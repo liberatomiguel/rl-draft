@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rocket Draft
 
-## Getting Started
+**A fan-made Rocket League esports history draft game.** Build a roster from
+iconic RLCS lineups — 3 players, a coach, a substitute and an organization —
+then survive a simulated RLCS-style championship: Swiss stage into playoffs.
 
-First, run the development server:
+> Fan-made, non-commercial project for educational purposes. Not affiliated
+> with Psyonix, Epic Games or any esports organization.
+
+---
+
+## Quickstart
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm test` | Engine + data test suite (vitest) |
+| `npm run validate:data` | Validate the JSON dataset only |
+| `npm run typecheck` | TypeScript check |
+| `npm run lint` | ESLint |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript**
+- **Tailwind CSS v4** (design tokens in `src/app/globals.css`)
+- **Zustand** (state + localStorage persistence)
+- **Zod** (dataset validation)
+- **Vitest** (engine tests)
 
-## Learn More
+No backend in the MVP — progress is saved locally (guest play). The
+architecture is prepared for Supabase + Discord OAuth later (see
+[docs/ROADMAP.md](docs/ROADMAP.md)).
 
-To learn more about Next.js, take a look at the following resources:
+## Project layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```txt
+src/
+├── app/            Routes: / · /play · /collection · /profile · /how-to-play
+├── components/
+│   ├── cards/      GameCard (rarity frames), MiniCard, roster views
+│   ├── layout/     AppShell (top nav + mobile bottom nav)
+│   ├── screens/    Setup · Draft · Review · Tournament · Results
+│   └── ui/         Button, Panel, Badge, Modal, ProgressBar, Toggle…
+├── config/
+│   └── balance.ts  ⚖️ EVERY tunable number in the game
+├── content/
+│   └── copy.ts     All player-facing strings (broadcast tone, l10n-ready)
+├── data/           📦 JSON dataset + zod schemas + validated loader
+├── engine/         🧠 Pure game logic — zero React imports
+├── lib/            Seeded RNG, small utils
+└── store/          Zustand stores (active run + persistent profile)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Golden rule:** game logic lives in `src/engine` (pure, deterministic,
+testable); the UI only calls engine functions through the stores.
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Doc | Contents |
+| --- | --- |
+| [docs/GAME-DESIGN.md](docs/GAME-DESIGN.md) | The original base design document |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, data flow, how a run works end to end |
+| [docs/DATA-GUIDE.md](docs/DATA-GUIDE.md) | How to edit/add cards, lineups, orgs — field by field |
+| [docs/BALANCE-GUIDE.md](docs/BALANCE-GUIDE.md) | Every balance knob, current values, how to retune |
+| [docs/DESIGN-DECISIONS.md](docs/DESIGN-DECISIONS.md) | Decisions taken beyond the base doc + open questions |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Version history + bugfix log |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | MVP 2-4 plan (collection, accounts, Liquipedia API) |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## MVP scope (v0.1.0)
+
+Implemented: Classic Draft (free choice, 6 slots), Easy/Normal/Hard + locked
+Legacy, rerolls by difficulty, hidden-overall mode with results reveal, base
+card rarities (silver/gold/blue), special cards with collection unlocks,
+chemistry, org buffs, coach/sub systems, Swiss (16 teams, Bo5) + single-elim
+Bo7 playoffs, results screen with XP/rank/achievements, local persistence
+(refresh-safe runs), responsive desktop + mobile.
+
+Not yet: login/sync, Liquipedia API, daily challenges, Quick/Regional Draft,
+double-elimination playoffs. See the roadmap.

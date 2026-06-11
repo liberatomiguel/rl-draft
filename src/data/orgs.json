@@ -1,0 +1,18 @@
+[
+  { "id": "ibuypower", "name": "iBUYPOWER", "region": "NA", "buffType": "offense", "buffLevel": "+" },
+  { "id": "flipsid3", "name": "FlipSid3 Tactics", "region": "EU", "buffType": "consistency", "buffLevel": "+" },
+  { "id": "gale-force", "name": "Gale Force Esports", "region": "EU", "buffType": "mechanics", "buffLevel": "++" },
+  { "id": "dignitas", "name": "Dignitas", "region": "EU", "buffType": "experience", "buffLevel": "++" },
+  { "id": "nrg", "name": "NRG", "region": "NA", "buffType": "experience", "buffLevel": "++" },
+  { "id": "cloud9", "name": "Cloud9", "region": "NA", "buffType": "clutch", "buffLevel": "++" },
+  { "id": "team-vitality", "name": "Team Vitality", "region": "EU", "buffType": "mechanics", "buffLevel": "++" },
+  { "id": "spacestation", "name": "Spacestation Gaming", "region": "NA", "buffType": "consistency", "buffLevel": "++" },
+  { "id": "team-bds", "name": "Team BDS", "region": "EU", "buffType": "consistency", "buffLevel": "++" },
+  { "id": "g2", "name": "G2 Esports", "region": "NA", "buffType": "offense", "buffLevel": "++" },
+  { "id": "renegades", "name": "Renegades", "region": "OCE", "buffType": "experience", "buffLevel": "+" },
+  { "id": "furia", "name": "FURIA Esports", "region": "SAM", "buffType": "mechanics", "buffLevel": "+" },
+  { "id": "faze", "name": "FaZe Clan", "region": "NA", "buffType": "offense", "buffLevel": "++" },
+  { "id": "falcons", "name": "Team Falcons", "region": "MENA", "buffType": "clutch", "buffLevel": "++" },
+  { "id": "gen-g", "name": "Gen.G Mobil1 Racing", "region": "NA", "buffType": "consistency", "buffLevel": "+" },
+  { "id": "karmine-corp", "name": "Karmine Corp", "region": "EU", "buffType": "offense", "buffLevel": "+" }
+]

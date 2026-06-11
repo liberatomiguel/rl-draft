@@ -1,26 +1,289 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   ROCKET DRAFT — design tokens
+   Dark premium theme. Blue = structure/info, Orange = action/highlight.
+   =========================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #05080f;
+  --bg-raised: #0a101d;
+  --panel: rgba(13, 20, 36, 0.72);
+  --panel-strong: rgba(16, 24, 43, 0.92);
+  --line: rgba(146, 164, 196, 0.14);
+  --line-strong: rgba(146, 164, 196, 0.28);
+  --ink: #e9eef8;
+  --sub: #8d9ab3;
+  --faint: #5b6880;
+
+  --blue: #3b82f6;
+  --blue-bright: #60a5fa;
+  --cyan: #38bdf8;
+  --orange: #f97316;
+  --orange-bright: #fb923c;
+  --good: #34d399;
+  --bad: #f87171;
+
+  --glow-blue: 0 0 28px rgba(59, 130, 246, 0.22);
+  --glow-orange: 0 0 28px rgba(249, 115, 22, 0.25);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-raised: var(--bg-raised);
+  --color-panel: var(--panel);
+  --color-panel-strong: var(--panel-strong);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-faint: var(--faint);
+  --color-blue: var(--blue);
+  --color-blue-bright: var(--blue-bright);
+  --color-cyan: var(--cyan);
+  --color-orange: var(--orange);
+  --color-orange-bright: var(--orange-bright);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-rajdhani), var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  background-image:
+    radial-gradient(900px 540px at 12% -8%, rgba(59, 130, 246, 0.14), transparent 62%),
+    radial-gradient(820px 520px at 96% 108%, rgba(249, 115, 22, 0.1), transparent 60%),
+    radial-gradient(620px 380px at 78% -12%, rgba(56, 189, 248, 0.07), transparent 55%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgba(249, 115, 22, 0.45);
+  color: #fff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(146, 164, 196, 0.25) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Typography helpers
+--------------------------------------------------------------------------- */
+
+.display {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.display-tight {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+.kicker {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+/* ---------------------------------------------------------------------------
+   Panels
+--------------------------------------------------------------------------- */
+
+.panel {
+  background: linear-gradient(160deg, rgba(20, 29, 51, 0.66), rgba(10, 16, 30, 0.78));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.panel-strong {
+  background: linear-gradient(160deg, rgba(23, 33, 58, 0.92), rgba(11, 17, 32, 0.96));
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+}
+
+.panel-glow-blue {
+  box-shadow: var(--glow-blue);
+}
+
+.panel-glow-orange {
+  box-shadow: var(--glow-orange);
+}
+
+/* ---------------------------------------------------------------------------
+   Card frames — gradient border via background-clip
+   Base rarities: silver (≤79) · gold (80-89) · blue (90+) · hidden ("??")
+   Special rarities: rare · epic · mythic · legendary (animated sheen)
+--------------------------------------------------------------------------- */
+
+.card-frame {
+  position: relative;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+}
+
+.card-silver {
+  background-image:
+    linear-gradient(168deg, #131c2e 0%, #0b1322 58%, #101a2c 100%),
+    linear-gradient(165deg, #aeb9c9 0%, #5d6b80 45%, #8d9ab3 100%);
+}
+
+.card-gold {
+  background-image:
+    linear-gradient(168deg, #181a26 0%, #100f1c 58%, #1a1626 100%),
+    linear-gradient(165deg, #f3c969 0%, #8a6224 48%, #d9a943 100%);
+}
+
+.card-blue {
+  background-image:
+    linear-gradient(168deg, #0e1a33 0%, #0a1326 58%, #0e1c38 100%),
+    linear-gradient(165deg, #67c5fb 0%, #1d4ed8 50%, #38bdf8 100%);
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.18);
+}
+
+.card-hidden {
+  background-image:
+    repeating-linear-gradient(135deg, #0a0f1c 0px, #0a0f1c 7px, #0c1220 7px, #0c1220 14px),
+    linear-gradient(165deg, #2c3550 0%, #161c2e 50%, #2c3550 100%);
+}
+
+.card-special {
+  box-shadow: 0 0 26px rgba(249, 115, 22, 0.12);
+  overflow: hidden;
+}
+
+.card-special::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.09) 46%, transparent 58%);
+  background-size: 240% 100%;
+  animation: card-sheen 4.2s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.card-rare {
+  background-image:
+    linear-gradient(168deg, #101733 0%, #0c1126 58%, #131a3a 100%),
+    linear-gradient(165deg, #818cf8 0%, #4338ca 50%, #6366f1 100%);
+}
+
+.card-epic {
+  background-image:
+    linear-gradient(168deg, #170f2e 0%, #100a22 58%, #1c1238 100%),
+    linear-gradient(165deg, #c084fc 0%, #7e22ce 50%, #a855f7 100%);
+}
+
+.card-mythic {
+  background-image:
+    linear-gradient(168deg, #200d18 0%, #150a14 58%, #271019 100%),
+    linear-gradient(165deg, #fb7185 0%, #be123c 45%, #fb923c 100%);
+}
+
+.card-legendary {
+  background-image:
+    linear-gradient(168deg, #1f1607 0%, #140e06 58%, #251a08 100%),
+    linear-gradient(140deg, #fde68a 0%, #f59e0b 30%, #f97316 60%, #fbbf24 100%);
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);
+}
+
+@keyframes card-sheen {
+  0% { background-position: 130% 0; }
+  55% { background-position: -60% 0; }
+  100% { background-position: -60% 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+--------------------------------------------------------------------------- */
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rise-in {
+  animation: rise-in 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.pop-in {
+  animation: pop-in 0.28s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+.flip-card {
+  perspective: 1100px;
+}
+
+.flip-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  backface-visibility: hidden;
+}
+
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .pop-in,
+  .pulse-soft,
+  .card-special::after {
+    animation: none !important;
+  }
+  .flip-card-inner {
+    transition: none !important;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
 }

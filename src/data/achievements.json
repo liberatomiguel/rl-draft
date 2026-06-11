@@ -1,0 +1,15 @@
+[
+  { "id": "first-draft", "title": "First Draft", "description": "Complete your first draft.", "xp": 25 },
+  { "id": "swiss-merchant", "title": "Swiss Merchant", "description": "Go 3-0 in the Swiss stage.", "xp": 50 },
+  { "id": "game-seven-ice", "title": "Game 7 Ice", "description": "Win a playoff series 4-3.", "xp": 50 },
+  { "id": "dynasty-builder", "title": "Dynasty Builder", "description": "Draft all three players from the same historical lineup.", "xp": 40 },
+  { "id": "no-numbers-needed", "title": "No Numbers Needed", "description": "Win a tournament with overalls hidden.", "xp": 100 },
+  { "id": "hard-mode-hero", "title": "Hard Mode Hero", "description": "Win a tournament on Hard.", "xp": 100 },
+  { "id": "legacy-unlocked", "title": "Legacy Unlocked", "description": "Unlock Legacy difficulty by winning on Hard.", "xp": 50 },
+  { "id": "one-country-army", "title": "One Country Army", "description": "Win a tournament with all three players from the same country.", "xp": 75 },
+  { "id": "against-the-odds", "title": "Against the Odds", "description": "Beat a team rated 8 or more above yours.", "xp": 50 },
+  { "id": "collector", "title": "Collector", "description": "Unlock your first special card.", "xp": 30 },
+  { "id": "archive-hunter", "title": "Archive Hunter", "description": "Unlock 5 special cards.", "xp": 75 },
+  { "id": "perfect-chemistry", "title": "Perfect Chemistry", "description": "Finish a run with Perfect chemistry.", "xp": 60 },
+  { "id": "immaculate", "title": "Immaculate", "description": "Win the tournament without dropping a single series.", "xp": 150 }
+]

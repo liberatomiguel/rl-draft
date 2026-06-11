@@ -1,0 +1,122 @@
+[
+  {
+    "id": "sp-jstn-this-is-rocket-league",
+    "playerId": "jstn",
+    "baseCardId": "jstn-nrg-s6",
+    "title": "This Is Rocket League",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": { "offense": 96, "defense": 88, "mechanics": 96, "consistency": 90, "experience": 94, "clutch": 99 },
+    "effect": { "type": "clutch_boost", "value": 3, "description": "+3 rating in the deciding game of any series." },
+    "flavor": "Season 6 Grand Final. Zero seconds on the clock, the ball still live — and one of the most famous calls in esports history."
+  },
+  {
+    "id": "sp-kaydop-triple-crown",
+    "playerId": "kaydop",
+    "baseCardId": "kaydop-vitality-s7",
+    "title": "Triple Crown",
+    "cardType": "legend",
+    "rarity": "legendary",
+    "overall": 95,
+    "stats": { "offense": 94, "defense": 93, "mechanics": 94, "consistency": 93, "experience": 95, "clutch": 94 },
+    "effect": { "type": "playoff_experience", "value": 2, "description": "+0.8 rating in every playoff game." },
+    "flavor": "Three world titles with three different rosters — Seasons 4, 5 and 7. The benchmark for big-stage consistency."
+  },
+  {
+    "id": "sp-squishy-double-touch",
+    "playerId": "squishy",
+    "baseCardId": "squishy-cloud9-s6",
+    "title": "The Double Touch",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": { "offense": 93, "defense": 89, "mechanics": 98, "consistency": 89, "experience": 86, "clutch": 94 },
+    "effect": { "type": "high_roll", "value": 2, "description": "+2 on mechanical high-roll moments." },
+    "flavor": "A ceiling-shot double touch in the Season 6 playoffs that still opens every mechanics montage."
+  },
+  {
+    "id": "sp-turbopolsa-three-rings",
+    "playerId": "turbopolsa",
+    "baseCardId": "turbopolsa-nrg-s8",
+    "title": "Three Rings",
+    "cardType": "legend",
+    "rarity": "legendary",
+    "overall": 94,
+    "stats": { "offense": 93, "defense": 90, "mechanics": 91, "consistency": 94, "experience": 96, "clutch": 95 },
+    "effect": { "type": "swiss_consistency", "value": 2, "description": "+0.8 rating in every Swiss stage game." },
+    "flavor": "Three RLCS titles across two continents. The big-match forward who never blinked under lights."
+  },
+  {
+    "id": "sp-monkey-moon-worlds-mvp",
+    "playerId": "monkey-moon",
+    "baseCardId": "monkey-moon-bds-2122",
+    "title": "Worlds MVP",
+    "cardType": "worlds_mvp",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": { "offense": 95, "defense": 94, "mechanics": 94, "consistency": 98, "experience": 90, "clutch": 95 },
+    "effect": { "type": "playoff_experience", "value": 2, "description": "+0.8 rating in every playoff game." },
+    "flavor": "The engine of BDS's 2021-22 World Championship run — relentless, unshakeable, everywhere at once."
+  },
+  {
+    "id": "sp-fairy-peak-the-wall",
+    "playerId": "fairy-peak",
+    "baseCardId": "fairy-peak-vitality-s7",
+    "title": "The Wall",
+    "cardType": "legend",
+    "rarity": "rare",
+    "overall": 92,
+    "stats": { "offense": 89, "defense": 97, "mechanics": 90, "consistency": 93, "experience": 90, "clutch": 90 },
+    "effect": { "type": "defense_stability", "value": 2, "description": "Reduces this team's negative variance." },
+    "flavor": "The last line of Vitality's Season 7 title run. Promising attacks died where Fairy Peak! stood."
+  },
+  {
+    "id": "sp-ahmad-major-mvp",
+    "playerId": "ahmad",
+    "baseCardId": "ahmad-falcons-2324",
+    "title": "Major MVP",
+    "cardType": "major_mvp",
+    "rarity": "epic",
+    "overall": 95,
+    "stats": { "offense": 96, "defense": 91, "mechanics": 96, "consistency": 92, "experience": 89, "clutch": 96 },
+    "effect": { "type": "clutch_boost", "value": 2, "description": "+2 rating in the deciding game of any series." },
+    "flavor": "The headline performance of the Falcons' 2023-24 Major title — fearless in every deciding game."
+  },
+  {
+    "id": "sp-yanxnz-sam-breakthrough",
+    "playerId": "yanxnz",
+    "baseCardId": "yanxnz-furia-2324",
+    "title": "SAM Breakthrough",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 92,
+    "stats": { "offense": 93, "defense": 88, "mechanics": 94, "consistency": 89, "experience": 87, "clutch": 93 },
+    "effect": { "type": "upset_boost", "value": 2, "description": "+2 rating when facing a higher-rated team." },
+    "flavor": "Carrying South America's banner deep into international brackets — and making the world respect the region."
+  },
+  {
+    "id": "sp-garrettg-the-mainstay",
+    "playerId": "garrettg",
+    "baseCardId": "garrettg-nrg-2122",
+    "title": "The Mainstay",
+    "cardType": "legend",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": { "offense": 93, "defense": 90, "mechanics": 92, "consistency": 92, "experience": 97, "clutch": 91 },
+    "effect": { "type": "swiss_consistency", "value": 2, "description": "+0.8 rating in every Swiss stage game." },
+    "flavor": "Era after era on NRG, always in contention. North America's great constant."
+  },
+  {
+    "id": "sp-zen-generational",
+    "playerId": "zen",
+    "baseCardId": "zen-vitality-2223",
+    "title": "Generational",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 97,
+    "stats": { "offense": 97, "defense": 92, "mechanics": 99, "consistency": 94, "experience": 84, "clutch": 96 },
+    "effect": { "type": "high_roll", "value": 2, "description": "+2 on mechanical high-roll moments." },
+    "flavor": "A rookie season that reset the bar for what a single player can do to a lobby."
+  }
+]

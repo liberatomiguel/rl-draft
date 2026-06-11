@@ -1,0 +1,14 @@
+[
+  { "id": "satthew-spacestation-x", "personId": "satthew", "name": "Satthew", "country": "US", "region": "NA", "orgId": "spacestation", "lineupId": "spacestation-x", "seasonId": "rlcs-x", "overall": 88, "bonusType": "consistency", "bonusLevel": "++" },
+  { "id": "mew-bds-x", "personId": "mew", "name": "Mew", "country": "FR", "region": "EU", "orgId": "team-bds", "lineupId": "bds-x", "seasonId": "rlcs-x", "overall": 86, "bonusType": "consistency", "bonusLevel": "++" },
+  { "id": "mew-bds-2122", "personId": "mew", "name": "Mew", "country": "FR", "region": "EU", "orgId": "team-bds", "lineupId": "bds-2122", "seasonId": "rlcs-2021-22", "overall": 89, "bonusType": "consistency", "bonusLevel": "++" },
+  { "id": "sizz-nrg-2122", "personId": "sizz", "name": "Sizz", "country": "US", "region": "NA", "orgId": "nrg", "lineupId": "nrg-2122", "seasonId": "rlcs-2021-22", "overall": 86, "bonusType": "experience", "bonusLevel": "++" },
+  { "id": "ferra-vitality-2223", "personId": "ferra", "name": "Ferra", "country": "FR", "region": "EU", "orgId": "team-vitality", "lineupId": "vitality-2223", "seasonId": "rlcs-2022-23", "overall": 90, "bonusType": "consistency", "bonusLevel": "++" },
+  { "id": "kassio-kc-2324", "personId": "kassio", "name": "Kassio", "country": "FR", "region": "EU", "orgId": "karmine-corp", "lineupId": "karmine-corp-2324", "seasonId": "rlcs-2023-24", "overall": 87, "bonusType": "mechanics", "bonusLevel": "+" },
+  { "id": "stl-furia-2324", "personId": "stl", "name": "STL", "country": "BR", "region": "SAM", "orgId": "furia", "lineupId": "furia-2324", "seasonId": "rlcs-2023-24", "overall": 85, "bonusType": "clutch", "bonusLevel": "+" },
+  { "id": "staff-falcons-2223", "personId": "staff-falcons-2223", "name": "Coaching Staff", "region": "MENA", "orgId": "falcons", "lineupId": "falcons-2223", "seasonId": "rlcs-2022-23", "overall": 79, "bonusType": "clutch", "bonusLevel": "+", "generic": true },
+  { "id": "staff-falcons-2324", "personId": "staff-falcons-2324", "name": "Coaching Staff", "region": "MENA", "orgId": "falcons", "lineupId": "falcons-2324", "seasonId": "rlcs-2023-24", "overall": 81, "bonusType": "clutch", "bonusLevel": "+", "generic": true },
+  { "id": "staff-g2-2324", "personId": "staff-g2-2324", "name": "Coaching Staff", "region": "NA", "orgId": "g2", "lineupId": "g2-stride-2324", "seasonId": "rlcs-2023-24", "overall": 80, "bonusType": "offense", "bonusLevel": "+", "generic": true },
+  { "id": "staff-gen-g-2223", "personId": "staff-gen-g-2223", "name": "Coaching Staff", "region": "NA", "orgId": "gen-g", "lineupId": "gen-g-2223", "seasonId": "rlcs-2022-23", "overall": 78, "bonusType": "consistency", "bonusLevel": "+", "generic": true },
+  { "id": "staff-faze-2122", "personId": "staff-faze-2122", "name": "Coaching Staff", "region": "NA", "orgId": "faze", "lineupId": "faze-2122", "seasonId": "rlcs-2021-22", "overall": 78, "bonusType": "offense", "bonusLevel": "+", "generic": true }
+]

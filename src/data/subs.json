@@ -1,0 +1,10 @@
+[
+  { "id": "express-renegades-x", "personId": "express", "name": "Express", "country": "AU", "region": "OCE", "orgId": "renegades", "lineupId": "renegades-x", "seasonId": "rlcs-x", "overall": 80,
+    "stats": { "offense": 80, "defense": 81, "mechanics": 80, "consistency": 81, "experience": 79, "clutch": 79 } },
+  { "id": "m7sn-falcons-2223", "personId": "m7sn", "name": "M7sN", "country": "SA", "region": "MENA", "orgId": "falcons", "lineupId": "falcons-2223", "seasonId": "rlcs-2022-23", "overall": 84,
+    "stats": { "offense": 85, "defense": 82, "mechanics": 86, "consistency": 83, "experience": 80, "clutch": 84 } },
+  { "id": "caiotg1-furia-2324", "personId": "caiotg1", "name": "CaioTG1", "country": "BR", "region": "SAM", "orgId": "furia", "lineupId": "furia-2324", "seasonId": "rlcs-2023-24", "overall": 84,
+    "stats": { "offense": 85, "defense": 82, "mechanics": 85, "consistency": 83, "experience": 82, "clutch": 83 } },
+  { "id": "itachi-kc-2324", "personId": "itachi", "name": "itachi", "country": "FR", "region": "EU", "orgId": "karmine-corp", "lineupId": "karmine-corp-2324", "seasonId": "rlcs-2023-24", "overall": 85,
+    "stats": { "offense": 86, "defense": 83, "mechanics": 86, "consistency": 84, "experience": 83, "clutch": 84 } }
+]
