@@ -25,20 +25,51 @@ import type {
   Roster,
   RosterPick,
   RosterSlotId,
+  RunMode,
 } from "./types";
 
 const PLAYER_SLOTS: RosterSlotId[] = ["player1", "player2", "player3"];
 
-export function createDraft(difficulty: Difficulty): DraftState {
+/**
+ * Virtual "leave it empty" cards. When a lineup has no coach/sub, these are
+ * offered instead and CAN be drafted (overall 50, no bonuses) — letting the
+ * player intentionally punt a slot to finish the draft sooner.
+ */
+export const VACANT_COACH = "vacant-coach";
+export const VACANT_SUB = "vacant-sub";
+export const VACANT_OVERALL = 50;
+
+export interface CreateDraftOptions {
+  mode?: RunMode;
+  /** Restrict the lineup pool (daily challenges). */
+  poolLineupIds?: string[];
+  /** Override the difficulty's reroll budget (daily modifier). */
+  rerollsOverride?: number;
+  /** Multiply the special-appearance chance (daily modifier). */
+  specialChanceMult?: number;
+}
+
+export function createDraft(
+  difficulty: Difficulty,
+  options: CreateDraftOptions = {},
+): DraftState {
   return {
+    mode: options.mode ?? "classic",
     round: 0,
-    rerollsLeft: DIFFICULTY[difficulty].rerolls,
+    rerollsLeft: options.rerollsOverride ?? DIFFICULTY[difficulty].rerolls,
     shownLineupIds: [],
     takenPersonIds: [],
+    poolLineupIds: options.poolLineupIds,
+    specialChanceMult: options.specialChanceMult,
     offer: null,
     roster: {},
     complete: false,
   };
+}
+
+/** Quick mode drafts players only. */
+function slotTarget(mode: RunMode): number {
+  return mode === "quick" ? 3 : 6;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,12 +84,14 @@ export function filledCount(roster: Roster): number {
   return (Object.keys(roster) as RosterSlotId[]).filter((k) => roster[k]).length;
 }
 
-export function neededKinds(roster: Roster): CardKind[] {
+export function neededKinds(roster: Roster, mode: RunMode = "classic"): CardKind[] {
   const needs: CardKind[] = [];
   if (openPlayerSlot(roster)) needs.push("player");
-  if (!roster.coach) needs.push("coach");
-  if (!roster.sub) needs.push("sub");
-  if (!roster.org) needs.push("org");
+  if (mode !== "quick") {
+    if (!roster.coach) needs.push("coach");
+    if (!roster.sub) needs.push("sub");
+    if (!roster.org) needs.push("org");
+  }
   return needs;
 }
 
@@ -95,13 +128,15 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   if (!lineup) throw new Error(`Unknown lineup "${lineupId}"`);
 
   const cards: DraftOfferCard[] = [];
+  const specialChance =
+    DRAFT.specialAppearanceChance * (draft.specialChanceMult ?? 1);
 
   for (const cardId of lineup.playerCardIds) {
     const card = playerCardById.get(cardId)!;
     // Special version may appear in place of the base card (collectible rule).
     const special = specialByBaseCardId.get(cardId);
     const specialId =
-      special && rng.chance(DRAFT.specialAppearanceChance) ? special.id : undefined;
+      special && rng.chance(specialChance) ? special.id : undefined;
     cards.push({
       kind: "player",
       refId: cardId,
@@ -110,42 +145,64 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
     });
   }
 
-  if (lineup.coachId) {
-    const coach = coachById.get(lineup.coachId)!;
+  if (draft.mode !== "quick") {
+    if (lineup.coachId) {
+      const coach = coachById.get(lineup.coachId)!;
+      cards.push({
+        kind: "coach",
+        refId: coach.id,
+        availability: availabilityFor("coach", coach.personId, draft),
+      });
+    } else {
+      // "No Coach" vacant card — pickable, fills the slot with nothing.
+      cards.push({
+        kind: "coach",
+        refId: VACANT_COACH,
+        availability: availabilityFor("coach", null, draft),
+      });
+    }
+
+    if (lineup.subId) {
+      const sub = subById.get(lineup.subId)!;
+      cards.push({
+        kind: "sub",
+        refId: sub.id,
+        availability: availabilityFor("sub", sub.personId, draft),
+      });
+    } else {
+      cards.push({
+        kind: "sub",
+        refId: VACANT_SUB,
+        availability: availabilityFor("sub", null, draft),
+      });
+    }
+
     cards.push({
-      kind: "coach",
-      refId: coach.id,
-      availability: availabilityFor("coach", coach.personId, draft),
+      kind: "org",
+      refId: lineup.orgId,
+      availability: availabilityFor("org", null, draft),
     });
   }
-
-  if (lineup.subId) {
-    const sub = subById.get(lineup.subId)!;
-    cards.push({
-      kind: "sub",
-      refId: sub.id,
-      availability: availabilityFor("sub", sub.personId, draft),
-    });
-  }
-
-  cards.push({
-    kind: "org",
-    refId: lineup.orgId,
-    availability: availabilityFor("org", null, draft),
-  });
 
   const hasPickableCard = cards.some((c) => c.availability === "available");
 
   return { lineupId, cards, hasPickableCard };
 }
 
+function lineupPool(draft: DraftState) {
+  return draft.poolLineupIds
+    ? lineups.filter((l) => draft.poolLineupIds!.includes(l.id))
+    : lineups;
+}
+
 export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
-  let pool = lineups.filter((l) => !draft.shownLineupIds.includes(l.id));
+  const fullPool = lineupPool(draft);
+  let pool = fullPool.filter((l) => !draft.shownLineupIds.includes(l.id));
   let shown = draft.shownLineupIds;
 
   // Pool exhausted (small datasets / many free rerolls): reset exclusions.
   if (pool.length === 0) {
-    pool = lineups.slice();
+    pool = fullPool.slice();
     shown = [];
   }
 
@@ -204,10 +261,16 @@ export function applyPick(
       personId = playerCardById.get(offerCard.refId)!.playerId;
       break;
     case "coach":
-      personId = coachById.get(offerCard.refId)!.personId;
+      personId =
+        offerCard.refId === VACANT_COACH
+          ? null
+          : coachById.get(offerCard.refId)!.personId;
       break;
     case "sub":
-      personId = subById.get(offerCard.refId)!.personId;
+      personId =
+        offerCard.refId === VACANT_SUB
+          ? null
+          : subById.get(offerCard.refId)!.personId;
       break;
     case "org":
       break;
@@ -226,7 +289,7 @@ export function applyPick(
     ? [...draft.takenPersonIds, personId]
     : draft.takenPersonIds;
 
-  const complete = filledCount(roster) === 6;
+  const complete = filledCount(roster) === slotTarget(draft.mode);
   const next: DraftState = { ...draft, roster, takenPersonIds, offer: null, complete };
 
   return complete ? next : drawNextOffer(next, rng);

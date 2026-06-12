@@ -22,6 +22,7 @@ function fakeTeam(id: string, rating: number): TournamentTeam {
     chemistry: { raw: 0, max: 16, percent: 0, tier: "Poor", items: [] },
     stats: { offense: 85, defense: 85, mechanics: 85, consistency: 85, experience: 85, clutch: 85 },
     specialIds: [],
+    playerNames: ["A", "B", "C"],
     orgId: "",
   };
 }

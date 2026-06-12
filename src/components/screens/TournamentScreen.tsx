@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TOURNAMENT } from "@/config/balance";
 import { NARRATION, TOURNAMENT_UI as T } from "@/content/copy";
-import { nextPlayoffPairings, PLAYOFF_ROUND_ORDER } from "@/engine/playoffs";
+import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { displayTeamOverall } from "@/engine/rating";
 import type {
   PlayoffRoundName,
@@ -101,12 +101,15 @@ export function TournamentScreen({ run }: { run: RunState }) {
   const t = run.tournament;
 
   // Playback state. On mount (or refresh) everything already simulated is
-  // treated as revealed; pressing Start continues from there.
+  // treated as revealed. A FRESH tournament (straight from team review)
+  // auto-starts — no extra click needed.
   const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t) : []));
   const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t).length : 0));
   const [gamesShown, setGamesShown] = useState(0);
-  const [running, setRunning] = useState(false);
-  const [speed, setSpeed] = useState<1 | 2>(1);
+  const [running, setRunning] = useState(
+    () => Boolean(t) && allEntries(t!).length === 0 && t!.stage !== "finished",
+  );
+  const [speed, setSpeed] = useState<1 | 2 | 4>(1);
   const [inspectKey, setInspectKey] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -188,14 +191,16 @@ export function TournamentScreen({ run }: { run: RunState }) {
       <RunStepper run={run} />
 
       <SectionTitle
-        kicker={t.stage === "swiss" || !revealedPlayoffsStarted(t, revealedKeys) ? T.swiss : T.playoffs}
-        title={T.title}
+        kicker={
+          run.mode === "quick" || t.stage !== "swiss" ? T.playoffs : T.swiss
+        }
+        title={run.daily ? `Daily · ${run.daily.label}` : T.title}
         right={
-          <div className="flex items-center gap-2">
+          run.mode !== "quick" ? (
             <Badge tone="blue" className="!text-sm">
               {T.record(userRecord.wins, userRecord.losses)}
             </Badge>
-          </div>
+          ) : null
         }
         className="mb-4"
       />
@@ -214,7 +219,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
               </Button>
             )}
             <div className="flex overflow-hidden rounded-lg border border-line">
-              {([1, 2] as const).map((s) => (
+              {([1, 2, 4] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setSpeed(s)}
@@ -234,7 +239,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
           </>
         ) : (
           <>
-            <Button variant="primary" size="lg" onClick={finishRun}>
+            <Button variant="primary" size="lg" className="min-w-64" onClick={finishRun}>
               {T.toResults}
             </Button>
             <span className="text-xs text-faint">{T.reviewHint}</span>
@@ -260,12 +265,14 @@ export function TournamentScreen({ run }: { run: RunState }) {
             </Panel>
           )}
 
-          {/* Swiss: your path */}
-          <SwissPath run={run} t={t} revealed={revealedKeys} liveKey={liveEntry?.key ?? null} onInspect={setInspectKey} />
+          {/* Swiss: your path (classic/daily only) */}
+          {run.mode !== "quick" ? (
+            <SwissPath run={run} t={t} revealed={revealedKeys} liveKey={liveEntry?.key ?? null} onInspect={setInspectKey} />
+          ) : null}
 
           {/* Playoffs bracket */}
           {t.playoffs && revealedPlayoffsStarted(t, revealedKeys) ? (
-            <DoubleElimBracket
+            <PlayoffBracketView
               run={run}
               t={t}
               revealed={revealedKeys}
@@ -274,10 +281,19 @@ export function TournamentScreen({ run }: { run: RunState }) {
               onInspect={setInspectKey}
             />
           ) : null}
+
+          {/* Bottom shortcut to results — long pages shouldn't need a scroll back up. */}
+          {finished && allRevealed ? (
+            <Button variant="primary" size="lg" full onClick={finishRun}>
+              {T.toResults}
+            </Button>
+          ) : null}
         </div>
 
-        {/* Standings (derived from revealed series only) */}
-        <SwissStandings run={run} t={t} records={revealedRecords} />
+        {/* Standings (derived from revealed series only; classic/daily) */}
+        {run.mode !== "quick" ? (
+          <SwissStandings run={run} t={t} records={revealedRecords} />
+        ) : null}
       </div>
     </div>
   );
@@ -373,6 +389,21 @@ function MatchCenter({
     else if (!userWon && userDiff >= 3) lines.push(pick(NARRATION.upsetLoss));
     else if (margin === 1) lines.push(pick(NARRATION.seriesLossClose));
     else lines.push(pick(NARRATION.seriesLoss));
+
+    // Name the series star: most game-stars on the winning side.
+    const counts = new Map<string, number>();
+    for (const g of series.games) {
+      if (g.winnerTeamId === series.winnerTeamId && g.starName) {
+        counts.set(g.starName, (counts.get(g.starName) ?? 0) + 1);
+      }
+    }
+    const star = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (star) {
+      lines.push(
+        userWon ? NARRATION.starLine(star) : NARRATION.starLineOpponent(star),
+      );
+    }
+
     if (series.games.some((g) => g.deciding && g.notes.includes("special_clutch"))) {
       lines.push(NARRATION.specialNote);
     } else if (series.games.some((g) => g.overtime && g.deciding)) {
@@ -385,7 +416,14 @@ function MatchCenter({
     <Panel strong glow={live ? "orange" : undefined} className="p-5">
       <div className="mb-1 flex items-center justify-between gap-3">
         <p className="kicker">
-          {entry.label} · {T.bestOf(entry.stage === "swiss" ? TOURNAMENT.swiss.bestOf : TOURNAMENT.playoffs.bestOf)}
+          {entry.label} ·{" "}
+          {T.bestOf(
+            entry.stage === "swiss"
+              ? TOURNAMENT.swiss.bestOf
+              : t.playoffs?.format === "single"
+                ? TOURNAMENT.quick.bestOf
+                : TOURNAMENT.playoffs.bestOf,
+          )}
         </p>
         <div className="flex items-center gap-2">
           {live ? (
@@ -444,10 +482,13 @@ function MatchCenter({
                   : "border-line bg-white/3",
               )}
             >
-              <span className="uppercase tracking-wider text-sub">
+              <span className="min-w-0 truncate uppercase tracking-wider text-sub">
                 {T.game(game.index)}
                 {game.overtime ? <span className="ml-1.5 font-bold text-orange-bright">{T.overtime}</span> : null}
                 {game.deciding ? <span className="ml-1.5 font-bold text-cyan">{T.matchPoint}</span> : null}
+                {game.starName && (game.overtime || game.deciding || game.notes.includes("high_roll")) ? (
+                  <span className="ml-1.5 normal-case text-faint">★ {game.starName}</span>
+                ) : null}
               </span>
               <span className="display font-bold text-ink">
                 {score[0]}–{score[1]}
@@ -605,6 +646,7 @@ function SwissPath({
 
 const UPPER_COLUMNS: PlayoffRoundName[] = ["ub_quarterfinal", "ub_semifinal", "ub_final", "grand_final"];
 const LOWER_COLUMNS: PlayoffRoundName[] = ["lb_round1", "lb_round2", "lb_semifinal", "lb_final", "third_place"];
+const SINGLE_COLUMNS: PlayoffRoundName[] = ["quarterfinal", "semifinal", "final"];
 const SLOTS: Record<PlayoffRoundName, number> = {
   ub_quarterfinal: 4,
   lb_round1: 2,
@@ -615,9 +657,12 @@ const SLOTS: Record<PlayoffRoundName, number> = {
   lb_final: 1,
   third_place: 1,
   grand_final: 1,
+  quarterfinal: 4,
+  semifinal: 2,
+  final: 1,
 };
 
-function DoubleElimBracket({
+function PlayoffBracketView({
   run,
   t,
   revealed,
@@ -634,7 +679,7 @@ function DoubleElimBracket({
 }) {
   const p = t.playoffs!;
   const roundIndexByName = new Map(p.rounds.map((r, i) => [r.name, i]));
-  const nextRoundName = PLAYOFF_ROUND_ORDER[p.rounds.length] ?? null;
+  const nextRoundName = roundOrderFor(p.format)[p.rounds.length] ?? null;
   const upcomingPairs = !p.finished && allRevealed && nextRoundName ? nextPlayoffPairings(p) : null;
 
   const renderColumn = (name: PlayoffRoundName) => {
@@ -666,20 +711,29 @@ function DoubleElimBracket({
     );
   };
 
+  const isSingle = p.format === "single";
+
   return (
     <Panel className="p-4">
       <h3 className="display mb-4 text-sm font-bold uppercase tracking-[0.16em] text-ink">
-        {T.bracket} · {T.bestOf(TOURNAMENT.playoffs.bestOf)}
+        {T.bracket} ·{" "}
+        {T.bestOf(isSingle ? TOURNAMENT.quick.bestOf : TOURNAMENT.playoffs.bestOf)}
       </h3>
       <div className="space-y-5 overflow-x-auto pb-1">
-        <div>
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">{T.upperBracket}</p>
-          <div className="flex min-w-[640px] gap-3">{UPPER_COLUMNS.map(renderColumn)}</div>
-        </div>
-        <div>
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">{T.lowerBracket}</p>
-          <div className="flex min-w-[640px] gap-3">{LOWER_COLUMNS.map(renderColumn)}</div>
-        </div>
+        {isSingle ? (
+          <div className="flex min-w-[520px] gap-3">{SINGLE_COLUMNS.map(renderColumn)}</div>
+        ) : (
+          <>
+            <div>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan">{T.upperBracket}</p>
+              <div className="flex min-w-[640px] gap-3">{UPPER_COLUMNS.map(renderColumn)}</div>
+            </div>
+            <div>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-bright">{T.lowerBracket}</p>
+              <div className="flex min-w-[640px] gap-3">{LOWER_COLUMNS.map(renderColumn)}</div>
+            </div>
+          </>
+        )}
       </div>
     </Panel>
   );

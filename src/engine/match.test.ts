@@ -35,6 +35,7 @@ function fakeTeam(id: string, rating: number): TournamentTeam {
       clutch: 85,
     },
     specialIds: [],
+    playerNames: ["A", "B", "C"],
     orgId: "",
   };
 }

@@ -18,12 +18,61 @@ import type {
   TournamentTeam,
 } from "./types";
 
+export interface TournamentOptions {
+  mode?: "classic" | "quick" | "daily";
+  /** Restrict opponent generation to these lineups (daily challenges). */
+  poolLineupIds?: string[];
+}
+
 export function initTournament(
   userTeam: TournamentTeam,
   difficulty: Difficulty,
   rng: Rng,
+  options: TournamentOptions = {},
 ): TournamentState {
-  const opponents = generateOpponents(difficulty, rng, TOURNAMENT.swiss.teams - 1);
+  const mode = options.mode ?? "classic";
+
+  // Quick mode: 8 teams straight into a single-elimination bracket.
+  if (mode === "quick") {
+    const opponents = generateOpponents(
+      difficulty,
+      rng,
+      TOURNAMENT.quick.teams - 1,
+      options.poolLineupIds,
+    );
+    const teams: Record<string, TournamentTeam> = { [userTeam.id]: userTeam };
+    for (const opp of opponents) teams[opp.id] = opp;
+
+    const seeds = Object.keys(teams).sort(
+      (a, b) => teams[b].rating.total - teams[a].rating.total,
+    );
+    return {
+      teams,
+      // Dummy finished Swiss keeps the state shape uniform across modes.
+      swiss: {
+        rounds: [],
+        records: Object.keys(teams).map((teamId) => ({
+          teamId,
+          wins: 0,
+          losses: 0,
+          gameDiff: 0,
+          status: "advanced",
+        })),
+        nextPairings: null,
+        finished: true,
+      },
+      playoffs: createPlayoffs(seeds, "single"),
+      stage: "playoffs",
+      userEliminated: false,
+    };
+  }
+
+  const opponents = generateOpponents(
+    difficulty,
+    rng,
+    TOURNAMENT.swiss.teams - 1,
+    options.poolLineupIds,
+  );
   const teams: Record<string, TournamentTeam> = { [userTeam.id]: userTeam };
   for (const opp of opponents) teams[opp.id] = opp;
 
@@ -76,11 +125,14 @@ export function playNextRound(
       );
       if (userSeries) {
         const lost = userSeries.winnerTeamId !== "user";
-        // Double elim: an upper-bracket loss drops to the lower bracket, and
-        // lb_semifinal / lb_final losers still play the third-place series.
-        // The user is only OUT after lb_round1/lb_round2 losses, after the
-        // third-place series (win or lose), or after losing the grand final.
-        if (lastRound.name === "third_place") {
+        if (playoffs.format === "single") {
+          // Single elim (quick): any loss ends the run.
+          if (lost) next.userEliminated = true;
+        } else if (lastRound.name === "third_place") {
+          // Double elim: an upper-bracket loss drops to the lower bracket,
+          // and lb_semifinal / lb_final losers still play the third-place
+          // series. The user is only OUT after lb_round1/lb_round2 losses,
+          // after the third-place series, or after losing the grand final.
           next.userEliminated = true;
         } else if (
           lost &&
@@ -147,12 +199,17 @@ export function userPlacement(state: TournamentState): Placement {
 
   switch (last.round) {
     case "grand_final":
+    case "final":
       return "runner_up";
     case "third_place":
       return won ? "third" : "fourth";
     case "lb_round2":
       return "top6";
     case "lb_round1":
+      return "top8";
+    case "semifinal":
+      return "top4";
+    case "quarterfinal":
       return "top8";
     default:
       // Defensive: a user run can only END on the rounds above.

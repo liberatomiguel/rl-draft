@@ -155,12 +155,14 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     tagline: "Hidden overalls. Stronger field. Knowledge wins.",
     rerolls: 0,
     overallLockedHidden: true,
-    userRollRange: [-5, 4],
+    // v0.3: was [-5,4] / +1.0 / elite 1.8 — playtesting showed good rosters
+    // missing playoffs too often (the champion-heavy dataset compounds it).
+    userRollRange: [-4, 4],
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 2.8,
-    opponentRatingShift: 1.0,
+    opponentRatingShift: 0.5,
     opponentSpecialChance: 0.12,
-    opponentTierWeights: { elite: 1.8, strong: 1.3, solid: 0.6, underdog: 0.4 },
+    opponentTierWeights: { elite: 1.5, strong: 1.3, solid: 0.7, underdog: 0.5 },
     xpMultiplier: 1.5,
   },
   legacy: {
@@ -171,7 +173,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     userRollRange: [-5, 5],
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 2.8,
-    opponentRatingShift: 1.5,
+    opponentRatingShift: 1.2,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 2.6, strong: 1.2, solid: 0.15, underdog: 0.1 },
     xpMultiplier: 2.0,
@@ -240,6 +242,11 @@ export const TOURNAMENT = {
     teams: 8,
     bestOf: 7,
   },
+  /** Quick Draft: straight 8-team single-elimination, shorter series. */
+  quick: {
+    teams: 8,
+    bestOf: 5,
+  },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -261,23 +268,28 @@ export const XP = {
   } as Record<string, number>,
   /** Bonus multiplier when the run was played with hidden overalls. */
   hiddenOverallBonus: 0.25,
+  /** Run-XP multiplier per game mode. */
+  modeMultiplier: {
+    classic: 1.0,
+    quick: 0.5,
+    daily: 1.5,
+  } as Record<string, number>,
 } as const;
 
 /**
- * Rank ladder. Gaps grow rank over rank for a moderate grind:
- * an average run earns ~150-300 XP, a winning run ~500-800.
- * Supersonic Legend lands around 35-60 completed runs.
+ * Rank ladder (v0.3 curve). Target: Supersonic Legend in ~100-150 runs.
+ * An average run earns ~150-300 XP, a winning run ~500-800.
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  { id: "bronze", label: "Bronze", minXp: 200 },
-  { id: "silver", label: "Silver", minXp: 600 },
-  { id: "gold", label: "Gold", minXp: 1400 },
-  { id: "platinum", label: "Platinum", minXp: 2600 },
-  { id: "diamond", label: "Diamond", minXp: 4500 },
-  { id: "champion", label: "Champion", minXp: 7200 },
-  { id: "grand-champion", label: "Grand Champion", minXp: 10500 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 14500 },
+  { id: "bronze", label: "Bronze", minXp: 300 },
+  { id: "silver", label: "Silver", minXp: 1000 },
+  { id: "gold", label: "Gold", minXp: 2400 },
+  { id: "platinum", label: "Platinum", minXp: 4800 },
+  { id: "diamond", label: "Diamond", minXp: 8500 },
+  { id: "champion", label: "Champion", minXp: 14000 },
+  { id: "grand-champion", label: "Grand Champion", minXp: 21000 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 30000 },
 ] as const;
 
 export const HISTORY_LIMIT = 25;

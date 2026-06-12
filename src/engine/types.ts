@@ -20,6 +20,13 @@ export type Region = "NA" | "EU" | "SAM" | "MENA" | "OCE" | "APAC";
 export type Difficulty = "easy" | "normal" | "hard" | "legacy";
 
 /**
+ * Game modes. classic = full 6-slot draft + Swiss + double elim.
+ * quick = players only + straight single-elim bracket.
+ * daily = classic structure with a date-seeded modifier set.
+ */
+export type RunMode = "classic" | "quick" | "daily";
+
+/**
  * Visual rarity of a base card, derived from overall (see balance.RARITY).
  * "common" = no rarity (low overalls, neutral orgs, placeholder cards).
  */
@@ -176,6 +183,8 @@ export interface AchievementDef {
   title: string;
   description: string;
   xp: number;
+  /** Visual family in the achievements grid. */
+  category: "milestone" | "skill" | "collection" | "legend";
 }
 
 // ---------------------------------------------------------------------------
@@ -222,12 +231,17 @@ export interface RosterPick {
 export type Roster = Partial<Record<RosterSlotId, RosterPick>>;
 
 export interface DraftState {
+  mode: RunMode;
   round: number;
   rerollsLeft: number;
   /** Lineups already shown this run (drawn without replacement). */
   shownLineupIds: string[];
   /** Person ids that can no longer be drafted (players, coaches, subs). */
   takenPersonIds: string[];
+  /** Restricted lineup pool (daily challenges). Undefined = full pool. */
+  poolLineupIds?: string[];
+  /** Multiplier on the special-appearance chance (daily modifier). */
+  specialChanceMult?: number;
   offer: DraftOffer | null;
   roster: Roster;
   complete: boolean;
@@ -274,6 +288,8 @@ export interface TournamentTeam {
   stats: Stats;
   /** Special cards active on this team (user picks or AI upgrades). */
   specialIds: string[];
+  /** Player nicknames — used for star-of-the-game narration. */
+  playerNames: string[];
   orgId: string;
 }
 
@@ -286,6 +302,8 @@ export interface GameResult {
   deciding: boolean;
   /** Message keys resolved to text by the UI layer. */
   notes: string[];
+  /** Star of the game (a player nickname from the winning side). */
+  starName?: string;
 }
 
 export interface SeriesResult {
@@ -323,7 +341,10 @@ export interface SwissState {
   finished: boolean;
 }
 
-/** Double elimination rounds in play order (+ a dedicated 3rd-place series). */
+/**
+ * Playoff rounds in play order. The double-elimination set (classic mode)
+ * plus the straight single-elimination set (quick mode).
+ */
 export type PlayoffRoundName =
   | "ub_quarterfinal"
   | "lb_round1"
@@ -333,7 +354,10 @@ export type PlayoffRoundName =
   | "lb_semifinal"
   | "lb_final"
   | "third_place"
-  | "grand_final";
+  | "grand_final"
+  | "quarterfinal"
+  | "semifinal"
+  | "final";
 
 export interface PlayoffRound {
   name: PlayoffRoundName;
@@ -341,6 +365,7 @@ export interface PlayoffRound {
 }
 
 export interface PlayoffState {
+  format: "double" | "single";
   /** Seeded team ids, best record first. */
   seeds: string[];
   rounds: PlayoffRound[];
@@ -365,6 +390,7 @@ export type Placement =
   | "runner_up"
   | "third"
   | "fourth"
+  | "top4"
   | "top6"
   | "top8"
   | "swiss_exit";
@@ -404,9 +430,26 @@ export interface RunResults {
   xp: XpSummary;
 }
 
+/** Daily-challenge metadata attached to a run. */
+export interface DailyInfo {
+  /** ISO date (UTC), e.g. "2026-06-12" — also drives the shared seed. */
+  date: string;
+  label: string;
+  description: string;
+  /** Optional bonus objective evaluated at results time. */
+  objective?: {
+    type: "chemistry_good" | "concede_under";
+    /** Threshold for concede_under (max goals conceded). */
+    value?: number;
+    label: string;
+    bonusXp: number;
+  };
+}
+
 /** The whole state of one run. Persisted so a refresh resumes the game. */
 export interface RunState {
   runId: string;
+  mode: RunMode;
   seed: number;
   /** Mutable RNG cursor — persisted so reloads stay deterministic. */
   rngState: number;
@@ -415,6 +458,7 @@ export interface RunState {
   showOverall: boolean;
   phase: RunPhase;
   startedAt: string;
+  daily?: DailyInfo;
   draft: DraftState;
   tournament: TournamentState | null;
   results: RunResults | null;

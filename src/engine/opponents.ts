@@ -15,9 +15,12 @@ export function generateOpponents(
   difficulty: Difficulty,
   rng: Rng,
   count: number,
+  poolLineupIds?: string[],
 ): TournamentTeam[] {
   const profile = DIFFICULTY[difficulty];
-  const pool = [...lineups];
+  const pool = poolLineupIds
+    ? lineups.filter((l) => poolLineupIds.includes(l.id))
+    : [...lineups];
   const picked: typeof pool = [];
 
   while (picked.length < count && pool.length > 0) {

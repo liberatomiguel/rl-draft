@@ -19,6 +19,8 @@ interface FieldViewProps {
   /** Kind of the currently selected draft card (null = nothing selected). */
   highlightKind?: CardKind | null;
   onSlotClick?: (slot: RosterSlotId) => void;
+  /** Quick mode has no coach/sub/org bench. */
+  showBench?: boolean;
   className?: string;
 }
 
@@ -38,6 +40,7 @@ export function FieldView({
   showOverall,
   highlightKind = null,
   onSlotClick,
+  showBench = true,
   className,
 }: FieldViewProps) {
   const slotKind = (slot: RosterSlotId): CardKind =>
@@ -64,7 +67,7 @@ export function FieldView({
       </div>
 
       {/* Bench strip: coach · sub · org */}
-      <div className="mt-2 grid grid-cols-3 gap-2">
+      <div className={cx("mt-2 grid grid-cols-3 gap-2", !showBench && "hidden")}>
         <BenchSlot
           label={DRAFT_UI.slotCoach}
           card={resolved(roster, "coach")}
@@ -166,7 +169,7 @@ function BenchSlot({
             {card.name}
           </span>
           <span className="display shrink-0 text-[11px] font-bold text-cyan">
-            {isOrg ? card.buffLevel : showOverall ? card.overall : "??"}
+            {isOrg ? (showOverall ? card.buffLevel : "??") : showOverall ? card.overall : "??"}
           </span>
         </span>
       ) : (

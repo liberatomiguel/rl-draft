@@ -48,8 +48,15 @@ const SPECIAL_ACCENT: Record<string, string> = {
 };
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
-  if (card.special) return `card-${card.special.rarity} card-special`;
-  if (!showOverall && card.kind !== "org") return "card-hidden";
+  if (card.special) {
+    const holo = ["epic", "mythic", "legendary"].includes(card.special.rarity)
+      ? ` holo-${card.special.rarity}`
+      : "";
+    return `card-${card.special.rarity} card-special${holo}`;
+  }
+  // Hidden runs black out EVERYTHING except special cards (base doc §11):
+  // player/coach/sub overalls, coach bonuses, org buffs and all rarities.
+  if (!showOverall) return "card-hidden";
   return `card-${card.baseRarity ?? "common"}`;
 }
 
@@ -66,7 +73,7 @@ export function GameCard({
 }: GameCardProps) {
   const isOrg = card.kind === "org";
   const isSpecial = Boolean(card.special);
-  const hiddenBase = !showOverall && !isSpecial && !isOrg;
+  const hiddenBase = !showOverall && !isSpecial;
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
 
@@ -114,8 +121,13 @@ export function GameCard({
               {overallText}
             </span>
           ) : (
-            <span className="display block text-2xl font-bold leading-none text-orange-bright">
-              {card.buffLevel === "~" ? "·" : card.buffLevel}
+            <span
+              className={cx(
+                "display block text-2xl font-bold leading-none",
+                showOverall ? "text-orange-bright" : "text-faint",
+              )}
+            >
+              {!showOverall ? "??" : card.buffLevel === "~" ? "·" : card.buffLevel}
             </span>
           )}
           <span className={cx("kicker mt-1 block !text-[9px]", isSpecial && "!text-white/70")}>
@@ -165,11 +177,13 @@ export function GameCard({
         ) : null}
         <p className={cx("mt-0.5 truncate text-[10px]", isSpecial ? "text-white/60" : "text-sub")}>
           {isOrg
-            ? `${STAT_LABELS[card.buffType ?? ""] ?? ""} ${card.buffLevel === "~" ? "" : card.buffLevel ?? ""}`.trim() || "Neutral"
+            ? showOverall
+              ? `${STAT_LABELS[card.buffType ?? ""] ?? ""} ${card.buffLevel === "~" ? "" : card.buffLevel ?? ""}`.trim() || "Neutral"
+              : "Buff hidden"
             : [card.orgName, card.seasonShort].filter(Boolean).join(" · ")}
         </p>
 
-        {/* Bottom tag */}
+        {/* Bottom tag — fully blacked out on hidden runs (only specials show) */}
         <div className="mt-1.5 flex items-center justify-between gap-1">
           {card.special ? (
             <Badge tone={specialCollected ? "gold" : "neutral"} className="!text-[9px] backdrop-blur-sm">
@@ -177,7 +191,7 @@ export function GameCard({
                 ? `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
                 : "?? · ??"}
             </Badge>
-          ) : card.kind === "coach" && card.buffType ? (
+          ) : card.kind === "coach" && card.buffType && showOverall ? (
             <Badge tone="blue" className="!text-[9px]">
               {STAT_LABELS[card.buffType]} {card.buffLevel}
             </Badge>
@@ -250,47 +264,3 @@ function SpecialArt({ card }: { card: ResolvedCard }) {
   );
 }
 
-/** Non-pickable placeholder for lineups missing a coach or sub. */
-export function PlaceholderCard({
-  kind,
-  size = "md",
-}: {
-  kind: "coach" | "sub";
-  size?: "sm" | "md" | "lg";
-}) {
-  const sizeClasses =
-    size === "lg"
-      ? "w-44 md:w-52 p-3.5"
-      : size === "sm"
-        ? "w-32 p-2.5"
-        : "w-36 md:w-44 p-3";
-  return (
-    <div
-      className={cx(
-        "card-frame card-common flex aspect-[3/4.3] flex-col opacity-55",
-        sizeClasses,
-      )}
-      aria-label={kind === "coach" ? DRAFT_UI.noCoach : DRAFT_UI.noSub}
-    >
-      <div className="flex items-start justify-between">
-        <div className="leading-none">
-          <span className="display block text-3xl font-bold leading-none text-faint">50</span>
-          <span className="kicker mt-1 block !text-[9px]">{ROLE_LABEL[kind]}</span>
-        </div>
-      </div>
-      <div className="flex flex-1 items-center justify-center">
-        <svg viewBox="0 0 24 24" className="h-12 w-12 text-white/15" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <circle cx="12" cy="12" r="9" />
-          <path d="m6 6 12 12" />
-        </svg>
-      </div>
-      <div className="min-h-0">
-        <p className="display truncate text-sm font-bold uppercase tracking-wide text-faint">
-          {kind === "coach" ? DRAFT_UI.noCoach : DRAFT_UI.noSub}
-        </p>
-        <p className="mt-0.5 truncate text-[10px] text-faint">{DRAFT_UI.notFielded}</p>
-        <div className="mt-1.5 h-[18px]" />
-      </div>
-    </div>
-  );
-}

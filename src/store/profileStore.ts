@@ -9,19 +9,44 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { HISTORY_LIMIT } from "@/config/balance";
-import type { Difficulty, RunHistoryEntry, RunResults } from "@/engine/types";
+import type {
+  Difficulty,
+  Placement,
+  RunHistoryEntry,
+  RunMode,
+  RunResults,
+} from "@/engine/types";
+
+export interface DailyResult {
+  placement: Placement;
+  xp: number;
+  label: string;
+}
 
 export interface ProfileState {
   xp: number;
   runsCompleted: number;
   wins: Record<Difficulty, number>;
+  /** Lifetime counters (beyond the capped run history). */
+  playoffAppearances: number;
+  podiums: number;
+  swissWinsTotal: number;
   /** specialCardId → ISO date unlocked. */
   unlockedSpecials: Record<string, string>;
   /** achievementId → ISO date earned. */
   achievements: Record<string, string>;
   runHistory: RunHistoryEntry[];
+  /** ISO date → daily challenge result. */
+  dailyResults: Record<string, DailyResult>;
+  /** Setup memory: a new game pre-selects the last configuration. */
+  settings: { lastDifficulty: Difficulty; lastShowOverall: boolean; lastMode: RunMode };
 
-  applyRunResults: (results: RunResults, entry: RunHistoryEntry) => void;
+  applyRunResults: (
+    results: RunResults,
+    entry: RunHistoryEntry,
+    daily?: { date: string; label: string },
+  ) => void;
+  setLastSetup: (difficulty: Difficulty, showOverall: boolean, mode: RunMode) => void;
   resetAll: () => void;
 }
 
@@ -29,9 +54,18 @@ const initialData = {
   xp: 0,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
+  playoffAppearances: 0,
+  podiums: 0,
+  swissWinsTotal: 0,
   unlockedSpecials: {},
   achievements: {},
-  runHistory: [],
+  runHistory: [] as RunHistoryEntry[],
+  dailyResults: {} as Record<string, DailyResult>,
+  settings: {
+    lastDifficulty: "normal" as Difficulty,
+    lastShowOverall: true,
+    lastMode: "classic" as RunMode,
+  },
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -39,7 +73,7 @@ export const useProfileStore = create<ProfileState>()(
     (set) => ({
       ...initialData,
 
-      applyRunResults: (results, entry) =>
+      applyRunResults: (results, entry, daily) =>
         set((state) => {
           const now = new Date().toISOString();
 
@@ -58,21 +92,56 @@ export const useProfileStore = create<ProfileState>()(
             wins[entry.difficulty] += 1;
           }
 
+          const madePlayoffs = results.placement !== "swiss_exit";
+          const podium = ["champion", "runner_up", "third"].includes(results.placement);
+
+          const dailyResults = { ...state.dailyResults };
+          if (daily) {
+            dailyResults[daily.date] = {
+              placement: results.placement,
+              xp: results.xp.total,
+              label: daily.label,
+            };
+          }
+
           return {
             xp: state.xp + results.xp.total,
             runsCompleted: state.runsCompleted + 1,
             wins,
+            playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
+            podiums: state.podiums + (podium ? 1 : 0),
+            swissWinsTotal: state.swissWinsTotal + entry.swissRecord.wins,
             unlockedSpecials,
             achievements,
             runHistory: [entry, ...state.runHistory].slice(0, HISTORY_LIMIT),
+            dailyResults,
           };
         }),
+
+      setLastSetup: (lastDifficulty, lastShowOverall, lastMode) =>
+        set({ settings: { lastDifficulty, lastShowOverall, lastMode } }),
 
       resetAll: () => set({ ...initialData }),
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 1,
+      version: 2,
+      // v2 adds lifetime counters, daily results and setup memory.
+      migrate: (persisted, version) => {
+        const prev = (persisted ?? {}) as Partial<ProfileState>;
+        if (version < 2) {
+          return {
+            ...initialData,
+            ...prev,
+            playoffAppearances: 0,
+            podiums: 0,
+            swissWinsTotal: 0,
+            dailyResults: {},
+            settings: initialData.settings,
+          };
+        }
+        return prev as ProfileState;
+      },
     },
   ),
 );
@@ -80,6 +149,21 @@ export const useProfileStore = create<ProfileState>()(
 /** Legacy difficulty unlock rule (base doc §7): win once on Hard. */
 export function selectLegacyUnlocked(state: ProfileState): boolean {
   return state.wins.hard > 0 || state.wins.legacy > 0;
+}
+
+/** Consecutive daily-challenge days completed, ending today or yesterday. */
+export function selectDailyStreak(state: ProfileState): number {
+  const day = 24 * 60 * 60 * 1000;
+  let cursor = Date.now();
+  let streak = 0;
+  // Allow the streak to be alive if today's challenge is still pending.
+  const today = new Date(cursor).toISOString().slice(0, 10);
+  if (!state.dailyResults[today]) cursor -= day;
+  while (state.dailyResults[new Date(cursor).toISOString().slice(0, 10)]) {
+    streak += 1;
+    cursor -= day;
+  }
+  return streak;
 }
 
 export function selectChampionships(state: ProfileState): number {

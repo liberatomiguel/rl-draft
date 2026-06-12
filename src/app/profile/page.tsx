@@ -77,11 +77,27 @@ export default function ProfilePage() {
       </Panel>
 
       {/* Stats */}
-      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile label={P.runs} value={String(profile.runsCompleted)} />
         <StatTile label={P.titles} value={String(titles)} />
         <StatTile label={P.bestClear} value={bestClear ? DIFFICULTY[bestClear].label : P.none} />
         <StatTile label={P.specials} value={`${unlockedCount}/${specialCards.length}`} />
+      </div>
+      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatTile
+          label="Title rate"
+          value={profile.runsCompleted > 0 ? `${Math.round((titles / profile.runsCompleted) * 100)}%` : P.none}
+        />
+        <StatTile
+          label="Playoff rate"
+          value={
+            profile.runsCompleted > 0
+              ? `${Math.round((profile.playoffAppearances / profile.runsCompleted) * 100)}%`
+              : P.none
+          }
+        />
+        <StatTile label="Podiums" value={String(profile.podiums)} />
+        <StatTile label="Swiss wins" value={String(profile.swissWinsTotal)} />
       </div>
 
       {/* Achievements */}
@@ -106,7 +122,7 @@ export default function ProfilePage() {
         <Panel className="p-8 text-center text-sm text-sub">{P.emptyHistory}</Panel>
       ) : (
         <div className="space-y-2">
-          {profile.runHistory.map((run) => (
+          {profile.runHistory.slice(0, 10).map((run) => (
             <Panel key={run.runId} className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3.5 text-sm">
               <Badge tone={run.placement === "champion" ? "gold" : "neutral"} className="w-20 justify-center">
                 {PLACEMENT_SHORT[run.placement as Placement] ?? run.placement}

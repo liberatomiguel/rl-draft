@@ -142,6 +142,7 @@ export const achievementSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   xp: z.number().int().min(0),
+  category: z.enum(["milestone", "skill", "collection", "legend"]),
 });
 
 export const playersFileSchema = z.array(playerSchema);

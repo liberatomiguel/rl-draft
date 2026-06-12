@@ -176,6 +176,11 @@ export function simulateSeries(
     if (overtime) notes.unshift("overtime");
     if (deciding) notes.unshift("deciding");
 
+    // Star of the game: a player from the winning side (narration flavor).
+    const winnerTeam = aWins ? teamA : teamB;
+    const starName =
+      winnerTeam.playerNames.length > 0 ? rng.pick(winnerTeam.playerNames) : undefined;
+
     games.push({
       index: games.length + 1,
       winnerTeamId: aWins ? teamA.id : teamB.id,
@@ -183,6 +188,7 @@ export function simulateSeries(
       overtime,
       deciding,
       notes,
+      starName,
     });
   }
 

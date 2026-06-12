@@ -122,6 +122,7 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     chemistry,
     stats,
     specialIds: input.specialIds,
+    playerNames: input.players.map((p) => p.name),
     orgId: input.orgId ?? "",
   };
 }
@@ -151,32 +152,47 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
 export function buildUserTeam(
   roster: Roster,
   difficulty: Difficulty,
-  teamName = "Your Team",
+  options: { mode?: "classic" | "quick" | "daily"; teamName?: string } = {},
 ): TournamentTeam {
+  const mode = options.mode ?? "classic";
   const playerPicks = [roster.player1, roster.player2, roster.player3].filter(Boolean);
-  if (playerPicks.length !== 3 || !roster.coach || !roster.sub || !roster.org) {
+  if (playerPicks.length !== 3) {
+    throw new Error("Roster incomplete — cannot build team");
+  }
+  if (mode !== "quick" && (!roster.coach || !roster.sub || !roster.org)) {
     throw new Error("Roster incomplete — cannot build team");
   }
 
   const players = playerPicks.map((p) => playerMemberFromPick(p!.refId, p!.specialId));
 
-  const coachCard = coachById.get(roster.coach.refId)!;
-  const coach = {
-    name: coachCard.name,
-    overall: coachCard.overall,
-    bonusType: coachCard.bonusType,
-    bonusLevel: coachCard.bonusLevel,
-    lineupId: coachCard.lineupId,
-    orgId: coachCard.orgId,
-  };
+  // Vacant picks ("No Coach"/"No Sub") and quick mode contribute nothing.
+  const coachCard =
+    roster.coach && roster.coach.refId !== "vacant-coach"
+      ? coachById.get(roster.coach.refId)
+      : undefined;
+  const coach = coachCard
+    ? {
+        name: coachCard.name,
+        overall: coachCard.overall,
+        bonusType: coachCard.bonusType,
+        bonusLevel: coachCard.bonusLevel,
+        lineupId: coachCard.lineupId,
+        orgId: coachCard.orgId,
+      }
+    : undefined;
 
-  const subCard = subById.get(roster.sub.refId)!;
-  const sub: AssembleInput["sub"] = {
-    name: subCard.name,
-    overall: subCard.overall,
-    lineupId: subCard.lineupId,
-    orgId: subCard.orgId,
-  };
+  const subCard =
+    roster.sub && roster.sub.refId !== "vacant-sub"
+      ? subById.get(roster.sub.refId)
+      : undefined;
+  const sub: AssembleInput["sub"] = subCard
+    ? {
+        name: subCard.name,
+        overall: subCard.overall,
+        lineupId: subCard.lineupId,
+        orgId: subCard.orgId,
+      }
+    : undefined;
 
   const specialIds = [roster.player1, roster.player2, roster.player3]
     .map((p) => p?.specialId)
@@ -192,13 +208,13 @@ export function buildUserTeam(
 
   return assembleTeam({
     id: "user",
-    name: teamName,
+    name: options.teamName ?? "Your Team",
     isUser: true,
     region,
     players,
     coach,
     sub,
-    orgId: roster.org.refId,
+    orgId: roster.org?.refId,
     specialIds,
     difficulty,
     difficultyShift: 0,

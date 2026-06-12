@@ -33,11 +33,25 @@ export const PLAYOFF_ROUND_ORDER: PlayoffRoundName[] = [
   "grand_final",
 ];
 
-export function createPlayoffs(seeds: string[]): PlayoffState {
+/** Quick mode: straight single elimination. */
+export const SINGLE_ELIM_ROUND_ORDER: PlayoffRoundName[] = [
+  "quarterfinal",
+  "semifinal",
+  "final",
+];
+
+export function roundOrderFor(format: PlayoffState["format"]): PlayoffRoundName[] {
+  return format === "single" ? SINGLE_ELIM_ROUND_ORDER : PLAYOFF_ROUND_ORDER;
+}
+
+export function createPlayoffs(
+  seeds: string[],
+  format: PlayoffState["format"] = "double",
+): PlayoffState {
   if (seeds.length !== TOURNAMENT.playoffs.teams) {
     throw new Error(`Playoffs need ${TOURNAMENT.playoffs.teams} seeds, got ${seeds.length}`);
   }
-  return { seeds, rounds: [], championTeamId: null, finished: false };
+  return { format, seeds, rounds: [], championTeamId: null, finished: false };
 }
 
 function roundByName(state: PlayoffState, name: PlayoffRoundName): SeriesResult[] {
@@ -54,8 +68,27 @@ function loser(series: SeriesResult): string {
 
 /** Pairings for the next round, derived from seeds and previous results. */
 export function nextPlayoffPairings(state: PlayoffState): [string, string][] {
-  const name = PLAYOFF_ROUND_ORDER[state.rounds.length];
+  const name = roundOrderFor(state.format)[state.rounds.length];
   if (!name) return [];
+
+  // Single elimination (quick mode).
+  if (state.format === "single") {
+    if (name === "quarterfinal") {
+      const s = state.seeds;
+      return [
+        [s[0], s[7]],
+        [s[3], s[4]],
+        [s[1], s[6]],
+        [s[2], s[5]],
+      ];
+    }
+    const prev = state.rounds[state.rounds.length - 1].series;
+    const pairs: [string, string][] = [];
+    for (let i = 0; i < prev.length; i += 2) {
+      pairs.push([winner(prev[i]), winner(prev[i + 1])]);
+    }
+    return pairs;
+  }
 
   const qf = roundByName(state, "ub_quarterfinal");
   const lb1 = roundByName(state, "lb_round1");
@@ -102,6 +135,8 @@ export function nextPlayoffPairings(state: PlayoffState): [string, string][] {
       return [[loser(lbsf[0]), loser(lbf[0])]];
     case "grand_final":
       return [[winner(ubf[0]), winner(lbf[0])]];
+    default:
+      return [];
   }
 }
 
@@ -113,14 +148,16 @@ export function playPlayoffRound(
 ): PlayoffState {
   if (state.finished) return state;
 
-  const name = PLAYOFF_ROUND_ORDER[state.rounds.length];
+  const name = roundOrderFor(state.format)[state.rounds.length];
   const pairs = nextPlayoffPairings(state);
+  const bestOf =
+    state.format === "single" ? TOURNAMENT.quick.bestOf : TOURNAMENT.playoffs.bestOf;
 
   const round: PlayoffRound = {
     name,
     series: pairs.map(([aId, bId]) =>
       simulateSeries(teams[aId], teams[bId], {
-        bestOf: TOURNAMENT.playoffs.bestOf,
+        bestOf,
         stage: "playoff",
         difficulty,
       }, rng),
@@ -128,7 +165,7 @@ export function playPlayoffRound(
   };
 
   const rounds = [...state.rounds, round];
-  const finished = name === "grand_final";
+  const finished = name === "grand_final" || name === "final";
   return {
     ...state,
     rounds,

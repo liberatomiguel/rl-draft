@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * Team review: final roster, team overall, chemistry breakdown, org bonus,
- * special effects and an analyst readout. Picks are locked at this point.
- * On hidden-overall runs nothing here may leak numbers (base doc §8).
+ * Team review v0.3: field + analyst column on the left, numbers column on
+ * the right, the six cards in a compact strip right below the fold.
+ * Starting the tournament drops straight into the auto-simulation.
+ * On hidden-overall runs nothing here may leak numbers or buffs.
  */
 
 import { useMemo } from "react";
@@ -42,13 +43,14 @@ const STAT_LOW: Record<StatKey, string> = {
 
 export function ReviewScreen({ run }: { run: RunState }) {
   const startTournament = useRunStore((s) => s.startTournament);
+  const isQuick = run.mode === "quick";
 
   const team = useMemo(
-    () => buildUserTeam(run.draft.roster, run.difficulty),
-    [run.draft.roster, run.difficulty],
+    () => buildUserTeam(run.draft.roster, run.difficulty, { mode: run.mode }),
+    [run.draft.roster, run.difficulty, run.mode],
   );
 
-  const slots = rosterSlots(run.draft.roster);
+  const slots = rosterSlots(run.draft.roster).filter((s) => s.card);
   const org = run.draft.roster.org ? orgById.get(run.draft.roster.org.refId) : undefined;
   const specials = team.specialIds
     .map((id) => specialCardById.get(id))
@@ -64,7 +66,8 @@ export function ReviewScreen({ run }: { run: RunState }) {
       if (low[0] !== top[0]) lines.push(STAT_LOW[low[0]]);
     }
     lines.push(`${team.chemistry.tier} chemistry between the pieces.`);
-    if (org) {
+    // Org buffs are hidden information on blackout runs.
+    if (org && run.showOverall) {
       lines.push(`${org.name} brings ${STAT_LABELS[org.buffType].toLowerCase()} ${org.buffLevel} to the table.`);
     }
     if (specials.length > 0) {
@@ -82,65 +85,76 @@ export function ReviewScreen({ run }: { run: RunState }) {
       <RunStepper run={run} />
       <SectionTitle kicker={REVIEW.subtitle} title={REVIEW.title} className="mb-6" />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
-        {/* Field + roster cards */}
-        <div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
+        {/* Field + readout */}
+        <div className="space-y-4">
           <FieldView
             roster={run.draft.roster}
             showOverall={run.showOverall}
-            className="mx-auto mb-6 max-w-md"
+            showBench={!isQuick}
+            className="mx-auto w-full max-w-md lg:max-w-none"
           />
-          <div className="grid grid-cols-3 justify-items-center gap-2 md:gap-4">
-            {slots.map((s) =>
-              s.card ? (
-                <GameCard key={s.slot} card={s.card} showOverall={run.showOverall} size="md" />
-              ) : null,
-            )}
-          </div>
+          <Panel className="p-5">
+            <p className="kicker mb-3">{REVIEW.readout}</p>
+            <ul className="space-y-2">
+              {readout.map((line, i) => (
+                <li key={i} className="flex gap-2 text-xs leading-relaxed text-sub">
+                  <span className="mt-1 h-1 w-3 shrink-0 -skew-x-12 bg-blue" aria-hidden />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </Panel>
         </div>
 
-        {/* Summary column */}
+        {/* Numbers column */}
         <div className="space-y-4">
-          <Panel strong glow="blue" className="p-5">
-            <p className="kicker mb-1">{REVIEW.teamOverall}</p>
-            <p className="display text-5xl font-bold leading-none text-ink">
-              {run.showOverall ? displayTeamOverall(team.rating) : "??"}
-            </p>
-            {run.showOverall ? (
-              <dl className="mt-4 space-y-1 text-xs text-sub">
-                <Row label="Players (avg)" value={team.rating.avgPlayerOverall.toFixed(1)} />
-                <Row label="Coach" value={`+${team.rating.coachMod.toFixed(1)}`} />
-                <Row label="Substitute" value={`+${team.rating.subMod.toFixed(1)}`} />
-                <Row label="Organization" value={`+${team.rating.orgMod.toFixed(1)}`} />
-                <Row label="Chemistry" value={`+${team.rating.chemMod.toFixed(1)}`} />
-                <Row label="Specials" value={`+${team.rating.specialMod.toFixed(1)}`} />
-              </dl>
-            ) : (
-              <p className="mt-3 text-xs text-faint">{REVIEW.hiddenNote}</p>
-            )}
-          </Panel>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Panel strong glow="blue" className="p-5">
+              <p className="kicker mb-1">{REVIEW.teamOverall}</p>
+              <p className="display text-5xl font-bold leading-none text-ink">
+                {run.showOverall ? displayTeamOverall(team.rating) : "??"}
+              </p>
+              {run.showOverall ? (
+                <dl className="mt-4 space-y-1 text-xs text-sub">
+                  <Row label="Players (avg)" value={team.rating.avgPlayerOverall.toFixed(1)} />
+                  {!isQuick ? (
+                    <>
+                      <Row label="Coach" value={`+${team.rating.coachMod.toFixed(1)}`} />
+                      <Row label="Substitute" value={`+${team.rating.subMod.toFixed(1)}`} />
+                      <Row label="Organization" value={`+${team.rating.orgMod.toFixed(1)}`} />
+                    </>
+                  ) : null}
+                  <Row label="Chemistry" value={`+${team.rating.chemMod.toFixed(1)}`} />
+                  <Row label="Specials" value={`+${team.rating.specialMod.toFixed(1)}`} />
+                </dl>
+              ) : (
+                <p className="mt-3 text-xs text-faint">{REVIEW.hiddenNote}</p>
+              )}
+            </Panel>
 
-          <Panel className="p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="kicker">{REVIEW.chemistry}</p>
-              <Badge tone={team.chemistry.percent >= 62 ? "good" : team.chemistry.percent >= 40 ? "blue" : "neutral"}>
-                {team.chemistry.tier}
-              </Badge>
-            </div>
-            <ProgressBar value={team.chemistry.percent / 100} tone="good" label={REVIEW.chemistry} />
-            {team.chemistry.items.length > 0 ? (
-              <ul className="mt-3 space-y-1.5">
-                {team.chemistry.items.map((item, i) => (
-                  <li key={i} className="flex items-center justify-between gap-3 text-xs text-sub">
-                    <span className="truncate">{item.label}</span>
-                    <span className="display shrink-0 font-bold text-good">+{item.points}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 text-xs text-faint">{REVIEW.noChemistry}</p>
-            )}
-          </Panel>
+            <Panel className="p-5">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="kicker">{REVIEW.chemistry}</p>
+                <Badge tone={team.chemistry.percent >= 62 ? "good" : team.chemistry.percent >= 40 ? "blue" : "neutral"}>
+                  {team.chemistry.tier}
+                </Badge>
+              </div>
+              <ProgressBar value={team.chemistry.percent / 100} tone="good" label={REVIEW.chemistry} />
+              {team.chemistry.items.length > 0 ? (
+                <ul className="mt-3 space-y-1.5">
+                  {team.chemistry.items.slice(0, 6).map((item, i) => (
+                    <li key={i} className="flex items-center justify-between gap-3 text-xs text-sub">
+                      <span className="truncate">{item.label}</span>
+                      <span className="display shrink-0 font-bold text-good">+{item.points}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-xs text-faint">{REVIEW.noChemistry}</p>
+              )}
+            </Panel>
+          </div>
 
           {specials.length > 0 ? (
             <Panel className="p-5">
@@ -158,22 +172,17 @@ export function ReviewScreen({ run }: { run: RunState }) {
             </Panel>
           ) : null}
 
-          <Panel className="p-5">
-            <p className="kicker mb-3">{REVIEW.readout}</p>
-            <ul className="space-y-2">
-              {readout.map((line, i) => (
-                <li key={i} className="flex gap-2 text-xs leading-relaxed text-sub">
-                  <span className="mt-1 h-1 w-3 shrink-0 -skew-x-12 bg-blue" aria-hidden />
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </Panel>
-
           <Button variant="primary" size="lg" full onClick={startTournament}>
             {REVIEW.startTournament}
           </Button>
         </div>
+      </div>
+
+      {/* Cards strip */}
+      <div className="mt-8 grid grid-cols-3 justify-items-center gap-2 md:gap-3 lg:grid-cols-6">
+        {slots.map((s) => (
+          <GameCard key={s.slot} card={s.card!} showOverall={run.showOverall} size="sm" />
+        ))}
       </div>
     </div>
   );

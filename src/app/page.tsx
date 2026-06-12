@@ -7,33 +7,47 @@
  */
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { achievements as achievementDefs, specialCards } from "@/data";
 import { APP, HOME } from "@/content/copy";
 import { rankForXp } from "@/engine/progression";
-import { cx } from "@/lib/util";
+import { generateDailyConfig, todayKey } from "@/lib/daily";
 import { useMounted } from "@/store/useMounted";
-import { useProfileStore, selectChampionships } from "@/store/profileStore";
+import {
+  selectChampionships,
+  selectDailyStreak,
+  useProfileStore,
+} from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 
 export default function HomePage() {
   const mounted = useMounted();
+  const router = useRouter();
   const xp = useProfileStore((s) => s.xp);
   const runs = useProfileStore((s) => s.runsCompleted);
   const titles = useProfileStore(selectChampionships);
   const unlocked = useProfileStore((s) => Object.keys(s.unlockedSpecials).length);
   const achieved = useProfileStore((s) => Object.keys(s.achievements).length);
-  const run = useRunStore((s) => s.run);
+  const dailyResults = useProfileStore((s) => s.dailyResults);
+  const streak = useProfileStore(selectDailyStreak);
   const clearRun = useRunStore((s) => s.clearRun);
+  const startDailyRun = useRunStore((s) => s.startDailyRun);
   const rank = rankForXp(xp);
 
-  // Back to the menu = the run is gone.
+  const today = todayKey();
+  const daily = useMemo(() => generateDailyConfig(today), [today]);
+  const dailyDone = mounted ? Boolean(dailyResults[today]) : false;
+
+  // Arriving at the menu abandons any in-progress run — checked ONCE on
+  // mount (not subscribed), so starting a daily from here isn't wiped.
   useEffect(() => {
-    if (mounted && run) clearRun();
-  }, [mounted, run, clearRun]);
+    if (mounted && useRunStore.getState().run) clearRun();
+  }, [mounted, clearRun]);
 
   return (
     <div className="rise-in">
@@ -49,15 +63,6 @@ export default function HomePage() {
         <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-sub md:text-base">
           {APP.description}
         </p>
-
-        <div className="mt-8 flex justify-center">
-          <Link
-            href="/play"
-            className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-10 py-3.5 text-base font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_36px_rgba(249,115,22,0.35)] transition-all hover:-translate-y-0.5 hover:brightness-110"
-          >
-            Play now
-          </Link>
-        </div>
 
         {mounted ? (
           <div className="mt-7 flex flex-col items-center gap-2">
@@ -76,11 +81,74 @@ export default function HomePage() {
         ) : null}
       </section>
 
-      {/* Modes */}
+      {/* Modes — Classic Draft is THE primary action of the menu */}
       <section aria-label="Game modes" className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <ModeCard href="/play" title={HOME.playClassic} description={HOME.playClassicDesc} accent />
-        <ModeCard title={HOME.quickDraft} description={HOME.quickDraftDesc} soon />
-        <ModeCard title={HOME.daily} description={HOME.dailyDesc} soon />
+        <Link href="/play" className="group md:col-span-2">
+          <Panel
+            strong
+            glow="orange"
+            className="relative flex h-full flex-col justify-between overflow-hidden !border-orange/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-orange/70 md:p-8"
+          >
+            <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-orange/10 blur-3xl" aria-hidden />
+            <div>
+              <div className="mb-2 flex items-center gap-2.5">
+                <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
+                  {HOME.playClassic}
+                </h2>
+                <Badge tone="orange">Live</Badge>
+              </div>
+              <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.playClassicDesc}</p>
+            </div>
+            <span className="display mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all group-hover:brightness-110">
+              Play now →
+            </span>
+          </Panel>
+        </Link>
+
+        <div className="flex flex-col gap-4">
+          <Link href="/play" className="group flex-1">
+            <Panel className="flex h-full flex-col justify-center p-5 transition-all group-hover:!border-blue/50">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
+                  {HOME.quickDraft}
+                </h3>
+                <Badge tone="blue">Live</Badge>
+              </div>
+              <p className="text-xs leading-relaxed text-sub">{HOME.quickDraftDesc}</p>
+            </Panel>
+          </Link>
+
+          <Panel className="flex-1 p-5">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
+                {HOME.daily}
+              </h3>
+              {mounted && streak > 0 ? (
+                <Badge tone="gold">{HOME.dailyStreak(streak)}</Badge>
+              ) : (
+                <Badge tone="blue">Live</Badge>
+              )}
+            </div>
+            <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">
+              {daily.info.label}
+            </p>
+            <p className="mb-3 mt-0.5 text-xs leading-relaxed text-sub">{daily.info.description}</p>
+            {dailyDone ? (
+              <Badge tone="good">{HOME.dailyDone}</Badge>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  startDailyRun();
+                  router.push("/play");
+                }}
+              >
+                {HOME.dailyPlay}
+              </Button>
+            )}
+          </Panel>
+        </div>
       </section>
 
       {/* Secondary */}
@@ -142,36 +210,3 @@ export default function HomePage() {
   );
 }
 
-function ModeCard({
-  href,
-  title,
-  description,
-  accent,
-  soon,
-}: {
-  href?: string;
-  title: string;
-  description: string;
-  accent?: boolean;
-  soon?: boolean;
-}) {
-  const inner = (
-    <Panel
-      strong={accent}
-      glow={accent ? "orange" : undefined}
-      className={cx(
-        "relative h-full p-5 transition-all",
-        accent && "!border-orange/40",
-        href && "hover:-translate-y-0.5 hover:!border-orange/60",
-        soon && "opacity-60",
-      )}
-    >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="display text-xl font-bold uppercase tracking-wide text-ink">{title}</h3>
-        {soon ? <Badge tone="neutral">{HOME.comingSoon}</Badge> : accent ? <Badge tone="orange">Live</Badge> : null}
-      </div>
-      <p className="text-xs leading-relaxed text-sub">{description}</p>
-    </Panel>
-  );
-  return href ? <Link href={href}>{inner}</Link> : <div aria-disabled>{inner}</div>;
-}

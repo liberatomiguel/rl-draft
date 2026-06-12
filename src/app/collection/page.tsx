@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { StatBar } from "@/components/ui/ProgressBar";
+import { TiltCard } from "@/components/ui/TiltCard";
 import { GameCard } from "@/components/cards/GameCard";
 
 const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
@@ -105,14 +106,15 @@ export default function CollectionPage() {
           {visible.map((sp) => {
             const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
             return isUnlocked ? (
-              <GameCard
-                key={sp.id}
-                card={resolvePlayerCard(sp.baseCardId, sp.id)}
-                showOverall
-                specialCollected
-                size="md"
-                onClick={() => setDetail(sp)}
-              />
+              <TiltCard key={sp.id}>
+                <GameCard
+                  card={resolvePlayerCard(sp.baseCardId, sp.id)}
+                  showOverall
+                  specialCollected
+                  size="md"
+                  onClick={() => setDetail(sp)}
+                />
+              </TiltCard>
             ) : (
               <LockedCard key={sp.id} sp={sp} onClick={() => setDetail(sp)} />
             );

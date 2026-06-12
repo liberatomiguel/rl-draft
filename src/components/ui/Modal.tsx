@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cx } from "@/lib/util";
 
 interface ModalProps {
@@ -13,6 +14,11 @@ interface ModalProps {
 }
 
 export function Modal({ open, title, children, actions, onClose, wide }: ModalProps) {
+  // Portal target — animated ancestors create transform containing blocks
+  // that would re-anchor position:fixed, so the dialog must live on <body>.
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setHost(document.body), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -26,9 +32,9 @@ export function Modal({ open, title, children, actions, onClose, wide }: ModalPr
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !host) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -63,6 +69,7 @@ export function Modal({ open, title, children, actions, onClose, wide }: ModalPr
         <div className="text-sm leading-relaxed text-sub">{children}</div>
         {actions ? <div className="mt-6 flex flex-wrap justify-end gap-3">{actions}</div> : null}
       </div>
-    </div>
+    </div>,
+    host,
   );
 }

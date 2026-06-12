@@ -51,6 +51,7 @@ function makeRun(seed: number): { run: RunState; rng: ReturnType<typeof createRn
   const { draft, rng } = autoDraft(seed);
   const run: RunState = {
     runId: `test-${seed}`,
+    mode: "classic",
     seed,
     rngState: rng.state,
     difficulty: "normal",
@@ -133,6 +134,36 @@ describe("tournament integration", () => {
 
     expect(results.xp.difficultyMultiplier).toBe(1.5);
     expect(results.xp.hiddenOverallBonus).toBe(0.25);
+  });
+
+  it("quick mode runs a straight 8-team single-elimination bracket", () => {
+    const rng = createRng(555);
+    // Build a quick roster: just three players.
+    let draft = drawNextOffer(createDraft("normal", { mode: "quick" }), rng);
+    let guard = 0;
+    while (!draft.complete && guard < 60) {
+      const card = draft.offer!.cards.find((c) => c.availability === "available");
+      if (card) {
+        draft = applyPick(draft, card, openPlayerSlot(draft.roster)!, rng);
+      } else {
+        draft = applyFreeReroll(draft, rng);
+      }
+      guard += 1;
+    }
+    expect(draft.complete).toBe(true);
+    expect(draft.roster.coach).toBeUndefined();
+    expect(draft.roster.org).toBeUndefined();
+
+    const team = buildUserTeam(draft.roster, "normal", { mode: "quick" });
+    let t = initTournament(team, "normal", rng, { mode: "quick" });
+    expect(Object.keys(t.teams)).toHaveLength(8);
+    expect(t.stage).toBe("playoffs");
+    expect(t.playoffs?.format).toBe("single");
+
+    t = fastForward(t, "normal", rng);
+    expect(t.stage).toBe("finished");
+    expect(t.playoffs?.rounds).toHaveLength(3); // QF, SF, Final
+    expect(["champion", "runner_up", "top4", "top8"]).toContain(userPlacement(t));
   });
 
   it("higher difficulty produces stronger opponent fields on average", () => {

@@ -9,11 +9,13 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { achievementById, specialCardById } from "@/data";
+import { DIFFICULTY } from "@/config/balance";
 import { RESULTS_UI as R, RARITY_LABELS } from "@/content/copy";
 import { resolvePlayerCard, type ResolvedCard } from "@/engine/cards";
 import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { Placement, RunState } from "@/engine/types";
+import { downloadShareCard } from "@/lib/shareCard";
 import { cx } from "@/lib/util";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
@@ -32,6 +34,7 @@ const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "ora
   runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
   third: { title: R.third, sub: R.thirdSub, tone: "blue" },
   fourth: { title: R.fourth, sub: R.fourthSub, tone: "blue" },
+  top4: { title: R.top4, sub: R.top4Sub, tone: "blue" },
   top6: { title: R.top6, sub: R.top6Sub, tone: "blue" },
   top8: { title: R.top8, sub: R.top8Sub, tone: "blue" },
   swiss_exit: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
@@ -42,16 +45,23 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
   const clearRun = useRunStore((s) => s.clearRun);
+  const startRun = useRunStore((s) => s.startRun);
   const xpNow = useProfileStore((s) => s.xp);
+  const settings = useProfileStore((s) => s.settings);
 
   const results = run.results;
   const team = run.tournament?.teams["user"];
   const slots = useMemo(() => rosterSlots(run.draft.roster), [run.draft.roster]);
+  const [ceremonyOpen, setCeremonyOpen] = useState(
+    () => (run.results?.unlockedSpecialIds.length ?? 0) > 0,
+  );
 
   if (!results || !team) return null;
 
   const placement = PLACEMENT_COPY[results.placement];
   const isChampion = results.placement === "champion";
+  // Flawless: title without dropping a single series → prismatic celebration.
+  const isImmaculate = isChampion && checkNoSeriesLost(run);
   const xpBefore = Math.max(0, xpNow - results.xp.total);
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
@@ -60,21 +70,67 @@ export function ResultsScreen({ run }: { run: RunState }) {
     .find((p) => p?.refId === results.bestPlayerCardId);
   const bestPlayer = bestPick ? resolvePlayerCard(bestPick.refId, bestPick.specialId) : null;
 
+  const handlePlayAgain = () => {
+    // Same setup, zero clicks: straight into a new draft (daily → classic).
+    clearRun();
+    startRun({
+      mode: run.mode === "quick" ? "quick" : "classic",
+      difficulty: run.difficulty,
+      showOverall: settings.lastShowOverall,
+    });
+  };
+
+  const handleShare = () => {
+    void downloadShareCard({
+      placementLabel: placement.title,
+      placement: results.placement,
+      modeLabel: run.daily ? `Daily · ${run.daily.label}` : run.mode === "quick" ? "Quick Draft" : "Classic Draft",
+      difficultyLabel: DIFFICULTY[run.difficulty].label,
+      hiddenOverall: !run.showOverall,
+      swissRecord:
+        run.mode === "quick" ? null : `${results.swissRecord.wins}-${results.swissRecord.losses}`,
+      teamOverall: displayTeamOverall(team.rating),
+      chemistryTier: team.chemistry.tier,
+      players: [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3]
+        .filter(Boolean)
+        .map((p) => {
+          const card = resolvePlayerCard(p!.refId, p!.specialId);
+          return { name: card.name, overall: card.overall ?? 0 };
+        }),
+      staff: [run.draft.roster.coach, run.draft.roster.sub, run.draft.roster.org]
+        .map((p) => (p ? rosterSlots(run.draft.roster).find((s) => s.slot === p.slot)?.card?.name : null))
+        .filter((n): n is string => Boolean(n) && n !== "No Coach" && n !== "No Sub"),
+      xp: results.xp.total,
+      date: new Date().toISOString().slice(0, 10),
+    });
+  };
+
   return (
     <div className="rise-in pb-8">
       <RunStepper run={run} />
-      <AchievementToasts ids={results.newAchievementIds} />
+      {ceremonyOpen ? (
+        <UnlockCeremony
+          specialIds={results.unlockedSpecialIds}
+          onDone={() => setCeremonyOpen(false)}
+        />
+      ) : (
+        <AchievementToasts ids={results.newAchievementIds} />
+      )}
 
       {/* Placement hero */}
       <Panel
         strong
         glow={placement.tone}
-        className={cx("celebrate mb-8 px-6 py-12 text-center", isChampion && "!border-orange/50")}
+        className={cx(
+          "celebrate mb-8 px-6 py-12 text-center",
+          isChampion && "!border-orange/50",
+          isImmaculate && "!border-cyan/50",
+        )}
       >
         {isChampion ? (
           <>
-            <div className="celebrate-rays" aria-hidden />
-            <Confetti />
+            <div className={isImmaculate ? "celebrate-rays-prism" : "celebrate-rays"} aria-hidden />
+            <Confetti prism={isImmaculate} />
           </>
         ) : null}
         <div className="relative z-10">
@@ -82,14 +138,24 @@ export function ResultsScreen({ run }: { run: RunState }) {
           <h1
             className={cx(
               "display text-5xl font-bold uppercase tracking-wide md:text-7xl",
-              isChampion
-                ? "champion-title bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-transparent"
-                : "text-ink",
+              isImmaculate
+                ? "immaculate-title bg-gradient-to-b from-cyan via-blue-bright to-purple-400 bg-clip-text text-transparent"
+                : isChampion
+                  ? "champion-title bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-transparent"
+                  : "text-ink",
             )}
           >
             {placement.title}
           </h1>
+          {isImmaculate ? (
+            <p className="display mt-2 text-base font-bold uppercase tracking-[0.3em] text-cyan">
+              {R.immaculateBadge}
+            </p>
+          ) : null}
           <p className="mt-3 text-sm text-sub">{placement.sub}</p>
+          {run.daily ? (
+            <p className="mt-1 text-xs text-orange-bright">Daily · {run.daily.label}</p>
+          ) : null}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <Badge tone="blue">
               {R.swissRecord}: {results.swissRecord.wins}–{results.swissRecord.losses}
@@ -259,11 +325,14 @@ export function ResultsScreen({ run }: { run: RunState }) {
 
       {/* CTAs */}
       <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
-        <Button variant="primary" size="lg" onClick={() => clearRun()}>
+        <Button variant="primary" size="lg" onClick={handlePlayAgain}>
           {R.playAgain}
         </Button>
+        <Button variant="secondary" size="lg" onClick={handleShare}>
+          {R.share}
+        </Button>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="lg"
           onClick={() => {
             clearRun();
@@ -277,12 +346,25 @@ export function ResultsScreen({ run }: { run: RunState }) {
   );
 }
 
+function checkNoSeriesLost(run: RunState): boolean {
+  const t = run.tournament;
+  if (!t) return false;
+  const all = [
+    ...t.swiss.rounds.flatMap((r) => r.series),
+    ...(t.playoffs?.rounds ?? []).flatMap((r) => r.series),
+  ].filter((s) => s.teamAId === "user" || s.teamBId === "user");
+  return all.length > 0 && all.every((s) => s.winnerTeamId === "user");
+}
+
 /** Deterministic confetti pieces (no render-time randomness → SSR safe). */
-function Confetti() {
+function Confetti({ prism }: { prism?: boolean }) {
+  const colors = prism
+    ? ["#38bdf8", "#a855f7", "#60a5fa", "#e9eef8", "#c084fc"]
+    : CONFETTI_COLORS;
   const pieces = Array.from({ length: 16 }, (_, i) => ({
     left: `${(i * 61) % 100}%`,
     delay: `${(i * 0.37) % 2.6}s`,
-    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    color: colors[i % colors.length],
     duration: `${3 + ((i * 13) % 14) / 10}s`,
   }));
   return (
@@ -299,6 +381,75 @@ function Confetti() {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+/**
+ * Unlock ceremony: each freshly unlocked special gets its reveal moment —
+ * card back, tap (or auto) flip with a burst, then the next one.
+ */
+function UnlockCeremony({
+  specialIds,
+  onDone,
+}: {
+  specialIds: string[];
+  onDone: () => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+
+  const sp = specialCardById.get(specialIds[index]);
+  if (!sp) {
+    onDone();
+    return null;
+  }
+  const card = resolvePlayerCard(sp.baseCardId, sp.id);
+  const last = index === specialIds.length - 1;
+
+  const advance = () => {
+    if (!revealed) {
+      setRevealed(true);
+      return;
+    }
+    if (last) onDone();
+    else {
+      setIndex((i) => i + 1);
+      setRevealed(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
+      role="dialog"
+      aria-label={R.ceremonyKicker}
+    >
+      <p className="kicker">{R.ceremonyKicker}</p>
+      <button type="button" onClick={advance} className="relative outline-none" aria-label={R.ceremonyTap}>
+        {revealed ? (
+          <div className="ceremony-burst relative">
+            <span className="ceremony-ring" aria-hidden />
+            <div className="card-float">
+              <GameCard card={card} showOverall specialCollected size="lg" />
+            </div>
+          </div>
+        ) : (
+          <div className="pulse-soft card-frame card-hidden flex aspect-[3/4.3] w-44 flex-col items-center justify-center gap-3 p-3 md:w-52">
+            <Logo className="text-[10px]" />
+            <span className="display text-5xl font-bold text-faint">??</span>
+          </div>
+        )}
+      </button>
+      <p className="text-xs text-sub">
+        {specialIds.length > 1 ? `${index + 1}/${specialIds.length} · ` : ""}
+        {revealed ? "" : R.ceremonyTap}
+      </p>
+      {revealed ? (
+        <Button variant="primary" onClick={advance}>
+          {last ? R.ceremonyContinue : "Next card"}
+        </Button>
+      ) : null}
     </div>
   );
 }

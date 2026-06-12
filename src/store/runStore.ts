@@ -6,7 +6,8 @@
  *
  * All game logic lives in src/engine (pure functions); this store only
  * orchestrates engine calls, keeps the RNG cursor and persists the run so a
- * page refresh resumes exactly where the player stopped.
+ * page refresh resumes exactly where the player stopped. Leaving to the menu
+ * clears the run (no resume system, v0.2 rule).
  */
 
 import { create } from "zustand";
@@ -34,16 +35,25 @@ import type {
   DraftOfferCard,
   RosterSlotId,
   RunHistoryEntry,
+  RunMode,
   RunState,
 } from "@/engine/types";
+import { generateDailyConfig, seedFromDate, todayKey } from "@/lib/daily";
 import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
 import { useProfileStore } from "./profileStore";
 
+export interface StartRunOptions {
+  mode: Exclude<RunMode, "daily">;
+  difficulty: Difficulty;
+  showOverall: boolean;
+}
+
 interface RunStore {
   run: RunState | null;
 
-  startRun: (difficulty: Difficulty, showOverallChoice: boolean) => void;
+  startRun: (options: StartRunOptions) => void;
+  startDailyRun: () => void;
   clearRun: () => void;
 
   // Draft phase
@@ -64,20 +74,58 @@ export const useRunStore = create<RunStore>()(
     (set, get) => ({
       run: null,
 
-      startRun: (difficulty, showOverallChoice) => {
+      startRun: ({ mode, difficulty, showOverall }) => {
         const seed = randomSeed();
         const rng = createRng(seed);
         const profile = DIFFICULTY[difficulty];
-        const draft = drawNextOffer(createDraft(difficulty), rng);
+        const draft = drawNextOffer(createDraft(difficulty, { mode }), rng);
+
+        // Remember the setup for next time (and for "Play again").
+        useProfileStore.getState().setLastSetup(difficulty, showOverall, mode);
 
         const run: RunState = {
           runId: uid("run"),
+          mode,
           seed,
           rngState: rng.state,
           difficulty,
-          showOverall: profile.overallLockedHidden ? false : showOverallChoice,
+          showOverall: profile.overallLockedHidden ? false : showOverall,
           phase: "draft",
           startedAt: new Date().toISOString(),
+          draft,
+          tournament: null,
+          results: null,
+        };
+        set({ run });
+      },
+
+      startDailyRun: () => {
+        const date = todayKey();
+        const config = generateDailyConfig(date);
+        const seed = seedFromDate(date);
+        const rng = createRng(seed);
+        const profile = DIFFICULTY[config.difficulty];
+
+        const draft = drawNextOffer(
+          createDraft(config.difficulty, {
+            mode: "daily",
+            poolLineupIds: config.poolLineupIds,
+            rerollsOverride: config.rerollsOverride,
+            specialChanceMult: config.specialChanceMult,
+          }),
+          rng,
+        );
+
+        const run: RunState = {
+          runId: uid("daily"),
+          mode: "daily",
+          seed,
+          rngState: rng.state,
+          difficulty: config.difficulty,
+          showOverall: profile.overallLockedHidden || config.hiddenOverall ? false : true,
+          phase: "draft",
+          startedAt: new Date().toISOString(),
+          daily: config.info,
           draft,
           tournament: null,
           results: null,
@@ -123,8 +171,13 @@ export const useRunStore = create<RunStore>()(
         const { run } = get();
         if (!run || run.phase !== "review") return;
         const rng = createRng(run.rngState);
-        const userTeam = buildUserTeam(run.draft.roster, run.difficulty);
-        const tournament = initTournament(userTeam, run.difficulty, rng);
+        const userTeam = buildUserTeam(run.draft.roster, run.difficulty, {
+          mode: run.mode,
+        });
+        const tournament = initTournament(userTeam, run.difficulty, rng, {
+          mode: run.mode,
+          poolLineupIds: run.draft.poolLineupIds,
+        });
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },
         });
@@ -142,7 +195,7 @@ export const useRunStore = create<RunStore>()(
         while (
           tournament.stage !== "finished" &&
           !userHasPendingSeries(tournament) &&
-          guard < 10
+          guard < 16
         ) {
           tournament = playNextRound(tournament, run.difficulty, rng);
           guard += 1;
@@ -190,7 +243,11 @@ export const useRunStore = create<RunStore>()(
           xpGained: results.xp.total,
         };
 
-        profile.applyRunResults(results, entry);
+        profile.applyRunResults(
+          results,
+          entry,
+          run.daily ? { date: run.daily.date, label: run.daily.label } : undefined,
+        );
         set({
           run: { ...run, results, rngState: rng.state, phase: "results" },
         });
@@ -198,11 +255,11 @@ export const useRunStore = create<RunStore>()(
     }),
     {
       name: "rocket-draft:run:v1",
-      version: 2,
-      // v0.2 changed the run shape (double elim, slot-target picks):
-      // discard any older persisted run instead of resuming a broken one.
+      version: 3,
+      // The run shape changed in v0.2 (double elim) and v0.3 (modes):
+      // discard older persisted runs instead of resuming a broken one.
       migrate: (persisted, version) =>
-        version < 2 ? { run: null } : (persisted as { run: RunState | null }),
+        version < 3 ? { run: null } : (persisted as { run: RunState | null }),
       partialize: (state) => ({ run: state.run }),
     },
   ),

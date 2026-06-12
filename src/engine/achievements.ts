@@ -3,7 +3,7 @@
  * Each rule receives the full run context and returns true when earned.
  */
 
-import { playerById, playerCardById } from "@/data";
+import { playerById, playerCardById, seasonById } from "@/data";
 import { userPlayoffSeries } from "./playoffs";
 import { userSwissRecord } from "./swiss";
 import type {
@@ -97,6 +97,51 @@ const RULES: Record<string, (ctx: AchievementContext) => boolean> = {
 
   untouchable: (ctx) =>
     ctx.goalsConceded === 0 && userSeries(ctx.tournament).length > 0,
+
+  "first-title": (ctx) => ctx.placement === "champion",
+
+  podium: (ctx) => ["champion", "runner_up", "third"].includes(ctx.placement),
+
+  "legacy-cleared": (ctx) =>
+    ctx.placement === "champion" && ctx.run.difficulty === "legacy",
+
+  "comeback-kings": (ctx) =>
+    userSeries(ctx.tournament).some((s) => {
+      if (!userWonSeries(s)) return false;
+      let userWins = 0;
+      let oppWins = 0;
+      for (const game of s.games) {
+        if (game.winnerTeamId === "user") userWins += 1;
+        else oppWins += 1;
+        if (oppWins - userWins >= 2) return true;
+      }
+      return false;
+    }),
+
+  "the-long-way": (ctx) => {
+    if (ctx.placement !== "champion") return false;
+    // Champion after losing an upper-bracket series = lower-bracket run.
+    return userPlayoffSeries(ctx.tournament.playoffs).some(
+      ({ round, series }) =>
+        round.startsWith("ub_") && series.winnerTeamId !== "user",
+    );
+  },
+
+  strangers: (ctx) =>
+    ctx.placement === "champion" && ctx.chemistry.tier === "Poor",
+
+  "old-school": (ctx) => {
+    if (ctx.placement !== "champion") return false;
+    const picks = [ctx.run.draft.roster.player1, ctx.run.draft.roster.player2, ctx.run.draft.roster.player3];
+    return picks.every((p) => {
+      const card = p && playerCardById.get(p.refId);
+      const season = card ? seasonById.get(card.seasonId) : undefined;
+      const year = season ? parseInt(season.year, 10) : NaN;
+      return Number.isFinite(year) && year <= 2019;
+    });
+  },
+
+  curator: (ctx) => ctx.specialsOwnedAfter >= 10,
 };
 
 export function evaluateAchievements(ctx: AchievementContext): string[] {

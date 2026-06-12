@@ -115,7 +115,20 @@ export function resolvePlayerCard(cardId: string, specialId?: string): ResolvedC
   };
 }
 
+/** Vacant slot cards ("No Coach" / "No Sub") — pickable empty slots. */
+function vacantCard(kind: "coach" | "sub", refId: string): ResolvedCard {
+  return {
+    kind,
+    refId,
+    name: kind === "coach" ? "No Coach" : "No Sub",
+    overall: 50,
+    baseRarity: "common",
+    generic: true,
+  };
+}
+
 export function resolveCoach(coachId: string): ResolvedCard {
+  if (coachId === "vacant-coach") return vacantCard("coach", coachId);
   const coach = coachById.get(coachId);
   if (!coach) throw new Error(`Unknown coach card "${coachId}"`);
   const org = orgById.get(coach.orgId);
@@ -141,6 +154,7 @@ export function resolveCoach(coachId: string): ResolvedCard {
 }
 
 export function resolveSub(subId: string): ResolvedCard {
+  if (subId === "vacant-sub") return vacantCard("sub", subId);
   const sub = subById.get(subId);
   if (!sub) throw new Error(`Unknown sub card "${subId}"`);
   const org = orgById.get(sub.orgId);

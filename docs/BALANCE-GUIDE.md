@@ -102,11 +102,11 @@ Run XP: complete 50 · swiss win 20 · qualify 75 · playoff series win 40 each
 · placement bonus (title 200 / final 100 / 3rd 60 / 4th 40) — multiplied by
 difficulty, +25% if hidden overalls. Achievement XP is flat (not multiplied).
 
-Rank ladder (v0.2, "moderate grind" target): Unranked 0 → Bronze 200 →
-Silver 600 → Gold 1.4k → Platinum 2.6k → Diamond 4.5k → Champion 7.2k →
-Grand Champion 10.5k → Supersonic Legend 14.5k. Average run ≈ 150-300 XP,
-winning run ≈ 500-800 → SSL lands around 35-60 runs. Tune `RANKS` minXp to
-stretch or compress the grind.
+Rank ladder (v0.3, target SSL in **100-150 runs**): Unranked 0 → Bronze 300
+→ Silver 1k → Gold 2.4k → Platinum 4.8k → Diamond 8.5k → Champion 14k →
+Grand Champion 21k → Supersonic Legend 30k. Average run ≈ 150-300 XP,
+winning run ≈ 500-800. Mode multipliers: quick ×0.5 · daily ×1.5.
+Tune `RANKS` minXp to stretch or compress the grind.
 
 ## Playtest workflow
 

@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { GameCard, PlaceholderCard } from "@/components/cards/GameCard";
+import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
 import { RunStepper } from "./RunStepper";
 
@@ -60,12 +60,13 @@ export function DraftScreen({ run }: { run: RunState }) {
   if (!offer || !header || !lineup) return null;
 
   const filled = filledCount(run.draft.roster);
-  const needed = neededKinds(run.draft.roster);
+  const slotTotal = run.mode === "quick" ? 3 : 6;
+  const needed = neededKinds(run.draft.roster, run.mode);
 
   const playerCards = offer.cards.filter((c) => c.kind === "player");
   const coachCard = offer.cards.find((c) => c.kind === "coach") ?? null;
   const subCard = offer.cards.find((c) => c.kind === "sub") ?? null;
-  const orgCard = offer.cards.find((c) => c.kind === "org")!;
+  const orgCard = offer.cards.find((c) => c.kind === "org") ?? null;
 
   const handleSlotClick = (slot: RosterSlotId) => {
     if (!selected) return;
@@ -107,7 +108,8 @@ export function DraftScreen({ run }: { run: RunState }) {
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="kicker mb-1">
-                {DRAFT_UI.roundLabel(run.draft.round)} · {DRAFT_UI.pickProgress(filled, 6)}
+                {DRAFT_UI.roundLabel(run.draft.round)} · {DRAFT_UI.pickProgress(filled, slotTotal)}
+                {run.daily ? <span className="text-orange-bright"> · {run.daily.label}</span> : null}
               </p>
               <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
                 {header.name}
@@ -136,12 +138,14 @@ export function DraftScreen({ run }: { run: RunState }) {
           <div className="mb-3 grid grid-cols-3 justify-items-center gap-2 md:gap-4">
             {playerCards.map(renderOfferCard)}
           </div>
-          {/* Row 2: coach · sub · org */}
-          <div className="grid grid-cols-3 justify-items-center gap-2 md:gap-4">
-            {coachCard ? renderOfferCard(coachCard) : <PlaceholderCard kind="coach" />}
-            {subCard ? renderOfferCard(subCard) : <PlaceholderCard kind="sub" />}
-            {renderOfferCard(orgCard)}
-          </div>
+          {/* Row 2: coach · sub · org (classic/daily only) */}
+          {run.mode !== "quick" && coachCard && subCard && orgCard ? (
+            <div className="grid grid-cols-3 justify-items-center gap-2 md:gap-4">
+              {renderOfferCard(coachCard)}
+              {renderOfferCard(subCard)}
+              {renderOfferCard(orgCard)}
+            </div>
+          ) : null}
 
           {!offer.hasPickableCard ? (
             <Panel className="mt-6 flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
@@ -161,15 +165,19 @@ export function DraftScreen({ run }: { run: RunState }) {
               <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
                 {DRAFT_UI.yourRoster}
               </h3>
-              <span className="display text-sm font-bold text-orange-bright">{filled}/6</span>
+              <span className="display text-sm font-bold text-orange-bright">
+                {filled}/{slotTotal}
+              </span>
             </div>
-            <ProgressBar value={filled / 6} tone="orange" className="mb-4" label={DRAFT_UI.yourRoster} />
+            <ProgressBar value={filled / slotTotal} tone="orange" className="mb-4" label={DRAFT_UI.yourRoster} />
 
             <FieldView
               roster={run.draft.roster}
               showOverall={run.showOverall}
               highlightKind={selected?.kind ?? null}
               onSlotClick={handleSlotClick}
+              showBench={run.mode !== "quick"}
+              className="mx-auto w-full max-w-md lg:max-w-none"
             />
 
             <p

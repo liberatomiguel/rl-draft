@@ -63,6 +63,7 @@ function huntOffer(
 }
 
 function personOfPick(pick: RosterPick): string {
+  if (pick.refId.startsWith("vacant-")) return pick.refId;
   if (pick.kind === "player") return playerCardById.get(pick.refId)!.playerId;
   if (pick.kind === "coach") return coachById.get(pick.refId)!.personId;
   if (pick.kind === "sub") return subById.get(pick.refId)!.personId;
@@ -160,28 +161,25 @@ describe("draft (§4-§6, v0.2 rules)", () => {
 
   it("grants a free reroll only when nothing is pickable", () => {
     const rng = createRng(31);
-    // Everything filled except the coach slot.
+    // Only player slots remain — and every Gale Force player is already taken,
+    // so the whole offer is blocked (vacant coach/sub can't help: slots full).
     let draft: DraftState = {
       ...createDraft("normal"),
       roster: {
-        player1: { slot: "player1", kind: "player", refId: "kronovi-ibuypower-s1", fromLineupId: "x" },
-        player2: { slot: "player2", kind: "player", refId: "lachinio-ibuypower-s1", fromLineupId: "x" },
-        player3: { slot: "player3", kind: "player", refId: "gambit-ibuypower-s1", fromLineupId: "x" },
+        coach: { slot: "coach", kind: "coach", refId: "satthew-spacestation-x", fromLineupId: "x" },
         sub: { slot: "sub", kind: "sub", refId: "express-renegades-x", fromLineupId: "x" },
         org: { slot: "org", kind: "org", refId: "ibuypower", fromLineupId: "x" },
       },
-      takenPersonIds: ["kronovi", "lachinio", "gambit", "express"],
+      takenPersonIds: ["satthew", "express", "kaydop", "turbopolsa", "violentpanda"],
     };
 
-    // Gale Force S4 has no coach card → nothing fits the remaining slot.
-    draft = { ...draft, shownLineupIds: [] };
     let hunted = drawNextOffer(draft, rng);
     let guard = 0;
     while (hunted.offer!.lineupId !== "gale-force-s4" && guard < 60) {
       hunted = drawNextOffer(hunted, rng);
       guard += 1;
     }
-    expect(lineupById.get("gale-force-s4")?.coachId).toBeUndefined();
+    expect(hunted.offer!.lineupId).toBe("gale-force-s4");
     expect(hunted.offer!.hasPickableCard).toBe(false);
 
     const blocked = hunted.offer!.cards[0];
@@ -190,6 +188,28 @@ describe("draft (§4-§6, v0.2 rules)", () => {
     expect(rerolled.round).toBe(hunted.round + 1);
     // Free reroll never touches the paid reroll budget.
     expect(rerolled.rerollsLeft).toBe(hunted.rerollsLeft);
+
+    // And it is rejected while something IS pickable.
+    let open = drawNextOffer(createDraft("normal"), rng);
+    expect(open.offer!.hasPickableCard).toBe(true);
+    expect(() => applyFreeReroll(open, rng)).toThrow();
+  });
+
+  it("offers pickable vacant cards when a lineup has no coach/sub", () => {
+    const rng = createRng(77);
+    let draft = drawNextOffer(createDraft("normal"), rng);
+    // Gale Force S4 has neither coach nor sub in the dataset.
+    draft = huntOffer(draft, rng, (d) => d.offer!.lineupId === "gale-force-s4");
+
+    const vacantCoach = draft.offer!.cards.find((c) => c.refId === "vacant-coach");
+    const vacantSub = draft.offer!.cards.find((c) => c.refId === "vacant-sub");
+    expect(vacantCoach?.availability).toBe("available");
+    expect(vacantSub?.availability).toBe("available");
+
+    draft = applyPick(draft, vacantCoach!, "coach", rng);
+    expect(draft.roster.coach?.refId).toBe("vacant-coach");
+    // Vacant picks exclude nobody.
+    expect(draft.takenPersonIds).toHaveLength(0);
   });
 
   it("limits paid rerolls by difficulty and throws at zero", () => {

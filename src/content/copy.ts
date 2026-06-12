@@ -22,6 +22,9 @@ export const HOME = {
   quickDraftDesc: "Players only, short bracket. Built for quick sessions.",
   daily: "Daily Challenge",
   dailyDesc: "One seeded draft per day, same for everyone.",
+  dailyPlay: "Play today's challenge",
+  dailyDone: "Completed today",
+  dailyStreak: (n: number) => `${n}-day streak`,
   comingSoon: "Coming soon",
   collection: "Collection",
   collectionDesc: "Special cards you have unlocked across your runs.",
@@ -44,6 +47,11 @@ export const SETUP = {
   start: "Start Draft",
   back: "Back to menu",
   legacyLocked: "Win a tournament on Hard to unlock Legacy.",
+  mode: "Game mode",
+  modeClassic: "Classic Draft",
+  modeClassicHint: "6 slots · Swiss + double-elim playoffs",
+  modeQuick: "Quick Draft",
+  modeQuickHint: "3 players only · straight 8-team bracket",
 } as const;
 
 export const DRAFT_UI = {
@@ -124,6 +132,9 @@ export const TOURNAMENT_UI = {
     lb_final: "LB Final",
     third_place: "Third Place",
     grand_final: "Grand Final",
+    quarterfinal: "Quarterfinal",
+    semifinal: "Semifinal",
+    final: "Final",
   } as Record<string, string>,
 } as const;
 
@@ -137,6 +148,8 @@ export const RESULTS_UI = {
   thirdSub: "On the podium after the bronze decider.",
   fourth: "Fourth Place",
   fourthSub: "Lost the bronze decider — still a deep run.",
+  top4: "Top 4",
+  top4Sub: "One series short of the final.",
   top6: "Top 6",
   top6Sub: "The lower bracket ended the run.",
   top8: "Top 8",
@@ -160,6 +173,11 @@ export const RESULTS_UI = {
   playAgain: "Play again",
   backHome: "Back to menu",
   hiddenReveal: "Overalls revealed",
+  share: "Download share card",
+  immaculateBadge: "Flawless run",
+  ceremonyKicker: "New card unlocked",
+  ceremonyTap: "Tap to reveal",
+  ceremonyContinue: "Continue",
 } as const;
 
 export const COLLECTION_UI = {
@@ -234,6 +252,8 @@ export const NARRATION = {
   overtimeNote: "Overtime decided it.",
   clutchNote: "Clutch factor tipped the deciding game.",
   specialNote: "A special card effect activated.",
+  starLine: (name: string) => `${name} led the charge.`,
+  starLineOpponent: (name: string) => `${name} was everywhere for the opposition.`,
   chemistryNote: "Chemistry made the difference in a close matchup.",
   coachNote: "The coach bonus helped stabilize the run.",
 } as const;

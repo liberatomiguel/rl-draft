@@ -4,7 +4,7 @@
  */
 
 import { DIFFICULTY, XP } from "@/config/balance";
-import { achievementById, playerCardById, specialCardById } from "@/data";
+import { achievementById, playerById, playerCardById, specialCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { evaluateAchievements } from "./achievements";
 import { finalOverall } from "./cards";
@@ -49,6 +49,9 @@ function labeledUserSeries(t: TournamentState): LabeledSeries[] {
     lb_final: "LB Final",
     third_place: "Third Place Match",
     grand_final: "Grand Final",
+    quarterfinal: "Quarterfinal",
+    semifinal: "Semifinal",
+    final: "Final",
   };
   for (const entry of userPlayoffSeries(t.playoffs)) {
     out.push({ label: playoffLabels[entry.round] ?? entry.round, series: entry.series });
@@ -129,17 +132,27 @@ export function compileResults(
       ? highlight(tournament, decidingGames[decidingGames.length - 1])
       : null;
 
-  // --- Best player: card overall plus a touch of run-to-run variance ---
+  // --- Best player: most "star of the game" appearances in won games,
+  // with card overall as the tiebreaker ---
   const playerPicks = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3];
   const userTeam = tournament.teams["user"];
   let bestPlayerCardId: string | null = null;
   if (userTeam && playerPicks.every(Boolean)) {
+    const starCounts = new Map<string, number>();
+    for (const { series } of all) {
+      for (const game of series.games) {
+        if (game.winnerTeamId === "user" && game.starName) {
+          starCounts.set(game.starName, (starCounts.get(game.starName) ?? 0) + 1);
+        }
+      }
+    }
     let bestScore = -Infinity;
     for (const pick of playerPicks) {
       const special = pick!.specialId ? specialCardById.get(pick!.specialId) : undefined;
       const card = playerCardById.get(pick!.refId);
+      const nickname = card ? playerById.get(card.playerId)?.nickname ?? "" : "";
       const overall = special?.overall ?? (card ? finalOverall(card) : 0);
-      const score = overall + rng.range(0, 4);
+      const score = (starCounts.get(nickname) ?? 0) * 10 + overall + rng.range(0, 2);
       if (score > bestScore) {
         bestScore = score;
         bestPlayerCardId = pick!.refId;
@@ -204,7 +217,22 @@ export function compileResults(
     lines.push({ label: placementLabel[placement] ?? "Placement bonus", amount: placementBonus });
   }
 
-  const difficultyMultiplier = DIFFICULTY[run.difficulty].xpMultiplier;
+  // Daily challenge bonus objective.
+  if (run.daily?.objective) {
+    const obj = run.daily.objective;
+    const met =
+      obj.type === "chemistry_good"
+        ? (userTeam?.chemistry.percent ?? 0) >= 40
+        : obj.type === "concede_under"
+          ? goalsConceded < (obj.value ?? 0)
+          : false;
+    if (met) {
+      lines.push({ label: `Objective: ${obj.label}`, amount: obj.bonusXp });
+    }
+  }
+
+  const modeMultiplier = XP.modeMultiplier[run.mode] ?? 1;
+  const difficultyMultiplier = DIFFICULTY[run.difficulty].xpMultiplier * modeMultiplier;
   const hiddenOverallBonus = run.showOverall ? 0 : XP.hiddenOverallBonus;
   const base = lines.reduce((sum, l) => sum + l.amount, 0);
 

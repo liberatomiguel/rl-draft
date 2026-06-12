@@ -304,8 +304,13 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/*
+ * fill-mode must be `backwards` (not `both`): `both` keeps a computed
+ * transform after the animation, which turns the element into a containing
+ * block for position:fixed descendants (breaking modals/toasts).
+ */
 .rise-in {
-  animation: rise-in 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation: rise-in 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
 
 @keyframes pop-in {
@@ -445,13 +450,41 @@ body {
   100% { opacity: 0; transform: translateY(330px) rotate(540deg); }
 }
 
+/*
+ * Title glow uses filter:drop-shadow — text-shadow renders ABOVE
+ * background-clip:text gradients and looks broken; drop-shadow doesn't.
+ */
 @keyframes trophy-shine {
-  0%, 100% { text-shadow: 0 0 18px rgba(249, 115, 22, 0.35); }
-  50% { text-shadow: 0 0 44px rgba(251, 191, 36, 0.7); }
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.35)); }
+  50% { filter: drop-shadow(0 0 26px rgba(251, 191, 36, 0.75)); }
 }
 
 .champion-title {
   animation: trophy-shine 2.6s ease-in-out infinite;
+}
+
+@keyframes prism-shine {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)) hue-rotate(0deg); }
+  50% { filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.7)) hue-rotate(40deg); }
+}
+
+.immaculate-title {
+  animation: prism-shine 3.2s ease-in-out infinite;
+}
+
+.celebrate-rays-prism {
+  position: absolute;
+  inset: -55%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 12deg,
+    rgba(56, 189, 248, 0.08) 12deg 20deg,
+    transparent 20deg 38deg,
+    rgba(168, 85, 247, 0.07) 38deg 46deg,
+    transparent 46deg 70deg
+  );
+  animation: rays-spin 22s linear infinite;
+  pointer-events: none;
 }
 
 /* ---------------------------------------------------------------------------
@@ -485,6 +518,83 @@ body {
   animation: live-dot 1s ease-in-out infinite;
 }
 
+/* ---------------------------------------------------------------------------
+   Holographic effects (special cards, tier-scaled)
+   epic → reverse holo (background shimmer) · mythic → holo overlay
+   legendary → prismatic conic shimmer. Subtle by design.
+--------------------------------------------------------------------------- */
+
+@keyframes holo-shift {
+  0% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+  50% { background-position: 100% 50%; filter: hue-rotate(35deg); }
+  100% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+}
+
+.holo-epic::after {
+  background:
+    linear-gradient(115deg, transparent 30%, rgba(192, 132, 252, 0.16) 44%, rgba(56, 189, 248, 0.12) 52%, transparent 64%);
+  background-size: 220% 100%;
+}
+
+.holo-mythic::after {
+  background:
+    linear-gradient(115deg, transparent 26%, rgba(251, 113, 133, 0.2) 40%, rgba(56, 189, 248, 0.15) 50%, rgba(251, 146, 60, 0.2) 58%, transparent 70%);
+  background-size: 220% 100%;
+}
+
+.holo-legendary::after {
+  background:
+    linear-gradient(115deg, transparent 22%, rgba(253, 230, 138, 0.25) 36%, rgba(56, 189, 248, 0.18) 46%, rgba(192, 132, 252, 0.2) 54%, rgba(251, 191, 36, 0.25) 64%, transparent 76%);
+  background-size: 220% 100%;
+  animation: card-sheen 3.4s ease-in-out infinite, holo-shift 6s ease-in-out infinite;
+}
+
+/* Cursor-tracked glare (TiltCard sets --mx/--my as percentages) */
+.tilt-glare {
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.14),
+    transparent 55%
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   Unlock ceremony
+--------------------------------------------------------------------------- */
+
+@keyframes ceremony-burst {
+  0% { transform: scale(0.6); opacity: 0; }
+  55% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.ceremony-burst {
+  animation: ceremony-burst 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes ceremony-ring {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+.ceremony-ring {
+  position: absolute;
+  inset: -12%;
+  border: 2px solid rgba(249, 115, 22, 0.55);
+  border-radius: 22px;
+  animation: ceremony-ring 0.9s ease-out both;
+  pointer-events: none;
+}
+
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.card-float {
+  animation: card-float 2.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
   .pop-in,
@@ -494,8 +604,14 @@ body {
   .card-mythic.card-special,
   .field-slot-glow,
   .celebrate-rays,
+  .celebrate-rays-prism,
   .confetti,
   .champion-title,
+  .immaculate-title,
+  .holo-legendary::after,
+  .ceremony-burst,
+  .ceremony-ring,
+  .card-float,
   .live-dot {
     animation: none !important;
   }
