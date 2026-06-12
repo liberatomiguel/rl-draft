@@ -127,12 +127,14 @@ function vacantCard(kind: "coach" | "sub", refId: string): ResolvedCard {
   };
 }
 
-export function resolveCoach(coachId: string): ResolvedCard {
+export function resolveCoach(coachId: string, specialId?: string): ResolvedCard {
   if (coachId === "vacant-coach") return vacantCard("coach", coachId);
   const coach = coachById.get(coachId);
   if (!coach) throw new Error(`Unknown coach card "${coachId}"`);
   const org = orgById.get(coach.orgId);
   const season = seasonById.get(coach.seasonId);
+  const special = specialId ? specialCardById.get(specialId) : undefined;
+  const overall = special ? special.overall : coach.overall;
   return {
     kind: "coach",
     refId: coachId,
@@ -145,8 +147,9 @@ export function resolveCoach(coachId: string): ResolvedCard {
     lineupId: coach.lineupId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
-    overall: coach.overall,
-    baseRarity: baseRarityOf(coach.overall),
+    overall,
+    baseRarity: baseRarityOf(overall),
+    special,
     buffType: coach.bonusType,
     buffLevel: coach.bonusLevel,
     generic: coach.generic,
@@ -176,9 +179,10 @@ export function resolveSub(subId: string): ResolvedCard {
   };
 }
 
-export function resolveOrg(orgId: string): ResolvedCard {
+export function resolveOrg(orgId: string, buffOverride?: BuffLevel): ResolvedCard {
   const org = orgById.get(orgId);
   if (!org) throw new Error(`Unknown org "${orgId}"`);
+  const buffLevel = buffOverride ?? org.buffLevel;
   return {
     kind: "org",
     refId: orgId,
@@ -186,22 +190,28 @@ export function resolveOrg(orgId: string): ResolvedCard {
     region: org.region,
     orgId: org.id,
     orgName: org.name,
-    baseRarity: orgRarityOf(org.buffLevel),
+    baseRarity: orgRarityOf(buffLevel),
     buffType: org.buffType,
-    buffLevel: org.buffLevel,
+    buffLevel,
   };
 }
 
-export function resolveOfferCard(card: DraftOfferCard): ResolvedCard {
+/** Org buff strength as of a given lineup's season (era-accurate). */
+export function orgBuffForLineup(orgId: string, lineupId?: string): BuffLevel {
+  const lineup = lineupId ? lineupById.get(lineupId) : undefined;
+  return lineup?.orgBuffLevel ?? orgById.get(orgId)?.buffLevel ?? "~";
+}
+
+export function resolveOfferCard(card: DraftOfferCard, offerLineupId?: string): ResolvedCard {
   switch (card.kind) {
     case "player":
       return resolvePlayerCard(card.refId, card.specialId);
     case "coach":
-      return resolveCoach(card.refId);
+      return resolveCoach(card.refId, card.specialId);
     case "sub":
       return resolveSub(card.refId);
     case "org":
-      return resolveOrg(card.refId);
+      return resolveOrg(card.refId, orgBuffForLineup(card.refId, offerLineupId));
   }
 }
 
@@ -210,12 +220,19 @@ export function resolvePick(pick: RosterPick): ResolvedCard {
     case "player":
       return resolvePlayerCard(pick.refId, pick.specialId);
     case "coach":
-      return resolveCoach(pick.refId);
+      return resolveCoach(pick.refId, pick.specialId);
     case "sub":
       return resolveSub(pick.refId);
     case "org":
-      return resolveOrg(pick.refId);
+      return resolveOrg(pick.refId, orgBuffForLineup(pick.refId, pick.fromLineupId));
   }
+}
+
+/** Display resolution for a special card (player- or coach-based). */
+export function resolveSpecial(sp: SpecialCard): ResolvedCard {
+  return sp.kind === "coach"
+    ? resolveCoach(sp.baseCardId, sp.id)
+    : resolvePlayerCard(sp.baseCardId, sp.id);
 }
 
 /** Lineup header info for the draft screen. */

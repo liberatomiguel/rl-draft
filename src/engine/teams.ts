@@ -35,7 +35,7 @@ interface MemberView {
   stats: Stats;
   lineupId: string;
   orgId: string;
-  country: string;
+  country?: string;
 }
 
 interface AssembleInput {
@@ -48,6 +48,10 @@ interface AssembleInput {
   coach?: { name: string; overall: number; bonusType: StatKey; bonusLevel: string; lineupId: string; orgId: string };
   sub?: { name: string; overall: number; lineupId: string; orgId: string };
   orgId?: string;
+  /** Era-accurate org buff (lineup override). Falls back to the org default. */
+  orgBuffLevel?: string;
+  /** Team-wide stat boosts from coach special cards. */
+  teamBoosts?: { attributes: StatKey[]; value: number }[];
   specialIds: string[];
   difficulty: Difficulty;
   difficultyShift: number;
@@ -65,6 +69,9 @@ function averageStats(players: MemberView[]): Stats {
 
 function assembleTeam(input: AssembleInput): TournamentTeam {
   const org = input.orgId ? orgById.get(input.orgId) : undefined;
+  const orgBuffLevel = (input.orgBuffLevel ?? org?.buffLevel) as
+    | keyof typeof BUFF_LEVEL_VALUE
+    | undefined;
 
   const chemistryInput: ChemistryInput = {
     players: input.players.map((p) => ({
@@ -90,7 +97,7 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
       ? { overall: input.coach.overall, bonusLevel: input.coach.bonusLevel as never }
       : undefined,
     sub: input.sub ? { overall: input.sub.overall } : undefined,
-    orgBuffLevel: org?.buffLevel,
+    orgBuffLevel: orgBuffLevel as never,
     chemistryPercent: chemistry.percent,
     chemistryMaxBonus: DIFFICULTY[input.difficulty].chemistryMaxBonus,
     specialCount: input.specialIds.length,
@@ -100,8 +107,8 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
   // Situational stats: player average + thematic nudges from org buff,
   // coach bonus and sub depth. Small by design — overall dominates.
   const stats = averageStats(input.players);
-  if (org) {
-    stats[org.buffType] = clamp(stats[org.buffType] + BUFF_LEVEL_VALUE[org.buffLevel] * 1.0, 60, 99);
+  if (org && orgBuffLevel) {
+    stats[org.buffType] = clamp(stats[org.buffType] + BUFF_LEVEL_VALUE[orgBuffLevel] * 1.0, 60, 99);
   }
   if (input.coach) {
     const level = BUFF_LEVEL_VALUE[input.coach.bonusLevel as never] ?? 0;
@@ -110,6 +117,12 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
   if (input.sub) {
     stats.consistency = clamp(stats.consistency + 1, 60, 99);
     stats.experience = clamp(stats.experience + 1, 60, 99);
+  }
+  // Coach special cards: direct team attribute boosts (v3 effect model).
+  for (const boost of input.teamBoosts ?? []) {
+    for (const attr of boost.attributes) {
+      stats[attr] = clamp(stats[attr] + boost.value, 60, 99);
+    }
   }
 
   return {
@@ -139,6 +152,12 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
   const stats = special
     ? effectiveStats(special.overall, special.stats)
     : effectiveStats(finalOverall(card), card.stats);
+  // v3 effect model: direct attribute boosts baked into the member's stats.
+  if (special?.effect.type === "attribute_boost") {
+    for (const attr of special.effect.attributes ?? []) {
+      stats[attr] = clamp(stats[attr] + special.effect.value, 60, 99);
+    }
+  }
   return {
     name: player.nickname,
     overall,
@@ -170,16 +189,28 @@ export function buildUserTeam(
     roster.coach && roster.coach.refId !== "vacant-coach"
       ? coachById.get(roster.coach.refId)
       : undefined;
+  const coachSpecial = roster.coach?.specialId
+    ? specialCardById.get(roster.coach.specialId)
+    : undefined;
   const coach = coachCard
     ? {
         name: coachCard.name,
-        overall: coachCard.overall,
+        overall: coachSpecial ? coachSpecial.overall : coachCard.overall,
         bonusType: coachCard.bonusType,
         bonusLevel: coachCard.bonusLevel,
         lineupId: coachCard.lineupId,
         orgId: coachCard.orgId,
       }
     : undefined;
+  const teamBoosts =
+    coachSpecial?.effect.type === "team_attribute_boost"
+      ? [
+          {
+            attributes: coachSpecial.effect.attributes ?? [],
+            value: coachSpecial.effect.value,
+          },
+        ]
+      : undefined;
 
   const subCard =
     roster.sub && roster.sub.refId !== "vacant-sub"
@@ -194,7 +225,7 @@ export function buildUserTeam(
       }
     : undefined;
 
-  const specialIds = [roster.player1, roster.player2, roster.player3]
+  const specialIds = [roster.player1, roster.player2, roster.player3, roster.coach]
     .map((p) => p?.specialId)
     .filter((id): id is string => Boolean(id));
 
@@ -206,6 +237,11 @@ export function buildUserTeam(
     (a, b) => regions.filter((r) => r === b).length - regions.filter((r) => r === a).length,
   )[0];
 
+  // Era-accurate org buff: the org was drafted FROM a specific lineup.
+  const orgBuffLevel = roster.org
+    ? lineupById.get(roster.org.fromLineupId)?.orgBuffLevel
+    : undefined;
+
   return assembleTeam({
     id: "user",
     name: options.teamName ?? "Your Team",
@@ -215,6 +251,8 @@ export function buildUserTeam(
     coach,
     sub,
     orgId: roster.org?.refId,
+    orgBuffLevel,
+    teamBoosts,
     specialIds,
     difficulty,
     difficultyShift: 0,
@@ -228,7 +266,7 @@ export function buildUserTeam(
 export function buildLineupTeam(
   lineupId: string,
   difficulty: Difficulty,
-  options?: { specialUpgradeCardId?: string },
+  options?: { specialUpgrade?: { cardId: string; specialId: string } },
 ): TournamentTeam {
   const lineup = lineupById.get(lineupId);
   if (!lineup) throw new Error(`Unknown lineup "${lineupId}"`);
@@ -236,27 +274,11 @@ export function buildLineupTeam(
 
   const specialIds: string[] = [];
   const players = lineup.playerCardIds.map((cardId) => {
-    const card = playerCardById.get(cardId)!;
-    const player = playerById.get(card.playerId)!;
-    let overall = finalOverall(card);
-    let stats = effectiveStats(overall, card.stats);
-    if (options?.specialUpgradeCardId === cardId) {
-      const special = specialCardById.get(
-        // upgrade target is validated by the caller (opponents.ts)
-        [...specialCardById.values()].find((sp) => sp.baseCardId === cardId)!.id,
-      )!;
-      specialIds.push(special.id);
-      overall = special.overall;
-      stats = effectiveStats(special.overall, special.stats);
+    if (options?.specialUpgrade?.cardId === cardId) {
+      specialIds.push(options.specialUpgrade.specialId);
+      return playerMemberFromPick(cardId, options.specialUpgrade.specialId);
     }
-    return {
-      name: player.nickname,
-      overall,
-      stats,
-      lineupId: card.lineupId,
-      orgId: card.orgId,
-      country: player.country,
-    };
+    return playerMemberFromPick(cardId);
   });
 
   const coachCard = lineup.coachId ? coachById.get(lineup.coachId) : undefined;
@@ -283,6 +305,7 @@ export function buildLineupTeam(
       ? { name: subCard.name, overall: subCard.overall, lineupId: subCard.lineupId, orgId: subCard.orgId }
       : undefined,
     orgId: lineup.orgId,
+    orgBuffLevel: lineup.orgBuffLevel,
     specialIds,
     difficulty,
     difficultyShift: DIFFICULTY[difficulty].opponentRatingShift,

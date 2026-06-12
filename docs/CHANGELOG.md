@@ -10,6 +10,57 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [0.4.0] — 2026-06-12
+
+The real dataset + MVP closing polish.
+
+### Added
+- **Full historical dataset** imported from the curated finals archive:
+  **208 lineups · 624 player cards · 305 players · 83 coaches · 76 subs ·
+  104 orgs across 15 seasons (2016 → 2026) and 7 regions (SSA added)**.
+  Test data fully replaced.
+- **Dataset pipeline**: `npm run build:data` regenerates every JSON (and the
+  image-manifest READMEs) from `data-sources/teams.md` — future data updates
+  are an MD edit + one command. Tests are dataset-agnostic now.
+- **54 official special cards** (47 players + 7 coaches) from the v3
+  catalogue: legendary legacy cards, every Worlds/Major MVP, iconic moments.
+  New v3 effect model (direct attribute boosts; coach cards boost TEAM
+  attributes), multiple specials per base card, coach specials appear on
+  coach cards in the draft (separate low-frequency pool).
+- **Era-accurate org buffs**: the same org can be `+` in one season and
+  `+++` in another (per-lineup override; the org entity keeps a default).
+- Tilt 3D em todas as cartas (leve nas normais, forte nas especiais, máximo
+  na visualização da coleção) + **holo Balatro-style reativo ao cursor**
+  por tier: foil (rare) · reverse-holo (epic) · holo (mythic) ·
+  polychrome animado (legendary).
+- One unique icon per achievement (22), keeping category colors.
+- Back-to-menu link on the achievements page.
+
+### Changed
+- Home mode cards now open their OWN setup (Classic → classic difficulty
+  select; Quick → quick) — no mode switcher inside setup. "Play again"
+  returns to that mode's difficulty selection.
+- Draft: clicking a card whose kind has a single open destination
+  (coach/sub/org or the last open player slot) assigns immediately.
+- Unlock ceremony auto-plays (reveal + advance); clicking skips ahead.
+- Daily Challenge: a loss no longer reads as "completed" — the card shows
+  Victory (+XP) or Defeat plus "come back tomorrow", and the streak counts
+  only victories.
+- Player nationality is now optional data (the archive doesn't carry it);
+  same-country chemistry applies only when both players have one. ~85
+  well-known nationalities curated in the generator.
+- Card overall floor relaxed to 50 (bench/staff ratings + vacant cards).
+
+### Fixed
+- **`npm run dev` failing with "connection refused"**: orphaned dev-server
+  processes plus a stale `.next/dev/lock` (Next 16's single-instance lock)
+  blocked new instances. Cleaned up; troubleshooting note added to README.
+- **Champion celebration showed only two rotating beams**: a plain
+  `conic-gradient` holds its last stop instead of repeating — switched to
+  `repeating-conic-gradient` (gold and prismatic variants).
+- UTF-8 corruption introduced by a PowerShell bulk-edit during development
+  was caught and reverted before commit (files restored from git).
+
 ## [0.3.0] — 2026-06-12
 
 Feedback round 2 + the first MVP 2 features.

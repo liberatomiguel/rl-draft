@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { achievementById, specialCardById } from "@/data";
 import { DIFFICULTY } from "@/config/balance";
 import { RESULTS_UI as R, RARITY_LABELS } from "@/content/copy";
-import { resolvePlayerCard, type ResolvedCard } from "@/engine/cards";
+import { resolvePlayerCard, resolveSpecial, type ResolvedCard } from "@/engine/cards";
 import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { Placement, RunState } from "@/engine/types";
@@ -45,9 +45,8 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
   const clearRun = useRunStore((s) => s.clearRun);
-  const startRun = useRunStore((s) => s.startRun);
+  const setSetupMode = useRunStore((s) => s.setSetupMode);
   const xpNow = useProfileStore((s) => s.xp);
-  const settings = useProfileStore((s) => s.settings);
 
   const results = run.results;
   const team = run.tournament?.teams["user"];
@@ -71,13 +70,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const bestPlayer = bestPick ? resolvePlayerCard(bestPick.refId, bestPick.specialId) : null;
 
   const handlePlayAgain = () => {
-    // Same setup, zero clicks: straight into a new draft (daily → classic).
+    // Back to this mode's difficulty selection (last setup pre-selected).
+    setSetupMode(run.mode === "quick" ? "quick" : "classic");
     clearRun();
-    startRun({
-      mode: run.mode === "quick" ? "quick" : "classic",
-      difficulty: run.difficulty,
-      showOverall: settings.lastShowOverall,
-    });
   };
 
   const handleShare = () => {
@@ -303,7 +298,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                   return (
                     <GameCard
                       key={id}
-                      card={resolvePlayerCard(sp.baseCardId, sp.id)}
+                      card={resolveSpecial(sp)}
                       showOverall
                       specialCollected
                       size="sm"
@@ -386,8 +381,9 @@ function Confetti({ prism }: { prism?: boolean }) {
 }
 
 /**
- * Unlock ceremony: each freshly unlocked special gets its reveal moment —
- * card back, tap (or auto) flip with a burst, then the next one.
+ * Unlock ceremony: each freshly unlocked special gets its reveal moment.
+ * Plays AUTOMATICALLY (reveal after a beat, then advance) — clicking just
+ * skips ahead.
  */
 function UnlockCeremony({
   specialIds,
@@ -400,11 +396,6 @@ function UnlockCeremony({
   const [revealed, setRevealed] = useState(false);
 
   const sp = specialCardById.get(specialIds[index]);
-  if (!sp) {
-    onDone();
-    return null;
-  }
-  const card = resolvePlayerCard(sp.baseCardId, sp.id);
   const last = index === specialIds.length - 1;
 
   const advance = () => {
@@ -418,6 +409,21 @@ function UnlockCeremony({
       setRevealed(false);
     }
   };
+
+  // Auto-play: reveal after ~1s, linger on the revealed card, then advance.
+  useEffect(() => {
+    if (!sp) return;
+    const delay = revealed ? 3200 : 1000;
+    const id = setTimeout(advance, delay);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, revealed, sp?.id]);
+
+  if (!sp) {
+    onDone();
+    return null;
+  }
+  const card = resolveSpecial(sp);
 
   return (
     <div

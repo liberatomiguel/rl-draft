@@ -186,8 +186,10 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
 // ---------------------------------------------------------------------------
 
 export const DRAFT = {
-  /** Chance a player card appears as its special version (if one exists). */
+  /** Chance a player card appears as a special version (if any exists). */
   specialAppearanceChance: 0.07,
+  /** Coach specials are a separate, lower-frequency pool (v3 notes). */
+  coachSpecialChance: 0.05,
   /** Lineups are drawn without replacement; pool resets if exhausted. */
   withoutReplacement: true,
 } as const;

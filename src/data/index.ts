@@ -112,10 +112,19 @@ export const lineupById = toMap("lineups", lineups);
 export const specialCardById = toMap("specialCards", specialCards);
 export const achievementById = toMap("achievements", achievements);
 
-/** Special version of a base player card, if one exists. */
-export const specialByBaseCardId = new Map<string, SpecialCard>(
-  specialCards.map((sp) => [sp.baseCardId, sp]),
-);
+/**
+ * Special versions per base card (a card can have several — e.g. zen has a
+ * legendary, a Worlds MVP, a Major MVP and a moment on the same base).
+ * Player specials and coach specials are separate pools.
+ */
+export const specialsByBaseCardId = new Map<string, SpecialCard[]>();
+export const coachSpecialsByBaseCardId = new Map<string, SpecialCard[]>();
+for (const sp of specialCards) {
+  const map = sp.kind === "coach" ? coachSpecialsByBaseCardId : specialsByBaseCardId;
+  const list = map.get(sp.baseCardId) ?? [];
+  list.push(sp);
+  map.set(sp.baseCardId, list);
+}
 
 // ---------------------------------------------------------------------------
 // Referential integrity — fail loudly on broken links between files
@@ -158,10 +167,16 @@ for (const lineup of lineups) {
 }
 
 for (const sp of specialCards) {
-  assertRef(playerById.has(sp.playerId), `specialCards: "${sp.id}" → unknown playerId "${sp.playerId}"`);
-  assertRef(playerCardById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown baseCardId "${sp.baseCardId}"`);
-  const base = playerCardById.get(sp.baseCardId)!;
-  assertRef(base.playerId === sp.playerId, `specialCards: "${sp.id}" → base card belongs to "${base.playerId}", not "${sp.playerId}"`);
+  if (sp.kind === "coach") {
+    assertRef(coachById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown coach baseCardId "${sp.baseCardId}"`);
+    const base = coachById.get(sp.baseCardId)!;
+    assertRef(base.personId === sp.playerId, `specialCards: "${sp.id}" → coach card belongs to "${base.personId}", not "${sp.playerId}"`);
+  } else {
+    assertRef(playerById.has(sp.playerId), `specialCards: "${sp.id}" → unknown playerId "${sp.playerId}"`);
+    assertRef(playerCardById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown baseCardId "${sp.baseCardId}"`);
+    const base = playerCardById.get(sp.baseCardId)!;
+    assertRef(base.playerId === sp.playerId, `specialCards: "${sp.id}" → base card belongs to "${base.playerId}", not "${sp.playerId}"`);
+  }
 }
 
 /** Quick dataset stats — handy for docs and the collection screen. */

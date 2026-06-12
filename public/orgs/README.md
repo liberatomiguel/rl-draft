@@ -1,16 +1,112 @@
 # Organization logos
 
-Drop one PNG per org here, named by the org id from `src/data/orgs.json`:
+Drop one PNG per org here (square, transparent, ≥256px). Missing files fall
+back to a monogram placeholder. Generated from data-sources/teams.md — run
+`npm run build:data` after editing it.
 
 ```
-ibuypower.png      flipsid3.png       gale-force.png    dignitas.png
-nrg.png            cloud9.png         team-vitality.png spacestation.png
-team-bds.png       g2.png             renegades.png     furia.png
-faze.png           falcons.png        gen-g.png         karmine-corp.png
+01-esports.png
+alpha-sydney.png
+avidity-esports.png
+bravado-gaming.png
+canberra-havoc.png
+chiefs-esc.png
+chiefs-esports-club.png
+cloud9.png
+complexity-gaming.png
+cringe-society.png
+denial-esports.png
+dignitas.png
+elevate.png
+ellevens-esports.png
+endpoint-cex.png
+eunited.png
+evil-geniuses.png
+exodus.png
+faze-clan.png
+fc-barcelona.png
+flipsid3-tactics.png
+furia.png
+fury.png
+fut-esports.png
+g1.png
+g2-esports.png
+g2-stride.png
+gaimin-gladiators.png
+gale-force-esports.png
+geekay-esports.png
+gen-g-mobil1-racing.png
+genesis.png
+gentle-mates-alpine.png
+ghost-gaming.png
+ground-zero-gaming.png
+guild-esports.png
+ibuypower.png
+intz-esports.png
+jam-gaming.png
+karmine-corp.png
+kings-of-urban.png
+kru-esports.png
+limitless.png
+lowkey-esports.png
+manchester-city-esports.png
+method.png
+mibr.png
+mock-it-esports.png
+mockit-esports.png
+moist-esports.png
+mousesports.png
+ninjas-in-pyjamas.png
+northern-gaming.png
+nrg-esports.png
+og.png
+optic-gaming.png
+orbit-esport.png
+orlando-pirates-exdee.png
+oxygen-esports.png
+pale-horse-esports.png
+pioneers.png
+pittsburgh-knights.png
+precision-z.png
+psg-esports.png
+pwr.png
+quiktrip-pioneers-gaming.png
+renault-vitality.png
+renegades.png
+roc-esports.png
+rogue.png
+rule-one.png
+selfless-gaming.png
+senbei-strikers.png
+shopify-rebellion.png
+smpr-esports.png
+solary.png
+spacestation-gaming.png
+tainted-minds.png
+take-3.png
+team-bds.png
+team-dignitas.png
+team-envy.png
+team-falcons.png
+team-liquid.png
+team-queso.png
+team-reciprocity.png
+team-secret.png
+team-vitality.png
+the-club.png
+the-flying-dutchmen.png
+the-leftovers.png
+the-three-sins.png
+the-ultimates.png
+top-blokes.png
+triple-trouble.png
+true-neutral.png
+tsm.png
+twisted-minds.png
+valiant.png
+veloce-esports.png
+version1.png
+virtus-pro.png
+we-dem-girlz.png
+wildcard.png
 ```
-
-Used on base cards (centerpiece), bracket rows, standings and the field view.
-Recommended: square, transparent background, ≥256×256px.
-Missing files fall back to a monogram placeholder
-(component: `src/components/ui/TeamLogo.tsx`). A per-org override is also
-possible via the `logoUrl` field in `orgs.json`.

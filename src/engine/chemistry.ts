@@ -14,7 +14,8 @@ export interface ChemPlayerInput {
   name: string;
   lineupId: string;
   orgId: string;
-  country: string;
+  /** Same-country chemistry only applies when both players have one. */
+  country?: string;
 }
 
 export interface ChemStaffInput {
@@ -45,7 +46,7 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
       if (a.lineupId === b.lineupId) {
         raw += w.sameLineupPair;
         items.push({ label: `${a.name} + ${b.name} — same lineup`, points: w.sameLineupPair });
-      } else if (a.country === b.country) {
+      } else if (a.country && b.country && a.country === b.country) {
         raw += w.sameCountryPair;
         items.push({ label: `${a.name} + ${b.name} — same country`, points: w.sameCountryPair });
       } else if (a.orgId === b.orgId) {

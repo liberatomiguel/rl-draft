@@ -8,7 +8,7 @@
 
 import { z } from "zod";
 
-export const regionSchema = z.enum(["NA", "EU", "SAM", "MENA", "OCE", "APAC"]);
+export const regionSchema = z.enum(["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"]);
 
 export const statKeySchema = z.enum([
   "offense",
@@ -21,7 +21,9 @@ export const statKeySchema = z.enum([
 
 export const buffLevelSchema = z.enum(["~", "+", "++", "+++"]);
 
-const overallSchema = z.number().int().min(60).max(99);
+// Floor 50: the imported dataset rates bench/staff players down to 50
+// (which is also the "vacant slot" value).
+const overallSchema = z.number().int().min(50).max(99);
 
 export const statsSchema = z
   .object({
@@ -38,7 +40,7 @@ export const playerSchema = z.object({
   id: z.string().min(1),
   nickname: z.string().min(1),
   realName: z.string().optional(),
-  country: z.string().length(2),
+  country: z.string().length(2).optional(),
   region: regionSchema,
 });
 
@@ -89,7 +91,7 @@ export const subCardSchema = z.object({
   id: z.string().min(1),
   personId: z.string().min(1),
   name: z.string().min(1),
-  country: z.string().length(2),
+  country: z.string().length(2).optional(),
   region: regionSchema,
   orgId: z.string().min(1),
   lineupId: z.string().min(1),
@@ -107,11 +109,14 @@ export const lineupSchema = z.object({
   playerCardIds: z.tuple([z.string(), z.string(), z.string()]),
   coachId: z.string().optional(),
   subId: z.string().optional(),
+  orgBuffLevel: buffLevelSchema.optional(),
   historicalStrength: z.enum(["elite", "strong", "solid", "underdog"]),
 });
 
 export const specialEffectSchema = z.object({
   type: z.enum([
+    "attribute_boost",
+    "team_attribute_boost",
     "clutch_boost",
     "swiss_consistency",
     "playoff_experience",
@@ -119,16 +124,18 @@ export const specialEffectSchema = z.object({
     "defense_stability",
     "high_roll",
   ]),
+  attributes: z.array(statKeySchema).optional(),
   value: z.number().min(0).max(5),
   description: z.string().min(1),
 });
 
 export const specialCardSchema = z.object({
   id: z.string().min(1),
+  kind: z.enum(["player", "coach"]).optional(),
   playerId: z.string().min(1),
   baseCardId: z.string().min(1),
   title: z.string().min(1),
-  cardType: z.enum(["moment", "major_mvp", "worlds_mvp", "mythic", "legend"]),
+  cardType: z.enum(["moment", "major_mvp", "worlds_mvp", "mythic", "legend", "coach"]),
   rarity: z.enum(["rare", "epic", "mythic", "legendary"]),
   overall: overallSchema,
   stats: statsSchema.optional(),

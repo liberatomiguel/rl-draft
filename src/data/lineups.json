@@ -1,91 +1,3073 @@
 [
-  { "id": "ibuypower-s1", "name": "iBUYPOWER Cosmic", "seasonId": "rlcs-s1", "orgId": "ibuypower", "region": "NA",
-    "playerCardIds": ["kronovi-ibuypower-s1", "lachinio-ibuypower-s1", "gambit-ibuypower-s1"],
-    "historicalStrength": "solid" },
-  { "id": "flipsid3-s2", "name": "FlipSid3 Tactics", "seasonId": "rlcs-s2", "orgId": "flipsid3", "region": "EU",
-    "playerCardIds": ["kuxir97-flipsid3-s2", "markydooda-flipsid3-s2", "m1k3rules-flipsid3-s2"],
-    "historicalStrength": "solid" },
-  { "id": "gale-force-s4", "name": "Gale Force Esports", "seasonId": "rlcs-s4", "orgId": "gale-force", "region": "EU",
-    "playerCardIds": ["kaydop-gale-force-s4", "turbopolsa-gale-force-s4", "violentpanda-gale-force-s4"],
-    "historicalStrength": "strong" },
-  { "id": "dignitas-s5", "name": "Dignitas", "seasonId": "rlcs-s5", "orgId": "dignitas", "region": "EU",
-    "playerCardIds": ["kaydop-dignitas-s5", "turbopolsa-dignitas-s5", "violentpanda-dignitas-s5"],
-    "historicalStrength": "elite" },
-  { "id": "nrg-s6", "name": "NRG Esports", "seasonId": "rlcs-s6", "orgId": "nrg", "region": "NA",
-    "playerCardIds": ["garrettg-nrg-s6", "jstn-nrg-s6", "fireburner-nrg-s6"],
-    "historicalStrength": "strong" },
-  { "id": "cloud9-s6", "name": "Cloud9", "seasonId": "rlcs-s6", "orgId": "cloud9", "region": "NA",
-    "playerCardIds": ["squishy-cloud9-s6", "gimmick-cloud9-s6", "torment-cloud9-s6"],
-    "historicalStrength": "elite" },
-  { "id": "vitality-s7", "name": "Renault Vitality", "seasonId": "rlcs-s7", "orgId": "team-vitality", "region": "EU",
-    "playerCardIds": ["fairy-peak-vitality-s7", "kaydop-vitality-s7", "alpha54-vitality-s7"],
-    "historicalStrength": "elite" },
-  { "id": "nrg-s8", "name": "NRG Esports", "seasonId": "rlcs-s8", "orgId": "nrg", "region": "NA",
-    "playerCardIds": ["garrettg-nrg-s8", "jstn-nrg-s8", "turbopolsa-nrg-s8"],
-    "historicalStrength": "elite" },
-  { "id": "spacestation-x", "name": "Spacestation Gaming", "seasonId": "rlcs-x", "orgId": "spacestation", "region": "NA",
-    "playerCardIds": ["arsenal-spacestation-x", "retals-spacestation-x", "sypical-spacestation-x"],
-    "coachId": "satthew-spacestation-x",
-    "historicalStrength": "strong" },
-  { "id": "bds-x", "name": "Team BDS", "seasonId": "rlcs-x", "orgId": "team-bds", "region": "EU",
-    "playerCardIds": ["monkey-moon-bds-x", "extra-bds-x", "aztral-bds-x"],
-    "coachId": "mew-bds-x",
-    "historicalStrength": "elite" },
-  { "id": "vitality-x", "name": "Team Vitality", "seasonId": "rlcs-x", "orgId": "team-vitality", "region": "EU",
-    "playerCardIds": ["fairy-peak-vitality-x", "kaydop-vitality-x", "alpha54-vitality-x"],
-    "historicalStrength": "strong" },
-  { "id": "g2-x", "name": "G2 Esports", "seasonId": "rlcs-x", "orgId": "g2", "region": "NA",
-    "playerCardIds": ["jknaps-g2-x", "chicago-g2-x", "rizzo-g2-x"],
-    "historicalStrength": "strong" },
-  { "id": "renegades-x", "name": "Renegades", "seasonId": "rlcs-x", "orgId": "renegades", "region": "OCE",
-    "playerCardIds": ["cjcj-renegades-x", "kamii-renegades-x", "torsos-renegades-x"],
-    "subId": "express-renegades-x",
-    "historicalStrength": "solid" },
-  { "id": "furia-2122", "name": "FURIA Esports", "seasonId": "rlcs-2021-22", "orgId": "furia", "region": "SAM",
-    "playerCardIds": ["yanxnz-furia-2122", "card-furia-2122", "drufinho-furia-2122"],
-    "historicalStrength": "solid" },
-  { "id": "nrg-2122", "name": "NRG Esports", "seasonId": "rlcs-2021-22", "orgId": "nrg", "region": "NA",
-    "playerCardIds": ["garrettg-nrg-2122", "jstn-nrg-2122", "squishy-nrg-2122"],
-    "coachId": "sizz-nrg-2122",
-    "historicalStrength": "elite" },
-  { "id": "bds-2122", "name": "Team BDS", "seasonId": "rlcs-2021-22", "orgId": "team-bds", "region": "EU",
-    "playerCardIds": ["monkey-moon-bds-2122", "extra-bds-2122", "seikoo-bds-2122"],
-    "coachId": "mew-bds-2122",
-    "historicalStrength": "elite" },
-  { "id": "faze-2122", "name": "FaZe Clan", "seasonId": "rlcs-2021-22", "orgId": "faze", "region": "NA",
-    "playerCardIds": ["ayyjayy-faze-2122", "firstkiller-faze-2122", "sypical-faze-2122"],
-    "coachId": "staff-faze-2122",
-    "historicalStrength": "strong" },
-  { "id": "falcons-2223", "name": "Team Falcons", "seasonId": "rlcs-2022-23", "orgId": "falcons", "region": "MENA",
-    "playerCardIds": ["ahmad-falcons-2223", "okhalid-falcons-2223", "trk511-falcons-2223"],
-    "coachId": "staff-falcons-2223",
-    "subId": "m7sn-falcons-2223",
-    "historicalStrength": "strong" },
-  { "id": "vitality-2223", "name": "Team Vitality", "seasonId": "rlcs-2022-23", "orgId": "team-vitality", "region": "EU",
-    "playerCardIds": ["zen-vitality-2223", "alpha54-vitality-2223", "radosin-vitality-2223"],
-    "coachId": "ferra-vitality-2223",
-    "historicalStrength": "elite" },
-  { "id": "gen-g-2223", "name": "Gen.G Mobil1 Racing", "seasonId": "rlcs-2022-23", "orgId": "gen-g", "region": "NA",
-    "playerCardIds": ["chronic-gen-g-2223", "noly-gen-g-2223", "apparentlyjack-gen-g-2223"],
-    "coachId": "staff-gen-g-2223",
-    "historicalStrength": "strong" },
-  { "id": "falcons-2324", "name": "Team Falcons", "seasonId": "rlcs-2023-24", "orgId": "falcons", "region": "MENA",
-    "playerCardIds": ["ahmad-falcons-2324", "okhalid-falcons-2324", "trk511-falcons-2324"],
-    "coachId": "staff-falcons-2324",
-    "subId": "m7sn-falcons-2324",
-    "historicalStrength": "elite" },
-  { "id": "g2-stride-2324", "name": "G2 Stride", "seasonId": "rlcs-2023-24", "orgId": "g2", "region": "NA",
-    "playerCardIds": ["daniel-g2-2324", "beastmode-g2-2324", "atomic-g2-2324"],
-    "coachId": "staff-g2-2324",
-    "historicalStrength": "elite" },
-  { "id": "karmine-corp-2324", "name": "Karmine Corp", "seasonId": "rlcs-2023-24", "orgId": "karmine-corp", "region": "EU",
-    "playerCardIds": ["vatira-kc-2324", "aztral-kc-2324", "exotiik-kc-2324"],
-    "coachId": "kassio-kc-2324",
-    "subId": "itachi-kc-2324",
-    "historicalStrength": "strong" },
-  { "id": "furia-2324", "name": "FURIA Esports", "seasonId": "rlcs-2023-24", "orgId": "furia", "region": "SAM",
-    "playerCardIds": ["yanxnz-furia-2324", "lostt-furia-2324", "drufinho-furia-2324"],
-    "coachId": "stl-furia-2324",
-    "subId": "caiotg1-furia-2324",
-    "historicalStrength": "strong" }
+  {
+    "id": "ibuypower-s1",
+    "name": "iBUYPOWER",
+    "seasonId": "rlcs-s1",
+    "orgId": "ibuypower",
+    "region": "NA",
+    "playerCardIds": [
+      "kronovi-ibuypower-s1",
+      "lachinio-ibuypower-s1",
+      "0verzer0-ibuypower-s1"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "kings-of-urban-s1",
+    "name": "Kings of Urban",
+    "seasonId": "rlcs-s1",
+    "orgId": "kings-of-urban",
+    "region": "NA",
+    "playerCardIds": [
+      "fireburner-kings-of-urban-s1",
+      "jacob-kings-of-urban-s1",
+      "sadjunior-kings-of-urban-s1"
+    ],
+    "subId": "fl0w-sub-kings-of-urban-s1",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "exodus-s1",
+    "name": "Exodus",
+    "seasonId": "rlcs-s1",
+    "orgId": "exodus",
+    "region": "NA",
+    "playerCardIds": [
+      "garrettg-exodus-s1",
+      "moses-exodus-s1",
+      "turtle-exodus-s1"
+    ],
+    "subId": "huskih-sub-exodus-s1",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "genesis-s1",
+    "name": "Genesis",
+    "seasonId": "rlcs-s1",
+    "orgId": "genesis",
+    "region": "NA",
+    "playerCardIds": [
+      "espeon-genesis-s1",
+      "pluto-genesis-s1",
+      "quinnlobdell-genesis-s1"
+    ],
+    "subId": "kovanel-sub-genesis-s1",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "flipsid3-tactics-s1",
+    "name": "FlipSid3 Tactics",
+    "seasonId": "rlcs-s1",
+    "orgId": "flipsid3-tactics",
+    "region": "EU",
+    "playerCardIds": [
+      "kuxir97-flipsid3-tactics-s1",
+      "markydooda-flipsid3-tactics-s1",
+      "m1k3rules-flipsid3-tactics-s1"
+    ],
+    "subId": "myebipod4shor-sub-flipsid3-tactics-s1",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "northern-gaming-s1",
+    "name": "Northern Gaming",
+    "seasonId": "rlcs-s1",
+    "orgId": "northern-gaming",
+    "region": "EU",
+    "playerCardIds": [
+      "greazy-northern-gaming-s1",
+      "maestro-northern-gaming-s1",
+      "remkoe-northern-gaming-s1"
+    ],
+    "subId": "deboer-sub-northern-gaming-s1",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mock-it-esports-s1",
+    "name": "Mock-It eSports",
+    "seasonId": "rlcs-s1",
+    "orgId": "mock-it-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "paschy90-mock-it-esports-s1",
+      "sikii-mock-it-esports-s1",
+      "turbopolsa-mock-it-esports-s1"
+    ],
+    "subId": "killerno7-sub-mock-it-esports-s1",
+    "orgBuffLevel": "+",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "the-flying-dutchmen-s1",
+    "name": "The Flying Dutchmen",
+    "seasonId": "rlcs-s1",
+    "orgId": "the-flying-dutchmen",
+    "region": "EU",
+    "playerCardIds": [
+      "dogu-the-flying-dutchmen-s1",
+      "jessie-the-flying-dutchmen-s1",
+      "vogan-the-flying-dutchmen-s1"
+    ],
+    "subId": "pauliepaulnl-sub-the-flying-dutchmen-s1",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nrg-esports-s2",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s2",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "fireburner-nrg-esports-s2",
+      "jacob-nrg-esports-s2",
+      "sadjunior-nrg-esports-s2"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "orbit-esport-s2",
+    "name": "Orbit eSport",
+    "seasonId": "rlcs-s2",
+    "orgId": "orbit-esport",
+    "region": "NA",
+    "playerCardIds": [
+      "garrettg-orbit-esport-s2",
+      "turtle-orbit-esport-s2",
+      "moses-orbit-esport-s2"
+    ],
+    "subId": "sizz-sub-orbit-esport-s2",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "genesis-s2",
+    "name": "Genesis",
+    "seasonId": "rlcs-s2",
+    "orgId": "genesis",
+    "region": "NA",
+    "playerCardIds": [
+      "pluto-genesis-s2",
+      "espeon-genesis-s2",
+      "klassux-genesis-s2"
+    ],
+    "subId": "kylemasc-sub-genesis-s2",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "take-3-s2",
+    "name": "Take 3",
+    "seasonId": "rlcs-s2",
+    "orgId": "take-3",
+    "region": "NA",
+    "playerCardIds": [
+      "insolences-take-3-s2",
+      "rizzo-take-3-s2",
+      "zanejackey-take-3-s2"
+    ],
+    "subId": "low5ive-sub-take-3-s2",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "flipsid3-tactics-s2",
+    "name": "FlipSid3 Tactics",
+    "seasonId": "rlcs-s2",
+    "orgId": "flipsid3-tactics",
+    "region": "EU",
+    "playerCardIds": [
+      "kuxir97-flipsid3-tactics-s2",
+      "markydooda-flipsid3-tactics-s2",
+      "greazy-flipsid3-tactics-s2"
+    ],
+    "subId": "jhzer-sub-flipsid3-tactics-s2",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "northern-gaming-s2",
+    "name": "Northern Gaming",
+    "seasonId": "rlcs-s2",
+    "orgId": "northern-gaming",
+    "region": "EU",
+    "playerCardIds": [
+      "remkoe-northern-gaming-s2",
+      "maestro-northern-gaming-s2",
+      "miztik-northern-gaming-s2"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mock-it-esports-s2",
+    "name": "Mock-It eSports",
+    "seasonId": "rlcs-s2",
+    "orgId": "mock-it-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "paschy90-mock-it-esports-s2",
+      "violentpanda-mock-it-esports-s2",
+      "deevo-mock-it-esports-s2"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "precision-z-s2",
+    "name": "Precision Z",
+    "seasonId": "rlcs-s2",
+    "orgId": "precision-z",
+    "region": "EU",
+    "playerCardIds": [
+      "skyline-precision-z-s2",
+      "kaydop-precision-z-s2",
+      "sikii-precision-z-s2"
+    ],
+    "subId": "friisisch-sub-precision-z-s2",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nrg-esports-s3",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s3",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "fireburner-nrg-esports-s3",
+      "garrettg-nrg-esports-s3",
+      "jacob-nrg-esports-s3"
+    ],
+    "subId": "genocop-sub-nrg-esports-s3",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "rogue-s3",
+    "name": "Rogue",
+    "seasonId": "rlcs-s3",
+    "orgId": "rogue",
+    "region": "NA",
+    "playerCardIds": [
+      "matt-rogue-s3",
+      "sizz-rogue-s3",
+      "turtle-rogue-s3"
+    ],
+    "subId": "syntax-sub-rogue-s3",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "selfless-gaming-s3",
+    "name": "Selfless Gaming",
+    "seasonId": "rlcs-s3",
+    "orgId": "selfless-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "dappur-selfless-gaming-s3",
+      "mijo-selfless-gaming-s3",
+      "timi-selfless-gaming-s3"
+    ],
+    "subId": "pluoh-sub-selfless-gaming-s3",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "denial-esports-s3",
+    "name": "Denial eSports",
+    "seasonId": "rlcs-s3",
+    "orgId": "denial-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "lethamyr-denial-esports-s3",
+      "corruptedg-denial-esports-s3",
+      "sadjunior-denial-esports-s3"
+    ],
+    "subId": "jwismont-sub-denial-esports-s3",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mockit-esports-s3",
+    "name": "Mockit eSports",
+    "seasonId": "rlcs-s3",
+    "orgId": "mockit-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "fairypeak-mockit-esports-s3",
+      "kaydop-mockit-esports-s3",
+      "miztik-mockit-esports-s3"
+    ],
+    "subId": "sniper-sub-mockit-esports-s3",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "flipsid3-tactics-s3",
+    "name": "FlipSid3 Tactics",
+    "seasonId": "rlcs-s3",
+    "orgId": "flipsid3-tactics",
+    "region": "EU",
+    "playerCardIds": [
+      "markydooda-flipsid3-tactics-s3",
+      "kuxir97-flipsid3-tactics-s3",
+      "greazy-flipsid3-tactics-s3"
+    ],
+    "subId": "flarke-sub-flipsid3-tactics-s3",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "the-leftovers-s3",
+    "name": "The Leftovers",
+    "seasonId": "rlcs-s3",
+    "orgId": "the-leftovers",
+    "region": "EU",
+    "playerCardIds": [
+      "ferra-the-leftovers-s3",
+      "sikii-the-leftovers-s3",
+      "snaski-the-leftovers-s3"
+    ],
+    "subId": "continuum-sub-the-leftovers-s3",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "northern-gaming-s3",
+    "name": "Northern Gaming",
+    "seasonId": "rlcs-s3",
+    "orgId": "northern-gaming",
+    "region": "EU",
+    "playerCardIds": [
+      "remkoe-northern-gaming-s3",
+      "deevo-northern-gaming-s3",
+      "turbopolsa-northern-gaming-s3"
+    ],
+    "subId": "maestro-sub-northern-gaming-s3",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "alpha-sydney-s3",
+    "name": "Alpha Sydney",
+    "seasonId": "rlcs-s3",
+    "orgId": "alpha-sydney",
+    "region": "OCE",
+    "playerCardIds": [
+      "drippay-alpha-sydney-s3",
+      "jake-alpha-sydney-s3",
+      "torsos-alpha-sydney-s3"
+    ],
+    "subId": "enigma-sub-alpha-sydney-s3",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "jam-gaming-s3",
+    "name": "JAM Gaming",
+    "seasonId": "rlcs-s3",
+    "orgId": "jam-gaming",
+    "region": "OCE",
+    "playerCardIds": [
+      "bango-jam-gaming-s3",
+      "express-jam-gaming-s3",
+      "montyconnor-jam-gaming-s3"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "cloud9-s4",
+    "name": "Cloud9",
+    "seasonId": "rlcs-s4",
+    "orgId": "cloud9",
+    "region": "NA",
+    "playerCardIds": [
+      "gimmick-cloud9-s4",
+      "squishymuffinz-cloud9-s4",
+      "torment-cloud9-s4"
+    ],
+    "subId": "napp-sub-cloud9-s4",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "ghost-gaming-s4",
+    "name": "Ghost Gaming",
+    "seasonId": "rlcs-s4",
+    "orgId": "ghost-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "klassux-ghost-gaming-s4",
+      "lethamyr-ghost-gaming-s4",
+      "zanejackey-ghost-gaming-s4"
+    ],
+    "subId": "blueze-sub-ghost-gaming-s4",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "nrg-esports-s4",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s4",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "fireburner-nrg-esports-s4",
+      "garrettg-nrg-esports-s4",
+      "jacob-nrg-esports-s4"
+    ],
+    "subId": "dudewiththenose-sub-nrg-esports-s4",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "g2-esports-s4",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-s4",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "kronovi-g2-esports-s4",
+      "jknaps-g2-esports-s4",
+      "rizzo-g2-esports-s4"
+    ],
+    "subId": "turtle-sub-g2-esports-s4",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "gale-force-esports-s4",
+    "name": "Gale Force eSports",
+    "seasonId": "rlcs-s4",
+    "orgId": "gale-force-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "violentpanda-gale-force-esports-s4",
+      "kaydop-gale-force-esports-s4",
+      "turbopolsa-gale-force-esports-s4"
+    ],
+    "subId": "dogu-sub-gale-force-esports-s4",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "method-s4",
+    "name": "Method",
+    "seasonId": "rlcs-s4",
+    "orgId": "method",
+    "region": "EU",
+    "playerCardIds": [
+      "al0t-method-s4",
+      "metsanauris-method-s4",
+      "mognus-method-s4"
+    ],
+    "subId": "sniper-sub-method-s4",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "mock-it-esports-s4",
+    "name": "Mock-It eSports",
+    "seasonId": "rlcs-s4",
+    "orgId": "mock-it-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "fairypeak-mock-it-esports-s4",
+      "freakii-mock-it-esports-s4",
+      "paschy90-mock-it-esports-s4"
+    ],
+    "subId": "petrick-sub-mock-it-esports-s4",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "psg-esports-s4",
+    "name": "PSG eSports",
+    "seasonId": "rlcs-s4",
+    "orgId": "psg-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "chausette45-psg-esports-s4",
+      "ferra-psg-esports-s4",
+      "bluey-psg-esports-s4"
+    ],
+    "subId": "yukeo-sub-psg-esports-s4",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "chiefs-esc-s4",
+    "name": "Chiefs ESC",
+    "seasonId": "rlcs-s4",
+    "orgId": "chiefs-esc",
+    "region": "OCE",
+    "playerCardIds": [
+      "drippay-chiefs-esc-s4",
+      "jake-chiefs-esc-s4",
+      "torsos-chiefs-esc-s4"
+    ],
+    "subId": "enigma-sub-chiefs-esc-s4",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pale-horse-esports-s4",
+    "name": "Pale Horse eSports",
+    "seasonId": "rlcs-s4",
+    "orgId": "pale-horse-esports",
+    "region": "OCE",
+    "playerCardIds": [
+      "kamii-pale-horse-esports-s4",
+      "cjcj-pale-horse-esports-s4",
+      "kia-pale-horse-esports-s4"
+    ],
+    "subId": "julz-sub-pale-horse-esports-s4",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "g2-esports-s5",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-s5",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jknaps-g2-esports-s5",
+      "kronovi-g2-esports-s5",
+      "rizzo-g2-esports-s5"
+    ],
+    "subId": "satthew-sub-g2-esports-s5",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "nrg-esports-s5",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s5",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "fireburner-nrg-esports-s5",
+      "garrettg-nrg-esports-s5",
+      "jstn-nrg-esports-s5"
+    ],
+    "subId": "moses-sub-nrg-esports-s5",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "cloud9-s5",
+    "name": "Cloud9",
+    "seasonId": "rlcs-s5",
+    "orgId": "cloud9",
+    "region": "NA",
+    "playerCardIds": [
+      "gimmick-cloud9-s5",
+      "squishymuffinz-cloud9-s5",
+      "torment-cloud9-s5"
+    ],
+    "subId": "sadjunior-sub-cloud9-s5",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "evil-geniuses-s5",
+    "name": "Evil Geniuses",
+    "seasonId": "rlcs-s5",
+    "orgId": "evil-geniuses",
+    "region": "NA",
+    "playerCardIds": [
+      "chrome-evil-geniuses-s5",
+      "corruptedg-evil-geniuses-s5",
+      "klassux-evil-geniuses-s5"
+    ],
+    "subId": "darkfire-sub-evil-geniuses-s5",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-dignitas-s5",
+    "name": "Team Dignitas",
+    "seasonId": "rlcs-s5",
+    "orgId": "team-dignitas",
+    "region": "EU",
+    "playerCardIds": [
+      "violentpanda-team-dignitas-s5",
+      "kaydop-team-dignitas-s5",
+      "turbopolsa-team-dignitas-s5"
+    ],
+    "subId": "reepex-sub-team-dignitas-s5",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "renault-vitality-s5",
+    "name": "Renault Vitality",
+    "seasonId": "rlcs-s5",
+    "orgId": "renault-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "fairypeak-renault-vitality-s5",
+      "freakii-renault-vitality-s5",
+      "paschy90-renault-vitality-s5"
+    ],
+    "subId": "gnagflow06-sub-renault-vitality-s5",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-envy-s5",
+    "name": "Team Envy",
+    "seasonId": "rlcs-s5",
+    "orgId": "team-envy",
+    "region": "EU",
+    "playerCardIds": [
+      "deevo-team-envy-s5",
+      "eyeignite-team-envy-s5",
+      "remkoe-team-envy-s5"
+    ],
+    "subId": "greazy-sub-team-envy-s5",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "complexity-gaming-s5",
+    "name": "compLexity Gaming",
+    "seasonId": "rlcs-s5",
+    "orgId": "complexity-gaming",
+    "region": "EU",
+    "playerCardIds": [
+      "al0t-complexity-gaming-s5",
+      "metsanauris-complexity-gaming-s5",
+      "mognus-complexity-gaming-s5"
+    ],
+    "subId": "speed-sub-complexity-gaming-s5",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "chiefs-esports-club-s5",
+    "name": "Chiefs Esports Club",
+    "seasonId": "rlcs-s5",
+    "orgId": "chiefs-esports-club",
+    "region": "OCE",
+    "playerCardIds": [
+      "drippay-chiefs-esports-club-s5",
+      "jake-chiefs-esports-club-s5",
+      "torsos-chiefs-esports-club-s5"
+    ],
+    "subId": "requiem-sub-chiefs-esports-club-s5",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "tainted-minds-s5",
+    "name": "Tainted Minds",
+    "seasonId": "rlcs-s5",
+    "orgId": "tainted-minds",
+    "region": "OCE",
+    "playerCardIds": [
+      "cjcj-tainted-minds-s5",
+      "julz-tainted-minds-s5",
+      "kamii-tainted-minds-s5"
+    ],
+    "subId": "xkorez-sub-tainted-minds-s5",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "cloud9-s6",
+    "name": "Cloud9",
+    "seasonId": "rlcs-s6",
+    "orgId": "cloud9",
+    "region": "NA",
+    "playerCardIds": [
+      "squishymuffinz-cloud9-s6",
+      "torment-cloud9-s6",
+      "gimmick-cloud9-s6"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "evil-geniuses-s6",
+    "name": "Evil Geniuses",
+    "seasonId": "rlcs-s6",
+    "orgId": "evil-geniuses",
+    "region": "NA",
+    "playerCardIds": [
+      "corruptedg-evil-geniuses-s6",
+      "klassux-evil-geniuses-s6",
+      "chicago-evil-geniuses-s6"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "nrg-esports-s6",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s6",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "fireburner-nrg-esports-s6",
+      "garrettg-nrg-esports-s6",
+      "jstn-nrg-esports-s6"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "g2-esports-s6",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-s6",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "kronovi-g2-esports-s6",
+      "rizzo-g2-esports-s6",
+      "jknaps-g2-esports-s6"
+    ],
+    "coachId": "jahzo-coach-g2-esports-s6",
+    "subId": "mijo-sub-g2-esports-s6",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "dignitas-s6",
+    "name": "Dignitas",
+    "seasonId": "rlcs-s6",
+    "orgId": "dignitas",
+    "region": "EU",
+    "playerCardIds": [
+      "violentpanda-dignitas-s6",
+      "kaydop-dignitas-s6",
+      "turbopolsa-dignitas-s6"
+    ],
+    "subId": "jhzer-sub-dignitas-s6",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "we-dem-girlz-s6",
+    "name": "We Dem Girlz",
+    "seasonId": "rlcs-s6",
+    "orgId": "we-dem-girlz",
+    "region": "EU",
+    "playerCardIds": [
+      "metsanauris-we-dem-girlz-s6",
+      "eyeignite-we-dem-girlz-s6",
+      "remkoe-we-dem-girlz-s6"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "flipsid3-tactics-s6",
+    "name": "FlipSid3 Tactics",
+    "seasonId": "rlcs-s6",
+    "orgId": "flipsid3-tactics",
+    "region": "EU",
+    "playerCardIds": [
+      "miztik-flipsid3-tactics-s6",
+      "kuxir97-flipsid3-tactics-s6",
+      "yukeo-flipsid3-tactics-s6"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "psg-esports-s6",
+    "name": "PSG Esports",
+    "seasonId": "rlcs-s6",
+    "orgId": "psg-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "ferra-psg-esports-s6",
+      "chausette45-psg-esports-s6",
+      "fruity-psg-esports-s6"
+    ],
+    "subId": "bluey-sub-psg-esports-s6",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "chiefs-esports-club-s6",
+    "name": "Chiefs Esports Club",
+    "seasonId": "rlcs-s6",
+    "orgId": "chiefs-esports-club",
+    "region": "OCE",
+    "playerCardIds": [
+      "torsos-chiefs-esports-club-s6",
+      "drippay-chiefs-esports-club-s6",
+      "kamii-chiefs-esports-club-s6"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "tainted-minds-s6",
+    "name": "Tainted Minds",
+    "seasonId": "rlcs-s6",
+    "orgId": "tainted-minds",
+    "region": "OCE",
+    "playerCardIds": [
+      "cjcj-tainted-minds-s6",
+      "express-tainted-minds-s6",
+      "shadey-tainted-minds-s6"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "g2-esports-s7",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-s7",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jknaps-g2-esports-s7",
+      "rizzo-g2-esports-s7",
+      "chicago-g2-esports-s7"
+    ],
+    "coachId": "jahzo-coach-g2-esports-s7",
+    "subId": "mijo-sub-g2-esports-s7",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "cloud9-s7",
+    "name": "Cloud9",
+    "seasonId": "rlcs-s7",
+    "orgId": "cloud9",
+    "region": "NA",
+    "playerCardIds": [
+      "squishymuffinz-cloud9-s7",
+      "gimmick-cloud9-s7",
+      "torment-cloud9-s7"
+    ],
+    "subId": "sadjunior-sub-cloud9-s7",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "rogue-s7",
+    "name": "Rogue",
+    "seasonId": "rlcs-s7",
+    "orgId": "rogue",
+    "region": "NA",
+    "playerCardIds": [
+      "kronovi-rogue-s7",
+      "wonder-rogue-s7",
+      "ayyjayy-rogue-s7"
+    ],
+    "subId": "sizz-sub-rogue-s7",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "nrg-esports-s7",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s7",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jstn-nrg-esports-s7",
+      "garrettg-nrg-esports-s7",
+      "fireburner-nrg-esports-s7"
+    ],
+    "coachId": "chrome-coach-nrg-esports-s7",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "renault-vitality-s7",
+    "name": "Renault Vitality",
+    "seasonId": "rlcs-s7",
+    "orgId": "renault-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "scrubkilla-renault-vitality-s7",
+      "fairypeak-renault-vitality-s7",
+      "kaydop-renault-vitality-s7"
+    ],
+    "coachId": "gregan-coach-renault-vitality-s7",
+    "subId": "neqzo-sub-renault-vitality-s7",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "fc-barcelona-s7",
+    "name": "FC Barcelona",
+    "seasonId": "rlcs-s7",
+    "orgId": "fc-barcelona",
+    "region": "EU",
+    "playerCardIds": [
+      "bluey-fc-barcelona-s7",
+      "alpha54-fc-barcelona-s7",
+      "deevo-fc-barcelona-s7"
+    ],
+    "coachId": "gregan-coach-fc-barcelona-s7",
+    "subId": "bymateos-sub-fc-barcelona-s7",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "triple-trouble-s7",
+    "name": "Triple Trouble",
+    "seasonId": "rlcs-s7",
+    "orgId": "triple-trouble",
+    "region": "EU",
+    "playerCardIds": [
+      "ronaky-triple-trouble-s7",
+      "tadpole-triple-trouble-s7",
+      "kassio-triple-trouble-s7"
+    ],
+    "coachId": "base-coach-triple-trouble-s7",
+    "subId": "seeb-sub-triple-trouble-s7",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "psg-esports-s7",
+    "name": "PSG Esports",
+    "seasonId": "rlcs-s7",
+    "orgId": "psg-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "fruity-psg-esports-s7",
+      "ferra-psg-esports-s7",
+      "chausette45-psg-esports-s7"
+    ],
+    "subId": "mout-sub-psg-esports-s7",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "ground-zero-gaming-s7",
+    "name": "Ground Zero Gaming",
+    "seasonId": "rlcs-s7",
+    "orgId": "ground-zero-gaming",
+    "region": "OCE",
+    "playerCardIds": [
+      "decka-ground-zero-gaming-s7",
+      "siki-ground-zero-gaming-s7",
+      "julz-ground-zero-gaming-s7"
+    ],
+    "subId": "kia-sub-ground-zero-gaming-s7",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "renegades-s7",
+    "name": "Renegades",
+    "seasonId": "rlcs-s7",
+    "orgId": "renegades",
+    "region": "OCE",
+    "playerCardIds": [
+      "kamii-renegades-s7",
+      "torsos-renegades-s7",
+      "zen-oce-renegades-s7"
+    ],
+    "subId": "requiem-sub-renegades-s7",
+    "orgBuffLevel": "+",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "intz-esports-s7",
+    "name": "INTZ eSports",
+    "seasonId": "rlcs-s7",
+    "orgId": "intz-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "repi-intz-esports-s7",
+      "pj-intz-esports-s7",
+      "matix-intz-esports-s7"
+    ],
+    "coachId": "jato-coach-intz-esports-s7",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "lowkey-esports-s7",
+    "name": "Lowkey Esports",
+    "seasonId": "rlcs-s7",
+    "orgId": "lowkey-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "caard-lowkey-esports-s7",
+      "renan-lowkey-esports-s7",
+      "tander-lowkey-esports-s7"
+    ],
+    "subId": "fasi-sub-lowkey-esports-s7",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nrg-esports-s8",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s8",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "garrettg-nrg-esports-s8",
+      "jstn-nrg-esports-s8",
+      "turbopolsa-nrg-esports-s8"
+    ],
+    "coachId": "sizz-coach-nrg-esports-s8",
+    "subId": "moses-sub-nrg-esports-s8",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "spacestation-gaming-s8",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-s8",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "arsenal-spacestation-gaming-s8",
+      "axb-spacestation-gaming-s8",
+      "sypical-spacestation-gaming-s8"
+    ],
+    "coachId": "chrome-coach-spacestation-gaming-s8",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "pittsburgh-knights-s8",
+    "name": "Pittsburgh Knights",
+    "seasonId": "rlcs-s8",
+    "orgId": "pittsburgh-knights",
+    "region": "NA",
+    "playerCardIds": [
+      "explosivegyro-pittsburgh-knights-s8",
+      "retals-pittsburgh-knights-s8",
+      "mist-pittsburgh-knights-s8"
+    ],
+    "coachId": "moopy-coach-pittsburgh-knights-s8",
+    "subId": "mala-sub-pittsburgh-knights-s8",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "eunited-s8",
+    "name": "eUnited",
+    "seasonId": "rlcs-s8",
+    "orgId": "eunited",
+    "region": "NA",
+    "playerCardIds": [
+      "hockser-eunited-s8",
+      "rolldizz-eunited-s8",
+      "ayjacks-eunited-s8"
+    ],
+    "subId": "fire-sub-eunited-s8",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "renault-vitality-s8",
+    "name": "Renault Vitality",
+    "seasonId": "rlcs-s8",
+    "orgId": "renault-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "fairypeak-renault-vitality-s8",
+      "scrubkilla-renault-vitality-s8",
+      "kaydop-renault-vitality-s8"
+    ],
+    "coachId": "gregan-coach-renault-vitality-s8",
+    "subId": "jessie-sub-renault-vitality-s8",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "dignitas-s8",
+    "name": "Dignitas",
+    "seasonId": "rlcs-s8",
+    "orgId": "dignitas",
+    "region": "EU",
+    "playerCardIds": [
+      "violentpanda-dignitas-s8",
+      "yukeo-dignitas-s8",
+      "aztral-dignitas-s8"
+    ],
+    "coachId": "virge-coach-dignitas-s8",
+    "subId": "jzr-sub-dignitas-s8",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "veloce-esports-s8",
+    "name": "Veloce Esports",
+    "seasonId": "rlcs-s8",
+    "orgId": "veloce-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "flame-veloce-esports-s8",
+      "freakii-veloce-esports-s8",
+      "kassio-veloce-esports-s8"
+    ],
+    "coachId": "yumicheeseman-coach-veloce-esports-s8",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-reciprocity-s8",
+    "name": "Team Reciprocity",
+    "seasonId": "rlcs-s8",
+    "orgId": "team-reciprocity",
+    "region": "EU",
+    "playerCardIds": [
+      "ferra-team-reciprocity-s8",
+      "chausette45-team-reciprocity-s8",
+      "fruity-team-reciprocity-s8"
+    ],
+    "coachId": "yumicheeseman-coach-team-reciprocity-s8",
+    "subId": "neqzo-sub-team-reciprocity-s8",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "renegades-s8",
+    "name": "Renegades",
+    "seasonId": "rlcs-s8",
+    "orgId": "renegades",
+    "region": "OCE",
+    "playerCardIds": [
+      "torsos-renegades-s8",
+      "kamii-renegades-s8",
+      "siki-renegades-s8"
+    ],
+    "subId": "yeatzy-sub-renegades-s8",
+    "orgBuffLevel": "+",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "canberra-havoc-s8",
+    "name": "Canberra Havoc",
+    "seasonId": "rlcs-s8",
+    "orgId": "canberra-havoc",
+    "region": "OCE",
+    "playerCardIds": [
+      "walcott-canberra-havoc-s8",
+      "leduck-canberra-havoc-s8",
+      "spydoge-canberra-havoc-s8"
+    ],
+    "subId": "riv-sub-canberra-havoc-s8",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "lowkey-esports-s8",
+    "name": "Lowkey Esports",
+    "seasonId": "rlcs-s8",
+    "orgId": "lowkey-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "caard-lowkey-esports-s8",
+      "caiotg1-lowkey-esports-s8",
+      "tander-lowkey-esports-s8"
+    ],
+    "coachId": "kairos-coach-lowkey-esports-s8",
+    "subId": "firewall154-sub-lowkey-esports-s8",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "the-three-sins-s8",
+    "name": "The Three Sins",
+    "seasonId": "rlcs-s8",
+    "orgId": "the-three-sins",
+    "region": "SAM",
+    "playerCardIds": [
+      "math-the-three-sins-s8",
+      "matix-the-three-sins-s8",
+      "valt-the-three-sins-s8"
+    ],
+    "coachId": "bananaman-coach-the-three-sins-s8",
+    "subId": "jato-sub-the-three-sins-s8",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "g2-esports-s9",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-s9",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "rizzo-g2-esports-s9",
+      "jknaps-g2-esports-s9",
+      "chicago-g2-esports-s9"
+    ],
+    "coachId": "jahzo-coach-g2-esports-s9",
+    "subId": "mile-sub-g2-esports-s9",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-s9",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-s9",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "sypical-spacestation-gaming-s9",
+      "axb-spacestation-gaming-s9",
+      "arsenal-spacestation-gaming-s9"
+    ],
+    "coachId": "chrome-coach-spacestation-gaming-s9",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "ghost-gaming-s9",
+    "name": "Ghost Gaming",
+    "seasonId": "rlcs-s9",
+    "orgId": "ghost-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "allushin-ghost-gaming-s9",
+      "atomic-ghost-gaming-s9",
+      "mist-ghost-gaming-s9"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "nrg-esports-s9",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-s9",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "garrettg-nrg-esports-s9",
+      "jstn-nrg-esports-s9",
+      "turbopolsa-nrg-esports-s9"
+    ],
+    "coachId": "sizz-coach-nrg-esports-s9",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "dignitas-s9",
+    "name": "Dignitas",
+    "seasonId": "rlcs-s9",
+    "orgId": "dignitas",
+    "region": "EU",
+    "playerCardIds": [
+      "violentpanda-dignitas-s9",
+      "yukeo-dignitas-s9",
+      "aztral-dignitas-s9"
+    ],
+    "coachId": "virge-coach-dignitas-s9",
+    "subId": "jzr-sub-dignitas-s9",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "renault-vitality-s9",
+    "name": "Renault Vitality",
+    "seasonId": "rlcs-s9",
+    "orgId": "renault-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "fairypeak-renault-vitality-s9",
+      "kaydop-renault-vitality-s9",
+      "alpha54-renault-vitality-s9"
+    ],
+    "coachId": "gregan-coach-renault-vitality-s9",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "fc-barcelona-s9",
+    "name": "FC Barcelona",
+    "seasonId": "rlcs-s9",
+    "orgId": "fc-barcelona",
+    "region": "EU",
+    "playerCardIds": [
+      "deevo-fc-barcelona-s9",
+      "ronaky-fc-barcelona-s9",
+      "flakes-fc-barcelona-s9"
+    ],
+    "coachId": "elgeneral-coach-fc-barcelona-s9",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mousesports-s9",
+    "name": "mousesports",
+    "seasonId": "rlcs-s9",
+    "orgId": "mousesports",
+    "region": "EU",
+    "playerCardIds": [
+      "kuxir97-mousesports-s9",
+      "speed-mousesports-s9",
+      "scrubkilla-mousesports-s9"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "ground-zero-gaming-s9",
+    "name": "Ground Zero Gaming",
+    "seasonId": "rlcs-s9",
+    "orgId": "ground-zero-gaming",
+    "region": "OCE",
+    "playerCardIds": [
+      "julz-ground-zero-gaming-s9",
+      "express-ground-zero-gaming-s9",
+      "decka-ground-zero-gaming-s9"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "fury-s9",
+    "name": "FURY",
+    "seasonId": "rlcs-s9",
+    "orgId": "fury",
+    "region": "OCE",
+    "playerCardIds": [
+      "kennysalmon-fury-s9",
+      "amphis-fury-s9",
+      "scarth-fury-s9"
+    ],
+    "coachId": "jimmah-coach-fury-s9",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "ellevens-esports-s9",
+    "name": "Ellevens Esports",
+    "seasonId": "rlcs-s9",
+    "orgId": "ellevens-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "caard-ellevens-esports-s9",
+      "caiotg1-ellevens-esports-s9",
+      "tander-ellevens-esports-s9"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "avidity-esports-s9",
+    "name": "Avidity Esports",
+    "seasonId": "rlcs-s9",
+    "orgId": "avidity-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "haberkamper-avidity-esports-s9",
+      "firefoxd-avidity-esports-s9",
+      "renan-avidity-esports-s9"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nrg-esports-x",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-x",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "garrettg-nrg-esports-x",
+      "jstn-nrg-esports-x",
+      "squishymuffinz-nrg-esports-x"
+    ],
+    "coachId": "sizz-coach-nrg-esports-x",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-x",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-x",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "arsenal-spacestation-gaming-x",
+      "retals-spacestation-gaming-x",
+      "sypical-spacestation-gaming-x"
+    ],
+    "coachId": "chrome-coach-spacestation-gaming-x",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "g2-esports-x",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-x",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jknaps-g2-esports-x",
+      "chicago-g2-esports-x",
+      "dreaz-g2-esports-x"
+    ],
+    "coachId": "jahzo-coach-g2-esports-x",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "rogue-x",
+    "name": "Rogue",
+    "seasonId": "rlcs-x",
+    "orgId": "rogue",
+    "region": "NA",
+    "playerCardIds": [
+      "firstkiller-rogue-x",
+      "turinturo-rogue-x",
+      "taroco-rogue-x"
+    ],
+    "coachId": "corruptedg-coach-rogue-x",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-envy-x",
+    "name": "Team Envy",
+    "seasonId": "rlcs-x",
+    "orgId": "team-envy",
+    "region": "NA",
+    "playerCardIds": [
+      "turbopolsa-team-envy-x",
+      "mist-team-envy-x",
+      "atomic-team-envy-x"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "faze-clan-x",
+    "name": "FaZe Clan",
+    "seasonId": "rlcs-x",
+    "orgId": "faze-clan",
+    "region": "NA",
+    "playerCardIds": [
+      "ayyjayy-faze-clan-x",
+      "gyro-faze-clan-x",
+      "allushin-faze-clan-x"
+    ],
+    "coachId": "moopy-coach-faze-clan-x",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-bds-x",
+    "name": "Team BDS",
+    "seasonId": "rlcs-x",
+    "orgId": "team-bds",
+    "region": "EU",
+    "playerCardIds": [
+      "m0nkeym00n-team-bds-x",
+      "extra-team-bds-x",
+      "marcby8-team-bds-x"
+    ],
+    "coachId": "kael-coach-team-bds-x",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "team-vitality-x",
+    "name": "Team Vitality",
+    "seasonId": "rlcs-x",
+    "orgId": "team-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "kaydop-team-vitality-x",
+      "fairypeak-team-vitality-x",
+      "alpha54-team-vitality-x"
+    ],
+    "coachId": "mout-coach-team-vitality-x",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "top-blokes-x",
+    "name": "Top Blokes",
+    "seasonId": "rlcs-x",
+    "orgId": "top-blokes",
+    "region": "EU",
+    "playerCardIds": [
+      "archie-top-blokes-x",
+      "kassio-top-blokes-x",
+      "flame-top-blokes-x"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "guild-esports-x",
+    "name": "Guild Esports",
+    "seasonId": "rlcs-x",
+    "orgId": "guild-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "tho-guild-esports-x",
+      "noly-guild-esports-x",
+      "deevo-guild-esports-x"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "solary-x",
+    "name": "Solary",
+    "seasonId": "rlcs-x",
+    "orgId": "solary",
+    "region": "EU",
+    "playerCardIds": [
+      "aztral-solary-x",
+      "chausette45-solary-x",
+      "ferra-solary-x"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-queso-x",
+    "name": "Team Queso",
+    "seasonId": "rlcs-x",
+    "orgId": "team-queso",
+    "region": "EU",
+    "playerCardIds": [
+      "atomik-team-queso-x",
+      "dmentza-team-queso-x",
+      "vksailen-team-queso-x"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "ground-zero-gaming-x",
+    "name": "Ground Zero Gaming",
+    "seasonId": "rlcs-x",
+    "orgId": "ground-zero-gaming",
+    "region": "OCE",
+    "playerCardIds": [
+      "amphis-ground-zero-gaming-x",
+      "torsos-ground-zero-gaming-x",
+      "express-ground-zero-gaming-x"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "cringe-society-x",
+    "name": "Cringe Society",
+    "seasonId": "rlcs-x",
+    "orgId": "cringe-society",
+    "region": "OCE",
+    "playerCardIds": [
+      "drippay-cringe-society-x",
+      "decka-cringe-society-x",
+      "julz-cringe-society-x"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "true-neutral-x",
+    "name": "True Neutral",
+    "seasonId": "rlcs-x",
+    "orgId": "true-neutral",
+    "region": "SAM",
+    "playerCardIds": [
+      "ajg-true-neutral-x",
+      "reysbull-true-neutral-x",
+      "shad-true-neutral-x"
+    ],
+    "coachId": "aguesome-coach-true-neutral-x",
+    "subId": "aguesome-sub-true-neutral-x",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "furia-x",
+    "name": "FURIA",
+    "seasonId": "rlcs-x",
+    "orgId": "furia",
+    "region": "SAM",
+    "playerCardIds": [
+      "caard-furia-x",
+      "caiotg1-furia-x",
+      "tander-furia-x"
+    ],
+    "coachId": "stl-coach-furia-x",
+    "subId": "stl-sub-furia-x",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "g2-esports-2122",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jknaps-g2-esports-2122",
+      "chicago-g2-esports-2122",
+      "atomic-g2-esports-2122"
+    ],
+    "coachId": "satthew-coach-g2-esports-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "faze-clan-2122",
+    "name": "FaZe Clan",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "faze-clan",
+    "region": "NA",
+    "playerCardIds": [
+      "firstkiller-faze-clan-2122",
+      "ayyjayy-faze-clan-2122",
+      "sypical-faze-clan-2122"
+    ],
+    "coachId": "rolldizz-coach-faze-clan-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "nrg-esports-2122",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "garrettg-nrg-esports-2122",
+      "jstn-nrg-esports-2122",
+      "squishymuffinz-nrg-esports-2122"
+    ],
+    "coachId": "sizz-coach-nrg-esports-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "version1-2122",
+    "name": "Version1",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "version1",
+    "region": "NA",
+    "playerCardIds": [
+      "torment-version1-2122",
+      "comm-version1-2122",
+      "beastmode-version1-2122"
+    ],
+    "coachId": "fireburner-coach-version1-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "spacestation-gaming-2122",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "arsenal-spacestation-gaming-2122",
+      "retals-spacestation-gaming-2122",
+      "daniel-spacestation-gaming-2122"
+    ],
+    "coachId": "chrome-coach-spacestation-gaming-2122",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "optic-gaming-2122",
+    "name": "OpTic Gaming",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "optic-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "mist-optic-gaming-2122",
+      "dreaz-optic-gaming-2122",
+      "allushin-optic-gaming-2122"
+    ],
+    "coachId": "rawgreg-coach-optic-gaming-2122",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-bds-2122",
+    "name": "Team BDS",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "team-bds",
+    "region": "EU",
+    "playerCardIds": [
+      "m0nkeym00n-team-bds-2122",
+      "extra-team-bds-2122",
+      "seikoo-team-bds-2122"
+    ],
+    "coachId": "mew-coach-team-bds-2122",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "moist-esports-2122",
+    "name": "Moist Esports",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "moist-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "joyo-moist-esports-2122",
+      "rise-moist-esports-2122",
+      "vatira-moist-esports-2122"
+    ],
+    "coachId": "n0ah-coach-moist-esports-2122",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "karmine-corp-2122",
+    "name": "Karmine Corp",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "karmine-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "aztral-karmine-corp-2122",
+      "itachi-karmine-corp-2122",
+      "noly-karmine-corp-2122"
+    ],
+    "coachId": "eversax-coach-karmine-corp-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "dignitas-2122",
+    "name": "Dignitas",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "dignitas",
+    "region": "EU",
+    "playerCardIds": [
+      "apparentlyjack-dignitas-2122",
+      "joreuz-dignitas-2122",
+      "scrubkilla-dignitas-2122"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "smpr-esports-2122",
+    "name": "SMPR Esports",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "smpr-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "kassio-smpr-esports-2122",
+      "chausette45-smpr-esports-2122",
+      "exotiik-smpr-esports-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "endpoint-cex-2122",
+    "name": "Endpoint CeX",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "endpoint-cex",
+    "region": "EU",
+    "playerCardIds": [
+      "relatingwave-endpoint-cex-2122",
+      "metsanauris-endpoint-cex-2122",
+      "archie-endpoint-cex-2122"
+    ],
+    "coachId": "eclipse-coach-endpoint-cex-2122",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "renegades-2122",
+    "name": "Renegades",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "renegades",
+    "region": "OCE",
+    "playerCardIds": [
+      "cjcj-renegades-2122",
+      "kamii-renegades-2122",
+      "fever-renegades-2122"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pioneers-2122",
+    "name": "Pioneers",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "pioneers",
+    "region": "OCE",
+    "playerCardIds": [
+      "scrub-pioneers-2122",
+      "superlachie-pioneers-2122",
+      "bananahead-pioneers-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "furia-2122",
+    "name": "FURIA",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "furia",
+    "region": "SAM",
+    "playerCardIds": [
+      "caard-furia-2122",
+      "caiotg1-furia-2122",
+      "yanxnz-furia-2122"
+    ],
+    "coachId": "kairos-coach-furia-2122",
+    "subId": "stl-sub-furia-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "the-club-2122",
+    "name": "The Club",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "the-club",
+    "region": "SAM",
+    "playerCardIds": [
+      "aztromick-the-club-2122",
+      "kv1-the-club-2122",
+      "lostt-the-club-2122"
+    ],
+    "coachId": "michi-coach-the-club-2122",
+    "subId": "fasi-sub-the-club-2122",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "team-secret-2122",
+    "name": "Team Secret",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "team-secret",
+    "region": "SAM",
+    "playerCardIds": [
+      "sadness-team-secret-2122",
+      "nxghtt-team-secret-2122",
+      "math-team-secret-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "team-falcons-2122",
+    "name": "Team Falcons",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "team-falcons",
+    "region": "MENA",
+    "playerCardIds": [
+      "ahmad-team-falcons-2122",
+      "okhalid-team-falcons-2122",
+      "trk511-team-falcons-2122"
+    ],
+    "coachId": "d7oom24-coach-team-falcons-2122",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "veloce-esports-2122",
+    "name": "Veloce Esports",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "veloce-esports",
+    "region": "MENA",
+    "playerCardIds": [
+      "nwpo-veloce-esports-2122",
+      "smw-veloce-esports-2122",
+      "fahad77-veloce-esports-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "01-esports-2122",
+    "name": "01 Esports",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "01-esports",
+    "region": "MENA",
+    "playerCardIds": [
+      "ali-01-esports-2122",
+      "ovampier-01-esports-2122",
+      "venom-01-esports-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "gaimin-gladiators-2122",
+    "name": "Gaimin Gladiators",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "gaimin-gladiators",
+    "region": "APAC",
+    "playerCardIds": [
+      "maxeew-gaimin-gladiators-2122",
+      "lct-gaimin-gladiators-2122",
+      "virtuoso-gaimin-gladiators-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "senbei-strikers-2122",
+    "name": "Senbei Strikers",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "senbei-strikers",
+    "region": "APAC",
+    "playerCardIds": [
+      "realize-senbei-strikers-2122",
+      "lunatic-senbei-strikers-2122",
+      "popo-senbei-strikers-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "orlando-pirates-exdee-2122",
+    "name": "Orlando Pirates Exdee",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "orlando-pirates-exdee",
+    "region": "SSA",
+    "playerCardIds": [
+      "2die4-orlando-pirates-exdee-2122",
+      "darth-orlando-pirates-exdee-2122",
+      "daisyd-orlando-pirates-exdee-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "bravado-gaming-2122",
+    "name": "Bravado Gaming",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "bravado-gaming",
+    "region": "SSA",
+    "playerCardIds": [
+      "snowyy-bravado-gaming-2122",
+      "kamz-bravado-gaming-2122",
+      "pnidh-bravado-gaming-2122"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "gen-g-mobil1-racing-2223",
+    "name": "Gen.G Mobil1 Racing",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "gen-g-mobil1-racing",
+    "region": "NA",
+    "playerCardIds": [
+      "apparentlyjack-gen-g-mobil1-racing-2223",
+      "noly-gen-g-mobil1-racing-2223",
+      "chronic-gen-g-mobil1-racing-2223"
+    ],
+    "coachId": "allushin-coach-gen-g-mobil1-racing-2223",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "faze-clan-2223",
+    "name": "FaZe Clan",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "faze-clan",
+    "region": "NA",
+    "playerCardIds": [
+      "firstkiller-faze-clan-2223",
+      "mist-faze-clan-2223",
+      "sypical-faze-clan-2223"
+    ],
+    "coachId": "rolldizz-coach-faze-clan-2223",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "g2-esports-2223",
+    "name": "G2 Esports",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "g2-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jknaps-g2-esports-2223",
+      "chicago-g2-esports-2223",
+      "atomic-g2-esports-2223"
+    ],
+    "coachId": "satthew-coach-g2-esports-2223",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-2223",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "arsenal-spacestation-gaming-2223",
+      "lj-spacestation-gaming-2223",
+      "hockser-spacestation-gaming-2223"
+    ],
+    "coachId": "chrome-coach-spacestation-gaming-2223",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "complexity-gaming-2223",
+    "name": "Complexity Gaming",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "complexity-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "crr-complexity-gaming-2223",
+      "reysbull-complexity-gaming-2223",
+      "ajg-complexity-gaming-2223"
+    ],
+    "coachId": "aguesome-coach-complexity-gaming-2223",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-vitality-2223",
+    "name": "Team Vitality",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "team-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "zen-team-vitality-2223",
+      "alpha54-team-vitality-2223",
+      "radosin-team-vitality-2223"
+    ],
+    "coachId": "ferra-coach-team-vitality-2223",
+    "subId": "saizen-sub-team-vitality-2223",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "team-bds-2223",
+    "name": "Team BDS",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "team-bds",
+    "region": "EU",
+    "playerCardIds": [
+      "m0nkeym00n-team-bds-2223",
+      "seikoo-team-bds-2223",
+      "rise-team-bds-2223"
+    ],
+    "coachId": "mew-coach-team-bds-2223",
+    "subId": "extra-sub-team-bds-2223",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "team-liquid-2223",
+    "name": "Team Liquid",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "team-liquid",
+    "region": "EU",
+    "playerCardIds": [
+      "acronik-team-liquid-2223",
+      "atow-team-liquid-2223",
+      "oski-team-liquid-2223"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "karmine-corp-2223",
+    "name": "Karmine Corp",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "karmine-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "vatira-karmine-corp-2223",
+      "itachi-karmine-corp-2223",
+      "exotiik-karmine-corp-2223"
+    ],
+    "coachId": "eversax-coach-karmine-corp-2223",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "moist-esports-2223",
+    "name": "Moist Esports",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "moist-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "joyo-moist-esports-2223",
+      "kash-moist-esports-2223",
+      "juicy-moist-esports-2223"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "oxygen-esports-2223",
+    "name": "Oxygen Esports",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "oxygen-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "archie-oxygen-esports-2223",
+      "joreuz-oxygen-esports-2223",
+      "eekso-oxygen-esports-2223"
+    ],
+    "subId": "gawfs-sub-oxygen-esports-2223",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "g1-2223",
+    "name": "G1",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "g1",
+    "region": "EU",
+    "playerCardIds": [
+      "atomik-g1-2223",
+      "dorito-g1-2223",
+      "oaly-g1-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pwr-2223",
+    "name": "PWR",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "pwr",
+    "region": "OCE",
+    "playerCardIds": [
+      "torsos-pwr-2223",
+      "fever-pwr-2223",
+      "bananahead-pwr-2223"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pioneers-2223",
+    "name": "Pioneers",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "pioneers",
+    "region": "OCE",
+    "playerCardIds": [
+      "scrub-pioneers-2223",
+      "superlachie-pioneers-2223",
+      "fiberr-pioneers-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "team-secret-2223",
+    "name": "Team Secret",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "team-secret",
+    "region": "SAM",
+    "playerCardIds": [
+      "sadness-team-secret-2223",
+      "kv1-team-secret-2223",
+      "nxghtt-team-secret-2223"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "kru-esports-2223",
+    "name": "KRÜ Esports",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "kru-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "brad-kru-esports-2223",
+      "droppz-kru-esports-2223",
+      "shad-kru-esports-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "ninjas-in-pyjamas-2223",
+    "name": "Ninjas in Pyjamas",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "ninjas-in-pyjamas",
+    "region": "SAM",
+    "playerCardIds": [
+      "aztromick-ninjas-in-pyjamas-2223",
+      "motta-ninjas-in-pyjamas-2223",
+      "swiftt-ninjas-in-pyjamas-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "rule-one-2223",
+    "name": "Rule One",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "rule-one",
+    "region": "MENA",
+    "playerCardIds": [
+      "rw9-rule-one-2223",
+      "kiileerrz-rule-one-2223",
+      "m7sn-rule-one-2223"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "team-falcons-2223",
+    "name": "Team Falcons",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "team-falcons",
+    "region": "MENA",
+    "playerCardIds": [
+      "ahmad-team-falcons-2223",
+      "okhalid-team-falcons-2223",
+      "trk511-team-falcons-2223"
+    ],
+    "coachId": "d7oom24-coach-team-falcons-2223",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "twisted-minds-2223",
+    "name": "Twisted Minds",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "twisted-minds",
+    "region": "MENA",
+    "playerCardIds": [
+      "smw-twisted-minds-2223",
+      "venom-twisted-minds-2223",
+      "nwpo-twisted-minds-2223"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "gaimin-gladiators-2223",
+    "name": "Gaimin Gladiators",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "gaimin-gladiators",
+    "region": "APAC",
+    "playerCardIds": [
+      "maxeew-gaimin-gladiators-2223",
+      "lct-gaimin-gladiators-2223",
+      "virtuoso-gaimin-gladiators-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "elevate-2223",
+    "name": "Elevate",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "elevate",
+    "region": "APAC",
+    "playerCardIds": [
+      "realize-elevate-2223",
+      "lunatic-elevate-2223",
+      "sigms-elevate-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "limitless-2223",
+    "name": "Limitless",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "limitless",
+    "region": "SSA",
+    "playerCardIds": [
+      "2die4-limitless-2223",
+      "snowyy-limitless-2223",
+      "sweaty-limitless-2223"
+    ],
+    "coachId": "noxes-coach-limitless-2223",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "valiant-2223",
+    "name": "Valiant",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "valiant",
+    "region": "SSA",
+    "playerCardIds": [
+      "arceon-valiant-2223",
+      "fefe-valiant-2223",
+      "rxii-valiant-2223"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "g2-stride-2024",
+    "name": "G2 Stride",
+    "seasonId": "rlcs-2024",
+    "orgId": "g2-stride",
+    "region": "NA",
+    "playerCardIds": [
+      "beastmode-g2-stride-2024",
+      "atomic-g2-stride-2024",
+      "daniel-g2-stride-2024"
+    ],
+    "coachId": "satthew-coach-g2-stride-2024",
+    "subId": "dreaz-sub-g2-stride-2024",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "gen-g-mobil1-racing-2024",
+    "name": "Gen.G Mobil1 Racing",
+    "seasonId": "rlcs-2024",
+    "orgId": "gen-g-mobil1-racing",
+    "region": "NA",
+    "playerCardIds": [
+      "apparentlyjack-gen-g-mobil1-racing-2024",
+      "chronic-gen-g-mobil1-racing-2024",
+      "firstkiller-gen-g-mobil1-racing-2024"
+    ],
+    "coachId": "rawgreg-coach-gen-g-mobil1-racing-2024",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-2024",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-2024",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "lj-spacestation-gaming-2024",
+      "chicago-spacestation-gaming-2024",
+      "hockser-spacestation-gaming-2024"
+    ],
+    "coachId": "chrome-coach-spacestation-gaming-2024",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "og-2024",
+    "name": "OG",
+    "seasonId": "rlcs-2024",
+    "orgId": "og",
+    "region": "NA",
+    "playerCardIds": [
+      "jknaps-og-2024",
+      "noly-og-2024",
+      "comm-og-2024"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-bds-2024",
+    "name": "Team BDS",
+    "seasonId": "rlcs-2024",
+    "orgId": "team-bds",
+    "region": "EU",
+    "playerCardIds": [
+      "m0nkeym00n-team-bds-2024",
+      "exotiik-team-bds-2024",
+      "dralii-team-bds-2024"
+    ],
+    "coachId": "kassio-coach-team-bds-2024",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "gentle-mates-alpine-2024",
+    "name": "Gentle Mates Alpine",
+    "seasonId": "rlcs-2024",
+    "orgId": "gentle-mates-alpine",
+    "region": "EU",
+    "playerCardIds": [
+      "seikoo-gentle-mates-alpine-2024",
+      "itachi-gentle-mates-alpine-2024",
+      "juicy-gentle-mates-alpine-2024"
+    ],
+    "coachId": "eversax-coach-gentle-mates-alpine-2024",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "karmine-corp-2024",
+    "name": "Karmine Corp",
+    "seasonId": "rlcs-2024",
+    "orgId": "karmine-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "vatira-karmine-corp-2024",
+      "atow-karmine-corp-2024",
+      "rise-karmine-corp-2024"
+    ],
+    "coachId": "ferra-coach-karmine-corp-2024",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "team-vitality-2024",
+    "name": "Team Vitality",
+    "seasonId": "rlcs-2024",
+    "orgId": "team-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "zen-team-vitality-2024",
+      "alpha54-team-vitality-2024",
+      "radosin-team-vitality-2024"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "oxygen-esports-2024",
+    "name": "Oxygen Esports",
+    "seasonId": "rlcs-2024",
+    "orgId": "oxygen-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "oski-oxygen-esports-2024",
+      "joyo-oxygen-esports-2024",
+      "eekso-oxygen-esports-2024"
+    ],
+    "coachId": "snaski-coach-oxygen-esports-2024",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pwr-2024",
+    "name": "PWR",
+    "seasonId": "rlcs-2024",
+    "orgId": "pwr",
+    "region": "OCE",
+    "playerCardIds": [
+      "torsos-pwr-2024",
+      "fever-pwr-2024",
+      "bananahead-pwr-2024"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "quiktrip-pioneers-gaming-2024",
+    "name": "QuikTrip Pioneers Gaming",
+    "seasonId": "rlcs-2024",
+    "orgId": "quiktrip-pioneers-gaming",
+    "region": "OCE",
+    "playerCardIds": [
+      "superlachie-quiktrip-pioneers-gaming-2024",
+      "scrub-quiktrip-pioneers-gaming-2024",
+      "fiberr-quiktrip-pioneers-gaming-2024"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "furia-2024",
+    "name": "FURIA",
+    "seasonId": "rlcs-2024",
+    "orgId": "furia",
+    "region": "SAM",
+    "playerCardIds": [
+      "yanxnz-furia-2024",
+      "lostt-furia-2024",
+      "drufinho-furia-2024"
+    ],
+    "coachId": "brunovisquii-coach-furia-2024",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "team-secret-2024",
+    "name": "Team Secret",
+    "seasonId": "rlcs-2024",
+    "orgId": "team-secret",
+    "region": "SAM",
+    "playerCardIds": [
+      "kv1-team-secret-2024",
+      "sadness-team-secret-2024",
+      "brad-team-secret-2024"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-falcons-2024",
+    "name": "Team Falcons",
+    "seasonId": "rlcs-2024",
+    "orgId": "team-falcons",
+    "region": "MENA",
+    "playerCardIds": [
+      "trk511-team-falcons-2024",
+      "kiileerrz-team-falcons-2024",
+      "rw9-team-falcons-2024"
+    ],
+    "coachId": "d7oom24-coach-team-falcons-2024",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "gaimin-gladiators-2024",
+    "name": "Gaimin Gladiators",
+    "seasonId": "rlcs-2024",
+    "orgId": "gaimin-gladiators",
+    "region": "APAC",
+    "playerCardIds": [
+      "maxeew-gaimin-gladiators-2024",
+      "tho-gaimin-gladiators-2024",
+      "virtuoso-gaimin-gladiators-2024"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "limitless-2024",
+    "name": "Limitless",
+    "seasonId": "rlcs-2024",
+    "orgId": "limitless",
+    "region": "SSA",
+    "playerCardIds": [
+      "2die4-limitless-2024",
+      "snowyy-limitless-2024",
+      "sweatyclarence-limitless-2024"
+    ],
+    "coachId": "noxes-coach-limitless-2024",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nrg-esports-2025",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-2025",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "beastmode-nrg-esports-2025",
+      "atomic-nrg-esports-2025",
+      "daniel-nrg-esports-2025"
+    ],
+    "coachId": "satthew-coach-nrg-esports-2025",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "the-ultimates-2025",
+    "name": "The Ultimates",
+    "seasonId": "rlcs-2025",
+    "orgId": "the-ultimates",
+    "region": "NA",
+    "playerCardIds": [
+      "firstkiller-the-ultimates-2025",
+      "lj-the-ultimates-2025",
+      "chronic-the-ultimates-2025"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-2025",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-2025",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "scrzbbles-spacestation-gaming-2025",
+      "reveal-spacestation-gaming-2025",
+      "kofyr-spacestation-gaming-2025"
+    ],
+    "coachId": "xpere-coach-spacestation-gaming-2025",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "gen-g-mobil1-racing-2025",
+    "name": "Gen.G Mobil1 Racing",
+    "seasonId": "rlcs-2025",
+    "orgId": "gen-g-mobil1-racing",
+    "region": "NA",
+    "playerCardIds": [
+      "majicbear-gen-g-mobil1-racing-2025",
+      "cheese-gen-g-mobil1-racing-2025",
+      "jstn-gen-g-mobil1-racing-2025"
+    ],
+    "coachId": "rawgreg-coach-gen-g-mobil1-racing-2025",
+    "subId": "thundah-sub-gen-g-mobil1-racing-2025",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "shopify-rebellion-2025",
+    "name": "Shopify Rebellion",
+    "seasonId": "rlcs-2025",
+    "orgId": "shopify-rebellion",
+    "region": "NA",
+    "playerCardIds": [
+      "2piece-shopify-rebellion-2025",
+      "retals-shopify-rebellion-2025",
+      "wahvey-shopify-rebellion-2025"
+    ],
+    "coachId": "memory-coach-shopify-rebellion-2025",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "karmine-corp-2025",
+    "name": "Karmine Corp",
+    "seasonId": "rlcs-2025",
+    "orgId": "karmine-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "vatira-karmine-corp-2025",
+      "atow-karmine-corp-2025",
+      "dralii-karmine-corp-2025"
+    ],
+    "coachId": "eversax-coach-karmine-corp-2025",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "dignitas-2025",
+    "name": "Dignitas",
+    "seasonId": "rlcs-2025",
+    "orgId": "dignitas",
+    "region": "EU",
+    "playerCardIds": [
+      "fiv3up-dignitas-2025",
+      "bora-dignitas-2025",
+      "evoh-dignitas-2025"
+    ],
+    "coachId": "eclipse-coach-dignitas-2025",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-vitality-2025",
+    "name": "Team Vitality",
+    "seasonId": "rlcs-2025",
+    "orgId": "team-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "zen-team-vitality-2025",
+      "m0nkeym00n-team-vitality-2025",
+      "exotiik-team-vitality-2025"
+    ],
+    "coachId": "hugo-coach-team-vitality-2025",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "ninjas-in-pyjamas-2025",
+    "name": "Ninjas in Pyjamas",
+    "seasonId": "rlcs-2025",
+    "orgId": "ninjas-in-pyjamas",
+    "region": "EU",
+    "playerCardIds": [
+      "apparentlyjack-ninjas-in-pyjamas-2025",
+      "joreuz-ninjas-in-pyjamas-2025",
+      "stizzy-ninjas-in-pyjamas-2025"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "wildcard-2025",
+    "name": "Wildcard",
+    "seasonId": "rlcs-2025",
+    "orgId": "wildcard",
+    "region": "OCE",
+    "playerCardIds": [
+      "fever-wildcard-2025",
+      "torsos-wildcard-2025",
+      "bananahead-wildcard-2025"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "tsm-2025",
+    "name": "TSM",
+    "seasonId": "rlcs-2025",
+    "orgId": "tsm",
+    "region": "OCE",
+    "playerCardIds": [
+      "kevin-tsm-2025",
+      "sphinx-tsm-2025",
+      "catalysm-tsm-2025"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "furia-2025",
+    "name": "FURIA",
+    "seasonId": "rlcs-2025",
+    "orgId": "furia",
+    "region": "SAM",
+    "playerCardIds": [
+      "swiftt-furia-2025",
+      "lostt-furia-2025",
+      "yanxnz-furia-2025"
+    ],
+    "coachId": "brunovisquii-coach-furia-2025",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "team-secret-2025",
+    "name": "Team Secret",
+    "seasonId": "rlcs-2025",
+    "orgId": "team-secret",
+    "region": "SAM",
+    "playerCardIds": [
+      "motta-team-secret-2025",
+      "suco-team-secret-2025",
+      "drufinho-team-secret-2025"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mibr-2025",
+    "name": "MIBR",
+    "seasonId": "rlcs-2025",
+    "orgId": "mibr",
+    "region": "SAM",
+    "playerCardIds": [
+      "brad-mibr-2025",
+      "droppz-mibr-2025",
+      "reysbull-mibr-2025"
+    ],
+    "coachId": "pekitas-coach-mibr-2025",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-falcons-2025",
+    "name": "Team Falcons",
+    "seasonId": "rlcs-2025",
+    "orgId": "team-falcons",
+    "region": "MENA",
+    "playerCardIds": [
+      "trk511-team-falcons-2025",
+      "rw9-team-falcons-2025",
+      "kiileerrz-team-falcons-2025"
+    ],
+    "coachId": "d7oom24-coach-team-falcons-2025",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "roc-esports-2025",
+    "name": "ROC Esports",
+    "seasonId": "rlcs-2025",
+    "orgId": "roc-esports",
+    "region": "MENA",
+    "playerCardIds": [
+      "twiz-roc-esports-2025",
+      "abdullah-roc-esports-2025",
+      "ghaazi0-roc-esports-2025"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "twisted-minds-2025",
+    "name": "Twisted Minds",
+    "seasonId": "rlcs-2025",
+    "orgId": "twisted-minds",
+    "region": "MENA",
+    "playerCardIds": [
+      "nwpo-twisted-minds-2025",
+      "rise-twisted-minds-2025",
+      "atomik-twisted-minds-2025"
+    ],
+    "subId": "hisoka-sub-twisted-minds-2025",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "geekay-esports-2025",
+    "name": "Geekay Esports",
+    "seasonId": "rlcs-2025",
+    "orgId": "geekay-esports",
+    "region": "MENA",
+    "playerCardIds": [
+      "tempoh-geekay-esports-2025",
+      "apparentlyjack-geekay-esports-2025",
+      "mtzr-geekay-esports-2025"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "virtus-pro-2025",
+    "name": "Virtus.pro",
+    "seasonId": "rlcs-2025",
+    "orgId": "virtus-pro",
+    "region": "APAC",
+    "playerCardIds": [
+      "catalysm-virtus-pro-2025",
+      "sosa-virtus-pro-2025",
+      "sphinx-virtus-pro-2025"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "fut-esports-2025",
+    "name": "FUT Esports",
+    "seasonId": "rlcs-2025",
+    "orgId": "fut-esports",
+    "region": "SSA",
+    "playerCardIds": [
+      "vksailen-fut-esports-2025",
+      "leoro-fut-esports-2025",
+      "torres823-fut-esports-2025"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nrg-esports-2026",
+    "name": "NRG Esports",
+    "seasonId": "rlcs-2026",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "beastmode-nrg-esports-2026",
+      "atomic-nrg-esports-2026",
+      "daniel-nrg-esports-2026"
+    ],
+    "coachId": "satthew-coach-nrg-esports-2026",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "shopify-rebellion-2026",
+    "name": "Shopify Rebellion",
+    "seasonId": "rlcs-2026",
+    "orgId": "shopify-rebellion",
+    "region": "NA",
+    "playerCardIds": [
+      "lj-shopify-rebellion-2026",
+      "kofyr-shopify-rebellion-2026",
+      "firstkiller-shopify-rebellion-2026"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-2026",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-2026",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "diaz-spacestation-gaming-2026",
+      "zach-spacestation-gaming-2026",
+      "reveal-spacestation-gaming-2026"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "fut-esports-2026",
+    "name": "FUT Esports",
+    "seasonId": "rlcs-2026",
+    "orgId": "fut-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "jstn-fut-esports-2026",
+      "chronic-fut-esports-2026",
+      "cheese-fut-esports-2026"
+    ],
+    "coachId": "laf-coach-fut-esports-2026",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "karmine-corp-2026",
+    "name": "Karmine Corp",
+    "seasonId": "rlcs-2026",
+    "orgId": "karmine-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "juicy-karmine-corp-2026",
+      "atow-karmine-corp-2026",
+      "vatira-karmine-corp-2026"
+    ],
+    "coachId": "extra-coach-karmine-corp-2026",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "gentle-mates-alpine-2026",
+    "name": "Gentle Mates Alpine",
+    "seasonId": "rlcs-2026",
+    "orgId": "gentle-mates-alpine",
+    "region": "EU",
+    "playerCardIds": [
+      "nass-gentle-mates-alpine-2026",
+      "archie-gentle-mates-alpine-2026",
+      "oski-gentle-mates-alpine-2026"
+    ],
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "team-vitality-2026",
+    "name": "Team Vitality",
+    "seasonId": "rlcs-2026",
+    "orgId": "team-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "zen-team-vitality-2026",
+      "exotiik-team-vitality-2026",
+      "stizzy-team-vitality-2026"
+    ],
+    "coachId": "eversax-coach-team-vitality-2026",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "ninjas-in-pyjamas-2026",
+    "name": "Ninjas in Pyjamas",
+    "seasonId": "rlcs-2026",
+    "orgId": "ninjas-in-pyjamas",
+    "region": "EU",
+    "playerCardIds": [
+      "oaly-ninjas-in-pyjamas-2026",
+      "joreuz-ninjas-in-pyjamas-2026",
+      "crr-ninjas-in-pyjamas-2026"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "manchester-city-esports-2026",
+    "name": "Manchester City Esports",
+    "seasonId": "rlcs-2026",
+    "orgId": "manchester-city-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "seikoo-manchester-city-esports-2026",
+      "ejby-manchester-city-esports-2026",
+      "accro-manchester-city-esports-2026"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pwr-2026",
+    "name": "PWR",
+    "seasonId": "rlcs-2026",
+    "orgId": "pwr",
+    "region": "OCE",
+    "playerCardIds": [
+      "gus-pwr-2026",
+      "superlachie-pwr-2026",
+      "fiberr-pwr-2026"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mibr-2026",
+    "name": "MIBR",
+    "seasonId": "rlcs-2026",
+    "orgId": "mibr",
+    "region": "SAM",
+    "playerCardIds": [
+      "sadness-mibr-2026",
+      "aztromick-mibr-2026",
+      "reysbull-mibr-2026"
+    ],
+    "coachId": "pekitas-coach-mibr-2026",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "furia-2026",
+    "name": "FURIA",
+    "seasonId": "rlcs-2026",
+    "orgId": "furia",
+    "region": "SAM",
+    "playerCardIds": [
+      "swiftt-furia-2026",
+      "lostt-furia-2026",
+      "yanxnz-furia-2026"
+    ],
+    "coachId": "brunovisquii-coach-furia-2026",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "twisted-minds-2026",
+    "name": "Twisted Minds",
+    "seasonId": "rlcs-2026",
+    "orgId": "twisted-minds",
+    "region": "MENA",
+    "playerCardIds": [
+      "m0nkeym00n-twisted-minds-2026",
+      "nwpo-twisted-minds-2026",
+      "trk511-twisted-minds-2026"
+    ],
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "team-falcons-2026",
+    "name": "Team Falcons",
+    "seasonId": "rlcs-2026",
+    "orgId": "team-falcons",
+    "region": "MENA",
+    "playerCardIds": [
+      "dralii-team-falcons-2026",
+      "kiileerrz-team-falcons-2026",
+      "rw9-team-falcons-2026"
+    ],
+    "coachId": "d7oom24-coach-team-falcons-2026",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "tsm-2026",
+    "name": "TSM",
+    "seasonId": "rlcs-2026",
+    "orgId": "tsm",
+    "region": "APAC",
+    "playerCardIds": [
+      "kevin-tsm-2026",
+      "sphinx-tsm-2026",
+      "catalysm-tsm-2026"
+    ],
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pioneers-2026",
+    "name": "Pioneers",
+    "seasonId": "rlcs-2026",
+    "orgId": "pioneers",
+    "region": "SSA",
+    "playerCardIds": [
+      "sweaty-pioneers-2026",
+      "luiisp-pioneers-2026",
+      "2die4-pioneers-2026"
+    ],
+    "coachId": "lawler-coach-pioneers-2026",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  }
 ]

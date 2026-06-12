@@ -14,7 +14,7 @@ import {
   SPECIAL_TYPE_LABELS,
   STAT_LABELS,
 } from "@/content/copy";
-import { effectiveStats, resolvePlayerCard } from "@/engine/cards";
+import { effectiveStats, resolveSpecial } from "@/engine/cards";
 import type { SpecialCard, SpecialRarity } from "@/engine/types";
 import { cx, countryName, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -23,7 +23,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { StatBar } from "@/components/ui/ProgressBar";
-import { TiltCard } from "@/components/ui/TiltCard";
 import { GameCard } from "@/components/cards/GameCard";
 
 const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
@@ -106,15 +105,14 @@ export default function CollectionPage() {
           {visible.map((sp) => {
             const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
             return isUnlocked ? (
-              <TiltCard key={sp.id}>
-                <GameCard
-                  card={resolvePlayerCard(sp.baseCardId, sp.id)}
-                  showOverall
-                  specialCollected
-                  size="md"
-                  onClick={() => setDetail(sp)}
-                />
-              </TiltCard>
+              <GameCard
+                key={sp.id}
+                card={resolveSpecial(sp)}
+                showOverall
+                specialCollected
+                size="md"
+                onClick={() => setDetail(sp)}
+              />
             ) : (
               <LockedCard key={sp.id} sp={sp} onClick={() => setDetail(sp)} />
             );
@@ -191,12 +189,13 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
 }
 
 function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: string }) {
-  const resolved = resolvePlayerCard(sp.baseCardId, sp.id);
+  const resolved = resolveSpecial(sp);
   const stats = effectiveStats(sp.overall, sp.stats);
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr]">
       <div className="mx-auto">
-        <GameCard card={resolved} showOverall specialCollected size="lg" />
+        {/* Detail view gets the strongest tilt of all (item: collection UX). */}
+        <GameCard card={resolved} showOverall specialCollected size="lg" tilt="max" />
       </div>
       <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap gap-1.5">

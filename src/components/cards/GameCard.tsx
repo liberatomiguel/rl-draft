@@ -18,6 +18,7 @@ import type { ResolvedCard } from "@/engine/cards";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
+import { TiltCard, type TiltIntensity } from "@/components/ui/TiltCard";
 
 export interface GameCardProps {
   card: ResolvedCard;
@@ -29,6 +30,11 @@ export interface GameCardProps {
   selected?: boolean;
   disabled?: boolean;
   disabledLabel?: string;
+  /**
+   * 3D tilt: defaults to light on base cards and strong on specials;
+   * "max" is for the collection detail view. "off" disables it.
+   */
+  tilt?: TiltIntensity | "off";
   onClick?: () => void;
   className?: string;
 }
@@ -68,6 +74,7 @@ export function GameCard({
   selected,
   disabled,
   disabledLabel,
+  tilt,
   onClick,
   className,
 }: GameCardProps) {
@@ -76,6 +83,8 @@ export function GameCard({
   const hiddenBase = !showOverall && !isSpecial;
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
+  const tiltTier: TiltIntensity | "off" =
+    tilt ?? (disabled ? "off" : isSpecial ? "strong" : "light");
 
   const sizeClasses =
     size === "lg"
@@ -100,6 +109,17 @@ export function GameCard({
     >
       {/* Special photo layer */}
       {isSpecial ? <SpecialArt card={card} /> : null}
+
+      {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive) */}
+      {isSpecial && card.special ? (
+        <>
+          {card.special.rarity !== "rare" ? <div className="reverse-holo" aria-hidden /> : null}
+          <div
+            aria-hidden
+            className={cx("holo-rainbow z-[5]", `holo-rainbow-${card.special.rarity}`)}
+          />
+        </>
+      ) : null}
 
       {/* Top row */}
       <div className="relative z-10 flex items-start justify-between">
@@ -218,8 +238,8 @@ export function GameCard({
     </div>
   );
 
-  if (onClick && !disabled) {
-    return (
+  const interactiveBody =
+    onClick && !disabled ? (
       <button
         type="button"
         onClick={onClick}
@@ -228,9 +248,12 @@ export function GameCard({
       >
         {body}
       </button>
+    ) : (
+      <div className="relative">{body}</div>
     );
-  }
-  return <div className="relative">{body}</div>;
+
+  if (tiltTier === "off") return interactiveBody;
+  return <TiltCard intensity={tiltTier}>{interactiveBody}</TiltCard>;
 }
 
 /** Photo layer for special cards: real image or stylized fallback art. */

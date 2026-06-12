@@ -414,16 +414,21 @@ body {
   overflow: hidden;
 }
 
+/*
+ * repeating-conic-gradient — a plain conic-gradient holds its last stop
+ * after the listed segment, which rendered only TWO beams (v0.3 bug).
+ * The repeating variant tiles the beam pattern around the full circle.
+ */
 .celebrate-rays {
   position: absolute;
   inset: -55%;
-  background: conic-gradient(
+  background: repeating-conic-gradient(
     from 0deg,
-    transparent 0deg 14deg,
-    rgba(249, 115, 22, 0.07) 14deg 22deg,
-    transparent 22deg 40deg,
-    rgba(251, 191, 36, 0.06) 40deg 48deg,
-    transparent 48deg 72deg
+    transparent 0deg 9deg,
+    rgba(249, 115, 22, 0.07) 9deg 14deg,
+    transparent 14deg 24deg,
+    rgba(251, 191, 36, 0.06) 24deg 29deg,
+    transparent 29deg 40deg
   );
   animation: rays-spin 26s linear infinite;
   pointer-events: none;
@@ -475,13 +480,13 @@ body {
 .celebrate-rays-prism {
   position: absolute;
   inset: -55%;
-  background: conic-gradient(
+  background: repeating-conic-gradient(
     from 0deg,
-    transparent 0deg 12deg,
-    rgba(56, 189, 248, 0.08) 12deg 20deg,
-    transparent 20deg 38deg,
-    rgba(168, 85, 247, 0.07) 38deg 46deg,
-    transparent 46deg 70deg
+    transparent 0deg 8deg,
+    rgba(56, 189, 248, 0.08) 8deg 13deg,
+    transparent 13deg 22deg,
+    rgba(168, 85, 247, 0.07) 22deg 27deg,
+    transparent 27deg 36deg
   );
   animation: rays-spin 22s linear infinite;
   pointer-events: none;
@@ -556,6 +561,50 @@ body {
     rgba(255, 255, 255, 0.14),
     transparent 55%
   );
+}
+
+/*
+ * Balatro-style cursor-reactive holo layer for special cards.
+ * Rainbow conic centered on the pointer, blended with color-dodge —
+ * intensity scales with rarity (foil → reverse holo → holo → polychrome).
+ */
+.holo-rainbow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.2), transparent 42%),
+    conic-gradient(
+      from 160deg at var(--mx, 50%) var(--my, 30%),
+      rgba(255, 80, 160, 0.14),
+      rgba(80, 220, 255, 0.14),
+      rgba(255, 230, 90, 0.13),
+      rgba(160, 110, 255, 0.14),
+      rgba(255, 80, 160, 0.14)
+    );
+  mix-blend-mode: color-dodge;
+  transition: opacity 0.3s ease;
+}
+
+.holo-rainbow-rare { opacity: 0.3; }
+.holo-rainbow-epic { opacity: 0.45; }
+.holo-rainbow-mythic { opacity: 0.6; }
+.holo-rainbow-legendary {
+  opacity: 0.75;
+  animation: holo-shift 7s ease-in-out infinite;
+}
+
+/* Reverse-holo backdrop texture (epic+): shimmer behind the content */
+.reverse-holo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 8px),
+    linear-gradient(200deg, rgba(120, 200, 255, 0.07), rgba(255, 130, 200, 0.07), rgba(255, 220, 120, 0.06));
+  mix-blend-mode: screen;
 }
 
 /* ---------------------------------------------------------------------------

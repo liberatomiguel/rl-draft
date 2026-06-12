@@ -15,7 +15,7 @@
 // 1. Data entities
 // ---------------------------------------------------------------------------
 
-export type Region = "NA" | "EU" | "SAM" | "MENA" | "OCE" | "APAC";
+export type Region = "NA" | "EU" | "SAM" | "MENA" | "OCE" | "APAC" | "SSA";
 
 export type Difficulty = "easy" | "normal" | "hard" | "legacy";
 
@@ -39,7 +39,8 @@ export type SpecialCardType =
   | "major_mvp"
   | "worlds_mvp"
   | "mythic"
-  | "legend";
+  | "legend"
+  | "coach";
 
 /** Org / coach buff notation used across the game. `~` means neutral. */
 export type BuffLevel = "~" | "+" | "++" | "+++";
@@ -61,8 +62,12 @@ export interface Player {
   id: string;
   nickname: string;
   realName?: string;
-  /** ISO 3166-1 alpha-2 country code, e.g. "BR", "FR", "US". */
-  country: string;
+  /**
+   * ISO 3166-1 alpha-2 country code, e.g. "BR", "FR", "US".
+   * Optional — the imported dataset doesn't carry nationality for everyone;
+   * same-country chemistry only applies when both sides have one.
+   */
+  country?: string;
   region: Region;
 }
 
@@ -124,7 +129,7 @@ export interface SubCard {
   id: string;
   personId: string;
   name: string;
-  country: string;
+  country?: string;
   region: Region;
   orgId: string;
   lineupId: string;
@@ -144,19 +149,30 @@ export interface Lineup {
   playerCardIds: [string, string, string];
   coachId?: string;
   subId?: string;
+  /**
+   * Org buff strength AS OF this season (orgs grow/shrink era to era).
+   * Falls back to the org entity's default level when absent.
+   */
+  orgBuffLevel?: BuffLevel;
   historicalStrength: HistoricalStrength;
 }
 
 export type SpecialEffectType =
-  | "clutch_boost" // bonus in the deciding game of a series
-  | "swiss_consistency" // flat bonus during Swiss stage games
-  | "playoff_experience" // flat bonus during playoff games
-  | "upset_boost" // bonus when facing a higher-rated opponent
-  | "defense_stability" // dampens this team's negative variance
-  | "high_roll"; // boosts mechanics proc bonus
+  // v3 effect model: direct attribute boosts (simple, no conditions).
+  | "attribute_boost" // + value to the card's listed attributes
+  | "team_attribute_boost" // + value to the TEAM's listed attributes (coach)
+  // Legacy situational types — still supported by the engine.
+  | "clutch_boost"
+  | "swiss_consistency"
+  | "playoff_experience"
+  | "upset_boost"
+  | "defense_stability"
+  | "high_roll";
 
 export interface SpecialEffect {
   type: SpecialEffectType;
+  /** Boosted attributes for the attribute_boost family. */
+  attributes?: StatKey[];
   value: number;
   /** Human readable, shown in collection/team review. */
   description: string;
@@ -164,8 +180,11 @@ export interface SpecialEffect {
 
 export interface SpecialCard {
   id: string;
+  /** "player" (default) or "coach". */
+  kind?: "player" | "coach";
+  /** Person identity (player id, or coach person id for coach specials). */
   playerId: string;
-  /** The base card this special version replaces when it appears in a draft. */
+  /** Base card replaced in draft offers: a player card or a coach card. */
   baseCardId: string;
   title: string;
   cardType: SpecialCardType;

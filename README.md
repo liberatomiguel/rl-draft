@@ -22,9 +22,15 @@ npm run dev        # http://localhost:3000
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm test` | Engine + data test suite (vitest) |
+| `npm run build:data` | Regenerate all data JSONs from `data-sources/teams.md` |
 | `npm run validate:data` | Validate the JSON dataset only |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` | ESLint |
+
+> **`npm run dev` says "connection refused"?** A previous dev server didn't
+> shut down cleanly. Close stray `node.exe` processes (Task Manager) and
+> delete the `.next` folder — Next 16 keeps a single-instance lock in
+> `.next/dev/lock` that blocks new servers.
 
 ## Stack
 

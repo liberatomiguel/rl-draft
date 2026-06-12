@@ -51,7 +51,10 @@ export interface StartRunOptions {
 
 interface RunStore {
   run: RunState | null;
+  /** Mode the setup screen configures — set by the home menu cards. */
+  setupMode: Exclude<RunMode, "daily">;
 
+  setSetupMode: (mode: Exclude<RunMode, "daily">) => void;
   startRun: (options: StartRunOptions) => void;
   startDailyRun: () => void;
   clearRun: () => void;
@@ -73,6 +76,9 @@ export const useRunStore = create<RunStore>()(
   persist(
     (set, get) => ({
       run: null,
+      setupMode: "classic",
+
+      setSetupMode: (setupMode) => set({ setupMode }),
 
       startRun: ({ mode, difficulty, showOverall }) => {
         const seed = randomSeed();

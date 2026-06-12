@@ -1,12 +1,34 @@
 # Data Guide
 
-Everything the game knows about RLCS history lives in `src/data/*.json`.
-The files are hand-editable: change a value, save, refresh. Every file is
-validated on load (zod schema + referential integrity) — a broken reference
-fails loudly with a message pointing at the exact id.
+## ⚙️ The dataset pipeline (v0.4+)
 
-Run `npm run validate:data` after editing to check everything without
-opening the app.
+The JSONs in `src/data/` are **GENERATED** — the source of truth is
+**`data-sources/teams.md`** (the curated "all RLCS finals teams" archive,
+208 lineups across 2016-2026). To update the dataset:
+
+1. Edit `data-sources/teams.md` (same team-block format, see the file).
+2. Run `npm run build:data`.
+3. Run `npm run validate:data` (schema + referential integrity).
+
+The generator (`scripts/build-dataset.mjs`) handles: person identity
+de-duplication across nickname variants ("jstn"/"JSTN"/"jstn."), the
+known ZeN(OCE) ≠ zen(FR) collision, curated nationalities (~85 players;
+the rest have none — same-country chemistry skips them), org buff levels
+**per season** (`lineups[].orgBuffLevel` override; the org entity keeps the
+strongest level as default), derived coach bonuses (level from overall,
+type from a stable hash), derived `historicalStrength` (avg overall:
+≥91 elite · ≥87 strong · ≥82 solid · else underdog) and the special-cards
+catalogue (with base-card season hints + rarity mapping:
+legendary→legendary · worlds_mvp→mythic · major_mvp→epic · mythic→mythic ·
+moment→rare). Special effects use the v3 model: `attribute_boost` on the
+card's stats, `team_attribute_boost` for coach specials.
+
+Hand-edits to the generated JSONs are fine for quick experiments but will
+be OVERWRITTEN by the next `build:data` — put permanent changes in
+`data-sources/teams.md` or in the generator's curated maps.
+
+Everything is validated on load (zod schema + referential integrity) — a
+broken reference fails loudly with a message pointing at the exact id.
 
 > **Accuracy disclaimer:** the v0.1 dataset is a best-effort manual curation
 > built for testing the game loop, not a historical record. Some

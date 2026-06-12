@@ -6,7 +6,7 @@
  */
 
 import { DIFFICULTY } from "@/config/balance";
-import { lineups, specialByBaseCardId } from "@/data";
+import { lineups, specialsByBaseCardId } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { buildLineupTeam } from "./teams";
 import type { Difficulty, TournamentTeam } from "./types";
@@ -33,13 +33,17 @@ export function generateOpponents(
   }
 
   return picked.map((lineup) => {
-    let specialUpgradeCardId: string | undefined;
+    let specialUpgrade: { cardId: string; specialId: string } | undefined;
     if (rng.chance(profile.opponentSpecialChance)) {
-      const upgradable = lineup.playerCardIds.filter((id) => specialByBaseCardId.has(id));
+      const upgradable = lineup.playerCardIds.filter((id) =>
+        (specialsByBaseCardId.get(id)?.length ?? 0) > 0,
+      );
       if (upgradable.length > 0) {
-        specialUpgradeCardId = rng.pick(upgradable);
+        const cardId = rng.pick(upgradable);
+        const specialId = rng.pick(specialsByBaseCardId.get(cardId)!).id;
+        specialUpgrade = { cardId, specialId };
       }
     }
-    return buildLineupTeam(lineup.id, difficulty, { specialUpgradeCardId });
+    return buildLineupTeam(lineup.id, difficulty, { specialUpgrade });
   });
 }

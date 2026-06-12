@@ -37,7 +37,13 @@ export default function HomePage() {
   const streak = useProfileStore(selectDailyStreak);
   const clearRun = useRunStore((s) => s.clearRun);
   const startDailyRun = useRunStore((s) => s.startDailyRun);
+  const setSetupMode = useRunStore((s) => s.setSetupMode);
   const rank = rankForXp(xp);
+
+  const goToSetup = (mode: "classic" | "quick") => {
+    setSetupMode(mode);
+    router.push("/play");
+  };
 
   const today = todayKey();
   const daily = useMemo(() => generateDailyConfig(today), [today]);
@@ -83,7 +89,7 @@ export default function HomePage() {
 
       {/* Modes — Classic Draft is THE primary action of the menu */}
       <section aria-label="Game modes" className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Link href="/play" className="group md:col-span-2">
+        <button type="button" onClick={() => goToSetup("classic")} className="group text-left md:col-span-2">
           <Panel
             strong
             glow="orange"
@@ -103,10 +109,10 @@ export default function HomePage() {
               Play now →
             </span>
           </Panel>
-        </Link>
+        </button>
 
         <div className="flex flex-col gap-4">
-          <Link href="/play" className="group flex-1">
+          <button type="button" onClick={() => goToSetup("quick")} className="group flex-1 text-left">
             <Panel className="flex h-full flex-col justify-center p-5 transition-all group-hover:!border-blue/50">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
@@ -116,7 +122,7 @@ export default function HomePage() {
               </div>
               <p className="text-xs leading-relaxed text-sub">{HOME.quickDraftDesc}</p>
             </Panel>
-          </Link>
+          </button>
 
           <Panel className="flex-1 p-5">
             <div className="mb-1 flex items-center justify-between gap-2">
@@ -134,7 +140,14 @@ export default function HomePage() {
             </p>
             <p className="mb-3 mt-0.5 text-xs leading-relaxed text-sub">{daily.info.description}</p>
             {dailyDone ? (
-              <Badge tone="good">{HOME.dailyDone}</Badge>
+              <div>
+                {dailyResults[today]?.placement === "champion" ? (
+                  <Badge tone="good">{HOME.dailyVictory} · +{dailyResults[today]?.xp} XP</Badge>
+                ) : (
+                  <Badge tone="bad">{HOME.dailyDefeat}</Badge>
+                )}
+                <p className="mt-2 text-[11px] text-faint">{HOME.dailyComeBack}</p>
+              </div>
             ) : (
               <Button
                 variant="secondary"

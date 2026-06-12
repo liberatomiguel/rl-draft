@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { DIFFICULTY } from "@/config/balance";
 import { HOME, SETUP } from "@/content/copy";
-import type { Difficulty, RunMode } from "@/engine/types";
+import type { Difficulty } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { selectLegacyUnlocked, useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
@@ -23,13 +23,12 @@ const ORDER: Difficulty[] = ["easy", "normal", "hard", "legacy"];
 
 export function SetupScreen() {
   const startRun = useRunStore((s) => s.startRun);
+  // The mode comes from the menu card the player clicked (Classic / Quick) —
+  // no mode switcher here by design.
+  const mode = useRunStore((s) => s.setupMode);
   const legacyUnlocked = useProfileStore(selectLegacyUnlocked);
   const settings = useProfileStore((s) => s.settings);
 
-  // Last-used setup as the starting point (Legacy falls back when locked).
-  const [mode, setMode] = useState<Exclude<RunMode, "daily">>(
-    settings.lastMode === "quick" ? "quick" : "classic",
-  );
   const [difficulty, setDifficulty] = useState<Difficulty>(() =>
     settings.lastDifficulty === "legacy" && !legacyUnlocked
       ? "normal"
@@ -42,35 +41,12 @@ export function SetupScreen() {
 
   return (
     <div className="rise-in mx-auto max-w-3xl">
-      <SectionTitle kicker="Game setup" title={SETUP.title} className="mb-2" />
+      <SectionTitle
+        kicker={mode === "quick" ? SETUP.modeQuickHint : SETUP.modeClassicHint}
+        title={mode === "quick" ? SETUP.modeQuick : SETUP.modeClassic}
+        className="mb-2"
+      />
       <p className="mb-6 max-w-xl text-sm leading-relaxed text-sub">{SETUP.subtitle}</p>
-
-      {/* Mode */}
-      <p className="kicker mb-3">{SETUP.mode}</p>
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={SETUP.mode}>
-        {(
-          [
-            { id: "classic", label: SETUP.modeClassic, hint: SETUP.modeClassicHint },
-            { id: "quick", label: SETUP.modeQuick, hint: SETUP.modeQuickHint },
-          ] as const
-        ).map((m) => (
-          <button
-            key={m.id}
-            role="radio"
-            aria-checked={mode === m.id}
-            onClick={() => setMode(m.id)}
-            className={cx(
-              "panel p-4 text-left transition-all",
-              mode === m.id ? "panel-glow-blue !border-blue/60" : "hover:!border-line-strong",
-            )}
-          >
-            <span className="display block text-base font-bold uppercase tracking-wide text-ink">
-              {m.label}
-            </span>
-            <span className="mt-1 block text-xs text-sub">{m.hint}</span>
-          </button>
-        ))}
-      </div>
 
       <p className="kicker mb-3">{SETUP.difficulty}</p>
       <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={SETUP.difficulty}>

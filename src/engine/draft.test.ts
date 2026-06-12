@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coachById, lineupById, playerCardById, subById } from "@/data";
+import { coachById, coaches, lineups, orgs, playerCardById, playerCards, subById, subs } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import {
   applyFreeReroll,
@@ -54,7 +54,8 @@ function huntOffer(
   predicate: (draft: DraftState) => boolean,
 ): DraftState {
   let guard = 0;
-  while (!predicate(draft) && guard < 80) {
+  // Pool is 200+ lineups (drawn without replacement, so this terminates).
+  while (!predicate(draft) && guard < 500) {
     draft = drawNextOffer(draft, rng);
     guard += 1;
   }
@@ -120,23 +121,33 @@ describe("draft (§4-§6, v0.2 rules)", () => {
   });
 
   it("blocks every other card of an already-drafted person (core rule)", () => {
+    // Find any person with multiple cards in the dataset.
+    const byPlayer = new Map<string, string[]>();
+    for (const card of playerCards) {
+      byPlayer.set(card.playerId, [...(byPlayer.get(card.playerId) ?? []), card.id]);
+    }
+    const [playerId, cardIds] = [...byPlayer.entries()].find(([, ids]) => ids.length >= 2)!;
+    const firstCard = playerCardById.get(cardIds[0])!;
+
     const rng = createRng(11);
     let draft = drawNextOffer(createDraft("normal"), rng);
 
-    // Draft Kaydop's Gale Force S4 card…
-    draft = huntOffer(draft, rng, (d) => d.offer!.lineupId === "gale-force-s4");
-    const kaydop = draft.offer!.cards.find((c) => c.refId === "kaydop-gale-force-s4")!;
-    expect(kaydop.availability).toBe("available");
-    draft = applyPick(draft, kaydop, "player1", rng);
+    // Draft one version of the player…
+    draft = huntOffer(draft, rng, (d) => d.offer!.lineupId === firstCard.lineupId);
+    const offerCard = draft.offer!.cards.find((c) => c.refId === firstCard.id)!;
+    expect(offerCard.availability).toBe("available");
+    draft = applyPick(draft, offerCard, "player1", rng);
 
-    // …then any lineup containing another Kaydop card must mark it taken.
+    // …then any lineup containing another card of theirs must mark it taken.
     draft = huntOffer(draft, rng, (d) =>
-      d.offer!.cards.some((c) => playerCardById.get(c.refId)?.playerId === "kaydop"),
+      d.offer!.cards.some(
+        (c) => c.kind === "player" && playerCardById.get(c.refId)?.playerId === playerId,
+      ),
     );
-    const otherKaydop = draft.offer!.cards.find(
-      (c) => playerCardById.get(c.refId)?.playerId === "kaydop",
+    const otherCard = draft.offer!.cards.find(
+      (c) => c.kind === "player" && playerCardById.get(c.refId)?.playerId === playerId,
     )!;
-    expect(otherKaydop.availability).toBe("already_drafted");
+    expect(otherCard.availability).toBe("already_drafted");
   });
 
   it("marks player cards slot_full once the three player slots are taken", () => {
@@ -161,25 +172,30 @@ describe("draft (§4-§6, v0.2 rules)", () => {
 
   it("grants a free reroll only when nothing is pickable", () => {
     const rng = createRng(31);
-    // Only player slots remain — and every Gale Force player is already taken,
-    // so the whole offer is blocked (vacant coach/sub can't help: slots full).
+    // Only player slots remain — and every player of the target lineup is
+    // already taken, so its offer is fully blocked (vacant coach/sub can't
+    // help: those slots are filled).
+    const target = lineups[0];
+    const targetPlayerIds = target.playerCardIds.map(
+      (id) => playerCardById.get(id)!.playerId,
+    );
     let draft: DraftState = {
       ...createDraft("normal"),
       roster: {
-        coach: { slot: "coach", kind: "coach", refId: "satthew-spacestation-x", fromLineupId: "x" },
-        sub: { slot: "sub", kind: "sub", refId: "express-renegades-x", fromLineupId: "x" },
-        org: { slot: "org", kind: "org", refId: "ibuypower", fromLineupId: "x" },
+        coach: { slot: "coach", kind: "coach", refId: coaches[0].id, fromLineupId: "x" },
+        sub: { slot: "sub", kind: "sub", refId: subs[0].id, fromLineupId: "x" },
+        org: { slot: "org", kind: "org", refId: orgs[0].id, fromLineupId: "x" },
       },
-      takenPersonIds: ["satthew", "express", "kaydop", "turbopolsa", "violentpanda"],
+      takenPersonIds: [coaches[0].personId, subs[0].personId, ...targetPlayerIds],
     };
 
     let hunted = drawNextOffer(draft, rng);
     let guard = 0;
-    while (hunted.offer!.lineupId !== "gale-force-s4" && guard < 60) {
+    while (hunted.offer!.lineupId !== target.id && guard < 400) {
       hunted = drawNextOffer(hunted, rng);
       guard += 1;
     }
-    expect(hunted.offer!.lineupId).toBe("gale-force-s4");
+    expect(hunted.offer!.lineupId).toBe(target.id);
     expect(hunted.offer!.hasPickableCard).toBe(false);
 
     const blocked = hunted.offer!.cards[0];
@@ -190,16 +206,19 @@ describe("draft (§4-§6, v0.2 rules)", () => {
     expect(rerolled.rerollsLeft).toBe(hunted.rerollsLeft);
 
     // And it is rejected while something IS pickable.
-    let open = drawNextOffer(createDraft("normal"), rng);
+    const open = drawNextOffer(createDraft("normal"), rng);
     expect(open.offer!.hasPickableCard).toBe(true);
     expect(() => applyFreeReroll(open, rng)).toThrow();
   });
 
   it("offers pickable vacant cards when a lineup has no coach/sub", () => {
+    // Find a lineup with neither coach nor sub in the dataset.
+    const target = lineups.find((l) => !l.coachId && !l.subId)!;
+    expect(target).toBeDefined();
+
     const rng = createRng(77);
     let draft = drawNextOffer(createDraft("normal"), rng);
-    // Gale Force S4 has neither coach nor sub in the dataset.
-    draft = huntOffer(draft, rng, (d) => d.offer!.lineupId === "gale-force-s4");
+    draft = huntOffer(draft, rng, (d) => d.offer!.lineupId === target.id);
 
     const vacantCoach = draft.offer!.cards.find((c) => c.refId === "vacant-coach");
     const vacantSub = draft.offer!.cards.find((c) => c.refId === "vacant-sub");

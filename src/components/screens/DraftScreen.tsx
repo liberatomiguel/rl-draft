@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DRAFT_UI } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
-import { filledCount, neededKinds } from "@/engine/draft";
+import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
 import { lineupById } from "@/data";
 import type { DraftOfferCard, RosterSlotId, RunState } from "@/engine/types";
 import { useProfileStore } from "@/store/profileStore";
@@ -74,8 +74,24 @@ export function DraftScreen({ run }: { run: RunState }) {
     setSelected(null);
   };
 
+  const handleCardClick = (offerCard: DraftOfferCard, isSelected: boolean) => {
+    if (isSelected) {
+      setSelected(null);
+      return;
+    }
+    // One possible destination (coach/sub/org, or the last open player slot)
+    // → assign immediately, no second click needed.
+    const openSlots = slotsForKind(offerCard.kind).filter((s) => !run.draft.roster[s]);
+    if (openSlots.length === 1) {
+      pickCard(offerCard, openSlots[0]);
+      setSelected(null);
+      return;
+    }
+    setSelected(offerCard);
+  };
+
   const renderOfferCard = (offerCard: DraftOfferCard) => {
-    const resolvedCard = resolveOfferCard(offerCard);
+    const resolvedCard = resolveOfferCard(offerCard, offer.lineupId);
     const isSelected =
       selected?.kind === offerCard.kind && selected?.refId === offerCard.refId;
     const unavailable = offerCard.availability !== "available";
@@ -93,7 +109,7 @@ export function DraftScreen({ run }: { run: RunState }) {
         disabledLabel={
           offerCard.availability === "slot_full" ? DRAFT_UI.slotFull : DRAFT_UI.alreadyDrafted
         }
-        onClick={() => setSelected(isSelected ? null : offerCard)}
+        onClick={() => handleCardClick(offerCard, isSelected)}
       />
     );
   };

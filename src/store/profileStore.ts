@@ -151,15 +151,20 @@ export function selectLegacyUnlocked(state: ProfileState): boolean {
   return state.wins.hard > 0 || state.wins.legacy > 0;
 }
 
-/** Consecutive daily-challenge days completed, ending today or yesterday. */
+/**
+ * Consecutive daily-challenge VICTORIES (champion runs), ending today or
+ * yesterday. A played-but-lost day breaks the streak — losses don't count
+ * as completed.
+ */
 export function selectDailyStreak(state: ProfileState): number {
   const day = 24 * 60 * 60 * 1000;
   let cursor = Date.now();
   let streak = 0;
+  const won = (date: string) => state.dailyResults[date]?.placement === "champion";
   // Allow the streak to be alive if today's challenge is still pending.
   const today = new Date(cursor).toISOString().slice(0, 10);
-  if (!state.dailyResults[today]) cursor -= day;
-  while (state.dailyResults[new Date(cursor).toISOString().slice(0, 10)]) {
+  if (!won(today)) cursor -= day;
+  while (won(new Date(cursor).toISOString().slice(0, 10))) {
     streak += 1;
     cursor -= day;
   }

@@ -2,6 +2,7 @@
 
 /** Achievements album — discoverable straight from the home screen. */
 
+import Link from "next/link";
 import { achievements as achievementDefs } from "@/data";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
@@ -16,6 +17,15 @@ export default function AchievementsPage() {
 
   return (
     <div className="rise-in">
+      <Link
+        href="/"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-sub transition-colors hover:text-ink"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+          <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to menu
+      </Link>
       <SectionTitle
         kicker="Feats to chase across every run"
         title="Achievements"

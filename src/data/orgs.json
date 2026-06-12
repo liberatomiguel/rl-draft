@@ -1,18 +1,730 @@
 [
-  { "id": "ibuypower", "name": "iBUYPOWER", "region": "NA", "buffType": "offense", "buffLevel": "+" },
-  { "id": "flipsid3", "name": "FlipSid3 Tactics", "region": "EU", "buffType": "consistency", "buffLevel": "+" },
-  { "id": "gale-force", "name": "Gale Force Esports", "region": "EU", "buffType": "mechanics", "buffLevel": "++" },
-  { "id": "dignitas", "name": "Dignitas", "region": "EU", "buffType": "experience", "buffLevel": "++" },
-  { "id": "nrg", "name": "NRG", "region": "NA", "buffType": "experience", "buffLevel": "++" },
-  { "id": "cloud9", "name": "Cloud9", "region": "NA", "buffType": "clutch", "buffLevel": "++" },
-  { "id": "team-vitality", "name": "Team Vitality", "region": "EU", "buffType": "mechanics", "buffLevel": "++" },
-  { "id": "spacestation", "name": "Spacestation Gaming", "region": "NA", "buffType": "consistency", "buffLevel": "++" },
-  { "id": "team-bds", "name": "Team BDS", "region": "EU", "buffType": "consistency", "buffLevel": "++" },
-  { "id": "g2", "name": "G2 Esports", "region": "NA", "buffType": "offense", "buffLevel": "++" },
-  { "id": "renegades", "name": "Renegades", "region": "OCE", "buffType": "experience", "buffLevel": "+" },
-  { "id": "furia", "name": "FURIA Esports", "region": "SAM", "buffType": "mechanics", "buffLevel": "+" },
-  { "id": "faze", "name": "FaZe Clan", "region": "NA", "buffType": "offense", "buffLevel": "++" },
-  { "id": "falcons", "name": "Team Falcons", "region": "MENA", "buffType": "clutch", "buffLevel": "++" },
-  { "id": "gen-g", "name": "Gen.G Mobil1 Racing", "region": "NA", "buffType": "consistency", "buffLevel": "+" },
-  { "id": "karmine-corp", "name": "Karmine Corp", "region": "EU", "buffType": "offense", "buffLevel": "+" }
+  {
+    "id": "01-esports",
+    "name": "01 Esports",
+    "region": "MENA",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "alpha-sydney",
+    "name": "Alpha Sydney",
+    "region": "OCE",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "avidity-esports",
+    "name": "Avidity Esports",
+    "region": "SAM",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "bravado-gaming",
+    "name": "Bravado Gaming",
+    "region": "SSA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "canberra-havoc",
+    "name": "Canberra Havoc",
+    "region": "OCE",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "chiefs-esc",
+    "name": "Chiefs ESC",
+    "region": "OCE",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "chiefs-esports-club",
+    "name": "Chiefs Esports Club",
+    "region": "OCE",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "cloud9",
+    "name": "Cloud9",
+    "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "++"
+  },
+  {
+    "id": "complexity-gaming",
+    "name": "Complexity Gaming",
+    "region": "EU",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "cringe-society",
+    "name": "Cringe Society",
+    "region": "OCE",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "denial-esports",
+    "name": "Denial eSports",
+    "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "dignitas",
+    "name": "Dignitas",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "++"
+  },
+  {
+    "id": "elevate",
+    "name": "Elevate",
+    "region": "APAC",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "ellevens-esports",
+    "name": "Ellevens Esports",
+    "region": "SAM",
+    "buffType": "experience",
+    "buffLevel": "+"
+  },
+  {
+    "id": "endpoint-cex",
+    "name": "Endpoint CeX",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "eunited",
+    "name": "eUnited",
+    "region": "NA",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "evil-geniuses",
+    "name": "Evil Geniuses",
+    "region": "NA",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "exodus",
+    "name": "Exodus",
+    "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "faze-clan",
+    "name": "FaZe Clan",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "++"
+  },
+  {
+    "id": "fc-barcelona",
+    "name": "FC Barcelona",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "+"
+  },
+  {
+    "id": "flipsid3-tactics",
+    "name": "FlipSid3 Tactics",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "++"
+  },
+  {
+    "id": "furia",
+    "name": "FURIA",
+    "region": "SAM",
+    "buffType": "mechanics",
+    "buffLevel": "++"
+  },
+  {
+    "id": "fury",
+    "name": "FURY",
+    "region": "OCE",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "fut-esports",
+    "name": "FUT Esports",
+    "region": "SSA",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "g1",
+    "name": "G1",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "g2-esports",
+    "name": "G2 Esports",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "++"
+  },
+  {
+    "id": "g2-stride",
+    "name": "G2 Stride",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "gaimin-gladiators",
+    "name": "Gaimin Gladiators",
+    "region": "APAC",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "gale-force-esports",
+    "name": "Gale Force eSports",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "++"
+  },
+  {
+    "id": "geekay-esports",
+    "name": "Geekay Esports",
+    "region": "MENA",
+    "buffType": "mechanics",
+    "buffLevel": "+"
+  },
+  {
+    "id": "gen-g-mobil1-racing",
+    "name": "Gen.G Mobil1 Racing",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "++"
+  },
+  {
+    "id": "genesis",
+    "name": "Genesis",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "gentle-mates-alpine",
+    "name": "Gentle Mates Alpine",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "ghost-gaming",
+    "name": "Ghost Gaming",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "ground-zero-gaming",
+    "name": "Ground Zero Gaming",
+    "region": "OCE",
+    "buffType": "consistency",
+    "buffLevel": "+"
+  },
+  {
+    "id": "guild-esports",
+    "name": "Guild Esports",
+    "region": "EU",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "ibuypower",
+    "name": "iBUYPOWER",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "++"
+  },
+  {
+    "id": "intz-esports",
+    "name": "INTZ eSports",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "jam-gaming",
+    "name": "JAM Gaming",
+    "region": "OCE",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "karmine-corp",
+    "name": "Karmine Corp",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "kings-of-urban",
+    "name": "Kings of Urban",
+    "region": "NA",
+    "buffType": "experience",
+    "buffLevel": "+"
+  },
+  {
+    "id": "kru-esports",
+    "name": "KRÜ Esports",
+    "region": "SAM",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "limitless",
+    "name": "Limitless",
+    "region": "SSA",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "lowkey-esports",
+    "name": "Lowkey Esports",
+    "region": "SAM",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "manchester-city-esports",
+    "name": "Manchester City Esports",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "method",
+    "name": "Method",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "+"
+  },
+  {
+    "id": "mibr",
+    "name": "MIBR",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "mock-it-esports",
+    "name": "Mock-It eSports",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "+"
+  },
+  {
+    "id": "mockit-esports",
+    "name": "Mockit eSports",
+    "region": "EU",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "moist-esports",
+    "name": "Moist Esports",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "mousesports",
+    "name": "mousesports",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "ninjas-in-pyjamas",
+    "name": "Ninjas in Pyjamas",
+    "region": "SAM",
+    "buffType": "mechanics",
+    "buffLevel": "+"
+  },
+  {
+    "id": "northern-gaming",
+    "name": "Northern Gaming",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "++"
+  },
+  {
+    "id": "nrg-esports",
+    "name": "NRG Esports",
+    "region": "NA",
+    "buffType": "experience",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "og",
+    "name": "OG",
+    "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "optic-gaming",
+    "name": "OpTic Gaming",
+    "region": "NA",
+    "buffType": "mechanics",
+    "buffLevel": "+"
+  },
+  {
+    "id": "orbit-esport",
+    "name": "Orbit eSport",
+    "region": "NA",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "orlando-pirates-exdee",
+    "name": "Orlando Pirates Exdee",
+    "region": "SSA",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "oxygen-esports",
+    "name": "Oxygen Esports",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "pale-horse-esports",
+    "name": "Pale Horse eSports",
+    "region": "OCE",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "pioneers",
+    "name": "Pioneers",
+    "region": "OCE",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "pittsburgh-knights",
+    "name": "Pittsburgh Knights",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "precision-z",
+    "name": "Precision Z",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "psg-esports",
+    "name": "PSG Esports",
+    "region": "EU",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "pwr",
+    "name": "PWR",
+    "region": "OCE",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "quiktrip-pioneers-gaming",
+    "name": "QuikTrip Pioneers Gaming",
+    "region": "OCE",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "renault-vitality",
+    "name": "Renault Vitality",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "++"
+  },
+  {
+    "id": "renegades",
+    "name": "Renegades",
+    "region": "OCE",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "roc-esports",
+    "name": "ROC Esports",
+    "region": "MENA",
+    "buffType": "experience",
+    "buffLevel": "+"
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "rule-one",
+    "name": "Rule One",
+    "region": "MENA",
+    "buffType": "offense",
+    "buffLevel": "++"
+  },
+  {
+    "id": "selfless-gaming",
+    "name": "Selfless Gaming",
+    "region": "NA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "senbei-strikers",
+    "name": "Senbei Strikers",
+    "region": "APAC",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "shopify-rebellion",
+    "name": "Shopify Rebellion",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "++"
+  },
+  {
+    "id": "smpr-esports",
+    "name": "SMPR Esports",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "solary",
+    "name": "Solary",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "+"
+  },
+  {
+    "id": "spacestation-gaming",
+    "name": "Spacestation Gaming",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "++"
+  },
+  {
+    "id": "tainted-minds",
+    "name": "Tainted Minds",
+    "region": "OCE",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "take-3",
+    "name": "Take 3",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "team-bds",
+    "name": "Team BDS",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "team-dignitas",
+    "name": "Team Dignitas",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "++"
+  },
+  {
+    "id": "team-envy",
+    "name": "Team Envy",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "++"
+  },
+  {
+    "id": "team-falcons",
+    "name": "Team Falcons",
+    "region": "MENA",
+    "buffType": "clutch",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "team-liquid",
+    "name": "Team Liquid",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "++"
+  },
+  {
+    "id": "team-queso",
+    "name": "Team Queso",
+    "region": "EU",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "team-reciprocity",
+    "name": "Team Reciprocity",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "+"
+  },
+  {
+    "id": "team-secret",
+    "name": "Team Secret",
+    "region": "SAM",
+    "buffType": "defense",
+    "buffLevel": "+"
+  },
+  {
+    "id": "team-vitality",
+    "name": "Team Vitality",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "the-club",
+    "name": "The Club",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "the-flying-dutchmen",
+    "name": "The Flying Dutchmen",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "the-leftovers",
+    "name": "The Leftovers",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "the-three-sins",
+    "name": "The Three Sins",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "the-ultimates",
+    "name": "The Ultimates",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "++"
+  },
+  {
+    "id": "top-blokes",
+    "name": "Top Blokes",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "+"
+  },
+  {
+    "id": "triple-trouble",
+    "name": "Triple Trouble",
+    "region": "EU",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "true-neutral",
+    "name": "True Neutral",
+    "region": "SAM",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "tsm",
+    "name": "TSM",
+    "region": "OCE",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "twisted-minds",
+    "name": "Twisted Minds",
+    "region": "MENA",
+    "buffType": "clutch",
+    "buffLevel": "+++"
+  },
+  {
+    "id": "valiant",
+    "name": "Valiant",
+    "region": "SSA",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "veloce-esports",
+    "name": "Veloce Esports",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "version1",
+    "name": "Version1",
+    "region": "NA",
+    "buffType": "mechanics",
+    "buffLevel": "++"
+  },
+  {
+    "id": "virtus-pro",
+    "name": "Virtus.pro",
+    "region": "APAC",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "we-dem-girlz",
+    "name": "We Dem Girlz",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  },
+  {
+    "id": "wildcard",
+    "name": "Wildcard",
+    "region": "OCE",
+    "buffType": "clutch",
+    "buffLevel": "+"
+  }
 ]

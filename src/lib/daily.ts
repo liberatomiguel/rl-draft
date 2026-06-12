@@ -74,7 +74,7 @@ export function generateDailyConfig(date: string): DailyConfig {
       hiddenOverall: false,
     }),
     () => {
-      const regions: Region[] = ["NA", "EU", "SAM", "MENA"];
+      const regions: Region[] = ["NA", "EU", "SAM", "MENA", "OCE"];
       const region = rng.pick(regions);
       const pool = poolByRegion(region);
       if (!viable(pool)) {

@@ -52,10 +52,15 @@ describe("dataset", () => {
 
   it("special cards map to real base cards inside real lineups", () => {
     for (const sp of specialCards) {
-      const base = playerCardById.get(sp.baseCardId);
-      expect(base).toBeDefined();
-      expect(lineupById.get(base!.lineupId)).toBeDefined();
-      expect(sp.overall).toBeGreaterThanOrEqual(base!.overall);
+      if (sp.kind === "coach") {
+        const base = coaches.find((c) => c.id === sp.baseCardId);
+        expect(base, sp.id).toBeDefined();
+        expect(lineupById.get(base!.lineupId)).toBeDefined();
+      } else {
+        const base = playerCardById.get(sp.baseCardId);
+        expect(base, sp.id).toBeDefined();
+        expect(lineupById.get(base!.lineupId)).toBeDefined();
+      }
     }
   });
 

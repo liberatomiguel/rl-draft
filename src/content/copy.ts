@@ -23,8 +23,10 @@ export const HOME = {
   daily: "Daily Challenge",
   dailyDesc: "One seeded draft per day, same for everyone.",
   dailyPlay: "Play today's challenge",
-  dailyDone: "Completed today",
-  dailyStreak: (n: number) => `${n}-day streak`,
+  dailyVictory: "Victory",
+  dailyDefeat: "Defeat",
+  dailyComeBack: "Come back tomorrow for a new challenge.",
+  dailyStreak: (n: number) => `${n}-win streak`,
   comingSoon: "Coming soon",
   collection: "Collection",
   collectionDesc: "Special cards you have unlocked across your runs.",
@@ -273,6 +275,7 @@ export const SPECIAL_TYPE_LABELS: Record<string, string> = {
   worlds_mvp: "Worlds MVP",
   mythic: "Mythic",
   legend: "Legend",
+  coach: "Coach",
 };
 
 export const RARITY_LABELS: Record<string, string> = {

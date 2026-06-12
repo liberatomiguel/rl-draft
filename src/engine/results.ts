@@ -165,6 +165,7 @@ export function compileResults(
     run.draft.roster.player1,
     run.draft.roster.player2,
     run.draft.roster.player3,
+    run.draft.roster.coach,
     run.draft.roster.sub,
   ]
     .map((p) => p?.specialId)

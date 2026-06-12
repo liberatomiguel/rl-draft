@@ -1,51 +1,1675 @@
 [
-  { "id": "kronovi", "nickname": "Kronovi", "country": "US", "region": "NA" },
-  { "id": "lachinio", "nickname": "Lachinio", "country": "CA", "region": "NA" },
-  { "id": "gambit", "nickname": "Gambit", "country": "US", "region": "NA" },
-  { "id": "markydooda", "nickname": "Markydooda", "country": "GB", "region": "EU" },
-  { "id": "kuxir97", "nickname": "kuxir97", "country": "IT", "region": "EU" },
-  { "id": "m1k3rules", "nickname": "M1k3Rules", "country": "GB", "region": "EU" },
-  { "id": "kaydop", "nickname": "Kaydop", "country": "FR", "region": "EU" },
-  { "id": "turbopolsa", "nickname": "Turbopolsa", "country": "SE", "region": "EU" },
-  { "id": "violentpanda", "nickname": "ViolentPanda", "country": "NL", "region": "EU" },
-  { "id": "garrettg", "nickname": "GarrettG", "country": "US", "region": "NA" },
-  { "id": "jstn", "nickname": "jstn.", "country": "US", "region": "NA" },
-  { "id": "fireburner", "nickname": "Fireburner", "country": "US", "region": "NA" },
-  { "id": "squishy", "nickname": "SquishyMuffinz", "country": "CA", "region": "NA" },
-  { "id": "gimmick", "nickname": "Gimmick", "country": "US", "region": "NA" },
-  { "id": "torment", "nickname": "Torment", "country": "US", "region": "NA" },
-  { "id": "fairy-peak", "nickname": "Fairy Peak!", "country": "FR", "region": "EU" },
-  { "id": "alpha54", "nickname": "Alpha54", "country": "FR", "region": "EU" },
-  { "id": "arsenal", "nickname": "Arsenal", "country": "US", "region": "NA" },
-  { "id": "retals", "nickname": "retals", "country": "US", "region": "NA" },
-  { "id": "sypical", "nickname": "Sypical", "country": "US", "region": "NA" },
-  { "id": "monkey-moon", "nickname": "M0nkey M00n", "country": "FR", "region": "EU" },
-  { "id": "extra", "nickname": "Extra", "country": "FR", "region": "EU" },
-  { "id": "aztral", "nickname": "AztraL", "country": "BE", "region": "EU" },
-  { "id": "jknaps", "nickname": "JKnaps", "country": "CA", "region": "NA" },
-  { "id": "chicago", "nickname": "Chicago", "country": "US", "region": "NA" },
-  { "id": "rizzo", "nickname": "Rizzo", "country": "US", "region": "NA" },
-  { "id": "cjcj", "nickname": "CJCJ", "country": "AU", "region": "OCE" },
-  { "id": "kamii", "nickname": "Kamii", "country": "AU", "region": "OCE" },
-  { "id": "torsos", "nickname": "Torsos", "country": "AU", "region": "OCE" },
-  { "id": "yanxnz", "nickname": "yANXNZ", "country": "BR", "region": "SAM" },
-  { "id": "card", "nickname": "CaRd", "country": "BR", "region": "SAM" },
-  { "id": "drufinho", "nickname": "drufinho", "country": "BR", "region": "SAM" },
-  { "id": "ayyjayy", "nickname": "AYYJAYY", "country": "US", "region": "NA" },
-  { "id": "firstkiller", "nickname": "Firstkiller", "country": "US", "region": "NA" },
-  { "id": "ahmad", "nickname": "Ahmad", "country": "SA", "region": "MENA" },
-  { "id": "okhalid", "nickname": "oKhaliD", "country": "SA", "region": "MENA" },
-  { "id": "trk511", "nickname": "trk511", "country": "SA", "region": "MENA" },
-  { "id": "zen", "nickname": "zen", "country": "FR", "region": "EU" },
-  { "id": "radosin", "nickname": "Radosin", "country": "CZ", "region": "EU" },
-  { "id": "chronic", "nickname": "Chronic", "country": "US", "region": "NA" },
-  { "id": "noly", "nickname": "noly", "country": "GB", "region": "EU" },
-  { "id": "apparentlyjack", "nickname": "ApparentlyJack", "country": "GB", "region": "EU" },
-  { "id": "daniel", "nickname": "Daniel", "country": "US", "region": "NA" },
-  { "id": "beastmode", "nickname": "BeastMode", "country": "US", "region": "NA" },
-  { "id": "atomic", "nickname": "Atomic", "country": "US", "region": "NA" },
-  { "id": "vatira", "nickname": "Vatira", "country": "FR", "region": "EU" },
-  { "id": "exotiik", "nickname": "ExoTiiK", "country": "FR", "region": "EU" },
-  { "id": "seikoo", "nickname": "Seikoo", "country": "FR", "region": "EU" },
-  { "id": "lostt", "nickname": "Lostt", "country": "BR", "region": "SAM" }
+  {
+    "id": "0verzer0",
+    "nickname": "0ver Zer0",
+    "region": "NA"
+  },
+  {
+    "id": "2die4",
+    "nickname": "2Die4",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "2piece",
+    "nickname": "2Piece",
+    "region": "NA"
+  },
+  {
+    "id": "abdullah",
+    "nickname": "Abdullah",
+    "region": "MENA"
+  },
+  {
+    "id": "accro",
+    "nickname": "accro",
+    "region": "EU"
+  },
+  {
+    "id": "acronik",
+    "nickname": "AcroniK.",
+    "region": "EU"
+  },
+  {
+    "id": "aguesome",
+    "nickname": "Aguesome",
+    "region": "SAM"
+  },
+  {
+    "id": "ahmad",
+    "nickname": "Ahmad",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "ajg",
+    "nickname": "ajg",
+    "country": "AR",
+    "region": "SAM"
+  },
+  {
+    "id": "al0t",
+    "nickname": "al0t",
+    "country": "FI",
+    "region": "EU"
+  },
+  {
+    "id": "ali",
+    "nickname": "Ali",
+    "region": "MENA"
+  },
+  {
+    "id": "allushin",
+    "nickname": "Allushin",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "alpha54",
+    "nickname": "Alpha54",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "amphis",
+    "nickname": "Amphis",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "apparentlyjack",
+    "nickname": "ApparentlyJack",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "arceon",
+    "nickname": "Arceon",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "archie",
+    "nickname": "archie",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "arsenal",
+    "nickname": "Arsenal",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "atomic",
+    "nickname": "Atomic",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "atomik",
+    "nickname": "AtomiK",
+    "country": "ES",
+    "region": "EU"
+  },
+  {
+    "id": "atow",
+    "nickname": "Atow.",
+    "region": "EU"
+  },
+  {
+    "id": "axb",
+    "nickname": "AxB",
+    "region": "NA"
+  },
+  {
+    "id": "ayjacks",
+    "nickname": "ayjacks",
+    "region": "NA"
+  },
+  {
+    "id": "ayyjayy",
+    "nickname": "AYYJAYY",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "aztral",
+    "nickname": "AztraL",
+    "country": "BE",
+    "region": "EU"
+  },
+  {
+    "id": "aztromick",
+    "nickname": "Aztromick",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "bananahead",
+    "nickname": "bananahead",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "bananaman",
+    "nickname": "BananaMan",
+    "region": "SAM"
+  },
+  {
+    "id": "bango",
+    "nickname": "Bango",
+    "region": "OCE"
+  },
+  {
+    "id": "base",
+    "nickname": "Base",
+    "region": "EU"
+  },
+  {
+    "id": "beastmode",
+    "nickname": "BeastMode",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "bluey",
+    "nickname": "Bluey",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "blueze",
+    "nickname": "Blueze",
+    "region": "NA"
+  },
+  {
+    "id": "bora",
+    "nickname": "bora",
+    "region": "EU"
+  },
+  {
+    "id": "brad",
+    "nickname": "brad",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "brunovisquii",
+    "nickname": "BRUNOVISQUII",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "bymateos",
+    "nickname": "ByMateos",
+    "region": "EU"
+  },
+  {
+    "id": "caard",
+    "nickname": "caard",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "caiotg1",
+    "nickname": "CaioTG1",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "catalysm",
+    "nickname": "Catalysm",
+    "region": "OCE"
+  },
+  {
+    "id": "chausette45",
+    "nickname": "Chausette45",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "cheese",
+    "nickname": "CHEESE.",
+    "region": "NA"
+  },
+  {
+    "id": "chicago",
+    "nickname": "Chicago",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "chrome",
+    "nickname": "Chrome",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "chronic",
+    "nickname": "Chronic",
+    "region": "NA"
+  },
+  {
+    "id": "cjcj",
+    "nickname": "CJCJ",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "comm",
+    "nickname": "Comm",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "continuum",
+    "nickname": "Continuum",
+    "region": "EU"
+  },
+  {
+    "id": "corruptedg",
+    "nickname": "CorruptedG",
+    "country": "CA",
+    "region": "NA"
+  },
+  {
+    "id": "crr",
+    "nickname": "crr",
+    "region": "NA"
+  },
+  {
+    "id": "d7oom24",
+    "nickname": "d7oom-24",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "daisyd",
+    "nickname": "DaisyD",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "daniel",
+    "nickname": "Daniel",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "dappur",
+    "nickname": "Dappur",
+    "region": "NA"
+  },
+  {
+    "id": "darkfire",
+    "nickname": "Darkfire",
+    "region": "NA"
+  },
+  {
+    "id": "darth",
+    "nickname": "Darth",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "deboer",
+    "nickname": "De Boer",
+    "region": "EU"
+  },
+  {
+    "id": "decka",
+    "nickname": "Decka",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "deevo",
+    "nickname": "Deevo",
+    "country": "AU",
+    "region": "EU"
+  },
+  {
+    "id": "diaz",
+    "nickname": "diaz",
+    "region": "NA"
+  },
+  {
+    "id": "dmentza",
+    "nickname": "DmentZa",
+    "region": "EU"
+  },
+  {
+    "id": "dogu",
+    "nickname": "Dogu",
+    "region": "EU"
+  },
+  {
+    "id": "dorito",
+    "nickname": "DORITO",
+    "region": "EU"
+  },
+  {
+    "id": "dralii",
+    "nickname": "dralii",
+    "region": "EU"
+  },
+  {
+    "id": "dreaz",
+    "nickname": "dreaz",
+    "region": "NA"
+  },
+  {
+    "id": "drippay",
+    "nickname": "Drippay",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "droppz",
+    "nickname": "droppz",
+    "region": "SAM"
+  },
+  {
+    "id": "drufinho",
+    "nickname": "drufinho",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "dudewiththenose",
+    "nickname": "DudeWithTheNose",
+    "region": "NA"
+  },
+  {
+    "id": "eclipse",
+    "nickname": "Eclipse",
+    "region": "EU"
+  },
+  {
+    "id": "eekso",
+    "nickname": "eekso",
+    "region": "EU"
+  },
+  {
+    "id": "ejby",
+    "nickname": "ejby",
+    "region": "EU"
+  },
+  {
+    "id": "elgeneral",
+    "nickname": "El General",
+    "region": "EU"
+  },
+  {
+    "id": "enigma",
+    "nickname": "ENiGMA",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "espeon",
+    "nickname": "Espeon",
+    "region": "NA"
+  },
+  {
+    "id": "eversax",
+    "nickname": "Eversax",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "evoh",
+    "nickname": "Evoh",
+    "region": "EU"
+  },
+  {
+    "id": "exotiik",
+    "nickname": "ExoTiiK",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "explosivegyro",
+    "nickname": "ExplosiveGyro",
+    "region": "NA"
+  },
+  {
+    "id": "express",
+    "nickname": "Express",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "extra",
+    "nickname": "Extra",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "eyeignite",
+    "nickname": "EyeIgnite",
+    "country": "SE",
+    "region": "EU"
+  },
+  {
+    "id": "fahad77",
+    "nickname": "Fahad77",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "fairypeak",
+    "nickname": "Fairy Peak!",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "fasi",
+    "nickname": "fAsi",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "fefe",
+    "nickname": "Fefe",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "ferra",
+    "nickname": "Ferra",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "fever",
+    "nickname": "Fever",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "fiberr",
+    "nickname": "Fibérr",
+    "region": "OCE"
+  },
+  {
+    "id": "fire",
+    "nickname": "fire",
+    "region": "NA"
+  },
+  {
+    "id": "fireburner",
+    "nickname": "Fireburner",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "firefoxd",
+    "nickname": "FirefoxD",
+    "region": "SAM"
+  },
+  {
+    "id": "firewall154",
+    "nickname": "Firewall154",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "firstkiller",
+    "nickname": "Firstkiller",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "fiv3up",
+    "nickname": "Fiv3Up",
+    "region": "EU"
+  },
+  {
+    "id": "fl0w",
+    "nickname": "Fl0w",
+    "region": "NA"
+  },
+  {
+    "id": "flakes",
+    "nickname": "Flakes",
+    "region": "EU"
+  },
+  {
+    "id": "flame",
+    "nickname": "Flame",
+    "region": "EU"
+  },
+  {
+    "id": "flarke",
+    "nickname": "Flarke",
+    "region": "EU"
+  },
+  {
+    "id": "freakii",
+    "nickname": "FreaKii",
+    "country": "DE",
+    "region": "EU"
+  },
+  {
+    "id": "friisisch",
+    "nickname": "Friisisch",
+    "region": "EU"
+  },
+  {
+    "id": "fruity",
+    "nickname": "fruity",
+    "region": "EU"
+  },
+  {
+    "id": "garrettg",
+    "nickname": "GarrettG",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "gawfs",
+    "nickname": "Gawfs",
+    "region": "EU"
+  },
+  {
+    "id": "genocop",
+    "nickname": "Genocop",
+    "region": "NA"
+  },
+  {
+    "id": "ghaazi0",
+    "nickname": "Ghaazi0",
+    "region": "MENA"
+  },
+  {
+    "id": "gimmick",
+    "nickname": "Gimmick",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "gnagflow06",
+    "nickname": "Gnagflow06",
+    "region": "EU"
+  },
+  {
+    "id": "greazy",
+    "nickname": "Greazy",
+    "country": "NL",
+    "region": "EU"
+  },
+  {
+    "id": "gregan",
+    "nickname": "Gregan",
+    "region": "EU"
+  },
+  {
+    "id": "gus",
+    "nickname": "gus",
+    "region": "OCE"
+  },
+  {
+    "id": "gyro",
+    "nickname": "Gyro.",
+    "region": "NA"
+  },
+  {
+    "id": "haberkamper",
+    "nickname": "Haberkamper",
+    "region": "SAM"
+  },
+  {
+    "id": "hisoka",
+    "nickname": "Hisoka",
+    "region": "MENA"
+  },
+  {
+    "id": "hockser",
+    "nickname": "hockser",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "hugo",
+    "nickname": "Hugo",
+    "region": "EU"
+  },
+  {
+    "id": "huskih",
+    "nickname": "Huskih",
+    "region": "NA"
+  },
+  {
+    "id": "insolences",
+    "nickname": "Insolences",
+    "region": "NA"
+  },
+  {
+    "id": "itachi",
+    "nickname": "Itachi",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "jacob",
+    "nickname": "Jacob",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "jahzo",
+    "nickname": "Jahzo",
+    "region": "NA"
+  },
+  {
+    "id": "jake",
+    "nickname": "Jake",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "jato",
+    "nickname": "Jato",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "jessie",
+    "nickname": "Jessie",
+    "region": "EU"
+  },
+  {
+    "id": "jhzer",
+    "nickname": "JHZER",
+    "region": "EU"
+  },
+  {
+    "id": "jimmah",
+    "nickname": "Jimmah",
+    "region": "OCE"
+  },
+  {
+    "id": "jknaps",
+    "nickname": "JKnaps",
+    "country": "CA",
+    "region": "NA"
+  },
+  {
+    "id": "joreuz",
+    "nickname": "Joreuz",
+    "country": "NL",
+    "region": "EU"
+  },
+  {
+    "id": "joyo",
+    "nickname": "Joyo",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "jstn",
+    "nickname": "jstn.",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "juicy",
+    "nickname": "juicy",
+    "region": "EU"
+  },
+  {
+    "id": "julz",
+    "nickname": "Julz",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "jwismont",
+    "nickname": "JWismont",
+    "region": "NA"
+  },
+  {
+    "id": "jzr",
+    "nickname": "JZR",
+    "region": "EU"
+  },
+  {
+    "id": "kael",
+    "nickname": "Kael",
+    "region": "EU"
+  },
+  {
+    "id": "kairos",
+    "nickname": "Kairos",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "kamii",
+    "nickname": "Kamii",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "kamz",
+    "nickname": "Kamz",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "kash",
+    "nickname": "Kash",
+    "region": "EU"
+  },
+  {
+    "id": "kassio",
+    "nickname": "Kassio",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "kaydop",
+    "nickname": "Kaydop",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "kennysalmon",
+    "nickname": "KennySalmon",
+    "region": "OCE"
+  },
+  {
+    "id": "kevin",
+    "nickname": "Kevin",
+    "region": "OCE"
+  },
+  {
+    "id": "kia",
+    "nickname": "Kia",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "kiileerrz",
+    "nickname": "Kiileerrz",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "killerno7",
+    "nickname": "Killerno7",
+    "region": "EU"
+  },
+  {
+    "id": "klassux",
+    "nickname": "Klassux",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "kofyr",
+    "nickname": "kofyr",
+    "region": "NA"
+  },
+  {
+    "id": "kovanel",
+    "nickname": "Kovanel",
+    "region": "NA"
+  },
+  {
+    "id": "kronovi",
+    "nickname": "Kronovi",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "kuxir97",
+    "nickname": "kuxir97",
+    "country": "IT",
+    "region": "EU"
+  },
+  {
+    "id": "kv1",
+    "nickname": "kv1",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "kylemasc",
+    "nickname": "Kyle Masc",
+    "region": "NA"
+  },
+  {
+    "id": "lachinio",
+    "nickname": "Lachinio",
+    "country": "CA",
+    "region": "NA"
+  },
+  {
+    "id": "laf",
+    "nickname": "Laf",
+    "region": "NA"
+  },
+  {
+    "id": "lawler",
+    "nickname": "Lawler",
+    "region": "SSA"
+  },
+  {
+    "id": "lct",
+    "nickname": "LCT",
+    "region": "APAC"
+  },
+  {
+    "id": "leduck",
+    "nickname": "Le Duck",
+    "region": "OCE"
+  },
+  {
+    "id": "leoro",
+    "nickname": "Leoro",
+    "region": "SSA"
+  },
+  {
+    "id": "lethamyr",
+    "nickname": "Lethamyr",
+    "country": "CA",
+    "region": "NA"
+  },
+  {
+    "id": "lj",
+    "nickname": "Lj.",
+    "region": "NA"
+  },
+  {
+    "id": "lostt",
+    "nickname": "Lostt",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "low5ive",
+    "nickname": "Low5ive",
+    "region": "NA"
+  },
+  {
+    "id": "luiisp",
+    "nickname": "LuiisP",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "lunatic",
+    "nickname": "Lunatic",
+    "region": "APAC"
+  },
+  {
+    "id": "m0nkeym00n",
+    "nickname": "M0nkey M00n",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "m1k3rules",
+    "nickname": "M1k3Rules",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "m7sn",
+    "nickname": "M7sn",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "maestro",
+    "nickname": "Maestro",
+    "region": "EU"
+  },
+  {
+    "id": "majicbear",
+    "nickname": "MaJicBear",
+    "region": "NA"
+  },
+  {
+    "id": "mala",
+    "nickname": "Mala",
+    "region": "NA"
+  },
+  {
+    "id": "marcby8",
+    "nickname": "MaRc_By_8",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "markydooda",
+    "nickname": "Markydooda",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "math",
+    "nickname": "math",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "matix",
+    "nickname": "matix",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "matt",
+    "nickname": "Matt",
+    "region": "NA"
+  },
+  {
+    "id": "maxeew",
+    "nickname": "Maxeew",
+    "region": "APAC"
+  },
+  {
+    "id": "memory",
+    "nickname": "Memory",
+    "region": "NA"
+  },
+  {
+    "id": "metsanauris",
+    "nickname": "Metsanauris",
+    "country": "FI",
+    "region": "EU"
+  },
+  {
+    "id": "mew",
+    "nickname": "Mew",
+    "region": "EU"
+  },
+  {
+    "id": "michi",
+    "nickname": "Michi",
+    "region": "SAM"
+  },
+  {
+    "id": "mijo",
+    "nickname": "Mijo",
+    "region": "NA"
+  },
+  {
+    "id": "mile",
+    "nickname": "Mile",
+    "region": "NA"
+  },
+  {
+    "id": "mist",
+    "nickname": "mist",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "miztik",
+    "nickname": "Miztik",
+    "region": "EU"
+  },
+  {
+    "id": "mognus",
+    "nickname": "Mognus",
+    "country": "SE",
+    "region": "EU"
+  },
+  {
+    "id": "montyconnor",
+    "nickname": "Montyconnor",
+    "region": "OCE"
+  },
+  {
+    "id": "moopy",
+    "nickname": "Moopy",
+    "region": "NA"
+  },
+  {
+    "id": "moses",
+    "nickname": "Moses",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "motta",
+    "nickname": "Motta",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "mout",
+    "nickname": "Mout",
+    "region": "EU"
+  },
+  {
+    "id": "mtzr",
+    "nickname": "mtzR.",
+    "region": "MENA"
+  },
+  {
+    "id": "myebipod4shor",
+    "nickname": "Mye_bipod_4shor",
+    "region": "EU"
+  },
+  {
+    "id": "n0ah",
+    "nickname": "n0ah",
+    "region": "EU"
+  },
+  {
+    "id": "napp",
+    "nickname": "Napp",
+    "region": "NA"
+  },
+  {
+    "id": "nass",
+    "nickname": "nass",
+    "region": "EU"
+  },
+  {
+    "id": "neqzo",
+    "nickname": "Neqzo",
+    "region": "EU"
+  },
+  {
+    "id": "noly",
+    "nickname": "Noly",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "noxes",
+    "nickname": "Noxes",
+    "region": "SSA"
+  },
+  {
+    "id": "nwpo",
+    "nickname": "Nwpo",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "nxghtt",
+    "nickname": "nxghtt",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "oaly",
+    "nickname": "oaly.",
+    "region": "EU"
+  },
+  {
+    "id": "okhalid",
+    "nickname": "oKhaliD",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "oski",
+    "nickname": "Oski",
+    "country": "PL",
+    "region": "EU"
+  },
+  {
+    "id": "ovampier",
+    "nickname": "oVaMPiER",
+    "region": "MENA"
+  },
+  {
+    "id": "paschy90",
+    "nickname": "Paschy90",
+    "country": "DE",
+    "region": "EU"
+  },
+  {
+    "id": "pauliepaulnl",
+    "nickname": "PauliepaulNL",
+    "region": "EU"
+  },
+  {
+    "id": "pekitas",
+    "nickname": "pekitas",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "petrick",
+    "nickname": "PetricK",
+    "region": "EU"
+  },
+  {
+    "id": "pj",
+    "nickname": "PJ",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "pluoh",
+    "nickname": "Plu'oh",
+    "region": "NA"
+  },
+  {
+    "id": "pluto",
+    "nickname": "Pluto",
+    "region": "NA"
+  },
+  {
+    "id": "pnidh",
+    "nickname": "Pnidh",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "popo",
+    "nickname": "popo",
+    "region": "APAC"
+  },
+  {
+    "id": "quinnlobdell",
+    "nickname": "Quinn Lobdell",
+    "region": "NA"
+  },
+  {
+    "id": "radosin",
+    "nickname": "Radosin",
+    "country": "CZ",
+    "region": "EU"
+  },
+  {
+    "id": "rawgreg",
+    "nickname": "RawGreg",
+    "region": "NA"
+  },
+  {
+    "id": "realize",
+    "nickname": "ReaLize",
+    "country": "JP",
+    "region": "APAC"
+  },
+  {
+    "id": "reepex",
+    "nickname": "Reepex",
+    "region": "EU"
+  },
+  {
+    "id": "relatingwave",
+    "nickname": "RelatingWave",
+    "region": "EU"
+  },
+  {
+    "id": "remkoe",
+    "nickname": "Remkoe",
+    "country": "NL",
+    "region": "EU"
+  },
+  {
+    "id": "renan",
+    "nickname": "renaN",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "repi",
+    "nickname": "repi",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "requiem",
+    "nickname": "Requiem",
+    "region": "OCE"
+  },
+  {
+    "id": "retals",
+    "nickname": "Retals",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "reveal",
+    "nickname": "reveal",
+    "region": "NA"
+  },
+  {
+    "id": "reysbull",
+    "nickname": "Reysbull",
+    "country": "AR",
+    "region": "SAM"
+  },
+  {
+    "id": "rise",
+    "nickname": "rise.",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "riv",
+    "nickname": "Riv",
+    "region": "OCE"
+  },
+  {
+    "id": "rizzo",
+    "nickname": "Rizzo",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "rolldizz",
+    "nickname": "Roll Dizz",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "ronaky",
+    "nickname": "Ronaky",
+    "country": "ES",
+    "region": "EU"
+  },
+  {
+    "id": "rw9",
+    "nickname": "Rw9",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "rxii",
+    "nickname": "Rxii",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "sadjunior",
+    "nickname": "Sadjunior",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "sadness",
+    "nickname": "Sadness",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "saizen",
+    "nickname": "saizen",
+    "region": "EU"
+  },
+  {
+    "id": "satthew",
+    "nickname": "Satthew",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "scarth",
+    "nickname": "Scarth",
+    "region": "OCE"
+  },
+  {
+    "id": "scrub",
+    "nickname": "Scrub",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "scrubkilla",
+    "nickname": "Scrub Killa",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "scrzbbles",
+    "nickname": "Scrzbbles",
+    "region": "NA"
+  },
+  {
+    "id": "seeb",
+    "nickname": "Seeb",
+    "region": "EU"
+  },
+  {
+    "id": "seikoo",
+    "nickname": "Seikoo",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "shad",
+    "nickname": "Shad",
+    "region": "SAM"
+  },
+  {
+    "id": "shadey",
+    "nickname": "Shadey",
+    "region": "OCE"
+  },
+  {
+    "id": "sigms",
+    "nickname": "Sigms",
+    "region": "APAC"
+  },
+  {
+    "id": "siki",
+    "nickname": "Siki",
+    "region": "OCE"
+  },
+  {
+    "id": "sikii",
+    "nickname": "Sikii",
+    "country": "DE",
+    "region": "EU"
+  },
+  {
+    "id": "sizz",
+    "nickname": "Sizz",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "skyline",
+    "nickname": "Skyline",
+    "region": "EU"
+  },
+  {
+    "id": "smw",
+    "nickname": "SMW",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "snaski",
+    "nickname": "Snaski",
+    "country": "DK",
+    "region": "EU"
+  },
+  {
+    "id": "sniper",
+    "nickname": "Sniper",
+    "region": "EU"
+  },
+  {
+    "id": "snowyy",
+    "nickname": "Snowyy",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "sosa",
+    "nickname": "sosa",
+    "region": "APAC"
+  },
+  {
+    "id": "speed",
+    "nickname": "Speed",
+    "country": "GB",
+    "region": "EU"
+  },
+  {
+    "id": "sphinx",
+    "nickname": "Sphinx",
+    "region": "OCE"
+  },
+  {
+    "id": "spydoge",
+    "nickname": "SPYDOGE",
+    "region": "OCE"
+  },
+  {
+    "id": "squishymuffinz",
+    "nickname": "SquishyMuffinz",
+    "country": "CA",
+    "region": "NA"
+  },
+  {
+    "id": "stizzy",
+    "nickname": "Stizzy",
+    "region": "EU"
+  },
+  {
+    "id": "stl",
+    "nickname": "STL",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "suco",
+    "nickname": "suco",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "superlachie",
+    "nickname": "Superlachie",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "sweaty",
+    "nickname": "Sweaty",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "sweatyclarence",
+    "nickname": "Sweaty_Clarence",
+    "region": "SSA"
+  },
+  {
+    "id": "swiftt",
+    "nickname": "swiftt",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "syntax",
+    "nickname": "Syntax",
+    "region": "NA"
+  },
+  {
+    "id": "sypical",
+    "nickname": "Sypical",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "tadpole",
+    "nickname": "Tadpole",
+    "region": "EU"
+  },
+  {
+    "id": "tander",
+    "nickname": "tander",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "taroco",
+    "nickname": "Taroco",
+    "region": "NA"
+  },
+  {
+    "id": "tempoh",
+    "nickname": "TempoH",
+    "region": "MENA"
+  },
+  {
+    "id": "tho",
+    "nickname": "ThO.",
+    "region": "EU"
+  },
+  {
+    "id": "thundah",
+    "nickname": "Thundah",
+    "region": "NA"
+  },
+  {
+    "id": "timi",
+    "nickname": "Timi",
+    "region": "NA"
+  },
+  {
+    "id": "torment",
+    "nickname": "Torment",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "torres823",
+    "nickname": "TORRES823",
+    "region": "SSA"
+  },
+  {
+    "id": "torsos",
+    "nickname": "Torsos",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "trk511",
+    "nickname": "trk511",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "turbopolsa",
+    "nickname": "Turbopolsa",
+    "country": "SE",
+    "region": "EU"
+  },
+  {
+    "id": "turinturo",
+    "nickname": "Turinturo",
+    "region": "NA"
+  },
+  {
+    "id": "turtle",
+    "nickname": "Turtle",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "twiz",
+    "nickname": "Twiz",
+    "region": "MENA"
+  },
+  {
+    "id": "valt",
+    "nickname": "valt",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "vatira",
+    "nickname": "Vatira",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "venom",
+    "nickname": "Venom",
+    "region": "MENA"
+  },
+  {
+    "id": "violentpanda",
+    "nickname": "ViolentPanda",
+    "country": "NL",
+    "region": "EU"
+  },
+  {
+    "id": "virge",
+    "nickname": "Virge",
+    "region": "EU"
+  },
+  {
+    "id": "virtuoso",
+    "nickname": "virtuoso",
+    "region": "APAC"
+  },
+  {
+    "id": "vksailen",
+    "nickname": "VKSailen",
+    "region": "EU"
+  },
+  {
+    "id": "vogan",
+    "nickname": "Vogan",
+    "region": "EU"
+  },
+  {
+    "id": "wahvey",
+    "nickname": "Wahvey",
+    "region": "NA"
+  },
+  {
+    "id": "walcott",
+    "nickname": "Walcott",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "wonder",
+    "nickname": "Wonder",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "xkorez",
+    "nickname": "xkorez",
+    "region": "OCE"
+  },
+  {
+    "id": "xpere",
+    "nickname": "Xpére",
+    "region": "NA"
+  },
+  {
+    "id": "yanxnz",
+    "nickname": "yanxnz",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "yeatzy",
+    "nickname": "Yeatzy",
+    "region": "OCE"
+  },
+  {
+    "id": "yukeo",
+    "nickname": "Yukeo",
+    "region": "EU"
+  },
+  {
+    "id": "yumicheeseman",
+    "nickname": "yumi_cheeseman",
+    "region": "EU"
+  },
+  {
+    "id": "zach",
+    "nickname": "Zach",
+    "region": "NA"
+  },
+  {
+    "id": "zanejackey",
+    "nickname": "Zanejackey",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "zen",
+    "nickname": "zen",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "zen-oce",
+    "nickname": "ZeN",
+    "region": "OCE"
+  }
 ]

@@ -14,7 +14,15 @@
  */
 
 import { DIFFICULTY, DRAFT } from "@/config/balance";
-import { coachById, lineupById, lineups, playerCardById, specialByBaseCardId, subById } from "@/data";
+import {
+  coachById,
+  coachSpecialsByBaseCardId,
+  lineupById,
+  lineups,
+  playerCardById,
+  specialsByBaseCardId,
+  subById,
+} from "@/data";
 import type { Rng } from "@/lib/rng";
 import type {
   CardKind,
@@ -133,10 +141,13 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
 
   for (const cardId of lineup.playerCardIds) {
     const card = playerCardById.get(cardId)!;
-    // Special version may appear in place of the base card (collectible rule).
-    const special = specialByBaseCardId.get(cardId);
+    // A special version may appear in place of the base card (collectible
+    // rule). Cards with several specials pick one at random.
+    const pool = specialsByBaseCardId.get(cardId);
     const specialId =
-      special && rng.chance(specialChance) ? special.id : undefined;
+      pool && pool.length > 0 && rng.chance(specialChance)
+        ? rng.pick(pool).id
+        : undefined;
     cards.push({
       kind: "player",
       refId: cardId,
@@ -148,9 +159,15 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   if (draft.mode !== "quick") {
     if (lineup.coachId) {
       const coach = coachById.get(lineup.coachId)!;
+      const coachPool = coachSpecialsByBaseCardId.get(coach.id);
+      const coachSpecialId =
+        coachPool && coachPool.length > 0 && rng.chance(DRAFT.coachSpecialChance)
+          ? rng.pick(coachPool).id
+          : undefined;
       cards.push({
         kind: "coach",
         refId: coach.id,
+        specialId: coachSpecialId,
         availability: availabilityFor("coach", coach.personId, draft),
       });
     } else {

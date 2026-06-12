@@ -12,6 +12,7 @@ import { achievements as achievementDefs } from "@/data";
 import type { AchievementDef } from "@/engine/types";
 import { cx, formatDate } from "@/lib/util";
 import { Panel } from "@/components/ui/Panel";
+import { AchievementIcon } from "@/components/AchievementIcon";
 
 const CATEGORY_STYLE: Record<
   AchievementDef["category"],
@@ -64,7 +65,7 @@ export function AchievementsGrid({
                 date ? style.chip : "bg-white/5 text-faint",
               )}
             >
-              <CategoryIcon category={def.category} />
+              <AchievementIcon id={def.id} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center justify-between gap-2">
@@ -87,32 +88,3 @@ export function AchievementsGrid({
   );
 }
 
-function CategoryIcon({ category }: { category: AchievementDef["category"] }) {
-  switch (category) {
-    case "milestone":
-      return (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <path d="M6 21V4m0 1h11l-2.5 4L17 13H6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case "skill":
-      return (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" strokeLinejoin="round" />
-        </svg>
-      );
-    case "collection":
-      return (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <rect x="4" y="3.5" width="10" height="14" rx="2" />
-          <path d="M9 20.5h9a2 2 0 0 0 2-2V8" strokeLinecap="round" />
-        </svg>
-      );
-    case "legend":
-      return (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <path d="m4 8 4 4 4-7 4 7 4-4-1.5 11h-13L4 8Z" strokeLinejoin="round" />
-        </svg>
-      );
-  }
-}
