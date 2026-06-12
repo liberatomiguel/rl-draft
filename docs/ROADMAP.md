@@ -4,45 +4,37 @@ Follows the base document's MVP phasing (§37), adjusted for what v0.1.0
 already shipped. The north star for every item (§42): *does it make the draft
 more fun, more readable or more replayable?*
 
-## ✅ v0.1.0 — MVP 1 (+ collection slice)
+## ✅ Shipped — v0.1.0 → v0.4.0 (MVP complete)
 
 Classic Draft core, 4 difficulties (Legacy unlockable), hidden-overall mode,
-Swiss + single-elim playoffs, special cards + collection + achievements +
-XP/rank, local persistence, responsive UI, docs + tests.
+Swiss + DOUBLE-ELIM playoffs (lower bracket + 3rd-place series), automatic
+simulation playback, Quick Draft, Daily Challenges (template wheel +
+streak), full historical dataset (208 lineups, 2016-2026, generated
+pipeline), 54 official special cards with holo tiers + 3D tilt, unlock
+ceremony, share card, star narration, 22 achievements, XP/9 ranks, local
+persistence, docs + 33 tests. See CHANGELOG + STATUS.md.
 
-## v0.2 — Loop polish (validate the fun)
+## Next — release & playtest
 
-- Playtest balance pass (use BALANCE-GUIDE workflow; log under Balance).
-- Dataset growth toward the "better early dataset" (§36): 30 lineups,
-  90 cards, 10 subs, more coaches — pure JSON work.
-- Draft feel: card hover details, pick history ("drafted from G2 '20-21"),
-  small SFX hooks (muted by default).
-- Optional: show opponent ratings on hidden runs (open question in
-  DESIGN-DECISIONS.md).
+- Drop real images (orgs / ranks / specials — manifests in `public/`).
+- Publish on Vercel; share with the community testers.
+- Feedback-driven balance pass (BALANCE-GUIDE workflow).
+- Small polish from playtest notes; optional SFX pack (muted by default).
 
-## v0.3 — MVP 2 completion
-
-- Collection categories beyond specials (players seen, orgs, moments).
-- More achievements + achievement toasts in-run.
-- Run detail page from history (full bracket replay of a past run).
-- More special cards (target 20-30) and 1-2 new effect types.
-
-## v0.4 — MVP 3: accounts & daily
+## Then — MVP 3: accounts & sync
 
 - Supabase project + schema mirroring the two stores (profile + runs).
 - Discord OAuth via Supabase Auth; guest → account migration of local saves.
-- Daily Challenge: shared seed (the RNG layer is already seeded), modifier
-  rules (§32), daily leaderboard later.
-- Settings screen (animation speed, reduced motion, language).
+- Daily leaderboard (the daily seed is already shared globally).
+- Settings screen (animation speed, reduced motion, language PT-BR/EN).
 
-## v0.5 — MVP 4: data expansion & advanced modes
+## Later — MVP 4: data expansion & advanced modes
 
-- Liquipedia API ingestion script generating the same JSON contract
-  (see DATA-GUIDE.md “Future” section); manual adjustments overlay file.
-- Double-elimination Bo7 playoffs (swap `engine/playoffs.ts`).
-- Quick Draft (3 players, short bracket) and Regional Draft (region-filtered
-  pools — the draft engine already takes a pool parameter conceptually).
-- Real card art / org logos via `imageUrl`/`logoUrl`.
+- Liquipedia API ingestion feeding `data-sources/teams.md` (the generator
+  pipeline already isolates the game from the source format).
+- Regional Draft (the draft engine already takes a lineup-pool filter).
+- Grand-final bracket reset option; collection categories beyond specials;
+  run detail replay from history.
 
 ## Explicitly out of scope (per base doc)
 

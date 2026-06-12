@@ -6,10 +6,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Rocket Draft — project conventions
 
-Fan-made Rocket League esports draft game. Next.js 16 + React 19 + Tailwind v4
-+ Zustand + Zod + Vitest. Start with `README.md`; deep dives in `docs/`.
+Fan-made Rocket League esports history draft game (Miguel's project; he
+communicates in PT-BR, the product UI is in English). Next.js 16 + React 19 +
+Tailwind v4 + Zustand + Zod + Vitest.
 
-Hard rules:
+**Start here:** `README.md` → `docs/STATUS.md` (current state + pending work)
+→ deep dives in `docs/`. Full version/bugfix history: `docs/CHANGELOG.md`.
+
+## Hard rules
 
 - **Game logic only in `src/engine`** (pure TS, no React, deterministic via
   the seeded RNG in `src/lib/rng.ts`). UI calls engine through `src/store`.
@@ -17,11 +21,40 @@ Hard rules:
   magic numbers for gameplay values.
 - **Every player-facing string** goes in `src/content/copy.ts` (broadcast
   tone: clean esports-desk language, no forced memes).
-- **Dataset edits** happen only in `src/data/*.json`; run
-  `npm run validate:data` after. Field reference: `docs/DATA-GUIDE.md`.
+- **The data JSONs are GENERATED** (since v0.4). Source of truth is
+  `data-sources/teams.md` + the specials catalogue inside
+  `scripts/build-dataset.mjs`. To change data: edit those, run
+  `npm run build:data`, then `npm run validate:data`. Do NOT hand-edit
+  `src/data/*.json` (except `achievements.json`, which is hand-maintained).
+  Field reference + generator mappings: `docs/DATA-GUIDE.md`.
 - After engine/balance changes run `npm test` — the suite asserts the design
-  anchors from `docs/GAME-DESIGN.md` §25 (overall must stay dominant).
+  anchors from `docs/GAME-DESIGN.md` §25 (overall must stay dominant) and is
+  dataset-agnostic (no hardcoded ids).
 - Update `docs/CHANGELOG.md` (Added/Changed/Balance/Fixed) with every
   meaningful change; bugfixes always get a root-cause line.
 - Design deviations from `docs/GAME-DESIGN.md` must be recorded in
   `docs/DESIGN-DECISIONS.md`.
+- Commit per milestone with a `vX.Y.Z` message (Miguel wants version history).
+
+## Pitfalls learned the hard way (do not repeat)
+
+- **Never bulk-edit files via PowerShell `-replace`** — PS 5.1 mis-decodes
+  UTF-8 and corrupts `·`/`→`/accents (mojibake). Use the Edit tool; if it
+  happens, `git checkout -- <file>` and redo.
+- **Always stop preview/dev servers you start.** Orphaned `node.exe` +
+  Next 16's `.next/dev/lock` block Miguel's own `npm run dev`
+  ("connection refused"). Cleanup: kill node processes, delete `.next`.
+- `position: fixed` breaks inside animated ancestors (transform containing
+  block) — modals/toasts render via portal on `<body>`; keep `rise-in`
+  fill-mode `backwards`.
+- Plain `conic-gradient` does not repeat its segment — use
+  `repeating-conic-gradient` for ray effects.
+- Miguel may edit `data-sources/` or drop images into `public/` in parallel —
+  don't overwrite his files without checking `git status` first.
+
+## Asset drop-in conventions (no code changes needed)
+
+`public/orgs/<orgId>.png` · `public/ranks/menu/<rankId>.png` ·
+`public/ranks/profile/<rankId>.png` · `public/cards/specials/<specialId>.png`
+— each folder has a generated README listing exact filenames; styled
+fallbacks render while files are missing.
