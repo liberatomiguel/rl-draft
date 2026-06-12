@@ -19,6 +19,8 @@ export interface AchievementContext {
   tournament: TournamentState;
   placement: Placement;
   chemistry: ChemistryResult;
+  /** Goals conceded across the whole run. */
+  goalsConceded: number;
   /** Total specials in collection counting this run's unlocks. */
   specialsOwnedAfter: number;
   alreadyEarned: ReadonlySet<string>;
@@ -92,6 +94,9 @@ const RULES: Record<string, (ctx: AchievementContext) => boolean> = {
   immaculate: (ctx) =>
     ctx.placement === "champion" &&
     userSeries(ctx.tournament).every((s) => userWonSeries(s)),
+
+  untouchable: (ctx) =>
+    ctx.goalsConceded === 0 && userSeries(ctx.tournament).length > 0,
 };
 
 export function evaluateAchievements(ctx: AchievementContext): string[] {

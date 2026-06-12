@@ -15,8 +15,10 @@ import type { BuffLevel, Difficulty, HistoricalStrength } from "@/engine/types";
 export const RARITY = {
   /** overall >= blueMin → blue card. */
   blueMin: 90,
-  /** overall >= goldMin → gold card. Below → silver. */
+  /** overall >= goldMin → gold card. */
   goldMin: 80,
+  /** overall >= silverMin → silver card. Below → common (no rarity). */
+  silverMin: 70,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -248,22 +250,34 @@ export const XP = {
   completeRun: 50,
   swissWin: 20,
   qualifyPlayoffs: 75,
-  reachSemifinal: 50,
-  reachFinal: 75,
-  winTournament: 200,
+  /** Per playoff series won (double elimination has up to 5 for the user). */
+  playoffSeriesWin: 40,
+  /** Final placement bonuses. */
+  placementBonus: {
+    champion: 200,
+    runner_up: 100,
+    third: 60,
+    fourth: 40,
+  } as Record<string, number>,
   /** Bonus multiplier when the run was played with hidden overalls. */
   hiddenOverallBonus: 0.25,
 } as const;
 
+/**
+ * Rank ladder. Gaps grow rank over rank for a moderate grind:
+ * an average run earns ~150-300 XP, a winning run ~500-800.
+ * Supersonic Legend lands around 35-60 completed runs.
+ */
 export const RANKS = [
-  { id: "bronze", label: "Bronze", minXp: 0 },
-  { id: "silver", label: "Silver", minXp: 300 },
-  { id: "gold", label: "Gold", minXp: 800 },
-  { id: "platinum", label: "Platinum", minXp: 1600 },
-  { id: "diamond", label: "Diamond", minXp: 2800 },
-  { id: "champion", label: "Champion", minXp: 4500 },
-  { id: "grand-champion", label: "Grand Champion", minXp: 7000 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 10000 },
+  { id: "unranked", label: "Unranked", minXp: 0 },
+  { id: "bronze", label: "Bronze", minXp: 200 },
+  { id: "silver", label: "Silver", minXp: 600 },
+  { id: "gold", label: "Gold", minXp: 1400 },
+  { id: "platinum", label: "Platinum", minXp: 2600 },
+  { id: "diamond", label: "Diamond", minXp: 4500 },
+  { id: "champion", label: "Champion", minXp: 7200 },
+  { id: "grand-champion", label: "Grand Champion", minXp: 10500 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 14500 },
 ] as const;
 
 export const HISTORY_LIMIT = 25;

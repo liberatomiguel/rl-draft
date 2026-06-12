@@ -19,8 +19,11 @@ export type Region = "NA" | "EU" | "SAM" | "MENA" | "OCE" | "APAC";
 
 export type Difficulty = "easy" | "normal" | "hard" | "legacy";
 
-/** Visual rarity of a base card, derived from overall (see balance.rarity). */
-export type BaseRarity = "silver" | "gold" | "blue";
+/**
+ * Visual rarity of a base card, derived from overall (see balance.RARITY).
+ * "common" = no rarity (low overalls, neutral orgs, placeholder cards).
+ */
+export type BaseRarity = "common" | "silver" | "gold" | "blue";
 
 export type SpecialRarity = "rare" | "epic" | "mythic" | "legendary";
 
@@ -198,13 +201,13 @@ export interface DraftOfferCard {
   refId: string;
   /** Set when this player card appears as its special version. */
   specialId?: string;
-  availability: "available" | "as_sub" | "slot_full" | "already_drafted";
+  availability: "available" | "slot_full" | "already_drafted";
 }
 
 export interface DraftOffer {
   lineupId: string;
   cards: DraftOfferCard[];
-  /** False when nothing in the offer can be picked → free skip allowed. */
+  /** False when nothing in the offer can be picked → a free reroll is granted. */
   hasPickableCard: boolean;
 }
 
@@ -213,8 +216,6 @@ export interface RosterPick {
   kind: CardKind;
   refId: string;
   specialId?: string;
-  /** True when a player card occupies the sub slot. */
-  asSub?: boolean;
   fromLineupId: string;
 }
 
@@ -322,7 +323,17 @@ export interface SwissState {
   finished: boolean;
 }
 
-export type PlayoffRoundName = "quarterfinal" | "semifinal" | "final";
+/** Double elimination rounds in play order (+ a dedicated 3rd-place series). */
+export type PlayoffRoundName =
+  | "ub_quarterfinal"
+  | "lb_round1"
+  | "ub_semifinal"
+  | "lb_round2"
+  | "ub_final"
+  | "lb_semifinal"
+  | "lb_final"
+  | "third_place"
+  | "grand_final";
 
 export interface PlayoffRound {
   name: PlayoffRoundName;
@@ -352,8 +363,10 @@ export interface TournamentState {
 export type Placement =
   | "champion"
   | "runner_up"
-  | "semifinalist"
-  | "quarterfinalist"
+  | "third"
+  | "fourth"
+  | "top6"
+  | "top8"
   | "swiss_exit";
 
 export interface XpLine {
@@ -384,6 +397,8 @@ export interface RunResults {
   biggestWin: SeriesHighlight | null;
   closestSeries: SeriesHighlight | null;
   worstLoss: SeriesHighlight | null;
+  /** Total goals conceded across the whole run (0 → "Untouchable"). */
+  goalsConceded: number;
   unlockedSpecialIds: string[];
   newAchievementIds: string[];
   xp: XpSummary;

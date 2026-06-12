@@ -10,6 +10,62 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [0.2.0] — 2026-06-11
+
+First feedback round on the MVP — draft flow, simulation flow and visual
+identity reworked.
+
+### Added
+- **RLCS field view**: the drafted team renders on a stylized top-down pitch
+  (3 players on field, coach/sub on the bench, org slot) — used on the draft
+  and review screens, and as the placement target during the draft.
+- **Double-elimination playoffs** (upper + lower bracket, Bo7) plus a
+  dedicated **third-place series** (LB semifinal loser vs LB final loser).
+  New placements: Champion / Grand Finalist / 3rd / 4th / Top 6 / Top 8.
+- **Automatic tournament simulation**: press Start once — user series play
+  game-by-game in the Match Center, AI series resolve in the background,
+  rounds chain automatically. Speed toggle (1×/2×), pause and skip-to-end.
+  Standings and brackets are spoiler-safe (only revealed results show).
+  After the run, every finished series can be clicked open for review.
+- Swiss "Your Path" bracket cards with team logos and green/red outlines on
+  the user's matches (also applied across the playoff bracket).
+- Placeholder cards ("No Coach" / "No Sub", overall 50, no rarity) when a
+  historical lineup didn't field one.
+- **Common (no-rarity) tier**: overalls ≤69 and neutral orgs; org cards now
+  carry rarity from their buff (+ silver · ++ gold · +++ blue).
+- Asset pipeline (drop files in, no code): `public/orgs/<orgId>.png`,
+  `public/ranks/menu|profile/<rankId>.png`,
+  `public/cards/specials/<specialId>.png` — all with automatic styled
+  fallbacks and README manifests in each folder.
+- "Unranked" rank tier; growing XP curve up to Supersonic Legend (14.5k XP).
+- Achievements tile on the home screen, dedicated `/achievements` page and
+  slide-in achievement toasts on the results screen.
+- "Untouchable" achievement + results callout: complete a run without
+  conceding a single goal (intentionally near-mythical).
+- Champion celebration on the results screen (rotating rays, confetti,
+  shining title) — restrained for non-title runs.
+
+### Changed
+- **Draft interaction**: click a card, then click the target slot on the
+  field — no confirm button. Players choose WHICH player slot (1/2/3).
+- Offer layout: two rows of three (players / coach·sub·org).
+- Card redesign: base cards show the org logo as centerpiece (no player
+  photos by design); special cards carry a player photo with stronger
+  rarity treatment (halos, foil sheen, photo gradient).
+- **No resume system**: returning to the menu resets the run; the in-run
+  header has a back button. Refreshing mid-run still resumes (accident
+  protection), but leaving the flow abandons it.
+- Sub slot accepts only sub cards (player-as-sub removed). When an offer has
+  nothing pickable the player now gets a **free reroll** (doesn't consume
+  the difficulty budget).
+- Results team reveal arranged as players row + staff row.
+- XP model: per-playoff-series-win line + placement bonuses replace the old
+  semifinal/final lines (see BALANCE-GUIDE).
+
+### Fixed
+- Persisted runs from v0.1 are discarded on load (store version bump) — the
+  run shape changed and resuming one would crash.
+
 ## [0.1.0] — 2026-06-11
 
 First playable build (MVP 1 + collection/progression slice).

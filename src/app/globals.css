@@ -147,6 +147,23 @@ body {
   border-radius: 14px;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
+  overflow: hidden;
+}
+
+/* Subtle top sheen on every card */
+.card-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 62% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.card-common {
+  background-image:
+    linear-gradient(168deg, #0d1322 0%, #0a0f1b 58%, #0d1320 100%),
+    linear-gradient(165deg, #39435c 0%, #232b3f 50%, #39435c 100%);
 }
 
 .card-silver {
@@ -215,10 +232,67 @@ body {
   box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);
 }
 
+/* Diagonal texture behind the org logo on base cards */
+.card-texture {
+  background-image: repeating-linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.025) 0 2px,
+    transparent 2px 9px
+  );
+}
+
+/* Special card photo treatment */
+.special-photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 18%;
+  pointer-events: none;
+}
+
+.special-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 8, 15, 0.25) 0%, transparent 26%, transparent 46%, rgba(5, 8, 15, 0.88) 72%, rgba(5, 8, 15, 0.97) 100%);
+}
+
+.special-fallback-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.12), transparent 55%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.04) 0 3px, transparent 3px 12px);
+  pointer-events: none;
+}
+
 @keyframes card-sheen {
   0% { background-position: 130% 0; }
   55% { background-position: -60% 0; }
   100% { background-position: -60% 0; }
+}
+
+/* Legendary halo pulse */
+@keyframes legendary-halo {
+  0%, 100% { box-shadow: 0 0 26px rgba(251, 191, 36, 0.2); }
+  50% { box-shadow: 0 0 42px rgba(251, 191, 36, 0.38); }
+}
+
+.card-legendary.card-special {
+  animation: legendary-halo 3.2s ease-in-out infinite;
+}
+
+@keyframes mythic-halo {
+  0%, 100% { box-shadow: 0 0 24px rgba(251, 113, 133, 0.18); }
+  50% { box-shadow: 0 0 38px rgba(249, 115, 22, 0.34); }
+}
+
+.card-mythic.card-special {
+  animation: mythic-halo 3.6s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -273,11 +347,156 @@ body {
   transform: rotateY(180deg);
 }
 
+/* ---------------------------------------------------------------------------
+   RLCS field (team visualization)
+--------------------------------------------------------------------------- */
+
+.field {
+  position: relative;
+  border-radius: 18px;
+  background:
+    radial-gradient(90% 70% at 50% 50%, rgba(59, 130, 246, 0.12), transparent 70%),
+    linear-gradient(180deg, #0a1424 0%, #081020 100%);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+}
+
+.field::before {
+  /* Pitch lines: midline + center circle */
+  content: "";
+  position: absolute;
+  inset: 6% 4%;
+  border: 1.5px solid rgba(96, 165, 250, 0.22);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(96, 165, 250, 0.22), rgba(96, 165, 250, 0.22)) 50% 0 / 1.5px 100% no-repeat,
+    radial-gradient(circle at 50% 50%, transparent 0 17.5%, rgba(96, 165, 250, 0.22) 17.6% 18.8%, transparent 19%);
+  pointer-events: none;
+}
+
+.field::after {
+  /* Goal boxes */
+  content: "";
+  position: absolute;
+  top: 38%;
+  bottom: 38%;
+  left: 4%;
+  right: 4%;
+  background:
+    linear-gradient(rgba(96, 165, 250, 0.18), rgba(96, 165, 250, 0.18)) 0 50% / 7% 100% no-repeat,
+    linear-gradient(rgba(96, 165, 250, 0.18), rgba(96, 165, 250, 0.18)) 100% 50% / 7% 100% no-repeat;
+  -webkit-mask: linear-gradient(#000, #000);
+  pointer-events: none;
+  border-left: 1.5px solid rgba(96, 165, 250, 0.25);
+  border-right: 1.5px solid rgba(96, 165, 250, 0.25);
+}
+
+.field-slot-glow {
+  animation: slot-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes slot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.55); }
+  50% { box-shadow: 0 0 0 7px rgba(249, 115, 22, 0); }
+}
+
+/* ---------------------------------------------------------------------------
+   Results celebration
+--------------------------------------------------------------------------- */
+
+.celebrate {
+  position: relative;
+  overflow: hidden;
+}
+
+.celebrate-rays {
+  position: absolute;
+  inset: -55%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 14deg,
+    rgba(249, 115, 22, 0.07) 14deg 22deg,
+    transparent 22deg 40deg,
+    rgba(251, 191, 36, 0.06) 40deg 48deg,
+    transparent 48deg 72deg
+  );
+  animation: rays-spin 26s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rays-spin {
+  to { transform: rotate(360deg); }
+}
+
+.confetti {
+  position: absolute;
+  top: -8px;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-fall 3.4s ease-in infinite;
+  pointer-events: none;
+}
+
+@keyframes confetti-fall {
+  0% { opacity: 0; transform: translateY(-10px) rotate(0deg); }
+  8% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(330px) rotate(540deg); }
+}
+
+@keyframes trophy-shine {
+  0%, 100% { text-shadow: 0 0 18px rgba(249, 115, 22, 0.35); }
+  50% { text-shadow: 0 0 44px rgba(251, 191, 36, 0.7); }
+}
+
+.champion-title {
+  animation: trophy-shine 2.6s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Achievement toasts
+--------------------------------------------------------------------------- */
+
+@keyframes toast-in {
+  0% { opacity: 0; transform: translateX(46px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-out {
+  to { opacity: 0; transform: translateX(46px); }
+}
+
+.toast-enter {
+  animation: toast-in 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.toast-exit {
+  animation: toast-out 0.3s ease-in both;
+}
+
+/* Live series pulse dot */
+@keyframes live-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.live-dot {
+  animation: live-dot 1s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
   .pop-in,
   .pulse-soft,
-  .card-special::after {
+  .card-special::after,
+  .card-legendary.card-special,
+  .card-mythic.card-special,
+  .field-slot-glow,
+  .celebrate-rays,
+  .confetti,
+  .champion-title,
+  .live-dot {
     animation: none !important;
   }
   .flip-card-inner {

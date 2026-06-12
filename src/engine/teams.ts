@@ -170,24 +170,15 @@ export function buildUserTeam(
     orgId: coachCard.orgId,
   };
 
-  // Sub slot may hold a sub card or a player card (player-as-sub rule).
-  let sub: AssembleInput["sub"];
-  if (roster.sub.kind === "sub") {
-    const subCard = subById.get(roster.sub.refId)!;
-    sub = { name: subCard.name, overall: subCard.overall, lineupId: subCard.lineupId, orgId: subCard.orgId };
-  } else {
-    const card = playerCardById.get(roster.sub.refId)!;
-    const player = playerById.get(card.playerId)!;
-    const special = roster.sub.specialId ? specialCardById.get(roster.sub.specialId) : undefined;
-    sub = {
-      name: player.nickname,
-      overall: special ? special.overall : finalOverall(card),
-      lineupId: card.lineupId,
-      orgId: card.orgId,
-    };
-  }
+  const subCard = subById.get(roster.sub.refId)!;
+  const sub: AssembleInput["sub"] = {
+    name: subCard.name,
+    overall: subCard.overall,
+    lineupId: subCard.lineupId,
+    orgId: subCard.orgId,
+  };
 
-  const specialIds = [roster.player1, roster.player2, roster.player3, roster.sub]
+  const specialIds = [roster.player1, roster.player2, roster.player3]
     .map((p) => p?.specialId)
     .filter((id): id is string => Boolean(id));
 

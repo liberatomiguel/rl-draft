@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
+import { FieldView } from "@/components/cards/FieldView";
 import { rosterSlots } from "@/components/cards/rosterView";
 import { RunStepper } from "./RunStepper";
 
@@ -82,13 +83,20 @@ export function ReviewScreen({ run }: { run: RunState }) {
       <SectionTitle kicker={REVIEW.subtitle} title={REVIEW.title} className="mb-6" />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
-        {/* Roster cards */}
-        <div className="flex flex-wrap justify-center gap-3 md:justify-start md:gap-4">
-          {slots.map((s) =>
-            s.card ? (
-              <GameCard key={s.slot} card={s.card} showOverall={run.showOverall} size="md" />
-            ) : null,
-          )}
+        {/* Field + roster cards */}
+        <div>
+          <FieldView
+            roster={run.draft.roster}
+            showOverall={run.showOverall}
+            className="mx-auto mb-6 max-w-md"
+          />
+          <div className="grid grid-cols-3 justify-items-center gap-2 md:gap-4">
+            {slots.map((s) =>
+              s.card ? (
+                <GameCard key={s.slot} card={s.card} showOverall={run.showOverall} size="md" />
+              ) : null,
+            )}
+          </div>
         </div>
 
         {/* Summary column */}

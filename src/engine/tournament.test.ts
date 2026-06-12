@@ -5,7 +5,13 @@
 
 import { describe, expect, it } from "vitest";
 import { createRng } from "@/lib/rng";
-import { applyPick, applySkip, createDraft, drawNextOffer } from "./draft";
+import {
+  applyFreeReroll,
+  applyPick,
+  createDraft,
+  drawNextOffer,
+  openPlayerSlot,
+} from "./draft";
 import { compileResults } from "./results";
 import { buildUserTeam } from "./teams";
 import {
@@ -14,17 +20,27 @@ import {
   userHasPendingSeries,
   userPlacement,
 } from "./tournament";
-import type { DraftState, RunState } from "./types";
+import type { DraftState, RosterSlotId, RunState } from "./types";
 
 function autoDraft(seed: number) {
   const rng = createRng(seed);
   let draft: DraftState = drawNextOffer(createDraft("normal"), rng);
   let guard = 0;
-  while (!draft.complete && guard < 120) {
-    const card = draft.offer!.cards.find(
-      (c) => c.availability === "available" || c.availability === "as_sub",
-    );
-    draft = card ? applyPick(draft, card, rng) : applySkip(draft, rng);
+  while (!draft.complete && guard < 200) {
+    const card = draft.offer!.cards.find((c) => c.availability === "available");
+    if (card) {
+      const slot: RosterSlotId | null =
+        card.kind === "player"
+          ? openPlayerSlot(draft.roster)
+          : card.kind === "coach"
+            ? "coach"
+            : card.kind === "sub"
+              ? "sub"
+              : "org";
+      draft = applyPick(draft, card, slot!, rng);
+    } else {
+      draft = applyFreeReroll(draft, rng);
+    }
     guard += 1;
   }
   expect(draft.complete).toBe(true);
@@ -62,13 +78,20 @@ describe("tournament integration", () => {
       tournament = fastForward(tournament, run.difficulty, rng);
       expect(tournament.stage).toBe("finished");
       expect(tournament.playoffs?.championTeamId).toBeTruthy();
+      // Full double elimination: 9 rounds, 15 series (4+2+2+2+1+1+1+1+1).
+      expect(tournament.playoffs?.rounds).toHaveLength(9);
+      expect(
+        tournament.playoffs?.rounds.reduce((sum, r) => sum + r.series.length, 0),
+      ).toBe(15);
 
       const placement = userPlacement(tournament);
       expect([
         "champion",
         "runner_up",
-        "semifinalist",
-        "quarterfinalist",
+        "third",
+        "fourth",
+        "top6",
+        "top8",
         "swiss_exit",
       ]).toContain(placement);
 

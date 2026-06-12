@@ -11,5 +11,6 @@
   { "id": "collector", "title": "Collector", "description": "Unlock your first special card.", "xp": 30 },
   { "id": "archive-hunter", "title": "Archive Hunter", "description": "Unlock 5 special cards.", "xp": 75 },
   { "id": "perfect-chemistry", "title": "Perfect Chemistry", "description": "Finish a run with Perfect chemistry.", "xp": 60 },
-  { "id": "immaculate", "title": "Immaculate", "description": "Win the tournament without dropping a single series.", "xp": 150 }
+  { "id": "immaculate", "title": "Immaculate", "description": "Win the tournament without dropping a single series.", "xp": 150 },
+  { "id": "untouchable", "title": "Untouchable", "description": "Complete a run without conceding a single goal.", "xp": 200 }
 ]

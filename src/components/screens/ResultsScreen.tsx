@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Results screen: placement, run stats, full team reveal (the payoff moment
- * for hidden-overall runs), XP breakdown, rank progress, achievements and
- * unlocked special cards.
+ * Results screen v2: celebratory placement hero (rays + confetti for a
+ * title), run highlights, team reveal in two rows of three, XP/rank
+ * progress, achievement toasts and unlocked specials.
  */
 
 import { useRouter } from "next/navigation";
@@ -30,10 +30,14 @@ import { RunStepper } from "./RunStepper";
 const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
   champion: { title: R.champion, sub: R.championSub, tone: "orange" },
   runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
-  semifinalist: { title: R.semifinalist, sub: R.semifinalistSub, tone: "blue" },
-  quarterfinalist: { title: R.quarterfinalist, sub: R.quarterfinalistSub, tone: "blue" },
+  third: { title: R.third, sub: R.thirdSub, tone: "blue" },
+  fourth: { title: R.fourth, sub: R.fourthSub, tone: "blue" },
+  top6: { title: R.top6, sub: R.top6Sub, tone: "blue" },
+  top8: { title: R.top8, sub: R.top8Sub, tone: "blue" },
   swiss_exit: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
 };
+
+const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
@@ -47,48 +51,62 @@ export function ResultsScreen({ run }: { run: RunState }) {
   if (!results || !team) return null;
 
   const placement = PLACEMENT_COPY[results.placement];
+  const isChampion = results.placement === "champion";
   const xpBefore = Math.max(0, xpNow - results.xp.total);
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
 
   const bestPick = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3]
     .find((p) => p?.refId === results.bestPlayerCardId);
-  const bestPlayer = bestPick
-    ? resolvePlayerCard(bestPick.refId, bestPick.specialId)
-    : null;
+  const bestPlayer = bestPick ? resolvePlayerCard(bestPick.refId, bestPick.specialId) : null;
 
   return (
     <div className="rise-in pb-8">
       <RunStepper run={run} />
+      <AchievementToasts ids={results.newAchievementIds} />
 
       {/* Placement hero */}
       <Panel
         strong
         glow={placement.tone}
-        className="mb-8 px-6 py-10 text-center"
+        className={cx("celebrate mb-8 px-6 py-12 text-center", isChampion && "!border-orange/50")}
       >
-        <p className="kicker mb-3">{R.finalPlacement}</p>
-        <h1
-          className={cx(
-            "display text-5xl font-bold uppercase tracking-wide md:text-6xl",
-            results.placement === "champion" ? "text-orange-bright" : "text-ink",
-          )}
-        >
-          {placement.title}
-        </h1>
-        <p className="mt-3 text-sm text-sub">{placement.sub}</p>
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <Badge tone="blue">
-            {R.swissRecord}: {results.swissRecord.wins}–{results.swissRecord.losses}
-          </Badge>
-          <Badge tone="neutral">Team OVR {displayTeamOverall(team.rating)}</Badge>
-          <Badge tone={team.chemistry.percent >= 62 ? "good" : "neutral"}>
-            {team.chemistry.tier} chemistry
-          </Badge>
-        </div>
-        {results.championName ? (
-          <p className="mt-4 text-xs text-faint">{R.champion0f(results.championName)}</p>
+        {isChampion ? (
+          <>
+            <div className="celebrate-rays" aria-hidden />
+            <Confetti />
+          </>
         ) : null}
+        <div className="relative z-10">
+          <p className="kicker mb-3">{R.finalPlacement}</p>
+          <h1
+            className={cx(
+              "display text-5xl font-bold uppercase tracking-wide md:text-7xl",
+              isChampion
+                ? "champion-title bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-transparent"
+                : "text-ink",
+            )}
+          >
+            {placement.title}
+          </h1>
+          <p className="mt-3 text-sm text-sub">{placement.sub}</p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <Badge tone="blue">
+              {R.swissRecord}: {results.swissRecord.wins}–{results.swissRecord.losses}
+            </Badge>
+            <Badge tone="neutral">Team OVR {displayTeamOverall(team.rating)}</Badge>
+            <Badge tone={team.chemistry.percent >= 62 ? "good" : "neutral"}>
+              {team.chemistry.tier} chemistry
+            </Badge>
+            {results.goalsConceded === 0 ? <Badge tone="gold">Untouchable</Badge> : null}
+          </div>
+          {results.goalsConceded === 0 ? (
+            <p className="mt-3 text-sm font-semibold text-amber-300">{R.untouchableNote}</p>
+          ) : null}
+          {results.championName ? (
+            <p className="mt-4 text-xs text-faint">{R.champion0f(results.championName)}</p>
+          ) : null}
+        </div>
       </Panel>
 
       {/* Highlights */}
@@ -119,13 +137,13 @@ export function ResultsScreen({ run }: { run: RunState }) {
         ) : null}
       </div>
 
-      {/* Team reveal */}
+      {/* Team reveal: players on top, staff below */}
       <SectionTitle
         title={R.teamReveal}
         right={!run.showOverall ? <Badge tone="orange">{R.hiddenReveal}</Badge> : null}
         className="mb-4"
       />
-      <div className="mb-10 flex flex-wrap justify-center gap-3 md:justify-start md:gap-4">
+      <div className="mb-10 grid grid-cols-3 justify-items-center gap-2 md:gap-4">
         {slots.map((s, i) =>
           s.card ? (
             <RevealCard key={s.slot} card={s.card} delayMs={i * 220} animate={!run.showOverall} />
@@ -259,6 +277,74 @@ export function ResultsScreen({ run }: { run: RunState }) {
   );
 }
 
+/** Deterministic confetti pieces (no render-time randomness → SSR safe). */
+function Confetti() {
+  const pieces = Array.from({ length: 16 }, (_, i) => ({
+    left: `${(i * 61) % 100}%`,
+    delay: `${(i * 0.37) % 2.6}s`,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    duration: `${3 + ((i * 13) % 14) / 10}s`,
+  }));
+  return (
+    <div aria-hidden>
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="confetti"
+          style={{
+            left: p.left,
+            animationDelay: p.delay,
+            animationDuration: p.duration,
+            backgroundColor: p.color,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Slide-in toasts for freshly earned achievements. */
+function AchievementToasts({ ids }: { ids: string[] }) {
+  const [visible, setVisible] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (ids.length === 0) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    ids.forEach((id, i) => {
+      timers.push(setTimeout(() => setVisible((v) => [...v, id]), 700 + i * 1100));
+      timers.push(
+        setTimeout(() => setVisible((v) => v.filter((x) => x !== id)), 700 + i * 1100 + 5200),
+      );
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [ids]);
+
+  if (visible.length === 0) return null;
+
+  return (
+    <div className="pointer-events-none fixed right-4 top-16 z-50 flex w-72 flex-col gap-2" aria-live="polite">
+      {visible.map((id) => {
+        const def = achievementById.get(id);
+        if (!def) return null;
+        return (
+          <div key={id} className="toast-enter panel-strong pointer-events-auto flex items-center gap-3 p-3 !border-orange/40">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange/15 text-orange-bright">
+              <TrophyIcon />
+            </span>
+            <span className="min-w-0">
+              <span className="kicker block !text-[9px]">{R.achievementToast}</span>
+              <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
+                {def.title}
+              </span>
+              <span className="block text-[11px] text-sub">+{def.xp} XP</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function HighlightTile({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <Panel className="p-4">
@@ -309,7 +395,7 @@ function RevealCard({
 
 function CardBack() {
   return (
-    <div className="card-frame card-hidden flex aspect-[3/4.3] w-36 flex-col items-center justify-center gap-3 p-3 md:w-40">
+    <div className="card-frame card-hidden flex aspect-[3/4.3] w-36 flex-col items-center justify-center gap-3 p-3 md:w-44">
       <Logo className="text-[10px]" />
       <span className="display text-4xl font-bold text-faint">??</span>
     </div>

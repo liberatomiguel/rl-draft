@@ -39,15 +39,33 @@ function labeledUserSeries(t: TournamentState): LabeledSeries[] {
       }
     }
   }
-  const playoffLabels = {
-    quarterfinal: "Quarterfinal",
-    semifinal: "Semifinal",
-    final: "Grand Final",
-  } as const;
+  const playoffLabels: Record<string, string> = {
+    ub_quarterfinal: "UB Quarterfinal",
+    lb_round1: "LB Round 1",
+    ub_semifinal: "UB Semifinal",
+    lb_round2: "LB Round 2",
+    ub_final: "UB Final",
+    lb_semifinal: "LB Semifinal",
+    lb_final: "LB Final",
+    third_place: "Third Place Match",
+    grand_final: "Grand Final",
+  };
   for (const entry of userPlayoffSeries(t.playoffs)) {
-    out.push({ label: playoffLabels[entry.round], series: entry.series });
+    out.push({ label: playoffLabels[entry.round] ?? entry.round, series: entry.series });
   }
   return out;
+}
+
+/** Goals conceded by the user across every game of the run. */
+function goalsConcededBy(userId: string, all: LabeledSeries[]): number {
+  let conceded = 0;
+  for (const { series } of all) {
+    for (const game of series.games) {
+      // game.score is [winner goals, loser goals].
+      conceded += game.winnerTeamId === userId ? game.score[1] : game.score[0];
+    }
+  }
+  return conceded;
 }
 
 function highlight(t: TournamentState, entry: LabeledSeries): SeriesHighlight {
@@ -142,6 +160,8 @@ export function compileResults(
     (id) => !profile.unlockedSpecialIds.includes(id),
   );
 
+  const goalsConceded = goalsConcededBy("user", all);
+
   // --- Achievements ---
   const newAchievementIds = evaluateAchievements({
     run,
@@ -154,6 +174,7 @@ export function compileResults(
       tier: "Poor",
       items: [],
     },
+    goalsConceded,
     specialsOwnedAfter: profile.unlockedSpecialIds.length + unlockedSpecialIds.length,
     alreadyEarned: new Set(profile.achievementIds),
   });
@@ -166,9 +187,22 @@ export function compileResults(
   if (placement !== "swiss_exit") {
     lines.push({ label: "Qualified for playoffs", amount: XP.qualifyPlayoffs });
   }
-  if (playoffWins >= 1) lines.push({ label: "Reached semifinals", amount: XP.reachSemifinal });
-  if (playoffWins >= 2) lines.push({ label: "Reached the Grand Final", amount: XP.reachFinal });
-  if (placement === "champion") lines.push({ label: "Tournament champion", amount: XP.winTournament });
+  if (playoffWins > 0) {
+    lines.push({
+      label: `Playoff series wins ×${playoffWins}`,
+      amount: playoffWins * XP.playoffSeriesWin,
+    });
+  }
+  const placementBonus = XP.placementBonus[placement] ?? 0;
+  if (placementBonus > 0) {
+    const placementLabel: Record<string, string> = {
+      champion: "Tournament champion",
+      runner_up: "Grand finalist",
+      third: "Third place",
+      fourth: "Fourth place",
+    };
+    lines.push({ label: placementLabel[placement] ?? "Placement bonus", amount: placementBonus });
+  }
 
   const difficultyMultiplier = DIFFICULTY[run.difficulty].xpMultiplier;
   const hiddenOverallBonus = run.showOverall ? 0 : XP.hiddenOverallBonus;
@@ -193,6 +227,7 @@ export function compileResults(
     biggestWin,
     closestSeries,
     worstLoss,
+    goalsConceded,
     unlockedSpecialIds,
     newAchievementIds,
     xp: { lines, difficultyMultiplier, hiddenOverallBonus, total },

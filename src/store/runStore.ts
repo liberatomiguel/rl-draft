@@ -14,9 +14,9 @@ import { persist } from "zustand/middleware";
 import { DIFFICULTY } from "@/config/balance";
 import { playerById, playerCardById } from "@/data";
 import {
+  applyFreeReroll,
   applyPick,
   applyReroll,
-  applySkip,
   createDraft,
   drawNextOffer,
 } from "@/engine/draft";
@@ -32,6 +32,7 @@ import { userSwissRecord } from "@/engine/swiss";
 import type {
   Difficulty,
   DraftOfferCard,
+  RosterSlotId,
   RunHistoryEntry,
   RunState,
 } from "@/engine/types";
@@ -43,13 +44,12 @@ interface RunStore {
   run: RunState | null;
 
   startRun: (difficulty: Difficulty, showOverallChoice: boolean) => void;
-  abandonRun: () => void;
   clearRun: () => void;
 
   // Draft phase
-  pickCard: (card: DraftOfferCard) => void;
+  pickCard: (card: DraftOfferCard, slot: RosterSlotId) => void;
   reroll: () => void;
-  skipLineup: () => void;
+  freeReroll: () => void;
 
   // Review phase
   startTournament: () => void;
@@ -85,14 +85,13 @@ export const useRunStore = create<RunStore>()(
         set({ run });
       },
 
-      abandonRun: () => set({ run: null }),
       clearRun: () => set({ run: null }),
 
-      pickCard: (card) => {
+      pickCard: (card, slot) => {
         const { run } = get();
         if (!run || run.phase !== "draft") return;
         const rng = createRng(run.rngState);
-        const draft = applyPick(run.draft, card, rng);
+        const draft = applyPick(run.draft, card, slot, rng);
         set({
           run: {
             ...run,
@@ -111,12 +110,12 @@ export const useRunStore = create<RunStore>()(
         set({ run: { ...run, draft, rngState: rng.state } });
       },
 
-      skipLineup: () => {
+      freeReroll: () => {
         const { run } = get();
         if (!run || run.phase !== "draft") return;
         if (run.draft.offer?.hasPickableCard) return;
         const rng = createRng(run.rngState);
-        const draft = applySkip(run.draft, rng);
+        const draft = applyFreeReroll(run.draft, rng);
         set({ run: { ...run, draft, rngState: rng.state } });
       },
 
@@ -199,7 +198,11 @@ export const useRunStore = create<RunStore>()(
     }),
     {
       name: "rocket-draft:run:v1",
-      version: 1,
+      version: 2,
+      // v0.2 changed the run shape (double elim, slot-target picks):
+      // discard any older persisted run instead of resuming a broken one.
+      migrate: (persisted, version) =>
+        version < 2 ? { run: null } : (persisted as { run: RunState | null }),
       partialize: (state) => ({ run: state.run }),
     },
   ),

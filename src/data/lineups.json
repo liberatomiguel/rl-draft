@@ -72,6 +72,7 @@
   { "id": "falcons-2324", "name": "Team Falcons", "seasonId": "rlcs-2023-24", "orgId": "falcons", "region": "MENA",
     "playerCardIds": ["ahmad-falcons-2324", "okhalid-falcons-2324", "trk511-falcons-2324"],
     "coachId": "staff-falcons-2324",
+    "subId": "m7sn-falcons-2324",
     "historicalStrength": "elite" },
   { "id": "g2-stride-2324", "name": "G2 Stride", "seasonId": "rlcs-2023-24", "orgId": "g2", "region": "NA",
     "playerCardIds": ["daniel-g2-2324", "beastmode-g2-2324", "atomic-g2-2324"],

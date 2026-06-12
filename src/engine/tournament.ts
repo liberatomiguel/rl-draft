@@ -74,8 +74,22 @@ export function playNextRound(
       const userSeries = lastRound.series.find(
         (s) => s.teamAId === "user" || s.teamBId === "user",
       );
-      if (userSeries && userSeries.winnerTeamId !== "user") {
-        next.userEliminated = true;
+      if (userSeries) {
+        const lost = userSeries.winnerTeamId !== "user";
+        // Double elim: an upper-bracket loss drops to the lower bracket, and
+        // lb_semifinal / lb_final losers still play the third-place series.
+        // The user is only OUT after lb_round1/lb_round2 losses, after the
+        // third-place series (win or lose), or after losing the grand final.
+        if (lastRound.name === "third_place") {
+          next.userEliminated = true;
+        } else if (
+          lost &&
+          (lastRound.name === "lb_round1" ||
+            lastRound.name === "lb_round2" ||
+            lastRound.name === "grand_final")
+        ) {
+          next.userEliminated = true;
+        }
       }
     }
     return next;
@@ -114,7 +128,8 @@ export function fastForward(
 ): TournamentState {
   let current = state;
   let guard = 0;
-  while (current.stage !== "finished" && guard < 12) {
+  // Worst case: 5 Swiss rounds + 9 playoff rounds.
+  while (current.stage !== "finished" && guard < 20) {
     current = playNextRound(current, difficulty, rng);
     guard += 1;
   }
@@ -125,13 +140,22 @@ export function userPlacement(state: TournamentState): Placement {
   if (state.playoffs?.championTeamId === "user") return "champion";
 
   const playoffRuns = userPlayoffSeries(state.playoffs);
-  if (playoffRuns.length > 0) {
-    const lastLoss = playoffRuns[playoffRuns.length - 1];
-    if (lastLoss.series.winnerTeamId !== "user") {
-      if (lastLoss.round === "final") return "runner_up";
-      if (lastLoss.round === "semifinal") return "semifinalist";
-      return "quarterfinalist";
-    }
+  if (playoffRuns.length === 0) return "swiss_exit";
+
+  const last = playoffRuns[playoffRuns.length - 1];
+  const won = last.series.winnerTeamId === "user";
+
+  switch (last.round) {
+    case "grand_final":
+      return "runner_up";
+    case "third_place":
+      return won ? "third" : "fourth";
+    case "lb_round2":
+      return "top6";
+    case "lb_round1":
+      return "top8";
+    default:
+      // Defensive: a user run can only END on the rounds above.
+      return won ? "third" : "top8";
   }
-  return "swiss_exit";
 }

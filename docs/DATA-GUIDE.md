@@ -179,6 +179,19 @@ achievement = one JSON entry + one rule function with the same id.
 **Add a special card:** new entry in `specialCards.json` pointing at an
 existing base card. It immediately becomes draftable + collectible.
 
+## Images (drop-in, no code changes)
+
+| Asset | Path | Fallback |
+| --- | --- | --- |
+| Org logos | `public/orgs/<orgId>.png` | monogram placeholder |
+| Rank art (menu set) | `public/ranks/menu/<rankId>.png` | CSS emblem |
+| Rank art (profile set) | `public/ranks/profile/<rankId>.png` | CSS emblem |
+| Special card photos | `public/cards/specials/<specialId>.png` | stylized art |
+
+Each folder has a README listing the exact expected filenames. Base player
+cards intentionally have NO player photo — the org logo is the centerpiece;
+only special cards carry photos.
+
 ## Future: Liquipedia API (MVP 4)
 
 The only contract the app depends on is the exports of `src/data/index.ts`

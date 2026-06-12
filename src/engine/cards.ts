@@ -59,7 +59,22 @@ export function finalOverall(card: PlayerCard): number {
 export function baseRarityOf(overall: number): BaseRarity {
   if (overall >= RARITY.blueMin) return "blue";
   if (overall >= RARITY.goldMin) return "gold";
-  return "silver";
+  if (overall >= RARITY.silverMin) return "silver";
+  return "common";
+}
+
+/** Org cards earn rarity from their buff: ~ common · + silver · ++ gold · +++ blue. */
+export function orgRarityOf(buffLevel: BuffLevel): BaseRarity {
+  switch (buffLevel) {
+    case "+++":
+      return "blue";
+    case "++":
+      return "gold";
+    case "+":
+      return "silver";
+    default:
+      return "common";
+  }
 }
 
 /** Missing internal stats fall back to the card overall (base doc rule). */
@@ -157,6 +172,7 @@ export function resolveOrg(orgId: string): ResolvedCard {
     region: org.region,
     orgId: org.id,
     orgName: org.name,
+    baseRarity: orgRarityOf(org.buffLevel),
     buffType: org.buffType,
     buffLevel: org.buffLevel,
   };

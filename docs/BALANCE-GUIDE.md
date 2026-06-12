@@ -91,15 +91,22 @@ stats only nudge (the game must be playable with overall alone).
 
 ## Cards
 
-- `RARITY`: silver <80 · gold 80-89 · blue ≥90 (visual only).
+- `RARITY`: common ≤69 · silver 70-79 · gold 80-89 · blue ≥90 (visual only).
+  Org cards map from buff level: ~ common · + silver · ++ gold · +++ blue.
 - `DRAFT.specialAppearanceChance` (7%): chance a base card shows up as its
   special version in an offer. Raise to make the collection faster to fill.
 
 ## Progression (`XP`, `RANKS`)
 
-Run XP: complete 50 · swiss win 20 · qualify 75 · semis 50 · final 75 ·
-title 200 — multiplied by difficulty, +25% if hidden overalls. Achievement XP
-is flat (not multiplied). Rank thresholds: Bronze 0 → Supersonic Legend 10k.
+Run XP: complete 50 · swiss win 20 · qualify 75 · playoff series win 40 each
+· placement bonus (title 200 / final 100 / 3rd 60 / 4th 40) — multiplied by
+difficulty, +25% if hidden overalls. Achievement XP is flat (not multiplied).
+
+Rank ladder (v0.2, "moderate grind" target): Unranked 0 → Bronze 200 →
+Silver 600 → Gold 1.4k → Platinum 2.6k → Diamond 4.5k → Champion 7.2k →
+Grand Champion 10.5k → Supersonic Legend 14.5k. Average run ≈ 150-300 XP,
+winning run ≈ 500-800 → SSL lands around 35-60 runs. Tune `RANKS` minXp to
+stretch or compress the grind.
 
 ## Playtest workflow
 

@@ -3,6 +3,7 @@
 The base document ([GAME-DESIGN.md](GAME-DESIGN.md)) left some gaps that had
 to be closed to ship a coherent MVP. Every call is listed here with its
 rationale so it can be reviewed — none of these are sacred.
+Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 
 ## Gameplay rules
 
@@ -12,17 +13,18 @@ rationale so it can be reviewed — none of these are sacred.
    for consistency (Mew drafted once = every Mew card is gone for that run).
    Orgs don't need it (a single org slot already blocks repeats).
 
-2. **Player cards can fill the substitute slot.** Once the three player slots
-   are full, player cards remain pickable as "Joins as substitute" (sub-level
-   impact, not player-level). Reason: only some historical lineups carry a
-   dedicated sub card, so a sub-only hunt at the end of a draft could drag for
-   many rounds; this keeps every round meaningful and adds a real decision
-   (bench a star for depth?). Dedicated sub cards can ONLY fill the sub slot.
+2. ~~Player cards can fill the substitute slot.~~ **Removed in v0.2** by
+   direction: only sub cards fill the sub slot. The sub-scarcity problem
+   (few lineups carry one) is covered by the free-reroll rule below; growing
+   the subs dataset further reduces friction (see DATA-GUIDE).
 
-3. **Forced skip.** If nothing in an offer is pickable (slots full / persons
-   taken / lineup lacks the card type you still need), the lineup can be
-   skipped for free. Voluntary skips don't exist — that would make rerolls
-   pointless.
+3. **Free reroll when stuck** (v0.2, replaces "forced skip"). If nothing in
+   an offer is pickable, the player is granted a free reroll that does NOT
+   consume the difficulty budget. Voluntary skips still don't exist.
+
+3b. **Slot-target picking** (v0.2). Drafting is two clicks: select the card,
+   then click the destination slot on the field view. Players choose which
+   of the three player slots — free positional ordering, no confirm button.
 
 4. **Lineups are drawn without replacement** within a run (no repeated
    offers). If the pool ever exhausts (tiny dataset + many skips), it resets
@@ -35,9 +37,12 @@ rationale so it can be reviewed — none of these are sacred.
 6. **When the user is eliminated, the rest of the tournament auto-simulates**
    so the results screen can say who won the title. Costs nothing, adds story.
 
-7. **Playoffs = single-elimination Bo7, 8 teams, seeds 1v8/4v5/2v7/3v6** from
-   Swiss results (losses, then game diff, then rating). Double elimination is
-   roadmap (only `engine/playoffs.ts` changes).
+7. **Playoffs = DOUBLE ELIMINATION Bo7** (v0.2), 8 teams seeded
+   1v8/4v5/2v7/3v6 from Swiss results. Lower bracket R2 crosses sides to
+   delay rematches. One grand final (no bracket reset — flag if wanted).
+   **Third-place series**: in pure double elim 3rd/4th are decided without a
+   match; per direction we added a bronze decider — LB semifinal loser vs
+   LB final loser — played right before the grand final.
 
 8. **Legacy is in the MVP** (the base doc deferred it) — it was nearly free
    on top of the difficulty system and completes the unlock loop:
@@ -89,6 +94,26 @@ rationale so it can be reviewed — none of these are sacred.
     invented people. Some assignments are best-effort and documented as such
     in DATA-GUIDE.md.
 
+## v0.2 additions
+
+18. **No resume system.** Returning to the menu resets the run (one-click
+    back button in the run header, no confirmation modal). Refreshing the
+    page mid-run still restores it — that protects against accidents, not
+    intentional exits.
+
+19. **Spoiler-safe playback.** The tournament simulates ahead internally but
+    the UI derives standings/brackets only from *revealed* series, so the
+    auto-playback never leaks results before showing them.
+
+20. **"Untouchable"** (no goals conceded all run) is implemented literally
+    as directed and is therefore near-impossible by design (~25+ games all
+    with clean sheets). It doubles as a long-term chase goal. If it should
+    be attainable, the goal model in `match.ts → flavorGoals` is the knob.
+
+21. **Asset conventions over configuration**: org logos, rank art (two sets)
+    and special-card photos are looked up by id under `public/`, with styled
+    fallbacks when missing. Dropping files in is the whole integration.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).
@@ -96,5 +121,6 @@ rationale so it can be reviewed — none of these are sacred.
 - Special draft chance 7% — fast enough collection pace?
 - Hidden runs currently hide opponent team ratings too (full blackout).
   Alternative: show opponent ratings, hide only yours.
+- Grand final bracket reset (LB team must win twice)? Currently single GF.
 - "Best player" of the run is currently overall + small variance — a deeper
   per-game impact model is possible if it matters.

@@ -1,15 +1,16 @@
 /**
- * Draft state machine (base doc §4-§6).
+ * Draft state machine (base doc §4-§6, revised in v0.2).
  *
  * Rules implemented here:
  *  - Each round shows one random historical lineup (pure random, all difficulties).
  *  - Lineups are drawn WITHOUT replacement within a run; pool resets if exhausted.
- *  - Free choice: any card can be taken, one per round.
+ *  - Free choice: pick one card per round and place it on a chosen slot
+ *    (players pick which of the three player slots).
  *  - A person picked once (player/coach/sub) is excluded for the rest of the run.
- *  - When player slots are full, player cards can still be drafted INTO the sub
- *    slot (design decision — see docs/DESIGN-DECISIONS.md).
- *  - If nothing in the offer is pickable, the lineup can be skipped for free.
- *  - Rerolls replace the entire lineup and are limited by difficulty.
+ *  - Only sub cards can fill the sub slot (v0.2 — player-as-sub removed).
+ *  - If nothing in the offer is pickable, the player gets a FREE reroll
+ *    (does not consume the difficulty reroll budget).
+ *  - Paid rerolls replace the entire lineup and are limited by difficulty.
  */
 
 import { DIFFICULTY, DRAFT } from "@/config/balance";
@@ -61,6 +62,20 @@ export function neededKinds(roster: Roster): CardKind[] {
   return needs;
 }
 
+/** Slots a given card kind may occupy (players choose among the open ones). */
+export function slotsForKind(kind: CardKind): RosterSlotId[] {
+  switch (kind) {
+    case "player":
+      return PLAYER_SLOTS;
+    case "coach":
+      return ["coach"];
+    case "sub":
+      return ["sub"];
+    case "org":
+      return ["org"];
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Offer creation
 // ---------------------------------------------------------------------------
@@ -71,18 +86,8 @@ function availabilityFor(
   draft: DraftState,
 ): DraftOfferCard["availability"] {
   if (personId && draft.takenPersonIds.includes(personId)) return "already_drafted";
-  switch (kind) {
-    case "player":
-      if (openPlayerSlot(draft.roster)) return "available";
-      if (!draft.roster.sub) return "as_sub";
-      return "slot_full";
-    case "coach":
-      return draft.roster.coach ? "slot_full" : "available";
-    case "sub":
-      return draft.roster.sub ? "slot_full" : "available";
-    case "org":
-      return draft.roster.org ? "slot_full" : "available";
-  }
+  const hasOpenSlot = slotsForKind(kind).some((slot) => !draft.roster[slot]);
+  return hasOpenSlot ? "available" : "slot_full";
 }
 
 function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
@@ -129,9 +134,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
     availability: availabilityFor("org", null, draft),
   });
 
-  const hasPickableCard = cards.some(
-    (c) => c.availability === "available" || c.availability === "as_sub",
-  );
+  const hasPickableCard = cards.some((c) => c.availability === "available");
 
   return { lineupId, cards, hasPickableCard };
 }
@@ -140,7 +143,7 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   let pool = lineups.filter((l) => !draft.shownLineupIds.includes(l.id));
   let shown = draft.shownLineupIds;
 
-  // Pool exhausted (small datasets / many skips): reset exclusions.
+  // Pool exhausted (small datasets / many free rerolls): reset exclusions.
   if (pool.length === 0) {
     pool = lineups.slice();
     shown = [];
@@ -166,11 +169,11 @@ export function applyReroll(draft: DraftState, rng: Rng): DraftState {
   return drawNextOffer({ ...draft, rerollsLeft: draft.rerollsLeft - 1 }, rng);
 }
 
-/** Free skip — only legal when the offer has no pickable card. */
-export function applySkip(draft: DraftState, rng: Rng): DraftState {
-  if (!draft.offer) throw new Error("No active offer to skip");
+/** Free reroll — only legal when the offer has no pickable card. */
+export function applyFreeReroll(draft: DraftState, rng: Rng): DraftState {
+  if (!draft.offer) throw new Error("No active offer");
   if (draft.offer.hasPickableCard) {
-    throw new Error("Skip is only allowed when no card is pickable");
+    throw new Error("Free reroll is only granted when no card is pickable");
   }
   return drawNextOffer(draft, rng);
 }
@@ -178,59 +181,47 @@ export function applySkip(draft: DraftState, rng: Rng): DraftState {
 export function applyPick(
   draft: DraftState,
   offerCard: DraftOfferCard,
+  targetSlot: RosterSlotId,
   rng: Rng,
 ): DraftState {
   if (!draft.offer) throw new Error("No active offer");
   if (!draft.offer.cards.some((c) => c.kind === offerCard.kind && c.refId === offerCard.refId)) {
     throw new Error("Card is not part of the current offer");
   }
-  if (offerCard.availability !== "available" && offerCard.availability !== "as_sub") {
+  if (offerCard.availability !== "available") {
     throw new Error(`Card not pickable (${offerCard.availability})`);
   }
+  if (!slotsForKind(offerCard.kind).includes(targetSlot)) {
+    throw new Error(`A ${offerCard.kind} card cannot fill the ${targetSlot} slot`);
+  }
+  if (draft.roster[targetSlot]) {
+    throw new Error(`Slot ${targetSlot} is already filled`);
+  }
 
-  let slot: RosterSlotId;
-  let asSub = false;
   let personId: string | null = null;
-
   switch (offerCard.kind) {
-    case "player": {
-      const card = playerCardById.get(offerCard.refId)!;
-      personId = card.playerId;
-      const open = openPlayerSlot(draft.roster);
-      if (open) {
-        slot = open;
-      } else {
-        slot = "sub";
-        asSub = true;
-      }
+    case "player":
+      personId = playerCardById.get(offerCard.refId)!.playerId;
       break;
-    }
-    case "coach": {
+    case "coach":
       personId = coachById.get(offerCard.refId)!.personId;
-      slot = "coach";
       break;
-    }
-    case "sub": {
+    case "sub":
       personId = subById.get(offerCard.refId)!.personId;
-      slot = "sub";
       break;
-    }
-    case "org": {
-      slot = "org";
+    case "org":
       break;
-    }
   }
 
   const pick: RosterPick = {
-    slot,
+    slot: targetSlot,
     kind: offerCard.kind,
     refId: offerCard.refId,
     specialId: offerCard.specialId,
-    asSub: asSub || undefined,
     fromLineupId: draft.offer.lineupId,
   };
 
-  const roster: Roster = { ...draft.roster, [slot]: pick };
+  const roster: Roster = { ...draft.roster, [targetSlot]: pick };
   const takenPersonIds = personId
     ? [...draft.takenPersonIds, personId]
     : draft.takenPersonIds;
