@@ -540,28 +540,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "fairypeak-mockit-esports-s3",
+    "id": "fairypeak-mock-it-esports-s3",
     "playerId": "fairypeak",
-    "orgId": "mockit-esports",
-    "lineupId": "mockit-esports-s3",
+    "orgId": "mock-it-esports",
+    "lineupId": "mock-it-esports-s3",
     "seasonId": "rlcs-s3",
     "overall": 89,
     "manualAdjustment": 0
   },
   {
-    "id": "kaydop-mockit-esports-s3",
+    "id": "kaydop-mock-it-esports-s3",
     "playerId": "kaydop",
-    "orgId": "mockit-esports",
-    "lineupId": "mockit-esports-s3",
+    "orgId": "mock-it-esports",
+    "lineupId": "mock-it-esports-s3",
     "seasonId": "rlcs-s3",
     "overall": 91,
     "manualAdjustment": 0
   },
   {
-    "id": "miztik-mockit-esports-s3",
+    "id": "miztik-mock-it-esports-s3",
     "playerId": "miztik",
-    "orgId": "mockit-esports",
-    "lineupId": "mockit-esports-s3",
+    "orgId": "mock-it-esports",
+    "lineupId": "mock-it-esports-s3",
     "seasonId": "rlcs-s3",
     "overall": 87,
     "manualAdjustment": 0
@@ -918,28 +918,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "drippay-chiefs-esc-s4",
+    "id": "drippay-chiefs-esports-club-s4",
     "playerId": "drippay",
-    "orgId": "chiefs-esc",
-    "lineupId": "chiefs-esc-s4",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-s4",
     "seasonId": "rlcs-s4",
     "overall": 86,
     "manualAdjustment": 0
   },
   {
-    "id": "jake-chiefs-esc-s4",
+    "id": "jake-chiefs-esports-club-s4",
     "playerId": "jake",
-    "orgId": "chiefs-esc",
-    "lineupId": "chiefs-esc-s4",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-s4",
     "seasonId": "rlcs-s4",
     "overall": 81,
     "manualAdjustment": 0
   },
   {
-    "id": "torsos-chiefs-esc-s4",
+    "id": "torsos-chiefs-esports-club-s4",
     "playerId": "torsos",
-    "orgId": "chiefs-esc",
-    "lineupId": "chiefs-esc-s4",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-s4",
     "seasonId": "rlcs-s4",
     "overall": 84,
     "manualAdjustment": 0
@@ -1080,55 +1080,55 @@
     "manualAdjustment": 0
   },
   {
-    "id": "violentpanda-team-dignitas-s5",
+    "id": "violentpanda-dignitas-s5",
     "playerId": "violentpanda",
-    "orgId": "team-dignitas",
-    "lineupId": "team-dignitas-s5",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-s5",
     "seasonId": "rlcs-s5",
     "overall": 94,
     "manualAdjustment": 0
   },
   {
-    "id": "kaydop-team-dignitas-s5",
+    "id": "kaydop-dignitas-s5",
     "playerId": "kaydop",
-    "orgId": "team-dignitas",
-    "lineupId": "team-dignitas-s5",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-s5",
     "seasonId": "rlcs-s5",
     "overall": 96,
     "manualAdjustment": 0
   },
   {
-    "id": "turbopolsa-team-dignitas-s5",
+    "id": "turbopolsa-dignitas-s5",
     "playerId": "turbopolsa",
-    "orgId": "team-dignitas",
-    "lineupId": "team-dignitas-s5",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-s5",
     "seasonId": "rlcs-s5",
     "overall": 96,
     "manualAdjustment": 0
   },
   {
-    "id": "fairypeak-renault-vitality-s5",
+    "id": "fairypeak-team-vitality-s5",
     "playerId": "fairypeak",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s5",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s5",
     "seasonId": "rlcs-s5",
     "overall": 87,
     "manualAdjustment": 0
   },
   {
-    "id": "freakii-renault-vitality-s5",
+    "id": "freakii-team-vitality-s5",
     "playerId": "freakii",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s5",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s5",
     "seasonId": "rlcs-s5",
     "overall": 84,
     "manualAdjustment": 0
   },
   {
-    "id": "paschy90-renault-vitality-s5",
+    "id": "paschy90-team-vitality-s5",
     "playerId": "paschy90",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s5",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s5",
     "seasonId": "rlcs-s5",
     "overall": 83,
     "manualAdjustment": 0
@@ -1620,28 +1620,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "scrubkilla-renault-vitality-s7",
+    "id": "scrubkilla-team-vitality-s7",
     "playerId": "scrubkilla",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s7",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s7",
     "seasonId": "rlcs-s7",
     "overall": 92,
     "manualAdjustment": 0
   },
   {
-    "id": "fairypeak-renault-vitality-s7",
+    "id": "fairypeak-team-vitality-s7",
     "playerId": "fairypeak",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s7",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s7",
     "seasonId": "rlcs-s7",
     "overall": 91,
     "manualAdjustment": 0
   },
   {
-    "id": "kaydop-renault-vitality-s7",
+    "id": "kaydop-team-vitality-s7",
     "playerId": "kaydop",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s7",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s7",
     "seasonId": "rlcs-s7",
     "overall": 93,
     "manualAdjustment": 0
@@ -1944,28 +1944,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "fairypeak-renault-vitality-s8",
+    "id": "fairypeak-team-vitality-s8",
     "playerId": "fairypeak",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s8",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s8",
     "seasonId": "rlcs-s8",
     "overall": 91,
     "manualAdjustment": 0
   },
   {
-    "id": "scrubkilla-renault-vitality-s8",
+    "id": "scrubkilla-team-vitality-s8",
     "playerId": "scrubkilla",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s8",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s8",
     "seasonId": "rlcs-s8",
     "overall": 89,
     "manualAdjustment": 0
   },
   {
-    "id": "kaydop-renault-vitality-s8",
+    "id": "kaydop-team-vitality-s8",
     "playerId": "kaydop",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s8",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s8",
     "seasonId": "rlcs-s8",
     "overall": 91,
     "manualAdjustment": 0
@@ -2295,28 +2295,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "fairypeak-renault-vitality-s9",
+    "id": "fairypeak-team-vitality-s9",
     "playerId": "fairypeak",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s9",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s9",
     "seasonId": "rlcs-s9",
     "overall": 91,
     "manualAdjustment": 0
   },
   {
-    "id": "kaydop-renault-vitality-s9",
+    "id": "kaydop-team-vitality-s9",
     "playerId": "kaydop",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s9",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s9",
     "seasonId": "rlcs-s9",
     "overall": 91,
     "manualAdjustment": 0
   },
   {
-    "id": "alpha54-renault-vitality-s9",
+    "id": "alpha54-team-vitality-s9",
     "playerId": "alpha54",
-    "orgId": "renault-vitality",
-    "lineupId": "renault-vitality-s9",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-s9",
     "seasonId": "rlcs-s9",
     "overall": 94,
     "manualAdjustment": 0
@@ -3267,28 +3267,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "scrub-pioneers-2122",
+    "id": "scrub-pioneers-oce-2122",
     "playerId": "scrub",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2122",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 79,
     "manualAdjustment": 0
   },
   {
-    "id": "superlachie-pioneers-2122",
+    "id": "superlachie-pioneers-oce-2122",
     "playerId": "superlachie",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2122",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 82,
     "manualAdjustment": 0
   },
   {
-    "id": "bananahead-pioneers-2122",
+    "id": "bananahead-pioneers-oce-2122",
     "playerId": "bananahead",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2122",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 81,
     "manualAdjustment": 0
@@ -3915,28 +3915,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "scrub-pioneers-2223",
+    "id": "scrub-pioneers-oce-2223",
     "playerId": "scrub",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2223",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2223",
     "seasonId": "rlcs-2022-23",
     "overall": 78,
     "manualAdjustment": 0
   },
   {
-    "id": "superlachie-pioneers-2223",
+    "id": "superlachie-pioneers-oce-2223",
     "playerId": "superlachie",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2223",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2223",
     "seasonId": "rlcs-2022-23",
     "overall": 83,
     "manualAdjustment": 0
   },
   {
-    "id": "fiberr-pioneers-2223",
+    "id": "fiberr-pioneers-oce-2223",
     "playerId": "fiberr",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2223",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2223",
     "seasonId": "rlcs-2022-23",
     "overall": 81,
     "manualAdjustment": 0
@@ -4482,28 +4482,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "superlachie-quiktrip-pioneers-gaming-2024",
+    "id": "superlachie-pioneers-oce-2024",
     "playerId": "superlachie",
-    "orgId": "quiktrip-pioneers-gaming",
-    "lineupId": "quiktrip-pioneers-gaming-2024",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2024",
     "seasonId": "rlcs-2024",
     "overall": 83,
     "manualAdjustment": 0
   },
   {
-    "id": "scrub-quiktrip-pioneers-gaming-2024",
+    "id": "scrub-pioneers-oce-2024",
     "playerId": "scrub",
-    "orgId": "quiktrip-pioneers-gaming",
-    "lineupId": "quiktrip-pioneers-gaming-2024",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2024",
     "seasonId": "rlcs-2024",
     "overall": 79,
     "manualAdjustment": 0
   },
   {
-    "id": "fiberr-quiktrip-pioneers-gaming-2024",
+    "id": "fiberr-pioneers-oce-2024",
     "playerId": "fiberr",
-    "orgId": "quiktrip-pioneers-gaming",
-    "lineupId": "quiktrip-pioneers-gaming-2024",
+    "orgId": "pioneers-oce",
+    "lineupId": "pioneers-oce-2024",
     "seasonId": "rlcs-2024",
     "overall": 82,
     "manualAdjustment": 0
@@ -5157,28 +5157,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "vksailen-fut-esports-2025",
+    "id": "vksailen-fut-esports-ssa-2025",
     "playerId": "vksailen",
-    "orgId": "fut-esports",
-    "lineupId": "fut-esports-2025",
+    "orgId": "fut-esports-ssa",
+    "lineupId": "fut-esports-ssa-2025",
     "seasonId": "rlcs-2025",
     "overall": 78,
     "manualAdjustment": 0
   },
   {
-    "id": "leoro-fut-esports-2025",
+    "id": "leoro-fut-esports-ssa-2025",
     "playerId": "leoro",
-    "orgId": "fut-esports",
-    "lineupId": "fut-esports-2025",
+    "orgId": "fut-esports-ssa",
+    "lineupId": "fut-esports-ssa-2025",
     "seasonId": "rlcs-2025",
     "overall": 75,
     "manualAdjustment": 0
   },
   {
-    "id": "torres823-fut-esports-2025",
+    "id": "torres823-fut-esports-ssa-2025",
     "playerId": "torres823",
-    "orgId": "fut-esports",
-    "lineupId": "fut-esports-2025",
+    "orgId": "fut-esports-ssa",
+    "lineupId": "fut-esports-ssa-2025",
     "seasonId": "rlcs-2025",
     "overall": 75,
     "manualAdjustment": 0
@@ -5265,28 +5265,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "jstn-fut-esports-2026",
+    "id": "jstn-fut-esports-na-2026",
     "playerId": "jstn",
-    "orgId": "fut-esports",
-    "lineupId": "fut-esports-2026",
+    "orgId": "fut-esports-na",
+    "lineupId": "fut-esports-na-2026",
     "seasonId": "rlcs-2026",
     "overall": 87,
     "manualAdjustment": 0
   },
   {
-    "id": "chronic-fut-esports-2026",
+    "id": "chronic-fut-esports-na-2026",
     "playerId": "chronic",
-    "orgId": "fut-esports",
-    "lineupId": "fut-esports-2026",
+    "orgId": "fut-esports-na",
+    "lineupId": "fut-esports-na-2026",
     "seasonId": "rlcs-2026",
     "overall": 87,
     "manualAdjustment": 0
   },
   {
-    "id": "cheese-fut-esports-2026",
+    "id": "cheese-fut-esports-na-2026",
     "playerId": "cheese",
-    "orgId": "fut-esports",
-    "lineupId": "fut-esports-2026",
+    "orgId": "fut-esports-na",
+    "lineupId": "fut-esports-na-2026",
     "seasonId": "rlcs-2026",
     "overall": 86,
     "manualAdjustment": 0
@@ -5589,28 +5589,28 @@
     "manualAdjustment": 0
   },
   {
-    "id": "sweaty-pioneers-2026",
+    "id": "sweaty-pioneers-ssa-2026",
     "playerId": "sweaty",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2026",
+    "orgId": "pioneers-ssa",
+    "lineupId": "pioneers-ssa-2026",
     "seasonId": "rlcs-2026",
     "overall": 75,
     "manualAdjustment": 0
   },
   {
-    "id": "luiisp-pioneers-2026",
+    "id": "luiisp-pioneers-ssa-2026",
     "playerId": "luiisp",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2026",
+    "orgId": "pioneers-ssa",
+    "lineupId": "pioneers-ssa-2026",
     "seasonId": "rlcs-2026",
     "overall": 78,
     "manualAdjustment": 0
   },
   {
-    "id": "2die4-pioneers-2026",
+    "id": "2die4-pioneers-ssa-2026",
     "playerId": "2die4",
-    "orgId": "pioneers",
-    "lineupId": "pioneers-2026",
+    "orgId": "pioneers-ssa",
+    "lineupId": "pioneers-ssa-2026",
     "seasonId": "rlcs-2026",
     "overall": 79,
     "manualAdjustment": 0

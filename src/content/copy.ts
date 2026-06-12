@@ -37,6 +37,15 @@ export const HOME = {
   howToPlay: "How to play",
 } as const;
 
+export const NAV_UI = {
+  backToMenu: "Back to menu",
+  leaveTitle: "Leave the run?",
+  leaveBody:
+    "Returning to the menu abandons the current run — your draft and tournament progress will be lost.",
+  leaveConfirm: "Leave run",
+  leaveCancel: "Keep playing",
+} as const;
+
 export const SETUP = {
   title: "Game Setup",
   subtitle: "Pick a difficulty. The draft pool is always fully random — difficulty changes the tournament, not your luck.",
@@ -108,6 +117,7 @@ export const TOURNAMENT_UI = {
   skipAll: "Skip to end",
   live: "Live",
   standings: "Standings",
+  throughRound: (n: number) => `Through Round ${n}`,
   yourPath: "Your Path",
   matchCenter: "Match Center",
   upcoming: "Up next",
@@ -180,6 +190,8 @@ export const RESULTS_UI = {
   ceremonyKicker: "New card unlocked",
   ceremonyTap: "Tap to reveal",
   ceremonyContinue: "Continue",
+  rankUpTitle: "Rank up!",
+  rankUpHint: "Tap to continue",
 } as const;
 
 export const COLLECTION_UI = {

@@ -1,20 +1,23 @@
 "use client";
 
 /**
- * Draft screen v2.
+ * Draft screen v3.
  * Offer laid out as 2 rows of 3: players on top; coach, sub, org below
  * (missing coach/sub render as non-pickable placeholder cards).
  * Interaction: click a card to select it → compatible slots on the field
  * glow → click a slot to place. No confirm button.
  * If nothing is pickable, the player gets a free reroll.
+ * v0.5: the drawn lineup lands via a slot-machine reel (the instant swap
+ * read as nothing happening), and the region badge is color-coded.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DRAFT_UI } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
-import { lineupById } from "@/data";
+import { lineupById, lineups, seasonById } from "@/data";
 import type { DraftOfferCard, RosterSlotId, RunState } from "@/engine/types";
+import { cx } from "@/lib/util";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
@@ -23,6 +26,7 @@ import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
+import { REGION_BADGE } from "@/components/regionStyle";
 import { RunStepper } from "./RunStepper";
 
 const KIND_LABEL: Record<string, string> = {
@@ -39,11 +43,33 @@ export function DraftScreen({ run }: { run: RunState }) {
   const unlockedSpecials = useProfileStore((s) => s.unlockedSpecials);
 
   const [selected, setSelected] = useState<DraftOfferCard | null>(null);
+  // Slot-machine reel: decoy lineup names spinning onto the drawn one.
+  const [reel, setReel] = useState<string[] | null>(null);
+  const rolledOnce = useRef(false);
 
   const offer = run.draft.offer;
   useEffect(() => {
     setSelected(null);
   }, [offer?.lineupId, run.draft.round]);
+
+  useEffect(() => {
+    if (!offer) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const drawn = lineupById.get(offer.lineupId);
+    if (!drawn) return;
+    // First offer after a refresh resumes silently; rolls play from then on.
+    if (!rolledOnce.current) {
+      rolledOnce.current = true;
+      if (run.draft.round > 1) return;
+    }
+    const nameOf = (l: (typeof lineups)[number]) =>
+      `${l.name} · ${seasonById.get(l.seasonId)?.shortLabel ?? ""}`;
+    const decoys: string[] = [];
+    for (let i = 0; i < 9; i++) {
+      decoys.push(nameOf(lineups[Math.floor(Math.random() * lineups.length)]));
+    }
+    setReel([...decoys, nameOf(drawn)]);
+  }, [offer, run.draft.round]);
 
   // ESC clears the selection.
   useEffect(() => {
@@ -104,15 +130,23 @@ export function DraftScreen({ run }: { run: RunState }) {
           offerCard.specialId ? Boolean(unlockedSpecials[offerCard.specialId]) : true
         }
         size="md"
+        // Fluid inside the 3-col grid — fixed w-36 overlapped on phones.
+        className="!w-full mx-auto max-w-44"
         selected={isSelected}
         disabled={unavailable}
         disabledLabel={
-          offerCard.availability === "slot_full" ? DRAFT_UI.slotFull : DRAFT_UI.alreadyDrafted
+          offerCard.availability === "vacant"
+            ? DRAFT_UI.notFielded
+            : offerCard.availability === "slot_full"
+              ? DRAFT_UI.slotFull
+              : DRAFT_UI.alreadyDrafted
         }
         onClick={() => handleCardClick(offerCard, isSelected)}
       />
     );
   };
+
+  const rolling = reel !== null;
 
   return (
     <div className="rise-in">
@@ -122,24 +156,52 @@ export function DraftScreen({ run }: { run: RunState }) {
         {/* ------------------------------------------------ Lineup offer */}
         <div>
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <p className="kicker mb-1">
                 {DRAFT_UI.roundLabel(run.draft.round)} · {DRAFT_UI.pickProgress(filled, slotTotal)}
                 {run.daily ? <span className="text-orange-bright"> · {run.daily.label}</span> : null}
               </p>
-              <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
-                {header.name}
-              </h2>
-              <p className="mt-1 flex items-center gap-2 text-sm text-sub">
+              {rolling ? (
+                <div
+                  className="slot-reel h-8 md:h-9"
+                  style={{ "--slot-item-h": "2.25rem" } as React.CSSProperties}
+                  aria-hidden
+                >
+                  <div
+                    className="slot-reel-track"
+                    onAnimationEnd={() => setReel(null)}
+                  >
+                    {reel!.map((name, i) => (
+                      <p
+                        key={i}
+                        className="display flex h-8 items-center truncate text-2xl font-bold uppercase tracking-wide text-ink md:h-9 md:text-3xl"
+                      >
+                        {name}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <h2 className="display pop-in truncate text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
+                  {header.name}
+                </h2>
+              )}
+              <p
+                className={cx(
+                  "mt-1 flex items-center gap-2 text-sm text-sub transition-opacity duration-200",
+                  rolling && "opacity-0",
+                )}
+              >
                 {header.seasonLabel}
-                <Badge tone="neutral">{header.region}</Badge>
+                {/* Region accent color — where is this team from, at a glance */}
+                <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
               </p>
             </div>
             <Button
               variant="secondary"
               size="sm"
               onClick={reroll}
-              disabled={run.draft.rerollsLeft <= 0}
+              disabled={run.draft.rerollsLeft <= 0 || rolling}
               title={DRAFT_UI.reroll}
             >
               <RerollIcon />
@@ -150,28 +212,31 @@ export function DraftScreen({ run }: { run: RunState }) {
             </Button>
           </div>
 
-          {/* Row 1: the three players */}
-          <div className="mb-3 grid grid-cols-3 justify-items-center gap-2 md:gap-4">
-            {playerCards.map(renderOfferCard)}
-          </div>
-          {/* Row 2: coach · sub · org (classic/daily only) */}
-          {run.mode !== "quick" && coachCard && subCard && orgCard ? (
-            <div className="grid grid-cols-3 justify-items-center gap-2 md:gap-4">
-              {renderOfferCard(coachCard)}
-              {renderOfferCard(subCard)}
-              {renderOfferCard(orgCard)}
+          {/* The offer fades in once the reel lands */}
+          <div className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
+            {/* Row 1: the three players (cells stretch; cards cap at max-w) */}
+            <div className="mb-3 grid grid-cols-3 gap-2 md:gap-4">
+              {playerCards.map(renderOfferCard)}
             </div>
-          ) : null}
+            {/* Row 2: coach · sub · org (classic/daily only) */}
+            {run.mode !== "quick" && coachCard && subCard && orgCard ? (
+              <div className="grid grid-cols-3 gap-2 md:gap-4">
+                {renderOfferCard(coachCard)}
+                {renderOfferCard(subCard)}
+                {renderOfferCard(orgCard)}
+              </div>
+            ) : null}
 
-          {!offer.hasPickableCard ? (
-            <Panel className="mt-6 flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
-              <p className="text-sm text-sub">{DRAFT_UI.freeRerollHint}</p>
-              <Button variant="primary" onClick={freeReroll} className="pulse-soft shrink-0">
-                <RerollIcon />
-                {DRAFT_UI.freeReroll}
-              </Button>
-            </Panel>
-          ) : null}
+            {!offer.hasPickableCard ? (
+              <Panel className="mt-6 flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
+                <p className="text-sm text-sub">{DRAFT_UI.freeRerollHint}</p>
+                <Button variant="primary" onClick={freeReroll} className="pulse-soft shrink-0">
+                  <RerollIcon />
+                  {DRAFT_UI.freeReroll}
+                </Button>
+              </Panel>
+            ) : null}
+          </div>
         </div>
 
         {/* ------------------------------------------------ Your team (field) */}

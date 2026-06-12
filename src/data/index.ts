@@ -113,17 +113,18 @@ export const specialCardById = toMap("specialCards", specialCards);
 export const achievementById = toMap("achievements", achievements);
 
 /**
- * Special versions per base card (a card can have several — e.g. zen has a
- * legendary, a Worlds MVP, a Major MVP and a moment on the same base).
- * Player specials and coach specials are separate pools.
+ * Special versions per PERSON (v0.5): a special belongs to the player, so any
+ * card of theirs can roll it (zen has a legendary, a Worlds MVP, a Major MVP
+ * and moments — all reachable from every zen card). `baseCardId` remains the
+ * display/stat anchor only. Player and coach specials are separate pools.
  */
-export const specialsByBaseCardId = new Map<string, SpecialCard[]>();
-export const coachSpecialsByBaseCardId = new Map<string, SpecialCard[]>();
+export const specialsByPlayerId = new Map<string, SpecialCard[]>();
+export const coachSpecialsByPersonId = new Map<string, SpecialCard[]>();
 for (const sp of specialCards) {
-  const map = sp.kind === "coach" ? coachSpecialsByBaseCardId : specialsByBaseCardId;
-  const list = map.get(sp.baseCardId) ?? [];
+  const map = sp.kind === "coach" ? coachSpecialsByPersonId : specialsByPlayerId;
+  const list = map.get(sp.playerId) ?? [];
   list.push(sp);
-  map.set(sp.baseCardId, list);
+  map.set(sp.playerId, list);
 }
 
 // ---------------------------------------------------------------------------

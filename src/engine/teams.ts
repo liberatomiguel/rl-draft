@@ -148,6 +148,9 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
   const card = playerCardById.get(refId)!;
   const player = playerById.get(card.playerId)!;
   const special = specialId ? specialCardById.get(specialId) : undefined;
+  // The special's own historical moment drives chemistry context (v0.5):
+  // a 2022 card rolled as an S1 legend counts as the S1 lineup/org.
+  const ctx = (special && playerCardById.get(special.baseCardId)) || card;
   const overall = special ? special.overall : finalOverall(card);
   const stats = special
     ? effectiveStats(special.overall, special.stats)
@@ -162,8 +165,8 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
     name: player.nickname,
     overall,
     stats,
-    lineupId: card.lineupId,
-    orgId: card.orgId,
+    lineupId: ctx.lineupId,
+    orgId: ctx.orgId,
     country: player.country,
   };
 }
@@ -192,14 +195,17 @@ export function buildUserTeam(
   const coachSpecial = roster.coach?.specialId
     ? specialCardById.get(roster.coach.specialId)
     : undefined;
+  // Coach specials use their own moment's lineup/org for chemistry (v0.5).
+  const coachCtx =
+    (coachSpecial && coachById.get(coachSpecial.baseCardId)) || coachCard;
   const coach = coachCard
     ? {
         name: coachCard.name,
         overall: coachSpecial ? coachSpecial.overall : coachCard.overall,
         bonusType: coachCard.bonusType,
         bonusLevel: coachCard.bonusLevel,
-        lineupId: coachCard.lineupId,
-        orgId: coachCard.orgId,
+        lineupId: (coachCtx ?? coachCard).lineupId,
+        orgId: (coachCtx ?? coachCard).orgId,
       }
     : undefined;
   const teamBoosts =

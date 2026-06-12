@@ -39,6 +39,16 @@ export const BUFF_LEVEL_VALUE: Record<BuffLevel, number> = {
 // ---------------------------------------------------------------------------
 
 export const TEAM_RATING = {
+  /**
+   * Superteam compression (v0.5): rating above the pivot counts at the slope.
+   * The champion-heavy dataset produces historical rosters at 98-102 total
+   * (elite players + 100% lineup chemistry + maxed buffs) — an unbeatable
+   * wall in a Bo7. Compressing BOTH sides (AI lineups and dream drafts alike)
+   * keeps the hierarchy while making the title reachable. Applied before the
+   * difficulty shift.
+   */
+  superteamPivot: 94,
+  superteamSlope: 0.55,
   coach: {
     /** Modifier = (overall - baseline) * scale + bonusLevel * perBonusLevel */
     baseline: 75,
@@ -123,6 +133,15 @@ export interface DifficultyProfile {
   requiresLegacyUnlock?: boolean;
 }
 
+/*
+ * v0.5 playtest pass: the live MVP played too hard — good rosters were
+ * missing playoffs on Normal. Two structural causes:
+ *  1. Every AI lineup is a real historical roster → 100% chemistry, while a
+ *     drafted all-star mix sits near ~20%. chemistryMaxBonus was effectively
+ *     a flat buff to the WHOLE FIELD, so it was lowered across the board.
+ *  2. Per-series form swing (±6) drowned out rating gaps → lowered to ±4.5
+ *     (see SIMULATION.seriesFormRange).
+ */
 export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
   easy: {
     label: "Easy",
@@ -131,10 +150,10 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     overallLockedHidden: false,
     userRollRange: [-3, 5],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 1.2,
-    opponentRatingShift: -1.5,
+    chemistryMaxBonus: 1.0,
+    opponentRatingShift: -2.0,
     opponentSpecialChance: 0.02,
-    opponentTierWeights: { elite: 0.5, strong: 1.0, solid: 1.8, underdog: 1.8 },
+    opponentTierWeights: { elite: 0.4, strong: 0.9, solid: 1.8, underdog: 2.0 },
     xpMultiplier: 1.0,
   },
   normal: {
@@ -142,12 +161,12 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     tagline: "The standard RLCS experience. Balanced field.",
     rerolls: 1,
     overallLockedHidden: false,
-    userRollRange: [-4, 4],
+    userRollRange: [-3, 4],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 2.2,
+    chemistryMaxBonus: 1.6,
     opponentRatingShift: 0,
     opponentSpecialChance: 0.05,
-    opponentTierWeights: { elite: 1.0, strong: 1.0, solid: 1.0, underdog: 1.0 },
+    opponentTierWeights: { elite: 0.7, strong: 1.0, solid: 1.25, underdog: 1.3 },
     xpMultiplier: 1.0,
   },
   hard: {
@@ -157,12 +176,14 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     overallLockedHidden: true,
     // v0.3: was [-5,4] / +1.0 / elite 1.8 — playtesting showed good rosters
     // missing playoffs too often (the champion-heavy dataset compounds it).
-    userRollRange: [-4, 4],
+    // v0.5: user roll moves toward Normal's — Hard's identity is the stronger
+    // field and hidden overalls, not a punitive dice range.
+    userRollRange: [-3.5, 4],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 2.8,
-    opponentRatingShift: 0.5,
+    chemistryMaxBonus: 1.8,
+    opponentRatingShift: 0.3,
     opponentSpecialChance: 0.12,
-    opponentTierWeights: { elite: 1.5, strong: 1.3, solid: 0.7, underdog: 0.5 },
+    opponentTierWeights: { elite: 1.15, strong: 1.25, solid: 0.75, underdog: 0.5 },
     xpMultiplier: 1.5,
   },
   legacy: {
@@ -172,7 +193,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     overallLockedHidden: true,
     userRollRange: [-5, 5],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 2.8,
+    chemistryMaxBonus: 2.2,
     opponentRatingShift: 1.2,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 2.6, strong: 1.2, solid: 0.15, underdog: 0.1 },
@@ -186,12 +207,34 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
 // ---------------------------------------------------------------------------
 
 export const DRAFT = {
-  /** Chance a player card appears as a special version (if any exists). */
-  specialAppearanceChance: 0.07,
-  /** Coach specials are a separate, lower-frequency pool (v3 notes). */
-  coachSpecialChance: 0.05,
   /** Lineups are drawn without replacement; pool resets if exhausted. */
   withoutReplacement: true,
+  /**
+   * When the only open slots are coach/sub, the draw favors lineups that can
+   * still fill them (weight ramps from 1 → this as the lineup covers more of
+   * the missing kinds). Soft bias — blanks still appear, just rarely.
+   */
+  staffScarcityBoost: 5,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Special cards (v0.5: specials belong to the PLAYER, not one base card —
+// any Kronovi card can roll any Kronovi special).
+// ---------------------------------------------------------------------------
+
+export const SPECIALS = {
+  /** Chance a player card in an offer appears as one of that player's specials. */
+  appearanceChance: 0.16,
+  /** Coach cards roll their person's coach specials at this chance. */
+  coachAppearanceChance: 0.12,
+  /**
+   * When a special DOES appear, which one is weighted by rarity tier.
+   * Within a player's pool: rare ≈ common sight, legendary ≈ chase pull.
+   */
+  rarityWeights: { rare: 100, epic: 55, mythic: 28, legendary: 12 } as Record<
+    string,
+    number
+  >,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -205,8 +248,10 @@ export const SIMULATION = {
    * Per-series "form" swing (±). Rolled once per team per series, so it does
    * not average out across a best-of like per-game noise does — this is the
    * main upset engine. Consistency/defense_stability dampen its bad side.
+   * v0.5: 6 → 4.5 — at ±6 a +3 rating edge was close to a coin flip, which
+   * read as "my good team keeps losing" in playtests.
    */
-  seriesFormRange: 6,
+  seriesFormRange: 4.5,
   /** Stat baseline for situational modifiers: (stat - baseline) / divisor. */
   statBaseline: 82,
   statDivisor: 18,

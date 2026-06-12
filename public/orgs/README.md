@@ -10,7 +10,6 @@ alpha-sydney.png
 avidity-esports.png
 bravado-gaming.png
 canberra-havoc.png
-chiefs-esc.png
 chiefs-esports-club.png
 cloud9.png
 complexity-gaming.png
@@ -28,7 +27,8 @@ fc-barcelona.png
 flipsid3-tactics.png
 furia.png
 fury.png
-fut-esports.png
+fut-esports-na.png
+fut-esports-ssa.png
 g1.png
 g2-esports.png
 g2-stride.png
@@ -53,7 +53,6 @@ manchester-city-esports.png
 method.png
 mibr.png
 mock-it-esports.png
-mockit-esports.png
 moist-esports.png
 mousesports.png
 ninjas-in-pyjamas.png
@@ -65,13 +64,12 @@ orbit-esport.png
 orlando-pirates-exdee.png
 oxygen-esports.png
 pale-horse-esports.png
-pioneers.png
+pioneers-oce.png
+pioneers-ssa.png
 pittsburgh-knights.png
 precision-z.png
 psg-esports.png
 pwr.png
-quiktrip-pioneers-gaming.png
-renault-vitality.png
 renegades.png
 roc-esports.png
 rogue.png
@@ -85,7 +83,6 @@ spacestation-gaming.png
 tainted-minds.png
 take-3.png
 team-bds.png
-team-dignitas.png
 team-envy.png
 team-falcons.png
 team-liquid.png

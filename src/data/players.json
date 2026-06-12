@@ -2,6 +2,7 @@
   {
     "id": "0verzer0",
     "nickname": "0ver Zer0",
+    "country": "US",
     "region": "NA"
   },
   {
@@ -159,6 +160,7 @@
   {
     "id": "bango",
     "nickname": "Bango",
+    "country": "AU",
     "region": "OCE"
   },
   {
@@ -203,6 +205,7 @@
   {
     "id": "bymateos",
     "nickname": "ByMateos",
+    "country": "ES",
     "region": "EU"
   },
   {
@@ -352,6 +355,7 @@
   {
     "id": "dralii",
     "nickname": "dralii",
+    "country": "FR",
     "region": "EU"
   },
   {
@@ -608,6 +612,7 @@
   {
     "id": "gus",
     "nickname": "gus",
+    "country": "AU",
     "region": "OCE"
   },
   {
@@ -683,11 +688,13 @@
   {
     "id": "jhzer",
     "nickname": "JHZER",
+    "country": "DK",
     "region": "EU"
   },
   {
     "id": "jimmah",
     "nickname": "Jimmah",
+    "country": "AU",
     "region": "OCE"
   },
   {
@@ -728,11 +735,13 @@
   {
     "id": "jwismont",
     "nickname": "JWismont",
+    "country": "US",
     "region": "NA"
   },
   {
     "id": "jzr",
     "nickname": "JZR",
+    "country": "FI",
     "region": "EU"
   },
   {
@@ -839,6 +848,7 @@
   {
     "id": "kylemasc",
     "nickname": "Kyle Masc",
+    "country": "US",
     "region": "NA"
   },
   {
@@ -855,6 +865,7 @@
   {
     "id": "lawler",
     "nickname": "Lawler",
+    "country": "ZA",
     "region": "SSA"
   },
   {
@@ -870,6 +881,7 @@
   {
     "id": "leoro",
     "nickname": "Leoro",
+    "country": "ZA",
     "region": "SSA"
   },
   {
@@ -1012,6 +1024,7 @@
   {
     "id": "miztik",
     "nickname": "Miztik",
+    "country": "GB",
     "region": "EU"
   },
   {
@@ -1070,6 +1083,7 @@
   {
     "id": "nass",
     "nickname": "nass",
+    "country": "FR",
     "region": "EU"
   },
   {
@@ -1086,6 +1100,7 @@
   {
     "id": "noxes",
     "nickname": "Noxes",
+    "country": "ZA",
     "region": "SSA"
   },
   {
@@ -1131,6 +1146,7 @@
   {
     "id": "pauliepaulnl",
     "nickname": "PauliepaulNL",
+    "country": "NL",
     "region": "EU"
   },
   {
@@ -1174,6 +1190,7 @@
   {
     "id": "quinnlobdell",
     "nickname": "Quinn Lobdell",
+    "country": "US",
     "region": "NA"
   },
   {
@@ -1310,6 +1327,7 @@
   {
     "id": "scarth",
     "nickname": "Scarth",
+    "country": "AU",
     "region": "OCE"
   },
   {
@@ -1348,6 +1366,7 @@
   {
     "id": "shadey",
     "nickname": "Shadey",
+    "country": "AU",
     "region": "OCE"
   },
   {
@@ -1459,6 +1478,7 @@
   {
     "id": "sweatyclarence",
     "nickname": "Sweaty_Clarence",
+    "country": "ZA",
     "region": "SSA"
   },
   {
@@ -1523,6 +1543,7 @@
   {
     "id": "torres823",
     "nickname": "TORRES823",
+    "country": "ZA",
     "region": "SSA"
   },
   {
@@ -1643,11 +1664,13 @@
   {
     "id": "yukeo",
     "nickname": "Yukeo",
+    "country": "AT",
     "region": "EU"
   },
   {
     "id": "yumicheeseman",
     "nickname": "yumi_cheeseman",
+    "country": "AU",
     "region": "EU"
   },
   {
@@ -1670,6 +1693,7 @@
   {
     "id": "zen-oce",
     "nickname": "ZeN",
+    "country": "AU",
     "region": "OCE"
   }
 ]

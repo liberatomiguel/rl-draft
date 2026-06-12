@@ -12,7 +12,7 @@ import { achievementById, specialCardById } from "@/data";
 import { DIFFICULTY } from "@/config/balance";
 import { RESULTS_UI as R, RARITY_LABELS } from "@/content/copy";
 import { resolvePlayerCard, resolveSpecial, type ResolvedCard } from "@/engine/cards";
-import { rankForXp } from "@/engine/progression";
+import { rankForXp, type RankInfo } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { Placement, RunState } from "@/engine/types";
 import { downloadShareCard } from "@/lib/shareCard";
@@ -24,9 +24,12 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { RankBadge } from "@/components/ui/RankBadge";
 import { GameCard } from "@/components/cards/GameCard";
 import { rosterSlots } from "@/components/cards/rosterView";
 import { Logo } from "@/components/layout/AppShell";
+import { AchievementIcon } from "@/components/AchievementIcon";
+import { achievementStyle } from "@/components/achievementStyle";
 import { RunStepper } from "./RunStepper";
 
 const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
@@ -54,6 +57,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const [ceremonyOpen, setCeremonyOpen] = useState(
     () => (run.results?.unlockedSpecialIds.length ?? 0) > 0,
   );
+  const [rankUpSeen, setRankUpSeen] = useState(false);
 
   if (!results || !team) return null;
 
@@ -64,6 +68,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const xpBefore = Math.max(0, xpNow - results.xp.total);
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
+  const rankedUp = rankBefore.id !== rankAfter.id;
 
   const bestPick = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3]
     .find((p) => p?.refId === results.bestPlayerCardId);
@@ -108,6 +113,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
           specialIds={results.unlockedSpecialIds}
           onDone={() => setCeremonyOpen(false)}
         />
+      ) : rankedUp && !rankUpSeen ? (
+        <RankUpCelebration rank={rankAfter} onDone={() => setRankUpSeen(true)} />
       ) : (
         <AchievementToasts ids={results.newAchievementIds} />
       )}
@@ -204,7 +211,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         right={!run.showOverall ? <Badge tone="orange">{R.hiddenReveal}</Badge> : null}
         className="mb-4"
       />
-      <div className="mb-10 grid grid-cols-3 justify-items-center gap-2 md:gap-4">
+      <div className="mb-10 grid grid-cols-3 gap-2 md:gap-4">
         {slots.map((s, i) =>
           s.card ? (
             <RevealCard key={s.slot} card={s.card} delayMs={i * 220} animate={!run.showOverall} />
@@ -270,10 +277,17 @@ export function ResultsScreen({ run }: { run: RunState }) {
                 {results.newAchievementIds.map((id) => {
                   const def = achievementById.get(id);
                   if (!def) return null;
+                  const style = achievementStyle(def);
                   return (
                     <li key={id} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-orange/15 text-orange-bright">
-                        <TrophyIcon />
+                      <span
+                        className={cx(
+                          "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
+                          style.chip,
+                          style.legend && "ach-legend-chip",
+                        )}
+                      >
+                        <AchievementIcon id={def.id} />
                       </span>
                       <span>
                         <span className="display block text-sm font-bold uppercase tracking-wide text-ink">
@@ -460,7 +474,55 @@ function UnlockCeremony({
   );
 }
 
-/** Slide-in toasts for freshly earned achievements. */
+/**
+ * Rank-up moment (v0.5): the old "Rank up!" badge was easy to miss — the new
+ * rank now gets its own celebration beat right after the unlock ceremony.
+ * Auto-dismisses; clicking anywhere skips.
+ */
+function RankUpCelebration({
+  rank,
+  onDone,
+}: {
+  rank: Pick<RankInfo, "id" | "label">;
+  onDone: () => void;
+}) {
+  useEffect(() => {
+    const id = setTimeout(onDone, 4200);
+    return () => clearTimeout(id);
+  }, [onDone]);
+
+  return (
+    <button
+      type="button"
+      onClick={onDone}
+      className="celebrate fixed inset-0 z-50 flex w-full flex-col items-center justify-center gap-5 bg-black/85 p-6 backdrop-blur-sm"
+      aria-label={R.rankUpTitle}
+    >
+      <div className="celebrate-rays" aria-hidden />
+      <div className="ceremony-burst relative">
+        <span className="ceremony-ring" aria-hidden />
+        <div className="card-float">
+          <RankBadge rank={rank} variant="profile" size="lg" />
+        </div>
+      </div>
+      <div className="relative z-10 text-center">
+        <p className="champion-title display bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-5xl font-bold uppercase tracking-wide text-transparent md:text-6xl">
+          {R.rankUpTitle}
+        </p>
+        <p className="display mt-2 text-lg font-bold uppercase tracking-[0.24em] text-ink">
+          {rank.label}
+        </p>
+        <p className="mt-3 text-xs text-sub">{R.rankUpHint}</p>
+      </div>
+    </button>
+  );
+}
+
+/**
+ * Slide-in toasts for freshly earned achievements — each toast wears the
+ * achievement's own visual identity (icon, hue, legend prismatics), not a
+ * generic trophy (v0.5).
+ */
 function AchievementToasts({ ids }: { ids: string[] }) {
   const [visible, setVisible] = useState<string[]>([]);
 
@@ -483,13 +545,30 @@ function AchievementToasts({ ids }: { ids: string[] }) {
       {visible.map((id) => {
         const def = achievementById.get(id);
         if (!def) return null;
+        const style = achievementStyle(def);
         return (
-          <div key={id} className="toast-enter panel-strong pointer-events-auto flex items-center gap-3 p-3 !border-orange/40">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange/15 text-orange-bright">
-              <TrophyIcon />
+          <div
+            key={id}
+            className={cx(
+              "toast-enter panel panel-strong pointer-events-auto flex items-center gap-3 p-3",
+              style.ring,
+              style.glow,
+              style.legend && "ach-legend",
+            )}
+          >
+            <span
+              className={cx(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                style.chip,
+                style.legend && "ach-legend-chip",
+              )}
+            >
+              <AchievementIcon id={def.id} />
             </span>
             <span className="min-w-0">
-              <span className="kicker block !text-[9px]">{R.achievementToast}</span>
+              <span className={cx("block text-[9px] font-bold uppercase tracking-[0.18em]", style.text)}>
+                {R.achievementToast} · {style.label}
+              </span>
               <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
                 {def.title}
               </span>
@@ -533,17 +612,17 @@ function RevealCard({
   }, [animate, delayMs]);
 
   if (!animate) {
-    return <GameCard card={card} showOverall size="md" />;
+    return <GameCard card={card} showOverall size="md" className="!w-full mx-auto max-w-44" />;
   }
 
   return (
-    <div className={cx("flip-card", flipped && "flipped")}>
+    <div className={cx("flip-card mx-auto w-full max-w-44", flipped && "flipped")}>
       <div className="flip-card-inner relative">
         <div className={cx("flip-face", flipped && "pointer-events-none")}>
           <CardBack />
         </div>
         <div className="flip-face flip-back absolute inset-0">
-          <GameCard card={card} showOverall size="md" />
+          <GameCard card={card} showOverall size="md" className="!w-full" />
         </div>
       </div>
     </div>
@@ -552,18 +631,10 @@ function RevealCard({
 
 function CardBack() {
   return (
-    <div className="card-frame card-hidden flex aspect-[3/4.3] w-36 flex-col items-center justify-center gap-3 p-3 md:w-44">
+    <div className="card-frame card-hidden flex aspect-[3/4.3] w-full flex-col items-center justify-center gap-3 p-3">
       <Logo className="text-[10px]" />
       <span className="display text-4xl font-bold text-faint">??</span>
     </div>
   );
 }
 
-function TrophyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M8 4h8v5a4 4 0 0 1-8 0Z" strokeLinejoin="round" />
-      <path d="M8 5H5a3 3 0 0 0 3 4M16 5h3a3 3 0 0 1-3 4M12 13v4m-3 3h6m-5-3h4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}

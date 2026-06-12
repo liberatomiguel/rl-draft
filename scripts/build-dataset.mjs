@@ -105,6 +105,13 @@ const COUNTRY = {
   // SSA
   "2die4": "ZA", snowyy: "ZA", sweaty: "ZA", darth: "ZA", daisyd: "ZA",
   kamz: "ZA", pnidh: "ZA", arceon: "ZA", fefe: "ZA", rxii: "ZA", luiisp: "ZA",
+  // v0.5 curation pass (high-confidence only; the rest stay countryless)
+  "0verzer0": "US", jwismont: "US", quinnlobdell: "US", kylemasc: "US",
+  jzr: "FI", yukeo: "AT", miztik: "GB", jhzer: "DK", nass: "FR", dralii: "FR",
+  bymateos: "ES", pauliepaulnl: "NL",
+  yumicheeseman: "AU", gus: "AU", bango: "AU", jimmah: "AU", shadey: "AU",
+  scarth: "AU", "zen-oce": "AU",
+  lawler: "ZA", leoro: "ZA", noxes: "ZA", sweatyclarence: "ZA", torres823: "ZA",
 };
 
 const ORG_BUFF_TYPE = {
@@ -113,7 +120,6 @@ const ORG_BUFF_TYPE = {
   "nrg-esports": "experience",
   cloud9: "clutch",
   "team-vitality": "mechanics",
-  "renault-vitality": "mechanics",
   "team-bds": "consistency",
   furia: "mechanics",
   "team-falcons": "clutch",
@@ -121,7 +127,6 @@ const ORG_BUFF_TYPE = {
   "spacestation-gaming": "consistency",
   "faze-clan": "offense",
   dignitas: "experience",
-  "team-dignitas": "experience",
   "moist-esports": "mechanics",
   "flipsid3-tactics": "consistency",
   ibuypower: "offense",
@@ -132,6 +137,32 @@ const ORG_BUFF_TYPE = {
 };
 
 const BUFF_SYMBOLS = ["~", "+", "++", "+++"];
+
+/**
+ * Same ORGANIZATION, different spellings / sponsor names across seasons —
+ * unify the org id so org-history chemistry connects eras. Lineups keep the
+ * era display name ("Renault Vitality" still shows on S7 cards).
+ */
+const ORG_ALIAS = {
+  "chiefs-esc": "chiefs-esports-club",
+  "team-dignitas": "dignitas",
+  "renault-vitality": "team-vitality",
+  "mockit-esports": "mock-it-esports",
+  "mock-it-esports-eu": "mock-it-esports",
+  "quiktrip-pioneers-gaming": "pioneers",
+};
+
+/**
+ * Same NAME, different organizations (one per region) — keep them apart so
+ * chemistry doesn't link strangers (OCE Pioneers ≠ SSA Pioneers).
+ */
+const REGION_SPLIT_ORGS = new Set(["pioneers", "fut-esports"]);
+
+function orgIdOf(name, region) {
+  const slug = slugOf(name);
+  const id = ORG_ALIAS[slug] ?? slug;
+  return REGION_SPLIT_ORGS.has(id) ? `${id}-${region.toLowerCase()}` : id;
+}
 
 // ---------------------------------------------------------------------------
 // Parse teams.md
@@ -226,7 +257,7 @@ function registerPerson(nick, region, seasonOrder) {
 
 const orgs = new Map(); // slug → { id, name, region, buffLevelMax, lastOrder }
 function registerOrg(name, region, buffLevel, seasonOrder) {
-  const id = slugOf(name);
+  const id = orgIdOf(name, region);
   const existing = orgs.get(id);
   const levelIdx = BUFF_SYMBOLS.indexOf(buffLevel);
   if (!existing) {
@@ -587,7 +618,8 @@ const coachByIdMap = new Map(coachCards.map((c) => [c.id, c]));
 
 const specialsOut = SPECIALS.map((sp) => {
   const [orgSlug, seasonSlug] = sp.base;
-  const lineupId = `${orgSlug}-${seasonSlug}`;
+  // Era spellings in the hints resolve through the org alias map too.
+  const lineupId = `${ORG_ALIAS[orgSlug] ?? orgSlug}-${seasonSlug}`;
   const kind = sp.kind ?? "player";
   const baseCardId = kind === "coach" ? `${sp.p}-coach-${lineupId}` : `${sp.p}-${lineupId}`;
   const baseExists = kind === "coach" ? coachByIdMap.has(baseCardId) : cardById.has(baseCardId);

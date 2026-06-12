@@ -18,6 +18,7 @@ import {
 } from "@/store/profileStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -54,6 +55,7 @@ export default function ProfilePage() {
 
   return (
     <div className="rise-in">
+      <BackToMenu />
       <SectionTitle kicker="Career" title={P.title} className="mb-6" />
 
       {/* Rank header — uses the profile art set (public/ranks/profile/) */}

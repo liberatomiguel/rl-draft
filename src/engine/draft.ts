@@ -1,5 +1,5 @@
 /**
- * Draft state machine (base doc §4-§6, revised in v0.2).
+ * Draft state machine (base doc §4-§6, revised in v0.2, v0.5).
  *
  * Rules implemented here:
  *  - Each round shows one random historical lineup (pure random, all difficulties).
@@ -8,19 +8,24 @@
  *    (players pick which of the three player slots).
  *  - A person picked once (player/coach/sub) is excluded for the rest of the run.
  *  - Only sub cards can fill the sub slot (v0.2 — player-as-sub removed).
- *  - If nothing in the offer is pickable, the player gets a FREE reroll
+ *  - Missing coach/sub show as vacant cards but are NOT pickable (v0.5 — the
+ *    pickable punt was removed); a fully blocked offer grants a FREE reroll
  *    (does not consume the difficulty reroll budget).
+ *  - When only coach/sub slots remain, the draw favors lineups that still
+ *    have them (soft weighting, see DRAFT.staffScarcityBoost).
+ *  - Special versions roll per PERSON: any card of a player can appear as any
+ *    of that player's specials, weighted by rarity tier (v0.5).
  *  - Paid rerolls replace the entire lineup and are limited by difficulty.
  */
 
-import { DIFFICULTY, DRAFT } from "@/config/balance";
+import { DIFFICULTY, DRAFT, SPECIALS } from "@/config/balance";
 import {
   coachById,
-  coachSpecialsByBaseCardId,
+  coachSpecialsByPersonId,
   lineupById,
   lineups,
   playerCardById,
-  specialsByBaseCardId,
+  specialsByPlayerId,
   subById,
 } from "@/data";
 import type { Rng } from "@/lib/rng";
@@ -30,22 +35,38 @@ import type {
   DraftOffer,
   DraftOfferCard,
   DraftState,
+  Lineup,
   Roster,
   RosterPick,
   RosterSlotId,
   RunMode,
+  SpecialCard,
 } from "./types";
 
 const PLAYER_SLOTS: RosterSlotId[] = ["player1", "player2", "player3"];
 
 /**
- * Virtual "leave it empty" cards. When a lineup has no coach/sub, these are
- * offered instead and CAN be drafted (overall 50, no bonuses) — letting the
- * player intentionally punt a slot to finish the draft sooner.
+ * Virtual "no coach/sub this season" cards. Shown in the offer as context but
+ * never pickable (v0.5 — picking a vacant slot was removed; blocked offers
+ * grant a free reroll instead).
  */
 export const VACANT_COACH = "vacant-coach";
 export const VACANT_SUB = "vacant-sub";
 export const VACANT_OVERALL = 50;
+
+/**
+ * Roll a special appearance from a person's pool: gate by chance, then pick
+ * which special by rarity weight (legendaries are the chase pulls).
+ * Shared by the draft offer and the AI opponent upgrade path.
+ */
+export function rollSpecial(
+  pool: SpecialCard[] | undefined,
+  chance: number,
+  rng: Rng,
+): string | undefined {
+  if (!pool || pool.length === 0 || !rng.chance(chance)) return undefined;
+  return rng.weightedPick(pool, (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1).id;
+}
 
 export interface CreateDraftOptions {
   mode?: RunMode;
@@ -137,21 +158,16 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
 
   const cards: DraftOfferCard[] = [];
   const specialChance =
-    DRAFT.specialAppearanceChance * (draft.specialChanceMult ?? 1);
+    SPECIALS.appearanceChance * (draft.specialChanceMult ?? 1);
 
   for (const cardId of lineup.playerCardIds) {
     const card = playerCardById.get(cardId)!;
-    // A special version may appear in place of the base card (collectible
-    // rule). Cards with several specials pick one at random.
-    const pool = specialsByBaseCardId.get(cardId);
-    const specialId =
-      pool && pool.length > 0 && rng.chance(specialChance)
-        ? rng.pick(pool).id
-        : undefined;
+    // A special version may appear in place of the base card — the pool is
+    // the PLAYER's full catalogue, weighted by rarity (v0.5).
     cards.push({
       kind: "player",
       refId: cardId,
-      specialId,
+      specialId: rollSpecial(specialsByPlayerId.get(card.playerId), specialChance, rng),
       availability: availabilityFor("player", card.playerId, draft),
     });
   }
@@ -159,24 +175,19 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   if (draft.mode !== "quick") {
     if (lineup.coachId) {
       const coach = coachById.get(lineup.coachId)!;
-      const coachPool = coachSpecialsByBaseCardId.get(coach.id);
-      const coachSpecialId =
-        coachPool && coachPool.length > 0 && rng.chance(DRAFT.coachSpecialChance)
-          ? rng.pick(coachPool).id
-          : undefined;
       cards.push({
         kind: "coach",
         refId: coach.id,
-        specialId: coachSpecialId,
+        specialId: rollSpecial(
+          coachSpecialsByPersonId.get(coach.personId),
+          SPECIALS.coachAppearanceChance * (draft.specialChanceMult ?? 1),
+          rng,
+        ),
         availability: availabilityFor("coach", coach.personId, draft),
       });
     } else {
-      // "No Coach" vacant card — pickable, fills the slot with nothing.
-      cards.push({
-        kind: "coach",
-        refId: VACANT_COACH,
-        availability: availabilityFor("coach", null, draft),
-      });
+      // "No Coach" placeholder — context only, never pickable (v0.5).
+      cards.push({ kind: "coach", refId: VACANT_COACH, availability: "vacant" });
     }
 
     if (lineup.subId) {
@@ -187,11 +198,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
         availability: availabilityFor("sub", sub.personId, draft),
       });
     } else {
-      cards.push({
-        kind: "sub",
-        refId: VACANT_SUB,
-        availability: availabilityFor("sub", null, draft),
-      });
+      cards.push({ kind: "sub", refId: VACANT_SUB, availability: "vacant" });
     }
 
     cards.push({
@@ -212,6 +219,20 @@ function lineupPool(draft: DraftState) {
     : lineups;
 }
 
+/**
+ * Staff scarcity weighting: when the player only needs coach and/or sub,
+ * favor lineups that can actually fill those slots (person not taken).
+ * Weight ramps 1 → staffScarcityBoost with the share of missing kinds the
+ * lineup covers, so blank offers become rare instead of constant.
+ */
+function lineupWeight(lineup: Lineup, staffNeeds: CardKind[]): number {
+  if (staffNeeds.length === 0) return 1;
+  let covered = 0;
+  if (staffNeeds.includes("coach") && lineup.coachId) covered += 1;
+  if (staffNeeds.includes("sub") && lineup.subId) covered += 1;
+  return 1 + (covered / staffNeeds.length) * (DRAFT.staffScarcityBoost - 1);
+}
+
 export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   const fullPool = lineupPool(draft);
   let pool = fullPool.filter((l) => !draft.shownLineupIds.includes(l.id));
@@ -223,7 +244,23 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
     shown = [];
   }
 
-  const lineup = rng.pick(pool);
+  // Only coach/sub missing → bias toward lineups that still have them.
+  const needs = neededKinds(draft.roster, draft.mode);
+  const staffNeeds =
+    needs.length > 0 && needs.every((k) => k === "coach" || k === "sub")
+      ? needs.filter((k) => {
+          if (k === "coach") {
+            return !pool.every((l) => !l.coachId); // ignore if nobody has one
+          }
+          return !pool.every((l) => !l.subId);
+        })
+      : [];
+
+  const lineup =
+    staffNeeds.length > 0
+      ? rng.weightedPick(pool, (l) => lineupWeight(l, staffNeeds))
+      : rng.pick(pool);
+
   const next: DraftState = {
     ...draft,
     round: draft.round + 1,
@@ -278,16 +315,10 @@ export function applyPick(
       personId = playerCardById.get(offerCard.refId)!.playerId;
       break;
     case "coach":
-      personId =
-        offerCard.refId === VACANT_COACH
-          ? null
-          : coachById.get(offerCard.refId)!.personId;
+      personId = coachById.get(offerCard.refId)!.personId;
       break;
     case "sub":
-      personId =
-        offerCard.refId === VACANT_SUB
-          ? null
-          : subById.get(offerCard.refId)!.personId;
+      personId = subById.get(offerCard.refId)!.personId;
       break;
     case "org":
       break;

@@ -12,10 +12,12 @@
 import { useRef, useState } from "react";
 import { cx } from "@/lib/util";
 
+// v0.5: tilt deepened across the board — playtesters wanted the 3D to read
+// clearly on normal cards too, not just specials.
 const TIERS = {
-  light: { tilt: 5, scale: 1.015, glare: 0.5 },
-  strong: { tilt: 10, scale: 1.035, glare: 1 },
-  max: { tilt: 15, scale: 1.06, glare: 1 },
+  light: { tilt: 8, scale: 1.02, glare: 0.6 },
+  strong: { tilt: 14, scale: 1.045, glare: 1 },
+  max: { tilt: 19, scale: 1.07, glare: 1 },
 } as const;
 
 export type TiltIntensity = keyof typeof TIERS;

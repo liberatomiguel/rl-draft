@@ -20,6 +20,7 @@ import { cx, countryName, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { Badge } from "@/components/ui/Badge";
+import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { StatBar } from "@/components/ui/ProgressBar";
@@ -38,17 +39,24 @@ export default function CollectionPage() {
   const unlockedCount = mounted ? Object.keys(unlockedMap).length : 0;
 
   const visible = useMemo(() => {
-    return specialCards.filter((sp) => {
+    const filtered = specialCards.filter((sp) => {
       const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
       if (status === "unlocked" && !isUnlocked) return false;
       if (status === "locked" && isUnlocked) return false;
       if (rarity !== "all" && sp.rarity !== rarity) return false;
       return true;
     });
+    // Collected cards lead the grid (v0.5) — catalogue order within groups.
+    return [...filtered].sort(
+      (a, b) =>
+        Number(mounted && Boolean(unlockedMap[b.id])) -
+        Number(mounted && Boolean(unlockedMap[a.id])),
+    );
   }, [mounted, unlockedMap, status, rarity]);
 
   return (
     <div className="rise-in">
+      <BackToMenu />
       <SectionTitle
         kicker={C.subtitle}
         title={C.title}

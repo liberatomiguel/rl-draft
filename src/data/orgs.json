@@ -35,13 +35,6 @@
     "buffLevel": "~"
   },
   {
-    "id": "chiefs-esc",
-    "name": "Chiefs ESC",
-    "region": "OCE",
-    "buffType": "clutch",
-    "buffLevel": "+"
-  },
-  {
     "id": "chiefs-esports-club",
     "name": "Chiefs Esports Club",
     "region": "OCE",
@@ -161,11 +154,18 @@
     "buffLevel": "~"
   },
   {
-    "id": "fut-esports",
+    "id": "fut-esports-na",
+    "name": "FUT Esports",
+    "region": "NA",
+    "buffType": "consistency",
+    "buffLevel": "+"
+  },
+  {
+    "id": "fut-esports-ssa",
     "name": "FUT Esports",
     "region": "SSA",
-    "buffType": "clutch",
-    "buffLevel": "+"
+    "buffType": "consistency",
+    "buffLevel": "~"
   },
   {
     "id": "g1",
@@ -336,13 +336,6 @@
     "buffLevel": "+"
   },
   {
-    "id": "mockit-esports",
-    "name": "Mockit eSports",
-    "region": "EU",
-    "buffType": "defense",
-    "buffLevel": "+"
-  },
-  {
     "id": "moist-esports",
     "name": "Moist Esports",
     "region": "EU",
@@ -420,10 +413,17 @@
     "buffLevel": "~"
   },
   {
-    "id": "pioneers",
-    "name": "Pioneers",
+    "id": "pioneers-oce",
+    "name": "QuikTrip Pioneers Gaming",
     "region": "OCE",
-    "buffType": "offense",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "pioneers-ssa",
+    "name": "Pioneers",
+    "region": "SSA",
+    "buffType": "mechanics",
     "buffLevel": "~"
   },
   {
@@ -453,20 +453,6 @@
     "region": "OCE",
     "buffType": "offense",
     "buffLevel": "+"
-  },
-  {
-    "id": "quiktrip-pioneers-gaming",
-    "name": "QuikTrip Pioneers Gaming",
-    "region": "OCE",
-    "buffType": "mechanics",
-    "buffLevel": "~"
-  },
-  {
-    "id": "renault-vitality",
-    "name": "Renault Vitality",
-    "region": "EU",
-    "buffType": "mechanics",
-    "buffLevel": "++"
   },
   {
     "id": "renegades",
@@ -558,13 +544,6 @@
     "region": "EU",
     "buffType": "consistency",
     "buffLevel": "+++"
-  },
-  {
-    "id": "team-dignitas",
-    "name": "Team Dignitas",
-    "region": "EU",
-    "buffType": "experience",
-    "buffLevel": "++"
   },
   {
     "id": "team-envy",

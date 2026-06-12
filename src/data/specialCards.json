@@ -56,7 +56,7 @@
   {
     "id": "sp-turbopolsa-four-time-world-champion",
     "playerId": "turbopolsa",
-    "baseCardId": "turbopolsa-team-dignitas-s5",
+    "baseCardId": "turbopolsa-dignitas-s5",
     "title": "Four-Time World Champion",
     "cardType": "legend",
     "rarity": "legendary",
@@ -83,7 +83,7 @@
   {
     "id": "sp-kaydop-three-time-world-champion",
     "playerId": "kaydop",
-    "baseCardId": "kaydop-team-dignitas-s5",
+    "baseCardId": "kaydop-dignitas-s5",
     "title": "Three-Time World Champion",
     "cardType": "legend",
     "rarity": "legendary",
@@ -297,7 +297,7 @@
   {
     "id": "sp-kaydop-s5-worlds-mvp",
     "playerId": "kaydop",
-    "baseCardId": "kaydop-team-dignitas-s5",
+    "baseCardId": "kaydop-dignitas-s5",
     "title": "Season 5 World MVP",
     "cardType": "worlds_mvp",
     "rarity": "mythic",
@@ -351,7 +351,7 @@
   {
     "id": "sp-scrubkilla-s7-worlds-mvp",
     "playerId": "scrubkilla",
-    "baseCardId": "scrubkilla-renault-vitality-s7",
+    "baseCardId": "scrubkilla-team-vitality-s7",
     "title": "Season 7 World MVP",
     "cardType": "worlds_mvp",
     "rarity": "mythic",
@@ -1022,7 +1022,7 @@
   {
     "id": "sp-fairy-peak-vitality-control",
     "playerId": "fairypeak",
-    "baseCardId": "fairypeak-renault-vitality-s8",
+    "baseCardId": "fairypeak-team-vitality-s8",
     "title": "Vitality Control",
     "cardType": "legend",
     "rarity": "mythic",
@@ -1130,7 +1130,7 @@
   {
     "id": "sp-drippay-oce-breakthrough",
     "playerId": "drippay",
-    "baseCardId": "drippay-chiefs-esc-s4",
+    "baseCardId": "drippay-chiefs-esports-club-s4",
     "title": "OCE Breakthrough",
     "cardType": "moment",
     "rarity": "rare",

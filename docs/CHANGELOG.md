@@ -10,6 +10,109 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [0.5.0] — 2026-06-12
+
+First live-playtest feedback round (Vercel MVP) — the "last MVP version"
+before the 1.0 push.
+
+### Added
+- **Slot-machine lineup reveal**: each drawn lineup spins in through a
+  decelerating name reel ("the draw felt instant" feedback). Reduced-motion
+  users skip it; resumes after refresh don't replay it.
+- **Rank-up celebration**: ranking up now gets its own full-screen moment
+  (badge burst + rays) after the unlock ceremony — the old corner badge was
+  easy to miss.
+- **Region color identity** in the draft: the drawn lineup's region badge is
+  color-coded (NA blue · EU amber · SAM green · MENA purple · OCE cyan ·
+  APAC rose · SSA orange).
+- **Leave-run guard**: navigating to the menu mid-run (nav links, logo, the
+  run-header back button) asks for confirmation — playtesters lost drafts to
+  stray Home clicks. Results phase never warns. Profile, collection,
+  achievements and how-to-play pages all gained a "Back to menu" link.
+- **Asset fetcher** (`npm run fetch:assets`): downloads org logos and player
+  photos from Liquipedia (rate-limited per their API terms, CC-BY-SA
+  attribution generated in `public/ATTRIBUTION.md`) and country flags from
+  flagcdn — no more saving 200 images by hand. Misses are reported and can
+  be mapped in `data-sources/asset-overrides.json`; existing files are never
+  overwritten. Country chips now render real flag images when present.
+- **Difficulty outcome tests** (`balance.test.ts`): full-tournament rates
+  for a representative good roster are pinned per difficulty (playoffs/title
+  bands), so balance regressions fail CI, not playtests.
+
+### Changed
+- **Tournament playback v3 (focus + pacing)**: the Match Center now shows
+  ONLY the user's series — AI series never hijack it (they pop into the
+  bracket/standings and stay clickable). Within a round the user's series
+  plays first, game by game (950ms), then lingers ~2.8s so the result and
+  narration can be read; a breath separates rounds. Swiss standings move
+  only when a full round is revealed ("Through Round N" tag).
+- **Spoiler fixes**: upcoming Swiss opponents are hidden until every
+  simulated round is fully revealed (Swiss pairs by record — naming the next
+  opponent leaked the current result), and the playoff bracket only appears
+  once the whole Swiss stage has been revealed.
+- **Special cards belong to the PLAYER, not one base card**: any Kronovi
+  card can roll any Kronovi special. When one appears it carries its own
+  historical moment (org/season shown and used for chemistry). Which special
+  shows is weighted by rarity — legendaries are the chase pulls
+  (`SPECIALS.rarityWeights`).
+- **"No Coach"/"No Sub" are no longer pickable** (v0.3 punt reverted by
+  feedback): they render as stamped vacant cards, a fully blocked offer
+  grants the free reroll, and when only staff slots remain the lineup draw
+  softly favors lineups that still have a coach/sub
+  (`DRAFT.staffScarcityBoost`).
+- Collection grid sorts collected cards first.
+- Draft/team-reveal card grids are fluid on phones (fixed-width cards
+  overlapped below ~400px).
+- Achievements: per-achievement hue variation inside each category family,
+  light 3D tilt on earned cards, and a premium animated prismatic frame for
+  the legend tier. The unlock toast (and results list) now wears each
+  achievement's own icon/colors instead of a generic trophy.
+- 3D tilt deepened on all tiers (light 5°→8°, strong 10°→14°, max 15°→19°).
+- How-to-play texts caught up with v0.2 rules (double elim, no player-as-sub).
+
+### Balance
+- **The game was too hard overall** (live feedback: good teams missing
+  playoffs). Three structural causes found and fixed:
+  1. **Series form swing ±6 → ±4.5** — at ±6, a +3 rating edge was close to
+     a coin flip, which read as "my good team keeps losing".
+  2. **AI chemistry advantage trimmed**: every historical lineup has 100%
+     chemistry, so `chemistryMaxBonus` acted as a flat field-wide buff —
+     lowered across the board (easy 1.2→1.0 · normal 2.2→1.6 · hard 2.8→1.8
+     · legacy 2.8→2.2).
+  3. **Superteam compression** (`TEAM_RATING.superteamPivot/Slope`): rating
+     above 94 counts at 0.55× for BOTH sides. Historical 99-overall rosters
+     (zen/Vatira/M0nkey M00n at 100% chemistry ≈ 102 total) were an
+     unbeatable Bo7 wall — the title was near-impossible even with a great
+     draft. Hierarchy preserved, wall removed.
+- Normal: user roll −4..4 → −3..4, elite weight 1.0 → 0.7. Hard: user roll
+  → −3.5..4, elite 1.5 → 1.15, shift +0.5 → +0.3. Easy: shift −1.5 → −2.0.
+- Measured outcomes for a 92.5-rated roster (300+ runs/difficulty): Easy
+  100% playoffs / 59% title · Normal 97% / 12% (28% with a 94.5 dream
+  draft) · Hard 79% / ~1%. Title chance now scales with draft quality.
+- Specials appear meaningfully more often: base card chance 7% → 16%
+  (coach 5% → 12%) — the per-player pool also multiplies eligible cards.
+  Daily "Specials Surge" multiplier ×4 → ×2.5 accordingly.
+
+### Fixed
+- **Chemistry felt broken — root cause: org identity fragmentation.** The
+  same organization spelled differently per era created SEPARATE orgs
+  ("Team Dignitas"≠"Dignitas", "Renault Vitality"≠"Team Vitality",
+  "Chiefs ESC"≠"Chiefs Esports Club", Mock-It ×3, QuikTrip Pioneers), so
+  same-org chemistry never connected across eras. The generator now
+  unifies them via an alias map while lineups keep their era display name.
+  Conversely, same-name-different-org collisions (OCE Pioneers vs SSA
+  Pioneers, FUT Esports NA/SSA) are now split per region — they were
+  incorrectly fused into one org before. Player ids were already normalized
+  (yanxnz/Yanxnz/yanXNZ = one person) — verified by test.
+- ~24 missing nationalities curated (high-confidence only), improving
+  same-country chemistry coverage (157 → 133 without one).
+- **Champion celebration rays clipped while rotating** — the `inset:-55%`
+  ray layer was a rectangle, so its short side crossed the panel edges as it
+  spun. Now a square sized past the container diagonal, centered with the
+  `translate` property (which survives the `transform` rotation).
+- Stale `.next` Turbopack cache served pre-edit CSS in dev — cleaned;
+  README troubleshooting note already covered the recovery.
+
 ## [0.4.0] — 2026-06-12
 
 The real dataset + MVP closing polish.

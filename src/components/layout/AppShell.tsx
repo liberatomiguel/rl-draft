@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { APP } from "@/content/copy";
 import { cx } from "@/lib/util";
+import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 
 const NAV = [
   { href: "/", label: "Home", icon: HomeIcon },
@@ -24,77 +25,99 @@ export function Logo({ className }: { className?: string }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
+  // Home links abandon a run in progress → they go through the leave guard.
+  const NavLink = ({
+    item,
+    className,
+    children,
+  }: {
+    item: (typeof NAV)[number];
+    className: string;
+    children: React.ReactNode;
+  }) =>
+    item.href === "/" ? (
+      <GuardedHomeLink href="/" className={className}>
+        {children}
+      </GuardedHomeLink>
+    ) : (
+      <Link href={item.href} className={className}>
+        {children}
+      </Link>
+    );
+
   return (
-    <div className="flex min-h-dvh flex-col">
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2" aria-label={APP.name}>
-            <LogoMark />
-            <Logo className="text-sm" />
-          </Link>
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+    <LeaveRunProvider>
+      <div className="flex min-h-dvh flex-col">
+        {/* Top bar */}
+        <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">
+          <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
+            <GuardedHomeLink href="/" className="flex items-center gap-2" aria-label={APP.name}>
+              <LogoMark />
+              <Logo className="text-sm" />
+            </GuardedHomeLink>
+            <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+              {NAV.map((item) => {
+                const active =
+                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                return (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    className={cx(
+                      "display rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
+                      active
+                        ? "bg-orange/12 text-orange-bright"
+                        : "text-sub hover:bg-white/5 hover:text-ink",
+                    )}
+                  >
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-12">
+          {children}
+        </main>
+
+        {/* Footer (desktop) */}
+        <footer className="hidden border-t border-line py-5 md:block">
+          <p className="mx-auto max-w-6xl px-4 text-xs leading-relaxed text-faint">
+            {APP.disclaimer}
+          </p>
+        </footer>
+
+        {/* Bottom nav (mobile) */}
+        <nav
+          aria-label="Main"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
+        >
+          <div className="mx-auto grid max-w-md grid-cols-4">
             {NAV.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              const Icon = item.icon;
               return (
-                <Link
+                <NavLink
                   key={item.href}
-                  href={item.href}
+                  item={item}
                   className={cx(
-                    "display rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
-                    active
-                      ? "bg-orange/12 text-orange-bright"
-                      : "text-sub hover:bg-white/5 hover:text-ink",
+                    "flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                    active ? "text-orange-bright" : "text-sub",
                   )}
                 >
+                  <Icon className="h-5 w-5" />
                   {item.label}
-                </Link>
+                </NavLink>
               );
             })}
-          </nav>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-12">
-        {children}
-      </main>
-
-      {/* Footer (desktop) */}
-      <footer className="hidden border-t border-line py-5 md:block">
-        <p className="mx-auto max-w-6xl px-4 text-xs leading-relaxed text-faint">
-          {APP.disclaimer}
-        </p>
-      </footer>
-
-      {/* Bottom nav (mobile) */}
-      <nav
-        aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
-      >
-        <div className="mx-auto grid max-w-md grid-cols-4">
-          {NAV.map((item) => {
-            const active =
-              item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cx(
-                  "flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider transition-colors",
-                  active ? "text-orange-bright" : "text-sub",
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
+          </div>
+        </nav>
+      </div>
+    </LeaveRunProvider>
   );
 }
 

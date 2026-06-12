@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { cx } from "@/lib/util";
 
 type Tone = "neutral" | "blue" | "orange" | "good" | "bad" | "gold";
@@ -33,8 +36,32 @@ export function Badge({
   );
 }
 
-/** Tiny country-code chip (placeholder for flags in the MVP). */
+/**
+ * Country chip: real flag from public/flags/<cc>.png when present
+ * (populated by `npm run fetch:assets -- --flags`), text code otherwise.
+ * Region codes (NA/EU/…) have no flag file and use the text fallback.
+ */
 export function CountryChip({ code, className }: { code: string; className?: string }) {
+  const src = `/flags/${code.toLowerCase()}.png`;
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+
+  if (!failed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={code}
+        title={code}
+        onError={() => setFailed(true)}
+        className={cx(
+          "inline-block h-3.5 w-5 rounded-[3px] border border-line-strong object-cover shadow-sm",
+          className,
+        )}
+      />
+    );
+  }
+
   return (
     <span
       title={code}

@@ -92,10 +92,13 @@ export function effectiveStats(overall: number, partial?: Partial<Stats>): Stats
 export function resolvePlayerCard(cardId: string, specialId?: string): ResolvedCard {
   const card = playerCardById.get(cardId);
   if (!card) throw new Error(`Unknown player card "${cardId}"`);
-  const player = playerById.get(card.playerId);
-  const org = orgById.get(card.orgId);
-  const season = seasonById.get(card.seasonId);
   const special = specialId ? specialCardById.get(specialId) : undefined;
+  // A special carries its own historical context: any card of the player can
+  // roll it (v0.5), but the moment's org/season is what the card shows.
+  const ctx = (special && playerCardById.get(special.baseCardId)) || card;
+  const player = playerById.get(card.playerId);
+  const org = orgById.get(ctx.orgId);
+  const season = seasonById.get(ctx.seasonId);
   const overall = special ? special.overall : finalOverall(card);
   return {
     kind: "player",
@@ -104,9 +107,9 @@ export function resolvePlayerCard(cardId: string, specialId?: string): ResolvedC
     name: player?.nickname ?? card.playerId,
     country: player?.country,
     region: player?.region,
-    orgId: card.orgId,
+    orgId: ctx.orgId,
     orgName: org?.name,
-    lineupId: card.lineupId,
+    lineupId: ctx.lineupId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
     overall,
@@ -131,9 +134,11 @@ export function resolveCoach(coachId: string, specialId?: string): ResolvedCard 
   if (coachId === "vacant-coach") return vacantCard("coach", coachId);
   const coach = coachById.get(coachId);
   if (!coach) throw new Error(`Unknown coach card "${coachId}"`);
-  const org = orgById.get(coach.orgId);
-  const season = seasonById.get(coach.seasonId);
   const special = specialId ? specialCardById.get(specialId) : undefined;
+  // Coach specials carry their own moment too (see resolvePlayerCard).
+  const ctx = (special && coachById.get(special.baseCardId)) || coach;
+  const org = orgById.get(ctx.orgId);
+  const season = seasonById.get(ctx.seasonId);
   const overall = special ? special.overall : coach.overall;
   return {
     kind: "coach",
@@ -142,9 +147,9 @@ export function resolveCoach(coachId: string, specialId?: string): ResolvedCard 
     name: coach.name,
     country: coach.country,
     region: coach.region,
-    orgId: coach.orgId,
+    orgId: ctx.orgId,
     orgName: org?.name,
-    lineupId: coach.lineupId,
+    lineupId: ctx.lineupId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
     overall,

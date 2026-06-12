@@ -229,7 +229,8 @@ export interface DraftOfferCard {
   refId: string;
   /** Set when this player card appears as its special version. */
   specialId?: string;
-  availability: "available" | "slot_full" | "already_drafted";
+  /** "vacant" = the lineup has no coach/sub — shown but never pickable (v0.5). */
+  availability: "available" | "slot_full" | "already_drafted" | "vacant";
 }
 
 export interface DraftOffer {

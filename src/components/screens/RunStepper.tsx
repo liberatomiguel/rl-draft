@@ -1,8 +1,10 @@
 "use client";
 
 /**
- * In-run header: back-to-menu (resets the run), phase progress, run badges.
- * v0.2: no resume system — leaving a run abandons it, one click, no modal.
+ * In-run header: back-to-menu, phase progress, run badges.
+ * v0.5: leaving mid-run asks for confirmation (players lost drafts to a
+ * stray click) — the shared LeaveRunGuard owns the modal. Results phase
+ * navigates straight home, nothing left to lose.
  */
 
 import { useRouter } from "next/navigation";
@@ -12,6 +14,7 @@ import type { RunPhase, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
+import { useLeaveRunGuard } from "@/components/layout/LeaveRunGuard";
 
 const PHASES: { id: RunPhase; label: string }[] = [
   { id: "draft", label: "Draft" },
@@ -23,6 +26,7 @@ const PHASES: { id: RunPhase; label: string }[] = [
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
   const clearRun = useRunStore((s) => s.clearRun);
+  const requestLeave = useLeaveRunGuard();
   const currentIndex = PHASES.findIndex((p) => p.id === run.phase);
 
   return (
@@ -31,8 +35,12 @@ export function RunStepper({ run }: { run: RunState }) {
         <button
           type="button"
           onClick={() => {
-            clearRun();
-            router.push("/");
+            // Mid-run the guard opens the confirmation modal; on results
+            // (or with no run) it declines and we navigate directly.
+            if (!requestLeave("/")) {
+              clearRun();
+              router.push("/");
+            }
           }}
           title={SETUP.back}
           aria-label={SETUP.back}

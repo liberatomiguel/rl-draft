@@ -353,6 +353,47 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Draft slot-machine reel (v0.5): the drawn lineup spins in like a slot,
+   decelerating onto the real name. Track height is N items; the final
+   translate leaves exactly the LAST item visible.
+--------------------------------------------------------------------------- */
+
+.slot-reel {
+  position: relative;
+  overflow: hidden;
+}
+
+.slot-reel::before,
+.slot-reel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.slot-reel::before {
+  top: 0;
+  background: linear-gradient(180deg, var(--bg), transparent);
+}
+
+.slot-reel::after {
+  bottom: 0;
+  background: linear-gradient(0deg, var(--bg), transparent);
+}
+
+.slot-reel-track {
+  animation: slot-spin 1.15s cubic-bezier(0.15, 0.85, 0.25, 1) forwards;
+}
+
+@keyframes slot-spin {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% + var(--slot-item-h, 2.5rem))); }
+}
+
+/* ---------------------------------------------------------------------------
    RLCS field (team visualization)
 --------------------------------------------------------------------------- */
 
@@ -418,10 +459,19 @@ body {
  * repeating-conic-gradient — a plain conic-gradient holds its last stop
  * after the listed segment, which rendered only TWO beams (v0.3 bug).
  * The repeating variant tiles the beam pattern around the full circle.
+ *
+ * Geometry (v0.5 fix): the ray layer must be a SQUARE wider than the
+ * container's diagonal, centered via the `translate` property — `inset:-55%`
+ * made a rectangle that clipped the beams as soon as it rotated, and
+ * `translate` (unlike transform) survives the rotate animation.
  */
 .celebrate-rays {
   position: absolute;
-  inset: -55%;
+  left: 50%;
+  top: 50%;
+  width: 220%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
   background: repeating-conic-gradient(
     from 0deg,
     transparent 0deg 9deg,
@@ -479,7 +529,11 @@ body {
 
 .celebrate-rays-prism {
   position: absolute;
-  inset: -55%;
+  left: 50%;
+  top: 50%;
+  width: 220%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
   background: repeating-conic-gradient(
     from 0deg,
     transparent 0deg 8deg,
@@ -490,6 +544,40 @@ body {
   );
   animation: rays-spin 22s linear infinite;
   pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Achievements (v0.5): legend tier wears an animated prismatic border —
+   the same premium language as legendary special cards.
+--------------------------------------------------------------------------- */
+
+.panel.ach-legend {
+  border: 1px solid transparent !important;
+  background:
+    linear-gradient(160deg, rgba(20, 29, 51, 0.92), rgba(10, 16, 30, 0.96)) padding-box,
+    linear-gradient(120deg, #e879f9, #fb923c, #38bdf8, #a855f7, #e879f9) border-box;
+  background-size: auto, 340% 100%;
+  animation: ach-legend-border 7s linear infinite;
+}
+
+@keyframes ach-legend-border {
+  0% { background-position: 0 0, 0% 50%; }
+  100% { background-position: 0 0, 340% 50%; }
+}
+
+/* Soft traveling sheen on the legend icon chip */
+.ach-legend-chip {
+  position: relative;
+  overflow: hidden;
+}
+
+.ach-legend-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 64%);
+  background-size: 220% 100%;
+  animation: card-sheen 3s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -661,6 +749,9 @@ body {
   .ceremony-burst,
   .ceremony-ring,
   .card-float,
+  .ach-legend,
+  .ach-legend-chip::after,
+  .slot-reel-track,
   .live-dot {
     animation: none !important;
   }

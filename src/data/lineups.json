@@ -296,17 +296,17 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "mockit-esports-s3",
+    "id": "mock-it-esports-s3",
     "name": "Mockit eSports",
     "seasonId": "rlcs-s3",
-    "orgId": "mockit-esports",
+    "orgId": "mock-it-esports",
     "region": "EU",
     "playerCardIds": [
-      "fairypeak-mockit-esports-s3",
-      "kaydop-mockit-esports-s3",
-      "miztik-mockit-esports-s3"
+      "fairypeak-mock-it-esports-s3",
+      "kaydop-mock-it-esports-s3",
+      "miztik-mock-it-esports-s3"
     ],
-    "subId": "sniper-sub-mockit-esports-s3",
+    "subId": "sniper-sub-mock-it-esports-s3",
     "orgBuffLevel": "+",
     "historicalStrength": "strong"
   },
@@ -505,17 +505,17 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "chiefs-esc-s4",
+    "id": "chiefs-esports-club-s4",
     "name": "Chiefs ESC",
     "seasonId": "rlcs-s4",
-    "orgId": "chiefs-esc",
+    "orgId": "chiefs-esports-club",
     "region": "OCE",
     "playerCardIds": [
-      "drippay-chiefs-esc-s4",
-      "jake-chiefs-esc-s4",
-      "torsos-chiefs-esc-s4"
+      "drippay-chiefs-esports-club-s4",
+      "jake-chiefs-esports-club-s4",
+      "torsos-chiefs-esports-club-s4"
     ],
-    "subId": "enigma-sub-chiefs-esc-s4",
+    "subId": "enigma-sub-chiefs-esports-club-s4",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
@@ -595,32 +595,32 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "team-dignitas-s5",
+    "id": "dignitas-s5",
     "name": "Team Dignitas",
     "seasonId": "rlcs-s5",
-    "orgId": "team-dignitas",
+    "orgId": "dignitas",
     "region": "EU",
     "playerCardIds": [
-      "violentpanda-team-dignitas-s5",
-      "kaydop-team-dignitas-s5",
-      "turbopolsa-team-dignitas-s5"
+      "violentpanda-dignitas-s5",
+      "kaydop-dignitas-s5",
+      "turbopolsa-dignitas-s5"
     ],
-    "subId": "reepex-sub-team-dignitas-s5",
+    "subId": "reepex-sub-dignitas-s5",
     "orgBuffLevel": "++",
     "historicalStrength": "elite"
   },
   {
-    "id": "renault-vitality-s5",
+    "id": "team-vitality-s5",
     "name": "Renault Vitality",
     "seasonId": "rlcs-s5",
-    "orgId": "renault-vitality",
+    "orgId": "team-vitality",
     "region": "EU",
     "playerCardIds": [
-      "fairypeak-renault-vitality-s5",
-      "freakii-renault-vitality-s5",
-      "paschy90-renault-vitality-s5"
+      "fairypeak-team-vitality-s5",
+      "freakii-team-vitality-s5",
+      "paschy90-team-vitality-s5"
     ],
-    "subId": "gnagflow06-sub-renault-vitality-s5",
+    "subId": "gnagflow06-sub-team-vitality-s5",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
@@ -890,18 +890,18 @@
     "historicalStrength": "strong"
   },
   {
-    "id": "renault-vitality-s7",
+    "id": "team-vitality-s7",
     "name": "Renault Vitality",
     "seasonId": "rlcs-s7",
-    "orgId": "renault-vitality",
+    "orgId": "team-vitality",
     "region": "EU",
     "playerCardIds": [
-      "scrubkilla-renault-vitality-s7",
-      "fairypeak-renault-vitality-s7",
-      "kaydop-renault-vitality-s7"
+      "scrubkilla-team-vitality-s7",
+      "fairypeak-team-vitality-s7",
+      "kaydop-team-vitality-s7"
     ],
-    "coachId": "gregan-coach-renault-vitality-s7",
-    "subId": "neqzo-sub-renault-vitality-s7",
+    "coachId": "gregan-coach-team-vitality-s7",
+    "subId": "neqzo-sub-team-vitality-s7",
     "orgBuffLevel": "++",
     "historicalStrength": "elite"
   },
@@ -1075,18 +1075,18 @@
     "historicalStrength": "underdog"
   },
   {
-    "id": "renault-vitality-s8",
+    "id": "team-vitality-s8",
     "name": "Renault Vitality",
     "seasonId": "rlcs-s8",
-    "orgId": "renault-vitality",
+    "orgId": "team-vitality",
     "region": "EU",
     "playerCardIds": [
-      "fairypeak-renault-vitality-s8",
-      "scrubkilla-renault-vitality-s8",
-      "kaydop-renault-vitality-s8"
+      "fairypeak-team-vitality-s8",
+      "scrubkilla-team-vitality-s8",
+      "kaydop-team-vitality-s8"
     ],
-    "coachId": "gregan-coach-renault-vitality-s8",
-    "subId": "jessie-sub-renault-vitality-s8",
+    "coachId": "gregan-coach-team-vitality-s8",
+    "subId": "jessie-sub-team-vitality-s8",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
@@ -1276,17 +1276,17 @@
     "historicalStrength": "strong"
   },
   {
-    "id": "renault-vitality-s9",
+    "id": "team-vitality-s9",
     "name": "Renault Vitality",
     "seasonId": "rlcs-s9",
-    "orgId": "renault-vitality",
+    "orgId": "team-vitality",
     "region": "EU",
     "playerCardIds": [
-      "fairypeak-renault-vitality-s9",
-      "kaydop-renault-vitality-s9",
-      "alpha54-renault-vitality-s9"
+      "fairypeak-team-vitality-s9",
+      "kaydop-team-vitality-s9",
+      "alpha54-team-vitality-s9"
     ],
-    "coachId": "gregan-coach-renault-vitality-s9",
+    "coachId": "gregan-coach-team-vitality-s9",
     "orgBuffLevel": "++",
     "historicalStrength": "elite"
   },
@@ -1804,15 +1804,15 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "pioneers-2122",
+    "id": "pioneers-oce-2122",
     "name": "Pioneers",
     "seasonId": "rlcs-2021-22",
-    "orgId": "pioneers",
+    "orgId": "pioneers-oce",
     "region": "OCE",
     "playerCardIds": [
-      "scrub-pioneers-2122",
-      "superlachie-pioneers-2122",
-      "bananahead-pioneers-2122"
+      "scrub-pioneers-oce-2122",
+      "superlachie-pioneers-oce-2122",
+      "bananahead-pioneers-oce-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2156,15 +2156,15 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "pioneers-2223",
+    "id": "pioneers-oce-2223",
     "name": "Pioneers",
     "seasonId": "rlcs-2022-23",
-    "orgId": "pioneers",
+    "orgId": "pioneers-oce",
     "region": "OCE",
     "playerCardIds": [
-      "scrub-pioneers-2223",
-      "superlachie-pioneers-2223",
-      "fiberr-pioneers-2223"
+      "scrub-pioneers-oce-2223",
+      "superlachie-pioneers-oce-2223",
+      "fiberr-pioneers-oce-2223"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2460,15 +2460,15 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "quiktrip-pioneers-gaming-2024",
+    "id": "pioneers-oce-2024",
     "name": "QuikTrip Pioneers Gaming",
     "seasonId": "rlcs-2024",
-    "orgId": "quiktrip-pioneers-gaming",
+    "orgId": "pioneers-oce",
     "region": "OCE",
     "playerCardIds": [
-      "superlachie-quiktrip-pioneers-gaming-2024",
-      "scrub-quiktrip-pioneers-gaming-2024",
-      "fiberr-quiktrip-pioneers-gaming-2024"
+      "superlachie-pioneers-oce-2024",
+      "scrub-pioneers-oce-2024",
+      "fiberr-pioneers-oce-2024"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2825,15 +2825,15 @@
     "historicalStrength": "underdog"
   },
   {
-    "id": "fut-esports-2025",
+    "id": "fut-esports-ssa-2025",
     "name": "FUT Esports",
     "seasonId": "rlcs-2025",
-    "orgId": "fut-esports",
+    "orgId": "fut-esports-ssa",
     "region": "SSA",
     "playerCardIds": [
-      "vksailen-fut-esports-2025",
-      "leoro-fut-esports-2025",
-      "torres823-fut-esports-2025"
+      "vksailen-fut-esports-ssa-2025",
+      "leoro-fut-esports-ssa-2025",
+      "torres823-fut-esports-ssa-2025"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2882,17 +2882,17 @@
     "historicalStrength": "strong"
   },
   {
-    "id": "fut-esports-2026",
+    "id": "fut-esports-na-2026",
     "name": "FUT Esports",
     "seasonId": "rlcs-2026",
-    "orgId": "fut-esports",
+    "orgId": "fut-esports-na",
     "region": "NA",
     "playerCardIds": [
-      "jstn-fut-esports-2026",
-      "chronic-fut-esports-2026",
-      "cheese-fut-esports-2026"
+      "jstn-fut-esports-na-2026",
+      "chronic-fut-esports-na-2026",
+      "cheese-fut-esports-na-2026"
     ],
-    "coachId": "laf-coach-fut-esports-2026",
+    "coachId": "laf-coach-fut-esports-na-2026",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
@@ -3056,17 +3056,17 @@
     "historicalStrength": "solid"
   },
   {
-    "id": "pioneers-2026",
+    "id": "pioneers-ssa-2026",
     "name": "Pioneers",
     "seasonId": "rlcs-2026",
-    "orgId": "pioneers",
+    "orgId": "pioneers-ssa",
     "region": "SSA",
     "playerCardIds": [
-      "sweaty-pioneers-2026",
-      "luiisp-pioneers-2026",
-      "2die4-pioneers-2026"
+      "sweaty-pioneers-ssa-2026",
+      "luiisp-pioneers-ssa-2026",
+      "2die4-pioneers-ssa-2026"
     ],
-    "coachId": "lawler-coach-pioneers-2026",
+    "coachId": "lawler-coach-pioneers-ssa-2026",
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
   }

@@ -53,10 +53,9 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
    blocking it would distort the opponent pool. Flag for review if it feels
    wrong in playtests.
 
-10. **Special card appearance is per-offer (7%)** on each player card that
-    has a special version, independent of difficulty (base doc §7 lists the
-    *opponent* special chance per difficulty; the player-side draft chance
-    stays flat to keep the draft pool fair).
+10. ~~Special card appearance is per-offer (7%) on each player card that
+    has a special version.~~ **Reworked in v0.5** — see decision #23:
+    specials belong to the player and roll at 16% with rarity weighting.
 
 ## Scope
 
@@ -96,10 +95,11 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 
 ## v0.2 additions
 
-18. **No resume system.** Returning to the menu resets the run (one-click
-    back button in the run header, no confirmation modal). Refreshing the
-    page mid-run still restores it — that protects against accidents, not
-    intentional exits.
+18. **No resume system.** Returning to the menu resets the run. Refreshing
+    the page mid-run still restores it — that protects against accidents,
+    not intentional exits. *(v0.5: the exit is now guarded by ONE
+    confirmation modal — live playtesters lost drafts to stray Home clicks.
+    The no-resume rule itself is unchanged.)*
 
 19. **Spoiler-safe playback.** The tournament simulates ahead internally but
     the UI derives standings/brackets only from *revealed* series, so the
@@ -114,13 +114,50 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     and special-card photos are looked up by id under `public/`, with styled
     fallbacks when missing. Dropping files in is the whole integration.
 
+## v0.5 additions (first live-playtest round)
+
+22. **Vacant coach/sub picks removed** (reverts the v0.3 punt). Players felt
+    forced into dead picks; instead, blocked offers free-reroll and the draw
+    softly favors staffed lineups when only those slots remain
+    (`DRAFT.staffScarcityBoost`). Vacant cards still render — stamped, never
+    pickable — so the lineup reads historically honest.
+
+23. **Specials belong to the PERSON, not one base card.** Any Kronovi card
+    can roll any Kronovi special (the old per-base-card link made specials
+    nearly unfindable). Which one appears is rarity-weighted
+    (`SPECIALS.rarityWeights`) so legendaries stay chase pulls. A special
+    carries its own historical moment: org/season display AND chemistry use
+    the special's base lineup, not the card it replaced — the card *becomes*
+    that moment.
+
+24. **Superteam compression** (`TEAM_RATING.superteamPivot/Slope`): team
+    rating above 94 counts at 0.55×, both sides. Without it the historical
+    super-rosters (~102 raw) made titles near-impossible (measured 0% on
+    Hard, <9% on Normal with a good draft). Compression preserves ordering;
+    it only narrows gaps at the very top. Applied before the difficulty
+    shift so the knob stays independent.
+
+25. **Org identity unification + region splits** in the generator: era
+    spellings/sponsor names map to one org (Dignitas, Vitality, Chiefs,
+    Mock-It, Pioneers/QuikTrip) so org chemistry connects across eras, while
+    same-name-different-org cases (Pioneers OCE/SSA, FUT NA/SSA) split per
+    region. Lineups keep their era display name.
+
+26. **Playback is user-centric**: the Match Center never shows AI series
+    uninvited; standings step per ROUND; future opponents stay hidden until
+    the current round is fully revealed (Swiss pairs by record — an early
+    pairing reveal is a result spoiler). Pacing favors readability over
+    speed; 2×/4×/skip remain for the impatient.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).
 - Should opponents be allowed to field people you drafted (decision #9)?
-- Special draft chance 7% — fast enough collection pace?
 - Hidden runs currently hide opponent team ratings too (full blackout).
   Alternative: show opponent ratings, hide only yours.
 - Grand final bracket reset (LB team must win twice)? Currently single GF.
 - "Best player" of the run is currently overall + small variance — a deeper
   per-game impact model is possible if it matters.
+- Liquipedia-fetched art is a bootstrap: a curation pass over
+  `data-sources/asset-overrides.json` will be needed for misses and
+  same-name org collisions (e.g. FUT Esports NA logo).

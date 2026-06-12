@@ -16,14 +16,29 @@ the strongest factor".
 | +6 | wins most of the time | >82% |
 | +12 | upsets very rare | >96% |
 
+## Outcome anchors (asserted by `src/engine/balance.test.ts`, v0.5)
+
+Full-tournament rates for a representative **good roster (~92.5 total)**,
+real opponent generation + Swiss + double elim. Measured v0.5 values:
+
+| Difficulty | Playoffs | Title | Notes |
+| --- | --- | --- | --- |
+| Easy | ~100% | ~59% | learning mode |
+| Normal | ~97% | ~12% | a 94.5 dream draft reaches ~28% |
+| Hard | ~79% | ~1-3% | the title is the chase, playoffs the fight |
+
+If a balance change moves these outside the test bands, the suite fails —
+retune or consciously update the test with a CHANGELOG entry.
+
 ## The variance model (why two noise sources)
 
 `engine/match.ts` mixes:
 
-1. **Series form** (`SIMULATION.seriesFormRange`, ±6): rolled **once per team
-   per series**. This is the upset engine — per-game noise alone gets averaged
-   away by a best-of-5 and makes favorites win ~95% of close matchups (we
-   measured it; see CHANGELOG v0.1.0). Form does not average out.
+1. **Series form** (`SIMULATION.seriesFormRange`, ±4.5 since v0.5 — was ±6):
+   rolled **once per team per series**. This is the upset engine — per-game
+   noise alone gets averaged away by a best-of-5 and makes favorites win ~95%
+   of close matchups (we measured it; see CHANGELOG v0.1.0). Form does not
+   average out. At ±6 a +3 edge played like a coin flip (v0.5 feedback).
 2. **Per-game roll** (difficulty `userRollRange` / `aiRollRange`): small
    game-to-game swings; creates close series, OTs and momentum flips.
 
@@ -31,22 +46,25 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 *negative* side of both rolls — strong-floor teams lose less to variance.
 
 **Tuning tips**
-- Game feels too random → lower `seriesFormRange` (5 or 4).
-- Favorites stomp too much → raise it (7).
+- Game feels too random → lower `seriesFormRange`.
+- Favorites stomp too much → raise it.
 - Keep `userRollRange` asymmetries small; they tilt every single game.
 
-## Difficulty profiles (`DIFFICULTY`)
+## Difficulty profiles (`DIFFICULTY`) — v0.5 values
 
 | Knob | easy | normal | hard | legacy |
 | --- | --- | --- | --- | --- |
 | `rerolls` | 3 | 1 | 0 | 0 |
 | `overallLockedHidden` | no | no | yes | yes |
-| `userRollRange` | [-3, 5] | [-4, 4] | [-5, 4] | [-5, 5] |
-| `chemistryMaxBonus` | 1.2 | 2.2 | 2.8 | 2.8 |
-| `opponentRatingShift` | -1.5 | 0 | +1.0 | +1.5 |
+| `userRollRange` | [-3, 5] | [-3, 4] | [-3.5, 4] | [-5, 5] |
+| `chemistryMaxBonus` | 1.0 | 1.6 | 1.8 | 2.2 |
+| `opponentRatingShift` | -2.0 | 0 | +0.3 | +1.2 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
-| `opponentTierWeights` | favors solid | flat | favors elite | heavily elite |
+| `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
+
+`chemistryMaxBonus` is also a FIELD-WIDE buff: every AI lineup is a real
+roster at 100% chemistry while drafts sit near ~20% — keep it modest.
 
 Rules that must NOT change (base doc §5): difficulty never touches the
 **draft** pool — only rerolls, visibility, opponents and simulation weights.
@@ -58,12 +76,20 @@ rating = avg player overall            (dominant, ~82-96)
        + coach   (overall-75)·0.10 + bonusLevel·0.25   max 2.5
        + sub     (overall-75)·0.05                     max 1.2
        + org     buffLevel·0.6                         max 1.8
-       + chem    percent · chemistryMaxBonus           max 2.8 (hard)
+       + chem    percent · chemistryMaxBonus           max 2.2 (legacy)
        + special 0.4/card                              max 1.2
+then:  anything above superteamPivot (94) counts at superteamSlope (0.55×)
 ```
 
 All modifiers together ≈ ±9 max vs a player-average span of ~14 points —
 players stay ~75% of the signal, as the base doc requires.
+
+**Superteam compression (v0.5)**: the champion-heavy dataset produces
+historical lineups at 98-102 raw total (elite trios + 100% chemistry +
+maxed buffs) — an unbeatable Bo7 wall that made the title near-impossible.
+Rating above the pivot is compressed for user AND AI alike, keeping the
+hierarchy while making championships winnable. Lower the slope to flatten
+the top end further; raise the pivot to let super-rosters breathe.
 
 ## Chemistry (`CHEMISTRY`) — base doc §22
 
@@ -89,12 +115,18 @@ The user trades raw overall vs chemistry — that's the intended draft tension.
 Stat norm = `(stat − 82) / 18`, clamped — so an 82-stat team is neutral and
 stats only nudge (the game must be playable with overall alone).
 
-## Cards
+## Cards & specials
 
 - `RARITY`: common ≤69 · silver 70-79 · gold 80-89 · blue ≥90 (visual only).
   Org cards map from buff level: ~ common · + silver · ++ gold · +++ blue.
-- `DRAFT.specialAppearanceChance` (7%): chance a base card shows up as its
-  special version in an offer. Raise to make the collection faster to fill.
+- `SPECIALS.appearanceChance` (16%): chance a player card in an offer rolls
+  one of that PLAYER's specials (v0.5 — the pool follows the person, so any
+  card of theirs qualifies). `coachAppearanceChance` (12%) for coach cards.
+- `SPECIALS.rarityWeights` (rare 100 · epic 55 · mythic 28 · legendary 12):
+  which special appears once the roll passes — legendaries are chase pulls.
+  Raise legendary's weight to make the top tier less elusive.
+- `DRAFT.staffScarcityBoost` (5): when only coach/sub slots remain, lineups
+  that can fill them are favored by up to this weight (1 = off).
 
 ## Progression (`XP`, `RANKS`)
 

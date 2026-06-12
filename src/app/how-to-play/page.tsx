@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DIFFICULTY } from "@/config/balance";
+import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { Badge } from "@/components/ui/Badge";
 
@@ -15,7 +16,7 @@ const STEPS = [
   },
   {
     title: "Free choice, six slots",
-    body: "You need 3 players, 1 coach, 1 substitute and 1 org. Pick in any order. Once a person is on your roster, their other versions can't be drafted again this run. If your player slots are full, player cards can still be drafted as your substitute.",
+    body: "You need 3 players, 1 coach, 1 substitute and 1 org. Pick in any order. Once a person is on your roster, their other versions can't be drafted again this run. If nothing in a lineup fits your remaining slots, the reroll is free.",
   },
   {
     title: "Build chemistry",
@@ -23,7 +24,7 @@ const STEPS = [
   },
   {
     title: "Survive the bracket",
-    body: "16 teams. Swiss stage in best-of-5: 3 wins to advance, 3 losses and you're out. Top 8 seed into a single-elimination best-of-7 bracket. Your team rating is driven mostly by player overalls — chemistry, org buffs, coach and special effects add the edge.",
+    body: "16 teams. Swiss stage in best-of-5: 3 wins to advance, 3 losses and you're out. Top 8 seed into a double-elimination best-of-7 bracket — an upper-bracket loss drops you to the lower bracket, not out of the event. Your team rating is driven mostly by player overalls — chemistry, org buffs, coach and special effects add the edge.",
   },
   {
     title: "Collect special cards",
@@ -34,6 +35,7 @@ const STEPS = [
 export default function HowToPlayPage() {
   return (
     <div className="rise-in mx-auto max-w-3xl">
+      <BackToMenu />
       <SectionTitle kicker="Rules of the game" title="How to Play" className="mb-8" />
 
       <ol className="space-y-4">

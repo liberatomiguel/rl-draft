@@ -148,10 +148,12 @@ export function generateDailyConfig(date: string): DailyConfig {
     }),
     () => ({
       label: "Specials Surge",
-      description: "Special cards appear four times as often — collectors' day.",
+      description: "Special cards appear far more often — collectors' day.",
       difficulty: "normal",
       hiddenOverall: false,
-      specialChanceMult: 4,
+      // v0.5: base chance went 0.07 → 0.16, so the surge multiplier came down
+      // (×4 would have meant a special on most cards).
+      specialChanceMult: 2.5,
     }),
   ];
 

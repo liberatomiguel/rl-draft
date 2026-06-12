@@ -13,7 +13,7 @@
  */
 
 import { useState } from "react";
-import { DRAFT_UI, RARITY_LABELS, SPECIAL_TYPE_LABELS, STAT_LABELS } from "@/content/copy";
+import { RARITY_LABELS, SPECIAL_TYPE_LABELS, STAT_LABELS } from "@/content/copy";
 import type { ResolvedCard } from "@/engine/cards";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
@@ -128,7 +128,7 @@ export function GameCard({
             <span
               className={cx(
                 "display block font-bold leading-none",
-                size === "sm" ? "text-2xl" : "text-3xl",
+                size === "sm" ? "text-2xl" : "text-2xl md:text-3xl",
                 isSpecial
                   ? "text-white drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]"
                   : showOverall && (card.overall ?? 0) >= 90
@@ -179,7 +179,7 @@ export function GameCard({
         <p
           className={cx(
             "display truncate font-bold uppercase tracking-wide",
-            size === "sm" ? "text-xs" : "text-sm",
+            size === "sm" ? "text-xs" : "text-xs md:text-sm",
             isSpecial ? "text-white" : "text-ink",
           )}
         >

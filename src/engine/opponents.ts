@@ -5,8 +5,8 @@
  * chance of special-card upgrades. It NEVER affects the user's draft pool.
  */
 
-import { DIFFICULTY } from "@/config/balance";
-import { lineups, specialsByBaseCardId } from "@/data";
+import { DIFFICULTY, SPECIALS } from "@/config/balance";
+import { lineups, playerCardById, specialsByPlayerId } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { buildLineupTeam } from "./teams";
 import type { Difficulty, TournamentTeam } from "./types";
@@ -35,12 +35,18 @@ export function generateOpponents(
   return picked.map((lineup) => {
     let specialUpgrade: { cardId: string; specialId: string } | undefined;
     if (rng.chance(profile.opponentSpecialChance)) {
-      const upgradable = lineup.playerCardIds.filter((id) =>
-        (specialsByBaseCardId.get(id)?.length ?? 0) > 0,
+      // v0.5: specials belong to the player — any of their cards can upgrade.
+      const upgradable = lineup.playerCardIds.filter(
+        (id) =>
+          (specialsByPlayerId.get(playerCardById.get(id)!.playerId)?.length ?? 0) > 0,
       );
       if (upgradable.length > 0) {
         const cardId = rng.pick(upgradable);
-        const specialId = rng.pick(specialsByBaseCardId.get(cardId)!).id;
+        const pool = specialsByPlayerId.get(playerCardById.get(cardId)!.playerId)!;
+        const specialId = rng.weightedPick(
+          pool,
+          (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1,
+        ).id;
         specialUpgrade = { cardId, specialId };
       }
     }

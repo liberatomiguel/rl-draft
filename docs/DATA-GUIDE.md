@@ -160,8 +160,11 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 }
 ```
 
-- `baseCardId` links the special to the base card it replaces when it appears
-  in a draft offer (chance per appearance in `balance.ts → DRAFT`).
+- **The special is owned by `playerId`** (v0.5): ANY card of that player can
+  roll it in a draft offer (`balance.ts → SPECIALS.appearanceChance`, with
+  `rarityWeights` deciding which one shows). `baseCardId` anchors the
+  special's own historical moment — the org/season it displays AND the
+  lineup/org used for chemistry when drafted.
 - `cardType`: `moment | major_mvp | worlds_mvp | mythic | legend`.
 - `rarity`: `rare | epic | mythic | legendary` (visual + collection grouping).
 - `effect.type` (implemented in `engine/match.ts`):

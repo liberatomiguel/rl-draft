@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coachById, coaches, lineups, orgs, playerCardById, playerCards, subById, subs } from "@/data";
+import { coachById, coaches, lineups, orgs, playerCardById, playerCards, specialCards, subById, subs } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import {
   applyFreeReroll,
@@ -179,7 +179,7 @@ describe("draft (§4-§6, v0.2 rules)", () => {
     const targetPlayerIds = target.playerCardIds.map(
       (id) => playerCardById.get(id)!.playerId,
     );
-    let draft: DraftState = {
+    const draft: DraftState = {
       ...createDraft("normal"),
       roster: {
         coach: { slot: "coach", kind: "coach", refId: coaches[0].id, fromLineupId: "x" },
@@ -211,7 +211,7 @@ describe("draft (§4-§6, v0.2 rules)", () => {
     expect(() => applyFreeReroll(open, rng)).toThrow();
   });
 
-  it("offers pickable vacant cards when a lineup has no coach/sub", () => {
+  it("shows vacant coach/sub cards but never lets them be picked (v0.5)", () => {
     // Find a lineup with neither coach nor sub in the dataset.
     const target = lineups.find((l) => !l.coachId && !l.subId)!;
     expect(target).toBeDefined();
@@ -222,13 +222,88 @@ describe("draft (§4-§6, v0.2 rules)", () => {
 
     const vacantCoach = draft.offer!.cards.find((c) => c.refId === "vacant-coach");
     const vacantSub = draft.offer!.cards.find((c) => c.refId === "vacant-sub");
-    expect(vacantCoach?.availability).toBe("available");
-    expect(vacantSub?.availability).toBe("available");
+    expect(vacantCoach?.availability).toBe("vacant");
+    expect(vacantSub?.availability).toBe("vacant");
+    expect(() => applyPick(draft, vacantCoach!, "coach", rng)).toThrow();
+  });
 
-    draft = applyPick(draft, vacantCoach!, "coach", rng);
-    expect(draft.roster.coach?.refId).toBe("vacant-coach");
-    // Vacant picks exclude nobody.
-    expect(draft.takenPersonIds).toHaveLength(0);
+  it("grants a free reroll when only staff slots remain and the lineup has none", () => {
+    // Roster needs ONLY a coach; hunt a lineup without one → fully blocked.
+    const rng = createRng(78);
+    const noCoach = lineups.find((l) => !l.coachId)!;
+    let draft: DraftState = {
+      ...createDraft("normal"),
+      roster: {
+        player1: { slot: "player1", kind: "player", refId: playerCards[0].id, fromLineupId: "x" },
+        player2: { slot: "player2", kind: "player", refId: playerCards[1].id, fromLineupId: "x" },
+        player3: { slot: "player3", kind: "player", refId: playerCards[2].id, fromLineupId: "x" },
+        sub: { slot: "sub", kind: "sub", refId: subs[0].id, fromLineupId: "x" },
+        org: { slot: "org", kind: "org", refId: orgs[0].id, fromLineupId: "x" },
+      },
+    };
+    draft = drawNextOffer(draft, rng);
+    let guard = 0;
+    while (draft.offer!.lineupId !== noCoach.id && guard < 600) {
+      draft = drawNextOffer(draft, rng);
+      guard += 1;
+    }
+    expect(draft.offer!.lineupId).toBe(noCoach.id);
+    expect(draft.offer!.hasPickableCard).toBe(false);
+    const rerolled = applyFreeReroll(draft, rng);
+    expect(rerolled.rerollsLeft).toBe(draft.rerollsLeft);
+  });
+
+  it("favors lineups that can fill the last open staff slots (scarcity weighting)", () => {
+    // With only coach+sub missing, lineups with staff should dominate draws.
+    const base: DraftState = {
+      ...createDraft("normal"),
+      roster: {
+        player1: { slot: "player1", kind: "player", refId: playerCards[0].id, fromLineupId: "x" },
+        player2: { slot: "player2", kind: "player", refId: playerCards[1].id, fromLineupId: "x" },
+        player3: { slot: "player3", kind: "player", refId: playerCards[2].id, fromLineupId: "x" },
+        org: { slot: "org", kind: "org", refId: orgs[0].id, fromLineupId: "x" },
+      },
+    };
+    const withStaffShare =
+      lineups.filter((l) => l.coachId || l.subId).length / lineups.length;
+
+    const rng = createRng(79);
+    let staffDraws = 0;
+    const draws = 300;
+    for (let i = 0; i < draws; i++) {
+      const drawn = drawNextOffer({ ...base, shownLineupIds: [] }, rng);
+      const lineup = lineups.find((l) => l.id === drawn.offer!.lineupId)!;
+      if (lineup.coachId || lineup.subId) staffDraws += 1;
+    }
+    // Weighted draws must clearly beat the natural share of staffed lineups.
+    expect(staffDraws / draws).toBeGreaterThan(Math.min(0.95, withStaffShare + 0.12));
+  });
+
+  it("rolls specials from the PLAYER's pool, on any of their cards (v0.5)", () => {
+    // Force specials to always appear; every specialId must belong to the
+    // player of the card it replaced — even when the base card differs.
+    const rng = createRng(81);
+    let draft: DraftState = {
+      ...createDraft("normal"),
+      specialChanceMult: 1000,
+    };
+    const seen = new Set<string>();
+    let crossMoment = 0;
+    for (let i = 0; i < 120; i++) {
+      draft = drawNextOffer({ ...draft, shownLineupIds: [] }, rng);
+      for (const card of draft.offer!.cards) {
+        if (card.kind !== "player" || !card.specialId) continue;
+        const sp = specialCards.find((s) => s.id === card.specialId)!;
+        const cardPlayer = playerCardById.get(card.refId)!.playerId;
+        expect(sp.playerId).toBe(cardPlayer);
+        seen.add(sp.id);
+        if (sp.baseCardId !== card.refId) crossMoment += 1;
+      }
+    }
+    // The per-player pool must actually surface specials…
+    expect(seen.size).toBeGreaterThan(5);
+    // …including on cards that are NOT the special's original base card.
+    expect(crossMoment).toBeGreaterThan(0);
   });
 
   it("limits paid rerolls by difficulty and throws at zero", () => {

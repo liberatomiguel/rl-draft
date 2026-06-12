@@ -60,8 +60,17 @@ export function computeTeamRating(input: RatingInput): TeamRatingBreakdown {
 
   const difficultyShift = input.difficultyShift ?? 0;
 
-  const total =
-    avg + coachMod + subMod + orgMod + chemMod + specialMod + difficultyShift;
+  // Superteam compression (see balance.TEAM_RATING): stacked rosters yield
+  // diminishing returns past the pivot — applies to user and AI alike, so
+  // historical 99-overall lineups stop being an unbeatable playoff wall.
+  const subtotal = avg + coachMod + subMod + orgMod + chemMod + specialMod;
+  const compressed =
+    subtotal > TEAM_RATING.superteamPivot
+      ? TEAM_RATING.superteamPivot +
+        (subtotal - TEAM_RATING.superteamPivot) * TEAM_RATING.superteamSlope
+      : subtotal;
+
+  const total = compressed + difficultyShift;
 
   return {
     avgPlayerOverall: round1(avg),

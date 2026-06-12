@@ -1,0 +1,18 @@
+{
+  "orgs": {
+    "endpoint-cex": "Endpoint",
+    "g2-stride": "G2 Stride",
+    "gentle-mates-alpine": "Gentle Mates",
+    "intz-esports": "INTZ",
+    "jam-gaming": "JAM Gaming",
+    "mousesports": "Mousesports",
+    "nrg-esports": "NRG",
+    "pioneers-oce": false,
+    "pittsburgh-knights": "Pittsburgh Knights",
+    "team-envy": "Team Envy"
+  },
+  "players": {
+    "jstn": false,
+    "fairypeak": false
+  }
+}

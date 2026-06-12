@@ -1,17 +1,18 @@
 "use client";
 
 /**
- * Tournament screen v2 — automatic simulation.
+ * Tournament screen v3 — automatic simulation, focused on YOUR games.
  *
- * The player presses Start once; rounds then resolve on their own. The user's
- * series play out game by game in the Match Center, AI series pop into the
- * brackets with a short delay. Speed toggle (1×/2×) and Skip available.
- *
- * Views: Swiss = "Your Path" round cards + live standings (derived only from
- * revealed series — no spoilers). Playoffs = full double-elimination bracket
- * (upper, lower, finals + third place) with team logos and a green/red
- * outline on the user's matches. Finished → everything stays browsable and
- * any series can be clicked open in the Match Center.
+ * The player presses Start once; rounds then resolve on their own.
+ * Playback rules (v0.5 playtest feedback):
+ *  - The Match Center only ever shows the USER's series (AI series are
+ *    browsable by clicking them once revealed — they never hijack the view).
+ *  - Within a round the user's series plays first, game by game, then
+ *    lingers so the result can be read before anything else moves.
+ *  - Swiss standings only move at the END of a fully revealed round.
+ *  - Upcoming opponents are hidden until the current round is fully revealed
+ *    (the engine simulates ahead — revealing pairings early spoils results).
+ *  - Speed toggle (1×/2×/4×) and Skip available.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -53,32 +54,54 @@ function entryKey(stage: string, roundIndex: number, seriesIndex: number): strin
 
 function allEntries(t: TournamentState): SeriesEntry[] {
   const out: SeriesEntry[] = [];
+  // Within each round the user's series reveals FIRST (it's the story);
+  // AI series follow as quick background pops. Sort is stable, so rebuilt
+  // queues keep the exact order of already-revealed entries.
+  const pushRound = (entries: SeriesEntry[]) => {
+    out.push(...[...entries].sort((a, b) => Number(b.isUser) - Number(a.isUser)));
+  };
   t.swiss.rounds.forEach((round, ri) => {
-    round.series.forEach((s, si) => {
-      out.push({
+    pushRound(
+      round.series.map((s, si) => ({
         key: entryKey("swiss", ri, si),
         label: `${T.swiss} · ${T.round(round.round)}`,
         isUser: s.teamAId === "user" || s.teamBId === "user",
-        stage: "swiss",
+        stage: "swiss" as const,
         roundIndex: ri,
         seriesIndex: si,
-      });
-    });
+      })),
+    );
   });
   (t.playoffs?.rounds ?? []).forEach((round, ri) => {
-    round.series.forEach((s, si) => {
-      out.push({
+    pushRound(
+      round.series.map((s, si) => ({
         key: entryKey("playoffs", ri, si),
         label: T.roundNames[round.name] ?? round.name,
         isUser: s.teamAId === "user" || s.teamBId === "user",
-        stage: "playoffs",
+        stage: "playoffs" as const,
         roundIndex: ri,
         seriesIndex: si,
-      });
-    });
+      })),
+    );
   });
   return out;
 }
+
+/** Playback pacing (ms at 1× — divided by the speed toggle). */
+const PACE = {
+  /** Between games of the user's series. */
+  userGame: 950,
+  /** Linger on the finished user series so the narration can be read. */
+  userSeriesLinger: 2800,
+  /** AI series during Swiss are invisible until standings move — near-batch. */
+  aiSwiss: 90,
+  /** AI series popping into the playoff bracket. */
+  aiPlayoff: 420,
+  /** Extra breath when a new round starts (standings just moved). */
+  roundGap: 1400,
+  /** Engine tick between rounds. */
+  advance: 500,
+} as const;
 
 function locateSeries(t: TournamentState, entry: SeriesEntry): SeriesResult {
   return entry.stage === "swiss"
@@ -129,7 +152,9 @@ export function TournamentScreen({ run }: { run: RunState }) {
     setQueue(entries); // cursor stays — new entries are beyond it
   }, [playRound]);
 
-  // The autoplay engine.
+  // The autoplay engine. Pace depends on what is being revealed: the user's
+  // series plays game by game then lingers; AI series pop quickly; crossing
+  // into a new round adds a breath so the standings update can be read.
   useEffect(() => {
     if (!running || !t) return;
     const tick = (ms: number, fn: () => void) => {
@@ -137,24 +162,35 @@ export function TournamentScreen({ run }: { run: RunState }) {
     };
 
     if (current) {
+      const prev = cursor > 0 ? queue[cursor - 1] : null;
+      const crossesRound =
+        prev !== null &&
+        (prev.stage !== current.stage || prev.roundIndex !== current.roundIndex);
+      const roundGap = crossesRound ? PACE.roundGap : 0;
+
       const series = locateSeries(t, current);
       if (current.isUser && gamesShown < series.games.length) {
-        tick(850, () => setGamesShown((g) => g + 1));
+        tick(PACE.userGame + (gamesShown === 0 ? roundGap : 0), () =>
+          setGamesShown((g) => g + 1),
+        );
       } else {
-        tick(current.isUser ? 1300 : 240, () => {
+        const base = current.isUser
+          ? PACE.userSeriesLinger
+          : (current.stage === "swiss" ? PACE.aiSwiss : PACE.aiPlayoff) + roundGap;
+        tick(base, () => {
           setCursor((c) => c + 1);
           setGamesShown(0);
         });
       }
     } else if (t.stage !== "finished") {
-      tick(420, advanceRound);
+      tick(PACE.advance, advanceRound);
     } else {
       setRunning(false);
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [running, t, current, gamesShown, speed, advanceRound]);
+  }, [running, t, current, cursor, queue, gamesShown, speed, advanceRound]);
 
   if (!t) return null;
 
@@ -175,16 +211,21 @@ export function TournamentScreen({ run }: { run: RunState }) {
     setRunning(false);
   };
 
-  // What the Match Center shows: inspected > live > last revealed user series.
+  // What the Match Center shows: inspected > the user's LIVE series > the
+  // last revealed user series. AI series never hijack the center (v0.5).
   const inspected = inspectKey ? queue.find((e) => e.key === inspectKey) ?? null : null;
   const liveEntry = running && current ? current : null;
+  const liveUserEntry = liveEntry?.isUser ? liveEntry : null;
   const lastRevealedUser = [...queue.slice(0, cursor)].reverse().find((e) => e.isUser) ?? null;
-  const centerEntry = inspected ?? liveEntry ?? lastRevealedUser;
-  const centerLive = Boolean(liveEntry && centerEntry?.key === liveEntry.key);
+  const centerEntry = inspected ?? liveUserEntry ?? lastRevealedUser;
+  const centerLive = Boolean(liveUserEntry && centerEntry?.key === liveUserEntry.key);
 
-  // Header record derived from revealed series only (no spoilers).
-  const revealedRecords = deriveSwissRecords(t, revealedKeys);
-  const userRecord = revealedRecords.get("user") ?? { wins: 0, losses: 0, gameDiff: 0 };
+  // Swiss rounds fully revealed → the ONLY thing that moves the standings.
+  const revealedSwissRounds = countRevealedSwissRounds(t, revealedKeys);
+  const standingsRecords = swissRecordsThroughRounds(t, revealedSwissRounds);
+  // The header badge tracks the user's own revealed series immediately.
+  const userRecord =
+    deriveSwissRecords(t, revealedKeys).get("user") ?? { wins: 0, losses: 0, gameDiff: 0 };
 
   return (
     <div className="rise-in">
@@ -252,7 +293,6 @@ export function TournamentScreen({ run }: { run: RunState }) {
           {/* Match center */}
           {centerEntry ? (
             <MatchCenter
-              run={run}
               t={t}
               entry={centerEntry}
               live={centerLive}
@@ -267,11 +307,20 @@ export function TournamentScreen({ run }: { run: RunState }) {
 
           {/* Swiss: your path (classic/daily only) */}
           {run.mode !== "quick" ? (
-            <SwissPath run={run} t={t} revealed={revealedKeys} liveKey={liveEntry?.key ?? null} onInspect={setInspectKey} />
+            <SwissPath
+              run={run}
+              t={t}
+              revealed={revealedKeys}
+              revealedRounds={revealedSwissRounds}
+              liveKey={liveEntry?.key ?? null}
+              onInspect={setInspectKey}
+            />
           ) : null}
 
-          {/* Playoffs bracket */}
-          {t.playoffs && revealedPlayoffsStarted(t, revealedKeys) ? (
+          {/* Playoffs bracket — only after the whole Swiss stage is revealed */}
+          {t.playoffs &&
+          (run.mode === "quick" ||
+            (t.swiss.finished && revealedSwissRounds >= t.swiss.rounds.length)) ? (
             <PlayoffBracketView
               run={run}
               t={t}
@@ -290,21 +339,18 @@ export function TournamentScreen({ run }: { run: RunState }) {
           ) : null}
         </div>
 
-        {/* Standings (derived from revealed series only; classic/daily) */}
+        {/* Standings (move only at the end of each revealed round) */}
         {run.mode !== "quick" ? (
-          <SwissStandings run={run} t={t} records={revealedRecords} />
+          <SwissStandings
+            run={run}
+            t={t}
+            records={standingsRecords}
+            throughRound={revealedSwissRounds}
+          />
         ) : null}
       </div>
     </div>
   );
-}
-
-function revealedPlayoffsStarted(t: TournamentState, revealed: Set<string>): boolean {
-  if (!t.playoffs || t.playoffs.rounds.length === 0) {
-    // Show the bracket as soon as seeding exists and all swiss is revealed.
-    return Boolean(t.playoffs) && t.swiss.finished;
-  }
-  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -341,19 +387,42 @@ function deriveSwissRecords(
   return map;
 }
 
+/** How many Swiss rounds are COMPLETELY revealed (standings granularity). */
+function countRevealedSwissRounds(t: TournamentState, revealed: Set<string>): number {
+  let count = 0;
+  for (let ri = 0; ri < t.swiss.rounds.length; ri++) {
+    const whole = t.swiss.rounds[ri].series.every((_, si) =>
+      revealed.has(entryKey("swiss", ri, si)),
+    );
+    if (!whole) break;
+    count += 1;
+  }
+  return count;
+}
+
+/** Records counting only the first `rounds` Swiss rounds (end-of-round steps). */
+function swissRecordsThroughRounds(
+  t: TournamentState,
+  rounds: number,
+): Map<string, DerivedRecord> {
+  const keys = new Set<string>();
+  t.swiss.rounds.slice(0, rounds).forEach((round, ri) => {
+    round.series.forEach((_, si) => keys.add(entryKey("swiss", ri, si)));
+  });
+  return deriveSwissRecords(t, keys);
+}
+
 // ---------------------------------------------------------------------------
 // Match Center
 // ---------------------------------------------------------------------------
 
 function MatchCenter({
-  run,
   t,
   entry,
   live,
   gamesShown,
   onClose,
 }: {
-  run: RunState;
   t: TournamentState;
   entry: SeriesEntry;
   live: boolean;
@@ -519,12 +588,15 @@ function SwissPath({
   run,
   t,
   revealed,
+  revealedRounds,
   liveKey,
   onInspect,
 }: {
   run: RunState;
   t: TournamentState;
   revealed: Set<string>;
+  /** Fully revealed Swiss rounds — opponents beyond this stay hidden. */
+  revealedRounds: number;
   liveKey: string | null;
   onInspect: (key: string) => void;
 }) {
@@ -535,6 +607,8 @@ function SwissPath({
     series: SeriesResult | null;
     state: "revealed" | "live" | "upcoming" | "none";
     opponentId?: string;
+    /** Swiss pairs by record — a future opponent leaks the current result. */
+    hideOpponent?: boolean;
   }[] = [];
 
   t.swiss.rounds.forEach((round, ri) => {
@@ -546,11 +620,16 @@ function SwissPath({
       round: round.round,
       series: round.series[si],
       state: revealed.has(key) ? "revealed" : key === liveKey ? "live" : "upcoming",
+      hideOpponent: ri > revealedRounds,
     });
   });
 
-  // Upcoming pairing (known one round ahead).
-  const upcomingPair = t.swiss.nextPairings?.find(([a, b]) => a === "user" || b === "user");
+  // Upcoming pairing (known one round ahead) — only once every simulated
+  // round has been revealed; earlier it spoils the round still animating.
+  const upcomingPair =
+    revealedRounds >= t.swiss.rounds.length
+      ? t.swiss.nextPairings?.find(([a, b]) => a === "user" || b === "user")
+      : undefined;
   if (upcomingPair) {
     cells.push({
       key: null,
@@ -604,6 +683,9 @@ function SwissPath({
           const userScore = s.teamAId === "user" ? s.score : [s.score[1], s.score[0]];
           const isLive = cell.state === "live";
           const isRevealed = cell.state === "revealed";
+          // Future rounds the engine already simulated: opponent stays hidden
+          // (Swiss pairs by record — naming them spoils the current round).
+          const showOpponent = isRevealed || isLive || !cell.hideOpponent;
           return (
             <button
               key={i}
@@ -620,17 +702,21 @@ function SwissPath({
                 {T.round(cell.round)}
                 {isLive ? <span className="ml-1 text-orange-bright">· {T.live}</span> : null}
               </p>
-              <span className="flex items-center gap-1.5">
-                <TeamLogo orgId={opp.orgId} size="xs" />
-                <span className="display min-w-0 flex-1 truncate text-[11px] font-bold uppercase text-ink">
-                  {opp.name}
-                </span>
-                {isRevealed ? (
-                  <span className={cx("display shrink-0 text-xs font-bold", userWon ? "text-good" : "text-bad")}>
-                    {userScore[0]}–{userScore[1]}
+              {showOpponent ? (
+                <span className="flex items-center gap-1.5">
+                  <TeamLogo orgId={opp.orgId} size="xs" />
+                  <span className="display min-w-0 flex-1 truncate text-[11px] font-bold uppercase text-ink">
+                    {opp.name}
                   </span>
-                ) : null}
-              </span>
+                  {isRevealed ? (
+                    <span className={cx("display shrink-0 text-xs font-bold", userWon ? "text-good" : "text-bad")}>
+                      {userScore[0]}–{userScore[1]}
+                    </span>
+                  ) : null}
+                </span>
+              ) : (
+                <span className="text-[11px] italic text-faint">{T.tbd}</span>
+              )}
             </button>
           );
         })}
@@ -831,10 +917,13 @@ function SwissStandings({
   run,
   t,
   records,
+  throughRound,
 }: {
   run: RunState;
   t: TournamentState;
   records: Map<string, DerivedRecord>;
+  /** Standings reflect rounds 1..throughRound only (end-of-round updates). */
+  throughRound: number;
 }) {
   const sorted = Object.keys(t.teams).sort((a, b) => {
     const ra = records.get(a)!;
@@ -850,9 +939,16 @@ function SwissStandings({
   return (
     <aside aria-label={T.standings}>
       <Panel className="p-4">
-        <h3 className="display mb-3 text-sm font-bold uppercase tracking-[0.16em] text-ink">
-          {T.standings} — {T.swiss}
-        </h3>
+        <div className="mb-3 flex items-baseline justify-between gap-2">
+          <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
+            {T.standings} — {T.swiss}
+          </h3>
+          {throughRound > 0 ? (
+            <span className="shrink-0 text-[10px] uppercase tracking-wider text-faint">
+              {T.throughRound(throughRound)}
+            </span>
+          ) : null}
+        </div>
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-faint">
@@ -862,7 +958,8 @@ function SwissStandings({
               <th className="pb-2 text-right font-semibold">OVR</th>
             </tr>
           </thead>
-          <tbody>
+          {/* keyed by round → the whole body re-enters when standings step */}
+          <tbody key={throughRound} className="rise-in">
             {sorted.map((teamId) => {
               const team = t.teams[teamId];
               const r = records.get(teamId)!;

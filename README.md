@@ -24,6 +24,7 @@ npm run dev        # http://localhost:3000
 | `npm test` | Engine + data test suite (vitest) |
 | `npm run build:data` | Regenerate all data JSONs from `data-sources/teams.md` |
 | `npm run validate:data` | Validate the JSON dataset only |
+| `npm run fetch:assets` | Download org logos + player photos (Liquipedia) and flags (flagcdn) into `public/` |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` | ESLint |
 
