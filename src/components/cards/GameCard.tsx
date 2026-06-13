@@ -1,15 +1,17 @@
 "use client";
 
 /**
- * GameCard v2 — renders any card kind in any state.
+ * GameCard v3 — renders any card kind in any state.
  *
  * Base cards (player/coach/sub): org logo as the centerpiece (no player
  * photos on base cards by design). Org cards: logo + buff, framed by buff
  * rarity (~ common · + silver · ++ gold · +++ blue).
  * Special cards: player photo (public/cards/specials/<id>.png or imageUrl)
  * with heavy rarity treatment — animated frames, halo, foil sheen.
- * Hidden-overall runs: base cards go black with "??"; specials keep their
- * look but hide the number (base doc §10-§11).
+ * Hidden-overall runs (v0.5.1, by direction): ratings/buffs/rarity stay
+ * "??" but ORG LOGOS show everywhere, and SPECIALS are masked — frame,
+ * holo and rarity announce "this is a special", while the photo, title,
+ * type and overall stay secret until the results reveal.
  */
 
 import { useState } from "react";
@@ -27,6 +29,13 @@ export interface GameCardProps {
   /** Collection state — uncollected specials show "??" instead of rarity. */
   specialCollected?: boolean;
   size?: "sm" | "md" | "lg";
+  /**
+   * Fluid width: the card fills its parent (cap it with a max-w wrapper).
+   * Required inside grid cells — fixed widths overflow small cells, and a
+   * bare `w-full` collapses because the inner <button> is shrink-to-fit, so
+   * fluid threads `w-full` through every wrapper level (v0.5.1 fix).
+   */
+  fluid?: boolean;
   selected?: boolean;
   disabled?: boolean;
   disabledLabel?: string;
@@ -71,6 +80,7 @@ export function GameCard({
   showOverall,
   specialCollected = true,
   size = "md",
+  fluid,
   selected,
   disabled,
   disabledLabel,
@@ -81,13 +91,17 @@ export function GameCard({
   const isOrg = card.kind === "org";
   const isSpecial = Boolean(card.special);
   const hiddenBase = !showOverall && !isSpecial;
+  // Hidden runs: the special's identity (photo/title/type/overall) is a
+  // results-screen reveal — only the frame/holo betray that it IS one.
+  const maskedSpecial = isSpecial && !showOverall;
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
   const tiltTier: TiltIntensity | "off" =
     tilt ?? (disabled ? "off" : isSpecial ? "strong" : "light");
 
-  const sizeClasses =
-    size === "lg"
+  const sizeClasses = fluid
+    ? "w-full p-2.5 md:p-3"
+    : size === "lg"
       ? "w-44 md:w-52 p-3.5"
       : size === "sm"
         ? "w-32 p-2.5"
@@ -107,8 +121,17 @@ export function GameCard({
         className,
       )}
     >
-      {/* Special photo layer */}
-      {isSpecial ? <SpecialArt card={card} /> : null}
+      {/* Special photo layer — masked specials keep the mystery art */}
+      {isSpecial ? (
+        maskedSpecial ? (
+          <div className="special-fallback-art">
+            <span className="display select-none text-6xl font-bold text-white/10">?</span>
+            <div className="special-photo" />
+          </div>
+        ) : (
+          <SpecialArt card={card} />
+        )
+      ) : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive) */}
       {isSpecial && card.special ? (
@@ -161,15 +184,21 @@ export function GameCard({
         ) : null}
       </div>
 
-      {/* Centerpiece: org logo (base cards) / photo space (specials) */}
+      {/* Centerpiece: org logo (base cards) / photo space (specials).
+          Org logos stay visible on hidden runs (v0.5.1) — only ratings,
+          buffs and rarity are secret. */}
       <div className="relative z-10 flex flex-1 items-center justify-center py-1">
-        {isSpecial ? null : hiddenBase ? (
-          <span className="display text-4xl font-bold text-white/15">?</span>
-        ) : (
+        {isSpecial ? null : (
           <div className="card-texture flex h-full w-full items-center justify-center rounded-lg">
             {card.orgId ? (
-              <TeamLogo orgId={card.orgId} size={size === "sm" ? "md" : "lg"} />
-            ) : null}
+              <TeamLogo
+                orgId={card.orgId}
+                seasonId={card.seasonId}
+                size={size === "sm" ? "md" : "lg"}
+              />
+            ) : (
+              <span className="display text-4xl font-bold text-white/15">?</span>
+            )}
           </div>
         )}
       </div>
@@ -192,7 +221,7 @@ export function GameCard({
               SPECIAL_ACCENT[card.special.rarity] ?? "text-orange-bright",
             )}
           >
-            {specialCollected ? card.special.title : "???"}
+            {maskedSpecial || !specialCollected ? "???" : card.special.title}
           </p>
         ) : null}
         <p className={cx("mt-0.5 truncate text-[10px]", isSpecial ? "text-white/60" : "text-sub")}>
@@ -200,16 +229,23 @@ export function GameCard({
             ? showOverall
               ? `${STAT_LABELS[card.buffType ?? ""] ?? ""} ${card.buffLevel === "~" ? "" : card.buffLevel ?? ""}`.trim() || "Neutral"
               : "Buff hidden"
-            : [card.orgName, card.seasonShort].filter(Boolean).join(" · ")}
+            : maskedSpecial
+              ? "???" // the special's own org/season would identify the moment
+              : [card.orgName, card.seasonShort].filter(Boolean).join(" · ")}
         </p>
 
-        {/* Bottom tag — fully blacked out on hidden runs (only specials show) */}
+        {/* Bottom tag — ratings/buffs blacked out on hidden runs */}
         <div className="mt-1.5 flex items-center justify-between gap-1">
           {card.special ? (
-            <Badge tone={specialCollected ? "gold" : "neutral"} className="!text-[9px] backdrop-blur-sm">
-              {specialCollected
-                ? `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
-                : "?? · ??"}
+            <Badge
+              tone={specialCollected && !maskedSpecial ? "gold" : "neutral"}
+              className="!text-[9px] backdrop-blur-sm"
+            >
+              {maskedSpecial
+                ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
+                : specialCollected
+                  ? `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
+                  : "?? · ??"}
             </Badge>
           ) : card.kind === "coach" && card.buffType && showOverall ? (
             <Badge tone="blue" className="!text-[9px]">
@@ -238,22 +274,28 @@ export function GameCard({
     </div>
   );
 
+  // Buttons are shrink-to-fit (unlike divs) — fluid must force w-full here
+  // or pickable cards collapse while disabled ones render full size.
   const interactiveBody =
     onClick && !disabled ? (
       <button
         type="button"
         onClick={onClick}
-        className="relative block focus-visible:outline-orange"
+        className={cx("relative block focus-visible:outline-orange", fluid && "w-full")}
         aria-pressed={selected}
       >
         {body}
       </button>
     ) : (
-      <div className="relative">{body}</div>
+      <div className={cx("relative", fluid && "w-full")}>{body}</div>
     );
 
   if (tiltTier === "off") return interactiveBody;
-  return <TiltCard intensity={tiltTier}>{interactiveBody}</TiltCard>;
+  return (
+    <TiltCard intensity={tiltTier} className={fluid ? "w-full" : undefined}>
+      {interactiveBody}
+    </TiltCard>
+  );
 }
 
 /** Photo layer for special cards: real image or stylized fallback art. */

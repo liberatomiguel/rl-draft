@@ -78,6 +78,8 @@ export interface Season {
   /** Short label for tight card layouts, e.g. "S6 ’18". */
   shortLabel: string;
   year: string;
+  /** Chronological position (1 = RLCS S1) — drives era-logo resolution. */
+  order: number;
 }
 
 /**
@@ -106,6 +108,12 @@ export interface Org {
   buffType: StatKey;
   buffLevel: BuffLevel;
   logoUrl?: string;
+  /**
+   * Era logos (v0.5.1): seasons with order <= untilOrder use the asset
+   * public/orgs/<orgId>@<key>.png — orgs rebrand (NRG classic vs modern)
+   * and the card should wear the logo of ITS season. Default logo otherwise.
+   */
+  logoEras?: { key: string; untilOrder: number }[];
 }
 
 export interface CoachCard {

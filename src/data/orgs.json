@@ -368,7 +368,13 @@
     "name": "NRG Esports",
     "region": "NA",
     "buffType": "experience",
-    "buffLevel": "+++"
+    "buffLevel": "+++",
+    "logoEras": [
+      {
+        "key": "classic",
+        "untilOrder": 9
+      }
+    ]
   },
   {
     "id": "og",

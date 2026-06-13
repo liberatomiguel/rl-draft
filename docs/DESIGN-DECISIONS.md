@@ -22,9 +22,11 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
    an offer is pickable, the player is granted a free reroll that does NOT
    consume the difficulty budget. Voluntary skips still don't exist.
 
-3b. **Slot-target picking** (v0.2). Drafting is two clicks: select the card,
-   then click the destination slot on the field view. Players choose which
-   of the three player slots — free positional ordering, no confirm button.
+3b. ~~Slot-target picking (v0.2): select the card, then click the
+   destination slot.~~ **Replaced in v0.5.1 by direction**: ONE click drafts
+   the card into the first open compatible slot. Player slots are
+   functionally identical (positions are cosmetic), so the second click was
+   pure friction.
 
 4. **Lineups are drawn without replacement** within a run (no repeated
    offers). If the pool ever exhausts (tiny dataset + many skips), it resets
@@ -148,6 +150,27 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     the current round is fully revealed (Swiss pairs by record — an early
     pairing reveal is a result spoiler). Pacing favors readability over
     speed; 2×/4×/skip remain for the impatient.
+
+## v0.5.1 additions (hotfix round, by direction)
+
+27. **Hidden runs show org logos but mask special identities.** Blackout
+    hides *ratings knowledge* (overalls, buffs, rarity), not *history* —
+    you're supposed to recognize teams. Specials flip the other way: the
+    frame/holo/effect say "a special is live", but the photo, title, type
+    and moment stay secret until results, otherwise a recognizable photo
+    gives away the card's strength on the mode about knowledge.
+
+28. **Special sightings are rare again (6%)**: with the per-player pool the
+    16% rate surfaced several per run. Specials are the chase, not the
+    routine — collection pace comes from playing more runs, not more drops
+    per run.
+
+29. **Era logos are data, not filenames-only**: `org.logoEras` (generated
+    from a curated map) + season `order` resolve which asset a card wears,
+    with graceful fallback to the default logo. Drop-in stays the workflow:
+    `public/orgs/<orgId>@<era>.png`. Curate eras only when an org's rebrand
+    is era-defining (NRG first); wrong-era logos are a polish bug, not a
+    data error.
 
 ## Open questions for review
 

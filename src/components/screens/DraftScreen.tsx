@@ -1,22 +1,23 @@
 "use client";
 
 /**
- * Draft screen v3.
+ * Draft screen v4.
  * Offer laid out as 2 rows of 3: players on top; coach, sub, org below
  * (missing coach/sub render as non-pickable placeholder cards).
- * Interaction: click a card to select it → compatible slots on the field
- * glow → click a slot to place. No confirm button.
+ * Interaction (v0.5.1, by direction): ONE click drafts the card straight
+ * into the first open compatible slot — player slots are functionally
+ * identical, so there is no select-then-place step anymore.
  * If nothing is pickable, the player gets a free reroll.
  * v0.5: the drawn lineup lands via a slot-machine reel (the instant swap
  * read as nothing happening), and the region badge is color-coded.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DRAFT_UI } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
 import { lineupById, lineups, seasonById } from "@/data";
-import type { DraftOfferCard, RosterSlotId, RunState } from "@/engine/types";
+import type { DraftOfferCard, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
@@ -42,17 +43,15 @@ export function DraftScreen({ run }: { run: RunState }) {
   const freeReroll = useRunStore((s) => s.freeReroll);
   const unlockedSpecials = useProfileStore((s) => s.unlockedSpecials);
 
-  const [selected, setSelected] = useState<DraftOfferCard | null>(null);
   // Slot-machine reel: decoy lineup names spinning onto the drawn one.
   const [reel, setReel] = useState<string[] | null>(null);
   const rolledOnce = useRef(false);
 
   const offer = run.draft.offer;
-  useEffect(() => {
-    setSelected(null);
-  }, [offer?.lineupId, run.draft.round]);
 
-  useEffect(() => {
+  // useLayoutEffect, not useEffect: the reel must be up BEFORE the browser
+  // paints the new offer, or the drawn name flashes for a frame (v0.5.1).
+  useLayoutEffect(() => {
     if (!offer) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const drawn = lineupById.get(offer.lineupId);
@@ -71,15 +70,6 @@ export function DraftScreen({ run }: { run: RunState }) {
     setReel([...decoys, nameOf(drawn)]);
   }, [offer, run.draft.round]);
 
-  // ESC clears the selection.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelected(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const header = useMemo(() => (offer ? lineupHeader(offer.lineupId) : null), [offer]);
   const lineup = offer ? lineupById.get(offer.lineupId) : null;
 
@@ -94,55 +84,42 @@ export function DraftScreen({ run }: { run: RunState }) {
   const subCard = offer.cards.find((c) => c.kind === "sub") ?? null;
   const orgCard = offer.cards.find((c) => c.kind === "org") ?? null;
 
-  const handleSlotClick = (slot: RosterSlotId) => {
-    if (!selected) return;
-    pickCard(selected, slot);
-    setSelected(null);
-  };
-
-  const handleCardClick = (offerCard: DraftOfferCard, isSelected: boolean) => {
-    if (isSelected) {
-      setSelected(null);
-      return;
-    }
-    // One possible destination (coach/sub/org, or the last open player slot)
-    // → assign immediately, no second click needed.
-    const openSlots = slotsForKind(offerCard.kind).filter((s) => !run.draft.roster[s]);
-    if (openSlots.length === 1) {
-      pickCard(offerCard, openSlots[0]);
-      setSelected(null);
-      return;
-    }
-    setSelected(offerCard);
+  // One click drafts the card into the first open compatible slot —
+  // player slots are interchangeable, so there is nothing to choose.
+  const handleCardClick = (offerCard: DraftOfferCard) => {
+    const openSlot = slotsForKind(offerCard.kind).find((s) => !run.draft.roster[s]);
+    if (openSlot) pickCard(offerCard, openSlot);
   };
 
   const renderOfferCard = (offerCard: DraftOfferCard) => {
     const resolvedCard = resolveOfferCard(offerCard, offer.lineupId);
-    const isSelected =
-      selected?.kind === offerCard.kind && selected?.refId === offerCard.refId;
     const unavailable = offerCard.availability !== "available";
     return (
-      <GameCard
+      // Wrapper caps the card at its normal size and centers it; the card
+      // itself is fluid so small grid cells shrink it instead of overlapping.
+      <div
         key={`${offerCard.kind}-${offerCard.refId}`}
-        card={resolvedCard}
-        showOverall={run.showOverall}
-        specialCollected={
-          offerCard.specialId ? Boolean(unlockedSpecials[offerCard.specialId]) : true
-        }
-        size="md"
-        // Fluid inside the 3-col grid — fixed w-36 overlapped on phones.
-        className="!w-full mx-auto max-w-44"
-        selected={isSelected}
-        disabled={unavailable}
-        disabledLabel={
-          offerCard.availability === "vacant"
-            ? DRAFT_UI.notFielded
-            : offerCard.availability === "slot_full"
-              ? DRAFT_UI.slotFull
-              : DRAFT_UI.alreadyDrafted
-        }
-        onClick={() => handleCardClick(offerCard, isSelected)}
-      />
+        className="mx-auto w-full max-w-36 md:max-w-44"
+      >
+        <GameCard
+          card={resolvedCard}
+          showOverall={run.showOverall}
+          specialCollected={
+            offerCard.specialId ? Boolean(unlockedSpecials[offerCard.specialId]) : true
+          }
+          size="md"
+          fluid
+          disabled={unavailable}
+          disabledLabel={
+            offerCard.availability === "vacant"
+              ? DRAFT_UI.notFielded
+              : offerCard.availability === "slot_full"
+                ? DRAFT_UI.slotFull
+                : DRAFT_UI.alreadyDrafted
+          }
+          onClick={() => handleCardClick(offerCard)}
+        />
+      </div>
     );
   };
 
@@ -255,17 +232,12 @@ export function DraftScreen({ run }: { run: RunState }) {
             <FieldView
               roster={run.draft.roster}
               showOverall={run.showOverall}
-              highlightKind={selected?.kind ?? null}
-              onSlotClick={handleSlotClick}
               showBench={run.mode !== "quick"}
               className="mx-auto w-full max-w-md lg:max-w-none"
             />
 
-            <p
-              className={cxHint(selected !== null)}
-              aria-live="polite"
-            >
-              {selected ? DRAFT_UI.placeHint : DRAFT_UI.selectHint}
+            <p className="mt-3 text-center text-xs text-faint" aria-live="polite">
+              {DRAFT_UI.selectHint}
             </p>
 
             {needed.length > 0 ? (
@@ -279,12 +251,6 @@ export function DraftScreen({ run }: { run: RunState }) {
       </div>
     </div>
   );
-}
-
-function cxHint(active: boolean): string {
-  return active
-    ? "mt-3 text-center text-xs font-semibold text-orange-bright"
-    : "mt-3 text-center text-xs text-faint";
 }
 
 function RerollIcon() {

@@ -39,6 +39,8 @@ export interface ResolvedCard {
   orgId?: string;
   orgName?: string;
   lineupId?: string;
+  /** Season of the card's context — drives era-correct org logos (v0.5.1). */
+  seasonId?: string;
   seasonShort?: string;
   seasonLabel?: string;
   /** Final overall (manual adjustment applied). Undefined for orgs. */
@@ -110,6 +112,7 @@ export function resolvePlayerCard(cardId: string, specialId?: string): ResolvedC
     orgId: ctx.orgId,
     orgName: org?.name,
     lineupId: ctx.lineupId,
+    seasonId: ctx.seasonId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
     overall,
@@ -150,6 +153,7 @@ export function resolveCoach(coachId: string, specialId?: string): ResolvedCard 
     orgId: ctx.orgId,
     orgName: org?.name,
     lineupId: ctx.lineupId,
+    seasonId: ctx.seasonId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
     overall,
@@ -177,6 +181,7 @@ export function resolveSub(subId: string): ResolvedCard {
     orgId: sub.orgId,
     orgName: org?.name,
     lineupId: sub.lineupId,
+    seasonId: sub.seasonId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
     overall: sub.overall,
@@ -184,7 +189,11 @@ export function resolveSub(subId: string): ResolvedCard {
   };
 }
 
-export function resolveOrg(orgId: string, buffOverride?: BuffLevel): ResolvedCard {
+export function resolveOrg(
+  orgId: string,
+  buffOverride?: BuffLevel,
+  seasonId?: string,
+): ResolvedCard {
   const org = orgById.get(orgId);
   if (!org) throw new Error(`Unknown org "${orgId}"`);
   const buffLevel = buffOverride ?? org.buffLevel;
@@ -195,6 +204,7 @@ export function resolveOrg(orgId: string, buffOverride?: BuffLevel): ResolvedCar
     region: org.region,
     orgId: org.id,
     orgName: org.name,
+    seasonId,
     baseRarity: orgRarityOf(buffLevel),
     buffType: org.buffType,
     buffLevel,
@@ -216,7 +226,11 @@ export function resolveOfferCard(card: DraftOfferCard, offerLineupId?: string): 
     case "sub":
       return resolveSub(card.refId);
     case "org":
-      return resolveOrg(card.refId, orgBuffForLineup(card.refId, offerLineupId));
+      return resolveOrg(
+        card.refId,
+        orgBuffForLineup(card.refId, offerLineupId),
+        offerLineupId ? lineupById.get(offerLineupId)?.seasonId : undefined,
+      );
   }
 }
 
@@ -229,7 +243,11 @@ export function resolvePick(pick: RosterPick): ResolvedCard {
     case "sub":
       return resolveSub(pick.refId);
     case "org":
-      return resolveOrg(pick.refId, orgBuffForLineup(pick.refId, pick.fromLineupId));
+      return resolveOrg(
+        pick.refId,
+        orgBuffForLineup(pick.refId, pick.fromLineupId),
+        lineupById.get(pick.fromLineupId)?.seasonId,
+      );
   }
 }
 

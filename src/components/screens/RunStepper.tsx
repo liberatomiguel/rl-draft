@@ -12,7 +12,6 @@ import { DIFFICULTY } from "@/config/balance";
 import { SETUP } from "@/content/copy";
 import type { RunPhase, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
-import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { useLeaveRunGuard } from "@/components/layout/LeaveRunGuard";
 
@@ -25,7 +24,6 @@ const PHASES: { id: RunPhase; label: string }[] = [
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
-  const clearRun = useRunStore((s) => s.clearRun);
   const requestLeave = useLeaveRunGuard();
   const currentIndex = PHASES.findIndex((p) => p.id === run.phase);
 
@@ -36,9 +34,10 @@ export function RunStepper({ run }: { run: RunState }) {
           type="button"
           onClick={() => {
             // Mid-run the guard opens the confirmation modal; on results
-            // (or with no run) it declines and we navigate directly.
+            // (or with no run) it declines and we navigate directly. The
+            // home page clears the run on mount — clearing here first would
+            // flash the setup screen during the transition.
             if (!requestLeave("/")) {
-              clearRun();
               router.push("/");
             }
           }}

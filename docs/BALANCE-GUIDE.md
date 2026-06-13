@@ -119,9 +119,11 @@ stats only nudge (the game must be playable with overall alone).
 
 - `RARITY`: common ≤69 · silver 70-79 · gold 80-89 · blue ≥90 (visual only).
   Org cards map from buff level: ~ common · + silver · ++ gold · +++ blue.
-- `SPECIALS.appearanceChance` (16%): chance a player card in an offer rolls
-  one of that PLAYER's specials (v0.5 — the pool follows the person, so any
-  card of theirs qualifies). `coachAppearanceChance` (12%) for coach cards.
+- `SPECIALS.appearanceChance` (6% — v0.5.1, was 16%): chance a player card
+  in an offer rolls one of that PLAYER's specials (the pool follows the
+  person, so any card of theirs qualifies — which already multiplies
+  exposure; at 16% runs saw 3-4 specials and they stopped feeling special).
+  `coachAppearanceChance` (5%) for coach cards. ~0.4 sightings/run expected.
 - `SPECIALS.rarityWeights` (rare 100 · epic 55 · mythic 28 · legendary 12):
   which special appears once the roll passes — legendaries are chase pulls.
   Raise legendary's weight to make the top tier less elusive.

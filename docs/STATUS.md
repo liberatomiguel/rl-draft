@@ -1,15 +1,18 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-12, after v0.5.0 (first live-playtest feedback round).
+> Last updated: 2026-06-12, after v0.5.1 (v0.5.0 hotfix round —
+> **uncommitted**: Miguel reviews on localhost and commits manually).
 
 ## Where we are
 
-**The MVP is live on Vercel and the first community feedback round is
-addressed** at v0.5.0 — declared the last MVP version before the 1.0 push.
-Working today:
+**The MVP is live on Vercel; v0.5.0 addressed feedback round 1 and v0.5.1
+hot-fixed its regressions** (draft card sizing, reel flash, leave-run flash)
+plus direction changes: one-click drafting, specials at 6% and masked on
+hidden runs, org logos visible on hidden runs, era-aware logos (NRG classic
+worked example), identity guard tests. Working today:
 
-- Classic Draft (6 slots, select-then-place on the RLCS field view,
+- Classic Draft (6 slots, ONE-click drafting onto the first open slot,
   slot-machine lineup reveal, region-colored badges, free reroll when
   blocked, staff-scarcity weighting, person-once-per-run rule; vacant
   coach/sub cards show but are never pickable)
@@ -52,16 +55,21 @@ quality; the Swiss wall is gone. Knobs and rationale: BALANCE-GUIDE.md.
 
 ## Pending / next actions (in order)
 
-1. **Finish the asset pass**: `npm run fetch:assets` resolves most org
-   logos/player photos automatically; review the misses it lists and map
-   them in `data-sources/asset-overrides.json` (watch same-name collisions,
-   e.g. FUT Esports NA). Rank art (9 ×2 sets) is still hand-made by Miguel.
-2. **Deploy v0.5.0** (push → Vercel auto-builds) → second community
-   playtest round, validate the new difficulty curve + playback pacing.
-3. Decide the remaining open questions (DESIGN-DECISIONS.md bottom):
+1. **Miguel reviews v0.5.1 on localhost and commits manually** (his call —
+   restart `npm run dev` fresh first: stop it, delete `.next`, start again;
+   a dev server was running while the cache was rebuilt this session).
+2. **Finish the asset pass**: remaining manual curation = `pioneers-oce`
+   logo + `jstn`/`fairypeak` photos (`false` markers in
+   `data-sources/asset-overrides.json`); replace any photo by overwriting
+   `public/cards/specials/<specialId>.png` (the fetcher never overwrites).
+   Era logos: extend `ORG_LOGO_ERAS` as rebrands are confirmed (NRG done).
+   Rank art (9 ×2 sets) is still hand-made by Miguel.
+3. **Deploy** (push → Vercel auto-builds) → second community playtest
+   round, validate the difficulty curve + playback pacing + 6% specials.
+4. Decide the remaining open questions (DESIGN-DECISIONS.md bottom):
    PT-BR translation, opponents fielding drafted people, grand-final
    bracket reset, hidden-mode scope.
-4. Then **1.0 release** and **MVP 3** (`docs/ROADMAP.md`): Supabase +
+5. Then **1.0 release** and **MVP 3** (`docs/ROADMAP.md`): Supabase +
    Discord OAuth, synced progress, daily leaderboard, settings screen
    (animation speed / reduced motion / language).
 

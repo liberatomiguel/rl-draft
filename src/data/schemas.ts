@@ -49,6 +49,8 @@ export const seasonSchema = z.object({
   label: z.string().min(1),
   shortLabel: z.string().min(1),
   year: z.string().min(4),
+  /** Chronological position (1 = RLCS S1) — drives era-logo resolution. */
+  order: z.number().int().min(1),
 });
 
 export const playerCardSchema = z.object({
@@ -70,6 +72,14 @@ export const orgSchema = z.object({
   buffType: statKeySchema,
   buffLevel: buffLevelSchema,
   logoUrl: z.string().optional(),
+  /**
+   * Era logos: cards/lineups from a season with order <= untilOrder use
+   * public/orgs/<orgId>@<key>.png (e.g. NRG's classic shield). Entries are
+   * checked in array order; no match → the default <orgId>.png.
+   */
+  logoEras: z
+    .array(z.object({ key: z.string().min(1), untilOrder: z.number().int().min(1) }))
+    .optional(),
 });
 
 export const coachCardSchema = z.object({

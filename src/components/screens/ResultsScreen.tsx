@@ -343,10 +343,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
         <Button
           variant="ghost"
           size="lg"
-          onClick={() => {
-            clearRun();
-            router.push("/");
-          }}
+          // Navigate only — the home page clears the run on mount (clearing
+          // first flashes the setup screen during the route transition).
+          onClick={() => router.push("/")}
         >
           {R.backHome}
         </Button>
@@ -612,17 +611,21 @@ function RevealCard({
   }, [animate, delayMs]);
 
   if (!animate) {
-    return <GameCard card={card} showOverall size="md" className="!w-full mx-auto max-w-44" />;
+    return (
+      <div className="mx-auto w-full max-w-36 md:max-w-44">
+        <GameCard card={card} showOverall size="md" fluid />
+      </div>
+    );
   }
 
   return (
-    <div className={cx("flip-card mx-auto w-full max-w-44", flipped && "flipped")}>
+    <div className={cx("flip-card mx-auto w-full max-w-36 md:max-w-44", flipped && "flipped")}>
       <div className="flip-card-inner relative">
         <div className={cx("flip-face", flipped && "pointer-events-none")}>
           <CardBack />
         </div>
         <div className="flip-face flip-back absolute inset-0">
-          <GameCard card={card} showOverall size="md" className="!w-full" />
+          <GameCard card={card} showOverall size="md" fluid />
         </div>
       </div>
     </div>

@@ -21,6 +21,12 @@ import { useRunStore } from "@/store/runStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 
+/**
+ * Leaving = navigate FIRST; the home page clears the run on mount.
+ * Clearing before navigating re-rendered /play as the setup screen for a
+ * frame ("shows the screen underneath before going back" — v0.5.1 fix).
+ */
+
 const LeaveRunContext = createContext<(href: string) => boolean>(() => false);
 
 /**
@@ -33,7 +39,6 @@ export function useLeaveRunGuard() {
 
 export function LeaveRunProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const clearRun = useRunStore((s) => s.clearRun);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const requestLeave = useCallback((href: string): boolean => {
@@ -46,7 +51,8 @@ export function LeaveRunProvider({ children }: { children: React.ReactNode }) {
   const confirmLeave = () => {
     const href = pendingHref ?? "/";
     setPendingHref(null);
-    clearRun();
+    // No clearRun here — the run screen stays up during the transition and
+    // the home page abandons the run when it mounts.
     router.push(href);
   };
 

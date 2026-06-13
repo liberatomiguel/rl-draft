@@ -10,6 +10,65 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [0.5.1] — 2026-06-12
+
+Hotfix round on v0.5.0 feedback — the draft screen is the visual heart of
+the app and shipped broken. Not yet committed/deployed: Miguel reviews on
+localhost first.
+
+### Added
+- **Era-aware org logos**: orgs rebrand, and a card should wear the logo of
+  ITS season. `seasons.json` gained `order`, orgs can declare `logoEras`
+  (curated `ORG_LOGO_ERAS` map in the generator), and `TeamLogo` resolves
+  `public/orgs/<orgId>@<era>.png → <orgId>.png → monogram` from the card /
+  lineup season. Wired through draft cards, field view and every tournament
+  view. NRG is the worked example: classic shield through S9, modern mark
+  after. `fetch-assets` gained an `"orgFiles"` override block (exact
+  Liquipedia file → asset) and now prefers NEWER files for the default logo
+  slot (org pages list every past identity, including predecessor orgs).
+- Identity guard tests: zen (EU) ≠ ZeN (OCE), era spellings never become
+  separate orgs (alias map), same-name orgs from different regions stay
+  split — the unification contract is now CI-enforced.
+
+### Changed
+- **One-click drafting** (by direction): clicking a card drafts it straight
+  into the first open compatible slot — the select-then-place step is gone
+  (player slots are functionally identical, so there was nothing to choose).
+- **Hidden runs reveal org logos** (by direction): base cards and org cards
+  show their team crest on blackout runs — only ratings, buffs and rarity
+  stay secret.
+- **Specials are masked on hidden runs** (by direction): the rarity frame,
+  holo and effect description announce "this is a special", but the photo,
+  title, card type, moment context and overall stay hidden until the
+  results-screen reveal (draft, review and field views).
+- Draft hint copy updated for the one-click flow.
+
+### Balance
+- **Special appearance 16% → 6%** (coach 12% → 5%) by direction — a Hard
+  run surfaced 4 specials and they stopped feeling special. ~0.4 expected
+  special sightings per run across all modes.
+
+### Fixed
+- **Draft cards rendered at different sizes** (v0.5.0 regression, urgent):
+  pickable cards collapsed to their content width while disabled ones kept
+  full size. Root cause: the fluid-width attempt set `w-full` only on the
+  inner card frame, but `<button>` wrappers are shrink-to-fit (unlike the
+  `<div>` used by disabled cards), so 100% of a collapsed parent collapsed.
+  `GameCard` now has a real `fluid` mode that threads `w-full` through
+  TiltCard → button → frame, with the size cap on an outer wrapper
+  (`max-w-36 md:max-w-44` — the original card size). Team reveal uses the
+  same path.
+- **Drawn team name flashed before the slot-machine reel** (v0.5.0
+  regression): the reel was armed in `useEffect`, which runs after paint —
+  the new offer rendered for a frame first. Moved to `useLayoutEffect`.
+- **Leaving a run briefly showed the screen underneath**: `clearRun()`
+  before `router.push("/")` re-rendered `/play` as the setup screen during
+  the route transition. Leaving now only navigates — the home page already
+  abandons the run on mount (run-header back button, leave-run modal and
+  the results back-to-menu button all fixed).
+- Review screen no longer leaks special-card titles on hidden runs (the
+  effect description still shows, per direction).
+
 ## [0.5.0] — 2026-06-12
 
 First live-playtest feedback round (Vercel MVP) — the "last MVP version"

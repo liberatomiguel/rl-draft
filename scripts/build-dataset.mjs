@@ -158,6 +158,18 @@ const ORG_ALIAS = {
  */
 const REGION_SPLIT_ORGS = new Set(["pioneers", "fut-esports"]);
 
+/**
+ * Era logos (v0.5.1): orgs that rebranded get one entry per OLD identity —
+ * seasons up to `until` (inclusive) use public/orgs/<orgId>@<key>.png.
+ * Cards/lineups after the last entry use the default <orgId>.png (modern).
+ * Add entries here + drop the image; `npm run fetch:assets` can pull exact
+ * Liquipedia files via "orgFiles" in data-sources/asset-overrides.json.
+ */
+const ORG_LOGO_ERAS = {
+  // NRG played S2-S9 with the classic shield before the 2020+ rebrand.
+  "nrg-esports": [{ key: "classic", until: "S9" }],
+};
+
 function orgIdOf(name, region) {
   const slug = slugOf(name);
   const id = ORG_ALIAS[slug] ?? slug;
@@ -375,12 +387,21 @@ const orgsOut = [...orgs.values()]
     region: o.region,
     buffType: ORG_BUFF_TYPE[o.id] ?? STATS[hash(o.id) % STATS.length],
     buffLevel: BUFF_SYMBOLS[Math.max(0, o.buffLevelMax)],
+    ...(ORG_LOGO_ERAS[o.id]
+      ? {
+          logoEras: ORG_LOGO_ERAS[o.id].map(({ key, until }) => {
+            const season = SEASONS[until];
+            if (!season) throw new Error(`ORG_LOGO_ERAS: unknown season "${until}" for ${o.id}`);
+            return { key, untilOrder: season.order };
+          }),
+        }
+      : {}),
   }))
   .sort((a, b) => a.id.localeCompare(b.id));
 
 const seasonsOut = Object.values(SEASONS)
   .sort((a, b) => a.order - b.order)
-  .map(({ id, label, shortLabel, year }) => ({ id, label, shortLabel, year }));
+  .map(({ id, label, shortLabel, year, order }) => ({ id, label, shortLabel, year, order }));
 
 // ---------------------------------------------------------------------------
 // Special cards (transcribed from data-sources/specials-reference.md v3)
@@ -667,7 +688,12 @@ writeJson("specialCards.json", specialsOut);
 mkdirSync(join(root, "public", "orgs"), { recursive: true });
 writeFileSync(
   join(root, "public", "orgs", "README.md"),
-  `# Organization logos\n\nDrop one PNG per org here (square, transparent, ≥256px). Missing files fall\nback to a monogram placeholder. Generated from data-sources/teams.md — run\n\`npm run build:data\` after editing it.\n\n\`\`\`\n${orgsOut.map((o) => `${o.id}.png`).join("\n")}\n\`\`\`\n`,
+  `# Organization logos\n\nDrop one PNG per org here (square, transparent, ≥256px). Missing files fall\nback to a monogram placeholder. \`<orgId>@<era>.png\` files are era variants\n(rebrands — see ORG_LOGO_ERAS in scripts/build-dataset.mjs); they fall back\nto the default org logo. Generated from data-sources/teams.md — run\n\`npm run build:data\` after editing it.\n\n\`\`\`\n${orgsOut
+    .flatMap((o) => [
+      `${o.id}.png`,
+      ...(o.logoEras ?? []).map((e) => `${o.id}@${e.key}.png`),
+    ])
+    .join("\n")}\n\`\`\`\n`,
 );
 mkdirSync(join(root, "public", "cards", "specials"), { recursive: true });
 writeFileSync(

@@ -72,4 +72,44 @@ describe("dataset", () => {
     const multiCard = [...byPlayer.values()].filter((n) => n >= 2);
     expect(multiCard.length).toBeGreaterThanOrEqual(8);
   });
+
+  // -------------------------------------------------------------------------
+  // Identity unification contract (v0.5/v0.5.1). Spelling variants of the
+  // same person/org MUST share one id; same-name strangers MUST NOT.
+  // -------------------------------------------------------------------------
+
+  it("zen (EU) and ZeN (OCE) are different people", () => {
+    const zenEu = players.find((p) => p.id === "zen");
+    const zenOce = players.find((p) => p.id === "zen-oce");
+    expect(zenEu?.region).toBe("EU");
+    expect(zenOce?.region).toBe("OCE");
+  });
+
+  it("org era spellings are unified — alias sources never become orgs", () => {
+    const ids = new Set(orgs.map((o) => o.id));
+    // Aliased era spellings (see ORG_ALIAS in scripts/build-dataset.mjs):
+    for (const stale of [
+      "renault-vitality",
+      "team-dignitas",
+      "chiefs-esc",
+      "mockit-esports",
+      "mock-it-esports-eu",
+      "quiktrip-pioneers-gaming",
+    ]) {
+      expect(ids.has(stale), `"${stale}" should be an alias, not an org`).toBe(false);
+    }
+    // Their canonical identities exist:
+    for (const canonical of ["team-vitality", "dignitas", "chiefs-esports-club", "mock-it-esports"]) {
+      expect(ids.has(canonical), canonical).toBe(true);
+    }
+  });
+
+  it("same-name orgs from different regions stay separate", () => {
+    const ids = new Set(orgs.map((o) => o.id));
+    for (const split of ["pioneers-oce", "pioneers-ssa", "fut-esports-na", "fut-esports-ssa"]) {
+      expect(ids.has(split), split).toBe(true);
+    }
+    expect(ids.has("pioneers")).toBe(false);
+    expect(ids.has("fut-esports")).toBe(false);
+  });
 });

@@ -163,7 +163,8 @@ export function ReviewScreen({ run }: { run: RunState }) {
                 {specials.map((sp) => (
                   <li key={sp.id} className="text-xs">
                     <span className="display block font-bold uppercase tracking-wide text-orange-bright">
-                      {sp.title}
+                      {/* Hidden runs show the EFFECT, never which card it is */}
+                      {run.showOverall ? sp.title : "???"}
                     </span>
                     <span className="text-sub">{sp.effect.description}</span>
                   </li>

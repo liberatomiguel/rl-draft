@@ -98,7 +98,12 @@ async function fileUrl(fileTitle) {
 
 const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-/** Rank a page's files for "the org logo": allmode > lightmode > name match. */
+/**
+ * Rank a page's files for "the org logo": allmode > lightmode > name match,
+ * and NEWER files beat older ones — org pages carry every past identity
+ * (predecessor logos included), and the DEFAULT slot wants the current
+ * brand; era variants are pulled explicitly via the "orgFiles" override.
+ */
 function pickLogoFile(files, orgName) {
   const slug = normalize(orgName);
   const score = (title) => {
@@ -111,6 +116,8 @@ function pickLogoFile(files, orgName) {
     if (t.includes("darkmode")) s += 2;
     if (t.includes("logo")) s += 3;
     if (normalize(t).includes(slug.slice(0, 8))) s += 4;
+    const year = t.match(/20(1[5-9]|2\d)/)?.[0];
+    if (year) s += Number(year) - 2015; // recency: 2017 → +2 · 2024 → +9
     return s;
   };
   return files
@@ -170,7 +177,31 @@ async function fetchFlags() {
   console.log(`Flags done (${done} new).`);
 }
 
+/**
+ * Exact-file downloads from data-sources/asset-overrides.json "orgFiles":
+ *   { "nrg-esports@classic": "NRG Esports 2017 lightmode.png" }
+ * The asset id maps to public/orgs/<id>.png — used for era variants and for
+ * any logo the heuristic keeps getting wrong.
+ */
+async function fetchDirectOrgFiles() {
+  const entries = Object.entries(overrides.orgFiles ?? {});
+  for (const [assetId, fileTitle] of entries) {
+    const out = join(root, "public", "orgs", `${assetId}.png`);
+    if (existsSync(out)) continue;
+    try {
+      const title = fileTitle.startsWith("File:") ? fileTitle : `File:${fileTitle}`;
+      const url = await fileUrl(title);
+      if (!url) throw new Error("no file url");
+      await download(url, out);
+      console.log(`  ✓ ${assetId}  ←  ${title} (direct)`);
+    } catch (error) {
+      console.warn(`  ✗ ${assetId}: ${error.message}`);
+    }
+  }
+}
+
 async function fetchOrgLogos() {
+  await fetchDirectOrgFiles();
   const orgs = readJson("src/data/orgs.json");
   const misses = [];
   console.log(`Org logos: ${orgs.length} orgs (≈2.6s/API call — be patient)`);

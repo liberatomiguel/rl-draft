@@ -73,8 +73,7 @@ export const DRAFT_UI = {
   noRerolls: "No rerolls",
   freeReroll: "Free reroll",
   freeRerollHint: "Nothing here fits your remaining slots — this one's on the house.",
-  placeHint: "Now choose a slot on your team",
-  selectHint: "Tap a card to select it",
+  selectHint: "Tap a card to draft it — it lands on the first open slot",
   yourRoster: "Your Team",
   slotPlayer: (n: number) => `Player ${n}`,
   slotCoach: "Coach",
@@ -288,6 +287,8 @@ export const SPECIAL_TYPE_LABELS: Record<string, string> = {
   mythic: "Mythic",
   legend: "Legend",
   coach: "Coach",
+  /** Hidden-run mask: the type would identify the card (v0.5.1). */
+  masked: "Special",
 };
 
 export const RARITY_LABELS: Record<string, string> = {

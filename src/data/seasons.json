@@ -3,90 +3,105 @@
     "id": "rlcs-s1",
     "label": "RLCS Season 1",
     "shortLabel": "S1 '16",
-    "year": "2016"
+    "year": "2016",
+    "order": 1
   },
   {
     "id": "rlcs-s2",
     "label": "RLCS Season 2",
     "shortLabel": "S2 '16",
-    "year": "2016"
+    "year": "2016",
+    "order": 2
   },
   {
     "id": "rlcs-s3",
     "label": "RLCS Season 3",
     "shortLabel": "S3 '17",
-    "year": "2017"
+    "year": "2017",
+    "order": 3
   },
   {
     "id": "rlcs-s4",
     "label": "RLCS Season 4",
     "shortLabel": "S4 '17",
-    "year": "2017"
+    "year": "2017",
+    "order": 4
   },
   {
     "id": "rlcs-s5",
     "label": "RLCS Season 5",
     "shortLabel": "S5 '18",
-    "year": "2018"
+    "year": "2018",
+    "order": 5
   },
   {
     "id": "rlcs-s6",
     "label": "RLCS Season 6",
     "shortLabel": "S6 '18",
-    "year": "2018"
+    "year": "2018",
+    "order": 6
   },
   {
     "id": "rlcs-s7",
     "label": "RLCS Season 7",
     "shortLabel": "S7 '19",
-    "year": "2019"
+    "year": "2019",
+    "order": 7
   },
   {
     "id": "rlcs-s8",
     "label": "RLCS Season 8",
     "shortLabel": "S8 '19",
-    "year": "2019"
+    "year": "2019",
+    "order": 8
   },
   {
     "id": "rlcs-s9",
     "label": "RLCS Season 9",
     "shortLabel": "S9 '20",
-    "year": "2020"
+    "year": "2020",
+    "order": 9
   },
   {
     "id": "rlcs-x",
     "label": "RLCS X",
     "shortLabel": "X '20-21",
-    "year": "2020-21"
+    "year": "2020-21",
+    "order": 10
   },
   {
     "id": "rlcs-2021-22",
     "label": "RLCS 2021-22",
     "shortLabel": "'21-22",
-    "year": "2021-22"
+    "year": "2021-22",
+    "order": 11
   },
   {
     "id": "rlcs-2022-23",
     "label": "RLCS 2022-23",
     "shortLabel": "'22-23",
-    "year": "2022-23"
+    "year": "2022-23",
+    "order": 12
   },
   {
     "id": "rlcs-2024",
     "label": "RLCS 2024",
     "shortLabel": "'24",
-    "year": "2024"
+    "year": "2024",
+    "order": 13
   },
   {
     "id": "rlcs-2025",
     "label": "RLCS 2025",
     "shortLabel": "'25",
-    "year": "2025"
+    "year": "2025",
+    "order": 14
   },
   {
     "id": "rlcs-2026",
     "label": "RLCS 2026",
     "shortLabel": "'26",
-    "year": "2026"
+    "year": "2026",
+    "order": 15
   }
 ]

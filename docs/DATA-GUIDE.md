@@ -118,12 +118,23 @@ broken reference fails loudly with a message pointing at the exact id.
 
 ```json
 { "id": "team-bds", "name": "Team BDS", "region": "EU",
-  "buffType": "consistency", "buffLevel": "++" }
+  "buffType": "consistency", "buffLevel": "++",
+  "logoEras": [{ "key": "classic", "untilOrder": 9 }] }
 ```
 
 - `buffType`: `offense | defense | mechanics | consistency | experience | clutch`
 - `buffLevel`: `~ | + | ++ | +++` → internally 0/1/2/3. No negative buffs in
   the MVP (base doc §21). v0.1 caps the dataset at `++` for balance headroom.
+- **Identity rules (v0.5)**: era spellings/sponsor names unify into ONE org
+  id (`ORG_ALIAS` in the generator — "Renault Vitality" → `team-vitality`);
+  same-name strangers split per region (`REGION_SPLIT_ORGS` — `pioneers-oce`
+  ≠ `pioneers-ssa`). Lineups keep the era display name. Guarded by tests.
+- **`logoEras` (v0.5.1)**: cards/lineups whose season `order` ≤ `untilOrder`
+  use `public/orgs/<orgId>@<key>.png` (falls back to the default logo).
+  Curate in `ORG_LOGO_ERAS` in `scripts/build-dataset.mjs`; exact Liquipedia
+  files can be pulled via the `"orgFiles"` block of
+  `data-sources/asset-overrides.json`. Seasons carry `order` (1 = RLCS S1)
+  for this resolution.
 
 ## coaches.json
 

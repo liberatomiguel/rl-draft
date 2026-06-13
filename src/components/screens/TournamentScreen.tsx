@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TOURNAMENT } from "@/config/balance";
 import { NARRATION, TOURNAMENT_UI as T } from "@/content/copy";
+import { lineupById } from "@/data";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { displayTeamOverall } from "@/engine/rating";
 import type {
@@ -112,6 +113,11 @@ function locateSeries(t: TournamentState, entry: SeriesEntry): SeriesResult {
 function ratingLabel(team: TournamentTeam | undefined, showOverall: boolean): string {
   if (!team) return "";
   return showOverall ? String(displayTeamOverall(team.rating)) : "??";
+}
+
+/** AI teams are historical lineups — their logos follow the lineup's era. */
+function teamSeasonId(team: TournamentTeam | undefined): string | undefined {
+  return team?.lineupId ? lineupById.get(team.lineupId)?.seasonId : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -513,7 +519,7 @@ function MatchCenter({
       {/* Scoreline */}
       <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <TeamLogo orgId={teamA.orgId} size="sm" />
+          <TeamLogo orgId={teamA.orgId} seasonId={teamSeasonId(teamA)} size="sm" />
           <p className={cx("display min-w-0 truncate text-base font-bold uppercase tracking-wide md:text-lg", teamA.isUser ? "text-orange-bright" : "text-ink")}>
             {teamA.name}
           </p>
@@ -527,7 +533,7 @@ function MatchCenter({
           <p className={cx("display min-w-0 truncate text-right text-base font-bold uppercase tracking-wide md:text-lg", teamB.isUser ? "text-orange-bright" : "text-ink")}>
             {teamB.name}
           </p>
-          <TeamLogo orgId={teamB.orgId} size="sm" />
+          <TeamLogo orgId={teamB.orgId} seasonId={teamSeasonId(teamB)} size="sm" />
         </div>
       </div>
 
@@ -667,7 +673,7 @@ function SwissPath({
                 <p className="kicker mb-1 !text-[9px]">{T.round(cell.round)} · {T.upcoming}</p>
                 {opp ? (
                   <span className="flex items-center gap-1.5">
-                    <TeamLogo orgId={opp.orgId} size="xs" />
+                    <TeamLogo orgId={opp.orgId} seasonId={teamSeasonId(opp)} size="xs" />
                     <span className="display min-w-0 truncate text-[11px] font-bold uppercase text-ink">{opp.name}</span>
                   </span>
                 ) : (
@@ -704,7 +710,7 @@ function SwissPath({
               </p>
               {showOpponent ? (
                 <span className="flex items-center gap-1.5">
-                  <TeamLogo orgId={opp.orgId} size="xs" />
+                  <TeamLogo orgId={opp.orgId} seasonId={teamSeasonId(opp)} size="xs" />
                   <span className="display min-w-0 flex-1 truncate text-[11px] font-bold uppercase text-ink">
                     {opp.name}
                   </span>
@@ -863,7 +869,7 @@ function BracketCell({
     const team = teamId ? t.teams[teamId] : null;
     return (
       <p className={cx("flex items-center gap-1.5 py-0.5 text-xs", won === false && "opacity-45")}>
-        {team ? <TeamLogo orgId={team.orgId} size="xs" /> : <span className="h-4 w-4 rounded bg-white/5" />}
+        {team ? <TeamLogo orgId={team.orgId} seasonId={teamSeasonId(team)} size="xs" /> : <span className="h-4 w-4 rounded bg-white/5" />}
         <span className={cx("min-w-0 flex-1 truncate", team?.isUser ? "font-bold text-orange-bright" : team ? "text-ink" : "italic text-faint")}>
           {team?.name ?? T.tbd}
         </span>
@@ -970,7 +976,7 @@ function SwissStandings({
                 <tr key={teamId} className={cx("border-t border-line", isUser && "bg-orange/8", out && "opacity-45")}>
                   <td className="max-w-0 truncate py-1.5 pr-2">
                     <span className="flex items-center gap-1.5">
-                      <TeamLogo orgId={team.orgId} size="xs" />
+                      <TeamLogo orgId={team.orgId} seasonId={teamSeasonId(team)} size="xs" />
                       <span className={cx("min-w-0 truncate", isUser ? "font-bold text-orange-bright" : "text-ink")}>
                         {team.name}
                       </span>

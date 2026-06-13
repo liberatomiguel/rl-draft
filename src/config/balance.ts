@@ -223,10 +223,14 @@ export const DRAFT = {
 // ---------------------------------------------------------------------------
 
 export const SPECIALS = {
-  /** Chance a player card in an offer appears as one of that player's specials. */
-  appearanceChance: 0.16,
+  /**
+   * Chance a player card in an offer appears as one of that player's
+   * specials. v0.5.1: 0.16 → 0.06 by direction — at 16% (×the per-player
+   * pool) runs were seeing 3-4 specials and they stopped feeling special.
+   */
+  appearanceChance: 0.06,
   /** Coach cards roll their person's coach specials at this chance. */
-  coachAppearanceChance: 0.12,
+  coachAppearanceChance: 0.05,
   /**
    * When a special DOES appear, which one is weighted by rarity tier.
    * Within a player's pool: rare ≈ common sight, legendary ≈ chase pull.

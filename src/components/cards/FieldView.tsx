@@ -111,7 +111,7 @@ function FieldSlot({
 }) {
   const inner = card ? (
     <span className="flex w-[76px] flex-col items-center gap-0.5 md:w-[84px]">
-      {card.orgId ? <TeamLogo orgId={card.orgId} size="sm" /> : null}
+      {card.orgId ? <TeamLogo orgId={card.orgId} seasonId={card.seasonId} size="sm" /> : null}
       <span className="display w-full truncate text-center text-[10px] font-bold uppercase tracking-wide text-ink">
         {card.name}
         {card.special ? <span className="text-orange-bright">★</span> : null}
@@ -164,7 +164,7 @@ function BenchSlot({
       <span className="kicker !text-[8px]">{label}</span>
       {card ? (
         <span className="flex w-full items-center justify-center gap-1.5">
-          {card.orgId ? <TeamLogo orgId={card.orgId} size="xs" /> : null}
+          {card.orgId ? <TeamLogo orgId={card.orgId} seasonId={card.seasonId} size="xs" /> : null}
           <span className="display min-w-0 truncate text-[11px] font-bold uppercase tracking-wide text-ink">
             {card.name}
           </span>

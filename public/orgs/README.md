@@ -1,7 +1,9 @@
 # Organization logos
 
 Drop one PNG per org here (square, transparent, ≥256px). Missing files fall
-back to a monogram placeholder. Generated from data-sources/teams.md — run
+back to a monogram placeholder. `<orgId>@<era>.png` files are era variants
+(rebrands — see ORG_LOGO_ERAS in scripts/build-dataset.mjs); they fall back
+to the default org logo. Generated from data-sources/teams.md — run
 `npm run build:data` after editing it.
 
 ```
@@ -58,6 +60,7 @@ mousesports.png
 ninjas-in-pyjamas.png
 northern-gaming.png
 nrg-esports.png
+nrg-esports@classic.png
 og.png
 optic-gaming.png
 orbit-esport.png
