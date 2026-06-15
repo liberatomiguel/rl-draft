@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Rajdhani } from "next/font/google";
-import { APP } from "@/content/copy";
+import { Analytics } from "@vercel/analytics/next";
+import { APP } from "@/content/copy.en";
+import { SITE } from "@/config/site";
 import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
@@ -20,16 +22,76 @@ const rajdhani = Rajdhani({
   subsets: ["latin"],
 });
 
+const TITLE = `${SITE.name} — RLCS Esports History Draft Game`;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE.url),
   title: {
-    default: `${APP.name} — RL Esports History Draft`,
-    template: `%s · ${APP.name}`,
+    default: TITLE,
+    template: `%s · ${SITE.name}`,
   },
   description: APP.description,
+  applicationName: SITE.name,
+  authors: [{ name: SITE.author, url: SITE.authorUrl }],
+  creator: SITE.author,
+  keywords: [
+    "Rocket League",
+    "RLCS",
+    "Rocket League esports",
+    "esports draft",
+    "fantasy draft",
+    "Rocket Draft",
+    "RLCS draft",
+    "draft game",
+    "card game",
+  ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    url: SITE.url,
+    title: TITLE,
+    description: APP.description,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: APP.description,
+    creator: "@liberatoRL_",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  icons: { icon: "/icon.svg", shortcut: "/favicon.ico" },
+  // Drop your Google Search Console HTML-tag token in GOOGLE_SITE_VERIFICATION
+  // (env) to verify domain ownership; or use the DNS method and skip this.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export const viewport: Viewport = {
   themeColor: "#05080f",
+};
+
+/** Structured data so search engines understand this is a (free) web game. */
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  name: SITE.name,
+  url: SITE.url,
+  description: APP.description,
+  applicationCategory: "Game",
+  operatingSystem: "Web browser",
+  genre: ["Sports", "Strategy", "Card game"],
+  gamePlatform: "Web",
+  inLanguage: ["en", "pt-BR"],
+  author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  isBasedOn: SITE.inspiredByUrl,
 };
 
 export default function RootLayout({
@@ -43,7 +105,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        />
         <AppShell>{children}</AppShell>
+        <Analytics />
       </body>
     </html>
   );

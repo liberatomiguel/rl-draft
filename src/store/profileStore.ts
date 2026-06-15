@@ -40,6 +40,8 @@ export interface ProfileState {
   dailyResults: Record<string, DailyResult>;
   /** Setup memory: a new game pre-selects the last configuration. */
   settings: { lastDifficulty: Difficulty; lastShowOverall: boolean; lastMode: RunMode };
+  /** One-time onboarding flags (first-run how-to-play, first Legacy intro). */
+  flags: { seenHowToPlay: boolean; seenLegacyIntro: boolean };
 
   applyRunResults: (
     results: RunResults,
@@ -47,6 +49,7 @@ export interface ProfileState {
     daily?: { date: string; label: string },
   ) => void;
   setLastSetup: (difficulty: Difficulty, showOverall: boolean, mode: RunMode) => void;
+  markFlag: (flag: keyof ProfileState["flags"]) => void;
   resetAll: () => void;
 }
 
@@ -66,6 +69,7 @@ const initialData = {
     lastShowOverall: true,
     lastMode: "classic" as RunMode,
   },
+  flags: { seenHowToPlay: false, seenLegacyIntro: false },
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -120,6 +124,8 @@ export const useProfileStore = create<ProfileState>()(
 
       setLastSetup: (lastDifficulty, lastShowOverall, lastMode) =>
         set({ settings: { lastDifficulty, lastShowOverall, lastMode } }),
+
+      markFlag: (flag) => set((state) => ({ flags: { ...state.flags, [flag]: true } })),
 
       resetAll: () => set({ ...initialData }),
     }),

@@ -8,6 +8,7 @@ import { achievementById, playerById, playerCardById, specialCardById } from "@/
 import type { Rng } from "@/lib/rng";
 import { evaluateAchievements } from "./achievements";
 import { finalOverall } from "./cards";
+import { displayTeamOverall } from "./rating";
 import { userPlayoffSeries } from "./playoffs";
 import { userSwissRecord } from "./swiss";
 import { userPlacement } from "./tournament";
@@ -221,12 +222,20 @@ export function compileResults(
   // Daily challenge bonus objective.
   if (run.daily?.objective) {
     const obj = run.daily.objective;
+    const chemPct = userTeam?.chemistry.percent ?? 0;
+    const teamOvr = userTeam ? displayTeamOverall(userTeam.rating) : 0;
     const met =
       obj.type === "chemistry_good"
-        ? (userTeam?.chemistry.percent ?? 0) >= 40
-        : obj.type === "concede_under"
-          ? goalsConceded < (obj.value ?? 0)
-          : false;
+        ? chemPct >= 40
+        : obj.type === "chemistry_great"
+          ? chemPct >= 62
+          : obj.type === "concede_under"
+            ? goalsConceded < (obj.value ?? 0)
+            : obj.type === "win_title"
+              ? placement === "champion"
+              : obj.type === "team_overall_under"
+                ? placement === "champion" && teamOvr <= (obj.value ?? 0)
+                : false;
     if (met) {
       lines.push({ label: `Objective: ${obj.label}`, amount: obj.bonusXp });
     }

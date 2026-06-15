@@ -11,8 +11,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { DIFFICULTY } from "@/config/balance";
-import { RUN_UI, SETUP } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import type { RunPhase, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { useRunStore } from "@/store/runStore";
@@ -20,18 +19,20 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 
-const PHASES: { id: RunPhase; label: string }[] = [
-  { id: "draft", label: "Draft" },
-  { id: "review", label: "Review" },
-  { id: "tournament", label: "Tournament" },
-  { id: "results", label: "Results" },
-];
+const PHASE_IDS: RunPhase[] = ["draft", "review", "tournament", "results"];
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
+  const { RUN_UI, SETUP, DIFFICULTY_LABELS } = useCopy();
   const restartRun = useRunStore((s) => s.restartRun);
   const [confirmReset, setConfirmReset] = useState(false);
-  const currentIndex = PHASES.findIndex((p) => p.id === run.phase);
+  const phaseLabel: Record<RunPhase, string> = {
+    draft: RUN_UI.phaseDraft,
+    review: RUN_UI.phaseReview,
+    tournament: RUN_UI.phaseTournament,
+    results: RUN_UI.phaseResults,
+  };
+  const currentIndex = PHASE_IDS.findIndex((p) => p === run.phase);
 
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -51,8 +52,8 @@ export function RunStepper({ run }: { run: RunState }) {
         </button>
 
         <ol className="flex items-center gap-1.5 md:gap-2" aria-label="Run progress">
-          {PHASES.map((phase, i) => (
-            <li key={phase.id} className="flex items-center gap-1.5 md:gap-2">
+          {PHASE_IDS.map((phase, i) => (
+            <li key={phase} className="flex items-center gap-1.5 md:gap-2">
               {i > 0 ? <span className="h-px w-3 bg-line-strong md:w-5" aria-hidden /> : null}
               <span
                 className={cx(
@@ -65,7 +66,7 @@ export function RunStepper({ run }: { run: RunState }) {
                 )}
                 aria-current={i === currentIndex ? "step" : undefined}
               >
-                {phase.label}
+                {phaseLabel[phase]}
               </span>
             </li>
           ))}
@@ -73,8 +74,8 @@ export function RunStepper({ run }: { run: RunState }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge tone="blue">{DIFFICULTY[run.difficulty].label}</Badge>
-        {!run.showOverall ? <Badge tone="neutral">Hidden OVR</Badge> : null}
+        <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
+        {!run.showOverall ? <Badge tone="neutral">{RUN_UI.hiddenOvr}</Badge> : null}
         {/* Reset run — deliberate restart (the run is over on results). */}
         {run.phase !== "results" ? (
           <button

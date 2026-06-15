@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { achievementById, lineupById, specialCardById } from "@/data";
 import { DIFFICULTY } from "@/config/balance";
-import { RESULTS_UI as R, RARITY_LABELS } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import {
   resolveCoach,
   resolveOrg,
@@ -23,6 +23,7 @@ import { rankForXp, type RankInfo } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { EliminatorTeam, Placement, RunState } from "@/engine/types";
 import { downloadShareCard } from "@/lib/shareCard";
+import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
@@ -39,21 +40,21 @@ import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
 import { RunStepper } from "./RunStepper";
 
-const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
-  champion: { title: R.champion, sub: R.championSub, tone: "orange" },
-  runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
-  third: { title: R.third, sub: R.thirdSub, tone: "blue" },
-  fourth: { title: R.fourth, sub: R.fourthSub, tone: "blue" },
-  top4: { title: R.top4, sub: R.top4Sub, tone: "blue" },
-  top6: { title: R.top6, sub: R.top6Sub, tone: "blue" },
-  top8: { title: R.top8, sub: R.top8Sub, tone: "blue" },
-  swiss_exit: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
-};
-
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
+  const { RESULTS_UI: R, RARITY_LABELS, CHEM_TIERS } = useCopy();
+  const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
+    champion: { title: R.champion, sub: R.championSub, tone: "orange" },
+    runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
+    third: { title: R.third, sub: R.thirdSub, tone: "blue" },
+    fourth: { title: R.fourth, sub: R.fourthSub, tone: "blue" },
+    top4: { title: R.top4, sub: R.top4Sub, tone: "blue" },
+    top6: { title: R.top6, sub: R.top6Sub, tone: "blue" },
+    top8: { title: R.top8, sub: R.top8Sub, tone: "blue" },
+    swiss_exit: { title: R.swissExit, sub: R.swissExitSub, tone: "blue" },
+  };
   const clearRun = useRunStore((s) => s.clearRun);
   const setSetupMode = useRunStore((s) => s.setSetupMode);
   const xpNow = useProfileStore((s) => s.xp);
@@ -68,6 +69,14 @@ export function ResultsScreen({ run }: { run: RunState }) {
   );
   const [rankUpSeen, setRankUpSeen] = useState(false);
   const [legacySeen, setLegacySeen] = useState(false);
+
+  // Placement cue, once on mount.
+  useEffect(() => {
+    if (!run.results) return;
+    if (run.results.placement === "champion") sfx.win();
+    else sfx.lose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!results || !team) return null;
 
@@ -182,11 +191,11 @@ export function ResultsScreen({ run }: { run: RunState }) {
             <Badge tone="blue">
               {R.swissRecord}: {results.swissRecord.wins}–{results.swissRecord.losses}
             </Badge>
-            <Badge tone="neutral">Team OVR {displayTeamOverall(team.rating)}</Badge>
+            <Badge tone="neutral">{R.teamOvrBadge(displayTeamOverall(team.rating))}</Badge>
             <Badge tone={team.chemistry.percent >= 62 ? "good" : "neutral"}>
-              {team.chemistry.tier} chemistry
+              {R.chemistryBadge(CHEM_TIERS[team.chemistry.tier] ?? team.chemistry.tier)}
             </Badge>
-            {results.goalsConceded === 0 ? <Badge tone="gold">Untouchable</Badge> : null}
+            {results.goalsConceded === 0 ? <Badge tone="gold">{R.untouchableBadge}</Badge> : null}
           </div>
           {results.goalsConceded === 0 ? (
             <p className="mt-3 text-sm font-semibold text-amber-300">{R.untouchableNote}</p>
@@ -200,7 +209,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
       {/* Highlights */}
       <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {bestPlayer ? (
-          <HighlightTile label={R.bestPlayer} value={bestPlayer.name} detail={`OVR ${bestPlayer.overall}`} />
+          <HighlightTile label={R.bestPlayer} value={bestPlayer.name} detail={R.ovr(bestPlayer.overall ?? 0)} />
         ) : null}
         {results.biggestWin ? (
           <HighlightTile
@@ -252,13 +261,13 @@ export function ResultsScreen({ run }: { run: RunState }) {
             ))}
             {results.xp.difficultyMultiplier !== 1 ? (
               <li className="flex items-center justify-between text-sm text-sub">
-                <span>Difficulty multiplier</span>
+                <span>{R.difficultyMultiplier}</span>
                 <span className="display font-bold text-cyan">×{results.xp.difficultyMultiplier}</span>
               </li>
             ) : null}
             {results.xp.hiddenOverallBonus > 0 ? (
               <li className="flex items-center justify-between text-sm text-sub">
-                <span>Hidden overall bonus</span>
+                <span>{R.hiddenOverallBonus}</span>
                 <span className="display font-bold text-cyan">
                   +{Math.round(results.xp.hiddenOverallBonus * 100)}%
                 </span>
@@ -266,7 +275,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
             ) : null}
           </ul>
           <div className="mt-4 flex items-end justify-between border-t border-line pt-4">
-            <span className="text-sm font-semibold text-sub">Total</span>
+            <span className="text-sm font-semibold text-sub">{R.total}</span>
             <span className="display text-3xl font-bold text-orange-bright">
               +<AnimatedNumber value={results.xp.total} />
               <span className="ml-1 text-base">XP</span>
@@ -279,9 +288,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
                 {rankAfter.label}
               </span>
               {rankBefore.label !== rankAfter.label ? (
-                <Badge tone="orange">Rank up!</Badge>
+                <Badge tone="orange">{R.rankUpBadge}</Badge>
               ) : rankAfter.next ? (
-                <span className="text-faint">{rankAfter.xpToNext} XP to {rankAfter.next.label}</span>
+                <span className="text-faint">{R.xpToNext(rankAfter.xpToNext, rankAfter.next.label)}</span>
               ) : null}
             </div>
             <ProgressBar value={rankAfter.progress} tone="orange" label={R.rankProgress} />
@@ -345,7 +354,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                   .map((id) => RARITY_LABELS[specialCardById.get(id)?.rarity ?? ""])
                   .filter(Boolean)
                   .join(" · ")}{" "}
-                — added to your collection.
+                — {R.unlockedNote}
               </p>
             </Panel>
           ) : null}
@@ -428,6 +437,7 @@ function UnlockCeremony({
   specialIds: string[];
   onDone: () => void;
 }) {
+  const { RESULTS_UI: R } = useCopy();
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
 
@@ -454,6 +464,11 @@ function UnlockCeremony({
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, revealed, sp?.id]);
+
+  // Sound cue each time a card is revealed.
+  useEffect(() => {
+    if (revealed) sfx.unlock();
+  }, [revealed, index]);
 
   if (!sp) {
     onDone();
@@ -498,7 +513,7 @@ function UnlockCeremony({
             advance();
           }}
         >
-          {last ? R.ceremonyContinue : "Next card"}
+          {last ? R.ceremonyContinue : R.ceremonyNext}
         </Button>
       ) : null}
     </div>
@@ -518,10 +533,16 @@ function RankUpCelebration({
   rank: Pick<RankInfo, "id" | "label">;
   onDone: () => void;
 }) {
+  const { RESULTS_UI: R } = useCopy();
   useEffect(() => {
     const id = setTimeout(onDone, 4200);
     return () => clearTimeout(id);
   }, [onDone]);
+
+  // Rank-up fanfare, once on mount.
+  useEffect(() => {
+    sfx.rankUp();
+  }, []);
 
   return (
     // Tap ANYWHERE dismisses (v0.6.1).
@@ -560,10 +581,16 @@ function RankUpCelebration({
  * anywhere or wait to dismiss.
  */
 function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
+  const { RESULTS_UI: R } = useCopy();
   useEffect(() => {
     const id = setTimeout(onDone, 5200);
     return () => clearTimeout(id);
   }, [onDone]);
+
+  // Unlock fanfare, once on mount.
+  useEffect(() => {
+    sfx.unlock();
+  }, []);
 
   return (
     <div
@@ -623,6 +650,7 @@ function LegacyEmblem() {
  * Renders nothing when `results.eliminatedBy` is null (champion / flag off).
  */
 function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
+  const { RESULTS_UI: R } = useCopy();
   const lineup = lineupById.get(eliminator.lineupId);
   if (!lineup) return null;
   // Full opposing roster (v0.6.1): players, then coach/sub when the lineup
@@ -665,6 +693,7 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
  * generic trophy (v0.5).
  */
 function AchievementToasts({ ids }: { ids: string[] }) {
+  const { RESULTS_UI: R } = useCopy();
   const [visible, setVisible] = useState<string[]>([]);
 
   useEffect(() => {

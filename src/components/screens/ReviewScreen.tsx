@@ -8,11 +8,12 @@
  */
 
 import { useMemo } from "react";
-import { REVIEW, STAT_LABELS } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { displayTeamOverall } from "@/engine/rating";
 import { buildUserTeam } from "@/engine/teams";
 import type { RunState, StatKey } from "@/engine/types";
 import { lineupById, orgById, specialCardById } from "@/data";
+import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -23,25 +24,8 @@ import { FieldView } from "@/components/cards/FieldView";
 import { rosterSlots } from "@/components/cards/rosterView";
 import { RunStepper } from "./RunStepper";
 
-const STAT_HIGH: Record<StatKey, string> = {
-  offense: "Heavy attacking pressure.",
-  defense: "Hard to break down.",
-  mechanics: "Elite mechanical ceiling.",
-  consistency: "Reliable floor, series after series.",
-  experience: "Deep big-stage experience.",
-  clutch: "Built for deciding games.",
-};
-
-const STAT_LOW: Record<StatKey, string> = {
-  offense: "May struggle to create chances.",
-  defense: "Defensively exposed at times.",
-  mechanics: "Limited mechanical ceiling.",
-  consistency: "Prone to volatile results.",
-  experience: "Short on big-stage experience.",
-  clutch: "Untested in deciding games.",
-};
-
 export function ReviewScreen({ run }: { run: RunState }) {
+  const { REVIEW, STAT_LABELS, CHEM_TIERS } = useCopy();
   const startTournament = useRunStore((s) => s.startTournament);
   const isQuick = run.mode === "quick";
 
@@ -62,23 +46,19 @@ export function ReviewScreen({ run }: { run: RunState }) {
       const entries = Object.entries(team.stats) as [StatKey, number][];
       const top = entries.reduce((a, b) => (b[1] > a[1] ? b : a));
       const low = entries.reduce((a, b) => (b[1] < a[1] ? b : a));
-      lines.push(STAT_HIGH[top[0]]);
-      if (low[0] !== top[0]) lines.push(STAT_LOW[low[0]]);
+      lines.push(REVIEW.statHigh[top[0]]);
+      if (low[0] !== top[0]) lines.push(REVIEW.statLow[low[0]]);
     }
-    lines.push(`${team.chemistry.tier} chemistry between the pieces.`);
+    lines.push(REVIEW.chemistryLine(CHEM_TIERS[team.chemistry.tier] ?? team.chemistry.tier));
     // Org buffs are hidden information on blackout runs.
     if (org && run.showOverall) {
-      lines.push(`${org.name} brings ${STAT_LABELS[org.buffType].toLowerCase()} ${org.buffLevel} to the table.`);
+      lines.push(REVIEW.orgBrings(org.name, STAT_LABELS[org.buffType].toLowerCase(), org.buffLevel));
     }
     if (specials.length > 0) {
-      lines.push(
-        specials.length === 1
-          ? "One special card effect is live for this run."
-          : `${specials.length} special card effects are live for this run.`,
-      );
+      lines.push(specials.length === 1 ? REVIEW.oneSpecial : REVIEW.manySpecials(specials.length));
     }
     return lines;
-  }, [team, org, specials, run.showOverall]);
+  }, [team, org, specials, run.showOverall, REVIEW, STAT_LABELS, CHEM_TIERS]);
 
   return (
     <div className="rise-in">
@@ -117,16 +97,16 @@ export function ReviewScreen({ run }: { run: RunState }) {
               </p>
               {run.showOverall ? (
                 <dl className="mt-4 space-y-1 text-xs text-sub">
-                  <Row label="Players (avg)" value={team.rating.avgPlayerOverall.toFixed(1)} />
+                  <Row label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
                   {!isQuick ? (
                     <>
-                      <Row label="Coach" value={`+${team.rating.coachMod.toFixed(1)}`} />
-                      <Row label="Substitute" value={`+${team.rating.subMod.toFixed(1)}`} />
-                      <Row label="Organization" value={`+${team.rating.orgMod.toFixed(1)}`} />
+                      <Row label={REVIEW.rowCoach} value={`+${team.rating.coachMod.toFixed(1)}`} />
+                      <Row label={REVIEW.rowSub} value={`+${team.rating.subMod.toFixed(1)}`} />
+                      <Row label={REVIEW.rowOrg} value={`+${team.rating.orgMod.toFixed(1)}`} />
                     </>
                   ) : null}
-                  <Row label="Chemistry" value={`+${team.rating.chemMod.toFixed(1)}`} />
-                  <Row label="Specials" value={`+${team.rating.specialMod.toFixed(1)}`} />
+                  <Row label={REVIEW.rowChemistry} value={`+${team.rating.chemMod.toFixed(1)}`} />
+                  <Row label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
                 </dl>
               ) : (
                 <p className="mt-3 text-xs text-faint">{REVIEW.hiddenNote}</p>
@@ -137,7 +117,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
               <div className="mb-2 flex items-center justify-between">
                 <p className="kicker">{REVIEW.chemistry}</p>
                 <Badge tone={team.chemistry.percent >= 62 ? "good" : team.chemistry.percent >= 40 ? "blue" : "neutral"}>
-                  {team.chemistry.tier}
+                  {CHEM_TIERS[team.chemistry.tier] ?? team.chemistry.tier}
                 </Badge>
               </div>
               <ProgressBar value={team.chemistry.percent / 100} tone="good" label={REVIEW.chemistry} />
@@ -173,7 +153,15 @@ export function ReviewScreen({ run }: { run: RunState }) {
             </Panel>
           ) : null}
 
-          <Button variant="primary" size="lg" full onClick={startTournament}>
+          <Button
+            variant="primary"
+            size="lg"
+            full
+            onClick={() => {
+              sfx.start();
+              startTournament();
+            }}
+          >
             {REVIEW.startTournament}
           </Button>
         </div>

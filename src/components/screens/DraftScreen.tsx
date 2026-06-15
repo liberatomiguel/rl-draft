@@ -17,12 +17,13 @@
  */
 
 import { useMemo, useState } from "react";
-import { DRAFT_UI } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
 import { lineupById, lineups, seasonById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
+import { sfx } from "@/lib/sfx";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
@@ -33,13 +34,7 @@ import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { RunStepper } from "./RunStepper";
-
-const KIND_LABEL: Record<string, string> = {
-  player: "Player",
-  coach: DRAFT_UI.slotCoach,
-  sub: DRAFT_UI.slotSub,
-  org: DRAFT_UI.slotOrg,
-};
+import { RunOnboarding } from "./RunOnboarding";
 
 const REEL_LENGTH = 10; // 9 decoys + the drawn lineup
 
@@ -48,10 +43,17 @@ function lineupReelName(l: Lineup): string {
 }
 
 export function DraftScreen({ run }: { run: RunState }) {
+  const { DRAFT_UI } = useCopy();
   const pickCard = useRunStore((s) => s.pickCard);
   const reroll = useRunStore((s) => s.reroll);
   const freeReroll = useRunStore((s) => s.freeReroll);
   const unlockedSpecials = useProfileStore((s) => s.unlockedSpecials);
+  const KIND_LABEL: Record<string, string> = {
+    player: DRAFT_UI.player,
+    coach: DRAFT_UI.slotCoach,
+    sub: DRAFT_UI.slotSub,
+    org: DRAFT_UI.slotOrg,
+  };
 
   // The reel plays for offers the player REACHED (any pick/reroll this mount)
   // and for the very first lineup of a fresh run, but not when resuming a
@@ -74,20 +76,24 @@ export function DraftScreen({ run }: { run: RunState }) {
     const openSlot = slotsForKind(offerCard.kind).find((s) => !run.draft.roster[s]);
     if (openSlot) {
       setActed(true);
+      sfx.pick();
       pickCard(offerCard, openSlot);
     }
   };
   const handleReroll = () => {
     setActed(true);
+    sfx.reroll();
     reroll();
   };
   const handleFreeReroll = () => {
     setActed(true);
+    sfx.reroll();
     freeReroll();
   };
 
   return (
     <div className="rise-in">
+      <RunOnboarding difficulty={run.difficulty} />
       <RunStepper run={run} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
@@ -174,6 +180,7 @@ function OfferReveal({
   onReroll,
   onFreeReroll,
 }: OfferRevealProps) {
+  const { DRAFT_UI } = useCopy();
   // Lazy init: the reel names are built ONCE on mount (this component is keyed
   // by round, so each offer gets a fresh mount). When the reel is non-null we
   // render it instead of the drawn name, so the team only appears once the
@@ -277,7 +284,15 @@ function OfferReveal({
               rolling && "opacity-0",
             )}
           >
-            {header.seasonLabel}
+            {/* Season + the year it took place — but only append the year when
+                the label doesn't already carry it (e.g. "RLCS Season 6" → 2018,
+                while "RLCS 2022-23" already has it). */}
+            <span>
+              {header.seasonLabel}
+              {header.year && !header.seasonLabel.includes(header.year) ? (
+                <span className="text-faint"> · {header.year}</span>
+              ) : null}
+            </span>
             {/* Region accent color — where is this team from, at a glance */}
             <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
           </p>

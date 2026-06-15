@@ -10,7 +10,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { achievements as achievementDefs, specialCards } from "@/data";
-import { APP, HOME } from "@/content/copy";
+import { useCopy } from "@/content/copy";
+import { SITE } from "@/config/site";
+import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
 import { generateDailyConfig, todayKey } from "@/lib/daily";
 import { useMounted } from "@/store/useMounted";
@@ -26,6 +28,7 @@ import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 
 export default function HomePage() {
+  const { APP, HOME } = useCopy();
   const mounted = useMounted();
   const router = useRouter();
   const xp = useProfileStore((s) => s.xp);
@@ -41,6 +44,7 @@ export default function HomePage() {
   const rank = rankForXp(xp);
 
   const goToSetup = (mode: "classic" | "quick") => {
+    sfx.click();
     setSetupMode(mode);
     router.push("/play");
   };
@@ -76,12 +80,8 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
               <Badge tone="blue">{rank.label}</Badge>
               <Badge tone="neutral">{xp} XP</Badge>
-              {runs > 0 ? (
-                <Badge tone="neutral">
-                  {runs} {runs === 1 ? "run" : "runs"}
-                </Badge>
-              ) : null}
-              {titles > 0 ? <Badge tone="gold">{titles} titles</Badge> : null}
+              {runs > 0 ? <Badge tone="neutral">{HOME.runs(runs)}</Badge> : null}
+              {titles > 0 ? <Badge tone="gold">{HOME.titles(titles)}</Badge> : null}
             </div>
           </div>
         ) : null}
@@ -101,12 +101,12 @@ export default function HomePage() {
                 <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
                   {HOME.playClassic}
                 </h2>
-                <Badge tone="orange">Live</Badge>
+                <Badge tone="orange">{HOME.liveBadge}</Badge>
               </div>
               <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.playClassicDesc}</p>
             </div>
             <span className="display mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all group-hover:brightness-110">
-              Play now →
+              {HOME.playNow}
             </span>
           </Panel>
         </button>
@@ -118,7 +118,7 @@ export default function HomePage() {
                 <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                   {HOME.quickDraft}
                 </h3>
-                <Badge tone="blue">Live</Badge>
+                <Badge tone="blue">{HOME.liveBadge}</Badge>
               </div>
               <p className="text-xs leading-relaxed text-sub">{HOME.quickDraftDesc}</p>
             </Panel>
@@ -128,17 +128,29 @@ export default function HomePage() {
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                 {HOME.daily}
+                <span className="ml-2 text-sm text-faint">#{daily.info.n}</span>
               </h3>
               {mounted && streak > 0 ? (
                 <Badge tone="gold">{HOME.dailyStreak(streak)}</Badge>
               ) : (
-                <Badge tone="blue">Live</Badge>
+                <Badge tone="blue">{HOME.liveBadge}</Badge>
               )}
             </div>
             <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">
               {daily.info.label}
             </p>
-            <p className="mb-3 mt-0.5 text-xs leading-relaxed text-sub">{daily.info.description}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-sub">{daily.info.description}</p>
+            {daily.info.objective ? (
+              <p className="mb-3 mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-cyan">
+                <TargetGlyph />
+                <span>
+                  {daily.info.objective.label}
+                  <span className="text-faint"> · +{daily.info.objective.bonusXp} XP</span>
+                </span>
+              </p>
+            ) : (
+              <div className="mb-3" />
+            )}
             {dailyDone ? (
               <div>
                 {dailyResults[today]?.placement === "champion" ? (
@@ -216,10 +228,61 @@ export default function HomePage() {
         </Link>
       </p>
 
-      <p className="mt-10 text-center text-[11px] leading-relaxed text-faint md:hidden">
-        {APP.disclaimer}
-      </p>
+      {/* Subtle community / support row — only renders once the links are set
+          in src/config/site.ts (kept low-key by direction). */}
+      {SITE.discordUrl || SITE.supportUrl ? (
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+          {SITE.discordUrl ? (
+            <a
+              href={SITE.discordUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-blue/50 hover:text-blue-bright"
+            >
+              <DiscordGlyph /> {HOME.joinDiscord}
+            </a>
+          ) : null}
+          {SITE.supportUrl ? (
+            <a
+              href={SITE.supportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-orange-bright"
+            >
+              <CoffeeGlyph /> {HOME.support}
+            </a>
+          ) : null}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function TargetGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function DiscordGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+      <path d="M19.3 5.3a16 16 0 0 0-4-1.2l-.2.4a11 11 0 0 1 3.5 1.2 13 13 0 0 0-11.2 0A11 11 0 0 1 11 4.5l-.3-.4a16 16 0 0 0-4 1.2C4 8.5 3.4 11.7 3.6 14.8a16 16 0 0 0 4.9 2.5l.4-.5c-.4-.2-.9-.4-1.3-.7l.3-.2a9.3 9.3 0 0 0 8 0l.3.2c-.4.3-.9.5-1.3.7l.4.5a16 16 0 0 0 4.9-2.5c.3-3.6-.6-6.8-2.9-9.5ZM9.5 13c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Zm5 0c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6s1.5.7 1.4 1.6c0 .9-.6 1.6-1.4 1.6Z" />
+    </svg>
+  );
+}
+
+function CoffeeGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z" strokeLinejoin="round" />
+      <path d="M17 9h2.2a2.3 2.3 0 0 1 0 4.6H17" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 3c-.5.7-.5 1.3 0 2M11.5 3c-.5.7-.5 1.3 0 2" strokeLinecap="round" />
+    </svg>
   );
 }
 

@@ -7,13 +7,7 @@
 
 import { useMemo, useState } from "react";
 import { specialCards } from "@/data";
-import {
-  COLLECTION_UI as C,
-  EFFECT_LABELS,
-  RARITY_LABELS,
-  SPECIAL_TYPE_LABELS,
-  STAT_LABELS,
-} from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { effectiveStats, resolveSpecial } from "@/engine/cards";
 import type { SpecialCard, SpecialRarity } from "@/engine/types";
 import { cx, countryName, formatDate } from "@/lib/util";
@@ -38,6 +32,7 @@ const RARITY_RANK: Record<SpecialRarity, number> = {
 };
 
 export default function CollectionPage() {
+  const { COLLECTION_UI: C, RARITY_LABELS } = useCopy();
   const mounted = useMounted();
   const unlockedMap = useProfileStore((s) => s.unlockedSpecials);
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -119,7 +114,10 @@ export default function CollectionPage() {
       {visible.length === 0 ? (
         <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
       ) : (
-        <div className="flex flex-wrap justify-center gap-3 md:justify-start md:gap-4">
+        // auto-fill grid: columns stretch (1fr) so cards fill the whole row —
+        // no empty column on the right (v1.0.0 Pass 3). Cards are fluid to fill
+        // their cell; only the collection uses this, so other layouts untouched.
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
           {visible.map((sp) => {
             const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
             return isUnlocked ? (
@@ -129,6 +127,7 @@ export default function CollectionPage() {
                 showOverall
                 specialCollected
                 size="md"
+                fluid
                 onClick={() => setDetail(sp)}
               />
             ) : (
@@ -183,11 +182,12 @@ function FilterChip({
 }
 
 function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
+  const { SPECIAL_TYPE_LABELS, RARITY_LABELS } = useCopy();
   return (
-    <button type="button" onClick={onClick} className="relative block text-left">
-      {/* Match the unlocked GameCard md footprint exactly (w-36 md:w-44, p-3)
-          so earned and locked cards never differ in size (v0.7.0). */}
-      <div className="card-frame card-hidden flex aspect-[3/4.3] w-36 flex-col p-3 opacity-80 transition-all hover:opacity-100 md:w-44">
+    <button type="button" onClick={onClick} className="relative block w-full text-left">
+      {/* Fluid (w-full) to fill its grid cell, matching the fluid unlocked
+          GameCard so earned and locked cards stay the same size (v1.0.0). */}
+      <div className="card-frame card-hidden flex aspect-[3/4.3] w-full flex-col p-3 opacity-80 transition-all hover:opacity-100">
         <div className="flex items-start justify-between">
           <span className="display text-3xl font-bold leading-none text-faint">??</span>
           <LockGlyph />
@@ -209,6 +209,7 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
 }
 
 function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: string }) {
+  const { COLLECTION_UI: C, SPECIAL_TYPE_LABELS, RARITY_LABELS, EFFECT_LABELS, STAT_LABELS } = useCopy();
   const resolved = resolveSpecial(sp);
   const stats = effectiveStats(sp.overall, sp.stats);
   return (
@@ -249,6 +250,7 @@ function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: strin
 }
 
 function LockedDetail({ sp }: { sp: SpecialCard }) {
+  const { COLLECTION_UI: C, SPECIAL_TYPE_LABELS, RARITY_LABELS } = useCopy();
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">

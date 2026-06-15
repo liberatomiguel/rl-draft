@@ -3,6 +3,7 @@
 /** Achievements album — discoverable straight from the home screen. */
 
 import { achievements as achievementDefs } from "@/data";
+import { useCopy } from "@/content/copy";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { Badge } from "@/components/ui/Badge";
@@ -11,6 +12,7 @@ import { SectionTitle } from "@/components/ui/Panel";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 
 export default function AchievementsPage() {
+  const { ACH_UI } = useCopy();
   const mounted = useMounted();
   const earned = useProfileStore((s) => s.achievements);
   const count = mounted ? Object.keys(earned).length : 0;
@@ -19,8 +21,8 @@ export default function AchievementsPage() {
     <div className="rise-in">
       <BackToMenu />
       <SectionTitle
-        kicker="Feats to chase across every run"
-        title="Achievements"
+        kicker={ACH_UI.kicker}
+        title={ACH_UI.title}
         right={
           <Badge tone="orange" className="!text-sm">
             {count}/{achievementDefs.length}

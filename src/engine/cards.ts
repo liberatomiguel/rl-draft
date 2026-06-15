@@ -269,6 +269,7 @@ export function lineupHeader(lineupId: string) {
     orgName: org?.name ?? lineup.name,
     seasonLabel: season?.label ?? lineup.seasonId,
     seasonShort: season?.shortLabel ?? "",
+    year: season?.year ?? "",
     region: lineup.region,
   };
 }

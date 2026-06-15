@@ -10,7 +10,7 @@
 
 import { lineups, seasonById } from "@/data";
 import { createRng } from "@/lib/rng";
-import type { DailyInfo, Difficulty, Region } from "@/engine/types";
+import type { DailyInfo, DailyObjective, Difficulty, Region } from "@/engine/types";
 
 export interface DailyConfig {
   info: DailyInfo;
@@ -27,6 +27,18 @@ export interface DailyConfig {
 
 export function todayKey(now = new Date()): string {
   return now.toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+}
+
+/** Launch day = challenge #1. */
+const DAILY_EPOCH = "2026-06-15";
+const DAY_MS = 86_400_000;
+
+/** Sequential daily number since launch (#1, #2, …). */
+export function dailyNumber(date: string): number {
+  const t = Date.parse(`${date}T00:00:00Z`);
+  const e = Date.parse(`${DAILY_EPOCH}T00:00:00Z`);
+  if (Number.isNaN(t) || Number.isNaN(e)) return 1;
+  return Math.max(1, Math.floor((t - e) / DAY_MS) + 1);
 }
 
 /** FNV-1a — stable across platforms, good enough to seed mulberry32. */
@@ -64,15 +76,23 @@ function viable(pool: string[]): boolean {
 export function generateDailyConfig(date: string): DailyConfig {
   const rng = createRng(seedFromDate(date) ^ 0x5eed);
 
-  type Template = () => Omit<DailyConfig, "info"> & { label: string; description: string };
+  type TemplateResult = Omit<DailyConfig, "info"> & {
+    label: string;
+    description: string;
+    /** A template may pin its own bonus objective (overrides the random one). */
+    objective?: DailyObjective;
+  };
+  type Template = () => TemplateResult;
+
+  const pureBracket = (): TemplateResult => ({
+    label: "Pure Bracket",
+    description: "No modifiers. A clean classic run — same seed for everyone.",
+    difficulty: "normal",
+    hiddenOverall: false,
+  });
 
   const templates: Template[] = [
-    () => ({
-      label: "Pure Bracket",
-      description: "No modifiers. A clean classic run — same seed for everyone.",
-      difficulty: "normal",
-      hiddenOverall: false,
-    }),
+    pureBracket,
     () => {
       const regions: Region[] = ["NA", "EU", "SAM", "MENA", "OCE"];
       const region = rng.pick(regions);
@@ -155,30 +175,61 @@ export function generateDailyConfig(date: string): DailyConfig {
       // (×4 would have meant a special on most cards).
       specialChanceMult: 2.5,
     }),
+    // --- v1.0 models ---
+    () => ({
+      label: "Legacy Day",
+      description:
+        "The all-time gauntlet — championship rosters, hidden overalls, no rerolls. No unlock needed today.",
+      difficulty: "legacy",
+      hiddenOverall: true,
+    }),
+    () => ({
+      label: "Underdog",
+      description: "Take the long shot all the way. Win the title with a team under 88 OVR.",
+      difficulty: "normal",
+      hiddenOverall: false,
+      objective: {
+        type: "team_overall_under",
+        value: 88,
+        label: "Win the title with a team under 88 OVR",
+        bonusXp: 120,
+      },
+    }),
+    () => {
+      const pool = lineups
+        .filter((l) => l.historicalStrength === "elite" || l.historicalStrength === "strong")
+        .map((l) => l.id)
+        .sort();
+      return viable(pool)
+        ? {
+            label: "Champions Only",
+            description: "Only the all-time great rosters are in the pool. Greatness vs greatness.",
+            difficulty: "hard",
+            hiddenOverall: false,
+            poolLineupIds: pool,
+          }
+        : pureBracket();
+    },
   ];
 
   const picked = rng.pick(templates)();
 
-  // ~45% of days carry a bonus objective on top.
-  let objective: DailyInfo["objective"];
-  if (rng.chance(0.45)) {
-    objective = rng.chance(0.5)
-      ? {
-          type: "chemistry_good",
-          label: "Finish with Good+ chemistry",
-          bonusXp: 50,
-        }
-      : {
-          type: "concede_under",
-          value: 25,
-          label: "Concede fewer than 25 goals",
-          bonusXp: 50,
-        };
+  // A template can pin its own objective; otherwise ~45% of days roll a bonus.
+  let objective: DailyObjective | undefined = picked.objective;
+  if (!objective && rng.chance(0.45)) {
+    const pool: DailyObjective[] = [
+      { type: "chemistry_good", label: "Finish with Good+ chemistry", bonusXp: 50 },
+      { type: "chemistry_great", label: "Finish with Great+ chemistry", bonusXp: 80 },
+      { type: "concede_under", value: 25, label: "Concede fewer than 25 goals", bonusXp: 50 },
+      { type: "win_title", label: "Win the whole thing", bonusXp: 75 },
+    ];
+    objective = rng.pick(pool);
   }
 
   return {
     info: {
       date,
+      n: dailyNumber(date),
       label: picked.label,
       description: picked.description,
       objective,

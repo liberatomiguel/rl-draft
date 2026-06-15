@@ -15,7 +15,7 @@
  */
 
 import { useState } from "react";
-import { RARITY_LABELS, SPECIAL_TYPE_LABELS, STAT_LABELS } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import type { ResolvedCard } from "@/engine/cards";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
@@ -57,13 +57,6 @@ export interface GameCardProps {
   className?: string;
 }
 
-const ROLE_LABEL: Record<ResolvedCard["kind"], string> = {
-  player: "Player",
-  coach: "Coach",
-  sub: "Sub",
-  org: "Org",
-};
-
 /**
  * Role tag tints (v0.7.0) — a small colored pill per card kind so the player
  * can tell players/coach/sub/org apart at a glance. Org cards are tinted by
@@ -78,9 +71,23 @@ const KIND_TAG: Record<ResolvedCard["kind"], string> = {
 
 const SPECIAL_ACCENT: Record<string, string> = {
   rare: "text-indigo-300",
-  epic: "text-orange-300",
+  epic: "text-teal-300",
   mythic: "text-red-300",
   legendary: "text-amber-200",
+};
+
+/**
+ * Overall number tint per special rarity. Paired with `.ovr-shadow` (a heavy
+ * dark text-shadow) so the colored number stays legible over the card photo.
+ * v1.0.0 (Pass 3): legendary = a true gold (not pale yellow); mythic/rare/epic
+ * bumped up a shade so they read vivid, not washed out.
+ * ⇢ Adjust these tints here if you want a different look.
+ */
+const SPECIAL_OVR_COLOR: Record<string, string> = {
+  rare: "text-indigo-300",
+  epic: "text-teal-300",
+  mythic: "text-red-400",
+  legendary: "text-amber-400",
 };
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
@@ -111,6 +118,13 @@ export function GameCard({
   onClick,
   className,
 }: GameCardProps) {
+  const { RARITY_LABELS, SPECIAL_TYPE_LABELS, STAT_LABELS, DRAFT_UI } = useCopy();
+  const ROLE_LABEL: Record<ResolvedCard["kind"], string> = {
+    player: DRAFT_UI.player,
+    coach: DRAFT_UI.slotCoach,
+    sub: DRAFT_UI.slotSub,
+    org: DRAFT_UI.slotOrg,
+  };
   const isOrg = card.kind === "org";
   const isSpecial = Boolean(card.special);
   const hiddenBase = !showOverall && !isSpecial;
@@ -123,8 +137,9 @@ export function GameCard({
   const showLogoCenter = !isSpecial || maskedSpecial;
   const logoOrgId = maskedSpecial ? maskOrgId ?? card.orgId : card.orgId;
   const logoSeasonId = maskedSpecial ? maskSeasonId ?? card.seasonId : card.seasonId;
-  // Role tag tint — region-colored for org cards, kind-colored otherwise.
-  const tagClass = isOrg && card.region ? REGION_BADGE[card.region] : KIND_TAG[card.kind];
+  // Role tag tint — a FIXED color per kind (v1.0: the org tag no longer
+  // borrows the region color; only the org's region CHIP is region-tinted).
+  const tagClass = KIND_TAG[card.kind];
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
   const tiltTier: TiltIntensity | "off" =
@@ -177,7 +192,7 @@ export function GameCard({
                 "display block font-bold leading-none",
                 size === "sm" ? "text-2xl" : "text-2xl md:text-3xl",
                 isSpecial
-                  ? "text-white drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]"
+                  ? cx(SPECIAL_OVR_COLOR[card.special!.rarity] ?? "text-white", "ovr-shadow")
                   : showOverall && (card.overall ?? 0) >= 90
                     ? "text-cyan"
                     : hiddenBase
@@ -265,12 +280,14 @@ export function GameCard({
               : [card.orgName, card.seasonShort].filter(Boolean).join(" · ")}
         </p>
 
-        {/* Bottom tag — ratings/buffs blacked out on hidden runs */}
-        <div className="mt-1.5 flex items-center justify-between gap-1">
+        {/* Bottom tag — ratings/buffs blacked out on hidden runs. min-w-0 +
+            truncate keep the type·rarity pill inside the card on small sizes
+            (it used to spill past the frame and clip mid-letter). */}
+        <div className="mt-1.5 flex min-w-0 items-center justify-between gap-1">
           {card.special ? (
             <Badge
               tone={specialCollected && !maskedSpecial ? "gold" : "neutral"}
-              className="!text-[9px] backdrop-blur-sm"
+              className="!block max-w-full truncate !text-[9px] backdrop-blur-sm"
             >
               {maskedSpecial
                 ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
@@ -279,7 +296,7 @@ export function GameCard({
                   : "?? · ??"}
             </Badge>
           ) : card.kind === "coach" && card.buffType && showOverall ? (
-            <Badge tone="blue" className="!text-[9px]">
+            <Badge tone="blue" className="!block max-w-full truncate !text-[9px]">
               {STAT_LABELS[card.buffType]} {card.buffLevel}
             </Badge>
           ) : (

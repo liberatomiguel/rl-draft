@@ -3,17 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { APP } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
+import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
+import { useSettings } from "@/store/settingsStore";
+import { useMounted } from "@/store/useMounted";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
+import { SiteFooter } from "./SiteFooter";
+import { SettingsEffects } from "./SettingsEffects";
 
-const NAV = [
-  { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/play", label: "Play", icon: PlayIcon },
-  { href: "/collection", label: "Collection", icon: CollectionIcon },
-  { href: "/profile", label: "Profile", icon: ProfileIcon },
-] as const;
+type NavKey = "home" | "play" | "collection" | "profile";
+const NAV_ITEMS: { href: string; key: NavKey; icon: (p: { className?: string }) => React.ReactNode }[] = [
+  { href: "/", key: "home", icon: HomeIcon },
+  { href: "/play", key: "play", icon: PlayIcon },
+  { href: "/collection", key: "collection", icon: CollectionIcon },
+  { href: "/profile", key: "profile", icon: ProfileIcon },
+];
 
 export function Logo({ className }: { className?: string }) {
   return (
@@ -26,6 +32,7 @@ export function Logo({ className }: { className?: string }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const t = useCopy();
 
   // Leaving the run (any page that isn't /play) RESETS it automatically
   // (v0.7.0 — the leave-confirmation modal was removed by direction). The run
@@ -43,50 +50,68 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     className,
     children,
   }: {
-    item: (typeof NAV)[number];
+    item: (typeof NAV_ITEMS)[number];
     className: string;
     children: React.ReactNode;
   }) =>
     item.href === "/" ? (
-      <GuardedHomeLink href="/" className={className}>
+      <GuardedHomeLink href="/" className={className} onClick={() => sfx.click()}>
         {children}
       </GuardedHomeLink>
     ) : (
-      <Link href={item.href} className={className}>
+      <Link href={item.href} className={className} onClick={() => sfx.click()}>
         {children}
       </Link>
     );
 
   return (
     <LeaveRunProvider>
+      <SettingsEffects />
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">
           <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-            <GuardedHomeLink href="/" className="flex items-center gap-2" aria-label={APP.name}>
+            <GuardedHomeLink href="/" className="flex items-center gap-2" aria-label={t.APP.name}>
               <LogoMark />
               <Logo className="text-sm" />
             </GuardedHomeLink>
-            <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
-              {NAV.map((item) => {
-                const active =
-                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-                return (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    className={cx(
-                      "display rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
-                      active
-                        ? "bg-orange/12 text-orange-bright"
-                        : "text-sub hover:bg-white/5 hover:text-ink",
-                    )}
-                  >
-                    {item.label}
-                  </NavLink>
-                );
-              })}
-            </nav>
+            <div className="flex items-center gap-1">
+              <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+                {NAV_ITEMS.map((item) => {
+                  const active =
+                    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                  return (
+                    <NavLink
+                      key={item.href}
+                      item={item}
+                      className={cx(
+                        "display rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
+                        active
+                          ? "bg-orange/12 text-orange-bright"
+                          : "text-sub hover:bg-white/5 hover:text-ink",
+                      )}
+                    >
+                      {t.NAV[item.key]}
+                    </NavLink>
+                  );
+                })}
+              </nav>
+              <LangToggle />
+              <Link
+                href="/settings"
+                aria-label={t.NAV.settings}
+                title={t.NAV.settings}
+                onClick={() => sfx.click()}
+                className={cx(
+                  "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                  pathname.startsWith("/settings")
+                    ? "bg-orange/12 text-orange-bright"
+                    : "text-sub hover:bg-white/5 hover:text-ink",
+                )}
+              >
+                <GearIcon className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -95,12 +120,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
 
-        {/* Footer (desktop) */}
-        <footer className="hidden border-t border-line py-5 md:block">
-          <p className="mx-auto max-w-6xl px-4 text-xs leading-relaxed text-faint">
-            {APP.disclaimer}
-          </p>
-        </footer>
+        {/* Footer */}
+        <SiteFooter />
 
         {/* Bottom nav (mobile) */}
         <nav
@@ -108,7 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
         >
           <div className="mx-auto grid max-w-md grid-cols-4">
-            {NAV.map((item) => {
+            {NAV_ITEMS.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               const Icon = item.icon;
@@ -122,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   )}
                 >
                   <Icon className="h-5 w-5" />
-                  {item.label}
+                  {t.NAV[item.key]}
                 </NavLink>
               );
             })}
@@ -130,6 +151,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </div>
     </LeaveRunProvider>
+  );
+}
+
+/** EN / PT language switch — always visible in the header. */
+function LangToggle() {
+  const lang = useSettings((s) => s.lang);
+  const set = useSettings((s) => s.set);
+  const mounted = useMounted();
+  const active = mounted ? lang : "en";
+  return (
+    <div className="mr-0.5 flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Language">
+      {(["en", "pt"] as const).map((l) => (
+        <button
+          key={l}
+          type="button"
+          aria-pressed={active === l}
+          onClick={() => {
+            sfx.click();
+            set("lang", l);
+          }}
+          className={cx(
+            "display px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors",
+            active === l ? "bg-orange/20 text-orange-bright" : "text-sub hover:text-ink",
+          )}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -178,6 +228,24 @@ function CollectionIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
       <rect x="4" y="3.5" width="10" height="14" rx="2" />
       <path d="M9 20.5h9a2 2 0 0 0 2-2V8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GearIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }

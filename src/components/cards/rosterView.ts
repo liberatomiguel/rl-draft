@@ -1,6 +1,6 @@
 /** Roster → ordered, labeled, resolved slots for rails/review/results. */
 
-import { DRAFT_UI } from "@/content/copy";
+import { DRAFT_UI } from "@/content/copy.en";
 import { resolvePick, type ResolvedCard } from "@/engine/cards";
 import type { Roster, RosterSlotId } from "@/engine/types";
 

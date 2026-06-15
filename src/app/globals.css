@@ -224,9 +224,9 @@ body {
 
 .card-epic {
   background-image:
-    linear-gradient(168deg, #2a1606 0%, #1c0e03 58%, #2f1808 100%),
-    linear-gradient(165deg, #fdba74 0%, #ea580c 48%, #fb923c 100%);
-  box-shadow: 0 0 24px rgba(249, 115, 22, 0.16);
+    linear-gradient(168deg, #07241f 0%, #04130f 58%, #0a2a23 100%),
+    linear-gradient(165deg, #5eead4 0%, #0d9488 48%, #2dd4bf 100%);
+  box-shadow: 0 0 24px rgba(45, 212, 191, 0.16);
 }
 
 .card-mythic {
@@ -318,10 +318,10 @@ body {
   animation: mythic-halo 3.4s ease-in-out infinite;
 }
 
-/* Epic halo pulse — orange (gentler than mythic) */
+/* Epic halo pulse — teal (gentler than mythic) */
 @keyframes epic-halo {
-  0%, 100% { box-shadow: 0 0 22px rgba(249, 115, 22, 0.18); }
-  50% { box-shadow: 0 0 38px rgba(251, 146, 60, 0.36); }
+  0%, 100% { box-shadow: 0 0 22px rgba(20, 184, 166, 0.18); }
+  50% { box-shadow: 0 0 38px rgba(94, 234, 212, 0.34); }
 }
 
 .card-epic.card-special {
@@ -343,7 +343,7 @@ body {
  * block for position:fixed descendants (breaking modals/toasts).
  */
 .rise-in {
-  animation: rise-in 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  animation: rise-in calc(0.4s * var(--anim-scale, 1)) cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
 
 @keyframes pop-in {
@@ -370,7 +370,7 @@ body {
 
 .flip-card-inner {
   transform-style: preserve-3d;
-  transition: transform 0.65s cubic-bezier(0.3, 0.7, 0.3, 1);
+  transition: transform calc(0.65s * var(--anim-scale, 1)) cubic-bezier(0.3, 0.7, 0.3, 1);
 }
 
 .flip-card.flipped .flip-card-inner {
@@ -418,7 +418,7 @@ body {
 }
 
 .slot-reel-track {
-  animation: slot-spin 1.15s cubic-bezier(0.15, 0.85, 0.25, 1) forwards;
+  animation: slot-spin calc(1.15s * var(--anim-scale, 1)) cubic-bezier(0.15, 0.85, 0.25, 1) forwards;
 }
 
 @keyframes slot-spin {
@@ -658,7 +658,7 @@ body {
 
 .holo-epic::after {
   background:
-    linear-gradient(115deg, transparent 28%, rgba(251, 146, 60, 0.22) 44%, rgba(253, 224, 71, 0.16) 52%, transparent 66%);
+    linear-gradient(115deg, transparent 28%, rgba(45, 212, 191, 0.22) 44%, rgba(125, 252, 228, 0.16) 52%, transparent 66%);
   background-size: 220% 100%;
 }
 
@@ -744,6 +744,36 @@ body {
   animation: field-fx-pulse 2.4s ease-in-out infinite;
 }
 
+/*
+ * Holographic sheen for a special card on the field (v1.0): a rarity-tinted
+ * light band sweeps across the slot (screen blend, narrow band) so it reads as
+ * holographic without washing out the tiny name/overall text. Rarity tint is
+ * passed via --holo-tint. Needs the slot to be `relative overflow-hidden`.
+ */
+.field-holo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 36%,
+    var(--holo-tint, rgba(255, 255, 255, 0.3)) 50%,
+    transparent 64%
+  );
+  background-size: 220% 100%;
+  mix-blend-mode: screen;
+  animation: card-sheen 3.2s ease-in-out infinite;
+}
+
+/* Overall-number legibility on special cards: heavy dark shadow under the
+   rarity-colored number so it stays readable over the photo. */
+.ovr-shadow {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 0 7px rgba(0, 0, 0, 0.7);
+}
+
 /* ---------------------------------------------------------------------------
    Unlock ceremony
 --------------------------------------------------------------------------- */
@@ -755,7 +785,7 @@ body {
 }
 
 .ceremony-burst {
-  animation: ceremony-burst 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  animation: ceremony-burst calc(0.55s * var(--anim-scale, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 
 @keyframes ceremony-ring {
@@ -790,6 +820,7 @@ body {
   .card-mythic.card-special,
   .card-epic.card-special,
   .field-fx,
+  .field-holo,
   .field-slot-glow,
   .celebrate-rays,
   .celebrate-rays-prism,
@@ -812,4 +843,46 @@ body {
   * {
     scroll-behavior: auto !important;
   }
+}
+
+/*
+ * Manual reduced-motion override (Settings → Reduce motion). Mirrors the
+ * media-query block above for players who want it off regardless of the OS
+ * setting. `:is()` keeps the selector list compact; pseudo-elements can't go
+ * inside :is(), so they're listed separately.
+ */
+html.force-reduce-motion
+  :is(
+    .rise-in,
+    .pop-in,
+    .pulse-soft,
+    .card-legendary.card-special,
+    .card-mythic.card-special,
+    .card-epic.card-special,
+    .field-fx,
+    .field-holo,
+    .field-slot-glow,
+    .celebrate-rays,
+    .celebrate-rays-prism,
+    .confetti,
+    .champion-title,
+    .immaculate-title,
+    .ceremony-burst,
+    .ceremony-ring,
+    .card-float,
+    .ach-legend,
+    .slot-reel-track,
+    .live-dot
+  ) {
+  animation: none !important;
+}
+
+html.force-reduce-motion .card-special::after,
+html.force-reduce-motion .holo-legendary::after,
+html.force-reduce-motion .ach-legend-chip::after {
+  animation: none !important;
+}
+
+html.force-reduce-motion .flip-card-inner {
+  transition: none !important;
 }

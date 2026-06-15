@@ -17,6 +17,10 @@ const SIZES = {
   lg: "h-28 w-28",
 } as const;
 
+/** Intrinsic px per size — set as width/height so the slot is reserved
+ *  before the PNG loads (no layout shift / late paint). v1.0 perf fix. */
+const SIZE_PX = { sm: 48, md: 80, lg: 112 } as const;
+
 const RANK_TINT: Record<string, string> = {
   unranked: "from-slate-500/25 to-slate-800/40 border-slate-400/30",
   bronze: "from-amber-700/35 to-amber-950/50 border-amber-600/40",
@@ -71,6 +75,11 @@ export function RankBadge({
       src={src}
       alt={rank.label}
       title={rank.label}
+      width={SIZE_PX[size]}
+      height={SIZE_PX[size]}
+      loading="eager"
+      fetchPriority="high"
+      decoding="async"
       onError={() => setFailed(true)}
       className={cx("shrink-0 object-contain", SIZES[size], className)}
     />

@@ -1,9 +1,72 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-15. **v0.6.0 "Main Stage"** (the big polish pass before
-> 1.0) is COMMITTED. **v0.6.1** (a tuning round on top) is implemented but
-> **uncommitted** — Miguel reviews on localhost and commits manually.
+> Last updated: 2026-06-15. **v1.0.0 "Kickoff"** (public launch on
+> rocketdraft.app) is being built across focused passes — **Pass 1 done**
+> (launch foundation + card work), **uncommitted**. v0.6.x is committed.
+
+## v1.0.0 "Kickoff" — launch build (in progress, uncommitted)
+
+Being assembled in passes so each is reviewable (Miguel reviews on localhost).
+
+**Pass 1 — DONE:**
+- SEO complete for rocketdraft.app: metadata, OG image, sitemap, robots,
+  JSON-LD, Search Console hook. Vercel Web Analytics wired (`@vercel/analytics`).
+- Global footer + `/changelog` and `/privacy` pages + subtle home Discord/coffee
+  buttons. Links in `src/config/site.ts` — **discordUrl now set**; `supportUrl`
+  still empty (its button hides until filled).
+- Card work: rarity-colored overalls (legible shadow); **epic → teal**;
+  holographic sheen on field specials; fixed org tag color; season year in the
+  draft; small-card badge truncation; rank-image load optimization.
+- First-run How-to-Play modal + first-Legacy intro (one-time profile flags).
+
+**Pass 2 — DONE:**
+- **Settings** (`/settings`, gear in header, `settingsStore`): sound on/off +
+  volume, reduce-motion override, animation speed. Applied via `SettingsEffects`
+  (`--anim-scale` + `force-reduce-motion` class) and the tournament default.
+- **Sound effects** — synthesized Web Audio (`src/lib/sfx.ts`), no assets,
+  volume/mute-aware; wired into pick/reroll/start/unlock/rank-up/win/lose.
+- **Richer dailies** (`daily.ts`): daily #number, new models (Legacy Day,
+  Underdog, Champions Only) + objectives (Great chemistry, win title,
+  team-overall-under). Shown on the home card. (export/import save dropped by
+  direction.)
+
+**Pass 3a — DONE (polish):** settings icon → gear; light menu-click + sim
+match-resolved cues (sfx.click/matchWin/matchLose); collection grid fills the
+row (CSS `auto-fill,minmax(160px,1fr)` + fluid cards, LockedCard `w-full`);
+special overall numbers recolored (`SPECIAL_OVR_COLOR` in GameCard) — legendary
+gold, mythic/rare/epic more saturated.
+
+**Pass 3b — DONE: PT-BR translation + language switch.** `copy.en.ts` (`EN`)
++ `copy.pt.ts` (`PT`) + `copy.ts` exposing `useCopy()` (mounted-gated → EN on
+first render, then saved lang; no hydration mismatch) + `getCopy()`. All ~15
+client screens + sub-components migrated off the static named imports; layout
+metadata + `rosterView` read `copy.en` directly (EN, server-safe). EN/PT toggle
+in the header (`LangToggle`) + a Language control in `/settings`; `<html lang>`
+set in `SettingsEffects`. Difficulty labels/taglines live in copy (mapped in
+SetupScreen/RunStepper/how-to/profile, since `balance.ts` stays language-free).
+**Scope — EN by design (content, not chrome):** achievement
+titles/descriptions, special-card titles/flavor/effects, player/org/season
+names, daily-challenge labels, the engine XP-line labels, changelog/privacy
+prose. Verified: toggle works both ways mid-run, cards render, no console/
+hydration errors, `tsc`+`build` clean, 42 tests pass.
+
+**v1.0.0 "Kickoff" is now FEATURE-COMPLETE** (uncommitted). Remaining before
+shipping is launch ops, not code: see "Pending / next actions".
+
+**v1.1 fast-follow (needs backend Miguel provisions):** Discord login + cloud
+save, leaderboard, internal player metrics (e.g. Discord role for the first
+max-rank player). Supabase + a Discord OAuth app required.
+
+**Open setup tasks for Miguel:** fill `discordUrl`/`supportUrl` in
+`src/config/site.ts`; add `GOOGLE_SITE_VERIFICATION` env (or verify via DNS)
+and submit the sitemap in Search Console; confirm the Vercel domain.
+
+**Card-rendering question answered:** orgs with multiple logos use
+`Org.logoEras` + the curated `ORG_LOGO_ERAS` map in
+`scripts/build-dataset.mjs`; assets at `public/orgs/<orgId>@<era>.png` resolve
+by season order (NRG is the worked example). See DATA-GUIDE.md before the
+manual logo/photo review.
 
 ## v0.6.1 — tuning round (uncommitted)
 

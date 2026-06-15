@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TOURNAMENT } from "@/config/balance";
-import { NARRATION, TOURNAMENT_UI as T } from "@/content/copy";
+import { useCopy, type Copy } from "@/content/copy";
 import { lineupById } from "@/data";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { displayTeamOverall } from "@/engine/rating";
@@ -29,7 +29,9 @@ import type {
   TournamentTeam,
 } from "@/engine/types";
 import { cx } from "@/lib/util";
+import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
+import { ANIM_TOURNAMENT_SPEED, useSettings } from "@/store/settingsStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
@@ -53,7 +55,7 @@ function entryKey(stage: string, roundIndex: number, seriesIndex: number): strin
   return `${stage}:${roundIndex}:${seriesIndex}`;
 }
 
-function allEntries(t: TournamentState): SeriesEntry[] {
+function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[] {
   const out: SeriesEntry[] = [];
   // Within each round the user's series reveals FIRST (it's the story);
   // AI series follow as quick background pops. Sort is stable, so rebuilt
@@ -125,6 +127,7 @@ function teamSeasonId(team: TournamentTeam | undefined): string | undefined {
 // ---------------------------------------------------------------------------
 
 export function TournamentScreen({ run }: { run: RunState }) {
+  const { TOURNAMENT_UI: T } = useCopy();
   const playRound = useRunStore((s) => s.playRound);
   const finishRun = useRunStore((s) => s.finishRun);
   const t = run.tournament;
@@ -132,15 +135,20 @@ export function TournamentScreen({ run }: { run: RunState }) {
   // Playback state. On mount (or refresh) everything already simulated is
   // treated as revealed. A FRESH tournament (straight from team review)
   // auto-starts — no extra click needed.
-  const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t) : []));
-  const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t).length : 0));
+  const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t, T) : []));
+  const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t, T).length : 0));
   const [gamesShown, setGamesShown] = useState(0);
   const [running, setRunning] = useState(
-    () => Boolean(t) && allEntries(t!).length === 0 && t!.stage !== "finished",
+    () => Boolean(t) && allEntries(t!, T).length === 0 && t!.stage !== "finished",
   );
-  const [speed, setSpeed] = useState<1 | 2 | 4>(1);
+  // Default playback speed follows the Settings → Animation speed preference.
+  const [speed, setSpeed] = useState<1 | 2 | 4>(
+    () => ANIM_TOURNAMENT_SPEED[useSettings.getState().animSpeed],
+  );
   const [inspectKey, setInspectKey] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // User series whose "match complete" cue already played (once each).
+  const cuedRef = useRef<Set<string>>(new Set());
 
   const revealedKeys = useMemo(
     () => new Set(queue.slice(0, cursor).map((e) => e.key)),
@@ -154,9 +162,9 @@ export function TournamentScreen({ run }: { run: RunState }) {
     playRound();
     const fresh = useRunStore.getState().run?.tournament;
     if (!fresh) return;
-    const entries = allEntries(fresh);
+    const entries = allEntries(fresh, T);
     setQueue(entries); // cursor stays — new entries are beyond it
-  }, [playRound]);
+  }, [playRound, T]);
 
   // The autoplay engine. Pace depends on what is being revealed: the user's
   // series plays game by game then lingers; AI series pop quickly; crossing
@@ -180,6 +188,12 @@ export function TournamentScreen({ run }: { run: RunState }) {
           setGamesShown((g) => g + 1),
         );
       } else {
+        // The user's series just finished resolving on screen — light cue.
+        if (current.isUser && !cuedRef.current.has(current.key)) {
+          cuedRef.current.add(current.key);
+          if (series.winnerTeamId === "user") sfx.matchWin();
+          else sfx.matchLose();
+        }
         const base = current.isUser
           ? PACE.userSeriesLinger
           : (current.stage === "swiss" ? PACE.aiSwiss : PACE.aiPlayoff) + roundGap;
@@ -209,7 +223,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
     }
     const fresh = useRunStore.getState().run?.tournament;
     if (fresh) {
-      const entries = allEntries(fresh);
+      const entries = allEntries(fresh, T);
       setQueue(entries);
       setCursor(entries.length);
     }
@@ -262,7 +276,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
               </Button>
             ) : (
               <Button variant="secondary" onClick={() => setRunning(false)}>
-                <PauseGlyph /> Pause
+                <PauseGlyph /> {T.pause}
               </Button>
             )}
             <div className="flex overflow-hidden rounded-lg border border-line">
@@ -435,6 +449,7 @@ function MatchCenter({
   gamesShown: number;
   onClose?: () => void;
 }) {
+  const { TOURNAMENT_UI: T, NARRATION } = useCopy();
   const series = locateSeries(t, entry);
   const teamA = t.teams[series.teamAId];
   const teamB = t.teams[series.teamBId];
@@ -485,7 +500,7 @@ function MatchCenter({
       lines.push(NARRATION.overtimeNote);
     }
     return lines;
-  }, [done, isUserSeries, series, userWon]);
+  }, [done, isUserSeries, series, userWon, NARRATION]);
 
   return (
     <Panel strong glow={live ? "orange" : undefined} className="p-5">
@@ -606,6 +621,7 @@ function SwissPath({
   liveKey: string | null;
   onInspect: (key: string) => void;
 }) {
+  const { TOURNAMENT_UI: T } = useCopy();
   // The user's series per swiss round, with reveal state.
   const cells: {
     key: string | null;
@@ -727,7 +743,7 @@ function SwissPath({
           );
         })}
       </div>
-      <p className="mt-2 text-[10px] text-faint">{run.showOverall ? "" : "Opponent ratings stay hidden until the results screen."}</p>
+      <p className="mt-2 text-[10px] text-faint">{run.showOverall ? "" : T.opponentHidden}</p>
     </Panel>
   );
 }
@@ -769,6 +785,7 @@ function PlayoffBracketView({
   allRevealed: boolean;
   onInspect: (key: string) => void;
 }) {
+  const { TOURNAMENT_UI: T } = useCopy();
   const p = t.playoffs!;
   const roundIndexByName = new Map(p.rounds.map((r, i) => [r.name, i]));
   const nextRoundName = roundOrderFor(p.format)[p.rounds.length] ?? null;
@@ -848,6 +865,7 @@ function BracketCell({
   pair?: [string, string];
   onClick?: () => void;
 }) {
+  const { TOURNAMENT_UI: T } = useCopy();
   const userIn = series
     ? series.teamAId === "user" || series.teamBId === "user"
     : pair
@@ -931,6 +949,7 @@ function SwissStandings({
   /** Standings reflect rounds 1..throughRound only (end-of-round updates). */
   throughRound: number;
 }) {
+  const { TOURNAMENT_UI: T } = useCopy();
   const sorted = Object.keys(t.teams).sort((a, b) => {
     const ra = records.get(a)!;
     const rb = records.get(b)!;
@@ -958,7 +977,7 @@ function SwissStandings({
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-faint">
-              <th className="pb-2 font-semibold">Team</th>
+              <th className="pb-2 font-semibold">{T.team}</th>
               <th className="pb-2 text-center font-semibold">W–L</th>
               <th className="pb-2 text-center font-semibold">GD</th>
               <th className="pb-2 text-right font-semibold">OVR</th>

@@ -478,16 +478,25 @@ export interface EliminatorTeam {
 export interface DailyInfo {
   /** ISO date (UTC), e.g. "2026-06-12" — also drives the shared seed. */
   date: string;
+  /** Sequential challenge number since launch (#1, #2, …). */
+  n: number;
   label: string;
   description: string;
   /** Optional bonus objective evaluated at results time. */
-  objective?: {
-    type: "chemistry_good" | "concede_under";
-    /** Threshold for concede_under (max goals conceded). */
-    value?: number;
-    label: string;
-    bonusXp: number;
-  };
+  objective?: DailyObjective;
+}
+
+export interface DailyObjective {
+  type:
+    | "chemistry_good"
+    | "chemistry_great"
+    | "concede_under"
+    | "win_title"
+    | "team_overall_under";
+  /** Threshold for concede_under (max goals) / team_overall_under (max OVR). */
+  value?: number;
+  label: string;
+  bonusXp: number;
 }
 
 /** The whole state of one run. Persisted so a refresh resumes the game. */

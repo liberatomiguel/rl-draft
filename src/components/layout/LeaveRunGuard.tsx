@@ -15,7 +15,7 @@
  */
 
 import Link from "next/link";
-import { NAV_UI } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 
 /**
  * Back-compat shim: returns a no-op `requestLeave` that NEVER intercepts
@@ -47,6 +47,7 @@ export function GuardedHomeLink({
 
 /** Standard top-of-page back link (profile, collection, achievements…). */
 export function BackToMenu() {
+  const { NAV_UI } = useCopy();
   return (
     <GuardedHomeLink
       href="/"

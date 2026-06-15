@@ -9,7 +9,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { DIFFICULTY } from "@/config/balance";
-import { HOME, SETUP } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import type { Difficulty } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { selectLegacyUnlocked, useProfileStore } from "@/store/profileStore";
@@ -22,6 +22,7 @@ import { Toggle } from "@/components/ui/Toggle";
 const ORDER: Difficulty[] = ["easy", "normal", "hard", "legacy"];
 
 export function SetupScreen() {
+  const { HOME, SETUP, DIFFICULTY_LABELS } = useCopy();
   const startRun = useRunStore((s) => s.startRun);
   // The mode comes from the menu card the player clicked (Classic / Quick) —
   // no mode switcher here by design.
@@ -70,19 +71,19 @@ export function SetupScreen() {
             >
               <div className="mb-1 flex items-center justify-between">
                 <span className="display text-lg font-bold uppercase tracking-wide text-ink">
-                  {d.label}
+                  {DIFFICULTY_LABELS[id].label}
                 </span>
-                {active ? <Badge tone="orange">Selected</Badge> : null}
+                {active ? <Badge tone="orange">{SETUP.selected}</Badge> : null}
               </div>
-              <p className="mb-3 text-xs leading-relaxed text-sub">{d.tagline}</p>
+              <p className="mb-3 text-xs leading-relaxed text-sub">{DIFFICULTY_LABELS[id].tagline}</p>
               <div className="flex flex-wrap gap-1.5">
                 <Badge tone="blue">{SETUP.rerolls(d.rerolls)}</Badge>
                 {d.overallLockedHidden ? (
-                  <Badge tone="neutral">OVR hidden</Badge>
+                  <Badge tone="neutral">{SETUP.ovrHidden}</Badge>
                 ) : (
-                  <Badge tone="neutral">OVR optional</Badge>
+                  <Badge tone="neutral">{SETUP.ovrOptional}</Badge>
                 )}
-                {id === "legacy" ? <Badge tone="gold">All-time gauntlet</Badge> : null}
+                {id === "legacy" ? <Badge tone="gold">{SETUP.legacyBadge}</Badge> : null}
               </div>
               {isLegacyLocked ? (
                 <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-faint">

@@ -10,6 +10,95 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.0.0] — "Kickoff" — 2026 (in progress, uncommitted)
+
+The public launch (rocketdraft.app), assembled across focused passes.
+**Pass 1: launch foundation + card work. Pass 2: settings, sound, dailies.
+Pass 3a: polish adjustments (below).** Still to land before 1.0 ships:
+**PT-BR translation + language switch** (Pass 3b). (Accounts + leaderboard are
+a v1.1 fast-follow.)
+
+### Added (Pass 3b — PT-BR + language switch)
+- **Full Portuguese (PT-BR) translation** of the UI with an **EN/PT toggle in
+  the header** (always visible). Persisted per device; switches instantly with
+  no reload, including mid-run.
+- i18n architecture: `copy.en.ts` (`EN`) + `copy.pt.ts` (`PT`) + a `useCopy()`
+  hook **gated by `useMounted()`** so the first (server-matching) render is EN,
+  then the saved language — no hydration mismatch/flash. `getCopy()` covers
+  non-component helpers. `<html lang>` updates with the language.
+- Translated: home, nav, footer, setup, draft, team review (incl. analyst
+  readout), tournament, results, collection, profile, settings, achievements,
+  how-to-play, onboarding, difficulty names/taglines, card role tags, and
+  narration. Scope note: historical CONTENT stays EN by design — achievement
+  titles/descriptions, special-card titles/flavor/effects, player/org/season
+  names, daily-challenge labels, the engine-generated XP-line labels, and the
+  changelog/privacy long-form pages.
+
+### Changed / Fixed (Pass 3a — polish)
+- Settings icon is now a proper **gear** (was a sun).
+- Light **menu click** sound + a light **match-resolved** cue in the sim
+  (distinct for the user's series won vs lost).
+- **Collection grid fills the row** (CSS auto-fill, fluid cards) — no more
+  empty column on the right on desktop; locked + earned stay the same size.
+- Special **overall numbers**: legendary is a true **gold** (not pale yellow),
+  and mythic/rare/epic are more saturated (less washed out).
+  ⇢ tweak in `SPECIAL_OVR_COLOR` in `src/components/cards/GameCard.tsx`.
+
+### Added (Pass 2 — settings, sound, dailies)
+- **Settings screen** (`/settings`, gear in the header): sound on/off + volume,
+  reduce-motion override, and animation speed (Slow/Normal/Fast). Persisted.
+- **Animation speed** scales the draft reel, reveals, ceremonies and page
+  transitions (`--anim-scale`) and sets the tournament playback default;
+  **Reduce motion** is a manual override on top of the OS setting.
+- **Subtle sound effects** (synthesized — no assets): draft pick, reroll,
+  tournament start, card unlock, rank-up, win/lose. Respects the volume/mute
+  setting; off is instant.
+- **Richer daily challenges**: a sequential **daily number** (#1, #2, …), new
+  models (**Legacy Day**, **Underdog** — win with a sub-88 team, **Champions
+  Only**), and new bonus objectives (Great+ chemistry, win the title,
+  team-overall-under). The number + objective show on the home card.
+
+### Added (Pass 1 — launch foundation)
+- **SEO**: full metadata for rocketdraft.app (canonical, Open Graph, Twitter
+  card, keywords), a generated OG/preview image, `sitemap.xml`, `robots.txt`,
+  `VideoGame` JSON-LD, and a Google Search Console verification hook
+  (`GOOGLE_SITE_VERIFICATION` env).
+- **Vercel Web Analytics** (privacy-first, no cookie banner). Search-impression
+  data comes from Search Console (set up at deploy).
+- **Footer** across the site: Changelog · How to play · Privacy · Discord ·
+  Support links, "Made by LiberatoRL", "Inspired by draftrlcs.app by Rams",
+  and the version/codename. (Discord + support links render once set in
+  `src/config/site.ts`.)
+- **Changelog** and **Privacy Policy** pages (`/changelog`, `/privacy`).
+- **Subtle home buttons** for the community Discord and "buy me a coffee"
+  (hidden until their URLs are set).
+- **First-run How-to-Play modal** (shown once) and a **first-Legacy intro**
+  modal (one-time flags in the profile store).
+- `src/config/site.ts` — one place for the domain, version, attribution and
+  external links.
+
+### Changed
+- **Special-card overall numbers are rarity-colored** (legendary gold, mythic
+  red, epic teal, rare indigo) with a heavy `.ovr-shadow` so they stay legible
+  over the photo.
+- **Epic rarity → teal/emerald** (frame, halo, holo, accents, field FX) — a
+  cleaner blue→green→red→gold ladder than the orange trial.
+- **Special cards on the "Your Team" field now carry a rarity-tinted
+  holographic sheen** (`field-holo`) on top of the glow + border, on every run.
+- **Draft header shows the season's year** next to the season label (only when
+  the label doesn't already contain it).
+- **Rank images load faster**: explicit dimensions + eager/high-priority
+  decoding (no layout shift / late paint).
+
+### Fixed
+- **Org cards: the "ORG" tag is a fixed color again** (it was tracking the
+  region color); only the org's region chip stays region-tinted.
+- **Small/reduced cards no longer clip the type·rarity pill** — it now
+  truncates with an ellipsis inside the card instead of spilling past the
+  frame and clipping mid-letter.
+
+---
+
 ## [0.6.1] — "Main Stage" (cont.) — 2026-06-15
 
 Tuning round on v0.6.0, by direction — colors, effects and the celebration

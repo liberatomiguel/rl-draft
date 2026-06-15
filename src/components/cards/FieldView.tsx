@@ -7,7 +7,7 @@
  * compatible empty slots glow and become clickable.
  */
 
-import { DRAFT_UI } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { resolvePick, type ResolvedCard } from "@/engine/cards";
 import type { CardKind, Roster, RosterSlotId } from "@/engine/types";
 import { cx } from "@/lib/util";
@@ -38,36 +38,44 @@ function resolved(roster: Roster, slot: RosterSlotId): ResolvedCard | null {
 interface FieldFx {
   cls: string;
   style?: React.CSSProperties;
+  /** Rarity tint for the holographic sheen (special cards only). */
+  holoTint?: string;
 }
 
 /**
- * Rarity FX for a drafted card sitting on the field (v0.6.1).
+ * Rarity FX for a drafted card sitting on the field (v1.0).
  * - SPECIAL cards get a LIVING rarity glow (animated `field-fx`, color via
- *   `--fx-color`) on EVERY run — including Hard/hidden, because a special's
- *   presence is public information (only its identity is masked). The glow
- *   is the effect, not just a border line.
+ *   `--fx-color`) PLUS a rarity-tinted holographic sheen (`field-holo`), on
+ *   EVERY run — including Hard/hidden, because a special's presence is public
+ *   information (only its identity is masked). It's the full effect, not just
+ *   a border line.
  * - BASE cards get their gold/silver/blue border only when overalls are shown
- *   (base rarity is secret on hidden runs).
+ *   (base rarity is secret on hidden runs) — see baseAccent.
+ * The slot must add positioning + `overflow-hidden` to clip the sheen.
  */
 function fieldFx(card: ResolvedCard | null): FieldFx {
-  if (!card) return { cls: "" };
-  if (card.special) {
-    const fx = (border: string, color: string): FieldFx => ({
-      cls: `field-fx ${border}`,
-      style: { ["--fx-color"]: color } as React.CSSProperties,
-    });
-    switch (card.special.rarity) {
-      case "legendary":
-        return fx("!border-amber-100/80", "rgba(255, 240, 195, 0.62)");
-      case "mythic":
-        return fx("!border-red-400/80", "rgba(239, 68, 68, 0.55)");
-      case "epic":
-        return fx("!border-orange-400/80", "rgba(249, 115, 22, 0.5)");
-      case "rare":
-        return fx("!border-indigo-400/75", "rgba(99, 102, 241, 0.45)");
-    }
+  if (!card?.special) return { cls: "" };
+  const fx = (border: string, glow: string, holoTint: string): FieldFx => ({
+    cls: `field-fx ${border}`,
+    style: { ["--fx-color"]: glow } as React.CSSProperties,
+    holoTint,
+  });
+  switch (card.special.rarity) {
+    case "legendary":
+      return fx("!border-amber-100/80", "rgba(255, 240, 195, 0.62)", "rgba(255, 240, 190, 0.55)");
+    case "mythic":
+      return fx("!border-red-400/80", "rgba(239, 68, 68, 0.55)", "rgba(248, 113, 113, 0.5)");
+    case "epic":
+      return fx("!border-teal-400/80", "rgba(45, 212, 191, 0.5)", "rgba(94, 234, 212, 0.45)");
+    case "rare":
+      return fx("!border-indigo-400/75", "rgba(99, 102, 241, 0.45)", "rgba(129, 140, 248, 0.42)");
   }
   return { cls: "" };
+}
+
+/** The holographic sheen overlay rendered inside a special card's field slot. */
+function FieldHolo({ tint }: { tint: string }) {
+  return <span className="field-holo" style={{ ["--holo-tint"]: tint } as React.CSSProperties} aria-hidden />;
 }
 
 /** Base-card border accent — only meaningful when overalls are visible. */
@@ -93,6 +101,7 @@ export function FieldView({
   showBench = true,
   className,
 }: FieldViewProps) {
+  const { DRAFT_UI } = useCopy();
   const slotKind = (slot: RosterSlotId): CardKind =>
     slot === "coach" ? "coach" : slot === "sub" ? "sub" : slot === "org" ? "org" : "player";
 
@@ -176,7 +185,7 @@ function FieldSlot({
     </span>
   );
 
-  const fx = target ? { cls: "", style: undefined } : fieldFx(card);
+  const fx: FieldFx = target ? { cls: "" } : fieldFx(card);
   const base = cx(
     "absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-1.5 py-1.5 backdrop-blur-sm transition-all",
     card
@@ -184,17 +193,25 @@ function FieldSlot({
       : "border-dashed border-line bg-black/20",
     !target && baseAccent(card, showOverall),
     !target && fx.cls,
+    // FieldSlot is already positioned (absolute), so the holo anchors to it.
+    fx.holoTint && "overflow-hidden",
     target && "field-slot-glow cursor-pointer !border-orange bg-orange/10",
   );
   const mergedStyle = { ...style, ...fx.style };
+  const content = (
+    <>
+      {inner}
+      {fx.holoTint ? <FieldHolo tint={fx.holoTint} /> : null}
+    </>
+  );
 
   return onClick ? (
     <button type="button" onClick={onClick} style={mergedStyle} className={base} aria-label={`Place in ${label}`}>
-      {inner}
+      {content}
     </button>
   ) : (
     <div style={mergedStyle} className={base}>
-      {inner}
+      {content}
     </div>
   );
 }
@@ -212,6 +229,7 @@ function BenchSlot({
   target: boolean;
   onClick?: () => void;
 }) {
+  const { DRAFT_UI } = useCopy();
   const isOrg = card?.kind === "org";
   const inner = (
     <>
@@ -232,20 +250,28 @@ function BenchSlot({
     </>
   );
 
-  const fx = target ? { cls: "", style: undefined } : fieldFx(card);
+  const fx: FieldFx = target ? { cls: "" } : fieldFx(card);
   const base = cx(
     "flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 transition-all",
     card ? "border-line-strong bg-white/4" : "border-dashed border-line",
     !target && baseAccent(card, showOverall),
     !target && fx.cls,
+    // BenchSlot is static, so it needs `relative` for the holo to anchor.
+    fx.holoTint && "relative overflow-hidden",
     target && "field-slot-glow cursor-pointer !border-orange bg-orange/10",
+  );
+  const content = (
+    <>
+      {inner}
+      {fx.holoTint ? <FieldHolo tint={fx.holoTint} /> : null}
+    </>
   );
 
   return onClick ? (
     <button type="button" onClick={onClick} style={fx.style} className={base} aria-label={`Place in ${label}`}>
-      {inner}
+      {content}
     </button>
   ) : (
-    <div style={fx.style} className={base}>{inner}</div>
+    <div style={fx.style} className={base}>{content}</div>
   );
 }

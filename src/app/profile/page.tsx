@@ -5,8 +5,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { achievements as achievementDefs, specialCards } from "@/data";
-import { DIFFICULTY } from "@/config/balance";
-import { PROFILE_UI as P } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { rankForXp } from "@/engine/progression";
 import type { Placement } from "@/engine/types";
 import { formatDate } from "@/lib/util";
@@ -25,20 +24,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 
-const PLACEMENT_SHORT: Record<string, string> = {
-  champion: "Champion",
-  runner_up: "Finalist",
-  third: "3rd Place",
-  fourth: "4th Place",
-  top6: "Top 6",
-  top8: "Top 8",
-  swiss_exit: "Swiss",
-  // Legacy labels from pre-v0.2 saves:
-  semifinalist: "Top 4",
-  quarterfinalist: "Top 8",
-};
-
 export default function ProfilePage() {
+  const { PROFILE_UI: P, DIFFICULTY_LABELS } = useCopy();
   const mounted = useMounted();
   const profile = useProfileStore();
   const titles = useProfileStore(selectChampionships);
@@ -56,7 +43,7 @@ export default function ProfilePage() {
   return (
     <div className="rise-in">
       <BackToMenu />
-      <SectionTitle kicker="Career" title={P.title} className="mb-6" />
+      <SectionTitle kicker={P.career} title={P.title} className="mb-6" />
 
       {/* Rank header — uses the profile art set (public/ranks/profile/) */}
       <Panel strong glow="blue" className="mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
@@ -82,24 +69,24 @@ export default function ProfilePage() {
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile label={P.runs} value={String(profile.runsCompleted)} />
         <StatTile label={P.titles} value={String(titles)} />
-        <StatTile label={P.bestClear} value={bestClear ? DIFFICULTY[bestClear].label : P.none} />
+        <StatTile label={P.bestClear} value={bestClear ? DIFFICULTY_LABELS[bestClear].label : P.none} />
         <StatTile label={P.specials} value={`${unlockedCount}/${specialCards.length}`} />
       </div>
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile
-          label="Title rate"
+          label={P.titleRate}
           value={profile.runsCompleted > 0 ? `${Math.round((titles / profile.runsCompleted) * 100)}%` : P.none}
         />
         <StatTile
-          label="Playoff rate"
+          label={P.playoffRate}
           value={
             profile.runsCompleted > 0
               ? `${Math.round((profile.playoffAppearances / profile.runsCompleted) * 100)}%`
               : P.none
           }
         />
-        <StatTile label="Podiums" value={String(profile.podiums)} />
-        <StatTile label="Swiss wins" value={String(profile.swissWinsTotal)} />
+        <StatTile label={P.podiums} value={String(profile.podiums)} />
+        <StatTile label={P.swissWins} value={String(profile.swissWinsTotal)} />
       </div>
 
       {/* Achievements */}
@@ -108,7 +95,7 @@ export default function ProfilePage() {
         right={
           <Link href="/achievements">
             <Badge tone="blue" className="cursor-pointer hover:bg-blue/20">
-              {Object.keys(earned).length}/{achievementDefs.length} — view all
+              {P.viewAll(Object.keys(earned).length, achievementDefs.length)}
             </Badge>
           </Link>
         }
@@ -127,7 +114,7 @@ export default function ProfilePage() {
           {profile.runHistory.slice(0, 10).map((run) => (
             <Panel key={run.runId} className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3.5 text-sm">
               <Badge tone={run.placement === "champion" ? "gold" : "neutral"} className="w-20 justify-center">
-                {PLACEMENT_SHORT[run.placement as Placement] ?? run.placement}
+                {P.placement[run.placement as Placement] ?? run.placement}
               </Badge>
               <span className="display font-bold text-ink">
                 {run.swissRecord.wins}–{run.swissRecord.losses}
@@ -135,8 +122,8 @@ export default function ProfilePage() {
               <span className="min-w-0 flex-1 truncate text-xs text-sub">
                 {run.rosterNames.join(" · ")}
               </span>
-              <Badge tone="blue">{DIFFICULTY[run.difficulty].label}</Badge>
-              {run.hiddenOverall ? <Badge tone="neutral">Hidden</Badge> : null}
+              <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
+              {run.hiddenOverall ? <Badge tone="neutral">{P.hidden}</Badge> : null}
               <span className="display text-xs font-bold text-orange-bright">+{run.xpGained} XP</span>
               <span className="text-[11px] text-faint">{formatDate(run.date)}</span>
             </Panel>
@@ -158,7 +145,7 @@ export default function ProfilePage() {
         actions={
           <>
             <Button variant="ghost" onClick={() => setConfirmReset(false)}>
-              Cancel
+              {P.cancel}
             </Button>
             <Button
               variant="danger"
