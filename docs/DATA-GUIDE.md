@@ -155,6 +155,14 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 
 ## specialCards.json — collectibles
 
+> **HAND-MAINTAINED (since v1.1.0).** Unlike the other data files, this one is
+> NOT generated. Edit it directly, then run `npm run validate:data`.
+> `npm run build:data` no longer overwrites it — it only re-checks that every
+> `baseCardId` resolves. The old `SPECIALS` catalogue in the generator is
+> reference-only. Each card must point `playerId` + `baseCardId` at ids that
+> exist in `players.json` / `playerCards.json` (or `coaches.json` for coach
+> specials); the loader fails loudly with the offending id if not.
+
 ```json
 {
   "id": "sp-jstn-this-is-rocket-league",
@@ -176,7 +184,9 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
   `rarityWeights` deciding which one shows). `baseCardId` anchors the
   special's own historical moment — the org/season it displays AND the
   lineup/org used for chemistry when drafted.
-- `cardType`: `moment | major_mvp | worlds_mvp | mythic | legend`.
+- `cardType`: `moment | major_mvp | worlds_mvp | season_mvp | mythic | legend | coach`
+  (`season_mvp` added v1.1.0 — a season-MVP award kept distinct from `worlds_mvp`
+  so a league/season MVP isn't mislabelled as a world title).
 - `rarity`: `rare | epic | mythic | legendary` (visual + collection grouping).
 - `effect.type` (implemented in `engine/match.ts`):
   - `clutch_boost` — + value in the deciding game of a series
@@ -212,8 +222,24 @@ achievement = one JSON entry + one rule function with the same id.
 **Make a player stronger/weaker:** prefer `manualAdjustment` over editing
 `overall` — that's what the field is for.
 
-**Add a special card:** new entry in `specialCards.json` pointing at an
-existing base card. It immediately becomes draftable + collectible.
+**Add a special card:** new entry in `specialCards.json` (hand-maintained)
+pointing at an existing base card, then `npm run validate:data`. It immediately
+becomes draftable + collectible. The `playerId` must match a player exactly —
+watch for nickname-spelling drift (`exotiik`, not `exotiiik`); the validator
+prints the bad id if a ref doesn't resolve.
+
+**Add multiple logos for one org (logo eras):** an org that rebranded can show
+a different logo per era. Edit the `ORG_LOGO_ERAS` map in
+`scripts/build-dataset.mjs` (it has a full step-by-step comment + a season-key
+cheat sheet + a worked NRG example), then `npm run build:data` and drop the
+PNGs named per the regenerated `public/orgs/README.md`. Rules of thumb:
+- One entry per OLD logo, **oldest first**; `until` = the last season that old
+  logo was used (a season key like `S8`, `"2022-23"`). `key` is any short label
+  you choose; it becomes the filename suffix.
+- The **current/newest** logo needs no entry — it's the default `<orgId>.png`.
+  So N logos = (N−1) entries + the default file.
+- Missing images fall back gracefully (era → default → monogram). Resolved at
+  render time by `src/components/ui/TeamLogo.tsx` from the card's season order.
 
 ## Images (drop-in, no code changes)
 

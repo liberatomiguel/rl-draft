@@ -41,6 +41,7 @@ import type {
 import { generateDailyConfig, seedFromDate, todayKey } from "@/lib/daily";
 import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
+import { trackEvent } from "@/lib/analytics";
 import { useProfileStore } from "./profileStore";
 
 export interface StartRunOptions {
@@ -106,6 +107,11 @@ export const useRunStore = create<RunStore>()(
           results: null,
         };
         set({ run });
+        trackEvent("run_started", {
+          mode,
+          difficulty,
+          hiddenOverall: !run.showOverall,
+        });
       },
 
       startDailyRun: () => {
@@ -140,6 +146,11 @@ export const useRunStore = create<RunStore>()(
           results: null,
         };
         set({ run });
+        trackEvent("run_started", {
+          mode: "daily",
+          difficulty: config.difficulty,
+          hiddenOverall: !run.showOverall,
+        });
       },
 
       clearRun: () => set({ run: null }),
@@ -206,6 +217,10 @@ export const useRunStore = create<RunStore>()(
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },
         });
+        trackEvent("tournament_started", {
+          mode: run.mode,
+          difficulty: run.difficulty,
+        });
       },
 
       playRound: () => {
@@ -267,6 +282,18 @@ export const useRunStore = create<RunStore>()(
           rosterNames: playerNames,
           xpGained: results.xp.total,
         };
+
+        trackEvent("run_completed", {
+          mode: run.mode,
+          difficulty: run.difficulty,
+          placement: results.placement,
+          won: results.placement === "champion",
+          hiddenOverall: !run.showOverall,
+          teamOverall: entry.teamOverall,
+          swissWins: entry.swissRecord.wins,
+          swissLosses: entry.swissRecord.losses,
+          xpGained: entry.xpGained,
+        });
 
         profile.applyRunResults(
           results,

@@ -10,7 +10,69 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [1.0.0] — "Kickoff" — 2026 (in progress, uncommitted)
+## [1.1.0] — "Overtime" — 2026 (in progress, uncommitted)
+
+A post-launch follow-up: a bigger special-card collection, mobile + onboarding
+polish, the analytics/SEO groundwork for measuring real usage, and PT-BR for the
+last two English-only pages.
+
+### Added
+- **Custom in-game analytics events** — `src/lib/analytics.ts`, a typed
+  `trackEvent` wrapper over Vercel Web Analytics, emitted from the run store:
+  `run_started` (mode / difficulty / hiddenOverall), `tournament_started`, and
+  `run_completed` (placement, won, team overall, swiss W-L, xp). Gives
+  completion rate, difficulty mix and win-rate-by-difficulty. Values are scalar
+  and non-PII, store-layer only (never in `engine/`); `run_completed` fires once
+  per run (finishRun guards re-entry), never from React render.
+- **Vercel Speed Insights** (`@vercel/speed-insights`) mounted next to
+  `<Analytics/>` in the root layout — page-speed / Web-Vitals data.
+- **`season_mvp` special cardType** — a season/league MVP award kept distinct
+  from `worlds_mvp` so it isn't mislabelled as a world title. Wired through the
+  Zod schema, `SpecialCardType`, and both copy dictionaries (`SPECIAL_TYPE_LABELS`).
+- **PT-BR for the Privacy Policy and Changelog pages.** Both moved off hardcoded
+  English into `PRIVACY` + `CHANGELOG_PAGE` copy groups and now follow the EN/PT
+  switch — the route stays a server component (keeps `metadata` for SEO) and
+  renders a client `…View` that reads `useCopy()`. Reverses the earlier
+  "EN by design" call for these two pages (see DESIGN-DECISIONS #41).
+- **Org logo-era guide**: a step-by-step comment + season-key cheat sheet +
+  worked NRG example on `ORG_LOGO_ERAS` (`scripts/build-dataset.mjs`) and a
+  recipe in `docs/DATA-GUIDE.md`, so multiple logos per org can be added without
+  code help. (The mechanism itself already shipped in v0.5.1.)
+
+### Changed
+- **Collection grid on mobile** now shows **2 cards per row** instead of one
+  oversized card (`grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`).
+  Desktop is unchanged — the original auto-fill grid still applies from `sm:` up.
+  ⇢ Only the collection grid `<div>` changed; **no card-component internals were
+  touched** (cards are already `fluid`/`w-full`, so they just fill the cell).
+- **First-run onboarding** (How-to-Play + Legacy intros): each numbered step now
+  renders as its own **Panel card** for more scannable reading. Copy is unchanged
+  (still `string[]`), so EN/PT stay correct automatically.
+- **`specialCards.json` is now HAND-MAINTAINED** (like `achievements.json`) and
+  decoupled from the generator. `npm run build:data` no longer writes it — it
+  only re-validates that every `baseCardId` resolves and regenerates the photo
+  README. The legacy `SPECIALS` catalogue in the generator is reference-only now.
+  This protects the hand-curated cards (now 83) from being overwritten.
+  (see DESIGN-DECISIONS #42)
+
+### Fixed
+- **Game wouldn't boot after the manual `specialCards.json` edit** — two root
+  causes:
+  1. A new card used `cardType: "season_mvp"`, which wasn't in the Zod enum /
+     `SpecialCardType` / copy labels, so schema parsing threw at load. Added it
+     everywhere.
+  2. Six cards referenced players/base cards that didn't resolve (referential
+     integrity threw). Five were nickname/id drift or wrong era anchors and were
+     re-linked to real cards: `exotiiik`→`exotiik` (spelling; base
+     `exotiik-team-bds-2024` already existed), and re-anchored
+     `okhalid`→`okhalid-team-falcons-2122`, `lostt`→`lostt-furia-2024`,
+     `bananahead`→`bananahead-wildcard-2025`, `seikoo`→`seikoo-team-bds-2122`
+     (note: this last title says "Endpoint" but seikoo has no Endpoint card in
+     the dataset — flagged for Miguel). The sixth, `mawkzy`, isn't in the dataset
+     at all and was moved to `data-sources/specials-pending.json` (nothing lost).
+  Result: **83 valid specials**; `validate:data`, 42 tests and `next build` all green.
+
+## [1.0.0] — "Kickoff" — 2026 (released)
 
 The public launch (rocketdraft.app), assembled across focused passes.
 **Pass 1: launch foundation + card work. Pass 2: settings, sound, dailies.

@@ -38,6 +38,7 @@ export type SpecialCardType =
   | "moment"
   | "major_mvp"
   | "worlds_mvp"
+  | "season_mvp"
   | "mythic"
   | "legend"
   | "coach";

@@ -252,6 +252,34 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     the card-unlock and rank-up ceremonies. All three (and the eliminator
     reveal) dismiss on a tap anywhere on the overlay.
 
+## v1.1.0 additions (Overtime — post-launch follow-up)
+
+41. **Privacy Policy + Changelog are now translated (amends the v1.0 "EN by
+    design" scope).** v1.0 deliberately kept long-form prose EN-only. v1.1
+    reverses that for these two pages: the prose lives in `PRIVACY` /
+    `CHANGELOG_PAGE` copy groups and follows the EN/PT switch. SEO is preserved
+    by keeping each route a server component that exports `metadata` and renders
+    a `"use client"` `…View`. Version numbers, codenames and dates stay
+    language-agnostic; only prose + labels translate. Other historical CONTENT
+    (card flavor, achievements, player/org names) remains EN by design.
+
+42. **`specialCards.json` is hand-maintained, decoupled from the generator.**
+    Miguel curates the special cards directly in the JSON (now 83). The generator
+    (`scripts/build-dataset.mjs`) no longer writes the file — it only reads it to
+    re-validate `baseCardId` refs and to regenerate the photo README — so
+    `npm run build:data` can no longer clobber the hand-edits. This makes
+    `specialCards.json` the second hand-maintained data file (alongside
+    `achievements.json`); the legacy `SPECIALS` catalogue is kept as reference
+    only. Rationale: the catalogue and the live file had drifted (regenerating
+    would have reverted 83 → ~54 cards), and editing the JSON directly matches
+    how Miguel actually works.
+
+43. **In-game analytics are aggregate, scalar and non-PII**, emitted only from
+    the store layer (never `engine/`, never React render). Events: `run_started`,
+    `tournament_started`, `run_completed`. The privacy policy was updated to note
+    analytics also covers "how the game performs" so it stays truthful. Difficulty
+    / mode / placement / win counters cannot fingerprint a player.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

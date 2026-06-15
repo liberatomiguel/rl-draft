@@ -22,10 +22,14 @@ Tailwind v4 + Zustand + Zod + Vitest.
 - **Every player-facing string** goes in `src/content/copy.ts` (broadcast
   tone: clean esports-desk language, no forced memes).
 - **The data JSONs are GENERATED** (since v0.4). Source of truth is
-  `data-sources/teams.md` + the specials catalogue inside
-  `scripts/build-dataset.mjs`. To change data: edit those, run
-  `npm run build:data`, then `npm run validate:data`. Do NOT hand-edit
-  `src/data/*.json` (except `achievements.json`, which is hand-maintained).
+  `data-sources/teams.md`. To change data: edit it, run `npm run build:data`,
+  then `npm run validate:data`. Do NOT hand-edit `src/data/*.json` **except**
+  `achievements.json` AND `specialCards.json` — both are HAND-MAINTAINED.
+  `specialCards.json` was decoupled from the generator in v1.1.0 (Miguel
+  curates the special cards by hand, 80+ entries); `build:data` only *reads* it
+  to re-validate base-card refs and never overwrites it. The legacy `SPECIALS`
+  catalogue in `scripts/build-dataset.mjs` is reference-only now. To add/edit a
+  special card: edit `src/data/specialCards.json`, then `npm run validate:data`.
   Field reference + generator mappings: `docs/DATA-GUIDE.md`.
 - After engine/balance changes run `npm test` — the suite asserts the design
   anchors from `docs/GAME-DESIGN.md` §25 (overall must stay dominant) and is

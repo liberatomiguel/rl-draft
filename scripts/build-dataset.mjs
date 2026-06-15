@@ -159,14 +159,52 @@ const ORG_ALIAS = {
 const REGION_SPLIT_ORGS = new Set(["pioneers", "fut-esports"]);
 
 /**
- * Era logos (v0.5.1): orgs that rebranded get one entry per OLD identity —
- * seasons up to `until` (inclusive) use public/orgs/<orgId>@<key>.png.
- * Cards/lineups after the last entry use the default <orgId>.png (modern).
- * Add entries here + drop the image; `npm run fetch:assets` can pull exact
- * Liquipedia files via "orgFiles" in data-sources/asset-overrides.json.
+ * ===========================================================================
+ * MULTIPLE LOGOS PER ORG ("logo eras") — how to add them (v0.5.1, guide v1.1.0)
+ * ===========================================================================
+ *
+ * Many orgs rebrand over time (NRG changed logo in 2017, 2019, 2020, 2024).
+ * You can give ONE org different logos depending on the season of the card.
+ *
+ * HOW IT WORKS
+ *   - A card uses  public/orgs/<orgId>@<key>.png  when its season is on or
+ *     before that era's `until` boundary; otherwise it uses the default
+ *     public/orgs/<orgId>.png.
+ *   - So the DEFAULT file (no @key) is always the CURRENT / newest logo, and
+ *     each entry below covers one OLDER logo era.
+ *   - Missing image files fall back gracefully (older era -> default ->
+ *     monogram), so nothing breaks if a PNG isn't there yet.
+ *
+ * TO ADD LOGOS FOR AN ORG (3 steps)
+ *   1) Add one entry per OLD logo, OLDEST FIRST (ascending `until`). `key` is
+ *      any short label YOU pick (it becomes part of the filename); `until` is
+ *      the LAST season that old logo was used — a SEASON KEY from the cheat
+ *      sheet below. The newest logo gets NO entry (it's the default file).
+ *      => N logos = (N - 1) entries here + 1 default <orgId>.png file.
+ *   2) Run  npm run build:data  (this also rewrites public/orgs/README.md with
+ *      the exact filenames to use).
+ *   3) Drop the PNGs into public/orgs/ using those exact names.
+ *
+ * SEASON KEY cheat sheet  (key = calendar year):
+ *   S1,S2 = 2016 | S3,S4 = 2017 | S5,S6 = 2018 | S7,S8 = 2019 | S9 = 2020 |
+ *   "RLCS X" = 2020-21 | "2021-22" | "2022-23" | "2024" | "2025" | "2026"
+ *
+ * EXAMPLE — NRG, logos changing in 2017 / 2019 / 2020 / 2024 (5 eras = 4
+ * entries + the current default nrg-esports.png). Tweak the boundaries to the
+ * real logo history, then drop nrg-esports@2016.png ... and nrg-esports.png:
+ *   "nrg-esports": [
+ *     { key: "2016", until: "S2" },      // first logo, through 2016
+ *     { key: "2017", until: "S6" },      // 2017 logo, through 2018
+ *     { key: "2019", until: "S8" },      // 2019 logo, through 2019
+ *     { key: "2020", until: "2022-23" }, // 2020 logo, through 2023
+ *   ],                                   // 2024+ logo = default nrg-esports.png
+ *
+ * (`npm run fetch:assets` can also pull exact Liquipedia files via the
+ * "orgFiles" block in data-sources/asset-overrides.json.)
  */
 const ORG_LOGO_ERAS = {
-  // NRG played S2-S9 with the classic shield before the 2020+ rebrand.
+  // NRG ran the classic shield through S9 before the modern rebrand.
+  // Replace this with the multi-era block above once the logo PNGs are ready.
   "nrg-esports": [{ key: "classic", until: "S9" }],
 };
 
@@ -412,7 +450,17 @@ const seasonsOut = Object.values(SEASONS)
 // Coach cards keep kind:"coach" and use team_attribute_boost.
 // ---------------------------------------------------------------------------
 
-/** base: [orgSlug, seasonSlug] hint resolving the card the special replaces. */
+/**
+ * LEGACY REFERENCE ONLY (since v1.1.0). This catalogue is NO LONGER written to
+ * src/data/specialCards.json — that file is now HAND-MAINTAINED (like
+ * achievements.json), so `npm run build:data` never overwrites the hand-edited
+ * cards. It is kept here only as the original launch-set source. To add or edit
+ * a special card, edit src/data/specialCards.json directly, then run
+ * `npm run validate:data`. Changes made HERE no longer affect the game.
+ *
+ * base: [orgSlug, seasonSlug] hint resolving the card the special replaces.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept as reference; specialCards.json is hand-maintained (see note above)
 const SPECIALS = [
   // -- Legendary legacy (99s) --
   { id: "sp-kronovi-first-world-champion", p: "kronovi", base: ["ibuypower", "s1"], title: "First World Champion", type: "legend", rarity: "legendary", overall: 99,
@@ -637,35 +685,26 @@ const SPECIALS = [
 const cardById = new Map(playerCards.map((c) => [c.id, c]));
 const coachByIdMap = new Map(coachCards.map((c) => [c.id, c]));
 
-const specialsOut = SPECIALS.map((sp) => {
-  const [orgSlug, seasonSlug] = sp.base;
-  // Era spellings in the hints resolve through the org alias map too.
-  const lineupId = `${ORG_ALIAS[orgSlug] ?? orgSlug}-${seasonSlug}`;
+// specialCards.json is HAND-MAINTAINED (since v1.1.0). It is NOT regenerated
+// from the SPECIALS catalogue above, so `npm run build:data` never clobbers the
+// hand-edited cards. We still LOAD the real file here to (a) re-validate that
+// every base card id resolves against the freshly generated player/coach cards
+// (so a typo is caught at build time, exactly like the load-time check in
+// src/data/index.ts) and (b) keep public/cards/specials/README.md listing the
+// real card filenames.
+const existingSpecials = JSON.parse(
+  readFileSync(join(root, "src", "data", "specialCards.json"), "utf8"),
+);
+for (const sp of existingSpecials) {
   const kind = sp.kind ?? "player";
-  const baseCardId = kind === "coach" ? `${sp.p}-coach-${lineupId}` : `${sp.p}-${lineupId}`;
-  const baseExists = kind === "coach" ? coachByIdMap.has(baseCardId) : cardById.has(baseCardId);
-  if (!baseExists) {
-    throw new Error(`Special "${sp.id}" → base card "${baseCardId}" not found`);
+  const baseOk = kind === "coach" ? coachByIdMap.has(sp.baseCardId) : cardById.has(sp.baseCardId);
+  if (!baseOk) {
+    throw new Error(
+      `specialCards.json: "${sp.id}" -> base ${kind} card "${sp.baseCardId}" not found. ` +
+        `Edit src/data/specialCards.json so baseCardId matches a real card id.`,
+    );
   }
-  return {
-    id: sp.id,
-    ...(kind === "coach" ? { kind: "coach" } : {}),
-    playerId: sp.p,
-    baseCardId,
-    title: sp.title,
-    cardType: sp.type,
-    rarity: sp.rarity,
-    overall: sp.overall,
-    ...(sp.stats ? { stats: sp.stats } : {}),
-    effect: {
-      type: sp.fx.team ? "team_attribute_boost" : "attribute_boost",
-      attributes: sp.fx.attributes,
-      value: sp.fx.value,
-      description: sp.fx.description,
-    },
-    flavor: sp.flavor,
-  };
-});
+}
 
 // ---------------------------------------------------------------------------
 // Write outputs
@@ -682,7 +721,7 @@ writeJson("playerCards.json", playerCards);
 writeJson("coaches.json", coachCards);
 writeJson("subs.json", subCards);
 writeJson("lineups.json", lineups);
-writeJson("specialCards.json", specialsOut);
+// specialCards.json intentionally NOT written — hand-maintained since v1.1.0.
 
 // Asset manifests — drop-in image filenames.
 mkdirSync(join(root, "public", "orgs"), { recursive: true });
@@ -698,7 +737,7 @@ writeFileSync(
 mkdirSync(join(root, "public", "cards", "specials"), { recursive: true });
 writeFileSync(
   join(root, "public", "cards", "specials", "README.md"),
-  `# Special card photos\n\nDrop one image per special card here (portrait crop, face in the top half,\n≥480×680px). Missing files fall back to stylized art. Generated from the\nspecials catalogue — run \`npm run build:data\` after editing it.\n\n\`\`\`\n${specialsOut.map((s) => `${s.id}.png`).join("\n")}\n\`\`\`\n`,
+  `# Special card photos\n\nDrop one image per special card here (portrait crop, face in the top half,\n≥480×680px). Missing files fall back to stylized art. Generated from the\nspecials catalogue — run \`npm run build:data\` after editing it.\n\n\`\`\`\n${existingSpecials.map((s) => `${s.id}.png`).join("\n")}\n\`\`\`\n`,
 );
 
 // ---------------------------------------------------------------------------
@@ -718,6 +757,6 @@ console.log(`  coaches:      ${coachCards.length}`);
 console.log(`  subs:         ${subCards.length}`);
 console.log(`  orgs:         ${orgsOut.length}`);
 console.log(`  lineups:      ${lineups.length}  (${Object.entries(strengthCount).map(([k, v]) => `${k} ${v}`).join(" · ")})`);
-console.log(`  specials:     ${specialsOut.length}`);
+console.log(`  specials:     ${existingSpecials.length} (hand-maintained)`);
 const noCountry = playersOut.filter((p) => !p.country).length;
 console.log(`  players without country (chemistry skips them): ${noCountry}`);

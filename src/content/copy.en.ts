@@ -492,6 +492,7 @@ export const SPECIAL_TYPE_LABELS: Record<string, string> = {
   moment: "Moment",
   major_mvp: "Major MVP",
   worlds_mvp: "Worlds MVP",
+  season_mvp: "Season MVP",
   mythic: "Mythic",
   legend: "Legend",
   coach: "Coach",
@@ -527,6 +528,130 @@ export const CHEM_TIERS: Record<string, string> = {
   Perfect: "Perfect",
 };
 
+// Long-form legal/notes pages — translated since v1.1.0 (the rendered view
+// reads these via useCopy(); the route metadata stays EN for SEO). The product
+// name "Rocket Draft" and version numbers/dates are intentionally not localized.
+export const PRIVACY = {
+  kicker: "Legal",
+  title: "Privacy Policy",
+  sections: [
+    {
+      title: "The short version",
+      body: [
+        "Rocket Draft is a free, fan-made game. It does not require an account, and it does not sell or share your personal data. Your game progress is stored on your own device.",
+      ],
+    },
+    {
+      title: "What's stored on your device",
+      body: [
+        "Your XP, rank, collection, achievements, run history, daily-challenge results and settings are saved in your browser's local storage. This data never leaves your device unless you explicitly export it.",
+        "Clearing your browser data, or playing in a different browser or in private mode, will reset this progress.",
+      ],
+    },
+    {
+      title: "Analytics",
+      body: [
+        "We use privacy-friendly, aggregate web analytics to understand how many people visit, which pages are popular, and how the game performs. It does not use advertising cookies and does not identify you personally.",
+        "Search-engine statistics (how often the site appears in results) come from Google Search Console, which only reports aggregate, anonymous data.",
+      ],
+    },
+    {
+      title: "Accounts (coming later)",
+      body: [
+        "A future update will add optional Discord sign-in so your progress can sync across devices and power leaderboards. It will be entirely opt-in; until you choose to sign in, nothing is sent to a server. When it ships, this policy will be updated to describe exactly what is stored.",
+      ],
+    },
+    {
+      title: "Third-party links",
+      body: [
+        "The site links to external services (Discord, X, a support page). Those services have their own privacy policies, which apply once you leave this site.",
+      ],
+    },
+    {
+      title: "Not affiliated",
+      body: [
+        "Rocket Draft is an unofficial, non-commercial fan project. It is not affiliated with Psyonix, Epic Games, or any esports organization. Rocket League is a trademark of its respective owners.",
+      ],
+    },
+  ],
+  contactBefore: "Questions? Reach out to",
+  contactBetween: "on",
+};
+
+export const CHANGELOG_PAGE = {
+  kicker: "Release notes",
+  title: "Changelog",
+  latest: "Latest",
+  releases: [
+    {
+      version: "1.1.0",
+      name: "",
+      date: "2026",
+      current: true,
+      notes: [
+        "More special cards to collect — 80+ legendary players, MVP moments and coaches.",
+        "The collection reads better on phones: two cards per row instead of one oversized card.",
+        "Clearer first-time guides — each tip is now its own card.",
+        "Privacy Policy and Changelog are now available in Portuguese.",
+        "Groundwork for performance and usage insights that will guide future updates.",
+      ],
+    },
+    {
+      version: "1.0.0",
+      name: "Kickoff",
+      date: "2026",
+      current: false,
+      notes: [
+        "Public launch on rocketdraft.app.",
+        "Full Portuguese (PT-BR) translation with a language switcher.",
+        "Settings: volume, reduced motion, animation speed and language.",
+        "Subtle sound effects throughout the draft and tournament.",
+        "Richer daily challenges with a fixed seed and a daily number.",
+        "Card polish: rarity-colored overalls, holographic special cards on the field, sharper layouts.",
+        "Export / import your progress so it's never lost.",
+      ],
+    },
+    {
+      version: "0.6.x",
+      name: "Main Stage",
+      date: "2026",
+      current: false,
+      notes: [
+        "Reworked special-card rarities (legendary white-gold, mythic red, epic, rare) with effects that ramp by tier.",
+        "Rank-up and card-unlock celebrations; first-Hard-win unlocks the Legacy gauntlet.",
+        "Smoother mobile play and a one-tap run reset.",
+      ],
+    },
+    {
+      version: "0.5.x",
+      name: "",
+      date: "2026",
+      current: false,
+      notes: [
+        "First live playtest round: balance overhaul and a more readable tournament playback.",
+        "Special cards belong to the player; slot-machine lineup reveal in the draft.",
+      ],
+    },
+    {
+      version: "0.4.0",
+      name: "",
+      date: "2026",
+      current: false,
+      notes: ["Full RLCS finals dataset — 208 lineups, 624 cards, 2016–2026."],
+    },
+    {
+      version: "0.1.0 – 0.3.0",
+      name: "",
+      date: "2025–2026",
+      current: false,
+      notes: [
+        "Core draft, Swiss + double-elimination tournament, collection, achievements and progression.",
+        "Quick Draft and Daily Challenge modes.",
+      ],
+    },
+  ],
+};
+
 /** The whole dictionary — `copy.pt.ts` must match this shape exactly. */
 export const EN = {
   APP,
@@ -552,6 +677,8 @@ export const EN = {
   RARITY_LABELS,
   EFFECT_LABELS,
   CHEM_TIERS,
+  PRIVACY,
+  CHANGELOG_PAGE,
 };
 
 export type Copy = typeof EN;

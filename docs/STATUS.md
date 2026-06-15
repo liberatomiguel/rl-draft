@@ -1,11 +1,50 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-15. **v1.0.0 "Kickoff"** (public launch on
-> rocketdraft.app) is being built across focused passes — **Pass 1 done**
-> (launch foundation + card work), **uncommitted**. v0.6.x is committed.
+> Last updated: 2026-06-15. **v1.1.0 "Overtime"** is built and **uncommitted** —
+> Miguel reviews on localhost, then commits + deploys. **v1.0.0 "Kickoff"** (the
+> public launch on rocketdraft.app) is committed.
 
-## v1.0.0 "Kickoff" — launch build (in progress, uncommitted)
+## v1.1.0 "Overtime" — post-launch follow-up (uncommitted, Miguel testing)
+
+A focused follow-up to launch. **All gates green**: `tsc`, 42 vitest tests,
+ESLint (8 pre-existing baseline errors, 0 new), `next build` (all 16 routes
+prerendered static). Spot-verified in the browser preview (collection mobile
+grid, PT privacy/changelog, onboarding cards, no console errors). What shipped:
+
+- **specialCards.json fix + protection.** The hand-edited file (83 cards) broke
+  boot. Fixed: added the `season_mvp` cardType everywhere; re-linked 6 broken
+  refs (CHANGELOG → Fixed). **`specialCards.json` is now hand-maintained** —
+  `build:data` no longer overwrites it (DESIGN-DECISIONS #42).
+- **Collection: 2 cards/row on mobile** (was 1 oversized card). Desktop
+  unchanged; no card-component internals touched.
+- **Onboarding tutorials** render each numbered step as a Panel card.
+- **Analytics**: custom events (`run_started` / `tournament_started` /
+  `run_completed`) via `src/lib/analytics.ts` + **Vercel Speed Insights** mounted.
+- **PT-BR** for /privacy and /changelog (server `metadata` kept for SEO).
+- **Org logo-era guide** — the mechanism already shipped in v0.5.1; v1.1 adds a
+  beginner-friendly template + cheat sheet on `ORG_LOGO_ERAS` and a DATA-GUIDE
+  recipe.
+
+**Open setup / curation tasks for Miguel (ops + data, not code):**
+1. **Vercel dashboard**: enable **Web Analytics** AND **Speed Insights** for the
+   project — the components are mounted but only collect once enabled. Custom
+   game events appear under Analytics → Events.
+2. **Google Search Console**: DNS TXT is added; submit the sitemap
+   (`https://rocketdraft.app/sitemap.xml`) and request indexing. (The
+   `GOOGLE_SITE_VERIFICATION` env is optional now that DNS is verified.)
+3. **Special cards** (83 active): two need a call — `seikoo` "Endpoint Breakout"
+   now displays Team BDS (no Endpoint card exists in the dataset), so either
+   retitle it or add an Endpoint era card; `mawkzy` "1v1 Final Boss" is parked in
+   `data-sources/specials-pending.json` (player absent) — add him to
+   `data-sources/teams.md` to restore it, or drop it. Drop photos into
+   `public/cards/specials/<id>.png` as curated.
+4. **Org logos**: to give NRG (etc.) multiple era logos, follow the guide on
+   `ORG_LOGO_ERAS` in `scripts/build-dataset.mjs` (+ DATA-GUIDE recipe), run
+   `build:data`, then drop the PNGs. `nrg-esports.png` / `team-vitality.png` are
+   already edited (uncommitted).
+
+## v1.0.0 "Kickoff" — launch build (committed)
 
 Being assembled in passes so each is reviewable (Miguel reviews on localhost).
 

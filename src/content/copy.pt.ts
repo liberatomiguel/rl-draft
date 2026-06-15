@@ -485,6 +485,7 @@ export const PT: Copy = {
     moment: "Momento",
     major_mvp: "MVP de Major",
     worlds_mvp: "MVP do Mundial",
+    season_mvp: "MVP da Temporada",
     mythic: "Mítica",
     legend: "Lenda",
     coach: "Técnico",
@@ -517,5 +518,126 @@ export const PT: Copy = {
     Good: "Boa",
     Great: "Ótima",
     Perfect: "Perfeita",
+  },
+
+  PRIVACY: {
+    kicker: "Aviso legal",
+    title: "Política de Privacidade",
+    sections: [
+      {
+        title: "Resumo rápido",
+        body: [
+          "Rocket Draft é um jogo gratuito, fan-made. Não exige conta e não vende nem compartilha seus dados pessoais. Seu progresso fica salvo no seu próprio dispositivo.",
+        ],
+      },
+      {
+        title: "O que fica salvo no seu dispositivo",
+        body: [
+          "Seu XP, rank, coleção, conquistas, histórico de runs, resultados dos desafios diários e configurações ficam salvos no armazenamento local do navegador. Esses dados nunca saem do seu dispositivo, a não ser que você os exporte.",
+          "Limpar os dados do navegador, ou jogar em outro navegador ou no modo anônimo, vai zerar esse progresso.",
+        ],
+      },
+      {
+        title: "Analytics",
+        body: [
+          "Usamos analytics web agregado e respeitoso à privacidade para entender quantas pessoas visitam o site, quais páginas são populares e como o jogo se comporta. Não usamos cookies de publicidade e não identificamos você pessoalmente.",
+          "As estatísticas de busca (com que frequência o site aparece nos resultados) vêm do Google Search Console, que só reporta dados agregados e anônimos.",
+        ],
+      },
+      {
+        title: "Contas (em breve)",
+        body: [
+          "Uma atualização futura vai adicionar login opcional via Discord para sincronizar seu progresso entre dispositivos e habilitar rankings. Será totalmente opcional; até você escolher entrar, nada é enviado a um servidor. Quando isso chegar, esta política será atualizada para descrever exatamente o que é armazenado.",
+        ],
+      },
+      {
+        title: "Links de terceiros",
+        body: [
+          "O site tem links para serviços externos (Discord, X, uma página de apoio). Esses serviços têm as próprias políticas de privacidade, que valem a partir do momento em que você sai daqui.",
+        ],
+      },
+      {
+        title: "Sem afiliação",
+        body: [
+          "Rocket Draft é um projeto de fã, não oficial e sem fins lucrativos. Não é afiliado à Psyonix, Epic Games ou qualquer organização de esports. Rocket League é marca registrada de seus respectivos donos.",
+        ],
+      },
+    ],
+    contactBefore: "Dúvidas? Fale com",
+    contactBetween: "no",
+  },
+
+  CHANGELOG_PAGE: {
+    kicker: "Notas de versão",
+    title: "Changelog",
+    latest: "Mais recente",
+    releases: [
+      {
+        version: "1.1.0",
+        name: "",
+        date: "2026",
+        current: true,
+        notes: [
+          "Mais cartas especiais para colecionar — 80+ jogadores lendários, momentos de MVP e técnicos.",
+          "A coleção fica melhor no celular: duas cartas por linha em vez de uma carta gigante.",
+          "Tutoriais de primeira vez mais claros — cada dica agora é um card.",
+          "Política de Privacidade e Changelog agora disponíveis em português.",
+          "Base para insights de desempenho e uso que vão guiar as próximas versões.",
+        ],
+      },
+      {
+        version: "1.0.0",
+        name: "Kickoff",
+        date: "2026",
+        current: false,
+        notes: [
+          "Lançamento público em rocketdraft.app.",
+          "Tradução completa para português (PT-BR) com seletor de idioma.",
+          "Configurações: volume, redução de movimento, velocidade das animações e idioma.",
+          "Efeitos sonoros sutis durante o draft e o torneio.",
+          "Desafios diários mais ricos, com seed fixa e número do dia.",
+          "Polimento das cartas: overalls coloridos por raridade, cartas especiais holográficas em campo, layouts mais nítidos.",
+          "Exporte / importe seu progresso para nunca perdê-lo.",
+        ],
+      },
+      {
+        version: "0.6.x",
+        name: "Main Stage",
+        date: "2026",
+        current: false,
+        notes: [
+          "Raridades de cartas especiais repaginadas (lendária branco-dourada, mítica vermelha, épica, rara) com efeitos que escalam por tier.",
+          "Comemorações de rank-up e de desbloqueio de cartas; a primeira vitória no Difícil libera o gauntlet Legacy.",
+          "Jogo mais fluido no celular e reset de run com um toque.",
+        ],
+      },
+      {
+        version: "0.5.x",
+        name: "",
+        date: "2026",
+        current: false,
+        notes: [
+          "Primeira rodada de playtest ao vivo: revisão geral de balance e um playback de torneio mais legível.",
+          "Cartas especiais pertencem ao jogador; revelação da lineup estilo caça-níquel no draft.",
+        ],
+      },
+      {
+        version: "0.4.0",
+        name: "",
+        date: "2026",
+        current: false,
+        notes: ["Dataset completo das finais de RLCS — 208 lineups, 624 cartas, 2016–2026."],
+      },
+      {
+        version: "0.1.0 – 0.3.0",
+        name: "",
+        date: "2025–2026",
+        current: false,
+        notes: [
+          "Draft principal, torneio Suíço + dupla eliminação, coleção, conquistas e progressão.",
+          "Modos Draft Rápido e Desafio Diário.",
+        ],
+      },
+    ],
   },
 };

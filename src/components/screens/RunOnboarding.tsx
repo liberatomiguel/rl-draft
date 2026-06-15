@@ -13,18 +13,24 @@ import type { Difficulty } from "@/engine/types";
 import { useProfileStore } from "@/store/profileStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { Panel } from "@/components/ui/Panel";
 
+// Each numbered point is its own card (v1.1.0) so the steps read as distinct,
+// scannable beats instead of a dense list. Content stays plain strings from
+// copy (EN/PT) — only the wrapper changed.
 function Steps({ intro, steps }: { intro: string; steps: readonly string[] }) {
   return (
     <div className="space-y-3">
       <p>{intro}</p>
       <ol className="space-y-2.5">
         {steps.map((s, i) => (
-          <li key={i} className="flex gap-3">
-            <span className="display flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange/15 text-[11px] font-bold text-orange-bright">
-              {i + 1}
-            </span>
-            <span className="text-sm leading-relaxed text-sub">{s}</span>
+          <li key={i}>
+            <Panel className="flex items-start gap-3 p-3.5">
+              <span className="display flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange/15 text-sm font-bold text-orange-bright">
+                {i + 1}
+              </span>
+              <span className="text-sm leading-relaxed text-sub">{s}</span>
+            </Panel>
           </li>
         ))}
       </ol>

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "sp-mawkzy-1v1-final-boss",
+    "playerId": "mawkzy",
+    "baseCardId": "mawkzy-1v1-base",
+    "title": "1v1 Final Boss",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 97,
+      "defense": 89,
+      "mechanics": 99,
+      "consistency": 94,
+      "experience": 91,
+      "clutch": 96
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and consistency."
+    },
+    "flavor": "A specialist card for one of the most recognizable modern 1v1 names and his suffocating solo-game control."
+  }
+]

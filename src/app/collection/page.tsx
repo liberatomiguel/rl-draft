@@ -114,10 +114,13 @@ export default function CollectionPage() {
       {visible.length === 0 ? (
         <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
       ) : (
-        // auto-fill grid: columns stretch (1fr) so cards fill the whole row —
-        // no empty column on the right (v1.0.0 Pass 3). Cards are fluid to fill
-        // their cell; only the collection uses this, so other layouts untouched.
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
+        // Mobile (<640px): exactly 2 columns so cards aren't one-per-row huge
+        // (v1.1.0). From sm: up, the original auto-fill grid is restored
+        // unchanged — columns stretch (1fr) to fill the row with no empty
+        // column on the right. Cards are fluid (w-full) to fill their cell, so
+        // shrinking the cell is the intended resize path — no card internals
+        // are touched, and only the collection uses this grid.
+        <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
           {visible.map((sp) => {
             const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
             return isUnlocked ? (

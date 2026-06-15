@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Rajdhani } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
 import { AppShell } from "@/components/layout/AppShell";
@@ -111,6 +112,7 @@ export default function RootLayout({
         />
         <AppShell>{children}</AppShell>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

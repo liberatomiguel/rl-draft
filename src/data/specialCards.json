@@ -1,19 +1,19 @@
 [
   {
-    "id": "sp-kronovi-first-world-champion",
+    "id": "sp-kronovi-the-mountain",
     "playerId": "kronovi",
     "baseCardId": "kronovi-ibuypower-s1",
-    "title": "First World Champion",
+    "title": "The Mountain",
     "cardType": "legend",
     "rarity": "legendary",
     "overall": 99,
     "stats": {
       "offense": 96,
-      "defense": 91,
-      "mechanics": 94,
-      "consistency": 97,
+      "defense": 98,
+      "mechanics": 95,
+      "consistency": 99,
       "experience": 99,
-      "clutch": 98
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -24,7 +24,7 @@
       "value": 5,
       "description": "+5 experience and clutch."
     },
-    "flavor": "Season 1 champion with iBUYPOWER Cosmic and one of the first defining names of competitive Rocket League."
+    "flavor": "The original mountain of competitive Rocket League: Season 1 champion, early superstar and one of the first true faces of the esport."
   },
   {
     "id": "sp-kuxir97-pinch-god",
@@ -35,12 +35,12 @@
     "rarity": "legendary",
     "overall": 99,
     "stats": {
-      "offense": 96,
+      "offense": 99,
       "defense": 94,
       "mechanics": 99,
       "consistency": 97,
-      "experience": 99,
-      "clutch": 97
+      "experience": 98,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -51,20 +51,20 @@
       "value": 5,
       "description": "+5 mechanics and experience."
     },
-    "flavor": "A Season 2 World Champion and Worlds MVP who helped define early Rocket League mechanics before the modern meta existed."
+    "flavor": "Season 2 World Champion, Worlds MVP and one of the names that defined early high-level mechanics before the modern meta existed."
   },
   {
-    "id": "sp-turbopolsa-four-time-world-champion",
+    "id": "sp-turbopolsa-four-times-world-champion",
     "playerId": "turbopolsa",
     "baseCardId": "turbopolsa-dignitas-s5",
-    "title": "Four-Time World Champion",
+    "title": "Four Times World Champion",
     "cardType": "legend",
     "rarity": "legendary",
     "overall": 99,
     "stats": {
-      "offense": 95,
-      "defense": 97,
-      "mechanics": 94,
+      "offense": 96,
+      "defense": 98,
+      "mechanics": 95,
       "consistency": 99,
       "experience": 99,
       "clutch": 99
@@ -78,23 +78,23 @@
       "value": 5,
       "description": "+5 consistency and clutch."
     },
-    "flavor": "Four RLCS World Championships across different teams and regions. The strongest winning résumé in the esport."
+    "flavor": "Four RLCS World Championships across eras, regions and rosters. The strongest pure winning résumé in Rocket League."
   },
   {
-    "id": "sp-kaydop-three-time-world-champion",
+    "id": "sp-kaydop-three-times-world-champion",
     "playerId": "kaydop",
     "baseCardId": "kaydop-dignitas-s5",
-    "title": "Three-Time World Champion",
+    "title": "Three Times World Champion",
     "cardType": "legend",
     "rarity": "legendary",
     "overall": 99,
     "stats": {
       "offense": 99,
-      "defense": 91,
-      "mechanics": 95,
+      "defense": 93,
+      "mechanics": 99,
       "consistency": 98,
-      "experience": 99,
-      "clutch": 98
+      "experience": 97,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -105,7 +105,7 @@
       "value": 5,
       "description": "+5 offense and clutch."
     },
-    "flavor": "The finishing edge of the Gale Force, Dignitas and Vitality championship eras."
+    "flavor": "The finishing edge of the Gale Force, Dignitas and Vitality championship eras, with three World Championships and years of elite LAN pressure."
   },
   {
     "id": "sp-zen-perfect-spring",
@@ -117,10 +117,10 @@
     "overall": 99,
     "stats": {
       "offense": 99,
-      "defense": 96,
+      "defense": 94,
       "mechanics": 99,
-      "consistency": 98,
-      "experience": 94,
+      "consistency": 97,
+      "experience": 96,
       "clutch": 99
     },
     "effect": {
@@ -135,7 +135,7 @@
     "flavor": "Three regionals, the Spring Major and the World Championship in the same debut run. One of the cleanest peaks in RLCS history."
   },
   {
-    "id": "sp-monkeymoon-bds-anchor",
+    "id": "sp-m0nkeym00n-bds-anchor",
     "playerId": "m0nkeym00n",
     "baseCardId": "m0nkeym00n-team-bds-2122",
     "title": "BDS Anchor",
@@ -143,12 +143,12 @@
     "rarity": "legendary",
     "overall": 99,
     "stats": {
-      "offense": 96,
+      "offense": 94,
       "defense": 99,
       "mechanics": 96,
       "consistency": 99,
       "experience": 98,
-      "clutch": 97
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -159,7 +159,7 @@
       "value": 5,
       "description": "+5 defense and consistency."
     },
-    "flavor": "A defining player of the open era, built on pressure, efficiency and championship-level structure."
+    "flavor": "A defining player of the open era, built on pressure, structure, efficiency and championship-level defensive control."
   },
   {
     "id": "sp-vatira-major-champion",
@@ -170,12 +170,12 @@
     "rarity": "legendary",
     "overall": 99,
     "stats": {
-      "offense": 96,
+      "offense": 94,
       "defense": 99,
-      "mechanics": 97,
-      "consistency": 98,
-      "experience": 97,
-      "clutch": 98
+      "mechanics": 96,
+      "consistency": 99,
+      "experience": 98,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -186,10 +186,517 @@
       "value": 5,
       "description": "+5 defense and clutch."
     },
-    "flavor": "One of the most complete LAN players of the open era, with elite defensive reads and multiple Major peaks."
+    "flavor": "One of the most complete LAN players of the open era, with elite defensive reads, repeated Major peaks and a résumé that keeps growing."
   },
   {
-    "id": "sp-0verzero-s1-worlds-mvp",
+    "id": "sp-fairypeak-1v1-goat",
+    "playerId": "fairypeak",
+    "baseCardId": "fairypeak-team-vitality-s8",
+    "title": "1v1 GOAT",
+    "cardType": "legend",
+    "rarity": "legendary",
+    "overall": 98,
+    "stats": {
+      "offense": 95,
+      "defense": 97,
+      "mechanics": 94,
+      "consistency": 99,
+      "experience": 99,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "experience"
+      ],
+      "value": 5,
+      "description": "+5 consistency and experience."
+    },
+    "flavor": "A legacy card for Fairy Peak!'s long-standing control, 1v1 dominance and importance to the Vitality identity."
+  },
+  {
+    "id": "sp-garrettg-na-captain",
+    "playerId": "garrettg",
+    "baseCardId": "garrettg-nrg-esports-2122",
+    "title": "NA Captain",
+    "cardType": "legend",
+    "rarity": "legendary",
+    "overall": 96,
+    "stats": {
+      "offense": 93,
+      "defense": 95,
+      "mechanics": 92,
+      "consistency": 99,
+      "experience": 99,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
+      "value": 5,
+      "description": "+5 experience and consistency."
+    },
+    "flavor": "A career legacy card for one of the defining names of North American Rocket League, from the early RLCS era through modern competition."
+  },
+  {
+    "id": "sp-violentpanda-dignitas-brain",
+    "playerId": "violentpanda",
+    "baseCardId": "violentpanda-dignitas-s5",
+    "title": "Dignitas Brain",
+    "cardType": "legend",
+    "rarity": "legendary",
+    "overall": 97,
+    "stats": {
+      "offense": 94,
+      "defense": 96,
+      "mechanics": 93,
+      "consistency": 99,
+      "experience": 99,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
+      "value": 5,
+      "description": "+5 experience and consistency."
+    },
+    "flavor": "The cerebral core of the Gale Force and Dignitas dynasty, remembered for structure, passing lanes and championship composure."
+  },
+  {
+    "id": "sp-squishymuffinz-og-ceiling-shot",
+    "playerId": "squishymuffinz",
+    "baseCardId": "squishymuffinz-cloud9-s4",
+    "title": "OG Ceiling Shot",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 98,
+      "defense": 90,
+      "mechanics": 99,
+      "consistency": 93,
+      "experience": 92,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics"
+      ],
+      "value": 5,
+      "description": "+5 mechanics."
+    },
+    "flavor": "A famous early ceiling shot that became a marker for where Rocket League mechanics were heading."
+  },
+  {
+    "id": "sp-jstn-this-is-rocket-league",
+    "playerId": "jstn",
+    "baseCardId": "jstn-nrg-esports-s5",
+    "title": "This Is Rocket League",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": {
+      "offense": 97,
+      "defense": 92,
+      "mechanics": 96,
+      "consistency": 94,
+      "experience": 96,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch"
+      ],
+      "value": 5,
+      "description": "+5 clutch."
+    },
+    "flavor": "Season 5 Grand Final. Zero seconds on the clock, the ball still live, and one of the most famous calls in esports history."
+  },
+  {
+    "id": "sp-yanxnz-moisty-hat-trick",
+    "playerId": "yanxnz",
+    "baseCardId": "yanxnz-furia-2122",
+    "title": "Moisty Hat-Trick",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 97,
+    "stats": {
+      "offense": 99,
+      "defense": 91,
+      "mechanics": 99,
+      "consistency": 96,
+      "experience": 95,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch"
+      ],
+      "value": 5,
+      "description": "+5 clutch."
+    },
+    "flavor": "FURIA vs Moist at the 2021-22 World Championship. A defining SAM moment on the world stage."
+  },
+  {
+    "id": "sp-joyo-moist-masterclass",
+    "playerId": "joyo",
+    "baseCardId": "joyo-moist-esports-2122",
+    "title": "Moist Masterclass",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 99,
+      "defense": 90,
+      "mechanics": 99,
+      "consistency": 93,
+      "experience": 92,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "A Joyo moment card for the 2022 Spring Major run, focused on mechanics, confidence and attacking creativity."
+  },
+  {
+    "id": "sp-zen-mr-physics",
+    "playerId": "zen",
+    "baseCardId": "zen-team-vitality-2223",
+    "title": "Mr. Physics",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 98,
+    "stats": {
+      "offense": 99,
+      "defense": 93,
+      "mechanics": 99,
+      "consistency": 96,
+      "experience": 95,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics"
+      ],
+      "value": 5,
+      "description": "+5 mechanics."
+    },
+    "flavor": "A mechanics-first zen card based on his physics-defying touches, reads and solo-pressure moments."
+  },
+  {
+    "id": "sp-al0t-ceiling-redirect",
+    "playerId": "al0t",
+    "baseCardId": "al0t-complexity-gaming-s5",
+    "title": "Ceiling Redirect",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 91,
+    "stats": {
+      "offense": 96,
+      "defense": 86,
+      "mechanics": 99,
+      "consistency": 89,
+      "experience": 88,
+      "clutch": 93
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "mechanics"
+      ],
+      "value": 3,
+      "description": "+3 offense and mechanics."
+    },
+    "flavor": "A community-favorite redirect highlight. Kept as a stylish mechanics card without inflating it into the top tier."
+  },
+  {
+    "id": "sp-0verzer0-og-air-dribble",
+    "playerId": "0verzer0",
+    "baseCardId": "0verzer0-ibuypower-s1",
+    "title": "OG Air Dribble",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 93,
+    "stats": {
+      "offense": 96,
+      "defense": 88,
+      "mechanics": 99,
+      "consistency": 91,
+      "experience": 90,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and clutch."
+    },
+    "flavor": "A Season 1-era air dribble highlight from iBUYPOWER Cosmic, preserved as one of the original mechanical moment cards."
+  },
+  {
+    "id": "sp-daniel-chronic-didnt-jump",
+    "playerId": "daniel",
+    "baseCardId": "daniel-g2-stride-2024",
+    "title": "Chronic Didn't Jump",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": {
+      "offense": 99,
+      "defense": 91,
+      "mechanics": 99,
+      "consistency": 94,
+      "experience": 93,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and clutch."
+    },
+    "flavor": "A modern NA mechanics card built around Daniel's solo-pressure aura and one of the most quoted Gen.G/G2-era moments."
+  },
+  {
+    "id": "sp-rw9-zen-winstreak-killer",
+    "playerId": "rw9",
+    "baseCardId": "rw9-team-falcons-2025",
+    "title": "Zen Winstreak Killer",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 90,
+      "defense": 99,
+      "mechanics": 92,
+      "consistency": 98,
+      "experience": 94,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 defense and clutch."
+    },
+    "flavor": "A 1v1-flavored moment card for rw9 ending the sense of inevitability around zen's run and showing elite defensive control."
+  },
+  {
+    "id": "sp-fairypeak-be-careful",
+    "playerId": "fairypeak",
+    "baseCardId": "fairypeak-team-vitality-s7",
+    "title": "Be Careful!",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": {
+      "offense": 93,
+      "defense": 95,
+      "mechanics": 92,
+      "consistency": 99,
+      "experience": 99,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 experience and clutch."
+    },
+    "flavor": "A Fairy Peak! control card built around the classic warning: give him space and the play is already gone."
+  },
+  {
+    "id": "sp-deevo-double-tap-king",
+    "playerId": "deevo",
+    "baseCardId": "deevo-northern-gaming-s3",
+    "title": "Double Tap King",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 98,
+      "defense": 90,
+      "mechanics": 99,
+      "consistency": 93,
+      "experience": 92,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics"
+      ],
+      "value": 5,
+      "description": "+5 mechanics."
+    },
+    "flavor": "A card for the early double-tap and backboard era, when Deevo helped move pro mechanics forward."
+  },
+  {
+    "id": "sp-garrettg-wasteland-shot",
+    "playerId": "garrettg",
+    "baseCardId": "garrettg-nrg-esports-s3",
+    "title": "Wasteland Shot",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 94,
+      "defense": 89,
+      "mechanics": 93,
+      "consistency": 91,
+      "experience": 93,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 clutch."
+    },
+    "flavor": "An early GarrettG highlight card, representing his long-running ability to produce memorable goals under pressure."
+  },
+  {
+    "id": "sp-gimmick-cloud9-mechanics",
+    "playerId": "gimmick",
+    "baseCardId": "gimmick-cloud9-s6",
+    "title": "Cloud9 Mechanics",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 99,
+      "defense": 90,
+      "mechanics": 99,
+      "consistency": 93,
+      "experience": 92,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "The mechanics-forward piece of Cloud9's Season 6 identity, built for speed, creativity and pressure."
+  },
+  {
+    "id": "sp-rise-ice-cold",
+    "playerId": "rise",
+    "baseCardId": "rise-moist-esports-2122",
+    "title": "Ice Cold",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 96,
+      "defense": 91,
+      "mechanics": 95,
+      "consistency": 95,
+      "experience": 95,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 clutch and consistency."
+    },
+    "flavor": "A clutch card for rise's reputation in tense series, especially during Moist's explosive LAN era."
+  },
+  {
+    "id": "sp-chausette45-valencia-peak",
+    "playerId": "chausette45",
+    "baseCardId": "chausette45-psg-esports-s7",
+    "title": "Valencia Peak",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 98,
+      "defense": 88,
+      "mechanics": 99,
+      "consistency": 91,
+      "experience": 90,
+      "clutch": 95
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "mechanics"
+      ],
+      "value": 4,
+      "description": "+4 offense and mechanics."
+    },
+    "flavor": "A DreamHack Valencia peak card for one of the most memorable non-RLCS LAN performances of the pre-open era."
+  },
+  {
+    "id": "sp-yanxnz-gamers8-champion",
+    "playerId": "yanxnz",
+    "baseCardId": "yanxnz-furia-2122",
+    "title": "Gamers8 Champion",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 95,
+    "stats": {
+      "offense": 99,
+      "defense": 89,
+      "mechanics": 99,
+      "consistency": 94,
+      "experience": 93,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "mechanics"
+      ],
+      "value": 4,
+      "description": "+4 offense and mechanics."
+    },
+    "flavor": "FURIA's Gamers8 2022 win was one of the biggest international statements by a Brazilian Rocket League roster."
+  },
+  {
+    "id": "sp-0verzer0-season-1-world-mvp",
     "playerId": "0verzer0",
     "baseCardId": "0verzer0-ibuypower-s1",
     "title": "Season 1 World MVP",
@@ -197,12 +704,12 @@
     "rarity": "mythic",
     "overall": 95,
     "stats": {
-      "offense": 93,
-      "defense": 92,
-      "mechanics": 89,
+      "offense": 96,
+      "defense": 91,
+      "mechanics": 95,
       "consistency": 93,
-      "experience": 94,
-      "clutch": 98
+      "experience": 95,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -215,7 +722,7 @@
     "flavor": "Season 1 World Championship MVP. A substitute story that became part of the early RLCS mythology."
   },
   {
-    "id": "sp-kuxir97-s2-worlds-mvp",
+    "id": "sp-kuxir97-season-2-world-mvp",
     "playerId": "kuxir97",
     "baseCardId": "kuxir97-flipsid3-tactics-s2",
     "title": "Season 2 World MVP",
@@ -223,12 +730,12 @@
     "rarity": "mythic",
     "overall": 97,
     "stats": {
-      "offense": 96,
-      "defense": 94,
-      "mechanics": 98,
-      "consistency": 96,
-      "experience": 96,
-      "clutch": 97
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
+      "consistency": 95,
+      "experience": 94,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -242,7 +749,7 @@
     "flavor": "Season 2 World Championship MVP with FlipSid3 Tactics."
   },
   {
-    "id": "sp-deevo-s3-worlds-mvp",
+    "id": "sp-deevo-season-3-world-mvp",
     "playerId": "deevo",
     "baseCardId": "deevo-northern-gaming-s3",
     "title": "Season 3 World MVP",
@@ -250,12 +757,12 @@
     "rarity": "mythic",
     "overall": 97,
     "stats": {
-      "offense": 96,
-      "defense": 93,
-      "mechanics": 97,
-      "consistency": 94,
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
+      "consistency": 95,
       "experience": 94,
-      "clutch": 97
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -268,7 +775,7 @@
     "flavor": "Season 3 World Championship MVP. A card focused on early aerial creativity and backboard pressure."
   },
   {
-    "id": "sp-turbopolsa-s4-worlds-mvp",
+    "id": "sp-turbopolsa-season-4-world-mvp",
     "playerId": "turbopolsa",
     "baseCardId": "turbopolsa-gale-force-esports-s4",
     "title": "Season 4 World MVP",
@@ -279,8 +786,8 @@
       "offense": 95,
       "defense": 97,
       "mechanics": 94,
-      "consistency": 98,
-      "experience": 97,
+      "consistency": 99,
+      "experience": 99,
       "clutch": 99
     },
     "effect": {
@@ -295,7 +802,7 @@
     "flavor": "Season 4 World Championship MVP with Gale Force Esports."
   },
   {
-    "id": "sp-kaydop-s5-worlds-mvp",
+    "id": "sp-kaydop-season-5-world-mvp",
     "playerId": "kaydop",
     "baseCardId": "kaydop-dignitas-s5",
     "title": "Season 5 World MVP",
@@ -304,11 +811,11 @@
     "overall": 98,
     "stats": {
       "offense": 99,
-      "defense": 90,
-      "mechanics": 95,
-      "consistency": 98,
-      "experience": 97,
-      "clutch": 98
+      "defense": 92,
+      "mechanics": 99,
+      "consistency": 97,
+      "experience": 96,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -322,7 +829,7 @@
     "flavor": "Season 5 World Championship MVP in one of the most famous Grand Finals in RLCS history."
   },
   {
-    "id": "sp-torment-s6-worlds-mvp",
+    "id": "sp-torment-season-6-world-mvp",
     "playerId": "torment",
     "baseCardId": "torment-cloud9-s6",
     "title": "Season 6 World MVP",
@@ -330,12 +837,12 @@
     "rarity": "mythic",
     "overall": 96,
     "stats": {
-      "offense": 90,
+      "offense": 92,
       "defense": 99,
-      "mechanics": 92,
-      "consistency": 97,
-      "experience": 95,
-      "clutch": 97
+      "mechanics": 94,
+      "consistency": 99,
+      "experience": 96,
+      "clutch": 96
     },
     "effect": {
       "type": "attribute_boost",
@@ -349,7 +856,7 @@
     "flavor": "Season 6 World Championship MVP. Cloud9 had the mechanics, but Torment gave the run its defensive base."
   },
   {
-    "id": "sp-scrubkilla-s7-worlds-mvp",
+    "id": "sp-scrubkilla-season-7-world-mvp",
     "playerId": "scrubkilla",
     "baseCardId": "scrubkilla-team-vitality-s7",
     "title": "Season 7 World MVP",
@@ -357,12 +864,12 @@
     "rarity": "mythic",
     "overall": 96,
     "stats": {
-      "offense": 96,
-      "defense": 93,
-      "mechanics": 96,
+      "offense": 99,
+      "defense": 91,
+      "mechanics": 99,
       "consistency": 94,
-      "experience": 91,
-      "clutch": 98
+      "experience": 93,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -376,7 +883,7 @@
     "flavor": "Season 7 World Championship MVP with Renault Vitality."
   },
   {
-    "id": "sp-turbopolsa-s8-worlds-mvp",
+    "id": "sp-turbopolsa-season-8-world-mvp",
     "playerId": "turbopolsa",
     "baseCardId": "turbopolsa-nrg-esports-s8",
     "title": "Season 8 World MVP",
@@ -384,8 +891,8 @@
     "rarity": "mythic",
     "overall": 98,
     "stats": {
-      "offense": 94,
-      "defense": 98,
+      "offense": 95,
+      "defense": 97,
       "mechanics": 94,
       "consistency": 99,
       "experience": 99,
@@ -403,7 +910,7 @@
     "flavor": "Season 8 World Championship MVP. The NRG title completed the four-time story."
   },
   {
-    "id": "sp-seikoo-2022-worlds-mvp",
+    "id": "sp-seikoo-2021-22-world-mvp",
     "playerId": "seikoo",
     "baseCardId": "seikoo-team-bds-2122",
     "title": "2021-22 World MVP",
@@ -411,12 +918,12 @@
     "rarity": "mythic",
     "overall": 96,
     "stats": {
-      "offense": 96,
-      "defense": 91,
-      "mechanics": 96,
-      "consistency": 94,
-      "experience": 90,
-      "clutch": 97
+      "offense": 99,
+      "defense": 90,
+      "mechanics": 99,
+      "consistency": 95,
+      "experience": 94,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -430,7 +937,7 @@
     "flavor": "World Championship MVP after joining Team BDS and turning a great roster into a champion."
   },
   {
-    "id": "sp-zen-2023-worlds-mvp",
+    "id": "sp-zen-2022-23-world-mvp",
     "playerId": "zen",
     "baseCardId": "zen-team-vitality-2223",
     "title": "2022-23 World MVP",
@@ -439,10 +946,10 @@
     "overall": 99,
     "stats": {
       "offense": 99,
-      "defense": 96,
+      "defense": 94,
       "mechanics": 99,
-      "consistency": 98,
-      "experience": 94,
+      "consistency": 97,
+      "experience": 96,
       "clutch": 99
     },
     "effect": {
@@ -451,67 +958,67 @@
         "mechanics",
         "clutch"
       ],
-      "value": 5,
-      "description": "+5 mechanics and clutch."
+      "value": 4,
+      "description": "+4 mechanics and clutch."
     },
     "flavor": "The World Championship MVP card for the season where zen completed the perfect debut run."
   },
   {
-    "id": "sp-dralii-2024-worlds-mvp",
-    "playerId": "dralii",
-    "baseCardId": "dralii-team-bds-2024",
+    "id": "sp-exotiiik-2024-world-mvp",
+    "playerId": "exotiik",
+    "baseCardId": "exotiik-team-bds-2024",
     "title": "2024 World MVP",
     "cardType": "worlds_mvp",
     "rarity": "mythic",
     "overall": 97,
     "stats": {
       "offense": 97,
-      "defense": 94,
-      "mechanics": 98,
-      "consistency": 95,
-      "experience": 91,
-      "clutch": 97
+      "defense": 97,
+      "mechanics": 97,
+      "consistency": 99,
+      "experience": 97,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
       "attributes": [
-        "mechanics",
-        "offense"
+        "consistency",
+        "clutch"
       ],
       "value": 4,
-      "description": "+4 mechanics and offense."
+      "description": "+4 consistency and clutch."
     },
-    "flavor": "A World Championship MVP card for BDS's 2024 title run."
+    "flavor": "World Championship MVP card for Team BDS's 2024 title run, replacing the incorrect dralii MVP entry from the previous base."
   },
   {
-    "id": "sp-atomic-2025-worlds-mvp",
-    "playerId": "atomic",
-    "baseCardId": "atomic-nrg-esports-2025",
-    "title": "2025 World MVP",
-    "cardType": "worlds_mvp",
+    "id": "sp-beastmode-2025-season-mvp",
+    "playerId": "beastmode",
+    "baseCardId": "beastmode-nrg-esports-2025",
+    "title": "2025 Season MVP",
+    "cardType": "season_mvp",
     "rarity": "mythic",
     "overall": 98,
     "stats": {
-      "offense": 98,
-      "defense": 93,
-      "mechanics": 97,
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
       "consistency": 97,
       "experience": 96,
-      "clutch": 98
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
       "attributes": [
         "offense",
-        "consistency"
+        "clutch"
       ],
       "value": 4,
-      "description": "+4 offense and consistency."
+      "description": "+4 offense and clutch."
     },
-    "flavor": "World Championship MVP card for NRG's 2025 title run."
+    "flavor": "Season MVP card for NRG's 2025 title season, separated from the Worlds MVP category to avoid a false award label."
   },
   {
-    "id": "sp-marcby8-fall-major-mvp",
+    "id": "sp-marcby8-stockholm-major-mvp",
     "playerId": "marcby8",
     "baseCardId": "marcby8-team-bds-x",
     "title": "Stockholm Major MVP",
@@ -520,10 +1027,10 @@
     "overall": 95,
     "stats": {
       "offense": 92,
-      "defense": 95,
-      "mechanics": 93,
-      "consistency": 96,
-      "experience": 91,
+      "defense": 96,
+      "mechanics": 91,
+      "consistency": 99,
+      "experience": 98,
       "clutch": 94
     },
     "effect": {
@@ -538,7 +1045,7 @@
     "flavor": "RLCS 2021-22 Fall Major MVP with Team BDS."
   },
   {
-    "id": "sp-atomic-winter-major-mvp",
+    "id": "sp-atomic-la-winter-major-mvp",
     "playerId": "atomic",
     "baseCardId": "atomic-g2-esports-2122",
     "title": "LA Winter Major MVP",
@@ -546,12 +1053,12 @@
     "rarity": "epic",
     "overall": 96,
     "stats": {
-      "offense": 96,
-      "defense": 92,
-      "mechanics": 96,
+      "offense": 99,
+      "defense": 90,
+      "mechanics": 98,
       "consistency": 95,
-      "experience": 92,
-      "clutch": 97
+      "experience": 94,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -565,7 +1072,7 @@
     "flavor": "RLCS 2021-22 Winter Major MVP with G2 Esports."
   },
   {
-    "id": "sp-joyo-spring-major-mvp",
+    "id": "sp-joyo-london-spring-major-mvp",
     "playerId": "joyo",
     "baseCardId": "joyo-moist-esports-2122",
     "title": "London Spring Major MVP",
@@ -573,12 +1080,12 @@
     "rarity": "epic",
     "overall": 96,
     "stats": {
-      "offense": 96,
-      "defense": 89,
-      "mechanics": 98,
-      "consistency": 92,
-      "experience": 90,
-      "clutch": 97
+      "offense": 99,
+      "defense": 91,
+      "mechanics": 99,
+      "consistency": 94,
+      "experience": 93,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -589,10 +1096,10 @@
       "value": 4,
       "description": "+4 mechanics and clutch."
     },
-    "flavor": "RLCS 2021-22 Spring Major MVP. This also covers the Moist/Joyo masterclass from that LAN."
+    "flavor": "RLCS 2021-22 Spring Major MVP. The official MVP version of the Moist/Joyo LAN peak."
   },
   {
-    "id": "sp-apparentlyjack-fall-major-mvp",
+    "id": "sp-apparentlyjack-rotterdam-major-mvp",
     "playerId": "apparentlyjack",
     "baseCardId": "apparentlyjack-gen-g-mobil1-racing-2223",
     "title": "Rotterdam Major MVP",
@@ -600,12 +1107,12 @@
     "rarity": "epic",
     "overall": 96,
     "stats": {
-      "offense": 94,
+      "offense": 93,
       "defense": 95,
-      "mechanics": 94,
-      "consistency": 97,
-      "experience": 92,
-      "clutch": 96
+      "mechanics": 92,
+      "consistency": 99,
+      "experience": 99,
+      "clutch": 97
     },
     "effect": {
       "type": "attribute_boost",
@@ -619,7 +1126,34 @@
     "flavor": "RLCS 2022-23 Fall Major MVP with Gen.G Mobil1 Racing."
   },
   {
-    "id": "sp-zen-spring-major-mvp",
+    "id": "sp-vatira-san-diego-winter-major-mvp",
+    "playerId": "vatira",
+    "baseCardId": "vatira-karmine-corp-2223",
+    "title": "San Diego Winter Major MVP",
+    "cardType": "major_mvp",
+    "rarity": "epic",
+    "overall": 97,
+    "stats": {
+      "offense": 92,
+      "defense": 99,
+      "mechanics": 94,
+      "consistency": 99,
+      "experience": 96,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 defense and clutch."
+    },
+    "flavor": "RLCS 2022-23 Winter Major MVP with Karmine Corp, reinforcing Vatira's Major résumé."
+  },
+  {
+    "id": "sp-zen-boston-spring-major-mvp",
     "playerId": "zen",
     "baseCardId": "zen-team-vitality-2223",
     "title": "Boston Spring Major MVP",
@@ -627,12 +1161,12 @@
     "rarity": "epic",
     "overall": 98,
     "stats": {
-      "offense": 98,
-      "defense": 95,
+      "offense": 99,
+      "defense": 93,
       "mechanics": 99,
-      "consistency": 97,
-      "experience": 92,
-      "clutch": 98
+      "consistency": 98,
+      "experience": 95,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -646,31 +1180,31 @@
     "flavor": "RLCS 2022-23 Spring Major MVP. The Major that confirmed Vitality's perfect split was real."
   },
   {
-    "id": "sp-itachi-copenhagen-major-mvp",
-    "playerId": "itachi",
-    "baseCardId": "itachi-gentle-mates-alpine-2024",
+    "id": "sp-juicy-copenhagen-major-mvp",
+    "playerId": "juicy",
+    "baseCardId": "juicy-gentle-mates-alpine-2024",
     "title": "Copenhagen Major MVP",
     "cardType": "major_mvp",
     "rarity": "epic",
     "overall": 96,
     "stats": {
-      "offense": 92,
-      "defense": 97,
-      "mechanics": 94,
-      "consistency": 97,
+      "offense": 99,
+      "defense": 90,
+      "mechanics": 98,
+      "consistency": 95,
       "experience": 94,
-      "clutch": 96
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
       "attributes": [
-        "defense",
-        "consistency"
+        "offense",
+        "clutch"
       ],
       "value": 4,
-      "description": "+4 defense and consistency."
+      "description": "+4 offense and clutch."
     },
-    "flavor": "RLCS 2024 Major 1 MVP with Gentle Mates Alpine."
+    "flavor": "RLCS 2024 Major 1 MVP with Gentle Mates Alpine, correcting the previous Itachi MVP entry."
   },
   {
     "id": "sp-beastmode-london-major-mvp",
@@ -681,12 +1215,12 @@
     "rarity": "epic",
     "overall": 97,
     "stats": {
-      "offense": 98,
-      "defense": 92,
-      "mechanics": 98,
-      "consistency": 95,
-      "experience": 94,
-      "clutch": 98
+      "offense": 99,
+      "defense": 91,
+      "mechanics": 99,
+      "consistency": 96,
+      "experience": 95,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -708,12 +1242,12 @@
     "rarity": "epic",
     "overall": 97,
     "stats": {
-      "offense": 97,
-      "defense": 94,
-      "mechanics": 98,
-      "consistency": 96,
-      "experience": 91,
-      "clutch": 97
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
+      "consistency": 95,
+      "experience": 94,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -724,7 +1258,7 @@
       "value": 4,
       "description": "+4 mechanics and offense."
     },
-    "flavor": "RLCS 2025 Birmingham Major MVP."
+    "flavor": "RLCS 2025 Birmingham Major MVP with Karmine Corp."
   },
   {
     "id": "sp-kiileerrz-raleigh-major-mvp",
@@ -735,12 +1269,12 @@
     "rarity": "epic",
     "overall": 97,
     "stats": {
-      "offense": 97,
-      "defense": 93,
-      "mechanics": 98,
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
       "consistency": 95,
       "experience": 94,
-      "clutch": 98
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -751,7 +1285,7 @@
       "value": 4,
       "description": "+4 mechanics and clutch."
     },
-    "flavor": "RLCS 2025 Raleigh Major MVP. Falcons' win gave MENA its first RLCS LAN title."
+    "flavor": "RLCS 2025 Raleigh Major MVP. Falcons' win gave MENA its first RLCS Major title."
   },
   {
     "id": "sp-nass-boston-major-mvp",
@@ -762,12 +1296,12 @@
     "rarity": "epic",
     "overall": 97,
     "stats": {
-      "offense": 97,
-      "defense": 93,
-      "mechanics": 98,
-      "consistency": 96,
-      "experience": 91,
-      "clutch": 98
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
+      "consistency": 95,
+      "experience": 94,
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -789,12 +1323,12 @@
     "rarity": "epic",
     "overall": 98,
     "stats": {
-      "offense": 96,
+      "offense": 94,
       "defense": 99,
-      "mechanics": 97,
-      "consistency": 98,
+      "mechanics": 96,
+      "consistency": 99,
       "experience": 98,
-      "clutch": 98
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -805,208 +1339,23 @@
       "value": 4,
       "description": "+4 defense and clutch."
     },
-    "flavor": "RLCS 2026 Paris Major MVP with Karmine Corp."
+    "flavor": "RLCS 2026 Paris Major MVP with Karmine Corp in front of the French crowd."
   },
   {
-    "id": "sp-jstn-this-is-rocket-league",
-    "playerId": "jstn",
-    "baseCardId": "jstn-nrg-esports-s5",
-    "title": "This Is Rocket League",
-    "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 96,
-    "stats": {
-      "offense": 96,
-      "defense": 88,
-      "mechanics": 96,
-      "consistency": 90,
-      "experience": 94,
-      "clutch": 99
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "clutch"
-      ],
-      "value": 5,
-      "description": "+5 clutch."
-    },
-    "flavor": "Season 5 Grand Final. Zero seconds on the clock, the ball still live, and one of the most famous calls in esports history."
-  },
-  {
-    "id": "sp-squishy-ceiling-shot",
-    "playerId": "squishymuffinz",
-    "baseCardId": "squishymuffinz-cloud9-s4",
-    "title": "Ceiling Shot",
+    "id": "sp-firstkiller-na-mvp",
+    "playerId": "firstkiller",
+    "baseCardId": "firstkiller-faze-clan-2223",
+    "title": "NA MVP",
     "cardType": "moment",
     "rarity": "mythic",
     "overall": 95,
     "stats": {
-      "offense": 94,
-      "defense": 88,
+      "offense": 99,
+      "defense": 90,
       "mechanics": 99,
-      "consistency": 91,
-      "experience": 93,
-      "clutch": 95
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "mechanics"
-      ],
-      "value": 5,
-      "description": "+5 mechanics."
-    },
-    "flavor": "A famous early ceiling shot that became a marker for where Rocket League mechanics were heading."
-  },
-  {
-    "id": "sp-0verzero-air-dribble",
-    "playerId": "0verzer0",
-    "baseCardId": "0verzer0-ibuypower-s1",
-    "title": "Air Dribble",
-    "cardType": "moment",
-    "rarity": "rare",
-    "overall": 93,
-    "stats": {
-      "offense": 92,
-      "defense": 88,
-      "mechanics": 94,
-      "consistency": 88,
+      "consistency": 93,
       "experience": 92,
-      "clutch": 96
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "mechanics",
-        "clutch"
-      ],
-      "value": 3,
-      "description": "+3 mechanics and clutch."
-    },
-    "flavor": "A Season 1-era aerial dribble highlight from iBUYPOWER Cosmic, kept as a moment card rather than another MVP card."
-  },
-  {
-    "id": "sp-al0t-redirect",
-    "playerId": "al0t",
-    "baseCardId": "al0t-complexity-gaming-s5",
-    "title": "Redirect",
-    "cardType": "moment",
-    "rarity": "rare",
-    "overall": 91,
-    "stats": {
-      "offense": 93,
-      "defense": 84,
-      "mechanics": 94,
-      "consistency": 86,
-      "experience": 88,
-      "clutch": 91
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "offense",
-        "mechanics"
-      ],
-      "value": 3,
-      "description": "+3 offense and mechanics."
-    },
-    "flavor": "A community-favorite redirect highlight. Useful as a mechanics/offense moment without inflating him into the top tier."
-  },
-  {
-    "id": "sp-zen-mr-physics",
-    "playerId": "zen",
-    "baseCardId": "zen-team-vitality-2223",
-    "title": "Mr. Physics",
-    "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 98,
-    "stats": {
-      "offense": 98,
-      "defense": 95,
-      "mechanics": 99,
-      "consistency": 97,
-      "experience": 92,
-      "clutch": 98
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "mechanics"
-      ],
-      "value": 5,
-      "description": "+5 mechanics."
-    },
-    "flavor": "A mechanics-first zen moment card, based on the community perception of his physics-defying touches and reads."
-  },
-  {
-    "id": "sp-joyo-moist-masterclass",
-    "playerId": "joyo",
-    "baseCardId": "joyo-moist-esports-2122",
-    "title": "Moist Masterclass",
-    "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 95,
-    "stats": {
-      "offense": 95,
-      "defense": 88,
-      "mechanics": 98,
-      "consistency": 91,
-      "experience": 90,
-      "clutch": 96
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "mechanics",
-        "offense"
-      ],
-      "value": 4,
-      "description": "+4 mechanics and offense."
-    },
-    "flavor": "A separate Joyo moment card for the 2022 Spring Major run. The official MVP version is also in the album."
-  },
-  {
-    "id": "sp-yanxnz-moist-game-seven-hat-trick",
-    "playerId": "yanxnz",
-    "baseCardId": "yanxnz-furia-2122",
-    "title": "Moist Game 7 Hat Trick",
-    "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 97,
-    "stats": {
-      "offense": 97,
-      "defense": 87,
-      "mechanics": 97,
-      "consistency": 90,
-      "experience": 89,
-      "clutch": 99
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "clutch"
-      ],
-      "value": 5,
-      "description": "+5 clutch."
-    },
-    "flavor": "FURIA vs Moist at the 2021-22 World Championship. A defining SAM moment on the world stage."
-  },
-  {
-    "id": "sp-yanxnz-gamers8-champion",
-    "playerId": "yanxnz",
-    "baseCardId": "yanxnz-furia-2122",
-    "title": "Gamers8 Champion",
-    "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 95,
-    "stats": {
-      "offense": 96,
-      "defense": 85,
-      "mechanics": 97,
-      "consistency": 90,
-      "experience": 89,
-      "clutch": 96
+      "clutch": 97
     },
     "effect": {
       "type": "attribute_boost",
@@ -1017,34 +1366,7 @@
       "value": 4,
       "description": "+4 offense and mechanics."
     },
-    "flavor": "FURIA's Gamers8 2022 win was one of the biggest international statements by a Brazilian Rocket League roster."
-  },
-  {
-    "id": "sp-fairy-peak-vitality-control",
-    "playerId": "fairypeak",
-    "baseCardId": "fairypeak-team-vitality-s8",
-    "title": "Vitality Control",
-    "cardType": "legend",
-    "rarity": "mythic",
-    "overall": 94,
-    "stats": {
-      "offense": 91,
-      "defense": 96,
-      "mechanics": 93,
-      "consistency": 97,
-      "experience": 98,
-      "clutch": 94
-    },
-    "effect": {
-      "type": "attribute_boost",
-      "attributes": [
-        "defense",
-        "consistency"
-      ],
-      "value": 4,
-      "description": "+4 defense and consistency."
-    },
-    "flavor": "A legacy card for Fairy Peak!'s control, longevity and importance to the Vitality identity."
+    "flavor": "A high-peak North American card for Firstkiller's individual pressure, speed and ability to reshape entire series."
   },
   {
     "id": "sp-firstkiller-rogue-era",
@@ -1052,15 +1374,15 @@
     "baseCardId": "firstkiller-rogue-x",
     "title": "Rogue Era",
     "cardType": "moment",
-    "rarity": "mythic",
+    "rarity": "epic",
     "overall": 94,
     "stats": {
-      "offense": 96,
-      "defense": 88,
-      "mechanics": 98,
-      "consistency": 88,
-      "experience": 89,
-      "clutch": 94
+      "offense": 99,
+      "defense": 89,
+      "mechanics": 99,
+      "consistency": 92,
+      "experience": 91,
+      "clutch": 96
     },
     "effect": {
       "type": "attribute_boost",
@@ -1071,7 +1393,7 @@
       "value": 4,
       "description": "+4 offense and mechanics."
     },
-    "flavor": "A card for the early Firstkiller period, when his individual pressure could reshape entire series."
+    "flavor": "A card for the early Firstkiller period, when his individual mechanics made Rogue a must-watch roster."
   },
   {
     "id": "sp-seikoo-endpoint-breakout",
@@ -1082,12 +1404,12 @@
     "rarity": "mythic",
     "overall": 94,
     "stats": {
-      "offense": 95,
+      "offense": 99,
       "defense": 88,
-      "mechanics": 96,
-      "consistency": 92,
-      "experience": 86,
-      "clutch": 94
+      "mechanics": 98,
+      "consistency": 93,
+      "experience": 92,
+      "clutch": 97
     },
     "effect": {
       "type": "attribute_boost",
@@ -1098,7 +1420,7 @@
       "value": 4,
       "description": "+4 offense and mechanics."
     },
-    "flavor": "Before the Worlds MVP card, there was the Endpoint breakout."
+    "flavor": "Before the Worlds MVP card, there was the Endpoint breakout: a rookie star changing the pace of EU series."
   },
   {
     "id": "sp-trk511-mena-arrival",
@@ -1107,14 +1429,14 @@
     "title": "MENA Arrival",
     "cardType": "moment",
     "rarity": "mythic",
-    "overall": 94,
+    "overall": 95,
     "stats": {
-      "offense": 94,
-      "defense": 91,
-      "mechanics": 96,
+      "offense": 98,
+      "defense": 90,
+      "mechanics": 99,
       "consistency": 93,
       "experience": 92,
-      "clutch": 95
+      "clutch": 99
     },
     "effect": {
       "type": "attribute_boost",
@@ -1128,47 +1450,155 @@
     "flavor": "A Falcons/Sandrock-era card for MENA becoming a real international contender."
   },
   {
-    "id": "sp-drippay-oce-breakthrough",
-    "playerId": "drippay",
-    "baseCardId": "drippay-chiefs-esports-club-s4",
-    "title": "OCE Breakthrough",
+    "id": "sp-trk511-falcons-finalist",
+    "playerId": "trk511",
+    "baseCardId": "trk511-team-falcons-2025",
+    "title": "Falcons Finalist",
     "cardType": "moment",
-    "rarity": "rare",
-    "overall": 91,
+    "rarity": "epic",
+    "overall": 94,
     "stats": {
-      "offense": 93,
-      "defense": 85,
-      "mechanics": 91,
-      "consistency": 89,
-      "experience": 90,
-      "clutch": 94
+      "offense": 94,
+      "defense": 94,
+      "mechanics": 94,
+      "consistency": 96,
+      "experience": 94,
+      "clutch": 96
     },
     "effect": {
       "type": "attribute_boost",
       "attributes": [
-        "offense",
+        "consistency",
         "clutch"
       ],
-      "value": 3,
-      "description": "+3 offense and clutch."
+      "value": 4,
+      "description": "+4 consistency and clutch."
     },
-    "flavor": "A card for the first OCE era that showed the region could create LAN threats and individual stars."
+    "flavor": "A second trk511 card for Falcons' continued international relevance and deep LAN runs."
   },
   {
-    "id": "sp-torsos-longevity",
+    "id": "sp-ahmad-mena-aerial-engine",
+    "playerId": "ahmad",
+    "baseCardId": "ahmad-team-falcons-2122",
+    "title": "MENA Aerial Engine",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 99,
+      "defense": 89,
+      "mechanics": 99,
+      "consistency": 92,
+      "experience": 91,
+      "clutch": 96
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "An Ahmad card for the Sandrock/Falcons mechanical engine that helped introduce MENA's speed to the wider RLCS audience."
+  },
+  {
+    "id": "sp-okhalid-50-50-king",
+    "playerId": "okhalid",
+    "baseCardId": "okhalid-team-falcons-2122",
+    "title": "50/50 King",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 95,
+    "stats": {
+      "offense": 90,
+      "defense": 99,
+      "mechanics": 92,
+      "consistency": 99,
+      "experience": 94,
+      "clutch": 96
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 defense and consistency."
+    },
+    "flavor": "A control-heavy card for oKhaliD's grounded style, 1v1 discipline and impossible-looking challenges."
+  },
+  {
+    "id": "sp-nwpo-first-1v1-world-champion",
+    "playerId": "nwpo",
+    "baseCardId": "nwpo-twisted-minds-2025",
+    "title": "First 1v1 World Champion",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 97,
+    "stats": {
+      "offense": 99,
+      "defense": 92,
+      "mechanics": 99,
+      "consistency": 95,
+      "experience": 94,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and clutch."
+    },
+    "flavor": "The first official 1v1 world champion card, built around peak solo mechanics and fearless pressure."
+  },
+  {
+    "id": "sp-joreuz-mechanical-prodigy",
+    "playerId": "joreuz",
+    "baseCardId": "joreuz-dignitas-2122",
+    "title": "Mechanical Prodigy",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 98,
+      "defense": 88,
+      "mechanics": 99,
+      "consistency": 91,
+      "experience": 90,
+      "clutch": 95
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "A mechanics-first card for Joreuz's prodigy reputation and peak individual creativity."
+  },
+  {
+    "id": "sp-torsos-oce-longevity",
     "playerId": "torsos",
     "baseCardId": "torsos-chiefs-esports-club-s5",
-    "title": "Longevity",
+    "title": "OCE Longevity",
     "cardType": "legend",
     "rarity": "rare",
     "overall": 88,
     "stats": {
-      "offense": 84,
-      "defense": 88,
+      "offense": 85,
+      "defense": 87,
       "mechanics": 84,
-      "consistency": 91,
-      "experience": 96,
-      "clutch": 88
+      "consistency": 93,
+      "experience": 95,
+      "clutch": 89
     },
     "effect": {
       "type": "attribute_boost",
@@ -1190,12 +1620,12 @@
     "rarity": "rare",
     "overall": 86,
     "stats": {
-      "offense": 81,
+      "offense": 83,
       "defense": 85,
-      "mechanics": 80,
-      "consistency": 89,
-      "experience": 95,
-      "clutch": 86
+      "mechanics": 82,
+      "consistency": 91,
+      "experience": 93,
+      "clutch": 87
     },
     "effect": {
       "type": "attribute_boost",
@@ -1206,50 +1636,50 @@
       "value": 3,
       "description": "+3 experience and consistency."
     },
-    "flavor": "A lower-overall special card for leadership, region identity and career presence."
+    "flavor": "A lower-overall special card for leadership, region identity, desk presence and long-term OCE relevance."
   },
   {
-    "id": "sp-chausettes-dreamhack-valencia",
-    "playerId": "chausette45",
-    "baseCardId": "chausette45-psg-esports-s7",
-    "title": "Valencia Peak",
+    "id": "sp-drippay-oce-breakthrough",
+    "playerId": "drippay",
+    "baseCardId": "drippay-chiefs-esports-club-s4",
+    "title": "OCE Breakthrough",
     "cardType": "moment",
     "rarity": "rare",
-    "overall": 92,
+    "overall": 91,
     "stats": {
-      "offense": 94,
+      "offense": 93,
       "defense": 89,
-      "mechanics": 94,
-      "consistency": 90,
-      "experience": 91,
+      "mechanics": 91,
+      "consistency": 91,
+      "experience": 93,
       "clutch": 94
     },
     "effect": {
       "type": "attribute_boost",
       "attributes": [
         "offense",
-        "mechanics"
+        "clutch"
       ],
       "value": 3,
-      "description": "+3 offense and mechanics."
+      "description": "+3 offense and clutch."
     },
-    "flavor": "Not an RLCS MVP card, but a strong non-RLCS LAN peak worth keeping as optional flavor."
+    "flavor": "A card for the first OCE era that showed the region could create LAN threats and individual stars."
   },
   {
-    "id": "sp-garrettg-longevity",
-    "playerId": "garrettg",
-    "baseCardId": "garrettg-nrg-esports-2122",
-    "title": "Longevity",
-    "cardType": "legend",
-    "rarity": "mythic",
-    "overall": 95,
+    "id": "sp-caiotg1-sam-pioneer",
+    "playerId": "caiotg1",
+    "baseCardId": "caiotg1-furia-2122",
+    "title": "SAM Pioneer",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 89,
     "stats": {
-      "offense": 93,
-      "defense": 93,
-      "mechanics": 92,
-      "consistency": 99,
-      "experience": 99,
-      "clutch": 94
+      "offense": 89,
+      "defense": 87,
+      "mechanics": 89,
+      "consistency": 91,
+      "experience": 93,
+      "clutch": 90
     },
     "effect": {
       "type": "attribute_boost",
@@ -1257,20 +1687,344 @@
         "experience",
         "consistency"
       ],
-      "value": 4,
-      "description": "+4 experience and consistency."
+      "value": 3,
+      "description": "+3 experience and consistency."
     },
-    "flavor": "A career legacy card for one of the defining names of North American Rocket League."
+    "flavor": "A Brazilian/SAM legacy card for the players who helped build the region before its deeper international runs."
   },
   {
-    "id": "sp-coach-ferra-perfect-vitality",
-    "kind": "coach",
+    "id": "sp-caard-furia-engine",
+    "playerId": "caard",
+    "baseCardId": "caard-furia-2122",
+    "title": "FURIA Engine",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 90,
+    "stats": {
+      "offense": 92,
+      "defense": 88,
+      "mechanics": 90,
+      "consistency": 92,
+      "experience": 92,
+      "clutch": 91
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "consistency"
+      ],
+      "value": 3,
+      "description": "+3 offense and consistency."
+    },
+    "flavor": "A FURIA support-engine card for the roster identity around pressure, pace and Brazilian confidence."
+  },
+  {
+    "id": "sp-lostt-vitality-slayer",
+    "playerId": "lostt",
+    "baseCardId": "lostt-furia-2024",
+    "title": "Vitality Slayer",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 99,
+      "defense": 87,
+      "mechanics": 95,
+      "consistency": 92,
+      "experience": 91,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 offense and clutch."
+    },
+    "flavor": "A SAM upset card for Lostt's ability to threaten elite European teams with pace and finishing."
+  },
+  {
+    "id": "sp-kv1-sam-wall",
+    "playerId": "kv1",
+    "baseCardId": "kv1-team-secret-2223",
+    "title": "SAM Wall",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 90,
+    "stats": {
+      "offense": 86,
+      "defense": 96,
+      "mechanics": 88,
+      "consistency": 94,
+      "experience": 90,
+      "clutch": 90
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
+      "value": 3,
+      "description": "+3 defense and consistency."
+    },
+    "flavor": "A defensive SAM card for controlled challenges, last-man saves and structure under pressure."
+  },
+  {
+    "id": "sp-bananahead-wildcard-upset",
+    "playerId": "bananahead",
+    "baseCardId": "bananahead-wildcard-2025",
+    "title": "Wildcard Upset",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 90,
+    "stats": {
+      "offense": 90,
+      "defense": 88,
+      "mechanics": 92,
+      "consistency": 90,
+      "experience": 92,
+      "clutch": 93
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "clutch",
+        "mechanics"
+      ],
+      "value": 3,
+      "description": "+3 clutch and mechanics."
+    },
+    "flavor": "A lower-tier special card for the APAC/OCE upset energy that makes international Swiss stages unpredictable."
+  },
+  {
+    "id": "sp-fireburner-third-man-blueprint",
+    "playerId": "fireburner",
+    "baseCardId": "fireburner-nrg-esports-s5",
+    "title": "Third Man Blueprint",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 88,
+      "defense": 99,
+      "mechanics": 90,
+      "consistency": 96,
+      "experience": 94,
+      "clutch": 94
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "experience"
+      ],
+      "value": 4,
+      "description": "+4 defense and experience."
+    },
+    "flavor": "A classic NA structure card for the third-man discipline that shaped early NRG and pre-open era team play."
+  },
+  {
+    "id": "sp-extra-bds-glue",
+    "playerId": "extra",
+    "baseCardId": "extra-team-bds-2122",
+    "title": "BDS Glue",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 91,
+      "defense": 95,
+      "mechanics": 90,
+      "consistency": 99,
+      "experience": 97,
+      "clutch": 93
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "defense"
+      ],
+      "value": 4,
+      "description": "+4 consistency and defense."
+    },
+    "flavor": "A BDS structure card for the stabilizing player who made pressure, spacing and rotations feel inevitable."
+  },
+  {
+    "id": "sp-alpha54-vitality-finisher",
+    "playerId": "alpha54",
+    "baseCardId": "alpha54-team-vitality-2223",
+    "title": "Vitality Finisher",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 99,
+      "defense": 88,
+      "mechanics": 96,
+      "consistency": 93,
+      "experience": 92,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 offense and clutch."
+    },
+    "flavor": "A Vitality attacking card for Alpha54's finishing, speed and ability to convert pressure into goals."
+  },
+  {
+    "id": "sp-radosin-perfect-vitality",
+    "playerId": "radosin",
+    "baseCardId": "radosin-team-vitality-2223",
+    "title": "Perfect Vitality",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 93,
+      "defense": 93,
+      "mechanics": 93,
+      "consistency": 95,
+      "experience": 93,
+      "clutch": 95
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 consistency and clutch."
+    },
+    "flavor": "A role-player card for Vitality's perfect 2023 run, rewarding adaptability and team fit around zen and Alpha54."
+  },
+  {
+    "id": "sp-itachi-gentle-mates-structure",
+    "playerId": "itachi",
+    "baseCardId": "itachi-gentle-mates-alpine-2024",
+    "title": "Gentle Mates Structure",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 91,
+      "defense": 95,
+      "mechanics": 90,
+      "consistency": 99,
+      "experience": 97,
+      "clutch": 93
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 defense and consistency."
+    },
+    "flavor": "A corrected Itachi card: not Copenhagen MVP, but still a structure-heavy LAN champion piece for Gentle Mates."
+  },
+  {
+    "id": "sp-atow-liquid-mechanics",
+    "playerId": "atow",
+    "baseCardId": "atow-team-liquid-2223",
+    "title": "Liquid Mechanics",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 99,
+      "defense": 89,
+      "mechanics": 99,
+      "consistency": 92,
+      "experience": 91,
+      "clutch": 96
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "A Team Liquid mechanics card for Atow.'s speed, reads and ability to generate pressure from awkward positions."
+  },
+  {
+    "id": "sp-atomic-nrg-precision",
+    "playerId": "atomic",
+    "baseCardId": "atomic-nrg-esports-2025",
+    "title": "NRG Precision",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 95,
+    "stats": {
+      "offense": 99,
+      "defense": 89,
+      "mechanics": 97,
+      "consistency": 96,
+      "experience": 93,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 offense and consistency."
+    },
+    "flavor": "A 2025 NRG title-era card for Atomic's reliable finishing and clean offensive decisions, without falsely labeling him as Worlds MVP."
+  },
+  {
+    "id": "sp-dralii-moroccan-world-champion",
+    "playerId": "dralii",
+    "baseCardId": "dralii-team-bds-2024",
+    "title": "Moroccan World Champion",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": {
+      "offense": 99,
+      "defense": 91,
+      "mechanics": 99,
+      "consistency": 94,
+      "experience": 93,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "A special champion card for dralii's 2024 BDS run and mechanical ceiling, separated from the corrected 2024 World MVP award."
+  },
+  {
+    "id": "sp-ferra-perfect-vitality",
     "playerId": "ferra",
     "baseCardId": "ferra-coach-team-vitality-2223",
     "title": "Perfect Vitality",
     "cardType": "coach",
     "rarity": "legendary",
     "overall": 99,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
@@ -1280,17 +2034,17 @@
       "value": 5,
       "description": "+5 team consistency and clutch."
     },
-    "flavor": "Vitality's 2023 run gives Ferra the premium coach card."
+    "flavor": "Vitality's 2023 perfect run gives Ferra the premium coach card."
   },
   {
-    "id": "sp-coach-stl-gamers8-furia",
-    "kind": "coach",
+    "id": "sp-stl-gamers8-furia",
     "playerId": "stl",
     "baseCardId": "stl-coach-furia-x",
     "title": "Gamers8 FURIA",
     "cardType": "coach",
     "rarity": "mythic",
     "overall": 94,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
@@ -1303,33 +2057,33 @@
     "flavor": "FURIA's Gamers8 2022 title was a landmark for Brazilian Rocket League. STL gets a coach card for that run."
   },
   {
-    "id": "sp-coach-satthew-na-superteam",
-    "kind": "coach",
+    "id": "sp-satthew-na-superteam",
     "playerId": "satthew",
     "baseCardId": "satthew-coach-nrg-esports-2025",
     "title": "NA Superteam",
     "cardType": "coach",
     "rarity": "mythic",
     "overall": 95,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
         "consistency"
       ],
-      "value": 4,
-      "description": "+4 team consistency."
+      "value": 5,
+      "description": "+5 team consistency."
     },
     "flavor": "A coach card for managing elite NA rosters and keeping high-talent lineups stable."
   },
   {
-    "id": "sp-coach-mew-bds-worlds",
-    "kind": "coach",
+    "id": "sp-mew-bds-reset",
     "playerId": "mew",
     "baseCardId": "mew-coach-team-bds-2122",
     "title": "BDS Reset",
     "cardType": "coach",
     "rarity": "mythic",
     "overall": 94,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
@@ -1339,17 +2093,17 @@
       "value": 4,
       "description": "+4 team defense and consistency."
     },
-    "flavor": "A BDS Worlds preparation card focused on structure and bracket adaptation."
+    "flavor": "A BDS Worlds preparation card focused on structure, mental reset and bracket adaptation."
   },
   {
-    "id": "sp-coach-sizz-nrg-madrid",
-    "kind": "coach",
+    "id": "sp-sizz-madrid-nrg",
     "playerId": "sizz",
     "baseCardId": "sizz-coach-nrg-esports-s8",
     "title": "Madrid NRG",
     "cardType": "coach",
     "rarity": "rare",
     "overall": 91,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
@@ -1361,14 +2115,14 @@
     "flavor": "NRG's Season 8 title run earns Sizz a mentality-focused coach card."
   },
   {
-    "id": "sp-coach-eversax-kc-structure",
-    "kind": "coach",
+    "id": "sp-eversax-karmine-structure",
     "playerId": "eversax",
     "baseCardId": "eversax-coach-karmine-corp-2223",
     "title": "Karmine Structure",
     "cardType": "coach",
     "rarity": "mythic",
     "overall": 94,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
@@ -1381,14 +2135,14 @@
     "flavor": "A Karmine Corp structure card built around controlling elite attacking talent."
   },
   {
-    "id": "sp-coach-snaski-gentle-mates",
-    "kind": "coach",
+    "id": "sp-snaski-gentle-mates",
     "playerId": "snaski",
     "baseCardId": "snaski-coach-oxygen-esports-2024",
     "title": "Gentle Mates",
     "cardType": "coach",
     "rarity": "rare",
     "overall": 91,
+    "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
       "attributes": [
@@ -1398,5 +2152,25 @@
       "description": "+3 team consistency."
     },
     "flavor": "A fundamentals-focused coach card for Gentle Mates' LAN structure."
+  },
+  {
+    "id": "sp-gregan-vitality-blueprint",
+    "playerId": "gregan",
+    "baseCardId": "gregan-coach-team-vitality-s7",
+    "title": "Vitality Blueprint",
+    "cardType": "coach",
+    "rarity": "epic",
+    "overall": 93,
+    "kind": "coach",
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "defense",
+        "experience"
+      ],
+      "value": 4,
+      "description": "+4 team defense and experience."
+    },
+    "flavor": "A coach/analyst legacy card for the early Vitality structure and one of the most recognizable strategic voices in Rocket League."
   }
 ]
