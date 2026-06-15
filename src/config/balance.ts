@@ -228,9 +228,9 @@ export const SPECIALS = {
    * specials. v0.5.1: 0.16 → 0.06 by direction — at 16% (×the per-player
    * pool) runs were seeing 3-4 specials and they stopped feeling special.
    */
-  appearanceChance: 0.06,
+  appearanceChance: 1,
   /** Coach cards roll their person's coach specials at this chance. */
-  coachAppearanceChance: 0.05,
+  coachAppearanceChance: 1,
   /**
    * When a special DOES appear, which one is weighted by rarity tier.
    * Within a player's pool: rare ≈ common sight, legendary ≈ chase pull.
@@ -325,6 +325,16 @@ export const XP = {
     quick: 0.5,
     daily: 1.5,
   } as Record<string, number>,
+  /**
+   * Flat XP for unlocking a NEW special card, by rarity (v0.7.0). Kept modest
+   * by direction — it's a collection reward, not run performance, so it is
+   * added AFTER the difficulty multiplier (like achievement XP) and never
+   * scaled. Reference: a run completion is 50 XP.
+   */
+  specialUnlock: { rare: 10, epic: 20, mythic: 40, legendary: 75 } as Record<
+    string,
+    number
+  >,
 } as const;
 
 /**
@@ -344,3 +354,17 @@ export const RANKS = [
 ] as const;
 
 export const HISTORY_LIMIT = 25;
+
+// ---------------------------------------------------------------------------
+// Experimental feature flags (v0.7.0). Each is a single revert point — flip
+// to false to fully disable the feature with no other code change.
+// ---------------------------------------------------------------------------
+
+export const FEATURES = {
+  /**
+   * Results screen reveals the lineup that knocked the user out on a lost run
+   * (a subdued strip — "who ended my run"). EASY TO REVERT: set false and the
+   * results `eliminatedBy` data stays null, so the UI block renders nothing.
+   */
+  showEliminatorTeam: true,
+} as const;

@@ -12,7 +12,7 @@ import { REVIEW, STAT_LABELS } from "@/content/copy";
 import { displayTeamOverall } from "@/engine/rating";
 import { buildUserTeam } from "@/engine/teams";
 import type { RunState, StatKey } from "@/engine/types";
-import { orgById, specialCardById } from "@/data";
+import { lineupById, orgById, specialCardById } from "@/data";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -179,11 +179,28 @@ export function ReviewScreen({ run }: { run: RunState }) {
         </div>
       </div>
 
-      {/* Cards strip */}
-      <div className="mt-8 grid grid-cols-3 justify-items-center gap-2 md:gap-3 lg:grid-cols-6">
-        {slots.map((s) => (
-          <GameCard key={s.slot} card={s.card!} showOverall={run.showOverall} size="sm" />
-        ))}
+      {/* Cards strip — fluid cards inside capped cells (mobile fix, v0.7.0):
+          a fixed size="sm" card (w-32) overflowed its 3-column mobile track
+          and the cards overlapped. This uses the SAME proven fluid + max-width
+          wrapper the draft and results screens already use — the card
+          internals are untouched, so no other view changes. */}
+      <div className="mt-8 grid grid-cols-3 gap-2 md:gap-3 lg:grid-cols-6">
+        {slots.map((s) => {
+          const fromLineupId = run.draft.roster[s.slot]?.fromLineupId;
+          const lu = fromLineupId ? lineupById.get(fromLineupId) : undefined;
+          return (
+            <div key={s.slot} className="mx-auto w-full max-w-32">
+              <GameCard
+                card={s.card!}
+                showOverall={run.showOverall}
+                maskOrgId={lu?.orgId}
+                maskSeasonId={lu?.seasonId}
+                size="sm"
+                fluid
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,19 +1,24 @@
 "use client";
 
 /**
- * In-run header: back-to-menu, phase progress, run badges.
- * v0.5: leaving mid-run asks for confirmation (players lost drafts to a
- * stray click) — the shared LeaveRunGuard owns the modal. Results phase
- * navigates straight home, nothing left to lose.
+ * In-run header: back-to-menu, phase progress, run badges, reset.
+ * v0.7.0: leaving the run resets it automatically (no confirmation modal) —
+ * the back arrow and nav links just navigate, and AppShell clears the run on
+ * any page that isn't /play. A dedicated "Reset run" button sits next to the
+ * difficulty tag for a deliberate restart (kept behind one confirm, since it
+ * throws away an in-progress draft/tournament).
  */
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { DIFFICULTY } from "@/config/balance";
-import { SETUP } from "@/content/copy";
+import { RUN_UI, SETUP } from "@/content/copy";
 import type { RunPhase, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
+import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
-import { useLeaveRunGuard } from "@/components/layout/LeaveRunGuard";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 
 const PHASES: { id: RunPhase; label: string }[] = [
   { id: "draft", label: "Draft" },
@@ -24,7 +29,8 @@ const PHASES: { id: RunPhase; label: string }[] = [
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
-  const requestLeave = useLeaveRunGuard();
+  const clearRun = useRunStore((s) => s.clearRun);
+  const [confirmReset, setConfirmReset] = useState(false);
   const currentIndex = PHASES.findIndex((p) => p.id === run.phase);
 
   return (
@@ -32,15 +38,9 @@ export function RunStepper({ run }: { run: RunState }) {
       <div className="flex items-center gap-2 md:gap-3">
         <button
           type="button"
-          onClick={() => {
-            // Mid-run the guard opens the confirmation modal; on results
-            // (or with no run) it declines and we navigate directly. The
-            // home page clears the run on mount — clearing here first would
-            // flash the setup screen during the transition.
-            if (!requestLeave("/")) {
-              router.push("/");
-            }
-          }}
+          // Just navigate — AppShell resets the run when it sees we left /play
+          // (clearing here first would flash the setup screen mid-transition).
+          onClick={() => router.push("/")}
           title={SETUP.back}
           aria-label={SETUP.back}
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:bg-white/5 hover:text-ink"
@@ -75,7 +75,54 @@ export function RunStepper({ run }: { run: RunState }) {
       <div className="flex items-center gap-2">
         <Badge tone="blue">{DIFFICULTY[run.difficulty].label}</Badge>
         {!run.showOverall ? <Badge tone="neutral">Hidden OVR</Badge> : null}
+        {/* Reset run — deliberate restart (the run is over on results). */}
+        {run.phase !== "results" ? (
+          <button
+            type="button"
+            onClick={() => setConfirmReset(true)}
+            title={RUN_UI.reset}
+            aria-label={RUN_UI.reset}
+            className="flex h-7 items-center gap-1 rounded-md border border-line px-2 text-[11px] font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:border-bad/50 hover:bg-bad/10 hover:text-bad"
+          >
+            <ResetIcon />
+            <span className="hidden sm:inline">{RUN_UI.reset}</span>
+          </button>
+        ) : null}
       </div>
+
+      <Modal
+        open={confirmReset}
+        title={RUN_UI.resetTitle}
+        onClose={() => setConfirmReset(false)}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmReset(false)}>
+              {RUN_UI.resetCancel}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setConfirmReset(false);
+                // Stay on /play — clearing the run drops back to the setup screen.
+                clearRun();
+              }}
+            >
+              {RUN_UI.resetConfirm}
+            </Button>
+          </>
+        }
+      >
+        {RUN_UI.resetBody}
+      </Modal>
     </div>
+  );
+}
+
+function ResetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+      <path d="M20 11a8 8 0 1 0-2.34 6.34" strokeLinecap="round" />
+      <path d="M20 5v6h-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

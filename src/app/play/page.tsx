@@ -7,6 +7,7 @@
  * The active run is persisted, so reloading resumes in place.
  */
 
+import { useEffect } from "react";
 import { useMounted } from "@/store/useMounted";
 import { useRunStore } from "@/store/runStore";
 import { SetupScreen } from "@/components/screens/SetupScreen";
@@ -18,6 +19,16 @@ import { ResultsScreen } from "@/components/screens/ResultsScreen";
 export default function PlayPage() {
   const mounted = useMounted();
   const run = useRunStore((s) => s.run);
+
+  // Reset the scroll to the top of the page on every phase/step change (mobile
+  // fix, v0.7.0): tapping a button at the bottom of one step (e.g. draft a card
+  // or "Start tournament") used to land the next step still scrolled down.
+  // Route changes already scroll to top; this covers in-page step transitions.
+  const phase = run?.phase;
+  const draftRound = run?.draft.round;
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
+  }, [phase, draftRound]);
 
   if (!mounted) return <PageSkeleton />;
   if (!run) return <SetupScreen />;

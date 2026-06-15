@@ -8,13 +8,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { achievementById, specialCardById } from "@/data";
+import { achievementById, lineupById, specialCardById } from "@/data";
 import { DIFFICULTY } from "@/config/balance";
 import { RESULTS_UI as R, RARITY_LABELS } from "@/content/copy";
 import { resolvePlayerCard, resolveSpecial, type ResolvedCard } from "@/engine/cards";
 import { rankForXp, type RankInfo } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
-import type { Placement, RunState } from "@/engine/types";
+import type { EliminatorTeam, Placement, RunState } from "@/engine/types";
 import { downloadShareCard } from "@/lib/shareCard";
 import { cx } from "@/lib/util";
 import { useProfileStore } from "@/store/profileStore";
@@ -332,6 +332,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
         </div>
       </div>
 
+      {/* Who ended the run (lost runs only, feature-flagged — see results.ts) */}
+      {results.eliminatedBy ? <EliminatorReveal eliminator={results.eliminatedBy} /> : null}
+
       {/* CTAs */}
       <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
         <Button variant="primary" size="lg" onClick={handlePlayAgain}>
@@ -474,9 +477,10 @@ function UnlockCeremony({
 }
 
 /**
- * Rank-up moment (v0.5): the old "Rank up!" badge was easy to miss — the new
- * rank now gets its own celebration beat right after the unlock ceremony.
- * Auto-dismisses; clicking anywhere skips.
+ * Rank-up moment (reworked v0.7.0): the v0.5 version read as cramped — this
+ * now uses the SAME full-screen overlay language as the "new card unlocked"
+ * ceremony (black backdrop, emblem bursting in the center) and the MENU rank
+ * art (not the profile set). Auto-dismisses; clicking anywhere skips.
  */
 function RankUpCelebration({
   rank,
@@ -491,21 +495,27 @@ function RankUpCelebration({
   }, [onDone]);
 
   return (
-    <button
-      type="button"
-      onClick={onDone}
-      className="celebrate fixed inset-0 z-50 flex w-full flex-col items-center justify-center gap-5 bg-black/85 p-6 backdrop-blur-sm"
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
+      role="dialog"
       aria-label={R.rankUpTitle}
     >
-      <div className="celebrate-rays" aria-hidden />
-      <div className="ceremony-burst relative">
-        <span className="ceremony-ring" aria-hidden />
-        <div className="card-float">
-          <RankBadge rank={rank} variant="profile" size="lg" />
+      <p className="kicker">{R.rankUpKicker}</p>
+      <button
+        type="button"
+        onClick={onDone}
+        className="relative outline-none"
+        aria-label={R.rankUpTitle}
+      >
+        <div className="ceremony-burst relative">
+          <span className="ceremony-ring" aria-hidden />
+          <div className="card-float">
+            <RankBadge rank={rank} variant="menu" size="lg" />
+          </div>
         </div>
-      </div>
-      <div className="relative z-10 text-center">
-        <p className="champion-title display bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-5xl font-bold uppercase tracking-wide text-transparent md:text-6xl">
+      </button>
+      <div className="text-center">
+        <p className="champion-title display bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-4xl font-bold uppercase tracking-wide text-transparent md:text-5xl">
           {R.rankUpTitle}
         </p>
         <p className="display mt-2 text-lg font-bold uppercase tracking-[0.24em] text-ink">
@@ -513,7 +523,44 @@ function RankUpCelebration({
         </p>
         <p className="mt-3 text-xs text-sub">{R.rankUpHint}</p>
       </div>
-    </button>
+    </div>
+  );
+}
+
+/**
+ * Eliminator reveal (v0.7.0, experimental — FEATURES.showEliminatorTeam):
+ * on a lost run, a subdued strip shows the historical lineup that knocked the
+ * user out so they can see who ended it. Deliberately low-key (small base
+ * cards, muted panel) so it informs without competing with the placement hero.
+ * Renders nothing when `results.eliminatedBy` is null (champion / flag off).
+ */
+function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
+  const lineup = lineupById.get(eliminator.lineupId);
+  if (!lineup) return null;
+  const cards = lineup.playerCardIds.map((id) => resolvePlayerCard(id));
+
+  return (
+    <Panel className="mt-8 p-5 opacity-90">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="kicker !text-[10px]">{R.eliminatorKicker}</p>
+          <p className="display mt-1 truncate text-sm font-bold uppercase tracking-wide text-sub">
+            {R.eliminatedBy(eliminator.name)}
+          </p>
+        </div>
+        <Badge tone="bad" className="shrink-0">
+          {eliminator.stage} ·{" "}
+          {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
+        </Badge>
+      </div>
+      <div className="grid max-w-sm grid-cols-3 gap-2">
+        {cards.map((card, i) => (
+          <div key={i} className="mx-auto w-full max-w-28">
+            <GameCard card={card} showOverall size="sm" fluid tilt="off" />
+          </div>
+        ))}
+      </div>
+    </Panel>
   );
 }
 

@@ -10,6 +10,84 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [0.7.0] — "Main Stage" — 2026-06-15
+
+The last polish pass before the **1.0** community launch — a feedback round on
+the MVP plus launch-prep. (Versioned 0.7.0 by direction, skipping 0.6.) Not yet
+committed/deployed: Miguel reviews on localhost first.
+
+### Added
+- **Run resets automatically when you leave it** (by direction): the
+  leave-the-run confirmation modal is gone. Navigating off the run page — to
+  home, collection, profile, anywhere — now silently resets the run
+  (`AppShell` clears it whenever the route isn't `/play`; a refresh on `/play`
+  still resumes). DESIGN-DECISIONS #30.
+- **"Reset run" button** next to the difficulty tag in the run header — a
+  deliberate restart back to the setup screen, behind one confirmation.
+- **Eliminator reveal** (experimental, `FEATURES.showEliminatorTeam`): on a
+  lost run, a subdued strip on the results screen shows the historical lineup
+  that knocked you out (last lost series' opponent), with the stage and final
+  score. Built to be trivially reversible — flip the flag and the data field
+  stays null, so nothing renders. DESIGN-DECISIONS #31.
+- **Special-unlock XP** (by direction): a newly unlocked special grants flat XP
+  by rarity (rare 10 · epic 20 · mythic 40 · legendary 75), added after the
+  difficulty multiplier like achievement XP and shown as its own breakdown line.
+- **Card role tags**: player/coach/sub/org wear a small color-coded pill
+  (player blue · coach amber · sub emerald · org region-colored) so kinds read
+  at a glance; the org card's region chip matches the draft-draw region accent.
+- **Collection rarity sections**: the album is grouped by rarity
+  (Legendary → Mythic → Epic → Rare), each section sorted by overall; locked
+  cards are grouped the same way.
+
+### Changed
+- **Special-card rarity palette** (by direction): legendary → white & gold
+  (Ultimate Team "Legend" look), mythic → red, epic → purple/pink, rare → dark
+  purple — a distinct color identity per tier on the frame, halo and title
+  accent. DESIGN-DECISIONS #32.
+- **Drafted cards on the field now wear their rarity border** (overalls-visible
+  modes only): special cards get their rarity color + glow, base cards their
+  gold/silver/blue border. Hidden runs stay neutral — rarity is secret there.
+- **Rank-up celebration reworked**: now a full-screen overlay in the same
+  language as the "new card unlocked" ceremony (black backdrop, emblem bursting
+  in the center) and using the MENU rank art instead of the profile set (the
+  v0.5 version read as cramped and pulled the wrong art).
+- **Hidden-run specials show a team logo**: on Hard/hidden runs a masked
+  special now wears the drawn lineup's crest — like the other cards — instead
+  of a bare "?", while its own moment stays hidden. DESIGN-DECISIONS #33.
+- **Mobile step transitions reset the scroll** to the top of the page (every
+  phase change and each new draft lineup) — tapping a bottom-of-screen button
+  used to land the next step still scrolled to the bottom.
+
+### Balance
+- Special-unlock XP added (above) — small, collection-side, never scaled by
+  difficulty (`XP.specialUnlock`). No simulation knobs changed.
+
+### Fixed
+- **Drawn team flashed before the slot-machine reel** (recurring — the v0.5.1
+  `useLayoutEffect` only narrowed it). Root cause: the reel was armed AFTER the
+  new offer rendered, so the real lineup name painted for one frame before the
+  reel covered it. The reel reveal is now a child component remounted per draft
+  round (`key`), building its spinning names in a lazy `useState` initializer,
+  so the drawn name is never rendered before the reel lands. React-Compiler
+  safe — no setState or ref access during render (the project has
+  `reactCompiler: true`).
+- **Mobile review cards overlapped**. Root cause: the review strip used
+  fixed-width `size="sm"` cards (w-32 / 128px) inside a 3-column grid whose
+  mobile tracks are narrower than 128px, so cards overflowed and overlapped.
+  The strip now uses the same proven fluid + max-width wrapper the draft and
+  results screens already use — only this strip changed, card internals
+  untouched (measured: 0 overlaps at 375px, cards shrink to ~109px to fit).
+- **Collection card sizes differed**: locked cards rendered narrower than
+  earned ones (md:w-40 vs md:w-44). Locked cards now match the earned GameCard
+  footprint exactly (w-36 md:w-44 — measured identical).
+
+### Quality gates
+- 42 vitest tests pass, `tsc` clean, `next build` clean. ESLint baseline
+  unchanged (8 pre-existing `react-hooks/set-state-in-effect` warnings in
+  untouched UI primitives; this change adds none).
+
+---
+
 ## [0.5.1] — 2026-06-12
 
 Hotfix round on v0.5.0 feedback — the draft screen is the visual heart of

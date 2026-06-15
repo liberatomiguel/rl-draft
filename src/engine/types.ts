@@ -456,6 +456,22 @@ export interface RunResults {
   unlockedSpecialIds: string[];
   newAchievementIds: string[];
   xp: XpSummary;
+  /**
+   * The historical lineup that eliminated the user (lost runs only, v0.7.0).
+   * Gated by FEATURES.showEliminatorTeam — null when the user is champion or
+   * the feature is off. Optional so older persisted runs stay valid.
+   */
+  eliminatedBy?: EliminatorTeam | null;
+}
+
+/** The lineup that knocked the user out, for the results-screen reveal. */
+export interface EliminatorTeam {
+  lineupId: string;
+  name: string;
+  /** Stage label, e.g. "Grand Final" / "Swiss Round 5". */
+  stage: string;
+  /** Final series score, user's wins first. */
+  score: [number, number];
 }
 
 /** Daily-challenge metadata attached to a run. */

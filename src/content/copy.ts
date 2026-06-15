@@ -39,11 +39,17 @@ export const HOME = {
 
 export const NAV_UI = {
   backToMenu: "Back to menu",
-  leaveTitle: "Leave the run?",
-  leaveBody:
-    "Returning to the menu abandons the current run — your draft and tournament progress will be lost.",
-  leaveConfirm: "Leave run",
-  leaveCancel: "Keep playing",
+} as const;
+
+/** In-run header controls (v0.7.0). Leaving the run now resets it silently;
+ *  the explicit Reset button keeps a confirmation since it's destructive. */
+export const RUN_UI = {
+  reset: "Reset run",
+  resetTitle: "Reset this run?",
+  resetBody:
+    "Your current draft and tournament progress will be discarded, and you'll return to the setup screen.",
+  resetConfirm: "Reset run",
+  resetCancel: "Keep playing",
 } as const;
 
 export const SETUP = {
@@ -189,8 +195,13 @@ export const RESULTS_UI = {
   ceremonyKicker: "New card unlocked",
   ceremonyTap: "Tap to reveal",
   ceremonyContinue: "Continue",
+  rankUpKicker: "Rank up",
   rankUpTitle: "Rank up!",
   rankUpHint: "Tap to continue",
+  /** Eliminator reveal on a lost run (v0.7.0). */
+  eliminatorKicker: "Who ended your run",
+  eliminatedBy: (name: string) => `Eliminated by ${name}`,
+  eliminatorScore: (a: number, b: number) => `${a}–${b}`,
 } as const;
 
 export const COLLECTION_UI = {

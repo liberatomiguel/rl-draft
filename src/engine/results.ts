@@ -3,7 +3,7 @@
  * achievements and the XP breakdown (base doc §27, §30).
  */
 
-import { DIFFICULTY, XP } from "@/config/balance";
+import { DIFFICULTY, FEATURES, XP } from "@/config/balance";
 import { achievementById, playerById, playerCardById, specialCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { evaluateAchievements } from "./achievements";
@@ -245,7 +245,36 @@ export function compileResults(
     lines.push({ label: "Achievements", amount: achievementXp });
   }
 
-  const total = Math.round(base * difficultyMultiplier * (1 + hiddenOverallBonus)) + achievementXp;
+  // New special cards grant flat XP by rarity (v0.7.0) — a collection reward,
+  // added after the multiplier like achievement XP (never scaled).
+  const specialUnlockXp = unlockedSpecialIds.reduce(
+    (sum, id) => sum + (XP.specialUnlock[specialCardById.get(id)?.rarity ?? ""] ?? 0),
+    0,
+  );
+  if (specialUnlockXp > 0) {
+    lines.push({ label: "New special cards", amount: specialUnlockXp });
+  }
+
+  const total =
+    Math.round(base * difficultyMultiplier * (1 + hiddenOverallBonus)) +
+    achievementXp +
+    specialUnlockXp;
+
+  // Who ended the run: the user's LAST lost series (chronological — Swiss then
+  // playoffs), so swiss_exit shows the 3rd-loss opponent and a bracket exit
+  // shows the knockout. Champions have no eliminator. Feature-flagged (v0.7.0).
+  const eliminatedBy =
+    FEATURES.showEliminatorTeam && placement !== "champion" && losses.length > 0
+      ? (() => {
+          const last = losses[losses.length - 1];
+          const oppId =
+            last.series.teamAId === "user" ? last.series.teamBId : last.series.teamAId;
+          const opp = tournament.teams[oppId];
+          if (!opp?.lineupId) return null;
+          const h = highlight(tournament, last);
+          return { lineupId: opp.lineupId, name: opp.name, stage: h.stage, score: h.score };
+        })()
+      : null;
 
   return {
     placement,
@@ -260,5 +289,6 @@ export function compileResults(
     unlockedSpecialIds,
     newAchievementIds,
     xp: { lines, difficultyMultiplier, hiddenOverallBonus, total },
+    eliminatedBy,
   };
 }

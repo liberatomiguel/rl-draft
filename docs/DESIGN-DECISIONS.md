@@ -99,9 +99,9 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 
 18. **No resume system.** Returning to the menu resets the run. Refreshing
     the page mid-run still restores it — that protects against accidents,
-    not intentional exits. *(v0.5: the exit is now guarded by ONE
-    confirmation modal — live playtesters lost drafts to stray Home clicks.
-    The no-resume rule itself is unchanged.)*
+    not intentional exits. *(v0.5: the exit was guarded by ONE confirmation
+    modal. **v0.7.0 removed the modal by direction** — see decision #30. The
+    no-resume rule itself is unchanged.)*
 
 19. **Spoiler-safe playback.** The tournament simulates ahead internally but
     the UI derives standings/brackets only from *revealed* series, so the
@@ -171,6 +171,56 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     `public/orgs/<orgId>@<era>.png`. Curate eras only when an org's rebrand
     is era-defining (NRG first); wrong-era logos are a polish bug, not a
     data error.
+
+## v0.7.0 additions (Main Stage — last polish before 1.0)
+
+30. **Leaving the run resets it silently; the confirmation modal is gone**
+    (supersedes the v0.5 leave-guard, by direction). Navigating off `/play`
+    to any page clears the run (owned by `AppShell`, which clears whenever the
+    route isn't `/play`); a refresh on `/play` still resumes. A dedicated
+    **"Reset run"** button sits next to the difficulty tag for deliberate
+    restarts — kept behind ONE confirmation because a mis-tap mid-tournament
+    that wipes a draft is worse than one extra tap (the removed modal was the
+    *every-exit* friction, not this intentional action). The no-resume rule
+    (#18) is unchanged.
+
+31. **Eliminator reveal is experimental and flag-gated**
+    (`FEATURES.showEliminatorTeam`). On a LOST run, a subdued strip at the
+    bottom of results shows the historical lineup that knocked the user out:
+    the opponent of the user's LAST lost series (chronological), so a Swiss
+    exit shows the 3rd-loss team and a bracket exit shows the knockout. Kept
+    low-key on purpose (small base cards, muted panel) so it informs without
+    competing with the placement hero. **Easy to revert**: set the flag false
+    → `results.eliminatedBy` stays null → the UI block renders nothing.
+    Flagged for review — may not survive to 1.0.
+
+32. **Special-rarity color identity** (by direction): legendary → white & gold
+    (Ultimate Team "Legend" language), mythic → red, epic → purple/pink,
+    rare → dark purple. A glanceable tier identity on the frame, halo and
+    title accent. Rare moved off indigo onto deep purple so it reads distinctly
+    from the *blue* base-card (90+) frame.
+
+33. **Hidden-run specials wear the drawn lineup's crest** (overrides part of
+    #27, by direction). The masked "?" looked broken beside the other cards;
+    a masked special now shows the OFFER lineup's logo — the same crest as its
+    offer-mates — instead of a bare "?". Crucially it shows the *lineup's* org,
+    NOT the special's own moment org, so the card stays consistent with the
+    offer AND the special's identity (title/type/overall/moment) stays secret
+    until the results reveal. Non-hidden modes are unchanged (real photo).
+
+34. **Special unlocks grant XP by rarity** (rare 10 · epic 20 · mythic 40 ·
+    legendary 75, `XP.specialUnlock`). Added AFTER the difficulty multiplier
+    like achievement XP — it's a collection reward, not run performance — and
+    shown as its own line in the breakdown. Kept small by direction: the chase
+    is the card itself, the XP is a nod.
+
+35. **Card kinds are color-tagged**; drafted cards on the field show their
+    rarity border. Each card wears a small role pill (player blue · coach
+    amber · sub emerald · org region-colored) so kinds read at a glance, and
+    the org card's region uses the same accent as the draft-draw region badge.
+    On the "Your Team" field, drafted cards now carry their rarity border
+    (special → rarity color + glow; base → gold/silver/blue) — but only when
+    overalls are visible, since rarity is hidden information on blackout runs.
 
 ## Open questions for review
 

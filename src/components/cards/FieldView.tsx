@@ -35,6 +35,37 @@ function resolved(roster: Roster, slot: RosterSlotId): ResolvedCard | null {
   return pick ? resolvePick(pick) : null;
 }
 
+/**
+ * Rarity accent for a drafted card sitting on the field (v0.7.0): special
+ * cards get their rarity color + glow, base cards their gold/silver/blue
+ * border. Hidden-overall runs stay neutral — rarity is secret information.
+ */
+function slotAccent(card: ResolvedCard | null, showOverall: boolean): string {
+  if (!card || !showOverall) return "";
+  if (card.special) {
+    switch (card.special.rarity) {
+      case "legendary":
+        return "!border-amber-200/70 shadow-[0_0_12px_rgba(253,230,138,0.3)]";
+      case "mythic":
+        return "!border-red-400/70 shadow-[0_0_12px_rgba(239,68,68,0.28)]";
+      case "epic":
+        return "!border-fuchsia-400/70 shadow-[0_0_12px_rgba(217,70,239,0.26)]";
+      case "rare":
+        return "!border-violet-400/70 shadow-[0_0_10px_rgba(124,58,237,0.24)]";
+    }
+  }
+  switch (card.baseRarity) {
+    case "blue":
+      return "!border-cyan-400/60 shadow-[0_0_10px_rgba(56,189,248,0.2)]";
+    case "gold":
+      return "!border-amber-300/60";
+    case "silver":
+      return "!border-slate-300/50";
+    default:
+      return "";
+  }
+}
+
 export function FieldView({
   roster,
   showOverall,
@@ -131,6 +162,7 @@ function FieldSlot({
     card
       ? "border-line-strong bg-raised/85"
       : "border-dashed border-line bg-black/20",
+    !target && slotAccent(card, showOverall),
     target && "field-slot-glow cursor-pointer !border-orange bg-orange/10",
   );
 
@@ -181,6 +213,7 @@ function BenchSlot({
   const base = cx(
     "flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 transition-all",
     card ? "border-line-strong bg-white/4" : "border-dashed border-line",
+    !target && slotAccent(card, showOverall),
     target && "field-slot-glow cursor-pointer !border-orange bg-orange/10",
   );
 

@@ -21,6 +21,7 @@ import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { TiltCard, type TiltIntensity } from "@/components/ui/TiltCard";
+import { REGION_BADGE } from "@/components/regionStyle";
 
 export interface GameCardProps {
   card: ResolvedCard;
@@ -40,6 +41,14 @@ export interface GameCardProps {
   disabled?: boolean;
   disabledLabel?: string;
   /**
+   * Org logo to show in place of the mystery "?" when a SPECIAL is masked on
+   * a hidden-overall run (v0.7.0): pass the drawn lineup's org so the card
+   * wears the same crest as the other cards in the offer — which also keeps
+   * the special's own historical moment hidden. Falls back to the card's org.
+   */
+  maskOrgId?: string;
+  maskSeasonId?: string;
+  /**
    * 3D tilt: defaults to light on base cards and strong on specials;
    * "max" is for the collection detail view. "off" disables it.
    */
@@ -55,11 +64,23 @@ const ROLE_LABEL: Record<ResolvedCard["kind"], string> = {
   org: "Org",
 };
 
+/**
+ * Role tag tints (v0.7.0) — a small colored pill per card kind so the player
+ * can tell players/coach/sub/org apart at a glance. Org cards are tinted by
+ * their REGION instead (the same accent as the draft-draw region badge).
+ */
+const KIND_TAG: Record<ResolvedCard["kind"], string> = {
+  player: "border-blue-400/40 bg-blue-400/10 text-blue-200",
+  coach: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+  sub: "border-emerald-400/40 bg-emerald-400/10 text-emerald-200",
+  org: "border-line-strong bg-white/5 text-sub",
+};
+
 const SPECIAL_ACCENT: Record<string, string> = {
-  rare: "text-indigo-300",
-  epic: "text-purple-300",
-  mythic: "text-rose-300",
-  legendary: "text-amber-300",
+  rare: "text-violet-300",
+  epic: "text-fuchsia-300",
+  mythic: "text-red-300",
+  legendary: "text-amber-200",
 };
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
@@ -84,6 +105,8 @@ export function GameCard({
   selected,
   disabled,
   disabledLabel,
+  maskOrgId,
+  maskSeasonId,
   tilt,
   onClick,
   className,
@@ -94,6 +117,14 @@ export function GameCard({
   // Hidden runs: the special's identity (photo/title/type/overall) is a
   // results-screen reveal — only the frame/holo betray that it IS one.
   const maskedSpecial = isSpecial && !showOverall;
+  // Masked specials (v0.7.0) show a TEAM LOGO centerpiece — the drawn lineup's
+  // crest (maskOrgId) when supplied, so they match the rest of the offer in
+  // hidden mode instead of a bare "?". Base cards always show their org logo.
+  const showLogoCenter = !isSpecial || maskedSpecial;
+  const logoOrgId = maskedSpecial ? maskOrgId ?? card.orgId : card.orgId;
+  const logoSeasonId = maskedSpecial ? maskSeasonId ?? card.seasonId : card.seasonId;
+  // Role tag tint — region-colored for org cards, kind-colored otherwise.
+  const tagClass = isOrg && card.region ? REGION_BADGE[card.region] : KIND_TAG[card.kind];
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
   const tiltTier: TiltIntensity | "off" =
@@ -121,17 +152,10 @@ export function GameCard({
         className,
       )}
     >
-      {/* Special photo layer — masked specials keep the mystery art */}
-      {isSpecial ? (
-        maskedSpecial ? (
-          <div className="special-fallback-art">
-            <span className="display select-none text-6xl font-bold text-white/10">?</span>
-            <div className="special-photo" />
-          </div>
-        ) : (
-          <SpecialArt card={card} />
-        )
-      ) : null}
+      {/* Special photo layer — masked specials hide the photo and show the
+          team-logo centerpiece below instead (v0.7.0); the frame/holo still
+          announce that it IS a special. */}
+      {isSpecial && !maskedSpecial ? <SpecialArt card={card} /> : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive) */}
       {isSpecial && card.special ? (
@@ -173,14 +197,21 @@ export function GameCard({
               {!showOverall ? "??" : card.buffLevel === "~" ? "·" : card.buffLevel}
             </span>
           )}
-          <span className={cx("kicker mt-1 block !text-[9px]", isSpecial && "!text-white/70")}>
+          <span
+            className={cx(
+              "display mt-1 inline-flex items-center rounded border px-1 py-px text-[8px] font-bold uppercase leading-none tracking-[0.12em]",
+              tagClass,
+              isSpecial && "backdrop-blur-sm",
+            )}
+          >
             {ROLE_LABEL[card.kind]}
           </span>
         </div>
         {card.country ? (
           <CountryChip code={card.country} className={cx(isSpecial && "bg-black/40")} />
         ) : isOrg && card.region ? (
-          <CountryChip code={card.region} />
+          // Org region wears the same region accent as the draft-draw badge.
+          <CountryChip code={card.region} className={REGION_BADGE[card.region]} />
         ) : null}
       </div>
 
@@ -188,19 +219,19 @@ export function GameCard({
           Org logos stay visible on hidden runs (v0.5.1) — only ratings,
           buffs and rarity are secret. */}
       <div className="relative z-10 flex flex-1 items-center justify-center py-1">
-        {isSpecial ? null : (
+        {showLogoCenter ? (
           <div className="card-texture flex h-full w-full items-center justify-center rounded-lg">
-            {card.orgId ? (
+            {logoOrgId ? (
               <TeamLogo
-                orgId={card.orgId}
-                seasonId={card.seasonId}
+                orgId={logoOrgId}
+                seasonId={logoSeasonId}
                 size={size === "sm" ? "md" : "lg"}
               />
             ) : (
               <span className="display text-4xl font-bold text-white/15">?</span>
             )}
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Name plate */}

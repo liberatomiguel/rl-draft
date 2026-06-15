@@ -1,16 +1,35 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-12, after v0.5.1 (v0.5.0 hotfix round —
-> **uncommitted**: Miguel reviews on localhost and commits manually).
+> Last updated: 2026-06-15, after **v0.7.0 "Main Stage"** — the last polish
+> pass before the 1.0 community launch (feedback round + launch prep).
+> **Uncommitted**: Miguel reviews on localhost and commits manually.
+> (Versioned 0.7.0 by direction, skipping 0.6.)
+
+## v0.7.0 "Main Stage" — what changed this round
+
+Feedback batch + launch polish (full detail in CHANGELOG / DESIGN-DECISIONS
+#30–35). Headlines:
+- **Run reset is automatic + silent** on leaving the run page (the leave
+  confirmation modal is gone); a **Reset button** sits by the difficulty tag.
+- **Mobile**: scroll resets to the top on every phase/step change; the
+  **review card strip no longer overlaps** (fluid + max-width, review-only).
+- **Slot-machine flash fixed for good**: the reel is a per-round keyed child
+  with a lazy-init reel, so the drawn team never paints before the reel.
+- **Rank-up** is now a full-screen ceremony-style overlay using the MENU art.
+- **Cards**: kind tags color-coded (player/coach/sub/org); special-rarity
+  palette reworked (legendary white-gold · mythic red · epic purple-pink ·
+  rare dark purple); drafted cards show their rarity border on the field;
+  hidden-run specials show the lineup crest instead of "?".
+- **Collection**: grouped by rarity → overall; earned/locked sizes unified.
+- **Eliminator reveal** on lost runs (experimental, `FEATURES.showEliminatorTeam`
+  — easy to revert). **Special-unlock XP** by rarity.
+- Gates: 42 vitest tests pass, `tsc` + `next build` clean.
 
 ## Where we are
 
-**The MVP is live on Vercel; v0.5.0 addressed feedback round 1 and v0.5.1
-hot-fixed its regressions** (draft card sizing, reel flash, leave-run flash)
-plus direction changes: one-click drafting, specials at 6% and masked on
-hidden runs, org logos visible on hidden runs, era-aware logos (NRG classic
-worked example), identity guard tests. Working today:
+**The MVP is live on Vercel; v0.5.x addressed feedback round 1, and v0.7.0 is
+the last polish before 1.0.** Working today:
 
 - Classic Draft (6 slots, ONE-click drafting onto the first open slot,
   slot-machine lineup reveal, region-colored badges, free reroll when
@@ -44,8 +63,9 @@ worked example), identity guard tests. Working today:
   fallbacks still cover anything missing
 - All local persistence (guest play); leaving to the menu resets the run
 
-Quality gates: 39 vitest tests (incl. full-tournament difficulty outcome
-bands), `tsc` clean, `next build` clean. Git: v0.1.0 → v0.5.0.
+Quality gates: 42 vitest tests (incl. full-tournament difficulty outcome
+bands), `tsc` clean, `next build` clean, ESLint baseline unchanged. Git:
+v0.1.0 → v0.5.1 (v0.7.0 uncommitted, pending Miguel's localhost review).
 
 ## Balance picture (v0.5, measured)
 
@@ -55,9 +75,12 @@ quality; the Swiss wall is gone. Knobs and rationale: BALANCE-GUIDE.md.
 
 ## Pending / next actions (in order)
 
-1. **Miguel reviews v0.5.1 on localhost and commits manually** (his call —
-   restart `npm run dev` fresh first: stop it, delete `.next`, start again;
-   a dev server was running while the cache was rebuilt this session).
+1. **Miguel reviews v0.7.0 on localhost and commits manually** (his call —
+   if `npm run dev` won't start, the agent left a preview server earlier:
+   stop stray `node.exe`, delete `.next`, start again. This session ran
+   `next build` then a preview server, which served stale CSS until `.next`
+   was cleared — a fresh `npm run dev` avoids that). Then bump to **1.0** when
+   happy; this is the last pre-launch polish round.
 2. **Finish the asset pass**: remaining manual curation = `pioneers-oce`
    logo + `jstn`/`fairypeak` photos (`false` markers in
    `data-sources/asset-overrides.json`); replace any photo by overwriting

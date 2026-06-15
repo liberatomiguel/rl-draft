@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { APP } from "@/content/copy";
 import { cx } from "@/lib/util";
+import { useRunStore } from "@/store/runStore";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 
 const NAV = [
@@ -24,6 +26,16 @@ export function Logo({ className }: { className?: string }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  // Leaving the run (any page that isn't /play) RESETS it automatically
+  // (v0.7.0 — the leave-confirmation modal was removed by direction). The run
+  // only lives on /play; a refresh there still resumes because pathname stays
+  // /play on load. Idempotent and safe under React strict mode (no cleanup).
+  useEffect(() => {
+    if (pathname !== "/play" && useRunStore.getState().run) {
+      useRunStore.getState().clearRun();
+    }
+  }, [pathname]);
 
   // Home links abandon a run in progress → they go through the leave guard.
   const NavLink = ({

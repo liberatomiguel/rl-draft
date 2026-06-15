@@ -207,29 +207,38 @@ body {
   border-radius: inherit;
 }
 
+/*
+ * Special-rarity palette (v0.7.0, by direction — a clear color identity per
+ * tier so a card's rarity reads at a glance):
+ *   rare      → dark purple
+ *   epic      → purple / pink
+ *   mythic    → red
+ *   legendary → white & gold (Ultimate Team "Legend" language)
+ * First gradient = inner (dark), second = the gradient border.
+ */
 .card-rare {
   background-image:
-    linear-gradient(168deg, #101733 0%, #0c1126 58%, #131a3a 100%),
-    linear-gradient(165deg, #818cf8 0%, #4338ca 50%, #6366f1 100%);
+    linear-gradient(168deg, #1a1033 0%, #120a26 58%, #1d1140 100%),
+    linear-gradient(165deg, #7c3aed 0%, #4c1d95 50%, #6d28d9 100%);
 }
 
 .card-epic {
   background-image:
-    linear-gradient(168deg, #170f2e 0%, #100a22 58%, #1c1238 100%),
-    linear-gradient(165deg, #c084fc 0%, #7e22ce 50%, #a855f7 100%);
+    linear-gradient(168deg, #220f2b 0%, #170a1f 58%, #2a1133 100%),
+    linear-gradient(165deg, #f0abfc 0%, #c026d3 48%, #e879f9 100%);
 }
 
 .card-mythic {
   background-image:
-    linear-gradient(168deg, #200d18 0%, #150a14 58%, #271019 100%),
-    linear-gradient(165deg, #fb7185 0%, #be123c 45%, #fb923c 100%);
+    linear-gradient(168deg, #250d12 0%, #1a080c 58%, #2c0f14 100%),
+    linear-gradient(165deg, #f87171 0%, #b91c1c 48%, #ef4444 100%);
 }
 
 .card-legendary {
   background-image:
-    linear-gradient(168deg, #1f1607 0%, #140e06 58%, #251a08 100%),
-    linear-gradient(140deg, #fde68a 0%, #f59e0b 30%, #f97316 60%, #fbbf24 100%);
-  box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);
+    linear-gradient(168deg, #20180a 0%, #140e06 58%, #261c0a 100%),
+    linear-gradient(140deg, #fffdf5 0%, #fde68a 28%, #f5c451 55%, #fffaf0 80%, #f0b429 100%);
+  box-shadow: 0 0 30px rgba(253, 230, 138, 0.26);
 }
 
 /* Diagonal texture behind the org logo on base cards */
@@ -276,19 +285,20 @@ body {
   100% { background-position: -60% 0; }
 }
 
-/* Legendary halo pulse */
+/* Legendary halo pulse — white-gold (FUT Legend language) */
 @keyframes legendary-halo {
-  0%, 100% { box-shadow: 0 0 26px rgba(251, 191, 36, 0.2); }
-  50% { box-shadow: 0 0 42px rgba(251, 191, 36, 0.38); }
+  0%, 100% { box-shadow: 0 0 26px rgba(253, 230, 138, 0.24); }
+  50% { box-shadow: 0 0 46px rgba(255, 255, 240, 0.4); }
 }
 
 .card-legendary.card-special {
   animation: legendary-halo 3.2s ease-in-out infinite;
 }
 
+/* Mythic halo pulse — red */
 @keyframes mythic-halo {
-  0%, 100% { box-shadow: 0 0 24px rgba(251, 113, 133, 0.18); }
-  50% { box-shadow: 0 0 38px rgba(249, 115, 22, 0.34); }
+  0%, 100% { box-shadow: 0 0 24px rgba(248, 113, 113, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.36); }
 }
 
 .card-mythic.card-special {
