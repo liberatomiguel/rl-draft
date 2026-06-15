@@ -29,7 +29,7 @@ const PHASES: { id: RunPhase; label: string }[] = [
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
-  const clearRun = useRunStore((s) => s.clearRun);
+  const restartRun = useRunStore((s) => s.restartRun);
   const [confirmReset, setConfirmReset] = useState(false);
   const currentIndex = PHASES.findIndex((p) => p.id === run.phase);
 
@@ -103,8 +103,9 @@ export function RunStepper({ run }: { run: RunState }) {
               variant="danger"
               onClick={() => {
                 setConfirmReset(false);
-                // Stay on /play — clearing the run drops back to the setup screen.
-                clearRun();
+                // Restart on the SAME difficulty — straight into a fresh draft
+                // (does not bounce through the setup screen).
+                restartRun();
               }}
             >
               {RUN_UI.resetConfirm}

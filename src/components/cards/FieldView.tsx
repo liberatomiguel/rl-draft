@@ -35,25 +35,44 @@ function resolved(roster: Roster, slot: RosterSlotId): ResolvedCard | null {
   return pick ? resolvePick(pick) : null;
 }
 
+interface FieldFx {
+  cls: string;
+  style?: React.CSSProperties;
+}
+
 /**
- * Rarity accent for a drafted card sitting on the field (v0.7.0): special
- * cards get their rarity color + glow, base cards their gold/silver/blue
- * border. Hidden-overall runs stay neutral — rarity is secret information.
+ * Rarity FX for a drafted card sitting on the field (v0.6.1).
+ * - SPECIAL cards get a LIVING rarity glow (animated `field-fx`, color via
+ *   `--fx-color`) on EVERY run — including Hard/hidden, because a special's
+ *   presence is public information (only its identity is masked). The glow
+ *   is the effect, not just a border line.
+ * - BASE cards get their gold/silver/blue border only when overalls are shown
+ *   (base rarity is secret on hidden runs).
  */
-function slotAccent(card: ResolvedCard | null, showOverall: boolean): string {
-  if (!card || !showOverall) return "";
+function fieldFx(card: ResolvedCard | null): FieldFx {
+  if (!card) return { cls: "" };
   if (card.special) {
+    const fx = (border: string, color: string): FieldFx => ({
+      cls: `field-fx ${border}`,
+      style: { ["--fx-color"]: color } as React.CSSProperties,
+    });
     switch (card.special.rarity) {
       case "legendary":
-        return "!border-amber-200/70 shadow-[0_0_12px_rgba(253,230,138,0.3)]";
+        return fx("!border-amber-100/80", "rgba(255, 240, 195, 0.62)");
       case "mythic":
-        return "!border-red-400/70 shadow-[0_0_12px_rgba(239,68,68,0.28)]";
+        return fx("!border-red-400/80", "rgba(239, 68, 68, 0.55)");
       case "epic":
-        return "!border-fuchsia-400/70 shadow-[0_0_12px_rgba(217,70,239,0.26)]";
+        return fx("!border-orange-400/80", "rgba(249, 115, 22, 0.5)");
       case "rare":
-        return "!border-violet-400/70 shadow-[0_0_10px_rgba(124,58,237,0.24)]";
+        return fx("!border-indigo-400/75", "rgba(99, 102, 241, 0.45)");
     }
   }
+  return { cls: "" };
+}
+
+/** Base-card border accent — only meaningful when overalls are visible. */
+function baseAccent(card: ResolvedCard | null, showOverall: boolean): string {
+  if (!card || !showOverall || card.special) return "";
   switch (card.baseRarity) {
     case "blue":
       return "!border-cyan-400/60 shadow-[0_0_10px_rgba(56,189,248,0.2)]";
@@ -157,21 +176,24 @@ function FieldSlot({
     </span>
   );
 
+  const fx = target ? { cls: "", style: undefined } : fieldFx(card);
   const base = cx(
     "absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-1.5 py-1.5 backdrop-blur-sm transition-all",
     card
       ? "border-line-strong bg-raised/85"
       : "border-dashed border-line bg-black/20",
-    !target && slotAccent(card, showOverall),
+    !target && baseAccent(card, showOverall),
+    !target && fx.cls,
     target && "field-slot-glow cursor-pointer !border-orange bg-orange/10",
   );
+  const mergedStyle = { ...style, ...fx.style };
 
   return onClick ? (
-    <button type="button" onClick={onClick} style={style} className={base} aria-label={`Place in ${label}`}>
+    <button type="button" onClick={onClick} style={mergedStyle} className={base} aria-label={`Place in ${label}`}>
       {inner}
     </button>
   ) : (
-    <div style={style} className={base}>
+    <div style={mergedStyle} className={base}>
       {inner}
     </div>
   );
@@ -210,18 +232,20 @@ function BenchSlot({
     </>
   );
 
+  const fx = target ? { cls: "", style: undefined } : fieldFx(card);
   const base = cx(
     "flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 transition-all",
     card ? "border-line-strong bg-white/4" : "border-dashed border-line",
-    !target && slotAccent(card, showOverall),
+    !target && baseAccent(card, showOverall),
+    !target && fx.cls,
     target && "field-slot-glow cursor-pointer !border-orange bg-orange/10",
   );
 
   return onClick ? (
-    <button type="button" onClick={onClick} className={base} aria-label={`Place in ${label}`}>
+    <button type="button" onClick={onClick} style={fx.style} className={base} aria-label={`Place in ${label}`}>
       {inner}
     </button>
   ) : (
-    <div className={base}>{inner}</div>
+    <div style={fx.style} className={base}>{inner}</div>
   );
 }

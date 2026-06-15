@@ -208,24 +208,25 @@ body {
 }
 
 /*
- * Special-rarity palette (v0.7.0, by direction — a clear color identity per
- * tier so a card's rarity reads at a glance):
- *   rare      → dark purple
- *   epic      → purple / pink
+ * Special-rarity palette (v0.6.1, by direction — a clear color identity per
+ * tier; effects ramp from rare (faintest) to legendary (most spectacular)):
+ *   rare      → dark bluish purple (indigo)
+ *   epic      → orange / amber
  *   mythic    → red
- *   legendary → white & gold (Ultimate Team "Legend" language)
+ *   legendary → radiant white-gold + a traveling shimmer (the chase pull)
  * First gradient = inner (dark), second = the gradient border.
  */
 .card-rare {
   background-image:
-    linear-gradient(168deg, #1a1033 0%, #120a26 58%, #1d1140 100%),
-    linear-gradient(165deg, #7c3aed 0%, #4c1d95 50%, #6d28d9 100%);
+    linear-gradient(168deg, #101733 0%, #0c1126 58%, #131a3a 100%),
+    linear-gradient(165deg, #818cf8 0%, #4338ca 50%, #6366f1 100%);
 }
 
 .card-epic {
   background-image:
-    linear-gradient(168deg, #220f2b 0%, #170a1f 58%, #2a1133 100%),
-    linear-gradient(165deg, #f0abfc 0%, #c026d3 48%, #e879f9 100%);
+    linear-gradient(168deg, #2a1606 0%, #1c0e03 58%, #2f1808 100%),
+    linear-gradient(165deg, #fdba74 0%, #ea580c 48%, #fb923c 100%);
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.16);
 }
 
 .card-mythic {
@@ -234,11 +235,18 @@ body {
     linear-gradient(165deg, #f87171 0%, #b91c1c 48%, #ef4444 100%);
 }
 
+/*
+ * Legendary is the most special card in the game: a near-WHITE platinum-gold
+ * border (white highlights woven through the gold so it never reads as a plain
+ * gold base card) that travels via background-position, plus the brightest
+ * halo. Border layer is oversized (230%) so the shimmer has room to slide.
+ */
 .card-legendary {
   background-image:
     linear-gradient(168deg, #20180a 0%, #140e06 58%, #261c0a 100%),
-    linear-gradient(140deg, #fffdf5 0%, #fde68a 28%, #f5c451 55%, #fffaf0 80%, #f0b429 100%);
-  box-shadow: 0 0 30px rgba(253, 230, 138, 0.26);
+    linear-gradient(110deg, #ffffff 0%, #fde68a 20%, #ffffff 36%, #f6c652 54%, #fffaf0 72%, #f0b429 88%, #ffffff 100%);
+  background-size: auto, 230% 100%;
+  box-shadow: 0 0 34px rgba(255, 242, 200, 0.4);
 }
 
 /* Diagonal texture behind the org logo on base cards */
@@ -285,24 +293,39 @@ body {
   100% { background-position: -60% 0; }
 }
 
-/* Legendary halo pulse — white-gold (FUT Legend language) */
+/* Legendary: brightest halo + the gold border travels (premium shimmer) */
 @keyframes legendary-halo {
-  0%, 100% { box-shadow: 0 0 26px rgba(253, 230, 138, 0.24); }
-  50% { box-shadow: 0 0 46px rgba(255, 255, 240, 0.4); }
+  0%, 100% { box-shadow: 0 0 30px rgba(255, 240, 195, 0.34); }
+  50% { box-shadow: 0 0 58px rgba(255, 255, 245, 0.58); }
+}
+
+@keyframes legendary-shimmer {
+  0% { background-position: 0 0, 0% 50%; }
+  100% { background-position: 0 0, 230% 50%; }
 }
 
 .card-legendary.card-special {
-  animation: legendary-halo 3.2s ease-in-out infinite;
+  animation: legendary-halo 3s ease-in-out infinite, legendary-shimmer 4.5s linear infinite;
 }
 
 /* Mythic halo pulse — red */
 @keyframes mythic-halo {
-  0%, 100% { box-shadow: 0 0 24px rgba(248, 113, 113, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.36); }
+  0%, 100% { box-shadow: 0 0 26px rgba(248, 113, 113, 0.24); }
+  50% { box-shadow: 0 0 46px rgba(239, 68, 68, 0.44); }
 }
 
 .card-mythic.card-special {
-  animation: mythic-halo 3.6s ease-in-out infinite;
+  animation: mythic-halo 3.4s ease-in-out infinite;
+}
+
+/* Epic halo pulse — orange (gentler than mythic) */
+@keyframes epic-halo {
+  0%, 100% { box-shadow: 0 0 22px rgba(249, 115, 22, 0.18); }
+  50% { box-shadow: 0 0 38px rgba(251, 146, 60, 0.36); }
+}
+
+.card-epic.card-special {
+  animation: epic-halo 3.8s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -635,21 +658,21 @@ body {
 
 .holo-epic::after {
   background:
-    linear-gradient(115deg, transparent 30%, rgba(192, 132, 252, 0.16) 44%, rgba(56, 189, 248, 0.12) 52%, transparent 64%);
+    linear-gradient(115deg, transparent 28%, rgba(251, 146, 60, 0.22) 44%, rgba(253, 224, 71, 0.16) 52%, transparent 66%);
   background-size: 220% 100%;
 }
 
 .holo-mythic::after {
   background:
-    linear-gradient(115deg, transparent 26%, rgba(251, 113, 133, 0.2) 40%, rgba(56, 189, 248, 0.15) 50%, rgba(251, 146, 60, 0.2) 58%, transparent 70%);
+    linear-gradient(115deg, transparent 24%, rgba(251, 113, 133, 0.26) 40%, rgba(56, 189, 248, 0.16) 50%, rgba(248, 113, 113, 0.26) 58%, transparent 72%);
   background-size: 220% 100%;
 }
 
 .holo-legendary::after {
   background:
-    linear-gradient(115deg, transparent 22%, rgba(253, 230, 138, 0.25) 36%, rgba(56, 189, 248, 0.18) 46%, rgba(192, 132, 252, 0.2) 54%, rgba(251, 191, 36, 0.25) 64%, transparent 76%);
+    linear-gradient(115deg, transparent 20%, rgba(255, 255, 245, 0.4) 34%, rgba(56, 189, 248, 0.22) 44%, rgba(192, 132, 252, 0.24) 52%, rgba(253, 230, 138, 0.4) 62%, transparent 78%);
   background-size: 220% 100%;
-  animation: card-sheen 3.4s ease-in-out infinite, holo-shift 6s ease-in-out infinite;
+  animation: card-sheen 3s ease-in-out infinite, holo-shift 5.5s ease-in-out infinite;
 }
 
 /* Cursor-tracked glare (TiltCard sets --mx/--my as percentages) */
@@ -685,12 +708,13 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.holo-rainbow-rare { opacity: 0.3; }
-.holo-rainbow-epic { opacity: 0.45; }
-.holo-rainbow-mythic { opacity: 0.6; }
+/* Cursor-reactive holo intensity ramps hard from rare → legendary (v0.6.1). */
+.holo-rainbow-rare { opacity: 0.34; }
+.holo-rainbow-epic { opacity: 0.56; }
+.holo-rainbow-mythic { opacity: 0.74; }
 .holo-rainbow-legendary {
-  opacity: 0.75;
-  animation: holo-shift 7s ease-in-out infinite;
+  opacity: 0.95;
+  animation: holo-shift 6s ease-in-out infinite;
 }
 
 /* Reverse-holo backdrop texture (epic+): shimmer behind the content */
@@ -703,6 +727,21 @@ body {
     repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 8px),
     linear-gradient(200deg, rgba(120, 200, 255, 0.07), rgba(255, 130, 200, 0.07), rgba(255, 220, 120, 0.06));
   mix-blend-mode: screen;
+}
+
+/* ---------------------------------------------------------------------------
+   Field special FX (v0.6.1): a special card drafted onto the "Your Team" pitch
+   gets a LIVING rarity glow (not just a border) — the rarity color is passed
+   in via --fx-color so one keyframe serves every tier. Shown on hidden runs
+   too: a special's presence is public information, only base rarity is secret.
+--------------------------------------------------------------------------- */
+@keyframes field-fx-pulse {
+  0%, 100% { box-shadow: 0 0 9px 0 var(--fx-color, transparent); }
+  50% { box-shadow: 0 0 19px 3px var(--fx-color, transparent); }
+}
+
+.field-fx {
+  animation: field-fx-pulse 2.4s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -749,6 +788,8 @@ body {
   .card-special::after,
   .card-legendary.card-special,
   .card-mythic.card-special,
+  .card-epic.card-special,
+  .field-fx,
   .field-slot-glow,
   .celebrate-rays,
   .celebrate-rays-prism,

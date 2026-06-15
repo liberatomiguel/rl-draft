@@ -47,7 +47,7 @@ export const RUN_UI = {
   reset: "Reset run",
   resetTitle: "Reset this run?",
   resetBody:
-    "Your current draft and tournament progress will be discarded, and you'll return to the setup screen.",
+    "Your current draft and tournament progress will be discarded and a fresh draft starts on the same difficulty.",
   resetConfirm: "Reset run",
   resetCancel: "Keep playing",
 } as const;
@@ -193,11 +193,16 @@ export const RESULTS_UI = {
   share: "Download share card",
   immaculateBadge: "Flawless run",
   ceremonyKicker: "New card unlocked",
-  ceremonyTap: "Tap to reveal",
+  ceremonyTap: "Tap anywhere to reveal",
   ceremonyContinue: "Continue",
   rankUpKicker: "Rank up",
   rankUpTitle: "Rank up!",
-  rankUpHint: "Tap to continue",
+  rankUpHint: "Tap anywhere to continue",
+  /** Legacy mode unlock celebration (first Hard tournament win). */
+  legacyKicker: "New mode unlocked",
+  legacyTitle: "Legacy Unlocked",
+  legacySub: "An all-time gauntlet of championship rosters now awaits.",
+  legacyHint: "Tap anywhere to continue",
   /** Eliminator reveal on a lost run (v0.7.0). */
   eliminatorKicker: "Who ended your run",
   eliminatedBy: (name: string) => `Eliminated by ${name}`,

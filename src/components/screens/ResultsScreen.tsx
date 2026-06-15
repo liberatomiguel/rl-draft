@@ -11,7 +11,14 @@ import { useEffect, useMemo, useState } from "react";
 import { achievementById, lineupById, specialCardById } from "@/data";
 import { DIFFICULTY } from "@/config/balance";
 import { RESULTS_UI as R, RARITY_LABELS } from "@/content/copy";
-import { resolvePlayerCard, resolveSpecial, type ResolvedCard } from "@/engine/cards";
+import {
+  resolveCoach,
+  resolveOrg,
+  resolvePlayerCard,
+  resolveSpecial,
+  resolveSub,
+  type ResolvedCard,
+} from "@/engine/cards";
 import { rankForXp, type RankInfo } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { EliminatorTeam, Placement, RunState } from "@/engine/types";
@@ -50,6 +57,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const clearRun = useRunStore((s) => s.clearRun);
   const setSetupMode = useRunStore((s) => s.setSetupMode);
   const xpNow = useProfileStore((s) => s.xp);
+  const winsHard = useProfileStore((s) => s.wins.hard);
+  const winsLegacy = useProfileStore((s) => s.wins.legacy);
 
   const results = run.results;
   const team = run.tournament?.teams["user"];
@@ -58,6 +67,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
     () => (run.results?.unlockedSpecialIds.length ?? 0) > 0,
   );
   const [rankUpSeen, setRankUpSeen] = useState(false);
+  const [legacySeen, setLegacySeen] = useState(false);
 
   if (!results || !team) return null;
 
@@ -69,6 +79,14 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
   const rankedUp = rankBefore.id !== rankAfter.id;
+  // Legacy unlocks on the FIRST Hard tournament win — this run is that win when
+  // it's a Hard championship and the hard-win counter (already incremented in
+  // applyRunResults) just reached 1, with no Legacy title yet.
+  const legacyJustUnlocked =
+    run.difficulty === "hard" &&
+    results.placement === "champion" &&
+    winsHard === 1 &&
+    winsLegacy === 0;
 
   const bestPick = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3]
     .find((p) => p?.refId === results.bestPlayerCardId);
@@ -115,6 +133,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
         />
       ) : rankedUp && !rankUpSeen ? (
         <RankUpCelebration rank={rankAfter} onDone={() => setRankUpSeen(true)} />
+      ) : legacyJustUnlocked && !legacySeen ? (
+        <LegacyUnlockCelebration onDone={() => setLegacySeen(true)} />
       ) : (
         <AchievementToasts ids={results.newAchievementIds} />
       )}
@@ -442,13 +462,16 @@ function UnlockCeremony({
   const card = resolveSpecial(sp);
 
   return (
+    // Tap ANYWHERE on the overlay advances (v0.6.1) — the inner button stops
+    // propagation so it doesn't double-fire.
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
       role="dialog"
       aria-label={R.ceremonyKicker}
+      onClick={advance}
     >
       <p className="kicker">{R.ceremonyKicker}</p>
-      <button type="button" onClick={advance} className="relative outline-none" aria-label={R.ceremonyTap}>
+      <div className="relative">
         {revealed ? (
           <div className="ceremony-burst relative">
             <span className="ceremony-ring" aria-hidden />
@@ -462,13 +485,19 @@ function UnlockCeremony({
             <span className="display text-5xl font-bold text-faint">??</span>
           </div>
         )}
-      </button>
+      </div>
       <p className="text-xs text-sub">
         {specialIds.length > 1 ? `${index + 1}/${specialIds.length} · ` : ""}
         {revealed ? "" : R.ceremonyTap}
       </p>
       {revealed ? (
-        <Button variant="primary" onClick={advance}>
+        <Button
+          variant="primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            advance();
+          }}
+        >
           {last ? R.ceremonyContinue : "Next card"}
         </Button>
       ) : null}
@@ -495,25 +524,22 @@ function RankUpCelebration({
   }, [onDone]);
 
   return (
+    // Tap ANYWHERE dismisses (v0.6.1).
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
       role="dialog"
       aria-label={R.rankUpTitle}
+      onClick={onDone}
     >
       <p className="kicker">{R.rankUpKicker}</p>
-      <button
-        type="button"
-        onClick={onDone}
-        className="relative outline-none"
-        aria-label={R.rankUpTitle}
-      >
+      <div className="relative">
         <div className="ceremony-burst relative">
           <span className="ceremony-ring" aria-hidden />
           <div className="card-float">
             <RankBadge rank={rank} variant="menu" size="lg" />
           </div>
         </div>
-      </button>
+      </div>
       <div className="text-center">
         <p className="champion-title display bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-4xl font-bold uppercase tracking-wide text-transparent md:text-5xl">
           {R.rankUpTitle}
@@ -528,6 +554,68 @@ function RankUpCelebration({
 }
 
 /**
+ * Legacy-mode unlock (v0.6.1): the first Hard tournament win opens the
+ * all-time Legacy gauntlet — a moment worth its own full-screen beat, in the
+ * same ceremony language (prismatic, since Legacy is the endgame). Tap
+ * anywhere or wait to dismiss.
+ */
+function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const id = setTimeout(onDone, 5200);
+    return () => clearTimeout(id);
+  }, [onDone]);
+
+  return (
+    <div
+      className="celebrate fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-black/88 p-6 backdrop-blur-sm"
+      role="dialog"
+      aria-label={R.legacyTitle}
+      onClick={onDone}
+    >
+      <div className="celebrate-rays-prism" aria-hidden />
+      <p className="kicker relative z-10">{R.legacyKicker}</p>
+      <div className="ceremony-burst relative z-10">
+        <span className="ceremony-ring" aria-hidden />
+        <div className="card-float">
+          <LegacyEmblem />
+        </div>
+      </div>
+      <div className="relative z-10 text-center">
+        <p className="immaculate-title display bg-gradient-to-b from-cyan via-blue-bright to-purple-400 bg-clip-text text-4xl font-bold uppercase tracking-wide text-transparent md:text-5xl">
+          {R.legacyTitle}
+        </p>
+        <p className="mx-auto mt-3 max-w-xs text-sm text-sub">{R.legacySub}</p>
+        <p className="mt-3 text-xs text-faint">{R.legacyHint}</p>
+      </div>
+    </div>
+  );
+}
+
+function LegacyEmblem() {
+  return (
+    <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-cyan/40 bg-gradient-to-br from-cyan/15 via-blue/10 to-purple-500/15 shadow-[0_0_44px_rgba(56,189,248,0.4)] md:h-32 md:w-32">
+      <svg viewBox="0 0 48 48" className="h-16 w-16" fill="none" aria-hidden>
+        <defs>
+          <linearGradient id="legacyGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#38bdf8" />
+            <stop offset="0.5" stopColor="#a855f7" />
+            <stop offset="1" stopColor="#f97316" />
+          </linearGradient>
+        </defs>
+        <path d="M24 4 41 14v20L24 44 7 34V14Z" stroke="url(#legacyGrad)" strokeWidth="2.5" strokeLinejoin="round" />
+        <path
+          d="M15 31l3-13 6 7 6-7 3 13Z"
+          stroke="url(#legacyGrad)"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/**
  * Eliminator reveal (v0.7.0, experimental — FEATURES.showEliminatorTeam):
  * on a lost run, a subdued strip shows the historical lineup that knocked the
  * user out so they can see who ended it. Deliberately low-key (small base
@@ -537,7 +625,14 @@ function RankUpCelebration({
 function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
   const lineup = lineupById.get(eliminator.lineupId);
   if (!lineup) return null;
-  const cards = lineup.playerCardIds.map((id) => resolvePlayerCard(id));
+  // Full opposing roster (v0.6.1): players, then coach/sub when the lineup
+  // fielded them, then the org — so the eliminator reads as a complete team.
+  const cards: ResolvedCard[] = [
+    ...lineup.playerCardIds.map((id) => resolvePlayerCard(id)),
+    ...(lineup.coachId ? [resolveCoach(lineup.coachId)] : []),
+    ...(lineup.subId ? [resolveSub(lineup.subId)] : []),
+    resolveOrg(lineup.orgId, lineup.orgBuffLevel, lineup.seasonId),
+  ];
 
   return (
     <Panel className="mt-8 p-5 opacity-90">
@@ -553,7 +648,7 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
           {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
         </Badge>
       </div>
-      <div className="grid max-w-sm grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:max-w-2xl sm:grid-cols-6">
         {cards.map((card, i) => (
           <div key={i} className="mx-auto w-full max-w-28">
             <GameCard card={card} showOverall size="sm" fluid tilt="off" />

@@ -10,11 +10,48 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [0.7.0] — "Main Stage" — 2026-06-15
+## [0.6.1] — "Main Stage" (cont.) — 2026-06-15
+
+Tuning round on v0.6.0, by direction — colors, effects and the celebration
+moments. Not yet committed: Miguel reviews on localhost first.
+
+### Changed
+- **Special-rarity palette, take 2** (by direction): **rare** goes back to the
+  bluish dark-purple (indigo) it was before; **epic** becomes **orange/amber**
+  (the purple/pink wasn't working); **mythic** stays red; **legendary** is
+  pushed further from the gold base cards — a near-white platinum-gold border
+  with a traveling shimmer and the brightest halo, so it reads as the single
+  most special card in the game.
+- **Special-card effects now ramp by tier**: the cursor holo, sheen and halo
+  scale from rare (faintest) up to legendary (most spectacular), and are more
+  pronounced across the board than before.
+- **Collection is a single grid again** (no rarity sections): unlocked cards
+  lead in rarity→overall order, then the still-locked cards in the same order.
+- **Reset run restarts in place**: the in-run Reset button now starts a fresh
+  draft on the SAME difficulty/mode instead of bouncing back to the setup
+  screen (`runStore.restartRun`).
+- **"Who ended your run" shows the FULL opposing roster** — players plus coach
+  and sub (when fielded) and the org, not just the three players.
+- **Special FX on the "Your Team" pitch now show on Hard/hidden runs too** and
+  are a living rarity glow (animated `field-fx`), not just a border line — a
+  special's presence is public information; only base-card rarity stays hidden.
+
+### Added
+- **Legacy unlock celebration**: winning your first Hard tournament (which
+  unlocks Legacy) now gets its own full-screen, prismatic moment in the same
+  language as the card-unlock / rank-up ceremonies.
+
+### Fixed
+- **"New card unlocked" and "Rank up" now advance on a tap ANYWHERE** on the
+  overlay (not only on the emblem); the explicit Continue/Next button stops
+  propagation so it doesn't double-advance.
+
+---
+
+## [0.6.0] — "Main Stage" — 2026-06-15
 
 The last polish pass before the **1.0** community launch — a feedback round on
-the MVP plus launch-prep. (Versioned 0.7.0 by direction, skipping 0.6.) Not yet
-committed/deployed: Miguel reviews on localhost first.
+the MVP plus launch-prep. Committed by Miguel after localhost review.
 
 ### Added
 - **Run resets automatically when you leave it** (by direction): the

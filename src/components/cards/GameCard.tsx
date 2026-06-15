@@ -77,8 +77,8 @@ const KIND_TAG: Record<ResolvedCard["kind"], string> = {
 };
 
 const SPECIAL_ACCENT: Record<string, string> = {
-  rare: "text-violet-300",
-  epic: "text-fuchsia-300",
+  rare: "text-indigo-300",
+  epic: "text-orange-300",
   mythic: "text-red-300",
   legendary: "text-amber-200",
 };

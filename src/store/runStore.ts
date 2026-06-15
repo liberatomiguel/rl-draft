@@ -58,6 +58,9 @@ interface RunStore {
   startRun: (options: StartRunOptions) => void;
   startDailyRun: () => void;
   clearRun: () => void;
+  /** Abandon the current run and immediately start a fresh one with the SAME
+   *  mode/difficulty/visibility — drops straight into a new draft. */
+  restartRun: () => void;
 
   // Draft phase
   pickCard: (card: DraftOfferCard, slot: RosterSlotId) => void;
@@ -140,6 +143,22 @@ export const useRunStore = create<RunStore>()(
       },
 
       clearRun: () => set({ run: null }),
+
+      restartRun: () => {
+        const { run } = get();
+        if (!run) return;
+        // Daily restarts re-roll today's seeded run; everything else re-runs
+        // startRun with the same settings (a brand-new seed → fresh draft).
+        if (run.mode === "daily") {
+          get().startDailyRun();
+          return;
+        }
+        get().startRun({
+          mode: run.mode,
+          difficulty: run.difficulty,
+          showOverall: run.showOverall,
+        });
+      },
 
       pickCard: (card, slot) => {
         const { run } = get();

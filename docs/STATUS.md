@@ -1,35 +1,40 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-15, after **v0.7.0 "Main Stage"** — the last polish
-> pass before the 1.0 community launch (feedback round + launch prep).
-> **Uncommitted**: Miguel reviews on localhost and commits manually.
-> (Versioned 0.7.0 by direction, skipping 0.6.)
+> Last updated: 2026-06-15. **v0.6.0 "Main Stage"** (the big polish pass before
+> 1.0) is COMMITTED. **v0.6.1** (a tuning round on top) is implemented but
+> **uncommitted** — Miguel reviews on localhost and commits manually.
 
-## v0.7.0 "Main Stage" — what changed this round
+## v0.6.1 — tuning round (uncommitted)
 
-Feedback batch + launch polish (full detail in CHANGELOG / DESIGN-DECISIONS
-#30–35). Headlines:
-- **Run reset is automatic + silent** on leaving the run page (the leave
-  confirmation modal is gone); a **Reset button** sits by the difficulty tag.
-- **Mobile**: scroll resets to the top on every phase/step change; the
-  **review card strip no longer overlaps** (fluid + max-width, review-only).
-- **Slot-machine flash fixed for good**: the reel is a per-round keyed child
-  with a lazy-init reel, so the drawn team never paints before the reel.
-- **Rank-up** is now a full-screen ceremony-style overlay using the MENU art.
-- **Cards**: kind tags color-coded (player/coach/sub/org); special-rarity
-  palette reworked (legendary white-gold · mythic red · epic purple-pink ·
-  rare dark purple); drafted cards show their rarity border on the field;
-  hidden-run specials show the lineup crest instead of "?".
-- **Collection**: grouped by rarity → overall; earned/locked sizes unified.
-- **Eliminator reveal** on lost runs (experimental, `FEATURES.showEliminatorTeam`
-  — easy to revert). **Special-unlock XP** by rarity.
-- Gates: 42 vitest tests pass, `tsc` + `next build` clean.
+Colors, effects and celebration moments (full detail in CHANGELOG /
+DESIGN-DECISIONS #36–40):
+- **Rarity palette take 2**: rare → bluish indigo (restored); epic → orange;
+  mythic → red; legendary → radiant platinum-gold + shimmer (clearly above the
+  gold base cards). Per-tier holo/halo EFFECTS now ramp rare → legendary.
+- **Collection** back to a single grid (unlocked first by rarity→overall, then
+  locked).
+- **Reset run** restarts a fresh draft on the same difficulty (no setup bounce).
+- **"Who ended your run"** shows the FULL opposing roster (coach/sub/org too).
+- **Field special FX** now show on Hard/hidden runs and glow (not just border).
+- **Legacy unlock** (first Hard win) gets its own full-screen celebration;
+  the unlock/rank-up overlays dismiss on a tap anywhere.
+- Gates: 42 vitest tests pass, `tsc` clean, no new lint.
+
+## v0.6.0 "Main Stage" — the committed polish pass
+
+Feedback batch + launch polish (CHANGELOG / DESIGN-DECISIONS #30–35):
+- Run reset is automatic + silent on leaving the run page; Reset button by the
+  difficulty tag. Mobile scroll resets per step; review strip overlap fixed.
+- Slot-machine flash fixed (per-round keyed child + lazy-init reel). Rank-up is
+  a full-screen ceremony using MENU art. Kind tags color-coded. Hidden-run
+  specials show the lineup crest. Eliminator reveal (flag-gated). Special-unlock
+  XP by rarity. (Some v0.6.1 items below revise the palette/collection here.)
 
 ## Where we are
 
-**The MVP is live on Vercel; v0.5.x addressed feedback round 1, and v0.7.0 is
-the last polish before 1.0.** Working today:
+**The MVP is live on Vercel; v0.5.x addressed feedback round 1; v0.6.x is the
+final polish before 1.0.** Working today:
 
 - Classic Draft (6 slots, ONE-click drafting onto the first open slot,
   slot-machine lineup reveal, region-colored badges, free reroll when
@@ -65,7 +70,7 @@ the last polish before 1.0.** Working today:
 
 Quality gates: 42 vitest tests (incl. full-tournament difficulty outcome
 bands), `tsc` clean, `next build` clean, ESLint baseline unchanged. Git:
-v0.1.0 → v0.5.1 (v0.7.0 uncommitted, pending Miguel's localhost review).
+v0.1.0 → v0.6.0 (v0.6.1 uncommitted, pending Miguel's localhost review).
 
 ## Balance picture (v0.5, measured)
 
@@ -75,12 +80,11 @@ quality; the Swiss wall is gone. Knobs and rationale: BALANCE-GUIDE.md.
 
 ## Pending / next actions (in order)
 
-1. **Miguel reviews v0.7.0 on localhost and commits manually** (his call —
-   if `npm run dev` won't start, the agent left a preview server earlier:
-   stop stray `node.exe`, delete `.next`, start again. This session ran
-   `next build` then a preview server, which served stale CSS until `.next`
-   was cleared — a fresh `npm run dev` avoids that). Then bump to **1.0** when
-   happy; this is the last pre-launch polish round.
+1. **Miguel reviews v0.6.1 on localhost and commits manually** (his call —
+   if `npm run dev` won't start, stop stray `node.exe` and delete `.next`,
+   then start again; running `next build` before a dev server can serve stale
+   CSS until `.next` is cleared). Then bump to **1.0** when happy; v0.6.x is
+   the last pre-launch polish.
 2. **Finish the asset pass**: remaining manual curation = `pioneers-oce`
    logo + `jstn`/`fairypeak` photos (`false` markers in
    `data-sources/asset-overrides.json`); replace any photo by overwriting

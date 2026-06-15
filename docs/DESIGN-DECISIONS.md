@@ -100,7 +100,7 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 18. **No resume system.** Returning to the menu resets the run. Refreshing
     the page mid-run still restores it — that protects against accidents,
     not intentional exits. *(v0.5: the exit was guarded by ONE confirmation
-    modal. **v0.7.0 removed the modal by direction** — see decision #30. The
+    modal. **v0.6.0 removed the modal by direction** — see decision #30. The
     no-resume rule itself is unchanged.)*
 
 19. **Spoiler-safe playback.** The tournament simulates ahead internally but
@@ -172,7 +172,7 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     is era-defining (NRG first); wrong-era logos are a polish bug, not a
     data error.
 
-## v0.7.0 additions (Main Stage — last polish before 1.0)
+## v0.6.0 additions (Main Stage — last polish before 1.0)
 
 30. **Leaving the run resets it silently; the confirmation modal is gone**
     (supersedes the v0.5 leave-guard, by direction). Navigating off `/play`
@@ -221,6 +221,36 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     On the "Your Team" field, drafted cards now carry their rarity border
     (special → rarity color + glow; base → gold/silver/blue) — but only when
     overalls are visible, since rarity is hidden information on blackout runs.
+
+## v0.6.1 adjustments (tuning round, by direction)
+
+36. **Reset run restarts in place** (amends #30). The in-run Reset button now
+    starts a FRESH draft on the same mode/difficulty/visibility
+    (`runStore.restartRun`) rather than dropping to the setup screen — the
+    player wanted a fast re-roll of the same run, not a reconfigure.
+
+37. **Special-rarity palette, take 2** (amends #32). Rare returns to its
+    original bluish dark-purple (indigo); epic becomes orange/amber (the
+    purple/pink read poorly and sat too close to rare); mythic stays red;
+    legendary is pushed further from gold base cards — a near-white
+    platinum-gold border with a traveling shimmer + the brightest halo, the
+    single most special card in the game. Per-tier EFFECTS (holo/sheen/halo)
+    now ramp rare → legendary so rarity reads from across the screen.
+
+38. **Field special FX show on hidden runs too** (amends #35). A special's
+    PRESENCE is public information (the card frame already announces it), so a
+    special drafted onto the pitch shows its living rarity glow even on Hard —
+    only base-card rarity (gold/silver/blue) stays hidden when overalls are.
+    The field treatment is a glow effect, not just a border.
+
+39. **Collection is one grid** (amends the v0.6.0 rarity sections). Unlocked
+    cards lead (rarity → overall), then locked cards in the same order — a
+    single album reads better than four stacked sections.
+
+40. **First Hard win gets a Legacy-unlock celebration.** Unlocking a whole new
+    mode is a milestone; it now gets a full-screen prismatic moment alongside
+    the card-unlock and rank-up ceremonies. All three (and the eliminator
+    reveal) dismiss on a tap anywhere on the overlay.
 
 ## Open questions for review
 

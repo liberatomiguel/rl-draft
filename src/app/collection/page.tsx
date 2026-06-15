@@ -29,15 +29,12 @@ import { GameCard } from "@/components/cards/GameCard";
 const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
 type StatusFilter = "all" | "unlocked" | "locked";
 
-/** Album order (v0.7.0): highest rarity first, then by overall within each. */
-const RARITY_DISPLAY_ORDER: SpecialRarity[] = ["legendary", "mythic", "epic", "rare"];
-
-/** Section-heading tint per rarity — matches the new card-frame palette. */
-const RARITY_HEADING: Record<SpecialRarity, string> = {
-  legendary: "text-amber-200",
-  mythic: "text-red-300",
-  epic: "text-fuchsia-300",
-  rare: "text-violet-300",
+/** Sort weight per rarity — higher = rarer, ordered first within a lock state. */
+const RARITY_RANK: Record<SpecialRarity, number> = {
+  legendary: 4,
+  mythic: 3,
+  epic: 2,
+  rare: 1,
 };
 
 export default function CollectionPage() {
@@ -49,10 +46,10 @@ export default function CollectionPage() {
 
   const unlockedCount = mounted ? Object.keys(unlockedMap).length : 0;
 
-  // Grouped by rarity (legendary → rare), sorted by overall within each group
-  // (v0.7.0). Locked cards are grouped the same way — their rarity is known,
-  // only the overall number is hidden on the silhouette.
-  const groups = useMemo(() => {
+  // Single grid (v0.6.1, by direction): UNLOCKED cards lead — ordered rarity
+  // (legendary→rare) then overall — followed by the still-locked cards in the
+  // same rarity→overall order.
+  const visible = useMemo(() => {
     const isUnlocked = (id: string) => mounted && Boolean(unlockedMap[id]);
     const filtered = specialCards.filter((sp) => {
       if (status === "unlocked" && !isUnlocked(sp.id)) return false;
@@ -60,18 +57,11 @@ export default function CollectionPage() {
       if (rarity !== "all" && sp.rarity !== rarity) return false;
       return true;
     });
-    return RARITY_DISPLAY_ORDER.filter((r) => rarity === "all" || rarity === r)
-      .map((r) => ({
-        rarity: r,
-        cards: filtered
-          .filter((sp) => sp.rarity === r)
-          .sort(
-            (a, b) =>
-              b.overall - a.overall ||
-              Number(isUnlocked(b.id)) - Number(isUnlocked(a.id)),
-          ),
-      }))
-      .filter((g) => g.cards.length > 0);
+    return [...filtered].sort((a, b) => {
+      const lockDiff = Number(isUnlocked(b.id)) - Number(isUnlocked(a.id));
+      if (lockDiff !== 0) return lockDiff; // unlocked first
+      return RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || b.overall - a.overall;
+    });
   }, [mounted, unlockedMap, status, rarity]);
 
   return (
@@ -125,44 +115,26 @@ export default function CollectionPage() {
         ))}
       </div>
 
-      {/* Grid — one section per rarity, highest first */}
-      {groups.length === 0 ? (
+      {/* Grid — single grid, unlocked first (rarity → overall), then locked */}
+      {visible.length === 0 ? (
         <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
       ) : (
-        <div className="space-y-8">
-          {groups.map((group) => (
-            <section key={group.rarity}>
-              <div className="mb-3 flex items-center gap-3">
-                <h2
-                  className={cx(
-                    "display text-sm font-bold uppercase tracking-[0.16em]",
-                    RARITY_HEADING[group.rarity],
-                  )}
-                >
-                  {RARITY_LABELS[group.rarity]}
-                </h2>
-                <span className="h-px flex-1 bg-line" aria-hidden />
-                <span className="text-xs text-faint">{group.cards.length}</span>
-              </div>
-              <div className="flex flex-wrap justify-center gap-3 md:justify-start md:gap-4">
-                {group.cards.map((sp) => {
-                  const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
-                  return isUnlocked ? (
-                    <GameCard
-                      key={sp.id}
-                      card={resolveSpecial(sp)}
-                      showOverall
-                      specialCollected
-                      size="md"
-                      onClick={() => setDetail(sp)}
-                    />
-                  ) : (
-                    <LockedCard key={sp.id} sp={sp} onClick={() => setDetail(sp)} />
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+        <div className="flex flex-wrap justify-center gap-3 md:justify-start md:gap-4">
+          {visible.map((sp) => {
+            const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
+            return isUnlocked ? (
+              <GameCard
+                key={sp.id}
+                card={resolveSpecial(sp)}
+                showOverall
+                specialCollected
+                size="md"
+                onClick={() => setDetail(sp)}
+              />
+            ) : (
+              <LockedCard key={sp.id} sp={sp} onClick={() => setDetail(sp)} />
+            );
+          })}
         </div>
       )}
 
