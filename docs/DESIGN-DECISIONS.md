@@ -252,7 +252,7 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     the card-unlock and rank-up ceremonies. All three (and the eliminator
     reveal) dismiss on a tap anywhere on the overlay.
 
-## v1.1.0 additions (Overtime — post-launch follow-up)
+## v1.1.1 additions (post-launch follow-up)
 
 41. **Privacy Policy + Changelog are now translated (amends the v1.0 "EN by
     design" scope).** v1.0 deliberately kept long-form prose EN-only. v1.1

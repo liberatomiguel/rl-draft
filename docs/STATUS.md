@@ -1,11 +1,11 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-15. **v1.1.0 "Overtime"** is built and **uncommitted** —
+> Last updated: 2026-06-15. **v1.1.1** is built and **uncommitted** —
 > Miguel reviews on localhost, then commits + deploys. **v1.0.0 "Kickoff"** (the
 > public launch on rocketdraft.app) is committed.
 
-## v1.1.0 "Overtime" — post-launch follow-up (uncommitted, Miguel testing)
+## v1.1.1 — post-launch follow-up (uncommitted, Miguel testing)
 
 A focused follow-up to launch. **All gates green**: `tsc`, 42 vitest tests,
 ESLint (8 pre-existing baseline errors, 0 new), `next build` (all 16 routes

@@ -25,7 +25,7 @@ Tailwind v4 + Zustand + Zod + Vitest.
   `data-sources/teams.md`. To change data: edit it, run `npm run build:data`,
   then `npm run validate:data`. Do NOT hand-edit `src/data/*.json` **except**
   `achievements.json` AND `specialCards.json` — both are HAND-MAINTAINED.
-  `specialCards.json` was decoupled from the generator in v1.1.0 (Miguel
+  `specialCards.json` was decoupled from the generator in v1.1.1 (Miguel
   curates the special cards by hand, 80+ entries); `build:data` only *reads* it
   to re-validate base-card refs and never overwrites it. The legacy `SPECIALS`
   catalogue in `scripts/build-dataset.mjs` is reference-only now. To add/edit a

@@ -66,9 +66,9 @@ function fieldFx(card: ResolvedCard | null): FieldFx {
     case "mythic":
       return fx("!border-red-400/80", "rgba(239, 68, 68, 0.55)", "rgba(248, 113, 113, 0.5)");
     case "epic":
-      return fx("!border-teal-400/80", "rgba(45, 212, 191, 0.5)", "rgba(94, 234, 212, 0.45)");
+      return fx("!border-violet-400/80", "rgba(124, 58, 237, 0.5)", "rgba(168, 85, 247, 0.45)");
     case "rare":
-      return fx("!border-indigo-400/75", "rgba(99, 102, 241, 0.45)", "rgba(129, 140, 248, 0.42)");
+      return fx("!border-blue-500/75", "rgba(59, 130, 246, 0.45)", "rgba(99, 102, 241, 0.42)");
   }
   return { cls: "" };
 }

@@ -573,7 +573,7 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
-        version: "1.1.0",
+        version: "1.1.1",
         name: "",
         date: "2026",
         current: true,

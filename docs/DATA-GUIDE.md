@@ -155,7 +155,7 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 
 ## specialCards.json — collectibles
 
-> **HAND-MAINTAINED (since v1.1.0).** Unlike the other data files, this one is
+> **HAND-MAINTAINED (since v1.1.1).** Unlike the other data files, this one is
 > NOT generated. Edit it directly, then run `npm run validate:data`.
 > `npm run build:data` no longer overwrites it — it only re-checks that every
 > `baseCardId` resolves. The old `SPECIALS` catalogue in the generator is
@@ -185,7 +185,7 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
   special's own historical moment — the org/season it displays AND the
   lineup/org used for chemistry when drafted.
 - `cardType`: `moment | major_mvp | worlds_mvp | season_mvp | mythic | legend | coach`
-  (`season_mvp` added v1.1.0 — a season-MVP award kept distinct from `worlds_mvp`
+  (`season_mvp` added v1.1.1 — a season-MVP award kept distinct from `worlds_mvp`
   so a league/season MVP isn't mislabelled as a world title).
 - `rarity`: `rare | epic | mythic | legendary` (visual + collection grouping).
 - `effect.type` (implemented in `engine/match.ts`):

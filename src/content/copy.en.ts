@@ -528,7 +528,7 @@ export const CHEM_TIERS: Record<string, string> = {
   Perfect: "Perfect",
 };
 
-// Long-form legal/notes pages — translated since v1.1.0 (the rendered view
+// Long-form legal/notes pages — translated since v1.1.1 (the rendered view
 // reads these via useCopy(); the route metadata stays EN for SEO). The product
 // name "Rocket Draft" and version numbers/dates are intentionally not localized.
 export const PRIVACY = {
@@ -584,7 +584,7 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
-      version: "1.1.0",
+      version: "1.1.1",
       name: "",
       date: "2026",
       current: true,

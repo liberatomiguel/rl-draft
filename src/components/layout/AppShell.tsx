@@ -184,26 +184,10 @@ function LangToggle() {
 }
 
 function LogoMark() {
-  return (
-    <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden>
-      <defs>
-        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#38bdf8" />
-          <stop offset="0.55" stopColor="#3b82f6" />
-          <stop offset="1" stopColor="#f97316" />
-        </linearGradient>
-      </defs>
-      <path d="M32 7 53 19.5v25L32 57 11 44.5v-25Z" fill="none" stroke="url(#lg)" strokeWidth="4" />
-      <path
-        d="M24 40 40 24M40 24h-9.5M40 24v9.5"
-        fill="none"
-        stroke="#f97316"
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  // Renders the same file as the favicon (public/icon.svg) so updating the icon
+  // in one place updates the header too. (v1.1.x — was an inline SVG before.)
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/icon.svg" alt="" aria-hidden className="h-7 w-7" />;
 }
 
 function HomeIcon({ className }: { className?: string }) {

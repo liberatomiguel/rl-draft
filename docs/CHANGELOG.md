@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [1.1.0] — "Overtime" — 2026 (in progress, uncommitted)
+## [1.1.1] — 2026 (in progress, uncommitted)
 
 A post-launch follow-up: a bigger special-card collection, mobile + onboarding
 polish, the analytics/SEO groundwork for measuring real usage, and PT-BR for the
@@ -40,6 +40,18 @@ last two English-only pages.
   code help. (The mechanism itself already shipped in v0.5.1.)
 
 ### Changed
+- **Special-card rarity identity reworked** (the cards are the centerpiece):
+  legendary OVR is now a **white-gold metallic** gradient (not flat amber) with
+  a brighter halo; mythic OVR matches the **border red** with a stronger glow;
+  epic moved from teal to a **blue → purple** border with a light-purple OVR;
+  rare set to a **deep, dark blue** (slight purple touch) with a matching blue
+  OVR, kept clearly distinct from epic. Effect intensity
+  now clearly ramps rare → epic → mythic → legendary. Colors live in the
+  `.card-*` / `.ovr-*` rules in `globals.css` + `SPECIAL_OVR_COLOR` in GameCard;
+  field-glow tints in `FieldView`.
+- **Header brand icon** now renders `public/icon.svg` (the same file as the
+  favicon) instead of a separate inline SVG, so updating the icon in one place
+  updates both.
 - **Collection grid on mobile** now shows **2 cards per row** instead of one
   oversized card (`grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`).
   Desktop is unchanged — the original auto-fill grid still applies from `sm:` up.

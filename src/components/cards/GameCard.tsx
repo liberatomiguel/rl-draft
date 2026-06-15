@@ -77,17 +77,17 @@ const SPECIAL_ACCENT: Record<string, string> = {
 };
 
 /**
- * Overall number tint per special rarity. Paired with `.ovr-shadow` (a heavy
- * dark text-shadow) so the colored number stays legible over the card photo.
- * v1.0.0 (Pass 3): legendary = a true gold (not pale yellow); mythic/rare/epic
- * bumped up a shade so they read vivid, not washed out.
- * ⇢ Adjust these tints here if you want a different look.
+ * Overall-number treatment per special rarity (v1.1.1). Each value is a
+ * self-contained `.ovr-*` class in globals.css that owns the color + its own
+ * legibility shadow + a tier-scaled glow (legendary is a white-gold metallic
+ * gradient, not a flat color). ⇢ To retint, edit the
+ * `.ovr-rare/.ovr-epic/.ovr-mythic/.ovr-legendary` rules in src/app/globals.css.
  */
 const SPECIAL_OVR_COLOR: Record<string, string> = {
-  rare: "text-indigo-300",
-  epic: "text-teal-300",
-  mythic: "text-red-400",
-  legendary: "text-amber-400",
+  rare: "ovr-rare",
+  epic: "ovr-epic",
+  mythic: "ovr-mythic",
+  legendary: "ovr-legendary",
 };
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
@@ -192,7 +192,7 @@ export function GameCard({
                 "display block font-bold leading-none",
                 size === "sm" ? "text-2xl" : "text-2xl md:text-3xl",
                 isSpecial
-                  ? cx(SPECIAL_OVR_COLOR[card.special!.rarity] ?? "text-white", "ovr-shadow")
+                  ? (SPECIAL_OVR_COLOR[card.special!.rarity] ?? "text-white ovr-shadow")
                   : showOverall && (card.overall ?? 0) >= 90
                     ? "text-cyan"
                     : hiddenBase

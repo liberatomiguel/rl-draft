@@ -217,16 +217,18 @@ body {
  * First gradient = inner (dark), second = the gradient border.
  */
 .card-rare {
+  /* deep, dark, strong blue with a slight purple/indigo touch (distinct from
+     epic's brighter blue->purple) */
   background-image:
-    linear-gradient(168deg, #101733 0%, #0c1126 58%, #131a3a 100%),
-    linear-gradient(165deg, #818cf8 0%, #4338ca 50%, #6366f1 100%);
+    linear-gradient(168deg, #0b1230 0%, #06091c 58%, #0d1338 100%),
+    linear-gradient(165deg, #2f55d4 0%, #14205e 54%, #3b35b0 100%);
 }
 
 .card-epic {
   background-image:
-    linear-gradient(168deg, #07241f 0%, #04130f 58%, #0a2a23 100%),
-    linear-gradient(165deg, #5eead4 0%, #0d9488 48%, #2dd4bf 100%);
-  box-shadow: 0 0 24px rgba(45, 212, 191, 0.16);
+    linear-gradient(168deg, #0d1430 0%, #080a20 58%, #16103a 100%),
+    linear-gradient(165deg, #3b82f6 0%, #7c3aed 50%, #b15cf7 100%);
+  box-shadow: 0 0 24px rgba(124, 58, 237, 0.18);
 }
 
 .card-mythic {
@@ -295,8 +297,8 @@ body {
 
 /* Legendary: brightest halo + the gold border travels (premium shimmer) */
 @keyframes legendary-halo {
-  0%, 100% { box-shadow: 0 0 30px rgba(255, 240, 195, 0.34); }
-  50% { box-shadow: 0 0 58px rgba(255, 255, 245, 0.58); }
+  0%, 100% { box-shadow: 0 0 36px rgba(255, 240, 195, 0.42); }
+  50% { box-shadow: 0 0 72px rgba(255, 252, 236, 0.74); }
 }
 
 @keyframes legendary-shimmer {
@@ -310,8 +312,8 @@ body {
 
 /* Mythic halo pulse — red */
 @keyframes mythic-halo {
-  0%, 100% { box-shadow: 0 0 26px rgba(248, 113, 113, 0.24); }
-  50% { box-shadow: 0 0 46px rgba(239, 68, 68, 0.44); }
+  0%, 100% { box-shadow: 0 0 30px rgba(248, 113, 113, 0.30); }
+  50% { box-shadow: 0 0 56px rgba(239, 68, 68, 0.52); }
 }
 
 .card-mythic.card-special {
@@ -320,8 +322,8 @@ body {
 
 /* Epic halo pulse — teal (gentler than mythic) */
 @keyframes epic-halo {
-  0%, 100% { box-shadow: 0 0 22px rgba(20, 184, 166, 0.18); }
-  50% { box-shadow: 0 0 38px rgba(94, 234, 212, 0.34); }
+  0%, 100% { box-shadow: 0 0 22px rgba(124, 58, 237, 0.20); }
+  50% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.38); }
 }
 
 .card-epic.card-special {
@@ -658,7 +660,7 @@ body {
 
 .holo-epic::after {
   background:
-    linear-gradient(115deg, transparent 28%, rgba(45, 212, 191, 0.22) 44%, rgba(125, 252, 228, 0.16) 52%, transparent 66%);
+    linear-gradient(115deg, transparent 28%, rgba(96, 165, 250, 0.22) 44%, rgba(168, 85, 247, 0.18) 52%, transparent 66%);
   background-size: 220% 100%;
 }
 
@@ -772,6 +774,40 @@ body {
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.95),
     0 0 7px rgba(0, 0, 0, 0.7);
+}
+
+/* Per-rarity special-card OVR number (v1.1.1). The cards are the centerpiece,
+   so each rarity gets a tailored number: a color matched to its border, its own
+   dark legibility shadow, and a tier-scaled glow (rare faint -> mythic strong ->
+   legendary metallic). Applied INSTEAD of .ovr-shadow (each owns its shadow). */
+.ovr-rare {
+  color: #326CE3; /* strong blue with a faint indigo lean, matches the rare border */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.7);
+}
+.ovr-epic {
+  color: #d8b4fe; /* light, highlighted purple over the blue-purple border */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.92), 0 0 9px rgba(147, 51, 234, 0.5);
+}
+.ovr-mythic {
+  color: #f23d3d; /* the same striking red as the mythic border */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(239, 68, 68, 0.62);
+}
+.ovr-legendary {
+  /* white-gold metallic gradient — the chase number, not a flat amber */
+  background-image: linear-gradient(
+    165deg,
+    #fffefa 0%,
+    #fdebb0 30%,
+    #f3cd6c 54%,
+    #fff7e2 76%,
+    #f1c452 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 9px rgba(255, 226, 150, 0.55));
 }
 
 /* ---------------------------------------------------------------------------
