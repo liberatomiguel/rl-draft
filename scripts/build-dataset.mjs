@@ -112,6 +112,59 @@ const COUNTRY = {
   yumicheeseman: "AU", gus: "AU", bango: "AU", jimmah: "AU", shadey: "AU",
   scarth: "AU", "zen-oce": "AU",
   lawler: "ZA", leoro: "ZA", noxes: "ZA", sweatyclarence: "ZA", torres823: "ZA",
+
+  // ===========================================================================
+  // v1.1.5 Liquipedia nationality pass — scripts/fetch-nationalities.mjs audited
+  // ALL 300 players against their Liquipedia {{Infobox player}} |country=. This
+  // block FILLs the countryless and CORRECTS verified mistakes; being LAST, its
+  // keys override the guesses above (al0t FI→SE, deevo AU→GB, radosin CZ→FR,
+  // ronaky ES→DK, lawler/leoro/noxes ZA→US/ES/PR, …). Wrong LP matches (a same
+  // handle resolving to a different person) were rejected by hand and KEEP their
+  // prior values: scrub, greazy, torres823, jhzer, kairos. Region-odd but
+  // id-confirmed imports are intentional (APAC/SSA had Western players).
+  // Full evidence + per-row status: data-sources/nationalities-audit.md
+  // ===========================================================================
+  // NA
+  "2piece": "US", "allushin": "CA", "axb": "CA", "ayjacks": "US", "blueze": "US",
+  "cheese": "US", "chronic": "US", "crr": "ES", "dappur": "US", "darkfire": "US",
+  "diaz": "US", "dreaz": "US", "dudewiththenose": "CA", "espeon": "US", "fire": "US",
+  "fl0w": "US", "genocop": "US", "gyro": "US", "huskih": "US", "insolences": "US",
+  "jahzo": "US", "kofyr": "US", "kovanel": "CA", "laf": "CA", "lj": "US",
+  "low5ive": "US", "majicbear": "US", "mala": "US", "matt": "US", "memory": "US",
+  "mijo": "US", "mile": "US", "moopy": "US", "napp": "US", "pluto": "US",
+  "rawgreg": "US", "reveal": "US", "sadjunior": "CA", "scrzbbles": "US", "syntax": "CH",
+  "taroco": "CA", "thundah": "US", "timi": "CA", "turinturo": "US", "wahvey": "US",
+  "xpere": "PT", "zach": "US",
+  // EU
+  "accro": "GB", "acronik": "PT", "al0t": "SE", "atow": "BE", "base": "GB",
+  "continuum": "CH", "deboer": "ES", "deevo": "GB", "dmentza": "ES", "dogu": "NL",
+  "dorito": "ES", "dralii": "MA", "eclipse": "GB", "eekso": "GB", "ejby": "DK",
+  "elgeneral": "AR", "eversax": "BE", "eyeignite": "GB", "flakes": "NL", "flame": "GB",
+  "flarke": "SE", "friisisch": "DK", "fruity": "DK", "gawfs": "GB", "gnagflow06": "DE",
+  "gregan": "GB", "hugo": "FR", "itachi": "MA", "jessie": "NL", "juicy": "NL",
+  "kael": "ES", "kash": "GB", "killerno7": "IT", "m1k3rules": "IE", "maestro": "DK",
+  "marcby8": "ES", "mew": "FR", "mognus": "FI", "mout": "FR", "myebipod4shor": "GB",
+  "n0ah": "GB", "nass": "MA", "neqzo": "FR", "oaly": "NL", "petrick": "PL",
+  "radosin": "FR", "reepex": "CH", "relatingwave": "GB", "rise": "GB", "ronaky": "DK",
+  "saizen": "FR", "seeb": "NO", "skyline": "CH", "sniper": "NO", "stizzy": "ES",
+  "tadpole": "GB", "tho": "NL", "virge": "US", "vksailen": "ES", "vogan": "NL",
+  // OCE
+  "fiberr": "AU", "hntr": "AU", "kaka": "AU", "kamii": "NZ", "kennysalmon": "NZ",
+  "leduck": "AU", "montyconnor": "NZ", "requiem": "AU", "riv": "AU", "scarth": "NZ",
+  "siki": "AU", "spydoge": "AU", "xkorez": "AU", "yeatzy": "AU",
+  // SAM
+  "aguesome": "AR", "bananaman": "BR", "bemmz": "BR", "droppz": "BR", "firefoxd": "BR",
+  "haberkamper": "BR", "michi": "BR", "pekitas": "AR", "reysbull": "CL", "shad": "AR",
+  // MENA
+  "abdullah": "SA", "ams": "SA", "hisoka": "SA", "senzo": "SA", "twiz": "SA",
+  "venom": "SA", "zez0nix": "SA",
+  // APAC
+  "catalysm": "DE", "commutator": "SG", "kevin": "TH", "lct": "ID", "maxeew": "IE",
+  "osm": "IS", "sigms": "US", "sosa": "CA", "sphinx": "MY", "tenhow": "JP",
+  "virtuoso": "IE",
+  // SSA
+  "daisy": "ZA", "happymeal": "ZA", "lawler": "US", "leoro": "ES", "luiisp": "ES",
+  "noxes": "PR", "skillsteal": "ZA", "werty": "ZA", "wiiilooo": "FR",
 };
 
 const ORG_BUFF_TYPE = {

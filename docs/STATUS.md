@@ -107,9 +107,12 @@ only** — grep those for history; do not paste it back here.
 
 ## Known soft spots (not bugs)
 
-- ~133 players still have no nationality — same-country chemistry skips
-  them; the curated map lives in `scripts/build-dataset.mjs` (add only
-  high-confidence entries).
+- Only **2 players** still have no nationality (`Ghaazi0`, `Plu'oh` — no
+  Liquipedia page; left countryless rather than guessed). The rest were
+  completed/corrected from Liquipedia in v1.1.5 (see CHANGELOG +
+  `data-sources/nationalities-audit.md`). Re-audit anytime with
+  `node scripts/fetch-nationalities.mjs`; the curated `COUNTRY` map lives in
+  `scripts/build-dataset.mjs` (add only high-confidence entries).
 - Coach bonus types are hash-derived (file only has overalls) — curate in
   the generator if wanted.
 - Liquipedia art is a bootstrap, not a curation: a few logos will be wrong

@@ -10,6 +10,36 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.1.5] — 2026
+
+### Fixed
+- **Player nationalities completed + corrected from Liquipedia.** Most players
+  had no country (so same-country chemistry skipped them and flags were missing
+  or wrong). New audit tool `scripts/fetch-nationalities.mjs` read every player's
+  Liquipedia `{{Infobox player}}` `|country=` and compared it to the curated
+  `COUNTRY` map: **137 → 2 players without a country** (only `Ghaazi0` and
+  `Plu'oh` have no LP page; left countryless rather than guessed). **158 entries
+  written** to `COUNTRY` in `build-dataset.mjs` (134 fills + 22 verified
+  corrections + 2 manual). Real fixes included e.g. `al0t` FI→SE, `deevo` AU→GB,
+  `radosin` CZ→FR, `ronaky` ES→DK, `eversax` FR→BE, and the SSA-guessed `lawler`
+  /`leoro`/`noxes` ZA→US/ES/PR (imports, not South Africans).
+  - Each suspect was verified by hand against the LP infobox (id/name/team).
+    **Wrong matches were rejected** (a shared handle resolving to a *different*
+    person) and kept their prior value: `scrub` (≠ "Scrub Killa"), `greazy`
+    (≠ "gReazymeister"), `torres823` (≠ "TORRES8232"), `jhzer`, `kairos`
+    (LP says US but the real name is Brazilian — kept BR). Region-odd but
+    id-confirmed imports (APAC/SSA Western players) were applied intentionally.
+  - Root cause: the original `COUNTRY` map was a small high-confidence-only
+    hand pass, so ~133 players were never assigned and a handful were guessed
+    wrong. Evidence: `data-sources/nationalities-audit.md`.
+
+### Added
+- **13 new country flags** (`ch cl id ie is ma my no nz pr pt sg th`) fetched to
+  `public/flags/` by `npm run fetch:assets -- --flags`, which now sees the new
+  ISO codes in the rebuilt data (21 → 34 flags).
+
+---
+
 ## [1.1.4] — 2026
 
 ### Added
