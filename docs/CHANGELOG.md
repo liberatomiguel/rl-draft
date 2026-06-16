@@ -66,6 +66,19 @@ last two English-only pages.
   **off in dev** (`images.unoptimized` when `NODE_ENV !== "production"`) so that
   replacing a card photo shows up on a refresh instead of serving a stale cached
   transform; production stays fully optimized.
+- **Special-card source photos compressed** — the curated PNGs shipped at
+  ~500KB each (600×823), **45.8MB** total. The client never gets them
+  (`next/image` transcodes to WebP), but on a cold Vercel cache the optimizer
+  still had to download + transform a 500KB source before the first paint —
+  measurably dropping the **/collection Speed Insights score (99 → 93)** on a
+  full collection. Re-encoded in place to ≤512px-wide quantized PNGs (the
+  largest on-screen use is the detail modal at ~208px CSS): **45.8MB → 11.6MB
+  (~74% smaller)**, alpha preserved on cut-out photos, no visible quality change
+  (the client output WebP is indistinguishable at display size). New
+  `scripts/optimize-images.mjs` (`npm run optimize:images`) keeps future photo
+  drops light and is idempotent; `--check` fails if any file is over budget.
+  Root cause: source PNGs were dropped in at full editor export weight with no
+  compression pass.
 - **Collection grid on mobile** now shows **2 cards per row** instead of one
   oversized card (`grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`).
   Desktop is unchanged — the original auto-fill grid still applies from `sm:` up.
