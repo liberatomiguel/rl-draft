@@ -10,7 +10,27 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [1.1.1] — 2026 (in progress, uncommitted)
+## [1.1.4] — 2026
+
+### Added
+- **Per-page SEO metadata** for `/play`, `/collection`, `/how-to-play` and
+  `/achievements`. They were client components (can't export `metadata`), so all
+  four inherited the home page's title/description — Google would have indexed
+  them with the same generic title. Each is now split into a server `page.tsx`
+  that exports a unique `title` + `description` + canonical and renders its
+  client `…View` (the same pattern already used for `/privacy` and `/changelog`;
+  `git mv` preserved the view bytes). Verified in the production build: the
+  prerendered HTML carries the distinct `<title>`, `<meta name="description">`
+  and `<link rel="canonical">` per route.
+
+---
+
+## [1.1.1 – 1.1.3] — 2026 (shipped)
+
+> Shipped as the post-launch wave across three tags: **1.1.1** visual/special-card
+> polish + revamped icon, **1.1.2** full database review + special-card photos,
+> **1.1.3** image compression + collection performance. Bundled in one narrative
+> below.
 
 A post-launch follow-up: a bigger special-card collection, mobile + onboarding
 polish, the analytics/SEO groundwork for measuring real usage, and PT-BR for the
