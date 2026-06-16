@@ -1,11 +1,50 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-16. **v1.1.1** is built and **uncommitted** — Miguel
-> reviews on localhost, then commits + deploys. **v1.0.0 "Kickoff"** (the public
-> launch on rocketdraft.app) is committed. The v1.1.1 section below is the full
-> record of a long work session; read it + `docs/CHANGELOG.md` to continue in a
-> fresh chat.
+> Last updated: 2026-06-16. **v1.1.5** is the latest committed/deployed state
+> (see `docs/CHANGELOG.md`). The **v1.1.6** section right below is the current
+> work (Google indexing fix + SAM dataset staging + a PageSpeed audit). The
+> older **v1.1.1** narrative further down is historical.
+
+## v1.1.6 — indexing fix + SAM staging + perf audit (current)
+
+### Done this session
+- **Google indexing fixed (apex/www canonical conflict).** The app was already
+  apex-canonical (`SITE.url`), but Vercel redirected apex → www, contradicting
+  the canonical → Search Console "Page with redirect", canonical N/D, not
+  indexed. Fixed by making the **apex the primary domain** and flipping the
+  redirect to **`www → apex`** (Vercel Domains; no code change). Verified live
+  (apex 200, www→apex 308, http→https 308); pages now appear under
+  `site:rocketdraft.app`. DNS is on Vercel nameservers → apex is managed/resilient
+  (no manual A-record risk; apex-primary vs www-primary is purely a redirect
+  choice here). Details in `docs/CHANGELOG.md` [1.1.6].
+- **SAM regional Top-8 dataset staged** in `data-sources/sam-pending/`
+  (`teams-sam.md` = 45 `sam-only` lineups S7→2025, `sam-merge-notes.md`,
+  `validate-sam.mjs`, `README.md`). **Inert** — the generator only reads
+  `teams.md`, so the game is unaffected. For the SAM-only mode patch.
+
+### Next steps (open)
+**SEO — Search Console (Miguel, not code):**
+1. Submit `https://rocketdraft.app/sitemap.xml` (still "no sitemap detected").
+2. URL Inspection → request indexing of `https://rocketdraft.app/` (homepage
+   still shows the stale `http://` entry; self-heals on re-crawl).
+3. Prefer a **Domain property** for `rocketdraft.app` (covers apex/www/http/https).
+
+**Performance — PageSpeed mobile 89 / desktop 93 (A11y/BP/SEO 100), by impact:**
+1. `experimental.inlineCss: true` in `next.config.ts` — removes render-blocking
+   CSS (~590 ms mobile FCP/LCP). Experimental; verify `next build`.
+2. Add a modern `browserslist` to `package.json` — drops ~14 KiB legacy polyfills
+   (`Array.at/flat/flatMap`, `Object.fromEntries/hasOwn`, `trimStart/End`).
+3. **Stop importing the whole dataset on the home page.** `src/app/page.tsx`
+   (`"use client"`) imports `@/data` (all JSON + Zod) and `@/lib/daily` (pulls
+   `lineups`) just for two `.length` counts + `daily.info` → ~94 KiB unused JS +
+   TBT on the landing page. Split: a generated `counts.ts` for the two counts; a
+   cheap date-only `generateDailyInfo` for the menu, deferring the lineup-pool
+   build into `startDailyRun` (dynamic import). Do on the main machine with
+   `npm test` + Lighthouse.
+
+**SAM-only mode (next patch):** wire `flag: sam-only` per `sam-merge-notes.md`
+§2, then merge `data-sources/sam-pending/teams-sam.md` into `teams.md`.
 
 ## v1.1.1 — post-launch follow-up (uncommitted, Miguel testing)
 

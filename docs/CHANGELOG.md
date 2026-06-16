@@ -10,6 +10,36 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.1.6] — 2026
+
+### Fixed
+- **Site not indexing on Google — apex/www canonical conflict.** The app is
+  canonical on the apex (`SITE.url = https://rocketdraft.app` → `metadataBase`,
+  sitemap, robots, every page canonical), but Vercel was redirecting
+  apex → www (308). Googlebot hit `rocketdraft.app` → 308 → `www…`, whose
+  canonical pointed back at the *redirecting* apex, so Search Console reported
+  "Page with redirect", canonical "N/D", and refused to index.
+  - **Fix:** made the **apex the primary served domain** and flipped the redirect
+    to **`www → apex`** (Vercel → Domains). **No code change** — the code was
+    already apex-canonical; only the redirect direction was wrong.
+  - Verified live: apex `200`, `www → apex` `308`, `http → https` `308`, and
+    sitemap/robots/all canonicals on apex+https. Pages now show under
+    `site:rocketdraft.app`. Root cause: redirect direction contradicted the
+    declared canonical. Remaining (Miguel, Search Console): submit the sitemap;
+    the stale `http://` homepage entry self-heals on re-crawl.
+
+### Added
+- **SAM (South America) regional Top-8 dataset — staged for the "SAM Only"
+  mode.** `data-sources/sam-pending/` holds `teams-sam.md` (45 new Top-8 SAM
+  lineups, S7→2025, that did NOT reach Worlds/Finals, each flagged
+  `flag: sam-only`), `sam-merge-notes.md` (merge steps + the generator change
+  for the flag + `COUNTRY` additions + dedup/collision map + overall methodology
+  + per-season Top-8 tables + Liquipedia sources) and `validate-sam.mjs`.
+  **Inert:** `build:data` only reads `teams.md`, so this does NOT affect the game
+  yet — it ships with the SAM-only mode patch. Researched from Liquipedia
+  (rosters sourced; overalls anchored to existing dataset values per
+  player/season). Validated: 0 duplicate lineup ids vs the 208 existing teams.
+
 ## [1.1.5] — 2026
 
 ### Fixed
