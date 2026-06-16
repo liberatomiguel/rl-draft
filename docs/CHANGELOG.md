@@ -10,6 +10,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.1.7] — 2026
+
+### Changed
+- **Performance (PageSpeed): render-blocking CSS removed.** Enabled
+  `experimental.inlineCss` in `next.config.ts` — the Tailwind CSS is now inlined
+  into the HTML `<head>` instead of two render-blocking `<link rel="stylesheet">`
+  requests (~590 ms of render-blocking on mobile per Lighthouse). Build-verified:
+  the prerendered home has **1 inline `<style>` and 0 blocking CSS links**. Helps
+  FCP/LCP (mobile LCP was render-delay-bound). Must be deployed before PageSpeed
+  reflects it.
+- **Modern `browserslist`** added to `package.json` (Chrome/Edge/FF ≥111,
+  Safari/iOS ≥16.4) so SWC stops shipping ~14 KiB of legacy polyfills
+  (`Array.at/flat/flatMap`, `Object.fromEntries/hasOwn`, `String.trimStart/End`)
+  — all targeted browsers support these natively.
+
+> Still pending (tracked in STATUS): the home page imports the full dataset +
+> Zod for two counts + `daily.info` (~94 KiB unused JS on the landing page) —
+> a refactor saved for a focused follow-up (it touches the deterministic daily).
+
 ## [1.1.6] — 2026
 
 ### Fixed

@@ -1,7 +1,14 @@
 {
   "name": "rocket-draft",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "private": true,
+  "browserslist": [
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 111",
+    "safari >= 16.4",
+    "ios_saf >= 16.4"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

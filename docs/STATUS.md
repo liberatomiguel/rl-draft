@@ -6,9 +6,14 @@
 > work (Google indexing fix + SAM dataset staging + a PageSpeed audit). The
 > older **v1.1.1** narrative further down is historical.
 
-## v1.1.6 — indexing fix + SAM staging + perf audit (current)
+## v1.1.6 / v1.1.7 — indexing fix + SAM staging + performance (current)
 
 ### Done this session
+- **Performance (v1.1.7): render-blocking CSS removed + modern browserslist.**
+  `experimental.inlineCss` (CSS now inlined into the HTML — build-verified: home
+  has 1 inline `<style>`, 0 blocking CSS links) + a modern `browserslist`
+  (drops ~14 KiB legacy polyfills). Perf item 3 below is still pending. **Needs
+  push + Vercel deploy before PageSpeed shows the gain.**
 - **Google indexing fixed (apex/www canonical conflict).** The app was already
   apex-canonical (`SITE.url`), but Vercel redirected apex → www, contradicting
   the canonical → Search Console "Page with redirect", canonical N/D, not
@@ -30,11 +35,9 @@
    still shows the stale `http://` entry; self-heals on re-crawl).
 3. Prefer a **Domain property** for `rocketdraft.app` (covers apex/www/http/https).
 
-**Performance — PageSpeed mobile 89 / desktop 93 (A11y/BP/SEO 100), by impact:**
-1. `experimental.inlineCss: true` in `next.config.ts` — removes render-blocking
-   CSS (~590 ms mobile FCP/LCP). Experimental; verify `next build`.
-2. Add a modern `browserslist` to `package.json` — drops ~14 KiB legacy polyfills
-   (`Array.at/flat/flatMap`, `Object.fromEntries/hasOwn`, `trimStart/End`).
+**Performance — PageSpeed mobile 89 / desktop 93 (A11y/BP/SEO 100):**
+1. ✅ DONE (v1.1.7) — `experimental.inlineCss` (render-blocking CSS removed).
+2. ✅ DONE (v1.1.7) — modern `browserslist` (legacy polyfills dropped).
 3. **Stop importing the whole dataset on the home page.** `src/app/page.tsx`
    (`"use client"`) imports `@/data` (all JSON + Zod) and `@/lib/daily` (pulls
    `lineups`) just for two `.length` counts + `daily.info` → ~94 KiB unused JS +
