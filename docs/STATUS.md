@@ -9,11 +9,13 @@
 ## v1.1.6 / v1.1.7 — indexing fix + SAM staging + performance (current)
 
 ### Done this session
-- **Performance (v1.1.7): render-blocking CSS removed + modern browserslist.**
-  `experimental.inlineCss` (CSS now inlined into the HTML — build-verified: home
-  has 1 inline `<style>`, 0 blocking CSS links) + a modern `browserslist`
-  (drops ~14 KiB legacy polyfills). Perf item 3 below is still pending. **Needs
-  push + Vercel deploy before PageSpeed shows the gain.**
+- **Performance (v1.1.7): render-blocking CSS removed.** `experimental.inlineCss`
+  (build-verified: home has 1 inline `<style>`, 0 blocking CSS links). After
+  deploy: **PageSpeed mobile ~95 / desktop ~99** (warm run: mobile LCP 3.5s→1.4s,
+  SI 4.0→1.9s). Lab score varies a lot on cold edge cache (saw 86 then 95 minutes
+  apart — always run 2-3×). The `browserslist` was added too but Next 16 still
+  ships the ~14 KiB legacy polyfills regardless (no effect; off-score). Remaining
+  perf backlog below.
 - **Google indexing fixed (apex/www canonical conflict).** The app was already
   apex-canonical (`SITE.url`), but Vercel redirected apex → www, contradicting
   the canonical → Search Console "Page with redirect", canonical N/D, not
@@ -35,16 +37,28 @@
    still shows the stale `http://` entry; self-heals on re-crawl).
 3. Prefer a **Domain property** for `rocketdraft.app` (covers apex/www/http/https).
 
-**Performance — PageSpeed mobile 89 / desktop 93 (A11y/BP/SEO 100):**
-1. ✅ DONE (v1.1.7) — `experimental.inlineCss` (render-blocking CSS removed).
-2. ✅ DONE (v1.1.7) — modern `browserslist` (legacy polyfills dropped).
-3. **Stop importing the whole dataset on the home page.** `src/app/page.tsx`
-   (`"use client"`) imports `@/data` (all JSON + Zod) and `@/lib/daily` (pulls
-   `lineups`) just for two `.length` counts + `daily.info` → ~94 KiB unused JS +
-   TBT on the landing page. Split: a generated `counts.ts` for the two counts; a
-   cheap date-only `generateDailyInfo` for the menu, deferring the lineup-pool
-   build into `startDailyRun` (dynamic import). Do on the main machine with
-   `npm test` + Lighthouse.
+**Performance — now PageSpeed mobile ~95 / desktop ~99 (A11y/BP/SEO 100).**
+Shipped v1.1.7: ✅ `experimental.inlineCss` (render-blocking CSS gone; warm LCP
+3.5s→1.4s). `browserslist` is applied (Chrome ≥111…) but Next 16 still emits the
+~14 KiB legacy polyfills regardless (no effect; off-score).
+
+Remaining optimization backlog (PLANNED — none urgent at 95/99):
+1. **Font CLS 0.107 (mobile)** — the only Core Web Vital just over "good" (>0.1).
+   The display font (Rajdhani via `next/font`) swaps and shifts the "Game modes"
+   section (an inlineCss tradeoff: faster paint → swap now visible; CLS was 0
+   before). Fix: preload the display font and/or reserve height on the mode cards
+   (min-height / fixed line-height), or tune the `next/font` fallback metrics
+   (`adjustFontFallback`). **Highest value — CLS is a ranking signal.**
+2. **Stop importing the whole dataset on the home page (~94 KiB unused JS).**
+   `src/app/page.tsx` (`"use client"`) imports `@/data` (all JSON + Zod) +
+   `@/lib/daily` (lineups) just for two `.length` counts + `daily.info`. Plan: a
+   generated `counts.ts` for the counts; split a cheap date-only
+   `generateDailyInfo` from the lineup-pool build; defer the pool into
+   `startDailyRun` (dynamic import); ideally make the hero a Server Component.
+   Touches the deterministic daily — do with `npm test`.
+3. **`unranked.png` 160→80** (~6 KiB) — serve at 80px or via `next/image`. Trivial.
+4. Cosmetic: 4 non-composited animations, 2 long tasks, DOM size — only if
+   chasing a perfect 100.
 
 **SAM-only mode (next patch):** wire `flag: sam-only` per `sam-merge-notes.md`
 §2, then merge `data-sources/sam-pending/teams-sam.md` into `teams.md`.

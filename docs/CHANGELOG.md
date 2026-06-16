@@ -23,7 +23,10 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Modern `browserslist`** added to `package.json` (Chrome/Edge/FF ≥111,
   Safari/iOS ≥16.4) so SWC stops shipping ~14 KiB of legacy polyfills
   (`Array.at/flat/flatMap`, `Object.fromEntries/hasOwn`, `String.trimStart/End`)
-  — all targeted browsers support these natively.
+  — all targeted browsers support these natively. (Observed post-deploy: Next 16
+  still emits these polyfills regardless, so no measurable effect — kept as a
+  modern-target baseline.) Net result after deploy: PageSpeed **mobile ~95 /
+  desktop ~99** (warm run; the inlineCss change took mobile LCP 3.5s→1.4s).
 
 > Still pending (tracked in STATUS): the home page imports the full dataset +
 > Zod for two counts + `daily.info` (~94 KiB unused JS on the landing page) —
