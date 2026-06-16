@@ -807,12 +807,12 @@
     "orgId": "chiefs-esports-club",
     "region": "OCE",
     "playerCardIds": [
-      "torsos-chiefs-esports-club-s6",
-      "drippay-chiefs-esports-club-s6",
-      "kamii-chiefs-esports-club-s6"
+      "cjcj-chiefs-esports-club-s6",
+      "express-chiefs-esports-club-s6",
+      "shadey-chiefs-esports-club-s6"
     ],
     "orgBuffLevel": "+",
-    "historicalStrength": "solid"
+    "historicalStrength": "underdog"
   },
   {
     "id": "tainted-minds-s6",
@@ -821,12 +821,12 @@
     "orgId": "tainted-minds",
     "region": "OCE",
     "playerCardIds": [
-      "cjcj-tainted-minds-s6",
-      "express-tainted-minds-s6",
-      "shadey-tainted-minds-s6"
+      "torsos-tainted-minds-s6",
+      "drippay-tainted-minds-s6",
+      "kamii-tainted-minds-s6"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "g2-esports-s7",
@@ -1050,7 +1050,7 @@
     "orgId": "pittsburgh-knights",
     "region": "NA",
     "playerCardIds": [
-      "explosivegyro-pittsburgh-knights-s8",
+      "gyro-pittsburgh-knights-s8",
       "retals-pittsburgh-knights-s8",
       "mist-pittsburgh-knights-s8"
     ],
@@ -1885,9 +1885,9 @@
     "orgId": "veloce-esports",
     "region": "MENA",
     "playerCardIds": [
-      "nwpo-veloce-esports-2122",
       "smw-veloce-esports-2122",
-      "fahad77-veloce-esports-2122"
+      "senzo-veloce-esports-2122",
+      "twiz-veloce-esports-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -1899,9 +1899,9 @@
     "orgId": "01-esports",
     "region": "MENA",
     "playerCardIds": [
-      "ali-01-esports-2122",
-      "ovampier-01-esports-2122",
-      "venom-01-esports-2122"
+      "zez0nix-01-esports-2122",
+      "ams-01-esports-2122",
+      "m7sn-01-esports-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -1915,7 +1915,7 @@
     "playerCardIds": [
       "maxeew-gaimin-gladiators-2122",
       "lct-gaimin-gladiators-2122",
-      "virtuoso-gaimin-gladiators-2122"
+      "commutator-gaimin-gladiators-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -1928,8 +1928,8 @@
     "region": "APAC",
     "playerCardIds": [
       "realize-senbei-strikers-2122",
-      "lunatic-senbei-strikers-2122",
-      "popo-senbei-strikers-2122"
+      "tenhow-senbei-strikers-2122",
+      "sigms-senbei-strikers-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -1941,9 +1941,9 @@
     "orgId": "orlando-pirates-exdee",
     "region": "SSA",
     "playerCardIds": [
-      "2die4-orlando-pirates-exdee-2122",
+      "snowyy-orlando-pirates-exdee-2122",
       "darth-orlando-pirates-exdee-2122",
-      "daisyd-orlando-pirates-exdee-2122"
+      "skillsteal-orlando-pirates-exdee-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -1955,9 +1955,9 @@
     "orgId": "bravado-gaming",
     "region": "SSA",
     "playerCardIds": [
-      "snowyy-bravado-gaming-2122",
-      "kamz-bravado-gaming-2122",
-      "pnidh-bravado-gaming-2122"
+      "2die4-bravado-gaming-2122",
+      "daisy-bravado-gaming-2122",
+      "happymeal-bravado-gaming-2122"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2148,9 +2148,9 @@
     "orgId": "pwr",
     "region": "OCE",
     "playerCardIds": [
+      "amphis-pwr-2223",
       "torsos-pwr-2223",
-      "fever-pwr-2223",
-      "bananahead-pwr-2223"
+      "fever-pwr-2223"
     ],
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
@@ -2163,8 +2163,8 @@
     "region": "OCE",
     "playerCardIds": [
       "scrub-pioneers-oce-2223",
-      "superlachie-pioneers-oce-2223",
-      "fiberr-pioneers-oce-2223"
+      "bananahead-pioneers-oce-2223",
+      "hntr-pioneers-oce-2223"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2192,10 +2192,10 @@
     "playerCardIds": [
       "brad-kru-esports-2223",
       "droppz-kru-esports-2223",
-      "shad-kru-esports-2223"
+      "drufinho-kru-esports-2223"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "ninjas-in-pyjamas-2223",
@@ -2205,11 +2205,11 @@
     "region": "SAM",
     "playerCardIds": [
       "aztromick-ninjas-in-pyjamas-2223",
-      "motta-ninjas-in-pyjamas-2223",
-      "swiftt-ninjas-in-pyjamas-2223"
+      "bemmz-ninjas-in-pyjamas-2223",
+      "motta-ninjas-in-pyjamas-2223"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "solid"
+    "historicalStrength": "underdog"
   },
   {
     "id": "rule-one-2223",
@@ -2249,10 +2249,10 @@
     "playerCardIds": [
       "smw-twisted-minds-2223",
       "venom-twisted-minds-2223",
-      "nwpo-twisted-minds-2223"
+      "senzo-twisted-minds-2223"
     ],
     "orgBuffLevel": "+",
-    "historicalStrength": "solid"
+    "historicalStrength": "underdog"
   },
   {
     "id": "gaimin-gladiators-2223",
@@ -2263,7 +2263,7 @@
     "playerCardIds": [
       "maxeew-gaimin-gladiators-2223",
       "lct-gaimin-gladiators-2223",
-      "virtuoso-gaimin-gladiators-2223"
+      "osm-gaimin-gladiators-2223"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2276,8 +2276,8 @@
     "region": "APAC",
     "playerCardIds": [
       "realize-elevate-2223",
-      "lunatic-elevate-2223",
-      "sigms-elevate-2223"
+      "virtuoso-elevate-2223",
+      "kamii-elevate-2223"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2291,7 +2291,7 @@
     "playerCardIds": [
       "2die4-limitless-2223",
       "snowyy-limitless-2223",
-      "sweaty-limitless-2223"
+      "darth-limitless-2223"
     ],
     "coachId": "noxes-coach-limitless-2223",
     "orgBuffLevel": "~",
@@ -2304,9 +2304,9 @@
     "orgId": "valiant",
     "region": "SSA",
     "playerCardIds": [
-      "arceon-valiant-2223",
-      "fefe-valiant-2223",
-      "rxii-valiant-2223"
+      "werty-valiant-2223",
+      "wiiilooo-valiant-2223",
+      "sweaty-valiant-2223"
     ],
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -2437,13 +2437,13 @@
     "orgId": "oxygen-esports",
     "region": "EU",
     "playerCardIds": [
+      "archie-oxygen-esports-2024",
       "oski-oxygen-esports-2024",
-      "joyo-oxygen-esports-2024",
-      "eekso-oxygen-esports-2024"
+      "joyo-oxygen-esports-2024"
     ],
     "coachId": "snaski-coach-oxygen-esports-2024",
     "orgBuffLevel": "+",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "pwr-2024",
@@ -2467,11 +2467,11 @@
     "region": "OCE",
     "playerCardIds": [
       "superlachie-pioneers-oce-2024",
-      "scrub-pioneers-oce-2024",
+      "amphis-pioneers-oce-2024",
       "fiberr-pioneers-oce-2024"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "furia-2024",
@@ -2496,7 +2496,7 @@
     "region": "SAM",
     "playerCardIds": [
       "kv1-team-secret-2024",
-      "sadness-team-secret-2024",
+      "motta-team-secret-2024",
       "brad-team-secret-2024"
     ],
     "orgBuffLevel": "+",
@@ -2540,7 +2540,7 @@
     "playerCardIds": [
       "2die4-limitless-2024",
       "snowyy-limitless-2024",
-      "sweatyclarence-limitless-2024"
+      "sweaty-limitless-2024"
     ],
     "coachId": "noxes-coach-limitless-2024",
     "orgBuffLevel": "~",
@@ -2643,9 +2643,9 @@
     "orgId": "dignitas",
     "region": "EU",
     "playerCardIds": [
-      "fiv3up-dignitas-2025",
-      "bora-dignitas-2025",
-      "evoh-dignitas-2025"
+      "stizzy-dignitas-2025",
+      "apparentlyjack-dignitas-2025",
+      "joreuz-dignitas-2025"
     ],
     "coachId": "eclipse-coach-dignitas-2025",
     "orgBuffLevel": "+",
@@ -2673,9 +2673,23 @@
     "orgId": "ninjas-in-pyjamas",
     "region": "EU",
     "playerCardIds": [
-      "apparentlyjack-ninjas-in-pyjamas-2025",
-      "joreuz-ninjas-in-pyjamas-2025",
-      "stizzy-ninjas-in-pyjamas-2025"
+      "nass-ninjas-in-pyjamas-2025",
+      "oski-ninjas-in-pyjamas-2025",
+      "radosin-ninjas-in-pyjamas-2025"
+    ],
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "geekay-esports-2025",
+    "name": "Geekay Esports",
+    "seasonId": "rlcs-2025",
+    "orgId": "geekay-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "archie-geekay-esports-2025",
+      "joyo-geekay-esports-2025",
+      "oaly-geekay-esports-2025"
     ],
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
@@ -2701,12 +2715,12 @@
     "orgId": "tsm",
     "region": "OCE",
     "playerCardIds": [
-      "kevin-tsm-2025",
-      "sphinx-tsm-2025",
-      "catalysm-tsm-2025"
+      "superlachie-tsm-2025",
+      "amphis-tsm-2025",
+      "kaka-tsm-2025"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "furia-2025",
@@ -2715,9 +2729,9 @@
     "orgId": "furia",
     "region": "SAM",
     "playerCardIds": [
-      "swiftt-furia-2025",
+      "yanxnz-furia-2025",
       "lostt-furia-2025",
-      "yanxnz-furia-2025"
+      "drufinho-furia-2025"
     ],
     "coachId": "brunovisquii-coach-furia-2025",
     "orgBuffLevel": "++",
@@ -2730,9 +2744,9 @@
     "orgId": "team-secret",
     "region": "SAM",
     "playerCardIds": [
-      "motta-team-secret-2025",
-      "suco-team-secret-2025",
-      "drufinho-team-secret-2025"
+      "kv1-team-secret-2025",
+      "swiftt-team-secret-2025",
+      "motta-team-secret-2025"
     ],
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
@@ -2795,20 +2809,6 @@
     "subId": "hisoka-sub-twisted-minds-2025",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
-  },
-  {
-    "id": "geekay-esports-2025",
-    "name": "Geekay Esports",
-    "seasonId": "rlcs-2025",
-    "orgId": "geekay-esports",
-    "region": "MENA",
-    "playerCardIds": [
-      "tempoh-geekay-esports-2025",
-      "apparentlyjack-geekay-esports-2025",
-      "mtzr-geekay-esports-2025"
-    ],
-    "orgBuffLevel": "+",
-    "historicalStrength": "solid"
   },
   {
     "id": "virtus-pro-2025",

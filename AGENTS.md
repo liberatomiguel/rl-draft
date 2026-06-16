@@ -10,8 +10,20 @@ Fan-made Rocket League esports history draft game (Miguel's project; he
 communicates in PT-BR, the product UI is in English). Next.js 16 + React 19 +
 Tailwind v4 + Zustand + Zod + Vitest.
 
-**Start here:** `README.md` → `docs/STATUS.md` (current state + pending work)
-→ deep dives in `docs/`. Full version/bugfix history: `docs/CHANGELOG.md`.
+**Start here — keep orientation cheap.** Read **`docs/STATUS.md`** (current
+state + next steps); that alone orients you for almost any task. Everything else
+is **reference, fetched on demand — NOT bedtime reading**:
+- `docs/CHANGELOG.md` (append-only history), `docs/DESIGN-DECISIONS.md`,
+  `docs/GAME-DESIGN.md`, `docs/ARCHITECTURE.md`, `data-sources/*-audit.md`:
+  **grep for the entry you need; never read the whole file.**
+- Data is LARGE — `data-sources/teams.md` (~1900 lines) and `src/data/*.json`
+  (hundreds of records): **query with grep or a Node one-liner; never load the
+  whole file** into context.
+- Read a source file only when you're about to change it (or its direct callers).
+
+Following this keeps a fresh chat at ~tens of k tokens of orientation instead of
+pulling the whole repo in. STATUS.md must stay **current-state only** — when a
+version ships, move its narrative to CHANGELOG.md and trim STATUS.
 
 ## Hard rules
 

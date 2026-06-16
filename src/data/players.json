@@ -55,11 +55,6 @@
     "region": "EU"
   },
   {
-    "id": "ali",
-    "nickname": "Ali",
-    "region": "MENA"
-  },
-  {
     "id": "allushin",
     "nickname": "Allushin",
     "country": "US",
@@ -78,16 +73,15 @@
     "region": "OCE"
   },
   {
+    "id": "ams",
+    "nickname": "ams.",
+    "region": "MENA"
+  },
+  {
     "id": "apparentlyjack",
     "nickname": "ApparentlyJack",
     "country": "GB",
     "region": "EU"
-  },
-  {
-    "id": "arceon",
-    "nickname": "Arceon",
-    "country": "ZA",
-    "region": "SSA"
   },
   {
     "id": "archie",
@@ -175,6 +169,11 @@
     "region": "NA"
   },
   {
+    "id": "bemmz",
+    "nickname": "Bemmz",
+    "region": "SAM"
+  },
+  {
     "id": "bluey",
     "nickname": "Bluey",
     "country": "GB",
@@ -184,11 +183,6 @@
     "id": "blueze",
     "nickname": "Blueze",
     "region": "NA"
-  },
-  {
-    "id": "bora",
-    "nickname": "bora",
-    "region": "EU"
   },
   {
     "id": "brad",
@@ -223,7 +217,7 @@
   {
     "id": "catalysm",
     "nickname": "Catalysm",
-    "region": "OCE"
+    "region": "APAC"
   },
   {
     "id": "chausette45",
@@ -266,6 +260,11 @@
     "region": "NA"
   },
   {
+    "id": "commutator",
+    "nickname": "Commutator",
+    "region": "APAC"
+  },
+  {
     "id": "continuum",
     "nickname": "Continuum",
     "region": "EU"
@@ -288,9 +287,8 @@
     "region": "MENA"
   },
   {
-    "id": "daisyd",
-    "nickname": "DaisyD",
-    "country": "ZA",
+    "id": "daisy",
+    "nickname": "Daisy",
     "region": "SSA"
   },
   {
@@ -423,20 +421,10 @@
     "region": "EU"
   },
   {
-    "id": "evoh",
-    "nickname": "Evoh",
-    "region": "EU"
-  },
-  {
     "id": "exotiik",
     "nickname": "ExoTiiK",
     "country": "FR",
     "region": "EU"
-  },
-  {
-    "id": "explosivegyro",
-    "nickname": "ExplosiveGyro",
-    "region": "NA"
   },
   {
     "id": "express",
@@ -457,12 +445,6 @@
     "region": "EU"
   },
   {
-    "id": "fahad77",
-    "nickname": "Fahad77",
-    "country": "SA",
-    "region": "MENA"
-  },
-  {
     "id": "fairypeak",
     "nickname": "Fairy Peak!",
     "country": "FR",
@@ -473,12 +455,6 @@
     "nickname": "fAsi",
     "country": "BR",
     "region": "SAM"
-  },
-  {
-    "id": "fefe",
-    "nickname": "Fefe",
-    "country": "ZA",
-    "region": "SSA"
   },
   {
     "id": "ferra",
@@ -524,11 +500,6 @@
     "nickname": "Firstkiller",
     "country": "US",
     "region": "NA"
-  },
-  {
-    "id": "fiv3up",
-    "nickname": "Fiv3Up",
-    "region": "EU"
   },
   {
     "id": "fl0w",
@@ -626,9 +597,19 @@
     "region": "SAM"
   },
   {
+    "id": "happymeal",
+    "nickname": "Happymeal",
+    "region": "SSA"
+  },
+  {
     "id": "hisoka",
     "nickname": "Hisoka",
     "region": "MENA"
+  },
+  {
+    "id": "hntr",
+    "nickname": "hntr",
+    "region": "OCE"
   },
   {
     "id": "hockser",
@@ -756,16 +737,15 @@
     "region": "SAM"
   },
   {
+    "id": "kaka",
+    "nickname": "kaka",
+    "region": "OCE"
+  },
+  {
     "id": "kamii",
     "nickname": "Kamii",
     "country": "AU",
     "region": "OCE"
-  },
-  {
-    "id": "kamz",
-    "nickname": "Kamz",
-    "country": "ZA",
-    "region": "SSA"
   },
   {
     "id": "kash",
@@ -792,7 +772,7 @@
   {
     "id": "kevin",
     "nickname": "Kevin",
-    "region": "OCE"
+    "region": "APAC"
   },
   {
     "id": "kia",
@@ -911,11 +891,6 @@
     "nickname": "LuiisP",
     "country": "ZA",
     "region": "SSA"
-  },
-  {
-    "id": "lunatic",
-    "nickname": "Lunatic",
-    "region": "APAC"
   },
   {
     "id": "m0nkeym00n",
@@ -1061,11 +1036,6 @@
     "region": "EU"
   },
   {
-    "id": "mtzr",
-    "nickname": "mtzR.",
-    "region": "MENA"
-  },
-  {
     "id": "myebipod4shor",
     "nickname": "Mye_bipod_4shor",
     "region": "EU"
@@ -1133,9 +1103,9 @@
     "region": "EU"
   },
   {
-    "id": "ovampier",
-    "nickname": "oVaMPiER",
-    "region": "MENA"
+    "id": "osm",
+    "nickname": "OSM",
+    "region": "APAC"
   },
   {
     "id": "paschy90",
@@ -1175,17 +1145,6 @@
     "id": "pluto",
     "nickname": "Pluto",
     "region": "NA"
-  },
-  {
-    "id": "pnidh",
-    "nickname": "Pnidh",
-    "country": "ZA",
-    "region": "SSA"
-  },
-  {
-    "id": "popo",
-    "nickname": "popo",
-    "region": "APAC"
   },
   {
     "id": "quinnlobdell",
@@ -1296,12 +1255,6 @@
     "region": "MENA"
   },
   {
-    "id": "rxii",
-    "nickname": "Rxii",
-    "country": "ZA",
-    "region": "SSA"
-  },
-  {
     "id": "sadjunior",
     "nickname": "Sadjunior",
     "country": "US",
@@ -1359,6 +1312,11 @@
     "region": "EU"
   },
   {
+    "id": "senzo",
+    "nickname": "Senzo",
+    "region": "MENA"
+  },
+  {
     "id": "shad",
     "nickname": "Shad",
     "region": "SAM"
@@ -1371,7 +1329,7 @@
   },
   {
     "id": "sigms",
-    "nickname": "Sigms",
+    "nickname": "sigms",
     "region": "APAC"
   },
   {
@@ -1390,6 +1348,11 @@
     "nickname": "Sizz",
     "country": "US",
     "region": "NA"
+  },
+  {
+    "id": "skillsteal",
+    "nickname": "SkillSteal",
+    "region": "SSA"
   },
   {
     "id": "skyline",
@@ -1433,7 +1396,7 @@
   {
     "id": "sphinx",
     "nickname": "Sphinx",
-    "region": "OCE"
+    "region": "APAC"
   },
   {
     "id": "spydoge",
@@ -1458,12 +1421,6 @@
     "region": "SAM"
   },
   {
-    "id": "suco",
-    "nickname": "suco",
-    "country": "BR",
-    "region": "SAM"
-  },
-  {
     "id": "superlachie",
     "nickname": "Superlachie",
     "country": "AU",
@@ -1472,12 +1429,6 @@
   {
     "id": "sweaty",
     "nickname": "Sweaty",
-    "country": "ZA",
-    "region": "SSA"
-  },
-  {
-    "id": "sweatyclarence",
-    "nickname": "Sweaty_Clarence",
     "country": "ZA",
     "region": "SSA"
   },
@@ -1515,9 +1466,9 @@
     "region": "NA"
   },
   {
-    "id": "tempoh",
-    "nickname": "TempoH",
-    "region": "MENA"
+    "id": "tenhow",
+    "nickname": "Tenhow",
+    "region": "APAC"
   },
   {
     "id": "tho",
@@ -1635,6 +1586,16 @@
     "region": "OCE"
   },
   {
+    "id": "werty",
+    "nickname": "Werty",
+    "region": "SSA"
+  },
+  {
+    "id": "wiiilooo",
+    "nickname": "Wiiilooo",
+    "region": "SSA"
+  },
+  {
     "id": "wonder",
     "nickname": "Wonder",
     "country": "US",
@@ -1695,5 +1656,10 @@
     "nickname": "ZeN",
     "country": "AU",
     "region": "OCE"
+  },
+  {
+    "id": "zez0nix",
+    "nickname": "Zez0nix",
+    "region": "MENA"
   }
 ]

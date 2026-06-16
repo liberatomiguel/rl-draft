@@ -165,7 +165,7 @@
     "id": "sp-vatira-major-champion",
     "playerId": "vatira",
     "baseCardId": "vatira-karmine-corp-2223",
-    "title": "Major Champion",
+    "title": "Four Times Major Champion",
     "cardType": "legend",
     "rarity": "legendary",
     "overall": 99,
@@ -222,7 +222,7 @@
     "title": "NA Captain",
     "cardType": "legend",
     "rarity": "legendary",
-    "overall": 96,
+    "overall": 97,
     "stats": {
       "offense": 93,
       "defense": 95,
@@ -433,8 +433,8 @@
     "baseCardId": "0verzer0-ibuypower-s1",
     "title": "OG Air Dribble",
     "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 93,
+    "rarity": "epic",
+    "overall": 92,
     "stats": {
       "offense": 96,
       "defense": 88,
@@ -488,7 +488,7 @@
     "title": "Zen Winstreak Killer",
     "cardType": "moment",
     "rarity": "mythic",
-    "overall": 95,
+    "overall": 96,
     "stats": {
       "offense": 90,
       "defense": 99,
@@ -675,7 +675,7 @@
     "title": "Gamers8 Champion",
     "cardType": "moment",
     "rarity": "epic",
-    "overall": 95,
+    "overall": 93,
     "stats": {
       "offense": 99,
       "defense": 89,
@@ -889,7 +889,7 @@
     "title": "Season 8 World MVP",
     "cardType": "worlds_mvp",
     "rarity": "mythic",
-    "overall": 98,
+    "overall": 97,
     "stats": {
       "offense": 95,
       "defense": 97,
@@ -1159,7 +1159,7 @@
     "title": "Boston Spring Major MVP",
     "cardType": "major_mvp",
     "rarity": "epic",
-    "overall": 98,
+    "overall": 97,
     "stats": {
       "offense": 99,
       "defense": 93,
@@ -1401,8 +1401,8 @@
     "baseCardId": "seikoo-team-bds-2122",
     "title": "Endpoint Breakout",
     "cardType": "moment",
-    "rarity": "mythic",
-    "overall": 94,
+    "rarity": "epic",
+    "overall": 93,
     "stats": {
       "offense": 99,
       "defense": 88,
@@ -1645,7 +1645,7 @@
     "title": "OCE Breakthrough",
     "cardType": "moment",
     "rarity": "rare",
-    "overall": 91,
+    "overall": 90,
     "stats": {
       "offense": 93,
       "defense": 89,
@@ -1780,7 +1780,7 @@
     "title": "Wildcard Upset",
     "cardType": "moment",
     "rarity": "rare",
-    "overall": 90,
+    "overall": 89,
     "stats": {
       "offense": 90,
       "defense": 88,
@@ -2042,8 +2042,8 @@
     "baseCardId": "stl-coach-furia-x",
     "title": "Gamers8 FURIA",
     "cardType": "coach",
-    "rarity": "mythic",
-    "overall": 94,
+    "rarity": "epic",
+    "overall": 93,
     "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
@@ -2063,7 +2063,7 @@
     "title": "NA Superteam",
     "cardType": "coach",
     "rarity": "mythic",
-    "overall": 95,
+    "overall": 94,
     "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
@@ -2141,7 +2141,7 @@
     "title": "Gentle Mates",
     "cardType": "coach",
     "rarity": "rare",
-    "overall": 91,
+    "overall": 90,
     "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",

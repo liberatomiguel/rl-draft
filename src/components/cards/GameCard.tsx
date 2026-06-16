@@ -15,6 +15,7 @@
  */
 
 import { useState } from "react";
+import Image from "next/image";
 import { useCopy } from "@/content/copy";
 import type { ResolvedCard } from "@/engine/cards";
 import { cx, initials } from "@/lib/util";
@@ -37,6 +38,14 @@ export interface GameCardProps {
    * fluid threads `w-full` through every wrapper level (v0.5.1 fix).
    */
   fluid?: boolean;
+  /**
+   * Lighter render for dense grids (e.g. the full collection): KEEPS the 3D tilt
+   * and the foil sheen, but drops the GPU-heavy cursor holo (mix-blend-mode) +
+   * backdrop-blur pills and the per-frame box-shadow halo pulse (a static rarity
+   * glow stays). Lets dozens of specials scroll smoothly; the full effects still
+   * play on single-card / detail views (v1.1.x perf).
+   */
+  lite?: boolean;
   selected?: boolean;
   disabled?: boolean;
   disabledLabel?: string;
@@ -109,6 +118,7 @@ export function GameCard({
   specialCollected = true,
   size = "md",
   fluid,
+  lite,
   selected,
   disabled,
   disabledLabel,
@@ -142,6 +152,9 @@ export function GameCard({
   const tagClass = KIND_TAG[card.kind];
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
+  // `lite` (dense grids) keeps the 3D tilt — it's cheap now that TiltCard only
+  // promotes a layer (will-change) while actually tilting. Only the heavier
+  // blend/backdrop/halo-pulse effects are dropped in lite (below + globals.css).
   const tiltTier: TiltIntensity | "off" =
     tilt ?? (disabled ? "off" : isSpecial ? "strong" : "light");
 
@@ -160,6 +173,7 @@ export function GameCard({
       className={cx(
         "card-frame flex aspect-[3/4.3] flex-col text-left transition-all duration-200",
         frame,
+        isSpecial && lite && "card-lite",
         sizeClasses,
         interactive && "cursor-pointer hover:-translate-y-1.5 hover:brightness-110",
         selected && "-translate-y-1.5 !shadow-[0_0_30px_rgba(249,115,22,0.45)] ring-2 ring-orange",
@@ -172,8 +186,10 @@ export function GameCard({
           announce that it IS a special. */}
       {isSpecial && !maskedSpecial ? <SpecialArt card={card} /> : null}
 
-      {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive) */}
-      {isSpecial && card.special ? (
+      {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive). Skipped
+          in `lite` mode (dense grids): these mix-blend-mode layers are the main
+          scroll-jank cost when many specials render at once. */}
+      {isSpecial && card.special && !lite ? (
         <>
           {card.special.rarity !== "rare" ? <div className="reverse-holo" aria-hidden /> : null}
           <div
@@ -216,7 +232,7 @@ export function GameCard({
             className={cx(
               "display mt-1 inline-flex items-center rounded border px-1 py-px text-[8px] font-bold uppercase leading-none tracking-[0.12em]",
               tagClass,
-              isSpecial && "backdrop-blur-sm",
+              isSpecial && !lite && "backdrop-blur-sm",
             )}
           >
             {ROLE_LABEL[card.kind]}
@@ -287,7 +303,7 @@ export function GameCard({
           {card.special ? (
             <Badge
               tone={specialCollected && !maskedSpecial ? "gold" : "neutral"}
-              className="!block max-w-full truncate !text-[9px] backdrop-blur-sm"
+              className={cx("!block max-w-full truncate !text-[9px]", !lite && "backdrop-blur-sm")}
             >
               {maskedSpecial
                 ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
@@ -364,13 +380,19 @@ function SpecialArt({ card }: { card: ResolvedCard }) {
 
   return (
     <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {/* next/image: Vercel (and the local optimizer) serves a resized
+          WebP/AVIF — alpha/transparency preserved — at the card's display size,
+          lazily. Keeps the photo folder light without touching the source PNGs
+          or their framing. `fill` => absolute inset-0 inside the relative card. */}
+      <Image
         src={src}
         alt=""
         aria-hidden
+        fill
+        sizes="(max-width: 639px) 50vw, 256px"
+        decoding="async"
         onError={() => setFailed(true)}
-        className="absolute inset-0 h-full w-full object-cover object-[center_18%]"
+        className="object-cover object-[center_18%]"
       />
       <div className="special-photo" />
     </>

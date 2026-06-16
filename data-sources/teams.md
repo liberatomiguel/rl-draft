@@ -543,18 +543,18 @@ org: PSG Esports +
 ### OCE
 
 ```team: Chiefs Esports Club · S6 · 2018
-player 1: Torsos 84
-player 2: Drippay 87
-player 3: Kamii 84
+player 1: CJCJ 80
+player 2: Express 81
+player 3: Shadey 78
 sub: -
 coach: -
 org: Chiefs Esports Club +
 ```
 
 ```team: Tainted Minds · S6 · 2018
-player 1: CJCJ 80
-player 2: Express 81
-player 3: Shadey 78
+player 1: Torsos 84
+player 2: Drippay 87
+player 3: Kamii 84
 sub: -
 coach: -
 org: Tainted Minds ~
@@ -705,7 +705,7 @@ org: Spacestation Gaming +
 ```
 
 ```team: Pittsburgh Knights · S8 · 2019
-player 1: ExplosiveGyro 86
+player 1: Gyro. 86
 player 2: retals 87
 player 3: mist 88
 sub: Mala 64
@@ -1253,18 +1253,18 @@ org: Team Falcons ++
 ```
 
 ```team: Veloce Esports · 2021-22
-player 1: Nwpo 84
-player 2: SMW 80
-player 3: Fahad77 79
+player 1: SMW 80
+player 2: Senzo 78
+player 3: Twiz 79
 sub: -
 coach: -
 org: Veloce Esports
 ```
 
 ```team: 01 Esports · 2021-22
-player 1: Ali 79
-player 2: oVaMPiER 78
-player 3: Venom 78
+player 1: Zez0nix 78
+player 2: ams. 78
+player 3: M7sN 79
 sub: -
 coach: -
 org: 01 Esports
@@ -1275,7 +1275,7 @@ org: 01 Esports
 ```team: Gaimin Gladiators · 2021-22
 player 1: Maxeew 74
 player 2: LCT 68
-player 3: Virtuoso 75
+player 3: Commutator 73
 sub: -
 coach: -
 org: Gaimin Gladiators
@@ -1283,8 +1283,8 @@ org: Gaimin Gladiators
 
 ```team: Senbei Strikers · 2021-22
 player 1: ReaLize 79
-player 2: Lunatic 74
-player 3: popo 68
+player 2: Tenhow 73
+player 3: sigms 70
 sub: -
 coach: -
 org: Senbei Strikers
@@ -1293,18 +1293,18 @@ org: Senbei Strikers
 ### SSA
 
 ```team: Orlando Pirates Exdee · 2021-22
-player 1: 2Die4 66
+player 1: Snowyy 66
 player 2: Darth 66
-player 3: DaisyD 66
+player 3: SkillSteal 66
 sub: -
 coach: -
 org: Orlando Pirates Exdee
 ```
 
 ```team: Bravado Gaming · 2021-22
-player 1: Snowyy 66
-player 2: Kamz 66
-player 3: Pnidh 66
+player 1: 2Die4 66
+player 2: Daisy 66
+player 3: Happymeal 66
 sub: -
 coach: -
 org: Bravado Gaming
@@ -1429,9 +1429,9 @@ org: G1
 ### OCE
 
 ```team: PWR · 2022-23
-player 1: Torsos 83
-player 2: Fever 85
-player 3: Bananahead 84
+player 1: Amphis 84
+player 2: Torsos 83
+player 3: Fever 85
 sub: -
 coach: -
 org: PWR +
@@ -1439,8 +1439,8 @@ org: PWR +
 
 ```team: Pioneers · 2022-23
 player 1: Scrub 78
-player 2: Superlachie 83
-player 3: Fiberr 81
+player 2: bananahead 84
+player 3: hntr 80
 sub: -
 coach: -
 org: Pioneers
@@ -1460,7 +1460,7 @@ org: Team Secret +
 ```team: KRÜ Esports · 2022-23
 player 1: brad 80
 player 2: droppz 81
-player 3: Shad 80
+player 3: drufinho 85
 sub: -
 coach: -
 org: KRÜ Esports
@@ -1468,8 +1468,8 @@ org: KRÜ Esports
 
 ```team: Ninjas in Pyjamas · 2022-23
 player 1: Aztromick 81
-player 2: Motta 82
-player 3: swiftt 83
+player 2: Bemmz 80
+player 3: Motta 82
 sub: -
 coach: -
 org: Ninjas in Pyjamas
@@ -1498,7 +1498,7 @@ org: Team Falcons ++
 ```team: Twisted Minds · 2022-23
 player 1: SMW 82
 player 2: Venom 81
-player 3: Nwpo 87
+player 3: Senzo 80
 sub: -
 coach: -
 org: Twisted Minds +
@@ -1509,7 +1509,7 @@ org: Twisted Minds +
 ```team: Gaimin Gladiators · 2022-23
 player 1: Maxeew 76
 player 2: LCT 75
-player 3: Virtuoso 76
+player 3: OSM 75
 sub: -
 coach: -
 org: Gaimin Gladiators
@@ -1517,8 +1517,8 @@ org: Gaimin Gladiators
 
 ```team: Elevate · 2022-23
 player 1: ReaLize 80
-player 2: Lunatic 76
-player 3: Sigms 75
+player 2: virtuoso 76
+player 3: Kamii 80
 sub: -
 coach: -
 org: Elevate
@@ -1529,16 +1529,16 @@ org: Elevate
 ```team: Limitless · 2022-23
 player 1: 2Die4 73
 player 2: Snowyy 71
-player 3: Sweaty 71
+player 3: Darth 71
 sub: -
 coach: Noxes 67
 org: Limitless
 ```
 
 ```team: Valiant · 2022-23
-player 1: Arceon 66
-player 2: Fefe 66
-player 3: Rxii 66
+player 1: Werty 66
+player 2: Wiiilooo 66
+player 3: Sweaty 66
 sub: -
 coach: -
 org: Valiant
@@ -1625,9 +1625,9 @@ org: Team Vitality ++
 ```
 
 ```team: Oxygen Esports · 2024
-player 1: Oski 88
-player 2: Joyo 88
-player 3: eekso 83
+player 1: archie 86
+player 2: Oski 88
+player 3: Joyo 88
 sub: -
 coach: Snaski 78
 org: Oxygen Esports +
@@ -1646,7 +1646,7 @@ org: PWR +
 
 ```team: QuikTrip Pioneers Gaming · 2024
 player 1: Superlachie 83
-player 2: Scrub 79
+player 2: Amphis 84
 player 3: Fiberr 82
 sub: -
 coach: -
@@ -1666,7 +1666,7 @@ org: FURIA ++
 
 ```team: Team Secret · 2024
 player 1: kv1 84
-player 2: Sadness 83
+player 2: Motta 83
 player 3: brad 82
 sub: -
 coach: -
@@ -1700,7 +1700,7 @@ org: Gaimin Gladiators
 ```team: Limitless · 2024
 player 1: 2Die4 75
 player 2: Snowyy 73
-player 3: Sweaty_Clarence 73
+player 3: Sweaty 73
 sub: -
 coach: Noxes 69
 org: Limitless
@@ -1769,9 +1769,9 @@ org: Karmine Corp +++
 ```
 
 ```team: Dignitas · 2025
-player 1: Fiv3Up 85
-player 2: bora 84
-player 3: Evoh 87
+player 1: stizzy 86
+player 2: ApparentlyJack 87
+player 3: Joreuz 87
 sub: -
 coach: Eclipse 78
 org: Dignitas +
@@ -1787,12 +1787,21 @@ org: Team Vitality +++
 ```
 
 ```team: Ninjas in Pyjamas · 2025
-player 1: ApparentlyJack 87
-player 2: Joreuz 87
-player 3: stizzy 86
+player 1: nass 82
+player 2: Oski 85
+player 3: Radosin 86
 sub: -
 coach: -
 org: Ninjas in Pyjamas +
+```
+
+```team: Geekay Esports · 2025
+player 1: Archie 86
+player 2: Joyo 88
+player 3: oaly. 84
+sub: -
+coach: -
+org: Geekay Esports +
 ```
 
 ### OCE
@@ -1807,9 +1816,9 @@ org: Wildcard +
 ```
 
 ```team: TSM · 2025
-player 1: Kevin 81
-player 2: Sphinx 80
-player 3: Catalysm 80
+player 1: Superlachie 84
+player 2: Amphis 84
+player 3: kaka 80
 sub: -
 coach: -
 org: TSM
@@ -1818,18 +1827,18 @@ org: TSM
 ### SAM
 
 ```team: FURIA · 2025
-player 1: swiftt 87
+player 1: yanxnz 91
 player 2: Lostt 89
-player 3: yanxnz 91
+player 3: drufinho 87
 sub: -
 coach: BRUNOVISQUII 82
 org: FURIA ++
 ```
 
 ```team: Team Secret · 2025
-player 1: Motta 83
-player 2: suco 82
-player 3: drufinho 87
+player 1: kv1 85
+player 2: swiftt 87
+player 3: Motta 83
 sub: -
 coach: -
 org: Team Secret +
@@ -1871,15 +1880,6 @@ player 3: AtomiK 85
 sub: Hisoka 70
 coach: -
 org: Twisted Minds ++
-```
-
-```team: Geekay Esports · 2025
-player 1: TempoH 83
-player 2: ApparentlyJack 87
-player 3: mtzR. 82
-sub: -
-coach: -
-org: Geekay Esports +
 ```
 
 ### APAC

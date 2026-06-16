@@ -208,6 +208,32 @@ body {
 }
 
 /*
+ * Perf for dense grids (the collection). `lite` cards KEEP the 3D tilt and the
+ * light foil SHEEN (so the grid stays alive), but GameCard skips the GPU-heavy
+ * cursor holo (mix-blend-mode) + backdrop-blur pills, and here we drop only the
+ * per-frame box-shadow halo PULSE + border shimmer on the card itself — a
+ * static rarity glow remains. The ::after sheen is preserved.
+ */
+.card-lite {
+  animation: none !important;
+}
+
+/*
+ * The FxCard observer (collection page) tags cards scrolled off-screen with
+ * .fx-paused, pausing their remaining animations (mainly the ::after sheen) so a
+ * complete 80+ album only animates the cards actually in view. This pause is
+ * effective now that the heavy always-on compositing (blend modes, backdrop
+ * blur, forced tilt layers) is gone. No clipping — tilt-scale + glows are never
+ * cropped (unlike content-visibility).
+ */
+.fx-paused,
+.fx-paused *,
+.fx-paused *::before,
+.fx-paused *::after {
+  animation-play-state: paused !important;
+}
+
+/*
  * Special-rarity palette (v0.6.1, by direction — a clear color identity per
  * tier; effects ramp from rare (faintest) to legendary (most spectacular)):
  *   rare      → dark bluish purple (indigo)
@@ -228,13 +254,14 @@ body {
   background-image:
     linear-gradient(168deg, #0d1430 0%, #080a20 58%, #16103a 100%),
     linear-gradient(165deg, #3b82f6 0%, #7c3aed 50%, #b15cf7 100%);
-  box-shadow: 0 0 24px rgba(124, 58, 237, 0.18);
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.15);
 }
 
 .card-mythic {
   background-image:
     linear-gradient(168deg, #250d12 0%, #1a080c 58%, #2c0f14 100%),
     linear-gradient(165deg, #f87171 0%, #b91c1c 48%, #ef4444 100%);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.14);
 }
 
 /*
@@ -248,7 +275,7 @@ body {
     linear-gradient(168deg, #20180a 0%, #140e06 58%, #261c0a 100%),
     linear-gradient(110deg, #ffffff 0%, #fde68a 20%, #ffffff 36%, #f6c652 54%, #fffaf0 72%, #f0b429 88%, #ffffff 100%);
   background-size: auto, 230% 100%;
-  box-shadow: 0 0 34px rgba(255, 242, 200, 0.4);
+  box-shadow: 0 0 22px rgba(255, 242, 200, 0.3);
 }
 
 /* Diagonal texture behind the org logo on base cards */
@@ -297,8 +324,8 @@ body {
 
 /* Legendary: brightest halo + the gold border travels (premium shimmer) */
 @keyframes legendary-halo {
-  0%, 100% { box-shadow: 0 0 36px rgba(255, 240, 195, 0.42); }
-  50% { box-shadow: 0 0 72px rgba(255, 252, 236, 0.74); }
+  0%, 100% { box-shadow: 0 0 24px rgba(255, 240, 195, 0.30); }
+  50% { box-shadow: 0 0 48px rgba(255, 250, 235, 0.5); }
 }
 
 @keyframes legendary-shimmer {
@@ -312,8 +339,8 @@ body {
 
 /* Mythic halo pulse — red */
 @keyframes mythic-halo {
-  0%, 100% { box-shadow: 0 0 30px rgba(248, 113, 113, 0.30); }
-  50% { box-shadow: 0 0 56px rgba(239, 68, 68, 0.52); }
+  0%, 100% { box-shadow: 0 0 22px rgba(248, 113, 113, 0.22); }
+  50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.4); }
 }
 
 .card-mythic.card-special {
@@ -322,8 +349,8 @@ body {
 
 /* Epic halo pulse — teal (gentler than mythic) */
 @keyframes epic-halo {
-  0%, 100% { box-shadow: 0 0 22px rgba(124, 58, 237, 0.20); }
-  50% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.38); }
+  0%, 100% { box-shadow: 0 0 18px rgba(124, 58, 237, 0.16); }
+  50% { box-shadow: 0 0 32px rgba(168, 85, 247, 0.3); }
 }
 
 .card-epic.card-special {
@@ -672,7 +699,7 @@ body {
 
 .holo-legendary::after {
   background:
-    linear-gradient(115deg, transparent 20%, rgba(255, 255, 245, 0.4) 34%, rgba(56, 189, 248, 0.22) 44%, rgba(192, 132, 252, 0.24) 52%, rgba(253, 230, 138, 0.4) 62%, transparent 78%);
+    linear-gradient(115deg, transparent 20%, rgba(255, 255, 245, 0.3) 34%, rgba(56, 189, 248, 0.16) 44%, rgba(192, 132, 252, 0.18) 52%, rgba(253, 230, 138, 0.3) 62%, transparent 78%);
   background-size: 220% 100%;
   animation: card-sheen 3s ease-in-out infinite, holo-shift 5.5s ease-in-out infinite;
 }
@@ -711,11 +738,11 @@ body {
 }
 
 /* Cursor-reactive holo intensity ramps hard from rare → legendary (v0.6.1). */
-.holo-rainbow-rare { opacity: 0.34; }
-.holo-rainbow-epic { opacity: 0.56; }
-.holo-rainbow-mythic { opacity: 0.74; }
+.holo-rainbow-rare { opacity: 0.26; }
+.holo-rainbow-epic { opacity: 0.44; }
+.holo-rainbow-mythic { opacity: 0.6; }
 .holo-rainbow-legendary {
-  opacity: 0.95;
+  opacity: 0.78;
   animation: holo-shift 6s ease-in-out infinite;
 }
 

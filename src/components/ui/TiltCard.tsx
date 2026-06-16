@@ -63,7 +63,7 @@ export function TiltCard({
       onPointerMove={onMove}
       onPointerLeave={onLeave}
       style={{ ...style, transition: active ? "transform 60ms linear" : "transform 300ms ease" }}
-      className={cx("relative will-change-transform", className)}
+      className={cx("relative", active && "will-change-transform", className)}
     >
       {children}
       <div

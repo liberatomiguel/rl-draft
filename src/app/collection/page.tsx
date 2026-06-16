@@ -5,7 +5,7 @@
  * full stats; locked cards show as silhouettes with their rarity to chase.
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
 import { effectiveStats, resolveSpecial } from "@/engine/cards";
@@ -39,13 +39,27 @@ export default function CollectionPage() {
   const [rarity, setRarity] = useState<SpecialRarity | "all">("all");
   const [detail, setDetail] = useState<SpecialCard | null>(null);
 
-  const unlockedCount = mounted ? Object.keys(unlockedMap).length : 0;
+  // Hidden dev preview: visiting /collection?dev=1 renders EVERY special as
+  // unlocked so the card art can be reviewed at a glance. VISUAL ONLY — it never
+  // writes to the profile, so the real collection / achievements stay honest.
+  // Gated by `mounted` so the URL is only read on the client (matches the app's
+  // mounted-gate pattern: no hydration mismatch, no setState-in-effect).
+  const devPreview = mounted && new URLSearchParams(window.location.search).get("dev") === "1";
+
+  const isUnlocked = useCallback(
+    (id: string) => devPreview || (mounted && Boolean(unlockedMap[id])),
+    [devPreview, mounted, unlockedMap],
+  );
+  const unlockedCount = devPreview
+    ? specialCards.length
+    : mounted
+      ? Object.keys(unlockedMap).length
+      : 0;
 
   // Single grid (v0.6.1, by direction): UNLOCKED cards lead — ordered rarity
   // (legendary→rare) then overall — followed by the still-locked cards in the
   // same rarity→overall order.
   const visible = useMemo(() => {
-    const isUnlocked = (id: string) => mounted && Boolean(unlockedMap[id]);
     const filtered = specialCards.filter((sp) => {
       if (status === "unlocked" && !isUnlocked(sp.id)) return false;
       if (status === "locked" && isUnlocked(sp.id)) return false;
@@ -57,7 +71,7 @@ export default function CollectionPage() {
       if (lockDiff !== 0) return lockDiff; // unlocked first
       return RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || b.overall - a.overall;
     });
-  }, [mounted, unlockedMap, status, rarity]);
+  }, [isUnlocked, status, rarity]);
 
   return (
     <div className="rise-in">
@@ -66,9 +80,16 @@ export default function CollectionPage() {
         kicker={C.subtitle}
         title={C.title}
         right={
-          <Badge tone="orange" className="!text-sm">
-            {C.progress(unlockedCount, specialCards.length)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {devPreview ? (
+              <span className="display rounded-md border border-blue/50 bg-blue/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-bright">
+                Dev preview
+              </span>
+            ) : null}
+            <Badge tone="orange" className="!text-sm">
+              {C.progress(unlockedCount, specialCards.length)}
+            </Badge>
+          </div>
         }
         className="mb-6"
       />
@@ -77,9 +98,11 @@ export default function CollectionPage() {
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {RARITIES.map((r) => {
           const total = specialCards.filter((sp) => sp.rarity === r).length;
-          const got = mounted
-            ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
-            : 0;
+          const got = devPreview
+            ? total
+            : mounted
+              ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
+              : 0;
           return (
             <Panel key={r} className="p-3 text-center">
               <p className="kicker !text-[10px]">{RARITY_LABELS[r]}</p>
@@ -121,40 +144,67 @@ export default function CollectionPage() {
         // shrinking the cell is the intended resize path — no card internals
         // are touched, and only the collection uses this grid.
         <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
-          {visible.map((sp) => {
-            const isUnlocked = mounted && Boolean(unlockedMap[sp.id]);
-            return isUnlocked ? (
-              <GameCard
-                key={sp.id}
-                card={resolveSpecial(sp)}
-                showOverall
-                specialCollected
-                size="md"
-                fluid
-                onClick={() => setDetail(sp)}
-              />
-            ) : (
-              <LockedCard key={sp.id} sp={sp} onClick={() => setDetail(sp)} />
-            );
-          })}
+          {visible.map((sp) => (
+            <FxCard key={sp.id}>
+              {isUnlocked(sp.id) ? (
+                <GameCard
+                  card={resolveSpecial(sp)}
+                  showOverall
+                  specialCollected
+                  size="md"
+                  fluid
+                  lite
+                  onClick={() => setDetail(sp)}
+                />
+              ) : (
+                <LockedCard sp={sp} onClick={() => setDetail(sp)} />
+              )}
+            </FxCard>
+          ))}
         </div>
       )}
 
       {/* Detail modal */}
       <Modal
         open={Boolean(detail)}
-        title={detail ? (mounted && unlockedMap[detail.id] ? detail.title : C.lockedCard) : ""}
+        title={detail ? (isUnlocked(detail.id) ? detail.title : C.lockedCard) : ""}
         onClose={() => setDetail(null)}
         wide
       >
         {detail ? (
-          mounted && unlockedMap[detail.id] ? (
-            <UnlockedDetail sp={detail} unlockedAt={unlockedMap[detail.id]} />
+          isUnlocked(detail.id) ? (
+            <UnlockedDetail sp={detail} unlockedAt={unlockedMap[detail.id] ?? ""} />
           ) : (
             <LockedDetail sp={detail} />
           )
         ) : null}
       </Modal>
+    </div>
+  );
+}
+
+/**
+ * Pauses a card's remaining animations (the foil sheen) while it's scrolled
+ * off-screen, resuming as it nears the viewport — so a near-complete album only
+ * animates the cards actually in view. This is effective now that the heavy
+ * always-on layers (blend modes, backdrop-blur, forced tilt layers) are gone in
+ * `lite` mode. Card internals are untouched; lives only in the collection.
+ */
+function FxCard({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setPaused(!entry.isIntersecting), {
+      rootMargin: "400px 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={paused ? "fx-paused" : undefined}>
+      {children}
     </div>
   );
 }
@@ -246,7 +296,9 @@ function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: strin
             <StatBar key={key} label={STAT_LABELS[key]} value={Math.round(stats[key])} />
           ))}
         </div>
-        <p className="text-xs text-faint">{C.unlockedOn(formatDate(unlockedAt))}</p>
+        {unlockedAt ? (
+          <p className="text-xs text-faint">{C.unlockedOn(formatDate(unlockedAt))}</p>
+        ) : null}
       </div>
     </div>
   );

@@ -38,6 +38,10 @@ last two English-only pages.
   worked NRG example on `ORG_LOGO_ERAS` (`scripts/build-dataset.mjs`) and a
   recipe in `docs/DATA-GUIDE.md`, so multiple logos per org can be added without
   code help. (The mechanism itself already shipped in v0.5.1.)
+- **Hidden dev preview** for reviewing card art: visiting `/collection?dev=1`
+  renders every special as unlocked. Visual only — it never writes to the
+  profile (real collection / achievements stay honest) and shows a "DEV PREVIEW"
+  badge. No UI entry point; `mounted`-gated so the page stays statically rendered.
 
 ### Changed
 - **Special-card rarity identity reworked** (the cards are the centerpiece):
@@ -52,6 +56,16 @@ last two English-only pages.
 - **Header brand icon** now renders `public/icon.svg` (the same file as the
   favicon) instead of a separate inline SVG, so updating the icon in one place
   updates both.
+- **Special-card photos now use `next/image`** — Vercel (and the local
+  optimizer) serves a resized **WebP/AVIF** per card at its display size, lazily,
+  with **transparency preserved** (so the blended/transparent photos keep
+  working). A ~620KB source PNG becomes a **~13KB** WebP at card width (≈98%
+  smaller); source files and their framing are untouched. Keeps the collection
+  light even with the full 83-card photo set. (Quality left at the default 75 —
+  Next 16 rejects non-allowlisted `quality` values.) Image optimization is
+  **off in dev** (`images.unoptimized` when `NODE_ENV !== "production"`) so that
+  replacing a card photo shows up on a refresh instead of serving a stale cached
+  transform; production stays fully optimized.
 - **Collection grid on mobile** now shows **2 cards per row** instead of one
   oversized card (`grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`).
   Desktop is unchanged — the original auto-fill grid still applies from `sm:` up.
@@ -83,6 +97,44 @@ last two English-only pages.
      the dataset — flagged for Miguel). The sixth, `mawkzy`, isn't in the dataset
      at all and was moved to `data-sources/specials-pending.json` (nothing lost).
   Result: **83 valid specials**; `validate:data`, 42 tests and `next build` all green.
+- **Collection lag / freeze with a large (near-complete) collection.** Root
+  cause: every special card rendered a 3D `TiltCard` layer **plus** two
+  `mix-blend-mode` holo layers (cursor color-dodge + reverse-holo screen) **plus**
+  two `backdrop-filter: blur` pills **plus** infinite sheen/halo animations — all
+  of them, for every card at once. Dozens of blend-mode + backdrop-blur + 3D
+  compositing layers thrash the GPU and froze scrolling; with photos now added,
+  83 images also decoded up front. Fix, in layers: (1) `TiltCard` now sets
+  `will-change: transform` **only while actually tilting** (it was always-on —
+  one forced GPU layer per card × 83); (2) a **`lite` mode** for the collection
+  grid (`GameCard` `lite`) skips the cursor holo (mix-blend-mode) + backdrop-blur
+  pills and the per-frame box-shadow halo pulse, but **keeps the 3D tilt and the
+  foil sheen** so the grid still feels alive; (3) card photos **lazy-load**
+  (`loading="lazy"`); (4) an `FxCard` IntersectionObserver pauses the remaining
+  sheen on off-screen cards. The **full effects** (cursor holo + animated halo)
+  still play on the detail / single-card view. (A first attempt that only paused
+  off-screen animations didn't help — the real cost was the always-on
+  blend/backdrop/tilt *layers* on the visible cards, not the animations.)
+- **Toned down the rarity halos/glows** a notch (legendary especially) — it read
+  too strong once real card photos were added. `*-halo` keyframes, the static
+  `.card-*` glows, and the legendary holo sheen (`.holo-legendary::after`, ~25%
+  lower opacity) in `globals.css`.
+
+### Data — RLCS Worlds dataset corrected vs Liquipedia
+- Audited every RLCS World Championship field (S1 → 2026) against Liquipedia
+  (wikitext-verified) — full findings in `data-sources/liquipedia-worlds-audit.md`.
+  Team **counts were all correct**; the errors were **rosters**, mostly in the
+  3rd slot and in MENA/APAC/SSA + the 2025 season.
+- Fixed in `data-sources/teams.md` (then regenerated): S6 (Chiefs ↔ Tainted
+  Minds swap), 2021-22 + 2022-23 (MENA/APAC/SSA/OCE/SAM rosters), 2024 (Oxygen,
+  QuikTrip Pioneers, Team Secret), 2025 (Dignitas/NiP rosters, **Geekay moved
+  MENA → EU**, TSM, FURIA, Team Secret). `validate:data` + 42 tests pass; all
+  special-card refs still resolve.
+- **Normalized duplicate player spellings**: `ExplosiveGyro` → `Gyro.`,
+  `Sweaty_Clarence` → `Sweaty`. `zen` (EU) and `ZeN` (OCE) kept distinct (the
+  generator already splits that key). Org spellings already unified via
+  `ORG_ALIAS` (no new duplicates found).
+- Obscure-region + newly-added players use approximate overalls. **Not changed:**
+  S9 (no Worlds happened — COVID) and 2026 (not played yet) — flagged for a call.
 
 ## [1.0.0] — "Kickoff" — 2026 (released)
 
