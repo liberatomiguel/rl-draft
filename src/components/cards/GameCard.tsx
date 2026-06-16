@@ -46,6 +46,13 @@ export interface GameCardProps {
    * play on single-card / detail views (v1.1.x perf).
    */
   lite?: boolean;
+  /**
+   * LCP hint for the few cards above the fold (e.g. the collection's first row):
+   * loads the special photo eagerly with high fetch priority instead of lazily.
+   * Only meaningful for unlocked specials — pass it to a small N of leading
+   * cards, never the whole grid (priority on everything defeats the purpose).
+   */
+  priority?: boolean;
   selected?: boolean;
   disabled?: boolean;
   disabledLabel?: string;
@@ -119,6 +126,7 @@ export function GameCard({
   size = "md",
   fluid,
   lite,
+  priority,
   selected,
   disabled,
   disabledLabel,
@@ -184,7 +192,7 @@ export function GameCard({
       {/* Special photo layer — masked specials hide the photo and show the
           team-logo centerpiece below instead (v0.7.0); the frame/holo still
           announce that it IS a special. */}
-      {isSpecial && !maskedSpecial ? <SpecialArt card={card} /> : null}
+      {isSpecial && !maskedSpecial ? <SpecialArt card={card} priority={priority} /> : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive). Skipped
           in `lite` mode (dense grids): these mix-blend-mode layers are the main
@@ -363,7 +371,7 @@ export function GameCard({
 }
 
 /** Photo layer for special cards: real image or stylized fallback art. */
-function SpecialArt({ card }: { card: ResolvedCard }) {
+function SpecialArt({ card, priority }: { card: ResolvedCard; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
   const src = card.special?.imageUrl || `/cards/specials/${card.special?.id}.png`;
 
@@ -391,6 +399,7 @@ function SpecialArt({ card }: { card: ResolvedCard }) {
         fill
         sizes="(max-width: 639px) 50vw, 256px"
         decoding="async"
+        priority={priority}
         onError={() => setFailed(true)}
         className="object-cover object-[center_18%]"
       />

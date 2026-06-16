@@ -79,6 +79,25 @@ last two English-only pages.
   drops light and is idempotent; `--check` fails if any file is over budget.
   Root cause: source PNGs were dropped in at full editor export weight with no
   compression pass.
+- **Collection LCP** — the first ~6 (above-the-fold) unlocked card photos now
+  load with `priority` (eager + high fetch priority) instead of lazily. The page
+  is client-rendered and gated on `localStorage`, so photos only mount after
+  hydration; without a priority hint the largest paint waited on
+  IntersectionObserver. New optional `priority` prop on `GameCard` → `SpecialArt`
+  → `next/image`; passed only to the leading grid cells (unlocked cards sort
+  first, so those indices are exactly the above-the-fold photos).
+- **Collection renders progressively** — the album now mounts `PAGE_BATCH` (24)
+  cards up front and appends another batch via a bottom sentinel
+  (IntersectionObserver, 600px margin) as you scroll, instead of mounting the
+  whole catalogue at once. This is the lever that scales: initial DOM + image
+  requests stay flat as the special-card set keeps growing (83 → 200+), which is
+  what actually moves LCP/INP on a full collection. Cards still render in full
+  (no `content-visibility` clipping of the overflowing glows/tilt) and the
+  continuous "album wall" feel is preserved — no "load more" click. The reveal
+  resets to one batch on a filter change via a render-phase reset (no
+  setState-in-effect). Why progressive reveal over virtualization: the rarity
+  glows/tilt deliberately overflow the card frame, so windowing would risk
+  clipping; appending keeps every mounted card intact.
 - **Collection grid on mobile** now shows **2 cards per row** instead of one
   oversized card (`grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`).
   Desktop is unchanged — the original auto-fill grid still applies from `sm:` up.

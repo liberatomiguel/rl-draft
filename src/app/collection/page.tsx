@@ -31,6 +31,16 @@ const RARITY_RANK: Record<SpecialRarity, number> = {
   rare: 1,
 };
 
+/**
+ * Progressive reveal batch (UI/perf, not gameplay — stays out of balance.ts).
+ * The album renders this many cards up front and appends another batch as a
+ * sentinel scrolls into view, so the initial paint mounts a few dozen cards
+ * instead of the whole (ever-growing) catalogue — the lever that actually moves
+ * the /collection LCP/INP. Cards still render in full (no clipping), preserving
+ * the glows/tilt that overflow the frame and the continuous "album wall" feel.
+ */
+const PAGE_BATCH = 24;
+
 export default function CollectionPage() {
   const { COLLECTION_UI: C, RARITY_LABELS } = useCopy();
   const mounted = useMounted();
@@ -72,6 +82,40 @@ export default function CollectionPage() {
       return RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || b.overall - a.overall;
     });
   }, [isUnlocked, status, rarity]);
+
+  // Progressive reveal: only the first `limit` cards mount; a sentinel below the
+  // grid bumps it by a batch as it nears the viewport. Reset to one batch when
+  // the filtered set changes (new filter / first unlock load) so a fresh view
+  // never carries a stale large count — done as a render-phase reset (React's
+  // "adjust state when an input changes" pattern) to keep setState out of an
+  // effect (avoids cascading renders).
+  const [limit, setLimit] = useState(PAGE_BATCH);
+  const filterKey = `${status}|${rarity}|${mounted}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setLimit(PAGE_BATCH);
+  }
+  const shown = visible.slice(0, limit);
+  const hasMore = limit < visible.length;
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setLimit((l) => l + PAGE_BATCH);
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+    // Re-observe on each `limit` change: IntersectionObserver only fires on
+    // transitions, so if the sentinel is still visible after a batch (tall
+    // viewport / short batch) re-attaching re-checks and appends again until the
+    // 600px margin is filled or no cards remain.
+  }, [hasMore, limit]);
 
   return (
     <div className="rise-in">
@@ -144,7 +188,7 @@ export default function CollectionPage() {
         // shrinking the cell is the intended resize path — no card internals
         // are touched, and only the collection uses this grid.
         <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
-          {visible.map((sp) => (
+          {shown.map((sp, i) => (
             <FxCard key={sp.id}>
               {isUnlocked(sp.id) ? (
                 <GameCard
@@ -154,6 +198,11 @@ export default function CollectionPage() {
                   size="md"
                   fluid
                   lite
+                  // First row(s) are the LCP candidates: load their photos
+                  // eagerly instead of lazily so the largest paint isn't gated
+                  // on scroll/intersection. Unlocked cards sort first, so the
+                  // leading indices are exactly the above-the-fold photos.
+                  priority={i < 6}
                   onClick={() => setDetail(sp)}
                 />
               ) : (
@@ -163,6 +212,12 @@ export default function CollectionPage() {
           ))}
         </div>
       )}
+
+      {/* Reveal sentinel — appending more cards as it nears the viewport keeps
+          the initial mount small without a "load more" click. Rendered only
+          while cards remain; the 600px rootMargin loads the next batch before
+          the user reaches the bottom so the scroll stays seamless. */}
+      {hasMore ? <div ref={sentinelRef} aria-hidden className="h-px w-full" /> : null}
 
       {/* Detail modal */}
       <Modal
