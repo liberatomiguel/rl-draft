@@ -2929,7 +2929,7 @@
       "archie-gentle-mates-alpine-2026",
       "oski-gentle-mates-alpine-2026"
     ],
-    "orgBuffLevel": "++",
+    "orgBuffLevel": "+++",
     "historicalStrength": "strong"
   },
   {
@@ -2959,7 +2959,7 @@
       "crr-ninjas-in-pyjamas-2026"
     ],
     "coachId": "lbp-coach-ninjas-in-pyjamas-2026",
-    "orgBuffLevel": "+",
+    "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
   {
@@ -2973,7 +2973,7 @@
       "ejby-manchester-city-esports-2026",
       "accro-manchester-city-esports-2026"
     ],
-    "orgBuffLevel": "+",
+    "orgBuffLevel": "++",
     "historicalStrength": "solid"
   },
   {
@@ -3003,7 +3003,7 @@
       "reysbull-mibr-2026"
     ],
     "coachId": "pekitas-coach-mibr-2026",
-    "orgBuffLevel": "+",
+    "orgBuffLevel": "++",
     "historicalStrength": "solid"
   },
   {
@@ -3018,7 +3018,7 @@
       "yanxnz-furia-2026"
     ],
     "coachId": "brunovisquii-coach-furia-2026",
-    "orgBuffLevel": "++",
+    "orgBuffLevel": "+++",
     "historicalStrength": "strong"
   },
   {
@@ -3094,7 +3094,7 @@
     "coachId": "tibiano-coach-erodium-s7",
     "subId": "lance-sub-erodium-s7",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3110,7 +3110,7 @@
     ],
     "subId": "dudubrhue-sub-lotus-s7",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3189,7 +3189,7 @@
     ],
     "subId": "dudubrhue-sub-lotus-s8",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3205,7 +3205,7 @@
     ],
     "subId": "sword-sub-intz-esports-s8",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "++",
     "historicalStrength": "underdog"
   },
   {
@@ -3303,7 +3303,7 @@
     "coachId": "cha0s-coach-the-three-sins-s9",
     "subId": "brad-sub-the-three-sins-s9",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "++",
     "historicalStrength": "underdog"
   },
   {
@@ -3320,7 +3320,7 @@
     "coachId": "aguesome-coach-true-neutral-s9",
     "subId": "manteca-sub-true-neutral-s9",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "++",
     "historicalStrength": "underdog"
   },
   {
@@ -3386,7 +3386,7 @@
       "valt-the-three-sins-x"
     ],
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3402,7 +3402,7 @@
     ],
     "coachId": "bliss-coach-rebel-x",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
   {
@@ -3419,7 +3419,7 @@
     "coachId": "jato-coach-noble-esports-x",
     "subId": "firewall154-sub-noble-esports-x",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3451,7 +3451,7 @@
       "chr1s-carnage-gaming-x"
     ],
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3550,7 +3550,7 @@
     "coachId": "pekitas-coach-kru-esports-2122",
     "subId": "gatox-sub-kru-esports-2122",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "++",
     "historicalStrength": "underdog"
   },
   {
@@ -3567,7 +3567,7 @@
     "coachId": "pedrokanicastro-coach-exeed-2223",
     "subId": "baait-sub-exeed-2223",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3632,7 +3632,7 @@
     ],
     "coachId": "groval-coach-era-2223",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "underdog"
   },
   {
@@ -3648,7 +3648,7 @@
     ],
     "coachId": "aguesome-coach-complexity-gaming-2024",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+++",
     "historicalStrength": "solid"
   },
   {
@@ -3664,7 +3664,7 @@
     ],
     "coachId": "fasi-coach-ninjas-in-pyjamas-2024",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+++",
     "historicalStrength": "solid"
   },
   {
@@ -3681,7 +3681,7 @@
     "coachId": "pekitas-coach-kru-esports-2024",
     "subId": "wisty-sub-kru-esports-2024",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "++",
     "historicalStrength": "underdog"
   },
   {
@@ -3697,7 +3697,7 @@
     ],
     "coachId": "tander-coach-w7m-esports-2024",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "++",
     "historicalStrength": "underdog"
   },
   {
@@ -3745,7 +3745,7 @@
     "coachId": "kaoshi-coach-godfidence-2025",
     "subId": "fasi-sub-godfidence-2025",
     "samOnly": true,
-    "orgBuffLevel": "~",
+    "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
   {
