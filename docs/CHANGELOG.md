@@ -60,8 +60,9 @@ tag, mobile card-fit fixes, more reachable chemistry, and SEO copy polish.
   number also tighten a step on mobile to keep every line inside the frame.
 - **SEO copy polish** (no score regression, just sharper): refreshed `<title>`,
   a deduplicated/expanded `keywords` set, an `Esports` schema genre, a stronger
-  product `description` (EN + PT, feeds metadata/OG/hero), and a refreshed OG-image
-  line.
+  product `description` (EN + PT, feeds metadata/OG/hero), and the OG / link-preview
+  image now leads with the SAME logo lockup as the site header (the `icon.svg`
+  hexagon mark + the ink/orange "RocketDraft" wordmark).
 
 ### Balance
 - **Perfect chemistry is reachable** (`balance.ts` `CHEMISTRY.tiers`). Tier
