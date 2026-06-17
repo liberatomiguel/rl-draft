@@ -566,7 +566,7 @@ export const PT: Copy = {
       {
         title: "Analytics",
         body: [
-          "Usamos analytics web agregado e respeitoso à privacidade para entender quantas pessoas visitam o site, quais páginas são populares e como o jogo se comporta. Não usamos cookies de publicidade e não identificamos você pessoalmente.",
+          "Usamos analytics agregado e respeitoso à privacidade para entender quantas pessoas visitam o site, quais páginas são populares, como o jogo se comporta e como as runs acontecem — por exemplo, quais dificuldades as pessoas escolhem e com que frequência as runs são concluídas. Medimos isso com o Vercel Web Analytics e o PostHog, configurados para serem sem cookies e anônimos: não usamos cookies de publicidade, não identificamos você pessoalmente e respeitamos a opção Não rastrear (Do Not Track) do seu navegador.",
           "As estatísticas de busca (com que frequência o site aparece nos resultados) vêm do Google Search Console, que só reporta dados agregados e anônimos.",
         ],
       },

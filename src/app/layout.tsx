@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
 import { AppShell } from "@/components/layout/AppShell";
+import { PostHogProvider } from "@/components/PostHogProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -112,7 +113,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
-        <AppShell>{children}</AppShell>
+        <PostHogProvider>
+          <AppShell>{children}</AppShell>
+        </PostHogProvider>
         <Analytics />
         <SpeedInsights />
       </body>

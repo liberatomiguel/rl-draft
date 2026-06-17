@@ -10,6 +10,38 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [Unreleased]
+
+Post-launch analytics: detailed, **free** product analytics so we can see how
+the game is actually played (runs by difficulty, win-rate, where players drop
+off) without the paid Vercel events tier. Assign a version on commit.
+
+### Added
+- **PostHog product analytics** (`posthog-js`) as a second analytics sink
+  alongside Vercel Web Analytics. The typed `trackEvent` wrapper
+  (`src/lib/analytics.ts`) now fans the same events out to BOTH; a new
+  `PostHogProvider` (`src/components/PostHogProvider.tsx`) bootstraps it in the
+  root layout. Configured cookieless + anonymous (localStorage persistence, no
+  `identify`, autocapture and session recording off, DNT respected) so the
+  privacy promise is unchanged. **No-op until `NEXT_PUBLIC_POSTHOG_KEY` is set**
+  (env), so local dev and an unconfigured build behave exactly as before.
+  Unlocks funnels (visit → run_started → tournament_started → run_completed),
+  retention / returning players, and difficulty / win-rate breakdowns on the
+  free tier.
+- **`run_abandoned` event** — emitted from the run store when a run is left
+  before its results screen, with `phase` (draft / review / tournament) and
+  `reason` (`"quit"` to the menu / `"restart"`). Turns the funnel's implicit
+  drop-off into an explicit, attributable signal.
+- **SPA-aware pageviews** for PostHog (`capture_pageview: "history_change"`,
+  App Router route changes), and a documented `.env.local` template for the two
+  `NEXT_PUBLIC_POSTHOG_*` vars.
+
+### Changed
+- **Privacy policy — Analytics section** (EN + PT) now names both processors
+  (Vercel + PostHog), states the cookieless / anonymous / DNT configuration, and
+  notes that aggregate gameplay (difficulty mix, completion) is measured — not
+  only page visits.
+
 ## [1.2.2] — 2026
 
 A small post-launch patch: a clearer org/coach buff readout plus roster data

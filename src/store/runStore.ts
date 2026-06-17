@@ -166,11 +166,40 @@ export const useRunStore = create<RunStore>()(
         });
       },
 
-      clearRun: () => set({ run: null }),
+      clearRun: () => {
+        // A run cleared before its results screen is an abandonment — the
+        // funnel drop-off signal. (Clearing FROM results = a completed run,
+        // so it's excluded.) Fires via the page.tsx + AppShell route guards.
+        const { run } = get();
+        if (run && run.phase !== "results") {
+          trackEvent("run_abandoned", {
+            mode: run.mode,
+            difficulty: run.difficulty,
+            phase: run.phase,
+            reason: "quit",
+            hiddenOverall: !run.showOverall,
+            region: run.regionLock ?? "worldwide",
+          });
+        }
+        set({ run: null });
+      },
 
       restartRun: () => {
         const { run } = get();
         if (!run) return;
+        // Restarting mid-run abandons the current one (a fresh run_started
+        // fires from startRun/startDailyRun below). A restart from results is
+        // just "play again", so it isn't counted as an abandonment.
+        if (run.phase !== "results") {
+          trackEvent("run_abandoned", {
+            mode: run.mode,
+            difficulty: run.difficulty,
+            phase: run.phase,
+            reason: "restart",
+            hiddenOverall: !run.showOverall,
+            region: run.regionLock ?? "worldwide",
+          });
+        }
         // Daily restarts re-roll today's seeded run; everything else re-runs
         // startRun with the same settings (a brand-new seed → fresh draft).
         if (run.mode === "daily") {

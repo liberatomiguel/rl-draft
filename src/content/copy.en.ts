@@ -577,7 +577,7 @@ export const PRIVACY = {
     {
       title: "Analytics",
       body: [
-        "We use privacy-friendly, aggregate web analytics to understand how many people visit, which pages are popular, and how the game performs. It does not use advertising cookies and does not identify you personally.",
+        "We use privacy-friendly, aggregate analytics to understand how many people visit, which pages are popular, how the game performs, and how runs play out — for example which difficulties people choose and how often runs are finished. This is measured with Vercel Web Analytics and PostHog, configured to be cookieless and anonymous: it uses no advertising cookies, does not identify you personally, and honours your browser's Do Not Track setting.",
         "Search-engine statistics (how often the site appears in results) come from Google Search Console, which only reports aggregate, anonymous data.",
       ],
     },

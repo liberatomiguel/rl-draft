@@ -5,6 +5,37 @@
 > **v1.2.2** below is the current (uncommitted) post-launch patch under Miguel's
 > review. v1.1.x and older are historical — see `docs/CHANGELOG.md` for detail.
 
+## Analytics upgrade — PostHog (current · uncommitted, under review)
+
+Free, detailed product analytics so we can measure real play (runs by
+difficulty, win-rate, drop-off, retention) **without the paid Vercel events
+tier**. Code is wired and **no-ops until configured**. Full technical detail in
+`docs/CHANGELOG.md` [Unreleased].
+
+### Done this session
+- `posthog-js` added; `PostHogProvider` mounted in the root layout (cookieless +
+  anonymous). `trackEvent` (`src/lib/analytics.ts`) now fans `run_started /
+  tournament_started / run_completed` out to BOTH Vercel and PostHog, plus a new
+  `run_abandoned` (phase + reason) for the drop-off funnel and SPA-aware
+  pageviews (`history_change`).
+- Privacy policy (EN + PT) updated to name PostHog and the cookieless /
+  anonymous / DNT config.
+
+### Next steps (open) — mostly Miguel, not code
+1. **Turn it on:** create a free PostHog Cloud account, set the billing limit to
+   **$0** (can never be charged), copy the **Project API Key** (`phc_…`) + host
+   into `.env.local` (already templated) AND into the Vercel project's env vars
+   (`NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST`), then **redeploy**
+   (NEXT_PUBLIC_ vars are inlined at build time). Until then PostHog is a no-op.
+2. In PostHog, build the funnel (`$pageview` → `run_started` →
+   `tournament_started` → `run_completed`) and a win-rate breakdown of
+   `run_completed` by `difficulty` / `won`.
+3. (Optional) Confirm Vercel Web Analytics is enabled — the free tier still
+   gives visitor counts even without the paid events view.
+4. (Optional, later) Reverse-proxy PostHog through a Next rewrite (`/ingest`) to
+   dodge ad-blockers; pick the US/EU region first.
+5. Review + commit (assign a version) and deploy.
+
 ## v1.2.2 — post-launch patch (current · uncommitted, under review)
 
 A small follow-up. Built + verified (`tsc`, **50** vitest tests, lint at the
