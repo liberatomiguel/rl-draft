@@ -63,6 +63,7 @@ export const PT: Copy = {
     madeBy: "Feito por",
     inspiredBy: "Inspirado em",
     by: "por",
+    balancedBy: "Overalls balanceados por",
   },
 
   RUN_UI: {
@@ -101,6 +102,20 @@ export const PT: Copy = {
     ovrHidden: "OVR oculto",
     selected: "Selecionado",
     legacyBadge: "Gauntlet histórico",
+    region: "Região",
+    regionHint: "Trave sua run em uma região inteira — ou jogue mundial.",
+    regionWorldwide: "Mundial",
+    regionWorldwideHint: "Todos os times do Mundial da RLCS",
+    regionComingSoon: "Em Breve",
+    regionLockedBadge: "Região travada",
+    regionDescWorldwide:
+      "Todos os times do Mundial da RLCS. Toque numa região para travar o draft nela — por enquanto só a SAM está disponível, mais em breve.",
+    regionDescLocked: (region: string) =>
+      `Só ${region} — um pool mais profundo, que inclui times que nunca chegaram ao Mundial.`,
+    regionNames: {
+      NA: "América do Norte", EU: "Europa", SAM: "América do Sul", MENA: "MENA",
+      OCE: "Oceania", APAC: "APAC", SSA: "África Subsaariana",
+    } as Record<string, string>,
   },
 
   DIFFICULTY_LABELS: {
@@ -141,7 +156,7 @@ export const PT: Copy = {
     howToIntro: "Monte um elenco com a história da RLCS e dispute a chave. O básico:",
     howToSteps: [
       "A cada rodada sai uma lineup histórica da RLCS. Toque numa carta para draftá-la no seu time.",
-      "Preencha 3 jogadores, um técnico, um reserva e uma org. A química recompensa juntar companheiros de time, países e orgs.",
+      "Preencha 3 jogadores, um técnico, um reserva e uma org. A química é seu trunfo: junte mesmo país, org ou lineup histórica e um elenco coeso pode bater um time de estrelas com overall maior — o maior overall nem sempre é a escolha certa.",
       "Então um torneio joga sozinho: suíça e playoffs de dupla eliminação. Mais overall + química vence mais séries.",
       "Termine as runs — vencendo ou perdendo — para ganhar XP, subir de rank e desbloquear cartas especiais para sua coleção.",
     ],
@@ -154,6 +169,14 @@ export const PT: Copy = {
       "Vença aqui e você terá batido os melhores dos melhores. Boa sorte.",
     ],
     legacyCta: "Pode vir",
+    regionalTitle: "Draft Regional",
+    regionalIntro: "Esta run está travada na cena de uma região. Veja o que muda:",
+    regionalSteps: [
+      "O pool é só da região — seus times do Worlds MAIS o Top 8 regional que nunca chegou a um Mundial.",
+      "Bancos mais profundos, heróis locais e zebras de culto que você nunca vê no draft mundial.",
+      "O resto é igual: dificuldade, química, o torneio completo. Vença para erguer a bandeira da sua região.",
+    ],
+    regionalCta: "Bora jogar",
   },
 
   REVIEW: {
@@ -389,6 +412,8 @@ export const PT: Copy = {
   ACH_UI: {
     kicker: "Feitos para perseguir em cada run",
     title: "Conquistas",
+    secretTitle: "???",
+    secretHint: "Secreta — descubra jogando",
   },
 
   HOWTO: {
@@ -501,6 +526,7 @@ export const PT: Copy = {
     epic: "Épica",
     mythic: "Mítica",
     legendary: "Lendária",
+    creator: "Criador",
   },
 
   EFFECT_LABELS: {
@@ -573,10 +599,26 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.2.0",
+        name: "Regional Champions",
+        date: "2026",
+        current: true,
+        notes: [
+          "Novo: Draft por Região. Escolha uma região na tela de setup e drafte da cena inteira dela — os times do Worlds MAIS o Top 8 regional que nunca chegou a um Mundial. A América do Sul (SAM) já está disponível; mais regiões em breve.",
+          "Um pool sul-americano muito mais profundo — dezenas de novos times e jogadores da SAM pesquisados na Liquipedia.",
+          "Os overalls de jogadores e técnicos do jogo inteiro passaram por uma revisão e ajuste manual.",
+          "Uma nova conquista por vencer uma run regional — e uma carta secreta por aí para os curiosos.",
+          "Corrigido: ao voltar do Hard para o Normal ou Easy, os overalls voltam a aparecer automaticamente.",
+          "Os tutoriais ganharam um visual novo, e os momentos de subir de rank, nova carta e desbloqueio do Legacy agora são em tela cheia e esperam por você — só avançam quando você avança.",
+          "Agora todo time exibe seu logo real, incluindo as novas orgs sul-americanas — e clubes históricos como NRG, Dignitas, Spacestation e Vitality mostram o logo correspondente a cada temporada.",
+          "Nos bastidores: carregamento mais rápido e correções de indexação no Google.",
+        ],
+      },
+      {
         version: "1.1.1",
         name: "",
         date: "2026",
-        current: true,
+        current: false,
         notes: [
           "Mais cartas especiais para colecionar — 80+ jogadores lendários, momentos de MVP e técnicos.",
           "A coleção fica melhor no celular: duas cartas por linha em vez de uma carta gigante.",

@@ -458,7 +458,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-s6",
     "seasonId": "rlcs-s6",
-    "overall": 69
+    "overall": 82
   },
   {
     "id": "jhzer-sub-dignitas-s6",
@@ -833,5 +833,291 @@
     "lineupId": "twisted-minds-2025",
     "seasonId": "rlcs-2025",
     "overall": 70
+  },
+  {
+    "id": "lance-sub-erodium-s7",
+    "personId": "lance",
+    "name": "Lance",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "erodium",
+    "lineupId": "erodium-s7",
+    "seasonId": "rlcs-s7",
+    "overall": 60
+  },
+  {
+    "id": "dudubrhue-sub-lotus-s7",
+    "personId": "dudubrhue",
+    "name": "DuduBRHue",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "lotus",
+    "lineupId": "lotus-s7",
+    "seasonId": "rlcs-s7",
+    "overall": 60
+  },
+  {
+    "id": "mateusstl-sub-orchid-s7",
+    "personId": "mateusstl",
+    "name": "MateusSTL",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "orchid",
+    "lineupId": "orchid-s7",
+    "seasonId": "rlcs-s7",
+    "overall": 58
+  },
+  {
+    "id": "deathxplosion-sub-gfactor-galaxy-s7",
+    "personId": "deathxplosion",
+    "name": "Deathxplosion",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "gfactor-galaxy",
+    "lineupId": "gfactor-galaxy-s7",
+    "seasonId": "rlcs-s7",
+    "overall": 56
+  },
+  {
+    "id": "srforeverplays-sub-fantasydeath-s7",
+    "personId": "srforeverplays",
+    "name": "SrForeverplays",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "fantasydeath",
+    "lineupId": "fantasydeath-s7",
+    "seasonId": "rlcs-s7",
+    "overall": 50
+  },
+  {
+    "id": "dudubrhue-sub-lotus-s8",
+    "personId": "dudubrhue",
+    "name": "DuduBRHue",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "lotus",
+    "lineupId": "lotus-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 61
+  },
+  {
+    "id": "sword-sub-intz-esports-s8",
+    "personId": "sword",
+    "name": "Sword",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "intz-esports",
+    "lineupId": "intz-esports-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 60
+  },
+  {
+    "id": "richy-sub-oxey-team-s8",
+    "personId": "richy",
+    "name": "Richy",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "oxey-team",
+    "lineupId": "oxey-team-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 60
+  },
+  {
+    "id": "manteca-sub-hawks-s8",
+    "personId": "manteca",
+    "name": "Manteca",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "hawks",
+    "lineupId": "hawks-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 60
+  },
+  {
+    "id": "mateusstl-sub-orchid-s8",
+    "personId": "mateusstl",
+    "name": "MateusSTL",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "orchid",
+    "lineupId": "orchid-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 60
+  },
+  {
+    "id": "ianpinheiro-sub-most-wanted-s9",
+    "personId": "ianpinheiro",
+    "name": "ianpinheiro",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "most-wanted",
+    "lineupId": "most-wanted-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 66
+  },
+  {
+    "id": "brad-sub-the-three-sins-s9",
+    "personId": "brad",
+    "name": "Brad",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "the-three-sins",
+    "lineupId": "the-three-sins-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 70
+  },
+  {
+    "id": "manteca-sub-true-neutral-s9",
+    "personId": "manteca",
+    "name": "Manteca",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "true-neutral",
+    "lineupId": "true-neutral-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 62
+  },
+  {
+    "id": "zanetti-sub-poison-bullets-s9",
+    "personId": "zanetti",
+    "name": "Zanetti",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "poison-bullets",
+    "lineupId": "poison-bullets-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 62
+  },
+  {
+    "id": "subhallz-sub-sapphire-s9",
+    "personId": "subhallz",
+    "name": "SubHallz",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "sapphire",
+    "lineupId": "sapphire-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 60
+  },
+  {
+    "id": "srnanitou-sub-three-point-shooters-s9",
+    "personId": "srnanitou",
+    "name": "SrNaniTou",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "three-point-shooters",
+    "lineupId": "three-point-shooters-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 58
+  },
+  {
+    "id": "firewall154-sub-noble-esports-x",
+    "personId": "firewall154",
+    "name": "Firewall154",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "noble-esports",
+    "lineupId": "noble-esports-x",
+    "seasonId": "rlcs-x",
+    "overall": 62
+  },
+  {
+    "id": "gonk-sub-nocturns-gaming-x",
+    "personId": "gonk",
+    "name": "Gonk",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "nocturns-gaming",
+    "lineupId": "nocturns-gaming-x",
+    "seasonId": "rlcs-x",
+    "overall": 70
+  },
+  {
+    "id": "zanetti-sub-chromax-x",
+    "personId": "zanetti",
+    "name": "Zanetti",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "chromax",
+    "lineupId": "chromax-x",
+    "seasonId": "rlcs-x",
+    "overall": 63
+  },
+  {
+    "id": "kixou-sub-elevate-2122",
+    "personId": "kixou",
+    "name": "kixou",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "elevate",
+    "lineupId": "elevate-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 62
+  },
+  {
+    "id": "waantz-sub-hawks-2122",
+    "personId": "waantz",
+    "name": "Waantz",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "hawks",
+    "lineupId": "hawks-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 62
+  },
+  {
+    "id": "gatox-sub-kru-esports-2122",
+    "personId": "gatox",
+    "name": "GaTox",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "kru-esports",
+    "lineupId": "kru-esports-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 65
+  },
+  {
+    "id": "baait-sub-exeed-2223",
+    "personId": "baait",
+    "name": "baait",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "exeed",
+    "lineupId": "exeed-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 64
+  },
+  {
+    "id": "lag0-sub-endgame-2223",
+    "personId": "lag0",
+    "name": "lag0",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "endgame",
+    "lineupId": "endgame-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 64
+  },
+  {
+    "id": "wisty-sub-kru-esports-2024",
+    "personId": "wisty",
+    "name": "wisty",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "kru-esports",
+    "lineupId": "kru-esports-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 78
+  },
+  {
+    "id": "fasi-sub-godfidence-2025",
+    "personId": "fasi",
+    "name": "fAsi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "godfidence",
+    "lineupId": "godfidence-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 66
   }
 ]

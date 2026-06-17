@@ -109,6 +109,14 @@ export function AchievementIcon({ id, className = "h-4 w-4" }: { id: string; cla
       return (
         <svg {...common}><path d="M12 3 5 6v5c0 5 3 8.5 7 10 4-1.5 7-5 7-10V6l-7-3Z" {...P} /><ellipse cx="12" cy="12" rx="2.4" ry="3.2" /></svg>
       );
+    case "regional-champion": // globe with a crown
+      return (
+        <svg {...common}><circle cx="12" cy="13" r="7" /><path d="M5 13h14M12 6c2 2 2.8 4.5 2.8 7s-.8 5-2.8 7c-2-2-2.8-4.5-2.8-7s.8-5 2.8-7Z" {...P} /><path d="m8 5 1.5 1.5L12 4l2.5 2.5L16 5" {...P} /></svg>
+      );
+    case "creator": // signature key / spark
+      return (
+        <svg {...common}><circle cx="8" cy="9" r="3.2" /><path d="m10.3 11.3 8 8M16 16l2-2m-1.5 4 2-2" {...P} /><path d="M8 3.5v1.2M4.2 6 5.3 6.6M11.8 6l-1.1.6" {...P} /></svg>
+      );
     default: // fallback trophy
       return (
         <svg {...common}><path d="M8 4h8v5a4 4 0 0 1-8 0Z" {...P} /><path d="M8 5H5a3 3 0 0 0 3 4M16 5h3a3 3 0 0 1-3 4M12 13v4m-3 3h6" {...P} /></svg>

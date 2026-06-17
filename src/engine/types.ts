@@ -32,7 +32,7 @@ export type RunMode = "classic" | "quick" | "daily";
  */
 export type BaseRarity = "common" | "silver" | "gold" | "blue";
 
-export type SpecialRarity = "rare" | "epic" | "mythic" | "legendary";
+export type SpecialRarity = "rare" | "epic" | "mythic" | "legendary" | "creator";
 
 export type SpecialCardType =
   | "moment"
@@ -163,6 +163,19 @@ export interface Lineup {
    * Falls back to the org entity's default level when absent.
    */
   orgBuffLevel?: BuffLevel;
+  /**
+   * Regional-only lineup (v1.2.0): a SAM Top-8 team that did NOT reach
+   * Worlds/Finals. Excluded from the general draft/opponent/daily pools;
+   * appears only in the region-locked mode. Absent/false = a Worlds finals team.
+   */
+  samOnly?: boolean;
+  /**
+   * Easter-egg lineup (v1.2.0): excluded from the normal draw AND the opponent
+   * pool; instead force-injected into one draft offer at DRAFT.easterEggChance
+   * (region-locked mode only). Used by the Wings creator team — when it appears,
+   * the creator's card is guaranteed to show as the Creator special.
+   */
+  rareSpawn?: boolean;
   historicalStrength: HistoricalStrength;
 }
 
@@ -211,8 +224,10 @@ export interface AchievementDef {
   title: string;
   description: string;
   xp: number;
-  /** Visual family in the achievements grid. */
-  category: "milestone" | "skill" | "collection" | "legend";
+  /** Rarity family in the achievements grid (v1.2.0): common · rare · epic · legend. */
+  category: "common" | "rare" | "epic" | "legend";
+  /** Hidden until earned (v1.2.0) — shown as a locked mystery in the grid. */
+  secret?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -504,6 +519,8 @@ export interface DailyObjective {
 export interface RunState {
   runId: string;
   mode: RunMode;
+  /** Region-locked run (v1.2.0): e.g. "SAM". Undefined = worldwide (default). */
+  regionLock?: Region;
   seed: number;
   /** Mutable RNG cursor — persisted so reloads stay deterministic. */
   rngState: number;

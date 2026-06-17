@@ -12,6 +12,7 @@ import { HISTORY_LIMIT } from "@/config/balance";
 import type {
   Difficulty,
   Placement,
+  Region,
   RunHistoryEntry,
   RunMode,
   RunResults,
@@ -39,16 +40,27 @@ export interface ProfileState {
   /** ISO date → daily challenge result. */
   dailyResults: Record<string, DailyResult>;
   /** Setup memory: a new game pre-selects the last configuration. */
-  settings: { lastDifficulty: Difficulty; lastShowOverall: boolean; lastMode: RunMode };
-  /** One-time onboarding flags (first-run how-to-play, first Legacy intro). */
-  flags: { seenHowToPlay: boolean; seenLegacyIntro: boolean };
+  settings: {
+    lastDifficulty: Difficulty;
+    lastShowOverall: boolean;
+    lastMode: RunMode;
+    /** Last region lock chosen on the setup screen; null = worldwide. */
+    lastRegionLock: Region | null;
+  };
+  /** One-time onboarding flags (first-run how-to-play, first Legacy/regional intro). */
+  flags: { seenHowToPlay: boolean; seenLegacyIntro: boolean; seenRegionalIntro: boolean };
 
   applyRunResults: (
     results: RunResults,
     entry: RunHistoryEntry,
     daily?: { date: string; label: string },
   ) => void;
-  setLastSetup: (difficulty: Difficulty, showOverall: boolean, mode: RunMode) => void;
+  setLastSetup: (
+    difficulty: Difficulty,
+    showOverall: boolean,
+    mode: RunMode,
+    regionLock: Region | null,
+  ) => void;
   markFlag: (flag: keyof ProfileState["flags"]) => void;
   resetAll: () => void;
 }
@@ -68,8 +80,9 @@ const initialData = {
     lastDifficulty: "normal" as Difficulty,
     lastShowOverall: true,
     lastMode: "classic" as RunMode,
+    lastRegionLock: null as Region | null,
   },
-  flags: { seenHowToPlay: false, seenLegacyIntro: false },
+  flags: { seenHowToPlay: false, seenLegacyIntro: false, seenRegionalIntro: false },
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -122,8 +135,8 @@ export const useProfileStore = create<ProfileState>()(
           };
         }),
 
-      setLastSetup: (lastDifficulty, lastShowOverall, lastMode) =>
-        set({ settings: { lastDifficulty, lastShowOverall, lastMode } }),
+      setLastSetup: (lastDifficulty, lastShowOverall, lastMode, lastRegionLock) =>
+        set({ settings: { lastDifficulty, lastShowOverall, lastMode, lastRegionLock } }),
 
       markFlag: (flag) => set((state) => ({ flags: { ...state.flags, [flag]: true } })),
 
@@ -131,22 +144,31 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 2,
-      // v2 adds lifetime counters, daily results and setup memory.
+      version: 3,
+      // v2 added lifetime counters/daily/setup memory; v3 added the regional
+      // lock setting + regional onboarding flag (backfilled for old saves).
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
-        if (version < 2) {
-          return {
-            ...initialData,
-            ...prev,
-            playoffAppearances: 0,
-            podiums: 0,
-            swissWinsTotal: 0,
-            dailyResults: {},
-            settings: initialData.settings,
-          };
-        }
-        return prev as ProfileState;
+        const base =
+          version < 2
+            ? {
+                ...initialData,
+                ...prev,
+                playoffAppearances: 0,
+                podiums: 0,
+                swissWinsTotal: 0,
+                dailyResults: {},
+                settings: initialData.settings,
+                flags: initialData.flags,
+              }
+            : prev;
+        // Deep-merge settings/flags so new keys get defaults on older profiles.
+        return {
+          ...initialData,
+          ...base,
+          settings: { ...initialData.settings, ...(base.settings ?? {}) },
+          flags: { ...initialData.flags, ...(base.flags ?? {}) },
+        } as ProfileState;
       },
     },
   ),

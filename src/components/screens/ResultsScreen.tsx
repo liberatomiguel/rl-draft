@@ -8,6 +8,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { achievementById, lineupById, specialCardById } from "@/data";
 import { DIFFICULTY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -25,6 +26,7 @@ import type { EliminatorTeam, Placement, RunState } from "@/engine/types";
 import { downloadShareCard } from "@/lib/shareCard";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
+import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
@@ -64,6 +66,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const results = run.results;
   const team = run.tournament?.teams["user"];
   const slots = useMemo(() => rosterSlots(run.draft.roster), [run.draft.roster]);
+  const playerSlots = slots.slice(0, 3); // player1 · player2 · player3
+  const benchSlots = slots.slice(3); // coach · sub · org (null in Quick)
   const [ceremonyOpen, setCeremonyOpen] = useState(
     () => (run.results?.unlockedSpecialIds.length ?? 0) > 0,
   );
@@ -234,18 +238,43 @@ export function ResultsScreen({ run }: { run: RunState }) {
         ) : null}
       </div>
 
-      {/* Team reveal: players on top, staff below */}
+      {/* Team reveal: the three player cards across the pitch (the middle one
+          raised, the outer two aligned), staff in a spaced row below. Card size
+          matches the draft screen. */}
       <SectionTitle
         title={R.teamReveal}
         right={!run.showOverall ? <Badge tone="orange">{R.hiddenReveal}</Badge> : null}
         className="mb-4"
       />
-      <div className="mb-10 grid grid-cols-3 gap-2 md:gap-4">
-        {slots.map((s, i) =>
-          s.card ? (
-            <RevealCard key={s.slot} card={s.card} delayMs={i * 220} animate={!run.showOverall} />
-          ) : null,
-        )}
+      <div className="mb-10">
+        <div className="field rounded-2xl p-4 sm:p-6">
+          <div className="mx-auto grid max-w-2xl grid-cols-3 items-start gap-2 md:gap-4">
+            {playerSlots.map((s, i) =>
+              s?.card ? (
+                // Outer two sit lower (aligned with each other); the middle card
+                // is raised. Cards stay straight (no tilt) at the draft size.
+                <div key={s.slot} className={cx(i !== 1 && "mt-6 sm:mt-10")}>
+                  <RevealCard card={s.card} delayMs={i * 220} animate={!run.showOverall} />
+                </div>
+              ) : null,
+            )}
+          </div>
+        </div>
+        {benchSlots.some((s) => s.card) ? (
+          <div className="mt-5 flex justify-center gap-5 sm:gap-10">
+            {benchSlots.map((s, i) =>
+              s.card ? (
+                <RevealCard
+                  key={s.slot}
+                  card={s.card}
+                  delayMs={(i + 3) * 220}
+                  animate={!run.showOverall}
+                  className="mx-auto w-24 sm:w-32"
+                />
+              ) : null,
+            )}
+          </div>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -426,9 +455,50 @@ function Confetti({ prism }: { prism?: boolean }) {
 }
 
 /**
+ * Shared full-screen ceremony overlay (v1.2.0): portaled onto <body> so the
+ * `position: fixed` backdrop covers the viewport even though the results screen
+ * animates with a transform (`rise-in`) that would otherwise re-anchor it. Locks
+ * body scroll while open. Advances ONLY on user input — no auto-dismiss timers.
+ */
+function CeremonyPortal({
+  onClick,
+  ariaLabel,
+  className,
+  children,
+}: {
+  onClick: () => void;
+  ariaLabel: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const mounted = useMounted();
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      className={cx(
+        "fixed inset-0 z-[60] flex cursor-pointer flex-col items-center justify-center gap-6 p-6 backdrop-blur-sm",
+        className,
+      )}
+      role="dialog"
+      aria-label={ariaLabel}
+      onClick={onClick}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+/**
  * Unlock ceremony: each freshly unlocked special gets its reveal moment.
- * Plays AUTOMATICALLY (reveal after a beat, then advance) — clicking just
- * skips ahead.
+ * Tap to reveal the card, tap again for the next — it advances only on input
+ * (no auto-play) and is portaled full-screen by CeremonyPortal.
  */
 function UnlockCeremony({
   specialIds,
@@ -456,15 +526,6 @@ function UnlockCeremony({
     }
   };
 
-  // Auto-play: reveal after ~1s, linger on the revealed card, then advance.
-  useEffect(() => {
-    if (!sp) return;
-    const delay = revealed ? 3200 : 1000;
-    const id = setTimeout(advance, delay);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, revealed, sp?.id]);
-
   // Sound cue each time a card is revealed.
   useEffect(() => {
     if (revealed) sfx.unlock();
@@ -477,14 +538,9 @@ function UnlockCeremony({
   const card = resolveSpecial(sp);
 
   return (
-    // Tap ANYWHERE on the overlay advances (v0.6.1) — the inner button stops
-    // propagation so it doesn't double-fire.
-    <div
-      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
-      role="dialog"
-      aria-label={R.ceremonyKicker}
-      onClick={advance}
-    >
+    // Tap ANYWHERE on the overlay advances — the inner button stops propagation
+    // so it doesn't double-fire. Portaled full-screen; advances only on input.
+    <CeremonyPortal ariaLabel={R.ceremonyKicker} className="bg-black/85" onClick={advance}>
       <p className="kicker">{R.ceremonyKicker}</p>
       <div className="relative">
         {revealed ? (
@@ -516,7 +572,7 @@ function UnlockCeremony({
           {last ? R.ceremonyContinue : R.ceremonyNext}
         </Button>
       ) : null}
-    </div>
+    </CeremonyPortal>
   );
 }
 
@@ -524,7 +580,7 @@ function UnlockCeremony({
  * Rank-up moment (reworked v0.7.0): the v0.5 version read as cramped — this
  * now uses the SAME full-screen overlay language as the "new card unlocked"
  * ceremony (black backdrop, emblem bursting in the center) and the MENU rank
- * art (not the profile set). Auto-dismisses; clicking anywhere skips.
+ * art (not the profile set). Portaled full-screen; advances only on tap/continue.
  */
 function RankUpCelebration({
   rank,
@@ -534,10 +590,6 @@ function RankUpCelebration({
   onDone: () => void;
 }) {
   const { RESULTS_UI: R } = useCopy();
-  useEffect(() => {
-    const id = setTimeout(onDone, 4200);
-    return () => clearTimeout(id);
-  }, [onDone]);
 
   // Rank-up fanfare, once on mount.
   useEffect(() => {
@@ -545,13 +597,8 @@ function RankUpCelebration({
   }, []);
 
   return (
-    // Tap ANYWHERE dismisses (v0.6.1).
-    <div
-      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-black/85 p-6 backdrop-blur-sm"
-      role="dialog"
-      aria-label={R.rankUpTitle}
-      onClick={onDone}
-    >
+    // Portaled full-screen; dismisses only when the player taps/continues.
+    <CeremonyPortal ariaLabel={R.rankUpTitle} className="bg-black/85" onClick={onDone}>
       <p className="kicker">{R.rankUpKicker}</p>
       <div className="relative">
         <div className="ceremony-burst relative">
@@ -570,22 +617,18 @@ function RankUpCelebration({
         </p>
         <p className="mt-3 text-xs text-sub">{R.rankUpHint}</p>
       </div>
-    </div>
+    </CeremonyPortal>
   );
 }
 
 /**
  * Legacy-mode unlock (v0.6.1): the first Hard tournament win opens the
  * all-time Legacy gauntlet — a moment worth its own full-screen beat, in the
- * same ceremony language (prismatic, since Legacy is the endgame). Tap
- * anywhere or wait to dismiss.
+ * same ceremony language (prismatic, since Legacy is the endgame). Portaled
+ * full-screen; dismisses only when the player taps/continues.
  */
 function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
   const { RESULTS_UI: R } = useCopy();
-  useEffect(() => {
-    const id = setTimeout(onDone, 5200);
-    return () => clearTimeout(id);
-  }, [onDone]);
 
   // Unlock fanfare, once on mount.
   useEffect(() => {
@@ -593,12 +636,7 @@ function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
   }, []);
 
   return (
-    <div
-      className="celebrate fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-black/88 p-6 backdrop-blur-sm"
-      role="dialog"
-      aria-label={R.legacyTitle}
-      onClick={onDone}
-    >
+    <CeremonyPortal ariaLabel={R.legacyTitle} className="celebrate bg-black/88" onClick={onDone}>
       <div className="celebrate-rays-prism" aria-hidden />
       <p className="kicker relative z-10">{R.legacyKicker}</p>
       <div className="ceremony-burst relative z-10">
@@ -614,7 +652,7 @@ function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
         <p className="mx-auto mt-3 max-w-xs text-sm text-sub">{R.legacySub}</p>
         <p className="mt-3 text-xs text-faint">{R.legacyHint}</p>
       </div>
-    </div>
+    </CeremonyPortal>
   );
 }
 
@@ -676,9 +714,10 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
           {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
         </Badge>
       </div>
-      <div className="grid grid-cols-3 gap-2 sm:max-w-2xl sm:grid-cols-6">
+      {/* Left-aligned row of small cards — wraps on narrow screens. */}
+      <div className="flex flex-wrap justify-start gap-3">
         {cards.map((card, i) => (
-          <div key={i} className="mx-auto w-full max-w-28">
+          <div key={i} className="w-[5.25rem] sm:w-24">
             <GameCard card={card} showOverall size="sm" fluid tilt="off" />
           </div>
         ))}
@@ -690,7 +729,8 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
 /**
  * Slide-in toasts for freshly earned achievements — each toast wears the
  * achievement's own visual identity (icon, hue, legend prismatics), not a
- * generic trophy (v0.5).
+ * generic trophy (v0.5). They appear one after another in the screen corner
+ * and auto-dismiss, so they inform without taking over the results screen.
  */
 function AchievementToasts({ ids }: { ids: string[] }) {
   const { RESULTS_UI: R } = useCopy();
@@ -711,7 +751,10 @@ function AchievementToasts({ ids }: { ids: string[] }) {
   if (visible.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed right-4 top-16 z-50 flex w-72 flex-col gap-2" aria-live="polite">
+    <div
+      className="pointer-events-none fixed right-4 top-16 z-50 flex w-72 flex-col gap-2"
+      aria-live="polite"
+    >
       {visible.map((id) => {
         const def = achievementById.get(id);
         if (!def) return null;
@@ -736,7 +779,9 @@ function AchievementToasts({ ids }: { ids: string[] }) {
               <AchievementIcon id={def.id} />
             </span>
             <span className="min-w-0">
-              <span className={cx("block text-[9px] font-bold uppercase tracking-[0.18em]", style.text)}>
+              <span
+                className={cx("block text-[9px] font-bold uppercase tracking-[0.18em]", style.text)}
+              >
                 {R.achievementToast} · {style.label}
               </span>
               <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
@@ -768,10 +813,15 @@ function RevealCard({
   card,
   delayMs,
   animate,
+  // Wrapper classes REPLACE the default — callers control width (the old
+  // max-w-36/md:max-w-44 cap lived here, so appending would re-cap and silently
+  // block enlargement). The flip-card structural class stays separate via cx().
+  className = "mx-auto w-full max-w-36 md:max-w-44",
 }: {
   card: ResolvedCard;
   delayMs: number;
   animate: boolean;
+  className?: string;
 }) {
   const [flipped, setFlipped] = useState(!animate);
 
@@ -783,14 +833,14 @@ function RevealCard({
 
   if (!animate) {
     return (
-      <div className="mx-auto w-full max-w-36 md:max-w-44">
+      <div className={className}>
         <GameCard card={card} showOverall size="md" fluid />
       </div>
     );
   }
 
   return (
-    <div className={cx("flip-card mx-auto w-full max-w-36 md:max-w-44", flipped && "flipped")}>
+    <div className={cx("flip-card", className, flipped && "flipped")}>
       <div className="flip-card-inner relative">
         <div className={cx("flip-face", flipped && "pointer-events-none")}>
           <CardBack />

@@ -497,7 +497,7 @@ org: NRG Esports ++
 player 1: Kronovi 86
 player 2: Rizzo 87
 player 3: JKnaps 89
-sub: Mijo 69
+sub: Mijo 82
 coach: Jahzo 74
 org: G2 Esports ++
 ```
@@ -571,7 +571,7 @@ player 1: JKnaps 90
 player 2: Rizzo 87
 player 3: Chicago 88
 sub: Mijo 69
-coach: Jahzo 76
+coach: Jahzo 82
 org: G2 Esports ++
 ```
 
@@ -598,7 +598,7 @@ player 1: jstn 91
 player 2: GarrettG 91
 player 3: Fireburner 87
 sub: -
-coach: Chrome 81
+coach: Chrome 83
 org: NRG Esports ++
 ```
 
@@ -609,7 +609,7 @@ player 1: Scrub Killa 92
 player 2: Fairy Peak! 91
 player 3: Kaydop 93
 sub: Neqzo 69
-coach: Gregan 86
+coach: Gregan 89
 org: Renault Vitality ++
 ```
 
@@ -618,7 +618,7 @@ player 1: Bluey 87
 player 2: Alpha54 90
 player 3: Deevo 86
 sub: ByMateos 65
-coach: Gregan 84
+coach: Roken 79
 org: FC Barcelona +
 ```
 
@@ -627,7 +627,7 @@ player 1: Ronaky 84
 player 2: Tadpole 82
 player 3: Kassio 82
 sub: Seeb 60
-coach: Base 65
+coach: Base 78
 org: Triple Trouble ~
 ```
 
@@ -709,7 +709,7 @@ player 1: Gyro. 86
 player 2: retals 87
 player 3: mist 88
 sub: Mala 64
-coach: Moopy 77
+coach: Moopy 80
 org: Pittsburgh Knights +
 ```
 
@@ -747,7 +747,7 @@ player 1: FlamE 81
 player 2: FreaKii 82
 player 3: Kassio 84
 sub: -
-coach: yumi_cheeseman 70
+coach: miztik 70
 org: Veloce Esports ~
 ```
 
@@ -787,7 +787,7 @@ player 1: caard 82
 player 2: CaioTG1 81
 player 3: tander 78
 sub: Firewall154 50
-coach: Kairos 83
+coach: Kairos 78
 org: Lowkey Esports ~
 ```
 
@@ -796,7 +796,7 @@ player 1: math 79
 player 2: matix 75
 player 3: valt 73
 sub: Jato 54
-coach: BananaMan 58
+coach: BananaMan 70
 org: The Three Sins ~
 ```
 
@@ -811,7 +811,7 @@ player 1: Rizzo 87
 player 2: JKnaps 91
 player 3: Chicago 90
 sub: Mile 65
-coach: Jahzo 78
+coach: Jahzo 84
 org: G2 Esports ++
 ```
 
@@ -838,7 +838,7 @@ player 1: GarrettG 94
 player 2: jstn 95
 player 3: Turbopolsa 91
 sub: -
-coach: Sizz 84
+coach: Sizz 85
 org: NRG Esports ++
 ```
 
@@ -849,7 +849,7 @@ player 1: ViolentPanda 88
 player 2: Yukeo 86
 player 3: AztraL 91
 sub: JZR 73
-coach: Virge 83
+coach: Virge 86
 org: Dignitas +
 ```
 
@@ -858,7 +858,7 @@ player 1: Fairy Peak! 91
 player 2: Kaydop 91
 player 3: Alpha54 94
 sub: -
-coach: Gregan 84
+coach: Gregan 87
 org: Renault Vitality ++
 ```
 
@@ -867,7 +867,7 @@ player 1: Deevo 86
 player 2: Ronaky 85
 player 3: Flakes 87
 sub: -
-coach: El General 70
+coach: El General 82
 org: FC Barcelona +
 ```
 
@@ -896,7 +896,7 @@ player 1: KennySalmon 78
 player 2: Amphis 80
 player 3: Scarth 78
 sub: -
-coach: Jimmah 61
+coach: Jimmah 77
 org: FURY ~
 ```
 
@@ -931,7 +931,7 @@ player 1: GarrettG 89
 player 2: jstn. 91
 player 3: SquishyMuffinz 88
 sub: -
-coach: Sizz 84
+coach: Sizz 82
 org: NRG Esports ++
 ```
 
@@ -949,7 +949,7 @@ player 1: JKnaps 87
 player 2: Chicago 87
 player 3: dreaz 80
 sub: -
-coach: Jahzo 79
+coach: Jahzo 83
 org: G2 Esports ++
 ```
 
@@ -958,7 +958,7 @@ player 1: Firstkiller 91
 player 2: Turinturo 82
 player 3: Taroco 82
 sub: -
-coach: CorruptedG 76
+coach: CorruptedG 77
 org: Rogue +
 ```
 
@@ -976,7 +976,7 @@ player 1: AYYJAYY 87
 player 2: Gyro. 82
 player 3: Allushin 81
 sub: -
-coach: Moopy 72
+coach: Moopy 80
 org: FaZe Clan +
 ```
 
@@ -987,7 +987,7 @@ player 1: M0nkey M00n 94
 player 2: Extra 91
 player 3: MaRc_By_8 90
 sub: -
-coach: Kael 83
+coach: Kael 85
 org: Team BDS +++
 ```
 
@@ -996,7 +996,7 @@ player 1: Kaydop 87
 player 2: Fairy Peak! 87
 player 3: Alpha54 90
 sub: -
-coach: Mout 78
+coach: Mout 84
 org: Team Vitality ++
 ```
 
@@ -1063,7 +1063,7 @@ player 1: ajg 85
 player 2: Reysbull 84
 player 3: Shad 83
 sub: Aguesome 71
-coach: Aguesome 71
+coach: Aguesome 77
 org: True Neutral ~
 ```
 
@@ -1087,7 +1087,7 @@ player 1: JKnaps 88
 player 2: Chicago 87
 player 3: Atomic 90
 sub: -
-coach: Satthew 84
+coach: Satthew 83
 org: G2 Esports ++
 ```
 
@@ -1096,7 +1096,7 @@ player 1: Firstkiller 91
 player 2: AYYJAYY 88
 player 3: Sypical 87
 sub: -
-coach: Roll Dizz 78
+coach: Roll Dizz 79
 org: FaZe Clan ++
 ```
 
@@ -1105,7 +1105,7 @@ player 1: GarrettG 87
 player 2: jstn. 90
 player 3: SquishyMuffinz 87
 sub: -
-coach: Sizz 84
+coach: Sizz 81
 org: NRG Esports ++
 ```
 
@@ -1114,7 +1114,7 @@ player 1: Torment 84
 player 2: Comm 86
 player 3: BeastMode 90
 sub: -
-coach: Fireburner 82
+coach: Fireburner 83
 org: Version1 ++
 ```
 
@@ -1123,7 +1123,7 @@ player 1: Arsenal 86
 player 2: retals 85
 player 3: Daniel 89
 sub: -
-coach: Chrome 82
+coach: Chrome 85
 org: Spacestation Gaming +
 ```
 
@@ -1132,7 +1132,7 @@ player 1: mist 86
 player 2: dreaz 81
 player 3: Allushin 79
 sub: -
-coach: RawGreg 76
+coach: RawGreg 80
 org: OpTic Gaming +
 ```
 
@@ -1152,7 +1152,7 @@ player 1: Joyo 93
 player 2: rise. 93
 player 3: Vatira 95
 sub: -
-coach: n0ah 84
+coach: n0ah 82
 org: Moist Esports +++
 ```
 
@@ -1161,7 +1161,7 @@ player 1: AztraL 89
 player 2: itachi 87
 player 3: noly 86
 sub: -
-coach: Eversax 84
+coach: Eversax 83
 org: Karmine Corp ++
 ```
 
@@ -1188,7 +1188,7 @@ player 1: RelatingWave 82
 player 2: Metsanauris 80
 player 3: archie 87
 sub: -
-coach: Eclipse 75
+coach: Eclipse 82
 org: Endpoint CeX +
 ```
 
@@ -1228,7 +1228,7 @@ player 1: AztromicK 79
 player 2: kv1 79
 player 3: Lostt 80
 sub: fAsi 70
-coach: Michi 71
+coach: Michi 75
 org: The Club
 ```
 
@@ -1248,7 +1248,7 @@ player 1: Ahmad 88
 player 2: oKhaliD 87
 player 3: trk511 89
 sub: -
-coach: d7oom-24 83
+coach: d7oom-24 81
 org: Team Falcons ++
 ```
 
@@ -1275,7 +1275,7 @@ org: 01 Esports
 ```team: Gaimin Gladiators · 2021-22
 player 1: Maxeew 74
 player 2: LCT 68
-player 3: Commutator 73
+player 3: Commutator 50
 sub: -
 coach: -
 org: Gaimin Gladiators
@@ -1330,7 +1330,7 @@ player 1: Firstkiller 91
 player 2: mist 88
 player 3: Sypical 87
 sub: -
-coach: Roll Dizz 78
+coach: Roll Dizz 83
 org: FaZe Clan ++
 ```
 
@@ -1339,7 +1339,7 @@ player 1: JKnaps 87
 player 2: Chicago 86
 player 3: Atomic 88
 sub: -
-coach: Satthew 84
+coach: Satthew 87
 org: G2 Esports +
 ```
 
@@ -1348,7 +1348,7 @@ player 1: Arsenal 84
 player 2: Lj. 87
 player 3: hockser 82
 sub: -
-coach: Chrome 80
+coach: Chrome 85
 org: Spacestation Gaming +
 ```
 
@@ -1357,18 +1357,18 @@ player 1: crr 87
 player 2: Reysbull 86
 player 3: ajg 84
 sub: -
-coach: Aguesome 79
+coach: Aguesome 83
 org: Complexity Gaming +
 ```
 
 ### EU
 
 ```team: Team Vitality · 2022-23
-player 1: zen 98
+player 1: zen 97
 player 2: Alpha54 92
 player 3: Radosin 90
 sub: saizen 78
-coach: Ferra 90
+coach: Ferra 91
 org: Team Vitality +++
 ```
 
@@ -1377,7 +1377,7 @@ player 1: M0nkey M00n 94
 player 2: Seikoo 90
 player 3: rise. 93
 sub: Extra 81
-coach: Mew 86
+coach: Mew 87
 org: Team BDS +++
 ```
 
@@ -1453,7 +1453,7 @@ player 1: Sadness 83
 player 2: kv1 84
 player 3: nxghtt 82
 sub: -
-coach: -
+coach: BRUNOVISQUII 84
 org: Team Secret +
 ```
 
@@ -1491,7 +1491,7 @@ player 1: Ahmad 87
 player 2: oKhaliD 86
 player 3: trk511 88
 sub: -
-coach: d7oom-24 81
+coach: d7oom-24 84
 org: Team Falcons ++
 ```
 
@@ -1555,7 +1555,7 @@ player 1: BeastMode 94
 player 2: Atomic 94
 player 3: Daniel 95
 sub: dreaz 73
-coach: Satthew 89
+coach: Satthew 86
 org: G2 Stride +++
 ```
 
@@ -1564,7 +1564,7 @@ player 1: ApparentlyJack 87
 player 2: Chronic 87
 player 3: Firstkiller 91
 sub: -
-coach: RawGreg 81
+coach: RawGreg 83
 org: Gen.G Mobil1 Racing ++
 ```
 
@@ -1573,7 +1573,7 @@ player 1: Lj. 88
 player 2: Chicago 84
 player 3: hockser 83
 sub: -
-coach: Chrome 80
+coach: Chrome 85
 org: Spacestation Gaming +
 ```
 
@@ -1611,7 +1611,7 @@ player 1: Vatira 94
 player 2: Atow. 93
 player 3: rise. 92
 sub: -
-coach: Ferra 88
+coach: Ferra 90
 org: Karmine Corp +++
 ```
 
@@ -1629,7 +1629,7 @@ player 1: archie 86
 player 2: Oski 88
 player 3: Joyo 88
 sub: -
-coach: Snaski 78
+coach: Snaski 86
 org: Oxygen Esports +
 ```
 
@@ -1660,7 +1660,7 @@ player 1: yanxnz 91
 player 2: Lostt 88
 player 3: drufinho 86
 sub: -
-coach: BRUNOVISQUII 81
+coach: BRUNOVISQUII 85
 org: FURIA ++
 ```
 
@@ -1680,7 +1680,7 @@ player 1: trk511 92
 player 2: Kiileerrz 93
 player 3: Rw9 93
 sub: -
-coach: d7oom-24 83
+coach: d7oom-24 85
 org: Team Falcons +++
 ```
 
@@ -1735,7 +1735,7 @@ player 1: Scrzbbles 84
 player 2: reveal 86
 player 3: kofyr 85
 sub: -
-coach: Xpére 77
+coach: Xpére 84
 org: Spacestation Gaming +
 ```
 
@@ -1744,7 +1744,7 @@ player 1: MaJicBear 84
 player 2: CHEESE. 86
 player 3: jstn. 87
 sub: Thundah 72
-coach: RawGreg 78
+coach: RawGreg 80
 org: Gen.G Mobil1 Racing +
 ```
 
@@ -1773,12 +1773,12 @@ player 1: stizzy 86
 player 2: ApparentlyJack 87
 player 3: Joreuz 87
 sub: -
-coach: Eclipse 78
+coach: Eclipse 83
 org: Dignitas +
 ```
 
 ```team: Team Vitality · 2025
-player 1: zen 97
+player 1: zen 96
 player 2: M0nkey M00n 95
 player 3: ExoTiiK 93
 sub: -
@@ -1831,7 +1831,7 @@ player 1: yanxnz 91
 player 2: Lostt 89
 player 3: drufinho 87
 sub: -
-coach: BRUNOVISQUII 82
+coach: BRUNOVISQUII 85
 org: FURIA ++
 ```
 
@@ -1849,7 +1849,7 @@ player 1: brad 82
 player 2: droppz 82
 player 3: Reysbull 86
 sub: -
-coach: pekitas 79
+coach: pekitas 83
 org: MIBR
 ```
 
@@ -1911,9 +1911,9 @@ org: FUT Esports
 ### NA
 
 ```team: NRG Esports · 2026
-player 1: BeastMode 94
-player 2: Atomic 94
-player 3: Daniel 95
+player 1: BeastMode 92
+player 2: Atomic 93
+player 3: Daniel 93
 sub: -
 coach: Satthew 90
 org: NRG Esports +++
@@ -1924,7 +1924,7 @@ player 1: Lj. 89
 player 2: kofyr 86
 player 3: Firstkiller 94
 sub: -
-coach: -
+coach: violentpanda 84
 org: Shopify Rebellion ++
 ```
 
@@ -1933,16 +1933,16 @@ player 1: diaz 87
 player 2: Zach 88
 player 3: reveal 87
 sub: -
-coach: -
+coach: Xpére 87
 org: Spacestation Gaming ++
 ```
 
 ```team: FUT Esports · 2026
-player 1: jstn. 87
-player 2: Chronic 87
+player 1: jstn. 85
+player 2: Chronic 86
 player 3: CHEESE. 86
 sub: -
-coach: Laf 77
+coach: adam_baguette 82
 org: FUT Esports +
 ```
 
@@ -1950,10 +1950,10 @@ org: FUT Esports +
 
 ```team: Karmine Corp · 2026
 player 1: juicy 89
-player 2: Atow. 94
+player 2: Atow. 95
 player 3: Vatira 94
 sub: -
-coach: Extra 83
+coach: Extra 88
 org: Karmine Corp +++
 ```
 
@@ -1967,11 +1967,11 @@ org: Gentle Mates Alpine ++
 ```
 
 ```team: Team Vitality · 2026
-player 1: zen 97
-player 2: ExoTiiK 93
-player 3: Stizzy 87
+player 1: zen 96
+player 2: ExoTiiK 91
+player 3: Stizzy 89
 sub: -
-coach: Eversax 86
+coach: Eversax 88
 org: Team Vitality +++
 ```
 
@@ -1980,7 +1980,7 @@ player 1: oaly. 86
 player 2: Joreuz 88
 player 3: crr 87
 sub: -
-coach: -
+coach: LBP 85
 org: Ninjas in Pyjamas +
 ```
 
@@ -1996,11 +1996,11 @@ org: Manchester City Esports +
 ### OCE
 
 ```team: PWR · 2026
-player 1: gus 84
-player 2: Superlachie 84
-player 3: Fibérr 83
+player 1: gus 82
+player 2: Superlachie 80
+player 3: Fibérr 82
 sub: -
-coach: -
+coach: freakii 78
 org: PWR +
 ```
 
@@ -2011,7 +2011,7 @@ player 1: Sadness 85
 player 2: Aztromick 84
 player 3: Reysbull 87
 sub: -
-coach: pekitas 80
+coach: pekitas 84
 org: MIBR +
 ```
 
@@ -2020,27 +2020,27 @@ player 1: swiftt 87
 player 2: Lostt 89
 player 3: yanxnz 91
 sub: -
-coach: BRUNOVISQUII 82
+coach: BRUNOVISQUII 86
 org: FURIA ++
 ```
 
 ### MENA
 
 ```team: Twisted Minds · 2026
-player 1: M0nkey M00n 96
-player 2: Nwpo 95
-player 3: trk511 93
+player 1: M0nkey M00n 92
+player 2: Nwpo 92
+player 3: trk511 91
 sub: -
-coach: -
+coach: SadJunior 88
 org: Twisted Minds +++
 ```
 
 ```team: Team Falcons · 2026
-player 1: dralii 94
-player 2: Kiileerrz 93
-player 3: Rw9 93
+player 1: dralii 91
+player 2: Kiileerrz 91
+player 3: Rw9 92
 sub: -
-coach: d7oom-24 83
+coach: d7oom-24 86
 org: Team Falcons +++
 ```
 
@@ -2062,8 +2062,526 @@ player 1: Sweaty 75
 player 2: LuiisP 78
 player 3: 2Die4 79
 sub: -
-coach: Lawler 77
+coach: Lawler 80
 org: Pioneers
 ```
 
 ---
+
+---
+
+# ===========================================================================
+# REGIONAL TOP-8 (sam-only) — appears ONLY in the region-locked draft mode
+# ===========================================================================
+# These SAM Top-8 teams did NOT reach RLCS Worlds/Finals, so they are EXCLUDED
+# from the general (Worlds) draft. Every block carries `flag: sam-only`; the
+# generator sets the lineup samOnly:true and the engine keeps it out of the
+# default draftable pool. Season is read from each team line (e.g. `· S7 ·`),
+# region from the `### SAM` heading below. Source: data-sources/sam-pending/.
+## Season 7 · 2019
+
+### SAM
+
+```team: Erodium · S7 · 2019
+player 1: CaioTG1 77
+player 2: math 79
+player 3: valt 73
+sub: Lance 60
+coach: Tibiano 58
+org: Erodium ~
+flag: sam-only
+```
+
+```team: Lotus · S7 · 2019
+player 1: Haberkamper 75
+player 2: FirefoxD 73
+player 3: Juan 71
+sub: DuduBRHue 60
+coach: -
+org: Lotus ~
+flag: sam-only
+```
+
+```team: Orchid · S7 · 2019
+player 1: BRUNOVISQUII 72
+player 2: C4 70
+player 3: Noisy 69
+sub: MateusSTL 58
+coach: -
+org: Orchid ~
+flag: sam-only
+```
+
+```team: Team CryptiK · S7 · 2019
+player 1: Szaro 71
+player 2: Flasheeyy 70
+player 3: Sempa 68
+sub: -
+coach: -
+org: Team CryptiK ~
+flag: sam-only
+```
+
+```team: GFactor Galaxy · S7 · 2019
+player 1: Gonk 69
+player 2: PansitoFrances 69
+player 3: Orbi7 68
+sub: Deathxplosion 56
+coach: -
+org: GFactor Galaxy ~
+flag: sam-only
+```
+
+```team: FantasyDeath · S7 · 2019
+player 1: DavInsano 68
+player 2: LeoDkn 68
+player 3: SnipJuzo 68
+sub: SrForeverplays 50
+coach: -
+org: FantasyDeath ~
+flag: sam-only
+```
+
+---
+
+## Season 8 · 2019
+
+### SAM
+
+```team: Lotus · S8 · 2019
+player 1: Haberkamper 76
+player 2: renaN 75
+player 3: FirefoxD 74
+sub: DuduBRHue 61
+coach: -
+org: Lotus ~
+flag: sam-only
+```
+
+```team: INTZ eSports · S8 · 2019
+player 1: repi 74
+player 2: PJ 73
+player 3: Juan 72
+sub: Sword 60
+coach: -
+org: INTZ eSports ~
+flag: sam-only
+```
+
+```team: Oxey Team · S8 · 2019
+player 1: Luk 72
+player 2: Reysbull 70
+player 3: DisLike 70
+sub: Richy 60
+coach: Androzz 60
+org: Oxey Team ~
+flag: sam-only
+```
+
+```team: Hawks · S8 · 2019
+player 1: Lexim 71
+player 2: Gonk 70
+player 3: Sempa 69
+sub: Manteca 60
+coach: Aguesome 70
+org: Hawks ~
+flag: sam-only
+```
+
+```team: Monos · S8 · 2019
+player 1: ajg 71
+player 2: Shad 71
+player 3: GaTox 69
+sub: -
+coach: -
+org: Monos ~
+flag: sam-only
+```
+
+```team: Orchid · S8 · 2019
+player 1: BRUNOVISQUII 70
+player 2: Szaro 69
+player 3: Noisy 69
+sub: MateusSTL 60
+coach: -
+org: Orchid ~
+flag: sam-only
+```
+
+---
+
+## Season 9 · 2020
+
+### SAM
+
+```team: Most Wanted · S9 · 2020
+player 1: math 79
+player 2: fAsi 77
+player 3: Luk 74
+sub: ianpinheiro 66
+coach: -
+org: Most Wanted ~
+flag: sam-only
+```
+
+```team: The Three Sins · S9 · 2020
+player 1: matix 76
+player 2: PJ 74
+player 3: valt 73
+sub: Brad 70
+coach: Cha0s 73
+org: The Three Sins ~
+flag: sam-only
+```
+
+```team: True Neutral · S9 · 2020
+player 1: Reysbull 74
+player 2: Shad 73
+player 3: Lexim 73
+sub: Manteca 62
+coach: Aguesome 73
+org: True Neutral ~
+flag: sam-only
+```
+
+```team: Poison Bullets · S9 · 2020
+player 1: repi 73
+player 2: droppz 72
+player 3: Juan 71
+sub: Zanetti 62
+coach: Majowww 60
+org: Poison Bullets ~
+flag: sam-only
+```
+
+```team: Sapphire · S9 · 2020
+player 1: BRUNOVISQUII 72
+player 2: Sword 70
+player 3: SppydeR 69
+sub: SubHallz 60
+coach: MateusSTL 72
+org: Sapphire ~
+flag: sam-only
+```
+
+```team: Three Point Shooters · S9 · 2020
+player 1: ajg 72
+player 2: pan 70
+player 3: gonk 70
+sub: SrNaniTou 58
+coach: Laayoh 67
+org: Three Point Shooters ~
+flag: sam-only
+```
+
+---
+
+## RLCS X · 2020-21
+
+### SAM
+
+```team: The Three Sins · RLCS X · 2020-21
+player 1: matix 80
+player 2: PJ 78
+player 3: valt 77
+sub: -
+coach: -
+org: The Three Sins ~
+flag: sam-only
+```
+
+```team: Rebel · RLCS X · 2020-21
+player 1: yanxnz 87
+player 2: AztromicK 83
+player 3: snipjz 80
+sub: -
+coach: Bliss 72
+org: Rebel ~
+flag: sam-only
+```
+
+```team: Noble esports · RLCS X · 2020-21
+player 1: Haberkamper 75
+player 2: renaN 75
+player 3: FirefoxD 74
+sub: Firewall154 62
+coach: Jato 72
+org: Noble esports ~
+flag: sam-only
+```
+
+```team: Nocturns Gaming · RLCS X · 2020-21
+player 1: Szaro 72
+player 2: TaTu 73
+player 3: pan 73
+sub: Gonk 70
+coach: Nachusky 60
+org: Nocturns Gaming ~
+flag: sam-only
+```
+
+```team: Carnage Gaming · RLCS X · 2020-21
+player 1: fAsi 77
+player 2: ianpinheiro 73
+player 3: Chr1s 72
+sub: -
+coach: -
+org: Carnage Gaming ~
+flag: sam-only
+```
+
+```team: Chromax · RLCS X · 2020-21
+player 1: Brad 75
+player 2: droppz 75
+player 3: repi 75
+sub: Zanetti 63
+coach: -
+org: Chromax ~
+flag: sam-only
+```
+
+---
+
+## 2021-22
+
+### SAM
+
+```team: Elevate · 2021-22
+player 1: droppz 78
+player 2: Luk 76
+player 3: snipjz 77
+sub: kixou 62
+coach: xoz1N 72
+org: Elevate ~
+flag: sam-only
+```
+
+```team: Hawks · 2021-22
+player 1: repi 74
+player 2: yanD 73
+player 3: KnS 73
+sub: Waantz 62
+coach: Pedrokanicastro 74
+org: Hawks ~
+flag: sam-only
+```
+
+```team: EndGame · 2021-22
+player 1: bmendesantos 72
+player 2: Wells 73
+player 3: ianpinheiro 73
+sub: -
+coach: FARz 73
+org: EndGame ~
+flag: sam-only
+```
+
+```team: Leviatán · 2021-22
+player 1: aguz 74
+player 2: Lexim 74
+player 3: UmBroken 74
+sub: -
+coach: Stolen 75
+org: Leviatán ~
+flag: sam-only
+```
+
+```team: KRÜ Esports · 2021-22
+player 1: drufinho 83
+player 2: Bemmz 78
+player 3: pan 75
+sub: GaTox 65
+coach: pekitas 79
+org: KRÜ Esports ~
+flag: sam-only
+```
+
+---
+
+## 2022-23
+
+### SAM
+
+```team: Exeed · 2022-23
+player 1: Davitrox 76
+player 2: KnS 75
+player 3: klaus 75
+sub: baait 64
+coach: Pedrokanicastro 76
+org: Exeed ~
+flag: sam-only
+```
+
+```team: Ruby · 2022-23
+player 1: alpe 74
+player 2: davinsano 71
+player 3: LeoDkn 71
+sub: -
+coach: Stolen 74
+org: Ruby ~
+flag: sam-only
+```
+
+```team: EndGame · 2022-23
+player 1: Luk 74
+player 2: Wells 74
+player 3: seck 73
+sub: lag0 64
+coach: FARz 73
+org: EndGame ~
+flag: sam-only
+```
+
+```team: Blazar · 2022-23
+player 1: PJ 73
+player 2: Darxtz 73
+player 3: twistt 73
+sub: -
+coach: Luc 67
+org: Blazar ~
+flag: sam-only
+```
+
+```team: eRa · 2022-23
+player 1: pan 75
+player 2: UmBroken 75
+player 3: ianpinheiro 74
+sub: -
+coach: groval 77
+org: eRa ~
+flag: sam-only
+```
+
+---
+
+## 2024
+
+### SAM
+
+```team: Complexity Gaming · 2024
+player 1: Reysbull 84
+player 2: crr 82
+player 3: dorito 80
+sub: -
+coach: Aguesome 82
+org: Complexity Gaming ~
+flag: sam-only
+```
+
+```team: Ninjas in Pyjamas · 2024
+player 1: swiftt 84
+player 2: AztromicK 82
+player 3: nxghtt 82
+sub: -
+coach: fAsi 80
+org: Ninjas in Pyjamas ~
+flag: sam-only
+```
+
+```team: KRÜ Esports · 2024
+player 1: caard 82
+player 2: ajg 80
+player 3: Bemmz 80
+sub: wisty 78
+coach: pekitas 83
+org: KRÜ Esports ~
+flag: sam-only
+```
+
+```team: w7m esports · 2024
+player 1: caiotg1 80
+player 2: Royales 79
+player 3: pan 77
+sub: -
+coach: tander 77
+org: w7m esports ~
+flag: sam-only
+```
+
+```team: Bodybuilders · 2024
+player 1: caiotg1 80
+player 2: yanD 74
+player 3: Dappluto 73
+sub: -
+coach: FARz 74
+org: Bodybuilders ~
+flag: sam-only
+```
+
+```team: GamerLegion · 2024
+player 1: pan 77
+player 2: UmBroken 75
+player 3: ianpinheiro 74
+sub: -
+coach: -
+org: GamerLegion ~
+flag: sam-only
+```
+
+---
+
+## 2025
+
+### SAM
+
+```team: Godfidence · 2025
+player 1: AztromicK 85
+player 2: Bemmz 82
+player 3: suco 80
+sub: fAsi 66
+coach: Kaoshi 77
+org: Godfidence ~
+flag: sam-only
+```
+
+```team: Amethyst · 2025
+player 1: Sadness 84
+player 2: nxghtt 82
+player 3: wisty 80
+sub: -
+coach: Michi 80
+org: Amethyst ~
+flag: sam-only
+```
+
+```team: Sunset · 2025
+player 1: caard 83
+player 2: caiotg1 82
+player 3: crn 76
+sub: -
+coach: PatoLimpo 74
+org: Sunset ~
+flag: sam-only
+```
+
+```team: Moonrise · 2025
+player 1: KnS 75
+player 2: yanD 75
+player 3: klaus 75
+sub: -
+coach: repi 70
+org: Moonrise ~
+flag: sam-only
+```
+
+```team: Latino Heat · 2025
+player 1: pan 76
+player 2: Davitrox 76
+player 3: nachosky 74
+sub: -
+coach: groval 79
+org: Latino Heat ~
+flag: sam-only
+```
+
+# Wings E-Sports — Season 2 easter egg (the creator's own team, LiberatoRL).
+
+```team: Wings E-Sports · S2 · 2016
+player 1: LiberatoRL 68
+player 2: Ninja23509 71
+player 3: Repi 70
+sub: -
+coach: -
+org: Wings E-Sports +
+flag: sam-only rare
+```

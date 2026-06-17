@@ -8,7 +8,11 @@ const player = (
   country: string,
 ): ChemPlayerInput => ({ name, lineupId, orgId, country });
 
-describe("chemistry (§22)", () => {
+const ORDER = ["Poor", "Okay", "Good", "Great", "Perfect"];
+const atLeast = (tier: string, floor: string) =>
+  expect(ORDER.indexOf(tier)).toBeGreaterThanOrEqual(ORDER.indexOf(floor));
+
+describe("chemistry (§22, v1.2.0 rework — generous + reachable)", () => {
   it("full same-lineup roster with matching staff and org is Perfect", () => {
     const result = computeChemistry({
       players: [
@@ -21,7 +25,6 @@ describe("chemistry (§22)", () => {
       orgId: "O1",
       orgName: "Org",
     });
-    expect(result.raw).toBe(16);
     expect(result.percent).toBe(100);
     expect(result.tier).toBe("Perfect");
   });
@@ -30,14 +33,14 @@ describe("chemistry (§22)", () => {
     const result = computeChemistry({
       players: [
         player("A", "L1", "O1", "FR"),
-        player("B", "L1", "O1", "FR"), // same lineup AND country AND org → only +3
+        player("B", "L1", "O1", "FR"), // same lineup AND country AND org → only the lineup link
         player("C", "L9", "O9", "US"),
       ],
     });
-    expect(result.raw).toBe(3);
+    expect(result.raw).toBe(4); // one same-lineup pair
   });
 
-  it("scores same-country and same-org pairs at ++ and +", () => {
+  it("scores same-country (3) and same-org (2) pairs", () => {
     const country = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -45,7 +48,7 @@ describe("chemistry (§22)", () => {
         player("C", "L3", "O3", "US"),
       ],
     });
-    expect(country.raw).toBe(2);
+    expect(country.raw).toBe(3);
 
     const org = computeChemistry({
       players: [
@@ -54,22 +57,31 @@ describe("chemistry (§22)", () => {
         player("C", "L3", "O3", "US"),
       ],
     });
-    expect(org.raw).toBe(1);
+    expect(org.raw).toBe(2);
   });
 
-  it("adds org history links per connected player", () => {
+  it("a 3-player country stack reaches Great — the achievable strategic payoff", () => {
     const result = computeChemistry({
       players: [
-        player("A", "L1", "O1", "FR"),
-        player("B", "L2", "O1", "SE"),
+        player("A", "L1", "O1", "BR"),
+        player("B", "L2", "O2", "BR"),
+        player("C", "L3", "O3", "BR"),
+      ],
+    });
+    atLeast(result.tier, "Great");
+  });
+
+  it("two linked players plus an org tie reach Good", () => {
+    const result = computeChemistry({
+      players: [
+        player("A", "L1", "O1", "BR"),
+        player("B", "L2", "O2", "BR"),
         player("C", "L3", "O3", "US"),
       ],
       orgId: "O1",
-      orgName: "Org One",
+      orgName: "Org",
     });
-    // A+B same org (+1) plus two org-history links (+2)
-    expect(result.raw).toBe(3);
-    expect(result.items.some((i) => i.label.includes("org history"))).toBe(true);
+    atLeast(result.tier, "Good");
   });
 
   it("an all-star mix with no links is Poor", () => {

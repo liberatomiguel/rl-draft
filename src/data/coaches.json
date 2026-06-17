@@ -21,7 +21,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-s7",
     "seasonId": "rlcs-s7",
-    "overall": 76,
+    "overall": 82,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -34,7 +34,7 @@
     "orgId": "nrg-esports",
     "lineupId": "nrg-esports-s7",
     "seasonId": "rlcs-s7",
-    "overall": 81,
+    "overall": 83,
     "bonusType": "clutch",
     "bonusLevel": "+"
   },
@@ -47,21 +47,20 @@
     "orgId": "team-vitality",
     "lineupId": "team-vitality-s7",
     "seasonId": "rlcs-s7",
-    "overall": 86,
+    "overall": 89,
     "bonusType": "consistency",
     "bonusLevel": "++"
   },
   {
-    "id": "gregan-coach-fc-barcelona-s7",
-    "personId": "gregan",
-    "name": "Gregan",
-    "country": "GB",
+    "id": "roken-coach-fc-barcelona-s7",
+    "personId": "roken",
+    "name": "Roken",
     "region": "EU",
     "orgId": "fc-barcelona",
     "lineupId": "fc-barcelona-s7",
     "seasonId": "rlcs-s7",
-    "overall": 84,
-    "bonusType": "consistency",
+    "overall": 79,
+    "bonusType": "offense",
     "bonusLevel": "+"
   },
   {
@@ -73,9 +72,9 @@
     "orgId": "triple-trouble",
     "lineupId": "triple-trouble-s7",
     "seasonId": "rlcs-s7",
-    "overall": 65,
+    "overall": 78,
     "bonusType": "offense",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "jato-coach-intz-esports-s7",
@@ -125,7 +124,7 @@
     "orgId": "pittsburgh-knights",
     "lineupId": "pittsburgh-knights-s8",
     "seasonId": "rlcs-s8",
-    "overall": 77,
+    "overall": 80,
     "bonusType": "clutch",
     "bonusLevel": "+"
   },
@@ -156,16 +155,16 @@
     "bonusLevel": "+"
   },
   {
-    "id": "yumicheeseman-coach-veloce-esports-s8",
-    "personId": "yumicheeseman",
-    "name": "yumi_cheeseman",
-    "country": "AU",
+    "id": "miztik-coach-veloce-esports-s8",
+    "personId": "miztik",
+    "name": "miztik",
+    "country": "GB",
     "region": "EU",
     "orgId": "veloce-esports",
     "lineupId": "veloce-esports-s8",
     "seasonId": "rlcs-s8",
     "overall": 70,
-    "bonusType": "experience",
+    "bonusType": "consistency",
     "bonusLevel": "~"
   },
   {
@@ -190,7 +189,7 @@
     "orgId": "lowkey-esports",
     "lineupId": "lowkey-esports-s8",
     "seasonId": "rlcs-s8",
-    "overall": 83,
+    "overall": 78,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -203,7 +202,7 @@
     "orgId": "the-three-sins",
     "lineupId": "the-three-sins-s8",
     "seasonId": "rlcs-s8",
-    "overall": 58,
+    "overall": 70,
     "bonusType": "offense",
     "bonusLevel": "~"
   },
@@ -216,7 +215,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-s9",
     "seasonId": "rlcs-s9",
-    "overall": 78,
+    "overall": 84,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -242,9 +241,9 @@
     "orgId": "nrg-esports",
     "lineupId": "nrg-esports-s9",
     "seasonId": "rlcs-s9",
-    "overall": 84,
+    "overall": 85,
     "bonusType": "consistency",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "virge-coach-dignitas-s9",
@@ -255,9 +254,9 @@
     "orgId": "dignitas",
     "lineupId": "dignitas-s9",
     "seasonId": "rlcs-s9",
-    "overall": 83,
+    "overall": 86,
     "bonusType": "experience",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "gregan-coach-team-vitality-s9",
@@ -268,9 +267,9 @@
     "orgId": "team-vitality",
     "lineupId": "team-vitality-s9",
     "seasonId": "rlcs-s9",
-    "overall": 84,
+    "overall": 87,
     "bonusType": "consistency",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "elgeneral-coach-fc-barcelona-s9",
@@ -281,9 +280,9 @@
     "orgId": "fc-barcelona",
     "lineupId": "fc-barcelona-s9",
     "seasonId": "rlcs-s9",
-    "overall": 70,
+    "overall": 82,
     "bonusType": "experience",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "jimmah-coach-fury-s9",
@@ -294,9 +293,9 @@
     "orgId": "fury",
     "lineupId": "fury-s9",
     "seasonId": "rlcs-s9",
-    "overall": 61,
+    "overall": 77,
     "bonusType": "defense",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "sizz-coach-nrg-esports-x",
@@ -307,7 +306,7 @@
     "orgId": "nrg-esports",
     "lineupId": "nrg-esports-x",
     "seasonId": "rlcs-x",
-    "overall": 84,
+    "overall": 82,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -333,7 +332,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-x",
     "seasonId": "rlcs-x",
-    "overall": 79,
+    "overall": 83,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -346,7 +345,7 @@
     "orgId": "rogue",
     "lineupId": "rogue-x",
     "seasonId": "rlcs-x",
-    "overall": 76,
+    "overall": 77,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -359,9 +358,9 @@
     "orgId": "faze-clan",
     "lineupId": "faze-clan-x",
     "seasonId": "rlcs-x",
-    "overall": 72,
+    "overall": 80,
     "bonusType": "clutch",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "kael-coach-team-bds-x",
@@ -372,9 +371,9 @@
     "orgId": "team-bds",
     "lineupId": "team-bds-x",
     "seasonId": "rlcs-x",
-    "overall": 83,
+    "overall": 85,
     "bonusType": "mechanics",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "mout-coach-team-vitality-x",
@@ -385,7 +384,7 @@
     "orgId": "team-vitality",
     "lineupId": "team-vitality-x",
     "seasonId": "rlcs-x",
-    "overall": 78,
+    "overall": 84,
     "bonusType": "offense",
     "bonusLevel": "+"
   },
@@ -398,9 +397,9 @@
     "orgId": "true-neutral",
     "lineupId": "true-neutral-x",
     "seasonId": "rlcs-x",
-    "overall": 71,
+    "overall": 77,
     "bonusType": "consistency",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "stl-coach-furia-x",
@@ -424,7 +423,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 84,
+    "overall": 83,
     "bonusType": "clutch",
     "bonusLevel": "+"
   },
@@ -437,7 +436,7 @@
     "orgId": "faze-clan",
     "lineupId": "faze-clan-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 78,
+    "overall": 79,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -450,7 +449,7 @@
     "orgId": "nrg-esports",
     "lineupId": "nrg-esports-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 84,
+    "overall": 81,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -463,7 +462,7 @@
     "orgId": "version1",
     "lineupId": "version1-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 82,
+    "overall": 83,
     "bonusType": "clutch",
     "bonusLevel": "+"
   },
@@ -476,9 +475,9 @@
     "orgId": "spacestation-gaming",
     "lineupId": "spacestation-gaming-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 82,
+    "overall": 85,
     "bonusType": "clutch",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "rawgreg-coach-optic-gaming-2122",
@@ -489,7 +488,7 @@
     "orgId": "optic-gaming",
     "lineupId": "optic-gaming-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 76,
+    "overall": 80,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -515,7 +514,7 @@
     "orgId": "moist-esports",
     "lineupId": "moist-esports-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 84,
+    "overall": 82,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -528,7 +527,7 @@
     "orgId": "karmine-corp",
     "lineupId": "karmine-corp-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 84,
+    "overall": 83,
     "bonusType": "clutch",
     "bonusLevel": "+"
   },
@@ -541,7 +540,7 @@
     "orgId": "endpoint-cex",
     "lineupId": "endpoint-cex-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 75,
+    "overall": 82,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -567,9 +566,9 @@
     "orgId": "the-club",
     "lineupId": "the-club-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 71,
+    "overall": 75,
     "bonusType": "defense",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "d7oom24-coach-team-falcons-2122",
@@ -580,7 +579,7 @@
     "orgId": "team-falcons",
     "lineupId": "team-falcons-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 83,
+    "overall": 81,
     "bonusType": "defense",
     "bonusLevel": "+"
   },
@@ -606,7 +605,7 @@
     "orgId": "faze-clan",
     "lineupId": "faze-clan-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 78,
+    "overall": 83,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -619,9 +618,9 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 84,
+    "overall": 87,
     "bonusType": "clutch",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "chrome-coach-spacestation-gaming-2223",
@@ -632,9 +631,9 @@
     "orgId": "spacestation-gaming",
     "lineupId": "spacestation-gaming-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 80,
+    "overall": 85,
     "bonusType": "clutch",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "aguesome-coach-complexity-gaming-2223",
@@ -645,7 +644,7 @@
     "orgId": "complexity-gaming",
     "lineupId": "complexity-gaming-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 79,
+    "overall": 83,
     "bonusType": "consistency",
     "bonusLevel": "+"
   },
@@ -658,7 +657,7 @@
     "orgId": "team-vitality",
     "lineupId": "team-vitality-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 90,
+    "overall": 91,
     "bonusType": "consistency",
     "bonusLevel": "++"
   },
@@ -671,7 +670,7 @@
     "orgId": "team-bds",
     "lineupId": "team-bds-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 86,
+    "overall": 87,
     "bonusType": "offense",
     "bonusLevel": "++"
   },
@@ -689,6 +688,19 @@
     "bonusLevel": "++"
   },
   {
+    "id": "brunovisquii-coach-team-secret-2223",
+    "personId": "brunovisquii",
+    "name": "BRUNOVISQUII",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "team-secret",
+    "lineupId": "team-secret-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 84,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
     "id": "d7oom24-coach-team-falcons-2223",
     "personId": "d7oom24",
     "name": "d7oom-24",
@@ -697,7 +709,7 @@
     "orgId": "team-falcons",
     "lineupId": "team-falcons-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 81,
+    "overall": 84,
     "bonusType": "defense",
     "bonusLevel": "+"
   },
@@ -723,7 +735,7 @@
     "orgId": "g2-stride",
     "lineupId": "g2-stride-2024",
     "seasonId": "rlcs-2024",
-    "overall": 89,
+    "overall": 86,
     "bonusType": "clutch",
     "bonusLevel": "++"
   },
@@ -736,7 +748,7 @@
     "orgId": "gen-g-mobil1-racing",
     "lineupId": "gen-g-mobil1-racing-2024",
     "seasonId": "rlcs-2024",
-    "overall": 81,
+    "overall": 83,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -749,9 +761,9 @@
     "orgId": "spacestation-gaming",
     "lineupId": "spacestation-gaming-2024",
     "seasonId": "rlcs-2024",
-    "overall": 80,
+    "overall": 85,
     "bonusType": "clutch",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "kassio-coach-team-bds-2024",
@@ -788,7 +800,7 @@
     "orgId": "karmine-corp",
     "lineupId": "karmine-corp-2024",
     "seasonId": "rlcs-2024",
-    "overall": 88,
+    "overall": 90,
     "bonusType": "consistency",
     "bonusLevel": "++"
   },
@@ -801,9 +813,9 @@
     "orgId": "oxygen-esports",
     "lineupId": "oxygen-esports-2024",
     "seasonId": "rlcs-2024",
-    "overall": 78,
+    "overall": 86,
     "bonusType": "mechanics",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "brunovisquii-coach-furia-2024",
@@ -814,9 +826,9 @@
     "orgId": "furia",
     "lineupId": "furia-2024",
     "seasonId": "rlcs-2024",
-    "overall": 81,
+    "overall": 85,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "d7oom24-coach-team-falcons-2024",
@@ -827,9 +839,9 @@
     "orgId": "team-falcons",
     "lineupId": "team-falcons-2024",
     "seasonId": "rlcs-2024",
-    "overall": 83,
+    "overall": 85,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "noxes-coach-limitless-2024",
@@ -866,7 +878,7 @@
     "orgId": "spacestation-gaming",
     "lineupId": "spacestation-gaming-2025",
     "seasonId": "rlcs-2025",
-    "overall": 77,
+    "overall": 84,
     "bonusType": "defense",
     "bonusLevel": "+"
   },
@@ -879,7 +891,7 @@
     "orgId": "gen-g-mobil1-racing",
     "lineupId": "gen-g-mobil1-racing-2025",
     "seasonId": "rlcs-2025",
-    "overall": 78,
+    "overall": 80,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -918,7 +930,7 @@
     "orgId": "dignitas",
     "lineupId": "dignitas-2025",
     "seasonId": "rlcs-2025",
-    "overall": 78,
+    "overall": 83,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -944,9 +956,9 @@
     "orgId": "furia",
     "lineupId": "furia-2025",
     "seasonId": "rlcs-2025",
-    "overall": 82,
+    "overall": 85,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "pekitas-coach-mibr-2025",
@@ -957,7 +969,7 @@
     "orgId": "mibr",
     "lineupId": "mibr-2025",
     "seasonId": "rlcs-2025",
-    "overall": 79,
+    "overall": 83,
     "bonusType": "experience",
     "bonusLevel": "+"
   },
@@ -988,16 +1000,42 @@
     "bonusLevel": "++"
   },
   {
-    "id": "laf-coach-fut-esports-na-2026",
-    "personId": "laf",
-    "name": "Laf",
-    "country": "CA",
+    "id": "violentpanda-coach-shopify-rebellion-2026",
+    "personId": "violentpanda",
+    "name": "violentpanda",
+    "country": "NL",
+    "region": "NA",
+    "orgId": "shopify-rebellion",
+    "lineupId": "shopify-rebellion-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 84,
+    "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "xpere-coach-spacestation-gaming-2026",
+    "personId": "xpere",
+    "name": "Xpére",
+    "country": "PT",
+    "region": "NA",
+    "orgId": "spacestation-gaming",
+    "lineupId": "spacestation-gaming-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 87,
+    "bonusType": "defense",
+    "bonusLevel": "++"
+  },
+  {
+    "id": "adambaguette-coach-fut-esports-na-2026",
+    "personId": "adambaguette",
+    "name": "adam_baguette",
+    "country": "FR",
     "region": "NA",
     "orgId": "fut-esports-na",
     "lineupId": "fut-esports-na-2026",
     "seasonId": "rlcs-2026",
-    "overall": 77,
-    "bonusType": "offense",
+    "overall": 82,
+    "bonusType": "defense",
     "bonusLevel": "+"
   },
   {
@@ -1009,9 +1047,9 @@
     "orgId": "karmine-corp",
     "lineupId": "karmine-corp-2026",
     "seasonId": "rlcs-2026",
-    "overall": 83,
+    "overall": 88,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "eversax-coach-team-vitality-2026",
@@ -1022,9 +1060,35 @@
     "orgId": "team-vitality",
     "lineupId": "team-vitality-2026",
     "seasonId": "rlcs-2026",
-    "overall": 86,
+    "overall": 88,
     "bonusType": "clutch",
     "bonusLevel": "++"
+  },
+  {
+    "id": "lbp-coach-ninjas-in-pyjamas-2026",
+    "personId": "lbp",
+    "name": "LBP",
+    "country": "AU",
+    "region": "EU",
+    "orgId": "ninjas-in-pyjamas",
+    "lineupId": "ninjas-in-pyjamas-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 85,
+    "bonusType": "clutch",
+    "bonusLevel": "++"
+  },
+  {
+    "id": "freakii-coach-pwr-2026",
+    "personId": "freakii",
+    "name": "freakii",
+    "country": "DE",
+    "region": "OCE",
+    "orgId": "pwr",
+    "lineupId": "pwr-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 78,
+    "bonusType": "offense",
+    "bonusLevel": "+"
   },
   {
     "id": "pekitas-coach-mibr-2026",
@@ -1035,7 +1099,7 @@
     "orgId": "mibr",
     "lineupId": "mibr-2026",
     "seasonId": "rlcs-2026",
-    "overall": 80,
+    "overall": 84,
     "bonusType": "experience",
     "bonusLevel": "+"
   },
@@ -1048,9 +1112,22 @@
     "orgId": "furia",
     "lineupId": "furia-2026",
     "seasonId": "rlcs-2026",
-    "overall": 82,
+    "overall": 86,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
+  },
+  {
+    "id": "sadjunior-coach-twisted-minds-2026",
+    "personId": "sadjunior",
+    "name": "SadJunior",
+    "country": "CA",
+    "region": "MENA",
+    "orgId": "twisted-minds",
+    "lineupId": "twisted-minds-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 88,
+    "bonusType": "mechanics",
+    "bonusLevel": "++"
   },
   {
     "id": "d7oom24-coach-team-falcons-2026",
@@ -1061,9 +1138,9 @@
     "orgId": "team-falcons",
     "lineupId": "team-falcons-2026",
     "seasonId": "rlcs-2026",
-    "overall": 83,
+    "overall": 86,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "lawler-coach-pioneers-ssa-2026",
@@ -1074,7 +1151,410 @@
     "orgId": "pioneers-ssa",
     "lineupId": "pioneers-ssa-2026",
     "seasonId": "rlcs-2026",
+    "overall": 80,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "tibiano-coach-erodium-s7",
+    "personId": "tibiano",
+    "name": "Tibiano",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "erodium",
+    "lineupId": "erodium-s7",
+    "seasonId": "rlcs-s7",
+    "overall": 58,
+    "bonusType": "clutch",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "androzz-coach-oxey-team-s8",
+    "personId": "androzz",
+    "name": "Androzz",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "oxey-team",
+    "lineupId": "oxey-team-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 60,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "aguesome-coach-hawks-s8",
+    "personId": "aguesome",
+    "name": "Aguesome",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "hawks",
+    "lineupId": "hawks-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 70,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "cha0s-coach-the-three-sins-s9",
+    "personId": "cha0s",
+    "name": "Cha0s",
+    "country": "BE",
+    "region": "SAM",
+    "orgId": "the-three-sins",
+    "lineupId": "the-three-sins-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 73,
+    "bonusType": "offense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "aguesome-coach-true-neutral-s9",
+    "personId": "aguesome",
+    "name": "Aguesome",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "true-neutral",
+    "lineupId": "true-neutral-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 73,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "majowww-coach-poison-bullets-s9",
+    "personId": "majowww",
+    "name": "Majowww",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "poison-bullets",
+    "lineupId": "poison-bullets-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 60,
+    "bonusType": "defense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "mateusstl-coach-sapphire-s9",
+    "personId": "mateusstl",
+    "name": "MateusSTL",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "sapphire",
+    "lineupId": "sapphire-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 72,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "laayoh-coach-three-point-shooters-s9",
+    "personId": "laayoh",
+    "name": "Laayoh",
+    "country": "US",
+    "region": "SAM",
+    "orgId": "three-point-shooters",
+    "lineupId": "three-point-shooters-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 67,
+    "bonusType": "defense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "bliss-coach-rebel-x",
+    "personId": "bliss",
+    "name": "Bliss",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "rebel",
+    "lineupId": "rebel-x",
+    "seasonId": "rlcs-x",
+    "overall": 72,
+    "bonusType": "mechanics",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "jato-coach-noble-esports-x",
+    "personId": "jato",
+    "name": "Jato",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "noble-esports",
+    "lineupId": "noble-esports-x",
+    "seasonId": "rlcs-x",
+    "overall": 72,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "nachusky-coach-nocturns-gaming-x",
+    "personId": "nachusky",
+    "name": "Nachusky",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "nocturns-gaming",
+    "lineupId": "nocturns-gaming-x",
+    "seasonId": "rlcs-x",
+    "overall": 60,
+    "bonusType": "clutch",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "xoz1n-coach-elevate-2122",
+    "personId": "xoz1n",
+    "name": "xoz1N",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "elevate",
+    "lineupId": "elevate-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 72,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "pedrokanicastro-coach-hawks-2122",
+    "personId": "pedrokanicastro",
+    "name": "Pedrokanicastro",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "hawks",
+    "lineupId": "hawks-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 74,
+    "bonusType": "mechanics",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "farz-coach-endgame-2122",
+    "personId": "farz",
+    "name": "FARz",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "endgame",
+    "lineupId": "endgame-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 73,
+    "bonusType": "offense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "stolen-coach-leviatan-2122",
+    "personId": "stolen",
+    "name": "Stolen",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "leviatan",
+    "lineupId": "leviatan-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 75,
+    "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "pekitas-coach-kru-esports-2122",
+    "personId": "pekitas",
+    "name": "pekitas",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "kru-esports",
+    "lineupId": "kru-esports-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 79,
+    "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "pedrokanicastro-coach-exeed-2223",
+    "personId": "pedrokanicastro",
+    "name": "Pedrokanicastro",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "exeed",
+    "lineupId": "exeed-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 76,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "stolen-coach-ruby-2223",
+    "personId": "stolen",
+    "name": "Stolen",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "ruby",
+    "lineupId": "ruby-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 74,
+    "bonusType": "offense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "farz-coach-endgame-2223",
+    "personId": "farz",
+    "name": "FARz",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "endgame",
+    "lineupId": "endgame-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 73,
+    "bonusType": "offense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "luc-coach-blazar-2223",
+    "personId": "luc",
+    "name": "Luc",
+    "country": "US",
+    "region": "SAM",
+    "orgId": "blazar",
+    "lineupId": "blazar-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 67,
+    "bonusType": "defense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "groval-coach-era-2223",
+    "personId": "groval",
+    "name": "groval",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "era",
+    "lineupId": "era-2223",
+    "seasonId": "rlcs-2022-23",
     "overall": 77,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "aguesome-coach-complexity-gaming-2024",
+    "personId": "aguesome",
+    "name": "Aguesome",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 82,
+    "bonusType": "consistency",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "fasi-coach-ninjas-in-pyjamas-2024",
+    "personId": "fasi",
+    "name": "fAsi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "ninjas-in-pyjamas",
+    "lineupId": "ninjas-in-pyjamas-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 80,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "pekitas-coach-kru-esports-2024",
+    "personId": "pekitas",
+    "name": "pekitas",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "kru-esports",
+    "lineupId": "kru-esports-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 83,
+    "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "tander-coach-w7m-esports-2024",
+    "personId": "tander",
+    "name": "tander",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "w7m-esports",
+    "lineupId": "w7m-esports-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 77,
+    "bonusType": "clutch",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "farz-coach-bodybuilders-2024",
+    "personId": "farz",
+    "name": "FARz",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "bodybuilders",
+    "lineupId": "bodybuilders-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 74,
+    "bonusType": "offense",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "kaoshi-coach-godfidence-2025",
+    "personId": "kaoshi",
+    "name": "Kaoshi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "godfidence",
+    "lineupId": "godfidence-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 77,
+    "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "michi-coach-amethyst-2025",
+    "personId": "michi",
+    "name": "Michi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "amethyst",
+    "lineupId": "amethyst-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 80,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "patolimpo-coach-sunset-2025",
+    "personId": "patolimpo",
+    "name": "PatoLimpo",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "sunset",
+    "lineupId": "sunset-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 74,
+    "bonusType": "experience",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "repi-coach-moonrise-2025",
+    "personId": "repi",
+    "name": "repi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "moonrise",
+    "lineupId": "moonrise-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 70,
+    "bonusType": "consistency",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "groval-coach-latino-heat-2025",
+    "personId": "groval",
+    "name": "groval",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "latino-heat",
+    "lineupId": "latino-heat-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 79,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   }

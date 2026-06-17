@@ -13,7 +13,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DIFFICULTY } from "@/config/balance";
-import { playerById, playerCardById } from "@/data";
+import { lineupPoolForRegion, playerById, playerCardById } from "@/data";
 import {
   applyFreeReroll,
   applyPick,
@@ -33,6 +33,7 @@ import { userSwissRecord } from "@/engine/swiss";
 import type {
   Difficulty,
   DraftOfferCard,
+  Region,
   RosterSlotId,
   RunHistoryEntry,
   RunMode,
@@ -48,6 +49,8 @@ export interface StartRunOptions {
   mode: Exclude<RunMode, "daily">;
   difficulty: Difficulty;
   showOverall: boolean;
+  /** Region-locked run (v1.2.0). null/undefined = worldwide (default). */
+  regionLock?: Region | null;
 }
 
 interface RunStore {
@@ -84,18 +87,23 @@ export const useRunStore = create<RunStore>()(
 
       setSetupMode: (setupMode) => set({ setupMode }),
 
-      startRun: ({ mode, difficulty, showOverall }) => {
+      startRun: ({ mode, difficulty, showOverall, regionLock }) => {
         const seed = randomSeed();
         const rng = createRng(seed);
         const profile = DIFFICULTY[difficulty];
-        const draft = drawNextOffer(createDraft(difficulty, { mode }), rng);
+        const region = regionLock ?? null;
+        // Region-locked runs draw from the region's full pool (Worlds finalists
+        // + its samOnly Top-8 teams); worldwide runs use the default pool.
+        const poolLineupIds = region ? lineupPoolForRegion(region) : undefined;
+        const draft = drawNextOffer(createDraft(difficulty, { mode, poolLineupIds }), rng);
 
         // Remember the setup for next time (and for "Play again").
-        useProfileStore.getState().setLastSetup(difficulty, showOverall, mode);
+        useProfileStore.getState().setLastSetup(difficulty, showOverall, mode, region);
 
         const run: RunState = {
           runId: uid("run"),
           mode,
+          ...(region ? { regionLock: region } : {}),
           seed,
           rngState: rng.state,
           difficulty,
@@ -111,6 +119,7 @@ export const useRunStore = create<RunStore>()(
           mode,
           difficulty,
           hiddenOverall: !run.showOverall,
+          region: region ?? "worldwide",
         });
       },
 
@@ -168,6 +177,7 @@ export const useRunStore = create<RunStore>()(
           mode: run.mode,
           difficulty: run.difficulty,
           showOverall: run.showOverall,
+          regionLock: run.regionLock ?? null,
         });
       },
 

@@ -65,6 +65,7 @@ export const NAV_UI = {
   madeBy: "Made by",
   inspiredBy: "Inspired by",
   by: "by",
+  balancedBy: "Overalls balanced by",
 };
 
 export const RUN_UI = {
@@ -103,6 +104,20 @@ export const SETUP = {
   ovrHidden: "OVR hidden",
   selected: "Selected",
   legacyBadge: "All-time gauntlet",
+  region: "Region",
+  regionHint: "Lock your run to one region's full scene — or draft worldwide.",
+  regionWorldwide: "Worldwide",
+  regionWorldwideHint: "Every RLCS World Championship team",
+  regionComingSoon: "Coming soon",
+  regionLockedBadge: "Region-locked",
+  regionDescWorldwide:
+    "Every RLCS World Championship team. Tap a region to lock the draft to its scene — only SAM is live for now, more coming soon.",
+  regionDescLocked: (region: string) =>
+    `${region} only — a deeper pool that also includes teams that never reached Worlds.`,
+  regionNames: {
+    NA: "North America", EU: "Europe", SAM: "South America", MENA: "MENA",
+    OCE: "Oceania", APAC: "APAC", SSA: "Sub-Saharan Africa",
+  } as Record<string, string>,
 };
 
 /** Difficulty names + taglines (the source lives in balance.ts; these mirror
@@ -148,7 +163,7 @@ export const ONBOARDING = {
   howToIntro: "Build a roster from RLCS history, then run the bracket. The basics:",
   howToSteps: [
     "Each round draws a historical RLCS lineup. Tap a card to draft it onto your team.",
-    "Fill 3 players, a coach, a sub and an org. Chemistry rewards stacking teammates, countries and orgs.",
+    "Fill 3 players, a coach, a sub and an org. Chemistry is your edge: stack the same country, org or historical lineup and a coherent roster can beat a higher-rated all-star mix — the top overall isn't always the smart pick.",
     "Then a tournament auto-plays: Swiss into double-elim playoffs. Higher overall + chemistry wins more series.",
     "Finish runs — win or lose — to earn XP, rank up, and unlock special cards for your collection.",
   ],
@@ -161,6 +176,14 @@ export const ONBOARDING = {
     "Win here and you've beaten the best of the best. Good luck.",
   ],
   legacyCta: "Bring it on",
+  regionalTitle: "Regional Draft",
+  regionalIntro: "This run is locked to one region's scene. Here's what changes:",
+  regionalSteps: [
+    "The pool is region-only — its Worlds teams PLUS the regional Top 8 that never reached a World Championship.",
+    "Deeper benches, local heroes and cult underdogs you'll never see in the worldwide draft.",
+    "Everything else is the same: difficulty, chemistry, the full tournament. Win it to fly your region's flag.",
+  ],
+  regionalCta: "Let's run it",
 };
 
 export const REVIEW = {
@@ -396,6 +419,8 @@ export const PROFILE_UI = {
 export const ACH_UI = {
   kicker: "Feats to chase across every run",
   title: "Achievements",
+  secretTitle: "???",
+  secretHint: "Hidden — discover it in play",
 };
 
 export const HOWTO = {
@@ -508,6 +533,7 @@ export const RARITY_LABELS: Record<string, string> = {
   epic: "Epic",
   mythic: "Mythic",
   legendary: "Legendary",
+  creator: "Creator",
 };
 
 export const EFFECT_LABELS: Record<string, string> = {
@@ -584,10 +610,26 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.2.0",
+      name: "Regional Champions",
+      date: "2026",
+      current: true,
+      notes: [
+        "New: Region-Locked Draft. Pick a region on the setup screen and draft from its whole scene — the Worlds teams PLUS the regional Top 8 that never reached a World Championship. South America (SAM) is live now; more regions are coming soon.",
+        "A much deeper South American pool — dozens of new SAM teams and players researched from Liquipedia.",
+        "Player and coach ratings across the whole game got a hand-reviewed tuning pass.",
+        "A new achievement for winning a region-locked run — and a hidden card out there for the curious.",
+        "Fixed: switching from Hard back to Normal or Easy now turns overalls back on automatically.",
+        "Tutorials got a visual refresh, and the rank-up, new-card and Legacy-unlock moments are now full-screen and wait for you — they only move on when you do.",
+        "Every team now wears its real logo, including the new South American orgs — and historic clubs like NRG, Dignitas, Spacestation and Vitality show the logo that matched each season.",
+        "Behind the scenes: faster page loads and Google indexing fixes.",
+      ],
+    },
+    {
       version: "1.1.1",
       name: "",
       date: "2026",
-      current: true,
+      current: false,
       notes: [
         "More special cards to collect — 80+ legendary players, MVP moments and coaches.",
         "The collection reads better on phones: two cards per row instead of one oversized card.",

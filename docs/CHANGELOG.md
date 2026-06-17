@@ -10,6 +10,151 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.2.0] — 2026 · "Regional Champions"
+
+A second draft pool per region, the SAM Top-8 import, an easter-egg card, and a
+batch of UX polish. Prep for the public launch.
+
+### Added
+- **Region-locked draft mode.** A new "Region" picker on the setup screen
+  (`SetupScreen.tsx`), for both Classic and Quick: **Worldwide** (default — the
+  Worlds/finals pool, unchanged) or a region. Only **SAM** is live; the other six
+  show a disabled **"Em Breve" / "Coming soon"** state. A region-locked run draws
+  from that region's FULL pool — its Worlds finalists PLUS its regional Top-8
+  teams. Pool computed in `runStore.startRun` via `lineupPoolForRegion(region)`
+  (`src/data`) and threaded through `createDraft`'s `poolLineupIds` into both the
+  draft and the opponent field. `RunState.regionLock` persists it across reload /
+  "play again"; `profileStore` remembers the last choice (`lastRegionLock`).
+- **SAM (South America) regional dataset — 46 new lineups.** The SAM Top-8 teams
+  that did NOT reach Worlds (S7→2025), researched from Liquipedia, merged into
+  `data-sources/teams.md` under a labeled "Regional Top-8 (sam-only)" trailing
+  section (parser reads season from each team line, region from `### SAM`). +72
+  players, +138 cards → 254 lineups / 372 players / 762 cards; the Worlds /
+  draftable pool stays **208**. Every block carries `flag: sam-only` → `samOnly`.
+- **`samOnly` separation tag.** New `Lineup.samOnly` (schema + generator + type).
+  A new `draftableLineups` export (`!samOnly`) is the default pool for the general
+  draft, opponents AND daily challenges, so regional teams never leak into them.
+- **"Creator" special-card rarity + the Wings easter egg.** A new `creator`
+  rarity (pink/violet frame, rose-pink OVR, mythic-tier halo, `holo-creator`
+  sheen). One unique card — **"Rocket Draft Creator"** (player `liberatorl`,
+  OVR 91) — whose effect lifts EVERY team attribute by +2. It lives on **Wings
+  E-Sports · S2**, a hidden SAM-region lineup (`rareSpawn`) that is EXCLUDED from
+  the normal draw and the opponent pool and instead **force-injected** into one
+  draft offer at `DRAFT.easterEggChance` (≈1%/offer, region-locked only); when it
+  appears, LiberatoRL's card is GUARANTEED to be the Creator special, so the prize
+  isn't gated behind a second 5% roll. Player specials can now carry
+  `team_attribute_boost` (was coach-only) — applied for the user and AI teams.
+- **Regional first-run tutorial** (`RunOnboarding`): a one-time "Regional Draft"
+  modal (flag `seenRegionalIntro`) that chains after How-to-play.
+- **Two achievements:** `regional-champion` ("Regional Royalty" — win a
+  region-locked run) and the **secret** `creator` ("The Creator's Card" — unlock
+  the hidden card). New optional `AchievementDef.secret` masks it as "???" in the
+  grid until earned.
+
+### Changed
+- **Onboarding tutorials are more visual** — themed numbered step cards
+  (how-to orange · regional emerald · legacy cyan), larger gradient badges,
+  emphasized intro line.
+- **Celebratory overlays are robustly full-screen.** The unlock-ceremony, rank-up
+  AND Legacy-unlock now render through a shared `CeremonyPortal` that portals onto
+  `<body>`. Root cause they needed it: the results screen animates with a
+  `rise-in` transform, whose containing block was re-anchoring the previously
+  inline `position: fixed` overlays (most visibly the Legacy unlock, which read as
+  "not full-screen").
+- **Celebrations advance ONLY on user input** — removed the auto-dismiss / auto-
+  advance timers (unlock 1s + 3.2s, rank-up 4.2s, Legacy 5.2s). They now wait for
+  a tap / Continue.
+- **Region selector UX** (`SetupScreen.tsx`): the full-width **Worldwide** card
+  is back on top (the default); below it a **4-then-3 grid** of equal-size region
+  chips fills the container. Only **SAM** is selectable; the tags reuse the
+  difficulty-mode Badges — orange **Selected** and neutral grey **Coming soon**.
+  No SAM accent green. A dynamic line below names the locked region.
+- **In-card logos enlarged** — `TeamLogo` md/lg/xl bumped a notch for readability
+  on the draft/result cards, without overlapping the card frame.
+- **Achievements reclassified into rarity tiers** — **Common · Rare · Epic ·
+  Legend** (was Milestone/Skill/Collection/Legend), recoloured to match
+  (slate / blue / violet / prismatic). 24 achievements: 4 common, 9 rare, 6 epic,
+  5 legend.
+- **Results team-reveal reworked.** The drafted line-up now shows as three
+  draft-sized cards across the pitch (the middle one raised, the outer two
+  aligned) with the coach/sub/org in a spaced row below — replacing the cramped
+  flat grid. Achievement unlocks keep the existing corner toasts (unchanged).
+- **Eliminator strip ("who ended your run") realigned** to a tidy left-aligned row.
+- **Creator card reads simply "Creator"** (no rarity-type line) and is pinned
+  **last** among unlocked cards in the collection (lowest sort weight).
+- Version → **1.2.0 "Regional Champions"** (`site.ts` + `package.json`); reader-facing site
+  changelog updated (EN + PT).
+
+### Balance
+- `DRAFT.easterEggChance = 0.01` — per-offer chance to force-inject the easter-egg
+  lineup (Wings) when a region-locked pool contains one. The `&&` short-circuits
+  when no `rareSpawn` lineup is present, so the seeded daily/general draws stay
+  byte-identical (≈8-10% over a classic run, 3-6% over quick; tune in `balance.ts`).
+- `SPECIALS.rarityWeights.creator = 12`; `XP.specialUnlock.creator = 100`.
+- **Chemistry reworked to be a real lever.** Per-pair/link weights rebalanced
+  (same-lineup 4 · same-country 3 · same-org 2 · org-link 1.5/player · coach 1.5
+  cap 3 · sub 1 cap 2), `maxRaw 12`, tiers re-floored (Perfect 80 / Great 58 /
+  Good 36 / Okay 15). A coherent roster (shared country / org / historical lineup)
+  now reaches Great–Perfect, so the boost is worth chasing over a higher-rated
+  all-star mix — the top overall is no longer always the smart pick. Per-difficulty
+  `chemistryMaxBonus` raised (easy 1.0→1.3, normal 1.6→2.0, hard 1.8→2.1,
+  legacy 2.2→2.6). `chemistry.test.ts` rewritten to the new weights + reachability
+  anchors; `balance.test.ts` unaffected (fixed user team). The first-run tutorial
+  now explains chemistry as the player's edge.
+
+### Fixed
+- **Overall-visibility toggle stayed off after Hard.** Selecting Hard/Legacy
+  correctly locks overalls hidden, but switching back to Normal/Easy left the
+  toggle off. Root cause: the difficulty button only called `setDifficulty`; the
+  `showOverall` preference was never restored when the new difficulty unlocked it.
+  Fix (`SetupScreen.tsx`): on a locked→open difficulty change, re-enable overalls.
+- **"The Three Sins" showed Ellevens' logo**, and a few SAM orgs collided on the
+  Liquipedia name-search. Pinned exact `File:` overrides (`the-three-sins`,
+  `denial-esports`) and monogram fallbacks (`northern-gaming`, `cringe-society`,
+  `senbei-strikers`) in `asset-overrides.json`; re-verified no duplicate logos
+  (except the intentional FUT NA/SSA share) and dark-card contrast per-logo.
+- **Slot-machine reel showed non-pool teams in regional mode.** The draft reel now
+  spins only over the run's actual lineup pool (`run.draft.poolLineupIds`), so a
+  region-locked run never flashes a team outside its region.
+
+### Data / generator / docs
+- `scripts/build-dataset.mjs`: parses `flag: sam-only` and `rare`; added SAM Top-8
+  `COUNTRY` entries. Per Miguel's notes: `obtth`/`liberatorl`/`ninja23509` = BR;
+  `diaz` kept as the single existing NA player (no `diaz-sam` split);
+  `brunovisquii` kept as FURIA 2025 coach. Fixed the Wings block's season key
+  (`· 2016` → `· S2 · 2016`).
+- **Reviewed overalls integrated** (manual review-pass CSV from Miguel's friend):
+  **162 overall edits** across all regions + **9 coach fixes** — 3 corrections
+  (FC Barcelona S7 → `Roken`, Veloce S8 → `miztik`, FUT NA 2026 → `adam_baguette`)
+  and 6 missing coaches added (Team Secret 22-23, and Twisted Minds / NiP /
+  Shopify / SSG / PWR 2026). `COUNTRY` += `adambaguette` FR, `lbp` AU; coaches
+  114 → 120. Applied via a matched + nick-verified migration over `teams.md`.
+- **Footer credit:** added **GWR** ([x.com/zgwr_rl](https://x.com/zgwr_rl)), who
+  helped balance the overalls (`site.ts` `balanceCreditName/Url`, `SiteFooter`).
+- **Org logos completed + logo-era system extended.** Fetched every missing SAM
+  org logo from Liquipedia (`npm run fetch:assets --orgs`), curating exact
+  `File:` titles in `asset-overrides.json` for the ~14 where the name-search
+  grabbed another org's logo (`w7m`, `hawks`, `monos`, `ruby`, `endgame`, …).
+  Orgs with no Liquipedia logo (`bodybuilders`, `era`, `poison-bullets`,
+  `sapphire`, `wings-e-sports`, `pioneers-oce`) fall back to the styled monogram.
+  Added season-correct `ORG_LOGO_ERAS` for **NRG** (2016/2017/2019/2020 → 2024),
+  **Dignitas** (2018 → 2025), **Spacestation** (2021 → 2023) and **Team Vitality**
+  (2018 → modern), using dark-card-legible variants (verified by per-logo
+  luminance — several `lightmode` files were near-black and swapped to `darkmode`).
+  Coverage: 128 logos + 6 intentional monograms, 0 gaps. ATTRIBUTION.md (CC-BY-SA)
+  regenerated.
+- Profile persist bumped to **v3** with a backfill migration (deep-merges new
+  `settings.lastRegionLock` + `flags.seenRegionalIntro` onto older saves).
+- Review aids: `data-sources/sam-pending/overall-review.csv` (every team) +
+  `overall-review.md` (the new SAM teams) for the manual overall pass.
+- New `src/engine/regional.test.ts` (pool separation · regional pool · rare-spawn
+  rarity · Creator team boost). Suite: **49 tests**, all green; `tsc` clean; lint
+  at the 8-error baseline (0 new).
+- **Open item:** `SnipJuzo` vs `snipjz` may be the same person under two ids —
+  left separate pending confirmation.
+
+---
+
 ## [1.1.7] — 2026
 
 ### Changed

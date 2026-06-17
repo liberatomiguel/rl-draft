@@ -20,9 +20,9 @@ import { cx, initials } from "@/lib/util";
 const SIZES = {
   xs: "h-4 w-4 text-[7px]",
   sm: "h-6 w-6 text-[9px]",
-  md: "h-10 w-10 text-sm",
-  lg: "h-16 w-16 text-xl",
-  xl: "h-20 w-20 text-2xl",
+  md: "h-11 w-11 text-sm",
+  lg: "h-[4.5rem] w-[4.5rem] text-xl",
+  xl: "h-[5.5rem] w-[5.5rem] text-2xl",
 } as const;
 
 export function TeamLogo({

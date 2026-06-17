@@ -6,7 +6,7 @@
  */
 
 import { DIFFICULTY, SPECIALS } from "@/config/balance";
-import { lineups, playerCardById, specialsByPlayerId } from "@/data";
+import { draftableLineups, lineups, playerCardById, specialsByPlayerId } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { buildLineupTeam } from "./teams";
 import type { Difficulty, TournamentTeam } from "./types";
@@ -18,9 +18,10 @@ export function generateOpponents(
   poolLineupIds?: string[],
 ): TournamentTeam[] {
   const profile = DIFFICULTY[difficulty];
-  const pool = poolLineupIds
-    ? lineups.filter((l) => poolLineupIds.includes(l.id))
-    : [...lineups];
+  // Easter-egg lineups (Wings) are draft-only treasures — never AI opponents.
+  const pool = (
+    poolLineupIds ? lineups.filter((l) => poolLineupIds.includes(l.id)) : [...draftableLineups]
+  ).filter((l) => !l.rareSpawn);
   const picked: typeof pool = [];
 
   while (picked.length < count && pool.length > 0) {

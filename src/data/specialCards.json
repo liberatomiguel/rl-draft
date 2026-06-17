@@ -675,7 +675,7 @@
     "title": "Gamers8 Champion",
     "cardType": "moment",
     "rarity": "epic",
-    "overall": 93,
+    "overall": 95,
     "stats": {
       "offense": 99,
       "defense": 89,
@@ -2172,5 +2172,36 @@
       "description": "+4 team defense and experience."
     },
     "flavor": "A coach/analyst legacy card for the early Vitality structure and one of the most recognizable strategic voices in Rocket League."
+  },
+  {
+    "id": "sp-liberatorl-rocket-draft-creator",
+    "playerId": "liberatorl",
+    "baseCardId": "liberatorl-wings-e-sports-s2",
+    "title": "Rocket Draft Creator",
+    "cardType": "legend",
+    "rarity": "creator",
+    "overall": 68,
+    "stats": {
+      "offense": 69,
+      "defense": 69,
+      "mechanics": 70,
+      "consistency": 72,
+      "experience": 73,
+      "clutch": 71
+    },
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "offense",
+        "defense",
+        "mechanics",
+        "consistency",
+        "experience",
+        "clutch"
+      ],
+      "value": 5,
+      "description": "+5 to every team attribute — the creator's touch."
+    },
+    "flavor": "A hidden tribute: LiberatoRL and Wings E-Sports, from the early days of South American Rocket League. The one who built this game gets a single card — and it lifts the whole team."
   }
 ]

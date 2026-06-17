@@ -90,6 +90,7 @@ const SPECIAL_ACCENT: Record<string, string> = {
   epic: "text-teal-300",
   mythic: "text-red-300",
   legendary: "text-amber-200",
+  creator: "text-pink-200",
 };
 
 /**
@@ -104,11 +105,12 @@ const SPECIAL_OVR_COLOR: Record<string, string> = {
   epic: "ovr-epic",
   mythic: "ovr-mythic",
   legendary: "ovr-legendary",
+  creator: "ovr-creator",
 };
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
   if (card.special) {
-    const holo = ["epic", "mythic", "legendary"].includes(card.special.rarity)
+    const holo = ["epic", "mythic", "legendary", "creator"].includes(card.special.rarity)
       ? ` holo-${card.special.rarity}`
       : "";
     return `card-${card.special.rarity} card-special${holo}`;
@@ -316,7 +318,9 @@ export function GameCard({
               {maskedSpecial
                 ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
                 : specialCollected
-                  ? `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
+                  ? card.special.rarity === "creator"
+                    ? RARITY_LABELS.creator
+                    : `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
                   : "?? · ??"}
             </Badge>
           ) : card.kind === "coach" && card.buffType && showOverall ? (

@@ -29,6 +29,9 @@ const RARITY_RANK: Record<SpecialRarity, number> = {
   mythic: 3,
   epic: 2,
   rare: 1,
+  // The unique Creator card carries the lowest weight — always last among
+  // unlocked cards (by direction, v1.2.0).
+  creator: 0,
 };
 
 /**
@@ -308,7 +311,9 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
         <p className="display truncate text-sm font-bold uppercase tracking-wide text-faint">???</p>
         <div className="mt-1.5">
           <Badge tone="neutral" className="!text-[9px]">
-            {SPECIAL_TYPE_LABELS[sp.cardType]} · {RARITY_LABELS[sp.rarity]}
+            {sp.rarity === "creator"
+              ? RARITY_LABELS[sp.rarity]
+              : `${SPECIAL_TYPE_LABELS[sp.cardType]} · ${RARITY_LABELS[sp.rarity]}`}
           </Badge>
         </div>
       </div>
@@ -328,7 +333,9 @@ function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: strin
       </div>
       <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap gap-1.5">
-          <Badge tone="gold">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
+          {sp.rarity !== "creator" ? (
+            <Badge tone="gold">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
+          ) : null}
           <Badge tone="orange">{RARITY_LABELS[sp.rarity]}</Badge>
           <Badge tone="neutral">{resolved.seasonLabel}</Badge>
           {resolved.country ? <Badge tone="neutral">{countryName(resolved.country)}</Badge> : null}
@@ -364,7 +371,9 @@ function LockedDetail({ sp }: { sp: SpecialCard }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">
-        <Badge tone="neutral">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
+        {sp.rarity !== "creator" ? (
+          <Badge tone="neutral">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
+        ) : null}
         <Badge tone="neutral">{RARITY_LABELS[sp.rarity]}</Badge>
       </div>
       <p>{C.lockedHint}</p>

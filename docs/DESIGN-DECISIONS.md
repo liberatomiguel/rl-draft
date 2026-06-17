@@ -280,6 +280,55 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     analytics also covers "how the game performs" so it stays truthful. Difficulty
     / mode / placement / win counters cannot fingerprint a player.
 
+## v1.2.0 additions (Regional Champions)
+
+44. **Region lock is a draft-POOL axis, orthogonal to difficulty/mode.** Rather
+    than a new `RunMode`, a region lock is an optional choice on the existing
+    setup screen that just narrows the lineup pool; difficulty, Classic/Quick,
+    Swiss + playoffs and chemistry are all unchanged. Implemented by computing
+    `poolLineupIds` from the region and reusing the SAME mechanism daily
+    challenges already use — so the engine needed no new mode. `Worldwide` (no
+    lock) is the explicit default and is the unchanged Worlds experience.
+
+45. **Worlds vs regional teams are separated by a `samOnly` tag + a
+    `draftableLineups` default, not by deleting/duplicating data.** The general
+    draft, opponents and daily all draw from `draftableLineups` (= `!samOnly`);
+    the region-locked mode draws from the full per-region set (`region === X`,
+    which includes both Worlds finalists and `samOnly` Top-8 teams). This keeps
+    ONE dataset, makes "general = Worlds only" a single safe default, and means
+    adding a region later is data-only. Net: nothing changed for today's modes.
+
+46. **SAM Top-8 merged as a labeled trailing section in `teams.md`, not spliced
+    per-season.** The generator reads a team's SEASON from its own team line and
+    its REGION from the nearest `### REGION` heading, so a self-contained
+    "Regional Top-8 (sam-only)" block at the end is parsed correctly AND keeps the
+    curated 208-team Worlds file untouched/low-risk — which mirrors the
+    conceptual Worlds-vs-regional split. Done via a one-shot UTF-8 Node merge to
+    avoid PowerShell mojibake on accented orgs (Leviatán/KRÜ).
+
+47. **"Creator" rarity + the Wings easter egg.** A new `creator` special rarity
+    (pink/violet) sits beside the four earned tiers; there is exactly ONE creator
+    card ("Rocket Draft Creator", `liberatorl`). Uniqueness is intrinsic (a single
+    catalogue entry), so no per-account dedup was added. Mechanism (revised after
+    playtest, v1.2.0): the Wings lineup is EXCLUDED from the normal draw and the
+    opponent pool, then **force-injected** into one offer at `DRAFT.easterEggChance`
+    (~1%/offer, region-locked SAM only); when it appears the Creator card is
+    GUARANTEED on LiberatoRL's card — so finding the lineup is the only gate. The
+    first cut (a low draw-weight × the 5% special roll) compounded to effectively
+    unfindable, which is why it moved to an explicit force-inject + guarantee. Its
+    team-wide `+2 all` is a player-card
+    `team_attribute_boost` (the engine was extended to honor team boosts from
+    player specials, previously coach-only). Obtaining it grants a **secret**
+    achievement (new `AchievementDef.secret`, masked in the grid until earned) —
+    so the card and the achievement reveal each other only through play.
+
+48. **Celebratory overlays: full-screen via portal, advance-only-on-input.** All
+    three (unlock ceremony, rank-up, Legacy unlock) now share `CeremonyPortal`,
+    which portals onto `<body>` (the results screen's `rise-in` transform was
+    re-anchoring inline `position:fixed`, per the AGENTS.md pitfall). Auto-dismiss
+    timers were removed by direction — a celebration should never vanish before
+    the player has looked at it.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

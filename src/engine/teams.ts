@@ -208,15 +208,21 @@ export function buildUserTeam(
         orgId: (coachCtx ?? coachCard).orgId,
       }
     : undefined;
-  const teamBoosts =
-    coachSpecial?.effect.type === "team_attribute_boost"
-      ? [
-          {
-            attributes: coachSpecial.effect.attributes ?? [],
-            value: coachSpecial.effect.value,
-          },
-        ]
-      : undefined;
+  // Team-wide stat boosts: from a coach special AND from any player special
+  // that carries one (e.g. the Creator card's light all-team buff, v1.2.0).
+  const teamBoosts: { attributes: StatKey[]; value: number }[] = [];
+  if (coachSpecial?.effect.type === "team_attribute_boost") {
+    teamBoosts.push({
+      attributes: coachSpecial.effect.attributes ?? [],
+      value: coachSpecial.effect.value,
+    });
+  }
+  for (const pick of playerPicks) {
+    const sp = pick?.specialId ? specialCardById.get(pick.specialId) : undefined;
+    if (sp?.effect.type === "team_attribute_boost") {
+      teamBoosts.push({ attributes: sp.effect.attributes ?? [], value: sp.effect.value });
+    }
+  }
 
   const subCard =
     roster.sub && roster.sub.refId !== "vacant-sub"
@@ -290,6 +296,15 @@ export function buildLineupTeam(
   const coachCard = lineup.coachId ? coachById.get(lineup.coachId) : undefined;
   const subCard = lineup.subId ? subById.get(lineup.subId) : undefined;
 
+  // Player specials may carry a team-wide boost (e.g. the Creator card).
+  const teamBoosts: { attributes: StatKey[]; value: number }[] = [];
+  for (const spId of specialIds) {
+    const sp = specialCardById.get(spId);
+    if (sp?.effect.type === "team_attribute_boost") {
+      teamBoosts.push({ attributes: sp.effect.attributes ?? [], value: sp.effect.value });
+    }
+  }
+
   return assembleTeam({
     id: `opp-${lineup.id}`,
     name: `${lineup.name} ${season?.shortLabel ?? ""}`.trim(),
@@ -312,6 +327,7 @@ export function buildLineupTeam(
       : undefined,
     orgId: lineup.orgId,
     orgBuffLevel: lineup.orgBuffLevel,
+    teamBoosts,
     specialIds,
     difficulty,
     difficultyShift: DIFFICULTY[difficulty].opponentRatingShift,

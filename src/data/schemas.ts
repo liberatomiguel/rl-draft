@@ -120,6 +120,10 @@ export const lineupSchema = z.object({
   coachId: z.string().optional(),
   subId: z.string().optional(),
   orgBuffLevel: buffLevelSchema.optional(),
+  /** Regional-only team (SAM Top-8 that missed Worlds) — general draft hides it. */
+  samOnly: z.boolean().optional(),
+  /** Easter-egg lineup drawn far less often (DRAFT.rareSpawnWeight). */
+  rareSpawn: z.boolean().optional(),
   historicalStrength: z.enum(["elite", "strong", "solid", "underdog"]),
 });
 
@@ -146,7 +150,7 @@ export const specialCardSchema = z.object({
   baseCardId: z.string().min(1),
   title: z.string().min(1),
   cardType: z.enum(["moment", "major_mvp", "worlds_mvp", "season_mvp", "mythic", "legend", "coach"]),
-  rarity: z.enum(["rare", "epic", "mythic", "legendary"]),
+  rarity: z.enum(["rare", "epic", "mythic", "legendary", "creator"]),
   overall: overallSchema,
   stats: statsSchema.optional(),
   effect: specialEffectSchema,
@@ -159,7 +163,8 @@ export const achievementSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   xp: z.number().int().min(0),
-  category: z.enum(["milestone", "skill", "collection", "legend"]),
+  category: z.enum(["common", "rare", "epic", "legend"]),
+  secret: z.boolean().optional(),
 });
 
 export const playersFileSchema = z.array(playerSchema);

@@ -8,7 +8,7 @@
  * objective — both picked deterministically from the date.
  */
 
-import { lineups, seasonById } from "@/data";
+import { draftableLineups, lineups, seasonById } from "@/data";
 import { createRng } from "@/lib/rng";
 import type { DailyInfo, DailyObjective, Difficulty, Region } from "@/engine/types";
 
@@ -57,12 +57,14 @@ function lineupYear(lineupId: string): number {
   return season ? parseInt(season.year, 10) : NaN;
 }
 
+// Daily pools draw from the Worlds-only set (regional samOnly teams belong to
+// the dedicated region-locked mode, not the shared daily challenge).
 function poolByRegion(region: Region): string[] {
-  return lineups.filter((l) => l.region === region).map((l) => l.id).sort();
+  return draftableLineups.filter((l) => l.region === region).map((l) => l.id).sort();
 }
 
 function poolByEra(test: (year: number) => boolean): string[] {
-  return lineups
+  return draftableLineups
     .filter((l) => test(lineupYear(l.id)))
     .map((l) => l.id)
     .sort();
@@ -196,7 +198,7 @@ export function generateDailyConfig(date: string): DailyConfig {
       },
     }),
     () => {
-      const pool = lineups
+      const pool = draftableLineups
         .filter((l) => l.historicalStrength === "elite" || l.historicalStrength === "strong")
         .map((l) => l.id)
         .sort();

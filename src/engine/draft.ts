@@ -22,6 +22,7 @@ import { DIFFICULTY, DRAFT, SPECIALS } from "@/config/balance";
 import {
   coachById,
   coachSpecialsByPersonId,
+  draftableLineups,
   lineupById,
   lineups,
   playerCardById,
@@ -164,10 +165,18 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
     const card = playerCardById.get(cardId)!;
     // A special version may appear in place of the base card — the pool is
     // the PLAYER's full catalogue, weighted by rarity (v0.5).
+    let specialId = rollSpecial(specialsByPlayerId.get(card.playerId), specialChance, rng);
+    // Easter-egg lineup (Wings): the creator's card ALWAYS appears as its
+    // special (the Creator card) — finding the lineup is the rare gate, so the
+    // prize isn't gated behind a second roll (v1.2.0).
+    if (lineup.rareSpawn) {
+      const eggSpecial = specialsByPlayerId.get(card.playerId)?.[0];
+      if (eggSpecial) specialId = eggSpecial.id;
+    }
     cards.push({
       kind: "player",
       refId: cardId,
-      specialId: rollSpecial(specialsByPlayerId.get(card.playerId), specialChance, rng),
+      specialId,
       availability: availabilityFor("player", card.playerId, draft),
     });
   }
@@ -214,9 +223,11 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
 }
 
 function lineupPool(draft: DraftState) {
+  // An explicit pool (daily / region-locked) may include samOnly teams, so it
+  // filters the FULL set; the default general pool is Worlds-only.
   return draft.poolLineupIds
     ? lineups.filter((l) => draft.poolLineupIds!.includes(l.id))
-    : lineups;
+    : draftableLineups;
 }
 
 /**
@@ -235,12 +246,17 @@ function lineupWeight(lineup: Lineup, staffNeeds: CardKind[]): number {
 
 export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   const fullPool = lineupPool(draft);
-  let pool = fullPool.filter((l) => !draft.shownLineupIds.includes(l.id));
+  // Easter-egg lineups (Wings) never enter the normal draw — they're excluded
+  // here and force-injected below at a small chance. So the seeded daily/general
+  // draws stay byte-identical (those pools carry no rareSpawn lineup).
+  const eggs = fullPool.filter((l) => l.rareSpawn);
+  const base = fullPool.filter((l) => !l.rareSpawn);
+  let pool = base.filter((l) => !draft.shownLineupIds.includes(l.id));
   let shown = draft.shownLineupIds;
 
   // Pool exhausted (small datasets / many free rerolls): reset exclusions.
   if (pool.length === 0) {
-    pool = fullPool.slice();
+    pool = base.slice();
     shown = [];
   }
 
@@ -256,10 +272,16 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
         })
       : [];
 
+  // Force-inject an as-yet-unseen easter-egg lineup at a small chance — only
+  // reachable in the region-locked pool (worlds/daily carry no rareSpawn, so the
+  // `&&` short-circuits and the seeded RNG sequence stays byte-identical).
+  const availableEggs = eggs.filter((l) => !draft.shownLineupIds.includes(l.id));
   const lineup =
-    staffNeeds.length > 0
-      ? rng.weightedPick(pool, (l) => lineupWeight(l, staffNeeds))
-      : rng.pick(pool);
+    availableEggs.length > 0 && rng.chance(DRAFT.easterEggChance)
+      ? rng.pick(availableEggs)
+      : staffNeeds.length > 0
+        ? rng.weightedPick(pool, (l) => lineupWeight(l, staffNeeds))
+        : rng.pick(pool);
 
   const next: DraftState = {
     ...draft,

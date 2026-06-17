@@ -191,6 +191,7 @@ export function compileResults(
     },
     goalsConceded,
     specialsOwnedAfter: profile.unlockedSpecialIds.length + unlockedSpecialIds.length,
+    specialIdsOwnedAfter: new Set([...profile.unlockedSpecialIds, ...unlockedSpecialIds]),
     alreadyEarned: new Set(profile.achievementIds),
   });
 

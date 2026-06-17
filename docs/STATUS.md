@@ -1,34 +1,86 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-16. **v1.1.5** is the latest committed/deployed state
-> (see `docs/CHANGELOG.md`). The **v1.1.6** section right below is the current
-> work (Google indexing fix + SAM dataset staging + a PageSpeed audit). The
-> older **v1.1.1** narrative further down is historical.
+> Last updated: 2026-06-17. The **v1.2.0 "Regional Champions"** section below is the
+> current (UNCOMMITTED) work, under Miguel's review. The v1.1.x sections are
+> historical — see `docs/CHANGELOG.md` for shipped detail.
 
-## v1.1.6 / v1.1.7 — indexing fix + SAM staging + performance (current)
+## v1.2.0 — "Regional Champions" (current · uncommitted, under review)
+
+The v1.2.0 feature pass is built and verified locally (NOT committed — Miguel
+reviews first). Technical detail in `docs/CHANGELOG.md` [1.2.0]; rationale in
+`docs/DESIGN-DECISIONS.md` #44–48.
 
 ### Done this session
-- **Performance (v1.1.7): render-blocking CSS removed.** `experimental.inlineCss`
-  (build-verified: home has 1 inline `<style>`, 0 blocking CSS links). After
-  deploy: **PageSpeed mobile ~95 / desktop ~99** (warm run: mobile LCP 3.5s→1.4s,
-  SI 4.0→1.9s). Lab score varies a lot on cold edge cache (saw 86 then 95 minutes
-  apart — always run 2-3×). The `browserslist` was added too but Next 16 still
-  ships the ~14 KiB legacy polyfills regardless (no effect; off-score). Remaining
-  perf backlog below.
-- **Google indexing fixed (apex/www canonical conflict).** The app was already
-  apex-canonical (`SITE.url`), but Vercel redirected apex → www, contradicting
-  the canonical → Search Console "Page with redirect", canonical N/D, not
-  indexed. Fixed by making the **apex the primary domain** and flipping the
-  redirect to **`www → apex`** (Vercel Domains; no code change). Verified live
-  (apex 200, www→apex 308, http→https 308); pages now appear under
-  `site:rocketdraft.app`. DNS is on Vercel nameservers → apex is managed/resilient
-  (no manual A-record risk; apex-primary vs www-primary is purely a redirect
-  choice here). Details in `docs/CHANGELOG.md` [1.1.6].
-- **SAM regional Top-8 dataset staged** in `data-sources/sam-pending/`
-  (`teams-sam.md` = 45 `sam-only` lineups S7→2025, `sam-merge-notes.md`,
-  `validate-sam.mjs`, `README.md`). **Inert** — the generator only reads
-  `teams.md`, so the game is unaffected. For the SAM-only mode patch.
+- **Region-locked draft mode** — a "Region" picker on the setup screen for
+  Classic + Quick. Worldwide (default, unchanged) or a region; only **SAM** is
+  live, the rest show **"Em Breve"**. Region runs draw from the region's full
+  pool (Worlds finalists + the `samOnly` Top-8). `RunState.regionLock`,
+  `lineupPoolForRegion`, persisted last choice.
+- **SAM Top-8 imported** — 46 new lineups merged into `teams.md` (a labeled
+  "Regional Top-8 (sam-only)" section). Dataset now 254 lineups / 372 players /
+  762 cards; the Worlds/draftable pool is unchanged at **208**. Separation via
+  `samOnly` + the `draftableLineups` default.
+- **Reviewed overalls integrated** — applied the friend's manual review CSV: 162
+  overall edits (all regions) + 9 coach fixes (3 corrections, 6 missing coaches
+  added). Coaches 114 → 120.
+- **"Creator" rarity + Wings easter egg** — the unique "Rocket Draft Creator"
+  card (`liberatorl`, +2 all-team). Wings · S2 is **force-injected** into a draft
+  offer at ~1% (region-locked SAM only), excluded from normal draws + opponents,
+  and GUARANTEES the Creator card when it appears. Secret achievement to obtain
+  it; plus a `regional-champion` achievement.
+- **Chemistry reworked into a real lever** — per-pair/link weights + tiers
+  re-floored so a coherent roster (shared country / org / historical lineup)
+  reaches Great–Perfect, making the boost worth chasing over a higher-rated
+  all-star mix. Tutorial now explains it. (`balance.ts` + `chemistry.ts`.)
+- **Achievements reclassified** into **Common · Rare · Epic · Legend** (recoloured
+  to match: slate / blue / violet / prismatic). The corner unlock toasts are
+  unchanged.
+- **Fixes / polish** — overall toggle re-enables when leaving Hard; the region
+  selector is a full-width **Worldwide** card over a **4-then-3 grid** of equal
+  region chips (mode-style Badges: orange Selected / grey Coming soon, no green
+  accent); in-card logos enlarged a notch; the results team-reveal shows three
+  draft-sized cards across the pitch (middle raised) with a spaced staff row, and
+  the eliminator strip is left-aligned; the Creator card reads just "Creator" and
+  sorts **last** among unlocked cards; "The Three Sins" logo fixed (+ SAM logo
+  collisions resolved); the slot-machine reel shows only the run's pool in regional
+  mode; tutorials are more visual + a new regional tutorial; rank / card / Legacy
+  celebrations are full-screen (portaled) and advance only on input; footer credits
+  **GWR** for overall balance.
+- **Org logos completed + logo eras.** Every SAM org logo fetched from Liquipedia
+  (exact-file overrides for the ~14 misses; styled monogram for the logo-less few);
+  **NRG / Dignitas / Spacestation / Vitality** now show season-correct logos
+  (`ORG_LOGO_ERAS` + `orgFiles`). Contrast verified per-logo. 128 logos + 6
+  monograms, 0 gaps. (CHANGELOG [1.2.0].)
+- **Gates green**: `tsc`, **49** vitest tests, lint at the 8-error baseline
+  (0 new), `build:data` + `validate:data`. Verified live in the preview (EN + PT).
+
+### Next steps (open)
+1. **Overall review — DONE.** The friend's CSV pass is integrated (162 overalls
+   + 9 coach fixes). Further tweaks: edit `teams.md`, then `build:data`.
+2. **Confirm data flags:** `SnipJuzo` vs `snipjz` (possible same person, two
+   ids — left separate); whether to add `Obtth` to Blazar 22-23; whether to add
+   the `diaz` Major-2 variants (w7m / Complexity); `Roken` (FCB S7 coach) is
+   countryless (friend didn't specify).
+3. **Drop-in art (optional):** SAM + era org logos are now fetched from Liquipedia.
+   Only `public/orgs/wings-e-sports.png` has no source (drop a custom one if
+   wanted) and the Creator card photo
+   `public/cards/specials/sp-liberatorl-rocket-draft-creator.png` (styled fallbacks
+   render until then). A logo-less few use the monogram by design.
+4. **Commit `v1.2.0`** once reviewed, then deploy.
+5. **v1.3.0 (planned, NOT in this build):** Discord login (save progress) +
+   leaderboards. Deferred by direction.
+
+---
+
+## v1.1.6 / v1.1.7 — indexing fix + performance (historical)
+
+Shipped detail is in **`docs/CHANGELOG.md`**. v1.1.6 fixed Google indexing
+(apex made the primary domain, `www → apex` 308 — no code change) and v1.1.7
+removed render-blocking CSS (`experimental.inlineCss` → PageSpeed mobile ~95 /
+desktop ~99). The SAM Top-8 dataset was staged here and **has since been merged
+into `teams.md` (v1.2.0)**, so `data-sources/sam-pending/` is now reference-only.
+Still-open follow-ups remain below.
 
 ### Next steps (open)
 **SEO — Search Console (Miguel, not code):**
@@ -60,63 +112,15 @@ Remaining optimization backlog (PLANNED — none urgent at 95/99):
 4. Cosmetic: 4 non-composited animations, 2 long tasks, DOM size — only if
    chasing a perfect 100.
 
-**SAM-only mode (next patch):** wire `flag: sam-only` per `sam-merge-notes.md`
-§2, then merge `data-sources/sam-pending/teams-sam.md` into `teams.md`.
+## v1.1.1 — post-launch follow-up (historical)
 
-## v1.1.1 — post-launch follow-up (uncommitted, Miguel testing)
-
-A large follow-up session. **All gates green**: `tsc`, 42 vitest tests, ESLint
-(8 pre-existing baseline errors, 0 new), `next build` (16 routes prerendered
-static), `validate:data`. Full per-change detail is in `docs/CHANGELOG.md` under
-`[1.1.1]`; design rationale in `docs/DESIGN-DECISIONS.md` #41–43.
-
-### What shipped (grouped)
-**Gameplay data**
-- **specialCards.json now HAND-MAINTAINED** (decoupled from the generator; added
-  `season_mvp` cardType; fixed 6 broken refs). `build:data` only re-validates +
-  regenerates the photo README, never overwrites it. (DESIGN-DECISIONS #42.)
-- **RLCS Worlds dataset corrected vs Liquipedia** — audited ALL 15 seasons
-  (full report + FIXED summary in `data-sources/liquipedia-worlds-audit.md`).
-  Team counts were already right; rosters were fixed in `data-sources/teams.md`:
-  **S6** (Chiefs↔Tainted Minds swap), **2021-22 / 2022-23** (MENA/APAC/SSA/OCE/SAM),
-  **2024** (Oxygen, QuikTrip Pioneers, Team Secret), **2025** (Dignitas/NiP,
-  Geekay moved MENA→EU, TSM, FURIA, Team Secret). S1–S5/S7/S8/RLCS-X were
-  verified CORRECT (no change needed). Normalized `ExplosiveGyro`→`Gyro.`,
-  `Sweaty_Clarence`→`Sweaty`; `zen` (EU) ≠ `ZeN` (OCE) kept distinct.
-
-**UI / UX**
-- **Collection: 2 cards/row on mobile** (desktop unchanged; no card internals).
-- **Onboarding tutorials** render each numbered step as a Panel card.
-- **Special-card rarity colours reworked + tuned**: legendary OVR = white-gold
-  metallic gradient (`.ovr-legendary`), mythic = border-red, epic = blue→purple
-  border + light-purple OVR, rare = deep dark blue (+ slight purple) OVR. Halos
-  + legendary holo sheen toned down. Colours live in `globals.css` `.card-*` /
-  `.ovr-*` + `SPECIAL_OVR_COLOR` in `GameCard.tsx`; field tints in `FieldView`.
-- **Header brand icon** now renders `public/icon.svg` (same file as favicon).
-- **PT-BR** for /privacy and /changelog (server `metadata` kept for SEO).
-
-**Performance (collection lag fix)**
-- `GameCard` `lite` mode (used only by the collection grid): drops the GPU-heavy
-  cursor holo (mix-blend-mode), backdrop-blur pills, and the per-frame box-shadow
-  halo PULSE; keeps tilt + foil sheen + a static glow. `TiltCard` only sets
-  `will-change` while actively tilting. `FxCard` IntersectionObserver pauses
-  off-screen sheen. Full effects still play on the detail/single-card view.
-- **Special photos → `next/image`** (Vercel serves resized WebP/AVIF, alpha
-  preserved, lazy — ~620KB PNG → ~13KB). `next.config.ts` sets
-  `images.unoptimized` in **dev only** so swapping a photo file shows on refresh;
-  prod stays optimized. Quality left at default 75 (Next 16 rejects others).
-
-**Assets**
-- **All 83 special-card photos present.** Cleaned `public/cards/specials/`
-  (26 renamed to match new ids = salvaged Miguel's manual work, 10 true orphans
-  deleted), fetched 25 from Liquipedia via `npm run fetch:assets --players`,
-  fairypeak added manually. `public/ATTRIBUTION.md` regenerated (CC-BY-SA).
-
-**Analytics / SEO**
-- Custom events (`run_started` / `tournament_started` / `run_completed`) via
-  `src/lib/analytics.ts`; **Vercel Speed Insights** mounted.
-- Org logo-era guide (beginner template + season cheat sheet on `ORG_LOGO_ERAS`
-  in `scripts/build-dataset.mjs` + DATA-GUIDE recipe; mechanism shipped v0.5.1).
+Shipped in v1.1.1 (full detail in `docs/CHANGELOG.md` [1.1.1]; rationale in
+`docs/DESIGN-DECISIONS.md` #41–43): `specialCards.json` decoupled to
+HAND-MAINTAINED; the RLCS Worlds dataset audited + corrected vs Liquipedia (all
+15 seasons); collection + onboarding UI polish; special-card rarity colours
+reworked; the collection-grid performance pass (`GameCard` lite mode, special
+photos → `next/image`); all 83 special photos present; analytics + Speed
+Insights mounted. The still-open data decisions below survive (none blocking).
 
 ### NEXT STEPS / open decisions (for the new chat)
 **Ops Miguel must do (Vercel/Google — not code):**

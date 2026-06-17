@@ -78,28 +78,34 @@ export const TEAM_RATING = {
 // ---------------------------------------------------------------------------
 
 export const CHEMISTRY = {
+  // v1.2.0 rework — generous + REACHABLE. A drafted team that commits to a
+  // country stack lands Great; two linked players land Good; a real lineup
+  // stack lands Perfect. AI lineups are full stacks (≈100% either way), so this
+  // does NOT inflate the field — it lets the PLAYER close the chemistry gap by
+  // building, which is the intended strategic lever (trade a little overall for
+  // a coherent roster). Earlier the realistic ceiling was ~Okay; now it pays off.
   weights: {
     /** Per pair of the 3 players. Strongest link counts (lineup ⊃ org). */
-    sameLineupPair: 3,
-    sameCountryPair: 2,
-    sameOrgPair: 1,
+    sameLineupPair: 4,
+    sameCountryPair: 3,
+    sameOrgPair: 2,
     /** Per player whose card org matches the drafted org. */
-    orgLinkPerPlayer: 1,
+    orgLinkPerPlayer: 1.5,
     /** Coach sharing lineup/org with players or org (capped). */
-    coachLink: 1,
-    coachLinkMax: 2,
-    /** Sub sharing lineup/org/country with players or org (capped). */
+    coachLink: 1.5,
+    coachLinkMax: 3,
+    /** Sub sharing lineup/org with players or org (capped). */
     subLink: 1,
     subLinkMax: 2,
   },
-  /** 3 pairs × 3 + 3 org links + coach 2 + sub 2. */
-  maxRaw: 16,
-  /** Percent thresholds (inclusive lower bound) → tier. */
+  /** Reachable ceiling — a 3-player country stack (9) is 75% → Great. */
+  maxRaw: 12,
+  /** Percent thresholds (inclusive lower bound) → tier. More generous (v1.2.0). */
   tiers: [
-    { min: 85, tier: "Perfect" },
-    { min: 62, tier: "Great" },
-    { min: 40, tier: "Good" },
-    { min: 18, tier: "Okay" },
+    { min: 80, tier: "Perfect" },
+    { min: 58, tier: "Great" },
+    { min: 36, tier: "Good" },
+    { min: 15, tier: "Okay" },
     { min: 0, tier: "Poor" },
   ] as const,
 } as const;
@@ -150,7 +156,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     overallLockedHidden: false,
     userRollRange: [-3, 5],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 1.0,
+    chemistryMaxBonus: 1.3,
     opponentRatingShift: -2.0,
     opponentSpecialChance: 0.02,
     opponentTierWeights: { elite: 0.4, strong: 0.9, solid: 1.8, underdog: 2.0 },
@@ -163,7 +169,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     overallLockedHidden: false,
     userRollRange: [-3, 4],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 1.6,
+    chemistryMaxBonus: 2.0,
     opponentRatingShift: 0,
     opponentSpecialChance: 0.05,
     opponentTierWeights: { elite: 0.7, strong: 1.0, solid: 1.25, underdog: 1.3 },
@@ -180,7 +186,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // field and hidden overalls, not a punitive dice range.
     userRollRange: [-3.5, 4],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 1.8,
+    chemistryMaxBonus: 2.1,
     opponentRatingShift: 0.3,
     opponentSpecialChance: 0.12,
     opponentTierWeights: { elite: 1.15, strong: 1.25, solid: 0.75, underdog: 0.5 },
@@ -193,7 +199,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     overallLockedHidden: true,
     userRollRange: [-5, 5],
     aiRollRange: [-4, 4],
-    chemistryMaxBonus: 2.2,
+    chemistryMaxBonus: 2.6,
     opponentRatingShift: 1.2,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 2.6, strong: 1.2, solid: 0.15, underdog: 0.1 },
@@ -215,6 +221,15 @@ export const DRAFT = {
    * the missing kinds). Soft bias — blanks still appear, just rarely.
    */
   staffScarcityBoost: 5,
+  /**
+   * Easter-egg lineups (Lineup.rareSpawn) are EXCLUDED from the normal draw and
+   * instead force-injected into one offer at this per-offer chance — only in a
+   * region-locked pool that contains one (Wings, SAM). ~1% per offer ≈ 8-10%
+   * over a classic run / 3-6% over a quick run. When it appears the creator's
+   * card is guaranteed to be the Creator special. Tune to taste; 0 disables.
+   * (v1.2.0)
+   */
+  easterEggChance: 0.01,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -235,7 +250,7 @@ export const SPECIALS = {
    * When a special DOES appear, which one is weighted by rarity tier.
    * Within a player's pool: rare ≈ common sight, legendary ≈ chase pull.
    */
-  rarityWeights: { rare: 100, epic: 55, mythic: 28, legendary: 12 } as Record<
+  rarityWeights: { rare: 100, epic: 55, mythic: 28, legendary: 12, creator: 12 } as Record<
     string,
     number
   >,
@@ -331,7 +346,7 @@ export const XP = {
    * added AFTER the difficulty multiplier (like achievement XP) and never
    * scaled. Reference: a run completion is 50 XP.
    */
-  specialUnlock: { rare: 10, epic: 20, mythic: 40, legendary: 75 } as Record<
+  specialUnlock: { rare: 10, epic: 20, mythic: 40, legendary: 75, creator: 100 } as Record<
     string,
     number
   >,
@@ -343,14 +358,14 @@ export const XP = {
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  { id: "bronze", label: "Bronze", minXp: 300 },
-  { id: "silver", label: "Silver", minXp: 1000 },
-  { id: "gold", label: "Gold", minXp: 2400 },
-  { id: "platinum", label: "Platinum", minXp: 4800 },
-  { id: "diamond", label: "Diamond", minXp: 8500 },
-  { id: "champion", label: "Champion", minXp: 14000 },
-  { id: "grand-champion", label: "Grand Champion", minXp: 21000 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 30000 },
+  { id: "bronze", label: "Bronze", minXp: 400 },
+  { id: "silver", label: "Silver", minXp: 1200 },
+  { id: "gold", label: "Gold", minXp: 3000 },
+  { id: "platinum", label: "Platinum", minXp: 6500 },
+  { id: "diamond", label: "Diamond", minXp: 11500 },
+  { id: "champion", label: "Champion", minXp: 19000 },
+  { id: "grand-champion", label: "Grand Champion", minXp: 29000 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 40000 },
 ] as const;
 
 export const HISTORY_LIMIT = 25;

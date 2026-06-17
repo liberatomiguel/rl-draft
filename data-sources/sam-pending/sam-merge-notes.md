@@ -149,7 +149,7 @@ laayoh: "US", luc: "US", cha0s: "BE",
 ```
 
 Low-confidence / left out (add only if you confirm): `Obtth` (Blazar 22-23 sub,
-event-page only) — omitted from the blocks entirely.
+event-page only) — omitted from the blocks entirely. ~~Miguel's note: Obtth is from BR.
 
 ---
 
@@ -187,6 +187,8 @@ without care (different keys for the same person) — verify these stay canonica
   if (key === "diaz" && region === "SAM") key = "diaz-sam";
   ```
   and `diazsam`/`diaz-sam`: "BR" in COUNTRY. Otherwise you'll merge two people.
+
+  ~~Miguel's note: this info is WRONG. diaz BR and diaz NA IS the same player. He moved to NA after playing in Brazil. Already in the dataset. Be careful. If needed to put him back in a team that he should be, that should be done. diaz was in w7m M1 and in Complexity M2. Check liquipedia if needed to confirm.
 
 - **`crr` (ES)** and **`dorito` (ES)** on **Complexity Gaming 2024 (SAM)** are
   the SAME persons already in the dataset (EU/NA-origin imports who played the
@@ -315,7 +317,7 @@ the official JSON merge is your separate task; decide there.
   points were earned) FURIA's coach was **STL**; `brunovisquii` only joined FURIA
   on the **Nov 1, 2025** FURIA↔Team Secret swap (swiftt+brunovisquii → FURIA;
   drufinho+STL → Team Secret). The dataset value reflects the post-swap/current
-  state — fine if intentional, but the season-representative coach is STL.
+  state — fine if intentional, but the season-representative coach is STL. ~~Miguel's note: keep brunovisquii in furia 2025.
 - **S9 Avidity Esports:** dataset has no coach/sub; LP adds **coach Jato**, **sub
   DuduBRHue** (players unchanged).
 - **S9 Ellevens:** LP adds **sub Gian** (players unchanged).
@@ -337,3 +339,20 @@ the official JSON merge is your separate task; decide there.
   nothing was invented. Items marked ⚠ / LOW CONFIDENCE / UNCONFIRMED are the
   only soft spots — concentrated in RLCS X (org-points chains) and a couple of
   event-only subs.
+
+
+~~Miguel's note: vamos adicionar também o seguinte time:
+
+Season 2:
+
+```team: Wings E-Sports · 2016
+player 1: LiberatoRL 68
+player 2: Ninja23509 71
+player 3: Repi 70
+sub: -
+coach: -
+org: Wings E-Sports +
+flag: sam-only
+```
+
+Esse time será como um easter-egg, apesar de não termos a SAM na season 2 oficialmente, mas era o time que eu (LiberatoRL) jogava. Podemos dar um buff "creator" na minha carta, que bufa levemente todos os atributos do time draftado. Esse time é um easter egg, então deve ter uma chance reduzida de aparecer. A carta LiberatoRL vai ser sempre especial. Podemos criar uma raridade nova "Creator" para essa carta, usar a borda em tons de rosa e mais alguma cor e ter efeitos moderados, como as mythic. Será única, porém não muito overpowered. Devemos ter um achievement secreto/escondido também para conseguir a carta do criador. Título da carta: "Rocket Draft Creator".

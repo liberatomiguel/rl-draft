@@ -20,7 +20,7 @@ import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
-import { lineupById, lineups, seasonById } from "@/data";
+import { draftableLineups, lineupById, seasonById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
@@ -93,7 +93,7 @@ export function DraftScreen({ run }: { run: RunState }) {
 
   return (
     <div className="rise-in">
-      <RunOnboarding difficulty={run.difficulty} />
+      <RunOnboarding difficulty={run.difficulty} regionLock={run.regionLock} />
       <RunStepper run={run} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
@@ -198,10 +198,18 @@ function OfferReveal({
     }
     const drawn = lineupById.get(offer.lineupId);
     if (!drawn) return null;
+    // Decoy names come from the SAME pool this run draws from — regional / daily
+    // restrict it via poolLineupIds; worldwide uses the full Worlds set. The
+    // easter-egg lineup is excluded so it stays a surprise.
+    const reelPool = (
+      run.draft.poolLineupIds
+        ? run.draft.poolLineupIds.map((id) => lineupById.get(id)!)
+        : draftableLineups
+    ).filter((l) => l && !l.rareSpawn);
     const names: string[] = [];
     for (let i = 0; i < REEL_LENGTH - 1; i++) {
-      const idx = (offer.lineupId.length * 7 + run.draft.round * 13 + i * 29) % lineups.length;
-      names.push(lineupReelName(lineups[idx]));
+      const idx = (offer.lineupId.length * 7 + run.draft.round * 13 + i * 29) % reelPool.length;
+      names.push(lineupReelName(reelPool[idx]));
     }
     names.push(lineupReelName(drawn));
     return names;

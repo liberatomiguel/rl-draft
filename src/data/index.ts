@@ -36,6 +36,7 @@ import type {
   Org,
   Player,
   PlayerCard,
+  Region,
   Season,
   SpecialCard,
   SubCard,
@@ -78,6 +79,23 @@ export const subs = parse("subs", () => subsFileSchema.parse(subsJson)) as SubCa
 export const lineups = parse("lineups", () =>
   lineupsFileSchema.parse(lineupsJson),
 ) as Lineup[];
+
+/**
+ * The pool the GENERAL draft / opponents / daily challenges draw from:
+ * Worlds-finals teams only. Regional-only lineups (`samOnly` — the SAM Top-8
+ * teams that missed Worlds, plus the Wings easter egg) are excluded here and
+ * surface ONLY in the region-locked mode, which builds its own per-region
+ * pool from the full `lineups` set. (v1.2.0)
+ */
+export const draftableLineups = lineups.filter((l) => !l.samOnly);
+
+/**
+ * Lineup ids for the region-locked mode (v1.2.0). Includes BOTH the region's
+ * Worlds finalists AND its `samOnly` Top-8 teams — the "larger regional pool".
+ */
+export function lineupPoolForRegion(region: Region): string[] {
+  return lineups.filter((l) => l.region === region).map((l) => l.id);
+}
 
 export const specialCards = parse("specialCards", () =>
   specialCardsFileSchema.parse(specialCardsJson),

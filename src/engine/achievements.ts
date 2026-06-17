@@ -23,6 +23,8 @@ export interface AchievementContext {
   goalsConceded: number;
   /** Total specials in collection counting this run's unlocks. */
   specialsOwnedAfter: number;
+  /** Special-card ids owned after this run (for card-specific achievements). */
+  specialIdsOwnedAfter: ReadonlySet<string>;
   alreadyEarned: ReadonlySet<string>;
 }
 
@@ -142,6 +144,13 @@ const RULES: Record<string, (ctx: AchievementContext) => boolean> = {
   },
 
   curator: (ctx) => ctx.specialsOwnedAfter >= 10,
+
+  // v1.2.0 — region-locked mode + the hidden Creator easter egg.
+  "regional-champion": (ctx) =>
+    ctx.placement === "champion" && Boolean(ctx.run.regionLock),
+
+  creator: (ctx) =>
+    ctx.specialIdsOwnedAfter.has("sp-liberatorl-rocket-draft-creator"),
 };
 
 export function evaluateAchievements(ctx: AchievementContext): string[] {

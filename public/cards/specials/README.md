@@ -88,4 +88,5 @@ sp-sizz-madrid-nrg.png
 sp-eversax-karmine-structure.png
 sp-snaski-gentle-mates.png
 sp-gregan-vitality-blueprint.png
+sp-liberatorl-rocket-draft-creator.png
 ```

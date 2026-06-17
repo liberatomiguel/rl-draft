@@ -9,6 +9,7 @@
  */
 
 import { achievements as achievementDefs } from "@/data";
+import { useCopy } from "@/content/copy";
 import { cx, formatDate } from "@/lib/util";
 import { Panel } from "@/components/ui/Panel";
 import { TiltCard } from "@/components/ui/TiltCard";
@@ -21,11 +22,14 @@ export function AchievementsGrid({
   /** achievementId → ISO date earned. */
   earned: Record<string, string>;
 }) {
+  const { ACH_UI } = useCopy();
   return (
     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
       {achievementDefs.map((def) => {
         const date = earned[def.id];
         const style = achievementStyle(def);
+        // Secret achievements stay masked ("???") until they're earned.
+        const hidden = Boolean(def.secret) && !date;
         const card = (
           <Panel
             className={cx(
@@ -42,12 +46,16 @@ export function AchievementsGrid({
                 date && style.legend && "ach-legend-chip",
               )}
             >
-              <AchievementIcon id={def.id} className="h-4.5 w-4.5" />
+              {hidden ? (
+                <span className="display text-base font-bold text-faint">?</span>
+              ) : (
+                <AchievementIcon id={def.id} className="h-4.5 w-4.5" />
+              )}
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center justify-between gap-2">
                 <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
-                  {def.title}
+                  {hidden ? ACH_UI.secretTitle : def.title}
                 </span>
                 <span
                   className={cx(
@@ -58,7 +66,9 @@ export function AchievementsGrid({
                   {style.label}
                 </span>
               </span>
-              <span className="block text-xs leading-snug text-sub">{def.description}</span>
+              <span className="block text-xs leading-snug text-sub">
+                {hidden ? ACH_UI.secretHint : def.description}
+              </span>
               <span className="mt-0.5 block text-[10px] text-faint">
                 {date ? formatDate(date) : `+${def.xp} XP`}
               </span>

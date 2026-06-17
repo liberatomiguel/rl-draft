@@ -46,6 +46,9 @@ export function SiteFooter() {
             {NAV_UI.madeBy}{" "}
             <ExternalLink href={SITE.authorUrl}>{SITE.author}</ExternalLink>
             {" · "}
+            {NAV_UI.balancedBy}{" "}
+            <ExternalLink href={SITE.balanceCreditUrl}>{SITE.balanceCreditName}</ExternalLink>
+            {" · "}
             {NAV_UI.inspiredBy}{" "}
             <ExternalLink href={SITE.inspiredByUrl}>{SITE.inspiredByName}</ExternalLink>{" "}
             {NAV_UI.by} {SITE.inspiredByAuthor}

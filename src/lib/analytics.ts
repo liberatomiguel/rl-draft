@@ -24,6 +24,8 @@ export interface GameEvents {
     mode: string;
     difficulty: string;
     hiddenOverall: boolean;
+    /** Region lock, or "worldwide" for the default pool (v1.2.0). */
+    region?: string;
   };
   /** The draft was confirmed and the tournament bracket began. */
   tournament_started: {

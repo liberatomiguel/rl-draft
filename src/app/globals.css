@@ -247,7 +247,7 @@ body {
      epic's brighter blue->purple) */
   background-image:
     linear-gradient(168deg, #0b1230 0%, #06091c 58%, #0d1338 100%),
-    linear-gradient(165deg, #2f55d4 0%, #14205e 54%, #3b35b0 100%);
+    linear-gradient(165deg, #4c75e6 0%, #6f63b6 54%, #28238d 100%);
 }
 
 .card-epic {
@@ -276,6 +276,18 @@ body {
     linear-gradient(110deg, #ffffff 0%, #fde68a 20%, #ffffff 36%, #f6c652 54%, #fffaf0 72%, #f0b429 88%, #ffffff 100%);
   background-size: auto, 230% 100%;
   box-shadow: 0 0 22px rgba(255, 242, 200, 0.3);
+}
+
+/*
+ * Creator (v1.2.0): the unique easter-egg card — a rose/magenta border woven
+ * with violet, distinct from every earned rarity. There is exactly one in the
+ * game ("Rocket Draft Creator"). Effects sit at mythic energy, not legendary.
+ */
+.card-creator {
+  background-image:
+    linear-gradient(168deg, #2a0d22 0%, #190813 58%, #2c1030 100%),
+    linear-gradient(135deg, #fbcfe8 0%, #ec4899 28%, #a855f7 60%, #f472b6 100%);
+  box-shadow: 0 0 18px rgba(236, 72, 153, 0.2);
 }
 
 /* Diagonal texture behind the org logo on base cards */
@@ -355,6 +367,16 @@ body {
 
 .card-epic.card-special {
   animation: epic-halo 3.8s ease-in-out infinite;
+}
+
+/* Creator halo pulse — rose/violet (v1.2.0) */
+@keyframes creator-halo {
+  0%, 100% { box-shadow: 0 0 22px rgba(236, 72, 153, 0.24); }
+  50% { box-shadow: 0 0 42px rgba(168, 85, 247, 0.42); }
+}
+
+.card-creator.card-special {
+  animation: creator-halo 3.4s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -704,6 +726,12 @@ body {
   animation: card-sheen 3s ease-in-out infinite, holo-shift 5.5s ease-in-out infinite;
 }
 
+.holo-creator::after {
+  background:
+    linear-gradient(115deg, transparent 24%, rgba(244, 114, 182, 0.26) 40%, rgba(168, 85, 247, 0.18) 50%, rgba(236, 72, 153, 0.26) 58%, transparent 72%);
+  background-size: 220% 100%;
+}
+
 /* Cursor-tracked glare (TiltCard sets --mx/--my as percentages) */
 .tilt-glare {
   background: radial-gradient(
@@ -808,7 +836,7 @@ body {
    dark legibility shadow, and a tier-scaled glow (rare faint -> mythic strong ->
    legendary metallic). Applied INSTEAD of .ovr-shadow (each owns its shadow). */
 .ovr-rare {
-  color: #326CE3; /* strong blue with a faint indigo lean, matches the rare border */
+  color: #8ab9ff; /* strong blue with a faint indigo lean, matches the rare border */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.7);
 }
 .ovr-epic {
@@ -835,6 +863,10 @@ body {
   filter:
     drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))
     drop-shadow(0 0 9px rgba(255, 226, 150, 0.55));
+}
+.ovr-creator {
+  color: #f472b6; /* rose-pink matching the creator border */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(236, 72, 153, 0.6);
 }
 
 /* ---------------------------------------------------------------------------
@@ -882,6 +914,7 @@ body {
   .card-legendary.card-special,
   .card-mythic.card-special,
   .card-epic.card-special,
+  .card-creator.card-special,
   .field-fx,
   .field-holo,
   .field-slot-glow,
@@ -922,6 +955,7 @@ html.force-reduce-motion
     .card-legendary.card-special,
     .card-mythic.card-special,
     .card-epic.card-special,
+    .card-creator.card-special,
     .field-fx,
     .field-holo,
     .field-slot-glow,

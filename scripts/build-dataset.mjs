@@ -165,6 +165,36 @@ const COUNTRY = {
   // SSA
   "daisy": "ZA", "happymeal": "ZA", "lawler": "US", "leoro": "ES", "luiisp": "ES",
   "noxes": "PR", "skillsteal": "ZA", "werty": "ZA", "wiiilooo": "FR",
+
+  // ===========================================================================
+  // v1.2.0 SAM Top-8 import (regional "SAM Only" mode). High-confidence only;
+  // countries read from Liquipedia flags. Already-present SAM keys are NOT
+  // repeated (see data-sources/sam-pending/sam-merge-notes.md §4 + §5 dedup).
+  // ===========================================================================
+  // Brazil
+  tibiano: "BR", juan: "BR", dudubrhue: "BR", c4: "BR", noisy: "BR",
+  mateusstl: "BR", flasheeyy: "BR", davinsano: "BR", snipjuzo: "BR", leodkn: "BR",
+  srforeverplays: "BR", luk: "BR", sword: "BR", ianpinheiro: "BR", zanetti: "BR",
+  majowww: "BR", sppyder: "BR", subhallz: "BR", chr1s: "BR", snipjz: "BR",
+  bliss: "BR", gian: "BR", kixou: "BR", xoz1n: "BR", yand: "BR", kns: "BR",
+  waantz: "BR", pedrokanicastro: "BR", bmendesantos: "BR", wells: "BR",
+  klaus: "BR", baait: "BR", alpe: "BR", lag0: "BR", darxtz: "BR", twistt: "BR",
+  royales: "BR", wisty: "BR", dappluto: "BR", crn: "BR", kaoshi: "BR",
+  patolimpo: "BR", obtth: "BR",
+  // Argentina
+  szaro: "AR", sempa: "AR", orbi7: "AR", dislike: "AR", lexim: "AR",
+  manteca: "AR", tatu: "AR", nachusky: "AR", srnanitou: "AR", aguz: "AR",
+  umbroken: "AR", stolen: "AR", farz: "AR", seck: "AR",
+  // Chile
+  lance: "CL", pansitofrances: "CL", gonk: "CL", deathxplosion: "CL", richy: "CL",
+  androzz: "CL", gatox: "CL", pan: "CL", davitrox: "CL", groval: "CL",
+  nachosky: "CL",
+  // elsewhere
+  laayoh: "US", luc: "US", cha0s: "BE",
+  // Wings E-Sports easter egg (Season 2) — the creator's own team
+  liberatorl: "BR", ninja23509: "BR",
+  // v1.2.0 overall-review coach corrections/additions
+  adambaguette: "FR", lbp: "AU",
 };
 
 const ORG_BUFF_TYPE = {
@@ -256,9 +286,27 @@ const REGION_SPLIT_ORGS = new Set(["pioneers", "fut-esports"]);
  * "orgFiles" block in data-sources/asset-overrides.json.)
  */
 const ORG_LOGO_ERAS = {
-  // NRG ran the classic shield through S9 before the modern rebrand.
-  // Replace this with the multi-era block above once the logo PNGs are ready.
-  "nrg-esports": [{ key: "classic", until: "S9" }],
+  // Big historic orgs that changed identity mid-history. Each entry's `@key`
+  // PNG wears the OLDER logo for seasons on/before `until`; the default
+  // <orgId>.png is always the CURRENT logo. Era PNGs are pulled via the
+  // "orgFiles" overrides (exact Liquipedia File: titles) or dropped by hand;
+  // missing era files fall back to the default, so nothing breaks meanwhile.
+  // (Liquipedia file titles for each key live in data-sources/asset-overrides.json.)
+  //
+  // NRG ran five logos across its S2→2026 RLCS span: the 2016 "NRG eSports",
+  // the 2017, 2019 and 2020 marks, and the 2024 rebrand (the default file).
+  "nrg-esports": [
+    { key: "2016", until: "S2" },
+    { key: "2017", until: "S6" },
+    { key: "2019", until: "S8" },
+    { key: "2020", until: "2022-23" },
+  ],
+  // Dignitas wore its 2018 logo at the S5 title; current is the 2025 rebrand.
+  dignitas: [{ key: "2018", until: "S9" }],
+  // Spacestation won 2021-22 Worlds under its 2021 logo; rebranded in 2023.
+  "spacestation-gaming": [{ key: "2021", until: "2021-22" }],
+  // Team Vitality's earlier bee (through the 2019 Renault era) vs the modern crest.
+  "team-vitality": [{ key: "2018", until: "S8" }],
 };
 
 function orgIdOf(name, region) {
@@ -330,7 +378,14 @@ const teams = rawTeams.map((raw) => {
     // Org line and team line should agree; trust the team line for display.
   }
 
-  return { orgName, orgDisplay: orgDisplay || orgName, season, region: raw.region, players, sub, coach, orgBuffLevel };
+  // Flags (v1.2.0): `sam-only` = SAM Top-8 team that missed Worlds (excluded
+  // from the general draft, shown only in the region-locked SAM mode); `rare` =
+  // easter-egg lineup drawn far less often. Unknown flags are ignored.
+  const flagRaw = get("flag");
+  const samOnly = /\bsam-only\b/i.test(flagRaw);
+  const rareSpawn = /\brare\b/i.test(flagRaw);
+
+  return { orgName, orgDisplay: orgDisplay || orgName, season, region: raw.region, players, sub, coach, orgBuffLevel, samOnly, rareSpawn };
 });
 
 // ---------------------------------------------------------------------------
@@ -457,6 +512,8 @@ for (const team of teams) {
     playerCardIds,
     ...(coachId ? { coachId } : {}),
     ...(subId ? { subId } : {}),
+    ...(team.samOnly ? { samOnly: true } : {}),
+    ...(team.rareSpawn ? { rareSpawn: true } : {}),
     orgBuffLevel: team.orgBuffLevel,
     historicalStrength,
   });
