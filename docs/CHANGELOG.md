@@ -10,6 +10,85 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.2.1] — 2026 · launch polish
+
+The final pass before the public launch: a featured Daily, a special-card buff
+tag, mobile card-fit fixes, more reachable chemistry, and SEO copy polish.
+
+### Added
+- **Authored Daily Challenges** (`src/lib/daily.ts`). A new `AUTHORED_DAILIES`
+  map lets a specific date OVERRIDE the template wheel with a hand-designed
+  config; `generateDailyConfig` short-circuits to it. Today (**2026-06-17**) is
+  **"Loaded Draft"**: a **stronger field** (Hard difficulty) with **overalls left
+  visible** so the cards show off, **2 special cards guaranteed** in the player's
+  draft, and one reroll. Deterministic by construction, so it stays "the same run
+  for everyone."
+- **Guaranteed player specials in the draft** (`DraftState.guaranteedPlayerSpecials`,
+  threaded through `createDraft` → `daily` → `runStore`). Until the player has
+  drafted the target number of specials, `drawNextOffer` narrows the draw to
+  lineups that actually carry a forceable, un-drafted special player
+  (`lineupHasDraftableSpecial`), and `buildOffer` then forces one into the offer.
+  Keyed off the roster (not the round number), so it survives rerolls. Inert
+  unless the field is set (default runs are byte-identical).
+- **Special-card buff tag** (`GameCard.tsx`). Every special now wears a small
+  pill advertising its boost — `+5 MEC`, `+3 OFF·CON`, `+5 Team` — reusing the
+  existing `Badge` (`tone="good"`). On hidden-overall / Hard runs the value masks
+  to `+?? MEC` (stat shown, amount hidden), per direction. It never reveals the
+  card's identity, so it shows even on not-yet-unlocked specials in the draft.
+
+### Changed
+- **Daily overall-visibility is now the daily's own call**, decoupled from the
+  difficulty's hidden-lock (`runStore.startDailyRun`). A Daily can run a stronger
+  field (Hard) while keeping overalls visible — `config.hiddenOverall` is the
+  single source of truth. (Also fixes the latent "Champions Only" template, which
+  declared `hiddenOverall: false` but was being force-hidden by Hard.)
+- **Achievements read varied, not monochrome-per-tier** (`achievementStyle.ts`).
+  Each non-Legend tier now spreads across several distinct hues (Common: cool
+  muted; Rare: cool brights; Epic: vivid jewels) so the trophy wall looks varied;
+  vividness still rises with rarity. **Legend stays standardized** — one prismatic
+  look for every legend, unchanged.
+- **Results team-reveal staff row matches the players** (`ResultsScreen.tsx`).
+  On desktop the coach/sub/org cards now use the same size and spacing as the
+  three player cards, aligned on one row (a `sm+` grid mirroring the top). Mobile
+  layout is preserved (and its card-fit is fixed below).
+- **Region chips match the Worldwide label size** (`SetupScreen.tsx`): the region
+  codes went `text-sm` → `text-base` (16px), so they no longer read squished.
+- **In-card org logos shrink on mobile only** (`GameCard.tsx`). After the v1.2.0
+  enlargement (`lg` = 72px) the logo crowded out the nameplate on small cards;
+  it now steps down on mobile (`40px` base / `56px` `sm`) and restores to the
+  full `72px` at `md+` — desktop is untouched. Card mobile padding and the overall
+  number also tighten a step on mobile to keep every line inside the frame.
+- **SEO copy polish** (no score regression, just sharper): refreshed `<title>`,
+  a deduplicated/expanded `keywords` set, an `Esports` schema genre, a stronger
+  product `description` (EN + PT, feeds metadata/OG/hero), and a refreshed OG-image
+  line.
+
+### Balance
+- **Perfect chemistry is reachable** (`balance.ts` `CHEMISTRY.tiers`). Tier
+  thresholds lowered — Perfect 80→72, Great 58→52, Good 36→32, Okay 15→14 — so a
+  committed coherent roster (a 3-player country stack = 9 raw = 75%, or a lineup
+  pair + org/coach links) now lands **Perfect** instead of stalling at Great.
+  This is a label remap ONLY: the chemistry rating reward is percent-based
+  (`rating.ts`), so it is unchanged, the overall-dominant anchors (GAME-DESIGN
+  §25) still hold, and the AI (already ~100% chemistry) is not buffed. The 50-test
+  suite — including the chemistry and full-tournament anchors — stays green.
+
+### Fixed
+- **The Creator card showed no field effect.** `FieldView.fieldFx` switches on the
+  special's rarity to pick the on-pitch glow/border/holo, but the `switch` had no
+  `creator` case (added after the other four), so the newest rarity fell through
+  to "no effect" — on both mobile and desktop. Added the `creator` case (rose/pink
+  at mythic energy, matching `.card-creator` / `.ovr-creator` in `globals.css`).
+- **`how-to-play` AND `play` route metadata claimed a "budget" mechanic** that
+  doesn't exist (both inherited the phrasing from the v1.1.4 per-page SEO pass) —
+  both reworded to "build team chemistry" (accurate; both pages are indexed).
+- **Daily "Good+/Great+ chemistry" objectives now track the tier floors.** The
+  satisfaction gates in `results.ts` were hardcoded (40% / 62%) and drifted from
+  the displayed tier after this patch's threshold change; they now read
+  `CHEMISTRY.tiers` (Good 32% / Great 52%), so the objective passes exactly when
+  the chemistry badge shows that tier. (Featured launch day isn't affected — it
+  runs a win-title objective.)
+
 ## [1.2.0] — 2026 · "Regional Champions"
 
 A second draft pool per region, the SAM Top-8 import, an easter-egg card, and a

@@ -3,7 +3,7 @@
  * achievements and the XP breakdown (base doc §27, §30).
  */
 
-import { DIFFICULTY, FEATURES, XP } from "@/config/balance";
+import { CHEMISTRY, DIFFICULTY, FEATURES, XP } from "@/config/balance";
 import { achievementById, playerById, playerCardById, specialCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { evaluateAchievements } from "./achievements";
@@ -225,11 +225,16 @@ export function compileResults(
     const obj = run.daily.objective;
     const chemPct = userTeam?.chemistry.percent ?? 0;
     const teamOvr = userTeam ? displayTeamOverall(userTeam.rating) : 0;
+    // Gates track the displayed tier floors (balance.ts CHEMISTRY.tiers), so a
+    // "Good+/Great+ chemistry" objective passes exactly when the badge shows
+    // that tier — not a separate hardcoded number (v1.2.1).
+    const tierMin = (tier: string, fallback: number) =>
+      CHEMISTRY.tiers.find((t) => t.tier === tier)?.min ?? fallback;
     const met =
       obj.type === "chemistry_good"
-        ? chemPct >= 40
+        ? chemPct >= tierMin("Good", 32)
         : obj.type === "chemistry_great"
-          ? chemPct >= 62
+          ? chemPct >= tierMin("Great", 52)
           : obj.type === "concede_under"
             ? goalsConceded < (obj.value ?? 0)
             : obj.type === "win_title"

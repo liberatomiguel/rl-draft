@@ -21,6 +21,16 @@ describe("daily challenge generator", () => {
     expect(labels.size).toBeGreaterThanOrEqual(4);
   });
 
+  it("authored daily (2026-06-17) is the featured specials challenge", () => {
+    const a = generateDailyConfig("2026-06-17");
+    const b = generateDailyConfig("2026-06-17");
+    expect(a).toEqual(b); // deterministic override
+    expect(a.guaranteedPlayerSpecials).toBe(2);
+    expect(a.difficulty).toBe("hard");
+    expect(a.hiddenOverall).toBe(false); // overalls visible to show off the specials
+    expect(a.info.label).toBe("Loaded Draft");
+  });
+
   it("restricted pools reference real lineups and stay viable", () => {
     for (let day = 1; day <= 28; day++) {
       const date = `2026-08-${String(day).padStart(2, "0")}`;

@@ -21,6 +21,8 @@ export interface DailyConfig {
   rerollsOverride?: number;
   /** Multiplier on the special appearance chance. */
   specialChanceMult?: number;
+  /** Guarantee at least this many pickable player specials in the draft. */
+  guaranteedPlayerSpecials?: number;
   /** Restricted lineup pool (sorted for determinism). */
   poolLineupIds?: string[];
 }
@@ -75,7 +77,36 @@ function viable(pool: string[]): boolean {
   return pool.length >= 8;
 }
 
+/**
+ * Hand-authored daily challenges for specific dates (v1.2.1). When a date has
+ * an entry here it OVERRIDES the template wheel — used to feature a designed
+ * challenge on a notable day. Deterministic by construction (a fixed config for
+ * a fixed date), so the "same draft for everyone" guarantee holds.
+ */
+const AUTHORED_DAILIES: Record<string, (date: string) => DailyConfig> = {
+  // Launch-week feature (2026-06-17): two special cards are guaranteed in the
+  // player's draft, against a stronger Hard field — but overalls stay VISIBLE so
+  // the special-card firepower is on show, with one reroll as a small safety net.
+  "2026-06-17": (date) => ({
+    info: {
+      date,
+      n: dailyNumber(date),
+      label: "Loaded Draft",
+      description:
+        "Two special cards are guaranteed to show up in your draft — but the bracket bites back with a stronger, sharper field. Make the star power count.",
+      objective: { type: "win_title", label: "Win the whole thing", bonusXp: 100 },
+    },
+    difficulty: "hard",
+    hiddenOverall: false,
+    rerollsOverride: 1,
+    guaranteedPlayerSpecials: 2,
+  }),
+};
+
 export function generateDailyConfig(date: string): DailyConfig {
+  const authored = AUTHORED_DAILIES[date];
+  if (authored) return authored(date);
+
   const rng = createRng(seedFromDate(date) ^ 0x5eed);
 
   type TemplateResult = Omit<DailyConfig, "info"> & {

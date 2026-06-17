@@ -78,9 +78,10 @@ export const TEAM_RATING = {
 // ---------------------------------------------------------------------------
 
 export const CHEMISTRY = {
-  // v1.2.0 rework — generous + REACHABLE. A drafted team that commits to a
-  // country stack lands Great; two linked players land Good; a real lineup
-  // stack lands Perfect. AI lineups are full stacks (≈100% either way), so this
+  // v1.2.0 rework — generous + REACHABLE; v1.2.1 lowered the tier floors so MAX
+  // is attainable. A drafted team that commits to a country stack (or a real
+  // lineup) now lands Perfect; a same-lineup pair lands Good. AI lineups are full
+  // stacks (≈100% either way), so this
   // does NOT inflate the field — it lets the PLAYER close the chemistry gap by
   // building, which is the intended strategic lever (trade a little overall for
   // a coherent roster). Earlier the realistic ceiling was ~Okay; now it pays off.
@@ -98,14 +99,22 @@ export const CHEMISTRY = {
     subLink: 1,
     subLinkMax: 2,
   },
-  /** Reachable ceiling — a 3-player country stack (9) is 75% → Great. */
+  /** Reachable ceiling — a 3-player country stack (9) is 75% → Perfect. */
   maxRaw: 12,
-  /** Percent thresholds (inclusive lower bound) → tier. More generous (v1.2.0). */
+  /**
+   * Percent thresholds (inclusive lower bound) → tier. Lowered again in v1.2.1
+   * so MAX chemistry is actually reachable: a committed coherent roster (a
+   * 3-player country stack = 9 raw = 75%, or a lineup pair + org/coach links)
+   * now lands Perfect instead of stalling at Great. This is a label remap only —
+   * the rating reward is percent-based (rating.ts), so it is UNCHANGED, the
+   * overall-dominant design anchors (GAME-DESIGN §25) still hold, and the AI
+   * (already ~100% chemistry) is not buffed. See DESIGN-DECISIONS #49.
+   */
   tiers: [
-    { min: 80, tier: "Perfect" },
-    { min: 58, tier: "Great" },
-    { min: 36, tier: "Good" },
-    { min: 15, tier: "Okay" },
+    { min: 72, tier: "Perfect" },
+    { min: 52, tier: "Great" },
+    { min: 32, tier: "Good" },
+    { min: 14, tier: "Okay" },
     { min: 0, tier: "Poor" },
   ] as const,
 } as const;

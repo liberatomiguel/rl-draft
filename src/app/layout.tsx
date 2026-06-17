@@ -23,7 +23,7 @@ const rajdhani = Rajdhani({
   subsets: ["latin"],
 });
 
-const TITLE = `${SITE.name} — RLCS Esports History Draft Game`;
+const TITLE = `${SITE.name} — RLCS Draft Game · Rocket League Esports History`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -39,12 +39,14 @@ export const metadata: Metadata = {
     "Rocket League",
     "RLCS",
     "Rocket League esports",
-    "esports draft",
+    "RLCS history",
+    "esports draft game",
     "fantasy draft",
+    "roster builder",
+    "tournament simulator",
+    "Rocket League draft game",
     "Rocket Draft",
-    "RLCS draft",
-    "draft game",
-    "card game",
+    "free browser game",
   ],
   alternates: { canonical: "/" },
   openGraph: {
@@ -87,7 +89,7 @@ const JSON_LD = {
   description: APP.description,
   applicationCategory: "Game",
   operatingSystem: "Web browser",
-  genre: ["Sports", "Strategy", "Card game"],
+  genre: ["Sports", "Strategy", "Esports", "Card game"],
   gamePlatform: "Web",
   inLanguage: ["en", "pt-BR"],
   author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },

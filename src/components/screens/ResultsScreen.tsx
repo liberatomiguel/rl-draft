@@ -247,7 +247,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         className="mb-4"
       />
       <div className="mb-10">
-        <div className="field rounded-2xl p-4 sm:p-6">
+        <div className="field rounded-2xl p-3 sm:p-6">
           <div className="mx-auto grid max-w-2xl grid-cols-3 items-start gap-2 md:gap-4">
             {playerSlots.map((s, i) =>
               s?.card ? (
@@ -261,7 +261,10 @@ export function ResultsScreen({ run }: { run: RunState }) {
           </div>
         </div>
         {benchSlots.some((s) => s.card) ? (
-          <div className="mt-5 flex justify-center gap-5 sm:gap-10">
+          // Desktop (sm+) mirrors the top row exactly — same 3-col grid, gaps and
+          // card size, so coach/sub/org line up under the players. Mobile keeps
+          // its tighter centered flex row, unchanged (v1.2.1).
+          <div className="mt-5 flex justify-center gap-2 sm:mx-auto sm:grid sm:max-w-2xl sm:grid-cols-3 sm:items-start sm:gap-2 md:gap-4">
             {benchSlots.map((s, i) =>
               s.card ? (
                 <RevealCard
@@ -269,7 +272,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                   card={s.card}
                   delayMs={(i + 3) * 220}
                   animate={!run.showOverall}
-                  className="mx-auto w-24 sm:w-32"
+                  className="mx-auto w-[6.75rem] sm:w-full sm:max-w-36 md:max-w-44"
                 />
               ) : null,
             )}

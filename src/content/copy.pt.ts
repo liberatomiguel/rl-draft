@@ -12,7 +12,7 @@ export const PT: Copy = {
     name: "Rocket Draft",
     tagline: "Drafte a história. Sobreviva à chave.",
     description:
-      "Um jogo fan-made de draft da história do Rocket League esports. Monte um elenco com lineups icônicas da RLCS e dispute um torneio no estilo RLCS.",
+      "Um jogo fan-made e gratuito de draft do Rocket League esports. Monte um elenco com lineups icônicas da RLCS, colecione cartas especiais lendárias e sobreviva a um torneio no estilo RLCS.",
     disclaimer:
       "Projeto fan-made, sem fins lucrativos, para fins educativos. Não afiliado à Psyonix, Epic Games ou qualquer organização de esports. Rocket League é marca registrada de seus respectivos donos.",
   },
@@ -599,10 +599,26 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.2.1",
+        name: "",
+        date: "2026",
+        current: true,
+        notes: [
+          "O Desafio Diário de hoje é especial — \"Loaded Draft\": duas cartas especiais garantidas para aparecer no seu draft, contra um campo mais forte. Aproveite o poder de fogo.",
+          "As cartas especiais agora mostram o buff de cara — uma tag tipo \"+5 MEC\" na própria carta. Em runs com overall oculto, ela aparece como \"+?? MEC\".",
+          "As conquistas ficaram mais coloridas — a estante de troféus agora é variada, em vez de um único tom por tier. As conquistas Legend mantêm o visual prismático característico.",
+          "As cartas ficam melhores no celular: depois dos logos maiores, as cartas do draft e do team reveal não cortam mais nenhuma informação no mobile.",
+          "Ficou mais fácil chegar na química Perfeita — um elenco que aposta em um país, org ou lineup compartilhada agora é recompensado no tier máximo.",
+          "A carta Creator finalmente mostra seu brilho em campo, como toda carta especial.",
+          "Polimento na tela de resultados: as cartas de técnico, reserva e org agora ficam alinhadas embaixo dos seus três jogadores.",
+          "Textos mais afiados pelo site para as pessoas certas encontrarem o jogo.",
+        ],
+      },
+      {
         version: "1.2.0",
         name: "Regional Champions",
         date: "2026",
-        current: true,
+        current: false,
         notes: [
           "Novo: Draft por Região. Escolha uma região na tela de setup e drafte da cena inteira dela — os times do Worlds MAIS o Top 8 regional que nunca chegou a um Mundial. A América do Sul (SAM) já está disponível; mais regiões em breve.",
           "Um pool sul-americano muito mais profundo — dezenas de novos times e jogadores da SAM pesquisados na Liquipedia.",

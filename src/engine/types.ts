@@ -286,6 +286,12 @@ export interface DraftState {
   poolLineupIds?: string[];
   /** Multiplier on the special-appearance chance (daily modifier). */
   specialChanceMult?: number;
+  /**
+   * Daily "specials" challenge (v1.2.1): until the player has drafted this many
+   * special player cards, every offer with an open player slot is guaranteed to
+   * include at least one pickable player special. Undefined = no guarantee.
+   */
+  guaranteedPlayerSpecials?: number;
   offer: DraftOffer | null;
   roster: Roster;
   complete: boolean;

@@ -69,6 +69,11 @@ function fieldFx(card: ResolvedCard | null): FieldFx {
       return fx("!border-violet-400/80", "rgba(124, 58, 237, 0.5)", "rgba(168, 85, 247, 0.45)");
     case "rare":
       return fx("!border-blue-500/75", "rgba(59, 130, 246, 0.45)", "rgba(99, 102, 241, 0.42)");
+    case "creator":
+      // Rose/violet, at mythic energy — matches the Creator card's frame, halo
+      // and overall colour (globals.css .card-creator / .ovr-creator). Was
+      // missing, so the Creator card showed no field effect (v1.2.1 fix).
+      return fx("!border-pink-400/80", "rgba(236, 72, 153, 0.55)", "rgba(244, 114, 182, 0.5)");
   }
   return { cls: "" };
 }

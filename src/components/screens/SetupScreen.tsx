@@ -164,7 +164,9 @@ export function SetupScreen() {
               >
                 <span
                   className={cx(
-                    "display text-sm font-bold tracking-wide",
+                    // Matches the Worldwide card's label size (was text-sm, which
+                    // read as squished against the chip height) — v1.2.1.
+                    "display text-base font-bold leading-none tracking-wide",
                     active ? "text-orange-bright" : available ? "text-ink" : "text-faint",
                   )}
                 >

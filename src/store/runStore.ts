@@ -128,7 +128,6 @@ export const useRunStore = create<RunStore>()(
         const config = generateDailyConfig(date);
         const seed = seedFromDate(date);
         const rng = createRng(seed);
-        const profile = DIFFICULTY[config.difficulty];
 
         const draft = drawNextOffer(
           createDraft(config.difficulty, {
@@ -136,6 +135,7 @@ export const useRunStore = create<RunStore>()(
             poolLineupIds: config.poolLineupIds,
             rerollsOverride: config.rerollsOverride,
             specialChanceMult: config.specialChanceMult,
+            guaranteedPlayerSpecials: config.guaranteedPlayerSpecials,
           }),
           rng,
         );
@@ -146,7 +146,11 @@ export const useRunStore = create<RunStore>()(
           seed,
           rngState: rng.state,
           difficulty: config.difficulty,
-          showOverall: profile.overallLockedHidden || config.hiddenOverall ? false : true,
+          // Dailies set their OWN visibility (v1.2.1): a challenge can run a
+          // stronger field (Hard) while keeping overalls visible. The daily's
+          // hiddenOverall is the single source of truth, so a Hard daily no
+          // longer force-hides — only `hiddenOverall: true` templates do.
+          showOverall: config.hiddenOverall ? false : true,
           phase: "draft",
           startedAt: new Date().toISOString(),
           daily: config.info,

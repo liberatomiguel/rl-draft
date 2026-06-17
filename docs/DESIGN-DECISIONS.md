@@ -329,6 +329,48 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     timers were removed by direction — a celebration should never vanish before
     the player has looked at it.
 
+## v1.2.1 additions (launch polish)
+
+49. **Reaching MAX chemistry is a threshold remap, not a reward buff.** The
+    player asked to make Perfect chemistry actually attainable. The safe lever is
+    the TIER thresholds (Perfect 80→72, etc.), NOT `chemistryMaxBonus` or the pair
+    weights: the chemistry rating bonus is percent-based, so lowering tier labels
+    changes ZERO rating math — the overall-dominant anchors and full-tournament
+    outcome tests can't regress — and it doesn't touch the AI (already ~100%
+    chemistry, so already getting full bonus). A 3-player country stack (9 raw =
+    75%) now reads Perfect, which is the intended "commit to a theme and it pays
+    off" payoff. (Matches the project memory: reward chemistry via reachable
+    player scoring, never via the field-wide bonus.)
+
+50. **A featured Daily is an authored OVERRIDE, and a Daily owns its own overall
+    visibility.** Rather than reshuffle the template wheel, specific dates get a
+    hand-written `DailyConfig` via `AUTHORED_DAILIES` (deterministic, so "same run
+    for everyone" holds). To let the featured day run a STRONGER field while still
+    SHOWING the special cards, daily visibility was decoupled from the difficulty's
+    hidden-lock — `config.hiddenOverall` is now the single source of truth in
+    `startDailyRun` (a Hard daily no longer force-hides). This also corrects the
+    pre-existing "Champions Only" template, which always intended visible overalls.
+    The "2 specials guaranteed" is a real guarantee (bias the draw to
+    special-capable lineups + force one in the offer), keyed off the roster so it
+    survives rerolls — not a probability bump, which the sparse special pool can't
+    reliably hit.
+
+51. **Achievement colour = variety within a tier, with Legend the fixed apex.**
+    The wall read monochrome (all Rare blue, all Epic violet). Each non-Legend
+    tier now carries a SPREAD of distinct hues (still trending cool→vivid by
+    rarity so the tier stays legible), assigned by the existing stable per-id
+    `hueIndex`. Legend keeps a SINGLE prismatic identity by direction — the apex
+    should look uniform and premium, so colour variety stops below it.
+
+52. **The mobile in-card logo is the single shrink point for card-fit.** The
+    v1.2.0 logo enlargement (`lg` 64→72px) is great on desktop but overflowed the
+    nameplate on narrow mobile cards — the same root cause behind BOTH the draft
+    and the team-reveal "cut info" reports. Fixed once, in `GameCard`, with a
+    mobile-only responsive logo (40/56/72 by breakpoint) plus a one-step trim of
+    mobile padding and the overall number; desktop is byte-identical. The
+    team-reveal staff cards were additionally widened on mobile (they're the
+    narrowest at `w-24`) so their badges clear the frame.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

@@ -60,7 +60,7 @@ describe("chemistry (§22, v1.2.0 rework — generous + reachable)", () => {
     expect(org.raw).toBe(2);
   });
 
-  it("a 3-player country stack reaches Great — the achievable strategic payoff", () => {
+  it("a 3-player country stack reaches Perfect — the achievable strategic payoff", () => {
     const result = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -68,7 +68,9 @@ describe("chemistry (§22, v1.2.0 rework — generous + reachable)", () => {
         player("C", "L3", "O3", "BR"),
       ],
     });
-    atLeast(result.tier, "Great");
+    // v1.2.1: 9 raw = 75% now clears the Perfect floor (72), so MAX chemistry is
+    // reachable by a committed-but-buildable roster.
+    atLeast(result.tier, "Perfect");
   });
 
   it("two linked players plus an org tie reach Good", () => {

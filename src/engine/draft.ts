@@ -77,6 +77,8 @@ export interface CreateDraftOptions {
   rerollsOverride?: number;
   /** Multiply the special-appearance chance (daily modifier). */
   specialChanceMult?: number;
+  /** Guarantee at least this many pickable player specials over the draft. */
+  guaranteedPlayerSpecials?: number;
 }
 
 export function createDraft(
@@ -91,6 +93,7 @@ export function createDraft(
     takenPersonIds: [],
     poolLineupIds: options.poolLineupIds,
     specialChanceMult: options.specialChanceMult,
+    guaranteedPlayerSpecials: options.guaranteedPlayerSpecials,
     offer: null,
     roster: {},
     complete: false,
@@ -217,6 +220,30 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
     });
   }
 
+  // Daily "specials" challenge (v1.2.1): until the player has drafted the target
+  // number of specials, GUARANTEE at least one pickable player special in every
+  // offer that still has an open player slot. Keyed off the roster (not the
+  // round), so it survives rerolls. The field is only set on the authored daily;
+  // it is undefined everywhere else, so this whole block is inert by default.
+  const specialTarget = draft.guaranteedPlayerSpecials ?? 0;
+  if (specialTarget > 0) {
+    const draftedSpecials = PLAYER_SLOTS.filter((s) => draft.roster[s]?.specialId).length;
+    const openPlayerSlot = PLAYER_SLOTS.some((s) => !draft.roster[s]);
+    const offersSpecial = cards.some(
+      (c) => c.kind === "player" && c.specialId && c.availability === "available",
+    );
+    if (draftedSpecials < specialTarget && openPlayerSlot && !offersSpecial) {
+      for (const c of cards) {
+        if (c.kind !== "player" || c.availability !== "available") continue;
+        const pool = specialsByPlayerId.get(playerCardById.get(c.refId)!.playerId);
+        if (pool && pool.length > 0) {
+          c.specialId = rng.weightedPick(pool, (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1).id;
+          break;
+        }
+      }
+    }
+  }
+
   const hasPickableCard = cards.some((c) => c.availability === "available");
 
   return { lineupId, cards, hasPickableCard };
@@ -236,6 +263,16 @@ function lineupPool(draft: DraftState) {
  * Weight ramps 1 → staffScarcityBoost with the share of missing kinds the
  * lineup covers, so blank offers become rare instead of constant.
  */
+/** True when a lineup carries an un-drafted player who has a special pool. */
+function lineupHasDraftableSpecial(lineup: Lineup, takenPersonIds: string[]): boolean {
+  return lineup.playerCardIds.some((cardId) => {
+    const card = playerCardById.get(cardId);
+    if (!card || takenPersonIds.includes(card.playerId)) return false;
+    const pool = specialsByPlayerId.get(card.playerId);
+    return Boolean(pool && pool.length > 0);
+  });
+}
+
 function lineupWeight(lineup: Lineup, staffNeeds: CardKind[]): number {
   if (staffNeeds.length === 0) return 1;
   let covered = 0;
@@ -258,6 +295,20 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   if (pool.length === 0) {
     pool = base.slice();
     shown = [];
+  }
+
+  // Daily "specials" challenge (v1.2.1): while the player still owes specials and
+  // has an open player slot, restrict the draw to lineups that actually carry a
+  // forceable player special — buildOffer then guarantees one in the offer. Falls
+  // back to the full pool only if none remain. Inert unless the field is set.
+  const specialTarget = draft.guaranteedPlayerSpecials ?? 0;
+  if (specialTarget > 0) {
+    const draftedSpecials = PLAYER_SLOTS.filter((s) => draft.roster[s]?.specialId).length;
+    const openPlayerSlot = PLAYER_SLOTS.some((s) => !draft.roster[s]);
+    if (draftedSpecials < specialTarget && openPlayerSlot) {
+      const specialPool = pool.filter((l) => lineupHasDraftableSpecial(l, draft.takenPersonIds));
+      if (specialPool.length > 0) pool = specialPool;
+    }
   }
 
   // Only coach/sub missing → bias toward lineups that still have them.

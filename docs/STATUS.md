@@ -1,15 +1,57 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-17. The **v1.2.0 "Regional Champions"** section below is the
-> current (UNCOMMITTED) work, under Miguel's review. The v1.1.x sections are
+> Last updated: 2026-06-17. The **v1.2.1 "launch polish"** section below is the
+> current (UNCOMMITTED) work, under Miguel's review — the FINAL patch before the
+> public launch (today). v1.2.0 is committed (`cf5d1a2`); v1.1.x and older are
 > historical — see `docs/CHANGELOG.md` for shipped detail.
 
-## v1.2.0 — "Regional Champions" (current · uncommitted, under review)
+## v1.2.1 — launch polish (current · uncommitted, under review)
 
-The v1.2.0 feature pass is built and verified locally (NOT committed — Miguel
-reviews first). Technical detail in `docs/CHANGELOG.md` [1.2.0]; rationale in
-`docs/DESIGN-DECISIONS.md` #44–48.
+The last pass before launch. Built + verified locally (`tsc`, **50** vitest tests,
+lint at the 8-error baseline / 0 new) and exercised live in the preview (EN, a
+full daily run desktop + mobile, the achievements wall, the creator field FX).
+NOT committed — Miguel reviews first. Technical detail in `docs/CHANGELOG.md`
+[1.2.1]; rationale in `docs/DESIGN-DECISIONS.md` #49–52.
+
+### Done this session (10 items)
+1. **Featured Daily for today** — `2026-06-17` is the authored **"Loaded Draft"**:
+   Hard field but overalls VISIBLE, **2 specials guaranteed** in the draft, 1
+   reroll. New `AUTHORED_DAILIES` override + a real special guarantee
+   (`guaranteedPlayerSpecials`, draw-bias + force in `draft.ts`). Dailies now own
+   their overall visibility (decoupled from the Hard hidden-lock in `runStore`).
+2. **Special-card buff tag** — every special wears a `+5 MEC` / `+5 Team` pill
+   (`+?? MEC` on hidden runs), reusing `Badge`. Shows even on un-unlocked draft
+   specials (no identity leak).
+3. **Perfect chemistry reachable** — `CHEMISTRY.tiers` thresholds lowered
+   (Perfect 80→72…). Label remap only; rating math + anchor tests unchanged.
+4. **Achievements read varied** — per-tier hue spread in `achievementStyle.ts`;
+   Legend stays standardized prismatic.
+5. **Creator field FX fixed** — `FieldView.fieldFx` was missing the `creator`
+   case (no on-pitch glow); added (rose/pink).
+6. **Mobile card-fit** — in-card logo shrinks on mobile only (40/56/72 px);
+   fixes BOTH the draft and team-reveal "cut info" reports. Desktop untouched.
+7. **Results staff row** — coach/sub/org now match the player cards' size +
+   spacing on one desktop row; mobile staff cards widened so badges clear.
+8. **Region chips** — code labels `text-sm`→`text-base` (match Worldwide).
+9. **SEO polish** — title, keywords, description (EN+PT), OG line, schema genre;
+   fixed the false "budget" claim in `how-to-play` metadata.
+10. **Version bump** → `1.2.1` (`site.ts` + `package.json`); changelog page
+    (EN+PT) updated with friendly notes.
+
+### Next steps (open)
+1. **Review + commit `v1.2.1`**, then deploy for launch.
+2. Optional art still pending from v1.2.0 (below) — non-blocking.
+3. The buff-pill `+?? MEC` (hidden-overall) path is logic-verified but was not
+   screenshotted in a live Hard-hidden run; quick to eyeball if wanted.
+
+---
+
+## v1.2.0 — "Regional Champions" (shipped · committed `cf5d1a2`)
+
+Full detail in `docs/CHANGELOG.md` [1.2.0]; rationale in
+`docs/DESIGN-DECISIONS.md` #44–48. Highlights kept here only as context for the
+open follow-ups below.
 
 ### Done this session
 - **Region-locked draft mode** — a "Region" picker on the setup screen for

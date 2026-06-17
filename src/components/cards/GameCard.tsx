@@ -18,6 +18,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useCopy } from "@/content/copy";
 import type { ResolvedCard } from "@/engine/cards";
+import type { SpecialEffect } from "@/engine/types";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
@@ -108,6 +109,36 @@ const SPECIAL_OVR_COLOR: Record<string, string> = {
   creator: "ovr-creator",
 };
 
+/** Compact stat codes for the special-card buff pill (full names don't fit). */
+const STAT_SHORT: Record<string, string> = {
+  offense: "OFF",
+  defense: "DEF",
+  mechanics: "MEC",
+  consistency: "CON",
+  experience: "EXP",
+  clutch: "CLT",
+};
+
+/**
+ * Short label for a special card's buff, shown as a pill on the card (v1.2.1).
+ * Whole-team boosts read "Team"; otherwise the (up to two) boosted stats. On
+ * hidden-overall runs the value is masked to "+??" but the stat still shows —
+ * e.g. "+?? CLT" — so the player knows WHAT it buffs, not how much.
+ */
+function specialBuffLabel(effect: SpecialEffect, showOverall: boolean): string | null {
+  const attrs = effect.attributes ?? [];
+  const value = showOverall ? `+${effect.value}` : "+??";
+  // A team_attribute_boost lifts the WHOLE team — read "Team" regardless of how
+  // many stats it lists (and it doubles as less of an identity tell on Hard).
+  if (effect.type === "team_attribute_boost") return `${value} Team`;
+  if (attrs.length === 0) return null; // legacy situational effects → no stat pill
+  const stats = attrs
+    .slice(0, 2)
+    .map((a) => STAT_SHORT[a] ?? a.slice(0, 3).toUpperCase())
+    .join("·");
+  return `${value} ${stats}`;
+}
+
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
   if (card.special) {
     const holo = ["epic", "mythic", "legendary", "creator"].includes(card.special.rarity)
@@ -162,6 +193,12 @@ export function GameCard({
   const tagClass = KIND_TAG[card.kind];
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
+  // Buff pill (v1.2.1): every special advertises its buff — the gameplay info a
+  // drafter needs. It never reveals the card's identity (only the stat), so it
+  // shows even on yet-to-be-unlocked specials. The VALUE follows the overall:
+  // visible runs show "+5 EXP", hidden/Hard runs show "+?? EXP".
+  const buffLabel =
+    isSpecial && card.special ? specialBuffLabel(card.special.effect, showOverall) : null;
   // `lite` (dense grids) keeps the 3D tilt — it's cheap now that TiltCard only
   // promotes a layer (will-change) while actually tilting. Only the heavier
   // blend/backdrop/halo-pulse effects are dropped in lite (below + globals.css).
@@ -169,7 +206,7 @@ export function GameCard({
     tilt ?? (disabled ? "off" : isSpecial ? "strong" : "light");
 
   const sizeClasses = fluid
-    ? "w-full p-2.5 md:p-3"
+    ? "w-full p-2 md:p-3"
     : size === "lg"
       ? "w-44 md:w-52 p-3.5"
       : size === "sm"
@@ -216,7 +253,9 @@ export function GameCard({
             <span
               className={cx(
                 "display block font-bold leading-none",
-                size === "sm" ? "text-2xl" : "text-2xl md:text-3xl",
+                // Mobile trims the overall a step so dense reveal/draft cards keep
+                // every line inside the frame; desktop is unchanged (v1.2.1).
+                size === "sm" ? "text-2xl" : "text-xl sm:text-2xl md:text-3xl",
                 isSpecial
                   ? (SPECIAL_OVR_COLOR[card.special!.rarity] ?? "text-white ovr-shadow")
                   : showOverall && (card.overall ?? 0) >= 90
@@ -267,6 +306,14 @@ export function GameCard({
                 orgId={logoOrgId}
                 seasonId={logoSeasonId}
                 size={size === "sm" ? "md" : "lg"}
+                // Mobile keeps the in-card logo a touch smaller so the nameplate
+                // never clips after the v1.2.0 logo enlargement; desktop (md+)
+                // restores the full "lg" size, so it's unchanged there (v1.2.1).
+                className={
+                  size === "sm"
+                    ? undefined
+                    : "!h-10 !w-10 sm:!h-14 sm:!w-14 md:!h-[4.5rem] md:!w-[4.5rem]"
+                }
               />
             ) : (
               <span className="display text-4xl font-bold text-white/15">?</span>
@@ -311,18 +358,28 @@ export function GameCard({
             (it used to spill past the frame and clip mid-letter). */}
         <div className="mt-1.5 flex min-w-0 items-center justify-between gap-1">
           {card.special ? (
-            <Badge
-              tone={specialCollected && !maskedSpecial ? "gold" : "neutral"}
-              className={cx("!block max-w-full truncate !text-[9px]", !lite && "backdrop-blur-sm")}
-            >
-              {maskedSpecial
-                ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
-                : specialCollected
-                  ? card.special.rarity === "creator"
-                    ? RARITY_LABELS.creator
-                    : `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
-                  : "?? · ??"}
-            </Badge>
+            <>
+              <Badge
+                tone={specialCollected && !maskedSpecial ? "gold" : "neutral"}
+                className={cx("!block min-w-0 truncate !text-[9px]", !lite && "backdrop-blur-sm")}
+              >
+                {maskedSpecial
+                  ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
+                  : specialCollected
+                    ? card.special.rarity === "creator"
+                      ? RARITY_LABELS.creator
+                      : `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
+                    : "?? · ??"}
+              </Badge>
+              {buffLabel ? (
+                <Badge
+                  tone="good"
+                  className={cx("shrink-0 !text-[9px]", !lite && "backdrop-blur-sm")}
+                >
+                  {buffLabel}
+                </Badge>
+              ) : null}
+            </>
           ) : card.kind === "coach" && card.buffType && showOverall ? (
             <Badge tone="blue" className="!block max-w-full truncate !text-[9px]">
               {STAT_LABELS[card.buffType]} {card.buffLevel}

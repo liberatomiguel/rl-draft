@@ -14,7 +14,7 @@ export const APP = {
   name: "Rocket Draft",
   tagline: "Draft history. Survive the bracket.",
   description:
-    "A fan-made Rocket League esports history draft game. Build a roster from iconic RLCS lineups and run an RLCS-style tournament.",
+    "A free, fan-made Rocket League esports draft game. Build a roster from iconic RLCS lineups, collect legendary special cards, and survive an RLCS-style tournament bracket.",
   disclaimer:
     "Fan-made, non-commercial project for educational purposes. Not affiliated with Psyonix, Epic Games or any esports organization. Rocket League is a trademark of its respective owners.",
 };
@@ -610,10 +610,26 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.2.1",
+      name: "",
+      date: "2026",
+      current: true,
+      notes: [
+        "Today's Daily Challenge is a special one — \"Loaded Draft\": two special cards are guaranteed to show up in your draft, against a tougher field. Make the star power count.",
+        "Special cards now show their boost at a glance — a little tag like \"+5 MEC\" right on the card. On hidden-overall runs it teases the stat as \"+?? MEC\".",
+        "Achievements got more colorful — the trophy wall now reads varied instead of one shade per tier. Legend achievements keep their signature prismatic look.",
+        "Cards read better on phones: after the bigger logos, the draft and team-reveal cards no longer cut off any info on mobile.",
+        "Easier to reach Perfect team chemistry — a roster that commits to a country, org or shared lineup now pays off at the top tier.",
+        "The Creator card finally shows its glow on the field, like every other special.",
+        "Results screen polish: the coach, sub and org cards now line up neatly under your three players.",
+        "Sharper wording across the site so the right people can find the game.",
+      ],
+    },
+    {
       version: "1.2.0",
       name: "Regional Champions",
       date: "2026",
-      current: true,
+      current: false,
       notes: [
         "New: Region-Locked Draft. Pick a region on the setup screen and draft from its whole scene — the Worlds teams PLUS the regional Top 8 that never reached a World Championship. South America (SAM) is live now; more regions are coming soon.",
         "A much deeper South American pool — dozens of new SAM teams and players researched from Liquipedia.",

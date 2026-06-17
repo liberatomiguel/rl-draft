@@ -49,7 +49,7 @@ export default function OpengraphImage() {
             lineHeight: 1.4,
           }}
         >
-          Build a roster from iconic RLCS lineups and run an RLCS-style tournament.
+          Build a roster from iconic RLCS lineups and survive an RLCS-style tournament bracket.
         </div>
         <div
           style={{
