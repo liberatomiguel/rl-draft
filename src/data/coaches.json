@@ -1,5 +1,17 @@
 [
   {
+    "id": "fireworks-coach-evil-geniuses-s5",
+    "personId": "fireworks",
+    "name": "fireworks",
+    "region": "NA",
+    "orgId": "evil-geniuses",
+    "lineupId": "evil-geniuses-s5",
+    "seasonId": "rlcs-s5",
+    "overall": 75,
+    "bonusType": "consistency",
+    "bonusLevel": "+"
+  },
+  {
     "id": "jahzo-coach-g2-esports-s6",
     "personId": "jahzo",
     "name": "Jahzo",
@@ -181,6 +193,19 @@
     "bonusLevel": "~"
   },
   {
+    "id": "jimmah-coach-canberra-havoc-s8",
+    "personId": "jimmah",
+    "name": "Jimmah",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "canberra-havoc",
+    "lineupId": "canberra-havoc-s8",
+    "seasonId": "rlcs-s8",
+    "overall": 72,
+    "bonusType": "defense",
+    "bonusLevel": "~"
+  },
+  {
     "id": "kairos-coach-lowkey-esports-s8",
     "personId": "kairos",
     "name": "Kairos",
@@ -282,6 +307,19 @@
     "seasonId": "rlcs-s9",
     "overall": 82,
     "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "lethamyr-coach-mousesports-s9",
+    "personId": "lethamyr",
+    "name": "Lethamyr",
+    "country": "CA",
+    "region": "EU",
+    "orgId": "mousesports",
+    "lineupId": "mousesports-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 79,
+    "bonusType": "consistency",
     "bonusLevel": "+"
   },
   {
@@ -675,6 +713,19 @@
     "bonusLevel": "++"
   },
   {
+    "id": "xpere-coach-team-liquid-2223",
+    "personId": "xpere",
+    "name": "xpere",
+    "country": "PT",
+    "region": "EU",
+    "orgId": "team-liquid",
+    "lineupId": "team-liquid-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 85,
+    "bonusType": "defense",
+    "bonusLevel": "++"
+  },
+  {
     "id": "eversax-coach-karmine-corp-2223",
     "personId": "eversax",
     "name": "Eversax",
@@ -818,16 +869,16 @@
     "bonusLevel": "++"
   },
   {
-    "id": "brunovisquii-coach-furia-2024",
-    "personId": "brunovisquii",
-    "name": "BRUNOVISQUII",
+    "id": "stl-coach-furia-2024",
+    "personId": "stl",
+    "name": "STL",
     "country": "BR",
     "region": "SAM",
     "orgId": "furia",
     "lineupId": "furia-2024",
     "seasonId": "rlcs-2024",
     "overall": 85,
-    "bonusType": "defense",
+    "bonusType": "offense",
     "bonusLevel": "++"
   },
   {

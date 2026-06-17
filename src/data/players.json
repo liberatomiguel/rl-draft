@@ -648,6 +648,11 @@
     "region": "SAM"
   },
   {
+    "id": "fireworks",
+    "nickname": "fireworks",
+    "region": "NA"
+  },
+  {
     "id": "firstkiller",
     "nickname": "Firstkiller",
     "country": "US",
@@ -1809,12 +1814,6 @@
     "region": "EU"
   },
   {
-    "id": "snipjuzo",
-    "nickname": "SnipJuzo",
-    "country": "BR",
-    "region": "SAM"
-  },
-  {
     "id": "snipjz",
     "nickname": "snipjz",
     "country": "BR",
@@ -2172,7 +2171,7 @@
     "id": "xpere",
     "nickname": "Xpére",
     "country": "PT",
-    "region": "NA"
+    "region": "EU"
   },
   {
     "id": "yand",

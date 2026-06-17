@@ -350,10 +350,16 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     hidden-lock — `config.hiddenOverall` is now the single source of truth in
     `startDailyRun` (a Hard daily no longer force-hides). This also corrects the
     pre-existing "Champions Only" template, which always intended visible overalls.
-    The "2 specials guaranteed" is a real guarantee (bias the draw to
-    special-capable lineups + force one in the offer), keyed off the roster so it
-    survives rerolls — not a probability bump, which the sparse special pool can't
-    reliably hit.
+    The featured draft is HAND-SCRIPTED (`scriptedLineups`: an exact lineup per
+    pick, each optionally forcing a specific special), not just "2 guaranteed".
+    This buys full curation — balanced teams, distinct orgs, a single Dignitas,
+    al0t's special on pick 2 and violentpanda's legend on pick 5 — deterministic
+    and the same for everyone. The forced special shows REGARDLESS of slot state
+    (the legend is a showcase even when not pickable); since specials are player
+    cards, a player who fills all three player slots early can't draft the pick-5
+    legend, so a deliberately weaker team carrying the coach/sub sits right before
+    it to nudge leaving a slot open. A scripted offer that can't fill the remaining
+    slots falls back to a normal staff-aware draw so the run always completes.
 
 51. **Achievement colour = variety within a tier, with Legend the fixed apex.**
     The wall read monochrome (all Rare blue, all Epic violet). Each non-Legend

@@ -135,7 +135,7 @@ export const useRunStore = create<RunStore>()(
             poolLineupIds: config.poolLineupIds,
             rerollsOverride: config.rerollsOverride,
             specialChanceMult: config.specialChanceMult,
-            guaranteedPlayerSpecials: config.guaranteedPlayerSpecials,
+            scriptedLineups: config.scriptedLineups,
           }),
           rng,
         );

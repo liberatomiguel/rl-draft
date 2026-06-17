@@ -35,6 +35,7 @@ import type {
   Difficulty,
   DraftOffer,
   DraftOfferCard,
+  DraftScriptStep,
   DraftState,
   Lineup,
   Roster,
@@ -77,8 +78,8 @@ export interface CreateDraftOptions {
   rerollsOverride?: number;
   /** Multiply the special-appearance chance (daily modifier). */
   specialChanceMult?: number;
-  /** Guarantee at least this many pickable player specials over the draft. */
-  guaranteedPlayerSpecials?: number;
+  /** Scripted daily draft: exact lineup per pick, optional forced special. */
+  scriptedLineups?: DraftScriptStep[];
 }
 
 export function createDraft(
@@ -93,7 +94,7 @@ export function createDraft(
     takenPersonIds: [],
     poolLineupIds: options.poolLineupIds,
     specialChanceMult: options.specialChanceMult,
-    guaranteedPlayerSpecials: options.guaranteedPlayerSpecials,
+    scriptedLineups: options.scriptedLineups,
     offer: null,
     roster: {},
     complete: false,
@@ -220,28 +221,18 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
     });
   }
 
-  // Daily "specials" challenge (v1.2.1): until the player has drafted the target
-  // number of specials, GUARANTEE at least one pickable player special in every
-  // offer that still has an open player slot. Keyed off the roster (not the
-  // round), so it survives rerolls. The field is only set on the authored daily;
-  // it is undefined everywhere else, so this whole block is inert by default.
-  const specialTarget = draft.guaranteedPlayerSpecials ?? 0;
-  if (specialTarget > 0) {
-    const draftedSpecials = PLAYER_SLOTS.filter((s) => draft.roster[s]?.specialId).length;
-    const openPlayerSlot = PLAYER_SLOTS.some((s) => !draft.roster[s]);
-    const offersSpecial = cards.some(
-      (c) => c.kind === "player" && c.specialId && c.availability === "available",
+  // Scripted daily (v1.2.1): force the scripted player to appear as its special on
+  // this pick — regardless of whether its slot is still open (the card still
+  // shows; it's just not pickable once the slot is full). Keyed off picks made
+  // (reroll-proof). Only set on an authored daily; inert otherwise.
+  const scriptStep = draft.scriptedLineups?.[filledCount(draft.roster)];
+  if (scriptStep?.special) {
+    const target = cards.find(
+      (c) =>
+        c.kind === "player" &&
+        playerCardById.get(c.refId)?.playerId === scriptStep.special!.playerId,
     );
-    if (draftedSpecials < specialTarget && openPlayerSlot && !offersSpecial) {
-      for (const c of cards) {
-        if (c.kind !== "player" || c.availability !== "available") continue;
-        const pool = specialsByPlayerId.get(playerCardById.get(c.refId)!.playerId);
-        if (pool && pool.length > 0) {
-          c.specialId = rng.weightedPick(pool, (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1).id;
-          break;
-        }
-      }
-    }
+    if (target) target.specialId = scriptStep.special.specialId;
   }
 
   const hasPickableCard = cards.some((c) => c.availability === "available");
@@ -263,16 +254,6 @@ function lineupPool(draft: DraftState) {
  * Weight ramps 1 → staffScarcityBoost with the share of missing kinds the
  * lineup covers, so blank offers become rare instead of constant.
  */
-/** True when a lineup carries an un-drafted player who has a special pool. */
-function lineupHasDraftableSpecial(lineup: Lineup, takenPersonIds: string[]): boolean {
-  return lineup.playerCardIds.some((cardId) => {
-    const card = playerCardById.get(cardId);
-    if (!card || takenPersonIds.includes(card.playerId)) return false;
-    const pool = specialsByPlayerId.get(card.playerId);
-    return Boolean(pool && pool.length > 0);
-  });
-}
-
 function lineupWeight(lineup: Lineup, staffNeeds: CardKind[]): number {
   if (staffNeeds.length === 0) return 1;
   let covered = 0;
@@ -297,20 +278,6 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
     shown = [];
   }
 
-  // Daily "specials" challenge (v1.2.1): while the player still owes specials and
-  // has an open player slot, restrict the draw to lineups that actually carry a
-  // forceable player special — buildOffer then guarantees one in the offer. Falls
-  // back to the full pool only if none remain. Inert unless the field is set.
-  const specialTarget = draft.guaranteedPlayerSpecials ?? 0;
-  if (specialTarget > 0) {
-    const draftedSpecials = PLAYER_SLOTS.filter((s) => draft.roster[s]?.specialId).length;
-    const openPlayerSlot = PLAYER_SLOTS.some((s) => !draft.roster[s]);
-    if (draftedSpecials < specialTarget && openPlayerSlot) {
-      const specialPool = pool.filter((l) => lineupHasDraftableSpecial(l, draft.takenPersonIds));
-      if (specialPool.length > 0) pool = specialPool;
-    }
-  }
-
   // Only coach/sub missing → bias toward lineups that still have them.
   const needs = neededKinds(draft.roster, draft.mode);
   const staffNeeds =
@@ -327,20 +294,33 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   // reachable in the region-locked pool (worlds/daily carry no rareSpawn, so the
   // `&&` short-circuits and the seeded RNG sequence stays byte-identical).
   const availableEggs = eggs.filter((l) => !draft.shownLineupIds.includes(l.id));
-  const lineup =
+  const randomLineup = (): Lineup =>
     availableEggs.length > 0 && rng.chance(DRAFT.easterEggChance)
       ? rng.pick(availableEggs)
       : staffNeeds.length > 0
         ? rng.weightedPick(pool, (l) => lineupWeight(l, staffNeeds))
         : rng.pick(pool);
 
-  const next: DraftState = {
-    ...draft,
-    round: draft.round + 1,
-    shownLineupIds: [...shown, lineup.id],
-    offer: null,
+  const draw = (lineup: Lineup): DraftState => {
+    const next: DraftState = {
+      ...draft,
+      round: draft.round + 1,
+      shownLineupIds: [...shown, lineup.id],
+      offer: null,
+    };
+    return { ...next, offer: buildOffer(lineup.id, next, rng) };
   };
-  return { ...next, offer: buildOffer(lineup.id, next, rng) };
+
+  // Scripted daily (v1.2.1): use the authored lineup for this pick. If it can't
+  // fill the remaining slots (e.g. only a coach is needed but it has none), fall
+  // back to the normal staff-aware draw so the run can always complete.
+  const scriptStep = draft.scriptedLineups?.[filledCount(draft.roster)];
+  const scripted = scriptStep ? lineupById.get(scriptStep.lineupId) : undefined;
+  if (scripted) {
+    const state = draw(scripted);
+    if (state.offer?.hasPickableCard) return state;
+  }
+  return draw(randomLineup());
 }
 
 // ---------------------------------------------------------------------------

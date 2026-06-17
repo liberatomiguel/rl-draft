@@ -610,10 +610,20 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
-      version: "1.2.1",
+      version: "1.2.2",
       name: "",
       date: "2026",
       current: true,
+      notes: [
+        "Org cards are easier to read — instead of cryptic dots and plus signs, they now say it plainly: \"+2 Mechanics\" for a boost, or \"No buff\" when there's none. Coach cards match.",
+        "Roster touch-ups: added some missing coaches (Team Liquid, mousesports, Evil Geniuses, Canberra Havoc) and corrected a couple of names.",
+      ],
+    },
+    {
+      version: "1.2.1",
+      name: "",
+      date: "2026",
+      current: false,
       notes: [
         "Today's Daily Challenge is a special one — \"Loaded Draft\": two special cards are guaranteed to show up in your draft, against a tougher field. Make the star power count.",
         "Special cards now show their boost at a glance — a little tag like \"+5 MEC\" right on the card. On hidden-overall runs it teases the stat as \"+?? MEC\".",

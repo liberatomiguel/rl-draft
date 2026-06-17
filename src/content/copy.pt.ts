@@ -599,10 +599,20 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
-        version: "1.2.1",
+        version: "1.2.2",
         name: "",
         date: "2026",
         current: true,
+        notes: [
+          "As cartas de org ficaram mais fáceis de ler — em vez de pontinhos e sinais de mais enigmáticos, agora elas dizem direto: \"+2 Mechanics\" para um bônus, ou \"No buff\" quando não tem. As cartas de técnico seguem o mesmo padrão.",
+          "Ajustes de elenco: adicionados alguns técnicos que faltavam (Team Liquid, mousesports, Evil Geniuses, Canberra Havoc) e corrigidos alguns nomes.",
+        ],
+      },
+      {
+        version: "1.2.1",
+        name: "",
+        date: "2026",
+        current: false,
         notes: [
           "O Desafio Diário de hoje é especial — \"Loaded Draft\": duas cartas especiais garantidas para aparecer no seu draft, contra um campo mais forte. Aproveite o poder de fogo.",
           "As cartas especiais agora mostram o buff de cara — uma tag tipo \"+5 MEC\" na própria carta. Em runs com overall oculto, ela aparece como \"+?? MEC\".",

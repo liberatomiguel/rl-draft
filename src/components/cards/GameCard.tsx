@@ -19,6 +19,7 @@ import Image from "next/image";
 import { useCopy } from "@/content/copy";
 import type { ResolvedCard } from "@/engine/cards";
 import type { SpecialEffect } from "@/engine/types";
+import { BUFF_LEVEL_VALUE } from "@/config/balance";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
@@ -271,10 +272,16 @@ export function GameCard({
             <span
               className={cx(
                 "display block text-2xl font-bold leading-none",
-                showOverall ? "text-orange-bright" : "text-faint",
+                // Orange only when there's an actual boost; a neutral org reads as
+                // a muted "—" so it's clearly "no buff", not a cryptic dot (v1.2.2).
+                showOverall && card.buffLevel !== "~" ? "text-orange-bright" : "text-faint",
               )}
             >
-              {!showOverall ? "??" : card.buffLevel === "~" ? "·" : card.buffLevel}
+              {!showOverall
+                ? "??"
+                : card.buffLevel === "~"
+                  ? "—"
+                  : `+${BUFF_LEVEL_VALUE[card.buffLevel ?? "~"]}`}
             </span>
           )}
           <span
@@ -346,7 +353,9 @@ export function GameCard({
         <p className={cx("mt-0.5 truncate text-[10px]", isSpecial ? "text-white/60" : "text-sub")}>
           {isOrg
             ? showOverall
-              ? `${STAT_LABELS[card.buffType ?? ""] ?? ""} ${card.buffLevel === "~" ? "" : card.buffLevel ?? ""}`.trim() || "Neutral"
+              ? card.buffLevel === "~"
+                ? "No buff"
+                : `${STAT_LABELS[card.buffType ?? ""] ?? ""} +${BUFF_LEVEL_VALUE[card.buffLevel ?? "~"]}`.trim()
               : "Buff hidden"
             : maskedSpecial
               ? "???" // the special's own org/season would identify the moment
@@ -382,7 +391,10 @@ export function GameCard({
             </>
           ) : card.kind === "coach" && card.buffType && showOverall ? (
             <Badge tone="blue" className="!block max-w-full truncate !text-[9px]">
-              {STAT_LABELS[card.buffType]} {card.buffLevel}
+              {/* Same clear +N notation as org cards (v1.2.2). */}
+              {card.buffLevel === "~"
+                ? "No buff"
+                : `${STAT_LABELS[card.buffType]} +${BUFF_LEVEL_VALUE[card.buffLevel ?? "~"]}`}
             </Badge>
           ) : (
             <span className="text-[9px] uppercase tracking-widest text-faint">

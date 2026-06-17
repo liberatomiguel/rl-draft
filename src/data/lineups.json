@@ -590,6 +590,7 @@
       "corruptedg-evil-geniuses-s5",
       "klassux-evil-geniuses-s5"
     ],
+    "coachId": "fireworks-coach-evil-geniuses-s5",
     "subId": "darkfire-sub-evil-geniuses-s5",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
@@ -1163,6 +1164,7 @@
       "leduck-canberra-havoc-s8",
       "spydoge-canberra-havoc-s8"
     ],
+    "coachId": "jimmah-coach-canberra-havoc-s8",
     "subId": "riv-sub-canberra-havoc-s8",
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
@@ -1316,6 +1318,7 @@
       "speed-mousesports-s9",
       "scrubkilla-mousesports-s9"
     ],
+    "coachId": "lethamyr-coach-mousesports-s9",
     "orgBuffLevel": "+",
     "historicalStrength": "strong"
   },
@@ -2080,6 +2083,7 @@
       "atow-team-liquid-2223",
       "oski-team-liquid-2223"
     ],
+    "coachId": "xpere-coach-team-liquid-2223",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
@@ -2485,7 +2489,7 @@
       "lostt-furia-2024",
       "drufinho-furia-2024"
     ],
-    "coachId": "brunovisquii-coach-furia-2024",
+    "coachId": "stl-coach-furia-2024",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
@@ -3165,7 +3169,7 @@
     "playerCardIds": [
       "davinsano-fantasydeath-s7",
       "leodkn-fantasydeath-s7",
-      "snipjuzo-fantasydeath-s7"
+      "snipjz-fantasydeath-s7"
     ],
     "subId": "srforeverplays-sub-fantasydeath-s7",
     "samOnly": true,

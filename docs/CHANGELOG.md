@@ -10,6 +10,26 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.2.2] — 2026
+
+A small post-launch patch: a clearer org/coach buff readout plus roster data
+corrections.
+
+### Changed
+- **Org & coach buff readout is now plain-language** (`GameCard.tsx`). The org
+  card's cryptic centre symbol (`·` for neutral, `+`/`++`/`+++` for a boost) and
+  matching nameplate text confused players. A neutral org now reads a muted
+  **"—" / "No buff"**; a boost reads a numeric **"+2" / "Mechanics +2"** (the tier
+  as a number). Coach buff pills use the same **"Stat +N"** form for consistency.
+
+### Fixed
+- **Roster / coach data** (`data-sources/teams.md`, regenerated + validated):
+  coaches added — Team Liquid 2022-23 **xpere** (85), mousesports S9 **Lethamyr**
+  (79), Evil Geniuses S5 **fireworks** (75), Canberra Havoc S8 **Jimmah** (72);
+  FURIA 2024 coach corrected to **STL** (was brunovisqui).
+- **`SnipJuzo` unified into `snipjz`** — the two ids were the same person; the
+  FantasyDeath S7 card now resolves to `snipjz` (3 cards across his teams).
+
 ## [1.2.1] — 2026 · launch polish
 
 The final pass before the public launch: a featured Daily, a special-card buff
@@ -20,15 +40,22 @@ tag, mobile card-fit fixes, more reachable chemistry, and SEO copy polish.
   map lets a specific date OVERRIDE the template wheel with a hand-designed
   config; `generateDailyConfig` short-circuits to it. Today (**2026-06-17**) is
   **"Loaded Draft"**: a **stronger field** (Hard difficulty) with **overalls left
-  visible** so the cards show off, **2 special cards guaranteed** in the player's
-  draft, and one reroll. Deterministic by construction, so it stays "the same run
-  for everyone."
-- **Guaranteed player specials in the draft** (`DraftState.guaranteedPlayerSpecials`,
-  threaded through `createDraft` → `daily` → `runStore`). Until the player has
-  drafted the target number of specials, `drawNextOffer` narrows the draw to
-  lineups that actually carry a forceable, un-drafted special player
-  (`lineupHasDraftableSpecial`), and `buildOffer` then forces one into the offer.
-  Keyed off the roster (not the round number), so it survives rerolls. Inert
+  visible** so the cards show off, and a **hand-scripted 6-pick draft** — balanced,
+  distinct orgs, a single Dignitas — where **al0t's special lands on pick 2** and
+  **violentpanda's "Brain" legend (OVR 97) on pick 5**, with a deliberately weaker
+  team (Gen.G, carrying the coach+sub) right before it. Deterministic by
+  construction, so it stays "the same run for everyone."
+- **Scripted daily draft** (`DraftState.scriptedLineups`: an exact lineup per pick,
+  each optionally forcing a player to appear as a specific special; threaded
+  through `createDraft` → `daily` → `runStore`). `drawNextOffer` offers the
+  authored lineup for each pick (keyed off picks made, so it's reroll-proof) and
+  `buildOffer` forces the scripted special onto that player — shown regardless of
+  whether the slot is still open (the legend still APPEARS at pick 5; it's only
+  pickable if a player slot was left open, which the weaker pick-4 team nudges by
+  carrying the coach/sub the player wants instead). A scripted offer that can't
+  fill the remaining slots falls back to a normal staff-aware draw, so the run
+  always completes. Natural specials are suppressed (`specialChanceMult: 0`) so
+  only the two authored cards appear; no rerolls (the draft is curated). Inert
   unless the field is set (default runs are byte-identical).
 - **Special-card buff tag** (`GameCard.tsx`). Every special now wears a small
   pill advertising its boost — `+5 MEC`, `+3 OFF·CON`, `+5 Team` — reusing the

@@ -1,12 +1,30 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-17. The **v1.2.1 "launch polish"** section below is the
-> current (UNCOMMITTED) work, under Miguel's review — the FINAL patch before the
-> public launch (today). v1.2.0 is committed (`cf5d1a2`); v1.1.x and older are
-> historical — see `docs/CHANGELOG.md` for shipped detail.
+> Last updated: 2026-06-17. **The game is LAUNCHED.** v1.2.1 is published;
+> **v1.2.2** below is the current (uncommitted) post-launch patch under Miguel's
+> review. v1.1.x and older are historical — see `docs/CHANGELOG.md` for detail.
 
-## v1.2.1 — launch polish (current · uncommitted, under review)
+## v1.2.2 — post-launch patch (current · uncommitted, under review)
+
+A small follow-up. Built + verified (`tsc`, **50** vitest tests, lint at the
+8-error baseline / 0 new; `build:data` + `validate:data`) and checked live in the
+preview. Technical detail in `docs/CHANGELOG.md` [1.2.2].
+
+### Done this session
+- **Org & coach buff readout clarified** (`GameCard.tsx`) — the cryptic `·` /
+  `+`/`++`/`+++` became plain **"—" / "No buff"** (neutral) and **"+2" /
+  "Mechanics +2"** (boost); coach pills match. Players weren't understanding the
+  old symbols.
+- **Roster/coach data fixes** (`teams.md`, regenerated): +coaches xpere (Team
+  Liquid 22-23), Lethamyr (mousesports S9), fireworks (EG S5), Jimmah (Canberra
+  Havoc S8); FURIA 2024 coach → STL (was brunovisqui); `SnipJuzo` unified into
+  `snipjz`. Coaches 120 → 124.
+
+### Next steps (open)
+1. Review + commit `v1.2.2`, then deploy.
+
+## v1.2.1 — launch polish (SHIPPED · published)
 
 The last pass before launch. Built + verified locally (`tsc`, **50** vitest tests,
 lint at the 8-error baseline / 0 new) and exercised live in the preview (EN, a
@@ -16,10 +34,13 @@ NOT committed — Miguel reviews first. Technical detail in `docs/CHANGELOG.md`
 
 ### Done this session (10 items)
 1. **Featured Daily for today** — `2026-06-17` is the authored **"Loaded Draft"**:
-   Hard field but overalls VISIBLE, **2 specials guaranteed** in the draft, 1
-   reroll. New `AUTHORED_DAILIES` override + a real special guarantee
-   (`guaranteedPlayerSpecials`, draw-bias + force in `draft.ts`). Dailies now own
-   their overall visibility (decoupled from the Hard hidden-lock in `runStore`).
+   Hard field but overalls VISIBLE, and a **hand-scripted 6-pick draft** (al0t
+   special on pick 2, violentpanda "Brain" legend on pick 5, a weaker Gen.G team
+   carrying the coach/sub right before it to nudge leaving a slot). New
+   `AUTHORED_DAILIES` override + `DraftState.scriptedLineups` (exact lineup per
+   pick + forced special, reroll-proof, with a fallback so the run always
+   completes) in `draft.ts`. Natural specials suppressed; no rerolls. Dailies now
+   own their overall visibility (decoupled from the Hard hidden-lock in `runStore`).
 2. **Special-card buff tag** — every special wears a `+5 MEC` / `+5 Team` pill
    (`+?? MEC` on hidden runs), reusing `Badge`. Shows even on un-unlocked draft
    specials (no identity leak).

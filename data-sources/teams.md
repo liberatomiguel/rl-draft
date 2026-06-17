@@ -398,7 +398,7 @@ player 1: Chrome 86
 player 2: CorruptedG 84
 player 3: Klassux 83
 sub: Darkfire 60
-coach: -
+coach: fireworks 75
 org: Evil Geniuses +
 ```
 
@@ -776,7 +776,7 @@ player 1: Walcott 73
 player 2: Le Duck 71
 player 3: SPYDOGE 70
 sub: Riv 50
-coach: -
+coach: Jimmah 72
 org: Canberra Havoc ~
 ```
 
@@ -876,7 +876,7 @@ player 1: kuxir97 86
 player 2: Speed 87
 player 3: Scrub Killa 88
 sub: -
-coach: -
+coach: Lethamyr 79
 org: mousesports +
 ```
 
@@ -1386,7 +1386,7 @@ player 1: AcroniK. 88
 player 2: Atow. 92
 player 3: Oski 91
 sub: -
-coach: -
+coach: xpere 85
 org: Team Liquid ++
 ```
 
@@ -1660,7 +1660,7 @@ player 1: yanxnz 91
 player 2: Lostt 88
 player 3: drufinho 86
 sub: -
-coach: BRUNOVISQUII 85
+coach: STL 85
 org: FURIA ++
 ```
 
@@ -2135,7 +2135,7 @@ flag: sam-only
 ```team: FantasyDeath · S7 · 2019
 player 1: DavInsano 68
 player 2: LeoDkn 68
-player 3: SnipJuzo 68
+player 3: snipjz 68
 sub: SrForeverplays 50
 coach: -
 org: FantasyDeath ~

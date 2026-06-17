@@ -10,7 +10,13 @@
 
 import { draftableLineups, lineups, seasonById } from "@/data";
 import { createRng } from "@/lib/rng";
-import type { DailyInfo, DailyObjective, Difficulty, Region } from "@/engine/types";
+import type {
+  DailyInfo,
+  DailyObjective,
+  Difficulty,
+  DraftScriptStep,
+  Region,
+} from "@/engine/types";
 
 export interface DailyConfig {
   info: DailyInfo;
@@ -21,8 +27,8 @@ export interface DailyConfig {
   rerollsOverride?: number;
   /** Multiplier on the special appearance chance. */
   specialChanceMult?: number;
-  /** Guarantee at least this many pickable player specials in the draft. */
-  guaranteedPlayerSpecials?: number;
+  /** Scripted draft: exact lineup per pick, each optionally forcing a special. */
+  scriptedLineups?: DraftScriptStep[];
   /** Restricted lineup pool (sorted for determinism). */
   poolLineupIds?: string[];
 }
@@ -98,8 +104,20 @@ const AUTHORED_DAILIES: Record<string, (date: string) => DailyConfig> = {
     },
     difficulty: "hard",
     hiddenOverall: false,
-    rerollsOverride: 1,
-    guaranteedPlayerSpecials: 2,
+    rerollsOverride: 0, // the draft is hand-scripted; rerolls would just re-show it
+    specialChanceMult: 0, // suppress natural specials — only the two scripted ones
+    // A hand-curated 6-pick draft: balanced, distinct orgs, one Dignitas. al0t's
+    // special lands on pick 2; violentpanda's "Brain" legend on pick 5, with a
+    // deliberately weaker team (Gen.G, carrying the coach+sub) right before it to
+    // nudge leaving a player slot open for the legend.
+    scriptedLineups: [
+      { lineupId: "g2-stride-2024" },
+      { lineupId: "complexity-gaming-s5", special: { playerId: "al0t", specialId: "sp-al0t-ceiling-redirect" } },
+      { lineupId: "team-bds-2223" },
+      { lineupId: "gen-g-mobil1-racing-2025" },
+      { lineupId: "dignitas-s5", special: { playerId: "violentpanda", specialId: "sp-violentpanda-dignitas-brain" } },
+      { lineupId: "team-vitality-2223" },
+    ],
   }),
 };
 

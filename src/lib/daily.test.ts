@@ -25,10 +25,17 @@ describe("daily challenge generator", () => {
     const a = generateDailyConfig("2026-06-17");
     const b = generateDailyConfig("2026-06-17");
     expect(a).toEqual(b); // deterministic override
-    expect(a.guaranteedPlayerSpecials).toBe(2);
     expect(a.difficulty).toBe("hard");
     expect(a.hiddenOverall).toBe(false); // overalls visible to show off the specials
     expect(a.info.label).toBe("Loaded Draft");
+    // Scripted draft: al0t special on pick 2, violentpanda legend on pick 5.
+    expect(a.scriptedLineups).toHaveLength(6);
+    expect(a.scriptedLineups?.[1].special?.specialId).toBe("sp-al0t-ceiling-redirect");
+    expect(a.scriptedLineups?.[4].special?.specialId).toBe("sp-violentpanda-dignitas-brain");
+    // Every scripted lineup must be a real lineup (catches typos).
+    for (const step of a.scriptedLineups ?? []) {
+      expect(lineupById.has(step.lineupId)).toBe(true);
+    }
   });
 
   it("restricted pools reference real lineups and stay viable", () => {

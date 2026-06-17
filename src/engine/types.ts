@@ -274,6 +274,14 @@ export interface RosterPick {
 
 export type Roster = Partial<Record<RosterSlotId, RosterPick>>;
 
+/** One step of a scripted daily draft (one per pick, in order). */
+export interface DraftScriptStep {
+  /** The exact lineup to offer for this pick. */
+  lineupId: string;
+  /** Force a player in that lineup to appear as a specific special card. */
+  special?: { playerId: string; specialId: string };
+}
+
 export interface DraftState {
   mode: RunMode;
   round: number;
@@ -287,11 +295,13 @@ export interface DraftState {
   /** Multiplier on the special-appearance chance (daily modifier). */
   specialChanceMult?: number;
   /**
-   * Daily "specials" challenge (v1.2.1): until the player has drafted this many
-   * special player cards, every offer with an open player slot is guaranteed to
-   * include at least one pickable player special. Undefined = no guarantee.
+   * Daily "scripted" draft (v1.2.1): an exact ordered lineup per pick (index =
+   * picks made so far), each optionally forcing a player to appear as a specific
+   * special. Lets an authored daily curate the whole draft. A scripted offer that
+   * can't fill the remaining slots falls back to a normal draw (see draft.ts).
+   * Keyed off picks made (reroll-proof). Undefined = normal random draft.
    */
-  guaranteedPlayerSpecials?: number;
+  scriptedLineups?: DraftScriptStep[];
   offer: DraftOffer | null;
   roster: Roster;
   complete: boolean;
