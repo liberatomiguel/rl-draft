@@ -99,7 +99,11 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     sub: input.sub ? { overall: input.sub.overall } : undefined,
     orgBuffLevel: orgBuffLevel as never,
     chemistryPercent: chemistry.percent,
-    chemistryMaxBonus: DIFFICULTY[input.difficulty].chemistryMaxBonus,
+    // Chemistry is the PLAYER's edge: opponents use their own (Hard/Legacy = 0)
+    // cap so a coherent draft can out-chemistry a higher-overall AI lineup.
+    chemistryMaxBonus: input.isUser
+      ? DIFFICULTY[input.difficulty].chemistryMaxBonus
+      : DIFFICULTY[input.difficulty].opponentChemistryMaxBonus,
     specialCount: input.specialIds.length,
     difficultyShift: input.difficultyShift,
   });

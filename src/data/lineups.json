@@ -203,6 +203,7 @@
       "maestro-northern-gaming-s2",
       "miztik-northern-gaming-s2"
     ],
+    "subId": "turbopolsa-sub-northern-gaming-s2",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
@@ -1151,7 +1152,7 @@
     ],
     "subId": "yeatzy-sub-renegades-s8",
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "canberra-havoc-s8",
@@ -1183,7 +1184,7 @@
     "coachId": "kairos-coach-lowkey-esports-s8",
     "subId": "firewall154-sub-lowkey-esports-s8",
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "the-three-sins-s8",
@@ -1377,7 +1378,7 @@
       "renan-avidity-esports-s9"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "nrg-esports-x",
@@ -1850,7 +1851,7 @@
     "coachId": "michi-coach-the-club-2122",
     "subId": "fasi-sub-the-club-2122",
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "team-secret-2122",
@@ -3095,7 +3096,7 @@
     "subId": "lance-sub-erodium-s7",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "lotus-s7",
@@ -3111,7 +3112,7 @@
     "subId": "dudubrhue-sub-lotus-s7",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "orchid-s7",
@@ -3190,7 +3191,7 @@
     "subId": "dudubrhue-sub-lotus-s8",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "intz-esports-s8",
@@ -3206,7 +3207,7 @@
     "subId": "sword-sub-intz-esports-s8",
     "samOnly": true,
     "orgBuffLevel": "++",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "oxey-team-s8",
@@ -3287,7 +3288,7 @@
     "subId": "ianpinheiro-sub-most-wanted-s9",
     "samOnly": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "the-three-sins-s9",
@@ -3304,7 +3305,7 @@
     "subId": "brad-sub-the-three-sins-s9",
     "samOnly": true,
     "orgBuffLevel": "++",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "true-neutral-s9",
@@ -3387,7 +3388,7 @@
     ],
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "rebel-x",
@@ -3403,7 +3404,7 @@
     "coachId": "bliss-coach-rebel-x",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "noble-esports-x",
@@ -3420,7 +3421,7 @@
     "subId": "firewall154-sub-noble-esports-x",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "nocturns-gaming-x",
@@ -3551,7 +3552,7 @@
     "subId": "gatox-sub-kru-esports-2122",
     "samOnly": true,
     "orgBuffLevel": "++",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "exeed-2223",
@@ -3568,7 +3569,7 @@
     "subId": "baait-sub-exeed-2223",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "ruby-2223",
@@ -3633,7 +3634,7 @@
     "coachId": "groval-coach-era-2223",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "complexity-gaming-2024",
@@ -3649,7 +3650,7 @@
     "coachId": "aguesome-coach-complexity-gaming-2024",
     "samOnly": true,
     "orgBuffLevel": "+++",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "ninjas-in-pyjamas-2024",
@@ -3665,7 +3666,7 @@
     "coachId": "fasi-coach-ninjas-in-pyjamas-2024",
     "samOnly": true,
     "orgBuffLevel": "+++",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "kru-esports-2024",
@@ -3682,7 +3683,7 @@
     "subId": "wisty-sub-kru-esports-2024",
     "samOnly": true,
     "orgBuffLevel": "++",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "w7m-esports-2024",
@@ -3698,7 +3699,7 @@
     "coachId": "tander-coach-w7m-esports-2024",
     "samOnly": true,
     "orgBuffLevel": "++",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "bodybuilders-2024",
@@ -3746,7 +3747,7 @@
     "subId": "fasi-sub-godfidence-2025",
     "samOnly": true,
     "orgBuffLevel": "+",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "amethyst-2025",
@@ -3762,7 +3763,7 @@
     "coachId": "michi-coach-amethyst-2025",
     "samOnly": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "solid"
+    "historicalStrength": "strong"
   },
   {
     "id": "sunset-2025",
@@ -3778,7 +3779,7 @@
     "coachId": "patolimpo-coach-sunset-2025",
     "samOnly": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "moonrise-2025",
@@ -3794,7 +3795,7 @@
     "coachId": "repi-coach-moonrise-2025",
     "samOnly": true,
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "strong"
   },
   {
     "id": "latino-heat-2025",

@@ -7,6 +7,9 @@
  * Swiss + double elim), not just the per-series anchors in match.test.ts:
  *   Normal · good team → makes playoffs most runs, wins a meaningful share.
  *   Hard   · good team → playoffs is a real fight, title is rare but real.
+ *   Legacy · good team → a brutal gauntlet: playoffs is the exception, the
+ *            title a long shot — but NOT impossible (v1.2.5: opponents lost
+ *            their chemistry bonus, so a good draft can finally compete).
  * Bounds are wide on purpose — they catch balance regressions, not noise.
  */
 
@@ -83,5 +86,12 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     const r = outcomeRates("easy", 200, 737);
     expect(r.playoffs).toBeGreaterThan(0.85);
     expect(r.titles).toBeGreaterThan(0.2);
+  });
+
+  it("Legacy: a gauntlet — playoffs is the exception, the title a long shot, but reachable", () => {
+    const r = outcomeRates("legacy", 600, 626);
+    expect(r.playoffs).toBeGreaterThan(0.12); // not impossible — a good draft competes
+    expect(r.playoffs).toBeLessThan(0.5); // …but clearly the hardest: most runs end in Swiss
+    expect(r.titles).toBeLessThan(0.1); // the crown is a true achievement
   });
 });

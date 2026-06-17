@@ -60,7 +60,7 @@
     "name": "Carnage Gaming",
     "region": "SAM",
     "buffType": "experience",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "chiefs-esports-club",
@@ -88,7 +88,7 @@
     "name": "Complexity Gaming",
     "region": "EU",
     "buffType": "defense",
-    "buffLevel": "+"
+    "buffLevel": "+++"
   },
   {
     "id": "cringe-society",
@@ -150,14 +150,14 @@
     "name": "eRa",
     "region": "SAM",
     "buffType": "consistency",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "erodium",
     "name": "Erodium",
     "region": "SAM",
     "buffType": "mechanics",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "eunited",
@@ -178,7 +178,7 @@
     "name": "Exeed",
     "region": "SAM",
     "buffType": "mechanics",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "exodus",
@@ -220,7 +220,7 @@
     "name": "FURIA",
     "region": "SAM",
     "buffType": "mechanics",
-    "buffLevel": "++"
+    "buffLevel": "+++"
   },
   {
     "id": "fury",
@@ -332,7 +332,7 @@
     "name": "Godfidence",
     "region": "SAM",
     "buffType": "consistency",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "ground-zero-gaming",
@@ -367,7 +367,7 @@
     "name": "INTZ eSports",
     "region": "SAM",
     "buffType": "clutch",
-    "buffLevel": "~"
+    "buffLevel": "++"
   },
   {
     "id": "jam-gaming",
@@ -395,7 +395,7 @@
     "name": "KRÜ Esports",
     "region": "SAM",
     "buffType": "mechanics",
-    "buffLevel": "~"
+    "buffLevel": "++"
   },
   {
     "id": "latino-heat",
@@ -423,7 +423,7 @@
     "name": "Lotus",
     "region": "SAM",
     "buffType": "experience",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "lowkey-esports",
@@ -437,7 +437,7 @@
     "name": "Manchester City Esports",
     "region": "EU",
     "buffType": "offense",
-    "buffLevel": "+"
+    "buffLevel": "++"
   },
   {
     "id": "method",
@@ -451,7 +451,7 @@
     "name": "MIBR",
     "region": "SAM",
     "buffType": "clutch",
-    "buffLevel": "+"
+    "buffLevel": "++"
   },
   {
     "id": "mock-it-esports",
@@ -500,14 +500,14 @@
     "name": "Ninjas in Pyjamas",
     "region": "SAM",
     "buffType": "mechanics",
-    "buffLevel": "+"
+    "buffLevel": "+++"
   },
   {
     "id": "noble-esports",
     "name": "Noble esports",
     "region": "SAM",
     "buffType": "mechanics",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "nocturns-gaming",
@@ -658,7 +658,7 @@
     "name": "Rebel",
     "region": "SAM",
     "buffType": "consistency",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "renegades",
@@ -866,7 +866,7 @@
     "name": "The Three Sins",
     "region": "SAM",
     "buffType": "clutch",
-    "buffLevel": "~"
+    "buffLevel": "++"
   },
   {
     "id": "the-ultimates",
@@ -901,7 +901,7 @@
     "name": "True Neutral",
     "region": "SAM",
     "buffType": "consistency",
-    "buffLevel": "~"
+    "buffLevel": "++"
   },
   {
     "id": "tsm",
@@ -950,7 +950,7 @@
     "name": "w7m esports",
     "region": "SAM",
     "buffType": "consistency",
-    "buffLevel": "~"
+    "buffLevel": "++"
   },
   {
     "id": "we-dem-girlz",

@@ -377,6 +377,41 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     team-reveal staff cards were additionally widened on mobile (they're the
     narrowest at `w-24`) so their badges clear the frame.
 
+53. **Legacy relevance is a `historicalStrength` floor, not an overall buff.**
+    A community overall review marked 20 SAM regional rosters "Legacy" — they
+    should headline the SAM legacy gauntlet, but their reviewed overalls (avg
+    78–84) leave them at solid/underdog, which the legacy opponent sampler
+    (`opponentTierWeights`: elite 2.6 · strong 1.2 · solid 0.15 · underdog 0.1)
+    all but filters out. `historicalStrength` is the *only* lever for legacy
+    presence and it never touches the draft pool or the rating math, so a new
+    `legacy` flag in `teams.md` floors flagged lineups at **"strong"** (elite
+    kept if naturally derived). Chosen **"strong" over "elite"** so they sit level
+    with FURIA — the genuine SAM Worlds qualifier — rather than outranking it;
+    chosen **flag over inflating overalls** so the GAME-DESIGN §25 "overall stays
+    dominant" anchors and the card ratings stay intact. All 20 are `samOnly`, so
+    the effect is contained to region-locked SAM runs (their share of a SAM
+    legacy field goes ~21% → ~74%); it also mildly lifts them in SAM hard/normal,
+    which is acceptable since they are the region's historic best.
+
+54. **Chemistry is the player's edge — opponents lose their chemistry bonus on
+    Hard/Legacy.** Players reported that even a very good team got eliminated in
+    the Hard/Legacy Swiss. Root cause: every AI lineup is a real roster at ~100%
+    chemistry, so the shared `chemistryMaxBonus` handed the *whole field* a
+    near-flat bonus a drafted all-star mix (~20% chemistry) could never match —
+    on top of the rating shift, a stronger field and more specials. Fix: a
+    separate `opponentChemistryMaxBonus`, set to **0** on Hard and Legacy
+    (easy/normal keep both caps equal — they weren't the problem). Chosen over
+    other knobs because it's the most *targeted* lever (it closes the exact
+    player-vs-AI gap rather than nerfing opponents across the board) and the most
+    thematic (your chemistry is *your* reward for a coherent draft; the AI's
+    strength is raw talent + history). Tuned, not removed: opponents keep the
+    rating shift, the elite-weighted field, hidden overalls and specials, so the
+    ladder still reads Normal < Hard < Legacy. Simulated impact on a "good" (≈92.5)
+    drafted team reaching playoffs — Hard ~65%→~88%, Legacy ~5%→~28% (worldwide);
+    the title stays a long shot on Legacy. Anchors in GAME-DESIGN §25 are
+    untouched (overall still dominates; user chemistry cap unchanged). A new
+    `balance.test.ts` Legacy case pins "hard but not impossible".
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

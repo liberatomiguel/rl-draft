@@ -134,8 +134,16 @@ export interface DifficultyProfile {
   userRollRange: [number, number];
   /** AI per-game roll range (both sides in AI vs AI). */
   aiRollRange: [number, number];
-  /** Scales chemistry rating bonus: percent/100 * chemistryMaxBonus. */
+  /** Scales the USER team's chemistry rating bonus: percent/100 * chemistryMaxBonus. */
   chemistryMaxBonus: number;
+  /**
+   * Same, but for AI opponents. AI lineups are real rosters (~100% chemistry),
+   * so a shared cap handed the whole field a near-flat buff the player (low
+   * chemistry) couldn't match. Splitting it lets chemistry be the PLAYER's edge:
+   * Hard/Legacy set this to 0 (opponents earn their strength from overall + the
+   * rating shift + a stronger field, not from chemistry). See DESIGN-DECISIONS #54.
+   */
+  opponentChemistryMaxBonus: number;
   /** Flat rating shift applied to every opponent. */
   opponentRatingShift: number;
   /** Chance per opponent team of upgrading one card to its special version. */
@@ -166,6 +174,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     userRollRange: [-3, 5],
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 1.3,
+    opponentChemistryMaxBonus: 1.3,
     opponentRatingShift: -2.0,
     opponentSpecialChance: 0.02,
     opponentTierWeights: { elite: 0.4, strong: 0.9, solid: 1.8, underdog: 2.0 },
@@ -179,6 +188,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     userRollRange: [-3, 4],
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 2.0,
+    opponentChemistryMaxBonus: 2.0,
     opponentRatingShift: 0,
     opponentSpecialChance: 0.05,
     opponentTierWeights: { elite: 0.7, strong: 1.0, solid: 1.25, underdog: 1.3 },
@@ -196,6 +206,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     userRollRange: [-3.5, 4],
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 2.1,
+    opponentChemistryMaxBonus: 0,
     opponentRatingShift: 0.3,
     opponentSpecialChance: 0.12,
     opponentTierWeights: { elite: 1.15, strong: 1.25, solid: 0.75, underdog: 0.5 },
@@ -209,6 +220,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     userRollRange: [-5, 5],
     aiRollRange: [-4, 4],
     chemistryMaxBonus: 2.6,
+    opponentChemistryMaxBonus: 0,
     opponentRatingShift: 1.2,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 2.6, strong: 1.2, solid: 0.15, underdog: 0.1 },

@@ -380,12 +380,16 @@ const teams = rawTeams.map((raw) => {
 
   // Flags (v1.2.0): `sam-only` = SAM Top-8 team that missed Worlds (excluded
   // from the general draft, shown only in the region-locked SAM mode); `rare` =
-  // easter-egg lineup drawn far less often. Unknown flags are ignored.
+  // easter-egg lineup drawn far less often. `legacy` = a regional
+  // landmark roster whose raw overalls sit below the strong/elite cut but that
+  // should still headline its region's legacy gauntlet (floors historicalStrength
+  // at "strong" below). Flags are comma-separated; unknown flags are ignored.
   const flagRaw = get("flag");
   const samOnly = /\bsam-only\b/i.test(flagRaw);
   const rareSpawn = /\brare\b/i.test(flagRaw);
+  const legacy = /\blegacy\b/i.test(flagRaw);
 
-  return { orgName, orgDisplay: orgDisplay || orgName, season, region: raw.region, players, sub, coach, orgBuffLevel, samOnly, rareSpawn };
+  return { orgName, orgDisplay: orgDisplay || orgName, season, region: raw.region, players, sub, coach, orgBuffLevel, samOnly, rareSpawn, legacy };
 });
 
 // ---------------------------------------------------------------------------
@@ -500,8 +504,14 @@ for (const team of teams) {
   }
 
   const avg = team.players.reduce((s, p) => s + p.overall, 0) / 3;
-  const historicalStrength =
+  const derivedStrength =
     avg >= 91 ? "elite" : avg >= 87 ? "strong" : avg >= 82 ? "solid" : "underdog";
+  // A `legacy`-flagged roster is floored at "strong" so the difficulty-based
+  // opponent sampler (balance.ts → opponentTierWeights) surfaces it in the
+  // legacy gauntlet — without inflating the raw overalls. Never downgrades a
+  // naturally-elite lineup. Only weights opponents; never touches the draft pool.
+  const historicalStrength =
+    team.legacy && derivedStrength !== "elite" ? "strong" : derivedStrength;
 
   lineups.push({
     id: lineupId,

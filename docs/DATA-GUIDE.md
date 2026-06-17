@@ -111,6 +111,10 @@ broken reference fails loudly with a message pointing at the exact id.
 - `coachId` / `subId` optional — the draft offer simply shows fewer cards.
 - `historicalStrength`: `elite | strong | solid | underdog`. **Only** used to
   weight opponent generation by difficulty. It never affects the draft pool.
+  Derived from average overall (≥91 elite · ≥87 strong · ≥82 solid · else
+  underdog), **but** a block flagged `legacy` in `teams.md` is floored at
+  **"strong"** (a naturally-elite lineup keeps elite) — a regional landmark whose
+  raw overalls are below the cut still headlines its region's legacy gauntlet.
 - `name` is the display name of that era (e.g. "Renault Vitality" vs
   "Team Vitality").
 
@@ -221,6 +225,32 @@ achievement = one JSON entry + one rule function with the same id.
 
 **Make a player stronger/weaker:** prefer `manualAdjustment` over editing
 `overall` — that's what the field is for.
+
+**Apply a community overall / line review (the GWR CSV workflow):** the reviewer
+hands back a CSV in the `data-sources/overall-review-*.csv` format — one row per
+player/sub/coach, with **`OVR sugerido`** = the new overall and **`Legacy`** in
+the "Sugestão de line/time" column to flag a legacy-gauntlet roster. Apply it
+safely with the bundled tool (UTF-8 safe; never bulk-edit `teams.md` via
+PowerShell `-replace`):
+1. **Dry-run** — `node scripts/apply-overall-review.mjs <review.csv>` reports
+   every overall change, every legacy flag, free-text notes, and any `OVR atual`
+   that disagrees with `teams.md` (**drift**). Writes nothing.
+2. **Resolve drift** if reported (the CSV's "current" is stale, or the JSON was
+   hand-edited and `teams.md` never rebuilt) — the tool refuses to write while
+   drift exists; `--force` overrides.
+3. **Apply** — `node scripts/apply-overall-review.mjs <review.csv> --apply`
+   edits `teams.md` (overalls in place; `legacy` appended to the `flag:` line,
+   which floors that lineup's `historicalStrength` at "strong").
+4. `npm run build:data && npm run validate:data && npm test`.
+5. **Free-text notes** (e.g. "missing X as sub (NN)") are *not* auto-applied —
+   make those line edits in `teams.md` by hand (a `player N:` / `sub:` / `coach:`
+   line is `<Nick> <overall>`), then rebuild.
+
+**Produce a fresh review table for the next pass:**
+`node scripts/apply-overall-review.mjs --export data-sources/overall-review-<ver>.csv`
+dumps the current dataset in the exact same column model (new overalls as
+`OVR atual`, `OVR sugerido` blank, `Legacy` marks preserved). The export format
+*is* the apply-input format, so it round-trips (export → apply = zero changes).
 
 **Add a special card:** new entry in `specialCards.json` (hand-maintained)
 pointing at an existing base card, then `npm run validate:data`. It immediately

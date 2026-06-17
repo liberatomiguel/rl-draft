@@ -1,9 +1,71 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-17. **The game is LAUNCHED.** v1.2.1 is published;
-> **v1.2.2** below is the current (uncommitted) post-launch patch under Miguel's
-> review. v1.1.x and older are historical — see `docs/CHANGELOG.md` for detail.
+> Last updated: 2026-06-17. **The game is LAUNCHED.** v1.2.1 is published; the
+> **overall review + SAM legacy flag** (just below) is the newest uncommitted
+> change under Miguel's review, on top of the staged analytics + v1.2.2 patch.
+> v1.1.x and older are historical — see `docs/CHANGELOG.md` for detail.
+
+## Overall review + SAM legacy + Hard/Legacy rebalance (current · uncommitted, under review)
+
+Applied the community-reviewed overall CSV, made the reviewer's **"Legacy"** marks
+bite in-engine, added a **repeatable review pipeline** (tool + recipe), and lightly
+**rebalanced Hard/Legacy** (chemistry is now the player's edge). Data + a couple of
+small engine/balance edits — no UI changes. Gates green: `build:data`,
+`validate:data`, `tsc`, lint at the 8-error baseline (0 new), **51** vitest tests.
+
+### Done this session
+- **151 reviewed overalls** applied to `data-sources/teams.md` (113 player / 21
+  sub / 17 coach; all SAM; avg +5.1, range +1…+25). The CSV's "OVR atual" matched
+  the dataset on every row before the bump — surgical number edits only, no
+  identity/lineup changes, accents intact (no mojibake).
+- **`legacy` lineup flag** added in `teams.md` + parsed by
+  `scripts/build-dataset.mjs`: it floors a flagged lineup's `historicalStrength`
+  at **"strong"** (never downgrades elite). That field is the lever the
+  difficulty opponent sampler (`balance.ts → opponentTierWeights`) reads, so the
+  team now surfaces in **legacy** runs without touching its card ratings.
+- Applied to the **20** reviewer-flagged SAM landmark teams (KRÜ, Complexity,
+  The Three Sins, Noble, eRa, Exeed, NiP, w7m, Godfidence, Sunset, …). All are
+  `samOnly`, so the effect is scoped to **region-locked SAM runs**; in a SAM
+  legacy run their expected share of the opponent field rises **~21% → ~74%**.
+- **Reconciled pre-existing pipeline drift** found while rebuilding: v1.2.3's
+  "org buffs small fixes" had been hand-edited straight into `lineups.json` (23
+  buffs) without updating `teams.md` — I ported them back into the `teams.md`
+  `org:` lines, so the rebuild **preserves them (net buff change vs shipped: 0)**
+  and `teams.md` is canonical again. Also regenerated one stale overall (swiftt
+  FURIA 2026 `88`→`87`, matching `teams.md` + the review CSV). A clean
+  `build:data` is now idempotent. See CHANGELOG [Unreleased] → Fixed.
+- **Added `turbopolsa` as Northern Gaming S2 sub (92)** — the one free-text note
+  in the review CSV. ⚠ 92 is high vs his S1 (78) / S3 (88); applied as the
+  reviewer wrote it — flag if you want it lowered.
+- **Repeatable review pipeline** — `scripts/apply-overall-review.mjs` applies a
+  review CSV to `teams.md` (dry-run by default, validates "OVR atual", applies
+  overalls + `legacy` flags, refuses on drift) and `--export`s a fresh baseline
+  CSV; documented in `docs/DATA-GUIDE.md`. Fresh baseline with the new overalls:
+  `data-sources/overall-review-v1.2.5.csv` (round-trips: export → apply = 0 changes).
+- **Hard/Legacy lightly rebalanced** — players were getting knocked out of the
+  Hard/Legacy Swiss even with a strong team because AI lineups (real rosters,
+  ~100% chemistry) banked the full chemistry bonus a draft can't. New
+  `opponentChemistryMaxBonus = 0` on Hard/Legacy makes chemistry the player's
+  edge. Good-team playoff odds: Hard ~65%→~88%, Legacy ~5%→~28%; Legacy stays a
+  gauntlet, ladder still Normal < Hard < Legacy. See DESIGN-DECISIONS #54.
+
+### Why "strong" not "elite" (the design call)
+"strong" (weight 1.2) puts them level with FURIA — the only real SAM Worlds
+qualifier in the pool — instead of "elite" (2.6), which would rank these regional
+rosters *above* it. And flagging beats raw-overall inflation: the GAME-DESIGN §25
+"overall stays dominant" anchors and card ratings are untouched. Rationale logged
+in `docs/DESIGN-DECISIONS.md` #53.
+
+### Next steps (open)
+1. Review the `teams.md` diff (151 overalls + 20 legacy flags + 23 org-buff
+   restorations + a doc note) + the generator change + the regenerated JSONs
+   (lineups / playerCards / subs / coaches / orgs), then **assign a version and
+   commit**.
+2. Side effect by design: the floor also nudges these teams up a little in SAM
+   **hard/normal** (flatter weights) — they are the SAM greats, but flag if not
+   wanted. Worldwide and other-region pools are unaffected (SAM is the only live
+   region).
 
 ## Analytics upgrade — PostHog (current · uncommitted, under review)
 

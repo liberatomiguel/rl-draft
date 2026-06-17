@@ -57,14 +57,21 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `rerolls` | 3 | 1 | 0 | 0 |
 | `overallLockedHidden` | no | no | yes | yes |
 | `userRollRange` | [-3, 5] | [-3, 4] | [-3.5, 4] | [-5, 5] |
-| `chemistryMaxBonus` | 1.0 | 1.6 | 1.8 | 2.2 |
+| `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.1 | 2.6 |
+| `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
 | `opponentRatingShift` | -2.0 | 0 | +0.3 | +1.2 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
 
-`chemistryMaxBonus` is also a FIELD-WIDE buff: every AI lineup is a real
-roster at 100% chemistry while drafts sit near ~20% — keep it modest.
+**Chemistry is split into a user cap and an AI cap (v1.2.5).** Every AI lineup
+is a real roster at ~100% chemistry while a drafted all-star mix sits near ~20%,
+so a single shared cap was a near-flat FIELD-WIDE buff the player couldn't match —
+the main reason a good team got eliminated in the Hard/Legacy Swiss. Hard/Legacy
+now set `opponentChemistryMaxBonus: 0`, making chemistry the **player's** edge
+(easy/normal keep both caps equal — they're not the problem). Opponents earn
+their difficulty from raw overall + `opponentRatingShift` + a stronger field +
+specials, not from chemistry. Keep the user cap modest so overall still dominates.
 
 Rules that must NOT change (base doc §5): difficulty never touches the
 **draft** pool — only rerolls, visibility, opponents and simulation weights.
@@ -76,7 +83,7 @@ rating = avg player overall            (dominant, ~82-96)
        + coach   (overall-75)·0.10 + bonusLevel·0.25   max 2.5
        + sub     (overall-75)·0.05                     max 1.2
        + org     buffLevel·0.6                         max 1.8
-       + chem    percent · chemistryMaxBonus           max 2.2 (legacy)
+       + chem    percent · chemistryMaxBonus           max 2.6 (user); AI cap 0 on Hard/Legacy
        + special 0.4/card                              max 1.2
 then:  anything above superteamPivot (94) counts at superteamSlope (0.55×)
 ```

@@ -97,7 +97,7 @@
     "orgId": "intz-esports",
     "lineupId": "intz-esports-s7",
     "seasonId": "rlcs-s7",
-    "overall": 60,
+    "overall": 70,
     "bonusType": "consistency",
     "bonusLevel": "~"
   },
@@ -604,7 +604,7 @@
     "orgId": "the-club",
     "lineupId": "the-club-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 75,
+    "overall": 80,
     "bonusType": "defense",
     "bonusLevel": "+"
   },
@@ -1215,7 +1215,7 @@
     "orgId": "erodium",
     "lineupId": "erodium-s7",
     "seasonId": "rlcs-s7",
-    "overall": 58,
+    "overall": 60,
     "bonusType": "clutch",
     "bonusLevel": "~"
   },
@@ -1228,7 +1228,7 @@
     "orgId": "oxey-team",
     "lineupId": "oxey-team-s8",
     "seasonId": "rlcs-s8",
-    "overall": 60,
+    "overall": 65,
     "bonusType": "consistency",
     "bonusLevel": "~"
   },
@@ -1254,7 +1254,7 @@
     "orgId": "the-three-sins",
     "lineupId": "the-three-sins-s9",
     "seasonId": "rlcs-s9",
-    "overall": 73,
+    "overall": 74,
     "bonusType": "offense",
     "bonusLevel": "~"
   },
@@ -1267,9 +1267,9 @@
     "orgId": "true-neutral",
     "lineupId": "true-neutral-s9",
     "seasonId": "rlcs-s9",
-    "overall": 73,
+    "overall": 75,
     "bonusType": "consistency",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "majowww-coach-poison-bullets-s9",
@@ -1280,7 +1280,7 @@
     "orgId": "poison-bullets",
     "lineupId": "poison-bullets-s9",
     "seasonId": "rlcs-s9",
-    "overall": 60,
+    "overall": 73,
     "bonusType": "defense",
     "bonusLevel": "~"
   },
@@ -1293,9 +1293,9 @@
     "orgId": "sapphire",
     "lineupId": "sapphire-s9",
     "seasonId": "rlcs-s9",
-    "overall": 72,
+    "overall": 76,
     "bonusType": "consistency",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "laayoh-coach-three-point-shooters-s9",
@@ -1306,7 +1306,7 @@
     "orgId": "three-point-shooters",
     "lineupId": "three-point-shooters-s9",
     "seasonId": "rlcs-s9",
-    "overall": 67,
+    "overall": 70,
     "bonusType": "defense",
     "bonusLevel": "~"
   },
@@ -1319,9 +1319,9 @@
     "orgId": "rebel",
     "lineupId": "rebel-x",
     "seasonId": "rlcs-x",
-    "overall": 72,
+    "overall": 77,
     "bonusType": "mechanics",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "jato-coach-noble-esports-x",
@@ -1332,9 +1332,9 @@
     "orgId": "noble-esports",
     "lineupId": "noble-esports-x",
     "seasonId": "rlcs-x",
-    "overall": 72,
+    "overall": 79,
     "bonusType": "consistency",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "nachusky-coach-nocturns-gaming-x",
@@ -1384,9 +1384,9 @@
     "orgId": "endgame",
     "lineupId": "endgame-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 73,
+    "overall": 78,
     "bonusType": "offense",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "stolen-coach-leviatan-2122",
@@ -1423,7 +1423,7 @@
     "orgId": "exeed",
     "lineupId": "exeed-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 76,
+    "overall": 78,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -1449,9 +1449,9 @@
     "orgId": "endgame",
     "lineupId": "endgame-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 73,
+    "overall": 78,
     "bonusType": "offense",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "luc-coach-blazar-2223",
@@ -1475,7 +1475,7 @@
     "orgId": "era",
     "lineupId": "era-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 77,
+    "overall": 79,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -1540,9 +1540,9 @@
     "orgId": "bodybuilders",
     "lineupId": "bodybuilders-2024",
     "seasonId": "rlcs-2024",
-    "overall": 74,
+    "overall": 77,
     "bonusType": "offense",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "kaoshi-coach-godfidence-2025",
@@ -1592,9 +1592,9 @@
     "orgId": "moonrise",
     "lineupId": "moonrise-2025",
     "seasonId": "rlcs-2025",
-    "overall": 70,
+    "overall": 78,
     "bonusType": "consistency",
-    "bonusLevel": "~"
+    "bonusLevel": "+"
   },
   {
     "id": "groval-coach-latino-heat-2025",

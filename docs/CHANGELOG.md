@@ -16,6 +16,10 @@ Post-launch analytics: detailed, **free** product analytics so we can see how
 the game is actually played (runs by difficulty, win-rate, where players drop
 off) without the paid Vercel events tier. Assign a version on commit.
 
+Also batched here: a **community overall-review pass** (151 reviewed overalls)
+and a new **`legacy` lineup flag** that lifts hand-picked SAM landmark rosters
+into the legacy gauntlet.
+
 ### Added
 - **PostHog product analytics** (`posthog-js`) as a second analytics sink
   alongside Vercel Web Analytics. The typed `trackEvent` wrapper
@@ -35,12 +39,59 @@ off) without the paid Vercel events tier. Assign a version on commit.
 - **SPA-aware pageviews** for PostHog (`capture_pageview: "history_change"`,
   App Router route changes), and a documented `.env.local` template for the two
   `NEXT_PUBLIC_POSTHOG_*` vars.
+- **`legacy` lineup flag** (`data-sources/teams.md` → `scripts/build-dataset.mjs`).
+  A block tagged `flag: … legacy` has its `historicalStrength` floored at
+  **"strong"** regardless of average overall, so the difficulty-based opponent
+  sampler (`balance.ts → opponentTierWeights`) surfaces it in the **legacy**
+  gauntlet — without inflating the underlying card ratings. It only weights
+  opponent generation; the draft pool is untouched, and a naturally-elite lineup
+  is never downgraded. Applied to **20** community-flagged SAM regional landmark
+  rosters (KRÜ, Complexity, The Three Sins, Noble, eRa, Exeed, NiP, w7m,
+  Godfidence, Sunset, …) that previously sat at solid/underdog and were filtered
+  out of SAM legacy runs. Their expected share of a SAM-legacy opponent field
+  rises from ~21% to ~74%.
 
 ### Changed
 - **Privacy policy — Analytics section** (EN + PT) now names both processors
   (Vercel + PostHog), states the cookieless / anonymous / DNT configuration, and
   notes that aggregate gameplay (difficulty mix, completion) is measured — not
   only page visits.
+
+### Balance
+- **Community overall review applied** (`data-sources/teams.md`, regenerated +
+  validated). 151 reviewed overalls from the shared review CSV — **113 player,
+  21 sub, 17 coach** cards, all SAM teams (deltas +1…+25, avg +5.1; e.g. Erodium
+  S7 valt 73→80, Noble esports X renaN 75→83, Most Wanted S9 math 79→84). The
+  CSV's "OVR atual" column matched the dataset exactly on all 151 rows before the
+  bump (no drift). Player/sub/coach ratings only — identities and lineups
+  unchanged (org buffs: see Fixed).
+- **Hard & Legacy rebalanced — chemistry is now the player's edge.** Players
+  reported a very good team still getting knocked out in the Hard/Legacy Swiss.
+  Cause: every AI lineup is a real roster at ~100% chemistry, so the shared
+  chemistry cap was a near-flat field-wide buff a drafted team (~20% chemistry)
+  couldn't match. New `opponentChemistryMaxBonus` (`balance.ts`) is **0 on Hard
+  and Legacy** — opponents keep their rating shift, stronger field, hidden
+  overalls and specials, but no longer bank a chemistry bonus the player can't.
+  Easy/Normal unchanged. A "good" (~92.5) drafted team's playoff odds go ~65%→~88%
+  on Hard and ~5%→~28% on Legacy; Legacy stays a brutal gauntlet (title still a
+  long shot) and the ladder still reads Normal < Hard < Legacy. Overall-dominant
+  anchors (GAME-DESIGN §25) untouched; a Legacy case was added to the sanity
+  suite. See DESIGN-DECISIONS #54.
+
+### Fixed
+- **Data-pipeline drift reconciled** (`data-sources/teams.md` ↔ generated JSON).
+  Rebuilding from `teams.md` surfaced two pre-existing spots where the generated
+  JSON had been edited out-of-band without updating the source (against the
+  pipeline contract): (1) the **v1.2.3 "org buffs small fixes"** — 23 org-buff
+  bumps hand-applied straight to `lineups.json` — are now written back into the
+  `teams.md` `org:` lines so they survive a rebuild (**net org-buff change vs the
+  shipped data: none**); (2) **swiftt** (FURIA 2026) carried a stale `88` in
+  `lineups.json` vs the canonical `87` in `teams.md` — the review CSV agrees (87)
+  — regenerated to 87. `teams.md` is the single source of truth again and a clean
+  `build:data` is now idempotent. `orgs.json` default buff levels are regenerated
+  to match (18 orgs); this is the org-card *default/fallback* only — in-match org
+  buffs are read per-lineup (`lineups[].orgBuffLevel`, unchanged), so gameplay is
+  unaffected.
 
 ## [1.2.2] — 2026
 
