@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { SITE } from "@/config/site";
+import { HOWTO } from "@/content/copy.en";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, howToJsonLd } from "@/lib/jsonld";
 import { HowToPlayView } from "./HowToPlayView";
 
 export const metadata: Metadata = {
@@ -9,6 +12,19 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+const HOW_TO = howToJsonLd({
+  name: `How to play ${SITE.name}`,
+  description:
+    "Draft a roster from historical RLCS lineups, build chemistry, and survive an RLCS-style tournament bracket.",
+  steps: HOWTO.steps.map((s) => ({ name: s.title, text: s.body })),
+});
+
 export default function HowToPlayPage() {
-  return <HowToPlayView />;
+  return (
+    <>
+      <JsonLd data={breadcrumbJsonLd([{ name: HOWTO.title, path: "/how-to-play" }])} />
+      <JsonLd data={HOW_TO} />
+      <HowToPlayView />
+    </>
+  );
 }

@@ -7,9 +7,24 @@ import { SITE } from "@/config/site";
 const linkCls =
   "text-sub transition-colors hover:text-ink underline-offset-4 hover:underline";
 
-function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+function ExternalLink({
+  href,
+  children,
+  nofollow = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  /** Add rel=nofollow — used for the competitor credit so we don't pass
+   *  sitewide link equity to a direct competitor while keeping the credit. */
+  nofollow?: boolean;
+}) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={linkCls}>
+    <a
+      href={href}
+      target="_blank"
+      rel={nofollow ? "noopener noreferrer nofollow" : "noopener noreferrer"}
+      className={linkCls}
+    >
       {children}
     </a>
   );
@@ -30,6 +45,12 @@ export function SiteFooter() {
             <Link href="/how-to-play" className={linkCls}>
               {NAV_UI.howToPlay}
             </Link>
+            <Link href="/about" className={linkCls}>
+              {NAV_UI.about}
+            </Link>
+            <Link href="/faq" className={linkCls}>
+              {NAV_UI.faq}
+            </Link>
             <Link href="/privacy" className={linkCls}>
               {NAV_UI.privacy}
             </Link>
@@ -49,9 +70,11 @@ export function SiteFooter() {
             {NAV_UI.balancedBy}{" "}
             <ExternalLink href={SITE.balanceCreditUrl}>{SITE.balanceCreditName}</ExternalLink>
             {" · "}
-            {NAV_UI.inspiredBy}{" "}
-            <ExternalLink href={SITE.inspiredByUrl}>{SITE.inspiredByName}</ExternalLink>{" "}
-            {NAV_UI.by} {SITE.inspiredByAuthor}
+            {/* Credit kept as PLAIN TEXT (no link) — full attribution stays
+                visible sitewide + on /about, but we no longer hand a direct
+                competitor any sitewide link signal. */}
+            {NAV_UI.inspiredBy} {SITE.inspiredByName} {NAV_UI.by}{" "}
+            {SITE.inspiredByAuthor}
           </p>
           <p>{APP.disclaimer}</p>
         </div>

@@ -10,6 +10,52 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.2.7] — 2026 · Info pages, full PT translation + technical polish
+
+New static info pages with full Portuguese, richer page metadata and structured
+data, a web app manifest, and a few technical/perf tidy-ups. No gameplay or
+balance changes.
+
+### Added
+- **Six info pages, bilingual (EN + localized PT URLs), server-rendered and
+  static**: `/about`, `/faq`, `/ratings` (overall methodology), `/strategy`,
+  `/special-cards`, `/sam` (South America) and their PT twins `/pt`, `/pt/sobre`,
+  `/pt/faq`, `/pt/overalls`, `/pt/estrategia`, `/pt/cartas-especiais`, `/pt/sam`.
+  Copy fact-checked against `GAME-DESIGN.md` (no invented players/stats).
+  `/special-cards` is a curated **no-spoiler** showcase — the in-game `???`
+  collection mystery is untouched (DESIGN-DECISIONS #59).
+- **Bilingual content**: the EN/PT toggle now also translates these pages + the
+  home's lower content block in place — `LocaleContent` is mounted-gated to each
+  URL's locale; landing on a `/pt` URL switches the whole UI to Portuguese
+  (`SyncLocale`). `hreflang` (en-US ↔ pt-BR ↔ x-default) links each pair via
+  `src/lib/contentMeta.ts`. (DESIGN-DECISIONS #56–57.)
+- **GWR credited** as the overall-balancing lead on `/about` and `/ratings`
+  (EN + PT), alongside the existing footer credit.
+- **Structured data**: `BreadcrumbList` on hub pages, `FAQPage` on `/faq`,
+  `HowTo` on `/how-to-play`, plus an `ItemList` builder — alongside the existing
+  site-wide `VideoGame`. Helpers in `src/lib/jsonld.ts` + `<JsonLd>`.
+- **Web app manifest** (`/manifest.webmanifest`) + a generated **apple-icon**.
+- **`src/data/counts.ts`** — a light module for the home's "x/89" denominators so
+  the menu stops importing the full `@/data` barrel just for two integers.
+
+### Changed
+- **Home** split into a server shell (`page.tsx`, metadata) and a client island
+  (`HomeMenu.tsx`) that also carries the lower content block. The route map lives
+  in `pageRoutes.ts` (no JSON imports) so the home bundle stays lean.
+- **Footer**: added `About` + `FAQ` links; the draftrlcs.app attribution is now
+  plain text (credit retained, link removed). Removed `isBasedOn` from the
+  VideoGame JSON-LD.
+- **Sitemap**: stable per-release `lastModified` (was `new Date()` every build),
+  all new EN+PT routes, and `hreflang` alternates.
+- **`RankBadge`** no longer sets `fetchPriority="high"` on the decorative,
+  mounted-gated rank emblem (it paints after hydration, so the priority was wasted).
+- **Canonical host signals** (metadataBase / sitemap / robots / canonical tags)
+  are consistent on the apex. Removed a redundant in-code `www`→apex redirect —
+  host canonicalization is already handled at the Vercel edge.
+
+### Fixed
+- None — no gameplay or balance changes this release.
+
 ## [1.2.6] — 2026 · champion-on-Hard scroll fix
 
 ### Fixed

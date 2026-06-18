@@ -78,7 +78,9 @@ export function RankBadge({
       width={SIZE_PX[size]}
       height={SIZE_PX[size]}
       loading="eager"
-      fetchPriority="high"
+      // NOT high priority: the rank emblem is decorative and mounted-gated
+      // (it paints after hydration), so it is never the LCP. High priority here
+      // only stole bandwidth from the real LCP (the hero paragraph) on mobile.
       decoding="async"
       onError={() => setFailed(true)}
       className={cx("shrink-0 object-contain", SIZES[size], className)}

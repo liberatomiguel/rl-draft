@@ -53,11 +53,57 @@ export const PT: Copy = {
     titles: (n: number) => `${n} títulos`,
   },
 
+  HOME_SEO: {
+    heading: "Um jogo de draft da RLCS, gratuito e feito da história do Rocket League esports",
+    intro:
+      "Rocket Draft é um jogo de draft da RLCS gratuito e fan-made — parte roster builder, parte quiz de história do Rocket League esports, parte simulador de torneio. Drafte um time com lineups reais da RLCS de 2016 até hoje, construa chemistry, colecione cartas especiais de momentos lendários e percorra uma chave no estilo RLCS até o título.",
+    sections: [
+      {
+        id: "how-it-works",
+        title: "Como funciona o draft da RLCS",
+        body: "A cada rodada entra uma lineup real e histórica da RLCS. Pegue uma única carta — um jogador, o técnico, o reserva ou a organização — até fechar um elenco de três jogadores, técnico, reserva e org. Junte mesmo país, mesma organização ou a mesma lineup e sua chemistry sobe, então um time coeso pode derrubar um mix de estrelas mais bem avaliado. Aí o torneio roda sozinho: fase suíça e playoffs de dupla eliminação, igual à RLCS de verdade.",
+      },
+      {
+        id: "modes",
+        title: "Três formas de draftar",
+        body: "O Draft Clássico é a experiência completa — seis slots, suíça e dupla eliminação. O Draft Rápido é só jogadores, com uma chave curta para uma partida ligeira. O Desafio Diário é um draft com seed por dia, igual para todo mundo, com uma streak para defender. São quatro dificuldades, e vencer no Hard libera o Legacy — um gauntlet histórico de elencos campeões com os overalls escondidos.",
+      },
+      {
+        id: "special-cards",
+        title: "Cartas especiais da história da RLCS",
+        body: "Além das cartas base do elenco, o Rocket Draft esconde dezenas de cartas especiais ligadas a momentos inesquecíveis do Rocket League esports — MVPs de Worlds e Majors, jogadores lendários e jogadas icônicas. Drafte uma, termine a run vencendo ou perdendo, e ela fica desbloqueada na sua coleção para sempre. A caçada faz parte do draft: uma única especial pode virar uma série.",
+      },
+      {
+        id: "regions",
+        title: "Bancos regionais — América do Sul & SAM",
+        body: "O Draft Regional limita o pool a uma cena inteira — os times de Mundial mais o Top 8 regional que nunca chegou a um Worlds. A América do Sul (SAM) já está no ar, com um elenco pesquisado à mão de times brasileiros e sul-americanos, heróis locais e azarões cult que você não vê no draft mundial. Mais regiões estão a caminho.",
+      },
+      {
+        id: "ratings",
+        title: "Ratings revisados à mão e transparentes",
+        body: "Cada overall é revisado à mão, não tirado de uma única linha de estatística — desempenho individual, resultados e contexto histórico entram na conta, e cartas especiais podem subir acima das versões base. A gente publica a metodologia para os ratings ficarem honestos e a comunidade poder contestar.",
+      },
+    ],
+    links: {
+      heading: "Explore o Rocket Draft",
+      howToPlay: "Aprenda como funciona o draft da RLCS",
+      ratings: "Leia a metodologia dos ratings",
+      specialCards: "Veja as cartas especiais da RLCS",
+      strategy: "Leia o guia de estratégia do Rocket Draft",
+      sam: "Jogue o draft SAM de Rocket League",
+      faq: "Perguntas frequentes",
+      about: "Sobre o projeto",
+      play: "Jogue o jogo de draft da RLCS",
+    },
+  },
+
   NAV_UI: {
     backToMenu: "Voltar ao menu",
     changelog: "Novidades",
     privacy: "Privacidade",
     howToPlay: "Como jogar",
+    about: "Sobre",
+    faq: "FAQ",
     discord: "Discord",
     support: "Apoiar o projeto",
     madeBy: "Feito por",

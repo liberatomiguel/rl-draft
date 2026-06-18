@@ -1,0 +1,225 @@
+{
+  "about": {
+    "metaTitle": "About Rocket Draft — Fan-Made RLCS Draft Game",
+    "metaDescription": "Rocket Draft is a free, fan-made RLCS draft game built by LiberatoRL. Draft real Rocket League esports lineups from 2016 to today, build chemistry, and run a tournament.",
+    "kicker": "About",
+    "title": "About Rocket Draft",
+    "intro": "Rocket Draft is a free, fan-made RLCS draft game — a Rocket League esports roster builder that turns the history of the scene into a playable draft. Here is what it is, who made it, and why it exists.",
+    "sections": [
+      {
+        "heading": "What is Rocket Draft",
+        "body": "Rocket Draft is a free Rocket League esports roster builder. Each round deals one real historical RLCS lineup from 2016 to today, and you take a single card — a player, the coach, the substitute, or the organization — until you have three players, one coach, one sub, and one org. Then you build chemistry, collect special cards, and run an RLCS-style tournament. No account, no download — it plays in any browser, desktop or mobile."
+      },
+      {
+        "heading": "Why it exists and who made it",
+        "body": "Rocket Draft was created by LiberatoRL, a fan, as an unofficial passion project celebrating RLCS history, with the player overalls reviewed and balanced by GWR. It is non-commercial and free, with a Discord community and a buy-me-a-coffee support link for anyone who wants to help keep it running. Credit where it is due: the game is inspired by Rams' draftrlcs.app. It exists because RLCS history deserves a way to be replayed, not just remembered."
+      },
+      {
+        "heading": "What makes it different",
+        "body": "Two things set Rocket Draft apart. The first is Region-Locked Draft: South America (SAM) is live now, hand-researched from Liquipedia, covering Brazilian and South American teams — its World Championship rosters plus the regional Top 8 that never reached Worlds, with deeper benches and cult underdogs like yanxnz. More regions are coming. The second is transparent ratings: every overall is a calculated base plus a hand manual review, reviewed over time, and open to community pushback."
+      },
+      {
+        "heading": "A fan project, not affiliated",
+        "body": "Rocket Draft is an unofficial fan project. It is not affiliated with Psyonix, Epic Games, or any esports organization, and Rocket League is a trademark of its owners. Everything here is built out of respect for the players, teams, and moments that shaped the scene. Want to dive in? Head to How to Play to learn the loop, or jump straight into Play."
+      }
+    ],
+    "ctaLabel": "Play Rocket Draft now",
+    "faqs": []
+  },
+  "faq": {
+    "metaTitle": "Rocket Draft FAQ",
+    "metaDescription": "Answers to common Rocket Draft questions: is it free, do you need an account, mobile play, how RLCS ratings are calculated, special cards, the draft, and SAM.",
+    "kicker": "Help",
+    "title": "Rocket Draft FAQ",
+    "intro": "Quick answers to the questions players ask most about Rocket Draft — the free, fan-made RLCS draft game built on real Rocket League esports history.",
+    "sections": [
+      {
+        "heading": "Everything you need to get started",
+        "body": "Rocket Draft lets you draft a team from real historical RLCS lineups, build chemistry, collect special cards, and play an RLCS-style tournament — all in your browser, free, no account required. Below are the questions players ask most. If you want the full walkthrough, see How to Play; for the ratings system, see Ratings; for the legends showcase, see Special Cards."
+      }
+    ],
+    "ctaLabel": "Start a free draft",
+    "faqs": [
+      {
+        "q": "Is Rocket Draft free?",
+        "a": "Yes. Rocket Draft is completely free and non-commercial — a fan-made passion project celebrating RLCS history. There is no paywall, no ads required to play, and a \"buy me a coffee\" support link is entirely optional."
+      },
+      {
+        "q": "Do I need an account to play?",
+        "a": "No account is needed. You can start a draft instantly. Your progress is saved on your own device, so nothing to sign up for or log into."
+      },
+      {
+        "q": "Can I play on mobile?",
+        "a": "Yes. Rocket Draft runs in any modern browser on both desktop and mobile — no app to download and no install."
+      },
+      {
+        "q": "Is Rocket Draft official or affiliated with an esports org?",
+        "a": "No. Rocket Draft is an unofficial, fan-made project created by LiberatoRL. It is not affiliated with Psyonix, Epic Games, or any esports organization. Rocket League is a trademark of its owners. It was inspired by Rams' draftrlcs.app."
+      },
+      {
+        "q": "How are player ratings and overalls calculated?",
+        "a": "Every overall is built in two layers: a calculated base plus a hand manual review. The calculation weighs team placement, tournament tier, season strength, win rate, titles, Major and Worlds appearances, Top 4 and Top 8 finishes, individual stats where available, region strength, and consistency across events. The manual review exists because esports data can mislead — some players overperform statistically due to context, others are historically elite despite worse team results (typical adjustment is small, around plus or minus 3, exceptional plus or minus 5). Six internal stats feed simulation and card depth: Offense, Defense, Mechanics, Consistency, Experience, and Clutch. See the Ratings page for the full methodology."
+      },
+      {
+        "q": "What are special cards?",
+        "a": "Special cards are rare versions of players tied to iconic Rocket League esports moments — Worlds and Major MVP runs, legends, and signature plays. There are 84 of them, and they can appear in any draft. Draft one and finish the run, win or lose, to unlock it in your collection forever. In-game, locked cards show as ??? until you unlock them. The Special Cards page is a curated showcase of legends and does not spoil your unlock progress."
+      },
+      {
+        "q": "How does the draft work?",
+        "a": "Each round deals one real historical RLCS lineup. You take exactly one card from it — a player, the coach, the substitute, or the organization — until you have 3 players, 1 coach, 1 sub, and 1 org. The draft pool is fully random on every difficulty, so luck is the same for everyone; difficulty changes the tournament field, not your draw. If nothing in a lineup fits your open slots, the reroll is free."
+      },
+      {
+        "q": "What is SAM, the regional mode?",
+        "a": "Region-Locked Draft narrows the pool to one scene's full depth — its World Championship teams plus the regional Top 8 that never reached Worlds, meaning deeper benches and local underdogs you won't see worldwide. South America (SAM) is live now, hand-researched from Liquipedia, covering Brazilian and South American teams (for example, yanxnz). More regions are coming soon."
+      },
+      {
+        "q": "Are more players and teams being added?",
+        "a": "Yes. The roster covers real RLCS lineups from 2016 to today, ratings are reviewed and updated over time, and more regions beyond SAM are coming soon. The community can also push back on ratings."
+      },
+      {
+        "q": "How is my progress saved?",
+        "a": "Progress is saved locally on the device you play on — your collection, profile, and settings live in your browser. No account or sign-in is required, so there's nothing to log into to keep playing."
+      }
+    ]
+  },
+  "ratings": {
+    "metaTitle": "RLCS Player Ratings: How Overalls Are Built",
+    "metaDescription": "How Rocket Draft calculates RLCS player ratings: a calculated base plus a hand manual review, six internal stats, and why team overall stays the main factor.",
+    "kicker": "Ratings",
+    "title": "How Rocket Draft Rates RLCS Players",
+    "intro": "This is the transparent breakdown of how every player overall is built — the two layers behind the number, what the calculation weighs, and why some special cards rate above their base versions. If you have ever asked why a player carries the overall they do, this is the answer.",
+    "sections": [
+      {
+        "heading": "How overalls are built: base plus manual review",
+        "body": "Every player overall is built in two layers. First, a calculated base derived from results and context. Then a hand manual review — led by GWR, who balances the player ratings — because esports data misleads on its own. Some players overperform statistically due to context; others are historically elite despite worse team results. The manual adjustment is typically small — around ±3, with exceptional cases reaching ±5. The goal is a number that respects both the spreadsheet and the history."
+      },
+      {
+        "heading": "What the calculation considers",
+        "body": "The calculated base weighs a wide spread of historical signal: team placement, tournament tier, season strength, win rate, titles, Major and Worlds appearances, Top 4 and Top 8 finishes, individual stats where available, region strength and context, and consistency across events. No single stat line decides an overall — the base reads the whole career arc across RLCS history from 2016 to today."
+      },
+      {
+        "heading": "The six stats behind every card",
+        "body": "Six internal stats feed the match simulation and give cards their depth. Offense covers scoring and pressure. Defense is stability and avoiding bad losses. Mechanics is ceiling — the explosive, high-roll games. Consistency reduces collapse and variance. Experience rewards longer series and playoff runs. Clutch shows up in Game 5 and Game 7, overtime, and close series. Together they shape how a roster actually plays out."
+      },
+      {
+        "heading": "Why special cards can beat base cards",
+        "body": "Special cards are rare versions tied to iconic Rocket League esports moments — Worlds and Major MVP runs, legends, signature plays. Because they capture a peak, a special card can rate above its base version. \"Pinch God\" (kuxir97, Season 2 World Champion and Worlds MVP) or \"Four Times World Champion\" (Turbopolsa) are not just reskins — the effect ramps with the moment. There are 84 special cards to unlock by finishing a run with one drafted."
+      },
+      {
+        "heading": "How team rating works: overall stays dominant",
+        "body": "A team rating is driven mostly by player overalls. Chemistry, org buffs, coach effects and special-card boosts add the edge — they never replace overall as the main factor. That said, a coherent, high-chemistry roster can beat a higher-rated all-star mix, so the top overall is not always the smart pick. On Hard and Legacy, chemistry is asymmetric: it helps your team while AI opponents bank no bonus."
+      },
+      {
+        "heading": "How SAM and region players are rated",
+        "body": "Region-Locked Draft narrows the pool to one scene's full depth. South America (SAM) is live now, hand-researched from Liquipedia, covering Brazilian and South American teams — its World Championship rosters plus the regional Top 8 that never reached Worlds. Those players carry the same two-layer treatment, with region strength and context already folded into the base. A confirmed SAM name in the pool: yanxnz."
+      },
+      {
+        "heading": "How often ratings are reviewed",
+        "body": "Ratings are not frozen. They are reviewed and updated over time as the methodology is refined and as history is re-read with fresh eyes. The community can push back on any overall — this page exists so those conversations start from a shared, honest baseline rather than a black box."
+      }
+    ],
+    "ctaLabel": "Draft a team and see the overalls in action",
+    "faqs": []
+  },
+  "strategy": {
+    "metaTitle": "Rocket Draft Strategy: Best Picks & How to Win",
+    "metaDescription": "A practical Rocket Draft strategy guide: best picks, how to build chemistry, when to value coach, sub and org, smart reroll use, and how to win on Hard and Legacy.",
+    "kicker": "Guide",
+    "title": "Rocket Draft Strategy Guide",
+    "intro": "How to actually win in Rocket Draft: stars versus depth, building real chemistry, when to spend a slot on a coach, sub or org, smart reroll use, and the picks that carry you through Hard and Legacy.",
+    "sections": [
+      {
+        "heading": "Stars vs. depth: don't always take the top overall",
+        "body": "Team rating is driven mostly by your three players' overalls, but the highest-rated card is not always the right pick. Chemistry, org buffs, coach and special-card effects add the edge that decides close series. A coherent, high-chemistry roster can beat a higher-rated all-star mix. Before you grab the biggest number on the board, ask whether it fits your open slots and whether it links to the players you already hold."
+      },
+      {
+        "heading": "How to build chemistry (the real edge)",
+        "body": "Chemistry is your main lever to out-punch a higher-rated field. The strongest link is three players from the same historical lineup; same country is strong; same organization counts. A coach or sub connected to your players, team or org adds a little more. Tiers run Poor, Okay, Good, Great, Perfect. Commit early to a country stack or a real lineup and the bonus compounds fast, so trade a sliver of raw overall for a roster that holds together."
+      },
+      {
+        "heading": "When to value coach, sub and org",
+        "body": "Each lineup lets you take one card: a player, the coach, the substitute, or the organization. Players carry the rating, so they come first, but the support slots win tight matches. Take a coach or sub who shares a lineup or org with players you already drafted to bank extra chemistry. Pick an org that matches your players' historical org so the org-link bonus stacks. A connected support card is worth more than a slightly stronger but isolated one."
+      },
+      {
+        "heading": "Using rerolls (and the free reroll)",
+        "body": "Rerolls differ by difficulty: Easy gives three, Normal gives one, Hard and Legacy give none. Spend them when a lineup offers nothing for your open slots, not to chase a marginally better card. One rule applies on every difficulty: if a dealt lineup has no card that fits your remaining slots, the reroll is free, so you never get stuck. On zero-reroll runs, plan your slots so you're rarely forced to take a dead card."
+      },
+      {
+        "heading": "Difficulty-specific tips: Easy to Hard to Legacy",
+        "body": "Easy and Normal show overalls and forgive mistakes, so use them to learn the loop. Hard hides overalls, gives zero rerolls and fields a stronger bracket, rewarding historical knowledge: you draft on what you know about real RLCS rosters, not on numbers. Crucially, on Hard and Legacy chemistry is asymmetric, helping your team while AI opponents bank no chemistry bonus, so a tightly linked stack is your equalizer. Legacy unlocks by winning on Hard and is an all-time gauntlet of championship rosters."
+      },
+      {
+        "heading": "Reading special cards",
+        "body": "Special cards are rare versions tied to iconic Rocket League esports moments, like \"Pinch God\" (kuxir97) or \"Four Times World Champion\" (Turbopolsa). They can appear in any draft on any difficulty, can rate above their base versions, and ramp in effect from legends to MVP cards to moments. Draft one and finish the run, win or lose, to unlock it in your collection forever. When a special fits your roster and chemistry plan, it is usually worth the slot for both the edge and the unlock."
+      }
+    ],
+    "ctaLabel": "Start a draft and put the strategy to work",
+    "faqs": []
+  },
+  "special-cards": {
+    "metaTitle": "RLCS Special Cards — Rocket League Esports Cards",
+    "metaDescription": "A showcase of 84 RLCS special cards in Rocket Draft — rare versions tied to iconic Rocket League esports moments. Draft one, finish the run, unlock it forever.",
+    "kicker": "Special Cards",
+    "title": "RLCS Special Cards",
+    "intro": "Special cards are the rare, collectible side of Rocket Draft — versions of real players tied to the biggest moments in RLCS history. There are 84 to chase, and every one is earned the same way: draft it, finish the run, keep it forever.",
+    "sections": [
+      {
+        "heading": "What special cards are",
+        "body": "Special cards are rare versions of real players tied to iconic Rocket League esports moments — Worlds and Major MVP runs, era-defining legends, signature plays. They can appear in ANY draft, on any difficulty, because the pool is always fully random. A special often rates above the player's base card and carries a stronger effect, so pulling one mid-run can reshape the whole roster you were building."
+      },
+      {
+        "heading": "How you unlock them",
+        "body": "The rule is simple: draft the special card into your lineup, then FINISH the run — win or lose, it doesn't matter. Complete the tournament with that card on your team and it unlocks in your Collection permanently. There's no grind and no account required; you just have to see the run through. Until you unlock one, it shows in-game as ??? — discovering them is part of the play."
+      },
+      {
+        "heading": "Rarities and effects",
+        "body": "Special cards ramp in effect by tier — legends, MVP cards, and standout moments scale up as you climb the rarity ladder. Effects are direct attribute boosts that feed the same six internal stats every card uses: Offense, Defense, Mechanics, Consistency, Experience, and Clutch. The higher the tier, the bigger the edge it brings to your team rating, which is why a well-placed special can lift a roster above a stronger-looking field."
+      },
+      {
+        "heading": "A few legendary examples",
+        "body": "The names on this showcase are the ones the community remembers. \"The Mountain\" is Kronovi, the Season 1 champion and one of the first defining superstars of the scene. \"Pinch God\" is kuxir97, Season 2 World Champion and Worlds MVP. \"Four Times World Champion\" is Turbopolsa, owner of four RLCS World Championships. These are the kind of legends a special card exists to celebrate."
+      },
+      {
+        "heading": "How they fit the draft",
+        "body": "A special card is never a free win — your team rating is driven mostly by player overalls, with chemistry, org buffs, coaches, and special effects adding the edge on top. The smart play is fitting a special into a lineup that already has overall and chemistry, not chasing a shiny card into a roster that doesn't hold together. Use one to sharpen a build, and let the run decide whether it joins your Collection."
+      },
+      {
+        "heading": "84 to collect — with the mystery intact",
+        "body": "There are 84 special cards in all, and the in-game Collection keeps its mystery: locked cards stay as ??? until you earn them, so your unlock progress is yours alone. This page is a public, curated showcase of the legends — a celebration of RLCS history, not a spoiler dump. Head to Play, draft a real historical lineup, and start hunting your first one."
+      }
+    ],
+    "ctaLabel": "Start a draft and hunt special cards",
+    "faqs": []
+  },
+  "sam": {
+    "metaTitle": "SAM Rocket League Draft — Brazil & South America",
+    "metaDescription": "Region-lock the draft to South America: every SAM Worlds team plus the regional Top 8 that never reached Worlds. Hand-researched Brazilian & SA rosters. Free.",
+    "kicker": "Region-Locked Draft",
+    "title": "SAM Draft — Brazil & South America",
+    "intro": "Region-Locked Draft narrows the pool to one scene's full depth. South America (SAM) is live now — a hand-researched gauntlet of Brazilian and South American RLCS history, free in your browser.",
+    "sections": [
+      {
+        "heading": "What the SAM region-locked draft is",
+        "body": "SAM is a Region-Locked Draft: instead of pulling from the global pool, every round deals from South America's full depth. You still draft the same way — take one card per lineup until you have 3 players, 1 coach, 1 sub and 1 org — but every card comes from the SAM scene. South America is the first region live, hand-researched from Liquipedia, covering Brazilian and South American teams from RLCS history."
+      },
+      {
+        "heading": "What's in the SAM pool",
+        "body": "The pool combines two layers of the region: its World Championship teams, and the regional Top 8 that never reached Worlds. That second layer is the difference — deeper benches, local heroes and cult underdogs you won't see in the worldwide draft. Confirmed Brazilian names like yanxnz live in here. It's the region's real depth, not just its Worlds highlight reel."
+      },
+      {
+        "heading": "Why it's a differentiator",
+        "body": "Most RLCS draft games stop at the World Championship lineups. SAM goes deeper, surfacing the regional Top 8 that never made it to a Worlds stage — the qualifier teams, the near-misses, the scene's full bench. For Brazilian and South American fans that means drafting the players you actually watched, not only the handful who reached the global stage. That regional depth is what sets Rocket Draft apart."
+      },
+      {
+        "heading": "How region-lock changes a run",
+        "body": "Region-lock changes only the pool — nothing else. Your difficulty, chemistry rules and the full RLCS-style tournament all play exactly as normal: 16 teams, a Swiss stage into double-elimination playoffs. Same-country chemistry naturally lands more often inside one scene, so a coherent SAM roster can punch above a scattered all-star mix. The draft luck stays random; only the names on the cards are SAM."
+      },
+      {
+        "heading": "More regions coming",
+        "body": "South America is live first because it's hand-researched and ready. More regions are on the way, each built the same way — a scene's Worlds teams plus the regional Top 8 that never reached a World Championship. The goal is to let every fan lock the draft to the scene they grew up watching. SAM is the proof of concept; the rest of the map follows."
+      }
+    ],
+    "ctaLabel": "Play the SAM Rocket League draft",
+    "faqs": []
+  }
+}

@@ -70,6 +70,9 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
   icons: { icon: "/icon.svg", shortcut: "/favicon.ico" },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: SITE.name, statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
   // Drop your Google Search Console HTML-tag token in GOOGLE_SITE_VERIFICATION
   // (env) to verify domain ownership; or use the DNS method and skip this.
   verification: process.env.GOOGLE_SITE_VERIFICATION
@@ -95,7 +98,6 @@ const JSON_LD = {
   inLanguage: ["en", "pt-BR"],
   author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl },
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-  isBasedOn: SITE.inspiredByUrl,
 };
 
 export default function RootLayout({

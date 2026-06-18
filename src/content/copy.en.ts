@@ -55,11 +55,64 @@ export const HOME = {
   titles: (n: number) => `${n} titles`,
 };
 
+/**
+ * Home long-form SEO content (v1.3). Server-rendered below the menu so crawlers
+ * get real, keyword-bearing depth about what Rocket Draft is — an RLCS draft
+ * game / Rocket League esports roster builder — without changing the playable
+ * menu above it. Presentational: rendered from the active locale's dict.
+ */
+export const HOME_SEO = {
+  heading: "A free RLCS draft game built from Rocket League esports history",
+  intro:
+    "Rocket Draft is a free, fan-made RLCS draft game — part roster builder, part Rocket League esports history quiz, part tournament simulator. Draft a team from real RLCS lineups spanning 2016 to today, build chemistry, collect special cards from legendary moments, and run an RLCS-style bracket to a championship.",
+  sections: [
+    {
+      id: "how-it-works",
+      title: "How the RLCS draft works",
+      body: "Every round deals one real historical RLCS lineup. Take a single card — a player, the coach, the substitute or the organization — until you have a full roster of three players, a coach, a sub and an org. Stack the same country, organization or shared lineup and your chemistry climbs, so a coherent team can upset a higher-rated all-star mix. Then a tournament auto-plays: a Swiss stage into double-elimination playoffs, exactly like the real RLCS.",
+    },
+    {
+      id: "modes",
+      title: "Three ways to draft",
+      body: "Classic Draft is the full experience — six slots, Swiss into double-elim. Quick Draft is players-only and runs a short bracket for a fast session. The Daily Challenge is one seeded draft per day, the same for everyone, with a streak to defend. Four difficulties scale the field, and clearing Hard unlocks Legacy — an all-time gauntlet of championship rosters with overalls hidden.",
+    },
+    {
+      id: "special-cards",
+      title: "Special cards from RLCS history",
+      body: "Beyond the base roster cards, Rocket Draft hides dozens of special cards tied to unforgettable Rocket League esports moments — Worlds and Major MVP runs, legendary players and iconic plays. Draft one, finish the run win or lose, and it is unlocked in your collection forever. The chase is part of the draft: a single special can swing a series.",
+    },
+    {
+      id: "regions",
+      title: "Regional databases — South America & SAM",
+      body: "Region-Locked Draft narrows the pool to one scene's full depth — its World Championship teams plus the regional Top 8 that never reached Worlds. South America (SAM) is live now, with a hand-researched roster of Brazilian and South American teams, local heroes and cult underdogs you will not see in the worldwide draft. More regions are on the way.",
+    },
+    {
+      id: "ratings",
+      title: "Transparent, hand-reviewed player ratings",
+      body: "Every overall is reviewed by hand, not scraped from a single stat line — individual performance, results and historical context all feed the number, and special cards can climb above their base versions. We publish the methodology so the ratings stay honest and the community can push back on them.",
+    },
+  ],
+  /** Descriptive internal links (no \"click here\"). Hrefs live in the component. */
+  links: {
+    heading: "Explore Rocket Draft",
+    howToPlay: "Learn how the RLCS draft works",
+    ratings: "Read the player-ratings methodology",
+    specialCards: "Browse RLCS special cards",
+    strategy: "Read the Rocket Draft strategy guide",
+    sam: "Play the SAM Rocket League draft",
+    faq: "Rocket Draft FAQ",
+    about: "About the project",
+    play: "Play the RLCS draft game",
+  },
+};
+
 export const NAV_UI = {
   backToMenu: "Back to menu",
   changelog: "Changelog",
   privacy: "Privacy",
   howToPlay: "How to play",
+  about: "About",
+  faq: "FAQ",
   discord: "Discord",
   support: "Support the project",
   madeBy: "Made by",
@@ -725,6 +778,7 @@ export const EN = {
   APP,
   NAV,
   HOME,
+  HOME_SEO,
   NAV_UI,
   RUN_UI,
   SETUP,

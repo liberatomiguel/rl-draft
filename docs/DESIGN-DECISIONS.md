@@ -463,6 +463,65 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     12. **Process discipline.** Commit per milestone (`vX.Y.Z`), and log the patch
         in `CHANGELOG.md` + record any deviation here in `DESIGN-DECISIONS.md`.
 
+## v1.2.7 additions (info pages, PT translation, technical polish)
+
+56. **Content-page copy lives in server-only `src/content/pages.{en,pt}.json`,
+    NOT in the `copy.{en,pt}.ts` runtime dictionary.** This is a deliberate,
+    documented deviation from the "every player-facing string goes in copy.ts"
+    rule. `copy.ts` is imported by the client `useCopy()` layer, so it ships in
+    the client bundle on every page; adding ~3k words of long-form page prose to
+    it would bloat all JS. The content pages are server-rendered per locale, so
+    their copy is JSON imported only by the server routes — out of the client
+    bundle, still fully translated and shape-checked (`ContentPageCopy`). The
+    hard rule still governs interactive UI chrome (which DOES go in `copy.ts`).
+
+57. **i18n = toggle translates everything in place + dedicated `/pt/*` SEO URLs
+    (NOT full app-wide locale routing).** Chosen over full `[locale]` routing,
+    which would need middleware + URL/toggle sync + hydration reconciliation —
+    real usability/regression risk on launch day, overlapping accounts/sync (#55).
+    How it works (Paradigm A):
+    - The EN/PT header toggle (`settingsStore.lang`) is the single source of truth
+      and now translates the content pages + the home SEO block **in place**, just
+      like the game UI — `LocaleContent` is mounted-gated to the URL's canonical
+      locale, so SSR ships EN HTML at bare paths (crawlable) and PT HTML at `/pt/*`,
+      while the toggle swaps either for the player. (Initial cut shipped the
+      content pages as server-EN-only — they didn't follow the toggle; fixed after
+      launch-day review.)
+    - `/pt/*` URLs render PT in SSR (crawlable PT + hreflang) AND run `SyncLocale`
+      to set the session to PT, so a visitor landing from search gets the whole
+      UI — header, footer, game — in Portuguese. Bare/EN paths do NOT force EN
+      (they respect a returning player's saved preference).
+    - Home SEO links are locale-aware (`localePath`): a PT player's links point at
+      the `/pt` URLs. The route map lives in `pageRoutes.ts` (no JSON imports) so
+      the home bundle never pulls in content-page copy.
+    - Content-page copy is JSON imported per-route (`pages.{en,pt}.json`), not in
+      the global `useCopy` dict (#56), so prose doesn't bloat every page's JS.
+    Full `/en` + `/pt` routing for the *whole* site (incl. the game) was offered
+    and declined for now — marginal SEO upside on interactive pages, big refactor.
+
+58. **Canonical host stays the bare apex `https://rocketdraft.app`.** Chosen
+    because the whole codebase already declared it (metadataBase, sitemap, robots,
+    OG, JSON-LD). Enforced by a host-conditioned 308 `www`→apex redirect in
+    `next.config.ts` + (ops) setting apex as the Vercel primary domain so `www`/
+    `http` 301 there too. Reverting to `www` would mean rewriting every derived
+    signal for no gain.
+
+59. **`/special-cards` is a curated, public, no-spoiler showcase — the in-game
+    `???` locked-collection mystery is preserved.** The SEO audit suggested
+    exposing locked cards publicly for indexable content; that would attack the
+    collection's discovery mechanic. Instead the public page celebrates a curated
+    set of legends using only card flavor/history that is already public RLCS
+    fact, fully decoupled from a player's unlock progress (which stays in the
+    logged-in collection). SEO benefit without spoiling gameplay.
+
+60. **Deferred (not a regression): the home's full mobile-LCP fix.** The biggest
+    mobile-LCP lever is stopping the home from importing the ~434 KB `@/data`
+    barrel via `@/lib/daily` + `runStore`. That touches the **deterministic daily**
+    (#15) and must be done carefully with `npm test`, so it is left as a focused
+    follow-up rather than rushed in alongside the SEO pass. The safe wins were
+    taken now: `counts.ts` (kills the direct barrel import for two integers) and
+    dropping `fetchPriority="high"` on the decorative rank emblem.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

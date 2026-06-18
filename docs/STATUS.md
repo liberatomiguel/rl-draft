@@ -1,14 +1,13 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-18. **The game is LAUNCHED.** Committed tip: **v1.2.6**
-> (champion-on-Hard scroll fix). Recently shipped: **v1.2.5** (SAM overall review +
-> Legacy relevance + Hard/Legacy chemistry rebalance + the review tooling) and
-> **v1.2.4** (analytics wiring — enablement still open below). **Next up: v1.3**
-> (accounts & sync — see `docs/ROADMAP.md` and the invariants in
-> `docs/DESIGN-DECISIONS.md` #55). Per-version detail is in `docs/CHANGELOG.md`;
-> this file stays **current-state only** — the sections below are the still-OPEN
-> follow-ups (mostly Miguel's ops). Grep CHANGELOG/DESIGN-DECISIONS for history.
+> Last updated: 2026-06-18. **The game is LAUNCHED.** Committed tip: **v1.2.7**
+> (info pages + full PT translation + technical polish — 13 new EN+PT info/landing
+> pages, bilingual toggle for them, structured data, web manifest; see
+> `docs/CHANGELOG.md` [1.2.7] + `DESIGN-DECISIONS.md` #56–60). **Next up: v1.3
+> (accounts & sync)** — see `docs/ROADMAP.md` + the invariants in
+> `DESIGN-DECISIONS.md` #55. Per-version detail is in `docs/CHANGELOG.md`; this
+> file stays **current-state only**. Grep CHANGELOG/DESIGN-DECISIONS for history.
 
 ## Current state
 
@@ -52,15 +51,25 @@ build). Confirm **Vercel Web Analytics + Speed Insights** are enabled in the
 dashboard. Then build the PostHog funnel (`$pageview → run_started →
 tournament_started → run_completed`) + a win-rate breakdown by `difficulty` / `won`.
 
-**SEO — Search Console (Miguel):** submit `https://rocketdraft.app/sitemap.xml`;
-URL-inspect → request indexing of the homepage; prefer a **Domain property**
-(covers apex/www/http/https).
+**SEO — Search Console only; Vercel is already correct (Miguel):** the domains
+are fine — apex `rocketdraft.app` is primary/production and `www` + `*.vercel.app`
+already **308** to it. **Do NOT change Vercel.** The "4 origins" in the GSC export
+were the launch-window discovery period (~3 days of data). Action: prefer a GSC
+**Domain property** (consolidates apex/www/http reporting), **resubmit
+`…/sitemap.xml`** (now 20 URLs incl. the new EN+PT pages), and URL-inspect →
+request indexing of the home + `/ratings`, `/sam`, `/faq`; then give Google time
+to consolidate onto the apex (the canonical tags + sitemap + hreflang all point
+there). **Community outreach:** a launch post in r/RocketLeagueEsports + the SAM
+communities is worth doing; ask Claude to draft it.
 
 **Performance backlog (planned, none urgent — PageSpeed ~95 mobile / ~99 desktop):**
-font CLS ~0.107 on mobile (preload the Rajdhani display font / reserve mode-card
-height); stop importing the whole dataset on the home page (~94 KiB — a generated
-`counts.ts` + a deferred daily pool); serve `unranked.png` at 80px. Touches the
-deterministic daily — do with `npm test`.
+the remaining mobile-LCP lever is **stop importing the whole `@/data` barrel on the
+home** via `@/lib/daily` + `runStore` (~94 KiB). Deferred from the v1.3 SEO pass
+because it touches the **deterministic daily** — do it as a focused change with
+`npm test` (DESIGN-DECISIONS #60). Already done in v1.3: generated `counts.ts`
+(home no longer imports the barrel for two integers) + dropped `fetchPriority` on
+the decorative rank emblem. (Font CLS is a non-issue — latest PageSpeed shows
+mobile CLS 0 / desktop 0.035.)
 
 **Data decisions (none blocking):** S9 (2020) had no World Championship (COVID → 4
 regionals) and keeps a 12-team approximation; the 2026 field is provisional until the

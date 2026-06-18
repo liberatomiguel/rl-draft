@@ -16,7 +16,7 @@ export const SITE = {
   domain: "rocketdraft.app",
   url: "https://rocketdraft.app",
   /** Shown in the footer. Keep in sync with package.json. */
-  version: "1.2.6",
+  version: "1.2.7",
   versionName: "Regional Champions",
 
   author: "LiberatoRL",

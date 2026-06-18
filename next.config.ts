@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
     // optimization (NODE_ENV === "production").
     unoptimized: process.env.NODE_ENV !== "production",
   },
+  // Host canonicalization (www / http / vercel.app → apex) is handled at the
+  // Vercel edge — apex `rocketdraft.app` is the primary domain and the other
+  // hosts already 308 to it. The code declares the same canonical everywhere
+  // (SITE.url → metadataBase, sitemap, robots, canonical tags, hreflang), so no
+  // in-app redirect is needed. The multi-origin data in Search Console was the
+  // launch-window discovery period (3 days of data); the canonical signals +
+  // a GSC Domain property consolidate it onto the apex over time.
 };
 
 export default nextConfig;

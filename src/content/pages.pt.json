@@ -1,0 +1,225 @@
+{
+  "about": {
+    "metaTitle": "Sobre o Rocket Draft — RLCS Draft Game Fã",
+    "metaDescription": "Rocket Draft é um RLCS draft game gratuito e fan-made, criado pelo LiberatoRL. Monte um roster com lineups reais da história do Rocket League esports e jogue um tournament.",
+    "kicker": "Sobre",
+    "title": "Sobre o Rocket Draft",
+    "intro": "Rocket Draft é um RLCS draft game gratuito e fan-made — um construtor de roster do Rocket League esports que transforma a história da cena em um draft jogável. Aqui está o que ele é, quem o criou e por que ele existe.",
+    "sections": [
+      {
+        "heading": "O que é o Rocket Draft",
+        "body": "Rocket Draft é um construtor de roster do Rocket League esports, gratuito. A cada rodada surge uma lineup real e histórica da RLCS, de 2016 até hoje, e você escolhe uma única carta — um jogador, o coach, o substituto ou a organização — até ter três jogadores, um coach, um sub e uma org. Depois você constrói chemistry, coleciona cartas especiais e disputa um tournament no estilo RLCS. Sem conta, sem download: roda em qualquer navegador, no desktop ou no celular."
+      },
+      {
+        "heading": "Por que ele existe e quem o criou",
+        "body": "Rocket Draft foi criado pelo LiberatoRL, um fã, como um projeto não oficial e apaixonado que celebra a história da RLCS, com os overalls dos jogadores revisados e balanceados pelo GWR. É gratuito e não comercial, com uma comunidade no Discord e um link de buy-me-a-coffee para quem quiser ajudar a mantê-lo no ar. Crédito a quem merece: o jogo é inspirado no draftrlcs.app, do Rams. Ele existe porque a história da RLCS merece poder ser revivida, não só lembrada."
+      },
+      {
+        "heading": "O que o torna diferente",
+        "body": "Duas coisas destacam o Rocket Draft. A primeira é o Region-Locked Draft: a América do Sul (SAM) já está no ar, pesquisada à mão a partir do Liquipedia, cobrindo times brasileiros e sul-americanos — os rosters de World Championship mais o Top 8 regional que nunca chegou ao Worlds, com bancos mais profundos e underdogs cultuados, como o yanxnz. Mais regiões estão a caminho. A segunda é a transparência dos ratings: todo overall é uma base calculada somada a uma revisão manual feita à mão, atualizada com o tempo e aberta a contestação da comunidade."
+      },
+      {
+        "heading": "Um projeto de fã, sem afiliação",
+        "body": "Rocket Draft é um projeto de fã, não oficial. Não tem afiliação com a Psyonix, a Epic Games ou qualquer organização de esports, e Rocket League é uma marca registrada de seus donos. Tudo aqui foi construído por respeito aos jogadores, aos times e aos momentos que moldaram a cena. Quer começar? Vá até How to Play para aprender o loop, ou pule direto para Play."
+      }
+    ],
+    "ctaLabel": "Jogar o Rocket Draft agora",
+    "faqs": []
+  },
+  "faq": {
+    "metaTitle": "FAQ do Rocket Draft",
+    "metaDescription": "Respostas para as dúvidas mais comuns do Rocket Draft: é gratuito, precisa de conta, joga no celular, como os overalls são calculados, special cards e SAM.",
+    "kicker": "Ajuda",
+    "title": "FAQ do Rocket Draft",
+    "intro": "Respostas rápidas para as dúvidas mais frequentes sobre o Rocket Draft — o jogo de draft de RLCS gratuito e feito por fã, construído sobre a história real do esports de Rocket League.",
+    "sections": [
+      {
+        "heading": "Tudo o que você precisa para começar",
+        "body": "No Rocket Draft você monta um time a partir de lineups reais da RLCS, constrói chemistry, coleciona special cards e disputa um torneio no estilo RLCS — tudo no navegador, de graça e sem precisar de conta. Abaixo estão as perguntas que mais aparecem. Se quiser o passo a passo completo, veja Como Jogar; para o sistema de notas, veja Ratings; para a vitrine de lendas, veja Special Cards."
+      }
+    ],
+    "ctaLabel": "Começar um draft grátis",
+    "faqs": [
+      {
+        "q": "O Rocket Draft é gratuito?",
+        "a": "Sim. O Rocket Draft é totalmente gratuito e não comercial — um projeto feito por fã que celebra a história da RLCS. Não tem paywall nem anúncio obrigatório para jogar, e o link de apoio \"buy me a coffee\" é totalmente opcional."
+      },
+      {
+        "q": "Preciso de conta para jogar?",
+        "a": "Não precisa de conta. Dá para começar um draft na hora. Seu progresso fica salvo no seu próprio dispositivo, então não há cadastro nem login."
+      },
+      {
+        "q": "Dá para jogar no celular?",
+        "a": "Sim. O Rocket Draft roda em qualquer navegador moderno, no desktop e no celular — sem app para baixar e sem instalação."
+      },
+      {
+        "q": "O Rocket Draft é oficial ou tem ligação com alguma org?",
+        "a": "Não. O Rocket Draft é um projeto não oficial, feito pelo fã LiberatoRL. Não tem afiliação com a Psyonix, a Epic Games ou qualquer organização de esports. Rocket League é uma marca registrada de seus donos. O projeto foi inspirado no draftrlcs.app do Rams."
+      },
+      {
+        "q": "Como os ratings e overalls dos jogadores são calculados?",
+        "a": "Cada overall é montado em duas camadas: uma base calculada mais uma revisão manual à mão. O cálculo pondera colocação do time, tier do torneio, força da temporada, win rate, títulos, presenças em Majors e Worlds, finais em Top 4 e Top 8, stats individuais quando disponíveis, força da região e consistência entre eventos. A revisão manual existe porque os dados de esports podem enganar — alguns jogadores rendem demais nas estatísticas por causa do contexto, outros são historicamente de elite apesar de resultados piores do time (o ajuste típico é pequeno, cerca de mais ou menos 3, e excepcional mais ou menos 5). Seis stats internos alimentam a simulação e a profundidade das cartas: Offense, Defense, Mechanics, Consistency, Experience e Clutch. Veja a página Ratings para a metodologia completa."
+      },
+      {
+        "q": "O que são special cards?",
+        "a": "Special cards são versões raras de jogadores ligadas a momentos icônicos do esports de Rocket League — runs de MVP em Worlds e Majors, lendas e jogadas marcantes. São 84 no total e podem aparecer em qualquer draft. Pegue uma e termine a run, com vitória ou derrota, para desbloqueá-la na sua coleção para sempre. No jogo, as cartas bloqueadas aparecem como ??? até serem desbloqueadas. A página Special Cards é uma vitrine curada de lendas e não revela o seu progresso de desbloqueio."
+      },
+      {
+        "q": "Como funciona o draft?",
+        "a": "Cada round entrega um lineup real e histórico da RLCS. Você pega exatamente uma carta dele — um jogador, o coach, o substitute ou a organização — até ter 3 jogadores, 1 coach, 1 sub e 1 org. O draft pool é totalmente aleatório em qualquer dificuldade, então a sorte é a mesma para todo mundo; a dificuldade muda o field do torneio, não o seu sorteio. Se nada num lineup encaixa nos seus slots abertos, o reroll é grátis."
+      },
+      {
+        "q": "O que é o SAM, o modo regional?",
+        "a": "O Region-Locked Draft restringe o pool à profundidade total de uma cena — os times de World Championship dela mais o Top 8 regional que nunca chegou aos Worlds, ou seja, benches mais profundos e zebras locais que você não vê no mundial. A South America (SAM) já está no ar, pesquisada à mão pelo Liquipedia, cobrindo times brasileiros e sul-americanos (por exemplo, yanxnz). Mais regiões estão a caminho."
+      },
+      {
+        "q": "Mais jogadores e times estão sendo adicionados?",
+        "a": "Sim. O roster cobre lineups reais da RLCS de 2016 até hoje, os ratings são revisados e atualizados com o tempo e mais regiões além da SAM estão a caminho. A comunidade também pode contestar os ratings."
+      },
+      {
+        "q": "Como meu progresso é salvo?",
+        "a": "O progresso é salvo localmente no dispositivo em que você joga — sua coleção, perfil e configurações ficam no seu navegador. Não é preciso conta nem login, então não há nada para acessar para continuar jogando."
+      }
+    ]
+  },
+  "ratings": {
+    "metaTitle": "Ratings de Jogadores da RLCS: Como os Overalls São Construídos",
+    "metaDescription": "Entenda como o Rocket Draft calcula o overall de cada jogador da RLCS: as duas camadas por trás do número, o que o cálculo pondera e por que alguns special cards superam suas versões base.",
+    "kicker": "Ratings",
+    "title": "Como o Rocket Draft Avalia os Jogadores da RLCS",
+    "intro": "Este é o detalhamento transparente de como o overall de cada jogador é construído — as duas camadas por trás do número, o que o cálculo leva em conta e por que alguns special cards ficam acima de suas versões base. Se você já se perguntou por que um jogador carrega o overall que tem, a resposta está aqui.",
+    "sections": [
+      {
+        "heading": "Como os overalls são construídos: base mais revisão manual",
+        "body": "O overall de cada jogador é construído em duas camadas. Primeiro, uma base calculada a partir de resultados e contexto. Depois, uma revisão manual feita à mão pelo GWR, que balanceia os ratings dos jogadores, porque dados de esports enganam quando ficam por conta própria. Alguns jogadores rendem acima do esperado nas estatísticas por causa do contexto; outros são historicamente de elite apesar de resultados de equipe piores. O ajuste manual costuma ser pequeno — em torno de mais ou menos 3, com casos excepcionais chegando a mais ou menos 5. O objetivo é um número que respeite tanto a planilha quanto a história."
+      },
+      {
+        "heading": "O que o cálculo considera",
+        "body": "A base calculada pondera uma ampla gama de sinais históricos: colocação da equipe, nível do torneio, força da temporada, win rate, títulos, participações em Majors e Worlds, campanhas de Top 4 e Top 8, estatísticas individuais quando disponíveis, força e contexto da região e consistência ao longo dos eventos. Nenhuma linha estatística isolada define um overall — a base lê todo o arco da carreira ao longo da história da RLCS, de 2016 até hoje."
+      },
+      {
+        "heading": "Os seis atributos por trás de cada card",
+        "body": "Seis atributos internos alimentam a simulação das partidas e dão profundidade aos cards. Offense cobre finalização e pressão. Defense é estabilidade e evitar derrotas ruins. Mechanics é o teto — os jogos explosivos e de high-roll. Consistency reduz colapsos e variância. Experience recompensa séries mais longas e campanhas de playoffs. Clutch aparece no Game 5 e no Game 7, na prorrogação e nas séries apertadas. Juntos, eles moldam como um roster de fato se comporta."
+      },
+      {
+        "heading": "Por que special cards podem superar cards base",
+        "body": "Os special cards são versões raras ligadas a momentos icônicos do esports de Rocket League — campanhas de MVP em Worlds e Majors, lendas, jogadas autorais. Por capturarem um pico, um special card pode ficar acima de sua versão base. Pinch God (kuxir97, Campeão Mundial e Worlds MVP da Season 2) ou Four Times World Champion (Turbopolsa) não são apenas reskins — o efeito cresce junto com o momento. Há 84 special cards para desbloquear, bastando concluir uma run com um deles draftado."
+      },
+      {
+        "heading": "Como funciona o rating de equipe: o overall continua dominante",
+        "body": "O rating de uma equipe é movido principalmente pelos overalls dos jogadores. Chemistry, buffs de org, efeitos de técnico e boosts de special cards somam a vantagem extra — mas nunca substituem o overall como fator principal. Dito isso, um roster coeso e com alta chemistry pode vencer uma mistura de all-stars com rating mais alto, então o maior overall nem sempre é a escolha inteligente. No Hard e no Legacy, a chemistry é assimétrica: ela ajuda a sua equipe enquanto os oponentes de IA não acumulam nenhum bônus."
+      },
+      {
+        "heading": "Como SAM e jogadores da região são avaliados",
+        "body": "O Region-Locked Draft estreita o pool para toda a profundidade de uma única cena. A América do Sul (SAM) já está disponível, pesquisada à mão a partir do Liquipedia, cobrindo equipes brasileiras e sul-americanas — seus rosters de Campeonato Mundial mais o Top 8 regional que nunca chegou aos Worlds. Esses jogadores recebem o mesmo tratamento de duas camadas, com a força e o contexto da região já embutidos na base. Um nome confirmado de SAM no pool: yanxnz."
+      },
+      {
+        "heading": "Com que frequência os ratings são revisados",
+        "body": "Os ratings não são definitivos. Eles são revisados e atualizados ao longo do tempo, à medida que a metodologia é refinada e que a história é relida com novos olhos. A comunidade pode questionar qualquer overall — esta página existe para que essas conversas comecem a partir de uma base comum e honesta, e não de uma caixa-preta."
+      }
+    ],
+    "ctaLabel": "Drafte uma equipe e veja os overalls em ação",
+    "faqs": []
+  },
+  "strategy": {
+    "metaTitle": "Estratégia no Rocket Draft: Melhores Picks e Como Vencer",
+    "metaDescription": "Guia de estratégia do Rocket Draft: estrelas contra profundidade, como criar chemistry de verdade, quando gastar um slot em coach, sub ou org, uso inteligente de reroll e os picks que te levam longe no Hard e no Legacy.",
+    "kicker": "Guia",
+    "title": "Guia de Estratégia do Rocket Draft",
+    "intro": "Como vencer de verdade no Rocket Draft: estrelas contra profundidade, como construir chemistry real, quando gastar um slot em um coach, sub ou org, uso inteligente de reroll e os picks que te carregam pelo Hard e pelo Legacy.",
+    "sections": [
+      {
+        "heading": "Estrelas vs. profundidade: nem sempre pegue o maior overall",
+        "body": "A nota do time é definida principalmente pelos overalls dos seus três players, mas a carta mais bem avaliada nem sempre é o pick certo. Chemistry, buffs de org, efeitos de coach e de cartas especiais somam a vantagem que decide séries apertadas. Um roster coeso e com chemistry alta pode bater uma mistura de all-stars com nota mais alta. Antes de cravar o maior número da mesa, pergunte se ele encaixa nos seus slots abertos e se ele se conecta aos players que você já tem."
+      },
+      {
+        "heading": "Como construir chemistry (a vantagem de verdade)",
+        "body": "Chemistry é a sua principal alavanca para superar um field mais bem avaliado. O vínculo mais forte são três players do mesmo lineup histórico; mesmo país é forte; mesma organização conta. Um coach ou sub conectado aos seus players, time ou org soma um pouco mais. Os tiers vão de Poor, Okay, Good, Great a Perfect. Comprometa-se cedo com uma stack de país ou com um lineup de verdade e o bônus acumula rápido, então troque um pedacinho de overall bruto por um roster que se sustenta."
+      },
+      {
+        "heading": "Quando valorizar coach, sub e org",
+        "body": "Cada lineup deixa você levar uma carta: um player, o coach, o substituto ou a organização. Os players carregam a nota, então vêm primeiro, mas os slots de apoio vencem as partidas equilibradas. Pegue um coach ou sub que compartilhe um lineup ou org com players que você já draftou para guardar chemistry extra. Escolha uma org que combine com a org histórica dos seus players para que o bônus de org-link se acumule. Uma carta de apoio conectada vale mais do que uma um pouco mais forte, porém isolada."
+      },
+      {
+        "heading": "Usando rerolls (e o reroll grátis)",
+        "body": "Os rerolls variam por dificuldade: o Easy dá três, o Normal dá um, e Hard e Legacy não dão nenhum. Gaste-os quando um lineup não oferecer nada para os seus slots abertos, não para correr atrás de uma carta marginalmente melhor. Uma regra vale em toda dificuldade: se um lineup distribuído não tem nenhuma carta que encaixe nos seus slots restantes, o reroll é grátis, então você nunca fica travado. Em runs sem reroll, planeje seus slots para raramente ser forçado a pegar uma carta morta."
+      },
+      {
+        "heading": "Dicas por dificuldade: do Easy ao Hard ao Legacy",
+        "body": "Easy e Normal mostram os overalls e perdoam erros, então use-os para aprender o loop. O Hard esconde os overalls, não dá nenhum reroll e coloca um bracket mais forte na mesa, recompensando o conhecimento histórico: você drafta pelo que sabe sobre rosters reais da RLCS, não pelos números. O ponto crucial: no Hard e no Legacy a chemistry é assimétrica, ajudando o seu time enquanto os oponentes de IA não acumulam bônus de chemistry, então uma stack bem conectada é o seu equalizador. O Legacy é desbloqueado ao vencer no Hard e é um gauntlet histórico com os rosters campeões de todos os tempos."
+      },
+      {
+        "heading": "Lendo as cartas especiais",
+        "body": "As cartas especiais são versões raras ligadas a momentos icônicos do esports de Rocket League, como Pinch God (kuxir97) ou Four Times World Champion (Turbopolsa). Elas podem aparecer em qualquer draft, em qualquer dificuldade, podem ter nota acima das versões base e escalam em efeito, de lendas a cartas de MVP e a momentos. Drafte uma e termine a run, vencendo ou perdendo, para desbloqueá-la na sua coleção para sempre. Quando uma especial encaixa no seu roster e no seu plano de chemistry, normalmente ela vale o slot tanto pela vantagem quanto pelo desbloqueio."
+      }
+    ],
+    "ctaLabel": "Comece um draft e coloque a estratégia em prática",
+    "faqs": []
+  },
+  "special-cards": {
+    "metaTitle": "Cartas Especiais RLCS — Cartas de Esports",
+    "metaDescription": "Uma vitrine das 84 cartas especiais RLCS do Rocket Draft — versões raras ligadas a momentos icônicos do esports de Rocket League. Faça o draft, termine a run e desbloqueie para sempre.",
+    "kicker": "Cartas Especiais",
+    "title": "Cartas Especiais RLCS",
+    "intro": "As cartas especiais são o lado raro e colecionável do Rocket Draft — versões de jogadores reais ligadas aos maiores momentos da história da RLCS. São 84 para caçar, e todas se conquistam do mesmo jeito: faça o draft, termine a run e fique com ela para sempre.",
+    "sections": [
+      {
+        "heading": "O que são as cartas especiais",
+        "body": "Cartas especiais são versões raras de jogadores reais ligadas a momentos icônicos do esports de Rocket League — runs de MVP de Worlds e Major, lendas que definiram eras, jogadas marcantes. Elas podem aparecer em QUALQUER draft, em qualquer dificuldade, porque o pool é sempre totalmente aleatório. Uma especial costuma ter overall acima da carta base do jogador e um efeito mais forte, então pegar uma no meio da run pode remodelar todo o roster que você estava montando."
+      },
+      {
+        "heading": "Como desbloquear",
+        "body": "A regra é simples: faça o draft da carta especial para o seu lineup e então TERMINE a run — ganhando ou perdendo, não importa. Conclua o tournament com aquela carta no time e ela desbloqueia na sua Collection de forma permanente. Não tem grind nem precisa de conta; basta levar a run até o fim. Enquanto você não desbloqueia uma, ela aparece no jogo como ??? — descobri-las faz parte da brincadeira."
+      },
+      {
+        "heading": "Raridades e efeitos",
+        "body": "As cartas especiais escalam o efeito por tier — lendas, cartas de MVP e momentos marcantes ficam mais fortes conforme você sobe na raridade. Os efeitos são boosts diretos de atributo que alimentam as mesmas seis stats internas de toda carta: Offense, Defense, Mechanics, Consistency, Experience e Clutch. Quanto mais alto o tier, maior a vantagem no rating do time — por isso uma especial bem colocada pode levantar um roster acima de um field aparentemente mais forte."
+      },
+      {
+        "heading": "Alguns exemplos lendários",
+        "body": "Os nomes desta vitrine são os que a comunidade lembra. \"The Mountain\" é o Kronovi, campeão da Season 1 e um dos primeiros superstars que definiram a cena. \"Pinch God\" é o kuxir97, World Champion da Season 2 e MVP de Worlds. \"Four Times World Champion\" é o Turbopolsa, dono de quatro World Championships da RLCS. É esse tipo de lenda que uma carta especial existe para celebrar."
+      },
+      {
+        "heading": "Como elas entram no draft",
+        "body": "Uma carta especial nunca é vitória garantida — o rating do seu time vem principalmente dos overalls dos jogadores, com chemistry, buffs de organização, coaches e efeitos especiais somando a vantagem por cima. A jogada inteligente é encaixar a especial num lineup que já tem overall e chemistry, e não correr atrás de uma carta brilhante para um roster que não se sustenta. Use uma para afiar o build e deixe a run decidir se ela entra na sua Collection."
+      },
+      {
+        "heading": "84 para colecionar — com o mistério intacto",
+        "body": "São 84 cartas especiais no total, e a Collection no jogo mantém o mistério: as cartas bloqueadas continuam como ??? até você conquistá-las, então o seu progresso de desbloqueio é só seu. Esta página é uma vitrine pública e curada das lendas — uma celebração da história da RLCS, não um spoiler do seu progresso. Vá para o Play, faça o draft de um lineup histórico real e comece a caçar a sua primeira."
+      }
+    ],
+    "ctaLabel": "Comece um draft e cace cartas especiais",
+    "faqs": []
+  },
+  "sam": {
+    "metaTitle": "Draft RLCS Brasil — SAM (América do Sul)",
+    "metaDescription": "Trave o draft na América do Sul: todos os times de Worlds da SAM mais o Top 8 regional que nunca chegou ao Worlds. Rosters BR e sul-americanos pesquisados à mão. Grátis.",
+    "kicker": "Region-Locked Draft",
+    "title": "Draft SAM — Brasil e América do Sul",
+    "intro": "O Region-Locked Draft restringe o pool à profundidade total de uma cena. A América do Sul (SAM) já está no ar — um gauntlet pesquisado à mão da história do RLCS brasileiro e sul-americano, grátis no seu navegador.",
+    "sections": [
+      {
+        "heading": "O que é o draft region-locked da SAM",
+        "body": "A SAM é um Region-Locked Draft: em vez de sortear do pool global, cada round entrega cartas de toda a profundidade da América do Sul. O draft funciona igual — você pega uma carta por lineup até montar 3 players, 1 coach, 1 sub e 1 org — mas cada carta vem da cena SAM. A América do Sul é a primeira região no ar, pesquisada à mão na Liquipedia, cobrindo times brasileiros e sul-americanos da história do RLCS."
+      },
+      {
+        "heading": "O que tem no pool da SAM",
+        "body": "O pool junta duas camadas da região: os times de World Championship e o Top 8 regional que nunca chegou ao Worlds. Essa segunda camada é a diferença — bancos mais profundos, heróis locais e azarões de culto que você não vê no draft mundial. Nomes brasileiros confirmados como o yanxnz estão aqui dentro. É a profundidade real da região, não só o resumo do Worlds."
+      },
+      {
+        "heading": "Por que isso é um diferencial",
+        "body": "A maioria dos jogos de draft RLCS para nos lineups de World Championship. A SAM vai mais fundo e traz o Top 8 regional que nunca subiu a um palco de Worlds — os times de qualifier, os que passaram perto, o banco completo da cena. Para o público brasileiro e sul-americano, isso significa draftar os players que você de fato acompanhou, não só os poucos que chegaram ao palco global. Essa profundidade regional é o que separa o Rocket Draft."
+      },
+      {
+        "heading": "Como o region-lock muda uma run",
+        "body": "O region-lock muda só o pool — nada mais. A sua dificuldade, as regras de chemistry e o torneio completo no estilo RLCS jogam exatamente como sempre: 16 times, fase Swiss para os playoffs em dupla eliminação. A chemistry de mesmo país naturalmente cai com mais frequência dentro de uma só cena, então um roster SAM coeso pode bater uma mistura de all-stars espalhada. A sorte do draft continua aleatória; só os nomes nas cartas são SAM."
+      },
+      {
+        "heading": "Mais regiões chegando",
+        "body": "A América do Sul veio primeiro porque foi pesquisada à mão e está pronta. Mais regiões estão a caminho, cada uma montada do mesmo jeito — os times de Worlds de uma cena mais o Top 8 regional que nunca chegou a um World Championship. A ideia é deixar cada fã travar o draft na cena que cresceu assistindo. A SAM é a prova de conceito; o resto do mapa vem depois."
+      }
+    ],
+    "ctaLabel": "Jogar o draft SAM de Rocket League",
+    "faqs": []
+  }
+}
