@@ -412,6 +412,57 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     untouched (overall still dominates; user chemistry cap unchanged). A new
     `balance.test.ts` Legacy case pins "hard but not impossible".
 
+## v1.3 readiness (invariants the accounts/sync patch must not break)
+
+55. **Invariants the v1.3 accounts/sync patch (Supabase + Discord OAuth +
+    guest→account migration + daily leaderboard) MUST preserve.** This is a big
+    patch touching persistence and identity; the list below is the contract it
+    is NOT allowed to violate. Each line is the failure it prevents.
+    1. **Engine purity.** `src/engine` never imports React, storage, network,
+       analytics, Supabase or OAuth — it stays pure/deterministic. ALL account,
+       auth, sync and remote-fetch code lives in `store`/`lib`/UI only (same rule
+       analytics already follows, #43). A Supabase import under `engine/` is a bug.
+    2. **Determinism is `{seed, rngState}`.** A run replays identically only from
+       its persisted `seed` + RNG cursor (#15). Sync must store BOTH **verbatim**
+       — never re-roll, re-seed or "normalize" them server-side — or a synced run
+       diverges on replay and the result no longer matches the leaderboard.
+    3. **Shared daily seed stays client-derived.** `src/lib/daily.ts` derives the
+       daily seed from the date so "same run for everyone" holds (#15, #50); the
+       leaderboard only ever compares runs sharing the same date-seed. Don't move
+       seed derivation server-side in any way that changes the derived value.
+    4. **Store boundary.** `runStore` is the EPHEMERAL in-flight run (no-resume,
+       #18/#30); `profileStore` is the DURABLE source of truth and the only thing
+       to mirror to the cloud. Don't collapse the two or sync the run store.
+    5. **`applyRunResults` is the single funnel.** It is called exactly once, by
+       `finishRun`, to apply XP / wins / unlocks / counters / history / daily.
+       Sync hooks AFTER it — observe the resulting state, never re-apply results
+       on a second path — or counters double-count.
+    6. **Persistence keys & versions are contracts.** Keys are
+       `rocket-draft:{run,profile,settings}:v1`; schema versions are run **3** and
+       profile **3**. The `:v1` is a STORAGE-KEY NAMESPACE, *not* the schema
+       version (the version lives in the persist config). Any new persisted field
+       needs a profile `version` bump + a `migrate()` that deep-merges defaults
+       (the existing migrate already deep-merges `settings`/`flags`).
+    7. **Full `ProfileState` is the migration payload.** Guest→account migration
+       must carry the WHOLE durable profile, not a subset:
+       `xp`, `runsCompleted`, `wins` (per difficulty: easy/normal/hard/legacy),
+       lifetime counters (`playoffAppearances`, `podiums`, `swissWinsTotal`),
+       `unlockedSpecials`, `achievements`, `runHistory` (capped at
+       `HISTORY_LIMIT`), `dailyResults`, `settings` (setup memory:
+       `lastDifficulty`/`lastShowOverall`/`lastMode`/`lastRegionLock`) and the
+       onboarding `flags` (`seenHowToPlay`/`seenLegacyIntro`/`seenRegionalIntro`).
+       Dropping a field silently resets that progress on first sign-in.
+    8. **`balance.ts` stays the single source of tunables** — any new sync/daily
+       cadence numbers go there, never inlined.
+    9. **Copy in both `copy.en`/`copy.pt`** — all new auth/leaderboard strings
+       are translated, per the v1.1.1 EN/PT contract (#41).
+    10. **Data via `src/data/index.ts` with its integrity checks** — leaderboard
+        lineup/special refs resolve through the existing data layer, not ad-hoc.
+    11. **SSR-safety.** Persisted/account state is read only after `useMounted`,
+        so the server render never reads localStorage or a client-only session.
+    12. **Process discipline.** Commit per milestone (`vX.Y.Z`), and log the patch
+        in `CHANGELOG.md` + record any deviation here in `DESIGN-DECISIONS.md`.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

@@ -16,16 +16,18 @@ the strongest factor".
 | +6 | wins most of the time | >82% |
 | +12 | upsets very rare | >96% |
 
-## Outcome anchors (asserted by `src/engine/balance.test.ts`, v0.5)
+## Outcome anchors (asserted by `src/engine/balance.test.ts`)
 
 Full-tournament rates for a representative **good roster (~92.5 total)**,
-real opponent generation + Swiss + double elim. Measured v0.5 values:
+real opponent generation + Swiss + double elim (Hard/Legacy reflect the
+**v1.2.5** chemistry rebalance — opponents no longer get a chemistry bonus):
 
 | Difficulty | Playoffs | Title | Notes |
 | --- | --- | --- | --- |
 | Easy | ~100% | ~59% | learning mode |
-| Normal | ~97% | ~12% | a 94.5 dream draft reaches ~28% |
-| Hard | ~79% | ~1-3% | the title is the chase, playoffs the fight |
+| Normal | ~96% | ~5% | a 94.5 dream draft reaches the title more often |
+| Hard | ~88% | ~2% | a good team now usually makes playoffs; the title is the chase |
+| Legacy | ~28% | ~0% | a brutal gauntlet — playoffs is the exception, the crown a long shot (but reachable) |
 
 If a balance change moves these outside the test bands, the suite fails —
 retune or consciously update the test with a CHANGELOG entry.
@@ -57,12 +59,16 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `rerolls` | 3 | 1 | 0 | 0 |
 | `overallLockedHidden` | no | no | yes | yes |
 | `userRollRange` | [-3, 5] | [-3, 4] | [-3.5, 4] | [-5, 5] |
+| `aiRollRange` | [-4, 4] | [-4, 4] | [-4, 4] | [-4, 4] |
 | `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.1 | 2.6 |
 | `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
 | `opponentRatingShift` | -2.0 | 0 | +0.3 | +1.2 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
+
+`requiresLegacyUnlock` is set on **legacy only** — it needs a Hard tournament
+win to play.
 
 **Chemistry is split into a user cap and an AI cap (v1.2.5).** Every AI lineup
 is a real roster at ~100% chemistry while a drafted all-star mix sits near ~20%,
@@ -100,11 +106,11 @@ the top end further; raise the pivot to let super-rosters breathe.
 
 ## Chemistry (`CHEMISTRY`) — base doc §22
 
-Points: same-lineup pair **3** · same-country pair **2** · same-org pair
-**1** (strongest link only per pair) · org-history link **1**/player ·
-coach link **1** (cap 2) · sub link **1** (cap 2). Max raw = 16.
+Points: same-lineup pair **4** · same-country pair **3** · same-org pair
+**2** (strongest link only per pair) · org-history link **1.5**/player ·
+coach link **1.5** (cap 3) · sub link **1** (cap 2). Max raw = 12.
 
-Tiers by percent: Perfect ≥85 · Great ≥62 · Good ≥40 · Okay ≥18 · Poor <18.
+Tiers by percent: Perfect ≥72 · Great ≥52 · Good ≥32 · Okay ≥14 · Poor <14.
 
 Note: AI historical lineups are naturally Great/Perfect (same lineup ×3).
 The user trades raw overall vs chemistry — that's the intended draft tension.
@@ -116,8 +122,12 @@ The user trades raw overall vs chemistry — that's the intended draft tension.
 | `clutchWeight` | 1.2 | deciding-game bonus × clutch norm |
 | `experienceWeight` | 0.8 | every playoff game × experience norm |
 | `consistencyDampen` | 0.35 | negative-variance reduction × consistency norm |
-| `mechProcBaseChance` | 0.12 | chance of a +2 "high roll" game spike |
+| `mechProcBaseChance` | 0.12 | chance of a "high roll" game spike |
+| `mechProcBonus` | 2.0 | flat bonus applied when the mech proc fires |
 | `overtimeThreshold` | 0.9 | score gap that sends a game to OT |
+| `overtimeClutchWeight` | 0.8 | extra clutch weight on the OT winner check |
+| `defenseStabilityDampenPerPoint` | 0.08 | extra negative-variance dampen per `defense_stability` point |
+| `upsetActivationGap` | 2 | `upset_boost` activates when own rating is below opponent's by this margin |
 
 Stat norm = `(stat − 82) / 18`, clamped — so an 82-stat team is neutral and
 stats only nudge (the game must be playable with overall alone).
@@ -126,16 +136,27 @@ stats only nudge (the game must be playable with overall alone).
 
 - `RARITY`: common ≤69 · silver 70-79 · gold 80-89 · blue ≥90 (visual only).
   Org cards map from buff level: ~ common · + silver · ++ gold · +++ blue.
-- `SPECIALS.appearanceChance` (6% — v0.5.1, was 16%): chance a player card
+- `SPECIALS.appearanceChance` (5% — v0.5.1, was 16%): chance a player card
   in an offer rolls one of that PLAYER's specials (the pool follows the
   person, so any card of theirs qualifies — which already multiplies
   exposure; at 16% runs saw 3-4 specials and they stopped feeling special).
   `coachAppearanceChance` (5%) for coach cards. ~0.4 sightings/run expected.
-- `SPECIALS.rarityWeights` (rare 100 · epic 55 · mythic 28 · legendary 12):
+- `SPECIALS.rarityWeights` (rare 100 · epic 55 · mythic 28 · legendary 12 ·
+  creator 12):
   which special appears once the roll passes — legendaries are chase pulls.
   Raise legendary's weight to make the top tier less elusive.
 - `DRAFT.staffScarcityBoost` (5): when only coach/sub slots remain, lineups
   that can fill them are favored by up to this weight (1 = off).
+
+## Tournament structure (`TOURNAMENT`)
+
+- **Swiss**: 16 teams, Bo5 — 3 wins advance, 3 losses eliminate.
+- **Playoffs**: 8 teams, Bo7.
+- **Quick Draft**: 8 teams, single-elimination, Bo5.
+
+`HISTORY_LIMIT` (25) caps the stored run history. `FEATURES.showEliminatorTeam`
+(true) reveals the lineup that knocked the user out on a lost run — flip to
+false to fully disable with no other code change.
 
 ## Progression (`XP`, `RANKS`)
 
@@ -143,10 +164,14 @@ Run XP: complete 50 · swiss win 20 · qualify 75 · playoff series win 40 each
 · placement bonus (title 200 / final 100 / 3rd 60 / 4th 40) — multiplied by
 difficulty, +25% if hidden overalls. Achievement XP is flat (not multiplied).
 
-Rank ladder (v0.3, target SSL in **100-150 runs**): Unranked 0 → Bronze 300
-→ Silver 1k → Gold 2.4k → Platinum 4.8k → Diamond 8.5k → Champion 14k →
-Grand Champion 21k → Supersonic Legend 30k. Average run ≈ 150-300 XP,
-winning run ≈ 500-800. Mode multipliers: quick ×0.5 · daily ×1.5.
+Unlocking a NEW special card grants flat XP by rarity (`XP.specialUnlock`,
+added after the difficulty multiplier like achievement XP): rare 10 · epic 20
+· mythic 40 · legendary 75 · creator 100.
+
+Rank ladder (v0.3, target SSL in **100-150 runs**): Unranked 0 → Bronze 400
+→ Silver 1.2k → Gold 3k → Platinum 6.5k → Diamond 11.5k → Champion 19k →
+Grand Champion 29k → Supersonic Legend 40k. Average run ≈ 150-300 XP,
+winning run ≈ 500-800. Mode multipliers: classic ×1.0 · quick ×0.5 · daily ×1.5.
 Tune `RANKS` minXp to stretch or compress the grind.
 
 ## Playtest workflow

@@ -31,13 +31,16 @@ version ships, move its narrative to CHANGELOG.md and trim STATUS.
   the seeded RNG in `src/lib/rng.ts`). UI calls engine through `src/store`.
 - **Every tunable number** goes in `src/config/balance.ts` — never inline
   magic numbers for gameplay values.
-- **Every player-facing string** goes in `src/content/copy.ts` (broadcast
-  tone: clean esports-desk language, no forced memes).
+- **Every player-facing string** goes in `src/content/copy.en.ts` AND its PT
+  translation in `copy.pt.ts` (both keyed identically); `copy.ts` is only the
+  runtime access layer (`useCopy`/`getCopy`). Broadcast tone: clean esports-desk
+  language, no forced memes.
 - **The data JSONs are GENERATED** (since v0.4). Source of truth is
   `data-sources/teams.md`. To change data: edit it, run `npm run build:data`,
   then `npm run validate:data`. Do NOT hand-edit `src/data/*.json` **except**
   `achievements.json` AND `specialCards.json` — both are HAND-MAINTAINED.
-  `specialCards.json` was decoupled from the generator in v1.1.1 (Miguel
+  `specialCards.json` was decoupled from the generator in v1.1.1 (the
+  `build-dataset.mjs` comments say v1.1.0 — they predate the decouple; Miguel
   curates the special cards by hand, 80+ entries); `build:data` only *reads* it
   to re-validate base-card refs and never overwrites it. The legacy `SPECIALS`
   catalogue in `scripts/build-dataset.mjs` is reference-only now. To add/edit a

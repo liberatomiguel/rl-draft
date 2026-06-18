@@ -49,7 +49,7 @@ architecture is prepared for Supabase + Discord OAuth later (see
 
 ```txt
 src/
-├── app/            Routes: / · /play · /collection · /profile · /how-to-play
+├── app/            Routes: / · /play · /collection · /profile · /how-to-play · /achievements · /settings · /changelog · /privacy
 ├── components/
 │   ├── cards/      GameCard (rarity frames), MiniCard, roster views
 │   ├── layout/     AppShell (top nav + mobile bottom nav)
@@ -62,7 +62,7 @@ src/
 ├── data/           📦 JSON dataset + zod schemas + validated loader
 ├── engine/         🧠 Pure game logic — zero React imports
 ├── lib/            Seeded RNG, small utils
-└── store/          Zustand stores (active run + persistent profile)
+└── store/          Zustand stores (active run + persistent profile + settings/language)
 ```
 
 **Golden rule:** game logic lives in `src/engine` (pure, deterministic,
@@ -86,8 +86,8 @@ Implemented: Classic Draft (free choice, 6 slots), Easy/Normal/Hard + locked
 Legacy, rerolls by difficulty, hidden-overall mode with results reveal, base
 card rarities (silver/gold/blue), special cards with collection unlocks,
 chemistry, org buffs, coach/sub systems, Swiss (16 teams, Bo5) + single-elim
-Bo7 playoffs, results screen with XP/rank/achievements, local persistence
-(refresh-safe runs), responsive desktop + mobile.
+Bo7 playoffs, double-elimination playoffs, Regional Draft, daily challenges,
+results screen with XP/rank/achievements, local persistence (refresh-safe runs),
+responsive desktop + mobile.
 
-Not yet: login/sync, Liquipedia API, daily challenges, Quick/Regional Draft,
-double-elimination playoffs. See the roadmap.
+Not yet: login/sync, Liquipedia API, Quick Draft. See the roadmap.

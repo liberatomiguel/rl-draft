@@ -390,6 +390,11 @@ Examples of situational effects:
 + Small defensive stability boost
 ```
 
+*[As built: the shipped effect model is the v3 `attribute_boost` /
+`team_attribute_boost` form (boosts on the card's stats; `team_attribute_boost`
+for coach specials). The situational types shown above are legacy/back-compat.
+See DATA-GUIDE.]*
+
 Avoid making special cards simply “99 overall and unbeatable”.
 
 They should feel exciting, but still balanced.
@@ -552,6 +557,9 @@ final_overall: 91
 
 Manual adjustment should be stored separately from the calculated base, so future recalculations remain possible.
 
+*[As built: `manualAdjustment` is effectively always 0 in the generated
+dataset — overall tuning happens at source in `teams.md`.]*
+
 ---
 
 # 18. Team Overall / Team Rating
@@ -586,6 +594,9 @@ Average player overall
 The displayed Team Overall should remain understandable.
 
 Detailed internal calculations can stay hidden.
+
+*[As built: a superteam compression (pivot 94 / slope 0.55) is applied above the
+pivot before the difficulty shift (live since v0.5).]*
 
 ---
 
@@ -722,6 +733,10 @@ Normal: chemistry has moderate impact
 Hard: chemistry has relevant impact
 Legacy: chemistry has relevant impact
 ```
+
+*[As built: on Hard and Legacy chemistry is ASYMMETRIC — it applies to the
+player's team only; AI opponents get 0 chemistry bonus
+(`opponentChemistryMaxBonus=0`). See DESIGN-DECISIONS #54.]*
 
 ## Chemistry Display
 
@@ -893,6 +908,10 @@ Legacy: -5 to +5
 ```
 
 These values are only initial design ideas and should be playtested.
+
+*[As built: the live values live in `balance.ts` `DIFFICULTY.*.userRollRange`
+(Normal -3..+4, Hard -3.5..+4); the spec numbers above are superseded initial
+ideas.]*
 
 ---
 
@@ -1193,6 +1212,10 @@ Challenge Mode can be unlocked or added later to avoid competing too much with D
 
 # 33. Game Modes Roadmap
 
+*[As built: Quick Draft, Daily Challenge, Regional Draft and Legacy Mode are
+SHIPPED (not roadmap). The canonical Region list (NA · EU · SAM · MENA · OCE ·
+APAC · SSA — note SSA) lives in `types.ts`.]*
+
 ## Classic Draft
 
 Main mode.
@@ -1483,6 +1506,10 @@ Represents a historical team lineup.
   "unlockCondition": "draft_and_complete_run"
 }
 ```
+
+*[As built: the shipped effect model is v3 `attribute_boost` /
+`team_attribute_boost`; the situational `specialEffect` shape above is
+legacy/back-compat. See DATA-GUIDE.]*
 
 ---
 

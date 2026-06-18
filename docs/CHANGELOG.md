@@ -10,35 +10,30 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [Unreleased]
+## [1.2.6] — 2026 · champion-on-Hard scroll fix
 
-Post-launch analytics: detailed, **free** product analytics so we can see how
-the game is actually played (runs by difficulty, win-rate, where players drop
-off) without the paid Vercel events tier. Assign a version on commit.
+### Fixed
+- **Champion-on-Hard "can't scroll down"** (`ResultsScreen.tsx`). The first Hard
+  championship mandatorily shows the **Legacy-unlock** ceremony, which locks page
+  scroll (intended) — but its overlay was `overflow:hidden` (via `.celebrate`) and
+  vertically centered, so on a **short viewport** the content and the "tap to
+  continue" dismiss hint were clipped off-screen, reading as a stuck scroll lock.
+  Only short viewports overflowed, so it didn't reproduce on taller screens. Root
+  cause: a centered, overflow-hidden full-screen overlay clips its own dismiss
+  affordance when its content exceeds a short viewport. Fix: `CeremonyPortal` is
+  now a scroll container (`overflow-y-auto` + a `min-h-full` center-or-scroll
+  wrapper) so any ceremony stays reachable; the Legacy rays moved to their own
+  fixed clip layer (`.celebrate-rays-prism` CSS untouched → the champion hero is
+  unaffected); the body-scroll lock now captures/restores the prior value. Verified
+  live at 880×300 (overlay scrolls, hint reachable, scroll restored on dismiss).
 
-Also batched here: a **community overall-review pass** (151 reviewed overalls)
-and a new **`legacy` lineup flag** that lifts hand-picked SAM landmark rosters
-into the legacy gauntlet.
+## [1.2.5] — 2026 · SAM overall review + Legacy relevance + Hard/Legacy rebalance
+
+A community overall-review pass (151 reviewed overalls), a new `legacy` lineup
+flag that lifts hand-picked SAM landmark rosters into the legacy gauntlet, and a
+Hard/Legacy rebalance that makes chemistry the player's edge.
 
 ### Added
-- **PostHog product analytics** (`posthog-js`) as a second analytics sink
-  alongside Vercel Web Analytics. The typed `trackEvent` wrapper
-  (`src/lib/analytics.ts`) now fans the same events out to BOTH; a new
-  `PostHogProvider` (`src/components/PostHogProvider.tsx`) bootstraps it in the
-  root layout. Configured cookieless + anonymous (localStorage persistence, no
-  `identify`, autocapture and session recording off, DNT respected) so the
-  privacy promise is unchanged. **No-op until `NEXT_PUBLIC_POSTHOG_KEY` is set**
-  (env), so local dev and an unconfigured build behave exactly as before.
-  Unlocks funnels (visit → run_started → tournament_started → run_completed),
-  retention / returning players, and difficulty / win-rate breakdowns on the
-  free tier.
-- **`run_abandoned` event** — emitted from the run store when a run is left
-  before its results screen, with `phase` (draft / review / tournament) and
-  `reason` (`"quit"` to the menu / `"restart"`). Turns the funnel's implicit
-  drop-off into an explicit, attributable signal.
-- **SPA-aware pageviews** for PostHog (`capture_pageview: "history_change"`,
-  App Router route changes), and a documented `.env.local` template for the two
-  `NEXT_PUBLIC_POSTHOG_*` vars.
 - **`legacy` lineup flag** (`data-sources/teams.md` → `scripts/build-dataset.mjs`).
   A block tagged `flag: … legacy` has its `historicalStrength` floored at
   **"strong"** regardless of average overall, so the difficulty-based opponent
@@ -50,12 +45,6 @@ into the legacy gauntlet.
   Godfidence, Sunset, …) that previously sat at solid/underdog and were filtered
   out of SAM legacy runs. Their expected share of a SAM-legacy opponent field
   rises from ~21% to ~74%.
-
-### Changed
-- **Privacy policy — Analytics section** (EN + PT) now names both processors
-  (Vercel + PostHog), states the cookieless / anonymous / DNT configuration, and
-  notes that aggregate gameplay (difficulty mix, completion) is measured — not
-  only page visits.
 
 ### Balance
 - **Community overall review applied** (`data-sources/teams.md`, regenerated +
@@ -92,19 +81,46 @@ into the legacy gauntlet.
   to match (18 orgs); this is the org-card *default/fallback* only — in-match org
   buffs are read per-lineup (`lineups[].orgBuffLevel`, unchanged), so gameplay is
   unaffected.
-- **Champion-on-Hard "can't scroll down"** (`ResultsScreen.tsx`). The first Hard
-  championship mandatorily shows the **Legacy-unlock** ceremony, which locks page
-  scroll (intended) — but its overlay was `overflow:hidden` (via `.celebrate`) and
-  vertically centered, so on a **short viewport** the content and the "tap to
-  continue" dismiss hint were clipped off-screen, reading as a stuck scroll lock.
-  Only short viewports overflowed, so it didn't reproduce on taller screens. Root
-  cause: a centered, overflow-hidden full-screen overlay clips its own dismiss
-  affordance when its content exceeds a short viewport. Fix: `CeremonyPortal` is
-  now a scroll container (`overflow-y-auto` + a `min-h-full` center-or-scroll
-  wrapper) so any ceremony stays reachable; the Legacy rays moved to their own
-  fixed clip layer (`.celebrate-rays-prism` CSS untouched → the champion hero is
-  unaffected); the body-scroll lock now captures/restores the prior value. Verified
-  live at 880×300 (overlay scrolls, hint reachable, scroll restored on dismiss).
+
+## [1.2.4] — 2026 · analytics
+
+Post-launch analytics: detailed, **free** product analytics so we can see how
+the game is actually played (runs by difficulty, win-rate, where players drop
+off) without the paid Vercel events tier.
+
+### Added
+- **PostHog product analytics** (`posthog-js`) as a second analytics sink
+  alongside Vercel Web Analytics. The typed `trackEvent` wrapper
+  (`src/lib/analytics.ts`) now fans the same events out to BOTH; a new
+  `PostHogProvider` (`src/components/PostHogProvider.tsx`) bootstraps it in the
+  root layout. Configured cookieless + anonymous (localStorage persistence, no
+  `identify`, autocapture and session recording off, DNT respected) so the
+  privacy promise is unchanged. **No-op until `NEXT_PUBLIC_POSTHOG_KEY` is set**
+  (env), so local dev and an unconfigured build behave exactly as before.
+  Unlocks funnels (visit → run_started → tournament_started → run_completed),
+  retention / returning players, and difficulty / win-rate breakdowns on the
+  free tier.
+- **`run_abandoned` event** — emitted from the run store when a run is left
+  before its results screen, with `phase` (draft / review / tournament) and
+  `reason` (`"quit"` to the menu / `"restart"`). Turns the funnel's implicit
+  drop-off into an explicit, attributable signal.
+- **SPA-aware pageviews** for PostHog (`capture_pageview: "history_change"`,
+  App Router route changes), and a documented `.env.local` template for the two
+  `NEXT_PUBLIC_POSTHOG_*` vars.
+
+### Changed
+- **Privacy policy — Analytics section** (EN + PT) now names both processors
+  (Vercel + PostHog), states the cookieless / anonymous / DNT configuration, and
+  notes that aggregate gameplay (difficulty mix, completion) is measured — not
+  only page visits.
+
+## [1.2.3] — 2026 · org buff fixes
+
+### Balance
+- **Org buff small fixes** — 23 per-season org-buff levels were hand-tuned for
+  SAM regional + 2026 teams. (Edited directly into `lineups.json`; v1.2.5
+  reconciled them back into `data-sources/teams.md` as the source of truth — see
+  [1.2.5] → Fixed.)
 
 ## [1.2.2] — 2026
 

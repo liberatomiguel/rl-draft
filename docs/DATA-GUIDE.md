@@ -4,7 +4,7 @@
 
 The JSONs in `src/data/` are **GENERATED** — the source of truth is
 **`data-sources/teams.md`** (the curated "all RLCS finals teams" archive,
-208 lineups across 2016-2026). To update the dataset:
+254 lineups across 2016-2026). To update the dataset:
 
 1. Edit `data-sources/teams.md` (same team-block format, see the file).
 2. Run `npm run build:data`.
@@ -12,8 +12,9 @@ The JSONs in `src/data/` are **GENERATED** — the source of truth is
 
 The generator (`scripts/build-dataset.mjs`) handles: person identity
 de-duplication across nickname variants ("jstn"/"JSTN"/"jstn."), the
-known ZeN(OCE) ≠ zen(FR) collision, curated nationalities (~85 players;
-the rest have none — same-country chemistry skips them), org buff levels
+known ZeN(OCE) ≠ zen(FR) collision, curated nationalities (near-full
+coverage, 370/374 players; the rest have none — same-country chemistry
+skips them), org buff levels
 **per season** (`lineups[].orgBuffLevel` override; the org entity keeps the
 strongest level as default), derived coach bonuses (level from overall,
 type from a stable hash), derived `historicalStrength` (avg overall:
@@ -30,7 +31,7 @@ be OVERWRITTEN by the next `build:data` — put permanent changes in
 Everything is validated on load (zod schema + referential integrity) — a
 broken reference fails loudly with a message pointing at the exact id.
 
-> **Accuracy disclaimer:** the v0.1 dataset is a best-effort manual curation
+> **Accuracy disclaimer:** the dataset is a best-effort manual curation
 > built for testing the game loop, not a historical record. Some
 > coach/substitute assignments and country/overall values are approximations
 > — fixing them is a JSON edit. Lineups without a known coach either have
@@ -40,17 +41,17 @@ broken reference fails loudly with a message pointing at the exact id.
 
 ## Files at a glance
 
-| File | Entity | Counts (v0.1) |
+| File | Entity | Counts (approx — run build:data) |
 | --- | --- | --- |
-| `seasons.json` | RLCS seasons (labels) | 11 |
-| `players.json` | Real player identities | 49 |
-| `playerCards.json` | Player versions per lineup/season | 72 |
-| `orgs.json` | Organizations + buffs | 16 |
-| `coaches.json` | Coach cards (incl. generic staff) | 12 |
-| `subs.json` | Substitute cards | 4 |
-| `lineups.json` | Historical rosters (the draft pool) | 24 |
-| `specialCards.json` | Collectible special versions | 10 |
-| `achievements.json` | Achievement definitions | 13 |
+| `seasons.json` | RLCS seasons (labels) | 15 |
+| `players.json` | Real player identities | 374 |
+| `playerCards.json` | Player versions per lineup/season | 762 |
+| `orgs.json` | Organizations + buffs | 134 |
+| `coaches.json` | Coach cards (incl. generic staff) | 124 |
+| `subs.json` | Substitute cards | 103 |
+| `lineups.json` | Historical rosters (the draft pool) | 254 |
+| `specialCards.json` | Collectible special versions | 84 |
+| `achievements.json` | Achievement definitions | 24 |
 
 ---
 
@@ -62,7 +63,7 @@ broken reference fails loudly with a message pointing at the exact id.
 
 - `country`: ISO 3166-1 alpha-2 (`BR`, `FR`, `US`…). Used for chemistry and
   the country chip. Add display names in `src/lib/util.ts` if missing.
-- `region`: `NA | EU | SAM | MENA | OCE | APAC`.
+- `region`: `NA | EU | SAM | MENA | OCE | APAC | SSA`.
 - One entry per person. **Strength lives on cards, not here** (base doc §9).
 
 ## playerCards.json — one card per player per lineup
@@ -81,9 +82,13 @@ broken reference fails loudly with a message pointing at the exact id.
 }
 ```
 
-- `overall` (60-99): the calculated base. `manualAdjustment` (-5..+5) is the
-  curator layer (base doc §17) — stored separately so future recalculation
-  from API data stays possible. The game uses `overall + manualAdjustment`.
+- `overall` (60-99): the calculated base. The game uses
+  `overall + manualAdjustment`, but **`manualAdjustment` is always `0`** —
+  the generator hardcodes it (`build-dataset.mjs:463`), so any hand-set value
+  is wiped on the next `build:data`. It's a reserved hook for a future curator
+  layer (base doc §17); today it does nothing. **To change a player's strength,
+  edit the overall in `teams.md`** (or use `scripts/apply-overall-review.mjs`)
+  and rebuild.
 - `stats` is **optional** (per key too). Missing stats fall back to the card
   overall in the engine — the simulation is fully playable with overall only.
 - Rarity is derived, never stored: ≤79 silver · 80-89 gold · 90+ blue.
@@ -115,6 +120,14 @@ broken reference fails loudly with a message pointing at the exact id.
   underdog), **but** a block flagged `legacy` in `teams.md` is floored at
   **"strong"** (a naturally-elite lineup keeps elite) — a regional landmark whose
   raw overalls are below the cut still headlines its region's legacy gauntlet.
+- `samOnly` (optional): a SAM Top-8 team that missed Worlds — region-locked.
+  Excluded from `draftableLineups` (the worldwide draw); shown only in the
+  region-locked SAM mode / larger regional pool. Set by the `sam-only` flag in
+  `teams.md`.
+- `rareSpawn` (optional): an easter-egg lineup drawn far less often than normal
+  (`DRAFT.rareSpawnWeight`). Set by the `rare` flag in `teams.md`.
+- Flags live on the team block's `flag:` line in `teams.md`, comma-separated;
+  spellings are `sam-only`, `rare`, `legacy` (unknown flags are ignored).
 - `name` is the display name of that era (e.g. "Renault Vitality" vs
   "Team Vitality").
 
@@ -144,6 +157,7 @@ broken reference fails loudly with a message pointing at the exact id.
 
 ```json
 { "id": "mew-bds-2122", "personId": "mew", "name": "Mew",
+  "country": "FR", "region": "EU",
   "orgId": "team-bds", "lineupId": "bds-2122", "seasonId": "rlcs-2021-22",
   "overall": 89, "bonusType": "consistency", "bonusLevel": "++" }
 ```
@@ -152,6 +166,7 @@ broken reference fails loudly with a message pointing at the exact id.
   the same coach in two seasons shares one `personId`.
 - `generic: true` marks anonymous "Coaching Staff" placeholder cards (used
   where the real coach is unknown; replace freely as data improves).
+  **Currently unused** — the dataset has 0 generic coach cards.
 
 ## subs.json
 
@@ -177,8 +192,8 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
   "rarity": "mythic",
   "overall": 96,
   "stats": { "...": "optional" },
-  "effect": { "type": "clutch_boost", "value": 3,
-              "description": "+3 rating in the deciding game of any series." },
+  "effect": { "type": "attribute_boost", "attributes": ["experience", "clutch"],
+              "value": 5, "description": "+5 experience and clutch." },
   "flavor": "Season 6 Grand Final. Zero seconds on the clock…"
 }
 ```
@@ -191,22 +206,30 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 - `cardType`: `moment | major_mvp | worlds_mvp | season_mvp | mythic | legend | coach`
   (`season_mvp` added v1.1.1 — a season-MVP award kept distinct from `worlds_mvp`
   so a league/season MVP isn't mislabelled as a world title).
-- `rarity`: `rare | epic | mythic | legendary` (visual + collection grouping).
-- `effect.type` (implemented in `engine/match.ts`):
-  - `clutch_boost` — + value in the deciding game of a series
-  - `swiss_consistency` — small flat bonus during Swiss games
-  - `playoff_experience` — small flat bonus during playoff games
-  - `upset_boost` — + value when facing a higher-rated team
-  - `defense_stability` — dampens this team's negative variance
-  - `high_roll` — bigger mechanics-proc spikes
+- `rarity`: `rare | epic | mythic | legendary | creator` (visual + collection
+  grouping).
+- `effect` — the v3 flat-boost model used by all 84 cards:
+  - player specials: `{ type: "attribute_boost", attributes: [StatKey, …],
+    value, description }` — adds `value` to each listed stat (`StatKey` =
+    `offense | defense | mechanics | consistency | experience | clutch`).
+  - coach specials: `{ type: "team_attribute_boost", attributes: [StatKey, …],
+    value, description }` — same, applied across the team.
+  - The older situational types (`clutch_boost`, `swiss_consistency`,
+    `playoff_experience`, `upset_boost`, `defense_stability`, `high_roll`) are
+    still accepted by the schema/engine for back-compat, but **no current card
+    uses them**.
 - Unlock rule (base doc §12): drafted + run completed (win not required).
 
 ## achievements.json
 
 ```json
 { "id": "swiss-merchant", "title": "Swiss Merchant",
-  "description": "Go 3-0 in the Swiss stage.", "xp": 50 }
+  "description": "Go 3-0 in the Swiss stage.", "xp": 50,
+  "category": "rare" }
 ```
+
+- `category`: `common | rare | epic | legend` (grouping + visual tier).
+- `secret` (optional): hidden until unlocked.
 
 The check logic lives in `src/engine/achievements.ts` — adding a new
 achievement = one JSON entry + one rule function with the same id.
@@ -223,8 +246,10 @@ achievement = one JSON entry + one rule function with the same id.
 4. Add the lineup to `lineups.json` referencing those ids.
 5. `npm run validate:data`.
 
-**Make a player stronger/weaker:** prefer `manualAdjustment` over editing
-`overall` — that's what the field is for.
+**Make a player stronger/weaker:** edit the overall in `data-sources/teams.md`
+(or use `scripts/apply-overall-review.mjs`) and rebuild. Do **not** hand-edit
+`manualAdjustment` — the generator hardcodes it to `0` (`build-dataset.mjs:463`),
+so the value is wiped on the next `build:data`.
 
 **Apply a community overall / line review (the GWR CSV workflow):** the reviewer
 hands back a CSV in the `data-sources/overall-review-*.csv` format — one row per
