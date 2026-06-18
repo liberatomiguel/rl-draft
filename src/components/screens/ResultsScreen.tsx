@@ -476,23 +476,32 @@ function CeremonyPortal({
 }) {
   const mounted = useMounted();
   useEffect(() => {
+    // Capture + restore the prior value (not a hardcoded '') so concurrent lock
+    // owners (e.g. a Modal) can't be desynced by this overlay's cleanup.
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prev;
     };
   }, []);
   if (!mounted) return null;
   return createPortal(
     <div
+      // Full-screen SCROLL container: tall ceremony content (e.g. the Legacy
+      // unlock on a SHORT viewport) stays reachable and the "tap to continue"
+      // hint is never clipped off-screen. Body scroll stays locked (intended) —
+      // only this overlay scrolls; the inner min-h-full centers it when it fits.
       className={cx(
-        "fixed inset-0 z-[60] flex cursor-pointer flex-col items-center justify-center gap-6 p-6 backdrop-blur-sm",
+        "fixed inset-0 z-[60] cursor-pointer overflow-y-auto overscroll-contain backdrop-blur-sm",
         className,
       )}
       role="dialog"
       aria-label={ariaLabel}
       onClick={onClick}
     >
-      {children}
+      <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6">
+        {children}
+      </div>
     </div>,
     document.body,
   );
@@ -639,8 +648,14 @@ function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
   }, []);
 
   return (
-    <CeremonyPortal ariaLabel={R.legacyTitle} className="celebrate bg-black/88" onClick={onDone}>
-      <div className="celebrate-rays-prism" aria-hidden />
+    <CeremonyPortal ariaLabel={R.legacyTitle} className="bg-black/88" onClick={onDone}>
+      {/* Rays live in their OWN fixed, non-scrolling clip layer (the overlay now
+          scrolls, so we can't reuse the old `.celebrate` overflow:hidden to clip
+          them). `.celebrate-rays-prism` CSS is untouched — the champion hero
+          that also uses it is unaffected. */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+        <div className="celebrate-rays-prism" />
+      </div>
       <p className="kicker relative z-10">{R.legacyKicker}</p>
       <div className="ceremony-burst relative z-10">
         <span className="ceremony-ring" aria-hidden />

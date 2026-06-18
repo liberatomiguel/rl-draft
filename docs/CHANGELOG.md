@@ -92,6 +92,19 @@ into the legacy gauntlet.
   to match (18 orgs); this is the org-card *default/fallback* only — in-match org
   buffs are read per-lineup (`lineups[].orgBuffLevel`, unchanged), so gameplay is
   unaffected.
+- **Champion-on-Hard "can't scroll down"** (`ResultsScreen.tsx`). The first Hard
+  championship mandatorily shows the **Legacy-unlock** ceremony, which locks page
+  scroll (intended) — but its overlay was `overflow:hidden` (via `.celebrate`) and
+  vertically centered, so on a **short viewport** the content and the "tap to
+  continue" dismiss hint were clipped off-screen, reading as a stuck scroll lock.
+  Only short viewports overflowed, so it didn't reproduce on taller screens. Root
+  cause: a centered, overflow-hidden full-screen overlay clips its own dismiss
+  affordance when its content exceeds a short viewport. Fix: `CeremonyPortal` is
+  now a scroll container (`overflow-y-auto` + a `min-h-full` center-or-scroll
+  wrapper) so any ceremony stays reachable; the Legacy rays moved to their own
+  fixed clip layer (`.celebrate-rays-prism` CSS untouched → the champion hero is
+  unaffected); the body-scroll lock now captures/restores the prior value. Verified
+  live at 880×300 (overlay scrolls, hint reachable, scroll restored on dismiss).
 
 ## [1.2.2] — 2026
 
