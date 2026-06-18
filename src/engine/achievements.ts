@@ -149,6 +149,12 @@ const RULES: Record<string, (ctx: AchievementContext) => boolean> = {
   "regional-champion": (ctx) =>
     ctx.placement === "champion" && Boolean(ctx.run.regionLock),
 
+  // v1.3.2 — the hardest feat: a Legacy title in region-locked mode.
+  "regional-legend": (ctx) =>
+    ctx.placement === "champion" &&
+    ctx.run.difficulty === "legacy" &&
+    Boolean(ctx.run.regionLock),
+
   creator: (ctx) =>
     ctx.specialIdsOwnedAfter.has("sp-liberatorl-rocket-draft-creator"),
 };

@@ -22,5 +22,6 @@
   { "id": "immaculate", "title": "Immaculate", "description": "Win the tournament without dropping a single series.", "xp": 150, "category": "legend" },
   { "id": "untouchable", "title": "Untouchable", "description": "Complete a run without conceding a single goal.", "xp": 200, "category": "legend" },
   { "id": "regional-champion", "title": "Regional Royalty", "description": "Win a region-locked run.", "xp": 90, "category": "rare" },
+  { "id": "regional-legend", "title": "Continental Crown", "description": "Win a Legacy tournament in region-locked mode.", "xp": 300, "category": "legend" },
   { "id": "creator", "title": "The Creator's Card", "description": "Discover and unlock the hidden Rocket Draft Creator card.", "xp": 120, "category": "legend", "secret": true }
 ]

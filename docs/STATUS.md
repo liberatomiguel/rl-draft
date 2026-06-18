@@ -2,9 +2,12 @@
 
 > Snapshot for whoever (human or agent) picks this up next.
 > Last updated: 2026-06-18. **The game is LAUNCHED.** Production tip: **v1.2.7**.
-> **v1.3.1 is committed to a `staging` branch** (Vercel preview URL, NOT production)
-> for Miguel to test the difficulty rebalance with colleagues before launching v1.3
-> to the apex domain. v1.3 is a big gameplay update:
+> **v1.3.2 is committed to a `staging` branch** (Vercel preview URL, NOT production)
+> for Miguel to test the difficulty/chemistry rebalance with colleagues before
+> launching v1.3 to the apex domain. v1.3.2 adds a second live-feedback pass:
+> higher win rates, eased chemistry (3 country = Great, +1 org = Perfect), Hard
+> rank-gate removed, SAM boost 3→2, a legendary region-Legacy achievement, and a
+> menu collection-lock. v1.3 is a big gameplay update:
 > rank-gated rewards, reachable chemistry, a Legacy rebalance that makes the title
 > winnable, org-unique tournament fields, a reworked Match Center + playoff reveal,
 > the always-visible special-card art, and the community SAM overall review. See

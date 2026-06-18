@@ -10,6 +10,41 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.3.2] — 2026 · Second live-feedback pass
+
+More staging feedback: winning was still rare (not because a strong team's WIN
+chance is low, but because BUILDING a strong team is), the Hard rank-gate broke
+the flow, and Perfect chemistry was too hard again. Supersedes [1.3.1] balance.
+
+### Added
+- **Legendary achievement "Continental Crown"** (300 XP): win a **Legacy**
+  tournament in **region-locked** mode — the hardest feat in the game.
+- **Collection lock shown on the home menu** (a padlock + "unlocks at Bronze")
+  when Unranked, not only inside the Collection screen.
+
+### Changed
+- **Win rates raised across the board** (the run-level odds were too low because
+  strong drafts are rare): Normal `opponentRatingShift` -1.0 → **-1.3**, Hard -0.2
+  → **-0.5**, Legacy 0.2 → **-0.3**. A ~92 elite now wins Hard ~12%, a ~95 dream
+  wins Legacy ~17% (was ~10%), and the chemistry change (below) makes those totals
+  easier to reach. `balance.test.ts` Legacy band rebased (playoffs is reachable;
+  the title is the wall).
+- **Hard mode is no longer rank-gated** (`RANK_REWARDS.hardMode` = true for all
+  ranks) — gating it behind Silver broke the experience in playtest. Every
+  difficulty is open from the start (Legacy still needs a Hard win).
+- **Chemistry thresholds eased to Miguel's spec**: **3 same-country players reach
+  Great** (was Good), and **adding one org connection** (drafting a player's org,
+  or a coach/sub who shares it) **reaches Perfect**. Country alone still can't hit
+  Perfect — a same-country coach+sub is a soft bonus that falls short on its own.
+  `maxRaw` 15 → 11, `sameCountryPair` 2 → 3, org/staff links 1.5 → 2,
+  `staffCountryBonus` 0.5.
+- **Region-lock boost 3 → 2** (`REGION_LOCK.opponentRatingBoost`): a regional field
+  is too weak to wall a genuinely strong SAM draft at any boost, so SAM favours
+  winnability — a typical ~90 SAM team wins Legacy ~18% (not ~40%), a great one
+  wins comfortably. SAM stays the more accessible region-pride mode.
+- **Ranks**: Bronze 300 → **250 XP** (one run clears Unranked even on a loss);
+  Supersonic Legend 40k → **50k XP** (longer endgame).
+
 ## [1.3.1] — 2026 · Live-feedback pass (balance targets, chemistry rules, polish)
 
 Pre-launch iteration on v1.3 from live play. Supersedes the [1.3.0] balance.

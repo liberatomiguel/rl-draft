@@ -9,10 +9,7 @@ const player = (
   region?: string,
 ): ChemPlayerInput => ({ name, lineupId, orgId, country, region });
 
-const ORDER = ["Poor", "Okay", "Good", "Great", "Perfect"];
-const idx = (tier: string) => ORDER.indexOf(tier);
-
-describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
+describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () => {
   it("a real lineup with matching staff and org is Perfect (full bar)", () => {
     const result = computeChemistry({
       players: [
@@ -40,7 +37,7 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
     expect(result.raw).toBe(4); // one same-lineup pair
   });
 
-  it("shared org (3) now outranks same country (2)", () => {
+  it("a shared-org pair and a same-country pair each score 3", () => {
     const country = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -48,7 +45,7 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
         player("C", "L3", "O3", "US"),
       ],
     });
-    expect(country.raw).toBe(2); // one same-country pair
+    expect(country.raw).toBe(3); // one same-country pair
 
     const org = computeChemistry({
       players: [
@@ -60,7 +57,7 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
     expect(org.raw).toBe(3); // one shared-org pair
   });
 
-  it("a 3-player country stack reaches Good but NOT Perfect", () => {
+  it("3 same-country players reach Great (but not Perfect)", () => {
     const result = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -68,11 +65,24 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
         player("C", "L3", "O3", "BR"),
       ],
     });
-    expect(idx(result.tier)).toBeGreaterThanOrEqual(idx("Good"));
-    expect(result.tier).not.toBe("Perfect");
+    expect(result.tier).toBe("Great");
+    expect(result.percent).toBeLessThan(100);
   });
 
-  it("country + national staff still cannot reach Perfect (no org overlap)", () => {
+  it("3 same-country + ONE org connection reaches Perfect", () => {
+    const result = computeChemistry({
+      players: [
+        player("A", "L1", "O1", "BR"),
+        player("B", "L2", "O2", "BR"),
+        player("C", "L3", "O3", "BR"),
+      ],
+      orgId: "O1", // drafting A's org adds org-loyalty → completes the bar
+      orgName: "Org",
+    });
+    expect(result.tier).toBe("Perfect");
+  });
+
+  it("3 same-country + same-country STAFF still falls short of Perfect (needs org)", () => {
     const result = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -82,22 +92,8 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
       coach: { name: "Coach", lineupId: "LX", orgId: "OX", country: "BR" },
       sub: { name: "Sub", lineupId: "LY", orgId: "OY", country: "BR" },
     });
-    expect(result.tier).not.toBe("Perfect");
+    expect(result.tier).toBe("Great");
     expect(result.percent).toBeLessThan(100);
-  });
-
-  it("org overlap + loyalty climbs toward Perfect", () => {
-    const result = computeChemistry({
-      players: [
-        player("A", "L1", "O1", "BR"),
-        player("B", "L2", "O1", "BR"), // shared org O1
-        player("C", "L3", "O1", "BR"), // shared org O1
-      ],
-      orgId: "O1", // all three are org-loyal
-      orgName: "Org",
-    });
-    // 3 shared-org pairs (9) + 3 org-loyalty (4.5) = 13.5 / 15 = 90% → Great
-    expect(idx(result.tier)).toBeGreaterThanOrEqual(idx("Great"));
   });
 
   it("merges a same-country group into a single breakdown line", () => {
@@ -110,7 +106,7 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
     });
     const countryItems = result.items.filter((i) => i.label.startsWith("Same country"));
     expect(countryItems).toHaveLength(1); // one line, not three
-    expect(countryItems[0].points).toBe(6); // 3 pairs × 2, summed
+    expect(countryItems[0].points).toBe(9); // 3 pairs × 3, summed
     expect(countryItems[0].label).toContain("A · B · C");
   });
 
@@ -122,7 +118,7 @@ describe("chemistry (§22, v1.3.1 — Perfect needs real org overlap)", () => {
         player("C", "L3", "O3", "CL", "SAM"),
       ],
     });
-    expect(result.tier).toBe("Okay"); // lifted out of Poor, but modest
+    expect(result.tier).toBe("Good"); // lifted out of Poor by region links
   });
 
   it("an all-star mix with no links is Poor", () => {

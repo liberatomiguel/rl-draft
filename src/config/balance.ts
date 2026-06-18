@@ -88,46 +88,50 @@ export const CHEMISTRY = {
   weights: {
     /** Per pair of the 3 players. Strongest link counts: lineup > org > country > region. */
     sameLineupPair: 4,
-    /** Shared org now OUTRANKS country (v1.3.1) — org overlap is the path to Perfect. */
     sameOrgPair: 3,
-    sameCountryPair: 2,
+    sameCountryPair: 3,
     /**
      * Same-region pair: the weakest link — the floor that lifts a coherent-but-
      * mixed roster (e.g. a Brazil+Argentina SAM duo) out of Poor. In region-locked
-     * play (everyone shares a region) this keeps the baseline around Okay/Good
-     * while real org overlap is still required for Perfect.
+     * play (everyone shares a region) this keeps the baseline around Good.
      */
-    sameRegionPair: 1,
+    sameRegionPair: 1.5,
     /** Per player whose drafted card org matches the drafted org (org loyalty). */
-    orgLinkPerPlayer: 1.5,
+    orgLinkPerPlayer: 2,
     /**
      * Coach/sub connect by lineup, org or nationality (same country, or region at
      * half), each capped. Lets a drafted coach who shares the roster's heritage
      * contribute — staff cards carry country/region.
      */
-    coachLink: 1.5,
+    coachLink: 2,
     coachLinkMax: 3,
-    subLink: 1,
+    subLink: 2,
     subLinkMax: 2,
-    /** Fraction of a staff link granted for a region-only (not country) match. */
+    /**
+     * Staff NATIONALITY is a soft bonus, deliberately below a full org/lineup link
+     * (coachLink): a same-country coach+sub must NOT complete a country stack into
+     * Perfect on their own — only a real ORG connection does (Miguel's rule).
+     */
+    staffCountryBonus: 0.5,
+    /** Fraction of the country bonus granted for a region-only (not country) match. */
     staffRegionFactor: 0.5,
   },
   /**
-   * Full bar (v1.3.1). Raising the ceiling from 12 to 15 means **Perfect requires
-   * real org/lineup overlap** — the strongest a country-only roster can reach is a
-   * 3-country stack (6) + national staff (~+4) ≈ Good. Perfect (a FULL bar) needs
-   * a real trio + their org, or a heavy org dynasty + staff. Per Miguel: only a
-   * completely full bar reads "Perfect", and country alone must never get there.
+   * Ceiling (v1.3.2). maxRaw 11 is tuned to Miguel's targets: **3 same-country
+   * players land Great** (3 pairs × 3 = 9 → 82%), and **adding one org connection
+   * reaches Perfect** (org-loyalty / coach / sub each worth 2 → 11 = full bar).
+   * Country alone still never hits Perfect (Great is the cap) — real org/lineup
+   * overlap is what completes the bar. AI lineups still saturate (a real trio is
+   * 12+ → capped 100%), so the field is not inflated.
    */
-  maxRaw: 15,
+  maxRaw: 11,
   /**
-   * Percent thresholds (inclusive lower bound) → tier. Perfect is **100% only** —
-   * the bar must be completely full (raw ≥ maxRaw). A 3-player country stack lands
-   * Good; org/lineup overlap + loyalty/staff is what climbs to Great → Perfect.
+   * Percent thresholds (inclusive lower bound) → tier. Perfect is **100% only**
+   * (a full bar). A 3-player country stack lands Great; one org link completes it.
    */
   tiers: [
     { min: 100, tier: "Perfect" },
-    { min: 72, tier: "Great" },
+    { min: 70, tier: "Great" },
     { min: 40, tier: "Good" },
     { min: 18, tier: "Okay" },
     { min: 0, tier: "Poor" },
@@ -207,7 +211,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // v1.3.1: Normal is the "you can win with a good team" mode. A -1.0 field
     // shift makes a 90-overall team a real (if modest ~3%) title threat and a
     // 92 elite a strong one (~13%), per Miguel's targets.
-    opponentRatingShift: -1.0,
+    opponentRatingShift: -1.3,
     opponentSpecialChance: 0.05,
     opponentTierWeights: { elite: 0.7, strong: 1.0, solid: 1.25, underdog: 1.3 },
     xpMultiplier: 1.0,
@@ -231,7 +235,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // dream comfortably. The field is fewer-superteams (low elite weight) but
     // still stronger than Normal (more strong, fewer underdogs) and, crucially,
     // played with overalls HIDDEN — the real difficulty is drafting blind.
-    opponentRatingShift: -0.2,
+    opponentRatingShift: -0.5,
     opponentSpecialChance: 0.12,
     opponentTierWeights: { elite: 0.7, strong: 1.1, solid: 1.0, underdog: 0.7 },
     xpMultiplier: 1.5,
@@ -257,7 +261,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // dream team breaks through ~1-in-10 while it stays comfortably the hardest
     // mode. The Bo7 gauntlet is inherently steep — a 3-overall gap (92→95) is the
     // difference between "almost never" and "~10%", which is the intended feel.
-    opponentRatingShift: 0.2,
+    opponentRatingShift: -0.3,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.4, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -275,7 +279,12 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
  * targets. Only applies when a run is region-locked; worldwide runs use 0.
  */
 export const REGION_LOCK = {
-  opponentRatingBoost: 3,
+  // v1.3.2: 3 → 2. A regional (SAM) field tops out far below worldwide, so a flat
+  // boost can't give a strong SAM team worldwide-parity without making a typical
+  // one unwinnable. +2 keeps typical SAM teams honest (a ~90 wins Legacy ~18%, not
+  // ~40%) while a genuinely great SAM draft (rare — needs specials) still wins —
+  // SAM stays the more accessible, region-pride mode by design.
+  opponentRatingBoost: 2,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -446,16 +455,16 @@ export const XP = {
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  // v1.3: Bronze lowered 400 → 300 so even a losing first run clears it — the
-  // Unranked on-ramp (no specials / no collection) is meant to be one run long.
-  { id: "bronze", label: "Bronze", minXp: 300 },
+  // v1.3.2: Bronze at 250 so even a losing first run clears the Unranked on-ramp
+  // (no specials / no collection); SSL stretched to 50k for a longer endgame grind.
+  { id: "bronze", label: "Bronze", minXp: 250 },
   { id: "silver", label: "Silver", minXp: 1200 },
   { id: "gold", label: "Gold", minXp: 3000 },
   { id: "platinum", label: "Platinum", minXp: 6500 },
   { id: "diamond", label: "Diamond", minXp: 11500 },
   { id: "champion", label: "Champion", minXp: 19000 },
   { id: "grand-champion", label: "Grand Champion", minXp: 29000 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 40000 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 50000 },
 ] as const;
 
 /**
@@ -466,17 +475,18 @@ export const RANKS = [
  *  · `specialChance` — the player's special-appearance chance per offer card. The
  *    chase quickens at the very top (Champion 8% / GC 12% / SSL 16%).
  *  · `collection` — whether the Collection screen is open.
- *  · `hardMode` — whether Hard difficulty is available (Legacy still needs a Hard
- *    win on top). Unranked is a brief on-ramp; Bronze is ~1 run away.
+ *  · `hardMode` — kept for structure but ALWAYS true (v1.3.2): gating Hard behind a
+ *    rank broke the experience in playtest, so every difficulty is open from the
+ *    start (Legacy still needs a Hard win, as always).
  * NEVER touches opponents, the draft POOL, or the daily — only the player's
- * own special-card rewards and screen/mode access.
+ * own special-card rewards and Collection access.
  */
 export const RANK_REWARDS: Record<
   string,
   { rarities: string[]; specialChance: number; collection: boolean; hardMode: boolean }
 > = {
-  unranked: { rarities: [], specialChance: 0, collection: false, hardMode: false },
-  bronze: { rarities: ["rare"], specialChance: 0.05, collection: true, hardMode: false },
+  unranked: { rarities: [], specialChance: 0, collection: false, hardMode: true },
+  bronze: { rarities: ["rare"], specialChance: 0.05, collection: true, hardMode: true },
   silver: { rarities: ["rare", "epic"], specialChance: 0.05, collection: true, hardMode: true },
   gold: { rarities: ["rare", "epic", "mythic"], specialChance: 0.05, collection: true, hardMode: true },
   platinum: { rarities: ["rare", "epic", "mythic"], specialChance: 0.05, collection: true, hardMode: true },

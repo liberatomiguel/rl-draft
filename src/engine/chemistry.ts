@@ -133,11 +133,13 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
       points += linkW;
       reasons.push("same org");
     }
+    // Nationality is a SOFT bonus (below a full org/lineup link), so a same-country
+    // coach+sub can't complete a country stack into Perfect on their own.
     if (staff.country && input.players.some((p) => p.country === staff.country)) {
-      points += linkW;
+      points += w.staffCountryBonus;
       reasons.push("same country");
     } else if (staff.region && input.players.some((p) => p.region === staff.region)) {
-      points += linkW * w.staffRegionFactor;
+      points += w.staffCountryBonus * w.staffRegionFactor;
       reasons.push("same region");
     }
     points = Math.min(points, capW);

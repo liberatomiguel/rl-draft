@@ -17,15 +17,13 @@ describe("rank rewards (v1.3 unlock ladder)", () => {
     expect(r.rarities).toEqual([]);
     expect(r.specialChance).toBe(0);
     expect(r.collection).toBe(false);
-    expect(r.hardMode).toBe(false);
   });
 
-  it("Bronze (≈one run) opens rare + collection, Hard still locked", () => {
-    const r = rankRewardsForXp(300);
+  it("Bronze (≈one run) opens rare + collection", () => {
+    const r = rankRewardsForXp(250);
     expect(r.rarities).toContain("rare");
     expect(r.rarities).not.toContain("epic");
     expect(r.collection).toBe(true);
-    expect(r.hardMode).toBe(false);
   });
 
   it("each rank adds the next rarity in order", () => {
@@ -35,17 +33,17 @@ describe("rank rewards (v1.3 unlock ladder)", () => {
     expect(rankRewardsForXp(11500).rarities).toContain("legendary"); // Diamond
   });
 
-  it("Hard unlocks at Silver", () => {
-    expect(rankRewardsForXp(1199).hardMode).toBe(false); // still Bronze
-    expect(rankRewardsForXp(1200).hardMode).toBe(true); // Silver
+  it("every difficulty is open from any rank (v1.3.2 — Hard no longer gated)", () => {
+    expect(rankRewardsForXp(0).hardMode).toBe(true); // Unranked
+    expect(rankRewardsForXp(250).hardMode).toBe(true); // Bronze
   });
 
   it("appearance chance ramps only at the very top", () => {
-    expect(rankRewardsForXp(300).specialChance).toBe(0.05); // Bronze..Diamond
+    expect(rankRewardsForXp(250).specialChance).toBe(0.05); // Bronze..Diamond
     expect(rankRewardsForXp(11500).specialChance).toBe(0.05); // Diamond
     expect(rankRewardsForXp(19000).specialChance).toBe(0.08); // Champion
     expect(rankRewardsForXp(29000).specialChance).toBe(0.12); // Grand Champion
-    expect(rankRewardsForXp(40000).specialChance).toBe(0.16); // SSL
+    expect(rankRewardsForXp(50000).specialChance).toBe(0.16); // SSL
   });
 
   it("rankThatUnlocksRarity reports the gating rank label", () => {

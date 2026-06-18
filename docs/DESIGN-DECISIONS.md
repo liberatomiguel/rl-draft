@@ -623,6 +623,35 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     so it still shows the historical moment. Implemented in `resolvePlayerCard` /
     `resolveCoach` (display uses the passed card, not the special's base).
 
+## v1.3.2 (second live-feedback pass)
+
+71. **The bottleneck is BUILDING a strong team, not the strong team's win rate.**
+    Live insight: a dream team's ~10% Legacy win is fine, but dreams are rare to
+    assemble, so run-level odds felt impossible. Two compounding fixes: (a) win
+    rates raised (shifts Normal -1.3 / Hard -0.5 / Legacy -0.3), and (b) chemistry
+    made easier to max so more drafts reach high totals. Both lift P(win a run)
+    without making any single matchup trivial.
+
+72. **Hard is NOT rank-gated.** The v1.3 Silver gate on Hard broke the flow in
+    playtest (you want the real challenge available immediately). `RANK_REWARDS`
+    keeps the `hardMode` field for structure but it is always true; only the
+    Collection and special-card rarities remain rank-gated.
+
+73. **Region-lock favours winnability over strict parity.** A regional (SAM) field
+    tops out far below worldwide and its opponent range is compressed, so NO flat
+    boost gives a strong SAM team worldwide-parity (~15% Legacy) without making a
+    typical one unwinnable — measured: a SAM-95 wins 84-96% across boosts 0-2. So
+    the boost (now +2, was +3) targets the TYPICAL team (a ~90 wins Legacy ~18%,
+    not ~40%) and accepts that strong SAM drafts win comfortably. SAM is the more
+    accessible, region-pride mode by design.
+
+74. **Chemistry: 3 same-country = Great, +1 org connection = Perfect** (refines
+    #69). Country alone still can't reach Perfect (Great is its cap), but the
+    threshold from there is a single real org link (org-loyalty, or a coach/sub who
+    shares the org). Same-country STAFF is a deliberately soft bonus
+    (`staffCountryBonus` 0.5) that can't complete a country stack on its own —
+    only a real org connection does. maxRaw 11.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

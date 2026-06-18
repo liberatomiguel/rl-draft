@@ -209,12 +209,20 @@ export default function HomeMenu() {
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                 {HOME.collection}
               </h3>
-              <p className="mt-1 text-xs text-sub">{HOME.collectionDesc}</p>
+              <p className="mt-1 text-xs text-sub">
+                {mounted && rank.id === "unranked" ? HOME.collectionLocked : HOME.collectionDesc}
+              </p>
             </div>
-            <span className="display shrink-0 text-2xl font-bold text-cyan">
-              {mounted ? unlocked : 0}
-              <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
-            </span>
+            {mounted && rank.id === "unranked" ? (
+              <span className="shrink-0 text-faint" aria-label={HOME.collectionLocked}>
+                <MenuLockGlyph />
+              </span>
+            ) : (
+              <span className="display shrink-0 text-2xl font-bold text-cyan">
+                {mounted ? unlocked : 0}
+                <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
+              </span>
+            )}
           </Panel>
         </Link>
         <Link href="/achievements" className="group">
@@ -292,6 +300,15 @@ export default function HomeMenu() {
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
     </>
+  );
+}
+
+function MenuLockGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
   );
 }
 

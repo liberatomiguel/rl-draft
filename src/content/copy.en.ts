@@ -42,6 +42,7 @@ export const HOME = {
   comingSoon: "Coming soon",
   collection: "Collection",
   collectionDesc: "Special cards you have unlocked across your runs.",
+  collectionLocked: "Locked — unlocks at Bronze",
   achievements: "Achievements",
   achievementsDesc: "Feats to chase across every run you play.",
   profile: "Profile",

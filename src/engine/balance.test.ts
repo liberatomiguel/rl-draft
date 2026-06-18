@@ -127,21 +127,21 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     expect(r.titles).toBeGreaterThan(0.2);
   });
 
-  it("Legacy (v1.3): a great chemistry-built draft can break through; a good one rarely does", () => {
-    // v1.3 rebalance — live feedback was "2h, zero Legacy titles even with good
-    // teams". The org-unique field (engine/opponents) + a softer, mixed gauntlet
-    // (opponentRatingShift 1.2→0.6, elite weight 2.6→1.8) turn Legacy from a brick
-    // wall into a real chase. A merely-GOOD team (92.5) now competes for playoffs
-    // but almost never lifts the trophy; a STRONG, coherent, high-chemistry draft
-    // (~95.5) has a real, rare shot. Legacy stays strictly harder than Hard.
+  it("Legacy (v1.3.2): the title is the wall, not the playoffs", () => {
+    // v1.3.2 — live feedback: even a strong draft felt impossible, because the
+    // problem isn't the dream team's WIN chance, it's how rarely you can BUILD one.
+    // So win rates were raised (shift 0.2→-0.3) AND chemistry made more reachable.
+    // A merely-GOOD team (92.5) now reaches playoffs often but almost never lifts
+    // the trophy; a STRONG, coherent draft (~95.5) has a real ~1-in-5 shot. Legacy
+    // stays strictly harder than Hard (a 92.5 wins it far less than on Hard).
     const good = outcomeRates("legacy", 600, 626);
     expect(good.playoffs).toBeGreaterThan(0.3); // you genuinely compete…
-    expect(good.playoffs).toBeLessThan(0.78); // …but it's still the hardest field
-    expect(good.titles).toBeLessThan(0.05); // a 92.5 team almost never wins it
+    expect(good.playoffs).toBeLessThan(0.92); // …but the title is the gauntlet
+    expect(good.titles).toBeLessThan(0.06); // a 92.5 team almost never wins it
 
     // Reachability is the whole point: a great draft must be able to win it.
     const strong = outcomeRates("legacy", 600, 909, strongUserTeam);
-    expect(strong.titles).toBeGreaterThan(0.02); // not impossible…
-    expect(strong.titles).toBeLessThan(0.15); // …but a true achievement
+    expect(strong.titles).toBeGreaterThan(0.04); // a real shot…
+    expect(strong.titles).toBeLessThan(0.4); // …but a true achievement
   });
 });

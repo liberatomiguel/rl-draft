@@ -40,6 +40,7 @@ export const PT: Copy = {
     comingSoon: "Em breve",
     collection: "Coleção",
     collectionDesc: "Cartas especiais que você desbloqueou nas suas runs.",
+    collectionLocked: "Bloqueada — desbloqueia no Bronze",
     achievements: "Conquistas",
     achievementsDesc: "Feitos para perseguir em cada run.",
     profile: "Perfil",
