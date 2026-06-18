@@ -2,7 +2,7 @@
  * Rank progression — XP thresholds → Rocket League inspired ranks.
  */
 
-import { RANKS } from "@/config/balance";
+import { RANK_REWARDS, RANKS } from "@/config/balance";
 
 export interface RankInfo {
   id: string;
@@ -34,4 +34,23 @@ export function rankForXp(xp: number): RankInfo {
     progress,
     xpToNext: next ? Math.max(0, next.minXp - xp) : 0,
   };
+}
+
+export type RankRewards = (typeof RANK_REWARDS)[string];
+
+/** Rank-gated rewards for a given XP total (v1.3). Falls back to Unranked. */
+export function rankRewardsForXp(xp: number): RankRewards {
+  return RANK_REWARDS[rankForXp(xp).id] ?? RANK_REWARDS.unranked;
+}
+
+/**
+ * The label of the FIRST rank that unlocks a given special rarity — for
+ * "Unlocks at Gold" hints in the Collection. Returns null if no rank gates it
+ * (shouldn't happen) — callers treat null as "always available".
+ */
+export function rankThatUnlocksRarity(rarity: string): string | null {
+  for (const r of RANKS) {
+    if (RANK_REWARDS[r.id]?.rarities.includes(rarity)) return r.label;
+  }
+  return null;
 }

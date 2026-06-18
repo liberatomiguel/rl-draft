@@ -16,21 +16,38 @@ export function generateOpponents(
   rng: Rng,
   count: number,
   poolLineupIds?: string[],
+  extraShift = 0,
 ): TournamentTeam[] {
   const profile = DIFFICULTY[difficulty];
   // Easter-egg lineups (Wings) are draft-only treasures — never AI opponents.
-  const pool = (
+  const base = (
     poolLineupIds ? lineups.filter((l) => poolLineupIds.includes(l.id)) : [...draftableLineups]
   ).filter((l) => !l.rareSpawn);
-  const picked: typeof pool = [];
+  const weight = (l: (typeof base)[number]) =>
+    profile.opponentTierWeights[l.historicalStrength] ?? 0.5;
+  const picked: typeof base = [];
 
+  // v1.3: ONE lineup per org. A tournament field is a bracket of distinct teams —
+  // facing "FURIA 24" and "FURIA 25" in the same Swiss broke the fiction and
+  // stacked the very strongest orgs against the player (the legacy/SAM "FURIA
+  // wall"). Primary pass draws org-unique; same weighting, just no repeats.
+  const usedOrgs = new Set<string>();
+  let pool = [...base];
   while (picked.length < count && pool.length > 0) {
-    const lineup = rng.weightedPick(
-      pool,
-      (l) => profile.opponentTierWeights[l.historicalStrength] ?? 0.5,
-    );
+    const lineup = rng.weightedPick(pool, weight);
     picked.push(lineup);
-    pool.splice(pool.indexOf(lineup), 1);
+    usedOrgs.add(lineup.orgId);
+    pool = pool.filter((l) => l.orgId !== lineup.orgId);
+  }
+  // Fallback (tiny regional pools only): if there weren't enough distinct orgs to
+  // fill the field, top up allowing repeat orgs — but never the same lineup twice.
+  if (picked.length < count) {
+    let rest = base.filter((l) => !picked.includes(l));
+    while (picked.length < count && rest.length > 0) {
+      const lineup = rng.weightedPick(rest, weight);
+      picked.push(lineup);
+      rest = rest.filter((l) => l !== lineup);
+    }
   }
 
   return picked.map((lineup) => {
@@ -51,6 +68,6 @@ export function generateOpponents(
         specialUpgrade = { cardId, specialId };
       }
     }
-    return buildLineupTeam(lineup.id, difficulty, { specialUpgrade });
+    return buildLineupTeam(lineup.id, difficulty, { specialUpgrade, extraShift });
   });
 }

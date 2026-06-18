@@ -552,24 +552,25 @@ function MatchCenter({
         </div>
       </div>
 
-      {/* Games */}
-      <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" aria-live={live ? "polite" : undefined}>
-        {visible.map((game) => {
-          const aWon = game.winnerTeamId === series.teamAId;
-          const userPerspective = isUserSeries
-            ? game.winnerTeamId === "user"
-            : aWon;
-          const score = aWon ? game.score : ([game.score[1], game.score[0]] as [number, number]);
+      {/* Games — v1.3: split by outcome instead of chronological flow. Each
+          game card lands in the WINNER's column (teamA left, teamB right —
+          mirroring the scoreline above), so a 4-2 series stacks 4 cards under
+          one team and 2 under the other. For the user's series this reads as
+          "my wins on my side, my losses on the other". */}
+      {(() => {
+        const renderGame = (game: (typeof visible)[number]) => {
+          const wonByUser = isUserSeries && game.winnerTeamId === "user";
+          const lostByUser = isUserSeries && game.winnerTeamId !== "user";
           return (
             <li
               key={game.index}
               className={cx(
                 "rise-in flex items-center justify-between rounded-md border px-3 py-1.5 text-xs",
-                isUserSeries
-                  ? userPerspective
-                    ? "border-good/30 bg-good/5"
-                    : "border-bad/30 bg-bad/5"
-                  : "border-line bg-white/3",
+                wonByUser
+                  ? "border-good/30 bg-good/5"
+                  : lostByUser
+                    ? "border-bad/30 bg-bad/5"
+                    : "border-line bg-white/3",
               )}
             >
               <span className="min-w-0 truncate uppercase tracking-wider text-sub">
@@ -580,13 +581,23 @@ function MatchCenter({
                   <span className="ml-1.5 normal-case text-faint">★ {game.starName}</span>
                 ) : null}
               </span>
+              {/* game.score is [winnerGoals, loserGoals]; the card sits in the
+                  winner's column, so showing it as-is reads "win score first". */}
               <span className="display font-bold text-ink">
-                {score[0]}–{score[1]}
+                {game.score[0]}–{game.score[1]}
               </span>
             </li>
           );
-        })}
-      </ol>
+        };
+        const leftGames = visible.filter((g) => g.winnerTeamId === series.teamAId);
+        const rightGames = visible.filter((g) => g.winnerTeamId === series.teamBId);
+        return (
+          <div className="grid grid-cols-2 gap-1.5" aria-live={live ? "polite" : undefined}>
+            <ol className="flex flex-col gap-1.5">{leftGames.map(renderGame)}</ol>
+            <ol className="flex flex-col gap-1.5">{rightGames.map(renderGame)}</ol>
+          </div>
+        );
+      })()}
 
       {done && narration ? (
         <div className="pop-in mt-4 rounded-lg border border-line bg-white/4 px-4 py-3">
@@ -808,7 +819,12 @@ function PlayoffBracketView({
               key={si}
               run={run}
               t={t}
-              series={isRevealed || isLive ? s : null}
+              // v1.3: pass the series for EVERY match of a simulated round so the
+              // whole round's pairings show at once (teams + overalls). BracketCell
+              // keeps the SCORE hidden until `revealed`, so results still reveal
+              // one-by-one after the user's match plays — the matchups just aren't
+              // a surprise anymore. Future (un-simulated) rounds: s is null → TBD.
+              series={s}
               revealed={isRevealed}
               live={isLive}
               pair={pair ?? undefined}

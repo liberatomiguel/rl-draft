@@ -1,0 +1,990 @@
+Função,Jogador,Time,Temporada,Ano,Região,Pool,OVR atual,OVR sugerido,Sugestão de line/time,Ref (id)
+Player 1,Maxeew,Gaimin Gladiators,RLCS 2021-22,2021-22,APAC,,74,,,maxeew-gaimin-gladiators-2122
+Player 2,LCT,Gaimin Gladiators,RLCS 2021-22,2021-22,APAC,,68,,,lct-gaimin-gladiators-2122
+Player 3,Commutator,Gaimin Gladiators,RLCS 2021-22,2021-22,APAC,,50,,,commutator-gaimin-gladiators-2122
+Player 1,ReaLize,Senbei Strikers,RLCS 2021-22,2021-22,APAC,,79,,,realize-senbei-strikers-2122
+Player 2,Tenhow,Senbei Strikers,RLCS 2021-22,2021-22,APAC,,73,,,tenhow-senbei-strikers-2122
+Player 3,sigms,Senbei Strikers,RLCS 2021-22,2021-22,APAC,,70,,,sigms-senbei-strikers-2122
+Player 1,Maxeew,Gaimin Gladiators,RLCS 2022-23,2022-23,APAC,,76,,,maxeew-gaimin-gladiators-2223
+Player 2,LCT,Gaimin Gladiators,RLCS 2022-23,2022-23,APAC,,75,,,lct-gaimin-gladiators-2223
+Player 3,OSM,Gaimin Gladiators,RLCS 2022-23,2022-23,APAC,,75,,,osm-gaimin-gladiators-2223
+Player 1,ReaLize,Elevate,RLCS 2022-23,2022-23,APAC,,80,,,realize-elevate-2223
+Player 2,virtuoso,Elevate,RLCS 2022-23,2022-23,APAC,,76,,,virtuoso-elevate-2223
+Player 3,Kamii,Elevate,RLCS 2022-23,2022-23,APAC,,80,,,kamii-elevate-2223
+Player 1,Maxeew,Gaimin Gladiators,RLCS 2024,2024,APAC,,79,,,maxeew-gaimin-gladiators-2024
+Player 2,ThO.,Gaimin Gladiators,RLCS 2024,2024,APAC,,78,,,tho-gaimin-gladiators-2024
+Player 3,virtuoso,Gaimin Gladiators,RLCS 2024,2024,APAC,,79,,,virtuoso-gaimin-gladiators-2024
+Player 1,Catalysm,Virtus.pro,RLCS 2025,2025,APAC,,80,,,catalysm-virtus-pro-2025
+Player 2,sosa,Virtus.pro,RLCS 2025,2025,APAC,,80,,,sosa-virtus-pro-2025
+Player 3,Sphinx,Virtus.pro,RLCS 2025,2025,APAC,,81,,,sphinx-virtus-pro-2025
+Player 1,Kevin,TSM,RLCS 2026,2026,APAC,,82,,,kevin-tsm-2026
+Player 2,Sphinx,TSM,RLCS 2026,2026,APAC,,82,,,sphinx-tsm-2026
+Player 3,Catalysm,TSM,RLCS 2026,2026,APAC,,82,,,catalysm-tsm-2026
+Player 1,kuxir97,FlipSid3 Tactics,RLCS Season 1,2016,EU,,92,,,kuxir97-flipsid3-tactics-s1
+Player 2,Markydooda,FlipSid3 Tactics,RLCS Season 1,2016,EU,,88,,,markydooda-flipsid3-tactics-s1
+Player 3,M1k3Rules,FlipSid3 Tactics,RLCS Season 1,2016,EU,,87,,,m1k3rules-flipsid3-tactics-s1
+Sub,Mye_bipod_4shor,FlipSid3 Tactics,RLCS Season 1,2016,EU,,62,,,myebipod4shor-sub-flipsid3-tactics-s1
+Player 1,Greazy,Northern Gaming,RLCS Season 1,2016,EU,,87,,,greazy-northern-gaming-s1
+Player 2,Maestro,Northern Gaming,RLCS Season 1,2016,EU,,86,,,maestro-northern-gaming-s1
+Player 3,Remkoe,Northern Gaming,RLCS Season 1,2016,EU,,85,,,remkoe-northern-gaming-s1
+Sub,De Boer,Northern Gaming,RLCS Season 1,2016,EU,,60,,,deboer-sub-northern-gaming-s1
+Player 1,Paschy90,Mock-It eSports,RLCS Season 1,2016,EU,,82,,,paschy90-mock-it-esports-s1
+Player 2,Sikii,Mock-It eSports,RLCS Season 1,2016,EU,,80,,,sikii-mock-it-esports-s1
+Player 3,Turbopolsa,Mock-It eSports,RLCS Season 1,2016,EU,,78,,,turbopolsa-mock-it-esports-s1
+Sub,Killerno7,Mock-It eSports,RLCS Season 1,2016,EU,,58,,,killerno7-sub-mock-it-esports-s1
+Player 1,Dogu,The Flying Dutchmen,RLCS Season 1,2016,EU,,82,,,dogu-the-flying-dutchmen-s1
+Player 2,Jessie,The Flying Dutchmen,RLCS Season 1,2016,EU,,81,,,jessie-the-flying-dutchmen-s1
+Player 3,Vogan,The Flying Dutchmen,RLCS Season 1,2016,EU,,80,,,vogan-the-flying-dutchmen-s1
+Sub,PauliepaulNL,The Flying Dutchmen,RLCS Season 1,2016,EU,,58,,,pauliepaulnl-sub-the-flying-dutchmen-s1
+Player 1,kuxir97,FlipSid3 Tactics,RLCS Season 2,2016,EU,,94,97,,kuxir97-flipsid3-tactics-s2
+Player 2,Markydooda,FlipSid3 Tactics,RLCS Season 2,2016,EU,,89,,,markydooda-flipsid3-tactics-s2
+Player 3,Greazy,FlipSid3 Tactics,RLCS Season 2,2016,EU,,88,,,greazy-flipsid3-tactics-s2
+Sub,JHZER,FlipSid3 Tactics,RLCS Season 2,2016,EU,,64,,,jhzer-sub-flipsid3-tactics-s2
+Player 1,Remkoe,Northern Gaming,RLCS Season 2,2016,EU,,85,,,remkoe-northern-gaming-s2
+Player 2,Maestro,Northern Gaming,RLCS Season 2,2016,EU,,85,,,maestro-northern-gaming-s2
+Player 3,miztik,Northern Gaming,RLCS Season 2,2016,EU,,83,,,miztik-northern-gaming-s2
+Sub,Turbopolsa,Northern Gaming,RLCS Season 2,2016,EU,,92,,,turbopolsa-sub-northern-gaming-s2
+Player 1,Paschy90,Mock-It eSports,RLCS Season 2,2016,EU,,85,,,paschy90-mock-it-esports-s2
+Player 2,violentpanda,Mock-It eSports,RLCS Season 2,2016,EU,,86,,,violentpanda-mock-it-esports-s2
+Player 3,Deevo,Mock-It eSports,RLCS Season 2,2016,EU,,88,,,deevo-mock-it-esports-s2
+Player 1,Skyline,Precision Z,RLCS Season 2,2016,EU,,78,,,skyline-precision-z-s2
+Player 2,Kaydop,Precision Z,RLCS Season 2,2016,EU,,84,,,kaydop-precision-z-s2
+Player 3,Sikii,Precision Z,RLCS Season 2,2016,EU,,80,,,sikii-precision-z-s2
+Sub,Friisisch,Precision Z,RLCS Season 2,2016,EU,,58,,,friisisch-sub-precision-z-s2
+Player 1,Fairy Peak!,Mockit eSports,RLCS Season 3,2017,EU,,89,,,fairypeak-mock-it-esports-s3
+Player 2,Kaydop,Mockit eSports,RLCS Season 3,2017,EU,,91,,,kaydop-mock-it-esports-s3
+Player 3,miztik,Mockit eSports,RLCS Season 3,2017,EU,,87,,,miztik-mock-it-esports-s3
+Sub,Sniper,Mockit eSports,RLCS Season 3,2017,EU,,58,,,sniper-sub-mock-it-esports-s3
+Player 1,Markydooda,FlipSid3 Tactics,RLCS Season 3,2017,EU,,87,,,markydooda-flipsid3-tactics-s3
+Player 2,kuxir97,FlipSid3 Tactics,RLCS Season 3,2017,EU,,88,,,kuxir97-flipsid3-tactics-s3
+Player 3,Greazy,FlipSid3 Tactics,RLCS Season 3,2017,EU,,87,,,greazy-flipsid3-tactics-s3
+Sub,Flarke,FlipSid3 Tactics,RLCS Season 3,2017,EU,,57,,,flarke-sub-flipsid3-tactics-s3
+Player 1,Ferra,The Leftovers,RLCS Season 3,2017,EU,,85,,,ferra-the-leftovers-s3
+Player 2,Sikii,The Leftovers,RLCS Season 3,2017,EU,,81,,,sikii-the-leftovers-s3
+Player 3,Snaski,The Leftovers,RLCS Season 3,2017,EU,,83,,,snaski-the-leftovers-s3
+Sub,Continuum,The Leftovers,RLCS Season 3,2017,EU,,57,,,continuum-sub-the-leftovers-s3
+Player 1,Remkoe,Northern Gaming,RLCS Season 3,2017,EU,,89,,,remkoe-northern-gaming-s3
+Player 2,Deevo,Northern Gaming,RLCS Season 3,2017,EU,,95,,,deevo-northern-gaming-s3
+Player 3,Turbopolsa,Northern Gaming,RLCS Season 3,2017,EU,,88,,,turbopolsa-northern-gaming-s3
+Sub,Maestro,Northern Gaming,RLCS Season 3,2017,EU,,82,,,maestro-sub-northern-gaming-s3
+Player 1,violentpanda,Gale Force eSports,RLCS Season 4,2017,EU,,92,,,violentpanda-gale-force-esports-s4
+Player 2,Kaydop,Gale Force eSports,RLCS Season 4,2017,EU,,96,,,kaydop-gale-force-esports-s4
+Player 3,Turbopolsa,Gale Force eSports,RLCS Season 4,2017,EU,,95,,,turbopolsa-gale-force-esports-s4
+Sub,Dogu,Gale Force eSports,RLCS Season 4,2017,EU,,62,,,dogu-sub-gale-force-esports-s4
+Player 1,al0t,Method,RLCS Season 4,2017,EU,,88,,,al0t-method-s4
+Player 2,Metsanauris,Method,RLCS Season 4,2017,EU,,89,,,metsanauris-method-s4
+Player 3,Mognus,Method,RLCS Season 4,2017,EU,,88,,,mognus-method-s4
+Sub,Sniper,Method,RLCS Season 4,2017,EU,,60,,,sniper-sub-method-s4
+Player 1,Fairy Peak!,Mock-It eSports,RLCS Season 4,2017,EU,,87,,,fairypeak-mock-it-esports-s4
+Player 2,freakii,Mock-It eSports,RLCS Season 4,2017,EU,,83,,,freakii-mock-it-esports-s4
+Player 3,Paschy90,Mock-It eSports,RLCS Season 4,2017,EU,,82,,,paschy90-mock-it-esports-s4
+Sub,PetricK,Mock-It eSports,RLCS Season 4,2017,EU,,58,,,petrick-sub-mock-it-esports-s4
+Player 1,Chausette45,PSG eSports,RLCS Season 4,2017,EU,,87,,,chausette45-psg-esports-s4
+Player 2,Ferra,PSG eSports,RLCS Season 4,2017,EU,,86,,,ferra-psg-esports-s4
+Player 3,Bluey,PSG eSports,RLCS Season 4,2017,EU,,87,,,bluey-psg-esports-s4
+Sub,Yukeo,PSG eSports,RLCS Season 4,2017,EU,,70,,,yukeo-sub-psg-esports-s4
+Player 1,violentpanda,Team Dignitas,RLCS Season 5,2018,EU,,94,,,violentpanda-dignitas-s5
+Player 2,Kaydop,Team Dignitas,RLCS Season 5,2018,EU,,96,,,kaydop-dignitas-s5
+Player 3,Turbopolsa,Team Dignitas,RLCS Season 5,2018,EU,,96,,,turbopolsa-dignitas-s5
+Sub,Reepex,Team Dignitas,RLCS Season 5,2018,EU,,68,,,reepex-sub-dignitas-s5
+Player 1,Fairy Peak!,Renault Vitality,RLCS Season 5,2018,EU,,87,,,fairypeak-team-vitality-s5
+Player 2,freakii,Renault Vitality,RLCS Season 5,2018,EU,,84,,,freakii-team-vitality-s5
+Player 3,Paschy90,Renault Vitality,RLCS Season 5,2018,EU,,83,,,paschy90-team-vitality-s5
+Sub,Gnagflow06,Renault Vitality,RLCS Season 5,2018,EU,,58,,,gnagflow06-sub-team-vitality-s5
+Player 1,Deevo,Team Envy,RLCS Season 5,2018,EU,,88,,,deevo-team-envy-s5
+Player 2,EyeIgnite,Team Envy,RLCS Season 5,2018,EU,,87,,,eyeignite-team-envy-s5
+Player 3,Remkoe,Team Envy,RLCS Season 5,2018,EU,,87,,,remkoe-team-envy-s5
+Sub,Greazy,Team Envy,RLCS Season 5,2018,EU,,78,,,greazy-sub-team-envy-s5
+Player 1,al0t,compLexity Gaming,RLCS Season 5,2018,EU,,89,,,al0t-complexity-gaming-s5
+Player 2,Metsanauris,compLexity Gaming,RLCS Season 5,2018,EU,,89,,,metsanauris-complexity-gaming-s5
+Player 3,Mognus,compLexity Gaming,RLCS Season 5,2018,EU,,88,,,mognus-complexity-gaming-s5
+Sub,Speed,compLexity Gaming,RLCS Season 5,2018,EU,,72,,,speed-sub-complexity-gaming-s5
+Player 1,violentpanda,Dignitas,RLCS Season 6,2018,EU,,94,,,violentpanda-dignitas-s6
+Player 2,Kaydop,Dignitas,RLCS Season 6,2018,EU,,95,,,kaydop-dignitas-s6
+Player 3,Turbopolsa,Dignitas,RLCS Season 6,2018,EU,,95,,,turbopolsa-dignitas-s6
+Sub,JHZER,Dignitas,RLCS Season 6,2018,EU,,72,,,jhzer-sub-dignitas-s6
+Player 1,Metsanauris,We Dem Girlz,RLCS Season 6,2018,EU,,87,,,metsanauris-we-dem-girlz-s6
+Player 2,EyeIgnite,We Dem Girlz,RLCS Season 6,2018,EU,,88,,,eyeignite-we-dem-girlz-s6
+Player 3,Remkoe,We Dem Girlz,RLCS Season 6,2018,EU,,86,,,remkoe-we-dem-girlz-s6
+Player 1,miztik,FlipSid3 Tactics,RLCS Season 6,2018,EU,,82,,,miztik-flipsid3-tactics-s6
+Player 2,kuxir97,FlipSid3 Tactics,RLCS Season 6,2018,EU,,87,,,kuxir97-flipsid3-tactics-s6
+Player 3,Yukeo,FlipSid3 Tactics,RLCS Season 6,2018,EU,,84,,,yukeo-flipsid3-tactics-s6
+Player 1,Ferra,PSG Esports,RLCS Season 6,2018,EU,,87,,,ferra-psg-esports-s6
+Player 2,Chausette45,PSG Esports,RLCS Season 6,2018,EU,,87,,,chausette45-psg-esports-s6
+Player 3,fruity,PSG Esports,RLCS Season 6,2018,EU,,85,,,fruity-psg-esports-s6
+Sub,Bluey,PSG Esports,RLCS Season 6,2018,EU,,81,,,bluey-sub-psg-esports-s6
+Player 1,Scrub Killa,Renault Vitality,RLCS Season 7,2019,EU,,92,,,scrubkilla-team-vitality-s7
+Player 2,Fairy Peak!,Renault Vitality,RLCS Season 7,2019,EU,,91,,,fairypeak-team-vitality-s7
+Player 3,Kaydop,Renault Vitality,RLCS Season 7,2019,EU,,93,,,kaydop-team-vitality-s7
+Sub,Neqzo,Renault Vitality,RLCS Season 7,2019,EU,,69,,,neqzo-sub-team-vitality-s7
+Coach,Gregan,Renault Vitality,RLCS Season 7,2019,EU,,89,,,gregan-coach-team-vitality-s7
+Player 1,Bluey,FC Barcelona,RLCS Season 7,2019,EU,,87,,,bluey-fc-barcelona-s7
+Player 2,Alpha54,FC Barcelona,RLCS Season 7,2019,EU,,90,,,alpha54-fc-barcelona-s7
+Player 3,Deevo,FC Barcelona,RLCS Season 7,2019,EU,,86,,,deevo-fc-barcelona-s7
+Sub,ByMateos,FC Barcelona,RLCS Season 7,2019,EU,,65,,,bymateos-sub-fc-barcelona-s7
+Coach,Roken,FC Barcelona,RLCS Season 7,2019,EU,,79,,,roken-coach-fc-barcelona-s7
+Player 1,Ronaky,Triple Trouble,RLCS Season 7,2019,EU,,84,,,ronaky-triple-trouble-s7
+Player 2,Tadpole,Triple Trouble,RLCS Season 7,2019,EU,,82,,,tadpole-triple-trouble-s7
+Player 3,Kassio,Triple Trouble,RLCS Season 7,2019,EU,,82,,,kassio-triple-trouble-s7
+Sub,Seeb,Triple Trouble,RLCS Season 7,2019,EU,,60,,,seeb-sub-triple-trouble-s7
+Coach,Base,Triple Trouble,RLCS Season 7,2019,EU,,78,,,base-coach-triple-trouble-s7
+Player 1,fruity,PSG Esports,RLCS Season 7,2019,EU,,85,,,fruity-psg-esports-s7
+Player 2,Ferra,PSG Esports,RLCS Season 7,2019,EU,,86,,,ferra-psg-esports-s7
+Player 3,Chausette45,PSG Esports,RLCS Season 7,2019,EU,,88,,,chausette45-psg-esports-s7
+Sub,Mout,PSG Esports,RLCS Season 7,2019,EU,,65,,,mout-sub-psg-esports-s7
+Player 1,Fairy Peak!,Renault Vitality,RLCS Season 8,2019,EU,,91,,,fairypeak-team-vitality-s8
+Player 2,Scrub Killa,Renault Vitality,RLCS Season 8,2019,EU,,89,,,scrubkilla-team-vitality-s8
+Player 3,Kaydop,Renault Vitality,RLCS Season 8,2019,EU,,91,,,kaydop-team-vitality-s8
+Sub,Jessie,Renault Vitality,RLCS Season 8,2019,EU,,70,,,jessie-sub-team-vitality-s8
+Coach,Gregan,Renault Vitality,RLCS Season 8,2019,EU,,86,,,gregan-coach-team-vitality-s8
+Player 1,violentpanda,Dignitas,RLCS Season 8,2019,EU,,88,,,violentpanda-dignitas-s8
+Player 2,Yukeo,Dignitas,RLCS Season 8,2019,EU,,86,,,yukeo-dignitas-s8
+Player 3,AztraL,Dignitas,RLCS Season 8,2019,EU,,91,,,aztral-dignitas-s8
+Sub,JZR,Dignitas,RLCS Season 8,2019,EU,,73,,,jzr-sub-dignitas-s8
+Coach,Virge,Dignitas,RLCS Season 8,2019,EU,,83,,,virge-coach-dignitas-s8
+Player 1,Flame,Veloce Esports,RLCS Season 8,2019,EU,,81,,,flame-veloce-esports-s8
+Player 2,freakii,Veloce Esports,RLCS Season 8,2019,EU,,82,,,freakii-veloce-esports-s8
+Player 3,Kassio,Veloce Esports,RLCS Season 8,2019,EU,,84,,,kassio-veloce-esports-s8
+Coach,miztik,Veloce Esports,RLCS Season 8,2019,EU,,70,,,miztik-coach-veloce-esports-s8
+Player 1,Ferra,Team Reciprocity,RLCS Season 8,2019,EU,,87,,,ferra-team-reciprocity-s8
+Player 2,Chausette45,Team Reciprocity,RLCS Season 8,2019,EU,,90,,,chausette45-team-reciprocity-s8
+Player 3,fruity,Team Reciprocity,RLCS Season 8,2019,EU,,86,,,fruity-team-reciprocity-s8
+Sub,Neqzo,Team Reciprocity,RLCS Season 8,2019,EU,,70,,,neqzo-sub-team-reciprocity-s8
+Coach,yumi_cheeseman,Team Reciprocity,RLCS Season 8,2019,EU,,70,,,yumicheeseman-coach-team-reciprocity-s8
+Player 1,violentpanda,Dignitas,RLCS Season 9,2020,EU,,88,,,violentpanda-dignitas-s9
+Player 2,Yukeo,Dignitas,RLCS Season 9,2020,EU,,86,,,yukeo-dignitas-s9
+Player 3,AztraL,Dignitas,RLCS Season 9,2020,EU,,91,,,aztral-dignitas-s9
+Sub,JZR,Dignitas,RLCS Season 9,2020,EU,,73,,,jzr-sub-dignitas-s9
+Coach,Virge,Dignitas,RLCS Season 9,2020,EU,,86,,,virge-coach-dignitas-s9
+Player 1,Fairy Peak!,Renault Vitality,RLCS Season 9,2020,EU,,91,,,fairypeak-team-vitality-s9
+Player 2,Kaydop,Renault Vitality,RLCS Season 9,2020,EU,,91,,,kaydop-team-vitality-s9
+Player 3,Alpha54,Renault Vitality,RLCS Season 9,2020,EU,,94,,,alpha54-team-vitality-s9
+Coach,Gregan,Renault Vitality,RLCS Season 9,2020,EU,,87,,,gregan-coach-team-vitality-s9
+Player 1,Deevo,FC Barcelona,RLCS Season 9,2020,EU,,86,,,deevo-fc-barcelona-s9
+Player 2,Ronaky,FC Barcelona,RLCS Season 9,2020,EU,,85,,,ronaky-fc-barcelona-s9
+Player 3,Flakes,FC Barcelona,RLCS Season 9,2020,EU,,87,,,flakes-fc-barcelona-s9
+Coach,El General,FC Barcelona,RLCS Season 9,2020,EU,,82,,,elgeneral-coach-fc-barcelona-s9
+Player 1,kuxir97,mousesports,RLCS Season 9,2020,EU,,86,,,kuxir97-mousesports-s9
+Player 2,Speed,mousesports,RLCS Season 9,2020,EU,,87,,,speed-mousesports-s9
+Player 3,Scrub Killa,mousesports,RLCS Season 9,2020,EU,,88,,,scrubkilla-mousesports-s9
+Coach,Lethamyr,mousesports,RLCS Season 9,2020,EU,,79,,,lethamyr-coach-mousesports-s9
+Player 1,M0nkey M00n,Team BDS,RLCS X,2020-21,EU,,94,,,m0nkeym00n-team-bds-x
+Player 2,Extra,Team BDS,RLCS X,2020-21,EU,,91,,,extra-team-bds-x
+Player 3,MaRc_By_8,Team BDS,RLCS X,2020-21,EU,,90,,,marcby8-team-bds-x
+Coach,Kael,Team BDS,RLCS X,2020-21,EU,,85,,,kael-coach-team-bds-x
+Player 1,Kaydop,Team Vitality,RLCS X,2020-21,EU,,87,,,kaydop-team-vitality-x
+Player 2,Fairy Peak!,Team Vitality,RLCS X,2020-21,EU,,87,,,fairypeak-team-vitality-x
+Player 3,Alpha54,Team Vitality,RLCS X,2020-21,EU,,90,,,alpha54-team-vitality-x
+Coach,Mout,Team Vitality,RLCS X,2020-21,EU,,84,,,mout-coach-team-vitality-x
+Player 1,archie,Top Blokes,RLCS X,2020-21,EU,,87,,,archie-top-blokes-x
+Player 2,Kassio,Top Blokes,RLCS X,2020-21,EU,,83,,,kassio-top-blokes-x
+Player 3,Flame,Top Blokes,RLCS X,2020-21,EU,,82,,,flame-top-blokes-x
+Player 1,ThO.,Guild Esports,RLCS X,2020-21,EU,,82,,,tho-guild-esports-x
+Player 2,Noly,Guild Esports,RLCS X,2020-21,EU,,85,,,noly-guild-esports-x
+Player 3,Deevo,Guild Esports,RLCS X,2020-21,EU,,81,,,deevo-guild-esports-x
+Player 1,AztraL,Solary,RLCS X,2020-21,EU,,87,,,aztral-solary-x
+Player 2,Chausette45,Solary,RLCS X,2020-21,EU,,84,,,chausette45-solary-x
+Player 3,Ferra,Solary,RLCS X,2020-21,EU,,80,,,ferra-solary-x
+Player 1,AtomiK,Team Queso,RLCS X,2020-21,EU,,82,,,atomik-team-queso-x
+Player 2,DmentZa,Team Queso,RLCS X,2020-21,EU,,81,,,dmentza-team-queso-x
+Player 3,VKSailen,Team Queso,RLCS X,2020-21,EU,,80,,,vksailen-team-queso-x
+Player 1,M0nkey M00n,Team BDS,RLCS 2021-22,2021-22,EU,,96,97,,m0nkeym00n-team-bds-2122
+Player 2,Extra,Team BDS,RLCS 2021-22,2021-22,EU,,92,,,extra-team-bds-2122
+Player 3,Seikoo,Team BDS,RLCS 2021-22,2021-22,EU,,95,,,seikoo-team-bds-2122
+Coach,Mew,Team BDS,RLCS 2021-22,2021-22,EU,,88,,,mew-coach-team-bds-2122
+Player 1,Joyo,Moist Esports,RLCS 2021-22,2021-22,EU,,93,,,joyo-moist-esports-2122
+Player 2,rise.,Moist Esports,RLCS 2021-22,2021-22,EU,,93,,,rise-moist-esports-2122
+Player 3,Vatira,Moist Esports,RLCS 2021-22,2021-22,EU,,95,,,vatira-moist-esports-2122
+Coach,n0ah,Moist Esports,RLCS 2021-22,2021-22,EU,,82,,,n0ah-coach-moist-esports-2122
+Player 1,AztraL,Karmine Corp,RLCS 2021-22,2021-22,EU,,89,,,aztral-karmine-corp-2122
+Player 2,Itachi,Karmine Corp,RLCS 2021-22,2021-22,EU,,87,,,itachi-karmine-corp-2122
+Player 3,Noly,Karmine Corp,RLCS 2021-22,2021-22,EU,,86,,,noly-karmine-corp-2122
+Coach,Eversax,Karmine Corp,RLCS 2021-22,2021-22,EU,,83,85,,eversax-coach-karmine-corp-2122
+Player 1,ApparentlyJack,Dignitas,RLCS 2021-22,2021-22,EU,,88,87,,apparentlyjack-dignitas-2122
+Player 2,Joreuz,Dignitas,RLCS 2021-22,2021-22,EU,,89,86,,joreuz-dignitas-2122
+Player 3,Scrub Killa,Dignitas,RLCS 2021-22,2021-22,EU,,86,85,,scrubkilla-dignitas-2122
+Player 1,Kassio,SMPR Esports,RLCS 2021-22,2021-22,EU,,82,,,kassio-smpr-esports-2122
+Player 2,Chausette45,SMPR Esports,RLCS 2021-22,2021-22,EU,,82,,,chausette45-smpr-esports-2122
+Player 3,ExoTiiK,SMPR Esports,RLCS 2021-22,2021-22,EU,,86,,,exotiik-smpr-esports-2122
+Player 1,RelatingWave,Endpoint CeX,RLCS 2021-22,2021-22,EU,,82,,,relatingwave-endpoint-cex-2122
+Player 2,Metsanauris,Endpoint CeX,RLCS 2021-22,2021-22,EU,,80,,,metsanauris-endpoint-cex-2122
+Player 3,archie,Endpoint CeX,RLCS 2021-22,2021-22,EU,,87,,,archie-endpoint-cex-2122
+Coach,Eclipse,Endpoint CeX,RLCS 2021-22,2021-22,EU,,82,79,,eclipse-coach-endpoint-cex-2122
+Player 1,zen,Team Vitality,RLCS 2022-23,2022-23,EU,,97,98,,zen-team-vitality-2223
+Player 2,Alpha54,Team Vitality,RLCS 2022-23,2022-23,EU,,92,94,,alpha54-team-vitality-2223
+Player 3,Radosin,Team Vitality,RLCS 2022-23,2022-23,EU,,90,95,,radosin-team-vitality-2223
+Sub,saizen,Team Vitality,RLCS 2022-23,2022-23,EU,,78,,,saizen-sub-team-vitality-2223
+Coach,Ferra,Team Vitality,RLCS 2022-23,2022-23,EU,,91,,,ferra-coach-team-vitality-2223
+Player 1,M0nkey M00n,Team BDS,RLCS 2022-23,2022-23,EU,,94,,,m0nkeym00n-team-bds-2223
+Player 2,Seikoo,Team BDS,RLCS 2022-23,2022-23,EU,,90,,,seikoo-team-bds-2223
+Player 3,rise.,Team BDS,RLCS 2022-23,2022-23,EU,,93,,,rise-team-bds-2223
+Sub,Extra,Team BDS,RLCS 2022-23,2022-23,EU,,81,,,extra-sub-team-bds-2223
+Coach,Mew,Team BDS,RLCS 2022-23,2022-23,EU,,87,,,mew-coach-team-bds-2223
+Player 1,AcroniK.,Team Liquid,RLCS 2022-23,2022-23,EU,,88,89,,acronik-team-liquid-2223
+Player 2,Atow.,Team Liquid,RLCS 2022-23,2022-23,EU,,92,93,,atow-team-liquid-2223
+Player 3,Oski,Team Liquid,RLCS 2022-23,2022-23,EU,,91,92,,oski-team-liquid-2223
+Coach,xpere,Team Liquid,RLCS 2022-23,2022-23,EU,,85,87,,xpere-coach-team-liquid-2223
+Player 1,Vatira,Karmine Corp,RLCS 2022-23,2022-23,EU,,95,,,vatira-karmine-corp-2223
+Player 2,Itachi,Karmine Corp,RLCS 2022-23,2022-23,EU,,91,,,itachi-karmine-corp-2223
+Player 3,ExoTiiK,Karmine Corp,RLCS 2022-23,2022-23,EU,,92,,,exotiik-karmine-corp-2223
+Coach,Eversax,Karmine Corp,RLCS 2022-23,2022-23,EU,,86,89,,eversax-coach-karmine-corp-2223
+Player 1,Joyo,Moist Esports,RLCS 2022-23,2022-23,EU,,89,,,joyo-moist-esports-2223
+Player 2,Kash,Moist Esports,RLCS 2022-23,2022-23,EU,,87,,,kash-moist-esports-2223
+Player 3,juicy,Moist Esports,RLCS 2022-23,2022-23,EU,,85,,,juicy-moist-esports-2223
+Player 1,archie,Oxygen Esports,RLCS 2022-23,2022-23,EU,,87,,,archie-oxygen-esports-2223
+Player 2,Joreuz,Oxygen Esports,RLCS 2022-23,2022-23,EU,,87,,,joreuz-oxygen-esports-2223
+Player 3,eekso,Oxygen Esports,RLCS 2022-23,2022-23,EU,,83,,,eekso-oxygen-esports-2223
+Sub,Gawfs,Oxygen Esports,RLCS 2022-23,2022-23,EU,,60,,,gawfs-sub-oxygen-esports-2223
+Player 1,AtomiK,G1,RLCS 2022-23,2022-23,EU,,84,,,atomik-g1-2223
+Player 2,dorito,G1,RLCS 2022-23,2022-23,EU,,83,,,dorito-g1-2223
+Player 3,oaly.,G1,RLCS 2022-23,2022-23,EU,,83,,,oaly-g1-2223
+Player 1,M0nkey M00n,Team BDS,RLCS 2024,2024,EU,,96,,,m0nkeym00n-team-bds-2024
+Player 2,ExoTiiK,Team BDS,RLCS 2024,2024,EU,,93,,,exotiik-team-bds-2024
+Player 3,dralii,Team BDS,RLCS 2024,2024,EU,,94,,,dralii-team-bds-2024
+Coach,Kassio,Team BDS,RLCS 2024,2024,EU,,86,,,kassio-coach-team-bds-2024
+Player 1,Seikoo,Gentle Mates Alpine,RLCS 2024,2024,EU,,91,,,seikoo-gentle-mates-alpine-2024
+Player 2,Itachi,Gentle Mates Alpine,RLCS 2024,2024,EU,,89,,,itachi-gentle-mates-alpine-2024
+Player 3,juicy,Gentle Mates Alpine,RLCS 2024,2024,EU,,88,,,juicy-gentle-mates-alpine-2024
+Coach,Eversax,Gentle Mates Alpine,RLCS 2024,2024,EU,,86,,,eversax-coach-gentle-mates-alpine-2024
+Player 1,Vatira,Karmine Corp,RLCS 2024,2024,EU,,94,,,vatira-karmine-corp-2024
+Player 2,Atow.,Karmine Corp,RLCS 2024,2024,EU,,93,,,atow-karmine-corp-2024
+Player 3,rise.,Karmine Corp,RLCS 2024,2024,EU,,92,,,rise-karmine-corp-2024
+Coach,Ferra,Karmine Corp,RLCS 2024,2024,EU,,90,,,ferra-coach-karmine-corp-2024
+Player 1,zen,Team Vitality,RLCS 2024,2024,EU,,92,,,zen-team-vitality-2024
+Player 2,Alpha54,Team Vitality,RLCS 2024,2024,EU,,88,,,alpha54-team-vitality-2024
+Player 3,Radosin,Team Vitality,RLCS 2024,2024,EU,,87,,,radosin-team-vitality-2024
+Player 1,archie,Oxygen Esports,RLCS 2024,2024,EU,,86,,,archie-oxygen-esports-2024
+Player 2,Oski,Oxygen Esports,RLCS 2024,2024,EU,,88,,,oski-oxygen-esports-2024
+Player 3,Joyo,Oxygen Esports,RLCS 2024,2024,EU,,88,,,joyo-oxygen-esports-2024
+Coach,Snaski,Oxygen Esports,RLCS 2024,2024,EU,,86,,,snaski-coach-oxygen-esports-2024
+Player 1,Vatira,Karmine Corp,RLCS 2025,2025,EU,,95,,,vatira-karmine-corp-2025
+Player 2,Atow.,Karmine Corp,RLCS 2025,2025,EU,,94,,,atow-karmine-corp-2025
+Player 3,dralii,Karmine Corp,RLCS 2025,2025,EU,,94,,,dralii-karmine-corp-2025
+Coach,Eversax,Karmine Corp,RLCS 2025,2025,EU,,87,,,eversax-coach-karmine-corp-2025
+Player 1,Stizzy,Dignitas,RLCS 2025,2025,EU,,86,,,stizzy-dignitas-2025
+Player 2,ApparentlyJack,Dignitas,RLCS 2025,2025,EU,,87,,,apparentlyjack-dignitas-2025
+Player 3,Joreuz,Dignitas,RLCS 2025,2025,EU,,87,,,joreuz-dignitas-2025
+Coach,Eclipse,Dignitas,RLCS 2025,2025,EU,,83,,,eclipse-coach-dignitas-2025
+Player 1,zen,Team Vitality,RLCS 2025,2025,EU,,96,,,zen-team-vitality-2025
+Player 2,M0nkey M00n,Team Vitality,RLCS 2025,2025,EU,,95,,,m0nkeym00n-team-vitality-2025
+Player 3,ExoTiiK,Team Vitality,RLCS 2025,2025,EU,,93,,,exotiik-team-vitality-2025
+Coach,Hugo,Team Vitality,RLCS 2025,2025,EU,,81,,,hugo-coach-team-vitality-2025
+Player 1,nass,Ninjas in Pyjamas,RLCS 2025,2025,EU,,82,,,nass-ninjas-in-pyjamas-2025
+Player 2,Oski,Ninjas in Pyjamas,RLCS 2025,2025,EU,,85,,,oski-ninjas-in-pyjamas-2025
+Player 3,Radosin,Ninjas in Pyjamas,RLCS 2025,2025,EU,,86,,,radosin-ninjas-in-pyjamas-2025
+Player 1,archie,Geekay Esports,RLCS 2025,2025,EU,,86,,,archie-geekay-esports-2025
+Player 2,Joyo,Geekay Esports,RLCS 2025,2025,EU,,88,,,joyo-geekay-esports-2025
+Player 3,oaly.,Geekay Esports,RLCS 2025,2025,EU,,84,,,oaly-geekay-esports-2025
+Player 1,juicy,Karmine Corp,RLCS 2026,2026,EU,,89,,,juicy-karmine-corp-2026
+Player 2,Atow.,Karmine Corp,RLCS 2026,2026,EU,,95,,,atow-karmine-corp-2026
+Player 3,Vatira,Karmine Corp,RLCS 2026,2026,EU,,94,,,vatira-karmine-corp-2026
+Coach,Extra,Karmine Corp,RLCS 2026,2026,EU,,88,,,extra-coach-karmine-corp-2026
+Player 1,nass,Gentle Mates Alpine,RLCS 2026,2026,EU,,88,,,nass-gentle-mates-alpine-2026
+Player 2,archie,Gentle Mates Alpine,RLCS 2026,2026,EU,,89,,,archie-gentle-mates-alpine-2026
+Player 3,Oski,Gentle Mates Alpine,RLCS 2026,2026,EU,,90,,,oski-gentle-mates-alpine-2026
+Player 1,zen,Team Vitality,RLCS 2026,2026,EU,,96,,,zen-team-vitality-2026
+Player 2,ExoTiiK,Team Vitality,RLCS 2026,2026,EU,,91,,,exotiik-team-vitality-2026
+Player 3,Stizzy,Team Vitality,RLCS 2026,2026,EU,,89,,,stizzy-team-vitality-2026
+Coach,Eversax,Team Vitality,RLCS 2026,2026,EU,,88,,,eversax-coach-team-vitality-2026
+Player 1,oaly.,Ninjas in Pyjamas,RLCS 2026,2026,EU,,86,,,oaly-ninjas-in-pyjamas-2026
+Player 2,Joreuz,Ninjas in Pyjamas,RLCS 2026,2026,EU,,88,,,joreuz-ninjas-in-pyjamas-2026
+Player 3,crr,Ninjas in Pyjamas,RLCS 2026,2026,EU,,87,,,crr-ninjas-in-pyjamas-2026
+Coach,LBP,Ninjas in Pyjamas,RLCS 2026,2026,EU,,85,,,lbp-coach-ninjas-in-pyjamas-2026
+Player 1,Seikoo,Manchester City Esports,RLCS 2026,2026,EU,,90,,,seikoo-manchester-city-esports-2026
+Player 2,ejby,Manchester City Esports,RLCS 2026,2026,EU,,84,,,ejby-manchester-city-esports-2026
+Player 3,accro,Manchester City Esports,RLCS 2026,2026,EU,,83,,,accro-manchester-city-esports-2026
+Player 1,Ahmad,Team Falcons,RLCS 2021-22,2021-22,MENA,,88,,,ahmad-team-falcons-2122
+Player 2,oKhaliD,Team Falcons,RLCS 2021-22,2021-22,MENA,,87,,,okhalid-team-falcons-2122
+Player 3,trk511,Team Falcons,RLCS 2021-22,2021-22,MENA,,89,,,trk511-team-falcons-2122
+Coach,d7oom-24,Team Falcons,RLCS 2021-22,2021-22,MENA,,81,,,d7oom24-coach-team-falcons-2122
+Player 1,SMW,Veloce Esports,RLCS 2021-22,2021-22,MENA,,80,,,smw-veloce-esports-2122
+Player 2,Senzo,Veloce Esports,RLCS 2021-22,2021-22,MENA,,78,,,senzo-veloce-esports-2122
+Player 3,Twiz,Veloce Esports,RLCS 2021-22,2021-22,MENA,,79,,,twiz-veloce-esports-2122
+Player 1,Zez0nix,01 Esports,RLCS 2021-22,2021-22,MENA,,78,,,zez0nix-01-esports-2122
+Player 2,ams.,01 Esports,RLCS 2021-22,2021-22,MENA,,78,,,ams-01-esports-2122
+Player 3,M7sn,01 Esports,RLCS 2021-22,2021-22,MENA,,79,,,m7sn-01-esports-2122
+Player 1,Rw9,Rule One,RLCS 2022-23,2022-23,MENA,,91,,,rw9-rule-one-2223
+Player 2,Kiileerrz,Rule One,RLCS 2022-23,2022-23,MENA,,90,,,kiileerrz-rule-one-2223
+Player 3,M7sn,Rule One,RLCS 2022-23,2022-23,MENA,,86,,,m7sn-rule-one-2223
+Player 1,Ahmad,Team Falcons,RLCS 2022-23,2022-23,MENA,,87,,,ahmad-team-falcons-2223
+Player 2,oKhaliD,Team Falcons,RLCS 2022-23,2022-23,MENA,,86,,,okhalid-team-falcons-2223
+Player 3,trk511,Team Falcons,RLCS 2022-23,2022-23,MENA,,88,,,trk511-team-falcons-2223
+Coach,d7oom-24,Team Falcons,RLCS 2022-23,2022-23,MENA,,84,,,d7oom24-coach-team-falcons-2223
+Player 1,SMW,Twisted Minds,RLCS 2022-23,2022-23,MENA,,82,,,smw-twisted-minds-2223
+Player 2,Venom,Twisted Minds,RLCS 2022-23,2022-23,MENA,,81,,,venom-twisted-minds-2223
+Player 3,Senzo,Twisted Minds,RLCS 2022-23,2022-23,MENA,,80,,,senzo-twisted-minds-2223
+Player 1,trk511,Team Falcons,RLCS 2024,2024,MENA,,92,,,trk511-team-falcons-2024
+Player 2,Kiileerrz,Team Falcons,RLCS 2024,2024,MENA,,93,,,kiileerrz-team-falcons-2024
+Player 3,Rw9,Team Falcons,RLCS 2024,2024,MENA,,93,,,rw9-team-falcons-2024
+Coach,d7oom-24,Team Falcons,RLCS 2024,2024,MENA,,85,,,d7oom24-coach-team-falcons-2024
+Player 1,trk511,Team Falcons,RLCS 2025,2025,MENA,,92,,,trk511-team-falcons-2025
+Player 2,Rw9,Team Falcons,RLCS 2025,2025,MENA,,93,,,rw9-team-falcons-2025
+Player 3,Kiileerrz,Team Falcons,RLCS 2025,2025,MENA,,93,,,kiileerrz-team-falcons-2025
+Coach,d7oom-24,Team Falcons,RLCS 2025,2025,MENA,,83,,,d7oom24-coach-team-falcons-2025
+Player 1,Twiz,ROC Esports,RLCS 2025,2025,MENA,,82,,,twiz-roc-esports-2025
+Player 2,Abdullah,ROC Esports,RLCS 2025,2025,MENA,,83,,,abdullah-roc-esports-2025
+Player 3,Ghaazi0,ROC Esports,RLCS 2025,2025,MENA,,83,,,ghaazi0-roc-esports-2025
+Player 1,Nwpo,Twisted Minds,RLCS 2025,2025,MENA,,94,,,nwpo-twisted-minds-2025
+Player 2,rise.,Twisted Minds,RLCS 2025,2025,MENA,,88,,,rise-twisted-minds-2025
+Player 3,AtomiK,Twisted Minds,RLCS 2025,2025,MENA,,85,,,atomik-twisted-minds-2025
+Sub,Hisoka,Twisted Minds,RLCS 2025,2025,MENA,,70,,,hisoka-sub-twisted-minds-2025
+Player 1,M0nkey M00n,Twisted Minds,RLCS 2026,2026,MENA,,92,,,m0nkeym00n-twisted-minds-2026
+Player 2,Nwpo,Twisted Minds,RLCS 2026,2026,MENA,,92,,,nwpo-twisted-minds-2026
+Player 3,trk511,Twisted Minds,RLCS 2026,2026,MENA,,91,,,trk511-twisted-minds-2026
+Coach,SadJunior,Twisted Minds,RLCS 2026,2026,MENA,,88,,,sadjunior-coach-twisted-minds-2026
+Player 1,dralii,Team Falcons,RLCS 2026,2026,MENA,,91,,,dralii-team-falcons-2026
+Player 2,Kiileerrz,Team Falcons,RLCS 2026,2026,MENA,,91,,,kiileerrz-team-falcons-2026
+Player 3,Rw9,Team Falcons,RLCS 2026,2026,MENA,,92,,,rw9-team-falcons-2026
+Coach,d7oom-24,Team Falcons,RLCS 2026,2026,MENA,,86,,,d7oom24-coach-team-falcons-2026
+Player 1,Kronovi,iBUYPOWER,RLCS Season 1,2016,NA,,92,97,,kronovi-ibuypower-s1
+Player 2,Lachinio,iBUYPOWER,RLCS Season 1,2016,NA,,88,,,lachinio-ibuypower-s1
+Player 3,0ver Zer0,iBUYPOWER,RLCS Season 1,2016,NA,,87,,,0verzer0-ibuypower-s1
+Player 1,Fireburner,Kings of Urban,RLCS Season 1,2016,NA,,86,,,fireburner-kings-of-urban-s1
+Player 2,Jacob,Kings of Urban,RLCS Season 1,2016,NA,,85,,,jacob-kings-of-urban-s1
+Player 3,SadJunior,Kings of Urban,RLCS Season 1,2016,NA,,82,,,sadjunior-kings-of-urban-s1
+Sub,Fl0w,Kings of Urban,RLCS Season 1,2016,NA,,60,,,fl0w-sub-kings-of-urban-s1
+Player 1,GarrettG,Exodus,RLCS Season 1,2016,NA,,82,,,garrettg-exodus-s1
+Player 2,Moses,Exodus,RLCS Season 1,2016,NA,,79,,,moses-exodus-s1
+Player 3,Turtle,Exodus,RLCS Season 1,2016,NA,,78,,,turtle-exodus-s1
+Sub,Huskih,Exodus,RLCS Season 1,2016,NA,,58,,,huskih-sub-exodus-s1
+Player 1,Espeon,Genesis,RLCS Season 1,2016,NA,,78,,,espeon-genesis-s1
+Player 2,Pluto,Genesis,RLCS Season 1,2016,NA,,77,,,pluto-genesis-s1
+Player 3,Quinn Lobdell,Genesis,RLCS Season 1,2016,NA,,76,,,quinnlobdell-genesis-s1
+Sub,Kovanel,Genesis,RLCS Season 1,2016,NA,,56,,,kovanel-sub-genesis-s1
+Player 1,Fireburner,NRG Esports,RLCS Season 2,2016,NA,,87,,,fireburner-nrg-esports-s2
+Player 2,Jacob,NRG Esports,RLCS Season 2,2016,NA,,86,,,jacob-nrg-esports-s2
+Player 3,SadJunior,NRG Esports,RLCS Season 2,2016,NA,,82,,,sadjunior-nrg-esports-s2
+Player 1,GarrettG,Orbit eSport,RLCS Season 2,2016,NA,,82,,,garrettg-orbit-esport-s2
+Player 2,Turtle,Orbit eSport,RLCS Season 2,2016,NA,,80,,,turtle-orbit-esport-s2
+Player 3,Moses,Orbit eSport,RLCS Season 2,2016,NA,,78,,,moses-orbit-esport-s2
+Sub,Sizz,Orbit eSport,RLCS Season 2,2016,NA,,65,,,sizz-sub-orbit-esport-s2
+Player 1,Pluto,Genesis,RLCS Season 2,2016,NA,,78,,,pluto-genesis-s2
+Player 2,Espeon,Genesis,RLCS Season 2,2016,NA,,76,,,espeon-genesis-s2
+Player 3,Klassux,Genesis,RLCS Season 2,2016,NA,,78,,,klassux-genesis-s2
+Sub,Kyle Masc,Genesis,RLCS Season 2,2016,NA,,56,,,kylemasc-sub-genesis-s2
+Player 1,Insolences,Take 3,RLCS Season 2,2016,NA,,80,,,insolences-take-3-s2
+Player 2,Rizzo,Take 3,RLCS Season 2,2016,NA,,82,,,rizzo-take-3-s2
+Player 3,Zanejackey,Take 3,RLCS Season 2,2016,NA,,79,,,zanejackey-take-3-s2
+Sub,Low5ive,Take 3,RLCS Season 2,2016,NA,,57,,,low5ive-sub-take-3-s2
+Player 1,Fireburner,NRG Esports,RLCS Season 3,2017,NA,,87,,,fireburner-nrg-esports-s3
+Player 2,GarrettG,NRG Esports,RLCS Season 3,2017,NA,,87,,,garrettg-nrg-esports-s3
+Player 3,Jacob,NRG Esports,RLCS Season 3,2017,NA,,86,,,jacob-nrg-esports-s3
+Sub,Genocop,NRG Esports,RLCS Season 3,2017,NA,,57,,,genocop-sub-nrg-esports-s3
+Player 1,Matt,Rogue,RLCS Season 3,2017,NA,,84,,,matt-rogue-s3
+Player 2,Sizz,Rogue,RLCS Season 3,2017,NA,,84,,,sizz-rogue-s3
+Player 3,Turtle,Rogue,RLCS Season 3,2017,NA,,85,,,turtle-rogue-s3
+Sub,Syntax,Rogue,RLCS Season 3,2017,NA,,57,,,syntax-sub-rogue-s3
+Player 1,Dappur,Selfless Gaming,RLCS Season 3,2017,NA,,81,,,dappur-selfless-gaming-s3
+Player 2,Mijo,Selfless Gaming,RLCS Season 3,2017,NA,,78,,,mijo-selfless-gaming-s3
+Player 3,Timi,Selfless Gaming,RLCS Season 3,2017,NA,,79,,,timi-selfless-gaming-s3
+Sub,Plu'oh,Selfless Gaming,RLCS Season 3,2017,NA,,78,,,pluoh-sub-selfless-gaming-s3
+Player 1,Lethamyr,Denial eSports,RLCS Season 3,2017,NA,,84,,,lethamyr-denial-esports-s3
+Player 2,CorruptedG,Denial eSports,RLCS Season 3,2017,NA,,82,,,corruptedg-denial-esports-s3
+Player 3,SadJunior,Denial eSports,RLCS Season 3,2017,NA,,81,,,sadjunior-denial-esports-s3
+Sub,JWismont,Denial eSports,RLCS Season 3,2017,NA,,57,,,jwismont-sub-denial-esports-s3
+Player 1,Gimmick,Cloud9,RLCS Season 4,2017,NA,,88,,,gimmick-cloud9-s4
+Player 2,SquishyMuffinz,Cloud9,RLCS Season 4,2017,NA,,91,,,squishymuffinz-cloud9-s4
+Player 3,Torment,Cloud9,RLCS Season 4,2017,NA,,88,,,torment-cloud9-s4
+Sub,Napp,Cloud9,RLCS Season 4,2017,NA,,58,,,napp-sub-cloud9-s4
+Player 1,Klassux,Ghost Gaming,RLCS Season 4,2017,NA,,83,,,klassux-ghost-gaming-s4
+Player 2,Lethamyr,Ghost Gaming,RLCS Season 4,2017,NA,,86,,,lethamyr-ghost-gaming-s4
+Player 3,Zanejackey,Ghost Gaming,RLCS Season 4,2017,NA,,82,,,zanejackey-ghost-gaming-s4
+Sub,Blueze,Ghost Gaming,RLCS Season 4,2017,NA,,57,,,blueze-sub-ghost-gaming-s4
+Player 1,Fireburner,NRG Esports,RLCS Season 4,2017,NA,,86,,,fireburner-nrg-esports-s4
+Player 2,GarrettG,NRG Esports,RLCS Season 4,2017,NA,,87,,,garrettg-nrg-esports-s4
+Player 3,Jacob,NRG Esports,RLCS Season 4,2017,NA,,83,,,jacob-nrg-esports-s4
+Sub,DudeWithTheNose,NRG Esports,RLCS Season 4,2017,NA,,56,,,dudewiththenose-sub-nrg-esports-s4
+Player 1,Kronovi,G2 Esports,RLCS Season 4,2017,NA,,87,,,kronovi-g2-esports-s4
+Player 2,JKnaps,G2 Esports,RLCS Season 4,2017,NA,,88,,,jknaps-g2-esports-s4
+Player 3,Rizzo,G2 Esports,RLCS Season 4,2017,NA,,86,,,rizzo-g2-esports-s4
+Sub,Turtle,G2 Esports,RLCS Season 4,2017,NA,,79,,,turtle-sub-g2-esports-s4
+Player 1,JKnaps,G2 Esports,RLCS Season 5,2018,NA,,88,,,jknaps-g2-esports-s5
+Player 2,Kronovi,G2 Esports,RLCS Season 5,2018,NA,,86,,,kronovi-g2-esports-s5
+Player 3,Rizzo,G2 Esports,RLCS Season 5,2018,NA,,86,,,rizzo-g2-esports-s5
+Sub,Satthew,G2 Esports,RLCS Season 5,2018,NA,,70,80,,satthew-sub-g2-esports-s5
+Player 1,Fireburner,NRG Esports,RLCS Season 5,2018,NA,,89,,,fireburner-nrg-esports-s5
+Player 2,GarrettG,NRG Esports,RLCS Season 5,2018,NA,,91,,,garrettg-nrg-esports-s5
+Player 3,jstn.,NRG Esports,RLCS Season 5,2018,NA,,92,,,jstn-nrg-esports-s5
+Sub,Moses,NRG Esports,RLCS Season 5,2018,NA,,70,,,moses-sub-nrg-esports-s5
+Player 1,Gimmick,Cloud9,RLCS Season 5,2018,NA,,90,,,gimmick-cloud9-s5
+Player 2,SquishyMuffinz,Cloud9,RLCS Season 5,2018,NA,,91,,,squishymuffinz-cloud9-s5
+Player 3,Torment,Cloud9,RLCS Season 5,2018,NA,,89,,,torment-cloud9-s5
+Sub,Sadjunior,Cloud9,RLCS Season 5,2018,NA,,72,83,,sadjunior-sub-cloud9-s5
+Player 1,Chrome,Evil Geniuses,RLCS Season 5,2018,NA,,86,,,chrome-evil-geniuses-s5
+Player 2,CorruptedG,Evil Geniuses,RLCS Season 5,2018,NA,,84,,,corruptedg-evil-geniuses-s5
+Player 3,Klassux,Evil Geniuses,RLCS Season 5,2018,NA,,83,,,klassux-evil-geniuses-s5
+Sub,Darkfire,Evil Geniuses,RLCS Season 5,2018,NA,,60,,,darkfire-sub-evil-geniuses-s5
+Coach,fireworks,Evil Geniuses,RLCS Season 5,2018,NA,,75,,,fireworks-coach-evil-geniuses-s5
+Player 1,SquishyMuffinz,Cloud9,RLCS Season 6,2018,NA,,95,,,squishymuffinz-cloud9-s6
+Player 2,Torment,Cloud9,RLCS Season 6,2018,NA,,91,,,torment-cloud9-s6
+Player 3,Gimmick,Cloud9,RLCS Season 6,2018,NA,,91,,,gimmick-cloud9-s6
+Player 1,CorruptedG,Evil Geniuses,RLCS Season 6,2018,NA,,82,,,corruptedg-evil-geniuses-s6
+Player 2,Klassux,Evil Geniuses,RLCS Season 6,2018,NA,,80,,,klassux-evil-geniuses-s6
+Player 3,Chicago,Evil Geniuses,RLCS Season 6,2018,NA,,86,,,chicago-evil-geniuses-s6
+Player 1,Fireburner,NRG Esports,RLCS Season 6,2018,NA,,88,,,fireburner-nrg-esports-s6
+Player 2,GarrettG,NRG Esports,RLCS Season 6,2018,NA,,91,,,garrettg-nrg-esports-s6
+Player 3,jstn.,NRG Esports,RLCS Season 6,2018,NA,,92,,,jstn-nrg-esports-s6
+Player 1,Kronovi,G2 Esports,RLCS Season 6,2018,NA,,86,,,kronovi-g2-esports-s6
+Player 2,Rizzo,G2 Esports,RLCS Season 6,2018,NA,,87,,,rizzo-g2-esports-s6
+Player 3,JKnaps,G2 Esports,RLCS Season 6,2018,NA,,89,,,jknaps-g2-esports-s6
+Sub,Mijo,G2 Esports,RLCS Season 6,2018,NA,,82,,,mijo-sub-g2-esports-s6
+Coach,Jahzo,G2 Esports,RLCS Season 6,2018,NA,,74,,,jahzo-coach-g2-esports-s6
+Player 1,JKnaps,G2 Esports,RLCS Season 7,2019,NA,,90,,,jknaps-g2-esports-s7
+Player 2,Rizzo,G2 Esports,RLCS Season 7,2019,NA,,87,,,rizzo-g2-esports-s7
+Player 3,Chicago,G2 Esports,RLCS Season 7,2019,NA,,88,,,chicago-g2-esports-s7
+Sub,Mijo,G2 Esports,RLCS Season 7,2019,NA,,69,76,,mijo-sub-g2-esports-s7
+Coach,Jahzo,G2 Esports,RLCS Season 7,2019,NA,,82,,,jahzo-coach-g2-esports-s7
+Player 1,SquishyMuffinz,Cloud9,RLCS Season 7,2019,NA,,91,,,squishymuffinz-cloud9-s7
+Player 2,Gimmick,Cloud9,RLCS Season 7,2019,NA,,89,,,gimmick-cloud9-s7
+Player 3,Torment,Cloud9,RLCS Season 7,2019,NA,,89,,,torment-cloud9-s7
+Sub,Sadjunior,Cloud9,RLCS Season 7,2019,NA,,70,,,sadjunior-sub-cloud9-s7
+Player 1,Kronovi,Rogue,RLCS Season 7,2019,NA,,86,,,kronovi-rogue-s7
+Player 2,Wonder,Rogue,RLCS Season 7,2019,NA,,82,,,wonder-rogue-s7
+Player 3,AYYJAYY,Rogue,RLCS Season 7,2019,NA,,87,,,ayyjayy-rogue-s7
+Sub,Sizz,Rogue,RLCS Season 7,2019,NA,,73,,,sizz-sub-rogue-s7
+Player 1,jstn.,NRG Esports,RLCS Season 7,2019,NA,,91,,,jstn-nrg-esports-s7
+Player 2,GarrettG,NRG Esports,RLCS Season 7,2019,NA,,91,,,garrettg-nrg-esports-s7
+Player 3,Fireburner,NRG Esports,RLCS Season 7,2019,NA,,87,,,fireburner-nrg-esports-s7
+Coach,Chrome,NRG Esports,RLCS Season 7,2019,NA,,83,,,chrome-coach-nrg-esports-s7
+Player 1,GarrettG,NRG Esports,RLCS Season 8,2019,NA,,94,,,garrettg-nrg-esports-s8
+Player 2,jstn.,NRG Esports,RLCS Season 8,2019,NA,,95,,,jstn-nrg-esports-s8
+Player 3,Turbopolsa,NRG Esports,RLCS Season 8,2019,NA,,94,,,turbopolsa-nrg-esports-s8
+Sub,Moses,NRG Esports,RLCS Season 8,2019,NA,,68,,,moses-sub-nrg-esports-s8
+Coach,Sizz,NRG Esports,RLCS Season 8,2019,NA,,84,,,sizz-coach-nrg-esports-s8
+Player 1,Arsenal,Spacestation Gaming,RLCS Season 8,2019,NA,,87,,,arsenal-spacestation-gaming-s8
+Player 2,AxB,Spacestation Gaming,RLCS Season 8,2019,NA,,86,,,axb-spacestation-gaming-s8
+Player 3,Sypical,Spacestation Gaming,RLCS Season 8,2019,NA,,91,,,sypical-spacestation-gaming-s8
+Coach,Chrome,Spacestation Gaming,RLCS Season 8,2019,NA,,84,,,chrome-coach-spacestation-gaming-s8
+Player 1,Gyro.,Pittsburgh Knights,RLCS Season 8,2019,NA,,86,,,gyro-pittsburgh-knights-s8
+Player 2,Retals,Pittsburgh Knights,RLCS Season 8,2019,NA,,87,,,retals-pittsburgh-knights-s8
+Player 3,mist,Pittsburgh Knights,RLCS Season 8,2019,NA,,88,,,mist-pittsburgh-knights-s8
+Sub,Mala,Pittsburgh Knights,RLCS Season 8,2019,NA,,64,,,mala-sub-pittsburgh-knights-s8
+Coach,Moopy,Pittsburgh Knights,RLCS Season 8,2019,NA,,80,,,moopy-coach-pittsburgh-knights-s8
+Player 1,hockser,eUnited,RLCS Season 8,2019,NA,,82,,,hockser-eunited-s8
+Player 2,Roll Dizz,eUnited,RLCS Season 8,2019,NA,,79,,,rolldizz-eunited-s8
+Player 3,ayjacks,eUnited,RLCS Season 8,2019,NA,,78,,,ayjacks-eunited-s8
+Sub,fire,eUnited,RLCS Season 8,2019,NA,,60,,,fire-sub-eunited-s8
+Player 1,Rizzo,G2 Esports,RLCS Season 9,2020,NA,,87,,,rizzo-g2-esports-s9
+Player 2,JKnaps,G2 Esports,RLCS Season 9,2020,NA,,91,,,jknaps-g2-esports-s9
+Player 3,Chicago,G2 Esports,RLCS Season 9,2020,NA,,90,,,chicago-g2-esports-s9
+Sub,Mile,G2 Esports,RLCS Season 9,2020,NA,,65,,,mile-sub-g2-esports-s9
+Coach,Jahzo,G2 Esports,RLCS Season 9,2020,NA,,84,,,jahzo-coach-g2-esports-s9
+Player 1,Sypical,Spacestation Gaming,RLCS Season 9,2020,NA,,94,,,sypical-spacestation-gaming-s9
+Player 2,AxB,Spacestation Gaming,RLCS Season 9,2020,NA,,87,,,axb-spacestation-gaming-s9
+Player 3,Arsenal,Spacestation Gaming,RLCS Season 9,2020,NA,,91,,,arsenal-spacestation-gaming-s9
+Coach,Chrome,Spacestation Gaming,RLCS Season 9,2020,NA,,84,,,chrome-coach-spacestation-gaming-s9
+Player 1,Allushin,Ghost Gaming,RLCS Season 9,2020,NA,,86,,,allushin-ghost-gaming-s9
+Player 2,Atomic,Ghost Gaming,RLCS Season 9,2020,NA,,89,,,atomic-ghost-gaming-s9
+Player 3,mist,Ghost Gaming,RLCS Season 9,2020,NA,,90,,,mist-ghost-gaming-s9
+Player 1,GarrettG,NRG Esports,RLCS Season 9,2020,NA,,94,,,garrettg-nrg-esports-s9
+Player 2,jstn.,NRG Esports,RLCS Season 9,2020,NA,,95,,,jstn-nrg-esports-s9
+Player 3,Turbopolsa,NRG Esports,RLCS Season 9,2020,NA,,91,,,turbopolsa-nrg-esports-s9
+Coach,Sizz,NRG Esports,RLCS Season 9,2020,NA,,85,,,sizz-coach-nrg-esports-s9
+Player 1,GarrettG,NRG Esports,RLCS X,2020-21,NA,,89,,,garrettg-nrg-esports-x
+Player 2,jstn.,NRG Esports,RLCS X,2020-21,NA,,91,,,jstn-nrg-esports-x
+Player 3,SquishyMuffinz,NRG Esports,RLCS X,2020-21,NA,,88,,,squishymuffinz-nrg-esports-x
+Coach,Sizz,NRG Esports,RLCS X,2020-21,NA,,82,,,sizz-coach-nrg-esports-x
+Player 1,Arsenal,Spacestation Gaming,RLCS X,2020-21,NA,,87,,,arsenal-spacestation-gaming-x
+Player 2,Retals,Spacestation Gaming,RLCS X,2020-21,NA,,87,,,retals-spacestation-gaming-x
+Player 3,Sypical,Spacestation Gaming,RLCS X,2020-21,NA,,89,,,sypical-spacestation-gaming-x
+Coach,Chrome,Spacestation Gaming,RLCS X,2020-21,NA,,84,,,chrome-coach-spacestation-gaming-x
+Player 1,JKnaps,G2 Esports,RLCS X,2020-21,NA,,87,,,jknaps-g2-esports-x
+Player 2,Chicago,G2 Esports,RLCS X,2020-21,NA,,87,,,chicago-g2-esports-x
+Player 3,dreaz,G2 Esports,RLCS X,2020-21,NA,,80,,,dreaz-g2-esports-x
+Coach,Jahzo,G2 Esports,RLCS X,2020-21,NA,,83,,,jahzo-coach-g2-esports-x
+Player 1,Firstkiller,Rogue,RLCS X,2020-21,NA,,91,93,,firstkiller-rogue-x
+Player 2,Turinturo,Rogue,RLCS X,2020-21,NA,,82,,,turinturo-rogue-x
+Player 3,Taroco,Rogue,RLCS X,2020-21,NA,,82,,,taroco-rogue-x
+Coach,CorruptedG,Rogue,RLCS X,2020-21,NA,,77,,,corruptedg-coach-rogue-x
+Player 1,Turbopolsa,Team Envy,RLCS X,2020-21,NA,,87,,,turbopolsa-team-envy-x
+Player 2,mist,Team Envy,RLCS X,2020-21,NA,,88,,,mist-team-envy-x
+Player 3,Atomic,Team Envy,RLCS X,2020-21,NA,,88,,,atomic-team-envy-x
+Player 1,AYYJAYY,FaZe Clan,RLCS X,2020-21,NA,,87,,,ayyjayy-faze-clan-x
+Player 2,Gyro.,FaZe Clan,RLCS X,2020-21,NA,,82,,,gyro-faze-clan-x
+Player 3,Allushin,FaZe Clan,RLCS X,2020-21,NA,,81,,,allushin-faze-clan-x
+Coach,Moopy,FaZe Clan,RLCS X,2020-21,NA,,80,,,moopy-coach-faze-clan-x
+Player 1,JKnaps,G2 Esports,RLCS 2021-22,2021-22,NA,,88,,,jknaps-g2-esports-2122
+Player 2,Chicago,G2 Esports,RLCS 2021-22,2021-22,NA,,87,,,chicago-g2-esports-2122
+Player 3,Atomic,G2 Esports,RLCS 2021-22,2021-22,NA,,90,,,atomic-g2-esports-2122
+Coach,Satthew,G2 Esports,RLCS 2021-22,2021-22,NA,,83,,,satthew-coach-g2-esports-2122
+Player 1,Firstkiller,FaZe Clan,RLCS 2021-22,2021-22,NA,,91,93,,firstkiller-faze-clan-2122
+Player 2,AYYJAYY,FaZe Clan,RLCS 2021-22,2021-22,NA,,88,,,ayyjayy-faze-clan-2122
+Player 3,Sypical,FaZe Clan,RLCS 2021-22,2021-22,NA,,87,,,sypical-faze-clan-2122
+Coach,Roll Dizz,FaZe Clan,RLCS 2021-22,2021-22,NA,,79,,,rolldizz-coach-faze-clan-2122
+Player 1,GarrettG,NRG Esports,RLCS 2021-22,2021-22,NA,,87,,,garrettg-nrg-esports-2122
+Player 2,jstn.,NRG Esports,RLCS 2021-22,2021-22,NA,,90,,,jstn-nrg-esports-2122
+Player 3,SquishyMuffinz,NRG Esports,RLCS 2021-22,2021-22,NA,,87,,,squishymuffinz-nrg-esports-2122
+Coach,Sizz,NRG Esports,RLCS 2021-22,2021-22,NA,,81,,,sizz-coach-nrg-esports-2122
+Player 1,Torment,Version1,RLCS 2021-22,2021-22,NA,,84,,,torment-version1-2122
+Player 2,Comm,Version1,RLCS 2021-22,2021-22,NA,,86,,,comm-version1-2122
+Player 3,BeastMode,Version1,RLCS 2021-22,2021-22,NA,,90,,,beastmode-version1-2122
+Coach,Fireburner,Version1,RLCS 2021-22,2021-22,NA,,83,,,fireburner-coach-version1-2122
+Player 1,Arsenal,Spacestation Gaming,RLCS 2021-22,2021-22,NA,,86,,,arsenal-spacestation-gaming-2122
+Player 2,Retals,Spacestation Gaming,RLCS 2021-22,2021-22,NA,,85,,,retals-spacestation-gaming-2122
+Player 3,Daniel,Spacestation Gaming,RLCS 2021-22,2021-22,NA,,89,,,daniel-spacestation-gaming-2122
+Coach,Chrome,Spacestation Gaming,RLCS 2021-22,2021-22,NA,,85,,,chrome-coach-spacestation-gaming-2122
+Player 1,mist,OpTic Gaming,RLCS 2021-22,2021-22,NA,,86,,,mist-optic-gaming-2122
+Player 2,dreaz,OpTic Gaming,RLCS 2021-22,2021-22,NA,,81,,,dreaz-optic-gaming-2122
+Player 3,Allushin,OpTic Gaming,RLCS 2021-22,2021-22,NA,,79,,,allushin-optic-gaming-2122
+Coach,RawGreg,OpTic Gaming,RLCS 2021-22,2021-22,NA,,80,,,rawgreg-coach-optic-gaming-2122
+Player 1,ApparentlyJack,Gen.G Mobil1 Racing,RLCS 2022-23,2022-23,NA,,90,,,apparentlyjack-gen-g-mobil1-racing-2223
+Player 2,Noly,Gen.G Mobil1 Racing,RLCS 2022-23,2022-23,NA,,88,,,noly-gen-g-mobil1-racing-2223
+Player 3,Chronic,Gen.G Mobil1 Racing,RLCS 2022-23,2022-23,NA,,89,,,chronic-gen-g-mobil1-racing-2223
+Coach,Allushin,Gen.G Mobil1 Racing,RLCS 2022-23,2022-23,NA,,83,,,allushin-coach-gen-g-mobil1-racing-2223
+Player 1,Firstkiller,FaZe Clan,RLCS 2022-23,2022-23,NA,,91,,,firstkiller-faze-clan-2223
+Player 2,mist,FaZe Clan,RLCS 2022-23,2022-23,NA,,88,,,mist-faze-clan-2223
+Player 3,Sypical,FaZe Clan,RLCS 2022-23,2022-23,NA,,87,,,sypical-faze-clan-2223
+Coach,Roll Dizz,FaZe Clan,RLCS 2022-23,2022-23,NA,,83,,,rolldizz-coach-faze-clan-2223
+Player 1,JKnaps,G2 Esports,RLCS 2022-23,2022-23,NA,,87,,,jknaps-g2-esports-2223
+Player 2,Chicago,G2 Esports,RLCS 2022-23,2022-23,NA,,86,,,chicago-g2-esports-2223
+Player 3,Atomic,G2 Esports,RLCS 2022-23,2022-23,NA,,88,,,atomic-g2-esports-2223
+Coach,Satthew,G2 Esports,RLCS 2022-23,2022-23,NA,,87,,,satthew-coach-g2-esports-2223
+Player 1,Arsenal,Spacestation Gaming,RLCS 2022-23,2022-23,NA,,84,,,arsenal-spacestation-gaming-2223
+Player 2,Lj.,Spacestation Gaming,RLCS 2022-23,2022-23,NA,,87,,,lj-spacestation-gaming-2223
+Player 3,hockser,Spacestation Gaming,RLCS 2022-23,2022-23,NA,,82,,,hockser-spacestation-gaming-2223
+Coach,Chrome,Spacestation Gaming,RLCS 2022-23,2022-23,NA,,85,,,chrome-coach-spacestation-gaming-2223
+Player 1,crr,Complexity Gaming,RLCS 2022-23,2022-23,NA,,87,,,crr-complexity-gaming-2223
+Player 2,Reysbull,Complexity Gaming,RLCS 2022-23,2022-23,NA,,86,,,reysbull-complexity-gaming-2223
+Player 3,ajg,Complexity Gaming,RLCS 2022-23,2022-23,NA,,84,,,ajg-complexity-gaming-2223
+Coach,Aguesome,Complexity Gaming,RLCS 2022-23,2022-23,NA,,83,,,aguesome-coach-complexity-gaming-2223
+Player 1,BeastMode,G2 Stride,RLCS 2024,2024,NA,,94,,,beastmode-g2-stride-2024
+Player 2,Atomic,G2 Stride,RLCS 2024,2024,NA,,94,,,atomic-g2-stride-2024
+Player 3,Daniel,G2 Stride,RLCS 2024,2024,NA,,95,,,daniel-g2-stride-2024
+Sub,dreaz,G2 Stride,RLCS 2024,2024,NA,,73,,,dreaz-sub-g2-stride-2024
+Coach,Satthew,G2 Stride,RLCS 2024,2024,NA,,86,,,satthew-coach-g2-stride-2024
+Player 1,ApparentlyJack,Gen.G Mobil1 Racing,RLCS 2024,2024,NA,,87,,,apparentlyjack-gen-g-mobil1-racing-2024
+Player 2,Chronic,Gen.G Mobil1 Racing,RLCS 2024,2024,NA,,87,,,chronic-gen-g-mobil1-racing-2024
+Player 3,Firstkiller,Gen.G Mobil1 Racing,RLCS 2024,2024,NA,,91,,,firstkiller-gen-g-mobil1-racing-2024
+Coach,RawGreg,Gen.G Mobil1 Racing,RLCS 2024,2024,NA,,83,,,rawgreg-coach-gen-g-mobil1-racing-2024
+Player 1,Lj.,Spacestation Gaming,RLCS 2024,2024,NA,,88,,,lj-spacestation-gaming-2024
+Player 2,Chicago,Spacestation Gaming,RLCS 2024,2024,NA,,84,,,chicago-spacestation-gaming-2024
+Player 3,hockser,Spacestation Gaming,RLCS 2024,2024,NA,,83,,,hockser-spacestation-gaming-2024
+Coach,Chrome,Spacestation Gaming,RLCS 2024,2024,NA,,85,,,chrome-coach-spacestation-gaming-2024
+Player 1,JKnaps,OG,RLCS 2024,2024,NA,,84,,,jknaps-og-2024
+Player 2,Noly,OG,RLCS 2024,2024,NA,,84,,,noly-og-2024
+Player 3,Comm,OG,RLCS 2024,2024,NA,,85,,,comm-og-2024
+Player 1,BeastMode,NRG Esports,RLCS 2025,2025,NA,,94,,,beastmode-nrg-esports-2025
+Player 2,Atomic,NRG Esports,RLCS 2025,2025,NA,,94,,,atomic-nrg-esports-2025
+Player 3,Daniel,NRG Esports,RLCS 2025,2025,NA,,94,,,daniel-nrg-esports-2025
+Coach,Satthew,NRG Esports,RLCS 2025,2025,NA,,90,,,satthew-coach-nrg-esports-2025
+Player 1,Firstkiller,The Ultimates,RLCS 2025,2025,NA,,91,,,firstkiller-the-ultimates-2025
+Player 2,Lj.,The Ultimates,RLCS 2025,2025,NA,,89,,,lj-the-ultimates-2025
+Player 3,Chronic,The Ultimates,RLCS 2025,2025,NA,,88,,,chronic-the-ultimates-2025
+Player 1,Scrzbbles,Spacestation Gaming,RLCS 2025,2025,NA,,84,,,scrzbbles-spacestation-gaming-2025
+Player 2,reveal,Spacestation Gaming,RLCS 2025,2025,NA,,86,,,reveal-spacestation-gaming-2025
+Player 3,kofyr,Spacestation Gaming,RLCS 2025,2025,NA,,85,,,kofyr-spacestation-gaming-2025
+Coach,Xpére,Spacestation Gaming,RLCS 2025,2025,NA,,84,,,xpere-coach-spacestation-gaming-2025
+Player 1,MaJicBear,Gen.G Mobil1 Racing,RLCS 2025,2025,NA,,84,,,majicbear-gen-g-mobil1-racing-2025
+Player 2,CHEESE.,Gen.G Mobil1 Racing,RLCS 2025,2025,NA,,86,,,cheese-gen-g-mobil1-racing-2025
+Player 3,jstn.,Gen.G Mobil1 Racing,RLCS 2025,2025,NA,,87,,,jstn-gen-g-mobil1-racing-2025
+Sub,Thundah,Gen.G Mobil1 Racing,RLCS 2025,2025,NA,,72,,,thundah-sub-gen-g-mobil1-racing-2025
+Coach,RawGreg,Gen.G Mobil1 Racing,RLCS 2025,2025,NA,,80,,,rawgreg-coach-gen-g-mobil1-racing-2025
+Player 1,2Piece,Shopify Rebellion,RLCS 2025,2025,NA,,82,,,2piece-shopify-rebellion-2025
+Player 2,Retals,Shopify Rebellion,RLCS 2025,2025,NA,,81,,,retals-shopify-rebellion-2025
+Player 3,Wahvey,Shopify Rebellion,RLCS 2025,2025,NA,,84,,,wahvey-shopify-rebellion-2025
+Coach,Memory,Shopify Rebellion,RLCS 2025,2025,NA,,76,,,memory-coach-shopify-rebellion-2025
+Player 1,BeastMode,NRG Esports,RLCS 2026,2026,NA,,92,,,beastmode-nrg-esports-2026
+Player 2,Atomic,NRG Esports,RLCS 2026,2026,NA,,93,,,atomic-nrg-esports-2026
+Player 3,Daniel,NRG Esports,RLCS 2026,2026,NA,,93,,,daniel-nrg-esports-2026
+Coach,Satthew,NRG Esports,RLCS 2026,2026,NA,,90,,,satthew-coach-nrg-esports-2026
+Player 1,Lj.,Shopify Rebellion,RLCS 2026,2026,NA,,89,,,lj-shopify-rebellion-2026
+Player 2,kofyr,Shopify Rebellion,RLCS 2026,2026,NA,,86,,,kofyr-shopify-rebellion-2026
+Player 3,Firstkiller,Shopify Rebellion,RLCS 2026,2026,NA,,94,,,firstkiller-shopify-rebellion-2026
+Coach,violentpanda,Shopify Rebellion,RLCS 2026,2026,NA,,84,,,violentpanda-coach-shopify-rebellion-2026
+Player 1,diaz,Spacestation Gaming,RLCS 2026,2026,NA,,87,,,diaz-spacestation-gaming-2026
+Player 2,Zach,Spacestation Gaming,RLCS 2026,2026,NA,,88,,,zach-spacestation-gaming-2026
+Player 3,reveal,Spacestation Gaming,RLCS 2026,2026,NA,,87,,,reveal-spacestation-gaming-2026
+Coach,Xpére,Spacestation Gaming,RLCS 2026,2026,NA,,87,,,xpere-coach-spacestation-gaming-2026
+Player 1,jstn.,FUT Esports,RLCS 2026,2026,NA,,85,,,jstn-fut-esports-na-2026
+Player 2,Chronic,FUT Esports,RLCS 2026,2026,NA,,86,,,chronic-fut-esports-na-2026
+Player 3,CHEESE.,FUT Esports,RLCS 2026,2026,NA,,86,,,cheese-fut-esports-na-2026
+Coach,adam_baguette,FUT Esports,RLCS 2026,2026,NA,,82,,,adambaguette-coach-fut-esports-na-2026
+Player 1,Drippay,Alpha Sydney,RLCS Season 3,2017,OCE,,83,,,drippay-alpha-sydney-s3
+Player 2,Jake,Alpha Sydney,RLCS Season 3,2017,OCE,,80,,,jake-alpha-sydney-s3
+Player 3,Torsos,Alpha Sydney,RLCS Season 3,2017,OCE,,82,,,torsos-alpha-sydney-s3
+Sub,ENiGMA,Alpha Sydney,RLCS Season 3,2017,OCE,,58,,,enigma-sub-alpha-sydney-s3
+Player 1,Bango,JAM Gaming,RLCS Season 3,2017,OCE,,74,,,bango-jam-gaming-s3
+Player 2,Express,JAM Gaming,RLCS Season 3,2017,OCE,,79,,,express-jam-gaming-s3
+Player 3,Montyconnor,JAM Gaming,RLCS Season 3,2017,OCE,,74,,,montyconnor-jam-gaming-s3
+Player 1,Drippay,Chiefs ESC,RLCS Season 4,2017,OCE,,86,,,drippay-chiefs-esports-club-s4
+Player 2,Jake,Chiefs ESC,RLCS Season 4,2017,OCE,,81,,,jake-chiefs-esports-club-s4
+Player 3,Torsos,Chiefs ESC,RLCS Season 4,2017,OCE,,84,,,torsos-chiefs-esports-club-s4
+Sub,ENiGMA,Chiefs ESC,RLCS Season 4,2017,OCE,,60,,,enigma-sub-chiefs-esports-club-s4
+Player 1,Kamii,Pale Horse eSports,RLCS Season 4,2017,OCE,,79,,,kamii-pale-horse-esports-s4
+Player 2,CJCJ,Pale Horse eSports,RLCS Season 4,2017,OCE,,78,,,cjcj-pale-horse-esports-s4
+Player 3,Kia,Pale Horse eSports,RLCS Season 4,2017,OCE,,77,,,kia-pale-horse-esports-s4
+Sub,Julz,Pale Horse eSports,RLCS Season 4,2017,OCE,,60,,,julz-sub-pale-horse-esports-s4
+Player 1,Drippay,Chiefs Esports Club,RLCS Season 5,2018,OCE,,87,,,drippay-chiefs-esports-club-s5
+Player 2,Jake,Chiefs Esports Club,RLCS Season 5,2018,OCE,,82,,,jake-chiefs-esports-club-s5
+Player 3,Torsos,Chiefs Esports Club,RLCS Season 5,2018,OCE,,85,,,torsos-chiefs-esports-club-s5
+Sub,Requiem,Chiefs Esports Club,RLCS Season 5,2018,OCE,,60,,,requiem-sub-chiefs-esports-club-s5
+Player 1,CJCJ,Tainted Minds,RLCS Season 5,2018,OCE,,80,,,cjcj-tainted-minds-s5
+Player 2,Julz,Tainted Minds,RLCS Season 5,2018,OCE,,79,,,julz-tainted-minds-s5
+Player 3,Kamii,Tainted Minds,RLCS Season 5,2018,OCE,,81,,,kamii-tainted-minds-s5
+Sub,xkorez,Tainted Minds,RLCS Season 5,2018,OCE,,60,,,xkorez-sub-tainted-minds-s5
+Player 1,CJCJ,Chiefs Esports Club,RLCS Season 6,2018,OCE,,80,,,cjcj-chiefs-esports-club-s6
+Player 2,Express,Chiefs Esports Club,RLCS Season 6,2018,OCE,,81,,,express-chiefs-esports-club-s6
+Player 3,Shadey,Chiefs Esports Club,RLCS Season 6,2018,OCE,,78,,,shadey-chiefs-esports-club-s6
+Player 1,Torsos,Tainted Minds,RLCS Season 6,2018,OCE,,84,,,torsos-tainted-minds-s6
+Player 2,Drippay,Tainted Minds,RLCS Season 6,2018,OCE,,87,,,drippay-tainted-minds-s6
+Player 3,Kamii,Tainted Minds,RLCS Season 6,2018,OCE,,84,,,kamii-tainted-minds-s6
+Player 1,Decka,Ground Zero Gaming,RLCS Season 7,2019,OCE,,80,,,decka-ground-zero-gaming-s7
+Player 2,Siki,Ground Zero Gaming,RLCS Season 7,2019,OCE,,78,,,siki-ground-zero-gaming-s7
+Player 3,Julz,Ground Zero Gaming,RLCS Season 7,2019,OCE,,79,,,julz-ground-zero-gaming-s7
+Sub,Kia,Ground Zero Gaming,RLCS Season 7,2019,OCE,,55,,,kia-sub-ground-zero-gaming-s7
+Player 1,Kamii,Renegades,RLCS Season 7,2019,OCE,,81,,,kamii-renegades-s7
+Player 2,Torsos,Renegades,RLCS Season 7,2019,OCE,,83,,,torsos-renegades-s7
+Player 3,ZeN,Renegades,RLCS Season 7,2019,OCE,,80,,,zen-oce-renegades-s7
+Sub,Requiem,Renegades,RLCS Season 7,2019,OCE,,55,,,requiem-sub-renegades-s7
+Player 1,Torsos,Renegades,RLCS Season 8,2019,OCE,,82,,,torsos-renegades-s8
+Player 2,Kamii,Renegades,RLCS Season 8,2019,OCE,,83,,,kamii-renegades-s8
+Player 3,Siki,Renegades,RLCS Season 8,2019,OCE,,81,,,siki-renegades-s8
+Sub,Yeatzy,Renegades,RLCS Season 8,2019,OCE,,60,,,yeatzy-sub-renegades-s8
+Player 1,Walcott,Canberra Havoc,RLCS Season 8,2019,OCE,,73,,,walcott-canberra-havoc-s8
+Player 2,Le Duck,Canberra Havoc,RLCS Season 8,2019,OCE,,71,,,leduck-canberra-havoc-s8
+Player 3,SPYDOGE,Canberra Havoc,RLCS Season 8,2019,OCE,,70,,,spydoge-canberra-havoc-s8
+Sub,Riv,Canberra Havoc,RLCS Season 8,2019,OCE,,50,,,riv-sub-canberra-havoc-s8
+Coach,Jimmah,Canberra Havoc,RLCS Season 8,2019,OCE,,72,,,jimmah-coach-canberra-havoc-s8
+Player 1,Julz,Ground Zero Gaming,RLCS Season 9,2020,OCE,,82,,,julz-ground-zero-gaming-s9
+Player 2,Express,Ground Zero Gaming,RLCS Season 9,2020,OCE,,81,,,express-ground-zero-gaming-s9
+Player 3,Decka,Ground Zero Gaming,RLCS Season 9,2020,OCE,,84,,,decka-ground-zero-gaming-s9
+Player 1,KennySalmon,FURY,RLCS Season 9,2020,OCE,,78,,,kennysalmon-fury-s9
+Player 2,Amphis,FURY,RLCS Season 9,2020,OCE,,80,,,amphis-fury-s9
+Player 3,Scarth,FURY,RLCS Season 9,2020,OCE,,78,,,scarth-fury-s9
+Coach,Jimmah,FURY,RLCS Season 9,2020,OCE,,77,,,jimmah-coach-fury-s9
+Player 1,Amphis,Ground Zero Gaming,RLCS X,2020-21,OCE,,84,,,amphis-ground-zero-gaming-x
+Player 2,Torsos,Ground Zero Gaming,RLCS X,2020-21,OCE,,83,,,torsos-ground-zero-gaming-x
+Player 3,Express,Ground Zero Gaming,RLCS X,2020-21,OCE,,82,,,express-ground-zero-gaming-x
+Player 1,Drippay,Cringe Society,RLCS X,2020-21,OCE,,82,,,drippay-cringe-society-x
+Player 2,Decka,Cringe Society,RLCS X,2020-21,OCE,,82,,,decka-cringe-society-x
+Player 3,Julz,Cringe Society,RLCS X,2020-21,OCE,,80,,,julz-cringe-society-x
+Player 1,CJCJ,Renegades,RLCS 2021-22,2021-22,OCE,,80,,,cjcj-renegades-2122
+Player 2,Kamii,Renegades,RLCS 2021-22,2021-22,OCE,,82,,,kamii-renegades-2122
+Player 3,Fever,Renegades,RLCS 2021-22,2021-22,OCE,,84,,,fever-renegades-2122
+Player 1,Scrub,Pioneers,RLCS 2021-22,2021-22,OCE,,79,,,scrub-pioneers-oce-2122
+Player 2,Superlachie,Pioneers,RLCS 2021-22,2021-22,OCE,,82,,,superlachie-pioneers-oce-2122
+Player 3,bananahead,Pioneers,RLCS 2021-22,2021-22,OCE,,81,,,bananahead-pioneers-oce-2122
+Player 1,Amphis,PWR,RLCS 2022-23,2022-23,OCE,,84,,,amphis-pwr-2223
+Player 2,Torsos,PWR,RLCS 2022-23,2022-23,OCE,,83,,,torsos-pwr-2223
+Player 3,Fever,PWR,RLCS 2022-23,2022-23,OCE,,85,,,fever-pwr-2223
+Player 1,Scrub,Pioneers,RLCS 2022-23,2022-23,OCE,,78,,,scrub-pioneers-oce-2223
+Player 2,bananahead,Pioneers,RLCS 2022-23,2022-23,OCE,,84,,,bananahead-pioneers-oce-2223
+Player 3,hntr,Pioneers,RLCS 2022-23,2022-23,OCE,,80,,,hntr-pioneers-oce-2223
+Player 1,Torsos,PWR,RLCS 2024,2024,OCE,,84,,,torsos-pwr-2024
+Player 2,Fever,PWR,RLCS 2024,2024,OCE,,86,,,fever-pwr-2024
+Player 3,bananahead,PWR,RLCS 2024,2024,OCE,,85,,,bananahead-pwr-2024
+Player 1,Superlachie,QuikTrip Pioneers Gaming,RLCS 2024,2024,OCE,,83,,,superlachie-pioneers-oce-2024
+Player 2,Amphis,QuikTrip Pioneers Gaming,RLCS 2024,2024,OCE,,84,,,amphis-pioneers-oce-2024
+Player 3,Fibérr,QuikTrip Pioneers Gaming,RLCS 2024,2024,OCE,,82,,,fiberr-pioneers-oce-2024
+Player 1,Fever,Wildcard,RLCS 2025,2025,OCE,,87,,,fever-wildcard-2025
+Player 2,Torsos,Wildcard,RLCS 2025,2025,OCE,,84,,,torsos-wildcard-2025
+Player 3,bananahead,Wildcard,RLCS 2025,2025,OCE,,85,,,bananahead-wildcard-2025
+Player 1,Superlachie,TSM,RLCS 2025,2025,OCE,,84,,,superlachie-tsm-2025
+Player 2,Amphis,TSM,RLCS 2025,2025,OCE,,84,,,amphis-tsm-2025
+Player 3,kaka,TSM,RLCS 2025,2025,OCE,,80,,,kaka-tsm-2025
+Player 1,gus,PWR,RLCS 2026,2026,OCE,,82,,,gus-pwr-2026
+Player 2,Superlachie,PWR,RLCS 2026,2026,OCE,,80,,,superlachie-pwr-2026
+Player 3,Fibérr,PWR,RLCS 2026,2026,OCE,,82,,,fiberr-pwr-2026
+Coach,freakii,PWR,RLCS 2026,2026,OCE,,78,,,freakii-coach-pwr-2026
+Player 1,LiberatoRL,Wings E-Sports,RLCS Season 2,2016,SAM,SAM-only,71,,,liberatorl-wings-e-sports-s2
+Player 2,Ninja23509,Wings E-Sports,RLCS Season 2,2016,SAM,SAM-only,74,,,ninja23509-wings-e-sports-s2
+Player 3,repi,Wings E-Sports,RLCS Season 2,2016,SAM,SAM-only,73,,,repi-wings-e-sports-s2
+Player 1,repi,INTZ eSports,RLCS Season 7,2019,SAM,,79,,,repi-intz-esports-s7
+Player 2,PJ,INTZ eSports,RLCS Season 7,2019,SAM,,79,,,pj-intz-esports-s7
+Player 3,matix,INTZ eSports,RLCS Season 7,2019,SAM,,81,,,matix-intz-esports-s7
+Coach,Jato,INTZ eSports,RLCS Season 7,2019,SAM,,70,,,jato-coach-intz-esports-s7
+Player 1,caard,Lowkey Esports,RLCS Season 7,2019,SAM,,83,,,caard-lowkey-esports-s7
+Player 2,renaN,Lowkey Esports,RLCS Season 7,2019,SAM,,80,,,renan-lowkey-esports-s7
+Player 3,tander,Lowkey Esports,RLCS Season 7,2019,SAM,,80,,,tander-lowkey-esports-s7
+Sub,fAsi,Lowkey Esports,RLCS Season 7,2019,SAM,,75,,,fasi-sub-lowkey-esports-s7
+Player 1,caiotg1,Erodium,RLCS Season 7,2019,SAM,SAM-only,81,,Legacy,caiotg1-erodium-s7
+Player 2,math,Erodium,RLCS Season 7,2019,SAM,SAM-only,82,,Legacy,math-erodium-s7
+Player 3,valt,Erodium,RLCS Season 7,2019,SAM,SAM-only,80,,Legacy,valt-erodium-s7
+Sub,Lance,Erodium,RLCS Season 7,2019,SAM,SAM-only,67,,Legacy,lance-sub-erodium-s7
+Coach,Tibiano,Erodium,RLCS Season 7,2019,SAM,SAM-only,60,,Legacy,tibiano-coach-erodium-s7
+Player 1,Haberkamper,Lotus,RLCS Season 7,2019,SAM,SAM-only,80,,Legacy,haberkamper-lotus-s7
+Player 2,FirefoxD,Lotus,RLCS Season 7,2019,SAM,SAM-only,79,,Legacy,firefoxd-lotus-s7
+Player 3,Juan,Lotus,RLCS Season 7,2019,SAM,SAM-only,77,,Legacy,juan-lotus-s7
+Sub,DuduBRHue,Lotus,RLCS Season 7,2019,SAM,SAM-only,64,,Legacy,dudubrhue-sub-lotus-s7
+Player 1,BRUNOVISQUII,Orchid,RLCS Season 7,2019,SAM,SAM-only,75,,,brunovisquii-orchid-s7
+Player 2,C4,Orchid,RLCS Season 7,2019,SAM,SAM-only,72,,,c4-orchid-s7
+Player 3,Noisy,Orchid,RLCS Season 7,2019,SAM,SAM-only,71,,,noisy-orchid-s7
+Sub,MateusSTL,Orchid,RLCS Season 7,2019,SAM,SAM-only,66,,,mateusstl-sub-orchid-s7
+Player 1,Szaro,Team CryptiK,RLCS Season 7,2019,SAM,SAM-only,72,,,szaro-team-cryptik-s7
+Player 2,Flasheeyy,Team CryptiK,RLCS Season 7,2019,SAM,SAM-only,71,,,flasheeyy-team-cryptik-s7
+Player 3,Sempa,Team CryptiK,RLCS Season 7,2019,SAM,SAM-only,70,,,sempa-team-cryptik-s7
+Player 1,Gonk,GFactor Galaxy,RLCS Season 7,2019,SAM,SAM-only,73,,,gonk-gfactor-galaxy-s7
+Player 2,PansitoFrances,GFactor Galaxy,RLCS Season 7,2019,SAM,SAM-only,73,,,pansitofrances-gfactor-galaxy-s7
+Player 3,Orbi7,GFactor Galaxy,RLCS Season 7,2019,SAM,SAM-only,71,,,orbi7-gfactor-galaxy-s7
+Sub,Deathxplosion,GFactor Galaxy,RLCS Season 7,2019,SAM,SAM-only,65,,,deathxplosion-sub-gfactor-galaxy-s7
+Player 1,davinsano,FantasyDeath,RLCS Season 7,2019,SAM,SAM-only,72,,,davinsano-fantasydeath-s7
+Player 2,LeoDkn,FantasyDeath,RLCS Season 7,2019,SAM,SAM-only,72,,,leodkn-fantasydeath-s7
+Player 3,snipjz,FantasyDeath,RLCS Season 7,2019,SAM,SAM-only,72,,,snipjz-fantasydeath-s7
+Sub,SrForeverplays,FantasyDeath,RLCS Season 7,2019,SAM,SAM-only,65,,,srforeverplays-sub-fantasydeath-s7
+Player 1,caard,Lowkey Esports,RLCS Season 8,2019,SAM,,84,,,caard-lowkey-esports-s8
+Player 2,caiotg1,Lowkey Esports,RLCS Season 8,2019,SAM,,82,,,caiotg1-lowkey-esports-s8
+Player 3,tander,Lowkey Esports,RLCS Season 8,2019,SAM,,80,,,tander-lowkey-esports-s8
+Sub,Firewall154,Lowkey Esports,RLCS Season 8,2019,SAM,,73,,,firewall154-sub-lowkey-esports-s8
+Coach,Kairos,Lowkey Esports,RLCS Season 8,2019,SAM,,78,,,kairos-coach-lowkey-esports-s8
+Player 1,math,The Three Sins,RLCS Season 8,2019,SAM,,82,,,math-the-three-sins-s8
+Player 2,matix,The Three Sins,RLCS Season 8,2019,SAM,,81,,,matix-the-three-sins-s8
+Player 3,valt,The Three Sins,RLCS Season 8,2019,SAM,,80,,,valt-the-three-sins-s8
+Sub,Jato,The Three Sins,RLCS Season 8,2019,SAM,,54,,,jato-sub-the-three-sins-s8
+Coach,BananaMan,The Three Sins,RLCS Season 8,2019,SAM,,70,,,bananaman-coach-the-three-sins-s8
+Player 1,Haberkamper,Lotus,RLCS Season 8,2019,SAM,SAM-only,82,,Legacy,haberkamper-lotus-s8
+Player 2,renaN,Lotus,RLCS Season 8,2019,SAM,SAM-only,81,,Legacy,renan-lotus-s8
+Player 3,FirefoxD,Lotus,RLCS Season 8,2019,SAM,SAM-only,80,,Legacy,firefoxd-lotus-s8
+Sub,DuduBRHue,Lotus,RLCS Season 8,2019,SAM,SAM-only,70,,Legacy,dudubrhue-sub-lotus-s8
+Player 1,repi,INTZ eSports,RLCS Season 8,2019,SAM,SAM-only,81,,Legacy,repi-intz-esports-s8
+Player 2,PJ,INTZ eSports,RLCS Season 8,2019,SAM,SAM-only,82,,Legacy,pj-intz-esports-s8
+Player 3,Juan,INTZ eSports,RLCS Season 8,2019,SAM,SAM-only,78,,Legacy,juan-intz-esports-s8
+Sub,Sword,INTZ eSports,RLCS Season 8,2019,SAM,SAM-only,67,,Legacy,sword-sub-intz-esports-s8
+Player 1,Luk,Oxey Team,RLCS Season 8,2019,SAM,SAM-only,73,,,luk-oxey-team-s8
+Player 2,Reysbull,Oxey Team,RLCS Season 8,2019,SAM,SAM-only,74,,,reysbull-oxey-team-s8
+Player 3,DisLike,Oxey Team,RLCS Season 8,2019,SAM,SAM-only,72,,,dislike-oxey-team-s8
+Sub,Richy,Oxey Team,RLCS Season 8,2019,SAM,SAM-only,62,,,richy-sub-oxey-team-s8
+Coach,Androzz,Oxey Team,RLCS Season 8,2019,SAM,SAM-only,65,,,androzz-coach-oxey-team-s8
+Player 1,Lexim,Hawks,RLCS Season 8,2019,SAM,SAM-only,73,,,lexim-hawks-s8
+Player 2,Gonk,Hawks,RLCS Season 8,2019,SAM,SAM-only,73,,,gonk-hawks-s8
+Player 3,Sempa,Hawks,RLCS Season 8,2019,SAM,SAM-only,72,,,sempa-hawks-s8
+Sub,Manteca,Hawks,RLCS Season 8,2019,SAM,SAM-only,68,,,manteca-sub-hawks-s8
+Coach,Aguesome,Hawks,RLCS Season 8,2019,SAM,SAM-only,70,,,aguesome-coach-hawks-s8
+Player 1,ajg,Monos,RLCS Season 8,2019,SAM,SAM-only,76,,,ajg-monos-s8
+Player 2,Shad,Monos,RLCS Season 8,2019,SAM,SAM-only,76,,,shad-monos-s8
+Player 3,GaTox,Monos,RLCS Season 8,2019,SAM,SAM-only,72,,,gatox-monos-s8
+Player 1,BRUNOVISQUII,Orchid,RLCS Season 8,2019,SAM,SAM-only,75,,,brunovisquii-orchid-s8
+Player 2,Szaro,Orchid,RLCS Season 8,2019,SAM,SAM-only,74,,,szaro-orchid-s8
+Player 3,Noisy,Orchid,RLCS Season 8,2019,SAM,SAM-only,71,,,noisy-orchid-s8
+Sub,MateusSTL,Orchid,RLCS Season 8,2019,SAM,SAM-only,67,,,mateusstl-sub-orchid-s8
+Player 1,caard,Ellevens Esports,RLCS Season 9,2020,SAM,,84,85,,caard-ellevens-esports-s9
+Player 2,caiotg1,Ellevens Esports,RLCS Season 9,2020,SAM,,83,84,,caiotg1-ellevens-esports-s9
+Player 3,tander,Ellevens Esports,RLCS Season 9,2020,SAM,,81,82,,tander-ellevens-esports-s9
+Player 1,Haberkamper,Avidity Esports,RLCS Season 9,2020,SAM,,84,,,haberkamper-avidity-esports-s9
+Player 2,FirefoxD,Avidity Esports,RLCS Season 9,2020,SAM,,83,,,firefoxd-avidity-esports-s9
+Player 3,renaN,Avidity Esports,RLCS Season 9,2020,SAM,,83,,,renan-avidity-esports-s9
+Player 1,math,Most Wanted,RLCS Season 9,2020,SAM,SAM-only,84,,Legacy,math-most-wanted-s9
+Player 2,fAsi,Most Wanted,RLCS Season 9,2020,SAM,SAM-only,82,,Legacy,fasi-most-wanted-s9
+Player 3,Luk,Most Wanted,RLCS Season 9,2020,SAM,SAM-only,81,82,Legacy,luk-most-wanted-s9
+Sub,ianpinheiro,Most Wanted,RLCS Season 9,2020,SAM,SAM-only,75,,Legacy,ianpinheiro-sub-most-wanted-s9
+Player 1,matix,The Three Sins,RLCS Season 9,2020,SAM,SAM-only,80,,Legacy,matix-the-three-sins-s9
+Player 2,PJ,The Three Sins,RLCS Season 9,2020,SAM,SAM-only,81,,Legacy,pj-the-three-sins-s9
+Player 3,valt,The Three Sins,RLCS Season 9,2020,SAM,SAM-only,80,,Legacy,valt-the-three-sins-s9
+Sub,Brad,The Three Sins,RLCS Season 9,2020,SAM,SAM-only,77,,Legacy,brad-sub-the-three-sins-s9
+Coach,Cha0s,The Three Sins,RLCS Season 9,2020,SAM,SAM-only,74,,Legacy,cha0s-coach-the-three-sins-s9
+Player 1,Reysbull,True Neutral,RLCS Season 9,2020,SAM,SAM-only,79,,,reysbull-true-neutral-s9
+Player 2,Shad,True Neutral,RLCS Season 9,2020,SAM,SAM-only,78,,,shad-true-neutral-s9
+Player 3,Lexim,True Neutral,RLCS Season 9,2020,SAM,SAM-only,76,,,lexim-true-neutral-s9
+Sub,Manteca,True Neutral,RLCS Season 9,2020,SAM,SAM-only,68,,,manteca-sub-true-neutral-s9
+Coach,Aguesome,True Neutral,RLCS Season 9,2020,SAM,SAM-only,75,,,aguesome-coach-true-neutral-s9
+Player 1,repi,Poison Bullets,RLCS Season 9,2020,SAM,SAM-only,79,,,repi-poison-bullets-s9
+Player 2,droppz,Poison Bullets,RLCS Season 9,2020,SAM,SAM-only,79,,,droppz-poison-bullets-s9
+Player 3,Juan,Poison Bullets,RLCS Season 9,2020,SAM,SAM-only,76,,,juan-poison-bullets-s9
+Sub,Zanetti,Poison Bullets,RLCS Season 9,2020,SAM,SAM-only,73,,,zanetti-sub-poison-bullets-s9
+Coach,Majowww,Poison Bullets,RLCS Season 9,2020,SAM,SAM-only,73,,,majowww-coach-poison-bullets-s9
+Player 1,BRUNOVISQUII,Sapphire,RLCS Season 9,2020,SAM,SAM-only,77,,,brunovisquii-sapphire-s9
+Player 2,Sword,Sapphire,RLCS Season 9,2020,SAM,SAM-only,75,,,sword-sapphire-s9
+Player 3,SppydeR,Sapphire,RLCS Season 9,2020,SAM,SAM-only,77,,,sppyder-sapphire-s9
+Sub,SubHallz,Sapphire,RLCS Season 9,2020,SAM,SAM-only,72,,,subhallz-sub-sapphire-s9
+Coach,MateusSTL,Sapphire,RLCS Season 9,2020,SAM,SAM-only,76,,,mateusstl-coach-sapphire-s9
+Player 1,ajg,Three Point Shooters,RLCS Season 9,2020,SAM,SAM-only,75,,,ajg-three-point-shooters-s9
+Player 2,pan,Three Point Shooters,RLCS Season 9,2020,SAM,SAM-only,75,,,pan-three-point-shooters-s9
+Player 3,Gonk,Three Point Shooters,RLCS Season 9,2020,SAM,SAM-only,72,,,gonk-three-point-shooters-s9
+Sub,SrNaniTou,Three Point Shooters,RLCS Season 9,2020,SAM,SAM-only,70,,,srnanitou-sub-three-point-shooters-s9
+Coach,Laayoh,Three Point Shooters,RLCS Season 9,2020,SAM,SAM-only,70,,,laayoh-coach-three-point-shooters-s9
+Player 1,ajg,True Neutral,RLCS X,2020-21,SAM,,85,,,ajg-true-neutral-x
+Player 2,Reysbull,True Neutral,RLCS X,2020-21,SAM,,84,,,reysbull-true-neutral-x
+Player 3,Shad,True Neutral,RLCS X,2020-21,SAM,,83,,,shad-true-neutral-x
+Sub,Aguesome,True Neutral,RLCS X,2020-21,SAM,,71,,,aguesome-sub-true-neutral-x
+Coach,Aguesome,True Neutral,RLCS X,2020-21,SAM,,77,,,aguesome-coach-true-neutral-x
+Player 1,caard,FURIA,RLCS X,2020-21,SAM,,84,,,caard-furia-x
+Player 2,caiotg1,FURIA,RLCS X,2020-21,SAM,,83,,,caiotg1-furia-x
+Player 3,tander,FURIA,RLCS X,2020-21,SAM,,81,,,tander-furia-x
+Sub,STL,FURIA,RLCS X,2020-21,SAM,,74,,,stl-sub-furia-x
+Coach,STL,FURIA,RLCS X,2020-21,SAM,,81,,,stl-coach-furia-x
+Player 1,matix,The Three Sins,RLCS X,2020-21,SAM,SAM-only,81,,Legacy,matix-the-three-sins-x
+Player 2,PJ,The Three Sins,RLCS X,2020-21,SAM,SAM-only,80,,Legacy,pj-the-three-sins-x
+Player 3,valt,The Three Sins,RLCS X,2020-21,SAM,SAM-only,79,,Legacy,valt-the-three-sins-x
+Player 1,yanxnz,Rebel,RLCS X,2020-21,SAM,SAM-only,87,,Legacy,yanxnz-rebel-x
+Player 2,Aztromick,Rebel,RLCS X,2020-21,SAM,SAM-only,84,,Legacy,aztromick-rebel-x
+Player 3,snipjz,Rebel,RLCS X,2020-21,SAM,SAM-only,82,,Legacy,snipjz-rebel-x
+Coach,Bliss,Rebel,RLCS X,2020-21,SAM,SAM-only,77,,Legacy,bliss-coach-rebel-x
+Player 1,Haberkamper,Noble esports,RLCS X,2020-21,SAM,SAM-only,84,,Legacy,haberkamper-noble-esports-x
+Player 2,renaN,Noble esports,RLCS X,2020-21,SAM,SAM-only,83,,Legacy,renan-noble-esports-x
+Player 3,FirefoxD,Noble esports,RLCS X,2020-21,SAM,SAM-only,83,,Legacy,firefoxd-noble-esports-x
+Sub,Firewall154,Noble esports,RLCS X,2020-21,SAM,SAM-only,77,,Legacy,firewall154-sub-noble-esports-x
+Coach,Jato,Noble esports,RLCS X,2020-21,SAM,SAM-only,79,,Legacy,jato-coach-noble-esports-x
+Player 1,Szaro,Nocturns Gaming,RLCS X,2020-21,SAM,SAM-only,72,,,szaro-nocturns-gaming-x
+Player 2,TaTu,Nocturns Gaming,RLCS X,2020-21,SAM,SAM-only,73,,,tatu-nocturns-gaming-x
+Player 3,pan,Nocturns Gaming,RLCS X,2020-21,SAM,SAM-only,73,,,pan-nocturns-gaming-x
+Sub,Gonk,Nocturns Gaming,RLCS X,2020-21,SAM,SAM-only,70,,,gonk-sub-nocturns-gaming-x
+Coach,Nachusky,Nocturns Gaming,RLCS X,2020-21,SAM,SAM-only,60,,,nachusky-coach-nocturns-gaming-x
+Player 1,fAsi,Carnage Gaming,RLCS X,2020-21,SAM,SAM-only,77,,,fasi-carnage-gaming-x
+Player 2,ianpinheiro,Carnage Gaming,RLCS X,2020-21,SAM,SAM-only,73,,,ianpinheiro-carnage-gaming-x
+Player 3,Chr1s,Carnage Gaming,RLCS X,2020-21,SAM,SAM-only,72,,,chr1s-carnage-gaming-x
+Player 1,brad,Chromax,RLCS X,2020-21,SAM,SAM-only,75,,,brad-chromax-x
+Player 2,droppz,Chromax,RLCS X,2020-21,SAM,SAM-only,75,,,droppz-chromax-x
+Player 3,repi,Chromax,RLCS X,2020-21,SAM,SAM-only,75,,,repi-chromax-x
+Sub,Zanetti,Chromax,RLCS X,2020-21,SAM,SAM-only,63,,,zanetti-sub-chromax-x
+Player 1,caard,FURIA,RLCS 2021-22,2021-22,SAM,,83,85,,caard-furia-2122
+Player 2,caiotg1,FURIA,RLCS 2021-22,2021-22,SAM,,82,84,,caiotg1-furia-2122
+Player 3,yanxnz,FURIA,RLCS 2021-22,2021-22,SAM,,88,89,,yanxnz-furia-2122
+Sub,STL,FURIA,RLCS 2021-22,2021-22,SAM,,71,,,stl-sub-furia-2122
+Coach,Kairos,FURIA,RLCS 2021-22,2021-22,SAM,,77,80,,kairos-coach-furia-2122
+Player 1,Aztromick,The Club,RLCS 2021-22,2021-22,SAM,,82,83,,aztromick-the-club-2122
+Player 2,kv1,The Club,RLCS 2021-22,2021-22,SAM,,83,84,,kv1-the-club-2122
+Player 3,Lostt,The Club,RLCS 2021-22,2021-22,SAM,,85,86,,lostt-the-club-2122
+Sub,fAsi,The Club,RLCS 2021-22,2021-22,SAM,,77,,,fasi-sub-the-club-2122
+Coach,Michi,The Club,RLCS 2021-22,2021-22,SAM,,80,,,michi-coach-the-club-2122
+Player 1,Sadness,Team Secret,RLCS 2021-22,2021-22,SAM,,79,82,,sadness-team-secret-2122
+Player 2,nxghtt,Team Secret,RLCS 2021-22,2021-22,SAM,,78,82,,nxghtt-team-secret-2122
+Player 3,math,Team Secret,RLCS 2021-22,2021-22,SAM,,80,83,missing team secret's coach brunovisqui( overall 79),math-team-secret-2122
+Player 1,droppz,Elevate,RLCS 2021-22,2021-22,SAM,SAM-only,80,,,droppz-elevate-2122
+Player 2,Luk,Elevate,RLCS 2021-22,2021-22,SAM,SAM-only,79,,,luk-elevate-2122
+Player 3,snipjz,Elevate,RLCS 2021-22,2021-22,SAM,SAM-only,79,,,snipjz-elevate-2122
+Sub,kixou,Elevate,RLCS 2021-22,2021-22,SAM,SAM-only,62,,,kixou-sub-elevate-2122
+Coach,xoz1N,Elevate,RLCS 2021-22,2021-22,SAM,SAM-only,72,,,xoz1n-coach-elevate-2122
+Player 1,repi,Hawks,RLCS 2021-22,2021-22,SAM,SAM-only,74,75,,repi-hawks-2122
+Player 2,yanD,Hawks,RLCS 2021-22,2021-22,SAM,SAM-only,73,78,,yand-hawks-2122
+Player 3,KnS,Hawks,RLCS 2021-22,2021-22,SAM,SAM-only,73,74,,kns-hawks-2122
+Sub,Waantz,Hawks,RLCS 2021-22,2021-22,SAM,SAM-only,62,,,waantz-sub-hawks-2122
+Coach,Pedrokanicastro,Hawks,RLCS 2021-22,2021-22,SAM,SAM-only,74,,,pedrokanicastro-coach-hawks-2122
+Player 1,bmendesantos,EndGame,RLCS 2021-22,2021-22,SAM,SAM-only,79,,,bmendesantos-endgame-2122
+Player 2,Wells,EndGame,RLCS 2021-22,2021-22,SAM,SAM-only,79,,,wells-endgame-2122
+Player 3,ianpinheiro,EndGame,RLCS 2021-22,2021-22,SAM,SAM-only,81,,,ianpinheiro-endgame-2122
+Coach,FARz,EndGame,RLCS 2021-22,2021-22,SAM,SAM-only,78,,,farz-coach-endgame-2122
+Player 1,aguz,Leviatán,RLCS 2021-22,2021-22,SAM,SAM-only,74,76,,aguz-leviatan-2122
+Player 2,Lexim,Leviatán,RLCS 2021-22,2021-22,SAM,SAM-only,74,,,lexim-leviatan-2122
+Player 3,UmBroken,Leviatán,RLCS 2021-22,2021-22,SAM,SAM-only,74,,,umbroken-leviatan-2122
+Coach,Stolen,Leviatán,RLCS 2021-22,2021-22,SAM,SAM-only,75,,,stolen-coach-leviatan-2122
+Player 1,drufinho,KRÜ Esports,RLCS 2021-22,2021-22,SAM,SAM-only,83,84,Legacy,drufinho-kru-esports-2122
+Player 2,Bemmz,KRÜ Esports,RLCS 2021-22,2021-22,SAM,SAM-only,81,82,Legacy,bemmz-kru-esports-2122
+Player 3,pan,KRÜ Esports,RLCS 2021-22,2021-22,SAM,SAM-only,80,,Legacy,pan-kru-esports-2122
+Sub,GaTox,KRÜ Esports,RLCS 2021-22,2021-22,SAM,SAM-only,65,,Legacy,gatox-sub-kru-esports-2122
+Coach,pekitas,KRÜ Esports,RLCS 2021-22,2021-22,SAM,SAM-only,79,,Legacy,pekitas-coach-kru-esports-2122
+Player 1,Sadness,Team Secret,RLCS 2022-23,2022-23,SAM,,83,85,,sadness-team-secret-2223
+Player 2,kv1,Team Secret,RLCS 2022-23,2022-23,SAM,,84,87,,kv1-team-secret-2223
+Player 3,nxghtt,Team Secret,RLCS 2022-23,2022-23,SAM,,82,85,,nxghtt-team-secret-2223
+Coach,BRUNOVISQUII,Team Secret,RLCS 2022-23,2022-23,SAM,,84,86,,brunovisquii-coach-team-secret-2223
+Player 1,brad,KRÜ Esports,RLCS 2022-23,2022-23,SAM,,80,82,,brad-kru-esports-2223
+Player 2,droppz,KRÜ Esports,RLCS 2022-23,2022-23,SAM,,81,83,,droppz-kru-esports-2223
+Player 3,drufinho,KRÜ Esports,RLCS 2022-23,2022-23,SAM,,85,87,,drufinho-kru-esports-2223
+Player 1,Aztromick,Ninjas in Pyjamas,RLCS 2022-23,2022-23,SAM,,81,83,,aztromick-ninjas-in-pyjamas-2223
+Player 2,Bemmz,Ninjas in Pyjamas,RLCS 2022-23,2022-23,SAM,,80,83,,bemmz-ninjas-in-pyjamas-2223
+Player 3,Motta,Ninjas in Pyjamas,RLCS 2022-23,2022-23,SAM,,82,85,,motta-ninjas-in-pyjamas-2223
+Player 1,Davitrox,Exeed,RLCS 2022-23,2022-23,SAM,SAM-only,80,,Legacy,davitrox-exeed-2223
+Player 2,KnS,Exeed,RLCS 2022-23,2022-23,SAM,SAM-only,80,,Legacy,kns-exeed-2223
+Player 3,klaus,Exeed,RLCS 2022-23,2022-23,SAM,SAM-only,80,81,Legacy,klaus-exeed-2223
+Sub,baait,Exeed,RLCS 2022-23,2022-23,SAM,SAM-only,75,,Legacy,baait-sub-exeed-2223
+Coach,Pedrokanicastro,Exeed,RLCS 2022-23,2022-23,SAM,SAM-only,78,,Legacy,pedrokanicastro-coach-exeed-2223
+Player 1,alpe,Ruby,RLCS 2022-23,2022-23,SAM,SAM-only,78,,,alpe-ruby-2223
+Player 2,davinsano,Ruby,RLCS 2022-23,2022-23,SAM,SAM-only,79,,,davinsano-ruby-2223
+Player 3,LeoDkn,Ruby,RLCS 2022-23,2022-23,SAM,SAM-only,77,,,leodkn-ruby-2223
+Coach,Stolen,Ruby,RLCS 2022-23,2022-23,SAM,SAM-only,74,,,stolen-coach-ruby-2223
+Player 1,Luk,EndGame,RLCS 2022-23,2022-23,SAM,SAM-only,78,,switch for: royales ),luk-endgame-2223
+Player 2,Wells,EndGame,RLCS 2022-23,2022-23,SAM,SAM-only,77,,,wells-endgame-2223
+Player 3,seck,EndGame,RLCS 2022-23,2022-23,SAM,SAM-only,77,,,seck-endgame-2223
+Sub,lag0,EndGame,RLCS 2022-23,2022-23,SAM,SAM-only,64,,,lag0-sub-endgame-2223
+Coach,FARz,EndGame,RLCS 2022-23,2022-23,SAM,SAM-only,78,,,farz-coach-endgame-2223
+Player 1,PJ,Blazar,RLCS 2022-23,2022-23,SAM,SAM-only,77,,,pj-blazar-2223
+Player 2,Darxtz,Blazar,RLCS 2022-23,2022-23,SAM,SAM-only,76,,,darxtz-blazar-2223
+Player 3,twistt,Blazar,RLCS 2022-23,2022-23,SAM,SAM-only,76,,,twistt-blazar-2223
+Coach,Luc,Blazar,RLCS 2022-23,2022-23,SAM,SAM-only,67,,,luc-coach-blazar-2223
+Player 1,pan,eRa,RLCS 2022-23,2022-23,SAM,SAM-only,80,,Legacy,pan-era-2223
+Player 2,UmBroken,eRa,RLCS 2022-23,2022-23,SAM,SAM-only,80,,Legacy,umbroken-era-2223
+Player 3,ianpinheiro,eRa,RLCS 2022-23,2022-23,SAM,SAM-only,80,,Legacy,ianpinheiro-era-2223
+Coach,groval,eRa,RLCS 2022-23,2022-23,SAM,SAM-only,79,,Legacy,groval-coach-era-2223
+Player 1,yanxnz,FURIA,RLCS 2024,2024,SAM,,91,,,yanxnz-furia-2024
+Player 2,Lostt,FURIA,RLCS 2024,2024,SAM,,88,,,lostt-furia-2024
+Player 3,drufinho,FURIA,RLCS 2024,2024,SAM,,86,,,drufinho-furia-2024
+Coach,STL,FURIA,RLCS 2024,2024,SAM,,85,,,stl-coach-furia-2024
+Player 1,kv1,Team Secret,RLCS 2024,2024,SAM,,84,,,kv1-team-secret-2024
+Player 2,Motta,Team Secret,RLCS 2024,2024,SAM,,83,,,motta-team-secret-2024
+Player 3,brad,Team Secret,RLCS 2024,2024,SAM,,82,,missing team secret's coach brunovisqui( overall 84),brad-team-secret-2024
+Player 1,Reysbull,Complexity Gaming,RLCS 2024,2024,SAM,SAM-only,84,,Legacy,reysbull-complexity-gaming-2024
+Player 2,crr,Complexity Gaming,RLCS 2024,2024,SAM,SAM-only,82,,Legacy,crr-complexity-gaming-2024
+Player 3,dorito,Complexity Gaming,RLCS 2024,2024,SAM,SAM-only,80,,Legacy,dorito-complexity-gaming-2024
+Coach,Aguesome,Complexity Gaming,RLCS 2024,2024,SAM,SAM-only,82,,Legacy,aguesome-coach-complexity-gaming-2024
+Player 1,swiftt,Ninjas in Pyjamas,RLCS 2024,2024,SAM,SAM-only,84,,Legacy,swiftt-ninjas-in-pyjamas-2024
+Player 2,Aztromick,Ninjas in Pyjamas,RLCS 2024,2024,SAM,SAM-only,82,,Legacy,aztromick-ninjas-in-pyjamas-2024
+Player 3,nxghtt,Ninjas in Pyjamas,RLCS 2024,2024,SAM,SAM-only,82,,Legacy,nxghtt-ninjas-in-pyjamas-2024
+Coach,fAsi,Ninjas in Pyjamas,RLCS 2024,2024,SAM,SAM-only,80,,Legacy,fasi-coach-ninjas-in-pyjamas-2024
+Player 1,caard,KRÜ Esports,RLCS 2024,2024,SAM,SAM-only,82,77,Legacy,caard-kru-esports-2024
+Player 2,ajg,KRÜ Esports,RLCS 2024,2024,SAM,SAM-only,80,,Legacy,ajg-kru-esports-2024
+Player 3,Bemmz,KRÜ Esports,RLCS 2024,2024,SAM,SAM-only,80,,Legacy,bemmz-kru-esports-2024
+Sub,wisty,KRÜ Esports,RLCS 2024,2024,SAM,SAM-only,78,79,Legacy (caard sub / wisty starter),wisty-sub-kru-esports-2024
+Coach,pekitas,KRÜ Esports,RLCS 2024,2024,SAM,SAM-only,83,,Legacy,pekitas-coach-kru-esports-2024
+Player 1,caiotg1,w7m esports,RLCS 2024,2024,SAM,SAM-only,80,,Legacy,caiotg1-w7m-esports-2024
+Player 2,Royales,w7m esports,RLCS 2024,2024,SAM,SAM-only,79,,Legacy,royales-w7m-esports-2024
+Player 3,pan,w7m esports,RLCS 2024,2024,SAM,SAM-only,77,,Legacy,pan-w7m-esports-2024
+Coach,tander,w7m esports,RLCS 2024,2024,SAM,SAM-only,77,,Legacy,tander-coach-w7m-esports-2024
+Player 1,caiotg1,Bodybuilders,RLCS 2024,2024,SAM,SAM-only,82,,,caiotg1-bodybuilders-2024
+Player 2,yanD,Bodybuilders,RLCS 2024,2024,SAM,SAM-only,79,,,yand-bodybuilders-2024
+Player 3,Dappluto,Bodybuilders,RLCS 2024,2024,SAM,SAM-only,78,,,dappluto-bodybuilders-2024
+Coach,FARz,Bodybuilders,RLCS 2024,2024,SAM,SAM-only,77,,,farz-coach-bodybuilders-2024
+Player 1,pan,GamerLegion,RLCS 2024,2024,SAM,SAM-only,77,,,pan-gamerlegion-2024
+Player 2,UmBroken,GamerLegion,RLCS 2024,2024,SAM,SAM-only,75,,,umbroken-gamerlegion-2024
+Player 3,ianpinheiro,GamerLegion,RLCS 2024,2024,SAM,SAM-only,74,,,ianpinheiro-gamerlegion-2024
+Player 1,yanxnz,FURIA,RLCS 2025,2025,SAM,,91,,,yanxnz-furia-2025
+Player 2,Lostt,FURIA,RLCS 2025,2025,SAM,,89,,,lostt-furia-2025
+Player 3,drufinho,FURIA,RLCS 2025,2025,SAM,,87,,,drufinho-furia-2025
+Coach,BRUNOVISQUII,FURIA,RLCS 2025,2025,SAM,,85,,"coach is wrong, FURIA 2025 coach is STL, still 85 overall",brunovisquii-coach-furia-2025
+Player 1,kv1,Team Secret,RLCS 2025,2025,SAM,,85,,,kv1-team-secret-2025
+Player 2,swiftt,Team Secret,RLCS 2025,2025,SAM,,87,88,,swiftt-team-secret-2025
+Player 3,Motta,Team Secret,RLCS 2025,2025,SAM,,83,,missing team secret's coach brunovisqui( overall 84),motta-team-secret-2025
+Player 1,brad,MIBR,RLCS 2025,2025,SAM,,82,,,brad-mibr-2025
+Player 2,droppz,MIBR,RLCS 2025,2025,SAM,,82,,,droppz-mibr-2025
+Player 3,Reysbull,MIBR,RLCS 2025,2025,SAM,,86,,,reysbull-mibr-2025
+Coach,pekitas,MIBR,RLCS 2025,2025,SAM,,83,,,pekitas-coach-mibr-2025
+Player 1,Aztromick,Godfidence,RLCS 2025,2025,SAM,SAM-only,85,82,Legacy,aztromick-godfidence-2025
+Player 2,Bemmz,Godfidence,RLCS 2025,2025,SAM,SAM-only,82,83,Legacy,bemmz-godfidence-2025
+Player 3,suco,Godfidence,RLCS 2025,2025,SAM,SAM-only,80,83,Legacy,suco-godfidence-2025
+Sub,fAsi,Godfidence,RLCS 2025,2025,SAM,SAM-only,66,77,Legacy,fasi-sub-godfidence-2025
+Coach,Kaoshi,Godfidence,RLCS 2025,2025,SAM,SAM-only,77,79,Legacy,kaoshi-coach-godfidence-2025
+Player 1,Sadness,Amethyst,RLCS 2025,2025,SAM,SAM-only,84,,Legacy,sadness-amethyst-2025
+Player 2,nxghtt,Amethyst,RLCS 2025,2025,SAM,SAM-only,82,,Legacy,nxghtt-amethyst-2025
+Player 3,wisty,Amethyst,RLCS 2025,2025,SAM,SAM-only,80,,Legacy,wisty-amethyst-2025
+Coach,Michi,Amethyst,RLCS 2025,2025,SAM,SAM-only,80,,Legacy,michi-coach-amethyst-2025
+Player 1,caard,Sunset,RLCS 2025,2025,SAM,SAM-only,83,78,Legacy,caard-sunset-2025
+Player 2,caiotg1,Sunset,RLCS 2025,2025,SAM,SAM-only,82,78,Legacy,caiotg1-sunset-2025
+Player 3,crn,Sunset,RLCS 2025,2025,SAM,SAM-only,76,77,Legacy,crn-sunset-2025
+Coach,PatoLimpo,Sunset,RLCS 2025,2025,SAM,SAM-only,74,,Legacy,patolimpo-coach-sunset-2025
+Player 1,KnS,Moonrise,RLCS 2025,2025,SAM,SAM-only,75,79,Legacy,kns-moonrise-2025
+Player 2,yanD,Moonrise,RLCS 2025,2025,SAM,SAM-only,75,78,Legacy,yand-moonrise-2025
+Player 3,klaus,Moonrise,RLCS 2025,2025,SAM,SAM-only,75,79,Legacy,klaus-moonrise-2025
+Coach,repi,Moonrise,RLCS 2025,2025,SAM,SAM-only,78,,Legacy,repi-coach-moonrise-2025
+Player 1,pan,Latino Heat,RLCS 2025,2025,SAM,SAM-only,76,,,pan-latino-heat-2025
+Player 2,Davitrox,Latino Heat,RLCS 2025,2025,SAM,SAM-only,76,,,davitrox-latino-heat-2025
+Player 3,nachosky,Latino Heat,RLCS 2025,2025,SAM,SAM-only,74,,,nachosky-latino-heat-2025
+Coach,groval,Latino Heat,RLCS 2025,2025,SAM,SAM-only,79,,,groval-coach-latino-heat-2025
+Player 1,Sadness,MIBR,RLCS 2026,2026,SAM,,85,,,sadness-mibr-2026
+Player 2,Aztromick,MIBR,RLCS 2026,2026,SAM,,84,,,aztromick-mibr-2026
+Player 3,Reysbull,MIBR,RLCS 2026,2026,SAM,,87,,,reysbull-mibr-2026
+Coach,pekitas,MIBR,RLCS 2026,2026,SAM,,84,,,pekitas-coach-mibr-2026
+Player 1,swiftt,FURIA,RLCS 2026,2026,SAM,,87,88,,swiftt-furia-2026
+Player 2,Lostt,FURIA,RLCS 2026,2026,SAM,,89,87,,lostt-furia-2026
+Player 3,yanxnz,FURIA,RLCS 2026,2026,SAM,,91,89,,yanxnz-furia-2026
+Coach,BRUNOVISQUII,FURIA,RLCS 2026,2026,SAM,,86,,,brunovisquii-coach-furia-2026
+Player 1,Snowyy,Orlando Pirates Exdee,RLCS 2021-22,2021-22,SSA,,66,,,snowyy-orlando-pirates-exdee-2122
+Player 2,Darth,Orlando Pirates Exdee,RLCS 2021-22,2021-22,SSA,,66,,,darth-orlando-pirates-exdee-2122
+Player 3,SkillSteal,Orlando Pirates Exdee,RLCS 2021-22,2021-22,SSA,,66,,,skillsteal-orlando-pirates-exdee-2122
+Player 1,2Die4,Bravado Gaming,RLCS 2021-22,2021-22,SSA,,66,,,2die4-bravado-gaming-2122
+Player 2,Daisy,Bravado Gaming,RLCS 2021-22,2021-22,SSA,,66,,,daisy-bravado-gaming-2122
+Player 3,Happymeal,Bravado Gaming,RLCS 2021-22,2021-22,SSA,,66,,,happymeal-bravado-gaming-2122
+Player 1,2Die4,Limitless,RLCS 2022-23,2022-23,SSA,,73,,,2die4-limitless-2223
+Player 2,Snowyy,Limitless,RLCS 2022-23,2022-23,SSA,,71,,,snowyy-limitless-2223
+Player 3,Darth,Limitless,RLCS 2022-23,2022-23,SSA,,71,,,darth-limitless-2223
+Coach,Noxes,Limitless,RLCS 2022-23,2022-23,SSA,,67,,,noxes-coach-limitless-2223
+Player 1,Werty,Valiant,RLCS 2022-23,2022-23,SSA,,66,,,werty-valiant-2223
+Player 2,Wiiilooo,Valiant,RLCS 2022-23,2022-23,SSA,,66,,,wiiilooo-valiant-2223
+Player 3,Sweaty,Valiant,RLCS 2022-23,2022-23,SSA,,66,,,sweaty-valiant-2223
+Player 1,2Die4,Limitless,RLCS 2024,2024,SSA,,75,,,2die4-limitless-2024
+Player 2,Snowyy,Limitless,RLCS 2024,2024,SSA,,73,,,snowyy-limitless-2024
+Player 3,Sweaty,Limitless,RLCS 2024,2024,SSA,,73,,,sweaty-limitless-2024
+Coach,Noxes,Limitless,RLCS 2024,2024,SSA,,69,,,noxes-coach-limitless-2024
+Player 1,VKSailen,FUT Esports,RLCS 2025,2025,SSA,,78,,,vksailen-fut-esports-ssa-2025
+Player 2,Leoro,FUT Esports,RLCS 2025,2025,SSA,,75,,,leoro-fut-esports-ssa-2025
+Player 3,TORRES823,FUT Esports,RLCS 2025,2025,SSA,,75,,,torres823-fut-esports-ssa-2025
+Player 1,Sweaty,Pioneers,RLCS 2026,2026,SSA,,75,,,sweaty-pioneers-ssa-2026
+Player 2,LuiisP,Pioneers,RLCS 2026,2026,SSA,,78,,,luiisp-pioneers-ssa-2026
+Player 3,2Die4,Pioneers,RLCS 2026,2026,SSA,,79,,,2die4-pioneers-ssa-2026
+Coach,Lawler,Pioneers,RLCS 2026,2026,SSA,,80,,,lawler-coach-pioneers-ssa-2026

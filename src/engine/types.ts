@@ -292,8 +292,15 @@ export interface DraftState {
   takenPersonIds: string[];
   /** Restricted lineup pool (daily challenges). Undefined = full pool. */
   poolLineupIds?: string[];
-  /** Multiplier on the special-appearance chance (daily modifier). */
+  /** Multiplier on the special-appearance chance (daily modifier; v1.3 also
+   *  carries the rank-scaled chance for classic/quick runs). */
   specialChanceMult?: number;
+  /**
+   * Rank-gated special rarities that may appear (v1.3). Undefined = no gate (all
+   * rarities — used by the daily). An empty array means specials are locked
+   * (Unranked). Set from the player's rank in runStore for classic/quick runs.
+   */
+  specialRarities?: string[];
   /**
    * Daily "scripted" draft (v1.2.1): an exact ordered lineup per pick (index =
    * picks made so far), each optionally forcing a player to appear as a specific

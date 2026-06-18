@@ -565,9 +565,9 @@
     "orgId": "karmine-corp",
     "lineupId": "karmine-corp-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 83,
+    "overall": 85,
     "bonusType": "clutch",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "eclipse-coach-endpoint-cex-2122",
@@ -578,7 +578,7 @@
     "orgId": "endpoint-cex",
     "lineupId": "endpoint-cex-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 82,
+    "overall": 79,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -591,7 +591,7 @@
     "orgId": "furia",
     "lineupId": "furia-2122",
     "seasonId": "rlcs-2021-22",
-    "overall": 77,
+    "overall": 80,
     "bonusType": "mechanics",
     "bonusLevel": "+"
   },
@@ -605,6 +605,19 @@
     "lineupId": "the-club-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 80,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "brunovisquii-coach-team-secret-2122",
+    "personId": "brunovisquii",
+    "name": "BRUNOVISQUII",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "team-secret",
+    "lineupId": "team-secret-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 79,
     "bonusType": "defense",
     "bonusLevel": "+"
   },
@@ -721,7 +734,7 @@
     "orgId": "team-liquid",
     "lineupId": "team-liquid-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 85,
+    "overall": 87,
     "bonusType": "defense",
     "bonusLevel": "++"
   },
@@ -734,7 +747,7 @@
     "orgId": "karmine-corp",
     "lineupId": "karmine-corp-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 86,
+    "overall": 89,
     "bonusType": "clutch",
     "bonusLevel": "++"
   },
@@ -747,9 +760,9 @@
     "orgId": "team-secret",
     "lineupId": "team-secret-2223",
     "seasonId": "rlcs-2022-23",
-    "overall": 84,
+    "overall": 86,
     "bonusType": "defense",
-    "bonusLevel": "+"
+    "bonusLevel": "++"
   },
   {
     "id": "d7oom24-coach-team-falcons-2223",
@@ -882,6 +895,19 @@
     "bonusLevel": "++"
   },
   {
+    "id": "brunovisquii-coach-team-secret-2024",
+    "personId": "brunovisquii",
+    "name": "BRUNOVISQUII",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "team-secret",
+    "lineupId": "team-secret-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 84,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
     "id": "d7oom24-coach-team-falcons-2024",
     "personId": "d7oom24",
     "name": "d7oom-24",
@@ -999,17 +1025,30 @@
     "bonusLevel": "+"
   },
   {
-    "id": "brunovisquii-coach-furia-2025",
-    "personId": "brunovisquii",
-    "name": "BRUNOVISQUII",
+    "id": "stl-coach-furia-2025",
+    "personId": "stl",
+    "name": "STL",
     "country": "BR",
     "region": "SAM",
     "orgId": "furia",
     "lineupId": "furia-2025",
     "seasonId": "rlcs-2025",
     "overall": 85,
-    "bonusType": "defense",
+    "bonusType": "offense",
     "bonusLevel": "++"
+  },
+  {
+    "id": "brunovisquii-coach-team-secret-2025",
+    "personId": "brunovisquii",
+    "name": "BRUNOVISQUII",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "team-secret",
+    "lineupId": "team-secret-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 84,
+    "bonusType": "defense",
+    "bonusLevel": "+"
   },
   {
     "id": "pekitas-coach-mibr-2025",
@@ -1553,7 +1592,7 @@
     "orgId": "godfidence",
     "lineupId": "godfidence-2025",
     "seasonId": "rlcs-2025",
-    "overall": 77,
+    "overall": 79,
     "bonusType": "experience",
     "bonusLevel": "+"
   },

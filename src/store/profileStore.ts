@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { HISTORY_LIMIT } from "@/config/balance";
+import { rankRewardsForXp } from "@/engine/progression";
 import type {
   Difficulty,
   Placement,
@@ -48,7 +49,13 @@ export interface ProfileState {
     lastRegionLock: Region | null;
   };
   /** One-time onboarding flags (first-run how-to-play, first Legacy/regional intro). */
-  flags: { seenHowToPlay: boolean; seenLegacyIntro: boolean; seenRegionalIntro: boolean };
+  flags: {
+    seenHowToPlay: boolean;
+    seenLegacyIntro: boolean;
+    seenRegionalIntro: boolean;
+    /** First-launch full-screen feature tour (v1.3.1). */
+    seenTutorial: boolean;
+  };
 
   applyRunResults: (
     results: RunResults,
@@ -82,7 +89,12 @@ const initialData = {
     lastMode: "classic" as RunMode,
     lastRegionLock: null as Region | null,
   },
-  flags: { seenHowToPlay: false, seenLegacyIntro: false, seenRegionalIntro: false },
+  flags: {
+    seenHowToPlay: false,
+    seenLegacyIntro: false,
+    seenRegionalIntro: false,
+    seenTutorial: false,
+  },
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -177,6 +189,20 @@ export const useProfileStore = create<ProfileState>()(
 /** Legacy difficulty unlock rule (base doc §7): win once on Hard. */
 export function selectLegacyUnlocked(state: ProfileState): boolean {
   return state.wins.hard > 0 || state.wins.legacy > 0;
+}
+
+/**
+ * Hard mode unlocks at Silver (v1.3) — the rank ladder now gates difficulty too.
+ * Back-compat: anyone who already WON Hard/Legacy keeps access even if their XP
+ * predates the gate, so no existing player is locked out of a mode they cleared.
+ */
+export function selectHardUnlocked(state: ProfileState): boolean {
+  return rankRewardsForXp(state.xp).hardMode || state.wins.hard > 0 || state.wins.legacy > 0;
+}
+
+/** Collection screen unlocks at Bronze (v1.3); Unranked has it locked. */
+export function selectCollectionUnlocked(state: ProfileState): boolean {
+  return rankRewardsForXp(state.xp).collection;
 }
 
 /**

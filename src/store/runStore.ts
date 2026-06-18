@@ -12,8 +12,9 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DIFFICULTY } from "@/config/balance";
+import { DIFFICULTY, REGION_LOCK, SPECIALS } from "@/config/balance";
 import { lineupPoolForRegion, playerById, playerCardById } from "@/data";
+import { rankRewardsForXp } from "@/engine/progression";
 import {
   applyFreeReroll,
   applyPick,
@@ -95,7 +96,19 @@ export const useRunStore = create<RunStore>()(
         // Region-locked runs draw from the region's full pool (Worlds finalists
         // + its samOnly Top-8 teams); worldwide runs use the default pool.
         const poolLineupIds = region ? lineupPoolForRegion(region) : undefined;
-        const draft = drawNextOffer(createDraft(difficulty, { mode, poolLineupIds }), rng);
+        // v1.3 rank rewards: the player's rank gates which special rarities can
+        // appear and scales their chance (Unranked → none; Champion+ → richer).
+        // Folded into specialChanceMult so the draft engine stays unchanged.
+        const rewards = rankRewardsForXp(useProfileStore.getState().xp);
+        const draft = drawNextOffer(
+          createDraft(difficulty, {
+            mode,
+            poolLineupIds,
+            specialChanceMult: rewards.specialChance / SPECIALS.appearanceChance,
+            specialRarities: rewards.rarities,
+          }),
+          rng,
+        );
 
         // Remember the setup for next time (and for "Play again").
         useProfileStore.getState().setLastSetup(difficulty, showOverall, mode, region);
@@ -256,6 +269,9 @@ export const useRunStore = create<RunStore>()(
         const tournament = initTournament(userTeam, run.difficulty, rng, {
           mode: run.mode,
           poolLineupIds: run.draft.poolLineupIds,
+          // Region-locked runs face a weaker regional field — normalise it so the
+          // difficulty curve matches worldwide with adapted overalls (v1.3.1).
+          opponentRatingBoost: run.regionLock ? REGION_LOCK.opponentRatingBoost : 0,
         });
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },

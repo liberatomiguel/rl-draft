@@ -50,13 +50,45 @@ function goodUserTeam(): TournamentTeam {
   };
 }
 
-function outcomeRates(difficulty: Difficulty, runs: number, seed: number) {
+/** A great draft that ALSO commits to chemistry (~95.5 total) — the only kind of
+ *  roster that should be able to win Legacy (v1.3). */
+function strongUserTeam(): TournamentTeam {
+  return {
+    ...goodUserTeam(),
+    rating: {
+      avgPlayerOverall: 93.7,
+      coachMod: 0.8,
+      subMod: 0.4,
+      orgMod: 0.6,
+      chemMod: 0,
+      specialMod: 0,
+      difficultyShift: 0,
+      total: 95.5,
+    },
+    chemistry: { raw: 9, max: 16, percent: 75, tier: "Perfect", items: [] },
+    stats: {
+      offense: 89,
+      defense: 89,
+      mechanics: 89,
+      consistency: 89,
+      experience: 89,
+      clutch: 89,
+    },
+  };
+}
+
+function outcomeRates(
+  difficulty: Difficulty,
+  runs: number,
+  seed: number,
+  makeTeam: () => TournamentTeam = goodUserTeam,
+) {
   const rng = createRng(seed);
   let playoffs = 0;
   let titles = 0;
   for (let i = 0; i < runs; i++) {
     const t = fastForward(
-      initTournament(goodUserTeam(), difficulty, rng),
+      initTournament(makeTeam(), difficulty, rng),
       difficulty,
       rng,
     );
@@ -69,17 +101,24 @@ function outcomeRates(difficulty: Difficulty, runs: number, seed: number) {
 
 describe("difficulty outcomes (v0.5 targets)", () => {
   it("Normal: a good roster reaches playoffs most runs and wins a real share", () => {
-    const r = outcomeRates("normal", 300, 515);
+    // 1000 runs (was 300): after the v1.3 community overall review the field is a
+    // touch stronger, so a good team's Normal title rate sits near ~5.5% — right at
+    // the 5% line, where a 300-run sample was just noise. Bigger sample, true rate.
+    const r = outcomeRates("normal", 1000, 515);
     expect(r.playoffs).toBeGreaterThan(0.8); // swiss must not be the wall
     expect(r.titles).toBeGreaterThan(0.05); // the title is reachable…
     expect(r.titles).toBeLessThan(0.35); // …but not handed out
   });
 
-  it("Hard: playoffs is a fight; the title stays rare but possible", () => {
+  it("Hard (v1.3.1): a good team makes playoffs and has a real title shot", () => {
+    // v1.3.1 targets: a 90 team can't win Hard, a 92 elite wins ~10%, a 95 dream
+    // comfortably. The balance team (92.5) sits at the elite mark — it makes
+    // playoffs almost always and wins ~1-in-8. The REAL Hard difficulty is
+    // drafting with overalls HIDDEN, which this fixed-team test can't model.
     const r = outcomeRates("hard", 500, 626);
-    expect(r.playoffs).toBeGreaterThan(0.55);
-    expect(r.playoffs).toBeLessThan(0.95);
-    expect(r.titles).toBeLessThan(0.2);
+    expect(r.playoffs).toBeGreaterThan(0.8);
+    expect(r.titles).toBeGreaterThan(0.04); // reachable for an elite-level team
+    expect(r.titles).toBeLessThan(0.25); // …but not handed out
   });
 
   it("Easy: forgiving — playoffs is the norm", () => {
@@ -88,10 +127,21 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     expect(r.titles).toBeGreaterThan(0.2);
   });
 
-  it("Legacy: a gauntlet — playoffs is the exception, the title a long shot, but reachable", () => {
-    const r = outcomeRates("legacy", 600, 626);
-    expect(r.playoffs).toBeGreaterThan(0.12); // not impossible — a good draft competes
-    expect(r.playoffs).toBeLessThan(0.5); // …but clearly the hardest: most runs end in Swiss
-    expect(r.titles).toBeLessThan(0.1); // the crown is a true achievement
+  it("Legacy (v1.3): a great chemistry-built draft can break through; a good one rarely does", () => {
+    // v1.3 rebalance — live feedback was "2h, zero Legacy titles even with good
+    // teams". The org-unique field (engine/opponents) + a softer, mixed gauntlet
+    // (opponentRatingShift 1.2→0.6, elite weight 2.6→1.8) turn Legacy from a brick
+    // wall into a real chase. A merely-GOOD team (92.5) now competes for playoffs
+    // but almost never lifts the trophy; a STRONG, coherent, high-chemistry draft
+    // (~95.5) has a real, rare shot. Legacy stays strictly harder than Hard.
+    const good = outcomeRates("legacy", 600, 626);
+    expect(good.playoffs).toBeGreaterThan(0.3); // you genuinely compete…
+    expect(good.playoffs).toBeLessThan(0.78); // …but it's still the hardest field
+    expect(good.titles).toBeLessThan(0.05); // a 92.5 team almost never wins it
+
+    // Reachability is the whole point: a great draft must be able to win it.
+    const strong = outcomeRates("legacy", 600, 909, strongUserTeam);
+    expect(strong.titles).toBeGreaterThan(0.02); // not impossible…
+    expect(strong.titles).toBeLessThan(0.15); // …but a true achievement
   });
 });

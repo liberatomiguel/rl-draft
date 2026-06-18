@@ -36,6 +36,7 @@ interface MemberView {
   lineupId: string;
   orgId: string;
   country?: string;
+  region?: string;
 }
 
 interface AssembleInput {
@@ -45,8 +46,8 @@ interface AssembleInput {
   region: Region;
   lineupId?: string;
   players: MemberView[];
-  coach?: { name: string; overall: number; bonusType: StatKey; bonusLevel: string; lineupId: string; orgId: string };
-  sub?: { name: string; overall: number; lineupId: string; orgId: string };
+  coach?: { name: string; overall: number; bonusType: StatKey; bonusLevel: string; lineupId: string; orgId: string; country?: string; region?: string };
+  sub?: { name: string; overall: number; lineupId: string; orgId: string; country?: string; region?: string };
   orgId?: string;
   /** Era-accurate org buff (lineup override). Falls back to the org default. */
   orgBuffLevel?: string;
@@ -79,12 +80,25 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
       lineupId: p.lineupId,
       orgId: p.orgId,
       country: p.country,
+      region: p.region,
     })),
     coach: input.coach
-      ? { name: input.coach.name, lineupId: input.coach.lineupId, orgId: input.coach.orgId }
+      ? {
+          name: input.coach.name,
+          lineupId: input.coach.lineupId,
+          orgId: input.coach.orgId,
+          country: input.coach.country,
+          region: input.coach.region,
+        }
       : undefined,
     sub: input.sub
-      ? { name: input.sub.name, lineupId: input.sub.lineupId, orgId: input.sub.orgId }
+      ? {
+          name: input.sub.name,
+          lineupId: input.sub.lineupId,
+          orgId: input.sub.orgId,
+          country: input.sub.country,
+          region: input.sub.region,
+        }
       : undefined,
     orgId: input.orgId,
     orgName: org?.name,
@@ -172,6 +186,7 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
     lineupId: ctx.lineupId,
     orgId: ctx.orgId,
     country: player.country,
+    region: player.region,
   };
 }
 
@@ -210,6 +225,8 @@ export function buildUserTeam(
         bonusLevel: coachCard.bonusLevel,
         lineupId: (coachCtx ?? coachCard).lineupId,
         orgId: (coachCtx ?? coachCard).orgId,
+        country: coachCard.country,
+        region: coachCard.region,
       }
     : undefined;
   // Team-wide stat boosts: from a coach special AND from any player special
@@ -238,6 +255,8 @@ export function buildUserTeam(
         overall: subCard.overall,
         lineupId: subCard.lineupId,
         orgId: subCard.orgId,
+        country: subCard.country,
+        region: subCard.region,
       }
     : undefined;
 
@@ -282,7 +301,7 @@ export function buildUserTeam(
 export function buildLineupTeam(
   lineupId: string,
   difficulty: Difficulty,
-  options?: { specialUpgrade?: { cardId: string; specialId: string } },
+  options?: { specialUpgrade?: { cardId: string; specialId: string }; extraShift?: number },
 ): TournamentTeam {
   const lineup = lineupById.get(lineupId);
   if (!lineup) throw new Error(`Unknown lineup "${lineupId}"`);
@@ -324,16 +343,27 @@ export function buildLineupTeam(
           bonusLevel: coachCard.bonusLevel,
           lineupId: coachCard.lineupId,
           orgId: coachCard.orgId,
+          country: coachCard.country,
+          region: coachCard.region,
         }
       : undefined,
     sub: subCard
-      ? { name: subCard.name, overall: subCard.overall, lineupId: subCard.lineupId, orgId: subCard.orgId }
+      ? {
+          name: subCard.name,
+          overall: subCard.overall,
+          lineupId: subCard.lineupId,
+          orgId: subCard.orgId,
+          country: subCard.country,
+          region: subCard.region,
+        }
       : undefined,
     orgId: lineup.orgId,
     orgBuffLevel: lineup.orgBuffLevel,
     teamBoosts,
     specialIds,
     difficulty,
-    difficultyShift: DIFFICULTY[difficulty].opponentRatingShift,
+    // Region-locked runs add a flat boost so a weaker regional field plays as
+    // hard as the worldwide one (v1.3.1).
+    difficultyShift: DIFFICULTY[difficulty].opponentRatingShift + (options?.extraShift ?? 0),
   });
 }

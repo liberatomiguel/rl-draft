@@ -59,7 +59,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </GuardedHomeLink>
     ) : (
-      <Link href={item.href} className={className} onClick={() => sfx.click()}>
+      <Link
+        href={item.href}
+        className={className}
+        onClick={() => {
+          sfx.click();
+          // Play always starts a fresh run at Setup — clear any run in progress so
+          // /play shows Setup even when you're already on /play mid-run (v1.3.1).
+          if (item.key === "play") useRunStore.getState().clearRun();
+        }}
+      >
         {children}
       </Link>
     );

@@ -190,7 +190,7 @@
     ],
     "subId": "jhzer-sub-flipsid3-tactics-s2",
     "orgBuffLevel": "++",
-    "historicalStrength": "strong"
+    "historicalStrength": "elite"
   },
   {
     "id": "northern-gaming-s2",
@@ -1762,7 +1762,7 @@
       "scrubkilla-dignitas-2122"
     ],
     "orgBuffLevel": "++",
-    "historicalStrength": "strong"
+    "historicalStrength": "solid"
   },
   {
     "id": "smpr-esports-2122",
@@ -1864,8 +1864,9 @@
       "nxghtt-team-secret-2122",
       "math-team-secret-2122"
     ],
+    "coachId": "brunovisquii-coach-team-secret-2122",
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "team-falcons-2122",
@@ -2086,7 +2087,7 @@
     ],
     "coachId": "xpere-coach-team-liquid-2223",
     "orgBuffLevel": "++",
-    "historicalStrength": "strong"
+    "historicalStrength": "elite"
   },
   {
     "id": "karmine-corp-2223",
@@ -2215,7 +2216,7 @@
       "motta-ninjas-in-pyjamas-2223"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "rule-one-2223",
@@ -2505,6 +2506,7 @@
       "motta-team-secret-2024",
       "brad-team-secret-2024"
     ],
+    "coachId": "brunovisquii-coach-team-secret-2024",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
@@ -2739,7 +2741,7 @@
       "lostt-furia-2025",
       "drufinho-furia-2025"
     ],
-    "coachId": "brunovisquii-coach-furia-2025",
+    "coachId": "stl-coach-furia-2025",
     "orgBuffLevel": "++",
     "historicalStrength": "strong"
   },
@@ -2754,6 +2756,7 @@
       "swiftt-team-secret-2025",
       "motta-team-secret-2025"
     ],
+    "coachId": "brunovisquii-coach-team-secret-2025",
     "orgBuffLevel": "+",
     "historicalStrength": "solid"
   },
@@ -3594,7 +3597,7 @@
     "orgId": "endgame",
     "region": "SAM",
     "playerCardIds": [
-      "luk-endgame-2223",
+      "royales-endgame-2223",
       "wells-endgame-2223",
       "seck-endgame-2223"
     ],

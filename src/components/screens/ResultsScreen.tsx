@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { achievementById, lineupById, specialCardById } from "@/data";
-import { DIFFICULTY } from "@/config/balance";
+import { DIFFICULTY, RANK_REWARDS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import {
   resolveCoach,
@@ -23,7 +23,13 @@ import {
 import { rankForXp, type RankInfo } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { EliminatorTeam, Placement, RunState } from "@/engine/types";
-import { downloadShareCard } from "@/lib/shareCard";
+import {
+  downloadShareCard,
+  shareCardBlob,
+  shareCardColor,
+  shareCardDataUrl,
+  type ShareCardData,
+} from "@/lib/shareCard";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -34,6 +40,7 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Modal } from "@/components/ui/Modal";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { GameCard } from "@/components/cards/GameCard";
 import { rosterSlots } from "@/components/cards/rosterView";
@@ -73,6 +80,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
   );
   const [rankUpSeen, setRankUpSeen] = useState(false);
   const [legacySeen, setLegacySeen] = useState(false);
+  const [shareData, setShareData] = useState<ShareCardData | null>(null);
 
   // Placement cue, once on mount.
   useEffect(() => {
@@ -112,7 +120,30 @@ export function ResultsScreen({ run }: { run: RunState }) {
   };
 
   const handleShare = () => {
-    void downloadShareCard({
+    const roleOf: Record<string, string> = {
+      player1: "P1", player2: "P2", player3: "P3", coach: "Coach", sub: "Sub", org: "Org",
+    };
+    const cards = rosterSlots(run.draft.roster)
+      .filter((s) => s.card)
+      .map((s) => {
+        const c = s.card!;
+        const isOrg = c.kind === "org";
+        const isSpecial = Boolean(c.special);
+        return {
+          name: c.name,
+          value: isOrg ? (c.buffLevel && c.buffLevel !== "~" ? c.buffLevel : "~") : String(c.overall ?? ""),
+          color: shareCardColor({
+            isSpecial,
+            specialRarity: c.special?.rarity,
+            overall: c.overall,
+            isOrg,
+            buffLevel: c.buffLevel,
+          }),
+          isSpecial,
+          role: roleOf[s.slot] ?? s.slot,
+        };
+      });
+    setShareData({
       placementLabel: placement.title,
       placement: results.placement,
       modeLabel: run.daily ? `Daily · ${run.daily.label}` : run.mode === "quick" ? "Quick Draft" : "Classic Draft",
@@ -122,15 +153,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         run.mode === "quick" ? null : `${results.swissRecord.wins}-${results.swissRecord.losses}`,
       teamOverall: displayTeamOverall(team.rating),
       chemistryTier: team.chemistry.tier,
-      players: [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3]
-        .filter(Boolean)
-        .map((p) => {
-          const card = resolvePlayerCard(p!.refId, p!.specialId);
-          return { name: card.name, overall: card.overall ?? 0 };
-        }),
-      staff: [run.draft.roster.coach, run.draft.roster.sub, run.draft.roster.org]
-        .map((p) => (p ? rosterSlots(run.draft.roster).find((s) => s.slot === p.slot)?.card?.name : null))
-        .filter((n): n is string => Boolean(n) && n !== "No Coach" && n !== "No Sub"),
+      cards,
       xp: results.xp.total,
       date: new Date().toISOString().slice(0, 10),
     });
@@ -145,7 +168,11 @@ export function ResultsScreen({ run }: { run: RunState }) {
           onDone={() => setCeremonyOpen(false)}
         />
       ) : rankedUp && !rankUpSeen ? (
-        <RankUpCelebration rank={rankAfter} onDone={() => setRankUpSeen(true)} />
+        <RankUpCelebration
+          rank={rankAfter}
+          prevRankId={rankBefore.id}
+          onDone={() => setRankUpSeen(true)}
+        />
       ) : legacyJustUnlocked && !legacySeen ? (
         <LegacyUnlockCelebration onDone={() => setLegacySeen(true)} />
       ) : (
@@ -414,7 +441,94 @@ export function ResultsScreen({ run }: { run: RunState }) {
           {R.backHome}
         </Button>
       </div>
+
+      {shareData ? (
+        <ShareModal
+          data={shareData}
+          isChampion={isChampion}
+          placementLabel={placement.title}
+          onClose={() => setShareData(null)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Share preview (v1.3.1): renders the share image, a placement-aware caption and
+ * three ways out — native Share (image + text on supporting devices), an X
+ * compose intent (prefilled text), or a plain PNG download.
+ */
+function ShareModal({
+  data,
+  isChampion,
+  placementLabel,
+  onClose,
+}: {
+  data: ShareCardData;
+  isChampion: boolean;
+  placementLabel: string;
+  onClose: () => void;
+}) {
+  const { RESULTS_UI: R } = useCopy();
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void shareCardDataUrl(data).then((u) => {
+      if (alive) setUrl(u);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [data]);
+
+  const message = isChampion ? R.shareMsgChampion : R.shareMsgPlacement(placementLabel);
+
+  const onNativeShare = async () => {
+    try {
+      const blob = await shareCardBlob(data);
+      const file = new File([blob], `rocket-draft-${data.date}.png`, { type: "image/png" });
+      const nav = navigator as Navigator & {
+        canShare?: (d: ShareData) => boolean;
+      };
+      if (nav.canShare?.({ files: [file] }) && nav.share) {
+        await nav.share({ files: [file], text: `${message} rocketdraft.app` });
+        return;
+      }
+    } catch {
+      /* user cancelled or unsupported — fall through to download */
+    }
+    void downloadShareCard(data);
+  };
+
+  const onX = () => {
+    const text = encodeURIComponent(`${message} rocketdraft.app`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <Modal open title={R.shareTitle} onClose={onClose} wide>
+      <div className="space-y-4">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="w-full rounded-lg border border-line" />
+        ) : (
+          <div className="aspect-[1200/630] w-full animate-pulse rounded-lg bg-white/5" />
+        )}
+        <p className="text-center text-sm text-sub">{message}</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button variant="primary" onClick={onNativeShare}>
+            {R.shareNative}
+          </Button>
+          <Button variant="secondary" onClick={onX}>
+            {R.shareX}
+          </Button>
+          <Button variant="ghost" onClick={() => void downloadShareCard(data)}>
+            {R.shareDownload}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -594,14 +708,40 @@ function UnlockCeremony({
  * ceremony (black backdrop, emblem bursting in the center) and the MENU rank
  * art (not the profile set). Portaled full-screen; advances only on tap/continue.
  */
+/** What the new rank just unlocked vs the previous one — for the rank-up screen. */
+function rankUnlockLines(
+  prevRankId: string,
+  rankId: string,
+  R: ReturnType<typeof useCopy>["RESULTS_UI"],
+  rarityLabels: ReturnType<typeof useCopy>["RARITY_LABELS"],
+): string[] {
+  const before = RANK_REWARDS[prevRankId];
+  const after = RANK_REWARDS[rankId];
+  if (!before || !after) return [];
+  const out: string[] = [];
+  if (!before.collection && after.collection) out.push(R.unlockCollection);
+  for (const r of after.rarities) {
+    if (before.rarities.includes(r) || r === "creator") continue;
+    out.push(R.unlockRarity(rarityLabels[r as keyof typeof rarityLabels] ?? r));
+  }
+  if (!before.hardMode && after.hardMode) out.push(R.unlockHard);
+  if (after.specialChance > before.specialChance) {
+    out.push(R.unlockChance(Math.round(after.specialChance * 100)));
+  }
+  return out;
+}
+
 function RankUpCelebration({
   rank,
+  prevRankId,
   onDone,
 }: {
   rank: Pick<RankInfo, "id" | "label">;
+  prevRankId: string;
   onDone: () => void;
 }) {
-  const { RESULTS_UI: R } = useCopy();
+  const { RESULTS_UI: R, RARITY_LABELS } = useCopy();
+  const unlocks = rankUnlockLines(prevRankId, rank.id, R, RARITY_LABELS);
 
   // Rank-up fanfare, once on mount.
   useEffect(() => {
@@ -627,7 +767,20 @@ function RankUpCelebration({
         <p className="display mt-2 text-lg font-bold uppercase tracking-[0.24em] text-ink">
           {rank.label}
         </p>
-        <p className="mt-3 text-xs text-sub">{R.rankUpHint}</p>
+        {unlocks.length > 0 ? (
+          <div className="mx-auto mt-5 max-w-xs rounded-xl border border-orange/25 bg-orange/5 px-4 py-3">
+            <p className="kicker !text-[10px] text-orange-bright">{R.rankUpUnlocked}</p>
+            <ul className="mt-2 space-y-1">
+              {unlocks.map((u, i) => (
+                <li key={i} className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink">
+                  <span className="text-good">+</span> {u}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="mt-3 text-xs text-sub">{R.rankUpHint}</p>
+        )}
       </div>
     </CeremonyPortal>
   );
@@ -732,10 +885,13 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
           {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
         </Badge>
       </div>
-      {/* Left-aligned row of small cards — wraps on narrow screens. */}
-      <div className="flex flex-wrap justify-start gap-3">
+      {/* Card row — uses the EXACT proven structure from the team-review screen
+          (ReviewScreen): a fluid size="sm" card inside a max-w-32 cell, laid out
+          3-up on mobile / 6-up on desktop. This is the layout that finally fixed
+          the mobile card-overflow that broke earlier attempts here (v1.3.1). */}
+      <div className="grid grid-cols-3 gap-2 md:gap-3 lg:grid-cols-6">
         {cards.map((card, i) => (
-          <div key={i} className="w-[5.25rem] sm:w-24">
+          <div key={i} className="mx-auto w-full max-w-32">
             <GameCard card={card} showOverall size="sm" fluid tilt="off" />
           </div>
         ))}

@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { HomeSeoContent } from "@/components/content/HomeSeoContent";
+import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
 
 export default function HomeMenu() {
   const { APP, HOME, HOME_SEO } = useCopy();
@@ -83,6 +84,7 @@ export default function HomeMenu() {
 
   return (
     <>
+      <FirstRunTutorial />
       <div className="rise-in">
       {/* Hero */}
       <section className="px-2 py-10 text-center md:py-14">
@@ -265,6 +267,16 @@ export default function HomeMenu() {
               <DiscordGlyph /> {HOME.joinDiscord}
             </a>
           ) : null}
+          {SITE.authorUrl ? (
+            <a
+              href={SITE.authorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/3 px-3.5 py-1.5 text-xs font-semibold text-sub transition-colors hover:border-line-strong hover:text-ink"
+            >
+              <XGlyph /> {HOME.followTwitter}
+            </a>
+          ) : null}
           {SITE.supportUrl ? (
             <a
               href={SITE.supportUrl}
@@ -280,6 +292,14 @@ export default function HomeMenu() {
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
     </>
+  );
+}
+
+function XGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" />
+    </svg>
   );
 }
 

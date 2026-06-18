@@ -522,6 +522,107 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     taken now: `counts.ts` (kills the direct barrel import for two integers) and
     dropping `fetchPriority="high"` on the decorative rank emblem.
 
+## v1.3 (rewards, chemistry, legacy rebalance)
+
+61. **Legacy is a chase, not a wall — winnable only by a great, chemistry-built
+    draft.** Live feedback: a 2-hour stream produced zero Legacy titles even with
+    good teams. Root analysis: the field was all-elite (`opponentTierWeights.elite`
+    2.6) AND every org could repeat (#62), so every match read as a top-5 superteam.
+    Fix is structural + tuning: org-unique fields, `opponentRatingShift` 1.2→0.6,
+    elite weight 2.6→1.8 (a *mixed* iconic gauntlet), user `chemistryMaxBonus`
+    2.6→2.9. Measured target: a ~95.5 chemistry draft wins ~8%; a 92.5 "good" team
+    ~0%. Legacy stays strictly harder than Hard. The `balance.test.ts` Legacy band
+    was deliberately rebased (playoffs is now reachable; the *title* is the gate)
+    and a reachability assertion added — a future regression that re-walls Legacy
+    fails the suite.
+
+62. **One lineup per org in a tournament field.** A bracket is a set of distinct
+    teams; facing "FURIA 24" and "FURIA 25" in one Swiss broke the fiction and
+    stacked the strongest orgs against the player. `generateOpponents` now draws
+    org-unique, with a fallback that only repeats an org when a small regional pool
+    (e.g. SAM) genuinely can't fill the field otherwise. Applies to every
+    difficulty. Does not touch the draft pool.
+
+63. **Chemistry reachability via new SOURCES, not a higher field-wide cap.**
+    Perfect chemistry was "near-impossible", and region-locked play (everyone same
+    region/often same country) needed a sensible floor. Added a **same-region pair**
+    link (weakest pairwise tier, below same-org — lifts a mixed-nationality roster
+    out of Poor) and **coach/sub nationality** links (same country, region at half).
+    Safe by construction: AI historical lineups already saturate `maxRaw` (≈100%),
+    so new sources do NOT inflate the field — they only help the PLAYER reach the
+    cap. Honours the project memory (reward chemistry via reachable scoring, never
+    the field-wide bonus) and extends #49. On Hard/Legacy the user cap also rose
+    (2.1→2.3 / 2.6→2.9), which is a pure player buff there since the AI cap is 0.
+
+64. **Progression unlocks CONTENT — rank-gated rewards.** The rank ladder did
+    nothing in practice. Now (`RANK_REWARDS`): special-card rarities unlock by rank
+    (Unranked none → Diamond legendary), appearance chance ramps at the top
+    (Champion 8 / GC 12 / SSL 16%), the Collection is locked until Bronze, and Hard
+    unlocks at Silver. Implemented by folding the rank chance into the existing
+    `specialChanceMult` and adding a rarity filter to `rollSpecial`, so the draft
+    engine stays mostly unchanged and the **daily is exempt** (no rank gate — its
+    scripted specials and RNG sequence are untouched). Bronze lowered 400→300 so a
+    single run clears Unranked. Back-compat: anyone who already won Hard/Legacy
+    keeps Hard access regardless of XP. Bronze–Diamond keep the familiar 5% chance,
+    so the gate is felt as *unlocks*, not a nerf to existing players.
+
+65. **Special cards are never identity-masked by difficulty — only the number and
+    rarity hide.** v0.7 over-masked: on hidden-overall runs a special showed only a
+    team-logo silhouette. That contradicted GAME-DESIGN §11/§14 ("specials still
+    show, with `??` for the overall"). Now a special always shows photo + title +
+    org/season + full buff in every mode; only the overall number and the rarity
+    label hide on no-overall runs. Collection-locking (uncollected → `???`/`??`)
+    stays orthogonal to difficulty — that's the unlock reward, not the hidden-run
+    mask.
+
+66. **Draft anti-frustration tilt is a global, difficulty-independent soft weight —
+    and never touches the daily.** A long session of all-no-hope drafts is
+    frustrating; `DRAFT.tierBias` (0.35) softly favors historically stronger
+    lineups (elite ~1.35×, underdog ~0.9×) without removing weak teams. It does NOT
+    read difficulty (the hard rule "difficulty never shapes the draft pool" holds —
+    this is a flat feel tweak) and is mode-gated OFF for the daily so the
+    globally-shared seed stays byte-identical (`weightedPick` with a ×1 weight is
+    provably identical to the prior `pick`).
+
+## v1.3.1 (live-feedback pass)
+
+67. **Difficulty is tuned to felt team-strength targets, not abstract bands.** Live
+    play set the goalposts: ~90 "good", ~92 "elite", ~95 "dream". Normal — a good
+    team can win, an elite has strong odds. Hard — 90 can't win, 92 ~10%, 95
+    comfortably. Legacy — 95 ~10%, 92 very rarely, 90 never. Achieved by retuning
+    `opponentRatingShift` + `opponentTierWeights` per difficulty (measured with a
+    fixed-team harness across totals). The Bo7 gauntlet is inherently steep — a
+    3-overall gap is the difference between "almost never" and "~10%" — so Legacy's
+    elite-team rate lands below the loose "2%" wish; that's accepted. Hard's true
+    difficulty is drafting with overalls hidden, which a fixed-team test can't model.
+
+68. **Region-locked play is normalised, not left easy.** A regional pool (SAM) tops
+    out ~5 overall below worldwide, so the same difficulty was trivially easy. A
+    flat `REGION_LOCK.opponentRatingBoost` (+3) is added to every region-locked
+    opponent so the regional curve mirrors worldwide with adapted overalls: a
+    SAM-best (~90) draft faces ~the same odds a worldwide dream (~95) does. Threaded
+    via `buildLineupTeam(extraShift)` ← `generateOpponents` ← `initTournament`
+    options ← the run's `regionLock`. A single flat boost is slightly harsher than
+    worldwide on Normal/Hard and on-target on Legacy — acceptable for a focused
+    regional challenge; one tunable.
+
+69. **Perfect chemistry demands real org/lineup overlap; the bar must be FULL.**
+    Reworking #49: Perfect now means a 100% bar (`raw ≥ maxRaw`, maxRaw 12→15), and
+    shared-org (3) outranks same-country (2), so a country-only or country+staff
+    stack caps at Good — Perfect needs same-org or same-lineup player pairs.
+    Same-kind pairs MERGE into one readout line (a Brazil core is one "+6", not
+    three "+2"s), and coach/sub state a named reason, not a vague "connection".
+    Still safe vs the overall-dominant anchors (AI lineups still saturate; the
+    rating reward stays percent-based).
+
+70. **A drafted special wears the DRAFTED org on YOUR field — only the Collection
+    shows its moment.** Amends #23: the moment still drives chemistry and the card
+    art/title, but the on-field crest/season follow the lineup you drafted from (a
+    yanxnz FURIA special pulled from a Rebel offer reads as a Rebel pickup). The
+    Collection is unaffected because it resolves a special via its OWN base card id,
+    so it still shows the historical moment. Implemented in `resolvePlayerCard` /
+    `resolveCoach` (display uses the passed card, not the special's base).
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

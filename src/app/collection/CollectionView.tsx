@@ -13,6 +13,7 @@ import type { SpecialCard, SpecialRarity } from "@/engine/types";
 import { cx, countryName, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
+import { rankRewardsForXp, rankThatUnlocksRarity } from "@/engine/progression";
 import { Badge } from "@/components/ui/Badge";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Modal } from "@/components/ui/Modal";
@@ -48,6 +49,7 @@ export function CollectionView() {
   const { COLLECTION_UI: C, RARITY_LABELS } = useCopy();
   const mounted = useMounted();
   const unlockedMap = useProfileStore((s) => s.unlockedSpecials);
+  const xp = useProfileStore((s) => s.xp);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [rarity, setRarity] = useState<SpecialRarity | "all">("all");
   const [detail, setDetail] = useState<SpecialCard | null>(null);
@@ -68,6 +70,16 @@ export function CollectionView() {
     : mounted
       ? Object.keys(unlockedMap).length
       : 0;
+
+  // v1.3 rank gates: the Collection opens at Bronze, and each rarity unlocks at a
+  // rank (Bronze rare → Diamond legendary). devPreview and pre-mount stay open to
+  // avoid a hydration flash — the lock is a brief first-session state (Bronze is
+  // one run away). `rarityLockedAt` returns the rank label that unlocks a still-
+  // locked rarity (null = available to this player).
+  const collectionLocked = mounted && !devPreview && !rankRewardsForXp(xp).collection;
+  const unlockedRarities = mounted && !devPreview ? rankRewardsForXp(xp).rarities : null;
+  const rarityLockedAt = (r: SpecialRarity): string | null =>
+    unlockedRarities && !unlockedRarities.includes(r) ? rankThatUnlocksRarity(r) : null;
 
   // Single grid (v0.6.1, by direction): UNLOCKED cards lead — ordered rarity
   // (legendary→rare) then overall — followed by the still-locked cards in the
@@ -120,6 +132,27 @@ export function CollectionView() {
     // 600px margin is filled or no cards remain.
   }, [hasMore, limit]);
 
+  // Unranked: the album is sealed until Bronze. Shown after the hooks above so
+  // the rules-of-hooks order is stable.
+  if (collectionLocked) {
+    return (
+      <div className="rise-in">
+        <BackToMenu />
+        <SectionTitle kicker={C.subtitle} title={C.title} className="mb-6" />
+        <Panel strong className="p-10 text-center">
+          <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-line bg-white/5 text-faint">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <rect x="5" y="11" width="14" height="9" rx="2" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
+          </span>
+          <p className="display text-lg font-bold uppercase tracking-wide text-ink">{C.lockedTitle}</p>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-sub">{C.lockedBody}</p>
+        </Panel>
+      </div>
+    );
+  }
+
   return (
     <div className="rise-in">
       <BackToMenu />
@@ -150,13 +183,20 @@ export function CollectionView() {
             : mounted
               ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
               : 0;
+          const lockLabel = rarityLockedAt(r);
           return (
-            <Panel key={r} className="p-3 text-center">
+            <Panel key={r} className={cx("p-3 text-center", lockLabel && "opacity-70")}>
               <p className="kicker !text-[10px]">{RARITY_LABELS[r]}</p>
-              <p className="display mt-1 text-xl font-bold text-ink">
-                {got}
-                <span className="text-sm text-faint">/{total}</span>
-              </p>
+              {lockLabel ? (
+                <p className="display mt-1 flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wide text-faint">
+                  <LockGlyph /> {C.unlocksAt(lockLabel)}
+                </p>
+              ) : (
+                <p className="display mt-1 text-xl font-bold text-ink">
+                  {got}
+                  <span className="text-sm text-faint">/{total}</span>
+                </p>
+              )}
             </Panel>
           );
         })}

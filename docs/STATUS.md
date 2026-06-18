@@ -1,38 +1,54 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-18. **The game is LAUNCHED.** Committed tip: **v1.2.7**
-> (info pages + full PT translation + technical polish — 13 new EN+PT info/landing
-> pages, bilingual toggle for them, structured data, web manifest; see
-> `docs/CHANGELOG.md` [1.2.7] + `DESIGN-DECISIONS.md` #56–60). **Next up: v1.3
-> (accounts & sync)** — see `docs/ROADMAP.md` + the invariants in
-> `DESIGN-DECISIONS.md` #55. Per-version detail is in `docs/CHANGELOG.md`; this
-> file stays **current-state only**. Grep CHANGELOG/DESIGN-DECISIONS for history.
+> Last updated: 2026-06-18. **The game is LAUNCHED.** Production tip: **v1.2.7**.
+> **v1.3.1 is committed to a `staging` branch** (Vercel preview URL, NOT production)
+> for Miguel to test the difficulty rebalance with colleagues before launching v1.3
+> to the apex domain. v1.3 is a big gameplay update:
+> rank-gated rewards, reachable chemistry, a Legacy rebalance that makes the title
+> winnable, org-unique tournament fields, a reworked Match Center + playoff reveal,
+> the always-visible special-card art, and the community SAM overall review. See
+> `docs/CHANGELOG.md` [1.3.0] + `DESIGN-DECISIONS.md` #61–66. The **Challenges**
+> feature was designed this pass (`docs/CHALLENGES-DESIGN.md`) but NOT implemented
+> — it's the next build. Per-version detail is in `docs/CHANGELOG.md`; this file
+> stays **current-state only**. Grep CHANGELOG/DESIGN-DECISIONS for history.
 
 ## Current state
 
-Launched on Vercel; committed tip **v1.2.6**. The core loop is complete — Classic +
-Quick + Daily modes, 4 difficulties (Legacy unlockable), region-lock (SAM live),
-Swiss + double-elim playoffs, special cards + collection + achievements + XP/ranks,
-local persistence (run / profile / settings stores). Recent releases (full detail in
-`docs/CHANGELOG.md`):
+Launched on Vercel; committed tip **v1.2.7**, with **v1.3.0 staged uncommitted**.
+The core loop is complete — Classic + Quick + Daily modes, 4 difficulties (Hard now
+gated at Silver, Legacy behind a Hard win), region-lock (SAM live), Swiss +
+double-elim playoffs, special cards + collection + achievements + XP/ranks, local
+persistence (run / profile / settings stores). What v1.3 changed (full detail in
+`docs/CHANGELOG.md` [1.3.0]):
 
-- **v1.2.6** — champion-on-Hard scroll-lock fix (short-viewport ceremony overlay now
-  scrolls; the dismiss hint is always reachable).
-- **v1.2.5** — community **SAM overall review** (151 overalls), the **`legacy` lineup
-  flag** (SAM legends surface in the legacy gauntlet via a `historicalStrength` floor),
-  the **Hard/Legacy chemistry rebalance** (`opponentChemistryMaxBonus = 0` — opponents
-  no longer bank a chemistry bonus the player can't), data-pipeline-drift
-  reconciliation, and a repeatable review tool (`scripts/apply-overall-review.mjs` +
-  `data-sources/overall-review-v1.2.5.csv` baseline).
-- **v1.2.4** — analytics wiring (PostHog + Vercel Web Analytics), **no-op until enabled**.
+- **Rewards**: `RANK_REWARDS` — rank gates special-card rarities (Unranked none →
+  Diamond legendary), ramps appearance chance at the top (Champion 8 / GC 12 / SSL
+  16%), locks the Collection until Bronze (300 XP), gates Hard at Silver.
+- **Chemistry**: same-region pair + coach/sub nationality links (reachable Perfect,
+  AI unaffected — it already saturates).
+- **Legacy rebalance**: org-unique fields + softer mixed gauntlet (`opponentRatingShift`
+  0.6, elite weight 1.8, user `chemistryMaxBonus` 2.9) — a great draft wins ~8%.
+- **Sim/UI**: org-unique opponent fields; Match Center splits games win/loss by column;
+  playoffs reveal the whole round at once; specials always show art + buff in hidden
+  mode (only number + rarity hide).
+- **Data**: community SAM overall review (69 overalls + roster fixes), via
+  `scripts/apply-overall-review.mjs` + `data-sources/overall-review-v1.3.csv`.
 
-Gates as of v1.2.6: `tsc`, **51** vitest tests, lint at the 8-error baseline (0 new),
-`build:data` + `validate:data`.
+Gates as of v1.3.0: `tsc` clean, **60** vitest tests pass, lint at the 8-error
+baseline (0 new), `build:data` + `validate:data` green. NOTE: automated browser
+verification of the UI changes was blocked by a running dev server holding Next's
+`.next/dev/lock` (port 3000) — verify the Match Center / playoff / card visuals
+on the live dev server.
 
-## Next up — v1.3 (accounts & sync)
+## Next up
 
-Supabase mirror of the stores + Discord OAuth + guest→account migration + a daily
+**1. Challenges** (designed, not built) — rank-unlocked "beat-the-line" puzzles.
+Full design + open decisions in `docs/CHALLENGES-DESIGN.md`; await Miguel's calls
+on the five `[DECIDE]` points, then build in the suggested phases.
+
+**2. Accounts & sync** (the originally-planned v1.3, now a later version): Supabase
+mirror of the stores + Discord OAuth + guest→account migration + a daily
 leaderboard (the daily seed is already globally shared). Scope in `docs/ROADMAP.md`.
 The **invariants this patch must not break** are recorded in
 `docs/DESIGN-DECISIONS.md` **#55** — engine purity, persist `seed`+`rngState`

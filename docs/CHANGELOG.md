@@ -10,6 +10,129 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.3.1] — 2026 · Live-feedback pass (balance targets, chemistry rules, polish)
+
+Pre-launch iteration on v1.3 from live play. Supersedes the [1.3.0] balance.
+
+### Added
+- **First-launch tutorial**: a short full-screen, multi-step feature tour (draft →
+  collection → ranks → difficulties), shown once (`flags.seenTutorial`),
+  skippable. Client-only + mounted-gated → no SSR/SEO/page-speed impact.
+- **Rank-up screen now lists what you unlocked** (the Collection, a new rarity,
+  Hard mode, a higher special chance) — derived from `RANK_REWARDS`.
+- **Region-lock difficulty normalisation** (`REGION_LOCK.opponentRatingBoost` = 3):
+  a flat boost to region-locked (SAM) opponents so the regional curve mirrors
+  worldwide with adapted overalls — a SAM-best (~90) draft faces roughly the same
+  odds a worldwide dream (~95) does, instead of SAM being trivially easy.
+- **Share preview**: the share button now opens a preview modal (image + caption)
+  with native Share (image + text), an X compose intent, or a plain download. The
+  share image now shows the **drafted roster as rarity-framed mini-cards**.
+- **Follow on X pill** on the home, next to Join the Discord.
+
+### Changed
+- **Difficulty retuned to live targets** (measured for ~90 "good" / ~92 "elite" /
+  ~95 "dream" teams): Normal `opponentRatingShift` 0 → **-1.0** (a good team can
+  win, an elite has strong odds); Hard `{elite 1.15…}` → **`{elite 0.7, strong
+  1.1, solid 1.0, underdog 0.7}`** + shift 0.3 → **-0.2** (a 90 can't win, a 92
+  elite ~10%, a 95 dream comfortably); Legacy shift 0.6 → **0.2**, elite weight
+  1.8 → **1.4** (a 95 dream ~10%, a 92 elite very rarely). Hard's real difficulty
+  remains drafting with overalls hidden. `balance.test.ts` Hard band rebased.
+- **Chemistry reworked** (engine + CHEMISTRY): **Perfect only at a FULL bar** (raw
+  ≥ maxRaw; tiers Perfect=100). **Shared org now outranks country** (org 3 >
+  country 2) and **Perfect requires real org/lineup overlap** — a country-only (or
+  country+staff) stack tops out at Good, never Perfect. Same-country/-org/-lineup
+  pairs are **merged into one breakdown line** (a 3-player Brazil core reads as one
+  "Same country +6", not three +2s). Coach/sub now state a **named reason**
+  ("coached this lineup" / "same org" / "same country") instead of a vague
+  "connection". `maxRaw` 12 → 15.
+- **Special cards show the DRAFTED org on your field** (and in the draft offer), not
+  the special's historical org — a yanxnz FURIA special drafted from a Rebel offer
+  now wears the Rebel crest. The special keeps its moment for art/title + chemistry,
+  and the Collection still shows the moment (resolves via the special's own base
+  card). Updates DESIGN-DECISIONS #23.
+- **Header "Play" always opens Setup**, even mid-run on `/play` (clears the run).
+- **"Who ended your run" cards** now use the team-review screen's proven 6-card row
+  (3-up mobile / 6-up desktop, fluid `max-w-32` cells) instead of a cramped
+  flex-wrap — the layout that fixed the long-standing mobile overflow there.
+
+### Fixed
+- Share card download now goes via a Blob URL (revoked after use) instead of a
+  giant data-URL `href`.
+
+## [1.3.0] — 2026 · Rewards, chemistry, legacy rebalance + sim/UI overhaul
+
+A large gameplay update. Progression now **unlocks content**; Legacy is finally
+winnable for a great draft; chemistry is reachable; tournament fields are
+org-unique; the Match Center and playoff reveal were reworked; and the community
+SAM overall review landed. The Challenges feature was **designed** (see
+`docs/CHALLENGES-DESIGN.md`) and deferred to a later release.
+
+### Added
+- **Rank-gated reward system** (`RANK_REWARDS`, `engine/progression`): special-card
+  **rarities unlock by rank** — Unranked none · Bronze rare · Silver epic ·
+  Gold/Platinum mythic · Diamond+ legendary — and the special **appearance chance
+  ramps at the top** (Champion 8% · Grand Champion 12% · SSL 16%; Bronze–Diamond
+  stay the familiar 5%). The **Collection is locked until Bronze** with a clear
+  "reach Bronze" panel, and the rarity-progress tiles show **"Unlocks at <Rank>"**
+  hints. **Hard mode unlocks at Silver** (Legacy still needs a Hard win on top);
+  existing Hard/Legacy winners keep access. **Bronze lowered 400→300 XP** so one
+  run — win or lose — clears the Unranked on-ramp. New `engine/progression.test.ts`
+  pins the whole ladder.
+- **New chemistry sources** (reachable Perfect, especially region-locked): a
+  **same-region pair** link (the weakest pairwise tier — the floor that lifts a
+  mixed-nationality roster out of Poor) and **coach/sub nationality** links (same
+  country, or region at half), within the existing staff caps.
+- **`docs/CHALLENGES-DESIGN.md`** — full design for rank-unlocked "beat-the-line"
+  puzzles. Design only; implementation deferred.
+
+### Changed
+- **Org-unique tournament fields**: the Swiss/quick field now draws **one lineup
+  per org** (graceful fallback for tiny regional pools), so a bracket is a set of
+  distinct teams instead of "FURIA 24 + FURIA 25 + …".
+- **Special cards in hidden-overall (Hard/Legacy) mode** now always show their
+  **photo, identity (title/org/season) and full buff** — only the overall number
+  and the rarity label stay hidden, matching base cards and GAME-DESIGN §11/§14.
+  (Reverts the v0.7 over-masking.)
+- **Match Center games split by outcome**: each game card lands in the **winner's
+  column** (mirroring the scoreline — teamA left, teamB right), so a 4-2 series
+  reads as 4 cards under one team and 2 under the other, instead of a chronological
+  flow.
+- **Playoffs reveal a whole round at once**: entering a round shows **all its
+  matchups** (teams + overalls); the user's match plays, then the other results
+  reveal one-by-one before advancing. (Previously only the user's match showed
+  until its result.)
+- **Draft anti-frustration tilt** (`DRAFT.tierBias`, 0.35): offers are *softly*
+  weighted toward historically stronger lineups so a long session is less of a
+  parade of no-hope teams — weak rosters still appear. Global and
+  difficulty-independent; the **daily draw stays byte-identical** (mode-gated).
+
+### Balance
+- **Legacy made winnable** (live feedback: a 2-hour session, zero titles).
+  `opponentRatingShift` 1.2→**0.6**, `opponentTierWeights` elite 2.6→**1.8**
+  (a mixed gauntlet, not all-elite), user `chemistryMaxBonus` 2.6→**2.9**. Net:
+  a great, chemistry-built draft (~95.5+) now wins Legacy ~**8%** of runs while a
+  merely-good (92.5) team still almost never lifts it — the crown is a real but
+  rare achievement. Combined with org-unique fields this dismantles the SAM "FURIA
+  wall". The `balance.test.ts` Legacy band was rebased to the new intent and a
+  **reachability assertion** added (a strong draft *must* be able to win it).
+- **Hard**: user `chemistryMaxBonus` 2.1→**2.3** (chemistry is the player's
+  asymmetric edge here — the AI cap stays 0).
+- **Community SAM overall review** (`data-sources/overall-review-v1.3.csv`): **69
+  overalls** adjusted via the repeatable review tool (zero drift). Roster fixes:
+  Team Secret coach **BRUNOVISQUII** added (2122 ovr 79 · 2024/2025 ovr 84),
+  **FURIA 2025 coach corrected to STL** (was mis-assigned BRUNOVISQUII), **EndGame
+  2022-23 Luk→Royales**, **Kronovi iBUYPOWER S1 92→97**. The SAM `legacy`
+  historicalStrength floors were already consistent.
+- **Normal anchor**: org-unique fields restored the good-team Normal title rate;
+  the test sample was raised 300→1000 runs to read the true ~5.5% reliably past
+  the 5% line (the field is a touch stronger after the overall review).
+
+### Fixed
+- **Tournament fields could draw an org's multiple seasons into one bracket**
+  (e.g. FURIA 24 + FURIA 25). Root cause: `generateOpponents` sampled lineups
+  with no org-uniqueness guard. Now one lineup per org, with a fallback that only
+  repeats an org when a small regional pool can't otherwise fill the field.
+
 ## [1.2.7] — 2026 · Info pages, full PT translation + technical polish
 
 New static info pages with full Portuguese, richer page metadata and structured

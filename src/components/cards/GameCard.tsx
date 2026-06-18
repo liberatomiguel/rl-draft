@@ -164,8 +164,6 @@ export function GameCard({
   selected,
   disabled,
   disabledLabel,
-  maskOrgId,
-  maskSeasonId,
   tilt,
   onClick,
   className,
@@ -180,26 +178,27 @@ export function GameCard({
   const isOrg = card.kind === "org";
   const isSpecial = Boolean(card.special);
   const hiddenBase = !showOverall && !isSpecial;
-  // Hidden runs: the special's identity (photo/title/type/overall) is a
-  // results-screen reveal — only the frame/holo betray that it IS one.
-  const maskedSpecial = isSpecial && !showOverall;
-  // Masked specials (v0.7.0) show a TEAM LOGO centerpiece — the drawn lineup's
-  // crest (maskOrgId) when supplied, so they match the rest of the offer in
-  // hidden mode instead of a bare "?". Base cards always show their org logo.
-  const showLogoCenter = !isSpecial || maskedSpecial;
-  const logoOrgId = maskedSpecial ? maskOrgId ?? card.orgId : card.orgId;
-  const logoSeasonId = maskedSpecial ? maskSeasonId ?? card.seasonId : card.seasonId;
+  // v1.3: special cards always show their photo, identity, org/season and buff in
+  // EVERY mode (base doc §11/§14) — exactly like base cards keep their crest and
+  // name on no-overall runs. The ONLY difficulty-driven mask left for a special is
+  // the rarity label (and the overall number, handled by `overallText`). Whether a
+  // not-yet-collected special hides its title/rarity is the COLLECTION reward
+  // (`specialCollected`), independent of difficulty.
+  const hideSpecialRarity = isSpecial && !showOverall;
+  // Only BASE cards use the org-logo centerpiece now; specials always show the photo.
+  const showLogoCenter = !isSpecial;
+  const logoOrgId = card.orgId;
+  const logoSeasonId = card.seasonId;
   // Role tag tint — a FIXED color per kind (v1.0: the org tag no longer
   // borrows the region color; only the org's region CHIP is region-tinted).
   const tagClass = KIND_TAG[card.kind];
   const frame = frameOf(card, showOverall);
   const overallText = isOrg ? null : showOverall ? String(card.overall) : "??";
-  // Buff pill (v1.2.1): every special advertises its buff — the gameplay info a
-  // drafter needs. It never reveals the card's identity (only the stat), so it
-  // shows even on yet-to-be-unlocked specials. The VALUE follows the overall:
-  // visible runs show "+5 EXP", hidden/Hard runs show "+?? EXP".
+  // Buff pill (v1.2.1; v1.3 always shows the value): every special advertises its
+  // full buff — the gameplay info a drafter needs, shown in EVERY mode now that the
+  // photo is no longer hidden. It shows even on yet-to-be-unlocked specials.
   const buffLabel =
-    isSpecial && card.special ? specialBuffLabel(card.special.effect, showOverall) : null;
+    isSpecial && card.special ? specialBuffLabel(card.special.effect, true) : null;
   // `lite` (dense grids) keeps the 3D tilt — it's cheap now that TiltCard only
   // promotes a layer (will-change) while actually tilting. Only the heavier
   // blend/backdrop/halo-pulse effects are dropped in lite (below + globals.css).
@@ -229,10 +228,8 @@ export function GameCard({
         className,
       )}
     >
-      {/* Special photo layer — masked specials hide the photo and show the
-          team-logo centerpiece below instead (v0.7.0); the frame/holo still
-          announce that it IS a special. */}
-      {isSpecial && !maskedSpecial ? <SpecialArt card={card} priority={priority} /> : null}
+      {/* Special photo layer — v1.3: always shown for specials, in every mode. */}
+      {isSpecial ? <SpecialArt card={card} priority={priority} /> : null}
 
       {/* Holo treatment, tier-scaled (Balatro-style, cursor-reactive). Skipped
           in `lite` mode (dense grids): these mix-blend-mode layers are the main
@@ -347,7 +344,7 @@ export function GameCard({
               SPECIAL_ACCENT[card.special.rarity] ?? "text-orange-bright",
             )}
           >
-            {maskedSpecial || !specialCollected ? "???" : card.special.title}
+            {!specialCollected ? "???" : card.special.title}
           </p>
         ) : null}
         <p className={cx("mt-0.5 truncate text-[10px]", isSpecial ? "text-white/60" : "text-sub")}>
@@ -357,9 +354,7 @@ export function GameCard({
                 ? "No buff"
                 : `${STAT_LABELS[card.buffType ?? ""] ?? ""} +${BUFF_LEVEL_VALUE[card.buffLevel ?? "~"]}`.trim()
               : "Buff hidden"
-            : maskedSpecial
-              ? "???" // the special's own org/season would identify the moment
-              : [card.orgName, card.seasonShort].filter(Boolean).join(" · ")}
+            : [card.orgName, card.seasonShort].filter(Boolean).join(" · ")}
         </p>
 
         {/* Bottom tag — ratings/buffs blacked out on hidden runs. min-w-0 +
@@ -369,16 +364,17 @@ export function GameCard({
           {card.special ? (
             <>
               <Badge
-                tone={specialCollected && !maskedSpecial ? "gold" : "neutral"}
+                tone={specialCollected ? "gold" : "neutral"}
                 className={cx("!block min-w-0 truncate !text-[9px]", !lite && "backdrop-blur-sm")}
               >
-                {maskedSpecial
-                  ? `${SPECIAL_TYPE_LABELS.masked} · ${RARITY_LABELS[card.special.rarity]}`
-                  : specialCollected
-                    ? card.special.rarity === "creator"
-                      ? RARITY_LABELS.creator
-                      : `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${RARITY_LABELS[card.special.rarity]}`
-                    : "?? · ??"}
+                {!specialCollected
+                  ? "?? · ??"
+                  : card.special.rarity === "creator"
+                    ? RARITY_LABELS.creator
+                    : // v1.3: type stays; only the rarity label hides on no-overall runs.
+                      `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${
+                        hideSpecialRarity ? "??" : RARITY_LABELS[card.special.rarity]
+                      }`}
               </Badge>
               {buffLabel ? (
                 <Badge

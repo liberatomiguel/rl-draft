@@ -65,9 +65,16 @@ export function rollSpecial(
   pool: SpecialCard[] | undefined,
   chance: number,
   rng: Rng,
+  allowedRarities?: readonly string[],
 ): string | undefined {
-  if (!pool || pool.length === 0 || !rng.chance(chance)) return undefined;
-  return rng.weightedPick(pool, (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1).id;
+  // v1.3 rank gate: restrict the person's catalogue to the rarities the player's
+  // rank has unlocked. Undefined = no gate (daily / pre-v1.3 callers). An empty
+  // list (Unranked) leaves no eligible special, so none appears.
+  const eligible = allowedRarities
+    ? pool?.filter((sp) => allowedRarities.includes(sp.rarity))
+    : pool;
+  if (!eligible || eligible.length === 0 || !rng.chance(chance)) return undefined;
+  return rng.weightedPick(eligible, (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1).id;
 }
 
 export interface CreateDraftOptions {
@@ -76,8 +83,10 @@ export interface CreateDraftOptions {
   poolLineupIds?: string[];
   /** Override the difficulty's reroll budget (daily modifier). */
   rerollsOverride?: number;
-  /** Multiply the special-appearance chance (daily modifier). */
+  /** Multiply the special-appearance chance (daily modifier / rank scaling). */
   specialChanceMult?: number;
+  /** Rank-gated special rarities that may appear (v1.3). Undefined = all. */
+  specialRarities?: string[];
   /** Scripted daily draft: exact lineup per pick, optional forced special. */
   scriptedLineups?: DraftScriptStep[];
 }
@@ -94,6 +103,7 @@ export function createDraft(
     takenPersonIds: [],
     poolLineupIds: options.poolLineupIds,
     specialChanceMult: options.specialChanceMult,
+    specialRarities: options.specialRarities,
     scriptedLineups: options.scriptedLineups,
     offer: null,
     roster: {},
@@ -168,8 +178,14 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   for (const cardId of lineup.playerCardIds) {
     const card = playerCardById.get(cardId)!;
     // A special version may appear in place of the base card — the pool is
-    // the PLAYER's full catalogue, weighted by rarity (v0.5).
-    let specialId = rollSpecial(specialsByPlayerId.get(card.playerId), specialChance, rng);
+    // the PLAYER's full catalogue, weighted by rarity (v0.5), gated to the
+    // player's rank-unlocked rarities (v1.3).
+    let specialId = rollSpecial(
+      specialsByPlayerId.get(card.playerId),
+      specialChance,
+      rng,
+      draft.specialRarities,
+    );
     // Easter-egg lineup (Wings): the creator's card ALWAYS appears as its
     // special (the Creator card) — finding the lineup is the rare gate, so the
     // prize isn't gated behind a second roll (v1.2.0).
@@ -195,6 +211,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
           coachSpecialsByPersonId.get(coach.personId),
           SPECIALS.coachAppearanceChance * (draft.specialChanceMult ?? 1),
           rng,
+          draft.specialRarities,
         ),
         availability: availabilityFor("coach", coach.personId, draft),
       });
@@ -262,6 +279,15 @@ function lineupWeight(lineup: Lineup, staffNeeds: CardKind[]): number {
   return 1 + (covered / staffNeeds.length) * (DRAFT.staffScarcityBoost - 1);
 }
 
+/**
+ * Soft anti-frustration weight by historical strength (v1.3). 1 = neutral.
+ * Lerps from uniform (tierBias 0) toward DRAFT.draftTierWeights (tierBias 1).
+ * Never filters the pool — weak rosters still appear, just a touch less often.
+ */
+function lineupTierWeight(lineup: Lineup): number {
+  return 1 + (DRAFT.draftTierWeights[lineup.historicalStrength] - 1) * DRAFT.tierBias;
+}
+
 export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   const fullPool = lineupPool(draft);
   // Easter-egg lineups (Wings) never enter the normal draw — they're excluded
@@ -294,12 +320,22 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   // reachable in the region-locked pool (worlds/daily carry no rareSpawn, so the
   // `&&` short-circuits and the seeded RNG sequence stays byte-identical).
   const availableEggs = eggs.filter((l) => !draft.shownLineupIds.includes(l.id));
-  const randomLineup = (): Lineup =>
-    availableEggs.length > 0 && rng.chance(DRAFT.easterEggChance)
-      ? rng.pick(availableEggs)
-      : staffNeeds.length > 0
-        ? rng.weightedPick(pool, (l) => lineupWeight(l, staffNeeds))
-        : rng.pick(pool);
+  // Tier bias is classic/quick only — the daily's draw must stay byte-identical
+  // (tierBiasOn=false there → the staff branch multiplies by 1 and the open branch
+  // stays rng.pick, so the seeded RNG sequence is untouched).
+  const tierBiasOn = draft.mode !== "daily" && DRAFT.tierBias > 0;
+  const randomLineup = (): Lineup => {
+    if (availableEggs.length > 0 && rng.chance(DRAFT.easterEggChance)) {
+      return rng.pick(availableEggs);
+    }
+    if (staffNeeds.length > 0) {
+      return rng.weightedPick(
+        pool,
+        (l) => lineupWeight(l, staffNeeds) * (tierBiasOn ? lineupTierWeight(l) : 1),
+      );
+    }
+    return tierBiasOn ? rng.weightedPick(pool, lineupTierWeight) : rng.pick(pool);
+  };
 
   const draw = (lineup: Lineup): DraftState => {
     const next: DraftState = {

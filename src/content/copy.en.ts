@@ -48,6 +48,7 @@ export const HOME = {
   profileDesc: "Rank, XP and run history.",
   howToPlay: "How to play",
   joinDiscord: "Join the Discord",
+  followTwitter: "Follow on X",
   support: "Buy me a coffee",
   liveBadge: "Live",
   playNow: "Play now →",
@@ -148,6 +149,7 @@ export const SETUP = {
   start: "Start Draft",
   back: "Back to menu",
   legacyLocked: "Win a tournament on Hard to unlock Legacy.",
+  hardLocked: "Reach Silver to unlock Hard.",
   mode: "Game mode",
   modeClassic: "Classic Draft",
   modeClassicHint: "6 slots · Swiss + double-elim playoffs",
@@ -281,6 +283,42 @@ export const REVIEW = {
   manySpecials: (n: number) => `${n} special card effects are live for this run.`,
 };
 
+export const TUTORIAL = {
+  kicker: "Welcome",
+  title: "How Rocket Draft works",
+  skip: "Skip",
+  next: "Next",
+  back: "Back",
+  done: "Let's play",
+  steps: [
+    {
+      icon: "draft",
+      title: "Draft your team",
+      body: "Each round shows one lineup from RLCS history — pick a card to fill a slot. Build three players, a coach, a sub and an org.",
+    },
+    {
+      icon: "field",
+      title: "Then simulate",
+      body: "Your team plays a full tournament — Swiss, then playoffs. Player overalls plus chemistry decide who lifts the trophy.",
+    },
+    {
+      icon: "collection",
+      title: "Build a Collection",
+      body: "Special cards you draft are saved forever in your Collection — rare moments from RLCS history to chase and complete.",
+    },
+    {
+      icon: "rank",
+      title: "Ranks & rewards",
+      body: "Every run earns XP. Ranking up unlocks the Collection, new card rarities, Hard mode, and a higher special-card chance.",
+    },
+    {
+      icon: "difficulty",
+      title: "Pick your challenge",
+      body: "Normal is winnable with a good team. Hard hides overalls and stiffens the field. Legacy is an all-time gauntlet — for champions only.",
+    },
+  ] as { icon: string; title: string; body: string }[],
+};
+
 export const TOURNAMENT_UI = {
   title: "RLCS-Style Championship",
   swiss: "Swiss Stage",
@@ -374,7 +412,14 @@ export const RESULTS_UI = {
   playAgain: "Play again",
   backHome: "Back to menu",
   hiddenReveal: "Overalls revealed",
-  share: "Download share card",
+  share: "Share run",
+  shareTitle: "Share your run",
+  shareNative: "Share",
+  shareX: "Share on X",
+  shareDownload: "Download",
+  shareMsgChampion: "I'm a Rocket Draft champion 🏆 — build your own RLCS dream team at",
+  shareMsgPlacement: (placement: string) =>
+    `I made ${placement} on Rocket Draft — build your own RLCS dream team at`,
   immaculateBadge: "Flawless run",
   ceremonyKicker: "New card unlocked",
   ceremonyTap: "Tap anywhere to reveal",
@@ -383,6 +428,11 @@ export const RESULTS_UI = {
   rankUpKicker: "Rank up",
   rankUpTitle: "Rank up!",
   rankUpHint: "Tap anywhere to continue",
+  rankUpUnlocked: "Unlocked",
+  unlockCollection: "The Collection",
+  unlockRarity: (label: string) => `${label} special cards`,
+  unlockHard: "Hard mode",
+  unlockChance: (pct: number) => `${pct}% special card chance`,
   legacyKicker: "New mode unlocked",
   legacyTitle: "Legacy Unlocked",
   legacySub: "An all-time gauntlet of championship rosters now awaits.",
@@ -403,6 +453,10 @@ export const COLLECTION_UI = {
   lockedCard: "Locked",
   lockedHint: "Draft this card and finish the run to unlock it.",
   unlockedOn: (date: string) => `Unlocked ${date}`,
+  lockedTitle: "Collection locked",
+  lockedBody:
+    "Reach Bronze to open your collection — just finish one run. Special cards you draft are saved here, and rarer tiers unlock as you climb the ranks.",
+  unlocksAt: (rank: string) => `Unlocks at ${rank}`,
   effect: "Special effect",
   context: "The moment",
   empty: "Nothing here yet. Finish runs with special cards to grow the album.",
@@ -785,6 +839,7 @@ export const EN = {
   DIFFICULTY_LABELS,
   DRAFT_UI,
   ONBOARDING,
+  TUTORIAL,
   REVIEW,
   TOURNAMENT_UI,
   RESULTS_UI,

@@ -12,7 +12,7 @@ import { DIFFICULTY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import type { Difficulty, Region } from "@/engine/types";
 import { cx } from "@/lib/util";
-import { selectLegacyUnlocked, useProfileStore } from "@/store/profileStore";
+import { selectHardUnlocked, selectLegacyUnlocked, useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -39,13 +39,15 @@ export function SetupScreen() {
   // no mode switcher here by design.
   const mode = useRunStore((s) => s.setupMode);
   const legacyUnlocked = useProfileStore(selectLegacyUnlocked);
+  const hardUnlocked = useProfileStore(selectHardUnlocked);
   const settings = useProfileStore((s) => s.settings);
 
-  const [difficulty, setDifficulty] = useState<Difficulty>(() =>
-    settings.lastDifficulty === "legacy" && !legacyUnlocked
-      ? "normal"
-      : settings.lastDifficulty,
-  );
+  const [difficulty, setDifficulty] = useState<Difficulty>(() => {
+    const last = settings.lastDifficulty;
+    if (last === "legacy" && !legacyUnlocked) return "normal";
+    if (last === "hard" && !hardUnlocked) return "normal";
+    return last;
+  });
   const [showOverall, setShowOverall] = useState(settings.lastShowOverall);
   const [regionLock, setRegionLock] = useState<Region | null>(
     () => settings.lastRegionLock ?? null,
@@ -68,13 +70,15 @@ export function SetupScreen() {
         {ORDER.map((id) => {
           const d = DIFFICULTY[id];
           const isLegacyLocked = Boolean(d.requiresLegacyUnlock) && !legacyUnlocked;
+          const isHardLocked = id === "hard" && !hardUnlocked;
+          const isLocked = isLegacyLocked || isHardLocked;
           const active = difficulty === id;
           return (
             <button
               key={id}
               role="radio"
               aria-checked={active}
-              disabled={isLegacyLocked}
+              disabled={isLocked}
               onClick={() => {
                 // Switching from a hidden-locked difficulty (Hard/Legacy) back
                 // to an open one re-enables overalls automatically (v1.2.0 fix).
@@ -86,8 +90,8 @@ export function SetupScreen() {
               className={cx(
                 "panel relative p-4 text-left transition-all",
                 active && "panel-glow-orange !border-orange/60",
-                !active && !isLegacyLocked && "hover:!border-line-strong",
-                isLegacyLocked && "cursor-not-allowed opacity-50",
+                !active && !isLocked && "hover:!border-line-strong",
+                isLocked && "cursor-not-allowed opacity-50",
               )}
             >
               <div className="mb-1 flex items-center justify-between">
@@ -106,9 +110,9 @@ export function SetupScreen() {
                 )}
                 {id === "legacy" ? <Badge tone="gold">{SETUP.legacyBadge}</Badge> : null}
               </div>
-              {isLegacyLocked ? (
+              {isLocked ? (
                 <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-faint">
-                  <LockIcon /> {SETUP.legacyLocked}
+                  <LockIcon /> {isHardLocked ? SETUP.hardLocked : SETUP.legacyLocked}
                 </p>
               ) : null}
             </button>

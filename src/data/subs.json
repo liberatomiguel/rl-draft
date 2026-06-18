@@ -359,7 +359,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-s5",
     "seasonId": "rlcs-s5",
-    "overall": 70
+    "overall": 80
   },
   {
     "id": "moses-sub-nrg-esports-s5",
@@ -381,7 +381,7 @@
     "orgId": "cloud9",
     "lineupId": "cloud9-s5",
     "seasonId": "rlcs-s5",
-    "overall": 72
+    "overall": 83
   },
   {
     "id": "darkfire-sub-evil-geniuses-s5",
@@ -502,7 +502,7 @@
     "orgId": "g2-esports",
     "lineupId": "g2-esports-s7",
     "seasonId": "rlcs-s7",
-    "overall": 69
+    "overall": 76
   },
   {
     "id": "sadjunior-sub-cloud9-s7",
@@ -1118,7 +1118,7 @@
     "orgId": "kru-esports",
     "lineupId": "kru-esports-2024",
     "seasonId": "rlcs-2024",
-    "overall": 78
+    "overall": 79
   },
   {
     "id": "fasi-sub-godfidence-2025",
@@ -1129,6 +1129,6 @@
     "orgId": "godfidence",
     "lineupId": "godfidence-2025",
     "seasonId": "rlcs-2025",
-    "overall": 66
+    "overall": 77
   }
 ]
