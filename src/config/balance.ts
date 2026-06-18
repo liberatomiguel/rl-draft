@@ -457,7 +457,7 @@ export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
   // v1.3.2: Bronze at 250 so even a losing first run clears the Unranked on-ramp
   // (no specials / no collection); SSL stretched to 50k for a longer endgame grind.
-  { id: "bronze", label: "Bronze", minXp: 250 },
+  { id: "bronze", label: "Bronze", minXp: 200 },
   { id: "silver", label: "Silver", minXp: 1200 },
   { id: "gold", label: "Gold", minXp: 3000 },
   { id: "platinum", label: "Platinum", minXp: 6500 },

@@ -21,6 +21,10 @@ the flow, and Perfect chemistry was too hard again. Supersedes [1.3.1] balance.
   tournament in **region-locked** mode — the hardest feat in the game.
 - **Collection lock shown on the home menu** (a padlock + "unlocks at Bronze")
   when Unranked, not only inside the Collection screen.
+- **Team-overall breakdown on the results screen for hidden-overall runs**
+  (Hard/Legacy) — the same players/coach/sub/org/chemistry/specials breakdown the
+  review screen shows in visible modes, now revealed at results where the overalls
+  are first shown.
 
 ### Changed
 - **Win rates raised across the board** (the run-level odds were too low because

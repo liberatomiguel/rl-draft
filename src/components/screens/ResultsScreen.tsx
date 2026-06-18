@@ -53,7 +53,7 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, RARITY_LABELS, CHEM_TIERS } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS } = useCopy();
   const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, sub: R.championSub, tone: "orange" },
     runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
@@ -307,6 +307,32 @@ export function ResultsScreen({ run }: { run: RunState }) {
         ) : null}
       </div>
 
+      {/* Team-overall breakdown — shown on results for HIDDEN runs (Hard/Legacy),
+          where the overalls are revealed here for the first time. Visible runs
+          already saw this on the review screen (v1.3.2). */}
+      {!run.showOverall ? (
+        <Panel strong glow="blue" className="mb-10 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="kicker">{REVIEW.teamOverall}</p>
+            <p className="display text-4xl font-bold leading-none text-ink">
+              {displayTeamOverall(team.rating)}
+            </p>
+          </div>
+          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-sub sm:grid-cols-3">
+            <ResultRow label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
+            {run.mode !== "quick" ? (
+              <>
+                <ResultRow label={REVIEW.rowCoach} value={`+${team.rating.coachMod.toFixed(1)}`} />
+                <ResultRow label={REVIEW.rowSub} value={`+${team.rating.subMod.toFixed(1)}`} />
+                <ResultRow label={REVIEW.rowOrg} value={`+${team.rating.orgMod.toFixed(1)}`} />
+              </>
+            ) : null}
+            <ResultRow label={REVIEW.rowChemistry} value={`+${team.rating.chemMod.toFixed(1)}`} />
+            <ResultRow label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
+          </dl>
+        </Panel>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* XP + rank */}
         <Panel className="p-5">
@@ -529,6 +555,15 @@ function ShareModal({
         </div>
       </div>
     </Modal>
+  );
+}
+
+function ResultRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-line/40 py-0.5">
+      <dt>{label}</dt>
+      <dd className="display font-bold text-ink">{value}</dd>
+    </div>
   );
 }
 
