@@ -214,6 +214,9 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
     `offense | defense | mechanics | consistency | experience | clutch`).
   - coach specials: `{ type: "team_attribute_boost", attributes: [StatKey, …],
     value, description }` — same, applied across the team.
+  - `overallBonus` (optional, v1.3.3) — a flat bonus to the team's FINAL overall,
+    independent of the attribute boost. Used by the Creator card (+5). Stacks
+    across the roster; capped 0–5 by the schema.
   - The older situational types (`clutch_boost`, `swiss_consistency`,
     `playoff_experience`, `upset_boost`, `defense_stability`, `high_roll`) are
     still accepted by the schema/engine for back-compat, but **no current card

@@ -13,7 +13,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DIFFICULTY, REGION_LOCK, SPECIALS } from "@/config/balance";
-import { lineupPoolForRegion, playerById, playerCardById } from "@/data";
+import { lineupPoolForRegion, playerById, playerCardById, specialCardById } from "@/data";
 import { rankRewardsForXp } from "@/engine/progression";
 import {
   applyFreeReroll,
@@ -283,6 +283,20 @@ export const useRunStore = create<RunStore>()(
           mode: run.mode,
           difficulty: run.difficulty,
         });
+        // Special-card usage: one event per special on the locked roster, so
+        // PostHog can rank which specials players actually take into a tournament.
+        for (const id of userTeam.specialIds) {
+          const sp = specialCardById.get(id);
+          if (sp) {
+            trackEvent("special_used", {
+              specialId: id,
+              title: sp.title,
+              rarity: sp.rarity,
+              mode: run.mode,
+              difficulty: run.difficulty,
+            });
+          }
+        }
       },
 
       playRound: () => {

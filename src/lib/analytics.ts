@@ -62,6 +62,17 @@ export interface GameEvents {
     hiddenOverall: boolean;
     region?: string;
   };
+  /** One per special card on the FINAL roster when the tournament starts — the
+   *  special-card usage signal (which specials players actually take in). Fired
+   *  once per special, so a Trends "Total count" broken down by `title`/`rarity`
+   *  ranks the most-used cards. */
+  special_used: {
+    specialId: string;
+    title: string;
+    rarity: string;
+    mode: string;
+    difficulty: string;
+  };
 }
 
 export function trackEvent<K extends keyof GameEvents>(

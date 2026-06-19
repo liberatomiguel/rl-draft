@@ -52,7 +52,11 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 - Favorites stomp too much → raise it.
 - Keep `userRollRange` asymmetries small; they tilt every single game.
 
-## Difficulty profiles (`DIFFICULTY`) — v0.5 values
+## Difficulty profiles (`DIFFICULTY`) — current (v1.3.5)
+
+> The figures in the tables below are an illustrative snapshot; **`src/config/balance.ts`
+> is authoritative** and drifts with every balance patch. When in doubt, read the
+> file. Rationale for the current tunings is in `DESIGN-DECISIONS.md` (#71–78).
 
 | Knob | easy | normal | hard | legacy |
 | --- | --- | --- | --- | --- |
@@ -60,10 +64,14 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `overallLockedHidden` | no | no | yes | yes |
 | `userRollRange` | [-3, 5] | [-3, 4] | [-3.5, 4] | [-5, 5] |
 | `aiRollRange` | [-4, 4] | [-4, 4] | [-4, 4] | [-4, 4] |
-| `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.1 | 2.6 |
+| `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.4 | 3.0 |
 | `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
-| `opponentRatingShift` | -2.0 | 0 | +0.3 | +1.2 |
+| `opponentRatingShift` | -2.0 | -1.3 | -0.2 | +1.65 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
+
+Region-locked (SAM) runs add a **per-difficulty** flat boost to every opponent
+(`REGION_LOCK.opponentRatingBoost`: easy/normal/hard +2, legacy +2.95) so the
+weaker regional field plays at the intended curve (#75).
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
 
@@ -89,7 +97,7 @@ rating = avg player overall            (dominant, ~82-96)
        + coach   (overall-75)·0.10 + bonusLevel·0.25   max 2.5
        + sub     (overall-75)·0.05                     max 1.2
        + org     buffLevel·0.6                         max 1.8
-       + chem    percent · chemistryMaxBonus           max 2.6 (user); AI cap 0 on Hard/Legacy
+       + chem    percent · chemistryMaxBonus           max = chemistryMaxBonus (1.3–3 by difficulty); AI cap 0 on Hard/Legacy
        + special 0.4/card                              max 1.2
 then:  anything above superteamPivot (94) counts at superteamSlope (0.55×)
 ```
@@ -168,10 +176,11 @@ Unlocking a NEW special card grants flat XP by rarity (`XP.specialUnlock`,
 added after the difficulty multiplier like achievement XP): rare 10 · epic 20
 · mythic 40 · legendary 75 · creator 100.
 
-Rank ladder (v0.3, target SSL in **100-150 runs**): Unranked 0 → Bronze 400
-→ Silver 1.2k → Gold 3k → Platinum 6.5k → Diamond 11.5k → Champion 19k →
-Grand Champion 29k → Supersonic Legend 40k. Average run ≈ 150-300 XP,
-winning run ≈ 500-800. Mode multipliers: classic ×1.0 · quick ×0.5 · daily ×1.5.
+Rank ladder (`RANKS`, current v1.3.5): Unranked 0 → Bronze 200 → Silver 1.5k →
+Gold 4k → Platinum 8.5k → Diamond 15k → Champion 24k → Grand Champion 38k →
+Supersonic Legend 60k. Bronze stays low so the Collection unlocks on the first
+run; the rest was stretched in v1.3.5 for a longer endgame. Average run ≈ 150-300
+XP, winning run ≈ 500-800. Mode multipliers: classic ×1.0 · quick ×0.5 · daily ×1.5.
 Tune `RANKS` minXp to stretch or compress the grind.
 
 ## Playtest workflow

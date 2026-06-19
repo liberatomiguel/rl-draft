@@ -1,110 +1,104 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-18. **The game is LAUNCHED.** Production tip: **v1.2.7**.
-> **v1.3.2 is committed to a `staging` branch** (Vercel preview URL, NOT production)
-> for Miguel to test the difficulty/chemistry rebalance with colleagues before
-> launching v1.3 to the apex domain. v1.3.2 adds a second live-feedback pass:
-> higher win rates, eased chemistry (3 country = Great, +1 org = Perfect), Hard
-> rank-gate removed, SAM boost 3→2, a legendary region-Legacy achievement, and a
-> menu collection-lock. v1.3 is a big gameplay update:
-> rank-gated rewards, reachable chemistry, a Legacy rebalance that makes the title
-> winnable, org-unique tournament fields, a reworked Match Center + playoff reveal,
-> the always-visible special-card art, and the community SAM overall review. See
-> `docs/CHANGELOG.md` [1.3.0] + `DESIGN-DECISIONS.md` #61–66. The **Challenges**
-> feature was designed this pass (`docs/CHALLENGES-DESIGN.md`) but NOT implemented
-> — it's the next build. Per-version detail is in `docs/CHANGELOG.md`; this file
-> stays **current-state only**. Grep CHANGELOG/DESIGN-DECISIONS for history.
+> Last updated: 2026-06-19. **Launched & live on Vercel.** Production tip:
+> **v1.3.5 "Proving Grounds"** (apex `rocketdraft.app`; commits to `main`
+> auto-deploy to production — no staging branch anymore). The whole v1.3 line
+> (1.3.0 → 1.3.5) has shipped: rank-gated rewards, reachable chemistry, a
+> winnable-but-brutal Legacy, org-unique fields, the reworked Match Center, a
+> systems pass (shared-history chemistry, a meaningful sub + sub specials, the
+> Creator overall buff), results/share polish, and the XP-curve stretch.
+> Per-version detail lives in `docs/CHANGELOG.md` ([1.3.0]–[1.3.5]) +
+> `DESIGN-DECISIONS.md` #61–78. This file stays **current-state only** — grep
+> CHANGELOG/DESIGN-DECISIONS for history. **Next: v1.4** (candidates below).
 
 ## Current state
 
-Launched on Vercel; committed tip **v1.2.7**, with **v1.3.0 staged uncommitted**.
-The core loop is complete — Classic + Quick + Daily modes, 4 difficulties (Hard now
-gated at Silver, Legacy behind a Hard win), region-lock (SAM live), Swiss +
-double-elim playoffs, special cards + collection + achievements + XP/ranks, local
-persistence (run / profile / settings stores). What v1.3 changed (full detail in
-`docs/CHANGELOG.md` [1.3.0]):
+Live on Vercel, production tip **v1.3.5**. The core loop is complete — Classic +
+Quick + Daily modes, 4 difficulties (all open; Legacy still needs a Hard win),
+region-lock (SAM live), Swiss + double-elim playoffs, special cards + collection +
+achievements + XP/ranks, local persistence (run / profile / settings stores).
 
-- **Rewards**: `RANK_REWARDS` — rank gates special-card rarities (Unranked none →
-  Diamond legendary), ramps appearance chance at the top (Champion 8 / GC 12 / SSL
-  16%), locks the Collection until Bronze (300 XP), gates Hard at Silver.
-- **Chemistry**: same-region pair + coach/sub nationality links (reachable Perfect,
-  AI unaffected — it already saturates).
-- **Legacy rebalance**: org-unique fields + softer mixed gauntlet (`opponentRatingShift`
-  0.6, elite weight 1.8, user `chemistryMaxBonus` 2.9) — a great draft wins ~8%.
-- **Sim/UI**: org-unique opponent fields; Match Center splits games win/loss by column;
-  playoffs reveal the whole round at once; specials always show art + buff in hidden
-  mode (only number + rarity hide).
-- **Data**: community SAM overall review (69 overalls + roster fixes), via
-  `scripts/apply-overall-review.mjs` + `data-sources/overall-review-v1.3.csv`.
+Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
+`DESIGN-DECISIONS.md` — do NOT duplicate the figures here, they drift):
 
-Gates as of v1.3.0: `tsc` clean, **60** vitest tests pass, lint at the 8-error
-baseline (0 new), `build:data` + `validate:data` green. NOTE: automated browser
-verification of the UI changes was blocked by a running dev server holding Next's
-`.next/dev/lock` (port 3000) — verify the Match Center / playoff / card visuals
-on the live dev server.
+- **Difficulty:** Hard is NOT rank-gated (open from the start, #72); Legacy unlocks
+  after a Hard win. Legacy is the all-time wall — only an elite (~97 worldwide /
+  ~92 SAM) draft wins the title; eased slightly for the very best in v1.3.4 (#75).
+- **Rewards:** `RANK_REWARDS` gates special-card rarities and ramps appearance
+  chance only at the top (base 0.04 → Champion 6% / GC 10% / SSL 16%); the
+  Collection unlocks at **Bronze (200 XP)** and its home button is non-clickable
+  until then. XP ladder stretched to **SSL 60k** (1.3.5).
+- **Chemistry:** same-country / org / region pairs + **shared career history**
+  (ex-teammates, shared-org) + coach/sub links; Perfect is reachable, AI unaffected
+  (#74, #77). Country always shows over career links (#77 fix).
+- **Sub & specials:** sub "depth" scales with the sub's overall and subs can roll
+  specials; the Creator card grants **+5 team overall** on top of its stat boost (#78).
 
-## Next up
+Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
+`build:data` + `validate:data` green, lint at its baseline, and a green
+`npm run build` (production) for anything shipping.
 
-**1. Challenges** (designed, not built) — rank-unlocked "beat-the-line" puzzles.
-Full design + open decisions in `docs/CHALLENGES-DESIGN.md`; await Miguel's calls
-on the five `[DECIDE]` points, then build in the suggested phases.
+## In progress (committed, but NOT yet in the live game data)
 
-**2. Accounts & sync** (the originally-planned v1.3, now a later version): Supabase
-mirror of the stores + Discord OAuth + guest→account migration + a daily
-leaderboard (the daily seed is already globally shared). Scope in `docs/ROADMAP.md`.
-The **invariants this patch must not break** are recorded in
-`docs/DESIGN-DECISIONS.md` **#55** — engine purity, persist `seed`+`rngState`
-verbatim, the single `applyRunResults` funnel, the run (ephemeral) / profile
-(durable, sync-worthy) / settings store boundary, persistence keys + schema versions,
-the full ProfileState migration payload, etc. `docs/ARCHITECTURE.md` now documents
-the three persisted stores + the sync boundary accurately — read it first.
+- **International-Major DB expansion** (`data-sources/`, NOT yet in game data): a
+  careful first-pass harvest of every international Major (RLCS 2021-22 → 2025) for
+  teams that did NOT reach Worlds — `majors-new-teams.json` + the review workbook
+  `majors-review.xlsx` (≈28 new / ~6 review teams) + `majors-harvest-report.md`.
+  PENDING Miguel's manual overall review; then apply to `teams.md` →
+  `build:data`/`validate:data`. Tooling: `scripts/fetch-liquipedia-majors.mjs`,
+  `scripts/build-majors-review.py`. Dedup = same-lineup ≥2-player overlap (see the
+  memory note + report for the caveats).
+- **Community-suggestions intake** `data-sources/community-suggestions.xlsx`
+  (overalls / specials / new-teams tabs) + `scripts/build-community-sheet.py` —
+  ready to share with the community.
+
+## Next up — v1.4 (candidates)
+
+1. **Worldwide DB expansion** (in progress, above) — fold the reviewed Major-only
+   teams into `teams.md`. This is the most concrete v1.4 workstream.
+2. **Challenges** (designed, not built) — rank-unlocked "beat-the-line" puzzles.
+   Design + open `[DECIDE]` points in `docs/CHALLENGES-DESIGN.md`.
+3. **Accounts & sync** (a later version): Supabase mirror + Discord OAuth +
+   guest→account migration + a daily leaderboard. Scope in `docs/ROADMAP.md`; the
+   invariants this must not break are in `DESIGN-DECISIONS.md` **#55** (engine
+   purity, persist `seed`+`rngState` verbatim, the `applyRunResults` funnel, the
+   run/profile/settings store boundary, persistence keys + schema versions).
+   `docs/ARCHITECTURE.md` documents the persisted stores + sync boundary — read first.
 
 ## Open follow-ups (mostly ops, not code)
 
-**Analytics — turn it on (Miguel):** create a free PostHog Cloud account, set the
-billing limit to **$0** (can never be charged), put the Project API key (`phc_…`) +
-host into `.env.local` (templated) AND the Vercel env vars (`NEXT_PUBLIC_POSTHOG_KEY`
-/ `NEXT_PUBLIC_POSTHOG_HOST`), then **redeploy** (`NEXT_PUBLIC_` vars are inlined at
-build). Confirm **Vercel Web Analytics + Speed Insights** are enabled in the
-dashboard. Then build the PostHog funnel (`$pageview → run_started →
-tournament_started → run_completed`) + a win-rate breakdown by `difficulty` / `won`.
+**Analytics — LIVE (done):** PostHog is configured (key in Vercel env, EU host,
+cookieless/anonymous) and receiving data; events: `run_started`,
+`tournament_started`, `run_completed`, `run_abandoned`, `special_used` (live).
+Operator guide (funnels/filters, the funnel-vs-Trends gotcha):
+`docs/ANALYTICS.md`. **Vercel Web Analytics** hit its free event cap and is
+redundant with PostHog — dropping it (`<Analytics/>` in `layout.tsx` + the Vercel
+sink in `analytics.ts`) is a ~2-line change, **deferred by Miguel's call**. GA4 was
+evaluated and **declined** (cookie-consent + privacy-policy cost, worse for funnels).
 
-**SEO — Search Console only; Vercel is already correct (Miguel):** the domains
-are fine — apex `rocketdraft.app` is primary/production and `www` + `*.vercel.app`
-already **308** to it. **Do NOT change Vercel.** The "4 origins" in the GSC export
-were the launch-window discovery period (~3 days of data). Action: prefer a GSC
-**Domain property** (consolidates apex/www/http reporting), **resubmit
-`…/sitemap.xml`** (now 20 URLs incl. the new EN+PT pages), and URL-inspect →
-request indexing of the home + `/ratings`, `/sam`, `/faq`; then give Google time
-to consolidate onto the apex (the canonical tags + sitemap + hreflang all point
-there). **Community outreach:** a launch post in r/RocketLeagueEsports + the SAM
-communities is worth doing; ask Claude to draft it.
+**SEO:** the v1.3.3 pass added RLCS-draft-focused FAQ entries + keywords. Apex is
+canonical; `www`/`*.vercel.app` 308 to it. Standing ops: keep the GSC Domain
+property + resubmit `…/sitemap.xml` after page changes; a launch post in
+r/RocketLeagueEsports + SAM communities is still worth doing.
 
-**Performance backlog (planned, none urgent — PageSpeed ~95 mobile / ~99 desktop):**
-the remaining mobile-LCP lever is **stop importing the whole `@/data` barrel on the
-home** via `@/lib/daily` + `runStore` (~94 KiB). Deferred from the v1.3 SEO pass
-because it touches the **deterministic daily** — do it as a focused change with
-`npm test` (DESIGN-DECISIONS #60). Already done in v1.3: generated `counts.ts`
-(home no longer imports the barrel for two integers) + dropped `fetchPriority` on
-the decorative rank emblem. (Font CLS is a non-issue — latest PageSpeed shows
-mobile CLS 0 / desktop 0.035.)
+**Performance backlog (none urgent — PageSpeed ~95 mobile / ~99 desktop):** the
+remaining mobile-LCP lever is to stop importing the whole `@/data` barrel on the
+home via `@/lib/daily` + `runStore`. It touches the **deterministic daily**, so do
+it as a focused change with `npm test` (DESIGN-DECISIONS #60).
 
-**Data decisions (none blocking):** S9 (2020) had no World Championship (COVID → 4
-regionals) and keeps a 12-team approximation; the 2026 field is provisional until the
-event; a few special-card title/era pairings are content choices (see CHANGELOG
-[1.1.1]). Optional art still pending: `public/orgs/wings-e-sports.png` and the Creator
-card photo (`public/cards/specials/sp-liberatorl-rocket-draft-creator.png`) — styled
+**Data decisions (none blocking):** S9 (2020) had no Worlds (COVID) and keeps a
+12-team approximation; the 2026 field is provisional. Optional art pending:
+`public/orgs/wings-e-sports.png` and the Creator card photo
+(`public/cards/specials/sp-liberatorl-rocket-draft-creator.png`) — styled
 fallbacks render until dropped in.
 
 ## Known soft spots (not bugs)
 
 - A few players have no nationality (e.g. `Ghaazi0`, `Plu'oh` — no Liquipedia page;
-  left countryless rather than guessed). Re-audit with
-  `node scripts/fetch-nationalities.mjs`; the curated `COUNTRY` map lives in
-  `scripts/build-dataset.mjs` (add only high-confidence entries).
-- Coach bonus *types* are hash-derived (the source data has only overalls) — curate
-  in the generator if wanted.
-- Liquipedia art is a bootstrap, not a curation: a few logos may be wrong (same-name
-  orgs) or missing (old/regional teams) until `data-sources/asset-overrides.json`
-  is filled in.
+  left countryless). Re-audit with `node scripts/fetch-nationalities.mjs`; curated
+  `COUNTRY` map lives in `scripts/build-dataset.mjs` (high-confidence entries only).
+- Coach bonus *types* are hash-derived (source data has only overalls) — curate in
+  the generator if wanted.
+- Liquipedia art is a bootstrap: a few logos may be wrong (same-name orgs) or
+  missing until `data-sources/asset-overrides.json` is filled in.

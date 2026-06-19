@@ -162,7 +162,9 @@ PostHog — and is a **no-op until keyed** (PostHog needs `NEXT_PUBLIC_POSTHOG_K
 Vercel needs prod with Web Analytics on), so calling it never blocks gameplay.
 Event payloads are pre-flattened to scalars. Only the UI/store layer may call
 it — **the engine must NEVER import analytics** (it has to stay pure and
-deterministic, AGENTS.md hard rule).
+deterministic, AGENTS.md hard rule). The event catalogue is the typed `GameEvents`
+in `analytics.ts`; for how to read the data (funnels/filters, the funnel-vs-Trends
+gotcha) see the operator guide **`docs/ANALYTICS.md`**.
 
 ## UI layer
 
