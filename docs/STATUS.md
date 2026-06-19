@@ -2,15 +2,15 @@
 
 > Snapshot for whoever (human or agent) picks this up next.
 > Last updated: 2026-06-19. **Launched & live on Vercel.** Production tip:
-> **v1.3.5 "Proving Grounds"** (apex `rocketdraft.app`; commits to `main`
-> auto-deploy to production — no staging branch anymore). The whole v1.3 line
-> (1.3.0 → 1.3.5) has shipped: rank-gated rewards, reachable chemistry, a
-> winnable-but-brutal Legacy, org-unique fields, the reworked Match Center, a
-> systems pass (shared-history chemistry, a meaningful sub + sub specials, the
-> Creator overall buff), results/share polish, and the XP-curve stretch.
-> Per-version detail lives in `docs/CHANGELOG.md` ([1.3.0]–[1.3.5]) +
-> `DESIGN-DECISIONS.md` #61–78. This file stays **current-state only** — grep
-> CHANGELOG/DESIGN-DECISIONS for history. **Next: v1.4** (candidates below).
+> **v1.3.5 "Proving Grounds"** (apex `rocketdraft.app`). **v1.4 is built and
+> sitting on the `staging` branch for team review** (not yet on `main`/prod).
+> v1.4 adds: **Challenges** (a new rank-unlocked draft-puzzle mode), a
+> **special-card rarity rework** (absolute per-rarity rates — lone legendaries
+> no longer over-appear), a **Leaderboards + accounts foundation** (Discord
+> login + cloud sync; code-complete but DORMANT until the Supabase env vars are
+> set — see below), and a **visual/mobile/Legacy polish** pass. Per-version
+> detail lives in `docs/CHANGELOG.md` ([1.4.0]) + `DESIGN-DECISIONS.md`. This
+> file stays **current-state only** — grep CHANGELOG/DESIGN-DECISIONS for history.
 
 ## Current state
 
@@ -53,18 +53,36 @@ Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
   (overalls / specials / new-teams tabs) + `scripts/build-community-sheet.py` —
   ready to share with the community.
 
-## Next up — v1.4 (candidates)
+## v1.4 — built on `staging`, what's done vs. what's pending
 
-1. **Worldwide DB expansion** (in progress, above) — fold the reviewed Major-only
-   teams into `teams.md`. This is the most concrete v1.4 workstream.
-2. **Challenges** (designed, not built) — rank-unlocked "beat-the-line" puzzles.
-   Design + open `[DECIDE]` points in `docs/CHALLENGES-DESIGN.md`.
-3. **Accounts & sync** (a later version): Supabase mirror + Discord OAuth +
-   guest→account migration + a daily leaderboard. Scope in `docs/ROADMAP.md`; the
-   invariants this must not break are in `DESIGN-DECISIONS.md` **#55** (engine
-   purity, persist `seed`+`rngState` verbatim, the `applyRunResults` funnel, the
-   run/profile/settings store boundary, persistence keys + schema versions).
-   `docs/ARCHITECTURE.md` documents the persisted stores + sync boundary — read first.
+**Done & on `staging` (4 commits on top of `main` tip `3403b7e`):**
+1. **Challenges** — SHIPPED (was "designed, not built"). `engine/challenges.ts`,
+   `src/data/challenges.json` (10 starters), `/challenges` route + nav, briefing +
+   match screens, `profileStore.challengesCompleted`. Winnability is sim-validated
+   (`challenges.test.ts`). See `docs/CHALLENGES-DESIGN.md` (now marked SHIPPED).
+2. **Rarity rework** — absolute per-rarity spawn rates (`SPECIALS.rarityChance`),
+   rolled rarest-first. Calibrated with `scripts/calibrate-rarity.mjs`. Fixes the
+   kronovi/monkey_moon over-appearance. Tested.
+3. **Visual/nav/mobile** — slot-machine replays on reset, eliminator bolt icon,
+   Legacy crown emblem (setup card + in-run indicator + unlock ceremony), richer
+   Legacy-champion celebration, mobile modal close-button fix. (Play-button reset
+   was reported broken but verified already-working from v1.3.1 — no change.)
+4. **Leaderboards + accounts foundation** — `/leaderboards` (peak overall per
+   difficulty + worldwide/SAM, championships, streak, challenges cleared) works
+   today from the local profile. `lib/profileSync.ts` merge is tested (no progress
+   loss, #55.7). `lib/supabase.ts` is a no-op until configured.
+
+**PENDING — Miguel's infra (to light up Discord login + global leaderboards):**
+follow **`docs/ACCOUNTS-SETUP.md`** — create the Supabase project + Discord app,
+run the SQL (profiles table + RLS), set `NEXT_PUBLIC_SUPABASE_URL/_ANON_KEY` in
+`.env.local` + Vercel. Until then the game runs exactly as the guest-only build.
+Then we finish the wiring together (sync-after-run, a header sign-in chip, daily
+leaderboard — listed in ACCOUNTS-SETUP "Follow-ups"). Invariants this must keep:
+`DESIGN-DECISIONS.md` **#55**.
+
+**Still a candidate (not started):** the Worldwide DB expansion (the reviewed
+Major-only teams in `data-sources/`) — fold into `teams.md` when ready. And the
+gameplay-longevity backlog (`docs/GAMEPLAY-IDEAS.md`, brainstorm only).
 
 ## Open follow-ups (mostly ops, not code)
 
