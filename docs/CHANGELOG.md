@@ -10,6 +10,42 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.0] — 2026 · Accounts, Challenges & polish (in progress)
+
+> Big release: Discord login + cloud sync + leaderboards, a rank-unlocked
+> Challenges mode, a special-card rarity rework, and a visual/mobile pass.
+> Sections fill in as each workstream lands.
+
+### Added
+- **Legacy identity pass.** A prismatic hexagon-with-crown emblem (shared
+  `components/ui/icons.tsx`) now marks Legacy across the app: on the setup
+  difficulty card, as a discreet in-run indicator in the `RunStepper` (shows in
+  draft / review / tournament / results), and in the unlock ceremony.
+- **Richer Legacy-champion celebration.** Winning the all-time gauntlet now gets
+  the crown emblem, a "Legacy Champion" prismatic selo, a second prismatic ray
+  bank and a denser confetti shower (30 vs 16 pieces, full cyan→purple→gold
+  palette) — the hardest title to win now reads as the biggest moment.
+
+### Changed
+- **Eliminator overall uses a real bolt icon** (`BoltIcon`) instead of the `⚡`
+  emoji on the results screen, matching the hand-drawn SVG icon system.
+
+### Fixed
+- **Slot-machine reveal now replays on "Reset run".** Root cause: `OfferReveal`
+  was keyed by `draft.round` only, and a reset starts a fresh run back at
+  round 1 — an identical key, so React never remounted the component and its
+  lazy reel-state initializer never re-ran (the reel stayed `null` from the
+  prior draft's `onAnimationEnd`). Now keyed by `runId`+`round`; a reset mints a
+  new `runId`, forcing the remount that rebuilds and re-spins the reel.
+- **Modal close button no longer renders off-screen on mobile.** Root cause: the
+  shared `Modal` centered its card with `items-center` and had no max-height or
+  scroll, so any card taller than the viewport was centered with its header (and
+  the ✕) pushed above the top of the screen, unreachable. The card is now a flex
+  column capped at `100dvh-2rem` with a pinned, non-scrolling header and a
+  scrollable body — affects every modal (collection detail, onboarding, reset
+  confirm). The first-run tutorial got the same scroll treatment plus a
+  safe-area-aware skip button.
+
 ## [1.3.5] — 2026 · Progression + collection polish
 
 ### Changed

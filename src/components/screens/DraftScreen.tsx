@@ -98,10 +98,12 @@ export function DraftScreen({ run }: { run: RunState }) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         {/* ----------------------------------------------- Lineup offer.
-            Keyed by draft round → a new offer REMOUNTS it, so the reel state
-            is rebuilt fresh in its lazy initializer (no flash of the name). */}
+            Keyed by runId + draft round → a new offer (or a fresh run after
+            "Reset run", which mints a new runId at round 1) REMOUNTS it, so the
+            reel state is rebuilt fresh in its lazy initializer (no flash of the
+            name, and the slot machine replays on reset — v1.4 fix). */}
         <OfferReveal
-          key={run.draft.round}
+          key={`${run.runId}-${run.draft.round}`}
           run={run}
           offer={offer}
           header={header}

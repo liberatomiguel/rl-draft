@@ -34,18 +34,24 @@ export function FirstRunTutorial() {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label={T.title}
     >
+      {/* Skip sits on the non-scrolling backdrop and respects the safe-area so it
+          never tucks under a notch/dynamic island on mobile (v1.4). */}
       <button
         onClick={finish}
-        className="absolute right-4 top-4 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-sub transition-colors hover:text-ink"
+        className="absolute right-[max(1rem,env(safe-area-inset-right))] top-[max(1rem,env(safe-area-inset-top))] z-10 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-sub transition-colors hover:text-ink"
       >
         {T.skip}
       </button>
 
+      {/* Scroll wrapper: min-h-full keeps the card centered but lets it scroll
+          instead of clipping top/bottom on short (e.g. landscape) viewports. */}
+      <div className="absolute inset-0 overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-6">
       <div key={step} className="rise-in w-full max-w-md text-center">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-orange/30 bg-orange/10 text-orange-bright shadow-[0_0_30px_rgba(249,115,22,0.18)]">
           <TutorialIcon name={cur.icon} />
@@ -90,6 +96,8 @@ export function FirstRunTutorial() {
             {last ? T.done : T.next}
           </Button>
         </div>
+      </div>
+      </div>
       </div>
     </div>,
     document.body,

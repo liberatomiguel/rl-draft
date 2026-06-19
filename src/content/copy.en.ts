@@ -422,6 +422,7 @@ export const RESULTS_UI = {
   shareMsgPlacement: (placement: string) =>
     `I made ${placement} on Rocket Draft — build your own RLCS dream team at`,
   immaculateBadge: "Flawless run",
+  legacyChampionBadge: "Legacy Champion",
   ceremonyKicker: "New card unlocked",
   ceremonyTap: "Tap anywhere to reveal",
   ceremonyContinue: "Continue",

@@ -47,6 +47,7 @@ import { rosterSlots } from "@/components/cards/rosterView";
 import { Logo } from "@/components/layout/AppShell";
 import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
+import { BoltIcon, LegacyEmblem as LegacyEmblem_ } from "@/components/ui/icons";
 import { RunStepper } from "./RunStepper";
 
 const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
@@ -96,6 +97,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const isChampion = results.placement === "champion";
   // Flawless: title without dropping a single series → prismatic celebration.
   const isImmaculate = isChampion && checkNoSeriesLost(run);
+  // Legacy title — the all-time gauntlet. The hardest win in the game gets the
+  // richest celebration (crown emblem, selo, denser rays + confetti) — v1.4.
+  const isLegacyChampion = isChampion && run.difficulty === "legacy";
   const xpBefore = Math.max(0, xpNow - results.xp.total);
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
@@ -191,15 +195,26 @@ export function ResultsScreen({ run }: { run: RunState }) {
           "celebrate mb-8 px-6 py-12 text-center",
           isChampion && "!border-orange/50",
           isImmaculate && "!border-cyan/50",
+          isLegacyChampion && "!border-cyan/60",
         )}
       >
         {isChampion ? (
           <>
             <div className={isImmaculate ? "celebrate-rays-prism" : "celebrate-rays"} aria-hidden />
-            <Confetti prism={isImmaculate} />
+            {/* Legacy champion layers a second prismatic ray bank for a denser,
+                more rewarding sweep on top of the base champion rays (v1.4). */}
+            {isLegacyChampion && !isImmaculate ? (
+              <div className="celebrate-rays-prism" aria-hidden />
+            ) : null}
+            <Confetti prism={isImmaculate} legacy={isLegacyChampion} />
           </>
         ) : null}
         <div className="relative z-10">
+          {isLegacyChampion ? (
+            <div className="ceremony-burst mb-5 flex justify-center">
+              <LegacyEmblem_ framed gradientId="legacyGradChamp" />
+            </div>
+          ) : null}
           <p className="kicker mb-3">{R.finalPlacement}</p>
           <h1
             className={cx(
@@ -216,6 +231,11 @@ export function ResultsScreen({ run }: { run: RunState }) {
           {isImmaculate ? (
             <p className="display mt-2 text-base font-bold uppercase tracking-[0.3em] text-cyan">
               {R.immaculateBadge}
+            </p>
+          ) : null}
+          {isLegacyChampion ? (
+            <p className="immaculate-title display mt-2 bg-gradient-to-r from-cyan via-purple-400 to-orange-bright bg-clip-text text-base font-bold uppercase tracking-[0.3em] text-transparent">
+              {R.legacyChampionBadge}
             </p>
           ) : null}
           <p className="mt-3 text-sm text-sub">{placement.sub}</p>
@@ -580,11 +600,17 @@ function checkNoSeriesLost(run: RunState): boolean {
 }
 
 /** Deterministic confetti pieces (no render-time randomness → SSR safe). */
-function Confetti({ prism }: { prism?: boolean }) {
-  const colors = prism
-    ? ["#38bdf8", "#a855f7", "#60a5fa", "#e9eef8", "#c084fc"]
-    : CONFETTI_COLORS;
-  const pieces = Array.from({ length: 16 }, (_, i) => ({
+function Confetti({ prism, legacy }: { prism?: boolean; legacy?: boolean }) {
+  // Legacy champions get the full prismatic palette (cyan→purple→gold→orange)
+  // and a denser shower — the all-time gauntlet is the hardest title to win, so
+  // its celebration is the richest (v1.4).
+  const colors = legacy
+    ? ["#38bdf8", "#a855f7", "#fbbf24", "#f97316", "#e9eef8", "#c084fc"]
+    : prism
+      ? ["#38bdf8", "#a855f7", "#60a5fa", "#e9eef8", "#c084fc"]
+      : CONFETTI_COLORS;
+  const count = legacy ? 30 : 16;
+  const pieces = Array.from({ length: count }, (_, i) => ({
     left: `${(i * 61) % 100}%`,
     delay: `${(i * 0.37) % 2.6}s`,
     color: colors[i % colors.length],
@@ -867,27 +893,9 @@ function LegacyUnlockCelebration({ onDone }: { onDone: () => void }) {
 }
 
 function LegacyEmblem() {
-  return (
-    <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-cyan/40 bg-gradient-to-br from-cyan/15 via-blue/10 to-purple-500/15 shadow-[0_0_44px_rgba(56,189,248,0.4)] md:h-32 md:w-32">
-      <svg viewBox="0 0 48 48" className="h-16 w-16" fill="none" aria-hidden>
-        <defs>
-          <linearGradient id="legacyGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#38bdf8" />
-            <stop offset="0.5" stopColor="#a855f7" />
-            <stop offset="1" stopColor="#f97316" />
-          </linearGradient>
-        </defs>
-        <path d="M24 4 41 14v20L24 44 7 34V14Z" stroke="url(#legacyGrad)" strokeWidth="2.5" strokeLinejoin="round" />
-        <path
-          d="M15 31l3-13 6 7 6-7 3 13Z"
-          stroke="url(#legacyGrad)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-  );
+  // Shared prismatic hexagon + crown (v1.4 — the crown now reads clearly and is
+  // reused on the setup card and the in-run Legacy indicator).
+  return <LegacyEmblem_ framed gradientId="legacyGradCeremony" />;
 }
 
 /**
@@ -932,8 +940,12 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
           <span className="display text-2xl font-bold leading-none text-ink">
             {eliminator.overall}
             {eliminator.buffed ? (
-              <span className="ml-1 align-top text-sm text-orange" title={R.eliminatorBuffed}>
-                ⚡
+              <span
+                className="ml-0.5 inline-flex align-top text-orange"
+                title={R.eliminatorBuffed}
+                aria-label={R.eliminatorBuffed}
+              >
+                <BoltIcon className="h-4 w-4" />
               </span>
             ) : null}
           </span>

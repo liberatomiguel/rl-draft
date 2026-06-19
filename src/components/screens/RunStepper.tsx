@@ -17,6 +17,7 @@ import { cx } from "@/lib/util";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { LegacyEmblem } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
 
 const PHASE_IDS: RunPhase[] = ["draft", "review", "tournament", "results"];
@@ -74,7 +75,17 @@ export function RunStepper({ run }: { run: RunState }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
+        {run.difficulty === "legacy" ? (
+          // Discreet, elegant "you're in Legacy" marker — same prismatic emblem
+          // as the setup card and unlock ceremony (v1.4). Shows on every phase
+          // because RunStepper renders in draft/review/tournament/results.
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan/40 bg-gradient-to-r from-cyan/10 to-purple-500/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-cyan">
+            <LegacyEmblem className="h-3.5 w-3.5 shrink-0" gradientId="legacyGradStepper" />
+            {DIFFICULTY_LABELS.legacy.label}
+          </span>
+        ) : (
+          <Badge tone="blue">{DIFFICULTY_LABELS[run.difficulty].label}</Badge>
+        )}
         {!run.showOverall ? <Badge tone="neutral">{RUN_UI.hiddenOvr}</Badge> : null}
         {/* Reset run — deliberate restart (the run is over on results). */}
         {run.phase !== "results" ? (

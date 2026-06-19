@@ -16,6 +16,7 @@ import { selectHardUnlocked, selectLegacyUnlocked, useProfileStore } from "@/sto
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { LegacyEmblem } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { Toggle } from "@/components/ui/Toggle";
 
@@ -95,7 +96,10 @@ export function SetupScreen() {
               )}
             >
               <div className="mb-1 flex items-center justify-between">
-                <span className="display text-lg font-bold uppercase tracking-wide text-ink">
+                <span className="display flex items-center gap-2 text-lg font-bold uppercase tracking-wide text-ink">
+                  {id === "legacy" ? (
+                    <LegacyEmblem className="h-6 w-6 shrink-0" gradientId="legacyGradSetup" />
+                  ) : null}
                   {DIFFICULTY_LABELS[id].label}
                 </span>
                 {active ? <Badge tone="orange">{SETUP.selected}</Badge> : null}

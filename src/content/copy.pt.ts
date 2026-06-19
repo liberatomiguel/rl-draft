@@ -408,6 +408,7 @@ export const PT: Copy = {
     shareMsgPlacement: (placement: string) =>
       `Peguei ${placement} no Rocket Draft — monte seu time dos sonhos da RLCS em`,
     immaculateBadge: "Run impecável",
+    legacyChampionBadge: "Campeão Legacy",
     ceremonyKicker: "Nova carta desbloqueada",
     ceremonyTap: "Toque em qualquer lugar para revelar",
     ceremonyContinue: "Continuar",

@@ -46,28 +46,34 @@ export function Modal({ open, title, children, actions, onClose, wide }: ModalPr
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
+      {/* Card is a flex column capped at the viewport height: the header (with the
+          close button) is pinned and never scrolls off-screen, and only the body
+          scrolls when content is tall — this is the v1.4 fix for the close button
+          rendering off the top of the screen on mobile. */}
       <div
         className={cx(
-          "panel-strong pop-in relative z-10 w-full p-6",
+          "panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] w-full flex-col p-6",
           wide ? "max-w-2xl" : "max-w-md",
         )}
       >
-        <div className="mb-3 flex items-start justify-between gap-4">
+        <div className="mb-3 flex shrink-0 items-start justify-between gap-4">
           <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
             {title}
           </h3>
           <button
             onClick={onClose}
             aria-label="Close dialog"
-            className="rounded-md p-1 text-sub transition-colors hover:bg-white/10 hover:text-ink"
+            className="-mr-1 -mt-1 shrink-0 rounded-md p-1.5 text-sub transition-colors hover:bg-white/10 hover:text-ink"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
             </svg>
           </button>
         </div>
-        <div className="text-sm leading-relaxed text-sub">{children}</div>
-        {actions ? <div className="mt-6 flex flex-wrap justify-end gap-3">{actions}</div> : null}
+        <div className="-mr-2 overflow-y-auto pr-2 text-sm leading-relaxed text-sub">{children}</div>
+        {actions ? (
+          <div className="mt-6 flex shrink-0 flex-wrap justify-end gap-3">{actions}</div>
+        ) : null}
       </div>
     </div>,
     host,
