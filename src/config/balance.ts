@@ -498,16 +498,18 @@ export const XP = {
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  // v1.3.2: Bronze at 200 so even a losing first run clears the Unranked on-ramp
-  // (no specials / no collection); SSL stretched to 50k for a longer endgame grind.
+  // Bronze stays at 200 so even a losing first run clears the Unranked on-ramp and
+  // opens the Collection immediately. v1.3.5: the rest of the ladder is stretched
+  // (SSL 50k → 60k, mid-ranks redistributed) for a longer, steadier endgame climb
+  // with progressively larger gaps.
   { id: "bronze", label: "Bronze", minXp: 200 },
-  { id: "silver", label: "Silver", minXp: 1200 },
-  { id: "gold", label: "Gold", minXp: 3000 },
-  { id: "platinum", label: "Platinum", minXp: 6500 },
-  { id: "diamond", label: "Diamond", minXp: 11500 },
-  { id: "champion", label: "Champion", minXp: 19000 },
-  { id: "grand-champion", label: "Grand Champion", minXp: 29000 },
-  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 50000 },
+  { id: "silver", label: "Silver", minXp: 1500 },
+  { id: "gold", label: "Gold", minXp: 4000 },
+  { id: "platinum", label: "Platinum", minXp: 8500 },
+  { id: "diamond", label: "Diamond", minXp: 15000 },
+  { id: "champion", label: "Champion", minXp: 24000 },
+  { id: "grand-champion", label: "Grand Champion", minXp: 38000 },
+  { id: "supersonic-legend", label: "Supersonic Legend", minXp: 60000 },
 ] as const;
 
 /**

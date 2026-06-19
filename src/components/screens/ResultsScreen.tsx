@@ -763,7 +763,9 @@ function rankUnlockLines(
   }
   if (!before.hardMode && after.hardMode) out.push(R.unlockHard);
   if (after.specialChance > before.specialChance) {
-    out.push(R.unlockChance(Math.round(after.specialChance * 100)));
+    // Show the GAIN over the previous rank (e.g. "+2%"), not the absolute chance —
+    // it reads as a reward and stays correct as the base rates change.
+    out.push(R.unlockChance(Math.round((after.specialChance - before.specialChance) * 100)));
   }
   return out;
 }

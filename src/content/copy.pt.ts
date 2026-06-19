@@ -701,29 +701,18 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
-        version: "1.3.4",
-        name: "",
+        version: "1.3.5",
+        name: "Proving Grounds",
         date: "2026",
         current: true,
         notes: [
-          "Legacy: os melhores drafts agora têm uma chance mais justa no título — um time de elite (~97) leva com mais frequência, enquanto os times mais fracos seguem igualmente desafiados.",
-          "\"Quem encerrou sua run\" agora mostra o overall reforçado com que o time vencedor de fato jogou no Legacy / região — fica claro por que um time de overall menor te venceu.",
-          "Correção: a química de mesmo país sempre aparece no seu time agora, mesmo quando esses jogadores também já foram companheiros de equipe.",
-        ],
-      },
-      {
-        version: "1.3.3",
-        name: "Proving Grounds",
-        date: "2026",
-        current: false,
-        notes: [
-          "Dificuldade Legacy reajustada — voltou a ser o muro definitivo: só um draft realmente de elite levanta o troféu (mundial ~97, SAM perto do seu teto realista), brutal mas justo.",
-          "A química agora premia história em comum — jogadores que já foram companheiros, ou que passaram pela mesma org, criam link mesmo com cartas de times diferentes.",
-          "O reserva importa mais: um sub forte agora é profundidade de elenco de verdade, e reservas finalmente podem aparecer como cartas especiais.",
+          "Dificuldade Legacy reajustada — o muro definitivo: só um draft de elite levanta o troféu (mundial ~97, SAM perto do seu teto realista), e agora os melhores têm uma chance mais justa, enquanto os times mais fracos seguem igualmente desafiados.",
+          "A química premia história em comum — ex-companheiros, ou jogadores que passaram pela mesma org, criam link mesmo com cartas de times diferentes (e mesmo país sempre conta).",
+          "O reserva importa mais: um sub forte é profundidade de elenco de verdade, e reservas agora podem aparecer como cartas especiais.",
           "A carta do Creator eleva o overall do time inteiro, além do bônus de atributos.",
-          "O detalhamento do overall do time agora aparece na tela de resultados em todos os modos.",
-          "\"Quem encerrou sua run\" mostra o overall do time vencedor (com um marcador quando a dificuldade o reforçou) e as cartas especiais que ele realmente usou.",
+          "A tela de resultados mostra o detalhamento do overall em todos os modos, e \"quem encerrou sua run\" revela o overall reforçado do time mais as cartas especiais que ele usou.",
           "Polimento da imagem de compartilhamento — cartas especiais mostram holo e borda de raridade, e toda carta exibe o escudo da org.",
+          "Um endgame mais longo — a escada de XP se estende rumo ao Supersonic Legend, enquanto a Coleção continua liberando cedo no Bronze.",
         ],
       },
       {

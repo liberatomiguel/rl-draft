@@ -203,28 +203,46 @@ export default function HomeMenu() {
 
       {/* Secondary */}
       <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Link href="/collection" className="group">
-          <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
-            <div>
-              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
-                {HOME.collection}
-              </h3>
-              <p className="mt-1 text-xs text-sub">
-                {mounted && rank.id === "unranked" ? HOME.collectionLocked : HOME.collectionDesc}
-              </p>
+        {(() => {
+          // Collection is locked until Bronze — when locked the card is NOT a link
+          // (not clickable, not focusable) so it can't be opened (v1.3.5).
+          const collectionLocked = mounted && rank.id === "unranked";
+          const body = (
+            <Panel
+              className={`flex h-full items-center justify-between gap-4 p-5 transition-colors ${
+                collectionLocked ? "opacity-60" : "group-hover:!border-line-strong"
+              }`}
+            >
+              <div>
+                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
+                  {HOME.collection}
+                </h3>
+                <p className="mt-1 text-xs text-sub">
+                  {collectionLocked ? HOME.collectionLocked : HOME.collectionDesc}
+                </p>
+              </div>
+              {collectionLocked ? (
+                <span className="shrink-0 text-faint" aria-label={HOME.collectionLocked}>
+                  <MenuLockGlyph />
+                </span>
+              ) : (
+                <span className="display shrink-0 text-2xl font-bold text-cyan">
+                  {mounted ? unlocked : 0}
+                  <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
+                </span>
+              )}
+            </Panel>
+          );
+          return collectionLocked ? (
+            <div className="cursor-not-allowed" aria-disabled="true" title={HOME.collectionLocked}>
+              {body}
             </div>
-            {mounted && rank.id === "unranked" ? (
-              <span className="shrink-0 text-faint" aria-label={HOME.collectionLocked}>
-                <MenuLockGlyph />
-              </span>
-            ) : (
-              <span className="display shrink-0 text-2xl font-bold text-cyan">
-                {mounted ? unlocked : 0}
-                <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
-              </span>
-            )}
-          </Panel>
-        </Link>
+          ) : (
+            <Link href="/collection" className="group">
+              {body}
+            </Link>
+          );
+        })()}
         <Link href="/achievements" className="group">
           <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
             <div>

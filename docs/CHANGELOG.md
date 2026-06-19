@@ -10,6 +10,26 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.3.5] — 2026 · Progression + collection polish
+
+### Changed
+- **XP ladder stretched.** SSL 50k → 60k with the mid-ranks redistributed for a
+  longer, steadier endgame climb (progressively larger gaps). **Bronze stays 200**
+  so the Collection still unlocks on the first run.
+- **Rank-up screen shows the special-card chance GAINED** over the previous rank
+  (e.g. "+2%") instead of the absolute value — reads as a reward and stays correct
+  as the base rates change.
+
+### Fixed
+- **Collection card on the home is no longer clickable while locked** (Unranked):
+  it renders as a non-link (not focusable, `aria-disabled`) until Bronze. The
+  `/collection` route already guards direct-URL access with a locked state.
+
+### Notes
+- Public site changelog consolidated: the [1.3.3]–[1.3.5] patches are merged into a
+  single "Proving Grounds" entry in-app so the page stays tidy. This dev changelog
+  keeps the per-version history.
+
 ## [1.3.4] — 2026 · Legacy elite ease
 
 A small follow-up to the [1.3.3] retune: the very best drafts deserved a slightly

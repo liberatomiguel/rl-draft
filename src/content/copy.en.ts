@@ -719,29 +719,18 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
-      version: "1.3.4",
-      name: "",
+      version: "1.3.5",
+      name: "Proving Grounds",
       date: "2026",
       current: true,
       notes: [
-        "Legacy: the very best drafts now get a fairer shot at the title — an elite (~97) team wins it more often, while weaker teams stay just as challenged.",
-        "\"Who ended your run\" now shows the boosted overall the winning team actually played at in Legacy / region-locked — so it's clear why a lower-rated team beat you.",
-        "Fixed: same-country chemistry always shows on your team now, even when those players were also former teammates.",
-      ],
-    },
-    {
-      version: "1.3.3",
-      name: "Proving Grounds",
-      date: "2026",
-      current: false,
-      notes: [
-        "Legacy difficulty retuned — it's the all-time wall again: only a truly elite draft lifts the trophy (worldwide ~97, SAM around its realistic ceiling), brutal but fair.",
-        "Chemistry now rewards shared history — players who were once teammates, or who passed through the same org, link up even when their cards are from different teams.",
-        "The substitute matters more: a strong sub is real squad depth now, and subs can finally appear as special cards.",
+        "Legacy difficulty retuned — the all-time wall: only an elite draft lifts the trophy (worldwide ~97, SAM near its realistic ceiling), and the very best now get a fair shot while weaker teams stay just as challenged.",
+        "Chemistry rewards shared history — former teammates, or players who passed through the same org, link up even with cards from different teams (and same-country always counts).",
+        "The substitute matters more: a strong sub is real squad depth, and subs can now appear as special cards.",
         "The Creator card lifts your whole team's overall, on top of its attribute boost.",
-        "The team-overall breakdown now shows on the results screen in every mode.",
-        "\"Who ended your run\" reveals the winning team's overall (with a marker when the difficulty boosted it) and the special cards they actually used.",
+        "Results screen shows the team-overall breakdown in every mode, and \"who ended your run\" reveals the team's boosted overall plus the special cards they used.",
         "Share image polish — special cards show their holo and rarity border, and every card carries its org crest.",
+        "A longer endgame climb — the XP ladder stretches toward Supersonic Legend, while the Collection still unlocks early at Bronze.",
       ],
     },
     {
