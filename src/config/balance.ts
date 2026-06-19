@@ -229,15 +229,15 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     aiRollRange: [-4, 4],
     // v1.3: chemistry is the PLAYER's asymmetric edge here (AI cap = 0), so a
     // small bump rewards a coherent draft without inflating the field.
-    chemistryMaxBonus: 2.3,
+    chemistryMaxBonus: 2.4,
     opponentChemistryMaxBonus: 0,
     // v1.3.1: targets — a 90 team should NOT win Hard, a 92 elite ~10%, a 95
     // dream comfortably. The field is fewer-superteams (low elite weight) but
     // still stronger than Normal (more strong, fewer underdogs) and, crucially,
     // played with overalls HIDDEN — the real difficulty is drafting blind.
-    opponentRatingShift: -0.5,
+    opponentRatingShift: -0.2,
     opponentSpecialChance: 0.12,
-    opponentTierWeights: { elite: 0.7, strong: 1.1, solid: 1.0, underdog: 0.7 },
+    opponentTierWeights: { elite: 1.0, strong: 1.1, solid: 1.0, underdog: 0.7 },
     xpMultiplier: 1.5,
   },
   legacy: {
@@ -254,16 +254,16 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     //  · chemistryMaxBonus 2.6 → 2.9 — the player's edge (AI cap = 0); a committed,
     //    coherent roster is rewarded. The bigger structural help is the org-unique
     //    field (engine/opponents) — you no longer face the same superteam 3×.
-    chemistryMaxBonus: 2.9,
+    chemistryMaxBonus: 3,
     opponentChemistryMaxBonus: 0,
     // v1.3.1 targets — a 95+ dream draft wins ~10%, a 92 elite very rarely (<2%),
     // a 90 team never. Softer than v1.3 (shift 0.6→0.2, elite 1.8→1.4) so a true
     // dream team breaks through ~1-in-10 while it stays comfortably the hardest
     // mode. The Bo7 gauntlet is inherently steep — a 3-overall gap (92→95) is the
     // difference between "almost never" and "~10%", which is the intended feel.
-    opponentRatingShift: -0.3,
+    opponentRatingShift: 0,
     opponentSpecialChance: 0.18,
-    opponentTierWeights: { elite: 1.4, strong: 1.1, solid: 0.3, underdog: 0.15 },
+    opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
     requiresLegacyUnlock: true,
   },
@@ -455,7 +455,7 @@ export const XP = {
  */
 export const RANKS = [
   { id: "unranked", label: "Unranked", minXp: 0 },
-  // v1.3.2: Bronze at 250 so even a losing first run clears the Unranked on-ramp
+  // v1.3.2: Bronze at 200 so even a losing first run clears the Unranked on-ramp
   // (no specials / no collection); SSL stretched to 50k for a longer endgame grind.
   { id: "bronze", label: "Bronze", minXp: 200 },
   { id: "silver", label: "Silver", minXp: 1200 },
