@@ -279,15 +279,15 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     //    field (engine/opponents) — you no longer face the same superteam 3×.
     chemistryMaxBonus: 3,
     opponentChemistryMaxBonus: 0,
-    // v1.3.3 retune — Legacy had drifted too easy (a worldwide overall-97 team won
-    // ~53%, losing its "only the very best win" identity). Re-anchored on real-team
-    // sims (teams built from actual cards, so stats match the live game — not just
-    // overall): shift 0 → 2.3 puts a worldwide overall-97 draft at ~15%, the
-    // all-time-best 99 (Vitality '22-23) at ~46%, a 95 at low single digits, a 92
-    // near zero. The Bo7 gauntlet is steep on purpose — each overall point roughly
-    // doubles the title odds. SAM normalises on top via REGION_LOCK (per-difficulty).
-    // See DESIGN-DECISIONS #75 (supersedes the Legacy half of #71).
-    opponentRatingShift: 2.3,
+    // v1.3.3 retune, eased v1.3.4 — anchored on real-team sims (teams built from
+    // actual cards, so stats match the live game, not just overall). Legacy is the
+    // all-time wall, but the very best drafts now get a fairer shot: shift 2.3 → 1.65
+    // puts a worldwide overall-97 dream at ~25% (was ~15%), the all-time-best 99
+    // (Vitality '22-23) at ~62%, a 95 at single digits, a 92 near zero — the base of
+    // the curve stays low while the elite is rewarded. The Bo7 gauntlet is steep on
+    // purpose. SAM normalises on top via REGION_LOCK (per-difficulty); its boost was
+    // raised so the SAM curve is UNCHANGED by this WW ease. See DESIGN-DECISIONS #75.
+    opponentRatingShift: 1.65,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -308,17 +308,16 @@ export const REGION_LOCK = {
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
   //    most runs); left untouched this pass, retune with a target if wanted.
-  //  · legacy 2 → 2.3: anchored (real-team sims) on the best REALISTICALLY-ACHIEVABLE
+  //  · legacy 2.95: anchored (real-team sims) on the best REALISTICALLY-ACHIEVABLE
   //    SAM team, NOT the theoretical ceiling. Live feedback: real SAM drafts land in
   //    the 80s (the pool is weak and random; overall 92 is already a rare-good
   //    result, 95+ is essentially never built). The engine's effective SAM opponent
-  //    shift = legacy.opponentRatingShift (2.3) + this boost, so 2.3 here = +4.6
-  //    effective. At +4.6 a typical SAM team (~90) wins ~2%, the best realistic ~92
-  //    wins ~15% (the anchor), and the rare 95/97 unicorns win a lot (once-in-a-
-  //    lifetime SAM drafts). Mirrors worldwide, where the best achievable ~97 wins
-  //    ~15%. (The weak SAM pool + larger shift nets out to a field ~90-94, below the
-  //    worldwide ~97 field — matching the lower SAM achievable ceiling.) See #75.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.3 } as Record<
+  //    shift = legacy.opponentRatingShift + this boost. It is pinned at +4.6 effective
+  //    (= the SAM anchor): a typical SAM team (~90) wins ~2%, the best realistic ~92
+  //    wins ~15% (the anchor), and the rare 95/97 unicorns win a lot. When the WW
+  //    shift eased 2.3 → 1.65 (v1.3.4), this boost rose 2.3 → 2.95 so SAM stays at
+  //    +4.6 — i.e. the WW-elite ease does NOT touch the SAM curve. See #75.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.95 } as Record<
     Difficulty,
     number
   >,

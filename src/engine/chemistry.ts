@@ -94,18 +94,22 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
     for (let j = i + 1; j < input.players.length; j++) {
       const a = input.players[i];
       const b = input.players[j];
-      // Weight order (strongest wins): drafted lineup > drafted org > shared
-      // career lineup (ex-teammates) > country > shared career org > region.
+      // Weight order (strongest wins): drafted lineup > drafted org > country >
+      // shared career lineup (ex-teammates) > shared career org > region. Country
+      // sits above the career links so a same-country pair always reads as "Same
+      // country" (the primary, intuitive link); career links are the value-add for
+      // pairs of DIFFERENT countries who crossed paths. careerLineup ties country
+      // on points (3), so no balance change — only which reason is shown.
       const sharedCareerLineup = firstShared(a.careerLineupIds, b.careerLineupIds);
       const sharedCareerOrg = firstShared(a.careerOrgIds, b.careerOrgIds);
       if (a.lineupId === b.lineupId) {
         addPair(a, b, "lineup", a.lineupId, "Same lineup", "", w.sameLineupPair);
       } else if (a.orgId === b.orgId) {
         addPair(a, b, "org", a.orgId, "Shared org", "", w.sameOrgPair);
-      } else if (sharedCareerLineup) {
-        addPair(a, b, "career-lineup", sharedCareerLineup, "Ex-teammates", "", w.careerLineupPair);
       } else if (a.country && b.country && a.country === b.country) {
         addPair(a, b, "country", a.country, "Same country", ` (${a.country})`, w.sameCountryPair);
+      } else if (sharedCareerLineup) {
+        addPair(a, b, "career-lineup", sharedCareerLineup, "Ex-teammates", "", w.careerLineupPair);
       } else if (sharedCareerOrg) {
         addPair(a, b, "career-org", sharedCareerOrg, "Shared org history", "", w.careerOrgPair);
       } else if (a.region && b.region && a.region === b.region) {

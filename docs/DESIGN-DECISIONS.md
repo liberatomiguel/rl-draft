@@ -675,6 +675,12 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     to a field ~90-94, below the worldwide ~97 field — matching the lower SAM
     achievable ceiling, and mirroring worldwide where the best achievable ~97 also
     wins ~15%. easy/normal/hard keep +2 — Hard SAM stays easy at the top this pass.
+    **v1.3.4 ease (by direction):** the worldwide ELITE end was a touch too punishing
+    (a 97 dream won only ~15%), so `opponentRatingShift` dropped 2.3 → 1.65 — a 97 now
+    wins ~25%, the all-time 99 ~60%, base unchanged. To keep SAM exactly where it was
+    tuned, the SAM boost rose 2.3 → 2.95 (effective SAM shift pinned at +4.6). One knob
+    moves the whole worldwide curve, so 97→30% would drag the 99 to ~65% and lift the
+    base; ~25% is the agreed sweet spot between "a real elite shot" and "still brutal".
 
 76. **The draft anti-frustration tilt weights by roster OVERALL, not historical
     strength.** The v1.3 tilt softly favoured "historically stronger" lineups

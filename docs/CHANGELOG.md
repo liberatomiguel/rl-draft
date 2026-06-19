@@ -10,6 +10,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.3.4] — 2026 · Legacy elite ease
+
+A small follow-up to the [1.3.3] retune: the very best drafts deserved a slightly
+better shot at Legacy without making it easier overall.
+
+### Balance
+- **Legacy elite eased — `opponentRatingShift` 2.3 → 1.65.** A worldwide overall-97
+  dream now wins the title ~25% (was ~15%) and the all-time-best 99 ~60% (was ~47%),
+  while the base of the curve stays low (a 95 single digits, a 92 ≈ 0). Verified on
+  real-team sims.
+- **SAM curve unchanged.** `REGION_LOCK.opponentRatingBoost.legacy` 2.3 → 2.95 so the
+  effective SAM opponent shift stays pinned at +4.6 — the worldwide-elite ease does
+  not touch SAM (still ~92→15%, ~95→44%).
+
+### Changed
+- **"Who ended your run" shows the eliminator's BOOSTED overall** — the number the
+  team actually played at in Legacy / region-locked (rating + difficulty shift),
+  keeping the ⚡ marker, so it's clear why a "lower-rated" team could beat you.
+
 ## [1.3.3] — 2026 · Legacy difficulty retune + systems pass
 
 Legacy had drifted too easy — a worldwide overall-97 draft won the title ~53% of

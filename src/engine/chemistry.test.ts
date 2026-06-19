@@ -156,7 +156,10 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
         { name: "C", lineupId: "L3", orgId: "O3", country: "BR", careerLineupIds: ["L3", "LZ"], careerOrgIds: ["O3", "OZ"] },
       ],
     });
-    // Each pair shares career lineup LZ (3) which ties/oudranks country (3) → 3×3=9.
+    // Country outranks the career links (same points, 3), so it reads as "Same
+    // country" — never shadowed by "Ex-teammates" — and stays Great (3×3=9, <100%).
+    expect(result.items.some((i) => i.label.startsWith("Same country"))).toBe(true);
+    expect(result.items.some((i) => i.label.startsWith("Ex-teammates"))).toBe(false);
     expect(result.tier).toBe("Great");
     expect(result.percent).toBeLessThan(100);
   });

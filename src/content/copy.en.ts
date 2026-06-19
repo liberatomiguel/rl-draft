@@ -441,7 +441,7 @@ export const RESULTS_UI = {
   eliminatorKicker: "Who ended your run",
   eliminatedBy: (name: string) => `Eliminated by ${name}`,
   eliminatorScore: (a: number, b: number) => `${a}–${b}`,
-  eliminatorBuffed: "Boosted by the difficulty (played above its overall)",
+  eliminatorBuffed: "Overall boosted by the difficulty (Legacy / region-locked)",
 };
 
 export const COLLECTION_UI = {
@@ -719,10 +719,21 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.3.4",
+      name: "",
+      date: "2026",
+      current: true,
+      notes: [
+        "Legacy: the very best drafts now get a fairer shot at the title — an elite (~97) team wins it more often, while weaker teams stay just as challenged.",
+        "\"Who ended your run\" now shows the boosted overall the winning team actually played at in Legacy / region-locked — so it's clear why a lower-rated team beat you.",
+        "Fixed: same-country chemistry always shows on your team now, even when those players were also former teammates.",
+      ],
+    },
+    {
       version: "1.3.3",
       name: "Proving Grounds",
       date: "2026",
-      current: true,
+      current: false,
       notes: [
         "Legacy difficulty retuned — it's the all-time wall again: only a truly elite draft lifts the trophy (worldwide ~97, SAM around its realistic ceiling), brutal but fair.",
         "Chemistry now rewards shared history — players who were once teammates, or who passed through the same org, link up even when their cards are from different teams.",

@@ -292,7 +292,10 @@ export function compileResults(
             name: opp.name,
             stage: h.stage,
             score: h.score,
-            overall: displayTeamOverall(opp.rating),
+            // Show the BOOSTED overall the team actually played at (rating.total
+            // includes the difficulty shift), so players see why a "lower" team
+            // could beat them in Legacy / region-locked. The ⚡ marker flags it.
+            overall: Math.min(99, Math.round(opp.rating.total)),
             buffed: opp.rating.difficultyShift > 0.05,
             specialIds: opp.specialIds,
           };

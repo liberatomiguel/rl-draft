@@ -427,7 +427,7 @@ export const PT: Copy = {
     eliminatorKicker: "Quem encerrou sua run",
     eliminatedBy: (name: string) => `Eliminado por ${name}`,
     eliminatorScore: (a: number, b: number) => `${a}–${b}`,
-    eliminatorBuffed: "Reforçado pela dificuldade (jogou acima do overall)",
+    eliminatorBuffed: "Overall reforçado pela dificuldade (Legacy / região)",
   },
 
   COLLECTION_UI: {
@@ -701,10 +701,21 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.3.4",
+        name: "",
+        date: "2026",
+        current: true,
+        notes: [
+          "Legacy: os melhores drafts agora têm uma chance mais justa no título — um time de elite (~97) leva com mais frequência, enquanto os times mais fracos seguem igualmente desafiados.",
+          "\"Quem encerrou sua run\" agora mostra o overall reforçado com que o time vencedor de fato jogou no Legacy / região — fica claro por que um time de overall menor te venceu.",
+          "Correção: a química de mesmo país sempre aparece no seu time agora, mesmo quando esses jogadores também já foram companheiros de equipe.",
+        ],
+      },
+      {
         version: "1.3.3",
         name: "Proving Grounds",
         date: "2026",
-        current: true,
+        current: false,
         notes: [
           "Dificuldade Legacy reajustada — voltou a ser o muro definitivo: só um draft realmente de elite levanta o troféu (mundial ~97, SAM perto do seu teto realista), brutal mas justo.",
           "A química agora premia história em comum — jogadores que já foram companheiros, ou que passaram pela mesma org, criam link mesmo com cartas de times diferentes.",
