@@ -379,21 +379,33 @@ export const DRAFT = {
 
 export const SPECIALS = {
   /**
-   * Chance a player card in an offer appears as one of that player's
-   * specials. v0.5.1: 0.16 → 0.06 by direction — at 16% (×the per-player
-   * pool) runs were seeing 3-4 specials and they stopped feeling special.
+   * v1.4 rarity rework — ABSOLUTE per-rarity appearance rates.
+   *
+   * `rarityChance[r]` is the chance a given offer card shows a special of rarity
+   * `r`, at the baseline rank (mult 1.0). Each rarity the person OWNS is rolled
+   * independently, **rarest first**; the first tier to proc supplies the card
+   * (chosen uniformly within that tier). This decouples a rarity's appearance
+   * rate from how many cards a player has of it — the old model normalised a
+   * single weighted pick across the person's pool, so a lone-legendary player
+   * (kronovi, m0nkeym00n, violentpanda) showed their legendary EVERY time a
+   * special procced (~4%). Now a legendary appears at its own low rate (~1%)
+   * regardless of pool size. Calibrated with `scripts/calibrate-rarity.mjs`:
+   * the overall special rate stays ~unchanged (~1.6% per offer slot) while
+   * legendaries are ~4x rarer. Coaches roll their own pool with the same table.
    */
-  appearanceChance: 0.05,
-  /** Coach cards roll their person's coach specials at this chance. */
-  coachAppearanceChance: 0.05,
-  /**
-   * When a special DOES appear, which one is weighted by rarity tier.
-   * Within a player's pool: rare ≈ common sight, legendary ≈ chase pull.
-   */
-  rarityWeights: { rare: 100, epic: 55, mythic: 28, legendary: 12, creator: 12 } as Record<
+  rarityChance: { rare: 0.045, epic: 0.036, mythic: 0.03, legendary: 0.01, creator: 0.006 } as Record<
     string,
     number
   >,
+  /** Roll order — rarest first. The first tier the person owns that procs wins. */
+  rarityOrder: ["creator", "legendary", "mythic", "epic", "rare"] as const,
+  /**
+   * Baseline rank special chance (Bronze–Diamond). `specialChanceMult` is
+   * `rewards.specialChance / this`, so the common ranks sit at mult 1.0 and the
+   * top ranks ramp (Champion ×1.5 / GC ×2.5 / SSL ×4) — same ramp SHAPE as v1.3,
+   * just re-anchored. The mult scales every per-rarity rate together.
+   */
+  rankBaselineChance: 0.04,
 } as const;
 
 // ---------------------------------------------------------------------------

@@ -30,6 +30,21 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Eliminator overall uses a real bolt icon** (`BoltIcon`) instead of the `⚡`
   emoji on the results screen, matching the hand-drawn SVG icon system.
 
+### Balance
+- **Special-card rarity rework — absolute per-rarity spawn rates.** The old model
+  rolled one flat appearance chance and then a within-pool weighted pick, so a
+  player whose ONLY special is a legendary (kronovi, m0nkeym00n, violentpanda)
+  showed it ~4% of the time — every time a special procced — because the weighted
+  pick normalised over a one-card pool. Rarity rate was effectively coupled to
+  pool size. Now each rarity a person owns is rolled at its OWN absolute rate
+  (`SPECIALS.rarityChance`, scaled by the rank/daily mult), rarest-first, first
+  hit wins. Calibrated with `scripts/calibrate-rarity.mjs`: the overall special
+  rate is preserved (~1.6% per offer slot, was ~1.64%) while legendaries are
+  ~4× rarer (a lone legendary drops from ~4.0% to ~1.0%). The rank-gate and the
+  rank ramp SHAPE (Champion ×1.5 / GC ×2.5 / SSL ×4) are unchanged — the mult is
+  just re-anchored to the baseline rank (`rankBaselineChance`). AI opponents use
+  the same per-rarity weighting so their rosters stay consistent.
+
 ### Fixed
 - **Slot-machine reveal now replays on "Reset run".** Root cause: `OfferReveal`
   was keyed by `draft.round` only, and a reset starts a fresh run back at

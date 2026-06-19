@@ -104,7 +104,7 @@ export const useRunStore = create<RunStore>()(
           createDraft(difficulty, {
             mode,
             poolLineupIds,
-            specialChanceMult: rewards.specialChance / SPECIALS.appearanceChance,
+            specialChanceMult: rewards.specialChance / SPECIALS.rankBaselineChance,
             specialRarities: rewards.rarities,
           }),
           rng,

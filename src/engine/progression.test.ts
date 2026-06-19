@@ -54,25 +54,40 @@ describe("rank rewards (v1.3 unlock ladder)", () => {
   });
 });
 
-describe("rollSpecial rarity gate", () => {
+describe("rollSpecial — rank gate + per-rarity rates (v1.4)", () => {
   const fake = (id: string, rarity: SpecialCard["rarity"]): SpecialCard =>
     ({ id, rarity }) as SpecialCard;
   const pool = [fake("r", "rare"), fake("e", "epic"), fake("l", "legendary")];
 
-  it("an empty allow-list (Unranked) yields no special even at 100% chance", () => {
-    expect(rollSpecial(pool, 1, createRng(1), [])).toBeUndefined();
+  it("an empty allow-list (Unranked) yields no special even at a huge mult", () => {
+    expect(rollSpecial(pool, 100, createRng(1), [])).toBeUndefined();
   });
 
-  it("only allowed rarities can appear", () => {
-    // rare-only allow-list, 100% chance, many draws → always the rare card.
+  it("a rare-only gate never shows epic/legendary, even at a huge mult", () => {
     for (let i = 0; i < 50; i++) {
-      expect(rollSpecial(pool, 1, createRng(i + 1), ["rare"])).toBe("r");
+      expect(rollSpecial(pool, 100, createRng(i + 1), ["rare"])).toBe("r");
     }
   });
 
-  it("undefined allow-list = no gate (daily / legacy callers)", () => {
-    const got = new Set<string | undefined>();
-    for (let i = 0; i < 200; i++) got.add(rollSpecial(pool, 1, createRng(i + 1)));
-    expect(got.size).toBeGreaterThan(1); // a mix of rarities appears
+  it("no gate (undefined) lets a higher rarity surface — rarest-first wins at huge mult", () => {
+    // ORDER is rarest-first, so a huge mult forces the rarest OWNED tier.
+    expect(rollSpecial(pool, 100, createRng(7))).toBe("l");
+  });
+
+  it("a lone legendary appears far less often than a lone rare (the v1.4 decoupling)", () => {
+    // The core fix: a player whose ONLY special is legendary (kronovi) must show
+    // it at the LEGENDARY rate, not at the flat special-trigger rate — i.e. the
+    // appearance rate is per-rarity and independent of pool size.
+    const loneRare = [fake("r", "rare")];
+    const loneLegend = [fake("l", "legendary")];
+    let rares = 0;
+    let legends = 0;
+    for (let i = 0; i < 8000; i++) {
+      if (rollSpecial(loneRare, 1, createRng(i + 1))) rares++;
+      if (rollSpecial(loneLegend, 1, createRng(i + 100001))) legends++;
+    }
+    // rate 0.045 vs 0.010 → rare ~4.5x more common than legendary.
+    expect(rares).toBeGreaterThan(legends * 2.5);
+    expect(legends).toBeGreaterThan(0); // legendaries still appear sometimes
   });
 });

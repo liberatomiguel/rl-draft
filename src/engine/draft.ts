@@ -58,13 +58,22 @@ export const VACANT_SUB = "vacant-sub";
 export const VACANT_OVERALL = 50;
 
 /**
- * Roll a special appearance from a person's pool: gate by chance, then pick
- * which special by rarity weight (legendaries are the chase pulls).
- * Shared by the draft offer and the AI opponent upgrade path.
+ * Roll a special appearance from a person's pool (v1.4). Each rarity the person
+ * OWNS is rolled at its own ABSOLUTE rate (`SPECIALS.rarityChance × mult`),
+ * RAREST FIRST; the first tier to proc supplies the card (uniform within tier).
+ *
+ * `mult` is the rank/daily special-chance multiplier (1.0 at the baseline rank;
+ * higher ranks and the Specials-Surge daily scale it up). Passing a huge mult
+ * forces a special to always appear (used by tests / scripted dailies).
+ *
+ * Why rarest-first per rarity instead of one weighted pick: the old model
+ * normalised a single pick across the pool, so a player whose ONLY special is a
+ * legendary (kronovi) showed it every time a special procced. Now a legendary
+ * appears at its own low rate regardless of how many cards the person has.
  */
 export function rollSpecial(
   pool: SpecialCard[] | undefined,
-  chance: number,
+  mult: number,
   rng: Rng,
   allowedRarities?: readonly string[],
 ): string | undefined {
@@ -74,8 +83,15 @@ export function rollSpecial(
   const eligible = allowedRarities
     ? pool?.filter((sp) => allowedRarities.includes(sp.rarity))
     : pool;
-  if (!eligible || eligible.length === 0 || !rng.chance(chance)) return undefined;
-  return rng.weightedPick(eligible, (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1).id;
+  if (!eligible || eligible.length === 0) return undefined;
+  for (const rarity of SPECIALS.rarityOrder) {
+    const tier = eligible.filter((sp) => sp.rarity === rarity);
+    if (tier.length === 0) continue;
+    if (rng.chance((SPECIALS.rarityChance[rarity] ?? 0) * mult)) {
+      return rng.pick(tier).id;
+    }
+  }
+  return undefined;
 }
 
 export interface CreateDraftOptions {
@@ -173,17 +189,18 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   if (!lineup) throw new Error(`Unknown lineup "${lineupId}"`);
 
   const cards: DraftOfferCard[] = [];
-  const specialChance =
-    SPECIALS.appearanceChance * (draft.specialChanceMult ?? 1);
+  // Rank/daily special-chance multiplier (1.0 at the baseline rank). rollSpecial
+  // applies the per-rarity rates × this (v1.4).
+  const mult = draft.specialChanceMult ?? 1;
 
   for (const cardId of lineup.playerCardIds) {
     const card = playerCardById.get(cardId)!;
     // A special version may appear in place of the base card — the pool is
-    // the PLAYER's full catalogue, weighted by rarity (v0.5), gated to the
-    // player's rank-unlocked rarities (v1.3).
+    // the PLAYER's full catalogue, rolled per-rarity rarest-first (v1.4), gated
+    // to the player's rank-unlocked rarities (v1.3).
     let specialId = rollSpecial(
       specialsByPlayerId.get(card.playerId),
-      specialChance,
+      mult,
       rng,
       draft.specialRarities,
     );
@@ -210,7 +227,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
         refId: coach.id,
         specialId: rollSpecial(
           coachSpecialsByPersonId.get(coach.personId),
-          SPECIALS.coachAppearanceChance * (draft.specialChanceMult ?? 1),
+          mult,
           rng,
           draft.specialRarities,
         ),
@@ -230,7 +247,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
         // sub who was also a famous player — e.g. Turbopolsa — can show one).
         specialId: rollSpecial(
           specialsByPlayerId.get(sub.personId),
-          specialChance,
+          mult,
           rng,
           draft.specialRarities,
         ),

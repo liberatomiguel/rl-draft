@@ -61,9 +61,11 @@ export function generateOpponents(
       if (upgradable.length > 0) {
         const cardId = rng.pick(upgradable);
         const pool = specialsByPlayerId.get(playerCardById.get(cardId)!.playerId)!;
+        // Weight the AI's special pick by the same per-rarity rates as the player
+        // draft (v1.4) — rares are common, legendaries are the rare flex.
         const specialId = rng.weightedPick(
           pool,
-          (sp) => SPECIALS.rarityWeights[sp.rarity] ?? 1,
+          (sp) => SPECIALS.rarityChance[sp.rarity] ?? 0.01,
         ).id;
         specialUpgrade = { cardId, specialId };
       }
