@@ -93,6 +93,10 @@ export interface LeaderboardStats {
   best_worldwide: number;
   best_sam: number;
   championships: number;
+  titles_easy: number;
+  titles_normal: number;
+  titles_hard: number;
+  titles_legacy: number;
   daily_streak: number;
   challenges_cleared: number;
 }
@@ -107,6 +111,10 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
     best_worldwide: p.records.bestOverallWorldwide,
     best_sam: p.records.bestOverallSam,
     championships,
+    titles_easy: p.wins.easy,
+    titles_normal: p.wins.normal,
+    titles_hard: p.wins.hard,
+    titles_legacy: p.wins.legacy,
     daily_streak: dailyStreak,
     challenges_cleared: Object.keys(p.challengesCompleted).length,
   };
@@ -150,12 +158,40 @@ export async function pushCloudProfile(
   );
 }
 
-/** Update just the public display name (leaderboard name). */
-export async function updateUsername(userId: string, username: string): Promise<void> {
-  await client()
-    ?.from("profiles")
-    .update({ username })
-    .eq("id", userId);
+/** Update the public display name. Returns an error message on failure — the
+ *  DB unique index on lower(username) rejects a name already taken. */
+export async function updateUsername(userId: string, username: string): Promise<{ error?: string }> {
+  const c = client();
+  if (!c) return { error: "accounts disabled" };
+  const { error } = await c.from("profiles").update({ username }).eq("id", userId);
+  if (!error) return {};
+  // Postgres unique-violation code is 23505.
+  if (error.code === "23505") return { error: "taken" };
+  return { error: error.message };
+}
+
+/** Pre-check whether a display name is free (case-insensitive). The unique index
+ *  is the real guard; this just gives nicer UX before saving. */
+export async function isUsernameAvailable(
+  username: string,
+  currentUsername: string,
+): Promise<boolean> {
+  const name = username.trim();
+  if (!name) return false;
+  if (name.toLowerCase() === currentUsername.trim().toLowerCase()) return true; // unchanged
+  const c = client();
+  if (!c) return true;
+  const { data, error } = await c.from("leaderboard").select("username").ilike("username", name).limit(1);
+  if (error || !data) return true; // fail open — the DB unique index still guards
+  return data.length === 0;
+}
+
+/** Delete the signed-in user's account (auth user + profile row, via cascade). */
+export async function deleteAccount(): Promise<void> {
+  const c = client();
+  if (!c) return;
+  await c.rpc("delete_own_account");
+  await c.auth.signOut();
 }
 
 // --- Leaderboards ---------------------------------------------------------
@@ -164,11 +200,14 @@ export type LeaderboardCategory = keyof LeaderboardStats | "xp";
 
 export interface LeaderboardRow {
   username: string;
-  avatar_url: string | null;
   value: number;
 }
 
-/** Top `limit` players by a leaderboard column (descending). */
+/**
+ * Top `limit` players by a leaderboard column (descending). Reads the PUBLIC
+ * `leaderboard` view (safe columns only) — NOT the profiles table, whose full
+ * durable blob is owner-only. So a public read never exposes a player's history.
+ */
 export async function fetchLeaderboard(
   category: LeaderboardCategory,
   limit = 100,
@@ -176,8 +215,8 @@ export async function fetchLeaderboard(
   const c = client();
   if (!c) return [];
   const { data, error } = await c
-    .from("profiles")
-    .select(`username, avatar_url, value:${category}`)
+    .from("leaderboard")
+    .select(`username, value:${category}`)
     .order(category, { ascending: false })
     .gt(category, 0)
     .limit(limit);

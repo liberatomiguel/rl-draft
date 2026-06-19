@@ -67,6 +67,72 @@ create index if not exists profiles_xp_idx              on public.profiles (xp d
 create index if not exists profiles_championships_idx   on public.profiles (championships desc);
 ```
 
+## 1b. Security hardening — RUN THIS (important)
+
+This makes the data safe to expose and adds the v1.4 account features. **Idempotent
+— safe to run even though you already ran step 1.** Paste into the SQL Editor → Run.
+
+> **What it fixes:** the first migration let *anyone* read every profile row,
+> including the full `durable` blob (a player's whole history). After this, the
+> durable blob is **owner-only**; the public leaderboard reads a **view of safe
+> columns only** (display name + scores — no history, no ids, never the email).
+
+```sql
+-- 1) Per-difficulty title columns (titles per difficulty for the boards).
+alter table public.profiles
+  add column if not exists titles_easy   integer not null default 0,
+  add column if not exists titles_normal integer not null default 0,
+  add column if not exists titles_hard   integer not null default 0,
+  add column if not exists titles_legacy integer not null default 0;
+
+-- 2) Unique display names, case-insensitive.
+create unique index if not exists profiles_username_unique on public.profiles (lower(username));
+
+-- 3) Lock the full profile to its owner: the durable blob (history, collection,
+--    achievements) is readable ONLY by the player it belongs to.
+drop policy if exists "profiles are readable by anyone" on public.profiles;
+create policy "a user reads only their own profile"
+  on public.profiles for select using (auth.uid() = id);
+
+-- 4) Public leaderboard = a VIEW of SAFE columns only (no durable blob, no ids,
+--    no email). The app queries this for the boards; everyone can read it.
+create or replace view public.leaderboard with (security_invoker = false) as
+  select username, xp,
+         best_easy, best_normal, best_hard, best_legacy, best_worldwide, best_sam,
+         championships, titles_easy, titles_normal, titles_hard, titles_legacy,
+         daily_streak, challenges_cleared
+  from public.profiles;
+grant select on public.leaderboard to anon, authenticated;
+
+-- 5) Account deletion (LGPD/GDPR right to erasure): a signed-in player can delete
+--    THEIR OWN account; removing the auth user cascades to the profile row.
+create or replace function public.delete_own_account()
+  returns void language sql security definer set search_path = '' as $$
+  delete from auth.users where id = auth.uid();
+$$;
+revoke all on function public.delete_own_account() from public, anon;
+grant execute on function public.delete_own_account() to authenticated;
+
+create index if not exists profiles_titles_legacy_idx on public.profiles (titles_legacy desc);
+create index if not exists profiles_titles_hard_idx   on public.profiles (titles_hard desc);
+```
+
+> Supabase's linter may warn that `public.leaderboard` is a "security definer
+> view" — that's **intentional and safe here**: it exists precisely to expose a
+> few non-sensitive columns publicly while the underlying table stays private.
+
+### What's stored vs. what's public
+
+| Data | Where | Who can read it |
+| --- | --- | --- |
+| **Email** | Supabase `auth.users` (managed) | only you (never exposed via the app) |
+| **Display name + scores** | `profiles` flat columns → `leaderboard` view | **public** (that's the leaderboard) |
+| **Full profile** (history, **collection**, achievements, dailies) | `profiles.durable` jsonb | **only the owner** |
+
+**Yes — your collection and achievements ARE backed up to the account** (they live
+in the `durable` blob), merged in on login and never lost. They are private to you;
+the public boards only ever show display name + the score columns.
+
 ## 2. Email sending (the 6-digit code)
 
 Email auth is **on by default** in Supabase (Authentication → Providers → Email).

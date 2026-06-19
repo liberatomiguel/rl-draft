@@ -698,9 +698,11 @@ export const PRIVACY = {
       ],
     },
     {
-      title: "Accounts (coming later)",
+      title: "Accounts & sign-in (optional)",
       body: [
-        "A future update will add optional Discord sign-in so your progress can sync across devices and power leaderboards. It will be entirely opt-in; until you choose to sign in, nothing is sent to a server. When it ships, this policy will be updated to describe exactly what is stored.",
+        "You can play forever without an account — sign-in is entirely optional. If you choose to sign in, you do it with your email: we send a one-time code to your inbox, with no password to store.",
+        "When you are signed in, your game progress (the same data listed above) is backed up to our database (Supabase) so it syncs across devices and powers the leaderboards. Your email is used only to sign you in — it is never shown publicly or sold. Your full progress, including your collection and achievements, stays private to your account; the public leaderboards only ever show the display name you choose and your scores.",
+        "You can change your display name, sign out, or permanently delete your account and all of its cloud data at any time from your Profile. Deleting your account removes your email and progress from our database right away. Until you choose to sign in, nothing is sent to a server.",
       ],
     },
     {
@@ -909,8 +911,8 @@ export const LEADERBOARDS_UI = {
   emailPlaceholder: "your@email.com",
   sendCode: "Email me a code",
   sending: "Sending…",
-  codeSentTo: (email: string) => `We emailed a 6-digit code to ${email}.`,
-  codePlaceholder: "6-digit code",
+  codeSentTo: (email: string) => `We emailed a sign-in code to ${email}.`,
+  codePlaceholder: "code from the email",
   verify: "Verify & sign in",
   verifying: "Verifying…",
   useAnotherEmail: "Use another email",

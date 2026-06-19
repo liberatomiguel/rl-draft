@@ -178,8 +178,8 @@ export const PT: Copy = {
     emailPlaceholder: "seu@email.com",
     sendCode: "Enviar código por email",
     sending: "Enviando…",
-    codeSentTo: (email: string) => `Enviamos um código de 6 dígitos para ${email}.`,
-    codePlaceholder: "código de 6 dígitos",
+    codeSentTo: (email: string) => `Enviamos um código de acesso para ${email}.`,
+    codePlaceholder: "código do email",
     verify: "Verificar e entrar",
     verifying: "Verificando…",
     useAnotherEmail: "Usar outro email",
@@ -759,9 +759,11 @@ export const PT: Copy = {
         ],
       },
       {
-        title: "Contas (em breve)",
+        title: "Contas e login (opcional)",
         body: [
-          "Uma atualização futura vai adicionar login opcional via Discord para sincronizar seu progresso entre dispositivos e habilitar rankings. Será totalmente opcional; até você escolher entrar, nada é enviado a um servidor. Quando isso chegar, esta política será atualizada para descrever exatamente o que é armazenado.",
+          "Você pode jogar pra sempre sem conta — o login é totalmente opcional. Se escolher entrar, é com o seu email: enviamos um código de uso único pra sua caixa de entrada, sem senha pra guardar.",
+          "Quando você está logado, seu progresso de jogo (os mesmos dados listados acima) é salvo no nosso banco de dados (Supabase) pra sincronizar entre dispositivos e habilitar os rankings. Seu email é usado só pra te logar — nunca é mostrado publicamente nem vendido. Todo o seu progresso, incluindo coleção e conquistas, fica privado na sua conta; os rankings públicos só mostram o nome de exibição que você escolher e suas pontuações.",
+          "Você pode trocar o nome de exibição, sair da conta ou excluir permanentemente a conta e todos os dados na nuvem a qualquer momento no seu Perfil. Excluir a conta remove seu email e progresso do nosso banco na hora. Até você escolher entrar, nada é enviado a um servidor.",
         ],
       },
       {

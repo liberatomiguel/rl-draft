@@ -212,12 +212,13 @@ function SignInPanel({ L }: { L: ReturnType<typeof useCopy>["LEADERBOARDS_UI"] }
               inputMode="numeric"
               autoComplete="one-time-code"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              // Accept any OTP length (Supabase's "Email OTP length" can be 6-10).
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
               onKeyDown={(e) => e.key === "Enter" && verify()}
               placeholder={L.codePlaceholder}
               className="flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm tracking-[0.3em] text-ink outline-none focus:border-orange/60"
             />
-            <Button variant="primary" onClick={verify} disabled={busy || code.length < 6}>
+            <Button variant="primary" onClick={verify} disabled={busy || code.length < 4}>
               {busy ? L.verifying : L.verify}
             </Button>
           </div>
