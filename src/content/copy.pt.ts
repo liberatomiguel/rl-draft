@@ -700,10 +700,24 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.3.0",
+        name: "Season Pass",
+        date: "2026",
+        current: true,
+        notes: [
+          "Progressão Season Pass: seu rank agora desbloqueia conteúdo — raridades de cartas especiais, a Coleção e mais chance de cartas especiais conforme você sobe do Bronze ao Supersonic Legend.",
+          "Nova química — monte seu time por nacionalidade e organização. Três jogadores do mesmo país chegam a Great; compartilhe uma org para Perfect.",
+          "Modo Legacy rebalanceado — o gauntlet histórico continua brutal, mas o título finalmente é possível com um draft excelente e coeso.",
+          "Chaveamentos com orgs únicas — você não enfrenta mais temporadas diferentes da mesma org no mesmo bracket.",
+          "Simulação repaginada: vitórias e derrotas separadas em colunas, a rodada inteira do playoff revelada de uma vez, e cartas especiais sempre mostrando a arte.",
+          "Tutorial na primeira vez, card de compartilhar sua run nas redes, e o detalhamento do overall do time agora na tela de resultados.",
+          "Revisão de overalls da comunidade (69 overalls atualizados), novos times SAM e cartas especiais, e um novo achievement lendário.",
+        ],
+      },
+      {
         version: "1.2.2",
         name: "",
         date: "2026",
-        current: true,
         notes: [
           "As cartas de org ficaram mais fáceis de ler — em vez de pontinhos e sinais de mais enigmáticos, agora elas dizem direto: \"+2 Mechanics\" para um bônus, ou \"No buff\" quando não tem. As cartas de técnico seguem o mesmo padrão.",
           "Ajustes de elenco: adicionados alguns técnicos que faltavam (Team Liquid, mousesports, Evil Geniuses, Canberra Havoc) e corrigidos alguns nomes.",

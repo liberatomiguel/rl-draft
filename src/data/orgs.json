@@ -118,6 +118,13 @@
     ]
   },
   {
+    "id": "dream-conspiracy",
+    "name": "Dream Conspiracy",
+    "region": "SAM",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
     "id": "elevate",
     "name": "Elevate",
     "region": "APAC",
@@ -153,6 +160,13 @@
     "buffLevel": "+"
   },
   {
+    "id": "erased",
+    "name": "Erased",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
     "id": "erodium",
     "name": "Erodium",
     "region": "SAM",
@@ -164,6 +178,13 @@
     "name": "eUnited",
     "region": "NA",
     "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "euphoria",
+    "name": "Euphoria",
+    "region": "SAM",
+    "buffType": "experience",
     "buffLevel": "~"
   },
   {
@@ -353,6 +374,13 @@
     "name": "Hawks",
     "region": "SAM",
     "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "hero-base",
+    "name": "Hero Base",
+    "region": "SAM",
+    "buffType": "defense",
     "buffLevel": "~"
   },
   {

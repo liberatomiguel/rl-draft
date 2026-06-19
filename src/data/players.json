@@ -736,6 +736,12 @@
     "region": "MENA"
   },
   {
+    "id": "gian",
+    "nickname": "Gian",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
     "id": "gimmick",
     "nickname": "Gimmick",
     "country": "US",
@@ -829,6 +835,11 @@
     "id": "ianpinheiro",
     "nickname": "ianpinheiro",
     "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "impulse",
+    "nickname": "Impulse",
     "region": "SAM"
   },
   {
@@ -1836,6 +1847,11 @@
     "nickname": "Speed",
     "country": "GB",
     "region": "EU"
+  },
+  {
+    "id": "speedhack",
+    "nickname": "speedhack",
+    "region": "SAM"
   },
   {
     "id": "sphinx",

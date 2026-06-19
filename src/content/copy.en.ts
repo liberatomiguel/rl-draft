@@ -718,10 +718,24 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.3.0",
+      name: "Season Pass",
+      date: "2026",
+      current: true,
+      notes: [
+        "Season Pass progression: your rank now unlocks content — special-card rarities, the Collection, and a higher special-card chance as you climb from Bronze to Supersonic Legend.",
+        "New chemistry system — build your team around nationality and organization. Three players from the same country reach Great; add a shared org for Perfect.",
+        "Legacy mode rebalanced — the all-time gauntlet is still brutal, but the title is finally winnable with a great, coherent draft.",
+        "Org-unique tournament fields — you no longer face the same org's different seasons in one bracket.",
+        "Reworked simulation: wins and losses split into columns, the whole playoff round reveals at once, and special cards always show their art.",
+        "A first-launch tutorial, a share-your-run card with social sharing, and the team-overall breakdown now on the results screen.",
+        "Community overall review (69 ratings updated), new SAM teams and special cards, and a new legendary achievement.",
+      ],
+    },
+    {
       version: "1.2.2",
       name: "",
       date: "2026",
-      current: true,
       notes: [
         "Org cards are easier to read — instead of cryptic dots and plus signs, they now say it plainly: \"+2 Mechanics\" for a boost, or \"No buff\" when there's none. Coach cards match.",
         "Roster touch-ups: added some missing coaches (Team Liquid, mousesports, Evil Geniuses, Canberra Havoc) and corrected a couple of names.",

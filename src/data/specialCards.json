@@ -2203,5 +2203,53 @@
       "description": "+5 to every team attribute — the creator's touch."
     },
     "flavor": "A hidden tribute: LiberatoRL and Wings E-Sports, from the early days of South American Rocket League. The one who built this game gets a single card — and it lifts the whole team."
+  },
+  {
+    "id": "sp-loud-klaus",
+    "playerId": "klaus",
+    "baseCardId": "klaus-hero-base-2024",
+    "title": "Hometown Hero",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 85,
+    "stats": {
+      "offense": 86,
+      "defense": 83,
+      "mechanics": 88,
+      "consistency": 84,
+      "experience": 83,
+      "clutch": 86
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": ["mechanics", "offense"],
+      "value": 2,
+      "description": "+2 mechanics and offense."
+    },
+    "flavor": "A South American standout — a clean rare highlight for Klaus, kept grounded so it rewards a regional run without breaking it."
+  },
+  {
+    "id": "sp-sam-mvp-drufinho",
+    "playerId": "drufinho",
+    "baseCardId": "drufinho-furia-2024",
+    "title": "SAM MVP",
+    "cardType": "season_mvp",
+    "rarity": "rare",
+    "overall": 90,
+    "stats": {
+      "offense": 91,
+      "defense": 89,
+      "mechanics": 92,
+      "consistency": 90,
+      "experience": 89,
+      "clutch": 92
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": ["clutch", "mechanics"],
+      "value": 3,
+      "description": "+3 clutch and mechanics."
+    },
+    "flavor": "drufinho flying the SAM flag at FURIA — a regional MVP moment immortalized as a rare card."
   }
 ]

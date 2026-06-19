@@ -25,6 +25,21 @@ the flow, and Perfect chemistry was too hard again. Supersedes [1.3.1] balance.
   (Hard/Legacy) — the same players/coach/sub/org/chemistry/specials breakdown the
   review screen shows in visible modes, now revealed at results where the overalls
   are first shown.
+- **5 new SAM-only lineups**: Euphoria (RLCS X), Erased (RLCS X), Dream Conspiracy
+  (2021-22), w7m esports (2022-23) and Hero Base (2024). NOTE: the suggested W7M
+  2024 roster was NOT applied — `w7m esports · 2024` already exists with a
+  different roster; left untouched (needs a call on which roster is correct).
+  New orgs (euphoria, erased, dream-conspiracy, hero-base) render styled logo
+  fallbacks until art is dropped into `public/orgs/`.
+- **2 new special cards**: `sp-loud-klaus` (Klaus, rare 85, based on his Hero Base
+  2024 card) and `sp-sam-mvp-drufinho` (rare 90). NOTE: drufinho's 2022-23 card is
+  KRÜ in the dataset, so the FURIA base used is `drufinho-furia-2024` — retarget if
+  a different base is intended.
+
+### Release
+- **Displayed version is v1.3.0 "Season Pass"** — the public launch label for the
+  whole v1.3 effort (the [1.3.1]/[1.3.2] entries are dev iterations folded in).
+  In-app changelog page updated (EN + PT).
 
 ### Changed
 - **Win rates raised across the board** (the run-level odds were too low because

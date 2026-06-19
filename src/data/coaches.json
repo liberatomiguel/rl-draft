@@ -1389,6 +1389,32 @@
     "bonusLevel": "~"
   },
   {
+    "id": "pekitas-coach-euphoria-x",
+    "personId": "pekitas",
+    "name": "pekitas",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "euphoria",
+    "lineupId": "euphoria-x",
+    "seasonId": "rlcs-x",
+    "overall": 77,
+    "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "gian-coach-erased-x",
+    "personId": "gian",
+    "name": "Gian",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "erased",
+    "lineupId": "erased-x",
+    "seasonId": "rlcs-x",
+    "overall": 75,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
     "id": "xoz1n-coach-elevate-2122",
     "personId": "xoz1n",
     "name": "xoz1N",
@@ -1448,6 +1474,18 @@
     "region": "SAM",
     "orgId": "kru-esports",
     "lineupId": "kru-esports-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 79,
+    "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "impulse-coach-dream-conspiracy-2122",
+    "personId": "impulse",
+    "name": "Impulse",
+    "region": "SAM",
+    "orgId": "dream-conspiracy",
+    "lineupId": "dream-conspiracy-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 79,
     "bonusType": "experience",
@@ -1519,6 +1557,19 @@
     "bonusLevel": "+"
   },
   {
+    "id": "tander-coach-w7m-esports-2223",
+    "personId": "tander",
+    "name": "tander",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "w7m-esports",
+    "lineupId": "w7m-esports-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 81,
+    "bonusType": "clutch",
+    "bonusLevel": "+"
+  },
+  {
     "id": "aguesome-coach-complexity-gaming-2024",
     "personId": "aguesome",
     "name": "Aguesome",
@@ -1581,6 +1632,19 @@
     "seasonId": "rlcs-2024",
     "overall": 77,
     "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "groval-coach-hero-base-2024",
+    "personId": "groval",
+    "name": "groval",
+    "country": "CL",
+    "region": "SAM",
+    "orgId": "hero-base",
+    "lineupId": "hero-base-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 79,
+    "bonusType": "mechanics",
     "bonusLevel": "+"
   },
   {

@@ -24,13 +24,16 @@ cringe-society.png
 denial-esports.png
 dignitas.png
 dignitas@2018.png
+dream-conspiracy.png
 elevate.png
 ellevens-esports.png
 endgame.png
 endpoint-cex.png
 era.png
+erased.png
 erodium.png
 eunited.png
+euphoria.png
 evil-geniuses.png
 exeed.png
 exodus.png
@@ -58,6 +61,7 @@ godfidence.png
 ground-zero-gaming.png
 guild-esports.png
 hawks.png
+hero-base.png
 ibuypower.png
 intz-esports.png
 jam-gaming.png

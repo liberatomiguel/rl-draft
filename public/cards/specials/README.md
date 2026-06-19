@@ -89,4 +89,6 @@ sp-eversax-karmine-structure.png
 sp-snaski-gentle-mates.png
 sp-gregan-vitality-blueprint.png
 sp-liberatorl-rocket-draft-creator.png
+sp-loud-klaus.png
+sp-sam-mvp-drufinho.png
 ```

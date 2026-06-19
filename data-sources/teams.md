@@ -2343,6 +2343,26 @@ org: Chromax ~
 flag: sam-only
 ```
 
+```team: Euphoria · RLCS X · 2020-21
+player 1: BRUNOVISQUII 80
+player 2: pan 79
+player 3: fAsi 79
+sub: -
+coach: pekitas 77
+org: Euphoria ~
+flag: sam-only
+```
+
+```team: Erased · RLCS X · 2020-21
+player 1: Luk 83
+player 2: PJ 80
+player 3: Sadness 82
+sub: -
+coach: Gian 75
+org: Erased ~
+flag: sam-only
+```
+
 ---
 
 ## 2021-22
@@ -2399,6 +2419,16 @@ org: KRÜ Esports ++
 flag: sam-only, legacy
 ```
 
+```team: Dream Conspiracy · 2021-22
+player 1: Royales 80
+player 2: yanD 80
+player 3: repi 79
+sub: speedhack 73
+coach: Impulse 79
+org: Dream Conspiracy ~
+flag: sam-only
+```
+
 ---
 
 ## 2022-23
@@ -2453,6 +2483,16 @@ sub: -
 coach: groval 79
 org: eRa +
 flag: sam-only, legacy
+```
+
+```team: w7m esports · 2022-23
+player 1: Royales 80
+player 2: wisty 80
+player 3: snipjz 79
+sub: -
+coach: tander 81
+org: w7m esports +
+flag: sam-only
 ```
 
 ---
@@ -2518,6 +2558,16 @@ player 3: ianpinheiro 74
 sub: -
 coach: -
 org: GamerLegion ~
+flag: sam-only
+```
+
+```team: Hero Base · 2024
+player 1: klaus 81
+player 2: droppz 79
+player 3: Sadness 80
+sub: -
+coach: groval 79
+org: Hero Base ~
 flag: sam-only
 ```
 

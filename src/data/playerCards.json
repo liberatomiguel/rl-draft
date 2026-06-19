@@ -6264,6 +6264,60 @@
     "manualAdjustment": 0
   },
   {
+    "id": "brunovisquii-euphoria-x",
+    "playerId": "brunovisquii",
+    "orgId": "euphoria",
+    "lineupId": "euphoria-x",
+    "seasonId": "rlcs-x",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "pan-euphoria-x",
+    "playerId": "pan",
+    "orgId": "euphoria",
+    "lineupId": "euphoria-x",
+    "seasonId": "rlcs-x",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "fasi-euphoria-x",
+    "playerId": "fasi",
+    "orgId": "euphoria",
+    "lineupId": "euphoria-x",
+    "seasonId": "rlcs-x",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "luk-erased-x",
+    "playerId": "luk",
+    "orgId": "erased",
+    "lineupId": "erased-x",
+    "seasonId": "rlcs-x",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "pj-erased-x",
+    "playerId": "pj",
+    "orgId": "erased",
+    "lineupId": "erased-x",
+    "seasonId": "rlcs-x",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sadness-erased-x",
+    "playerId": "sadness",
+    "orgId": "erased",
+    "lineupId": "erased-x",
+    "seasonId": "rlcs-x",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
     "id": "droppz-elevate-2122",
     "playerId": "droppz",
     "orgId": "elevate",
@@ -6399,6 +6453,33 @@
     "manualAdjustment": 0
   },
   {
+    "id": "royales-dream-conspiracy-2122",
+    "playerId": "royales",
+    "orgId": "dream-conspiracy",
+    "lineupId": "dream-conspiracy-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "yand-dream-conspiracy-2122",
+    "playerId": "yand",
+    "orgId": "dream-conspiracy",
+    "lineupId": "dream-conspiracy-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "repi-dream-conspiracy-2122",
+    "playerId": "repi",
+    "orgId": "dream-conspiracy",
+    "lineupId": "dream-conspiracy-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
     "id": "davitrox-exeed-2223",
     "playerId": "davitrox",
     "orgId": "exeed",
@@ -6531,6 +6612,33 @@
     "lineupId": "era-2223",
     "seasonId": "rlcs-2022-23",
     "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "royales-w7m-esports-2223",
+    "playerId": "royales",
+    "orgId": "w7m-esports",
+    "lineupId": "w7m-esports-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "wisty-w7m-esports-2223",
+    "playerId": "wisty",
+    "orgId": "w7m-esports",
+    "lineupId": "w7m-esports-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "snipjz-w7m-esports-2223",
+    "playerId": "snipjz",
+    "orgId": "w7m-esports",
+    "lineupId": "w7m-esports-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 79,
     "manualAdjustment": 0
   },
   {
@@ -6693,6 +6801,33 @@
     "lineupId": "gamerlegion-2024",
     "seasonId": "rlcs-2024",
     "overall": 74,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "klaus-hero-base-2024",
+    "playerId": "klaus",
+    "orgId": "hero-base",
+    "lineupId": "hero-base-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "droppz-hero-base-2024",
+    "playerId": "droppz",
+    "orgId": "hero-base",
+    "lineupId": "hero-base-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sadness-hero-base-2024",
+    "playerId": "sadness",
+    "orgId": "hero-base",
+    "lineupId": "hero-base-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 80,
     "manualAdjustment": 0
   },
   {

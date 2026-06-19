@@ -3475,6 +3475,38 @@
     "historicalStrength": "underdog"
   },
   {
+    "id": "euphoria-x",
+    "name": "Euphoria",
+    "seasonId": "rlcs-x",
+    "orgId": "euphoria",
+    "region": "SAM",
+    "playerCardIds": [
+      "brunovisquii-euphoria-x",
+      "pan-euphoria-x",
+      "fasi-euphoria-x"
+    ],
+    "coachId": "pekitas-coach-euphoria-x",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "erased-x",
+    "name": "Erased",
+    "seasonId": "rlcs-x",
+    "orgId": "erased",
+    "region": "SAM",
+    "playerCardIds": [
+      "luk-erased-x",
+      "pj-erased-x",
+      "sadness-erased-x"
+    ],
+    "coachId": "gian-coach-erased-x",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
     "id": "elevate-2122",
     "name": "Elevate",
     "seasonId": "rlcs-2021-22",
@@ -3558,6 +3590,23 @@
     "historicalStrength": "strong"
   },
   {
+    "id": "dream-conspiracy-2122",
+    "name": "Dream Conspiracy",
+    "seasonId": "rlcs-2021-22",
+    "orgId": "dream-conspiracy",
+    "region": "SAM",
+    "playerCardIds": [
+      "royales-dream-conspiracy-2122",
+      "yand-dream-conspiracy-2122",
+      "repi-dream-conspiracy-2122"
+    ],
+    "coachId": "impulse-coach-dream-conspiracy-2122",
+    "subId": "speedhack-sub-dream-conspiracy-2122",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
     "id": "exeed-2223",
     "name": "Exeed",
     "seasonId": "rlcs-2022-23",
@@ -3638,6 +3687,22 @@
     "samOnly": true,
     "orgBuffLevel": "+",
     "historicalStrength": "strong"
+  },
+  {
+    "id": "w7m-esports-2223",
+    "name": "w7m esports",
+    "seasonId": "rlcs-2022-23",
+    "orgId": "w7m-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "royales-w7m-esports-2223",
+      "wisty-w7m-esports-2223",
+      "snipjz-w7m-esports-2223"
+    ],
+    "coachId": "tander-coach-w7m-esports-2223",
+    "samOnly": true,
+    "orgBuffLevel": "+",
+    "historicalStrength": "underdog"
   },
   {
     "id": "complexity-gaming-2024",
@@ -3731,6 +3796,22 @@
       "umbroken-gamerlegion-2024",
       "ianpinheiro-gamerlegion-2024"
     ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "hero-base-2024",
+    "name": "Hero Base",
+    "seasonId": "rlcs-2024",
+    "orgId": "hero-base",
+    "region": "SAM",
+    "playerCardIds": [
+      "klaus-hero-base-2024",
+      "droppz-hero-base-2024",
+      "sadness-hero-base-2024"
+    ],
+    "coachId": "groval-coach-hero-base-2024",
     "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
