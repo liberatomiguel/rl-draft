@@ -25,6 +25,7 @@ import {
   draftableLineups,
   lineupById,
   lineups,
+  playerById,
   playerCardById,
   specialsByPlayerId,
   subById,
@@ -33,6 +34,7 @@ import type { Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
 import type {
   CardKind,
+  ChallengeConstraint,
   Difficulty,
   DraftOffer,
   DraftOfferCard,
@@ -106,6 +108,30 @@ export interface CreateDraftOptions {
   specialRarities?: string[];
   /** Scripted daily draft: exact lineup per pick, optional forced special. */
   scriptedLineups?: DraftScriptStep[];
+  /** Challenge constraint (v1.4): per-card eligibility + no-specials. */
+  constraint?: ChallengeConstraint;
+}
+
+/**
+ * v1.4 challenge eligibility: a drafted PLAYER may be capped by overall and/or
+ * pinned to a nationality. Pool-level twists (region/season) are applied via
+ * `poolLineupIds`; this is the per-card gate that marks offer cards ineligible.
+ */
+export function playerEligibleUnderConstraint(
+  cardId: string,
+  constraint: ChallengeConstraint | undefined,
+): boolean {
+  if (!constraint) return true;
+  const card = playerCardById.get(cardId);
+  if (!card) return true;
+  if (constraint.maxPlayerOverall != null && finalOverall(card) > constraint.maxPlayerOverall) {
+    return false;
+  }
+  if (constraint.country) {
+    const country = playerById.get(card.playerId)?.country;
+    if (country !== constraint.country) return false;
+  }
+  return true;
 }
 
 export function createDraft(
@@ -122,6 +148,7 @@ export function createDraft(
     specialChanceMult: options.specialChanceMult,
     specialRarities: options.specialRarities,
     scriptedLineups: options.scriptedLineups,
+    constraint: options.constraint,
     offer: null,
     roster: {},
     complete: false,
@@ -190,8 +217,9 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
 
   const cards: DraftOfferCard[] = [];
   // Rank/daily special-chance multiplier (1.0 at the baseline rank). rollSpecial
-  // applies the per-rarity rates × this (v1.4).
-  const mult = draft.specialChanceMult ?? 1;
+  // applies the per-rarity rates × this (v1.4). A "no specials" challenge twist
+  // forces 0 → base cards only.
+  const mult = draft.constraint?.noSpecials ? 0 : (draft.specialChanceMult ?? 1);
 
   for (const cardId of lineup.playerCardIds) {
     const card = playerCardById.get(cardId)!;
@@ -211,12 +239,13 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
       const eggSpecial = specialsByPlayerId.get(card.playerId)?.[0];
       if (eggSpecial) specialId = eggSpecial.id;
     }
-    cards.push({
-      kind: "player",
-      refId: cardId,
-      specialId,
-      availability: availabilityFor("player", card.playerId, draft),
-    });
+    // A challenge constraint (OVR cap / nationality) can mark an otherwise-open
+    // player card ineligible — shown dimmed, never pickable (v1.4).
+    let availability = availabilityFor("player", card.playerId, draft);
+    if (availability === "available" && !playerEligibleUnderConstraint(cardId, draft.constraint)) {
+      availability = "ineligible";
+    }
+    cards.push({ kind: "player", refId: cardId, specialId, availability });
   }
 
   if (draft.mode !== "quick") {

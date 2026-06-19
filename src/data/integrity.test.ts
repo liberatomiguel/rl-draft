@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import {
   achievements,
+  challenges,
   coaches,
   datasetSummary,
   lineupById,
@@ -30,6 +31,7 @@ describe("dataset", () => {
       subs: subs.length,
       specialCards: specialCards.length,
       achievements: achievements.length,
+      challenges: challenges.length,
     });
   });
 

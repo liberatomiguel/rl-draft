@@ -17,6 +17,20 @@ with the root cause — that section doubles as the project's bugfix log.
 > Sections fill in as each workstream lands.
 
 ### Added
+- **Challenges — a new rank-unlocked mode (`/challenges`).** Authored puzzles: a
+  constrained draft then a single Bo7 against a fixed historical line. Cleared =
+  cleared (one-and-done, like an achievement), granting XP (+ an optional earned
+  special that bypasses the rank gate). 10 starter challenges span the ranks and
+  the archetypes — Beat-the-Wall, Region Pride (SAM-only), Era Lock (one season),
+  One Nation (a nationality), Underdog (overall cap), Purist (no specials) and
+  Build-Around (a fixed low-overall player) — with a couple of prereq chains.
+  Each is seeded for a repeatable, solvable puzzle and **validated winnable** by
+  a sim (`challenges.test.ts`: a strong legal team must clear every one — from a
+  100% on-ramp down to a 27% Grand-Champion "miracle"). New `RunMode`/`RunPhase`
+  `challenge`, `engine/challenges.ts`, hand-authored `src/data/challenges.json`
+  (referential-integrity checked), `profileStore.challengesCompleted` (profile
+  schema v3 → v4), a `/challenges` nav entry, briefing + match screens, and full
+  EN/PT copy. Implements `docs/CHALLENGES-DESIGN.md`.
 - **Legacy identity pass.** A prismatic hexagon-with-crown emblem (shared
   `components/ui/icons.tsx`) now marks Legacy across the app: on the setup
   difficulty card, as a discreet in-run indicator in the `RunStepper` (shows in

@@ -13,7 +13,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DIFFICULTY, REGION_LOCK, SPECIALS } from "@/config/balance";
-import { lineupPoolForRegion, playerById, playerCardById, specialCardById } from "@/data";
+import { challengeById, lineupPoolForRegion, playerById, playerCardById, specialCardById } from "@/data";
 import { rankRewardsForXp } from "@/engine/progression";
 import {
   applyFreeReroll,
@@ -22,6 +22,11 @@ import {
   createDraft,
   drawNextOffer,
 } from "@/engine/draft";
+import {
+  buildChallengeOpponent,
+  createChallengeDraft,
+  playChallengeSeries,
+} from "@/engine/challenges";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
 import { buildUserTeam } from "@/engine/teams";
@@ -62,6 +67,8 @@ interface RunStore {
   setSetupMode: (mode: Exclude<RunMode, "daily">) => void;
   startRun: (options: StartRunOptions) => void;
   startDailyRun: () => void;
+  /** Start a challenge run (v1.4) — a constrained draft vs a fixed boss. */
+  startChallenge: (challengeId: string) => void;
   clearRun: () => void;
   /** Abandon the current run and immediately start a fresh one with the SAME
    *  mode/difficulty/visibility — drops straight into a new draft. */
@@ -78,6 +85,9 @@ interface RunStore {
   // Tournament phase
   playRound: () => void;
   finishRun: () => void;
+
+  // Challenge phase (v1.4) — single Bo7 vs the fixed boss.
+  playChallenge: () => void;
 }
 
 export const useRunStore = create<RunStore>()(
@@ -125,6 +135,7 @@ export const useRunStore = create<RunStore>()(
           startedAt: new Date().toISOString(),
           draft,
           tournament: null,
+          challenge: null,
           results: null,
         };
         set({ run });
@@ -169,6 +180,7 @@ export const useRunStore = create<RunStore>()(
           daily: config.info,
           draft,
           tournament: null,
+          challenge: null,
           results: null,
         };
         set({ run });
@@ -176,6 +188,38 @@ export const useRunStore = create<RunStore>()(
           mode: "daily",
           difficulty: config.difficulty,
           hiddenOverall: !run.showOverall,
+        });
+      },
+
+      startChallenge: (challengeId) => {
+        const challenge = challengeById.get(challengeId);
+        if (!challenge) return;
+        // Deterministic per-challenge seed → a repeatable, solvable puzzle.
+        const rng = createRng(challenge.seed);
+        const draft = createChallengeDraft(challenge, rng);
+        const run: RunState = {
+          runId: uid("challenge"),
+          mode: "challenge",
+          challengeId,
+          seed: challenge.seed,
+          rngState: rng.state,
+          difficulty: challenge.sim.difficulty,
+          // Challenges always show overalls — they're strategy puzzles, not the
+          // knowledge test that hides overalls on Hard/Legacy runs.
+          showOverall: true,
+          phase: "draft",
+          startedAt: new Date().toISOString(),
+          draft,
+          tournament: null,
+          challenge: null,
+          results: null,
+        };
+        set({ run });
+        trackEvent("run_started", {
+          mode: "challenge",
+          difficulty: challenge.sim.difficulty,
+          hiddenOverall: false,
+          region: challenge.constraint?.region ?? "worldwide",
         });
       },
 
@@ -266,6 +310,41 @@ export const useRunStore = create<RunStore>()(
         const userTeam = buildUserTeam(run.draft.roster, run.difficulty, {
           mode: run.mode,
         });
+
+        // Challenge mode (v1.4): no Swiss/playoffs — build the fixed boss and go
+        // straight to the single-Bo7 "challenge" phase.
+        if (run.mode === "challenge") {
+          if (!run.challengeId) return;
+          const challenge = challengeById.get(run.challengeId);
+          if (!challenge) return;
+          const opponent = buildChallengeOpponent(challenge);
+          set({
+            run: {
+              ...run,
+              challenge: { user: userTeam, opponent, series: null, cleared: false },
+              rngState: rng.state,
+              phase: "challenge",
+            },
+          });
+          trackEvent("tournament_started", {
+            mode: "challenge",
+            difficulty: run.difficulty,
+          });
+          for (const id of userTeam.specialIds) {
+            const sp = specialCardById.get(id);
+            if (sp) {
+              trackEvent("special_used", {
+                specialId: id,
+                title: sp.title,
+                rarity: sp.rarity,
+                mode: "challenge",
+                difficulty: run.difficulty,
+              });
+            }
+          }
+          return;
+        }
+
         const tournament = initTournament(userTeam, run.difficulty, rng, {
           mode: run.mode,
           poolLineupIds: run.draft.poolLineupIds,
@@ -378,6 +457,42 @@ export const useRunStore = create<RunStore>()(
         );
         set({
           run: { ...run, results, rngState: rng.state, phase: "results" },
+        });
+      },
+
+      playChallenge: () => {
+        const { run } = get();
+        if (
+          !run ||
+          run.phase !== "challenge" ||
+          !run.challenge ||
+          run.challenge.series || // already played
+          !run.challengeId
+        ) {
+          return;
+        }
+        const challenge = challengeById.get(run.challengeId);
+        if (!challenge) return;
+        const rng = createRng(run.rngState);
+        const { user, opponent } = run.challenge;
+        const series = playChallengeSeries(user, opponent, challenge, rng);
+        const cleared = series.winnerTeamId === user.id;
+        // Sync AFTER the result is known (the single funnel for challenge rewards)
+        // — one-and-done, so re-clearing never re-rewards (#55.5 spirit).
+        if (cleared) {
+          useProfileStore.getState().completeChallenge(challenge.id, challenge.reward);
+        }
+        set({
+          run: {
+            ...run,
+            challenge: { ...run.challenge, series, cleared },
+            rngState: rng.state,
+          },
+        });
+        trackEvent("challenge_played", {
+          challengeId: challenge.id,
+          difficulty: challenge.sim.difficulty,
+          cleared,
         });
       },
     }),

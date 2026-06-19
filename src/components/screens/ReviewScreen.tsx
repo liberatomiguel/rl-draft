@@ -25,7 +25,7 @@ import { rosterSlots } from "@/components/cards/rosterView";
 import { RunStepper } from "./RunStepper";
 
 export function ReviewScreen({ run }: { run: RunState }) {
-  const { REVIEW, STAT_LABELS, CHEM_TIERS } = useCopy();
+  const { REVIEW, STAT_LABELS, CHEM_TIERS, CHALLENGES_UI } = useCopy();
   const startTournament = useRunStore((s) => s.startTournament);
   const isQuick = run.mode === "quick";
 
@@ -162,7 +162,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
               startTournament();
             }}
           >
-            {REVIEW.startTournament}
+            {run.mode === "challenge" ? CHALLENGES_UI.toMatch : REVIEW.startTournament}
           </Button>
         </div>
       </div>

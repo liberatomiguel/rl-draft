@@ -21,6 +21,9 @@ import { LegacyEmblem } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
 
 const PHASE_IDS: RunPhase[] = ["draft", "review", "tournament", "results"];
+// A challenge is a constrained draft → review → single Bo7 (the "challenge"
+// phase) — no Swiss/playoffs, so its stepper is shorter (v1.4).
+const PHASE_IDS_CHALLENGE: RunPhase[] = ["draft", "review", "challenge"];
 
 export function RunStepper({ run }: { run: RunState }) {
   const router = useRouter();
@@ -32,8 +35,10 @@ export function RunStepper({ run }: { run: RunState }) {
     review: RUN_UI.phaseReview,
     tournament: RUN_UI.phaseTournament,
     results: RUN_UI.phaseResults,
+    challenge: RUN_UI.phaseChallenge,
   };
-  const currentIndex = PHASE_IDS.findIndex((p) => p === run.phase);
+  const phaseIds = run.mode === "challenge" ? PHASE_IDS_CHALLENGE : PHASE_IDS;
+  const currentIndex = phaseIds.findIndex((p) => p === run.phase);
 
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -53,7 +58,7 @@ export function RunStepper({ run }: { run: RunState }) {
         </button>
 
         <ol className="flex items-center gap-1.5 md:gap-2" aria-label="Run progress">
-          {PHASE_IDS.map((phase, i) => (
+          {phaseIds.map((phase, i) => (
             <li key={phase} className="flex items-center gap-1.5 md:gap-2">
               {i > 0 ? <span className="h-px w-3 bg-line-strong md:w-5" aria-hidden /> : null}
               <span

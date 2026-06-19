@@ -22,6 +22,7 @@ export const APP = {
 export const NAV = {
   home: "Home",
   play: "Play",
+  challenges: "Challenges",
   collection: "Collection",
   profile: "Profile",
   settings: "Settings",
@@ -134,6 +135,7 @@ export const RUN_UI = {
   phaseReview: "Review",
   phaseTournament: "Tournament",
   phaseResults: "Results",
+  phaseChallenge: "Match",
   hiddenOvr: "Hidden OVR",
 };
 
@@ -859,6 +861,42 @@ export const CHANGELOG_PAGE = {
   ],
 };
 
+export const CHALLENGES_UI = {
+  title: "Challenges",
+  subtitle:
+    "Rank-unlocked puzzles. Out-draft a fixed historical line under a twist and win the series. Cleared challenges grant XP and stay cleared.",
+  progress: (done: number, total: number) => `${done} / ${total} cleared`,
+  status: { locked: "Locked", available: "Available", cleared: "Cleared" },
+  unlocksAt: (rank: string) => `Unlocks at ${rank}`,
+  clearPrereq: (title: string) => `Clear “${title}” first`,
+  rewardXp: (xp: number) => `+${xp} XP`,
+  briefTargetKicker: "The line you face",
+  briefTwistKicker: "The twist",
+  noTwist: "No twist — just out-draft them.",
+  twist: {
+    maxOverall: (n: number) => `No player over ${n} OVR`,
+    region: (r: string) => `${r} roster only`,
+    season: (s: string) => `Draft from ${s} only`,
+    country: (c: string) => `${c} nationals only`,
+    noSpecials: "No special cards",
+    fixed: (name: string) => `Build around ${name}`,
+  },
+  start: "Start challenge",
+  vs: "vs",
+  yourTeam: "Your team",
+  theBoss: "The line",
+  toMatch: "Face the line",
+  bestOf: (n: number) => `Best of ${n}`,
+  playSeries: "Play the series",
+  clearedTitle: "Challenge cleared!",
+  clearedSub: "The puzzle is solved — reward banked.",
+  failedTitle: "Not this time",
+  failedSub: "The line held. Re-draft and try again.",
+  seriesScore: (a: number, b: number) => `${a}–${b}`,
+  retry: "Try again",
+  backToChallenges: "Back to challenges",
+};
+
 /** The whole dictionary — `copy.pt.ts` must match this shape exactly. */
 export const EN = {
   APP,
@@ -867,6 +905,7 @@ export const EN = {
   HOME_SEO,
   NAV_UI,
   RUN_UI,
+  CHALLENGES_UI,
   SETUP,
   DIFFICULTY_LABELS,
   DRAFT_UI,

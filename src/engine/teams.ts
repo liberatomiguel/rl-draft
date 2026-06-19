@@ -25,6 +25,7 @@ import type {
   Difficulty,
   Region,
   Roster,
+  RunMode,
   Stats,
   StatKey,
   TournamentTeam,
@@ -216,8 +217,9 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
 export function buildUserTeam(
   roster: Roster,
   difficulty: Difficulty,
-  options: { mode?: "classic" | "quick" | "daily"; teamName?: string } = {},
+  options: { mode?: RunMode; teamName?: string } = {},
 ): TournamentTeam {
+  // "challenge" assembles a full 6-slot roster like classic; only "quick" is 3.
   const mode = options.mode ?? "classic";
   const playerPicks = [roster.player1, roster.player2, roster.player3].filter(Boolean);
   if (playerPicks.length !== 3) {

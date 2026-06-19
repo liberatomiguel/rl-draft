@@ -73,6 +73,12 @@ export interface GameEvents {
     mode: string;
     difficulty: string;
   };
+  /** A challenge's single Bo7 was played (v1.4) — `cleared` = the puzzle solved. */
+  challenge_played: {
+    challengeId: string;
+    difficulty: string;
+    cleared: boolean;
+  };
 }
 
 export function trackEvent<K extends keyof GameEvents>(

@@ -24,7 +24,7 @@ export type Difficulty = "easy" | "normal" | "hard" | "legacy";
  * quick = players only + straight single-elim bracket.
  * daily = classic structure with a date-seeded modifier set.
  */
-export type RunMode = "classic" | "quick" | "daily";
+export type RunMode = "classic" | "quick" | "daily" | "challenge";
 
 /**
  * Visual rarity of a base card, derived from overall (see balance.RARITY).
@@ -240,7 +240,7 @@ export interface AchievementDef {
 // 2. Run state (one game from setup to results)
 // ---------------------------------------------------------------------------
 
-export type RunPhase = "draft" | "review" | "tournament" | "results";
+export type RunPhase = "draft" | "review" | "tournament" | "results" | "challenge";
 
 export type RosterSlotId =
   | "player1"
@@ -259,8 +259,10 @@ export interface DraftOfferCard {
   refId: string;
   /** Set when this player card appears as its special version. */
   specialId?: string;
-  /** "vacant" = the lineup has no coach/sub — shown but never pickable (v0.5). */
-  availability: "available" | "slot_full" | "already_drafted" | "vacant";
+  /** "vacant" = the lineup has no coach/sub — shown but never pickable (v0.5).
+   *  "ineligible" = excluded by a challenge constraint (e.g. over the OVR cap or
+   *  wrong nationality) — shown dimmed, never pickable (v1.4). */
+  availability: "available" | "slot_full" | "already_drafted" | "vacant" | "ineligible";
 }
 
 export interface DraftOffer {
@@ -298,6 +300,8 @@ export interface DraftState {
   takenPersonIds: string[];
   /** Restricted lineup pool (daily challenges). Undefined = full pool. */
   poolLineupIds?: string[];
+  /** Challenge constraint (v1.4) — per-card eligibility (OVR cap / nationality). */
+  constraint?: ChallengeConstraint;
   /** Multiplier on the special-appearance chance (daily modifier; v1.3 also
    *  carries the rank-scaled chance for classic/quick runs). */
   specialChanceMult?: number;
@@ -565,9 +569,59 @@ export interface RunState {
   phase: RunPhase;
   startedAt: string;
   daily?: DailyInfo;
+  /** Set on `mode: "challenge"` runs (v1.4) — the puzzle being attempted. */
+  challengeId?: string;
   draft: DraftState;
   tournament: TournamentState | null;
+  /** The challenge match (single Bo7 vs a fixed boss) — challenge mode only. */
+  challenge: ChallengeRunState | null;
   results: RunResults | null;
+}
+
+// ---------------------------------------------------------------------------
+// Challenges (v1.4) — rank-unlocked authored puzzles: a constrained draft then
+// a single Bo7 against a fixed historical lineup. Data shape lives in
+// src/data/schemas.ts (Challenge); these are the runtime/engine types.
+// ---------------------------------------------------------------------------
+
+/** A hand-authored challenge (data shape; validated by challengeSchema). */
+export interface Challenge {
+  id: string;
+  title: string;
+  brief: string;
+  rankRequired: string;
+  prereq?: string;
+  opponentLineupId: string;
+  fixedPlayerCardId?: string;
+  tier: "common" | "rare" | "epic" | "legend";
+  seed: number;
+  sim: { difficulty: Difficulty; bestOf: number };
+  constraint?: ChallengeConstraint;
+  reward: { xp: number; badge?: string; specialId?: string };
+}
+
+/** The optional "twist" on a challenge draft. All fields are optional. */
+export interface ChallengeConstraint {
+  /** Each drafted player must be <= this overall (the Underdog twist). */
+  maxPlayerOverall?: number;
+  /** Draft pool restricted to one region's lineups (Region Pride). */
+  region?: Region;
+  /** ...or to a single season/era (Era Lock). */
+  seasonId?: string;
+  /** ...or every drafted player must be this nationality (One Nation). */
+  country?: string;
+  /** Base cards only — no specials roll in the draft (Purist). */
+  noSpecials?: boolean;
+}
+
+/** Live state of a challenge match (the single Bo7 vs the fixed boss). */
+export interface ChallengeRunState {
+  user: TournamentTeam;
+  opponent: TournamentTeam;
+  /** Null until the player presses play; then the simulated series. */
+  series: SeriesResult | null;
+  /** True once `series.winnerTeamId === user.id` — the puzzle is solved. */
+  cleared: boolean;
 }
 
 // ---------------------------------------------------------------------------

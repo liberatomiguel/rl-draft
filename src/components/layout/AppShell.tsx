@@ -13,10 +13,11 @@ import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
 
-type NavKey = "home" | "play" | "collection" | "profile";
+type NavKey = "home" | "play" | "challenges" | "collection" | "profile";
 const NAV_ITEMS: { href: string; key: NavKey; icon: (p: { className?: string }) => React.ReactNode }[] = [
   { href: "/", key: "home", icon: HomeIcon },
   { href: "/play", key: "play", icon: PlayIcon },
+  { href: "/challenges", key: "challenges", icon: ChallengesIcon },
   { href: "/collection", key: "collection", icon: CollectionIcon },
   { href: "/profile", key: "profile", icon: ProfileIcon },
 ];
@@ -137,7 +138,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="Main"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
         >
-          <div className="mx-auto grid max-w-md grid-cols-4">
+          <div className="mx-auto grid max-w-md grid-cols-5">
             {NAV_ITEMS.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -212,6 +213,17 @@ function PlayIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
       <path d="M7 4.5v15l12-7.5Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChallengesIcon({ className }: { className?: string }) {
+  // A target — the "missions / out-draft the line" objective (v1.4).
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }

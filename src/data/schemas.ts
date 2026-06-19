@@ -169,6 +169,52 @@ export const achievementSchema = z.object({
   secret: z.boolean().optional(),
 });
 
+// Challenges (v1.4) — hand-authored rank-unlocked puzzles. Like specialCards.json
+// and achievements.json, this file is curated by hand (not generated). Cross-refs
+// (opponentLineupId, rankRequired, prereq, fixedPlayerCardId, reward.specialId)
+// are checked against the dataset in src/data/index.ts at load.
+export const challengeConstraintSchema = z
+  .object({
+    maxPlayerOverall: overallSchema.optional(),
+    region: regionSchema.optional(),
+    seasonId: z.string().min(1).optional(),
+    country: z.string().length(2).optional(),
+    noSpecials: z.boolean().optional(),
+  })
+  .strict();
+
+export const challengeSchema = z
+  .object({
+    id: z.string().min(1),
+    title: z.string().min(1),
+    brief: z.string().min(1),
+    /** Unlocks at this rank id (see RANKS in balance.ts). */
+    rankRequired: z.string().min(1),
+    /** Optional: a challenge id that must be cleared first (difficulty chain). */
+    prereq: z.string().min(1).optional(),
+    /** The FIXED boss lineup the player drafts against (from lineups.json). */
+    opponentLineupId: z.string().min(1),
+    /** Optional: a player card pre-placed in the roster to build around. */
+    fixedPlayerCardId: z.string().min(1).optional(),
+    /** Visual family (reuses the achievement style tiers). */
+    tier: z.enum(["common", "rare", "epic", "legend"]),
+    /** Deterministic per-challenge seed → a solvable, repeatable puzzle. */
+    seed: z.number().int().nonnegative(),
+    sim: z.object({
+      difficulty: z.enum(["easy", "normal", "hard", "legacy"]),
+      bestOf: z.number().int().min(1).max(7),
+    }),
+    constraint: challengeConstraintSchema.optional(),
+    reward: z.object({
+      xp: z.number().int().min(0),
+      /** Optional cosmetic "cleared" badge id (free-form, for future use). */
+      badge: z.string().min(1).optional(),
+      /** Optional hand-authored special granted on clear (bypasses the rank gate). */
+      specialId: z.string().min(1).optional(),
+    }),
+  })
+  .strict();
+
 export const playersFileSchema = z.array(playerSchema);
 export const seasonsFileSchema = z.array(seasonSchema);
 export const playerCardsFileSchema = z.array(playerCardSchema);
@@ -178,3 +224,4 @@ export const subsFileSchema = z.array(subCardSchema);
 export const lineupsFileSchema = z.array(lineupSchema);
 export const specialCardsFileSchema = z.array(specialCardSchema);
 export const achievementsFileSchema = z.array(achievementSchema);
+export const challengesFileSchema = z.array(challengeSchema);

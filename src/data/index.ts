@@ -16,9 +16,12 @@ import subsJson from "./subs.json";
 import lineupsJson from "./lineups.json";
 import specialCardsJson from "./specialCards.json";
 import achievementsJson from "./achievements.json";
+import challengesJson from "./challenges.json";
 
+import { RANKS } from "@/config/balance";
 import {
   achievementsFileSchema,
+  challengesFileSchema,
   coachesFileSchema,
   lineupsFileSchema,
   orgsFileSchema,
@@ -31,6 +34,7 @@ import {
 
 import type {
   AchievementDef,
+  Challenge,
   CoachCard,
   Lineup,
   Org,
@@ -105,6 +109,10 @@ export const achievements = parse("achievements", () =>
   achievementsFileSchema.parse(achievementsJson),
 ) as AchievementDef[];
 
+export const challenges = parse("challenges", () =>
+  challengesFileSchema.parse(challengesJson),
+) as Challenge[];
+
 // ---------------------------------------------------------------------------
 // Lookup maps
 // ---------------------------------------------------------------------------
@@ -129,6 +137,7 @@ export const subById = toMap("subs", subs);
 export const lineupById = toMap("lineups", lineups);
 export const specialCardById = toMap("specialCards", specialCards);
 export const achievementById = toMap("achievements", achievements);
+export const challengeById = toMap("challenges", challenges);
 
 /**
  * Special versions per PERSON (v0.5): a special belongs to the player, so any
@@ -218,6 +227,28 @@ for (const sp of specialCards) {
   }
 }
 
+// Challenges (v1.4): every cross-reference must resolve, the gating rank must be
+// real, a prereq must be another challenge, and a region/season constraint must
+// actually have lineups — so an authored challenge is never unwinnable by typo.
+const rankIds = new Set<string>(RANKS.map((r) => r.id));
+for (const ch of challenges) {
+  assertRef(lineupById.has(ch.opponentLineupId), `challenges: "${ch.id}" → unknown opponentLineupId "${ch.opponentLineupId}"`);
+  assertRef(rankIds.has(ch.rankRequired), `challenges: "${ch.id}" → unknown rankRequired "${ch.rankRequired}"`);
+  if (ch.prereq) {
+    assertRef(challengeById.has(ch.prereq), `challenges: "${ch.id}" → unknown prereq "${ch.prereq}"`);
+    assertRef(ch.prereq !== ch.id, `challenges: "${ch.id}" → prereq cannot be itself`);
+  }
+  if (ch.fixedPlayerCardId) {
+    assertRef(playerCardById.has(ch.fixedPlayerCardId), `challenges: "${ch.id}" → unknown fixedPlayerCardId "${ch.fixedPlayerCardId}"`);
+  }
+  if (ch.reward.specialId) {
+    assertRef(specialCardById.has(ch.reward.specialId), `challenges: "${ch.id}" → unknown reward.specialId "${ch.reward.specialId}"`);
+  }
+  if (ch.constraint?.seasonId) {
+    assertRef(seasonById.has(ch.constraint.seasonId), `challenges: "${ch.id}" → unknown constraint.seasonId "${ch.constraint.seasonId}"`);
+  }
+}
+
 /** Quick dataset stats — handy for docs and the collection screen. */
 export const datasetSummary = {
   players: players.length,
@@ -228,4 +259,5 @@ export const datasetSummary = {
   subs: subs.length,
   specialCards: specialCards.length,
   achievements: achievements.length,
+  challenges: challenges.length,
 };

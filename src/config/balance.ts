@@ -555,6 +555,16 @@ export const RANK_REWARDS: Record<
 
 export const HISTORY_LIMIT = 25;
 
+/**
+ * Challenges (v1.4). Authored puzzles play a constrained draft then a single Bo7
+ * vs a fixed boss. The draft gets a generous, difficulty-independent reroll
+ * budget — a challenge tests whether you can BEAT the boss, not draft luck, so
+ * you can always assemble a legal roster even under a tight twist.
+ */
+export const CHALLENGE = {
+  rerolls: 5,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Experimental feature flags (v0.7.0). Each is a single revert point — flip
 // to false to fully disable the feature with no other code change.

@@ -60,6 +60,7 @@ function makeRun(seed: number): { run: RunState; rng: ReturnType<typeof createRn
     startedAt: new Date().toISOString(),
     draft,
     tournament: null,
+    challenge: null,
     results: null,
   };
   return { run, rng };

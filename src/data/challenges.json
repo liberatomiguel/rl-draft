@@ -1,0 +1,122 @@
+[
+  {
+    "id": "ch-first-final",
+    "title": "The First Final",
+    "brief": "Where it all began. iBUYPOWER ran the very first RLCS final — out-draft them and rewrite history.",
+    "rankRequired": "bronze",
+    "opponentLineupId": "ibuypower-s1",
+    "tier": "common",
+    "seed": 14010,
+    "sim": { "difficulty": "easy", "bestOf": 5 },
+    "reward": { "xp": 60, "badge": "first-final" }
+  },
+  {
+    "id": "ch-south-american-steel",
+    "title": "South American Steel",
+    "brief": "No imports. Build an all-South-American roster and prove the region on the world stage against FURIA.",
+    "rankRequired": "silver",
+    "opponentLineupId": "furia-2025",
+    "tier": "rare",
+    "seed": 22027,
+    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "constraint": { "region": "SAM" },
+    "reward": { "xp": 110, "badge": "sam-steel" }
+  },
+  {
+    "id": "ch-old-school",
+    "title": "Old School",
+    "brief": "Class of 2018 only. Draft from Season 5 and topple a modern superteam with the old guard.",
+    "rankRequired": "silver",
+    "opponentLineupId": "g2-stride-2024",
+    "tier": "rare",
+    "seed": 25018,
+    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "constraint": { "seasonId": "rlcs-s5" },
+    "reward": { "xp": 120, "badge": "old-school" }
+  },
+  {
+    "id": "ch-vive-la-france",
+    "title": "Vive la France",
+    "brief": "Les Bleus assemble. Every player on your roster must be French — then go beat the Americans.",
+    "rankRequired": "gold",
+    "opponentLineupId": "nrg-esports-s8",
+    "tier": "epic",
+    "seed": 33067,
+    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "constraint": { "country": "FR" },
+    "reward": { "xp": 150, "badge": "les-bleus" }
+  },
+  {
+    "id": "ch-no-stars",
+    "title": "No Stars",
+    "brief": "Nobody over 88 overall. No superstars to hide behind — chemistry and reads are all you've got.",
+    "rankRequired": "gold",
+    "prereq": "ch-old-school",
+    "opponentLineupId": "northern-gaming-s3",
+    "tier": "epic",
+    "seed": 38088,
+    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "constraint": { "maxPlayerOverall": 88 },
+    "reward": { "xp": 160, "badge": "no-stars" }
+  },
+  {
+    "id": "ch-raw-talent",
+    "title": "Raw Talent",
+    "brief": "No special cards — base talent only. Strip away the highlights and just out-play Moist.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "moist-esports-2122",
+    "tier": "epic",
+    "seed": 41099,
+    "sim": { "difficulty": "hard", "bestOf": 7 },
+    "constraint": { "noSpecials": true },
+    "reward": { "xp": 175, "badge": "raw-talent" }
+  },
+  {
+    "id": "ch-carry-the-rookie",
+    "title": "Carry the Rookie",
+    "brief": "C4 is locked into your roster at 72 overall. Build a championship team around the rookie and win it all.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "furia-2024",
+    "fixedPlayerCardId": "c4-orchid-s7",
+    "tier": "epic",
+    "seed": 44072,
+    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "reward": { "xp": 180, "badge": "carry-the-rookie" }
+  },
+  {
+    "id": "ch-break-the-wall",
+    "title": "Break the Wall",
+    "brief": "M0nkey M00n's BDS swept 2021-22. A dynasty in its prime — out-draft a wall that never cracked.",
+    "rankRequired": "diamond",
+    "opponentLineupId": "team-bds-2122",
+    "tier": "legend",
+    "seed": 51095,
+    "sim": { "difficulty": "hard", "bestOf": 7 },
+    "reward": { "xp": 230, "badge": "wall-breaker" }
+  },
+  {
+    "id": "ch-topple-the-titans",
+    "title": "Topple the Titans",
+    "brief": "The 2022-23 Vitality — many call them the greatest of all time. Beat the best roster ever assembled.",
+    "rankRequired": "champion",
+    "prereq": "ch-break-the-wall",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "legend",
+    "seed": 60096,
+    "sim": { "difficulty": "legacy", "bestOf": 7 },
+    "reward": { "xp": 320, "badge": "giant-slayer" }
+  },
+  {
+    "id": "ch-south-american-miracle",
+    "title": "South American Miracle",
+    "brief": "The dream that drives a continent: an all-SAM roster taking down a Worlds champion. Make it real.",
+    "rankRequired": "grand-champion",
+    "prereq": "ch-south-american-steel",
+    "opponentLineupId": "team-vitality-2025",
+    "tier": "legend",
+    "seed": 70088,
+    "sim": { "difficulty": "hard", "bestOf": 7 },
+    "constraint": { "region": "SAM" },
+    "reward": { "xp": 360, "badge": "sam-miracle" }
+  }
+]

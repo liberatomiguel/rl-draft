@@ -1,8 +1,18 @@
-# Challenges — design proposal (v1.3 design, implementation deferred)
+# Challenges — design (SHIPPED in v1.4)
 
-> Status: **DESIGN ONLY.** Discussed for v1.3, to be built in a later stage
-> (suggested v1.3.1 / v1.4). Nothing here is implemented yet. Decisions marked
-> **[DECIDE]** need Miguel's sign-off before coding.
+> Status: **SHIPPED in v1.4.** Built per this design. Engine `engine/challenges.ts`,
+> data `src/data/challenges.json` (hand-authored, 10 starters), `/challenges`
+> route + nav, briefing + match screens, `profileStore.challengesCompleted`.
+> Deviations from the original proposal:
+> - **No separate `/api`** — fully client/engine, like the rest of the game.
+> - **`picks` constraint dropped** for v1.4 (every challenge is a full 6-slot
+>   draft); the schema is `.strict()` so re-adding it is a deliberate change.
+> - **Generous, difficulty-independent reroll budget** (`CHALLENGE.rerolls`) so a
+>   tight twist is always assemble-able — the test is beating the boss, not luck.
+> - **Overalls always shown** (challenges are strategy puzzles, not the Hard/Legacy
+>   knowledge test).
+> - Next: objective-only seed puzzles (clear by reaching an OVR/chemistry target
+>   without a boss) and badge cosmetics are still open follow-ups.
 
 ## 1. The idea (one line)
 

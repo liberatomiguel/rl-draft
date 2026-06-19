@@ -40,6 +40,8 @@ export interface ProfileState {
   runHistory: RunHistoryEntry[];
   /** ISO date → daily challenge result. */
   dailyResults: Record<string, DailyResult>;
+  /** challengeId → ISO date cleared (v1.4, one-and-done like achievements). */
+  challengesCompleted: Record<string, string>;
   /** Setup memory: a new game pre-selects the last configuration. */
   settings: {
     lastDifficulty: Difficulty;
@@ -69,6 +71,11 @@ export interface ProfileState {
     regionLock: Region | null,
   ) => void;
   markFlag: (flag: keyof ProfileState["flags"]) => void;
+  /** Mark a challenge cleared (v1.4) — idempotent: re-clearing never re-rewards. */
+  completeChallenge: (
+    challengeId: string,
+    reward: { xp: number; badge?: string; specialId?: string },
+  ) => void;
   resetAll: () => void;
 }
 
@@ -83,6 +90,7 @@ const initialData = {
   achievements: {},
   runHistory: [] as RunHistoryEntry[],
   dailyResults: {} as Record<string, DailyResult>,
+  challengesCompleted: {} as Record<string, string>,
   settings: {
     lastDifficulty: "normal" as Difficulty,
     lastShowOverall: true,
@@ -152,13 +160,31 @@ export const useProfileStore = create<ProfileState>()(
 
       markFlag: (flag) => set((state) => ({ flags: { ...state.flags, [flag]: true } })),
 
+      completeChallenge: (challengeId, reward) =>
+        set((state) => {
+          if (state.challengesCompleted[challengeId]) return {}; // one-and-done
+          const now = new Date().toISOString();
+          const unlockedSpecials = { ...state.unlockedSpecials };
+          // An earned reward special bypasses the rank rarity-gate — it just lands
+          // in the collection (challenge design §9-B).
+          if (reward.specialId && !unlockedSpecials[reward.specialId]) {
+            unlockedSpecials[reward.specialId] = now;
+          }
+          return {
+            xp: state.xp + reward.xp,
+            challengesCompleted: { ...state.challengesCompleted, [challengeId]: now },
+            unlockedSpecials,
+          };
+        }),
+
       resetAll: () => set({ ...initialData }),
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 3,
+      version: 4,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
-      // lock setting + regional onboarding flag (backfilled for old saves).
+      // lock setting + regional onboarding flag; v4 added challengesCompleted —
+      // all backfilled from initialData by the deep-merge below for old saves.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =

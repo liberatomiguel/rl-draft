@@ -15,6 +15,7 @@ import { DraftScreen } from "@/components/screens/DraftScreen";
 import { ReviewScreen } from "@/components/screens/ReviewScreen";
 import { TournamentScreen } from "@/components/screens/TournamentScreen";
 import { ResultsScreen } from "@/components/screens/ResultsScreen";
+import { ChallengeScreen } from "@/components/screens/ChallengeScreen";
 
 export function PlayView() {
   const mounted = useMounted();
@@ -42,6 +43,8 @@ export function PlayView() {
       return <TournamentScreen run={run} />;
     case "results":
       return <ResultsScreen run={run} />;
+    case "challenge":
+      return <ChallengeScreen run={run} />;
   }
 }
 
