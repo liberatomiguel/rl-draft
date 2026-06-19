@@ -37,7 +37,7 @@ the flow, and Perfect chemistry was too hard again. Supersedes [1.3.1] balance.
   a different base is intended.
 
 ### Release
-- **Displayed version is v1.3.0 "Season Pass"** — the public launch label for the
+- **Displayed version is v1.3.0 "Season Rewards"** — the public launch label for the
   whole v1.3 effort (the [1.3.1]/[1.3.2] entries are dev iterations folded in).
   In-app changelog page updated (EN + PT).
 

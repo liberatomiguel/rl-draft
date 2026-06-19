@@ -701,11 +701,11 @@ export const PT: Copy = {
     releases: [
       {
         version: "1.3.0",
-        name: "Season Pass",
+        name: "Season Rewards",
         date: "2026",
         current: true,
         notes: [
-          "Progressão Season Pass: seu rank agora desbloqueia conteúdo — raridades de cartas especiais, a Coleção e mais chance de cartas especiais conforme você sobe do Bronze ao Supersonic Legend.",
+          "Progressão Season Rewards: seu rank agora desbloqueia conteúdo — raridades de cartas especiais, a Coleção e mais chance de cartas especiais conforme você sobe do Bronze ao Supersonic Legend.",
           "Nova química — monte seu time por nacionalidade e organização. Três jogadores do mesmo país chegam a Great; compartilhe uma org para Perfect.",
           "Modo Legacy rebalanceado — o gauntlet histórico continua brutal, mas o título finalmente é possível com um draft excelente e coeso.",
           "Chaveamentos com orgs únicas — você não enfrenta mais temporadas diferentes da mesma org no mesmo bracket.",

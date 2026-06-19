@@ -719,11 +719,11 @@ export const CHANGELOG_PAGE = {
   releases: [
     {
       version: "1.3.0",
-      name: "Season Pass",
+      name: "Season Rewards",
       date: "2026",
       current: true,
       notes: [
-        "Season Pass progression: your rank now unlocks content — special-card rarities, the Collection, and a higher special-card chance as you climb from Bronze to Supersonic Legend.",
+        "Season Rewards progression: your rank now unlocks content — special-card rarities, the Collection, and a higher special-card chance as you climb from Bronze to Supersonic Legend.",
         "New chemistry system — build your team around nationality and organization. Three players from the same country reach Great; add a shared org for Perfect.",
         "Legacy mode rebalanced — the all-time gauntlet is still brutal, but the title is finally winnable with a great, coherent draft.",
         "Org-unique tournament fields — you no longer face the same org's different seasons in one bracket.",
