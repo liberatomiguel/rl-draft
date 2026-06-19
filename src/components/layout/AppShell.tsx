@@ -8,7 +8,11 @@ import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
 import { useSettings } from "@/store/settingsStore";
+import { useAccountStore } from "@/store/accountStore";
+import { useProfileStore } from "@/store/profileStore";
 import { useMounted } from "@/store/useMounted";
+import { rankForXp } from "@/engine/progression";
+import { RankBadge } from "@/components/ui/RankBadge";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
@@ -44,6 +48,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       useRunStore.getState().clearRun();
     }
   }, [pathname]);
+
+  // Wire the account session once (no-op when accounts are disabled) — v1.4.
+  useEffect(() => useAccountStore.getState().init(), []);
 
   // Home links abandon a run in progress → they go through the leave guard.
   const NavLink = ({
@@ -106,6 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   );
                 })}
               </nav>
+              <AccountChip />
               <LangToggle />
               <Link
                 href="/settings"
@@ -161,6 +169,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </div>
     </LeaveRunProvider>
+  );
+}
+
+/** Header account chip (v1.4): "Log in" when signed out, username + rank emblem
+ *  when signed in. Both route to /profile (the account hub). Hidden entirely when
+ *  accounts aren't configured, so the guest header is unchanged. */
+function AccountChip() {
+  const t = useCopy();
+  const mounted = useMounted();
+  const enabled = useAccountStore((s) => s.enabled);
+  const status = useAccountStore((s) => s.status);
+  const username = useAccountStore((s) => s.username);
+  const xp = useProfileStore((s) => s.xp);
+  if (!mounted || !enabled || status === "loading") return null;
+
+  if (status === "signedIn") {
+    return (
+      <Link
+        href="/profile"
+        onClick={() => sfx.click()}
+        className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-white/5"
+        title={username ?? undefined}
+      >
+        <RankBadge rank={rankForXp(xp)} variant="menu" size="sm" />
+        <span className="hidden max-w-[110px] truncate text-xs font-semibold text-sub sm:inline">
+          {username}
+        </span>
+      </Link>
+    );
+  }
+  return (
+    <Link
+      href="/profile"
+      onClick={() => sfx.click()}
+      className="display rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:bg-white/5 hover:text-ink"
+    >
+      {t.NAV_UI.logIn}
+    </Link>
   );
 }
 

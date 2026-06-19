@@ -23,6 +23,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
+import { AccountSection } from "@/components/AccountSection";
 
 export default function ProfilePage() {
   const { PROFILE_UI: P, DIFFICULTY_LABELS } = useCopy();
@@ -44,6 +45,10 @@ export default function ProfilePage() {
     <div className="rise-in">
       <BackToMenu />
       <SectionTitle kicker={P.career} title={P.title} className="mb-6" />
+
+      {/* Account hub (v1.4) — sign-in / display name / sign out / delete.
+          Renders nothing when accounts aren't configured. */}
+      <AccountSection />
 
       {/* Rank header — uses the profile art set (public/ranks/profile/) */}
       <Panel strong glow="blue" className="mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">

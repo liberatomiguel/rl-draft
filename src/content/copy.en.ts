@@ -114,6 +114,7 @@ export const HOME_SEO = {
 };
 
 export const NAV_UI = {
+  logIn: "Log in",
   backToMenu: "Back to menu",
   changelog: "Changelog",
   privacy: "Privacy",
@@ -920,6 +921,15 @@ export const LEADERBOARDS_UI = {
   displayNameLabel: "Display name (shown on the boards)",
   save: "Save",
   saved: "Saved",
+  nameTaken: "That name is taken — try another.",
+  signedInEmail: (email: string) => `Signed in as ${email}`,
+  deleteAccount: "Delete account",
+  deleteTitle: "Delete your account?",
+  deleteBody:
+    "This permanently removes your account and all of its cloud data — synced progress, leaderboard entries and display name. Your local progress on this device is kept. This can't be undone.",
+  deleteConfirm: "Delete forever",
+  cancel: "Cancel",
+  account: "Account",
   signOut: "Sign out",
   signedInAs: (name: string) => `Signed in as ${name}`,
   syncing: "Syncing…",
@@ -939,7 +949,11 @@ export const LEADERBOARDS_UI = {
     best_legacy: "Best overall · Legacy",
     best_worldwide: "Best overall · Worldwide",
     best_sam: "Best overall · SAM",
-    championships: "Championships",
+    championships: "Titles · Total",
+    titles_normal: "Titles · Normal",
+    titles_hard: "Titles · Hard",
+    titles_legacy: "Titles · Legacy",
+    titles_easy: "Titles · Easy",
     xp: "Total XP",
     daily_streak: "Daily streak",
     challenges_cleared: "Challenges cleared",
