@@ -6,7 +6,7 @@
 > sitting on the `staging` branch for team review** (not yet on `main`/prod).
 > v1.4 adds: **Challenges** (a new rank-unlocked draft-puzzle mode), a
 > **special-card rarity rework** (absolute per-rarity rates — lone legendaries
-> no longer over-appear), a **Leaderboards + accounts foundation** (Discord
+> no longer over-appear), a **Leaderboards + accounts foundation** (email-code
 > login + cloud sync; code-complete but DORMANT until the Supabase env vars are
 > set — see below), and a **visual/mobile/Legacy polish** pass. Per-version
 > detail lives in `docs/CHANGELOG.md` ([1.4.0]) + `DESIGN-DECISIONS.md`. This
@@ -72,10 +72,12 @@ Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
    today from the local profile. `lib/profileSync.ts` merge is tested (no progress
    loss, #55.7). `lib/supabase.ts` is a no-op until configured.
 
-**PENDING — Miguel's infra (to light up Discord login + global leaderboards):**
-follow **`docs/ACCOUNTS-SETUP.md`** — create the Supabase project + Discord app,
-run the SQL (profiles table + RLS), set `NEXT_PUBLIC_SUPABASE_URL/_ANON_KEY` in
-`.env.local` + Vercel. Until then the game runs exactly as the guest-only build.
+**PENDING — Miguel's infra (to light up email login + global leaderboards):**
+follow **`docs/ACCOUNTS-SETUP.md`** — Supabase project is created and the local
+env vars are set; remaining: run the SQL (profiles table + RLS), set up email
+sending (the code template + a custom SMTP for launch), and add the env vars to
+Vercel. Login is **email + 6-digit code** (no Discord). Until the SQL + email are
+done the game runs exactly as the guest-only build.
 Then we finish the wiring together (sync-after-run, a header sign-in chip, daily
 leaderboard — listed in ACCOUNTS-SETUP "Follow-ups"). Invariants this must keep:
 `DESIGN-DECISIONS.md` **#55**.

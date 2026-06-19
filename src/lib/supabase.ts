@@ -35,13 +35,29 @@ function client(): SupabaseClient | null {
   return _client;
 }
 
-// --- Auth -----------------------------------------------------------------
+// --- Auth (email one-time code) -------------------------------------------
 
-/** Kick off the Discord OAuth redirect. Returns to `redirectTo` signed in. */
-export async function signInWithDiscord(redirectTo: string): Promise<void> {
+/** Email the player a 6-digit sign-in code. `shouldCreateUser` makes first-time
+ *  emails register automatically. Returns an error message on failure. */
+export async function sendEmailCode(email: string): Promise<{ error?: string }> {
   const c = client();
-  if (!c) return;
-  await c.auth.signInWithOAuth({ provider: "discord", options: { redirectTo } });
+  if (!c) return { error: "accounts disabled" };
+  const { error } = await c.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true },
+  });
+  return error ? { error: error.message } : {};
+}
+
+/** Verify the code from the email and create the session. */
+export async function verifyEmailCode(
+  email: string,
+  token: string,
+): Promise<{ error?: string }> {
+  const c = client();
+  if (!c) return { error: "accounts disabled" };
+  const { error } = await c.auth.verifyOtp({ email, token, type: "email" });
+  return error ? { error: error.message } : {};
 }
 
 export async function signOut(): Promise<void> {
@@ -96,20 +112,26 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
   };
 }
 
-/** Fetch the signed-in user's stored durable profile (for merge on login). */
-export async function fetchCloudProfile(userId: string): Promise<DurableProfile | null> {
+/** Fetch the user's stored durable profile + chosen display name (for merge +
+ *  to keep their name on subsequent syncs). Null when no row exists yet. */
+export async function fetchCloudRow(
+  userId: string,
+): Promise<{ durable: DurableProfile | null; username: string | null } | null> {
   const c = client();
   if (!c) return null;
-  const { data, error } = await c.from("profiles").select("durable").eq("id", userId).maybeSingle();
+  const { data, error } = await c
+    .from("profiles")
+    .select("durable, username")
+    .eq("id", userId)
+    .maybeSingle();
   if (error || !data) return null;
-  return (data.durable as DurableProfile) ?? null;
+  return { durable: (data.durable as DurableProfile) ?? null, username: data.username ?? null };
 }
 
 /** Upsert the user's profile: the full durable blob + the flattened columns. */
 export async function pushCloudProfile(
   userId: string,
   username: string,
-  avatarUrl: string | null,
   durable: DurableProfile,
   stats: LeaderboardStats,
 ): Promise<void> {
@@ -119,7 +141,6 @@ export async function pushCloudProfile(
     {
       id: userId,
       username,
-      avatar_url: avatarUrl,
       xp: durable.xp,
       durable,
       ...stats,
@@ -127,6 +148,14 @@ export async function pushCloudProfile(
     },
     { onConflict: "id" },
   );
+}
+
+/** Update just the public display name (leaderboard name). */
+export async function updateUsername(userId: string, username: string): Promise<void> {
+  await client()
+    ?.from("profiles")
+    .update({ username })
+    .eq("id", userId);
 }
 
 // --- Leaderboards ---------------------------------------------------------

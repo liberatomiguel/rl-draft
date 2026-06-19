@@ -12,16 +12,16 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ## [1.4.0] — 2026 · Accounts, Challenges & polish (in progress)
 
-> Big release: Discord login + cloud sync + leaderboards, a rank-unlocked
+> Big release: email-code login + cloud sync + leaderboards, a rank-unlocked
 > Challenges mode, a special-card rarity rework, and a visual/mobile pass.
 > Sections fill in as each workstream lands.
 
 ### Added
-- **Leaderboards + accounts foundation (Discord login + cloud sync).** A new
+- **Leaderboards + accounts foundation (email-code login + cloud sync).** A new
   `/leaderboards` page (linked from the home menu) tracks the player's peak team
   overall per difficulty and per pool (worldwide / SAM), plus championships,
   daily streak and challenges cleared — working **today**, from the local
-  profile. Discord sign-in + global boards + cloud backup activate the moment the
+  profile. Email-code sign-in + global boards + cloud backup activate the moment the
   Supabase env vars are set (the code is dormant until then — guest play is
   unchanged). The progress-safety guarantee is built and unit-tested:
   `mergeProfiles` (`src/lib/profileSync.ts`) merges a guest's local save into the
@@ -31,7 +31,7 @@ with the root cause — that section doubles as the project's bugfix log.
   `records` on the profile (schema v4 → v5, backfilled from history), the
   `@supabase/supabase-js` client wrapper (`src/lib/supabase.ts`, no-op until
   configured), and `RunHistoryEntry.mode`/`.region` for attribution. **Ops setup
-  (Supabase project, Discord app, SQL schema + RLS, env vars): `docs/ACCOUNTS-SETUP.md`.**
+  (SQL schema + RLS, email sender, env vars): `docs/ACCOUNTS-SETUP.md`.**
 - **Challenges — a new rank-unlocked mode (`/challenges`).** Authored puzzles: a
   constrained draft then a single Bo7 against a fixed historical line. Cleared =
   cleared (one-and-done, like an achievement), granting XP (+ an optional earned
