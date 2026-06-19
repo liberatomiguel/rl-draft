@@ -1,0 +1,814 @@
+[
+  {
+    "major": "RLCS 2021-22 Fall Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "Team Envy",
+    "status": "review",
+    "sameLineupOverlap": 1,
+    "players": [
+      {
+        "name": "Atomic",
+        "seedOverall": 94,
+        "knownPlayer": true
+      },
+      {
+        "name": "mist",
+        "seedOverall": 90,
+        "knownPlayer": true
+      },
+      {
+        "name": "Turbopolsa",
+        "seedOverall": 96,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": null,
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Fall"
+  },
+  {
+    "major": "RLCS 2021-22 Fall Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "Complexity Gaming",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Shad",
+        "seedOverall": 83,
+        "knownPlayer": true
+      },
+      {
+        "name": "Reysbull",
+        "seedOverall": 87,
+        "knownPlayer": true
+      },
+      {
+        "name": "ajg",
+        "seedOverall": 85,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Agüesome",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Fall/North America Tiebreaker"
+  },
+  {
+    "major": "RLCS 2021-22 Fall Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "Team Vitality",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Fairy Peak!",
+        "seedOverall": 91,
+        "knownPlayer": true
+      },
+      {
+        "name": "Kaydop",
+        "seedOverall": 96,
+        "knownPlayer": true
+      },
+      {
+        "name": "Alpha54",
+        "seedOverall": 94,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Mout",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Fall"
+  },
+  {
+    "major": "RLCS 2021-22 Fall Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "Ground Zero Gaming",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Amphis",
+        "seedOverall": 84,
+        "knownPlayer": true
+      },
+      {
+        "name": "Express",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "Torsos",
+        "seedOverall": 85,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Jimmah",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Fall"
+  },
+  {
+    "major": "RLCS 2021-22 Fall Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "eRa Eternity",
+    "status": "review",
+    "sameLineupOverlap": 1,
+    "players": [
+      {
+        "name": "AztromicK",
+        "seedOverall": 84,
+        "knownPlayer": true
+      },
+      {
+        "name": "math",
+        "seedOverall": 84,
+        "knownPlayer": true
+      },
+      {
+        "name": "snipjz",
+        "seedOverall": 82,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Michi",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Fall"
+  },
+  {
+    "major": "RLCS 2021-22 Winter Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "The General NRG",
+    "status": "review",
+    "sameLineupOverlap": 1,
+    "players": [
+      {
+        "name": "GarrettG",
+        "seedOverall": 94,
+        "knownPlayer": true
+      },
+      {
+        "name": "justin.",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "Squishy",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": "musty",
+    "subSeed": null,
+    "coach": "Sizz",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Winter"
+  },
+  {
+    "major": "RLCS 2021-22 Winter Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "Evil Geniuses",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Catalysm",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "ivn",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "Rizex45",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "arise",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Winter"
+  },
+  {
+    "major": "RLCS 2021-22 Winter Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "DeToNator",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "OLPiX",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "Burn",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "mikan",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Nunki",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Winter/Asia-Pacific Qualifier"
+  },
+  {
+    "major": "RLCS 2021-22 Spring Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "Team Liquid",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "AcroniK.",
+        "seedOverall": 89,
+        "knownPlayer": true
+      },
+      {
+        "name": "Oski",
+        "seedOverall": 92,
+        "knownPlayer": true
+      },
+      {
+        "name": "Atow.",
+        "seedOverall": 95,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Xpére",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Spring"
+  },
+  {
+    "major": "RLCS 2021-22 Spring Major",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "team": "PWR",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Amphis",
+        "seedOverall": 84,
+        "knownPlayer": true
+      },
+      {
+        "name": "Torsos",
+        "seedOverall": 85,
+        "knownPlayer": true
+      },
+      {
+        "name": "Express",
+        "seedOverall": 82,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Jimmah",
+    "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Spring"
+  },
+  {
+    "major": "RLCS 2022-23 Fall Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "Quadrant",
+    "status": "review",
+    "sameLineupOverlap": 1,
+    "players": [
+      {
+        "name": "RelatingWave",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "eekso",
+        "seedOverall": 83,
+        "knownPlayer": true
+      },
+      {
+        "name": "Kash",
+        "seedOverall": 87,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Snaski",
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Fall"
+  },
+  {
+    "major": "RLCS 2022-23 Fall Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "Version1",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "torment",
+        "seedOverall": 91,
+        "knownPlayer": true
+      },
+      {
+        "name": "comm",
+        "seedOverall": 86,
+        "knownPlayer": true
+      },
+      {
+        "name": "BeastMode",
+        "seedOverall": 94,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Fireburner",
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Fall"
+  },
+  {
+    "major": "RLCS 2022-23 Winter Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "Dignitas",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Andy",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "dreaz",
+        "seedOverall": 81,
+        "knownPlayer": true
+      },
+      {
+        "name": "Evoh",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Nick",
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Winter"
+  },
+  {
+    "major": "RLCS 2022-23 Winter Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "Ground Zero Gaming",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "kaka",
+        "seedOverall": 80,
+        "knownPlayer": true
+      },
+      {
+        "name": "Fibérr",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "Superlachie",
+        "seedOverall": 84,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Fernando",
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Winter"
+  },
+  {
+    "major": "RLCS 2022-23 Spring Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "FURIA Esports",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "caard",
+        "seedOverall": 85,
+        "knownPlayer": true
+      },
+      {
+        "name": "yANXNZ^^",
+        "seedOverall": 91,
+        "knownPlayer": true
+      },
+      {
+        "name": "Lostt",
+        "seedOverall": 89,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "STL",
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Spring"
+  },
+  {
+    "major": "RLCS 2022-23 Spring Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "OpTic Gaming",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "AYYJAYY",
+        "seedOverall": 88,
+        "knownPlayer": true
+      },
+      {
+        "name": "Retals",
+        "seedOverall": 87,
+        "knownPlayer": true
+      },
+      {
+        "name": "MaJicBear",
+        "seedOverall": 84,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "RawGreg",
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Spring"
+  },
+  {
+    "major": "RLCS 2022-23 Spring Major",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "team": "Ground Zero Gaming",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "kaka",
+        "seedOverall": 80,
+        "knownPlayer": true
+      },
+      {
+        "name": "Fibérr",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "Superlachie",
+        "seedOverall": 84,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": null,
+    "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Spring"
+  },
+  {
+    "major": "RLCS 2024 Major 1",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "team": "Luminosity Gaming",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "MaJicBear",
+        "seedOverall": 84,
+        "knownPlayer": true
+      },
+      {
+        "name": "Retals",
+        "seedOverall": 87,
+        "knownPlayer": true
+      },
+      {
+        "name": "CHEESE.",
+        "seedOverall": 86,
+        "knownPlayer": true
+      }
+    ],
+    "sub": "Thundah",
+    "subSeed": null,
+    "coach": "RawGreg",
+    "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 1"
+  },
+  {
+    "major": "RLCS 2024 Major 1",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "team": "Rule One",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "oKhaliD",
+        "seedOverall": 87,
+        "knownPlayer": true
+      },
+      {
+        "name": "Ahmad",
+        "seedOverall": 88,
+        "knownPlayer": true
+      },
+      {
+        "name": "Nwpo",
+        "seedOverall": 94,
+        "knownPlayer": true
+      }
+    ],
+    "sub": "Mesho",
+    "subSeed": null,
+    "coach": "crespor",
+    "qualifier": "[[Rocket League Championship Series/2024/Rankings/Middle East and North Africa/Major 1"
+  },
+  {
+    "major": "RLCS 2024 Major 1",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "team": "Elevate",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "LCT",
+        "seedOverall": 75,
+        "knownPlayer": true
+      },
+      {
+        "name": "Kevin",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "Sphinx",
+        "seedOverall": 82,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "trill.",
+    "qualifier": "[[Rocket League Championship Series/2024/Rankings/Asia-Pacific/Major 1"
+  },
+  {
+    "major": "RLCS 2024 Major 2",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "team": "Chiefs Esports Club",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "hntr",
+        "seedOverall": 80,
+        "knownPlayer": true
+      },
+      {
+        "name": "finn",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "kaka",
+        "seedOverall": 80,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "LBP",
+    "qualifier": "[[Rocket League Championship Series/2024/Rankings/Oceania/Major 2"
+  },
+  {
+    "major": "RLCS 2024 Major 2",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "team": "Twisted Minds",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Smw",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "M7sn",
+        "seedOverall": 86,
+        "knownPlayer": true
+      },
+      {
+        "name": "Ahmad",
+        "seedOverall": 88,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "bo0odi44",
+    "qualifier": "[[Rocket League Championship Series/2024/Rankings/Middle East and North Africa/Major 2"
+  },
+  {
+    "major": "RLCS 2024 Major 2",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "team": "Team Mobula",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "VKSailen",
+        "seedOverall": 80,
+        "knownPlayer": true
+      },
+      {
+        "name": "ASN_RuBiiX",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "Leoro",
+        "seedOverall": 75,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "ByJesuxEsP",
+    "qualifier": "[[Rocket League Championship Series/2024/Rankings/Sub-Saharan Africa/Major 2"
+  },
+  {
+    "major": "RLCS 2025 Birmingham Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "team": "Complexity Gaming",
+    "status": "review",
+    "sameLineupOverlap": 1,
+    "players": [
+      {
+        "name": "Reysbull",
+        "seedOverall": 87,
+        "knownPlayer": true
+      },
+      {
+        "name": "crr",
+        "seedOverall": 87,
+        "knownPlayer": true
+      },
+      {
+        "name": "diaz",
+        "seedOverall": 87,
+        "knownPlayer": true
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Agüesome",
+    "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Birmingham Major"
+  },
+  {
+    "major": "RLCS 2025 Birmingham Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "team": "Helfie Chiefs",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "hntr",
+        "seedOverall": 80,
+        "knownPlayer": true
+      },
+      {
+        "name": "Fibérr",
+        "seedOverall": 82,
+        "knownPlayer": true
+      },
+      {
+        "name": "Rezears",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "LBP",
+    "qualifier": "[[Rocket League Championship Series/2025/Rankings/Oceania/Birmingham Major"
+  },
+  {
+    "major": "RLCS 2025 Raleigh Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "team": "Gentle Mates Alpine",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Seikoo",
+        "seedOverall": 95,
+        "knownPlayer": true
+      },
+      {
+        "name": "juicy",
+        "seedOverall": 89,
+        "knownPlayer": true
+      },
+      {
+        "name": "yujin",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": "Eversax",
+    "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Raleigh_Major"
+  },
+  {
+    "major": "RLCS 2025 Raleigh Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "team": "First Touch",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "Roll Dizz",
+        "seedOverall": 79,
+        "knownPlayer": true
+      },
+      {
+        "name": "Tbates",
+        "seedOverall": null,
+        "knownPlayer": false
+      },
+      {
+        "name": "Dazerin",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": null,
+    "qualifier": null
+  },
+  {
+    "major": "RLCS 2025 Raleigh Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "team": "Chalked Cast",
+    "status": "new",
+    "sameLineupOverlap": 0,
+    "players": [
+      {
+        "name": "CJCJ",
+        "seedOverall": 80,
+        "knownPlayer": true
+      },
+      {
+        "name": "GarrettG",
+        "seedOverall": 94,
+        "knownPlayer": true
+      },
+      {
+        "name": "Gibbs",
+        "seedOverall": null,
+        "knownPlayer": false
+      }
+    ],
+    "sub": null,
+    "subSeed": null,
+    "coach": null,
+    "qualifier": null
+  }
+]

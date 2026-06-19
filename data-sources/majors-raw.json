@@ -1,0 +1,1864 @@
+{
+  "Rocket League Championship Series/2021-22/Fall": {
+    "title": "Rocket League Championship Series/2021-22/Fall",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "label": "RLCS 2021-22 Fall Major",
+    "teams": [
+      {
+        "team": "The General NRG",
+        "players": [
+          "GarrettG",
+          "jstn.",
+          "SquishyMuffinz"
+        ],
+        "sub": "musty",
+        "coach": "Sizz",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Fall"
+      },
+      {
+        "team": "G2 Esports",
+        "players": [
+          "JKnaps",
+          "Chicago",
+          "dreaz"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Fall"
+      },
+      {
+        "team": "FaZe Clan",
+        "players": [
+          "AYYJAYY",
+          "Allushin",
+          "Firstkiller"
+        ],
+        "sub": "",
+        "coach": "AxB",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Fall"
+      },
+      {
+        "team": "Team Envy",
+        "players": [
+          "Atomic",
+          "mist",
+          "Turbopolsa"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Fall"
+      },
+      {
+        "team": "Complexity Gaming",
+        "players": [
+          "Shad",
+          "Reysbull",
+          "ajg"
+        ],
+        "sub": "",
+        "coach": "Agüesome",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Fall/North America Tiebreaker"
+      },
+      {
+        "team": "Endpoint CeX",
+        "players": [
+          "RelatingWave",
+          "Metsanauris",
+          "Seikoo"
+        ],
+        "sub": "",
+        "coach": "Eclipse",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Dignitas",
+        "players": [
+          "Joreuz",
+          "ApparentlyJack",
+          "Scrub Killa"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Team BDS",
+        "players": [
+          "MaRc_By_8.",
+          "M0nkey M00n",
+          "Extra"
+        ],
+        "sub": "",
+        "coach": "Kael",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Fall"
+      },
+      {
+        "team": "SMPR Esports",
+        "players": [
+          "Kassio",
+          "archie",
+          "Chausette45"
+        ],
+        "sub": "",
+        "coach": "billy",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Team Vitality",
+        "players": [
+          "Fairy Peak!",
+          "Kaydop",
+          "Alpha54"
+        ],
+        "sub": "",
+        "coach": "Mout",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Ground Zero Gaming",
+        "players": [
+          "Amphis",
+          "Express",
+          "Torsos"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Fall"
+      },
+      {
+        "team": "Renegades",
+        "players": [
+          "CJCJ",
+          "Kamii",
+          "Fever"
+        ],
+        "sub": "",
+        "coach": "LBP",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Fall"
+      },
+      {
+        "team": "FURIA Esports",
+        "players": [
+          "CaioTG1",
+          "caard",
+          "yanxnz"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Fall"
+      },
+      {
+        "team": "eRa Eternity",
+        "players": [
+          "AztromicK",
+          "math",
+          "snipjz"
+        ],
+        "sub": "",
+        "coach": "Michi",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Fall"
+      },
+      {
+        "team": "Tokyo Verdy Esports",
+        "players": [
+          "ReaLize",
+          "Maru",
+          "Tenhow"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Fall/Asia-Pacific Qualifier"
+      },
+      {
+        "team": "Sandrock Gaming",
+        "players": [
+          "Ahmad",
+          "trk511",
+          "Senzo"
+        ],
+        "sub": "",
+        "coach": "mits",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Middle_East_and_North_Africa/Fall"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2021-22/Winter": {
+    "title": "Rocket League Championship Series/2021-22/Winter",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "label": "RLCS 2021-22 Winter Major",
+    "teams": [
+      {
+        "team": "The General NRG",
+        "players": [
+          "GarrettG",
+          "justin.",
+          "Squishy"
+        ],
+        "sub": "musty",
+        "coach": "Sizz",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Winter"
+      },
+      {
+        "team": "G2 Esports",
+        "players": [
+          "JKnaps",
+          "Chicago",
+          "Atomic"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Winter"
+      },
+      {
+        "team": "FaZe Clan",
+        "players": [
+          "AYYJAYY",
+          "Firstkiller",
+          "Sypical"
+        ],
+        "sub": "",
+        "coach": "AxB",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Winter"
+      },
+      {
+        "team": "Version1",
+        "players": [
+          "Torment",
+          "Comm",
+          "BeastMode"
+        ],
+        "sub": "",
+        "coach": "Fireburner",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Winter"
+      },
+      {
+        "team": "Spacestation Gaming",
+        "players": [
+          "Arsenal",
+          "retals",
+          "Daniel"
+        ],
+        "sub": "",
+        "coach": "Chrome",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Winter"
+      },
+      {
+        "team": "Team Queso",
+        "players": [
+          "Joyo",
+          "Vatira.",
+          "rise."
+        ],
+        "sub": "noah",
+        "coach": "Nick",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Dignitas",
+        "players": [
+          "ApparentlyJack",
+          "Joreuz",
+          "Scrub Killa"
+        ],
+        "sub": "",
+        "coach": "Lenny Wiersma",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Team BDS",
+        "players": [
+          "MaRc_By_8.",
+          "M0nkey M00n",
+          "Extra"
+        ],
+        "sub": "",
+        "coach": "Kael",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Endpoint CeX",
+        "players": [
+          "RelatingWave",
+          "Metsanauris",
+          "Seikoo"
+        ],
+        "sub": "",
+        "coach": "Eclipse",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Evil Geniuses",
+        "players": [
+          "Catalysm",
+          "ivn",
+          "Rizex45"
+        ],
+        "sub": "",
+        "coach": "arise",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Renegades",
+        "players": [
+          "CJCJ",
+          "Kamii",
+          "Fever"
+        ],
+        "sub": "",
+        "coach": "LBP",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Winter"
+      },
+      {
+        "team": "Pioneers",
+        "players": [
+          "Superlachie",
+          "Bananahead",
+          "Scrub"
+        ],
+        "sub": "",
+        "coach": "Prof",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Winter"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "Sad",
+          "nxghtt.",
+          "math"
+        ],
+        "sub": "",
+        "coach": "BRUNOVISQUII",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Winter"
+      },
+      {
+        "team": "FURIA Esports",
+        "players": [
+          "CaioTG1",
+          "caard",
+          "yanxnz"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Winter"
+      },
+      {
+        "team": "DeToNator",
+        "players": [
+          "OLPiX",
+          "Burn",
+          "mikan"
+        ],
+        "sub": "",
+        "coach": "Nunki",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Winter/Asia-Pacific Qualifier"
+      },
+      {
+        "team": "Sandrock Gaming",
+        "players": [
+          "Ahmad",
+          "oKhaliD",
+          "trk511"
+        ],
+        "sub": "Senzo",
+        "coach": "mits",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Middle_East_and_North_Africa/Winter"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2021-22/Spring": {
+    "title": "Rocket League Championship Series/2021-22/Spring",
+    "season": "rlcs-2021-22",
+    "year": "2021-22",
+    "label": "RLCS 2021-22 Spring Major",
+    "teams": [
+      {
+        "team": "G2 Esports",
+        "players": [
+          "JKnaps",
+          "Chicago",
+          "Atomic"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Spring"
+      },
+      {
+        "team": "FaZe Clan",
+        "players": [
+          "AYYJAYY",
+          "Firstkiller",
+          "Sypical"
+        ],
+        "sub": "",
+        "coach": "iuKeEe",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Spring"
+      },
+      {
+        "team": "Version1",
+        "players": [
+          "Torment",
+          "Comm",
+          "BeastMode"
+        ],
+        "sub": "",
+        "coach": "Fireburner",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Spring"
+      },
+      {
+        "team": "Spacestation Gaming",
+        "players": [
+          "Arsenal",
+          "retals",
+          "Daniel"
+        ],
+        "sub": "",
+        "coach": "Chrome",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Spring"
+      },
+      {
+        "team": "OpTic Gaming",
+        "players": [
+          "mist",
+          "dreaz",
+          "Allushin"
+        ],
+        "sub": "",
+        "coach": "Turbopolsa",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/North America/Spring"
+      },
+      {
+        "team": "Team BDS",
+        "players": [
+          "M0nkey M00n",
+          "Extra",
+          "Seikoo"
+        ],
+        "sub": "",
+        "coach": "Mew",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Moist Esports",
+        "players": [
+          "Joyo",
+          "Vatira",
+          "rise."
+        ],
+        "sub": "",
+        "coach": "noah",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Team Liquid",
+        "players": [
+          "AcroniK.",
+          "Oski",
+          "Atow."
+        ],
+        "sub": "",
+        "coach": "Xpére",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "itachi",
+          "AztraL",
+          "noly"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Endpoint CeX",
+        "players": [
+          "RelatingWave",
+          "Metsanauris",
+          "archie"
+        ],
+        "sub": "",
+        "coach": "Eclipse",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Pioneers",
+        "players": [
+          "Scrub",
+          "Superlachie",
+          "Bananahead"
+        ],
+        "sub": "",
+        "coach": "Threes",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Spring"
+      },
+      {
+        "team": "PWR",
+        "players": [
+          "Amphis",
+          "Torsos",
+          "Express"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Oceania/Spring"
+      },
+      {
+        "team": "FURIA Esports",
+        "players": [
+          "CaioTG1",
+          "caard",
+          "yanxnz"
+        ],
+        "sub": "",
+        "coach": "Kairos",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Spring"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "Sad",
+          "nxghtt",
+          "math"
+        ],
+        "sub": "",
+        "coach": "BRUNOVISQUII",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/South America/Spring"
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "players": [
+          "LCT",
+          "Maxeew",
+          "Abscrazy"
+        ],
+        "sub": "",
+        "coach": "OSM",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Spring/Asia-Pacific Qualifier"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "Ahmad",
+          "oKhaliD",
+          "trk511"
+        ],
+        "sub": "",
+        "coach": "Eljabr",
+        "qualifier": "[[Rocket League Championship Series/2021-22/Rankings/Middle_East_and_North_Africa/Spring"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2022-23/Fall": {
+    "title": "Rocket League Championship Series/2022-23/Fall",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "label": "RLCS 2022-23 Fall Major",
+    "teams": [
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "itachi",
+          "vatira.",
+          "ExoTiiK"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Team Liquid",
+        "players": [
+          "AcroniK.",
+          "Oski",
+          "Atow."
+        ],
+        "sub": "",
+        "coach": "Xpére",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Oxygen Esports",
+        "players": [
+          "archie",
+          "oaly.",
+          "Joreuz"
+        ],
+        "sub": "",
+        "coach": "billy",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Quadrant",
+        "players": [
+          "RelatingWave",
+          "eekso",
+          "Kash"
+        ],
+        "sub": "",
+        "coach": "Snaski",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Moist Esports",
+        "players": [
+          "Joyo",
+          "rise.",
+          "AztraL"
+        ],
+        "sub": "",
+        "coach": "noah",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Fall"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "ApparentlyJack",
+          "Chronic",
+          "noly"
+        ],
+        "sub": "",
+        "coach": "Allushin",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Fall"
+      },
+      {
+        "team": "FaZe Clan",
+        "players": [
+          "Firstkiller",
+          "Sypical",
+          "mist"
+        ],
+        "sub": "",
+        "coach": "Roll Dizz",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Fall"
+      },
+      {
+        "team": "Version1",
+        "players": [
+          "torment",
+          "comm",
+          "BeastMode"
+        ],
+        "sub": "",
+        "coach": "Fireburner",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Fall"
+      },
+      {
+        "team": "Spacestation Gaming",
+        "players": [
+          "Arsenal",
+          "Daniel",
+          "Lj"
+        ],
+        "sub": "",
+        "coach": "Chrome",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Fall"
+      },
+      {
+        "team": "G2 Esports",
+        "players": [
+          "JKnaps",
+          "Chicago",
+          "Atomic"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Fall"
+      },
+      {
+        "team": "Pioneers",
+        "players": [
+          "Scrub",
+          "Superlachie",
+          "bananahead"
+        ],
+        "sub": "Lunr",
+        "coach": "Threes",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Fall"
+      },
+      {
+        "team": "PWR",
+        "players": [
+          "Torsos",
+          "Amphis",
+          "Fever"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Fall"
+      },
+      {
+        "team": "The Club",
+        "players": [
+          "AZTROMICK",
+          "Lostt.",
+          "Bemmz"
+        ],
+        "sub": "",
+        "coach": "Michi",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/South America/Fall"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "Sad",
+          "nxghtt",
+          "kv1"
+        ],
+        "sub": "",
+        "coach": "brunovisqui",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Fall/South America Tiebreaker"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "Ahmad",
+          "oKhaliD",
+          "trk511"
+        ],
+        "sub": "",
+        "coach": "Azzam",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Middle_East_and_North_Africa/Fall"
+      },
+      {
+        "team": "James Cheese",
+        "players": [
+          "virtuoso",
+          "ReaLize",
+          "Kamii"
+        ],
+        "sub": "",
+        "coach": "LBP",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Asia-Pacific/Fall"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2022-23/Winter": {
+    "title": "Rocket League Championship Series/2022-23/Winter",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "label": "RLCS 2022-23 Winter Major",
+    "teams": [
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "itachi",
+          "Vatira",
+          "ExoTiiK"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Team Liquid",
+        "players": [
+          "AcroniK.",
+          "Oski",
+          "Atow."
+        ],
+        "sub": "",
+        "coach": "Xpére",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Oxygen Esports",
+        "players": [
+          "archie",
+          "Joreuz",
+          "rise."
+        ],
+        "sub": "",
+        "coach": "billy",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Winter"
+      },
+      {
+        "team": "Team Vitality",
+        "players": [
+          "Alpha54",
+          "Radosin",
+          "saizen"
+        ],
+        "sub": "",
+        "coach": "Ferra",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Winter"
+      },
+      {
+        "team": "G1",
+        "players": [
+          "MaRc_By_8.",
+          "LTK_AtomiK",
+          "DORITO"
+        ],
+        "sub": "",
+        "coach": "Kael",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Winter/Europe Tiebreaker"
+      },
+      {
+        "team": "FaZe Clan",
+        "players": [
+          "Firstkiller",
+          "Sypical",
+          "mist"
+        ],
+        "sub": "",
+        "coach": "Roll Dizz",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Winter"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "ApparentlyJack",
+          "Chronic",
+          "noly"
+        ],
+        "sub": "",
+        "coach": "Allushin",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Winter"
+      },
+      {
+        "team": "G2 Esports",
+        "players": [
+          "JKnaps",
+          "Chicago",
+          "Atomic"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Winter"
+      },
+      {
+        "team": "Complexity Gaming",
+        "players": [
+          "Reysbull",
+          "ajg.",
+          "crr^^"
+        ],
+        "sub": "",
+        "coach": "Agüesome",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Winter"
+      },
+      {
+        "team": "Dignitas",
+        "players": [
+          "Andy",
+          "dreaz",
+          "Evoh"
+        ],
+        "sub": "",
+        "coach": "Nick",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Winter"
+      },
+      {
+        "team": "Ground Zero Gaming",
+        "players": [
+          "kaka",
+          "Fibérr",
+          "Superlachie"
+        ],
+        "sub": "",
+        "coach": "Fernando",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Winter"
+      },
+      {
+        "team": "Pioneers",
+        "players": [
+          "Scrub",
+          "bananahead",
+          "hntr"
+        ],
+        "sub": "",
+        "coach": "JG7",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Winter"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "Sadness",
+          "nxghtt",
+          "kv1"
+        ],
+        "sub": "",
+        "coach": "brunovisqui",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/South America/Winter"
+      },
+      {
+        "team": "KRÜ Esports",
+        "players": [
+          "DRUFINHO",
+          "droppz",
+          "brad"
+        ],
+        "sub": "",
+        "coach": "pekitas",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Winter/South America Tiebreaker"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "Ahmad",
+          "oKhaliD",
+          "trk511"
+        ],
+        "sub": "",
+        "coach": "d7oom-24",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Middle_East_and_North_Africa/Winter"
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "players": [
+          "LCT",
+          "Maxeew",
+          "OSM"
+        ],
+        "sub": "",
+        "coach": "Markydooda",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Asia-Pacific/Winter"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2022-23/Spring": {
+    "title": "Rocket League Championship Series/2022-23/Spring",
+    "season": "rlcs-2022-23",
+    "year": "2022-23",
+    "label": "RLCS 2022-23 Spring Major",
+    "teams": [
+      {
+        "team": "Team Vitality",
+        "players": [
+          "Alpha54",
+          "Radosin",
+          "zen"
+        ],
+        "sub": "",
+        "coach": "Ferra",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Team BDS",
+        "players": [
+          "M0nkey M00n",
+          "Seikoo",
+          "rise."
+        ],
+        "sub": "",
+        "coach": "Mew",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "itachi",
+          "Vatira",
+          "ExoTiiK"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Team Liquid",
+        "players": [
+          "AcroniK.",
+          "Oski",
+          "Atow."
+        ],
+        "sub": "",
+        "coach": "Xpére",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Moist Esports",
+        "players": [
+          "Joyo",
+          "juicy",
+          "Kash"
+        ],
+        "sub": "",
+        "coach": "n0AH",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Europe/Spring"
+      },
+      {
+        "team": "Spacestation Gaming",
+        "players": [
+          "Arsenal",
+          "Lj",
+          "hockser"
+        ],
+        "sub": "",
+        "coach": "Sadjunior",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Spring"
+      },
+      {
+        "team": "FURIA Esports",
+        "players": [
+          "caard",
+          "yANXNZ^^",
+          "Lostt"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Spring"
+      },
+      {
+        "team": "OpTic Gaming",
+        "players": [
+          "AYYJAYY",
+          "Retals",
+          "MaJicBear"
+        ],
+        "sub": "",
+        "coach": "RawGreg",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Spring"
+      },
+      {
+        "team": "Complexity Gaming",
+        "players": [
+          "Reysbull",
+          "ajg.",
+          "crr"
+        ],
+        "sub": "",
+        "coach": "Agüesome",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/North America/Spring"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "ApparentlyJack",
+          "Chronic",
+          "noly"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": "[[Rocket_League_Championship_Series/2022-23/Spring/North America Tiebreaker"
+      },
+      {
+        "team": "Ground Zero Gaming",
+        "players": [
+          "kaka",
+          "Fibérr",
+          "Superlachie"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Spring"
+      },
+      {
+        "team": "PWR",
+        "players": [
+          "Amphis",
+          "Torsos",
+          "Fever"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Oceania/Spring"
+      },
+      {
+        "team": "KRÜ Esports",
+        "players": [
+          "drufinho",
+          "droppz",
+          "brad"
+        ],
+        "sub": "",
+        "coach": "pekitas",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/South America/Spring"
+      },
+      {
+        "team": "Ninjas in Pyjamas",
+        "players": [
+          "Aztrø",
+          "Bemmz",
+          "Motta"
+        ],
+        "sub": "",
+        "coach": "fAsi",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/South America/Spring"
+      },
+      {
+        "team": "Rule One",
+        "players": [
+          "Kiileerrz",
+          "Rw9",
+          "M7sn"
+        ],
+        "sub": "",
+        "coach": "crespor",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Middle_East_and_North_Africa/Spring"
+      },
+      {
+        "team": "Elevate",
+        "players": [
+          "virtuoso",
+          "ReaLize",
+          "Kamii"
+        ],
+        "sub": "",
+        "coach": "LBP",
+        "qualifier": "[[Rocket League Championship Series/2022-23/Rankings/Asia-Pacific/Spring"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2024/Major 1": {
+    "title": "Rocket League Championship Series/2024/Major 1",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "label": "RLCS 2024 Major 1",
+    "teams": [
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "Vatira",
+          "Atow.",
+          "rise."
+        ],
+        "sub": "",
+        "coach": "Ferra",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 1"
+      },
+      {
+        "team": "Team BDS",
+        "players": [
+          "M0nkey M00n",
+          "dralii",
+          "ExoTiiK"
+        ],
+        "sub": "",
+        "coach": "Kassio",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 1"
+      },
+      {
+        "team": "Team Vitality",
+        "players": [
+          "Alpha54",
+          "Radosin",
+          "zen"
+        ],
+        "sub": "",
+        "coach": "Fairy Peak!",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 1"
+      },
+      {
+        "team": "Gentle Mates Alpine",
+        "players": [
+          "juicy",
+          "itachi",
+          "Seikoo"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 1"
+      },
+      {
+        "team": "G2 Stride",
+        "players": [
+          "Atomic",
+          "Daniel",
+          "BeastMode"
+        ],
+        "sub": "ostyn",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 1"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "ApparentlyJack",
+          "Chronic",
+          "Firstkiller"
+        ],
+        "sub": "",
+        "coach": "Allushin",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 1"
+      },
+      {
+        "team": "Luminosity Gaming",
+        "players": [
+          "MaJicBear",
+          "Retals",
+          "CHEESE."
+        ],
+        "sub": "Thundah",
+        "coach": "RawGreg",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 1"
+      },
+      {
+        "team": "OG",
+        "players": [
+          "noly",
+          "JKnaps",
+          "Comm"
+        ],
+        "sub": "",
+        "coach": "torment",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 1"
+      },
+      {
+        "team": "PWR",
+        "players": [
+          "Torsos",
+          "Fever",
+          "bananahead"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Oceania/Major 1"
+      },
+      {
+        "team": "QuikTrip Pioneers Gaming",
+        "players": [
+          "Scrub",
+          "Amphis",
+          "Fibérr"
+        ],
+        "sub": "",
+        "coach": "Mock",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Oceania/Major 1"
+      },
+      {
+        "team": "FURIA Esports",
+        "players": [
+          "yANXNZ",
+          "Lostt",
+          "DRUFINHO"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/South America/Major 1"
+      },
+      {
+        "team": "Complexity Gaming",
+        "players": [
+          "Reysbull",
+          "crr",
+          "DORITO"
+        ],
+        "sub": "",
+        "coach": "Agüesome",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/South America/Major 1"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "trk511",
+          "Kiileerrz",
+          "Rw9"
+        ],
+        "sub": "",
+        "coach": "d7oom-24",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Middle East and North Africa/Major 1"
+      },
+      {
+        "team": "Rule One",
+        "players": [
+          "oKhaliD",
+          "Ahmad",
+          "Nwpo"
+        ],
+        "sub": "Mesho",
+        "coach": "crespor",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Middle East and North Africa/Major 1"
+      },
+      {
+        "team": "Elevate",
+        "players": [
+          "LCT",
+          "Kevin",
+          "Sphinx"
+        ],
+        "sub": "",
+        "coach": "trill.",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Asia-Pacific/Major 1"
+      },
+      {
+        "team": "Limitless",
+        "players": [
+          "2Die4",
+          "Snowyy",
+          "Sweaty"
+        ],
+        "sub": "",
+        "coach": "Noxes",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Sub-Saharan Africa/Major 1"
+      }
+    ]
+  },
+  "Rocket League Championship Series/2024/Major 2": {
+    "title": "Rocket League Championship Series/2024/Major 2",
+    "season": "rlcs-2024",
+    "year": "2024",
+    "label": "RLCS 2024 Major 2",
+    "teams": [
+      {
+        "team": "Team BDS",
+        "players": [
+          "M0nkey M00n",
+          "dralii",
+          "ExoTiiK"
+        ],
+        "sub": "",
+        "coach": "Kassio",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 2"
+      },
+      {
+        "team": "Team Vitality",
+        "players": [
+          "Alpha54",
+          "Radosin",
+          "zen"
+        ],
+        "sub": "",
+        "coach": "Fairy Peak!",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 2"
+      },
+      {
+        "team": "Gentle Mates Alpine",
+        "players": [
+          "juicy",
+          "itachi",
+          "Seikoo"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 2"
+      },
+      {
+        "team": "Oxygen Esports",
+        "players": [
+          "archie",
+          "Oski",
+          "Joyo"
+        ],
+        "sub": "",
+        "coach": "Snaski",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Europe/Major 2"
+      },
+      {
+        "team": "G2 Stride",
+        "players": [
+          "Atomic",
+          "Daniel",
+          "BeastMode"
+        ],
+        "sub": "ostyn",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 2"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "ApparentlyJack",
+          "Chronic",
+          "Firstkiller"
+        ],
+        "sub": "",
+        "coach": "Chrome",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 2"
+      },
+      {
+        "team": "Spacestation Gaming",
+        "players": [
+          "Lj.",
+          "hockser",
+          "Chicago"
+        ],
+        "sub": "",
+        "coach": "Sadjunior",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/North America/Major 2"
+      },
+      {
+        "team": "OG",
+        "players": [
+          "noly",
+          "JKnaps",
+          "Comm"
+        ],
+        "sub": "",
+        "coach": "torment",
+        "qualifier": "[[Rocket_League_Championship_Series/2024/Major_2/North_America_Tiebreaker"
+      },
+      {
+        "team": "PWR",
+        "players": [
+          "Torsos",
+          "Fever",
+          "bananahead"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Oceania/Major 2"
+      },
+      {
+        "team": "Chiefs Esports Club",
+        "players": [
+          "hntr",
+          "finn",
+          "kaka"
+        ],
+        "sub": "",
+        "coach": "LBP",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Oceania/Major 2"
+      },
+      {
+        "team": "FURIA Esports",
+        "players": [
+          "yANXNZ",
+          "Lostt",
+          "DRUFINHO"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/South America/Major 2"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "kv1",
+          "Motta",
+          "brad"
+        ],
+        "sub": "",
+        "coach": "brunovisqui",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/South America/Major 2"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "trk511",
+          "Rw9",
+          "Kiileerrz"
+        ],
+        "sub": "",
+        "coach": "d7oom-24",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Middle East and North Africa/Major 2"
+      },
+      {
+        "team": "Twisted Minds",
+        "players": [
+          "Smw",
+          "M7sn",
+          "Ahmad"
+        ],
+        "sub": "",
+        "coach": "bo0odi44",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Middle East and North Africa/Major 2"
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "players": [
+          "Maxeew",
+          "virtuoso",
+          "ThO."
+        ],
+        "sub": "",
+        "coach": "Markydooda",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Asia-Pacific/Major 2"
+      },
+      {
+        "team": "Team Mobula",
+        "players": [
+          "VKSailen",
+          "ASN_RuBiiX",
+          "Leoro"
+        ],
+        "sub": "",
+        "coach": "ByJesuxEsP",
+        "qualifier": "[[Rocket League Championship Series/2024/Rankings/Sub-Saharan Africa/Major 2"
+      }
+    ]
+  },
+  "RLCS 2025 Birmingham Major": {
+    "title": "RLCS 2025 Birmingham Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "label": "RLCS 2025 Birmingham Major",
+    "teams": [
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "Vatira",
+          "Atow.",
+          "dralii"
+        ],
+        "sub": "",
+        "coach": "Ferra",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Birmingham Major"
+      },
+      {
+        "team": "Team Vitality",
+        "players": [
+          "zen",
+          "ExoTiiK",
+          "M0nkey M00n"
+        ],
+        "sub": "",
+        "coach": "Kassio",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Birmingham Major"
+      },
+      {
+        "team": "Dignitas",
+        "players": [
+          "ApparentlyJack",
+          "Joreuz",
+          "stizzy"
+        ],
+        "sub": "",
+        "coach": "ViolentPanda",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Birmingham Major"
+      },
+      {
+        "team": "Geekay Esports",
+        "players": [
+          "Archie",
+          "Joyo",
+          "oaly."
+        ],
+        "sub": "",
+        "coach": "Nick",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Birmingham Major"
+      },
+      {
+        "team": "NRG",
+        "players": [
+          "Atomic",
+          "BeastMode",
+          "Daniel"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Birmingham Major"
+      },
+      {
+        "team": "The Ultimates",
+        "players": [
+          "Firstkiller",
+          "Chronic",
+          "Lj"
+        ],
+        "sub": "",
+        "coach": "Sadjunior",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Birmingham Major"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "Retals",
+          "MaJicBear",
+          "CHEESE."
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Birmingham Major"
+      },
+      {
+        "team": "Complexity Gaming",
+        "players": [
+          "Reysbull",
+          "crr",
+          "diaz"
+        ],
+        "sub": "",
+        "coach": "Agüesome",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Birmingham Major"
+      },
+      {
+        "team": "Wildcard",
+        "players": [
+          "Fever",
+          "Torsos",
+          "bananahead"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Oceania/Birmingham Major"
+      },
+      {
+        "team": "Helfie Chiefs",
+        "players": [
+          "hntr",
+          "Fibérr",
+          "Rezears"
+        ],
+        "sub": "",
+        "coach": "LBP",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Oceania/Birmingham Major"
+      },
+      {
+        "team": "FURIA",
+        "players": [
+          "yANXNZ",
+          "Lostt",
+          "DRUFINHO"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/South America/Birmingham Major"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "kv1",
+          "Motta",
+          "swiftt"
+        ],
+        "sub": "",
+        "coach": "brunovisqui",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/South America/Birmingham Major"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "trk511",
+          "Rw9",
+          "Kiileerrz"
+        ],
+        "sub": "",
+        "coach": "d7oom-24",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Middle East and North Africa/Birmingham Major"
+      },
+      {
+        "team": "Twisted Minds",
+        "players": [
+          "Nwpo",
+          "rise.",
+          "AtomiK"
+        ],
+        "sub": "",
+        "coach": "Msh",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Middle East and North Africa/Birmingham Major"
+      },
+      {
+        "team": "Luminosity Gaming",
+        "players": [
+          "Sphinx",
+          "sosa",
+          "Catalysm"
+        ],
+        "sub": "",
+        "coach": "mectos",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Asia-Pacific/Birmingham Major"
+      },
+      {
+        "team": "FUT Esports",
+        "players": [
+          "VKSailen",
+          "Leoro",
+          "TORRES8232"
+        ],
+        "sub": "",
+        "coach": "armonik",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Sub-Saharan Africa/Birmingham Major"
+      }
+    ]
+  },
+  "RLCS 2025 Raleigh Major": {
+    "title": "RLCS 2025 Raleigh Major",
+    "season": "rlcs-2025",
+    "year": "2025",
+    "label": "RLCS 2025 Raleigh Major",
+    "teams": [
+      {
+        "team": "Karmine Corp",
+        "players": [
+          "Vatira",
+          "Atow.",
+          "dralii"
+        ],
+        "sub": "",
+        "coach": "Ferra",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Raleigh_Major"
+      },
+      {
+        "team": "Dignitas",
+        "players": [
+          "stizzy",
+          "ApparentlyJack",
+          "Joreuz"
+        ],
+        "sub": "",
+        "coach": "ViolentPanda",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Raleigh_Major"
+      },
+      {
+        "team": "Team Vitality",
+        "players": [
+          "zen",
+          "M0nkey M00n",
+          "ExoTiiK"
+        ],
+        "sub": "",
+        "coach": "Kassio",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Raleigh_Major"
+      },
+      {
+        "team": "Gentle Mates Alpine",
+        "players": [
+          "Seikoo",
+          "juicy",
+          "yujin"
+        ],
+        "sub": "",
+        "coach": "Eversax",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Europe/Raleigh_Major"
+      },
+      {
+        "team": "NRG",
+        "players": [
+          "Atomic",
+          "BeastMode",
+          "Daniel"
+        ],
+        "sub": "",
+        "coach": "Satthew",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Raleigh_Major"
+      },
+      {
+        "team": "Spacestation Gaming",
+        "players": [
+          "Scrzbbles",
+          "reveal",
+          "kofyr"
+        ],
+        "sub": "",
+        "coach": "Xpére",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Raleigh_Major"
+      },
+      {
+        "team": "Gen.G Mobil1 Racing",
+        "players": [
+          "MaJicBear",
+          "CHEESE.",
+          "justin."
+        ],
+        "sub": "",
+        "coach": "RawGreg",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Raleigh_Major"
+      },
+      {
+        "team": "The Ultimates",
+        "players": [
+          "Firstkiller",
+          "Lj",
+          "Chronic"
+        ],
+        "sub": "",
+        "coach": "Sadjunior",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/North America/Raleigh_Major"
+      },
+      {
+        "team": "Wildcard",
+        "players": [
+          "Fever",
+          "Torsos",
+          "bananahead"
+        ],
+        "sub": "",
+        "coach": "Jimmah",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Oceania/Raleigh_Major"
+      },
+      {
+        "team": "TSM",
+        "players": [
+          "Superlachie",
+          "Amphis",
+          "kaka"
+        ],
+        "sub": "",
+        "coach": "mock",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Oceania/Raleigh_Major"
+      },
+      {
+        "team": "FURIA",
+        "players": [
+          "yANXNZ",
+          "Lostt",
+          "DRUFINHO"
+        ],
+        "sub": "",
+        "coach": "STL",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/South America/Raleigh_Major"
+      },
+      {
+        "team": "Team Secret",
+        "players": [
+          "kv1",
+          "Motta",
+          "swiftt"
+        ],
+        "sub": "",
+        "coach": "brunovisqui",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/South America/Raleigh_Major"
+      },
+      {
+        "team": "Team Falcons",
+        "players": [
+          "Trk511",
+          "Rw9",
+          "Kiileerrz"
+        ],
+        "sub": "",
+        "coach": "d7oom-24",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Middle East and North Africa/Raleigh_Major"
+      },
+      {
+        "team": "Twisted Minds",
+        "players": [
+          "Nwpo",
+          "rise.",
+          "LTK_AtomiK"
+        ],
+        "sub": "",
+        "coach": "blau",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Middle East and North Africa/Raleigh_Major"
+      },
+      {
+        "team": "Virtus.pro",
+        "players": [
+          "Catalysm",
+          "sosa",
+          "Sphinx"
+        ],
+        "sub": "",
+        "coach": "mectos",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Asia-Pacific/Raleigh_Major"
+      },
+      {
+        "team": "FUT Esports",
+        "players": [
+          "VKSailen",
+          "Leoro",
+          "TORRES8232"
+        ],
+        "sub": "",
+        "coach": "armonik",
+        "qualifier": "[[Rocket League Championship Series/2025/Rankings/Sub-Saharan Africa/Raleigh_Major"
+      },
+      {
+        "team": "First Touch",
+        "players": [
+          "Roll Dizz",
+          "Tbates",
+          "Dazerin"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": ""
+      },
+      {
+        "team": "Chalked Cast",
+        "players": [
+          "CJCJ",
+          "GarrettG",
+          "Gibbs"
+        ],
+        "sub": "",
+        "coach": "",
+        "qualifier": ""
+      }
+    ]
+  }
+}
