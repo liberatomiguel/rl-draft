@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { HISTORY_LIMIT } from "@/config/balance";
 import { rankRewardsForXp } from "@/engine/progression";
+import type { DurableProfile } from "@/lib/profileSync";
 import type {
   Difficulty,
   Placement,
@@ -42,6 +43,13 @@ export interface ProfileState {
   dailyResults: Record<string, DailyResult>;
   /** challengeId → ISO date cleared (v1.4, one-and-done like achievements). */
   challengesCompleted: Record<string, string>;
+  /** Leaderboard aggregates (v1.4): peak team overall per difficulty and per pool
+   *  (worldwide vs SAM). The durable feed for the cloud leaderboards. */
+  records: {
+    bestOverall: Record<Difficulty, number>;
+    bestOverallWorldwide: number;
+    bestOverallSam: number;
+  };
   /** Setup memory: a new game pre-selects the last configuration. */
   settings: {
     lastDifficulty: Difficulty;
@@ -76,6 +84,8 @@ export interface ProfileState {
     challengeId: string,
     reward: { xp: number; badge?: string; specialId?: string },
   ) => void;
+  /** Replace the durable slice wholesale (v1.4 cloud sync — after a merge). */
+  hydrateDurable: (durable: DurableProfile) => void;
   resetAll: () => void;
 }
 
@@ -91,6 +101,11 @@ const initialData = {
   runHistory: [] as RunHistoryEntry[],
   dailyResults: {} as Record<string, DailyResult>,
   challengesCompleted: {} as Record<string, string>,
+  records: {
+    bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
+    bestOverallWorldwide: 0,
+    bestOverallSam: 0,
+  },
   settings: {
     lastDifficulty: "normal" as Difficulty,
     lastShowOverall: true,
@@ -104,6 +119,28 @@ const initialData = {
     seenTutorial: false,
   },
 };
+
+type Records = ProfileState["records"];
+
+/** Fold one finished run into the peak-overall records (monotonic — only rises). */
+function bumpRecords(records: Records, entry: RunHistoryEntry): Records {
+  const next: Records = {
+    bestOverall: { ...records.bestOverall },
+    bestOverallWorldwide: records.bestOverallWorldwide,
+    bestOverallSam: records.bestOverallSam,
+  };
+  const ovr = entry.teamOverall;
+  next.bestOverall[entry.difficulty] = Math.max(next.bestOverall[entry.difficulty] ?? 0, ovr);
+  if (entry.region === "SAM") next.bestOverallSam = Math.max(next.bestOverallSam, ovr);
+  else if (!entry.region) next.bestOverallWorldwide = Math.max(next.bestOverallWorldwide, ovr);
+  return next;
+}
+
+/** Rebuild records from a run history (migration backfill — pre-v4 entries have
+ *  no region, so they count as worldwide). */
+function backfillRecords(history: RunHistoryEntry[]): Records {
+  return history.reduce(bumpRecords, initialData.records);
+}
 
 export const useProfileStore = create<ProfileState>()(
   persist(
@@ -152,6 +189,7 @@ export const useProfileStore = create<ProfileState>()(
             achievements,
             runHistory: [entry, ...state.runHistory].slice(0, HISTORY_LIMIT),
             dailyResults,
+            records: bumpRecords(state.records, entry),
           };
         }),
 
@@ -177,14 +215,17 @@ export const useProfileStore = create<ProfileState>()(
           };
         }),
 
+      hydrateDurable: (durable) => set(() => ({ ...durable })),
+
       resetAll: () => set({ ...initialData }),
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 4,
+      version: 5,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
-      // lock setting + regional onboarding flag; v4 added challengesCompleted —
-      // all backfilled from initialData by the deep-merge below for old saves.
+      // lock setting + regional onboarding flag; v4 added challengesCompleted;
+      // v5 added the leaderboard `records` (backfilled from runHistory below).
+      // All others backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
@@ -200,12 +241,14 @@ export const useProfileStore = create<ProfileState>()(
                 flags: initialData.flags,
               }
             : prev;
-        // Deep-merge settings/flags so new keys get defaults on older profiles.
+        // Deep-merge settings/flags so new keys get defaults on older profiles;
+        // rebuild records from history when they're missing (pre-v5 saves).
         return {
           ...initialData,
           ...base,
           settings: { ...initialData.settings, ...(base.settings ?? {}) },
           flags: { ...initialData.flags, ...(base.flags ?? {}) },
+          records: base.records ?? backfillRecords(base.runHistory ?? []),
         } as ProfileState;
       },
     },

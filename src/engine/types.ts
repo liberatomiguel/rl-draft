@@ -632,6 +632,10 @@ export interface RunHistoryEntry {
   runId: string;
   date: string;
   difficulty: Difficulty;
+  /** Game mode (v1.4) — for leaderboard attribution + run-history detail. */
+  mode: RunMode;
+  /** Region lock, or null for worldwide (v1.4) — splits the overall records. */
+  region: Region | null;
   hiddenOverall: boolean;
   placement: Placement;
   teamOverall: number;

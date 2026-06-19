@@ -48,6 +48,10 @@ export const HOME = {
   achievementsDesc: "Feats to chase across every run you play.",
   profile: "Profile",
   profileDesc: "Rank, XP and run history.",
+  challenges: "Challenges",
+  challengesDesc: "Rank-unlocked draft puzzles to clear.",
+  leaderboards: "Leaderboards",
+  leaderboardsDesc: "Your best rosters and milestones.",
   howToPlay: "How to play",
   joinDiscord: "Join the Discord",
   followTwitter: "Follow on X",
@@ -897,6 +901,37 @@ export const CHALLENGES_UI = {
   backToChallenges: "Back to challenges",
 };
 
+export const LEADERBOARDS_UI = {
+  title: "Leaderboards",
+  subtitle: "Your peak rosters and milestones. Sign in with Discord to save them to the cloud and climb the global boards.",
+  yourRecords: "Your records",
+  signInDiscord: "Sign in with Discord",
+  signOut: "Sign out",
+  signedInAs: (name: string) => `Signed in as ${name}`,
+  syncing: "Syncing…",
+  guestNote:
+    "Playing as a guest — your progress is saved on this device. Sign in with Discord to back it up to the cloud and compete globally. Your local progress is merged in, never lost.",
+  comingSoon: "Global leaderboards unlock once accounts go live. Your records are tracked locally in the meantime.",
+  globalTab: "Global",
+  youTab: "Your records",
+  rankCol: "#",
+  you: "You",
+  empty: "No entries yet — be the first.",
+  none: "—",
+  categories: {
+    best_normal: "Best overall · Normal",
+    best_easy: "Best overall · Easy",
+    best_hard: "Best overall · Hard",
+    best_legacy: "Best overall · Legacy",
+    best_worldwide: "Best overall · Worldwide",
+    best_sam: "Best overall · SAM",
+    championships: "Championships",
+    xp: "Total XP",
+    daily_streak: "Daily streak",
+    challenges_cleared: "Challenges cleared",
+  } as Record<string, string>,
+};
+
 /** The whole dictionary — `copy.pt.ts` must match this shape exactly. */
 export const EN = {
   APP,
@@ -906,6 +941,7 @@ export const EN = {
   NAV_UI,
   RUN_UI,
   CHALLENGES_UI,
+  LEADERBOARDS_UI,
   SETUP,
   DIFFICULTY_LABELS,
   DRAFT_UI,

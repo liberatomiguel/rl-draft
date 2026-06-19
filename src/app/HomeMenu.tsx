@@ -270,6 +270,36 @@ export default function HomeMenu() {
         </Link>
       </section>
 
+      {/* Challenges + Leaderboards (v1.4) */}
+      <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Link href="/challenges" className="group">
+          <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
+            <div>
+              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
+                {HOME.challenges}
+              </h3>
+              <p className="mt-1 text-xs text-sub">{HOME.challengesDesc}</p>
+            </div>
+            <span className="shrink-0 text-orange-bright" aria-hidden>
+              <MissionGlyph />
+            </span>
+          </Panel>
+        </Link>
+        <Link href="/leaderboards" className="group">
+          <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
+            <div>
+              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
+                {HOME.leaderboards}
+              </h3>
+              <p className="mt-1 text-xs text-sub">{HOME.leaderboardsDesc}</p>
+            </div>
+            <span className="shrink-0 text-cyan" aria-hidden>
+              <TrophyGlyph />
+            </span>
+          </Panel>
+        </Link>
+      </section>
+
       <p className="mt-10 text-center">
         <Link
           href="/how-to-play"
@@ -344,6 +374,27 @@ function TargetGlyph() {
       <circle cx="12" cy="12" r="8.5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="12" cy="12" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function MissionGlyph() {
+  // Card-sized target for the Challenges shortcut (v1.4).
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function TrophyGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M7 4h10v3a5 5 0 0 1-10 0V4Z" strokeLinejoin="round" />
+      <path d="M7 5H4.6a2.4 2.4 0 0 0 0 4.8H7M17 5h2.4a2.4 2.4 0 0 1 0 4.8H17" strokeLinecap="round" />
+      <path d="M12 12v4M9 20h6M10.2 20l.5-4M13.8 20l-.5-4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

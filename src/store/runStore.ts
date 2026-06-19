@@ -430,6 +430,8 @@ export const useRunStore = create<RunStore>()(
           runId: run.runId,
           date: new Date().toISOString(),
           difficulty: run.difficulty,
+          mode: run.mode,
+          region: run.regionLock ?? null,
           hiddenOverall: !run.showOverall,
           placement: results.placement,
           teamOverall: userTeam ? displayTeamOverall(userTeam.rating) : 0,
