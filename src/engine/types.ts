@@ -196,6 +196,12 @@ export interface SpecialEffect {
   /** Boosted attributes for the attribute_boost family. */
   attributes?: StatKey[];
   value: number;
+  /**
+   * Flat bonus to the TEAM's final overall (rating.total), independent of the
+   * attribute boost above. Used by the Creator card (v1.3.3) to "lift the whole
+   * team" on the scoreboard, not just its situational stats. Stacks across cards.
+   */
+  overallBonus?: number;
   /** Human readable, shown in collection/team review. */
   description: string;
 }
@@ -511,6 +517,12 @@ export interface EliminatorTeam {
   stage: string;
   /** Final series score, user's wins first. */
   score: [number, number];
+  /** The eliminator's team overall (intrinsic — difficulty shift stripped). */
+  overall: number;
+  /** True when the difficulty inflated this opponent (Legacy / region-lock). */
+  buffed: boolean;
+  /** Specials the eliminator actually fielded (AI player upgrades). */
+  specialIds: string[];
 }
 
 /** Daily-challenge metadata attached to a run. */

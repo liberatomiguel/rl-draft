@@ -441,6 +441,7 @@ export const RESULTS_UI = {
   eliminatorKicker: "Who ended your run",
   eliminatedBy: (name: string) => `Eliminated by ${name}`,
   eliminatorScore: (a: number, b: number) => `${a}–${b}`,
+  eliminatorBuffed: "Boosted by the difficulty (played above its overall)",
 };
 
 export const COLLECTION_UI = {
@@ -718,10 +719,25 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.3.3",
+      name: "Proving Grounds",
+      date: "2026",
+      current: true,
+      notes: [
+        "Legacy difficulty retuned — it's the all-time wall again: only a truly elite draft lifts the trophy (worldwide ~97, SAM around its realistic ceiling), brutal but fair.",
+        "Chemistry now rewards shared history — players who were once teammates, or who passed through the same org, link up even when their cards are from different teams.",
+        "The substitute matters more: a strong sub is real squad depth now, and subs can finally appear as special cards.",
+        "The Creator card lifts your whole team's overall, on top of its attribute boost.",
+        "The team-overall breakdown now shows on the results screen in every mode.",
+        "\"Who ended your run\" reveals the winning team's overall (with a marker when the difficulty boosted it) and the special cards they actually used.",
+        "Share image polish — special cards show their holo and rarity border, and every card carries its org crest.",
+      ],
+    },
+    {
       version: "1.3.0",
       name: "Season Rewards",
       date: "2026",
-      current: true,
+      current: false,
       notes: [
         "Season Rewards progression: your rank now unlocks content — special-card rarities, the Collection, and a higher special-card chance as you climb from Bronze to Supersonic Legend.",
         "New chemistry system — build your team around nationality and organization. Three players from the same country reach Great; add a shared org for Perfect.",

@@ -37,6 +37,11 @@ export const metadata: Metadata = {
   authors: [{ name: SITE.author, url: SITE.authorUrl }],
   creator: SITE.author,
   keywords: [
+    "RLCS draft",
+    "RLCS draft game",
+    "RLCS draft simulator",
+    "draft RLCS teams",
+    "RLCS fantasy draft",
     "Rocket League",
     "RLCS",
     "Rocket League esports",

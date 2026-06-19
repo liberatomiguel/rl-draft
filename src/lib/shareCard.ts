@@ -16,6 +16,8 @@ export interface ShareMiniCard {
   isSpecial: boolean;
   /** Short role tag shown under the card (P1 / COACH / ORG …). */
   role: string;
+  /** Optional image to draw on the card (org logo). Skipped if it fails to load. */
+  imageUrl?: string;
 }
 
 export interface ShareCardData {
@@ -74,6 +76,38 @@ export function shareCardColor(opts: {
   return "#5b6880";
 }
 
+/** Hex colour (#rrggbb) → rgba() string with the given alpha. */
+function hexToRgba(hex: string, alpha: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return `rgba(255,255,255,${alpha})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+/** Load an image, resolving null on failure (missing org logos fall back). */
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+/** Preload every card image referenced by the data (org logos). */
+async function loadCardImages(data: ShareCardData): Promise<Map<string, HTMLImageElement>> {
+  const urls = [...new Set(data.cards.map((c) => c.imageUrl).filter((u): u is string => !!u))];
+  const map = new Map<string, HTMLImageElement>();
+  await Promise.all(
+    urls.map(async (u) => {
+      const img = await loadImage(u);
+      if (img) map.set(u, img);
+    }),
+  );
+  return map;
+}
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -84,7 +118,10 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-export function renderShareCard(data: ShareCardData): HTMLCanvasElement {
+export function renderShareCard(
+  data: ShareCardData,
+  images?: Map<string, HTMLImageElement>,
+): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -169,6 +206,35 @@ export function renderShareCard(data: ShareCardData): HTMLCanvasElement {
     ctx.fillStyle = cg;
     roundRect(ctx, x, top, cw, ch, 14);
     ctx.fill();
+    // Holographic sheen on specials — a diagonal rarity-tinted gradient (clipped
+    // to the card) that mirrors the in-game holo, not just a border glow (v1.3.3).
+    if (c.isSpecial) {
+      ctx.save();
+      roundRect(ctx, x, top, cw, ch, 14);
+      ctx.clip();
+      const holo = ctx.createLinearGradient(x, top, x + cw, top + ch);
+      holo.addColorStop(0, "rgba(255,255,255,0.12)");
+      holo.addColorStop(0.35, hexToRgba(c.color, 0.18));
+      holo.addColorStop(0.5, "rgba(255,255,255,0.05)");
+      holo.addColorStop(0.65, hexToRgba(c.color, 0.18));
+      holo.addColorStop(1, "rgba(255,255,255,0.12)");
+      ctx.fillStyle = holo;
+      ctx.fillRect(x, top, cw, ch);
+      ctx.restore();
+    }
+    // Org crest — a small, low-opacity watermark in the mid card body (EVERY card
+    // carries its org). Kept small + centred so it never overlaps value/name/role.
+    const logo = c.imageUrl ? images?.get(c.imageUrl) : undefined;
+    if (logo && logo.width > 0 && logo.height > 0) {
+      const box = { w: cw - 56, h: 40 };
+      const scale = Math.min(box.w / logo.width, box.h / logo.height);
+      const lw = logo.width * scale;
+      const lh = logo.height * scale;
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.drawImage(logo, x + (cw - lw) / 2, top + 96 - lh / 2, lw, lh);
+      ctx.restore();
+    }
     // Frame
     ctx.strokeStyle = c.color;
     ctx.lineWidth = c.isSpecial ? 3 : 2;
@@ -233,13 +299,15 @@ async function ensureFont(): Promise<void> {
 /** Render to a data URL (for the preview <img>). */
 export async function shareCardDataUrl(data: ShareCardData): Promise<string> {
   await ensureFont();
-  return renderShareCard(data).toDataURL("image/png");
+  const images = await loadCardImages(data);
+  return renderShareCard(data, images).toDataURL("image/png");
 }
 
 /** Render to a PNG Blob (for native share / download). */
 export async function shareCardBlob(data: ShareCardData): Promise<Blob> {
   await ensureFont();
-  const canvas = renderShareCard(data);
+  const images = await loadCardImages(data);
+  const canvas = renderShareCard(data, images);
   return await new Promise<Blob>((resolve) =>
     canvas.toBlob((b) => resolve(b!), "image/png"),
   );

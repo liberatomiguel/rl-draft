@@ -145,6 +145,26 @@ for (const sp of specialCards) {
   map.set(sp.playerId, list);
 }
 
+/**
+ * Career history per player (v1.3.3): the set of orgs and lineups a player has
+ * EVER been part of, across all their cards. Drives "shared past" chemistry — two
+ * players who once shared an org/lineup link even when their drafted cards differ
+ * (e.g. drufinho's KRU card + a teammate from his old FURIA roster).
+ */
+export const careerByPlayerId = new Map<
+  string,
+  { orgIds: Set<string>; lineupIds: Set<string> }
+>();
+for (const card of playerCards) {
+  let entry = careerByPlayerId.get(card.playerId);
+  if (!entry) {
+    entry = { orgIds: new Set(), lineupIds: new Set() };
+    careerByPlayerId.set(card.playerId, entry);
+  }
+  entry.orgIds.add(card.orgId);
+  entry.lineupIds.add(card.lineupId);
+}
+
 // ---------------------------------------------------------------------------
 // Referential integrity — fail loudly on broken links between files
 // ---------------------------------------------------------------------------

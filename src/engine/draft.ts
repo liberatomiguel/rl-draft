@@ -30,6 +30,7 @@ import {
   subById,
 } from "@/data";
 import type { Rng } from "@/lib/rng";
+import { finalOverall } from "./cards";
 import type {
   CardKind,
   Difficulty,
@@ -225,6 +226,14 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
       cards.push({
         kind: "sub",
         refId: sub.id,
+        // v1.3.3: subs can roll a special too (specials belong to the PERSON, so a
+        // sub who was also a famous player — e.g. Turbopolsa — can show one).
+        specialId: rollSpecial(
+          specialsByPlayerId.get(sub.personId),
+          specialChance,
+          rng,
+          draft.specialRarities,
+        ),
         availability: availabilityFor("sub", sub.personId, draft),
       });
     } else {
@@ -279,13 +288,34 @@ function lineupWeight(lineup: Lineup, staffNeeds: CardKind[]): number {
   return 1 + (covered / staffNeeds.length) * (DRAFT.staffScarcityBoost - 1);
 }
 
+/** Roster overall (avg of the three player cards). Memoised — a lineup constant. */
+const lineupOverallCache = new Map<string, number>();
+function lineupOverall(lineup: Lineup): number {
+  const cached = lineupOverallCache.get(lineup.id);
+  if (cached !== undefined) return cached;
+  const cards = lineup.playerCardIds.map((id) => playerCardById.get(id)!);
+  const avg =
+    cards.reduce((sum, c) => sum + finalOverall(c), 0) / Math.max(1, cards.length);
+  lineupOverallCache.set(lineup.id, avg);
+  return avg;
+}
+
 /**
- * Soft anti-frustration weight by historical strength (v1.3). 1 = neutral.
- * Lerps from uniform (tierBias 0) toward DRAFT.draftTierWeights (tierBias 1).
- * Never filters the pool — weak rosters still appear, just a touch less often.
+ * Soft anti-frustration weight by roster OVERALL (v1.3.3; was historical strength).
+ * The lineup's overall is normalised within the draw pool [poolMin, poolMax] and
+ * lerped to a raw weight in [draftWeight.min, .max], then scaled by `bias`. 1 =
+ * neutral. Never filters the pool — weak rosters still appear, just a touch less.
  */
-function lineupTierWeight(lineup: Lineup): number {
-  return 1 + (DRAFT.draftTierWeights[lineup.historicalStrength] - 1) * DRAFT.tierBias;
+function lineupTierWeight(
+  lineup: Lineup,
+  poolMin: number,
+  poolMax: number,
+  bias: number,
+): number {
+  if (poolMax <= poolMin) return 1;
+  const norm = (lineupOverall(lineup) - poolMin) / (poolMax - poolMin);
+  const raw = DRAFT.draftWeight.min + norm * (DRAFT.draftWeight.max - DRAFT.draftWeight.min);
+  return 1 + (raw - 1) * bias;
 }
 
 export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
@@ -323,7 +353,15 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   // Tier bias is classic/quick only — the daily's draw must stay byte-identical
   // (tierBiasOn=false there → the staff branch multiplies by 1 and the open branch
   // stays rng.pick, so the seeded RNG sequence is untouched).
-  const tierBiasOn = draft.mode !== "daily" && DRAFT.tierBias > 0;
+  const tierBiasOn = draft.mode !== "daily";
+  // Region-locked pools (SAM) get a firmer nudge; worldwide stays gentle. Overall
+  // range is taken over the stable full `base` pool so a lineup's weight doesn't
+  // drift as others are drawn without replacement.
+  const bias = draft.poolLineupIds ? DRAFT.regionTierBias : DRAFT.tierBias;
+  const overalls = base.map(lineupOverall);
+  const poolMin = overalls.length ? Math.min(...overalls) : 0;
+  const poolMax = overalls.length ? Math.max(...overalls) : 0;
+  const tierWeight = (l: Lineup) => lineupTierWeight(l, poolMin, poolMax, bias);
   const randomLineup = (): Lineup => {
     if (availableEggs.length > 0 && rng.chance(DRAFT.easterEggChance)) {
       return rng.pick(availableEggs);
@@ -331,10 +369,10 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
     if (staffNeeds.length > 0) {
       return rng.weightedPick(
         pool,
-        (l) => lineupWeight(l, staffNeeds) * (tierBiasOn ? lineupTierWeight(l) : 1),
+        (l) => lineupWeight(l, staffNeeds) * (tierBiasOn ? tierWeight(l) : 1),
       );
     }
-    return tierBiasOn ? rng.weightedPick(pool, lineupTierWeight) : rng.pick(pool);
+    return tierBiasOn ? rng.weightedPick(pool, tierWeight) : rng.pick(pool);
   };
 
   const draw = (lineup: Lineup): DraftState => {

@@ -77,6 +77,33 @@ function strongUserTeam(): TournamentTeam {
   };
 }
 
+/** A worldwide-elite dream (~97.5 total) — the only kind of roster that should
+ *  have a real Legacy title shot after the v1.3.3 retune. */
+function dreamUserTeam(): TournamentTeam {
+  return {
+    ...goodUserTeam(),
+    rating: {
+      avgPlayerOverall: 95,
+      coachMod: 0.9,
+      subMod: 0.4,
+      orgMod: 0.6,
+      chemMod: 0.6,
+      specialMod: 0,
+      difficultyShift: 0,
+      total: 97.5,
+    },
+    chemistry: { raw: 11, max: 16, percent: 90, tier: "Perfect", items: [] },
+    stats: {
+      offense: 92,
+      defense: 92,
+      mechanics: 92,
+      consistency: 92,
+      experience: 92,
+      clutch: 92,
+    },
+  };
+}
+
 function outcomeRates(
   difficulty: Difficulty,
   runs: number,
@@ -127,21 +154,24 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     expect(r.titles).toBeGreaterThan(0.2);
   });
 
-  it("Legacy (v1.3.2): the title is the wall, not the playoffs", () => {
-    // v1.3.2 — live feedback: even a strong draft felt impossible, because the
-    // problem isn't the dream team's WIN chance, it's how rarely you can BUILD one.
-    // So win rates were raised (shift 0.2→-0.3) AND chemistry made more reachable.
-    // A merely-GOOD team (92.5) now reaches playoffs often but almost never lifts
-    // the trophy; a STRONG, coherent draft (~95.5) has a real ~1-in-5 shot. Legacy
-    // stays strictly harder than Hard (a 92.5 wins it far less than on Hard).
-    const good = outcomeRates("legacy", 600, 626);
-    expect(good.playoffs).toBeGreaterThan(0.3); // you genuinely compete…
-    expect(good.playoffs).toBeLessThan(0.92); // …but the title is the gauntlet
-    expect(good.titles).toBeLessThan(0.06); // a 92.5 team almost never wins it
+  it("Legacy (v1.3.3): only a worldwide-elite (~97) draft has a real shot", () => {
+    // v1.3.3 — Legacy had drifted too easy (an overall-97 team won ~53%). Re-tuned
+    // (opponentRatingShift 0 → 2.3) so it is again the all-time wall: only the very
+    // best win. The curve is steep — each overall point ~doubles the title odds:
+    //   good (92.5)  → makes playoffs sometimes, NEVER lifts the trophy
+    //   strong(95.5) → makes playoffs often, almost never wins (<2%)
+    //   dream (97.5) → the reachability case: a true dream wins ~10%
+    const good = outcomeRates("legacy", 1000, 626);
+    expect(good.playoffs).toBeGreaterThan(0.2); // you can still reach playoffs…
+    expect(good.playoffs).toBeLessThan(0.6); // …but it's a fight
+    expect(good.titles).toBeLessThan(0.02); // a 92.5 team never wins it
 
-    // Reachability is the whole point: a great draft must be able to win it.
-    const strong = outcomeRates("legacy", 600, 909, strongUserTeam);
-    expect(strong.titles).toBeGreaterThan(0.04); // a real shot…
-    expect(strong.titles).toBeLessThan(0.4); // …but a true achievement
+    const strong = outcomeRates("legacy", 1000, 909, strongUserTeam);
+    expect(strong.titles).toBeLessThan(0.05); // even a 95.5 almost never wins…
+
+    // Reachability is the whole point: a true dream (~97) MUST be able to win it.
+    const dream = outcomeRates("legacy", 1000, 777, dreamUserTeam);
+    expect(dream.titles).toBeGreaterThan(0.04); // a real shot…
+    expect(dream.titles).toBeLessThan(0.3); // …but a genuine achievement
   });
 });

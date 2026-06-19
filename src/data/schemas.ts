@@ -140,6 +140,8 @@ export const specialEffectSchema = z.object({
   ]),
   attributes: z.array(statKeySchema).optional(),
   value: z.number().min(0).max(5),
+  /** Flat team-overall bonus (Creator card); separate from the attribute boost. */
+  overallBonus: z.number().min(0).max(5).optional(),
   description: z.string().min(1),
 });
 

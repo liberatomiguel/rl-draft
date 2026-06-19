@@ -79,6 +79,18 @@
       {
         "q": "How is my progress saved?",
         "a": "Progress is saved locally on the device you play on — your collection, profile, and settings live in your browser. No account or sign-in is required, so there's nothing to log into to keep playing."
+      },
+      {
+        "q": "Is Rocket Draft an RLCS draft game?",
+        "a": "Yes. Rocket Draft is a free RLCS draft game and tournament simulator. You draft a roster from real RLCS lineups across every season since 2016, build team chemistry, and play an RLCS-style Swiss-into-double-elimination bracket — an RLCS draft you can run in the browser with no install."
+      },
+      {
+        "q": "What makes this RLCS draft different from a simple team picker?",
+        "a": "Most RLCS draft tools just let you pick a lineup. Rocket Draft turns the RLCS draft into a full game: a chemistry system that rewards same-country, same-org and shared-history rosters, dozens of collectible special cards from famous Rocket League esports moments, four difficulties up to the all-time Legacy gauntlet, and a tournament that actually simulates to a champion. It is inspired by Rams' draftrlcs.app and expands the idea."
+      },
+      {
+        "q": "Can I do a region-locked RLCS draft (like a SAM / South America draft)?",
+        "a": "Yes. Region-Locked Draft narrows the pool to one scene's full depth — its World Championship teams plus the regional Top 8. South America (SAM) is live now as a dedicated RLCS draft of Brazilian and South American teams, with more regions on the way."
       }
     ]
   },

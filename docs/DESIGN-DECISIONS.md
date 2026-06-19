@@ -652,6 +652,64 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     (`staffCountryBonus` 0.5) that can't complete a country stack on its own —
     only a real org connection does. maxRaw 11.
 
+## v1.3.3 (Legacy difficulty retune)
+
+75. **Legacy is the all-time wall again — only a worldwide-elite (~97) draft wins,
+    and SAM mirrors that curve (per-difficulty region boost).** Supersedes the
+    Legacy half of #71 and the Legacy part of #73. Live feedback: Legacy had become
+    too easy (an overall-97 draft won ~53%). Re-tuned on **real-team sims** (teams
+    built from actual cards, so situational stats — not just overall — match the
+    game): `legacy.opponentRatingShift` 0 → 2.3 puts an overall-97 worldwide draft
+    at ~15%, the best-ever 99 at ~46%, a 95 at low single digits, a 92 ≈ 0.
+    For SAM, `REGION_LOCK.opponentRatingBoost` became per-difficulty (was one flat
+    +2): **legacy 2 → 2.3**. **Anchor choice (by direction, revised after playtest):**
+    the first v1.3.3 draft anchored the theoretical SAM ceiling (~95) at 15%, but
+    live SAM play showed real drafts land in the 80s — the pool is weak and random,
+    so overall 92 is already a rare-good result and 95+ is essentially never built.
+    Anchoring at 95 made the title near-impossible in practice. So we **anchor the
+    best REALISTICALLY-ACHIEVABLE SAM team (overall ~92) at ~15%** instead. The
+    engine's effective SAM opponent shift = `legacy.opponentRatingShift` (2.3) + this
+    boost = **+4.6**; real-team sims then give a typical ~90 team ~2%, a 92 ~15% (the
+    anchor), and the rare 95/97 unicorns a lot (once-in-a-lifetime SAM drafts —
+    acceptable since they almost never occur). The weak SAM pool + larger shift nets
+    to a field ~90-94, below the worldwide ~97 field — matching the lower SAM
+    achievable ceiling, and mirroring worldwide where the best achievable ~97 also
+    wins ~15%. easy/normal/hard keep +2 — Hard SAM stays easy at the top this pass.
+
+76. **The draft anti-frustration tilt weights by roster OVERALL, not historical
+    strength.** The v1.3 tilt softly favoured "historically stronger" lineups
+    via `historicalStrength`. That tier tracks roster overall worldwide (elite teams
+    ARE high-overall: elite 93.2 / strong 88.5 / solid 84.3 / underdog 77.5) but is
+    miscalibrated in the compressed SAM pool — there "strong" teams averaged LOWER
+    overall (81.9) than "solid" ones (83.9) and there is no elite tier, so the tilt
+    barely moved SAM offers (good-team ≥84 share 15.5% uniform → 16.3% tilted) and
+    sometimes favoured the worse team. Fix: weight by the lineup's roster overall,
+    normalised within the draw pool, so it self-adapts to any pool. Worldwide is
+    preserved (mean offered overall +0.64 → +0.60, near-identical). Region-locked
+    pools (SAM) use a firmer `regionTierBias` (0.6 vs 0.35) because that pool is
+    bottom-heavy and needs more push: SAM good-team share 15.5% → ~19%, weak (≤78)
+    36.6% → ~27%. Never filters the pool (weak rosters still appear); daily stays
+    byte-identical (tilt off there).
+
+77. **Chemistry rewards SHARED CAREER history, not just the drafted card.** Two
+    players who once shared a lineup (ex-teammates) or an org link even when their
+    drafted cards are from different teams — built from each player's full career
+    set (all their cards' orgs/lineups). Placed in the strongest-wins ladder:
+    drafted lineup (4) > drafted org (3) > **career lineup (3)** > country (3) >
+    **career org (2)** > region (1.5). Deliberately NOT additive — a same-country
+    stack still tops out at Great (#74 invariant preserved), because career links
+    don't stack on the country link; they replace the weak region/no-link for MIXED
+    rosters of veterans who crossed paths. AI is unaffected (single real rosters
+    already link by drafted lineup).
+
+78. **The sub is squad DEPTH that scales with quality, and can be special.** The
+    sub was the weakest slot — a flat +1 consistency / +1 experience plus a small
+    overall bump. Now the depth bonus scales with the sub's overall (a strong or
+    special sub is a real bench; a token one barely registers), giving the slot a
+    reason to draft well. Subs can also roll specials now (specials belong to the
+    person, so e.g. a Turbopolsa sub can appear as one of his Worlds-MVP cards).
+    Still bounded so the sub never rivals a starter — it's depth, not a 4th player.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

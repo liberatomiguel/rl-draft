@@ -287,7 +287,15 @@ export function compileResults(
           const opp = tournament.teams[oppId];
           if (!opp?.lineupId) return null;
           const h = highlight(tournament, last);
-          return { lineupId: opp.lineupId, name: opp.name, stage: h.stage, score: h.score };
+          return {
+            lineupId: opp.lineupId,
+            name: opp.name,
+            stage: h.stage,
+            score: h.score,
+            overall: displayTeamOverall(opp.rating),
+            buffed: opp.rating.difficultyShift > 0.05,
+            specialIds: opp.specialIds,
+          };
         })()
       : null;
 

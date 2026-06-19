@@ -10,6 +10,76 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.3.3] — 2026 · Legacy difficulty retune + systems pass
+
+Legacy had drifted too easy — a worldwide overall-97 draft won the title ~53% of
+runs, and a strong SAM draft cruised — losing the "all-time gauntlet, only the
+very best win" identity. Re-anchored on **real-team simulations** (user teams
+built from actual cards so both rating AND situational stats match the live
+game, not just the team overall). Plus a systems pass: chemistry "shared past"
+links, a meaningful sub slot, and results/share polish.
+
+### Added
+- **Chemistry "shared past" links.** Two players whose drafted cards differ but
+  who once shared a LINEUP (ex-teammates) or an ORG in their careers now link up:
+  ex-teammates is a strong link (= a real org link), shared-org-history a weak
+  nudge. Kept in the strongest-wins ladder (NOT additive), so it never inflates a
+  same-country stack past Great — it rewards MIXED rosters of veterans who crossed
+  paths (e.g. a drafted-KRU player + an old FURIA teammate). See DESIGN-DECISIONS #77.
+- **Subs can roll special cards** (v0.5 only did players + coaches). Specials belong
+  to the PERSON, so a sub who was also a famous player — e.g. Turbopolsa — can now
+  appear as one of their specials, with that special's overall and chemistry context.
+
+### Changed
+- **The sub slot now matters.** Its depth bonus (consistency + experience) scales
+  with the sub's overall instead of a flat +1/+1, so a strong or special sub is a
+  real bench, a token one barely registers. See DESIGN-DECISIONS #78.
+- **Results screen shows the team-overall breakdown in ALL modes** (was hidden runs
+  / Hard+Legacy only) — a clean end-of-run summary of how the overall was built.
+- **"Who ended your run" upgraded:** shows the eliminator's team overall as a plain
+  number with a ⚡ marker when the difficulty boosted it (Legacy / region-lock — it
+  played above its overall), and now reveals the **special cards the opponent
+  actually fielded** (AI player upgrades), not just their base cards.
+- **Share image polish:** special cards render their full identity — rarity border,
+  a holographic sheen (not just a border glow), and the rarity-coloured overall —
+  and **every card shows its org crest** as a small watermark (styled fallback when
+  a logo PNG is missing).
+
+### Balance
+- **Legacy `opponentRatingShift` 0 → 2.3.** A worldwide overall-97 draft now wins
+  the title ~15% (was ~53%); the all-time-best 99 (Vitality '22-23) ~46%; a 95 a
+  few %; a 92 ≈ 0. The Bo7 curve is steep on purpose — each overall point roughly
+  doubles the title odds.
+- **`REGION_LOCK.opponentRatingBoost` is now per-difficulty** (was a single flat
+  +2 for all modes). easy/normal/hard keep +2 (SAM stays the accessible mode);
+  **legacy 2 → 2.3**. Anchored on the best REALISTICALLY-ACHIEVABLE SAM team, not
+  the theoretical ceiling: live SAM play showed real drafts land in the 80s (weak,
+  random pool — overall 92 is already a rare-good result, 95+ is never built).
+  Effective SAM opponent shift = `legacy.opponentRatingShift` (2.3) + boost = +4.6,
+  giving a typical ~90 team ~2%, the best realistic ~92 ~15% (the anchor), and the
+  rare 95/97 unicorns a lot (once-in-a-lifetime SAM drafts). Mirrors worldwide,
+  where the best achievable ~97 also wins ~15%.
+- Re-anchored the `balance.test.ts` Legacy assertions to the new targets (good
+  92.5 never wins; strong 95.5 <2%; a dream ~97.5 ~10% — the reachability case).
+- **Special-card appearance chance trimmed** to curb inflation: base ranks
+  (Bronze–Diamond) 0.05 → 0.04, Champion 0.08 → 0.06, Grand Champion 0.12 → 0.10
+  (SSL unchanged at 0.16). The ramp stays monotonic — it climbs only at the top.
+- **Creator card buffed — now +5 to the team's final OVERALL** (on top of its
+  existing +5 to every combat attribute). It forces the 71-overall LiberatoRL card
+  into the roster, so before this it was a *trap* (you sacrificed ~5 overall and
+  ~30pp of win rate for the tribute); the +5 makes it break-even with a normal
+  draft (~94 either way) while keeping the combat flavour. SAM-only rare spawn, so
+  not abusable. New `overallBonus` field on the special-effect model carries it.
+- **Draft anti-frustration tilt now weights by roster OVERALL, not historical
+  strength** — and it was effectively broken in SAM. `historicalStrength` tracks
+  overall worldwide but is miscalibrated in the compressed SAM pool (its "strong"
+  teams averaged a LOWER overall than its "solid" ones, and it has no elite tier),
+  so the SAM tilt barely moved offers (good-team share 15.5%→16.3%, ≈ uniform).
+  Overall-based weighting self-adapts to any pool; worldwide is preserved. SAM also
+  gets a firmer nudge (`regionTierBias` 0.6 vs the global 0.35) since its pool is
+  bottom-heavy: SAM good-team (≥84) share 15.5%→~19%, weak (≤78) 36.6%→~27%. Daily
+  stays byte-identical (tilt off there); weak rosters still appear (never filtered).
+
 ## [1.3.2] — 2026 · Second live-feedback pass
 
 More staging feedback: winning was still rare (not because a strong team's WIN

@@ -22,6 +22,12 @@ export interface RatingInput {
   /** Max chemistry rating bonus for the current difficulty. */
   chemistryMaxBonus: number;
   specialCount: number;
+  /**
+   * Flat team-overall bonus from special-card effects (e.g. the Creator card's
+   * `overallBonus`). Separate from `specialCount`/specialMod — this lifts the
+   * final overall directly. Summed across the roster's specials.
+   */
+  specialOverallBonus?: number;
   /** Flat shift for AI opponents (difficulty). 0 for the user. */
   difficultyShift?: number;
 }
@@ -53,10 +59,13 @@ export function computeTeamRating(input: RatingInput): TeamRatingBreakdown {
   const chemMod =
     (clamp(input.chemistryPercent, 0, 100) / 100) * input.chemistryMaxBonus;
 
-  const specialMod = Math.min(
-    input.specialCount * TEAM_RATING.special.perCard,
-    TEAM_RATING.special.max,
-  );
+  // Passive per-card rating (capped) PLUS any direct overall bonuses from special
+  // effects (the Creator card). The cap applies only to the passive part; the
+  // overall bonus is a distinct, uncapped effect folded into the same breakdown
+  // line so the rating breakdown still sums to the total.
+  const specialMod =
+    Math.min(input.specialCount * TEAM_RATING.special.perCard, TEAM_RATING.special.max) +
+    (input.specialOverallBonus ?? 0);
 
   const difficultyShift = input.difficultyShift ?? 0;
 

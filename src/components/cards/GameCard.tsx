@@ -129,6 +129,10 @@ const STAT_SHORT: Record<string, string> = {
 function specialBuffLabel(effect: SpecialEffect, showOverall: boolean): string | null {
   const attrs = effect.attributes ?? [];
   const value = showOverall ? `+${effect.value}` : "+??";
+  // A direct overall lift (Creator card) is the headline buff — show it as OVR.
+  if (effect.overallBonus) {
+    return showOverall ? `+${effect.overallBonus} OVR` : "+?? OVR";
+  }
   // A team_attribute_boost lifts the WHOLE team — read "Team" regardless of how
   // many stats it lists (and it doubles as less of an identity tell on Hard).
   if (effect.type === "team_attribute_boost") return `${value} Team`;

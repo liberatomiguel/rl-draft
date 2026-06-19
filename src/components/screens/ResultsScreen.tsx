@@ -9,7 +9,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { achievementById, lineupById, specialCardById } from "@/data";
+import { achievementById, lineupById, playerCardById, specialCardById } from "@/data";
 import { DIFFICULTY, RANK_REWARDS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import {
@@ -129,6 +129,9 @@ export function ResultsScreen({ run }: { run: RunState }) {
         const c = s.card!;
         const isOrg = c.kind === "org";
         const isSpecial = Boolean(c.special);
+        // Every card carries its org crest (org id is the org card's ref, or the
+        // card's own org for players/coach/sub).
+        const orgId = isOrg ? (c.orgId ?? c.refId) : c.orgId;
         return {
           name: c.name,
           value: isOrg ? (c.buffLevel && c.buffLevel !== "~" ? c.buffLevel : "~") : String(c.overall ?? ""),
@@ -141,6 +144,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
           }),
           isSpecial,
           role: roleOf[s.slot] ?? s.slot,
+          imageUrl: orgId ? `/orgs/${orgId}.png` : undefined,
         };
       });
     setShareData({
@@ -307,31 +311,29 @@ export function ResultsScreen({ run }: { run: RunState }) {
         ) : null}
       </div>
 
-      {/* Team-overall breakdown — shown on results for HIDDEN runs (Hard/Legacy),
-          where the overalls are revealed here for the first time. Visible runs
-          already saw this on the review screen (v1.3.2). */}
-      {!run.showOverall ? (
-        <Panel strong glow="blue" className="mb-10 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="kicker">{REVIEW.teamOverall}</p>
-            <p className="display text-4xl font-bold leading-none text-ink">
-              {displayTeamOverall(team.rating)}
-            </p>
-          </div>
-          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-sub sm:grid-cols-3">
-            <ResultRow label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
-            {run.mode !== "quick" ? (
-              <>
-                <ResultRow label={REVIEW.rowCoach} value={`+${team.rating.coachMod.toFixed(1)}`} />
-                <ResultRow label={REVIEW.rowSub} value={`+${team.rating.subMod.toFixed(1)}`} />
-                <ResultRow label={REVIEW.rowOrg} value={`+${team.rating.orgMod.toFixed(1)}`} />
-              </>
-            ) : null}
-            <ResultRow label={REVIEW.rowChemistry} value={`+${team.rating.chemMod.toFixed(1)}`} />
-            <ResultRow label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
-          </dl>
-        </Panel>
-      ) : null}
+      {/* Team-overall breakdown — shown on results for ALL modes (v1.3.3; was
+          hidden runs only). A clean end-of-run summary of how the team's overall
+          was built, regardless of whether overalls were visible during play. */}
+      <Panel strong glow="blue" className="mb-10 p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="kicker">{REVIEW.teamOverall}</p>
+          <p className="display text-4xl font-bold leading-none text-ink">
+            {displayTeamOverall(team.rating)}
+          </p>
+        </div>
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-sub sm:grid-cols-3">
+          <ResultRow label={REVIEW.rowPlayers} value={team.rating.avgPlayerOverall.toFixed(1)} />
+          {run.mode !== "quick" ? (
+            <>
+              <ResultRow label={REVIEW.rowCoach} value={`+${team.rating.coachMod.toFixed(1)}`} />
+              <ResultRow label={REVIEW.rowSub} value={`+${team.rating.subMod.toFixed(1)}`} />
+              <ResultRow label={REVIEW.rowOrg} value={`+${team.rating.orgMod.toFixed(1)}`} />
+            </>
+          ) : null}
+          <ResultRow label={REVIEW.rowChemistry} value={`+${team.rating.chemMod.toFixed(1)}`} />
+          <ResultRow label={REVIEW.rowSpecials} value={`+${team.rating.specialMod.toFixed(1)}`} />
+        </dl>
+      </Panel>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* XP + rank */}
@@ -897,10 +899,19 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
   const { RESULTS_UI: R } = useCopy();
   const lineup = lineupById.get(eliminator.lineupId);
   if (!lineup) return null;
+  // The specials the eliminator actually fielded (AI upgrades player cards), keyed
+  // by playerId so we render the SAME special they beat you with (v1.3.3).
+  const specialByPlayerId = new Map<string, string>();
+  for (const sid of eliminator.specialIds) {
+    const sp = specialCardById.get(sid);
+    if (sp) specialByPlayerId.set(sp.playerId, sid);
+  }
   // Full opposing roster (v0.6.1): players, then coach/sub when the lineup
   // fielded them, then the org — so the eliminator reads as a complete team.
   const cards: ResolvedCard[] = [
-    ...lineup.playerCardIds.map((id) => resolvePlayerCard(id)),
+    ...lineup.playerCardIds.map((id) =>
+      resolvePlayerCard(id, specialByPlayerId.get(playerCardById.get(id)?.playerId ?? "")),
+    ),
     ...(lineup.coachId ? [resolveCoach(lineup.coachId)] : []),
     ...(lineup.subId ? [resolveSub(lineup.subId)] : []),
     resolveOrg(lineup.orgId, lineup.orgBuffLevel, lineup.seasonId),
@@ -915,10 +926,20 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
             {R.eliminatedBy(eliminator.name)}
           </p>
         </div>
-        <Badge tone="bad" className="shrink-0">
-          {eliminator.stage} ·{" "}
-          {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="display text-2xl font-bold leading-none text-ink">
+            {eliminator.overall}
+            {eliminator.buffed ? (
+              <span className="ml-1 align-top text-sm text-orange" title={R.eliminatorBuffed}>
+                ⚡
+              </span>
+            ) : null}
+          </span>
+          <Badge tone="bad">
+            {eliminator.stage} ·{" "}
+            {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
+          </Badge>
+        </div>
       </div>
       {/* Card row — uses the EXACT proven structure from the team-review screen
           (ReviewScreen): a fluid size="sm" card inside a max-w-32 cell, laid out

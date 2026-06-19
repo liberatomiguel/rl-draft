@@ -121,6 +121,46 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
     expect(result.tier).toBe("Good"); // lifted out of Poor by region links
   });
 
+  it("ex-teammates (shared career lineup) link even with different drafted cards", () => {
+    // A and B drafted different cards/orgs/countries, but both were once on L9.
+    const result = computeChemistry({
+      players: [
+        { name: "A", lineupId: "L1", orgId: "O1", country: "BR", careerLineupIds: ["L1", "L9"] },
+        { name: "B", lineupId: "L2", orgId: "O2", country: "AR", careerLineupIds: ["L2", "L9"] },
+        { name: "C", lineupId: "L3", orgId: "O3", country: "US" },
+      ],
+    });
+    expect(result.raw).toBe(3); // careerLineupPair
+    expect(result.items.some((i) => i.label.startsWith("Ex-teammates"))).toBe(true);
+  });
+
+  it("shared career org is a weak link, below country and ex-teammates", () => {
+    const result = computeChemistry({
+      players: [
+        { name: "A", lineupId: "L1", orgId: "O1", country: "FR", careerOrgIds: ["O1", "OZ"] },
+        { name: "B", lineupId: "L2", orgId: "O2", country: "US", careerOrgIds: ["O2", "OZ"] },
+        { name: "C", lineupId: "L3", orgId: "O3", country: "BR" },
+      ],
+    });
+    expect(result.raw).toBe(2); // careerOrgPair (no country/region link between A & B)
+    expect(result.items.some((i) => i.label.startsWith("Shared org history"))).toBe(true);
+  });
+
+  it("career links never inflate a same-country stack past Great", () => {
+    // 3 Brazilians who also crossed paths in careers: country wins per pair (3),
+    // career links do NOT stack on top — still Great, not Perfect.
+    const result = computeChemistry({
+      players: [
+        { name: "A", lineupId: "L1", orgId: "O1", country: "BR", careerLineupIds: ["L1", "LZ"], careerOrgIds: ["O1", "OZ"] },
+        { name: "B", lineupId: "L2", orgId: "O2", country: "BR", careerLineupIds: ["L2", "LZ"], careerOrgIds: ["O2", "OZ"] },
+        { name: "C", lineupId: "L3", orgId: "O3", country: "BR", careerLineupIds: ["L3", "LZ"], careerOrgIds: ["O3", "OZ"] },
+      ],
+    });
+    // Each pair shares career lineup LZ (3) which ties/oudranks country (3) → 3×3=9.
+    expect(result.tier).toBe("Great");
+    expect(result.percent).toBeLessThan(100);
+  });
+
   it("an all-star mix with no links is Poor", () => {
     const result = computeChemistry({
       players: [

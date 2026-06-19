@@ -2200,7 +2200,8 @@
         "clutch"
       ],
       "value": 5,
-      "description": "+5 to every team attribute — the creator's touch."
+      "overallBonus": 5,
+      "description": "+5 to the team's overall AND +5 to every team attribute — the creator's touch."
     },
     "flavor": "A hidden tribute: LiberatoRL and Wings E-Sports, from the early days of South American Rocket League. The one who built this game gets a single card — and it lifts the whole team."
   },

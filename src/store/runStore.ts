@@ -270,8 +270,11 @@ export const useRunStore = create<RunStore>()(
           mode: run.mode,
           poolLineupIds: run.draft.poolLineupIds,
           // Region-locked runs face a weaker regional field — normalise it so the
-          // difficulty curve matches worldwide with adapted overalls (v1.3.1).
-          opponentRatingBoost: run.regionLock ? REGION_LOCK.opponentRatingBoost : 0,
+          // difficulty curve matches worldwide with adapted overalls (v1.3.1;
+          // per-difficulty boost since v1.3.3).
+          opponentRatingBoost: run.regionLock
+            ? REGION_LOCK.opponentRatingBoost[run.difficulty]
+            : 0,
         });
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },

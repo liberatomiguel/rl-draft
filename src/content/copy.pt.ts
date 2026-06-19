@@ -427,6 +427,7 @@ export const PT: Copy = {
     eliminatorKicker: "Quem encerrou sua run",
     eliminatedBy: (name: string) => `Eliminado por ${name}`,
     eliminatorScore: (a: number, b: number) => `${a}–${b}`,
+    eliminatorBuffed: "Reforçado pela dificuldade (jogou acima do overall)",
   },
 
   COLLECTION_UI: {
@@ -700,10 +701,25 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.3.3",
+        name: "Proving Grounds",
+        date: "2026",
+        current: true,
+        notes: [
+          "Dificuldade Legacy reajustada — voltou a ser o muro definitivo: só um draft realmente de elite levanta o troféu (mundial ~97, SAM perto do seu teto realista), brutal mas justo.",
+          "A química agora premia história em comum — jogadores que já foram companheiros, ou que passaram pela mesma org, criam link mesmo com cartas de times diferentes.",
+          "O reserva importa mais: um sub forte agora é profundidade de elenco de verdade, e reservas finalmente podem aparecer como cartas especiais.",
+          "A carta do Creator eleva o overall do time inteiro, além do bônus de atributos.",
+          "O detalhamento do overall do time agora aparece na tela de resultados em todos os modos.",
+          "\"Quem encerrou sua run\" mostra o overall do time vencedor (com um marcador quando a dificuldade o reforçou) e as cartas especiais que ele realmente usou.",
+          "Polimento da imagem de compartilhamento — cartas especiais mostram holo e borda de raridade, e toda carta exibe o escudo da org.",
+        ],
+      },
+      {
         version: "1.3.0",
         name: "Season Rewards",
         date: "2026",
-        current: true,
+        current: false,
         notes: [
           "Progressão Season Rewards: seu rank agora desbloqueia conteúdo — raridades de cartas especiais, a Coleção e mais chance de cartas especiais conforme você sobe do Bronze ao Supersonic Legend.",
           "Nova química — monte seu time por nacionalidade e organização. Três jogadores do mesmo país chegam a Great; compartilhe uma org para Perfect.",

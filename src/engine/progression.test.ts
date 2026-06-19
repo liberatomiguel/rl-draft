@@ -39,10 +39,10 @@ describe("rank rewards (v1.3 unlock ladder)", () => {
   });
 
   it("appearance chance ramps only at the very top", () => {
-    expect(rankRewardsForXp(250).specialChance).toBe(0.05); // Bronze..Diamond
-    expect(rankRewardsForXp(11500).specialChance).toBe(0.05); // Diamond
-    expect(rankRewardsForXp(19000).specialChance).toBe(0.08); // Champion
-    expect(rankRewardsForXp(29000).specialChance).toBe(0.12); // Grand Champion
+    expect(rankRewardsForXp(250).specialChance).toBe(0.04); // Bronze..Diamond
+    expect(rankRewardsForXp(11500).specialChance).toBe(0.04); // Diamond
+    expect(rankRewardsForXp(19000).specialChance).toBe(0.06); // Champion
+    expect(rankRewardsForXp(29000).specialChance).toBe(0.10); // Grand Champion
     expect(rankRewardsForXp(50000).specialChance).toBe(0.16); // SSL
   });
 

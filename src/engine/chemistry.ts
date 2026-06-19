@@ -22,6 +22,10 @@ export interface ChemPlayerInput {
   country?: string;
   /** Same-region is the weakest pairwise link (the floor for mixed rosters). */
   region?: string;
+  /** Every lineup this player was EVER on (career) — for "shared past" links. */
+  careerLineupIds?: string[];
+  /** Every org this player was EVER part of (career). */
+  careerOrgIds?: string[];
 }
 
 export interface ChemStaffInput {
@@ -40,6 +44,13 @@ export interface ChemistryInput {
   /** Drafted organization. */
   orgId?: string;
   orgName?: string;
+}
+
+/** First id present in both lists (career overlap), or undefined. */
+function firstShared(a?: string[], b?: string[]): string | undefined {
+  if (!a || !b || a.length === 0 || b.length === 0) return undefined;
+  const set = new Set(a);
+  return b.find((id) => set.has(id));
 }
 
 export function computeChemistry(input: ChemistryInput): ChemistryResult {
@@ -83,13 +94,20 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
     for (let j = i + 1; j < input.players.length; j++) {
       const a = input.players[i];
       const b = input.players[j];
-      // Weight order: lineup > org > country > region (org now outranks country).
+      // Weight order (strongest wins): drafted lineup > drafted org > shared
+      // career lineup (ex-teammates) > country > shared career org > region.
+      const sharedCareerLineup = firstShared(a.careerLineupIds, b.careerLineupIds);
+      const sharedCareerOrg = firstShared(a.careerOrgIds, b.careerOrgIds);
       if (a.lineupId === b.lineupId) {
         addPair(a, b, "lineup", a.lineupId, "Same lineup", "", w.sameLineupPair);
       } else if (a.orgId === b.orgId) {
         addPair(a, b, "org", a.orgId, "Shared org", "", w.sameOrgPair);
+      } else if (sharedCareerLineup) {
+        addPair(a, b, "career-lineup", sharedCareerLineup, "Ex-teammates", "", w.careerLineupPair);
       } else if (a.country && b.country && a.country === b.country) {
         addPair(a, b, "country", a.country, "Same country", ` (${a.country})`, w.sameCountryPair);
+      } else if (sharedCareerOrg) {
+        addPair(a, b, "career-org", sharedCareerOrg, "Shared org history", "", w.careerOrgPair);
       } else if (a.region && b.region && a.region === b.region) {
         addPair(a, b, "region", a.region, "Same region", ` (${a.region})`, w.sameRegionPair);
       }

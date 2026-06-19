@@ -5,8 +5,9 @@
  * exact same rules.
  */
 
-import { BUFF_LEVEL_VALUE, DIFFICULTY } from "@/config/balance";
+import { BUFF_LEVEL_VALUE, DIFFICULTY, TEAM_RATING } from "@/config/balance";
 import {
+  careerByPlayerId,
   coachById,
   lineupById,
   orgById,
@@ -37,6 +38,9 @@ interface MemberView {
   orgId: string;
   country?: string;
   region?: string;
+  /** Career history (all lineups/orgs this player was ever on) for chemistry. */
+  careerLineupIds?: string[];
+  careerOrgIds?: string[];
 }
 
 interface AssembleInput {
@@ -81,6 +85,8 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
       orgId: p.orgId,
       country: p.country,
       region: p.region,
+      careerLineupIds: p.careerLineupIds,
+      careerOrgIds: p.careerOrgIds,
     })),
     coach: input.coach
       ? {
@@ -119,6 +125,12 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
       ? DIFFICULTY[input.difficulty].chemistryMaxBonus
       : DIFFICULTY[input.difficulty].opponentChemistryMaxBonus,
     specialCount: input.specialIds.length,
+    // Direct team-overall bonuses from special effects (Creator card). Summed
+    // here so both the user and AI paths honour it (AI never holds such a card).
+    specialOverallBonus: input.specialIds.reduce(
+      (sum, id) => sum + (specialCardById.get(id)?.effect.overallBonus ?? 0),
+      0,
+    ),
     difficultyShift: input.difficultyShift,
   });
 
@@ -133,8 +145,16 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     stats[input.coach.bonusType] = clamp(stats[input.coach.bonusType] + level * 1.5, 60, 99);
   }
   if (input.sub) {
-    stats.consistency = clamp(stats.consistency + 1, 60, 99);
-    stats.experience = clamp(stats.experience + 1, 60, 99);
+    // Squad depth scales with the sub's overall (v1.3.3): a strong/special sub is
+    // a real bench, a token one barely registers.
+    const d = TEAM_RATING.sub;
+    const depth = clamp(
+      1 + (input.sub.overall - d.depthBaseline) * d.depthScale,
+      d.depthMin,
+      d.depthMax,
+    );
+    stats.consistency = clamp(stats.consistency + depth, 60, 99);
+    stats.experience = clamp(stats.experience + depth, 60, 99);
   }
   // Coach special cards: direct team attribute boosts (v3 effect model).
   for (const boost of input.teamBoosts ?? []) {
@@ -179,6 +199,7 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
       stats[attr] = clamp(stats[attr] + special.effect.value, 60, 99);
     }
   }
+  const career = careerByPlayerId.get(card.playerId);
   return {
     name: player.nickname,
     overall,
@@ -187,6 +208,8 @@ function playerMemberFromPick(refId: string, specialId?: string): MemberView {
     orgId: ctx.orgId,
     country: player.country,
     region: player.region,
+    careerLineupIds: career ? [...career.lineupIds] : undefined,
+    careerOrgIds: career ? [...career.orgIds] : undefined,
   };
 }
 
@@ -249,18 +272,36 @@ export function buildUserTeam(
     roster.sub && roster.sub.refId !== "vacant-sub"
       ? subById.get(roster.sub.refId)
       : undefined;
+  // v1.3.3: subs can carry a special too (specials belong to the person). The
+  // special's overall replaces the sub's, and its own moment drives chemistry.
+  const subSpecial = roster.sub?.specialId
+    ? specialCardById.get(roster.sub.specialId)
+    : undefined;
+  const subCtx = subSpecial ? playerCardById.get(subSpecial.baseCardId) : undefined;
   const sub: AssembleInput["sub"] = subCard
     ? {
         name: subCard.name,
-        overall: subCard.overall,
-        lineupId: subCard.lineupId,
-        orgId: subCard.orgId,
+        overall: subSpecial ? subSpecial.overall : subCard.overall,
+        lineupId: (subCtx ?? subCard).lineupId,
+        orgId: (subCtx ?? subCard).orgId,
         country: subCard.country,
         region: subCard.region,
       }
     : undefined;
+  if (subSpecial?.effect.type === "team_attribute_boost") {
+    teamBoosts.push({
+      attributes: subSpecial.effect.attributes ?? [],
+      value: subSpecial.effect.value,
+    });
+  }
 
-  const specialIds = [roster.player1, roster.player2, roster.player3, roster.coach]
+  const specialIds = [
+    roster.player1,
+    roster.player2,
+    roster.player3,
+    roster.coach,
+    roster.sub,
+  ]
     .map((p) => p?.specialId)
     .filter((id): id is string => Boolean(id));
 

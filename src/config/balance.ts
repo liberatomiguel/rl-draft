@@ -61,6 +61,16 @@ export const TEAM_RATING = {
     scale: 0.05,
     max: 1.2,
     /** Player cards drafted into the sub slot use the same formula. */
+    /**
+     * Situational stat bonus the sub lends as squad DEPTH (v1.3.3): consistency
+     * (a steady bench) and experience (a veteran presence), scaling with the sub's
+     * overall so a strong — or special — sub matters more than a token bench piece.
+     * bonus = clamp(1 + (overall - depthBaseline) * depthScale, depthMin, depthMax).
+     */
+    depthBaseline: 80,
+    depthScale: 0.12,
+    depthMin: 0.5,
+    depthMax: 2.5,
   },
   org: {
     perBuffLevel: 0.6, // "+" 0.6 · "++" 1.2 · "+++" 1.8
@@ -86,10 +96,23 @@ export const CHEMISTRY = {
   // building, which is the intended strategic lever (trade a little overall for
   // a coherent roster). Earlier the realistic ceiling was ~Okay; now it pays off.
   weights: {
-    /** Per pair of the 3 players. Strongest link counts: lineup > org > country > region. */
+    /**
+     * Per pair of the 3 players. Strongest link counts, in order:
+     * drafted lineup > drafted org > shared career lineup > country >
+     * shared career org > region.
+     */
     sameLineupPair: 4,
     sameOrgPair: 3,
     sameCountryPair: 3,
+    /**
+     * "Shared past" links (v1.3.3). Two players whose drafted cards differ but who
+     * once shared a LINEUP (were teammates) or an ORG in their careers. The lineup
+     * tier is strong (= a real org link); the org tier is a weak nudge. Kept in the
+     * strongest-wins ladder (NOT additive), so they never inflate a same-country
+     * stack past Great — they reward MIXED rosters of veterans who crossed paths.
+     */
+    careerLineupPair: 3,
+    careerOrgPair: 2,
     /**
      * Same-region pair: the weakest link — the floor that lifts a coherent-but-
      * mixed roster (e.g. a Brazil+Argentina SAM duo) out of Poor. In region-locked
@@ -256,12 +279,15 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     //    field (engine/opponents) — you no longer face the same superteam 3×.
     chemistryMaxBonus: 3,
     opponentChemistryMaxBonus: 0,
-    // v1.3.1 targets — a 95+ dream draft wins ~10%, a 92 elite very rarely (<2%),
-    // a 90 team never. Softer than v1.3 (shift 0.6→0.2, elite 1.8→1.4) so a true
-    // dream team breaks through ~1-in-10 while it stays comfortably the hardest
-    // mode. The Bo7 gauntlet is inherently steep — a 3-overall gap (92→95) is the
-    // difference between "almost never" and "~10%", which is the intended feel.
-    opponentRatingShift: 0,
+    // v1.3.3 retune — Legacy had drifted too easy (a worldwide overall-97 team won
+    // ~53%, losing its "only the very best win" identity). Re-anchored on real-team
+    // sims (teams built from actual cards, so stats match the live game — not just
+    // overall): shift 0 → 2.3 puts a worldwide overall-97 draft at ~15%, the
+    // all-time-best 99 (Vitality '22-23) at ~46%, a 95 at low single digits, a 92
+    // near zero. The Bo7 gauntlet is steep on purpose — each overall point roughly
+    // doubles the title odds. SAM normalises on top via REGION_LOCK (per-difficulty).
+    // See DESIGN-DECISIONS #75 (supersedes the Legacy half of #71).
+    opponentRatingShift: 2.3,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -270,21 +296,32 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
 };
 
 /**
- * Region-locked normalisation (v1.3.1). A regional pool (SAM) tops out far below
- * the worldwide field — its best teams sit ~88-90, not ~96 — so the same
- * difficulty would be trivially easy. This flat boost is added to every
- * region-locked OPPONENT's rating so the regional curve mirrors the worldwide one
- * with adapted overalls: a SAM-best (~90) draft faces roughly the same odds a
- * worldwide dream (~95) does. Tuned so SAM legacy lands near the worldwide
- * targets. Only applies when a run is region-locked; worldwide runs use 0.
+ * Region-locked normalisation (v1.3.1, per-difficulty since v1.3.3). A regional
+ * pool (SAM) tops out far below the worldwide field — best rosters ~89, best
+ * players ~91 vs ~95/98 worldwide — so without help the same difficulty would be
+ * trivially easy. This flat boost is added to every region-locked OPPONENT's
+ * rating so the regional curve mirrors the worldwide one with adapted overalls.
+ * Only applies when a run is region-locked; worldwide runs use 0.
  */
 export const REGION_LOCK = {
-  // v1.3.2: 3 → 2. A regional (SAM) field tops out far below worldwide, so a flat
-  // boost can't give a strong SAM team worldwide-parity without making a typical
-  // one unwinnable. +2 keeps typical SAM teams honest (a ~90 wins Legacy ~18%, not
-  // ~40%) while a genuinely great SAM draft (rare — needs specials) still wins —
-  // SAM stays the more accessible, region-pride mode by design.
-  opponentRatingBoost: 2,
+  // Per-difficulty (v1.3.3) so each mode's regional field can be tuned on its own.
+  //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
+  //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
+  //    most runs); left untouched this pass, retune with a target if wanted.
+  //  · legacy 2 → 2.3: anchored (real-team sims) on the best REALISTICALLY-ACHIEVABLE
+  //    SAM team, NOT the theoretical ceiling. Live feedback: real SAM drafts land in
+  //    the 80s (the pool is weak and random; overall 92 is already a rare-good
+  //    result, 95+ is essentially never built). The engine's effective SAM opponent
+  //    shift = legacy.opponentRatingShift (2.3) + this boost, so 2.3 here = +4.6
+  //    effective. At +4.6 a typical SAM team (~90) wins ~2%, the best realistic ~92
+  //    wins ~15% (the anchor), and the rare 95/97 unicorns win a lot (once-in-a-
+  //    lifetime SAM drafts). Mirrors worldwide, where the best achievable ~97 wins
+  //    ~15%. (The weak SAM pool + larger shift nets out to a field ~90-94, below the
+  //    worldwide ~97 field — matching the lower SAM achievable ceiling.) See #75.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.3 } as Record<
+    Difficulty,
+    number
+  >,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -295,23 +332,30 @@ export const DRAFT = {
   /** Lineups are drawn without replacement; pool resets if exhausted. */
   withoutReplacement: true,
   /**
-   * Anti-frustration tilt (v1.3). The draft stays mostly random — weak rosters
-   * MUST keep showing up — but offers are softly weighted toward historically
-   * stronger lineups so a long session is less likely to be a parade of teams
-   * that could never win. `tierBias` lerps from 0 (pure uniform, off) to 1 (the
-   * full `draftTierWeights`). Kept deliberately gentle: at 0.35 an elite lineup
-   * is ~1.35× as likely and an underdog ~0.9× — a nudge, not a filter.
+   * Anti-frustration tilt (v1.3; overall-based since v1.3.3). The draft stays
+   * mostly random — weak rosters MUST keep showing up — but offers are softly
+   * weighted toward higher-OVERALL lineups so a long session is less likely to be
+   * a parade of teams that could never win. A lineup's roster overall is
+   * normalised within the draw pool (0 = pool's weakest, 1 = strongest), mapped to
+   * a raw weight in [draftWeight.min, .max], then scaled by the bias:
+   * `weight = 1 + (raw - 1) * bias`.
    *
-   * Mode-gated: NEVER applied to the daily (its draw must stay byte-identical for
-   * the globally-shared seed); classic/quick only. Does NOT touch the candidate
-   * pool, so the hard rule "difficulty never shapes the draft" is intact — this
-   * is a global, difficulty-independent feel tweak.
+   * Why overall, not historicalStrength (the v1.3 axis): placement-tier tracks
+   * roster overall worldwide (elite teams ARE high-overall) but NOT in the
+   * compressed SAM pool — there the "strong" teams averaged LOWER overall than the
+   * "solid" ones and there is no elite tier, so the tilt did nothing regionally.
+   * Overall is the metric the tilt actually cares about, and it self-adapts to any
+   * pool. See DESIGN-DECISIONS #76.
+   *
+   * `regionTierBias` is a FIRMER nudge for region-locked pools (SAM): that pool is
+   * bottom-heavy (most teams are low-overall), so it needs more push to surface its
+   * few good rosters as often as the worldwide tilt does. Mode-gated: NEVER the
+   * daily (byte-identical seed); classic/quick only. Never filters the pool, so the
+   * hard rule "difficulty never shapes the draft" holds.
    */
   tierBias: 0.35,
-  draftTierWeights: { elite: 2.0, strong: 1.4, solid: 1.0, underdog: 0.7 } as Record<
-    HistoricalStrength,
-    number
-  >,
+  regionTierBias: 0.6,
+  draftWeight: { min: 0.7, max: 2.0 },
   /**
    * When the only open slots are coach/sub, the draw favors lineups that can
    * still fill them (weight ramps from 1 → this as the lineup covers more of
@@ -486,13 +530,13 @@ export const RANK_REWARDS: Record<
   { rarities: string[]; specialChance: number; collection: boolean; hardMode: boolean }
 > = {
   unranked: { rarities: [], specialChance: 0, collection: false, hardMode: true },
-  bronze: { rarities: ["rare"], specialChance: 0.05, collection: true, hardMode: true },
-  silver: { rarities: ["rare", "epic"], specialChance: 0.05, collection: true, hardMode: true },
-  gold: { rarities: ["rare", "epic", "mythic"], specialChance: 0.05, collection: true, hardMode: true },
-  platinum: { rarities: ["rare", "epic", "mythic"], specialChance: 0.05, collection: true, hardMode: true },
-  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.05, collection: true, hardMode: true },
-  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.08, collection: true, hardMode: true },
-  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.12, collection: true, hardMode: true },
+  bronze: { rarities: ["rare"], specialChance: 0.04, collection: true, hardMode: true },
+  silver: { rarities: ["rare", "epic"], specialChance: 0.04, collection: true, hardMode: true },
+  gold: { rarities: ["rare", "epic", "mythic"], specialChance: 0.04, collection: true, hardMode: true },
+  platinum: { rarities: ["rare", "epic", "mythic"], specialChance: 0.04, collection: true, hardMode: true },
+  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.04, collection: true, hardMode: true },
+  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.06, collection: true, hardMode: true },
+  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.10, collection: true, hardMode: true },
   "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.16, collection: true, hardMode: true },
 };
 
