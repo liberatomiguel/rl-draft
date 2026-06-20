@@ -8,7 +8,7 @@ import { achievements as achievementDefs, specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
 import { rankForXp } from "@/engine/progression";
 import type { Placement } from "@/engine/types";
-import { formatDate } from "@/lib/util";
+import { cx, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import {
   selectBestClear,
@@ -24,18 +24,26 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { AccountSection, ProfileNickname } from "@/components/AccountSection";
+import { useAccountStore } from "@/store/accountStore";
 
 export default function ProfilePage() {
-  const { PROFILE_UI: P, DIFFICULTY_LABELS } = useCopy();
+  const { PROFILE_UI: P, DIFFICULTY_LABELS, LEADERBOARDS_UI: L } = useCopy();
   const mounted = useMounted();
   const profile = useProfileStore();
   const titles = useProfileStore(selectChampionships);
   const bestClear = useProfileStore(selectBestClear);
+  const accountStatus = useAccountStore((s) => s.status);
+  const accountEmail = useAccountStore((s) => s.session?.user.email ?? null);
+  const accountSignOut = useAccountStore((s) => s.signOut);
+  const accountDelete = useAccountStore((s) => s.deleteAccount);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!mounted) {
     return <div className="h-96 animate-pulse rounded-2xl bg-white/5" aria-busy />;
   }
+
+  const signedIn = accountStatus === "signedIn";
 
   const rank = rankForXp(profile.xp);
   const unlockedCount = Object.keys(profile.unlockedSpecials).length;
@@ -46,14 +54,31 @@ export default function ProfilePage() {
       <BackToMenu />
       <SectionTitle kicker={P.career} title={P.title} className="mb-6" />
 
-      {/* Rank header doubles as the profile-identity card — the display name (with
-          a pencil to edit) sits with the rank when signed in (v1.4). */}
+      {/* Rank panel doubles as the profile-identity card (v1.4): when signed in,
+          the display name is the hero (left) and the rank / XP are right-aligned,
+          with sign out inside the card. Signed out, it's the rank on its own. */}
       <Panel strong glow="blue" className="mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
         <RankBadge rank={rank} variant="profile" size="lg" />
-        <div className="w-full min-w-0 flex-1 text-center sm:text-left">
-          <ProfileNickname />
+
+        {signedIn ? (
+          <div className="min-w-0 flex-1 text-center sm:text-left">
+            <ProfileNickname />
+            {accountEmail ? (
+              <p className="mt-1 truncate text-xs text-faint">{accountEmail}</p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div
+          className={cx(
+            "w-full min-w-0",
+            signedIn ? "shrink-0 text-center sm:w-60 sm:text-right" : "flex-1 text-center sm:text-left",
+          )}
+        >
           <p className="kicker mb-1">{P.rank}</p>
-          <p className="display text-3xl font-bold uppercase tracking-wide text-ink">{rank.label}</p>
+          <p className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
+            {rank.label}
+          </p>
           <div className="mt-3">
             <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
             <p className="mt-1.5 text-xs text-sub">
@@ -65,11 +90,19 @@ export default function ProfilePage() {
               )}
             </p>
           </div>
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={accountSignOut}
+              className="mt-3 text-xs font-semibold text-sub underline-offset-2 transition-colors hover:text-ink hover:underline"
+            >
+              {L.signOut}
+            </button>
+          ) : null}
         </div>
       </Panel>
 
-      {/* Account: sign-in incentive (signed out) / email + sign out + delete
-          (signed in). Renders nothing when accounts aren't configured. */}
+      {/* Sign-in incentive — signed out only (renders nothing otherwise). */}
       <AccountSection />
 
       {/* Stats */}
@@ -138,12 +171,41 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Danger zone */}
-      <div className="mt-10 flex justify-center">
+      {/* Danger zone — reset local progress + (signed in) delete account, same pill style. */}
+      <div className="mt-10 flex flex-wrap justify-center gap-3">
         <Button variant="danger" size="sm" onClick={() => setConfirmReset(true)}>
           {P.reset}
         </Button>
+        {signedIn ? (
+          <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+            {L.deleteAccount}
+          </Button>
+        ) : null}
       </div>
+
+      <Modal
+        open={confirmDelete}
+        title={L.deleteTitle}
+        onClose={() => setConfirmDelete(false)}
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+              {L.cancel}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setConfirmDelete(false);
+                accountDelete();
+              }}
+            >
+              {L.deleteConfirm}
+            </Button>
+          </>
+        }
+      >
+        {L.deleteBody}
+      </Modal>
 
       <Modal
         open={confirmReset}

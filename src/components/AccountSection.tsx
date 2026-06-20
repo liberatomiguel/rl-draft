@@ -4,9 +4,9 @@
  * Account UI (v1.4) — lives on the Profile.
  *  · <ProfileNickname>  — the display name + a pencil to edit it, shown INSIDE
  *    the rank card (the profile-identity card). Signed-in only.
- *  · <AccountSection>   — signed out: an email one-time-code sign-in with an
- *    incentive; signed in: the email + sign out + delete account. The name editor
- *    lives in the rank card now, not here.
+ *  · <AccountSection>   — the email one-time-code sign-in incentive, shown only
+ *    when signed OUT. The signed-in controls (sign out, delete) live in the
+ *    profile rank card + danger zone now.
  * Both render nothing when accounts aren't configured, so the guest profile is
  * unchanged.
  */
@@ -17,7 +17,6 @@ import { sfx } from "@/lib/sfx";
 import { sendEmailCode, verifyEmailCode } from "@/lib/supabase";
 import { useAccountStore } from "@/store/accountStore";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
 import { PencilIcon } from "@/components/ui/icons";
 
@@ -85,16 +84,18 @@ export function ProfileNickname() {
     );
   }
   return (
-    <div className="mb-1 flex items-center justify-center gap-1.5 sm:justify-start">
-      <span className="display text-xl font-bold text-ink">{username}</span>
+    <div className="mb-1 flex items-center justify-center gap-2 sm:justify-start">
+      <span className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">
+        {username}
+      </span>
       <button
         type="button"
         onClick={start}
         aria-label={L.displayNameLabel}
         title={L.displayNameLabel}
-        className="text-faint transition-colors hover:text-ink"
+        className="shrink-0 text-faint transition-colors hover:text-ink"
       >
-        <PencilIcon className="h-3.5 w-3.5" />
+        <PencilIcon className="h-4 w-4" />
       </button>
     </div>
   );
@@ -102,12 +103,14 @@ export function ProfileNickname() {
 
 // --- Account section (below the rank card) -------------------------------
 
+/** Signed-OUT only: the email sign-in incentive. The signed-in controls (name,
+ *  sign out, delete) live in the profile card + danger zone now. */
 export function AccountSection() {
   const { LEADERBOARDS_UI: L } = useCopy();
   const enabled = useAccountStore((s) => s.enabled);
   const status = useAccountStore((s) => s.status);
-  if (!enabled || status === "loading") return null;
-  return status === "signedIn" ? <SignedIn L={L} /> : <SignIn L={L} />;
+  if (!enabled || status !== "signedOut") return null;
+  return <SignIn L={L} />;
 }
 
 function SignIn({ L }: { L: L }) {
@@ -187,59 +190,6 @@ function SignIn({ L }: { L: L }) {
         </div>
       )}
       {error ? <p className="mt-3 text-xs font-semibold text-bad">{error}</p> : null}
-    </Panel>
-  );
-}
-
-function SignedIn({ L }: { L: L }) {
-  const session = useAccountStore((s) => s.session);
-  const syncing = useAccountStore((s) => s.syncing);
-  const signOut = useAccountStore((s) => s.signOut);
-  const deleteAccount = useAccountStore((s) => s.deleteAccount);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  return (
-    <Panel className="mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
-      <span className="text-xs text-sub">
-        {session?.user.email ? L.signedInEmail(session.user.email) : L.account}
-        {syncing ? ` · ${L.syncing}` : ""}
-      </span>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="text-xs font-semibold text-faint underline-offset-2 transition-colors hover:text-bad hover:underline"
-        >
-          {L.deleteAccount}
-        </button>
-        <Button variant="ghost" onClick={signOut}>
-          {L.signOut}
-        </Button>
-      </div>
-
-      <Modal
-        open={confirmDelete}
-        title={L.deleteTitle}
-        onClose={() => setConfirmDelete(false)}
-        actions={
-          <>
-            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
-              {L.cancel}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                setConfirmDelete(false);
-                deleteAccount();
-              }}
-            >
-              {L.deleteConfirm}
-            </Button>
-          </>
-        }
-      >
-        {L.deleteBody}
-      </Modal>
     </Panel>
   );
 }
