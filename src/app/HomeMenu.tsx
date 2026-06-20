@@ -22,6 +22,7 @@ import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
 import { generateDailyConfig, todayKey } from "@/lib/daily";
 import { useMounted } from "@/store/useMounted";
+import { useAccountStore } from "@/store/accountStore";
 import {
   selectChampionships,
   selectDailyStreak,
@@ -329,6 +330,9 @@ export default function HomeMenu() {
         </Link>
       </p>
 
+      {/* Discreet sign-in nudge — only when accounts are on and you're signed out. */}
+      <HomeSignInNudge />
+
       {/* Subtle community / support row — only renders once the links are set
           in src/config/site.ts (kept low-key by direction). */}
       {SITE.discordUrl || SITE.supportUrl ? (
@@ -368,6 +372,27 @@ export default function HomeMenu() {
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
     </>
+  );
+}
+
+/** Discreet, low-key sign-in nudge (v1.4) — renders only when accounts are
+ *  configured AND the player is signed out. Links to the Profile (sign-in lives
+ *  there). Intentionally small/quiet, not a banner. */
+function HomeSignInNudge() {
+  const { HOME: H } = useCopy();
+  const mounted = useMounted();
+  const enabled = useAccountStore((s) => s.enabled);
+  const status = useAccountStore((s) => s.status);
+  if (!mounted || !enabled || status !== "signedOut") return null;
+  return (
+    <p className="mt-3 text-center">
+      <Link
+        href="/profile"
+        className="text-xs text-faint underline-offset-4 transition-colors hover:text-sub hover:underline"
+      >
+        {H.signInNudge} →
+      </Link>
+    </p>
   );
 }
 

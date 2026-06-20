@@ -68,6 +68,8 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const clearRun = useRunStore((s) => s.clearRun);
   const setSetupMode = useRunStore((s) => s.setSetupMode);
   const xpNow = useProfileStore((s) => s.xp);
+  const mmrNow = useProfileStore((s) => s.mmr);
+  const mmrGain = useProfileStore((s) => s.lastMmrGain);
   const winsHard = useProfileStore((s) => s.wins.hard);
   const winsLegacy = useProfileStore((s) => s.wins.legacy);
 
@@ -384,6 +386,15 @@ export function ResultsScreen({ run }: { run: RunState }) {
             <span className="display text-3xl font-bold text-orange-bright">
               +<AnimatedNumber value={results.xp.total} />
               <span className="ml-1 text-base">XP</span>
+            </span>
+          </div>
+
+          {/* MMR earned this run + new total (cosmetic skill rating, v1.4). */}
+          <div className="mt-2 flex items-end justify-between">
+            <span className="text-xs font-semibold text-sub">{R.mmrEarned}</span>
+            <span className="display text-base font-bold text-cyan">
+              +{mmrGain}
+              <span className="ml-1 text-xs font-semibold text-faint">· {mmrNow} {R.mmrTotal}</span>
             </span>
           </div>
 
@@ -939,7 +950,7 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
             {eliminator.overall}
             {eliminator.buffed ? (
               <span
-                className="ml-0.5 inline-flex align-top text-orange"
+                className="ml-0.5 inline-flex align-top text-amber-300"
                 title={R.eliminatorBuffed}
                 aria-label={R.eliminatorBuffed}
               >

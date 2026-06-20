@@ -8,7 +8,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { HISTORY_LIMIT, MMR, mmrBackfillFloor, mmrForResult } from "@/config/balance";
+import { HISTORY_LIMIT, MMR, mmrAfterRun, mmrBackfillFloor } from "@/config/balance";
 import { achievementById, specialCardById, specialCards } from "@/data";
 import { evaluateCounterAchievements } from "@/engine/achievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
@@ -34,6 +34,9 @@ export interface ProfileState {
   /** Cosmetic skill rating (v1.4), parallel to XP. Starts at MMR.start, rises a
    *  small amount per run, never spent or lost. Profile card + leaderboard only. */
   mmr: number;
+  /** MMR gained on the most recent finished run — for the results screen readout.
+   *  Transient/display only (NOT in the durable sync slice). */
+  lastMmrGain: number;
   runsCompleted: number;
   wins: Record<Difficulty, number>;
   /** Lifetime counters (beyond the capped run history). */
@@ -104,6 +107,7 @@ export interface ProfileState {
 const initialData = {
   xp: 0,
   mmr: MMR.start,
+  lastMmrGain: 0,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
   playoffAppearances: 0,
@@ -269,9 +273,17 @@ export const useProfileStore = create<ProfileState>()(
           const goalsScored = state.goalsScored + results.userGoals;
           // results.xp.total already includes the run-state achievement XP.
           const xpAfterRun = state.xp + results.xp.total;
-          // Cosmetic MMR (v1.4): small per-run gain, derived from the same outcome
-          // fields. region != null = a region-locked clear (the +1 bonus pool).
-          const mmr = state.mmr + mmrForResult(entry.difficulty, results.placement, entry.region != null);
+          // Cosmetic MMR (v1.4): damped per-run gain from the same outcome fields
+          // (placement + Swiss wins + difficulty + regional title bonus), converging
+          // toward the soft cap. `lastMmrGain` feeds the results-screen readout.
+          const mmr = mmrAfterRun(
+            state.mmr,
+            entry.difficulty,
+            results.placement,
+            entry.region != null,
+            entry.swissRecord.wins,
+          );
+          const lastMmrGain = mmr - state.mmr;
 
           // Lifetime counters / collection / rank achievements — evaluated AFTER
           // this run is applied, then awarded with their XP (v1.4).
@@ -302,6 +314,7 @@ export const useProfileStore = create<ProfileState>()(
           return {
             xp: xpAfterRun + counterXp,
             mmr,
+            lastMmrGain,
             runsCompleted,
             wins,
             playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
@@ -370,7 +383,7 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 8,
+      version: 9,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);
@@ -379,8 +392,9 @@ export const useProfileStore = create<ProfileState>()(
       // exist (the v1.4 set replaced every id, so old earned ids would inflate
       // the count); v8 (a) routes that prune through pruneEarnedAchievements and
       // (b) SILENTLY backfills already-satisfied counter achievements so the v1.4
-      // set swap doesn't toast a flood of old milestones. All backfill from
-      // initialData via the deep-merge.
+      // set swap doesn't toast a flood of old milestones; v9 re-runs the MMR
+      // backfill after the scale rework (so it lands in the 1500-2000 range) and
+      // prunes ghost specials. All backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
@@ -419,9 +433,11 @@ export const useProfileStore = create<ProfileState>()(
         return {
           ...merged,
           achievements: { ...merged.achievements, ...backfilled },
-          // v8: seed MMR for pre-MMR veterans from their title history so a
-          // Supersonic Legend doesn't land on the board at 200 (no reset needed).
-          mmr: Math.max(merged.mmr, mmrBackfillFloor(merged.wins, merged.podiums)),
+          // v8/v9: seed MMR for veterans from their history so a Supersonic Legend
+          // doesn't land on the board at 200 (no reset needed). v9 re-runs it after
+          // the MMR scale rework so existing players get the new (1500-2000-range)
+          // values.
+          mmr: Math.max(merged.mmr, mmrBackfillFloor(merged.wins, merged.podiums, merged.runsCompleted)),
         } as ProfileState;
       },
     },

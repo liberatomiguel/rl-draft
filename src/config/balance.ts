@@ -254,11 +254,14 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // small bump rewards a coherent draft without inflating the field.
     chemistryMaxBonus: 2.4,
     opponentChemistryMaxBonus: 0,
-    // v1.3.1: targets — a 90 team should NOT win Hard, a 92 elite ~10%, a 95
-    // dream comfortably. The field is fewer-superteams (low elite weight) but
-    // still stronger than Normal (more strong, fewer underdogs) and, crucially,
-    // played with overalls HIDDEN — the real difficulty is drafting blind.
-    opponentRatingShift: -0.2,
+    // v1.3.1 targets, eased v1.4: a 90 team shouldn't win Hard, a 92 elite a real
+    // shot, a 95 dream comfortably. The field is fewer-superteams (low elite weight)
+    // but still stronger than Normal and played with overalls HIDDEN — the real
+    // difficulty is drafting blind. v1.4: -0.2 -> -0.7 nudges the blended total
+    // toward ~15% (Miguel's target; faithful sim showed ~12.5% at -0.2). The curve
+    // is flat (weak teams dominate the blend), so this is a measured, not drastic,
+    // move; the §25 anchors are about rating DIFFS, untouched.
+    opponentRatingShift: -0.7,
     opponentSpecialChance: 0.12,
     opponentTierWeights: { elite: 1.0, strong: 1.1, solid: 1.0, underdog: 0.7 },
     xpMultiplier: 1.5,
@@ -505,70 +508,101 @@ export const XP = {
 } as const;
 
 /**
- * MMR (v1.4) — a COSMETIC "skill rating" that runs parallel to XP, à la Rocket
- * League. It starts at `start` and rises a small amount per finished run; it is
- * never spent and (by design) never drops, so the cloud merge can take MAX like
- * every other monotonic counter. It surfaces on the profile card and as a
- * leaderboard category (replacing the old XP board). It does NOT touch gameplay.
+ * MMR (v1.4) — a COSMETIC "skill rating" parallel to XP, à la Rocket League. Starts
+ * at `start`, rises per finished run, never spent or lost (cloud merge takes MAX).
+ * Surfaces on the profile card, the results screen, and as the headline leaderboard
+ * category. Does NOT touch gameplay.
  *
- * Tuned to grow ~50× slower than XP (a legacy title is ~12-13 MMR vs 500-800 XP)
- * so the number reads as "how good are you", not "how long have you played", and
- * never reaches stratospheric values: a few hundred after 50 runs, low thousands
- * after 200. Placement base × per-difficulty multiplier, +1 for a region-locked
- * clear. The numbers are Miguel's to tune; see docs/DESIGN-DECISIONS.md.
+ * SCALE (v1.4 rework): tuned so a very good player lands ~1500-2000 and the number
+ * reads like RL MMR (SSL ≈ 1900+). Two devices keep it meaningful AND bounded:
+ *   1. Granular rewards — placement + per-Swiss-win + difficulty mult + a regional
+ *      title bonus, so even a non-podium run nudges the bar.
+ *   2. DIMINISHING RETURNS toward `softCap` (`mmrDamp`) + a `hardCap` clamp — gains
+ *      shrink as you approach ~2300 so a great player converges to 1500-2000 and even
+ *      an obsessive grinder can't reach absurd values (no 100k). Backfill uses the
+ *      closed-form integral of the same damped recurrence, so it's consistent.
  */
 export const MMR = {
   start: 200,
+  /** Gains taper toward this soft skill ceiling (diminishing returns). */
+  softCap: 2300,
+  /** Absolute clamp — even infinite grinding stops here. */
+  hardCap: 2800,
   /** Base award by final placement (before the difficulty multiplier). */
   placementBase: {
-    champion: 6,
-    runner_up: 4,
-    third: 3,
-    fourth: 2,
-    top4: 1,
-    top6: 1,
-    top8: 1,
-    swiss_exit: 0,
+    champion: 34,
+    runner_up: 20,
+    third: 13,
+    fourth: 8,
+    top4: 6,
+    top6: 4,
+    top8: 3,
+    swiss_exit: 1,
   } as Record<Placement, number>,
-  /** Per-difficulty multiplier — mirrors `DIFFICULTY[*].xpMultiplier`, with easy
-   *  halved so the easiest mode can't be farmed up the board. */
-  difficultyMultiplier: { easy: 0.5, normal: 1, hard: 1.5, legacy: 2 } as Record<Difficulty, number>,
-  /** Flat bonus for clearing in a region-locked pool (the harder, shallower field). */
-  regionalBonus: 1,
+  /** Per-difficulty multiplier — legacy is worth far more (mirrors xpMultiplier shape). */
+  difficultyMultiplier: { easy: 0.6, normal: 1, hard: 1.6, legacy: 2.4 } as Record<Difficulty, number>,
+  /** Small extra per Swiss game won (capped at 3) — every run nudges the bar. */
+  perSwissWin: 2,
+  /** Bonus for a region-locked TITLE (the harder, shallower pool). */
+  regionalBonus: 5,
 } as const;
 
-/** MMR gained from one finished run. Cosmetic; clamped at >= 0 (never regresses). */
-export function mmrForResult(
+/** Raw (pre-damping) MMR a finished run is worth. */
+export function mmrRawGain(
   difficulty: Difficulty,
   placement: Placement,
   regional: boolean,
+  swissWins = 0,
 ): number {
-  const scaled = Math.round((MMR.placementBase[placement] ?? 0) * MMR.difficultyMultiplier[difficulty]);
-  if (scaled <= 0) return 0;
-  return scaled + (regional ? MMR.regionalBonus : 0);
+  const base = (MMR.placementBase[placement] ?? 0) + MMR.perSwissWin * Math.min(Math.max(0, swissWins), 3);
+  const scaled = base * MMR.difficultyMultiplier[difficulty];
+  return scaled + (regional && placement === "champion" ? MMR.regionalBonus : 0);
+}
+
+/** Diminishing-returns factor at the current MMR — ≈1 near `start`, → 0.1 near the
+ *  soft cap, so growth slows as a player approaches a "great" rating. */
+export function mmrDamp(mmr: number): number {
+  const t = (mmr - MMR.start) / (MMR.softCap - MMR.start);
+  return Math.max(0.1, 1 - t);
+}
+
+/** The new MMR total after one finished run (applies damping; hard-capped). */
+export function mmrAfterRun(
+  mmr: number,
+  difficulty: Difficulty,
+  placement: Placement,
+  regional: boolean,
+  swissWins: number,
+): number {
+  const gain = Math.round(mmrRawGain(difficulty, placement, regional, swissWins) * mmrDamp(mmr));
+  return Math.min(MMR.hardCap, mmr + Math.max(0, gain));
 }
 
 /**
- * One-time MMR floor for a profile created BEFORE MMR existed (v1.4) — so a
- * veteran (e.g. already Supersonic Legend) isn't dropped onto the board at the
- * 200 starting value. We only have their title counts per difficulty and podium
- * total (not per-run placements), so the seed is deliberately CONSERVATIVE:
- * `start` + the champion-MMR they'd have earned for the titles we know about +
- * a small bump for non-winning podiums. It's applied as a FLOOR (max with the
- * stored value), so once real play carries MMR above it the floor is a no-op,
- * and re-applying is idempotent (the title set only grows). Avoids the
- * frustration of a rank/achievement reset entirely. See docs/DESIGN-DECISIONS.md.
+ * Backfill for a profile created BEFORE MMR (or after an MMR recalc) — so a veteran
+ * isn't dropped to `start`. We only have aggregate counts (titles per difficulty,
+ * podiums, runs), so we sum the raw MMR that history is worth and map it through the
+ * CLOSED-FORM INTEGRAL of the damped per-run recurrence
+ * (`m = start + span·(1 − e^(−R/span))`, span = softCap − start) — consistent with
+ * `mmrAfterRun` and naturally bounded by the soft cap. Applied as a FLOOR (max with
+ * the stored value); idempotent (counts only grow). No rank/achievement reset needed.
  */
-export function mmrBackfillFloor(wins: Record<Difficulty, number>, podiums: number): number {
+export function mmrBackfillFloor(
+  wins: Record<Difficulty, number>,
+  podiums: number,
+  runsCompleted = 0,
+): number {
   const titles = wins.easy + wins.normal + wins.hard + wins.legacy;
-  let floor = MMR.start;
+  let raw = 0;
   (Object.keys(wins) as Difficulty[]).forEach((d) => {
-    floor += wins[d] * mmrForResult(d, "champion", false);
+    raw += wins[d] * mmrRawGain(d, "champion", false, 3);
   });
-  // Non-winning podiums (runner-up / 3rd) we can't attribute to a difficulty —
-  // credit them at the Normal third-place value as a modest, flat approximation.
-  floor += Math.max(0, podiums - titles) * mmrForResult("normal", "third", false);
-  return floor;
+  // Non-winning podiums and plain finishes we can't attribute to a difficulty —
+  // credit at Normal third / swiss-exit as a modest approximation.
+  raw += Math.max(0, podiums - titles) * mmrRawGain("normal", "third", false, 2);
+  raw += Math.max(0, runsCompleted - podiums) * mmrRawGain("normal", "swiss_exit", false, 1);
+  const span = MMR.softCap - MMR.start;
+  return Math.round(MMR.start + span * (1 - Math.exp(-raw / span)));
 }
 
 /**

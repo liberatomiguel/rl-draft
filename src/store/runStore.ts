@@ -266,6 +266,12 @@ export const useRunStore = create<RunStore>()(
           get().startDailyRun();
           return;
         }
+        // Challenges are FIXED-SEED puzzles — a reset must replay the SAME
+        // challenge (same offers + boss), not spin up a fresh classic draft.
+        if (run.mode === "challenge" && run.challengeId) {
+          get().startChallenge(run.challengeId);
+          return;
+        }
         get().startRun({
           mode: run.mode,
           difficulty: run.difficulty,

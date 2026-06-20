@@ -59,6 +59,10 @@ with the root cause — that section doubles as the project's bugfix log.
   `docs/ACCOUNTS-SETUP.md` §1c for the global MMR board.** Veterans aren't dropped
   to 200: a one-time `mmrBackfillFloor` seeds MMR from existing title history (no
   rank/achievement reset needed — #80).
+- **MMR on the results screen + a discreet home sign-in nudge.** The run-complete
+  screen now shows MMR earned this run + your new total (beside the XP total). The
+  home menu gets a small, low-key "sign in to save your progress + climb the
+  leaderboards" link — only when accounts are on and you're signed out.
 - **Run recap — see how any past run went.** Each history row on the Profile is now
   a button opening a recap modal: the drafted team on a field (`FieldView`),
   placement, difficulty/region, team overall, chemistry, Swiss record, goals
@@ -103,7 +107,14 @@ with the root cause — that section doubles as the project's bugfix log.
   "Regional" (it's the only regional pool).
 - **Leaderboards reachable from a header trophy.** A compact trophy button sits
   beside the settings gear (desktop + mobile header) — one tap to the boards from
-  anywhere, without crowding the 5-slot bottom nav.
+  anywhere, without crowding the 5-slot bottom nav. **MMR is the headline board**
+  (first tab + default).
+- **Challenge match now uses the full sim look.** The Bo7 reveals in TWO columns
+  (your wins left, the boss's right) with a running scoreline + live cue, matching
+  the Classic Match Center, and **both teams' lines are shown on a field** above it.
+- **Tighter mobile chrome.** The bottom nav is now icons-only (labels dropped,
+  icons enlarged + centered); the header drops the "Rocket Draft" wordmark on mobile
+  (icon only). Both keep accessible labels (`sr-only` / `aria-label`).
 - **Challenge mode is rank-gated at Bronze (with the Collection).** Unranked players
   see a locked card on the home menu and a locked state on `/challenges`; both
   unlock at Bronze (one run away). #81.
@@ -132,6 +143,19 @@ with the root cause — that section doubles as the project's bugfix log.
   optimization stays ON (mobile LCP unaffected).
 
 ### Balance
+- **MMR rescaled to a Rocket-League-like 200→~2000 ladder (#80).** The first cut
+  topped out far too low (a heavy player sat ~440). Rework: bigger, granular gains
+  (placement + per-Swiss-win + difficulty mult + a regional-title bonus) with
+  **diminishing returns** toward a `softCap` (2300) + a `hardCap` (2800) clamp, so a
+  very good player lands ~1500-2000 and even an obsessive grinder can't reach absurd
+  values (a 2000-run grind stops at the cap, not 100k). The veteran backfill uses the
+  closed-form integral of the same damped recurrence, so it's consistent — existing
+  players (incl. Miguel) re-seed into the 1500-2000 range on the v9 migrate. Numbers
+  in `balance.ts` (`MMR`/`mmrRawGain`/`mmrDamp`/`mmrAfterRun`/`mmrBackfillFloor`).
+- **Hard eased to ~15% total win rate (v1.4).** `hard.opponentRatingShift`
+  −0.2 → −0.7 (faithful sim showed ~12.5% at −0.2; the blend is flat so it needs a
+  moderate nudge). Hard stays the hidden-overall knowledge test; the §25 anchors
+  (rating-diff based) are untouched and `balance.test.ts` Hard bounds still hold.
 - **Legacy eased toward ~5% total win rate — WW and SAM both (#79).** PostHog
   showed the live Legacy total win rate at ~2-4%. A faithful blended sim (REAL
   drafted teams built over every lineup, run through full tournaments — the sim
@@ -163,6 +187,13 @@ with the root cause — that section doubles as the project's bugfix log.
   the same per-rarity weighting so their rosters stay consistent.
 
 ### Fixed
+- **Resetting a challenge mid-run kept the fixed seed.** "Reset run" routed a
+  challenge back through `startRun` → a fresh classic draft, losing the puzzle's
+  fixed offers + boss. `restartRun` now re-invokes `startChallenge(challengeId)` for
+  challenge runs, replaying the same seed.
+- **"Who ended your run" bolt is yellow, not orange.** The difficulty-inflation bolt
+  on the eliminator overall (Legacy / region-locked) now uses amber, reading as a
+  distinct "buffed" marker instead of clashing with the brand orange.
 - **Challenges are now genuinely winnable (was 0-6% with real play).** The old
   winnability test validated an UNREACHABLE roster (the single best card at every
   slot across all lineups), so it proved nothing about real play — measured with a

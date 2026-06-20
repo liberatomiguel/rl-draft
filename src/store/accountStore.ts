@@ -98,7 +98,10 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         unlockedSpecials: pruneUnlockedSpecials(mergedRaw.unlockedSpecials),
         // Seed MMR for a signed-in veteran whose cloud row predates MMR (covers
         // the fresh-device case the local migrate can't). Idempotent floor.
-        mmr: Math.max(mergedRaw.mmr ?? 200, mmrBackfillFloor(mergedRaw.wins, mergedRaw.podiums)),
+        mmr: Math.max(
+          mergedRaw.mmr ?? 200,
+          mmrBackfillFloor(mergedRaw.wins, mergedRaw.podiums, mergedRaw.runsCompleted),
+        ),
       };
       if (row?.durable) useProfileStore.getState().hydrateDurable(merged); // never lose local
       const username = row?.username || emailPrefix(session);

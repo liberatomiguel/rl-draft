@@ -11,8 +11,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
+import { rosterFromLineup } from "@/engine/challenges";
 import { displayTeamOverall } from "@/engine/rating";
-import type { RunState, TournamentTeam } from "@/engine/types";
+import type { GameResult, RunState, TournamentTeam } from "@/engine/types";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
@@ -21,11 +22,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { TeamLogo } from "@/components/ui/TeamLogo";
+import { FieldView } from "@/components/cards/FieldView";
 import { CrownIcon } from "@/components/ui/icons";
 import { RunStepper } from "./RunStepper";
 
 export function ChallengeScreen({ run }: { run: RunState }) {
-  const { CHALLENGES_UI: CH } = useCopy();
+  const { CHALLENGES_UI: CH, TOURNAMENT_UI: T } = useCopy();
   const router = useRouter();
   const playChallenge = useRunStore((s) => s.playChallenge);
   const startChallenge = useRunStore((s) => s.startChallenge);
@@ -98,7 +100,7 @@ export function ChallengeScreen({ run }: { run: RunState }) {
     <div className="rise-in mx-auto max-w-3xl">
       <RunStepper run={run} />
 
-      {/* Matchup */}
+      {/* Matchup header */}
       <Panel className="p-5">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           <TeamSide team={user} name={CH.yourTeam} align="start" />
@@ -110,6 +112,18 @@ export function ChallengeScreen({ run }: { run: RunState }) {
         </p>
       </Panel>
 
+      {/* Both teams on the pitch (v1.4) — your line and the boss line side by side. */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div>
+          <p className="kicker mb-1.5">{CH.yourTeam}</p>
+          <FieldView roster={run.draft.roster} showOverall showBench={false} />
+        </div>
+        <div>
+          <p className="kicker mb-1.5">{CH.theBoss}</p>
+          <FieldView roster={rosterFromLineup(challenge.opponentLineupId)} showOverall showBench={false} />
+        </div>
+      </div>
+
       {!series ? (
         <div className="mt-6 text-center">
           <Button variant="primary" onClick={play}>
@@ -118,32 +132,35 @@ export function ChallengeScreen({ run }: { run: RunState }) {
         </div>
       ) : (
         <>
-          {/* Live series score while the games reveal */}
+          {/* Scoreline (running while the games reveal) */}
+          <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <p className="display min-w-0 truncate text-base font-bold uppercase tracking-wide text-orange-bright md:text-lg">
+              {user.name}
+            </p>
+            <p className="display shrink-0 text-3xl font-bold tabular-nums">
+              <span className={cx(!revealing && userWins > oppWins ? "text-good" : "text-ink")}>{userWins}</span>
+              <span className="mx-2 text-faint">–</span>
+              <span className={cx(!revealing && oppWins > userWins ? "text-good" : "text-ink")}>{oppWins}</span>
+            </p>
+            <p className="display min-w-0 truncate text-right text-base font-bold uppercase tracking-wide text-ink md:text-lg">
+              {boss.orgName}
+            </p>
+          </div>
           {revealing ? (
-            <div className="mt-5 text-center" aria-live="polite">
-              <p className="kicker">{CH.simulating}</p>
-              <p className="display mt-1 text-3xl font-bold tabular-nums text-ink">
-                {userWins}–{oppWins}
-              </p>
-            </div>
+            <p className="kicker mt-2 flex items-center justify-center gap-1.5 text-orange-bright" aria-live="polite">
+              <span className="live-dot h-2 w-2 rounded-full bg-orange" /> {CH.simulating}
+            </p>
           ) : null}
 
-          {/* Series games (revealed so far) */}
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {shown.map((g, i) => {
-              const userWon = g.winnerTeamId === "user";
-              return (
-                <span
-                  key={i}
-                  className={cx(
-                    "rise-in display rounded-md px-2.5 py-1 text-xs font-bold tabular-nums",
-                    userWon ? "bg-good/15 text-good" : "bg-bad/15 text-bad",
-                  )}
-                >
-                  {g.score[0]}–{g.score[1]}
-                </span>
-              );
-            })}
+          {/* Games — two columns (your wins left, the boss's right), same as the
+              main sim. Cards reveal one per tick. */}
+          <div className="mt-4 grid grid-cols-2 gap-1.5" aria-live={revealing ? "polite" : undefined}>
+            <ol className="flex flex-col gap-1.5">
+              {shown.filter((g) => g.winnerTeamId === "user").map((g) => renderGame(g, true, T))}
+            </ol>
+            <ol className="flex flex-col gap-1.5">
+              {shown.filter((g) => g.winnerTeamId !== "user").map((g) => renderGame(g, false, T))}
+            </ol>
           </div>
 
           {revealing ? (
@@ -209,6 +226,33 @@ export function ChallengeScreen({ run }: { run: RunState }) {
         </>
       )}
     </div>
+  );
+}
+
+/** One game card in the two-column series view (matches the main sim's look). */
+function renderGame(
+  game: GameResult,
+  wonByUser: boolean,
+  T: ReturnType<typeof useCopy>["TOURNAMENT_UI"],
+) {
+  return (
+    <li
+      key={game.index}
+      className={cx(
+        "rise-in flex items-center justify-between rounded-md border px-3 py-1.5 text-xs",
+        wonByUser ? "border-good/30 bg-good/5" : "border-bad/30 bg-bad/5",
+      )}
+    >
+      <span className="min-w-0 truncate uppercase tracking-wider text-sub">
+        {T.game(game.index)}
+        {game.overtime ? <span className="ml-1.5 font-bold text-orange-bright">{T.overtime}</span> : null}
+        {game.deciding ? <span className="ml-1.5 font-bold text-cyan">{T.matchPoint}</span> : null}
+      </span>
+      {/* score is [winner, loser]; the card sits in the winner's column. */}
+      <span className="display font-bold text-ink">
+        {game.score[0]}–{game.score[1]}
+      </span>
+    </li>
   );
 }
 
