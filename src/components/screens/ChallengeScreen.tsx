@@ -8,7 +8,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
 import { displayTeamOverall } from "@/engine/rating";
@@ -32,19 +32,67 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   const challenge = run.challengeId ? challengeById.get(run.challengeId) : undefined;
   const state = run.challenge;
 
-  // One-shot win/lose sting when the series resolves.
+  // Animated game-by-game reveal of the Bo7 (v1.4) — challenges used to resolve
+  // instantly; now the series plays out like the other modes. `revealed` counts
+  // shown games; `animating` is the playback window opened by "Play the series".
+  // `started` opens the playback window (set once on "Play"); it never auto-resets,
+  // so `revealing` is derived (no setState inside the reveal effect → no cascading-
+  // render lint hit). On a fresh mount/refresh with a series already present,
+  // `started` is false so the whole series shows at once.
+  const [started, setStarted] = useState(false);
+  const [revealed, setRevealed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const GAME_PACE = 780; // ms per game reveal
+
+  const series = state?.series ?? null;
+  const totalGames = series?.games.length ?? 0;
+  const shownGames = started ? Math.min(revealed, totalGames) : totalGames;
+  const revealing = started && series != null && revealed < totalGames;
+
+  const play = () => {
+    sfx.start();
+    setStarted(true);
+    setRevealed(0);
+    playChallenge(); // computes the full series synchronously
+  };
+  const skipReveal = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setRevealed(totalGames); // revealing is derived → false once revealed === total
+  };
+
+  // Drive the reveal: one game per tick, with a per-game win/lose blip. The tick
+  // schedules only while games remain; reaching the end just stops (no setState
+  // in the effect body).
+  useEffect(() => {
+    if (!started || !series || revealed >= series.games.length) return;
+    timerRef.current = setTimeout(() => {
+      const g = series.games[revealed];
+      if (g?.winnerTeamId === "user") sfx.matchWin();
+      else sfx.matchLose();
+      setRevealed((r) => r + 1);
+    }, GAME_PACE);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [started, series, revealed]);
+
+  // One-shot win/lose sting once the whole series has been revealed.
   const stung = useRef(false);
   useEffect(() => {
-    if (state?.series && !stung.current) {
+    if (state?.series && !revealing && !stung.current) {
       stung.current = true;
       if (state.cleared) sfx.win();
       else sfx.lose();
     }
-  }, [state?.series, state?.cleared]);
+  }, [state?.series, state?.cleared, revealing]);
 
   if (!state || !challenge) return null;
-  const { user, opponent, series, cleared } = state;
+  const { user, opponent, cleared } = state;
   const boss = lineupHeader(challenge.opponentLineupId);
+  // Running series score over the games revealed so far.
+  const shown = series ? series.games.slice(0, shownGames) : [];
+  const userWins = shown.filter((g) => g.winnerTeamId === "user").length;
+  const oppWins = shown.length - userWins;
 
   return (
     <div className="rise-in mx-auto max-w-3xl">
@@ -64,21 +112,31 @@ export function ChallengeScreen({ run }: { run: RunState }) {
 
       {!series ? (
         <div className="mt-6 text-center">
-          <Button variant="primary" onClick={playChallenge}>
+          <Button variant="primary" onClick={play}>
             {CH.playSeries}
           </Button>
         </div>
       ) : (
         <>
-          {/* Series games */}
+          {/* Live series score while the games reveal */}
+          {revealing ? (
+            <div className="mt-5 text-center" aria-live="polite">
+              <p className="kicker">{CH.simulating}</p>
+              <p className="display mt-1 text-3xl font-bold tabular-nums text-ink">
+                {userWins}–{oppWins}
+              </p>
+            </div>
+          ) : null}
+
+          {/* Series games (revealed so far) */}
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {series.games.map((g, i) => {
+            {shown.map((g, i) => {
               const userWon = g.winnerTeamId === "user";
               return (
                 <span
                   key={i}
                   className={cx(
-                    "display rounded-md px-2.5 py-1 text-xs font-bold tabular-nums",
+                    "rise-in display rounded-md px-2.5 py-1 text-xs font-bold tabular-nums",
                     userWon ? "bg-good/15 text-good" : "bg-bad/15 text-bad",
                   )}
                 >
@@ -88,7 +146,20 @@ export function ChallengeScreen({ run }: { run: RunState }) {
             })}
           </div>
 
-          {/* Result hero */}
+          {revealing ? (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={skipReveal}
+                className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+              >
+                {CH.skip}
+              </button>
+            </div>
+          ) : null}
+
+          {/* Result hero — only once the series is fully revealed */}
+          {series && !revealing ? (
           <Panel
             strong
             glow={cleared ? "orange" : undefined}
@@ -134,6 +205,7 @@ export function ChallengeScreen({ run }: { run: RunState }) {
               </div>
             </div>
           </Panel>
+          ) : null}
         </>
       )}
     </div>

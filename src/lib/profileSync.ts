@@ -22,6 +22,7 @@ import type { DailyResult, ProfileState } from "@/store/profileStore";
 export type DurableProfile = Pick<
   ProfileState,
   | "xp"
+  | "mmr"
   | "runsCompleted"
   | "wins"
   | "playoffAppearances"
@@ -41,6 +42,7 @@ export type DurableProfile = Pick<
 
 const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "xp",
+  "mmr",
   "runsCompleted",
   "wins",
   "playoffAppearances",
@@ -110,6 +112,9 @@ export function mergeProfiles(local: DurableProfile, cloud: DurableProfile): Dur
 
   return {
     xp: Math.max(local.xp, cloud.xp),
+    // MMR is monotonic like every other counter; `?? 200` seeds legacy rows saved
+    // before MMR existed so a pre-MMR cloud row can't drag a player back to 0.
+    mmr: Math.max(local.mmr ?? 200, cloud.mmr ?? 200),
     runsCompleted: Math.max(local.runsCompleted, cloud.runsCompleted),
     wins: maxRecord(local.wins, cloud.wins),
     playoffAppearances: Math.max(local.playoffAppearances, cloud.playoffAppearances),

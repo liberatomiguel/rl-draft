@@ -272,19 +272,39 @@ export default function HomeMenu() {
 
       {/* Challenges + Leaderboards (v1.4) */}
       <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Link href="/challenges" className="group">
-          <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
-            <div>
-              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
-                {HOME.challenges}
-              </h3>
-              <p className="mt-1 text-xs text-sub">{HOME.challengesDesc}</p>
+        {(() => {
+          // Challenges unlock at Bronze too (alongside the Collection) — when
+          // locked the card is NOT a link (v1.4).
+          const challengesLocked = mounted && rank.id === "unranked";
+          const body = (
+            <Panel
+              className={`flex h-full items-center justify-between gap-4 p-5 transition-colors ${
+                challengesLocked ? "opacity-60" : "group-hover:!border-line-strong"
+              }`}
+            >
+              <div>
+                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
+                  {HOME.challenges}
+                </h3>
+                <p className="mt-1 text-xs text-sub">
+                  {challengesLocked ? HOME.challengesLocked : HOME.challengesDesc}
+                </p>
+              </div>
+              <span className={`shrink-0 ${challengesLocked ? "text-faint" : "text-orange-bright"}`} aria-hidden>
+                {challengesLocked ? <MenuLockGlyph /> : <MissionGlyph />}
+              </span>
+            </Panel>
+          );
+          return challengesLocked ? (
+            <div className="cursor-not-allowed" aria-disabled="true" title={HOME.challengesLocked}>
+              {body}
             </div>
-            <span className="shrink-0 text-orange-bright" aria-hidden>
-              <MissionGlyph />
-            </span>
-          </Panel>
-        </Link>
+          ) : (
+            <Link href="/challenges" className="group">
+              {body}
+            </Link>
+          );
+        })()}
         <Link href="/leaderboards" className="group">
           <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
             <div>

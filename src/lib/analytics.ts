@@ -1,26 +1,26 @@
 /**
- * Custom game-event analytics — a thin, typed wrapper that fans the SAME
- * events out to two sinks:
- *   - Vercel Web Analytics custom events (`<Analytics/>` in the root layout),
- *   - PostHog product analytics for funnels / retention / breakdowns
- *     (bootstrapped in `src/components/PostHogProvider.tsx`).
+ * Custom game-event analytics — a thin, typed wrapper that sends each event to
+ * PostHog product analytics for funnels / retention / breakdowns (bootstrapped
+ * in `src/components/PostHogProvider.tsx`).
+ *
+ * History: this used to ALSO fan every event into Vercel Web Analytics, but that
+ * sink was redundant with PostHog and its per-event beacons (plus the
+ * `<Analytics/>`/`<SpeedInsights/>` pageview beacons) were the dominant driver of
+ * Vercel "edge requests" — which blew past the Hobby 1M/mo cap at launch. Dropped
+ * in v1.4 (PostHog keeps all the same data). See docs/ANALYTICS.md.
  *
  * Rules:
- *  - Both sinks are NO-OPs until enabled (Vercel: prod with Web Analytics on;
- *    PostHog: once NEXT_PUBLIC_POSTHOG_KEY is set), so calling these is always
- *    safe and never blocks gameplay.
+ *  - PostHog is a NO-OP until enabled (once NEXT_PUBLIC_POSTHOG_KEY is set), so
+ *    calling these is always safe and never blocks gameplay.
  *  - Event property values MUST be scalars (string | number | boolean | null);
- *    Vercel rejects nested objects, so payloads are pre-flattened here (PostHog
- *    accepts the same shape).
+ *    payloads are pre-flattened here.
  *  - UI/store layer only. NEVER import this from `src/engine` — the engine must
  *    stay pure/deterministic (AGENTS.md hard rule).
  *  - All values are aggregate and non-PII, consistent with the privacy policy.
  *
  * Inspect the data in PostHog (Trends / Funnels, filterable by the properties
- * below) or Vercel → Analytics → Events: run_started / tournament_started /
- * run_completed / run_abandoned.
+ * below): run_started / tournament_started / run_completed / run_abandoned.
  */
-import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 
 /** The full custom-event catalogue. Add a new event by adding a key here. */
@@ -86,12 +86,7 @@ export function trackEvent<K extends keyof GameEvents>(
   props: GameEvents[K],
 ): void {
   const payload = props as Record<string, string | number | boolean | null>;
-  // Two independent sinks; each guarded so analytics never breaks the game.
-  try {
-    track(name, payload);
-  } catch {
-    // Vercel Web Analytics — no-op in dev / when disabled.
-  }
+  // Single sink, guarded so analytics never breaks the game.
   try {
     if (posthog.__loaded) posthog.capture(name, payload);
   } catch {

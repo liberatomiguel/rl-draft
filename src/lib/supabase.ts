@@ -99,6 +99,8 @@ export interface LeaderboardStats {
   titles_legacy: number;
   daily_streak: number;
   challenges_cleared: number;
+  /** Cosmetic skill rating (v1.4) — the leaderboard category that replaced XP. */
+  mmr: number;
 }
 
 export function leaderboardStats(p: DurableProfile, dailyStreak: number): LeaderboardStats {
@@ -117,6 +119,7 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
     titles_legacy: p.wins.legacy,
     daily_streak: dailyStreak,
     challenges_cleared: Object.keys(p.challengesCompleted).length,
+    mmr: p.mmr,
   };
 }
 

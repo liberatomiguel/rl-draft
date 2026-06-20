@@ -6,8 +6,8 @@
     "rankRequired": "bronze",
     "opponentLineupId": "ibuypower-s1",
     "tier": "common",
-    "seed": 14010,
-    "sim": { "difficulty": "easy", "bestOf": 5 },
+    "seed": 19120,
+    "sim": { "difficulty": "easy", "bestOf": 5, "opponentShift": 5 },
     "reward": { "xp": 60, "badge": "first-final" }
   },
   {
@@ -17,7 +17,7 @@
     "rankRequired": "silver",
     "opponentLineupId": "furia-2025",
     "tier": "rare",
-    "seed": 22027,
+    "seed": 20084,
     "sim": { "difficulty": "normal", "bestOf": 7 },
     "constraint": { "region": "SAM" },
     "reward": { "xp": 110, "badge": "sam-steel" }
@@ -29,8 +29,8 @@
     "rankRequired": "silver",
     "opponentLineupId": "g2-stride-2024",
     "tier": "rare",
-    "seed": 25018,
-    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "seed": 19617,
+    "sim": { "difficulty": "normal", "bestOf": 7, "opponentShift": -1 },
     "constraint": { "seasonId": "rlcs-s5" },
     "reward": { "xp": 120, "badge": "old-school" }
   },
@@ -41,8 +41,8 @@
     "rankRequired": "gold",
     "opponentLineupId": "nrg-esports-s8",
     "tier": "epic",
-    "seed": 33067,
-    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "seed": 22171,
+    "sim": { "difficulty": "normal", "bestOf": 7, "opponentShift": 4 },
     "constraint": { "country": "FR" },
     "reward": { "xp": 150, "badge": "les-bleus" }
   },
@@ -54,7 +54,7 @@
     "prereq": "ch-old-school",
     "opponentLineupId": "northern-gaming-s3",
     "tier": "epic",
-    "seed": 38088,
+    "seed": 22499,
     "sim": { "difficulty": "normal", "bestOf": 7 },
     "constraint": { "maxPlayerOverall": 88 },
     "reward": { "xp": 160, "badge": "no-stars" }
@@ -66,8 +66,8 @@
     "rankRequired": "platinum",
     "opponentLineupId": "moist-esports-2122",
     "tier": "epic",
-    "seed": 41099,
-    "sim": { "difficulty": "hard", "bestOf": 7 },
+    "seed": 23039,
+    "sim": { "difficulty": "hard", "bestOf": 7, "opponentShift": -1 },
     "constraint": { "noSpecials": true },
     "reward": { "xp": 175, "badge": "raw-talent" }
   },
@@ -79,8 +79,8 @@
     "opponentLineupId": "furia-2024",
     "fixedPlayerCardId": "c4-orchid-s7",
     "tier": "epic",
-    "seed": 44072,
-    "sim": { "difficulty": "normal", "bestOf": 7 },
+    "seed": 24321,
+    "sim": { "difficulty": "normal", "bestOf": 7, "opponentShift": -1 },
     "reward": { "xp": 180, "badge": "carry-the-rookie" }
   },
   {
@@ -90,8 +90,8 @@
     "rankRequired": "diamond",
     "opponentLineupId": "team-bds-2122",
     "tier": "legend",
-    "seed": 51095,
-    "sim": { "difficulty": "hard", "bestOf": 7 },
+    "seed": 23536,
+    "sim": { "difficulty": "hard", "bestOf": 7, "opponentShift": 1 },
     "reward": { "xp": 230, "badge": "wall-breaker" }
   },
   {
@@ -102,8 +102,8 @@
     "prereq": "ch-break-the-wall",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
-    "seed": 60096,
-    "sim": { "difficulty": "legacy", "bestOf": 7 },
+    "seed": 24500,
+    "sim": { "difficulty": "legacy", "bestOf": 7, "opponentShift": -2 },
     "reward": { "xp": 320, "badge": "giant-slayer" }
   },
   {
@@ -114,8 +114,8 @@
     "prereq": "ch-south-american-steel",
     "opponentLineupId": "team-vitality-2025",
     "tier": "legend",
-    "seed": 70088,
-    "sim": { "difficulty": "hard", "bestOf": 7 },
+    "seed": 27531,
+    "sim": { "difficulty": "hard", "bestOf": 7, "opponentShift": -3 },
     "constraint": { "region": "SAM" },
     "reward": { "xp": 360, "badge": "sam-miracle" }
   }

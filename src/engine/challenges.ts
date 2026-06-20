@@ -9,9 +9,9 @@
  */
 
 import { CHALLENGE, RANKS } from "@/config/balance";
-import { lineupPoolForRegion, lineups, playerCardById } from "@/data";
+import { lineupById, lineupPoolForRegion, lineups, playerCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
-import { createDraft, drawNextOffer } from "./draft";
+import { createDraft, drawNextOffer, playerEligibleUnderConstraint } from "./draft";
 import { simulateSeries } from "./match";
 import { rankForXp } from "./progression";
 import { buildLineupTeam } from "./teams";
@@ -19,6 +19,8 @@ import type {
   Challenge,
   ChallengeConstraint,
   DraftState,
+  Roster,
+  RosterSlotId,
   SeriesResult,
   TournamentTeam,
 } from "./types";
@@ -54,6 +56,19 @@ export function challengePool(constraint: ChallengeConstraint | undefined): stri
   if (constraint.seasonId) {
     return lineups
       .filter((l) => l.seasonId === constraint.seasonId && !l.rareSpawn)
+      .map((l) => l.id);
+  }
+  // Nationality twist (v1.4): restrict the pool to lineups that actually CONTAIN
+  // an eligible player, so every offer surfaces a pickable national and the draft
+  // always completes within the reroll budget (a rare nationality used to be
+  // un-draftable on an unlucky fixed seed — the boss is the test, not draft luck).
+  if (constraint.country) {
+    return lineups
+      .filter(
+        (l) =>
+          !l.rareSpawn &&
+          l.playerCardIds.some((cid) => playerEligibleUnderConstraint(cid, constraint)),
+      )
       .map((l) => l.id);
   }
   return undefined;
@@ -96,9 +111,39 @@ export function createChallengeDraft(challenge: Challenge, rng: Rng): DraftState
   return drawNextOffer(draft, rng);
 }
 
-/** The fixed boss team — a clean historical lineup (no special upgrades). */
+/** The fixed boss team — a clean historical lineup (no special upgrades). The
+ *  per-challenge `sim.opponentShift` (v1.4) is a flat balance handicap so a famous
+ *  superteam stays the headline opponent yet is beatable by a good constrained draft. */
 export function buildChallengeOpponent(challenge: Challenge): TournamentTeam {
-  return buildLineupTeam(challenge.opponentLineupId, challenge.sim.difficulty);
+  return buildLineupTeam(challenge.opponentLineupId, challenge.sim.difficulty, {
+    extraShift: challenge.sim.opponentShift ?? 0,
+  });
+}
+
+/**
+ * A `Roster` shaped from a historical lineup (its 3 player cards + coach / sub /
+ * org), so the briefing can render the boss on a `FieldView` exactly like the
+ * player's own team. Pure data mapping — no rating math. (v1.4)
+ */
+export function rosterFromLineup(lineupId: string): Roster {
+  const l = lineupById.get(lineupId);
+  if (!l) return {};
+  const roster: Roster = {};
+  const slots: RosterSlotId[] = ["player1", "player2", "player3"];
+  l.playerCardIds.slice(0, 3).forEach((cid, i) => {
+    roster[slots[i]] = { slot: slots[i], kind: "player", refId: cid, fromLineupId: lineupId };
+  });
+  // Coach/sub are optional in the data — fall back to the "vacant" picks the game
+  // already understands (rendered as an empty bench slot, zero rating) so the
+  // roster is always a complete, buildable classic roster.
+  roster.coach = l.coachId
+    ? { slot: "coach", kind: "coach", refId: l.coachId, fromLineupId: lineupId }
+    : { slot: "coach", kind: "coach", refId: "vacant-coach", fromLineupId: lineupId };
+  roster.sub = l.subId
+    ? { slot: "sub", kind: "sub", refId: l.subId, fromLineupId: lineupId }
+    : { slot: "sub", kind: "sub", refId: "vacant-sub", fromLineupId: lineupId };
+  roster.org = { slot: "org", kind: "org", refId: l.orgId, fromLineupId: lineupId };
+  return roster;
 }
 
 /** Play the single Bo7 (or the challenge's bestOf) — one series, win or lose. */

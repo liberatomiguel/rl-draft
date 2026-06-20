@@ -214,6 +214,9 @@ export const challengeSchema = z
     sim: z.object({
       difficulty: z.enum(["easy", "normal", "hard", "legacy"]),
       bestOf: z.number().int().min(1).max(7),
+      /** Per-challenge boss balance knob (v1.4): flat rating delta on the boss,
+       *  on top of the difficulty shift. Negative = handicap. */
+      opponentShift: z.number().optional(),
     }),
     constraint: challengeConstraintSchema.optional(),
     reward: z.object({

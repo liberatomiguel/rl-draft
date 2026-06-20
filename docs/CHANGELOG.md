@@ -47,6 +47,30 @@ with the root cause — that section doubles as the project's bugfix log.
   `@supabase/supabase-js` client wrapper (`src/lib/supabase.ts`, no-op until
   configured), and `RunHistoryEntry.mode`/`.region` for attribution. **Ops setup
   (SQL schema + RLS, email sender, env vars): `docs/ACCOUNTS-SETUP.md`.**
+- **MMR — a cosmetic skill rating (parallel to XP).** Every profile now carries an
+  `mmr` that starts at **200** and rises a small, capped amount per finished run —
+  placement base × per-difficulty multiplier (+1 for a region-locked clear), so an
+  easy win is ~+3, a Legacy podium ~+6 and a Legacy title ~+12-13. It's never spent
+  or lost (cloud merge takes MAX, `?? 200`-seeded for pre-MMR rows) and is tuned to
+  grow ~50× slower than XP, so it reads as "how good are you," not playtime — a few
+  hundred after 50 runs, low thousands after 200. Surfaces next to your rank on the
+  profile card and as a leaderboard category. Numbers live in `balance.ts` (`MMR` +
+  `mmrForResult`); zero gameplay impact. **Ops: run the `mmr` SQL in
+  `docs/ACCOUNTS-SETUP.md` §1c for the global MMR board.** Veterans aren't dropped
+  to 200: a one-time `mmrBackfillFloor` seeds MMR from existing title history (no
+  rank/achievement reset needed — #80).
+- **Run recap — see how any past run went.** Each history row on the Profile is now
+  a button opening a recap modal: the drafted team on a field (`FieldView`),
+  placement, difficulty/region, team overall, chemistry, Swiss record, goals
+  conceded, the champion (if you didn't win) and XP. Backed by a compact
+  `RunHistoryEntry.recap` (roster refs + outcome facts, ~1KB) written at run end;
+  older saved runs degrade to a name+stats summary. Rides the existing cloud sync
+  (no schema change).
+- **Challenges now play out a real, animated Bo7.** The challenge match used to
+  resolve instantly; it now reveals game-by-game with a live series score, per-game
+  sfx and a Skip — the same sim playback as the other modes — before the
+  cleared/failed hero. The briefing also shows the **opponent lineup on a field**
+  (`FieldView`) so you can scout the line you must out-draft before committing.
 - **Challenges — a new rank-unlocked mode (`/challenges`).** Authored puzzles: a
   constrained draft then a single Bo7 against a fixed historical line. Cleared =
   cleared (one-and-done, like an achievement), granting XP (+ an optional earned
@@ -71,10 +95,59 @@ with the root cause — that section doubles as the project's bugfix log.
   palette) — the hardest title to win now reads as the biggest moment.
 
 ### Changed
+- **Leaderboard trimmed to four categories + MMR.** Down from twelve tabs to the
+  ones that matter, titles first: **Titles · Total**, **Titles · Legacy**, **Best
+  overall · Legacy**, **Best overall · Regional**, and **MMR** (which replaced the
+  old Total-XP board). The other DB columns still exist — they're just no longer
+  surfaced as tabs — so nothing about sync changed. `best_sam`'s label is now
+  "Regional" (it's the only regional pool).
+- **Leaderboards reachable from a header trophy.** A compact trophy button sits
+  beside the settings gear (desktop + mobile header) — one tap to the boards from
+  anywhere, without crowding the 5-slot bottom nav.
+- **Challenge mode is rank-gated at Bronze (with the Collection).** Unranked players
+  see a locked card on the home menu and a locked state on `/challenges`; both
+  unlock at Bronze (one run away). #81.
+- **Challenges grouped by rarity.** The grid is now sectioned by tier (Common →
+  Legend) with a per-section cleared count, instead of one flat list.
 - **Eliminator overall uses a real bolt icon** (`BoltIcon`) instead of the `⚡`
   emoji on the results screen, matching the hand-drawn SVG icon system.
+- **Dropped the Vercel Analytics + Speed Insights sinks (edge-request diet).** The
+  game blew past Vercel's Hobby **1M edge-requests/month** cap in 4 days at launch
+  (~1.1M). Root cause: `<Analytics/>` + `<SpeedInsights/>` fire a beacon to
+  `/_vercel/insights/*` and `/_vercel/speed-insights/vitals` on every pageview and
+  SPA navigation — all counted as edge requests — and `trackEvent` *doubled* it by
+  fanning every game event into the Vercel sink on top of PostHog. PostHog (EU,
+  cookieless, direct ingestion — bypasses the Vercel edge) already captures the
+  exact same pageviews + custom events, so the Vercel sinks were pure redundant
+  edge load. Removed `<Analytics/>`/`<SpeedInsights/>` from `layout.tsx` and the
+  `@vercel/analytics` `track()` call from `lib/analytics.ts` (PostHog-only now). No
+  analytics data lost. `@vercel/analytics`/`@vercel/speed-insights` deps can be
+  removed from `package.json` later (kept for now; harmless).
+- **Image-optimizer variant diet.** The only `next/image` use is the small
+  special-card photo (`GameCard`, ≤256px display), but the default size ladders let
+  the optimizer mint ~8+ variants per photo — each `/_next/image?…&w=…` an edge
+  request, ×86 photos on the collection screen. Trimmed `images.deviceSizes`/
+  `imageSizes` to the widths actually used (~256/640) and set `minimumCacheTTL` to
+  31 days so repeat visits stay off the optimizer. No visible change at card size;
+  optimization stays ON (mobile LCP unaffected).
 
 ### Balance
+- **Legacy eased toward ~5% total win rate — WW and SAM both (#79).** PostHog
+  showed the live Legacy total win rate at ~2-4%. A faithful blended sim (REAL
+  drafted teams built over every lineup, run through full tournaments — the sim
+  baseline reproduced the live ~2.6% WW / ~1.9% SAM) was used to calibrate a
+  light, anchor-preserving ease: `legacy.opponentRatingShift` **1.65 → 1.35**
+  (lifts the elite end most — a 97 dream ~25% → ~29%, a 92 stays near zero) and,
+  reversing the v1.3 SAM pin (#75), `REGION_LOCK.opponentRatingBoost.legacy`
+  **2.95 → 2.05** so the SAM effective shift drops **4.60 → 3.40** and SAM eases
+  too. In-sim blended lands ~3% (the sim weights weak historical teams a real
+  drafter would pass, so live should sit higher, ~4-5%); re-check PostHog after
+  deploy and nudge again if short. Hard is untouched (it has its own rate). The
+  `balance.test.ts` Legacy anchors still hold (good ~0%, strong ~2%, dream ~29% <
+  40%). **Root cause of the prior 2-4%:** at the very top the user-vs-field gap is
+  near zero and the ±4.5 series-form swing dominates, so only 97+ drafts had a real
+  shot; lowering the flat opponent shift widens that gap exactly where it was
+  thinnest.
 - **Special-card rarity rework — absolute per-rarity spawn rates.** The old model
   rolled one flat appearance chance and then a within-pool weighted pick, so a
   player whose ONLY special is a legendary (kronovi, m0nkeym00n, violentpanda)
@@ -90,12 +163,53 @@ with the root cause — that section doubles as the project's bugfix log.
   the same per-rarity weighting so their rosters stay consistent.
 
 ### Fixed
-- **Phantom "already-earned" achievement count.** Root cause: the v1.4 set
-  replaced every achievement id, but a player's earned-achievement map still held
-  the OLD ids; the unlocked count reads `Object.keys(achievements).length`, so it
-  showed ~22 unlocked even though none of the NEW achievements were earned. The
-  profile migrate (now v7) prunes earned ids that no longer exist in the current
-  set, so the count is accurate again.
+- **Challenges are now genuinely winnable (was 0-6% with real play).** The old
+  winnability test validated an UNREACHABLE roster (the single best card at every
+  slot across all lineups), so it proved nothing about real play — measured with a
+  competent auto-draft, most challenges sat at 0-6% and `ch-south-american-miracle`
+  was impossible; `ch-vive-la-france`'s fixed seed couldn't even assemble a French
+  roster. Fixes: (1) a per-challenge `sim.opponentShift` boss-balance knob so a
+  famous superteam stays the headline opponent yet is beatable; (2) re-thought,
+  distinct seeds per challenge (no two share an offer sequence) chosen to surface a
+  strong legal roster; (3) `challengePool` restricts a nationality twist to lineups
+  that actually contain an eligible national, and the challenge reroll budget rose
+  5 → 8, so a constrained draft always completes; (4) the winnability test rewritten
+  to simulate a competent draft, asserting realistic per-tier win rates (~50% /
+  legend ~30%). Every challenge now clears its floor.
+- **Collection counter no longer counts ghost cards.** The "X / N" unlocked count
+  was `Object.keys(unlockedSpecials).length`, which included ids for specials no
+  longer in the hand-curated set — so the counter read higher than the cards
+  actually shown. Now pruned (`pruneUnlockedSpecials`) on every store path (migrate,
+  cloud hydrate, cloud merge), mirroring the achievements fix, so the count is
+  accurate and the cloud row self-heals; the `specialsOwned` achievement counter is
+  corrected too.
+- **Phantom "already-earned" achievement count — now fixed for signed-in players
+  too.** Root cause: the v1.4 set replaced every achievement id, but a player's
+  earned map still held the OLD ids; the unlocked count reads
+  `Object.keys(achievements).length`, so it showed ~28 unlocked even though none of
+  the NEW achievements were earned. The v7 migrate pruned stale ids on *local*
+  rehydration — but the cloud path bypassed it entirely: `mergeProfiles` unions the
+  earned maps with no validity filter and `hydrateDurable` wrote them back
+  wholesale, so a signed-in player kept seeing 28 (and the stale ids were re-pushed
+  to the cloud, defeating the migrate permanently). Now `pruneEarnedAchievements`
+  runs on **every** path a durable profile enters the store — the migrate (v8),
+  `hydrateDurable`, and the `accountStore` cloud merge before hydrate+push — so the
+  count is accurate AND the cloud row self-heals on the next sync.
+- **In-match feats no longer pop before their match is shown.** Root cause: the
+  engine simulates the whole round (and AI rounds) ahead of the animation, but
+  `playRound` awarded `liveAchievements` over that pre-simulated state immediately —
+  so e.g. a hat-trick toast fired the instant you advanced, before its match was
+  revealed on screen ("the game hadn't even started"). Live feats are now awarded
+  by `TournamentScreen` as each user series finishes *revealing* (scoped via
+  `liveAchievements(t, earned, revealedUserSeries)`); `finishRun` re-evaluates the
+  full tournament as a dedup-safe safety net.
+- **Set-swap no longer floods existing players with toasts.** Cumulative
+  achievements ("Score 100 goals across all your runs") are correct by design, but
+  because the v1.4 set introduced brand-new ids, every milestone an existing player
+  had already passed re-fired as a toast on their next run (felt like "I got 100
+  goals on my first run"). The v8 migrate now **silently** pre-marks counter /
+  collection / rank achievements already satisfied by career totals (no toast, no
+  XP — the old set already rewarded the equivalent), so the swap is invisible.
 - **Slot-machine reveal now replays on "Reset run".** Root cause: `OfferReveal`
   was keyed by `draft.round` only, and a reset starts a fresh run back at
   round 1 — an identical key, so React never remounted the component and its

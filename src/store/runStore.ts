@@ -85,6 +85,8 @@ interface RunStore {
 
   // Tournament phase
   playRound: () => void;
+  /** Award live feats for the first N user series revealed on screen (v1.4). */
+  awardRevealedAchievements: (revealedUserSeries: number) => void;
   finishRun: () => void;
 
   // Challenge phase (v1.4) — single Bo7 vs the fixed boss.
@@ -406,11 +408,26 @@ export const useRunStore = create<RunStore>()(
         }
 
         set({ run: { ...run, tournament, rngState: rng.state } });
+        // NOTE: live feats are NOT awarded here. The engine simulates the whole
+        // round (and AI rounds) ahead of the animation, so awarding now made a
+        // feat (e.g. a hat-trick) pop before its match was even revealed on
+        // screen. The UI calls `awardRevealedAchievements` as each user series
+        // finishes REVEALING; `finishRun` re-evaluates the full tournament as a
+        // safety net for anything skipped. (v1.4)
+      },
 
-        // Real-time: in-match / series feats (hat-trick, 7-goal win, reverse
-        // sweep, giant-slayer, game-7…) pop as soon as the round that produced
-        // them is played — not only at run end (v1.4). awardAchievements dedupes.
-        useProfileStore.getState().awardAchievements(liveAchievements(tournament, new Set()));
+      /**
+       * Award in-match / series feats for the first `revealedUserSeries` user
+       * series in reveal order — called by TournamentScreen the moment a series
+       * finishes animating, so feats pop at the dramatically-correct time, not
+       * when the bracket was simulated. `awardAchievements` dedupes. (v1.4)
+       */
+      awardRevealedAchievements: (revealedUserSeries: number) => {
+        const t = get().run?.tournament;
+        if (!t) return;
+        useProfileStore
+          .getState()
+          .awardAchievements(liveAchievements(t, new Set(), revealedUserSeries));
       },
 
       finishRun: () => {
@@ -452,6 +469,15 @@ export const useRunStore = create<RunStore>()(
           swissRecord: userSwissRecord(run.tournament.swiss),
           rosterNames: playerNames,
           xpGained: results.xp.total,
+          // Rich recap (v1.4): the drafted roster + outcome facts, so the profile
+          // can show how the run went. Stored as refs (resolved at render time).
+          recap: {
+            roster: run.draft.roster,
+            chemistryTier: userTeam?.chemistry.tier ?? "Poor",
+            chemistryPercent: userTeam?.chemistry.percent ?? 0,
+            championName: results.championName,
+            goalsConceded: results.goalsConceded,
+          },
         };
 
         trackEvent("run_completed", {

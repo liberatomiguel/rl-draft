@@ -716,6 +716,46 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     person, so e.g. a Turbopolsa sub can appear as one of his Worlds-MVP cards).
     Still bounded so the sub never rivals a starter — it's depth, not a 4th player.
 
+## v1.4 (Legacy ease, MMR, challenges, ops)
+
+79. **Legacy eased toward ~5% total win rate — WW AND SAM, reversing the #75 SAM
+    pin.** PostHog showed Legacy's live total win rate at ~2-4%; Miguel wants ~5%
+    in both the worldwide and the region-locked (SAM) pools. Calibrated with a
+    FAITHFUL blended sim — real drafted teams (`buildUserTeam` over every lineup)
+    run through full tournaments — whose baseline reproduced the live ~2.6% WW /
+    ~1.9% SAM, so the model is trustworthy. Change: `legacy.opponentRatingShift`
+    1.65 → 1.35 (a flat per-opponent shift, added after compression, so it widens
+    the gap most at the top where it's thinnest — a 97 dream ~25% → ~29%, a 92 stays
+    near zero) and `REGION_LOCK.opponentRatingBoost.legacy` 2.95 → 2.05 so the SAM
+    effective shift falls 4.60 → 3.40. **This deliberately reverses #75**, which had
+    PINNED SAM at +4.6 so WW eases wouldn't touch it; v1.4's goal is the opposite —
+    ease SAM too. The ease is intentionally LIGHT (Miguel's directive — Legacy has
+    been retuned many times): in-sim blended only reaches ~3% because the sim
+    weights weak historical teams a real drafter would never commit to, so live
+    should land higher (~4-5%); the plan is to re-read PostHog after deploy and nudge
+    again if short, rather than over-buff the elite now. `balance.test.ts` Legacy
+    anchors still hold (good ~0%, strong ~2%, dream ~29% < the 40% ceiling). Hard was
+    left untouched — it has its own rate. Levers deliberately NOT moved:
+    `seriesFormRange` (global upset engine, guarded by the §25 match anchors) and
+    `superteamSlope`/`Pivot` (reshape the whole hierarchy).
+
+80. **MMR — a cosmetic skill rating parallel to XP.** Starts at 200, rises a small
+    capped amount per finished run (placement base × per-difficulty multiplier, +1
+    region-locked), never spent or lost (cloud merge = MAX). Tuned ~50× slower than
+    XP so it reads as skill, not playtime; surfaces on the profile card and as a
+    leaderboard category (it replaced the Total-XP board). NOT a gameplay input —
+    lives entirely in the profile store + `balance.ts` (`MMR`/`mmrForResult`), engine
+    untouched. **No rank/achievement reset for the v1.4 patch** (would frustrate
+    veterans): instead, MMR is BACKFILLED for pre-MMR profiles from their title
+    history (`mmrBackfillFloor`) so a Supersonic Legend doesn't land on the board at
+    200, and the new achievement set's already-satisfied counters are SILENTLY
+    pre-marked on migrate (no toast/XP) so the swap doesn't spam veterans.
+
+81. **Challenge mode is rank-gated at Bronze, alongside the Collection.** The whole
+    mode (home card + the `/challenges` route) is locked while Unranked, mirroring
+    the Collection's Bronze gate — a new player has a clean menu and unlocks both at
+    once after their first run or two.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

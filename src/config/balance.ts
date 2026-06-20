@@ -6,7 +6,7 @@
  * See docs/BALANCE-GUIDE.md for what each knob does and its safe range.
  */
 
-import type { BuffLevel, Difficulty, HistoricalStrength } from "@/engine/types";
+import type { BuffLevel, Difficulty, HistoricalStrength, Placement } from "@/engine/types";
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -279,15 +279,17 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     //    field (engine/opponents) — you no longer face the same superteam 3×.
     chemistryMaxBonus: 3,
     opponentChemistryMaxBonus: 0,
-    // v1.3.3 retune, eased v1.3.4 — anchored on real-team sims (teams built from
-    // actual cards, so stats match the live game, not just overall). Legacy is the
-    // all-time wall, but the very best drafts now get a fairer shot: shift 2.3 → 1.65
-    // puts a worldwide overall-97 dream at ~25% (was ~15%), the all-time-best 99
-    // (Vitality '22-23) at ~62%, a 95 at single digits, a 92 near zero — the base of
-    // the curve stays low while the elite is rewarded. The Bo7 gauntlet is steep on
-    // purpose. SAM normalises on top via REGION_LOCK (per-difficulty); its boost was
-    // raised so the SAM curve is UNCHANGED by this WW ease. See DESIGN-DECISIONS #75.
-    opponentRatingShift: 1.65,
+    // v1.3.3 → v1.4 ease (#79). Anchored on faithful blended sims (REAL drafted
+    // teams over every lineup, WW + SAM — the methodology matches PostHog: the
+    // live total WW-Legacy win rate was ~2-3%, and the sim baseline reproduced it).
+    // Miguel's v1.4 target: nudge BOTH the WW and SAM Legacy total win rate toward
+    // ~5%. shift 1.65 → 1.35 lifts the elite end most (a 97 dream ~25% → ~29%, the
+    // all-time-best 99 higher still) while a 92 stays near zero — the base of the
+    // curve stays low. UNLIKE #75 (which PINNED SAM at +4.6 so a WW ease left SAM
+    // untouched), v1.4 eases SAM TOO: REGION_LOCK.legacy drops in lockstep so the
+    // SAM effective shift falls 4.60 → 3.40. The Bo7 gauntlet is still the hardest
+    // mode. See DESIGN-DECISIONS #79.
+    opponentRatingShift: 1.35,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -307,17 +309,15 @@ export const REGION_LOCK = {
   // Per-difficulty (v1.3.3) so each mode's regional field can be tuned on its own.
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
-  //    most runs); left untouched this pass, retune with a target if wanted.
-  //  · legacy 2.95: anchored (real-team sims) on the best REALISTICALLY-ACHIEVABLE
-  //    SAM team, NOT the theoretical ceiling. Live feedback: real SAM drafts land in
-  //    the 80s (the pool is weak and random; overall 92 is already a rare-good
-  //    result, 95+ is essentially never built). The engine's effective SAM opponent
-  //    shift = legacy.opponentRatingShift + this boost. It is pinned at +4.6 effective
-  //    (= the SAM anchor): a typical SAM team (~90) wins ~2%, the best realistic ~92
-  //    wins ~15% (the anchor), and the rare 95/97 unicorns win a lot. When the WW
-  //    shift eased 2.3 → 1.65 (v1.3.4), this boost rose 2.3 → 2.95 so SAM stays at
-  //    +4.6 — i.e. the WW-elite ease does NOT touch the SAM curve. See #75.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.95 } as Record<
+  //    most runs); Hard has its own rate and was left untouched this pass.
+  //  · legacy 2.05 (v1.4, #79): the SAM effective shift = legacy.opponentRatingShift
+  //    (1.35) + this boost = 3.40 (was 4.60). v1.3 PINNED SAM at +4.6 so a WW ease
+  //    wouldn't touch it (#75); v1.4 REVERSES that on purpose — Miguel wants SAM
+  //    Legacy eased toward ~5% too. Faithful blended sim (real SAM drafts over the
+  //    whole SAM pool, avg overall ~83): SAM Legacy total ~1.9% → ~2.9% in-sim at
+  //    3.40, projecting higher in live play (the sim weights weak historical teams a
+  //    real drafter would pass). Re-check PostHog after deploy. See #79.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.05 } as Record<
     Difficulty,
     number
   >,
@@ -505,6 +505,73 @@ export const XP = {
 } as const;
 
 /**
+ * MMR (v1.4) — a COSMETIC "skill rating" that runs parallel to XP, à la Rocket
+ * League. It starts at `start` and rises a small amount per finished run; it is
+ * never spent and (by design) never drops, so the cloud merge can take MAX like
+ * every other monotonic counter. It surfaces on the profile card and as a
+ * leaderboard category (replacing the old XP board). It does NOT touch gameplay.
+ *
+ * Tuned to grow ~50× slower than XP (a legacy title is ~12-13 MMR vs 500-800 XP)
+ * so the number reads as "how good are you", not "how long have you played", and
+ * never reaches stratospheric values: a few hundred after 50 runs, low thousands
+ * after 200. Placement base × per-difficulty multiplier, +1 for a region-locked
+ * clear. The numbers are Miguel's to tune; see docs/DESIGN-DECISIONS.md.
+ */
+export const MMR = {
+  start: 200,
+  /** Base award by final placement (before the difficulty multiplier). */
+  placementBase: {
+    champion: 6,
+    runner_up: 4,
+    third: 3,
+    fourth: 2,
+    top4: 1,
+    top6: 1,
+    top8: 1,
+    swiss_exit: 0,
+  } as Record<Placement, number>,
+  /** Per-difficulty multiplier — mirrors `DIFFICULTY[*].xpMultiplier`, with easy
+   *  halved so the easiest mode can't be farmed up the board. */
+  difficultyMultiplier: { easy: 0.5, normal: 1, hard: 1.5, legacy: 2 } as Record<Difficulty, number>,
+  /** Flat bonus for clearing in a region-locked pool (the harder, shallower field). */
+  regionalBonus: 1,
+} as const;
+
+/** MMR gained from one finished run. Cosmetic; clamped at >= 0 (never regresses). */
+export function mmrForResult(
+  difficulty: Difficulty,
+  placement: Placement,
+  regional: boolean,
+): number {
+  const scaled = Math.round((MMR.placementBase[placement] ?? 0) * MMR.difficultyMultiplier[difficulty]);
+  if (scaled <= 0) return 0;
+  return scaled + (regional ? MMR.regionalBonus : 0);
+}
+
+/**
+ * One-time MMR floor for a profile created BEFORE MMR existed (v1.4) — so a
+ * veteran (e.g. already Supersonic Legend) isn't dropped onto the board at the
+ * 200 starting value. We only have their title counts per difficulty and podium
+ * total (not per-run placements), so the seed is deliberately CONSERVATIVE:
+ * `start` + the champion-MMR they'd have earned for the titles we know about +
+ * a small bump for non-winning podiums. It's applied as a FLOOR (max with the
+ * stored value), so once real play carries MMR above it the floor is a no-op,
+ * and re-applying is idempotent (the title set only grows). Avoids the
+ * frustration of a rank/achievement reset entirely. See docs/DESIGN-DECISIONS.md.
+ */
+export function mmrBackfillFloor(wins: Record<Difficulty, number>, podiums: number): number {
+  const titles = wins.easy + wins.normal + wins.hard + wins.legacy;
+  let floor = MMR.start;
+  (Object.keys(wins) as Difficulty[]).forEach((d) => {
+    floor += wins[d] * mmrForResult(d, "champion", false);
+  });
+  // Non-winning podiums (runner-up / 3rd) we can't attribute to a difficulty —
+  // credit them at the Normal third-place value as a modest, flat approximation.
+  floor += Math.max(0, podiums - titles) * mmrForResult("normal", "third", false);
+  return floor;
+}
+
+/**
  * Rank ladder (v0.3 curve). Target: Supersonic Legend in ~100-150 runs.
  * An average run earns ~150-300 XP, a winning run ~500-800.
  */
@@ -562,7 +629,11 @@ export const HISTORY_LIMIT = 25;
  * you can always assemble a legal roster even under a tight twist.
  */
 export const CHALLENGE = {
-  rerolls: 5,
+  // Generous by design (v1.4: 5 → 8): a challenge tests whether you can BEAT the
+  // boss, not your draft luck, so you can always assemble a strong legal roster
+  // even under a tight twist. Paired with the per-challenge `sim.opponentShift`
+  // boss handicap, this is what makes every authored challenge winnable.
+  rerolls: 8,
 } as const;
 
 // ---------------------------------------------------------------------------

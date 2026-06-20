@@ -25,7 +25,14 @@ import {
   signOut as sbSignOut,
   updateUsername as sbUpdateUsername,
 } from "@/lib/supabase";
-import { selectDailyStreak, useProfileStore } from "./profileStore";
+import {
+  pruneEarnedAchievements,
+  pruneUnlockedSpecials,
+  selectDailyStreak,
+  useProfileStore,
+} from "./profileStore";
+import { mmrBackfillFloor } from "@/config/balance";
+import type { DurableProfile } from "@/lib/profileSync";
 
 type Status = "loading" | "signedOut" | "signedIn";
 
@@ -81,7 +88,18 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     try {
       const local = toDurable(useProfileStore.getState());
       const row = await fetchCloudRow(session.user.id);
-      const merged = row?.durable ? mergeProfiles(local, row.durable) : local;
+      const mergedRaw = row?.durable ? mergeProfiles(local, row.durable) : local;
+      // Prune stale achievement ids the cloud row may still carry (the v1.4 swap)
+      // BEFORE we hydrate AND push — so the count is right locally and the cloud
+      // row self-heals on this write instead of re-seeding the stale ids forever.
+      const merged: DurableProfile = {
+        ...mergedRaw,
+        achievements: pruneEarnedAchievements(mergedRaw.achievements),
+        unlockedSpecials: pruneUnlockedSpecials(mergedRaw.unlockedSpecials),
+        // Seed MMR for a signed-in veteran whose cloud row predates MMR (covers
+        // the fresh-device case the local migrate can't). Idempotent floor.
+        mmr: Math.max(mergedRaw.mmr ?? 200, mmrBackfillFloor(mergedRaw.wins, mergedRaw.podiums)),
+      };
       if (row?.durable) useProfileStore.getState().hydrateDurable(merged); // never lose local
       const username = row?.username || emailPrefix(session);
       const streak = selectDailyStreak(useProfileStore.getState());

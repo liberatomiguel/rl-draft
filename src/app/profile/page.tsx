@@ -7,7 +7,7 @@ import { useState } from "react";
 import { achievements as achievementDefs, specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
 import { rankForXp } from "@/engine/progression";
-import type { Placement } from "@/engine/types";
+import type { Placement, RunHistoryEntry } from "@/engine/types";
 import { formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import {
@@ -22,6 +22,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
+import { FieldView } from "@/components/cards/FieldView";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { AccountSection, ProfileNickname } from "@/components/AccountSection";
 import { useAccountStore } from "@/store/accountStore";
@@ -38,6 +39,7 @@ export default function ProfilePage() {
   const accountDelete = useAccountStore((s) => s.deleteAccount);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [recapRun, setRecapRun] = useState<RunHistoryEntry | null>(null);
 
   if (!mounted) {
     return <div className="h-96 animate-pulse rounded-2xl bg-white/5" aria-busy />;
@@ -87,12 +89,18 @@ export default function ProfilePage() {
                 <p className="display whitespace-nowrap text-[1.7rem] font-bold uppercase tracking-wide text-ink">
                   {rank.label}
                 </p>
+                <p className="display mt-0.5 whitespace-nowrap text-xs font-bold tracking-wide text-orange-bright">
+                  {profile.mmr} {P.mmr}
+                </p>
               </div>
             </div>
           ) : (
             <div className="mb-3">
               <p className="kicker mb-1">{P.rank}</p>
               <p className="display text-3xl font-bold uppercase tracking-wide text-ink">{rank.label}</p>
+              <p className="display mt-1 text-xs font-bold tracking-wide text-orange-bright">
+                {profile.mmr} {P.mmr}
+              </p>
             </div>
           )}
 
@@ -166,7 +174,13 @@ export default function ProfilePage() {
       ) : (
         <div className="space-y-2">
           {profile.runHistory.slice(0, 10).map((run) => (
-            <Panel key={run.runId} className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3.5 text-sm">
+            <button
+              key={run.runId}
+              type="button"
+              onClick={() => setRecapRun(run)}
+              aria-label={P.viewRun}
+              className="panel flex w-full flex-wrap items-center gap-x-4 gap-y-2 p-3.5 text-left text-sm transition-colors hover:!border-line-strong"
+            >
               <Badge tone={run.placement === "champion" ? "gold" : "neutral"} className="w-20 justify-center">
                 {P.placement[run.placement as Placement] ?? run.placement}
               </Badge>
@@ -180,7 +194,7 @@ export default function ProfilePage() {
               {run.hiddenOverall ? <Badge tone="neutral">{P.hidden}</Badge> : null}
               <span className="display text-xs font-bold text-orange-bright">+{run.xpGained} XP</span>
               <span className="text-[11px] text-faint">{formatDate(run.date)}</span>
-            </Panel>
+            </button>
           ))}
         </div>
       )}
@@ -243,6 +257,46 @@ export default function ProfilePage() {
         }
       >
         {P.resetConfirmBody}
+      </Modal>
+
+      {/* Run recap (v1.4): click a history row to see how that run went — the
+          drafted team on a field + the key outcome facts. Older runs (no recap)
+          degrade to the roster names + summary stats. */}
+      <Modal open={!!recapRun} title={P.runDetailTitle} onClose={() => setRecapRun(null)}>
+        {recapRun ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone={recapRun.placement === "champion" ? "gold" : "neutral"}>
+                {P.placement[recapRun.placement as Placement] ?? recapRun.placement}
+              </Badge>
+              <Badge tone="blue">{DIFFICULTY_LABELS[recapRun.difficulty].label}</Badge>
+              {recapRun.region ? <Badge tone="neutral">{recapRun.region}</Badge> : null}
+              {recapRun.hiddenOverall ? <Badge tone="neutral">{P.hidden}</Badge> : null}
+              <span className="ml-auto text-[11px] text-faint">{formatDate(recapRun.date)}</span>
+            </div>
+            {recapRun.recap?.championName && recapRun.placement !== "champion" ? (
+              <p className="text-xs text-sub">{P.wonBy(recapRun.recap.championName)}</p>
+            ) : null}
+
+            {recapRun.recap ? (
+              <FieldView roster={recapRun.recap.roster} showOverall showBench />
+            ) : (
+              <p className="text-xs text-faint">{P.olderRun}</p>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <StatTile label={P.teamOverallLabel} value={String(recapRun.teamOverall)} />
+              <StatTile label={P.swissWins} value={`${recapRun.swissRecord.wins}–${recapRun.swissRecord.losses}`} />
+              {recapRun.recap ? <StatTile label={P.chemistry} value={recapRun.recap.chemistryTier} /> : null}
+              {recapRun.recap ? <StatTile label={P.conceded} value={String(recapRun.recap.goalsConceded)} /> : null}
+              <StatTile label={P.xp} value={`+${recapRun.xpGained}`} />
+            </div>
+
+            {!recapRun.recap ? (
+              <p className="text-xs text-sub">{recapRun.rosterNames.join(" · ")}</p>
+            ) : null}
+          </div>
+        ) : null}
       </Modal>
     </div>
   );

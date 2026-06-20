@@ -118,6 +118,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
               <LangToggle />
               <Link
+                href="/leaderboards"
+                aria-label={t.NAV.leaderboards}
+                title={t.NAV.leaderboards}
+                onClick={() => sfx.click()}
+                className={cx(
+                  "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                  pathname.startsWith("/leaderboards")
+                    ? "bg-orange/12 text-orange-bright"
+                    : "text-sub hover:bg-white/5 hover:text-ink",
+                )}
+              >
+                <TrophyIcon className="h-5 w-5" />
+              </Link>
+              <Link
                 href="/settings"
                 aria-label={t.NAV.settings}
                 title={t.NAV.settings}
@@ -309,6 +323,17 @@ function ProfileIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TrophyIcon({ className }: { className?: string }) {
+  // A cup — the global leaderboards (v1.4).
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" strokeLinejoin="round" />
+      <path d="M7 6H4.5v1.5A2.5 2.5 0 0 0 7 10M17 6h2.5v1.5A2.5 2.5 0 0 1 17 10" strokeLinecap="round" />
+      <path d="M12 13v3m-3 4h6m-5 0c0-1.5 1-2 2-2s2 .5 2 2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

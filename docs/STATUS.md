@@ -67,10 +67,19 @@ Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
    Legacy crown emblem (setup card + in-run indicator + unlock ceremony), richer
    Legacy-champion celebration, mobile modal close-button fix. (Play-button reset
    was reported broken but verified already-working from v1.3.1 — no change.)
-4. **Leaderboards + accounts foundation** — `/leaderboards` (peak overall per
-   difficulty + worldwide/SAM, championships, streak, challenges cleared) works
-   today from the local profile. `lib/profileSync.ts` merge is tested (no progress
-   loss, #55.7). `lib/supabase.ts` is a no-op until configured.
+4. **Leaderboards + accounts foundation** — `/leaderboards` works today from the
+   local profile; **trimmed to 4 categories + MMR** (titles total/legacy, overall
+   legacy/regional, MMR — replaced the XP board). `lib/profileSync.ts` merge tested
+   (no progress loss, #55.7). `lib/supabase.ts` is a no-op until configured.
+5. **v1.4 final pass (this push):** Vercel edge-request diet (analytics sinks
+   dropped); achievements 3-bug fix (cloud-prune self-heal + reveal-time feats +
+   silent set-swap backfill); **MMR** cosmetic skill rating (profile + board, with
+   veteran backfill — no reset, #80); **Legacy ease** WW+SAM toward ~5% (#79);
+   **challenges reworked** — rank-gated at Bronze (#81), grouped by rarity, opponent
+   field in the briefing, a real animated Bo7, and **genuinely winnable** seeds +
+   `opponentShift` boss knob (validated by a realistic-draft test); **run recap**
+   (history → see how a run went); collection counter ghost-card fix; leaderboards
+   trophy in the header. Engine purity + the §25 anchors hold; 96 vitest tests green.
 
 **PENDING — Miguel's infra (to light up email login + global leaderboards):**
 follow **`docs/ACCOUNTS-SETUP.md`** — Supabase project is created and the local
@@ -92,10 +101,22 @@ gameplay-longevity backlog (`docs/GAMEPLAY-IDEAS.md`, brainstorm only).
 cookieless/anonymous) and receiving data; events: `run_started`,
 `tournament_started`, `run_completed`, `run_abandoned`, `special_used` (live).
 Operator guide (funnels/filters, the funnel-vs-Trends gotcha):
-`docs/ANALYTICS.md`. **Vercel Web Analytics** hit its free event cap and is
-redundant with PostHog — dropping it (`<Analytics/>` in `layout.tsx` + the Vercel
-sink in `analytics.ts`) is a ~2-line change, **deferred by Miguel's call**. GA4 was
-evaluated and **declined** (cookie-consent + privacy-policy cost, worse for funnels).
+`docs/ANALYTICS.md`. **Vercel Analytics + Speed Insights — REMOVED (v1.4):** they
+were redundant with PostHog and their per-pageview beacons (`/_vercel/insights/*`,
+`/_vercel/speed-insights/vitals`) + the `trackEvent` double-sink were the dominant
+driver of the launch **edge-request blowup** (~1.1M in 4 days vs the Hobby 1M/mo
+cap). Now PostHog-only. GA4 was evaluated and **declined** (cookie-consent +
+privacy-policy cost, worse for funnels).
+
+**Vercel edge requests (v1.4 ops):** launch traffic projected ~8M/mo — over the
+Hobby 1M cap. Code-side diet shipped: dropped the Vercel telemetry beacons (above)
+and trimmed the `next/image` variant fan-out + 31-day `minimumCacheTTL`
+(`next.config.ts`). Next levers if still over after monitoring PostHog: **Cloudflare
+free in front of the apex** (absorbs static/asset requests off Vercel's edge) or
+**upgrade to Pro** ($20/mo, 10M edge requests included — fits the projection). No
+middleware / no PostHog-proxy / no in-code redirects exist, so those are not the
+cause. Hobby is non-commercial-only, but the fan game has no revenue, so the cap is
+the only real constraint.
 
 **SEO:** the v1.3.3 pass added RLCS-draft-focused FAQ entries + keywords. Apex is
 canonical; `www`/`*.vercel.app` 308 to it. Standing ops: keep the GSC Domain

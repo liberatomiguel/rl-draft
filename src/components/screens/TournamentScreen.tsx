@@ -130,6 +130,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
   const { TOURNAMENT_UI: T } = useCopy();
   const playRound = useRunStore((s) => s.playRound);
   const finishRun = useRunStore((s) => s.finishRun);
+  const awardRevealedAchievements = useRunStore((s) => s.awardRevealedAchievements);
   const t = run.tournament;
 
   // Playback state. On mount (or refresh) everything already simulated is
@@ -188,11 +189,17 @@ export function TournamentScreen({ run }: { run: RunState }) {
           setGamesShown((g) => g + 1),
         );
       } else {
-        // The user's series just finished resolving on screen — light cue.
+        // The user's series just finished resolving on screen — light cue, and
+        // award its in-match / series feats NOW (at reveal time), scoped to the
+        // user series revealed so far so nothing pops ahead of its animation.
         if (current.isUser && !cuedRef.current.has(current.key)) {
           cuedRef.current.add(current.key);
           if (series.winnerTeamId === "user") sfx.matchWin();
           else sfx.matchLose();
+          const revealedUserSeries = queue
+            .slice(0, cursor + 1)
+            .filter((e) => e.isUser).length;
+          awardRevealedAchievements(revealedUserSeries);
         }
         const base = current.isUser
           ? PACE.userSeriesLinger
@@ -210,7 +217,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [running, t, current, cursor, queue, gamesShown, speed, advanceRound]);
+  }, [running, t, current, cursor, queue, gamesShown, speed, advanceRound, awardRevealedAchievements]);
 
   if (!t) return null;
 
@@ -226,6 +233,8 @@ export function TournamentScreen({ run }: { run: RunState }) {
       const entries = allEntries(fresh, T);
       setQueue(entries);
       setCursor(entries.length);
+      // Everything is revealed at once on skip — award all live feats now.
+      awardRevealedAchievements(entries.filter((e) => e.isUser).length);
     }
     setGamesShown(0);
     setRunning(false);

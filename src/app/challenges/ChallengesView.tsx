@@ -20,7 +20,9 @@ import {
   seasonById,
 } from "@/data";
 import { finalOverall, lineupHeader } from "@/engine/cards";
-import { challengeStatus, type ChallengeStatus } from "@/engine/challenges";
+import { challengeStatus, rosterFromLineup, type ChallengeStatus } from "@/engine/challenges";
+import { rankForXp } from "@/engine/progression";
+import { FieldView } from "@/components/cards/FieldView";
 import type { Challenge } from "@/engine/types";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
@@ -87,25 +89,59 @@ export function ChallengesView() {
 
   const [active, setActive] = useState<Challenge | null>(null);
 
+  // Whole mode is rank-gated (Bronze, alongside the Collection) — v1.4.
+  const modeLocked = mounted && rankForXp(xp).id === "unranked";
+
+  // Group into rarity sections (common → legend), preserving the rank/reward sort
+  // within each tier.
+  const TIER_ORDER = ["common", "rare", "epic", "legend"] as const;
+  const sections = TIER_ORDER.map((tier) => ({
+    tier,
+    items: ordered.filter((c) => c.tier === tier),
+  })).filter((s) => s.items.length > 0);
+
   return (
     <div className="rise-in mx-auto max-w-5xl">
       <SectionTitle kicker={CH.progress(clearedCount, ordered.length)} title={CH.title} className="mb-2" />
       <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {ordered.map((ch) => (
-          <ChallengeCard
-            key={ch.id}
-            ch={ch}
-            status={statusOf(ch)}
-            onOpen={() => {
-              sfx.click();
-              setActive(ch);
-            }}
-            CH={CH}
-          />
-        ))}
-      </div>
+      {modeLocked ? (
+        <Panel className="p-8 text-center">
+          <p className="display text-lg font-bold uppercase tracking-wide text-ink">{CH.modeLockedTitle}</p>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-sub">{CH.modeLockedBody}</p>
+        </Panel>
+      ) : (
+        <div className="space-y-8">
+          {sections.map(({ tier, items }) => {
+            const cleared = mounted ? items.filter((c) => completed[c.id]).length : 0;
+            return (
+              <section key={tier}>
+                <div className="mb-3 flex items-center gap-3">
+                  <h2 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
+                    {CH.tier[tier]}
+                  </h2>
+                  <span className="text-xs font-semibold text-faint">{CH.progress(cleared, items.length)}</span>
+                  <span className="h-px flex-1 bg-line/60" />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map((ch) => (
+                    <ChallengeCard
+                      key={ch.id}
+                      ch={ch}
+                      status={statusOf(ch)}
+                      onOpen={() => {
+                        sfx.click();
+                        setActive(ch);
+                      }}
+                      CH={CH}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
 
       <BriefingModal challenge={active} onClose={() => setActive(null)} CH={CH} />
     </div>
@@ -253,6 +289,14 @@ function BriefingModal({
           <p className="text-[10px] uppercase tracking-wider text-faint">{CH.bestOf(challenge.sim.bestOf)}</p>
         </div>
       </div>
+
+      {/* The opponent on the pitch — scout the line you'll prepare to face (v1.4). */}
+      <FieldView
+        roster={rosterFromLineup(challenge.opponentLineupId)}
+        showOverall
+        showBench
+        className="mt-3"
+      />
 
       <p className="kicker mt-5">{CH.briefTwistKicker}</p>
       <div className="mt-2 flex flex-wrap gap-2">

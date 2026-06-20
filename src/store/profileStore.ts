@@ -8,8 +8,8 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { HISTORY_LIMIT } from "@/config/balance";
-import { achievementById, specialCards } from "@/data";
+import { HISTORY_LIMIT, MMR, mmrBackfillFloor, mmrForResult } from "@/config/balance";
+import { achievementById, specialCardById, specialCards } from "@/data";
 import { evaluateCounterAchievements } from "@/engine/achievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import type { DurableProfile } from "@/lib/profileSync";
@@ -31,6 +31,9 @@ export interface DailyResult {
 
 export interface ProfileState {
   xp: number;
+  /** Cosmetic skill rating (v1.4), parallel to XP. Starts at MMR.start, rises a
+   *  small amount per run, never spent or lost. Profile card + leaderboard only. */
+  mmr: number;
   runsCompleted: number;
   wins: Record<Difficulty, number>;
   /** Lifetime counters (beyond the capped run history). */
@@ -100,6 +103,7 @@ export interface ProfileState {
 
 const initialData = {
   xp: 0,
+  mmr: MMR.start,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
   playoffAppearances: 0,
@@ -153,6 +157,73 @@ function backfillRecords(history: RunHistoryEntry[]): Records {
   return history.reduce(bumpRecords, initialData.records);
 }
 
+/**
+ * Drop earned-achievement ids that no longer exist in the current set. The v1.4
+ * swap replaced EVERY id, so a stale earned-map would inflate the unlocked count
+ * (e.g. show "28 unlocked" while the grid renders almost nothing). Pure; applied
+ * on every path a durable profile enters the store — the persist migrate, cloud
+ * `hydrateDurable`, and the cloud merge in `accountStore` — so the count self-heals
+ * for signed-in players too, not just on local rehydration. Exported for the
+ * account sync path. (v1.4)
+ */
+export function pruneEarnedAchievements(
+  m: Record<string, string> | undefined,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(m ?? {}).filter(([id]) => achievementById.has(id)),
+  );
+}
+
+/**
+ * Same idea for unlocked specials: drop ids no longer in the hand-curated
+ * `specialCards.json`. A removed/renamed special would otherwise inflate the
+ * Collection counter ("X / N" with X counting ghosts) and the `specialsOwned`
+ * achievement counter, even though no card renders for it. (v1.4)
+ */
+export function pruneUnlockedSpecials(
+  m: Record<string, string> | undefined,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(m ?? {}).filter(([id]) => specialCardById.has(id)),
+  );
+}
+
+/**
+ * Counter / collection / rank achievements ALREADY satisfied by a profile's
+ * career totals. Used by the migrate to SILENTLY pre-mark them when the v1.4
+ * achievement set is introduced, so an existing player doesn't get a flood of
+ * toasts for milestones they passed long ago (e.g. "Score 100 goals across all
+ * your runs" firing on their first post-update run). No XP is granted — the old
+ * set already rewarded the equivalent milestones; this is purely a no-surprise
+ * reconciliation. Daily-streak is intentionally left out (re-earns naturally).
+ * (v1.4)
+ */
+function backfillSatisfiedCounters(
+  p: Pick<ProfileState, "xp" | "runsCompleted" | "wins" | "gamesWon" | "goalsScored" | "unlockedSpecials">,
+  alreadyEarned: ReadonlySet<string>,
+  now: string,
+): Record<string, string> {
+  const specialIds = new Set(Object.keys(p.unlockedSpecials ?? {}));
+  const ids = evaluateCounterAchievements(
+    {
+      runsCompleted: p.runsCompleted ?? 0,
+      titlesTotal: p.wins.easy + p.wins.normal + p.wins.hard + p.wins.legacy,
+      legacyTitles: p.wins.legacy,
+      gamesWon: p.gamesWon ?? 0,
+      goalsScored: p.goalsScored ?? 0,
+      specialsOwned: specialIds.size,
+      totalSpecials: specialCards.length,
+      specialIds,
+      dailyStreak: 0,
+      rankId: rankForXp(p.xp ?? 0).id,
+    },
+    alreadyEarned,
+  );
+  const out: Record<string, string> = {};
+  for (const id of ids) out[id] = now;
+  return out;
+}
+
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set) => ({
@@ -198,6 +269,9 @@ export const useProfileStore = create<ProfileState>()(
           const goalsScored = state.goalsScored + results.userGoals;
           // results.xp.total already includes the run-state achievement XP.
           const xpAfterRun = state.xp + results.xp.total;
+          // Cosmetic MMR (v1.4): small per-run gain, derived from the same outcome
+          // fields. region != null = a region-locked clear (the +1 bonus pool).
+          const mmr = state.mmr + mmrForResult(entry.difficulty, results.placement, entry.region != null);
 
           // Lifetime counters / collection / rank achievements — evaluated AFTER
           // this run is applied, then awarded with their XP (v1.4).
@@ -227,6 +301,7 @@ export const useProfileStore = create<ProfileState>()(
 
           return {
             xp: xpAfterRun + counterXp,
+            mmr,
             runsCompleted,
             wins,
             playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
@@ -266,7 +341,12 @@ export const useProfileStore = create<ProfileState>()(
           };
         }),
 
-      hydrateDurable: (durable) => set(() => ({ ...durable })),
+      hydrateDurable: (durable) =>
+        set(() => ({
+          ...durable,
+          achievements: pruneEarnedAchievements(durable.achievements),
+          unlockedSpecials: pruneUnlockedSpecials(durable.unlockedSpecials),
+        })),
 
       awardAchievements: (ids) => {
         const fresh: string[] = [];
@@ -290,14 +370,17 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 7,
+      version: 8,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);
       // v6 added the gamesWon/goalsScored counters (default 0 — they only
       // accrue going forward); v7 prunes earned-achievement ids that no longer
       // exist (the v1.4 set replaced every id, so old earned ids would inflate
-      // the count). All backfill from initialData via the deep-merge.
+      // the count); v8 (a) routes that prune through pruneEarnedAchievements and
+      // (b) SILENTLY backfills already-satisfied counter achievements so the v1.4
+      // set swap doesn't toast a flood of old milestones. All backfill from
+      // initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
@@ -314,19 +397,31 @@ export const useProfileStore = create<ProfileState>()(
               }
             : prev;
         // Deep-merge settings/flags so new keys get defaults on older profiles;
-        // rebuild records from history when they're missing (pre-v5 saves).
-        // Drop earned-achievement ids that no longer exist in the current set
-        // (v1.4 replaced every id) so the unlocked count is accurate.
-        const achievements = Object.fromEntries(
-          Object.entries(base.achievements ?? {}).filter(([id]) => achievementById.has(id)),
-        );
-        return {
+        // rebuild records from history when they're missing (pre-v5 saves);
+        // drop earned-achievement ids that no longer exist (v1.4 swap).
+        const merged = {
           ...initialData,
           ...base,
-          achievements,
+          achievements: pruneEarnedAchievements(base.achievements),
+          unlockedSpecials: pruneUnlockedSpecials(base.unlockedSpecials),
           settings: { ...initialData.settings, ...(base.settings ?? {}) },
           flags: { ...initialData.flags, ...(base.flags ?? {}) },
           records: base.records ?? backfillRecords(base.runHistory ?? []),
+        } as ProfileState;
+        // v8: silently pre-mark already-earned counter achievements (no toast,
+        // no XP) so the set swap is invisible to players who already cleared the
+        // equivalent milestones under the old set.
+        const backfilled = backfillSatisfiedCounters(
+          merged,
+          new Set(Object.keys(merged.achievements)),
+          new Date().toISOString(),
+        );
+        return {
+          ...merged,
+          achievements: { ...merged.achievements, ...backfilled },
+          // v8: seed MMR for pre-MMR veterans from their title history so a
+          // Supersonic Legend doesn't land on the board at 200 (no reset needed).
+          mmr: Math.max(merged.mmr, mmrBackfillFloor(merged.wins, merged.podiums)),
         } as ProfileState;
       },
     },

@@ -121,6 +121,30 @@ create index if not exists profiles_titles_hard_idx   on public.profiles (titles
 > view" — that's **intentional and safe here**: it exists precisely to expose a
 > few non-sensitive columns publicly while the underlying table stays private.
 
+## 1c. MMR column — RUN THIS for the v1.4 leaderboard
+
+The v1.4 leaderboard replaced the XP board with **MMR** (a cosmetic skill rating).
+Add its column + recreate the view so the MMR tab populates. **Idempotent.** Until
+you run this, the MMR tab simply shows an empty board (the query fails closed) —
+nothing else breaks.
+
+```sql
+-- MMR column (starts at 200; the app pushes the real value on every sync).
+alter table public.profiles
+  add column if not exists mmr integer not null default 200;
+
+-- Recreate the public leaderboard view INCLUDING mmr (and keep the rest).
+create or replace view public.leaderboard with (security_invoker = false) as
+  select username, xp, mmr,
+         best_easy, best_normal, best_hard, best_legacy, best_worldwide, best_sam,
+         championships, titles_easy, titles_normal, titles_hard, titles_legacy,
+         daily_streak, challenges_cleared
+  from public.profiles;
+grant select on public.leaderboard to anon, authenticated;
+
+create index if not exists profiles_mmr_idx on public.profiles (mmr desc);
+```
+
 ### What's stored vs. what's public
 
 | Data | Where | Who can read it |

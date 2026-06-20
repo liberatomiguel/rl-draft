@@ -68,9 +68,9 @@ interface UserGame {
   opp: number;
   won: boolean;
 }
-function userGames(t: TournamentState): UserGame[] {
+function gamesOf(seriesList: SeriesResult[]): UserGame[] {
   const out: UserGame[] = [];
-  for (const s of userSeries(t)) {
+  for (const s of seriesList) {
     const userIsA = s.teamAId === "user";
     for (const g of s.games) {
       const goals = (userIsA ? g.scorers?.a : g.scorers?.b) ?? [];
@@ -82,14 +82,29 @@ function userGames(t: TournamentState): UserGame[] {
   }
   return out;
 }
+function userGames(t: TournamentState): UserGame[] {
+  return gamesOf(userSeries(t));
+}
 function goalsConceded(t: TournamentState): number {
   return userGames(t).reduce((sum, g) => sum + Math.max(0, g.opp), 0);
 }
-/** Won finals (grand_final / final), with the deciding game info. */
-function userFinals(t: TournamentState) {
-  return userPlayoffSeries(t.playoffs).filter(
-    (e) => e.round === "grand_final" || e.round === "final",
+/**
+ * User series in REVEAL order (swiss rounds first, then playoff rounds), each
+ * tagged with whether it's a FINAL (grand_final / final). The order matches
+ * `TournamentScreen`'s reveal order (one user series per round), so the UI can
+ * slice the first N revealed series — see `liveAchievements`'s `revealedUserSeries`.
+ */
+function userSeriesWithMeta(t: TournamentState): { series: SeriesResult; isFinal: boolean }[] {
+  const swiss = t.swiss.rounds.flatMap((r) =>
+    r.series
+      .filter((s) => s.teamAId === "user" || s.teamBId === "user")
+      .map((series) => ({ series, isFinal: false })),
   );
+  const playoffs = userPlayoffSeries(t.playoffs).map((e) => ({
+    series: e.series,
+    isFinal: e.round === "grand_final" || e.round === "final",
+  }));
+  return [...swiss, ...playoffs];
 }
 
 const only = (ids: string[], earned: ReadonlySet<string>) =>
@@ -129,17 +144,34 @@ export function teamAchievements(
 
 // --- live feats (in-match / series) --------------------------------------
 
-export function liveAchievements(t: TournamentState, earned: ReadonlySet<string>): string[] {
+/**
+ * In-match / series feats (hat-trick, 7-goal win, reverse sweep, giant-slayer,
+ * game-7…). `revealedUserSeries`, when given, restricts evaluation to the first N
+ * user series in REVEAL order — so the UI can fire a feat the moment its series is
+ * revealed on screen, NOT when the engine simulates the whole bracket ahead of the
+ * animation (which made e.g. a hat-trick pop before the match visibly started).
+ * Omit it to evaluate the whole tournament (the run-end safety net in
+ * `evaluateRunAchievements`). `awardAchievements` dedupes, so re-evaluating a
+ * revealed series can never double-award.
+ */
+export function liveAchievements(
+  t: TournamentState,
+  earned: ReadonlySet<string>,
+  revealedUserSeries?: number,
+): string[] {
+  const meta = userSeriesWithMeta(t);
+  const considered =
+    revealedUserSeries === undefined ? meta : meta.slice(0, Math.max(0, revealedUserSeries));
+  const consideredSeries = considered.map((m) => m.series);
   const ids: string[] = [];
-  const games = userGames(t);
-  for (const g of games) {
+  for (const g of gamesOf(consideredSeries)) {
     if (g.won && g.team - g.opp >= 7) ids.push("ach-blowout");
     const top = Math.max(0, ...g.goals);
     if (top >= 3) ids.push("ach-hattrick");
     if (top >= 4) ids.push("ach-four-goals");
     if (g.team >= 3 && g.goals.some((x) => x === g.team)) ids.push("ach-solo-show");
   }
-  for (const s of userSeries(t)) {
+  for (const s of consideredSeries) {
     if (!userWon(s)) continue;
     if (userRatingDiff(s) < 0) ids.push("ach-giant-slayer");
     // Reverse sweep: fell behind by two games, then won.
@@ -154,7 +186,7 @@ export function liveAchievements(t: TournamentState, earned: ReadonlySet<string>
       }
     }
   }
-  for (const { series } of userFinals(t)) {
+  for (const { series } of considered.filter((m) => m.isFinal)) {
     if (!userWon(series)) continue;
     const total = series.score[0] + series.score[1];
     if (total === 7) ids.push("ach-game7");

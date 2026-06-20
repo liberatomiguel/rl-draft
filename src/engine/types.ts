@@ -612,7 +612,12 @@ export interface Challenge {
   fixedPlayerCardId?: string;
   tier: "common" | "rare" | "epic" | "legend";
   seed: number;
-  sim: { difficulty: Difficulty; bestOf: number };
+  /** `opponentShift` (v1.4) is a per-challenge boss balance knob: a flat rating
+   *  delta added to the boss ON TOP of the difficulty shift (negative = handicap).
+   *  It's how a famous superteam stays the headline opponent yet is BEATABLE by a
+   *  good draft from a constrained pool — tuned so realistic play wins ~50%
+   *  (legend ~30%). Defaults to 0. */
+  sim: { difficulty: Difficulty; bestOf: number; opponentShift?: number };
   constraint?: ChallengeConstraint;
   reward: { xp: number; badge?: string; specialId?: string };
 }
@@ -659,4 +664,16 @@ export interface RunHistoryEntry {
   swissRecord: { wins: number; losses: number };
   rosterNames: string[];
   xpGained: number;
+  /** Optional rich recap (v1.4) so the profile can replay "how that run went":
+   *  the drafted roster on a field + key outcome facts. Older entries lack it and
+   *  degrade to the flat row summary. Kept compact (refs, not resolved cards). */
+  recap?: RunRecap;
+}
+
+export interface RunRecap {
+  roster: Roster;
+  chemistryTier: string;
+  chemistryPercent: number;
+  championName: string | null;
+  goalsConceded: number;
 }

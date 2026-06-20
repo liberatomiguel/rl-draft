@@ -1,102 +1,78 @@
 import { describe, expect, it } from "vitest";
-import {
-  challenges,
-  coaches,
-  lineupById,
-  lineups,
-  orgs,
-  playerCardById,
-  subs,
-} from "@/data";
-import { createRng } from "@/lib/rng";
+import { challenges, coachById, playerCardById, subById } from "@/data";
+import { createRng, type Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
 import {
   buildChallengeOpponent,
-  challengePool,
   challengeStatus,
   createChallengeDraft,
   playChallengeSeries,
 } from "./challenges";
-import { drawNextOffer, playerEligibleUnderConstraint } from "./draft";
+import { applyPick, applyReroll, drawNextOffer, neededKinds, playerEligibleUnderConstraint, slotsForKind } from "./draft";
 import { buildUserTeam } from "./teams";
-import type { Challenge, Roster } from "./types";
+import type { Challenge, DraftOfferCard, Roster } from "./types";
 
 /**
- * Build a strong LEGAL roster for a challenge — best eligible players (one per
- * person), best staff, the top player's org. Represents what a skilled drafter
- * could assemble, so its win rate is a LOWER bound on what's achievable (an
- * optimal chemistry build does at least as well). Used to prove every authored
- * challenge is winnable.
+ * A COMPETENT, REALISTIC draft (v1.4) — what a thoughtful player actually does:
+ * each offer, take the best available card for an open needed slot (players
+ * first); reroll a clearly-weak offer while rerolls remain. This is the honest
+ * winnability bar — NOT the old `bestLegalRoster`, which cherry-picked the single
+ * best card at every slot across all lineups (an unreachable roster, so its win
+ * rate said nothing about real play). Seeded by the challenge, so it mirrors the
+ * exact offers a player faces.
  */
-function bestLegalRoster(ch: Challenge): Roster {
-  const poolIds = challengePool(ch.constraint);
-  const poolLineups = poolIds
-    ? lineups.filter((l) => poolIds.includes(l.id))
-    : lineups.filter((l) => !l.samOnly);
-
-  // Best eligible card per player.
-  const byPlayer = new Map<string, string>();
-  for (const l of poolLineups) {
-    for (const cid of l.playerCardIds) {
-      if (!playerEligibleUnderConstraint(cid, ch.constraint)) continue;
-      const card = playerCardById.get(cid)!;
-      const cur = byPlayer.get(card.playerId);
-      if (!cur || finalOverall(card) > finalOverall(playerCardById.get(cur)!)) {
-        byPlayer.set(card.playerId, cid);
+function cardScore(c: DraftOfferCard): number {
+  if (c.kind === "player") return finalOverall(playerCardById.get(c.refId)!);
+  if (c.kind === "coach") return coachById.get(c.refId)?.overall ?? 0;
+  if (c.kind === "sub") return subById.get(c.refId)?.overall ?? 0;
+  return 50;
+}
+function autoDraft(ch: Challenge, rng: Rng): Roster | null {
+  let draft = createChallengeDraft(ch, rng);
+  let guard = 0;
+  while (!draft.complete && guard++ < 120) {
+    const offer = draft.offer;
+    if (!offer) break;
+    const need = neededKinds(draft.roster, draft.mode);
+    const pickable = offer.cards
+      .filter((c) => c.availability === "available" && need.includes(c.kind))
+      .filter((c) => slotsForKind(c.kind).some((s) => !draft.roster[s]))
+      .sort((a, b) => (a.kind === "player" ? 1 : 0) - (b.kind === "player" ? 1 : 0) || cardScore(b) - cardScore(a));
+    const best = pickable.find((c) => c.kind === "player") ?? pickable[pickable.length - 1] ?? null;
+    if (!best) {
+      if (draft.rerollsLeft > 0) {
+        draft = applyReroll(draft, rng);
+        continue;
       }
+      const any = offer.cards.find(
+        (c) => c.availability === "available" && slotsForKind(c.kind).some((s) => !draft.roster[s]),
+      );
+      if (!any) return null;
+      draft = applyPick(draft, any, slotsForKind(any.kind).find((s) => !draft.roster[s])!, rng);
+      continue;
     }
+    if (best.kind === "player" && cardScore(best) < 80 && draft.rerollsLeft > 3) {
+      draft = applyReroll(draft, rng);
+      continue;
+    }
+    draft = applyPick(draft, best, slotsForKind(best.kind).find((s) => !draft.roster[s])!, rng);
   }
-  const ranked = [...byPlayer.values()].sort(
-    (a, b) => finalOverall(playerCardById.get(b)!) - finalOverall(playerCardById.get(a)!),
-  );
-
-  const roster: Roster = {};
-  const taken = new Set<string>();
-  if (ch.fixedPlayerCardId) {
-    const card = playerCardById.get(ch.fixedPlayerCardId)!;
-    roster.player1 = { slot: "player1", kind: "player", refId: card.id, fromLineupId: card.lineupId };
-    taken.add(card.playerId);
-  }
-  for (const slot of ["player1", "player2", "player3"] as const) {
-    if (roster[slot]) continue;
-    const cid = ranked.find((c) => !taken.has(playerCardById.get(c)!.playerId));
-    if (!cid) break;
-    const card = playerCardById.get(cid)!;
-    roster[slot] = { slot, kind: "player", refId: cid, fromLineupId: card.lineupId };
-    taken.add(card.playerId);
-  }
-
-  const coachIds = new Set(poolLineups.map((l) => l.coachId).filter(Boolean));
-  const coach =
-    coaches.filter((c) => coachIds.has(c.id)).sort((a, b) => b.overall - a.overall)[0] ??
-    [...coaches].sort((a, b) => b.overall - a.overall)[0];
-  const subIds = new Set(poolLineups.map((l) => l.subId).filter(Boolean));
-  const sub =
-    subs.filter((s) => subIds.has(s.id)).sort((a, b) => b.overall - a.overall)[0] ??
-    [...subs].sort((a, b) => b.overall - a.overall)[0];
-  const topLineup = roster.player1 ? lineupById.get(roster.player1.fromLineupId) : poolLineups[0];
-
-  roster.coach = { slot: "coach", kind: "coach", refId: coach.id, fromLineupId: coach.lineupId };
-  roster.sub = { slot: "sub", kind: "sub", refId: sub.id, fromLineupId: sub.lineupId };
-  roster.org = {
-    slot: "org",
-    kind: "org",
-    refId: topLineup?.orgId ?? orgs[0].id,
-    fromLineupId: topLineup?.id ?? "",
-  };
-  return roster;
+  return draft.complete ? draft.roster : null;
 }
 
-function winRate(ch: Challenge, trials = 500): number {
-  const roster = bestLegalRoster(ch);
-  const user = buildUserTeam(roster, ch.sim.difficulty, { mode: "classic" });
+/** Win rate of the competent fixed-seed draft, sampling the series outcome (the
+ *  live series RNG continues from the post-draft state, which varies with the
+ *  player's choice path). */
+function realisticWinRate(ch: Challenge, sims = 200): number {
+  const roster = autoDraft(ch, createRng(ch.seed));
+  if (!roster) return 0; // couldn't even assemble a legal roster on the fixed seed
+  const user = buildUserTeam(roster, ch.sim.difficulty, { mode: "challenge" });
   const opponent = buildChallengeOpponent(ch);
   let wins = 0;
-  for (let i = 0; i < trials; i++) {
-    const rng = createRng(7000 + i * 31);
-    if (playChallengeSeries(user, opponent, ch, rng).winnerTeamId === "user") wins++;
+  for (let i = 0; i < sims; i++) {
+    if (playChallengeSeries(user, opponent, ch, createRng(ch.seed + 1 + i * 131)).winnerTeamId === "user") wins++;
   }
-  return wins / trials;
+  return wins / sims;
 }
 
 describe("challenges — data integrity", () => {
@@ -140,23 +116,35 @@ describe("challenges — constraints actually bind", () => {
             expect(finalOverall(playerCardById.get(card.refId)!)).toBeLessThanOrEqual(cap);
           }
         }
-        // advance the offer to keep sampling the constrained pool
         draft = drawNextOffer({ ...draft, shownLineupIds: [] }, rng);
+      }
+    }
+  });
+
+  it("a nationality challenge always offers a pickable national (draft completes)", () => {
+    const fr = challenges.find((c) => c.constraint?.country);
+    if (fr) {
+      const roster = autoDraft(fr, createRng(fr.seed));
+      expect(roster).not.toBeNull();
+      // every drafted player matches the nationality twist
+      for (const slot of ["player1", "player2", "player3"] as const) {
+        const pick = roster![slot];
+        if (pick) expect(playerEligibleUnderConstraint(pick.refId, fr.constraint)).toBe(true);
       }
     }
   });
 });
 
-describe("challenges — every one is winnable", () => {
-  // A skilled, legal draft must have a real shot at every challenge (Miguel's
-  // hard rule: challenges are completable). Floor is deliberately low — the
-  // legend-tier walls are meant to be brutal, like Legacy mode itself.
+describe("challenges — every one is realistically winnable (v1.4)", () => {
+  // A COMPETENT (not perfect) draft on the fixed seed must have a real shot at
+  // every challenge. Floors carry margin below the design targets (~50% / legend
+  // ~30%) for sim noise; the boss `opponentShift` knob is tuned to hit them.
   for (const ch of challenges) {
-    it(`${ch.id} is winnable with a strong legal team`, () => {
-      const wr = winRate(ch);
-      // eslint-disable-next-line no-console
-      console.log(`  challenge ${ch.id.padEnd(28)} winrate ${(wr * 100).toFixed(0)}%`);
-      expect(wr).toBeGreaterThan(0.12);
+    const isLegend = ch.tier === "legend";
+    it(`${ch.id} is winnable (${ch.tier})`, () => {
+      const wr = realisticWinRate(ch);
+      console.log(`  ${ch.id.padEnd(28)} ${ch.tier.padEnd(6)} winrate ${(wr * 100).toFixed(0)}%`);
+      expect(wr).toBeGreaterThanOrEqual(isLegend ? 0.15 : 0.3);
     });
   }
 });

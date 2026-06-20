@@ -16,25 +16,21 @@ import { useAccountStore } from "@/store/accountStore";
 import { Badge } from "@/components/ui/Badge";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 
+// v1.4: trimmed to the four Miguel wants (titles first), plus MMR — the cosmetic
+// skill rating that replaced the old XP board. The other columns still exist in
+// the DB/view; they're just no longer surfaced as tabs.
 const CATEGORIES: LeaderboardCategory[] = [
-  "best_hard",
-  "best_legacy",
-  "best_worldwide",
-  "best_sam",
-  "best_normal",
-  "best_easy",
-  "championships",
-  "titles_hard",
-  "titles_legacy",
-  "challenges_cleared",
-  "daily_streak",
-  "xp",
+  "championships", // Titles · Total
+  "titles_legacy", // Titles · Legacy
+  "best_legacy", // Highest overall · Legacy
+  "best_sam", // Highest overall · Regional
+  "mmr", // Skill rating
 ];
 
 export function LeaderboardsView() {
   const { LEADERBOARDS_UI: L } = useCopy();
   const username = useAccountStore((s) => s.username);
-  const [cat, setCat] = useState<LeaderboardCategory>("best_hard");
+  const [cat, setCat] = useState<LeaderboardCategory>("championships");
   // Hold the loaded category with its rows; loading = the fetch for the current
   // tab hasn't landed yet. Derived, so no setState-in-effect.
   const [loaded, setLoaded] = useState<{ cat: LeaderboardCategory; rows: LeaderboardRow[] } | null>(null);
