@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const bestClear = useProfileStore(selectBestClear);
   const accountStatus = useAccountStore((s) => s.status);
   const accountEmail = useAccountStore((s) => s.session?.user.email ?? null);
+  const accountSignOut = useAccountStore((s) => s.signOut);
   const accountDelete = useAccountStore((s) => s.deleteAccount);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -74,7 +75,7 @@ export default function ProfilePage() {
           {signedIn ? (
             // Name is the hero (left, with the pencil + sign out); the rank text
             // moves to the right (one line).
-            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
                 <ProfileNickname />
                 {accountEmail ? (
@@ -83,7 +84,7 @@ export default function ProfilePage() {
               </div>
               <div className="shrink-0 sm:text-right">
                 <p className="kicker mb-0.5">{P.rank}</p>
-                <p className="display whitespace-nowrap text-2xl font-bold uppercase tracking-wide text-ink">
+                <p className="display whitespace-nowrap text-[1.7rem] font-bold uppercase tracking-wide text-ink">
                   {rank.label}
                 </p>
               </div>
@@ -95,10 +96,23 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* XP bar — full card width, where it always was; XP total below it
-              (right-aligned when signed in, matching the rank). */}
+          {/* XP bar — full card width; below it, sign out (left) + XP total
+              (right) when signed in, just the XP total otherwise. */}
           <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
-          <p className={"mt-1.5 text-xs text-sub" + (signedIn ? " sm:text-right" : "")}>{xpText}</p>
+          {signedIn ? (
+            <div className="mt-1.5 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={accountSignOut}
+                className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+              >
+                {L.signOut}
+              </button>
+              <p className="text-xs text-sub">{xpText}</p>
+            </div>
+          ) : (
+            <p className="mt-1.5 text-xs text-sub">{xpText}</p>
+          )}
         </div>
       </Panel>
 

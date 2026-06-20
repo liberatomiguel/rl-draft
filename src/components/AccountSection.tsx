@@ -30,7 +30,6 @@ export function ProfileNickname() {
   const status = useAccountStore((s) => s.status);
   const username = useAccountStore((s) => s.username);
   const setUsername = useAccountStore((s) => s.setUsername);
-  const signOut = useAccountStore((s) => s.signOut);
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -96,14 +95,7 @@ export function ProfileNickname() {
         title={L.displayNameLabel}
         className="shrink-0 text-faint transition-colors hover:text-ink"
       >
-        <PencilIcon className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={signOut}
-        className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
-      >
-        {L.signOut}
+        <PencilIcon className="h-5 w-5" />
       </button>
     </div>
   );
