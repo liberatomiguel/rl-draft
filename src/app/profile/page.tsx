@@ -49,6 +49,17 @@ export default function ProfilePage() {
   const unlockedCount = Object.keys(profile.unlockedSpecials).length;
   const earned = profile.achievements;
 
+  const xpText = (
+    <>
+      {profile.xp} {P.xp}
+      {rank.next ? (
+        <span className="text-faint"> · {P.toNext(rank.xpToNext)}</span>
+      ) : (
+        <span className="text-faint"> · {P.maxRank}</span>
+      )}
+    </>
+  );
+
   return (
     <div className="rise-in">
       <BackToMenu />
@@ -57,33 +68,35 @@ export default function ProfilePage() {
       {/* Rank panel doubles as the profile-identity card (v1.4): when signed in,
           the display name is the hero (left) and the rank / XP are right-aligned,
           with sign out inside the card. Signed out, it's the rank on its own. */}
-      <Panel strong glow="blue" className="mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
+      <Panel strong glow="blue" className="relative mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
+        {signedIn ? (
+          <button
+            type="button"
+            onClick={accountSignOut}
+            className="absolute right-4 top-3 text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+          >
+            {L.signOut}
+          </button>
+        ) : null}
+
         <RankBadge rank={rank} variant="profile" size="lg" />
 
         <div className="w-full min-w-0 flex-1 text-center sm:text-left">
           {signedIn ? (
-            // Name is the hero (left); the rank text moves to the right, one line.
-            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            // Name is the hero (left); the rank text + XP total go to the right.
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <ProfileNickname />
-                <div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
-                  {accountEmail ? (
-                    <span className="truncate text-xs text-faint">{accountEmail}</span>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={accountSignOut}
-                    className="shrink-0 text-xs font-semibold text-sub underline-offset-2 transition-colors hover:text-ink hover:underline"
-                  >
-                    {L.signOut}
-                  </button>
-                </div>
+                {accountEmail ? (
+                  <p className="mt-1 truncate text-xs text-faint">{accountEmail}</p>
+                ) : null}
               </div>
               <div className="shrink-0 sm:text-right">
                 <p className="kicker mb-0.5">{P.rank}</p>
                 <p className="display whitespace-nowrap text-2xl font-bold uppercase tracking-wide text-ink">
                   {rank.label}
                 </p>
+                <p className="mt-1 text-xs text-sub">{xpText}</p>
               </div>
             </div>
           ) : (
@@ -95,14 +108,7 @@ export default function ProfilePage() {
 
           {/* XP bar — full card width, where it always was. */}
           <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
-          <p className="mt-1.5 text-xs text-sub">
-            {profile.xp} {P.xp}
-            {rank.next ? (
-              <span className="text-faint"> · {P.toNext(rank.xpToNext)}</span>
-            ) : (
-              <span className="text-faint"> · {P.maxRank}</span>
-            )}
-          </p>
+          {!signedIn ? <p className="mt-1.5 text-xs text-sub">{xpText}</p> : null}
         </div>
       </Panel>
 
