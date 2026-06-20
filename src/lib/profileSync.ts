@@ -112,9 +112,11 @@ export function mergeProfiles(local: DurableProfile, cloud: DurableProfile): Dur
 
   return {
     xp: Math.max(local.xp, cloud.xp),
-    // MMR is monotonic like every other counter; `?? 200` seeds legacy rows saved
-    // before MMR existed so a pre-MMR cloud row can't drag a player back to 0.
-    mmr: Math.max(local.mmr ?? 200, cloud.mmr ?? 200),
+    // MMR is monotonic like every other counter; `?? 1000` seeds legacy rows saved
+    // before MMR existed (the MMR.start floor) so a pre-MMR cloud row can't drag a
+    // player below the starting value. The backfill floor (applied on hydrate)
+    // lifts veterans above this from history.
+    mmr: Math.max(local.mmr ?? 1000, cloud.mmr ?? 1000),
     runsCompleted: Math.max(local.runsCompleted, cloud.runsCompleted),
     wins: maxRecord(local.wins, cloud.wins),
     playoffAppearances: Math.max(local.playoffAppearances, cloud.playoffAppearances),

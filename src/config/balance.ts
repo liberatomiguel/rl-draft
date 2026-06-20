@@ -513,17 +513,21 @@ export const XP = {
  * Surfaces on the profile card, the results screen, and as the headline leaderboard
  * category. Does NOT touch gameplay.
  *
- * SCALE (v1.4 rework): tuned so a very good player lands ~1500-2000 and the number
- * reads like RL MMR (SSL ≈ 1900+). Two devices keep it meaningful AND bounded:
+ * SCALE (v1.4 rework): reads like RL MMR. Everyone STARTS at `start` (1000) — a new
+ * player isn't dumped at the bottom, so reaching ~1500 is a short, motivating climb
+ * (not a grind from zero) and ~1900 is the real grind toward the soft ceiling. Two
+ * devices keep it meaningful AND bounded:
  *   1. Granular rewards — placement + per-Swiss-win + difficulty mult + a regional
  *      title bonus, so even a non-podium run nudges the bar.
  *   2. DIMINISHING RETURNS toward `softCap` (`mmrDamp`) + a `hardCap` clamp — gains
- *      shrink as you approach ~2300 so a great player converges to 1500-2000 and even
+ *      shrink as you approach ~2300 so a great player converges to ~1500-2000 and even
  *      an obsessive grinder can't reach absurd values (no 100k). Backfill uses the
- *      closed-form integral of the same damped recurrence, so it's consistent.
+ *      closed-form integral of the same damped recurrence, so it's consistent: a
+ *      veteran lands ~1500-2000 from history, a new account starts at 1000.
  */
 export const MMR = {
-  start: 200,
+  /** Everyone starts here — a new player isn't at the bottom; ~1500 is a short climb. */
+  start: 1000,
   /** Gains taper toward this soft skill ceiling (diminishing returns). */
   softCap: 2300,
   /** Absolute clamp — even infinite grinding stops here. */
@@ -563,7 +567,7 @@ export function mmrRawGain(
  *  soft cap, so growth slows as a player approaches a "great" rating. */
 export function mmrDamp(mmr: number): number {
   const t = (mmr - MMR.start) / (MMR.softCap - MMR.start);
-  return Math.max(0.1, 1 - t);
+  return Math.min(1, Math.max(0.1, 1 - t));
 }
 
 /** The new MMR total after one finished run (applies damping; hard-capped). */

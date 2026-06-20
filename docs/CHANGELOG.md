@@ -143,8 +143,11 @@ with the root cause — that section doubles as the project's bugfix log.
   optimization stays ON (mobile LCP unaffected).
 
 ### Balance
-- **MMR rescaled to a Rocket-League-like 200→~2000 ladder (#80).** The first cut
-  topped out far too low (a heavy player sat ~440). Rework: bigger, granular gains
+- **MMR rescaled to a Rocket-League-like ladder; everyone starts at 1000 (#80).**
+  The first cut topped out far too low (a heavy player sat ~440) and started new
+  players at 200 (too long a climb). Now the floor is **1000** — a new account isn't
+  at the bottom, so reaching ~1500 is a short, motivating climb (~30-50 runs) and
+  ~1900 is the real grind toward the ~2300 soft cap. Rework: bigger, granular gains
   (placement + per-Swiss-win + difficulty mult + a regional-title bonus) with
   **diminishing returns** toward a `softCap` (2300) + a `hardCap` (2800) clamp, so a
   very good player lands ~1500-2000 and even an obsessive grinder can't reach absurd
@@ -187,6 +190,10 @@ with the root cause — that section doubles as the project's bugfix log.
   the same per-rarity weighting so their rosters stay consistent.
 
 ### Fixed
+- **Flaky Legacy balance test stabilised.** The v1.4 Legacy ease nudged a 92.5
+  team's title rate up against the old tight `< 0.03` bound; since the bracket draw
+  isn't fully seed-deterministic, it tripped intermittently. Bounds loosened to the
+  post-ease rates with variance headroom (still catch a regression, not noise).
 - **Resetting a challenge mid-run kept the fixed seed.** "Reset run" routed a
   challenge back through `startRun` → a fresh classic draft, losing the puzzle's
   fixed offers + boss. `restartRun` now re-invokes `startChallenge(challengeId)` for

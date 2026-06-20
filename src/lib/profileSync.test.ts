@@ -4,7 +4,7 @@ import { mergeProfiles, type DurableProfile } from "./profileSync";
 function make(over: Partial<DurableProfile> = {}): DurableProfile {
   return {
     xp: 0,
-    mmr: 200,
+    mmr: 1000,
     runsCompleted: 0,
     wins: { easy: 0, normal: 0, hard: 0, legacy: 0 },
     playoffAppearances: 0,
@@ -44,24 +44,24 @@ describe("mergeProfiles — never lose progress (#55.7)", () => {
   });
 
   it("takes the MAX of every counter and peak — result regresses below neither side", () => {
-    const a = make({ xp: 5000, mmr: 350, wins: { easy: 5, normal: 1, hard: 0, legacy: 0 }, records: { bestOverall: { easy: 90, normal: 0, hard: 0, legacy: 0 }, bestOverallWorldwide: 90, bestOverallSam: 0 } });
-    const b = make({ xp: 3000, mmr: 280, wins: { easy: 1, normal: 4, hard: 2, legacy: 0 }, records: { bestOverall: { easy: 70, normal: 85, hard: 92, legacy: 0 }, bestOverallWorldwide: 92, bestOverallSam: 88 } });
+    const a = make({ xp: 5000, mmr: 1750, wins: { easy: 5, normal: 1, hard: 0, legacy: 0 }, records: { bestOverall: { easy: 90, normal: 0, hard: 0, legacy: 0 }, bestOverallWorldwide: 90, bestOverallSam: 0 } });
+    const b = make({ xp: 3000, mmr: 1400, wins: { easy: 1, normal: 4, hard: 2, legacy: 0 }, records: { bestOverall: { easy: 70, normal: 85, hard: 92, legacy: 0 }, bestOverallWorldwide: 92, bestOverallSam: 88 } });
     const m = mergeProfiles(a, b);
     expect(m.xp).toBe(5000);
-    expect(m.mmr).toBe(350);
+    expect(m.mmr).toBe(1750);
     expect(m.wins).toEqual({ easy: 5, normal: 4, hard: 2, legacy: 0 });
     expect(m.records.bestOverall).toEqual({ easy: 90, normal: 85, hard: 92, legacy: 0 });
     expect(m.records.bestOverallWorldwide).toBe(92);
     expect(m.records.bestOverallSam).toBe(88);
   });
 
-  it("seeds MMR to 200 for legacy rows saved before MMR existed (never drags to 0)", () => {
-    const withMmr = make({ mmr: 320 });
+  it("seeds MMR to the start floor for legacy rows saved before MMR existed (never drags down)", () => {
+    const withMmr = make({ mmr: 1600 });
     // Simulate a pre-MMR cloud row: mmr field absent at runtime.
     const legacy = make();
     delete (legacy as Partial<DurableProfile>).mmr;
-    expect(mergeProfiles(withMmr, legacy).mmr).toBe(320);
-    expect(mergeProfiles(legacy, withMmr).mmr).toBe(320);
+    expect(mergeProfiles(withMmr, legacy).mmr).toBe(1600); // earned value survives
+    expect(mergeProfiles(legacy, withMmr).mmr).toBe(1600);
   });
 
   it("unions collections and keeps the EARLIEST unlock date", () => {

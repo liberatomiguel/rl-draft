@@ -31,7 +31,7 @@ import {
   selectDailyStreak,
   useProfileStore,
 } from "./profileStore";
-import { mmrBackfillFloor } from "@/config/balance";
+import { MMR, mmrBackfillFloor } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
 
 type Status = "loading" | "signedOut" | "signedIn";
@@ -99,7 +99,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         // Seed MMR for a signed-in veteran whose cloud row predates MMR (covers
         // the fresh-device case the local migrate can't). Idempotent floor.
         mmr: Math.max(
-          mergedRaw.mmr ?? 200,
+          mergedRaw.mmr ?? MMR.start,
           mmrBackfillFloor(mergedRaw.wins, mergedRaw.podiums, mergedRaw.runsCompleted),
         ),
       };

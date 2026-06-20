@@ -383,7 +383,7 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 9,
+      version: 10,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);
@@ -394,7 +394,9 @@ export const useProfileStore = create<ProfileState>()(
       // (b) SILENTLY backfills already-satisfied counter achievements so the v1.4
       // set swap doesn't toast a flood of old milestones; v9 re-runs the MMR
       // backfill after the scale rework (so it lands in the 1500-2000 range) and
-      // prunes ghost specials. All backfill from initialData via the deep-merge.
+      // prunes ghost specials; v10 re-runs the MMR backfill after raising the start
+      // to 1000 (new players begin at 1000, veterans re-seed from history). All
+      // backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =

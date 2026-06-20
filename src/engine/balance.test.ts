@@ -155,23 +155,23 @@ describe("difficulty outcomes (v0.5 targets)", () => {
   });
 
   it("Legacy: only a worldwide-elite (~97+) draft has a real shot", () => {
-    // v1.3.3 made Legacy the all-time wall again; v1.3.4 eased the ELITE end
-    // (opponentRatingShift 2.3 → 1.65) so the very best drafts get a fairer shot
-    // without lifting the base. Real-team sims:
-    //   good (92.5)  → reaches playoffs sometimes, NEVER lifts the trophy (~0%)
-    //   strong(95.5) → almost never wins (~1-2%)
-    //   dream (97.5) → the elite shot: a true dream now wins ~20% (was ~10%)
+    // v1.3.3 made Legacy the all-time wall again; v1.3.4 then v1.4 (#79) eased it
+    // toward a ~5% blended win rate (opponentRatingShift 2.3 → 1.65 → 1.35). The
+    // base of the curve stays low but the v1.4 ease lifts it a touch, so a 92.5
+    // team now wins a small-but-nonzero share (~2-3%) instead of ~0. Bounds carry
+    // headroom above those rates for sim variance (the bracket draw isn't fully
+    // seed-deterministic) — they catch a balance REGRESSION, not noise.
     const good = outcomeRates("legacy", 1000, 626);
     expect(good.playoffs).toBeGreaterThan(0.2); // you can still reach playoffs…
     expect(good.playoffs).toBeLessThan(0.7); // …but it's a fight
-    expect(good.titles).toBeLessThan(0.03); // a 92.5 team essentially never wins it
+    expect(good.titles).toBeLessThan(0.06); // a 92.5 team still rarely wins it
 
     const strong = outcomeRates("legacy", 1000, 909, strongUserTeam);
-    expect(strong.titles).toBeLessThan(0.08); // even a 95.5 rarely wins…
+    expect(strong.titles).toBeLessThan(0.12); // even a 95.5 wins only sometimes…
 
     // Reachability is the whole point: a true dream (~97+) MUST be able to win it.
     const dream = outcomeRates("legacy", 1000, 777, dreamUserTeam);
     expect(dream.titles).toBeGreaterThan(0.08); // a real, elite shot…
-    expect(dream.titles).toBeLessThan(0.4); // …but still a genuine achievement
+    expect(dream.titles).toBeLessThan(0.45); // …but still a genuine achievement
   });
 });
