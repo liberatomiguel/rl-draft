@@ -290,12 +290,14 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 6,
+      version: 7,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);
       // v6 added the gamesWon/goalsScored counters (default 0 — they only
-      // accrue going forward). All backfill from initialData via the deep-merge.
+      // accrue going forward); v7 prunes earned-achievement ids that no longer
+      // exist (the v1.4 set replaced every id, so old earned ids would inflate
+      // the count). All backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
@@ -313,9 +315,15 @@ export const useProfileStore = create<ProfileState>()(
             : prev;
         // Deep-merge settings/flags so new keys get defaults on older profiles;
         // rebuild records from history when they're missing (pre-v5 saves).
+        // Drop earned-achievement ids that no longer exist in the current set
+        // (v1.4 replaced every id) so the unlocked count is accurate.
+        const achievements = Object.fromEntries(
+          Object.entries(base.achievements ?? {}).filter(([id]) => achievementById.has(id)),
+        );
         return {
           ...initialData,
           ...base,
+          achievements,
           settings: { ...initialData.settings, ...(base.settings ?? {}) },
           flags: { ...initialData.flags, ...(base.flags ?? {}) },
           records: base.records ?? backfillRecords(base.runHistory ?? []),

@@ -1,21 +1,106 @@
 "use client";
 
 /**
- * Account hub (v1.4) — lives on the Profile. Signed out: an email one-time-code
- * sign-in. Signed in: the email, an editable (unique) display name, sign out, and
- * delete account. Renders nothing when accounts aren't configured, so the guest
- * profile is unchanged.
+ * Account UI (v1.4) — lives on the Profile.
+ *  · <ProfileNickname>  — the display name + a pencil to edit it, shown INSIDE
+ *    the rank card (the profile-identity card). Signed-in only.
+ *  · <AccountSection>   — signed out: an email one-time-code sign-in with an
+ *    incentive; signed in: the email + sign out + delete account. The name editor
+ *    lives in the rank card now, not here.
+ * Both render nothing when accounts aren't configured, so the guest profile is
+ * unchanged.
  */
 
 import { useState } from "react";
 import { useCopy } from "@/content/copy";
-import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { sendEmailCode, verifyEmailCode } from "@/lib/supabase";
 import { useAccountStore } from "@/store/accountStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
+import { PencilIcon } from "@/components/ui/icons";
+
+type L = ReturnType<typeof useCopy>["LEADERBOARDS_UI"];
+
+// --- Nickname (in the rank card) -----------------------------------------
+
+export function ProfileNickname() {
+  const { LEADERBOARDS_UI: L } = useCopy();
+  const enabled = useAccountStore((s) => s.enabled);
+  const status = useAccountStore((s) => s.status);
+  const username = useAccountStore((s) => s.username);
+  const setUsername = useAccountStore((s) => s.setUsername);
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!enabled || status !== "signedIn" || !username) return null;
+
+  const start = () => {
+    setDraft(username);
+    setError(null);
+    setEditing(true);
+  };
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    const res = await setUsername(draft);
+    setSaving(false);
+    if (res.error === "taken") setError(L.nameTaken);
+    else if (res.error) setError(res.error);
+    else setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="mb-1">
+        <div className="flex items-center justify-center gap-2 sm:justify-start">
+          <input
+            value={draft}
+            autoFocus
+            maxLength={24}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            className="min-w-0 max-w-[12rem] rounded-lg border border-line bg-bg/60 px-2.5 py-1 text-lg font-bold text-ink outline-none focus:border-orange/60"
+          />
+          <Button variant="secondary" size="sm" onClick={save} disabled={saving || !draft.trim()}>
+            {L.save}
+          </Button>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className="text-xs text-faint transition-colors hover:text-sub"
+          >
+            {L.cancel}
+          </button>
+        </div>
+        {error ? <p className="mt-1 text-xs font-semibold text-bad">{error}</p> : null}
+      </div>
+    );
+  }
+  return (
+    <div className="mb-1 flex items-center justify-center gap-1.5 sm:justify-start">
+      <span className="display text-xl font-bold text-ink">{username}</span>
+      <button
+        type="button"
+        onClick={start}
+        aria-label={L.displayNameLabel}
+        title={L.displayNameLabel}
+        className="text-faint transition-colors hover:text-ink"
+      >
+        <PencilIcon className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// --- Account section (below the rank card) -------------------------------
 
 export function AccountSection() {
   const { LEADERBOARDS_UI: L } = useCopy();
@@ -24,8 +109,6 @@ export function AccountSection() {
   if (!enabled || status === "loading") return null;
   return status === "signedIn" ? <SignedIn L={L} /> : <SignIn L={L} />;
 }
-
-type L = ReturnType<typeof useCopy>["LEADERBOARDS_UI"];
 
 function SignIn({ L }: { L: L }) {
   const [step, setStep] = useState<"email" | "code">("email");
@@ -53,8 +136,8 @@ function SignIn({ L }: { L: L }) {
   };
 
   return (
-    <Panel className="mb-6 p-5">
-      <h3 className="display mb-1 text-base font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
+    <Panel strong glow="blue" className="mb-6 p-5">
+      <h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
       <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p>
       {step === "email" ? (
         <div className="flex flex-col gap-2.5 sm:flex-row">
@@ -110,78 +193,28 @@ function SignIn({ L }: { L: L }) {
 
 function SignedIn({ L }: { L: L }) {
   const session = useAccountStore((s) => s.session);
-  const username = useAccountStore((s) => s.username);
   const syncing = useAccountStore((s) => s.syncing);
-  const setUsername = useAccountStore((s) => s.setUsername);
   const signOut = useAccountStore((s) => s.signOut);
   const deleteAccount = useAccountStore((s) => s.deleteAccount);
-
-  const [edited, setEdited] = useState<string | null>(null);
-  const draftName = edited ?? username ?? "";
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [nameError, setNameError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const save = async () => {
-    setSaving(true);
-    setNameError(null);
-    const res = await setUsername(draftName);
-    setSaving(false);
-    if (res.error === "taken") setNameError(L.nameTaken);
-    else if (res.error) setNameError(res.error);
-    else {
-      setEdited(null);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1500);
-    }
-  };
-
   return (
-    <Panel className="mb-6 p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs text-sub">
-          {session?.user.email ? L.signedInEmail(session.user.email) : L.account}
-          {syncing ? ` · ${L.syncing}` : ""}
-        </span>
-        <Button variant="ghost" onClick={signOut}>
-          {L.signOut}
-        </Button>
-      </div>
-
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-sub">
-        {L.displayNameLabel}
-      </label>
-      <div className="flex gap-2.5">
-        <input
-          value={draftName}
-          onChange={(e) => {
-            setEdited(e.target.value);
-            setNameError(null);
-          }}
-          maxLength={24}
-          className="flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60"
-        />
-        <Button
-          variant="secondary"
-          onClick={save}
-          disabled={saving || !draftName.trim() || draftName === username}
-        >
-          {saved ? L.saved : L.save}
-        </Button>
-      </div>
-      {nameError ? <p className="mt-2 text-xs font-semibold text-bad">{nameError}</p> : null}
-
-      <div className="mt-5 border-t border-line/60 pt-4">
+    <Panel className="mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
+      <span className="text-xs text-sub">
+        {session?.user.email ? L.signedInEmail(session.user.email) : L.account}
+        {syncing ? ` · ${L.syncing}` : ""}
+      </span>
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => setConfirmDelete(true)}
-          className={cx(
-            "text-xs font-semibold text-faint underline-offset-2 transition-colors hover:text-bad hover:underline",
-          )}
+          className="text-xs font-semibold text-faint underline-offset-2 transition-colors hover:text-bad hover:underline"
         >
           {L.deleteAccount}
         </button>
+        <Button variant="ghost" onClick={signOut}>
+          {L.signOut}
+        </Button>
       </div>
 
       <Modal

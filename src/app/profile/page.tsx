@@ -23,7 +23,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
-import { AccountSection } from "@/components/AccountSection";
+import { AccountSection, ProfileNickname } from "@/components/AccountSection";
 
 export default function ProfilePage() {
   const { PROFILE_UI: P, DIFFICULTY_LABELS } = useCopy();
@@ -46,14 +46,12 @@ export default function ProfilePage() {
       <BackToMenu />
       <SectionTitle kicker={P.career} title={P.title} className="mb-6" />
 
-      {/* Account hub (v1.4) — sign-in / display name / sign out / delete.
-          Renders nothing when accounts aren't configured. */}
-      <AccountSection />
-
-      {/* Rank header — uses the profile art set (public/ranks/profile/) */}
+      {/* Rank header doubles as the profile-identity card — the display name (with
+          a pencil to edit) sits with the rank when signed in (v1.4). */}
       <Panel strong glow="blue" className="mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
         <RankBadge rank={rank} variant="profile" size="lg" />
         <div className="w-full min-w-0 flex-1 text-center sm:text-left">
+          <ProfileNickname />
           <p className="kicker mb-1">{P.rank}</p>
           <p className="display text-3xl font-bold uppercase tracking-wide text-ink">{rank.label}</p>
           <div className="mt-3">
@@ -69,6 +67,10 @@ export default function ProfilePage() {
           </div>
         </div>
       </Panel>
+
+      {/* Account: sign-in incentive (signed out) / email + sign out + delete
+          (signed in). Renders nothing when accounts aren't configured. */}
+      <AccountSection />
 
       {/* Stats */}
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">

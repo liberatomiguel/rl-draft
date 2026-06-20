@@ -116,7 +116,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   );
                 })}
               </nav>
-              <AccountChip />
               <LangToggle />
               <Link
                 href="/settings"
@@ -132,6 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <GearIcon className="h-5 w-5" />
               </Link>
+              <AccountChip />
             </div>
           </div>
         </header>
@@ -195,10 +195,10 @@ function AccountChip() {
         className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-white/5"
         title={username ?? undefined}
       >
-        <RankBadge rank={rankForXp(xp)} variant="menu" size="sm" />
         <span className="hidden max-w-[110px] truncate text-xs font-semibold text-sub sm:inline">
           {username}
         </span>
+        <RankBadge rank={rankForXp(xp)} variant="menu" size="sm" />
       </Link>
     );
   }

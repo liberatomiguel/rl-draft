@@ -90,6 +90,12 @@ with the root cause — that section doubles as the project's bugfix log.
   the same per-rarity weighting so their rosters stay consistent.
 
 ### Fixed
+- **Phantom "already-earned" achievement count.** Root cause: the v1.4 set
+  replaced every achievement id, but a player's earned-achievement map still held
+  the OLD ids; the unlocked count reads `Object.keys(achievements).length`, so it
+  showed ~22 unlocked even though none of the NEW achievements were earned. The
+  profile migrate (now v7) prunes earned ids that no longer exist in the current
+  set, so the count is accurate again.
 - **Slot-machine reveal now replays on "Reset run".** Root cause: `OfferReveal`
   was keyed by `draft.round` only, and a reset starts a fresh run back at
   round 1 — an identical key, so React never remounted the component and its

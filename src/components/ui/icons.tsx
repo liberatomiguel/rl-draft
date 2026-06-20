@@ -23,6 +23,23 @@ export function CrownIcon({ className }: { className?: string }) {
   );
 }
 
+/** Pencil — "edit" affordance (e.g. the display name on the profile card). */
+export function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className={className}
+      aria-hidden
+    >
+      <path d="M4 20.5h4L18.5 10l-4-4L4 16.5v4Z" {...P} />
+      <path d="M13.5 7l4 4" {...P} />
+    </svg>
+  );
+}
+
 /** Lightning bolt — replaces the ⚡ emoji on the results eliminator (v1.4). */
 export function BoltIcon({ className }: { className?: string }) {
   return (
