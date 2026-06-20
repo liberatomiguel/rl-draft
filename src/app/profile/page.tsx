@@ -100,7 +100,7 @@ export default function ProfilePage() {
               (right) when signed in, just the XP total otherwise. */}
           <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
           {signedIn ? (
-            <div className="mt-1.5 flex items-center justify-between gap-3">
+            <div className="mt-2.5 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={accountSignOut}
@@ -111,7 +111,7 @@ export default function ProfilePage() {
               <p className="text-xs text-sub">{xpText}</p>
             </div>
           ) : (
-            <p className="mt-1.5 text-xs text-sub">{xpText}</p>
+            <p className="mt-2.5 text-xs text-sub">{xpText}</p>
           )}
         </div>
       </Panel>
