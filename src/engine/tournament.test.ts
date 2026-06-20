@@ -104,7 +104,7 @@ describe("tournament integration", () => {
 
       expect(results.xp.total).toBeGreaterThan(0);
       expect(results.xp.lines.length).toBeGreaterThan(0);
-      expect(results.newAchievementIds).toContain("first-draft");
+      expect(results.newAchievementIds).toContain("ach-first-team");
       expect(results.swissRecord.wins + results.swissRecord.losses).toBeGreaterThanOrEqual(3);
 
       // Special unlocks must be a subset of drafted specials.

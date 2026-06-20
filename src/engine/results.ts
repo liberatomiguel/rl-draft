@@ -6,7 +6,7 @@
 import { CHEMISTRY, DIFFICULTY, FEATURES, XP } from "@/config/balance";
 import { achievementById, playerById, playerCardById, specialCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
-import { evaluateAchievements } from "./achievements";
+import { evaluateRunAchievements, userRunTotals } from "./achievements";
 import { finalOverall } from "./cards";
 import { displayTeamOverall } from "./rating";
 import { userPlayoffSeries } from "./playoffs";
@@ -177,23 +177,15 @@ export function compileResults(
 
   const goalsConceded = goalsConcededBy("user", all);
 
-  // --- Achievements ---
-  const newAchievementIds = evaluateAchievements({
+  // --- Achievements (run-state: team / in-match / win-conditions). Lifetime
+  // counters + collection + rank are evaluated in profileStore.applyRunResults,
+  // against the profile AFTER this run is applied. ---
+  const newAchievementIds = evaluateRunAchievements(
     run,
     tournament,
-    placement,
-    chemistry: userTeam?.chemistry ?? {
-      raw: 0,
-      max: 1,
-      percent: 0,
-      tier: "Poor",
-      items: [],
-    },
-    goalsConceded,
-    specialsOwnedAfter: profile.unlockedSpecialIds.length + unlockedSpecialIds.length,
-    specialIdsOwnedAfter: new Set([...profile.unlockedSpecialIds, ...unlockedSpecialIds]),
-    alreadyEarned: new Set(profile.achievementIds),
-  });
+    new Set(profile.achievementIds),
+  );
+  const runTotals = userRunTotals(tournament);
 
   // --- XP ---
   const lines: XpLine[] = [{ label: "Run completed", amount: XP.completeRun }];
@@ -314,6 +306,8 @@ export function compileResults(
     goalsConceded,
     unlockedSpecialIds,
     newAchievementIds,
+    userGoals: runTotals.goals,
+    userGameWins: runTotals.gameWins,
     xp: { lines, difficultyMultiplier, hiddenOverallBonus, total },
     eliminatedBy,
   };

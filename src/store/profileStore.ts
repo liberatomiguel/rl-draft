@@ -9,8 +9,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { HISTORY_LIMIT } from "@/config/balance";
-import { rankRewardsForXp } from "@/engine/progression";
+import { achievementById, specialCards } from "@/data";
+import { evaluateCounterAchievements } from "@/engine/achievements";
+import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import type { DurableProfile } from "@/lib/profileSync";
+import { useAchievementToasts } from "./achievementToastStore";
 import type {
   Difficulty,
   Placement,
@@ -34,6 +37,9 @@ export interface ProfileState {
   playoffAppearances: number;
   podiums: number;
   swissWinsTotal: number;
+  /** Lifetime individual game wins + goals scored (v1.4 — achievement counters). */
+  gamesWon: number;
+  goalsScored: number;
   /** specialCardId → ISO date unlocked. */
   unlockedSpecials: Record<string, string>;
   /** achievementId → ISO date earned. */
@@ -86,6 +92,9 @@ export interface ProfileState {
   ) => void;
   /** Replace the durable slice wholesale (v1.4 cloud sync — after a merge). */
   hydrateDurable: (durable: DurableProfile) => void;
+  /** Award achievements the MOMENT they're earned (v1.4): mark + grant XP +
+   *  toast the genuinely-new ones. Used for the real-time mid-run feats. */
+  awardAchievements: (ids: string[]) => void;
   resetAll: () => void;
 }
 
@@ -96,6 +105,8 @@ const initialData = {
   playoffAppearances: 0,
   podiums: 0,
   swissWinsTotal: 0,
+  gamesWon: 0,
+  goalsScored: 0,
   unlockedSpecials: {},
   achievements: {},
   runHistory: [] as RunHistoryEntry[],
@@ -147,7 +158,8 @@ export const useProfileStore = create<ProfileState>()(
     (set) => ({
       ...initialData,
 
-      applyRunResults: (results, entry, daily) =>
+      applyRunResults: (results, entry, daily) => {
+        const freshToasts: string[] = [];
         set((state) => {
           const now = new Date().toISOString();
 
@@ -158,7 +170,10 @@ export const useProfileStore = create<ProfileState>()(
 
           const achievements = { ...state.achievements };
           for (const id of results.newAchievementIds) {
-            if (!achievements[id]) achievements[id] = now;
+            if (!achievements[id]) {
+              achievements[id] = now;
+              freshToasts.push(id);
+            }
           }
 
           const wins = { ...state.wins };
@@ -178,20 +193,56 @@ export const useProfileStore = create<ProfileState>()(
             };
           }
 
+          const runsCompleted = state.runsCompleted + 1;
+          const gamesWon = state.gamesWon + results.userGameWins;
+          const goalsScored = state.goalsScored + results.userGoals;
+          // results.xp.total already includes the run-state achievement XP.
+          const xpAfterRun = state.xp + results.xp.total;
+
+          // Lifetime counters / collection / rank achievements — evaluated AFTER
+          // this run is applied, then awarded with their XP (v1.4).
+          const counterIds = evaluateCounterAchievements(
+            {
+              runsCompleted,
+              titlesTotal: wins.easy + wins.normal + wins.hard + wins.legacy,
+              legacyTitles: wins.legacy,
+              gamesWon,
+              goalsScored,
+              specialsOwned: Object.keys(unlockedSpecials).length,
+              totalSpecials: specialCards.length,
+              specialIds: new Set(Object.keys(unlockedSpecials)),
+              dailyStreak: selectDailyStreak({ ...state, dailyResults } as ProfileState),
+              rankId: rankForXp(xpAfterRun).id,
+            },
+            new Set(Object.keys(achievements)),
+          );
+          let counterXp = 0;
+          for (const id of counterIds) {
+            if (!achievements[id]) {
+              achievements[id] = now;
+              counterXp += achievementById.get(id)?.xp ?? 0;
+              freshToasts.push(id);
+            }
+          }
+
           return {
-            xp: state.xp + results.xp.total,
-            runsCompleted: state.runsCompleted + 1,
+            xp: xpAfterRun + counterXp,
+            runsCompleted,
             wins,
             playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
             podiums: state.podiums + (podium ? 1 : 0),
             swissWinsTotal: state.swissWinsTotal + entry.swissRecord.wins,
+            gamesWon,
+            goalsScored,
             unlockedSpecials,
             achievements,
             runHistory: [entry, ...state.runHistory].slice(0, HISTORY_LIMIT),
             dailyResults,
             records: bumpRecords(state.records, entry),
           };
-        }),
+        });
+        if (freshToasts.length) useAchievementToasts.getState().push(freshToasts);
+      },
 
       setLastSetup: (lastDifficulty, lastShowOverall, lastMode, lastRegionLock) =>
         set({ settings: { lastDifficulty, lastShowOverall, lastMode, lastRegionLock } }),
@@ -217,15 +268,34 @@ export const useProfileStore = create<ProfileState>()(
 
       hydrateDurable: (durable) => set(() => ({ ...durable })),
 
+      awardAchievements: (ids) => {
+        const fresh: string[] = [];
+        set((state) => {
+          const achievements = { ...state.achievements };
+          const now = new Date().toISOString();
+          let xp = 0;
+          for (const id of ids) {
+            if (!achievements[id]) {
+              achievements[id] = now;
+              xp += achievementById.get(id)?.xp ?? 0;
+              fresh.push(id);
+            }
+          }
+          return fresh.length ? { achievements, xp: state.xp + xp } : {};
+        });
+        if (fresh.length) useAchievementToasts.getState().push(fresh);
+      },
+
       resetAll: () => set({ ...initialData }),
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 5,
+      version: 6,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
-      // v5 added the leaderboard `records` (backfilled from runHistory below).
-      // All others backfill from initialData via the deep-merge.
+      // v5 added the leaderboard `records` (backfilled from runHistory below);
+      // v6 added the gamesWon/goalsScored counters (default 0 — they only
+      // accrue going forward). All backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =

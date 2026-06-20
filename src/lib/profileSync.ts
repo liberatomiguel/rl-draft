@@ -27,6 +27,8 @@ export type DurableProfile = Pick<
   | "playoffAppearances"
   | "podiums"
   | "swissWinsTotal"
+  | "gamesWon"
+  | "goalsScored"
   | "unlockedSpecials"
   | "achievements"
   | "runHistory"
@@ -44,6 +46,8 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "playoffAppearances",
   "podiums",
   "swissWinsTotal",
+  "gamesWon",
+  "goalsScored",
   "unlockedSpecials",
   "achievements",
   "runHistory",
@@ -111,6 +115,8 @@ export function mergeProfiles(local: DurableProfile, cloud: DurableProfile): Dur
     playoffAppearances: Math.max(local.playoffAppearances, cloud.playoffAppearances),
     podiums: Math.max(local.podiums, cloud.podiums),
     swissWinsTotal: Math.max(local.swissWinsTotal, cloud.swissWinsTotal),
+    gamesWon: Math.max(local.gamesWon, cloud.gamesWon),
+    goalsScored: Math.max(local.goalsScored, cloud.goalsScored),
     unlockedSpecials: mergeDateMap(local.unlockedSpecials, cloud.unlockedSpecials),
     achievements: mergeDateMap(local.achievements, cloud.achievements),
     challengesCompleted: mergeDateMap(local.challengesCompleted, cloud.challengesCompleted),

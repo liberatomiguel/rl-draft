@@ -10,7 +10,7 @@
 
 import { DIFFICULTY, SIMULATION as SIM } from "@/config/balance";
 import { specialCardById } from "@/data";
-import type { Rng } from "@/lib/rng";
+import { createRng, type Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import type {
   Difficulty,
@@ -110,6 +110,17 @@ function gameSide(
   return { score, notes };
 }
 
+/** Split `total` goals among `n` players. Deterministic and WITHOUT consuming the
+ *  series RNG (a local RNG seeded off the cursor + game index) — so the seeded
+ *  draw sequence and every existing seed stay byte-identical. */
+function distributeGoals(n: number, total: number, seed: number): number[] {
+  const out = new Array(n).fill(0) as number[];
+  if (n <= 0 || total <= 0) return out;
+  const r = createRng(seed >>> 0);
+  for (let i = 0; i < total; i += 1) out[r.int(0, n - 1)] += 1;
+  return out;
+}
+
 function flavorGoals(margin: number, overtime: boolean, rng: Rng): [number, number] {
   const winnerGoals = clamp(Math.round(1 + margin * 0.6 + rng.range(0, 2.4)), 1, 7);
   if (overtime) return [winnerGoals, winnerGoals - 1];
@@ -181,14 +192,22 @@ export function simulateSeries(
     const starName =
       winnerTeam.playerNames.length > 0 ? rng.pick(winnerTeam.playerNames) : undefined;
 
+    const score = flavorGoals(margin, overtime, rng);
+    // Per-player goals — deterministic from the cursor + game index, no RNG draw.
+    const gi = games.length + 1;
+    const seed = (rng.state ^ (gi * 0x9e3779b1)) >>> 0;
+    const aGoals = distributeGoals(teamA.playerNames.length, aWins ? score[0] : score[1], seed);
+    const bGoals = distributeGoals(teamB.playerNames.length, aWins ? score[1] : score[0], (seed ^ 0x85ebca6b) >>> 0);
+
     games.push({
-      index: games.length + 1,
+      index: gi,
       winnerTeamId: aWins ? teamA.id : teamB.id,
-      score: flavorGoals(margin, overtime, rng),
+      score,
       overtime,
       deciding,
       notes,
       starName,
+      scorers: { a: aGoals, b: bGoals },
     });
   }
 

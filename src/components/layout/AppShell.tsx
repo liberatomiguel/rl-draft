@@ -13,6 +13,7 @@ import { useProfileStore } from "@/store/profileStore";
 import { useMounted } from "@/store/useMounted";
 import { rankForXp } from "@/engine/progression";
 import { RankBadge } from "@/components/ui/RankBadge";
+import { AchievementToaster } from "@/components/AchievementToaster";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
@@ -84,6 +85,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <LeaveRunProvider>
       <SettingsEffects />
+      <AchievementToaster />
+
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">

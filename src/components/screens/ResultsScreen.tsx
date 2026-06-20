@@ -183,9 +183,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
         />
       ) : legacyJustUnlocked && !legacySeen ? (
         <LegacyUnlockCelebration onDone={() => setLegacySeen(true)} />
-      ) : (
-        <AchievementToasts ids={results.newAchievementIds} />
-      )}
+      ) : null}
 
       {/* Placement hero */}
       <Panel
@@ -423,7 +421,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
                           style.legend && "ach-legend-chip",
                         )}
                       >
-                        <AchievementIcon id={def.id} />
+                        <AchievementIcon group={def.group} />
                       </span>
                       <span>
                         <span className="display block text-sm font-bold uppercase tracking-wide text-ink">
@@ -970,75 +968,6 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
   );
 }
 
-/**
- * Slide-in toasts for freshly earned achievements — each toast wears the
- * achievement's own visual identity (icon, hue, legend prismatics), not a
- * generic trophy (v0.5). They appear one after another in the screen corner
- * and auto-dismiss, so they inform without taking over the results screen.
- */
-function AchievementToasts({ ids }: { ids: string[] }) {
-  const { RESULTS_UI: R } = useCopy();
-  const [visible, setVisible] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (ids.length === 0) return;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    ids.forEach((id, i) => {
-      timers.push(setTimeout(() => setVisible((v) => [...v, id]), 700 + i * 1100));
-      timers.push(
-        setTimeout(() => setVisible((v) => v.filter((x) => x !== id)), 700 + i * 1100 + 5200),
-      );
-    });
-    return () => timers.forEach(clearTimeout);
-  }, [ids]);
-
-  if (visible.length === 0) return null;
-
-  return (
-    <div
-      className="pointer-events-none fixed right-4 top-16 z-50 flex w-72 flex-col gap-2"
-      aria-live="polite"
-    >
-      {visible.map((id) => {
-        const def = achievementById.get(id);
-        if (!def) return null;
-        const style = achievementStyle(def);
-        return (
-          <div
-            key={id}
-            className={cx(
-              "toast-enter panel panel-strong pointer-events-auto flex items-center gap-3 p-3",
-              style.ring,
-              style.glow,
-              style.legend && "ach-legend",
-            )}
-          >
-            <span
-              className={cx(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                style.chip,
-                style.legend && "ach-legend-chip",
-              )}
-            >
-              <AchievementIcon id={def.id} />
-            </span>
-            <span className="min-w-0">
-              <span
-                className={cx("block text-[9px] font-bold uppercase tracking-[0.18em]", style.text)}
-              >
-                {R.achievementToast} · {style.label}
-              </span>
-              <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">
-                {def.title}
-              </span>
-              <span className="block text-[11px] text-sub">+{def.xp} XP</span>
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function HighlightTile({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (

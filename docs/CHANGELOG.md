@@ -17,6 +17,21 @@ with the root cause — that section doubles as the project's bugfix log.
 > Sections fill in as each workstream lands.
 
 ### Added
+- **Achievements rebuilt + real-time (≈56, grouped).** A full new set replaces the
+  old 25, organised into seven groups (Milestones · Modes & Difficulty ·
+  Performance · Chemistry & Composition · Roster Building · Collection ·
+  Progression) with assigned rarities + secret flags. They now pop the **moment**
+  they're earned via a global toaster — mid-draft (perfect chemistry, all-one-
+  region, loaded-with-specials), mid-match (hat-trick, 7-goal win, reverse sweep,
+  giant-slayer, game-7 OT…), and at run end — not only on the results screen.
+  Engine split into `teamAchievements` / `liveAchievements` /
+  `evaluateRunAchievements` / `evaluateCounterAchievements` so each fires at its
+  natural trigger; a single `awardAchievements` funnel marks + grants XP + toasts.
+  Adds two lifetime counters (`gamesWon`, `goalsScored`, profile v5 → v6) and
+  **per-player goal attribution** in the match sim (`GameResult.scorers`) — derived
+  deterministically WITHOUT consuming the series RNG, so every existing seed stays
+  byte-identical. Icons are now group-based; the grid groups with per-group
+  progress. New `achievements.test.ts`. (Old earned ids orphan — per "substitua todos".)
 - **Leaderboards + accounts foundation (email-code login + cloud sync).** A new
   `/leaderboards` page (linked from the home menu) tracks the player's peak team
   overall per difficulty and per pool (worldwide / SAM), plus championships,

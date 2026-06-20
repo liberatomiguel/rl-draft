@@ -165,7 +165,18 @@ export const achievementSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   xp: z.number().int().min(0),
+  /** Rarity tier — drives the visual style (achievementStyle). */
   category: z.enum(["common", "rare", "epic", "legend"]),
+  /** Grouping bucket on the achievements screen (v1.4). */
+  group: z.enum([
+    "milestone",
+    "mode",
+    "performance",
+    "chemistry",
+    "roster",
+    "collection",
+    "progression",
+  ]),
   secret: z.boolean().optional(),
 });
 

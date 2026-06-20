@@ -536,8 +536,18 @@ export const PROFILE_UI = {
 export const ACH_UI = {
   kicker: "Feats to chase across every run",
   title: "Achievements",
+  unlocked: "Achievement unlocked",
   secretTitle: "???",
   secretHint: "Hidden — discover it in play",
+  groups: {
+    milestone: "Milestones",
+    mode: "Modes & Difficulty",
+    performance: "Performance",
+    chemistry: "Chemistry & Composition",
+    roster: "Roster Building",
+    collection: "Collection",
+    progression: "Progression",
+  } as Record<string, string>,
 };
 
 export const HOWTO = {

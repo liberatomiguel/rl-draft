@@ -1,167 +1,281 @@
 /**
- * Achievement evaluation — runs once when a run completes.
- * Each rule receives the full run context and returns true when earned.
+ * Achievement evaluation (v1.4 — rebuilt around Miguel's set, grouped by theme).
+ *
+ * Split so achievements can fire the MOMENT they're earned, not only at run end:
+ *   · teamAchievements  — when a team is built (review).
+ *   · liveAchievements  — in-match / series feats (after each tournament round).
+ *   · evaluateRunAchievements — team + live + win-conditions, at run end.
+ *   · evaluateCounterAchievements — lifetime counters / collection / rank,
+ *     against the PROFILE AFTER this run's results are applied.
+ * Every function filters out already-earned ids and returns only the new ones.
+ * Pure + deterministic (no React, no storage).
  */
 
-import { playerById, playerCardById, seasonById } from "@/data";
+import { lineupById, playerById, playerCardById, seasonById } from "@/data";
 import { userPlayoffSeries } from "./playoffs";
 import { userSwissRecord } from "./swiss";
 import type {
   ChemistryResult,
-  Placement,
+  Region,
+  Roster,
+  RosterPick,
   RunState,
   SeriesResult,
   TournamentState,
 } from "./types";
 
-export interface AchievementContext {
-  run: RunState;
-  tournament: TournamentState;
-  placement: Placement;
-  chemistry: ChemistryResult;
-  /** Goals conceded across the whole run. */
-  goalsConceded: number;
-  /** Total specials in collection counting this run's unlocks. */
-  specialsOwnedAfter: number;
-  /** Special-card ids owned after this run (for card-specific achievements). */
-  specialIdsOwnedAfter: ReadonlySet<string>;
-  alreadyEarned: ReadonlySet<string>;
+export const CREATOR_SPECIAL_ID = "sp-liberatorl-rocket-draft-creator";
+
+// --- roster helpers -------------------------------------------------------
+
+function rosterPlayers(roster: Roster): RosterPick[] {
+  return [roster.player1, roster.player2, roster.player3].filter(Boolean) as RosterPick[];
 }
+function regionOf(pick: RosterPick): Region | undefined {
+  const card = playerCardById.get(pick.refId);
+  return card ? playerById.get(card.playerId)?.region : undefined;
+}
+function yearOf(pick: RosterPick): number {
+  const card = playerCardById.get(pick.refId);
+  const season = card ? seasonById.get(card.seasonId) : undefined;
+  return season ? parseInt(season.year, 10) : NaN;
+}
+function isEliteCard(pick: RosterPick): boolean {
+  const card = playerCardById.get(pick.refId);
+  return card ? lineupById.get(card.lineupId)?.historicalStrength === "elite" : false;
+}
+function allThreePlayers(roster: Roster): boolean {
+  return rosterPlayers(roster).length === 3;
+}
+
+// --- series / game views --------------------------------------------------
 
 function userSeries(t: TournamentState): SeriesResult[] {
-  const swiss = t.swiss.rounds.flatMap((round) =>
-    round.series.filter((s) => s.teamAId === "user" || s.teamBId === "user"),
+  const swiss = t.swiss.rounds.flatMap((r) =>
+    r.series.filter((s) => s.teamAId === "user" || s.teamBId === "user"),
   );
-  const playoffs = userPlayoffSeries(t.playoffs).map((entry) => entry.series);
+  const playoffs = userPlayoffSeries(t.playoffs).map((e) => e.series);
   return [...swiss, ...playoffs];
 }
+const userWon = (s: SeriesResult) => s.winnerTeamId === "user";
+/** user rating minus opponent rating in a series. */
+const userRatingDiff = (s: SeriesResult) =>
+  s.teamAId === "user" ? s.ratingDiff : -s.ratingDiff;
 
-function userWonSeries(s: SeriesResult): boolean {
-  return s.winnerTeamId === "user";
+interface UserGame {
+  goals: number[]; // per user player
+  team: number;
+  opp: number;
+  won: boolean;
+}
+function userGames(t: TournamentState): UserGame[] {
+  const out: UserGame[] = [];
+  for (const s of userSeries(t)) {
+    const userIsA = s.teamAId === "user";
+    for (const g of s.games) {
+      const goals = (userIsA ? g.scorers?.a : g.scorers?.b) ?? [];
+      const team = goals.reduce((x, y) => x + y, 0);
+      const won = g.winnerTeamId === "user";
+      const opp = won ? team - (g.score[0] - g.score[1]) : team + (g.score[0] - g.score[1]);
+      out.push({ goals, team, opp, won });
+    }
+  }
+  return out;
+}
+function goalsConceded(t: TournamentState): number {
+  return userGames(t).reduce((sum, g) => sum + Math.max(0, g.opp), 0);
+}
+/** Won finals (grand_final / final), with the deciding game info. */
+function userFinals(t: TournamentState) {
+  return userPlayoffSeries(t.playoffs).filter(
+    (e) => e.round === "grand_final" || e.round === "final",
+  );
 }
 
-/** Rating of the user relative to the opponent in a series (user - opponent). */
-function userRatingDiff(s: SeriesResult): number {
-  return s.teamAId === "user" ? s.ratingDiff : -s.ratingDiff;
+const only = (ids: string[], earned: ReadonlySet<string>) =>
+  [...new Set(ids)].filter((id) => !earned.has(id));
+
+// --- team feats (review-time) --------------------------------------------
+
+export function teamAchievements(
+  roster: Roster,
+  chemistry: ChemistryResult,
+  specialsCount: number,
+  earned: ReadonlySet<string>,
+): string[] {
+  const ids: string[] = ["ach-first-team"];
+  if (chemistry.tier === "Perfect") ids.push("ach-perfect-chem");
+  if (specialsCount >= 3) ids.push("ach-three-specials");
+
+  if (allThreePlayers(roster)) {
+    const players = rosterPlayers(roster);
+    const regions = players.map(regionOf);
+    const byRegion: Record<Region, string> = {
+      SAM: "ach-all-sam",
+      EU: "ach-all-eu",
+      NA: "ach-all-na",
+      SSA: "ach-all-ssa",
+      MENA: "ach-all-mena",
+      OCE: "ach-all-oce",
+      APAC: "ach-all-apac",
+    };
+    if (regions[0] && regions.every((r) => r === regions[0])) ids.push(byRegion[regions[0]]);
+    if (players.every(isEliteCard)) ids.push("ach-all-champions");
+    const lineups = players.map((p) => playerCardById.get(p.refId)?.lineupId);
+    if (lineups[0] && lineups.every((l) => l === lineups[0])) ids.push("ach-same-team");
+  }
+  return only(ids, earned);
 }
 
-const RULES: Record<string, (ctx: AchievementContext) => boolean> = {
-  "first-draft": () => true,
+// --- live feats (in-match / series) --------------------------------------
 
-  "swiss-merchant": (ctx) => {
-    const record = userSwissRecord(ctx.tournament.swiss);
-    return record.wins === 3 && record.losses === 0;
-  },
-
-  "game-seven-ice": (ctx) =>
-    userPlayoffSeries(ctx.tournament.playoffs).some(({ series }) => {
-      if (!userWonSeries(series)) return false;
-      const [a, b] = series.score;
-      return a + b === 7; // 4-3 either orientation, user won
-    }),
-
-  "dynasty-builder": (ctx) => {
-    const picks = [ctx.run.draft.roster.player1, ctx.run.draft.roster.player2, ctx.run.draft.roster.player3];
-    const lineupIds = picks.map((p) => p && playerCardById.get(p.refId)?.lineupId);
-    return Boolean(lineupIds[0]) && lineupIds.every((id) => id === lineupIds[0]);
-  },
-
-  "no-numbers-needed": (ctx) => ctx.placement === "champion" && !ctx.run.showOverall,
-
-  "hard-mode-hero": (ctx) => ctx.placement === "champion" && ctx.run.difficulty === "hard",
-
-  "legacy-unlocked": (ctx) => ctx.placement === "champion" && ctx.run.difficulty === "hard",
-
-  "one-country-army": (ctx) => {
-    if (ctx.placement !== "champion") return false;
-    const picks = [ctx.run.draft.roster.player1, ctx.run.draft.roster.player2, ctx.run.draft.roster.player3];
-    const countries = picks.map((p) => {
-      const card = p && playerCardById.get(p.refId);
-      return card ? playerById.get(card.playerId)?.country : undefined;
-    });
-    return Boolean(countries[0]) && countries.every((c) => c === countries[0]);
-  },
-
-  "against-the-odds": (ctx) =>
-    userSeries(ctx.tournament).some(
-      (s) => userWonSeries(s) && userRatingDiff(s) <= -8,
-    ),
-
-  collector: (ctx) => ctx.specialsOwnedAfter >= 1,
-
-  "archive-hunter": (ctx) => ctx.specialsOwnedAfter >= 5,
-
-  "perfect-chemistry": (ctx) => ctx.chemistry.tier === "Perfect",
-
-  immaculate: (ctx) =>
-    ctx.placement === "champion" &&
-    userSeries(ctx.tournament).every((s) => userWonSeries(s)),
-
-  untouchable: (ctx) =>
-    ctx.goalsConceded === 0 && userSeries(ctx.tournament).length > 0,
-
-  "first-title": (ctx) => ctx.placement === "champion",
-
-  podium: (ctx) => ["champion", "runner_up", "third"].includes(ctx.placement),
-
-  "legacy-cleared": (ctx) =>
-    ctx.placement === "champion" && ctx.run.difficulty === "legacy",
-
-  "comeback-kings": (ctx) =>
-    userSeries(ctx.tournament).some((s) => {
-      if (!userWonSeries(s)) return false;
-      let userWins = 0;
-      let oppWins = 0;
-      for (const game of s.games) {
-        if (game.winnerTeamId === "user") userWins += 1;
-        else oppWins += 1;
-        if (oppWins - userWins >= 2) return true;
+export function liveAchievements(t: TournamentState, earned: ReadonlySet<string>): string[] {
+  const ids: string[] = [];
+  const games = userGames(t);
+  for (const g of games) {
+    if (g.won && g.team - g.opp >= 7) ids.push("ach-blowout");
+    const top = Math.max(0, ...g.goals);
+    if (top >= 3) ids.push("ach-hattrick");
+    if (top >= 4) ids.push("ach-four-goals");
+    if (g.team >= 3 && g.goals.some((x) => x === g.team)) ids.push("ach-solo-show");
+  }
+  for (const s of userSeries(t)) {
+    if (!userWon(s)) continue;
+    if (userRatingDiff(s) < 0) ids.push("ach-giant-slayer");
+    // Reverse sweep: fell behind by two games, then won.
+    let u = 0;
+    let o = 0;
+    for (const g of s.games) {
+      if (g.winnerTeamId === "user") u += 1;
+      else o += 1;
+      if (o - u >= 2) {
+        ids.push("ach-reverse-sweep");
+        break;
       }
-      return false;
-    }),
+    }
+  }
+  for (const { series } of userFinals(t)) {
+    if (!userWon(series)) continue;
+    const total = series.score[0] + series.score[1];
+    if (total === 7) ids.push("ach-game7");
+    const decider = series.games[series.games.length - 1];
+    if (total === 7 && decider?.overtime) ids.push("ach-ot-game7");
+    if (Math.abs(decider?.score[0] - decider?.score[1]) === 1) ids.push("ach-one-goal-final");
+  }
+  return only(ids, earned);
+}
 
-  "the-long-way": (ctx) => {
-    if (ctx.placement !== "champion") return false;
-    // Champion after losing an upper-bracket series = lower-bracket run.
-    return userPlayoffSeries(ctx.tournament.playoffs).some(
-      ({ round, series }) =>
-        round.startsWith("ub_") && series.winnerTeamId !== "user",
-    );
-  },
+// --- win-conditions (run-end) --------------------------------------------
 
-  strangers: (ctx) =>
-    ctx.placement === "champion" && ctx.chemistry.tier === "Poor",
+function conditionAchievements(
+  run: RunState,
+  t: TournamentState,
+  chemistry: ChemistryResult,
+  earned: ReadonlySet<string>,
+): string[] {
+  const champion = t.playoffs?.championTeamId === "user";
+  const ids: string[] = [];
+  const players = rosterPlayers(run.draft.roster);
 
-  "old-school": (ctx) => {
-    if (ctx.placement !== "champion") return false;
-    const picks = [ctx.run.draft.roster.player1, ctx.run.draft.roster.player2, ctx.run.draft.roster.player3];
-    return picks.every((p) => {
-      const card = p && playerCardById.get(p.refId);
-      const season = card ? seasonById.get(card.seasonId) : undefined;
-      const year = season ? parseInt(season.year, 10) : NaN;
-      return Number.isFinite(year) && year <= 2019;
-    });
-  },
+  if (run.mode === "quick" && userSeries(t).some(userWon)) ids.push("ach-quick-win");
+  const swiss = userSwissRecord(t.swiss);
+  if (swiss.wins === 3 && swiss.losses === 0) ids.push("ach-swiss-flawless");
 
-  curator: (ctx) => ctx.specialsOwnedAfter >= 10,
+  if (champion) {
+    ids.push("ach-first-title");
+    if (run.difficulty === "hard") ids.push("ach-hard-title");
+    if (run.difficulty === "legacy") ids.push("ach-legacy-title");
+    if (run.difficulty === "legacy" && run.regionLock) ids.push("ach-legacy-regional");
+    if (run.mode === "daily") ids.push("ach-daily-win");
+    if (userSeries(t).every(userWon)) ids.push("ach-undefeated");
+    if (goalsConceded(t) === 0 && userSeries(t).length > 0) ids.push("ach-clean-sheet");
+    // Lower-bracket title: lost an upper-bracket series on the way.
+    if (userPlayoffSeries(t.playoffs).some((e) => e.round.startsWith("ub_") && !userWon(e.series))) {
+      ids.push("ach-lower-bracket");
+    }
+    if (chemistry.tier === "Perfect") ids.push("ach-perfect-chem-title");
+    if (chemistry.percent === 0) ids.push("ach-no-chem-title");
+    if (allThreePlayers(run.draft.roster)) {
+      const years = players.map(yearOf);
+      if (years.every((y) => Number.isFinite(y) && y <= 2019)) ids.push("ach-early-era-title");
+      if (years.every((y) => Number.isFinite(y) && y >= 2020)) ids.push("ach-open-era-title");
+    }
+    // Ever-present: a player scored in EVERY user game of the (finished) run.
+    const games = userGames(t);
+    if (games.length > 0 && [0, 1, 2].some((i) => games.every((g) => (g.goals[i] ?? 0) >= 1))) {
+      ids.push("ach-scored-every-game");
+    }
+  }
+  return only(ids, earned);
+}
 
-  // v1.2.0 — region-locked mode + the hidden Creator easter egg.
-  "regional-champion": (ctx) =>
-    ctx.placement === "champion" && Boolean(ctx.run.regionLock),
+export function evaluateRunAchievements(
+  run: RunState,
+  t: TournamentState,
+  earned: ReadonlySet<string>,
+): string[] {
+  const user = t.teams["user"];
+  const chemistry: ChemistryResult =
+    user?.chemistry ?? { raw: 0, max: 1, percent: 0, tier: "Poor", items: [] };
+  const specialsCount = user?.specialIds.length ?? 0;
+  return only(
+    [
+      ...teamAchievements(run.draft.roster, chemistry, specialsCount, earned),
+      ...liveAchievements(t, earned),
+      ...conditionAchievements(run, t, chemistry, earned),
+    ],
+    earned,
+  );
+}
 
-  // v1.3.2 — the hardest feat: a Legacy title in region-locked mode.
-  "regional-legend": (ctx) =>
-    ctx.placement === "champion" &&
-    ctx.run.difficulty === "legacy" &&
-    Boolean(ctx.run.regionLock),
+// --- lifetime counters / collection / rank (post-update profile) ---------
 
-  creator: (ctx) =>
-    ctx.specialIdsOwnedAfter.has("sp-liberatorl-rocket-draft-creator"),
-};
+export interface CounterSnapshot {
+  runsCompleted: number;
+  titlesTotal: number;
+  legacyTitles: number;
+  gamesWon: number;
+  goalsScored: number;
+  specialsOwned: number;
+  totalSpecials: number;
+  specialIds: ReadonlySet<string>;
+  dailyStreak: number;
+  rankId: string;
+}
 
-export function evaluateAchievements(ctx: AchievementContext): string[] {
-  return Object.entries(RULES)
-    .filter(([id]) => !ctx.alreadyEarned.has(id))
-    .filter(([, rule]) => rule(ctx))
-    .map(([id]) => id);
+export function evaluateCounterAchievements(
+  s: CounterSnapshot,
+  earned: ReadonlySet<string>,
+): string[] {
+  const ids: string[] = [];
+  if (s.runsCompleted >= 1) ids.push("ach-first-run");
+  if (s.runsCompleted >= 10) ids.push("ach-runs-10");
+  if (s.runsCompleted >= 50) ids.push("ach-runs-50");
+  if (s.runsCompleted >= 200) ids.push("ach-runs-200");
+  if (s.titlesTotal >= 5) ids.push("ach-titles-5");
+  if (s.titlesTotal >= 15) ids.push("ach-titles-15");
+  if (s.titlesTotal >= 50) ids.push("ach-titles-50");
+  if (s.legacyTitles >= 10) ids.push("ach-legacy-10");
+  if (s.gamesWon >= 50) ids.push("ach-games-50");
+  if (s.gamesWon >= 200) ids.push("ach-games-200");
+  if (s.goalsScored >= 100) ids.push("ach-goals-100");
+  if (s.goalsScored >= 250) ids.push("ach-goals-250");
+  if (s.goalsScored >= 500) ids.push("ach-goals-500");
+  if (s.specialsOwned >= 1) ids.push("ach-first-special");
+  if (s.specialsOwned >= 15) ids.push("ach-specials-15");
+  if (s.specialsOwned >= 50) ids.push("ach-specials-50");
+  if (s.totalSpecials > 0 && s.specialsOwned >= s.totalSpecials) ids.push("ach-specials-all");
+  if (s.specialIds.has(CREATOR_SPECIAL_ID)) ids.push("ach-creator");
+  if (s.dailyStreak >= 7) ids.push("ach-daily-7");
+  if (s.rankId === "supersonic-legend") ids.push("ach-ssl");
+  return only(ids, earned);
+}
+
+/** Per-run user totals (goals scored, individual game wins) for the counters. */
+export function userRunTotals(t: TournamentState): { goals: number; gameWins: number } {
+  const games = userGames(t);
+  return {
+    goals: games.reduce((sum, g) => sum + g.team, 0),
+    gameWins: games.filter((g) => g.won).length,
+  };
 }

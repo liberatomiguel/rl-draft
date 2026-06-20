@@ -8,6 +8,7 @@
  * the trophy case should feel like a trophy case.
  */
 
+import type { AchievementDef } from "@/engine/types";
 import { achievements as achievementDefs } from "@/data";
 import { useCopy } from "@/content/copy";
 import { cx, formatDate } from "@/lib/util";
@@ -16,6 +17,16 @@ import { TiltCard } from "@/components/ui/TiltCard";
 import { AchievementIcon } from "@/components/AchievementIcon";
 import { achievementStyle } from "@/components/achievementStyle";
 
+const GROUP_ORDER: AchievementDef["group"][] = [
+  "milestone",
+  "mode",
+  "performance",
+  "chemistry",
+  "roster",
+  "collection",
+  "progression",
+];
+
 export function AchievementsGrid({
   earned,
 }: {
@@ -23,9 +34,27 @@ export function AchievementsGrid({
   earned: Record<string, string>;
 }) {
   const { ACH_UI } = useCopy();
+  // Group the defs, preserving the file order within each group.
+  const byGroup = GROUP_ORDER.map((g) => ({
+    group: g,
+    defs: achievementDefs.filter((d) => d.group === g),
+    earnedCount: achievementDefs.filter((d) => d.group === g && earned[d.id]).length,
+  })).filter((g) => g.defs.length > 0);
+
   return (
-    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-      {achievementDefs.map((def) => {
+    <div className="space-y-7">
+      {byGroup.map(({ group, defs, earnedCount }) => (
+        <section key={group}>
+          <div className="mb-2.5 flex items-baseline justify-between gap-2 border-b border-line/60 pb-1.5">
+            <h3 className="display text-xs font-bold uppercase tracking-[0.16em] text-sub">
+              {ACH_UI.groups[group] ?? group}
+            </h3>
+            <span className="text-[11px] font-semibold text-faint">
+              {earnedCount}/{defs.length}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {defs.map((def) => {
         const date = earned[def.id];
         const style = achievementStyle(def);
         // Secret achievements stay masked ("???") until they're earned.
@@ -49,7 +78,7 @@ export function AchievementsGrid({
               {hidden ? (
                 <span className="display text-base font-bold text-faint">?</span>
               ) : (
-                <AchievementIcon id={def.id} className="h-4.5 w-4.5" />
+                <AchievementIcon group={def.group} className="h-4.5 w-4.5" />
               )}
             </span>
             <span className="min-w-0 flex-1">
@@ -84,7 +113,10 @@ export function AchievementsGrid({
         ) : (
           <div key={def.id}>{card}</div>
         );
-      })}
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

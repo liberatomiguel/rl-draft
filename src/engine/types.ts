@@ -232,6 +232,15 @@ export interface AchievementDef {
   xp: number;
   /** Rarity family in the achievements grid (v1.2.0): common · rare · epic · legend. */
   category: "common" | "rare" | "epic" | "legend";
+  /** Thematic grouping bucket on the achievements screen (v1.4). */
+  group:
+    | "milestone"
+    | "mode"
+    | "performance"
+    | "chemistry"
+    | "roster"
+    | "collection"
+    | "progression";
   /** Hidden until earned (v1.2.0) — shown as a locked mystery in the grid. */
   secret?: boolean;
 }
@@ -381,6 +390,11 @@ export interface GameResult {
   notes: string[];
   /** Star of the game (a player nickname from the winning side). */
   starName?: string;
+  /** Goals per player for each side (v1.4) — `a`/`b` map to teamA/teamB players,
+   *  in roster order. Drives goal-based achievements (hat-trick, etc.). Derived
+   *  deterministically from the game WITHOUT consuming the series RNG, so it
+   *  never shifts existing seeds. */
+  scorers?: { a: number[]; b: number[] };
 }
 
 export interface SeriesResult {
@@ -504,6 +518,9 @@ export interface RunResults {
   goalsConceded: number;
   unlockedSpecialIds: string[];
   newAchievementIds: string[];
+  /** This run's user totals for the lifetime counters (v1.4). */
+  userGoals: number;
+  userGameWins: number;
   xp: XpSummary;
   /**
    * The historical lineup that eliminated the user (lost runs only, v0.7.0).

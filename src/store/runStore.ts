@@ -27,6 +27,7 @@ import {
   createChallengeDraft,
   playChallengeSeries,
 } from "@/engine/challenges";
+import { liveAchievements, teamAchievements } from "@/engine/achievements";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
 import { buildUserTeam } from "@/engine/teams";
@@ -345,6 +346,14 @@ export const useRunStore = create<RunStore>()(
           return;
         }
 
+        // Real-time: team-build achievements (perfect chemistry, all-one-region,
+        // loaded-with-specials, etc.) pop the moment the team is locked in (v1.4).
+        useProfileStore
+          .getState()
+          .awardAchievements(
+            teamAchievements(run.draft.roster, userTeam.chemistry, userTeam.specialIds.length, new Set()),
+          );
+
         const tournament = initTournament(userTeam, run.difficulty, rng, {
           mode: run.mode,
           poolLineupIds: run.draft.poolLineupIds,
@@ -397,6 +406,11 @@ export const useRunStore = create<RunStore>()(
         }
 
         set({ run: { ...run, tournament, rngState: rng.state } });
+
+        // Real-time: in-match / series feats (hat-trick, 7-goal win, reverse
+        // sweep, giant-slayer, game-7…) pop as soon as the round that produced
+        // them is played — not only at run end (v1.4). awardAchievements dedupes.
+        useProfileStore.getState().awardAchievements(liveAchievements(tournament, new Set()));
       },
 
       finishRun: () => {

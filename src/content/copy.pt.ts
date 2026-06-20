@@ -614,8 +614,18 @@ export const PT: Copy = {
   ACH_UI: {
     kicker: "Feitos para perseguir em cada run",
     title: "Conquistas",
+    unlocked: "Conquista desbloqueada",
     secretTitle: "???",
     secretHint: "Secreta — descubra jogando",
+    groups: {
+      milestone: "Marcos",
+      mode: "Modos e Dificuldade",
+      performance: "Desempenho",
+      chemistry: "Química e Composição",
+      roster: "Montagem de Time",
+      collection: "Coleção",
+      progression: "Progressão",
+    } as Record<string, string>,
   },
 
   HOWTO: {

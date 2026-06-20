@@ -9,6 +9,8 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
     playoffAppearances: 0,
     podiums: 0,
     swissWinsTotal: 0,
+    gamesWon: 0,
+    goalsScored: 0,
     unlockedSpecials: {},
     achievements: {},
     runHistory: [],
