@@ -8,7 +8,7 @@ import { achievements as achievementDefs, specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
 import { rankForXp } from "@/engine/progression";
 import type { Placement } from "@/engine/types";
-import { cx, formatDate } from "@/lib/util";
+import { formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import {
   selectBestClear,
@@ -60,45 +60,49 @@ export default function ProfilePage() {
       <Panel strong glow="blue" className="mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
         <RankBadge rank={rank} variant="profile" size="lg" />
 
-        {signedIn ? (
-          <div className="min-w-0 flex-1 text-center sm:text-left">
-            <ProfileNickname />
-            {accountEmail ? (
-              <p className="mt-1 truncate text-xs text-faint">{accountEmail}</p>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div
-          className={cx(
-            "w-full min-w-0",
-            signedIn ? "shrink-0 text-center sm:w-60 sm:text-right" : "flex-1 text-center sm:text-left",
-          )}
-        >
-          <p className="kicker mb-1">{P.rank}</p>
-          <p className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
-            {rank.label}
-          </p>
-          <div className="mt-3">
-            <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
-            <p className="mt-1.5 text-xs text-sub">
-              {profile.xp} {P.xp}
-              {rank.next ? (
-                <span className="text-faint"> · {P.toNext(rank.xpToNext)}</span>
-              ) : (
-                <span className="text-faint"> · {P.maxRank}</span>
-              )}
-            </p>
-          </div>
+        <div className="w-full min-w-0 flex-1 text-center sm:text-left">
           {signedIn ? (
-            <button
-              type="button"
-              onClick={accountSignOut}
-              className="mt-3 text-xs font-semibold text-sub underline-offset-2 transition-colors hover:text-ink hover:underline"
-            >
-              {L.signOut}
-            </button>
-          ) : null}
+            // Name is the hero (left); the rank text moves to the right, one line.
+            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <ProfileNickname />
+                <div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
+                  {accountEmail ? (
+                    <span className="truncate text-xs text-faint">{accountEmail}</span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={accountSignOut}
+                    className="shrink-0 text-xs font-semibold text-sub underline-offset-2 transition-colors hover:text-ink hover:underline"
+                  >
+                    {L.signOut}
+                  </button>
+                </div>
+              </div>
+              <div className="shrink-0 sm:text-right">
+                <p className="kicker mb-0.5">{P.rank}</p>
+                <p className="display whitespace-nowrap text-2xl font-bold uppercase tracking-wide text-ink">
+                  {rank.label}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-3">
+              <p className="kicker mb-1">{P.rank}</p>
+              <p className="display text-3xl font-bold uppercase tracking-wide text-ink">{rank.label}</p>
+            </div>
+          )}
+
+          {/* XP bar — full card width, where it always was. */}
+          <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
+          <p className="mt-1.5 text-xs text-sub">
+            {profile.xp} {P.xp}
+            {rank.next ? (
+              <span className="text-faint"> · {P.toNext(rank.xpToNext)}</span>
+            ) : (
+              <span className="text-faint"> · {P.maxRank}</span>
+            )}
+          </p>
         </div>
       </Panel>
 
