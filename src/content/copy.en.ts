@@ -674,6 +674,7 @@ export const RARITY_LABELS: Record<string, string> = {
   mythic: "Mythic",
   legendary: "Legendary",
   creator: "Creator",
+  community: "Content Creator",
 };
 
 export const EFFECT_LABELS: Record<string, string> = {

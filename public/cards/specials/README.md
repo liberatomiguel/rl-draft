@@ -94,4 +94,6 @@ sp-sam-mvp-drufinho.png
 sp-brunovisquii-the-architect.png
 sp-repi-wings-e-sports.png
 sp-ninja23509-wings-e-sports.png
+sp-gian-community.png
+sp-jato-community.png
 ```

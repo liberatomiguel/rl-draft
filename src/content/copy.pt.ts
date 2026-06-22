@@ -763,6 +763,7 @@ export const PT: Copy = {
     mythic: "Mítica",
     legendary: "Lendária",
     creator: "Criador",
+    community: "Criador de Conteúdo",
   },
 
   EFFECT_LABELS: {

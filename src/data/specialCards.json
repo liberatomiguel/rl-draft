@@ -2305,5 +2305,39 @@
     },
     "secret": true,
     "flavor": "A hidden Wings E-Sports tribute: ninja23509, from the early days of South American Rocket League. Appears only when the Wings line is drawn."
+  },
+  {
+    "id": "sp-gian-community",
+    "playerId": "gian",
+    "baseCardId": "gian-coach-erased-x",
+    "title": "Mechanical Mind",
+    "cardType": "coach",
+    "rarity": "community",
+    "overall": 80,
+    "kind": "coach",
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": ["mechanics", "clutch"],
+      "value": 3,
+      "description": "+3 team mechanics and clutch."
+    },
+    "flavor": "A nod to Gian — a content creator helping spread Rocket League across the South American scene."
+  },
+  {
+    "id": "sp-jato-community",
+    "playerId": "jato",
+    "baseCardId": "jato-coach-noble-esports-x",
+    "title": "Always On",
+    "cardType": "coach",
+    "rarity": "community",
+    "overall": 82,
+    "kind": "coach",
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": ["consistency", "experience"],
+      "value": 3,
+      "description": "+3 team consistency and experience."
+    },
+    "flavor": "A nod to Jato — a content creator helping spread Rocket League across the South American scene."
   }
 ]

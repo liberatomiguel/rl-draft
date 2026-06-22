@@ -16,6 +16,47 @@ with the root cause — that section doubles as the project's bugfix log.
 > Challenges mode, a special-card rarity rework, and a visual/mobile pass.
 > Sections fill in as each workstream lands.
 
+### International Majors & content-creator / Wings cards (2026-06-22)
+
+#### Added
+- **24 international-Major teams** (RLCS 2021-22 → 2025) folded into the worldwide pool with
+  reviewed overalls — lineups 259→283, players →397, orgs →142. Deduped against the existing
+  base: jstn./SquishyMuffinz spellings, canonical orgs on the `org:` line, **skipped "The
+  General NRG"** (= NRG 2021-22 Worlds, same roster/org/season) and the duplicate Ground Zero
+  2022-23, and **"Helfie Chiefs" → Chiefs Esports Club** (a 2025 sponsor name, verified).
+  Nationalities researched + filled for the new players/staff. `teams.md`,
+  `build-dataset.mjs` (COUNTRY), generated `*.json`.
+- **`community` special rarity (emerald/teal) — content-creator cards.** A normal-draw rarity
+  (Bronze+), visually distinct from the `creator` easter-egg. **gian + jato** get content-
+  creator **coach** cards. Wired through `types`/`schemas`/`balance` (`rarityChance` 0.06,
+  `rarityOrder`, `RANK_REWARDS`), `GameCard` (accent/ovr/holo), `globals.css` (emerald frame /
+  halo / holo / ovr), `CollectionView` (filter chip + showcased first), `copy.en/pt`.
+- **brunovisquii — rare coach special** (coach of Team Secret).
+- **Wings E-Sports easter-egg cards for repi + ninja23509** (`creator` rarity, secret in the
+  collection, +4 team overall & all stats, overall = base). Anchored to the Wings line, so they
+  surface ONLY when that rare line is drawn — like the Creator card, via the existing rareSpawn
+  path (no new mechanism). 4 new org logos mapped in `asset-overrides.json`.
+
+#### Fixed
+- **Creator-rarity specials could leak onto a person's other cards.** `rollSpecial` included
+  `creator`-rarity specials in the normal roll. The Creator never leaked only because liberatoRL
+  has a single (Wings) card; repi/ninja23509 own many cards, so their new Wings specials would
+  have surfaced off the Wings line at the diamond+ creator rate. Root cause: easter-egg specials
+  are assigned via the rareSpawn path (`drawNextOffer`), never a normal roll, but `rollSpecial`
+  didn't exclude them — now it does. `draft.ts`.
+
+#### Balance
+- **Re-tuned 13 challenges' seed/opponentShift** across two passes: (1) the +24-team pool growth
+  shifted 11 challenges' fixed-seed drafts out of band; (2) the special-pool RNG changes (the
+  `rollSpecial` exclusion, then the new `community` rarity) shifted **ch-samba-style** (→ -7) and
+  **ch-south-american-steel** (→ -5), both SAM challenges where the affected persons appear. All
+  20 back in their win-rate bands; themes are constraint-enforced, so re-seeding stays theme-safe.
+
+#### Deferred
+- **firewall154 content-creator card.** He exists only as a SUB in the base, and the special
+  loader resolves `baseCardId` against player/coach cards only. Deferred per direction until the
+  SAM base expansion gives him a player/coach card — the special attaches then without rework.
+
 ### Staging-review adjustments (2026-06-21)
 
 A pass over the v1.4 build before it ships, from playtesting on `staging`:

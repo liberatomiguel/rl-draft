@@ -42,20 +42,24 @@ Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
 - **Sub & specials:** sub "depth" scales with the sub's overall and subs can roll
   specials; the Creator card grants **+7 team overall** on top of its stat boost (#86).
 
-Standard gates before any commit: `tsc` clean, **~121** vitest tests pass,
+Standard gates before any commit: `tsc` clean, **122** vitest tests pass,
 `build:data` + `validate:data` green, lint at its baseline, and a green
 `npm run build` (production) for anything shipping.
 
 ## In progress (committed, but NOT yet in the live game data)
 
-- **International-Major DB expansion** (`data-sources/`, NOT yet in game data): a
-  careful first-pass harvest of every international Major (RLCS 2021-22 → 2025) for
-  teams that did NOT reach Worlds — `majors-new-teams.json` + the review workbook
-  `majors-review.xlsx` (≈28 new / ~6 review teams) + `majors-harvest-report.md`.
-  PENDING Miguel's manual overall review; then apply to `teams.md` →
-  `build:data`/`validate:data`. Tooling: `scripts/fetch-liquipedia-majors.mjs`,
-  `scripts/build-majors-review.py`. Dedup = same-lineup ≥2-player overlap (see the
-  memory note + report for the caveats).
+- **International-Major DB expansion — APPLIED to the `staging` game data (2026-06-22).**
+  24 international-Major teams (RLCS 2021-22 → 2025, non-Worlds) with Miguel-reviewed overalls
+  are now in `teams.md` → `build:data` (lineups 259→283, players →397, orgs →142), deduped
+  against the base (skipped "The General NRG" = NRG 2021-22 Worlds, a duplicate Ground Zero
+  22-23; "Helfie Chiefs" → Chiefs Esports Club). Nationalities filled. The harvest
+  tooling/workbook (`majors-new-teams.json`, `scripts/fetch-liquipedia-majors.mjs`) stays in
+  `data-sources/` for the next pass.
+- **Content-creator / Wings special cards (2026-06-22, on `staging`).** New emerald
+  `community` rarity: **gian + jato** coach cards; **brunovisquii** rare coach; **repi +
+  ninja23509** Wings easter-egg cards (secret, +4 team overall/stats, surface only on the Wings
+  line). **firewall154 deferred** (sub-only — DESIGN #90). Org logos for the 4 new orgs mapped
+  in `asset-overrides.json`; run `node scripts/fetch-assets.mjs --orgs` to pull the PNGs.
 - **Community-suggestions intake** `data-sources/community-suggestions.xlsx`
   (overalls / specials / new-teams tabs) + `scripts/build-community-sheet.py` —
   ready to share with the community.

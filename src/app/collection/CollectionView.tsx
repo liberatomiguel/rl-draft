@@ -22,11 +22,13 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 
-const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
+const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary", "community"];
 type StatusFilter = "all" | "unlocked" | "locked";
 
 /** Sort weight per rarity — higher = rarer, ordered first within a lock state. */
 const RARITY_RANK: Record<SpecialRarity, number> = {
+  // Content-creator cards are showcased first — they're the community nods (v1.4).
+  community: 5,
   legendary: 4,
   mythic: 3,
   epic: 2,

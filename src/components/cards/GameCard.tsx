@@ -93,6 +93,7 @@ const SPECIAL_ACCENT: Record<string, string> = {
   mythic: "text-red-300",
   legendary: "text-amber-200",
   creator: "text-pink-200",
+  community: "text-emerald-300",
 };
 
 /**
@@ -108,6 +109,7 @@ const SPECIAL_OVR_COLOR: Record<string, string> = {
   mythic: "ovr-mythic",
   legendary: "ovr-legendary",
   creator: "ovr-creator",
+  community: "ovr-community",
 };
 
 /** Compact stat codes for the special-card buff pill (full names don't fit). */
@@ -146,7 +148,7 @@ function specialBuffLabel(effect: SpecialEffect, showOverall: boolean): string |
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
   if (card.special) {
-    const holo = ["epic", "mythic", "legendary", "creator"].includes(card.special.rarity)
+    const holo = ["epic", "mythic", "legendary", "creator", "community"].includes(card.special.rarity)
       ? ` holo-${card.special.rarity}`
       : "";
     return `card-${card.special.rarity} card-special${holo}`;

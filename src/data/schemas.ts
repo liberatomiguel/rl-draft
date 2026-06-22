@@ -153,7 +153,7 @@ export const specialCardSchema = z.object({
   baseCardId: z.string().min(1),
   title: z.string().min(1),
   cardType: z.enum(["moment", "major_mvp", "worlds_mvp", "season_mvp", "mythic", "legend", "coach"]),
-  rarity: z.enum(["rare", "epic", "mythic", "legendary", "creator"]),
+  rarity: z.enum(["rare", "epic", "mythic", "legendary", "creator", "community"]),
   overall: overallSchema,
   stats: statsSchema.optional(),
   effect: specialEffectSchema,

@@ -290,6 +290,14 @@ body {
   box-shadow: 0 0 18px rgba(236, 72, 153, 0.2);
 }
 
+/* Content-creator card — emerald/teal (v1.4) */
+.card-community {
+  background-image:
+    linear-gradient(168deg, #06231b 0%, #04140f 58%, #07241f 100%),
+    linear-gradient(135deg, #6ee7b7 0%, #10b981 30%, #14b8a6 62%, #34d399 100%);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.2);
+}
+
 /* Diagonal texture behind the org logo on base cards */
 .card-texture {
   background-image: repeating-linear-gradient(
@@ -377,6 +385,16 @@ body {
 
 .card-creator.card-special {
   animation: creator-halo 3.4s ease-in-out infinite;
+}
+
+/* Content-creator halo pulse — emerald/teal (v1.4) */
+@keyframes community-halo {
+  0%, 100% { box-shadow: 0 0 22px rgba(16, 185, 129, 0.24); }
+  50% { box-shadow: 0 0 42px rgba(45, 212, 191, 0.42); }
+}
+
+.card-community.card-special {
+  animation: community-halo 3.4s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -732,6 +750,12 @@ body {
   background-size: 220% 100%;
 }
 
+.holo-community::after {
+  background:
+    linear-gradient(115deg, transparent 24%, rgba(110, 231, 183, 0.26) 40%, rgba(20, 184, 166, 0.18) 50%, rgba(16, 185, 129, 0.26) 58%, transparent 72%);
+  background-size: 220% 100%;
+}
+
 /* Cursor-tracked glare (TiltCard sets --mx/--my as percentages) */
 .tilt-glare {
   background: radial-gradient(
@@ -868,6 +892,10 @@ body {
   color: #f472b6; /* rose-pink matching the creator border */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(236, 72, 153, 0.6);
 }
+.ovr-community {
+  color: #6ee7b7; /* emerald matching the content-creator border */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(16, 185, 129, 0.6);
+}
 
 /* ---------------------------------------------------------------------------
    Unlock ceremony
@@ -915,6 +943,7 @@ body {
   .card-mythic.card-special,
   .card-epic.card-special,
   .card-creator.card-special,
+  .card-community.card-special,
   .field-fx,
   .field-holo,
   .field-slot-glow,
@@ -956,6 +985,7 @@ html.force-reduce-motion
     .card-mythic.card-special,
     .card-epic.card-special,
     .card-creator.card-special,
+    .card-community.card-special,
     .field-fx,
     .field-holo,
     .field-slot-glow,

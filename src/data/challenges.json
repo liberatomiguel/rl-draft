@@ -106,7 +106,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -1
+      "opponentShift": -5
     },
     "constraint": {
       "region": "SAM"

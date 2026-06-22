@@ -32,7 +32,15 @@ export type RunMode = "classic" | "quick" | "daily" | "challenge";
  */
 export type BaseRarity = "common" | "silver" | "gold" | "blue";
 
-export type SpecialRarity = "rare" | "epic" | "mythic" | "legendary" | "creator";
+export type SpecialRarity =
+  | "rare"
+  | "epic"
+  | "mythic"
+  | "legendary"
+  | "creator"
+  // Content-creator cards (v1.4): emerald/teal, for creators who help spread the
+  // game. Appear in normal draws (not easter-egg) — distinct from "creator".
+  | "community";
 
 export type SpecialCardType =
   | "moment"

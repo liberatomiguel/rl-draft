@@ -861,6 +861,25 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     (~25-30%) is inflated by the heavy reset behaviour + low volume + self-selection, so it is
     NOT the tuning target — the curve is. Supersedes #79's specific shift/boost values.
 
+## v1.4 international Majors & content-creator cards (2026-06-22)
+
+90. **Content-creator cards are a new `community` rarity (emerald), parallel to the secret
+    `creator` easter-egg.** Creators who help spread the game (gian, jato) get cards visually
+    distinct from the Creator card: a normal-draw rarity (eligible Bronze+, `rarityChance`
+    0.06) with emerald/teal art, showcased FIRST in the collection grid. Because gian/jato are
+    coaches in the base, these ship as **coach** specials. **firewall154 is DEFERRED** — he
+    exists only as a SUB and the special loader anchors `baseCardId` to player/coach cards
+    only; per direction the card waits until the SAM base expansion gives him a player/coach
+    card, at which point it attaches without rework (cf. Turbopolsa, who is both player and sub).
+
+91. **Easter-egg (creator-rarity) specials are rareSpawn-EXCLUSIVE.** The Wings line now carries
+    three secret cards — the Creator (liberatoRL) plus Wings cards for repi + ninja23509 (+4 to
+    team overall and every stat, overall = base). They surface only when the Wings line is drawn,
+    via the existing rareSpawn path that guarantees a person's special there. `rollSpecial` now
+    excludes `creator` rarity from normal rolls, so a person who owns OTHER cards (repi) can't
+    surface a Wings card off the Wings line — formalising what used to hold only by accident (the
+    Creator's owner, liberatoRL, has a single card).
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).
