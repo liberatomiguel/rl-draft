@@ -263,14 +263,14 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     opponentChemistryMaxBonus: 0,
     // v1.4 retune (#79.1) anchored on the REALISTIC-draft win-rate CURVE
     // (`difficulty.sim.test.ts`: real synergy-aware drafts + the reset behaviour,
-    // measured by final overall — not a hardcoded team). Target: the very best team a
-    // player can assemble (98+ worldwide) has a real, satisfying shot (~40%), while a
-    // ~92 team ≈ 0% — only the elite take it, but the elite are NOT doomed to never win.
-    // The #79 ease (1.65 → 1.35) overshot at the top (a 98+ pinnacle was winning ~47%),
-    // so this lifts the shift to 1.35 → 1.70 to bring the pinnacle to ~40% (the base of
-    // the curve was already ≈0, so this tightens the TOP, not the bottom). SAM is on its
-    // own flatter scale via REGION_LOCK.legacy (see there). Still the hardest mode.
-    opponentRatingShift: 1.7,
+    // measured by final overall — not a hardcoded team). Target: the elite TIER has a
+    // real, satisfying shot (no "never win"), while non-elite ≈ 0. Worldwide curve at
+    // 1.2: a ~92 team ≈ 0%, 94-95 ≈ 2%, 96-97 ≈ 15%, a 98+ pinnacle ≈ 49%. (The #79 ease
+    // to 1.35 had a 98+ winning ~47% but a thinner 96-97; Miguel wanted the whole elite
+    // tier to climb, so the shift moved 1.35 → 1.70 → 1.2 to lift 96-97 to ~15%, letting
+    // the top rise with it.) SAM is on its own flatter scale via REGION_LOCK.legacy
+    // (raised in lockstep so its curve stays put). Still the hardest mode.
+    opponentRatingShift: 1.2,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -291,15 +291,16 @@ export const REGION_LOCK = {
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
   //    most runs); Hard has its own rate and was left untouched this pass.
-  //  · legacy 1.0 (v1.4 retune, #79.1): SAM lives on a LOWER, FLATTER overall scale
+  //  · legacy 1.5 (v1.4 retune, #79.1): SAM lives on a LOWER, FLATTER overall scale
   //    (weaker pool, ~93 ceiling, but very high chemistry), so it gets its OWN curve,
   //    not the worldwide one. The SAM effective shift = legacy.opponentRatingShift
-  //    (1.70) + this boost = 2.70. Tuned on the realistic-draft curve
-  //    (`difficulty.sim.test.ts`, SAM): the ~92-93 SAM ceiling has a real shot (~34%)
-  //    and it's never impossible (88-89 ≈ 6%) — the regional pinnacle matches the
-  //    worldwide philosophy on its own scale, a touch harder than WW since SAM is more
-  //    accessible. The flat SAM curve means lifting the top also lifts the middle.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 1.0 } as Record<
+  //    (1.2) + this boost = 2.70. NOTE: this boost moves IN LOCKSTEP with the worldwide
+  //    shift — when that shift drops to lift the WW elite tier, this boost rises by the
+  //    same amount so the SAM curve stays put (effective 2.70). Tuned on the realistic
+  //    curve (`difficulty.sim.test.ts`, SAM): the ~92-93 SAM ceiling has a real shot
+  //    (~34%) and it's never impossible (88-89 ≈ 6%). The flat SAM curve means lifting
+  //    the top also lifts the middle.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 1.5 } as Record<
     Difficulty,
     number
   >,

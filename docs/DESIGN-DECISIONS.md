@@ -851,10 +851,13 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     **Legacy retune off that curve:** the #79 ease (shift 1.65 → 1.35) overshot — a worldwide
     98+ pinnacle was winning ~47%. Target curve (Miguel): a ~92 team ≈ 0% (non-elite almost
     never wins) but the very best team a player can build (98+) has a real, satisfying ~40%
-    shot (avoid "can never win" frustration). Set `legacy.opponentRatingShift` 1.35 → **1.70**
-    (worldwide 98+ ≈ 40%). SAM is on its OWN lower, flatter scale (weaker pool, ~93 ceiling,
-    very high chemistry), tuned separately via `REGION_LOCK.opponentRatingBoost.legacy`
-    2.05 → **1.0** (its ~92-93 ceiling ≈ 34%, never impossible). Live PostHog Legacy win rate
+    shot (avoid "can never win" frustration). Tuned `legacy.opponentRatingShift` 1.35 → 1.70
+    → **1.2** so the whole elite tier climbs — worldwide 96-97 ≈ 15%, a 98+ pinnacle ≈ 49%,
+    a ~92 team ≈ 0%. SAM is on its OWN lower, flatter scale (weaker pool, ~93 ceiling, very
+    high chemistry), tuned via `REGION_LOCK.opponentRatingBoost.legacy` 2.05 → 1.0 → **1.5**
+    (its ~92-93 ceiling ≈ 34%, never impossible) — this boost moves IN LOCKSTEP with the WW
+    shift so the SAM curve stays put (effective SAM shift = 1.2 + 1.5 = 2.70) when the WW
+    shift is lowered to lift the worldwide elite tier. Live PostHog Legacy win rate
     (~25-30%) is inflated by the heavy reset behaviour + low volume + self-selection, so it is
     NOT the tuning target — the curve is. Supersedes #79's specific shift/boost values.
 

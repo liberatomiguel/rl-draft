@@ -14,12 +14,13 @@
  *     ones players actually compete with;
  *   - we then measure the TITLE rate by the team's FINAL displayed overall.
  *
- * Design targets (Miguel, v1.4): Legacy is the all-time wall, but the very best team a
- * player can assemble must have a real, satisfying shot (no "can never win" frustration),
- * while non-elite teams almost never take it. Worldwide: a ~92 team ≈ 0%, a 98+ pinnacle
- * ≈ 40%. SAM lives on a LOWER, FLATTER scale (a weaker pool, ~93 ceiling, high chemistry):
- * its ~92-93 pinnacle ≈ 34%, and it's never impossible. Tuned via Legacy
- * `opponentRatingShift` (worldwide) and `REGION_LOCK.opponentRatingBoost.legacy` (SAM).
+ * Design targets (Miguel, v1.4): Legacy is the all-time wall, but the elite tier must have
+ * a real, satisfying shot (no "can never win" frustration), while non-elite teams almost
+ * never take it. Worldwide: a ~92 team ≈ 0%, the elite tier climbs — 96-97 ≈ 15%, a 98+
+ * pinnacle ≈ 49%. SAM lives on a LOWER, FLATTER scale (a weaker pool, ~93 ceiling, high
+ * chemistry): its ~92-93 pinnacle ≈ 34%, and it's never impossible. Tuned via Legacy
+ * `opponentRatingShift` (worldwide) and `REGION_LOCK.opponentRatingBoost.legacy` (SAM,
+ * raised in lockstep when the shift drops so the SAM curve stays put).
  *
  * This doubles as the TUNING TOOL: the per-bucket curve is logged; tweak the knobs in
  * balance.ts and re-run to read the new curve. Slower than a unit test (it drafts +
@@ -143,12 +144,14 @@ function curve(label: string, difficulty: Difficulty, region: "SAM" | undefined,
 
 // Moderate, deterministic sample (fixed seeds → identical every run; wide design bounds).
 describe("Legacy difficulty — realistic-draft win-rate curve (v1.4)", () => {
-  it("worldwide: a ~92 team almost never wins; only a 98+ pinnacle has a real shot (~40%)", () => {
+  it("worldwide: a ~92 team almost never wins; the elite tier climbs to a real shot (96-97 ~15%, 98+ ~49%)", () => {
     const r = curve("Legacy worldwide", "legacy", undefined, 320, 32, 12);
     expect(r["92-93"]).toBeLessThan(0.05); // non-elite ≈ never
-    expect(r["94-95"]).toBeLessThan(0.06);
-    expect(r["98+"]).toBeGreaterThan(0.3); // the pinnacle is a real, satisfying shot…
-    expect(r["98+"]).toBeLessThan(0.55); // …but not a coin flip
+    expect(r["94-95"]).toBeLessThan(0.07);
+    expect(r["96-97"]).toBeGreaterThan(0.1); // the elite tier has a real, growing shot…
+    expect(r["96-97"]).toBeLessThan(0.22); // …~15%
+    expect(r["98+"]).toBeGreaterThan(0.38); // the pinnacle is rewarding (no "never win")…
+    expect(r["98+"]).toBeLessThan(0.62); // …but the wall still holds
     expect(r["98+"]).toBeGreaterThan(r["96-97"]); // monotonic at the top
   }, 120000);
 

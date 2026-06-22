@@ -26,9 +26,10 @@ Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
   after a Hard win — specifically a **Classic/Quick** Hard (or Legacy) championship; a
   Daily or Challenge Hard win still counts as a title but does NOT open Legacy (v1.4,
   via the `legacyUnlocked` latch). Legacy is the all-time wall, tuned on the realistic
-  draft sim (`difficulty.sim.test.ts`, #79.1): worldwide a ~92 team ≈ 0%, only a 98+
-  pinnacle ≈ 40% (`legacy.opponentRatingShift` 1.70); SAM on its own flatter scale,
-  ~92-93 ceiling ≈ 34% (`REGION_LOCK.legacy` 1.0). Never impossible, never trivial.
+  draft sim (`difficulty.sim.test.ts`, #79.1): worldwide a ~92 team ≈ 0%, the elite tier
+  climbs (96-97 ≈ 15%, 98+ pinnacle ≈ 49%) via `legacy.opponentRatingShift` 1.2; SAM on
+  its own flatter scale, ~92-93 ceiling ≈ 34% (`REGION_LOCK.legacy` 1.5, moved in lockstep
+  with the WW shift). Never impossible, never trivial.
 - **Rewards:** `RANK_REWARDS` gates special-card rarities and ramps appearance
   chance only at the top (ramps from Diamond: Diamond 6% / Champion 9% / GC 12% /
   SSL 16%); the Collection unlocks at **Bronze (200 XP)** and its home button is
