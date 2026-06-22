@@ -24,8 +24,8 @@ A small post-launch patch (player-reported fixes).
 
 #### Changed
 - **Team "Bigode" → "Bigodes"** (correct name); orgId `bigode` → `bigodes`. `teams.md`.
-- **royales "NRG beater" flavor corrected** — he won a single GAME off NRG, not the
-  series, so the flavor no longer claims the card "took down NRG". `specialCards.json`.
+- **royales "NRG beater" flavor reframed** around the single GAME royales won off NRG,
+  not the series. `specialCards.json`.
 
 ---
 
