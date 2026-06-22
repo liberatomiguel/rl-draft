@@ -84,7 +84,7 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     expect(r.playoffs).toBeGreaterThan(0.8); // swiss must not be the wall
     expect(r.titles).toBeGreaterThan(0.05); // the title is reachable…
     expect(r.titles).toBeLessThan(0.35); // …but not handed out
-  });
+  }, 20_000); // 1000 sims can exceed vitest's 5s default under full-suite CPU contention
 
   it("Hard (v1.3.1): a good team makes playoffs and has a real title shot", () => {
     // v1.3.1 targets: a 90 team can't win Hard, a 92 elite wins ~10%, a 95 dream
@@ -95,7 +95,7 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     expect(r.playoffs).toBeGreaterThan(0.8);
     expect(r.titles).toBeGreaterThan(0.04); // reachable for an elite-level team
     expect(r.titles).toBeLessThan(0.25); // …but not handed out
-  });
+  }, 15_000);
 
   it("Easy: forgiving — playoffs is the norm", () => {
     const r = outcomeRates("easy", 200, 737);

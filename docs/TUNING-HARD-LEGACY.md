@@ -7,7 +7,7 @@ All knobs live in **`src/config/balance.ts`** → `DIFFICULTY.hard` / `DIFFICULT
 
 ```ts
 DIFFICULTY.hard.opponentRatingShift    // currently -0.7
-DIFFICULTY.legacy.opponentRatingShift  // currently +1.2  (NOTE: positive — Legacy opponents are BUFFED)
+DIFFICULTY.legacy.opponentRatingShift  // currently +1.3  (NOTE: positive — Legacy opponents are BUFFED)
 ```
 
 A flat rating added to **every opponent**. Note the **signs differ**: Hard
@@ -21,13 +21,14 @@ buffed above raw, which is why it's the gauntlet.
 deterministic harness that drafts real teams (synergy-aware + the reset behaviour) and
 prints the **win-rate-by-final-overall curve**. Edit the shift, run that test, read the
 new curve. Targets (worldwide): a ~92 team ≈ 0%, the elite tier climbs — 96-97 ≈ 15%,
-a **98+ pinnacle ≈ 49%** (the best team a player can build has a real, satisfying shot;
+a **98+ pinnacle ≈ 42%** (the best team a player can build has a real, satisfying shot;
 non-elite almost never wins).
 
 Measured now (realistic-draft curve):
-- Legacy worldwide `+1.2`: 92-93 ≈ 0% · 94-95 ≈ 2% · **96-97 ≈ 15%** · **98+ ≈ 49%**.
-  (The #79 ease overshot; the shift moved 1.35 → 1.70 → 1.2 to lift the whole elite tier —
-  96-97 up to ~15% — letting the top rise with it.) SAM uses its own boost (see below).
+- Legacy worldwide `+1.3`: 92-93 ≈ 0% · 94-95 ≈ 2.5% · **96-97 ≈ 15%** · **98+ ≈ 42%**.
+  (The #79 ease overshot to 1.35; the shift moved 1.35 → 1.70 → 1.2, then the v1.4 "World
+  Stage" final pass (#94) nudged 1.2 → 1.3 for ~1-2% harder — the drop concentrates at the
+  98+ pinnacle while 96-97 holds.) SAM uses its own boost (see below).
 - Hard `-0.7`: the blended total win rate sits around **~15%** (the sim showed ~12.5% at
   the old -0.2, so this nudges it up).
 
@@ -60,18 +61,19 @@ weakening opponents.
 ## SAM (region-locked) only
 
 ```ts
-REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 1.5 }
+REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 1.65 }
 ```
 
 A **per-difficulty record** (not a flat scalar) added to **every region-locked
 opponent**. **Higher → harder SAM**, **lower → easier SAM**. easy/normal/hard stay
-at **2**; **legacy is 1.5** (v1.4 retune, #79.1), so the SAM Legacy effective shift =
-`legacy.opponentRatingShift (1.2) + 1.5 = 2.70`. This boost moves IN LOCKSTEP with the WW
-shift — when that shift drops to lift the WW elite tier, this rises by the same amount so
-the SAM curve stays put. SAM lives on its OWN lower, flatter
+at **2**; **legacy is 1.65** (v1.4 "World Stage" final pass, #94; was 1.5 in #79.1), so the
+SAM Legacy effective shift = `legacy.opponentRatingShift (1.3) + 1.65 = 2.95`. NOTE: the old
+"this boost moves IN LOCKSTEP with the WW shift so the SAM curve stays put" rule was broken
+ON PURPOSE in #94 — the +6 SAM teams reshaped the pool and the boost was raised independently
+(1.5 → 1.65) to make SAM ~1% harder too. SAM lives on its OWN lower, flatter
 scale (weaker pool, ~93 ceiling, but very high chemistry), so it's tuned to its own
-curve — NOT the worldwide one. Measured (`difficulty.sim.test.ts`, SAM): 88-89 ≈ 6% ·
-90-91 ≈ 15% · **92-93 (the SAM ceiling) ≈ 34%** · never impossible. Because the SAM
+curve — NOT the worldwide one. Measured (`difficulty.sim.test.ts`, SAM, post-#94): 88-89 ≈ 3% ·
+90-91 ≈ 12% · **92-93 (the SAM ceiling) ≈ 36%** · never impossible. Because the SAM
 curve is flat, lowering this boost lifts the top AND the middle together. Tune the
 per-difficulty entry you care about — raising `legacy` re-hardens SAM Legacy only.
 

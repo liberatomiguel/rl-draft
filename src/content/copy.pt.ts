@@ -839,10 +839,27 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.4.0",
+        name: "World Stage",
+        date: "2026",
+        current: true,
+        notes: [
+          "Contas chegaram — entre com um código de 6 dígitos por e-mail para salvar seu progresso na nuvem e subir nos rankings globais (títulos, melhor overall e uma nova nota de habilidade).",
+          "Novo modo Desafios — quebra-cabeças de draft que desbloqueiam por rank, cada um com sua pegada (região, era, nacionalidade, limite de overall e mais), em melhor-de-7 com recompensa de verdade.",
+          "Expansão dos Majors Internacionais — mais de duas dezenas de times de eventos da RLCS pelo mundo entram no pool mundial, além de novos times sul-americanos para o modo SAM.",
+          "Novas cartas especiais — cartas de criadores de conteúdo, o easter egg da Wings E-Sports e novas raras (royales \"NRG beater\", freedom \"OG Brazil Goat\").",
+          "Cartas especiais raras agora aparecem em taxas justas por raridade — uma lendária solitária não aparece mais do que deveria.",
+          "Resumo da run — abra qualquer run do seu histórico para ver exatamente como ela foi.",
+          "A Coleção mostra o catálogo oficial por padrão; as cartas secretas de criador e comunidade aparecem quando você as desbloqueia.",
+          "O Legacy está um pouco mais difícil no topo — mundial e SAM — mas ainda vencível com um draft de elite.",
+          "Tela inicial mais rápida e fluida no mobile, sem salto de layout enquanto a página carrega.",
+        ],
+      },
+      {
         version: "1.3.5",
         name: "Proving Grounds",
         date: "2026",
-        current: true,
+        current: false,
         notes: [
           "Dificuldade Legacy reajustada — o muro definitivo: só um draft de elite levanta o troféu (mundial ~97, SAM perto do seu teto realista), e agora os melhores têm uma chance mais justa, enquanto os times mais fracos seguem igualmente desafiados.",
           "A química premia história em comum — ex-companheiros, ou jogadores que passaram pela mesma org, criam link mesmo com cartas de times diferentes (e mesmo país sempre conta).",

@@ -868,6 +868,39 @@
     "overall": 70
   },
   {
+    "id": "duo-sub-black-dragons-s1",
+    "personId": "duo",
+    "name": "DuO",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "black-dragons",
+    "lineupId": "black-dragons-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 80
+  },
+  {
+    "id": "firewall154-sub-cade-meu-boost-s1",
+    "personId": "firewall154",
+    "name": "Firewall154",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "cade-meu-boost",
+    "lineupId": "cade-meu-boost-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 79
+  },
+  {
+    "id": "juan-sub-nox-gaming-s1",
+    "personId": "juan",
+    "name": "Juan",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "nox-gaming",
+    "lineupId": "nox-gaming-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 72
+  },
+  {
     "id": "lance-sub-erodium-s7",
     "personId": "lance",
     "name": "Lance",

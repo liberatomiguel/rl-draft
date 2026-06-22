@@ -96,4 +96,6 @@ sp-repi-wings-e-sports.png
 sp-ninja23509-wings-e-sports.png
 sp-gian-community.png
 sp-jato-community.png
+sp-royales-nrg-beater.png
+sp-freedom-og-brazil-goat.png
 ```

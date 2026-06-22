@@ -1,25 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Rajdhani } from "next/font/google";
+import localFont from "next/font/local";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
 import { AppShell } from "@/components/layout/AppShell";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const rajdhani = Rajdhani({
+// Self-hosted fonts (v1.4 "World Stage"). Previously fetched from
+// fonts.googleapis.com at build time via next/font/google — the most likely
+// cause of the 45-min Vercel build timeout (a build-network stall on the Google
+// Fonts request; the build itself is ~45s locally). Bundling them locally makes
+// the build deterministic / offline-proof and drops an external request at
+// runtime. Geist + Geist Mono come from the official `geist` package (the same
+// files Google serves) and expose the same --font-geist-sans / --font-geist-mono
+// CSS variables globals.css already targets; Rajdhani is committed woff2 in
+// ./fonts (sourced from @fontsource), wired via next/font/local.
+const rajdhani = localFont({
   variable: "--font-rajdhani",
-  weight: ["500", "600", "700"],
-  subsets: ["latin"],
+  display: "swap",
+  src: [
+    { path: "./fonts/rajdhani-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/rajdhani-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/rajdhani-700.woff2", weight: "700", style: "normal" },
+  ],
 });
 
 const TITLE = `${SITE.name} — RLCS Draft Game · Rocket League Esports History`;
@@ -111,7 +116,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${rajdhani.variable} h-full antialiased`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <script

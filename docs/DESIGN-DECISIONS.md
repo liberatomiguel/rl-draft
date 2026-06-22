@@ -897,6 +897,50 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     per-rarity table and rank gates as player specials (`rollSpecial`), keyed by their own
     coach-special catalogue.
 
+## v1.4 "World Stage" final pass (2026-06-22)
+
+94. **Legacy nudged ~1-2% harder; WW and SAM hardened INDEPENDENTLY (not lockstep).**
+    Miguel wanted Legacy "a touch harder, sem exagero." Worldwide `opponentRatingShift`
+    1.2 → 1.3: on the realistic sim the 98+ pinnacle tightens ~49% → ~42% while the 96-97
+    elite tier holds ~15% (a ~92 team still ≈ 0%; all bands pass). The effect concentrates
+    at the very top — pushing further risks the "never win" frustration #79.1/#89 fixed, so
+    +0.1 is the ceiling. SAM was hardened SEPARATELY this pass: the +6 regional teams (#95)
+    reshaped the SAM pool on their own, and `REGION_LOCK.opponentRatingBoost.legacy` 1.5 →
+    1.65 makes SAM ~1% harder overall (88-91 tighter; ~92-93 ceiling ~36%, a real shot).
+    This INTENTIONALLY breaks the old "SAM moves in lockstep so its curve stays put" rule
+    (#79.1) — this time both scales were meant to toughen. Validated on
+    `difficulty.sim.test.ts`; all 20 challenges stayed in band (no re-seed). `balance.ts`.
+
+95. **6 more SAM-only teams + 2 rare specials (by direction).** Black Dragons / Cadê Meu
+    Boost / NoX Gaming (S1 · 2016) and BS+Competition / Bigode / Plot Twist (2026) join the
+    regional pool (`sam-only, legacy`). 8 new people; the rest reuse existing SAM ids. The
+    `sosa` name collided with an existing CA/APAC person (Virtus.pro 2025) — by Miguel's
+    direction they are the SAME person, so the card reuses that record (no disambiguation,
+    so the card reads CA/APAC). Two new rare player specials: royales "NRG beater" (87, base
+    Plot Twist 2026) and freedom "OG Brazil Goat" (89, base Black Dragons 2016). `teams.md`,
+    `build-dataset.mjs`, `specialCards.json`.
+
+96. **Collection defaults to the official catalogue; special-person cards appear only once
+    owned.** The creator/wings/community rarities are tied to a PERSON, not a competitive
+    achievement, so they no longer show as locked silhouettes nor count toward the album
+    total — they surface (and add to the total) only when unlocked. So the denominator reads
+    the official count (88) until the player earns a special-person card. New
+    `isSpecialPersonRarity` engine helper; the view derives one `collectibleCards` set that
+    every total reads from. `engine/cards.ts`, `CollectionView`.
+
+97. **Core Web Vitals + Vercel build hardening (no design change; recorded for the why).**
+    (a) The mobile **CLS 0.44** hard-fail was reserved-then-injected layout: mount-gated
+    blocks (rank/XP, the daily card) with no reserved height shoved the page down on
+    hydration. Fixed by reserving height and mount-gating the date-derived daily text — which
+    also killed a **React #418** hydration mismatch (the STATIC home was baking the build
+    day's daily, then the client rewrote it). The hero (LCP) moved OUT of the `rise-in`
+    opacity-0 island so it paints in the SSR HTML. (b) Fonts are **self-hosted** (the `geist`
+    package + committed Rajdhani woff2 via `next/font/local`) to remove the build-time Google
+    Fonts fetch — the most likely cause of the **45-min Vercel build timeout** (the build is
+    ~45s locally, so the timeout is an environment hang, not slow compute; a stalled
+    `fonts.googleapis.com` request fits). The home `@/data` de-barrel (INP / −146 KiB) stays
+    a deferred follow-up (#60). `HomeMenu.tsx`, `layout.tsx`, `tsconfig.json`.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

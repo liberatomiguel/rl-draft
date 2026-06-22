@@ -3446,6 +3446,55 @@
     "historicalStrength": "underdog"
   },
   {
+    "id": "black-dragons-s1",
+    "name": "Black Dragons",
+    "seasonId": "rlcs-s1",
+    "orgId": "black-dragons",
+    "region": "SAM",
+    "playerCardIds": [
+      "freedom-black-dragons-s1",
+      "godan-black-dragons-s1",
+      "krames-black-dragons-s1"
+    ],
+    "subId": "duo-sub-black-dragons-s1",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "cade-meu-boost-s1",
+    "name": "Cadê Meu Boost",
+    "seasonId": "rlcs-s1",
+    "orgId": "cade-meu-boost",
+    "region": "SAM",
+    "playerCardIds": [
+      "thekillah-cade-meu-boost-s1",
+      "firefoxd-cade-meu-boost-s1",
+      "ze-cade-meu-boost-s1"
+    ],
+    "subId": "firewall154-sub-cade-meu-boost-s1",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "nox-gaming-s1",
+    "name": "NoX Gaming",
+    "seasonId": "rlcs-s1",
+    "orgId": "nox-gaming",
+    "region": "SAM",
+    "playerCardIds": [
+      "lance-nox-gaming-s1",
+      "caiotg1-nox-gaming-s1",
+      "saladk1ng-nox-gaming-s1"
+    ],
+    "coachId": "magomagnifico-coach-nox-gaming-s1",
+    "subId": "juan-sub-nox-gaming-s1",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
+  },
+  {
     "id": "erodium-s7",
     "name": "Erodium",
     "seasonId": "rlcs-s7",
@@ -4257,6 +4306,54 @@
     "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "underdog"
+  },
+  {
+    "id": "bs-competition-2026",
+    "name": "BS+Competition",
+    "seasonId": "rlcs-2026",
+    "orgId": "bs-competition",
+    "region": "SAM",
+    "playerCardIds": [
+      "crn-bs-competition-2026",
+      "kv1-bs-competition-2026",
+      "wisty-bs-competition-2026"
+    ],
+    "coachId": "michi-coach-bs-competition-2026",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "bigode-2026",
+    "name": "Bigode",
+    "seasonId": "rlcs-2026",
+    "orgId": "bigode",
+    "region": "SAM",
+    "playerCardIds": [
+      "bemmz-bigode-2026",
+      "nxghtt-bigode-2026",
+      "drufinho-bigode-2026"
+    ],
+    "coachId": "kaoshi-coach-bigode-2026",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "plot-twist-2026",
+    "name": "Plot Twist",
+    "seasonId": "rlcs-2026",
+    "orgId": "plot-twist",
+    "region": "SAM",
+    "playerCardIds": [
+      "motta-plot-twist-2026",
+      "royales-plot-twist-2026",
+      "sosa-plot-twist-2026"
+    ],
+    "coachId": "stolen-coach-plot-twist-2026",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
   },
   {
     "id": "wings-e-sports-s2",

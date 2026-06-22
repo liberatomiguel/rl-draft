@@ -10,9 +10,9 @@ Classic Draft core, 4 difficulties (Legacy unlockable), hidden-overall mode,
 Swiss + DOUBLE-ELIM playoffs (lower bracket + 3rd-place series), automatic
 simulation playback, Quick Draft, Daily Challenges (template wheel +
 streak), Regional Draft (lineup-pool filter; shipped v1.2.0), full historical
-dataset (259 lineups, 2016-2026, generated pipeline), 86 official special
+dataset (283 lineups, 2016-2026, generated pipeline), 86 official special
 cards with holo tiers + 3D tilt, unlock ceremony, share card, star narration,
-56 achievements, XP/9 ranks, local persistence, docs + ~121 tests. See
+56 achievements, XP/9 ranks, local persistence, docs + 122 tests. See
 CHANGELOG + STATUS.md.
 
 **v1.4 (built on `staging`)** ships on top: Challenges (20 authored puzzles,

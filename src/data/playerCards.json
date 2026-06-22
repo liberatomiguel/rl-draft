@@ -6264,6 +6264,87 @@
     "manualAdjustment": 0
   },
   {
+    "id": "freedom-black-dragons-s1",
+    "playerId": "freedom",
+    "orgId": "black-dragons",
+    "lineupId": "black-dragons-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "godan-black-dragons-s1",
+    "playerId": "godan",
+    "orgId": "black-dragons",
+    "lineupId": "black-dragons-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "krames-black-dragons-s1",
+    "playerId": "krames",
+    "orgId": "black-dragons",
+    "lineupId": "black-dragons-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 86,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "thekillah-cade-meu-boost-s1",
+    "playerId": "thekillah",
+    "orgId": "cade-meu-boost",
+    "lineupId": "cade-meu-boost-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "firefoxd-cade-meu-boost-s1",
+    "playerId": "firefoxd",
+    "orgId": "cade-meu-boost",
+    "lineupId": "cade-meu-boost-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ze-cade-meu-boost-s1",
+    "playerId": "ze",
+    "orgId": "cade-meu-boost",
+    "lineupId": "cade-meu-boost-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "lance-nox-gaming-s1",
+    "playerId": "lance",
+    "orgId": "nox-gaming",
+    "lineupId": "nox-gaming-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "caiotg1-nox-gaming-s1",
+    "playerId": "caiotg1",
+    "orgId": "nox-gaming",
+    "lineupId": "nox-gaming-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "saladk1ng-nox-gaming-s1",
+    "playerId": "saladk1ng",
+    "orgId": "nox-gaming",
+    "lineupId": "nox-gaming-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
     "id": "caiotg1-erodium-s7",
     "playerId": "caiotg1",
     "orgId": "erodium",
@@ -7611,6 +7692,87 @@
     "lineupId": "latino-heat-2025",
     "seasonId": "rlcs-2025",
     "overall": 74,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "crn-bs-competition-2026",
+    "playerId": "crn",
+    "orgId": "bs-competition",
+    "lineupId": "bs-competition-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kv1-bs-competition-2026",
+    "playerId": "kv1",
+    "orgId": "bs-competition",
+    "lineupId": "bs-competition-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "wisty-bs-competition-2026",
+    "playerId": "wisty",
+    "orgId": "bs-competition",
+    "lineupId": "bs-competition-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 86,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "bemmz-bigode-2026",
+    "playerId": "bemmz",
+    "orgId": "bigode",
+    "lineupId": "bigode-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nxghtt-bigode-2026",
+    "playerId": "nxghtt",
+    "orgId": "bigode",
+    "lineupId": "bigode-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "drufinho-bigode-2026",
+    "playerId": "drufinho",
+    "orgId": "bigode",
+    "lineupId": "bigode-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "motta-plot-twist-2026",
+    "playerId": "motta",
+    "orgId": "plot-twist",
+    "lineupId": "plot-twist-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "royales-plot-twist-2026",
+    "playerId": "royales",
+    "orgId": "plot-twist",
+    "lineupId": "plot-twist-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 85,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sosa-plot-twist-2026",
+    "playerId": "sosa",
+    "orgId": "plot-twist",
+    "lineupId": "plot-twist-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 86,
     "manualAdjustment": 0
   },
   {

@@ -86,8 +86,9 @@ export default function HomeMenu() {
   return (
     <>
       <FirstRunTutorial />
-      <div className="rise-in">
-      {/* Hero */}
+      {/* Hero — rendered OUTSIDE the rise-in (opacity:0) wrapper so the LCP subtitle
+          paints in the SSR HTML immediately instead of waiting on hydration/animation
+          (CWV: LCP render-delay). */}
       <section className="px-2 py-10 text-center md:py-14">
         <p className="kicker mb-4">{APP.tagline}</p>
         <h1 className="display mx-auto max-w-3xl text-5xl font-bold uppercase leading-[0.95] tracking-[0.08em] md:text-7xl">
@@ -100,19 +101,26 @@ export default function HomeMenu() {
           {APP.description}
         </p>
 
-        {mounted ? (
-          <div className="mt-7 flex flex-col items-center gap-2">
-            <RankBadge rank={rank} variant="menu" size="md" />
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-              <Badge tone="blue">{rank.label}</Badge>
-              <Badge tone="neutral">{xp} XP</Badge>
-              {runs > 0 ? <Badge tone="neutral">{HOME.runs(runs)}</Badge> : null}
-              {titles > 0 ? <Badge tone="gold">{HOME.titles(titles)}</Badge> : null}
-            </div>
-          </div>
-        ) : null}
+        {/* The container ALWAYS reserves its height; the rank/XP are mount-gated (they
+            read persisted Zustand state, which would mismatch the SSR default and trip
+            a hydration error) and now fill that reserved box instead of shoving the
+            modes grid down on mount (CWV: the main CLS driver). */}
+        <div className="mt-7 flex min-h-[120px] flex-col items-center gap-2">
+          {mounted ? (
+            <>
+              <RankBadge rank={rank} variant="menu" size="md" />
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                <Badge tone="blue">{rank.label}</Badge>
+                <Badge tone="neutral">{xp} XP</Badge>
+                {runs > 0 ? <Badge tone="neutral">{HOME.runs(runs)}</Badge> : null}
+                {titles > 0 ? <Badge tone="gold">{HOME.titles(titles)}</Badge> : null}
+              </div>
+            </>
+          ) : null}
+        </div>
       </section>
 
+      <div className="rise-in">
       {/* Modes — Classic Draft is THE primary action of the menu */}
       <section aria-label="Game modes" className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <button type="button" onClick={() => goToSetup("classic")} className="group text-left md:col-span-2">
@@ -154,7 +162,7 @@ export default function HomeMenu() {
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                 {HOME.daily}
-                <span className="ml-2 text-sm text-faint">#{daily.info.n}</span>
+                <span className="ml-2 text-sm text-faint">{mounted ? `#${daily.info.n}` : ""}</span>
               </h3>
               {mounted && streak > 0 ? (
                 <Badge tone="gold">{HOME.dailyStreak(streak)}</Badge>
@@ -162,21 +170,31 @@ export default function HomeMenu() {
                 <Badge tone="blue">{HOME.liveBadge}</Badge>
               )}
             </div>
-            <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">
-              {daily.info.label}
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-sub">{daily.info.description}</p>
-            {daily.info.objective ? (
-              <p className="mb-3 mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-cyan">
-                <TargetGlyph />
-                <span>
-                  {daily.info.objective.label}
-                  <span className="text-faint"> · +{daily.info.objective.bonusXp} XP</span>
-                </span>
-              </p>
-            ) : (
-              <div className="mb-3" />
-            )}
+            {/* The daily template is date-derived (todayKey → new Date). The home is a
+                STATIC page, so SSR bakes the BUILD day's daily and the client rewrites
+                it on hydration → React #418 + a wrong-daily flash. Mount-gate the
+                date-derived text and reserve its height so it doesn't shift (CWV). */}
+            <div className="min-h-[68px]">
+              {mounted ? (
+                <>
+                  <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">
+                    {daily.info.label}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-sub">{daily.info.description}</p>
+                  {daily.info.objective ? (
+                    <p className="mb-3 mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-cyan">
+                      <TargetGlyph />
+                      <span>
+                        {daily.info.objective.label}
+                        <span className="text-faint"> · +{daily.info.objective.bonusXp} XP</span>
+                      </span>
+                    </p>
+                  ) : (
+                    <div className="mb-3" />
+                  )}
+                </>
+              ) : null}
+            </div>
             {dailyDone ? (
               <div>
                 {dailyResults[today]?.placement === "champion" ? (
@@ -223,7 +241,11 @@ export default function HomeMenu() {
                 </p>
               </div>
               {collectionLocked ? (
-                <span className="shrink-0 text-faint" aria-label={HOME.collectionLocked}>
+                // Decorative — the "Locked — unlocks at Bronze" text is already shown
+                // as the card subtitle (above) and the wrapper carries aria-disabled +
+                // title, so the glyph is aria-hidden (aria-label on a bare <span> is a
+                // prohibited-ARIA a11y failure).
+                <span className="shrink-0 text-faint" aria-hidden>
                   <MenuLockGlyph />
                 </span>
               ) : (

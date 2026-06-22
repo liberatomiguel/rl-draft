@@ -264,13 +264,16 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // v1.4 retune (#79.1) anchored on the REALISTIC-draft win-rate CURVE
     // (`difficulty.sim.test.ts`: real synergy-aware drafts + the reset behaviour,
     // measured by final overall — not a hardcoded team). Target: the elite TIER has a
-    // real, satisfying shot (no "never win"), while non-elite ≈ 0. Worldwide curve at
-    // 1.2: a ~92 team ≈ 0%, 94-95 ≈ 2%, 96-97 ≈ 15%, a 98+ pinnacle ≈ 49%. (The #79 ease
-    // to 1.35 had a 98+ winning ~47% but a thinner 96-97; Miguel wanted the whole elite
-    // tier to climb, so the shift moved 1.35 → 1.70 → 1.2 to lift 96-97 to ~15%, letting
-    // the top rise with it.) SAM is on its own flatter scale via REGION_LOCK.legacy
-    // (raised in lockstep so its curve stays put). Still the hardest mode.
-    opponentRatingShift: 1.2,
+    // real, satisfying shot (no "never win"), while non-elite ≈ 0.
+    // v1.4 "World Stage" final pass (#94): shift 1.2 → 1.3 to make Legacy a touch
+    // harder (Miguel: "1-2% harder, sem exagero"). Worldwide curve at 1.3: a ~92 team
+    // ≈ 0%, 94-95 ≈ 2.5%, 96-97 ≈ 15% (holds), a 98+ pinnacle ≈ 42% — tightened from
+    // ~49% at 1.2, so the all-time wall is a touch higher at the very top while still
+    // rewarding (no "never win"). The earlier 1.35 → 1.70 → 1.2 sweep had lifted the
+    // whole elite tier; this +0.1 nudges it back down a hair, concentrated at 98+.
+    // SAM lives on its own flatter scale via REGION_LOCK.legacy and is hardened
+    // SEPARATELY this pass (boost 1.5 → 1.65, NOT lockstep) so both scales toughen.
+    opponentRatingShift: 1.3,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -291,16 +294,17 @@ export const REGION_LOCK = {
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
   //    most runs); Hard has its own rate and was left untouched this pass.
-  //  · legacy 1.5 (v1.4 retune, #79.1): SAM lives on a LOWER, FLATTER overall scale
-  //    (weaker pool, ~93 ceiling, but very high chemistry), so it gets its OWN curve,
-  //    not the worldwide one. The SAM effective shift = legacy.opponentRatingShift
-  //    (1.2) + this boost = 2.70. NOTE: this boost moves IN LOCKSTEP with the worldwide
-  //    shift — when that shift drops to lift the WW elite tier, this boost rises by the
-  //    same amount so the SAM curve stays put (effective 2.70). Tuned on the realistic
-  //    curve (`difficulty.sim.test.ts`, SAM): the ~92-93 SAM ceiling has a real shot
-  //    (~34%) and it's never impossible (88-89 ≈ 6%). The flat SAM curve means lifting
-  //    the top also lifts the middle.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 1.5 } as Record<
+  //  · legacy 1.65 (v1.4 "World Stage", #94; was 1.5 in #79.1): SAM lives on a LOWER,
+  //    FLATTER overall scale (weaker pool, ~93 ceiling, but very high chemistry), so it
+  //    gets its OWN curve, not the worldwide one. The SAM effective shift =
+  //    legacy.opponentRatingShift (1.3) + this boost = 2.95. This pass adds 6 regional
+  //    SAM teams to the pool (Black Dragons / Cadê Meu Boost / NoX 2016 + BS+Competition
+  //    / Bigode / Plot Twist 2026), which on its own nudged the curve, so the boost was
+  //    raised 1.5 → 1.65 INDEPENDENTLY (NOT lockstep with the WW shift this time) to make
+  //    SAM ~1% harder overall too. Measured (`difficulty.sim.test.ts`, SAM): 88-89 ≈ 3%,
+  //    90-91 ≈ 12%, the ~92-93 ceiling ≈ 36% (a real shot, never a walkover), blended
+  //    ≈ 26%. The flat SAM curve means lifting the top also lifts the middle.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 1.65 } as Record<
     Difficulty,
     number
   >,

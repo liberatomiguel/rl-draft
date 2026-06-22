@@ -169,7 +169,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -7
+      "opponentShift": -5
     },
     "constraint": {
       "country": "BR"
@@ -347,7 +347,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -9
+      "opponentShift": -12
     },
     "constraint": {
       "region": "SAM"

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
-import { effectiveStats, resolveSpecial } from "@/engine/cards";
+import { effectiveStats, isSpecialPersonRarity, resolveSpecial } from "@/engine/cards";
 import type { SpecialCard, SpecialRarity } from "@/engine/types";
 import { cx, countryName, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -22,7 +22,11 @@ import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 
-const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary", "community"];
+// Official catalogue rarities only — the per-rarity tiles + filter chips. The
+// special-person rarities (community/wings/creator) are intentionally absent:
+// those cards are hidden until owned (see `collectibleCards`), so they get no
+// "chase" tile and no rarity filter; an owned one still shows under "all".
+const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
 type StatusFilter = "all" | "unlocked" | "locked";
 
 /**
@@ -74,10 +78,19 @@ export function CollectionView() {
     (id: string) => devPreview || (mounted && Boolean(unlockedMap[id])),
     [devPreview, mounted, unlockedMap],
   );
+
+  // The album shows the OFFICIAL catalogue by default; the special-person cards
+  // (creator / wings / community) only appear — and only count toward the total —
+  // once OWNED. So the denominator reads the official count until one is unlocked,
+  // then ticks up. devPreview keeps everything visible.
+  const collectibleCards = useMemo(
+    () => specialCards.filter((sp) => !isSpecialPersonRarity(sp.rarity) || isUnlocked(sp.id)),
+    [isUnlocked],
+  );
   const unlockedCount = devPreview
-    ? specialCards.length
+    ? collectibleCards.length
     : mounted
-      ? Object.keys(unlockedMap).length
+      ? collectibleCards.filter((sp) => isUnlocked(sp.id)).length
       : 0;
 
   // v1.3 rank gates: the Collection opens at Bronze, and each rarity unlocks at a
@@ -94,7 +107,7 @@ export function CollectionView() {
   // (legendary→rare) then overall — followed by the still-locked cards in the
   // same rarity→overall order.
   const visible = useMemo(() => {
-    const filtered = specialCards.filter((sp) => {
+    const filtered = collectibleCards.filter((sp) => {
       if (status === "unlocked" && !isUnlocked(sp.id)) return false;
       if (status === "locked" && isUnlocked(sp.id)) return false;
       if (rarity !== "all" && sp.rarity !== rarity) return false;
@@ -105,7 +118,7 @@ export function CollectionView() {
       if (lockDiff !== 0) return lockDiff; // unlocked first
       return RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || b.overall - a.overall;
     });
-  }, [isUnlocked, status, rarity]);
+  }, [collectibleCards, isUnlocked, status, rarity]);
 
   // Progressive reveal: only the first `limit` cards mount; a sentinel below the
   // grid bumps it by a batch as it nears the viewport. Reset to one batch when
@@ -176,7 +189,7 @@ export function CollectionView() {
               </span>
             ) : null}
             <Badge tone="orange" className="!text-sm">
-              {C.progress(unlockedCount, specialCards.length)}
+              {C.progress(unlockedCount, collectibleCards.length)}
             </Badge>
           </div>
         }

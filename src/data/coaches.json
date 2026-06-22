@@ -1542,6 +1542,19 @@
     "bonusLevel": "+"
   },
   {
+    "id": "magomagnifico-coach-nox-gaming-s1",
+    "personId": "magomagnifico",
+    "name": "MagoMagnífico",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "nox-gaming",
+    "lineupId": "nox-gaming-s1",
+    "seasonId": "rlcs-s1",
+    "overall": 70,
+    "bonusType": "mechanics",
+    "bonusLevel": "~"
+  },
+  {
     "id": "tibiano-coach-erodium-s7",
     "personId": "tibiano",
     "name": "Tibiano",
@@ -2007,5 +2020,44 @@
     "overall": 79,
     "bonusType": "mechanics",
     "bonusLevel": "+"
+  },
+  {
+    "id": "michi-coach-bs-competition-2026",
+    "personId": "michi",
+    "name": "michi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "bs-competition",
+    "lineupId": "bs-competition-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 80,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "kaoshi-coach-bigode-2026",
+    "personId": "kaoshi",
+    "name": "Kaoshi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "bigode",
+    "lineupId": "bigode-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 79,
+    "bonusType": "experience",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "stolen-coach-plot-twist-2026",
+    "personId": "stolen",
+    "name": "Stolen",
+    "country": "AR",
+    "region": "SAM",
+    "orgId": "plot-twist",
+    "lineupId": "plot-twist-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 74,
+    "bonusType": "offense",
+    "bonusLevel": "~"
   }
 ]

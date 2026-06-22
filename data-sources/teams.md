@@ -2297,6 +2297,40 @@ org: Pioneers
 # A few blocks add `, legacy` to the flag: community-reviewed regional landmarks
 # whose raw overalls sit below the strong/elite cut — the flag floors their
 # historicalStrength at "strong" so they headline the SAM legacy gauntlet.
+## Season 1 · 2016
+
+### SAM
+
+```team: Black Dragons · S1 · 2016
+player 1: Freedom 85
+player 2: Godan 84
+player 3: Krames 86
+sub: DuO 80
+coach: -
+org: Black Dragons ~
+flag: sam-only, legacy
+```
+
+```team: Cadê Meu Boost · S1 · 2016
+player 1: TheKillah 83
+player 2: FirefoxD 83
+player 3: Zé 84
+sub: Firewall154 79
+coach: -
+org: Cadê Meu Boost ~
+flag: sam-only, legacy
+```
+
+```team: NoX Gaming · S1 · 2016
+player 1: Lance 80
+player 2: CaioTG1 82
+player 3: Saladk1ng 81
+sub: Juan 72
+coach: MagoMagnífico 70
+org: NoX Gaming ~
+flag: sam-only, legacy
+```
+
 ## Season 7 · 2019
 
 ### SAM
@@ -2841,6 +2875,40 @@ sub: -
 coach: groval 79
 org: Latino Heat ~
 flag: sam-only
+```
+
+## 2026
+
+### SAM
+
+```team: BS+Competition · 2026
+player 1: crn 85
+player 2: kv1 88
+player 3: wisty 86
+sub: -
+coach: michi 80
+org: BS+Competition ~
+flag: sam-only, legacy
+```
+
+```team: Bigode · 2026
+player 1: Bemmz 84
+player 2: nxghtt 85
+player 3: drufinho 87
+sub: -
+coach: Kaoshi 79
+org: Bigode ~
+flag: sam-only, legacy
+```
+
+```team: Plot Twist · 2026
+player 1: Motta 85
+player 2: Royales 85
+player 3: sosa 86
+sub: -
+coach: Stolen 74
+org: Plot Twist ~
+flag: sam-only, legacy
 ```
 
 # Wings E-Sports — Season 2 easter egg (the creator's own team, LiberatoRL).

@@ -212,9 +212,12 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
   against `coaches.json` (routed through `coachSpecialsByPersonId`), so it draws
   in the coach slot with a `team_attribute_boost` effect; player specials take
   the default player path.
-- `rarity`: `rare | epic | mythic | legendary | creator` (visual + collection
-  grouping).
-- `effect` — the v3 flat-boost model used by all 86 cards:
+- `rarity`: `rare | epic | mythic | legendary | creator | wings | community`
+  (visual + collection grouping). `creator`/`wings` are secret easter-egg
+  rarities (liberatoRL's Creator card; the Wings E-Sports cards) and `community`
+  (emerald/teal) is the content-creator tier — all three added/finalised in v1.4,
+  see DESIGN-DECISIONS #90.
+- `effect` — the v3 flat-boost model used by all 93 cards:
   - player specials: `{ type: "attribute_boost", attributes: [StatKey, …],
     value, description }` — adds `value` to each listed stat (`StatKey` =
     `offense | defense | mechanics | consistency | experience | clutch`).

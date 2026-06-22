@@ -754,10 +754,27 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.4.0",
+      name: "World Stage",
+      date: "2026",
+      current: true,
+      notes: [
+        "Accounts are here — sign in with a 6-digit email code to save your progress to the cloud and climb the global leaderboards (titles, top overall, and a new skill rating).",
+        "New Challenges mode — rank-unlocked draft puzzles with their own twists (region, era, nationality, overall caps and more), each a best-of-7 with a real reward.",
+        "International Majors expansion — two dozen more teams from RLCS events around the world join the worldwide pool, plus new South American teams for SAM mode.",
+        "New special cards — content-creator cards, the Wings E-Sports easter egg, and fresh rares (royales \"NRG beater\", freedom \"OG Brazil Goat\").",
+        "Rarer special cards now appear at fair, per-rarity rates — a lone legendary no longer shows up more often than it should.",
+        "Run recap — open any past run from your history to see exactly how it went.",
+        "The Collection shows the official catalogue by default; the secret creator and community cards appear once you unlock them.",
+        "Legacy is a touch tougher at the very top — worldwide and SAM — but still winnable with an elite draft.",
+        "Faster, smoother home screen on mobile, with no layout jump as the page loads.",
+      ],
+    },
+    {
       version: "1.3.5",
       name: "Proving Grounds",
       date: "2026",
-      current: true,
+      current: false,
       notes: [
         "Legacy difficulty retuned — the all-time wall: only an elite draft lifts the trophy (worldwide ~97, SAM near its realistic ceiling), and the very best now get a fair shot while weaker teams stay just as challenged.",
         "Chemistry rewards shared history — former teammates, or players who passed through the same org, link up even with cards from different teams (and same-country always counts).",

@@ -1699,7 +1699,7 @@
     "title": "FURIA Engine",
     "cardType": "moment",
     "rarity": "rare",
-    "overall": 90,
+    "overall": 91,
     "stats": {
       "offense": 92,
       "defense": 88,
@@ -2339,5 +2339,53 @@
       "description": "+3 team consistency and experience."
     },
     "flavor": "A nod to Jato — a content creator helping spread Rocket League across the South American scene."
+  },
+  {
+    "id": "sp-royales-nrg-beater",
+    "playerId": "royales",
+    "baseCardId": "royales-plot-twist-2026",
+    "title": "NRG beater",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 87,
+    "stats": {
+      "offense": 88,
+      "defense": 86,
+      "mechanics": 88,
+      "consistency": 89,
+      "experience": 87,
+      "clutch": 90
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": ["offense", "clutch"],
+      "value": 3,
+      "description": "+3 offense and clutch."
+    },
+    "flavor": "A SAM card for the run that took down NRG — proof the region can punch up against the very best."
+  },
+  {
+    "id": "sp-freedom-og-brazil-goat",
+    "playerId": "freedom",
+    "baseCardId": "freedom-black-dragons-s1",
+    "title": "OG Brazil Goat",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 89,
+    "stats": {
+      "offense": 89,
+      "defense": 88,
+      "mechanics": 88,
+      "consistency": 91,
+      "experience": 93,
+      "clutch": 90
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": ["experience", "consistency"],
+      "value": 3,
+      "description": "+3 experience and consistency."
+    },
+    "flavor": "A Brazilian legacy card for one of the original faces of the SAM scene — a foundation of the region's history."
   }
 ]

@@ -24,9 +24,21 @@ import type {
   Region,
   RosterPick,
   SpecialCard,
+  SpecialRarity,
   StatKey,
   Stats,
 } from "./types";
+
+/**
+ * The three "special-person" rarities — cards tied to a specific PERSON rather
+ * than a competitive achievement: the Creator (liberatoRL), the Wings E-Sports
+ * easter egg, and the `community` content-creator cards. They are hidden from
+ * the Collection album AND from its total until OWNED, so the default collection
+ * is the official catalogue only; each one adds to the total as it is unlocked.
+ */
+export const SPECIAL_PERSON_RARITIES: SpecialRarity[] = ["creator", "wings", "community"];
+export const isSpecialPersonRarity = (r: SpecialRarity): boolean =>
+  SPECIAL_PERSON_RARITIES.includes(r);
 
 export interface ResolvedCard {
   kind: CardKind;

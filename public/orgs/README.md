@@ -11,9 +11,13 @@ to the default org logo. Generated from data-sources/teams.md — run
 alpha-sydney.png
 amethyst.png
 avidity-esports.png
+bigode.png
+black-dragons.png
 blazar.png
 bodybuilders.png
 bravado-gaming.png
+bs-competition.png
+cade-meu-boost.png
 canberra-havoc.png
 carnage-gaming.png
 chiefs-esports-club.png
@@ -88,6 +92,7 @@ ninjas-in-pyjamas.png
 noble-esports.png
 nocturns-gaming.png
 northern-gaming.png
+nox-gaming.png
 nrg-esports.png
 nrg-esports@2016.png
 nrg-esports@2017.png
@@ -104,6 +109,7 @@ pale-horse-esports.png
 pioneers-oce.png
 pioneers-ssa.png
 pittsburgh-knights.png
+plot-twist.png
 poison-bullets.png
 precision-z.png
 psg-esports.png

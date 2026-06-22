@@ -1,16 +1,17 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-19. **Launched & live on Vercel.** Production tip:
-> **v1.3.5 "Proving Grounds"** (apex `rocketdraft.app`). **v1.4 is built and
-> sitting on the `staging` branch for team review** (not yet on `main`/prod).
-> v1.4 adds: **Challenges** (a new rank-unlocked draft-puzzle mode), a
-> **special-card rarity rework** (absolute per-rarity rates — lone legendaries
-> no longer over-appear), a **Leaderboards + accounts foundation** (email-code
-> login + cloud sync; code-complete but DORMANT until the Supabase env vars are
-> set — see below), and a **visual/mobile/Legacy polish** pass. Per-version
-> detail lives in `docs/CHANGELOG.md` ([1.4.0]) + `DESIGN-DECISIONS.md`. This
-> file stays **current-state only** — grep CHANGELOG/DESIGN-DECISIONS for history.
+> Last updated: 2026-06-22. **Launched & live on Vercel.** Production tip:
+> **v1.3.5 "Proving Grounds"** (apex `rocketdraft.app`). **v1.4.0 "World Stage" is
+> FINALIZED and prepared for `main`** — reviewed before it ships. Staging pushes are
+> PAUSED (local testing only) until the Vercel build-timeout fix is confirmed in prod.
+> v1.4 adds: **Challenges** (rank-unlocked draft puzzles), a **special-card rarity
+> rework** (absolute per-rarity rates), a **Leaderboards + accounts foundation**
+> (email-code login + cloud sync; code-complete but DORMANT until the Supabase env vars
+> are set — see below), an **International-Majors + SAM expansion**, and a **visual /
+> mobile / Core-Web-Vitals** pass (the mobile CLS hard-fail + the Vercel build-timeout
+> fix). Per-version detail lives in `docs/CHANGELOG.md` ([1.4.0]) + `DESIGN-DECISIONS.md`.
+> This file stays **current-state only** — grep CHANGELOG/DESIGN-DECISIONS for history.
 
 ## Current state
 
@@ -26,10 +27,11 @@ Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
   after a Hard win — specifically a **Classic/Quick** Hard (or Legacy) championship; a
   Daily or Challenge Hard win still counts as a title but does NOT open Legacy (v1.4,
   via the `legacyUnlocked` latch). Legacy is the all-time wall, tuned on the realistic
-  draft sim (`difficulty.sim.test.ts`, #79.1): worldwide a ~92 team ≈ 0%, the elite tier
-  climbs (96-97 ≈ 15%, 98+ pinnacle ≈ 49%) via `legacy.opponentRatingShift` 1.2; SAM on
-  its own flatter scale, ~92-93 ceiling ≈ 34% (`REGION_LOCK.legacy` 1.5, moved in lockstep
-  with the WW shift). Never impossible, never trivial.
+  draft sim (`difficulty.sim.test.ts`, #79.1/#94): worldwide a ~92 team ≈ 0%, the elite
+  tier climbs (96-97 ≈ 15%, 98+ pinnacle ≈ 42%) via `legacy.opponentRatingShift` 1.3 (the
+  v1.4 final pass nudged 1.2 → 1.3, ~1-2% harder); SAM on its own flatter scale, ~92-93
+  ceiling ≈ 36% (`REGION_LOCK.legacy` 1.65, hardened independently this pass — NOT lockstep).
+  Never impossible, never trivial.
 - **Rewards:** `RANK_REWARDS` gates special-card rarities and ramps appearance
   chance only at the top (ramps from Diamond: Diamond 6% / Champion 9% / GC 12% /
   SSL 16%); the Collection unlocks at **Bronze (200 XP)** and its home button is
@@ -55,6 +57,11 @@ Standard gates before any commit: `tsc` clean, **122** vitest tests pass,
   22-23; "Helfie Chiefs" → Chiefs Esports Club). Nationalities filled. The harvest
   tooling/workbook (`majors-new-teams.json`, `scripts/fetch-liquipedia-majors.mjs`) stays in
   `data-sources/` for the next pass.
+- **+6 SAM-only regional teams (v1.4.0 final pass, 2026-06-22).** Black Dragons / Cadê Meu
+  Boost / NoX Gaming (S1 2016) + BS+Competition / Bigode / Plot Twist (2026), all
+  `sam-only, legacy`. lineups 283→**289**, players →**405**, orgs →**148**; 8 new people,
+  plus 2 new rare specials (royales "NRG beater" 87, freedom "OG Brazil Goat" 89 — freedom
+  art + the bigode org logo still pending). `teams.md` → `build:data`. See CHANGELOG/DESIGN #95.
 - **Content-creator / Wings special cards (2026-06-22, on `staging`).** New emerald
   `community` rarity: **gian + jato** coach cards; **brunovisquii** rare coach; **repi +
   ninja23509** Wings easter-egg cards (secret, +4 team overall/stats, surface only on the Wings
@@ -110,9 +117,11 @@ Then we finish the wiring together (sync-after-run, a header sign-in chip, daily
 leaderboard — listed in ACCOUNTS-SETUP "Follow-ups"). Invariants this must keep:
 `DESIGN-DECISIONS.md` **#55**.
 
-**Still a candidate (not started):** the Worldwide DB expansion (the reviewed
-Major-only teams in `data-sources/`) — fold into `teams.md` when ready. And the
-gameplay-longevity backlog (`docs/GAMEPLAY-IDEAS.md`, brainstorm only).
+**Still a candidate (not started):** the gameplay-longevity backlog
+(`docs/GAMEPLAY-IDEAS.md`, brainstorm only). Further DB growth *beyond* the
+applied Int'l-Major set is possible — the harvest tooling/workbook stays in
+`data-sources/` for the next pass. (The reviewed Major-only teams themselves are
+no longer pending: they were folded into `teams.md` on 2026-06-22 — see above.)
 
 ## Open follow-ups (mostly ops, not code)
 

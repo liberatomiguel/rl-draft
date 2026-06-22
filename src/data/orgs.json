@@ -28,6 +28,20 @@
     "buffLevel": "~"
   },
   {
+    "id": "bigode",
+    "name": "Bigode",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
+    "id": "black-dragons",
+    "name": "Black Dragons",
+    "region": "SAM",
+    "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
     "id": "blazar",
     "name": "Blazar",
     "region": "SAM",
@@ -45,6 +59,20 @@
     "id": "bravado-gaming",
     "name": "Bravado Gaming",
     "region": "SSA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "bs-competition",
+    "name": "BS+Competition",
+    "region": "SAM",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "cade-meu-boost",
+    "name": "Cadê Meu Boost",
+    "region": "SAM",
     "buffType": "experience",
     "buffLevel": "~"
   },
@@ -566,6 +594,13 @@
     "buffLevel": "++"
   },
   {
+    "id": "nox-gaming",
+    "name": "NoX Gaming",
+    "region": "SAM",
+    "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
     "id": "nrg-esports",
     "name": "NRG Esports",
     "region": "NA",
@@ -666,6 +701,13 @@
     "region": "NA",
     "buffType": "offense",
     "buffLevel": "+"
+  },
+  {
+    "id": "plot-twist",
+    "name": "Plot Twist",
+    "region": "SAM",
+    "buffType": "offense",
+    "buffLevel": "~"
   },
   {
     "id": "poison-bullets",

@@ -10,11 +10,91 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [1.4.0] — 2026 · Accounts, Challenges & polish (in progress)
+## [1.4.0] — 2026-06-22 · "World Stage"
 
 > Big release: email-code login + cloud sync + leaderboards, a rank-unlocked
-> Challenges mode, a special-card rarity rework, and a visual/mobile pass.
-> Sections fill in as each workstream lands.
+> Challenges mode, a special-card rarity rework, an International-Majors + SAM
+> expansion, and a visual / mobile / Core-Web-Vitals pass. Codename **World
+> Stage**. Prepared for `main`; reviewed before it ships.
+
+### "World Stage" — v1.4.0 final pass (2026-06-22)
+
+The closing pass before v1.4.0 ships to `main`: 6 more SAM teams, two new
+specials, a Legacy difficulty nudge, a Collection that defaults to the official
+catalogue, the mobile **CLS hard-fail** fix, and a Vercel build-reliability fix.
+
+#### Added
+- **6 more SAM-only teams** (regional pool, `sam-only, legacy`): **Black Dragons**,
+  **Cadê Meu Boost**, **NoX Gaming** (S1 · 2016) and **BS+Competition**, **Bigode**,
+  **Plot Twist** (2026). 8 brand-new people (Freedom, Godan, Krames, DuO, TheKillah,
+  Zé, Saladk1ng, MagoMagnífico) with nationalities; the rest reuse existing SAM
+  people (sosa reuses the existing person by direction). lineups 283→**289**, players
+  397→**405**, orgs 142→**148**. `teams.md`, `build-dataset.mjs` (COUNTRY).
+- **2 new rare specials**: **royales — "NRG beater"** (87, base Plot Twist 2026) and
+  **freedom — "OG Brazil Goat"** (89, base Black Dragons 2016). 93 specials total.
+  `specialCards.json`. Royales art dropped in; `sp-freedom-og-brazil-goat.png` still
+  pending (styled fallback renders meanwhile).
+
+#### Changed
+- **Collection shows the OFFICIAL catalogue only by default.** The 5 special-person
+  cards (creator / wings / community) no longer appear as locked silhouettes nor count
+  toward the total — they show and increment the total only once OWNED, so the
+  denominator reads the official count (**88**) until one is unlocked. New
+  `isSpecialPersonRarity` engine helper; `CollectionView` derives a `collectibleCards`
+  set that every total reads from. `engine/cards.ts`, `app/collection/CollectionView.tsx`.
+- **Self-hosted fonts** — Geist + Geist Mono via the official `geist` package, Rajdhani
+  via committed woff2 + `next/font/local`, replacing `next/font/google`. Same CSS
+  variables, identical rendering. `layout.tsx`, `src/app/fonts/`. (See the build fix.)
+
+#### Balance
+- **Legacy nudged ~1-2% harder (#94).** Worldwide `opponentRatingShift` 1.2 → 1.3: the
+  98+ pinnacle tightens ~49% → ~42%, the 96-97 elite tier holds ~15%, a ~92 team ≈ 0%
+  (bands still pass, no "never win"). SAM hardened SEPARATELY (not lockstep this pass):
+  the +6 regional teams reshaped the pool and `REGION_LOCK.opponentRatingBoost.legacy`
+  1.5 → 1.65 makes SAM ~1% harder overall (88-91 tier tighter; ~92-93 ceiling ~36%, a
+  real shot). Validated on `difficulty.sim.test.ts`; all 20 challenges stayed in band
+  (no re-seed needed). `balance.ts`.
+
+#### Fixed (Core Web Vitals — mobile, was failing CrUX)
+- **CLS 0.44 hard-fail → reserved layout (home).** The rank/XP block and the daily-card
+  text rendered only after mount (mounted-gated to avoid a persisted-state hydration
+  mismatch) with NO reserved space — injecting ~96px+ on hydration and shoving the page
+  down on every load. They now render into fixed-height containers (`min-h`), so mount
+  fills reserved space with zero shift. Root cause: mount-gating without height reservation.
+  `HomeMenu.tsx`.
+- **React #418 (hydration text mismatch), home console.** The daily card's number / label
+  / description are date-derived (`todayKey()` → `new Date()`), but the home is a STATIC
+  page — SSR baked the BUILD day's daily and the client rewrote it on hydration (text
+  mismatch + a wrong-daily flash). The date-derived text is now mount-gated; the static
+  `/` HTML carries no baked date (verified: empty daily slot). `HomeMenu.tsx`.
+- **LCP render-delay (mobile lab ~5.3s).** The LCP element (hero subtitle) sat inside the
+  `rise-in` (opacity:0) island, painting only after hydration/animation. The hero now
+  renders OUTSIDE `rise-in`, in the SSR HTML, painting immediately. `HomeMenu.tsx`.
+- **a11y / agentic-nav: prohibited ARIA.** The locked-Collection glyph put `aria-label` on
+  a bare `<span>` (prohibited; dropped by assistive tech). Now `aria-hidden` — the lock
+  text is already the card subtitle. `HomeMenu.tsx`.
+- **Legacy-JS down-levelling.** `tsconfig` target ES2017 → ES2022 (browserslist is already
+  modern) so our own code isn't needlessly transpiled down. The residual Lighthouse
+  "legacy JS" is third-party (posthog) and low-priority. `tsconfig.json`.
+
+#### Fixed (deploy)
+- **Vercel build timeout (45-min limit exceeded).** The build is ~45s locally, so the
+  timeout is an environment HANG, not slow compute — and the only build-time external
+  dependency was `next/font/google` fetching Geist / Geist Mono / Rajdhani from
+  `fonts.googleapis.com` (Google Fonts rate-limits shared CI/build IPs → a stalled fetch
+  = a 45-min hang). Fixed by self-hosting all three fonts (above) so the build makes no
+  external request. There is no `vercel.json`, no `prebuild`/`postinstall`, and `build:data`
+  is NOT chained into the build, so nothing else reaches the network at build. (`reactCompiler`
+  was ruled out: it builds in ~45s locally with it on.) Cannot be verified on Vercel this
+  pass — staging pushes are paused — but the hang vector is removed.
+
+#### Deferred (follow-ups, not blocking)
+- **Home `@/data` de-barrel (INP / −146 KiB unused JS).** `@/lib/daily` + `runStore` still
+  pull the full dataset barrel into the home chunk (DESIGN-DECISIONS #60 / STATUS backlog).
+  Left for a focused change with `npm test` — the urgent indexing-threatening CLS/#418/LCP
+  are fixed; INP 260 ms is "needs improvement", not a fail.
+- **Rank menu PNGs** stay 160×160 (= 2× retina at the 80px display): Lighthouse's 6 KiB
+  "savings" would cost retina sharpness, so kept.
 
 ### International Majors & content-creator / Wings cards (2026-06-22)
 
@@ -71,11 +151,13 @@ with the root cause — that section doubles as the project's bugfix log.
 - **firewall154 content-creator card.** He exists only as a SUB in the base, and the special
   loader resolves `baseCardId` against player/coach cards only. Deferred per direction until the
   SAM base expansion gives him a player/coach card — the special attaches then without rework.
-- **3 new-org logos need manual curation.** `fetch-assets --orgs` pulled the wrong crest for
-  `quadrant` (→ Team Liquid), `luminosity-gaming` (→ ROUNDS) and `team-mobula` (→ 9Lies) —
-  same-name/rebrand collisions on Liquipedia. Set to `false` in `asset-overrides.json` (monogram
-  fallback) so nothing wrong ships; correct PNGs can be dropped into `public/orgs/`. `detonator`
-  fetched correctly and is in.
+- **3 new-org logos — curated PNGs now hand-dropped in** (`public/orgs/quadrant.png`,
+  `luminosity-gaming.png`, `team-mobula.png` — keyed to the exact orgId, per the drop-in
+  convention). `fetch-assets --orgs` had pulled the wrong crest for these (`quadrant` → Team
+  Liquid, `luminosity-gaming` → ROUNDS, `team-mobula` → 9Lies — same-name/rebrand collisions on
+  Liquipedia), so they stay `false` in `asset-overrides.json` (no auto-fetched `logoUrl`) and the
+  UI renders the hand-dropped files via the `/orgs/<orgId>.png` fallback. `detonator` fetched
+  correctly and is in.
 
 ### Staging-review adjustments (2026-06-21)
 

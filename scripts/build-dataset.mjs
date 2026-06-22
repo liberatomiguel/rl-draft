@@ -203,6 +203,14 @@ const COUNTRY = {
   andy: "US", olpix: "JP", burn: "JP", mikan: "JP", ivn: "DE", rizex45: "DE",
   nick: "US", fernando: "AU", nunki: "JP", bo0odi44: "SA", mesho: "SA",
   byjesuxesp: "ES",
+  // v1.4 SAM regional expansion — NEW players only (Black Dragons / Cadê Meu
+  // Boost / NoX Gaming 2016 + Plot Twist / Bigode / BS+Competition 2026).
+  // Existing SAM keys above are reused (crn, kv1, wisty, royales, motta,
+  // drufinho, bemmz, nxghtt, firefoxd, juan, kaoshi, michi, stolen, caiotg1,
+  // lance=CL, sosa). thekillah=AR, the rest BR.
+  freedom: "BR", godan: "BR", krames: "BR", duo: "BR",
+  saladk1ng: "BR", magomagnifico: "BR", ze: "BR",
+  thekillah: "AR",
 };
 
 const ORG_BUFF_TYPE = {
