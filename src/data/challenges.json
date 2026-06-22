@@ -7,32 +7,135 @@
     "opponentLineupId": "ibuypower-s1",
     "tier": "common",
     "seed": 19120,
-    "sim": { "difficulty": "easy", "bestOf": 5, "opponentShift": 5 },
-    "reward": { "xp": 60, "badge": "first-final" }
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 7
+    },
+    "reward": {
+      "xp": 80,
+      "badge": "first-final"
+    }
+  },
+  {
+    "id": "ch-european-dawn",
+    "title": "European Dawn",
+    "brief": "kuxir97's FlipSid3 set the standard in Season 1. Beat the team that taught Europe how to win.",
+    "rankRequired": "bronze",
+    "opponentLineupId": "flipsid3-tactics-s1",
+    "tier": "common",
+    "seed": 14882,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 2
+    },
+    "reward": {
+      "xp": 90,
+      "badge": "european-dawn"
+    }
+  },
+  {
+    "id": "ch-new-world-order",
+    "title": "New World Order",
+    "brief": "GarrettG's early NRG put North America on the map. Take down the region's first powerhouse.",
+    "rankRequired": "silver",
+    "opponentLineupId": "nrg-esports-s2",
+    "tier": "common",
+    "seed": 20451,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 3
+    },
+    "reward": {
+      "xp": 100,
+      "badge": "new-world-order"
+    }
+  },
+  {
+    "id": "ch-down-under",
+    "title": "Down Under",
+    "brief": "Oceania never gets the spotlight. Build an all-OCE roster and shock an NRG dynasty on the big stage.",
+    "rankRequired": "silver",
+    "opponentLineupId": "nrg-esports-s4",
+    "tier": "common",
+    "seed": 21737,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 1
+    },
+    "constraint": {
+      "region": "OCE"
+    },
+    "reward": {
+      "xp": 110,
+      "badge": "down-under"
+    }
+  },
+  {
+    "id": "ch-old-guard",
+    "title": "Old Guard",
+    "brief": "No superstars to hide behind. Nobody over 86 overall — win it the hard way, with reads and chemistry.",
+    "rankRequired": "silver",
+    "opponentLineupId": "g2-esports-s7",
+    "tier": "common",
+    "seed": 22906,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": -4
+    },
+    "constraint": {
+      "maxPlayerOverall": 86
+    },
+    "reward": {
+      "xp": 110,
+      "badge": "old-guard"
+    }
   },
   {
     "id": "ch-south-american-steel",
     "title": "South American Steel",
     "brief": "No imports. Build an all-South-American roster and prove the region on the world stage against FURIA.",
-    "rankRequired": "silver",
+    "rankRequired": "gold",
     "opponentLineupId": "furia-2025",
     "tier": "rare",
     "seed": 20084,
-    "sim": { "difficulty": "normal", "bestOf": 7 },
-    "constraint": { "region": "SAM" },
-    "reward": { "xp": 110, "badge": "sam-steel" }
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -1
+    },
+    "constraint": {
+      "region": "SAM"
+    },
+    "reward": {
+      "xp": 160,
+      "badge": "sam-steel"
+    }
   },
   {
     "id": "ch-old-school",
     "title": "Old School",
     "brief": "Class of 2018 only. Draft from Season 5 and topple a modern superteam with the old guard.",
-    "rankRequired": "silver",
+    "rankRequired": "gold",
     "opponentLineupId": "g2-stride-2024",
     "tier": "rare",
     "seed": 19617,
-    "sim": { "difficulty": "normal", "bestOf": 7, "opponentShift": -1 },
-    "constraint": { "seasonId": "rlcs-s5" },
-    "reward": { "xp": 120, "badge": "old-school" }
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -1
+    },
+    "constraint": {
+      "seasonId": "rlcs-s5"
+    },
+    "reward": {
+      "xp": 180,
+      "badge": "old-school"
+    }
   },
   {
     "id": "ch-vive-la-france",
@@ -40,71 +143,197 @@
     "brief": "Les Bleus assemble. Every player on your roster must be French — then go beat the Americans.",
     "rankRequired": "gold",
     "opponentLineupId": "nrg-esports-s8",
-    "tier": "epic",
+    "tier": "rare",
     "seed": 22171,
-    "sim": { "difficulty": "normal", "bestOf": 7, "opponentShift": 4 },
-    "constraint": { "country": "FR" },
-    "reward": { "xp": 150, "badge": "les-bleus" }
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": 4
+    },
+    "constraint": {
+      "country": "FR"
+    },
+    "reward": {
+      "xp": 190,
+      "badge": "les-bleus"
+    }
+  },
+  {
+    "id": "ch-samba-style",
+    "title": "Samba Style",
+    "brief": "Joga bonito. An all-Brazilian roster, the way the crowd wants it — now beat FURIA at their own game.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "furia-2024",
+    "tier": "rare",
+    "seed": 23510,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -5
+    },
+    "constraint": {
+      "country": "BR"
+    },
+    "reward": {
+      "xp": 210,
+      "badge": "samba-style"
+    }
   },
   {
     "id": "ch-no-stars",
     "title": "No Stars",
     "brief": "Nobody over 88 overall. No superstars to hide behind — chemistry and reads are all you've got.",
-    "rankRequired": "gold",
+    "rankRequired": "platinum",
     "prereq": "ch-old-school",
     "opponentLineupId": "northern-gaming-s3",
-    "tier": "epic",
+    "tier": "rare",
     "seed": 22499,
-    "sim": { "difficulty": "normal", "bestOf": 7 },
-    "constraint": { "maxPlayerOverall": 88 },
-    "reward": { "xp": 160, "badge": "no-stars" }
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxPlayerOverall": 88
+    },
+    "reward": {
+      "xp": 220,
+      "badge": "no-stars"
+    }
   },
   {
     "id": "ch-raw-talent",
     "title": "Raw Talent",
     "brief": "No special cards — base talent only. Strip away the highlights and just out-play Moist.",
-    "rankRequired": "platinum",
+    "rankRequired": "diamond",
     "opponentLineupId": "moist-esports-2122",
     "tier": "epic",
     "seed": 23039,
-    "sim": { "difficulty": "hard", "bestOf": 7, "opponentShift": -1 },
-    "constraint": { "noSpecials": true },
-    "reward": { "xp": 175, "badge": "raw-talent" }
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 1
+    },
+    "constraint": {
+      "noSpecials": true
+    },
+    "reward": {
+      "xp": 290,
+      "badge": "raw-talent"
+    }
   },
   {
     "id": "ch-carry-the-rookie",
     "title": "Carry the Rookie",
     "brief": "C4 is locked into your roster at 72 overall. Build a championship team around the rookie and win it all.",
-    "rankRequired": "platinum",
+    "rankRequired": "diamond",
     "opponentLineupId": "furia-2024",
     "fixedPlayerCardId": "c4-orchid-s7",
     "tier": "epic",
     "seed": 24321,
-    "sim": { "difficulty": "normal", "bestOf": 7, "opponentShift": -1 },
-    "reward": { "xp": 180, "badge": "carry-the-rookie" }
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -1
+    },
+    "reward": {
+      "xp": 300,
+      "badge": "carry-the-rookie"
+    }
+  },
+  {
+    "id": "ch-emerald-wall",
+    "title": "The Emerald Wall",
+    "brief": "SquishyMuffinz's Cloud9 made the impossible look routine. Crack the green wall and write your own ending.",
+    "rankRequired": "diamond",
+    "opponentLineupId": "cloud9-s6",
+    "tier": "epic",
+    "seed": 25118,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -2
+    },
+    "reward": {
+      "xp": 320,
+      "badge": "emerald-wall"
+    }
+  },
+  {
+    "id": "ch-blue-blood",
+    "title": "Blue Blood",
+    "brief": "French royalty against French royalty. Field an all-French roster and dethrone Karmine Corp.",
+    "rankRequired": "champion",
+    "opponentLineupId": "karmine-corp-2024",
+    "tier": "epic",
+    "seed": 26204,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "country": "FR"
+    },
+    "reward": {
+      "xp": 340,
+      "badge": "blue-blood"
+    }
+  },
+  {
+    "id": "ch-desert-storm",
+    "title": "Desert Storm",
+    "brief": "The Falcons rewrote the map. No twist, no excuses — just out-draft the kings of the desert.",
+    "rankRequired": "champion",
+    "opponentLineupId": "team-falcons-2025",
+    "tier": "epic",
+    "seed": 27090,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -1
+    },
+    "reward": {
+      "xp": 360,
+      "badge": "desert-storm"
+    }
   },
   {
     "id": "ch-break-the-wall",
     "title": "Break the Wall",
     "brief": "M0nkey M00n's BDS swept 2021-22. A dynasty in its prime — out-draft a wall that never cracked.",
-    "rankRequired": "diamond",
+    "rankRequired": "grand-champion",
     "opponentLineupId": "team-bds-2122",
     "tier": "legend",
     "seed": 23536,
-    "sim": { "difficulty": "hard", "bestOf": 7, "opponentShift": 1 },
-    "reward": { "xp": 230, "badge": "wall-breaker" }
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 1
+    },
+    "reward": {
+      "xp": 440,
+      "badge": "wall-breaker"
+    }
   },
   {
     "id": "ch-topple-the-titans",
     "title": "Topple the Titans",
     "brief": "The 2022-23 Vitality — many call them the greatest of all time. Beat the best roster ever assembled.",
-    "rankRequired": "champion",
+    "rankRequired": "grand-champion",
     "prereq": "ch-break-the-wall",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
     "seed": 24500,
-    "sim": { "difficulty": "legacy", "bestOf": 7, "opponentShift": -2 },
-    "reward": { "xp": 320, "badge": "giant-slayer" }
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "reward": {
+      "xp": 500,
+      "badge": "giant-slayer"
+    }
   },
   {
     "id": "ch-south-american-miracle",
@@ -115,8 +344,60 @@
     "opponentLineupId": "team-vitality-2025",
     "tier": "legend",
     "seed": 27531,
-    "sim": { "difficulty": "hard", "bestOf": 7, "opponentShift": -3 },
-    "constraint": { "region": "SAM" },
-    "reward": { "xp": 360, "badge": "sam-miracle" }
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -11
+    },
+    "constraint": {
+      "region": "SAM"
+    },
+    "reward": {
+      "xp": 520,
+      "badge": "sam-miracle"
+    }
+  },
+  {
+    "id": "ch-the-goat-hunt",
+    "title": "The GOAT Hunt",
+    "brief": "No special cards, no margin for error. Kaydop's Dignitas at full strength — pure skill, nothing else.",
+    "rankRequired": "supersonic-legend",
+    "opponentLineupId": "dignitas-s5",
+    "tier": "legend",
+    "seed": 28744,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -13
+    },
+    "constraint": {
+      "noSpecials": true
+    },
+    "reward": {
+      "xp": 540,
+      "badge": "goat-hunt"
+    }
+  },
+  {
+    "id": "ch-perfect-storm",
+    "title": "Perfect Storm",
+    "brief": "The final exam. Nobody over 90, no rerolls — and the greatest team ever waiting on the other side.",
+    "rankRequired": "supersonic-legend",
+    "prereq": "ch-topple-the-titans",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "legend",
+    "seed": 29610,
+    "sim": {
+      "difficulty": "legacy",
+      "bestOf": 7,
+      "opponentShift": -8
+    },
+    "constraint": {
+      "maxPlayerOverall": 90
+    },
+    "reward": {
+      "xp": 560,
+      "badge": "perfect-storm"
+    }
   }
 ]

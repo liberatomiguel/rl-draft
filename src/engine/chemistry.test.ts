@@ -9,7 +9,7 @@ const player = (
   region?: string,
 ): ChemPlayerInput => ({ name, lineupId, orgId, country, region });
 
-describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () => {
+describe("chemistry (§22, v1.4 ADDITIVE — connection + heritage stack)", () => {
   it("a real lineup with matching staff and org is Perfect (full bar)", () => {
     const result = computeChemistry({
       players: [
@@ -26,18 +26,21 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
     expect(result.tier).toBe("Perfect");
   });
 
-  it("counts only the strongest link per pair (lineup beats org/country)", () => {
+  it("connection and heritage STACK per pair (additive, v1.4)", () => {
+    // A & B share an org (current) AND a country → both axes count: 2.5 + 2.5 = 5.
     const result = computeChemistry({
       players: [
-        player("A", "L1", "O1", "FR"),
-        player("B", "L1", "O1", "FR"), // same lineup AND org AND country → only the lineup link
-        player("C", "L9", "O9", "US"),
+        player("A", "L1", "O1", "BR"),
+        player("B", "L2", "O1", "BR"), // same org + same country as A
+        player("C", "L3", "O9", "US"),
       ],
     });
-    expect(result.raw).toBe(4); // one same-lineup pair
+    expect(result.raw).toBe(5); // connOrg 2.5 + herCountry 2.5
+    expect(result.items.some((i) => i.label.startsWith("Shared org"))).toBe(true);
+    expect(result.items.some((i) => i.label.startsWith("Same country"))).toBe(true);
   });
 
-  it("a shared-org pair and a same-country pair each score 3", () => {
+  it("a lone same-country pair and a lone shared-org pair each score 2.5", () => {
     const country = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -45,7 +48,7 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
         player("C", "L3", "O3", "US"),
       ],
     });
-    expect(country.raw).toBe(3); // one same-country pair
+    expect(country.raw).toBe(2.5); // one same-country pair (heritage only)
 
     const org = computeChemistry({
       players: [
@@ -54,7 +57,7 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
         player("C", "L3", "O3", "US"),
       ],
     });
-    expect(org.raw).toBe(3); // one shared-org pair
+    expect(org.raw).toBe(2.5); // one shared-org pair (connection only)
   });
 
   it("3 same-country players reach Great (but not Perfect)", () => {
@@ -69,20 +72,22 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
     expect(result.percent).toBeLessThan(100);
   });
 
-  it("3 same-country + ONE org connection reaches Perfect", () => {
+  it("3 same-country + shared org history reaches Perfect (v1.4: org now stacks)", () => {
+    // The v1.4 fix: players who also crossed paths at an org get that bond ON TOP of
+    // country — country (7.5) + shared-org (7.5) = full bar.
     const result = computeChemistry({
       players: [
-        player("A", "L1", "O1", "BR"),
-        player("B", "L2", "O2", "BR"),
-        player("C", "L3", "O3", "BR"),
+        { name: "A", lineupId: "L1", orgId: "O1", country: "BR", careerOrgIds: ["O1", "OZ"] },
+        { name: "B", lineupId: "L2", orgId: "O2", country: "BR", careerOrgIds: ["O2", "OZ"] },
+        { name: "C", lineupId: "L3", orgId: "O3", country: "BR", careerOrgIds: ["O3", "OZ"] },
       ],
-      orgId: "O1", // drafting A's org adds org-loyalty → completes the bar
-      orgName: "Org",
     });
     expect(result.tier).toBe("Perfect");
+    expect(result.items.some((i) => i.label.startsWith("Same country"))).toBe(true);
+    expect(result.items.some((i) => i.label.startsWith("Shared org"))).toBe(true);
   });
 
-  it("3 same-country + same-country STAFF still falls short of Perfect (needs org)", () => {
+  it("3 same-country + same-country STAFF still falls short of Perfect (needs a real connection)", () => {
     const result = computeChemistry({
       players: [
         player("A", "L1", "O1", "BR"),
@@ -106,7 +111,7 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
     });
     const countryItems = result.items.filter((i) => i.label.startsWith("Same country"));
     expect(countryItems).toHaveLength(1); // one line, not three
-    expect(countryItems[0].points).toBe(9); // 3 pairs × 3, summed
+    expect(countryItems[0].points).toBe(7.5); // 3 pairs × 2.5, summed
     expect(countryItems[0].label).toContain("A · B · C");
   });
 
@@ -130,11 +135,11 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
         { name: "C", lineupId: "L3", orgId: "O3", country: "US" },
       ],
     });
-    expect(result.raw).toBe(3); // careerLineupPair
+    expect(result.raw).toBe(3); // connTeammates (no heritage link between A & B)
     expect(result.items.some((i) => i.label.startsWith("Ex-teammates"))).toBe(true);
   });
 
-  it("shared career org is a weak link, below country and ex-teammates", () => {
+  it("shared career org connects two players of different countries", () => {
     const result = computeChemistry({
       players: [
         { name: "A", lineupId: "L1", orgId: "O1", country: "FR", careerOrgIds: ["O1", "OZ"] },
@@ -142,26 +147,23 @@ describe("chemistry (§22, v1.3.2 — 3 country = Great, +1 org = Perfect)", () 
         { name: "C", lineupId: "L3", orgId: "O3", country: "BR" },
       ],
     });
-    expect(result.raw).toBe(2); // careerOrgPair (no country/region link between A & B)
-    expect(result.items.some((i) => i.label.startsWith("Shared org history"))).toBe(true);
+    expect(result.raw).toBe(2.5); // connOrg (no heritage link between A & B)
+    expect(result.items.some((i) => i.label.startsWith("Shared org"))).toBe(true);
   });
 
-  it("career links never inflate a same-country stack past Great", () => {
-    // 3 Brazilians who also crossed paths in careers: country wins per pair (3),
-    // career links do NOT stack on top — still Great, not Perfect.
+  it("within an axis only the STRONGEST form counts (no double-count of one relationship)", () => {
+    // A & B were teammates (L9) AND share a career org (OZ) — same underlying history,
+    // so the connection axis counts ex-teammates (3) only, NOT 3 + 2.5.
     const result = computeChemistry({
       players: [
-        { name: "A", lineupId: "L1", orgId: "O1", country: "BR", careerLineupIds: ["L1", "LZ"], careerOrgIds: ["O1", "OZ"] },
-        { name: "B", lineupId: "L2", orgId: "O2", country: "BR", careerLineupIds: ["L2", "LZ"], careerOrgIds: ["O2", "OZ"] },
-        { name: "C", lineupId: "L3", orgId: "O3", country: "BR", careerLineupIds: ["L3", "LZ"], careerOrgIds: ["O3", "OZ"] },
+        { name: "A", lineupId: "L1", orgId: "O1", country: "US", careerLineupIds: ["L1", "L9"], careerOrgIds: ["O1", "OZ"] },
+        { name: "B", lineupId: "L2", orgId: "O2", country: "BR", careerLineupIds: ["L2", "L9"], careerOrgIds: ["O2", "OZ"] },
+        { name: "C", lineupId: "L3", orgId: "O3", country: "FR" },
       ],
     });
-    // Country outranks the career links (same points, 3), so it reads as "Same
-    // country" — never shadowed by "Ex-teammates" — and stays Great (3×3=9, <100%).
-    expect(result.items.some((i) => i.label.startsWith("Same country"))).toBe(true);
-    expect(result.items.some((i) => i.label.startsWith("Ex-teammates"))).toBe(false);
-    expect(result.tier).toBe("Great");
-    expect(result.percent).toBeLessThan(100);
+    expect(result.raw).toBe(3); // ex-teammates only (different countries → no heritage)
+    expect(result.items.some((i) => i.label.startsWith("Ex-teammates"))).toBe(true);
+    expect(result.items.some((i) => i.label.startsWith("Shared org"))).toBe(false);
   });
 
   it("an all-star mix with no links is Poor", () => {

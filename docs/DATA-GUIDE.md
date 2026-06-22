@@ -4,7 +4,7 @@
 
 The JSONs in `src/data/` are **GENERATED** — the source of truth is
 **`data-sources/teams.md`** (the curated "all RLCS finals teams" archive,
-254 lineups across 2016-2026). To update the dataset:
+259 lineups across 2016-2026). To update the dataset:
 
 1. Edit `data-sources/teams.md` (same team-block format, see the file).
 2. Run `npm run build:data`.
@@ -13,7 +13,7 @@ The JSONs in `src/data/` are **GENERATED** — the source of truth is
 The generator (`scripts/build-dataset.mjs`) handles: person identity
 de-duplication across nickname variants ("jstn"/"JSTN"/"jstn."), the
 known ZeN(OCE) ≠ zen(FR) collision, curated nationalities (near-full
-coverage, 370/374 players; the rest have none — same-country chemistry
+coverage, 371/377 players; the rest have none — same-country chemistry
 skips them), org buff levels
 **per season** (`lineups[].orgBuffLevel` override; the org entity keeps the
 strongest level as default), derived coach bonuses (level from overall,
@@ -44,14 +44,14 @@ broken reference fails loudly with a message pointing at the exact id.
 | File | Entity | Counts (approx — run build:data) |
 | --- | --- | --- |
 | `seasons.json` | RLCS seasons (labels) | 15 |
-| `players.json` | Real player identities | 374 |
-| `playerCards.json` | Player versions per lineup/season | 762 |
-| `orgs.json` | Organizations + buffs | 134 |
-| `coaches.json` | Coach cards (incl. generic staff) | 124 |
-| `subs.json` | Substitute cards | 103 |
-| `lineups.json` | Historical rosters (the draft pool) | 254 |
-| `specialCards.json` | Collectible special versions | 84 |
-| `achievements.json` | Achievement definitions | 24 |
+| `players.json` | Real player identities | 377 |
+| `playerCards.json` | Player versions per lineup/season | 777 |
+| `orgs.json` | Organizations + buffs | 138 |
+| `coaches.json` | Coach cards (incl. generic staff) | 132 |
+| `subs.json` | Substitute cards | 104 |
+| `lineups.json` | Historical rosters (the draft pool) | 259 |
+| `specialCards.json` | Collectible special versions | 86 |
+| `achievements.json` | Achievement definitions | 56 |
 
 ---
 
@@ -199,24 +199,30 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 ```
 
 - **The special is owned by `playerId`** (v0.5): ANY card of that player can
-  roll it in a draft offer (`balance.ts → SPECIALS.appearanceChance`, with
-  `rarityWeights` deciding which one shows). `baseCardId` anchors the
+  roll it in a draft offer (v1.4: each rarity rolls at its own ABSOLUTE rate
+  `balance.ts → SPECIALS.rarityChance`, rarest-first — so a lone-legendary
+  player no longer over-appears). `baseCardId` anchors the
   special's own historical moment — the org/season it displays AND the
   lineup/org used for chemistry when drafted.
 - `cardType`: `moment | major_mvp | worlds_mvp | season_mvp | mythic | legend | coach`
   (`season_mvp` added v1.1.1 — a season-MVP award kept distinct from `worlds_mvp`
   so a league/season MVP isn't mislabelled as a world title).
+- `kind` (optional, v1.4): `player | coach`. Defaults to `player` when omitted.
+  A `coach` special is owned by a coach `personId` and resolves its `baseCardId`
+  against `coaches.json` (routed through `coachSpecialsByPersonId`), so it draws
+  in the coach slot with a `team_attribute_boost` effect; player specials take
+  the default player path.
 - `rarity`: `rare | epic | mythic | legendary | creator` (visual + collection
   grouping).
-- `effect` — the v3 flat-boost model used by all 84 cards:
+- `effect` — the v3 flat-boost model used by all 86 cards:
   - player specials: `{ type: "attribute_boost", attributes: [StatKey, …],
     value, description }` — adds `value` to each listed stat (`StatKey` =
     `offense | defense | mechanics | consistency | experience | clutch`).
   - coach specials: `{ type: "team_attribute_boost", attributes: [StatKey, …],
     value, description }` — same, applied across the team.
   - `overallBonus` (optional, v1.3.3) — a flat bonus to the team's FINAL overall,
-    independent of the attribute boost. Used by the Creator card (+5). Stacks
-    across the roster; capped 0–5 by the schema.
+    independent of the attribute boost. Used by the Creator card (+7). Stacks
+    across the roster; capped 0–7 by the schema.
   - The older situational types (`clutch_boost`, `swiss_consistency`,
     `playoff_experience`, `upset_boost`, `defense_stability`, `high_roll`) are
     still accepted by the schema/engine for back-compat, but **no current card
@@ -228,10 +234,13 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 ```json
 { "id": "swiss-merchant", "title": "Swiss Merchant",
   "description": "Go 3-0 in the Swiss stage.", "xp": 50,
-  "category": "rare" }
+  "category": "rare", "group": "performance" }
 ```
 
-- `category`: `common | rare | epic | legend` (grouping + visual tier).
+- `category`: `common | rare | epic | legend` (visual tier).
+- `group` (**required**, v1.4): the section bucket on the achievements screen —
+  `milestone | mode | performance | chemistry | roster | collection |
+  progression`. Distinct from `category` (which is only the visual rarity tier).
 - `secret` (optional): hidden until unlocked.
 
 The check logic lives in `src/engine/achievements.ts` — adding a new

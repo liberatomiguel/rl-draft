@@ -44,10 +44,16 @@ interface AccountStore {
   session: Session | null;
   username: string | null;
   syncing: boolean;
+  /** The email a sign-in code was just sent to, if a sign-in is mid-flight. Lives in
+   *  the store (a navigation-surviving singleton) instead of the SignIn component's
+   *  local state, so leaving and returning to /profile resumes the code step with the
+   *  email remembered — the player can still enter the code they already received. */
+  pendingEmail: string | null;
   /** Mount-once guard so init() only wires listeners a single time. */
   initialized: boolean;
 
   init: () => void;
+  setPendingEmail: (email: string | null) => void;
   syncNow: (session?: Session) => Promise<void>;
   checkUsername: (name: string) => Promise<boolean>;
   setUsername: (name: string) => Promise<{ error?: string }>;
@@ -61,7 +67,10 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
   session: null,
   username: null,
   syncing: false,
+  pendingEmail: null,
   initialized: false,
+
+  setPendingEmail: (email) => set({ pendingEmail: email }),
 
   init: () => {
     if (get().initialized) return;
@@ -76,8 +85,10 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
     });
     onAuthChange((s) => {
       set({ session: s, status: s ? "signedIn" : "signedOut" });
-      if (s) get().syncNow(s);
-      else set({ username: null });
+      if (s) {
+        set({ pendingEmail: null }); // sign-in completed — clear the in-flight email
+        get().syncNow(s);
+      } else set({ username: null });
     });
   },
 
@@ -96,12 +107,10 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
         ...mergedRaw,
         achievements: pruneEarnedAchievements(mergedRaw.achievements),
         unlockedSpecials: pruneUnlockedSpecials(mergedRaw.unlockedSpecials),
-        // Seed MMR for a signed-in veteran whose cloud row predates MMR (covers
-        // the fresh-device case the local migrate can't). Idempotent floor.
-        mmr: Math.max(
-          mergedRaw.mmr ?? MMR.start,
-          mmrBackfillFloor(mergedRaw.wins, mergedRaw.podiums, mergedRaw.runsCompleted),
-        ),
+        // Seed MMR for a signed-in veteran whose cloud row predates MMR (covers the
+        // fresh-device case the local migrate can't). Floor from title history, capped
+        // at 1500; live-earned values above it (forward play) are preserved by the max.
+        mmr: Math.max(mergedRaw.mmr ?? MMR.start, mmrBackfillFloor(mergedRaw.wins)),
       };
       if (row?.durable) useProfileStore.getState().hydrateDurable(merged); // never lose local
       const username = row?.username || emailPrefix(session);
@@ -128,7 +137,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
 
   signOut: async () => {
     await sbSignOut();
-    set({ session: null, username: null, status: "signedOut" });
+    set({ session: null, username: null, status: "signedOut", pendingEmail: null });
   },
 
   deleteAccount: async () => {

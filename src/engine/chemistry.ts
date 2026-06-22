@@ -1,14 +1,19 @@
 /**
- * Chemistry system (base doc §22, reworked v1.3.1).
+ * Chemistry system (base doc §22; reworked to ADDITIVE in v1.4).
  *
- * Per player pair only the STRONGEST link counts, in weight order:
- *   same lineup (4) > shared org (3) > same country (2) > same region (1).
- * Org now outranks country, because **Perfect chemistry requires real org/lineup
- * overlap** — a pure country (or country+staff) stack tops out at Good, never
- * Perfect (Miguel's rule). Pairs of the same kind are MERGED into one readout
- * line (a 3-player Brazil core is one "Same country" entry, not three +2s).
- * Perfect is only reached when the bar is FULL (raw ≥ maxRaw). Raw → percent of
- * maxRaw → tier; the rating impact of the percent is difficulty-scaled in rating.ts.
+ * Per player pair, raw = CONNECTION + HERITAGE — two INDEPENDENT axes, summed, so
+ * EVERY factor the player built around counts (not just the single strongest link):
+ *   CONNECTION (strongest form): same lineup (4) > ex-teammates (3) > shared org (2.5)
+ *   HERITAGE  (strongest form): same country (2.5) > same region (1.5)
+ * Within an axis only the strongest form counts (the alternatives are the SAME
+ * relationship — ex-teammates already implies a shared org — so stacking them would
+ * double-count it). Across the axes they ADD: a same-country pair who also shared an
+ * org scores country + org. A pure country stack still never reaches Perfect (real
+ * connection completes the bar). Pairs of the same kind+key MERGE into one readout
+ * line (a 3-player Brazil core is one "Same country" entry). Perfect = a FULL bar
+ * (raw ≥ maxRaw). Raw → percent of maxRaw → tier; the rating impact is difficulty-
+ * scaled in rating.ts. AI lineups are real trios (~19+ raw) → capped 100%, so the
+ * field is not inflated.
  */
 
 import { CHEMISTRY } from "@/config/balance";
@@ -94,26 +99,29 @@ export function computeChemistry(input: ChemistryInput): ChemistryResult {
     for (let j = i + 1; j < input.players.length; j++) {
       const a = input.players[i];
       const b = input.players[j];
-      // Weight order (strongest wins): drafted lineup > drafted org > country >
-      // shared career lineup (ex-teammates) > shared career org > region. Country
-      // sits above the career links so a same-country pair always reads as "Same
-      // country" (the primary, intuitive link); career links are the value-add for
-      // pairs of DIFFERENT countries who crossed paths. careerLineup ties country
-      // on points (3), so no balance change — only which reason is shown.
+      // ADDITIVE (v1.4): a pair scores CONNECTION + HERITAGE — two independent axes.
+      // Within each axis only the strongest form counts (the alternatives describe the
+      // SAME relationship, so stacking them would double-count it); across axes they sum,
+      // so a same-country pair who also shared an org now gets BOTH.
+
+      // CONNECTION axis: same drafted lineup > ex-teammates (shared career lineup) >
+      // share an org (current cards same org, or a shared career org).
       const sharedCareerLineup = firstShared(a.careerLineupIds, b.careerLineupIds);
-      const sharedCareerOrg = firstShared(a.careerOrgIds, b.careerOrgIds);
+      const sharedOrg =
+        a.orgId === b.orgId ? a.orgId : firstShared(a.careerOrgIds, b.careerOrgIds);
       if (a.lineupId === b.lineupId) {
-        addPair(a, b, "lineup", a.lineupId, "Same lineup", "", w.sameLineupPair);
-      } else if (a.orgId === b.orgId) {
-        addPair(a, b, "org", a.orgId, "Shared org", "", w.sameOrgPair);
-      } else if (a.country && b.country && a.country === b.country) {
-        addPair(a, b, "country", a.country, "Same country", ` (${a.country})`, w.sameCountryPair);
+        addPair(a, b, "lineup", a.lineupId, "Same lineup", "", w.connLineup);
       } else if (sharedCareerLineup) {
-        addPair(a, b, "career-lineup", sharedCareerLineup, "Ex-teammates", "", w.careerLineupPair);
-      } else if (sharedCareerOrg) {
-        addPair(a, b, "career-org", sharedCareerOrg, "Shared org history", "", w.careerOrgPair);
+        addPair(a, b, "career-lineup", sharedCareerLineup, "Ex-teammates", "", w.connTeammates);
+      } else if (sharedOrg) {
+        addPair(a, b, "org", sharedOrg, "Shared org", "", w.connOrg);
+      }
+
+      // HERITAGE axis: same country > same region. ADDS on top of any connection.
+      if (a.country && b.country && a.country === b.country) {
+        addPair(a, b, "country", a.country, "Same country", ` (${a.country})`, w.herCountry);
       } else if (a.region && b.region && a.region === b.region) {
-        addPair(a, b, "region", a.region, "Same region", ` (${a.region})`, w.sameRegionPair);
+        addPair(a, b, "region", a.region, "Same region", ` (${a.region})`, w.herRegion);
       }
     }
   }

@@ -16,6 +16,90 @@ with the root cause — that section doubles as the project's bugfix log.
 > Challenges mode, a special-card rarity rework, and a visual/mobile pass.
 > Sections fill in as each workstream lands.
 
+### Staging-review adjustments (2026-06-21)
+
+A pass over the v1.4 build before it ships, from playtesting on `staging`:
+
+- **Balance — MMR reworked to a win-only economy (supersedes the original v1.4 MMR
+  below).** The placement-curve formula over-rewarded — a mediocre fresh account drifted
+  to ~1200 and elites blew past 1500. MMR now moves **only on a real title**, by a flat
+  table: Easy/Normal championship **+1**, Hard **+3**, Legacy grand finalist **+5**,
+  Legacy title **+9**; everything else **0** (no placement curve, Swiss, difficulty
+  multiplier or regional bonus). Start stays 1000; live gains are tiny and linear, so
+  climbing past 1600 is a real grind. The **retroactive backfill is capped at 1600** via
+  a saturating curve of title history (`MMR.backfillScale`), so the best current players
+  land *near* 1600 and a title-less account stays at start. Daily titles still earn MMR
+  (a real tournament); Challenge mode never did. Profile **v10 → v11** hard-resets MMR to
+  the new value (a one-time correction, not a floor). `balance.ts` (`MMR`/`mmrRawGain`/
+  `mmrAfterRun`/`mmrBackfillFloor`), `mmr.test.ts`.
+- **Changed — Legacy unlock decoupled from Daily/Challenge.** A Daily/Challenge Hard win
+  still counts as a **title** (achievements, leaderboard, MMR) but no longer **unlocks
+  Legacy** — only a Classic/Quick Hard (or Legacy) championship does. New `legacyUnlocked`
+  latch on the profile (synced, OR-merged), seeded `true` for anyone with an existing
+  Hard/Legacy title so no one loses access. `profileStore`, `profileSync`, `ResultsScreen`
+  (unlock-celebration guard).
+- **Changed — Challenges:** every series is now **Best-of-7** (schema-enforced); rerolls
+  **scale with difficulty** instead of a flat 8 — easy 8 / normal 5 / hard 3 / legacy 0;
+  XP rewards retuned into per-rarity bands (Common 80–110 → Legend 440–560). The set grew
+  from 10 to **20**, spread so **every rank Bronze→SSL unlocks new content**, with varied
+  twists (region / era / nationality / OVR-cap / no-specials / build-around). Every seed
+  is **sim-validated into a difficulty band** — the winnability test now also asserts an
+  upper bound (≤0.85) so nothing is a walkover. `challenges.json`, `balance.ts`
+  (`CHALLENGE.rerollsByDifficulty`), `challenges.ts`, `schemas.ts`, `challenges.test.ts`.
+- **Changed — rank-image lock messages.** Rank-locks show the unlocking **rank's badge**:
+  locked Challenge cards (the rank that unlocks each) and the Collection's per-rarity locks.
+  Reuses `RankBadge`. (The home Collection/Challenges tiles keep the original padlock glyph.)
+- **Balance — special-card rarity ladder + chance ramp retune.** Each rank Bronze→Platinum
+  now unlocks exactly ONE new rarity: **rare→epic→mythic→legendary** (legendary moved
+  **Diamond → Platinum**, so Platinum is no longer a dead rank). The per-run special
+  appearance chance, previously flat 4% until Champion, now **ramps from Diamond**:
+  4% Bronze–Platinum → **6% Diamond → 9% Champion → 12% GC → 16% SSL** (`RANK_REWARDS`).
+- **Fixed — special cards on the SUB slot didn't render in the draft.** A sub who carries
+  a special (e.g. Turbopolsa) showed its special only on the results screen. Root cause:
+  `resolveSub` (`engine/cards.ts`) — unlike `resolvePlayerCard`/`resolveCoach` — took no
+  `specialId` and never set `special`, so every card-render path dropped it (the rating
+  path read `roster.sub.specialId` directly, which is why the numbers were right). Now
+  `resolveSub` is special-aware and the offer/pick dispatchers forward the id. `cards.test.ts`.
+- **Fixed — email-code login dead-end after navigating away.** Requesting a code then
+  leaving `/profile` lost the in-flight state (it lived in the `SignIn` component's local
+  `useState`), so on return you could neither enter the code nor (past Supabase's 60s send
+  limit) request another. The in-flight email now lives in `accountStore` (a
+  navigation-surviving singleton) so you resume on the code step; added a **Resend** action,
+  surfaced Supabase's `over_email_send_rate_limit`/`otp_expired` codes with clear copy, and
+  a rate-limited resend still lets you enter an existing code. `accountStore`,
+  `AccountSection`, `supabase.ts`, copy (en+pt).
+- **Fixed — Supabase MMR leaderboard SQL errored / board empty.** `docs/ACCOUNTS-SETUP.md`
+  §1c recreated the `leaderboard` view with `mmr` inserted **mid-column-list**, which
+  Postgres rejects (`CREATE OR REPLACE VIEW` can only append) — so the column/view never
+  got created and the MMR tab failed closed to "no entries". Rewrote §1c to **DROP +
+  CREATE** the view (order-free) and corrected the stale `default 200` → `1000`. (Doc fix;
+  Miguel re-runs the corrected SQL in Supabase.)
+- **Fixed — rank-up celebration didn't fire on a challenge clear.** The full-screen rank-up
+  ceremony lived only in the tournament `ResultsScreen`, so clearing a challenge whose XP
+  crossed a rank threshold ranked you up silently. `RankUpCelebration` is now exported and
+  the `ChallengeScreen` fires it on a clear that crosses a rank (XP captured pre-reward in
+  `ChallengeRunState.xpBefore` for robustness). `runStore`, `types.ts`, `ResultsScreen`,
+  `ChallengeScreen`.
+- **Balance — secret Creator card eligible from Bronze + stronger.** The dev easter-egg
+  card now drops from **Bronze** (never advertised — the Collection's rarity grid omits the
+  `creator` tier) instead of Diamond. Its boost rose **+5 → +7** (team overall + every team
+  attribute) so the 71-overall card is genuinely worth slotting, not a downgrade; the
+  special-effect schema cap was raised 5 → 7 to allow it (normal specials stay ≤5). It stays
+  a rare, un-buildable-around pull, so it doesn't shift competitive balance. `RANK_REWARDS`,
+  `specialCards.json`, `schemas.ts`.
+- **Balance — chemistry is now ADDITIVE (revises the strongest-link rule).** Per player pair,
+  chemistry sums two INDEPENDENT axes — **connection** (same lineup > ex-teammates > shared
+  org, current or career) **+ heritage** (same country > region) — instead of counting only
+  the single strongest link. So a pair who share a country AND once shared an org now score
+  both (the old model masked the org behind the country, which is why "players who passed
+  through the same org" chemistry felt inconsistent). Within each axis only the strongest
+  form counts (the alternatives describe the same relationship, so they can't double-count).
+  Recalibrated (`maxRaw` 11 → 10, weights rescaled): a 3-same-country roster still lands
+  **Great, not Perfect** (75%); any real connection — shared org/teammates, org loyalty or
+  matching staff — completes the bar. Sim-neutral: AI lineups still saturate to 100% and
+  Hard/Legacy already weight AI chemistry at 0, so the field isn't inflated. `chemistry.ts`,
+  `balance.ts` (`CHEMISTRY`), `chemistry.test.ts`.
+
 ### Added
 - **Achievements rebuilt + real-time (≈56, grouped).** A full new set replaces the
   old 25, organised into seven groups (Milestones · Modes & Difficulty ·
@@ -47,7 +131,9 @@ with the root cause — that section doubles as the project's bugfix log.
   `@supabase/supabase-js` client wrapper (`src/lib/supabase.ts`, no-op until
   configured), and `RunHistoryEntry.mode`/`.region` for attribution. **Ops setup
   (SQL schema + RLS, email sender, env vars): `docs/ACCOUNTS-SETUP.md`.**
-- **MMR — a cosmetic skill rating (parallel to XP).** Every profile now carries an
+- **MMR — a cosmetic skill rating (parallel to XP).**
+  > **Superseded by the Staging-review MMR rework (win-only, start 1000) above.**
+  Every profile now carries an
   `mmr` that starts at **200** and rises a small, capped amount per finished run —
   placement base × per-difficulty multiplier (+1 for a region-locked clear), so an
   easy win is ~+3, a Legacy podium ~+6 and a Legacy title ~+12-13. It's never spent
@@ -75,7 +161,10 @@ with the root cause — that section doubles as the project's bugfix log.
   sfx and a Skip — the same sim playback as the other modes — before the
   cleared/failed hero. The briefing also shows the **opponent lineup on a field**
   (`FieldView`) so you can scout the line you must out-draft before committing.
-- **Challenges — a new rank-unlocked mode (`/challenges`).** Authored puzzles: a
+- **Challenges — a new rank-unlocked mode (`/challenges`).**
+  > Superseded by the Staging-review challenges pass above (now 20 challenges,
+  > all Bo7, rerolls by difficulty).
+  Authored puzzles: a
   constrained draft then a single Bo7 against a fixed historical line. Cleared =
   cleared (one-and-done, like an achievement), granting XP (+ an optional earned
   special that bypasses the rank gate). 10 starter challenges span the ranks and
@@ -144,6 +233,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ### Balance
 - **MMR rescaled to a Rocket-League-like ladder; everyone starts at 1000 (#80).**
+  > **Superseded by the Staging-review MMR rework (win-only, start 1000) above.**
   The first cut topped out far too low (a heavy player sat ~440) and started new
   players at 200 (too long a climb). Now the floor is **1000** — a new account isn't
   at the bottom, so reaching ~1500 is a short, motivating climb (~30-50 runs) and
@@ -175,7 +265,10 @@ with the root cause — that section doubles as the project's bugfix log.
   near zero and the ±4.5 series-form swing dominates, so only 97+ drafts had a real
   shot; lowering the flat opponent shift widens that gap exactly where it was
   thinnest.
-- **Special-card rarity rework — absolute per-rarity spawn rates.** The old model
+- **Special-card rarity rework — absolute per-rarity spawn rates.**
+  > Superseded by the Staging-review rarity retune above (ramp now from Diamond:
+  > 6/9/12/16%, legendary at Platinum).
+  The old model
   rolled one flat appearance chance and then a within-pool weighted pick, so a
   player whose ONLY special is a legendary (kronovi, m0nkeym00n, violentpanda)
   showed it ~4% of the time — every time a special procced — because the weighted
@@ -201,7 +294,10 @@ with the root cause — that section doubles as the project's bugfix log.
 - **"Who ended your run" bolt is yellow, not orange.** The difficulty-inflation bolt
   on the eliminator overall (Legacy / region-locked) now uses amber, reading as a
   distinct "buffed" marker instead of clashing with the brand orange.
-- **Challenges are now genuinely winnable (was 0-6% with real play).** The old
+- **Challenges are now genuinely winnable (was 0-6% with real play).**
+  > Superseded by the Staging-review challenges pass above (now 20 challenges,
+  > rerolls by difficulty 8/5/3/0).
+  The old
   winnability test validated an UNREACHABLE roster (the single best card at every
   slot across all lineups), so it proved nothing about real play — measured with a
   competent auto-draft, most challenges sat at 0-6% and `ch-south-american-miracle`

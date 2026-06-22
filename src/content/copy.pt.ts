@@ -192,8 +192,12 @@ export const PT: Copy = {
     codePlaceholder: "código do email",
     verify: "Verificar e entrar",
     verifying: "Verificando…",
+    resendCode: "Reenviar código",
     useAnotherEmail: "Usar outro email",
     authError: "Não foi possível entrar — confira o código e tente de novo.",
+    codeExpired: "Esse código expirou — solicite um novo.",
+    codeRateLimited:
+      "Aguarde um momento antes de pedir outro código. Se você já tem um, digite-o acima.",
     displayNameLabel: "Nome de exibição (aparece nos rankings)",
     save: "Salvar",
     saved: "Salvo",

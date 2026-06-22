@@ -37,6 +37,9 @@ export interface ProfileState {
   /** MMR gained on the most recent finished run — for the results screen readout.
    *  Transient/display only (NOT in the durable sync slice). */
   lastMmrGain: number;
+  /** Legacy difficulty gate (v1.4): set once by a real Classic/Quick Hard (or Legacy)
+   *  championship. Decoupled from `wins` so Daily/Challenge titles never open Legacy. */
+  legacyUnlocked: boolean;
   runsCompleted: number;
   wins: Record<Difficulty, number>;
   /** Lifetime counters (beyond the capped run history). */
@@ -108,6 +111,7 @@ const initialData = {
   xp: 0,
   mmr: MMR.start,
   lastMmrGain: 0,
+  legacyUnlocked: false,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
   playoffAppearances: 0,
@@ -256,6 +260,17 @@ export const useProfileStore = create<ProfileState>()(
             wins[entry.difficulty] += 1;
           }
 
+          // Legacy unlock (v1.4): decoupled from the raw `wins` counter so a Daily or
+          // Challenge Hard win still counts as a TITLE (achievements/leaderboard/MMR)
+          // but does NOT open Legacy. Only a real Classic/Quick Hard (or Legacy)
+          // championship flips the gate. One-way latch.
+          const isTournamentMode = entry.mode === "classic" || entry.mode === "quick";
+          const legacyUnlocked =
+            state.legacyUnlocked ||
+            (results.placement === "champion" &&
+              isTournamentMode &&
+              (entry.difficulty === "hard" || entry.difficulty === "legacy"));
+
           const madePlayoffs = results.placement !== "swiss_exit";
           const podium = ["champion", "runner_up", "third"].includes(results.placement);
 
@@ -273,16 +288,11 @@ export const useProfileStore = create<ProfileState>()(
           const goalsScored = state.goalsScored + results.userGoals;
           // results.xp.total already includes the run-state achievement XP.
           const xpAfterRun = state.xp + results.xp.total;
-          // Cosmetic MMR (v1.4): damped per-run gain from the same outcome fields
-          // (placement + Swiss wins + difficulty + regional title bonus), converging
-          // toward the soft cap. `lastMmrGain` feeds the results-screen readout.
-          const mmr = mmrAfterRun(
-            state.mmr,
-            entry.difficulty,
-            results.placement,
-            entry.region != null,
-            entry.swissRecord.wins,
-          );
+          // Cosmetic MMR (v1.4 rework): a flat per-TITLE award (Easy/Normal +1, Hard +3,
+          // Legacy finalist +5, Legacy title +8); every other outcome is 0. `lastMmrGain`
+          // feeds the results-screen readout (shown only when > 0). Challenge mode never
+          // reaches here; Daily does and a Daily title earns MMR like any tournament.
+          const mmr = mmrAfterRun(state.mmr, entry.difficulty, results.placement);
           const lastMmrGain = mmr - state.mmr;
 
           // Lifetime counters / collection / rank achievements — evaluated AFTER
@@ -315,6 +325,7 @@ export const useProfileStore = create<ProfileState>()(
             xp: xpAfterRun + counterXp,
             mmr,
             lastMmrGain,
+            legacyUnlocked,
             runsCompleted,
             wins,
             playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
@@ -383,7 +394,7 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 10,
+      version: 11,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);
@@ -395,8 +406,12 @@ export const useProfileStore = create<ProfileState>()(
       // set swap doesn't toast a flood of old milestones; v9 re-runs the MMR
       // backfill after the scale rework (so it lands in the 1500-2000 range) and
       // prunes ghost specials; v10 re-runs the MMR backfill after raising the start
-      // to 1000 (new players begin at 1000, veterans re-seed from history). All
-      // backfill from initialData via the deep-merge.
+      // to 1000 (new players begin at 1000, veterans re-seed from history); v11
+      // HARD-RESETS mmr to the reworked title-only backfill (capped 1500) — the old
+      // formula over-rewarded (a mediocre fresh account drifted to ~1200, elites past
+      // 1500), so this is a one-time correction, NOT a floor; and seeds `legacyUnlocked`
+      // from history (anyone with a Hard/Legacy title keeps Legacy open). All other
+      // new fields backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
@@ -435,20 +450,25 @@ export const useProfileStore = create<ProfileState>()(
         return {
           ...merged,
           achievements: { ...merged.achievements, ...backfilled },
-          // v8/v9: seed MMR for veterans from their history so a Supersonic Legend
-          // doesn't land on the board at 200 (no reset needed). v9 re-runs it after
-          // the MMR scale rework so existing players get the new (1500-2000-range)
-          // values.
-          mmr: Math.max(merged.mmr, mmrBackfillFloor(merged.wins, merged.podiums, merged.runsCompleted)),
+          // v11: recompute MMR from the reworked title-only backfill (capped 1500).
+          // This is a hard SET (not a floor) so the inflated old-formula values are
+          // corrected down: elites land near 1500, a title-less account back at start.
+          mmr: mmrBackfillFloor(merged.wins),
+          // v11: seed the new Legacy gate from history — anyone who already won a
+          // Hard or Legacy title keeps Legacy open (no one loses access they earned).
+          legacyUnlocked:
+            merged.legacyUnlocked || merged.wins.hard > 0 || merged.wins.legacy > 0,
         } as ProfileState;
       },
     },
   ),
 );
 
-/** Legacy difficulty unlock rule (base doc §7): win once on Hard. */
+/** Legacy difficulty unlock rule (v1.4): a real Classic/Quick Hard (or Legacy)
+ *  championship opens Legacy. Read from the dedicated `legacyUnlocked` latch so a
+ *  Daily/Challenge title — which still counts as a title elsewhere — never opens it. */
 export function selectLegacyUnlocked(state: ProfileState): boolean {
-  return state.wins.hard > 0 || state.wins.legacy > 0;
+  return state.legacyUnlocked;
 }
 
 /**

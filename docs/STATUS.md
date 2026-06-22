@@ -23,19 +23,23 @@ Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
 `DESIGN-DECISIONS.md` — do NOT duplicate the figures here, they drift):
 
 - **Difficulty:** Hard is NOT rank-gated (open from the start, #72); Legacy unlocks
-  after a Hard win. Legacy is the all-time wall — only an elite (~97 worldwide /
-  ~92 SAM) draft wins the title; eased slightly for the very best in v1.3.4 (#75).
+  after a Hard win — specifically a **Classic/Quick** Hard (or Legacy) championship; a
+  Daily or Challenge Hard win still counts as a title but does NOT open Legacy (v1.4,
+  via the `legacyUnlocked` latch). Legacy is the all-time wall — only an elite
+  (~97 worldwide / ~92 SAM) draft wins the title; eased slightly for the very best in v1.3.4 (#75).
 - **Rewards:** `RANK_REWARDS` gates special-card rarities and ramps appearance
-  chance only at the top (base 0.04 → Champion 6% / GC 10% / SSL 16%); the
-  Collection unlocks at **Bronze (200 XP)** and its home button is non-clickable
-  until then. XP ladder stretched to **SSL 60k** (1.3.5).
-- **Chemistry:** same-country / org / region pairs + **shared career history**
-  (ex-teammates, shared-org) + coach/sub links; Perfect is reachable, AI unaffected
-  (#74, #77). Country always shows over career links (#77 fix).
+  chance only at the top (ramps from Diamond: Diamond 6% / Champion 9% / GC 12% /
+  SSL 16%); the Collection unlocks at **Bronze (200 XP)** and its home button is
+  non-clickable until then. XP ladder stretched to **SSL 60k** (1.3.5).
+- **Chemistry:** now ADDITIVE — each pair sums two independent axes, **connection**
+  (same lineup > ex-teammates > shared org) **+ heritage** (country > region), instead
+  of counting only the single strongest link; `maxRaw` 10. So a pair who share a
+  country AND once shared an org now BOTH count. Perfect is reachable, AI unaffected
+  (#74, #77, #87).
 - **Sub & specials:** sub "depth" scales with the sub's overall and subs can roll
-  specials; the Creator card grants **+5 team overall** on top of its stat boost (#78).
+  specials; the Creator card grants **+7 team overall** on top of its stat boost (#86).
 
-Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
+Standard gates before any commit: `tsc` clean, **~121** vitest tests pass,
 `build:data` + `validate:data` green, lint at its baseline, and a green
 `npm run build` (production) for anything shipping.
 
@@ -57,7 +61,7 @@ Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
 
 **Done & on `staging` (4 commits on top of `main` tip `3403b7e`):**
 1. **Challenges** — SHIPPED (was "designed, not built"). `engine/challenges.ts`,
-   `src/data/challenges.json` (10 starters), `/challenges` route + nav, briefing +
+   `src/data/challenges.json` (20 starters), `/challenges` route + nav, briefing +
    match screens, `profileStore.challengesCompleted`. Winnability is sim-validated
    (`challenges.test.ts`). See `docs/CHALLENGES-DESIGN.md` (now marked SHIPPED).
 2. **Rarity rework** — absolute per-rarity spawn rates (`SPECIALS.rarityChance`),
@@ -71,15 +75,23 @@ Standard gates before any commit: `tsc` clean, **66** vitest tests pass,
    local profile; **trimmed to 4 categories + MMR** (titles total/legacy, overall
    legacy/regional, MMR — replaced the XP board). `lib/profileSync.ts` merge tested
    (no progress loss, #55.7). `lib/supabase.ts` is a no-op until configured.
-5. **v1.4 final pass (this push):** Vercel edge-request diet (analytics sinks
+5. **v1.4 final pass:** Vercel edge-request diet (analytics sinks
    dropped); achievements 3-bug fix (cloud-prune self-heal + reveal-time feats +
-   silent set-swap backfill); **MMR** cosmetic skill rating (profile + board, with
-   veteran backfill — no reset, #80); **Legacy ease** WW+SAM toward ~5% (#79);
-   **challenges reworked** — rank-gated at Bronze (#81), grouped by rarity, opponent
-   field in the briefing, a real animated Bo7, and **genuinely winnable** seeds +
-   `opponentShift` boss knob (validated by a realistic-draft test); **run recap**
-   (history → see how a run went); collection counter ghost-card fix; leaderboards
-   trophy in the header. Engine purity + the §25 anchors hold; 96 vitest tests green.
+   silent set-swap backfill); **MMR** cosmetic skill rating (profile + board);
+   **Legacy ease** WW+SAM toward ~5% (#79); **challenges** rank-gated at Bronze
+   (#81), grouped by rarity, opponent field in the briefing, a real animated Bo7;
+   **run recap** (history → see how a run went); collection counter ghost-card fix;
+   leaderboards trophy in the header. Engine purity + the §25 anchors hold.
+6. **Staging-review adjustments (2026-06-21)** — see CHANGELOG "Staging-review
+   adjustments": **MMR reworked** to a win-only economy (Easy/Normal title +1, Hard +3,
+   Legacy finalist +5, Legacy title +9; backfill capped at 1600; profile v11 hard-reset);
+   **Legacy unlock** decoupled from Daily/Challenge wins (`legacyUnlocked` latch);
+   **Challenges** all Bo7, **rerolls by difficulty** (8/5/3/0), XP retuned, grown to
+   **20** spread across every rank Bronze→SSL, all sim-validated into a difficulty band
+   (winnability test now has an upper bound too); **rank-image lock messages**
+   everywhere; **sub special** now renders in the draft; **email-code login** dead-end
+   fixed; **ACCOUNTS-SETUP §1c SQL** corrected (mid-list view column → DROP+CREATE).
+   `tsc` clean, **~121** vitest tests green, `validate:data` green, production build green.
 
 **PENDING — Miguel's infra (to light up email login + global leaderboards):**
 follow **`docs/ACCOUNTS-SETUP.md`** — Supabase project is created and the local

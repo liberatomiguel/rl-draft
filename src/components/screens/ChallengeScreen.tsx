@@ -12,12 +12,15 @@ import { useEffect, useRef, useState } from "react";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
 import { rosterFromLineup } from "@/engine/challenges";
+import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { GameResult, RunState, TournamentTeam } from "@/engine/types";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
+import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
+import { RankUpCelebration } from "./ResultsScreen";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
@@ -45,6 +48,12 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   const [revealed, setRevealed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const GAME_PACE = 780; // ms per game reveal
+
+  // Rank-up celebration (v1.4): a challenge clear grants XP, which can cross a rank
+  // threshold — fire the same full-screen ceremony the run results use. `xpBefore` was
+  // captured at clear time, so this is robust to re-renders.
+  const xpNow = useProfileStore((s) => s.xp);
+  const [rankUpSeen, setRankUpSeen] = useState(false);
 
   const series = state?.series ?? null;
   const totalGames = series?.games.length ?? 0;
@@ -96,8 +105,22 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   const userWins = shown.filter((g) => g.winnerTeamId === "user").length;
   const oppWins = shown.length - userWins;
 
+  // Did the clear reward cross a rank? Only after the series is revealed (so the
+  // ceremony lands with the win, not mid-animation).
+  const rankBefore = state.xpBefore != null ? rankForXp(state.xpBefore) : null;
+  const rankAfter = rankForXp(xpNow);
+  const rankedUp =
+    cleared && !revealing && rankBefore != null && rankBefore.id !== rankAfter.id;
+
   return (
     <div className="rise-in mx-auto max-w-3xl">
+      {rankedUp && !rankUpSeen ? (
+        <RankUpCelebration
+          rank={rankAfter}
+          prevRankId={rankBefore.id}
+          onDone={() => setRankUpSeen(true)}
+        />
+      ) : null}
       <RunStepper run={run} />
 
       {/* Matchup header */}

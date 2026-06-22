@@ -88,69 +88,48 @@ export const TEAM_RATING = {
 // ---------------------------------------------------------------------------
 
 export const CHEMISTRY = {
-  // v1.2.0 rework — generous + REACHABLE; v1.2.1 lowered the tier floors so MAX
-  // is attainable. A drafted team that commits to a country stack (or a real
-  // lineup) now lands Perfect; a same-lineup pair lands Good. AI lineups are full
-  // stacks (≈100% either way), so this
-  // does NOT inflate the field — it lets the PLAYER close the chemistry gap by
-  // building, which is the intended strategic lever (trade a little overall for
-  // a coherent roster). Earlier the realistic ceiling was ~Okay; now it pays off.
+  // v1.4 ADDITIVE model (Miguel's call): chemistry should reward EVERY factor the
+  // player weighed when building, not just the single strongest link. Per player pair,
+  // raw = CONNECTION + HERITAGE — two INDEPENDENT axes, summed. WITHIN each axis only
+  // the strongest form counts, because the alternatives describe the SAME underlying
+  // fact (being ex-teammates already implies a shared lineup/org), so stacking them
+  // would double-count one relationship and explode the bar. ACROSS the two axes they
+  // DO stack: a same-country pair who also shared an org now scores country + org, not
+  // just country — which is the whole point (shared-org history finally counts on top).
   weights: {
-    /**
-     * Per pair of the 3 players. Strongest link counts, in order:
-     * drafted lineup > drafted org > shared career lineup > country >
-     * shared career org > region.
-     */
-    sameLineupPair: 4,
-    sameOrgPair: 3,
-    sameCountryPair: 3,
-    /**
-     * "Shared past" links (v1.3.3). Two players whose drafted cards differ but who
-     * once shared a LINEUP (were teammates) or an ORG in their careers. The lineup
-     * tier is strong (= a real org link); the org tier is a weak nudge. Kept in the
-     * strongest-wins ladder (NOT additive), so they never inflate a same-country
-     * stack past Great — they reward MIXED rosters of veterans who crossed paths.
-     */
-    careerLineupPair: 3,
-    careerOrgPair: 2,
-    /**
-     * Same-region pair: the weakest link — the floor that lifts a coherent-but-
-     * mixed roster (e.g. a Brazil+Argentina SAM duo) out of Poor. In region-locked
-     * play (everyone shares a region) this keeps the baseline around Good.
-     */
-    sameRegionPair: 1.5,
+    // CONNECTION axis — how their teams/orgs overlap (strongest form wins):
+    connLineup: 4, //     drafted from the SAME lineup (rare for players)
+    connTeammates: 3, //  were on a real lineup together in their careers (ex-teammates)
+    connOrg: 2.5, //      share an org — current cards same org, OR a shared career org
+    // HERITAGE axis — shared origin (strongest form wins):
+    herCountry: 2.5,
+    herRegion: 1.5, //    the floor that lifts a mixed-nationality regional roster
     /** Per player whose drafted card org matches the drafted org (org loyalty). */
     orgLinkPerPlayer: 2,
     /**
      * Coach/sub connect by lineup, org or nationality (same country, or region at
-     * half), each capped. Lets a drafted coach who shares the roster's heritage
-     * contribute — staff cards carry country/region.
+     * half), each capped. These are additive supplements on top of the pair axes.
      */
     coachLink: 2,
     coachLinkMax: 3,
     subLink: 2,
     subLinkMax: 2,
-    /**
-     * Staff NATIONALITY is a soft bonus, deliberately below a full org/lineup link
-     * (coachLink): a same-country coach+sub must NOT complete a country stack into
-     * Perfect on their own — only a real ORG connection does (Miguel's rule).
-     */
+    /** Staff NATIONALITY is a soft bonus, below a full org/lineup link. */
     staffCountryBonus: 0.5,
     /** Fraction of the country bonus granted for a region-only (not country) match. */
     staffRegionFactor: 0.5,
   },
   /**
-   * Ceiling (v1.3.2). maxRaw 11 is tuned to Miguel's targets: **3 same-country
-   * players land Great** (3 pairs × 3 = 9 → 82%), and **adding one org connection
-   * reaches Perfect** (org-loyalty / coach / sub each worth 2 → 11 = full bar).
-   * Country alone still never hits Perfect (Great is the cap) — real org/lineup
-   * overlap is what completes the bar. AI lineups still saturate (a real trio is
-   * 12+ → capped 100%), so the field is not inflated.
+   * Ceiling (v1.4, additive). maxRaw 10: **3 same-country players land Great**
+   * (3 pairs × 2.5 = 7.5 → 75%) and **any real connection completes the bar** —
+   * shared org/teammates (+2.5/pair), org loyalty (+2/player) or matching staff. A
+   * pure country stack never reaches Perfect on its own. Real historical lineups
+   * saturate (a true trio is ~19+ → capped 100%), so the AI field is not inflated.
    */
-  maxRaw: 11,
+  maxRaw: 10,
   /**
    * Percent thresholds (inclusive lower bound) → tier. Perfect is **100% only**
-   * (a full bar). A 3-player country stack lands Great; one org link completes it.
+   * (a full bar). A 3-player country stack lands Great; a real connection completes it.
    */
   tiers: [
     { min: 100, tier: "Perfect" },
@@ -403,10 +382,10 @@ export const SPECIALS = {
   /** Roll order — rarest first. The first tier the person owns that procs wins. */
   rarityOrder: ["creator", "legendary", "mythic", "epic", "rare"] as const,
   /**
-   * Baseline rank special chance (Bronze–Diamond). `specialChanceMult` is
+   * Baseline rank special chance (Bronze–Platinum). `specialChanceMult` is
    * `rewards.specialChance / this`, so the common ranks sit at mult 1.0 and the
-   * top ranks ramp (Champion ×1.5 / GC ×2.5 / SSL ×4) — same ramp SHAPE as v1.3,
-   * just re-anchored. The mult scales every per-rarity rate together.
+   * top ranks ramp — v1.4: Diamond ×1.5 / Champion ×2.25 / GC ×3 / SSL ×4. The
+   * mult scales every per-rarity rate together.
    */
   rankBaselineChance: 0.04,
 } as const;
@@ -508,105 +487,85 @@ export const XP = {
 } as const;
 
 /**
- * MMR (v1.4) — a COSMETIC "skill rating" parallel to XP, à la Rocket League. Starts
- * at `start`, rises per finished run, never spent or lost (cloud merge takes MAX).
- * Surfaces on the profile card, the results screen, and as the headline leaderboard
- * category. Does NOT touch gameplay.
+ * MMR (v1.4 rework) — a COSMETIC "skill rating" parallel to XP, à la Rocket League.
+ * Starts at `start` (1000), rises ONLY on a real tournament TITLE (or a Legacy grand
+ * final), never spent or lost (cloud merge takes MAX). Surfaces on the profile card,
+ * the results screen, and as the headline leaderboard category. Does NOT touch gameplay.
  *
- * SCALE (v1.4 rework): reads like RL MMR. Everyone STARTS at `start` (1000) — a new
- * player isn't dumped at the bottom, so reaching ~1500 is a short, motivating climb
- * (not a grind from zero) and ~1900 is the real grind toward the soft ceiling. Two
- * devices keep it meaningful AND bounded:
- *   1. Granular rewards — placement + per-Swiss-win + difficulty mult + a regional
- *      title bonus, so even a non-podium run nudges the bar.
- *   2. DIMINISHING RETURNS toward `softCap` (`mmrDamp`) + a `hardCap` clamp — gains
- *      shrink as you approach ~2300 so a great player converges to ~1500-2000 and even
- *      an obsessive grinder can't reach absurd values (no 100k). Backfill uses the
- *      closed-form integral of the same damped recurrence, so it's consistent: a
- *      veteran lands ~1500-2000 from history, a new account starts at 1000.
+ * PHILOSOPHY (v1.4): MMR is hard to earn and reads like a badge of real achievement.
+ *   - WINS ONLY. A mediocre run is worth nothing; only a championship moves the bar,
+ *     and only by a few points. The flat per-title `award` table below is the WHOLE
+ *     economy — no placement curve, no per-Swiss-win, no difficulty multiplier, no
+ *     regional bonus. Easy/Normal titles are a token +1; the prestige sits in Hard (+3),
+ *     the Legacy grand final (+5) and the Legacy title (+9).
+ *   - Live gains are LINEAR and tiny, so climbing well past 1500 takes a real grind.
+ *   - BACKFILL is capped at `backfillCap` (1600): the retroactive value for a profile
+ *     created before this rework is a SATURATING curve of its title history, so the best
+ *     current players land NEAR 1600 (never above) and a fresh/mediocre account stays at
+ *     ~`start`. Above the elite band is only reachable by playing forward. `backfillScale`
+ *     (K) is
+ *     the single tuning knob — smaller K pushes histories toward the cap faster.
+ *
+ * Daily counts (it's a real tournament + a title); Challenge mode never reaches the MMR
+ * path (it grants XP via `completeChallenge`, no placement), so it stays 0 — by design.
  */
 export const MMR = {
-  /** Everyone starts here — a new player isn't at the bottom; ~1500 is a short climb. */
+  /** Everyone starts here. ~1500 is the elite band; above it is a forward-play grind. */
   start: 1000,
-  /** Gains taper toward this soft skill ceiling (diminishing returns). */
-  softCap: 2300,
-  /** Absolute clamp — even infinite grinding stops here. */
-  hardCap: 2800,
-  /** Base award by final placement (before the difficulty multiplier). */
-  placementBase: {
-    champion: 34,
-    runner_up: 20,
-    third: 13,
-    fourth: 8,
-    top4: 6,
-    top6: 4,
-    top8: 3,
-    swiss_exit: 1,
-  } as Record<Placement, number>,
-  /** Per-difficulty multiplier — legacy is worth far more (mirrors xpMultiplier shape). */
-  difficultyMultiplier: { easy: 0.6, normal: 1, hard: 1.6, legacy: 2.4 } as Record<Difficulty, number>,
-  /** Small extra per Swiss game won (capped at 3) — every run nudges the bar. */
-  perSwissWin: 2,
-  /** Bonus for a region-locked TITLE (the harder, shallower pool). */
-  regionalBonus: 5,
+  /** Retroactive (backfill) values are clamped here — nobody is seeded above 1600. */
+  backfillCap: 1600,
+  /** Saturation constant for the backfill curve (K). Lower = histories approach the cap
+   *  faster. K=120 puts raw 100→~1339, 200→~1487, 300→~1551, 500→~1591 (cap 1600). */
+  backfillScale: 120,
+  /** Flat MMR per QUALIFYING outcome. Everything not listed here is worth 0. */
+  award: {
+    easyTitle: 1,
+    normalTitle: 1,
+    hardTitle: 3,
+    legacyFinalist: 5, // Legacy grand finalist (runner-up)
+    legacyTitle: 9,
+  },
 } as const;
 
-/** Raw (pre-damping) MMR a finished run is worth. */
-export function mmrRawGain(
-  difficulty: Difficulty,
-  placement: Placement,
-  regional: boolean,
-  swissWins = 0,
-): number {
-  const base = (MMR.placementBase[placement] ?? 0) + MMR.perSwissWin * Math.min(Math.max(0, swissWins), 3);
-  const scaled = base * MMR.difficultyMultiplier[difficulty];
-  return scaled + (regional && placement === "champion" ? MMR.regionalBonus : 0);
+/** Flat MMR a finished run is worth (v1.4): wins only, by difficulty; Legacy also
+ *  credits the grand finalist. Every other placement/outcome is worth 0. */
+export function mmrRawGain(difficulty: Difficulty, placement: Placement): number {
+  if (placement === "champion") {
+    if (difficulty === "legacy") return MMR.award.legacyTitle;
+    if (difficulty === "hard") return MMR.award.hardTitle;
+    if (difficulty === "normal") return MMR.award.normalTitle;
+    if (difficulty === "easy") return MMR.award.easyTitle;
+  }
+  if (placement === "runner_up" && difficulty === "legacy") return MMR.award.legacyFinalist;
+  return 0;
 }
 
-/** Diminishing-returns factor at the current MMR — ≈1 near `start`, → 0.1 near the
- *  soft cap, so growth slows as a player approaches a "great" rating. */
-export function mmrDamp(mmr: number): number {
-  const t = (mmr - MMR.start) / (MMR.softCap - MMR.start);
-  return Math.min(1, Math.max(0.1, 1 - t));
-}
-
-/** The new MMR total after one finished run (applies damping; hard-capped). */
-export function mmrAfterRun(
-  mmr: number,
-  difficulty: Difficulty,
-  placement: Placement,
-  regional: boolean,
-  swissWins: number,
-): number {
-  const gain = Math.round(mmrRawGain(difficulty, placement, regional, swissWins) * mmrDamp(mmr));
-  return Math.min(MMR.hardCap, mmr + Math.max(0, gain));
+/** MMR total after one finished run — a plain, linear add of the flat award (no damping,
+ *  no cap on live play, so a determined grinder can climb past 1500 slowly). */
+export function mmrAfterRun(mmr: number, difficulty: Difficulty, placement: Placement): number {
+  return mmr + mmrRawGain(difficulty, placement);
 }
 
 /**
- * Backfill for a profile created BEFORE MMR (or after an MMR recalc) — so a veteran
- * isn't dropped to `start`. We only have aggregate counts (titles per difficulty,
- * podiums, runs), so we sum the raw MMR that history is worth and map it through the
- * CLOSED-FORM INTEGRAL of the damped per-run recurrence
- * (`m = start + span·(1 − e^(−R/span))`, span = softCap − start) — consistent with
- * `mmrAfterRun` and naturally bounded by the soft cap. Applied as a FLOOR (max with
- * the stored value); idempotent (counts only grow). No rank/achievement reset needed.
+ * Retroactive MMR from a profile's aggregate title history (`wins` per difficulty), for
+ * accounts created before this rework or a fresh device. We only have champion counts
+ * (no per-difficulty runner-up counter), so Legacy grand finals are not reconstructable
+ * here — a small, accepted undercount. The summed raw value is mapped through a
+ * SATURATING curve and CLAMPED at `backfillCap` (1500): elite histories cluster just
+ * under 1500, a no-title account stays at `start`. Monotone in the counts; no reset of
+ * ranks/achievements needed.
  */
-export function mmrBackfillFloor(
-  wins: Record<Difficulty, number>,
-  podiums: number,
-  runsCompleted = 0,
-): number {
-  const titles = wins.easy + wins.normal + wins.hard + wins.legacy;
-  let raw = 0;
-  (Object.keys(wins) as Difficulty[]).forEach((d) => {
-    raw += wins[d] * mmrRawGain(d, "champion", false, 3);
-  });
-  // Non-winning podiums and plain finishes we can't attribute to a difficulty —
-  // credit at Normal third / swiss-exit as a modest approximation.
-  raw += Math.max(0, podiums - titles) * mmrRawGain("normal", "third", false, 2);
-  raw += Math.max(0, runsCompleted - podiums) * mmrRawGain("normal", "swiss_exit", false, 1);
-  const span = MMR.softCap - MMR.start;
-  return Math.round(MMR.start + span * (1 - Math.exp(-raw / span)));
+export function mmrBackfillFloor(wins: Record<Difficulty, number>): number {
+  const raw =
+    wins.easy * MMR.award.easyTitle +
+    wins.normal * MMR.award.normalTitle +
+    wins.hard * MMR.award.hardTitle +
+    wins.legacy * MMR.award.legacyTitle;
+  const span = MMR.backfillCap - MMR.start;
+  return Math.min(
+    MMR.backfillCap,
+    Math.round(MMR.start + span * (1 - Math.exp(-raw / MMR.backfillScale))),
+  );
 }
 
 /**
@@ -647,14 +606,20 @@ export const RANK_REWARDS: Record<
   string,
   { rarities: string[]; specialChance: number; collection: boolean; hardMode: boolean }
 > = {
+  // Each rank Bronze→Platinum unlocks ONE new VISIBLE rarity (rare→epic→mythic→legendary);
+  // from Diamond on, nothing new unlocks but the appearance chance RAMPS (v1.4 retune:
+  // legendary moved Diamond→Platinum, ramp now starts at Diamond, not Champion).
+  // `creator` is the SECRET easter-egg card (the dev card): eligible from Bronze at its
+  // own tiny rate, but never surfaced as an "unlocks at" message (the Collection's rarity
+  // grid omits it), so it just rarely turns up. Unranked unlocks nothing.
   unranked: { rarities: [], specialChance: 0, collection: false, hardMode: true },
-  bronze: { rarities: ["rare"], specialChance: 0.04, collection: true, hardMode: true },
-  silver: { rarities: ["rare", "epic"], specialChance: 0.04, collection: true, hardMode: true },
-  gold: { rarities: ["rare", "epic", "mythic"], specialChance: 0.04, collection: true, hardMode: true },
-  platinum: { rarities: ["rare", "epic", "mythic"], specialChance: 0.04, collection: true, hardMode: true },
-  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.04, collection: true, hardMode: true },
-  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.06, collection: true, hardMode: true },
-  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.10, collection: true, hardMode: true },
+  bronze: { rarities: ["rare", "creator"], specialChance: 0.04, collection: true, hardMode: true },
+  silver: { rarities: ["rare", "epic", "creator"], specialChance: 0.04, collection: true, hardMode: true },
+  gold: { rarities: ["rare", "epic", "mythic", "creator"], specialChance: 0.04, collection: true, hardMode: true },
+  platinum: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.04, collection: true, hardMode: true },
+  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.06, collection: true, hardMode: true },
+  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.09, collection: true, hardMode: true },
+  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.12, collection: true, hardMode: true },
   "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "creator"], specialChance: 0.16, collection: true, hardMode: true },
 };
 
@@ -662,16 +627,16 @@ export const HISTORY_LIMIT = 25;
 
 /**
  * Challenges (v1.4). Authored puzzles play a constrained draft then a single Bo7
- * vs a fixed boss. The draft gets a generous, difficulty-independent reroll
- * budget — a challenge tests whether you can BEAT the boss, not draft luck, so
- * you can always assemble a legal roster even under a tight twist.
+ * vs a fixed boss.
+ *
+ * Rerolls now scale with the challenge's sim DIFFICULTY (v1.4 retune): the easier
+ * tiers are forgiving (assemble freely), the brutal ones make every pick count.
+ * The per-challenge `sim.opponentShift` boss handicap is the other knob that keeps
+ * each authored seed winnable. The named tiers map onto the game's difficulty enum:
+ *   very-easy → easy (8), normal → normal (5), hard → hard (3), very-hard → legacy (0).
  */
 export const CHALLENGE = {
-  // Generous by design (v1.4: 5 → 8): a challenge tests whether you can BEAT the
-  // boss, not your draft luck, so you can always assemble a strong legal roster
-  // even under a tight twist. Paired with the per-challenge `sim.opponentShift`
-  // boss handicap, this is what makes every authored challenge winnable.
-  rerolls: 8,
+  rerollsByDifficulty: { easy: 8, normal: 5, hard: 3, legacy: 0 } as Record<Difficulty, number>,
 } as const;
 
 // ---------------------------------------------------------------------------

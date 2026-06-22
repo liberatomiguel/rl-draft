@@ -27,10 +27,17 @@ describe("rank rewards (v1.3 unlock ladder)", () => {
   });
 
   it("each rank adds the next rarity in order", () => {
-    expect(rankRewardsForXp(1500).rarities).toEqual(["rare", "epic"]); // Silver
+    const silver = rankRewardsForXp(1500).rarities; // Silver
+    expect(silver).toContain("epic");
+    expect(silver).not.toContain("mythic");
     expect(rankRewardsForXp(4000).rarities).toContain("mythic"); // Gold
-    expect(rankRewardsForXp(4000).rarities).not.toContain("legendary");
-    expect(rankRewardsForXp(15000).rarities).toContain("legendary"); // Diamond
+    expect(rankRewardsForXp(4000).rarities).not.toContain("legendary"); // …not yet
+    expect(rankRewardsForXp(8500).rarities).toContain("legendary"); // Platinum (v1.4)
+  });
+
+  it("the secret Creator card is eligible from Bronze (easter egg, not advertised)", () => {
+    expect(rankRewardsForXp(0).rarities).not.toContain("creator"); // Unranked: nothing
+    expect(rankRewardsForXp(250).rarities).toContain("creator"); // Bronze+
   });
 
   it("every difficulty is open from any rank (v1.3.2 — Hard no longer gated)", () => {
@@ -38,19 +45,20 @@ describe("rank rewards (v1.3 unlock ladder)", () => {
     expect(rankRewardsForXp(250).hardMode).toBe(true); // Bronze
   });
 
-  it("appearance chance ramps only at the very top", () => {
-    expect(rankRewardsForXp(250).specialChance).toBe(0.04); // Bronze..Diamond
-    expect(rankRewardsForXp(15000).specialChance).toBe(0.04); // Diamond
-    expect(rankRewardsForXp(24000).specialChance).toBe(0.06); // Champion
-    expect(rankRewardsForXp(38000).specialChance).toBe(0.10); // Grand Champion
+  it("appearance chance ramps from Diamond up (v1.4)", () => {
+    expect(rankRewardsForXp(250).specialChance).toBe(0.04); // Bronze..Platinum flat
+    expect(rankRewardsForXp(8500).specialChance).toBe(0.04); // Platinum (legendary unlocks, chance flat)
+    expect(rankRewardsForXp(15000).specialChance).toBe(0.06); // Diamond — ramp begins
+    expect(rankRewardsForXp(24000).specialChance).toBe(0.09); // Champion
+    expect(rankRewardsForXp(38000).specialChance).toBe(0.12); // Grand Champion
     expect(rankRewardsForXp(60000).specialChance).toBe(0.16); // SSL
   });
 
-  it("rankThatUnlocksRarity reports the gating rank label", () => {
-    expect(rankThatUnlocksRarity("rare")).toBe("Bronze");
-    expect(rankThatUnlocksRarity("epic")).toBe("Silver");
-    expect(rankThatUnlocksRarity("mythic")).toBe("Gold");
-    expect(rankThatUnlocksRarity("legendary")).toBe("Diamond");
+  it("rankThatUnlocksRarity reports the gating rank (id + label)", () => {
+    expect(rankThatUnlocksRarity("rare")).toEqual({ id: "bronze", label: "Bronze" });
+    expect(rankThatUnlocksRarity("epic")?.label).toBe("Silver");
+    expect(rankThatUnlocksRarity("mythic")?.label).toBe("Gold");
+    expect(rankThatUnlocksRarity("legendary")?.label).toBe("Platinum");
   });
 });
 

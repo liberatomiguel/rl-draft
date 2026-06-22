@@ -5,7 +5,8 @@
 > eventos e os termos da interface ficam em inglês (a UI do PostHog é em inglês).
 >
 > Estado: PostHog **ativo e recebendo dados** (chave `phc_…` no Vercel, host EU,
-> cookieless/anônimo). Coleta = pageviews (SPA-aware) + os eventos de jogo abaixo.
+> cookieless/anônimo) e é o **único sink** — o Vercel Web Analytics foi removido
+> na v1.4 (ver §7). Coleta = pageviews (SPA-aware) + os eventos de jogo abaixo.
 
 ---
 
@@ -56,13 +57,15 @@ entre dispositivos (e é proposital, pela política de privacidade).
 | Evento | Quando dispara | Properties úteis |
 |---|---|---|
 | `$pageview` | Cada página/rota (automático) | `$current_url`, `$pathname` |
-| `run_started` | Run criada (classic/quick/daily) | `mode`, `difficulty`, `hiddenOverall`, `region` |
+| `run_started` | Run criada (classic/quick/daily/challenge) | `mode`, `difficulty`, `hiddenOverall`, `region` |
 | `tournament_started` | Draft confirmado, bracket começou | `mode`, `difficulty` |
 | `run_completed` | Chegou na tela de resultado (desfecho) | `mode`, `difficulty`, `placement`, `won`, `teamOverall`, `swissWins`, `swissLosses`, `xpGained`, `hiddenOverall` |
-| `run_abandoned` | Saiu antes do resultado | `mode`, `difficulty`, `phase` (draft/review/tournament), `reason` (quit/restart), `region` |
+| `run_abandoned` | Saiu antes do resultado | `mode`, `difficulty`, `phase` (draft/review/tournament), `reason` (quit/restart), `hiddenOverall`, `region` |
 | `special_used` | Uma vez por carta especial no roster final, ao iniciar o torneio | `specialId`, `title`, `rarity`, `mode`, `difficulty` |
+| `challenge_played` | Um desafio (Bo7 único) foi jogado | `challengeId`, `difficulty`, `cleared` |
 
 `region` = `"worldwide"` ou `"SAM"`. `difficulty` = easy/normal/hard/legacy.
+`cleared` = `true` quando o desafio foi resolvido (série vencida).
 
 ---
 
@@ -153,7 +156,7 @@ ou use **Breakdown by** = `region` pra comparar lado a lado.
 ## 7. Notas
 - Mudar evento/property é no código (`src/lib/analytics.ts` — catálogo tipado);
   adicione uma chave em `GameEvents` e chame `trackEvent(...)` na camada de UI/store.
-- O Vercel Web Analytics continua ligado em paralelo (mesmos eventos). Quando
-  quiser, dá pra desligar e ficar só no PostHog (resolve o limite do plano free) —
-  é um ajuste de 2 linhas no `layout.tsx`/`analytics.ts`.
+- **PostHog é o único sink.** O Vercel Web Analytics foi REMOVIDO na v1.4 (era
+  redundante com o PostHog e os beacons por evento estouravam o limite de "edge
+  requests" do plano Hobby). `trackEvent` agora envia pra um sink só (PostHog).
 - Dados são agregados e não-PII (condiz com a política de privacidade).

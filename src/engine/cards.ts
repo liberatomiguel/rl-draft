@@ -169,12 +169,19 @@ export function resolveCoach(coachId: string, specialId?: string): ResolvedCard 
   };
 }
 
-export function resolveSub(subId: string): ResolvedCard {
+export function resolveSub(subId: string, specialId?: string): ResolvedCard {
   if (subId === "vacant-sub") return vacantCard("sub", subId);
   const sub = subById.get(subId);
   if (!sub) throw new Error(`Unknown sub card "${subId}"`);
+  // v1.4 fix: subs can roll a special too (a sub who was also a famous player —
+  // e.g. Turbopolsa — carries one). Mirror resolvePlayerCard/resolveCoach so the
+  // special shows in the DRAFT (offer + chosen bench slot), not only in results.
+  // Display org/season still follow the DRAFTED sub card; the special keeps its
+  // overall + art/holo.
+  const special = specialId ? specialCardById.get(specialId) : undefined;
   const org = orgById.get(sub.orgId);
   const season = seasonById.get(sub.seasonId);
+  const overall = special ? special.overall : sub.overall;
   return {
     kind: "sub",
     refId: subId,
@@ -188,8 +195,9 @@ export function resolveSub(subId: string): ResolvedCard {
     seasonId: sub.seasonId,
     seasonShort: season?.shortLabel,
     seasonLabel: season?.label,
-    overall: sub.overall,
-    baseRarity: baseRarityOf(sub.overall),
+    overall,
+    baseRarity: baseRarityOf(overall),
+    special,
   };
 }
 
@@ -228,7 +236,7 @@ export function resolveOfferCard(card: DraftOfferCard, offerLineupId?: string): 
     case "coach":
       return resolveCoach(card.refId, card.specialId);
     case "sub":
-      return resolveSub(card.refId);
+      return resolveSub(card.refId, card.specialId);
     case "org":
       return resolveOrg(
         card.refId,
@@ -245,7 +253,7 @@ export function resolvePick(pick: RosterPick): ResolvedCard {
     case "coach":
       return resolveCoach(pick.refId, pick.specialId);
     case "sub":
-      return resolveSub(pick.refId);
+      return resolveSub(pick.refId, pick.specialId);
     case "org":
       return resolveOrg(
         pick.refId,

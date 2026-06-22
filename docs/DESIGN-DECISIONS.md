@@ -414,10 +414,12 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 
 ## v1.3 readiness (invariants the accounts/sync patch must not break)
 
-55. **Invariants the v1.3 accounts/sync patch (Supabase + Discord OAuth +
+55. **Invariants the accounts/sync patch (Supabase + login +
     guest→account migration + daily leaderboard) MUST preserve.** This is a big
     patch touching persistence and identity; the list below is the contract it
     is NOT allowed to violate. Each line is the failure it prevents.
+    *(Shipped in v1.4 — login is email + 6-digit code, NOT Discord OAuth as first
+    drafted here; all the invariants below were preserved.)*
     1. **Engine purity.** `src/engine` never imports React, storage, network,
        analytics, Supabase or OAuth — it stays pure/deterministic. ALL account,
        auth, sync and remote-fetch code lives in `store`/`lib`/UI only (same rule
@@ -439,7 +441,7 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
        on a second path — or counters double-count.
     6. **Persistence keys & versions are contracts.** Keys are
        `rocket-draft:{run,profile,settings}:v1`; schema versions are run **3** and
-       profile **3**. The `:v1` is a STORAGE-KEY NAMESPACE, *not* the schema
+       profile **11**. The `:v1` is a STORAGE-KEY NAMESPACE, *not* the schema
        version (the version lives in the persist config). Any new persisted field
        needs a profile `version` bump + a `migrate()` that deep-merges defaults
        (the existing migrate already deep-merges `settings`/`flags`).
@@ -451,7 +453,10 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
        `HISTORY_LIMIT`), `dailyResults`, `settings` (setup memory:
        `lastDifficulty`/`lastShowOverall`/`lastMode`/`lastRegionLock`) and the
        onboarding `flags` (`seenHowToPlay`/`seenLegacyIntro`/`seenRegionalIntro`).
-       Dropping a field silently resets that progress on first sign-in.
+       Dropping a field silently resets that progress on first sign-in. (See the
+       current `ProfileState` in `profileStore.ts` — now also includes `mmr`,
+       `legacyUnlocked`, `challengesCompleted`, `records`, `gamesWon`,
+       `goalsScored`.)
     8. **`balance.ts` stays the single source of tunables** — any new sync/daily
        cadence numbers go there, never inlined.
     9. **Copy in both `copy.en`/`copy.pt`** — all new auth/leaderboard strings
@@ -645,7 +650,8 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     not ~40%) and accepts that strong SAM drafts win comfortably. SAM is the more
     accessible, region-pride mode by design.
 
-74. **Chemistry: 3 same-country = Great, +1 org connection = Perfect** (refines
+74. ~~Superseded by #87 (chemistry is now additive).~~
+    **Chemistry: 3 same-country = Great, +1 org connection = Perfect** (refines
     #69). Country alone still can't reach Perfect (Great is its cap), but the
     threshold from there is a single real org link (org-loyalty, or a coach/sub who
     shares the org). Same-country STAFF is a deliberately soft bonus
@@ -697,7 +703,8 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     36.6% → ~27%. Never filters the pool (weak rosters still appear); daily stays
     byte-identical (tilt off there).
 
-77. **Chemistry rewards SHARED CAREER history, not just the drafted card.** Two
+77. ~~Superseded by #87 (chemistry is now additive).~~
+    **Chemistry rewards SHARED CAREER history, not just the drafted card.** Two
     players who once shared a lineup (ex-teammates) or an org link even when their
     drafted cards are from different teams — built from each player's full career
     set (all their cards' orgs/lineups). Placed in the strongest-wins ladder:
@@ -739,7 +746,8 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     `seriesFormRange` (global upset engine, guarded by the §25 match anchors) and
     `superteamSlope`/`Pivot` (reshape the whole hierarchy).
 
-80. **MMR — a cosmetic skill rating parallel to XP.** Starts at 200, rises a small
+80. ~~Superseded by #82 (win-only rework).~~ Original rationale kept for history:
+    **MMR — a cosmetic skill rating parallel to XP.** Starts at 200, rises a small
     capped amount per finished run (placement base × per-difficulty multiplier, +1
     region-locked), never spent or lost (cloud merge = MAX). Tuned ~50× slower than
     XP so it reads as skill, not playtime; surfaces on the profile card and as a
@@ -755,6 +763,80 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     mode (home card + the `/challenges` route) is locked while Unranked, mirroring
     the Collection's Bronze gate — a new player has a clean menu and unlocks both at
     once after their first run or two.
+
+## v1.4 staging-review adjustments (2026-06-21)
+
+82. **MMR reworked to a flat, win-only economy (revises #80).** Playtesting showed the
+    placement-curve MMR over-rewarded — a fresh account with mediocre results drifted to
+    ~1200 and elites blew past 1500. New rule: MMR moves **only on a title**, by a flat
+    table — Easy/Normal championship **+1**, Hard **+3**, Legacy grand finalist **+5**,
+    Legacy title **+9**; every other outcome **0** (no placement curve, no per-Swiss-win,
+    no difficulty multiplier, no regional bonus). Start stays 1000; gains are linear and
+    tiny, so climbing well past 1600 is a deliberate grind. **Retroactive backfill is
+    capped at 1600** (`MMR.backfillCap`) via a saturating curve of title history
+    (`MMR.backfillScale`, K=120): the best current players land *near* 1600, a title-less
+    account stays at start — Miguel's brief ("good players near 1600, above is a grind").
+    Daily titles earn MMR (a real tournament); Challenge mode never reaches the MMR path.
+    Profile **v10 → v11** HARD-RESETS mmr to the new value (a one-time correction of the
+    inflated old values, not a `Math.max` floor). The Legacy grand-finalist (+5) can't be
+    reconstructed in backfill from aggregate counts (no per-difficulty runner-up counter)
+    — an accepted minor undercount.
+
+83. **Legacy unlock decoupled from Daily/Challenge wins (`legacyUnlocked` latch).** Miguel:
+    a Daily/Challenge Hard win should still count as a **title** (achievements, leaderboard,
+    MMR) but must NOT open Legacy. Rather than stop counting those wins (which would also
+    drop them from titles), a dedicated `legacyUnlocked` boolean is set ONLY by a
+    Classic/Quick Hard (or Legacy) championship; `selectLegacyUnlocked` reads it. Migrate
+    seeds it `true` for anyone with an existing Hard/Legacy title so no one loses access;
+    it's in the durable sync slice (OR-merged) so it propagates across devices.
+
+84. **Challenges: all Bo7, rerolls scale with difficulty, 20 challenges across every rank.**
+    Every series is Best-of-7 (schema `bestOf: z.literal(7)`). Rerolls were a flat 8 →
+    now `CHALLENGE.rerollsByDifficulty` (easy 8 / normal 5 / hard 3 / legacy 0): the easy
+    tiers stay forgiving, the brutal ones make every pick count (0-reroll can't soft-lock —
+    a dead offer still grants a free reroll). The set grew 10 → 20, with `rankRequired`
+    spread so **every rank Bronze→SSL unlocks new content** (gradual release; `tier`/rarity
+    is now visual + difficulty-band only, independent of the rank gate). XP retuned into
+    per-rarity bands (Common 80–110 → Legend 440–560): rewarding without trivialising the
+    rank climb. Every seed is **sim-validated into a band** by `challenges.test.ts`, which
+    now asserts BOTH a floor (legend ≥0.15 / others ≥0.30) and a **ceiling (≤0.85)** so no
+    fixed seed is a walkover. The sim is deterministic (fixed seeds), so the bands are
+    stable; `sim.opponentShift` is the per-challenge tuning knob.
+
+85. **Rank-image lock messages.** Rank-locks show the unlocking rank's badge (reusing
+    `RankBadge`): locked Challenge cards and the Collection's per-rarity locks. (The home
+    Collection/Challenges tiles were tried with a Bronze badge but reverted to the original
+    padlock glyph — Miguel preferred the lock there.)
+
+86. **Special-card rarity ladder retune + secret Creator from Bronze.** Each rank
+    Bronze→Platinum unlocks ONE visible rarity (rare→epic→mythic→**legendary at Platinum**,
+    moved down from Diamond so Platinum isn't a dead rank); the per-run appearance chance now
+    **ramps from Diamond** (4% Bronze–Platinum → 6/9/12/16% Diamond→SSL), not from Champion.
+    The secret **Creator** card (the dev easter egg) is eligible from **Bronze** but never
+    advertised (the Collection's rarity grid omits the `creator` tier), and its boost rose
+    **+5 → +7** (schema cap raised to 7) so the low-overall (71) card is worth slotting — it
+    stays rare and un-buildable-around, so it doesn't move competitive balance. The per-rarity
+    ABSOLUTE rates (`SPECIALS.rarityChance`, the v1.4 kronovi fix) are fully honoured at every
+    rank — the rank only gates which rarities are eligible and scales all rates by a mult.
+
+87. **Chemistry reworked from STRONGEST-LINK to ADDITIVE (reverses #74/#77's "strongest link
+    only").** Miguel: "the player weighs ALL factors when building for chemistry, so all
+    factors should count." Per pair, raw = CONNECTION (same lineup > ex-teammates > shared
+    org) + HERITAGE (country > region) — two independent axes summed, so a same-country pair
+    who also shared an org now scores both (the old model masked the org behind the country —
+    the reported "shared-org chemistry sometimes doesn't work"). WITHIN an axis only the
+    strongest form counts, because the alternatives describe the SAME relationship (ex-
+    teammates already implies a shared lineup/org); stacking them would double-count it and
+    explode the bar. Recalibrated `maxRaw` 11→10 + rescaled weights so the invariants HOLD:
+    3-same-country = Great (not Perfect), a real connection completes to Perfect, random =
+    Poor, mixed-region = Good. **Sim-neutral:** AI lineups still saturate to 100% and
+    Hard/Legacy weight AI chemistry at 0, so the field isn't inflated (verified).
+
+88. **Rank-up ceremony fires on a challenge clear.** The full-screen rank-up celebration was
+    only wired into the tournament results, so a challenge whose XP reward crossed a rank
+    ranked the player up silently. The `ChallengeScreen` now fires the same ceremony, using
+    the XP captured the instant before the reward (`ChallengeRunState.xpBefore`) so it's
+    robust to re-renders and the one-and-done reward path.
 
 ## Open questions for review
 

@@ -48,6 +48,7 @@ storage. Fully unit-tested (`npm test`).
 | `results.ts` | Placement, highlights, unlocks, achievements, XP breakdown |
 | `achievements.ts` | One rule function per achievement |
 | `progression.ts` | XP → rank mapping |
+| `challenges.ts` | Rank-unlocked authored puzzles: constrained draft + single Bo7 vs a fixed boss lineup (pure, reuses draft + series engine) |
 
 ### Determinism
 
@@ -60,10 +61,14 @@ same primitive: a date-derived seed makes every player's daily run identical
 
 ## State layer (`src/store`)
 
-THREE persisted Zustand stores, each with its own localStorage key and schema
-version. **The `:v1` suffix in every key is a fixed namespace string, NOT the
-schema version** — the actual schema version is the `version` number passed to
-the persist middleware (run/profile are both at version 3, settings unversioned).
+FOUR Zustand stores, three with their own localStorage key + schema version.
+**The `:v1` suffix in every key is a fixed namespace string, NOT the schema
+version** — the actual schema version is the `version` number passed to the
+persist middleware (runStore at version 3, profileStore at version 11, settings
+unversioned). The fourth, `accountStore` (v1.4), holds the live Supabase
+session/sync state and is **not localStorage-persisted** — it rehydrates from
+the Supabase session at runtime. A fifth store, `achievementToastStore`, is also
+**non-persisted** (an in-memory toast queue, no localStorage key).
 
 - `runStore.ts` — the active run (one state machine:
   `draft → review → tournament → results`).
@@ -74,7 +79,7 @@ the persist middleware (run/profile are both at version 3, settings unversioned)
     run is discarded rather than resumed broken.
   - Actions are thin: they call engine functions and store the result.
 - `profileStore.ts` — long-term progress.
-  - key `rocket-draft:profile:v1`, version **3**.
+  - key `rocket-draft:profile:v1`, version **11**.
   - `migrate` deep-merges `settings`/`flags` (so new keys pick up defaults on
     old saves) and backfills the lifetime counters (`playoffAppearances`,
     `podiums`, `swissWinsTotal`) + `dailyResults`/setup-memory for pre-v2 saves.
@@ -87,13 +92,22 @@ the persist middleware (run/profile are both at version 3, settings unversioned)
     `animSpeed` (`slow`/`normal`/`fast`), `lang` (`en`/`pt`). Read by the SFX
     layer, the CSS animation-speed applier, the tournament-playback default,
     and copy access (language).
+- `accountStore.ts` (`useAccountStore`, v1.4) — Supabase session/sync state
+  (am I signed in, who am I, am I syncing). Read by the header chip, the Profile
+  account hub and the Leaderboards. Not localStorage-persisted; with no Supabase
+  env it sits in a permanent `signedOut` state and every action is a no-op, so
+  the app is unchanged for guests.
+- `achievementToastStore.ts` — non-persisted in-memory queue for achievement
+  toasts.
 - `useMounted.ts` — SSR-safety gate: persisted state renders after first
   client mount to avoid hydration mismatches.
 
 ### Persistence & sync boundary
 
-The stores split along a hard line that the future Supabase mirror (v1.3) must
-respect:
+The stores split along a hard line that the Supabase mirror (shipped v1.4,
+code-complete and dormant until the Supabase env vars are set) respects. That
+mirror lives in `accountStore` + `src/lib/supabase.ts` (auth/queries) +
+`src/lib/profileSync.ts` (the durable-slice merge):
 
 - **`runStore` is EPHEMERAL.** It is the active-run state machine — disposable
   by design (leaving to the menu clears it; there is no resume system beyond a
@@ -102,14 +116,22 @@ respect:
   cloud mirror has to carry. Its full `ProfileState` (verified against
   `profileStore.ts`) is:
   - `xp`
+  - `mmr` — cosmetic skill rating (v1.4), parallel to XP; profile card +
+    leaderboard only, never spent or lost
+  - `legacyUnlocked` (v1.4) — the Legacy-difficulty gate, set once by a real
+    Classic/Quick Hard (or Legacy) championship (`selectLegacyUnlocked`)
   - `runsCompleted`
   - `wins` — championships per difficulty (`easy`/`normal`/`hard`/`legacy`)
   - lifetime counters `playoffAppearances`, `podiums`, `swissWinsTotal`
     (kept separate because they outlive the capped run history)
+  - `gamesWon`, `goalsScored` — lifetime individual-game achievement counters (v1.4)
   - `unlockedSpecials` — specialCardId → ISO unlock date
   - `achievements` — achievementId → ISO earned date
   - `runHistory` — most-recent-first, capped at `HISTORY_LIMIT`
   - `dailyResults` — ISO date → daily result (placement/xp/label)
+  - `challengesCompleted` (v1.4) — challengeId → ISO date cleared (one-and-done)
+  - `records` (v1.4) — leaderboard aggregates: peak team overall per difficulty
+    and per pool (`bestOverallWorldwide`/`bestOverallSam`)
   - `settings` (setup memory) — `lastDifficulty`, `lastShowOverall`,
     `lastMode`, `lastRegionLock`
   - `flags` (onboarding) — `seenHowToPlay`, `seenLegacyIntro`,
@@ -119,7 +141,7 @@ respect:
 
 ## Game modes
 
-`RunMode` (on `RunState.mode`) is `classic | quick | daily`:
+`RunMode` (on `RunState.mode`) is `classic | quick | daily | challenge`:
 
 - **classic** — the full game: 6-slot draft (3 players + coach + sub + org) →
   16-team Swiss → 8-team double-elimination playoffs.
@@ -127,6 +149,11 @@ respect:
   bracket. `PlayoffState.format` is `single` for these runs.
 - **daily** — the classic structure run against a date-seeded modifier set
   (see below).
+- **challenge** (v1.4) — a rank-unlocked authored puzzle: a constrained draft
+  then a single Bo7 against a fixed boss lineup, scored one-and-done. Its run
+  flow uses a dedicated `challenge` phase on `RunPhase` (`draft → challenge →
+  results`) rather than the swiss/playoffs tournament path. See
+  `src/engine/challenges.ts`.
 
 ### Daily Challenge
 
@@ -134,8 +161,9 @@ respect:
 
 - `seedFromDate(date)` hashes the date with **FNV-1a** into the mulberry32 run
   seed. **The same date yields the same seed for every player** — the draft,
-  opponents and modifiers are identical worldwide. (The v1.3 daily leaderboard
-  depends on exactly this guarantee.)
+  opponents and modifiers are identical worldwide. (The daily leaderboard —
+  shipped v1.4, dormant until Supabase env is set — depends on exactly this
+  guarantee.)
 - `generateDailyConfig(date)` picks the challenge: a deterministic **template
   wheel** (Pure Bracket, Regional Lockdown, eras, Blackout, No Safety Net,
   Gauntlet, Specials Surge, Legacy Day, Underdog, Champions Only…) plus an
@@ -157,9 +185,10 @@ lineup force-injected into one regional-mode offer). **Only SAM is live today.**
 ## Analytics
 
 `trackEvent()` in `src/lib/analytics.ts` is the single typed entry point for
-custom game events. It fans each event to two sinks — Vercel Web Analytics and
-PostHog — and is a **no-op until keyed** (PostHog needs `NEXT_PUBLIC_POSTHOG_KEY`;
-Vercel needs prod with Web Analytics on), so calling it never blocks gameplay.
+custom game events. It sends each event to a single sink — PostHog (the Vercel
+Web Analytics sink was dropped in v1.4 as redundant) — and is a **no-op until
+keyed** (PostHog needs `NEXT_PUBLIC_POSTHOG_KEY`), so calling it never blocks
+gameplay.
 Event payloads are pre-flattened to scalars. Only the UI/store layer may call
 it — **the engine must NEVER import analytics** (it has to stay pure and
 deterministic, AGENTS.md hard rule). The event catalogue is the typed `GameEvents`
@@ -216,5 +245,5 @@ ResultsScreen ── clearRun → back to setup
 | Change a playoff round / add a bracket reset | `src/engine/playoffs.ts` (double elim already ships; `PLAYOFF_ROUND_ORDER`) |
 | Add a game mode | new engine options + a `RunMode` + a setup entry |
 | Plug Liquipedia (data source) | reimplement `src/data/index.ts` exports |
-| Sync profiles to Supabase (v1.3) | mirror `profileStore` `ProfileState` only |
+| Sync profiles to Supabase (shipped v1.4) | the durable slice in `src/lib/profileSync.ts` + `accountStore` + `src/lib/supabase.ts` mirror `profileStore` `ProfileState` only |
 | Translate the UI | add a `copy.*.ts` dictionary; switch via `settingsStore` |

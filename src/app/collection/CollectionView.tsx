@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/Badge";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
+import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 
@@ -78,7 +79,7 @@ export function CollectionView() {
   // locked rarity (null = available to this player).
   const collectionLocked = mounted && !devPreview && !rankRewardsForXp(xp).collection;
   const unlockedRarities = mounted && !devPreview ? rankRewardsForXp(xp).rarities : null;
-  const rarityLockedAt = (r: SpecialRarity): string | null =>
+  const rarityLockedAt = (r: SpecialRarity): { id: string; label: string } | null =>
     unlockedRarities && !unlockedRarities.includes(r) ? rankThatUnlocksRarity(r) : null;
 
   // Single grid (v0.6.1, by direction): UNLOCKED cards lead — ordered rarity
@@ -183,14 +184,17 @@ export function CollectionView() {
             : mounted
               ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
               : 0;
-          const lockLabel = rarityLockedAt(r);
+          const lockRank = rarityLockedAt(r);
           return (
-            <Panel key={r} className={cx("p-3 text-center", lockLabel && "opacity-70")}>
+            <Panel key={r} className={cx("p-3 text-center", lockRank && "opacity-70")}>
               <p className="kicker !text-[10px]">{RARITY_LABELS[r]}</p>
-              {lockLabel ? (
-                <p className="display mt-1 flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wide text-faint">
-                  <LockGlyph /> {C.unlocksAt(lockLabel)}
-                </p>
+              {lockRank ? (
+                <div className="mt-1 flex flex-col items-center gap-1">
+                  <RankBadge rank={lockRank} variant="menu" size="sm" />
+                  <p className="display flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wide text-faint">
+                    {C.unlocksAt(lockRank.label)}
+                  </p>
+                </div>
               ) : (
                 <p className="display mt-1 text-xl font-bold text-ink">
                   {got}

@@ -128,13 +128,26 @@ Add its column + recreate the view so the MMR tab populates. **Idempotent.** Unt
 you run this, the MMR tab simply shows an empty board (the query fails closed) —
 nothing else breaks.
 
-```sql
--- MMR column (starts at 200; the app pushes the real value on every sync).
-alter table public.profiles
-  add column if not exists mmr integer not null default 200;
+> **If you got a SQL error here before:** the previous version of this block used
+> `create or replace view` while inserting `mmr` in the MIDDLE of the column list.
+> Postgres only lets `CREATE OR REPLACE VIEW` **append** columns at the end (never
+> insert/rename), so it failed with
+> `ERROR: 42P16: cannot change name of view column "best_easy" to "mmr"` — and because
+> the batch aborted, the `mmr` column/view/index were never created, which is exactly
+> why the MMR board showed "no entries". The block below **drops and recreates** the
+> view instead, so column order can change freely. Just paste and run it again.
 
--- Recreate the public leaderboard view INCLUDING mmr (and keep the rest).
-create or replace view public.leaderboard with (security_invoker = false) as
+```sql
+-- MMR column (default 1000 = the app's MMR start; the app pushes the real value on
+-- every sync, so this default only ever applies to rows created by raw SQL).
+alter table public.profiles
+  add column if not exists mmr integer not null default 1000;
+
+-- Recreate the public leaderboard view INCLUDING mmr. DROP first so the column order
+-- can change (CREATE OR REPLACE VIEW cannot insert a column mid-list — that was the
+-- earlier error). Nothing depends on this view, so the drop is safe.
+drop view if exists public.leaderboard;
+create view public.leaderboard with (security_invoker = false) as
   select username, xp, mmr,
          best_easy, best_normal, best_hard, best_legacy, best_worldwide, best_sam,
          championships, titles_easy, titles_normal, titles_hard, titles_legacy,
@@ -144,6 +157,10 @@ grant select on public.leaderboard to anon, authenticated;
 
 create index if not exists profiles_mmr_idx on public.profiles (mmr desc);
 ```
+
+After running this, existing rows show `mmr = 1000` until each player triggers a sync
+(open `/leaderboards` or sign in), which pushes their real value. Backfill from history
+happens client-side on load — no SQL backfill needed.
 
 ### What's stored vs. what's public
 

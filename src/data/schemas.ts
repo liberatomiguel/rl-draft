@@ -139,9 +139,10 @@ export const specialEffectSchema = z.object({
     "high_roll",
   ]),
   attributes: z.array(statKeySchema).optional(),
-  value: z.number().min(0).max(5),
+  // Cap 7 (v1.4): the secret Creator card sits at the ceiling; normal specials stay ≤5.
+  value: z.number().min(0).max(7),
   /** Flat team-overall bonus (Creator card); separate from the attribute boost. */
-  overallBonus: z.number().min(0).max(5).optional(),
+  overallBonus: z.number().min(0).max(7).optional(),
   description: z.string().min(1),
 });
 
@@ -213,7 +214,8 @@ export const challengeSchema = z
     seed: z.number().int().nonnegative(),
     sim: z.object({
       difficulty: z.enum(["easy", "normal", "hard", "legacy"]),
-      bestOf: z.number().int().min(1).max(7),
+      // v1.4: every challenge series is a Best-of-7 (enforced so authors can't regress).
+      bestOf: z.literal(7),
       /** Per-challenge boss balance knob (v1.4): flat rating delta on the boss,
        *  on top of the difficulty shift. Negative = handicap. */
       opponentShift: z.number().optional(),

@@ -106,10 +106,12 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
   const rankedUp = rankBefore.id !== rankAfter.id;
-  // Legacy unlocks on the FIRST Hard tournament win — this run is that win when
-  // it's a Hard championship and the hard-win counter (already incremented in
-  // applyRunResults) just reached 1, with no Legacy title yet.
+  // Legacy unlocks on the FIRST Hard tournament win — this run is that win when it's a
+  // Classic/Quick Hard championship and the hard-win counter (already incremented in
+  // applyRunResults) just reached 1, with no Legacy title yet. Daily/Challenge Hard
+  // wins still count as titles but do NOT unlock Legacy (v1.4), so they never celebrate.
   const legacyJustUnlocked =
+    (run.mode === "classic" || run.mode === "quick") &&
     run.difficulty === "hard" &&
     results.placement === "champion" &&
     winsHard === 1 &&
@@ -389,12 +391,26 @@ export function ResultsScreen({ run }: { run: RunState }) {
             </span>
           </div>
 
-          {/* MMR earned this run + new total (cosmetic skill rating, v1.4). */}
+          {/* MMR (cosmetic skill rating, v1.4). Most runs earn 0 — show the "+N" only on a
+              qualifying title; otherwise just the current total (no demoralising "+0"). */}
           <div className="mt-2 flex items-end justify-between">
-            <span className="text-xs font-semibold text-sub">{R.mmrEarned}</span>
+            <span className="text-xs font-semibold text-sub">
+              {mmrGain > 0 ? R.mmrEarned : R.mmrTotal}
+            </span>
             <span className="display text-base font-bold text-cyan">
-              +{mmrGain}
-              <span className="ml-1 text-xs font-semibold text-faint">· {mmrNow} {R.mmrTotal}</span>
+              {mmrGain > 0 ? (
+                <>
+                  +{mmrGain}
+                  <span className="ml-1 text-xs font-semibold text-faint">
+                    · {mmrNow} {R.mmrTotal}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {mmrNow}
+                  <span className="ml-1 text-xs font-semibold text-faint">{R.mmrTotal}</span>
+                </>
+              )}
             </span>
           </div>
 
@@ -805,7 +821,7 @@ function rankUnlockLines(
   return out;
 }
 
-function RankUpCelebration({
+export function RankUpCelebration({
   rank,
   prevRankId,
   onDone,

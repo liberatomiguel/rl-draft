@@ -525,6 +525,9 @@ export const useRunStore = create<RunStore>()(
         const { user, opponent } = run.challenge;
         const series = playChallengeSeries(user, opponent, challenge, rng);
         const cleared = series.winnerTeamId === user.id;
+        // Capture XP BEFORE the reward so the cleared screen can fire the rank-up
+        // celebration if `reward.xp` crossed a rank threshold (v1.4).
+        const xpBefore = useProfileStore.getState().xp;
         // Sync AFTER the result is known (the single funnel for challenge rewards)
         // — one-and-done, so re-clearing never re-rewards (#55.5 spirit).
         if (cleared) {
@@ -533,7 +536,7 @@ export const useRunStore = create<RunStore>()(
         set({
           run: {
             ...run,
-            challenge: { ...run.challenge, series, cleared },
+            challenge: { ...run.challenge, series, cleared, xpBefore },
             rngState: rng.state,
           },
         });

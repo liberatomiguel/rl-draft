@@ -736,7 +736,16 @@ Legacy: chemistry has relevant impact
 
 *[As built: on Hard and Legacy chemistry is ASYMMETRIC — it applies to the
 player's team only; AI opponents get 0 chemistry bonus
-(`opponentChemistryMaxBonus=0`). See DESIGN-DECISIONS #54.]*
+(`opponentChemistryMaxBonus=0`). See DESIGN-DECISIONS #54.
+
+v1.4 ADDITIVE rework: each player pair now scores on two INDEPENDENT axes that are
+SUMMED — a CONNECTION axis (same lineup 4 > ex-teammates 3 > shared org 2.5) and a
+HERITAGE axis (same country 2.5 > same region 1.5); within an axis only the
+strongest form counts, but the two axes stack (a same-country pair who also shared
+an org scores country + org). Plus additive supplements: org loyalty 2/player, coach
+link (cap 3), sub link (cap 2) and a staff-nationality bonus. Raw is normalised
+against maxRaw 10 → percent → tier (Perfect ≥100 is a full bar). The old
+"strongest single link only" model is gone. The AI-cap-0 split above is unchanged.]*
 
 ## Chemistry Display
 
@@ -1132,6 +1141,13 @@ This allows players to progress even when they do not win the whole tournament.
 # 31. Login and Save System
 
 Long-term, the game should support login so users can save progress.
+
+*[As built (v1.4): login shipped as **email + 6-digit code** (Supabase email OTP via
+`sendEmailCode`/`verifyEmailCode`), NOT Discord — no passwords, one fewer third-party
+dependency. The guest-first, LocalStorage-then-sync approach below is exactly as shipped
+(`lib/profileSync.ts` merges guest progress into the cloud on first sign-in, never losing
+it). Discord OAuth remains a possible LATER second option if the community wants one-click.
+The "preferred/recommended" Discord text below is the original spec intent.]*
 
 Preferred login method:
 

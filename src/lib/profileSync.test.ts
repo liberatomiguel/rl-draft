@@ -5,6 +5,7 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
   return {
     xp: 0,
     mmr: 1000,
+    legacyUnlocked: false,
     runsCompleted: 0,
     wins: { easy: 0, normal: 0, hard: 0, legacy: 0 },
     playoffAppearances: 0,
@@ -62,6 +63,12 @@ describe("mergeProfiles — never lose progress (#55.7)", () => {
     delete (legacy as Partial<DurableProfile>).mmr;
     expect(mergeProfiles(withMmr, legacy).mmr).toBe(1600); // earned value survives
     expect(mergeProfiles(legacy, withMmr).mmr).toBe(1600);
+  });
+
+  it("ORs the Legacy unlock — once earned on either side, it survives the merge", () => {
+    expect(mergeProfiles(make({ legacyUnlocked: true }), make()).legacyUnlocked).toBe(true);
+    expect(mergeProfiles(make(), make({ legacyUnlocked: true })).legacyUnlocked).toBe(true);
+    expect(mergeProfiles(make(), make()).legacyUnlocked).toBe(false);
   });
 
   it("unions collections and keeps the EARLIEST unlock date", () => {

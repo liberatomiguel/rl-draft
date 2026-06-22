@@ -35,9 +35,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
+import { RankBadge } from "@/components/ui/RankBadge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 
-const rankLabel = (id: string) => RANKS.find((r) => r.id === id)?.label ?? id;
+const rankInfo = (id: string) => RANKS.find((r) => r.id === id) ?? { id, label: id };
+const rankLabel = (id: string) => rankInfo(id).label;
 
 function bossOverall(lineupId: string): number {
   const lineup = lineupById.get(lineupId);
@@ -183,10 +185,14 @@ function ChallengeCard({
       <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{ch.title}</h3>
 
       {locked ? (
-        <p className="mt-2 text-xs font-semibold text-faint">
-          {CH.unlocksAt(rankLabel(ch.rankRequired))}
-          {ch.prereq ? ` · ${CH.clearPrereq(challengeById.get(ch.prereq)?.title ?? ch.prereq)}` : ""}
-        </p>
+        <div className="mt-2 flex items-center gap-2">
+          {/* The rank you need — shown as its badge so the gate is unmistakable (v1.4). */}
+          <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="shrink-0" />
+          <p className="text-xs font-semibold text-faint">
+            {CH.unlocksAt(rankLabel(ch.rankRequired))}
+            {ch.prereq ? ` · ${CH.clearPrereq(challengeById.get(ch.prereq)?.title ?? ch.prereq)}` : ""}
+          </p>
+        </div>
       ) : (
         <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-sub">{ch.brief}</p>
       )}

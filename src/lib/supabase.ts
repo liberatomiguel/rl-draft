@@ -38,26 +38,28 @@ function client(): SupabaseClient | null {
 // --- Auth (email one-time code) -------------------------------------------
 
 /** Email the player a 6-digit sign-in code. `shouldCreateUser` makes first-time
- *  emails register automatically. Returns an error message on failure. */
-export async function sendEmailCode(email: string): Promise<{ error?: string }> {
+ *  emails register automatically. Returns the error message + Supabase error `code`
+ *  (e.g. `over_email_send_rate_limit`) so the UI can react instead of dead-ending. */
+export async function sendEmailCode(email: string): Promise<{ error?: string; code?: string }> {
   const c = client();
   if (!c) return { error: "accounts disabled" };
   const { error } = await c.auth.signInWithOtp({
     email,
     options: { shouldCreateUser: true },
   });
-  return error ? { error: error.message } : {};
+  return error ? { error: error.message, code: error.code } : {};
 }
 
-/** Verify the code from the email and create the session. */
+/** Verify the code from the email and create the session. Returns the error `code`
+ *  (e.g. `otp_expired`) so the UI can tell "expired" from "wrong code". */
 export async function verifyEmailCode(
   email: string,
   token: string,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; code?: string }> {
   const c = client();
   if (!c) return { error: "accounts disabled" };
   const { error } = await c.auth.verifyOtp({ email, token, type: "email" });
-  return error ? { error: error.message } : {};
+  return error ? { error: error.message, code: error.code } : {};
 }
 
 export async function signOut(): Promise<void> {

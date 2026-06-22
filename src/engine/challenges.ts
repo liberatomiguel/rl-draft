@@ -86,7 +86,7 @@ export function createChallengeDraft(challenge: Challenge, rng: Rng): DraftState
     mode: "challenge",
     poolLineupIds: challengePool(challenge.constraint),
     constraint: challenge.constraint,
-    rerollsOverride: CHALLENGE.rerolls,
+    rerollsOverride: CHALLENGE.rerollsByDifficulty[challenge.sim.difficulty],
   });
 
   if (challenge.fixedPlayerCardId) {

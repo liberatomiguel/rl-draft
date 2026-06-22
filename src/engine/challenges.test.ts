@@ -76,8 +76,12 @@ function realisticWinRate(ch: Challenge, sims = 200): number {
 }
 
 describe("challenges — data integrity", () => {
-  it("ships a non-trivial starter set", () => {
-    expect(challenges.length).toBeGreaterThanOrEqual(8);
+  it("ships the full v1.4 set", () => {
+    expect(challenges.length).toBeGreaterThanOrEqual(18);
+  });
+
+  it("every series is a Best-of-7 (v1.4)", () => {
+    for (const ch of challenges) expect(ch.sim.bestOf).toBe(7);
   });
 });
 
@@ -135,16 +139,20 @@ describe("challenges — constraints actually bind", () => {
   });
 });
 
-describe("challenges — every one is realistically winnable (v1.4)", () => {
-  // A COMPETENT (not perfect) draft on the fixed seed must have a real shot at
-  // every challenge. Floors carry margin below the design targets (~50% / legend
-  // ~30%) for sim noise; the boss `opponentShift` knob is tuned to hit them.
+describe("challenges — every one is realistically winnable, none trivial (v1.4)", () => {
+  // A COMPETENT (not perfect) draft on the fixed seed must land in a real DIFFICULTY
+  // BAND: hard enough to matter, never impossible, never a free win. The sim is
+  // deterministic (fixed seeds), so these bands are stable — tuned via the boss
+  // `opponentShift` knob. Floor: legend ≥0.15, others ≥0.30 (margin under the design
+  // targets Common~65/Rare~55/Epic~45/Legend~30). Ceiling: ≤0.85 so nothing is a
+  // walkover (the v1.4 "not too easy" rule for fixed seeds).
   for (const ch of challenges) {
     const isLegend = ch.tier === "legend";
-    it(`${ch.id} is winnable (${ch.tier})`, () => {
+    it(`${ch.id} is in-band (${ch.tier})`, () => {
       const wr = realisticWinRate(ch);
       console.log(`  ${ch.id.padEnd(28)} ${ch.tier.padEnd(6)} winrate ${(wr * 100).toFixed(0)}%`);
       expect(wr).toBeGreaterThanOrEqual(isLegend ? 0.15 : 0.3);
+      expect(wr).toBeLessThanOrEqual(0.85);
     });
   }
 });

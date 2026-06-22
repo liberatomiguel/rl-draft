@@ -44,13 +44,13 @@ export function rankRewardsForXp(xp: number): RankRewards {
 }
 
 /**
- * The label of the FIRST rank that unlocks a given special rarity — for
- * "Unlocks at Gold" hints in the Collection. Returns null if no rank gates it
- * (shouldn't happen) — callers treat null as "always available".
+ * The FIRST rank that unlocks a given special rarity — for "Unlocks at Gold" hints
+ * (+ the rank badge) in the Collection. Returns the rank's `{ id, label }`, or null
+ * if no rank gates it (shouldn't happen) — callers treat null as "always available".
  */
-export function rankThatUnlocksRarity(rarity: string): string | null {
+export function rankThatUnlocksRarity(rarity: string): { id: string; label: string } | null {
   for (const r of RANKS) {
-    if (RANK_REWARDS[r.id]?.rarities.includes(rarity)) return r.label;
+    if (RANK_REWARDS[r.id]?.rarities.includes(rarity)) return { id: r.id, label: r.label };
   }
   return null;
 }

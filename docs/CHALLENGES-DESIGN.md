@@ -1,14 +1,25 @@
 # Challenges — design (SHIPPED in v1.4)
 
 > Status: **SHIPPED in v1.4.** Built per this design. Engine `engine/challenges.ts`,
-> data `src/data/challenges.json` (hand-authored, 10 starters), `/challenges`
-> route + nav, briefing + match screens, `profileStore.challengesCompleted`.
+> data `src/data/challenges.json` (hand-authored, **20 challenges** as of the
+> 2026-06-21 staging pass), `/challenges` route + nav, briefing + match screens,
+> `profileStore.challengesCompleted`.
 > Deviations from the original proposal:
 > - **No separate `/api`** — fully client/engine, like the rest of the game.
 > - **`picks` constraint dropped** for v1.4 (every challenge is a full 6-slot
 >   draft); the schema is `.strict()` so re-adding it is a deliberate change.
-> - **Generous, difficulty-independent reroll budget** (`CHALLENGE.rerolls`) so a
->   tight twist is always assemble-able — the test is beating the boss, not luck.
+> - **Every series is Best-of-7** (schema-enforced `bestOf: 7`).
+> - **Rerolls scale with sim difficulty** (`CHALLENGE.rerollsByDifficulty`):
+>   easy 8 / normal 5 / hard 3 / legacy 0 — the easy tiers are forgiving, the brutal
+>   ones make every pick count (the 0-reroll case can't soft-lock: a dead offer still
+>   grants a free reroll). The `sim.opponentShift` boss handicap is the other balance knob.
+> - **Difficulty is gradual by RANK, not by rarity alone.** `rankRequired` is set
+>   per-challenge so each rank Bronze→SSL unlocks new content; `tier` (rarity) drives
+>   only the visual family + the rough difficulty band. Locked cards show the unlocking
+>   rank's badge.
+> - **Every seed is sim-validated into a difficulty band** (`challenges.test.ts`):
+>   floor (legend ≥0.15 / others ≥0.30) AND ceiling (≤0.85, so nothing is a walkover).
+>   Targets by rarity: Common ~65% · Rare ~55% · Epic ~45% · Legend ~30%.
 > - **Overalls always shown** (challenges are strategy puzzles, not the Hard/Legacy
 >   knowledge test).
 > - Next: objective-only seed puzzles (clear by reaching an OVR/chemistry target
@@ -65,15 +76,14 @@ against, which is the whole point of the example Miguel gave. **[DECIDE A]**
   "prereq": "ch-vitality-2223",    // optional: clear this challenge first (difficulty chain)
   "opponentLineupId": "team-bds-2122",  // the FIXED line you face (from lineups.json)
   "tier": "epic",                  // visual family (reuses achievementStyle: common|rare|epic|legend)
-  "reward": { "xp": 150, "badge": "wall-breaker", "specialId": null },  // XP + cosmetic; optional earned special (e.g. a contributor card) bypasses the rank rarity-gate
+  "reward": { "xp": 150, "badge": "wall-breaker" },  // XP + cosmetic; optional `specialId` (z.string().optional() — omit when none) grants an earned special (e.g. a contributor card) that bypasses the rank rarity-gate
   "sim": { "difficulty": "hard", "bestOf": 7 },  // roll ranges / shift come from this profile; opponent is FIXED
   "constraint": {                  // optional "twist" — omit for a pure beat-the-line
     "maxPlayerOverall": 90,        // each drafted player ≤ this
     "region": "SAM",               // draft pool restricted to a region
     "seasonId": "rlcs-2021-22",    // ...or to a single era
     "country": "BR",               // ...or one nationality
-    "noSpecials": true,            // base cards only
-    "picks": 3                     // players-only (skip coach/sub/org), à la Quick
+    "noSpecials": true             // base cards only
   }
 }
 ```
@@ -95,7 +105,7 @@ same data:
 | **Region Pride** | `region: SAM` | SAM roster topples a Worlds champion (great post-SAM-launch hook) |
 | **Purist** | `noSpecials` | No special cards — pure base overalls + chemistry |
 
-Ship ~8–12 at launch, spread across ranks (a couple at Bronze/Silver as a
+Shipped at **20**, spread across ranks (a couple at Bronze/Silver as a
 tutorialised on-ramp; the brutal ones gated at Champion+/SSL).
 
 ## 6. Engine (`src/engine/challenges.ts`) — reuse, don't reinvent
@@ -152,9 +162,8 @@ it stays consistent by construction.
   grant a hand-authored special (e.g. a contributor card in `specialCards.json`) on
   clear. A reward special bypasses the rank rarity-gate (it's earned, not rolled) —
   it just lands in the collection. Ties neatly into the existing Creator card.
-- **C — Starter set: OPEN.** Author ~10–12 spanning the §5 archetypes and ranks
-  (a couple tutorialised at Bronze/Silver → brutal ones at Champion+/SSL). I'll
-  draft them for review when we build.
+- **C — Starter set: SHIPPED at 20.** Authored spanning the §5 archetypes and
+  ranks (a couple tutorialised at Bronze/Silver → brutal ones at Champion+/SSL).
 - **D — One-and-done.** Cleared = cleared, like achievements. No replay-for-XP.
 - **E — Own `/challenges` tab.** New `NAV_ITEMS` entry (not a combined hub).
 
@@ -164,11 +173,11 @@ difficulty*. Cleanest model: each challenge has a `rankRequired` AND an optional
 then forms a short chain that escalates. Pure rank-gating is the fallback if a tree
 feels heavy.
 
-## 10. Suggested build phases (when greenlit)
+## 10. Build phases (SHIPPED in v1.4)
 
 1. **Engine + data**: `challenges.json` + `engine/challenges.ts` + `"challenge"`
-   run mode + constraint pool filter + `validate:data` check + ~10 authored
-   challenges. Unit tests (a constrained draft only offers eligible cards; a clear
+   run mode + constraint pool filter + `validate:data` check + **20 authored
+   challenges**. Unit tests (a constrained draft only offers eligible cards; a clear
    marks completion + XP).
 2. **UI**: `/challenges` grid + briefing modal + play flow + results panel +
    `profileStore.challengesCompleted` + nav entry.

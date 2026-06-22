@@ -946,8 +946,12 @@ export const LEADERBOARDS_UI = {
   codePlaceholder: "code from the email",
   verify: "Verify & sign in",
   verifying: "Verifying…",
+  resendCode: "Resend code",
   useAnotherEmail: "Use another email",
   authError: "Couldn't sign in — check the code and try again.",
+  codeExpired: "That code expired — request a new one.",
+  codeRateLimited:
+    "Please wait a moment before requesting another code. If you already have one, enter it above.",
   displayNameLabel: "Display name (shown on the boards)",
   save: "Save",
   saved: "Saved",

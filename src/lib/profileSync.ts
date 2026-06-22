@@ -15,7 +15,7 @@
  * The Supabase/auth wiring that calls it lives in `lib/supabase.ts` + UI.
  */
 
-import { HISTORY_LIMIT } from "@/config/balance";
+import { HISTORY_LIMIT, MMR } from "@/config/balance";
 import type { DailyResult, ProfileState } from "@/store/profileStore";
 
 /** The durable, sync-worthy slice of the profile (no action methods). */
@@ -23,6 +23,7 @@ export type DurableProfile = Pick<
   ProfileState,
   | "xp"
   | "mmr"
+  | "legacyUnlocked"
   | "runsCompleted"
   | "wins"
   | "playoffAppearances"
@@ -43,6 +44,7 @@ export type DurableProfile = Pick<
 const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "xp",
   "mmr",
+  "legacyUnlocked",
   "runsCompleted",
   "wins",
   "playoffAppearances",
@@ -112,11 +114,13 @@ export function mergeProfiles(local: DurableProfile, cloud: DurableProfile): Dur
 
   return {
     xp: Math.max(local.xp, cloud.xp),
-    // MMR is monotonic like every other counter; `?? 1000` seeds legacy rows saved
-    // before MMR existed (the MMR.start floor) so a pre-MMR cloud row can't drag a
-    // player below the starting value. The backfill floor (applied on hydrate)
-    // lifts veterans above this from history.
-    mmr: Math.max(local.mmr ?? 1000, cloud.mmr ?? 1000),
+    // MMR is monotonic like every other counter; `?? MMR.start` seeds legacy rows saved
+    // before MMR existed so a pre-MMR cloud row can't drag a player below the starting
+    // value. The backfill floor (applied on hydrate) lifts veterans toward the cap.
+    mmr: Math.max(local.mmr ?? MMR.start, cloud.mmr ?? MMR.start),
+    // Legacy gate: unlocked if EITHER side unlocked it (OR), so it propagates across
+    // devices once earned and is never lost.
+    legacyUnlocked: Boolean(local.legacyUnlocked) || Boolean(cloud.legacyUnlocked),
     runsCompleted: Math.max(local.runsCompleted, cloud.runsCompleted),
     wins: maxRecord(local.wins, cloud.wins),
     playoffAppearances: Math.max(local.playoffAppearances, cloud.playoffAppearances),

@@ -644,6 +644,9 @@ export interface ChallengeRunState {
   series: SeriesResult | null;
   /** True once `series.winnerTeamId === user.id` — the puzzle is solved. */
   cleared: boolean;
+  /** The player's XP the instant before the clear reward was applied — lets the
+   *  cleared screen fire the rank-up celebration if the reward crossed a rank (v1.4). */
+  xpBefore?: number;
 }
 
 // ---------------------------------------------------------------------------

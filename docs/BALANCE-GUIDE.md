@@ -20,7 +20,7 @@ the strongest factor".
 
 Full-tournament rates for a representative **good roster (~92.5 total)**,
 real opponent generation + Swiss + double elim (Hard/Legacy reflect the
-**v1.2.5** chemistry rebalance — opponents no longer get a chemistry bonus):
+**v1.4 additive chemistry** — opponents no longer get a chemistry bonus):
 
 | Difficulty | Playoffs | Title | Notes |
 | --- | --- | --- | --- |
@@ -52,7 +52,7 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 - Favorites stomp too much → raise it.
 - Keep `userRollRange` asymmetries small; they tilt every single game.
 
-## Difficulty profiles (`DIFFICULTY`) — current (v1.3.5)
+## Difficulty profiles (`DIFFICULTY`) — current (v1.4)
 
 > The figures in the tables below are an illustrative snapshot; **`src/config/balance.ts`
 > is authoritative** and drifts with every balance patch. When in doubt, read the
@@ -66,12 +66,12 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `aiRollRange` | [-4, 4] | [-4, 4] | [-4, 4] | [-4, 4] |
 | `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.4 | 3.0 |
 | `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
-| `opponentRatingShift` | -2.0 | -1.3 | -0.2 | +1.65 |
+| `opponentRatingShift` | -2.0 | -1.3 | -0.7 | +1.35 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
 
 Region-locked (SAM) runs add a **per-difficulty** flat boost to every opponent
-(`REGION_LOCK.opponentRatingBoost`: easy/normal/hard +2, legacy +2.95) so the
-weaker regional field plays at the intended curve (#75).
+(`REGION_LOCK.opponentRatingBoost` is a per-difficulty record: easy/normal/hard +2,
+legacy +2.05) so the weaker regional field plays at the intended curve (#79).
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
 
@@ -114,14 +114,30 @@ the top end further; raise the pivot to let super-rosters breathe.
 
 ## Chemistry (`CHEMISTRY`) — base doc §22
 
-Points: same-lineup pair **4** · same-country pair **3** · same-org pair
-**2** (strongest link only per pair) · org-history link **1.5**/player ·
-coach link **1.5** (cap 3) · sub link **1** (cap 2). Max raw = 12.
+**Additive model (v1.4).** Each player pair scores on two INDEPENDENT axes that
+are **summed**; within an axis only the strongest form counts (the weaker forms
+describe the same underlying fact, so stacking them would double-count):
 
-Tiers by percent: Perfect ≥72 · Great ≥52 · Good ≥32 · Okay ≥14 · Poor <14.
+- **Connection axis** (strongest wins): same-lineup pair **4** · ex-teammates
+  (shared a real lineup in their careers) **3** · shared org **2.5**.
+- **Heritage axis** (strongest wins): same country **2.5** · same region **1.5**.
 
-Note: AI historical lineups are naturally Great/Perfect (same lineup ×3).
-The user trades raw overall vs chemistry — that's the intended draft tension.
+So a same-country pair who also shared an org scores **2.5 + 2.5 = 5**, not just
+the strongest single link — the additive rework's whole point.
+
+On top of the pair axes (additive supplements): org loyalty **2**/player whose
+drafted card org matches the drafted org · coach link **2** (cap **3**) · sub
+link **2** (cap **2**) · staff nationality bonus **0.5** (region-only match
+counts at half, `staffRegionFactor` 0.5).
+
+**Max raw = 10** (real historical trios saturate well past it and cap at 100%).
+
+Tiers by percent: **Perfect ≥100 · Great ≥70 · Good ≥40 · Okay ≥18 · Poor <18**.
+Perfect is a **full bar (100% only)**. Three same-country players land Great
+(3 pairs × 2.5 = 7.5 → 75%); a real connection on top is what completes the bar.
+
+Note: AI historical lineups saturate to Perfect (a true trio is ~19+ raw, capped
+to 100%). The user trades raw overall vs chemistry — the intended draft tension.
 
 ## Situational stats (`SIMULATION`)
 
@@ -144,15 +160,26 @@ stats only nudge (the game must be playable with overall alone).
 
 - `RARITY`: common ≤69 · silver 70-79 · gold 80-89 · blue ≥90 (visual only).
   Org cards map from buff level: ~ common · + silver · ++ gold · +++ blue.
-- `SPECIALS.appearanceChance` (5% — v0.5.1, was 16%): chance a player card
-  in an offer rolls one of that PLAYER's specials (the pool follows the
-  person, so any card of theirs qualifies — which already multiplies
-  exposure; at 16% runs saw 3-4 specials and they stopped feeling special).
-  `coachAppearanceChance` (5%) for coach cards. ~0.4 sightings/run expected.
-- `SPECIALS.rarityWeights` (rare 100 · epic 55 · mythic 28 · legendary 12 ·
-  creator 12):
-  which special appears once the roll passes — legendaries are chase pulls.
-  Raise legendary's weight to make the top tier less elusive.
+- `SPECIALS.rarityChance` (v1.4 rework — **absolute per-rarity** rates): rare
+  **0.045** · epic **0.036** · mythic **0.03** · legendary **0.01** · creator
+  **0.006**. Each rarity the person OWNS is rolled INDEPENDENTLY, **rarest
+  first** (`rarityOrder` = creator → legendary → mythic → epic → rare); the
+  first tier to proc supplies the card. This decouples a rarity's appearance
+  rate from how many cards the player has of it (the old weighted-pick model
+  meant a lone-legendary player showed their legendary every time a special
+  procced). Overall special rate stays ~1.6%/offer slot; legendaries ~4× rarer.
+  Coaches roll their own pool with the same table.
+- `SPECIALS.rankBaselineChance` (**0.04**): the baseline (Bronze–Platinum)
+  special-appearance chance. `RANK_REWARDS.specialChance` ramps it from Diamond
+  up; `specialChanceMult = specialChance / rankBaselineChance` scales every
+  per-rarity rate together (Diamond ×1.5 · Champion ×2.25 · GC ×3 · SSL ×4).
+- `RANK_REWARDS` rarity unlocks & appearance ramp (v1.4): each rank
+  Bronze→Platinum unlocks one new visible rarity (rare → epic → mythic →
+  **legendary at Platinum**); from Diamond on nothing new unlocks but the
+  appearance chance ramps: **Bronze–Platinum 4% → Diamond 6% → Champion 9% →
+  GC 12% → SSL 16%**. `creator` is the secret dev card — eligible from Bronze
+  at its own tiny rate, never surfaced as an "unlocks at" message. The Creator
+  special grants a **+7** overall boost (schema cap raised to 7).
 - `DRAFT.staffScarcityBoost` (5): when only coach/sub slots remain, lineups
   that can fill them are favored by up to this weight (1 = off).
 
@@ -182,6 +209,37 @@ Supersonic Legend 60k. Bronze stays low so the Collection unlocks on the first
 run; the rest was stretched in v1.3.5 for a longer endgame. Average run ≈ 150-300
 XP, winning run ≈ 500-800. Mode multipliers: classic ×1.0 · quick ×0.5 · daily ×1.5.
 Tune `RANKS` minXp to stretch or compress the grind.
+
+## MMR (`MMR`, v1.4)
+
+A cosmetic "skill rating" parallel to XP — surfaced on the profile card, results
+screen and leaderboard; it never touches gameplay. Everyone starts at **1000**.
+It rises **only on a tournament title** (or a Legacy grand final) and is never
+spent or lost (cloud merge takes the max). The flat per-title `award` table is the
+whole economy — no placement curve, no difficulty multiplier:
+
+| Outcome | MMR |
+| --- | --- |
+| Easy title | 1 |
+| Normal title | 1 |
+| Hard title | 3 |
+| Legacy grand finalist (runner-up) | 5 |
+| Legacy title | 9 |
+
+Live gains are linear and tiny, so climbing past ~1500 (the elite band) is a real
+grind. `backfillCap` (**1600**) clamps the retroactive value for pre-rework
+profiles: a saturating curve (`backfillScale` K = 120) of a profile's title
+history lands the best current players near 1600 and a fresh account at ~1000.
+Functions: `mmrRawGain`, `mmrAfterRun`, `mmrBackfillFloor`.
+
+## Challenges (`CHALLENGE`, v1.4)
+
+20 authored puzzles — a constrained draft then a single **Bo7** vs a fixed boss.
+Rerolls scale with the challenge's sim difficulty via
+`CHALLENGE.rerollsByDifficulty`: **easy 8 · normal 5 · hard 3 · legacy 0** (the
+easy tiers let you assemble freely; the brutal ones make every pick count). The
+named challenge tiers map onto the difficulty enum (very-easy → easy, normal →
+normal, hard → hard, very-hard → legacy).
 
 ## Playtest workflow
 

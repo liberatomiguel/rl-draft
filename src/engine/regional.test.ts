@@ -77,7 +77,7 @@ describe("regional draft & sam-only separation (v1.2.0)", () => {
     const sp = specialCardById.get("sp-liberatorl-rocket-draft-creator")!;
     expect(sp.effect.type).toBe("team_attribute_boost");
     expect(sp.effect.attributes?.length).toBe(6);
-    expect(sp.effect.overallBonus).toBe(5); // v1.3.3: also lifts the final overall
+    expect(sp.effect.overallBonus ?? 0).toBeGreaterThanOrEqual(5); // also lifts the final overall (v1.4: +7)
 
     const cards = [...playerCardById.values()];
     const o1 = cards.find((c) => c.playerId !== "liberatorl")!;
@@ -95,9 +95,10 @@ describe("regional draft & sam-only separation (v1.2.0)", () => {
     const plain = buildUserTeam(base, "normal", { mode: "quick" });
     const boosted = buildUserTeam(withCreator, "normal", { mode: "quick" });
     expect(sum(boosted.stats)).toBeGreaterThan(sum(plain.stats));
-    // The Creator's overall (71) equals liberatorl's base (71), so the only rating
-    // gain is the +5 overallBonus (plus the small per-special passive) — the card
-    // is now break-even-or-better, not a downgrade.
-    expect(boosted.rating.total).toBeGreaterThan(plain.rating.total + 4);
+    // The Creator's overall (71) equals liberatorl's base (71), so the only rating gain
+    // is the overallBonus (plus the small per-special passive). Reference the actual
+    // bonus so re-tuning the Creator's strength can't break this — the card is
+    // break-even-or-better, never a downgrade.
+    expect(boosted.rating.total).toBeGreaterThan(plain.rating.total + (sp.effect.overallBonus ?? 0) - 1);
   });
 });
