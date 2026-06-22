@@ -99,6 +99,18 @@ A pass over the v1.4 build before it ships, from playtesting on `staging`:
   matching staff — completes the bar. Sim-neutral: AI lineups still saturate to 100% and
   Hard/Legacy already weight AI chemistry at 0, so the field isn't inflated. `chemistry.ts`,
   `balance.ts` (`CHEMISTRY`), `chemistry.test.ts`.
+- **Balance — Legacy difficulty retune + a REALISTIC difficulty sim harness (#79.1).** A
+  new `difficulty.sim.test.ts` measures the win-rate-by-final-overall CURVE from teams that
+  are actually DRAFTED (synergy-aware, with the real reset-until-satisfied behaviour) — not
+  a hardcoded 92.5/95.5/97.5 team — and is fully deterministic (fixed seeds → identical
+  every run). It revealed the #79 ease had overshot at the top: a worldwide 98+ pinnacle was
+  winning ~47%. Retuned `legacy.opponentRatingShift` **1.35 → 1.70** so the curve hits the
+  design target — worldwide: a ~92 team ≈ 0%, only a **98+ pinnacle ≈ 40%** (the very best
+  team a player can build has a real, satisfying shot; non-elite almost never wins). SAM is
+  tuned on its OWN flatter, lower scale via `REGION_LOCK.opponentRatingBoost.legacy`
+  **2.05 → 1.0** (its ~92-93 ceiling ≈ 34%, never impossible). The old flaky, hardcoded
+  Legacy anchor in `balance.test.ts` was retired (the new harness covers it properly).
+  `balance.ts`, `difficulty.sim.test.ts`, `balance.test.ts`.
 
 ### Added
 - **Achievements rebuilt + real-time (≈56, grouped).** A full new set replaces the

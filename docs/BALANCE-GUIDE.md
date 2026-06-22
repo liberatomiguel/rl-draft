@@ -66,12 +66,15 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `aiRollRange` | [-4, 4] | [-4, 4] | [-4, 4] | [-4, 4] |
 | `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.4 | 3.0 |
 | `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
-| `opponentRatingShift` | -2.0 | -1.3 | -0.7 | +1.35 |
+| `opponentRatingShift` | -2.0 | -1.3 | -0.7 | +1.70 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
 
-Region-locked (SAM) runs add a **per-difficulty** flat boost to every opponent
+Legacy's `+1.70` (v1.4 retune, #79.1) was tuned on the **realistic-draft win-rate curve**
+(`difficulty.sim.test.ts`): a 98+ pinnacle ≈ 40%, a ~92 team ≈ 0%. Region-locked (SAM)
+runs add a **per-difficulty** flat boost to every opponent
 (`REGION_LOCK.opponentRatingBoost` is a per-difficulty record: easy/normal/hard +2,
-legacy +2.05) so the weaker regional field plays at the intended curve (#79).
+**legacy +1.0**) — SAM lives on its own flatter scale (its ~92-93 ceiling ≈ 34%, never
+impossible), so the weaker regional field plays at its intended curve.
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
 

@@ -261,17 +261,16 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     //    field (engine/opponents) — you no longer face the same superteam 3×.
     chemistryMaxBonus: 3,
     opponentChemistryMaxBonus: 0,
-    // v1.3.3 → v1.4 ease (#79). Anchored on faithful blended sims (REAL drafted
-    // teams over every lineup, WW + SAM — the methodology matches PostHog: the
-    // live total WW-Legacy win rate was ~2-3%, and the sim baseline reproduced it).
-    // Miguel's v1.4 target: nudge BOTH the WW and SAM Legacy total win rate toward
-    // ~5%. shift 1.65 → 1.35 lifts the elite end most (a 97 dream ~25% → ~29%, the
-    // all-time-best 99 higher still) while a 92 stays near zero — the base of the
-    // curve stays low. UNLIKE #75 (which PINNED SAM at +4.6 so a WW ease left SAM
-    // untouched), v1.4 eases SAM TOO: REGION_LOCK.legacy drops in lockstep so the
-    // SAM effective shift falls 4.60 → 3.40. The Bo7 gauntlet is still the hardest
-    // mode. See DESIGN-DECISIONS #79.
-    opponentRatingShift: 1.35,
+    // v1.4 retune (#79.1) anchored on the REALISTIC-draft win-rate CURVE
+    // (`difficulty.sim.test.ts`: real synergy-aware drafts + the reset behaviour,
+    // measured by final overall — not a hardcoded team). Target: the very best team a
+    // player can assemble (98+ worldwide) has a real, satisfying shot (~40%), while a
+    // ~92 team ≈ 0% — only the elite take it, but the elite are NOT doomed to never win.
+    // The #79 ease (1.65 → 1.35) overshot at the top (a 98+ pinnacle was winning ~47%),
+    // so this lifts the shift to 1.35 → 1.70 to bring the pinnacle to ~40% (the base of
+    // the curve was already ≈0, so this tightens the TOP, not the bottom). SAM is on its
+    // own flatter scale via REGION_LOCK.legacy (see there). Still the hardest mode.
+    opponentRatingShift: 1.7,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -292,14 +291,15 @@ export const REGION_LOCK = {
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
   //    most runs); Hard has its own rate and was left untouched this pass.
-  //  · legacy 2.05 (v1.4, #79): the SAM effective shift = legacy.opponentRatingShift
-  //    (1.35) + this boost = 3.40 (was 4.60). v1.3 PINNED SAM at +4.6 so a WW ease
-  //    wouldn't touch it (#75); v1.4 REVERSES that on purpose — Miguel wants SAM
-  //    Legacy eased toward ~5% too. Faithful blended sim (real SAM drafts over the
-  //    whole SAM pool, avg overall ~83): SAM Legacy total ~1.9% → ~2.9% in-sim at
-  //    3.40, projecting higher in live play (the sim weights weak historical teams a
-  //    real drafter would pass). Re-check PostHog after deploy. See #79.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.05 } as Record<
+  //  · legacy 1.0 (v1.4 retune, #79.1): SAM lives on a LOWER, FLATTER overall scale
+  //    (weaker pool, ~93 ceiling, but very high chemistry), so it gets its OWN curve,
+  //    not the worldwide one. The SAM effective shift = legacy.opponentRatingShift
+  //    (1.70) + this boost = 2.70. Tuned on the realistic-draft curve
+  //    (`difficulty.sim.test.ts`, SAM): the ~92-93 SAM ceiling has a real shot (~34%)
+  //    and it's never impossible (88-89 ≈ 6%) — the regional pinnacle matches the
+  //    worldwide philosophy on its own scale, a touch harder than WW since SAM is more
+  //    accessible. The flat SAM curve means lifting the top also lifts the middle.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 1.0 } as Record<
     Difficulty,
     number
   >,

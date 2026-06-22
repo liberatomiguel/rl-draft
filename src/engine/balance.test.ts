@@ -50,59 +50,8 @@ function goodUserTeam(): TournamentTeam {
   };
 }
 
-/** A great draft that ALSO commits to chemistry (~95.5 total) — the only kind of
- *  roster that should be able to win Legacy (v1.3). */
-function strongUserTeam(): TournamentTeam {
-  return {
-    ...goodUserTeam(),
-    rating: {
-      avgPlayerOverall: 93.7,
-      coachMod: 0.8,
-      subMod: 0.4,
-      orgMod: 0.6,
-      chemMod: 0,
-      specialMod: 0,
-      difficultyShift: 0,
-      total: 95.5,
-    },
-    chemistry: { raw: 9, max: 16, percent: 75, tier: "Perfect", items: [] },
-    stats: {
-      offense: 89,
-      defense: 89,
-      mechanics: 89,
-      consistency: 89,
-      experience: 89,
-      clutch: 89,
-    },
-  };
-}
-
-/** A worldwide-elite dream (~97.5 total) — the only kind of roster that should
- *  have a real Legacy title shot after the v1.3.3 retune. */
-function dreamUserTeam(): TournamentTeam {
-  return {
-    ...goodUserTeam(),
-    rating: {
-      avgPlayerOverall: 95,
-      coachMod: 0.9,
-      subMod: 0.4,
-      orgMod: 0.6,
-      chemMod: 0.6,
-      specialMod: 0,
-      difficultyShift: 0,
-      total: 97.5,
-    },
-    chemistry: { raw: 11, max: 16, percent: 90, tier: "Perfect", items: [] },
-    stats: {
-      offense: 92,
-      defense: 92,
-      mechanics: 92,
-      consistency: 92,
-      experience: 92,
-      clutch: 92,
-    },
-  };
-}
+// (strongUserTeam / dreamUserTeam removed with the Legacy anchor — Legacy is now covered
+//  by the realistic `difficulty.sim.test.ts`. Normal/Hard/Easy still use goodUserTeam.)
 
 function outcomeRates(
   difficulty: Difficulty,
@@ -154,24 +103,9 @@ describe("difficulty outcomes (v0.5 targets)", () => {
     expect(r.titles).toBeGreaterThan(0.2);
   });
 
-  it("Legacy: only a worldwide-elite (~97+) draft has a real shot", () => {
-    // v1.3.3 made Legacy the all-time wall again; v1.3.4 then v1.4 (#79) eased it
-    // toward a ~5% blended win rate (opponentRatingShift 2.3 → 1.65 → 1.35). The
-    // base of the curve stays low but the v1.4 ease lifts it a touch, so a 92.5
-    // team now wins a small-but-nonzero share (~2-3%) instead of ~0. Bounds carry
-    // headroom above those rates for sim variance (the bracket draw isn't fully
-    // seed-deterministic) — they catch a balance REGRESSION, not noise.
-    const good = outcomeRates("legacy", 1000, 626);
-    expect(good.playoffs).toBeGreaterThan(0.2); // you can still reach playoffs…
-    expect(good.playoffs).toBeLessThan(0.7); // …but it's a fight
-    expect(good.titles).toBeLessThan(0.06); // a 92.5 team still rarely wins it
-
-    const strong = outcomeRates("legacy", 1000, 909, strongUserTeam);
-    expect(strong.titles).toBeLessThan(0.12); // even a 95.5 wins only sometimes…
-
-    // Reachability is the whole point: a true dream (~97+) MUST be able to win it.
-    const dream = outcomeRates("legacy", 1000, 777, dreamUserTeam);
-    expect(dream.titles).toBeGreaterThan(0.08); // a real, elite shot…
-    expect(dream.titles).toBeLessThan(0.45); // …but still a genuine achievement
-  });
+  // Legacy is covered by `difficulty.sim.test.ts` (v1.4) instead — a REALISTIC,
+  // fully-deterministic harness that drafts real teams (synergy-aware, with resets)
+  // and checks the win-rate-by-final-overall CURVE (a ~92 team ≈ 0%, a 98+ pinnacle
+  // ≈ 40%; SAM on its own scale). The old fixed-team Legacy anchor here was both
+  // unrealistic (hardcoded 92.5/95.5/97.5) and flaky on thin margins, so it was retired.
 });

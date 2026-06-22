@@ -838,6 +838,26 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     the XP captured the instant before the reward (`ChallengeRunState.xpBefore`) so it's
     robust to re-renders and the one-and-done reward path.
 
+89. **Difficulty is tuned on a REALISTIC, deterministic draft sim — by win-rate-vs-final-
+    overall, not a hardcoded team (#79.1).** Miguel: "real play, with real people, is far
+    more complex than a preset overall." The old `balance.test.ts` anchors fed the sim fixed
+    92.5/95.5/97.5 team objects — which don't reflect what a draft produces (chemistry,
+    specials, the players you actually get) and were flaky on thin margins. Replaced by
+    `difficulty.sim.test.ts`: a competent player DRAFTS via the real engine (synergy-aware, so
+    chemistry is built like a person), RESETS until satisfied (real reset rate ≈ 40 drafts per
+    kept team — modelled as best-of-N), and we measure the TITLE rate by the team's FINAL
+    displayed overall. It is fully deterministic (fixed seeds → identical every run), so it
+    doubles as the tuning tool (prints the curve) and never flakes.
+    **Legacy retune off that curve:** the #79 ease (shift 1.65 → 1.35) overshot — a worldwide
+    98+ pinnacle was winning ~47%. Target curve (Miguel): a ~92 team ≈ 0% (non-elite almost
+    never wins) but the very best team a player can build (98+) has a real, satisfying ~40%
+    shot (avoid "can never win" frustration). Set `legacy.opponentRatingShift` 1.35 → **1.70**
+    (worldwide 98+ ≈ 40%). SAM is on its OWN lower, flatter scale (weaker pool, ~93 ceiling,
+    very high chemistry), tuned separately via `REGION_LOCK.opponentRatingBoost.legacy`
+    2.05 → **1.0** (its ~92-93 ceiling ≈ 34%, never impossible). Live PostHog Legacy win rate
+    (~25-30%) is inflated by the heavy reset behaviour + low volume + self-selection, so it is
+    NOT the tuning target — the curve is. Supersedes #79's specific shift/boost values.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

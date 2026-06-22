@@ -7,7 +7,7 @@ All knobs live in **`src/config/balance.ts`** → `DIFFICULTY.hard` / `DIFFICULT
 
 ```ts
 DIFFICULTY.hard.opponentRatingShift    // currently -0.7
-DIFFICULTY.legacy.opponentRatingShift  // currently +1.35  (NOTE: positive — Legacy opponents are BUFFED)
+DIFFICULTY.legacy.opponentRatingShift  // currently +1.70  (NOTE: positive — Legacy opponents are BUFFED)
 ```
 
 A flat rating added to **every opponent**. Note the **signs differ**: Hard
@@ -15,20 +15,24 @@ A flat rating added to **every opponent**. Note the **signs differ**: Hard
 buffed above raw, which is why it's the gauntlet.
 - **More negative → EASIER** (opponents weaker → you win more).
 - **More positive → HARDER**.
-- Sensitivity: ~**0.2–0.3** is a noticeable change. As a rough guide for a fixed
-  team total, a **+0.3** shift on Legacy roughly **halves** the title rate at the
-  top end (and a -0.3 roughly doubles it).
+- Sensitivity: ~**0.2–0.3** is a noticeable change at the top of the curve.
 
-Measured now (worldwide, faithful blended sim — the v1.4 targets):
-- Legacy `+1.35`: a ~92 team stays near 0%; a 97 dream ~29%; the blended total win
-  rate sits around **~5%** (Miguel's v1.4 target). SAM Legacy is eased in lockstep
-  (effective shift 4.60 → 3.40) toward the same ~5%.
-- Hard `-0.7`: the blended total win rate sits around **~15%** (Miguel's target;
-  the sim showed ~12.5% at the old -0.2, so this nudges it up).
+**The right way to tune Legacy is `difficulty.sim.test.ts`** (v1.4) — a REALISTIC,
+deterministic harness that drafts real teams (synergy-aware + the reset behaviour) and
+prints the **win-rate-by-final-overall curve**. Edit the shift, run that test, read the
+new curve. Targets (worldwide): a ~92 team ≈ 0%, only a **98+ pinnacle ≈ 40%** (the very
+best team a player can build has a real, satisfying shot; non-elite almost never wins).
 
-Want Legacy easier (a 97 dream above ~30%)? Move `legacy.opponentRatingShift`
-*down* toward `+1.0`. Want Hard harder? Move `hard.opponentRatingShift` toward `0`
-(e.g. `-0.4`).
+Measured now (realistic-draft curve):
+- Legacy worldwide `+1.70`: 92-93 ≈ 0% · 94-95 ≈ 0.7% · 96-97 ≈ 9% · **98+ ≈ 40%**.
+  (The #79 ease, 1.65 → 1.35, overshot — a 98+ pinnacle was winning ~47%; 1.70 brings it
+  to ~40%.) SAM uses its own boost (see below).
+- Hard `-0.7`: the blended total win rate sits around **~15%** (the sim showed ~12.5% at
+  the old -0.2, so this nudges it up).
+
+Want the Legacy pinnacle higher (less punishing)? Move `legacy.opponentRatingShift`
+*down* (e.g. 1.5 → ~45% at 98+). Want it harder? *up*. Want Hard harder? Move
+`hard.opponentRatingShift` toward `0` (e.g. `-0.4`).
 
 ## The field-strength lever (secondary)
 
@@ -55,16 +59,18 @@ weakening opponents.
 ## SAM (region-locked) only
 
 ```ts
-REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 2.05 }
+REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 1.0 }
 ```
 
 A **per-difficulty record** (not a flat scalar) added to **every region-locked
 opponent**. **Higher → harder SAM**, **lower → easier SAM**. easy/normal/hard stay
-at **2**; **legacy is 2.05** (v1.4, #79), so the SAM Legacy effective shift =
-`legacy.opponentRatingShift (1.35) + 2.05 = 3.40` (down from 4.60 pre-v1.4),
-easing SAM Legacy toward the same ~5% target as worldwide. Tune the per-difficulty
-entry you care about — raising `legacy` re-hardens SAM Legacy without touching the
-other modes.
+at **2**; **legacy is 1.0** (v1.4 retune, #79.1), so the SAM Legacy effective shift =
+`legacy.opponentRatingShift (1.70) + 1.0 = 2.70`. SAM lives on its OWN lower, flatter
+scale (weaker pool, ~93 ceiling, but very high chemistry), so it's tuned to its own
+curve — NOT the worldwide one. Measured (`difficulty.sim.test.ts`, SAM): 88-89 ≈ 6% ·
+90-91 ≈ 15% · **92-93 (the SAM ceiling) ≈ 34%** · never impossible. Because the SAM
+curve is flat, lowering this boost lifts the top AND the middle together. Tune the
+per-difficulty entry you care about — raising `legacy` re-hardens SAM Legacy only.
 
 ## After any change
 
