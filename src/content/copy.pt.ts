@@ -839,10 +839,19 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
-        version: "1.4.1",
+        version: "1.4.2",
         name: "",
         date: "2026",
         current: true,
+        notes: [
+          "Legacy SAM mais difícil no topo — o muro definitivo regional ficou mais duro; até um elenco SAM de elite precisa suar pelo título.",
+        ],
+      },
+      {
+        version: "1.4.1",
+        name: "",
+        date: "2026",
+        current: false,
         notes: [
           "A conquista Reunion agora é possível — monte três jogadores da mesma org (antes pedia o mesmo lineup, que o draft nunca oferece).",
           "Pequenas correções: nome de um time e a descrição de uma carta especial.",

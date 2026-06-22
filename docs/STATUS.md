@@ -30,7 +30,8 @@ Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
   draft sim (`difficulty.sim.test.ts`, #79.1/#94): worldwide a ~92 team ≈ 0%, the elite
   tier climbs (96-97 ≈ 15%, 98+ pinnacle ≈ 42%) via `legacy.opponentRatingShift` 1.3 (the
   v1.4 final pass nudged 1.2 → 1.3, ~1-2% harder); SAM on its own flatter scale, ~92-93
-  ceiling ≈ 36% (`REGION_LOCK.legacy` 1.65, hardened independently this pass — NOT lockstep).
+  ceiling ≈ 22%, 94+ pinnacle ≈ 47% (`REGION_LOCK.legacy` 2.8, raised in v1.4.2/#98 after
+  playtest showed the post-expansion SAM top far too easy — champion with 93 AND 95 rosters).
   Never impossible, never trivial.
 - **Rewards:** `RANK_REWARDS` gates special-card rarities and ramps appearance
   chance only at the top (ramps from Diamond: Diamond 6% / Champion 9% / GC 12% /

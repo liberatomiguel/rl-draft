@@ -754,10 +754,19 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
-      version: "1.4.1",
+      version: "1.4.2",
       name: "",
       date: "2026",
       current: true,
+      notes: [
+        "Legacy SAM is tougher at the top — the regional all-time wall got harder, so even an elite SAM roster has to earn the title.",
+      ],
+    },
+    {
+      version: "1.4.1",
+      name: "",
+      date: "2026",
+      current: false,
       notes: [
         "The Reunion achievement is now earnable — field three players from the same org (it used to ask for the same lineup, which the draft never offers).",
         "Small fixes: corrected a team name and a special-card description.",

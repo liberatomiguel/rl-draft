@@ -941,6 +941,18 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     `fonts.googleapis.com` request fits). The home `@/data` de-barrel (INP / −146 KiB) stays
     a deferred follow-up (#60). `HomeMenu.tsx`, `layout.tsx`, `tsconfig.json`.
 
+98. **Legacy SAM hardened at the top (v1.4.2).** The +6-SAM-teams pass (#95) had an
+    unintended side effect: the new teams (kv1 88, drufinho 87, …) + chemistry/specials
+    raised the ACHIEVABLE SAM draft ceiling well above 93, and the flat opponent boost
+    (1.65) barely reaches that high — so the top was far too easy (playtest: champion with
+    a 93 AND a 95 roster back to back; sim: 92-93 ≈ 36%, the new 94+ pinnacle ≈ 61%).
+    `REGION_LOCK.opponentRatingBoost.legacy` 1.65 → **2.8** (effective 2.95 → 4.10): now
+    92-93 ≈ 22% (a 93 wins ~1-in-5), 94+ pinnacle ≈ 47% (rewarding, mirroring the WW 98+
+    ≈ 42%), blended ≈ 18%. WW Legacy untouched. The earlier worry that the flat boost was
+    "ceiling-insensitive" (#94) was a too-small (+0.15) test; a real bump (+1.15) moves the
+    top properly. `difficulty.sim.test.ts` SAM band retuned to (0.15, 0.35) with a 94+ < 0.6
+    guard. `balance.ts`.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

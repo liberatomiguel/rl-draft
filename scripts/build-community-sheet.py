@@ -91,12 +91,16 @@ ws.column_dimensions["A"].width = 110
 ws = wb.create_sheet("Overall Adjustments")
 with open(CSV_PATH, encoding="utf-8") as f:
     rows = list(csv.reader(f))
-header = rows[0]
+# Per-player "special card" suggestion column (col 12) — the community can flag a
+# player who deserves a special and sketch the idea inline; detailed proposals
+# (title/type/rarity/OVR/stats) still go on the "Special Card Suggestions" tab.
+header = rows[0] + ["Sugestão de carta especial"]
 ws.append(header)
 for r in rows[1:]:
     ws.append(r)
-# "OVR sugerido" (col 9) and "Sugestão de line/time" (col 10) are the input cols.
-input_cols = (9, 10)
+# "OVR sugerido" (col 9), "Sugestão de line/time" (col 10) and "Sugestão de carta
+# especial" (col 12) are the community input cols.
+input_cols = (9, 10, 12)
 style_header(ws, len(header), input_cols=input_cols)
 for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=len(header)):
     for cell in row:
@@ -104,7 +108,7 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=len(header)):
         cell.border = BORDER
         if cell.column in input_cols:
             cell.fill = INPUT_FILL
-set_widths(ws, [9, 16, 24, 16, 7, 9, 8, 9, 11, 22, 30])
+set_widths(ws, [9, 16, 24, 16, 7, 9, 8, 9, 11, 22, 30, 34])
 
 # ---------------------------------------------------------------------------
 # Sheet 2: Special Card Suggestions

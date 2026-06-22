@@ -10,6 +10,21 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.2] — 2026-06-22 · "World Stage" patch
+
+#### Balance
+- **Legacy SAM hardened at the top (#98).** Playtest showed the SAM ceiling was far too
+  easy after the v1.4 +6-SAM-teams pass: those teams (kv1 88, drufinho 87, …) + chemistry
+  raised the ACHIEVABLE ceiling well above 93, and at boost 1.65 a 92-93 team won ~36% and
+  the new **94+ pinnacle won ~61%** (Miguel went champion with 93 AND 95 rosters back to
+  back). `REGION_LOCK.opponentRatingBoost.legacy` 1.65 → **2.8** (effective shift 2.95 →
+  4.10). New SAM curve (`difficulty.sim.test.ts`): 88-89 ≈ 1%, 90-91 ≈ 6%, **92-93 ≈ 22%**
+  (a 93 wins ~1-in-5), **94+ pinnacle ≈ 47%** (rewarding, like the worldwide 98+ ≈ 42%),
+  blended ≈ 18%. WW Legacy unchanged. Test band retuned (92-93 0.15–0.35, + a 94+ < 0.6
+  guard). `balance.ts`, `difficulty.sim.test.ts`.
+
+---
+
 ## [1.4.1] — 2026-06-22 · "World Stage" patch
 
 A small post-launch patch (player-reported fixes).

@@ -61,19 +61,20 @@ weakening opponents.
 ## SAM (region-locked) only
 
 ```ts
-REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 1.65 }
+REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 2.8 }
 ```
 
 A **per-difficulty record** (not a flat scalar) added to **every region-locked
 opponent**. **Higher → harder SAM**, **lower → easier SAM**. easy/normal/hard stay
-at **2**; **legacy is 1.65** (v1.4 "World Stage" final pass, #94; was 1.5 in #79.1), so the
-SAM Legacy effective shift = `legacy.opponentRatingShift (1.3) + 1.65 = 2.95`. NOTE: the old
-"this boost moves IN LOCKSTEP with the WW shift so the SAM curve stays put" rule was broken
-ON PURPOSE in #94 — the +6 SAM teams reshaped the pool and the boost was raised independently
-(1.5 → 1.65) to make SAM ~1% harder too. SAM lives on its OWN lower, flatter
-scale (weaker pool, ~93 ceiling, but very high chemistry), so it's tuned to its own
-curve — NOT the worldwide one. Measured (`difficulty.sim.test.ts`, SAM, post-#94): 88-89 ≈ 3% ·
-90-91 ≈ 12% · **92-93 (the SAM ceiling) ≈ 36%** · never impossible. Because the SAM
+at **2**; **legacy is 2.8** (v1.4.2, #98; was 1.65 in #94, 1.5 in #79.1), so the SAM Legacy
+effective shift = `legacy.opponentRatingShift (1.3) + 2.8 = 4.10`. This boost is tuned
+INDEPENDENTLY of the WW shift (the old "moves in lockstep" rule was dropped in #94). The v1.4
++6-SAM-teams pass raised the achievable ceiling well above 93, so at 1.65 the top was too easy
+(92-93 ≈ 36%, the new 94+ pinnacle ≈ 61% — champion with 93 AND 95 rosters); 2.8 restores a
+real wall. SAM lives on its OWN lower, flatter scale (weaker pool, very high chemistry), tuned
+to its own curve — NOT the worldwide one. Measured (`difficulty.sim.test.ts`, SAM, post-#98):
+88-89 ≈ 1% · 90-91 ≈ 6% · **92-93 (the SAM ceiling) ≈ 22%** · **94+ pinnacle ≈ 47%** · never
+impossible. Because the SAM
 curve is flat, lowering this boost lifts the top AND the middle together. Tune the
 per-difficulty entry you care about — raising `legacy` re-hardens SAM Legacy only.
 

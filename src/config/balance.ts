@@ -294,17 +294,17 @@ export const REGION_LOCK = {
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
   //    most runs); Hard has its own rate and was left untouched this pass.
-  //  · legacy 1.65 (v1.4 "World Stage", #94; was 1.5 in #79.1): SAM lives on a LOWER,
-  //    FLATTER overall scale (weaker pool, ~93 ceiling, but very high chemistry), so it
-  //    gets its OWN curve, not the worldwide one. The SAM effective shift =
-  //    legacy.opponentRatingShift (1.3) + this boost = 2.95. This pass adds 6 regional
-  //    SAM teams to the pool (Black Dragons / Cadê Meu Boost / NoX 2016 + BS+Competition
-  //    / Bigode / Plot Twist 2026), which on its own nudged the curve, so the boost was
-  //    raised 1.5 → 1.65 INDEPENDENTLY (NOT lockstep with the WW shift this time) to make
-  //    SAM ~1% harder overall too. Measured (`difficulty.sim.test.ts`, SAM): 88-89 ≈ 3%,
-  //    90-91 ≈ 12%, the ~92-93 ceiling ≈ 36% (a real shot, never a walkover), blended
-  //    ≈ 26%. The flat SAM curve means lifting the top also lifts the middle.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 1.65 } as Record<
+  //  · legacy 2.8 (v1.4.2; was 1.65 in #94, 1.5 in #79.1): SAM lives on a LOWER, FLATTER
+  //    overall scale (weaker pool, but very high chemistry), so it gets its OWN curve, not
+  //    the worldwide one. The SAM effective shift = legacy.opponentRatingShift (1.3) +
+  //    this boost = 4.10. The v1.4 +6-SAM-teams pass raised the ACHIEVABLE ceiling well
+  //    above 93 (kv1 88, drufinho 87, … + chemistry/specials), and at 1.65 the top was far
+  //    too easy in playtest (Miguel went champion with 93 AND 95 teams): 92-93 ≈ 36% and
+  //    the new 94+ pinnacle ≈ 61%. Raised 1.65 → 2.8 to restore a real wall. Measured
+  //    (`difficulty.sim.test.ts`, SAM): 88-89 ≈ 1%, 90-91 ≈ 6%, the ~92-93 ceiling ≈ 22%
+  //    (a 93 wins ~1-in-5), the 94+ pinnacle ≈ 47% (rewarding, like the WW 98+ ≈ 42%),
+  //    blended ≈ 18%. The flat SAM curve means hardening the top also hardens the middle.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.8 } as Record<
     Difficulty,
     number
   >,

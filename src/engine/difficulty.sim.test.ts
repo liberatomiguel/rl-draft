@@ -155,10 +155,11 @@ describe("Legacy difficulty — realistic-draft win-rate curve (v1.4)", () => {
     expect(r["98+"]).toBeGreaterThan(r["96-97"]); // monotonic at the top
   }, 120000);
 
-  it("SAM: lower, flatter scale — the ~92-93 pinnacle has a real shot (~34%), never impossible", () => {
+  it("SAM: lower, flatter scale — the ~92-93 ceiling is a real but hard shot (~22%), 94+ pinnacle ~47%", () => {
     const r = curve("Legacy SAM", "legacy", "SAM", 320, 32, 12);
-    expect(r["88-89"]).toBeLessThan(0.15); // mid-SAM is a fight
-    expect(r["92-93"]).toBeGreaterThan(0.22); // the SAM ceiling has a real shot…
-    expect(r["92-93"]).toBeLessThan(0.5); // …but stays the wall
+    expect(r["88-89"]).toBeLessThan(0.15); // mid-SAM rarely takes it
+    expect(r["92-93"]).toBeGreaterThan(0.15); // the SAM ceiling has a real shot…
+    expect(r["92-93"]).toBeLessThan(0.35); // …but stays a hard wall (v1.4.2: was 0.22–0.5 at boost 1.65)
+    if (r["94+"] != null) expect(r["94+"]).toBeLessThan(0.6); // the 94+ pinnacle stays rewarding, not a lock
   }, 120000);
 });
