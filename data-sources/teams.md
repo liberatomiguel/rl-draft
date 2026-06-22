@@ -1082,6 +1082,24 @@ org: FURIA +
 
 ### NA
 
+```team: Team Envy · 2021-22
+player 1: Atomic 93
+player 2: mist 89
+player 3: Turbopolsa 88
+sub: -
+coach: -
+org: Team Envy +
+```
+
+```team: Complexity Gaming · 2021-22
+player 1: Shad 84
+player 2: Reysbull 88
+player 3: ajg 86
+sub: -
+coach: Agüesome 80
+org: Complexity Gaming +
+```
+
 ```team: G2 Esports · 2021-22
 player 1: JKnaps 88
 player 2: Chicago 87
@@ -1137,6 +1155,33 @@ org: OpTic Gaming +
 ```
 
 ### EU
+
+```team: Team Vitality · 2021-22
+player 1: Fairy Peak! 87
+player 2: Kaydop 88
+player 3: Alpha54 90
+sub: -
+coach: Mout 82
+org: Team Vitality +
+```
+
+```team: Evil Geniuses · 2021-22
+player 1: Catalysm 82
+player 2: ivn 81
+player 3: Rizex45 80
+sub: -
+coach: arise 75
+org: Evil Geniuses +
+```
+
+```team: Team Liquid · 2021-22
+player 1: AcroniK. 90
+player 2: Oski 92
+player 3: Atow. 93
+sub: -
+coach: Xpére 83
+org: Team Liquid +
+```
 
 ```team: Team BDS · 2021-22
 player 1: M0nkey M00n 97
@@ -1194,6 +1239,24 @@ org: Endpoint CeX +
 
 ### OCE
 
+```team: Ground Zero Gaming · 2021-22
+player 1: Amphis 84
+player 2: Express 82
+player 3: Torsos 83
+sub: -
+coach: Jimmah 78
+org: Ground Zero Gaming +
+```
+
+```team: PWR · 2021-22
+player 1: Amphis 84
+player 2: Torsos 84
+player 3: Express 82
+sub: -
+coach: Jimmah 78
+org: PWR +
+```
+
 ```team: Renegades · 2021-22
 player 1: CJCJ 80
 player 2: Kamii 82
@@ -1213,6 +1276,15 @@ org: Pioneers
 ```
 
 ### SAM
+
+```team: eRa Eternity · 2021-22
+player 1: AztromicK 83
+player 2: math 83
+player 3: snipjz 81
+sub: -
+coach: Michi 76
+org: eRa +
+```
 
 ```team: FURIA · 2021-22
 player 1: caard 85
@@ -1272,6 +1344,15 @@ org: 01 Esports
 
 ### APAC
 
+```team: DeToNator · 2021-22
+player 1: OLPiX 74
+player 2: Burn 73
+player 3: mikan 73
+sub: -
+coach: Nunki 70
+org: DeToNator +
+```
+
 ```team: Gaimin Gladiators · 2021-22
 player 1: Maxeew 74
 player 2: LCT 68
@@ -1315,6 +1396,42 @@ org: Bravado Gaming
 ## 2022-23
 
 ### NA
+
+```team: Version1 · 2022-23
+player 1: torment 88
+player 2: comm 87
+player 3: BeastMode 94
+sub: -
+coach: Fireburner 86
+org: Version1 +
+```
+
+```team: Dignitas · 2022-23
+player 1: Andy 80
+player 2: dreaz 81
+player 3: Evoh 83
+sub: -
+coach: Nick 75
+org: Dignitas +
+```
+
+```team: FURIA Esports · 2022-23
+player 1: caard 86
+player 2: yANXNZ^^ 91
+player 3: Lostt 89
+sub: -
+coach: STL 80
+org: FURIA +
+```
+
+```team: OpTic Gaming · 2022-23
+player 1: AYYJAYY 89
+player 2: Retals 87
+player 3: MaJicBear 84
+sub: -
+coach: RawGreg 81
+org: OpTic Gaming +
+```
 
 ```team: Gen.G Mobil1 Racing · 2022-23
 player 1: ApparentlyJack 90
@@ -1362,6 +1479,15 @@ org: Complexity Gaming +
 ```
 
 ### EU
+
+```team: Quadrant · 2022-23
+player 1: RelatingWave 82
+player 2: eekso 83
+player 3: Kash 86
+sub: -
+coach: Snaski 78
+org: Quadrant +
+```
 
 ```team: Team Vitality · 2022-23
 player 1: zen 98
@@ -1427,6 +1553,15 @@ org: G1
 ```
 
 ### OCE
+
+```team: Ground Zero Gaming · 2022-23
+player 1: kaka 80
+player 2: Fibérr 82
+player 3: Superlachie 84
+sub: -
+coach: Fernando 76
+org: Ground Zero Gaming +
+```
 
 ```team: PWR · 2022-23
 player 1: Amphis 84
@@ -1550,6 +1685,15 @@ org: Valiant
 
 ### NA
 
+```team: Luminosity Gaming · 2024
+player 1: MaJicBear 84
+player 2: Retals 87
+player 3: CHEESE. 86
+sub: Thundah 68
+coach: RawGreg 82
+org: Luminosity Gaming +
+```
+
 ```team: G2 Stride · 2024
 player 1: BeastMode 94
 player 2: Atomic 94
@@ -1635,6 +1779,15 @@ org: Oxygen Esports +
 
 ### OCE
 
+```team: Chiefs Esports Club · 2024
+player 1: hntr 80
+player 2: finn 78
+player 3: kaka 80
+sub: -
+coach: LBP 76
+org: Chiefs Esports Club +
+```
+
 ```team: PWR · 2024
 player 1: Torsos 84
 player 2: Fever 86
@@ -1675,6 +1828,24 @@ org: Team Secret +
 
 ### MENA
 
+```team: Rule One · 2024
+player 1: oKhaliD 87
+player 2: Ahmad 88
+player 3: Nwpo 93
+sub: Mesho 70
+coach: crespor 79
+org: Rule One +
+```
+
+```team: Twisted Minds · 2024
+player 1: Smw 83
+player 2: M7sn 87
+player 3: Ahmad 88
+sub: -
+coach: bo0odi44 80
+org: Twisted Minds +
+```
+
 ```team: Team Falcons · 2024
 player 1: trk511 92
 player 2: Kiileerrz 93
@@ -1686,6 +1857,15 @@ org: Team Falcons +++
 
 ### APAC
 
+```team: Elevate · 2024
+player 1: LCT 75
+player 2: Kevin 82
+player 3: Sphinx 82
+sub: -
+coach: trill. 73
+org: Elevate +
+```
+
 ```team: Gaimin Gladiators · 2024
 player 1: Maxeew 79
 player 2: ThO. 78
@@ -1696,6 +1876,15 @@ org: Gaimin Gladiators
 ```
 
 ### SSA
+
+```team: Team Mobula · 2024
+player 1: VKSailen 78
+player 2: ASN_RuBiiX 78
+player 3: Leoro 75
+sub: -
+coach: ByJesuxEsP 72
+org: Team Mobula +
+```
 
 ```team: Limitless · 2024
 player 1: 2Die4 75
@@ -1711,6 +1900,15 @@ org: Limitless
 ## 2025
 
 ### NA
+
+```team: Complexity Gaming · 2025
+player 1: Reysbull 88
+player 2: crr 88
+player 3: diaz 89
+sub: -
+coach: Agüesome 82
+org: Complexity Gaming +
+```
 
 ```team: NRG Esports · 2025
 player 1: BeastMode 94
@@ -1759,6 +1957,15 @@ org: Shopify Rebellion
 
 ### EU
 
+```team: Gentle Mates Alpine · 2025
+player 1: Seikoo 93
+player 2: juicy 90
+player 3: yujin 88
+sub: -
+coach: Eversax 87
+org: Gentle Mates Alpine +
+```
+
 ```team: Karmine Corp · 2025
 player 1: Vatira 95
 player 2: Atow. 94
@@ -1805,6 +2012,15 @@ org: Geekay Esports +
 ```
 
 ### OCE
+
+```team: Helfie Chiefs · 2025
+player 1: hntr 80
+player 2: Fibérr 82
+player 3: Rezears 83
+sub: -
+coach: LBP 76
+org: Chiefs Esports Club +
+```
 
 ```team: Wildcard · 2025
 player 1: Fever 87

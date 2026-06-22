@@ -6,11 +6,11 @@
     "rankRequired": "bronze",
     "opponentLineupId": "ibuypower-s1",
     "tier": "common",
-    "seed": 19120,
+    "seed": 30376,
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 7
+      "opponentShift": 0
     },
     "reward": {
       "xp": 80,
@@ -24,11 +24,11 @@
     "rankRequired": "bronze",
     "opponentLineupId": "flipsid3-tactics-s1",
     "tier": "common",
-    "seed": 14882,
+    "seed": 31111,
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 2
+      "opponentShift": 4
     },
     "reward": {
       "xp": 90,
@@ -169,7 +169,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -5
+      "opponentShift": -7
     },
     "constraint": {
       "country": "BR"
@@ -187,11 +187,11 @@
     "prereq": "ch-old-school",
     "opponentLineupId": "northern-gaming-s3",
     "tier": "rare",
-    "seed": 22499,
+    "seed": 32175,
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": 0
+      "opponentShift": -3
     },
     "constraint": {
       "maxPlayerOverall": 88
@@ -208,11 +208,11 @@
     "rankRequired": "diamond",
     "opponentLineupId": "moist-esports-2122",
     "tier": "epic",
-    "seed": 23039,
+    "seed": 32581,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": 1
+      "opponentShift": -4
     },
     "constraint": {
       "noSpecials": true
@@ -230,11 +230,11 @@
     "opponentLineupId": "furia-2024",
     "fixedPlayerCardId": "c4-orchid-s7",
     "tier": "epic",
-    "seed": 24321,
+    "seed": 33786,
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -1
+      "opponentShift": -9
     },
     "reward": {
       "xp": 300,
@@ -266,11 +266,11 @@
     "rankRequired": "champion",
     "opponentLineupId": "karmine-corp-2024",
     "tier": "epic",
-    "seed": 26204,
+    "seed": 36760,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": 0
+      "opponentShift": 1
     },
     "constraint": {
       "country": "FR"
@@ -287,11 +287,11 @@
     "rankRequired": "champion",
     "opponentLineupId": "team-falcons-2025",
     "tier": "epic",
-    "seed": 27090,
+    "seed": 34239,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -1
+      "opponentShift": -8
     },
     "reward": {
       "xp": 360,
@@ -305,11 +305,11 @@
     "rankRequired": "grand-champion",
     "opponentLineupId": "team-bds-2122",
     "tier": "legend",
-    "seed": 23536,
+    "seed": 35850,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": 1
+      "opponentShift": -3
     },
     "reward": {
       "xp": 440,
@@ -324,11 +324,11 @@
     "prereq": "ch-break-the-wall",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
-    "seed": 24500,
+    "seed": 37196,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": 0
+      "opponentShift": -6
     },
     "reward": {
       "xp": 500,
@@ -343,11 +343,11 @@
     "prereq": "ch-south-american-steel",
     "opponentLineupId": "team-vitality-2025",
     "tier": "legend",
-    "seed": 27531,
+    "seed": 38542,
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -11
+      "opponentShift": -9
     },
     "constraint": {
       "region": "SAM"
@@ -364,11 +364,11 @@
     "rankRequired": "supersonic-legend",
     "opponentLineupId": "dignitas-s5",
     "tier": "legend",
-    "seed": 28744,
+    "seed": 38901,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -13
+      "opponentShift": -2
     },
     "constraint": {
       "noSpecials": true

@@ -91,4 +91,7 @@ sp-gregan-vitality-blueprint.png
 sp-liberatorl-rocket-draft-creator.png
 sp-loud-klaus.png
 sp-sam-mvp-drufinho.png
+sp-brunovisquii-the-architect.png
+sp-repi-wings-e-sports.png
+sp-ninja23509-wings-e-sports.png
 ```

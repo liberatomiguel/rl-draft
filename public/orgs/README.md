@@ -22,6 +22,7 @@ cloud9.png
 complexity-gaming.png
 cringe-society.png
 denial-esports.png
+detonator.png
 dignitas.png
 dignitas@2018.png
 dream-conspiracy.png
@@ -73,6 +74,7 @@ leviatan.png
 limitless.png
 lotus.png
 lowkey-esports.png
+luminosity-gaming.png
 manchester-city-esports.png
 method.png
 mibr.png
@@ -106,6 +108,7 @@ poison-bullets.png
 precision-z.png
 psg-esports.png
 pwr.png
+quadrant.png
 rebel.png
 renegades.png
 roc-esports.png
@@ -128,6 +131,7 @@ team-cryptik.png
 team-envy.png
 team-falcons.png
 team-liquid.png
+team-mobula.png
 team-queso.png
 team-reciprocity.png
 team-secret.png

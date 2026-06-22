@@ -2252,5 +2252,58 @@
       "description": "+3 clutch and mechanics."
     },
     "flavor": "drufinho flying the SAM flag at FURIA — a regional MVP moment immortalized as a rare card."
+  },
+  {
+    "id": "sp-brunovisquii-the-architect",
+    "playerId": "brunovisquii",
+    "baseCardId": "brunovisquii-coach-team-secret-2223",
+    "title": "The Architect",
+    "cardType": "coach",
+    "rarity": "rare",
+    "overall": 86,
+    "kind": "coach",
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": ["defense", "consistency"],
+      "value": 3,
+      "description": "+3 team defense and consistency."
+    },
+    "flavor": "brunoVisqui — the coach behind Team Secret's South American project, shaping its run on the world stage."
+  },
+  {
+    "id": "sp-repi-wings-e-sports",
+    "playerId": "repi",
+    "baseCardId": "repi-wings-e-sports-s2",
+    "title": "Wings E-Sports",
+    "cardType": "legend",
+    "rarity": "creator",
+    "overall": 73,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": ["offense", "defense", "mechanics", "consistency", "experience", "clutch"],
+      "value": 4,
+      "overallBonus": 4,
+      "description": "+4 to the team's overall AND +4 to every team attribute — the Wings spirit."
+    },
+    "secret": true,
+    "flavor": "A hidden Wings E-Sports tribute: repi, from the early days of South American Rocket League. Appears only when the Wings line is drawn."
+  },
+  {
+    "id": "sp-ninja23509-wings-e-sports",
+    "playerId": "ninja23509",
+    "baseCardId": "ninja23509-wings-e-sports-s2",
+    "title": "Wings E-Sports",
+    "cardType": "legend",
+    "rarity": "creator",
+    "overall": 74,
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": ["offense", "defense", "mechanics", "consistency", "experience", "clutch"],
+      "value": 4,
+      "overallBonus": 4,
+      "description": "+4 to the team's overall AND +4 to every team attribute — the Wings spirit."
+    },
+    "secret": true,
+    "flavor": "A hidden Wings E-Sports tribute: ninja23509, from the early days of South American Rocket League. Appears only when the Wings line is drawn."
   }
 ]

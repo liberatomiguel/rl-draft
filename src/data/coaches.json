@@ -453,6 +453,19 @@
     "bonusLevel": "+"
   },
   {
+    "id": "aguesome-coach-complexity-gaming-2122",
+    "personId": "aguesome",
+    "name": "Agüesome",
+    "country": "AR",
+    "region": "NA",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 80,
+    "bonusType": "consistency",
+    "bonusLevel": "+"
+  },
+  {
     "id": "satthew-coach-g2-esports-2122",
     "personId": "satthew",
     "name": "Satthew",
@@ -531,6 +544,44 @@
     "bonusLevel": "+"
   },
   {
+    "id": "mout-coach-team-vitality-2122",
+    "personId": "mout",
+    "name": "Mout",
+    "country": "FR",
+    "region": "EU",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 82,
+    "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "arise-coach-evil-geniuses-2122",
+    "personId": "arise",
+    "name": "arise",
+    "region": "EU",
+    "orgId": "evil-geniuses",
+    "lineupId": "evil-geniuses-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 75,
+    "bonusType": "consistency",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "xpere-coach-team-liquid-2122",
+    "personId": "xpere",
+    "name": "Xpére",
+    "country": "PT",
+    "region": "EU",
+    "orgId": "team-liquid",
+    "lineupId": "team-liquid-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 83,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
     "id": "mew-coach-team-bds-2122",
     "personId": "mew",
     "name": "Mew",
@@ -583,6 +634,45 @@
     "bonusLevel": "+"
   },
   {
+    "id": "jimmah-coach-ground-zero-gaming-2122",
+    "personId": "jimmah",
+    "name": "Jimmah",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 78,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "jimmah-coach-pwr-2122",
+    "personId": "jimmah",
+    "name": "Jimmah",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "pwr",
+    "lineupId": "pwr-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 78,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "michi-coach-era-2122",
+    "personId": "michi",
+    "name": "Michi",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "era",
+    "lineupId": "era-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 76,
+    "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
     "id": "kairos-coach-furia-2122",
     "personId": "kairos",
     "name": "Kairos",
@@ -632,6 +722,71 @@
     "seasonId": "rlcs-2021-22",
     "overall": 81,
     "bonusType": "defense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "nunki-coach-detonator-2122",
+    "personId": "nunki",
+    "name": "Nunki",
+    "country": "JP",
+    "region": "APAC",
+    "orgId": "detonator",
+    "lineupId": "detonator-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 70,
+    "bonusType": "experience",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "fireburner-coach-version1-2223",
+    "personId": "fireburner",
+    "name": "Fireburner",
+    "country": "US",
+    "region": "NA",
+    "orgId": "version1",
+    "lineupId": "version1-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 86,
+    "bonusType": "clutch",
+    "bonusLevel": "++"
+  },
+  {
+    "id": "nick-coach-dignitas-2223",
+    "personId": "nick",
+    "name": "Nick",
+    "country": "US",
+    "region": "NA",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 75,
+    "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "stl-coach-furia-2223",
+    "personId": "stl",
+    "name": "STL",
+    "country": "BR",
+    "region": "NA",
+    "orgId": "furia",
+    "lineupId": "furia-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 80,
+    "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "rawgreg-coach-optic-gaming-2223",
+    "personId": "rawgreg",
+    "name": "RawGreg",
+    "country": "US",
+    "region": "NA",
+    "orgId": "optic-gaming",
+    "lineupId": "optic-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 81,
+    "bonusType": "mechanics",
     "bonusLevel": "+"
   },
   {
@@ -700,6 +855,19 @@
     "bonusLevel": "+"
   },
   {
+    "id": "snaski-coach-quadrant-2223",
+    "personId": "snaski",
+    "name": "Snaski",
+    "country": "DK",
+    "region": "EU",
+    "orgId": "quadrant",
+    "lineupId": "quadrant-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 78,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
     "id": "ferra-coach-team-vitality-2223",
     "personId": "ferra",
     "name": "Ferra",
@@ -752,6 +920,19 @@
     "bonusLevel": "++"
   },
   {
+    "id": "fernando-coach-ground-zero-gaming-2223",
+    "personId": "fernando",
+    "name": "Fernando",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 76,
+    "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
     "id": "brunovisquii-coach-team-secret-2223",
     "personId": "brunovisquii",
     "name": "BRUNOVISQUII",
@@ -789,6 +970,19 @@
     "overall": 67,
     "bonusType": "mechanics",
     "bonusLevel": "~"
+  },
+  {
+    "id": "rawgreg-coach-luminosity-gaming-2024",
+    "personId": "rawgreg",
+    "name": "RawGreg",
+    "country": "US",
+    "region": "NA",
+    "orgId": "luminosity-gaming",
+    "lineupId": "luminosity-gaming-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 82,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
   },
   {
     "id": "satthew-coach-g2-stride-2024",
@@ -882,6 +1076,19 @@
     "bonusLevel": "++"
   },
   {
+    "id": "lbp-coach-chiefs-esports-club-2024",
+    "personId": "lbp",
+    "name": "LBP",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 76,
+    "bonusType": "clutch",
+    "bonusLevel": "+"
+  },
+  {
     "id": "stl-coach-furia-2024",
     "personId": "stl",
     "name": "STL",
@@ -908,6 +1115,31 @@
     "bonusLevel": "+"
   },
   {
+    "id": "crespor-coach-rule-one-2024",
+    "personId": "crespor",
+    "name": "crespor",
+    "region": "MENA",
+    "orgId": "rule-one",
+    "lineupId": "rule-one-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 79,
+    "bonusType": "consistency",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "bo0odi44-coach-twisted-minds-2024",
+    "personId": "bo0odi44",
+    "name": "bo0odi44",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "twisted-minds",
+    "lineupId": "twisted-minds-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 80,
+    "bonusType": "mechanics",
+    "bonusLevel": "+"
+  },
+  {
     "id": "d7oom24-coach-team-falcons-2024",
     "personId": "d7oom24",
     "name": "d7oom-24",
@@ -921,6 +1153,31 @@
     "bonusLevel": "++"
   },
   {
+    "id": "trill-coach-elevate-2024",
+    "personId": "trill",
+    "name": "trill.",
+    "region": "APAC",
+    "orgId": "elevate",
+    "lineupId": "elevate-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 73,
+    "bonusType": "experience",
+    "bonusLevel": "~"
+  },
+  {
+    "id": "byjesuxesp-coach-team-mobula-2024",
+    "personId": "byjesuxesp",
+    "name": "ByJesuxEsP",
+    "country": "ES",
+    "region": "SSA",
+    "orgId": "team-mobula",
+    "lineupId": "team-mobula-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 72,
+    "bonusType": "clutch",
+    "bonusLevel": "~"
+  },
+  {
     "id": "noxes-coach-limitless-2024",
     "personId": "noxes",
     "name": "Noxes",
@@ -932,6 +1189,19 @@
     "overall": 69,
     "bonusType": "mechanics",
     "bonusLevel": "~"
+  },
+  {
+    "id": "aguesome-coach-complexity-gaming-2025",
+    "personId": "aguesome",
+    "name": "Agüesome",
+    "country": "AR",
+    "region": "NA",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 82,
+    "bonusType": "consistency",
+    "bonusLevel": "+"
   },
   {
     "id": "satthew-coach-nrg-esports-2025",
@@ -986,6 +1256,19 @@
     "bonusLevel": "+"
   },
   {
+    "id": "eversax-coach-gentle-mates-alpine-2025",
+    "personId": "eversax",
+    "name": "Eversax",
+    "country": "BE",
+    "region": "EU",
+    "orgId": "gentle-mates-alpine",
+    "lineupId": "gentle-mates-alpine-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 87,
+    "bonusType": "clutch",
+    "bonusLevel": "++"
+  },
+  {
     "id": "eversax-coach-karmine-corp-2025",
     "personId": "eversax",
     "name": "Eversax",
@@ -1022,6 +1305,19 @@
     "seasonId": "rlcs-2025",
     "overall": 81,
     "bonusType": "offense",
+    "bonusLevel": "+"
+  },
+  {
+    "id": "lbp-coach-chiefs-esports-club-2025",
+    "personId": "lbp",
+    "name": "LBP",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 76,
+    "bonusType": "clutch",
     "bonusLevel": "+"
   },
   {

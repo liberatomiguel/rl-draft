@@ -43,7 +43,7 @@
   },
   {
     "id": "aguesome",
-    "nickname": "Aguesome",
+    "nickname": "Agüesome",
     "country": "AR",
     "region": "SAM"
   },
@@ -108,6 +108,12 @@
     "region": "SAM"
   },
   {
+    "id": "andy",
+    "nickname": "Andy",
+    "country": "US",
+    "region": "NA"
+  },
+  {
     "id": "apparentlyjack",
     "nickname": "ApparentlyJack",
     "country": "GB",
@@ -120,10 +126,21 @@
     "region": "EU"
   },
   {
+    "id": "arise",
+    "nickname": "arise",
+    "region": "EU"
+  },
+  {
     "id": "arsenal",
     "nickname": "Arsenal",
     "country": "US",
     "region": "NA"
+  },
+  {
+    "id": "asnrubiix",
+    "nickname": "ASN_RuBiiX",
+    "country": "ES",
+    "region": "SSA"
   },
   {
     "id": "atomic",
@@ -240,6 +257,12 @@
     "region": "SAM"
   },
   {
+    "id": "bo0odi44",
+    "nickname": "bo0odi44",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
     "id": "brad",
     "nickname": "brad",
     "country": "BR",
@@ -250,6 +273,18 @@
     "nickname": "BRUNOVISQUII",
     "country": "BR",
     "region": "SAM"
+  },
+  {
+    "id": "burn",
+    "nickname": "Burn",
+    "country": "JP",
+    "region": "APAC"
+  },
+  {
+    "id": "byjesuxesp",
+    "nickname": "ByJesuxEsP",
+    "country": "ES",
+    "region": "SSA"
   },
   {
     "id": "bymateos",
@@ -279,7 +314,7 @@
     "id": "catalysm",
     "nickname": "Catalysm",
     "country": "DE",
-    "region": "APAC"
+    "region": "EU"
   },
   {
     "id": "cha0s",
@@ -352,6 +387,11 @@
     "nickname": "CorruptedG",
     "country": "CA",
     "region": "NA"
+  },
+  {
+    "id": "crespor",
+    "nickname": "crespor",
+    "region": "MENA"
   },
   {
     "id": "crn",
@@ -564,6 +604,12 @@
     "region": "EU"
   },
   {
+    "id": "evoh",
+    "nickname": "Evoh",
+    "country": "US",
+    "region": "NA"
+  },
+  {
     "id": "exotiik",
     "nickname": "ExoTiiK",
     "country": "FR",
@@ -606,6 +652,12 @@
     "region": "SAM"
   },
   {
+    "id": "fernando",
+    "nickname": "Fernando",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
     "id": "ferra",
     "nickname": "Ferra",
     "country": "FR",
@@ -620,6 +672,12 @@
   {
     "id": "fiberr",
     "nickname": "Fibérr",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
+    "id": "finn",
+    "nickname": "finn",
     "country": "AU",
     "region": "OCE"
   },
@@ -852,6 +910,12 @@
     "id": "itachi",
     "nickname": "Itachi",
     "country": "MA",
+    "region": "EU"
+  },
+  {
+    "id": "ivn",
+    "nickname": "ivn",
+    "country": "DE",
     "region": "EU"
   },
   {
@@ -1122,7 +1186,7 @@
     "id": "lbp",
     "nickname": "LBP",
     "country": "AU",
-    "region": "EU"
+    "region": "OCE"
   },
   {
     "id": "lct",
@@ -1299,6 +1363,12 @@
     "region": "NA"
   },
   {
+    "id": "mesho",
+    "nickname": "Mesho",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
     "id": "metsanauris",
     "nickname": "Metsanauris",
     "country": "FI",
@@ -1321,6 +1391,12 @@
     "nickname": "Mijo",
     "country": "US",
     "region": "NA"
+  },
+  {
+    "id": "mikan",
+    "nickname": "mikan",
+    "country": "JP",
+    "region": "APAC"
   },
   {
     "id": "mile",
@@ -1419,6 +1495,12 @@
     "region": "EU"
   },
   {
+    "id": "nick",
+    "nickname": "Nick",
+    "country": "US",
+    "region": "NA"
+  },
+  {
     "id": "ninja23509",
     "nickname": "Ninja23509",
     "country": "BR",
@@ -1443,6 +1525,12 @@
     "region": "SSA"
   },
   {
+    "id": "nunki",
+    "nickname": "Nunki",
+    "country": "JP",
+    "region": "APAC"
+  },
+  {
     "id": "nwpo",
     "nickname": "Nwpo",
     "country": "SA",
@@ -1465,6 +1553,12 @@
     "nickname": "oKhaliD",
     "country": "SA",
     "region": "MENA"
+  },
+  {
+    "id": "olpix",
+    "nickname": "OLPiX",
+    "country": "JP",
+    "region": "APAC"
   },
   {
     "id": "orbi7",
@@ -1628,6 +1722,12 @@
     "region": "SAM"
   },
   {
+    "id": "rezears",
+    "nickname": "Rezears",
+    "country": "AU",
+    "region": "OCE"
+  },
+  {
     "id": "richy",
     "nickname": "Richy",
     "country": "CL",
@@ -1644,6 +1744,12 @@
     "nickname": "Riv",
     "country": "AU",
     "region": "OCE"
+  },
+  {
+    "id": "rizex45",
+    "nickname": "Rizex45",
+    "country": "DE",
+    "region": "EU"
   },
   {
     "id": "rizzo",
@@ -1808,7 +1914,7 @@
   },
   {
     "id": "smw",
-    "nickname": "SMW",
+    "nickname": "Smw",
     "country": "SA",
     "region": "MENA"
   },
@@ -2017,7 +2123,7 @@
   },
   {
     "id": "torment",
-    "nickname": "Torment",
+    "nickname": "torment",
     "country": "US",
     "region": "NA"
   },
@@ -2032,6 +2138,11 @@
     "nickname": "Torsos",
     "country": "AU",
     "region": "OCE"
+  },
+  {
+    "id": "trill",
+    "nickname": "trill.",
+    "region": "APAC"
   },
   {
     "id": "trk511",
@@ -2206,6 +2317,12 @@
     "nickname": "Yeatzy",
     "country": "AU",
     "region": "OCE"
+  },
+  {
+    "id": "yujin",
+    "nickname": "yujin",
+    "country": "FR",
+    "region": "EU"
   },
   {
     "id": "yukeo",

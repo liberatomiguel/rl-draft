@@ -2916,6 +2916,60 @@
     "manualAdjustment": 0
   },
   {
+    "id": "atomic-team-envy-2122",
+    "playerId": "atomic",
+    "orgId": "team-envy",
+    "lineupId": "team-envy-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 93,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "mist-team-envy-2122",
+    "playerId": "mist",
+    "orgId": "team-envy",
+    "lineupId": "team-envy-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 89,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "turbopolsa-team-envy-2122",
+    "playerId": "turbopolsa",
+    "orgId": "team-envy",
+    "lineupId": "team-envy-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "shad-complexity-gaming-2122",
+    "playerId": "shad",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "reysbull-complexity-gaming-2122",
+    "playerId": "reysbull",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ajg-complexity-gaming-2122",
+    "playerId": "ajg",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 86,
+    "manualAdjustment": 0
+  },
+  {
     "id": "jknaps-g2-esports-2122",
     "playerId": "jknaps",
     "orgId": "g2-esports",
@@ -3075,6 +3129,87 @@
     "lineupId": "optic-gaming-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 79,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "fairypeak-team-vitality-2122",
+    "playerId": "fairypeak",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kaydop-team-vitality-2122",
+    "playerId": "kaydop",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "alpha54-team-vitality-2122",
+    "playerId": "alpha54",
+    "orgId": "team-vitality",
+    "lineupId": "team-vitality-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 90,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "catalysm-evil-geniuses-2122",
+    "playerId": "catalysm",
+    "orgId": "evil-geniuses",
+    "lineupId": "evil-geniuses-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ivn-evil-geniuses-2122",
+    "playerId": "ivn",
+    "orgId": "evil-geniuses",
+    "lineupId": "evil-geniuses-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "rizex45-evil-geniuses-2122",
+    "playerId": "rizex45",
+    "orgId": "evil-geniuses",
+    "lineupId": "evil-geniuses-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "acronik-team-liquid-2122",
+    "playerId": "acronik",
+    "orgId": "team-liquid",
+    "lineupId": "team-liquid-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 90,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "oski-team-liquid-2122",
+    "playerId": "oski",
+    "orgId": "team-liquid",
+    "lineupId": "team-liquid-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 92,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "atow-team-liquid-2122",
+    "playerId": "atow",
+    "orgId": "team-liquid",
+    "lineupId": "team-liquid-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 93,
     "manualAdjustment": 0
   },
   {
@@ -3240,6 +3375,60 @@
     "manualAdjustment": 0
   },
   {
+    "id": "amphis-ground-zero-gaming-2122",
+    "playerId": "amphis",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "express-ground-zero-gaming-2122",
+    "playerId": "express",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "torsos-ground-zero-gaming-2122",
+    "playerId": "torsos",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "amphis-pwr-2122",
+    "playerId": "amphis",
+    "orgId": "pwr",
+    "lineupId": "pwr-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "torsos-pwr-2122",
+    "playerId": "torsos",
+    "orgId": "pwr",
+    "lineupId": "pwr-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "express-pwr-2122",
+    "playerId": "express",
+    "orgId": "pwr",
+    "lineupId": "pwr-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
     "id": "cjcj-renegades-2122",
     "playerId": "cjcj",
     "orgId": "renegades",
@@ -3289,6 +3478,33 @@
     "playerId": "bananahead",
     "orgId": "pioneers-oce",
     "lineupId": "pioneers-oce-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "aztromick-era-2122",
+    "playerId": "aztromick",
+    "orgId": "era",
+    "lineupId": "era-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "math-era-2122",
+    "playerId": "math",
+    "orgId": "era",
+    "lineupId": "era-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "snipjz-era-2122",
+    "playerId": "snipjz",
+    "orgId": "era",
+    "lineupId": "era-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 81,
     "manualAdjustment": 0
@@ -3456,6 +3672,33 @@
     "manualAdjustment": 0
   },
   {
+    "id": "olpix-detonator-2122",
+    "playerId": "olpix",
+    "orgId": "detonator",
+    "lineupId": "detonator-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 74,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "burn-detonator-2122",
+    "playerId": "burn",
+    "orgId": "detonator",
+    "lineupId": "detonator-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 73,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "mikan-detonator-2122",
+    "playerId": "mikan",
+    "orgId": "detonator",
+    "lineupId": "detonator-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 73,
+    "manualAdjustment": 0
+  },
+  {
     "id": "maxeew-gaimin-gladiators-2122",
     "playerId": "maxeew",
     "orgId": "gaimin-gladiators",
@@ -3561,6 +3804,114 @@
     "lineupId": "bravado-gaming-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 66,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "torment-version1-2223",
+    "playerId": "torment",
+    "orgId": "version1",
+    "lineupId": "version1-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "comm-version1-2223",
+    "playerId": "comm",
+    "orgId": "version1",
+    "lineupId": "version1-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "beastmode-version1-2223",
+    "playerId": "beastmode",
+    "orgId": "version1",
+    "lineupId": "version1-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 94,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "andy-dignitas-2223",
+    "playerId": "andy",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "dreaz-dignitas-2223",
+    "playerId": "dreaz",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "evoh-dignitas-2223",
+    "playerId": "evoh",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "caard-furia-2223",
+    "playerId": "caard",
+    "orgId": "furia",
+    "lineupId": "furia-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 86,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "yanxnz-furia-2223",
+    "playerId": "yanxnz",
+    "orgId": "furia",
+    "lineupId": "furia-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 91,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "lostt-furia-2223",
+    "playerId": "lostt",
+    "orgId": "furia",
+    "lineupId": "furia-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 89,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ayyjayy-optic-gaming-2223",
+    "playerId": "ayyjayy",
+    "orgId": "optic-gaming",
+    "lineupId": "optic-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 89,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "retals-optic-gaming-2223",
+    "playerId": "retals",
+    "orgId": "optic-gaming",
+    "lineupId": "optic-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "majicbear-optic-gaming-2223",
+    "playerId": "majicbear",
+    "orgId": "optic-gaming",
+    "lineupId": "optic-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 84,
     "manualAdjustment": 0
   },
   {
@@ -3696,6 +4047,33 @@
     "lineupId": "complexity-gaming-2223",
     "seasonId": "rlcs-2022-23",
     "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "relatingwave-quadrant-2223",
+    "playerId": "relatingwave",
+    "orgId": "quadrant",
+    "lineupId": "quadrant-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "eekso-quadrant-2223",
+    "playerId": "eekso",
+    "orgId": "quadrant",
+    "lineupId": "quadrant-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kash-quadrant-2223",
+    "playerId": "kash",
+    "orgId": "quadrant",
+    "lineupId": "quadrant-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 86,
     "manualAdjustment": 0
   },
   {
@@ -3885,6 +4263,33 @@
     "lineupId": "g1-2223",
     "seasonId": "rlcs-2022-23",
     "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kaka-ground-zero-gaming-2223",
+    "playerId": "kaka",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "fiberr-ground-zero-gaming-2223",
+    "playerId": "fiberr",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "superlachie-ground-zero-gaming-2223",
+    "playerId": "superlachie",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 84,
     "manualAdjustment": 0
   },
   {
@@ -4212,6 +4617,33 @@
     "manualAdjustment": 0
   },
   {
+    "id": "majicbear-luminosity-gaming-2024",
+    "playerId": "majicbear",
+    "orgId": "luminosity-gaming",
+    "lineupId": "luminosity-gaming-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "retals-luminosity-gaming-2024",
+    "playerId": "retals",
+    "orgId": "luminosity-gaming",
+    "lineupId": "luminosity-gaming-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "cheese-luminosity-gaming-2024",
+    "playerId": "cheese",
+    "orgId": "luminosity-gaming",
+    "lineupId": "luminosity-gaming-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 86,
+    "manualAdjustment": 0
+  },
+  {
     "id": "beastmode-g2-stride-2024",
     "playerId": "beastmode",
     "orgId": "g2-stride",
@@ -4455,6 +4887,33 @@
     "manualAdjustment": 0
   },
   {
+    "id": "hntr-chiefs-esports-club-2024",
+    "playerId": "hntr",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "finn-chiefs-esports-club-2024",
+    "playerId": "finn",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kaka-chiefs-esports-club-2024",
+    "playerId": "kaka",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
     "id": "torsos-pwr-2024",
     "playerId": "torsos",
     "orgId": "pwr",
@@ -4563,6 +5022,60 @@
     "manualAdjustment": 0
   },
   {
+    "id": "okhalid-rule-one-2024",
+    "playerId": "okhalid",
+    "orgId": "rule-one",
+    "lineupId": "rule-one-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ahmad-rule-one-2024",
+    "playerId": "ahmad",
+    "orgId": "rule-one",
+    "lineupId": "rule-one-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "nwpo-rule-one-2024",
+    "playerId": "nwpo",
+    "orgId": "rule-one",
+    "lineupId": "rule-one-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 93,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "smw-twisted-minds-2024",
+    "playerId": "smw",
+    "orgId": "twisted-minds",
+    "lineupId": "twisted-minds-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 83,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "m7sn-twisted-minds-2024",
+    "playerId": "m7sn",
+    "orgId": "twisted-minds",
+    "lineupId": "twisted-minds-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 87,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "ahmad-twisted-minds-2024",
+    "playerId": "ahmad",
+    "orgId": "twisted-minds",
+    "lineupId": "twisted-minds-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
     "id": "trk511-team-falcons-2024",
     "playerId": "trk511",
     "orgId": "team-falcons",
@@ -4587,6 +5100,33 @@
     "lineupId": "team-falcons-2024",
     "seasonId": "rlcs-2024",
     "overall": 93,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "lct-elevate-2024",
+    "playerId": "lct",
+    "orgId": "elevate",
+    "lineupId": "elevate-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 75,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "kevin-elevate-2024",
+    "playerId": "kevin",
+    "orgId": "elevate",
+    "lineupId": "elevate-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "sphinx-elevate-2024",
+    "playerId": "sphinx",
+    "orgId": "elevate",
+    "lineupId": "elevate-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 82,
     "manualAdjustment": 0
   },
   {
@@ -4617,6 +5157,33 @@
     "manualAdjustment": 0
   },
   {
+    "id": "vksailen-team-mobula-2024",
+    "playerId": "vksailen",
+    "orgId": "team-mobula",
+    "lineupId": "team-mobula-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "asnrubiix-team-mobula-2024",
+    "playerId": "asnrubiix",
+    "orgId": "team-mobula",
+    "lineupId": "team-mobula-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 78,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "leoro-team-mobula-2024",
+    "playerId": "leoro",
+    "orgId": "team-mobula",
+    "lineupId": "team-mobula-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 75,
+    "manualAdjustment": 0
+  },
+  {
     "id": "2die4-limitless-2024",
     "playerId": "2die4",
     "orgId": "limitless",
@@ -4641,6 +5208,33 @@
     "lineupId": "limitless-2024",
     "seasonId": "rlcs-2024",
     "overall": 73,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "reysbull-complexity-gaming-2025",
+    "playerId": "reysbull",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "crr-complexity-gaming-2025",
+    "playerId": "crr",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "diaz-complexity-gaming-2025",
+    "playerId": "diaz",
+    "orgId": "complexity-gaming",
+    "lineupId": "complexity-gaming-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 89,
     "manualAdjustment": 0
   },
   {
@@ -4779,6 +5373,33 @@
     "manualAdjustment": 0
   },
   {
+    "id": "seikoo-gentle-mates-alpine-2025",
+    "playerId": "seikoo",
+    "orgId": "gentle-mates-alpine",
+    "lineupId": "gentle-mates-alpine-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 93,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "juicy-gentle-mates-alpine-2025",
+    "playerId": "juicy",
+    "orgId": "gentle-mates-alpine",
+    "lineupId": "gentle-mates-alpine-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 90,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "yujin-gentle-mates-alpine-2025",
+    "playerId": "yujin",
+    "orgId": "gentle-mates-alpine",
+    "lineupId": "gentle-mates-alpine-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 88,
+    "manualAdjustment": 0
+  },
+  {
     "id": "vatira-karmine-corp-2025",
     "playerId": "vatira",
     "orgId": "karmine-corp",
@@ -4911,6 +5532,33 @@
     "lineupId": "geekay-esports-2025",
     "seasonId": "rlcs-2025",
     "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "hntr-chiefs-esports-club-2025",
+    "playerId": "hntr",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "fiberr-chiefs-esports-club-2025",
+    "playerId": "fiberr",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 82,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "rezears-chiefs-esports-club-2025",
+    "playerId": "rezears",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 83,
     "manualAdjustment": 0
   },
   {

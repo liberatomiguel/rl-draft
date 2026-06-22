@@ -105,6 +105,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "detonator",
+    "name": "DeToNator",
+    "region": "APAC",
+    "buffType": "consistency",
+    "buffLevel": "+"
+  },
+  {
     "id": "dignitas",
     "name": "Dignitas",
     "region": "EU",
@@ -129,7 +136,7 @@
     "name": "Elevate",
     "region": "APAC",
     "buffType": "defense",
-    "buffLevel": "~"
+    "buffLevel": "+"
   },
   {
     "id": "ellevens-esports",
@@ -461,6 +468,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "luminosity-gaming",
+    "name": "Luminosity Gaming",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "+"
+  },
+  {
     "id": "manchester-city-esports",
     "name": "Manchester City Esports",
     "region": "EU",
@@ -682,6 +696,13 @@
     "buffLevel": "+"
   },
   {
+    "id": "quadrant",
+    "name": "Quadrant",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "+"
+  },
+  {
     "id": "rebel",
     "name": "Rebel",
     "region": "SAM",
@@ -833,6 +854,13 @@
     "region": "EU",
     "buffType": "clutch",
     "buffLevel": "++"
+  },
+  {
+    "id": "team-mobula",
+    "name": "Team Mobula",
+    "region": "SSA",
+    "buffType": "defense",
+    "buffLevel": "+"
   },
   {
     "id": "team-queso",

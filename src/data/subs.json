@@ -813,6 +813,17 @@
     "overall": 60
   },
   {
+    "id": "thundah-sub-luminosity-gaming-2024",
+    "personId": "thundah",
+    "name": "Thundah",
+    "country": "US",
+    "region": "NA",
+    "orgId": "luminosity-gaming",
+    "lineupId": "luminosity-gaming-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 68
+  },
+  {
     "id": "dreaz-sub-g2-stride-2024",
     "personId": "dreaz",
     "name": "dreaz",
@@ -822,6 +833,17 @@
     "lineupId": "g2-stride-2024",
     "seasonId": "rlcs-2024",
     "overall": 73
+  },
+  {
+    "id": "mesho-sub-rule-one-2024",
+    "personId": "mesho",
+    "name": "Mesho",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "rule-one",
+    "lineupId": "rule-one-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 70
   },
   {
     "id": "thundah-sub-gen-g-mobil1-racing-2025",

@@ -195,6 +195,14 @@ const COUNTRY = {
   liberatorl: "BR", ninja23509: "BR",
   // v1.2.0 overall-review coach corrections/additions
   adambaguette: "FR", lbp: "AU",
+  // v1.4 International-Major expansion — new players/staff (Liquipedia-verified
+  // where confirmed: yujin=Liam Daillac FR, Evoh=Jordan Manley US, ASN_RuBiiX=
+  // Rubén Santana ES; the rest are region/roster best-effort). A few obscure
+  // coaches (arise, crespor, trill) stay countryless until verified.
+  yujin: "FR", evoh: "US", asnrubiix: "ES", finn: "AU", rezears: "AU",
+  andy: "US", olpix: "JP", burn: "JP", mikan: "JP", ivn: "DE", rizex45: "DE",
+  nick: "US", fernando: "AU", nunki: "JP", bo0odi44: "SA", mesho: "SA",
+  byjesuxesp: "ES",
 };
 
 const ORG_BUFF_TYPE = {
