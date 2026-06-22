@@ -10,6 +10,25 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.1] — 2026-06-22 · "World Stage" patch
+
+A small post-launch patch (player-reported fixes).
+
+#### Fixed
+- **Achievement "Reunion" was unobtainable.** It asked for three players from the same
+  LINEUP, but the draft offers each lineup at most once (`shownLineupIds`), so you can
+  never field three cards of one lineup. Now it's three from the same ORG — reachable
+  (different NRG / Vitality seasons share an orgId; 30 worldwide orgs have ≥3 lineups).
+  Root cause: the condition keyed on `lineupId`, which the draft mechanic makes unique
+  per pick. `engine/achievements.ts`, `achievements.json`.
+
+#### Changed
+- **Team "Bigode" → "Bigodes"** (correct name); orgId `bigode` → `bigodes`. `teams.md`.
+- **royales "NRG beater" flavor corrected** — he won a single GAME off NRG, not the
+  series, so the flavor no longer claims the card "took down NRG". `specialCards.json`.
+
+---
+
 ## [1.4.0] — 2026-06-22 · "World Stage"
 
 > Big release: email-code login + cloud sync + leaderboards, a rank-unlocked
@@ -25,7 +44,7 @@ catalogue, the mobile **CLS hard-fail** fix, and a Vercel build-reliability fix.
 
 #### Added
 - **6 more SAM-only teams** (regional pool, `sam-only, legacy`): **Black Dragons**,
-  **Cadê Meu Boost**, **NoX Gaming** (S1 · 2016) and **BS+Competition**, **Bigode**,
+  **Cadê Meu Boost**, **NoX Gaming** (S1 · 2016) and **BS+Competition**, **Bigodes**,
   **Plot Twist** (2026). 8 brand-new people (Freedom, Godan, Krames, DuO, TheKillah,
   Zé, Saladk1ng, MagoMagnífico) with nationalities; the rest reuse existing SAM
   people (sosa reuses the existing person by direction). lineups 283→**289**, players

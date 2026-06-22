@@ -912,7 +912,7 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     `difficulty.sim.test.ts`; all 20 challenges stayed in band (no re-seed). `balance.ts`.
 
 95. **6 more SAM-only teams + 2 rare specials (by direction).** Black Dragons / Cadê Meu
-    Boost / NoX Gaming (S1 · 2016) and BS+Competition / Bigode / Plot Twist (2026) join the
+    Boost / NoX Gaming (S1 · 2016) and BS+Competition / Bigodes / Plot Twist (2026) join the
     regional pool (`sam-only, legacy`). 8 new people; the rest reuse existing SAM ids. The
     `sosa` name collided with an existing CA/APAC person (Virtus.pro 2025) — by Miguel's
     direction they are the SAME person, so the card reuses that record (no disambiguation,

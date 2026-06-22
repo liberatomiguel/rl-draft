@@ -136,8 +136,12 @@ export function teamAchievements(
     };
     if (regions[0] && regions.every((r) => r === regions[0])) ids.push(byRegion[regions[0]]);
     if (players.every(isEliteCard)) ids.push("ach-all-champions");
-    const lineups = players.map((p) => playerCardById.get(p.refId)?.lineupId);
-    if (lineups[0] && lineups.every((l) => l === lineups[0])) ids.push("ach-same-team");
+    // Three players from the SAME ORG (v1.4.1). The old "same lineup" check was
+    // unreachable: the draft offers each lineup at most once (shownLineupIds), so you
+    // can never field 3 cards of one lineup. Org is reachable — different seasons of
+    // the same org (e.g. NRG '16/'19/'25) share an orgId, and that's a real build.
+    const orgs = players.map((p) => playerCardById.get(p.refId)?.orgId);
+    if (orgs[0] && orgs.every((o) => o === orgs[0])) ids.push("ach-same-team");
   }
   return only(ids, earned);
 }

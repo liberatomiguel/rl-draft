@@ -754,10 +754,20 @@ export const CHANGELOG_PAGE = {
   latest: "Latest",
   releases: [
     {
+      version: "1.4.1",
+      name: "",
+      date: "2026",
+      current: true,
+      notes: [
+        "The Reunion achievement is now earnable — field three players from the same org (it used to ask for the same lineup, which the draft never offers).",
+        "Small fixes: corrected a team name and a special-card description.",
+      ],
+    },
+    {
       version: "1.4.0",
       name: "World Stage",
       date: "2026",
-      current: true,
+      current: false,
       notes: [
         "Accounts are here — sign in with a 6-digit email code to save your progress to the cloud and climb the global leaderboards (titles, top overall, and a new skill rating).",
         "New Challenges mode — rank-unlocked draft puzzles with their own twists (region, era, nationality, overall caps and more), each a best-of-7 with a real reward.",

@@ -839,10 +839,20 @@ export const PT: Copy = {
     latest: "Mais recente",
     releases: [
       {
+        version: "1.4.1",
+        name: "",
+        date: "2026",
+        current: true,
+        notes: [
+          "A conquista Reunion agora é possível — monte três jogadores da mesma org (antes pedia o mesmo lineup, que o draft nunca oferece).",
+          "Pequenas correções: nome de um time e a descrição de uma carta especial.",
+        ],
+      },
+      {
         version: "1.4.0",
         name: "World Stage",
         date: "2026",
-        current: true,
+        current: false,
         notes: [
           "Contas chegaram — entre com um código de 6 dígitos por e-mail para salvar seu progresso na nuvem e subir nos rankings globais (títulos, melhor overall e uma nova nota de habilidade).",
           "Novo modo Desafios — quebra-cabeças de draft que desbloqueiam por rank, cada um com sua pegada (região, era, nacionalidade, limite de overall e mais), em melhor-de-7 com recompensa de verdade.",

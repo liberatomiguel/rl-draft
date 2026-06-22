@@ -11,7 +11,7 @@ to the default org logo. Generated from data-sources/teams.md — run
 alpha-sydney.png
 amethyst.png
 avidity-esports.png
-bigode.png
+bigodes.png
 black-dragons.png
 blazar.png
 bodybuilders.png

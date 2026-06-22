@@ -4324,17 +4324,17 @@
     "historicalStrength": "strong"
   },
   {
-    "id": "bigode-2026",
-    "name": "Bigode",
+    "id": "bigodes-2026",
+    "name": "Bigodes",
     "seasonId": "rlcs-2026",
-    "orgId": "bigode",
+    "orgId": "bigodes",
     "region": "SAM",
     "playerCardIds": [
-      "bemmz-bigode-2026",
-      "nxghtt-bigode-2026",
-      "drufinho-bigode-2026"
+      "bemmz-bigodes-2026",
+      "nxghtt-bigodes-2026",
+      "drufinho-bigodes-2026"
     ],
-    "coachId": "kaoshi-coach-bigode-2026",
+    "coachId": "kaoshi-coach-bigodes-2026",
     "samOnly": true,
     "orgBuffLevel": "~",
     "historicalStrength": "strong"

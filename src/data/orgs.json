@@ -28,10 +28,10 @@
     "buffLevel": "~"
   },
   {
-    "id": "bigode",
-    "name": "Bigode",
+    "id": "bigodes",
+    "name": "Bigodes",
     "region": "SAM",
-    "buffType": "clutch",
+    "buffType": "experience",
     "buffLevel": "~"
   },
   {

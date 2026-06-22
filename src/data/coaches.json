@@ -2035,13 +2035,13 @@
     "bonusLevel": "+"
   },
   {
-    "id": "kaoshi-coach-bigode-2026",
+    "id": "kaoshi-coach-bigodes-2026",
     "personId": "kaoshi",
     "name": "Kaoshi",
     "country": "BR",
     "region": "SAM",
-    "orgId": "bigode",
-    "lineupId": "bigode-2026",
+    "orgId": "bigodes",
+    "lineupId": "bigodes-2026",
     "seasonId": "rlcs-2026",
     "overall": 79,
     "bonusType": "experience",

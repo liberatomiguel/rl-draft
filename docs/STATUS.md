@@ -58,7 +58,7 @@ Standard gates before any commit: `tsc` clean, **122** vitest tests pass,
   tooling/workbook (`majors-new-teams.json`, `scripts/fetch-liquipedia-majors.mjs`) stays in
   `data-sources/` for the next pass.
 - **+6 SAM-only regional teams (v1.4.0 final pass, 2026-06-22).** Black Dragons / Cadê Meu
-  Boost / NoX Gaming (S1 2016) + BS+Competition / Bigode / Plot Twist (2026), all
+  Boost / NoX Gaming (S1 2016) + BS+Competition / Bigodes / Plot Twist (2026), all
   `sam-only, legacy`. lineups 283→**289**, players →**405**, orgs →**148**; 8 new people,
   plus 2 new rare specials (royales "NRG beater" 87, freedom "OG Brazil Goat" 89 — freedom
   art + the bigode org logo still pending). `teams.md` → `build:data`. See CHANGELOG/DESIGN #95.

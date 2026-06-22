@@ -2891,13 +2891,13 @@ org: BS+Competition ~
 flag: sam-only, legacy
 ```
 
-```team: Bigode · 2026
+```team: Bigodes · 2026
 player 1: Bemmz 84
 player 2: nxghtt 85
 player 3: drufinho 87
 sub: -
 coach: Kaoshi 79
-org: Bigode ~
+org: Bigodes ~
 flag: sam-only, legacy
 ```
 

@@ -52,7 +52,7 @@
   { "id": "ach-all-oce", "title": "Oceanic Unit", "description": "Build a team of three Oceanic players.", "xp": 110, "category": "epic", "group": "roster" },
   { "id": "ach-all-apac", "title": "APAC Assembly", "description": "Build a team of three Asia-Pacific players.", "xp": 110, "category": "epic", "group": "roster" },
   { "id": "ach-all-champions", "title": "Champions Only", "description": "Build a team of three world-champion-tier players.", "xp": 120, "category": "epic", "group": "roster" },
-  { "id": "ach-same-team", "title": "Reunion", "description": "Build a team of three players from the same lineup.", "xp": 250, "category": "legend", "group": "roster" },
+  { "id": "ach-same-team", "title": "Reunion", "description": "Build a team of three players from the same org.", "xp": 250, "category": "legend", "group": "roster" },
 
   { "id": "ach-first-special", "title": "First Pull", "description": "Unlock your first special card.", "xp": 25, "category": "common", "group": "collection" },
   { "id": "ach-specials-15", "title": "Collector", "description": "Unlock 15 special cards.", "xp": 60, "category": "rare", "group": "collection" },
