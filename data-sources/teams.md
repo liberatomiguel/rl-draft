@@ -2844,10 +2844,12 @@ flag: sam-only
 ```
 
 # Wings E-Sports — Season 2 easter egg (the creator's own team, LiberatoRL).
+# Player order is intentional: LiberatoRL sits in the MIDDLE slot (player 2) so the
+# Creator card is always centered when the Wings line is drawn (by direction, v1.4).
 
 ```team: Wings E-Sports · S2 · 2016
-player 1: LiberatoRL 71
-player 2: Ninja23509 74
+player 1: Ninja23509 74
+player 2: LiberatoRL 71
 player 3: Repi 73
 sub: -
 coach: -

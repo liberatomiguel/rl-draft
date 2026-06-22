@@ -25,18 +25,24 @@ import { GameCard } from "@/components/cards/GameCard";
 const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary", "community"];
 type StatusFilter = "all" | "unlocked" | "locked";
 
-/** Sort weight per rarity — higher = rarer, ordered first within a lock state. */
+/**
+ * Sort weight per rarity — higher = first within a lock state. Order by direction
+ * (v1.4): legendary → mythic → epic → rare → content-creator → Wings → Creator. The
+ * two easter-egg rarities (Wings, Creator) sit at the very end.
+ */
 const RARITY_RANK: Record<SpecialRarity, number> = {
-  // Content-creator cards are showcased first — they're the community nods (v1.4).
-  community: 5,
-  legendary: 4,
-  mythic: 3,
-  epic: 2,
-  rare: 1,
-  // The unique Creator card carries the lowest weight — always last among
-  // unlocked cards (by direction, v1.2.0).
+  legendary: 6,
+  mythic: 5,
+  epic: 4,
+  rare: 3,
+  community: 2,
+  wings: 1,
   creator: 0,
 };
+
+/** Easter-egg rarities — masked in the collection until unlocked (Wings + Creator). */
+const SECRET_RARITIES: SpecialRarity[] = ["creator", "wings"];
+const isSecretRarity = (r: SpecialRarity) => SECRET_RARITIES.includes(r);
 
 /**
  * Progressive reveal batch (UI/perf, not gameplay — stays out of balance.ts).
@@ -357,7 +363,7 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
         <p className="display truncate text-sm font-bold uppercase tracking-wide text-faint">???</p>
         <div className="mt-1.5">
           <Badge tone="neutral" className="!text-[9px]">
-            {sp.rarity === "creator"
+            {isSecretRarity(sp.rarity)
               ? RARITY_LABELS[sp.rarity]
               : `${SPECIAL_TYPE_LABELS[sp.cardType]} · ${RARITY_LABELS[sp.rarity]}`}
           </Badge>
@@ -379,7 +385,7 @@ function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: strin
       </div>
       <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap gap-1.5">
-          {sp.rarity !== "creator" ? (
+          {!isSecretRarity(sp.rarity) ? (
             <Badge tone="gold">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
           ) : null}
           <Badge tone="orange">{RARITY_LABELS[sp.rarity]}</Badge>
@@ -417,7 +423,7 @@ function LockedDetail({ sp }: { sp: SpecialCard }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">
-        {sp.rarity !== "creator" ? (
+        {!isSecretRarity(sp.rarity) ? (
           <Badge tone="neutral">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
         ) : null}
         <Badge tone="neutral">{RARITY_LABELS[sp.rarity]}</Badge>

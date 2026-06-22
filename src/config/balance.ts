@@ -381,13 +381,16 @@ export const SPECIALS = {
     epic: 0.036,
     mythic: 0.03,
     legendary: 0.01,
+    // Easter-egg rarities (creator/wings) bypass this — assigned via the rareSpawn
+    // path and excluded from normal rolls — so their chance here is nominal only.
     creator: 0.006,
-    // Content-creator cards (v1.4): a touch above rare so they're a fun find when
-    // their (coach) card is drawn, without flooding the special economy.
-    community: 0.06,
+    wings: 0.006,
+    // Content-creator cards (v1.4): sit at the RARE tier (same rate), a fun find
+    // when their (coach) card is drawn, without flooding the special economy.
+    community: 0.045,
   } as Record<string, number>,
   /** Roll order — rarest first. The first tier the person owns that procs wins. */
-  rarityOrder: ["creator", "community", "legendary", "mythic", "epic", "rare"] as const,
+  rarityOrder: ["creator", "wings", "legendary", "mythic", "epic", "rare", "community"] as const,
   /**
    * Baseline rank special chance (Bronze–Platinum). `specialChanceMult` is
    * `rewards.specialChance / this`, so the common ranks sit at mult 1.0 and the
@@ -622,14 +625,14 @@ export const RANK_REWARDS: Record<
   // `community` (content-creator cards) rides alongside `creator`: eligible from
   // Bronze at its own rate so the creator nods can turn up for everyone (v1.4).
   unranked: { rarities: [], specialChance: 0, collection: false, hardMode: true },
-  bronze: { rarities: ["rare", "creator", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  silver: { rarities: ["rare", "epic", "creator", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  gold: { rarities: ["rare", "epic", "mythic", "creator", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  platinum: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "community"], specialChance: 0.04, collection: true, hardMode: true },
-  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "community"], specialChance: 0.06, collection: true, hardMode: true },
-  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "community"], specialChance: 0.09, collection: true, hardMode: true },
-  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "community"], specialChance: 0.12, collection: true, hardMode: true },
-  "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "community"], specialChance: 0.16, collection: true, hardMode: true },
+  bronze: { rarities: ["rare", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  silver: { rarities: ["rare", "epic", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  gold: { rarities: ["rare", "epic", "mythic", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  platinum: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.04, collection: true, hardMode: true },
+  diamond: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.06, collection: true, hardMode: true },
+  champion: { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.09, collection: true, hardMode: true },
+  "grand-champion": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.12, collection: true, hardMode: true },
+  "supersonic-legend": { rarities: ["rare", "epic", "mythic", "legendary", "creator", "wings", "community"], specialChance: 0.16, collection: true, hardMode: true },
 };
 
 export const HISTORY_LIMIT = 25;

@@ -298,6 +298,14 @@ body {
   box-shadow: 0 0 18px rgba(16, 185, 129, 0.2);
 }
 
+/* Wings E-Sports easter-egg card — orange (v1.4) */
+.card-wings {
+  background-image:
+    linear-gradient(168deg, #2a1606 0%, #190d04 58%, #2c1a08 100%),
+    linear-gradient(135deg, #fed7aa 0%, #fb923c 28%, #f97316 60%, #fdba74 100%);
+  box-shadow: 0 0 18px rgba(249, 115, 22, 0.2);
+}
+
 /* Diagonal texture behind the org logo on base cards */
 .card-texture {
   background-image: repeating-linear-gradient(
@@ -395,6 +403,16 @@ body {
 
 .card-community.card-special {
   animation: community-halo 3.4s ease-in-out infinite;
+}
+
+/* Wings halo pulse — orange (v1.4) */
+@keyframes wings-halo {
+  0%, 100% { box-shadow: 0 0 22px rgba(249, 115, 22, 0.24); }
+  50% { box-shadow: 0 0 42px rgba(251, 146, 60, 0.42); }
+}
+
+.card-wings.card-special {
+  animation: wings-halo 3.4s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -756,6 +774,12 @@ body {
   background-size: 220% 100%;
 }
 
+.holo-wings::after {
+  background:
+    linear-gradient(115deg, transparent 24%, rgba(253, 186, 116, 0.26) 40%, rgba(249, 115, 22, 0.18) 50%, rgba(251, 146, 60, 0.26) 58%, transparent 72%);
+  background-size: 220% 100%;
+}
+
 /* Cursor-tracked glare (TiltCard sets --mx/--my as percentages) */
 .tilt-glare {
   background: radial-gradient(
@@ -896,6 +920,10 @@ body {
   color: #6ee7b7; /* emerald matching the content-creator border */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(16, 185, 129, 0.6);
 }
+.ovr-wings {
+  color: #fdba74; /* orange matching the Wings border */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(249, 115, 22, 0.6);
+}
 
 /* ---------------------------------------------------------------------------
    Unlock ceremony
@@ -944,6 +972,7 @@ body {
   .card-epic.card-special,
   .card-creator.card-special,
   .card-community.card-special,
+  .card-wings.card-special,
   .field-fx,
   .field-holo,
   .field-slot-glow,
@@ -986,6 +1015,7 @@ html.force-reduce-motion
     .card-epic.card-special,
     .card-creator.card-special,
     .card-community.card-special,
+    .card-wings.card-special,
     .field-fx,
     .field-holo,
     .field-slot-glow,

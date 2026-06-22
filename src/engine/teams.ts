@@ -142,8 +142,12 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     stats[org.buffType] = clamp(stats[org.buffType] + BUFF_LEVEL_VALUE[orgBuffLevel] * 1.0, 60, 99);
   }
   if (input.coach) {
+    // v1.4: coach situational boost bumped ×1.5 → ×2.0 so a coach pulls more weight
+    // in-match (clutch/experience/consistency/mechanics modifiers in match.ts) without
+    // touching the OVERALL contribution (TEAM_RATING.coach) that anchors the Legacy
+    // difficulty curve (#89). Applies to base coaches and coach specials alike.
     const level = BUFF_LEVEL_VALUE[input.coach.bonusLevel as never] ?? 0;
-    stats[input.coach.bonusType] = clamp(stats[input.coach.bonusType] + level * 1.5, 60, 99);
+    stats[input.coach.bonusType] = clamp(stats[input.coach.bonusType] + level * 2.0, 60, 99);
   }
   if (input.sub) {
     // Squad depth scales with the sub's overall (v1.3.3): a strong/special sub is

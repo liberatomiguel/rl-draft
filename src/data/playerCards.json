@@ -7614,21 +7614,21 @@
     "manualAdjustment": 0
   },
   {
-    "id": "liberatorl-wings-e-sports-s2",
-    "playerId": "liberatorl",
-    "orgId": "wings-e-sports",
-    "lineupId": "wings-e-sports-s2",
-    "seasonId": "rlcs-s2",
-    "overall": 71,
-    "manualAdjustment": 0
-  },
-  {
     "id": "ninja23509-wings-e-sports-s2",
     "playerId": "ninja23509",
     "orgId": "wings-e-sports",
     "lineupId": "wings-e-sports-s2",
     "seasonId": "rlcs-s2",
     "overall": 74,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "liberatorl-wings-e-sports-s2",
+    "playerId": "liberatorl",
+    "orgId": "wings-e-sports",
+    "lineupId": "wings-e-sports-s2",
+    "seasonId": "rlcs-s2",
+    "overall": 71,
     "manualAdjustment": 0
   },
   {

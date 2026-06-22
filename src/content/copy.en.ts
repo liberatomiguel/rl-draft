@@ -674,6 +674,7 @@ export const RARITY_LABELS: Record<string, string> = {
   mythic: "Mythic",
   legendary: "Legendary",
   creator: "Creator",
+  wings: "Wings",
   community: "Content Creator",
 };
 
@@ -937,7 +938,7 @@ export const CHALLENGES_UI = {
 
 export const LEADERBOARDS_UI = {
   title: "Leaderboards",
-  subtitle: "Your peak rosters and milestones. Sign in with Discord to save them to the cloud and climb the global boards.",
+  subtitle: "Your peak rosters and milestones. Sign in with your email to save them to the cloud and climb the global boards.",
   yourRecords: "Your records",
   signInTitle: "Sign in to compete",
   emailPlaceholder: "your@email.com",

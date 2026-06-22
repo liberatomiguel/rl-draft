@@ -863,22 +863,39 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 
 ## v1.4 international Majors & content-creator cards (2026-06-22)
 
-90. **Content-creator cards are a new `community` rarity (emerald), parallel to the secret
-    `creator` easter-egg.** Creators who help spread the game (gian, jato) get cards visually
-    distinct from the Creator card: a normal-draw rarity (eligible Bronze+, `rarityChance`
-    0.06) with emerald/teal art, showcased FIRST in the collection grid. Because gian/jato are
-    coaches in the base, these ship as **coach** specials. **firewall154 is DEFERRED** — he
-    exists only as a SUB and the special loader anchors `baseCardId` to player/coach cards
-    only; per direction the card waits until the SAM base expansion gives him a player/coach
-    card, at which point it attaches without rework (cf. Turbopolsa, who is both player and sub).
+90. **Three distinct "special-person" rarities, by direction.** `creator` (rose/violet) is
+    liberatoRL ONLY — the one secret dev card. `wings` (orange) is the Wings E-Sports easter egg
+    (repi + ninja23509). `community` (emerald/teal) is for content creators who help spread the
+    game (gian, jato). `creator`/`wings` are easter-egg (secret in the collection, rareSpawn-only);
+    `community` is a normal-draw rarity at the **rare tier** (`rarityChance` 0.045, Bronze+).
+    Collection sort order (direction): legendary → mythic → epic → rare → content-creator → Wings
+    → Creator. Because gian/jato are coaches in the base, the content-creator cards ship as
+    **coach** specials. **firewall154 is DEFERRED** — he exists only as a SUB and the special
+    loader anchors `baseCardId` to player/coach cards only; per direction it waits until the SAM
+    base expansion gives him a player/coach card (cf. Turbopolsa, who is both player and sub).
 
-91. **Easter-egg (creator-rarity) specials are rareSpawn-EXCLUSIVE.** The Wings line now carries
-    three secret cards — the Creator (liberatoRL) plus Wings cards for repi + ninja23509 (+4 to
-    team overall and every stat, overall = base). They surface only when the Wings line is drawn,
-    via the existing rareSpawn path that guarantees a person's special there. `rollSpecial` now
-    excludes `creator` rarity from normal rolls, so a person who owns OTHER cards (repi) can't
-    surface a Wings card off the Wings line — formalising what used to hold only by accident (the
-    Creator's owner, liberatoRL, has a single card).
+91. **Easter-egg rarities (`creator` + `wings`) are rareSpawn-EXCLUSIVE.** The Wings line carries
+    three secret cards: the Creator (liberatoRL, centered) plus Wings cards for repi + ninja23509
+    (+4 to team overall and every stat, overall = base). They surface only when the Wings line is
+    drawn, via the rareSpawn path that guarantees a person's special there. `rollSpecial` excludes
+    BOTH `creator` and `wings` from normal rolls, so a person who owns OTHER cards (repi) can't
+    surface a Wings card off the Wings line. LiberatoRL is pinned to the middle player slot so the
+    Creator is always centered when the easter egg appears.
+
+92. **Imageless specials show the drafted team's org logo.** A special with no assigned art now
+    renders the ORG CREST (not stylized initials): the **drafted lineup's** crest in-game (a
+    special's displayed org follows the card you drafted, not its historical moment — #v1.3.1),
+    and the **base card's** crest in the Collection (resolved via `resolveSpecial(baseCardId)`).
+    So a Wings card on your field shows whatever crest you drafted it under, but the Collection
+    shows the Wings crest. `GameCard` `SpecialArt`.
+
+93. **Coach situational boost ×1.5 → ×2.0 (v1.4).** Coaches add a small per-attribute boost to
+    their `bonusType`, which feeds the in-match situational modifiers (clutch in deciders,
+    experience in playoffs, etc.). Bumped to make coaches — base and special — pull more weight,
+    WITHOUT touching the OVERALL contribution (`TEAM_RATING.coach`) that anchors the Legacy
+    difficulty curve (#89). Coach specials are NOT separately rated: they roll on the same
+    per-rarity table and rank gates as player specials (`rollSpecial`), keyed by their own
+    coach-special catalogue.
 
 ## Open questions for review
 

@@ -93,6 +93,7 @@ const SPECIAL_ACCENT: Record<string, string> = {
   mythic: "text-red-300",
   legendary: "text-amber-200",
   creator: "text-pink-200",
+  wings: "text-orange-300",
   community: "text-emerald-300",
 };
 
@@ -109,6 +110,7 @@ const SPECIAL_OVR_COLOR: Record<string, string> = {
   mythic: "ovr-mythic",
   legendary: "ovr-legendary",
   creator: "ovr-creator",
+  wings: "ovr-wings",
   community: "ovr-community",
 };
 
@@ -148,7 +150,7 @@ function specialBuffLabel(effect: SpecialEffect, showOverall: boolean): string |
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
   if (card.special) {
-    const holo = ["epic", "mythic", "legendary", "creator", "community"].includes(card.special.rarity)
+    const holo = ["epic", "mythic", "legendary", "creator", "wings", "community"].includes(card.special.rarity)
       ? ` holo-${card.special.rarity}`
       : "";
     return `card-${card.special.rarity} card-special${holo}`;
@@ -451,11 +453,19 @@ function SpecialArt({ card, priority }: { card: ResolvedCard; priority?: boolean
   const src = card.special?.imageUrl || `/cards/specials/${card.special?.id}.png`;
 
   if (failed) {
+    // No assigned photo → show the org logo of the team this card was DRAFTED with
+    // (resolvePlayerCard sets card.orgId/seasonId to the drafted lineup in-game, and
+    // to the base card's lineup in the Collection — exactly the two contexts we want).
+    // The center of the .special-photo gradient is transparent, so the logo reads.
     return (
       <div className="special-fallback-art">
-        <span className="display select-none text-6xl font-bold text-white/10">
-          {initials(card.name)}
-        </span>
+        {card.orgId ? (
+          <TeamLogo orgId={card.orgId} seasonId={card.seasonId} size="lg" />
+        ) : (
+          <span className="display select-none text-6xl font-bold text-white/10">
+            {initials(card.name)}
+          </span>
+        )}
         <div className="special-photo" />
       </div>
     );

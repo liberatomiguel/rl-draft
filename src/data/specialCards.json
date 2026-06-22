@@ -2276,7 +2276,7 @@
     "baseCardId": "repi-wings-e-sports-s2",
     "title": "Wings E-Sports",
     "cardType": "legend",
-    "rarity": "creator",
+    "rarity": "wings",
     "overall": 73,
     "effect": {
       "type": "team_attribute_boost",
@@ -2294,7 +2294,7 @@
     "baseCardId": "ninja23509-wings-e-sports-s2",
     "title": "Wings E-Sports",
     "cardType": "legend",
-    "rarity": "creator",
+    "rarity": "wings",
     "overall": 74,
     "effect": {
       "type": "team_attribute_boost",

@@ -182,7 +182,7 @@ export const PT: Copy = {
 
   LEADERBOARDS_UI: {
     title: "Rankings",
-    subtitle: "Seus melhores elencos e marcos. Entre com o Discord para salvá-los na nuvem e subir nos rankings globais.",
+    subtitle: "Seus melhores elencos e marcos. Entre com o seu e-mail para salvá-los na nuvem e subir nos rankings globais.",
     yourRecords: "Seus recordes",
     signInTitle: "Entre para competir",
     emailPlaceholder: "seu@email.com",
@@ -763,6 +763,7 @@ export const PT: Copy = {
     mythic: "Mítica",
     legendary: "Lendária",
     creator: "Criador",
+    wings: "Wings",
     community: "Criador de Conteúdo",
   },
 

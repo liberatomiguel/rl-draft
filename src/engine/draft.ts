@@ -79,11 +79,11 @@ export function rollSpecial(
   rng: Rng,
   allowedRarities?: readonly string[],
 ): string | undefined {
-  // Easter-egg specials (rarity "creator": the Creator + the Wings cards) are
-  // assigned ONLY via the rareSpawn-lineup path (see drawNextOffer), never a normal
-  // roll — otherwise a creator-rarity card owned by a player WITH OTHER cards (e.g.
-  // repi/ninja23509) would leak onto those cards. Exclude them here. (v1.4)
-  const rollable = pool?.filter((sp) => sp.rarity !== "creator");
+  // Easter-egg specials (rarity "creator" = the Creator/liberatoRL, "wings" = the
+  // Wings cards repi/ninja23509) are assigned ONLY via the rareSpawn-lineup path
+  // (see drawNextOffer), never a normal roll — otherwise an easter-egg card owned by
+  // a player WITH OTHER cards (repi) would leak onto those cards. Exclude them. (v1.4)
+  const rollable = pool?.filter((sp) => sp.rarity !== "creator" && sp.rarity !== "wings");
   // v1.3 rank gate: restrict the person's catalogue to the rarities the player's
   // rank has unlocked. Undefined = no gate (daily / pre-v1.3 callers). An empty
   // list (Unranked) leaves no eligible special, so none appears.

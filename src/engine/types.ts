@@ -37,9 +37,13 @@ export type SpecialRarity =
   | "epic"
   | "mythic"
   | "legendary"
+  // The secret Creator card — liberatoRL ONLY (rose/violet, easter-egg).
   | "creator"
+  // Wings E-Sports easter-egg cards (orange) — repi/ninja23509, surface only when
+  // the Wings line is drawn, like the Creator. Distinct rarity from "creator".
+  | "wings"
   // Content-creator cards (v1.4): emerald/teal, for creators who help spread the
-  // game. Appear in normal draws (not easter-egg) — distinct from "creator".
+  // game. Appear in NORMAL draws (not easter-egg), at the rare tier.
   | "community";
 
 export type SpecialCardType =

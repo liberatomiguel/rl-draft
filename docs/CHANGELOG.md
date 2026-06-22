@@ -26,16 +26,31 @@ with the root cause — that section doubles as the project's bugfix log.
   2022-23, and **"Helfie Chiefs" → Chiefs Esports Club** (a 2025 sponsor name, verified).
   Nationalities researched + filled for the new players/staff. `teams.md`,
   `build-dataset.mjs` (COUNTRY), generated `*.json`.
-- **`community` special rarity (emerald/teal) — content-creator cards.** A normal-draw rarity
-  (Bronze+), visually distinct from the `creator` easter-egg. **gian + jato** get content-
-  creator **coach** cards. Wired through `types`/`schemas`/`balance` (`rarityChance` 0.06,
-  `rarityOrder`, `RANK_REWARDS`), `GameCard` (accent/ovr/holo), `globals.css` (emerald frame /
-  halo / holo / ovr), `CollectionView` (filter chip + showcased first), `copy.en/pt`.
+- **`community` special rarity (emerald/teal) — content-creator cards.** A normal-draw rarity at
+  the **rare tier** (`rarityChance` 0.045, Bronze+), visually distinct from the easter-egg cards.
+  **gian + jato** get content-creator **coach** cards. Wired through `types`/`schemas`/`balance`
+  (`rarityChance`, `rarityOrder`, `RANK_REWARDS`), `GameCard` (accent/ovr/holo), `globals.css`
+  (emerald frame/halo/holo/ovr), `CollectionView`, `copy.en/pt`.
+- **`wings` special rarity (orange) — the Wings E-Sports easter egg.** A SEPARATE rarity from the
+  `creator` card (which is liberatoRL ONLY). **repi + ninja23509** get `wings` cards (secret in
+  the collection, +4 team overall & all stats, overall = base), anchored to the Wings line so they
+  surface ONLY when it's drawn — via the existing rareSpawn path. Excluded from normal rolls
+  alongside `creator` (`rollSpecial`). Own orange frame/halo/holo/ovr in `globals.css`.
 - **brunovisquii — rare coach special** (coach of Team Secret).
-- **Wings E-Sports easter-egg cards for repi + ninja23509** (`creator` rarity, secret in the
-  collection, +4 team overall & all stats, overall = base). Anchored to the Wings line, so they
-  surface ONLY when that rare line is drawn — like the Creator card, via the existing rareSpawn
-  path (no new mechanism). 4 new org logos mapped in `asset-overrides.json`.
+- **Special cards with no assigned image now show the ORG LOGO** instead of stylized initials —
+  the **drafted team's** crest in-game (follows `card.orgId`, set to the drafted lineup by
+  `resolvePlayerCard`) and the **base card's** crest in the Collection (resolved via
+  `resolveSpecial(baseCardId)`). `GameCard` `SpecialArt` fallback.
+
+#### Changed
+- **Collection sort order (by direction):** legendary → mythic → epic → rare → content-creator →
+  Wings → Creator (the two easter-egg rarities sit last). `CollectionView` `RARITY_RANK`.
+- **Wings offer always centers the Creator:** the Wings line is reordered so LiberatoRL is the
+  middle player slot, so his Creator card sits in the center when the easter egg is drawn.
+- **Coach situational boost ×1.5 → ×2.0** so coaches (base + special) pull more weight in-match
+  (clutch/experience/consistency/mechanics modifiers) without touching the OVERALL contribution
+  that anchors the Legacy difficulty curve (#89). Coach specials already share the player
+  per-rarity rates + rank gates (`rollSpecial` — no separate coach rate). `teams.ts`.
 
 #### Fixed
 - **Creator-rarity specials could leak onto a person's other cards.** `rollSpecial` included
@@ -56,6 +71,11 @@ with the root cause — that section doubles as the project's bugfix log.
 - **firewall154 content-creator card.** He exists only as a SUB in the base, and the special
   loader resolves `baseCardId` against player/coach cards only. Deferred per direction until the
   SAM base expansion gives him a player/coach card — the special attaches then without rework.
+- **3 new-org logos need manual curation.** `fetch-assets --orgs` pulled the wrong crest for
+  `quadrant` (→ Team Liquid), `luminosity-gaming` (→ ROUNDS) and `team-mobula` (→ 9Lies) —
+  same-name/rebrand collisions on Liquipedia. Set to `false` in `asset-overrides.json` (monogram
+  fallback) so nothing wrong ships; correct PNGs can be dropped into `public/orgs/`. `detonator`
+  fetched correctly and is in.
 
 ### Staging-review adjustments (2026-06-21)
 
