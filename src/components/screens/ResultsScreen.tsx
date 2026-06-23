@@ -102,7 +102,12 @@ export function ResultsScreen({ run }: { run: RunState }) {
   // Legacy title — the all-time gauntlet. The hardest win in the game gets the
   // richest celebration (crown emblem, selo, denser rays + confetti) — v1.4.
   const isLegacyChampion = isChampion && run.difficulty === "legacy";
-  const xpBefore = Math.max(0, xpNow - results.xp.total);
+  // Rank-up baseline = the profile XP captured when the run STARTED (v1.4.4). The run's
+  // whole XP gain — placement + end feats + any mid-run achievement XP that was already
+  // applied live — lands here, so a rank crossed at any point during the run still fires
+  // the ceremony on results. (Older runs without `xpAtStart` fall back to the estimate,
+  // which misses mid-run achievement / counter XP — the exact bug this fixes.)
+  const xpBefore = run.xpAtStart ?? Math.max(0, xpNow - results.xp.total);
   const rankBefore = rankForXp(xpBefore);
   const rankAfter = rankForXp(xpNow);
   const rankedUp = rankBefore.id !== rankAfter.id;

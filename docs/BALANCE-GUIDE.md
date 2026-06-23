@@ -228,10 +228,14 @@ whole economy — no placement curve, no difficulty multiplier:
 | Outcome | MMR |
 | --- | --- |
 | Easy title | 1 |
-| Normal title | 1 |
-| Hard title | 3 |
-| Legacy grand finalist (runner-up) | 5 |
+| Normal title | 2 |
+| Hard title | 5 |
+| Legacy grand finalist (runner-up) | 4 |
 | Legacy title | 9 |
+
+(v1.4.4 re-tune: Normal 1→2, Hard 3→5, Legacy finalist 5→4 — Hard now reads as real
+prestige; the finalist sits a notch below a Hard title. Forward-looking — live gains
+use the new table; existing backfilled accounts aren't recomputed.)
 
 Live gains are linear and tiny, so climbing past ~1500 (the elite band) is a real
 grind. `backfillCap` (**1600**) clamps the retroactive value for pre-rework

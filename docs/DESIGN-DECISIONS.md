@@ -766,11 +766,12 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 
 ## v1.4 staging-review adjustments (2026-06-21)
 
-82. **MMR reworked to a flat, win-only economy (revises #80).** Playtesting showed the
-    placement-curve MMR over-rewarded — a fresh account with mediocre results drifted to
-    ~1200 and elites blew past 1500. New rule: MMR moves **only on a title**, by a flat
-    table — Easy/Normal championship **+1**, Hard **+3**, Legacy grand finalist **+5**,
-    Legacy title **+9**; every other outcome **0** (no placement curve, no per-Swiss-win,
+82. **MMR reworked to a flat, win-only economy (revises #80; re-tuned v1.4.4 — see #101).**
+    Playtesting showed the placement-curve MMR over-rewarded — a fresh account with mediocre
+    results drifted to ~1200 and elites blew past 1500. New rule: MMR moves **only on a title**,
+    by a flat table — Easy **+1**, Normal **+2**, Hard **+5**, Legacy grand finalist **+4**,
+    Legacy title **+9** (v1.4.4 values; originally Easy/Normal +1, Hard +3, finalist +5);
+    every other outcome **0** (no placement curve, no per-Swiss-win,
     no difficulty multiplier, no regional bonus). Start stays 1000; gains are linear and
     tiny, so climbing well past 1600 is a deliberate grind. **Retroactive backfill is
     capped at 1600** (`MMR.backfillCap`) via a saturating curve of title history
@@ -975,6 +976,17 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      and fielding a card is the unlock event; clearing only governs the *reward* (XP + reward
      card), which stays one-and-done. Implemented as a standalone `profileStore.collectSpecials`
      called from `runStore.playChallenge`. See CHANGELOG [1.4.3] "Fixed".
+
+101. **MMR per-title award re-tuned (v1.4.4, refines #82).** Miguel's call: the v1.4 table
+     (Easy/Normal +1, Hard +3, Legacy finalist +5, Legacy title +9) under-sold a Hard title
+     and let the Legacy *runner-up* out-earn it. New table — Easy **+1**, Normal **+2**, Hard
+     **+5**, Legacy finalist **+4**, Legacy title **+9** — makes Hard read as real prestige and
+     ranks the Legacy grand-finalist just *below* a Hard title (a final you lost is worth less
+     than a tier you conquered). Win-only economy and the saturating backfill are unchanged
+     (#82). **Forward-looking only:** `mmrRawGain` uses the new table for live gains; existing
+     profiles already backfilled at profile-v11 are NOT recomputed (no version bump — MMR is
+     cosmetic and "never lost / cloud-merge max", so a one-time re-base wasn't worth resetting
+     everyone). `balance.ts` `MMR.award`.
 
 ## Open questions for review
 

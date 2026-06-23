@@ -10,6 +10,40 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.4] — 2026-06-23 · "World Stage" patch
+
+#### Balance
+- **MMR per-title award re-tuned (#101).** Normal **1 → 2**, Hard **3 → 5**, Legacy finalist
+  **5 → 4**; Easy (+1) and Legacy title (+9) unchanged. Hard now reads as real prestige, and a
+  *lost* Legacy grand final sits a notch below a Hard title won. Win-only economy + saturating
+  backfill unchanged (#82). **Forward-looking:** `mmrRawGain` uses the new table for live gains;
+  existing profiles already backfilled at v11 aren't recomputed (MMR is cosmetic, never lost,
+  cloud-merge max — not worth a re-base). `balance.ts`. (And yes — Hard wins *did* already award
+  MMR; this just raises Hard from +3 to +5.)
+
+#### Changed
+- **Header rank emblems normalised to a consistent visual size.** The `menu` rank PNGs are all
+  160×160 but fill their canvas by very different amounts — gold's solid triangle covers ~47% of
+  pixels, Supersonic Legend's airy winged emblem ~25% — so under `object-contain` the heavier
+  ranks rendered visibly oversized next to the profile in the header. Each menu rank now carries a
+  per-rank scale (√ of its opaque-pixel area vs Supersonic Legend, the reference "right" size,
+  clamped to ≤1), so every emblem reads at SSL's weight. The reserved layout box is unchanged, so
+  there's no layout shift. The profile art set was already uniform (~0.30 coverage) and is
+  untouched. `RankBadge.tsx`.
+
+#### Fixed
+- **Rank-up ceremony didn't play on the results screen after a mid-run rank-up.** If an
+  achievement earned MID-run pushed you across a rank threshold, its XP was applied to the profile
+  live — so the results screen's baseline (`xpNow − results.xp.total`) already contained it, saw no
+  rank change, and skipped the ceremony. The run now stamps `xpAtStart` (profile XP the instant the
+  run was created) and uses THAT as the rank-up baseline, so the run's whole XP gain — mid-run
+  feats, end placement, counter achievements — fires the ceremony on results no matter when each
+  piece landed. Root cause: the baseline subtracted only the run-results XP figure, but mid-run
+  achievement and post-run counter XP are applied outside it. `runStore.ts`, `ResultsScreen.tsx`,
+  `engine/types.ts`.
+
+---
+
 ## [1.4.3] — 2026-06-23 · "World Stage" patch
 
 #### Balance

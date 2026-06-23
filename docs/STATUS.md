@@ -100,8 +100,8 @@ Standard gates before any commit: `tsc` clean, **122** vitest tests pass,
    **run recap** (history → see how a run went); collection counter ghost-card fix;
    leaderboards trophy in the header. Engine purity + the §25 anchors hold.
 6. **Staging-review adjustments (2026-06-21)** — see CHANGELOG "Staging-review
-   adjustments": **MMR reworked** to a win-only economy (Easy/Normal title +1, Hard +3,
-   Legacy finalist +5, Legacy title +9; backfill capped at 1600; profile v11 hard-reset);
+   adjustments": **MMR reworked** to a win-only economy (re-tuned v1.4.4 to Easy +1, Normal
+   +2, Hard +5, Legacy finalist +4, Legacy title +9; backfill capped at 1600; profile v11 hard-reset);
    **Legacy unlock** decoupled from Daily/Challenge wins (`legacyUnlocked` latch);
    **Challenges** all Bo7, **rerolls by difficulty** (8/5/3/0), XP retuned, grown to
    **20** spread across every rank Bronze→SSL, all sim-validated into a difficulty band

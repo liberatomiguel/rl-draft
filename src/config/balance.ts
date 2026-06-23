@@ -511,8 +511,8 @@ export const XP = {
  *   - WINS ONLY. A mediocre run is worth nothing; only a championship moves the bar,
  *     and only by a few points. The flat per-title `award` table below is the WHOLE
  *     economy — no placement curve, no per-Swiss-win, no difficulty multiplier, no
- *     regional bonus. Easy/Normal titles are a token +1; the prestige sits in Hard (+3),
- *     the Legacy grand final (+5) and the Legacy title (+9).
+ *     regional bonus. Easy is a token +1 and Normal +2; the prestige sits in Hard (+5),
+ *     the Legacy grand final (+4) and the Legacy title (+9). (Re-tuned v1.4.4.)
  *   - Live gains are LINEAR and tiny, so climbing well past 1500 takes a real grind.
  *   - BACKFILL is capped at `backfillCap` (1600): the retroactive value for a profile
  *     created before this rework is a SATURATING curve of its title history, so the best
@@ -532,12 +532,13 @@ export const MMR = {
   /** Saturation constant for the backfill curve (K). Lower = histories approach the cap
    *  faster. K=120 puts raw 100→~1339, 200→~1487, 300→~1551, 500→~1591 (cap 1600). */
   backfillScale: 120,
-  /** Flat MMR per QUALIFYING outcome. Everything not listed here is worth 0. */
+  /** Flat MMR per QUALIFYING outcome. Everything not listed here is worth 0.
+   *  Re-tuned v1.4.4 (Hard now reads as real prestige; Normal a small step up). */
   award: {
     easyTitle: 1,
-    normalTitle: 1,
-    hardTitle: 3,
-    legacyFinalist: 5, // Legacy grand finalist (runner-up)
+    normalTitle: 2,
+    hardTitle: 5,
+    legacyFinalist: 4, // Legacy grand finalist (runner-up)
     legacyTitle: 9,
   },
 } as const;

@@ -33,6 +33,27 @@ const RANK_TINT: Record<string, string> = {
   "supersonic-legend": "from-fuchsia-300/40 to-orange-600/45 border-fuchsia-300/60",
 };
 
+/**
+ * Per-rank visual-size normalisation for the **menu** art set (v1.4.4). Those PNGs
+ * are all 160×160 but fill the canvas by wildly different amounts — gold's solid
+ * triangle covers ~47% of pixels while Supersonic Legend's airy winged emblem covers
+ * ~25% — so under `object-contain` the heavier ones rendered visibly oversized in the
+ * header. Supersonic Legend is the reference "right" size (matches the live profile
+ * art set, which is already uniform at ~0.30 coverage). Each factor = √(SSL coverage /
+ * this rank's coverage), clamped to ≤1 (only shrink), measured from the opaque-pixel
+ * area. Tweak a single value by eye to taste; ranks not listed render at 1.0. The
+ * profile variant is already uniform, so this applies to `variant: "menu"` only.
+ */
+const MENU_GLYPH_SCALE: Record<string, number> = {
+  gold: 0.73,
+  silver: 0.76,
+  bronze: 0.78,
+  diamond: 0.79,
+  "grand-champion": 0.81,
+  platinum: 0.89,
+  champion: 0.9,
+};
+
 export function RankBadge({
   rank,
   variant,
@@ -46,6 +67,10 @@ export function RankBadge({
 }) {
   const src = `/ranks/${variant}/${rank.id}.png`;
   const [failed, setFailed] = useState(false);
+  // Normalise the menu art's wildly-varying canvas fill so no rank looks oversized
+  // next to another (v1.4.4). Reserved layout box is unchanged (transform doesn't
+  // reflow), so there's no layout shift — only the painted glyph shrinks.
+  const glyphScale = variant === "menu" ? MENU_GLYPH_SCALE[rank.id] ?? 1 : 1;
 
   // Re-try when the rank changes (e.g. rank up while mounted).
   useEffect(() => setFailed(false), [src]);
@@ -83,6 +108,7 @@ export function RankBadge({
       // only stole bandwidth from the real LCP (the hero paragraph) on mobile.
       decoding="async"
       onError={() => setFailed(true)}
+      style={glyphScale !== 1 ? { transform: `scale(${glyphScale})` } : undefined}
       className={cx("shrink-0 object-contain", SIZES[size], className)}
     />
   );

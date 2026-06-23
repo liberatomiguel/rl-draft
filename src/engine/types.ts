@@ -597,6 +597,12 @@ export interface RunState {
   showOverall: boolean;
   phase: RunPhase;
   startedAt: string;
+  /** Profile XP the instant this run was created — the rank-up baseline (v1.4.4).
+   *  Lets the results screen fire the rank-up ceremony for the run's WHOLE XP gain,
+   *  including mid-run achievement XP that was already applied live (which otherwise
+   *  poisons an `xpNow − results.xp.total` estimate). Optional: runs persisted before
+   *  v1.4.4 fall back to the estimate. */
+  xpAtStart?: number;
   daily?: DailyInfo;
   /** Set on `mode: "challenge"` runs (v1.4) — the puzzle being attempted. */
   challengeId?: string;

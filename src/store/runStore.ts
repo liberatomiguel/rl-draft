@@ -112,7 +112,8 @@ export const useRunStore = create<RunStore>()(
         // v1.3 rank rewards: the player's rank gates which special rarities can
         // appear and scales their chance (Unranked → none; Champion+ → richer).
         // Folded into specialChanceMult so the draft engine stays unchanged.
-        const rewards = rankRewardsForXp(useProfileStore.getState().xp);
+        const xpAtStart = useProfileStore.getState().xp;
+        const rewards = rankRewardsForXp(xpAtStart);
         const draft = drawNextOffer(
           createDraft(difficulty, {
             mode,
@@ -136,6 +137,7 @@ export const useRunStore = create<RunStore>()(
           showOverall: profile.overallLockedHidden ? false : showOverall,
           phase: "draft",
           startedAt: new Date().toISOString(),
+          xpAtStart,
           draft,
           tournament: null,
           challenge: null,
@@ -180,6 +182,7 @@ export const useRunStore = create<RunStore>()(
           showOverall: config.hiddenOverall ? false : true,
           phase: "draft",
           startedAt: new Date().toISOString(),
+          xpAtStart: useProfileStore.getState().xp,
           daily: config.info,
           draft,
           tournament: null,

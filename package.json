@@ -1,6 +1,6 @@
 {
   "name": "rocket-draft",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "private": true,
   "browserslist": [
     "chrome >= 111",

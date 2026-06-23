@@ -292,8 +292,8 @@ export const useProfileStore = create<ProfileState>()(
           const goalsScored = state.goalsScored + results.userGoals;
           // results.xp.total already includes the run-state achievement XP.
           const xpAfterRun = state.xp + results.xp.total;
-          // Cosmetic MMR (v1.4 rework): a flat per-TITLE award (Easy/Normal +1, Hard +3,
-          // Legacy finalist +5, Legacy title +8); every other outcome is 0. `lastMmrGain`
+          // Cosmetic MMR (v1.4.4 re-tune): a flat per-TITLE award (Easy +1, Normal +2, Hard +5,
+          // Legacy finalist +4, Legacy title +9); every other outcome is 0. `lastMmrGain`
           // feeds the results-screen readout (shown only when > 0). Challenge mode never
           // reaches here; Daily does and a Daily title earns MMR like any tournament.
           const mmr = mmrAfterRun(state.mmr, entry.difficulty, results.placement);
