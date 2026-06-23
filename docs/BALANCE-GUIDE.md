@@ -66,16 +66,19 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `aiRollRange` | [-4, 4] | [-4, 4] | [-4, 4] | [-4, 4] |
 | `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.4 | 3.0 |
 | `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
-| `opponentRatingShift` | -2.0 | -1.3 | -0.7 | +1.20 |
+| `opponentRatingShift` | -2.0 | -1.3 | -0.7 | +1.3 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
 
-Legacy's `+1.20` (v1.4 retune, #79.1) was tuned on the **realistic-draft win-rate curve**
-(`difficulty.sim.test.ts`): a ~92 team ≈ 0%, the elite tier climbs to 96-97 ≈ 15% and a
-98+ pinnacle ≈ 49%. Region-locked (SAM) runs add a **per-difficulty** flat boost to every
-opponent (`REGION_LOCK.opponentRatingBoost` is a per-difficulty record: easy/normal/hard
-+2, **legacy +1.5**, moved in lockstep with the WW shift) — SAM lives on its own flatter
-scale (its ~92-93 ceiling ≈ 34%, never
-impossible), so the weaker regional field plays at its intended curve.
+Legacy's `+1.3` (v1.4 retune; #79.1 set 1.2, #94 nudged 1.2 → 1.3) was tuned on the
+**realistic-draft win-rate curve** (`difficulty.sim.test.ts`): a ~92 team ≈ 0%, the elite
+tier climbs to 96-97 ≈ 15% and a 98+ pinnacle ≈ 49%. Region-locked (SAM) runs add a
+**per-difficulty** flat boost to every opponent (`REGION_LOCK.opponentRatingBoost` is a
+per-difficulty record: easy/normal/hard +2, **legacy +4.0** — tuned on SAM's OWN curve, NOT
+in lockstep with the WW shift). SAM lives on its own flatter scale, re-anchored to its **~95
+achievable ceiling** (v1.4.3, #99): the 94-95 ceiling ≈ 32% title, non-elite walled out, never
+impossible — so the weaker regional field plays at its intended curve. Watch the **reach-the-
+final %** the sim now logs, not just the title rate: it was a 90-91 making the grand final 32%
+of runs (not the title rate) that exposed the pre-#99 ease.
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
 

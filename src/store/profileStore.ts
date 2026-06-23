@@ -99,6 +99,10 @@ export interface ProfileState {
     challengeId: string,
     reward: { xp: number; badge?: string; specialId?: string },
   ) => void;
+  /** Add fielded special cards to the collection — the same unlock a normal run
+   *  does (compileResults → applyRunResults), exposed standalone so the Challenge
+   *  flow can collect the specials it drafted too. Idempotent. (v1.4.3, #100) */
+  collectSpecials: (specialIds: string[]) => void;
   /** Replace the durable slice wholesale (v1.4 cloud sync — after a merge). */
   hydrateDurable: (durable: DurableProfile) => void;
   /** Award achievements the MOMENT they're earned (v1.4): mark + grant XP +
@@ -363,6 +367,20 @@ export const useProfileStore = create<ProfileState>()(
             challengesCompleted: { ...state.challengesCompleted, [challengeId]: now },
             unlockedSpecials,
           };
+        }),
+
+      collectSpecials: (specialIds) =>
+        set((state) => {
+          const unlockedSpecials = { ...state.unlockedSpecials };
+          const now = new Date().toISOString();
+          let changed = false;
+          for (const id of specialIds) {
+            if (!unlockedSpecials[id]) {
+              unlockedSpecials[id] = now;
+              changed = true;
+            }
+          }
+          return changed ? { unlockedSpecials } : {};
         }),
 
       hydrateDurable: (durable) =>

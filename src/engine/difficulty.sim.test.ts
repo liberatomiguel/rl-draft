@@ -17,14 +17,18 @@
  * Design targets (Miguel, v1.4): Legacy is the all-time wall, but the elite tier must have
  * a real, satisfying shot (no "can never win" frustration), while non-elite teams almost
  * never take it. Worldwide: a ~92 team ≈ 0%, the elite tier climbs — 96-97 ≈ 15%, a 98+
- * pinnacle ≈ 49%. SAM lives on a LOWER, FLATTER scale (a weaker pool, ~93 ceiling, high
- * chemistry): its ~92-93 pinnacle ≈ 34%, and it's never impossible. Tuned via Legacy
- * `opponentRatingShift` (worldwide) and `REGION_LOCK.opponentRatingBoost.legacy` (SAM,
- * raised in lockstep when the shift drops so the SAM curve stays put).
+ * pinnacle ≈ 49%. SAM lives on a LOWER, FLATTER scale (a weaker pool, high chemistry) and is
+ * re-anchored to its ~95 achievable ceiling (v1.4.3, #99): the 94-95 ceiling keeps a real
+ * shot (≈32% title), non-elite (≤91) is walled out, never impossible. Tuned via Legacy
+ * `opponentRatingShift` (worldwide) and `REGION_LOCK.opponentRatingBoost.legacy` (SAM, tuned
+ * on its OWN curve — the old "moves in lockstep with the WW shift" rule was dropped in #94).
  *
- * This doubles as the TUNING TOOL: the per-bucket curve is logged; tweak the knobs in
- * balance.ts and re-run to read the new curve. Slower than a unit test (it drafts +
- * simulates thousands of tournaments) but deterministic, so the asserts never flake.
+ * This doubles as the TUNING TOOL: the per-bucket curve is logged, both the TITLE rate and
+ * the REACH-THE-GRAND-FINAL rate (the latter exposed the v1.4.2 SAM ease that the title rate
+ * alone hid — #99). Tweak the knobs in balance.ts and re-run to read the new curve; `curve()`
+ * also takes a `boostOverride` so you can sweep SAM boosts without editing balance.ts. Slower
+ * than a unit test (it drafts + simulates thousands of tournaments) but deterministic, so the
+ * asserts never flake.
  */
 
 import { describe, expect, it } from "vitest";
@@ -111,34 +115,44 @@ const BUCKETS_SAM: [string, (r: number) => boolean][] = [
   ["90-91", (r) => r >= 90 && r < 92], ["92-93", (r) => r >= 92 && r < 94], ["94+", (r) => r >= 94],
 ];
 
-/** Win-rate-by-final-overall curve from realistic reset-drafts. Returns title rate per bucket. */
-function curve(label: string, difficulty: Difficulty, region: "SAM" | undefined, sessions: number, maxResets: number, perTeam: number): Record<string, number> {
+/**
+ * Win-rate-by-final-overall curve from realistic reset-drafts. Logs both the title rate and
+ * the reach-the-grand-final rate per bucket; returns the title rate per bucket (asserts use it).
+ * `boostOverride` forces the SAM opponent boost (tuning hook — sweep candidates without editing
+ * balance.ts); when omitted it reads the live `REGION_LOCK.opponentRatingBoost` value.
+ */
+function curve(label: string, difficulty: Difficulty, region: "SAM" | undefined, sessions: number, maxResets: number, perTeam: number, boostOverride?: number): Record<string, number> {
   const pool = region === "SAM" ? lineupPoolForRegion("SAM") : undefined;
-  const oppBoost = region === "SAM" ? REGION_LOCK.opponentRatingBoost[difficulty] : 0;
+  const oppBoost = boostOverride ?? (region === "SAM" ? REGION_LOCK.opponentRatingBoost[difficulty] : 0);
   const buckets = region === "SAM" ? BUCKETS_SAM : BUCKETS_WW;
-  const tally: Record<string, { runs: number; titles: number }> = {};
-  let runs = 0, titles = 0;
+  const tally: Record<string, { runs: number; titles: number; finals: number }> = {};
+  let runs = 0, titles = 0, finals = 0;
   for (let i = 0; i < sessions; i++) {
     const resets = i % (maxResets + 1);
     const got = draftBestOf(difficulty, 200000 + i * 131, pool, resets);
     if (!got) continue;
     const key = buckets.find(([, hit]) => hit(got.ovr))![0];
-    tally[key] = tally[key] ?? { runs: 0, titles: 0 };
+    tally[key] = tally[key] ?? { runs: 0, titles: 0, finals: 0 };
     for (let j = 0; j < perTeam; j++) {
       const rng = createRng(700000 + i * 311 + j * 17);
       const t = fastForward(initTournament(got.team, difficulty, rng, { poolLineupIds: pool, opponentRatingBoost: oppBoost }), difficulty, rng);
+      const place = userPlacement(t);
       tally[key].runs++; runs++;
-      if (userPlacement(t) === "champion") { tally[key].titles++; titles++; }
+      if (place === "champion") { tally[key].titles++; titles++; }
+      // "Reached the grand final" = won it OR lost it (Miguel's "chegar na final" feedback).
+      if (place === "champion" || place === "runner_up") { tally[key].finals++; finals++; }
     }
   }
   const rate: Record<string, number> = {};
   console.log(`\n=== ${label} — ${sessions} reset-sessions × ${perTeam} tourneys ===`);
+  console.log(`  ${"final OVR".padEnd(9)}  title%   reachedFinal%   (n)`);
   for (const [key] of buckets) {
     const x = tally[key]; if (!x || x.runs === 0) continue;
     rate[key] = x.titles / x.runs;
-    console.log(`  final OVR ${key.padEnd(6)}  ${(rate[key] * 100).toFixed(1)}%  (n=${x.runs})`);
+    const finalPct = (x.finals / x.runs * 100).toFixed(1);
+    console.log(`  ${key.padEnd(9)}  ${(rate[key] * 100).toFixed(1).padStart(5)}%  ${finalPct.padStart(11)}%   (n=${x.runs})`);
   }
-  console.log(`  >>> blended: ${(titles / runs * 100).toFixed(1)}%`);
+  console.log(`  >>> blended title: ${(titles / runs * 100).toFixed(1)}%  ·  reachedFinal: ${(finals / runs * 100).toFixed(1)}%`);
   return rate;
 }
 
@@ -155,11 +169,20 @@ describe("Legacy difficulty — realistic-draft win-rate curve (v1.4)", () => {
     expect(r["98+"]).toBeGreaterThan(r["96-97"]); // monotonic at the top
   }, 120000);
 
-  it("SAM: lower, flatter scale — the ~92-93 ceiling is a real but hard shot (~22%), 94+ pinnacle ~47%", () => {
+  it("SAM: lower, flatter scale — non-elite is walled out, the 94-95 ceiling keeps a real shot (~32%)", () => {
+    // v1.4.3 (#99): re-anchored to the ~95 achievable ceiling. The TITLE rate alone hid the
+    // ease — at boost 2.8 a 90-91 REACHED THE GRAND FINAL 32% of runs and a 92-93 68%, so the
+    // curve() harness now also logs reach-final %. Boost 4.0 walls the non-elite: 90-91 ≈ 3%
+    // title / 14% final, 92-93 ≈ 13% / 48%, the 94-95 ceiling ≈ 32% / 87%.
     const r = curve("Legacy SAM", "legacy", "SAM", 320, 32, 12);
-    expect(r["88-89"]).toBeLessThan(0.15); // mid-SAM rarely takes it
-    expect(r["92-93"]).toBeGreaterThan(0.15); // the SAM ceiling has a real shot…
-    expect(r["92-93"]).toBeLessThan(0.35); // …but stays a hard wall (v1.4.2: was 0.22–0.5 at boost 1.65)
-    if (r["94+"] != null) expect(r["94+"]).toBeLessThan(0.6); // the 94+ pinnacle stays rewarding, not a lock
+    expect(r["88-89"]).toBeLessThan(0.05); // weak SAM ≈ never
+    expect(r["90-91"]).toBeLessThan(0.08); // a "not so strong" team almost never takes it
+    expect(r["92-93"]).toBeGreaterThan(0.05); // a strong SAM team has a real but long shot…
+    expect(r["92-93"]).toBeLessThan(0.22); // …≈13% (v1.4.3: was 0.15–0.35 at boost 2.8)
+    if (r["94+"] != null) {
+      expect(r["94+"]).toBeGreaterThan(0.18); // the 94-95 ceiling is rewarding (no "never win")…
+      expect(r["94+"]).toBeLessThan(0.45); // …but stays a hard wall, not a lock
+      expect(r["94+"]).toBeGreaterThan(r["92-93"]); // monotonic at the top
+    }
   }, 120000);
 });

@@ -294,17 +294,18 @@ export const REGION_LOCK = {
   //  · easy/normal/hard keep the v1.3.2 value (2). SAM there stays the accessible,
   //    region-pride mode — Hard SAM is still easy at the top (a strong draft wins
   //    most runs); Hard has its own rate and was left untouched this pass.
-  //  · legacy 2.8 (v1.4.2; was 1.65 in #94, 1.5 in #79.1): SAM lives on a LOWER, FLATTER
+  //  · legacy 4.0 (v1.4.3, #99; was 2.8 in #98, 1.65 in #94): SAM lives on a LOWER, FLATTER
   //    overall scale (weaker pool, but very high chemistry), so it gets its OWN curve, not
   //    the worldwide one. The SAM effective shift = legacy.opponentRatingShift (1.3) +
-  //    this boost = 4.10. The v1.4 +6-SAM-teams pass raised the ACHIEVABLE ceiling well
-  //    above 93 (kv1 88, drufinho 87, … + chemistry/specials), and at 1.65 the top was far
-  //    too easy in playtest (Miguel went champion with 93 AND 95 teams): 92-93 ≈ 36% and
-  //    the new 94+ pinnacle ≈ 61%. Raised 1.65 → 2.8 to restore a real wall. Measured
-  //    (`difficulty.sim.test.ts`, SAM): 88-89 ≈ 1%, 90-91 ≈ 6%, the ~92-93 ceiling ≈ 22%
-  //    (a 93 wins ~1-in-5), the 94+ pinnacle ≈ 47% (rewarding, like the WW 98+ ≈ 42%),
-  //    blended ≈ 18%. The flat SAM curve means hardening the top also hardens the middle.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 2.8 } as Record<
+  //    this boost = 5.30. The achievable SAM ceiling is ~95 (the strongest roster ever
+  //    built). At 2.8 the TITLE rate looked fine, but the REACH-THE-FINAL rate exposed the
+  //    ease (Miguel's #99 feedback — winning/reaching the final with weak teams): a "not so
+  //    strong" 90-91 reached the grand final in 32% of runs and a 92-93 in 68%. Raised
+  //    2.8 → 4.0 to wall out non-elite while the 95 ceiling stays rewarding. Measured
+  //    (`difficulty.sim.test.ts`, SAM — title / reach-final): 88-89 ≈ 0.6% / 2%, 90-91 ≈
+  //    3% / 14%, 92-93 ≈ 13% / 48%, the 94-95 ceiling ≈ 32% / 87%, blended ≈ 10% / 34%.
+  //    The flat SAM curve means hardening the top also hardens the middle.
+  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 4.0 } as Record<
     Difficulty,
     number
   >,

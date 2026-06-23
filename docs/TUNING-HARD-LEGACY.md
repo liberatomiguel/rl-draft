@@ -61,22 +61,25 @@ weakening opponents.
 ## SAM (region-locked) only
 
 ```ts
-REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 2.8 }
+REGION_LOCK.opponentRatingBoost  // per-difficulty: { easy: 2, normal: 2, hard: 2, legacy: 4.0 }
 ```
 
 A **per-difficulty record** (not a flat scalar) added to **every region-locked
 opponent**. **Higher → harder SAM**, **lower → easier SAM**. easy/normal/hard stay
-at **2**; **legacy is 2.8** (v1.4.2, #98; was 1.65 in #94, 1.5 in #79.1), so the SAM Legacy
-effective shift = `legacy.opponentRatingShift (1.3) + 2.8 = 4.10`. This boost is tuned
-INDEPENDENTLY of the WW shift (the old "moves in lockstep" rule was dropped in #94). The v1.4
-+6-SAM-teams pass raised the achievable ceiling well above 93, so at 1.65 the top was too easy
-(92-93 ≈ 36%, the new 94+ pinnacle ≈ 61% — champion with 93 AND 95 rosters); 2.8 restores a
-real wall. SAM lives on its OWN lower, flatter scale (weaker pool, very high chemistry), tuned
-to its own curve — NOT the worldwide one. Measured (`difficulty.sim.test.ts`, SAM, post-#98):
-88-89 ≈ 1% · 90-91 ≈ 6% · **92-93 (the SAM ceiling) ≈ 22%** · **94+ pinnacle ≈ 47%** · never
-impossible. Because the SAM
-curve is flat, lowering this boost lifts the top AND the middle together. Tune the
-per-difficulty entry you care about — raising `legacy` re-hardens SAM Legacy only.
+at **2**; **legacy is 4.0** (v1.4.3, #99; was 2.8 in #98, 1.65 in #94), so the SAM Legacy
+effective shift = `legacy.opponentRatingShift (1.3) + 4.0 = 5.30`. This boost is tuned
+INDEPENDENTLY of the WW shift (the old "moves in lockstep" rule was dropped in #94). SAM lives
+on its OWN lower, flatter scale (weaker pool, very high chemistry), re-anchored to its **~95
+achievable ceiling** (the strongest roster ever built) — NOT the worldwide curve.
+
+**Watch the reach-the-final rate, not just the title rate.** At boost 2.8 the SAM *title* curve
+looked fine, but `difficulty.sim.test.ts` now also logs the **reach-the-grand-final %** — which
+is what exposed the ease Miguel reported (#99): a "not so strong" 90-91 team reached the final
+in **32%** of runs and a 92-93 in **68%**. Raised 2.8 → 4.0 to wall the non-elite while keeping
+the ceiling rewarding. Measured (SAM — title / reach-final): 88-89 ≈ 0.6% / 2% · 90-91 ≈ 3% /
+14% · **92-93 ≈ 13% / 48%** · **the 94-95 ceiling ≈ 32% / 87%** · blended ≈ 10% / 34% · never
+impossible. Because the SAM curve is flat, lowering this boost lifts the top AND the middle
+together. Tune the per-difficulty entry you care about — raising `legacy` re-hardens SAM Legacy only.
 
 ## After any change
 

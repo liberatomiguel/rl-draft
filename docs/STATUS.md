@@ -1,7 +1,7 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: 2026-06-22. **Launched & live on Vercel.** Production tip:
+> Last updated: 2026-06-23. **Launched & live on Vercel.** Production tip:
 > **v1.3.5 "Proving Grounds"** (apex `rocketdraft.app`). **v1.4.0 "World Stage" is
 > FINALIZED and prepared for `main`** — reviewed before it ships. Staging pushes are
 > PAUSED (local testing only) until the Vercel build-timeout fix is confirmed in prod.
@@ -29,9 +29,11 @@ Key current tunings (the numbers live in `src/config/balance.ts`; rationale in
   via the `legacyUnlocked` latch). Legacy is the all-time wall, tuned on the realistic
   draft sim (`difficulty.sim.test.ts`, #79.1/#94): worldwide a ~92 team ≈ 0%, the elite
   tier climbs (96-97 ≈ 15%, 98+ pinnacle ≈ 42%) via `legacy.opponentRatingShift` 1.3 (the
-  v1.4 final pass nudged 1.2 → 1.3, ~1-2% harder); SAM on its own flatter scale, ~92-93
-  ceiling ≈ 22%, 94+ pinnacle ≈ 47% (`REGION_LOCK.legacy` 2.8, raised in v1.4.2/#98 after
-  playtest showed the post-expansion SAM top far too easy — champion with 93 AND 95 rosters).
+  v1.4 final pass nudged 1.2 → 1.3, ~1-2% harder); SAM on its own flatter scale, re-anchored
+  to its ~95 achievable ceiling — the 94-95 ceiling ≈ 32% title / 87% reach-final, a 90-91 ≈
+  3% / 14% (`REGION_LOCK.legacy` 4.0, raised 2.8 → 4.0 in v1.4.3/#99 after feedback that weak
+  SAM teams reached the grand final too often — a 90-91 made the final 32% of runs at 2.8; the
+  sim now logs reach-final %, since the title rate alone hid it).
   Never impossible, never trivial.
 - **Rewards:** `RANK_REWARDS` gates special-card rarities and ramps appearance
   chance only at the top (ramps from Diamond: Diamond 6% / Champion 9% / GC 12% /

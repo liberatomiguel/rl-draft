@@ -953,6 +953,29 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     top properly. `difficulty.sim.test.ts` SAM band retuned to (0.15, 0.35) with a 94+ < 0.6
     guard. `balance.ts`.
 
+99. **Legacy SAM re-anchored to its ~95 ceiling (v1.4.3).** Player feedback: SAM Legacy was
+    too easy — you could reach/win the grand final with "not so strong" teams. The key fact
+    Miguel gave: the strongest SAM roster ever built is **~95** (the real achievable ceiling),
+    and the curve up to #98 had been tuned/measured by **title rate alone**. A title rate stays
+    modest even when a weak team makes the final and *loses*, so it hid the real problem — at
+    boost 2.8 a 90-91 team REACHED the grand final in **32%** of runs and a 92-93 in **68%**.
+    Diagnosed by extending `difficulty.sim.test.ts` to log the reach-the-grand-final % next to
+    the title %. `REGION_LOCK.opponentRatingBoost.legacy` 2.8 → **4.0** (effective 4.10 → 5.30):
+    now 90-91 ≈ 3% title / 14% final, 92-93 ≈ 13% / 48%, the 94-95 ceiling ≈ 32% / 87%, blended
+    ≈ 10% / 34%. Non-elite is walled out, the best-possible team keeps a real shot, never
+    impossible. Target picked with Miguel from a measured boost sweep (3.6 / 4.0 / 4.4) — 4.0 =
+    "wall the weak, keep the top rewarding". WW Legacy untouched; the flat SAM curve means this
+    also hardens the middle. `balance.ts`, `difficulty.sim.test.ts`.
+
+100. **Challenge specials collect win-or-loss, like a normal run (v1.4.3, bugfix).** The
+     Challenge flow only persisted the challenge's *reward* special, so specials you drafted and
+     fielded in a challenge never entered the Collection (player-reported). Decision: collect the
+     fielded specials whenever the challenge is PLAYED — win or loss — exactly as a normal run
+     does at completion (`compileResults` → `applyRunResults`), not gated on clearing it. Drafting
+     and fielding a card is the unlock event; clearing only governs the *reward* (XP + reward
+     card), which stays one-and-done. Implemented as a standalone `profileStore.collectSpecials`
+     called from `runStore.playChallenge`. See CHANGELOG [1.4.3] "Fixed".
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

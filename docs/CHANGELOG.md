@@ -10,6 +10,45 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.3] — 2026-06-23 · "World Stage" patch
+
+#### Balance
+- **Legacy SAM re-anchored to the ~95 ceiling (#99).** Feedback: SAM Legacy was too easy —
+  you could reach/win the grand final with "not so strong" teams (the strongest SAM roster
+  ever built is **95**). The TITLE rate looked fine, but the **reach-the-grand-final** rate was
+  the tell: at boost 2.8 a 90-91 team made the final in **32%** of runs and a 92-93 in **68%**.
+  `REGION_LOCK.opponentRatingBoost.legacy` 2.8 → **4.0** (effective shift 4.10 → 5.30). New SAM
+  curve (`difficulty.sim.test.ts`, title / reach-final): 88-89 ≈ 0.6% / 2%, 90-91 ≈ 3% / 14%,
+  **92-93 ≈ 13% / 48%**, the **94-95 ceiling ≈ 32% / 87%**, blended ≈ 10% / 34%. Non-elite is
+  walled out; the best-possible team keeps a real, satisfying shot. WW Legacy unchanged.
+  Root cause of the ease: the v1.4 +6-SAM-teams pass raised the achievable draft ceiling to ~95,
+  but the SAM curve had been measured by *title* rate only — which stays modest even when a weak
+  team reaches the final and loses, so "made the final far too often" was invisible. The harness
+  now logs reach-final % too. `balance.ts`, `difficulty.sim.test.ts`.
+
+#### Changed
+- **Difficulty sim harness now logs reach-the-grand-final % alongside the title rate**
+  (`curve()` in `difficulty.sim.test.ts`), and takes an optional `boostOverride` so SAM boosts
+  can be swept without editing `balance.ts`. SAM assert band retuned to the boost-4.0 curve
+  (92-93 0.05–0.22, 94+ 0.18–0.45 + monotonic at the top).
+- **`profileStore.collectSpecials`** — a standalone "add these fielded specials to the
+  collection" action, so the Challenge flow can unlock its drafted specials the same way a
+  normal run does. New regression test `store/runStore.challenge.test.ts` (the first store-level
+  test) drives the real `playChallenge` and asserts the collection.
+
+#### Fixed
+- **Special cards drafted in a Challenge never reached the Collection (#100).** Feedback: specials
+  unlocked in challenge mode didn't show up in the collection. Only the challenge's **reward**
+  special was persisted (`completeChallenge`); the specials you actually drafted and fielded were
+  dropped on the floor. A normal run collects every drafted special via `compileResults` →
+  `applyRunResults`, but the challenge path (`playChallenge`) only ran the reward funnel. Now
+  `playChallenge` also calls `collectSpecials(user.specialIds)` — **win or loss**, mirroring a
+  normal run. Root cause: challenge clearing reused the reward-only one-and-done funnel and never
+  had the drafted-special collection step that the tournament results path provides.
+  `store/runStore.ts`, `store/profileStore.ts`.
+
+---
+
 ## [1.4.2] — 2026-06-22 · "World Stage" patch
 
 #### Balance

@@ -525,6 +525,11 @@ export const useRunStore = create<RunStore>()(
         const { user, opponent } = run.challenge;
         const series = playChallengeSeries(user, opponent, challenge, rng);
         const cleared = series.winnerTeamId === user.id;
+        // Specials drafted onto the challenge team unlock into the collection just
+        // like a normal run (compileResults → applyRunResults), win or lose. Before
+        // this, only the challenge REWARD special was kept — the ones you actually
+        // drafted and fielded never reached the collection. (v1.4.3, #100)
+        useProfileStore.getState().collectSpecials(user.specialIds);
         // Capture XP BEFORE the reward so the cleared screen can fire the rank-up
         // celebration if `reward.xp` crossed a rank threshold (v1.4).
         const xpBefore = useProfileStore.getState().xp;
