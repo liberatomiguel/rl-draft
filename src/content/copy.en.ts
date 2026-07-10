@@ -10,6 +10,8 @@
  * XP-line labels, and the changelog/privacy long-form pages.
  */
 
+import { CAREER_EN } from "./copy.career.en";
+
 export const APP = {
   name: "Rocket Draft",
   tagline: "Draft history. Survive the bracket.",
@@ -22,6 +24,7 @@ export const APP = {
 export const NAV = {
   home: "Home",
   play: "Play",
+  career: "Career",
   challenges: "Challenges",
   collection: "Collection",
   profile: "Profile",
@@ -1035,6 +1038,7 @@ export const LEADERBOARDS_UI = {
 
 /** The whole dictionary — `copy.pt.ts` must match this shape exactly. */
 export const EN = {
+  CAREER: CAREER_EN,
   APP,
   NAV,
   HOME,

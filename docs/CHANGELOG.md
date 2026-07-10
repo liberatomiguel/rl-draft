@@ -10,6 +10,130 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.5.0-alpha] — UNRELEASED · "Road to Worlds" (awaiting Miguel's review — not committed)
+
+#### Added (v0.2 overhaul pass, 2026-07-09/10 — Miguel's playtest feedback)
+- **Day-based calendar (FIFA-career style).** The clock is now the DAY: `clock = {seasonIndex,
+  day}` over 224 days (7-day Monday-start weeks on the same 32-week grid — seed streams stay
+  week-keyed, so all determinism holds). Real calendar dates per season (Season X kicks off
+  Mon 2020-10-05; `CAREER_SEASONS[i].startDate`). Weekly world processing on Mondays, training
+  Mon-Fri, matchdays on Saturdays, Sundays rest; transfer windows are day ranges with a
+  days-left countdown. Continue advances to the next stop (matchday / window-open Monday /
+  pending decision) and "advance one day" is always available; official matchdays block the
+  clock until played or simmed, and skipping past an unofficial matchday declines the invite.
+  Saves migrate in place (v1 week → v2 day, `migrateSaveToV2`).
+- **Scrims — things to do between events.** Up to 2 weekday scrim blocks per week: a seeded
+  Bo5 behind closed doors vs a nearby-strength org from your region, granting a small
+  chemistry credit + light match XP (`CAREER_SCRIM`, `runScrimFlow`), reported on the wire
+  with the score.
+- **Gear & staff progression ladder** (replaces the generic 3-level facilities): pro
+  peripherals → 240Hz monitors → tournament PCs → bootcamp → structured bootcamp → sports
+  psychologist → Performance Center, each rep-gated and bought strictly in order
+  (`CAREER_GEAR`, `buyGearFlow`); training bonuses stack to +35% and PCs/Center feed the org
+  buff levels. **Sponsor perks**: tier 2+ deals discount gear (20/35/50%), tier 3+ include
+  free bootcamps (1-2/season) — a reason to chase tiers beyond the base check.
+- **Coach market with real names.** Coaches are hired from a Market shortlist mixing REAL
+  retired pros (fed by the world's retirement flow; coach OVR = 55 + 0.25 × final playing
+  OVR) with generated candidates (`CAREER_COACH_MARKET`, `coachCandidatesFor` in market.ts);
+  hires validate the shortlist and replacing a coach pays one split of severance.
+- **Inbox (mail) split from the news wire.** `save.mail` (MailItem, per-item read state):
+  transfer bids, sponsor offers/settlements, contract notices, backer events and unlocks now
+  land as e-mails addressed to the manager with full body text; the news feed (every template
+  now with a 1-2 line body, `news.body.*` EN+PT) moved onto the HQ dashboard.
+- **Training v2.** Per-player session INTENSITY (light 0.6× / normal / heavy 1.35×, heavy
+  adding a small telegraphed pre-event absence risk), truthful engine-side projections
+  (`trainingProjection` — the Training screen no longer re-implements engine math), and daily
+  ticks aligned to the day clock.
+- **Career event playback pacing group** (`CAREER_PLAYBACK`) + rebuilt event screen (live
+  spoiler-safe Swiss standings, playoff bracket, AI ticker, goal-by-goal user series, working
+  speed/skip/sim controls, instant → animated digest), wiring the previously-dead
+  `eventPlayback.ts` view-model.
+- **Procedural crests for filler orgs + crest builder v2**: crestId now encodes
+  `shape[:symbol[:pattern]]` (legacy ids still render identically); every generic org gets a
+  deterministic logo via the shared `OrgMark` dispatcher.
+
+#### Balance (v0.2 economy rescale — the garage-org start)
+- Starting budget **$150k/100k/60k → $20k/12k/8k**; salary curve anchor **$8k → $1.5k** @ OVR
+  70 with growth **1.13 → 1.20**/pt and floor **$2.5k → $250** (entry salaries land in the
+  hundreds; a 90-OVR star still asks ~$57k/split — progression IS the product); prize pools
+  t3 $5k→$2k · t2 $25k→$10k · regional $100k→$40k · major $300k→$150k · worlds $1M→$600k;
+  sponsor bases $8k/20k/45k/90k → $1.5k/6k/18k/45k; transfer fee floor $10k→$2.5k; scout
+  report $10k→$2.5k; stand-in $5k→$1k; Backer floor −$20k→−$5k (rescue to +$3k); money
+  quantum $250→$50.
+- **Team stars recalibrated (again):** 0-4★ absolute band → **0-5★ half-star steps driven by
+  world-percentile** (0.8 × rating percentile + 0.2 × prestige) — strong teams now always
+  read strong; org rating snapshots persist for cheap user-side reads (`userStarsFor`).
+- **Chemistry swap-drop softened:** new `newcomerGraceFactor` 0.35 — a newcomer's pairs
+  inherit part of the incumbent core's tenure, so one swap dents chemistry (~85% → ~60%)
+  instead of halving it; `maxRawPerPair` 6.5 → 6.0 keeps Perfect reachable.
+- **Training focus rebalance:** single-attribute focus overall share 0.7 → **0.9** (+ offset
+  0.3 → 0.35/wk) so specializing finally competes with balanced; `auto` = coach plan at 0.95
+  (falls back to balanced with no coach — the old double penalty is gone).
+
+#### Fixed (v0.2)
+- **Training gains double-counted toward the split/season caps.** Root cause: the weekly
+  training loop applied `trainWeek`'s returned accumulators AND re-added the gain on top
+  (`p.gainedThisSplit += res.gained` after `Object.assign`), so caps triggered ~2× early.
+  The day-tick rewrite applies the returned player verbatim.
+- **Event screen score orientation.** `GameResult.score` is `[winnerGoals, loserGoals]`, but
+  the old screen padded it as `[teamA, teamB]` — losses could render as fake ties with
+  phantom goal-feed entries (the "confusing" bug). The rebuilt screen uses the
+  `eventPlayback.goalTimeline` view-model, which orients via `winnerTeamId`.
+- **Instant-sim trap**: choosing "Instant result" dropped the user into manual playback with
+  a hidden exit (up to ~16 clicks). `watched:false` now routes straight to the digest.
+- **Sale fees no longer inflate the "biggest signing" record** (`resolveAcceptedBid` wrote
+  sale proceeds into `stats.biggestSigningFee`).
+- **Nondeterministic news ids** (`Math.random`) replaced by a per-save monotonic `seq` —
+  identical runs now produce byte-identical saves.
+- Offer expiry is day-accurate (`resolveDay` = window close), replacing the engine-hardcoded
+  `WINDOW_LAST_WEEK` table.
+
+#### Added
+- **Road to Worlds — the career mode (design: `docs/ROAD-TO-WORLDS-DESIGN.md`).** Found an org
+  at RLCS Season X, sign and develop players (age + hidden potential shown as a scouted band,
+  RL-realistic ages: debuts 13-15, careers end ~24-25), manage budget/sponsors/reputation
+  through a 32-week season calendar (3 splits × [3 regionals + 1 Major] + Worlds; Season
+  Points → Major/Worlds qualification with per-region slot tables), transfer windows with a
+  living AI world that drifts toward real RLCS history (anchor-fidelity market passes +
+  ~26 hand-written scripted news beats EN/PT — e.g. Vitality signing zen in 2024, degrading
+  into a Blockbuster bid if you own him), weekly training with delegate-to-coach fast path,
+  field-quality-scaled match XP, roster-stability rule (tiered; the original hard forfeit one
+  flag away), progressive unlock ladder (psychologist → facilities → bootcamp → relocation
+  teaser), cosmetic 0-4★ team ratings, one-rescue Emergency Backer (second bankruptcy ends
+  the career), endings (Worlds title credits / 2026 Final Whistle / Insolvency) + infinite
+  procedural era. New: `src/engine/career/*` (7 pure modules + 123 tests incl. a
+  full-season deterministic integration harness), `careerStore`/`careerFlow` (3 save slots,
+  `rocket-draft:career:v1`, additive migrate), `/career/*` routes + 13 screens with animated
+  per-game event playback (goal-by-goal, scorer names), `CAREER_*` balance groups, EN+PT
+  career copy, career data files (beats/sponsors/names/crests). Behind `FEATURES.careerMode`.
+- **Engine (additive only, goldens locked):** `assembleTournamentTeam` export with in-memory
+  org override + bounded `ratingBonus` + `chemistryOverride` channels; `initFieldTournament`
+  (explicit-field Swiss/single-elim, AI-vs-AI capable); `regression.golden.test.ts` pins the
+  shared sim pipeline's draw order so career work can never silently reshuffle existing modes'
+  fixed-seed content (challenges/daily untouched — full 249-test suite green).
+
+#### Fixed (v0.1 adjustment pass, 2026-07-09 — pre-review)
+- **CRITICAL: releasing/selling a squad player crashed the whole career and corrupted the
+  save.** Root cause: `releasePlayerFlow` filtered the player out of `squad` but left his id
+  in `starterIds`; `userTeamFor` maps `starterIds` on every top-bar render and threw
+  "starter … is not on the squad", crashing the `/career` layout so hard the player couldn't
+  even reach the reset. Fix, three layers: a `syncSquadRoles()` invariant (starterIds always
+  hold 3 on-squad ids, roles synced) called after every squad mutation; `userTeamFor` now
+  degrades a missing starter to the sub → an emergency stand-in instead of throwing; and
+  `careerStore.onRehydrateStorage` self-heals every slot on load so already-corrupted saves
+  recover. Regression-locked in `careerFlow.test.ts`.
+- **New squad started at 100% chemistry.** It leaked through a shared `career:org` id feeding
+  `computeChemistry`'s shared-org + org-loyalty. Chemistry is now EARNED over time
+  (`worldSim.careerChemistry` + `CAREER_CHEMISTRY`): a fresh same-region trio ≈ 23%, climbing
+  to High after ~2 splits; swapping a starter drops it.
+- **Sponsors were offered on day 1.** Gated behind `CAREER_SPONSOR.firstOfferRepGate`.
+- **Team stars miscalibrated** (elite orgs read as 2★). `starsFor` now uses an absolute
+  rating band + prestige, not intra-region percentile.
+- **Career nav disappeared in the inbox** — `"/career/news".startsWith("/career/new")` matched
+  the bare-route prefix; now exact-matched.
+- **Removed** the "reputation expects it (−N)" hub line; **forced manual training when no coach
+  is hired** (delegating to a nonexistent coach made no sense).
+
 ## [1.4.4] — 2026-06-23 · "World Stage" patch
 
 #### Balance

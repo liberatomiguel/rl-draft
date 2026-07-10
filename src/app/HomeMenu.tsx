@@ -17,6 +17,7 @@ import { COUNTS } from "@/data/counts";
 import { useCopy } from "@/content/copy";
 import { localePath } from "@/content/pageRoutes";
 import { useSettings } from "@/store/settingsStore";
+import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
@@ -37,7 +38,7 @@ import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
 
 export default function HomeMenu() {
-  const { APP, HOME, HOME_SEO } = useCopy();
+  const { APP, HOME, HOME_SEO, CAREER } = useCopy();
   const mounted = useMounted();
   const lang = useSettings((s) => s.lang);
   // Active locale (mounted-gated to match SSR EN), used for the SEO content +
@@ -219,6 +220,33 @@ export default function HomeMenu() {
           </Panel>
         </div>
       </section>
+
+      {/* Road to Worlds — career mode (v1.5) */}
+      {FEATURES.careerMode ? (
+        <section aria-label="Career mode" className="mt-4">
+          <Link href="/career" className="group block text-left">
+            <Panel
+              strong
+              glow="blue"
+              className="relative flex flex-col justify-between gap-4 overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:flex-row md:items-center"
+            >
+              <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/10 blur-3xl" aria-hidden />
+              <div>
+                <div className="mb-2 flex items-center gap-2.5">
+                  <h2 className="display text-xl font-bold uppercase tracking-wide text-ink md:text-2xl">
+                    {CAREER.meta.title}
+                  </h2>
+                  <Badge tone="blue">{CAREER.meta.newBadge}</Badge>
+                </div>
+                <p className="max-w-xl text-sm leading-relaxed text-sub">{CAREER.meta.homeCardDesc}</p>
+              </div>
+              <span className="display inline-flex w-fit shrink-0 items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-7 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
+                {CAREER.meta.subtitle}
+              </span>
+            </Panel>
+          </Link>
+        </section>
+      ) : null}
 
       {/* Secondary */}
       <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">

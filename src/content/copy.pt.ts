@@ -6,8 +6,10 @@
  */
 
 import type { Copy } from "./copy.en";
+import { CAREER_PT } from "./copy.career.pt";
 
 export const PT: Copy = {
+  CAREER: CAREER_PT,
   APP: {
     name: "Rocket Draft",
     tagline: "Drafte a história. Sobreviva à chave.",
@@ -20,6 +22,7 @@ export const PT: Copy = {
   NAV: {
     home: "Início",
     play: "Jogar",
+    career: "Carreira",
     challenges: "Desafios",
     collection: "Coleção",
     profile: "Perfil",

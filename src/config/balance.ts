@@ -657,6 +657,470 @@ export const CHALLENGE = {
   rerollsByDifficulty: { easy: 8, normal: 5, hard: 3, legacy: 0 } as Record<Difficulty, number>,
 } as const;
 
+// ===========================================================================
+// ROAD TO WORLDS (v1.5) — career-mode tunables.
+// Design source: docs/ROAD-TO-WORLDS-DESIGN.md. Every number here is an
+// initial value; the career pacing harness owns the final calibration.
+// All groups are consumed ONLY by src/engine/career/* + careerStore — nothing
+// below touches the existing modes.
+// ===========================================================================
+
+/**
+ * The historical timeline: seasonIndex 0..5. Infinite era clones the last entry.
+ * `startDate` is the season's day 1 (always a MONDAY — the day grid depends on
+ * it); the v0.2 day clock derives every calendar date from it.
+ */
+export const CAREER_SEASONS = [
+  { seasonId: "rlcs-x", label: "RLCS Season X", shortLabel: "Season X", year: "2020-21", order: 10, startDate: "2020-10-05" },
+  { seasonId: "rlcs-2021-22", label: "RLCS 2021-22", shortLabel: "2021-22", year: "2021-22", order: 11, startDate: "2021-10-11" },
+  { seasonId: "rlcs-2022-23", label: "RLCS 2022-23", shortLabel: "2022-23", year: "2022-23", order: 12, startDate: "2022-10-10" },
+  { seasonId: "rlcs-2024", label: "RLCS 2024", shortLabel: "2024", year: "2024", order: 13, startDate: "2024-01-08" },
+  { seasonId: "rlcs-2025", label: "RLCS 2025", shortLabel: "2025", year: "2025", order: 14, startDate: "2025-01-06" },
+  { seasonId: "rlcs-2026", label: "RLCS 2026", shortLabel: "2026", year: "2026", order: 15, startDate: "2026-01-05" },
+] as const;
+
+/**
+ * Season shape: 32 weeks — W1-2 preseason (window), 3 × [8-week split:
+ * open, R1, open, R2, open, R3, open, Major] with 2-week windows after
+ * splits 1 & 2, then the 1-week Worlds window (W31) and Worlds (W32).
+ *
+ * v0.2 DAY CLOCK: the playable clock is the DAY (1..weeksPerSeason×7,
+ * Monday-start weeks). The week grid above stays the scheduling skeleton —
+ * seed streams and event ids remain week-keyed — but the player advances one
+ * day at a time: weekly world processing lands on Mondays, training runs
+ * Mon-Fri, official/unofficial events resolve on `eventDayOfWeek` (Saturday),
+ * Sunday rests.
+ */
+export const CAREER_CALENDAR = {
+  weeksPerSeason: 32,
+  preseasonWeeks: 2,
+  splitWeeks: 8,
+  windowWeeks: 2,
+  /** Regionals land on the 2nd/4th/6th week of a split; the Major on the 8th. */
+  regionalOffsets: [2, 4, 6],
+  majorOffset: 8,
+  worldsWindowWeek: 31,
+  worldsWeek: 32,
+  /** Training-efficiency bonus on a week spent without an event ("Training Week"). */
+  trainingWeekBonus: 0.25,
+  /** Day grid: 7-day weeks starting Monday; events play on Saturday (dow 6). */
+  daysPerWeek: 7,
+  eventDayOfWeek: 6,
+} as const;
+
+/** Placement → Season Points (regionals; Majors pay ×2; Worlds pays none). */
+export const CAREER_POINTS = {
+  regional: {
+    champion: 400, runner_up: 320, third: 260, fourth: 210,
+    top4: 210, top6: 160, top8: 120, swiss_exit: 60,
+  } as Record<string, number>,
+  majorMultiplier: 2,
+} as const;
+
+/** Major/Worlds slots per region (sums to 16 — the engine field size). */
+export const CAREER_SLOTS = {
+  major: { NA: 4, EU: 4, SAM: 2, MENA: 2, OCE: 2, APAC: 1, SSA: 1 } as Record<string, number>,
+  worlds: { NA: 4, EU: 4, SAM: 2, MENA: 2, OCE: 2, APAC: 1, SSA: 1 } as Record<string, number>,
+} as const;
+
+/**
+ * Prize tables (in-game USD, "close to real, simplified"). 16-team events pay
+ * every placement; 9-16th flat. 8-team single-elim uses the `single8` shape.
+ */
+export const CAREER_PRIZES = {
+  pools: { t3: 2_000, t2: 10_000, regional: 40_000, major: 150_000, worlds: 600_000 },
+  /** Percent per placement for swiss16 events (champion → swiss_exit-flat ×8). */
+  swiss16Pct: {
+    champion: 30, runner_up: 20, third: 13, fourth: 10,
+    top6: 6.5, top8: 4, swiss_exit: 1,
+  } as Record<string, number>,
+  single8Pct: { champion: 40, runner_up: 22, top4: 11, top8: 4 } as Record<string, number>,
+} as const;
+
+/** Unofficial tournaments (t3 Community Cup · t2 Invitational; t1 LAN = v1.1). */
+export const CAREER_UNOFFICIAL = {
+  t3RatingBand: 4,
+  /** t3 offers stop above this team rating ("outgrown the community circuit"). */
+  t3RatingCeiling: 85,
+  t3MaxEntriesPerSplit: 2,
+  t3RepCapPerSplit: 2,
+  t2RepGate: 30,
+  t2OfferChance: 0.6,
+  /** Auto-enter only fields whose median is within ± this of the user rating. */
+  autoEnterBand: 3,
+} as const;
+
+/** Roster Stability (the 2/3 rule, tiered): counted on FIELDED new faces per split. */
+export const CAREER_STABILITY = {
+  freeNewFaces: 1,
+  secondFacePenaltyPct: 25,
+  thirdFacePenaltyPct: 60,
+  preseasonExempt: true,
+} as const;
+
+/**
+ * Career chemistry (v0.1 adjustment): chemistry is EARNED over time together,
+ * not granted. A brand-new squad starts near the floor (heritage only); a core
+ * kept 2+ splits together climbs to High. Per pair: connection (time together)
+ * + heritage (country/region). Swapping a starter drops it (the new pair has 0
+ * tenure). Replaces the leaky "same career org" chemistry for the user team.
+ */
+export const CAREER_CHEMISTRY = {
+  connPerSplitTogether: 2.0,
+  connMaxPerPair: 4.0,
+  herCountry: 2.5,
+  herRegion: 1.5,
+  /** Per-pair denominator (≤ conn cap + country makes Perfect reachable). */
+  maxRawPerPair: 6.0,
+  /**
+   * v0.2 swap softening: a newcomer's pairs inherit partial tenure from the
+   * incumbent core (an established structure absorbs one new face). Pair
+   * tenure = max(actual, incumbent-avg-tenure × this). Swapping a starter now
+   * dents chemistry (~85% → ~60%) instead of halving it.
+   */
+  newcomerGraceFactor: 0.35,
+} as const;
+
+/**
+ * Scrims (v0.2 day clock): optional weekday blocks between events. A scrim
+ * simulates one Bo5 vs a nearby-strength org from the user's region — small
+ * chemistry credit + light match XP. No money, no points; capped per week.
+ */
+export const CAREER_SCRIM = {
+  maxPerWeek: 2,
+  /** splitsTogether credit per scrim (chemistry accrual convention). */
+  chemistryCredit: 0.04,
+  /** Match-XP weeks granted, before the field-quality ramp of the opponent. */
+  xpWeeks: 0.4,
+  /** Opponent pick: closest orgs by rating within this band, seeded. */
+  ratingBand: 6,
+} as const;
+
+/** Player derivation (ages are RL-realistic: debut 13-15, careers end ~24-25). */
+export const CAREER_DEV = {
+  attrOffsetCap: 6,
+  potentialJitter: [-1, 2] as const,
+  endedCareerHeadroom: 2,
+  peakAgeRange: [18, 22] as const,
+  debutAgeWeights: { 13: 0.1, 14: 0.2, 15: 0.3, 16: 0.25, 17: 0.15 } as Record<number, number>,
+  archetypeWeights: {
+    allround: 0.3, mechanical: 0.18, playmaker: 0.16,
+    anchor: 0.14, icecold: 0.11, veteranmind: 0.11,
+  } as Record<string, number>,
+} as const;
+
+export const CAREER_TRAINING = {
+  weeklyBase: 0.1,
+  headroomSoftK: 4,
+  /** coachMult = clamp(1 + (coachOVR - 75) × perPoint, min, max); no coach = min. */
+  coachMult: { perPoint: 0.01, min: 0.85, max: 1.2 },
+  /** Training days per week (Mon-Fri); the daily tick is weeklyBase ÷ this. */
+  trainingDaysPerWeek: 5,
+  /**
+   * v0.2 focus rebalance (design: balanced must not dominate). Shares of the
+   * base overall rate per focus mode: single-attribute focus now grows overall
+   * at 0.9 AND its attribute offset (a real specialize-vs-grow tradeoff);
+   * auto with a coach is near-optimal (that's what the coach is paid for);
+   * auto without a coach falls back to balanced at the no-coach multiplier.
+   */
+  balancedShare: 1.0,
+  autoShare: 0.95,
+  focusOffsetPerWeek: 0.35,
+  focusOverallShare: 0.9,
+  /**
+   * Session intensity (per player): heavier training develops faster but adds
+   * telegraphed fatigue risk (added to the pre-event unavailability roll).
+   */
+  intensityMult: { light: 0.6, normal: 1.0, heavy: 1.35 } as Record<string, number>,
+  heavyUnavailabilityAdd: 0.01,
+  /** Match XP: bonus training weeks = base × fieldQuality (weak → stacked field). */
+  matchXpWeeks: 2,
+  fieldQualityMin: 0.25,
+  fieldQualityMax: 1.5,
+  /** Field quality ramps with avg field rating between these anchors. */
+  fieldQualityAnchor: [72, 92] as const,
+  subXpFactor: 0.7,
+  maxSeasonGain: 6,
+  maxSplitGain: 2.5,
+} as const;
+
+/** Age curve (young scene): growth to ~20, decline lands at season rollover. */
+export const CAREER_AGE = {
+  growthMult: { u16: 1.5, a17_18: 1.25, a19_20: 1.0, a21_22: 0.6, a23_24: 0.3, a25plus: 0.15 },
+  declineByAge: { a22: 0.5, a23_24: 1.5, a25_26: 2.0, a27plus: 3.0 },
+  declineRateDist: { slow: 0.2, normal: 0.6, fast: 0.2 } as Record<string, number>,
+  declineRateMult: { slow: 0.6, normal: 1.0, fast: 1.4 } as Record<string, number>,
+  trainingDeclineDampen: 0.7,
+  mechanicsDeclineOffset: 0.5,
+  expGrowthPerSeason: 0.5,
+  /** Retirement roll at rollover, from age 23. Guaranteed-ish by 28. */
+  retirementByAge: { 23: 0.05, 24: 0.12, 25: 0.25, 26: 0.4, 27: 0.55, 28: 0.7 } as Record<number, number>,
+  retirementStarMult: 0.5,
+  retireCoachConvertRate: 0.6,
+} as const;
+
+export const CAREER_SCOUT = {
+  bandWidthByLevel: { 0: 5, 1: 3, 2: 1, 3: 0 } as Record<number, number>,
+  /** Own-squad levels auto-narrow once per completed split (max 3). */
+  autoRevealPerSplit: 1,
+  reportCost: 2_500,
+  /** A paid report caps at L2 — exact potential is earned by playing together. */
+  reportMaxLevel: 2,
+} as const;
+
+/**
+ * v0.2 ECONOMY RESCALE — a brand-new org is a garage org. Start budgets drop
+ * ~8×, entry salaries land in the hundreds (steeper growth curve keeps stars
+ * expensive), prizes/sponsors/fees rescale in proportion. Progression is the
+ * product: money pressure must be real in seasons 1-2.
+ */
+export const CAREER_ECONOMY = {
+  roundQuantum: 50,
+  startingBudget: { easy: 20_000, normal: 12_000, hard: 8_000 } as Record<string, number>,
+  prizeMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
+  salaryAskMult: { easy: 0.9, normal: 1.0, hard: 1.15 } as Record<string, number>,
+  sponsorMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
+  /** Fanbase trickle per split = reputation × this. */
+  passivePerRepPoint: 40,
+} as const;
+
+export const CAREER_SALARY = {
+  basePerSplit: 1_500,
+  growthPerPoint: 1.2,
+  anchorOverall: 70,
+  minSalary: 250,
+  /** Age factors (young scene: primes 19-22 cost the most). */
+  ageFactor: { u18: 0.9, a19_22: 1.1, a23_24: 0.9, a25plus: 0.75 },
+  potentialPerPoint: 0.02,
+  potentialCap: 1.3,
+  repComfortBase: 62,
+  repComfortSlope: 0.35,
+  repPremiumPerPoint: 0.04,
+  repPremiumCap: 2.0,
+  askJitterPct: 0.08,
+  subRoleFactor: 0.4,
+  coachFactor: 0.35,
+  inflationPerSeason: 1.08,
+  /** "Ambitious" renewal premium when player prestige > org rep tier 2+ splits. */
+  ambitionRenewalMult: 1.25,
+  blockbusterRefusalRenewalMult: 1.1,
+  lengthDiscountPerSeason: 0.95,
+} as const;
+
+export const CAREER_CONTRACT = {
+  maxSeasons: 3,
+  releaseFeeFactor: 0.5,
+  /** Exclusive re-sign window for the user's own expiring players: split 3. */
+  resignPrioritySplit: 3,
+} as const;
+
+export const CAREER_TRANSFER = {
+  feePerRemainingSplit: 1.4,
+  minFee: 2_500,
+  sellLiquidityFactor: 0.9,
+  quickFlipFactor: 0.7,
+  quickFlipSplits: 3,
+  signingBonusPct: 0.15,
+  /** AI incoming-bid pressure: base + per top-10 user player, capped. */
+  poachBaseChance: 0.15,
+  poachPerTopPlayer: 0.1,
+  poachCap: 0.45,
+  aiBidRange: [0.9, 1.3] as const,
+  blockbusterFeeMult: 1.5,
+} as const;
+
+export const CAREER_SPONSOR = {
+  /**
+   * v0.2: tiers rescaled to the garage-org economy and each carries PERKS —
+   * gear discounts and free bootcamps — so a better sponsor visibly upgrades
+   * the org's toolbox, not just the bank line.
+   */
+  tiers: [
+    { tier: 1, repGate: 0, base: 1_500, bonus: 750, objective: "enterEvents", gearDiscountPct: 0, freeBootcampsPerSeason: 0 },
+    { tier: 2, repGate: 25, base: 6_000, bonus: 3_000, objective: "regionalTop8", gearDiscountPct: 20, freeBootcampsPerSeason: 0 },
+    { tier: 3, repGate: 50, base: 18_000, bonus: 9_000, objective: "majorQualify", gearDiscountPct: 35, freeBootcampsPerSeason: 1 },
+    { tier: 4, repGate: 75, base: 45_000, bonus: 25_000, objective: "majorTop4", gearDiscountPct: 50, freeBootcampsPerSeason: 2 },
+  ] as const,
+  signingBonusSplits: 1,
+  /** Misses within a deal before the renewal drops one tier. Never clawbacks. */
+  patienceMisses: 3,
+  enterEventsTarget: 2,
+  /**
+   * No sponsor offers until the org has earned a little standing (v0.1
+   * adjustment: no day-1 sponsorship). A couple of decent results clears this.
+   */
+  firstOfferRepGate: 12,
+} as const;
+
+export const CAREER_REP = {
+  start: 5,
+  gains: {
+    t3Win: 1, t2Win: 2, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
+    majorQualify: 2, majorTop4: 4, majorWin: 7, worldsQualify: 8, worldsTop4: 10,
+  },
+  softCapAt: 80,
+  softCapFactor: 0.5,
+  /** Reputation FALLS on missed telegraphed expectations (v0.1 adjustment). */
+  lossMajorMissAtRep: 40,
+  lossMajorMiss: 2,
+  lossWorldsMissAtRep: 60,
+  lossWorldsMiss: 4,
+  lossSeasonGoalMiss: 1,
+  /** Floor: never below (highest sponsor gate earned − 5). */
+  lossFloorSlack: 5,
+} as const;
+
+/** Non-gear unlock gates (gear/staff gates live on the CAREER_GEAR ladder). */
+export const CAREER_UNLOCKS = {
+  t2InvitationalRep: 30,
+  relocationRep: 70,
+} as const;
+
+/**
+ * v0.2 GEAR & STAFF LADDER (replaces the generic 3-level facilities). The
+ * org's toolbox grows step by step — peripherals → monitors → PCs → simple
+ * bootcamp → structured bootcamp → sports psychologist → performance center —
+ * each unlocked by reputation and bought (in order) with career money.
+ * Effects map onto existing engine channels: trainingBonus feeds the training
+ * multiplier, buffLevels feed the org-buff level (cap 3), psychologist keeps
+ * the flat stat bonus, bootcamps stay consumables (chemistry + Sharp rating).
+ */
+export const CAREER_GEAR = {
+  /** Permanent installations, purchasable strictly in list order. */
+  items: [
+    { id: "peripherals", repGate: 8, cost: 1_500, upkeepPerSplit: 0, trainingBonus: 0.05, buffLevels: 0 },
+    { id: "monitors", repGate: 14, cost: 4_000, upkeepPerSplit: 0, trainingBonus: 0.05, buffLevels: 0 },
+    { id: "pcs", repGate: 20, cost: 10_000, upkeepPerSplit: 250, trainingBonus: 0.1, buffLevels: 1 },
+    { id: "perfCenter", repGate: 55, cost: 60_000, upkeepPerSplit: 2_500, trainingBonus: 0.15, buffLevels: 2 },
+  ] as const,
+  /** Bootcamp tiers (consumable, 1/split): unlock the tier, pay per run. */
+  bootcamp: [
+    { tier: 1, repGate: 26, cost: 4_000, chemistryCredit: 0.25, sharpRating: 0.5 },
+    { tier: 2, repGate: 38, cost: 10_000, chemistryCredit: 0.5, sharpRating: 1.0 },
+  ] as const,
+  /** Sports psychologist (rolling retainer, the "essa é importante" hire). */
+  psychologistRep: 46,
+  psychologistPerSplit: 4_000,
+  psychologistStatBonus: { clutch: 1, consistency: 1 } as Record<string, number>,
+  /** Σ active temporary rating mods ≤ this (stays under the coach cap 2.5). */
+  tempRatingMax: 2.0,
+} as const;
+
+/** Hireable coaches (v0.2): real retired pros + generated candidates. */
+export const CAREER_COACH_MARKET = {
+  candidatesPerWindow: 5,
+  /** Target share of REAL (retired-pro) names among candidates. */
+  realShare: 0.5,
+  generatedOverallRange: [62, 84] as const,
+  /** Retired-pro coach quality = base + factor × final playing overall. */
+  retiredCoachBase: 55,
+  retiredCoachFinalOvrFactor: 0.25,
+} as const;
+
+export const CAREER_SUB = {
+  standInOverall: 60,
+  standInFee: 1_000,
+  /** Registered subs accrue half a split of chemistry credit per split. */
+  chemistryCreditFactor: 0.5,
+} as const;
+
+export const CAREER_LOAN = {
+  floor: -5_000,
+  rescueTo: 3_000,
+  repayFactor: 1.2,
+  garnishRate: { easy: 0.1, normal: 0.15, hard: 0.2 } as Record<string, number>,
+} as const;
+
+export const CAREER_WORLD = {
+  /** History gravity: chance each anchor move executes (top-3 orgs stronger). */
+  anchorFidelity: 0.85,
+  anchorFidelityTop: 0.95,
+  midWindowMoveRate: 0.25,
+  walletByPrestige: [250_000, 600_000, 1_200_000, 2_500_000] as const,
+  spendCapPctPerWindow: 0.6,
+  /** Filler world: min AI orgs per region (user fills slot 16 at home). */
+  minOrgsPerRegion: 16,
+  fillerOverallRange: [64, 80] as const,
+  fillerWonderkidChance: 0.05,
+  rookiesPerRegionPerSeason: 8,
+  rookieAgeRange: [13, 16] as const,
+  rookieOverallRange: [60, 72] as const,
+  /** Potential pyramid; the "generational" top tier only rolls in the infinite era. */
+  rookiePotentialPyramid: [
+    { p: 0.6, range: [73, 80] },
+    { p: 0.25, range: [81, 87] },
+    { p: 0.12, range: [88, 93] },
+    { p: 0.03, range: [94, 99] },
+  ] as const,
+  datasetEraPotentialCeiling: 88,
+  faPoolFloorPerRegion: 10,
+  /** Random events: one type in v1 ("starter unavailable"), ≤1 per split. */
+  unavailabilityChancePerWeek: 0.02,
+  /** The pre-event roll multiplies the weekly chance by this (≈ a month's risk). */
+  unavailabilityEventMult: 4,
+  unavailabilityMaxPerSplit: 1,
+  /** Novice guard: no random events in Split 1 of Season 1. */
+  unavailabilityGraceSplits: 1,
+} as const;
+
+export const CAREER_NEWS = {
+  maxItemsPerTick: 12,
+  feedRetention: 250,
+  maxToastsPerTick: 2,
+} as const;
+
+/**
+ * Cosmetic team stars — v0.2 recalibration: 0-5★ in HALF-STAR steps, driven
+ * by the org's rating PERCENTILE across the whole live world (so the strong
+ * teams always read strong, by construction) plus a small prestige component.
+ */
+export const CAREER_STARS = {
+  maxStars: 5,
+  ratingWeight: 0.8,
+  prestigeWeight: 0.2,
+} as const;
+
+/**
+ * Career event playback pacing (ms at 1× speed; divided by the speed factor).
+ * Mirrors the classic TournamentScreen PACE table with a career tempo.
+ */
+export const CAREER_PLAYBACK = {
+  userGoalMs: 700,
+  userGameGapMs: 650,
+  userSeriesLingerMs: 2_400,
+  aiSwissMs: 120,
+  aiPlayoffMs: 450,
+  roundGapMs: 1_300,
+  advanceMs: 500,
+  speeds: [1, 2, 4] as const,
+} as const;
+
+export const CAREER_SIM = {
+  /** Per-frame world-sim budget during multi-week skips before yielding. */
+  advanceBudgetMs: 80,
+  teamCache: true,
+} as const;
+
+export const CAREER_SAVE = {
+  maxSlots: 3,
+  newsCap: 250,
+  mailCap: 80,
+  ledgerTailCap: 100,
+  eventResultsCap: 60,
+  maxSaveBytes: 400_000,
+} as const;
+
+/** Master pacing anchors — every career harness imports these, none restates them. */
+export const CAREER_ARC = {
+  firstMajorBySeason2: 0.7,
+  firstWorldsBySeason4: 0.6,
+  worldsTitleBy2026: { easy: [0.45, 0.7], normal: [0.2, 0.45], hard: [0.08, 0.25] } as Record<
+    string,
+    [number, number]
+  >,
+  insolvencyRateMax: { easy: 0.02, normal: 0.1, hard: 0.25 } as Record<string, number>,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Experimental feature flags (v0.7.0). Each is a single revert point — flip
 // to false to fully disable the feature with no other code change.
@@ -669,4 +1133,15 @@ export const FEATURES = {
    * results `eliminatedBy` data stays null, so the UI block renders nothing.
    */
   showEliminatorTeam: true,
+  /**
+   * Road to Worlds career mode (v1.5). Single revert point: false hides the
+   * home card, the nav entries and the /career routes entirely.
+   */
+  careerMode: true,
+  /**
+   * Miguel's original hard roster rule (2+ starter swaps in one window zero
+   * the Season Points) instead of the shipped tiered Roster Stability. Kept
+   * one flag away per the design doc §21.1.
+   */
+  careerHardStabilityRule: false,
 } as const;
