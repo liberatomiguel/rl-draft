@@ -29,10 +29,11 @@ import {
 import {
   coachSalaryFor,
   computeSalaryAsk,
+  contractedFeeFor,
+  marketValueFor,
   quantize,
   salaryAskFactors,
   signingBonusFor,
-  transferFeeFor,
 } from "./economy";
 import { derivedFloat, deriveSeed, streams } from "./seeds";
 import type {
@@ -155,8 +156,18 @@ export function askPackageFor(
     playerId: view.id,
   };
   const salaryPerSplit = computeSalaryAsk(input);
+  // v0.3: fees derive from the unified market value with a bounded contract
+  // load — no more ask × raw-splits-remaining swings.
   const fee = ctx.contracted
-    ? transferFeeFor(salaryPerSplit, ctx.contracted.splitsRemaining)
+    ? contractedFeeFor(
+        marketValueFor({
+          overall: view.overall,
+          age: view.age,
+          potential: view.potential,
+          seasonIndex: ctx.seasonIndex,
+        }),
+        ctx.contracted.splitsRemaining,
+      )
     : 0;
   const signingBonus = ctx.contracted ? 0 : signingBonusFor(salaryPerSplit);
   const factors = salaryAskFactors(input);
@@ -215,21 +226,63 @@ function removeFromWorld(world: WorldState, playerId: string): string | null {
   return null;
 }
 
+/** View lookup used across one market pass — memoized (views are stable). */
+type ViewOf = (id: string) => CareerPlayerView | null;
+
 function bestRegionalFa(
   world: WorldState,
   region: string,
-  viewCtx: ViewCtx,
+  viewOf: ViewOf,
   exclude: Set<string>,
 ): string | null {
   let best: string | null = null;
   let bestOvr = -1;
   for (const id of world.freeAgentIds) {
     if (exclude.has(id)) continue;
-    const view = playerViewById(id, viewCtx);
+    const view = viewOf(id);
     if (!view || view.region !== region) continue;
     if (view.overall > bestOvr) {
       bestOvr = view.overall;
       best = id;
+    }
+  }
+  return best;
+}
+
+/** Effective org strength for market decisions (rating snapshot or fallback). */
+function orgStrength(org: { rating?: number; prestige: number }): number {
+  return org.rating ?? 70 + org.prestige * 6;
+}
+
+/**
+ * v0.3 org-shopping: the best affordable target on a clearly LOWER-rated org
+ * of the same region — bounded like-for-like (≤ buyer average + guard) so
+ * mid orgs buy peers, not superstars. One displacement level (design §10).
+ */
+function bestShoppableTarget(
+  world: WorldState,
+  buyer: { ref: string; region: string; rating?: number; prestige: number },
+  viewOf: ViewOf,
+  exclude: Set<string>,
+  weakestOvr: number,
+  avgOvr: number,
+): string | null {
+  const buyerRating = orgStrength(buyer);
+  let best: string | null = null;
+  let bestOvr = -1;
+  for (const org of Object.values(world.orgs)) {
+    if (org.ref === buyer.ref || org.region !== buyer.region) continue;
+    if (orgStrength(org) > buyerRating - CAREER_WORLD.orgBuyRatingEdge) continue;
+    for (const id of org.playerIds) {
+      if (exclude.has(id)) continue;
+      const view = viewOf(id);
+      if (!view) continue;
+      if (view.overall < weakestOvr + 2) continue;
+      if (view.overall > avgOvr + CAREER_WORLD.orgBuyMaxAboveAvg) continue;
+      if (view.overall > bestOvr) {
+        bestOvr = view.overall;
+        best = id;
+      }
     }
   }
   return best;
@@ -241,19 +294,20 @@ function feeFictionFor(
   ctx: WindowCtx,
 ): number {
   if (!fromRef) return 0;
-  const ask = computeSalaryAsk({
+  // v0.3: value-anchored with a small seeded band — same-OVR players now
+  // trade for comparable fees everywhere.
+  const value = marketValueFor({
     overall: view.overall,
     age: view.age,
     potential: view.potential,
-    rep: 50,
-    role: "starter",
     seasonIndex: ctx.seasonIndex,
-    lengthSeasons: 2,
-    difficulty: "normal",
-    careerSeed: ctx.careerSeed,
-    playerId: view.id,
   });
-  return transferFeeFor(ask, contractedSplitsRemaining(view.id, ctx.seasonIndex, ctx.careerSeed));
+  const [lo, hi] = CAREER_TRANSFER.aiFeeBand;
+  const f = derivedFloat(
+    ctx.careerSeed,
+    streams.gen("aiFee", `${view.id}:${ctx.seasonIndex}:${ctx.windowIdx}`),
+  );
+  return quantize(value * (lo + (hi - lo) * f));
 }
 
 /**
@@ -274,6 +328,18 @@ export function aiWindowMoves(
     seasonIndex: ctx.seasonIndex,
     world: next,
   };
+  // One memo for the whole pass: derivations are pure per (id, season, delta)
+  // and nothing this pass mutates changes a view — without it the v0.3
+  // scavenger/shopping scans re-derive the FA pool hundreds of times.
+  const viewCache = new Map<string, CareerPlayerView | null>();
+  const viewOf: ViewOf = (id) => {
+    let v = viewCache.get(id);
+    if (v === undefined) {
+      v = playerViewById(id, viewCtx);
+      viewCache.set(id, v);
+    }
+    return v;
+  };
   const userOwned = new Set(ctx.userSquadIds);
   const transfers: AiTransferRecord[] = [];
 
@@ -281,7 +347,7 @@ export function aiWindowMoves(
     const target = next.orgs[toRef];
     if (!target) return;
     if (target.playerIds.includes(playerId)) return;
-    const view = playerViewById(playerId, viewCtx);
+    const view = viewOf(playerId);
     if (!view) return;
     const fromRef = removeFromWorld(next, playerId);
 
@@ -289,7 +355,7 @@ export function aiWindowMoves(
     if (fromRef) {
       const fromOrg = next.orgs[fromRef];
       const idx = fromOrg.playerIds.indexOf(playerId);
-      const backfill = bestRegionalFa(next, fromOrg.region, viewCtx, userOwned);
+      const backfill = bestRegionalFa(next, fromOrg.region, viewOf, userOwned);
       if (backfill) {
         fromOrg.playerIds[idx] = backfill;
         next.freeAgentIds = next.freeAgentIds.filter((id) => id !== backfill);
@@ -305,7 +371,7 @@ export function aiWindowMoves(
     let weakest = 0;
     let weakestOvr = Infinity;
     target.playerIds.forEach((id, i) => {
-      const v = playerViewById(id, viewCtx);
+      const v = viewOf(id);
       const ovr = v?.overall ?? 60;
       if (ovr < weakestOvr) {
         weakestOvr = ovr;
@@ -341,7 +407,7 @@ export function aiWindowMoves(
         if (org.playerIds.includes(playerId)) continue;
         if (userOwned.has(playerId)) continue; // the user broke this slot
         if (next.retiredIds.includes(playerId)) continue;
-        const view = playerViewById(playerId, viewCtx);
+        const view = viewOf(playerId);
         if (!view) continue; // not debuted yet / unresolvable
         if (!rng.chance(fidelity)) continue; // per-slot break
         execMove(playerId, anchor.orgId);
@@ -349,26 +415,56 @@ export function aiWindowMoves(
     }
   } else if (!ctx.isPreseason) {
     // --- Needs pass: a fraction of orgs make one move ----------------------
+    // v0.3: orgs can now SHOP a lower-rated org's player (fee trade, one
+    // displacement level) instead of only draining the FA pool — mid-season
+    // org↔org trades were literally 0% before this pass.
     for (const org of Object.values(next.orgs)) {
       if (!rng.chance(CAREER_WORLD.midWindowMoveRate)) continue;
-      // Weakest starter vs best affordable FA.
       let weakestOvr = Infinity;
+      let sumOvr = 0;
+      let n = 0;
       for (const id of org.playerIds) {
-        const v = playerViewById(id, viewCtx);
-        if (v && v.overall < weakestOvr) weakestOvr = v.overall;
+        const v = viewOf(id);
+        if (!v) continue;
+        sumOvr += v.overall;
+        n += 1;
+        if (v.overall < weakestOvr) weakestOvr = v.overall;
       }
-      const candidate = bestRegionalFa(next, org.region, viewCtx, userOwned);
+      const avgOvr = n > 0 ? sumOvr / n : 70;
+      let candidate: string | null = null;
+      if (rng.chance(CAREER_WORLD.orgBuyChance)) {
+        candidate = bestShoppableTarget(next, org, viewOf, userOwned, weakestOvr, avgOvr);
+      }
+      candidate ??= bestRegionalFa(next, org.region, viewOf, userOwned);
       if (!candidate) continue;
-      const cView = playerViewById(candidate, viewCtx);
+      const cView = viewOf(candidate);
       if (!cView || cView.overall < weakestOvr + 2) continue;
       execMove(candidate, org.ref);
     }
   }
 
+  // --- v0.3 scavenger pass: displaced quality must not rot in the pool ----
+  // Any org (chance-gated) picks up a free agent clearly better than its
+  // weakest starter — quality percolates down the ladder after anchor/needs
+  // displacement instead of accumulating as free agents forever.
+  for (const org of Object.values(next.orgs)) {
+    if (!rng.chance(CAREER_WORLD.scavengerChance)) continue;
+    let weakestOvr = Infinity;
+    for (const id of org.playerIds) {
+      const v = viewOf(id);
+      if (v && v.overall < weakestOvr) weakestOvr = v.overall;
+    }
+    const fa = bestRegionalFa(next, org.region, viewOf, userOwned);
+    if (!fa) continue;
+    const view = viewOf(fa);
+    if (!view || view.overall < weakestOvr + CAREER_WORLD.scavengerMinEdge) continue;
+    execMove(fa, org.ref);
+  }
+
   // --- Top-up: no org plays short-handed ---------------------------------
   for (const org of Object.values(next.orgs)) {
     while (org.playerIds.filter(Boolean).length < 3) {
-      const fa = bestRegionalFa(next, org.region, viewCtx, userOwned);
+      const fa = bestRegionalFa(next, org.region, viewOf, userOwned);
       if (!fa) break;
       const slot = org.playerIds.findIndex((id) => !id);
       if (slot >= 0) org.playerIds[slot] = fa;
@@ -385,76 +481,104 @@ export function aiWindowMoves(
 // Incoming AI bids for user players (poaching pressure)
 // ---------------------------------------------------------------------------
 
-export function incomingBids(ctx: {
+/**
+ * v0.3 daily poach roll: bids for user players can land on ANY window day
+ * (was: only the window's first Monday, only ever for the single best
+ * player). Chance scales with squad attractiveness — stars AND developing
+ * prospects; target picked by attractiveness weight; capped per window with
+ * a cooldown. All randomness derived per (seasonIndex, day) — seed-stable.
+ */
+export function incomingBidForDay(ctx: {
   world: WorldState;
   squad: SquadPlayer[];
   seasonIndex: number;
   windowIdx: number;
-  week: number;
+  day: number;
   careerSeed: number;
   rep: number;
-  regionRatings: number[];
-}): TransferOffer[] {
-  if (ctx.squad.length === 0) return [];
-  const topPlayers = ctx.squad.filter((p) => p.overall >= 85).length;
-  const chance = Math.min(
-    CAREER_TRANSFER.poachCap,
-    CAREER_TRANSFER.poachBaseChance + CAREER_TRANSFER.poachPerTopPlayer * topPlayers,
-  );
-  const roll = derivedFloat(
-    ctx.careerSeed,
-    streams.gen("poach", `${ctx.seasonIndex}:${ctx.windowIdx}`),
-  );
-  if (roll >= chance) return [];
+  bidsThisWindow: number;
+  lastBidDay: number;
+  /** Player ids already carrying a pending bid (never doubled up). */
+  pendingTargetIds: string[];
+}): TransferOffer | null {
+  const T = CAREER_TRANSFER;
+  if (ctx.squad.length === 0) return null;
+  if (ctx.bidsThisWindow >= T.maxBidsPerWindow) return null;
+  if (ctx.day - ctx.lastBidDay < T.bidCooldownDays) return null;
 
-  // Target: the squad's best player; bidder: a prestige-1+ org of his region.
-  const target = [...ctx.squad].sort((a, b) => b.overall - a.overall)[0];
+  const ageFor = (p: SquadPlayer) =>
+    ageOf(p.birthYear ?? deriveBirthYear(p.id, ctx.careerSeed), ctx.seasonIndex);
+  const isProspect = (p: SquadPlayer) =>
+    ageFor(p) <= T.prospectAgeMax && p.potential - p.overall >= T.prospectUpside;
+
+  const stars = ctx.squad.filter((p) => p.overall >= T.starOverall).length;
+  const prospects = ctx.squad.filter(isProspect).length;
+  const chance = Math.min(
+    T.poachDailyCap,
+    T.poachDailyBase + T.poachPerStar * stars + T.poachPerProspect * prospects,
+  );
+  const roll = derivedFloat(ctx.careerSeed, streams.gen("poachDay", `${ctx.seasonIndex}:${ctx.day}`));
+  if (roll >= chance) return null;
+
+  // Target: attractiveness-weighted — AI GMs hunt upside, not only the star.
+  const pendingSet = new Set(ctx.pendingTargetIds);
+  const pool = ctx.squad.filter((p) => !pendingSet.has(p.id));
+  if (pool.length === 0) return null;
+  const weightOf = (p: SquadPlayer) =>
+    Math.max(1, p.overall - 70) +
+    (p.overall >= T.starOverall ? 6 : 0) +
+    (isProspect(p) ? 8 : 0);
+  const total = pool.reduce((s, p) => s + weightOf(p), 0);
+  let cursor =
+    derivedFloat(ctx.careerSeed, streams.gen("poachTarget", `${ctx.seasonIndex}:${ctx.day}`)) *
+    total;
+  let target = pool[pool.length - 1];
+  for (const p of pool) {
+    cursor -= weightOf(p);
+    if (cursor <= 0) {
+      target = p;
+      break;
+    }
+  }
+
   const bidders = Object.values(ctx.world.orgs).filter(
     (o) => o.region === target.region && o.prestige >= 1 && !o.playerIds.includes(target.id),
   );
-  if (bidders.length === 0) return [];
+  if (bidders.length === 0) return null;
   const pick = Math.floor(
-    derivedFloat(ctx.careerSeed, streams.gen("poachOrg", `${ctx.seasonIndex}:${ctx.windowIdx}`)) *
+    derivedFloat(ctx.careerSeed, streams.gen("poachOrg", `${ctx.seasonIndex}:${ctx.day}`)) *
       bidders.length,
   );
   const bidder = bidders[Math.min(pick, bidders.length - 1)];
 
-  const ask = computeSalaryAsk({
+  const value = marketValueFor({
     overall: target.overall,
-    age: ageOf(target.birthYear ?? deriveBirthYear(target.id, ctx.careerSeed), ctx.seasonIndex),
+    age: ageFor(target),
     potential: target.potential,
-    rep: ctx.rep,
-    role: "starter",
     seasonIndex: ctx.seasonIndex,
-    lengthSeasons: 2,
-    difficulty: "normal",
-    careerSeed: ctx.careerSeed,
-    playerId: target.id,
   });
-  const [lo, hi] = CAREER_TRANSFER.aiBidRange;
+  const [lo, hi] = T.aiBidRange;
   const mult =
     lo +
     (hi - lo) *
-      derivedFloat(ctx.careerSeed, streams.gen("poachFee", `${ctx.seasonIndex}:${ctx.windowIdx}`));
-  const fee = quantize(transferFeeFor(ask, 4) * mult);
+      derivedFloat(ctx.careerSeed, streams.gen("poachFee", `${ctx.seasonIndex}:${ctx.day}`));
+  const fee = quantize(value * mult);
 
-  return [
-    {
-      id: `bid:${ctx.seasonIndex}:${ctx.windowIdx}:${target.id}`,
-      direction: "out",
-      playerId: target.id,
-      playerName: target.name,
-      fee,
-      salaryPerSplit: 0,
-      lengthSeasons: 2,
-      role: "starter",
-      otherRef: bidder.ref,
-      status: "pending",
-      resolveSeason: ctx.seasonIndex,
-      resolveDay: windowCloseDayFor((ctx.windowIdx as 0 | 1 | 2 | 3) ?? 0),
-      factors: [],
-    },
-  ];
+  return {
+    id: `bid:${ctx.seasonIndex}:${ctx.day}:${target.id}`,
+    direction: "out",
+    playerId: target.id,
+    playerName: target.name,
+    fee,
+    salaryPerSplit: 0,
+    lengthSeasons: 2,
+    role: "starter",
+    otherRef: bidder.ref,
+    status: "pending",
+    resolveSeason: ctx.seasonIndex,
+    resolveDay: windowCloseDayFor((ctx.windowIdx as 0 | 1 | 2 | 3) ?? 0),
+    factors: [],
+  };
 }
 
 // ---------------------------------------------------------------------------

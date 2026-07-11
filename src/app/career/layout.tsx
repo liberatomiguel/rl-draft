@@ -14,6 +14,8 @@ import { useEffect } from "react";
 import { FEATURES } from "@/config/balance";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
+import { CareerAutopilot } from "@/components/career/CareerAutopilot";
+import { CareerToaster } from "@/components/career/CareerToaster";
 import { CareerTopBar } from "@/components/career/CareerTopBar";
 
 // Full-screen routes without the career top bar. EXACT match — "/career/news"
@@ -49,6 +51,12 @@ export default function CareerLayout({ children }: { children: React.ReactNode }
     }
   }, [mounted, bare, hasAnySave, hasActive, router]);
 
+  // v0.3 mobile fix: switching career screens always lands at the top —
+  // Next preserves scroll on client nav, which read as broken on phones.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   // SSR-safe skeleton until the persisted store hydrates.
   if (!mounted) {
     return <div className="min-h-[60vh]" />;
@@ -58,7 +66,13 @@ export default function CareerLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="pb-20 md:pb-8">
-      {!bare && hasActive ? <CareerTopBar /> : null}
+      {!bare && hasActive ? (
+        <>
+          <CareerTopBar />
+          <CareerAutopilot />
+          <CareerToaster />
+        </>
+      ) : null}
       {children}
     </div>
   );

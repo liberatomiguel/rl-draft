@@ -23,22 +23,24 @@ import { useCopy } from "@/content/copy";
 import type { CareerCopy } from "@/content/copy.career.en";
 import type {
   CareerSave,
-  NewsItem,
   SquadPlayer,
   TrainingFocus,
   TrainingIntensity,
 } from "@/engine/career/types";
 import type { StatKey } from "@/engine/types";
 import { clamp, cx } from "@/lib/util";
+import { scrimProjection, scrimShortlistFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import {
+  DAYS_PER_SEASON,
   agePhase,
   agendaDays,
   clockLabel,
   dateOfDay,
   dayOfWeekOf,
   gearTrainingBonus,
+  nameOfRef,
   potBandOfSquad,
   scrimAvailability,
   squadAge,
@@ -47,13 +49,12 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDateTiny } from "@/components/career/dateText";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
+import { TeamStars } from "@/components/career/TeamStars";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Toggle } from "@/components/ui/Toggle";
-
-type DatesCopy = CareerCopy["dates"];
 
 const STAT_KEYS: StatKey[] = [
   "offense",
@@ -80,6 +81,14 @@ export function TrainingScreen() {
   const setTrainingFocus = useCareerStore((s) => s.setTrainingFocus);
   const setTrainingIntensity = useCareerStore((s) => s.setTrainingIntensity);
   const runScrim = useCareerStore((s) => s.runScrim);
+  const scheduleScrim = useCareerStore((s) => s.scheduleScrim);
+  const cancelScrim = useCareerStore((s) => s.cancelScrim);
+  const advanceDay = useCareerStore((s) => s.advanceDay);
+  const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
+
+  /** v0.3 sparring — chosen opponent (null = closest) + booking day. */
+  const [oppRef, setOppRef] = useState<string | null>(null);
+  const [bookDay, setBookDay] = useState<number | null>(null);
 
   if (!mounted || !save) {
     return (
@@ -129,7 +138,7 @@ export function TrainingScreen() {
     ...STAT_KEYS.map((k) => ({ key: k as TrainingFocus, label: t.STAT_LABELS[k] })),
   ];
 
-  // --- scrim block ----------------------------------------------------------
+  // --- scrim block (v0.3 sparring partners) ----------------------------------
   const scrim = scrimAvailability(save);
   const scrimReasonText =
     scrim.reason === "used"
@@ -137,8 +146,26 @@ export function TrainingScreen() {
       : scrim.reason === "restDay"
         ? C.scrim.restDay
         : C.hub.scrimUnavailable;
-  const lastScrim =
-    save.news.find((n) => n.titleKey === "scrimWin" || n.titleKey === "scrimLoss") ?? null;
+
+  const shortlist = scrimShortlistFor(save);
+  const selectedOpp =
+    (oppRef ? shortlist.find((c) => c.ref === oppRef) : null) ?? shortlist[0] ?? null;
+  const benefit = selectedOpp ? scrimProjection(save, selectedOpp.ref) : null;
+
+  // Bookable days: the next free weekdays inside the scheduling horizon.
+  const bookableDays: number[] = [];
+  for (
+    let d = today + 1;
+    d <= Math.min(DAYS_PER_SEASON, today + CAREER_SCRIM.scheduleHorizonDays);
+    d++
+  ) {
+    if (dayOfWeekOf(d) > CAREER_TRAINING.trainingDaysPerWeek) continue;
+    bookableDays.push(d);
+  }
+  const selectedBookDay =
+    bookDay !== null && bookableDays.includes(bookDay) ? bookDay : (bookableDays[0] ?? null);
+
+  const seasonScrims = save.scrimLog.filter((e) => e.seasonIndex === save.clock.seasonIndex);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-3 py-5 sm:px-4">
@@ -280,33 +307,18 @@ export function TrainingScreen() {
         ))}
       </div>
 
-      {/* ==================== 5 — scrim block ==================== */}
+      {/* ============ 5 — sparring partners (v0.3 scrims) ============ */}
       <Panel
         glow={scrim.available ? "orange" : undefined}
         className="rise-in p-4"
         style={{ animationDelay: "240ms" }}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="kicker mb-1 text-[10px]">{C.scrim.title}</p>
-            <p className="max-w-md text-xs text-sub">{C.scrim.desc}</p>
-            {scrim.available && scrim.opponentName ? (
-              <p className="display mt-2 truncate text-lg font-bold uppercase tracking-wide text-ink">
-                {C.scrim.vs(scrim.opponentName)}
-              </p>
-            ) : (
-              <p className="mt-2 text-xs font-semibold text-faint">{scrimReasonText}</p>
-            )}
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="kicker mb-1 text-[10px]">{C.scrim.planTitle}</p>
+            <p className="max-w-md text-xs text-sub">{C.scrim.planDesc}</p>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <Button
-              variant="primary"
-              size="md"
-              disabled={!scrim.available}
-              onClick={runScrim}
-            >
-              {C.scrim.run}
-            </Button>
+          <div className="flex shrink-0 flex-col items-end gap-1">
             <div className="flex items-center gap-1.5" title={C.hub.scrimsLeft(scrim.remaining)}>
               {Array.from({ length: CAREER_SCRIM.maxPerWeek }, (_, i) => (
                 <span
@@ -323,13 +335,193 @@ export function TrainingScreen() {
           </div>
         </div>
 
-        {lastScrim ? <ScrimResultRow item={lastScrim} save={save} C={C} D={D} /> : null}
+        {/* opponent shortlist */}
+        <div className="mt-3">
+          <p className="kicker mb-1.5 text-[10px]">{C.scrim.chooseOpponent}</p>
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+            {shortlist.map((c) => {
+              const selected = selectedOpp?.ref === c.ref;
+              return (
+                <button
+                  key={c.ref}
+                  type="button"
+                  onClick={() => setOppRef(c.ref)}
+                  aria-pressed={selected}
+                  className={cx(
+                    "flex min-h-11 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left transition-colors",
+                    selected
+                      ? "border-orange/60 bg-orange/10"
+                      : "border-line bg-white/[0.03] hover:border-line-strong",
+                  )}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-semibold text-ink">{c.name}</span>
+                    <TeamStars stars={c.stars} size="xs" />
+                  </span>
+                  <span
+                    className={cx(
+                      "shrink-0 font-mono text-[11px] font-bold",
+                      c.gap > 0 ? "text-orange-bright" : "text-faint",
+                    )}
+                    title={C.scrim.strongerSide}
+                  >
+                    {c.gap > 0 ? `+${c.gap}` : c.gap}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* benefit preview + actions */}
+        {selectedOpp && benefit ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-black/20 px-3 py-2">
+            <div className="min-w-0">
+              <p className="kicker text-[9px]">{C.scrim.benefit}</p>
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold">
+                <span className="text-good">{C.scrim.projGain(fmt2(benefit.avgOverallGain))}</span>
+                <span className="text-cyan">{C.scrim.projChem}</span>
+                <span className="text-faint">{C.scrim.strongerSide}</span>
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={!scrim.available}
+                title={scrim.available ? undefined : scrimReasonText}
+                onClick={() => runScrim(selectedOpp.ref)}
+              >
+                {C.scrim.run}
+              </Button>
+              {selectedBookDay !== null ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => scheduleScrim(selectedBookDay, selectedOpp.ref)}
+                >
+                  {C.scrim.bookCta}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {/* booking day picker */}
+        {bookableDays.length > 0 ? (
+          <div className="mt-2.5">
+            <p className="kicker mb-1.5 text-[10px]">{C.scrim.pickDay}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {bookableDays.slice(0, 8).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setBookDay(d)}
+                  aria-pressed={selectedBookDay === d}
+                  className={cx(
+                    "min-h-9 rounded-md border px-2.5 text-[11px] font-semibold transition-colors",
+                    selectedBookDay === d
+                      ? "border-blue/60 bg-blue/10 text-blue-bright"
+                      : "border-line bg-white/[0.03] text-sub hover:border-line-strong",
+                  )}
+                >
+                  {formatDateTiny(D, dateOfDay(save.clock.seasonIndex, d))}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {/* booked scrims */}
+        {save.scheduledScrims.length > 0 ? (
+          <div className="mt-3 border-t border-line pt-2.5">
+            <p className="kicker mb-1.5 text-[10px]">{C.scrim.upcoming}</p>
+            <ul className="space-y-1">
+              {save.scheduledScrims.map((s) => (
+                <li
+                  key={`${s.day}:${s.oppRef}`}
+                  className="flex items-center justify-between gap-2 text-xs"
+                >
+                  <span className="min-w-0 truncate font-semibold text-sub">
+                    {C.scrim.booked(
+                      formatDateTiny(D, dateOfDay(save.clock.seasonIndex, s.day)),
+                      nameOfRef(save, s.oppRef),
+                    )}
+                  </span>
+                  <Button size="sm" variant="ghost" onClick={() => cancelScrim(s.day)}>
+                    {C.scrim.cancel}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {/* recent results — game-by-game */}
+        <div className="mt-3 border-t border-line pt-2.5">
+          <p className="kicker mb-1.5 text-[10px]">{C.scrim.results}</p>
+          {seasonScrims.length === 0 ? (
+            <p className="text-xs text-faint">{C.scrim.noResults}</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {seasonScrims.slice(0, 6).map((e) => (
+                <li key={e.id} className="flex flex-wrap items-center gap-2 text-xs">
+                  <span
+                    className={cx(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      e.won ? "bg-good" : "bg-bad",
+                    )}
+                    aria-hidden
+                  />
+                  <span className={cx("font-semibold", e.won ? "text-good" : "text-bad")}>
+                    {e.won
+                      ? C.scrim.won(e.oppName, e.scoreA, e.scoreB)
+                      : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
+                  </span>
+                  <span className="flex flex-wrap gap-1" aria-label={C.scrim.gameLine(e.games.join(" · "))}>
+                    {e.games.map((g, i) => (
+                      <span
+                        key={i}
+                        className="rounded bg-white/6 px-1.5 py-0.5 font-mono text-[10px] text-sub"
+                      >
+                        {g}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="ml-auto shrink-0 text-[10px] text-faint">
+                    {formatDateTiny(D, dateOfDay(e.seasonIndex, e.day))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </Panel>
 
       {/* ==================== 6 — footer hint ==================== */}
       <p className="rise-in text-center text-[11px] text-faint" style={{ animationDelay: "280ms" }}>
         {C.training.matchXpHint}
       </p>
+
+      {/* ==================== 7 — advance footer (v0.3) ==================== */}
+      <Panel strong className="sticky bottom-3 z-10 flex flex-wrap items-center justify-end gap-2 p-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={save.phase !== "running"}
+          onClick={advanceDay}
+        >
+          {C.calendar.advanceDay}
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={save.phase !== "running"}
+          onClick={advanceToNextStop}
+        >
+          {C.hub.continue}
+        </Button>
+      </Panel>
     </div>
   );
 }
@@ -539,45 +731,3 @@ function TrainingCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Latest scrim result (newest scrimWin/scrimLoss item off the wire)
-// ---------------------------------------------------------------------------
-
-function ScrimResultRow({
-  item,
-  save,
-  C,
-  D,
-}: {
-  item: NewsItem;
-  save: CareerSave;
-  C: CareerCopy;
-  D: DatesCopy;
-}) {
-  const won = item.titleKey === "scrimWin";
-  const params = item.params ?? {};
-  const title = won ? C.news.tpl.scrimWin(params) : C.news.tpl.scrimLoss(params);
-  const stamp =
-    typeof item.day === "number"
-      ? formatDateTiny(D, dateOfDay(item.seasonIndex, item.day))
-      : C.hub.week(item.week);
-  const isToday = item.seasonIndex === save.clock.seasonIndex && item.day === save.clock.day;
-
-  return (
-    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-black/20 px-3 py-2">
-      <span
-        className={cx(
-          "h-2 w-2 shrink-0 rounded-full",
-          won ? "bg-good" : "bg-bad",
-        )}
-        aria-hidden
-      />
-      <span className={cx("min-w-0 flex-1 text-xs font-semibold", won ? "text-good" : "text-bad")}>
-        {title}
-      </span>
-      <span className="shrink-0 text-[10px] text-faint">
-        {isToday ? D.today : stamp}
-      </span>
-    </div>
-  );
-}

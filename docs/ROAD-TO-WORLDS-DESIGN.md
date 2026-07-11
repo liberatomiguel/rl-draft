@@ -22,6 +22,32 @@
 > (animated goals, scorers, per-game flow — never a static results dump).
 > The affected sections below have been updated to match.
 >
+> **v0.3 adjustment pass (2026-07-11, Miguel's second playtest list — LOCKED,
+> BUILT):** (1) FIFA-style day AUTOPLAY is the primary advance (▶/⏸ +
+> self-pausing autopilot; the batched skip demoted to secondary) + a career
+> toast layer narrating mail/priority news; (2) scrims are schedulable with
+> opponent choice, engine-truth benefit preview, a per-game result log and a
+> same-day rematch guard; (3) SALARY NEGOTIATION ships in v1 after all —
+> bounded counter-offers against a deterministic hidden reserve with the TRUE
+> accept odds shown (supersedes §21.4's fixed-ask recommendation; sliders stay
+> out); (4) the §21.3 soft-premium star-gate is REPLACED by a visible rep cap
+> on new signings (74 + 0.3×rep, free at 84; locked rows stay browsable) and
+> coach hiring is earned at rep 10; (5) ONE unified market value anchors every
+> fee (AI↔AI fiction, AI bids — which now land on ANY window day and also hunt
+> prospects — and user buys), prizes grow ×1.12^season, sponsors ×1.10^season;
+> (6) the AI needs pass shops lower-rated orgs (org↔org fee trades) and a
+> scavenger pass drains displaced quality from the FA pool; a transfer wire +
+> window-close report make the market legible; (7) training anti-stagnation:
+> weeklyBase 0.13, headroomSoftK 2.5, match-prep weeks train at 0.5 share
+> (never freeze), 4-decimal tick quantization, ages 21-24 lifted; (8) early
+> rep floor — regional swiss exits and unofficial finals pay +1; (9) fictional
+> players develop every rollover, wonderkid 8%, headliner slots 77-84;
+> (10) Backer debt is repayable (sales amortize 50% + manual pay-down);
+> (11) org rosters inspectable everywhere (OrgSheet); (12) classic 22-tone
+> crest palette + badge/banner shapes, lion/comet/anchor/trident symbols,
+> sash/quarters patterns. Save v3 (additive). Affected clauses below are
+> superseded accordingly.
+>
 > **v0.2 adjustment pass (2026-07-09/10, Miguel's playtest feedback — LOCKED,
 > BUILT):** supersedes the "one clock = weeks" rule and several v0/v0.1 values.
 > 1. **DAY CLOCK (FIFA-career style).** The playable unit is the day:

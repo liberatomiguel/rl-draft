@@ -729,6 +729,11 @@ export const CAREER_SLOTS = {
  */
 export const CAREER_PRIZES = {
   pools: { t3: 2_000, t2: 10_000, regional: 40_000, major: 150_000, worlds: 600_000 },
+  /**
+   * v0.3: pools grow ×this^seasonIndex (esports money arrives as the scene
+   * matures) — the income-side counterweight to salary inflation 1.08^N.
+   */
+  growthPerSeason: 1.12,
   /** Percent per placement for swiss16 events (champion → swiss_exit-flat ×8). */
   swiss16Pct: {
     champion: 30, runner_up: 20, third: 13, fourth: 10,
@@ -789,11 +794,32 @@ export const CAREER_CHEMISTRY = {
 export const CAREER_SCRIM = {
   maxPerWeek: 2,
   /** splitsTogether credit per scrim (chemistry accrual convention). */
-  chemistryCredit: 0.04,
+  chemistryCredit: 0.05,
   /** Match-XP weeks granted, before the field-quality ramp of the opponent. */
-  xpWeeks: 0.4,
+  xpWeeks: 0.5,
   /** Opponent pick: closest orgs by rating within this band, seeded. */
   ratingBand: 6,
+  /** v0.3 scheduling: opponent shortlist size on the Training screen. */
+  shortlistSize: 6,
+  /** How many days ahead a scrim can be booked (within the season). */
+  scheduleHorizonDays: 14,
+} as const;
+
+/**
+ * v0.3 salary negotiation (supersedes §21.4's fixed-ask-only market): every
+ * player carries a hidden, deterministic reserve factor in
+ * [reserveFloor, 1] × ask per (player, season, window). Counter-offers below
+ * the reserve are rejected and HARDEN the player (+hardenPerReject on the
+ * reserve, telegraphed); after maxRejects only the full ask signs this
+ * window. The accept-chance readout shown in the UI is the true uniform CDF —
+ * legible risk, no save-scum (the reserve is fixed per window).
+ */
+export const CAREER_NEGOTIATION = {
+  reserveFloor: 0.88,
+  hardenPerReject: 0.04,
+  maxRejects: 2,
+  /** UI floor for the counter-offer stepper (below this is auto-insulting). */
+  minOfferFactor: 0.85,
 } as const;
 
 /** Player derivation (ages are RL-realistic: debut 13-15, careers end ~24-25). */
@@ -810,12 +836,22 @@ export const CAREER_DEV = {
 } as const;
 
 export const CAREER_TRAINING = {
-  weeklyBase: 0.1,
-  headroomSoftK: 4,
+  /** v0.3 pacing pass: 0.1 → 0.13 (players read as stagnant at 0.1). */
+  weeklyBase: 0.13,
+  /**
+   * v0.3: 4 → 2.5 — the h/(h+K) collapse near potential was the visible
+   * "stagnation": at K=4 a player 2 pts short trained at 1/3 speed forever.
+   */
+  headroomSoftK: 2.5,
   /** coachMult = clamp(1 + (coachOVR - 75) × perPoint, min, max); no coach = min. */
   coachMult: { perPoint: 0.01, min: 0.85, max: 1.2 },
   /** Training days per week (Mon-Fri); the daily tick is weeklyBase ÷ this. */
   trainingDaysPerWeek: 5,
+  /**
+   * v0.3: committed-event weeks train at this share instead of freezing —
+   * playing weak unofficials must never be a development trap.
+   */
+  matchPrepShare: 0.5,
   /**
    * v0.2 focus rebalance (design: balanced must not dominate). Shares of the
    * base overall rate per focus mode: single-attribute focus now grows overall
@@ -840,13 +876,15 @@ export const CAREER_TRAINING = {
   /** Field quality ramps with avg field rating between these anchors. */
   fieldQualityAnchor: [72, 92] as const,
   subXpFactor: 0.7,
-  maxSeasonGain: 6,
-  maxSplitGain: 2.5,
+  /** v0.3: 6/2.5 → 7/3 — headroom for the faster pacing to breathe. */
+  maxSeasonGain: 7,
+  maxSplitGain: 3,
 } as const;
 
 /** Age curve (young scene): growth to ~20, decline lands at season rollover. */
 export const CAREER_AGE = {
-  growthMult: { u16: 1.5, a17_18: 1.25, a19_20: 1.0, a21_22: 0.6, a23_24: 0.3, a25plus: 0.15 },
+  /** v0.3: 21-24 lifted (0.6/0.3 → 0.7/0.35) — veterans trained at ~zero. */
+  growthMult: { u16: 1.5, a17_18: 1.25, a19_20: 1.0, a21_22: 0.7, a23_24: 0.35, a25plus: 0.15 },
   declineByAge: { a22: 0.5, a23_24: 1.5, a25_26: 2.0, a27plus: 3.0 },
   declineRateDist: { slow: 0.2, normal: 0.6, fast: 0.2 } as Record<string, number>,
   declineRateMult: { slow: 0.6, normal: 1.0, fast: 1.4 } as Record<string, number>,
@@ -903,6 +941,8 @@ export const CAREER_SALARY = {
   inflationPerSeason: 1.08,
   /** "Ambitious" renewal premium when player prestige > org rep tier 2+ splits. */
   ambitionRenewalMult: 1.25,
+  /** Overall from which a player reads "ambitious" at a sub-tier-3 org. */
+  ambitiousOverall: 88,
   blockbusterRefusalRenewalMult: 1.1,
   lengthDiscountPerSeason: 0.95,
 } as const;
@@ -917,15 +957,37 @@ export const CAREER_CONTRACT = {
 export const CAREER_TRANSFER = {
   feePerRemainingSplit: 1.4,
   minFee: 2_500,
-  sellLiquidityFactor: 0.9,
-  quickFlipFactor: 0.7,
-  quickFlipSplits: 3,
   signingBonusPct: 0.15,
-  /** AI incoming-bid pressure: base + per top-10 user player, capped. */
-  poachBaseChance: 0.15,
-  poachPerTopPlayer: 0.1,
-  poachCap: 0.45,
-  aiBidRange: [0.9, 1.3] as const,
+  /**
+   * v0.3 unified market value: value = salary-curve ask (rep/jitter-neutral)
+   * × valueMultiple. EVERY fee derives from it — AI↔AI fee fiction, AI bids
+   * for user players, user buys — so same-OVR players stop pricing 6× apart
+   * (the old ask × synthetic-splits-remaining formula).
+   */
+  valueMultiple: 3.2,
+  /** AI↔AI fee fiction band around value (news numbers stay plausible). */
+  aiFeeBand: [0.85, 1.15] as const,
+  /** User buys under-contract: fee = value × (base + perSplit × remaining). */
+  contractLoadBase: 0.7,
+  contractLoadPerSplit: 0.15,
+  /**
+   * v0.3 incoming-bid pressure — bids can land on ANY window day:
+   * daily chance = base + perStar × |squad OVR ≥ starOverall|
+   *              + perProspect × |age ≤ prospectAgeMax && upside ≥ prospectUpside|,
+   * capped; at most maxBidsPerWindow per window, bidCooldownDays apart.
+   * AI GMs hunt developing prospects too, not only the best player.
+   */
+  poachDailyBase: 0.055,
+  poachPerStar: 0.03,
+  poachPerProspect: 0.02,
+  poachDailyCap: 0.18,
+  starOverall: 82,
+  prospectAgeMax: 18,
+  prospectUpside: 6,
+  maxBidsPerWindow: 2,
+  bidCooldownDays: 2,
+  /** AI bid fee = marketValue × this band (selling should tempt). */
+  aiBidRange: [1.0, 1.35] as const,
   blockbusterFeeMult: 1.5,
 } as const;
 
@@ -942,6 +1004,8 @@ export const CAREER_SPONSOR = {
     { tier: 4, repGate: 75, base: 45_000, bonus: 25_000, objective: "majorTop4", gearDiscountPct: 50, freeBootcampsPerSeason: 2 },
   ] as const,
   signingBonusSplits: 1,
+  /** v0.3: tier base/bonus grow ×this^seasonIndex at offer time (new deals). */
+  growthPerSeason: 1.1,
   /** Misses within a deal before the renewal drops one tier. Never clawbacks. */
   patienceMisses: 3,
   enterEventsTarget: 2,
@@ -954,8 +1018,15 @@ export const CAREER_SPONSOR = {
 
 export const CAREER_REP = {
   start: 5,
+  /**
+   * v0.3 early floor: modest results now pay a little rep — a swiss exit at a
+   * regional and an unofficial final each grant +1 (season 1 can no longer
+   * soft-lock at rep 5 with nothing unlockable). t3 gains stay capped per
+   * split via t3RepCapPerSplit.
+   */
   gains: {
-    t3Win: 1, t2Win: 2, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
+    t3Win: 1, t3Final: 1, t2Win: 2, t2Final: 1,
+    regionalSwissExit: 1, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
     majorQualify: 2, majorTop4: 4, majorWin: 7, worldsQualify: 8, worldsTop4: 10,
   },
   softCapAt: 80,
@@ -974,6 +1045,18 @@ export const CAREER_REP = {
 export const CAREER_UNLOCKS = {
   t2InvitationalRep: 30,
   relocationRep: 70,
+  /** v0.3: hiring a coach is earned early (between peripherals and monitors). */
+  coachRep: 10,
+  /**
+   * v0.3 visible signing gate (Miguel: high-OVR free agents were trivial to
+   * land day 1): NEW signings accept only up to
+   * cap(rep) = signableCapBase + signableCapPerRep × rep (uncapped from
+   * signableCapFreeAt). Renewals and the current squad are always exempt.
+   * Locked market rows stay visible with the rep they need.
+   */
+  signableCapBase: 74,
+  signableCapPerRep: 0.3,
+  signableCapFreeAt: 84,
 } as const;
 
 /**
@@ -1029,19 +1112,51 @@ export const CAREER_LOAN = {
   rescueTo: 3_000,
   repayFactor: 1.2,
   garnishRate: { easy: 0.1, normal: 0.15, hard: 0.2 } as Record<string, number>,
+  /**
+   * v0.3 debt-lock fix: while the Backer loan is active, HALF of every player
+   * sale amortizes the debt (was: prizes only — selling a star did nothing),
+   * and the Finances screen can pay any amount down manually at any time.
+   */
+  saleGarnishRate: 0.5,
 } as const;
 
 export const CAREER_WORLD = {
   /** History gravity: chance each anchor move executes (top-3 orgs stronger). */
   anchorFidelity: 0.85,
   anchorFidelityTop: 0.95,
-  midWindowMoveRate: 0.25,
+  /** v0.3: 0.25 → 0.35 — the mid-season market was too quiet. */
+  midWindowMoveRate: 0.35,
+  /**
+   * v0.3 living market: share of needs-pass moves where the org SHOPS another
+   * org's player (fee trade, one displacement level) instead of signing a
+   * free agent — mid-season org↔org trades were literally 0%.
+   */
+  orgBuyChance: 0.4,
+  /** Only lower-rated orgs get shopped; buyer must out-rate seller by this. */
+  orgBuyRatingEdge: 2,
+  /** Like-for-like guard: shopped player ≤ buyer roster average + this. */
+  orgBuyMaxAboveAvg: 6,
+  /**
+   * v0.3 scavenger pass: chance per window Monday that an org picks up a
+   * displaced FA clearly better than its weakest starter (good players were
+   * rotting in the FA pool forever).
+   */
+  scavengerChance: 0.5,
+  scavengerMinEdge: 3,
   walletByPrestige: [250_000, 600_000, 1_200_000, 2_500_000] as const,
   spendCapPctPerWindow: 0.6,
   /** Filler world: min AI orgs per region (user fills slot 16 at home). */
   minOrgsPerRegion: 16,
   fillerOverallRange: [64, 80] as const,
-  fillerWonderkidChance: 0.05,
+  /** v0.3: 0.05 → 0.08 — fictional players deserve real ceilings. */
+  fillerWonderkidChance: 0.08,
+  /**
+   * v0.3 headliners: the FIRST slot of each filler org may roll a stronger
+   * base overall — texture at the top of thin regions without flooding the
+   * early game with superteams (one per org, chance-gated).
+   */
+  fillerHeadlinerChance: 0.1,
+  fillerHeadlinerRange: [77, 84] as const,
   rookiesPerRegionPerSeason: 8,
   rookieAgeRange: [13, 16] as const,
   rookieOverallRange: [60, 72] as const,
@@ -1093,6 +1208,13 @@ export const CAREER_PLAYBACK = {
   roundGapMs: 1_300,
   advanceMs: 500,
   speeds: [1, 2, 4] as const,
+  /**
+   * v0.3 FIFA-style autoplay: ms per auto-advanced day. The autopilot pauses
+   * itself at every stop state (matchday, decision, window Monday) and on any
+   * user pause — the primary control is now ▶/⏸, "skip to next stop" is the
+   * secondary action.
+   */
+  autoAdvanceDayMs: 850,
 } as const;
 
 export const CAREER_SIM = {
@@ -1107,6 +1229,9 @@ export const CAREER_SAVE = {
   mailCap: 80,
   ledgerTailCap: 100,
   eventResultsCap: 60,
+  /** v0.3 rings: scrim results + the window transfer report. */
+  scrimLogCap: 12,
+  transferLogCap: 150,
   maxSaveBytes: 400_000,
 } as const;
 

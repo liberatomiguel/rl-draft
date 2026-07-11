@@ -160,6 +160,19 @@ export const CAREER_EN = {
     progression: "Next unlock",
     emptyStateTitle: "Welcome to the desk",
     emptyStateBody: "Your first tournament is on the calendar. Press Continue when you're ready.",
+    // v0.3 FIFA-style autoplay
+    play: "Play",
+    pause: "Pause",
+    playHint: (label: string) => `Playing — next: ${label}`,
+    skipToNext: "Skip ahead",
+    // v0.3 transfer wire panel
+    transfersTitle: "Transfer window",
+    transfersWire: "The transfer wire",
+    transfersAll: "All regions",
+    transfersEmpty: "No moves logged yet — the wire fills as the window runs.",
+    transfersFa: "Free agent",
+    transfersUser: "Your move",
+    transfersShowAll: (n: number) => `Show all ${n} moves`,
   },
 
   // v0.2 Inbox — mail addressed to the manager (offers, sponsors, contracts).
@@ -195,6 +208,9 @@ export const CAREER_EN = {
       contractExpiring: (p: Record<string, string | number>) => `${p.player} — contract in its final season`,
       backerIn: () => `Emergency funding arranged`,
       unlock: (p: Record<string, string | number>) => `New for the org: ${p.name}`,
+      windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves`,
+      unavailable: (p: Record<string, string | number>) => `${p.player} out for ${p.event}`,
+      debtCleared: () => `Backer repaid in full`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -213,10 +229,17 @@ export const CAREER_EN = {
         `The books breached the floor and the Emergency Backer stepped in — once. Repayment is garnished from prize money. A second collapse ends the org.`,
       unlock: (p: Record<string, string | number>) =>
         `The org's progress unlocked: ${p.name}. Check the Club's progression track — the toolbox grows with reputation.`,
+      windowReport: (p: Record<string, string | number>) =>
+        `The window is shut — ${p.n} moves across all regions. Headline fees: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. The full wire is on the HQ.`,
+      unavailable: (p: Record<string, string | number>) =>
+        `${p.player} can't play ${p.event} — the sub steps in with his chemistry; without one, an emergency stand-in fills the seat for a fee.`,
+      debtCleared: () =>
+        `The Emergency Backer is repaid in full. Transfer fees and gear purchases are unlocked again — the org owns its future.`,
     },
   },
 
-  // v0.2 scrims — weekday blocks between events.
+  // v0.2 scrims — weekday blocks between events. v0.3: schedulable, opponent
+  // choice, visible results.
   scrim: {
     title: "Scrim block",
     desc: "A best-of-5 behind closed doors: chemistry reps and light development. Two blocks per week.",
@@ -226,6 +249,24 @@ export const CAREER_EN = {
     lost: (opp: string, a: number, b: number) => `Scrim L ${a}-${b} vs ${opp}`,
     usedUp: "No scrim blocks left this week",
     restDay: "No scrims on rest days",
+    // v0.3 scheduling + results
+    planTitle: "Sparring partners",
+    planDesc: "Pick the opponent and the day — booked scrims run automatically and show on the calendar.",
+    chooseOpponent: "Opponent",
+    pickDay: "Day",
+    bookCta: "Book scrim",
+    booked: (date: string, opp: string) => `Booked: ${date} vs ${opp}`,
+    upcoming: "Booked scrims",
+    cancel: "Cancel",
+    benefit: "What you get",
+    projGain: (n: string) => `≈ +${n} OVR per starter`,
+    projChem: "+ chemistry reps",
+    fieldLevel: (n: number) => `Sparring level ${n}`,
+    strongerSide: "Stronger sparring develops faster",
+    results: "Recent scrims",
+    noResults: "No scrims yet this season.",
+    gameLine: (scores: string) => `Games: ${scores}`,
+    sameDay: "Already scrimmed this team today.",
   },
 
   calendar: {
@@ -441,11 +482,31 @@ export const CAREER_EN = {
     sortAge: "Age",
     sortPrice: "Price",
     sortPot: "Potential",
+    sortAsc: "Low → high",
+    sortDesc: "High → low",
     filterRegion: "Region",
     allRegions: "All regions",
     viewSheet: "View sheet",
     noResults: "No players match the filters.",
     dealsEmpty: "No active deals. Offers land here when a window is open.",
+    // v0.3 rep-gated signings (visible lock)
+    lockedAtRep: (rep: number) => `Signs at ${rep} reputation`,
+    lockedHint: "Players of this level won't join the org yet — reputation opens the door.",
+    coachLockedAt: (rep: number) => `Coach hiring unlocks at ${rep} reputation`,
+    // v0.3 salary negotiation
+    negotiation: {
+      title: "Wage talk",
+      yourOffer: "Your offer",
+      fullAsk: "Pay the ask",
+      chance: (pct: number) => `${pct}% to accept`,
+      safe: "Safe",
+      likely: "Likely",
+      risky: "Risky",
+      lowball: "Insulting",
+      hardened: (n: number) =>
+        n === 1 ? "One counter rejected — the ask hardened." : `${n} counters rejected — only the full ask signs now.`,
+      savings: (s: string) => `Saves ${s} / split`,
+    },
     errors: {
       windowClosed: "The transfer window is closed.",
       alreadySigned: "Already on the squad.",
@@ -461,6 +522,11 @@ export const CAREER_EN = {
       blocked: "Not right now.",
       none: "Nothing to do.",
       invalid: "Invalid selection.",
+      repGate: "The org's reputation is too low for a player of this level.",
+      negotiationRejected: "Offer rejected — the agent hardened the ask.",
+      negotiationLocked: "Negotiations soured — only the full ask signs this window.",
+      lowball: "That offer would insult the player.",
+      sameDay: "Already scrimmed this team today.",
     },
   },
 
@@ -491,6 +557,7 @@ export const CAREER_EN = {
       buff: "Staff & boosts",
       loanGrant: "Backer rescue",
       loanGarnish: "Backer repayment",
+      loanPayment: "Debt payment",
       fanbase: "Fanbase revenue",
     },
     sponsors: "Sponsors",
@@ -513,6 +580,13 @@ export const CAREER_EN = {
     backer: "Emergency Backer",
     backerRemaining: (s: string) => `Backer: ${s} to repay`,
     backerLine: (pct: number) => `Repaid from prize money (${pct}%)`,
+    // v0.3 debt pay-down
+    backerSaleLine: (pct: number) => `Player sales repay ${pct}% automatically`,
+    payDebt: "Pay down debt",
+    payDebtAll: (s: string) => `Pay it all (${s})`,
+    payDebtAmount: "Amount",
+    payDebtHint: "Clear the debt to unlock fee transfers and gear purchases.",
+    debtCleared: "Debt cleared — the org is free again.",
     backerWarning: "This deal likely triggers the Emergency Backer.",
     backerRescued: "The Backer stepped in — one rescue per career. Going broke again ends it.",
     insolvencyWarning: "The books are failing. A second collapse ends the career.",
@@ -606,6 +680,8 @@ export const CAREER_EN = {
       trainingReport: (p: Record<string, string | number>) => `Training report: squad ${p.n} OVR`,
       windowOpen: () => `Transfer window opens — the phones are on`,
       windowClose: () => `Window shut. Rosters are what they are.`,
+      windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves across the regions`,
+      debtCleared: () => `Backer repaid — the org walks free`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} announces ${p.name} partnership`,
       sponsorDropped: (p: Record<string, string | number>) => `${p.name} cools on the partnership`,
       repUp: (p: Record<string, string | number>) => `The scene is talking about ${p.org}`,
@@ -670,6 +746,10 @@ export const CAREER_EN = {
         `Age comes for the mechanics first. ${p.player} is adapting his game — experience keeps paying.`,
       windowOpen: () =>
         `Agents answering, fees moving, rosters unlocked. Deals resolve as the days advance; the window won't wait.`,
+      windowReport: (p: Record<string, string | number>) =>
+        `${p.n} moves logged before the window shut. The full wire — fees, free agents, every region — is on the HQ.`,
+      debtCleared: () =>
+        `The last installment cleared the Emergency Backer's books. Fee transfers and gear purchases are open again.`,
       sponsorSigned: (p: Record<string, string | number>) =>
         `${p.org} and ${p.name} signed for the season. Guaranteed base, bonus on the objective — deliver and the tier grows.`,
       unlock: (p: Record<string, string | number>) =>
@@ -737,6 +817,7 @@ export const CAREER_EN = {
       bootcamp2: "Structured bootcamp",
       psychologist: "Sports Psychologist",
       perfCenter: "Performance Center",
+      coach: "Coach hiring",
       t2: "Invitational circuit",
       sponsorT2: "Challenger sponsors",
       sponsorT3: "Global sponsors",
@@ -933,6 +1014,16 @@ export const CAREER_EN = {
       title: "Season rollover",
       body: "Ages tick, contracts count down, the world re-shuffles toward its history — unless you already changed it.",
     },
+  },
+
+  // v0.3 org sheet — any AI org's roster, opened from standings/events/market.
+  orgSheet: {
+    roster: "Roster",
+    coach: "Coach",
+    noCoach: "No coach",
+    points: "Season Points",
+    viewTeam: "View team",
+    prestige: (n: number) => `Prestige ${n}`,
   },
 
   common: {

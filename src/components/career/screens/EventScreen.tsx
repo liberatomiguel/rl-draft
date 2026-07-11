@@ -55,6 +55,7 @@ import {
   prizePoolOf,
 } from "@/components/career/hub/hubShared";
 import { OrgMark } from "@/components/career/OrgMark";
+import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -180,6 +181,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const enterEvent = useCareerStore((s) => s.enterEvent);
   const simEvent = useCareerStore((s) => s.simEvent);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
+  // One sheet for the lobby — any AI org in the field opens it.
+  const [sheetRef, setSheetRef] = useState<string | null>(null);
 
   const preview = useMemo(() => userTeamPreview(save), [save]);
   const userRating = Math.round(preview.rating.total);
@@ -275,16 +278,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {field.map((f) => {
               const isUser = f.ref === "user";
-              return (
-                <div
-                  key={f.ref}
-                  className={cx(
-                    "flex items-center gap-2 rounded-lg border p-2",
-                    isUser
-                      ? "border-orange/60 bg-orange/10"
-                      : "border-line bg-white/[0.03]",
-                  )}
-                >
+              const content = (
+                <>
                   <OrgMark save={save} orgRef={f.ref} size="sm" className="shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p
@@ -306,7 +301,29 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
                   >
                     {f.rating ?? "—"}
                   </span>
-                </div>
+                </>
+              );
+              // Your own row stays inert — the sheet is for scouting the others.
+              if (isUser) {
+                return (
+                  <div
+                    key={f.ref}
+                    className="flex min-h-11 items-center gap-2 rounded-lg border border-orange/60 bg-orange/10 p-2"
+                  >
+                    {content}
+                  </div>
+                );
+              }
+              return (
+                <button
+                  key={f.ref}
+                  type="button"
+                  title={C.orgSheet.viewTeam}
+                  onClick={() => setSheetRef(f.ref)}
+                  className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-line bg-white/[0.03] p-2 text-left transition-colors hover:bg-white/6 focus-visible:bg-white/6 focus-visible:outline-none"
+                >
+                  {content}
+                </button>
               );
             })}
           </div>
@@ -345,6 +362,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           {isUnofficial ? <p className="text-xs text-faint">{C.calendar.skipHint}</p> : null}
         </div>
       ) : null}
+
+      <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </div>
   );
 }
@@ -773,7 +792,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const t = ev.tournament;
   const placement = placementOf(t, "user");
   const isChamp = placement === "champion";
-  const prize = prizeFor(def.tier, placement, def.format, save.difficulty);
+  const prize = prizeFor(def.tier, placement, def.format, save.difficulty, def.seasonIndex);
   const points = pointsFor(def.tier, placement);
   const rep = repPreviewFor(save, def, placement);
   const championName = t.playoffs?.championTeamId
@@ -910,7 +929,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           <tbody>
             {finalRows.map((row) => {
               const isUser = row.id === "user";
-              const rowPrize = prizeFor(def.tier, row.placement, def.format, save.difficulty);
+              const rowPrize = prizeFor(def.tier, row.placement, def.format, save.difficulty, def.seasonIndex);
               const rowPoints = pointsFor(def.tier, row.placement);
               return (
                 <tr

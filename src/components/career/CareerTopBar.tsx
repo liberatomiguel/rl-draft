@@ -2,8 +2,12 @@
 
 /**
  * Road to Worlds — persistent career chrome: crest · the DATE (v0.2 day
- * clock) · budget · rep · the one orange CONTINUE button that always names
- * its destination. The news tab pill counts unread MAIL (the Inbox).
+ * clock) · budget · rep · the advance controls. v0.3: the PRIMARY action is
+ * the FIFA-style ▶/⏸ autoplay (day by day, pausable any time; the autopilot
+ * stops itself at every decision point); "skip ahead" batches to the next
+ * stop. When something blocks (matchday, decision, ceremony) the play
+ * control becomes the orange routed CONTINUE, exactly as before.
+ * The news tab pill counts unread MAIL (the Inbox).
  */
 
 import Link from "next/link";
@@ -25,6 +29,18 @@ import {
   userStars,
 } from "@/components/career/careerUi";
 
+/** Inline glyphs (the design system has no icon set — keep them tiny). */
+const PlayGlyph = () => (
+  <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current" aria-hidden>
+    <path d="M2.5 1.5v9l8-4.5z" />
+  </svg>
+);
+const PauseGlyph = () => (
+  <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current" aria-hidden>
+    <path d="M2.5 1.5h2.6v9H2.5zM6.9 1.5h2.6v9H6.9z" />
+  </svg>
+);
+
 const TABS: { key: string; href: string }[] = [
   { key: "hub", href: "/career" },
   { key: "calendar", href: "/career/calendar" },
@@ -43,6 +59,8 @@ export function CareerTopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
+  const autoAdvance = useCareerStore((s) => s.autoAdvance);
+  const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
 
   // The star read runs world-percentile math — memo on the save snapshot so
   // it recomputes per store write, not on every navigation re-render.
@@ -91,6 +109,10 @@ export function CareerTopBar() {
     }
     advanceToNextStop();
   };
+
+  // v0.3: plain-advance state exposes the autoplay pair (▶/⏸ + skip);
+  // any blocked state falls back to the routed CONTINUE.
+  const canAutoplay = kind === "advance" && save.phase === "running";
 
   return (
     <div className="sticky top-0 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">
@@ -141,9 +163,41 @@ export function CareerTopBar() {
           </div>
         </div>
 
-        <Button size="sm" onClick={onContinue} className="max-w-[42vw] shrink-0 sm:max-w-none">
-          <span className="truncate">{continueLabel}</span>
-        </Button>
+        {canAutoplay ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              size="sm"
+              onClick={() => setAutoAdvance(!autoAdvance)}
+              aria-pressed={autoAdvance}
+              title={autoAdvance ? copy.hub.pause : nextStopLabel ? copy.hub.playHint(nextStopLabel) : copy.hub.play}
+              className="max-w-[38vw] sm:max-w-none"
+            >
+              <span className="flex items-center gap-1.5">
+                {autoAdvance ? <PauseGlyph /> : <PlayGlyph />}
+                <span className="truncate">
+                  {autoAdvance ? copy.hub.pause : copy.hub.play}
+                  {!autoAdvance && nextStopLabel ? (
+                    <span className="hidden sm:inline"> · {nextStopLabel}</span>
+                  ) : null}
+                </span>
+              </span>
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onContinue}
+              title={copy.hub.skipToNext}
+              aria-label={copy.hub.skipToNext}
+            >
+              <span className="hidden sm:inline">{copy.hub.skipToNext}</span>
+              <span className="sm:hidden">»</span>
+            </Button>
+          </div>
+        ) : (
+          <Button size="sm" onClick={onContinue} className="max-w-[42vw] shrink-0 sm:max-w-none">
+            <span className="truncate">{continueLabel}</span>
+          </Button>
+        )}
       </div>
 
       <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-3 pb-1.5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

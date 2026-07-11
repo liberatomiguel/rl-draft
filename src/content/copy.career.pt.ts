@@ -155,6 +155,19 @@ export const CAREER_PT: CareerCopy = {
     progression: "Próximo desbloqueio",
     emptyStateTitle: "Bem-vindo à bancada",
     emptyStateBody: "Seu primeiro torneio já está no calendário. Aperte Continuar quando estiver pronto.",
+    // v0.3 avanço automático estilo FIFA
+    play: "Avançar",
+    pause: "Pausar",
+    playHint: (label: string) => `Avançando — a seguir: ${label}`,
+    skipToNext: "Pular adiante",
+    // v0.3 painel do plantão de transferências
+    transfersTitle: "Janela de transferências",
+    transfersWire: "Plantão de transferências",
+    transfersAll: "Todas as regiões",
+    transfersEmpty: "Nenhuma troca registrada ainda — o plantão enche conforme a janela corre.",
+    transfersFa: "Agente livre",
+    transfersUser: "Sua movimentação",
+    transfersShowAll: (n: number) => `Ver todas as ${n} trocas`,
   },
 
   // Caixa de entrada v0.2 — correio endereçado ao manager.
@@ -190,6 +203,9 @@ export const CAREER_PT: CareerCopy = {
       contractExpiring: (p: Record<string, string | number>) => `${p.player} — contrato na última temporada`,
       backerIn: () => `Aporte de emergência garantido`,
       unlock: (p: Record<string, string | number>) => `Novidade para a org: ${p.name}`,
+      windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas`,
+      unavailable: (p: Record<string, string | number>) => `${p.player} fora de ${p.event}`,
+      debtCleared: () => `Investidor quitado por completo`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -208,10 +224,17 @@ export const CAREER_PT: CareerCopy = {
         `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`,
       unlock: (p: Record<string, string | number>) =>
         `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no Clube — o arsenal cresce com a reputação.`,
+      windowReport: (p: Record<string, string | number>) =>
+        `A janela fechou — ${p.n} trocas em todas as regiões. Taxas de destaque: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. O plantão completo está no QG.`,
+      unavailable: (p: Record<string, string | number>) =>
+        `${p.player} não joga ${p.event} — o reserva entra com a química dele; sem reserva, um substituto de emergência ocupa a vaga por uma taxa.`,
+      debtCleared: () =>
+        `O Investidor de emergência foi quitado por completo. Transferências com taxa e compras de equipamento estão liberadas de novo — a org é dona do próprio futuro.`,
     },
   },
 
-  // Scrims v0.2 — blocos de dia útil entre eventos.
+  // Scrims v0.2 — blocos de dia útil entre eventos. v0.3: agendáveis, escolha
+  // de adversário, resultados visíveis.
   scrim: {
     title: "Bloco de scrim",
     desc: "Uma MD5 de portas fechadas: reps de química e desenvolvimento leve. Dois blocos por semana.",
@@ -221,6 +244,24 @@ export const CAREER_PT: CareerCopy = {
     lost: (opp: string, a: number, b: number) => `Scrim D ${a}-${b} vs ${opp}`,
     usedUp: "Sem blocos de scrim restantes nesta semana",
     restDay: "Nada de scrim em dia de descanso",
+    // v0.3 agendamento + resultados
+    planTitle: "Parceiros de treino",
+    planDesc: "Escolha o adversário e o dia — scrims agendadas rodam sozinhas e aparecem no calendário.",
+    chooseOpponent: "Adversário",
+    pickDay: "Dia",
+    bookCta: "Agendar scrim",
+    booked: (date: string, opp: string) => `Agendada: ${date} vs ${opp}`,
+    upcoming: "Scrims agendadas",
+    cancel: "Cancelar",
+    benefit: "O que você ganha",
+    projGain: (n: string) => `≈ +${n} OVR por titular`,
+    projChem: "+ reps de química",
+    fieldLevel: (n: number) => `Nível do treino ${n}`,
+    strongerSide: "Adversário mais forte desenvolve mais rápido",
+    results: "Scrims recentes",
+    noResults: "Nenhuma scrim nesta temporada ainda.",
+    gameLine: (scores: string) => `Jogos: ${scores}`,
+    sameDay: "Vocês já treinaram contra esse time hoje.",
   },
 
   calendar: {
@@ -436,11 +477,31 @@ export const CAREER_PT: CareerCopy = {
     sortAge: "Idade",
     sortPrice: "Preço",
     sortPot: "Potencial",
+    sortAsc: "Menor → maior",
+    sortDesc: "Maior → menor",
     filterRegion: "Região",
     allRegions: "Todas as regiões",
     viewSheet: "Ver ficha",
     noResults: "Nenhum jogador com esses filtros.",
     dealsEmpty: "Nenhuma negociação ativa. Propostas chegam aqui com a janela aberta.",
+    // v0.3 contratações travadas por reputação (cadeado visível)
+    lockedAtRep: (rep: number) => `Assina com ${rep} de reputação`,
+    lockedHint: "Jogadores desse nível ainda não topam a org — a reputação abre essa porta.",
+    coachLockedAt: (rep: number) => `Contratar coach desbloqueia com ${rep} de reputação`,
+    // v0.3 negociação salarial
+    negotiation: {
+      title: "Conversa salarial",
+      yourOffer: "Sua oferta",
+      fullAsk: "Pagar a pedida",
+      chance: (pct: number) => `${pct}% de aceitar`,
+      safe: "Seguro",
+      likely: "Provável",
+      risky: "Arriscado",
+      lowball: "Ofensivo",
+      hardened: (n: number) =>
+        n === 1 ? "Uma contraproposta recusada — a pedida endureceu." : `${n} contrapropostas recusadas — agora só a pedida cheia assina.`,
+      savings: (s: string) => `Economiza ${s} / split`,
+    },
     errors: {
       windowClosed: "A janela de transferências está fechada.",
       alreadySigned: "Já está no elenco.",
@@ -456,6 +517,11 @@ export const CAREER_PT: CareerCopy = {
       blocked: "Agora não.",
       none: "Nada a fazer.",
       invalid: "Seleção inválida.",
+      repGate: "A reputação da org ainda é baixa para um jogador desse nível.",
+      negotiationRejected: "Oferta recusada — o agente endureceu a pedida.",
+      negotiationLocked: "A negociação azedou — só a pedida cheia assina nesta janela.",
+      lowball: "Essa oferta ofenderia o jogador.",
+      sameDay: "Vocês já treinaram contra esse time hoje.",
     },
   },
 
@@ -486,6 +552,7 @@ export const CAREER_PT: CareerCopy = {
       buff: "Staff & boosts",
       loanGrant: "Resgate do investidor",
       loanGarnish: "Reembolso ao investidor",
+      loanPayment: "Pagamento da dívida",
       fanbase: "Receita de torcida",
     },
     sponsors: "Patrocinadores",
@@ -508,6 +575,13 @@ export const CAREER_PT: CareerCopy = {
     backer: "Investidor de emergência",
     backerRemaining: (s: string) => `Investidor: ${s} a reembolsar`,
     backerLine: (pct: number) => `Reembolsado da premiação (${pct}%)`,
+    // v0.3 quitação da dívida
+    backerSaleLine: (pct: number) => `Vendas de jogadores abatem ${pct}% automaticamente`,
+    payDebt: "Abater dívida",
+    payDebtAll: (s: string) => `Quitar tudo (${s})`,
+    payDebtAmount: "Valor",
+    payDebtHint: "Quite a dívida para liberar transferências com taxa e compras de equipamento.",
+    debtCleared: "Dívida quitada — a org está livre de novo.",
     backerWarning: "Este negócio provavelmente aciona o investidor de emergência.",
     backerRescued: "O investidor entrou — um resgate por carreira. Quebrar de novo encerra a história.",
     insolvencyWarning: "As contas estão ruindo. Um segundo colapso encerra a carreira.",
@@ -601,6 +675,8 @@ export const CAREER_PT: CareerCopy = {
       trainingReport: (p: Record<string, string | number>) => `Relatório de treinos: elenco ${p.n} OVR`,
       windowOpen: () => `Janela de transferências aberta — os telefones ligados`,
       windowClose: () => `Janela fechada. Os elencos são o que são.`,
+      windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas pelas regiões`,
+      debtCleared: () => `Investidor quitado — a org anda livre`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} anuncia parceria com ${p.name}`,
       sponsorDropped: (p: Record<string, string | number>) => `${p.name} esfria a parceria`,
       repUp: (p: Record<string, string | number>) => `A cena está falando de ${p.org}`,
@@ -665,6 +741,10 @@ export const CAREER_PT: CareerCopy = {
         `A idade cobra a mecânica primeiro. ${p.player} está adaptando o próprio jogo — a experiência segue pagando.`,
       windowOpen: () =>
         `Agentes atendendo, taxas circulando, elencos destravados. Negócios resolvem com o passar dos dias; a janela não espera.`,
+      windowReport: (p: Record<string, string | number>) =>
+        `${p.n} trocas registradas antes da janela fechar. O plantão completo — taxas, agentes livres, todas as regiões — está no QG.`,
+      debtCleared: () =>
+        `A última parcela zerou os livros do Investidor de emergência. Transferências com taxa e equipamentos liberados de novo.`,
       sponsorSigned: (p: Record<string, string | number>) =>
         `${p.org} e ${p.name} assinaram pela temporada. Base garantida, bônus na meta — entregue e o nível cresce.`,
       unlock: (p: Record<string, string | number>) =>
@@ -732,6 +812,7 @@ export const CAREER_PT: CareerCopy = {
       bootcamp2: "Bootcamp estruturado",
       psychologist: "Psicóloga esportiva",
       perfCenter: "Centro de Performance",
+      coach: "Contratação de coach",
       t2: "Circuito de Invitationals",
       sponsorT2: "Patrocinadores Challenger",
       sponsorT3: "Patrocinadores globais",
@@ -928,6 +1009,16 @@ export const CAREER_PT: CareerCopy = {
       title: "Virada de temporada",
       body: "As idades avançam, os contratos contam, o mundo se reorganiza rumo à própria história — a menos que você já a tenha mudado.",
     },
+  },
+
+  // v0.3 ficha de org — elenco de qualquer org, aberta de tabelas/eventos/mercado.
+  orgSheet: {
+    roster: "Elenco",
+    coach: "Coach",
+    noCoach: "Sem coach",
+    points: "Pontos da Temporada",
+    viewTeam: "Ver time",
+    prestige: (n: number) => `Prestígio ${n}`,
   },
 
   common: {

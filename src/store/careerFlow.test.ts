@@ -104,7 +104,7 @@ describe("careerFlow — full season integration (day clock)", () => {
     expect(a.scrimsThisWeek).toBe(0);
   });
 
-  it("plays season 0 end-to-end: events, standings, payday, worlds, review", () => {
+  it("plays season 0 end-to-end: events, standings, payday, worlds, review", { timeout: 20_000 }, () => {
     let save = createCareerSave(INPUT, 20260709);
     save = playSeason(save);
 
@@ -128,7 +128,10 @@ describe("careerFlow — full season integration (day clock)", () => {
     expect(save.clock.day).toBeLessThanOrEqual(DAYS_PER_SEASON);
   });
 
-  it("rolls over into season 1 and keeps playing", () => {
+  // v0.3: the living market (org shopping + scavenger passes + daily bids)
+  // roughly doubled the per-season work — full-season integrations get an
+  // explicit timeout instead of the 5s default.
+  it("rolls over into season 1 and keeps playing", { timeout: 20_000 }, () => {
     let save = createCareerSave(INPUT, 777001);
     save = playSeason(save);
     expect(save.phase).toBe("seasonReview");
@@ -153,7 +156,7 @@ describe("careerFlow — full season integration (day clock)", () => {
     expect(save.clock.day).toBeGreaterThanOrEqual(targetDay - 1);
   });
 
-  it("is deterministic: same seed, same season story", () => {
+  it("is deterministic: same seed, same season story", { timeout: 30_000 }, () => {
     const runOnce = () => {
       let save = createCareerSave(INPUT, 999333);
       save = playSeason(save);

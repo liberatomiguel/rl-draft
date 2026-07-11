@@ -8,8 +8,9 @@
  * EXPLAINS itself (expandable per-pair breakdown from the engine's
  * ChemistryResult.items), bench + coach chips, a roster-stability meter tied
  * to CAREER_STABILITY, and a contracts table with renew (1/2/3-season length
- * picker previewing the exact engine ask) and release (severance from the
- * same formula releasePlayerFlow charges).
+ * picker previewing the exact engine ask, plus the v0.3 wage-talk
+ * counter-offer widget — rejections keep the modal open and harden the odds)
+ * and release (severance from the same formula releasePlayerFlow charges).
  *
  * All money math mirrors the flow layer 1:1 — computeSalaryAsk/quantize are
  * imported READ-ONLY from the engine so the preview can never drift.
@@ -17,12 +18,13 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CAREER_CONTRACT, CAREER_STABILITY } from "@/config/balance";
+import { CAREER_CONTRACT, CAREER_SALARY, CAREER_STABILITY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { computeSalaryAsk, quantize } from "@/engine/career/economy";
 import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
+import { negotiationTriesFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import {
@@ -38,6 +40,7 @@ import {
 } from "@/components/career/careerUi";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
+import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import { PlayerSheet, type PlayerSheetData } from "@/components/career/PlayerSheet";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -63,6 +66,8 @@ export function SquadScreen() {
   const setStarters = useCareerStore((s) => s.setStarters);
   const releasePlayer = useCareerStore((s) => s.releasePlayer);
   const renewPlayer = useCareerStore((s) => s.renewPlayer);
+  const lastError = useCareerStore((s) => s.lastError);
+  const clearError = useCareerStore((s) => s.clearError);
 
   const [selected, setSelected] = useState<string | null>(null);
   /** Rating/chem snapshot taken right before a swap — powers the after-swap readout. */
@@ -72,6 +77,8 @@ export function SquadScreen() {
   const [release, setRelease] = useState<SquadPlayer | null>(null);
   const [renew, setRenew] = useState<SquadPlayer | null>(null);
   const [renewLen, setRenewLen] = useState<1 | 2 | 3>(2);
+  /** v0.3 wage talk — the counter-offer on the table (== ask when not countering). */
+  const [renewOffer, setRenewOffer] = useState(0);
 
   const team = useMemo(() => (save ? userTeamPreview(save) : null), [save]);
 
@@ -152,8 +159,17 @@ export function SquadScreen() {
       careerSeed: save.careerSeed,
       playerId: p.id,
       // Same ambition rule renewPlayerFlow applies (careerFlow.ts).
-      ambitious: p.overall >= 88 && repTierOf(save.reputation) < 3,
+      ambitious: p.overall >= CAREER_SALARY.ambitiousOverall && repTierOf(save.reputation) < 3,
     });
+
+  // v0.3 wage talk — fresh ask + this window's rejected counters (both re-read
+  // from the live save so a rejection refreshes the widget in place).
+  const renewAsk = renew ? askFor(renew, renewLen) : 0;
+  const renewRejects = renew ? negotiationTriesFor(save, renew.id) : 0;
+  const closeRenew = () => {
+    setRenew(null);
+    clearError();
+  };
 
   // --- release severance (same formula + quantize as releasePlayerFlow) -----
   const severanceFor = (p: SquadPlayer): number =>
@@ -452,6 +468,7 @@ export function SquadScreen() {
                     variant="secondary"
                     onClick={() => {
                       setRenewLen(2);
+                      setRenewOffer(askFor(p, 2));
                       setRenew(p);
                     }}
                   >
@@ -499,21 +516,28 @@ export function SquadScreen() {
         ) : null}
       </Modal>
 
-      {/* ==================== renew — length picker + ask preview ========== */}
+      {/* ============ renew — length picker + ask preview + wage talk ====== */}
       <Modal
         open={Boolean(renew)}
-        onClose={() => setRenew(null)}
+        onClose={closeRenew}
         title={renew ? `${C.squad.renew} — ${renew.name}` : ""}
         actions={
           <>
-            <Button variant="ghost" onClick={() => setRenew(null)}>
+            <Button variant="ghost" onClick={closeRenew}>
               {C.common.cancel}
             </Button>
             <Button
               variant="primary"
               onClick={() => {
-                if (renew) renewPlayer(renew.id, renewLen);
-                setRenew(null);
+                if (!renew) return;
+                renewPlayer(
+                  renew.id,
+                  renewLen,
+                  renewOffer < renewAsk ? renewOffer : undefined,
+                );
+                // A rejected counter keeps the modal open — the widget re-reads
+                // the hardened tries count from the persisted save.
+                if (!useCareerStore.getState().lastError) closeRenew();
               }}
             >
               {C.common.confirm}
@@ -523,6 +547,12 @@ export function SquadScreen() {
       >
         {renew ? (
           <div className="space-y-4">
+            {lastError ? (
+              <p className="rounded-lg border border-bad/40 bg-bad/10 p-2.5 text-xs font-semibold text-bad">
+                {(C.market.errors as Record<string, string>)[lastError] ??
+                  C.market.errors.unknown}
+              </p>
+            ) : null}
             <div>
               <p className="kicker mb-2 text-[10px]">{C.market.lengthLabel}</p>
               <div className="grid grid-cols-3 gap-2">
@@ -530,7 +560,10 @@ export function SquadScreen() {
                   <button
                     key={len}
                     type="button"
-                    onClick={() => setRenewLen(len)}
+                    onClick={() => {
+                      setRenewLen(len);
+                      setRenewOffer(askFor(renew, len));
+                    }}
                     className={cx(
                       "rounded-lg border p-2.5 text-center transition-colors",
                       renewLen === len
@@ -553,12 +586,20 @@ export function SquadScreen() {
                 ))}
               </div>
             </div>
+            <SalaryNegotiator
+              ask={renewAsk}
+              offered={Math.min(renewOffer || renewAsk, renewAsk)}
+              onChange={setRenewOffer}
+              rejects={renewRejects}
+            />
             <div className="rounded-lg border border-line bg-white/[0.02] p-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sub">{C.squad.wage}</span>
                 <span className="font-semibold text-ink">
                   {C.squad.perSplit(formatMoney(renew.salaryPerSplit))} →{" "}
-                  {C.squad.perSplit(formatMoney(askFor(renew, renewLen)))}
+                  {C.squad.perSplit(
+                    formatMoney(Math.min(renewOffer || renewAsk, renewAsk)),
+                  )}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center justify-between">

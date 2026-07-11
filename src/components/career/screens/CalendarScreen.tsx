@@ -76,6 +76,7 @@ export function CalendarScreen() {
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
+  const cancelScrim = useCareerStore((s) => s.cancelScrim);
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showWorld, setShowWorld] = useState(false);
@@ -183,6 +184,8 @@ export function CalendarScreen() {
         return C.calendar.payday;
       case "training":
         return C.calendar.trainingDay;
+      case "scrim":
+        return C.calendar.scrimDay;
       case "rest":
         return C.calendar.restDay;
       default:
@@ -266,6 +269,50 @@ export function CalendarScreen() {
             ) : null}
           </div>
         ) : null}
+
+        {/* v0.3 — booked scrim on this day (future: cancellable) */}
+        {(() => {
+          const booked = save.scheduledScrims.filter((s) => s.day === day.day);
+          if (booked.length === 0) return null;
+          return (
+            <div className="mt-3 border-t border-line pt-2.5">
+              {booked.map((s) => (
+                <div key={s.oppRef} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-sub">
+                    {C.scrim.title} · {C.scrim.vs(nameOfRef(save, s.oppRef))}
+                  </span>
+                  {day.day > save.clock.day ? (
+                    <Button size="sm" variant="ghost" onClick={() => cancelScrim(s.day)}>
+                      {C.scrim.cancel}
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* v0.3 — scrim results played on this day */}
+        {(() => {
+          const played = save.scrimLog.filter(
+            (e) => e.seasonIndex === save.clock.seasonIndex && e.day === day.day,
+          );
+          if (played.length === 0) return null;
+          return (
+            <div className="mt-3 border-t border-line pt-2.5 space-y-1.5">
+              {played.map((e) => (
+                <div key={e.id} className="flex flex-wrap items-center gap-2 text-xs">
+                  <Badge tone={e.won ? "good" : "neutral"}>
+                    {e.won
+                      ? C.scrim.won(e.oppName, e.scoreA, e.scoreB)
+                      : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
+                  </Badge>
+                  <span className="text-faint">{C.scrim.gameLine(e.games.join(" · "))}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {worldDefs.length > 0 ? (
           <div className="mt-3 border-t border-line pt-2.5">
@@ -493,6 +540,12 @@ export function CalendarScreen() {
                                 "h-1.5 w-1.5 rounded-full",
                                 ev.tier === "worlds" ? "bg-amber-300" : "bg-orange-bright",
                               )}
+                            />
+                          ) : d.kinds.includes("scrim") ? (
+                            // v0.3: a booked scrim reads as a ringed training dot.
+                            <span
+                              className="h-1.5 w-1.5 rounded-full bg-cyan/80 ring-1 ring-cyan/40"
+                              title={C.calendar.scrimDay}
                             />
                           ) : d.kinds.includes("training") ? (
                             <span className="h-1 w-1 rounded-full bg-white/25" />

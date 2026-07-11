@@ -981,10 +981,21 @@ export function agePassAndIntake(
   }
 
   // 3. Off-anchor development pass (rng-free; sorted for determinism).
-  for (const id of Object.keys(next.overallDelta).sort()) {
+  //    v0.3: ALL fictional players (fic:/rook:) develop too — previously only
+  //    ids the market had touched (present in overallDelta) ever grew, so
+  //    fillers and rookies never reached their potential. Growth is written
+  //    into overallDelta (a fictional's first entry initializes at 0).
+  const devIds = new Set<string>(Object.keys(next.overallDelta));
+  const addFictional = (id: string) => {
+    if (id.startsWith("fic:") || id.startsWith("rook:")) devIds.add(id);
+  };
+  for (const ref of Object.keys(next.orgs)) next.orgs[ref].playerIds.forEach(addFictional);
+  next.freeAgentIds.forEach(addFictional);
+  for (const id of [...devIds].sort()) {
     if (userSquad.has(id) || retiredNow.has(id)) continue;
     const view = playerViewById(id, viewCtx);
     if (!view) continue;
+    if (!(id in next.overallDelta)) next.overallDelta[id] = 0;
     const headroom = Math.max(0, view.potential - view.overall);
     const headroomMult = headroom / (headroom + CAREER_TRAINING.headroomSoftK);
     const raw =

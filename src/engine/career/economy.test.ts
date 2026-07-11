@@ -479,15 +479,21 @@ describe("sponsorOffersFor", () => {
     expect(floor.map((o) => o.tier)).toEqual([1]);
   });
 
-  it("bakes sponsorMult into the signed figures, quantized", () => {
+  it("bakes sponsorMult AND per-season growth into the signed figures, quantized", () => {
+    const seasonIndex = 2;
+    const growth = Math.pow(CAREER_SPONSOR.growthPerSeason, seasonIndex);
     for (const difficulty of ["easy", "normal", "hard"] as CareerDifficulty[]) {
-      const [best] = sponsorOffersFor(80, 2, 11, null, false, difficulty);
+      const [best] = sponsorOffersFor(80, seasonIndex, 11, null, false, difficulty);
       const row = CAREER_SPONSOR.tiers[best.tier - 1];
-      expect(best.basePerSplit).toBe(quantize(row.base * CAREER_ECONOMY.sponsorMult[difficulty]));
-      expect(best.bonus).toBe(quantize(row.bonus * CAREER_ECONOMY.sponsorMult[difficulty]));
+      const mult = CAREER_ECONOMY.sponsorMult[difficulty] * growth;
+      expect(best.basePerSplit).toBe(quantize(row.base * mult));
+      expect(best.bonus).toBe(quantize(row.bonus * mult));
       expect(best.objectiveKind).toBe(row.objective);
       expect(best.sponsorId.length).toBeGreaterThan(0);
     }
+    // Season 0 pays the flat table (growth^0 = 1).
+    const [s0] = sponsorOffersFor(80, 0, 11, null, false, "normal");
+    expect(s0.basePerSplit).toBe(quantize(CAREER_SPONSOR.tiers[s0.tier - 1].base));
   });
 
   it("is deterministic per (careerSeed, seasonIndex)", () => {

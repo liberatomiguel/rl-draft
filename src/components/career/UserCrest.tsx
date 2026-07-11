@@ -15,8 +15,11 @@
  * Unknown/absent parts fall back gracefully, so legacy saves render exactly
  * as they always did. Colors stay {primary, secondary} (CareerColors).
  *
- * All geometry is hand-authored on a 64×64 grid: 12 base silhouettes,
- * 14 center symbols (~24–30px, centered ≈(32,34)), 5 clipped patterns.
+ * All geometry is hand-authored on a 64×64 grid: 14 base silhouettes,
+ * 18 center symbols (~24–30px, centered ≈(32,34)), 7 clipped patterns.
+ * v0.3: classic-tone palette (22 swatches — the length is load-bearing:
+ * contrastingSecondaryIndex steps +5, coprime with 22) + badge/banner shapes,
+ * lion/comet/anchor/trident symbols, sash/quarters patterns.
  */
 
 import { useId } from "react";
@@ -26,19 +29,24 @@ import type { CareerColors } from "@/engine/career/types";
 // Catalogue ids
 // ---------------------------------------------------------------------------
 
+// Order = wizard display order (strong classics first). Ids are the contract —
+// never rename; appending is always safe (parse falls back on unknowns).
 export const CREST_IDS = [
-  "shield", "hex", "circle", "diamond", "wing", "bolt",
-  "star", "flame", "orbit", "blade", "crown", "wave",
+  "shield", "badge", "banner", "crown", "hex", "circle", "diamond",
+  "star", "blade", "flame", "wing", "bolt", "orbit", "wave",
 ] as const;
 export type CrestId = (typeof CREST_IDS)[number];
 
 export const SYMBOL_IDS = [
-  "rocket", "wolf", "dragon", "phoenix", "blade", "crown", "star",
-  "bolt", "flame", "wave", "gear", "falcon", "orb", "arrow",
+  "lion", "wolf", "dragon", "phoenix", "falcon", "crown", "blade",
+  "trident", "anchor", "star", "comet", "bolt", "flame", "wave",
+  "rocket", "gear", "orb", "arrow",
 ] as const;
 export type SymbolId = (typeof SYMBOL_IDS)[number];
 
-export const PATTERN_IDS = ["stripes", "split", "chevron", "rays", "ring"] as const;
+export const PATTERN_IDS = [
+  "stripes", "sash", "split", "quarters", "chevron", "rays", "ring",
+] as const;
 export type PatternId = (typeof PATTERN_IDS)[number];
 
 // ---------------------------------------------------------------------------
@@ -47,46 +55,49 @@ export type PatternId = (typeof PATTERN_IDS)[number];
 
 /**
  * Single swatches for independent primary/secondary picks (wizard v2 +
- * procedural filler crests). Superset of every CREST_COLOR_PAIRS color, plus
- * esports staples (white kit, graphite kit).
+ * procedural filler crests). v0.3: CLASSIC CLUB TONES (navies, forest,
+ * burgundy, gold, ivory…) replacing the neon Tailwind brights — Miguel's
+ * "tons mais clássicos". EXACTLY 22 entries: contrastingSecondaryIndex steps
+ * +5 (coprime with 22) and procedural filler crests index by hash, so the
+ * length is a compatibility surface — swap hexes, never the count.
  */
 export const CREST_PALETTE: { id: string; hex: string }[] = [
-  { id: "ember", hex: "#f97316" },
-  { id: "sand", hex: "#fde68a" },
-  { id: "gold", hex: "#eab308" },
-  { id: "cream", hex: "#fef9c3" },
-  { id: "crimson", hex: "#ef4444" },
-  { id: "blush", hex: "#fecaca" },
-  { id: "rose", hex: "#f43f5e" },
-  { id: "petal", hex: "#fda4af" },
-  { id: "violet", hex: "#a855f7" },
-  { id: "orchid", hex: "#fbcfe8" },
-  { id: "circuit", hex: "#3b82f6" },
-  { id: "ice", hex: "#a5f3fc" },
-  { id: "cyan", hex: "#06b6d4" },
-  { id: "glacier", hex: "#cffafe" },
-  { id: "pitch", hex: "#22c55e" },
-  { id: "mint", hex: "#bbf7d0" },
-  { id: "emerald", hex: "#10b981" },
-  { id: "seafoam", hex: "#99f6e4" },
-  { id: "steel", hex: "#94a3b8" },
-  { id: "silver", hex: "#e2e8f0" },
-  { id: "white", hex: "#f8fafc" },
-  { id: "graphite", hex: "#475569" },
+  { id: "navy", hex: "#1f3a5f" },
+  { id: "gold", hex: "#c9a227" },
+  { id: "burgundy", hex: "#7f1d2d" },
+  { id: "ivory", hex: "#f2efe3" },
+  { id: "royal", hex: "#1d4ed8" },
+  { id: "silver", hex: "#cbd5e1" },
+  { id: "forest", hex: "#1d5c3a" },
+  { id: "cream", hex: "#e8dfc8" },
+  { id: "scarlet", hex: "#c81e2e" },
+  { id: "sky", hex: "#4da3e8" },
+  { id: "charcoal", hex: "#262b33" },
+  { id: "amber", hex: "#d97706" },
+  { id: "petrol", hex: "#155e75" },
+  { id: "white", hex: "#f5f7fa" },
+  { id: "plum", hex: "#6d2f6b" },
+  { id: "steel", hex: "#7c8aa0" },
+  { id: "wine", hex: "#5c1a2e" },
+  { id: "olive", hex: "#5c6b2f" },
+  { id: "indigo", hex: "#4338ca" },
+  { id: "burnt-orange", hex: "#c2540a" },
+  { id: "teal", hex: "#0f766e" },
+  { id: "slate", hex: "#475569" },
 ];
 
 /** Legacy curated pairs — kept for old call sites; every color is in CREST_PALETTE. */
 export const CREST_COLOR_PAIRS: { primary: string; secondary: string }[] = [
-  { primary: "#f97316", secondary: "#fde68a" }, // ember
-  { primary: "#3b82f6", secondary: "#a5f3fc" }, // circuit blue
-  { primary: "#22c55e", secondary: "#bbf7d0" }, // pitch green
-  { primary: "#a855f7", secondary: "#fbcfe8" }, // royal violet
-  { primary: "#ef4444", secondary: "#fecaca" }, // crimson
-  { primary: "#eab308", secondary: "#fef9c3" }, // gold rush
-  { primary: "#06b6d4", secondary: "#cffafe" }, // cyan wave
-  { primary: "#f43f5e", secondary: "#fda4af" }, // rose fury
-  { primary: "#94a3b8", secondary: "#e2e8f0" }, // steel
-  { primary: "#10b981", secondary: "#99f6e4" }, // emerald
+  { primary: "#1f3a5f", secondary: "#c9a227" }, // navy & gold
+  { primary: "#7f1d2d", secondary: "#f2efe3" }, // burgundy & ivory
+  { primary: "#1d5c3a", secondary: "#e8dfc8" }, // forest & cream
+  { primary: "#1d4ed8", secondary: "#cbd5e1" }, // royal & silver
+  { primary: "#262b33", secondary: "#d97706" }, // charcoal & amber
+  { primary: "#c81e2e", secondary: "#f2efe3" }, // scarlet & ivory
+  { primary: "#155e75", secondary: "#4da3e8" }, // petrol & sky
+  { primary: "#6d2f6b", secondary: "#cbd5e1" }, // plum & silver
+  { primary: "#0f766e", secondary: "#e8dfc8" }, // teal & cream
+  { primary: "#475569", secondary: "#f5f7fa" }, // slate & white
 ];
 
 /** WCAG-ish relative luminance of a #rrggbb hex (0 = black, 1 = white). */
@@ -170,6 +181,11 @@ const BASE_PATH: Record<CrestId, string> = {
   blade: "M20 4 L44 4 L54 32 L44 60 L20 60 L10 32 Z",
   crown: "M8 22 L20 32 L32 12 L44 32 L56 22 L52 48 H12 Z",
   wave: "M6 40 C14 28 22 28 30 36 C38 44 46 44 58 32 L58 48 C46 58 34 58 26 50 C18 42 12 44 6 52 Z",
+  // v0.3 — the classic football-club badge (rounded top, tapered bottom).
+  badge:
+    "M14 6 H50 A6 6 0 0 1 56 12 V36 C56 49 46 57 32 60 C18 57 8 49 8 36 V12 A6 6 0 0 1 14 6 Z",
+  // v0.3 — hanging pennant banner with a swallowtail bottom.
+  banner: "M14 4 H50 V54 L32 45 L14 54 Z",
 };
 
 /** Legacy accent detail (secondary fill) — rendered ONLY on symbol-less, pattern-less crests. */
@@ -186,6 +202,8 @@ const ACCENT_PATH: Record<CrestId, string> = {
   blade: "M24 10 L40 10 L47 32 L40 54 L32 54 L40 32 Z",
   crown: "M32 20 L40 34 L48 27 L45 44 H32 Z",
   wave: "M6 48 C14 40 20 40 26 46 C34 52 44 52 58 42 L58 48 C46 58 34 58 26 50 C18 42 12 44 6 52 Z",
+  badge: "M32 12 L50 12 V36 C50 46 43 52 32 55 Z",
+  banner: "M32 10 L44 10 V45 L32 40 Z",
 };
 
 // ---------------------------------------------------------------------------
@@ -274,6 +292,35 @@ const SYMBOL_PATHS: Record<SymbolId, string[]> = {
   ],
   // Bold ascent arrow.
   arrow: ["M32 15.5 L45 31 L37.6 31 L37.6 47 L26.4 47 L26.4 31 L19 31 Z"],
+  // v0.3 — heraldic lion: 8-lobe mane ring (face hole) + eyes and muzzle.
+  lion: [
+    "M32 18.5 C36 18.5 38.2 20.6 41.6 21.2 C43.2 24.2 46.6 25.2 46.8 28.8 C48.8 31.4 48.8 36.6 46.8 39.2 C46.6 42.8 43.2 43.8 41.6 46.8 " +
+      "C38.2 47.4 36 49.5 32 49.5 C28 49.5 25.8 47.4 22.4 46.8 C20.8 43.8 17.4 42.8 17.2 39.2 C15.2 36.6 15.2 31.4 17.2 28.8 " +
+      "C17.4 25.2 20.8 24.2 22.4 21.2 C25.8 20.6 28 18.5 32 18.5 Z " +
+      "M32 25.5 A8.5 8.5 0 1 0 32.01 25.5 Z",
+    "M28.9 31 A1.9 1.9 0 1 1 28.89 31 Z M37 31 A1.9 1.9 0 1 1 36.99 31 Z " +
+      "M32 34.8 L28.4 38.2 C29.6 40.6 34.4 40.6 35.6 38.2 Z",
+  ],
+  // v0.3 — comet: head disc low-right, tail wedges sweeping to upper-left.
+  comet: [
+    "M38.2 31 A7.2 7.2 0 1 1 38.19 31 Z",
+    "M31.8 33.8 L14.5 22 L27.9 37.2 Z M35 29.8 L22.5 13.8 L31.7 32 Z M42.2 30 L38.8 14.5 L37.5 30.3 Z",
+  ],
+  // v0.3 — anchor: ring, shank + stock, curved flukes.
+  anchor: [
+    "M32 13.4 A4.6 4.6 0 1 1 31.99 13.4 Z M32 15.8 A2.2 2.2 0 1 0 32.01 15.8 Z",
+    "M30.4 22.4 L33.6 22.4 L33.6 44.5 L30.4 44.5 Z M24 26.8 L40 26.8 L40 29.8 L24 29.8 Z",
+    "M32 49.5 C24.6 49 19.6 44.6 18 37.6 L23 40.6 L22.2 34.8 C24.9 40 27.7 43 30.4 43.9 L33.6 43.9 C36.3 43 39.1 40 41.8 34.8 " +
+      "L41 40.6 L46 37.6 C44.4 44.6 39.4 49 32 49.5 Z",
+  ],
+  // v0.3 — trident: three prongs over a crossbar, shaft down.
+  trident: [
+    "M32 13.5 L36.2 20.5 L33.6 20.5 L33.6 32 L30.4 32 L30.4 20.5 L27.8 20.5 Z " +
+      "M22.5 17.5 L26.3 23.8 L24.1 23.8 L24.1 32 L20.9 32 L20.9 23.8 L18.7 23.8 Z " +
+      "M41.5 17.5 L45.3 23.8 L43.1 23.8 L43.1 32 L39.9 32 L39.9 23.8 L37.7 23.8 Z " +
+      "M20.9 32 L43.1 32 L43.1 35 L20.9 35 Z " +
+      "M30.4 35 L33.6 35 L33.6 49.5 L30.4 49.5 Z",
+  ],
 };
 
 /**
@@ -294,6 +341,8 @@ const SYMBOL_FIT: Record<CrestId, { s: number; cx: number; cy: number }> = {
   blade: { s: 0.8, cx: 32, cy: 32.5 },
   crown: { s: 0.62, cx: 32, cy: 34.5 },
   wave: { s: 0.6, cx: 32, cy: 42 },
+  badge: { s: 0.82, cx: 32, cy: 31.5 },
+  banner: { s: 0.7, cx: 32, cy: 28.5 },
 };
 
 // ---------------------------------------------------------------------------
@@ -325,6 +374,10 @@ const PATTERN_DEFS: Record<PatternId, string> = {
     "M32 32 L32 102 L-17.5 81.5 Z",
   // Annulus ring around center.
   ring: "M32 11 A21 21 0 1 1 31.99 11 Z M32 18 A14 14 0 1 1 31.99 18 Z",
+  // v0.3 — one thick heraldic sash (top-left → bottom-right).
+  sash: "M-22 12 L12 -22 L86 52 L52 86 Z",
+  // v0.3 — quartered field (two opposite quarters filled).
+  quarters: "M-2 -2 H32 V32 H-2 Z M32 32 H66 V66 H32 Z",
 };
 
 // ---------------------------------------------------------------------------

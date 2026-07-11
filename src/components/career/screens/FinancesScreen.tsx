@@ -83,6 +83,69 @@ function FinanceErrorNotice({ className }: { className?: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Emergency Backer pay-down (v0.3): amount stepper + pay / pay-it-all
+// ---------------------------------------------------------------------------
+
+function BackerPayDown({ remaining, balance }: { remaining: number; balance: number }) {
+  const C = useCopy().CAREER;
+  const payDebt = useCareerStore((s) => s.payDebt);
+  const [raw, setRaw] = useState<number | null>(null);
+
+  const payMin = CAREER_ECONOMY.roundQuantum;
+  const step = Math.max(payMin, quantize(remaining / 10));
+  const maxPay = Math.min(remaining, quantize(balance - CAREER_LOAN.floor));
+  const canPay = maxPay >= payMin;
+  const clamp = (n: number) => Math.min(Math.max(n, payMin), Math.max(payMin, maxPay));
+  const amount = clamp(raw ?? step);
+  const canPayAll = balance - remaining >= CAREER_LOAN.floor;
+
+  return (
+    <div className="mt-3 border-t border-line pt-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="-"
+          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => setRaw(clamp(amount - step))}
+          disabled={!canPay || amount - step < payMin}
+        >
+          −
+        </button>
+        <div className="min-w-0 flex-1 text-center">
+          <p className="display text-lg font-bold tabular-nums text-ink">{formatMoney(amount)}</p>
+          <p className="text-[10px] text-faint">{C.finances.payDebtAmount}</p>
+        </div>
+        <button
+          type="button"
+          aria-label="+"
+          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => setRaw(clamp(amount + step))}
+          disabled={!canPay || amount >= maxPay}
+        >
+          +
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button variant="primary" size="sm" disabled={!canPay} onClick={() => payDebt(amount)}>
+          {C.finances.payDebt}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={!canPayAll}
+          onClick={() => payDebt(remaining)}
+        >
+          {C.finances.payDebtAll(formatMoney(remaining))}
+        </Button>
+      </div>
+
+      <p className="mt-2 text-[10px] text-faint">{C.finances.payDebtHint}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Balance sparkline (running balance reconstructed from the ledger tail)
 // ---------------------------------------------------------------------------
 
@@ -557,6 +620,10 @@ export function FinancesScreen() {
             {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
           </p>
           <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
+          <p className="mt-0.5 text-xs text-sub">
+            {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
+          </p>
+          <BackerPayDown remaining={fin.loan.remaining} balance={fin.balance} />
         </Panel>
       ) : fin.loanUsed ? (
         <Panel className="rise-in !border-bad/40 p-4">

@@ -988,6 +988,65 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      cosmetic and "never lost / cloud-merge max", so a one-time re-base wasn't worth resetting
      everyone). `balance.ts` `MMR.award`.
 
+## v1.5.0-alpha "Road to Worlds" v0.3 pass (2026-07-11)
+
+102. **Salary negotiation ships in v1 — as a bounded counter, not sliders (amends design
+     §10/§21.4).** The v0 design cut negotiation because a deterministic slider "is a
+     calculator with one displayed correct position". Miguel asked for interactivity on
+     sign/renew, so v0.3 ships the honest version: every player carries a hidden reserve,
+     uniform in [0.88, 1] × ask, drawn deterministically per (player, season, window) —
+     fixed per window, so reloading can't re-roll it. The UI shows the TRUE accept
+     probability (the uniform CDF — no lying meters); each rejected counter hardens the
+     reserve +4% (telegraphed) and after 2 rejections only the full ask signs that window.
+     The decision space is real (save 0-12% vs. risk hardening the price), bounded, and
+     save-scum-proof by construction. `CAREER_NEGOTIATION`, `economy.negotiationAccepts`,
+     `SalaryNegotiator`, `careerFlow.resolveSalaryOffer`.
+
+103. **Visible rep cap on new signings REPLACES the soft salary premium as the star gate
+     (resolves §21.3 the other way).** The design recommended "money, never a hard refusal";
+     Miguel's playtest verdict: high-OVR free agents were trivially available day 1, hollowing
+     the climb. v0.3 adds `signableOverallCap(rep) = 74 + 0.3×rep` (uncapped at rep 84) for
+     NEW signings only — renewals and the current squad are always exempt, so nothing you own
+     is ever taken away. Per the "progression must be visible" v0.1 rule, locked players stay
+     browsable with the exact rep that opens the door ("Signs at N reputation"). The soft rep
+     premium remains on top as the price-side pressure. Coach hiring joins the ladder at rep
+     10 — early, but earned. `CAREER_UNLOCKS`, `signPlayerFlow`, Market locked rows.
+
+104. **One market value to rule every fee.** Fees were computed three different ways (user
+     buys: ask × synthetic splits-remaining ×1.4; AI↔AI news fiction: same formula at fixed
+     rep 50; AI bids: ×[0.9,1.3] on top) — same-OVR players priced up to 6× apart and the
+     news numbers never matched the market screen. v0.3 introduces `marketValueFor` (person-
+     neutral salary curve × 3.2, no rep/jitter) as the single anchor; buys apply a bounded
+     contract load (0.85-1.6×), AI fiction a ±15% band, AI bids ×[1.0,1.35]. Prizes grow
+     ×1.12^season and sponsor tiers ×1.10^season so income outpaces the 1.08^season wage
+     inflation — the late game funds itself only by winning, as §9 intended.
+
+105. **The training "stagnation" was a quantization bug, then a curve problem.** Root cause
+     ordering matters: (a) per-tick gains floored at 2 decimals zeroed ANY daily gain below
+     0.01 OVR — players 21+ or near potential gained literal 0 forever (fixed: 4-decimal
+     quantization); (b) h/(h+4) headroom collapsed to 1/3 speed 2 points from potential
+     (softK → 2.5); (c) committed-event weeks froze training entirely, making weak-field
+     unofficials a development TRAP (matchPrepShare 0.5). Only after the mechanics were fixed
+     did the rates get touched (weeklyBase 0.13, ages 21-24 lifted, caps 7/3) — tuning on top
+     of a bug would have hidden it.
+
+106. **Backer debt must be escapable by playing well (bugfix + design).** Selling a star
+     while in debt paid nothing toward it — the only amortization path was the prize garnish,
+     so a rescued org stayed locked out of fee transfers/gear for seasons (Miguel: "muito
+     frustrante"). v0.3: player sales auto-amortize 50% of the fee (line-itemized), Finances
+     gains a manual pay-down (any amount, any time), and clearing the debt lifts the lock
+     immediately with a "debt cleared" beat. The lock itself stays (anti-snowball) — the fix
+     is a fast, legible way OUT, not removing the consequence.
+
+107. **Autoplay is the primary clock control (day clock, phase 2).** v0.2 made the day the
+     unit; v0.3 makes it the RHYTHM: ▶ advances one day per tick (850ms), pauses itself at
+     every stop state the batched advance already knew (matchday, fresh invite, window
+     Monday, pending decision), and the toast layer narrates what happens en route — the
+     FIFA-career feel Miguel asked for. The batched "skip ahead" stays one tap away. Season
+     cost of the livelier world: bot seasons ~1.3s → ~3.5s (integration tests carry explicit
+     timeouts; `aiWindowMoves` memoizes player views — next lever is a global view memo per
+     world.version).
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

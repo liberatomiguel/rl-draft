@@ -12,7 +12,11 @@
 import { CAREER_BEATS } from "@/data/career/beats";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import type { Copy } from "@/content/copy";
+import { formatMoney } from "@/lib/format";
 import type { MailItem, NewsItem } from "@/engine/career/types";
+
+/** Param keys that carry raw dollar amounts (formatted before interpolation). */
+const MONEY_PARAM_KEYS = new Set(["fee", "bonus", "f1", "f2", "f3"]);
 
 type CareerCopy = Copy["CAREER"];
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;
@@ -27,8 +31,15 @@ export interface ResolvedNews {
 function displayParams(
   career: CareerCopy,
   titleKey: string,
-  p: Record<string, string | number>,
+  raw: Record<string, string | number>,
 ): Record<string, string | number> {
+  let p = raw;
+  for (const key of Object.keys(p)) {
+    if (MONEY_PARAM_KEYS.has(key) && typeof p[key] === "number") {
+      if (p === raw) p = { ...raw };
+      p[key] = formatMoney(p[key] as number);
+    }
+  }
   if (titleKey === "unlock" || titleKey === "gearBought") {
     const label =
       (career.club.unlockables as Record<string, string>)[String(p.name ?? "")] ??
@@ -92,6 +103,23 @@ export function resolveNews(
   const title = tpl ? tpl(p) : item.titleKey;
   const bodyTpl = bodies[item.titleKey];
   return { title, body: bodyTpl ? bodyTpl(p) : undefined };
+}
+
+/**
+ * v0.3 toast titles — one-line resolution for the popup layer (mail tpl first,
+ * then news tpl, with the same param display fixes as the feeds).
+ */
+export function resolveToastTitle(
+  toast: { source: "mail" | "news"; titleKey: string; params?: Record<string, string | number> },
+  career: CareerCopy,
+): string {
+  const p = displayParams(career, toast.titleKey, toast.params ?? {});
+  const mailTitles = career.mail.tpl as unknown as TplMap;
+  const newsTitles = career.news.tpl as unknown as TplMap;
+  if (toast.source === "mail" && mailTitles[toast.titleKey]) return mailTitles[toast.titleKey](p);
+  if (newsTitles[toast.titleKey]) return newsTitles[toast.titleKey](p);
+  if (mailTitles[toast.titleKey]) return mailTitles[toast.titleKey](p);
+  return toast.titleKey;
 }
 
 export interface ResolvedMail {

@@ -115,7 +115,7 @@ export function compileEventResult(
       name: ctx.nameOf(teamId),
       placement,
       points: pointsFor(def.tier, placement),
-      prize: prizeFor(def.tier, placement, def.format, ctx.difficulty),
+      prize: prizeFor(def.tier, placement, def.format, ctx.difficulty, def.seasonIndex),
     };
   });
   rows.sort(

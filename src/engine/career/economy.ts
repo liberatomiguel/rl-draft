@@ -14,6 +14,7 @@ import {
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
+  CAREER_NEGOTIATION,
   CAREER_POINTS,
   CAREER_PRIZES,
   CAREER_REP,
@@ -88,8 +89,12 @@ export function prizeFor(
   placement: Placement,
   format: "swiss" | "single",
   difficulty: CareerDifficulty,
+  /** v0.3: pools grow ×growthPerSeason^seasonIndex (default 0 = season X). */
+  seasonIndex = 0,
 ): number {
-  const pool = CAREER_PRIZES.pools[tier];
+  const pool =
+    CAREER_PRIZES.pools[tier] *
+    Math.pow(CAREER_PRIZES.growthPerSeason, Math.max(0, seasonIndex));
   const pct = prizePctFor(placement, format);
   const raw = pool * (pct / 100) * CAREER_ECONOMY.prizeMult[difficulty];
   const quantized = quantize(raw);
@@ -264,6 +269,126 @@ export function transferFeeFor(askPerSplit: number, splitsRemaining: number): nu
   );
 }
 
+// ---------------------------------------------------------------------------
+// v0.3 unified market value — ONE number every fee derives from
+// ---------------------------------------------------------------------------
+
+export interface MarketValueInput {
+  overall: number;
+  age: number;
+  potential: number;
+  seasonIndex: number;
+}
+
+/**
+ * The player's market value: the salary curve at normal difficulty with the
+ * person-neutral factors only (age, upside, inflation) × valueMultiple.
+ * Deliberately EXCLUDES rep premium, role, length and jitter — the same
+ * player is worth the same number in the news feed, an AI↔AI trade and the
+ * user's market screen (Miguel: fees were wildly discrepant).
+ */
+export function marketValueFor(input: MarketValueInput): number {
+  const raw =
+    CAREER_SALARY.basePerSplit *
+    Math.pow(CAREER_SALARY.growthPerPoint, input.overall - CAREER_SALARY.anchorOverall) *
+    Math.pow(CAREER_SALARY.inflationPerSeason, input.seasonIndex) *
+    ageFactorFor(input.age) *
+    potentialFactorFor(input.overall, input.potential) *
+    CAREER_TRANSFER.valueMultiple;
+  return quantize(Math.max(CAREER_TRANSFER.minFee, raw));
+}
+
+/** User buys under-contract: value × bounded contract load (was ask×splits×1.4). */
+export function contractedFeeFor(value: number, splitsRemaining: number): number {
+  const load =
+    CAREER_TRANSFER.contractLoadBase +
+    CAREER_TRANSFER.contractLoadPerSplit * Math.max(1, splitsRemaining);
+  return quantize(Math.max(CAREER_TRANSFER.minFee, value * load));
+}
+
+// ---------------------------------------------------------------------------
+// v0.3 salary negotiation (deterministic hidden reserve, legible odds)
+// ---------------------------------------------------------------------------
+
+/**
+ * The player's hidden reserve factor for this (season, window bucket): a
+ * uniform draw in [reserveFloor, 1]. Fixed per window — re-rolling by
+ * reloading is impossible by construction.
+ */
+export function negotiationReserveFor(
+  careerSeed: number,
+  playerId: string,
+  seasonIndex: number,
+  windowKey: string,
+): number {
+  const f = derivedFloat(
+    careerSeed,
+    streams.gen("negRes", `${playerId}:${seasonIndex}:${windowKey}`),
+  );
+  return CAREER_NEGOTIATION.reserveFloor + f * (1 - CAREER_NEGOTIATION.reserveFloor);
+}
+
+/**
+ * TRUE accept probability of an offer at `offer/ask`, given `rejects` prior
+ * lowballs this window (each hardens the reserve by hardenPerReject). This is
+ * the honest uniform CDF — the UI shows exactly this number.
+ */
+export function negotiationAcceptChance(
+  offered: number,
+  ask: number,
+  rejects: number,
+): number {
+  if (ask <= 0) return 0;
+  const floor = Math.min(
+    1,
+    CAREER_NEGOTIATION.reserveFloor + CAREER_NEGOTIATION.hardenPerReject * rejects,
+  );
+  if (floor >= 1) return offered >= ask ? 1 : 0;
+  return clamp((offered / ask - floor) / (1 - floor), 0, 1);
+}
+
+/** Resolve a counter-offer: accepted iff offer ≥ hardened reserve × ask. */
+export function negotiationAccepts(input: {
+  careerSeed: number;
+  playerId: string;
+  seasonIndex: number;
+  windowKey: string;
+  offered: number;
+  ask: number;
+  rejects: number;
+}): boolean {
+  if (input.offered >= input.ask) return true;
+  if (input.rejects >= CAREER_NEGOTIATION.maxRejects) return false;
+  const reserve = Math.min(
+    1,
+    negotiationReserveFor(input.careerSeed, input.playerId, input.seasonIndex, input.windowKey) +
+      CAREER_NEGOTIATION.hardenPerReject * input.rejects,
+  );
+  return input.offered >= quantize(input.ask * reserve);
+}
+
+// ---------------------------------------------------------------------------
+// v0.3 rep-gated signing cap (visible lock — supersedes §21.3's soft-only gate)
+// ---------------------------------------------------------------------------
+
+/** Max overall a NEW signing accepts at this reputation (squad/renewals exempt). */
+export function signableOverallCap(rep: number): number {
+  if (rep >= CAREER_UNLOCKS.signableCapFreeAt) return 99;
+  return Math.min(
+    99,
+    CAREER_UNLOCKS.signableCapBase + CAREER_UNLOCKS.signableCapPerRep * rep,
+  );
+}
+
+/** Reputation needed before a player of this overall signs (0 = signable now). */
+export function repNeededForOverall(overall: number): number {
+  if (overall <= CAREER_UNLOCKS.signableCapBase) return 0;
+  const rep = Math.ceil(
+    (overall - CAREER_UNLOCKS.signableCapBase) / CAREER_UNLOCKS.signableCapPerRep,
+  );
+  return Math.min(rep, CAREER_UNLOCKS.signableCapFreeAt);
+}
+
 /** Free-agent "luvas": ≈15% of the first SEASON's (3 splits) salary. */
 export function signingBonusFor(salaryPerSplit: number): number {
   return quantize(salaryPerSplit * 3 * CAREER_TRANSFER.signingBonusPct);
@@ -341,6 +466,69 @@ export function applyPrize(
     }
   }
   return { fin: next, garnished };
+}
+
+/**
+ * v0.3 debt-lock fix: a player sale while the Backer loan is active amortizes
+ * the debt at saleGarnishRate (half the fee) — selling a star finally pays
+ * the Backer down. Same line-item pattern as applyPrize.
+ */
+export function applyTransferIncome(
+  fin: FinanceState,
+  amount: number,
+  ctx: { seasonIndex: number; week: number; day?: number; refName: string },
+): { fin: FinanceState; garnished: number } {
+  let next = pushLedger(fin, {
+    seasonIndex: ctx.seasonIndex,
+    week: ctx.week,
+    day: ctx.day,
+    kind: "transferIn",
+    amount,
+    refName: ctx.refName,
+  });
+  let garnished = 0;
+  if (next.loan && amount > 0) {
+    garnished = Math.min(
+      next.loan.remaining,
+      quantize(CAREER_LOAN.saleGarnishRate * amount),
+    );
+    if (garnished > 0) {
+      next = pushLedger(next, {
+        seasonIndex: ctx.seasonIndex,
+        week: ctx.week,
+        day: ctx.day,
+        kind: "loanGarnish",
+        amount: -garnished,
+        refName: ctx.refName,
+      });
+      const remaining = next.loan!.remaining - garnished;
+      next = { ...next, loan: remaining > 0 ? { remaining } : null };
+    }
+  }
+  return { fin: next, garnished };
+}
+
+/**
+ * v0.3 manual debt pay-down: any amount from the balance, any time. Clamped
+ * to the outstanding debt; the loan clears at exactly 0.
+ */
+export function payLoanDown(
+  fin: FinanceState,
+  amount: number,
+  ctx: { seasonIndex: number; week: number; day?: number },
+): FinanceState {
+  if (!fin.loan || amount <= 0) return fin;
+  const paid = Math.min(fin.loan.remaining, amount);
+  let next = pushLedger(fin, {
+    seasonIndex: ctx.seasonIndex,
+    week: ctx.week,
+    day: ctx.day,
+    kind: "loanPayment",
+    amount: -paid,
+  });
+  const remaining = next.loan!.remaining - paid;
+  next = { ...next, loan: remaining > 0 ? { remaining } : null };
+  return next;
 }
 
 export interface SplitPaydayInput {
@@ -470,7 +658,11 @@ function sponsorOfferForTier(
 ): SponsorState {
   const row = CAREER_SPONSOR.tiers[tier - 1];
   const pick = derivedFloat(careerSeed, streams.gen("sponsor", `${seasonIndex}:${tier}`));
-  const mult = CAREER_ECONOMY.sponsorMult[difficulty];
+  // v0.3: sponsor money grows with the scene (new deals only — offers are
+  // generated per season, so the growth bakes in at offer time).
+  const mult =
+    CAREER_ECONOMY.sponsorMult[difficulty] *
+    Math.pow(CAREER_SPONSOR.growthPerSeason, Math.max(0, seasonIndex));
   return {
     sponsorId: SPONSOR_POOL[tier][pick < 0.5 ? 0 : 1],
     tier,

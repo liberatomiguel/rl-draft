@@ -16,9 +16,10 @@
  */
 
 import { useMemo, useState } from "react";
-import { CAREER_LOAN, CAREER_SCOUT } from "@/config/balance";
+import { CAREER_LOAN, CAREER_SCOUT, CAREER_UNLOCKS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import type { CareerCopy } from "@/content/copy.career.en";
+import { repNeededForOverall, signableOverallCap } from "@/engine/career/economy";
 import type {
   CareerPlayerView,
   PotentialBand,
@@ -27,10 +28,12 @@ import type {
 import type { Region } from "@/engine/types";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { coachCandidatesFor } from "@/store/careerFlow";
+import { coachCandidatesFor, negotiationTriesFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
+import { OrgSheet } from "@/components/career/OrgSheet";
+import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import {
   askPackageFor,
   dateOfDay,
@@ -162,21 +165,35 @@ export function MarketScreen() {
   const [tab, setTab] = useState<Tab>("free");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("ovr");
+  /** v0.3: flips the current sort key's natural direction. */
+  const [sortFlip, setSortFlip] = useState(false);
   const [regionFilter, setRegionFilter] = useState<Region | "all">("all");
   const [shown, setShown] = useState(PAGE);
   const [target, setTarget] = useState<MarketRow | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
   const [role, setRole] = useState<"starter" | "sub">("starter");
   const [len, setLen] = useState<1 | 2 | 3>(2);
+  /** v0.3 wage talk — the counter-offer on the table (0 = full ask). */
+  const [offered, setOffered] = useState(0);
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [confirmFire, setConfirmFire] = useState(false);
+  /** v0.3 org sheet (deals tab — inspect the bidder's roster). */
+  const [sheetRef, setSheetRef] = useState<string | null>(null);
 
   // Render-phase pagination reset so filter switches never carry a stale page.
-  const filterSig = `${tab}|${search}|${sort}|${regionFilter}`;
+  const filterSig = `${tab}|${search}|${sort}|${sortFlip}|${regionFilter}`;
   const [prevSig, setPrevSig] = useState(filterSig);
   if (filterSig !== prevSig) {
     setPrevSig(filterSig);
     setShown(PAGE);
+  }
+
+  // The counter-offer resets to the fresh ask whenever the quote changes.
+  const offerSig = `${target?.view.id ?? ""}|${role}|${len}`;
+  const [prevOfferSig, setPrevOfferSig] = useState(offerSig);
+  if (offerSig !== prevOfferSig) {
+    setPrevOfferSig(offerSig);
+    setOffered(0);
   }
 
   // --- listing: only recomputed when the world/squad actually changes -------
@@ -243,8 +260,10 @@ export function MarketScreen() {
         sorted.sort((a, b) => b.band.max - a.band.max || b.view.overall - a.view.overall);
         break;
     }
+    // v0.3: the direction toggle flips whatever the key's natural order is.
+    if (sortFlip) sorted.reverse();
     return sorted;
-  }, [rows, search, regionFilter, sort]);
+  }, [rows, search, regionFilter, sort, sortFlip]);
 
   const coaches = useMemo(() => (save ? coachCandidatesFor(save) : []), [save]);
 
@@ -266,6 +285,9 @@ export function MarketScreen() {
   // --- window state ----------------------------------------------------------
   const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
   const closesIn = daysUntilWindowCloses(save);
+  // v0.3 visible signing gate (new signings only; renewals/squad exempt).
+  const signableCap = signableOverallCap(save.reputation);
+  const targetLocked = target ? Math.round(target.view.overall) > signableCap : false;
   const nextWindowStop = windowOpen
     ? null
     : (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null);
@@ -303,13 +325,19 @@ export function MarketScreen() {
   const fundsBlocked = balanceAfter < CAREER_LOAN.floor;
   const blockReason = !windowOpen
     ? C.market.errors.windowClosed
-    : roleBlocked
-      ? C.market.squadFullWarning
-      : loanBlocked
-        ? C.market.errors.loanActive
-        : fundsBlocked
-          ? C.market.errors.funds
-          : null;
+    : targetLocked
+      ? C.market.errors.repGate
+      : roleBlocked
+        ? C.market.squadFullWarning
+        : loanBlocked
+          ? C.market.errors.loanActive
+          : fundsBlocked
+            ? C.market.errors.funds
+            : null;
+  // v0.3 wage talk — the live proposal (0 = pay the ask) + hardened count.
+  const askNow = pack?.salaryPerSplit ?? 0;
+  const proposal = offered > 0 ? Math.min(offered, askNow) : askNow;
+  const targetRejects = target ? negotiationTriesFor(save, target.view.id) : 0;
   const backerRisk =
     pack !== null && !blockReason && balanceAfter < CAREER_LOAN.floor + pack.salaryPerSplit;
   const targetBand = target ? potBandOfView(save, target.view) : null;
@@ -404,6 +432,15 @@ export function MarketScreen() {
                     {label}
                   </Chip>
                 ))}
+                <Chip
+                  active={sortFlip}
+                  onClick={() => setSortFlip((f) => !f)}
+                  className="font-mono"
+                >
+                  <span title={sortFlip ? C.market.sortAsc : C.market.sortDesc}>
+                    {sortFlip ? "↑" : "↓"}
+                  </span>
+                </Chip>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="kicker mr-1 text-[9px]">{C.market.filterRegion}</span>
@@ -434,43 +471,60 @@ export function MarketScreen() {
                 className="rise-in grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
                 style={{ animationDelay: "80ms" }}
               >
-                {visible.slice(0, shown).map((r) => (
-                  <PlayerCardTile
-                    key={r.view.id}
-                    name={r.view.name}
-                    overall={r.view.overall}
-                    age={r.view.age}
-                    band={r.band}
-                    archetype={r.view.archetype}
-                    country={r.view.country}
-                    region={r.view.region}
-                    onClick={() => {
-                      setTarget(r);
-                      setOfferOpen(false);
-                      setRole("starter");
-                      setLen(2);
-                    }}
-                    footer={
-                      <div className="flex items-center justify-between gap-2">
-                        {r.orgRef ? (
-                          <span className="flex min-w-0 items-center gap-1.5 text-faint">
-                            <OrgMark save={save} orgRef={r.orgRef} size="xs" />
-                            <span className="truncate">{nameOfRef(save, r.orgRef)}</span>
+                {visible.slice(0, shown).map((r) => {
+                  // v0.3 visible signing gate: over-cap players stay browsable
+                  // but read as locked, with the rep that opens the door.
+                  const locked = Math.round(r.view.overall) > signableCap;
+                  const tile = (
+                    <PlayerCardTile
+                      key={locked ? undefined : r.view.id}
+                      name={r.view.name}
+                      overall={r.view.overall}
+                      age={r.view.age}
+                      band={r.band}
+                      archetype={r.view.archetype}
+                      country={r.view.country}
+                      region={r.view.region}
+                      onClick={() => {
+                        setTarget(r);
+                        setOfferOpen(false);
+                        setRole("starter");
+                        setLen(2);
+                      }}
+                      footer={
+                        <div className="flex items-center justify-between gap-2">
+                          {r.orgRef ? (
+                            <span className="flex min-w-0 items-center gap-1.5 text-faint">
+                              <OrgMark save={save} orgRef={r.orgRef} size="xs" />
+                              <span className="truncate">{nameOfRef(save, r.orgRef)}</span>
+                            </span>
+                          ) : (
+                            <span className="display text-[10px] font-bold uppercase tracking-[0.12em] text-good">
+                              {C.market.freeAgentTag}
+                            </span>
+                          )}
+                          <span className="shrink-0 font-semibold text-ink">
+                            {r.orgRef
+                              ? formatMoney(r.price, { compact: true })
+                              : C.squad.perSplit(formatMoney(r.salary, { compact: true }))}
                           </span>
-                        ) : (
-                          <span className="display text-[10px] font-bold uppercase tracking-[0.12em] text-good">
-                            {C.market.freeAgentTag}
-                          </span>
-                        )}
-                        <span className="shrink-0 font-semibold text-ink">
-                          {r.orgRef
-                            ? formatMoney(r.price, { compact: true })
-                            : C.squad.perSplit(formatMoney(r.salary, { compact: true }))}
-                        </span>
-                      </div>
-                    }
-                  />
-                ))}
+                        </div>
+                      }
+                    />
+                  );
+                  if (!locked) return tile;
+                  return (
+                    <div key={r.view.id} className="relative">
+                      <div className="opacity-60 saturate-50">{tile}</div>
+                      <span
+                        className="pointer-events-none absolute right-2 top-2 rounded-md border border-line-strong bg-[color:var(--bg)]/90 px-2 py-0.5 text-[10px] font-bold text-sub"
+                        title={C.market.lockedHint}
+                      >
+                        🔒 {C.market.lockedAtRep(repNeededForOverall(Math.round(r.view.overall)))}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               {visible.length > shown ? (
                 <div className="text-center">
@@ -485,7 +539,20 @@ export function MarketScreen() {
       ) : null}
 
       {/* ================= coaches tab ================= */}
-      {tab === "coaches" ? (
+      {tab === "coaches" && save.reputation < CAREER_UNLOCKS.coachRep ? (
+        // v0.3: a coach is earned — the tab stays visible, the door is locked.
+        <Panel className="rise-in p-8 text-center" style={{ animationDelay: "60ms" }}>
+          <p className="display text-lg font-bold text-ink">🔒</p>
+          <p className="mt-2 text-sm font-semibold text-sub">
+            {C.market.coachLockedAt(CAREER_UNLOCKS.coachRep)}
+          </p>
+          <p className="mt-1 text-xs text-faint">
+            {C.finances.lockedAtRep(CAREER_UNLOCKS.coachRep)} · {C.common.rep}:{" "}
+            {Math.round(save.reputation)}
+          </p>
+        </Panel>
+      ) : null}
+      {tab === "coaches" && save.reputation >= CAREER_UNLOCKS.coachRep ? (
         <div className="rise-in space-y-4" style={{ animationDelay: "60ms" }}>
           {save.coach ? (
             <Panel strong className="p-4">
@@ -583,7 +650,16 @@ export function MarketScreen() {
                 return (
                   <Panel key={o.id} className="p-4">
                     <div className="flex flex-wrap items-center gap-3">
-                      {o.otherRef ? <OrgMark save={save} orgRef={o.otherRef} size="md" /> : null}
+                      {o.otherRef ? (
+                        <button
+                          type="button"
+                          title={C.orgSheet.viewTeam}
+                          onClick={() => setSheetRef(o.otherRef!)}
+                          className="shrink-0 rounded-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50"
+                        >
+                          <OrgMark save={save} orgRef={o.otherRef} size="md" />
+                        </button>
+                      ) : null}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="display truncate text-base font-bold text-ink">
@@ -594,7 +670,17 @@ export function MarketScreen() {
                           ) : null}
                         </div>
                         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-sub">
-                          {C.market.bidFrom(orgName)}
+                          {o.otherRef ? (
+                            <button
+                              type="button"
+                              className="font-semibold text-cyan hover:underline"
+                              onClick={() => setSheetRef(o.otherRef!)}
+                            >
+                              {C.market.bidFrom(orgName)}
+                            </button>
+                          ) : (
+                            C.market.bidFrom(orgName)
+                          )}
                           <TeamStars stars={orgStars} size="xs" />
                         </p>
                         <p className="mt-1 text-[10px] text-faint">
@@ -671,15 +757,26 @@ export function MarketScreen() {
                   {C.player.scoutDone}
                 </Badge>
               )}
-              <Button
-                variant="primary"
-                size="md"
-                disabled={!windowOpen}
-                title={windowOpen ? undefined : C.market.windowClosed}
-                onClick={() => setOfferOpen(true)}
-              >
-                {C.market.signCta}
-              </Button>
+              {targetLocked ? (
+                <span className="self-center" title={C.market.lockedHint}>
+                  <Badge tone="neutral">
+                    🔒{" "}
+                    {C.market.lockedAtRep(
+                      repNeededForOverall(Math.round(target.view.overall)),
+                    )}
+                  </Badge>
+                </span>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="md"
+                  disabled={!windowOpen}
+                  title={windowOpen ? undefined : C.market.windowClosed}
+                  onClick={() => setOfferOpen(true)}
+                >
+                  {C.market.signCta}
+                </Button>
+              )}
             </>
           ) : undefined
         }
@@ -701,7 +798,14 @@ export function MarketScreen() {
               disabled={Boolean(blockReason)}
               onClick={() => {
                 if (!target) return;
-                signPlayer(target.view.id, role, len);
+                signPlayer(
+                  target.view.id,
+                  role,
+                  len,
+                  proposal < askNow ? proposal : undefined,
+                );
+                // A rejected counter keeps the modal open — the negotiator
+                // re-reads the hardened tries count from the persisted save.
                 if (!useCareerStore.getState().lastError) {
                   setOfferOpen(false);
                   setTarget(null);
@@ -780,6 +884,15 @@ export function MarketScreen() {
               </div>
             </div>
 
+            {/* v0.3 wage talk — counter below the ask, honest odds shown */}
+            <SalaryNegotiator
+              ask={askNow}
+              offered={proposal}
+              onChange={setOffered}
+              rejects={targetRejects}
+              disabled={Boolean(blockReason)}
+            />
+
             {/* Why this price */}
             <div className="rounded-lg border border-line bg-white/[0.02] p-3">
               <p className="kicker mb-2 text-[10px]">{C.market.whyPrice}</p>
@@ -813,7 +926,7 @@ export function MarketScreen() {
                 {C.market.balanceAfter(formatMoney(balanceAfter))}
               </p>
               <p className="mt-0.5 font-semibold text-ink">
-                {C.market.wageAfter(formatMoney(payroll + pack.salaryPerSplit))}
+                {C.market.wageAfter(formatMoney(payroll + proposal))}
               </p>
               {backerRisk ? (
                 <p className="mt-2 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">
@@ -904,6 +1017,9 @@ export function MarketScreen() {
           </div>
         ) : null}
       </Modal>
+
+      {/* v0.3 — the bidder's roster, one tap away */}
+      <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </div>
   );
 }

@@ -40,6 +40,7 @@ import {
   dateOfDay,
   dayOfWeekOf,
   daysUntilWindowCloses,
+  isWindowWeek,
   scrimAvailability,
   seasonLabelFor,
   squadAge,
@@ -50,12 +51,14 @@ import {
   userStars,
   userTeamPreview,
   nameOfRef,
+  weekOfDay,
   type AgendaDay,
   type UpcomingStop,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDateTiny, formatDaysAway } from "@/components/career/dateText";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
+import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import {
   ErrorBanner,
@@ -454,7 +457,7 @@ export function HubScreen() {
                   variant="secondary"
                   size="md"
                   className="min-h-11"
-                  onClick={runScrim}
+                  onClick={() => runScrim()}
                 >
                   {C.hub.scrimCta(scrim.opponentName)}
                 </Button>
@@ -551,6 +554,9 @@ export function HubScreen() {
 
             {wireHasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
           </Panel>
+
+          {/* 8 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
+          <TransferWirePanel save={save} C={C} D={D} />
         </div>
 
         {/* ============ side column (1fr): goal · race · squad · budget · inbox · unlock ============ */}
@@ -912,6 +918,151 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
         {rest && !matchday ? <span className="h-px w-2 bg-white/20" /> : null}
       </span>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// v0.3 — THE TRANSFER WIRE (window panel: every move, all regions, filterable)
+// ---------------------------------------------------------------------------
+
+const TRANSFER_PREVIEW = 6;
+/** Keep the wire visible this many days past the last logged move. */
+const TRANSFER_LINGER_DAYS = 14;
+
+function TransferWirePanel({
+  save,
+  C,
+  D,
+}: {
+  save: CareerSave;
+  C: CareerCopy;
+  D: DatesCopy;
+}) {
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [expanded, setExpanded] = useState(false);
+  const [sheetRef, setSheetRef] = useState<string | null>(null);
+
+  const seasonMoves = save.transferLog.filter(
+    (t) => t.seasonIndex === save.clock.seasonIndex,
+  );
+  const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
+  const recent = seasonMoves.some((t) => save.clock.day - t.day <= TRANSFER_LINGER_DAYS);
+  if (!windowOpen && !recent) return null;
+
+  const filtered =
+    regionFilter === "all"
+      ? seasonMoves
+      : seasonMoves.filter((t) => t.region === regionFilter);
+  const shownMoves = expanded ? filtered : filtered.slice(0, TRANSFER_PREVIEW);
+
+  const orgCell = (ref: string | null) => {
+    if (!ref) {
+      return (
+        <span className="display text-[10px] font-bold uppercase tracking-[0.1em] text-good">
+          {C.hub.transfersFa}
+        </span>
+      );
+    }
+    const tappable = ref !== "user" && Boolean(save.world.orgs[ref]);
+    const body = (
+      <>
+        <OrgMark save={save} orgRef={ref} size="xs" />
+        <span className="max-w-24 truncate">{nameOfRef(save, ref)}</span>
+      </>
+    );
+    if (!tappable) {
+      return <span className="flex min-w-0 items-center gap-1 text-sub">{body}</span>;
+    }
+    return (
+      <button
+        type="button"
+        title={C.orgSheet.viewTeam}
+        onClick={() => setSheetRef(ref)}
+        className="flex min-w-0 items-center gap-1 text-sub transition-colors hover:text-ink"
+      >
+        {body}
+      </button>
+    );
+  };
+
+  return (
+    <Panel className="rise-in p-4" style={{ animationDelay: "140ms" }}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="kicker text-[10px]">
+          {C.hub.transfersTitle}
+          <span className="ml-2 font-normal normal-case tracking-normal text-faint">
+            {C.hub.transfersWire}
+          </span>
+        </p>
+        {windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
+      </div>
+
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {["all", ...Object.keys(REGION_BADGE)].map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setRegionFilter(r)}
+            aria-pressed={regionFilter === r}
+            className={cx(
+              "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
+              regionFilter === r
+                ? r === "all"
+                  ? "border-blue/50 bg-blue/15 text-blue-bright"
+                  : REGION_BADGE[r as keyof typeof REGION_BADGE]
+                : "border-line-strong bg-white/5 text-sub hover:text-ink",
+            )}
+          >
+            {r === "all" ? C.hub.transfersAll : r}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="py-4 text-center text-sm text-faint">{C.hub.transfersEmpty}</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {shownMoves.map((t) => (
+            <li
+              key={t.id}
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-line bg-white/[0.02] px-2.5 py-1.5 text-xs"
+            >
+              <span className="w-12 shrink-0 text-[10px] text-faint">
+                {formatDateTiny(D, dateOfDay(t.seasonIndex, t.day))}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-semibold text-ink">
+                {t.playerName}
+              </span>
+              <span className="flex min-w-0 items-center gap-1">
+                {orgCell(t.fromRef)}
+                <span className="text-faint" aria-hidden>
+                  →
+                </span>
+                {orgCell(t.toRef)}
+              </span>
+              {t.kind === "userIn" || t.kind === "userOut" ? (
+                <Badge tone="orange">{C.hub.transfersUser}</Badge>
+              ) : null}
+              {t.fee > 0 ? (
+                <span className="shrink-0 font-semibold text-orange-bright">
+                  {formatMoney(t.fee, { compact: true })}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!expanded && filtered.length > TRANSFER_PREVIEW ? (
+        <div className="mt-2 text-center">
+          <Button size="sm" variant="ghost" onClick={() => setExpanded(true)}>
+            {C.hub.transfersShowAll(filtered.length)}
+          </Button>
+        </div>
+      ) : null}
+
+      <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
+    </Panel>
   );
 }
 

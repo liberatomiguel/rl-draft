@@ -291,6 +291,7 @@ export type LedgerKind =
   | "buff"
   | "loanGrant"
   | "loanGarnish"
+  | "loanPayment" // v0.3: manual Backer pay-down
   | "fanbase";
 
 export interface LedgerEntry {
@@ -393,6 +394,49 @@ export interface TransferOffer {
   factors: OfferFactor[];
   /** True when this offer came from a degraded scripted beat (Blockbuster). */
   blockbuster?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Scrims v2 + the transfer wire (v0.3)
+// ---------------------------------------------------------------------------
+
+/** A scrim booked ahead from the Training screen (runs on its day arrival). */
+export interface ScheduledScrim {
+  day: number;
+  oppRef: string;
+}
+
+/** Compact scrim result (ring buffer CAREER_SAVE.scrimLogCap). */
+export interface ScrimLogEntry {
+  id: string;
+  seasonIndex: number;
+  day: number;
+  oppRef: string;
+  oppName: string;
+  won: boolean;
+  scoreA: number;
+  scoreB: number;
+  /** Per-game scores, user first (e.g. ["3-1", "2-4", "5-2", "1-0"]). */
+  games: string[];
+}
+
+/**
+ * One line of the transfer wire (ring buffer CAREER_SAVE.transferLogCap):
+ * every AI move, user signing/sale and scripted-beat transfer, feeding the
+ * HQ window panel + the window-close report.
+ */
+export interface TransferLogEntry {
+  id: string;
+  seasonIndex: number;
+  day: number;
+  playerId: string;
+  playerName: string;
+  /** Org refs ("user" included); null = free agency on that side. */
+  fromRef: string | null;
+  toRef: string | null;
+  fee: number;
+  kind: "fee" | "fa" | "userIn" | "userOut" | "beat";
+  region: Region;
 }
 
 // ---------------------------------------------------------------------------
@@ -581,6 +625,20 @@ export interface CareerSave {
   t3EntriesThisSplit: number;
   /** Scrims run this week (CAREER_SCRIM.maxPerWeek; resets each Monday). */
   scrimsThisWeek: number;
+  /** v0.3: scrims booked ahead (auto-run on day arrival, future days only). */
+  scheduledScrims: ScheduledScrim[];
+  /** v0.3: recent scrim results (ring buffer). */
+  scrimLog: ScrimLogEntry[];
+  /** v0.3: the transfer wire (AI + user + beat moves, ring buffer). */
+  transferLog: TransferLogEntry[];
+  /**
+   * v0.3 negotiation bookkeeping: rejected-counter counts keyed
+   * "{playerId}:{seasonIndex}:{windowKey}" (pruned at each window close).
+   */
+  negotiationTries: Record<string, number>;
+  /** v0.3: bookkeeping for the per-window incoming-bid cap/cooldown. */
+  bidsThisWindow: number;
+  lastBidDay: number;
   pendingOffers: TransferOffer[];
   /** A starter is unavailable for this event (random event, sub steps in). */
   pendingUnavailability: { playerId: string; eventId: string } | null;

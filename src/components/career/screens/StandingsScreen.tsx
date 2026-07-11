@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgMark } from "@/components/career/OrgMark";
+import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import {
   CAREER_SLOTS,
@@ -151,6 +152,7 @@ function StandingsTable({
   cutLabel,
   userStarCount,
   form,
+  onOpenOrg,
 }: {
   save: CareerSave;
   region: Region;
@@ -159,6 +161,7 @@ function StandingsTable({
   cutLabel: string;
   userStarCount: number;
   form: Map<string, Placement[]>;
+  onOpenOrg: (ref: string) => void;
 }) {
   const copy = useCopy().CAREER;
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
@@ -167,16 +170,21 @@ function StandingsTable({
   const trs: React.ReactNode[] = [];
   for (const row of rows) {
     const expanded = expandedRef === row.ref;
+    // User row keeps its expand-in-place detail; AI rows open the org sheet.
+    const activate = row.isUser
+      ? () => setExpandedRef(expanded ? null : row.ref)
+      : () => onOpenOrg(row.ref);
     trs.push(
       <tr
         key={row.ref}
         tabIndex={0}
-        aria-expanded={expanded}
-        onClick={() => setExpandedRef(expanded ? null : row.ref)}
+        aria-expanded={row.isUser ? expanded : undefined}
+        title={row.isUser ? undefined : copy.orgSheet.viewTeam}
+        onClick={activate}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setExpandedRef(expanded ? null : row.ref);
+            activate();
           }
         }}
         className={cx(
@@ -316,6 +324,8 @@ export function StandingsScreen() {
   const save = useCareerSave();
   const [tab, setTab] = useState<"split" | "season">("split");
   const [pickedRegion, setPickedRegion] = useState<Region | null>(null);
+  // One sheet for the whole screen — any AI org row/card opens it.
+  const [sheetRef, setSheetRef] = useState<string | null>(null);
 
   // Team assembly is not free — recompute only when the squad/world can have
   // actually moved, not on every save tick.
@@ -473,6 +483,7 @@ export function StandingsScreen() {
           cutLabel={cutLabel}
           userStarCount={userStarCount}
           form={form}
+          onOpenOrg={setSheetRef}
         />
       </Panel>
 
@@ -485,9 +496,25 @@ export function StandingsScreen() {
               {save.competition.worldsFieldRefs.map((ref, i) => (
                 <Panel
                   key={ref}
+                  role={ref === "user" ? undefined : "button"}
+                  tabIndex={ref === "user" ? undefined : 0}
+                  title={ref === "user" ? undefined : copy.orgSheet.viewTeam}
+                  onClick={ref === "user" ? undefined : () => setSheetRef(ref)}
+                  onKeyDown={
+                    ref === "user"
+                      ? undefined
+                      : (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSheetRef(ref);
+                          }
+                        }
+                  }
                   className={cx(
                     "rise-in flex flex-col items-center gap-1.5 p-3 text-center",
-                    ref === "user" && "panel-glow-orange border-orange/40",
+                    ref === "user"
+                      ? "panel-glow-orange border-orange/40"
+                      : "cursor-pointer transition-colors hover:bg-white/4 focus-visible:bg-white/6 focus-visible:outline-none",
                   )}
                   style={{ animationDelay: `${200 + i * 30}ms` }}
                 >
@@ -512,6 +539,8 @@ export function StandingsScreen() {
           <p className="mt-4 text-center text-xs text-faint">{copy.standings.fieldRevealPending}</p>
         )
       ) : null}
+
+      <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </div>
   );
 }

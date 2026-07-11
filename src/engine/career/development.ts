@@ -101,8 +101,14 @@ const REGION_COUNTRIES: Record<Region, readonly string[]> = {
 // ---------------------------------------------------------------------------
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
-/** Round DOWN to 2 decimals — used for capped gains so totals never exceed a cap. */
-const floor2 = (n: number): number => Math.floor(n * 100) / 100;
+/**
+ * v0.3 stagnation fix: training gains quantize at 4 decimals, not 2 — the old
+ * floor2 zeroed any daily tick below 0.01 OVR/day, so slower developers
+ * (21+, near-potential) gained literal 0 forever. Still rounds DOWN so
+ * accumulated totals never exceed a cap.
+ */
+const round4 = (n: number): number => Math.round(n * 10000) / 10000;
+const floor4 = (n: number): number => Math.floor(n * 10000) / 10000;
 
 /** Uniform int in [min, max] from a 0..1 float. */
 function intFrom(f: number, min: number, max: number): number {
@@ -337,7 +343,16 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
   const wrap = Math.floor(n / bank.length);
   const name = bank[n % bank.length] + (wrap > 0 ? ` ${roman(wrap + 1)}` : "");
 
-  const [oMin, oMax] = CAREER_WORLD.fillerOverallRange;
+  // v0.3 headliner: the first slot of each filler-org triplet (n % 3 === 0)
+  // may roll a stronger base — one visible name per filler org, chance-gated,
+  // so thin regions get texture without early superteams.
+  const headliner =
+    n % 3 === 0 &&
+    derivedFloat(ctx.careerSeed, streams.gen("fic-head", key)) <
+      CAREER_WORLD.fillerHeadlinerChance;
+  const [oMin, oMax] = headliner
+    ? CAREER_WORLD.fillerHeadlinerRange
+    : CAREER_WORLD.fillerOverallRange;
   const baseOverall = intFrom(derivedFloat(ctx.careerSeed, streams.gen("fic-ovr", key)), oMin, oMax);
   const overall = clamp(baseOverall + (ctx.world.overallDelta[id] ?? 0), 60, 99);
 
@@ -643,7 +658,7 @@ export function trainWeek(
 ): { player: SquadPlayer; gained: number } {
   const weeks = ctx.weeks ?? 1;
   const raw = rawGain(p, { ...ctx, weeks });
-  const gained = floor2(
+  const gained = floor4(
     Math.max(
       0,
       Math.min(
@@ -654,25 +669,30 @@ export function trainWeek(
       ),
     ),
   );
-  const overall = clamp(round2(p.overall + gained), 60, 99);
+  const overall = clamp(round4(p.overall + gained), 60, 99);
   return {
     player: {
       ...p,
       overall,
       attrOffsets: grownOffsets(p, weeks, overall),
-      gainedThisSplit: round2(ctx.splitGained + gained),
-      gainedThisSeason: round2(ctx.seasonGained + gained),
+      gainedThisSplit: round4(ctx.splitGained + gained),
+      gainedThisSeason: round4(ctx.seasonGained + gained),
     },
     gained,
   };
 }
 
-/** One weekday of training (the v0.2 daily tick). */
+/**
+ * One weekday of training (the v0.2 daily tick). `weekShare` scales the day
+ * (v0.3: committed-event weeks train at CAREER_TRAINING.matchPrepShare
+ * instead of freezing — weak-field events are no longer a development trap).
+ */
 export function trainDay(
   p: SquadPlayer,
   ctx: Omit<TrainTickCtx, "weeks">,
+  weekShare = 1,
 ): { player: SquadPlayer; gained: number } {
-  return trainWeek(p, { ...ctx, weeks: 1 / CAREER_TRAINING.trainingDaysPerWeek });
+  return trainWeek(p, { ...ctx, weeks: weekShare / CAREER_TRAINING.trainingDaysPerWeek });
 }
 
 /**
@@ -732,7 +752,7 @@ export function applyMatchXp(
     trainingWeekBonus: false,
     weeks,
   });
-  const gained = floor2(
+  const gained = floor4(
     Math.max(
       0,
       Math.min(
@@ -743,13 +763,13 @@ export function applyMatchXp(
       ),
     ),
   );
-  const overall = clamp(round2(p.overall + gained), 60, 99);
+  const overall = clamp(round4(p.overall + gained), 60, 99);
   return {
     ...p,
     overall,
     attrOffsets: grownOffsets(p, weeks, overall),
-    gainedThisSplit: round2(p.gainedThisSplit + gained),
-    gainedThisSeason: round2(p.gainedThisSeason + gained),
+    gainedThisSplit: round4(p.gainedThisSplit + gained),
+    gainedThisSeason: round4(p.gainedThisSeason + gained),
   };
 }
 

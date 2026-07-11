@@ -126,6 +126,7 @@ export type DayKind =
   | "matchday"
   | "windowOpen"
   | "payday"
+  | "scrim" // v0.3: a booked scrim runs on this day
   | "rest"
   | "idle";
 
@@ -177,6 +178,8 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
     if (dow === 1 && (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek)) {
       kinds.push("payday");
     }
+    // v0.3: booked scrims show as training events on the calendar.
+    if (save.scheduledScrims?.some((s) => s.day === day)) kinds.push("scrim");
     if (!event && dow <= CAREER_TRAINING.trainingDaysPerWeek) kinds.push("training");
     if (dow === 7) kinds.push("rest");
     if (kinds.length === 0) kinds.push("idle");

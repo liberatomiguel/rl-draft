@@ -10,7 +10,101 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [1.5.0-alpha] — UNRELEASED · "Road to Worlds" (awaiting Miguel's review — not committed)
+## [1.5.0-alpha] — UNRELEASED · "Road to Worlds" (awaiting Miguel's review — staging)
+
+### v0.3 adjustment pass (2026-07-11 — Miguel's second playtest list)
+
+#### Added
+- **FIFA-style autoplay.** The primary Advance control is now ▶/⏸: the calendar rolls one
+  day at a time (`CAREER_PLAYBACK.autoAdvanceDayMs`), pausable on any day, and the autopilot
+  pauses ITSELF at every stop (matchday, fresh invite, window Monday, pending decision,
+  season end). "Skip ahead" keeps the old batched advance as the secondary action. Works from
+  every career screen (TopBar) — Training also gained its own advance footer.
+- **Career popup layer** (`CareerToaster` + store toast queue): fresh mail and
+  priority-2+ news pop as tap-through toasts (incoming bids, contract warnings, player
+  unavailable, unlocks, scrim results, the window report) — the world talks while autoplay runs.
+- **Scrims v2 — schedulable sparring.** The Training screen picks the OPPONENT (6-org
+  nearest-strength shortlist with rating gap + engine-truth benefit preview via
+  `scrimProjection`) and can BOOK scrims ahead (`scheduleScrimFlow`; they run automatically on
+  arrival, appear on the calendar as training events, and land in a per-game result log
+  `save.scrimLog` with game-by-game scores). The same org can never be scrimmed twice on one
+  day (`sameDay` guard + indexed seed streams `scrim:{s}:{d}:{n}`).
+- **Salary negotiation (sign + renew).** Every ask now carries a hidden deterministic
+  reserve (uniform in [0.88, 1] × ask per player/window — `CAREER_NEGOTIATION`): counter-offer
+  below the ask with the TRUE accept odds shown (the uniform CDF, no lying UI); rejections
+  harden the ask +4% (telegraphed) and after 2 the player only signs at full price this
+  window. Reserve fixed per window → save-scumming buys nothing. Supersedes design §21.4's
+  fixed-ask-only market (recorded in DESIGN-DECISIONS).
+- **Visible rep-gated signings.** New signings accept only up to
+  `signableCapBase + signableCapPerRep × rep` (74 + 0.3/rep, uncapped at 84 rep): locked
+  market rows stay VISIBLE with the reputation they need ("Signs at N reputation") — the
+  climb is the content. Renewals and the current squad are always exempt. Coach hiring is now
+  earned at rep 10 (`CAREER_UNLOCKS.coachRep`, announced as an unlock crossing).
+- **Org sheets.** Any AI org's roster (spoiler-safe views: name/age/OVR/archetype), coach,
+  stars and Season Points — tappable from standings rows, the event lobby field, the deals
+  tab and the transfer wire.
+- **The transfer wire + window report.** Every AI move, user deal and scripted-beat transfer
+  lands in `save.transferLog` (ring 150); the HQ shows a region-filterable window panel, and
+  the first Monday after a window closes mails a **window report** (move count + top fees).
+- Save v3 (`migrateSaveToV3`, additive): `scheduledScrims`, `scrimLog`, `transferLog`,
+  `negotiationTries`, bid bookkeeping. Persist version 2 → 3; in-place, never a reset.
+- 19 new engine/store tests (`careerV03.test.ts`) locking the pass's behaviors.
+
+#### Balance
+- **Training anti-stagnation:** weeklyBase 0.10 → **0.13**; headroomSoftK 4 → **2.5** (the
+  h/(h+K) collapse near potential was the visible "my player stopped growing"); age 21-22
+  growth 0.6 → **0.7**, 23-24 0.3 → **0.35**; season/split caps 6/2.5 → **7/3**; committed-
+  event weeks now train at **matchPrepShare 0.5** instead of freezing (playing weak
+  unofficials was a development TRAP — slower than skipping them).
+- **Early reputation floor:** a regional swiss exit now pays **+1 rep** (`regionalSwissExit`),
+  unofficial finals pay **+1** (`t3Final` under the split cap, `t2Final`) — an 0-3 Swiss
+  season 1 still climbs toward the first gear unlocks instead of soft-locking at rep 5.
+- **Economy recalibration:** ONE market value for everyone
+  (`marketValueFor` = person-neutral salary curve × 3.2) now anchors every fee — AI↔AI trade
+  fiction (±15% band), AI bids for user players (×1.0-1.35) and user buys (bounded contract
+  load 0.85-1.6×) — replacing the ask × synthetic-splits formula that priced same-OVR players
+  up to 6× apart. **Prize pools grow ×1.12^season** and **sponsor tiers ×1.10^season** (new
+  deals) — the income side finally outpaces the 1.08^season salary inflation.
+- **Living market:** mid-window move rate 0.25 → **0.35**; **40% of needs-pass moves now shop
+  a lower-rated org's player** (fee trade, like-for-like guard) instead of only draining the
+  FA pool; a new **scavenger pass** picks displaced quality out of free agency (edge ≥ 3) so
+  good players stop rotting there.
+- **Incoming bids:** can land on ANY window day (daily roll: base 5.5% + 3%/star ≥82 +
+  2%/developing prospect, cap 18%/day, max 2/window, 2-day cooldown) and target selection is
+  attractiveness-weighted — AI GMs also hunt your prospects, not only your best player.
+- **Fictional players:** ALL fic/rook ids now develop at every rollover (previously only
+  market-touched ids ever grew — fillers never reached potential); wonderkid chance 5% → 8%;
+  **10% headliner chance** gives one filler org slot a 77-84 base roll (texture in thin
+  regions without early superteams; creation range for the rest stays 64-80).
+- Scrim rewards: chemistryCredit 0.04 → **0.05**, xpWeeks 0.4 → **0.5** (booking sparring
+  must be visibly worth the click).
+
+#### Fixed
+- **Backer debt lock (the "sold a player, still trapped" bug).** Root cause: the only code
+  path that ever reduced `loan.remaining` was the prize garnish in `applyPrize` — player-sale
+  fees went through a plain `transferIn` ledger push, so selling your star paid NOTHING and
+  the org stayed locked out of fee transfers/gear for seasons. Now: sales amortize **50%**
+  of the fee automatically (`applyTransferIncome`), and Finances has a manual **"Pay down
+  debt"** (any amount, `payDebtFlow`) — clearing the debt lifts the lock immediately, with a
+  "debt cleared" mail/news beat.
+- **Training stagnation at zero.** Root cause: per-tick gains quantized with `floor2` — any
+  daily gain below 0.01 OVR (age 21+, near-potential, no coach) floored to literal 0 forever;
+  the accumulators and overall also rounded at 2 decimals, compounding the freeze. Ticks now
+  quantize at 4 decimals (`floor4`/`round4`) — slow developers crawl instead of flatlining.
+- **Same-day scrim rematch.** Root cause: the opponent pick was seeded per (season, day) with
+  no memory — the second block on one day always drew the same pool and often the same org.
+  Picks now exclude today's opponents and the seed stream carries the block index.
+- **Ambitious-renewal threshold hardcoded at 88** in `renewPlayerFlow` — moved to
+  `CAREER_SALARY.ambitiousOverall` (the "every tunable in balance.ts" rule).
+- **Mobile: screens keeping the previous scroll position.** Root cause: Next.js preserves
+  scroll on client-side navigation; the career layout now resets to top on every pathname
+  change.
+- Money params in mail/news bodies (`fee`, `bonus`, report fees) now render formatted
+  (`formatMoney`) instead of raw integers.
+
+---
+
+### v0.2 overhaul (2026-07-09/10)
 
 #### Added (v0.2 overhaul pass, 2026-07-09/10 — Miguel's playtest feedback)
 - **Day-based calendar (FIFA-career style).** The clock is now the DAY: `clock = {seasonIndex,

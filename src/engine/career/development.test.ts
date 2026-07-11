@@ -364,15 +364,23 @@ describe("fillerPlayerView", () => {
 
   it("overalls sit in fillerOverallRange, with the occasional wonderkid ceiling", () => {
     const [oMin, oMax] = CAREER_WORLD.fillerOverallRange;
+    const [hMin, hMax] = CAREER_WORLD.fillerHeadlinerRange;
     let wonderkids = 0;
+    let headliners = 0;
     for (let n = 0; n < 300; n++) {
       const view = fillerPlayerView("SAM", n, ctxAt(0));
-      expect(view.overall).toBeGreaterThanOrEqual(oMin);
-      expect(view.overall).toBeLessThanOrEqual(oMax);
+      expect(view.overall).toBeGreaterThanOrEqual(Math.min(oMin, hMin));
+      // v0.3: first-of-triplet slots may roll the headliner band.
+      if (view.overall > oMax) {
+        expect(n % 3).toBe(0);
+        expect(view.overall).toBeLessThanOrEqual(hMax);
+        headliners += 1;
+      }
       if (view.potential >= 88) wonderkids += 1;
     }
-    expect(wonderkids).toBeGreaterThan(0); // ~5% of 300
-    expect(wonderkids).toBeLessThan(60);
+    expect(wonderkids).toBeGreaterThan(0); // ~8% of 300
+    expect(wonderkids).toBeLessThan(70);
+    expect(headliners).toBeLessThan(30); // ≤10% of the 100 first-slots
   });
 });
 

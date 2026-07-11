@@ -26,7 +26,9 @@ import {
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
+  CAREER_NEGOTIATION,
   CAREER_REP,
+  CAREER_SALARY,
   CAREER_SAVE,
   CAREER_SCOUT,
   CAREER_SCRIM,
@@ -85,22 +87,27 @@ import {
   seasonYear,
   squadRollover,
   trainDay,
+  trainingProjection,
 } from "@/engine/career/development";
 import {
   applyPrize,
+  applyTransferIncome,
   bootcampTierFor,
   computeSalaryAsk,
   gearNextItem,
   gearPriceFor,
   gearTrainingBonus,
+  marketValueFor,
+  negotiationAccepts,
+  payLoanDown,
   pushLedger,
   quantize,
   repGainFor,
   repLossFloor,
   repTierOf,
+  signableOverallCap,
   splitPayday,
   sponsorOffersFor,
-  transferFeeFor,
   unlocksFor,
   type GearItemId,
 } from "@/engine/career/economy";
@@ -109,7 +116,8 @@ import {
   askPackageFor,
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
-  incomingBids,
+  incomingBidForDay,
+  type AiTransferRecord,
 } from "@/engine/career/market";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
@@ -134,8 +142,10 @@ import type {
   MailItem,
   ManagementStyle,
   NewsItem,
+  ScrimLogEntry,
   SeasonRecord,
   SquadPlayer,
+  TransferLogEntry,
   TransferOffer,
 } from "@/engine/career/types";
 import type { Placement, Region, TournamentState } from "@/engine/types";
@@ -221,6 +231,22 @@ function pushMail(
   if (save.mail.length > CAREER_SAVE.mailCap) save.mail.length = CAREER_SAVE.mailCap;
 }
 
+/** v0.3: append to the transfer wire (ring buffer, newest first). */
+function logTransfer(
+  save: CareerSave,
+  entry: Omit<TransferLogEntry, "id" | "seasonIndex" | "day">,
+): void {
+  save.transferLog.unshift({
+    id: `t:${nextSeq(save)}`,
+    seasonIndex: save.clock.seasonIndex,
+    day: save.clock.day,
+    ...entry,
+  });
+  if (save.transferLog.length > CAREER_SAVE.transferLogCap) {
+    save.transferLog.length = CAREER_SAVE.transferLogCap;
+  }
+}
+
 function gainRep(save: CareerSave, kind: keyof typeof CAREER_REP.gains): void {
   const before = save.reputation;
   save.reputation = Math.min(100, save.reputation + repGainFor(kind, save.reputation));
@@ -247,6 +273,7 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
     [CAREER_GEAR.bootcamp[0].repGate, "bootcamp1"],
     [CAREER_GEAR.bootcamp[1].repGate, "bootcamp2"],
     [CAREER_GEAR.psychologistRep, "psychologist"],
+    [CAREER_UNLOCKS.coachRep, "coach"],
     [CAREER_UNLOCKS.t2InvitationalRep, "t2"],
     [CAREER_UNLOCKS.relocationRep, "relocation"],
   ];
@@ -318,20 +345,13 @@ export function processDayArrival(input: CareerSave): CareerSave {
         if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree) {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
-          const ask = computeSalaryAsk({
-            overall: player.overall,
-            age: 18,
-            potential: player.potential,
-            rep: save.reputation,
-            role: "starter",
-            seasonIndex,
-            lengthSeasons: 2,
-            difficulty: save.difficulty,
-            careerSeed: save.careerSeed,
-            playerId: player.id,
-          });
           const fee = quantize(
-            transferFeeFor(ask, 4) * CAREER_TRANSFER.blockbusterFeeMult,
+            marketValueFor({
+              overall: player.overall,
+              age: ageOf(player.birthYear, seasonIndex),
+              potential: player.potential,
+              seasonIndex,
+            }) * CAREER_TRANSFER.blockbusterFeeMult,
           );
           const toOrg = beat.effect?.forceTransfer.toOrgRef;
           save.pendingOffers.push({
@@ -364,7 +384,23 @@ export function processDayArrival(input: CareerSave): CareerSave {
         } else {
           if (beat.effect?.forceTransfer && beat.requiresPlayerFree) {
             const { playerId, toOrgRef } = beat.effect.forceTransfer;
+            const view = playerViewById(playerId, {
+              careerSeed: save.careerSeed,
+              seasonIndex,
+              world: save.world,
+            });
             forceTransferInWorld(save, playerId, toOrgRef);
+            if (view) {
+              logTransfer(save, {
+                playerId,
+                playerName: view.name,
+                fromRef: null,
+                toRef: toOrgRef,
+                fee: 0,
+                kind: "beat",
+                region: regionOfRef(save, toOrgRef),
+              });
+            }
           }
           pushNews(save, { type: "beat", priority: 3, titleKey: "beat", beatId: beat.id });
         }
@@ -376,6 +412,9 @@ export function processDayArrival(input: CareerSave): CareerSave {
     if (windowIdx !== null) {
       if (isWindowStartWeek(week)) {
         pushNews(save, { type: "window", priority: 1, titleKey: "windowOpen" });
+        // v0.3: per-window incoming-bid bookkeeping resets on open.
+        save.bidsThisWindow = 0;
+        save.lastBidDay = -99;
       }
       const { world, transfers } = aiWindowMoves(save.world, {
         seasonIndex,
@@ -387,6 +426,18 @@ export function processDayArrival(input: CareerSave): CareerSave {
         infinite: isInfinite(save),
       });
       save.world = world;
+      // v0.3: every AI move lands on the transfer wire (HQ window panel).
+      for (const t of transfers) {
+        logTransfer(save, {
+          playerId: t.playerId,
+          playerName: t.playerName,
+          fromRef: t.fromRef,
+          toRef: t.toRef,
+          fee: t.fee,
+          kind: t.fromRef ? "fee" : "fa",
+          region: regionOfRef(save, t.toRef),
+        });
+      }
       const shown = transfers.slice(0, 3);
       for (const t of shown) {
         pushNews(save, {
@@ -409,39 +460,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
           params: { n: transfers.length - shown.length },
         });
       }
-      if (isWindowStartWeek(week) && save.squad.length > 0) {
-        const bids = incomingBids({
-          world: save.world,
-          squad: save.squad,
-          seasonIndex,
-          windowIdx,
-          week,
-          careerSeed: save.careerSeed,
-          rep: save.reputation,
-          regionRatings: [],
-        });
-        for (const bid of bids) {
-          save.pendingOffers.push(bid);
-          pushNews(save, {
-            type: "transfer",
-            priority: 2,
-            titleKey: "incomingBid",
-            params: { player: bid.playerName, org: bid.otherRef ? nameOfRef(save, bid.otherRef) : "?" },
-          });
-          pushMail(save, {
-            kind: "offer",
-            titleKey: "incomingBid",
-            bodyKey: "incomingBid",
-            params: {
-              player: bid.playerName,
-              org: bid.otherRef ? nameOfRef(save, bid.otherRef) : "?",
-              fee: bid.fee,
-            },
-            fromKey: "agent",
-            linkTo: "/career/market",
-          });
-        }
-      }
+    }
+
+    // --- 2b. v0.3 window-close report (first Monday after a window shuts) --
+    if (windowIndexOf(week) === null && week >= 2 && windowIndexOf(week - 1) !== null) {
+      emitWindowReport(save, week - 1);
     }
 
     // --- 3. field announcements (major week / worlds window Monday) --------
@@ -532,6 +555,48 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
   }
 
+  // ============ WINDOW DAYS: incoming-bid roll (v0.3, any day) =============
+  const dayWindowIdx = windowIndexOf(week);
+  if (dayWindowIdx !== null && save.phase === "running" && save.squad.length > 0) {
+    const bid = incomingBidForDay({
+      world: save.world,
+      squad: save.squad,
+      seasonIndex,
+      windowIdx: dayWindowIdx,
+      day,
+      careerSeed: save.careerSeed,
+      rep: save.reputation,
+      bidsThisWindow: save.bidsThisWindow ?? 0,
+      lastBidDay: save.lastBidDay ?? -99,
+      pendingTargetIds: save.pendingOffers
+        .filter((o) => o.status === "pending" && o.direction === "out")
+        .map((o) => o.playerId),
+    });
+    if (bid) {
+      save.bidsThisWindow = (save.bidsThisWindow ?? 0) + 1;
+      save.lastBidDay = day;
+      save.pendingOffers.push(bid);
+      pushNews(save, {
+        type: "transfer",
+        priority: 2,
+        titleKey: "incomingBid",
+        params: { player: bid.playerName, org: bid.otherRef ? nameOfRef(save, bid.otherRef) : "?" },
+      });
+      pushMail(save, {
+        kind: "offer",
+        titleKey: "incomingBid",
+        bodyKey: "incomingBid",
+        params: {
+          player: bid.playerName,
+          org: bid.otherRef ? nameOfRef(save, bid.otherRef) : "?",
+          fee: bid.fee,
+        },
+        fromKey: "agent",
+        linkTo: "/career/market",
+      });
+    }
+  }
+
   // ==================== EVERY DAY: offer expiry ============================
   const beforeCount = save.pendingOffers.length;
   for (const offer of save.pendingOffers) {
@@ -548,11 +613,24 @@ export function processDayArrival(input: CareerSave): CareerSave {
     save.pendingOffers = save.pendingOffers.filter((o) => o.status === "pending");
   }
 
+  // ==================== MON-FRI: scheduled scrims (v0.3) ===================
+  if (save.phase === "running" && !save.activeEvent && save.scheduledScrims.length > 0) {
+    const due = save.scheduledScrims.filter((s) => s.day === day);
+    for (const s of due) performScrim(save, s.oppRef);
+    save.scheduledScrims = save.scheduledScrims.filter((s) => s.day > day);
+  }
+
   // ==================== MON-FRI: daily training tick =======================
-  // Weeks with a committed user event are match-prep weeks (no training gains
-  // — the event pays match XP instead), mirroring the v0.1 weekly rule.
-  if (dow <= CAREER_TRAINING.trainingDaysPerWeek && !save.pendingEventDef) {
-    applyDailyTraining(save, cal.kind === "open" || cal.kind === "preseason");
+  // v0.3: committed-event weeks are match-prep weeks — they now train at
+  // matchPrepShare instead of freezing entirely (playing a weak-field event
+  // must never develop players SLOWER than skipping it).
+  if (dow <= CAREER_TRAINING.trainingDaysPerWeek) {
+    const prep = save.pendingEventDef !== null;
+    applyDailyTraining(
+      save,
+      (cal.kind === "open" || cal.kind === "preseason") && !prep,
+      prep ? CAREER_TRAINING.matchPrepShare : 1,
+    );
   }
 
   // ==================== SATURDAY (matchday) ================================
@@ -621,6 +699,15 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
     titleKey: "unavailable",
     params: { player: victim.name, event: def.name },
   });
+  // v0.3: this is exactly the kind of thing that must land on your desk.
+  pushMail(save, {
+    kind: "club",
+    titleKey: "unavailable",
+    bodyKey: "unavailable",
+    params: { player: victim.name, event: def.name },
+    fromKey: "staff",
+    linkTo: "/career/squad",
+  });
 }
 
 function resolveAiEvent(save: CareerSave, def: CareerEventDef): void {
@@ -684,19 +771,70 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
   }
 }
 
-function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean): void {
+function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekShare = 1): void {
   const gearBonus = gearTrainingBonus(save.finances.gear);
   for (const p of save.squad) {
-    const res = trainDay(p, {
-      seasonIndex: save.clock.seasonIndex,
-      coachOverall: save.coach?.overall ?? null,
-      gearBonus,
-      trainingWeekBonus,
-      splitGained: p.gainedThisSplit,
-      seasonGained: p.gainedThisSeason,
-    });
+    const res = trainDay(
+      p,
+      {
+        seasonIndex: save.clock.seasonIndex,
+        coachOverall: save.coach?.overall ?? null,
+        gearBonus,
+        trainingWeekBonus,
+        splitGained: p.gainedThisSplit,
+        seasonGained: p.gainedThisSeason,
+      },
+      weekShare,
+    );
     Object.assign(p, res.player);
   }
+}
+
+/**
+ * v0.3 window-close report: the first Monday after a window shuts mails a
+ * digest of the market — volume, the biggest fees, where they landed — and
+ * prunes that window's negotiation bookkeeping.
+ */
+function emitWindowReport(save: CareerSave, lastWindowWeek: number): void {
+  const windowIdx = windowIndexOf(lastWindowWeek);
+  if (windowIdx === null) return;
+  const closeDay = lastWindowWeek * CAREER_CALENDAR.daysPerWeek;
+  const spanWeeks = windowIdx === 3 ? 1 : CAREER_CALENDAR.windowWeeks;
+  const fromDay = closeDay - spanWeeks * CAREER_CALENDAR.daysPerWeek;
+  const moves = save.transferLog.filter(
+    (t) => t.seasonIndex === save.clock.seasonIndex && t.day > fromDay && t.day <= closeDay,
+  );
+  // Prune the closed window's negotiation counters regardless of volume.
+  const suffix = `:${save.clock.seasonIndex}:w${windowIdx}`;
+  for (const k of Object.keys(save.negotiationTries ?? {})) {
+    if (k.endsWith(suffix)) delete save.negotiationTries[k];
+  }
+  if (moves.length === 0) return;
+  const top = [...moves].sort((a, b) => b.fee - a.fee).slice(0, 3);
+  const line = (t: TransferLogEntry | undefined) =>
+    t ? `${t.playerName} → ${t.toRef ? nameOfRef(save, t.toRef) : "FA"}` : "";
+  pushNews(save, {
+    type: "window",
+    priority: 2,
+    titleKey: "windowReport",
+    params: { n: moves.length },
+  });
+  pushMail(save, {
+    kind: "club",
+    titleKey: "windowReport",
+    bodyKey: "windowReport",
+    params: {
+      n: moves.length,
+      p1: line(top[0]),
+      f1: top[0]?.fee ?? 0,
+      p2: line(top[1]),
+      f2: top[1]?.fee ?? 0,
+      p3: line(top[2]),
+      f3: top[2]?.fee ?? 0,
+    },
+    fromKey: "league",
+    linkTo: "/career",
+  });
 }
 
 function runSplitBoundary(save: CareerSave): void {
@@ -831,13 +969,34 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
   syncSquadRoles(save);
   // The buying org takes him (or he lands in their world roster slot).
   if (offer.otherRef) forceTransferInWorld(save, offer.playerId, offer.otherRef);
-  save.finances = pushLedger(save.finances, {
+  // v0.3 debt-lock fix: while the Backer loan is active, half the sale
+  // amortizes the debt (line-itemized) — selling finally pays the Backer.
+  const { fin, garnished } = applyTransferIncome(save.finances, offer.fee, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
     day: save.clock.day,
-    kind: "transferIn",
-    amount: offer.fee,
     refName: player.name,
+  });
+  save.finances = fin;
+  if (garnished > 0 && !save.finances.loan) {
+    pushNews(save, { type: "org", priority: 2, titleKey: "debtCleared" });
+    pushMail(save, {
+      kind: "finance",
+      titleKey: "debtCleared",
+      bodyKey: "debtCleared",
+      params: {},
+      fromKey: "backer",
+      linkTo: "/career/finances",
+    });
+  }
+  logTransfer(save, {
+    playerId: player.id,
+    playerName: player.name,
+    fromRef: "user",
+    toRef: offer.otherRef ?? null,
+    fee: offer.fee,
+    kind: "userOut",
+    region: save.identity.region,
   });
   save.pendingOffers = save.pendingOffers.filter((o) => o.id !== offer.id);
   pushNews(save, {
@@ -851,6 +1010,35 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
     },
   });
   return save;
+}
+
+/**
+ * v0.3: manual Backer pay-down from the Finances screen — any amount, any
+ * time (clamped to the outstanding debt and the available balance headroom).
+ */
+export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
+  const save = clone(input);
+  if (!save.finances.loan) return { save: input, error: "none" };
+  const pay = quantize(Math.min(amount, save.finances.loan.remaining));
+  if (pay <= 0) return { save: input, error: "invalid" };
+  if (save.finances.balance - pay < CAREER_LOAN.floor) return { save: input, error: "funds" };
+  save.finances = payLoanDown(save.finances, pay, {
+    seasonIndex: save.clock.seasonIndex,
+    week: weekOfDay(save.clock.day),
+    day: save.clock.day,
+  });
+  if (!save.finances.loan) {
+    pushNews(save, { type: "org", priority: 2, titleKey: "debtCleared" });
+    pushMail(save, {
+      kind: "finance",
+      titleKey: "debtCleared",
+      bodyKey: "debtCleared",
+      params: {},
+      fromKey: "backer",
+      linkTo: "/career/finances",
+    });
+  }
+  return { save: capNews(save) };
 }
 
 // ---------------------------------------------------------------------------
@@ -1110,19 +1298,24 @@ function fieldedIdsFor(save: CareerSave): string[] {
 }
 
 function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placement): void {
-  if (def.tier === "t3" && placement === "champion") {
+  // t3 rep (win or final) shares one per-split cap counter.
+  if (def.tier === "t3" && (placement === "champion" || placement === "runner_up")) {
     const key = `t3rep:${save.clock.seasonIndex}:${splitOfWeek(weekOfDay(save.clock.day)) ?? 0}`;
     const used = (save.flags[key] as unknown as number) || 0;
     if (Number(used) < CAREER_UNOFFICIAL.t3RepCapPerSplit) {
-      gainRep(save, "t3Win");
+      gainRep(save, placement === "champion" ? "t3Win" : "t3Final");
       (save.flags as Record<string, unknown>)[key] = Number(used) + 1;
     }
   }
   if (def.tier === "t2" && placement === "champion") gainRep(save, "t2Win");
+  if (def.tier === "t2" && placement === "runner_up") gainRep(save, "t2Final");
   if (def.tier === "regional") {
     if (placement === "champion") gainRep(save, "regionalWin");
     else if (["runner_up", "third", "fourth", "top4"].includes(placement)) gainRep(save, "regionalTop4");
     else if (placement !== "swiss_exit") gainRep(save, "regionalTop8");
+    // v0.3 early floor: showing up at an official pays a little standing —
+    // a losing season 1 still climbs toward the first unlocks.
+    else gainRep(save, "regionalSwissExit");
   }
   if (def.tier === "major") {
     if (placement === "champion") gainRep(save, "majorWin");
@@ -1335,6 +1528,11 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   save.competition = emptyCompetition();
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
   save.eventResults = [];
+  // v0.3 season-scoped bookkeeping resets.
+  save.scheduledScrims = [];
+  save.negotiationTries = {};
+  save.bidsThisWindow = 0;
+  save.lastBidDay = -99;
   save.clock = { seasonIndex: nextSeason, day: 1 };
   save.phase = "running";
   save.finances.freeBootcampsUsedThisSeason = 0;
@@ -1447,7 +1645,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
   const squad = squadFromOffer(offer, input, careerSeed);
 
   const save: CareerSave = {
-    saveVersion: 2,
+    saveVersion: 3,
     createdAtAppVersion: SITE.version,
     careerSeed,
     identity: input.identity,
@@ -1487,6 +1685,12 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     unofficialOffer: null,
     t3EntriesThisSplit: 0,
     scrimsThisWeek: 0,
+    scheduledScrims: [],
+    scrimLog: [],
+    transferLog: [],
+    negotiationTries: {},
+    bidsThisWindow: 0,
+    lastBidDay: -99,
     pendingOffers: [],
     pendingUnavailability: null,
     news: [],
@@ -1636,10 +1840,59 @@ function removePlayerFromWorld(save: CareerSave, playerId: string): void {
   save.world.version += 1;
 }
 
+/** The negotiation bookkeeping key for this player in the current window. */
+function negotiationKeyFor(save: CareerSave, playerId: string): string {
+  const week = weekOfDay(save.clock.day);
+  const bucket = windowIndexOf(week) !== null ? `w${windowIndexOf(week)}` : `s${splitOfWeek(week) ?? 0}`;
+  return `${playerId}:${save.clock.seasonIndex}:${bucket}`;
+}
+
+export function negotiationTriesFor(save: CareerSave, playerId: string): number {
+  return save.negotiationTries?.[negotiationKeyFor(save, playerId)] ?? 0;
+}
+
+/**
+ * v0.3 negotiation resolution shared by sign + renew: `offered` below the ask
+ * consults the hidden reserve. Returns the salary to write, or an error key —
+ * and on rejection the tries counter is persisted on the DRAFT save (the
+ * caller returns it so the player visibly hardens).
+ */
+function resolveSalaryOffer(
+  save: CareerSave,
+  playerId: string,
+  ask: number,
+  offered: number | undefined,
+): { salary: number } | { error: string } {
+  if (offered === undefined || offered >= ask) return { salary: ask };
+  if (offered < quantize(ask * CAREER_NEGOTIATION.minOfferFactor)) return { error: "lowball" };
+  const key = negotiationKeyFor(save, playerId);
+  const tries = save.negotiationTries[key] ?? 0;
+  const week = weekOfDay(save.clock.day);
+  const accepted = negotiationAccepts({
+    careerSeed: save.careerSeed,
+    playerId,
+    seasonIndex: save.clock.seasonIndex,
+    windowKey: windowIndexOf(week) !== null ? `w${windowIndexOf(week)}` : `s${splitOfWeek(week) ?? 0}`,
+    offered,
+    ask,
+    rejects: tries,
+  });
+  if (!accepted) {
+    save.negotiationTries[key] = tries + 1;
+    return { error: tries + 1 >= CAREER_NEGOTIATION.maxRejects ? "negotiationLocked" : "negotiationRejected" };
+  }
+  return { salary: offered };
+}
+
 export function signPlayerFlow(
   input: CareerSave,
   playerId: string,
-  opts: { role: "starter" | "sub"; lengthSeasons: 1 | 2 | 3 },
+  opts: {
+    role: "starter" | "sub";
+    lengthSeasons: 1 | 2 | 3;
+    /** v0.3 negotiation: counter-offer below the ask (omit = pay the ask). */
+    offeredSalary?: number;
+  },
 ): FlowResult {
   const save = clone(input);
   if (!isWindowWeek(weekOfDay(save.clock.day))) return { save: input, error: "windowClosed" };
@@ -1656,6 +1909,11 @@ export function signPlayerFlow(
   };
   const view = playerViewById(playerId, viewCtx);
   if (!view) return { save: input, error: "unavailable" };
+
+  // v0.3 visible signing gate: new signings accept only up to the rep cap.
+  if (Math.round(view.overall) > signableOverallCap(save.reputation)) {
+    return { save: input, error: "repGate" };
+  }
 
   const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   const pack = askPackageFor(view, {
@@ -1678,6 +1936,11 @@ export function signPlayerFlow(
   const cost = pack.fee + pack.signingBonus;
   if (save.finances.balance - cost < CAREER_LOAN.floor) return { save: input, error: "funds" };
   if (pack.fee > 0 && save.finances.loan) return { save: input, error: "loanActive" };
+
+  // v0.3 negotiation: a counter-offer may sign cheaper — or harden the agent.
+  const negotiated = resolveSalaryOffer(save, playerId, pack.salaryPerSplit, opts.offeredSalary);
+  if ("error" in negotiated) return { save: capNews(save), error: negotiated.error };
+  const finalSalary = negotiated.salary;
 
   if (pack.fee > 0) {
     save.finances = pushLedger(save.finances, {
@@ -1726,7 +1989,7 @@ export function signPlayerFlow(
     peakAge: view.peakAge,
     declineRate: view.declineRate,
     role: opts.role,
-    salaryPerSplit: pack.salaryPerSplit,
+    salaryPerSplit: finalSalary,
     contractEndSeason: save.clock.seasonIndex + opts.lengthSeasons,
     trainingFocus: "auto",
     trainingIntensity: "normal",
@@ -1749,6 +2012,15 @@ export function signPlayerFlow(
   }
   syncSquadRoles(save);
 
+  logTransfer(save, {
+    playerId: view.id,
+    playerName: view.name,
+    fromRef: onOrg?.ref ?? null,
+    toRef: "user",
+    fee: pack.fee,
+    kind: "userIn",
+    region: save.identity.region,
+  });
   pushNews(save, {
     type: "transfer",
     priority: 2,
@@ -1791,13 +2063,15 @@ export function renewPlayerFlow(
   input: CareerSave,
   playerId: string,
   lengthSeasons: 1 | 2 | 3,
+  /** v0.3 negotiation: counter-offer below the fresh ask (omit = pay it). */
+  offeredSalary?: number,
 ): FlowResult {
   const save = clone(input);
   const player = save.squad.find((p) => p.id === playerId);
   if (!player) return { save: input, error: "unknown" };
   const age = ageOf(player.birthYear, save.clock.seasonIndex);
   const prestige = repTierOf(save.reputation);
-  const ambitious = player.overall >= 88 && prestige < 3;
+  const ambitious = player.overall >= CAREER_SALARY.ambitiousOverall && prestige < 3;
   const ask = computeSalaryAsk({
     overall: player.overall,
     age,
@@ -1811,7 +2085,9 @@ export function renewPlayerFlow(
     playerId: player.id,
     ambitious,
   });
-  player.salaryPerSplit = ask;
+  const negotiated = resolveSalaryOffer(save, playerId, ask, offeredSalary);
+  if ("error" in negotiated) return { save, error: negotiated.error };
+  player.salaryPerSplit = negotiated.salary;
   player.contractEndSeason = save.clock.seasonIndex + lengthSeasons;
   return { save };
 }
@@ -1933,6 +2209,8 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
 
 export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult {
   const save = clone(input);
+  // v0.3: a coach is earned early — hiring unlocks at CAREER_UNLOCKS.coachRep.
+  if (save.reputation < CAREER_UNLOCKS.coachRep) return { save: input, error: "repGate" };
   // Validate the candidate came from the current shortlist (no injected coaches).
   const candidates = coachCandidatesFor(save);
   const valid = candidates.find((c) => c.id === coach.id);
@@ -1975,15 +2253,54 @@ export function fireCoachFlow(input: CareerSave): FlowResult {
 }
 
 // ---------------------------------------------------------------------------
-// Scrims (v0.2 — weekday blocks between events)
+// Scrims (v0.3 — schedulable, opponent choice, visible results)
 // ---------------------------------------------------------------------------
 
-/** The scrim opponent for a given day (derived; null when none makes sense). */
+export interface ScrimCandidate {
+  ref: string;
+  name: string;
+  rating: number;
+  /** Signed rating gap vs the user team (negative = weaker sparring). */
+  gap: number;
+  stars: number;
+}
+
+/** Nearest-strength regional orgs — the Training screen's opponent shortlist. */
+export function scrimShortlistFor(save: CareerSave): ScrimCandidate[] {
+  const region = save.identity.region;
+  const userRating = approxUserRating(save);
+  return Object.values(save.world.orgs)
+    .filter((o) => o.region === region)
+    .map((o) => {
+      const rating = o.rating ?? 70 + o.prestige * 6;
+      return {
+        ref: o.ref,
+        name: o.name,
+        rating,
+        gap: Math.round((rating - userRating) * 10) / 10,
+        stars: o.stars,
+      };
+    })
+    .sort((a, b) => Math.abs(a.gap) - Math.abs(b.gap) || a.ref.localeCompare(b.ref))
+    .slice(0, CAREER_SCRIM.shortlistSize);
+}
+
+/** Org refs already scrimmed today (a same-day rematch is never offered). */
+function todaysScrimOpponents(save: CareerSave): Set<string> {
+  return new Set(
+    save.scrimLog
+      .filter((e) => e.seasonIndex === save.clock.seasonIndex && e.day === save.clock.day)
+      .map((e) => e.oppRef),
+  );
+}
+
+/** The auto-picked scrim opponent (derived; excludes today's opponents). */
 export function scrimOpponentFor(save: CareerSave): { ref: string; name: string } | null {
   const region = save.identity.region;
   const userRating = approxUserRating(save);
+  const exclude = todaysScrimOpponents(save);
   const candidates = Object.values(save.world.orgs)
-    .filter((o) => o.region === region)
+    .filter((o) => o.region === region && !exclude.has(o.ref))
     .map((o) => ({
       ref: o.ref,
       name: o.name,
@@ -1993,10 +2310,11 @@ export function scrimOpponentFor(save: CareerSave): { ref: string; name: string 
   const band = candidates.filter((c) => c.gap <= CAREER_SCRIM.ratingBand);
   const pool = band.length > 0 ? band : candidates.slice(0, 4);
   if (pool.length === 0) return null;
+  const n = todaysScrimOpponents(save).size;
   const pick = Math.floor(
     derivedFloat(
       save.careerSeed,
-      streams.gen("scrim", `${save.clock.seasonIndex}:${save.clock.day}`),
+      streams.gen("scrim", `${save.clock.seasonIndex}:${save.clock.day}:${n}`),
     ) * pool.length,
   );
   return pool[Math.min(pick, pool.length - 1)];
@@ -2009,18 +2327,26 @@ export interface ScrimOutcome {
 }
 
 /**
- * Run a scrim block today: one Bo5 vs a nearby-strength org from the region.
- * Grants a small chemistry credit + light match XP; no money, no points.
+ * The scrim core (mutates the draft save): one Bo5 vs the chosen (or
+ * auto-picked) org — chemistry credit + light match XP, a game-by-game log
+ * entry and a news line. Returns an error key, or null on success.
  */
-export function runScrimFlow(input: CareerSave): FlowResult & { outcome?: ScrimOutcome } {
-  const save = clone(input);
+function performScrim(save: CareerSave, oppRefWanted: string | null): string | null {
   const dow = dayOfWeekOf(save.clock.day);
-  if (save.phase !== "running" || save.activeEvent) return { save: input, error: "blocked" };
-  if (dow > CAREER_TRAINING.trainingDaysPerWeek) return { save: input, error: "restDay" };
-  if (save.scrimsThisWeek >= CAREER_SCRIM.maxPerWeek) return { save: input, error: "used" };
+  if (save.phase !== "running" || save.activeEvent) return "blocked";
+  if (dow > CAREER_TRAINING.trainingDaysPerWeek) return "restDay";
+  if (save.scrimsThisWeek >= CAREER_SCRIM.maxPerWeek) return "used";
 
-  const opponent = scrimOpponentFor(save);
-  if (!opponent) return { save: input, error: "unavailable" };
+  let opponent: { ref: string; name: string } | null = null;
+  if (oppRefWanted) {
+    const org = save.world.orgs[oppRefWanted];
+    if (!org || org.region !== save.identity.region) return "unavailable";
+    if (todaysScrimOpponents(save).has(org.ref)) return "sameDay";
+    opponent = { ref: org.ref, name: org.name };
+  } else {
+    opponent = scrimOpponentFor(save);
+  }
+  if (!opponent) return "unavailable";
 
   const { team } = userTeamFor({
     identity: save.identity,
@@ -2039,8 +2365,9 @@ export function runScrimFlow(input: CareerSave): FlowResult & { outcome?: ScrimO
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
   });
+  const n = todaysScrimOpponents(save).size;
   const rng = createRng(
-    deriveSeed(save.careerSeed, `scrim:${save.clock.seasonIndex}:${save.clock.day}`),
+    deriveSeed(save.careerSeed, `scrim:${save.clock.seasonIndex}:${save.clock.day}:${n}`),
   );
   const series = simulateSeries(
     team,
@@ -2050,6 +2377,11 @@ export function runScrimFlow(input: CareerSave): FlowResult & { outcome?: ScrimO
   );
   const won = series.winnerTeamId === "user";
   const score: [number, number] = [series.score[0], series.score[1]];
+  // Game scores oriented user-first (engine stores winner-first per game).
+  const games = series.games.map((g) => {
+    const userWon = g.winnerTeamId === "user";
+    return userWon ? `${g.score[0]}-${g.score[1]}` : `${g.score[1]}-${g.score[0]}`;
+  });
 
   // Chemistry credit + light match XP for the fielded squad.
   const oppRating = save.world.orgs[opponent.ref]?.rating ?? 74;
@@ -2069,13 +2401,119 @@ export function runScrimFlow(input: CareerSave): FlowResult & { outcome?: ScrimO
     Object.assign(p, next);
   }
   save.scrimsThisWeek += 1;
+
+  const entry: ScrimLogEntry = {
+    id: `s:${nextSeq(save)}`,
+    seasonIndex: save.clock.seasonIndex,
+    day: save.clock.day,
+    oppRef: opponent.ref,
+    oppName: opponent.name,
+    won,
+    scoreA: score[0],
+    scoreB: score[1],
+    games,
+  };
+  save.scrimLog.unshift(entry);
+  if (save.scrimLog.length > CAREER_SAVE.scrimLogCap) {
+    save.scrimLog.length = CAREER_SAVE.scrimLogCap;
+  }
+
+  // Priority 2: your team's result — it also surfaces as an autoplay toast.
   pushNews(save, {
     type: "training",
-    priority: 1,
+    priority: 2,
     titleKey: won ? "scrimWin" : "scrimLoss",
     params: { opponent: opponent.name, a: score[0], b: score[1] },
   });
-  return { save: capNews(save), outcome: { opponentName: opponent.name, won, score } };
+  return null;
+}
+
+/** Run a scrim block right now (optionally vs a chosen shortlist opponent). */
+export function runScrimFlow(
+  input: CareerSave,
+  oppRef?: string | null,
+): FlowResult & { outcome?: ScrimOutcome } {
+  const save = clone(input);
+  const err = performScrim(save, oppRef ?? null);
+  if (err) return { save: input, error: err };
+  const last = save.scrimLog[0];
+  return {
+    save: capNews(save),
+    outcome: { opponentName: last.oppName, won: last.won, score: [last.scoreA, last.scoreB] },
+  };
+}
+
+/**
+ * v0.3: book a scrim ahead from the Training screen — it runs automatically
+ * when the day arrives and shows on the calendar as a training event.
+ */
+export function scheduleScrimFlow(input: CareerSave, day: number, oppRef: string): FlowResult {
+  const save = clone(input);
+  if (save.phase !== "running") return { save: input, error: "blocked" };
+  const today = save.clock.day;
+  if (day <= today || day > DAYS_PER_SEASON) return { save: input, error: "invalid" };
+  if (day - today > CAREER_SCRIM.scheduleHorizonDays) return { save: input, error: "invalid" };
+  if (dayOfWeekOf(day) > CAREER_TRAINING.trainingDaysPerWeek) {
+    return { save: input, error: "restDay" };
+  }
+  const org = save.world.orgs[oppRef];
+  if (!org || org.region !== save.identity.region) return { save: input, error: "unavailable" };
+  // Weekly cap counts booked + already-run scrims of that week.
+  const week = weekOfDay(day);
+  const bookedThatWeek = save.scheduledScrims.filter((s) => weekOfDay(s.day) === week).length;
+  const runThatWeek = week === weekOfDay(today) ? save.scrimsThisWeek : 0;
+  if (bookedThatWeek + runThatWeek >= CAREER_SCRIM.maxPerWeek) {
+    return { save: input, error: "used" };
+  }
+  // Never two scrims vs the same org on the same day.
+  if (save.scheduledScrims.some((s) => s.day === day && s.oppRef === oppRef)) {
+    return { save: input, error: "sameDay" };
+  }
+  save.scheduledScrims.push({ day, oppRef });
+  save.scheduledScrims.sort((a, b) => a.day - b.day);
+  return { save };
+}
+
+/** Cancel a booked scrim (by day; removes every booking on that day). */
+export function cancelScrimFlow(input: CareerSave, day: number): FlowResult {
+  const save = clone(input);
+  const before = save.scheduledScrims.length;
+  save.scheduledScrims = save.scheduledScrims.filter((s) => s.day !== day);
+  if (save.scheduledScrims.length === before) return { save: input, error: "unknown" };
+  return { save };
+}
+
+/**
+ * Engine-truth benefit preview for a scrim vs `oppRef` (Training screen):
+ * field quality, XP-week equivalents, chemistry credit and the projected
+ * average overall gain across current starters (pre-cap, like
+ * trainingProjection).
+ */
+export function scrimProjection(
+  save: CareerSave,
+  oppRef: string,
+): { quality: number; xpWeeks: number; chemistryCredit: number; avgOverallGain: number } {
+  const oppRating = save.world.orgs[oppRef]?.rating ?? 74;
+  const quality = fieldQualityFor([oppRating]);
+  const weeks = CAREER_SCRIM.xpWeeks * quality;
+  const gearBonus = gearTrainingBonus(save.finances.gear);
+  const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
+  const gains = starters.map(
+    (p) =>
+      trainingProjection(p, {
+        seasonIndex: save.clock.seasonIndex,
+        coachOverall: save.coach?.overall ?? null,
+        gearBonus,
+        trainingWeekBonus: false,
+      }).weeklyOverall * weeks,
+  );
+  const avg = gains.length > 0 ? gains.reduce((s, g) => s + g, 0) / gains.length : 0;
+  return {
+    quality,
+    xpWeeks: weeks,
+    chemistryCredit: CAREER_SCRIM.chemistryCredit,
+    avgOverallGain: Math.round(avg * 100) / 100,
+  };
 }
 
 export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowResult {
@@ -2212,4 +2650,25 @@ export function migrateSaveToV2(raw: unknown): CareerSave | null {
 
   save.saveVersion = 2;
   return save as CareerSave;
+}
+
+/**
+ * v0.3 additive migration: scrim scheduling/log, the transfer wire,
+ * negotiation + bid bookkeeping. Runs after migrateSaveToV2 (chain in the
+ * store); safe to call on any save.
+ */
+export function migrateSaveToV3(raw: unknown): CareerSave | null {
+  const save = migrateSaveToV2(raw);
+  if (!save) return null;
+  if ((save.saveVersion ?? 2) >= 3) return save;
+
+  save.scheduledScrims ??= [];
+  save.scrimLog ??= [];
+  save.transferLog ??= [];
+  save.negotiationTries ??= {};
+  save.bidsThisWindow ??= 0;
+  save.lastBidDay ??= -99;
+
+  save.saveVersion = 3;
+  return save;
 }

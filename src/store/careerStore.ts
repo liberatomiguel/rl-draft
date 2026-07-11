@@ -9,9 +9,15 @@
  * a 20-hour save — never a destructive reset like the run store's).
  *
  * Persistence: rocket-draft:career:v1 · { slots, activeSlot } only.
- * v0.2 bumps the persist version to 2 (day clock + gear ladder + mail):
- * migrateSaveToV2 upgrades each slot in place — never a reset.
+ * v0.2 bumped the persist version to 2 (day clock + gear ladder + mail);
+ * v0.3 bumps to 3 (scrim scheduling/log, transfer wire, negotiation):
+ * migrateSaveToV3 upgrades each slot in place — never a reset.
  * AppShell's leave-run clearing NEVER touches this store (design §11).
+ *
+ * v0.3 session-only state (never persisted): `autoAdvance` (the FIFA-style
+ * autoplay switch — a component in the career layout drives the day ticks)
+ * and `toasts` (popup queue mirrored from newly created mail + high-priority
+ * news after each action).
  */
 
 import { create } from "zustand";
@@ -34,6 +40,7 @@ import {
   advanceToNextStopFlow,
   buyGearFlow,
   buyScoutReportFlow,
+  cancelScrimFlow,
   chooseSponsorFlow,
   createCareerSave,
   declineBidFlow,
@@ -42,13 +49,15 @@ import {
   finishEvent,
   fireCoachFlow,
   hireCoachFlow,
-  migrateSaveToV2,
+  migrateSaveToV3,
+  payDebtFlow,
   releasePlayerFlow,
   renewPlayerFlow,
   resolveAcceptedBid,
   rolloverToNextSeason,
   runBootcampFlow,
   runScrimFlow,
+  scheduleScrimFlow,
   setPsychologistFlow,
   setStartersFlow,
   setTrainingFocusFlow,
@@ -62,11 +71,49 @@ import {
 } from "./careerFlow";
 import type { GearItemId } from "@/engine/career/economy";
 
+/** A popup toast mirrored from a new mail/news item (session-only). */
+export interface CareerToast {
+  id: string;
+  source: "mail" | "news";
+  titleKey: string;
+  params?: Record<string, string | number>;
+  linkTo?: string;
+}
+
+const TOASTS_PER_ACTION = 3;
+const TOAST_QUEUE_CAP = 5;
+
+/** Numeric tail of a mail/news id ("m:412" → 412). */
+function seqOf(id: string): number {
+  const n = Number(id.slice(id.indexOf(":") + 1));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** New popup-worthy items created after `prevSeq` (newest first, capped). */
+function collectToasts(save: CareerSave, prevSeq: number): CareerToast[] {
+  const out: CareerToast[] = [];
+  for (const m of save.mail) {
+    if (seqOf(m.id) <= prevSeq) break; // newest-first list
+    out.push({ id: m.id, source: "mail", titleKey: m.titleKey, params: m.params, linkTo: m.linkTo });
+  }
+  for (const n of save.news) {
+    if (seqOf(n.id) <= prevSeq) break;
+    if (n.priority < 2) continue;
+    if (out.some((t) => t.titleKey === n.titleKey)) continue; // mail twin exists
+    out.push({ id: n.id, source: "news", titleKey: n.titleKey, params: n.params });
+  }
+  return out.slice(0, TOASTS_PER_ACTION);
+}
+
 interface CareerStoreState {
   slots: (CareerSave | null)[];
   activeSlot: number | null;
   /** Last action error (copy key suffix) — cleared on the next action. */
   lastError: string | null;
+  /** v0.3 FIFA-style autoplay switch (session-only; driven by CareerAutopilot). */
+  autoAdvance: boolean;
+  /** v0.3 popup queue (session-only). */
+  toasts: CareerToast[];
 
   createCareer: (slot: number, input: CreateCareerInput, customSeed?: number) => void;
   selectSlot: (slot: number) => void;
@@ -74,6 +121,8 @@ interface CareerStoreState {
 
   advanceDay: () => void;
   advanceToNextStop: () => void;
+  setAutoAdvance: (on: boolean) => void;
+  dismissToast: (id: string) => void;
 
   enterEvent: (watch: boolean) => void;
   playEventRound: () => void;
@@ -83,11 +132,20 @@ interface CareerStoreState {
   /** Accept this week's unofficial invite when auto-enter is off. */
   acceptUnofficial: () => void;
 
-  runScrim: () => void;
+  /** Run a scrim now — optionally vs a chosen shortlist opponent. */
+  runScrim: (oppRef?: string) => void;
+  /** v0.3: book a scrim ahead (shows on the calendar, runs on arrival). */
+  scheduleScrim: (day: number, oppRef: string) => void;
+  cancelScrim: (day: number) => void;
 
-  signPlayer: (playerId: string, role: "starter" | "sub", lengthSeasons: 1 | 2 | 3) => void;
+  signPlayer: (
+    playerId: string,
+    role: "starter" | "sub",
+    lengthSeasons: 1 | 2 | 3,
+    offeredSalary?: number,
+  ) => void;
   releasePlayer: (playerId: string) => void;
-  renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3) => void;
+  renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3, offeredSalary?: number) => void;
   acceptBid: (offerId: string) => void;
   declineBid: (offerId: string) => void;
 
@@ -106,6 +164,8 @@ interface CareerStoreState {
   hireCoach: (coach: CoachState) => void;
   fireCoach: () => void;
   chooseSponsor: (sponsorId: string) => void;
+  /** v0.3: manual Backer debt pay-down. */
+  payDebt: (amount: number) => void;
 
   continueToNextSeason: () => void;
   continueInfinite: () => void;
@@ -129,32 +189,49 @@ export const useCareerStore = create<CareerStoreState>()(
       const withSave = (fn: (save: CareerSave) => CareerSave): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
+        const prevSeq = slots[activeSlot]!.seq ?? 0;
         const next = fn(slots[activeSlot]!);
         next.lastPlayedAt = Date.now();
         const nextSlots = [...slots];
         nextSlots[activeSlot] = next;
-        set({ slots: nextSlots, lastError: null });
+        const fresh = collectToasts(next, prevSeq);
+        set((state) => ({
+          slots: nextSlots,
+          lastError: null,
+          toasts:
+            fresh.length > 0 ? [...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP) : state.toasts,
+        }));
       };
 
-      /** Flow functions returning { save, error } surface errors to the UI. */
+      /**
+       * Flow functions returning { save, error } surface errors to the UI.
+       * The returned save persists EVEN on error — v0.3 negotiation rejections
+       * mutate bookkeeping (the agent hardens) and must stick.
+       */
       const withResult = (fn: (save: CareerSave) => { save: CareerSave; error?: string }): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
+        const prevSeq = slots[activeSlot]!.seq ?? 0;
         const { save, error } = fn(slots[activeSlot]!);
-        if (error) {
-          set({ lastError: error });
-          return;
-        }
-        save.lastPlayedAt = Date.now();
-        const nextSlots = [...slots];
-        nextSlots[activeSlot] = save;
-        set({ slots: nextSlots, lastError: null });
+        const changed = save !== slots[activeSlot];
+        if (changed) save.lastPlayedAt = Date.now();
+        const nextSlots = changed ? [...slots] : slots;
+        if (changed) nextSlots[activeSlot] = save;
+        const fresh = changed ? collectToasts(save, prevSeq) : [];
+        set((state) => ({
+          slots: nextSlots,
+          lastError: error ?? null,
+          toasts:
+            fresh.length > 0 ? [...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP) : state.toasts,
+        }));
       };
 
       return {
         slots: emptySlots(),
         activeSlot: null,
         lastError: null,
+        autoAdvance: false,
+        toasts: [],
 
         createCareer: (slot, input, customSeed) => {
           const seed = (customSeed ?? randomSeed()) >>> 0;
@@ -162,11 +239,11 @@ export const useCareerStore = create<CareerStoreState>()(
           save.lastPlayedAt = Date.now();
           const slots = [...get().slots];
           slots[slot] = save;
-          set({ slots, activeSlot: slot, lastError: null });
+          set({ slots, activeSlot: slot, lastError: null, autoAdvance: false, toasts: [] });
         },
 
         selectSlot: (slot) => {
-          if (get().slots[slot]) set({ activeSlot: slot });
+          if (get().slots[slot]) set({ activeSlot: slot, autoAdvance: false, toasts: [] });
         },
 
         deleteSlot: (slot) => {
@@ -178,6 +255,8 @@ export const useCareerStore = create<CareerStoreState>()(
 
         advanceDay: () => withSave(advanceDayFlow),
         advanceToNextStop: () => withSave(advanceToNextStopFlow),
+        setAutoAdvance: (on) => set({ autoAdvance: on }),
+        dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 
         enterEvent: (watch) => withSave((s) => startEvent(s, watch)),
         playEventRound: () => withSave(stepEventRound),
@@ -192,13 +271,15 @@ export const useCareerStore = create<CareerStoreState>()(
             return next;
           }),
 
-        runScrim: () => withResult(runScrimFlow),
+        runScrim: (oppRef) => withResult((s) => runScrimFlow(s, oppRef)),
+        scheduleScrim: (day, oppRef) => withResult((s) => scheduleScrimFlow(s, day, oppRef)),
+        cancelScrim: (day) => withResult((s) => cancelScrimFlow(s, day)),
 
-        signPlayer: (playerId, role, lengthSeasons) =>
-          withResult((s) => signPlayerFlow(s, playerId, { role, lengthSeasons })),
+        signPlayer: (playerId, role, lengthSeasons, offeredSalary) =>
+          withResult((s) => signPlayerFlow(s, playerId, { role, lengthSeasons, offeredSalary })),
         releasePlayer: (playerId) => withResult((s) => releasePlayerFlow(s, playerId)),
-        renewPlayer: (playerId, lengthSeasons) =>
-          withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons)),
+        renewPlayer: (playerId, lengthSeasons, offeredSalary) =>
+          withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary)),
         acceptBid: (offerId) =>
           withSave((s) => {
             const offer = s.pendingOffers.find((o: TransferOffer) => o.id === offerId);
@@ -228,6 +309,7 @@ export const useCareerStore = create<CareerStoreState>()(
         hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach)),
         fireCoach: () => withResult(fireCoachFlow),
         chooseSponsor: (sponsorId) => withResult((s) => chooseSponsorFlow(s, sponsorId)),
+        payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
 
         continueToNextSeason: () => withSave(rolloverToNextSeason),
         continueInfinite: () =>
@@ -274,26 +356,26 @@ export const useCareerStore = create<CareerStoreState>()(
     },
     {
       name: "rocket-draft:career:v1",
-      version: 2,
+      version: 3,
       // ADDITIVE migrate, forever: upgrade each slot in place — new versions
       // add defaults for new fields per slot instead of resetting saves.
       migrate: (persisted) => {
         const state = persisted as CareerStoreState;
         if (state?.slots) {
-          state.slots = state.slots.map((slot) => (slot ? migrateSaveToV2(slot) : null));
+          state.slots = state.slots.map((slot) => (slot ? migrateSaveToV3(slot) : null));
         }
         return state;
       },
       partialize: (state) => ({ slots: state.slots, activeSlot: state.activeSlot }),
       // Load-time self-heal: repair any save whose starterIds drifted out of
-      // sync with the squad (the release-crash bug) and make sure the v2
+      // sync with the squad (the release-crash bug) and make sure the latest
       // migration ran even if zustand skipped `migrate` (same version).
       onRehydrateStorage: () => (state) => {
         if (!state?.slots) return;
         state.slots = state.slots.map((slot) => {
           if (!slot) return null;
           try {
-            const upgraded = migrateSaveToV2(slot) ?? slot;
+            const upgraded = migrateSaveToV3(slot) ?? slot;
             syncSquadRoles(upgraded);
             return upgraded;
           } catch {
