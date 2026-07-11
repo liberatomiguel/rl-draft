@@ -1099,10 +1099,15 @@ random-event families · beats beyond the floor.
 ## 22. Process notes
 
 - This doc follows the CHALLENGES-DESIGN mold and is the spec of record for
-  the mode; deviations land in DESIGN-DECISIONS.md (numbered), balance values
-  land in BALANCE-GUIDE.md when built, per-version narrative in CHANGELOG.md.
-- On approval: add the §42 north-star extension + the copy-rule amendment
-  (beat content en/pt in data files) + the §21 resolutions as DESIGN-DECISIONS
-  entries, and a one-line pointer in STATUS.md's "in progress".
-- Commit cadence: per phase (`v1.5.x` milestones), Miguel reviews diffs
-  before any commit.
+  the mode. **Career-mode deviations land in
+  [`ROAD-TO-WORLDS-DECISIONS.md`](ROAD-TO-WORLDS-DECISIONS.md) (numbered R#),
+  NOT the draft game's `DESIGN-DECISIONS.md`** — the two modes' decision logs
+  are kept separate on purpose. Balance values land in BALANCE-GUIDE.md when a
+  careers section is built; per-version narrative in CHANGELOG.md
+  `[1.5.0-alpha]`; current state + remaining work in
+  [`ROAD-TO-WORLDS-STATUS.md`](ROAD-TO-WORLDS-STATUS.md).
+- The §42 north-star extension, the copy-rule amendment (beat content en/pt in
+  data files) and the §21 resolutions are recorded in
+  `ROAD-TO-WORLDS-DECISIONS.md` (header + R1–R18).
+- Commit cadence: per phase (`v1.5.x` milestones); Miguel reviews diffs before
+  any commit. Shipped on `staging` through **v1.5.0-alpha.2** (v0.3 pass).

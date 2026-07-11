@@ -16,6 +16,10 @@ is **reference, fetched on demand — NOT bedtime reading**:
 - `docs/CHANGELOG.md` (append-only history), `docs/DESIGN-DECISIONS.md`,
   `docs/GAME-DESIGN.md`, `docs/ARCHITECTURE.md`, `data-sources/*-audit.md`:
   **grep for the entry you need; never read the whole file.**
+- **Road to Worlds (career mode) is a SEPARATE workstream with its own docs** —
+  `docs/ROAD-TO-WORLDS-STATUS.md` (start here for career work), `-DESIGN.md`
+  (spec), `-DECISIONS.md` (decisions). Keep it separate from the draft game:
+  career decisions go in `ROAD-TO-WORLDS-DECISIONS.md`, NOT `DESIGN-DECISIONS.md`.
 - Data is LARGE — `data-sources/teams.md` (~1900 lines) and `src/data/*.json`
   (hundreds of records): **query with grep or a Node one-liner; never load the
   whole file** into context.

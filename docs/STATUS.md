@@ -12,6 +12,13 @@
 > mobile / Core-Web-Vitals** pass (the mobile CLS hard-fail + the Vercel build-timeout
 > fix). Per-version detail lives in `docs/CHANGELOG.md` ([1.4.0]) + `DESIGN-DECISIONS.md`.
 > This file stays **current-state only** — grep CHANGELOG/DESIGN-DECISIONS for history.
+>
+> **Road to Worlds (career mode) is a SEPARATE workstream** in active
+> development behind `FEATURES.careerMode` on `staging` (v1.5.0-alpha.x). It has
+> its own docs — do not mix it with the draft game here:
+> `ROAD-TO-WORLDS-STATUS.md` (state + remaining), `ROAD-TO-WORLDS-DESIGN.md`
+> (spec), `ROAD-TO-WORLDS-DECISIONS.md` (decisions, kept out of
+> `DESIGN-DECISIONS.md`). This STATUS + DESIGN-DECISIONS cover the DRAFT game.
 
 ## Current state
 
