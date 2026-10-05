@@ -6,7 +6,7 @@
  * this screen entirely — their rules are fixed by the date.
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { DIFFICULTY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -216,12 +216,12 @@ export function SetupScreen() {
         >
           {SETUP.start}
         </Button>
-        <Link
+        <AppLink
           href="/how-to-play"
           className="text-center text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline"
         >
           {HOME.howToPlay}
-        </Link>
+        </AppLink>
       </div>
     </div>
   );

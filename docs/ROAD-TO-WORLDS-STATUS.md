@@ -1,12 +1,13 @@
 # Road to Worlds — implementation status & handoff
 
 > **For the next session.** The career mode is BUILT and playable end-to-end
-> behind `FEATURES.careerMode` (`true`), shipped on `staging` through
+> behind `FEATURES.careerMode` (env-driven: on in dev/tests, off in production
+> builds unless `NEXT_PUBLIC_CAREER_MODE=1`), shipped on `staging` through
 > **v1.5.0-alpha.2** (the v0.3 pass). This file is **current-state + remaining
 > work**. The other career docs:
 > - **Spec of record:** `ROAD-TO-WORLDS-DESIGN.md` (read the v0.1/v0.2/v0.3
 >   adjustment headers first).
-> - **Decisions log (why):** `ROAD-TO-WORLDS-DECISIONS.md` (R1–R18) — kept
+> - **Decisions log (why):** `ROAD-TO-WORLDS-DECISIONS.md` (R1–R19) — kept
 >   SEPARATE from the draft game's `DESIGN-DECISIONS.md`.
 > - **Per-version narrative:** `CHANGELOG.md` `[1.5.0-alpha]`.
 >
@@ -16,10 +17,24 @@
 ## How to run / verify
 - `npm run dev` → home has a "Road to Worlds" card; nav has a **Career** entry.
   `/career` → creation wizard → hub (HQ).
-- `npm test` (284 green). Career-specific: `npx vitest run src/engine/career
+- `npm test` (385 green). Career-specific: `npx vitest run src/engine/career
   src/store/careerFlow.test.ts src/store/careerV03.test.ts src/engine/regression.golden.test.ts`.
-- Kill switch: `FEATURES.careerMode = false` in `src/config/balance.ts` — hides
-  the home card, nav entries and `/career` routes entirely.
+- **Flag (env-driven, R19):** `FEATURES.careerMode = NODE_ENV !== "production" ||
+  NEXT_PUBLIC_CAREER_MODE === "1"` in `src/config/balance.ts`.
+  - **Dev and tests:** always on.
+  - **Production builds:** off unless `NEXT_PUBLIC_CAREER_MODE=1` is set at *build*
+    time — inline, for a local preview build only (`NEXT_PUBLIC_CAREER_MODE=1 npm run
+    build`). Never in `.env*` files or the production Worker's build variables (that
+    ships the alpha on rocketdraft.app); a shareable preview needs a separate staging
+    Worker (DEPLOY-CLOUDFLARE §5). Off hides the home card and nav entries.
+  - **Flag off in a build:** the server `src/app/career/layout.tsx` returns
+    `notFound()`, and `scripts/postexport.mjs` deletes `out/career*` (it fails
+    instead if the home page still links `/career`). The routes are not shipped at
+    all.
+  - **`/career` is always `noindex, nofollow`**, even with the flag on, while the mode
+    is alpha.
+  - Preview career on a static build: `NEXT_PUBLIC_CAREER_MODE=1 npm run build`, then
+    `npm run preview:static`.
 
 ## What's BUILT (the whole mode, v0.1 → v0.3)
 
@@ -124,8 +139,11 @@ the floor.
   ids are a compatibility surface (scrim streams gained an index suffix in
   v0.3 — additive only).
 - Every tunable in `balance.ts` (`CAREER_*`); every player-facing string in
-  `copy.career.en.ts` + `.pt.ts` (type-enforced parity). Beat/news-template
-  content is co-located EN+PT in the data files, not copy.
+  `copy.career.en.ts` + `.pt.ts` (type-enforced parity), read **only** through
+  `useCareerCopy()` / `getCareerCopy()` (`src/content/careerCopy.ts`).
+  `useCopy().CAREER` no longer exists, so career strings stay out of the core copy
+  chunk every page loads. The 4 home-card strings are core copy (`HOME.career*`).
+  Beat/news-template content is co-located EN+PT in the data files, not copy.
 - Existing draft modes byte-identical — `regression.golden.test.ts` is the
   tripwire; career results never flow through `applyRunResults`.
 - Saves migrate additively FOREVER (`migrateSaveToV2` → `migrateSaveToV3`;

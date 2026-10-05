@@ -28,8 +28,17 @@ Hand-edits to the generated JSONs are fine for quick experiments but will
 be OVERWRITTEN by the next `build:data` — put permanent changes in
 `data-sources/teams.md` or in the generator's curated maps.
 
-Everything is validated on load (zod schema + referential integrity) — a
-broken reference fails loudly with a message pointing at the exact id.
+Everything is validated at **build/CI time** (zod schema + duplicate ids +
+referential integrity + rank check, in `src/data/validate.ts`): by
+`npm run validate:data`, by `npm test`, and automatically by the `prebuild`
+hook of `npm run build`. A broken reference fails loudly with a message
+pointing at the exact id (prefixed `[data]`), and an invalid dataset fails the
+build. The browser does **not** run zod. `src/data/index.ts` serves typed casts
+of the JSON, so data that skipped validation would only fail at runtime, in
+odd ways. Always run `validate:data` after editing a JSON, and always deploy
+through `npm run build` (never a bare `next build`). A JSON key that the schema
+doesn't declare now fails `integrity.test.ts` instead of being silently
+dropped. Declare it in `schemas.ts` (and the type) or remove it.
 
 > **Accuracy disclaimer:** the dataset is a best-effort manual curation
 > built for testing the game loop, not a historical record. Some
@@ -309,7 +318,9 @@ PNGs named per the regenerated `public/orgs/README.md`. Rules of thumb:
 - The **current/newest** logo needs no entry — it's the default `<orgId>.png`.
   So N logos = (N−1) entries + the default file.
 - Missing images fall back gracefully (era → default → monogram). Resolved at
-  render time by `src/components/ui/TeamLogo.tsx` from the card's season order.
+  render time by `src/components/ui/TeamLogo.tsx` from the card's season order;
+  in production, `src/lib/assets.ts` skips any era/default logo the build-time
+  manifest doesn't list, so a missing file costs no request.
 
 ## Images (drop-in, no code changes)
 
@@ -322,7 +333,28 @@ PNGs named per the regenerated `public/orgs/README.md`. Rules of thumb:
 
 Each folder has a README listing the exact expected filenames. Base player
 cards intentionally have NO player photo — the org logo is the centerpiece;
-only special cards carry photos.
+only special cards carry photos. Region flags live in `public/flags/<cc>.png`;
+region codes with no flag (NA, EU, SSA, OCE…) render as a text chip.
+
+**What ships (static build).** The PNGs above are the *sources*. On every
+`npm run build`, the `prebuild` step (`scripts/build-images.mjs`, also
+`npm run build:images`) turns them into content-hashed WebP files under
+`public/img/**` (git-ignored):
+- org logos at 96 / 264 px;
+- special photos at 256 / 512 px;
+- rank emblems in a 224 px box.
+
+It also regenerates the committed `src/generated/asset-manifest.json`.
+Production pages request only the WebP files, and only for assets listed in
+the manifest. Everything else renders the fallback from the table above with
+no request. In practice:
+- **Dev** (`npm run dev`) shows a dropped PNG immediately, using the raw file.
+- **Production** shows it only after the next `npm run build`. Commit the
+  updated `asset-manifest.json` together with the PNG.
+- Replacing a PNG changes its hash, so the new URL bypasses the year-long
+  immutable cache automatically. There's no need to rename files.
+- Keep sources reasonably sized (`npm run optimize:images -- --check` flags
+  oversized photos). The WebP step resizes, but the raw PNGs are still deployed.
 
 ## Future: Liquipedia API (MVP 4)
 
@@ -332,5 +364,6 @@ The only contract the app depends on is the exports of `src/data/index.ts`
 1. A build-time script fetches Liquipedia data and **generates these same
    JSON files** (keeping `manualAdjustment` overrides in a separate file that
    merges on top).
-2. Zod schemas stay as the safety net for generated data.
+2. Zod schemas stay as the safety net for generated data (at build/CI time via
+   `src/data/validate.ts` — never shipped to the browser).
 3. Nothing in `engine/`, `store/` or the UI changes.

@@ -9,6 +9,7 @@
  */
 
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { CountryChip } from "@/components/ui/Badge";
@@ -51,7 +52,7 @@ export function PlayerSheet({
   actions?: React.ReactNode;
 }) {
   const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   if (!data) return null;
 
   const bandSpan = Math.max(1, data.band.max - 60);

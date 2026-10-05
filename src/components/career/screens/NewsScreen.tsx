@@ -12,8 +12,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useCopy } from "@/content/copy";
-import type { CareerCopy } from "@/content/copy.career.en";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type { MailItem, MailKind } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -117,7 +116,7 @@ function MailKindIcon({ kind, className }: { kind: MailKind; className?: string 
 // ---------------------------------------------------------------------------
 
 export function NewsScreen() {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
   const markMailRead = useCareerStore((s) => s.markMailRead);

@@ -18,7 +18,7 @@
 import { useMemo, useState } from "react";
 import { CAREER_LOAN, CAREER_SCOUT, CAREER_UNLOCKS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
-import type { CareerCopy } from "@/content/copy.career.en";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { repNeededForOverall, signableOverallCap } from "@/engine/career/economy";
 import type {
   CareerPlayerView,
@@ -82,7 +82,7 @@ function errorTextFor(C: CareerCopy, key: string): string {
 }
 
 function MarketErrorNotice({ className }: { className?: string }) {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
   if (!lastError) return null;
@@ -152,7 +152,7 @@ export function MarketScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
   const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const D = C.dates;
 
   const signPlayer = useCareerStore((s) => s.signPlayer);

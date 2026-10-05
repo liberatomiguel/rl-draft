@@ -10,12 +10,12 @@
  * Desktop: 2-col grid (main 2fr / side 1fr). Mobile: single column.
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CAREER_ECONOMY, CAREER_SPONSOR } from "@/config/balance";
 import { useCopy } from "@/content/copy";
-import type { CareerCopy } from "@/content/copy.career.en";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import type {
   CareerEventDef,
@@ -205,7 +205,7 @@ function NewsTypeIcon({ type, className }: { type: NewsType; className?: string 
 
 export function HubScreen() {
   const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const CHEM = copy.CHEM_TIERS;
   const D = C.dates;
   const lang = useSettings((s) => s.lang);
@@ -431,7 +431,7 @@ export function HubScreen() {
           </Panel>
 
           {/* 2 — THIS WEEK strip */}
-          <Link href="/career/calendar" className="block">
+          <AppLink href="/career/calendar" className="block">
             <Panel className="rise-in p-3.5 transition-colors hover:border-line-strong" style={{ animationDelay: "40ms" }}>
               <div className="mb-2.5 flex items-center justify-between gap-2">
                 <p className="kicker text-[10px]">{C.hub.thisWeek}</p>
@@ -446,7 +446,7 @@ export function HubScreen() {
                 ))}
               </div>
             </Panel>
-          </Link>
+          </AppLink>
 
           {/* 3 — TODAY AT THE OFFICE */}
           <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
@@ -463,7 +463,7 @@ export function HubScreen() {
                 </Button>
               ) : null}
               {clock.dow <= 5 && !eventNow ? (
-                <Link
+                <AppLink
                   href="/career/training"
                   className={cx(
                     actionChip,
@@ -471,16 +471,16 @@ export function HubScreen() {
                   )}
                 >
                   {C.nav.training}
-                </Link>
+                </AppLink>
               ) : null}
               {clock.windowOpen ? (
-                <Link
+                <AppLink
                   href="/career/market"
                   className={cx(actionChip, "border-blue/50 bg-blue/10 text-blue-bright hover:bg-blue/20")}
                 >
                   {C.calendar.windowOpen}
                   <span aria-hidden>→</span>
-                </Link>
+                </AppLink>
               ) : null}
             </div>
             <div className="mt-2.5 space-y-1 text-xs">
@@ -576,7 +576,7 @@ export function HubScreen() {
           ) : null}
 
           {/* 4b — Road to Worlds mini */}
-          <Link href="/career/standings" className="block">
+          <AppLink href="/career/standings" className="block">
             <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "90ms" }}>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="kicker text-[10px]">{C.hub.pointsRace}</p>
@@ -643,10 +643,10 @@ export function HubScreen() {
                 </>
               ) : null}
             </Panel>
-          </Link>
+          </AppLink>
 
           {/* 5 — squad strip */}
-          <Link href="/career/squad" className="block">
+          <AppLink href="/career/squad" className="block">
             <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "120ms" }}>
               <div className="mb-3 flex items-center justify-between gap-2">
                 <p className="kicker text-[10px]">{C.hub.rosterForm}</p>
@@ -679,10 +679,10 @@ export function HubScreen() {
                 </span>
               </div>
             </Panel>
-          </Link>
+          </AppLink>
 
           {/* 6 — budget tile */}
-          <Link href="/career/finances" className="block">
+          <AppLink href="/career/finances" className="block">
             <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "150ms" }}>
               <p className="kicker mb-1 text-[10px]">{C.hub.budget}</p>
               <p
@@ -732,10 +732,10 @@ export function HubScreen() {
                 </div>
               ) : null}
             </Panel>
-          </Link>
+          </AppLink>
 
           {/* 8 — inbox teaser */}
-          <Link href="/career/news" className="block">
+          <AppLink href="/career/news" className="block">
             <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "180ms" }}>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="kicker text-[10px]">{C.hub.inboxTeaser}</p>
@@ -783,11 +783,11 @@ export function HubScreen() {
                 {C.hub.inboxAll}
               </p>
             </Panel>
-          </Link>
+          </AppLink>
 
           {/* 9 — next unlock */}
           {nextUnlock ? (
-            <Link href="/career/club" className="block">
+            <AppLink href="/career/club" className="block">
               <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "210ms" }}>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
                   <p className="kicker text-[10px]">{C.hub.progression}</p>
@@ -806,7 +806,7 @@ export function HubScreen() {
                 />
                 <p className="mt-1.5 text-[10px] text-faint">{C.club.unlockAt(nextUnlock.gate)}</p>
               </Panel>
-            </Link>
+            </AppLink>
           ) : null}
         </div>
       </div>

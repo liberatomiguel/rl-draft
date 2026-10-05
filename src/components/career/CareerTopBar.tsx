@@ -10,10 +10,10 @@
  * The news tab pill counts unread MAIL (the Inbox).
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -55,7 +55,7 @@ const TABS: { key: string; href: string }[] = [
 
 export function CareerTopBar() {
   const save = useCareerSave();
-  const copy = useCopy().CAREER;
+  const copy = useCareerCopy();
   const router = useRouter();
   const pathname = usePathname();
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
@@ -117,7 +117,7 @@ export function CareerTopBar() {
   return (
     <div className="sticky top-0 z-30 border-b border-line bg-[color:var(--bg)]/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:px-4">
-        <Link href="/career/club" className="flex shrink-0 items-center gap-2">
+        <AppLink href="/career/club" className="flex shrink-0 items-center gap-2">
           <UserCrest
             crestId={save.identity.crestId}
             colors={save.identity.colors}
@@ -130,7 +130,7 @@ export function CareerTopBar() {
             </span>
             <TeamStars stars={stars} size="xs" />
           </span>
-        </Link>
+        </AppLink>
 
         {/* Center clock — the date is the game's heartbeat now. */}
         <div className="min-w-0 flex-1 text-center">
@@ -205,7 +205,7 @@ export function CareerTopBar() {
           const active =
             tab.href === "/career" ? pathname === "/career" : pathname.startsWith(tab.href);
           return (
-            <Link
+            <AppLink
               key={tab.key}
               href={tab.href}
               aria-current={active ? "page" : undefined}
@@ -222,7 +222,7 @@ export function CareerTopBar() {
                   {unreadMail}
                 </span>
               ) : null}
-            </Link>
+            </AppLink>
           );
         })}
       </nav>

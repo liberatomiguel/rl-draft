@@ -1,10 +1,20 @@
 /**
  * Data access layer.
  *
- * Loads the JSON dataset once, validates it (schema + referential integrity)
- * and exposes typed lookup maps. Everything else in the app reads data through
- * this module — swapping JSON for a Liquipedia-fed database later means
- * changing only this file's implementation, not its exports.
+ * Loads the JSON dataset once and exposes typed arrays + lookup maps.
+ * Everything else in the app reads data through this module — swapping JSON
+ * for a Liquipedia-fed database later means changing only this file's
+ * implementation, not its exports.
+ *
+ * Validation (zod schemas + referential integrity) is NOT done here: it runs at
+ * build/CI time via `validateDataset()` in `./validate.ts`, called by
+ * `integrity.test.ts` (`npm run validate:data`, part of `npm test`). The JSON is
+ * static and baked into the bundle, so re-validating it on every page load only
+ * cost the client zod (~65 KB gz) and 30-150 ms of main thread (v1.5 perf pass).
+ * The same test asserts the zod-parsed dataset deep-equals these casts (zod
+ * reshaped nothing except stripping one undeclared key, replicated below), so
+ * the runtime records hold exactly the values the old parse produced.
+ * Do NOT import `./schemas` or `./validate` from here (or any client module).
  */
 
 import playersJson from "./players.json";
@@ -17,20 +27,6 @@ import lineupsJson from "./lineups.json";
 import specialCardsJson from "./specialCards.json";
 import achievementsJson from "./achievements.json";
 import challengesJson from "./challenges.json";
-
-import { RANKS } from "@/config/balance";
-import {
-  achievementsFileSchema,
-  challengesFileSchema,
-  coachesFileSchema,
-  lineupsFileSchema,
-  orgsFileSchema,
-  playerCardsFileSchema,
-  playersFileSchema,
-  seasonsFileSchema,
-  specialCardsFileSchema,
-  subsFileSchema,
-} from "./schemas";
 
 import type {
   AchievementDef,
@@ -47,42 +43,22 @@ import type {
 } from "@/engine/types";
 
 // ---------------------------------------------------------------------------
-// Parse + validate
+// Typed views of the (build-time validated) JSON files
 // ---------------------------------------------------------------------------
 
-function parse<T>(label: string, fn: () => T): T {
-  try {
-    return fn();
-  } catch (error) {
-    throw new Error(
-      `[data] Invalid ${label}.json — fix the data file.\n${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-}
+export const players = playersJson as Player[];
 
-export const players = parse("players", () =>
-  playersFileSchema.parse(playersJson),
-) as Player[];
+export const seasons = seasonsJson as Season[];
 
-export const seasons = parse("seasons", () =>
-  seasonsFileSchema.parse(seasonsJson),
-) as Season[];
+export const playerCards = playerCardsJson as PlayerCard[];
 
-export const playerCards = parse("playerCards", () =>
-  playerCardsFileSchema.parse(playerCardsJson),
-) as PlayerCard[];
+export const orgs = orgsJson as Org[];
 
-export const orgs = parse("orgs", () => orgsFileSchema.parse(orgsJson)) as Org[];
+export const coaches = coachesJson as CoachCard[];
 
-export const coaches = parse("coaches", () =>
-  coachesFileSchema.parse(coachesJson),
-) as CoachCard[];
+export const subs = subsJson as SubCard[];
 
-export const subs = parse("subs", () => subsFileSchema.parse(subsJson)) as SubCard[];
-
-export const lineups = parse("lineups", () =>
-  lineupsFileSchema.parse(lineupsJson),
-) as Lineup[];
+export const lineups = lineupsJson as Lineup[];
 
 /**
  * The pool the GENERAL draft / opponents / daily challenges draw from:
@@ -101,22 +77,33 @@ export function lineupPoolForRegion(region: Region): string[] {
   return lineups.filter((l) => l.region === region).map((l) => l.id);
 }
 
-export const specialCards = parse("specialCards", () =>
-  specialCardsFileSchema.parse(specialCardsJson),
-) as SpecialCard[];
+/**
+ * `specialCards.json` (hand-curated) carries `"secret": true` on the two Wings
+ * tribute cards — a key the SpecialCard schema/type never declared, so the old
+ * load-time zod parse silently stripped it. Strip it here too, so the runtime
+ * objects stay exactly what the parse produced (integrity.test.ts asserts deep
+ * equality with the zod output; any OTHER undeclared key fails that test). Only
+ * the cards that carry the key are copied.
+ */
+function withoutUndeclaredKeys(card: SpecialCard): SpecialCard {
+  if (!("secret" in card)) return card;
+  const declared: SpecialCard & { secret?: unknown } = { ...card };
+  delete declared.secret;
+  return declared;
+}
 
-export const achievements = parse("achievements", () =>
-  achievementsFileSchema.parse(achievementsJson),
-) as AchievementDef[];
+export const specialCards = (specialCardsJson as SpecialCard[]).map(withoutUndeclaredKeys);
 
-export const challenges = parse("challenges", () =>
-  challengesFileSchema.parse(challengesJson),
-) as Challenge[];
+export const achievements = achievementsJson as AchievementDef[];
+
+export const challenges = challengesJson as Challenge[];
 
 // ---------------------------------------------------------------------------
 // Lookup maps
 // ---------------------------------------------------------------------------
 
+/** Id → record. Duplicate ids are rejected by `validateDataset()` in CI; the
+ *  throw here is a free last-resort guard (we iterate to build the map anyway). */
 function toMap<T extends { id: string }>(label: string, items: T[]): Map<string, T> {
   const map = new Map<string, T>();
   for (const item of items) {
@@ -174,80 +161,9 @@ for (const card of playerCards) {
   entry.lineupIds.add(card.lineupId);
 }
 
-// ---------------------------------------------------------------------------
-// Referential integrity — fail loudly on broken links between files
-// ---------------------------------------------------------------------------
-
-function assertRef(condition: boolean, message: string): void {
-  if (!condition) throw new Error(`[data] ${message}`);
-}
-
-for (const card of playerCards) {
-  assertRef(playerById.has(card.playerId), `playerCards: "${card.id}" → unknown playerId "${card.playerId}"`);
-  assertRef(orgById.has(card.orgId), `playerCards: "${card.id}" → unknown orgId "${card.orgId}"`);
-  assertRef(seasonById.has(card.seasonId), `playerCards: "${card.id}" → unknown seasonId "${card.seasonId}"`);
-}
-
-for (const coach of coaches) {
-  assertRef(orgById.has(coach.orgId), `coaches: "${coach.id}" → unknown orgId "${coach.orgId}"`);
-  assertRef(seasonById.has(coach.seasonId), `coaches: "${coach.id}" → unknown seasonId "${coach.seasonId}"`);
-}
-
-for (const sub of subs) {
-  assertRef(orgById.has(sub.orgId), `subs: "${sub.id}" → unknown orgId "${sub.orgId}"`);
-  assertRef(seasonById.has(sub.seasonId), `subs: "${sub.id}" → unknown seasonId "${sub.seasonId}"`);
-}
-
-for (const lineup of lineups) {
-  assertRef(orgById.has(lineup.orgId), `lineups: "${lineup.id}" → unknown orgId "${lineup.orgId}"`);
-  assertRef(seasonById.has(lineup.seasonId), `lineups: "${lineup.id}" → unknown seasonId "${lineup.seasonId}"`);
-  for (const cardId of lineup.playerCardIds) {
-    assertRef(playerCardById.has(cardId), `lineups: "${lineup.id}" → unknown playerCardId "${cardId}"`);
-    const card = playerCardById.get(cardId)!;
-    assertRef(card.lineupId === lineup.id, `lineups: "${lineup.id}" → card "${cardId}" belongs to lineup "${card.lineupId}"`);
-  }
-  if (lineup.coachId) {
-    assertRef(coachById.has(lineup.coachId), `lineups: "${lineup.id}" → unknown coachId "${lineup.coachId}"`);
-  }
-  if (lineup.subId) {
-    assertRef(subById.has(lineup.subId), `lineups: "${lineup.id}" → unknown subId "${lineup.subId}"`);
-  }
-}
-
-for (const sp of specialCards) {
-  if (sp.kind === "coach") {
-    assertRef(coachById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown coach baseCardId "${sp.baseCardId}"`);
-    const base = coachById.get(sp.baseCardId)!;
-    assertRef(base.personId === sp.playerId, `specialCards: "${sp.id}" → coach card belongs to "${base.personId}", not "${sp.playerId}"`);
-  } else {
-    assertRef(playerById.has(sp.playerId), `specialCards: "${sp.id}" → unknown playerId "${sp.playerId}"`);
-    assertRef(playerCardById.has(sp.baseCardId), `specialCards: "${sp.id}" → unknown baseCardId "${sp.baseCardId}"`);
-    const base = playerCardById.get(sp.baseCardId)!;
-    assertRef(base.playerId === sp.playerId, `specialCards: "${sp.id}" → base card belongs to "${base.playerId}", not "${sp.playerId}"`);
-  }
-}
-
-// Challenges (v1.4): every cross-reference must resolve, the gating rank must be
-// real, a prereq must be another challenge, and a region/season constraint must
-// actually have lineups — so an authored challenge is never unwinnable by typo.
-const rankIds = new Set<string>(RANKS.map((r) => r.id));
-for (const ch of challenges) {
-  assertRef(lineupById.has(ch.opponentLineupId), `challenges: "${ch.id}" → unknown opponentLineupId "${ch.opponentLineupId}"`);
-  assertRef(rankIds.has(ch.rankRequired), `challenges: "${ch.id}" → unknown rankRequired "${ch.rankRequired}"`);
-  if (ch.prereq) {
-    assertRef(challengeById.has(ch.prereq), `challenges: "${ch.id}" → unknown prereq "${ch.prereq}"`);
-    assertRef(ch.prereq !== ch.id, `challenges: "${ch.id}" → prereq cannot be itself`);
-  }
-  if (ch.fixedPlayerCardId) {
-    assertRef(playerCardById.has(ch.fixedPlayerCardId), `challenges: "${ch.id}" → unknown fixedPlayerCardId "${ch.fixedPlayerCardId}"`);
-  }
-  if (ch.reward.specialId) {
-    assertRef(specialCardById.has(ch.reward.specialId), `challenges: "${ch.id}" → unknown reward.specialId "${ch.reward.specialId}"`);
-  }
-  if (ch.constraint?.seasonId) {
-    assertRef(seasonById.has(ch.constraint.seasonId), `challenges: "${ch.id}" → unknown constraint.seasonId "${ch.constraint.seasonId}"`);
-  }
-}
+// Referential integrity (playerCards → players/orgs/seasons, lineups → cards/
+// coach/sub, specials → base cards, challenges → lineups/ranks/prereqs/…) is
+// asserted by `assertReferentialIntegrity` in ./validate.ts, run in CI.
 
 /** Quick dataset stats — handy for docs and the collection screen. */
 export const datasetSummary = {

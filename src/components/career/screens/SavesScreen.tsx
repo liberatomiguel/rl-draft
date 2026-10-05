@@ -12,6 +12,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSlotMeta } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -26,8 +27,7 @@ import { slotMetaFor, useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 
 export function SavesScreen() {
-  const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const router = useRouter();
   const mounted = useMounted();
   const slots = useCareerStore((s) => s.slots);
@@ -125,7 +125,7 @@ function SlotCard({
   onDelete: () => void;
 }) {
   const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const champion = meta.champion;
   return (
     <Panel
@@ -225,7 +225,7 @@ function MetaRow({
 }
 
 function EmptySlot({ delay, onFound }: { delay: number; onFound: () => void }) {
-  const { CAREER: C } = useCopy();
+  const C = useCareerCopy();
   return (
     <button
       type="button"

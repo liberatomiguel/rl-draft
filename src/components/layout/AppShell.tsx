@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { FEATURES } from "@/config/balance";
@@ -78,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </GuardedHomeLink>
     ) : (
-      <Link
+      <AppLink
         href={item.href}
         className={className}
         onClick={() => {
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
       >
         {children}
-      </Link>
+      </AppLink>
     );
 
   return (
@@ -128,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 })}
               </nav>
               <LangToggle />
-              <Link
+              <AppLink
                 href="/leaderboards"
                 aria-label={t.NAV.leaderboards}
                 title={t.NAV.leaderboards}
@@ -141,8 +141,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <TrophyIcon className="h-5 w-5" />
-              </Link>
-              <Link
+              </AppLink>
+              <AppLink
                 href="/settings"
                 aria-label={t.NAV.settings}
                 title={t.NAV.settings}
@@ -155,7 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <GearIcon className="h-5 w-5" />
-              </Link>
+              </AppLink>
               <AccountChip />
             </div>
           </div>
@@ -214,7 +214,7 @@ function AccountChip() {
 
   if (status === "signedIn") {
     return (
-      <Link
+      <AppLink
         href="/profile"
         onClick={() => sfx.click()}
         className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-white/5"
@@ -224,17 +224,17 @@ function AccountChip() {
           {username}
         </span>
         <RankBadge rank={rankForXp(xp)} variant="menu" size="sm" />
-      </Link>
+      </AppLink>
     );
   }
   return (
-    <Link
+    <AppLink
       href="/profile"
       onClick={() => sfx.click()}
       className="display rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:bg-white/5 hover:text-ink"
     >
       {t.NAV_UI.logIn}
-    </Link>
+    </AppLink>
   );
 }
 

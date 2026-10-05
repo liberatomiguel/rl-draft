@@ -8,7 +8,7 @@
  * upset flag), newest first. Rows are tap-to-inspect in the Match Center.
  */
 
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import type { SeriesResult, TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
@@ -33,7 +33,7 @@ export function CareerAiTicker({
   items: TickerItem[];
   onInspect?: (key: string) => void;
 }) {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   if (items.length === 0) return null;
 
   return (

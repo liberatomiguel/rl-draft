@@ -11,14 +11,13 @@
 
 import { CAREER_BEATS } from "@/data/career/beats";
 import { sponsorBrandById } from "@/data/career/sponsors";
-import type { Copy } from "@/content/copy";
+import type { CareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import type { MailItem, NewsItem } from "@/engine/career/types";
 
 /** Param keys that carry raw dollar amounts (formatted before interpolation). */
 const MONEY_PARAM_KEYS = new Set(["fee", "bonus", "f1", "f2", "f3"]);
 
-type CareerCopy = Copy["CAREER"];
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;
 
 export interface ResolvedNews {

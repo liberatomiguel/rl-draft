@@ -2,6 +2,8 @@
  * Road to Worlds — copy PT-BR (modo carreira).
  *
  * Espelho exato de copy.career.en.ts (paridade de chaves garantida pelo tipo).
+ * Lido SÓ pelo código da carreira via `careerCopy.ts` (fora do dicionário
+ * principal, para não pesar nas páginas do draft).
  * Tom: bancada de transmissão / análise pós-jogo. Termos canônicos da cena
  * (Split, Major, Worlds, OVR, Swiss) ficam em inglês.
  */
@@ -11,12 +13,8 @@ import type { CareerCopy } from "./copy.career.en";
 export const CAREER_PT: CareerCopy = {
   meta: {
     title: "Road to Worlds",
-    subtitle: "Construa uma org do zero. Vença o Mundial.",
-    homeCardDesc:
-      "Modo carreira: funde sua org, contrate e desenvolva jogadores, administre o orçamento e leve o calendário da RLCS até o Worlds.",
     nav: "Carreira",
     locked: "Disponível em breve",
-    newBadge: "NOVO",
   },
 
   nav: {

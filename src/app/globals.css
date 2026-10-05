@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source(".."); /* scan classes in src/ only (path is relative to this file) */
 
 /* ===========================================================================
    ROCKET DRAFT — design tokens
@@ -63,12 +63,31 @@ body {
   background-color: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/*
+ * Ambient glows (perf): a fixed, viewport-sized layer instead of
+ * `background-attachment: fixed` on <body>, which repainted the whole page on
+ * every scroll frame. Same look (a fixed box covering the viewport is the old
+ * viewport-anchored background), but the browser composites it once.
+ * Stacking: <body> creates no stacking context, so z-index:-1 puts this layer
+ * in the root context — above the canvas colour (body's background-color,
+ * propagated) and below all page content. Nothing in the app uses a negative
+ * z-index, and portaled modals/toasts sit at positive z-indexes. Keep <html>
+ * and <body> free of an opaque background / transform / filter, or this layer
+ * is hidden or stops being viewport-fixed.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image:
     radial-gradient(900px 540px at 12% -8%, rgba(59, 130, 246, 0.14), transparent 62%),
     radial-gradient(820px 520px at 96% 108%, rgba(249, 115, 22, 0.1), transparent 60%),
     radial-gradient(620px 380px at 78% -12%, rgba(56, 189, 248, 0.07), transparent 55%);
-  background-attachment: fixed;
-  min-height: 100dvh;
 }
 
 ::selection {
@@ -1042,4 +1061,99 @@ html.force-reduce-motion .ach-legend-chip::after {
 
 html.force-reduce-motion .flip-card-inner {
   transition: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Lite effects (perf on weak devices)
+   `html.lite-fx` is set automatically by SettingsEffects only when the device
+   reports navigator.deviceMemory ≤ 2 GB (Chromium) or the OS asks for reduced
+   motion; `html.force-reduce-motion` is the manual Settings toggle. Capable
+   devices get neither class, so nothing below changes their look.
+   Under either class:
+   1. No backdrop-filter on the LARGE blurred surfaces — panels, sticky bars,
+      full-screen overlays and modal scrims. Re-blurring the moving backdrop on
+      every scroll/animation frame is the main GPU cost on low-end phones.
+      Surfaces that relied on the blur for legibility become more opaque, so
+      text contrast never depends on it. Small chips/slots (card pills, field
+      slots) keep their blur: tiny, and their look depends on it.
+   2. Infinite decorative loops that repaint every frame (sheens, rarity
+      halos, hue shifts, title glows, the legend border shimmer, the ray
+      spin) stop, exactly like the reduced-motion blocks above: static rarity
+      borders/glows stay. Cheap or meaningful loops (pulse-soft, live-dot, the
+      target-slot glow, card-float, confetti) keep running unless the player
+      asked for reduced motion (blocks above).
+--------------------------------------------------------------------------- */
+
+:is(html.lite-fx, html.force-reduce-motion) .panel,
+:is(html.lite-fx, html.force-reduce-motion)
+  .sticky:is(.backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl),
+:is(html.lite-fx, html.force-reduce-motion)
+  .fixed:is(.backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl),
+:is(html.lite-fx, html.force-reduce-motion)
+  .inset-0:is(.backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/*
+ * Panel without blur: the same two gradient stops, re-solved at a higher alpha
+ * so that over the page colour (--bg) they produce the SAME colour as
+ * before (0.66/0.78 → 0.88/0.92), while busy content behind a panel now
+ * shows through at 8-12% instead of 22-34% unblurred. `.ach-legend` keeps its
+ * own (already opaque) prismatic-border background.
+ */
+:is(html.lite-fx, html.force-reduce-motion) .panel:not(.ach-legend) {
+  background: linear-gradient(160deg, rgba(16, 24, 42, 0.88), rgba(9, 15, 28, 0.92));
+}
+
+/*
+ * Blurred translucent bars/overlays that carry text: without the blur, page
+ * text scrolling beneath would show through SHARP (ghosting), so they become
+ * opaque enough to hide it. Bars painted in a page token go fully solid in
+ * that token — the same colour over the page, minus the faint glow tint.
+ * Matched on each surface's exact utility classes (AppShell header + mobile
+ * nav, CareerTopBar, FoundingSplash, FirstRunTutorial, ResultsScreen
+ * ceremonies, Modal scrim); if a class changes there, its rule just stops
+ * matching (blur still off, original alpha).
+ */
+:is(html.lite-fx, html.force-reduce-motion) .sticky.bg-bg\/80.backdrop-blur-md,
+:is(html.lite-fx, html.force-reduce-motion) .sticky.bg-\[color\:var\(--bg\)\]\/95.backdrop-blur,
+:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-bg\/95.backdrop-blur-sm {
+  background-color: var(--bg); /* was 80-95% + blur */
+}
+
+:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-raised\/95.backdrop-blur-md {
+  background-color: var(--bg-raised); /* was 95% + blur */
+}
+
+:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-black\/85.backdrop-blur-sm,
+:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-black\/88.backdrop-blur-sm,
+:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-black\/90.backdrop-blur-sm {
+  background-color: rgba(0, 0, 0, 0.95); /* was 85-90% + blur; text sits on it */
+}
+
+/* Modal scrim: no text on it (the dialog is an opaque .panel-strong), only a
+   little darker to make up for the page no longer being blurred. */
+:is(html.lite-fx, html.force-reduce-motion) .inset-0.bg-black\/70.backdrop-blur-sm {
+  background-color: rgba(0, 0, 0, 0.8); /* was 70% + blur */
+}
+
+:is(html.lite-fx, html.force-reduce-motion) .card-legendary.card-special,
+:is(html.lite-fx, html.force-reduce-motion) .card-mythic.card-special,
+:is(html.lite-fx, html.force-reduce-motion) .card-epic.card-special,
+:is(html.lite-fx, html.force-reduce-motion) .card-creator.card-special,
+:is(html.lite-fx, html.force-reduce-motion) .card-community.card-special,
+:is(html.lite-fx, html.force-reduce-motion) .card-wings.card-special,
+:is(html.lite-fx, html.force-reduce-motion) .card-special::after,
+:is(html.lite-fx, html.force-reduce-motion) .holo-legendary::after,
+:is(html.lite-fx, html.force-reduce-motion) .holo-rainbow-legendary,
+:is(html.lite-fx, html.force-reduce-motion) .field-fx,
+:is(html.lite-fx, html.force-reduce-motion) .field-holo,
+:is(html.lite-fx, html.force-reduce-motion) .panel.ach-legend,
+:is(html.lite-fx, html.force-reduce-motion) .ach-legend-chip::after,
+:is(html.lite-fx, html.force-reduce-motion) .champion-title,
+:is(html.lite-fx, html.force-reduce-motion) .immaculate-title,
+:is(html.lite-fx, html.force-reduce-motion) .celebrate-rays,
+:is(html.lite-fx, html.force-reduce-motion) .celebrate-rays-prism {
+  animation: none !important;
 }

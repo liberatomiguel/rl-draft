@@ -16,6 +16,7 @@
  */
 
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import type { PlayoffRoundName, SeriesResult, TournamentState } from "@/engine/types";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
@@ -73,7 +74,7 @@ export function CareerBracket({
   onInspect?: (key: string) => void;
 }) {
   const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const T = copy.TOURNAMENT_UI;
   const p = t.playoffs;
   if (!p) return null;

@@ -10,7 +10,6 @@ import {
   CAREER_LOAN,
   CAREER_NEGOTIATION,
   CAREER_PRIZES,
-  CAREER_SCRIM,
   CAREER_TRAINING,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
@@ -321,7 +320,7 @@ describe("v0.3 incoming bids", () => {
 
 describe("v0.3 scrim scheduling", () => {
   it("books, renders on future days only, and cancels", () => {
-    let save = makeSave();
+    const save = makeSave();
     // Find a valid weekday ahead of the clock.
     let day = save.clock.day + 1;
     while ((day - 1) % 7 >= CAREER_TRAINING.trainingDaysPerWeek) day++;
@@ -422,7 +421,6 @@ describe("v0.3 negotiation", () => {
   it("signPlayerFlow persists the hardened counter on rejection", () => {
     const save = makeSave();
     // Any signable FA below the cap:
-    const cap = signableOverallCap(save.reputation);
     const target = save.world.freeAgentIds
       .map((id) => id)
       .find((id) => {

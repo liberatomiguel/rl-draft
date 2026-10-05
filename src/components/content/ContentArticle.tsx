@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 
 /**
  * Shape every SEO content page's copy conforms to (lives in copy.en/copy.pt).
@@ -39,12 +39,12 @@ export function ContentArticle({
 }) {
   return (
     <article className="rise-in mx-auto max-w-3xl">
-      <Link
+      <AppLink
         href={backHref}
         className="display inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-sub transition-colors hover:text-ink"
       >
         <span aria-hidden>←</span> {backLabel}
-      </Link>
+      </AppLink>
 
       <header className="mt-6">
         <p className="kicker mb-2">{copy.kicker}</p>
@@ -81,12 +81,12 @@ export function ContentArticle({
       {children}
 
       <p className="mt-12 text-center">
-        <Link
+        <AppLink
           href={ctaHref}
           className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.3)] transition-all hover:brightness-110"
         >
           {copy.ctaLabel}
-        </Link>
+        </AppLink>
       </p>
     </article>
   );

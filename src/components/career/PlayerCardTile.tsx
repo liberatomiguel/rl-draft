@@ -10,7 +10,7 @@
  */
 
 import { cx } from "@/lib/util";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { CountryChip } from "@/components/ui/Badge";
 import type { PotentialBand } from "@/engine/career/types";
 import type { ArchetypeId } from "@/engine/career/types";
@@ -68,8 +68,7 @@ export function PlayerCardTile({
   onClick?: () => void;
   className?: string;
 }) {
-  const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const frame = ovrFrame(overall);
   const potText =
     band && band.min === band.max ? C.player.potExact(band.max) : band ? C.player.potBand(band.min, band.max) : null;

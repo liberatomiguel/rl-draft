@@ -3,13 +3,14 @@
  * Tone: narração de transmissão / análise pós-jogo (esports BR). Termos que a
  * comunidade brasileira de Rocket League costuma manter em inglês ficam como
  * estão (draft, reroll, run, overall, clutch, OT, playoffs, MVP).
+ *
+ * Career-mode copy is NOT here: see `copy.career.pt.ts` (read only by career
+ * code via `careerCopy.ts`). The home card's career strings are `HOME.career*`.
  */
 
 import type { Copy } from "./copy.en";
-import { CAREER_PT } from "./copy.career.pt";
 
 export const PT: Copy = {
-  CAREER: CAREER_PT,
   APP: {
     name: "Rocket Draft",
     tagline: "Drafte a história. Sobreviva à chave.",
@@ -64,6 +65,11 @@ export const PT: Copy = {
     playNow: "Jogar agora →",
     runs: (n: number) => `${n} ${n === 1 ? "run" : "runs"}`,
     titles: (n: number) => `${n} títulos`,
+    careerTitle: "Road to Worlds",
+    careerBadge: "NOVO",
+    careerDesc:
+      "Modo carreira: funde sua org, contrate e desenvolva jogadores, administre o orçamento e leve o calendário da RLCS até o Worlds.",
+    careerCta: "Construa uma org do zero. Vença o Mundial.",
   },
 
   HOME_SEO: {

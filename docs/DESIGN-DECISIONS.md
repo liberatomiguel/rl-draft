@@ -510,6 +510,11 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
     `next.config.ts` + (ops) setting apex as the Vercel primary domain so `www`/
     `http` 301 there too. Reverting to `www` would mean rewriting every derived
     signal for no gain.
+    *(Enforcement superseded by #102. The apex is still canonical, but the
+    `next.config.ts` redirect is long gone, and on Cloudflare a static export
+    cannot redirect between hosts. `www` → apex is now a Cloudflare zone
+    **Redirect Rule** (301, keeps the query string), and Vercel's primary-domain
+    setting no longer applies.)*
 
 59. **`/special-cards` is a curated, public, no-spoiler showcase — the in-game
     `???` locked-collection mystery is preserved.** The SEO audit suggested
@@ -987,6 +992,141 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      profiles already backfilled at profile-v11 are NOT recomputed (no version bump — MMR is
      cosmetic and "never lost / cloud-merge max", so a one-time re-base wasn't worth resetting
      everyone). `balance.ts` `MMR.award`.
+
+## Static relaunch (Cloudflare) + request/performance diet (unreleased, 2026-10-03)
+
+102. **Hosting is Cloudflare Workers Static Assets: a pure static export with no
+     Worker script.** Production on Vercel Hobby was disabled (HTTP 402) after it
+     passed 3M requests in a month against the 1M cap. The app has no server code,
+     so `next build` now writes a plain static site (`output: "export"` → `out/`).
+     `wrangler.jsonc` deploys it as assets only. On Cloudflare, static-asset requests
+     are free and not metered; only Worker-script invocations count (100k/day on the
+     free plan, then Error 1027).
+     - **Hard rule:** no Worker script, ever. `wrangler.jsonc` has no `main` and no
+       `run_worker_first`.
+     - **Nothing that needs a server may be added:** route handlers that read the
+       request, `rewrites`/`redirects`/`headers()` in `next.config.ts`,
+       middleware/proxy, Server Actions, ISR, dynamic routes without
+       `generateStaticParams`.
+     - **Where things live now:** cache and security headers in `public/_headers`;
+       404 handling and trailing slashes in `wrangler.jsonc`
+       (`not_found_handling: "404-page"`, `html_handling: "auto-trailing-slash"`);
+       `www` → apex in a Cloudflare zone **Redirect Rule**, which supersedes #58's
+       Vercel enforcement.
+     - **Trade-offs accepted:**
+       - no deploy-skew protection;
+       - 307 (not 308) for `/x/` → `/x`;
+       - `NEXT_PUBLIC_*` must be present at build time;
+       - a Windows build needs the `postexport` segment-folder flatten (a no-op on
+         Linux).
+     - `workers_dev` and `preview_urls` are off, so the only public origin is the apex.
+       The cutover runbook is `docs/DEPLOY-CLOUDFLARE.md`.
+     - **Rejected alternatives** (STATUS had listed both as the next levers):
+       - Cloudflare in front of Vercel. Cloudflare doesn't cache HTML/JSON by
+         default, so pages, RSC payloads and the first request for every asset would
+         still reach Vercel. Vercel also discourages reverse proxies.
+       - Vercel Pro ($20/mo). It restores the site with no code change, but it isn't
+         free, and a fan game with no revenue doesn't need it.
+
+103. **Internal links prefetch only on intent (`AppLink`).** Next 16 prefetches every
+     link that enters the viewport. In the static export that cost 5 requests per
+     link (a HEAD + 4 segment `.txt` files) plus route JS, 41–68% of our own-host
+     requests.
+     - `AppLink` starts with `prefetch={false}` and switches a link to Next's normal
+       prefetch on the first real mouse hover (`pointerType === "mouse"`) or keyboard
+       focus (`:focus-visible`). It stays switched for that link instance.
+     - Touch input never counts as intent, so a tap can't start a prefetch that races
+       the navigation. **Trade-off:** touch devices fetch the route payload (one small
+       `.txt`) and its JS on tap, so navigation is slightly less instant on phones.
+     - An explicit `prefetch` prop from the caller always wins.
+     - ESLint forbids importing `next/link` outside `AppLink.tsx`.
+
+104. **`experimental.inlineCss` removed (reverses the [1.1.7] PageSpeed change), by
+     measurement.** Inlining made sense when the CSS was ~18 KB. At 149 KB raw (17.4 KB
+     br) it was copied into every HTML page *and* every RSC `.txt` payload:
+     - home HTML: 488.6 → 42.2 KB raw;
+     - `/play` navigation payload: 306.3 → 11.8 KB;
+     - `out/`: 80 → 35.7 MB.
+
+     **Cost:** a first visit now waits on a render-blocking stylesheet (cached as
+     immutable afterwards). [1.1.7] credited inlining with mobile LCP 3.5 s → 1.4 s,
+     although that measurement predates the CWV fixes in #97. **Revert is one line**
+     (`experimental: { inlineCss: true }` in `next.config.ts`). Revert only if
+     PageSpeed FCP/LCP regresses measurably after cutover, and accept that the
+     payloads grow back.
+
+105. **Pre-generated, content-hashed WebP plus an asset manifest instead of a runtime
+     image optimizer.** A static host has no `/_next/image`.
+     - `scripts/build-images.mjs` runs in `prebuild` and writes WebP variants under
+       `public/img/**` (org logos 96/264 px, specials 256/512 px, ranks in a 224 px
+       box) plus `src/generated/asset-manifest.json`. Because the names are
+       content-hashed, `/img/*` is cached as immutable for a year.
+     - The manifest is also the existence check. `src/lib/assets.ts` returns `null`
+       for a missing asset, so the UI renders its fallback with **no request**. That
+       ended the guaranteed 404s.
+     - The drop-in convention is unchanged: Miguel still drops PNGs into `public/…`. A
+       dropped PNG reaches production only on the next `npm run build`.
+     - **Dev keeps the raw PNGs** (`unoptimized`, helpers treat every asset as present)
+       so photo curation shows up on refresh.
+     - The raw PNGs are still deployed, so old shared URLs keep working, and `/flags`
+       is still served as raw PNG.
+
+106. **No runtime zod: the dataset is validated at build/CI time, not on page load.**
+     zod plus the schemas were 66 KB gz and ~60–80 ms of main-thread work on every
+     page, only to re-check JSON that never changes between builds.
+     - `src/data/index.ts` now serves typed casts.
+     - `src/data/validate.ts` (schemas, duplicate ids, referential integrity, ranks)
+       runs in `npm test`, `npm run validate:data` and `prebuild`, so a bad dataset
+       still fails `npm run build`.
+     - `integrity.test.ts` checks that the runtime data deep-equals the zod output and
+       that no runtime file imports zod.
+     - This refines #55.10: data still flows only through `src/data/index.ts`, and its
+       integrity checks now run before the build instead of in the browser.
+     - The deploy build must therefore be `npm run build` (devDependencies installed),
+       never a bare `next build`.
+
+107. **The persist contract is frozen by a test (#55.6).**
+     `src/store/persistContract.test.ts` pins every persisted store's key and version
+     (`settings` unversioned, `profile` 11, `run` 3, `career` 3).
+     - It requires a `migrate` for every versioned store and forbids `skipHydration`
+       and unknown `rocket-draft:*` keys.
+     - It pins the `partialize` shapes and replays the profile migrate from every
+       older version.
+     - Changing a key or version is now a deliberate act: update the test's `CONTRACT`
+       in the same change and write an additive `migrate`. Players' saves are never
+       reset.
+     - The persist-contract test runs in `prebuild` (`npm run test:contract`), so both
+       release paths (Workers Builds and `npm run deploy`) are gated on it.
+
+108. **`lite-fx` is automatic only, and capable devices never get it.**
+     `SettingsEffects.tsx` adds `html.lite-fx` when `navigator.deviceMemory ≤ 2`
+     (`LITE_FX_MAX_DEVICE_MEMORY_GB`) or the OS asks for reduced motion.
+     - **No new setting.** It reuses the "still" look that Settings → Reduce motion
+       already has (both classes share the CSS block): no backdrop blur on big
+       surfaces, opaque fallbacks, decorative loops stopped.
+     - **Threshold:** `deviceMemory` is Chromium-only and bucketed, so ≤ 2 means phones
+       with roughly 3 GB or less. The diagnosis floated ≤ 4; ≤ 2 keeps mid-range
+       phones on the full look.
+     - The constant lives in `SettingsEffects.tsx`, not `balance.ts`, because it is a
+       rendering heuristic, not a gameplay tunable.
+     - The class is added after hydration, so `<html>` never has a className mismatch.
+
+109. **Third-party SDKs load lazily; PostHog feature flags/remote config and
+     `$pageleave` are off.**
+     - posthog-js (~75 KB gz) loads after `load` + idle, and @supabase/supabase-js
+       (~61 KB gz) loads only for a stored session, a sign-in or the leaderboards.
+       Neither is needed to render a page.
+     - Events fired before PostHog is ready are queued with their original timestamps
+       and replayed.
+     - `advanced_disable_flags: true`: the code uses no flags, and it removes
+       `config.js`, `/flags` and the 5-minute polling. A side effect is that features
+       toggled in PostHog's project settings (heatmaps etc.) can no longer switch on
+       remotely.
+     - `capture_pageleave: false`: no insight in `docs/ANALYTICS.md` uses it.
+     - **Accepted cost:** a metrics discontinuity at the cutover. Very early bounces
+       are no longer counted, there is no `$pageleave`, and UTM properties can be
+       missed if the visitor navigates before the SDK starts. Pre/post numbers aren't
+       directly comparable (CHANGELOG "Unreleased — Static relaunch").
 
 ---
 

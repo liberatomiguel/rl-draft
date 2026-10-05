@@ -21,7 +21,7 @@ import { officialEventDefsForWeek } from "@/engine/career/calendar";
 import type { CareerSave } from "@/engine/career/types";
 import type { Placement } from "@/engine/types";
 import type { Region } from "@/engine/types";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { Badge } from "@/components/ui/Badge";
@@ -163,7 +163,7 @@ function StandingsTable({
   form: Map<string, Placement[]>;
   onOpenOrg: (ref: string) => void;
 }) {
-  const copy = useCopy().CAREER;
+  const copy = useCareerCopy();
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
   const placementLabels = copy.common.placement as Record<string, string>;
 
@@ -319,7 +319,7 @@ function StandingsTable({
 // ---------------------------------------------------------------------------
 
 export function StandingsScreen() {
-  const copy = useCopy().CAREER;
+  const copy = useCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
   const [tab, setTab] = useState<"split" | "season">("split");

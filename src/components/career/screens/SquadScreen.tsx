@@ -16,10 +16,11 @@
  * imported READ-ONLY from the engine so the preview can never drift.
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
 import { CAREER_CONTRACT, CAREER_SALARY, CAREER_STABILITY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { computeSalaryAsk, quantize } from "@/engine/career/economy";
 import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
@@ -62,7 +63,7 @@ export function SquadScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
   const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const setStarters = useCareerStore((s) => s.setStarters);
   const releasePlayer = useCareerStore((s) => s.releasePlayer);
   const renewPlayer = useCareerStore((s) => s.renewPlayer);
@@ -345,23 +346,23 @@ export function SquadScreen() {
               />
             ))
           ) : (
-            <Link href="/career/market" className="block">
+            <AppLink href="/career/market" className="block">
               <div className="rounded-lg border border-dashed border-line p-4 text-center text-xs text-faint transition-colors hover:border-orange/50 hover:text-sub">
                 {C.squad.emptySub}
               </div>
-            </Link>
+            </AppLink>
           )}
         </Panel>
 
         <Panel className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <p className="kicker text-[11px]">{C.squad.coachSlot}</p>
-            <Link
+            <AppLink
               href="/career/market"
               className="rounded-full bg-blue/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-bright transition-colors hover:bg-blue/20"
             >
               {C.market.coaches}
-            </Link>
+            </AppLink>
           </div>
           {save.coach ? (
             <div className="rounded-xl border border-line-strong bg-white/[0.02] p-3.5">
@@ -377,20 +378,20 @@ export function SquadScreen() {
               </div>
             </div>
           ) : (
-            <Link href="/career/market" className="block">
+            <AppLink href="/career/market" className="block">
               <div className="rounded-lg border border-dashed border-line p-4 text-center text-xs text-faint transition-colors hover:border-orange/50 hover:text-sub">
                 {C.squad.emptyCoach}
               </div>
-            </Link>
+            </AppLink>
           )}
           {/* staff & boosts chips */}
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Link
+            <AppLink
               href="/career/finances"
               className="rounded bg-white/6 px-2 py-1 text-[10px] font-semibold text-sub transition-colors hover:text-ink"
             >
               {C.finances.gearLadder}
-            </Link>
+            </AppLink>
             {save.finances.gear.psychologist ? (
               <span className="rounded bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-300">
                 {C.finances.psychologist}

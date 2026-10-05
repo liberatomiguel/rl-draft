@@ -15,7 +15,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { CareerLifetimeStats } from "@/engine/career/types";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -138,7 +138,7 @@ const TROPHY_TINT: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function ClubScreen() {
-  const copy = useCopy().CAREER;
+  const copy = useCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
   const activeSlot = useCareerStore((s) => s.activeSlot);

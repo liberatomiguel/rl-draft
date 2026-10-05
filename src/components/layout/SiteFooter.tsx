@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useCopy } from "@/content/copy";
 import { SITE } from "@/config/site";
 
@@ -39,21 +39,21 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-6xl px-4 py-6 pb-24 md:pb-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold" aria-label="Footer">
-            <Link href="/changelog" className={linkCls}>
+            <AppLink href="/changelog" className={linkCls}>
               {NAV_UI.changelog}
-            </Link>
-            <Link href="/how-to-play" className={linkCls}>
+            </AppLink>
+            <AppLink href="/how-to-play" className={linkCls}>
               {NAV_UI.howToPlay}
-            </Link>
-            <Link href="/about" className={linkCls}>
+            </AppLink>
+            <AppLink href="/about" className={linkCls}>
               {NAV_UI.about}
-            </Link>
-            <Link href="/faq" className={linkCls}>
+            </AppLink>
+            <AppLink href="/faq" className={linkCls}>
               {NAV_UI.faq}
-            </Link>
-            <Link href="/privacy" className={linkCls}>
+            </AppLink>
+            <AppLink href="/privacy" className={linkCls}>
               {NAV_UI.privacy}
-            </Link>
+            </AppLink>
             {SITE.discordUrl ? <ExternalLink href={SITE.discordUrl}>{NAV_UI.discord}</ExternalLink> : null}
             {SITE.supportUrl ? <ExternalLink href={SITE.supportUrl}>{NAV_UI.support}</ExternalLink> : null}
           </nav>

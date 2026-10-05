@@ -7,14 +7,19 @@
  * today's. Pass the card/lineup `seasonId` and, when the org declares
  * `logoEras` (see ORG_LOGO_ERAS in scripts/build-dataset.mjs), the source
  * chain becomes:
- *   /orgs/<orgId>@<era>.png  →  /orgs/<orgId>.png  →  styled monogram
+ *   era variant ("<orgId>@<era>")  →  default logo  →  styled monogram
  * Without a seasonId (or for single-identity orgs) it's the default logo.
- * All assets are local files under public/ — nothing is fetched from the
- * internet at runtime.
+ * URLs come from the asset manifest (src/lib/assets.ts): in production they
+ * are small WebP variants sized for the display box, and a logo that has no
+ * file is skipped up front — an org without any logo renders the monogram
+ * immediately, with zero requests. onError still walks the chain as a
+ * safety net. All assets are local files under public/ — nothing is fetched
+ * from the internet at runtime.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { orgById, seasonById } from "@/data";
+import { orgLogoSrc } from "@/lib/assets";
 import { cx, initials } from "@/lib/util";
 
 const SIZES = {
@@ -24,6 +29,16 @@ const SIZES = {
   lg: "h-[4.5rem] w-[4.5rem] text-xl",
   xl: "h-[5.5rem] w-[5.5rem] text-2xl",
 } as const;
+
+/** CSS px of each SIZES box — picks the logo variant and sets the <img>
+ *  width/height attributes (equal to the CSS box, so no layout change). */
+const SIZE_PX: Record<keyof typeof SIZES, number> = {
+  xs: 16,
+  sm: 24,
+  md: 44,
+  lg: 72,
+  xl: 88,
+};
 
 export function TeamLogo({
   orgId,
@@ -39,21 +54,27 @@ export function TeamLogo({
 }) {
   const org = orgById.get(orgId);
   const name = org?.name ?? orgId;
+  const px = SIZE_PX[size];
 
   // Source chain: era variant (if any) → default logo → monogram fallback.
-  const sources: string[] = [];
+  // Entries with no file are skipped (orgLogoSrc → null), so they cost nothing.
   const order = seasonId ? seasonById.get(seasonId)?.order : undefined;
   const era =
     order !== undefined
       ? org?.logoEras?.find((e) => order <= e.untilOrder)
       : undefined;
-  if (era) sources.push(`/orgs/${orgId}@${era.key}.png`);
-  sources.push(org?.logoUrl || `/orgs/${orgId}.png`);
+  const sources = [
+    era ? orgLogoSrc(`${orgId}@${era.key}`, px) : null,
+    org?.logoUrl || orgLogoSrc(orgId, px),
+  ].filter((s): s is string => Boolean(s));
 
-  const [sourceIndex, setSourceIndex] = useState(0);
-  useEffect(() => setSourceIndex(0), [orgId, era?.key]);
+  // URLs that failed to load on this mount. Derived, not reset by an effect:
+  // when the org/era/size changes, the new chain's URLs aren't in the list, so
+  // it starts again from its first entry.
+  const [failed, setFailed] = useState<readonly string[]>([]);
+  const src = sources.find((s) => !failed.includes(s));
 
-  if (sourceIndex >= sources.length) {
+  if (!src) {
     return (
       <span
         aria-label={name}
@@ -74,10 +95,14 @@ export function TeamLogo({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={sources[sourceIndex]}
+      src={src}
       alt={name}
       title={name}
-      onError={() => setSourceIndex((i) => i + 1)}
+      width={px}
+      height={px}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed((f) => (f.includes(src) ? f : [...f, src]))}
       className={cx("shrink-0 object-contain", SIZES[size], className)}
     />
   );

@@ -12,7 +12,7 @@
 
 import { CAREER_ECONOMY, CAREER_NEGOTIATION } from "@/config/balance";
 import { negotiationAcceptChance, quantize } from "@/engine/career/economy";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 
@@ -37,8 +37,7 @@ export function SalaryNegotiator({
   rejects: number;
   disabled?: boolean;
 }) {
-  const t = useCopy();
-  const N = t.CAREER.market.negotiation;
+  const N = useCareerCopy().market.negotiation;
 
   const floor = quantize(ask * CAREER_NEGOTIATION.minOfferFactor);
   const step = negotiationStep(ask);

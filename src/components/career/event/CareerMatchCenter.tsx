@@ -15,6 +15,7 @@
 import { useMemo } from "react";
 import { TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import type { GameResult, SeriesResult, TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
@@ -65,7 +66,7 @@ export function CareerMatchCenter({
   onClose?: () => void;
 }) {
   const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const T = copy.TOURNAMENT_UI;
   const N = copy.NARRATION;
 

@@ -30,6 +30,7 @@ import {
   shareCardDataUrl,
   type ShareCardData,
 } from "@/lib/shareCard";
+import { orgLogoSrc } from "@/lib/assets";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -157,7 +158,10 @@ export function ResultsScreen({ run }: { run: RunState }) {
           }),
           isSpecial,
           role: roleOf[s.slot] ?? s.slot,
-          imageUrl: orgId ? `/orgs/${orgId}.png` : undefined,
+          // Drawn into a ≤112×40 box on the 1200×630 canvas: the large logo
+          // variant is plenty (canvas drawImage decodes WebP like any <img>).
+          // Orgs without a logo get no URL → no request, the card just skips it.
+          imageUrl: (orgId && orgLogoSrc(orgId, 176)) || undefined,
         };
       });
     setShareData({

@@ -14,7 +14,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore, type CareerToast } from "@/store/careerStore";
@@ -40,8 +40,7 @@ export function CareerToaster() {
 }
 
 function Toast({ toast }: { toast: CareerToast }) {
-  const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const router = useRouter();
   const dismiss = useCareerStore((s) => s.dismissToast);
 

@@ -4,11 +4,15 @@
  * Rank emblem with two art sets (drop images into public/ranks/):
  *   menu variant    → /ranks/menu/<rankId>.png     (home screen)
  *   profile variant → /ranks/profile/<rankId>.png  (profile screen)
- * Falls back to a styled CSS emblem until the images exist.
+ * Falls back to a styled CSS emblem until the images exist. URLs come from the
+ * asset manifest (src/lib/assets.ts → rankSrc): WebP in production, and a
+ * missing emblem renders the CSS fallback with no request. onError stays as a
+ * safety net.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { RankInfo } from "@/engine/progression";
+import { rankSrc } from "@/lib/assets";
 import { cx } from "@/lib/util";
 
 const SIZES = {
@@ -65,17 +69,16 @@ export function RankBadge({
   size?: keyof typeof SIZES;
   className?: string;
 }) {
-  const src = `/ranks/${variant}/${rank.id}.png`;
-  const [failed, setFailed] = useState(false);
+  const src = rankSrc(variant, rank.id);
+  // The URL that failed to load. Derived reset: when the rank changes (e.g. rank
+  // up while mounted) the src changes, so the new emblem is tried again.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   // Normalise the menu art's wildly-varying canvas fill so no rank looks oversized
   // next to another (v1.4.4). Reserved layout box is unchanged (transform doesn't
   // reflow), so there's no layout shift — only the painted glyph shrinks.
   const glyphScale = variant === "menu" ? MENU_GLYPH_SCALE[rank.id] ?? 1 : 1;
 
-  // Re-try when the rank changes (e.g. rank up while mounted).
-  useEffect(() => setFailed(false), [src]);
-
-  if (failed) {
+  if (!src || src === failedSrc) {
     return (
       <span
         aria-label={rank.label}
@@ -107,7 +110,7 @@ export function RankBadge({
       // (it paints after hydration), so it is never the LCP. High priority here
       // only stole bandwidth from the real LCP (the hero paragraph) on mobile.
       decoding="async"
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
       style={glyphScale !== 1 ? { transform: `scale(${glyphScale})` } : undefined}
       className={cx("shrink-0 object-contain", SIZES[size], className)}
     />

@@ -11,8 +11,14 @@
   ],
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run validate:data && npm run test:contract && npm run build:images",
     "build": "next build",
-    "start": "next start",
+    "postbuild": "node scripts/postexport.mjs",
+    "start": "npm run preview:static",
+    "build:images": "node scripts/build-images.mjs",
+    "preview:static": "wrangler dev",
+    "predeploy": "node scripts/check-deploy.mjs",
+    "deploy": "npm run build && wrangler deploy",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -20,12 +26,11 @@
     "build:data": "node scripts/build-dataset.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
     "validate:data": "vitest run src/data",
+    "test:contract": "vitest run src/store/persistContract.test.ts",
     "fetch:assets": "node scripts/fetch-assets.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0",
     "geist": "^1.7.2",
     "next": "16.2.9",
     "posthog-js": "^1.389.0",
@@ -46,6 +51,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "wrangler": "^4.147.0"
   }
 }

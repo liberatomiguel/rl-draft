@@ -1,7 +1,11 @@
 /**
  * Road to Worlds — English copy (career mode).
  *
- * One grouped object, spread into the main EN dictionary as `CAREER`.
+ * One grouped object, read ONLY by career code through `useCareerCopy()` /
+ * `getCareerCopy()` (`careerCopy.ts`) — it is deliberately not part of the
+ * core EN dictionary, so draft-game pages never download it. Do not import
+ * this file from non-career modules; the home card's strings are in
+ * `HOME.career*` (copy.en.ts / copy.pt.ts).
  * `copy.career.pt.ts` mirrors this shape exactly (enforced by its type).
  * Tone: broadcast desk / post-match analysis — clean esports language.
  */
@@ -9,12 +13,8 @@
 export const CAREER_EN = {
   meta: {
     title: "Road to Worlds",
-    subtitle: "Build an org from nothing. Win the World Championship.",
-    homeCardDesc:
-      "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
     nav: "Career",
     locked: "Available soon",
-    newBadge: "NEW",
   },
 
   nav: {

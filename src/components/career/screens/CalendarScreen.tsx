@@ -10,9 +10,9 @@
  * regional Saturdays as neutral dots + a list in the day detail.
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { officialEventDefsForWeek } from "@/engine/career/calendar";
 import type {
   CareerEventDef,
@@ -68,8 +68,7 @@ interface MonthGroup {
 export function CalendarScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const D = C.dates;
 
   const advanceDay = useCareerStore((s) => s.advanceDay);
@@ -647,7 +646,7 @@ export function CalendarScreen() {
       <div className="sticky bottom-3 z-10">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
           {eventDue ? (
-            <Link
+            <AppLink
               href="/career/event"
               className={cx(
                 "display inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold uppercase tracking-[0.12em]",
@@ -656,7 +655,7 @@ export function CalendarScreen() {
               )}
             >
               {C.calendar.advanceToStop(eventDue.name)}
-            </Link>
+            </AppLink>
           ) : (
             <>
               <Button

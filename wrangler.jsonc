@@ -1,0 +1,40 @@
+// Cloudflare deploy config for https://rocketdraft.app — an ASSETS-ONLY Worker
+// serving the Next static export in ./out (`npm run deploy` = build + deploy;
+// `npm run preview:static` = local `wrangler dev` of the last build).
+//
+// HARD RULE — NO WORKER SCRIPT. There is deliberately no "main" and no
+// "assets.run_worker_first". Requests answered straight from static assets are
+// free and unlimited; any request that invokes a Worker script is billed as a
+// Worker request (Free plan: 100,000/day, then 429s). Adding a script — even a
+// tiny redirect/header shim — would put every visit back on a request cap.
+// Headers live in public/_headers; cross-host redirects (www → apex) belong in
+// a zone Redirect Rule, not here.
+// Docs: https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rocket-draft",
+  "compatibility_date": "2026-10-01",
+
+  "assets": {
+    "directory": "./out",
+    // Unknown paths get the nearest 404.html with a real 404 status.
+    "not_found_handling": "404-page",
+    // `/play` serves play.html; `/play/` and `/play.html` redirect to `/play`.
+    // Matches trailingSlash: false in next.config.ts (AppShell compares the
+    // pathname to "/play" exactly).
+    "html_handling": "auto-trailing-slash"
+  },
+
+  // Only the apex custom domain serves the site: no <name>.<account>.workers.dev
+  // host and no per-version preview URLs (duplicate hosts for crawlers).
+  // preview_urls is set explicitly because Wrangler keeps the remote setting
+  // when the key is omitted.
+  "workers_dev": false,
+  "preview_urls": false,
+
+  // Custom Domain: Cloudflare creates the DNS record + certificate on deploy.
+  // Requires the rocketdraft.app zone to be active on this Cloudflare account
+  // (nameservers moved) and no CNAME on the apex — remove the old Vercel
+  // apex record(s) before the first deploy.
+  "routes": [{ "pattern": "rocketdraft.app", "custom_domain": true }]
+}

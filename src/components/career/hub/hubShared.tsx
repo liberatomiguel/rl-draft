@@ -12,8 +12,7 @@
  */
 
 import { CAREER_POINTS, CAREER_PRIZES } from "@/config/balance";
-import { useCopy } from "@/content/copy";
-import type { CareerCopy } from "@/content/copy.career.en";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type { CalendarWeek, EventTier, MailItem, NewsItem } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -36,7 +35,7 @@ const TIER_TONE: Record<EventTier, "gold" | "orange" | "blue" | "neutral"> = {
 };
 
 export function TierChip({ tier, className }: { tier: EventTier; className?: string }) {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   return (
     <Badge tone={TIER_TONE[tier]} className={className}>
       {C.common.tier[tier]}
@@ -67,7 +66,7 @@ function errorTextFor(C: CareerCopy, key: string): string {
 }
 
 export function ErrorBanner({ className }: { className?: string }) {
-  const copy = useCopy();
+  const C = useCareerCopy();
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
   if (!lastError) return null;
@@ -79,10 +78,10 @@ export function ErrorBanner({ className }: { className?: string }) {
         className,
       )}
     >
-      <span className="text-sm text-bad">{errorTextFor(copy.CAREER, lastError)}</span>
+      <span className="text-sm text-bad">{errorTextFor(C, lastError)}</span>
       <button
         onClick={clearError}
-        aria-label={copy.CAREER.common.close}
+        aria-label={C.common.close}
         className="shrink-0 rounded-md p-1.5 text-bad transition-colors hover:bg-white/10"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">

@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CAREER_ECONOMY, CAREER_REP } from "@/config/balance";
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs } from "@/data";
 import { computeSalaryAsk } from "@/engine/career/economy";
 import type { CareerColors, CareerDifficulty, ManagementStyle } from "@/engine/career/types";
@@ -112,7 +113,7 @@ function rivalsByRegion(): Record<Region, { orgId: string; name: string }[]> {
 
 export function WizardScreen() {
   const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const router = useRouter();
   const mounted = useMounted();
   const slots = useCareerStore((s) => s.slots);

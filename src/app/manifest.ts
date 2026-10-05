@@ -6,8 +6,13 @@ import { SITE } from "@/config/site";
  * Web app manifest (served at /manifest.webmanifest). Rocket Draft bills itself
  * as a free browser game, so it should be installable and declare its identity
  * for the browser / add-to-home-screen. Colors match the app shell (#05080f).
- * Icons reuse the brand hexagon (icon.svg) + the generated apple-icon.
+ * Icons reuse the brand hexagon (icon.svg) + the static apple-icon.png
+ * (src/app/apple-icon.png → /apple-icon.png).
  */
+
+// Required by `output: "export"`: written to out/manifest.webmanifest at build time.
+export const dynamic = "force-static";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: SITE.name,
@@ -30,7 +35,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/apple-icon",
+        src: "/apple-icon.png",
         type: "image/png",
         sizes: "180x180",
         purpose: "maskable",

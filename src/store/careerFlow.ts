@@ -117,7 +117,6 @@ import {
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
   incomingBidForDay,
-  type AiTransferRecord,
 } from "@/engine/career/market";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {

@@ -9,7 +9,7 @@
  * wire. Read-only by design — the world stays the world.
  */
 
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { CountryChip } from "@/components/ui/Badge";
 import { playerViewById } from "@/engine/career/development";
@@ -28,8 +28,7 @@ export function OrgSheet({
   orgRef: string | null;
   onClose: () => void;
 }) {
-  const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const org = orgRef ? save.world.orgs[orgRef] : null;
   if (!org) return null;
 

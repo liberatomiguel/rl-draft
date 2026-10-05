@@ -7,7 +7,8 @@ the two modes' rationale never tangles.
 - **Spec of record:** [`ROAD-TO-WORLDS-DESIGN.md`](ROAD-TO-WORLDS-DESIGN.md)
   (the v0 design + the v0.1 / v0.2 / v0.3 adjustment-pass headers are the
   authoritative brief — this file records the *why* behind the calls, in the
-  DESIGN-DECISIONS numbered style).
+  DESIGN-DECISIONS numbered style). R19 (release gating) was added on the
+  static-relaunch branch.
 - **Current state + remaining work:** [`ROAD-TO-WORLDS-STATUS.md`](ROAD-TO-WORLDS-STATUS.md).
 - **Per-version narrative:** `CHANGELOG.md` `[1.5.0-alpha]`.
 - **North-star note:** GAME-DESIGN §42 doesn't cover a management fantasy;
@@ -179,6 +180,37 @@ R18. **Autoplay is the primary clock control (day clock, phase 2).** v0.2 made
      explicit timeouts; `aiWindowMoves` memoizes player views — next lever is a
      global view memo per `world.version`). Save bumped to **v3** (additive
      migrate `migrateSaveToV2` → `migrateSaveToV3`).
+
+## Static relaunch gating (2026-10-03 — `perf/static-cloudflare`)
+
+R19. **`careerMode` is env-driven, `/career` is always noindex, and career copy
+     ships only with career.** The static relaunch (DESIGN-DECISIONS #102) is cut
+     from `staging`, so the alpha travels with it. It must not go public by
+     accident, and it must not cost the draft game anything.
+     - **Flag.** `FEATURES.careerMode = NODE_ENV !== "production" ||
+       NEXT_PUBLIC_CAREER_MODE === "1"`. Dev and tests always have career on.
+       Production builds have it off unless the env var is set **at build time**,
+       inline, for a local preview build only — never in `.env*` files or the
+       production Worker's build variables (a shareable preview needs a separate
+       staging Worker). It is a per-build constant, identical on
+       server and client, so there is no hydration mismatch.
+     - **Gate.** `src/app/career/layout.tsx` is a server component: `notFound()` when
+       the flag is off, and `robots: { index: false, follow: false }` **always**,
+       even with the flag on, while the mode is alpha. The client guard and UI live
+       in `CareerShell.tsx`. A static export writes every route, so the old
+       client-side `useEffect` redirect was not a gate: flag-off builds still shipped
+       an indexable `/career` with HTTP 200.
+     - **Strip.** `scripts/postexport.mjs` deletes `out/career*` when the flag is
+       off. It reads `.env*` the way `next build` does. If the home page links
+       `/career` or the sitemap lists it, it fails instead of deleting, because the
+       build and the script would disagree.
+     - **Copy split.** Career strings live only in `copy.career.{en,pt}.ts`, read
+       through `useCareerCopy()` / `getCareerCopy()` (`src/content/careerCopy.ts`).
+       `useCopy().CAREER` no longer exists, which cut the core copy chunk on every
+       page from 55.2 to 28.6 KB gz. The 4 home-card strings are core copy
+       (`HOME.career*`), because the home page renders them.
+     - Existing career saves are untouched: with the flag off the store simply isn't
+       loaded, and the saves come back when career is enabled.
 
 ---
 

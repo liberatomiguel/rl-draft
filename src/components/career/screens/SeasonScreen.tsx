@@ -14,7 +14,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CareerSave } from "@/engine/career/types";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
 import { CAREER_SEASONS } from "@/config/balance";
@@ -50,8 +50,7 @@ const GRADE_STAMP: Record<string, string> = {
 export function SeasonScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const router = useRouter();
   const continueToNextSeason = useCareerStore((s) => s.continueToNextSeason);
   const continueInfinite = useCareerStore((s) => s.continueInfinite);
@@ -477,7 +476,7 @@ function SnapshotRow({
   name: string;
   points: number;
 }) {
-  const copy = useCopy().CAREER;
+  const copy = useCareerCopy();
   const isUser = orgRef === "user";
   return (
     <li

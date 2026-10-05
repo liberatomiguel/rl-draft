@@ -14,8 +14,7 @@
 
 import { useState } from "react";
 import { CAREER_ECONOMY, CAREER_LOAN, CAREER_SPONSOR } from "@/config/balance";
-import { useCopy } from "@/content/copy";
-import type { CareerCopy } from "@/content/copy.career.en";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import { gearUpkeepPerSplit, quantize } from "@/engine/career/economy";
 import type {
@@ -55,7 +54,7 @@ function errorTextFor(C: CareerCopy, key: string): string {
 }
 
 function FinanceErrorNotice({ className }: { className?: string }) {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
   if (!lastError) return null;
@@ -87,7 +86,7 @@ function FinanceErrorNotice({ className }: { className?: string }) {
 // ---------------------------------------------------------------------------
 
 function BackerPayDown({ remaining, balance }: { remaining: number; balance: number }) {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   const payDebt = useCareerStore((s) => s.payDebt);
   const [raw, setRaw] = useState<number | null>(null);
 
@@ -296,8 +295,7 @@ function PriceTag({ base, price }: { base: number; price: number }) {
 export function FinancesScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const D = C.dates;
   const lang = useSettings((s) => s.lang);
 

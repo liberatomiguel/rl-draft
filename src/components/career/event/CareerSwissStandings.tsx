@@ -10,7 +10,7 @@
  */
 
 import { TOURNAMENT } from "@/config/balance";
-import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import type { TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
@@ -33,7 +33,7 @@ export function CareerSwissStandings({
   /** Known next opponent (only once every simulated round is revealed). */
   nextUpRef?: string | null;
 }) {
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
 
   const sorted = Object.keys(t.teams).sort((a, b) => {
     const ra = records.get(a) ?? { wins: 0, losses: 0, gameDiff: 0 };

@@ -1259,14 +1259,37 @@ export const FEATURES = {
    */
   showEliminatorTeam: true,
   /**
-   * Road to Worlds career mode (v1.5). Single revert point: false hides the
-   * home card, the nav entries and the /career routes entirely.
+   * Road to Worlds career mode (v1.5, alpha). ON in dev and tests (NODE_ENV
+   * !== "production"), OFF in production builds unless the build sets
+   * NEXT_PUBLIC_CAREER_MODE=1 — for local preview builds only, set inline
+   * (`NEXT_PUBLIC_CAREER_MODE=1 npm run build`). Never put it in .env* files or
+   * in the production Worker's build variables: it would ship the alpha on
+   * rocketdraft.app (docs/DEPLOY-CLOUDFLARE.md §5). NODE_ENV is
+   * always inlined; NEXT_PUBLIC_CAREER_MODE is inlined when set at build time
+   * and otherwise reads as undefined on the client — either way the value is
+   * fixed per build.
+   * Off → no home card, no nav entry, `/career` layout calls notFound(), and
+   * `scripts/postexport.mjs` deletes `out/career*` so the host serves the 404
+   * page. `scripts/postexport.mjs` mirrors this expression — keep them in sync.
    */
-  careerMode: true,
+  careerMode:
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_CAREER_MODE === "1",
   /**
    * Miguel's original hard roster rule (2+ starter swaps in one window zero
    * the Season Points) instead of the shipped tiered Roster Stability. Kept
    * one flag away per the design doc §21.1.
    */
   careerHardStabilityRule: false,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Cloud sync pacing (accounts). Not a gameplay value — kept here so every
+// tunable number lives in one place.
+// ---------------------------------------------------------------------------
+
+export const CLOUD_SYNC = {
+  /** Quiet period after the last profile change before a signed-in player's
+   *  progress is pushed mid-session (coalesces a run's burst of writes —
+   *  results, achievements, unlocks — into one read + push). */
+  pushDebounceMs: 4500,
 } as const;

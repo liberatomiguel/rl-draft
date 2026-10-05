@@ -7,6 +7,18 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "rocket-draft-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "dev", "--ip", "127.0.0.1", "--port", "8791"],
+      "port": 8791
+    },
+    {
+      "name": "rocket-draft-static-2",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "dev", "--ip", "127.0.0.1", "--port", "8792"],
+      "port": 8792
     }
   ]
 }

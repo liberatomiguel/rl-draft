@@ -10,6 +10,361 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## Unreleased — Static relaunch (Cloudflare) + request/performance diet
+
+> Branch `perf/static-cloudflare`, cut from `staging` @ `badd177` (v1.5.0-alpha.2), so it
+> carries the Road to Worlds alpha below. The version number is still to be chosen.
+> **Why:** production (Vercel Hobby, `main` @ v1.4.4) was disabled with HTTP 402 after it
+> passed 3M requests in a month against the Hobby cap of 1M. The app has no server code, so
+> it is now a **pure static export served by Cloudflare Workers Static Assets with no Worker
+> script**. Static-asset requests there are free and not metered. Every page view also costs
+> far fewer requests and bytes. No gameplay or balance changes.
+> Gates (2026-10-03): `tsc` clean · **385/385** vitest · `npm run build` green (48 s; `out/`
+> = 1,071 files, 35 MB) · lint at 5 errors + 1 warning, all pre-existing (TournamentScreen,
+> AnimatedNumber, Modal, useMounted, calibrate-rarity), down from 9 errors / 4 warnings.
+
+**Measured before/after.** Browser runs against the static export. "Before" is `staging`
+@ `badd177` exported as-is with Cloudflare's default headers; "after" is this branch on
+`wrangler dev`. Counts are requests to the site's own host.
+
+| Scenario | Before | After |
+| --- | --- | --- |
+| Cold home view | 74–80 requests | **27** |
+| Warm return to home | 80 (72 of them 304s) | **2** |
+| Click home → `/play` | `/play.txt` 316 KB raw on a non-prefetched click (CSS inlined) | **3 requests**, `/play.txt` 11.5 KB raw |
+| Full draft run (home → `/play` → draft → tournament → results) | 166, incl. 68 prefetch requests and 22 404s | **≤ 71**, incl. 42 distinct images and 0 404s |
+| Home first-load JS + CSS | 544 KB gz for the JS alone (CSS was inlined into the HTML) | **344 KB gz** for JS + CSS |
+| Home HTML | 504 KB raw / 27 KB br | **40 KB raw / 7.5 KB br** |
+
+> **Correction to the [1.4.0] "edge-request diet" entry.** This file is append-only, so the
+> old text stays. That entry named the Vercel Analytics / Speed Insights beacons and the
+> `trackEvent` double-sink as the root cause of the launch blowup (~1.1M edge requests in 4
+> days). The browser measurements and request accounting done for this release do not
+> support that. The dominant multipliers were:
+> - **`next/link` viewport prefetch**: ~4–5 requests per visible link. In the static export
+>   it is exactly 5 (one HEAD and 4 segment `.txt` files), plus the route's JS.
+> - **`/public` images served with `Cache-Control: max-age=0`**: every logo, flag and rank
+>   icon was revalidated on every page load.
+>
+> The pre-v1.4 beacons were only **~7–20%** of edge requests: about 15 in a typical session
+> and about 37 in a heavy one, against 150–200 other requests. Removing them was right, but
+> it could never have kept the site under the cap. That fits the >3M recurrence on an
+> unchanged `main` (no deploys since 2026-06-23).
+
+#### Added
+- **Cloudflare hosting config.**
+  - `wrangler.jsonc` is assets-only: `assets.directory: "./out"`, no `main`, no
+    `run_worker_first`. It sets `not_found_handling: "404-page"` and `html_handling:
+    "auto-trailing-slash"`, so `/play` serves `play.html` and `/play/` or `/play.html`
+    redirect to `/play`. It also sets `workers_dev: false`, `preview_urls: false` and an
+    apex custom-domain route (`rocketdraft.app`).
+  - `public/_headers` caches `/_next/static/*` and `/img/*` (content-hashed) as immutable
+    for a year. The unhashed files get moderate TTLs: `/flags` 7 days; `/orgs`, `/cards`
+    and `/ranks` 1 day; the icons and OG image 7 days; the manifest 1 day. Every response
+    gets `nosniff` + `Referrer-Policy`. HTML and the `.txt` RSC payloads have no rule, so
+    they keep the host default (`max-age=0, must-revalidate` + ETag) and a deploy shows on
+    the next load.
+  - `wrangler@4` is a new devDependency.
+- **Build and deploy scripts.**
+  - `prebuild` runs `validate:data && test:contract && build:images`.
+  - `postbuild` runs `scripts/postexport.mjs`.
+  - `preview:static` runs `wrangler dev` on `out/`. `npm start` now points to it, because
+    `next start` does not work with `output: "export"`.
+  - `deploy` runs `npm run build && wrangler deploy`. Its `predeploy`
+    (`scripts/check-deploy.mjs`) refuses to run when `ROCKET_DRAFT_ALLOW_LOCAL_ENDPOINTS` is
+    set in the shell.
+  - `.nvmrc` pins Node 24 for local dev and Workers Builds.
+- **`scripts/postexport.mjs`** runs named steps after the export:
+  - flatten the Windows `__next.*` segment folders (see Fixed);
+  - strip `/career` when career mode is off;
+  - check that every route has its `__PAGE__` prefetch file;
+  - check that the required files exist;
+  - check Cloudflare's limits (20,000 files, 25 MiB per file);
+  - print a report.
+
+  A broken export fails the build loudly; it is never shipped.
+- **Build-time image pipeline** (DESIGN-DECISIONS #105). `scripts/build-images.mjs` (sharp) turns the drop-in PNGs
+  into content-hashed WebP under `public/img/**` (git-ignored) and writes the committed
+  `src/generated/asset-manifest.json`.
+  - Sizes: org logos at 96 / 264 px, special photos at 256 / 512 px, rank emblems in a
+    224 px box. Menu emblems stay at their 160 px source size.
+  - It is deterministic and incremental. It prunes stale files, each URL hash covers the
+    source bytes plus that category's encoder settings (see Fixed), and `--force` redoes
+    the whole set.
+  - Today it produces 496 WebP files (~7.0 MB) from ~24.3 MB of PNG sources.
+- **`src/lib/assets.ts`** exports `flagSrc`, `orgLogoSrc`, `hasSpecialPhoto`,
+  `specialPhotoSrc` and `rankSrc`.
+  - In production they return the hashed `/img/…` WebP URL (or `/flags/<cc>.png`),
+    percent-encoded, **and only for files that exist**. A missing asset therefore renders
+    its fallback without any request.
+  - In dev and test they return the raw PNG paths and treat every asset as present.
+- **`src/lib/imageLoader.ts`** is a custom `next/image` loader. It maps
+  `/cards/specials/<id>.png` to the 256 / 512 px WebP; `images.deviceSizes: [512]` and
+  `imageSizes: [256]` make the srcset exactly 256w + 512w. Dev keeps `unoptimized` raw PNGs.
+- **`AppLink`** (`src/components/ui/AppLink.tsx`) is a drop-in `next/link` wrapper that only
+  prefetches on intent (see Changed). An ESLint `no-restricted-imports` rule now forbids
+  importing `next/link` anywhere else.
+- **Automatic `html.lite-fx` for weak devices** (DESIGN-DECISIONS #108). `SettingsEffects.tsx` applies it when
+  `navigator.deviceMemory` is ≤ 2 GB or the OS asks for `prefers-reduced-motion`. Under it,
+  and under Settings → Reduce motion:
+  - panels, sticky bars, full-screen overlays and the modal scrim drop their backdrop blur;
+  - surfaces that carry text get opaque fallbacks;
+  - the infinite decorative loops stop (sheens, rarity halos, hue shifts, title glows, the
+    legend border, the ray spin).
+
+  Capable devices never get it.
+- **`src/store/persistContract.test.ts`** (32 tests, DESIGN-DECISIONS #107) freezes the persist contract:
+  - every key and version: `settings` unversioned, `profile` 11, `run` 3, `career` 3;
+  - a `migrate` for every versioned store;
+  - no `skipHydration`, and no unknown `rocket-draft:*` keys;
+  - the `partialize` shapes.
+
+  It also runs the profile migrate from every version 1–10 and checks real hydration
+  end-to-end through an in-memory `localStorage`.
+- **`src/data/validate.ts`** exports `validateDataset()`: schemas, duplicate ids,
+  referential integrity and the rank check. `integrity.test.ts` uses it. The test also
+  asserts that the runtime data deep-equals the zod output, so an undeclared JSON key now
+  fails CI, and that no non-test file imports `zod`, `schemas` or `validate`.
+- **Static `src/app/opengraph-image.png` (1200×630) and `apple-icon.png` (180×180)** replace
+  the `.tsx` image generators. The alt text lives in `opengraph-image.alt.txt`.
+- New tests: `src/lib/analytics.test.ts`, `src/lib/supabase.test.ts` and
+  `src/store/accountStore.test.ts` (queueing and replay, tagged reads, sync gating).
+- `postbuild` (scripts/postexport.mjs) now fails the build when `NEXT_PUBLIC_POSTHOG_HOST` or
+  `NEXT_PUBLIC_SUPABASE_URL` is not an https URL or points at a loopback/localhost host. For
+  local measurement builds against mock servers, set `ROCKET_DRAFT_ALLOW_LOCAL_ENDPOINTS=1` in
+  the shell; env files are ignored for this flag. Such an out/ must never be deployed. Every
+  build now logs whether accounts (Supabase) and analytics (PostHog) are ENABLED and where
+  each value came from (shell or .env.local).
+- `postbuild` checks that every image URL src/lib/assets.ts can request (each manifest org ×
+  width, special × width, rank and flag) exists in out/, and fails otherwise.
+- `npm run test:contract` (the persist-contract save gate) now runs in `prebuild`. Every
+  `npm run build`, `npm run deploy` and Workers Builds deploy is blocked if a persist key,
+  version, migrate, partialize or skipHydration change breaks existing saves.
+
+#### Changed
+- **Hosting moved from Vercel to Cloudflare Workers Static Assets as a pure static export**
+  (DESIGN-DECISIONS #102).
+  - `next.config.ts` sets `output: "export"`. Nothing that needs a server may be added:
+    route handlers that read the request, rewrites, redirects or `headers()`,
+    middleware/proxy, Server Actions, ISR.
+  - `robots.ts`, `sitemap.ts` and `manifest.ts` are `force-static`; the manifest icon now
+    points to `/apple-icon.png`.
+  - `www` → apex is now a Cloudflare zone Redirect Rule (ops), not something in code.
+  - The runtime image optimizer (`/_next/image`) and `minimumCacheTTL` are gone.
+  - Removed: `@vercel/analytics`, `@vercel/speed-insights` and the 5 unused template SVGs
+    in `public/`.
+- **Internal links prefetch only on intent** (DESIGN-DECISIONS #103). All 43 links in 15
+  files now use `AppLink`.
+  - It renders `prefetch={false}` until the first real mouse hover (`pointerType ===
+    "mouse"`) or keyboard focus (`:focus-visible`). After that, that link uses Next's normal
+    prefetch.
+  - Touch taps never prefetch, so a prefetch can't race the navigation.
+  - Viewport prefetch had cost 5 requests per visible link plus route JS: 41–68% of
+    own-host requests in the baseline runs.
+- **`experimental.inlineCss` removed, which reverses [1.1.7]** (DESIGN-DECISIONS #104). The
+  Tailwind CSS is 149 KB raw / 22.2 KB gz / 17.4 KB br, and inlining copied it into every
+  HTML page *and* every RSC `.txt` payload. Measured with the option off vs on:
+  - `index.html`: 42.2 KB raw / 7.8 KB br (was 488.6 KB / 27.4 KB)
+  - `play.html`: 28.4 KB / 5.1 KB (was 474.7 KB / 24.7 KB)
+  - `play.txt` (navigation payload): 11.8 KB / 2.6 KB (was 306.3 KB / 20.0 KB)
+  - `out/`: 35.7 MB (was 80.0 MB)
+
+  The cost is that a first visit now downloads 2 stylesheets (149 KB + 1.8 KB raw); after
+  that they are cached as immutable.
+- **Tailwind scans only `src/`** (`@import "tailwindcss" source("..")` in `globals.css`). The
+  CSS went from 150,359 to 149,004 B, and 7 selectors no file in `src/` uses were dropped.
+- **Asset consumers use the manifest.**
+  - `TeamLogo`, `CountryChip`, `RankBadge`, GameCard's `SpecialArt` and the results share
+    card now get their URLs from `assets.ts`.
+  - Org logos pick their file by display size: ≤ 32 CSS px gets the 96 px file, anything
+    larger the 264 px file. The `<img>` gets width/height, `loading="lazy"` and
+    `decoding="async"`.
+  - The share card draws the 264 px WebP logo.
+  - `next/image` `priority` became `preload`. Next 16 deprecated `priority`; the behaviour
+    is the same.
+  - The failure-state resets that ran in `useEffect` are now derived state.
+- **posthog-js (~75 KB gz) and @supabase/supabase-js (~61 KB gz) are dynamic `import()`s,
+  out of every page's bundle** (DESIGN-DECISIONS #109).
+  - PostHog loads after the window `load` event plus `requestIdleCallback` (3 s deadline,
+    `setTimeout` fallback on Safari, 10 s cap if `load` never fires).
+  - Until then, game events are queued (cap 50) with their original timestamps and
+    `$current_url`/`$pathname`. SPA pageviews from before init are replayed the same way.
+  - Supabase starts at page load only when a stored `sb-<ref>-auth-token` (or its
+    code-verifier) or an auth-redirect URL is present. Guests download it only when they
+    send a sign-in code, open the leaderboards, or sign in from another tab.
+- **PostHog config**: `advanced_disable_flags: true` (no `config.js`, no `/flags`, no 5-minute
+  polling; nothing in `src` uses flags) and `capture_pageleave: false` (no insight uses
+  `$pageleave`). The unused `posthog-js/react` provider was removed. All other init options
+  are unchanged (token, EU host, `defaults`, localStorage persistence name, DNT,
+  history-change pageviews), so the anonymous distinct id survives the update.
+- **Analytics discontinuity at the cutover: compare pre/post numbers with care.**
+  - $pageview, unique-user and session counts dip by design. A visit that bounces before
+    load + idle + chunk download now records no $pageview and no session; before, the first
+    $pageview fired at hydration.
+  - `$pageleave` is no longer collected, so PostHog Web Analytics bounce rate and session
+    duration change for single-page sessions.
+  - **UTM caveat:** a visitor who lands on `/?utm_source=…` and navigates inside the SPA
+    before the SDK starts keeps the right landing `$current_url`, but the `utm_*`/`gclid`
+    campaign properties are not attached to the person or session. Channel/UTM breakdowns
+    undercount. No documented insight uses UTMs.
+  - A few events can be lost if the tab closes in the seconds before the SDK arrives.
+- **No runtime zod** (DESIGN-DECISIONS #106).
+  - `src/data/index.ts` now serves typed casts of the JSON. Schema and integrity
+    validation moved to `src/data/validate.ts` and runs in `npm test`,
+    `npm run validate:data` and **`prebuild`**, so an invalid dataset still fails
+    `npm run build`.
+  - The `@/data` bundle dropped from 690 KB raw / 118.0 KB gz to 355 KB / 51.1 KB (zod plus
+    the schemas were 66.2 KB gz).
+  - Module init is ~60–80 ms less main-thread work (Node desktop medians 81.8–102.7 ms →
+    21.4 ms; phones are slower in absolute terms).
+  - The runtime output is identical to zod's, including stripping the undeclared `secret`
+    key from 2 special cards. The only difference is key order in 68 records, which nothing
+    depends on.
+- **GeistMono `preload: false`.** It is redeclared through `next/font/local` with the same
+  file, variable and fallbacks, which cuts font preloads from 5 to 4. The first `font-mono`
+  text (region chips) can briefly render in `ui-monospace` until the font arrives
+  (`display: swap`).
+- **Career mode is env-driven** (`FEATURES.careerMode = NODE_ENV !== "production" ||
+  NEXT_PUBLIC_CAREER_MODE === "1"`; ROAD-TO-WORLDS-DECISIONS R19).
+  - It is off in production builds unless `NEXT_PUBLIC_CAREER_MODE=1` is set at build time,
+    inline, for a local preview build only (never in `.env*` files or the production
+    Worker's build variables). Dev and tests keep it on.
+  - `src/app/career/layout.tsx` is now a server component: `robots` noindex/nofollow, plus
+    `notFound()` when the flag is off. The client guard and UI moved unchanged into
+    `CareerShell.tsx`.
+  - `postexport` deletes `out/career*` when the flag is off. It loads `.env*` the same way
+    `next build` does, and fails instead of deleting if the home page links `/career` or
+    the sitemap lists it.
+- **Career copy split out of the core dictionaries.**
+  - `CAREER` is gone from `copy.en.ts`/`copy.pt.ts`. Career modules read
+    `copy.career.{en,pt}.ts` through `useCareerCopy()` / `getCareerCopy()`
+    (`src/content/careerCopy.ts`), and `useCopy().CAREER` no longer exists.
+  - The core copy chunk on every page went from 149,573 to 76,854 B raw (55.2 → 28.6 KB
+    gz).
+  - The 4 home-card strings moved to `HOME.careerTitle/careerBadge/careerDesc/careerCta`
+    with the same EN/PT text.
+- **Body ambient glows moved to a fixed composited `body::before` layer.** They were on
+  `background-attachment: fixed`, which repainted the whole page on every scroll frame.
+  - Desktop and Android look the same: pixel diffs are ≤ 2/255.
+  - **iOS Safari looks different while scrolled.** It ignores `background-attachment:
+    fixed`, so before, its glows scrolled with the page and repeated every viewport height.
+    Now they stay fixed to the viewport, as on other browsers.
+- **Reduce motion now also removes blur.** Players with Settings → Reduce motion or the OS
+  reduced-motion preference get the lite-fx look: no blur, opaque bars.
+- **Generated image widths have a single source of truth.** scripts/build-images.mjs writes
+  `widths` into src/generated/asset-manifest.json, and src/lib/assets.ts derives
+  ORG_LOGO_WIDTHS and SPECIAL_PHOTO_WIDTHS (now `readonly number[]`) from it, choosing the
+  smallest width that covers the request: 3× density for logos, so ≤ 32 CSS px still gets
+  the 96 px variant.
+
+#### Fixed
+- **22 guaranteed 404s per draft run, re-fired on every card mount.** In the measured run, 9
+  came from region flags (`/flags/na.png` and similar) and 13 from the 2 logo-less orgs that
+  showed up. The 3 photo-less specials also 404'd whenever they were shown. Each 404 returned
+  the full ~490 KB 404 page. In production, missing
+  assets now render their fallback (text chip, monogram, CSS emblem, stylized art) with no
+  request. Root cause: `TeamLogo`, `CountryChip`, `RankBadge` and `SpecialArt` built asset
+  URLs blindly and relied on `onError`, and that failure state lived per mount. The fix
+  decides from the build-time asset manifest.
+- **A special card's photo fallback could stick after the card changed.** Root cause:
+  `SpecialArt`'s `failed` flag was component state that was never reset for a new card. It
+  is now derived from the URL that failed.
+- **Windows-built static export: page prefetch files written to the wrong path.** Every
+  `__PAGE__` prefetch for those routes 404'd (7 404s / 3.3 MB on one cold home view). Root
+  cause: Next's export builds the segment-file path with `path.relative`, which uses
+  backslashes on Windows, while the segment encoder only replaces `/`. The files were
+  written as `X/__next.X/__PAGE__.txt` instead of `X/__next.X.__PAGE__.txt`. `postexport`
+  now flattens them (55 files in 37 folders on this build) and checks every name against
+  Next's own encoder. It does nothing on Linux.
+- **Duplicate favicon/icon links in `<head>`.** Root cause: a manual `metadata.icons` entry
+  in `layout.tsx` on top of the `favicon.ico` / `icon.svg` file conventions. It is removed.
+  Next only emits the file-convention icons (including `apple-touch-icon`) when
+  `metadata.icons` is unset.
+- **Cloud sync could overwrite the cloud backup after a failed read.** Root cause:
+  `fetchCloudRow` returned `null` both for "no row" and for "error", so the push went ahead.
+  The read is now tagged (`ok` / `no-row` / `error`), and an error aborts the sync with
+  nothing merged or pushed.
+- **Cloud sync ran up to 3 times per page load and again on every tab refocus.** Root
+  cause: every auth event, including `TOKEN_REFRESHED` and the refocus `SIGNED_IN`, called
+  `syncNow`, and `init` also called it through `getSession`. Now only one sync runs at a
+  time per user. It runs once per page load per signed-in user (`INITIAL_SESSION` / first
+  `SIGNED_IN`). A failed sync may be retried by a later `SIGNED_IN`.
+- **Cloud sync could revert progress made during the cloud read.** Root cause: the local
+  snapshot was taken *before* the read, and sync did not wait for the profile store to
+  hydrate. The snapshot is now taken after the read, and sync waits for profile hydration.
+- **`/career` was exported with HTTP 200, `index, follow` and canonical `/` even with the flag
+  off.** Root cause: the only gate was a client-side `useEffect` redirect in
+  `career/layout.tsx`, and a static export writes every route. The fix is the server
+  layout with `notFound()` + noindex, plus the `postexport` strip.
+- **The legendary cursor-holo hue shift (`.holo-rainbow-legendary`) kept animating with
+  Reduce motion on.** Root cause: the class was never added to the reduce-motion selector
+  lists.
+- **Lint.** 3 `react-hooks/set-state-in-effect` errors (TeamLogo, RankBadge, Badge) are
+  fixed; root cause: failure state was reset inside effects, and it is now derived. Also
+  fixed: `prefer-const` and unused imports/vars in `careerV03.test.ts` and `careerFlow.ts`;
+  root cause: leftovers from the v0.3 pass.
+- **Cloud sync: a signed-in player's progress reaches the cloud backup and their leaderboard
+  row again during a session.** A debounced push (`CLOUD_SYNC.pushDebounceMs`, 4.5 s after
+  the last profile change, or at once when the tab is hidden) runs the guarded sync only when
+  the durable profile differs from what this tab last pushed. Refocus `SIGNED_IN` and
+  `TOKEN_REFRESHED` still don't sync. Root cause: the NET-2 once-per-page-load hardening
+  removed the refocus/token-refresh syncs, which had been the de-facto in-session push,
+  without adding the planned post-run push, so a session's progress stayed local until a
+  full reload.
+- **Display name: the cloud name is shown as soon as the read succeeds**, and an aborted sync
+  (read error, push error, unexpected error) keeps the shown name or falls back to the email
+  prefix. A late sync never shows a name after a sign-out or user switch. Root cause: the new
+  abort paths returned before the only `set({ username })`, so a signed-in player could see
+  no name and no rename pencil (v1.4.4 always set one).
+- **Cross-tab: a sync folds the profile currently saved in localStorage into its local
+  snapshot** with the monotonic `mergeProfiles`. Storage that is unreadable or holds another
+  schema version is ignored. Root cause: zustand persist never re-reads storage, so an idle
+  tab woken by a sign-in in another tab merged and wrote back its page-load profile, which
+  could overwrite the other tab's newer save.
+- **A sync that finishes after a sign-out no longer marks the user as synced for this page
+  load.** Root cause: `syncedThisLoad.add` ran unconditionally, so signing back in during the
+  same page load skipped the sync.
+- **WebP URLs now change when encoder settings change.** Root cause: the `/img/` file hash
+  covered only the source PNG bytes, so changing quality or the rank box size re-encoded files
+  under the same `immutable` URLs, and the node_modules/.cache settings stamp was lost on
+  `npm ci`. Each category's encoder settings (ORG_WEBP, SPECIAL_WEBP, {box, RANK_WEBP}) are
+  now part of its hash, and the stamp is removed. All /img/ URLs changed once; none had been
+  served in production yet.
+
+#### Known limitations / follow-ups
+- **Touch devices never prefetch.** A tap fetches the route's `.txt` and JS on demand: one
+  small request, but a little less instant than a prefetched link.
+- **No deploy-skew protection** (Vercel had it). A long-lived tab can 404 on a chunk that a
+  new deploy deleted, including the lazy Supabase/PostHog chunks. The leaderboard then shows
+  empty and sign-in shows the generic error until the user reloads. Possible mitigation
+  (not done): keep the previous build's `_next/static` in each upload.
+- `/play/` and `/play.html` redirect with **307** (Vercel used 308). Minor SEO difference.
+- `_headers` rules also apply to 404s and redirects (a 404 under `/flags` would be cached
+  for 7 days). Production code no longer requests missing files.
+- A PNG dropped into `public/` reaches production only after the next `npm run build`
+  (`prebuild` regenerates the WebP files and the manifest). Dev shows it immediately. Always
+  build through `npm run build`: a bare `next build` skips data validation and image
+  generation.
+- 404s under `/_next/static/*` and `/img/*` inherit the `immutable` Cache-Control from
+  `public/_headers`, so those URLs must never be reused for different content. The image
+  hash now covers the source bytes plus the encoder settings (see Fixed).
+- **Signed-in "Reset all progress" is restored from the cloud by the next sync** (the merge is
+  monotonic), now about 4.5 s later. Product decision pending: hide the reset for signed-in
+  players, or reword its copy.
+- A rename that lands between a background sync's cloud read and its upsert can be reverted
+  in the cloud. The window is pre-existing; the debounced push makes it more frequent.
+- Content pages (`/about`, `/faq`, …, `/pt/*`) emit no `og:image`. This is pre-existing and
+  unchanged; their `openGraph` objects replace the root's without inheriting its images.
+- Ops before cutover:
+  - `wrangler login`;
+  - the `rocketdraft.app` zone active on Cloudflare, with the old Vercel apex record
+    removed (the custom-domain route fails until then);
+  - the `www` → apex Redirect Rule;
+  - `NEXT_PUBLIC_*` and `GOOGLE_SITE_VERIFICATION` available at build time (`.env.local`
+    for a local `npm run deploy`, Build variables for Workers Builds).
+
+---
+
 ## [1.5.0-alpha] — UNRELEASED · "Road to Worlds" (awaiting Miguel's review — staging)
 
 ### v0.3 adjustment pass (2026-07-11 — Miguel's second playtest list)

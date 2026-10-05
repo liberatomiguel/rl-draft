@@ -16,11 +16,11 @@
  * constants or the engine projection — never inline literals.
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { CAREER_CALENDAR, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
 import { useCopy } from "@/content/copy";
-import type { CareerCopy } from "@/content/copy.career.en";
+import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type {
   CareerSave,
   SquadPlayer,
@@ -76,7 +76,7 @@ export function TrainingScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
   const t = useCopy();
-  const C = t.CAREER;
+  const C = useCareerCopy();
   const setAutoTrain = useCareerStore((s) => s.setAutoTrain);
   const setTrainingFocus = useCareerStore((s) => s.setTrainingFocus);
   const setTrainingIntensity = useCareerStore((s) => s.setTrainingIntensity);
@@ -261,19 +261,19 @@ export function TrainingScreen() {
             {C.training.coachEffect(save.coach.name, coachEffectPct)}
           </span>
         ) : (
-          <Link
+          <AppLink
             href="/career/market"
             className="rounded-full border border-orange/40 bg-orange/10 px-3 py-1 font-semibold text-orange-bright transition-colors hover:bg-orange/20"
           >
             {C.training.noCoach}
-          </Link>
+          </AppLink>
         )}
-        <Link
+        <AppLink
           href="/career/finances"
           className="rounded-full border border-line-strong bg-white/5 px-3 py-1 font-semibold text-sub transition-colors hover:text-ink"
         >
           {C.training.facilityEffect(gearPct)}
-        </Link>
+        </AppLink>
       </div>
 
       {/* ==================== 3 — delegate toggle ==================== */}

@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_UNOFFICIAL, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
+import { useCareerCopy } from "@/content/careerCopy";
 import { repGainFor, prizeFor, pointsFor } from "@/engine/career/economy";
 import { placementOf } from "@/engine/career/careerResults";
 import type {
@@ -85,7 +86,7 @@ import {
 export function EventScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
-  const C = useCopy().CAREER;
+  const C = useCareerCopy();
   const router = useRouter();
   const simEvent = useCareerStore((s) => s.simEvent);
 
@@ -174,8 +175,7 @@ function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating: numbe
 }
 
 function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
-  const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const D = C.dates;
   const router = useRouter();
   const enterEvent = useCareerStore((s) => s.enterEvent);
@@ -374,7 +374,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
 
 function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const T = copy.TOURNAMENT_UI;
   const playEventRound = useCareerStore((s) => s.playEventRound);
   const simEvent = useCareerStore((s) => s.simEvent);
@@ -782,8 +782,7 @@ function repPreviewFor(save: CareerSave, def: CareerEventDef, placement: Placeme
 }
 
 function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
-  const copy = useCopy();
-  const C = copy.CAREER;
+  const C = useCareerCopy();
   const router = useRouter();
   const completeEvent = useCareerStore((s) => s.completeEvent);
   const reduced = useSettings((s) => s.reducedMotion);
