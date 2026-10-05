@@ -14,7 +14,7 @@
  * back to plain navigation.
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useCopy } from "@/content/copy";
 
 /**
@@ -37,11 +37,11 @@ export function GuardedHomeLink({
   className,
   children,
   ...rest
-}: React.ComponentProps<typeof Link>) {
+}: React.ComponentProps<typeof AppLink>) {
   return (
-    <Link href={href} className={className} {...rest}>
+    <AppLink href={href} className={className} {...rest}>
       {children}
-    </Link>
+    </AppLink>
   );
 }
 

@@ -2,7 +2,7 @@
 
 /** Profile: rank (profile art set), XP, lifetime stats, achievements, run history. */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { achievements as achievementDefs, specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
@@ -155,11 +155,11 @@ export default function ProfilePage() {
       <SectionTitle
         title={P.achievements}
         right={
-          <Link href="/achievements">
+          <AppLink href="/achievements">
             <Badge tone="blue" className="cursor-pointer hover:bg-blue/20">
               {P.viewAll(Object.keys(earned).length, achievementDefs.length)}
             </Badge>
-          </Link>
+          </AppLink>
         }
         className="mb-4"
       />

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { PT } from "@/content/copy.pt";
 import { SITE } from "@/config/site";
 import { HomeSeoContent } from "@/components/content/HomeSeoContent";
@@ -54,12 +54,12 @@ export default function PtHomePage() {
           {PT.APP.description}
         </p>
         <p className="mt-8">
-          <Link
+          <AppLink
             href="/play"
             className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all hover:brightness-110"
           >
             {PT.HOME_SEO.links.play}
-          </Link>
+          </AppLink>
         </p>
       </section>
 

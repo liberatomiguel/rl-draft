@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
 import { AppShell } from "@/components/layout/AppShell";
@@ -25,6 +24,32 @@ const rajdhani = localFont({
     { path: "./fonts/rajdhani-600.woff2", weight: "600", style: "normal" },
     { path: "./fonts/rajdhani-700.woff2", weight: "700", style: "normal" },
   ],
+});
+
+// Geist Mono — the SAME file + options as `geist/font/mono`'s GeistMono (keep
+// in sync if that package changes them), redeclared only to add
+// `preload: false`: it styles a little small mono text, so it no longer costs
+// every first visit a 71 KB <link rel="preload">; the browser fetches it when
+// mono text first renders (display: swap). Keep the const NAMED `GeistMono`:
+// next/font derives the font-family name from it. Do not also import
+// `geist/font/mono` — that would bring back the preloaded copy.
+const GeistMono = localFont({
+  src: "../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
+  variable: "--font-geist-mono",
+  preload: false,
+  adjustFontFallback: false,
+  fallback: [
+    "ui-monospace",
+    "SFMono-Regular",
+    "Roboto Mono",
+    "Menlo",
+    "Monaco",
+    "Liberation Mono",
+    "DejaVu Sans Mono",
+    "Courier New",
+    "monospace",
+  ],
+  weight: "100 900",
 });
 
 const TITLE = `${SITE.name} — RLCS Draft Game · Rocket League Esports History`;
@@ -72,12 +97,18 @@ export const metadata: Metadata = {
     description: APP.description,
     creator: "@liberatoRL_",
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
-  icons: { icon: "/icon.svg", shortcut: "/favicon.ico" },
+  // NEXT_PUBLIC_NOINDEX=1 → staging build: never indexed (production omits it).
+  robots:
+    process.env.NEXT_PUBLIC_NOINDEX === "1"
+      ? { index: false, follow: false }
+      : {
+          index: true,
+          follow: true,
+          googleBot: { index: true, follow: true, "max-image-preview": "large" },
+        },
+  // No `icons` / `openGraph.images` here: favicon.ico, icon.svg, apple-icon.png
+  // and opengraph-image.png in src/app are file conventions Next links itself
+  // (with cache-busting hashes). A manual entry only duplicated those tags/requests.
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: SITE.name, statusBarStyle: "black-translucent" },
   formatDetection: { telephone: false },

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { flagSrc } from "@/lib/assets";
 import { cx } from "@/lib/util";
 
 type Tone = "neutral" | "blue" | "orange" | "good" | "bad" | "gold";
@@ -39,21 +40,23 @@ export function Badge({
 /**
  * Country chip: real flag from public/flags/<cc>.png when present
  * (populated by `npm run fetch:assets -- --flags`), text code otherwise.
- * Region codes (NA/EU/…) have no flag file and use the text fallback.
+ * Region codes (NA/EU/…) have no flag file: the asset manifest knows that
+ * (flagSrc → null), so they render the text chip with no request at all.
+ * onError stays as a safety net for a flag that fails to load.
  */
 export function CountryChip({ code, className }: { code: string; className?: string }) {
-  const src = `/flags/${code.toLowerCase()}.png`;
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  const src = flagSrc(code);
+  // The URL that failed to load (derived reset: a new code → a new src → retry).
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  if (!failed) {
+  if (src && src !== failedSrc) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt={code}
         title={code}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         className={cx(
           "inline-block h-3.5 w-5 rounded-[3px] border border-line-strong object-cover shadow-sm",
           className,

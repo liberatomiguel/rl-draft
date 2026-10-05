@@ -2,17 +2,20 @@ import type { MetadataRoute } from "next";
 import { SITE } from "@/config/site";
 import { PAGE_ROUTES } from "@/content/pages";
 
+// Required by `output: "export"`: written to out/sitemap.xml at build time.
+export const dynamic = "force-static";
+
+const LAST_MODIFIED = "2026-06-18"; // v1.3 SEO pass — bump on meaningful content change
+const abs = (path: string) => `${SITE.url}${path === "/" ? "" : path}`;
+
+type Freq = "weekly" | "monthly" | "yearly";
+
 /**
  * Sitemap. The run flow lives behind one `/play` route; the rest are content /
  * hub pages. Localized content pages emit both their EN and PT URLs with
  * hreflang alternates so Google serves the right language and folds the twins.
  * (Profile/settings are per-device and intentionally omitted.)
  */
-const LAST_MODIFIED = "2026-06-18"; // v1.3 SEO pass — bump on meaningful content change
-const abs = (path: string) => `${SITE.url}${path === "/" ? "" : path}`;
-
-type Freq = "weekly" | "monthly" | "yearly";
-
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [];
   const homeLangs = { "en-US": abs("/"), "pt-BR": abs("/pt") };

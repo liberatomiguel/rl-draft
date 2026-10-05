@@ -11,6 +11,9 @@
  * - The EN named groups are re-exported for back-compat (server metadata reads
  *   them from `copy.en` directly; any client spot not yet migrated still works,
  *   just in EN).
+ * - Career mode (Road to Worlds) copy is NOT in this dictionary — career code
+ *   reads it via `useCareerCopy()` / `getCareerCopy()` in `careerCopy.ts`, so
+ *   the draft-game pages don't ship it.
  */
 
 import { useSettings } from "@/store/settingsStore";

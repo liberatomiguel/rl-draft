@@ -5,16 +5,19 @@
  *   node scripts/optimize-images.mjs --check    report only, exit 1 if any file is too heavy (CI/pre-commit)
  *
  * Why: the curated source PNGs come out of editing tools at ~500KB (600x823).
- * The client never receives them — `next/image` transcodes to a ~256px WebP/AVIF
- * — but on a COLD Vercel cache the optimizer must still download + transform the
- * full source before serving the first request, so a fat source = slow first
- * paint (this measurably dropped the /collection Speed Insights score in v1.1.2).
+ * Production clients get the 256/512px WebP variants that
+ * scripts/build-images.mjs derives from these sources at build time, but the
+ * sources are still committed, deployed (raw /cards/specials/*.png) and served
+ * as-is in dev, so they are kept light.
  *
- * The fix: cap the source at 512px wide (plenty — the largest on-screen use is
- * the detail modal at ~208px CSS) and re-encode as a quantized PNG. Alpha on
- * cut-out player photos is preserved; fully-opaque stage shots correctly drop
- * the redundant channel. Result: ~46MB -> ~12MB, no visible quality change
- * (the client output WebP is byte-for-byte indistinguishable at display size).
+ * The fix: cap the source at 512px wide (= the largest generated variant; the
+ * largest on-screen use is the detail modal at ~208px CSS) and re-encode as a
+ * quantized PNG. Alpha on cut-out player photos is preserved; fully-opaque
+ * stage shots correctly drop the redundant channel. Result: ~46MB -> ~12MB,
+ * no visible quality change at display size.
+ *
+ * Separate concern from scripts/build-images.mjs (which never edits sources).
+ * A re-quantized source gets a new content hash there, i.e. new WebP URLs.
  *
  * Idempotent: files already within budget (<= MAX_WIDTH and < SKIP_BYTES) are
  * skipped, so re-running never re-quantizes an already-light file.

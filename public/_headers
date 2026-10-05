@@ -1,0 +1,51 @@
+# Cloudflare Workers Static Assets response headers (copied to out/_headers by
+# `next build`; parsed by Cloudflare, never served itself).
+# Syntax: https://developers.cloudflare.com/workers/static-assets/headers/
+# - Every rule that matches a path applies; a header set by two rules has its
+#   values comma-joined. So Cache-Control is set ONLY in path-specific rules,
+#   never under /*.
+# - HTML pages and *.txt RSC payloads have no rule on purpose: they keep the
+#   host default (public, max-age=0, must-revalidate + ETag), so a deploy is
+#   visible on the next load and always matches its hashed chunks.
+# - Limit: 100 rules.
+
+# Content-hashed by Next (JS, CSS, fonts) or by scripts/build-images.mjs
+# (WebP variants): a changed file always gets a new URL.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Not hashed (stable names in public/) — moderate TTLs.
+/flags/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/orgs/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/cards/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/ranks/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/icon.svg
+  Cache-Control: public, max-age=604800
+
+/favicon.ico
+  Cache-Control: public, max-age=604800
+
+/apple-icon.png
+  Cache-Control: public, max-age=604800
+
+/opengraph-image.png
+  Cache-Control: public, max-age=604800
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400
+
+# Security headers for every response (no Cache-Control here — see above).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

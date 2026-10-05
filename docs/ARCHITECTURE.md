@@ -11,19 +11,27 @@ below it. **Game logic never imports React; UI never computes game rules.**
 ├──────────────────────────────────────────────────────────┤
 │  Engine    src/engine (pure TypeScript, deterministic)   │  game rules
 ├──────────────────────────────────────────────────────────┤
-│  Data      src/data (JSON + zod) · src/config/balance.ts │  content + tuning
+│  Data      src/data (JSON; zod at build/CI) · balance.ts │  content + tuning
 └──────────────────────────────────────────────────────────┘
 ```
 
 ## Data layer
 
 - `src/data/*.json` — the hand-curated dataset (see DATA-GUIDE.md).
-- `src/data/schemas.ts` — zod schemas; a typo in a JSON file becomes a clear
-  startup error, not a silent gameplay bug.
-- `src/data/index.ts` — parses everything once, builds lookup `Map`s, runs
-  referential-integrity checks (every id mentioned anywhere must exist), and
-  exports typed arrays/maps. **Every other module reads data through here** —
-  a future Liquipedia/Supabase source only changes this file's internals.
+- `src/data/index.ts` — the runtime data layer. It serves **typed casts** of the
+  JSON (no zod in the browser), builds the lookup `Map`s (throwing on a
+  duplicate id), and exports typed arrays/maps. **Every other module reads data
+  through here** — a future Liquipedia/Supabase source only changes this file's
+  internals. It still mirrors zod's one transform: it strips the undeclared
+  `secret` key from 2 special cards.
+- `src/data/schemas.ts` + `src/data/validate.ts` — **build/CI-time validation
+  only.** `validateDataset()` runs the zod schemas, duplicate-id checks,
+  referential integrity (every id mentioned anywhere must exist) and the rank
+  check. `src/data/integrity.test.ts` calls it, so it runs in `npm test`,
+  `npm run validate:data` and the `prebuild` hook of `npm run build`. A typo in a
+  JSON file therefore fails the build, not a player's page load. That test also
+  asserts the runtime casts deep-equal the zod output (an undeclared key fails
+  CI) and that no runtime file imports `zod`/`schemas`/`validate`.
 - `src/config/balance.ts` — every tunable number (difficulty profiles, rating
   weights, chemistry weights, simulation variance, XP, ranks).
 
@@ -67,7 +75,15 @@ version** — the actual schema version is the `version` number passed to the
 persist middleware (runStore at version 3, profileStore at version 11, settings
 unversioned). The fourth, `accountStore` (v1.4), holds the live Supabase
 session/sync state and is **not localStorage-persisted** — it rehydrates from
-the Supabase session at runtime. A fifth store, `achievementToastStore`, is also
+the Supabase session at runtime. The Supabase SDK is a lazy chunk, loaded at
+startup only when a stored session exists. A full sync runs once per page load
+per signed-in user, then a debounced push (`CLOUD_SYNC.pushDebounceMs`) sends
+later profile changes. Every sync waits for profile hydration, folds in the
+profile currently saved in localStorage, and aborts without pushing if the
+cloud read fails (see `ACCOUNTS-SETUP.md`). The persist keys and versions are
+frozen by `src/store/persistContract.test.ts` (DESIGN-DECISIONS #107). The
+career store (`rocket-draft:career:v1`, version 3) loads only when career mode
+is on. A fifth store, `achievementToastStore`, is also
 **non-persisted** (an in-memory toast queue, no localStorage key).
 
 - `runStore.ts` — the active run (one state machine:
@@ -188,7 +204,10 @@ lineup force-injected into one regional-mode offer). **Only SAM is live today.**
 custom game events. It sends each event to a single sink — PostHog (the Vercel
 Web Analytics sink was dropped in v1.4 as redundant) — and is a **no-op until
 keyed** (PostHog needs `NEXT_PUBLIC_POSTHOG_KEY`), so calling it never blocks
-gameplay.
+gameplay. `posthog-js` is a **lazy chunk**. `PostHogProvider` imports it after
+the window `load` event plus idle time, and until then `trackEvent` queues
+events (cap 50) with their original timestamps and URLs, then replays them.
+Feature flags/remote config and `$pageleave` are disabled.
 Event payloads are pre-flattened to scalars. Only the UI/store layer may call
 it — **the engine must NEVER import analytics** (it has to stay pure and
 deterministic, AGENTS.md hard rule). The event catalogue is the typed `GameEvents`
@@ -210,12 +229,126 @@ gotcha) see the operator guide **`docs/ANALYTICS.md`**.
 - `components/ui/*` — small presentational primitives.
 - `src/content/copy.ts` is the **access layer** for player-facing strings (tone:
   broadcast desk); the actual strings live in `copy.en.ts` + `copy.pt.ts`, with
-  the active language selected via `settingsStore` (`lang`).
+  the active language selected via `settingsStore` (`lang`). Career strings are
+  split out into `copy.career.{en,pt}.ts`, read only through `useCareerCopy()`
+  (`src/content/careerCopy.ts`), so they never ship in the core copy chunk.
+- **Internal links use `AppLink`** (`components/ui/AppLink.tsx`), never
+  `next/link` directly; ESLint enforces it. It prefetches only on intent (mouse
+  hover / keyboard focus), not on viewport entry (DESIGN-DECISIONS #103).
+- **Images go through `src/lib/assets.ts`** (see Asset pipeline). Never
+  hard-code `/orgs/…`, `/flags/…`, `/ranks/…` or `/cards/specials/…` URLs in a
+  component.
 - Other `src/lib` helpers: `rng` (seeded RNG), `daily` (daily generator),
   `analytics` (`trackEvent`), `sfx` (sound), `shareCard` (result-card image),
   `util` (ids/misc).
 - Theme tokens + card frames + animations live in `src/app/globals.css`
-  (Tailwind v4 `@theme`).
+  (Tailwind v4 `@theme`). Tailwind scans `src/` only (`source("..")`). The
+  "Lite effects" block at the end applies under `html.lite-fx` (automatic on
+  low-memory devices or OS reduced motion, set in `SettingsEffects.tsx`) and
+  under `html.force-reduce-motion` (Settings → Reduce motion). Its opaque
+  fallbacks match exact utility-class strings in AppShell, CareerTopBar,
+  FoundingSplash, FirstRunTutorial, ResultsScreen and Modal, so if you change
+  those elements' background/blur classes, update the matching selector.
+
+## Asset pipeline (images)
+
+The drop-in convention is unchanged: PNGs go in `public/orgs/`, `public/flags/`,
+`public/ranks/{menu,profile}/` and `public/cards/specials/`. What ships to
+production is generated from them:
+
+- **`scripts/build-images.mjs`** (sharp; runs in `prebuild`, or
+  `npm run build:images`) writes content-hashed WebP to `public/img/**`
+  (git-ignored):
+  - org logos at 96 and 264 px (`orgs/<key>.<hash>.<w>.webp`; `<key>` is
+    `<orgId>` or `<orgId>@<era>`);
+  - special photos at 256 and 512 px;
+  - rank emblems in a 224 px box.
+
+  It also writes the committed **`src/generated/asset-manifest.json`**, which
+  says which flags, orgs, specials and ranks have a file. It is deterministic
+  and incremental, prunes stale files, and each output's URL hash covers the
+  source bytes plus that category's encoder settings, so a settings change
+  yields new URLs (no cache stamp; `--force` redoes everything). Widths are
+  written to the manifest's `widths` and read by `src/lib/assets.ts`; change
+  them only in `scripts/build-images.mjs` (`ORG_WIDTHS` / `SPECIAL_WIDTHS`).
+  `postexport` verifies that every manifest URL exists in `out/`.
+- **`src/lib/assets.ts`** is the only place that builds asset URLs: `flagSrc`,
+  `orgLogoSrc(key, displayPx)` (≤ 32 CSS px → 96 px file, else 264 px),
+  `hasSpecialPhoto`, `specialPhotoSrc(id, width)` and `rankSrc(variant, id)`.
+  - In production they return the hashed, percent-encoded `/img/…` URL
+    (`/flags/<cc>.png` for flags), **or `null` when the file doesn't exist**.
+    Components then render their fallback (text chip, monogram, CSS emblem,
+    stylized art) without making a request.
+  - In dev/test they return the raw PNG paths and treat every asset as present,
+    so a freshly dropped PNG shows on refresh.
+- **`src/lib/imageLoader.ts`** is the custom `next/image` loader
+  (`images.loader: "custom"`). The only `next/image` is the special-card photo:
+  the loader maps `/cards/specials/<id>.png` to the 256/512 px WebP, and
+  `deviceSizes: [512]` + `imageSizes: [256]` keep the srcset at exactly those two
+  widths. In dev, `unoptimized` serves the raw PNG.
+- A PNG dropped after a build reaches production only on the next
+  `npm run build`.
+
+## Hosting & build (static export on Cloudflare)
+
+Production is a **pure static export** served by **Cloudflare Workers Static
+Assets**, with **no Worker script** (DESIGN-DECISIONS #102; account/DNS steps in
+the runbook `docs/DEPLOY-CLOUDFLARE.md`). Static-asset
+requests are not metered there. There is no server runtime, so nothing may be
+added that needs one: route handlers that read the request,
+`rewrites`/`redirects`/`headers()`, middleware/proxy, Server Actions, ISR, or
+dynamic routes without `generateStaticParams`.
+
+- **`next.config.ts`** sets `output: "export"` (writes `out/`), `reactCompiler`
+  and the custom image loader. `trailingSlash` stays false. There is no
+  `inlineCss` (DESIGN-DECISIONS #104). `robots.ts`, `sitemap.ts` and
+  `manifest.ts` are `force-static`. The OG image and the apple icon are static
+  PNGs (`src/app/opengraph-image.png`, `apple-icon.png`) picked up by Next's
+  file conventions. `layout.tsx` must not set `metadata.icons`: that would
+  suppress the file-convention icons.
+- **`npm run build`** runs three stages:
+  1. `prebuild`: `validate:data` (dataset integrity), then `test:contract`
+     (the persist-contract save gate), then `build:images`;
+  2. `next build`;
+  3. `postbuild`: `scripts/postexport.mjs`.
+
+  The `postexport` steps:
+  - flatten Next's Windows-only `__next.*` segment folders (a no-op on Linux);
+  - strip `out/career*` when career mode is off;
+  - check that every route has its `__PAGE__` prefetch file;
+  - check that the required files exist;
+  - check that every image URL `assets.ts` can request exists in `out/`;
+  - reject non-https or loopback `NEXT_PUBLIC_POSTHOG_HOST` /
+    `NEXT_PUBLIC_SUPABASE_URL` (unless `ROCKET_DRAFT_ALLOW_LOCAL_ENDPOINTS=1`
+    is set in the shell, for measurement builds that must never be deployed)
+    and log whether accounts and analytics are ENABLED;
+  - check Cloudflare's limits (20,000 files, 25 MiB per file).
+
+  Always build through `npm run build`: a bare `next build` skips validation
+  and image generation.
+- **`wrangler.jsonc`** is assets-only (`assets.directory: "./out"`, no `main`)
+  and sets:
+  - `not_found_handling: "404-page"` (serves `out/404.html`);
+  - `html_handling: "auto-trailing-slash"` (`/play` serves `play.html`;
+    `/play/` → 307 → `/play`);
+  - `workers_dev: false`, `preview_urls: false`;
+  - the apex custom-domain route `rocketdraft.app`.
+
+  `www` → apex is a Cloudflare zone Redirect Rule, not code.
+- **`public/_headers`** holds the caching rules. `/_next/static/*` and `/img/*`
+  are immutable for a year (content-hashed). Unhashed `public/` folders and
+  icons get 1–7 day TTLs. HTML and `.txt` RSC payloads keep the host default
+  (`max-age=0, must-revalidate` + ETag), so a deploy is visible on the next
+  load. Every response gets `nosniff` + `Referrer-Policy`. Never put
+  `Cache-Control` under `/*`: matching rules combine.
+- **Local preview / deploy:** `npm run preview:static` (also `npm start`) runs
+  `wrangler dev` on `out/`; `next start` does not work with a static export.
+  `npm run deploy` = `npm run build && wrangler deploy` (needs `wrangler login`).
+  `NEXT_PUBLIC_*` values are inlined at **build** time: from `.env.local` for a
+  local build, or from Cloudflare **Build variables** for Workers Builds.
+- **Career gating:** `FEATURES.careerMode` is on in dev/tests and off in
+  production builds unless `NEXT_PUBLIC_CAREER_MODE=1` is set at build time
+  (ROAD-TO-WORLDS-DECISIONS R19).
 
 ## How one run flows
 
@@ -240,7 +373,8 @@ ResultsScreen ── clearRun → back to setup
 
 | Want to… | Touch |
 | --- | --- |
-| Add/edit cards, lineups, orgs | `src/data/*.json` only (validated on load) |
+| Add/edit cards, lineups, orgs | `src/data/*.json` only (validated by `npm run validate:data` / `npm test` / `prebuild`) |
+| Add an image (logo, flag, rank, special photo) | drop the PNG in `public/…`; `npm run build` regenerates the WebP + manifest |
 | Rebalance difficulty/sim/XP | `src/config/balance.ts` only |
 | Change a playoff round / add a bracket reset | `src/engine/playoffs.ts` (double elim already ships; `PLAYOFF_ROUND_ORDER`) |
 | Add a game mode | new engine options + a `RunMode` + a setup entry |

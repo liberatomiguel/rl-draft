@@ -89,6 +89,65 @@ export function initTournament(
   };
 }
 
+/**
+ * Explicit-field tournament initializer (Road to Worlds, v1.5).
+ *
+ * Career events supply their OWN field of assembled teams (which may or may
+ * not include a `user` team — AI-only events run headless via fastForward):
+ * - "swiss": 16 teams → Swiss (Bo5) → 8-team double-elim (the RLCS shape).
+ * - "single": 8 teams → straight single-elim bracket (unofficial cups).
+ *
+ * Purely additive: `initTournament` and every existing mode are untouched.
+ */
+export function initFieldTournament(
+  field: TournamentTeam[],
+  format: "swiss" | "single",
+  rng: Rng,
+): TournamentState {
+  const teams: Record<string, TournamentTeam> = {};
+  for (const team of field) teams[team.id] = team;
+
+  if (format === "single") {
+    if (field.length !== 8) {
+      throw new Error(`initFieldTournament(single) needs exactly 8 teams, got ${field.length}`);
+    }
+    const seeds = Object.keys(teams).sort(
+      (a, b) => teams[b].rating.total - teams[a].rating.total,
+    );
+    return {
+      teams,
+      swiss: {
+        rounds: [],
+        records: Object.keys(teams).map((teamId) => ({
+          teamId,
+          wins: 0,
+          losses: 0,
+          gameDiff: 0,
+          status: "advanced",
+        })),
+        nextPairings: null,
+        finished: true,
+      },
+      playoffs: createPlayoffs(seeds, "single"),
+      stage: "playoffs",
+      userEliminated: false,
+    };
+  }
+
+  if (field.length !== TOURNAMENT.swiss.teams) {
+    throw new Error(
+      `initFieldTournament(swiss) needs exactly ${TOURNAMENT.swiss.teams} teams, got ${field.length}`,
+    );
+  }
+  return {
+    teams,
+    swiss: createSwissState(Object.keys(teams), rng),
+    playoffs: null,
+    stage: "swiss",
+    userEliminated: false,
+  };
+}
+
 function userStatus(state: TournamentState): "active" | "advanced" | "eliminated" {
   return state.swiss.records.find((r) => r.teamId === "user")?.status ?? "active";
 }

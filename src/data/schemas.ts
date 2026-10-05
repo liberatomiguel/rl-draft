@@ -2,8 +2,15 @@
  * Zod schemas for every JSON data file.
  *
  * Purpose: the dataset is hand-edited (and later API-generated). These schemas
- * turn a typo in a JSON file into a clear error message at startup instead of
+ * turn a typo in a JSON file into a clear error message in CI
+ * (`npm run validate:data` → `validateDataset()` in ./validate.ts) instead of
  * a silent gameplay bug. See docs/DATA-GUIDE.md.
+ *
+ * BUILD/TEST-TIME ONLY: never import this from app/client code (that would
+ * ship zod to the browser again) — integrity.test.ts enforces it. A key the
+ * JSON carries but a schema doesn't declare is STRIPPED by zod, and the same
+ * test fails until it is declared here (+ engine/types.ts) or stripped in
+ * ./index.ts, so runtime data and validated data never drift apart.
  */
 
 import { z } from "zod";
@@ -184,7 +191,7 @@ export const achievementSchema = z.object({
 // Challenges (v1.4) — hand-authored rank-unlocked puzzles. Like specialCards.json
 // and achievements.json, this file is curated by hand (not generated). Cross-refs
 // (opponentLineupId, rankRequired, prereq, fixedPlayerCardId, reward.specialId)
-// are checked against the dataset in src/data/index.ts at load.
+// are checked against the dataset by assertReferentialIntegrity in ./validate.ts.
 export const challengeConstraintSchema = z
   .object({
     maxPlayerOverall: overallSchema.optional(),

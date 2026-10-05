@@ -8,6 +8,11 @@
  * NOT translated (content, not chrome): achievement titles/descriptions,
  * special-card titles/flavor, player/org/season names, the engine-generated
  * XP-line labels, and the changelog/privacy long-form pages.
+ *
+ * Career mode (Road to Worlds) copy is deliberately NOT in this dictionary: it
+ * lives in `copy.career.en.ts`, read only by career code via `careerCopy.ts`,
+ * so draft-game pages don't ship it. The home card's career strings are in
+ * `HOME.career*`.
  */
 
 export const APP = {
@@ -22,6 +27,7 @@ export const APP = {
 export const NAV = {
   home: "Home",
   play: "Play",
+  career: "Career",
   challenges: "Challenges",
   collection: "Collection",
   profile: "Profile",
@@ -63,6 +69,13 @@ export const HOME = {
   playNow: "Play now →",
   runs: (n: number) => `${n} ${n === 1 ? "run" : "runs"}`,
   titles: (n: number) => `${n} titles`,
+  // Road to Worlds home card (career mode). Kept here, not in the career
+  // dictionary, so the home page doesn't load the whole career copy.
+  careerTitle: "Road to Worlds",
+  careerBadge: "NEW",
+  careerDesc:
+    "Career mode: found your org, sign and develop players, manage the budget and take the RLCS calendar all the way to Worlds.",
+  careerCta: "Build an org from nothing. Win the World Championship.",
 };
 
 /**

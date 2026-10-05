@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import type { Copy } from "@/content/copy.en";
 
 type SeoLink = { label: string; href: string };
@@ -49,12 +49,12 @@ export function HomeSeoContent({
         <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
           {links.map((l) => (
             <li key={l.href}>
-              <Link
+              <AppLink
                 href={l.href}
                 className="text-blue-bright underline-offset-4 transition-colors hover:text-cyan hover:underline"
               >
                 {l.label}
-              </Link>
+              </AppLink>
             </li>
           ))}
         </ul>

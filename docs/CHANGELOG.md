@@ -10,6 +10,579 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## Unreleased — Static relaunch (Cloudflare) + request/performance diet
+
+> Branch `perf/static-cloudflare`, cut from `staging` @ `badd177` (v1.5.0-alpha.2), so it
+> carries the Road to Worlds alpha below. The version number is still to be chosen.
+> **Why:** production (Vercel Hobby, `main` @ v1.4.4) was disabled with HTTP 402 after it
+> passed 3M requests in a month against the Hobby cap of 1M. The app has no server code, so
+> it is now a **pure static export served by Cloudflare Workers Static Assets with no Worker
+> script**. Static-asset requests there are free and not metered. Every page view also costs
+> far fewer requests and bytes. No gameplay or balance changes.
+> Gates (2026-10-03): `tsc` clean · **385/385** vitest · `npm run build` green (48 s; `out/`
+> = 1,071 files, 35 MB) · lint at 5 errors + 1 warning, all pre-existing (TournamentScreen,
+> AnimatedNumber, Modal, useMounted, calibrate-rarity), down from 9 errors / 4 warnings.
+
+**Measured before/after.** Browser runs against the static export. "Before" is `staging`
+@ `badd177` exported as-is with Cloudflare's default headers; "after" is this branch on
+`wrangler dev`. Counts are requests to the site's own host.
+
+| Scenario | Before | After |
+| --- | --- | --- |
+| Cold home view | 74–80 requests | **27** |
+| Warm return to home | 80 (72 of them 304s) | **2** |
+| Click home → `/play` | `/play.txt` 316 KB raw on a non-prefetched click (CSS inlined) | **3 requests**, `/play.txt` 11.5 KB raw |
+| Full draft run (home → `/play` → draft → tournament → results) | 166, incl. 68 prefetch requests and 22 404s | **≤ 71**, incl. 42 distinct images and 0 404s |
+| Home first-load JS + CSS | 544 KB gz for the JS alone (CSS was inlined into the HTML) | **344 KB gz** for JS + CSS |
+| Home HTML | 504 KB raw / 27 KB br | **40 KB raw / 7.5 KB br** |
+
+> **Correction to the [1.4.0] "edge-request diet" entry.** This file is append-only, so the
+> old text stays. That entry named the Vercel Analytics / Speed Insights beacons and the
+> `trackEvent` double-sink as the root cause of the launch blowup (~1.1M edge requests in 4
+> days). The browser measurements and request accounting done for this release do not
+> support that. The dominant multipliers were:
+> - **`next/link` viewport prefetch**: ~4–5 requests per visible link. In the static export
+>   it is exactly 5 (one HEAD and 4 segment `.txt` files), plus the route's JS.
+> - **`/public` images served with `Cache-Control: max-age=0`**: every logo, flag and rank
+>   icon was revalidated on every page load.
+>
+> The pre-v1.4 beacons were only **~7–20%** of edge requests: about 15 in a typical session
+> and about 37 in a heavy one, against 150–200 other requests. Removing them was right, but
+> it could never have kept the site under the cap. That fits the >3M recurrence on an
+> unchanged `main` (no deploys since 2026-06-23).
+
+#### Added
+- **Cloudflare hosting config.**
+  - `wrangler.jsonc` is assets-only: `assets.directory: "./out"`, no `main`, no
+    `run_worker_first`. It sets `not_found_handling: "404-page"` and `html_handling:
+    "auto-trailing-slash"`, so `/play` serves `play.html` and `/play/` or `/play.html`
+    redirect to `/play`. It also sets `workers_dev: false`, `preview_urls: false` and an
+    apex custom-domain route (`rocketdraft.app`).
+  - `public/_headers` caches `/_next/static/*` and `/img/*` (content-hashed) as immutable
+    for a year. The unhashed files get moderate TTLs: `/flags` 7 days; `/orgs`, `/cards`
+    and `/ranks` 1 day; the icons and OG image 7 days; the manifest 1 day. Every response
+    gets `nosniff` + `Referrer-Policy`. HTML and the `.txt` RSC payloads have no rule, so
+    they keep the host default (`max-age=0, must-revalidate` + ETag) and a deploy shows on
+    the next load.
+  - `wrangler@4` is a new devDependency.
+- **Build and deploy scripts.**
+  - `prebuild` runs `validate:data && test:contract && build:images`.
+  - `postbuild` runs `scripts/postexport.mjs`.
+  - `preview:static` runs `wrangler dev` on `out/`. `npm start` now points to it, because
+    `next start` does not work with `output: "export"`.
+  - `deploy` runs `npm run build && wrangler deploy`. Its `predeploy`
+    (`scripts/check-deploy.mjs`) refuses to run when `ROCKET_DRAFT_ALLOW_LOCAL_ENDPOINTS` is
+    set in the shell.
+  - `.nvmrc` pins Node 24 for local dev and Workers Builds.
+- **`scripts/postexport.mjs`** runs named steps after the export:
+  - flatten the Windows `__next.*` segment folders (see Fixed);
+  - strip `/career` when career mode is off;
+  - check that every route has its `__PAGE__` prefetch file;
+  - check that the required files exist;
+  - check Cloudflare's limits (20,000 files, 25 MiB per file);
+  - print a report.
+
+  A broken export fails the build loudly; it is never shipped.
+- **Build-time image pipeline** (DESIGN-DECISIONS #105). `scripts/build-images.mjs` (sharp) turns the drop-in PNGs
+  into content-hashed WebP under `public/img/**` (git-ignored) and writes the committed
+  `src/generated/asset-manifest.json`.
+  - Sizes: org logos at 96 / 264 px, special photos at 256 / 512 px, rank emblems in a
+    224 px box. Menu emblems stay at their 160 px source size.
+  - It is deterministic and incremental. It prunes stale files, each URL hash covers the
+    source bytes plus that category's encoder settings (see Fixed), and `--force` redoes
+    the whole set.
+  - Today it produces 496 WebP files (~7.0 MB) from ~24.3 MB of PNG sources.
+- **`src/lib/assets.ts`** exports `flagSrc`, `orgLogoSrc`, `hasSpecialPhoto`,
+  `specialPhotoSrc` and `rankSrc`.
+  - In production they return the hashed `/img/…` WebP URL (or `/flags/<cc>.png`),
+    percent-encoded, **and only for files that exist**. A missing asset therefore renders
+    its fallback without any request.
+  - In dev and test they return the raw PNG paths and treat every asset as present.
+- **`src/lib/imageLoader.ts`** is a custom `next/image` loader. It maps
+  `/cards/specials/<id>.png` to the 256 / 512 px WebP; `images.deviceSizes: [512]` and
+  `imageSizes: [256]` make the srcset exactly 256w + 512w. Dev keeps `unoptimized` raw PNGs.
+- **`AppLink`** (`src/components/ui/AppLink.tsx`) is a drop-in `next/link` wrapper that only
+  prefetches on intent (see Changed). An ESLint `no-restricted-imports` rule now forbids
+  importing `next/link` anywhere else.
+- **Automatic `html.lite-fx` for weak devices** (DESIGN-DECISIONS #108). `SettingsEffects.tsx` applies it when
+  `navigator.deviceMemory` is ≤ 2 GB or the OS asks for `prefers-reduced-motion`. Under it,
+  and under Settings → Reduce motion:
+  - panels, sticky bars, full-screen overlays and the modal scrim drop their backdrop blur;
+  - surfaces that carry text get opaque fallbacks;
+  - the infinite decorative loops stop (sheens, rarity halos, hue shifts, title glows, the
+    legend border, the ray spin).
+
+  Capable devices never get it.
+- **`src/store/persistContract.test.ts`** (32 tests, DESIGN-DECISIONS #107) freezes the persist contract:
+  - every key and version: `settings` unversioned, `profile` 11, `run` 3, `career` 3;
+  - a `migrate` for every versioned store;
+  - no `skipHydration`, and no unknown `rocket-draft:*` keys;
+  - the `partialize` shapes.
+
+  It also runs the profile migrate from every version 1–10 and checks real hydration
+  end-to-end through an in-memory `localStorage`.
+- **`src/data/validate.ts`** exports `validateDataset()`: schemas, duplicate ids,
+  referential integrity and the rank check. `integrity.test.ts` uses it. The test also
+  asserts that the runtime data deep-equals the zod output, so an undeclared JSON key now
+  fails CI, and that no non-test file imports `zod`, `schemas` or `validate`.
+- **Static `src/app/opengraph-image.png` (1200×630) and `apple-icon.png` (180×180)** replace
+  the `.tsx` image generators. The alt text lives in `opengraph-image.alt.txt`.
+- New tests: `src/lib/analytics.test.ts`, `src/lib/supabase.test.ts` and
+  `src/store/accountStore.test.ts` (queueing and replay, tagged reads, sync gating).
+- `postbuild` (scripts/postexport.mjs) now fails the build when `NEXT_PUBLIC_POSTHOG_HOST` or
+  `NEXT_PUBLIC_SUPABASE_URL` is not an https URL or points at a loopback/localhost host. For
+  local measurement builds against mock servers, set `ROCKET_DRAFT_ALLOW_LOCAL_ENDPOINTS=1` in
+  the shell; env files are ignored for this flag. Such an out/ must never be deployed. Every
+  build now logs whether accounts (Supabase) and analytics (PostHog) are ENABLED and where
+  each value came from (shell or .env.local).
+- `postbuild` checks that every image URL src/lib/assets.ts can request (each manifest org ×
+  width, special × width, rank and flag) exists in out/, and fails otherwise.
+- `npm run test:contract` (the persist-contract save gate) now runs in `prebuild`. Every
+  `npm run build`, `npm run deploy` and Workers Builds deploy is blocked if a persist key,
+  version, migrate, partialize or skipHydration change breaks existing saves.
+
+#### Changed
+- **Hosting moved from Vercel to Cloudflare Workers Static Assets as a pure static export**
+  (DESIGN-DECISIONS #102).
+  - `next.config.ts` sets `output: "export"`. Nothing that needs a server may be added:
+    route handlers that read the request, rewrites, redirects or `headers()`,
+    middleware/proxy, Server Actions, ISR.
+  - `robots.ts`, `sitemap.ts` and `manifest.ts` are `force-static`; the manifest icon now
+    points to `/apple-icon.png`.
+  - `www` → apex is now a Cloudflare zone Redirect Rule (ops), not something in code.
+  - The runtime image optimizer (`/_next/image`) and `minimumCacheTTL` are gone.
+  - Removed: `@vercel/analytics`, `@vercel/speed-insights` and the 5 unused template SVGs
+    in `public/`.
+- **Internal links prefetch only on intent** (DESIGN-DECISIONS #103). All 43 links in 15
+  files now use `AppLink`.
+  - It renders `prefetch={false}` until the first real mouse hover (`pointerType ===
+    "mouse"`) or keyboard focus (`:focus-visible`). After that, that link uses Next's normal
+    prefetch.
+  - Touch taps never prefetch, so a prefetch can't race the navigation.
+  - Viewport prefetch had cost 5 requests per visible link plus route JS: 41–68% of
+    own-host requests in the baseline runs.
+- **`experimental.inlineCss` removed, which reverses [1.1.7]** (DESIGN-DECISIONS #104). The
+  Tailwind CSS is 149 KB raw / 22.2 KB gz / 17.4 KB br, and inlining copied it into every
+  HTML page *and* every RSC `.txt` payload. Measured with the option off vs on:
+  - `index.html`: 42.2 KB raw / 7.8 KB br (was 488.6 KB / 27.4 KB)
+  - `play.html`: 28.4 KB / 5.1 KB (was 474.7 KB / 24.7 KB)
+  - `play.txt` (navigation payload): 11.8 KB / 2.6 KB (was 306.3 KB / 20.0 KB)
+  - `out/`: 35.7 MB (was 80.0 MB)
+
+  The cost is that a first visit now downloads 2 stylesheets (149 KB + 1.8 KB raw); after
+  that they are cached as immutable.
+- **Tailwind scans only `src/`** (`@import "tailwindcss" source("..")` in `globals.css`). The
+  CSS went from 150,359 to 149,004 B, and 7 selectors no file in `src/` uses were dropped.
+- **Asset consumers use the manifest.**
+  - `TeamLogo`, `CountryChip`, `RankBadge`, GameCard's `SpecialArt` and the results share
+    card now get their URLs from `assets.ts`.
+  - Org logos pick their file by display size: ≤ 32 CSS px gets the 96 px file, anything
+    larger the 264 px file. The `<img>` gets width/height, `loading="lazy"` and
+    `decoding="async"`.
+  - The share card draws the 264 px WebP logo.
+  - `next/image` `priority` became `preload`. Next 16 deprecated `priority`; the behaviour
+    is the same.
+  - The failure-state resets that ran in `useEffect` are now derived state.
+- **posthog-js (~75 KB gz) and @supabase/supabase-js (~61 KB gz) are dynamic `import()`s,
+  out of every page's bundle** (DESIGN-DECISIONS #109).
+  - PostHog loads after the window `load` event plus `requestIdleCallback` (3 s deadline,
+    `setTimeout` fallback on Safari, 10 s cap if `load` never fires).
+  - Until then, game events are queued (cap 50) with their original timestamps and
+    `$current_url`/`$pathname`. SPA pageviews from before init are replayed the same way.
+  - Supabase starts at page load only when a stored `sb-<ref>-auth-token` (or its
+    code-verifier) or an auth-redirect URL is present. Guests download it only when they
+    send a sign-in code, open the leaderboards, or sign in from another tab.
+- **PostHog config**: `advanced_disable_flags: true` (no `config.js`, no `/flags`, no 5-minute
+  polling; nothing in `src` uses flags) and `capture_pageleave: false` (no insight uses
+  `$pageleave`). The unused `posthog-js/react` provider was removed. All other init options
+  are unchanged (token, EU host, `defaults`, localStorage persistence name, DNT,
+  history-change pageviews), so the anonymous distinct id survives the update.
+- **Analytics discontinuity at the cutover: compare pre/post numbers with care.**
+  - $pageview, unique-user and session counts dip by design. A visit that bounces before
+    load + idle + chunk download now records no $pageview and no session; before, the first
+    $pageview fired at hydration.
+  - `$pageleave` is no longer collected, so PostHog Web Analytics bounce rate and session
+    duration change for single-page sessions.
+  - **UTM caveat:** a visitor who lands on `/?utm_source=…` and navigates inside the SPA
+    before the SDK starts keeps the right landing `$current_url`, but the `utm_*`/`gclid`
+    campaign properties are not attached to the person or session. Channel/UTM breakdowns
+    undercount. No documented insight uses UTMs.
+  - A few events can be lost if the tab closes in the seconds before the SDK arrives.
+- **No runtime zod** (DESIGN-DECISIONS #106).
+  - `src/data/index.ts` now serves typed casts of the JSON. Schema and integrity
+    validation moved to `src/data/validate.ts` and runs in `npm test`,
+    `npm run validate:data` and **`prebuild`**, so an invalid dataset still fails
+    `npm run build`.
+  - The `@/data` bundle dropped from 690 KB raw / 118.0 KB gz to 355 KB / 51.1 KB (zod plus
+    the schemas were 66.2 KB gz).
+  - Module init is ~60–80 ms less main-thread work (Node desktop medians 81.8–102.7 ms →
+    21.4 ms; phones are slower in absolute terms).
+  - The runtime output is identical to zod's, including stripping the undeclared `secret`
+    key from 2 special cards. The only difference is key order in 68 records, which nothing
+    depends on.
+- **GeistMono `preload: false`.** It is redeclared through `next/font/local` with the same
+  file, variable and fallbacks, which cuts font preloads from 5 to 4. The first `font-mono`
+  text (region chips) can briefly render in `ui-monospace` until the font arrives
+  (`display: swap`).
+- **Career mode is env-driven** (`FEATURES.careerMode = NODE_ENV !== "production" ||
+  NEXT_PUBLIC_CAREER_MODE === "1"`; ROAD-TO-WORLDS-DECISIONS R19).
+  - It is off in production builds unless `NEXT_PUBLIC_CAREER_MODE=1` is set at build time,
+    inline, for a local preview build only (never in `.env*` files or the production
+    Worker's build variables). Dev and tests keep it on.
+  - `src/app/career/layout.tsx` is now a server component: `robots` noindex/nofollow, plus
+    `notFound()` when the flag is off. The client guard and UI moved unchanged into
+    `CareerShell.tsx`.
+  - `postexport` deletes `out/career*` when the flag is off. It loads `.env*` the same way
+    `next build` does, and fails instead of deleting if the home page links `/career` or
+    the sitemap lists it.
+- **Career copy split out of the core dictionaries.**
+  - `CAREER` is gone from `copy.en.ts`/`copy.pt.ts`. Career modules read
+    `copy.career.{en,pt}.ts` through `useCareerCopy()` / `getCareerCopy()`
+    (`src/content/careerCopy.ts`), and `useCopy().CAREER` no longer exists.
+  - The core copy chunk on every page went from 149,573 to 76,854 B raw (55.2 → 28.6 KB
+    gz).
+  - The 4 home-card strings moved to `HOME.careerTitle/careerBadge/careerDesc/careerCta`
+    with the same EN/PT text.
+- **Body ambient glows moved to a fixed composited `body::before` layer.** They were on
+  `background-attachment: fixed`, which repainted the whole page on every scroll frame.
+  - Desktop and Android look the same: pixel diffs are ≤ 2/255.
+  - **iOS Safari looks different while scrolled.** It ignores `background-attachment:
+    fixed`, so before, its glows scrolled with the page and repeated every viewport height.
+    Now they stay fixed to the viewport, as on other browsers.
+- **Reduce motion now also removes blur.** Players with Settings → Reduce motion or the OS
+  reduced-motion preference get the lite-fx look: no blur, opaque bars.
+- **Generated image widths have a single source of truth.** scripts/build-images.mjs writes
+  `widths` into src/generated/asset-manifest.json, and src/lib/assets.ts derives
+  ORG_LOGO_WIDTHS and SPECIAL_PHOTO_WIDTHS (now `readonly number[]`) from it, choosing the
+  smallest width that covers the request: 3× density for logos, so ≤ 32 CSS px still gets
+  the 96 px variant.
+
+#### Fixed
+- **22 guaranteed 404s per draft run, re-fired on every card mount.** In the measured run, 9
+  came from region flags (`/flags/na.png` and similar) and 13 from the 2 logo-less orgs that
+  showed up. The 3 photo-less specials also 404'd whenever they were shown. Each 404 returned
+  the full ~490 KB 404 page. In production, missing
+  assets now render their fallback (text chip, monogram, CSS emblem, stylized art) with no
+  request. Root cause: `TeamLogo`, `CountryChip`, `RankBadge` and `SpecialArt` built asset
+  URLs blindly and relied on `onError`, and that failure state lived per mount. The fix
+  decides from the build-time asset manifest.
+- **A special card's photo fallback could stick after the card changed.** Root cause:
+  `SpecialArt`'s `failed` flag was component state that was never reset for a new card. It
+  is now derived from the URL that failed.
+- **Windows-built static export: page prefetch files written to the wrong path.** Every
+  `__PAGE__` prefetch for those routes 404'd (7 404s / 3.3 MB on one cold home view). Root
+  cause: Next's export builds the segment-file path with `path.relative`, which uses
+  backslashes on Windows, while the segment encoder only replaces `/`. The files were
+  written as `X/__next.X/__PAGE__.txt` instead of `X/__next.X.__PAGE__.txt`. `postexport`
+  now flattens them (55 files in 37 folders on this build) and checks every name against
+  Next's own encoder. It does nothing on Linux.
+- **Duplicate favicon/icon links in `<head>`.** Root cause: a manual `metadata.icons` entry
+  in `layout.tsx` on top of the `favicon.ico` / `icon.svg` file conventions. It is removed.
+  Next only emits the file-convention icons (including `apple-touch-icon`) when
+  `metadata.icons` is unset.
+- **Cloud sync could overwrite the cloud backup after a failed read.** Root cause:
+  `fetchCloudRow` returned `null` both for "no row" and for "error", so the push went ahead.
+  The read is now tagged (`ok` / `no-row` / `error`), and an error aborts the sync with
+  nothing merged or pushed.
+- **Cloud sync ran up to 3 times per page load and again on every tab refocus.** Root
+  cause: every auth event, including `TOKEN_REFRESHED` and the refocus `SIGNED_IN`, called
+  `syncNow`, and `init` also called it through `getSession`. Now only one sync runs at a
+  time per user. It runs once per page load per signed-in user (`INITIAL_SESSION` / first
+  `SIGNED_IN`). A failed sync may be retried by a later `SIGNED_IN`.
+- **Cloud sync could revert progress made during the cloud read.** Root cause: the local
+  snapshot was taken *before* the read, and sync did not wait for the profile store to
+  hydrate. The snapshot is now taken after the read, and sync waits for profile hydration.
+- **`/career` was exported with HTTP 200, `index, follow` and canonical `/` even with the flag
+  off.** Root cause: the only gate was a client-side `useEffect` redirect in
+  `career/layout.tsx`, and a static export writes every route. The fix is the server
+  layout with `notFound()` + noindex, plus the `postexport` strip.
+- **The legendary cursor-holo hue shift (`.holo-rainbow-legendary`) kept animating with
+  Reduce motion on.** Root cause: the class was never added to the reduce-motion selector
+  lists.
+- **Lint.** 3 `react-hooks/set-state-in-effect` errors (TeamLogo, RankBadge, Badge) are
+  fixed; root cause: failure state was reset inside effects, and it is now derived. Also
+  fixed: `prefer-const` and unused imports/vars in `careerV03.test.ts` and `careerFlow.ts`;
+  root cause: leftovers from the v0.3 pass.
+- **Cloud sync: a signed-in player's progress reaches the cloud backup and their leaderboard
+  row again during a session.** A debounced push (`CLOUD_SYNC.pushDebounceMs`, 4.5 s after
+  the last profile change, or at once when the tab is hidden) runs the guarded sync only when
+  the durable profile differs from what this tab last pushed. Refocus `SIGNED_IN` and
+  `TOKEN_REFRESHED` still don't sync. Root cause: the NET-2 once-per-page-load hardening
+  removed the refocus/token-refresh syncs, which had been the de-facto in-session push,
+  without adding the planned post-run push, so a session's progress stayed local until a
+  full reload.
+- **Display name: the cloud name is shown as soon as the read succeeds**, and an aborted sync
+  (read error, push error, unexpected error) keeps the shown name or falls back to the email
+  prefix. A late sync never shows a name after a sign-out or user switch. Root cause: the new
+  abort paths returned before the only `set({ username })`, so a signed-in player could see
+  no name and no rename pencil (v1.4.4 always set one).
+- **Cross-tab: a sync folds the profile currently saved in localStorage into its local
+  snapshot** with the monotonic `mergeProfiles`. Storage that is unreadable or holds another
+  schema version is ignored. Root cause: zustand persist never re-reads storage, so an idle
+  tab woken by a sign-in in another tab merged and wrote back its page-load profile, which
+  could overwrite the other tab's newer save.
+- **A sync that finishes after a sign-out no longer marks the user as synced for this page
+  load.** Root cause: `syncedThisLoad.add` ran unconditionally, so signing back in during the
+  same page load skipped the sync.
+- **WebP URLs now change when encoder settings change.** Root cause: the `/img/` file hash
+  covered only the source PNG bytes, so changing quality or the rank box size re-encoded files
+  under the same `immutable` URLs, and the node_modules/.cache settings stamp was lost on
+  `npm ci`. Each category's encoder settings (ORG_WEBP, SPECIAL_WEBP, {box, RANK_WEBP}) are
+  now part of its hash, and the stamp is removed. All /img/ URLs changed once; none had been
+  served in production yet.
+
+#### Known limitations / follow-ups
+- **Touch devices never prefetch.** A tap fetches the route's `.txt` and JS on demand: one
+  small request, but a little less instant than a prefetched link.
+- **No deploy-skew protection** (Vercel had it). A long-lived tab can 404 on a chunk that a
+  new deploy deleted, including the lazy Supabase/PostHog chunks. The leaderboard then shows
+  empty and sign-in shows the generic error until the user reloads. Possible mitigation
+  (not done): keep the previous build's `_next/static` in each upload.
+- `/play/` and `/play.html` redirect with **307** (Vercel used 308). Minor SEO difference.
+- `_headers` rules also apply to 404s and redirects (a 404 under `/flags` would be cached
+  for 7 days). Production code no longer requests missing files.
+- A PNG dropped into `public/` reaches production only after the next `npm run build`
+  (`prebuild` regenerates the WebP files and the manifest). Dev shows it immediately. Always
+  build through `npm run build`: a bare `next build` skips data validation and image
+  generation.
+- 404s under `/_next/static/*` and `/img/*` inherit the `immutable` Cache-Control from
+  `public/_headers`, so those URLs must never be reused for different content. The image
+  hash now covers the source bytes plus the encoder settings (see Fixed).
+- **Signed-in "Reset all progress" is restored from the cloud by the next sync** (the merge is
+  monotonic), now about 4.5 s later. Product decision pending: hide the reset for signed-in
+  players, or reword its copy.
+- A rename that lands between a background sync's cloud read and its upsert can be reverted
+  in the cloud. The window is pre-existing; the debounced push makes it more frequent.
+- Content pages (`/about`, `/faq`, …, `/pt/*`) emit no `og:image`. This is pre-existing and
+  unchanged; their `openGraph` objects replace the root's without inheriting its images.
+- Ops before cutover:
+  - `wrangler login`;
+  - the `rocketdraft.app` zone active on Cloudflare, with the old Vercel apex record
+    removed (the custom-domain route fails until then);
+  - the `www` → apex Redirect Rule;
+  - `NEXT_PUBLIC_*` and `GOOGLE_SITE_VERIFICATION` available at build time (`.env.local`
+    for a local `npm run deploy`, Build variables for Workers Builds).
+
+---
+
+## [1.5.0-alpha] — UNRELEASED · "Road to Worlds" (awaiting Miguel's review — staging)
+
+### v0.3 adjustment pass (2026-07-11 — Miguel's second playtest list)
+
+#### Added
+- **FIFA-style autoplay.** The primary Advance control is now ▶/⏸: the calendar rolls one
+  day at a time (`CAREER_PLAYBACK.autoAdvanceDayMs`), pausable on any day, and the autopilot
+  pauses ITSELF at every stop (matchday, fresh invite, window Monday, pending decision,
+  season end). "Skip ahead" keeps the old batched advance as the secondary action. Works from
+  every career screen (TopBar) — Training also gained its own advance footer.
+- **Career popup layer** (`CareerToaster` + store toast queue): fresh mail and
+  priority-2+ news pop as tap-through toasts (incoming bids, contract warnings, player
+  unavailable, unlocks, scrim results, the window report) — the world talks while autoplay runs.
+- **Scrims v2 — schedulable sparring.** The Training screen picks the OPPONENT (6-org
+  nearest-strength shortlist with rating gap + engine-truth benefit preview via
+  `scrimProjection`) and can BOOK scrims ahead (`scheduleScrimFlow`; they run automatically on
+  arrival, appear on the calendar as training events, and land in a per-game result log
+  `save.scrimLog` with game-by-game scores). The same org can never be scrimmed twice on one
+  day (`sameDay` guard + indexed seed streams `scrim:{s}:{d}:{n}`).
+- **Salary negotiation (sign + renew).** Every ask now carries a hidden deterministic
+  reserve (uniform in [0.88, 1] × ask per player/window — `CAREER_NEGOTIATION`): counter-offer
+  below the ask with the TRUE accept odds shown (the uniform CDF, no lying UI); rejections
+  harden the ask +4% (telegraphed) and after 2 the player only signs at full price this
+  window. Reserve fixed per window → save-scumming buys nothing. Supersedes design §21.4's
+  fixed-ask-only market (recorded in DESIGN-DECISIONS).
+- **Visible rep-gated signings.** New signings accept only up to
+  `signableCapBase + signableCapPerRep × rep` (74 + 0.3/rep, uncapped at 84 rep): locked
+  market rows stay VISIBLE with the reputation they need ("Signs at N reputation") — the
+  climb is the content. Renewals and the current squad are always exempt. Coach hiring is now
+  earned at rep 10 (`CAREER_UNLOCKS.coachRep`, announced as an unlock crossing).
+- **Org sheets.** Any AI org's roster (spoiler-safe views: name/age/OVR/archetype), coach,
+  stars and Season Points — tappable from standings rows, the event lobby field, the deals
+  tab and the transfer wire.
+- **The transfer wire + window report.** Every AI move, user deal and scripted-beat transfer
+  lands in `save.transferLog` (ring 150); the HQ shows a region-filterable window panel, and
+  the first Monday after a window closes mails a **window report** (move count + top fees).
+- Save v3 (`migrateSaveToV3`, additive): `scheduledScrims`, `scrimLog`, `transferLog`,
+  `negotiationTries`, bid bookkeeping. Persist version 2 → 3; in-place, never a reset.
+- 19 new engine/store tests (`careerV03.test.ts`) locking the pass's behaviors.
+
+#### Balance
+- **Training anti-stagnation:** weeklyBase 0.10 → **0.13**; headroomSoftK 4 → **2.5** (the
+  h/(h+K) collapse near potential was the visible "my player stopped growing"); age 21-22
+  growth 0.6 → **0.7**, 23-24 0.3 → **0.35**; season/split caps 6/2.5 → **7/3**; committed-
+  event weeks now train at **matchPrepShare 0.5** instead of freezing (playing weak
+  unofficials was a development TRAP — slower than skipping them).
+- **Early reputation floor:** a regional swiss exit now pays **+1 rep** (`regionalSwissExit`),
+  unofficial finals pay **+1** (`t3Final` under the split cap, `t2Final`) — an 0-3 Swiss
+  season 1 still climbs toward the first gear unlocks instead of soft-locking at rep 5.
+- **Economy recalibration:** ONE market value for everyone
+  (`marketValueFor` = person-neutral salary curve × 3.2) now anchors every fee — AI↔AI trade
+  fiction (±15% band), AI bids for user players (×1.0-1.35) and user buys (bounded contract
+  load 0.85-1.6×) — replacing the ask × synthetic-splits formula that priced same-OVR players
+  up to 6× apart. **Prize pools grow ×1.12^season** and **sponsor tiers ×1.10^season** (new
+  deals) — the income side finally outpaces the 1.08^season salary inflation.
+- **Living market:** mid-window move rate 0.25 → **0.35**; **40% of needs-pass moves now shop
+  a lower-rated org's player** (fee trade, like-for-like guard) instead of only draining the
+  FA pool; a new **scavenger pass** picks displaced quality out of free agency (edge ≥ 3) so
+  good players stop rotting there.
+- **Incoming bids:** can land on ANY window day (daily roll: base 5.5% + 3%/star ≥82 +
+  2%/developing prospect, cap 18%/day, max 2/window, 2-day cooldown) and target selection is
+  attractiveness-weighted — AI GMs also hunt your prospects, not only your best player.
+- **Fictional players:** ALL fic/rook ids now develop at every rollover (previously only
+  market-touched ids ever grew — fillers never reached potential); wonderkid chance 5% → 8%;
+  **10% headliner chance** gives one filler org slot a 77-84 base roll (texture in thin
+  regions without early superteams; creation range for the rest stays 64-80).
+- Scrim rewards: chemistryCredit 0.04 → **0.05**, xpWeeks 0.4 → **0.5** (booking sparring
+  must be visibly worth the click).
+
+#### Fixed
+- **Backer debt lock (the "sold a player, still trapped" bug).** Root cause: the only code
+  path that ever reduced `loan.remaining` was the prize garnish in `applyPrize` — player-sale
+  fees went through a plain `transferIn` ledger push, so selling your star paid NOTHING and
+  the org stayed locked out of fee transfers/gear for seasons. Now: sales amortize **50%**
+  of the fee automatically (`applyTransferIncome`), and Finances has a manual **"Pay down
+  debt"** (any amount, `payDebtFlow`) — clearing the debt lifts the lock immediately, with a
+  "debt cleared" mail/news beat.
+- **Training stagnation at zero.** Root cause: per-tick gains quantized with `floor2` — any
+  daily gain below 0.01 OVR (age 21+, near-potential, no coach) floored to literal 0 forever;
+  the accumulators and overall also rounded at 2 decimals, compounding the freeze. Ticks now
+  quantize at 4 decimals (`floor4`/`round4`) — slow developers crawl instead of flatlining.
+- **Same-day scrim rematch.** Root cause: the opponent pick was seeded per (season, day) with
+  no memory — the second block on one day always drew the same pool and often the same org.
+  Picks now exclude today's opponents and the seed stream carries the block index.
+- **Ambitious-renewal threshold hardcoded at 88** in `renewPlayerFlow` — moved to
+  `CAREER_SALARY.ambitiousOverall` (the "every tunable in balance.ts" rule).
+- **Mobile: screens keeping the previous scroll position.** Root cause: Next.js preserves
+  scroll on client-side navigation; the career layout now resets to top on every pathname
+  change.
+- Money params in mail/news bodies (`fee`, `bonus`, report fees) now render formatted
+  (`formatMoney`) instead of raw integers.
+
+---
+
+### v0.2 overhaul (2026-07-09/10)
+
+#### Added (v0.2 overhaul pass, 2026-07-09/10 — Miguel's playtest feedback)
+- **Day-based calendar (FIFA-career style).** The clock is now the DAY: `clock = {seasonIndex,
+  day}` over 224 days (7-day Monday-start weeks on the same 32-week grid — seed streams stay
+  week-keyed, so all determinism holds). Real calendar dates per season (Season X kicks off
+  Mon 2020-10-05; `CAREER_SEASONS[i].startDate`). Weekly world processing on Mondays, training
+  Mon-Fri, matchdays on Saturdays, Sundays rest; transfer windows are day ranges with a
+  days-left countdown. Continue advances to the next stop (matchday / window-open Monday /
+  pending decision) and "advance one day" is always available; official matchdays block the
+  clock until played or simmed, and skipping past an unofficial matchday declines the invite.
+  Saves migrate in place (v1 week → v2 day, `migrateSaveToV2`).
+- **Scrims — things to do between events.** Up to 2 weekday scrim blocks per week: a seeded
+  Bo5 behind closed doors vs a nearby-strength org from your region, granting a small
+  chemistry credit + light match XP (`CAREER_SCRIM`, `runScrimFlow`), reported on the wire
+  with the score.
+- **Gear & staff progression ladder** (replaces the generic 3-level facilities): pro
+  peripherals → 240Hz monitors → tournament PCs → bootcamp → structured bootcamp → sports
+  psychologist → Performance Center, each rep-gated and bought strictly in order
+  (`CAREER_GEAR`, `buyGearFlow`); training bonuses stack to +35% and PCs/Center feed the org
+  buff levels. **Sponsor perks**: tier 2+ deals discount gear (20/35/50%), tier 3+ include
+  free bootcamps (1-2/season) — a reason to chase tiers beyond the base check.
+- **Coach market with real names.** Coaches are hired from a Market shortlist mixing REAL
+  retired pros (fed by the world's retirement flow; coach OVR = 55 + 0.25 × final playing
+  OVR) with generated candidates (`CAREER_COACH_MARKET`, `coachCandidatesFor` in market.ts);
+  hires validate the shortlist and replacing a coach pays one split of severance.
+- **Inbox (mail) split from the news wire.** `save.mail` (MailItem, per-item read state):
+  transfer bids, sponsor offers/settlements, contract notices, backer events and unlocks now
+  land as e-mails addressed to the manager with full body text; the news feed (every template
+  now with a 1-2 line body, `news.body.*` EN+PT) moved onto the HQ dashboard.
+- **Training v2.** Per-player session INTENSITY (light 0.6× / normal / heavy 1.35×, heavy
+  adding a small telegraphed pre-event absence risk), truthful engine-side projections
+  (`trainingProjection` — the Training screen no longer re-implements engine math), and daily
+  ticks aligned to the day clock.
+- **Career event playback pacing group** (`CAREER_PLAYBACK`) + rebuilt event screen (live
+  spoiler-safe Swiss standings, playoff bracket, AI ticker, goal-by-goal user series, working
+  speed/skip/sim controls, instant → animated digest), wiring the previously-dead
+  `eventPlayback.ts` view-model.
+- **Procedural crests for filler orgs + crest builder v2**: crestId now encodes
+  `shape[:symbol[:pattern]]` (legacy ids still render identically); every generic org gets a
+  deterministic logo via the shared `OrgMark` dispatcher.
+
+#### Balance (v0.2 economy rescale — the garage-org start)
+- Starting budget **$150k/100k/60k → $20k/12k/8k**; salary curve anchor **$8k → $1.5k** @ OVR
+  70 with growth **1.13 → 1.20**/pt and floor **$2.5k → $250** (entry salaries land in the
+  hundreds; a 90-OVR star still asks ~$57k/split — progression IS the product); prize pools
+  t3 $5k→$2k · t2 $25k→$10k · regional $100k→$40k · major $300k→$150k · worlds $1M→$600k;
+  sponsor bases $8k/20k/45k/90k → $1.5k/6k/18k/45k; transfer fee floor $10k→$2.5k; scout
+  report $10k→$2.5k; stand-in $5k→$1k; Backer floor −$20k→−$5k (rescue to +$3k); money
+  quantum $250→$50.
+- **Team stars recalibrated (again):** 0-4★ absolute band → **0-5★ half-star steps driven by
+  world-percentile** (0.8 × rating percentile + 0.2 × prestige) — strong teams now always
+  read strong; org rating snapshots persist for cheap user-side reads (`userStarsFor`).
+- **Chemistry swap-drop softened:** new `newcomerGraceFactor` 0.35 — a newcomer's pairs
+  inherit part of the incumbent core's tenure, so one swap dents chemistry (~85% → ~60%)
+  instead of halving it; `maxRawPerPair` 6.5 → 6.0 keeps Perfect reachable.
+- **Training focus rebalance:** single-attribute focus overall share 0.7 → **0.9** (+ offset
+  0.3 → 0.35/wk) so specializing finally competes with balanced; `auto` = coach plan at 0.95
+  (falls back to balanced with no coach — the old double penalty is gone).
+
+#### Fixed (v0.2)
+- **Training gains double-counted toward the split/season caps.** Root cause: the weekly
+  training loop applied `trainWeek`'s returned accumulators AND re-added the gain on top
+  (`p.gainedThisSplit += res.gained` after `Object.assign`), so caps triggered ~2× early.
+  The day-tick rewrite applies the returned player verbatim.
+- **Event screen score orientation.** `GameResult.score` is `[winnerGoals, loserGoals]`, but
+  the old screen padded it as `[teamA, teamB]` — losses could render as fake ties with
+  phantom goal-feed entries (the "confusing" bug). The rebuilt screen uses the
+  `eventPlayback.goalTimeline` view-model, which orients via `winnerTeamId`.
+- **Instant-sim trap**: choosing "Instant result" dropped the user into manual playback with
+  a hidden exit (up to ~16 clicks). `watched:false` now routes straight to the digest.
+- **Sale fees no longer inflate the "biggest signing" record** (`resolveAcceptedBid` wrote
+  sale proceeds into `stats.biggestSigningFee`).
+- **Nondeterministic news ids** (`Math.random`) replaced by a per-save monotonic `seq` —
+  identical runs now produce byte-identical saves.
+- Offer expiry is day-accurate (`resolveDay` = window close), replacing the engine-hardcoded
+  `WINDOW_LAST_WEEK` table.
+
+#### Added
+- **Road to Worlds — the career mode (design: `docs/ROAD-TO-WORLDS-DESIGN.md`).** Found an org
+  at RLCS Season X, sign and develop players (age + hidden potential shown as a scouted band,
+  RL-realistic ages: debuts 13-15, careers end ~24-25), manage budget/sponsors/reputation
+  through a 32-week season calendar (3 splits × [3 regionals + 1 Major] + Worlds; Season
+  Points → Major/Worlds qualification with per-region slot tables), transfer windows with a
+  living AI world that drifts toward real RLCS history (anchor-fidelity market passes +
+  ~26 hand-written scripted news beats EN/PT — e.g. Vitality signing zen in 2024, degrading
+  into a Blockbuster bid if you own him), weekly training with delegate-to-coach fast path,
+  field-quality-scaled match XP, roster-stability rule (tiered; the original hard forfeit one
+  flag away), progressive unlock ladder (psychologist → facilities → bootcamp → relocation
+  teaser), cosmetic 0-4★ team ratings, one-rescue Emergency Backer (second bankruptcy ends
+  the career), endings (Worlds title credits / 2026 Final Whistle / Insolvency) + infinite
+  procedural era. New: `src/engine/career/*` (7 pure modules + 123 tests incl. a
+  full-season deterministic integration harness), `careerStore`/`careerFlow` (3 save slots,
+  `rocket-draft:career:v1`, additive migrate), `/career/*` routes + 13 screens with animated
+  per-game event playback (goal-by-goal, scorer names), `CAREER_*` balance groups, EN+PT
+  career copy, career data files (beats/sponsors/names/crests). Behind `FEATURES.careerMode`.
+- **Engine (additive only, goldens locked):** `assembleTournamentTeam` export with in-memory
+  org override + bounded `ratingBonus` + `chemistryOverride` channels; `initFieldTournament`
+  (explicit-field Swiss/single-elim, AI-vs-AI capable); `regression.golden.test.ts` pins the
+  shared sim pipeline's draw order so career work can never silently reshuffle existing modes'
+  fixed-seed content (challenges/daily untouched — full 249-test suite green).
+
+#### Fixed (v0.1 adjustment pass, 2026-07-09 — pre-review)
+- **CRITICAL: releasing/selling a squad player crashed the whole career and corrupted the
+  save.** Root cause: `releasePlayerFlow` filtered the player out of `squad` but left his id
+  in `starterIds`; `userTeamFor` maps `starterIds` on every top-bar render and threw
+  "starter … is not on the squad", crashing the `/career` layout so hard the player couldn't
+  even reach the reset. Fix, three layers: a `syncSquadRoles()` invariant (starterIds always
+  hold 3 on-squad ids, roles synced) called after every squad mutation; `userTeamFor` now
+  degrades a missing starter to the sub → an emergency stand-in instead of throwing; and
+  `careerStore.onRehydrateStorage` self-heals every slot on load so already-corrupted saves
+  recover. Regression-locked in `careerFlow.test.ts`.
+- **New squad started at 100% chemistry.** It leaked through a shared `career:org` id feeding
+  `computeChemistry`'s shared-org + org-loyalty. Chemistry is now EARNED over time
+  (`worldSim.careerChemistry` + `CAREER_CHEMISTRY`): a fresh same-region trio ≈ 23%, climbing
+  to High after ~2 splits; swapping a starter drops it.
+- **Sponsors were offered on day 1.** Gated behind `CAREER_SPONSOR.firstOfferRepGate`.
+- **Team stars miscalibrated** (elite orgs read as 2★). `starsFor` now uses an absolute
+  rating band + prestige, not intra-region percentile.
+- **Career nav disappeared in the inbox** — `"/career/news".startsWith("/career/new")` matched
+  the bare-route prefix; now exact-matched.
+- **Removed** the "reputation expects it (−N)" hub line; **forced manual training when no coach
+  is hired** (delegating to a nonexistent coach made no sense).
+
 ## [1.4.4] — 2026-06-23 · "World Stage" patch
 
 #### Balance

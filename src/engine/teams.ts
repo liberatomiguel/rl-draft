@@ -22,6 +22,7 @@ import { effectiveStats, finalOverall } from "./cards";
 import { computeChemistry, type ChemistryInput } from "./chemistry";
 import { computeTeamRating } from "./rating";
 import type {
+  ChemistryResult,
   Difficulty,
   Region,
   Roster,
@@ -31,7 +32,7 @@ import type {
   TournamentTeam,
 } from "./types";
 
-interface MemberView {
+export interface MemberView {
   name: string;
   overall: number;
   stats: Stats;
@@ -44,7 +45,7 @@ interface MemberView {
   careerOrgIds?: string[];
 }
 
-interface AssembleInput {
+export interface AssembleInput {
   id: string;
   name: string;
   isUser: boolean;
@@ -56,11 +57,31 @@ interface AssembleInput {
   orgId?: string;
   /** Era-accurate org buff (lineup override). Falls back to the org default. */
   orgBuffLevel?: string;
+  /**
+   * In-memory org identity (Road to Worlds, v1.5): the career user org is a
+   * save-side entity that does NOT exist in orgs.json. When present this
+   * replaces the `orgById` lookup entirely — dataset callers never set it, so
+   * their path is bit-for-bit unchanged.
+   */
+  orgOverride?: { name: string; buffType: StatKey; buffLevel: string };
   /** Team-wide stat boosts from coach special cards. */
   teamBoosts?: { attributes: StatKey[]; value: number }[];
+  /**
+   * Precomputed chemistry (Road to Worlds, v1.5): the career mode computes its
+   * OWN earned-over-time chemistry and injects it here, bypassing the id-based
+   * computeChemistry. Absent for all dataset callers (their behavior is
+   * unchanged — locked by regression.golden.test.ts).
+   */
+  chemistryOverride?: ChemistryResult;
   specialIds: string[];
   difficulty: Difficulty;
   difficultyShift: number;
+  /**
+   * Flat bonus added to the final team rating (Road to Worlds, v1.5): bounded
+   * career buffs (e.g. the bootcamp "Sharp" edge), clamped by the caller
+   * against CAREER_BUFFS.tempRatingMax. Absent for all existing modes.
+   */
+  ratingBonus?: number;
 }
 
 function averageStats(players: MemberView[]): Stats {
@@ -74,7 +95,14 @@ function averageStats(players: MemberView[]): Stats {
 }
 
 function assembleTeam(input: AssembleInput): TournamentTeam {
-  const org = input.orgId ? orgById.get(input.orgId) : undefined;
+  // Org identity: in-memory override (career mode) or the dataset org. The
+  // override path is only ever taken by career callers — dataset callers
+  // (classic/quick/daily/challenges) never set it, keeping their behavior
+  // byte-identical (locked by regression.golden.test.ts).
+  const datasetOrg = input.orgId ? orgById.get(input.orgId) : undefined;
+  const org = input.orgOverride
+    ? { name: input.orgOverride.name, buffType: input.orgOverride.buffType, buffLevel: input.orgOverride.buffLevel }
+    : datasetOrg;
   const orgBuffLevel = (input.orgBuffLevel ?? org?.buffLevel) as
     | keyof typeof BUFF_LEVEL_VALUE
     | undefined;
@@ -110,7 +138,7 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     orgId: input.orgId,
     orgName: org?.name,
   };
-  const chemistry = computeChemistry(chemistryInput);
+  const chemistry = input.chemistryOverride ?? computeChemistry(chemistryInput);
 
   const rating = computeTeamRating({
     playerOveralls: input.players.map((p) => p.overall),
@@ -128,10 +156,13 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     specialCount: input.specialIds.length,
     // Direct team-overall bonuses from special effects (Creator card). Summed
     // here so both the user and AI paths honour it (AI never holds such a card).
-    specialOverallBonus: input.specialIds.reduce(
-      (sum, id) => sum + (specialCardById.get(id)?.effect.overallBonus ?? 0),
-      0,
-    ),
+    // Career buffs (v1.5) ride the same flat channel via `ratingBonus` — always
+    // 0 for existing modes.
+    specialOverallBonus:
+      input.specialIds.reduce(
+        (sum, id) => sum + (specialCardById.get(id)?.effect.overallBonus ?? 0),
+        0,
+      ) + (input.ratingBonus ?? 0),
     difficultyShift: input.difficultyShift,
   });
 
@@ -182,6 +213,15 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     orgId: input.orgId ?? "",
   };
 }
+
+/**
+ * Generic team assembler, exported for Road to Worlds (v1.5): the career mode
+ * builds TournamentTeams from in-memory entities (dynamic player overalls, the
+ * save-side user org via `orgOverride`) instead of dataset ids. Existing modes
+ * keep using buildUserTeam/buildLineupTeam, which delegate to the same
+ * function with unchanged inputs.
+ */
+export const assembleTournamentTeam = assembleTeam;
 
 // ---------------------------------------------------------------------------
 // User team from a completed draft roster

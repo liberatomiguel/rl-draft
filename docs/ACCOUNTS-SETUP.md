@@ -17,7 +17,9 @@ Leaderboards page shows local records + a "coming soon" note.
       the publishable key — safe in the client, RLS protects the data).
 - [ ] **Run the SQL** (step 1) — the `profiles` table + security rules.
 - [ ] **Email sending** (step 2) — the code template + (for launch) custom SMTP.
-- [ ] **Set the same env vars in Vercel** (step 3) for production.
+- [ ] **Set the same env vars as Cloudflare build variables** (step 3) for
+      production. The site moved off Vercel and is now a static export on
+      Cloudflare. `NEXT_PUBLIC_*` values are baked in at build time.
 
 ---
 
@@ -205,19 +207,37 @@ test alone, NOT for a launch). Set up a free sender:
 > No passwords are ever stored or entered — Supabase Auth handles the code. The
 > only "secret" is the SMTP password, which lives only inside Supabase.
 
-## 3. Production env vars (Vercel)
+## 3. Production env vars (Cloudflare build)
 
-Vercel → Project → **Settings → Environment Variables** → add for **Production +
-Preview** (same values as `.env.local`), then **redeploy**:
+Production is a **static export** served by Cloudflare Workers Static Assets
+(see `ARCHITECTURE.md` → Hosting & build). There is no server at runtime, so
+`NEXT_PUBLIC_*` values are **inlined at build time**. Setting them as runtime
+variables does nothing. Use the same values as `.env.local`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://rvdtluzbewzrbrgmouzy.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_…   (the publishable key)
 ```
 
+- **Local deploy** (`npm run deploy` = `npm run build && wrangler deploy`): the
+  build reads `.env.local`, so nothing else is needed. **Warning:** a local
+  `npm run deploy` reads .env.local and ENABLES accounts in production. The
+  build log prints `accounts (Supabase): ENABLED → <url> (from .env.local)`.
+  Only deploy locally once the SQL and SMTP steps are done.
+- **Workers Builds (Git-connected CI):** Cloudflare dashboard → the
+  `rocket-draft` Worker → **Settings → Build → Build variables** → add both,
+  then trigger a new build (full CI setup: `docs/DEPLOY-CLOUDFLARE.md` §5).
+- **Supabase Site URL stays `https://rocketdraft.app`.** The domain didn't
+  change; only the host did. Email-code login uses no redirect URL. If the
+  "Magic Link" / "Confirm signup" templates still contain
+  `{{ .ConfirmationURL }}`, that link points at the Site URL, which is still
+  correct. A Cloudflare preview host only needs adding to the redirect list if
+  you test link-based auth there.
+
 ## 4. Verify
 
-1. Restart `npm run dev` (env vars load at boot).
+1. Restart `npm run dev` (env vars load at boot). For production, rebuild:
+   the values are baked in at build time.
 2. Open `/leaderboards` → instead of "coming soon" you'll see a **"Sign in to
    compete"** email form.
 3. Enter your email → **Email me a code** → check inbox → enter the 6-digit code →
@@ -233,17 +253,50 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_…   (the publishable key)
   vars are present (`accountsEnabled`), else every call no-ops. Engine purity is
   intact: nothing under `src/engine` imports it. Auth = `sendEmailCode` +
   `verifyEmailCode` (Supabase email OTP).
+- **The SDK is lazy.** `@supabase/supabase-js` (~61 KB gz) is a dynamic `import()`
+  inside the async `client()`, not part of the page bundle. `accountStore.init`
+  starts it at page load **only** when `hasStoredAuthSession()` finds a stored
+  supabase-js session (`sb-<project-ref>-auth-token` or its `-code-verifier` in
+  localStorage) or an auth-redirect URL. Guests download it only when they
+  send a sign-in code, open the Leaderboards, or sign in from another tab
+  (`onStoredAuthSession` storage listener). If the download fails, `client()`
+  resolves `null` (the next call retries), the UI shows the usual empty/error
+  state, and nothing is pushed.
+- **Cloud read is tagged.** `fetchCloudRow` returns `ok` / `no-row` / `error`, and
+  `pushCloudProfile` returns `{ error? }`. Only `no-row` means "first sync"; an
+  `error` (network, PostgREST, SDK download) is never mistaken for an empty
+  cloud.
 - **Merge:** `src/lib/profileSync.ts` `mergeProfiles(local, cloud)` — pure, tested,
   monotonic (counters MAX, collections UNION-earliest-date, history union-by-id).
 - **Leaderboard feed:** `records` (peak overall per difficulty + worldwide/SAM) is
   updated in `profileStore.applyRunResults`; `leaderboardStats()` flattens it.
-- **Sync trigger (today):** on the Leaderboards page mount + on auth change. The
-  page handles sign-in, merge, push, the display-name editor, and the board fetch.
+- **Sync trigger (today):** a full sync **once per page load per signed-in
+  user**, on `INITIAL_SESSION` or the first `SIGNED_IN`, then a **debounced
+  push** for progress made later in the session.
+  - `TOKEN_REFRESHED`, `USER_UPDATED` and repeated `SIGNED_IN` events (e.g. tab
+    refocus) never sync. `SIGNED_OUT` clears the once-per-load guard.
+  - After that first sync succeeds, any profile change re-arms a
+    `CLOUD_SYNC.pushDebounceMs` (4.5 s) timer. When it fires, the same guarded
+    sync runs only if the durable profile differs from what this tab last
+    pushed. Hiding the tab sends a pending push at once. Idle tabs never sync.
+    Sign-out or a user switch cancels a pending push.
+  - Only one sync runs at a time per user.
+  - Each sync first waits for the profile store to finish hydrating from
+    localStorage. Then it reads the cloud row and takes the local snapshot
+    *after* the read (so progress made meanwhile isn't reverted). It also folds
+    in the profile currently saved in localStorage (another tab may have saved
+    newer progress), then merges and pushes.
+  - **If the cloud read fails, the sync is aborted without pushing**: nothing is
+    merged and nothing is written. A failed attempt may be retried by a later
+    `SIGNED_IN` or the next profile change.
+  - A signed-in player always sees a name: the cloud name as soon as the read
+    succeeds, else the one already shown, else the email prefix.
+
+  The Leaderboards page handles sign-in, the display-name editor and the board
+  fetch.
 
 ## Follow-ups we can do together (not blocking launch)
 
-- **Sync after every run** (not just on the Leaderboards page) — a small global
-  mount that pushes on profile change when signed in.
 - **A header sign-in chip** so login isn't only on the Leaderboards page.
 - **Daily leaderboard** — the daily seed is already shared globally
   (`src/lib/daily.ts`), so a per-date board is a natural addition.

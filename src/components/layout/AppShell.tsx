@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { FEATURES } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
@@ -18,14 +19,23 @@ import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
 
-type NavKey = "home" | "play" | "challenges" | "collection" | "profile";
-const NAV_ITEMS: { href: string; key: NavKey; icon: (p: { className?: string }) => React.ReactNode }[] = [
+type NavKey = "home" | "play" | "career" | "challenges" | "collection" | "profile";
+const BASE_NAV_ITEMS: { href: string; key: NavKey; icon: (p: { className?: string }) => React.ReactNode }[] = [
   { href: "/", key: "home", icon: HomeIcon },
   { href: "/play", key: "play", icon: PlayIcon },
   { href: "/challenges", key: "challenges", icon: ChallengesIcon },
   { href: "/collection", key: "collection", icon: CollectionIcon },
   { href: "/profile", key: "profile", icon: ProfileIcon },
 ];
+// Road to Worlds (v1.5): a 6th destination, flag-gated — the grid grows with it.
+const NAV_ITEMS: typeof BASE_NAV_ITEMS = FEATURES.careerMode
+  ? [
+      BASE_NAV_ITEMS[0],
+      BASE_NAV_ITEMS[1],
+      { href: "/career", key: "career", icon: CareerIcon },
+      ...BASE_NAV_ITEMS.slice(2),
+    ]
+  : BASE_NAV_ITEMS;
 
 export function Logo({ className }: { className?: string }) {
   return (
@@ -68,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </GuardedHomeLink>
     ) : (
-      <Link
+      <AppLink
         href={item.href}
         className={className}
         onClick={() => {
@@ -79,7 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
       >
         {children}
-      </Link>
+      </AppLink>
     );
 
   return (
@@ -118,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 })}
               </nav>
               <LangToggle />
-              <Link
+              <AppLink
                 href="/leaderboards"
                 aria-label={t.NAV.leaderboards}
                 title={t.NAV.leaderboards}
@@ -131,8 +141,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <TrophyIcon className="h-5 w-5" />
-              </Link>
-              <Link
+              </AppLink>
+              <AppLink
                 href="/settings"
                 aria-label={t.NAV.settings}
                 title={t.NAV.settings}
@@ -145,7 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <GearIcon className="h-5 w-5" />
-              </Link>
+              </AppLink>
               <AccountChip />
             </div>
           </div>
@@ -164,7 +174,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="Main"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-raised/95 backdrop-blur-md md:hidden"
         >
-          <div className="mx-auto grid max-w-md grid-cols-5">
+          <div className={cx("mx-auto grid max-w-md", FEATURES.careerMode ? "grid-cols-6" : "grid-cols-5")}>
             {NAV_ITEMS.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -204,7 +214,7 @@ function AccountChip() {
 
   if (status === "signedIn") {
     return (
-      <Link
+      <AppLink
         href="/profile"
         onClick={() => sfx.click()}
         className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-white/5"
@@ -214,17 +224,17 @@ function AccountChip() {
           {username}
         </span>
         <RankBadge rank={rankForXp(xp)} variant="menu" size="sm" />
-      </Link>
+      </AppLink>
     );
   }
   return (
-    <Link
+    <AppLink
       href="/profile"
       onClick={() => sfx.click()}
       className="display rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-sub transition-colors hover:bg-white/5 hover:text-ink"
     >
       {t.NAV_UI.logIn}
-    </Link>
+    </AppLink>
   );
 }
 
@@ -315,6 +325,17 @@ function GearIcon({ className }: { className?: string }) {
     >
       <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function CareerIcon({ className }: { className?: string }) {
+  // A road to the summit — Road to Worlds (v1.5).
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      <path d="M4 20c3-6 5.5-9 8-12l4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 4h4v4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 20h6" strokeLinecap="round" />
     </svg>
   );
 }

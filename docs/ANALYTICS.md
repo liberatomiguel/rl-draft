@@ -4,9 +4,13 @@
 > porque é um how-to pra operar a ferramenta, não doc de arquitetura. Os nomes de
 > eventos e os termos da interface ficam em inglês (a UI do PostHog é em inglês).
 >
-> Estado: PostHog **ativo e recebendo dados** (chave `phc_…` no Vercel, host EU,
-> cookieless/anônimo) e é o **único sink** — o Vercel Web Analytics foi removido
-> na v1.4 (ver §7). Coleta = pageviews (SPA-aware) + os eventos de jogo abaixo.
+> Estado: PostHog **ativo e recebendo dados** (host EU, cookieless/anônimo) e é o
+> **único sink**; o Vercel Web Analytics foi removido na v1.4 (ver §7). Coleta =
+> pageviews (SPA-aware) + os eventos de jogo abaixo. Desde o relançamento
+> estático na Cloudflare, a chave `phc_…` entra **no build**: `.env.local` num
+> deploy local, ou *Build variables* no Workers Builds. O SDK carrega de forma
+> **lazy**, `$pageleave` não é mais coletado e flags/remote config estão
+> desligados. **Leia o §8 antes de comparar números de antes e depois do corte.**
 
 ---
 
@@ -159,4 +163,50 @@ ou use **Breakdown by** = `region` pra comparar lado a lado.
 - **PostHog é o único sink.** O Vercel Web Analytics foi REMOVIDO na v1.4 (era
   redundante com o PostHog e os beacons por evento estouravam o limite de "edge
   requests" do plano Hobby). `trackEvent` agora envia pra um sink só (PostHog).
+  *(Correção, 2026-10: medido depois, os beacons eram só ~7-20% das requests. Os
+  multiplicadores dominantes eram o prefetch de links e as imagens de `/public`
+  sem cache. Ver CHANGELOG "Unreleased — Static relaunch".)*
 - Dados são agregados e não-PII (condiz com a política de privacidade).
+
+---
+
+## 8. Relançamento estático (Cloudflare, 2026-10): o que mudou na coleta
+
+**Como o SDK carrega agora.** O `posthog-js` saiu do bundle das páginas
+(~75 KB gz a menos) e virou um `import()` lazy:
+- `PostHogProvider` carrega o SDK depois do evento `load` da janela + um momento
+  ocioso (`requestIdleCallback`, prazo de 3 s; teto de 10 s se o `load` nunca
+  disparar).
+- Até lá, `trackEvent` **enfileira** os eventos de jogo (máx. 50), com o timestamp
+  e a URL originais, e eles são reenviados quando o SDK fica pronto. Pageviews de
+  navegação SPA feitas antes do init também são reenviadas.
+- O `$pageview` da página atual continua vindo do próprio SDK, sem contagem dupla.
+- O id anônimo continua o mesmo (mesma chave `ph_<token>_posthog` no
+  localStorage), então quem já jogava não vira "pessoa nova".
+
+**O que deixou de existir:**
+- **`$pageleave`** (`capture_pageleave: false`): nenhum insight deste guia usa.
+- **Feature flags / remote config** (`advanced_disable_flags: true`): não há mais
+  `config.js`, `/flags` nem polling a cada 5 min, e o código não usa flags.
+  Efeito colateral: ligar heatmaps, exception capture etc. nas *project settings*
+  do PostHog **não tem efeito**. Isso agora só muda no código.
+
+**Descontinuidade no corte: compare antes/depois com cuidado.**
+- **Contagens de `$pageview`, usuários únicos e sessões caem por construção.**
+  Uma visita que sai antes do `load` + idle + download do SDK agora não registra
+  pageview nem sessão. Antes, o primeiro `$pageview` saía já na hidratação. Ou
+  seja: bounces muito rápidos deixaram de ser contados.
+- **Bounce rate e duração de sessão do Web Analytics mudam** em sessões de uma
+  página só, porque o `$pageleave` sumiu.
+- **UTM:** se a pessoa chega em `/?utm_source=…` e navega dentro do app antes do
+  SDK carregar, o landing `$pageview` mantém o `$current_url` certo, mas as
+  propriedades `utm_*`/`gclid` **não** ficam na pessoa nem na sessão. As
+  quebras por canal/UTM subcontam. Nenhuma receita deste guia usa UTM.
+- Alguns eventos podem se perder se a aba fechar nos segundos antes do SDK chegar.
+
+Na prática:
+- Marque a data do corte como *annotation* nos gráficos.
+- Prefira métricas de jogo (`run_started`, `run_completed`, win rate, funil
+  §4.1), que não dependem do timing de carregamento.
+- Não leia uma queda de pageviews/sessões no dia do corte como queda de
+  audiência.

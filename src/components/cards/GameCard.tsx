@@ -20,6 +20,7 @@ import { useCopy } from "@/content/copy";
 import type { ResolvedCard } from "@/engine/cards";
 import type { SpecialEffect } from "@/engine/types";
 import { BUFF_LEVEL_VALUE } from "@/config/balance";
+import { hasSpecialPhoto } from "@/lib/assets";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
@@ -50,7 +51,8 @@ export interface GameCardProps {
   lite?: boolean;
   /**
    * LCP hint for the few cards above the fold (e.g. the collection's first row):
-   * loads the special photo eagerly with high fetch priority instead of lazily.
+   * loads the special photo eagerly, with a preload hint, instead of lazily
+   * (maps to next/image `preload`, Next 16's replacement for `priority`).
    * Only meaningful for unlocked specials — pass it to a small N of leading
    * cards, never the whole grid (priority on everything defeats the purpose).
    */
@@ -449,10 +451,20 @@ export function GameCard({
 
 /** Photo layer for special cards: real image or stylized fallback art. */
 function SpecialArt({ card, priority }: { card: ResolvedCard; priority?: boolean }) {
-  const [failed, setFailed] = useState(false);
-  const src = card.special?.imageUrl || `/cards/specials/${card.special?.id}.png`;
+  const special = card.special;
+  // An explicit imageUrl wins; otherwise the local photo, but only when the asset
+  // manifest lists one — a special without a photo renders the fallback straight
+  // away instead of requesting a guaranteed 404. The src stays the raw
+  // "/cards/specials/<id>.png" path: in production the next/image loader
+  // (src/lib/imageLoader.ts) maps it to the pre-built 256/512 px WebP.
+  const src =
+    special?.imageUrl ||
+    (special && hasSpecialPhoto(special.id) ? `/cards/specials/${special.id}.png` : null);
+  // The URL that failed to load (onError safety net). Derived reset: a different
+  // card means a different src, so its photo is tried again.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  if (failed) {
+  if (!src || src === failedSrc) {
     // No assigned photo → show the org logo of the team this card was DRAFTED with
     // (resolvePlayerCard sets card.orgId/seasonId to the drafted lineup in-game, and
     // to the base card's lineup in the Collection — exactly the two contexts we want).
@@ -473,10 +485,13 @@ function SpecialArt({ card, priority }: { card: ResolvedCard; priority?: boolean
 
   return (
     <>
-      {/* next/image: Vercel (and the local optimizer) serves a resized
-          WebP/AVIF — alpha/transparency preserved — at the card's display size,
-          lazily. Keeps the photo folder light without touching the source PNGs
-          or their framing. `fill` => absolute inset-0 inside the relative card. */}
+      {/* next/image: the custom loader (static export, no optimizer) points
+          the srcset at the pre-built 256/512 px WebP — alpha/transparency
+          preserved — so the browser fetches the card's display size, lazily.
+          Keeps the photo light without touching the source PNGs or their
+          framing. `fill` => absolute inset-0 inside the relative card.
+          `preload` is Next 16's name for the deprecated `priority` (same
+          behaviour: eager load + preload hint). */}
       <Image
         src={src}
         alt=""
@@ -484,8 +499,8 @@ function SpecialArt({ card, priority }: { card: ResolvedCard; priority?: boolean
         fill
         sizes="(max-width: 639px) 50vw, 256px"
         decoding="async"
-        priority={priority}
-        onError={() => setFailed(true)}
+        preload={priority}
+        onError={() => setFailedSrc(src)}
         className="object-cover object-[center_18%]"
       />
       <div className="special-photo" />

@@ -10,13 +10,14 @@
  * The hero text still follows the EN/PT language toggle (useCopy).
  */
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { COUNTS } from "@/data/counts";
 import { useCopy } from "@/content/copy";
 import { localePath } from "@/content/pageRoutes";
 import { useSettings } from "@/store/settingsStore";
+import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
@@ -220,6 +221,33 @@ export default function HomeMenu() {
         </div>
       </section>
 
+      {/* Road to Worlds — career mode (v1.5) */}
+      {FEATURES.careerMode ? (
+        <section aria-label="Career mode" className="mt-4">
+          <AppLink href="/career" className="group block text-left">
+            <Panel
+              strong
+              glow="blue"
+              className="relative flex flex-col justify-between gap-4 overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:flex-row md:items-center"
+            >
+              <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/10 blur-3xl" aria-hidden />
+              <div>
+                <div className="mb-2 flex items-center gap-2.5">
+                  <h2 className="display text-xl font-bold uppercase tracking-wide text-ink md:text-2xl">
+                    {HOME.careerTitle}
+                  </h2>
+                  <Badge tone="blue">{HOME.careerBadge}</Badge>
+                </div>
+                <p className="max-w-xl text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
+              </div>
+              <span className="display inline-flex w-fit shrink-0 items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-7 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
+                {HOME.careerCta}
+              </span>
+            </Panel>
+          </AppLink>
+        </section>
+      ) : null}
+
       {/* Secondary */}
       <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         {(() => {
@@ -261,12 +289,12 @@ export default function HomeMenu() {
               {body}
             </div>
           ) : (
-            <Link href="/collection" className="group">
+            <AppLink href="/collection" className="group">
               {body}
-            </Link>
+            </AppLink>
           );
         })()}
-        <Link href="/achievements" className="group">
+        <AppLink href="/achievements" className="group">
           <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
             <div>
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
@@ -279,8 +307,8 @@ export default function HomeMenu() {
               <span className="text-sm text-faint">/{COUNTS.achievements}</span>
             </span>
           </Panel>
-        </Link>
-        <Link href="/profile" className="group">
+        </AppLink>
+        <AppLink href="/profile" className="group">
           <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
             <div>
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
@@ -290,7 +318,7 @@ export default function HomeMenu() {
             </div>
             {mounted ? <RankBadge rank={rank} variant="menu" size="sm" /> : null}
           </Panel>
-        </Link>
+        </AppLink>
       </section>
 
       {/* Challenges + Leaderboards (v1.4) */}
@@ -323,12 +351,12 @@ export default function HomeMenu() {
               {body}
             </div>
           ) : (
-            <Link href="/challenges" className="group">
+            <AppLink href="/challenges" className="group">
               {body}
-            </Link>
+            </AppLink>
           );
         })()}
-        <Link href="/leaderboards" className="group">
+        <AppLink href="/leaderboards" className="group">
           <Panel className="flex h-full items-center justify-between gap-4 p-5 transition-colors group-hover:!border-line-strong">
             <div>
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
@@ -340,16 +368,16 @@ export default function HomeMenu() {
               <TrophyGlyph />
             </span>
           </Panel>
-        </Link>
+        </AppLink>
       </section>
 
       <p className="mt-10 text-center">
-        <Link
+        <AppLink
           href="/how-to-play"
           className="text-sm font-semibold text-sub underline-offset-4 hover:text-ink hover:underline"
         >
           {HOME.howToPlay} →
-        </Link>
+        </AppLink>
       </p>
 
       {/* Discreet sign-in nudge — only when accounts are on and you're signed out. */}
@@ -408,12 +436,12 @@ function HomeSignInNudge() {
   if (!mounted || !enabled || status !== "signedOut") return null;
   return (
     <p className="mt-3 text-center">
-      <Link
+      <AppLink
         href="/profile"
         className="text-xs text-faint underline-offset-4 transition-colors hover:text-sub hover:underline"
       >
         {H.signInNudge} →
-      </Link>
+      </AppLink>
     </p>
   );
 }

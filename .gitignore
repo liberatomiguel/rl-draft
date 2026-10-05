@@ -17,6 +17,12 @@
 /.next/
 /out/
 
+# generated image variants (scripts/build-images.mjs, runs as prebuild)
+/public/img/
+
+# cloudflare wrangler local state (wrangler dev / deploy)
+/.wrangler/
+
 # production
 /build
 
