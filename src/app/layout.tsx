@@ -97,11 +97,15 @@ export const metadata: Metadata = {
     description: APP.description,
     creator: "@liberatoRL_",
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
+  // NEXT_PUBLIC_NOINDEX=1 → staging build: never indexed (production omits it).
+  robots:
+    process.env.NEXT_PUBLIC_NOINDEX === "1"
+      ? { index: false, follow: false }
+      : {
+          index: true,
+          follow: true,
+          googleBot: { index: true, follow: true, "max-image-preview": "large" },
+        },
   // No `icons` / `openGraph.images` here: favicon.ico, icon.svg, apple-icon.png
   // and opengraph-image.png in src/app are file conventions Next links itself
   // (with cache-busting hashes). A manual entry only duplicated those tags/requests.

@@ -184,12 +184,17 @@ staging or career:
   <http://localhost:8787>, then press Ctrl+C. The inline `VAR=1 cmd` form applies
   to that one command only. Never `export` the flag in a shell you deploy from,
   and never put it in `.env.local`.
-- **Shareable cloud previews** need a config change (ask Claude). The plan is a
-  separate staging Worker, e.g. a `staging` environment in `wrangler.jsonc` →
-  Worker `rocket-draft-staging` on `workers.dev`, with no custom domain and its
-  own build variables (career flag on). Turning on `preview_urls` alone gives
-  public per-version URLs on `workers.dev`, but those builds use production's
-  variables, so career stays off.
+- **Cloud staging — `staging.rocketdraft.app`** (configured): `wrangler.jsonc`
+  has an `env.staging` → Worker **`rocket-draft-staging`** on the custom domain
+  `staging.rocketdraft.app`. Create a **second** Workers Builds project:
+  - Worker name `rocket-draft-staging`, same repo, **production branch `staging`**.
+  - Build command `npm run build`; deploy command `npx wrangler deploy --env staging`.
+  - Build variables: `NEXT_PUBLIC_CAREER_MODE=1`, `NEXT_PUBLIC_NOINDEX=1`
+    (robots.txt `Disallow: /` + `noindex` meta), plus the PostHog vars if you want
+    staging analytics (better: leave PostHog unset so tests don't pollute prod data).
+  - Staging is a separate origin, so its saves never touch players' saves.
+  - The production project keeps `main` and `npx wrangler deploy` (the
+    "multiple environments" warning it prints is expected).
 
 ## 6. Custom domain (apex)
 

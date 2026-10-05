@@ -36,5 +36,24 @@
   // Requires the rocketdraft.app zone to be active on this Cloudflare account
   // (nameservers moved) and no CNAME on the apex — remove the old Vercel
   // apex record(s) before the first deploy.
-  "routes": [{ "pattern": "rocketdraft.app", "custom_domain": true }]
+  "routes": [{ "pattern": "rocketdraft.app", "custom_domain": true }],
+
+  // Test build (career mode ON) on its own Worker + subdomain. Deployed with
+  // `npx wrangler deploy --env staging` from the `staging` branch, whose build
+  // sets NEXT_PUBLIC_CAREER_MODE=1 and NEXT_PUBLIC_NOINDEX=1. Separate origin →
+  // separate localStorage, so test saves never touch players' saves.
+  // Still assets-only: no "main", no run_worker_first.
+  "env": {
+    "staging": {
+      "name": "rocket-draft-staging",
+      "assets": {
+        "directory": "./out",
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+      },
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [{ "pattern": "staging.rocketdraft.app", "custom_domain": true }]
+    }
+  }
 }
