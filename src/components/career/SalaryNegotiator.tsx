@@ -11,7 +11,7 @@
  */
 
 import { CAREER_ECONOMY, CAREER_NEGOTIATION } from "@/config/balance";
-import { negotiationAcceptChance, quantize } from "@/engine/career/economy";
+import { negotiationAcceptChance, quantize, weeklyWage } from "@/engine/career/economy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -82,7 +82,10 @@ export function SalaryNegotiator({
           −
         </button>
         <div className="min-w-0 flex-1 text-center">
-          <p className="text-lg font-bold tabular-nums">{formatMoney(offered)}</p>
+          <p className="text-lg font-bold tabular-nums">
+            {formatMoney(weeklyWage(offered))}
+            <span className="ml-1 text-[10px] font-semibold text-faint">{N.perWeek}</span>
+          </p>
           <p className="text-[10px] text-faint">{N.yourOffer}</p>
         </div>
         <button
@@ -103,7 +106,7 @@ export function SalaryNegotiator({
         </span>
         {offered < ask ? (
           <span className="font-semibold text-emerald-400">
-            {N.savings(formatMoney(ask - offered))}
+            {N.savings(formatMoney(weeklyWage(ask) - weeklyWage(offered)))}
           </span>
         ) : null}
       </div>

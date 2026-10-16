@@ -13,7 +13,10 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CAREER_ECONOMY, CAREER_SPONSOR } from "@/config/balance";
+import {
+  CAREER_PAYROLL,
+  CAREER_SPONSOR,
+} from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
@@ -26,6 +29,7 @@ import type {
   SponsorState,
   TransferOffer,
 } from "@/engine/career/types";
+import { weeklyOf } from "@/engine/career/economy";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -33,27 +37,28 @@ import { useSettings } from "@/store/settingsStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
 import {
-  CAREER_GEAR,
-  CAREER_SLOTS,
   agendaDays,
+  CAREER_SLOTS,
   clockLabel,
   dateOfDay,
   dayOfWeekOf,
   daysUntilWindowCloses,
   isWindowWeek,
+  nameOfRef,
+  runwayWeeks,
   scrimAvailability,
   seasonLabelFor,
   squadAge,
   standingsRows,
+  type AgendaDay,
+  type UpcomingStop,
   unlockTrack,
   upcomingStops,
   useCareerSave,
   userStars,
   userTeamPreview,
-  nameOfRef,
+  weeklyStatement,
   weekOfDay,
-  type AgendaDay,
-  type UpcomingStop,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDateTiny, formatDaysAway } from "@/components/career/dateText";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
@@ -300,19 +305,21 @@ export function HubScreen() {
   const scrim = scrimAvailability(save);
   const windowDaysLeft = daysUntilWindowCloses(save);
 
-  // --- budget tile ----------------------------------------------------------
-  const wages =
-    save.squad.reduce((s, p) => s + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0);
-  const upkeep =
-    CAREER_GEAR.items.reduce(
-      (s, item) => s + (save.finances.gear[item.id] ? item.upkeepPerSplit : 0),
-      0,
-    ) + (save.finances.gear.psychologist ? CAREER_GEAR.psychologistPerSplit : 0);
-  const incomePerSplit =
-    (save.sponsor?.basePerSplit ?? 0) +
-    Math.round(save.reputation * CAREER_ECONOMY.passivePerRepPoint);
-  const net = incomePerSplit - wages - upkeep;
+  // --- budget tile (v2.0: the SAME weekly statement the Monday funnel books) --
+  const statement = weeklyStatement({
+    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
+    coachSalary: save.coach?.salaryPerSplit ?? null,
+    sponsor: save.sponsor,
+    rep: save.reputation,
+    gear: save.finances.gear,
+    bankLoan: save.finances.bankLoan ?? null,
+  });
+  const incomePerSplit = statement.income;
+  const wages = statement.payroll + statement.coach;
+  const upkeep = statement.psychologist + statement.upkeep + statement.bankPayment;
+  const net = statement.net;
   const projectedNegative = save.finances.balance + net < 0;
+  const runway = runwayWeeks(save.finances.balance, net);
 
   // --- Road to Worlds mini --------------------------------------------------
   const rows = standingsRows(save, region, "season");
@@ -712,6 +719,8 @@ export function HubScreen() {
               </div>
               {projectedNegative ? (
                 <p className="mt-2 text-xs font-semibold text-bad">{C.hub.budgetWarning}</p>
+              ) : runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks * 2 ? (
+                <p className="mt-2 text-xs font-semibold text-orange-bright">{C.finances.runway(runway)}</p>
               ) : null}
               {save.finances.loan ? (
                 <Badge tone="bad" className="mt-2">
@@ -1343,7 +1352,7 @@ function NowSponsorChoice({
                 </p>
               ) : null}
               <p className="mt-2 text-sm font-semibold text-good">
-                {C.finances.perSplitBase(formatMoney(o.basePerSplit, { compact: true }))}
+                {C.finances.perWeekBase(formatMoney(weeklyOf(o.basePerSplit), { compact: true }))}
               </p>
               <p className="text-xs text-sub">
                 {C.finances.bonusFor(formatMoney(o.bonus, { compact: true }))}

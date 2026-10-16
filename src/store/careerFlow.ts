@@ -27,6 +27,7 @@ import {
   CAREER_GEAR,
   CAREER_LOAN,
   CAREER_NEGOTIATION,
+  CAREER_PAYROLL,
   CAREER_REP,
   CAREER_SALARY,
   CAREER_SAVE,
@@ -92,6 +93,7 @@ import {
 import {
   applyPrize,
   applyTransferIncome,
+  bankLoanRefusal,
   bootcampTierFor,
   computeSalaryAsk,
   gearNextItem,
@@ -99,16 +101,19 @@ import {
   gearTrainingBonus,
   marketValueFor,
   negotiationAccepts,
+  payBankLoanDown,
   payLoanDown,
   pushLedger,
   quantize,
   repGainFor,
   repLossFloor,
   repTierOf,
+  runwayWeeks,
   signableOverallCap,
-  splitPayday,
   sponsorOffersFor,
+  takeBankLoan,
   unlocksFor,
+  weeklyPayroll,
   type GearItemId,
 } from "@/engine/career/economy";
 import {
@@ -118,6 +123,7 @@ import {
   contractedSplitsRemaining,
   incomingBidForDay,
 } from "@/engine/career/market";
+import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
@@ -159,7 +165,7 @@ function clone(save: CareerSave): CareerSave {
 
 export function nameOfRef(save: CareerSave, ref: string): string {
   if (ref === "user") return save.identity.orgName;
-  return save.world.orgs[ref]?.name ?? ref;
+  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed) : ref);
 }
 
 /**
@@ -331,6 +337,12 @@ export function processDayArrival(input: CareerSave): CareerSave {
         save.sponsor.progress = 0;
         save.sponsor.hitThisSplit = false;
       }
+    }
+
+    // --- 0b. v2.0 WEEKLY PAYROLL (R20) — every Monday but the founding day --
+    if (!(seasonIndex === 0 && week === 1)) {
+      runWeeklyPayroll(save);
+      if (save.phase === "ended") return capNews(save);
     }
 
     // --- 1. scripted beats --------------------------------------------------
@@ -525,7 +537,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
       }
     }
 
-    // --- 5. split boundary: payday + sponsor + turnover (weeks 11/21/31) ---
+    // --- 5. split boundary: sponsor objective + turnover (weeks 11/21/31) --
     if (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek) {
       runSplitBoundary(save);
       if (save.phase === "ended") return capNews(save);
@@ -836,18 +848,92 @@ function emitWindowReport(save: CareerSave, lastWindowWeek: number): void {
   });
 }
 
+/**
+ * v2.0 (R20): the Monday money funnel. Books the weekly statement through
+ * economy.weeklyPayroll, then owns the consequences: Backer rescue news,
+ * insolvency (career end), bank loan cleared, and the runway warning when
+ * the balance covers only CAREER_PAYROLL.runwayWarnWeeks more Mondays.
+ */
+function runWeeklyPayroll(save: CareerSave): void {
+  const { seasonIndex, day } = save.clock;
+  const week = weekOfDay(day);
+  const payroll = weeklyPayroll({
+    fin: save.finances,
+    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
+    coachSalary: save.coach?.salaryPerSplit ?? null,
+    sponsor: save.sponsor,
+    rep: save.reputation,
+    gear: save.finances.gear,
+    seasonIndex,
+    week,
+    day,
+    difficulty: save.difficulty,
+  });
+  save.finances = payroll.fin;
+  if (payroll.bankCleared) {
+    pushNews(save, { type: "org", priority: 2, titleKey: "bankCleared" });
+    pushMail(save, {
+      kind: "finance",
+      titleKey: "bankCleared",
+      bodyKey: "bankCleared",
+      params: {},
+      fromKey: "bank",
+      linkTo: "/career/finances",
+    });
+  }
+  if (payroll.rescued) {
+    pushNews(save, { type: "org", priority: 3, titleKey: "backerIn" });
+    pushMail(save, {
+      kind: "finance",
+      titleKey: "backerIn",
+      bodyKey: "backerIn",
+      params: {},
+      fromKey: "backer",
+      linkTo: "/career/finances",
+    });
+  }
+  if (payroll.insolvent) {
+    endCareer(save, "insolvency");
+    pushNews(save, { type: "org", priority: 3, titleKey: "insolvency" });
+    return;
+  }
+  const runway = runwayWeeks(save.finances.balance, payroll.statement.net);
+  if (runway !== null && runway === CAREER_PAYROLL.runwayWarnWeeks && save.finances.balance > 0) {
+    pushNews(save, {
+      type: "org",
+      priority: 2,
+      titleKey: "cashWarning",
+      params: { weeks: runway },
+    });
+    pushMail(save, {
+      kind: "finance",
+      titleKey: "cashWarning",
+      bodyKey: "cashWarning",
+      params: { weeks: runway, net: payroll.statement.net },
+      fromKey: "accountant",
+      linkTo: "/career/finances",
+    });
+  }
+}
+
 function runSplitBoundary(save: CareerSave): void {
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
-  // Sponsor objective settlement (before payday so the bonus rides along).
-  let sponsorBonusDue = 0;
+  // Sponsor objective settlement — the bonus lands as its own line.
   if (save.sponsor) {
     const s = save.sponsor;
     const hit =
       s.hitThisSplit ||
       (s.objectiveKind === "enterEvents" && s.progress >= CAREER_SPONSOR.enterEventsTarget);
     if (hit) {
-      sponsorBonusDue = s.bonus;
+      save.finances = pushLedger(save.finances, {
+        seasonIndex,
+        week,
+        day,
+        kind: "sponsorBonus",
+        amount: s.bonus,
+        refName: s.sponsorId,
+      });
       pushNews(save, { type: "org", priority: 2, titleKey: "objectiveHit", params: { name: s.sponsorId } });
       pushMail(save, {
         kind: "sponsor",
@@ -869,45 +955,6 @@ function runSplitBoundary(save: CareerSave): void {
         linkTo: "/career/finances",
       });
     }
-  }
-
-  const payday = splitPayday({
-    fin: save.finances,
-    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
-    coachSalary: save.coach?.salaryPerSplit ?? null,
-    sponsor: save.sponsor,
-    rep: save.reputation,
-    seasonIndex,
-    week,
-    day,
-    difficulty: save.difficulty,
-  });
-  save.finances = payday.fin;
-  if (sponsorBonusDue > 0) {
-    save.finances = pushLedger(save.finances, {
-      seasonIndex,
-      week,
-      day,
-      kind: "sponsorBonus",
-      amount: sponsorBonusDue,
-      refName: save.sponsor?.sponsorId,
-    });
-  }
-  if (payday.rescued) {
-    pushNews(save, { type: "org", priority: 3, titleKey: "backerIn" });
-    pushMail(save, {
-      kind: "finance",
-      titleKey: "backerIn",
-      bodyKey: "backerIn",
-      params: {},
-      fromKey: "backer",
-      linkTo: "/career/finances",
-    });
-  }
-  if (payday.insolvent) {
-    endCareer(save, "insolvency");
-    pushNews(save, { type: "org", priority: 3, titleKey: "insolvency" });
-    return;
   }
 
   // Split turnover: chemistry credit, scout narrowing, training accumulators,
@@ -1036,6 +1083,55 @@ export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
       fromKey: "backer",
       linkTo: "/career/finances",
     });
+  }
+  return { save: capNews(save) };
+}
+
+/**
+ * v2.0 (R21): request a bank loan. Validation lives in economy.bankLoanRefusal
+ * (one active loan, none while the Backer debt is open, min amount, rep-tier
+ * limit); the principal lands immediately and instalments book every Monday.
+ */
+export function takeBankLoanFlow(input: CareerSave, principal: number): FlowResult {
+  const save = clone(input);
+  const amount = quantize(principal);
+  const refusal = bankLoanRefusal(save.finances, save.reputation, amount);
+  if (refusal === "active") return { save: input, error: "bankActive" };
+  if (refusal === "backer") return { save: input, error: "bankBacker" };
+  if (refusal === "amount") return { save: input, error: "bankAmount" };
+  if (refusal === "limit") return { save: input, error: "bankLimit" };
+  save.finances = takeBankLoan(save.finances, amount, {
+    seasonIndex: save.clock.seasonIndex,
+    week: weekOfDay(save.clock.day),
+    day: save.clock.day,
+  });
+  const loan = save.finances.bankLoan!;
+  pushNews(save, { type: "org", priority: 1, titleKey: "bankLoan", params: { amount } });
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "bankLoan",
+    bodyKey: "bankLoan",
+    params: { amount, weekly: loan.weeklyPayment, total: loan.remaining },
+    fromKey: "bank",
+    linkTo: "/career/finances",
+  });
+  return { save: capNews(save) };
+}
+
+/** v2.0 (R21): pay the bank loan down early, any amount from the balance. */
+export function payBankLoanFlow(input: CareerSave, amount: number): FlowResult {
+  const save = clone(input);
+  if (!save.finances.bankLoan) return { save: input, error: "none" };
+  const pay = Math.min(quantize(amount), save.finances.bankLoan.remaining);
+  if (pay <= 0) return { save: input, error: "invalid" };
+  if (save.finances.balance - pay < CAREER_LOAN.floor) return { save: input, error: "funds" };
+  save.finances = payBankLoanDown(save.finances, pay, {
+    seasonIndex: save.clock.seasonIndex,
+    week: weekOfDay(save.clock.day),
+    day: save.clock.day,
+  });
+  if (!save.finances.bankLoan) {
+    pushNews(save, { type: "org", priority: 2, titleKey: "bankCleared" });
   }
   return { save: capNews(save) };
 }

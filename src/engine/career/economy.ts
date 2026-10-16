@@ -11,10 +11,12 @@
  */
 
 import {
+  CAREER_BANK,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
   CAREER_NEGOTIATION,
+  CAREER_PAYROLL,
   CAREER_POINTS,
   CAREER_PRIZES,
   CAREER_REP,
@@ -29,6 +31,7 @@ import { clamp } from "@/lib/util";
 import type { Placement } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type {
+  BankLoanState,
   CareerDifficulty,
   EventTier,
   FinanceState,
@@ -531,89 +534,141 @@ export function payLoanDown(
   return next;
 }
 
-export interface SplitPaydayInput {
-  fin: FinanceState;
+// ---------------------------------------------------------------------------
+// v2.0 weekly payroll (R20) — ONE statement, used by the funnel AND the UI
+// ---------------------------------------------------------------------------
+
+/** Quantize a weekly line to CAREER_PAYROLL.weeklyQuantum (toward zero). */
+export function quantizeWeekly(n: number): number {
+  const q = CAREER_PAYROLL.weeklyQuantum;
+  return Math.trunc(n / q) * q;
+}
+
+/**
+ * A per-split amount spread over the season's weeks: ×splits/weeks, so 32
+ * weekly lines add up to exactly 3 × the split figure (before quantization).
+ */
+export function weeklyOf(perSplit: number): number {
+  const weekly = quantizeWeekly(
+    (perSplit * CAREER_PAYROLL.splitsPerSeason) / CAREER_PAYROLL.weeksPerSeason,
+  );
+  // A positive contract never reads "$0 / week" — floor at one weekly quantum.
+  return weekly === 0 && perSplit > 0 ? CAREER_PAYROLL.weeklyQuantum : weekly;
+}
+
+/** The weekly wage a per-split contract pays (the number every wage label shows). */
+export function weeklyWage(salaryPerSplit: number): number {
+  return weeklyOf(salaryPerSplit);
+}
+
+export interface WeeklyStatementInput {
   squadSalaries: { name: string; amount: number }[];
   coachSalary: number | null;
   sponsor: SponsorState | null;
   rep: number;
+  gear: GearState;
+  bankLoan?: BankLoanState | null;
+}
+
+export interface WeeklyStatement {
+  sponsorBase: number;
+  fanbase: number;
+  payroll: number;
+  coach: number;
+  psychologist: number;
+  upkeep: number;
+  bankPayment: number;
+  income: number;
+  expenses: number;
+  net: number;
+}
+
+/**
+ * The Monday statement, computed ONCE here so the hub tile, the Finances
+ * screen and the ledger lines can never disagree. All amounts positive;
+ * `net` is income − expenses.
+ */
+export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
+  const sponsorBase = input.sponsor ? weeklyOf(input.sponsor.basePerSplit) : 0;
+  const fanbase = weeklyOf(Math.max(0, input.rep) * CAREER_ECONOMY.passivePerRepPoint);
+  const payroll = input.squadSalaries.reduce((sum, l) => sum + weeklyWage(l.amount), 0);
+  const coach = input.coachSalary !== null && input.coachSalary > 0 ? weeklyWage(input.coachSalary) : 0;
+  const psychologist = input.gear.psychologist ? weeklyOf(CAREER_GEAR.psychologistPerSplit) : 0;
+  const upkeep = weeklyOf(gearUpkeepPerSplit(input.gear));
+  const bankPayment = input.bankLoan
+    ? Math.min(input.bankLoan.remaining, input.bankLoan.weeklyPayment)
+    : 0;
+  const income = sponsorBase + fanbase;
+  const expenses = payroll + coach + psychologist + upkeep + bankPayment;
+  return {
+    sponsorBase,
+    fanbase,
+    payroll,
+    coach,
+    psychologist,
+    upkeep,
+    bankPayment,
+    income,
+    expenses,
+    net: income - expenses,
+  };
+}
+
+/**
+ * Weeks the balance covers at the current weekly net (null = not burning).
+ * The Finances runway line and the hub warning read this.
+ */
+export function runwayWeeks(balance: number, weeklyNet: number): number | null {
+  if (weeklyNet >= 0) return null;
+  return Math.max(0, Math.floor(balance / -weeklyNet));
+}
+
+export interface WeeklyPayrollInput extends WeeklyStatementInput {
+  fin: FinanceState;
   seasonIndex: number;
   week: number;
-  /** Day stamp for the ledger lines (v0.2 day clock). */
   day?: number;
   difficulty: CareerDifficulty;
 }
 
 /**
- * The settleSplit money funnel, in fixed order: sponsor base in → fanbase in
- * → salaries out → coach out → psychologist out → facility upkeep out → loan
- * check. SponsorState amounts are ALREADY difficulty-scaled (sponsorOffersFor
- * bakes ×sponsorMult at offer time so the signed deal pays what it displayed).
+ * The Monday money funnel (v2.0 — replaces the per-split payday): sponsor
+ * base in → fanbase in → squad payroll out (ONE aggregated line) → coach out →
+ * psychologist out → upkeep out → bank instalment out → floor check.
  *
- * Loan check (design §9 Emergency Backer): balance below CAREER_LOAN.floor →
- * first time, the Backer grants back to `rescueTo` (repayable at repayFactor,
- * garnished from prizes); a second breach after the rescue = insolvency (the
- * career-ending state — the STORE owns the ending).
+ * Floor check (design §9 Emergency Backer, unchanged): balance below
+ * CAREER_LOAN.floor → first time the Backer grants back to `rescueTo`
+ * (repayable at repayFactor, garnished from prizes); a second breach after
+ * the rescue = insolvency (the STORE owns the ending).
  */
-export function splitPayday(input: SplitPaydayInput): {
+export function weeklyPayroll(input: WeeklyPayrollInput): {
   fin: FinanceState;
+  statement: WeeklyStatement;
   insolvent: boolean;
   rescued: boolean;
+  bankCleared: boolean;
 } {
-  const { seasonIndex, week, day, rep } = input;
+  const { seasonIndex, week, day } = input;
+  const statement = weeklyStatement({ ...input, bankLoan: input.fin.bankLoan ?? null });
   let fin = input.fin;
+  const line = (kind: LedgerEntry["kind"], amount: number, refName?: string) => {
+    if (amount === 0) return;
+    fin = pushLedger(fin, { seasonIndex, week, day, kind, amount, refName });
+  };
 
-  if (input.sponsor) {
-    fin = pushLedger(fin, {
-      seasonIndex,
-      week,
-      day,
-      kind: "sponsorBase",
-      amount: input.sponsor.basePerSplit,
-      refName: input.sponsor.sponsorId,
-    });
-  }
-  const fanbase = quantize(rep * CAREER_ECONOMY.passivePerRepPoint);
-  if (fanbase > 0) {
-    fin = pushLedger(fin, { seasonIndex, week, day, kind: "fanbase", amount: fanbase });
-  }
-  for (const line of input.squadSalaries) {
-    fin = pushLedger(fin, {
-      seasonIndex,
-      week,
-      day,
-      kind: "salary",
-      amount: -Math.abs(line.amount),
-      refName: line.name,
-    });
-  }
-  if (input.coachSalary !== null && input.coachSalary > 0) {
-    fin = pushLedger(fin, {
-      seasonIndex,
-      week,
-      day,
-      kind: "coachSalary",
-      amount: -input.coachSalary,
-    });
-  }
-  if (fin.gear.psychologist) {
-    fin = pushLedger(fin, {
-      seasonIndex,
-      week,
-      day,
-      kind: "buff",
-      amount: -CAREER_GEAR.psychologistPerSplit,
-    });
-  }
-  const upkeep = gearUpkeepPerSplit(fin.gear);
-  if (upkeep > 0) {
-    fin = pushLedger(fin, {
-      seasonIndex,
-      week,
-      day,
-      kind: "upkeep",
-      amount: -upkeep,
-    });
+  line("sponsorBase", statement.sponsorBase, input.sponsor?.sponsorId);
+  line("fanbase", statement.fanbase);
+  line("payroll", -statement.payroll);
+  line("coachSalary", -statement.coach);
+  line("buff", -statement.psychologist);
+  line("upkeep", -statement.upkeep);
+
+  let bankCleared = false;
+  if (fin.bankLoan && statement.bankPayment > 0) {
+    line("bankPayment", -statement.bankPayment);
+    const remaining = fin.bankLoan.remaining - statement.bankPayment;
+    bankCleared = remaining <= 0;
+    fin = { ...fin, bankLoan: remaining > 0 ? { ...fin.bankLoan, remaining } : null };
   }
 
   let insolvent = false;
@@ -621,7 +676,7 @@ export function splitPayday(input: SplitPaydayInput): {
   if (fin.balance < CAREER_LOAN.floor) {
     if (!fin.loanUsed) {
       const grant = CAREER_LOAN.rescueTo - fin.balance;
-      fin = pushLedger(fin, { seasonIndex, week, kind: "loanGrant", amount: grant });
+      fin = pushLedger(fin, { seasonIndex, week, day, kind: "loanGrant", amount: grant });
       fin = {
         ...fin,
         loan: { remaining: grant * CAREER_LOAN.repayFactor },
@@ -632,7 +687,91 @@ export function splitPayday(input: SplitPaydayInput): {
       insolvent = true;
     }
   }
-  return { fin, insolvent, rescued };
+  return { fin, statement, insolvent, rescued, bankCleared };
+}
+
+// ---------------------------------------------------------------------------
+// v2.0 bank loan (R21)
+// ---------------------------------------------------------------------------
+
+/** Max principal the bank offers at this reputation (0 = nothing yet). */
+export function bankLoanLimitFor(rep: number): number {
+  return CAREER_BANK.maxByRepTier[repTierOf(rep)];
+}
+
+/** Repayment terms for a principal: total owed, weekly instalment, term. */
+export function bankLoanTerms(principal: number): {
+  total: number;
+  weeklyPayment: number;
+  termWeeks: number;
+} {
+  const total = quantizeWeekly(principal * (1 + CAREER_BANK.interestPct));
+  const weeklyPayment = Math.max(
+    CAREER_PAYROLL.weeklyQuantum,
+    Math.ceil(total / CAREER_BANK.termWeeks / CAREER_PAYROLL.weeklyQuantum) *
+      CAREER_PAYROLL.weeklyQuantum,
+  );
+  return { total, weeklyPayment, termWeeks: CAREER_BANK.termWeeks };
+}
+
+export type BankLoanRefusal = "active" | "backer" | "amount" | "limit";
+
+/** Why a loan request would be refused right now (null = allowed). */
+export function bankLoanRefusal(
+  fin: FinanceState,
+  rep: number,
+  principal: number,
+): BankLoanRefusal | null {
+  if (fin.bankLoan) return "active";
+  if (CAREER_BANK.blockedWhileBacker && fin.loan) return "backer";
+  if (principal < CAREER_BANK.minAmount || principal !== quantize(principal)) return "amount";
+  if (principal > bankLoanLimitFor(rep)) return "limit";
+  return null;
+}
+
+/** Book the principal and open the loan (caller validated via bankLoanRefusal). */
+export function takeBankLoan(
+  fin: FinanceState,
+  principal: number,
+  ctx: { seasonIndex: number; week: number; day?: number },
+): FinanceState {
+  const terms = bankLoanTerms(principal);
+  const next = pushLedger(fin, {
+    seasonIndex: ctx.seasonIndex,
+    week: ctx.week,
+    day: ctx.day,
+    kind: "bankLoan",
+    amount: principal,
+  });
+  return {
+    ...next,
+    bankLoan: {
+      principal,
+      remaining: terms.total,
+      weeklyPayment: terms.weeklyPayment,
+      takenSeason: ctx.seasonIndex,
+      takenWeek: ctx.week,
+    },
+  };
+}
+
+/** Early pay-down of the bank loan (any amount; clears at exactly 0). */
+export function payBankLoanDown(
+  fin: FinanceState,
+  amount: number,
+  ctx: { seasonIndex: number; week: number; day?: number },
+): FinanceState {
+  if (!fin.bankLoan || amount <= 0) return fin;
+  const paid = Math.min(fin.bankLoan.remaining, amount);
+  const next = pushLedger(fin, {
+    seasonIndex: ctx.seasonIndex,
+    week: ctx.week,
+    day: ctx.day,
+    kind: "bankPayment",
+    amount: -paid,
+  });
+  const remaining = fin.bankLoan.remaining - paid;
+  return { ...next, bankLoan: remaining > 0 ? { ...fin.bankLoan, remaining } : null };
 }
 
 // ---------------------------------------------------------------------------
@@ -679,7 +818,7 @@ function sponsorOfferForTier(
  * Season-start sponsor offers: the best rep-eligible tier (one lower when the
  * patience meter ran out — design §9, re-earnable) plus the tier below as the
  * safe option. Amounts are ×sponsorMult[difficulty] and quantized HERE —
- * splitPayday pays the stored figures verbatim.
+ * weeklyPayroll pays the stored figures verbatim (spread per week).
  *
  * NOTE: `difficulty` was added to the pinned signature — sponsorMult cannot
  * be applied without it (single deviation, coordinated via the build report).

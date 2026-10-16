@@ -283,6 +283,15 @@ every later surface builds on a stable contract.
 
 ### Phase 3 — Road to Worlds 2.0 (R1 → R7)
 - Each sub-phase its own commit; career docs updated; staging after R3 and R7.
+- [x] A — economy & market clarity: weekly payroll, bank loan, loans panel,
+      coach effects + deep link, community-cup local scene, starter rosters,
+      sub-slot signing (ROAD-TO-WORLDS-DECISIONS R20–R25).
+- [ ] B — hub rebuild + week calendar strip + day-by-day advance animation.
+- [ ] C — training rework (interactive plan, visible growth/ETA, attribute
+      buffs tied to training, potential calibration).
+- [ ] D — regional qualifier (non-top-8), local orgs growing, real lineups by season.
+- [ ] E — inserts (random / sponsor / training events), sponsors expanded.
+- [ ] F — permanent career achievements, crest/colour palette.
 
 ### Phase 4 — content, QA, launch
 - [ ] Event cards curated (Miguel), achievements for new systems, PT pass.

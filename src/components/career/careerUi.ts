@@ -39,8 +39,13 @@ import {
   gearPriceFor,
   gearTrainingBonus,
   repTierOf,
+  runwayWeeks,
   unlocksFor,
+  weeklyStatement,
+  weeklyWage,
 } from "@/engine/career/economy";
+import type { CareerCopy } from "@/content/careerCopy";
+import { formatMoney } from "@/lib/format";
 import {
   ageOf,
   playerViewById,
@@ -468,6 +473,12 @@ export function unlockTrack(save: CareerSave): UnlockEntry[] {
 }
 
 export { bootcampTierFor, gearNextItem, gearPriceFor, gearTrainingBonus, repTierOf, unlocksFor };
+export { weeklyWage, weeklyStatement, runwayWeeks };
+
+/** v2.0: every wage label shows the WEEKLY figure of a per-split contract. */
+export function wageLabel(C: CareerCopy, salaryPerSplit: number, compact = true): string {
+  return C.squad.perWeek(formatMoney(weeklyWage(salaryPerSplit), { compact }));
+}
 export { CAREER_GEAR };
 
 // ---------------------------------------------------------------------------

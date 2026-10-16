@@ -38,7 +38,9 @@ import {
   statsOfSquad,
   useCareerSave,
   userTeamPreview,
+  wageLabel,
 } from "@/components/career/careerUi";
+import { CoachEffectLines } from "@/components/career/CoachEffects";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
@@ -204,7 +206,7 @@ export function SquadScreen() {
         right={
           <div className="flex items-center gap-2 text-xs">
             <Badge tone="neutral">{save.squad.length}/4</Badge>
-            <span className="text-sub">{C.squad.perSplit(formatMoney(wageBill, { compact: true }))}</span>
+            <span className="text-sub">{wageLabel(C, wageBill)}</span>
           </div>
         }
       />
@@ -342,7 +344,7 @@ export function SquadScreen() {
                 selected={selected === p.id}
                 onClick={() => onTileClick(p.id)}
                 className="mb-2"
-                footer={C.squad.perSplit(formatMoney(p.salaryPerSplit, { compact: true }))}
+                footer={wageLabel(C, p.salaryPerSplit)}
               />
             ))
           ) : (
@@ -358,7 +360,7 @@ export function SquadScreen() {
           <div className="mb-2 flex items-center justify-between">
             <p className="kicker text-[11px]">{C.squad.coachSlot}</p>
             <AppLink
-              href="/career/market"
+              href="/career/market#coaches"
               className="rounded-full bg-blue/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-bright transition-colors hover:bg-blue/20"
             >
               {C.market.coaches}
@@ -374,11 +376,12 @@ export function SquadScreen() {
                 <span className="rounded bg-blue/10 px-1.5 py-0.5 font-semibold text-cyan">
                   {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])} {save.coach.bonusLevel}
                 </span>
-                <span>{C.squad.perSplit(formatMoney(save.coach.salaryPerSplit, { compact: true }))}</span>
+                <span>{wageLabel(C, save.coach.salaryPerSplit)}</span>
               </div>
+              <CoachEffectLines coach={save.coach} className="mt-2" />
             </div>
           ) : (
-            <AppLink href="/career/market" className="block">
+            <AppLink href="/career/market#coaches" className="block">
               <div className="rounded-lg border border-dashed border-line p-4 text-center text-xs text-faint transition-colors hover:border-orange/50 hover:text-sub">
                 {C.squad.emptyCoach}
               </div>
@@ -458,7 +461,7 @@ export function SquadScreen() {
                   </div>
                 </div>
                 <span className="text-xs text-sub">
-                  {C.squad.perSplit(formatMoney(p.salaryPerSplit, { compact: true }))}
+                  {wageLabel(C, p.salaryPerSplit)}
                 </span>
                 <div className="flex gap-1.5">
                   <Button size="sm" variant="ghost" onClick={() => openSheet(p)}>
@@ -581,7 +584,7 @@ export function SquadScreen() {
                       {C.market.seasons(len)}
                     </span>
                     <span className="mt-0.5 block text-[11px] text-sub">
-                      {C.squad.perSplit(formatMoney(askFor(renew, len), { compact: true }))}
+                      {wageLabel(C, askFor(renew, len))}
                     </span>
                   </button>
                 ))}
@@ -597,10 +600,8 @@ export function SquadScreen() {
               <div className="flex items-center justify-between">
                 <span className="text-sub">{C.squad.wage}</span>
                 <span className="font-semibold text-ink">
-                  {C.squad.perSplit(formatMoney(renew.salaryPerSplit))} →{" "}
-                  {C.squad.perSplit(
-                    formatMoney(Math.min(renewOffer || renewAsk, renewAsk)),
-                  )}
+                  {wageLabel(C, renew.salaryPerSplit, false)} →{" "}
+                  {wageLabel(C, Math.min(renewOffer || renewAsk, renewAsk), false)}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center justify-between">

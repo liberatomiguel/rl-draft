@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  CAREER_BANK,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
+  CAREER_PAYROLL,
   CAREER_POINTS,
   CAREER_REP,
   CAREER_SALARY,
@@ -29,11 +31,20 @@ import {
   repTierOf,
   salaryAskFactors,
   signingBonusFor,
-  splitPayday,
   sponsorOffersFor,
   starsFor,
   transferFeeFor,
   unlocksFor,
+  bankLoanLimitFor,
+  bankLoanRefusal,
+  bankLoanTerms,
+  payBankLoanDown,
+  runwayWeeks,
+  takeBankLoan,
+  weeklyOf,
+  weeklyPayroll,
+  weeklyStatement,
+  weeklyWage,
   type SalaryAskInput,
 } from "./economy";
 import type { CareerDifficulty, FinanceState, GearState, SponsorState } from "./types";
@@ -367,7 +378,7 @@ describe("applyPrize", () => {
   });
 });
 
-describe("splitPayday", () => {
+describe("weekly payroll (v2.0 R20)", () => {
   const sponsor: SponsorState = {
     sponsorId: "test-sponsor",
     tier: 1,
@@ -378,43 +389,84 @@ describe("splitPayday", () => {
     hitThisSplit: false,
     missedCount: 0,
   };
+  const W = CAREER_PAYROLL;
 
-  it("books the funnel in the pinned order (psychologist + gear upkeep via gear)", () => {
+  it("weeklyOf spreads a per-split figure so a season still costs 3 × the split", () => {
+    const perSplit = 3_200;
+    const weekly = weeklyOf(perSplit);
+    expect(weekly % W.weeklyQuantum).toBe(0);
+    expect(weekly).toBe(Math.trunc((perSplit * W.splitsPerSeason) / W.weeksPerSeason / W.weeklyQuantum) * W.weeklyQuantum);
+    // 32 Mondays land within one weekly quantum per week of 3 × perSplit.
+    expect(Math.abs(weekly * W.weeksPerSeason - perSplit * W.splitsPerSeason)).toBeLessThan(
+      W.weeksPerSeason * W.weeklyQuantum,
+    );
+    expect(weeklyWage(perSplit)).toBe(weekly);
+    // Tiny contracts floor at one weekly quantum (no "$0 / week" coaches).
+    expect(weeklyWage(100)).toBe(W.weeklyQuantum);
+    expect(weeklyOf(0)).toBe(0);
+  });
+
+  it("books the Monday funnel in the pinned order with ONE aggregated wage line", () => {
     const gear = freshGear({ peripherals: true, monitors: true, pcs: true, psychologist: true });
-    const { fin, insolvent, rescued } = splitPayday({
+    const squadSalaries = [
+      { name: "Alpha", amount: 2_000 },
+      { name: "Beta", amount: 1_500 },
+    ];
+    const st = weeklyStatement({ squadSalaries, coachSalary: 1_000, sponsor, rep: 10, gear });
+    const { fin, insolvent, rescued, statement } = weeklyPayroll({
       fin: freshFin(50_000, { gear }),
-      squadSalaries: [
-        { name: "Alpha", amount: 2_000 },
-        { name: "Beta", amount: 1_500 },
-      ],
+      squadSalaries,
       coachSalary: 1_000,
       sponsor,
       rep: 10,
+      gear,
       seasonIndex: 0,
-      week: 10,
+      week: 4,
+      day: 22,
       difficulty: "normal",
     });
     expect(insolvent).toBe(false);
     expect(rescued).toBe(false);
+    expect(statement).toEqual(st);
     expect(fin.ledger.map((e) => e.kind)).toEqual([
-      "sponsorBase", "fanbase", "salary", "salary", "coachSalary", "buff", "upkeep",
+      "sponsorBase", "fanbase", "payroll", "coachSalary", "buff", "upkeep",
     ]);
-    const fanbase = quantize(10 * CAREER_ECONOMY.passivePerRepPoint);
-    expect(fin.balance).toBe(
-      50_000 + 1_500 + fanbase - 2_000 - 1_500 - 1_000 -
-        CAREER_GEAR.psychologistPerSplit - gearUpkeepPerSplit(gear),
-    );
+    expect(st.payroll).toBe(weeklyWage(2_000) + weeklyWage(1_500));
+    expect(st.sponsorBase).toBe(weeklyOf(1_500));
+    expect(st.fanbase).toBe(weeklyOf(10 * CAREER_ECONOMY.passivePerRepPoint));
+    expect(st.psychologist).toBe(weeklyOf(CAREER_GEAR.psychologistPerSplit));
+    expect(st.upkeep).toBe(weeklyOf(gearUpkeepPerSplit(gear)));
+    expect(fin.balance).toBe(50_000 + st.net);
+    expect(fin.ledger.every((e) => e.day === 22)).toBe(true);
   });
 
-  it("rescues once via the Emergency Backer, then a second breach is insolvency", () => {
-    const first = splitPayday({
-      fin: freshFin(1_000),
-      squadSalaries: [{ name: "Alpha", amount: 10_000 }],
+  it("skips zero lines (no sponsor, no coach, no gear) and never books a $0 entry", () => {
+    const { fin } = weeklyPayroll({
+      fin: freshFin(5_000),
+      squadSalaries: [{ name: "Solo", amount: 1_000 }],
       coachSalary: null,
       sponsor: null,
       rep: 0,
+      gear: freshGear(),
+      seasonIndex: 0,
+      week: 4,
+      difficulty: "normal",
+    });
+    expect(fin.ledger.map((e) => e.kind)).toEqual(["payroll"]);
+    expect(fin.ledger.every((e) => e.amount !== 0)).toBe(true);
+  });
+
+  it("rescues once via the Emergency Backer, then a second breach is insolvency", () => {
+    const heavy = [{ name: "Alpha", amount: 70_000 }]; // ≈ 6.5k / week
+    const first = weeklyPayroll({
+      fin: freshFin(1_000),
+      squadSalaries: heavy,
+      coachSalary: null,
+      sponsor: null,
+      rep: 0,
+      gear: freshGear(),
       seasonIndex: 1,
-      week: 10,
+      week: 4,
       difficulty: "normal",
     });
     expect(first.rescued).toBe(true);
@@ -425,14 +477,15 @@ describe("splitPayday", () => {
     expect(grant).toBeDefined();
     expect(first.fin.loan?.remaining).toBeCloseTo(grant!.amount * CAREER_LOAN.repayFactor, 6);
 
-    const second = splitPayday({
-      fin: first.fin,
-      squadSalaries: [{ name: "Alpha", amount: 10_000 }],
+    const second = weeklyPayroll({
+      fin: { ...first.fin, balance: CAREER_LOAN.floor + 100 },
+      squadSalaries: heavy,
       coachSalary: null,
       sponsor: null,
       rep: 0,
+      gear: freshGear(),
       seasonIndex: 1,
-      week: 20,
+      week: 5,
       difficulty: "normal",
     });
     expect(second.rescued).toBe(false);
@@ -440,21 +493,75 @@ describe("splitPayday", () => {
     expect(second.fin.balance).toBeLessThan(CAREER_LOAN.floor);
   });
 
-  it("does not rescue while above the floor", () => {
-    const result = splitPayday({
-      fin: freshFin(1_000),
-      squadSalaries: [{ name: "Alpha", amount: 5_000 }],
-      coachSalary: null,
-      sponsor: null,
-      rep: 0,
-      seasonIndex: 0,
-      week: 10,
-      difficulty: "normal",
-    });
-    expect(result.rescued).toBe(false);
-    expect(result.insolvent).toBe(false);
-    expect(result.fin.balance).toBe(-4_000);
-    expect(result.fin.loan).toBeNull();
+  it("runwayWeeks: null in the black, floor(balance / burn) otherwise", () => {
+    expect(runwayWeeks(10_000, 0)).toBeNull();
+    expect(runwayWeeks(10_000, 250)).toBeNull();
+    expect(runwayWeeks(10_000, -400)).toBe(25);
+    expect(runwayWeeks(-200, -400)).toBe(0);
+  });
+});
+
+describe("bank loan (v2.0 R21)", () => {
+  it("limits scale with reputation tier and terms carry the flat interest", () => {
+    expect(bankLoanLimitFor(0)).toBe(CAREER_BANK.maxByRepTier[0]);
+    expect(bankLoanLimitFor(45)).toBe(CAREER_BANK.maxByRepTier[2]);
+    expect(bankLoanLimitFor(99)).toBe(CAREER_BANK.maxByRepTier[4]);
+    const terms = bankLoanTerms(10_000);
+    expect(terms.total).toBeCloseTo(10_000 * (1 + CAREER_BANK.interestPct), 6);
+    expect(terms.termWeeks).toBe(CAREER_BANK.termWeeks);
+    expect(terms.weeklyPayment * terms.termWeeks).toBeGreaterThanOrEqual(terms.total);
+    expect(terms.weeklyPayment % CAREER_PAYROLL.weeklyQuantum).toBe(0);
+  });
+
+  it("refuses a second loan, a loan under the Backer, a bad amount, or above the limit", () => {
+    const fin = freshFin(1_000);
+    expect(bankLoanRefusal(fin, 0, 2_000)).toBeNull();
+    expect(bankLoanRefusal(fin, 0, 2_025)).toBe("amount");
+    expect(bankLoanRefusal(fin, 0, CAREER_BANK.minAmount - QUANTUM)).toBe("amount");
+    expect(bankLoanRefusal(fin, 0, CAREER_BANK.maxByRepTier[0] + QUANTUM)).toBe("limit");
+    expect(bankLoanRefusal(freshFin(0, { loan: { remaining: 500 }, loanUsed: true }), 0, 2_000)).toBe("backer");
+    const withLoan = takeBankLoan(fin, 2_000, { seasonIndex: 0, week: 4 });
+    expect(bankLoanRefusal(withLoan, 0, 1_000)).toBe("active");
+  });
+
+  it("takes, repays weekly through the payroll, and clears exactly at 0", () => {
+    let fin = takeBankLoan(freshFin(0), 4_000, { seasonIndex: 0, week: 4, day: 22 });
+    expect(fin.balance).toBe(4_000);
+    expect(fin.ledger.map((e) => e.kind)).toEqual(["bankLoan"]);
+    const loan = fin.bankLoan!;
+    expect(loan.principal).toBe(4_000);
+    expect(loan.remaining).toBe(bankLoanTerms(4_000).total);
+    let weeks = 0;
+    while (fin.bankLoan && weeks < 40) {
+      weeks += 1;
+      const res = weeklyPayroll({
+        fin,
+        squadSalaries: [],
+        coachSalary: null,
+        sponsor: null,
+        rep: 0,
+        gear: freshGear(),
+        seasonIndex: 0,
+        week: 4 + weeks,
+        difficulty: "normal",
+      });
+      fin = res.fin;
+      if (!fin.bankLoan) expect(res.bankCleared).toBe(true);
+    }
+    expect(weeks).toBeLessThanOrEqual(CAREER_BANK.termWeeks);
+    expect(fin.bankLoan).toBeNull();
+    // Total repaid equals the quoted total, to the dollar.
+    const repaid = -fin.ledger.filter((e) => e.kind === "bankPayment").reduce((s, e) => s + e.amount, 0);
+    expect(repaid).toBe(loan.remaining);
+    expect(fin.balance).toBe(4_000 - loan.remaining);
+  });
+
+  it("early pay-down clamps to the remainder and clears the loan", () => {
+    const fin = takeBankLoan(freshFin(10_000), 2_000, { seasonIndex: 0, week: 4 });
+    const paid = payBankLoanDown(fin, 99_999, { seasonIndex: 0, week: 5 });
+    expect(paid.bankLoan).toBeNull();
+    expect(paid.balance).toBe(12_000 - bankLoanTerms(2_000).total);
+    expect(payBankLoanDown(paid, 100, { seasonIndex: 0, week: 5 })).toBe(paid);
   });
 });
 

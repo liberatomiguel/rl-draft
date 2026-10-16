@@ -13,6 +13,7 @@ import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { CountryChip } from "@/components/ui/Badge";
+import { weeklyWage } from "@/engine/career/economy";
 import { formatMoney } from "@/lib/format";
 import type { ArchetypeId, PotentialBand } from "@/engine/career/types";
 import type { Stats } from "@/engine/types";
@@ -132,7 +133,7 @@ export function PlayerSheet({
           <div className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-white/[0.02] p-3 text-sm sm:grid-cols-3">
             <div>
               <p className="kicker text-[10px]">{C.squad.wage}</p>
-              <p className="font-semibold text-ink">{C.squad.perSplit(formatMoney(data.wage))}</p>
+              <p className="font-semibold text-ink">{C.squad.perWeek(formatMoney(weeklyWage(data.wage)))}</p>
             </div>
             {data.contractLabel ? (
               <div>

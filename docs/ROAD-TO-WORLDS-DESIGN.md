@@ -464,6 +464,12 @@ coachMult    = 1 + (coachOVR−75)×0.01, clamp [0.85, 1.20]; no coach = 0.85
 
 ## 9. Economy
 
+> **v2.0 adjustment (R20/R21):** the `settleSplit` payday below is replaced by a
+> **weekly payroll** (every Monday, `weeklyPayroll`/`weeklyStatement`; split
+> figures spread ×3/32 per week) and a player-initiated **bank loan**
+> (`CAREER_BANK`) sits beside the Emergency Backer. Contract figures stay per
+> split. See `ROAD-TO-WORLDS-DECISIONS.md` R20–R21.
+
 **Owner note**: economy owns **every** money formula and table (salary ask,
 fees, prizes, prices). The market layer (§10) consumes them.
 

@@ -15,7 +15,7 @@ import { CAREER_ECONOMY, CAREER_REP } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs } from "@/data";
-import { computeSalaryAsk } from "@/engine/career/economy";
+import { computeSalaryAsk, weeklyWage } from "@/engine/career/economy";
 import type { CareerColors, CareerDifficulty, ManagementStyle } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
@@ -714,7 +714,7 @@ export function WizardScreen() {
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-sub">{C.wizard.wageBill}</span>
                         <span className="display font-bold text-orange-bright">
-                          {C.squad.perSplit(`~${formatMoney(wage, { compact: true })}`)}
+                          {C.squad.perWeek(`~${formatMoney(weeklyWage(wage), { compact: true })}`)}
                         </span>
                       </div>
                       <ProgressBar

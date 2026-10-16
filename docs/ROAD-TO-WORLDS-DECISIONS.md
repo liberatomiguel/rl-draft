@@ -214,6 +214,75 @@ R19. **`careerMode` is env-driven, `/career` is always noindex, and career copy
 
 ---
 
+## v2.0 pass — Road to Worlds 2.0, sub-phase A (2026-10-16 — economy & market clarity)
+
+Source: the v2.0 design guide, Part 3 (playtesters went broke in the first
+weeks, found finances confusing, could not sign a sub, could not find the
+coach tab, and lost every Community Cup for splits). Decisions R20–R25 are
+built on `claude/dazzling-cannon-1d6thr`; the rest of Part 3 (hub rebuild, day
+calendar animation, training rework, qualifier, inserts, achievements) follows
+as sub-phases B+.
+
+R20. **Money moves WEEKLY, contracts stay per split.** Every Monday
+     `processDayArrival` runs `economy.weeklyPayroll`: sponsor base in, fanbase
+     in, ONE aggregated `payroll` line for the squad, coach, psychologist,
+     upkeep, bank instalment out, then the floor/Backer check. A split figure is
+     spread ×3/32 per week (`weeklyOf`), quantized to $10, so a season still
+     costs exactly 3 × `salaryPerSplit` — the save schema is untouched (no
+     migration) and the negotiation curve is unchanged; only the DISPLAY unit
+     changed (every wage label is now "/ week" via `wageLabel`/`weeklyWage`).
+     The founding Monday (season 0, week 1) is skipped. `weeklyStatement` is the
+     ONE breakdown the hub tile, the Finances tiles and the Monday funnel all
+     read — they can no longer disagree. The old `splitPayday` is gone; the
+     split boundary keeps only the sponsor objective settlement and turnover.
+     Ledger cap 100 → 160 so a full split stays visible.
+
+R21. **Bank loan — the planned alternative to the Emergency Backer.** One loan
+     at a time, principal capped by reputation tier (`CAREER_BANK.maxByRepTier`
+     6k/12k/25k/50k/90k), flat 12% interest, 16 weekly instalments booked by the
+     payroll, early pay-down any time, refused while the Backer debt is open.
+     Taking one never ends the career; it just adds a weekly line. Finances
+     groups both debts under "Loans & debt" (bank request/pay early + Backer
+     pay-down, with the Backer's garnish rules spelled out). A "cash warning"
+     mail/news fires once when the runway (balance ÷ weekly burn) hits
+     `CAREER_PAYROLL.runwayWarnWeeks` (4), so bankruptcy stops being a surprise.
+
+R22. **Coach effects are explicit and better coaches pay more.**
+     `coachEffectsFor` (development.ts) spells out the three effects — training
+     speed vs. no coach, team-rating add (the existing `TEAM_RATING.coach`
+     formula, untouched for the draft game), and the stat buff — and ONE
+     component (`CoachEffectLines`) renders them on the market card, the current
+     coach panel and the squad slot. `CAREER_TRAINING.coachMult` widened
+     0.01/1.2 → 0.015/1.3 (85 OVR ≈ +15%, 92 ≈ +25% over the 0.85 no-coach
+     floor). Every "coach" link now opens `/career/market#coaches` (the tab
+     reads the hash on mount) — the "button that didn't go to the coaches"
+     report. Attribute buffs (+clutch, +offense) and their tie-in to training
+     stay for sub-phase C (training rework).
+
+R23. **Community Cups field the LOCAL SCENE, not the region's best.** The t3
+     field is the closest orgs by rating with at most
+     `t3MaxStrongerTeams` (2) rated above the user; when the region has fewer
+     weaker orgs than seats (true for EVERY region at season 0 — all 16 orgs
+     out-rate a starter roster), the rest are **local amateur teams**:
+     procedural sides (`engine/career/localScene.ts`, refs
+     `local:<region>:<season>:<k>`) rated within `localSceneBand` (−7..+1) of
+     the user team, with amateur-flavored names and gamertag players, never
+     persisted and never in standings. `t3FieldRefsFor` is the single selection
+     rule the engine AND the lobby preview use. Early cups become winnable
+     without touching regionals (the "don't make it easy, just less
+     frustrating" ask).
+
+R24. **Starter rosters overlap in day-one strength.** Shapes rebalanced to
+     prospects 65–68 (pot 80–90), journeymen 71–74 (pot cap 76), balanced
+     68–71 (pot 76–84) — no option is a dead start; the trade is today vs.
+     ceiling. Guarded by a test (average OVR spread ≤ 8 across the three).
+
+R25. **A full starting three defaults the market offer to the sub slot.** The
+     offer sheet's role picker now opens on "sub" when three starters are
+     signed, and the block reason distinguishes "starters full → signs as sub"
+     from "sub slot taken" and "squad full (4)". Root cause of "it won't let me
+     sign with a free sub slot": the role state always reset to "starter".
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

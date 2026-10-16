@@ -14,6 +14,7 @@
  */
 
 import {
+  BUFF_LEVEL_VALUE,
   CAREER_AGE,
   CAREER_CALENDAR,
   CAREER_DEV,
@@ -21,13 +22,14 @@ import {
   CAREER_SEASONS,
   CAREER_TRAINING,
   CAREER_WORLD,
+  TEAM_RATING,
 } from "@/config/balance";
 import { playerById, playerCards, seasonById } from "@/data";
 import { PLAYER_NAME_BANK } from "@/data/career/names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
-import type { PlayerCard, Region, StatKey, Stats } from "../types";
+import type { BuffLevel, PlayerCard, Region, StatKey, Stats } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type {
   ArchetypeId,
@@ -559,10 +561,48 @@ function growthMultFor(age: number): number {
   return g.a25plus;
 }
 
-function coachMultFor(coachOverall: number | null): number {
+export function coachMultFor(coachOverall: number | null): number {
   const { perPoint, min, max } = CAREER_TRAINING.coachMult;
   if (coachOverall === null) return min;
   return clamp(1 + (coachOverall - 75) * perPoint, min, max);
+}
+
+/**
+ * v2.0 (R22) — the coach's effects, spelled out for the market card, the
+ * squad panel and the training screen (one formula, three surfaces):
+ * training efficiency vs. the no-coach baseline, the team-rating modifier
+ * the rating engine applies (TEAM_RATING.coach), and the stat buff.
+ */
+export interface CoachEffects {
+  /** Training multiplier vs. the NO-coach baseline, in percent (e.g. +18). */
+  trainingPct: number;
+  /** Flat team-rating add (0..TEAM_RATING.coach.max), one decimal. */
+  ratingMod: number;
+  bonusType: StatKey;
+  bonusLevel: string;
+}
+
+export function coachEffectsFor(coach: {
+  overall: number;
+  bonusType: StatKey;
+  bonusLevel: string;
+}): CoachEffects {
+  const c = TEAM_RATING.coach;
+  const ratingMod = clamp(
+    Math.max(0, (coach.overall - c.baseline) * c.scale) +
+      (BUFF_LEVEL_VALUE[coach.bonusLevel as BuffLevel] ?? 0) * c.perBonusLevel,
+    0,
+    c.max,
+  );
+  const trainingPct = Math.round(
+    (coachMultFor(coach.overall) / CAREER_TRAINING.coachMult.min - 1) * 100,
+  );
+  return {
+    trainingPct,
+    ratingMod: Math.round(ratingMod * 10) / 10,
+    bonusType: coach.bonusType,
+    bonusLevel: coach.bonusLevel,
+  };
 }
 
 interface GainCtx {

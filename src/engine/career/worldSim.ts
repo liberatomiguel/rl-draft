@@ -38,6 +38,7 @@ import {
   CAREER_SEASONS,
   CAREER_SUB,
   CAREER_TRAINING,
+  CAREER_UNOFFICIAL,
   CAREER_WORLD,
   CHEMISTRY,
   DIFFICULTY,
@@ -54,6 +55,13 @@ import {
   seasonById,
 } from "@/data";
 import { FILLER_ORG_NAME_BANK, PLAYER_NAME_BANK, STAND_IN_NAMES } from "@/data/career/names";
+import {
+  isLocalRef,
+  localPlayerNames,
+  localSceneRefs,
+  localTeamName,
+  localTeamOffset,
+} from "./localScene";
 import { createRng, type Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { effectiveStats } from "../cards";
@@ -136,10 +144,16 @@ const STAR_RETIREMENT_OVERALL = RARITY.blueMin;
 const COACH_BONUS_STRONG = 85;
 const COACH_BONUS_MID = 75;
 /** Starter-offer generation shapes (design §6: prospects/journeymen/balanced). */
+/**
+ * v2.0 (R24) starter rosters rebalanced: the three shapes now overlap in
+ * day-one strength (prospects 65-68 / journeymen 71-74 / balanced 68-71) so
+ * none is a dead start — prospects trade ~5 OVR today for 80-90 potential,
+ * journeymen are the strongest now but capped at JOURNEYMAN_POTENTIAL_CAP.
+ */
 const STARTER_OFFERS = [
-  { key: "prospects", ageMin: 14, ageSpan: 3, ovrMin: 64, ovrSpan: 4, potMin: 78, potSpan: 10 },
-  { key: "journeymen", ageMin: 21, ageSpan: 3, ovrMin: 70, ovrSpan: 4, potMin: 0, potSpan: 0 },
-  { key: "balanced", ageMin: 16, ageSpan: 5, ovrMin: 67, ovrSpan: 4, potMin: 74, potSpan: 8 },
+  { key: "prospects", ageMin: 15, ageSpan: 3, ovrMin: 65, ovrSpan: 3, potMin: 80, potSpan: 10 },
+  { key: "journeymen", ageMin: 21, ageSpan: 3, ovrMin: 71, ovrSpan: 3, potMin: 0, potSpan: 0 },
+  { key: "balanced", ageMin: 17, ageSpan: 4, ovrMin: 68, ovrSpan: 3, potMin: 76, potSpan: 8 },
 ] as const;
 /** Journeymen potential ceiling ("the scene's veterans, low POT"). */
 const JOURNEYMAN_POTENTIAL_CAP = 76;
@@ -686,6 +700,87 @@ function expectedFieldSize(def: CareerEventDef): number {
  *    taking the 7 closest implements the "closest regardless" fallback).
  *  - t2: user + the region's top 7 by seasonPoints.
  */
+/**
+ * v2.0 (R23) Community Cup field selection — ONE rule for the engine and the
+ * lobby preview: the closest orgs by rating, at most t3MaxStrongerTeams of
+ * them rated above the user; when the region has fewer weaker orgs than the
+ * cup needs, the remaining seats go to the local amateur scene.
+ */
+export function t3FieldRefsFor(input: {
+  region: Region;
+  seasonIndex: number;
+  userRating: number;
+  orgRatings: { ref: string; rating: number }[];
+  seats: number;
+}): string[] {
+  const byDiff = [...input.orgRatings]
+    .map((o) => ({ ref: o.ref, diff: Math.abs(o.rating - input.userRating), stronger: o.rating > input.userRating }))
+    .sort((a, b) => a.diff - b.diff || a.ref.localeCompare(b.ref));
+  const picked: string[] = [];
+  let strongerTaken = 0;
+  for (const c of byDiff) {
+    if (picked.length >= input.seats) break;
+    if (c.stronger) {
+      if (strongerTaken >= CAREER_UNOFFICIAL.t3MaxStrongerTeams) continue;
+      strongerTaken += 1;
+    }
+    picked.push(c.ref);
+  }
+  for (const ref of localSceneRefs(input.region, input.seasonIndex)) {
+    if (picked.length >= input.seats) break;
+    picked.push(ref);
+  }
+  return picked;
+}
+
+/**
+ * A local amateur side for a Community Cup: three generated gamertags whose
+ * overalls are fitted (two passes) so the assembled intrinsic rating lands on
+ * userRating + localTeamOffset. Never persisted; same inputs → same team.
+ */
+export function localTeamFor(
+  ref: string,
+  ctx: { careerSeed: number; seasonIndex: number; difficulty: CareerDifficulty; userRating: number; region: Region },
+): TournamentTeam {
+  const name = localTeamName(ref, ctx.careerSeed);
+  const target = clamp(ctx.userRating + localTeamOffset(ref, ctx.careerSeed), 55, 96);
+  const names = localPlayerNames(ref, ctx.careerSeed);
+  const assemble = (shift: number): TournamentTeam => {
+    const players: MemberView[] = names.map((n, i) => {
+      const id = `${ref}:${i}`;
+      const archetype = deriveArchetype(id, ctx.careerSeed);
+      const jitter = Math.round((derivedFloat(ctx.careerSeed, streams.gen("localJit", id)) - 0.5) * 2);
+      const overall = clamp(Math.round(target + shift + jitter), 50, 99);
+      return {
+        name: n,
+        overall,
+        stats: statsFromView({ overall, attrOffsets: deriveAttrOffsets(id, ctx.careerSeed, archetype) }),
+        lineupId: ref,
+        orgId: ref,
+        region: ctx.region,
+      };
+    });
+    return assembleTournamentTeam({
+      id: ref,
+      name,
+      isUser: false,
+      region: ctx.region,
+      players,
+      orgOverride: {
+        name,
+        buffType: pickStat(derivedFloat(ctx.careerSeed, streams.gen("localBuff", ref))),
+        buffLevel: "~",
+      },
+      specialIds: [],
+      difficulty: ctx.difficulty,
+      difficultyShift: DIFFICULTY[ctx.difficulty].opponentRatingShift,
+    });
+  };
+  const first = assemble(0);
+  const delta = target - intrinsicRating(first);
+  return Math.abs(delta) < 0.5 ? first : assemble(Math.round(delta));
+}
+
 export function fieldForEvent(
   def: CareerEventDef,
   ctx: FieldCtx,
@@ -769,15 +864,29 @@ export function fieldForEvent(
     }
     const region = def.region ?? ctx.userRegion;
     if (def.tier === "t3") {
+      // v2.0 (R23): the local scene around the user — see t3FieldRefsFor.
       const userRating = ctx.userTeam.rating.total;
-      const closest = regionOrgs(region)
-        .map((o) => ({
-          ref: o.ref,
-          diff: Math.abs(intrinsicRating(teamFor(o.ref)) - userRating),
-        }))
-        .sort((a, b) => a.diff - b.diff || a.ref.localeCompare(b.ref))
-        .slice(0, SINGLE_ELIM_TEAMS - 1);
-      field = [ctx.userTeam, ...closest.map((c) => teamFor(c.ref))];
+      const refs = t3FieldRefsFor({
+        region,
+        seasonIndex: def.seasonIndex,
+        userRating,
+        orgRatings: regionOrgs(region).map((o) => ({ ref: o.ref, rating: intrinsicRating(teamFor(o.ref)) })),
+        seats: SINGLE_ELIM_TEAMS - 1,
+      });
+      field = [
+        ctx.userTeam,
+        ...refs.map((ref) =>
+          isLocalRef(ref)
+            ? localTeamFor(ref, {
+                careerSeed: ctx.careerSeed,
+                seasonIndex: def.seasonIndex,
+                difficulty: ctx.difficulty,
+                userRating,
+                region,
+              })
+            : teamFor(ref),
+        ),
+      ];
     } else {
       const ranked = regionOrgs(region).sort(
         pointsRank(ctx.competition.seasonPoints[region] ?? {}),

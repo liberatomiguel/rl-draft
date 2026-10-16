@@ -292,7 +292,10 @@ export type LedgerKind =
   | "loanGrant"
   | "loanGarnish"
   | "loanPayment" // v0.3: manual Backer pay-down
-  | "fanbase";
+  | "fanbase"
+  | "payroll" // v2.0: the squad aggregated weekly wages (one line per Monday)
+  | "bankLoan" // v2.0: bank loan principal received
+  | "bankPayment"; // v2.0: weekly instalment / early pay-down
 
 export interface LedgerEntry {
   id: string;
@@ -321,6 +324,19 @@ export interface GearState {
   psychologist: boolean;
 }
 
+/**
+ * v2.0 bank loan (R21): the player-initiated line of credit. `remaining`
+ * includes the flat interest; `weeklyPayment` is booked every Monday until
+ * it clears (the last instalment is clamped to the remainder).
+ */
+export interface BankLoanState {
+  principal: number;
+  remaining: number;
+  weeklyPayment: number;
+  takenSeason: number;
+  takenWeek: number;
+}
+
 export interface FinanceState {
   balance: number;
   /** Ring-buffer tail (CAREER_SAVE.ledgerTailCap). */
@@ -328,6 +344,8 @@ export interface FinanceState {
   loan: { remaining: number } | null;
   /** One rescue per career — a second breach after this is set ends the career. */
   loanUsed: boolean;
+  /** v2.0 bank loan (absent on pre-2.0 saves = none). */
+  bankLoan?: BankLoanState | null;
   gear: GearState;
   /** Bootcamp "Sharp" rating armed for the next official event (0 = none). */
   bootcampSharp: number;

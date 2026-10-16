@@ -3,8 +3,14 @@
 /**
  * Road to Worlds — Finances (v0.2 rebuild): the org's financial dashboard.
  *
- * Statement tiles (balance + sparkline · net/split · projected) computed from
- * balance constants only, the GEAR LADDER as the progression centerpiece
+ * v2.0 (R20/R21): the statement is WEEKLY — the tiles, the "Weekly statement"
+ * breakdown and the hub tile all read economy.weeklyStatement, the same
+ * function the Monday funnel books, so no screen can disagree with the
+ * ledger. "Loans & debt" holds both the bank loan (request / pay early) and
+ * the Emergency Backer pay-down.
+ *
+ * Statement tiles (balance + sparkline · net/week · projected + runway),
+ * the GEAR LADDER as the progression centerpiece
  * (7 steps: peripherals → monitors → PCs → bootcamp T1 → bootcamp T2 →
  * psychologist → Performance Center, unlocked by rep, bought in order, sponsor
  * perks discounting), the sponsor desk (active deal with objective/patience/
@@ -13,10 +19,18 @@
  */
 
 import { useState } from "react";
-import { CAREER_ECONOMY, CAREER_LOAN, CAREER_SPONSOR } from "@/config/balance";
+import { CAREER_BANK, CAREER_ECONOMY, CAREER_LOAN, CAREER_PAYROLL, CAREER_SPONSOR } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
-import { gearUpkeepPerSplit, quantize } from "@/engine/career/economy";
+import {
+  bankLoanLimitFor,
+  bankLoanTerms,
+  quantize,
+  runwayWeeks,
+  weeklyOf,
+  weeklyStatement,
+  type WeeklyStatement,
+} from "@/engine/career/economy";
 import type {
   LedgerEntry,
   SponsorObjectiveKind,
@@ -85,9 +99,20 @@ function FinanceErrorNotice({ className }: { className?: string }) {
 // Emergency Backer pay-down (v0.3): amount stepper + pay / pay-it-all
 // ---------------------------------------------------------------------------
 
-function BackerPayDown({ remaining, balance }: { remaining: number; balance: number }) {
+function PayDown({
+  remaining,
+  balance,
+  onPay,
+  cta,
+  hint,
+}: {
+  remaining: number;
+  balance: number;
+  onPay: (amount: number) => void;
+  cta: string;
+  hint?: string;
+}) {
   const C = useCareerCopy();
-  const payDebt = useCareerStore((s) => s.payDebt);
   const [raw, setRaw] = useState<number | null>(null);
 
   const payMin = CAREER_ECONOMY.roundQuantum;
@@ -126,20 +151,109 @@ function BackerPayDown({ remaining, balance }: { remaining: number; balance: num
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="primary" size="sm" disabled={!canPay} onClick={() => payDebt(amount)}>
-          {C.finances.payDebt}
+        <Button variant="primary" size="sm" disabled={!canPay} onClick={() => onPay(amount)}>
+          {cta}
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={!canPayAll}
-          onClick={() => payDebt(remaining)}
-        >
+        <Button variant="ghost" size="sm" disabled={!canPayAll} onClick={() => onPay(remaining)}>
           {C.finances.payDebtAll(formatMoney(remaining))}
         </Button>
       </div>
 
-      <p className="mt-2 text-[10px] text-faint">{C.finances.payDebtHint}</p>
+      {hint ? <p className="mt-2 text-[10px] text-faint">{hint}</p> : null}
+    </div>
+  );
+}
+
+/** v2.0 (R21): request a bank loan — amount stepper, live terms, one button. */
+function BankLoanRequest({ rep, balance }: { rep: number; balance: number }) {
+  const C = useCareerCopy();
+  const takeBankLoan = useCareerStore((s) => s.takeBankLoan);
+  const limit = bankLoanLimitFor(rep);
+  const step = Math.max(CAREER_ECONOMY.roundQuantum, quantize(limit / 10));
+  const [raw, setRaw] = useState<number | null>(null);
+  const clamp = (n: number) => Math.min(limit, Math.max(CAREER_BANK.minAmount, quantize(n)));
+  const amount = clamp(raw ?? Math.min(limit, Math.max(CAREER_BANK.minAmount, quantize(limit / 2))));
+  const terms = bankLoanTerms(amount);
+  if (limit < CAREER_BANK.minAmount) {
+    return <p className="mt-2 text-xs text-faint">{C.finances.bankLockedRep}</p>;
+  }
+  return (
+    <div className="mt-3 border-t border-line pt-3">
+      <p className="text-[11px] font-semibold text-sub">{C.finances.bankAvailable(formatMoney(limit))}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="-"
+          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => setRaw(clamp(amount - step))}
+          disabled={amount - step < CAREER_BANK.minAmount}
+        >
+          −
+        </button>
+        <div className="min-w-0 flex-1 text-center">
+          <p className="display text-lg font-bold tabular-nums text-ink">{formatMoney(amount)}</p>
+          <p className="text-[10px] text-faint">{C.finances.bankAmount}</p>
+        </div>
+        <button
+          type="button"
+          aria-label="+"
+          className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => setRaw(clamp(amount + step))}
+          disabled={amount >= limit}
+        >
+          +
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-sub">
+        {C.finances.bankTerms(
+          formatMoney(terms.weeklyPayment, { compact: true }),
+          terms.termWeeks,
+          formatMoney(terms.total, { compact: true }),
+        )}
+      </p>
+      <Button variant="primary" size="sm" className="mt-3" onClick={() => takeBankLoan(amount)}>
+        {C.finances.bankRequest} · {formatMoney(amount, { compact: true })}
+      </Button>
+      <p className="mt-2 text-[10px] text-faint">
+        {C.finances.projected}: {formatMoney(balance + amount, { compact: true })}
+      </p>
+    </div>
+  );
+}
+
+/** The Monday breakdown, line by line (positive in, negative out). */
+function StatementLines({ st }: { st: WeeklyStatement }) {
+  const C = useCareerCopy();
+  const rows: { key: keyof typeof C.finances.line; amount: number }[] = [
+    { key: "sponsorBase", amount: st.sponsorBase },
+    { key: "fanbase", amount: st.fanbase },
+    { key: "payroll", amount: -st.payroll },
+    { key: "coach", amount: -st.coach },
+    { key: "psychologist", amount: -st.psychologist },
+    { key: "upkeep", amount: -st.upkeep },
+    { key: "bankPayment", amount: -st.bankPayment },
+  ];
+  return (
+    <div className="rounded-lg border border-line bg-white/[0.02]">
+      {rows
+        .filter((r) => r.amount !== 0)
+        .map((r) => (
+          <div
+            key={r.key}
+            className="flex items-baseline justify-between gap-3 border-b border-line/50 px-2.5 py-1.5 text-xs last:border-0"
+          >
+            <span className="text-sub">{C.finances.line[r.key]}</span>
+            <span className={cx("font-mono font-semibold", r.amount >= 0 ? "text-good" : "text-bad")}>
+              {formatMoneyDelta(r.amount)}
+            </span>
+          </div>
+        ))}
+      <div className="flex items-baseline justify-between gap-3 px-2.5 py-1.5 text-xs">
+        <span className="font-semibold text-ink">{C.finances.net}</span>
+        <span className={cx("font-mono font-bold", st.net >= 0 ? "text-good" : "text-bad")}>
+          {formatMoneyDelta(st.net)}
+        </span>
+      </div>
     </div>
   );
 }
@@ -303,6 +417,8 @@ export function FinancesScreen() {
   const setPsychologist = useCareerStore((s) => s.setPsychologist);
   const runBootcamp = useCareerStore((s) => s.runBootcamp);
   const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
+  const payDebt = useCareerStore((s) => s.payDebt);
+  const payBankLoan = useCareerStore((s) => s.payBankLoan);
 
   const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>("all");
 
@@ -331,17 +447,18 @@ export function FinancesScreen() {
   const rep = save.reputation;
   const sponsorTier = save.sponsor?.tier ?? null;
 
-  // --- statement (balance constants ONLY — mirrors the splitPayday funnel) ---
-  const income =
-    (save.sponsor?.basePerSplit ?? 0) + quantize(rep * CAREER_ECONOMY.passivePerRepPoint);
-  const squadWages = save.squad.reduce((s, p) => s + p.salaryPerSplit, 0);
-  const expenses =
-    squadWages +
-    (save.coach?.salaryPerSplit ?? 0) +
-    (gear.psychologist ? CAREER_GEAR.psychologistPerSplit : 0) +
-    gearUpkeepPerSplit(gear);
-  const net = income - expenses;
+  // --- statement (v2.0: THE weekly statement the Monday funnel books) --------
+  const statement = weeklyStatement({
+    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
+    coachSalary: save.coach?.salaryPerSplit ?? null,
+    sponsor: save.sponsor,
+    rep,
+    gear,
+    bankLoan: fin.bankLoan ?? null,
+  });
+  const { income, expenses, net } = statement;
   const projected = fin.balance + net;
+  const runway = runwayWeeks(fin.balance, net);
 
   // --- sparkline series: running balance reconstructed backwards ------------
   const sparkSeries: number[] = [];
@@ -391,7 +508,7 @@ export function FinancesScreen() {
       <>
         {item.upkeepPerSplit > 0 ? (
           <p className="mt-1 text-[10px] text-faint">
-            {C.finances.upkeepLabel(formatMoney(item.upkeepPerSplit, { compact: true }))}
+            {C.finances.upkeepLabel(formatMoney(weeklyOf(item.upkeepPerSplit), { compact: true }))}
           </p>
         ) : null}
         {status === "locked" ? (
@@ -525,7 +642,7 @@ export function FinancesScreen() {
   const sponsorMoneyLine = (s: SponsorState): React.ReactNode => (
     <>
       <p className="mt-2 text-sm font-semibold text-good">
-        {C.finances.perSplitBase(formatMoney(s.basePerSplit, { compact: true }))}
+        {C.finances.perWeekBase(formatMoney(weeklyOf(s.basePerSplit), { compact: true }))}
       </p>
       <p className="text-xs text-sub">{C.finances.bonusFor(formatMoney(s.bonus, { compact: true }))}</p>
     </>
@@ -558,11 +675,18 @@ export function FinancesScreen() {
           >
             {formatMoney(fin.balance)}
           </p>
-          {fin.loan ? (
-            <Badge tone="bad" className="mt-2">
-              {C.finances.backerRemaining(formatMoney(fin.loan.remaining, { compact: true }))}
-            </Badge>
-          ) : null}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {fin.loan ? (
+              <Badge tone="bad">
+                {C.finances.backerRemaining(formatMoney(fin.loan.remaining, { compact: true }))}
+              </Badge>
+            ) : null}
+            {fin.bankLoan ? (
+              <Badge tone="orange">
+                {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining, { compact: true }))}
+              </Badge>
+            ) : null}
+          </div>
           <div className="mt-3 border-t border-line pt-2">
             <BalanceSparkline data={sparkTail} />
           </div>
@@ -607,29 +731,103 @@ export function FinancesScreen() {
           <p className="mt-3 text-[11px] text-faint">
             {C.finances.payday} · {C.hub.budgetNet(formatMoneyDelta(net, { compact: true }))}
           </p>
+          <p
+            className={cx(
+              "mt-1 text-[11px] font-semibold",
+              runway === null
+                ? "text-good"
+                : runway <= CAREER_PAYROLL.runwayWarnWeeks
+                  ? "text-bad"
+                  : "text-orange-bright",
+            )}
+          >
+            {runway === null ? C.finances.runwayOk : C.finances.runway(runway)}
+          </p>
         </Panel>
       </div>
 
-      {/* ================= Emergency Backer ================= */}
-      {fin.loan ? (
-        <Panel glow="orange" className="rise-in p-4">
-          <p className="kicker mb-1 text-[10px]">{C.finances.backer}</p>
-          <p className="display text-lg font-bold text-orange-bright">
-            {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
-          </p>
-          <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
-          <p className="mt-0.5 text-xs text-sub">
-            {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
-          </p>
-          <BackerPayDown remaining={fin.loan.remaining} balance={fin.balance} />
-        </Panel>
-      ) : fin.loanUsed ? (
-        <Panel className="rise-in !border-bad/40 p-4">
-          <p className="kicker mb-1 text-[10px]">{C.finances.backer}</p>
-          <p className="text-sm font-semibold text-bad">{C.finances.insolvencyWarning}</p>
-          <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
-        </Panel>
-      ) : null}
+      {/* ================= Loans & debt (v2.0) ================= */}
+      <Panel glow={fin.loan ? "orange" : undefined} className="rise-in p-4">
+        <div className="mb-1 flex items-baseline justify-between gap-2">
+          <p className="kicker text-[10px]">{C.finances.loans}</p>
+          <span className="text-[10px] text-faint">{C.finances.loansHint}</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {/* Bank */}
+          <div className="rounded-lg border border-line bg-white/[0.02] p-3">
+            <p className="display text-sm font-bold uppercase tracking-wide text-ink">
+              {C.finances.bankTitle}
+            </p>
+            {fin.bankLoan ? (
+              <>
+                <p className="display mt-1 text-lg font-bold text-orange-bright">
+                  {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining))}
+                </p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.bankWeekly(formatMoney(fin.bankLoan.weeklyPayment, { compact: true }))}
+                </p>
+                <PayDown
+                  remaining={fin.bankLoan.remaining}
+                  balance={fin.balance}
+                  onPay={payBankLoan}
+                  cta={C.finances.bankPayEarly}
+                />
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-sub">
+                  {C.finances.bankHint(CAREER_BANK.termWeeks, Math.round(CAREER_BANK.interestPct * 100))}
+                </p>
+                {fin.loan && CAREER_BANK.blockedWhileBacker ? (
+                  <p className="mt-2 text-xs font-semibold text-faint">{C.finances.bankBlockedBacker}</p>
+                ) : (
+                  <BankLoanRequest rep={rep} balance={fin.balance} />
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Emergency Backer */}
+          <div
+            className={cx(
+              "rounded-lg border bg-white/[0.02] p-3",
+              fin.loan ? "border-orange/40" : fin.loanUsed ? "border-bad/40" : "border-line",
+            )}
+          >
+            <p className="display text-sm font-bold uppercase tracking-wide text-ink">{C.finances.backer}</p>
+            {fin.loan ? (
+              <>
+                <p className="display mt-1 text-lg font-bold text-orange-bright">
+                  {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
+                </p>
+                <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
+                </p>
+                <PayDown
+                  remaining={fin.loan.remaining}
+                  balance={fin.balance}
+                  onPay={payDebt}
+                  cta={C.finances.payDebt}
+                  hint={C.finances.payDebtHint}
+                />
+              </>
+            ) : fin.loanUsed ? (
+              <>
+                <p className="mt-1 text-sm font-semibold text-bad">{C.finances.insolvencyWarning}</p>
+                <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-sub">
+                {C.finances.backerIdle(
+                  formatMoney(CAREER_LOAN.floor, { compact: true }),
+                  formatMoney(CAREER_LOAN.rescueTo, { compact: true }),
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+      </Panel>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-5">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
@@ -678,7 +876,7 @@ export function FinancesScreen() {
                 ) : psychUnlocked ? (
                   <Button variant="primary" size="sm" onClick={() => setPsychologist(true)}>
                     {C.finances.hireLabel} ·{" "}
-                    {formatMoney(CAREER_GEAR.psychologistPerSplit, { compact: true })}
+                    {C.squad.perWeek(formatMoney(weeklyOf(CAREER_GEAR.psychologistPerSplit), { compact: true }))}
                   </Button>
                 ) : null
               }
@@ -686,7 +884,7 @@ export function FinancesScreen() {
                 <>
                   <p className="mt-1 text-[10px] text-faint">
                     {C.finances.upkeepLabel(
-                      formatMoney(CAREER_GEAR.psychologistPerSplit, { compact: true }),
+                      formatMoney(weeklyOf(CAREER_GEAR.psychologistPerSplit), { compact: true }),
                     )}
                   </p>
                   {!psychUnlocked ? (
@@ -713,8 +911,15 @@ export function FinancesScreen() {
           </ol>
         </Panel>
 
-        {/* ================= right column: sponsors + ledger ================= */}
+        {/* ================= right column: statement + sponsors + ledger ================= */}
         <div className="space-y-4 lg:col-span-2">
+          {/* Weekly statement */}
+          <Panel className="rise-in p-4" style={{ animationDelay: "140ms" }}>
+            <p className="kicker mb-1 text-[11px]">{C.finances.weeklyStatement}</p>
+            <p className="mb-3 text-[11px] text-faint">{C.finances.statementHint}</p>
+            <StatementLines st={statement} />
+          </Panel>
+
           {/* Sponsors */}
           <Panel className="rise-in p-4" style={{ animationDelay: "160ms" }}>
             <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>

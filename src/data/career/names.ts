@@ -119,3 +119,18 @@ export const STAND_IN_NAMES: Record<Region, string> = {
   NA: "FillerUp", EU: "LastCall", SAM: "QuebraGalho", MENA: "Sandstorm",
   OCE: "PinchHit", APAC: "Kaeru", SSA: "Sharpline",
 };
+
+/**
+ * v2.0 (R23) local amateur scene — the community teams a new org meets at
+ * Community Cups. Deliberately amateur-flavored (in-jokes of the scene) so
+ * they read nothing like the pro orgs; region-neutral, picked by hash.
+ */
+export const LOCAL_TEAM_NAME_BANK: readonly string[] = [
+  "Garage Kings", "Late Night Rotations", "Pocket Rockets", "Ceiling Shot Club",
+  "Demo Derby", "Kickoff Crew", "Backboard Boys", "Flip Reset FC",
+  "Wavedash Union", "Bump Squad", "Boost Starved", "Double Tap Society",
+  "Musty Collective", "Air Roll Academy", "Pinch Point", "Fake Kickoff",
+  "Shadow Defense", "Ground Game", "Half Flip Hooligans", "Whiff City",
+  "Rotation Nation", "Ballcam Off", "Dribble Department", "Open Net Heroes",
+  "Zap Dash", "Speedflip Syndicate", "Corner Boost", "Last Touch",
+];

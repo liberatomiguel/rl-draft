@@ -16,7 +16,12 @@
  */
 
 import { useMemo, useState } from "react";
-import { CAREER_LOAN, CAREER_SCOUT, CAREER_UNLOCKS } from "@/config/balance";
+import {
+  CAREER_LOAN,
+  CAREER_SCOUT,
+  CAREER_TRAINING,
+  CAREER_UNLOCKS,
+} from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { repNeededForOverall, signableOverallCap } from "@/engine/career/economy";
@@ -45,6 +50,8 @@ import {
   statsFromView,
   upcomingStops,
   useCareerSave,
+  wageLabel,
+  weeklyWage,
   weekOfDay,
 } from "@/components/career/careerUi";
 import { formatDateTiny, formatDaysAway } from "@/components/career/dateText";
@@ -52,6 +59,7 @@ import { OrgMark } from "@/components/career/OrgMark";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
+import { CoachEffectLines } from "@/components/career/CoachEffects";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -162,7 +170,10 @@ export function MarketScreen() {
   const fireCoach = useCareerStore((s) => s.fireCoach);
   const buyScoutReport = useCareerStore((s) => s.buyScoutReport);
 
-  const [tab, setTab] = useState<Tab>("free");
+  // v2.0 (R22): deep link — /career/market#coaches opens the coaches tab.
+  const [tab, setTab] = useState<Tab>(() =>
+    typeof window !== "undefined" && window.location.hash === "#coaches" ? "coaches" : "free",
+  );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("ovr");
   /** v0.3: flips the current sort key's natural direction. */
@@ -320,6 +331,7 @@ export function MarketScreen() {
     : null;
   const cost = pack ? pack.fee + pack.signingBonus : 0;
   const balanceAfter = save.finances.balance - cost;
+  const squadFull = starterCount >= 3 && subCount >= 1;
   const roleBlocked = role === "starter" ? starterCount >= 3 : subCount >= 1;
   const loanBlocked = Boolean(save.finances.loan) && (pack?.fee ?? 0) > 0;
   const fundsBlocked = balanceAfter < CAREER_LOAN.floor;
@@ -327,9 +339,13 @@ export function MarketScreen() {
     ? C.market.errors.windowClosed
     : targetLocked
       ? C.market.errors.repGate
-      : roleBlocked
+      : squadFull
         ? C.market.squadFullWarning
-        : loanBlocked
+        : roleBlocked
+          ? role === "starter"
+            ? C.market.startersFull
+            : C.market.subTaken
+          : loanBlocked
           ? C.market.errors.loanActive
           : fundsBlocked
             ? C.market.errors.funds
@@ -488,7 +504,8 @@ export function MarketScreen() {
                       onClick={() => {
                         setTarget(r);
                         setOfferOpen(false);
-                        setRole("starter");
+                        // v2.0 (R25): a full starting three defaults the offer to the sub slot.
+                        setRole(starterCount >= 3 ? "sub" : "starter");
                         setLen(2);
                       }}
                       footer={
@@ -506,7 +523,7 @@ export function MarketScreen() {
                           <span className="shrink-0 font-semibold text-ink">
                             {r.orgRef
                               ? formatMoney(r.price, { compact: true })
-                              : C.squad.perSplit(formatMoney(r.salary, { compact: true }))}
+                              : wageLabel(C, r.salary)}
                           </span>
                         </div>
                       }
@@ -554,6 +571,11 @@ export function MarketScreen() {
       ) : null}
       {tab === "coaches" && save.reputation >= CAREER_UNLOCKS.coachRep ? (
         <div className="rise-in space-y-4" style={{ animationDelay: "60ms" }}>
+          {!save.coach ? (
+            <Panel className="p-3 text-xs font-semibold text-orange-bright">
+              {C.market.coachNoneEffects(Math.round((1 - CAREER_TRAINING.coachMult.min) * 100))}
+            </Panel>
+          ) : null}
           {save.coach ? (
             <Panel strong className="p-4">
               <p className="kicker mb-2 text-[10px]">{C.market.currentCoach}</p>
@@ -573,8 +595,9 @@ export function MarketScreen() {
                     {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])}{" "}
                     <span className="font-mono font-bold text-cyan">{save.coach.bonusLevel}</span>
                     <span className="mx-1.5 text-faint">·</span>
-                    {C.squad.perSplit(formatMoney(save.coach.salaryPerSplit, { compact: true }))}
+                    {wageLabel(C, save.coach.salaryPerSplit)}
                   </p>
+                  <CoachEffectLines coach={save.coach} className="mt-2" />
                 </div>
                 <div className="text-right leading-none">
                   <div className="display text-3xl font-bold text-ink">{save.coach.overall}</div>
@@ -614,9 +637,8 @@ export function MarketScreen() {
                   {C.market.coachBonus(t.STAT_LABELS[c.bonusType])}{" "}
                   <span className="font-mono font-bold text-cyan">{c.bonusLevel}</span>
                 </p>
-                <p className="mt-0.5 text-xs text-faint">
-                  {C.squad.perSplit(formatMoney(c.salaryPerSplit, { compact: true }))}
-                </p>
+                <p className="mt-0.5 text-xs text-faint">{wageLabel(C, c.salaryPerSplit)}</p>
+                <CoachEffectLines coach={c} className="mt-2" />
                 <Button
                   variant="primary"
                   size="sm"
@@ -838,6 +860,9 @@ export function MarketScreen() {
                     </Chip>
                   ))}
                 </div>
+                {starterCount >= 3 && subCount < 1 ? (
+                  <p className="mt-1 text-[10px] text-faint">{C.market.startersFull}</p>
+                ) : null}
               </div>
               <div>
                 <p className="kicker mb-1.5 text-[10px]">{C.market.lengthLabel}</p>
@@ -863,7 +888,7 @@ export function MarketScreen() {
                 <div className="flex items-center justify-between">
                   <span className="text-sub">{C.squad.wage}</span>
                   <span className="display font-bold text-ink">
-                    {C.squad.perSplit(formatMoney(pack.salaryPerSplit))}
+                    {C.squad.perWeek(formatMoney(weeklyWage(pack.salaryPerSplit)))}
                   </span>
                 </div>
                 {target.orgRef ? (

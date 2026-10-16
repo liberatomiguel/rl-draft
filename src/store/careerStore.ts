@@ -50,6 +50,7 @@ import {
   fireCoachFlow,
   hireCoachFlow,
   migrateSaveToV3,
+  payBankLoanFlow,
   payDebtFlow,
   releasePlayerFlow,
   renewPlayerFlow,
@@ -62,6 +63,7 @@ import {
   setStartersFlow,
   setTrainingFocusFlow,
   setTrainingIntensityFlow,
+  takeBankLoanFlow,
   signPlayerFlow,
   simEventToEnd,
   startEvent,
@@ -166,6 +168,9 @@ interface CareerStoreState {
   chooseSponsor: (sponsorId: string) => void;
   /** v0.3: manual Backer debt pay-down. */
   payDebt: (amount: number) => void;
+  /** v2.0 bank loan (R21). */
+  takeBankLoan: (principal: number) => void;
+  payBankLoan: (amount: number) => void;
 
   continueToNextSeason: () => void;
   continueInfinite: () => void;
@@ -310,6 +315,8 @@ export const useCareerStore = create<CareerStoreState>()(
         fireCoach: () => withResult(fireCoachFlow),
         chooseSponsor: (sponsorId) => withResult((s) => chooseSponsorFlow(s, sponsorId)),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
+        takeBankLoan: (principal) => withResult((s) => takeBankLoanFlow(s, principal)),
+        payBankLoan: (amount) => withResult((s) => payBankLoanFlow(s, amount)),
 
         continueToNextSeason: () => withSave(rolloverToNextSeason),
         continueInfinite: () =>

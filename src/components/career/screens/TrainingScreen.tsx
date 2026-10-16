@@ -28,6 +28,7 @@ import type {
   TrainingIntensity,
 } from "@/engine/career/types";
 import type { StatKey } from "@/engine/types";
+import { coachEffectsFor } from "@/engine/career/development";
 import { clamp, cx } from "@/lib/util";
 import { scrimProjection, scrimShortlistFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
@@ -122,11 +123,8 @@ export function TrainingScreen() {
     clock.dow <= CAREER_TRAINING.trainingDaysPerWeek;
 
   // --- effects row ----------------------------------------------------------
-  const cm = CAREER_TRAINING.coachMult;
-  const coachMult = save.coach
-    ? clamp(1 + (save.coach.overall - 75) * cm.perPoint, cm.min, cm.max)
-    : null;
-  const coachEffectPct = coachMult !== null ? Math.round((coachMult - 1) * 100) : null;
+  // v2.0: the coach line reads the same formula the market card shows.
+  const coachEffectPct = save.coach ? coachEffectsFor(save.coach).trainingPct : null;
   const gearPct = Math.round(gearTrainingBonus(save.finances.gear) * 100);
 
   const canDelegate = Boolean(save.coach);
@@ -262,7 +260,7 @@ export function TrainingScreen() {
           </span>
         ) : (
           <AppLink
-            href="/career/market"
+            href="/career/market#coaches"
             className="rounded-full border border-orange/40 bg-orange/10 px-3 py-1 font-semibold text-orange-bright transition-colors hover:bg-orange/20"
           >
             {C.training.noCoach}

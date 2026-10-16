@@ -906,6 +906,21 @@ export const CAREER_UNOFFICIAL = {
   t3RatingCeiling: 85,
   t3MaxEntriesPerSplit: 2,
   t3RepCapPerSplit: 2,
+  /**
+   * v2.0 (R23): a Community Cup fields at most this many orgs rated ABOVE the
+   * user team (closest-first); the rest are the closest weaker orgs. Early
+   * cups stop being a wall of stronger locals.
+   */
+  t3MaxStrongerTeams: 2,
+  /**
+   * v2.0 (R23) local amateur scene: when the region has fewer weaker orgs
+   * than the cup needs (every season-0 org out-rates a starter roster), the
+   * remaining slots are procedurally generated local teams rated within
+   * `localSceneBand` of the user team — the "garage scene" a new org actually
+   * plays against. `localScenePool` teams exist per region per season.
+   */
+  localSceneBand: [-7, 1] as const,
+  localScenePool: 6,
   t2RepGate: 30,
   t2OfferChance: 0.6,
   /** Auto-enter only fields whose median is within ± this of the user rating. */
@@ -1000,8 +1015,12 @@ export const CAREER_TRAINING = {
    * "stagnation": at K=4 a player 2 pts short trained at 1/3 speed forever.
    */
   headroomSoftK: 2.5,
-  /** coachMult = clamp(1 + (coachOVR - 75) × perPoint, min, max); no coach = min. */
-  coachMult: { perPoint: 0.01, min: 0.85, max: 1.2 },
+  /**
+   * coachMult = clamp(1 + (coachOVR - 75) × perPoint, min, max); no coach = min.
+   * v2.0 (R22): 0.01/1.2 → 0.015/1.3 — an 85 coach now reads +15% and a 92
+   * coach +25%, so "better coaches, better benefits" is visible on the card.
+   */
+  coachMult: { perPoint: 0.015, min: 0.85, max: 1.3 },
   /** Training days per week (Mon-Fri); the daily tick is weeklyBase ÷ this. */
   trainingDaysPerWeek: 5,
   /**
@@ -1277,6 +1296,38 @@ export const CAREER_LOAN = {
   saleGarnishRate: 0.5,
 } as const;
 
+/**
+ * v2.0 WEEKLY PAYROLL (R20). Contracts are still negotiated and stored per
+ * split (no save migration), but money now moves every Monday: a split's
+ * wage is spread over the season's 32 weeks (3 splits → ×3/32 per week), so a
+ * season still costs exactly 3 × salaryPerSplit. Sponsor base, fanbase and
+ * upkeep spread the same way. Weekly lines are quantized to `weeklyQuantum`.
+ */
+export const CAREER_PAYROLL = {
+  weeksPerSeason: 32,
+  splitsPerSeason: 3,
+  weeklyQuantum: 10,
+  /** Runway warning (weeks of negative net the balance still covers). */
+  runwayWarnWeeks: 4,
+} as const;
+
+/**
+ * v2.0 BANK LOAN (R21) — the player-initiated alternative to the Emergency
+ * Backer. One loan at a time, sized by reputation tier, repaid in equal
+ * weekly instalments over `termWeeks` with a flat `interestPct` on top.
+ * Taking one never ends the career; missing payments just drains the balance
+ * (the floor/Backer rules still apply).
+ */
+export const CAREER_BANK = {
+  /** Max principal by reputation tier (repTierOf → 0..4). */
+  maxByRepTier: [6_000, 12_000, 25_000, 50_000, 90_000] as const,
+  minAmount: 1_000,
+  interestPct: 0.12,
+  termWeeks: 16,
+  /** Loan offers are blocked while the Backer debt is open (one debt at a time). */
+  blockedWhileBacker: true,
+} as const;
+
 export const CAREER_WORLD = {
   /** History gravity: chance each anchor move executes (top-3 orgs stronger). */
   anchorFidelity: 0.85,
@@ -1384,7 +1435,8 @@ export const CAREER_SAVE = {
   maxSlots: 3,
   newsCap: 250,
   mailCap: 80,
-  ledgerTailCap: 100,
+  /** v2.0: weekly payroll books ~5 lines/week → 160 keeps a full split visible. */
+  ledgerTailCap: 160,
   eventResultsCap: 60,
   /** v0.3 rings: scrim results + the window transfer report. */
   scrimLogCap: 12,

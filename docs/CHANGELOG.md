@@ -112,6 +112,25 @@ with the root cause — that section doubles as the project's bugfix log.
   briefing (with their XP) and on the result hero ("new star" + XP); gauntlet stage list on
   the match screen.
 
+### Added — Phase 3 (Road to Worlds 2.0, sub-phase A · ROAD-TO-WORLDS-DECISIONS R20–R25)
+- **Weekly payroll.** Money moves every Monday: sponsor base and fanbase in;
+  one aggregated squad-wages line, coach, psychologist, upkeep and the bank
+  instalment out; then the Backer floor check. Contracts are still negotiated
+  per split (save schema unchanged) but every wage label reads "/ week". The
+  hub tile, the Finances tiles, the new "Weekly statement" panel and the ledger
+  all read one `weeklyStatement`. Runway line ("N weeks at this burn") and a
+  one-time cash-warning mail at 4 weeks.
+- **Bank loan.** Request a loan sized by reputation (6k → 90k), 12% flat, 16
+  weekly instalments, pay it early any time; blocked while the Backer debt is
+  open. Finances groups bank + Backer under "Loans & debt".
+- **Coach effects spelled out** on every coach card and the squad slot
+  (training speed vs. no coach, team-rating add, stat buff); better coaches
+  visibly pay more (`coachMult` 0.85–1.3).
+- **Community Cups field the local scene**: at most two orgs stronger than you
+  plus procedurally generated local amateur teams rated around your roster —
+  early cups are winnable, regionals untouched.
+- Starter roster offers rebalanced (no dead start); `src/store/careerV2.test.ts`.
+
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)
   for the side that lost the previous game, a `comeback` flag + narration note when the
@@ -122,6 +141,12 @@ with the root cause — that section doubles as the project's bugfix log.
 - Leaderboard category keys: `mmr` → `season_mmr` (Season Rating) as the headline board.
 
 ### Fixed
+- Career market: with three starters signed and a free sub slot, the offer
+  sheet refused every signing. Root cause: the role picker always reset to
+  "starter" and the block message said "squad full"; it now defaults to the sub
+  slot and names the real reason (starters full / sub taken / squad full).
+- Career: the coach buttons on Squad, Training and the hub opened the market
+  on the free-agents tab. They now deep-link to `/career/market#coaches`.
 - **Bracket spoiler** (draft game `PlayoffBracketView` + career `CareerBracket`): when the
   user went out and the remaining AI rounds auto-resolved in the same step, the later rounds'
   pairings were drawn at once (scores hidden) — and the user's absence from them gave the

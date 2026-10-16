@@ -13,6 +13,7 @@
  */
 
 import { TeamLogo } from "@/components/ui/TeamLogo";
+import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
 import { seasonIdFor } from "@/engine/career/calendar";
 import {
@@ -101,9 +102,13 @@ export function OrgMark({
       />
     );
   }
-  if (orgRef.startsWith("fill:")) {
+  if (orgRef.startsWith("fill:") || isLocalRef(orgRef)) {
     const org = save.world.orgs[orgRef];
-    const crest = proceduralCrestFor(orgRef, org?.name);
+    // v2.0 (R23): local amateur sides get a procedural crest from their name.
+    const crest = proceduralCrestFor(
+      orgRef,
+      org?.name ?? (isLocalRef(orgRef) ? localTeamName(orgRef, save.careerSeed) : undefined),
+    );
     return (
       <UserCrest
         crestId={crest.crestId}

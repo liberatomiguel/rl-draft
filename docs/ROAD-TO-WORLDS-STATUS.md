@@ -102,6 +102,34 @@ new shapes/symbols/patterns. Training **anti-stagnation** (the "players stop
 growing" root cause was a 2-decimal quantization bug, fixed to 4 decimals).
 New engine/store test file `careerV03.test.ts` (19 cases).
 
+## v2.0 pass — Road to Worlds 2.0 (in progress on `claude/dazzling-cannon-1d6thr`)
+
+Scope and order: `V2-IMPLEMENTATION-PLAN.md` §2.10 (R1–R7). Decisions in
+`ROAD-TO-WORLDS-DECISIONS.md` **R20–R25**. Verified by `npm test` (36 files)
+incl. the new `src/store/careerV2.test.ts`.
+
+**Sub-phase A — economy & market clarity (DONE, 2026-10-16)**
+- Weekly payroll every Monday (`economy.weeklyPayroll` / `weeklyStatement`,
+  R20); every wage label is "/ week" (`wageLabel`); hub tile + Finances tiles +
+  "Weekly statement" panel + runway line read the same statement.
+- Bank loan (`CAREER_BANK`, `takeBankLoanFlow` / `payBankLoanFlow`, R21) with
+  the "Loans & debt" panel (bank request / pay early + Backer pay-down); cash
+  warning mail at 4 weeks of runway; new ledger kinds `payroll`, `bankLoan`,
+  `bankPayment`.
+- Coach effects explicit (`coachEffectsFor` + `CoachEffectLines`, R22), coach
+  links deep-link to `/career/market#coaches`, `coachMult` widened.
+- Community Cups: ≤2 stronger orgs + local amateur scene
+  (`engine/career/localScene.ts`, `t3FieldRefsFor`, R23).
+- Starter rosters rebalanced (R24); market offer defaults to the sub slot when
+  the starters are full (R25).
+
+**Next sub-phases:** B — hub rebuild + week calendar strip + day-by-day advance
+animation; C — training rework (interactive plan, visible growth/ETA,
+attribute buffs tied to training, potentials calibration); D — regional
+qualifier for non-top-8 + local orgs growing + real lineups entering by
+season; E — inserts (random/sponsor/training events) + sponsors expanded; F —
+permanent career achievements + crest/colour palette.
+
 ## REMAINING / NEXT (what still needs doing)
 
 **Content (biggest asks — Miguel-owned):**

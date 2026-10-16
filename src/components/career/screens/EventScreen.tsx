@@ -21,6 +21,8 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { isLocalRef, localTeamName, localTeamOffset } from "@/engine/career/localScene";
+import { t3FieldRefsFor } from "@/engine/career/worldSim";
 import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_UNOFFICIAL, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -156,12 +158,17 @@ function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating: numbe
     return ["user", ...ranked.slice(0, TOURNAMENT.swiss.teams - 1).map((o) => o.ref)];
   }
   if (def.tier === "t3") {
-    const ranked = [...orgs].sort(
-      (a, b) =>
-        Math.abs((a.rating ?? 70) - userRating) - Math.abs((b.rating ?? 70) - userRating) ||
-        a.ref.localeCompare(b.ref),
-    );
-    return ["user", ...ranked.slice(0, TOURNAMENT.quick.teams - 1).map((o) => o.ref)];
+    // v2.0 (R23): the same selection the engine fields (closest orgs, ≤2 stronger, locals fill).
+    return [
+      "user",
+      ...t3FieldRefsFor({
+        region,
+        seasonIndex: def.seasonIndex,
+        userRating,
+        orgRatings: orgs.map((o) => ({ ref: o.ref, rating: o.rating ?? 70 })),
+        seats: TOURNAMENT.quick.teams - 1,
+      }),
+    ];
   }
   const pts = save.competition.seasonPoints[region] ?? {};
   const ranked = [...orgs].sort(
@@ -199,6 +206,14 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           return { ref, name: save.identity.orgName, stars: myStars, rating: userRating };
         }
         const org = save.world.orgs[ref];
+        if (!org && isLocalRef(ref)) {
+          return {
+            ref,
+            name: localTeamName(ref, save.careerSeed),
+            stars: 0,
+            rating: Math.round(userRating + localTeamOffset(ref, save.careerSeed)),
+          };
+        }
         return {
           ref,
           name: org?.name ?? ref,

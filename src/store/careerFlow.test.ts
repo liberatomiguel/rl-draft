@@ -123,7 +123,7 @@ describe("careerFlow — full season integration (day clock)", () => {
     }
     // Money moved: ledger has salaries.
     const kinds = new Set(save.finances.ledger.map((l) => l.kind));
-    expect(kinds.has("salary")).toBe(true);
+    expect(kinds.has("payroll")).toBe(true);
     // The day clock never exceeded the season.
     expect(save.clock.day).toBeLessThanOrEqual(DAYS_PER_SEASON);
   });
