@@ -211,6 +211,18 @@ export const challengeConstraintSchema = z
   })
   .strict();
 
+export const challengeStarSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("noSpecials") }).strict(),
+  z.object({ kind: z.literal("sweep"), maxLosses: z.number().int().min(0).max(3) }).strict(),
+  z.object({ kind: z.literal("maxOverall"), max: overallSchema }).strict(),
+  z.object({ kind: z.literal("chemistry"), tier: z.enum(["Good", "Great", "Perfect"]) }).strict(),
+  z.object({ kind: z.literal("underdog") }).strict(),
+  z.object({ kind: z.literal("maxRerolls"), max: z.number().int().min(0).max(10) }).strict(),
+  z.object({ kind: z.literal("goals"), min: z.number().int().min(1).max(80) }).strict(),
+  z.object({ kind: z.literal("concede"), max: z.number().int().min(0).max(30) }).strict(),
+  z.object({ kind: z.literal("noLosses") }).strict(),
+]);
+
 export const challengeSchema = z
   .object({
     id: z.string().min(1),
@@ -244,8 +256,22 @@ export const challengeSchema = z
       /** Optional hand-authored special granted on clear (bypasses the rank gate). */
       specialId: z.string().min(1).optional(),
     }),
+    /** v2.0: "boss" (default) or "gauntlet" (stages before the boss). */
+    kind: z.enum(["boss", "gauntlet"]).optional(),
+    gauntlet: z
+      .object({
+        lineupIds: z.array(z.string().min(1)).min(1).max(4),
+        bestOf: z.union([z.literal(5), z.literal(7)]),
+      })
+      .strict()
+      .optional(),
+    /** v2.0: the two extra stars (star 1 = the clear). */
+    stars: z.tuple([challengeStarSchema, challengeStarSchema]).optional(),
   })
-  .strict();
+  .strict()
+  .refine((c) => (c.kind === "gauntlet") === Boolean(c.gauntlet), {
+    message: "kind \"gauntlet\" needs `gauntlet`, and vice-versa",
+  });
 
 export const playersFileSchema = z.array(playerSchema);
 export const seasonsFileSchema = z.array(seasonSchema);

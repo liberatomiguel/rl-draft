@@ -22,6 +22,7 @@
 
 import type { AuthChangeEvent, Session, SupabaseClient } from "@supabase/supabase-js";
 import { SEASON } from "@/config/season";
+import { totalStars } from "@/engine/challenges";
 import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
 import type { DurableProfile } from "./profileSync";
 
@@ -261,7 +262,7 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
     lifetime_xp: p.lifetime?.xp ?? p.xp,
     quiz_solved: p.quiz?.solved ?? 0,
     login_streak: p.login?.best ?? 0,
-    challenge_stars: 0, // Phase 2 (Challenges 2.0) fills this
+    challenge_stars: totalStars(p.challengeStars ?? {}),
     ...equippedColumns(p.cosmetics ?? EMPTY_COSMETICS),
   };
 }

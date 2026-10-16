@@ -252,32 +252,32 @@ static rule. Scheduled for v2.1 after Season 1 ships.
 Goal: everything that touches saves and the DB lands first, fully tested, so
 every later surface builds on a stable contract.
 
-- [ ] 0a Season model, profile v12 migrate (snapshot + reset), lifetime fields,
+- [x] 0a Season model, profile v12 migrate (snapshot + reset), lifetime fields,
       season-aware merge, contract test update, DESIGN-DECISIONS #110.
-- [ ] 0b Cosmetics catalog + derivation + equipped state + copy.
-- [ ] 0c Season Rating table + history + peak; results readout.
-- [ ] 0d Supabase v2 SQL (this doc §6) + `lib/supabase.ts` push/read v2 +
+- [x] 0b Cosmetics catalog + derivation + equipped state + copy.
+- [x] 0c Season Rating table + history + peak; results readout.
+- [x] 0d Supabase v2 SQL (this doc §6) + `lib/supabase.ts` push/read v2 +
       `accountStore` folds grants/position.
-- [ ] 0e Missions engine + login streak + store events + copy.
-- [ ] 0f Event-exclusive cards + Special Hunt + data validation.
-- [ ] 0g Match variety + bracket spoiler fix + golden regen.
+- [x] 0e Missions engine + login streak + store events + copy.
+- [x] 0f Event-exclusive cards + Special Hunt + data validation.
+- [x] 0g Match variety + bracket spoiler fix + golden regen.
 - Gate: typecheck · tests · build. Commit `v2.0.0-alpha.1 — Season 1 technical base`.
 
 ### Phase 1 — player-facing surfaces of the base
-- [ ] Season recap "Your Legacy Lives On" (once per profile, upgrades when the
+- [x] Season recap "Your Legacy Lives On" (once per profile, upgrades when the
       cloud position arrives).
-- [ ] Profile v2: identity card (name, title, frame, banner, badges), season
+- [x] Profile v2: identity card (name, title, frame, banner, badges), season
       panel (rank, rating, graph, progress track), lifetime stats, locker
       (equip), achievements, history.
-- [ ] Leaderboard v2: Season Rating board with cosmetics per row, Hall of Fame
+- [x] Leaderboard v2: Season Rating board with cosmetics per row, Hall of Fame
       (pre-season), titles boards; profile peek.
-- [ ] Missions + login streak UI (home widget + `/missions`).
-- [ ] `/quiz` Guess the Player.
-- [ ] Home v2 + top bar (SEO text untouched).
+- [x] Missions + login streak UI (home widget + `/missions`).
+- [x] `/quiz` Guess the Player.
+- [x] Home v2 + top bar (SEO text untouched).
 - Gate + commit `v2.0.0-alpha.2 — Season 1 surfaces`. **Merge to staging.**
 
 ### Phase 2 — Challenges 2.0
-- [ ] Engine kinds + stars, progress + reset, new authored set, sim validation,
+- [x] Engine kinds + stars, progress + reset, new authored set, sim validation,
       star-track rewards, screens.
 - Gate + commit `v2.0.0-alpha.3 — Challenges 2.0`. Merge to staging.
 

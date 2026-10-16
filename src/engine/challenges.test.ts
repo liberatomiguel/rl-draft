@@ -4,10 +4,17 @@ import { createRng, type Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
 import {
   buildChallengeOpponent,
+  buildGauntletOpponents,
   challengeStatus,
   createChallengeDraft,
+  evaluateStars,
   playChallengeSeries,
+  playGauntletStage,
+  STAR_2,
+  STAR_3,
+  STAR_CLEAR,
 } from "./challenges";
+import { displayTeamOverall } from "./rating";
 import { applyPick, applyReroll, drawNextOffer, neededKinds, playerEligibleUnderConstraint, slotsForKind } from "./draft";
 import { buildUserTeam } from "./teams";
 import type { Challenge, DraftOfferCard, Roster } from "./types";
@@ -60,28 +67,68 @@ function autoDraft(ch: Challenge, rng: Rng): Roster | null {
   return draft.complete ? draft.roster : null;
 }
 
-/** Win rate of the competent fixed-seed draft, sampling the series outcome (the
+/** One full attempt (gauntlet stages, then the boss) on a given RNG. */
+function attempt(ch: Challenge, user: ReturnType<typeof buildUserTeam>, opponent: ReturnType<typeof buildChallengeOpponent>, stages: ReturnType<typeof buildGauntletOpponents>, rng: Rng) {
+  const all = [];
+  for (const o of stages) {
+    const r = playGauntletStage(user, o, ch, rng);
+    all.push(r);
+    if (r.winnerTeamId !== "user") return { cleared: false, mask: 0 };
+  }
+  const boss = playChallengeSeries(user, opponent, ch, rng);
+  all.push(boss);
+  const mask = evaluateStars(ch, { user, boss, all, bossOverall: displayTeamOverall(opponent.rating), rerollsUsed: 0 });
+  return { cleared: boss.winnerTeamId === "user", mask };
+}
+
+/** Win rate of the competent fixed-seed draft, sampling the whole attempt (the
  *  live series RNG continues from the post-draft state, which varies with the
- *  player's choice path). */
-function realisticWinRate(ch: Challenge, sims = 200): number {
+ *  player's choice path). Also returns how often each extra star came with a win. */
+function realisticRates(ch: Challenge, sims = 200): { win: number; star2: number; star3: number } {
   const roster = autoDraft(ch, createRng(ch.seed));
-  if (!roster) return 0; // couldn't even assemble a legal roster on the fixed seed
+  if (!roster) return { win: 0, star2: 0, star3: 0 }; // couldn't even assemble a legal roster
   const user = buildUserTeam(roster, ch.sim.difficulty, { mode: "challenge" });
   const opponent = buildChallengeOpponent(ch);
+  const stages = buildGauntletOpponents(ch);
   let wins = 0;
+  let s2 = 0;
+  let s3 = 0;
   for (let i = 0; i < sims; i++) {
-    if (playChallengeSeries(user, opponent, ch, createRng(ch.seed + 1 + i * 131)).winnerTeamId === "user") wins++;
+    const r = attempt(ch, user, opponent, stages, createRng(ch.seed + 1 + i * 131));
+    if (r.cleared) wins++;
+    if (r.mask & STAR_2) s2++;
+    if (r.mask & STAR_3) s3++;
   }
-  return wins / sims;
+  return { win: wins / sims, star2: s2 / sims, star3: s3 / sims };
 }
 
 describe("challenges — data integrity", () => {
-  it("ships the full v1.4 set", () => {
-    expect(challenges.length).toBeGreaterThanOrEqual(18);
+  it("ships the full v2.0 set with gauntlets", () => {
+    expect(challenges.length).toBeGreaterThanOrEqual(24);
+    expect(challenges.filter((c) => c.kind === "gauntlet").length).toBeGreaterThanOrEqual(4);
   });
 
-  it("every series is a Best-of-7 (v1.4)", () => {
+  it("every boss series is a Best-of-7 (v1.4)", () => {
     for (const ch of challenges) expect(ch.sim.bestOf).toBe(7);
+  });
+
+  it("v2.0: every challenge has two extra stars of different kinds", () => {
+    for (const ch of challenges) {
+      expect(ch.stars, ch.id).toBeTruthy();
+      expect(ch.stars![0].kind, ch.id).not.toBe(ch.stars![1].kind);
+    }
+  });
+
+  it("star masks: a loss earns nothing; a win always carries the clear bit", () => {
+    const ch = challenges[0];
+    const user = buildUserTeam(autoDraft(ch, createRng(ch.seed))!, ch.sim.difficulty, { mode: "challenge" });
+    const opponent = buildChallengeOpponent(ch);
+    const won = playChallengeSeries(user, opponent, ch, createRng(1));
+    const ctx = { user, boss: won, all: [won], bossOverall: displayTeamOverall(opponent.rating), rerollsUsed: 0 };
+    const mask = evaluateStars(ch, ctx);
+    if (won.winnerTeamId === "user") expect(mask & STAR_CLEAR).toBe(STAR_CLEAR);
+    else expect(mask).toBe(0);
+    expect((STAR_CLEAR | STAR_2 | STAR_3).toString(2)).toBe("111");
   });
 });
 
@@ -149,10 +196,17 @@ describe("challenges — every one is realistically winnable, none trivial (v1.4
   for (const ch of challenges) {
     const isLegend = ch.tier === "legend";
     it(`${ch.id} is in-band (${ch.tier})`, () => {
-      const wr = realisticWinRate(ch);
-      console.log(`  ${ch.id.padEnd(28)} ${ch.tier.padEnd(6)} winrate ${(wr * 100).toFixed(0)}%`);
-      expect(wr).toBeGreaterThanOrEqual(isLegend ? 0.15 : 0.3);
-      expect(wr).toBeLessThanOrEqual(0.85);
+      const r = realisticRates(ch);
+      console.log(`  ${ch.id.padEnd(30)} ${ch.tier.padEnd(6)} win ${(r.win * 100).toFixed(0).padStart(3)}%  ★2 ${(r.star2 * 100).toFixed(0).padStart(3)}%  ★3 ${(r.star3 * 100).toFixed(0).padStart(3)}%`);
+      expect(r.win).toBeGreaterThanOrEqual(isLegend ? 0.15 : 0.3);
+      expect(r.win).toBeLessThanOrEqual(0.85);
+      // Outcome-based stars (sweep / goals / concede) must be reachable on the fixed
+      // seed with the competent draft: never 0 across 200 attempts. Draft-shaped stars
+      // (chemistry / max overall / underdog / no specials / rerolls) depend on the
+      // player's choices, so they are not sampled here.
+      const outcomeKinds = new Set(["sweep", "goals", "concede"]);
+      if (ch.stars && outcomeKinds.has(ch.stars[0].kind)) expect(r.star2, `${ch.id} star 2`).toBeGreaterThan(0.02);
+      if (ch.stars && outcomeKinds.has(ch.stars[1].kind)) expect(r.star3, `${ch.id} star 3`).toBeGreaterThan(0.02);
     });
   }
 });

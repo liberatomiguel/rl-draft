@@ -60,6 +60,7 @@ const SACRED_PROFILE_FIELDS = [
   "runHistory",
   "dailyResults",
   "challengesCompleted",
+  "challengeStars",
   "records",
   "settings",
   "flags",

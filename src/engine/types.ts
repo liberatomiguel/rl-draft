@@ -651,7 +651,29 @@ export interface Challenge {
   sim: { difficulty: Difficulty; bestOf: number; opponentShift?: number };
   constraint?: ChallengeConstraint;
   reward: { xp: number; badge?: string; specialId?: string };
+  /**
+   * v2.0. `kind` defaults to "boss" (one series vs `opponentLineupId`). A
+   * "gauntlet" plays `gauntlet.lineupIds` in order (each a Bo`gauntlet.bestOf`,
+   * with the same `opponentShift`) and THEN the boss (Bo`sim.bestOf`); one lost
+   * series ends the run. `stars` are the two extra objectives (star 1 is always
+   * the main clear); each pays star XP the first time it is earned.
+   */
+  kind?: "boss" | "gauntlet";
+  gauntlet?: { lineupIds: string[]; bestOf: number };
+  stars?: [ChallengeStar, ChallengeStar];
 }
+
+/** An extra objective on a challenge (stars 2 and 3), evaluated on a CLEAR. */
+export type ChallengeStar =
+  | { kind: "noSpecials" }
+  | { kind: "sweep"; maxLosses: number }
+  | { kind: "maxOverall"; max: number }
+  | { kind: "chemistry"; tier: "Good" | "Great" | "Perfect" }
+  | { kind: "underdog" }
+  | { kind: "maxRerolls"; max: number }
+  | { kind: "goals"; min: number }
+  | { kind: "concede"; max: number }
+  | { kind: "noLosses" };
 
 /** The optional "twist" on a challenge draft. All fields are optional. */
 export interface ChallengeConstraint {
@@ -671,13 +693,23 @@ export interface ChallengeConstraint {
 export interface ChallengeRunState {
   user: TournamentTeam;
   opponent: TournamentTeam;
-  /** Null until the player presses play; then the simulated series. */
+  /** Null until the player presses play; then the simulated series (the BOSS
+   *  series for a gauntlet — its stages live in `stages`). */
   series: SeriesResult | null;
   /** True once `series.winnerTeamId === user.id` — the puzzle is solved. */
   cleared: boolean;
   /** The player's XP the instant before the clear reward was applied — lets the
    *  cleared screen fire the rank-up celebration if the reward crossed a rank (v1.4). */
   xpBefore?: number;
+  /** Gauntlet (v2.0): the opponents before the boss and the series played so far
+   *  (in order). `failedAt` = index of the lost stage, if the run ended early. */
+  stages?: { opponents: TournamentTeam[]; results: SeriesResult[]; failedAt: number | null };
+  /** Stars earned by THIS attempt (bit 0 = clear, 1 = star 2, 2 = star 3) and the
+   *  ones that were new for the profile, once the attempt is over (v2.0). */
+  starsEarned?: number;
+  starsNew?: number;
+  /** Rerolls used in the draft (for the "maxRerolls" star). */
+  rerollsUsed?: number;
 }
 
 // ---------------------------------------------------------------------------

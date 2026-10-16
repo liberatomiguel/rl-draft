@@ -15,7 +15,17 @@
     "reward": {
       "xp": 80,
       "badge": "first-final"
-    }
+    },
+    "stars": [
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Good"
+      }
+    ]
   },
   {
     "id": "ch-european-dawn",
@@ -33,7 +43,16 @@
     "reward": {
       "xp": 90,
       "badge": "european-dawn"
-    }
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "goals",
+        "min": 12
+      }
+    ]
   },
   {
     "id": "ch-new-world-order",
@@ -51,7 +70,17 @@
     "reward": {
       "xp": 100,
       "badge": "new-world-order"
-    }
+    },
+    "stars": [
+      {
+        "kind": "maxRerolls",
+        "max": 2
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      }
+    ]
   },
   {
     "id": "ch-down-under",
@@ -72,7 +101,17 @@
     "reward": {
       "xp": 110,
       "badge": "down-under"
-    }
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      },
+      {
+        "kind": "concede",
+        "max": 8
+      }
+    ]
   },
   {
     "id": "ch-old-guard",
@@ -93,7 +132,17 @@
     "reward": {
       "xp": 110,
       "badge": "old-guard"
-    }
+    },
+    "stars": [
+      {
+        "kind": "maxOverall",
+        "max": 84
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      }
+    ]
   },
   {
     "id": "ch-south-american-steel",
@@ -114,7 +163,16 @@
     "reward": {
       "xp": 160,
       "badge": "sam-steel"
-    }
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      },
+      {
+        "kind": "underdog"
+      }
+    ]
   },
   {
     "id": "ch-old-school",
@@ -135,7 +193,16 @@
     "reward": {
       "xp": 180,
       "badge": "old-school"
-    }
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      }
+    ]
   },
   {
     "id": "ch-vive-la-france",
@@ -156,7 +223,17 @@
     "reward": {
       "xp": 190,
       "badge": "les-bleus"
-    }
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      },
+      {
+        "kind": "maxRerolls",
+        "max": 2
+      }
+    ]
   },
   {
     "id": "ch-samba-style",
@@ -177,7 +254,17 @@
     "reward": {
       "xp": 210,
       "badge": "samba-style"
-    }
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      },
+      {
+        "kind": "concede",
+        "max": 10
+      }
+    ]
   },
   {
     "id": "ch-no-stars",
@@ -199,7 +286,16 @@
     "reward": {
       "xp": 220,
       "badge": "no-stars"
-    }
+    },
+    "stars": [
+      {
+        "kind": "maxOverall",
+        "max": 86
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ]
   },
   {
     "id": "ch-raw-talent",
@@ -220,7 +316,17 @@
     "reward": {
       "xp": 290,
       "badge": "raw-talent"
-    }
+    },
+    "stars": [
+      {
+        "kind": "maxRerolls",
+        "max": 1
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      }
+    ]
   },
   {
     "id": "ch-carry-the-rookie",
@@ -239,7 +345,17 @@
     "reward": {
       "xp": 300,
       "badge": "carry-the-rookie"
-    }
+    },
+    "stars": [
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Good"
+      }
+    ]
   },
   {
     "id": "ch-emerald-wall",
@@ -257,7 +373,15 @@
     "reward": {
       "xp": 320,
       "badge": "emerald-wall"
-    }
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "underdog"
+      }
+    ]
   },
   {
     "id": "ch-blue-blood",
@@ -278,7 +402,17 @@
     "reward": {
       "xp": 340,
       "badge": "blue-blood"
-    }
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      }
+    ]
   },
   {
     "id": "ch-desert-storm",
@@ -296,7 +430,16 @@
     "reward": {
       "xp": 360,
       "badge": "desert-storm"
-    }
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "concede",
+        "max": 10
+      }
+    ]
   },
   {
     "id": "ch-break-the-wall",
@@ -314,7 +457,16 @@
     "reward": {
       "xp": 440,
       "badge": "wall-breaker"
-    }
+    },
+    "stars": [
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ]
   },
   {
     "id": "ch-topple-the-titans",
@@ -333,7 +485,16 @@
     "reward": {
       "xp": 500,
       "badge": "giant-slayer"
-    }
+    },
+    "stars": [
+      {
+        "kind": "underdog"
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      }
+    ]
   },
   {
     "id": "ch-south-american-miracle",
@@ -355,7 +516,17 @@
     "reward": {
       "xp": 520,
       "badge": "sam-miracle"
-    }
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      }
+    ]
   },
   {
     "id": "ch-the-goat-hunt",
@@ -376,7 +547,17 @@
     "reward": {
       "xp": 540,
       "badge": "goat-hunt"
-    }
+    },
+    "stars": [
+      {
+        "kind": "maxRerolls",
+        "max": 1
+      },
+      {
+        "kind": "concede",
+        "max": 12
+      }
+    ]
   },
   {
     "id": "ch-perfect-storm",
@@ -398,6 +579,162 @@
     "reward": {
       "xp": 560,
       "badge": "perfect-storm"
-    }
+    },
+    "stars": [
+      {
+        "kind": "maxOverall",
+        "max": 88
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 2
+      }
+    ]
+  },
+  {
+    "id": "ch-gauntlet-rookie-road",
+    "title": "Rookie Road",
+    "brief": "Three series, no breather. Beat two early-era lines back to back, then G2's 2018 squad in a Bo7. One loss and the road ends.",
+    "rankRequired": "silver",
+    "kind": "gauntlet",
+    "gauntlet": {
+      "lineupIds": [
+        "flipsid3-tactics-s3",
+        "cloud9-s4"
+      ],
+      "bestOf": 5
+    },
+    "opponentLineupId": "g2-esports-s6",
+    "tier": "common",
+    "seed": 41077,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 4
+    },
+    "reward": {
+      "xp": 130,
+      "badge": "rookie-road"
+    },
+    "stars": [
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      },
+      {
+        "kind": "goals",
+        "min": 25
+      }
+    ]
+  },
+  {
+    "id": "ch-gauntlet-na-dynasty",
+    "title": "North American Dynasty",
+    "brief": "Survive NRG's 2018 line and Cloud9's 2019 run, then face the 2020 NRG champions. Every series counts.",
+    "rankRequired": "platinum",
+    "prereq": "ch-no-stars",
+    "kind": "gauntlet",
+    "gauntlet": {
+      "lineupIds": [
+        "nrg-esports-s6",
+        "cloud9-s7"
+      ],
+      "bestOf": 5
+    },
+    "opponentLineupId": "nrg-esports-s9",
+    "tier": "rare",
+    "seed": 52311,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -5
+    },
+    "reward": {
+      "xp": 240,
+      "badge": "na-dynasty"
+    },
+    "stars": [
+      {
+        "kind": "sweep",
+        "maxLosses": 1
+      },
+      {
+        "kind": "goals",
+        "min": 35
+      }
+    ]
+  },
+  {
+    "id": "ch-gauntlet-eu-crown",
+    "title": "European Crown",
+    "brief": "Dignitas' 2018 champions, then Vitality's 2020 title line, then BDS 2023 for the crown. Three kings in a row.",
+    "rankRequired": "champion",
+    "prereq": "ch-emerald-wall",
+    "kind": "gauntlet",
+    "gauntlet": {
+      "lineupIds": [
+        "dignitas-s6",
+        "team-vitality-s9"
+      ],
+      "bestOf": 5
+    },
+    "opponentLineupId": "team-bds-2223",
+    "tier": "epic",
+    "seed": 63499,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -7
+    },
+    "reward": {
+      "xp": 380,
+      "badge": "eu-crown"
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "goals",
+        "min": 40
+      }
+    ]
+  },
+  {
+    "id": "ch-gauntlet-world-tour",
+    "title": "World Tour",
+    "brief": "NRG 2025, Falcons 2024 and Karmine Corp 2025 — then Vitality's 2025 world champions. The longest road in the game.",
+    "rankRequired": "supersonic-legend",
+    "prereq": "ch-topple-the-titans",
+    "kind": "gauntlet",
+    "gauntlet": {
+      "lineupIds": [
+        "nrg-esports-2025",
+        "team-falcons-2024",
+        "karmine-corp-2025"
+      ],
+      "bestOf": 5
+    },
+    "opponentLineupId": "team-vitality-2025",
+    "tier": "legend",
+    "seed": 74651,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -13
+    },
+    "reward": {
+      "xp": 600,
+      "badge": "world-tour"
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "goals",
+        "min": 50
+      }
+    ]
   }
 ]

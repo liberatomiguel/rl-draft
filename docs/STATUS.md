@@ -12,10 +12,12 @@
 > QA/launch), the Supabase SQL Miguel must run, and the launch checklist. CHANGELOG
 > `[2.0.0]` is the narrative; DESIGN-DECISIONS #110–#115 the why.
 >
-> **v2.0 progress:** Phase 0 is DONE (season model, profile v12 reset + legacy snapshot,
-> Season Rating, cosmetics, Supabase v2 client, missions + login streak, event cards +
-> Special Hunt, series variety, bracket spoiler fix) — 444 tests green. Phase 1 (recap
-> screen, Profile v2, Leaderboard v2, missions UI, Quiz, Home v2) is next.
+> **v2.0 progress:** Phases 0, 1 and 2 are DONE — technical base (season model, profile v12
+> reset + legacy snapshot, Season Rating, cosmetics, Supabase v2 client, missions + login
+> streak, event cards + Special Hunt, series variety, bracket spoiler fix), the surfaces
+> (recap screen, Profile v2, Leaderboard v2, missions UI, Daily Quiz, Home v2) and
+> Challenges 2.0 (3 stars, 4 gauntlets, 24 validated challenges). Phase 3 (Road to Worlds
+> 2.0) is next, then Phase 4 (content, QA, staging, launch).
 >
 > **Never deploy v2.0 to `main` before the full review.** Test builds go to the staging
 > Worker (`staging.rocketdraft.app`) from the `staging` branch with a SEPARATE Supabase

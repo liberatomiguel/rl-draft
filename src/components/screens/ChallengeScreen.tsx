@@ -11,7 +11,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
-import { rosterFromLineup } from "@/engine/challenges";
+import { countStars, rosterFromLineup, starsAvailable } from "@/engine/challenges";
+import { StarRow } from "@/app/challenges/ChallengesView";
 import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { GameResult, RunState, TournamentTeam } from "@/engine/types";
@@ -100,6 +101,9 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   if (!state || !challenge) return null;
   const { user, opponent, cleared } = state;
   const boss = lineupHeader(challenge.opponentLineupId);
+  const stages = state.stages;
+  const stageOpponents = stages?.opponents ?? [];
+  const finishedAttempt = Boolean(series) || (stages?.failedAt !== null && stages?.failedAt !== undefined);
   // Running series score over the games revealed so far.
   const shown = series ? series.games.slice(0, shownGames) : [];
   const userWins = shown.filter((g) => g.winnerTeamId === "user").length;
@@ -147,12 +151,64 @@ export function ChallengeScreen({ run }: { run: RunState }) {
         </div>
       </div>
 
-      {!series ? (
+      {/* Gauntlet stages (v2.0): the road to the boss. */}
+      {stageOpponents.length ? (
+        <Panel className="mt-4 p-4">
+          <p className="kicker mb-2 !text-[10px]">{CH.gauntletKicker}</p>
+          <ol className="space-y-1.5">
+            {stageOpponents.map((o, i) => {
+              const r = stages?.results[i];
+              const won = r ? r.winnerTeamId === user.id : null;
+              const myScore = r ? (r.teamAId === user.id ? r.score[0] : r.score[1]) : null;
+              const theirScore = r ? (r.teamAId === user.id ? r.score[1] : r.score[0]) : null;
+              return (
+                <li key={o.id} className={cx("flex items-center gap-2 rounded-lg border px-3 py-2 text-xs", won === true ? "border-good/40 bg-good/5" : won === false ? "border-bad/40 bg-bad/5" : "border-line/60")}>
+                  <Badge tone="neutral">{CH.stage(i + 1)}</Badge>
+                  <TeamLogo orgId={o.orgId} size="sm" />
+                  <span className="min-w-0 flex-1 truncate font-semibold text-ink">{o.name}</span>
+                  <span className="display text-sm font-bold text-ink">{displayTeamOverall(o.rating)}</span>
+                  {r ? (
+                    <span className={cx("display text-sm font-bold", won ? "text-good" : "text-bad")}>
+                      {myScore}–{theirScore}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] uppercase tracking-wider text-faint">{finishedAttempt ? "—" : CH.stageUpcoming}</span>
+                  )}
+                </li>
+              );
+            })}
+            <li className="flex items-center gap-2 rounded-lg border border-orange/30 px-3 py-2 text-xs">
+              <Badge tone="orange">{CH.bossStage}</Badge>
+              <TeamLogo orgId={lineupById.get(challenge.opponentLineupId)!.orgId} size="sm" />
+              <span className="min-w-0 flex-1 truncate font-semibold text-ink">{boss.orgName}</span>
+              <span className="display text-sm font-bold text-ink">{displayTeamOverall(opponent.rating)}</span>
+            </li>
+          </ol>
+        </Panel>
+      ) : null}
+
+      {!finishedAttempt ? (
         <div className="mt-6 text-center">
           <Button variant="primary" onClick={play}>
             {CH.playSeries}
           </Button>
         </div>
+      ) : !series ? (
+        /* Gauntlet lost before the boss (v2.0). */
+        <Panel strong className="celebrate mt-6 px-6 py-10 text-center">
+          <div className="relative z-10">
+            <h1 className="display text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{CH.failedTitle}</h1>
+            <p className="mt-3 text-sm text-sub">{CH.failedSub}</p>
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+              <Button variant="primary" onClick={() => startChallenge(challenge.id)}>
+                {CH.retry}
+              </Button>
+              <Button variant="secondary" onClick={() => router.push("/challenges")}>
+                {CH.backToChallenges}
+              </Button>
+            </div>
+          </div>
+        </Panel>
       ) : (
         <>
           {/* Scoreline (running while the games reveal) */}
@@ -228,15 +284,23 @@ export function ChallengeScreen({ run }: { run: RunState }) {
               </h1>
               <p className="mt-3 text-sm text-sub">{cleared ? CH.clearedSub : CH.failedSub}</p>
               {cleared ? (
-                <div className="mt-4 flex justify-center">
-                  <Badge tone="gold">{CH.rewardXp(challenge.reward.xp)}</Badge>
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <StarRow mask={state.starsEarned ?? 1} total={starsAvailable(challenge)} size="md" />
+                  {state.starsNew ? (
+                    <Badge tone="gold">
+                      {countStars(state.starsNew) === 1 ? CH.newStar : CH.newStars(countStars(state.starsNew))}
+                      {xpNow - (state.xpBefore ?? xpNow) > 0 ? ` · +${xpNow - (state.xpBefore ?? xpNow)} XP` : ""}
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral">{CH.noNewStars}</Badge>
+                  )}
                 </div>
               ) : null}
 
               <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-                {!cleared ? (
-                  <Button variant="primary" onClick={() => startChallenge(challenge.id)}>
-                    {CH.retry}
+                {!cleared || countStars(state.starsEarned ?? 0) < starsAvailable(challenge) ? (
+                  <Button variant={cleared ? "secondary" : "primary"} onClick={() => startChallenge(challenge.id)}>
+                    {cleared ? CH.replay : CH.retry}
                   </Button>
                 ) : null}
                 <Button variant={cleared ? "primary" : "secondary"} onClick={() => router.push("/challenges")}>

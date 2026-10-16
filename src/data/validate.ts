@@ -221,6 +221,9 @@ export function assertReferentialIntegrity(data: ParsedDataset): void {
   for (const ch of challenges) {
     assertRef(lineupById.has(ch.opponentLineupId), `challenges: "${ch.id}" → unknown opponentLineupId "${ch.opponentLineupId}"`);
     assertRef(rankIds.has(ch.rankRequired), `challenges: "${ch.id}" → unknown rankRequired "${ch.rankRequired}"`);
+    for (const id of ch.gauntlet?.lineupIds ?? []) {
+      assertRef(lineupById.has(id), `challenges: "${ch.id}" → unknown gauntlet lineup "${id}"`);
+    }
     if (ch.prereq) {
       assertRef(challengeById.has(ch.prereq), `challenges: "${ch.id}" → unknown prereq "${ch.prereq}"`);
       assertRef(ch.prereq !== ch.id, `challenges: "${ch.id}" → prereq cannot be itself`);

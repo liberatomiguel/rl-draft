@@ -45,6 +45,7 @@ export type DurableProfile = Pick<
   | "runHistory"
   | "dailyResults"
   | "challengesCompleted"
+  | "challengeStars"
   | "records"
   | "settings"
   | "flags"
@@ -75,6 +76,7 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "runHistory",
   "dailyResults",
   "challengesCompleted",
+  "challengeStars",
   "records",
   "settings",
   "flags",
@@ -105,6 +107,13 @@ function mergeDateMap(
   for (const [id, date] of Object.entries(b)) {
     out[id] = out[id] ? (out[id] < date ? out[id] : date) : date;
   }
+  return out;
+}
+
+/** Challenge stars: bitwise OR per challenge (a star earned anywhere is earned). */
+function mergeStarMasks(a: Record<string, number>, b: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = { ...a };
+  for (const [id, m] of Object.entries(b)) out[id] = (out[id] ?? 0) | (m ?? 0);
   return out;
 }
 
@@ -200,6 +209,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     unlockedSpecials: mergeDateMap(local.unlockedSpecials, cloud.unlockedSpecials),
     achievements: mergeDateMap(local.achievements, cloud.achievements),
     challengesCompleted: mergeDateMap(local.challengesCompleted, cloud.challengesCompleted),
+    challengeStars: mergeStarMasks(local.challengeStars ?? {}, cloud.challengeStars ?? {}),
     dailyResults,
     runHistory,
     records: {

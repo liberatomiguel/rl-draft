@@ -66,6 +66,52 @@ with the root cause — that section doubles as the project's bugfix log.
   `refreshCosmetics`, `recordLogin`, `recordEventRuns`; `selectCollectionUnlocked` keeps the
   Collection open for anyone who already owns a card (veterans after the reset).
 
+### Added — Phase 1 (player-facing surfaces)
+- **Season recap "Your Legacy Lives On"** (`SeasonRecap.tsx`): three steps (final numbers →
+  legacy rewards → what the reset means + what is new), shown once to every pre-season
+  profile (flag `seenSeasonRecap`), replayable from the profile. Upgrades with the board
+  position when the cloud sync brings it.
+- **Profile v2**: identity card (banner, framed rank emblem, name + title + badges, Season
+  Rating with the last delta), season panel (week / days left, peak, runs, titles, rating
+  sparkline, the Season track), lifetime stats, the **Locker** (equip titles / badges /
+  frames / banners; locked items say how to get them), achievements, run history.
+- **Leaderboard v2**: Season Rating (headline), Pre-season Hall of Fame, Titles, Legacy
+  overall, Regional overall. Every row shows the player's frame, title, badges and banner;
+  tapping a row opens a profile peek.
+- **Missions UI**: home widget (today's three + the streak) and `/missions` (daily, weekly,
+  login streak card with milestones). Reward toasts (`RewardToaster`) for completions, the
+  all-three bonus, login XP and quiz solves.
+- **Daily Quiz** `/quiz` — "Guess the Player" (`src/engine/quiz.ts`): one player per UTC day
+  among those with ≥2 lineups, clues from the dataset (nationality → era → orgs → teammate →
+  peak card), three attempts, type-ahead over nicknames, XP 120 / 80 / 50 by attempt,
+  history + streak on the profile. Indexable page (new sitemap entry).
+- **Home v2**: hero + SEO content untouched; new season strip (framed rank, title, badges,
+  rating, week, streak), featured Classic Draft + Road to Worlds, "More ways to play" (Quick,
+  Daily, Challenges, Quiz), "Your progress" (missions + Collection / Achievements / Profile /
+  Leaderboards). The v1.4.6 Season 1 announcement pop-up is removed.
+- Cosmetic renderers (`src/components/cosmetics/CosmeticViews.tsx` + CSS): frames (gradient
+  rings, sheen / holo loops off under `lite-fx`), banners (gradient + pattern), title tags,
+  badge glyphs.
+
+### Added — Phase 2 (Challenges 2.0, DESIGN-DECISIONS #116)
+- **Three stars per challenge.** Star 1 = the clear (`reward.xp`, once); stars 2 and 3 are
+  authored conditions (`noSpecials`, `sweep`, `maxOverall`, `chemistry`, `underdog`,
+  `maxRerolls`, `goals`, `concede`, `noLosses`) paying `CHALLENGE.starXp[tier]` the first
+  time each is earned. Cleared challenges stay playable for the missing stars; nothing
+  re-pays. `profile.challengeStars` (bit masks, cloud merge = OR); the Season 1 reset
+  clears both the stars and the cleared map (the old count lives in the snapshot).
+- **Gauntlets** (`kind: "gauntlet"`): stages (Bo5) before the boss (Bo7), one loss ends the
+  run. Four shipped: Rookie Road (Silver), North American Dynasty (Platinum), European Crown
+  (Champion), World Tour (SSL). The set is now **24 challenges**, every one with two stars.
+- **Sim validation extended**: `challenges.test.ts` plays the whole attempt (stages + boss)
+  on the fixed seed with the competent auto-draft, keeps the win-rate bands (floor
+  legend ≥15 % / others ≥30 %, ceiling 85 %) and asserts the outcome-based stars (sweep /
+  goals / concede) are reachable. Rates on 2026-10-16: commons 38–75 %, rares 33–63 %,
+  epics 46–69 %, legends 17–34 %.
+- Star track (10 / 25 / 45 stars → cosmetics) on `/challenges`; stars on cards, in the
+  briefing (with their XP) and on the result hero ("new star" + XP); gauntlet stage list on
+  the match screen.
+
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)
   for the side that lost the previous game, a `comeback` flag + narration note when the

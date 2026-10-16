@@ -127,6 +127,8 @@ export interface ProfileState {
   dailyResults: Record<string, DailyResult>;
   /** challengeId → ISO date cleared (v1.4, one-and-done like achievements). */
   challengesCompleted: Record<string, string>;
+  /** challengeId → star bit mask (bit 0 = clear, 1 = star 2, 2 = star 3), v2.0. */
+  challengeStars: Record<string, number>;
   /** Leaderboard aggregates (v1.4): peak team overall per difficulty and per pool
    *  (worldwide vs SAM). The durable feed for the cloud leaderboards. */
   records: {
@@ -170,6 +172,16 @@ export interface ProfileState {
     challengeId: string,
     reward: { xp: number; badge?: string; specialId?: string },
   ) => void;
+  /** Record a finished challenge attempt (v2.0): OR the star mask in, pay XP for the
+   *  stars that are NEW (clear = `reward.xp`, each extra star = `CHALLENGE.starXp`),
+   *  mark the clear date on a first clear, grant the reward special. Returns the
+   *  mask of newly earned stars (0 = nothing new). */
+  recordChallengeResult: (
+    challengeId: string,
+    starsMask: number,
+    xpForNew: number,
+    reward: { xp: number; badge?: string; specialId?: string },
+  ) => number;
   /** Add fielded special cards to the collection — the same unlock a normal run
    *  does (compileResults → applyRunResults), exposed standalone so the Challenge
    *  flow can collect the specials it drafted too. Idempotent. (v1.4.3, #100) */
@@ -235,6 +247,7 @@ const initialData = {
   runHistory: [] as RunHistoryEntry[],
   dailyResults: {} as Record<string, DailyResult>,
   challengesCompleted: {} as Record<string, string>,
+  challengeStars: {} as Record<string, number>,
   records: {
     bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
     bestOverallWorldwide: 0,
@@ -358,7 +371,7 @@ function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionE
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
   p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
-    Partial<Pick<ProfileState, "missions" | "login" | "quiz">>,
+    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars">>,
   now = new Date().toISOString(),
 ): CosmeticsState {
   const owned = refreshOwned(p.cosmetics?.owned ?? {}, cosmeticFacts(p), now);
@@ -531,6 +544,39 @@ export const useProfileStore = create<ProfileState>()(
             unlockedSpecials,
           };
         }),
+
+      recordChallengeResult: (challengeId, starsMask, xpForNew, reward) => {
+        let fresh = 0;
+        set((state) => {
+          const had = state.challengeStars[challengeId] ?? 0;
+          fresh = starsMask & ~had;
+          if (!fresh) return {};
+          const now = new Date().toISOString();
+          const challengeStars = { ...state.challengeStars, [challengeId]: had | starsMask };
+          const challengesCompleted = { ...state.challengesCompleted };
+          if (fresh & 1 && !challengesCompleted[challengeId]) challengesCompleted[challengeId] = now;
+          const unlockedSpecials = { ...state.unlockedSpecials };
+          if (fresh & 1 && reward.specialId && !unlockedSpecials[reward.specialId]) {
+            unlockedSpecials[reward.specialId] = now;
+          }
+          const xp = state.xp + Math.max(0, xpForNew);
+          const rank = rankForXp(xp);
+          const season = {
+            ...state.season,
+            peakRankId: rank.index >= rankIndexOf(state.season.peakRankId) ? rank.id : state.season.peakRankId,
+          };
+          return {
+            xp,
+            lifetime: { xp: state.lifetime.xp + Math.max(0, xpForNew) },
+            season,
+            challengeStars,
+            challengesCompleted,
+            unlockedSpecials,
+            cosmetics: withCosmetics({ ...state, season, challengeStars }),
+          };
+        });
+        return fresh;
+      },
 
       collectSpecials: (specialIds) =>
         set((state) => {

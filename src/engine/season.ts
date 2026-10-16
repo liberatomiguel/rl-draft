@@ -70,6 +70,7 @@ export interface SeasonFields {
   runsCompleted: number;
   wins: Record<Difficulty, number>;
   challengesCompleted: Record<string, string>;
+  challengeStars?: Record<string, number>;
   season?: SeasonState;
   lifetime?: { xp: number };
   legacy?: LegacyState;
@@ -175,6 +176,7 @@ export function normalizeToSeason<T extends SeasonFields>(
     xp: 0,
     mmr: SEASON_RATING.start,
     challengesCompleted: {},
+    challengeStars: {},
     season: freshSeason(now),
     lifetime: { xp: lifetimeXp },
     legacy: { preseason: mergeSnapshots(p.legacy?.preseason, snapshot) },

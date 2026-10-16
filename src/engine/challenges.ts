@@ -9,6 +9,7 @@
  */
 
 import { CHALLENGE, RANKS } from "@/config/balance";
+import { specialCardById } from "@/data";
 import { lineupById, lineupPoolForRegion, lineups, playerCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { createDraft, drawNextOffer, playerEligibleUnderConstraint } from "./draft";
@@ -18,16 +19,143 @@ import { buildLineupTeam } from "./teams";
 import type {
   Challenge,
   ChallengeConstraint,
+  ChallengeStar,
   DraftState,
   Roster,
   RosterSlotId,
   SeriesResult,
   TournamentTeam,
 } from "./types";
+import { displayTeamOverall } from "./rating";
 
 export type ChallengeStatus = "locked" | "available" | "cleared";
 
 const rankIndex = (id: string): number => RANKS.findIndex((r) => r.id === id);
+
+/** Bit masks for the three stars (v2.0). */
+export const STAR_CLEAR = 1;
+export const STAR_2 = 2;
+export const STAR_3 = 4;
+export const ALL_STARS = STAR_CLEAR | STAR_2 | STAR_3;
+
+export function countStars(mask: number): number {
+  let n = 0;
+  for (let m = mask | 0; m; m >>>= 1) n += m & 1;
+  return n;
+}
+
+/** Total stars across a profile's `challengeStars` map. */
+export function totalStars(stars: Record<string, number>): number {
+  return Object.values(stars).reduce((n, m) => n + countStars(m), 0);
+}
+
+/** Number of stars a challenge can award (3 with `stars`, 1 without). */
+export function starsAvailable(challenge: Challenge): number {
+  return challenge.stars ? 3 : 1;
+}
+
+/** Everything the star evaluation reads from one finished attempt. */
+export interface StarContext {
+  user: TournamentTeam;
+  /** The boss series (the last one for a gauntlet). */
+  boss: SeriesResult;
+  /** Every series of the attempt (gauntlet stages first, boss last). */
+  all: SeriesResult[];
+  bossOverall: number;
+  rerollsUsed: number;
+}
+
+function userGoals(series: SeriesResult[], userId: string): { scored: number; conceded: number } {
+  let scored = 0;
+  let conceded = 0;
+  for (const s of series) {
+    for (const g of s.games) {
+      // game.score is [winner goals, loser goals]
+      if (g.winnerTeamId === userId) {
+        scored += g.score[0];
+        conceded += g.score[1];
+      } else {
+        scored += g.score[1];
+        conceded += g.score[0];
+      }
+    }
+  }
+  return { scored, conceded };
+}
+
+/** One star condition against a CLEARED attempt. Pure. */
+export function starSatisfied(star: ChallengeStar, ctx: StarContext): boolean {
+  const userId = ctx.user.id;
+  switch (star.kind) {
+    case "noSpecials":
+      return ctx.user.specialIds.filter((id) => specialCardById.has(id)).length === 0;
+    case "sweep": {
+      const lost = ctx.boss.winnerTeamId === ctx.boss.teamAId ? ctx.boss.score[1] : ctx.boss.score[0];
+      return lost <= star.maxLosses;
+    }
+    case "maxOverall":
+      return displayTeamOverall(ctx.user.rating) <= star.max;
+    case "chemistry": {
+      const order = ["Poor", "Okay", "Good", "Great", "Perfect"];
+      return order.indexOf(ctx.user.chemistry.tier) >= order.indexOf(star.tier);
+    }
+    case "underdog":
+      return displayTeamOverall(ctx.user.rating) < ctx.bossOverall;
+    case "maxRerolls":
+      return ctx.rerollsUsed <= star.max;
+    case "goals":
+      return userGoals(ctx.all, userId).scored >= star.min;
+    case "concede":
+      return userGoals(ctx.all, userId).conceded <= star.max;
+    case "noLosses":
+      return ctx.all.every((s) => s.winnerTeamId === userId);
+  }
+}
+
+/** Star mask earned by a finished attempt (0 when the boss was not beaten). */
+export function evaluateStars(challenge: Challenge, ctx: StarContext): number {
+  if (ctx.boss.winnerTeamId !== ctx.user.id) return 0;
+  let mask = STAR_CLEAR;
+  if (challenge.stars) {
+    if (starSatisfied(challenge.stars[0], ctx)) mask |= STAR_2;
+    if (starSatisfied(challenge.stars[1], ctx)) mask |= STAR_3;
+  }
+  return mask;
+}
+
+/** XP for the stars in `newMask` that the profile did not have (`had`). */
+export function starRewardXp(challenge: Challenge, had: number, newMask: number): number {
+  const fresh = newMask & ~had;
+  let xp = 0;
+  if (fresh & STAR_CLEAR) xp += challenge.reward.xp;
+  const per = CHALLENGE.starXp[challenge.tier] ?? 0;
+  if (fresh & STAR_2) xp += per;
+  if (fresh & STAR_3) xp += per;
+  return xp;
+}
+
+/** The gauntlet opponents (before the boss), built like the boss (same shift). */
+export function buildGauntletOpponents(challenge: Challenge): TournamentTeam[] {
+  if (challenge.kind !== "gauntlet" || !challenge.gauntlet) return [];
+  return challenge.gauntlet.lineupIds.map((lineupId) =>
+    buildLineupTeam(lineupId, challenge.sim.difficulty, { extraShift: challenge.sim.opponentShift ?? 0 }),
+  );
+}
+
+/** Play one gauntlet stage (Bo`gauntlet.bestOf`). */
+export function playGauntletStage(
+  user: TournamentTeam,
+  opponent: TournamentTeam,
+  challenge: Challenge,
+  rng: Rng,
+): SeriesResult {
+  return simulateSeries(
+    user,
+    opponent,
+    { bestOf: challenge.gauntlet?.bestOf ?? 5, stage: "playoff", difficulty: challenge.sim.difficulty },
+    rng,
+  );
+}
 
 /**
  * Locked until the player reaches `rankRequired` AND clears any `prereq`.

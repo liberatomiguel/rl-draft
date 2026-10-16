@@ -1195,6 +1195,18 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      (best owned by catalog priority) so veterans see their rewards without visiting the
      locker. All cosmetics are CSS/SVG — zero image assets, zero requests.
 
+116. **Challenge stars pay once each; the challenge itself is replayable.** v1.4 was
+     one-and-done, which left 20 puzzles with no reason to return. v2.0 keeps the
+     "never re-pay the same reward" rule (#55.5) but splits the reward into three
+     stars: the clear, and two authored conditions. The profile stores a bit mask per
+     challenge (merge = OR), XP is granted only for bits that are new, and a cleared
+     challenge stays playable until all three are lit. Draft-shaped stars (chemistry,
+     overall caps, no specials, reroll limits) are deliberately NOT sim-validated —
+     they depend on the player's choices — while outcome stars (sweep / goals /
+     concede) must be reachable on the fixed seed. Gauntlets reuse the same engine
+     (stages are plain series with the boss handicap); a stage loss ends the attempt
+     so the "survive" fantasy holds without a new state machine.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

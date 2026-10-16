@@ -25,9 +25,15 @@ import {
 } from "@/engine/draft";
 import {
   buildChallengeOpponent,
+  buildGauntletOpponents,
+  countStars,
   createChallengeDraft,
+  evaluateStars,
   playChallengeSeries,
+  playGauntletStage,
+  starRewardXp,
 } from "@/engine/challenges";
+import { CHALLENGE } from "@/config/balance";
 import { liveAchievements, teamAchievements } from "@/engine/achievements";
 import { compileResults } from "@/engine/results";
 import { displayTeamOverall } from "@/engine/rating";
@@ -46,6 +52,7 @@ import type {
   RunHistoryEntry,
   RunMode,
   RunState,
+  SeriesResult,
 } from "@/engine/types";
 import { generateDailyConfig, seedFromDate, todayKey } from "@/lib/daily";
 import { createRng, randomSeed } from "@/lib/rng";
@@ -344,7 +351,17 @@ export const useRunStore = create<RunStore>()(
           set({
             run: {
               ...run,
-              challenge: { user: userTeam, opponent, series: null, cleared: false },
+              challenge: {
+                user: userTeam,
+                opponent,
+                series: null,
+                cleared: false,
+                // Rerolls spent in the draft (the "maxRerolls" star, v2.0).
+                rerollsUsed: Math.max(
+                  0,
+                  CHALLENGE.rerollsByDifficulty[challenge.sim.difficulty] - run.draft.rerollsLeft,
+                ),
+              },
               rngState: rng.state,
               phase: "challenge",
             },
@@ -561,25 +578,66 @@ export const useRunStore = create<RunStore>()(
         if (!challenge) return;
         const rng = createRng(run.rngState);
         const { user, opponent } = run.challenge;
-        const series = playChallengeSeries(user, opponent, challenge, rng);
-        const cleared = series.winnerTeamId === user.id;
+        const profile = useProfileStore.getState();
+
+        // Gauntlet (v2.0): the stages play in order; the first loss ends the run
+        // before the boss. A plain boss challenge has no stages.
+        const stageOpponents = run.challenge.stages?.opponents ?? buildGauntletOpponents(challenge);
+        const stageResults: SeriesResult[] = [];
+        let failedAt: number | null = null;
+        for (let i = 0; i < stageOpponents.length; i++) {
+          const r = playGauntletStage(user, stageOpponents[i], challenge, rng);
+          stageResults.push(r);
+          if (r.winnerTeamId !== user.id) {
+            failedAt = i;
+            break;
+          }
+        }
+        const series = failedAt === null ? playChallengeSeries(user, opponent, challenge, rng) : null;
+        const cleared = !!series && series.winnerTeamId === user.id;
+
         // Specials drafted onto the challenge team unlock into the collection just
-        // like a normal run (compileResults → applyRunResults), win or lose. Before
-        // this, only the challenge REWARD special was kept — the ones you actually
-        // drafted and fielded never reached the collection. (v1.4.3, #100)
-        useProfileStore.getState().collectSpecials(user.specialIds);
+        // like a normal run, win or lose (v1.4.3, #100).
+        profile.collectSpecials(user.specialIds);
         // Capture XP BEFORE the reward so the cleared screen can fire the rank-up
-        // celebration if `reward.xp` crossed a rank threshold (v1.4).
-        const xpBefore = useProfileStore.getState().xp;
-        // Sync AFTER the result is known (the single funnel for challenge rewards)
-        // — one-and-done, so re-clearing never re-rewards (#55.5 spirit).
-        if (cleared) {
-          useProfileStore.getState().completeChallenge(challenge.id, challenge.reward);
+        // celebration if the reward crossed a rank threshold (v1.4).
+        const xpBefore = profile.xp;
+
+        // Stars (v2.0): evaluate on a clear, pay only what is new for the profile.
+        const rerollsUsed = run.challenge.rerollsUsed ?? 0;
+        const starsEarned = series
+          ? evaluateStars(challenge, {
+              user,
+              boss: series,
+              all: [...stageResults, series],
+              bossOverall: displayTeamOverall(opponent.rating),
+              rerollsUsed,
+            })
+          : 0;
+        let starsNew = 0;
+        if (starsEarned) {
+          const had = profile.challengeStars[challenge.id] ?? 0;
+          const xpForNew = starRewardXp(challenge, had, starsEarned);
+          starsNew = profile.recordChallengeResult(challenge.id, starsEarned, xpForNew, challenge.reward);
+          if (starsNew) {
+            useProfileStore.getState().applyMissionEvent({
+              type: "challenge_cleared",
+              newStars: countStars(starsNew),
+            });
+          }
         }
         set({
           run: {
             ...run,
-            challenge: { ...run.challenge, series, cleared, xpBefore },
+            challenge: {
+              ...run.challenge,
+              series,
+              cleared,
+              xpBefore,
+              starsEarned,
+              starsNew,
+              stages: stageOpponents.length ? { opponents: stageOpponents, results: stageResults, failedAt } : undefined,
+            },
             rngState: rng.state,
           },
         });

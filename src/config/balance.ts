@@ -760,6 +760,14 @@ export const HISTORY_LIMIT = 25;
  */
 export const CHALLENGE = {
   rerollsByDifficulty: { easy: 8, normal: 5, hard: 3, legacy: 0 } as Record<Difficulty, number>,
+  /**
+   * v2.0 stars. Star 1 (the clear) pays `reward.xp` once; stars 2 and 3 each pay
+   * `starXp[tier]` the first time they are earned. Repeating a challenge never
+   * re-pays — it is for the missing stars (DESIGN-DECISIONS #116).
+   */
+  starXp: { common: 40, rare: 70, epic: 110, legend: 160 } as Record<string, number>,
+  /** Star-track milestones (cosmetics in src/data/cosmetics.ts read the same counts). */
+  starMilestones: [10, 25, 45],
 } as const;
 
 /**
