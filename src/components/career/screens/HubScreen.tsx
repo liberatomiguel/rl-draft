@@ -1,6 +1,16 @@
 "use client";
 
 /**
+ * v2.0 hub rebuild (R26): HQ is a day you can read at a glance.
+ *   main column — DayCard (date, week strip, advance day / skip / autoplay)
+ *                 → Needs you (every pending decision as its own card)
+ *                 → What you can do today → Your edges → the wire(s)
+ *   side column — season goal, Road to Worlds mini, squad, inbox, next unlock.
+ * The decision cards live in hub/NowCards.tsx, the clock in hub/DayCard.tsx,
+ * the action/edge cards in hub/TodayCards.tsx — this file is layout.
+ */
+
+/**
  * Road to Worlds — HQ (v0.2 rebuild): the game's living room. A NOW hero
  * (next stop / blocking decision, always dated), the week strip for the new
  * day clock, contextual quick actions, and THE WIRE — the full news feed with
@@ -19,70 +29,55 @@ import {
 } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import { sponsorBrandById } from "@/data/career/sponsors";
 import type {
-  CareerEventDef,
   CareerSave,
   NewsItem,
   NewsType,
   SponsorObjectiveKind,
-  SponsorState,
   TransferOffer,
 } from "@/engine/career/types";
-import { weeklyOf } from "@/engine/career/economy";
-import { formatMoney, formatMoneyDelta } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useSettings } from "@/store/settingsStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
 import {
-  agendaDays,
   CAREER_SLOTS,
-  clockLabel,
   dateOfDay,
-  dayOfWeekOf,
-  daysUntilWindowCloses,
   isWindowWeek,
   nameOfRef,
   runwayWeeks,
-  scrimAvailability,
   seasonLabelFor,
   squadAge,
   standingsRows,
-  type AgendaDay,
-  type UpcomingStop,
   unlockTrack,
-  upcomingStops,
   useCareerSave,
   userStars,
   userTeamPreview,
   weeklyStatement,
   weekOfDay,
 } from "@/components/career/careerUi";
-import { formatDateShort, formatDateTiny, formatDaysAway } from "@/components/career/dateText";
+import { formatDateTiny } from "@/components/career/dateText";
+import { DayCard } from "@/components/career/hub/DayCard";
+import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
+import { EdgesStrip, TodayCards } from "@/components/career/hub/TodayCards";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
-import {
-  ErrorBanner,
-  TierChip,
-  maxPointsOf,
-  prizePoolOf,
-  withMoneyParams,
-} from "@/components/career/hub/hubShared";
+import { ErrorBanner, withMoneyParams } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
-type DatesCopy = CareerCopy["dates"];
-
 // ---------------------------------------------------------------------------
 // Wire filters (moved here from the old NewsScreen — the full feed lives on HQ)
 // ---------------------------------------------------------------------------
+
+type DatesCopy = CareerCopy["dates"];
 
 const WIRE_BATCH = 30;
 const WIRE_PREVIEW = 5;
@@ -218,10 +213,9 @@ export function HubScreen() {
   const save = useCareerSave();
   const router = useRouter();
 
-  const advanceDay = useCareerStore((s) => s.advanceDay);
-  const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
-  const runScrim = useCareerStore((s) => s.runScrim);
   const acceptBid = useCareerStore((s) => s.acceptBid);
+  const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
+  const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const declineBid = useCareerStore((s) => s.declineBid);
   const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
   const markNewsRead = useCareerStore((s) => s.markNewsRead);
@@ -281,11 +275,9 @@ export function HubScreen() {
   }
 
   const region = save.identity.region;
-  const clock = clockLabel(save);
   const today = save.clock.day;
 
-  // --- NOW hero decision chain (season stop > event today > out-bid >
-  // sponsor choice > next stop preview) --------------------------------------
+  // --- Needs you: every pending decision / stop, each its own card ----------
   const eventNow =
     save.activeEvent?.def ??
     (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null);
@@ -294,18 +286,11 @@ export function HubScreen() {
   const sponsorOffers =
     save.sponsorOffers && save.sponsorOffers.length > 0 ? save.sponsorOffers : null;
   const phaseStop = save.phase === "seasonReview" || save.phase === "ended";
-  const nextStop = upcomingStops(save, 1)[0] ?? null;
-  const heroDecision = !phaseStop && !eventNow && Boolean(outBid || sponsorOffers);
-
-  // --- week strip -----------------------------------------------------------
-  const monday = today - (dayOfWeekOf(today) + -1);
-  const weekDays = agendaDays(save, monday, 7);
-
-  // --- quick actions --------------------------------------------------------
-  const scrim = scrimAvailability(save);
-  const windowDaysLeft = daysUntilWindowCloses(save);
-
-  // --- budget tile (v2.0: the SAME weekly statement the Monday funnel books) --
+  const invite = !save.pendingEventDef && save.unofficialOffer ? save.unofficialOffer : null;
+  const expiringContracts =
+    weekOfDay(today) >= 23
+      ? save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex).length
+      : 0;
   const statement = weeklyStatement({
     squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
     coachSalary: save.coach?.salaryPerSplit ?? null,
@@ -314,12 +299,11 @@ export function HubScreen() {
     gear: save.finances.gear,
     bankLoan: save.finances.bankLoan ?? null,
   });
-  const incomePerSplit = statement.income;
   const wages = statement.payroll + statement.coach;
-  const upkeep = statement.psychologist + statement.upkeep + statement.bankPayment;
-  const net = statement.net;
-  const projectedNegative = save.finances.balance + net < 0;
-  const runway = runwayWeeks(save.finances.balance, net);
+  const runway = runwayWeeks(save.finances.balance, statement.net);
+  const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
+  const needsCount =
+    (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
 
   // --- Road to Worlds mini --------------------------------------------------
   const rows = standingsRows(save, region, "season");
@@ -367,8 +351,6 @@ export function HubScreen() {
     ? (save.squad.find((p) => p.id === confirmBid.playerId)?.salaryPerSplit ?? 0)
     : 0;
 
-  const actionChip =
-    "display inline-flex min-h-11 items-center gap-2 rounded-lg border px-4 text-xs font-bold uppercase tracking-[0.12em] transition-colors";
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
@@ -377,134 +359,94 @@ export function HubScreen() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* ============ main column (2fr): NOW · week · office · wire ============ */}
         <div className="space-y-4 lg:col-span-2">
-          {/* 1 — NOW hero */}
-          <Panel strong glow="orange" className="rise-in p-5 sm:p-6">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="kicker">{heroDecision ? C.hub.nowDecision : C.hub.nowNext}</p>
-              <span className="text-xs font-semibold text-sub">
-                {formatDateShort(D, clock.date)}
-              </span>
-            </div>
-            {phaseStop ? (
-              <NowSeason save={save} C={C} onGo={() => router.push("/career/season")} />
-            ) : eventNow ? (
-              <NowEvent
-                save={save}
-                C={C}
-                D={D}
-                def={eventNow}
-                daysAway={0}
-                primaryLabel={C.hub.continue}
-                onPrimary={() => router.push("/career/event")}
-              />
-            ) : outBid ? (
-              <NowBid
-                save={save}
-                C={C}
-                offer={outBid}
-                onAccept={() => setConfirmBid(outBid)}
-                onDecline={() => declineBid(outBid.id)}
-              />
-            ) : sponsorOffers ? (
-              <NowSponsorChoice
-                C={C}
-                lang={lang}
-                offers={sponsorOffers}
-                objectiveText={objectiveText}
-                onChoose={(id) => chooseSponsor(id)}
-              />
-            ) : nextStop && nextStop.kind === "event" && nextStop.event ? (
-              <NowEvent
-                save={save}
-                C={C}
-                D={D}
-                def={nextStop.event}
-                daysAway={nextStop.daysAway}
-                primaryLabel={C.hub.continueTo(nextStop.event.name)}
-                onPrimary={advanceToNextStop}
-                onAdvanceDay={advanceDay}
-              />
-            ) : (
-              <NowAdvance
-                save={save}
-                C={C}
-                D={D}
-                stop={nextStop}
-                windowDaysLeft={windowDaysLeft}
-                onAdvance={advanceToNextStop}
-                onAdvanceDay={advanceDay}
-              />
-            )}
-          </Panel>
+          {/* 1 — THE DAY CARD (clock + week strip + advance) */}
+          <DayCard save={save} C={C} />
 
-          {/* 2 — THIS WEEK strip */}
-          <AppLink href="/career/calendar" className="block">
-            <Panel className="rise-in p-3.5 transition-colors hover:border-line-strong" style={{ animationDelay: "40ms" }}>
-              <div className="mb-2.5 flex items-center justify-between gap-2">
-                <p className="kicker text-[10px]">{C.hub.thisWeek}</p>
-                <span className="flex items-center gap-2 text-[10px] text-faint">
-                  {clock.split ? <span>{C.calendar.split(clock.split)}</span> : null}
-                  <span>{C.hub.week(clock.week)}</span>
-                </span>
-              </div>
-              <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-                {weekDays.map((d) => (
-                  <DayChip key={d.day} d={d} C={C} />
-                ))}
-              </div>
-            </Panel>
-          </AppLink>
-
-          {/* 3 — TODAY AT THE OFFICE */}
-          <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
-            <p className="kicker mb-3 text-[10px]">{C.hub.quickActions}</p>
-            <div className="flex flex-wrap items-center gap-2">
-              {scrim.available && scrim.opponentName ? (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  className="min-h-11"
-                  onClick={() => runScrim()}
-                >
-                  {C.hub.scrimCta(scrim.opponentName)}
-                </Button>
+          {/* 2 — NEEDS YOU (decisions and stops, one card each) */}
+          {needsCount > 0 || expiringContracts > 0 || cashTight || save.finances.loan ? (
+            <div className="space-y-3">
+              <p className="kicker text-[10px] text-orange-bright">{C.hub.needsYou}</p>
+              {phaseStop ? (
+                <Panel strong glow="orange" className="rise-in p-5">
+                  <NowSeason save={save} C={C} onGo={() => router.push("/career/season")} />
+                </Panel>
               ) : null}
-              {clock.dow <= 5 && !eventNow ? (
-                <AppLink
-                  href="/career/training"
-                  className={cx(
-                    actionChip,
-                    "border-line-strong bg-white/5 text-sub hover:text-ink",
-                  )}
-                >
-                  {C.nav.training}
+              {eventNow ? (
+                <Panel strong glow="orange" className="rise-in p-5">
+                  <NowEvent
+                    save={save}
+                    C={C}
+                    D={D}
+                    def={eventNow}
+                    daysAway={0}
+                    primaryLabel={C.hub.continue}
+                    onPrimary={() => router.push("/career/event")}
+                  />
+                </Panel>
+              ) : null}
+              {invite ? (
+                <Panel strong className="rise-in border-orange/40 p-5">
+                  <NowInvite
+                    save={save}
+                    C={C}
+                    D={D}
+                    def={invite}
+                    onAccept={acceptUnofficial}
+                    onPass={passUnofficial}
+                  />
+                </Panel>
+              ) : null}
+              {outBid ? (
+                <Panel strong className="rise-in border-orange/40 p-5">
+                  <NowBid
+                    save={save}
+                    C={C}
+                    offer={outBid}
+                    onAccept={() => setConfirmBid(outBid)}
+                    onDecline={() => declineBid(outBid.id)}
+                  />
+                </Panel>
+              ) : null}
+              {sponsorOffers ? (
+                <Panel strong className="rise-in border-blue/40 p-5">
+                  <NowSponsorChoice
+                    C={C}
+                    lang={lang}
+                    offers={sponsorOffers}
+                    objectiveText={objectiveText}
+                    onChoose={(id) => chooseSponsor(id)}
+                  />
+                </Panel>
+              ) : null}
+              {expiringContracts > 0 ? (
+                <AppLink href="/career/squad" className="block">
+                  <Panel className="rise-in border-orange/30 p-3.5 text-sm text-ink transition-colors hover:border-orange/60">
+                    {C.hub.contractsExpiring(expiringContracts)}
+                  </Panel>
                 </AppLink>
               ) : null}
-              {clock.windowOpen ? (
-                <AppLink
-                  href="/career/market"
-                  className={cx(actionChip, "border-blue/50 bg-blue/10 text-blue-bright hover:bg-blue/20")}
-                >
-                  {C.calendar.windowOpen}
-                  <span aria-hidden>→</span>
+              {cashTight ? (
+                <AppLink href="/career/finances" className="block">
+                  <Panel className="rise-in border-bad/40 p-3.5 text-sm text-bad transition-colors hover:border-bad/70">
+                    {C.hub.cashWarningCard(runway ?? 0)}
+                  </Panel>
+                </AppLink>
+              ) : null}
+              {save.finances.loan ? (
+                <AppLink href="/career/finances" className="block">
+                  <Panel className="rise-in border-orange/30 p-3.5 text-sm text-sub transition-colors hover:border-orange/60">
+                    {C.hub.backerOpen}
+                  </Panel>
                 </AppLink>
               ) : null}
             </div>
-            <div className="mt-2.5 space-y-1 text-xs">
-              {scrim.reason === "ok" ? (
-                <p className="text-sub">{C.hub.scrimsLeft(scrim.remaining)}</p>
-              ) : scrim.reason === "restDay" ? (
-                <p className="text-faint">{C.hub.restDay}</p>
-              ) : scrim.reason === "used" ? (
-                <p className="text-faint">{C.scrim.usedUp}</p>
-              ) : (
-                <p className="text-faint">{C.hub.scrimUnavailable}</p>
-              )}
-              {clock.windowOpen && windowDaysLeft !== null ? (
-                <p className="text-blue-bright">{C.calendar.windowCloses(windowDaysLeft)}</p>
-              ) : null}
-            </div>
-          </Panel>
+          ) : (
+            <p className="px-1 text-xs text-faint">{C.hub.nothingNeeded}</p>
+          )}
+
+          {/* 3 — WHAT YOU CAN DO TODAY + YOUR EDGES */}
+          <TodayCards save={save} C={C} team={team} />
+          <EdgesStrip save={save} C={C} />
 
           {/* 7 — THE WIRE (full feed, filterable, expands in place) */}
           <Panel className="rise-in p-4" style={{ animationDelay: "120ms" }}>
@@ -688,61 +630,6 @@ export function HubScreen() {
             </Panel>
           </AppLink>
 
-          {/* 6 — budget tile */}
-          <AppLink href="/career/finances" className="block">
-            <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "150ms" }}>
-              <p className="kicker mb-1 text-[10px]">{C.hub.budget}</p>
-              <p
-                className={cx(
-                  "display text-2xl font-bold leading-none",
-                  save.finances.balance < 0 || projectedNegative ? "text-bad" : "text-ink",
-                )}
-              >
-                {formatMoney(save.finances.balance)}
-              </p>
-              <p className={cx("mt-1 text-xs font-semibold", net >= 0 ? "text-good" : "text-bad")}>
-                {C.hub.budgetNet(formatMoneyDelta(net, { compact: true }))}
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-line bg-white/[0.03] px-2 py-1.5">
-                  <span className="kicker block text-[9px]">{C.finances.income}</span>
-                  <span className="font-semibold text-good">
-                    {formatMoney(incomePerSplit, { compact: true })}
-                  </span>
-                </div>
-                <div className="rounded-md border border-line bg-white/[0.03] px-2 py-1.5">
-                  <span className="kicker block text-[9px]">{C.finances.expenses}</span>
-                  <span className="font-semibold text-bad">
-                    {formatMoney(wages + upkeep, { compact: true })}
-                  </span>
-                </div>
-              </div>
-              {projectedNegative ? (
-                <p className="mt-2 text-xs font-semibold text-bad">{C.hub.budgetWarning}</p>
-              ) : runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks * 2 ? (
-                <p className="mt-2 text-xs font-semibold text-orange-bright">{C.finances.runway(runway)}</p>
-              ) : null}
-              {save.finances.loan ? (
-                <Badge tone="bad" className="mt-2">
-                  {C.finances.backerRemaining(
-                    formatMoney(save.finances.loan.remaining, { compact: true }),
-                  )}
-                </Badge>
-              ) : null}
-              {save.sponsor ? (
-                <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-line pt-2.5">
-                  <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">
-                    {sponsorBrandById.get(save.sponsor.sponsorId)?.name ?? save.sponsor.sponsorId}
-                  </span>
-                  <Badge tone="blue">{C.finances.sponsorTier(save.sponsor.tier)}</Badge>
-                  {save.sponsor.hitThisSplit ? (
-                    <Badge tone="good">{C.finances.objectiveHit}</Badge>
-                  ) : null}
-                </div>
-              ) : null}
-            </Panel>
-          </AppLink>
-
           {/* 8 — inbox teaser */}
           <AppLink href="/career/news" className="block">
             <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "180ms" }}>
@@ -870,62 +757,6 @@ export function HubScreen() {
       >
         {C.explainers.hub.body}
       </Modal>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Week strip day chip
-// ---------------------------------------------------------------------------
-
-function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
-  const D = C.dates;
-  const matchday = d.kinds.includes("matchday");
-  const windowOpens = d.kinds.includes("windowOpen");
-  const payday = d.kinds.includes("payday");
-  const rest = d.kinds.includes("rest");
-
-  const label = d.event
-    ? d.event.name
-    : matchday
-      ? C.calendar.matchday
-      : windowOpens
-        ? C.calendar.window
-        : payday
-          ? C.calendar.payday
-          : rest
-            ? C.calendar.restDay
-            : d.kinds.includes("training")
-              ? C.calendar.trainingDay
-              : "";
-
-  return (
-    <div
-      title={label || undefined}
-      className={cx(
-        "flex flex-col items-center gap-0.5 rounded-lg border py-1.5",
-        matchday
-          ? "border-orange/50 bg-orange/10"
-          : "border-line bg-white/[0.03]",
-        d.isToday && "ring-2 ring-orange",
-        d.isPast && "opacity-40",
-      )}
-    >
-      <span className="kicker text-[8px] leading-none sm:text-[9px]">{D.weekdays[d.dow - 1]}</span>
-      <span
-        className={cx(
-          "display text-sm font-bold leading-none",
-          matchday ? "text-orange-bright" : "text-ink",
-        )}
-      >
-        {d.date.d}
-      </span>
-      <span className="flex h-1.5 items-center gap-0.5" aria-hidden>
-        {matchday ? <span className="h-1.5 w-1.5 rounded-full bg-orange" /> : null}
-        {windowOpens ? <span className="h-1.5 w-1.5 rounded-full bg-blue" /> : null}
-        {payday ? <span className="h-1.5 w-1.5 rounded-full bg-amber-300" /> : null}
-        {rest && !matchday ? <span className="h-px w-2 bg-white/20" /> : null}
-      </span>
     </div>
   );
 }
@@ -1144,297 +975,3 @@ function WireRow({
 // ---------------------------------------------------------------------------
 // NOW card variants
 // ---------------------------------------------------------------------------
-
-function NowSeason({ save, C, onGo }: { save: CareerSave; C: CareerCopy; onGo: () => void }) {
-  const ended = save.phase === "ended";
-  return (
-    <div>
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
-        {ended ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
-      </h2>
-      <Button variant="primary" size="lg" className="mt-5 w-full sm:w-auto" onClick={onGo}>
-        {C.hub.continue}
-      </Button>
-    </div>
-  );
-}
-
-function NowEvent({
-  save,
-  C,
-  D,
-  def,
-  daysAway,
-  primaryLabel,
-  onPrimary,
-  onAdvanceDay,
-}: {
-  save: CareerSave;
-  C: CareerCopy;
-  D: DatesCopy;
-  def: CareerEventDef;
-  daysAway: number;
-  primaryLabel: string;
-  onPrimary: () => void;
-  onAdvanceDay?: () => void;
-}) {
-  const fieldRegion =
-    def.region ?? (def.tier === "t2" || def.tier === "t3" ? save.identity.region : null);
-  const fieldOrgs = Object.values(save.world.orgs).filter(
-    (o) => !fieldRegion || o.region === fieldRegion,
-  );
-  const fieldStars = fieldOrgs.length
-    ? fieldOrgs.reduce((s, o) => s + o.stars, 0) / fieldOrgs.length
-    : 0;
-  const points = maxPointsOf(def.tier);
-  const unavailable =
-    daysAway === 0 && save.pendingUnavailability && save.pendingUnavailability.eventId === def.id
-      ? save.squad.find((p) => p.id === save.pendingUnavailability?.playerId)
-      : null;
-
-  return (
-    <div>
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
-        {def.name}
-      </h2>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge tone="orange" className={cx(daysAway === 0 && "animate-pulse")}>
-          {C.hub.matchdayIn(daysAway)}
-        </Badge>
-        <TierChip tier={def.tier} />
-        {def.region ? <Badge className={REGION_BADGE[def.region]}>{def.region}</Badge> : null}
-        <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))}</Badge>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.calendar.prizePool}</p>
-          <p className="display text-lg font-bold text-orange-bright">
-            {formatMoney(prizePoolOf(def.tier), { compact: true })}
-          </p>
-        </div>
-        <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.common.seasonPoints}</p>
-          <p className="display text-lg font-bold text-ink">
-            {points !== null ? `${points} ${C.standings.ptsShort}` : "—"}
-          </p>
-        </div>
-        <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
-          <p className="kicker text-[9px]">{C.calendar.fieldQuality}</p>
-          <TeamStars stars={Math.round(fieldStars)} size="md" className="mt-1" />
-        </div>
-      </div>
-      <p className="mt-2 text-xs text-faint">
-        {def.format === "swiss" ? C.event.formatSwiss : C.event.formatSingle}
-      </p>
-
-      {unavailable ? (
-        <p className="mt-3 rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-xs text-bad">
-          {C.event.unavailableNotice(unavailable.name)}
-        </p>
-      ) : null}
-
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={onPrimary}>
-          {primaryLabel}
-        </Button>
-        {onAdvanceDay ? (
-          <Button variant="ghost" size="md" className="min-h-11" onClick={onAdvanceDay}>
-            {C.hub.advanceDay}
-          </Button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function NowBid({
-  save,
-  C,
-  offer,
-  onAccept,
-  onDecline,
-}: {
-  save: CareerSave;
-  C: CareerCopy;
-  offer: TransferOffer;
-  onAccept: () => void;
-  onDecline: () => void;
-}) {
-  const orgName = offer.otherRef ? nameOfRef(save, offer.otherRef) : "?";
-  const orgStars = offer.otherRef ? (save.world.orgs[offer.otherRef]?.stars ?? 0) : 0;
-  const player = save.squad.find((p) => p.id === offer.playerId);
-
-  return (
-    <div>
-      {offer.blockbuster ? (
-        <Badge tone="gold" className="mb-2">
-          {C.market.blockbuster}
-        </Badge>
-      ) : null}
-      <div className="flex items-center gap-3">
-        {offer.otherRef ? <OrgMark save={save} orgRef={offer.otherRef} size="lg" /> : null}
-        <div className="min-w-0">
-          <p className="display truncate text-lg font-bold uppercase tracking-wide text-ink">
-            {orgName} <TeamStars stars={orgStars} size="sm" className="ml-1 align-middle" />
-          </p>
-          <p className="text-xs text-sub">{C.market.bidFrom(orgName)}</p>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-3 rounded-lg border border-line bg-white/[0.03] p-3">
-        <div className="min-w-0">
-          <p className="display truncate text-xl font-bold text-ink">{offer.playerName}</p>
-          {player ? (
-            <p className="text-xs text-sub">
-              {C.common.ovrShort(Math.round(player.overall))} · {C.player.age(squadAge(save, player))}{" "}
-              · {C.player.archetype[player.archetype]}
-            </p>
-          ) : null}
-        </div>
-        <div className="text-right">
-          <p className="kicker text-[9px]">{C.market.fee}</p>
-          <p className="display text-2xl font-bold text-orange-bright">
-            {formatMoney(offer.fee, { compact: true })}
-          </p>
-        </div>
-      </div>
-
-      <p className="mt-2 text-xs text-faint">{C.market.declineHint}</p>
-
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Button variant="primary" size="lg" onClick={onAccept}>
-          {C.market.accept}
-        </Button>
-        <Button variant="danger" size="lg" onClick={onDecline}>
-          {C.market.decline}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function NowSponsorChoice({
-  C,
-  lang,
-  offers,
-  objectiveText,
-  onChoose,
-}: {
-  C: CareerCopy;
-  lang: "en" | "pt";
-  offers: SponsorState[];
-  objectiveText: (kind: SponsorObjectiveKind) => string;
-  onChoose: (sponsorId: string) => void;
-}) {
-  return (
-    <div>
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink">
-        {C.finances.offerTitle}
-      </h2>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {offers.map((o) => {
-          const brand = sponsorBrandById.get(o.sponsorId);
-          return (
-            <div
-              key={o.sponsorId}
-              className="flex flex-col rounded-lg border border-line bg-white/[0.03] p-3.5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                  {brand?.name ?? o.sponsorId}
-                </p>
-                <Badge tone="blue">{C.finances.sponsorTier(o.tier)}</Badge>
-              </div>
-              {brand ? (
-                <p className="mt-1 text-xs italic text-faint">
-                  {lang === "pt" ? brand.flavorPt : brand.flavorEn}
-                </p>
-              ) : null}
-              <p className="mt-2 text-sm font-semibold text-good">
-                {C.finances.perWeekBase(formatMoney(weeklyOf(o.basePerSplit), { compact: true }))}
-              </p>
-              <p className="text-xs text-sub">
-                {C.finances.bonusFor(formatMoney(o.bonus, { compact: true }))}
-              </p>
-              <p className="mt-1.5 text-xs text-sub">
-                {C.finances.sponsorObjective}: {objectiveText(o.objectiveKind)}
-              </p>
-              <Button
-                variant="primary"
-                size="md"
-                full
-                className="mt-3"
-                onClick={() => onChoose(o.sponsorId)}
-              >
-                {C.market.accept}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function NowAdvance({
-  save,
-  C,
-  D,
-  stop,
-  windowDaysLeft,
-  onAdvance,
-  onAdvanceDay,
-}: {
-  save: CareerSave;
-  C: CareerCopy;
-  D: DatesCopy;
-  stop: UpcomingStop | null;
-  windowDaysLeft: number | null;
-  onAdvance: () => void;
-  onAdvanceDay: () => void;
-}) {
-  const clock = clockLabel(save);
-  const firstSteps = save.eventResults.length === 0 && save.history.length === 0;
-
-  const stopLabel = stop
-    ? stop.kind === "window"
-      ? C.calendar.window
-      : stop.kind === "seasonEnd"
-        ? C.calendar.seasonEnd
-        : C.calendar.payday
-    : C.calendar.seasonEnd;
-
-  return (
-    <div>
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
-        {firstSteps ? C.hub.emptyStateTitle : stopLabel}
-      </h2>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        {stop ? (
-          <>
-            <Badge tone="blue">
-              {formatDateShort(D, stop.date)} · {formatDaysAway(D, stop.daysAway)}
-            </Badge>
-          </>
-        ) : null}
-        {clock.windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
-      </div>
-      {firstSteps ? <p className="mt-3 max-w-md text-sm text-sub">{C.hub.emptyStateBody}</p> : null}
-      {clock.windowOpen && windowDaysLeft !== null ? (
-        <p className="mt-3 text-xs text-blue-bright">{C.calendar.windowCloses(windowDaysLeft)}</p>
-      ) : null}
-      {clock.kind === "open" ? (
-        <p className="mt-3 text-xs text-good">{C.hub.trainingWeek}</p>
-      ) : null}
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={onAdvance}>
-          {C.hub.continueTo(stopLabel)}
-        </Button>
-        <Button variant="ghost" size="md" className="min-h-11" onClick={onAdvanceDay}>
-          {C.hub.advanceDay}
-        </Button>
-      </div>
-    </div>
-  );
-}

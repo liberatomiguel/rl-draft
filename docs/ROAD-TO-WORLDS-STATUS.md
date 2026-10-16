@@ -123,8 +123,14 @@ incl. the new `src/store/careerV2.test.ts`.
 - Starter rosters rebalanced (R24); market offer defaults to the sub slot when
   the starters are full (R25).
 
-**Next sub-phases:** B — hub rebuild + week calendar strip + day-by-day advance
-animation; C — training rework (interactive plan, visible growth/ETA,
+**Sub-phase B — hub rebuild (DONE, 2026-10-16, R26)**
+- `hub/DayCard.tsx` (date, season progress, animated 7-day strip, Advance one
+  day / Advance — next stop / autoplay), `hub/NowCards.tsx` (the "Needs you"
+  decision cards incl. the new Community Cup invite card), `hub/TodayCards.tsx`
+  ("What you can do today" + "Your edges"); `HubScreen.tsx` is layout again.
+- Calendar marks payday on every Monday (weekly payroll).
+
+**Next sub-phases:** C — training rework (interactive plan, visible growth/ETA,
 attribute buffs tied to training, potentials calibration); D — regional
 qualifier for non-top-8 + local orgs growing + real lineups entering by
 season; E — inserts (random/sponsor/training events) + sponsors expanded; F —

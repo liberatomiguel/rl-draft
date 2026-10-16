@@ -130,6 +130,14 @@ with the root cause — that section doubles as the project's bugfix log.
   plus procedurally generated local amateur teams rated around your roster —
   early cups are winnable, regionals untouched.
 - Starter roster offers rebalanced (no dead start); `src/store/careerV2.test.ts`.
+- **HQ rebuilt around the clock** (ROAD-TO-WORLDS-DECISIONS R26): a Day Card
+  with the seven-day strip (the today ring glides on every advance, the strip
+  slides in when a week turns), **Advance one day** as the primary control
+  next to skip-to-next-stop and autoplay; a **Needs you** rail with one card
+  per decision (new Community Cup invite card, bids, sponsor offers, expiring
+  contracts, cash warning, Backer debt); **What you can do today** status
+  cards; **Your edges** (active coach, gear, psychologist, bootcamp Sharp,
+  sponsor perks). Calendar marks payday every Monday.
 
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)

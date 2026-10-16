@@ -283,6 +283,28 @@ R25. **A full starting three defaults the market offer to the sub slot.** The
      from "sub slot taken" and "squad full (4)". Root cause of "it won't let me
      sign with a free sub slot": the role state always reset to "starter".
 
+R26. **HQ is a day you can read at a glance (hub rebuild, sub-phase B).**
+     Playtesters called the hub confusing and the window "one same day". The
+     new layout puts the CLOCK first: a **Day Card** (date, season progress,
+     a seven-day strip whose "today" ring glides to the next chip on every
+     advance and whose strip slides in when a week turns — `hub/DayCard.tsx`,
+     CSS `day-marker` / `week-slide` / `day-tick`) with the three ways to move
+     time side by side: **Advance one day** (primary), **Advance — next stop**
+     (skip) and ▶/⏸ autoplay. When the clock is blocked (matchday, season
+     stop) the primary action becomes that stop. Below it, **Needs you** lists
+     every pending decision as its own card (season stop, event today,
+     Community Cup invite — new `NowInvite`, incoming bid, sponsor offers,
+     expiring contracts, cash warning, open Backer debt) or says plainly that
+     nothing needs a decision. **What you can do today** is a grid of status
+     cards (training, scrim with the run button, market with window state,
+     finances with runway, bootcamp when a slot is open, squad) and **Your
+     edges** shows the active coach/gear/psychologist/Sharp/sponsor perks so
+     the toolbox is visible where the player lives. The feeds (wire, transfer
+     wire, inbox) stay below; the budget tile folded into the finances card.
+     Day-by-day advance was always in the engine; it is now the primary
+     control, which is what gives the transfer window its "day after day"
+     feel (R27 will add the window's own daily rhythm).
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

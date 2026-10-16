@@ -9,7 +9,6 @@
  */
 
 import {
-  CAREER_CALENDAR,
   CAREER_GEAR,
   CAREER_SCOUT,
   CAREER_SCRIM,
@@ -180,9 +179,8 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
     const kinds: DayKind[] = [];
     if (event) kinds.push("matchday");
     if (dow === 1 && isWindowStartWeek(week)) kinds.push("windowOpen");
-    if (dow === 1 && (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek)) {
-      kinds.push("payday");
-    }
+    // v2.0 (R20): payroll books every Monday but the founding day.
+    if (dow === 1 && !(save.clock.seasonIndex === 0 && week === 1)) kinds.push("payday");
     // v0.3: booked scrims show as training events on the calendar.
     if (save.scheduledScrims?.some((s) => s.day === day)) kinds.push("scrim");
     if (!event && dow <= CAREER_TRAINING.trainingDaysPerWeek) kinds.push("training");
