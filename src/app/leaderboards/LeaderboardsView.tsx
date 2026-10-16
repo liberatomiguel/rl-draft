@@ -20,7 +20,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 // skill rating that replaced the old XP board. The other columns still exist in
 // the DB/view; they're just no longer surfaced as tabs.
 const CATEGORIES: LeaderboardCategory[] = [
-  "mmr", // Skill rating — the headline board (v1.4)
+  "season_mmr", // Season Rating — the headline board (v2.0)
   "championships", // Titles · Total
   "titles_legacy", // Titles · Legacy
   "best_legacy", // Highest overall · Legacy
@@ -30,7 +30,7 @@ const CATEGORIES: LeaderboardCategory[] = [
 export function LeaderboardsView() {
   const { LEADERBOARDS_UI: L } = useCopy();
   const username = useAccountStore((s) => s.username);
-  const [cat, setCat] = useState<LeaderboardCategory>("mmr");
+  const [cat, setCat] = useState<LeaderboardCategory>("season_mmr");
   // Hold the loaded category with its rows; loading = the fetch for the current
   // tab hasn't landed yet. Derived, so no setState-in-effect.
   const [loaded, setLoaded] = useState<{ cat: LeaderboardCategory; rows: LeaderboardRow[] } | null>(null);

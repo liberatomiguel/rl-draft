@@ -585,6 +585,75 @@ export function mmrBackfillFloor(wins: Record<Difficulty, number>): number {
 }
 
 /**
+ * SEASON RATING (v2.0, DESIGN-DECISIONS #111) — the competitive number behind the
+ * Season leaderboard. It REPLACES the title-only MMR economy above for live play
+ * (`MMR` stays for the pre-season backfill in old-save migrations). The profile
+ * field is still called `mmr` so every reader keeps working; the season reset puts
+ * everyone at `start`.
+ *
+ * PHILOSOPHY: results, not volume. Every finished tournament run moves the rating by
+ * a placement × difficulty delta: titles pay well, a deep run pays a little, and an
+ * early exit at the higher difficulties COSTS a few points (floor `floor`), so spamming
+ * runs with bad results does not climb. The first `placementRuns` runs of a season
+ * never lose rating (a soft landing after the reset). Daily and Quick scale by
+ * `modeMultiplier`; hidden overalls add `hiddenOverallBonus` to GAINS only.
+ * Challenge runs and Road to Worlds never touch it (Season XP only).
+ */
+export const SEASON_RATING = {
+  /** Everyone starts each season here (the reset value). */
+  start: 400,
+  /** Rating never drops below this. */
+  floor: 0,
+  /** Runs of a season during which a negative delta is clamped to 0. */
+  placementRuns: 5,
+  /** Placement deltas per difficulty. `playoffs` = top 8/6/4 exits (made the bracket). */
+  delta: {
+    easy: { champion: 6, runner_up: 3, third: 2, fourth: 1, playoffs: 0, swiss_exit: -2 },
+    normal: { champion: 10, runner_up: 5, third: 3, fourth: 2, playoffs: 0, swiss_exit: -3 },
+    hard: { champion: 16, runner_up: 9, third: 5, fourth: 3, playoffs: 1, swiss_exit: -4 },
+    legacy: { champion: 26, runner_up: 14, third: 8, fourth: 5, playoffs: 2, swiss_exit: -5 },
+  } as Record<
+    Difficulty,
+    Record<"champion" | "runner_up" | "third" | "fourth" | "playoffs" | "swiss_exit", number>
+  >,
+  /** Per game mode. Quick is a short single-elim; Daily is the shared puzzle. */
+  modeMultiplier: { classic: 1, quick: 0.5, daily: 1.25 } as Record<string, number>,
+  /** Added to positive deltas when the run was played with hidden overalls. */
+  hiddenOverallBonus: 0.15,
+  /** Entries kept in `season.ratingHistory` (profile rating graph). */
+  historyLimit: 40,
+} as const;
+
+/** Season Rating delta for one finished run (signed). Pure; see `SEASON_RATING`. */
+export function seasonRatingDelta(input: {
+  difficulty: Difficulty;
+  placement: Placement;
+  mode: string;
+  hiddenOverall: boolean;
+  /** Runs finished in this season BEFORE this one (placement protection). */
+  seasonRunsBefore: number;
+}): number {
+  const row = SEASON_RATING.delta[input.difficulty];
+  const bucket =
+    input.placement === "champion" ||
+    input.placement === "runner_up" ||
+    input.placement === "third" ||
+    input.placement === "fourth" ||
+    input.placement === "swiss_exit"
+      ? input.placement
+      : "playoffs";
+  let delta = row[bucket] * (SEASON_RATING.modeMultiplier[input.mode] ?? 1);
+  if (delta > 0 && input.hiddenOverall) delta *= 1 + SEASON_RATING.hiddenOverallBonus;
+  if (delta < 0 && input.seasonRunsBefore < SEASON_RATING.placementRuns) delta = 0;
+  return Math.round(delta);
+}
+
+/** Rating after one run: the signed delta applied with the floor. */
+export function seasonRatingAfter(mmr: number, delta: number): number {
+  return Math.max(SEASON_RATING.floor, mmr + delta);
+}
+
+/**
  * Rank ladder (v0.3 curve). Target: Supersonic Legend in ~100-150 runs.
  * An average run earns ~150-300 XP, a winning run ~500-800.
  */

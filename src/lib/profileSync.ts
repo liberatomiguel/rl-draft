@@ -15,7 +15,14 @@
  * The Supabase/auth wiring that calls it lives in `lib/supabase.ts` + UI.
  */
 
-import { HISTORY_LIMIT, MMR } from "@/config/balance";
+import { HISTORY_LIMIT } from "@/config/balance";
+import { cosmeticFacts, EMPTY_COSMETICS, mergeCosmetics, refreshOwned } from "@/engine/cosmetics";
+import {
+  mergeRating,
+  mergeSeasonState,
+  mergeSnapshots,
+  normalizeToSeason,
+} from "@/engine/season";
 import type { DailyResult, ProfileState } from "@/store/profileStore";
 
 /** The durable, sync-worthy slice of the profile (no action methods). */
@@ -39,6 +46,11 @@ export type DurableProfile = Pick<
   | "records"
   | "settings"
   | "flags"
+  | "season"
+  | "lifetime"
+  | "legacy"
+  | "grants"
+  | "cosmetics"
 >;
 
 const DURABLE_KEYS: (keyof DurableProfile)[] = [
@@ -60,6 +72,11 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "records",
   "settings",
   "flags",
+  "season",
+  "lifetime",
+  "legacy",
+  "grants",
+  "cosmetics",
 ];
 
 /** Extract the durable slice from a full ProfileState (drops the action fns). */
@@ -95,7 +112,14 @@ function maxRecord<K extends string>(
  * regresses below either input — so merging local into cloud (or vice-versa)
  * can only preserve or gain progress, never lose it.
  */
-export function mergeProfiles(local: DurableProfile, cloud: DurableProfile): DurableProfile {
+export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile): DurableProfile {
+  // v2.0: both sides are brought into the CURRENT season first. A row written by an
+  // older build (pre-season: no `season` block) or by a previous season is archived
+  // into `legacy.preseason` and reset, exactly like the local persist migrate does,
+  // so a stale cloud row can never re-inflate a Season 1 profile (#110).
+  const local = normalizeToSeason(localIn);
+  const cloud = normalizeToSeason(cloudIn);
+
   // runHistory: union by runId, newest first, capped.
   const byId = new Map<string, DurableProfile["runHistory"][number]>();
   for (const e of [...cloud.runHistory, ...local.runHistory]) {
@@ -112,12 +136,30 @@ export function mergeProfiles(local: DurableProfile, cloud: DurableProfile): Dur
     if (!cur || res.xp > cur.xp) dailyResults[date] = res;
   }
 
+  const season = mergeSeasonState(local.season!, cloud.season!);
+  const legacy = { preseason: mergeSnapshots(local.legacy?.preseason, cloud.legacy?.preseason) };
+  const grants = [...new Set([...(local.grants ?? []), ...(cloud.grants ?? [])])].sort();
+  const cosmeticsMerged = mergeCosmetics(local.cosmetics ?? EMPTY_COSMETICS, cloud.cosmetics ?? EMPTY_COSMETICS);
+  // Owned cosmetics are derived facts: refresh them from the MERGED facts so a reward
+  // one side earned (a grant, a better pre-season position) exists on the result.
+  const cosmetics = {
+    owned: refreshOwned(cosmeticsMerged.owned, cosmeticFacts({ legacy, grants, season })),
+    equipped: cosmeticsMerged.equipped,
+  };
+
   return {
     xp: Math.max(local.xp, cloud.xp),
-    // MMR is monotonic like every other counter; `?? MMR.start` seeds legacy rows saved
-    // before MMR existed so a pre-MMR cloud row can't drag a player below the starting
-    // value. The backfill floor (applied on hydrate) lifts veterans toward the cap.
-    mmr: Math.max(local.mmr ?? MMR.start, cloud.mmr ?? MMR.start),
+    // Season Rating can go down, so the copy that has played more of the season
+    // wins (a tie takes the MAX — never regress on a tie). See `mergeRating`.
+    mmr: mergeRating(
+      { mmr: local.mmr, runs: local.season!.runs },
+      { mmr: cloud.mmr, runs: cloud.season!.runs },
+    ),
+    season,
+    lifetime: { xp: Math.max(local.lifetime?.xp ?? 0, cloud.lifetime?.xp ?? 0) },
+    legacy,
+    grants,
+    cosmetics,
     // Legacy gate: unlocked if EITHER side unlocked it (OR), so it propagates across
     // devices once earned and is never lost.
     legacyUnlocked: Boolean(local.legacyUnlocked) || Boolean(cloud.legacyUnlocked),

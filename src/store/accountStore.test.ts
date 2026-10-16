@@ -63,11 +63,13 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-function cloud(over: Partial<DurableProfile>): CloudRowResult {
+function cloud(over: Partial<DurableProfile>, extras: { grants?: string[]; preseasonPosition?: number | null } = {}): CloudRowResult {
   return {
     status: "ok",
     durable: { ...toDurable(useProfileStore.getState()), ...over },
     username: "CloudName",
+    grants: extras.grants ?? [],
+    preseasonPosition: extras.preseasonPosition ?? null,
   };
 }
 

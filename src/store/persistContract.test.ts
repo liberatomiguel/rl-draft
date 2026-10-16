@@ -27,13 +27,16 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { mmrBackfillFloor } from "@/config/balance";
+import { mmrBackfillFloor, SEASON_RATING } from "@/config/balance";
+import { SEASON } from "@/config/season";
 import { achievements, specialCards } from "@/data";
 
 /** The frozen contract. `version: 0` = zustand's default (no `version` option). */
 const CONTRACT = {
   settings: { name: "rocket-draft:settings:v1", version: 0 },
-  profile: { name: "rocket-draft:profile:v1", version: 11 },
+  // v12 = the v2.0 Season 1 reset (DESIGN-DECISIONS #110): pre-season xp/mmr are
+  // archived into `legacy.preseason`, season fields reset, lifetime kept.
+  profile: { name: "rocket-draft:profile:v1", version: 12 },
   run: { name: "rocket-draft:run:v1", version: 3 },
   career: { name: "rocket-draft:career:v1", version: 3 },
 } as const;
@@ -60,6 +63,12 @@ const SACRED_PROFILE_FIELDS = [
   "records",
   "settings",
   "flags",
+  // v2.0
+  "season",
+  "lifetime",
+  "legacy",
+  "grants",
+  "cosmetics",
 ];
 
 class MemoryStorage implements Storage {
@@ -230,8 +239,8 @@ describe("profile migrate (old saves keep their progress)", () => {
     storage.clear();
   });
 
-  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])(
-    "migrate(v%i save) keeps xp, wins, collection and achievements",
+  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])(
+    "migrate(v%i save) archives the pre-season, resets the season, keeps the rest",
     (fromVersion) => {
       const migrate = persistOf("profile").getOptions().migrate!;
       let out: Record<string, unknown> = {};
@@ -239,38 +248,70 @@ describe("profile migrate (old saves keep their progress)", () => {
         out = migrate(structuredClone(oldProfile()), fromVersion) as Record<string, unknown>;
       }).not.toThrow();
       const old = oldProfile();
-      expect(out.xp).toBe(old.xp);
+      // Lifetime progress is untouched.
       expect(out.runsCompleted).toBe(old.runsCompleted);
       expect(out.wins).toStrictEqual(old.wins);
       // Real specials survive; ids no longer in specialCards.json are pruned (by design).
       expect(out.unlockedSpecials).toStrictEqual({ [specialCards[0].id]: DATE });
       // Earned achievements survive (the migrate may silently ADD satisfied counters).
       expect(out.achievements).toMatchObject(old.achievements);
+      // v12 (Season 1 reset): the pre-season is ARCHIVED, the season fields reset.
+      expect(out.xp).toBe(0);
+      expect(out.mmr).toBe(SEASON_RATING.start);
+      expect(out.lifetime).toStrictEqual({ xp: old.xp });
+      expect(out.season).toMatchObject({ id: SEASON.id, runs: 0, titles: 0, peakMmr: SEASON_RATING.start });
+      expect(out.legacy).toMatchObject({
+        preseason: {
+          xp: old.xp,
+          rankId: "gold",
+          runsCompleted: old.runsCompleted,
+          titles: 6,
+          position: null,
+          // pre-v11 saves get the title-history backfill (the v11 correction)
+          mmr: mmrBackfillFloor(old.wins),
+        },
+      });
+      expect(out.challengesCompleted).toStrictEqual({}); // Challenges restart in v2.0
+      // The legacy rewards are derived at migration time (no sync needed): "Day One"
+      // + the peak-rank frames up to Gold.
+      expect(Object.keys((out.cosmetics as { owned: Record<string, string> }).owned)).toEqual(
+        expect.arrayContaining(["legacy-title-day-one", "legacy-badge-first-chapter", "legacy-frame-gold"]),
+      );
       // New fields are backfilled, not missing.
       expect(out).toMatchObject({
         dailyResults: expect.any(Object),
-        challengesCompleted: expect.any(Object),
         records: expect.any(Object),
         settings: expect.objectContaining({ lastDifficulty: expect.any(String) }),
         flags: expect.objectContaining({ seenTutorial: expect.any(Boolean) }),
-        mmr: mmrBackfillFloor(old.wins),
+        grants: [],
         legacyUnlocked: true, // a Hard title keeps Legacy open
       });
     },
   );
 
-  it("hydrating a v1 save end-to-end migrates it and writes it back as v11", async () => {
+  it("migrate(v11 save) keeps a live-earned MMR above the backfill in the snapshot", () => {
+    const migrate = persistOf("profile").getOptions().migrate!;
+    const v11 = { ...oldProfile(), mmr: 1575, challengesCompleted: { "ch-first-final": DATE } };
+    const out = migrate(structuredClone(v11), 11) as Record<string, unknown>;
+    expect(out.legacy).toMatchObject({ preseason: { mmr: 1575, challengesCleared: 1 } });
+    expect(out.challengesCompleted).toStrictEqual({});
+  });
+
+  it("hydrating a v1 save end-to-end migrates it and writes it back as v12", async () => {
     storage.setItem(CONTRACT.profile.name, rawSave(oldProfile(), 1));
     await persistOf("profile").rehydrate();
 
     const state = stores.profile.getState();
-    expect(state.xp).toBe(4321);
+    expect(state.xp).toBe(0);
+    expect(state.lifetime.xp).toBe(4321);
+    expect(state.legacy.preseason?.xp).toBe(4321);
     expect(state.unlockedSpecials).toStrictEqual({ [specialCards[0].id]: DATE });
     expect(state.achievements).toMatchObject({ [achievements[0].id]: DATE });
 
     const written = JSON.parse(storage.getItem(CONTRACT.profile.name)!);
     expect(written.version).toBe(CONTRACT.profile.version);
-    expect(written.state.xp).toBe(4321);
+    expect(written.state.xp).toBe(0);
+    expect(written.state.legacy.preseason.xp).toBe(4321);
     expect(written.state.unlockedSpecials).toStrictEqual({ [specialCards[0].id]: DATE });
   });
 
@@ -287,7 +328,8 @@ describe("profile migrate (old saves keep their progress)", () => {
       setItem.mockRestore();
     }
     expect(storage.getItem(CONTRACT.profile.name)).toBe(raw);
-    expect(stores.profile.getState().xp).toBe(4321);
+    expect(stores.profile.getState().xp).toBe(0); // season xp after the v12 reset
+    expect(stores.profile.getState().legacy.preseason?.xp).toBe(4321);
   });
 });
 

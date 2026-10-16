@@ -58,7 +58,7 @@ import {
   useProfileStore,
 } from "./profileStore";
 import type { ProfileState } from "./profileStore";
-import { CLOUD_SYNC, MMR, mmrBackfillFloor } from "@/config/balance";
+import { CLOUD_SYNC } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
 
 type Status = "loading" | "signedOut" | "signedIn";
@@ -204,16 +204,25 @@ export const useAccountStore = create<AccountStore>((set, get) => {
     // Prune stale achievement ids the cloud row may still carry (the v1.4 swap)
     // BEFORE we hydrate AND push — so the count is right locally and the cloud
     // row self-heals on this write instead of re-seeding the stale ids forever.
+    // Server-owned extras (v2.0): the manual grants and the frozen pre-season place
+    // are read-only facts about this account — fold them in on every sync so a
+    // grant Miguel added in the dashboard shows up on the next visit.
+    const cloudGrants = row.status === "ok" ? row.grants : [];
+    const cloudPosition = row.status === "ok" ? row.preseasonPosition : null;
+    const preseason = mergedRaw.legacy?.preseason ?? null;
     const merged: DurableProfile = {
       ...mergedRaw,
       achievements: pruneEarnedAchievements(mergedRaw.achievements),
       unlockedSpecials: pruneUnlockedSpecials(mergedRaw.unlockedSpecials),
-      // Seed MMR for a signed-in veteran whose cloud row predates MMR (covers the
-      // fresh-device case the local migrate can't). Floor from title history, capped
-      // at 1500; live-earned values above it (forward play) are preserved by the max.
-      mmr: Math.max(mergedRaw.mmr ?? MMR.start, mmrBackfillFloor(mergedRaw.wins)),
+      grants: [...new Set([...(mergedRaw.grants ?? []), ...cloudGrants])].sort(),
+      legacy: {
+        preseason:
+          preseason && cloudPosition && preseason.position !== cloudPosition
+            ? { ...preseason, position: cloudPosition }
+            : preseason,
+      },
     };
-    if (cloudDurable || folded) {
+    if (cloudDurable || folded || cloudGrants.length || cloudPosition) {
       applyingSync = true;
       try {
         useProfileStore.getState().hydrateDurable(merged); // never lose local

@@ -53,10 +53,34 @@ afterEach(() => {
 });
 
 describe("fetchCloudRow — tagged result", () => {
-  it("ok: the row exists", async () => {
+  it("ok: the row exists (server extras default to empty / null)", async () => {
     const sb = await load();
     h.maybeSingle.mockResolvedValue({ data: { durable: { xp: 5 }, username: "ace" }, error: null });
-    expect(await sb.fetchCloudRow("u1")).toEqual({ status: "ok", durable: { xp: 5 }, username: "ace" });
+    expect(await sb.fetchCloudRow("u1")).toEqual({
+      status: "ok",
+      durable: { xp: 5 },
+      username: "ace",
+      grants: [],
+      preseasonPosition: null,
+    });
+  });
+
+  it("ok: embedded grants + the frozen pre-season position are read (v2.0)", async () => {
+    const sb = await load();
+    h.maybeSingle.mockResolvedValue({
+      data: {
+        durable: { xp: 5 },
+        username: "ace",
+        preseason_position: 17,
+        profile_grants: [{ grant_id: "pro" }, { grant_id: "supporter" }],
+      },
+      error: null,
+    });
+    expect(await sb.fetchCloudRow("u1")).toMatchObject({
+      status: "ok",
+      grants: ["pro", "supporter"],
+      preseasonPosition: 17,
+    });
   });
 
   it("no-row: the read succeeded and returned nothing", async () => {
@@ -97,6 +121,16 @@ describe("fetchCloudRow — tagged result", () => {
 });
 
 describe("pushCloudProfile", () => {
+  it("never writes the frozen pre-season columns (xp / mmr) — v2.0", async () => {
+    const sb = await load();
+    const durable = { xp: 120, mmr: 433 } as never;
+    await sb.pushCloudProfile("u1", "ace", durable, { season_xp: 120, season_mmr: 433 } as never);
+    const row = h.upsert.mock.calls[0][0] as Record<string, unknown>;
+    expect(row).not.toHaveProperty("xp");
+    expect(row).not.toHaveProperty("mmr");
+    expect(row).toMatchObject({ id: "u1", username: "ace", season_xp: 120, season_mmr: 433 });
+  });
+
   it("reports a failed upsert", async () => {
     const sb = await load();
     h.upsert.mockResolvedValue({ error: { message: "rls" } });

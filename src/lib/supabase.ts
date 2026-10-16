@@ -21,6 +21,8 @@
  */
 
 import type { AuthChangeEvent, Session, SupabaseClient } from "@supabase/supabase-js";
+import { SEASON } from "@/config/season";
+import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
 import type { DurableProfile } from "./profileSync";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -215,8 +217,20 @@ export interface LeaderboardStats {
   titles_legacy: number;
   daily_streak: number;
   challenges_cleared: number;
-  /** Cosmetic skill rating (v1.4) — the leaderboard category that replaced XP. */
-  mmr: number;
+  /** Season columns (v2.0). The pre-season `xp` / `mmr` columns are a FROZEN
+   *  archive now: the client never writes them again (docs/V2-IMPLEMENTATION-PLAN §2.5). */
+  season_id: number;
+  season_xp: number;
+  season_mmr: number;
+  season_peak_mmr: number;
+  season_titles: number;
+  season_runs: number;
+  lifetime_xp: number;
+  /** What the player shows on the boards (resolved from `cosmetics`, v2.0). */
+  equipped_title: string | null;
+  equipped_frame: string | null;
+  equipped_banner: string | null;
+  equipped_badges: string[];
 }
 
 export function leaderboardStats(p: DurableProfile, dailyStreak: number): LeaderboardStats {
@@ -235,7 +249,14 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
     titles_legacy: p.wins.legacy,
     daily_streak: dailyStreak,
     challenges_cleared: Object.keys(p.challengesCompleted).length,
-    mmr: p.mmr,
+    season_id: p.season?.id ?? SEASON.id,
+    season_xp: p.xp,
+    season_mmr: p.mmr,
+    season_peak_mmr: p.season?.peakMmr ?? p.mmr,
+    season_titles: p.season?.titles ?? 0,
+    season_runs: p.season?.runs ?? 0,
+    lifetime_xp: p.lifetime?.xp ?? p.xp,
+    ...equippedColumns(p.cosmetics ?? EMPTY_COSMETICS),
   };
 }
 
@@ -249,27 +270,43 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
  *               the caller must not push.
  */
 export type CloudRowResult =
-  | { status: "ok"; durable: DurableProfile | null; username: string | null }
+  | {
+      status: "ok";
+      durable: DurableProfile | null;
+      username: string | null;
+      /** Manual grants (supporter / pro / contributor) — dashboard-only writes (v2.0). */
+      grants: string[];
+      /** Frozen final pre-season place, once Miguel ran the freeze SQL (v2.0). */
+      preseasonPosition: number | null;
+    }
   | { status: "no-row" }
   | { status: "error"; error: string };
 
 /** Fetch the user's stored durable profile + chosen display name (for merge +
- *  to keep their name on subsequent syncs). */
+ *  to keep their name on subsequent syncs), plus the server-owned extras (v2.0):
+ *  the manual grants and the frozen pre-season position. One request: the grants
+ *  come embedded through the `profile_grants.user_id → profiles.id` relation. */
 export async function fetchCloudRow(userId: string): Promise<CloudRowResult> {
   try {
     const c = await client();
     if (!c) return { status: "error", error: UNAVAILABLE };
     const { data, error } = await c
       .from("profiles")
-      .select("durable, username")
+      .select("durable, username, preseason_position, profile_grants(grant_id)")
       .eq("id", userId)
       .maybeSingle();
     if (error) return { status: "error", error: error.message || "read failed" };
     if (!data) return { status: "no-row" };
+    const grantRows = (data.profile_grants as { grant_id: string }[] | null) ?? [];
     return {
       status: "ok",
       durable: (data.durable as DurableProfile) ?? null,
       username: data.username ?? null,
+      grants: grantRows.map((g) => g.grant_id).filter((g) => typeof g === "string"),
+      preseasonPosition:
+        typeof data.preseason_position === "number" && data.preseason_position > 0
+          ? data.preseason_position
+          : null,
     };
   } catch (e) {
     return { status: "error", error: e instanceof Error ? e.message : String(e) };
@@ -287,11 +324,13 @@ export async function pushCloudProfile(
   try {
     const c = await client();
     if (!c) return { error: UNAVAILABLE };
+    // v2.0: `xp` / `mmr` are deliberately NOT written — they are the frozen
+    // pre-season archive (a DB trigger also refuses them). Season values travel in
+    // the `season_*` columns of `stats`.
     const { error } = await c.from("profiles").upsert(
       {
         id: userId,
         username,
-        xp: durable.xp,
         durable,
         ...stats,
         updated_at: new Date().toISOString(),
@@ -342,17 +381,59 @@ export async function deleteAccount(): Promise<void> {
 
 // --- Leaderboards ---------------------------------------------------------
 
-export type LeaderboardCategory = keyof LeaderboardStats | "xp";
+export type LeaderboardCategory = Exclude<
+  keyof LeaderboardStats,
+  "season_id" | "equipped_title" | "equipped_frame" | "equipped_banner" | "equipped_badges"
+>;
 
-export interface LeaderboardRow {
+/** Columns that only make sense inside the current season (filtered by `season_id`). */
+const SEASON_SCOPED: ReadonlySet<string> = new Set([
+  "season_xp",
+  "season_mmr",
+  "season_peak_mmr",
+  "season_titles",
+  "season_runs",
+]);
+
+/** The public cosmetics every board row carries (v2.0): what the player chose to
+ *  show (equipped) plus the server-side grants. Nulls / empty when unset. */
+export interface RowCosmetics {
+  equipped_title: string | null;
+  equipped_frame: string | null;
+  equipped_banner: string | null;
+  equipped_badges: string[];
+  grants: string[];
+  preseason_position: number | null;
+}
+
+export interface LeaderboardRow extends RowCosmetics {
   username: string;
   value: number;
+}
+
+const ROW_COSMETIC_COLUMNS =
+  "equipped_title, equipped_frame, equipped_banner, equipped_badges, grants, preseason_position";
+
+function normalizeRow<T extends Partial<RowCosmetics>>(r: T): T & RowCosmetics {
+  return {
+    ...r,
+    equipped_title: r.equipped_title ?? null,
+    equipped_frame: r.equipped_frame ?? null,
+    equipped_banner: r.equipped_banner ?? null,
+    equipped_badges: Array.isArray(r.equipped_badges) ? r.equipped_badges : [],
+    grants: Array.isArray(r.grants) ? r.grants : [],
+    preseason_position:
+      typeof r.preseason_position === "number" && r.preseason_position > 0
+        ? r.preseason_position
+        : null,
+  };
 }
 
 /**
  * Top `limit` players by a leaderboard column (descending). Reads the PUBLIC
  * `leaderboard` view (safe columns only) — NOT the profiles table, whose full
  * durable blob is owner-only. So a public read never exposes a player's history.
+ * Season-scoped columns are filtered to the current season.
  */
 export async function fetchLeaderboard(
   category: LeaderboardCategory,
@@ -360,12 +441,35 @@ export async function fetchLeaderboard(
 ): Promise<LeaderboardRow[]> {
   const c = await client();
   if (!c) return [];
-  const { data, error } = await c
+  let q = c
     .from("leaderboard")
-    .select(`username, value:${category}`)
+    .select(`username, value:${category}, ${ROW_COSMETIC_COLUMNS}`)
     .order(category, { ascending: false })
-    .gt(category, 0)
+    .gt(category, 0);
+  if (SEASON_SCOPED.has(category)) q = q.eq("season_id", SEASON.id);
+  const { data, error } = await q.limit(limit);
+  if (error || !data) return [];
+  return (data as unknown as Partial<LeaderboardRow>[]).map((r) => normalizeRow(r) as LeaderboardRow);
+}
+
+export interface HallOfFameRow extends RowCosmetics {
+  username: string;
+  position: number;
+  mmr: number;
+  xp: number;
+  championships: number;
+}
+
+/** The frozen pre-season final board (v2.0), best place first. Empty until the
+ *  freeze SQL has run (docs/V2-IMPLEMENTATION-PLAN §6-C). */
+export async function fetchHallOfFame(limit = 100): Promise<HallOfFameRow[]> {
+  const c = await client();
+  if (!c) return [];
+  const { data, error } = await c
+    .from("preseason_hall_of_fame")
+    .select(`username, position, mmr, xp, championships, ${ROW_COSMETIC_COLUMNS}`)
+    .order("position", { ascending: true })
     .limit(limit);
   if (error || !data) return [];
-  return data as unknown as LeaderboardRow[];
+  return (data as unknown as Partial<HallOfFameRow>[]).map((r) => normalizeRow(r) as HallOfFameRow);
 }

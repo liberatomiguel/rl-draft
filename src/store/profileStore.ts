@@ -8,10 +8,32 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { HISTORY_LIMIT, MMR, mmrAfterRun, mmrBackfillFloor } from "@/config/balance";
+import {
+  HISTORY_LIMIT,
+  mmrBackfillFloor,
+  RANKS,
+  SEASON_RATING,
+  seasonRatingAfter,
+  seasonRatingDelta,
+} from "@/config/balance";
 import { achievementById, specialCardById, specialCards } from "@/data";
 import { evaluateCounterAchievements } from "@/engine/achievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
+import {
+  cosmeticFacts,
+  EMPTY_COSMETICS,
+  refreshOwned,
+  sanitizeEquipped,
+  type CosmeticsState,
+  type EquippedState,
+} from "@/engine/cosmetics";
+import {
+  freshSeason,
+  normalizeToSeason,
+  pushRatingHistory,
+  type LegacyState,
+  type SeasonState,
+} from "@/engine/season";
 import type { DurableProfile } from "@/lib/profileSync";
 import { useAchievementToasts } from "./achievementToastStore";
 import type {
@@ -30,13 +52,29 @@ export interface DailyResult {
 }
 
 export interface ProfileState {
+  /** SEASON XP (v2.0): resets every season; drives the rank ladder and every
+   *  rank-gated reward. Cumulative XP lives in `lifetime.xp`. */
   xp: number;
-  /** Cosmetic skill rating (v1.4), parallel to XP. Starts at MMR.start, rises a
-   *  small amount per run, never spent or lost. Profile card + leaderboard only. */
+  /** SEASON RATING (v2.0, still named `mmr` for every existing reader): the
+   *  competitive number behind the Season leaderboard. Starts at
+   *  `SEASON_RATING.start`, moves by placement × difficulty, floor 0. */
   mmr: number;
-  /** MMR gained on the most recent finished run — for the results screen readout.
-   *  Transient/display only (NOT in the durable sync slice). */
+  /** Signed rating delta of the most recent finished run — for the results
+   *  readout. Transient/display only (NOT in the durable sync slice). */
   lastMmrGain: number;
+  /** Season-scoped bookkeeping: which season `xp`/`mmr` belong to, peaks, runs,
+   *  titles and the rating history (v2.0). */
+  season: SeasonState;
+  /** Never reset: cumulative XP across seasons (v2.0). */
+  lifetime: { xp: number };
+  /** Archived pre-season achievements, frozen at the Season 1 reset (v2.0). */
+  legacy: LegacyState;
+  /** Server-owned manual grants (`supporter` / `pro` / `contributor`), read from the
+   *  cloud on every sync and unioned — never written by the client (v2.0). */
+  grants: string[];
+  /** Titles / badges / frames / banners: `owned` is DERIVED from the profile's facts
+   *  (refreshed on every progress write), `equipped` holds explicit choices (v2.0). */
+  cosmetics: CosmeticsState;
   /** Legacy difficulty gate (v1.4): set once by a real Classic/Quick Hard (or Legacy)
    *  championship. Decoupled from `wins` so Daily/Challenge titles never open Legacy. */
   legacyUnlocked: boolean;
@@ -108,13 +146,27 @@ export interface ProfileState {
   /** Award achievements the MOMENT they're earned (v1.4): mark + grant XP +
    *  toast the genuinely-new ones. Used for the real-time mid-run feats. */
   awardAchievements: (ids: string[]) => void;
+  /** Grant Season XP from a non-run source (missions, login streak, quiz, career
+   *  milestones — v2.0). Also accrues `lifetime.xp`. Ignores non-positive amounts. */
+  grantXp: (amount: number) => void;
+  /** Choose what the profile shows (locker, v2.0). Unknown / unowned ids are dropped;
+   *  null = auto (best owned), `NONE` = hide the slot. */
+  setEquipped: (patch: Partial<EquippedState>) => void;
+  /** Re-derive owned cosmetics from the profile's facts (idempotent). Called after
+   *  every progress write; exposed for screens that unlock through other stores. */
+  refreshCosmetics: () => void;
   resetAll: () => void;
 }
 
 const initialData = {
   xp: 0,
-  mmr: MMR.start,
+  mmr: SEASON_RATING.start,
   lastMmrGain: 0,
+  season: freshSeason(),
+  lifetime: { xp: 0 },
+  legacy: { preseason: null } as LegacyState,
+  grants: [] as string[],
+  cosmetics: EMPTY_COSMETICS,
   legacyUnlocked: false,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
@@ -236,6 +288,16 @@ function backfillSatisfiedCounters(
   return out;
 }
 
+/** The `cosmetics` patch for a (possibly partially updated) profile. */
+function withCosmetics(
+  p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics">,
+  now = new Date().toISOString(),
+): CosmeticsState {
+  const owned = refreshOwned(p.cosmetics?.owned ?? {}, cosmeticFacts(p), now);
+  const equipped = sanitizeEquipped(owned, p.cosmetics?.equipped ?? EMPTY_COSMETICS.equipped);
+  return { owned, equipped };
+}
+
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set) => ({
@@ -292,11 +354,18 @@ export const useProfileStore = create<ProfileState>()(
           const goalsScored = state.goalsScored + results.userGoals;
           // results.xp.total already includes the run-state achievement XP.
           const xpAfterRun = state.xp + results.xp.total;
-          // Cosmetic MMR (v1.4.4 re-tune): a flat per-TITLE award (Easy +1, Normal +2, Hard +5,
-          // Legacy finalist +4, Legacy title +9); every other outcome is 0. `lastMmrGain`
-          // feeds the results-screen readout (shown only when > 0). Challenge mode never
-          // reaches here; Daily does and a Daily title earns MMR like any tournament.
-          const mmr = mmrAfterRun(state.mmr, entry.difficulty, results.placement);
+          // Season Rating (v2.0): a signed placement × difficulty delta (SEASON_RATING),
+          // floor 0, with the first `placementRuns` runs of a season protected from
+          // losses. `lastMmrGain` feeds the results-screen readout. Challenge mode never
+          // reaches here; Daily does (×1.25) and a Daily title counts like any tournament.
+          const ratingDelta = seasonRatingDelta({
+            difficulty: entry.difficulty,
+            placement: results.placement,
+            mode: entry.mode,
+            hiddenOverall: entry.hiddenOverall,
+            seasonRunsBefore: state.season.runs,
+          });
+          const mmr = seasonRatingAfter(state.mmr, ratingDelta);
           const lastMmrGain = mmr - state.mmr;
 
           // Lifetime counters / collection / rank achievements — evaluated AFTER
@@ -325,10 +394,35 @@ export const useProfileStore = create<ProfileState>()(
             }
           }
 
+          const xpFinal = xpAfterRun + counterXp;
+          const rankAfter = rankForXp(xpFinal);
+          const peakRankId =
+            rankForXp(xpFinal).index >= rankIndexOf(state.season.peakRankId)
+              ? rankAfter.id
+              : state.season.peakRankId;
+          const season: SeasonState = {
+            ...state.season,
+            runs: state.season.runs + 1,
+            titles: state.season.titles + (results.placement === "champion" ? 1 : 0),
+            peakMmr: Math.max(state.season.peakMmr, mmr),
+            peakRankId,
+            ratingHistory: pushRatingHistory(state.season.ratingHistory, {
+              t: now,
+              delta: lastMmrGain,
+              mmr,
+              difficulty: entry.difficulty,
+              placement: results.placement,
+              mode: entry.mode,
+            }),
+          };
+
           return {
-            xp: xpAfterRun + counterXp,
+            xp: xpFinal,
             mmr,
             lastMmrGain,
+            season,
+            lifetime: { xp: state.lifetime.xp + (xpFinal - state.xp) },
+            cosmetics: withCosmetics({ ...state, season }, now),
             legacyUnlocked,
             runsCompleted,
             wins,
@@ -364,6 +458,7 @@ export const useProfileStore = create<ProfileState>()(
           }
           return {
             xp: state.xp + reward.xp,
+            lifetime: { xp: state.lifetime.xp + reward.xp },
             challengesCompleted: { ...state.challengesCompleted, [challengeId]: now },
             unlockedSpecials,
           };
@@ -384,11 +479,15 @@ export const useProfileStore = create<ProfileState>()(
         }),
 
       hydrateDurable: (durable) =>
-        set(() => ({
-          ...durable,
-          achievements: pruneEarnedAchievements(durable.achievements),
-          unlockedSpecials: pruneUnlockedSpecials(durable.unlockedSpecials),
-        })),
+        set(() => {
+          const next = normalizeToSeason(durable);
+          return {
+            ...next,
+            achievements: pruneEarnedAchievements(durable.achievements),
+            unlockedSpecials: pruneUnlockedSpecials(durable.unlockedSpecials),
+            cosmetics: withCosmetics({ ...next, cosmetics: next.cosmetics ?? EMPTY_COSMETICS }),
+          };
+        }),
 
       awardAchievements: (ids) => {
         const fresh: string[] = [];
@@ -403,16 +502,47 @@ export const useProfileStore = create<ProfileState>()(
               fresh.push(id);
             }
           }
-          return fresh.length ? { achievements, xp: state.xp + xp } : {};
+          return fresh.length
+            ? { achievements, xp: state.xp + xp, lifetime: { xp: state.lifetime.xp + xp } }
+            : {};
         });
         if (fresh.length) useAchievementToasts.getState().push(fresh);
       },
 
-      resetAll: () => set({ ...initialData }),
+      grantXp: (amount) =>
+        set((state) => {
+          if (!(amount > 0)) return {};
+          const xp = state.xp + Math.round(amount);
+          const rank = rankForXp(xp);
+          const peakRankId =
+            rank.index >= rankIndexOf(state.season.peakRankId) ? rank.id : state.season.peakRankId;
+          const season = { ...state.season, peakRankId };
+          return {
+            xp,
+            lifetime: { xp: state.lifetime.xp + Math.round(amount) },
+            season,
+            cosmetics: withCosmetics({ ...state, season }),
+          };
+        }),
+
+      setEquipped: (patch) =>
+        set((state) => ({
+          cosmetics: {
+            owned: state.cosmetics.owned,
+            equipped: sanitizeEquipped(state.cosmetics.owned, {
+              ...state.cosmetics.equipped,
+              ...patch,
+            }),
+          },
+        })),
+
+      refreshCosmetics: () => set((state) => ({ cosmetics: withCosmetics(state) })),
+
+      resetAll: () => set({ ...initialData, season: freshSeason() }),
     }),
     {
       name: "rocket-draft:profile:v1",
-      version: 11,
+      version: 12,
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);
@@ -428,8 +558,13 @@ export const useProfileStore = create<ProfileState>()(
       // HARD-RESETS mmr to the reworked title-only backfill (capped 1500) — the old
       // formula over-rewarded (a mediocre fresh account drifted to ~1200, elites past
       // 1500), so this is a one-time correction, NOT a floor; and seeds `legacyUnlocked`
-      // from history (anyone with a Hard/Legacy title keeps Legacy open). All other
-      // new fields backfill from initialData via the deep-merge.
+      // from history (anyone with a Hard/Legacy title keeps Legacy open); v12 (v2.0,
+      // DESIGN-DECISIONS #110) is the SEASON 1 RESET: the pre-season xp / mmr / rank /
+      // titles / challenge count are archived into `legacy.preseason`, then xp → 0,
+      // mmr → SEASON_RATING.start, challengesCompleted → {} and a fresh `season`
+      // block; `lifetime.xp` keeps the cumulative total. Collection, achievements,
+      // lifetime counters, run history and records are untouched. All other new
+      // fields backfill from initialData via the deep-merge.
       migrate: (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
@@ -465,18 +600,30 @@ export const useProfileStore = create<ProfileState>()(
           new Set(Object.keys(merged.achievements)),
           new Date().toISOString(),
         );
-        return {
+        const v11 = {
           ...merged,
           achievements: { ...merged.achievements, ...backfilled },
           // v11: recompute MMR from the reworked title-only backfill (capped 1500).
           // This is a hard SET (not a floor) so the inflated old-formula values are
           // corrected down: elites land near 1500, a title-less account back at start.
-          mmr: mmrBackfillFloor(merged.wins),
+          // A save already AT v11 keeps its live-earned value (the correction ran once).
+          mmr:
+            version < 11
+              ? mmrBackfillFloor(merged.wins)
+              : (base.mmr ?? mmrBackfillFloor(merged.wins)),
           // v11: seed the new Legacy gate from history — anyone who already won a
           // Hard or Legacy title keeps Legacy open (no one loses access they earned).
           legacyUnlocked:
             merged.legacyUnlocked || merged.wins.hard > 0 || merged.wins.legacy > 0,
         } as ProfileState;
+        // v12: the Season 1 reset. A pre-v12 save has no `season` block (the spread
+        // from initialData above gave it a FRESH one, which must not count as "already
+        // in the season"), so strip it before normalising: every pre-v12 save is a
+        // pre-season save by definition.
+        const preV12 = version < 12 ? { ...v11, season: undefined, lifetime: undefined, legacy: base.legacy } : v11;
+        const inSeason = normalizeToSeason(preV12 as ProfileState);
+        // The legacy rewards appear the moment the save migrates (no sync needed).
+        return { ...inSeason, cosmetics: withCosmetics({ ...inSeason, cosmetics: inSeason.cosmetics ?? EMPTY_COSMETICS }) };
       },
     },
   ),
@@ -498,9 +645,17 @@ export function selectHardUnlocked(state: ProfileState): boolean {
   return rankRewardsForXp(state.xp).hardMode || state.wins.hard > 0 || state.wins.legacy > 0;
 }
 
-/** Collection screen unlocks at Bronze (v1.3); Unranked has it locked. */
+/** Collection screen unlocks at Bronze (v1.3); Unranked has it locked. v2.0: a
+ *  player who already OWNS cards (a pre-season veteran after the reset) always
+ *  keeps access — the gate is an on-ramp, not a lock on what they earned. */
 export function selectCollectionUnlocked(state: ProfileState): boolean {
-  return rankRewardsForXp(state.xp).collection;
+  return rankRewardsForXp(state.xp).collection || Object.keys(state.unlockedSpecials).length > 0;
+}
+
+/** Ladder position of a rank id (0 = Unranked / unknown). */
+function rankIndexOf(rankId: string): number {
+  const i = RANKS.findIndex((r) => r.id === rankId);
+  return i < 0 ? 0 : i;
 }
 
 /**
