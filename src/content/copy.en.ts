@@ -59,6 +59,22 @@ export const HOME = {
   challengesDesc: "Rank-unlocked draft puzzles to clear.",
   challengesLocked: "Locked — unlocks at Bronze",
   signInNudge: "Sign in to save your progress and climb the leaderboards",
+  season1: {
+    kicker: "Pre-season · Final days",
+    title: "Season 1 is coming",
+    intro: "Rocket Draft v2.0 lands in a few days — and with it, the pre-season comes to an end.",
+    bullets: [
+      "A brand-new career mode",
+      "Expansions and a long list of improvements",
+      "More surprises on launch day",
+    ],
+    rewards:
+      "Every player with an account from the pre-season will receive exclusive rewards when Season 1 begins.",
+    rewardsSignedIn: "You're signed in — your pre-season rewards are secured.",
+    cta: "Create account / Log in",
+    later: "Later",
+    gotIt: "Got it",
+  },
   leaderboards: "Leaderboards",
   leaderboardsDesc: "Your best rosters and milestones.",
   howToPlay: "How to play",

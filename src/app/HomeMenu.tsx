@@ -36,6 +36,7 @@ import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
+import { Season1Notice } from "@/components/screens/Season1Notice";
 
 export default function HomeMenu() {
   const { APP, HOME, HOME_SEO } = useCopy();
@@ -87,6 +88,7 @@ export default function HomeMenu() {
   return (
     <>
       <FirstRunTutorial />
+      <Season1Notice />
       {/* Hero — rendered OUTSIDE the rise-in (opacity:0) wrapper so the LCP subtitle
           paints in the SSR HTML immediately instead of waiting on hydration/animation
           (CWV: LCP render-delay). */}

@@ -10,7 +10,14 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## Unreleased — Static relaunch (Cloudflare) + request/performance diet
+## [1.4.6] — 2026-10-16 · Season 1 announcement
+
+### Added
+- **Season 1 announcement pop-up** on the home page (`src/components/screens/Season1Notice.tsx`, copy `HOME.season1` EN+PT). Opens once per browser, after the first-run tutorial: v2.0 is days away (brand-new career mode, expansions, improvements), the pre-season ends, and pre-season account holders get Season 1 rewards. Signed-out players get a "Create account / Log in" button (→ /profile); signed-in players see their rewards are secured. The seen marker is a plain localStorage key (`rd-notice:season1:v1`), outside the persist contract. Remove it when Season 1 ships.
+
+---
+
+## [1.4.5] — 2026-10-05 · Static relaunch (Cloudflare) + request/performance diet
 
 > Branch `perf/static-cloudflare`, cut from `staging` @ `badd177` (v1.5.0-alpha.2), so it
 > carries the Road to Worlds alpha below. The version number is still to be chosen.

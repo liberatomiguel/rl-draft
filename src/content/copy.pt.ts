@@ -55,6 +55,22 @@ export const PT: Copy = {
     challengesDesc: "Puzzles de draft liberados por rank.",
     challengesLocked: "Bloqueado — desbloqueia no Bronze",
     signInNudge: "Faça login pra salvar seu progresso e subir nas leaderboards",
+    season1: {
+      kicker: "Pré-season · Reta final",
+      title: "A Season 1 está chegando",
+      intro: "O Rocket Draft v2.0 chega em poucos dias — e, com ele, a pré-season chega ao fim.",
+      bullets: [
+        "Um modo carreira completamente novo",
+        "Expansões e uma longa lista de melhorias",
+        "Mais novidades no dia do lançamento",
+      ],
+      rewards:
+        "Todos os jogadores com conta criada na pré-season vão receber recompensas exclusivas quando a Season 1 começar.",
+      rewardsSignedIn: "Você já está logado — suas recompensas da pré-season estão garantidas.",
+      cta: "Criar conta / Entrar",
+      later: "Depois",
+      gotIt: "Entendi",
+    },
     leaderboards: "Rankings",
     leaderboardsDesc: "Seus melhores elencos e marcos.",
     howToPlay: "Como jogar",
