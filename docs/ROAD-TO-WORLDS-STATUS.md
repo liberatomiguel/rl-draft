@@ -11,8 +11,10 @@
 >   SEPARATE from the draft game's `DESIGN-DECISIONS.md`.
 > - **Per-version narrative:** `CHANGELOG.md` `[1.5.0-alpha]`.
 >
-> Last updated: 2026-07-11 (v0.3 pass). Gates: `tsc` clean, **284 vitest
-> tests**, golden-master locks the existing draft modes byte-identical.
+> Last updated: 2026-10-16 (v2.0 pass, R20–R34 — see "v2.0 pass" below). Gates:
+> `tsc` clean, **483 vitest tests** (38 files, incl. `careerV2.test.ts`,
+> `achievements.test.ts`, `careerStore.achievements.test.ts`), golden-master
+> regenerated once for DESIGN-DECISIONS #117 (offense/defense weights).
 
 ## How to run / verify
 - `npm run dev` → home has a "Road to Worlds" card; nav has a **Career** entry.

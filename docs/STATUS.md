@@ -12,12 +12,22 @@
 > QA/launch), the Supabase SQL Miguel must run, and the launch checklist. CHANGELOG
 > `[2.0.0]` is the narrative; DESIGN-DECISIONS #110–#115 the why.
 >
-> **v2.0 progress:** Phases 0, 1 and 2 are DONE — technical base (season model, profile v12
+> **v2.0 progress:** Phases 0–3 are DONE — technical base (season model, profile v12
 > reset + legacy snapshot, Season Rating, cosmetics, Supabase v2 client, missions + login
 > streak, event cards + Special Hunt, series variety, bracket spoiler fix), the surfaces
-> (recap screen, Profile v2, Leaderboard v2, missions UI, Daily Quiz, Home v2) and
-> Challenges 2.0 (3 stars, 4 gauntlets, 24 validated challenges). Phase 3 (Road to Worlds
-> 2.0) is next, then Phase 4 (content, QA, staging, launch).
+> (recap screen, Profile v2, Leaderboard v2, missions UI, Daily Quiz, Home v2),
+> Challenges 2.0 (3 stars, 4 gauntlets, 24 validated challenges) and **Road to Worlds 2.0**
+> (weekly payroll + bank loan, hub rebuilt around the day card, Training 2.0, Wednesday
+> qualifier + local scene, real orgs entering by season, permanent achievements, weekly
+> inserts, colour kits — `ROAD-TO-WORLDS-STATUS.md`). **Phase 4 is in progress**: the
+> automated gates ran (typecheck, 483 tests, lint baseline, build, `wrangler dev` audits:
+> cold home **25** requests, `/career` 34, **0** same-origin 4xx across 21 routes, 0 page
+> errors; view-source of `/` and `/pt` keeps title, description, h1, HOME_SEO sections and
+> JSON-LD). The branch is published as **v2.0.0-rc.1 on `staging`** for Miguel's review.
+> Still open before `main`: Miguel's §6 steps (staging Supabase project, production SQL
+> B, freeze C, grants D, Cloudflare vars E), the manual checklist in plan §7 (fresh /
+> pre-season / signed-in profiles, two devices), event-card curation, a PT pass,
+> Lighthouse, and the version tag `v2.0.0`.
 >
 > **Never deploy v2.0 to `main` before the full review.** Test builds go to the staging
 > Worker (`staging.rocketdraft.app`) from the `staging` branch with a SEPARATE Supabase
@@ -73,6 +83,9 @@
   | Home HTML | 504 KB raw / 27 KB br | **40 KB / 7.5 KB** |
 
   Build: 48 s; `out/` = 1,071 files, 35 MB.
+  **v2.0.0-rc.1 (career on), same method:** cold home **25** requests (15 js · 2 css ·
+  3 img · 5 other), `/play` 25, `/career` 34; **0** same-origin 4xx/5xx across 21
+  routes; `out/` = 1,206 files, 40 MB; home HTML 43.5 KB raw / 9.8 KB gz.
 - **Staging Worker** (`rocket-draft-staging`, `staging.rocketdraft.app`): deployed with
   `npx wrangler deploy --env staging` from the `staging` branch (career on, noindex).
   Separate origin → separate localStorage.
@@ -116,7 +129,7 @@ drift.
 ### Standard gates (before any commit)
 
 - `npm run typecheck` (tsc) clean.
-- `npm test`: **444** vitest tests pass (33 files) on the v2.0 branch (385 on `main`).
+- `npm test`: **483** vitest tests pass (38 files) on the v2.0 branch (385 on `main`).
 - `npm run lint` at its baseline: **5 errors + 1 warning**, all pre-existing
   (TournamentScreen, AnimatedNumber, Modal, useMounted, calibrate-rarity).
   Don't add new ones.

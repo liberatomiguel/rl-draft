@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → staging)
+## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → `staging` as **v2.0.0-rc.1**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).

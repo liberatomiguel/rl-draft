@@ -298,10 +298,14 @@ every later surface builds on a stable contract.
 
 ### Phase 4 — content, QA, launch
 - [ ] Event cards curated (Miguel), achievements for new systems, PT pass.
-- [ ] Full regression on staging (checklist in §7), perf audit on `wrangler dev`
-      (request counts vs the v1.4.5 table in STATUS), SEO diff (view-source of
-      `/` and `/pt` before/after), Lighthouse.
-- [ ] CHANGELOG `[2.0.0]`, STATUS trimmed, DESIGN-DECISIONS, ROAD-TO-WORLDS docs.
+- [x] Automated gates + audits on the rc build: perf audit on `wrangler dev`
+      (cold home 25 req, 0 4xx across 21 routes), SEO view-source of `/` and
+      `/pt` (title, description, h1, HOME_SEO, JSON-LD intact), browser smokes
+      of Finances, Market, Training, HQ, qualifier lobby, inserts, wizard.
+- [ ] Manual regression on staging (checklist in §7: profiles, two devices,
+      runs, event cards, quiz, challenges, career end-to-end), Lighthouse.
+- [x] CHANGELOG `[2.0.0]`, STATUS, DESIGN-DECISIONS #110–#118, ROAD-TO-WORLDS docs
+      (R20–R34) — kept current through every sub-phase.
 - [ ] Miguel: §6 steps B–D, then merge to `main`, tag `v2.0.0`.
 
 ---
