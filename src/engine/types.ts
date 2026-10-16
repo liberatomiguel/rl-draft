@@ -235,6 +235,10 @@ export interface SpecialCard {
   /** Short historical context shown in the collection. */
   flavor: string;
   imageUrl?: string;
+  /** Event-exclusive window (v2.0): offered only between these UTC dates
+   *  (inclusive). `huntRuns` = runs finished inside the window before the
+   *  Special Hunt boost kicks in (SPECIALS.event.defaultHuntRuns when unset). */
+  event?: { from: string; to: string; huntRuns?: number };
 }
 
 export interface AchievementDef {
@@ -340,6 +344,13 @@ export interface DraftState {
    * Keyed off picks made (reroll-proof). Undefined = normal random draft.
    */
   scriptedLineups?: DraftScriptStep[];
+  /**
+   * Event-exclusive specials for this run (v2.0): `active` = inside their window
+   * today (offerable, rarity gate bypassed); `boosted` = the Special Hunt ramp
+   * applies (the player finished enough runs in the window). Fixed at draft
+   * creation so a run stays deterministic across midnight. Undefined = none.
+   */
+  eventSpecials?: { active: string[]; boosted: string[] };
   offer: DraftOffer | null;
   roster: Roster;
   complete: boolean;
@@ -419,6 +430,8 @@ export interface SeriesResult {
   /** Rating difference (teamA - teamB) at sim time. */
   ratingDiff: number;
   upset: boolean;
+  /** The winner trailed by `SIMULATION.comebackDeficit` games at some point (v2.0). */
+  comeback?: boolean;
 }
 
 export interface SwissRound {

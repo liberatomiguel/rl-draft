@@ -54,6 +54,7 @@ export type DurableProfile = Pick<
   | "cosmetics"
   | "missions"
   | "login"
+  | "events"
 >;
 
 const DURABLE_KEYS: (keyof DurableProfile)[] = [
@@ -82,6 +83,7 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "cosmetics",
   "missions",
   "login",
+  "events",
 ];
 
 /** Extract the durable slice from a full ProfileState (drops the action fns). */
@@ -100,6 +102,16 @@ function mergeDateMap(
   for (const [id, date] of Object.entries(b)) {
     out[id] = out[id] ? (out[id] < date ? out[id] : date) : date;
   }
+  return out;
+}
+
+/** Special Hunt counters: MAX per event card (monotonic). */
+function mergeEventRuns(
+  a: Record<string, { runs: number }>,
+  b: Record<string, { runs: number }>,
+): Record<string, { runs: number }> {
+  const out: Record<string, { runs: number }> = { ...a };
+  for (const [id, v] of Object.entries(b)) out[id] = { runs: Math.max(out[id]?.runs ?? 0, v?.runs ?? 0) };
   return out;
 }
 
@@ -169,6 +181,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     cosmetics,
     missions,
     login,
+    events: mergeEventRuns(local.events ?? {}, cloud.events ?? {}),
     // Legacy gate: unlocked if EITHER side unlocked it (OR), so it propagates across
     // devices once earned and is never lost.
     legacyUnlocked: Boolean(local.legacyUnlocked) || Boolean(cloud.legacyUnlocked),

@@ -92,6 +92,9 @@ export interface ProfileState {
   missions: MissionsState;
   /** Login streak (v2.0): first open of a UTC day counts. */
   login: LoginState;
+  /** Special Hunt progress (v2.0): event special id → runs finished while its
+   *  window was live. Never pruned (a few bytes per event; the id is the key). */
+  events: Record<string, { runs: number }>;
   /** Legacy difficulty gate (v1.4): set once by a real Classic/Quick Hard (or Legacy)
    *  championship. Decoupled from `wins` so Daily/Challenge titles never open Legacy. */
   legacyUnlocked: boolean;
@@ -180,6 +183,8 @@ export interface ProfileState {
   applyMissionEvent: (event: MissionEvent) => MissionApplyResult;
   /** Count today's login (idempotent per UTC day), granting the streak XP (v2.0). */
   recordLogin: () => { counted: boolean; xp: number; streak: number; milestone: number | null };
+  /** Count one finished run toward each live event card's Special Hunt (v2.0). */
+  recordEventRuns: (eventSpecialIds: string[]) => void;
   resetAll: () => void;
 }
 
@@ -194,6 +199,7 @@ const initialData = {
   cosmetics: EMPTY_COSMETICS,
   missions: EMPTY_MISSIONS,
   login: EMPTY_LOGIN,
+  events: {} as Record<string, { runs: number }>,
   legacyUnlocked: false,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
@@ -631,6 +637,14 @@ export const useProfileStore = create<ProfileState>()(
         });
         return out;
       },
+
+      recordEventRuns: (ids) =>
+        set((state) => {
+          if (ids.length === 0) return {};
+          const events = { ...state.events };
+          for (const id of ids) events[id] = { runs: (events[id]?.runs ?? 0) + 1 };
+          return { events };
+        }),
 
       resetAll: () => set({ ...initialData, season: freshSeason() }),
     }),

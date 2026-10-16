@@ -9,9 +9,11 @@
  *  - "column" (8-team unofficials): rounds stacked vertically, sized for the
  *    side rail — the whole knockout visible with zero scrolling.
  *
- * Spoiler rules: a simulated series shows its PAIRING immediately but hides
- * the score until its key lands in `revealed`; un-simulated rounds show the
- * engine's next pairings only once everything simulated has been revealed.
+ * Spoiler rules: a simulated series shows its PAIRING once every EARLIER round
+ * is fully revealed (v2.0: a later round's pairings give away who dropped out of
+ * the round still animating) and hides the score until its key lands in
+ * `revealed`; un-simulated rounds show the engine's next pairings only once
+ * everything simulated has been revealed.
  * The user's path is orange-edged; revealed user results tint good/bad.
  */
 
@@ -87,10 +89,17 @@ export function CareerBracket({
     const i = p.seeds.indexOf(id);
     return i === -1 ? null : i + 1;
   };
+  // v2.0 spoiler guard: rounds beyond the first not-fully-revealed one stay TBD.
+  let revealedRounds = 0;
+  for (let ri = 0; ri < p.rounds.length; ri++) {
+    if (p.rounds[ri].series.every((_, si) => revealed.has(`po:${ri}:${si}`))) revealedRounds += 1;
+    else break;
+  }
 
   const renderCells = (name: PlayoffRoundName) => {
     const ri = roundIndexByName.get(name);
-    const series = ri !== undefined ? p.rounds[ri].series : null;
+    const spoiler = ri !== undefined && ri > revealedRounds;
+    const series = ri !== undefined && !spoiler ? p.rounds[ri].series : null;
     return Array.from({ length: SLOTS[name] }).map((_, si) => {
       const s = series?.[si] ?? null;
       const key = ri !== undefined ? `po:${ri}:${si}` : null;

@@ -16,6 +16,7 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
     cosmetics: EMPTY_COSMETICS,
     missions: EMPTY_MISSIONS,
     login: EMPTY_LOGIN,
+    events: {},
     xp: 0,
     mmr: SEASON_RATING.start,
     legacyUnlocked: false,

@@ -112,10 +112,11 @@ describe("golden master — shared sim pipeline draw order", () => {
       return `${s.winnerTeamId}:${s.score[0]}-${s.score[1]}:${s.games.length}:${rng.state}`;
     });
     if (PRINT_GOLDENS) console.log("series goldens:", JSON.stringify(sig));
+    // Regenerated for v2.0 (momentum bounce + scoreline re-tune, CHANGELOG [2.0.0]).
     expect(sig).toEqual([
-      "opp:0-4:4:248189722",
-      "user:4-0:4:249176142",
-      "user:4-0:4:1448342873",
+      "opp:1-4:5:752142998",
+      "user:4-2:6:57352551",
+      "user:4-2:6:3655979568",
     ]);
   });
 
@@ -125,9 +126,10 @@ describe("golden master — shared sim pipeline draw order", () => {
       return `${r.champion}|${r.gfScore[0]}-${r.gfScore[1]}|${r.rngEnd}|${r.swissWinners.join(",")}`;
     });
     if (PRINT_GOLDENS) console.log("tournament goldens:", JSON.stringify(sig));
+    // Regenerated for v2.0 (momentum bounce + scoreline re-tune, CHANGELOG [2.0.0]).
     expect(sig).toEqual([
-      "user|4-0|105101394|t01,t02,t03,t04,t05,t06,t09,user",
-      "user|4-0|3252150890|t01,t02,t03,t04,t05,t07,t09,user",
+      "user|0-4|3008514956|t01,t02,t03,t04,t06,t11,t12,user",
+      "user|2-4|1405432477|t01,t02,t03,t04,t06,t08,t10,user",
     ]);
   });
 });

@@ -772,6 +772,21 @@ function SwissPath({
 // Double elimination bracket
 // ---------------------------------------------------------------------------
 
+/** Number of leading rounds whose every series is revealed (the round at this
+ *  index is the one animating, or the next to simulate). Shared with the career
+ *  bracket through the same rule. */
+export function countRevealedRounds(
+  seriesPerRound: number[],
+  isRevealed: (roundIndex: number, seriesIndex: number) => boolean,
+): number {
+  let n = 0;
+  for (let ri = 0; ri < seriesPerRound.length; ri++) {
+    for (let si = 0; si < seriesPerRound[ri]; si++) if (!isRevealed(ri, si)) return n;
+    n += 1;
+  }
+  return n;
+}
+
 const UPPER_COLUMNS: PlayoffRoundName[] = ["ub_quarterfinal", "ub_semifinal", "ub_final", "grand_final"];
 const LOWER_COLUMNS: PlayoffRoundName[] = ["lb_round1", "lb_round2", "lb_semifinal", "lb_final", "third_place"];
 const SINGLE_COLUMNS: PlayoffRoundName[] = ["quarterfinal", "semifinal", "final"];
@@ -810,10 +825,18 @@ function PlayoffBracketView({
   const roundIndexByName = new Map(p.rounds.map((r, i) => [r.name, i]));
   const nextRoundName = roundOrderFor(p.format)[p.rounds.length] ?? null;
   const upcomingPairs = !p.finished && allRevealed && nextRoundName ? nextPlayoffPairings(p) : null;
+  // Spoiler guard (v2.0): when several rounds were simulated in one go (the user
+  // went out, so the AI rounds auto-resolved), the pairings of a LATER round give
+  // away the result of the round still animating (the user is missing from them).
+  // Only rounds up to the first not-fully-revealed one show their pairings.
+  const revealedRounds = countRevealedRounds(p.rounds.map((r) => r.series.length), (ri, si) =>
+    revealed.has(entryKey("playoffs", ri, si)),
+  );
 
   const renderColumn = (name: PlayoffRoundName) => {
     const ri = roundIndexByName.get(name);
-    const series = ri !== undefined ? p.rounds[ri].series : null;
+    const spoiler = ri !== undefined && ri > revealedRounds;
+    const series = ri !== undefined && !spoiler ? p.rounds[ri].series : null;
     return (
       <div key={name} className="flex min-w-[150px] flex-1 flex-col justify-around gap-2">
         <p className="kicker text-center !text-[9px]">{T.roundNames[name]}</p>

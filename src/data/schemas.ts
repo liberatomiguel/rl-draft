@@ -166,6 +166,15 @@ export const specialCardSchema = z.object({
   effect: specialEffectSchema,
   flavor: z.string().min(1),
   imageUrl: z.string().optional(),
+  /** Event-exclusive window (v2.0): UTC dates, inclusive, from <= to. */
+  event: z
+    .object({
+      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      huntRuns: z.number().int().min(0).max(100).optional(),
+    })
+    .refine((e) => e.from <= e.to, { message: "event.from must be <= event.to" })
+    .optional(),
 });
 
 export const achievementSchema = z.object({

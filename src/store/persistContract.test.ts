@@ -71,6 +71,7 @@ const SACRED_PROFILE_FIELDS = [
   "cosmetics",
   "missions",
   "login",
+  "events",
 ];
 
 class MemoryStorage implements Storage {

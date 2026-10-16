@@ -13,7 +13,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DIFFICULTY, REGION_LOCK, SPECIALS } from "@/config/balance";
-import { challengeById, lineupPoolForRegion, playerById, playerCardById, specialCardById } from "@/data";
+import { challengeById, lineupPoolForRegion, playerById, playerCardById, specialCardById, specialCards } from "@/data";
 import { rankRewardsForXp } from "@/engine/progression";
 import {
   applyFreeReroll,
@@ -21,6 +21,7 @@ import {
   applyReroll,
   createDraft,
   drawNextOffer,
+  eventSpecialsFor,
 } from "@/engine/draft";
 import {
   buildChallengeOpponent,
@@ -120,6 +121,8 @@ export const useRunStore = create<RunStore>()(
             poolLineupIds,
             specialChanceMult: rewards.specialChance / SPECIALS.rankBaselineChance,
             specialRarities: rewards.rarities,
+            // Event-exclusive cards live today + the Special Hunt boost (v2.0).
+            eventSpecials: eventSpecialsFor(specialCards, todayKey(), useProfileStore.getState().events),
           }),
           rng,
         );
@@ -165,6 +168,12 @@ export const useRunStore = create<RunStore>()(
             rerollsOverride: config.rerollsOverride,
             specialChanceMult: config.specialChanceMult,
             scriptedLineups: config.scriptedLineups,
+            // The daily is shared, so only the WINDOW applies (no per-player hunt
+            // boost) — everyone sees the same odds on the same day.
+            eventSpecials: (() => {
+              const ev = eventSpecialsFor(specialCards, date, undefined);
+              return ev ? { active: ev.active, boosted: [] } : undefined;
+            })(),
           }),
           rng,
         );
@@ -508,6 +517,11 @@ export const useRunStore = create<RunStore>()(
           entry,
           run.daily ? { date: run.daily.date, label: run.daily.label } : undefined,
         );
+        // Special Hunt (v2.0): every event card live during this run counts a run
+        // toward its boost threshold.
+        if (run.draft.eventSpecials?.active.length) {
+          useProfileStore.getState().recordEventRuns(run.draft.eventSpecials.active);
+        }
         // Missions (v2.0): one event with the run's facts, folded after the profile
         // write so mission XP lands on top of the run's own.
         const starters = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3];

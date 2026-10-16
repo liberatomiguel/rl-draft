@@ -403,6 +403,18 @@ export const SPECIALS = {
    * mult scales every per-rarity rate together.
    */
   rankBaselineChance: 0.04,
+  /**
+   * Event-exclusive cards (v2.0, DESIGN-DECISIONS #113). A special card with an
+   * `event` window is only ever offered between `from` and `to` (UTC dates,
+   * inclusive), at its rarity's normal rate, and it BYPASSES the rank rarity gate
+   * (everyone can hunt it). Special Hunt: once the player has finished
+   * `huntRuns` runs inside the window (per card; `defaultHuntRuns` when the card
+   * does not say), the card's chance is multiplied by `huntMultiplier`.
+   */
+  event: {
+    huntMultiplier: 3,
+    defaultHuntRuns: 6,
+  },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -440,6 +452,30 @@ export const SIMULATION = {
   defenseStabilityDampenPerPoint: 0.08,
   /** upset_boost activates when own rating is below opponent's by this margin. */
   upsetActivationGap: 2,
+  /**
+   * Momentum (v2.0, DESIGN-DECISIONS #114): the side that LOST the previous game
+   * of the series gets this bounce in the next game. Series between similar teams
+   * alternate more (fewer 4–0 sweeps, real comebacks); a clear favourite still
+   * sweeps often because the bounce is small next to a 3+ rating edge. The §25
+   * anchors (+2 → 62–72 %, +6 ≥ 90 %, +12 ≥ 98 %) still hold (balance.test.ts).
+   */
+  momentumBounce: 1.5,
+  /** A win after trailing by this many games is flagged `comeback` (narration). */
+  comebackDeficit: 2,
+  /**
+   * Scoreline flavour (v2.0). Goals are narrative only (series logic uses game
+   * winners). v1 produced 7–0s whenever the rating gap was big, and the same
+   * score four games running; the re-tune keeps blowouts possible but rare and
+   * spreads the totals.
+   */
+  goals: {
+    winnerBase: 1.3,
+    winnerPerMargin: 0.35,
+    winnerSpread: 2.2,
+    loserPerMargin: 0.3,
+    loserSpread: 1.3,
+    max: 7,
+  },
 } as const;
 
 // ---------------------------------------------------------------------------

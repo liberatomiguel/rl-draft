@@ -78,6 +78,7 @@ export function rollSpecial(
   mult: number,
   rng: Rng,
   allowedRarities?: readonly string[],
+  events?: DraftState["eventSpecials"],
 ): string | undefined {
   // Easter-egg specials (rarity "creator" = the Creator/liberatoRL, "wings" = the
   // Wings cards repi/ninja23509) are assigned ONLY via the rareSpawn-lineup path
@@ -87,18 +88,47 @@ export function rollSpecial(
   // v1.3 rank gate: restrict the person's catalogue to the rarities the player's
   // rank has unlocked. Undefined = no gate (daily / pre-v1.3 callers). An empty
   // list (Unranked) leaves no eligible special, so none appears.
-  const eligible = allowedRarities
-    ? rollable?.filter((sp) => allowedRarities.includes(sp.rarity))
-    : rollable;
+  // v2.0 event cards: offerable ONLY inside their window (`events.active`), and
+  // then regardless of the rank gate — everyone can hunt the week's card.
+  const eligible = rollable?.filter((sp) =>
+    sp.event
+      ? Boolean(events?.active.includes(sp.id))
+      : !allowedRarities || allowedRarities.includes(sp.rarity),
+  );
   if (!eligible || eligible.length === 0) return undefined;
   for (const rarity of SPECIALS.rarityOrder) {
     const tier = eligible.filter((sp) => sp.rarity === rarity);
     if (tier.length === 0) continue;
-    if (rng.chance((SPECIALS.rarityChance[rarity] ?? 0) * mult)) {
+    // Special Hunt (v2.0): a boosted event card lifts its tier's chance.
+    const hunt = tier.some((sp) => sp.event && events?.boosted.includes(sp.id))
+      ? SPECIALS.event.huntMultiplier
+      : 1;
+    if (rng.chance((SPECIALS.rarityChance[rarity] ?? 0) * mult * hunt)) {
       return rng.pick(tier).id;
     }
   }
   return undefined;
+}
+
+/**
+ * Which event-exclusive specials are live on `today` (UTC "YYYY-MM-DD"), and
+ * which of those are boosted by the Special Hunt given the player's finished
+ * runs per event card (`eventRuns[specialId]`). Pure; fixed at draft creation.
+ */
+export function eventSpecialsFor(
+  cards: readonly SpecialCard[],
+  today: string,
+  eventRuns: Record<string, { runs: number }> | undefined,
+): DraftState["eventSpecials"] {
+  const active: string[] = [];
+  const boosted: string[] = [];
+  for (const sp of cards) {
+    if (!sp.event || today < sp.event.from || today > sp.event.to) continue;
+    active.push(sp.id);
+    const need = sp.event.huntRuns ?? SPECIALS.event.defaultHuntRuns;
+    if ((eventRuns?.[sp.id]?.runs ?? 0) >= need) boosted.push(sp.id);
+  }
+  return active.length ? { active, boosted } : undefined;
 }
 
 export interface CreateDraftOptions {
@@ -115,6 +145,8 @@ export interface CreateDraftOptions {
   scriptedLineups?: DraftScriptStep[];
   /** Challenge constraint (v1.4): per-card eligibility + no-specials. */
   constraint?: ChallengeConstraint;
+  /** Event-exclusive specials live for this run (v2.0, see `eventSpecialsFor`). */
+  eventSpecials?: DraftState["eventSpecials"];
 }
 
 /**
@@ -154,6 +186,7 @@ export function createDraft(
     specialRarities: options.specialRarities,
     scriptedLineups: options.scriptedLineups,
     constraint: options.constraint,
+    eventSpecials: options.eventSpecials,
     offer: null,
     roster: {},
     complete: false,
@@ -236,6 +269,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
       mult,
       rng,
       draft.specialRarities,
+      draft.eventSpecials,
     );
     // Easter-egg lineup (Wings): the creator's card ALWAYS appears as its
     // special (the Creator card) — finding the lineup is the rare gate, so the
@@ -264,6 +298,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
           mult,
           rng,
           draft.specialRarities,
+          draft.eventSpecials,
         ),
         availability: availabilityFor("coach", coach.personId, draft),
       });
@@ -284,6 +319,7 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
           mult,
           rng,
           draft.specialRarities,
+          draft.eventSpecials,
         ),
         availability: availabilityFor("sub", sub.personId, draft),
       });

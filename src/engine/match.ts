@@ -121,11 +121,18 @@ function distributeGoals(n: number, total: number, seed: number): number[] {
   return out;
 }
 
+/** Narrative scoreline for one game (v2.0 re-tune, SIMULATION.goals). Same two
+ *  RNG draws as before, so the seeded draw sequence is unchanged. */
 function flavorGoals(margin: number, overtime: boolean, rng: Rng): [number, number] {
-  const winnerGoals = clamp(Math.round(1 + margin * 0.6 + rng.range(0, 2.4)), 1, 7);
+  const g = SIM.goals;
+  const winnerGoals = clamp(
+    Math.round(g.winnerBase + margin * g.winnerPerMargin + rng.range(0, g.winnerSpread)),
+    1,
+    g.max,
+  );
   if (overtime) return [winnerGoals, winnerGoals - 1];
   const loserGoals = clamp(
-    winnerGoals - 1 - Math.round(margin * 0.5 + rng.range(0, 1.5)),
+    winnerGoals - 1 - Math.round(margin * g.loserPerMargin + rng.range(0, g.loserSpread)),
     0,
     winnerGoals - 1,
   );
@@ -157,6 +164,10 @@ export function simulateSeries(
   const games: GameResult[] = [];
   let winsA = 0;
   let winsB = 0;
+  // Momentum (v2.0): the loser of the previous game bounces back a little.
+  let lastWinner: "a" | "b" | null = null;
+  let maxDeficitA = 0;
+  let maxDeficitB = 0;
 
   while (winsA < target && winsB < target) {
     const deciding = winsA === target - 1 && winsB === target - 1;
@@ -164,6 +175,8 @@ export function simulateSeries(
 
     const a = gameSide(teamA, teamB, effectsA, formA, ctx, rng);
     const b = gameSide(teamB, teamA, effectsB, formB, ctx, rng);
+    if (lastWinner === "a") b.score += SIM.momentumBounce;
+    else if (lastWinner === "b") a.score += SIM.momentumBounce;
 
     let overtime = false;
     let aWins: boolean;
@@ -181,6 +194,9 @@ export function simulateSeries(
 
     if (aWins) winsA += 1;
     else winsB += 1;
+    lastWinner = aWins ? "a" : "b";
+    maxDeficitA = Math.max(maxDeficitA, winsB - winsA);
+    maxDeficitB = Math.max(maxDeficitB, winsA - winsB);
 
     const margin = Math.abs(gap);
     const notes = [...(aWins ? a.notes : b.notes)];
@@ -214,6 +230,9 @@ export function simulateSeries(
   const winnerTeamId = winsA > winsB ? teamA.id : teamB.id;
   const winnerRating = winnerTeamId === teamA.id ? teamA.rating.total : teamB.rating.total;
   const loserRating = winnerTeamId === teamA.id ? teamB.rating.total : teamA.rating.total;
+  const comeback =
+    (winnerTeamId === teamA.id ? maxDeficitA : maxDeficitB) >= SIM.comebackDeficit;
+  if (comeback) games[games.length - 1].notes.unshift("comeback");
 
   return {
     teamAId: teamA.id,
@@ -223,5 +242,6 @@ export function simulateSeries(
     winnerTeamId,
     ratingDiff: Math.round((teamA.rating.total - teamB.rating.total) * 10) / 10,
     upset: winnerRating < loserRating - 3,
+    ...(comeback ? { comeback: true } : {}),
   };
 }
