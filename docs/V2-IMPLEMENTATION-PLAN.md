@@ -290,7 +290,8 @@ every later surface builds on a stable contract.
 - [x] C — training rework: weekly drill, growth ETA meters, attribute effects
       (shared-sim offense/defense, DESIGN-DECISIONS #117), scrim tiers, 21+
       curve (R27–R29).
-- [ ] D — regional qualifier (non-top-8), local orgs growing, real lineups by season.
+- [x] D — regional qualifier for non-top-8 (R30). Local orgs growing / real
+      lineups entering by season stay open (world-sim anchor pass).
 - [ ] E — inserts (random / sponsor / training events), sponsors expanded.
 - [ ] F — permanent career achievements, crest/colour palette.
 

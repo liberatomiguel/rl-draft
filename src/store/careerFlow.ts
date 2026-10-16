@@ -61,6 +61,9 @@ import {
   isWindowStartWeek,
   isWindowWeek,
   officialEventDefsForWeek,
+  qualifierDayFor,
+  qualifierDefsForWeek,
+  regionalForQualifier,
   seasonIdFor,
   seasonLabelFor,
   splitOfWeek,
@@ -134,6 +137,7 @@ import {
   computeStars,
   fieldForEvent,
   orgTeamFor,
+  regionalSeedingFor,
   simulateAiEvent,
   starterRosterOffers,
   userTeamFor,
@@ -305,8 +309,42 @@ function isInfinite(save: CareerSave): boolean {
   return save.clock.seasonIndex >= CAREER_SEASONS.length;
 }
 
+/**
+ * v2.0 (R30): the user's regional seeding this week — stored fields only
+ * (split points → prestige → rating), the same rule the engine fields with.
+ */
+export function userSeedingFor(save: CareerSave): { direct: string[]; rest: string[] } {
+  const region = save.identity.region;
+  return regionalSeedingFor({
+    orgs: Object.values(save.world.orgs).filter((o) => o.region === region),
+    splitPoints: save.competition.splitPoints[region] ?? {},
+    user: { rating: approxUserRating(save), prestige: repTierOf(save.reputation) },
+  });
+}
+
+/** True when the user holds one of the split's direct regional slots right now. */
+export function userIsDirect(save: CareerSave): boolean {
+  return userSeedingFor(save).direct.includes("user");
+}
+
+/**
+ * v2.0 (R30): may the user play this regional? Direct, or through the
+ * Wednesday qualifier; a regional whose qualifier was played without the
+ * user making it is off. Regionals without qualifier data (pre-2.0 saves
+ * mid-season) stay open, as before.
+ */
+export function regionalUserEligible(save: CareerSave, def: CareerEventDef): boolean {
+  if (def.tier !== "regional" || def.region !== save.identity.region) return false;
+  if (save.pendingEventDef?.id === def.id) return true;
+  if (userIsDirect(save)) return true;
+  const q = save.competition.qualifiedRefs?.[def.region];
+  if (!q || q.eventId !== def.id) return true;
+  return q.refs.includes("user");
+}
+
 function userQualifiedFor(save: CareerSave, def: CareerEventDef): boolean {
-  if (def.tier === "regional") return def.region === save.identity.region;
+  if (def.tier === "regional") return regionalUserEligible(save, def);
+  if (def.tier === "qualifier") return def.region === save.identity.region && !userIsDirect(save);
   if (def.tier === "major") return save.competition.majorFieldRefs?.includes("user") ?? false;
   if (def.tier === "worlds") return save.competition.worldsFieldRefs?.includes("user") ?? false;
   return true; // unofficials are invitations
@@ -515,13 +553,23 @@ export function processDayArrival(input: CareerSave): CareerSave {
     save.unofficialOffer = null;
 
     const defs = officialEventDefsForWeek(seasonIndex, week);
-    for (const def of defs) {
-      const isUsers =
-        userQualifiedFor(save, def) &&
-        (def.tier !== "regional" || def.region === save.identity.region);
-      if (isUsers) {
-        save.pendingEventDef = def;
-        rollUnavailability(save, def);
+    // v2.0 (R30): on a regional week, a user outside the direct 8 plays the
+    // Wednesday qualifier first — the regional only lands if they get through.
+    const qualifier = qualifierDefsForWeek(seasonIndex, week).find(
+      (q) => q.region === save.identity.region,
+    );
+    if (qualifier && !userIsDirect(save)) {
+      save.pendingEventDef = qualifier;
+      rollUnavailability(save, qualifier);
+    } else {
+      for (const def of defs) {
+        const isUsers =
+          userQualifiedFor(save, def) &&
+          (def.tier !== "regional" || def.region === save.identity.region);
+        if (isUsers) {
+          save.pendingEventDef = def;
+          rollUnavailability(save, def);
+        }
       }
     }
 
@@ -646,6 +694,15 @@ export function processDayArrival(input: CareerSave): CareerSave {
       (cal.kind === "open" || cal.kind === "preseason") && !prep,
       prep ? CAREER_TRAINING.matchPrepShare : 1,
     );
+  }
+
+  // ==================== WEDNESDAY (v2.0 R30: qualifiers) ===================
+  if (day === qualifierDayFor(week)) {
+    for (const q of qualifierDefsForWeek(seasonIndex, week)) {
+      // The user's own qualifier waits in the lobby; every other one resolves.
+      if (save.pendingEventDef?.id === q.id) continue;
+      resolveAiEvent(save, q);
+    }
   }
 
   // ==================== SATURDAY (matchday) ================================
@@ -1210,6 +1267,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     userRegion: save.identity.region,
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
+    userPrestige: repTierOf(save.reputation),
   });
   const rng = createRng(deriveSeed(save.careerSeed, `evt:${def.id}`));
   const tournament = initFieldTournament(field, def.format, rng);
@@ -1396,6 +1454,35 @@ export function finishEvent(input: CareerSave): CareerSave {
   save.pendingEventDef = null;
   save.pendingUnavailability = null;
 
+  // v2.0 (R30): through the Wednesday qualifier → Saturday's regional is on.
+  if (def.tier === "qualifier") {
+    const regional = regionalForQualifier(def);
+    const advanced = placement !== "swiss_exit";
+    if (regional && advanced) {
+      save.pendingEventDef = regional;
+      rollUnavailability(save, regional);
+      pushNews(save, { type: "milestone", priority: 2, titleKey: "qualifiedRegional", params: { event: regional.name } });
+      pushMail(save, {
+        kind: "club",
+        titleKey: "qualifiedRegional",
+        bodyKey: "qualifiedRegional",
+        params: { event: regional.name },
+        fromKey: "league",
+        linkTo: "/career/event",
+      });
+    } else if (regional) {
+      pushNews(save, { type: "milestone", priority: 2, titleKey: "missedRegional", params: { event: regional.name } });
+      pushMail(save, {
+        kind: "club",
+        titleKey: "missedRegional",
+        bodyKey: "missedRegional",
+        params: { event: regional.name },
+        fromKey: "league",
+        linkTo: "/career/standings",
+      });
+    }
+  }
+
   // Worlds resolves the season (and possibly the career).
   if (def.tier === "worlds") {
     if (placement === "champion") {
@@ -1432,6 +1519,10 @@ function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placeme
       gainRep(save, placement === "champion" ? "t3Win" : "t3Final");
       (save.flags as Record<string, unknown>)[key] = Number(used) + 1;
     }
+  }
+  if (def.tier === "qualifier") {
+    if (placement !== "swiss_exit") gainRep(save, "qualifierAdvance");
+    if (placement === "champion") gainRep(save, "qualifierWin");
   }
   if (def.tier === "t2" && placement === "champion") gainRep(save, "t2Win");
   if (def.tier === "t2" && placement === "runner_up") gainRep(save, "t2Final");

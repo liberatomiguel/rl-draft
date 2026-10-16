@@ -13,6 +13,7 @@
 import { CAREER_REP, CAREER_SLOTS, CAREER_STABILITY, FEATURES } from "@/config/balance";
 import type { Placement, PlayoffState, Region, TournamentState } from "../types";
 import { pointsFor, prizeFor, repTierOf } from "./economy";
+import { isLocalRef } from "./localScene";
 import { derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -155,12 +156,25 @@ export function applyResultToStandings(
   result: CompactEventResult,
   regionOf: (ref: string) => Region,
 ): CompetitionState {
+  // v2.0 (R30): a qualifier banks no points — it names Saturday's field.
+  if (result.tier === "qualifier") {
+    const region = result.region;
+    if (!region) return competition;
+    const refs = result.rows.filter((r) => r.placement !== "swiss_exit").map((r) => r.ref);
+    const regionalId = result.eventId.replace(/:qual(\d):/, ":reg$1:");
+    return {
+      ...competition,
+      qualifiedRefs: { ...(competition.qualifiedRefs ?? {}), [region]: { eventId: regionalId, refs } },
+    };
+  }
   if (result.tier === "regional") {
     const region = result.region;
     if (!region) return competition;
     const split = { ...competition.splitPoints[region] };
     const season = { ...competition.seasonPoints[region] };
     for (const row of result.rows) {
+      // Local amateur sides (R23/R30) never enter the tables.
+      if (isLocalRef(row.ref)) continue;
       split[row.ref] = (split[row.ref] ?? 0) + row.points;
       season[row.ref] = (season[row.ref] ?? 0) + row.points;
     }

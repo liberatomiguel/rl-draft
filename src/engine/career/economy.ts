@@ -110,7 +110,7 @@ export function prizeFor(
  * points); regionals use the placement table; Majors pay exactly ×2.
  */
 export function pointsFor(tier: EventTier, placement: Placement): number {
-  if (tier === "t3" || tier === "t2" || tier === "worlds") return 0;
+  if (tier === "t3" || tier === "t2" || tier === "qualifier" || tier === "worlds") return 0;
   const base = CAREER_POINTS.regional[placement] ?? 0;
   return tier === "major" ? base * CAREER_POINTS.majorMultiplier : base;
 }

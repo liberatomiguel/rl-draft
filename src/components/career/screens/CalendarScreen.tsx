@@ -54,6 +54,7 @@ const MATCHDAY_FILL: Record<EventTier, string> = {
   worlds: "border-amber-400/70 bg-amber-400/20",
   major: "border-orange/80 bg-orange/25",
   regional: "border-orange/60 bg-orange/15",
+  qualifier: "border-blue/60 bg-blue/15",
   t2: "border-orange/45 bg-orange/10",
   t3: "border-orange/45 bg-orange/10",
 };

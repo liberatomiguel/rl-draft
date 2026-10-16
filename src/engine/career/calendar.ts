@@ -22,6 +22,7 @@
 
 import {
   CAREER_CALENDAR,
+  CAREER_QUALIFIER,
   CAREER_SEASONS,
   CAREER_SLOTS,
   CAREER_UNOFFICIAL,
@@ -233,7 +234,7 @@ export function windowIndexOf(week: number): 0 | 1 | 2 | 3 | null {
  */
 export function eventIdFor(
   seasonIndex: number,
-  kind: "regional" | "major" | "worlds",
+  kind: "regional" | "qualifier" | "major" | "worlds",
   split?: 1 | 2 | 3,
   ordinal?: 1 | 2 | 3,
   region?: Region,
@@ -242,9 +243,52 @@ export function eventIdFor(
   if (split === undefined) throw new Error(`eventIdFor(${kind}) needs a split`);
   if (kind === "major") return `${seasonIndex}:${split}:major`;
   if (ordinal === undefined || region === undefined) {
-    throw new Error("eventIdFor(regional) needs an ordinal and a region");
+    throw new Error(`eventIdFor(${kind}) needs an ordinal and a region`);
   }
-  return `${seasonIndex}:${split}:reg${ordinal}:${region}`;
+  return kind === "qualifier"
+    ? `${seasonIndex}:${split}:qual${ordinal}:${region}`
+    : `${seasonIndex}:${split}:reg${ordinal}:${region}`;
+}
+
+/** v2.0 (R30): the qualifier's matchday on a regional week (Wednesday). */
+export function qualifierDayFor(week: number): number {
+  return eventDayFor(week) - CAREER_QUALIFIER.dayOffset;
+}
+
+/**
+ * v2.0 (R30): the Wednesday qualifiers of a regional week — one per region,
+ * same split/ordinal grammar as the regional they feed. [] on other weeks.
+ * Kept SEPARATE from officialEventDefsForWeek (every consumer of that list
+ * assumes Saturday).
+ */
+export function qualifierDefsForWeek(seasonIndex: number, week: number): CareerEventDef[] {
+  const wk = weekAt(week);
+  if (wk.kind !== "regional") return [];
+  const split = wk.split as 1 | 2 | 3;
+  const ordinal = wk.ordinal as 1 | 2 | 3;
+  const day = qualifierDayFor(week);
+  return REGION_ORDER.map((region) => ({
+    id: eventIdFor(seasonIndex, "qualifier", split, ordinal, region),
+    tier: "qualifier" as const,
+    region,
+    seasonIndex,
+    week,
+    day,
+    split,
+    ordinal,
+    name: `${region} Qualifier ${ordinal}`,
+    format: "swiss" as const,
+  }));
+}
+
+/** The regional a qualifier feeds (same week/region), or null. */
+export function regionalForQualifier(def: CareerEventDef): CareerEventDef | null {
+  if (def.tier !== "qualifier" || !def.region) return null;
+  return (
+    officialEventDefsForWeek(def.seasonIndex, def.week).find(
+      (d) => d.tier === "regional" && d.region === def.region,
+    ) ?? null
+  );
 }
 
 /**

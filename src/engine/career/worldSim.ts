@@ -35,6 +35,7 @@ import {
   CAREER_CALENDAR,
   CAREER_CHEMISTRY,
   CAREER_GEAR,
+  CAREER_QUALIFIER,
   CAREER_SEASONS,
   CAREER_SUB,
   CAREER_TRAINING,
@@ -679,6 +680,8 @@ export interface FieldCtx {
   userRegion: Region;
   careerSeed: number;
   difficulty: CareerDifficulty;
+  /** v2.0 (R30): the user's seeding prestige (reputation tier) for the direct-8 race. */
+  userPrestige?: number;
 }
 
 /** Intrinsic (shift-stripped) rating — comparisons and field quality use this. */
@@ -781,6 +784,60 @@ export function localTeamFor(
   return Math.abs(delta) < 0.5 ? first : assemble(Math.round(delta));
 }
 
+/**
+ * v2.0 (R30): the split's regional seeding for a region — the direct top 8
+ * and everyone else — from STORED fields only (split points → prestige →
+ * stored rating → ref), so the hub, the calendar, the lobby and the engine
+ * all agree without building a single team. The user (when given) competes
+ * for a direct slot like any org, with reputation tier as prestige.
+ */
+export function regionalSeedingFor(input: {
+  orgs: WorldOrgState[];
+  splitPoints: Record<string, number>;
+  user: { rating: number; prestige: number } | null;
+}): { direct: string[]; rest: string[] } {
+  const rows = input.orgs.map((o) => ({
+    ref: o.ref,
+    points: input.splitPoints[o.ref] ?? 0,
+    prestige: o.prestige,
+    rating: o.rating ?? 70 + o.prestige * 6,
+  }));
+  if (input.user) {
+    rows.push({
+      ref: "user",
+      points: input.splitPoints.user ?? 0,
+      prestige: input.user.prestige as WorldOrgState["prestige"],
+      rating: input.user.rating,
+    });
+  }
+  rows.sort(
+    (a, b) =>
+      b.points - a.points || b.prestige - a.prestige || b.rating - a.rating || a.ref.localeCompare(b.ref),
+  );
+  const direct = rows.slice(0, CAREER_QUALIFIER.directSlots).map((r) => r.ref);
+  const rest = rows.slice(CAREER_QUALIFIER.directSlots).map((r) => r.ref);
+  return { direct, rest };
+}
+
+/**
+ * v2.0 (R30): the refs of a Wednesday qualifier field — the non-direct orgs
+ * (and the user when not direct) plus local amateur sides up to 16 (the
+ * lowest-seeded orgs drop out when the pool overflows).
+ */
+export function qualifierFieldRefsFor(input: {
+  region: Region;
+  seasonIndex: number;
+  seeding: { direct: string[]; rest: string[] };
+  seats: number;
+}): string[] {
+  const refs = input.seeding.rest.slice(0, input.seats);
+  for (const ref of localSceneRefs(input.region, input.seasonIndex)) {
+    if (refs.length >= input.seats) break;
+    refs.push(ref);
+  }
+  return refs;
+}
+
 export function fieldForEvent(
   def: CareerEventDef,
   ctx: FieldCtx,
@@ -813,15 +870,78 @@ export function fieldForEvent(
 
   let field: TournamentTeam[];
 
-  if (def.tier === "regional") {
+  // v2.0 (R30): a ref from the seeding/qualifier lists → a team (user, org, local).
+  const localAnchor = (region: Region): number => {
+    if (ctx.userTeam && region === ctx.userRegion) return ctx.userTeam.rating.total;
+    const ratings = regionOrgs(region).map((o) => o.rating ?? 70 + o.prestige * 6).sort((a, b) => a - b);
+    return ratings.length ? ratings[Math.floor(ratings.length / 2)] : 72;
+  };
+  const teamForRef = (ref: string, region: Region): TournamentTeam | null => {
+    if (ref === "user") return ctx.userTeam;
+    if (isLocalRef(ref)) {
+      return localTeamFor(ref, {
+        careerSeed: ctx.careerSeed,
+        seasonIndex: def.seasonIndex,
+        difficulty: ctx.difficulty,
+        userRating: localAnchor(region),
+        region,
+      });
+    }
+    return ctx.world.orgs[ref] ? teamFor(ref) : null;
+  };
+  const userSeed = (region: Region) =>
+    ctx.userTeam && region === ctx.userRegion
+      ? { rating: ctx.userTeam.rating.total, prestige: ctx.userPrestige ?? 0 }
+      : null;
+
+  if (def.tier === "qualifier") {
     const region = def.region ?? ctx.userRegion;
-    const ranked = regionOrgs(region).sort(
-      pointsRank(ctx.competition.splitPoints[region] ?? {}),
-    );
-    const includeUser = Boolean(ctx.userTeam) && region === ctx.userRegion;
-    const take = includeUser ? TOURNAMENT.swiss.teams - 1 : TOURNAMENT.swiss.teams;
-    field = ranked.slice(0, take).map((o) => teamFor(o.ref));
-    if (includeUser) field.push(ctx.userTeam!);
+    const seeding = regionalSeedingFor({
+      orgs: regionOrgs(region),
+      splitPoints: ctx.competition.splitPoints[region] ?? {},
+      user: userSeed(region),
+    });
+    const refs = qualifierFieldRefsFor({
+      region,
+      seasonIndex: def.seasonIndex,
+      seeding,
+      seats: TOURNAMENT.swiss.teams,
+    });
+    field = refs.map((ref) => teamForRef(ref, region)).filter((t): t is TournamentTeam => t !== null);
+    // The user's qualifier must field the user; AI qualifiers never do.
+    if (ctx.userTeam && region === ctx.userRegion && !seeding.direct.includes("user") && !field.some((t) => t.isUser)) {
+      field.push(ctx.userTeam);
+    }
+  } else if (def.tier === "regional") {
+    const region = def.region ?? ctx.userRegion;
+    const qualified = ctx.competition.qualifiedRefs?.[region];
+    if (qualified && qualified.eventId === def.id) {
+      // v2.0 (R30): direct top 8 + the Wednesday's top 8.
+      const seeding = regionalSeedingFor({
+        orgs: regionOrgs(region),
+        splitPoints: ctx.competition.splitPoints[region] ?? {},
+        user: userSeed(region),
+      });
+      const refs = [...seeding.direct, ...qualified.refs.filter((r) => !seeding.direct.includes(r))];
+      field = refs
+        .map((ref) => teamForRef(ref, region))
+        .filter((t): t is TournamentTeam => t !== null);
+      // Backfill (a qualified ref that no longer resolves): next-best non-direct orgs.
+      for (const ref of seeding.rest) {
+        if (field.length >= TOURNAMENT.swiss.teams) break;
+        if (refs.includes(ref)) continue;
+        const t = teamForRef(ref, region);
+        if (t) field.push(t);
+      }
+    } else {
+      const ranked = regionOrgs(region).sort(
+        pointsRank(ctx.competition.splitPoints[region] ?? {}),
+      );
+      const includeUser = Boolean(ctx.userTeam) && region === ctx.userRegion;
+      const take = includeUser ? TOURNAMENT.swiss.teams - 1 : TOURNAMENT.swiss.teams;
+      field = ranked.slice(0, take).map((o) => teamFor(o.ref));
+      if (includeUser) field.push(ctx.userTeam!);
+    }
   } else if (def.tier === "major" || def.tier === "worlds") {
     const refs =
       def.tier === "major"

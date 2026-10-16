@@ -22,7 +22,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isLocalRef, localTeamName, localTeamOffset } from "@/engine/career/localScene";
-import { t3FieldRefsFor } from "@/engine/career/worldSim";
+import { qualifierFieldRefsFor, t3FieldRefsFor } from "@/engine/career/worldSim";
 import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_UNOFFICIAL, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -46,6 +46,7 @@ import {
   dateOfDay,
   splitOfWeek,
   useCareerSave,
+  userSeedingFor,
   userStars,
   userTeamPreview,
   weekOfDay,
@@ -146,7 +147,22 @@ function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating: numbe
   if (def.tier === "worlds") return save.competition.worldsFieldRefs ?? [];
   const region = def.region ?? save.identity.region;
   const orgs = Object.values(save.world.orgs).filter((o) => o.region === region);
+  if (def.tier === "qualifier") {
+    // v2.0 (R30): the same seeding/field rule the engine uses.
+    const seeding = userSeedingFor(save);
+    return qualifierFieldRefsFor({
+      region,
+      seasonIndex: def.seasonIndex,
+      seeding,
+      seats: TOURNAMENT.swiss.teams,
+    });
+  }
   if (def.tier === "regional") {
+    const qualified = save.competition.qualifiedRefs?.[region];
+    if (qualified && qualified.eventId === def.id) {
+      const seeding = userSeedingFor(save);
+      return [...seeding.direct, ...qualified.refs.filter((r) => !seeding.direct.includes(r))];
+    }
     const pts = save.competition.splitPoints[region] ?? {};
     const ranked = [...orgs].sort(
       (a, b) =>
@@ -784,6 +800,11 @@ function repPreviewFor(save: CareerSave, def: CareerEventDef, placement: Placeme
     }
     case "t2":
       return placement === "champion" ? gain("t2Win") : 0;
+    case "qualifier":
+      return (
+        (placement !== "swiss_exit" ? gain("qualifierAdvance") : 0) +
+        (placement === "champion" ? gain("qualifierWin") : 0)
+      );
     case "regional":
       if (placement === "champion") return gain("regionalWin");
       if (top4) return gain("regionalTop4");

@@ -338,6 +338,28 @@ R29. **Growth made tangible; the 21+ curve lifted; sparring in three tiers.**
      behind "More opponents". Attribute-buff coaches now make sense with the
      drill (the coach's pick trains their own buff).
 
+R30. **Every regional opens with a Wednesday qualifier for everyone outside
+     the direct 8.** Miguel: "uma qualificatória antes do regional, somente com
+     times que não são o top 8 … para sentir melhor a progressão, mesmo sem
+     classificar". Each regional week now carries a 16-team Swiss
+     **qualifier** (new `EventTier`, `CAREER_QUALIFIER`, ids
+     `{s}:{split}:qual{n}:{region}`, matchday = Saturday − 3) per region. The
+     split's **direct 8** come from one seeding rule (`regionalSeedingFor`:
+     split points → prestige → stored rating; the user races for a slot with
+     reputation tier as prestige — stored fields only, so hub, calendar, lobby
+     and engine agree). The qualifier fields the non-direct orgs, the user
+     when not direct, and **local amateur sides (R23) to fill** — the lowest
+     seeds drop when the pool overflows; the user's qualifier is a team-rated
+     local scene plus eight real orgs. Its top 8 are stored as
+     `competition.qualifiedRefs[region]` and Saturday's regional fields the
+     direct 8 + those 8 (locals can make it; they never enter the points
+     tables). AI regions resolve their qualifiers on the Wednesday; the user's
+     waits in the lobby and, on finish, books the regional (news + mail) or
+     reports the miss — a week without a regional trains at full share.
+     Pays no Season Points, a small pool (6k), rep +1 to advance (+1 to win).
+     Pre-2.0 saves: no qualifier data → the regional stays open as before.
+     `eventResultsCap` 60 → 90 for the extra results.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

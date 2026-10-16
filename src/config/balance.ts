@@ -891,8 +891,21 @@ export const CAREER_SLOTS = {
  * Prize tables (in-game USD, "close to real, simplified"). 16-team events pay
  * every placement; 9-16th flat. 8-team single-elim uses the `single8` shape.
  */
+/**
+ * v2.0 REGIONAL QUALIFIER (R30): every regional week opens with a 16-team
+ * Swiss on the Wednesday for everyone outside the split's direct top 8 — the
+ * eight non-direct orgs, the user when not direct, and local amateur sides
+ * (R23) filling the rest. Its top 8 join the direct 8 on Saturday.
+ */
+export const CAREER_QUALIFIER = {
+  directSlots: 8,
+  advanceSlots: 8,
+  /** Qualifier matchday = the regional's Saturday minus this many days (3 = Wednesday). */
+  dayOffset: 3,
+} as const;
+
 export const CAREER_PRIZES = {
-  pools: { t3: 2_000, t2: 10_000, regional: 40_000, major: 150_000, worlds: 600_000 },
+  pools: { t3: 2_000, t2: 10_000, qualifier: 6_000, regional: 40_000, major: 150_000, worlds: 600_000 },
   /**
    * v0.3: pools grow ×this^seasonIndex (esports money arrives as the scene
    * matures) — the income-side counterweight to salary inflation 1.08^N.
@@ -927,7 +940,7 @@ export const CAREER_UNOFFICIAL = {
    * plays against. `localScenePool` teams exist per region per season.
    */
   localSceneBand: [-7, 1] as const,
-  localScenePool: 6,
+  localScenePool: 8,
   t2RepGate: 30,
   t2OfferChance: 0.6,
   /** Auto-enter only fields whose median is within ± this of the user rating. */
@@ -1230,6 +1243,8 @@ export const CAREER_REP = {
   gains: {
     t3Win: 1, t3Final: 1, t2Win: 2, t2Final: 1,
     regionalSwissExit: 1, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
+    /** v2.0 (R30): getting through the Wednesday qualifier is standing too. */
+    qualifierAdvance: 1, qualifierWin: 1,
     majorQualify: 2, majorTop4: 4, majorWin: 7, worldsQualify: 8, worldsTop4: 10,
   },
   softCapAt: 80,
@@ -1464,7 +1479,8 @@ export const CAREER_SAVE = {
   mailCap: 80,
   /** v2.0: weekly payroll books ~5 lines/week → 160 keeps a full split visible. */
   ledgerTailCap: 160,
-  eventResultsCap: 60,
+  /** v2.0: + 7 qualifier results per regional week → 90 keeps a full split. */
+  eventResultsCap: 90,
   /** v0.3 rings: scrim results + the window transfer report. */
   scrimLogCap: 12,
   transferLogCap: 150,

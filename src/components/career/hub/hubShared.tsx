@@ -30,6 +30,7 @@ const TIER_TONE: Record<EventTier, "gold" | "orange" | "blue" | "neutral"> = {
   worlds: "gold",
   major: "orange",
   regional: "blue",
+  qualifier: "blue",
   t2: "neutral",
   t3: "neutral",
 };

@@ -26,6 +26,8 @@ import {
   seasonLabelFor,
   splitOfWeek,
   officialEventDefsForWeek,
+  qualifierDayFor,
+  qualifierDefsForWeek,
   weekAt,
   weekOfDay,
   windowCloseDayFor,
@@ -65,7 +67,14 @@ import type {
 } from "@/engine/career/types";
 import type { Region, Stats, TournamentTeam } from "@/engine/types";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
-import { activeDrillFor, nameOfRef, scrimOpponentFor } from "@/store/careerFlow";
+import {
+  activeDrillFor,
+  nameOfRef,
+  regionalUserEligible,
+  scrimOpponentFor,
+  userIsDirect,
+  userSeedingFor,
+} from "@/store/careerFlow";
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -149,20 +158,36 @@ export interface AgendaDay {
 
 /** True when the def is one the user plays (own-region official or qualified). */
 export function isUserEventDef(save: CareerSave, def: CareerEventDef): boolean {
-  if (def.tier === "regional") return def.region === save.identity.region;
+  if (def.tier === "regional") return regionalUserEligible(save, def);
+  if (def.tier === "qualifier") return def.region === save.identity.region && !userIsDirect(save);
   if (def.tier === "major") return save.competition.majorFieldRefs?.includes("user") ?? false;
   if (def.tier === "worlds") return save.competition.worldsFieldRefs?.includes("user") ?? false;
   return true;
 }
 
-/** The user-relevant event def landing on `day`, if any (committed or scheduled). */
+/**
+ * The user-relevant event def landing on `day`, if any (committed or
+ * scheduled). v2.0 (R30): the Wednesday qualifier shows for a user outside
+ * the direct 8 of the CURRENT split standings (future weeks read today's
+ * seeding — the honest preview); the regional stays on the agenda until a
+ * played qualifier rules the user out.
+ */
 export function userEventOnDay(save: CareerSave, day: number): CareerEventDef | null {
   if (save.pendingEventDef?.day === day) return save.pendingEventDef;
   const week = weekOfDay(day);
+  if (day === qualifierDayFor(week)) {
+    const q = qualifierDefsForWeek(save.clock.seasonIndex, week).find(
+      (d) => d.region === save.identity.region,
+    );
+    if (q && !userIsDirect(save)) return q;
+    return null;
+  }
   if (day !== eventDayFor(week)) return null;
   const defs = officialEventDefsForWeek(save.clock.seasonIndex, week);
   for (const def of defs) {
-    if (def.tier === "regional" && def.region === save.identity.region) return def;
+    if (def.tier === "regional" && def.region === save.identity.region) {
+      return regionalUserEligible(save, def) ? def : null;
+    }
     if (def.tier === "major" || def.tier === "worlds") return def;
   }
   return null;
@@ -319,7 +344,7 @@ export function squadTrainingEta(save: CareerSave, p: SquadPlayer): ReturnType<t
   });
 }
 
-export { ageOf, playerViewById, statsFromView, activeDrillFor };
+export { ageOf, playerViewById, statsFromView, activeDrillFor, userIsDirect, userSeedingFor };
 export { askPackageFor, contractedSplitsRemaining, listingFor };
 
 // ---------------------------------------------------------------------------

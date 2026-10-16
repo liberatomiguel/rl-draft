@@ -215,7 +215,7 @@ export interface CareerClock {
   day: number;
 }
 
-export type EventTier = "t3" | "t2" | "regional" | "major" | "worlds";
+export type EventTier = "t3" | "t2" | "qualifier" | "regional" | "major" | "worlds";
 
 export interface CareerEventDef {
   /** Also the seed stream id suffix, e.g. "0:1:reg2:EU" — stable forever. */
@@ -274,6 +274,11 @@ export interface CompetitionState {
   squadAtSplitStart: string[];
   /** Worst stability tier already applied this split (0 | 25 | 60 %). */
   stabilityTierApplied: 0 | 25 | 60;
+  /**
+   * v2.0 (R30): per region, the latest Wednesday qualifier's top 8 and the
+   * regional event id they qualified for (absent on pre-2.0 saves).
+   */
+  qualifiedRefs?: Partial<Record<Region, { eventId: string; refs: string[] } | null>>;
 }
 
 // ---------------------------------------------------------------------------

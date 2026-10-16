@@ -147,6 +147,12 @@ with the root cause — that section doubles as the project's bugfix log.
   lifted growth curve for 21+ players.
 - **Shared sim:** offense and defense now weigh on every game
   (DESIGN-DECISIONS #117); goldens regenerated.
+- **Regional qualifier** (ROAD-TO-WORLDS-DECISIONS R30): every regional week
+  opens with a Wednesday 16-team Swiss for everyone outside the split's
+  direct top 8 — the non-direct orgs, your org when not direct, and local
+  amateur sides filling the field. Its top 8 join the direct 8 on Saturday.
+  Through it: the regional is booked (news + mail); out: the week is yours to
+  train. The hub, calendar and lobby read the same seeding the engine fields.
 
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)

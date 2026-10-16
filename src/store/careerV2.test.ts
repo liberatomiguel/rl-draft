@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { CAREER_BANK, CAREER_UNOFFICIAL } from "@/config/balance";
-import { firstDayOfWeek } from "@/engine/career/calendar";
+import { firstDayOfWeek, qualifierDayFor, seasonSchedule } from "@/engine/career/calendar";
 import { bankLoanTerms } from "@/engine/career/economy";
 import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
@@ -16,10 +16,14 @@ import {
   activeDrillFor,
   advanceDayFlow,
   createCareerSave,
+  finishEvent,
   payBankLoanFlow,
   setDrillFlow,
+  simEventToEnd,
   starterOffersForRegion,
+  startEvent,
   takeBankLoanFlow,
+  userIsDirect,
   type CreateCareerInput,
 } from "./careerFlow";
 
@@ -116,6 +120,55 @@ describe("weekly drill through the day clock (R27)", () => {
     };
     expect(activeDrillFor(delegated)?.id).toBe("rotations");
     expect(setDrillFlow(save, null).drill).toBeNull();
+  });
+});
+
+describe("regional qualifier (R30)", () => {
+  it("a starter roster outside the direct 8 plays the Wednesday qualifier; AI regions resolve theirs; the regional fields 8 + 8", () => {
+    let save = createCareerSave(INPUT, 55501);
+    const W = seasonSchedule().find((w) => w.kind === "regional")!.week;
+    // The first regional week: Monday commits the qualifier (not the regional).
+    save = advanceTo(save, firstDayOfWeek(W));
+    expect(userIsDirect(save)).toBe(false);
+    expect(save.pendingEventDef?.tier).toBe("qualifier");
+    expect(save.pendingEventDef?.day).toBe(qualifierDayFor(W));
+    // Wednesday: the user's qualifier waits in the lobby; the other six regions resolved.
+    save = advanceTo(save, qualifierDayFor(W));
+    expect(save.clock.day).toBe(qualifierDayFor(W));
+    const resolved = Object.entries(save.competition.qualifiedRefs ?? {}).filter(([, v]) => v);
+    expect(resolved.length).toBe(6);
+    for (const [, v] of resolved) expect(v!.refs).toHaveLength(8);
+    // Play the user's qualifier.
+    const lobby = startEvent(save, false);
+    expect(lobby.activeEvent?.tournament.teams && Object.keys(lobby.activeEvent.tournament.teams)).toHaveLength(16);
+    const played = finishEvent(simEventToEnd(lobby));
+    const mine = played.competition.qualifiedRefs?.SAM;
+    expect(mine?.refs).toHaveLength(8);
+    const through = mine!.refs.includes("user");
+    if (through) {
+      expect(played.pendingEventDef?.tier).toBe("regional");
+      expect(played.news.some((n) => n.titleKey === "qualifiedRegional")).toBe(true);
+    } else {
+      expect(played.pendingEventDef).toBeNull();
+      expect(played.news.some((n) => n.titleKey === "missedRegional")).toBe(true);
+    }
+    // Saturday: the regional (user's or AI-resolved) fields direct 8 + qualified 8.
+    let sat = advanceTo(played, firstDayOfWeek(W) + 5);
+    if (sat.pendingEventDef?.tier === "regional") {
+      const reg = startEvent(sat, false);
+      const ids = Object.keys(reg.activeEvent!.tournament.teams);
+      expect(ids).toHaveLength(16);
+      expect(ids).toContain("user");
+      sat = finishEvent(simEventToEnd(reg));
+    }
+    const regional = sat.eventResults.find((r) => r.tier === "regional" && r.region === "SAM");
+    expect(regional).toBeDefined();
+    expect(regional!.rows).toHaveLength(16);
+    // Locals never enter the points tables, even if one made Saturday.
+    for (const ref of Object.keys(sat.competition.splitPoints.SAM)) expect(isLocalRef(ref)).toBe(false);
+    // The qualifier paid no Season Points.
+    const q = sat.eventResults.find((r) => r.tier === "qualifier" && r.region === "SAM");
+    expect(q!.rows.every((r) => r.points === 0)).toBe(true);
   });
 });
 

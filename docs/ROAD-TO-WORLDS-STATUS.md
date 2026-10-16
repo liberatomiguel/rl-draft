@@ -139,10 +139,18 @@ incl. the new `src/store/careerV2.test.ts`.
 - `trainingEta` + per-card growth meters (next point, ETA, split/season caps);
   21+ growth lifted; scrim tiers (easier / even / harder).
 
-**Next sub-phases:** D — regional qualifier for non-top-8 + local orgs
-growing + real lineups entering by season; E — inserts (random/sponsor/
-training events) + sponsors expanded; F — permanent career achievements +
-crest/colour palette.
+**Sub-phase D — regional qualifier (DONE, 2026-10-16, R30)**
+- `EventTier "qualifier"`, `qualifierDefsForWeek` / `qualifierDayFor` /
+  `regionalForQualifier` (calendar), `regionalSeedingFor` +
+  `qualifierFieldRefsFor` + qualifier/regional field branches (worldSim),
+  `competition.qualifiedRefs` (results), Monday commit / Wednesday AI
+  resolution / finish booking (careerFlow), `userIsDirect` /
+  `regionalUserEligible`, lobby preview, tier chip/fill, news + mail.
+- Still open from Part 3: local orgs growing over seasons and real new
+  lineups entering by season (the world-sim anchor pass) — see "REMAINING".
+
+**Next sub-phases:** E — inserts (random/sponsor/training events) + sponsors
+expanded; F — permanent career achievements + crest/colour palette.
 
 ## REMAINING / NEXT (what still needs doing)
 

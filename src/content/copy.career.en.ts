@@ -247,6 +247,8 @@ export const CAREER_EN = {
       bankLoan: (p: Record<string, string | number>) => `Bank loan approved: ${p.amount}`,
       bankCleared: () => `Bank loan repaid in full`,
       cashWarning: (p: Record<string, string | number>) => `Cash warning: ${p.weeks} weeks of runway`,
+      qualifiedRegional: (p: Record<string, string | number>) => `Through the qualifier: ${p.event} is on`,
+      missedRegional: (p: Record<string, string | number>) => `Out at the qualifier — ${p.event} goes on without you`,
       backerIn: () => `Emergency funding arranged`,
       unlock: (p: Record<string, string | number>) => `New for the org: ${p.name}`,
       windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves`,
@@ -272,6 +274,10 @@ export const CAREER_EN = {
         `The last instalment cleared. The line of credit is open again if the org ever needs it.`,
       cashWarning: (p: Record<string, string | number>) =>
         `At ${p.net} per week the balance covers about ${p.weeks} more Mondays. Trim wages, win prize money, or arrange a bank loan before the Backer has to.`,
+      qualifiedRegional: (p: Record<string, string | number>) =>
+        `Eight teams went through on the Wednesday and you were one of them. ${p.event} is Saturday — the direct eight are waiting.`,
+      missedRegional: (p: Record<string, string | number>) =>
+        `The qualifier ended in the Swiss. ${p.event} happens without you; the week is yours to train and the next split resets the race.`,
       backerIn: () =>
         `The books breached the floor and the Emergency Backer stepped in — once. Repayment is garnished from prize money. A second collapse ends the org.`,
       unlock: (p: Record<string, string | number>) =>
@@ -808,6 +814,8 @@ export const CAREER_EN = {
       userReleased: (p: Record<string, string | number>) => `${p.org} releases ${p.player}`,
       result: (p: Record<string, string | number>) => `${p.org} take ${p.event}`,
       resultUser: (p: Record<string, string | number>) => `${p.event}: you finish ${p.placement}`,
+      qualifiedRegional: (p: Record<string, string | number>) => `Through the qualifier: ${p.event} is on`,
+      missedRegional: (p: Record<string, string | number>) => `Out at the qualifier — ${p.event} goes on without you`,
       qualifiedMajor: () => `You're in. The Major awaits.`,
       missedMajor: () => `The Major happens without you this split.`,
       qualifiedWorlds: () => `WORLDS. The org made it.`,
@@ -868,6 +876,10 @@ export const CAREER_EN = {
         `${p.org} closed out ${p.event}. The desk will replay that grand final for weeks.`,
       resultUser: (p: Record<string, string | number>) =>
         `The org's ${p.event} run ends at ${p.placement}. Every placement pays — and the table remembers.`,
+      qualifiedRegional: (p: Record<string, string | number>) =>
+        `Eight teams went through on the Wednesday and you were one of them. ${p.event} is Saturday — the direct eight are waiting.`,
+      missedRegional: (p: Record<string, string | number>) =>
+        `The qualifier ended in the Swiss. ${p.event} happens without you; the week is yours to train and the next split resets the race.`,
       qualifiedMajor: () =>
         `The split standings locked and your name is above the line. Cross-region field, doubled points — the real test.`,
       missedMajor: () =>
@@ -1209,6 +1221,7 @@ export const CAREER_EN = {
     tier: {
       t3: "Community Cup",
       t2: "Invitational",
+      qualifier: "Qualifier",
       regional: "Regional",
       major: "Major",
       worlds: "Worlds",

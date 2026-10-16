@@ -240,6 +240,8 @@ export const CAREER_PT: CareerCopy = {
       bankLoan: (p: Record<string, string | number>) => `Empréstimo aprovado: ${p.amount}`,
       bankCleared: () => `Empréstimo bancário quitado`,
       cashWarning: (p: Record<string, string | number>) => `Alerta de caixa: ${p.weeks} semanas de fôlego`,
+      qualifiedRegional: (p: Record<string, string | number>) => `Passou na qualificatória: ${p.event} está marcado`,
+      missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória — ${p.event} acontece sem você`,
       backerIn: () => `Aporte de emergência garantido`,
       unlock: (p: Record<string, string | number>) => `Novidade para a org: ${p.name}`,
       windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas`,
@@ -265,6 +267,10 @@ export const CAREER_PT: CareerCopy = {
         `A última parcela foi paga. A linha de crédito está aberta de novo, se a org precisar.`,
       cashWarning: (p: Record<string, string | number>) =>
         `A ${p.net} por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Corte salários, ganhe premiação ou negocie um empréstimo antes que o Investidor precise entrar.`,
+      qualifiedRegional: (p: Record<string, string | number>) =>
+        `Oito times passaram na quarta-feira e você estava entre eles. ${p.event} é no sábado — os oito diretos esperam.`,
+      missedRegional: (p: Record<string, string | number>) =>
+        `A qualificatória terminou no Swiss. ${p.event} acontece sem você; a semana é sua para treinar e o próximo split zera a corrida.`,
       backerIn: () =>
         `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`,
       unlock: (p: Record<string, string | number>) =>
@@ -801,6 +807,8 @@ export const CAREER_PT: CareerCopy = {
       userReleased: (p: Record<string, string | number>) => `${p.org} dispensa ${p.player}`,
       result: (p: Record<string, string | number>) => `${p.org} levam o ${p.event}`,
       resultUser: (p: Record<string, string | number>) => `${p.event}: você termina em ${p.placement}`,
+      qualifiedRegional: (p: Record<string, string | number>) => `Passou na qualificatória: ${p.event} está marcado`,
+      missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória — ${p.event} acontece sem você`,
       qualifiedMajor: () => `Está dentro. O Major espera.`,
       missedMajor: () => `O Major acontece sem você neste split.`,
       qualifiedWorlds: () => `WORLDS. A org chegou lá.`,
@@ -861,6 +869,10 @@ export const CAREER_PT: CareerCopy = {
         `${p.org} fecharam o ${p.event}. A bancada vai reprisar essa grande final por semanas.`,
       resultUser: (p: Record<string, string | number>) =>
         `A campanha da org no ${p.event} termina em ${p.placement}. Toda colocação paga — e a tabela lembra.`,
+      qualifiedRegional: (p: Record<string, string | number>) =>
+        `Oito times passaram na quarta-feira e você estava entre eles. ${p.event} é no sábado — os oito diretos esperam.`,
+      missedRegional: (p: Record<string, string | number>) =>
+        `A qualificatória terminou no Swiss. ${p.event} acontece sem você; a semana é sua para treinar e o próximo split zera a corrida.`,
       qualifiedMajor: () =>
         `A classificação do split travou e o seu nome está acima da linha. Chave inter-regional, pontos em dobro — o teste de verdade.`,
       missedMajor: () =>
@@ -1202,6 +1214,7 @@ export const CAREER_PT: CareerCopy = {
     tier: {
       t3: "Community Cup",
       t2: "Invitational",
+      qualifier: "Qualificatória",
       regional: "Regional",
       major: "Major",
       worlds: "Worlds",
