@@ -1,225 +1,58 @@
-# Road to Worlds — implementation status & handoff
+# Road to Worlds — status (current state only)
 
-> **For the next session.** The career mode is BUILT and playable end-to-end
-> behind `FEATURES.careerMode` (env-driven: on in dev/tests, off in production
-> builds unless `NEXT_PUBLIC_CAREER_MODE=1`), shipped on `staging` through
-> **v1.5.0-alpha.2** (the v0.3 pass). This file is **current-state + remaining
-> work**. The other career docs:
-> - **Spec of record:** `ROAD-TO-WORLDS-DESIGN.md` (read the v0.1/v0.2/v0.3
->   adjustment headers first).
-> - **Decisions log (why):** `ROAD-TO-WORLDS-DECISIONS.md` (R1–R19) — kept
->   SEPARATE from the draft game's `DESIGN-DECISIONS.md`.
-> - **Per-version narrative:** `CHANGELOG.md` `[1.5.0-alpha]`.
->
-> Last updated: 2026-10-16 (v2.0 pass, R20–R34 — see "v2.0 pass" below). Gates:
-> `tsc` clean, **483 vitest tests** (38 files, incl. `careerV2.test.ts`,
-> `achievements.test.ts`, `careerStore.achievements.test.ts`), golden-master
-> regenerated once for DESIGN-DECISIONS #117 (offense/defense weights).
+> Last updated: 2026-10-16. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
+> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R34. History: `CHANGELOG.md`
+> `[1.5.0-alpha]` and `[2.0.0]`. Do not read any of them whole.
 
-## How to run / verify
-- `npm run dev` → home has a "Road to Worlds" card; nav has a **Career** entry.
-  `/career` → creation wizard → hub (HQ).
-- `npm test` (385 green). Career-specific: `npx vitest run src/engine/career
-  src/store/careerFlow.test.ts src/store/careerV03.test.ts src/engine/regression.golden.test.ts`.
-- **Flag (env-driven, R19):** `FEATURES.careerMode = NODE_ENV !== "production" ||
-  NEXT_PUBLIC_CAREER_MODE === "1"` in `src/config/balance.ts`.
-  - **Dev and tests:** always on.
-  - **Production builds:** off unless `NEXT_PUBLIC_CAREER_MODE=1` is set at *build*
-    time — inline, for a local preview build only (`NEXT_PUBLIC_CAREER_MODE=1 npm run
-    build`). Never in `.env*` files or the production Worker's build variables (that
-    ships the alpha on rocketdraft.app); a shareable preview needs a separate staging
-    Worker (DEPLOY-CLOUDFLARE §5). Off hides the home card and nav entries.
-  - **Flag off in a build:** the server `src/app/career/layout.tsx` returns
-    `notFound()`, and `scripts/postexport.mjs` deletes `out/career*` (it fails
-    instead if the home page still links `/career`). The routes are not shipped at
-    all.
-  - **`/career` is always `noindex, nofollow`**, even with the flag on, while the mode
-    is alpha.
-  - Preview career on a static build: `NEXT_PUBLIC_CAREER_MODE=1 npm run build`, then
-    `npm run preview:static`.
+## Run / verify
 
-## What's BUILT (the whole mode, v0.1 → v0.3)
+- `npm run dev` → home card "Road to Worlds" → `/career` wizard → HQ.
+- Career tests: `npx vitest run src/engine/career src/store/careerFlow.test.ts
+  src/store/careerV03.test.ts src/store/careerV2.test.ts
+  src/store/careerStore.achievements.test.ts` (part of the 483-test suite).
+- Flag `FEATURES.careerMode` (balance.ts): on in dev/tests; production builds
+  only with `NEXT_PUBLIC_CAREER_MODE=1` (staging Worker has it). `/career` is
+  always noindex; with the flag off the routes are not exported.
 
-Everything below is implemented, tested and on `staging`.
+## Map (where each system lives)
 
-**Core loop & world**
-- 5-step creation wizard (identity → crest/colors → region → starter roster →
-  difficulty/style) + quick-start; "Found [ORG]" splash.
-- Deterministic 7-region AI world from the dataset (`buildWorldAtCreation`),
-  every region padded to 16 orgs with procedural fillers; free-agent pool.
-- **Day clock** (`clock={seasonIndex,day}`, 224 days/season, real calendar
-  dates): weekly world tick on Mondays, training Mon-Fri, matchdays Saturday.
-  `processDayArrival` is the heart; `advanceDayFlow` / `advanceToNextStopFlow`.
-- 6 config-identical seasons (RLCS X → 2026) → endgame (credits / Final
-  Whistle / Insolvency) + minimal infinite mode.
+| System | Engine | Flow / store | Screen |
+|---|---|---|---|
+| Calendar, day clock, qualifier defs | `engine/career/calendar.ts` | `store/careerFlow.ts` `processDayArrival` | `screens/CalendarScreen.tsx` |
+| World, fields, seeding, local scene, real-org intake | `worldSim.ts`, `localScene.ts` | rollover in `careerFlow.ts` | `EventScreen.tsx` |
+| Results, standings, qualified refs | `careerResults.ts` | `finishEvent` | `StandingsScreen.tsx` |
+| Development, drills, ETA, coach effects | `development.ts` | `applyDailyTraining`, `setDrillFlow` | `TrainingScreen.tsx` |
+| Economy: weekly payroll, bank loan, sponsors, gear | `economy.ts` | `runWeeklyPayroll`, `takeBankLoanFlow` | `FinancesScreen.tsx` |
+| Market, negotiation, coaches | `market.ts` | `signPlayerFlow`, `hireCoachFlow` | `MarketScreen.tsx` (`#coaches`) |
+| Inserts (weekly decision cards) | `inserts.ts` + `data/career/inserts.ts` | `resolveInsertFlow` | hub `NowCards.tsx` |
+| Achievements (permanent, cross-save) | `achievements.ts` + `data/career/achievements.ts` | `careerStore` `settleAchievements` | `ClubScreen.tsx` |
+| HQ | — | — | `HubScreen.tsx` + `hub/DayCard.tsx`, `TodayCards.tsx`, `NowCards.tsx` |
 
-**Competition** — regionals/Majors/Worlds on the shipped Swiss+DE formats via
-`simulateSeries`; Season Points + slot tables + Major/Worlds qualification;
-t3 Community Cup + t2 Invitational unofficials; roster-stability penalty on
-fielded new faces; the career playback suite (`CareerEventScreen`,
-`CareerMatchCenter`, live standings/bracket, goal-by-goal, AI ticker,
-speed/skip/sim, instant→digest).
+Tunables: `CAREER_*` blocks in `src/config/balance.ts`. Copy: `copy.career.en.ts`
+/ `.pt.ts` via `useCareerCopy()`. Save shape: `engine/career/types.ts`
+(`CareerSave`, persist v3, additive migrations `migrateSaveToV3`).
 
-**Players & development** — CareerPlayer layer (age, potential band, archetype
-offsets) derived from real trajectories; daily training ticks with
-focus/intensity, coach + gear multipliers, truthful engine projections;
-season-rollover aging/decline/retirement; match XP scaled by field quality;
-AI world development (anchored reals snap to real cards, off-anchor + all
-fictional ids develop each rollover). Scout reports + potential bands.
+## v2.0 state
 
-**Economy & market** — garage-org rescale (budgets 20k/12k/8k); salary curve,
-one unified `marketValueFor` for every fee, per-season prize (×1.12) + sponsor
-(×1.10) growth; gear/staff ladder + coach market (real retired pros); sponsors
-with objectives/patience/perks; reputation ratchet (+ early floor) gating the
-unlock ladder; Emergency Backer (one rescue, now repayable). AI transfer
-windows: anchor drift + needs pass with **org↔org fee trades** + scavenger
-pass; daily incoming bids for user players (targets stars AND prospects);
-scripted-beat transfers. Salary **negotiation** (hidden reserve, honest odds).
+All Part 3 asks of the v2.0 guide are built (R20–R34): weekly payroll + bank
+loan + loans panel; sub-slot signing fix; coach deep link + explicit effects;
+HQ rebuilt around the day card; Training 2.0 (weekly drill, growth ETA,
+attribute effects, scrim tiers); Wednesday qualifier + local amateur scene;
+real orgs enter by season; permanent achievements; weekly inserts; colour kits.
 
-**UX** — persistent TopBar with the **▶/⏸ autoplay** as the primary control +
-"skip ahead"; HQ (NOW hero, week strip, quick actions, the news wire, the
-**transfer wire** panel, season goal, points race, budget, inbox, next
-unlock); Calendar (month grid, scrim markers, day detail); Squad; Training
-(sparring partners + advance footer); Market (search/sort **with direction
-toggle**, rep-locked rows, coaches gate, negotiation modal); Finances (gear
-ladder, sponsor cards, Backer pay-down); Standings; Inbox (mail); Club; **org
-sheets** (any AI roster) from standings/lobby/deals/wire; **career toast
-layer** narrating mail/priority news; mobile scroll-reset on route change.
-Crest builder: 22-tone classic palette, 14 shapes, 18 symbols, 7 patterns.
+## Remaining / open
 
-**Persistence** — `careerStore` (3 slots, persist v3); additive save migration
-`migrateSaveToV2` → `migrateSaveToV3`; `save.mail` / `news` / `transferLog` /
-`scrimLog` ring buffers; scheduled scrims + negotiation/bid bookkeeping.
+- Manual playtest on staging (plan §7 career line): creation → first week →
+  qualifier → regional; payroll; loan; drill; insert.
+- Content: scripted beats corpus (~30, EN+PT), `born:` rows for modern players.
+- `CAREER_ARC` pacing harness (120-career sweep) not built; economy bands need
+  re-validation after Miguel plays.
+- Deferred by design: org relocation, t1 circuit, PvP.
 
-## Latest pass — v0.3 (2026-07-11)
+## Guardrails
 
-Miguel's second playtest list; full detail in CHANGELOG + `ROAD-TO-WORLDS-DECISIONS.md`
-R13–R18. Headline changes: FIFA-style day **autoplay** + **toasts**; **scrims
-v2** (schedule/opponent/results); salary **negotiation**; visible **rep cap**
-on signings + coach gate at rep 10; **unified fee value** + prize/sponsor
-escalation; **living market** (org↔org trades, scavenger, daily bids); **Backer
-debt** repayable; fictional players fully develop; **org sheets** + **transfer
-wire**; market sort direction; mobile scroll reset; classic crest palette +
-new shapes/symbols/patterns. Training **anti-stagnation** (the "players stop
-growing" root cause was a 2-decimal quantization bug, fixed to 4 decimals).
-New engine/store test file `careerV03.test.ts` (19 cases).
-
-## v2.0 pass — Road to Worlds 2.0 (in progress on `claude/dazzling-cannon-1d6thr`)
-
-Scope and order: `V2-IMPLEMENTATION-PLAN.md` §2.10 (R1–R7). Decisions in
-`ROAD-TO-WORLDS-DECISIONS.md` **R20–R25**. Verified by `npm test` (36 files)
-incl. the new `src/store/careerV2.test.ts`.
-
-**Sub-phase A — economy & market clarity (DONE, 2026-10-16)**
-- Weekly payroll every Monday (`economy.weeklyPayroll` / `weeklyStatement`,
-  R20); every wage label is "/ week" (`wageLabel`); hub tile + Finances tiles +
-  "Weekly statement" panel + runway line read the same statement.
-- Bank loan (`CAREER_BANK`, `takeBankLoanFlow` / `payBankLoanFlow`, R21) with
-  the "Loans & debt" panel (bank request / pay early + Backer pay-down); cash
-  warning mail at 4 weeks of runway; new ledger kinds `payroll`, `bankLoan`,
-  `bankPayment`.
-- Coach effects explicit (`coachEffectsFor` + `CoachEffectLines`, R22), coach
-  links deep-link to `/career/market#coaches`, `coachMult` widened.
-- Community Cups: ≤2 stronger orgs + local amateur scene
-  (`engine/career/localScene.ts`, `t3FieldRefsFor`, R23).
-- Starter rosters rebalanced (R24); market offer defaults to the sub slot when
-  the starters are full (R25).
-
-**Sub-phase B — hub rebuild (DONE, 2026-10-16, R26)**
-- `hub/DayCard.tsx` (date, season progress, animated 7-day strip, Advance one
-  day / Advance — next stop / autoplay), `hub/NowCards.tsx` (the "Needs you"
-  decision cards incl. the new Community Cup invite card), `hub/TodayCards.tsx`
-  ("What you can do today" + "Your edges"); `HubScreen.tsx` is layout again.
-- Calendar marks payday on every Monday (weekly payroll).
-
-**Sub-phase C — training rework (DONE, 2026-10-16, R27–R29 + DESIGN-DECISIONS #117)**
-- Weekly team drill (`CAREER_TRAINING.drills`, `save.drill`, `setDrillFlow` /
-  `activeDrillFor`, `drillEffectFor` / `autoDrillFor`); drill panel on the
-  Training screen; delegated training auto-picks the coach's buff.
-- Offense/defense weigh on every game (shared sim, goldens regenerated,
-  perfect-storm shift −9); `engine/statEffects.ts` + "What your attributes do".
-- `trainingEta` + per-card growth meters (next point, ETA, split/season caps);
-  21+ growth lifted; scrim tiers (easier / even / harder).
-
-**Sub-phase D — regional qualifier (DONE, 2026-10-16, R30)**
-- `EventTier "qualifier"`, `qualifierDefsForWeek` / `qualifierDayFor` /
-  `regionalForQualifier` (calendar), `regionalSeedingFor` +
-  `qualifierFieldRefsFor` + qualifier/regional field branches (worldSim),
-  `competition.qualifiedRefs` (results), Monday commit / Wednesday AI
-  resolution / finish booking (careerFlow), `userIsDirect` /
-  `regionalUserEligible`, lobby preview, tier chip/fill, news + mail.
-- **R31 (DONE):** real orgs whose first lineup is the new season enter the
-  world at rollover (`realOrgIntake`, replacing the region's weakest filler;
-  the preseason anchor pass then pulls their real players in) + news.
-
-**Sub-phase F (part 1) — permanent career achievements (DONE, 2026-10-16, R32
-+ DESIGN-DECISIONS #118)**
-- Catalog `data/career/achievements.ts` (15), engine
-  `engine/career/achievements.ts`, store memory `achievements` (persisted,
-  cross-save), flow markers (`ACH_FLAGS`, `foundingSquadIds`), Season XP via
-  `profileStore.grantXp`, `profile.careerMarks` → eight `career-mark`
-  cosmetics, achievement toasts, Club "Career achievements" panel.
-
-**Sub-phase E — weekly inserts (DONE, 2026-10-16, R33)**
-- `data/career/inserts.ts` (10 cards), `engine/career/inserts.ts` (roll),
-  `resolveInsertFlow` / `resolveInsert`, `pendingInsert` + `insertsSeen` on
-  the save, hub `NowInsert` card, ledger kind `insert`, copy EN/PT.
-
-**Sub-phase F (part 2) — colour kits (DONE, 2026-10-16, R34)**
-- `CREST_KITS` (16 pairs) + wizard kit picker; custom swatches contrast-guarded.
-
-Part 3 of the v2.0 guide is now fully covered on this branch except the
-open world-sim asks noted under REMAINING. Next: Phase 4 (QA, perf audit,
-SEO diff, version bump, staging).
-
-## REMAINING / NEXT (what still needs doing)
-
-**Content (biggest asks — Miguel-owned):**
-- **Scripted beats** — the ~30 hand-written flagship beats (EN+PT) for launch
-  is only partially seeded; the world's liveliness rides on the template layer
-  until then.
-- **`born:` rows** for the ~150–200 modern-era players (ages are inferred via
-  `development.deriveBirthYear` today) + the §21.13 PT glossary tone pass.
-- Filler-org identities / name-bank / sponsor-brand growth as regions fill out.
-
-**Validation (should run before any launch call):**
-- **`CAREER_ARC` pacing harness** — the 120-career difficulty sweep is NOT
-  built. v0.3 moved the whole money surface (value-anchored fees + prize/
-  sponsor escalation), so the economy bands need a fresh Monte-Carlo pass.
-- **Balance watch (first-guess tunables):** scrim chemistryCredit 0.05 /
-  xpWeeks 0.5, the daily-poach rates, negotiation reserveFloor 0.88, the
-  filler headliner band 77–84 — all need playtest confirmation.
-
-**Engineering follow-ups:**
-- **Perf:** the livelier market ~doubled per-season sim cost (bot season
-  ~1.3s → ~3.5s; full-season integration tests now carry explicit 20–30s
-  timeouts). `aiWindowMoves` memoizes views per pass; the next lever is a
-  global `playerViewById` memo keyed on `world.version`.
-- **Club "Edit crest"** — colors/crest are wizard-only today; a store action is
-  needed (the wizard copy already promises "re-tint colors later").
-- `upcomingStops` never emits kind `"payday"` (UI handles it defensively).
-
-**Deferred by design (telegraphed where visible):** org relocation · t1 Circuit
-LAN · negotiation sliders/counter-rounds · transfer-listing UI · Quick playback
-digest · spectate broadcast · additional random-event families · beats beyond
-the floor.
-
-## Guardrails (do not break)
-- Engine pure/deterministic; randomness via `deriveSeed` streams; seed-stream
-  ids are a compatibility surface (scrim streams gained an index suffix in
-  v0.3 — additive only).
-- Every tunable in `balance.ts` (`CAREER_*`); every player-facing string in
-  `copy.career.en.ts` + `.pt.ts` (type-enforced parity), read **only** through
-  `useCareerCopy()` / `getCareerCopy()` (`src/content/careerCopy.ts`).
-  `useCopy().CAREER` no longer exists, so career strings stay out of the core copy
-  chunk every page loads. The 4 home-card strings are core copy (`HOME.career*`).
-  Beat/news-template content is co-located EN+PT in the data files, not copy.
-- Existing draft modes byte-identical — `regression.golden.test.ts` is the
-  tripwire; career results never flow through `applyRunResults`.
-- Saves migrate additively FOREVER (`migrateSaveToV2` → `migrateSaveToV3`;
-  persist version 3).
-- `CREST_PALETTE` length (22) and existing crest/symbol/pattern ids are
-  compatibility surfaces (procedural filler crests index by hash; saved
-  crestIds must keep parsing).
-- **Career-mode decisions go in `ROAD-TO-WORLDS-DECISIONS.md` (R#), never the
-  draft game's `DESIGN-DECISIONS.md`.**
+- Engine pure and seeded; no React in `src/engine`. Game logic never in screens.
+- Never bump the career persist version without an additive migrate and a
+  DESIGN-DECISIONS entry (the contract test freezes it).
+- Golden master (`regression.golden.test.ts`) locks the shared sim; regenerate
+  only with a CHANGELOG-documented decision.

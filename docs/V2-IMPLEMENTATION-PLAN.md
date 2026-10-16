@@ -7,6 +7,12 @@
 >
 > Read `docs/STATUS.md` first for the current state of the repo; this file is the
 > plan, not the status.
+>
+> **Navigation (save context):** Phases 0–3 (§3) are done and shipped as
+> v2.0.0-rc.1 on `staging`; §0–§2 are the rules and architecture that are now
+> in the code. For remaining work read only **§6** (what Miguel does, in
+> order), **§7** (staging regression checklist) and **§8** (open decisions).
+> Jump with `grep -n "^## " docs/V2-IMPLEMENTATION-PLAN.md`.
 
 ---
 

@@ -173,6 +173,11 @@ with the root cause — that section doubles as the project's bugfix log.
   custom swatches are contrast-guarded.
 
 ### Changed
+- **Docs slimmed for new chats:** `AGENTS.md` now opens with a "Context budget"
+  section (orientation path, files to grep instead of read, output filtering);
+  `docs/STATUS.md` and `docs/ROAD-TO-WORLDS-STATUS.md` rewritten as
+  current-state-only (~550 / ~450 words, with a system → file map for career);
+  the v2 plan gained a navigation header pointing at §6–§8 only.
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)
   for the side that lost the previous game, a `comeback` flag + narration note when the
   winner trailed by 2 games, and the scoreline flavour re-tuned (`SIMULATION.goals`).

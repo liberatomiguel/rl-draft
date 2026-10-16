@@ -11,24 +11,44 @@ communicates in PT-BR, the product UI is in English). Next.js 16 + React 19 +
 Tailwind v4 + Zustand + Zod + Vitest. Hosted as a **pure static export on
 Cloudflare Workers Static Assets** (runbook: `docs/DEPLOY-CLOUDFLARE.md`).
 
-**Start here — keep orientation cheap.** Read **`docs/STATUS.md`** (current
-state + next steps); that alone orients you for almost any task. Everything else
-is **reference, fetched on demand — NOT bedtime reading**:
-- `docs/CHANGELOG.md` (append-only history), `docs/DESIGN-DECISIONS.md`,
-  `docs/GAME-DESIGN.md`, `docs/ARCHITECTURE.md`, `data-sources/*-audit.md`:
-  **grep for the entry you need; never read the whole file.**
-- **Road to Worlds (career mode) is a SEPARATE workstream with its own docs** —
-  `docs/ROAD-TO-WORLDS-STATUS.md` (start here for career work), `-DESIGN.md`
-  (spec), `-DECISIONS.md` (decisions). Keep it separate from the draft game:
-  career decisions go in `ROAD-TO-WORLDS-DECISIONS.md`, NOT `DESIGN-DECISIONS.md`.
-- Data is LARGE — `data-sources/teams.md` (~1900 lines) and `src/data/*.json`
-  (hundreds of records): **query with grep or a Node one-liner; never load the
-  whole file** into context.
-- Read a source file only when you're about to change it (or its direct callers).
+## Context budget (read this first; a fresh chat should cost tens of k tokens, not millions)
 
-Following this keeps a fresh chat at ~tens of k tokens of orientation instead of
-pulling the whole repo in. STATUS.md must stay **current-state only** — when a
-version ships, move its narrative to CHANGELOG.md and trim STATUS.
+**Orientation path, in order, and nothing more:**
+1. This file (you already have it).
+2. `docs/STATUS.md` (~550 words, current state + gates + what is open).
+3. Only for career work: `docs/ROAD-TO-WORLDS-STATUS.md` (~450 words; it has a
+   system → engine/flow/screen map so you can jump straight to the right file).
+4. For v2.0 release work: `docs/V2-IMPLEMENTATION-PLAN.md` **§6–§8 only**
+   (Miguel's to-do, regression checklist, open decisions). Phases 0–3 are done.
+
+**Never read whole, grep for the entry you need** (sizes in words):
+`docs/CHANGELOG.md` (28k), `docs/DESIGN-DECISIONS.md` (12k),
+`docs/ROAD-TO-WORLDS-DESIGN.md` (9k), `data-sources/teams.md` (8k),
+`docs/GAME-DESIGN.md` (5k), `docs/ROAD-TO-WORLDS-DECISIONS.md` (4k),
+`docs/ARCHITECTURE.md`, `data-sources/*-audit.md`, `src/data/*.json`
+(hundreds of records: query with grep or a Node one-liner).
+
+**Rules that keep the budget:**
+- Read a source file only when you are about to change it or its direct
+  caller; read a range (`offset`/`limit`, `sed -n`), not the file, when it is
+  over ~300 lines. `src/content/copy*.ts` and `src/config/balance.ts` are big:
+  grep the key, then read around it.
+- Filter command output: `npm test 2>&1 | tail -20`, `npm run lint 2>&1 |
+  grep -E "error|warning" | head`, `npm run typecheck 2>&1 | head -40`. Never
+  dump a full test run, build log or `git diff` of generated files
+  (`src/generated/*`, `src/data/*.json`, `out/`).
+- Run the targeted test file while iterating; the full suite (483 tests) only
+  before a commit. `npm run build` only when something ships or the export is
+  in question.
+- Do not re-explore: the status docs already tell you where things are. Trust
+  them, and when they are stale, fix them rather than re-deriving.
+- Do not spawn broad "explore the repo" sub-agents.
+
+**Road to Worlds (career) is a separate workstream.** Its decisions go in
+`ROAD-TO-WORLDS-DECISIONS.md`, never in `DESIGN-DECISIONS.md`.
+
+**STATUS docs stay current-state only.** When a version ships, move its
+narrative to CHANGELOG.md and trim STATUS. Keep both under ~600 words.
 
 ## Hard rules
 
