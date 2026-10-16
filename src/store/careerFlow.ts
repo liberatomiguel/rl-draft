@@ -83,12 +83,15 @@ import {
 import {
   ageOf,
   applyMatchXp,
+  autoDrillFor,
+  drillEffectFor,
   fieldQualityFor,
   playerViewById,
   seasonYear,
   squadRollover,
   trainDay,
   trainingProjection,
+  type DrillEffect,
 } from "@/engine/career/development";
 import {
   applyPrize,
@@ -144,6 +147,7 @@ import type {
   CareerSave,
   CoachState,
   CompactEventResult,
+  DrillId,
   MailItem,
   ManagementStyle,
   NewsItem,
@@ -782,8 +786,34 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
   }
 }
 
+/**
+ * v2.0 (R27): the drill in force this week — the player's pick for THIS
+ * week, else (when training is delegated) the coach's auto pick, else none.
+ */
+export function activeDrillFor(save: CareerSave): DrillEffect | null {
+  const week = weekOfDay(save.clock.day);
+  const chosen =
+    save.drill && save.drill.seasonIndex === save.clock.seasonIndex && save.drill.week === week
+      ? save.drill.id
+      : null;
+  if (chosen) return drillEffectFor(chosen);
+  // Delegation needs a coach to delegate to (the Training screen's rule too).
+  if (save.prefs.autoTrain && save.coach) return drillEffectFor(autoDrillFor(save.coach.bonusType, week));
+  return null;
+}
+
+/** v2.0 (R27): choose this week's team drill (null clears it). */
+export function setDrillFlow(input: CareerSave, id: DrillId | null): CareerSave {
+  const save = clone(input);
+  save.drill = id
+    ? { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), id }
+    : null;
+  return save;
+}
+
 function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekShare = 1): void {
   const gearBonus = gearTrainingBonus(save.finances.gear);
+  const drill = activeDrillFor(save);
   for (const p of save.squad) {
     const res = trainDay(
       p,
@@ -794,6 +824,7 @@ function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekSh
         trainingWeekBonus,
         splitGained: p.gainedThisSplit,
         seasonGained: p.gainedThisSeason,
+        drill,
       },
       weekShare,
     );

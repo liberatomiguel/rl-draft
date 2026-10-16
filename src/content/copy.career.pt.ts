@@ -307,6 +307,15 @@ export const CAREER_PT: CareerCopy = {
     noResults: "Nenhuma scrim nesta temporada ainda.",
     gameLine: (scores: string) => `Jogos: ${scores}`,
     sameDay: "Vocês já treinaram contra esse time hoje.",
+    // v2.0 (R29): três níveis de sparring, depois a lista completa
+    tiers: { easier: "Mais fácil", even: "Parelho", harder: "Mais difícil" } as Record<string, string>,
+    tierHint: {
+      easier: "Reps de química e vitória provável — pouco XP.",
+      even: "Um teste de verdade. XP padrão.",
+      harder: "Sparring mais forte desenvolve mais rápido — espere perder.",
+    } as Record<string, string>,
+    moreOpponents: "Mais adversários",
+    fewerOpponents: "Menos adversários",
   },
 
   calendar: {
@@ -460,6 +469,45 @@ export const CAREER_PT: CareerCopy = {
     sessionToday: "Sessão de hoje",
     noSessionToday: "Sem sessão hoje",
     matchPrepWeek: "Semana de jogo — sessões pausam; o evento paga XP de partida",
+    // v2.0 training rework (R27–R29)
+    drillTitle: "Treino da semana",
+    drillHint: "Um treino coletivo por semana: todo mundo afia o atributo do treino além do próprio foco, e as sessões rendem um pouco mais.",
+    drillNone: "Sem treino definido — as sessões seguem o plano base.",
+    drillByCoach: (name: string) => `Escolhido pelo coach ${name}`,
+    drillEffect: (offset: string, stats: string, pct: number) => `+${offset} ${stats} / semana para o elenco inteiro · +${pct}% de overall`,
+    drillClear: "Sem treino",
+    drills: {
+      "mechanics-lab": "Laboratório de mecânica",
+      rotations: "Rotações",
+      "set-plays": "Jogadas ensaiadas",
+      "film-room": "Sala de vídeo",
+      "clutch-sets": "Séries de clutch",
+    } as Record<string, string>,
+    drillsDesc: {
+      "mechanics-lab": "Controle aéreo, flip resets, velocidade — o atributo do high roll.",
+      rotations: "Disciplina no back-post e shadow — defesa.",
+      "set-plays": "Kickoffs, passes, pressão — ataque.",
+      "film-room": "Revisão de VOD e cenários — consistência e experiência.",
+      "clutch-sets": "Cenários de jogo 7 sob pressão — clutch.",
+    } as Record<string, string>,
+    growth: "Evolução",
+    nextPoint: (ovr: number) => `Próximo: ${ovr} OVR`,
+    etaDays: (days: number) => (days === 1 ? "≈ 1 dia de treino" : `≈ ${days} dias de treino`),
+    etaNone: "Parado — no teto do período ou no potencial",
+    etaAtPotential: "No potencial — não há mais o que aprender aqui",
+    capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
+      `Neste split +${split} de ${splitMax} · temporada +${season} de ${seasonMax}`,
+    effectsTitle: "O que seus atributos fazem",
+    effectsHint: "Linha de atributos do time → os modificadores exatos que a simulação aplica. Treine o que seus resultados pedem.",
+    effectWhen: {
+      always: "todo jogo",
+      deciding: "jogos decisivos",
+      playoffs: "jogos de playoff",
+      badRolls: "ameniza rolls ruins",
+      proc: "chance de high roll",
+    } as Record<string, string>,
+    effectRating: (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)} de rating`,
+    effectPct: (v: number) => `${v}%`,
   },
 
   market: {

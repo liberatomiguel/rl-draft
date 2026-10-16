@@ -314,6 +314,15 @@ export const CAREER_EN = {
     noResults: "No scrims yet this season.",
     gameLine: (scores: string) => `Games: ${scores}`,
     sameDay: "Already scrimmed this team today.",
+    // v2.0 (R29): three sparring tiers, then the full list
+    tiers: { easier: "Easier", even: "Even", harder: "Harder" } as Record<string, string>,
+    tierHint: {
+      easier: "Chemistry reps and a likely win — light XP.",
+      even: "A real test. Standard XP.",
+      harder: "Stronger sparring develops faster — expect to lose.",
+    } as Record<string, string>,
+    moreOpponents: "More opponents",
+    fewerOpponents: "Fewer opponents",
   },
 
   calendar: {
@@ -467,6 +476,45 @@ export const CAREER_EN = {
     sessionToday: "Today's session",
     noSessionToday: "No session today",
     matchPrepWeek: "Match week — sessions pause; the event pays match XP instead",
+    // v2.0 training rework (R27–R29)
+    drillTitle: "This week's drill",
+    drillHint: "One team drill per week: everyone sharpens the drill's attribute on top of their own focus, and sessions run a little hotter.",
+    drillNone: "No drill set — sessions run the base plan.",
+    drillByCoach: (name: string) => `Picked by coach ${name}`,
+    drillEffect: (offset: string, stats: string, pct: number) => `+${offset} ${stats} / week for the whole squad · +${pct}% overall`,
+    drillClear: "No drill",
+    drills: {
+      "mechanics-lab": "Mechanics lab",
+      rotations: "Rotations",
+      "set-plays": "Set plays",
+      "film-room": "Film room",
+      "clutch-sets": "Clutch sets",
+    } as Record<string, string>,
+    drillsDesc: {
+      "mechanics-lab": "Aerial car control, flip resets, speed — the high-roll stat.",
+      rotations: "Back-post discipline and shadowing — defense.",
+      "set-plays": "Kickoffs, passing plays, pressure — offense.",
+      "film-room": "VOD review and scenarios — consistency and experience.",
+      "clutch-sets": "Game-7 scenarios under pressure — clutch.",
+    } as Record<string, string>,
+    growth: "Growth",
+    nextPoint: (ovr: number) => `Next: ${ovr} OVR`,
+    etaDays: (days: number) => (days === 1 ? "≈ 1 training day away" : `≈ ${days} training days away`),
+    etaNone: "Not moving — capped or at potential",
+    etaAtPotential: "At potential — nothing left to learn here",
+    capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
+      `This split +${split} of ${splitMax} · season +${season} of ${seasonMax}`,
+    effectsTitle: "What your attributes do",
+    effectsHint: "Team stat line → the exact modifiers the match sim applies. Train what your results need.",
+    effectWhen: {
+      always: "every game",
+      deciding: "deciding games",
+      playoffs: "playoff games",
+      badRolls: "softens bad rolls",
+      proc: "high-roll chance",
+    } as Record<string, string>,
+    effectRating: (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)} rating`,
+    effectPct: (v: number) => `${v}%`,
   },
 
   market: {

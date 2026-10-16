@@ -287,8 +287,9 @@ every later surface builds on a stable contract.
       coach effects + deep link, community-cup local scene, starter rosters,
       sub-slot signing (ROAD-TO-WORLDS-DECISIONS R20–R25).
 - [x] B — hub rebuild + week calendar strip + day-by-day advance animation (R26).
-- [ ] C — training rework (interactive plan, visible growth/ETA, attribute
-      buffs tied to training, potential calibration).
+- [x] C — training rework: weekly drill, growth ETA meters, attribute effects
+      (shared-sim offense/defense, DESIGN-DECISIONS #117), scrim tiers, 21+
+      curve (R27–R29).
 - [ ] D — regional qualifier (non-top-8), local orgs growing, real lineups by season.
 - [ ] E — inserts (random / sponsor / training events), sponsors expanded.
 - [ ] F — permanent career achievements, crest/colour palette.

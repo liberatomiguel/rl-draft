@@ -19,34 +19,39 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { CAREER_CALENDAR, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
+import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import type {
   CareerSave,
+  DrillId,
   SquadPlayer,
   TrainingFocus,
   TrainingIntensity,
 } from "@/engine/career/types";
 import type { StatKey } from "@/engine/types";
-import { coachEffectsFor } from "@/engine/career/development";
+import { autoDrillFor, coachEffectsFor } from "@/engine/career/development";
 import { clamp, cx } from "@/lib/util";
 import { scrimProjection, scrimShortlistFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import {
-  DAYS_PER_SEASON,
-  agePhase,
+  activeDrillFor,
   agendaDays,
+  agePhase,
   clockLabel,
   dateOfDay,
   dayOfWeekOf,
+  DAYS_PER_SEASON,
   gearTrainingBonus,
   nameOfRef,
   potBandOfSquad,
   scrimAvailability,
   squadAge,
+  squadTrainingEta,
   squadTrainingProjection,
   useCareerSave,
+  userTeamPreview,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDateTiny } from "@/components/career/dateText";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
@@ -81,6 +86,9 @@ export function TrainingScreen() {
   const setAutoTrain = useCareerStore((s) => s.setAutoTrain);
   const setTrainingFocus = useCareerStore((s) => s.setTrainingFocus);
   const setTrainingIntensity = useCareerStore((s) => s.setTrainingIntensity);
+  const setDrill = useCareerStore((s) => s.setDrill);
+  /** v2.0 (R29): the full sparring list is a second step; tiers come first. */
+  const [moreOpps, setMoreOpps] = useState(false);
   const runScrim = useCareerStore((s) => s.runScrim);
   const scheduleScrim = useCareerStore((s) => s.scheduleScrim);
   const cancelScrim = useCareerStore((s) => s.cancelScrim);
@@ -130,6 +138,19 @@ export function TrainingScreen() {
   const canDelegate = Boolean(save.coach);
   const effectiveAuto = save.prefs.autoTrain && canDelegate;
 
+  // --- v2.0 (R27) this week's drill ------------------------------------------
+  const activeDrill = activeDrillFor(save);
+  const chosenDrill =
+    save.drill && save.drill.seasonIndex === save.clock.seasonIndex && save.drill.week === clock.week
+      ? save.drill.id
+      : null;
+  const coachPick = effectiveAuto && !chosenDrill ? autoDrillFor(save.coach?.bonusType ?? null, clock.week) : null;
+  const drillOffsetPct = Math.round((CAREER_TRAINING.drillOverallMult - 1) * 100);
+
+  // --- v2.0 (R28) what the attributes do, for the fielded team ----------------
+  const teamNow = userTeamPreview(save);
+  const effects = statEffectsFor(teamNow.stats);
+
   const focusOptions: { key: TrainingFocus; label: string }[] = [
     ...(canDelegate ? [{ key: "auto" as TrainingFocus, label: C.training.auto }] : []),
     { key: "balanced" as TrainingFocus, label: C.training.balanced },
@@ -146,6 +167,22 @@ export function TrainingScreen() {
         : C.hub.scrimUnavailable;
 
   const shortlist = scrimShortlistFor(save);
+  const tiers = (() => {
+    if (shortlist.length === 0) return [] as { key: string; cand: (typeof shortlist)[number] }[];
+    const byGap = [...shortlist].sort((a, b) => a.gap - b.gap);
+    const even = [...shortlist].sort((a, b) => Math.abs(a.gap) - Math.abs(b.gap))[0];
+    const easier = byGap[0];
+    const harder = byGap[byGap.length - 1];
+    // When every org out-rates the squad (season 0), "easier" IS the even
+    // one — keep the honest label and drop the duplicate tier.
+    const out = [
+      { key: "easier", cand: easier },
+      { key: "even", cand: even },
+      { key: "harder", cand: harder },
+    ].filter((tr) => !(tr.key !== "even" && tr.cand.ref === even.ref));
+    const seen = new Set<string>();
+    return out.filter((tr) => (seen.has(tr.cand.ref) ? false : (seen.add(tr.cand.ref), true)));
+  })();
   const selectedOpp =
     (oppRef ? shortlist.find((c) => c.ref === oppRef) : null) ?? shortlist[0] ?? null;
   const benefit = selectedOpp ? scrimProjection(save, selectedOpp.ref) : null;
@@ -246,10 +283,80 @@ export function TrainingScreen() {
               )}
               aria-hidden
             />
-            {sessionToday ? C.training.sessionToday : C.training.noSessionToday}
+            {sessionToday
+              ? C.training.sessionToday
+              : matchPrepWeek && clock.dow <= CAREER_TRAINING.trainingDaysPerWeek
+                ? C.training.matchPrepWeek
+                : C.training.noSessionToday}
           </span>
           <span className="text-faint">{C.training.weeklyPlanHint}</span>
         </div>
+      </Panel>
+
+      {/* ==================== 1b — this week's drill (v2.0 R27) ==================== */}
+      <Panel glow={activeDrill ? "blue" : undefined} className="rise-in p-4" style={{ animationDelay: "20ms" }}>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="kicker mb-1 text-[10px]">{C.training.drillTitle}</p>
+            <p className="max-w-xl text-xs text-sub">{C.training.drillHint}</p>
+          </div>
+          {activeDrill ? (
+            <Badge tone="blue">
+              {C.training.drillEffect(
+                fmt2(activeDrill.offsetPerWeek),
+                activeDrill.attrs.map((a) => t.STAT_LABELS[a]).join(" + "),
+                drillOffsetPct,
+              )}
+            </Badge>
+          ) : (
+            <Badge tone="neutral">{C.training.drillNone}</Badge>
+          )}
+        </div>
+        {coachPick && save.coach ? (
+          <p className="mt-2 text-[11px] font-semibold text-cyan">{C.training.drillByCoach(save.coach.name)}</p>
+        ) : null}
+        <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6" role="radiogroup" aria-label={C.training.drillTitle}>
+          {CAREER_TRAINING.drills.map((d) => {
+            const selected = (chosenDrill ?? coachPick) === d.id;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setDrill(d.id as DrillId)}
+                className={cx(
+                  "flex min-h-16 flex-col rounded-lg border px-2.5 py-2 text-left transition-colors",
+                  selected
+                    ? "border-blue/60 bg-blue/15"
+                    : "border-line bg-white/[0.03] hover:border-line-strong",
+                )}
+              >
+                <span className={cx("display text-[11px] font-bold uppercase tracking-[0.08em]", selected ? "text-blue-bright" : "text-ink")}>
+                  {C.training.drills[d.id]}
+                </span>
+                <span className="mt-0.5 text-[10px] leading-snug text-faint">
+                  {(d.attrs as readonly StatKey[]).map((a) => t.STAT_LABELS[a]).join(" + ")}
+                </span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!chosenDrill && !coachPick}
+            onClick={() => setDrill(null)}
+            className={cx(
+              "flex min-h-16 flex-col justify-center rounded-lg border px-2.5 py-2 text-left transition-colors",
+              !chosenDrill && !coachPick ? "border-line-strong bg-white/[0.06]" : "border-line bg-white/[0.03] hover:border-line-strong",
+            )}
+          >
+            <span className="display text-[11px] font-bold uppercase tracking-[0.08em] text-sub">{C.training.drillClear}</span>
+          </button>
+        </div>
+        {chosenDrill || coachPick ? (
+          <p className="mt-2 text-[11px] text-faint">{C.training.drillsDesc[(chosenDrill ?? coachPick) as string]}</p>
+        ) : null}
       </Panel>
 
       {/* ==================== 2 — effects row ==================== */}
@@ -273,6 +380,31 @@ export function TrainingScreen() {
           {C.training.facilityEffect(gearPct)}
         </AppLink>
       </div>
+
+      {/* ==================== 2b — what the attributes do (v2.0 R28) ==================== */}
+      <Panel className="rise-in p-4" style={{ animationDelay: "50ms" }}>
+        <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
+          <p className="kicker text-[10px]">{C.training.effectsTitle}</p>
+          <p className="text-[10px] text-faint">{C.training.effectsHint}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
+          {effects.map((e) => {
+            const positive = e.value > 0;
+            return (
+              <div key={e.key} className="rounded-lg border border-line bg-white/[0.03] px-2.5 py-2">
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="display text-[10px] font-bold uppercase tracking-[0.08em] text-ink">{t.STAT_LABELS[e.key]}</span>
+                  <span className="font-mono text-[11px] font-bold text-sub">{Math.round(teamNow.stats[e.key])}</span>
+                </div>
+                <p className={cx("mt-0.5 text-sm font-bold", positive ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>
+                  {e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)}
+                </p>
+                <p className="text-[10px] leading-tight text-faint">{C.training.effectWhen[e.when]}</p>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
 
       {/* ==================== 3 — delegate toggle ==================== */}
       {canDelegate ? (
@@ -333,10 +465,46 @@ export function TrainingScreen() {
           </div>
         </div>
 
-        {/* opponent shortlist */}
+        {/* v2.0 (R29): three sparring tiers first — easier / even / harder */}
         <div className="mt-3">
           <p className="kicker mb-1.5 text-[10px]">{C.scrim.chooseOpponent}</p>
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+            {tiers.map((tier) => {
+              const selected = selectedOpp?.ref === tier.cand.ref;
+              return (
+                <button
+                  key={tier.key}
+                  type="button"
+                  onClick={() => setOppRef(tier.cand.ref)}
+                  aria-pressed={selected}
+                  className={cx(
+                    "flex min-h-14 flex-col rounded-lg border px-2.5 py-2 text-left transition-colors",
+                    selected ? "border-orange/60 bg-orange/10" : "border-line bg-white/[0.03] hover:border-line-strong",
+                  )}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className={cx("display text-[11px] font-bold uppercase tracking-[0.08em]", selected ? "text-orange-bright" : "text-ink")}>
+                      {C.scrim.tiers[tier.key]}
+                    </span>
+                    <span className={cx("font-mono text-[11px] font-bold", tier.cand.gap > 0 ? "text-orange-bright" : "text-faint")}>
+                      {tier.cand.gap > 0 ? `+${tier.cand.gap}` : tier.cand.gap}
+                    </span>
+                  </span>
+                  <span className="truncate text-xs text-sub">{tier.cand.name}</span>
+                  <span className="text-[10px] leading-tight text-faint">{C.scrim.tierHint[tier.key]}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            className="mt-2 text-[11px] font-semibold text-blue-bright hover:underline"
+            onClick={() => setMoreOpps((v) => !v)}
+            aria-expanded={moreOpps}
+          >
+            {moreOpps ? C.scrim.fewerOpponents : C.scrim.moreOpponents}
+          </button>
+          <div className={cx("mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3", !moreOpps && "hidden")}>
             {shortlist.map((c) => {
               const selected = selectedOpp?.ref === c.ref;
               return (
@@ -588,6 +756,7 @@ function TrainingCard({
   };
 
   const growth = clamp((p.overall - 60) / Math.max(1, band.max - 60), 0, 1);
+  const eta = squadTrainingEta(save, p);
 
   return (
     <Panel className="rise-in p-4" style={style}>
@@ -613,6 +782,27 @@ function TrainingCard({
         <span className="shrink-0 text-[10px] text-faint">
           {C.player.growthRoom} · {C.player.potBand(band.min, band.max)}
         </span>
+      </div>
+
+      {/* --- v2.0 (R29): the next point, made tangible --------------------------- */}
+      <div className="mt-2 rounded-lg border border-line bg-black/20 px-2.5 py-2">
+        <div className="flex items-center justify-between gap-2 text-[11px]">
+          <span className="font-semibold text-ink">
+            {eta.atPotential ? C.training.etaAtPotential : C.training.nextPoint(Math.floor(p.overall) + 1)}
+          </span>
+          <span className={cx("font-semibold", eta.daysToNext !== null ? "text-good" : "text-faint")}>
+            {eta.atPotential ? "" : eta.daysToNext !== null ? C.training.etaDays(eta.daysToNext) : C.training.etaNone}
+          </span>
+        </div>
+        <ProgressBar value={eta.progress} tone={eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
+        <p className="mt-1 text-[10px] text-faint">
+          {C.training.capLine(
+            p.gainedThisSplit.toFixed(1),
+            CAREER_TRAINING.maxSplitGain,
+            p.gainedThisSeason.toFixed(1),
+            CAREER_TRAINING.maxSeasonGain,
+          )}
+        </p>
       </div>
 
       {/* --- focus ------------------------------------------------------------ */}

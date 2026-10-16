@@ -305,6 +305,39 @@ R26. **HQ is a day you can read at a glance (hub rebuild, sub-phase B).**
      control, which is what gives the transfer window its "day after day"
      feel (R27 will add the window's own daily rhythm).
 
+R27. **One training decision a week: the team drill.** Training was
+     "set-and-forget" by design (R-era) and playtesters read it as "nothing to
+     do". The drill is the weekly decision that is cheap to make and visible
+     in results: pick one of five (`CAREER_TRAINING.drills` — mechanics lab,
+     rotations, set plays, film room, clutch sets) and every squad player
+     grows that attribute by `drillOffsetPerWeek` (0.25) on top of their own
+     focus, inside the offset cap, while sessions run ×`drillOverallMult`
+     (1.05). It is week-scoped (`save.drill` = season/week/id; a stale week is
+     "no drill") so the Monday choice recurs. With "Delegate to coach" on, the
+     coach's plan auto-picks the drill that trains the coach's own buff (or
+     rotates weekly); the player can still override it. No save migration:
+     the field is optional.
+
+R28. **Attributes are visible and all six matter.** DESIGN-DECISIONS #117 adds
+     offense/defense weights to the shared sim; the Training screen gains
+     "What your attributes do" — the fielded team's stat line turned into the
+     exact modifiers the sim applies (`statEffectsFor`), so "train what your
+     results need" is a readable instruction and the drill/focus choices have a
+     visible target.
+
+R29. **Growth made tangible; the 21+ curve lifted; sparring in three tiers.**
+     Each player card now shows progress to the NEXT whole point, an ETA in
+     training days at the current rate (`trainingEta`, honest about the
+     split/season caps and potential), and "this split +x of 3 · season +y of
+     7" — the "+0.08/week" abstraction becomes "next point in ~9 days".
+     `CAREER_AGE.growthMult` 21-22 / 23-24 / 25+ lifted 0.7/0.35/0.15 →
+     0.8/0.45/0.2 (journeyman rosters stopped moving at 23). Scrims keep their
+     engine (XP × opponent quality + chemistry credit) but the screen offers
+     three sparring tiers first — Easier (chemistry, likely win), Even, Harder
+     (develops faster, expect to lose) — with the full shortlist and booking
+     behind "More opponents". Attribute-buff coaches now make sense with the
+     drill (the coach's pick trains their own buff).
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

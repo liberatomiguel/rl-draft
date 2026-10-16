@@ -130,11 +130,19 @@ incl. the new `src/store/careerV2.test.ts`.
   ("What you can do today" + "Your edges"); `HubScreen.tsx` is layout again.
 - Calendar marks payday on every Monday (weekly payroll).
 
-**Next sub-phases:** C — training rework (interactive plan, visible growth/ETA,
-attribute buffs tied to training, potentials calibration); D — regional
-qualifier for non-top-8 + local orgs growing + real lineups entering by
-season; E — inserts (random/sponsor/training events) + sponsors expanded; F —
-permanent career achievements + crest/colour palette.
+**Sub-phase C — training rework (DONE, 2026-10-16, R27–R29 + DESIGN-DECISIONS #117)**
+- Weekly team drill (`CAREER_TRAINING.drills`, `save.drill`, `setDrillFlow` /
+  `activeDrillFor`, `drillEffectFor` / `autoDrillFor`); drill panel on the
+  Training screen; delegated training auto-picks the coach's buff.
+- Offense/defense weigh on every game (shared sim, goldens regenerated,
+  perfect-storm shift −9); `engine/statEffects.ts` + "What your attributes do".
+- `trainingEta` + per-card growth meters (next point, ETA, split/season caps);
+  21+ growth lifted; scrim tiers (easier / even / harder).
+
+**Next sub-phases:** D — regional qualifier for non-top-8 + local orgs
+growing + real lineups entering by season; E — inserts (random/sponsor/
+training events) + sponsors expanded; F — permanent career achievements +
+crest/colour palette.
 
 ## REMAINING / NEXT (what still needs doing)
 

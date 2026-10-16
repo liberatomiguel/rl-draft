@@ -571,7 +571,7 @@
     "sim": {
       "difficulty": "legacy",
       "bestOf": 7,
-      "opponentShift": -8
+      "opponentShift": -9
     },
     "constraint": {
       "maxPlayerOverall": 90

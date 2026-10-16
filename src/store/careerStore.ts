@@ -31,6 +31,7 @@ import type {
   CareerSave,
   CareerSlotMeta,
   CoachState,
+  DrillId,
   SquadPlayer,
   TransferOffer,
 } from "@/engine/career/types";
@@ -62,6 +63,7 @@ import {
   setPsychologistFlow,
   setStartersFlow,
   setTrainingFocusFlow,
+  setDrillFlow,
   setTrainingIntensityFlow,
   takeBankLoanFlow,
   signPlayerFlow,
@@ -158,6 +160,8 @@ interface CareerStoreState {
     intensity: SquadPlayer["trainingIntensity"],
   ) => void;
   setAutoTrain: (on: boolean) => void;
+  /** v2.0 (R27): this week's team drill. */
+  setDrill: (id: DrillId | null) => void;
 
   buyGear: (itemId: GearItemId) => void;
   setPsychologist: (on: boolean) => void;
@@ -297,6 +301,7 @@ export const useCareerStore = create<CareerStoreState>()(
           withSave((s) => setTrainingFocusFlow(s, playerId, focus)),
         setTrainingIntensity: (playerId, intensity) =>
           withSave((s) => setTrainingIntensityFlow(s, playerId, intensity)),
+        setDrill: (id) => withSave((s) => setDrillFlow(s, id)),
         setAutoTrain: (on) =>
           withSave((s) => {
             const next = structuredClone(s);

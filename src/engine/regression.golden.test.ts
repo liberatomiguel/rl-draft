@@ -128,8 +128,9 @@ describe("golden master — shared sim pipeline draw order", () => {
     if (PRINT_GOLDENS) console.log("tournament goldens:", JSON.stringify(sig));
     // Regenerated for v2.0 (momentum bounce + scoreline re-tune, CHANGELOG [2.0.0]).
     expect(sig).toEqual([
-      "user|0-4|3008514956|t01,t02,t03,t04,t06,t11,t12,user",
-      "user|2-4|1405432477|t01,t02,t03,t04,t06,t08,t10,user",
+      // v2.0 R28 / DESIGN-DECISIONS #117: offense+defense weigh on every game.
+      "user|0-4|1929090907|t01,t02,t03,t04,t05,t06,t07,user",
+      "user|3-4|4188539945|t01,t02,t03,t05,t06,t09,t11,user",
     ]);
   });
 });

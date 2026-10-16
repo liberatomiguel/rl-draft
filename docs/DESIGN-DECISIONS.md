@@ -1207,6 +1207,20 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      (stages are plain series with the boss handicap); a stage loss ends the attempt
      so the "survive" fantasy holds without a new state machine.
 
+117. **Offense and defense weigh on every game (shared sim).** Until v2.0 the
+     match sim read four of the six attributes (mechanics proc, consistency
+     dampening, clutch in deciding games, experience in playoffs) and
+     offense/defense did nothing outside special-card effects — Road to Worlds
+     playtesters noticed ("+offense parece que não faz nada"). `gameSide` now
+     adds `offenseWeight × norm(offense) + defenseWeight × norm(defense)`
+     (0.5 each) to every game score. `norm` caps at ±1.2, so the combined swing
+     is ≤ ±1.2 rating — overall stays dominant (the §25 anchors and the
+     difficulty sims pass unchanged); the golden master was regenerated
+     (tournament signature only) and `ch-perfect-storm` moved its opponent
+     shift −8 → −9 to stay in its legend band. `src/engine/statEffects.ts`
+     reads the same constants back as legible per-attribute effects for the
+     career Training screen ("Clutch: +0.4 rating in deciding games").
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

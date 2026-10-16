@@ -435,6 +435,13 @@ export const SIMULATION = {
   /** Stat baseline for situational modifiers: (stat - baseline) / divisor. */
   statBaseline: 82,
   statDivisor: 18,
+  /**
+   * v2.0 (DESIGN-DECISIONS #117 / career R28): offense and defense now weigh
+   * on EVERY game (they were cosmetic): score += w × norm(stat). Capped by
+   * norm's ±1.2 so overall stays dominant (balance anchors re-verified).
+   */
+  offenseWeight: 0.5,
+  defenseWeight: 0.5,
   /** Deciding-game clutch weight. */
   clutchWeight: 1.2,
   /** Playoff experience weight (applies every playoff game). */
@@ -1055,12 +1062,32 @@ export const CAREER_TRAINING = {
   /** v0.3: 6/2.5 → 7/3 — headroom for the faster pacing to breathe. */
   maxSeasonGain: 7,
   maxSplitGain: 3,
+  /**
+   * v2.0 WEEKLY DRILL (R27): the one training decision per week. A drill is
+   * team-wide — every squad player grows the drill's attribute(s) by
+   * drillOffsetPerWeek (on top of any personal focus, inside the offset cap)
+   * and overall training runs ×drillOverallMult that week. "Delegate to
+   * coach" auto-picks the drill that matches the coach's buff (or rotates).
+   */
+  drills: [
+    { id: "mechanics-lab", attrs: ["mechanics"] },
+    { id: "rotations", attrs: ["defense"] },
+    { id: "set-plays", attrs: ["offense"] },
+    { id: "film-room", attrs: ["consistency", "experience"] },
+    { id: "clutch-sets", attrs: ["clutch"] },
+  ] as const,
+  drillOffsetPerWeek: 0.25,
+  drillOverallMult: 1.05,
 } as const;
 
 /** Age curve (young scene): growth to ~20, decline lands at season rollover. */
 export const CAREER_AGE = {
-  /** v0.3: 21-24 lifted (0.6/0.3 → 0.7/0.35) — veterans trained at ~zero. */
-  growthMult: { u16: 1.5, a17_18: 1.25, a19_20: 1.0, a21_22: 0.7, a23_24: 0.35, a25plus: 0.15 },
+  /**
+   * v0.3: 21-24 lifted (0.6/0.3 → 0.7/0.35) — veterans trained at ~zero.
+   * v2.0 (R29): 21+ lifted again (0.8/0.45/0.2) — "sometimes impossible to
+   * raise a player" was the journeyman roster at 23-24.
+   */
+  growthMult: { u16: 1.5, a17_18: 1.25, a19_20: 1.0, a21_22: 0.8, a23_24: 0.45, a25plus: 0.2 },
   declineByAge: { a22: 0.5, a23_24: 1.5, a25_26: 2.0, a27plus: 3.0 },
   declineRateDist: { slow: 0.2, normal: 0.6, fast: 0.2 } as Record<string, number>,
   declineRateMult: { slow: 0.6, normal: 1.0, fast: 1.4 } as Record<string, number>,

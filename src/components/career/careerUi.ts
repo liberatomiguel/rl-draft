@@ -50,6 +50,7 @@ import {
   playerViewById,
   scoutedBand,
   statsFromView,
+  trainingEta,
   trainingProjection,
   type ViewCtx,
 } from "@/engine/career/development";
@@ -64,7 +65,7 @@ import type {
 } from "@/engine/career/types";
 import type { Region, Stats, TournamentTeam } from "@/engine/types";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
-import { nameOfRef, scrimOpponentFor } from "@/store/careerFlow";
+import { activeDrillFor, nameOfRef, scrimOpponentFor } from "@/store/careerFlow";
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -301,11 +302,24 @@ export function squadTrainingProjection(
     seasonIndex: save.clock.seasonIndex,
     coachOverall: save.coach?.overall ?? null,
     gearBonus: gearTrainingBonus(save.finances.gear),
+    drill: activeDrillFor(save),
     trainingWeekBonus: false,
   });
 }
 
-export { ageOf, playerViewById, statsFromView };
+/** v2.0 (R29): growth made tangible — progress to the next point + ETA. */
+export function squadTrainingEta(save: CareerSave, p: SquadPlayer): ReturnType<typeof trainingEta> {
+  const week = weekAt(weekOfDay(save.clock.day));
+  return trainingEta(p, {
+    seasonIndex: save.clock.seasonIndex,
+    coachOverall: save.coach?.overall ?? null,
+    gearBonus: gearTrainingBonus(save.finances.gear),
+    trainingWeekBonus: (week.kind === "open" || week.kind === "preseason") && !save.pendingEventDef,
+    drill: activeDrillFor(save),
+  });
+}
+
+export { ageOf, playerViewById, statsFromView, activeDrillFor };
 export { askPackageFor, contractedSplitsRemaining, listingFor };
 
 // ---------------------------------------------------------------------------

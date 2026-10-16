@@ -27,12 +27,14 @@ import {
   ageOf,
   anchorOverall,
   applyMatchXp,
+  autoDrillFor,
   deriveArchetype,
   deriveAttrOffsets,
   deriveBirthYear,
   deriveDeclineRate,
   derivePeakAge,
   derivePotential,
+  drillEffectFor,
   fieldQualityFor,
   fillerPlayerView,
   playerViewById,
@@ -44,6 +46,7 @@ import {
   statsFromView,
   trainDay,
   trainWeek,
+  trainingEta,
 } from "./development";
 import type { SquadPlayer, WorldState } from "./types";
 
@@ -548,6 +551,52 @@ describe("trainWeek", () => {
     ).gained;
     const balancedNoCoach = trainWeek(base, trainCtx({ coachOverall: null })).gained;
     expect(autoNoCoach).toBe(balancedNoCoach);
+  });
+
+  it("v2.0 (R27): a team drill sharpens its attribute(s) for everyone and runs sessions hotter", () => {
+    const base = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74, potential: 88 });
+    const drill = drillEffectFor("film-room")!;
+    expect(drill.attrs).toEqual(["consistency", "experience"]);
+    const plain = trainWeek(base, trainCtx());
+    const drilled = trainWeek(base, { ...trainCtx(), drill });
+    expect(drilled.gained).toBeCloseTo(plain.gained * CAREER_TRAINING.drillOverallMult, 2);
+    expect(drilled.player.attrOffsets.consistency).toBeCloseTo(
+      (base.attrOffsets.consistency ?? 0) + CAREER_TRAINING.drillOffsetPerWeek,
+      5,
+    );
+    expect(drilled.player.attrOffsets.experience).toBeCloseTo(
+      (base.attrOffsets.experience ?? 0) + CAREER_TRAINING.drillOffsetPerWeek,
+      5,
+    );
+    // Personal focus stacks with the drill but the offset cap still holds.
+    const stacked = trainWeek(
+      { ...base, trainingFocus: "consistency", attrOffsets: { ...base.attrOffsets, consistency: CAREER_DEV.attrOffsetCap - 0.1 } },
+      { ...trainCtx(), drill },
+    );
+    expect(stacked.player.attrOffsets.consistency).toBeLessThanOrEqual(CAREER_DEV.attrOffsetCap);
+    // The coach's auto pick trains the coach's own buff; no coach rotates by week.
+    expect(autoDrillFor("defense", 3)).toBe("rotations");
+    expect(autoDrillFor(null, 1)).toBe(CAREER_TRAINING.drills[0].id);
+    expect(autoDrillFor(null, 6)).toBe(CAREER_TRAINING.drills[0].id);
+  });
+
+  it("v2.0 (R29): trainingEta counts training days to the next point and respects the caps", () => {
+    const p = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74.6, potential: 88 });
+    const eta = trainingEta(p, trainCtx());
+    expect(eta.progress).toBeCloseTo(0.6, 5);
+    expect(eta.toNext).toBeCloseTo(0.4, 5);
+    expect(eta.weeklyRate).toBeGreaterThan(0);
+    expect(eta.daysToNext).toBe(
+      Math.ceil((0.4 / eta.weeklyRate) * CAREER_TRAINING.trainingDaysPerWeek),
+    );
+    // Split cap exhausted → nothing moves.
+    const capped = trainingEta({ ...p, gainedThisSplit: CAREER_TRAINING.maxSplitGain }, trainCtx());
+    expect(capped.daysToNext).toBeNull();
+    expect(capped.splitCapLeft).toBe(0);
+    // At potential.
+    const done = trainingEta({ ...p, overall: 88, potential: 88 }, trainCtx());
+    expect(done.atPotential).toBe(true);
+    expect(done.daysToNext).toBeNull();
   });
 
   it("intensity scales the tick: heavy > normal > light (v0.2)", () => {

@@ -70,6 +70,13 @@ export type ArchetypeId =
 
 export type DeclineRate = "slow" | "normal" | "fast";
 export type TrainingFocus = StatKey | "balanced" | "auto";
+/** v2.0 (R27) weekly team drill ids (catalog: CAREER_TRAINING.drills). */
+export type DrillId = "mechanics-lab" | "rotations" | "set-plays" | "film-room" | "clutch-sets";
+export interface WeeklyDrill {
+  seasonIndex: number;
+  week: number;
+  id: DrillId;
+}
 export type TrainingIntensity = "light" | "normal" | "heavy";
 export type ScoutLevel = 0 | 1 | 2 | 3;
 
@@ -643,6 +650,8 @@ export interface CareerSave {
   t3EntriesThisSplit: number;
   /** Scrims run this week (CAREER_SCRIM.maxPerWeek; resets each Monday). */
   scrimsThisWeek: number;
+  /** v2.0 (R27): this week's team drill (null/stale week = none chosen). */
+  drill?: WeeklyDrill | null;
   /** v0.3: scrims booked ahead (auto-run on day arrival, future days only). */
   scheduledScrims: ScheduledScrim[];
   /** v0.3: recent scrim results (ring buffer). */

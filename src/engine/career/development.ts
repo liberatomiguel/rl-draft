@@ -33,6 +33,7 @@ import type { BuffLevel, PlayerCard, Region, StatKey, Stats } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type {
   ArchetypeId,
+  DrillId,
   CareerPlayerView,
   DeclineRate,
   PotentialBand,
@@ -605,6 +606,40 @@ export function coachEffectsFor(coach: {
   };
 }
 
+/** v2.0 (R27): the active weekly drill's effect on a training tick. */
+export interface DrillEffect {
+  id: DrillId;
+  attrs: readonly StatKey[];
+  /** Team-wide offset growth per training-week for each attr. */
+  offsetPerWeek: number;
+  overallMult: number;
+}
+
+export function drillEffectFor(id: DrillId | null | undefined): DrillEffect | null {
+  if (!id) return null;
+  const row = CAREER_TRAINING.drills.find((d) => d.id === id);
+  if (!row) return null;
+  return {
+    id: row.id,
+    attrs: row.attrs,
+    offsetPerWeek: CAREER_TRAINING.drillOffsetPerWeek,
+    overallMult: CAREER_TRAINING.drillOverallMult,
+  };
+}
+
+/**
+ * The coach's pick when training is delegated: the drill that trains the
+ * coach's own buff stat, else a week-rotating drill (no coach = still a plan).
+ */
+export function autoDrillFor(coachBonusType: StatKey | null, week: number): DrillId {
+  const drills = CAREER_TRAINING.drills;
+  if (coachBonusType) {
+    const match = drills.find((d) => (d.attrs as readonly StatKey[]).includes(coachBonusType));
+    if (match) return match.id;
+  }
+  return drills[Math.max(0, week - 1) % drills.length].id;
+}
+
 interface GainCtx {
   seasonIndex: number;
   coachOverall: number | null;
@@ -613,6 +648,8 @@ interface GainCtx {
   trainingWeekBonus: boolean;
   /** Training-week equivalents applied at once (match XP multiplies here). */
   weeks: number;
+  /** v2.0 (R27): this week's team drill, if any. */
+  drill?: DrillEffect | null;
 }
 
 /**
@@ -651,6 +688,7 @@ function rawGain(p: SquadPlayer, ctx: GainCtx): number {
     focusShareFor(p.trainingFocus, ctx.coachOverall) *
     intensityMultFor(p.trainingIntensity) *
     (ctx.trainingWeekBonus ? 1 + CAREER_CALENDAR.trainingWeekBonus : 1) *
+    (ctx.drill ? ctx.drill.overallMult : 1) *
     ctx.weeks
   );
 }
@@ -660,16 +698,23 @@ function grownOffsets(
   p: SquadPlayer,
   weeks: number,
   newOverall: number,
+  drill?: DrillEffect | null,
 ): Record<StatKey, number> {
-  const focus = p.trainingFocus;
-  if (focus === "balanced" || focus === "auto") return { ...p.attrOffsets };
   const cap = CAREER_DEV.attrOffsetCap;
-  const current = p.attrOffsets[focus] ?? 0;
-  // Grow, but never past the offset cap nor past a visible 99 attribute —
-  // and never *reduce* an already-high offset.
-  const allowedMax = Math.min(cap, Math.max(current, 99 - newOverall));
-  const next = Math.min(current + CAREER_TRAINING.focusOffsetPerWeek * weeks, allowedMax);
-  return { ...p.attrOffsets, [focus]: round2(Math.max(next, -cap)) };
+  const out = { ...p.attrOffsets };
+  const grow = (key: StatKey, perWeek: number) => {
+    const current = out[key] ?? 0;
+    // Grow, but never past the offset cap nor past a visible 99 attribute —
+    // and never *reduce* an already-high offset.
+    const allowedMax = Math.min(cap, Math.max(current, 99 - newOverall));
+    const next = Math.min(current + perWeek * weeks, allowedMax);
+    out[key] = round2(Math.max(next, -cap));
+  };
+  const focus = p.trainingFocus;
+  if (focus !== "balanced" && focus !== "auto") grow(focus, CAREER_TRAINING.focusOffsetPerWeek);
+  // v2.0 (R27): the team drill sharpens its attribute(s) for everyone.
+  if (drill) for (const key of drill.attrs) grow(key, drill.offsetPerWeek);
+  return out;
 }
 
 export interface TrainTickCtx {
@@ -682,6 +727,8 @@ export interface TrainTickCtx {
   seasonGained: number;
   /** Training-week equivalents (1 = a full week; a weekday = 1/trainingDaysPerWeek). */
   weeks?: number;
+  /** v2.0 (R27): this week's team drill, if any. */
+  drill?: DrillEffect | null;
 }
 
 /**
@@ -714,7 +761,7 @@ export function trainWeek(
     player: {
       ...p,
       overall,
-      attrOffsets: grownOffsets(p, weeks, overall),
+      attrOffsets: grownOffsets(p, weeks, overall, ctx.drill),
       gainedThisSplit: round4(ctx.splitGained + gained),
       gainedThisSeason: round4(ctx.seasonGained + gained),
     },
@@ -747,6 +794,7 @@ export function trainingProjection(
     coachOverall: number | null;
     gearBonus: number;
     trainingWeekBonus: boolean;
+    drill?: DrillEffect | null;
   },
 ): { weeklyOverall: number; weeklyOffset: number } {
   const weeklyOverall = round2(
@@ -757,6 +805,45 @@ export function trainingProjection(
     weeklyOverall,
     weeklyOffset: focused ? CAREER_TRAINING.focusOffsetPerWeek : 0,
   };
+}
+
+/**
+ * v2.0 (R29) — growth made tangible: how far the player is into the next
+ * overall point, how many TRAINING DAYS until it lands at the current weekly
+ * rate (null when nothing moves: capped, at potential, or zero rate), and
+ * what the split/season caps still allow.
+ */
+export function trainingEta(
+  p: SquadPlayer,
+  ctx: {
+    seasonIndex: number;
+    coachOverall: number | null;
+    gearBonus: number;
+    trainingWeekBonus: boolean;
+    drill?: DrillEffect | null;
+  },
+): {
+  progress: number;
+  toNext: number;
+  daysToNext: number | null;
+  weeklyRate: number;
+  splitCapLeft: number;
+  seasonCapLeft: number;
+  atPotential: boolean;
+} {
+  const whole = Math.floor(p.overall + 1e-9);
+  const progress = clamp(p.overall - whole, 0, 1);
+  const toNext = round2(Math.max(0, whole + 1 - p.overall));
+  const splitCapLeft = round2(Math.max(0, CAREER_TRAINING.maxSplitGain - p.gainedThisSplit));
+  const seasonCapLeft = round2(Math.max(0, CAREER_TRAINING.maxSeasonGain - p.gainedThisSeason));
+  const atPotential = p.potential - p.overall < 1e-6;
+  const weeklyRate = trainingProjection(p, ctx).weeklyOverall;
+  const capLeft = Math.min(splitCapLeft, seasonCapLeft, Math.max(0, p.potential - p.overall));
+  const daysToNext =
+    weeklyRate <= 0 || capLeft < toNext - 1e-9
+      ? null
+      : Math.max(1, Math.ceil((toNext / weeklyRate) * CAREER_TRAINING.trainingDaysPerWeek));
+  return { progress, toNext, daysToNext, weeklyRate, splitCapLeft, seasonCapLeft, atPotential };
 }
 
 /**

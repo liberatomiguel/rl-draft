@@ -13,9 +13,11 @@ import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
 import { fieldForEvent, userTeamFor } from "@/engine/career/worldSim";
 import {
+  activeDrillFor,
   advanceDayFlow,
   createCareerSave,
   payBankLoanFlow,
+  setDrillFlow,
   starterOffersForRegion,
   takeBankLoanFlow,
   type CreateCareerInput,
@@ -88,6 +90,32 @@ describe("bank loan flows (R21)", () => {
     expect(cleared.save.finances.bankLoan).toBeNull();
     expect(cleared.save.news.some((n) => n.titleKey === "bankCleared")).toBe(true);
     expect(payBankLoanFlow(cleared.save, 100).error).toBe("none");
+  });
+});
+
+describe("weekly drill through the day clock (R27)", () => {
+  it("a chosen drill grows its attribute for the whole squad; a stale week drops it; delegation auto-picks", () => {
+    let save = createCareerSave(INPUT, 31337);
+    save = { ...save, prefs: { ...save.prefs, autoTrain: false } };
+    expect(activeDrillFor(save)).toBeNull();
+    save = setDrillFlow(save, "rotations");
+    expect(activeDrillFor(save)?.id).toBe("rotations");
+    const before = save.squad.map((p) => p.attrOffsets.defense ?? 0);
+    // Tue → Fri of week 1: four training days of the drill.
+    save = advanceTo(save, 5);
+    save.squad.forEach((p, i) => expect(p.attrOffsets.defense ?? 0).toBeGreaterThan(before[i]));
+    // The drill is week-scoped: next Monday it no longer applies…
+    save = advanceTo(save, firstDayOfWeek(2));
+    expect(activeDrillFor(save)).toBeNull();
+    // …unless training is delegated TO A COACH, whose plan picks one (their own buff).
+    const noCoach = { ...save, prefs: { ...save.prefs, autoTrain: true }, coach: null };
+    expect(activeDrillFor(noCoach)).toBeNull();
+    const delegated = {
+      ...noCoach,
+      coach: { id: "c", name: "Coach", overall: 80, bonusType: "defense" as const, bonusLevel: "+", salaryPerSplit: 1_000, source: "generated" as const },
+    };
+    expect(activeDrillFor(delegated)?.id).toBe("rotations");
+    expect(setDrillFlow(save, null).drill).toBeNull();
   });
 });
 

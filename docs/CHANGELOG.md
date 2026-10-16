@@ -138,6 +138,15 @@ with the root cause — that section doubles as the project's bugfix log.
   contracts, cash warning, Backer debt); **What you can do today** status
   cards; **Your edges** (active coach, gear, psychologist, bootcamp Sharp,
   sponsor perks). Calendar marks payday every Monday.
+- **Training 2.0** (ROAD-TO-WORLDS-DECISIONS R27–R29): a **weekly team
+  drill** (five to pick from; everyone sharpens the drill's attribute, sessions
+  run hotter; the coach auto-picks when training is delegated), **growth made
+  tangible** on every player card (progress to the next point, ETA in training
+  days, split/season caps), **"What your attributes do"** (the fielded team's
+  stat line as the exact sim modifiers), scrims in three sparring tiers, and a
+  lifted growth curve for 21+ players.
+- **Shared sim:** offense and defense now weigh on every game
+  (DESIGN-DECISIONS #117); goldens regenerated.
 
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)
@@ -147,6 +156,15 @@ with the root cause — that section doubles as the project's bugfix log.
   while the series win rate stays 99.8 %. §25 anchors unchanged. **Golden master
   regenerated** (`regression.golden.test.ts`) for this deliberate change.
 - Leaderboard category keys: `mmr` → `season_mmr` (Season Rating) as the headline board.
+
+### Balance
+- `SIMULATION.offenseWeight` / `defenseWeight` 0.5 (new); `ch-perfect-storm`
+  opponent shift −8 → −9 (stays in the legend band).
+- `CAREER_AGE.growthMult` 21-22 / 23-24 / 25+: 0.7 / 0.35 / 0.15 → 0.8 /
+  0.45 / 0.2. `CAREER_TRAINING.coachMult` 0.01 / 1.2 → 0.015 / 1.3.
+- Starter roster shapes: prospects 65-68 (pot 80-90), journeymen 71-74,
+  balanced 68-71 (pot 76-84). Community Cups: ≤ 2 stronger orgs + local scene
+  (−7..+1 band).
 
 ### Fixed
 - Career market: with three starters signed and a free sub slot, the offer

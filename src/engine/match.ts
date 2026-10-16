@@ -77,6 +77,9 @@ function gameSide(
 
   let score = team.rating.total + seriesForm + roll;
 
+  // v2.0: offense/defense weigh on every game (they used to be cosmetic).
+  score += SIM.offenseWeight * norm(team.stats.offense) + SIM.defenseWeight * norm(team.stats.defense);
+
   // Mechanics high-roll proc.
   const procChance = SIM.mechProcBaseChance * (0.5 + Math.max(0, norm(team.stats.mechanics)));
   if (rng.chance(procChance)) {
