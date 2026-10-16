@@ -48,7 +48,8 @@ describe("profileStore.recordChallengeResult", () => {
 
   it("the Season 1 reset clears stars along with the cleared map", async () => {
     const { normalizeToSeason } = await import("@/engine/season");
-    const out = normalizeToSeason({
+    type Fields = import("@/engine/season").SeasonFields;
+    const out = normalizeToSeason<Fields>({
       xp: 100,
       mmr: 1000,
       runsCompleted: 3,
