@@ -60,7 +60,7 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { DayCard } from "@/components/career/hub/DayCard";
-import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
+import { NowBid, NowEvent, NowInsert, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
 import { EdgesStrip, TodayCards } from "@/components/career/hub/TodayCards";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
@@ -215,6 +215,7 @@ export function HubScreen() {
 
   const acceptBid = useCareerStore((s) => s.acceptBid);
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
+  const resolveInsert = useCareerStore((s) => s.resolveInsert);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const declineBid = useCareerStore((s) => s.declineBid);
   const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
@@ -287,6 +288,7 @@ export function HubScreen() {
     save.sponsorOffers && save.sponsorOffers.length > 0 ? save.sponsorOffers : null;
   const phaseStop = save.phase === "seasonReview" || save.phase === "ended";
   const invite = !save.pendingEventDef && save.unofficialOffer ? save.unofficialOffer : null;
+  const insert = save.pendingInsert && save.pendingInsert.day === today ? save.pendingInsert : null;
   const expiringContracts =
     weekOfDay(today) >= 23
       ? save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex).length
@@ -303,7 +305,7 @@ export function HubScreen() {
   const runway = runwayWeeks(save.finances.balance, statement.net);
   const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
   const needsCount =
-    (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
+    (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0) + (insert ? 1 : 0);
 
   // --- Road to Worlds mini --------------------------------------------------
   const rows = standingsRows(save, region, "season");
@@ -382,6 +384,11 @@ export function HubScreen() {
                     primaryLabel={C.hub.continue}
                     onPrimary={() => router.push("/career/event")}
                   />
+                </Panel>
+              ) : null}
+              {insert ? (
+                <Panel strong className="rise-in border-cyan/40 p-5">
+                  <NowInsert C={C} id={insert.id} onChoose={resolveInsert} />
                 </Panel>
               ) : null}
               {invite ? (

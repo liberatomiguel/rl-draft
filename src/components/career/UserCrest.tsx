@@ -87,6 +87,30 @@ export const CREST_PALETTE: { id: string; hex: string }[] = [
 ];
 
 /** Legacy curated pairs — kept for old call sites; every color is in CREST_PALETTE. */
+/**
+ * v2.0 (R34) curated KITS — harmonious primary/secondary pairs with names,
+ * the wizard's first choice (custom swatches stay one tap away). Every hex is
+ * in CREST_PALETTE so crests, kits and procedural fillers share one palette.
+ */
+export const CREST_KITS: { id: string; primary: string; secondary: string }[] = [
+  { id: "navy-gold", primary: "#1f3a5f", secondary: "#c9a227" },
+  { id: "burgundy-ivory", primary: "#7f1d2d", secondary: "#f2efe3" },
+  { id: "forest-cream", primary: "#1d5c3a", secondary: "#e8dfc8" },
+  { id: "royal-silver", primary: "#1d4ed8", secondary: "#cbd5e1" },
+  { id: "charcoal-amber", primary: "#262b33", secondary: "#d97706" },
+  { id: "scarlet-ivory", primary: "#c81e2e", secondary: "#f2efe3" },
+  { id: "petrol-sky", primary: "#155e75", secondary: "#4da3e8" },
+  { id: "plum-silver", primary: "#6d2f6b", secondary: "#cbd5e1" },
+  { id: "teal-cream", primary: "#0f766e", secondary: "#e8dfc8" },
+  { id: "slate-white", primary: "#475569", secondary: "#f5f7fa" },
+  { id: "indigo-gold", primary: "#4338ca", secondary: "#c9a227" },
+  { id: "wine-gold", primary: "#5c1a2e", secondary: "#c9a227" },
+  { id: "olive-ivory", primary: "#5c6b2f", secondary: "#f2efe3" },
+  { id: "orange-charcoal", primary: "#c2540a", secondary: "#262b33" },
+  { id: "white-royal", primary: "#f5f7fa", secondary: "#1d4ed8" },
+  { id: "steel-scarlet", primary: "#7c8aa0", secondary: "#c81e2e" },
+];
+
 export const CREST_COLOR_PAIRS: { primary: string; secondary: string }[] = [
   { primary: "#1f3a5f", secondary: "#c9a227" }, // navy & gold
   { primary: "#7f1d2d", secondary: "#f2efe3" }, // burgundy & ivory

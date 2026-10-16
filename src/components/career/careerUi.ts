@@ -534,6 +534,7 @@ export function continueKind(save: CareerSave): ContinueKind {
   if (save.phase === "seasonReview") return "seasonReview";
   if (save.activeEvent) return "event";
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) return "event";
+  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) return "decision";
   if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) {
     return "decision";
   }

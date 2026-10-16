@@ -904,6 +904,18 @@ export const CAREER_QUALIFIER = {
   dayOffset: 3,
 } as const;
 
+/**
+ * v2.0 WEEKLY INSERTS (R33): a mid-week decision card (Tue–Thu) with two
+ * clear options — the rhythm breaker between tournaments.
+ */
+export const CAREER_INSERTS = {
+  chancePerWeek: 0.35,
+  /** Weekdays an insert can land on (1 = Monday). */
+  days: [2, 3, 4] as const,
+  /** Ids seen in the last N inserts are not re-rolled. */
+  recentWindow: 4,
+} as const;
+
 export const CAREER_PRIZES = {
   pools: { t3: 2_000, t2: 10_000, qualifier: 6_000, regional: 40_000, major: 150_000, worlds: 600_000 },
   /**

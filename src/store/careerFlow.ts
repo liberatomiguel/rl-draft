@@ -93,9 +93,12 @@ import {
   seasonYear,
   squadRollover,
   trainDay,
+  trainWeek,
   trainingProjection,
   type DrillEffect,
 } from "@/engine/career/development";
+import { insertById } from "@/data/career/inserts";
+import { insertDowFor, rollInsertFor } from "@/engine/career/inserts";
 import {
   applyPrize,
   applyTransferIncome,
@@ -698,6 +701,24 @@ export function processDayArrival(input: CareerSave): CareerSave {
     );
   }
 
+  // ==================== TUE–THU (v2.0 R33: the weekly insert) ===============
+  // One roll per week on the week's insert day; a card the player never
+  // answers simply expires when its day passes (no penalty, no nag).
+  if (save.pendingInsert && save.pendingInsert.day < day) save.pendingInsert = null;
+  if (
+    save.phase === "running" &&
+    !save.pendingInsert &&
+    dow === insertDowFor(save, week) &&
+    !save.flags[`insertRolled:${seasonIndex}:${week}`]
+  ) {
+    save.flags[`insertRolled:${seasonIndex}:${week}`] = true;
+    const def = rollInsertFor(save, week);
+    if (def) {
+      save.pendingInsert = { id: def.id, day };
+      save.insertsSeen = [...(save.insertsSeen ?? []), def.id].slice(-12);
+    }
+  }
+
   // ==================== WEDNESDAY (v2.0 R30: qualifiers) ===================
   if (day === qualifierDayFor(week)) {
     for (const q of qualifierDefsForWeek(seasonIndex, week)) {
@@ -1206,6 +1227,66 @@ export function takeBankLoanFlow(input: CareerSave, principal: number): FlowResu
     fromKey: "bank",
     linkTo: "/career/finances",
   });
+  return { save: capNews(save) };
+}
+
+/**
+ * v2.0 (R33): answer the pending insert. Effects are small and legible —
+ * money (one ledger line), reputation, chemistry credit, bonus or lost
+ * training-week equivalents for the squad.
+ */
+export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult {
+  const save = clone(input);
+  const pending = save.pendingInsert;
+  if (!pending) return { save: input, error: "none" };
+  const def = insertById.get(pending.id);
+  if (!def) {
+    save.pendingInsert = null;
+    return { save };
+  }
+  const option = def.options.find((o) => o.key === key) ?? def.options[1];
+  const fx = option.effects;
+  const seasonIndex = save.clock.seasonIndex;
+  const week = weekOfDay(save.clock.day);
+  if (fx.money) {
+    save.finances = pushLedger(save.finances, {
+      seasonIndex,
+      week,
+      day: save.clock.day,
+      kind: "insert",
+      amount: fx.money,
+      refName: def.id,
+    });
+  }
+  if (fx.rep && fx.rep > 0) save.reputation = Math.min(100, save.reputation + fx.rep);
+  if (fx.rep && fx.rep < 0) loseRep(save, -fx.rep, "repDown");
+  if (fx.chemistry) for (const p of save.squad) p.splitsTogether += fx.chemistry;
+  if (fx.trainingWeeks) {
+    const gearBonus = gearTrainingBonus(save.finances.gear);
+    const drill = activeDrillFor(save);
+    for (const p of save.squad) {
+      const weeks = fx.trainingWeeks;
+      if (weeks > 0) {
+        const res = trainWeek(p, {
+          seasonIndex,
+          coachOverall: save.coach?.overall ?? null,
+          gearBonus,
+          trainingWeekBonus: false,
+          splitGained: p.gainedThisSplit,
+          seasonGained: p.gainedThisSeason,
+          weeks,
+          drill,
+        });
+        Object.assign(p, res.player);
+      } else {
+        // A lost session: a small, capped step back (never below 60).
+        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, drill });
+        p.overall = Math.max(60, p.overall - proj.weeklyOverall * -weeks);
+      }
+    }
+  }
+  save.pendingInsert = null;
+  pushNews(save, { type: "org", priority: 1, titleKey: "insertResolved", params: { insert: def.id } });
   return { save: capNews(save) };
 }
 
@@ -2018,7 +2099,8 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   ) {
     return true;
   }
-  // Pending decisions: incoming bids and sponsor offers.
+  // Pending decisions: incoming bids, sponsor offers, a mid-week insert.
+  if (save.pendingInsert && save.pendingInsert.day === day) return true;
   if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) return true;
   if (save.sponsorOffers && save.sponsorOffers.length > 0) return true;
   // A transfer window just opened (its first Monday).

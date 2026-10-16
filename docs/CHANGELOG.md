@@ -165,6 +165,12 @@ with the root cause — that section doubles as the project's bugfix log.
   an achievement toast and unlocks career cosmetics (Regional Champion, Major
   Winner, World Champion title + frame, Underdog, Homegrown, Dynasty, Road
   Warrior). Club screen lists them with unlock dates.
+- **Weekly inserts** (ROAD-TO-WORLDS-DECISIONS R33): a mid-week decision card
+  in roughly a third of the weeks — side quests, sponsor asks, training calls
+  — with two options and plain effects (money, reputation, chemistry,
+  training time). Unanswered cards expire with the day.
+- **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
+  custom swatches are contrast-guarded.
 
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)

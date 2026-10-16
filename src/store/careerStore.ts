@@ -61,6 +61,7 @@ import {
   migrateSaveToV3,
   payBankLoanFlow,
   payDebtFlow,
+  resolveInsertFlow,
   releasePlayerFlow,
   renewPlayerFlow,
   resolveAcceptedBid,
@@ -175,6 +176,8 @@ interface CareerStoreState {
   setAutoTrain: (on: boolean) => void;
   /** v2.0 (R27): this week's team drill. */
   setDrill: (id: DrillId | null) => void;
+  /** v2.0 (R33): answer the pending mid-week insert. */
+  resolveInsert: (key: "a" | "b") => void;
 
   buyGear: (itemId: GearItemId) => void;
   setPsychologist: (on: boolean) => void;
@@ -352,6 +355,7 @@ export const useCareerStore = create<CareerStoreState>()(
         setTrainingIntensity: (playerId, intensity) =>
           withSave((s) => setTrainingIntensityFlow(s, playerId, intensity)),
         setDrill: (id) => withSave((s) => setDrillFlow(s, id)),
+        resolveInsert: (key) => withResult((s) => resolveInsertFlow(s, key)),
         setAutoTrain: (on) =>
           withSave((s) => {
             const next = structuredClone(s);

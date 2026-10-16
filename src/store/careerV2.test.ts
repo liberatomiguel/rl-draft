@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { CAREER_BANK, CAREER_UNOFFICIAL } from "@/config/balance";
 import { firstDayOfWeek, qualifierDayFor, seasonSchedule } from "@/engine/career/calendar";
 import { bankLoanTerms } from "@/engine/career/economy";
+import { rollInsertFor } from "@/engine/career/inserts";
 import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
 import { fieldForEvent, realOrgIntake, userTeamFor } from "@/engine/career/worldSim";
@@ -18,6 +19,7 @@ import {
   createCareerSave,
   finishEvent,
   payBankLoanFlow,
+  resolveInsertFlow,
   setDrillFlow,
   simEventToEnd,
   starterOffersForRegion,
@@ -190,6 +192,40 @@ describe("real orgs enter by season (R31)", () => {
     // Season 0 and the infinite era bring nobody.
     expect(realOrgIntake(save.world, 0).entered).toHaveLength(0);
     expect(realOrgIntake(save.world, 99).entered).toHaveLength(0);
+  });
+});
+
+describe("weekly inserts (R33)", () => {
+  it("rolls deterministically, honours requirements, and a choice applies its effects once", () => {
+    const save = createCareerSave(INPUT, 90210);
+    const a = rollInsertFor(save, 5);
+    const b = rollInsertFor(save, 5);
+    expect(a?.id).toBe(b?.id);
+    // No sponsor, no coach at creation → sponsor/coach inserts never roll.
+    for (let w = 1; w <= 32; w++) {
+      const d = rollInsertFor(save, w);
+      if (d?.requires?.sponsor) expect(save.sponsor).not.toBeNull();
+      if (d?.requires?.coach) expect(save.coach).not.toBeNull();
+    }
+    // Resolve a money + training insert by hand.
+    const parked = { ...save, pendingInsert: { id: "ins-lan-bootcamp", day: save.clock.day } };
+    const before = parked.finances.balance;
+    const res = resolveInsertFlow(parked, "a");
+    expect(res.error).toBeUndefined();
+    expect(res.save.finances.balance).toBe(before - 1_500);
+    expect(res.save.finances.ledger.at(-1)?.kind).toBe("insert");
+    expect(res.save.pendingInsert).toBeNull();
+    expect(res.save.squad.every((p, i) => p.overall >= parked.squad[i].overall)).toBe(true);
+    expect(res.save.squad.every((p, i) => p.splitsTogether > parked.squad[i].splitsTogether)).toBe(true);
+    expect(resolveInsertFlow(res.save, "a").error).toBe("none");
+    // Option B of the same card is a plain pass.
+    const pass = resolveInsertFlow(parked, "b");
+    expect(pass.save.finances.balance).toBe(before);
+    // An unanswered insert expires when its day passes.
+    let s2: CareerSave = { ...save, pendingInsert: { id: "ins-showmatch", day: save.clock.day } };
+    s2 = advanceDayFlow(s2);
+    s2 = advanceDayFlow(s2);
+    expect(!s2.pendingInsert || s2.pendingInsert.day >= s2.clock.day).toBe(true);
   });
 });
 

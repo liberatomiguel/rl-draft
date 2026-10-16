@@ -18,7 +18,8 @@ import type {
   SponsorState,
   TransferOffer,
 } from "@/engine/career/types";
-import { formatMoney } from "@/lib/format";
+import { insertById, type InsertEffects } from "@/data/career/inserts";
+import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { dateOfDay, nameOfRef, squadAge } from "@/components/career/careerUi";
@@ -30,6 +31,53 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
 type DatesCopy = CareerCopy["dates"];
+
+/** v2.0 (R33): the mid-week insert — one question, two clear options. */
+export function NowInsert({
+  C,
+  id,
+  onChoose,
+}: {
+  C: CareerCopy;
+  id: string;
+  onChoose: (key: "a" | "b") => void;
+}) {
+  const def = insertById.get(id);
+  const item = C.inserts.items[id];
+  if (!def || !item) return null;
+  const fxText = (fx: InsertEffects): string => {
+    const parts: string[] = [];
+    if (fx.money) parts.push(formatMoneyDelta(fx.money, { compact: true }));
+    if (fx.rep) parts.push(C.inserts.fx.rep(fx.rep));
+    if (fx.chemistry) parts.push(C.inserts.fx.chemistry);
+    if (fx.trainingWeeks) parts.push(C.inserts.fx.training(fx.trainingWeeks));
+    return parts.length ? parts.join(" · ") : C.inserts.fx.none;
+  };
+  return (
+    <div>
+      <p className="kicker mb-1 text-[10px] text-cyan">{C.inserts.kinds[def.kind]}</p>
+      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
+      <p className="mt-2 max-w-xl text-sm text-sub">{item.body}</p>
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {def.options.map((o) => (
+          <button
+            key={o.key}
+            type="button"
+            onClick={() => onChoose(o.key)}
+            className={cx(
+              "flex min-h-16 flex-col rounded-lg border px-3 py-2.5 text-left transition-colors",
+              o.key === "a" ? "border-orange/50 bg-orange/10 hover:bg-orange/15" : "border-line bg-white/[0.03] hover:border-line-strong",
+            )}
+          >
+            <span className="display text-xs font-bold uppercase tracking-[0.1em] text-ink">{o.key === "a" ? item.a : item.b}</span>
+            <span className="mt-1 text-[11px] font-semibold text-sub">{fxText(o.effects)}</span>
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-[10px] text-faint">{C.inserts.expires}</p>
+    </div>
+  );
+}
 
 /** v2.0: a pending Community Cup / Invitational invite the player has not committed to. */
 export function NowInvite({

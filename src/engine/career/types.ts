@@ -307,7 +307,8 @@ export type LedgerKind =
   | "fanbase"
   | "payroll" // v2.0: the squad aggregated weekly wages (one line per Monday)
   | "bankLoan" // v2.0: bank loan principal received
-  | "bankPayment"; // v2.0: weekly instalment / early pay-down
+  | "bankPayment" // v2.0: weekly instalment / early pay-down
+  | "insert"; // v2.0 (R33): a mid-week decision's money effect
 
 export interface LedgerEntry {
   id: string;
@@ -659,6 +660,10 @@ export interface CareerSave {
   scrimsThisWeek: number;
   /** v2.0 (R27): this week's team drill (null/stale week = none chosen). */
   drill?: WeeklyDrill | null;
+  /** v2.0 (R33): the mid-week insert waiting for a decision (expires with its day). */
+  pendingInsert?: { id: string; day: number } | null;
+  /** v2.0 (R33): insert ids surfaced so far (recency window). */
+  insertsSeen?: string[];
   /** v0.3: scrims booked ahead (auto-run on day arrival, future days only). */
   scheduledScrims: ScheduledScrim[];
   /** v0.3: recent scrim results (ring buffer). */

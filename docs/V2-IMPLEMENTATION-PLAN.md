@@ -292,9 +292,9 @@ every later surface builds on a stable contract.
       curve (R27–R29).
 - [x] D — regional qualifier for non-top-8 (R30); real orgs entering the world
       by season (R31). Local scene scales with the user by construction.
-- [ ] E — inserts (random / sponsor / training events), sponsors expanded.
+- [x] E — weekly inserts (R33); sponsors tab/perks expanded in A.
 - [x] F (part 1) — permanent career achievements (R32, DESIGN-DECISIONS #118).
-- [ ] F (part 2) — crest/colour palette in the creation wizard.
+- [x] F (part 2) — colour kits + contrast guard in the creation wizard (R34).
 
 ### Phase 4 — content, QA, launch
 - [ ] Event cards curated (Miguel), achievements for new systems, PT pass.

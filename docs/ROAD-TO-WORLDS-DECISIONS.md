@@ -396,6 +396,27 @@ R32. **Permanent career achievements, outside the save, with limited Season XP
      title + frame, Underdog, Homegrown, Dynasty, Road Warrior). The Club
      screen lists the whole catalog with unlock dates.
 
+R33. **Weekly inserts: one small decision between tournaments.** "Skipando
+     para o próximo campeonato" was the complaint; the fix is a mid-week card
+     (Tue–Thu, ~35% of weeks, `CAREER_INSERTS`) with two legible options and
+     effects limited to money, reputation, chemistry credit and ± training-week
+     equivalents — never a new system to manage. Catalog
+     `data/career/inserts.ts` (10: side quests, sponsor asks that only roll
+     with a sponsor, training calls that only roll with a coach / a budget),
+     deterministic roll per (career, season, week) with a recency window
+     (`engine/career/inserts.ts`), one roll per week on a seeded weekday. The
+     card is a "Needs you" stop for autoplay/skip but never blocks a single
+     advance: an unanswered card expires with its day, no penalty, no nag.
+     `resolveInsertFlow` applies the choice (ledger kind `insert`).
+
+R34. **Curated colour kits in the wizard; contrast-guarded custom pairs.**
+     Miguel: "as cores não fazem sentido na paleta". `CREST_KITS` (16 named
+     pairs, every hex in `CREST_PALETTE`) is the wizard's first choice — one
+     tap sets both colours; custom swatches stay one toggle away and
+     secondaries within 0.12 luminance of the primary are disabled, so a
+     crest can no longer be built without contrast. Crest shapes (14),
+     symbols (18) and patterns (7) are unchanged.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

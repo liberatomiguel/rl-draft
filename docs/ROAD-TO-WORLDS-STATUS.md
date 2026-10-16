@@ -158,8 +158,17 @@ incl. the new `src/store/careerV2.test.ts`.
   `profileStore.grantXp`, `profile.careerMarks` → eight `career-mark`
   cosmetics, achievement toasts, Club "Career achievements" panel.
 
-**Next sub-phases:** E — inserts (random/sponsor/training events) + sponsors
-expanded; F (part 2) — crest/colour palette in the wizard.
+**Sub-phase E — weekly inserts (DONE, 2026-10-16, R33)**
+- `data/career/inserts.ts` (10 cards), `engine/career/inserts.ts` (roll),
+  `resolveInsertFlow` / `resolveInsert`, `pendingInsert` + `insertsSeen` on
+  the save, hub `NowInsert` card, ledger kind `insert`, copy EN/PT.
+
+**Sub-phase F (part 2) — colour kits (DONE, 2026-10-16, R34)**
+- `CREST_KITS` (16 pairs) + wizard kit picker; custom swatches contrast-guarded.
+
+Part 3 of the v2.0 guide is now fully covered on this branch except the
+open world-sim asks noted under REMAINING. Next: Phase 4 (QA, perf audit,
+SEO diff, version bump, staging).
 
 ## REMAINING / NEXT (what still needs doing)
 

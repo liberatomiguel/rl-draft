@@ -39,6 +39,9 @@ function displayParams(
       p[key] = formatMoney(p[key] as number);
     }
   }
+  if (titleKey === "insertResolved" && typeof p.insert === "string") {
+    p = { ...p, insert: insertTitle(career, p.insert) };
+  }
   if (titleKey === "unlock" || titleKey === "gearBought") {
     const label =
       (career.club.unlockables as Record<string, string>)[String(p.name ?? "")] ??
@@ -108,6 +111,11 @@ export function resolveNews(
  * v0.3 toast titles — one-line resolution for the popup layer (mail tpl first,
  * then news tpl, with the same param display fixes as the feeds).
  */
+/** v2.0 (R33): insert ids in news params read as their titles. */
+function insertTitle(career: CareerCopy, id: string): string {
+  return career.inserts.items[id]?.title ?? id;
+}
+
 export function resolveToastTitle(
   toast: { source: "mail" | "news" | "achievement"; titleKey: string; params?: Record<string, string | number> },
   career: CareerCopy,

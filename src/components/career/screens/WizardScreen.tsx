@@ -25,13 +25,15 @@ import { cx } from "@/lib/util";
 import { CAREER_SLOTS } from "@/components/career/careerUi";
 import { proceduralCrestFor } from "@/components/career/OrgMark";
 import {
+  composeCrestId,
+  contrastingSecondaryIndex,
   CREST_IDS,
+  CREST_KITS,
   CREST_PALETTE,
+  crestLuminance,
   PATTERN_IDS,
   SYMBOL_IDS,
   UserCrest,
-  composeCrestId,
-  contrastingSecondaryIndex,
 } from "@/components/career/UserCrest";
 import type { CrestId, PatternId, SymbolId } from "@/components/career/UserCrest";
 import { REGION_BADGE } from "@/components/regionStyle";
@@ -134,6 +136,7 @@ export function WizardScreen() {
   const [crestShape, setCrestShape] = useState<CrestId>("shield");
   const [crestSymbol, setCrestSymbol] = useState<SymbolId | null>(null);
   const [crestPattern, setCrestPattern] = useState<PatternId | null>(null);
+  const [customColors, setCustomColors] = useState(false);
   const [colors, setColors] = useState<CareerColors>({
     primary: CREST_PALETTE[0].hex,
     secondary: CREST_PALETTE[1].hex,
@@ -486,8 +489,40 @@ export function WizardScreen() {
                   ))}
                 </div>
 
+                {/* v2.0 (R34): curated kits first — one tap sets both colours */}
+                <p className="kicker mb-1 mt-6">{C.wizard.kits}</p>
+                <p className="mb-3 text-xs text-sub">{C.wizard.kitsHint}</p>
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-8" role="radiogroup" aria-label={C.wizard.kits}>
+                  {CREST_KITS.map((k) => {
+                    const active = colors.primary === k.primary && colors.secondary === k.secondary;
+                    return (
+                      <button
+                        key={k.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        title={k.id}
+                        onClick={() => setColors({ primary: k.primary, secondary: k.secondary })}
+                        className={cx(
+                          "relative h-11 overflow-hidden rounded-lg border transition-transform hover:scale-105",
+                          active ? "border-orange ring-2 ring-orange/50" : "border-line-strong",
+                        )}
+                        style={{ background: `linear-gradient(135deg, ${k.primary} 0 55%, ${k.secondary} 55% 100%)` }}
+                      />
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="mt-3 text-[11px] font-semibold text-blue-bright hover:underline"
+                  onClick={() => setCustomColors((v) => !v)}
+                  aria-expanded={customColors}
+                >
+                  {customColors ? C.wizard.customColorsHide : C.wizard.customColors}
+                </button>
+                <div className={cx(!customColors && "hidden")}>
                 {/* Colors — independent primary/secondary swatches */}
-                <p className="kicker mb-3 mt-6">{C.wizard.primaryColor}</p>
+                <p className="kicker mb-3 mt-4">{C.wizard.primaryColor}</p>
                 <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={C.wizard.primaryColor}>
                   {CREST_PALETTE.map((c) => (
                     <Swatch
@@ -508,10 +543,15 @@ export function WizardScreen() {
                       hex={c.hex}
                       name={c.id}
                       active={colors.secondary === c.hex}
-                      disabled={colors.primary === c.hex}
+                      disabled={
+                        colors.primary === c.hex ||
+                        Math.abs(crestLuminance(c.hex) - crestLuminance(colors.primary)) < 0.12
+                      }
                       onClick={() => setColors((prev) => ({ ...prev, secondary: c.hex }))}
                     />
                   ))}
+                </div>
+                <p className="mt-2 text-[10px] text-faint">{C.wizard.contrastHint}</p>
                 </div>
 
                 <p className="kicker mb-1 mt-6">{C.wizard.identityBuff}</p>
