@@ -1,32 +1,35 @@
 # Project Status — handoff notes
 
 > Snapshot for whoever (human or agent) picks this up next.
-> Last updated: **2026-10-03**.
+> Last updated: **2026-10-16**.
 >
-> **Production is DOWN.** The last live build was **v1.4.4 "World Stage"**
-> (`main` @ `2b4dfa2`, 2026-06-23, on Vercel at `rocketdraft.app`). In 2026-10
-> Vercel disabled the project: apex and www return `402 DEPLOYMENT_DISABLED`
-> (verified 2026-10-03). Traffic had passed **3M requests/month**, and the Hobby
-> plan allows 1M.
+> **Production is LIVE on Cloudflare** (`main` @ v1.4.6, static export, assets-only
+> Worker, `rocketdraft.app`). The Season 1 announcement pop-up is up.
 >
-> **The relaunch is on branch `perf/static-cloudflare`.** It was cut from
-> `staging` @ `badd177` and turns the app into a **pure static export on
-> Cloudflare Workers Static Assets**. The work is **uncommitted, waiting for
-> Miguel's review**. Deploy runbook: **`docs/DEPLOY-CLOUDFLARE.md`**. Narrative:
-> CHANGELOG "Unreleased — Static relaunch". Decisions: DESIGN-DECISIONS
-> #102–#109.
+> **v2.0 "Season 1" is IN PROGRESS on branch `claude/dazzling-cannon-1d6thr`.** Read
+> **`docs/V2-IMPLEMENTATION-PLAN.md`** first: it is the execution order (Phase 0 technical
+> base → Phase 1 surfaces → Phase 2 Challenges 2.0 → Phase 3 Road to Worlds 2.0 → Phase 4
+> QA/launch), the Supabase SQL Miguel must run, and the launch checklist. CHANGELOG
+> `[2.0.0]` is the narrative; DESIGN-DECISIONS #110–#115 the why.
 >
-> **Road to Worlds (career mode) is a SEPARATE workstream.** It lives on
-> `staging` (v1.5.0-alpha.2) and has its own docs: `ROAD-TO-WORLDS-STATUS.md`,
-> `-DESIGN.md` and `-DECISIONS.md`. This STATUS and DESIGN-DECISIONS cover the
-> DRAFT game.
+> **v2.0 progress:** Phase 0 is DONE (season model, profile v12 reset + legacy snapshot,
+> Season Rating, cosmetics, Supabase v2 client, missions + login streak, event cards +
+> Special Hunt, series variety, bracket spoiler fix) — 444 tests green. Phase 1 (recap
+> screen, Profile v2, Leaderboard v2, missions UI, Quiz, Home v2) is next.
 >
-> This file stays **current-state only**. Grep CHANGELOG/DESIGN-DECISIONS for
-> history.
+> **Never deploy v2.0 to `main` before the full review.** Test builds go to the staging
+> Worker (`staging.rocketdraft.app`) from the `staging` branch with a SEPARATE Supabase
+> project (plan §6-A).
+>
+> **Road to Worlds (career mode) is a SEPARATE workstream** with its own docs:
+> `ROAD-TO-WORLDS-STATUS.md`, `-DESIGN.md` and `-DECISIONS.md`. Its v2.0 overhaul is
+> Phase 3 of the plan.
+>
+> This file stays **current-state only**. Grep CHANGELOG/DESIGN-DECISIONS for history.
 
 ## Current state
 
-### Hosting and the relaunch branch
+### Hosting (live since v1.4.5)
 
 - **Why Vercel hit the cap.** Hobby counts every request, static files
   included. The real multipliers were viewport `<Link>` prefetch (several
@@ -68,14 +71,9 @@
   | Home HTML | 504 KB raw / 27 KB br | **40 KB / 7.5 KB** |
 
   Build: 48 s; `out/` = 1,071 files, 35 MB.
-- **Next steps (Miguel):**
-  1. Review the diff and commit (choose the version label).
-  2. Merge into the release branch (recommended: `main`). This brings the career
-     alpha *code*, flag off.
-  3. Follow `docs/DEPLOY-CLOUDFLARE.md`: DNS inventory → nameservers to
-     Cloudflare → Workers Builds → www redirect → verify → resubmit the sitemap.
-  4. Relaunch soon. Safari wipes script-written storage after 7 days without a
-     visit, so guests on Safari are losing saves while the site is down.
+- **Staging Worker** (`rocket-draft-staging`, `staging.rocketdraft.app`): deployed with
+  `npx wrangler deploy --env staging` from the `staging` branch (career on, noindex).
+  Separate origin → separate localStorage.
 - **Player saves** live only in `localStorage` on `https://rocketdraft.app`.
   Never serve the game from another host. Persist keys and versions are frozen by
   `src/store/persistContract.test.ts`.
@@ -116,7 +114,7 @@ drift.
 ### Standard gates (before any commit)
 
 - `npm run typecheck` (tsc) clean.
-- `npm test`: **385** vitest tests pass (28 files).
+- `npm test`: **444** vitest tests pass (33 files) on the v2.0 branch (385 on `main`).
 - `npm run lint` at its baseline: **5 errors + 1 warning**, all pre-existing
   (TournamentScreen, AnimatedNumber, Modal, useMounted, calibrate-rarity).
   Don't add new ones.
@@ -138,7 +136,14 @@ drift.
 - `npm run deploy`: build + `wrangler deploy`. Prefer Workers Builds, and read
   the `.env.local` warning in the runbook first.
 
-### Accounts and leaderboards: code done, DORMANT in production
+### Accounts and leaderboards
+
+**v2.0 changes the schema.** Before the v2.0 deploy Miguel runs the SQL in
+`docs/V2-IMPLEMENTATION-PLAN.md` §6-B (season columns, `profile_grants`, the freeze
+trigger, the `leaderboard` view v2, `preseason_hall_of_fame`), then §6-C once at launch
+(freeze the pre-season positions). The v2.0 client never writes `xp` / `mmr` again.
+
+#### Pre-v2.0 notes (v1.4, still accurate for `main`)
 
 The code is in place (email + 6-digit code, cloud sync, global boards). The sync
 was hardened on this branch: tagged read result, abort on error, one sync in

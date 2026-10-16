@@ -1138,6 +1138,63 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 > DRAFT chemistry model's use of a card's real *career history* — unrelated to
 > the career mode.
 
+## v2.0 "Season 1" (unreleased, 2026-10-16 →)
+
+110. **Profile persist v12 = the Season 1 hard reset, with the pre-season archived in
+     the save.** The persist contract changes once in v2.0. The migrate snapshots the
+     v11 profile's `xp`, `mmr`, rank, runs, titles and challenges cleared into
+     `legacy.preseason` BEFORE resetting `xp → 0`, `mmr → SEASON_RATING.start`,
+     `challengesCompleted → {}` and opening a fresh `season` block; collection,
+     achievements, lifetime counters, run history and records are untouched;
+     `lifetime.xp` keeps the cumulative total. The SAME normalisation runs inside
+     `mergeProfiles` on both inputs, so a cloud row written by an older build (no
+     `season`) is archived + reset instead of re-inflating a Season 1 profile. Why in
+     the save and not only in the DB: guests (localStorage only) get their legacy
+     rewards too, and a signed-in player sees the recap immediately, before the sync
+     lands. The cloud adds what only the server knows (`preseason_position`, grants).
+     The `xp` / `mmr` cloud COLUMNS are frozen (never written by the v2.0 client, DB
+     trigger refuses them) and are the pre-season Hall of Fame.
+111. **Season Rating replaces the title-only MMR for live play.** v1.4's MMR only moved on
+     titles, which made the board a "who played the most" count. Season Rating moves on
+     every finished run by placement × difficulty (`SEASON_RATING.delta`), with small
+     NEGATIVE deltas on Swiss exits (floor 0) so volume alone does not climb, and the
+     first 5 runs of a season protected (soft landing after the reset). The profile
+     field keeps the name `mmr` so every reader (results readout, leaderboard push)
+     stays unchanged. Merge rule: rating can go DOWN, so a plain MAX would resurrect a
+     loss from another device — the copy that has played more of the season wins, a tie
+     takes the MAX. Daily ×1.25 (shared puzzle, one shot), Quick ×0.5, hidden overalls
+     +15 % on gains. Challenge runs and Road to Worlds give Season XP only.
+112. **Missions are deterministic per date and gated by what the player can do.** One
+     mission per tier (easy / medium / hard) for the UTC day and the ISO week, drawn
+     with the seeded RNG from the period key over the ELIGIBLE catalog (rank, Legacy
+     unlock, career flag). The chosen ids are stored with the key so ranking up never
+     changes a live set. Progress flows through typed events emitted by the stores
+     after the fact (no engine coupling); rewards auto-grant on completion (no claim
+     step: nothing to forget). Login streak counts the first open of a day with no
+     run required, and a gap resets the streak but never removes rewards (`best`).
+113. **Event-exclusive cards bypass the rank rarity gate inside their window.** The week's
+     card is the community moment, so everyone should be able to hunt it; the rarity's
+     base rate still applies. The Special Hunt ramp (×3 after N finished runs in the
+     window) rewards persistence late in the week without making the card a guaranteed
+     drop. The eligibility is fixed at draft creation (`draft.eventSpecials`) so a run
+     that crosses midnight stays deterministic, and the shared Daily applies only the
+     window (same odds for everyone on the same day).
+114. **Series momentum (loser of the previous game +1.5) instead of a different sim.**
+     The per-series form roll (±4.5, the upset engine) made series lopsided: 43 % of
+     series between equal teams were 4–0 and a +6 favourite scored 7–0 in a quarter of
+     its games. A small bounce for the trailing side spreads results inside the series
+     (sweeps 22 %, real comebacks, flagged for narration) while the series-level win
+     probabilities and the §25 anchors stay where they were. The scoreline flavour was
+     re-tuned at the same time (same RNG draw count). The golden master was regenerated
+     once for this; challenges are re-validated in Phase 2.
+115. **Cosmetics are derived, never stored as truth.** `cosmetics.owned` is a cache with
+     unlock dates; the entitlement comes from facts the profile already keeps (the
+     pre-season snapshot, grants, season peak rank, streak, stars, quiz, missions). A
+     renamed catalog entry can never strand a save, and a cloud merge recomputes the
+     union from the merged facts. `equipped` is the only player choice; null = auto
+     (best owned by catalog priority) so veterans see their rewards without visiting the
+     locker. All cosmetics are CSS/SVG — zero image assets, zero requests.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

@@ -10,6 +10,80 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → staging)
+
+> The biggest release in the project's history. Plan + execution order:
+> **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
+> This entry grows as phases land. Never deployed to `main` before the full review.
+
+### Added — Phase 0 (technical base)
+- **Season model** (`src/config/season.ts`): the current season is a build-time constant
+  (`SEASON.id = 1`, pre-season = 0). `profile.season` tags the season-scoped fields
+  (`xp`, `mmr` keep their names so every reader keeps working), plus `peakMmr`,
+  `peakRankId`, `runs`, `titles` and a 40-entry `ratingHistory`. `lifetime.xp` accumulates
+  across seasons. `src/engine/season.ts` holds the pure helpers (snapshot / normalise / merge).
+- **Profile persist v12 — the Season 1 reset** (DESIGN-DECISIONS #110). The migrate archives
+  the pre-season (`xp`, `mmr`, rank, runs, titles, challenges cleared) into
+  `legacy.preseason`, then resets `xp → 0`, `mmr → 400`, `challengesCompleted → {}` and
+  starts a fresh `season`. Collection, achievements, lifetime counters, run history and
+  records are untouched. `mergeProfiles` normalises BOTH sides first, so a cloud row written
+  by an older build can never re-inflate a Season 1 profile. `persistContract.test.ts`
+  frozen at v12 with the new sacred fields (`season`, `lifetime`, `legacy`, `grants`,
+  `cosmetics`, `missions`, `login`, `events`).
+- **Season Rating** (`SEASON_RATING`, #111): replaces the title-only MMR for live play. Signed
+  placement × difficulty deltas (Legacy title +26 … Normal Swiss exit −3), floor 0, the first
+  5 runs of a season protected from losses, Daily ×1.25 / Quick ×0.5, hidden overalls +15 %
+  on gains. `lastMmrGain` is signed now. The old `MMR` table stays for pre-season backfills.
+- **Cosmetics** (`src/data/cosmetics.ts`, `src/engine/cosmetics.ts`): titles, badges, profile
+  frames and banners, all CSS/SVG (no assets, no requests). Ownership is DERIVED from the
+  profile's facts (legacy snapshot, cloud grants, season peak rank, login streak, challenge
+  stars, quiz solves, missions) and cached with unlock dates; `equipped` holds explicit
+  choices (null = auto best, `none` = hidden). Catalog: pre-season legacy rewards ("Day One"
+  title + "First Chapter" badge, peak-rank frames Bronze→SSL, "Pre-season Legend", board
+  position banners/titles Challenger→Champion), manual grants (Early Supporter, Founding
+  Contributor, Pro Player), the Season 1 rank track, login-streak, challenge-star, quiz and
+  mission rewards. Copy `COSMETICS` EN + PT; `cosmetics.test.ts` enforces catalog ↔ copy.
+- **Supabase v2 client** (`lib/supabase.ts`): the push writes the `season_*`, `lifetime_xp` and
+  `equipped_*` columns and NEVER `xp` / `mmr` again (they are the frozen pre-season archive);
+  the read embeds `profile_grants` and `preseason_position`; `fetchLeaderboard` returns the
+  cosmetics per row and filters season columns by `season_id`; `fetchHallOfFame` reads the
+  frozen pre-season board. SQL (idempotent) + freeze step in the plan §6.
+- **Missions** (`src/engine/missions.ts`, #112): 31 daily + 25 weekly templates, one per tier
+  (easy / medium / hard) picked deterministically from the date among what the player can do
+  (rank / Legacy / career gated). Typed progress events from the stores (`run_completed`,
+  `special_selected`, `challenge_cleared`, `quiz_played`, `career_*`). Rewards auto-grant
+  (`MISSIONS` in balance: 40/80/150 daily + 120 all-three; 150/300/500 weekly + 400). Copy
+  `MISSIONS_UI` EN + PT. `profileStore.applyMissionEvent` / `rollMissions`.
+- **Login streak** (`LOGIN_STREAK`): first open of a UTC day counts; 25 XP growing +5/day to
+  75, milestone bonuses at 3 / 7 / 14 / 30 with cosmetics; a gap resets to 1, `best` is kept.
+- **Event-exclusive special cards + Special Hunt** (#113): a special card may carry
+  `event: { from, to, huntRuns? }`. Inside the window it joins the eligible pool at its
+  rarity's rate and bypasses the rank rarity gate; outside it is never offered. After
+  `huntRuns` finished runs in the window (`profile.events`) its chance is ×3
+  (`SPECIALS.event`). Fixed per run at draft creation (`draft.eventSpecials`); the shared
+  Daily applies the window but not the per-player boost. Schema + `eventCards.test.ts`.
+- `profileStore.grantXp` (missions / quiz / career milestones), `setEquipped`,
+  `refreshCosmetics`, `recordLogin`, `recordEventRuns`; `selectCollectionUnlocked` keeps the
+  Collection open for anyone who already owns a card (veterans after the reset).
+
+### Changed
+- **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)
+  for the side that lost the previous game, a `comeback` flag + narration note when the
+  winner trailed by 2 games, and the scoreline flavour re-tuned (`SIMULATION.goals`).
+  Measured on equal teams: 4–0 sweeps 43 % → 22 %; for a +6 favourite 7–0 games 24 % → <5 %
+  while the series win rate stays 99.8 %. §25 anchors unchanged. **Golden master
+  regenerated** (`regression.golden.test.ts`) for this deliberate change.
+- Leaderboard category keys: `mmr` → `season_mmr` (Season Rating) as the headline board.
+
+### Fixed
+- **Bracket spoiler** (draft game `PlayoffBracketView` + career `CareerBracket`): when the
+  user went out and the remaining AI rounds auto-resolved in the same step, the later rounds'
+  pairings were drawn at once (scores hidden) — and the user's absence from them gave the
+  animating result away. Root cause: pairings were shown for every simulated round. Now a
+  round's pairings only show once every earlier round is fully revealed.
+
+---
+
 ## [1.4.6] — 2026-10-16 · Season 1 announcement
 
 ### Added

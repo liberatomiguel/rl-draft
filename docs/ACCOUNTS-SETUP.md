@@ -176,6 +176,12 @@ happens client-side on load — no SQL backfill needed.
 in the `durable` blob), merged in on login and never lost. They are private to you;
 the public boards only ever show display name + the score columns.
 
+## 1d. v2.0 / Season 1 schema — see the plan
+
+The Season 1 columns, the manual-grants table, the pre-season freeze and the
+leaderboard view v2 are in **`docs/V2-IMPLEMENTATION-PLAN.md` §6** (steps A–E, in
+order). Run §6-B before the v2.0 deploy and §6-C once at launch.
+
 ## 2. Email sending (the 6-digit code)
 
 Email auth is **on by default** in Supabase (Authentication → Providers → Email).
