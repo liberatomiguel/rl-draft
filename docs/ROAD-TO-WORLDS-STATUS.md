@@ -146,8 +146,9 @@ incl. the new `src/store/careerV2.test.ts`.
   `competition.qualifiedRefs` (results), Monday commit / Wednesday AI
   resolution / finish booking (careerFlow), `userIsDirect` /
   `regionalUserEligible`, lobby preview, tier chip/fill, news + mail.
-- Still open from Part 3: local orgs growing over seasons and real new
-  lineups entering by season (the world-sim anchor pass) — see "REMAINING".
+- **R31 (DONE):** real orgs whose first lineup is the new season enter the
+  world at rollover (`realOrgIntake`, replacing the region's weakest filler;
+  the preseason anchor pass then pulls their real players in) + news.
 
 **Next sub-phases:** E — inserts (random/sponsor/training events) + sponsors
 expanded; F — permanent career achievements + crest/colour palette.

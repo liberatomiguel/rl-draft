@@ -360,6 +360,21 @@ R30. **Every regional opens with a Wednesday qualifier for everyone outside
      Pre-2.0 saves: no qualifier data → the regional stays open as before.
      `eventResultsCap` 60 → 90 for the extra results.
 
+R31. **Real orgs enter the world when their season arrives.** The season-0
+     world is built from Season X lineups and padded with fillers; the
+     anchor pass (R-era) could only pull real players into orgs that already
+     existed, so Karmine Corp, Moist, Gen.G, FUT… never showed up ("times de
+     lines novas reais podem entrar quando a simulação chegar na season
+     deles"). `realOrgIntake` runs at every rollover into a dataset season:
+     each new lineup's org replaces the REGION'S WEAKEST FILLER (by stored
+     rating) — the filler roster keeps the seat, the filler's players go to
+     free agency, and the next preseason anchor pass brings the real lineup in
+     with the usual fidelity. Org counts never grow (16/region stays the
+     engine contract); regions out of fillers keep their field. News per
+     entrant ("{org} enters the {region} scene", priority 2 at home). This is
+     also what makes local fields "evolve": the scene hardens season by
+     season exactly as history did.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

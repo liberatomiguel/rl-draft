@@ -137,6 +137,7 @@ import {
   computeStars,
   fieldForEvent,
   orgTeamFor,
+  realOrgIntake,
   regionalSeedingFor,
   simulateAiEvent,
   starterRosterOffers,
@@ -1663,6 +1664,17 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     nextSeason >= CAREER_SEASONS.length,
   );
   save.world = pass.world;
+  // v2.0 (R31): real orgs whose first lineup is this season enter the world.
+  const intake = realOrgIntake(save.world, nextSeason);
+  save.world = intake.world;
+  for (const org of intake.entered.slice(0, 4)) {
+    pushNews(save, {
+      type: "milestone",
+      priority: org.region === save.identity.region ? 2 : 1,
+      titleKey: "orgEnters",
+      params: { org: org.name, region: org.region },
+    });
+  }
   for (const r of pass.retired.slice(0, 3)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "retired", params: { player: r.name } });
   }

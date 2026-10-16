@@ -825,6 +825,7 @@ export const CAREER_EN = {
       playerLeft: (p: Record<string, string | number>) => `${p.player} walks as a free agent`,
       retirementAnnounce: (p: Record<string, string | number>) => `${p.player} announces his final season`,
       retired: (p: Record<string, string | number>) => `${p.player} hangs up the controller`,
+      orgEnters: (p: Record<string, string | number>) => `${p.org} enters the ${p.region} scene`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives — ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
       breakout: (p: Record<string, string | number>) => `${p.player} is outgrowing everyone's projections`,
@@ -898,6 +899,8 @@ export const CAREER_EN = {
         `${p.player} will retire at season's end. One more run together — make it count.`,
       retired: (p: Record<string, string | number>) =>
         `${p.player} steps away from the game. The scene is younger — and a little poorer — today.`,
+      orgEnters: (p: Record<string, string | number>) =>
+        `A new badge on the ${p.region} circuit: ${p.org} fields a roster this season. History arrives on schedule — and the table gets harder.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Fresh names hit the ${p.region} free-agent pool. ${p.name} is the one scouts underline.`,
       decline: (p: Record<string, string | number>) =>

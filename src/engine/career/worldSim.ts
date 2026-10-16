@@ -1259,6 +1259,64 @@ export function agePassAndIntake(
 // ---------------------------------------------------------------------------
 
 /**
+ * v2.0 (R31) — REAL ORGS ENTER WHEN THEIR SEASON ARRIVES. The season-0 world
+ * is built from Season X lineups; every later dataset season brings orgs that
+ * did not exist yet (Karmine Corp, Moist, Gen.G, …). At rollover into a
+ * dataset season, each such lineup's org replaces the REGION'S WEAKEST FILLER
+ * org (by stored rating): the filler's players go to free agency, the real
+ * org arrives with the filler roster and the next preseason anchor pass
+ * (market.ts) pulls its real players in with the usual fidelity. Regions
+ * with no filler left keep their field. Deterministic (sorted scans).
+ */
+export function realOrgIntake(
+  world: WorldState,
+  toSeasonIndex: number,
+): { world: WorldState; entered: { ref: string; name: string; region: Region }[] } {
+  if (toSeasonIndex <= 0 || toSeasonIndex >= CAREER_SEASONS.length) return { world, entered: [] };
+  const seasonId = CAREER_SEASONS[toSeasonIndex].seasonId;
+  const next: WorldState = {
+    ...world,
+    orgs: { ...world.orgs },
+    freeAgentIds: [...world.freeAgentIds],
+    version: world.version,
+  };
+  const entered: { ref: string; name: string; region: Region }[] = [];
+  const seen = new Set<string>();
+  for (const lineup of lineups) {
+    if (lineup.seasonId !== seasonId || lineup.rareSpawn) continue;
+    if (next.orgs[lineup.orgId] || seen.has(lineup.orgId)) continue;
+    seen.add(lineup.orgId);
+    const fillers = Object.values(next.orgs)
+      .filter((o) => o.region === lineup.region && o.ref.startsWith("fill:"))
+      .sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0) || a.ref.localeCompare(b.ref));
+    const victim = fillers[0];
+    if (!victim) continue;
+    delete next.orgs[victim.ref];
+    next.freeAgentIds.push(...victim.playerIds);
+    const coach = lineup.coachId ? coachById.get(lineup.coachId) : undefined;
+    const prestige = PRESTIGE_BY_STRENGTH[lineup.historicalStrength];
+    const name = orgById.get(lineup.orgId)?.name ?? lineup.name;
+    next.orgs[lineup.orgId] = {
+      ref: lineup.orgId,
+      name,
+      region: lineup.region,
+      prestige,
+      // The filler roster keeps the seat warm; the preseason anchor pass
+      // brings the real lineup in (fidelity-gated, like every anchor).
+      playerIds: [...victim.playerIds] as [string, string, string],
+      coachOverall: coach?.overall,
+      stars: prestige,
+      rating: victim.rating,
+    };
+    // The seat's players are now free agents of the real org, not the filler.
+    next.freeAgentIds = next.freeAgentIds.filter((id) => !victim.playerIds.includes(id));
+    next.version += 1;
+    entered.push({ ref: lineup.orgId, name, region: lineup.region });
+  }
+  return { world: next, entered };
+}
+
+/**
  * Recompute every org's stars (v0.2: 0-5★ half-steps) via economy.starsFor:
  * intrinsic team rating percentile across the WHOLE live world + a prestige
  * component. AI orgs carry no reputation scalar, so repTier approximates from

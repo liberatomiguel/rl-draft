@@ -818,6 +818,7 @@ export const CAREER_PT: CareerCopy = {
       playerLeft: (p: Record<string, string | number>) => `${p.player} sai como agente livre`,
       retirementAnnounce: (p: Record<string, string | number>) => `${p.player} anuncia sua última temporada`,
       retired: (p: Record<string, string | number>) => `${p.player} pendura o controle`,
+      orgEnters: (p: Record<string, string | number>) => `${p.org} entra na cena de ${p.region}`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region} — ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
@@ -891,6 +892,8 @@ export const CAREER_PT: CareerCopy = {
         `${p.player} vai se aposentar no fim da temporada. Uma última campanha juntos — faça valer.`,
       retired: (p: Record<string, string | number>) =>
         `${p.player} deixa o jogo. A cena fica mais jovem — e um pouco mais pobre — hoje.`,
+      orgEnters: (p: Record<string, string | number>) =>
+        `Um escudo novo no circuito de ${p.region}: ${p.org} coloca uma line nesta temporada. A história chega no horário — e a tabela fica mais dura.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>

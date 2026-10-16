@@ -11,7 +11,7 @@ import { firstDayOfWeek, qualifierDayFor, seasonSchedule } from "@/engine/career
 import { bankLoanTerms } from "@/engine/career/economy";
 import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
-import { fieldForEvent, userTeamFor } from "@/engine/career/worldSim";
+import { fieldForEvent, realOrgIntake, userTeamFor } from "@/engine/career/worldSim";
 import {
   activeDrillFor,
   advanceDayFlow,
@@ -169,6 +169,27 @@ describe("regional qualifier (R30)", () => {
     // The qualifier paid no Season Points.
     const q = sat.eventResults.find((r) => r.tier === "qualifier" && r.region === "SAM");
     expect(q!.rows.every((r) => r.points === 0)).toBe(true);
+  });
+});
+
+describe("real orgs enter by season (R31)", () => {
+  it("rolling into 2021-22 replaces the weakest fillers with that season's new real orgs", () => {
+    const save = createCareerSave(INPUT, 777002);
+    const before = Object.keys(save.world.orgs).length;
+    const { world, entered } = realOrgIntake(save.world, 1);
+    expect(entered.length).toBeGreaterThan(5);
+    expect(Object.keys(world.orgs).length).toBe(before); // replacement, never growth
+    for (const o of entered) {
+      expect(world.orgs[o.ref]).toBeDefined();
+      expect(o.ref.startsWith("fill:")).toBe(false);
+      expect(world.orgs[o.ref].playerIds).toHaveLength(3);
+    }
+    // Idempotent for a season whose orgs are already in: nothing enters twice.
+    const again = realOrgIntake(world, 1);
+    expect(again.entered).toHaveLength(0);
+    // Season 0 and the infinite era bring nobody.
+    expect(realOrgIntake(save.world, 0).entered).toHaveLength(0);
+    expect(realOrgIntake(save.world, 99).entered).toHaveLength(0);
   });
 });
 

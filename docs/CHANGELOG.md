@@ -153,6 +153,10 @@ with the root cause — that section doubles as the project's bugfix log.
   amateur sides filling the field. Its top 8 join the direct 8 on Saturday.
   Through it: the regional is booked (news + mail); out: the week is yours to
   train. The hub, calendar and lobby read the same seeding the engine fields.
+- **Real orgs enter the world by season** (ROAD-TO-WORLDS-DECISIONS R31):
+  rolling into 2021-22, 2022-23, 2024… brings that season's new real orgs
+  (they replace the region's weakest filler; the preseason anchor pass fills
+  their real lineups). News on arrival.
 
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)
