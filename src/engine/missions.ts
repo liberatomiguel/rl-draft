@@ -81,6 +81,16 @@ export interface MissionDef {
   progress: (e: MissionEvent) => number;
 }
 
+/**
+ * Mission FAMILY — the activity it asks for, derived from the id ("d-series-6" →
+ * "series"). The picker never hands the same family twice in one period, so a
+ * day is never "win 3 / 6 / 10 series" three times over.
+ */
+export function missionFamily(id: string): string {
+  const m = /^[dw]-([a-z]+)/.exec(id);
+  return m ? m[1] : id;
+}
+
 /** What the picker knows about the player (evaluated at pick time). */
 export interface MissionEligibility {
   rankId: string;
@@ -202,10 +212,16 @@ export function periodKey(period: MissionPeriod, now = new Date()): string {
 export function pickMissions(period: MissionPeriod, key: string, el: MissionEligibility): string[] {
   const rng = createRng(seedFromKey(`${period}:${key}`));
   const out: string[] = [];
+  const families = new Set<string>();
   for (const tier of ["easy", "mid", "hard"] as MissionTier[]) {
-    const pool = MISSION_CATALOG.filter((m) => m.period === period && m.tier === tier && missionEligible(m, el));
+    const eligible = MISSION_CATALOG.filter((m) => m.period === period && m.tier === tier && missionEligible(m, el));
+    // Prefer a family not yet in the set; fall back to the full tier pool.
+    const fresh = eligible.filter((m) => !families.has(missionFamily(m.id)));
+    const pool = fresh.length ? fresh : eligible;
     if (pool.length === 0) continue;
-    out.push(pool[rng.int(0, pool.length - 1)].id);
+    const pick = pool[rng.int(0, pool.length - 1)];
+    families.add(missionFamily(pick.id));
+    out.push(pick.id);
   }
   return out;
 }

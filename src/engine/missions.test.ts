@@ -12,6 +12,7 @@ import {
   MISSION_CATALOG,
   missionById,
   missionEligible,
+  missionFamily,
   newSlot,
   periodKey,
   pickMissions,
@@ -78,6 +79,18 @@ describe("picking", () => {
     expect(a).toHaveLength(3);
     expect(a.map((id) => missionById.get(id)!.tier)).toEqual(["easy", "mid", "hard"]);
     expect(pickMissions("daily", "2026-10-22", VETERAN)).not.toEqual(a);
+  });
+
+  it("never repeats a family inside one set (no 'win 3 / 6 / 10 series' days)", () => {
+    for (let i = 0; i < 120; i++) {
+      for (const el of [ROOKIE, VETERAN]) {
+        const key = `2026-${String(1 + (i % 12)).padStart(2, "0")}-${String(1 + (i % 28)).padStart(2, "0")}`;
+        for (const period of ["daily", "weekly"] as const) {
+          const fams = pickMissions(period, key, el).map(missionFamily);
+          expect(new Set(fams).size, `${period} ${key}`).toBe(fams.length);
+        }
+      }
+    }
   });
 
   it("period keys: UTC day and ISO week", () => {

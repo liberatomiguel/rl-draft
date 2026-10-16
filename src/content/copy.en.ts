@@ -77,6 +77,7 @@ export const HOME = {
     daysLeft: (n: number) => (n === 1 ? "1 day left" : `${n} days left`),
     viewProfile: "Profile",
   },
+  newBadge: "NEW",
   featured: "Featured",
   moreModes: "More ways to play",
   yourProgress: "Your progress",

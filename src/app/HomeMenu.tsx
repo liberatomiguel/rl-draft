@@ -273,7 +273,7 @@ export default function HomeMenu() {
                 {quizDone ? (
                   <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
                 ) : (
-                  <Badge tone="blue">{HOME.careerBadge}</Badge>
+                  <Badge tone="blue">{HOME.newBadge}</Badge>
                 )}
               </div>
               <p className="text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>

@@ -73,6 +73,7 @@ export const PT: Copy = {
       daysLeft: (n: number) => (n === 1 ? "1 dia restante" : `${n} dias restantes`),
       viewProfile: "Perfil",
     },
+    newBadge: "NOVO",
     featured: "Em destaque",
     moreModes: "Mais formas de jogar",
     yourProgress: "Seu progresso",
