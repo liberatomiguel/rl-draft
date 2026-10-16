@@ -780,6 +780,20 @@ export const MISSIONS = {
 } as const;
 
 /**
+ * Daily Quiz — "Guess the Player" (v2.0). One player per UTC day, three attempts,
+ * a new clue after every miss. XP by the attempt that solved it; a miss on all
+ * three reveals the answer and pays nothing (the mission "play the quiz" still
+ * counts). Players need at least `minLineups` lineups to be a fair answer.
+ */
+export const QUIZ = {
+  attempts: 3,
+  xpByAttempt: { 1: 120, 2: 80, 3: 50 } as Record<number, number>,
+  minLineups: 2,
+  /** Daily results kept on the profile (older days are pruned). */
+  historyDays: 90,
+} as const;
+
+/**
  * Login streak (v2.0). The first open of a UTC day counts (no run needed). XP per
  * day grows with the streak up to `perDayMax`; a gap resets the streak to 1 but
  * never removes earned rewards. Milestone days also pay a flat bonus and unlock the

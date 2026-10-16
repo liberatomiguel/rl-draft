@@ -72,6 +72,7 @@ const SACRED_PROFILE_FIELDS = [
   "missions",
   "login",
   "events",
+  "quiz",
 ];
 
 class MemoryStorage implements Storage {

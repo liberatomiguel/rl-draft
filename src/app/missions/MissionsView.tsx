@@ -1,0 +1,17 @@
+"use client";
+
+import { useCopy } from "@/content/copy";
+import { BackToMenu } from "@/components/layout/LeaveRunGuard";
+import { SectionTitle } from "@/components/ui/Panel";
+import { MissionsPanel } from "@/components/MissionsPanel";
+
+export function MissionsView() {
+  const { MISSIONS_UI: M } = useCopy();
+  return (
+    <div className="rise-in mx-auto max-w-2xl">
+      <BackToMenu />
+      <SectionTitle kicker={M.kicker} title={M.title} className="mb-6" />
+      <MissionsPanel />
+    </div>
+  );
+}

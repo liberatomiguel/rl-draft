@@ -31,6 +31,7 @@ import {
   applyMissionEvent as foldMissionEvent,
   EMPTY_LOGIN,
   EMPTY_MISSIONS,
+  missionById,
   recordLogin as countLogin,
   rollMissions as rollMissionPeriods,
   type LoginState,
@@ -40,15 +41,23 @@ import {
   type MissionsState,
 } from "@/engine/missions";
 import {
+  applyGuess,
+  EMPTY_QUIZ,
+  foldQuizDay,
+  type QuizPuzzle,
+  type QuizState,
+} from "@/engine/quiz";
+import {
   freshSeason,
   normalizeToSeason,
   pushRatingHistory,
   type LegacyState,
   type SeasonState,
 } from "@/engine/season";
-import { FEATURES } from "@/config/balance";
+import { FEATURES, MISSIONS } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
 import { useAchievementToasts } from "./achievementToastStore";
+import { useRewardToasts } from "./rewardToastStore";
 import type {
   Difficulty,
   Placement,
@@ -95,6 +104,8 @@ export interface ProfileState {
   /** Special Hunt progress (v2.0): event special id → runs finished while its
    *  window was live. Never pruned (a few bytes per event; the id is the key). */
   events: Record<string, { runs: number }>;
+  /** Daily Quiz results + counters (v2.0). */
+  quiz: QuizState;
   /** Legacy difficulty gate (v1.4): set once by a real Classic/Quick Hard (or Legacy)
    *  championship. Decoupled from `wins` so Daily/Challenge titles never open Legacy. */
   legacyUnlocked: boolean;
@@ -138,6 +149,8 @@ export interface ProfileState {
     seenRegionalIntro: boolean;
     /** First-launch full-screen feature tour (v1.3.1). */
     seenTutorial: boolean;
+    /** The pre-season → Season 1 recap ("Your Legacy Lives On"), v2.0. */
+    seenSeasonRecap: boolean;
   };
 
   applyRunResults: (
@@ -185,6 +198,14 @@ export interface ProfileState {
   recordLogin: () => { counted: boolean; xp: number; streak: number; milestone: number | null };
   /** Count one finished run toward each live event card's Special Hunt (v2.0). */
   recordEventRuns: (eventSpecialIds: string[]) => void;
+  /** One Daily Quiz guess (v2.0): records the attempt, grants XP on a solve, folds
+   *  the day into the counters when it finishes, and feeds the missions. */
+  guessQuiz: (puzzle: QuizPuzzle, guessPlayerId: string | null, rawText: string) => {
+    correct: boolean;
+    finished: boolean;
+    xp: number;
+    attempts: number;
+  };
   resetAll: () => void;
 }
 
@@ -200,6 +221,7 @@ const initialData = {
   missions: EMPTY_MISSIONS,
   login: EMPTY_LOGIN,
   events: {} as Record<string, { runs: number }>,
+  quiz: EMPTY_QUIZ,
   legacyUnlocked: false,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
@@ -229,6 +251,7 @@ const initialData = {
     seenLegacyIntro: false,
     seenRegionalIntro: false,
     seenTutorial: false,
+    seenSeasonRecap: false,
   },
 };
 
@@ -335,7 +358,7 @@ function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionE
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
   p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
-    Partial<Pick<ProfileState, "missions" | "login">>,
+    Partial<Pick<ProfileState, "missions" | "login" | "quiz">>,
   now = new Date().toISOString(),
 ): CosmeticsState {
   const owned = refreshOwned(p.cosmetics?.owned ?? {}, cosmeticFacts(p), now);
@@ -345,7 +368,7 @@ function withCosmetics(
 
 export const useProfileStore = create<ProfileState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialData,
 
       applyRunResults: (results, entry, daily) => {
@@ -612,6 +635,17 @@ export const useProfileStore = create<ProfileState>()(
             cosmetics: withCosmetics({ ...state, season, missions }),
           };
         });
+        if (result.completed.length || result.bonuses.length) {
+          useRewardToasts.getState().push([
+            ...result.completed.map((missionId) => {
+              const def = missionById.get(missionId);
+              const tier = def?.tier ?? "easy";
+              const period = def?.period ?? "daily";
+              return { kind: "mission" as const, missionId, xp: MISSIONS[period].xp[tier] };
+            }),
+            ...result.bonuses.map((period) => ({ kind: "missionBonus" as const, period, xp: MISSIONS[period].allBonus })),
+          ]);
+        }
         return result;
       },
 
@@ -635,6 +669,9 @@ export const useProfileStore = create<ProfileState>()(
             cosmetics: withCosmetics({ ...state, season, login: r.state }),
           };
         });
+        if (out.counted) {
+          useRewardToasts.getState().push([{ kind: "login", streak: out.streak, xp: out.xp, milestone: out.milestone }]);
+        }
         return out;
       },
 
@@ -645,6 +682,42 @@ export const useProfileStore = create<ProfileState>()(
           for (const id of ids) events[id] = { runs: (events[id]?.runs ?? 0) + 1 };
           return { events };
         }),
+
+      guessQuiz: (puzzle, guessPlayerId, rawText) => {
+        let out = { correct: false, finished: false, xp: 0, attempts: 0 };
+        set((state) => {
+          const prev = state.quiz.results[puzzle.date];
+          const o = applyGuess(puzzle, prev, guessPlayerId, rawText);
+          out = { correct: o.correct, finished: o.finished, xp: o.xp, attempts: o.result.attempts };
+          if (o.result === prev) return {};
+          // In-progress days live in `results` too (so a reload keeps the attempts);
+          // the counters only move when the day finishes.
+          const wasFinished = !!prev && (prev.solved || prev.attempts >= 3);
+          const quiz: QuizState =
+            o.finished && !wasFinished
+              ? foldQuizDay(state.quiz, puzzle.date, o.result)
+              : { ...state.quiz, results: { ...state.quiz.results, [puzzle.date]: o.result } };
+          if (o.xp <= 0) return { quiz, cosmetics: withCosmetics({ ...state, quiz }) };
+          const xp = state.xp + o.xp;
+          const rank = rankForXp(xp);
+          const season = {
+            ...state.season,
+            peakRankId: rank.index >= rankIndexOf(state.season.peakRankId) ? rank.id : state.season.peakRankId,
+          };
+          return {
+            quiz,
+            xp,
+            lifetime: { xp: state.lifetime.xp + o.xp },
+            season,
+            cosmetics: withCosmetics({ ...state, season, quiz }),
+          };
+        });
+        if (out.correct) useRewardToasts.getState().push([{ kind: "quiz", attempt: out.attempts, xp: out.xp }]);
+        if (out.finished) {
+          get().applyMissionEvent({ type: "quiz_played", solved: out.correct, attempt: out.attempts });
+        }
+        return out;
+      },
 
       resetAll: () => set({ ...initialData, season: freshSeason() }),
     }),

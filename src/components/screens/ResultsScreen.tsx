@@ -400,16 +400,17 @@ export function ResultsScreen({ run }: { run: RunState }) {
             </span>
           </div>
 
-          {/* MMR (cosmetic skill rating, v1.4). Most runs earn 0 — show the "+N" only on a
-              qualifying title; otherwise just the current total (no demoralising "+0"). */}
+          {/* Season Rating (v2.0): a signed delta on every run — titles pay, early exits
+              at the higher difficulties cost a little; 0 just shows the total. */}
           <div className="mt-2 flex items-end justify-between">
             <span className="text-xs font-semibold text-sub">
-              {mmrGain > 0 ? R.mmrEarned : R.mmrTotal}
+              {mmrGain !== 0 ? R.mmrEarned : R.mmrTotal}
             </span>
-            <span className="display text-base font-bold text-cyan">
-              {mmrGain > 0 ? (
+            <span className={cx("display text-base font-bold", mmrGain < 0 ? "text-bad" : "text-cyan")}>
+              {mmrGain !== 0 ? (
                 <>
-                  +{mmrGain}
+                  {mmrGain > 0 ? "+" : ""}
+                  {mmrGain}
                   <span className="ml-1 text-xs font-semibold text-faint">
                     · {mmrNow} {R.mmrTotal}
                   </span>

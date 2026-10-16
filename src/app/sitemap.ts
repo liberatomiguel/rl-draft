@@ -5,10 +5,10 @@ import { PAGE_ROUTES } from "@/content/pages";
 // Required by `output: "export"`: written to out/sitemap.xml at build time.
 export const dynamic = "force-static";
 
-const LAST_MODIFIED = "2026-06-18"; // v1.3 SEO pass — bump on meaningful content change
+const LAST_MODIFIED = "2026-10-16"; // v2.0 — bump on meaningful content change
 const abs = (path: string) => `${SITE.url}${path === "/" ? "" : path}`;
 
-type Freq = "weekly" | "monthly" | "yearly";
+type Freq = "daily" | "weekly" | "monthly" | "yearly";
 
 /**
  * Sitemap. The run flow lives behind one `/play` route; the rest are content /
@@ -39,6 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Single-URL app/hub pages (language follows the in-app toggle).
   const solo: { path: string; priority: number; changeFrequency: Freq }[] = [
     { path: "/play", priority: 0.9, changeFrequency: "weekly" },
+    { path: "/quiz", priority: 0.7, changeFrequency: "daily" },
     { path: "/how-to-play", priority: 0.7, changeFrequency: "monthly" },
     { path: "/collection", priority: 0.6, changeFrequency: "weekly" },
     { path: "/achievements", priority: 0.4, changeFrequency: "monthly" },

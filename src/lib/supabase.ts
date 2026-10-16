@@ -226,6 +226,9 @@ export interface LeaderboardStats {
   season_titles: number;
   season_runs: number;
   lifetime_xp: number;
+  quiz_solved: number;
+  login_streak: number;
+  challenge_stars: number;
   /** What the player shows on the boards (resolved from `cosmetics`, v2.0). */
   equipped_title: string | null;
   equipped_frame: string | null;
@@ -256,6 +259,9 @@ export function leaderboardStats(p: DurableProfile, dailyStreak: number): Leader
     season_titles: p.season?.titles ?? 0,
     season_runs: p.season?.runs ?? 0,
     lifetime_xp: p.lifetime?.xp ?? p.xp,
+    quiz_solved: p.quiz?.solved ?? 0,
+    login_streak: p.login?.best ?? 0,
+    challenge_stars: 0, // Phase 2 (Challenges 2.0) fills this
     ...equippedColumns(p.cosmetics ?? EMPTY_COSMETICS),
   };
 }
@@ -409,14 +415,27 @@ export interface RowCosmetics {
 export interface LeaderboardRow extends RowCosmetics {
   username: string;
   value: number;
+  /** Context for the row (rank emblem, the profile peek). */
+  season_xp: number;
+  season_mmr: number;
+  season_titles: number;
+  championships: number;
 }
 
 const ROW_COSMETIC_COLUMNS =
-  "equipped_title, equipped_frame, equipped_banner, equipped_badges, grants, preseason_position";
+  "equipped_title, equipped_frame, equipped_banner, equipped_badges, grants, preseason_position, season_xp, season_mmr, season_titles, championships";
 
 function normalizeRow<T extends Partial<RowCosmetics>>(r: T): T & RowCosmetics {
+  const num = (k: string): number => {
+    const v = (r as Record<string, unknown>)[k];
+    return typeof v === "number" ? v : 0;
+  };
   return {
     ...r,
+    season_xp: num("season_xp"),
+    season_mmr: num("season_mmr"),
+    season_titles: num("season_titles"),
+    championships: num("championships"),
     equipped_title: r.equipped_title ?? null,
     equipped_frame: r.equipped_frame ?? null,
     equipped_banner: r.equipped_banner ?? null,
@@ -458,6 +477,9 @@ export interface HallOfFameRow extends RowCosmetics {
   mmr: number;
   xp: number;
   championships: number;
+  season_xp: number;
+  season_mmr: number;
+  season_titles: number;
 }
 
 /** The frozen pre-season final board (v2.0), best place first. Empty until the
@@ -467,7 +489,7 @@ export async function fetchHallOfFame(limit = 100): Promise<HallOfFameRow[]> {
   if (!c) return [];
   const { data, error } = await c
     .from("preseason_hall_of_fame")
-    .select(`username, position, mmr, xp, championships, ${ROW_COSMETIC_COLUMNS}`)
+    .select("username, position, mmr, xp, championships, equipped_title, equipped_frame, equipped_banner, grants")
     .order("position", { ascending: true })
     .limit(limit);
   if (error || !data) return [];

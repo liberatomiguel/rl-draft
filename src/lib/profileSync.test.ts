@@ -3,6 +3,7 @@ import { SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { EMPTY_COSMETICS } from "@/engine/cosmetics";
 import { EMPTY_LOGIN, EMPTY_MISSIONS } from "@/engine/missions";
+import { EMPTY_QUIZ } from "@/engine/quiz";
 import { freshSeason } from "@/engine/season";
 import { mergeProfiles, type DurableProfile } from "./profileSync";
 
@@ -17,6 +18,7 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
     missions: EMPTY_MISSIONS,
     login: EMPTY_LOGIN,
     events: {},
+    quiz: EMPTY_QUIZ,
     xp: 0,
     mmr: SEASON_RATING.start,
     legacyUnlocked: false,
@@ -34,7 +36,7 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
     challengesCompleted: {},
     records: { bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 }, bestOverallWorldwide: 0, bestOverallSam: 0 },
     settings: { lastDifficulty: "normal", lastShowOverall: true, lastMode: "classic", lastRegionLock: null },
-    flags: { seenHowToPlay: false, seenLegacyIntro: false, seenRegionalIntro: false, seenTutorial: false },
+    flags: { seenHowToPlay: false, seenLegacyIntro: false, seenRegionalIntro: false, seenTutorial: false, seenSeasonRecap: false },
     ...over,
   };
 }
@@ -138,14 +140,14 @@ describe("mergeProfiles — never lose progress (#55.7)", () => {
   it("dedupes runHistory by runId, newest first, and ORs onboarding flags", () => {
     const a = make({
       runHistory: [{ runId: "r2", date: "2026-02-02", difficulty: "normal", mode: "classic", region: null, hiddenOverall: false, placement: "champion", teamOverall: 90, swissRecord: { wins: 3, losses: 0 }, rosterNames: [], xpGained: 200 }],
-      flags: { seenHowToPlay: true, seenLegacyIntro: false, seenRegionalIntro: false, seenTutorial: false },
+      flags: { seenHowToPlay: true, seenLegacyIntro: false, seenRegionalIntro: false, seenTutorial: false, seenSeasonRecap: false },
     });
     const b = make({
       runHistory: [
         { runId: "r1", date: "2026-01-01", difficulty: "easy", mode: "classic", region: null, hiddenOverall: false, placement: "swiss_exit", teamOverall: 80, swissRecord: { wins: 1, losses: 3 }, rosterNames: [], xpGained: 50 },
         { runId: "r2", date: "2026-02-02", difficulty: "normal", mode: "classic", region: null, hiddenOverall: false, placement: "champion", teamOverall: 90, swissRecord: { wins: 3, losses: 0 }, rosterNames: [], xpGained: 200 },
       ],
-      flags: { seenHowToPlay: false, seenLegacyIntro: true, seenRegionalIntro: false, seenTutorial: false },
+      flags: { seenHowToPlay: false, seenLegacyIntro: true, seenRegionalIntro: false, seenTutorial: false, seenSeasonRecap: false },
     });
     const m = mergeProfiles(a, b);
     expect(m.runHistory.map((r) => r.runId)).toEqual(["r2", "r1"]); // newest first, deduped

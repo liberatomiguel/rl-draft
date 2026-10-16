@@ -1157,3 +1157,136 @@ html.force-reduce-motion .flip-card-inner {
 :is(html.lite-fx, html.force-reduce-motion) .celebrate-rays-prism {
   animation: none !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Cosmetics (v2.0) — profile frames, banners, titles, badges. Pure CSS: the
+   colours come from the catalog (src/data/cosmetics.ts) as inline custom
+   properties; these classes only shape them. Decorative loops are disabled
+   under lite-fx / reduced motion like every other loop.
+--------------------------------------------------------------------------- */
+
+/* Frame ring: a gradient border drawn by a padded wrapper (the child sits on
+   the page background). --cos-ring = the gradient; --cos-ring-w = thickness. */
+.cos-frame {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+  padding: var(--cos-ring-w, 3px);
+  background: var(--cos-ring, linear-gradient(135deg, #64748b, #334155));
+  isolation: isolate;
+}
+.cos-frame > * {
+  border-radius: 9999px;
+  background: var(--bg);
+}
+.cos-frame-2::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--cos-ring-w, 3px) - 2px);
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--cos-ring);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.cos-frame-sheen::after,
+.cos-frame-holo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.cos-frame-sheen::after {
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: cos-sheen 3.6s ease-in-out infinite;
+}
+.cos-frame-holo {
+  background: conic-gradient(from var(--cos-angle, 0deg), var(--cos-c1), var(--cos-c2), var(--cos-c3, var(--cos-c1)), var(--cos-c1));
+  animation: cos-spin 6s linear infinite;
+}
+.cos-frame-holo::after {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 55%);
+}
+@property --cos-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes cos-spin {
+  to { --cos-angle: 360deg; }
+}
+@keyframes cos-sheen {
+  0%, 100% { background-position: 120% 0; }
+  50% { background-position: -20% 0; }
+}
+
+/* Banner surface: gradient + optional pattern overlay (profile header, board row). */
+.cos-banner {
+  position: relative;
+  background: linear-gradient(120deg, var(--cos-from), var(--cos-to));
+  overflow: hidden;
+}
+.cos-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+}
+.cos-banner-rays::before {
+  background: repeating-conic-gradient(from 0deg at 85% 50%, transparent 0deg 9deg, var(--cos-accent) 9deg 11deg);
+  opacity: 0.16;
+}
+.cos-banner-grid::before {
+  background-image:
+    linear-gradient(var(--cos-accent) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.14;
+}
+.cos-banner-stripes::before {
+  background: repeating-linear-gradient(135deg, transparent 0 14px, var(--cos-accent) 14px 16px);
+  opacity: 0.12;
+}
+.cos-banner-animated::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%);
+  background-size: 260% 100%;
+  animation: cos-sheen 5.5s ease-in-out infinite;
+}
+.cos-banner::after,
+.cos-banner > * {
+  position: relative;
+}
+
+/* Title tag */
+.cos-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cos-color, var(--sub));
+}
+.cos-title-glow {
+  text-shadow: 0 0 12px color-mix(in srgb, var(--cos-color) 60%, transparent);
+}
+
+/* Lite effects: stop the loops, keep the colours. */
+:is(html.lite-fx, html.force-reduce-motion) .cos-frame-sheen::after,
+:is(html.lite-fx, html.force-reduce-motion) .cos-banner-animated::after {
+  animation: none;
+  background: none;
+}
+:is(html.lite-fx, html.force-reduce-motion) .cos-frame-holo {
+  animation: none;
+}

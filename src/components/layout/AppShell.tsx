@@ -15,6 +15,7 @@ import { useMounted } from "@/store/useMounted";
 import { rankForXp } from "@/engine/progression";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementToaster } from "@/components/AchievementToaster";
+import { RewardToaster } from "@/components/RewardToaster";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
@@ -63,6 +64,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Wire the account session once (no-op when accounts are disabled) — v1.4.
   useEffect(() => useAccountStore.getState().init(), []);
 
+  // v2.0: count today's login and roll the mission periods once the persisted
+  // profile is loaded (never on the server; idempotent per UTC day).
+  useEffect(() => {
+    const run = () => {
+      useProfileStore.getState().recordLogin();
+      useProfileStore.getState().rollMissions();
+    };
+    const p = useProfileStore.persist;
+    if (!p || p.hasHydrated()) {
+      run();
+      return;
+    }
+    const unsub = p.onFinishHydration(() => {
+      unsub();
+      run();
+    });
+    return unsub;
+  }, []);
+
   // Home links abandon a run in progress → they go through the leave guard.
   const NavLink = ({
     item,
@@ -96,6 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <LeaveRunProvider>
       <SettingsEffects />
       <AchievementToaster />
+      <RewardToaster />
 
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}

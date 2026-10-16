@@ -18,6 +18,7 @@
 import { HISTORY_LIMIT } from "@/config/balance";
 import { cosmeticFacts, EMPTY_COSMETICS, mergeCosmetics, refreshOwned } from "@/engine/cosmetics";
 import { EMPTY_LOGIN, EMPTY_MISSIONS, mergeLogin, mergeMissions } from "@/engine/missions";
+import { EMPTY_QUIZ, mergeQuiz } from "@/engine/quiz";
 import {
   mergeRating,
   mergeSeasonState,
@@ -55,6 +56,7 @@ export type DurableProfile = Pick<
   | "missions"
   | "login"
   | "events"
+  | "quiz"
 >;
 
 const DURABLE_KEYS: (keyof DurableProfile)[] = [
@@ -84,6 +86,7 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "missions",
   "login",
   "events",
+  "quiz",
 ];
 
 /** Extract the durable slice from a full ProfileState (drops the action fns). */
@@ -158,11 +161,12 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
   const grants = [...new Set([...(local.grants ?? []), ...(cloud.grants ?? [])])].sort();
   const missions = mergeMissions(local.missions ?? EMPTY_MISSIONS, cloud.missions ?? EMPTY_MISSIONS);
   const login = mergeLogin(local.login ?? EMPTY_LOGIN, cloud.login ?? EMPTY_LOGIN);
+  const quiz = mergeQuiz(local.quiz ?? EMPTY_QUIZ, cloud.quiz ?? EMPTY_QUIZ);
   const cosmeticsMerged = mergeCosmetics(local.cosmetics ?? EMPTY_COSMETICS, cloud.cosmetics ?? EMPTY_COSMETICS);
   // Owned cosmetics are derived facts: refresh them from the MERGED facts so a reward
   // one side earned (a grant, a better pre-season position) exists on the result.
   const cosmetics = {
-    owned: refreshOwned(cosmeticsMerged.owned, cosmeticFacts({ legacy, grants, season, missions, login })),
+    owned: refreshOwned(cosmeticsMerged.owned, cosmeticFacts({ legacy, grants, season, missions, login, quiz })),
     equipped: cosmeticsMerged.equipped,
   };
 
@@ -182,6 +186,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     missions,
     login,
     events: mergeEventRuns(local.events ?? {}, cloud.events ?? {}),
+    quiz,
     // Legacy gate: unlocked if EITHER side unlocked it (OR), so it propagates across
     // devices once earned and is never lost.
     legacyUnlocked: Boolean(local.legacyUnlocked) || Boolean(cloud.legacyUnlocked),
@@ -211,6 +216,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
       seenLegacyIntro: local.flags.seenLegacyIntro || cloud.flags.seenLegacyIntro,
       seenRegionalIntro: local.flags.seenRegionalIntro || cloud.flags.seenRegionalIntro,
       seenTutorial: local.flags.seenTutorial || cloud.flags.seenTutorial,
+      seenSeasonRecap: Boolean(local.flags.seenSeasonRecap) || Boolean(cloud.flags.seenSeasonRecap),
     },
     settings: local.settings,
   };
