@@ -726,6 +726,36 @@ export const CHALLENGE = {
   rerollsByDifficulty: { easy: 8, normal: 5, hard: 3, legacy: 0 } as Record<Difficulty, number>,
 } as const;
 
+/**
+ * Missions (v2.0, DESIGN-DECISIONS #112): three daily + three weekly objectives,
+ * one per tier, picked deterministically from the date among the missions the
+ * player can actually do (rank / unlock gated). Rewards auto-grant on completion;
+ * finishing all three of a period pays the bonus. Reference: a run is ~150–300 XP.
+ */
+export const MISSIONS = {
+  daily: {
+    xp: { easy: 40, mid: 80, hard: 150 } as Record<"easy" | "mid" | "hard", number>,
+    allBonus: 120,
+  },
+  weekly: {
+    xp: { easy: 150, mid: 300, hard: 500 } as Record<"easy" | "mid" | "hard", number>,
+    allBonus: 400,
+  },
+} as const;
+
+/**
+ * Login streak (v2.0). The first open of a UTC day counts (no run needed). XP per
+ * day grows with the streak up to `perDayMax`; a gap resets the streak to 1 but
+ * never removes earned rewards. Milestone days also pay a flat bonus and unlock the
+ * cosmetics in `src/data/cosmetics.ts` (login-streak sources: 3 / 7 / 14 / 30).
+ */
+export const LOGIN_STREAK = {
+  perDayBase: 25,
+  perDayStep: 5,
+  perDayMax: 75,
+  milestoneBonus: { 3: 50, 7: 100, 14: 200, 30: 400 } as Record<number, number>,
+} as const;
+
 // ===========================================================================
 // ROAD TO WORLDS (v1.5) — career-mode tunables.
 // Design source: docs/ROAD-TO-WORLDS-DESIGN.md. Every number here is an

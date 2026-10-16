@@ -28,12 +28,25 @@ import {
   type EquippedState,
 } from "@/engine/cosmetics";
 import {
+  applyMissionEvent as foldMissionEvent,
+  EMPTY_LOGIN,
+  EMPTY_MISSIONS,
+  recordLogin as countLogin,
+  rollMissions as rollMissionPeriods,
+  type LoginState,
+  type MissionApplyResult,
+  type MissionEligibility,
+  type MissionEvent,
+  type MissionsState,
+} from "@/engine/missions";
+import {
   freshSeason,
   normalizeToSeason,
   pushRatingHistory,
   type LegacyState,
   type SeasonState,
 } from "@/engine/season";
+import { FEATURES } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
 import { useAchievementToasts } from "./achievementToastStore";
 import type {
@@ -75,6 +88,10 @@ export interface ProfileState {
   /** Titles / badges / frames / banners: `owned` is DERIVED from the profile's facts
    *  (refreshed on every progress write), `equipped` holds explicit choices (v2.0). */
   cosmetics: CosmeticsState;
+  /** Daily + weekly missions (v2.0): the current sets, progress and completions. */
+  missions: MissionsState;
+  /** Login streak (v2.0): first open of a UTC day counts. */
+  login: LoginState;
   /** Legacy difficulty gate (v1.4): set once by a real Classic/Quick Hard (or Legacy)
    *  championship. Decoupled from `wins` so Daily/Challenge titles never open Legacy. */
   legacyUnlocked: boolean;
@@ -155,6 +172,14 @@ export interface ProfileState {
   /** Re-derive owned cosmetics from the profile's facts (idempotent). Called after
    *  every progress write; exposed for screens that unlock through other stores. */
   refreshCosmetics: () => void;
+  /** Roll the daily / weekly mission sets when their period moved on (v2.0).
+   *  Idempotent; call on screens that show missions and before applying events. */
+  rollMissions: () => void;
+  /** Fold a progress event into the missions, granting XP for completions (v2.0).
+   *  Returns what happened so the UI can toast it. */
+  applyMissionEvent: (event: MissionEvent) => MissionApplyResult;
+  /** Count today's login (idempotent per UTC day), granting the streak XP (v2.0). */
+  recordLogin: () => { counted: boolean; xp: number; streak: number; milestone: number | null };
   resetAll: () => void;
 }
 
@@ -167,6 +192,8 @@ const initialData = {
   legacy: { preseason: null } as LegacyState,
   grants: [] as string[],
   cosmetics: EMPTY_COSMETICS,
+  missions: EMPTY_MISSIONS,
+  login: EMPTY_LOGIN,
   legacyUnlocked: false,
   runsCompleted: 0,
   wins: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
@@ -288,9 +315,21 @@ function backfillSatisfiedCounters(
   return out;
 }
 
+/** What the mission picker may hand this player (v2.0). Career missions need the
+ *  mode in the build AND an existing save; the career store is not imported here
+ *  (it must not load on the draft pages), so the flag alone gates them. */
+function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionEligibility {
+  return {
+    rankId: rankForXp(p.xp).id,
+    legacyUnlocked: p.legacyUnlocked,
+    careerAvailable: FEATURES.careerMode,
+  };
+}
+
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
-  p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics">,
+  p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
+    Partial<Pick<ProfileState, "missions" | "login">>,
   now = new Date().toISOString(),
 ): CosmeticsState {
   const owned = refreshOwned(p.cosmetics?.owned ?? {}, cosmeticFacts(p), now);
@@ -537,6 +576,61 @@ export const useProfileStore = create<ProfileState>()(
         })),
 
       refreshCosmetics: () => set((state) => ({ cosmetics: withCosmetics(state) })),
+
+      rollMissions: () =>
+        set((state) => {
+          const missions = rollMissionPeriods(state.missions, eligibilityOf(state));
+          return missions === state.missions ? {} : { missions };
+        }),
+
+      applyMissionEvent: (event) => {
+        let result: MissionApplyResult = { state: EMPTY_MISSIONS, xp: 0, completed: [], bonuses: [] };
+        set((state) => {
+          const now = new Date();
+          const rolled = rollMissionPeriods(state.missions, eligibilityOf(state), now);
+          result = foldMissionEvent(rolled, event, now);
+          const missions = result.state;
+          if (missions === state.missions) return {};
+          if (result.xp <= 0) return { missions };
+          const xp = state.xp + result.xp;
+          const rank = rankForXp(xp);
+          const season = {
+            ...state.season,
+            peakRankId: rank.index >= rankIndexOf(state.season.peakRankId) ? rank.id : state.season.peakRankId,
+          };
+          return {
+            missions,
+            xp,
+            lifetime: { xp: state.lifetime.xp + result.xp },
+            season,
+            cosmetics: withCosmetics({ ...state, season, missions }),
+          };
+        });
+        return result;
+      },
+
+      recordLogin: () => {
+        let out = { counted: false, xp: 0, streak: 0, milestone: null as number | null };
+        set((state) => {
+          const r = countLogin(state.login);
+          out = { counted: r.counted, xp: r.xp, streak: r.state.streak, milestone: r.milestone };
+          if (!r.counted) return {};
+          const xp = state.xp + r.xp;
+          const rank = rankForXp(xp);
+          const season = {
+            ...state.season,
+            peakRankId: rank.index >= rankIndexOf(state.season.peakRankId) ? rank.id : state.season.peakRankId,
+          };
+          return {
+            login: r.state,
+            xp,
+            lifetime: { xp: state.lifetime.xp + r.xp },
+            season,
+            cosmetics: withCosmetics({ ...state, season, login: r.state }),
+          };
+        });
+        return out;
+      },
 
       resetAll: () => set({ ...initialData, season: freshSeason() }),
     }),

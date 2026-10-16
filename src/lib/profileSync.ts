@@ -17,6 +17,7 @@
 
 import { HISTORY_LIMIT } from "@/config/balance";
 import { cosmeticFacts, EMPTY_COSMETICS, mergeCosmetics, refreshOwned } from "@/engine/cosmetics";
+import { EMPTY_LOGIN, EMPTY_MISSIONS, mergeLogin, mergeMissions } from "@/engine/missions";
 import {
   mergeRating,
   mergeSeasonState,
@@ -51,6 +52,8 @@ export type DurableProfile = Pick<
   | "legacy"
   | "grants"
   | "cosmetics"
+  | "missions"
+  | "login"
 >;
 
 const DURABLE_KEYS: (keyof DurableProfile)[] = [
@@ -77,6 +80,8 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "legacy",
   "grants",
   "cosmetics",
+  "missions",
+  "login",
 ];
 
 /** Extract the durable slice from a full ProfileState (drops the action fns). */
@@ -139,11 +144,13 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
   const season = mergeSeasonState(local.season!, cloud.season!);
   const legacy = { preseason: mergeSnapshots(local.legacy?.preseason, cloud.legacy?.preseason) };
   const grants = [...new Set([...(local.grants ?? []), ...(cloud.grants ?? [])])].sort();
+  const missions = mergeMissions(local.missions ?? EMPTY_MISSIONS, cloud.missions ?? EMPTY_MISSIONS);
+  const login = mergeLogin(local.login ?? EMPTY_LOGIN, cloud.login ?? EMPTY_LOGIN);
   const cosmeticsMerged = mergeCosmetics(local.cosmetics ?? EMPTY_COSMETICS, cloud.cosmetics ?? EMPTY_COSMETICS);
   // Owned cosmetics are derived facts: refresh them from the MERGED facts so a reward
   // one side earned (a grant, a better pre-season position) exists on the result.
   const cosmetics = {
-    owned: refreshOwned(cosmeticsMerged.owned, cosmeticFacts({ legacy, grants, season })),
+    owned: refreshOwned(cosmeticsMerged.owned, cosmeticFacts({ legacy, grants, season, missions, login })),
     equipped: cosmeticsMerged.equipped,
   };
 
@@ -160,6 +167,8 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     legacy,
     grants,
     cosmetics,
+    missions,
+    login,
     // Legacy gate: unlocked if EITHER side unlocked it (OR), so it propagates across
     // devices once earned and is never lost.
     legacyUnlocked: Boolean(local.legacyUnlocked) || Boolean(cloud.legacyUnlocked),

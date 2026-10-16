@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { EMPTY_COSMETICS } from "@/engine/cosmetics";
+import { EMPTY_LOGIN, EMPTY_MISSIONS } from "@/engine/missions";
 import { freshSeason } from "@/engine/season";
 import { mergeProfiles, type DurableProfile } from "./profileSync";
 
@@ -13,6 +14,8 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
     legacy: { preseason: null },
     grants: [],
     cosmetics: EMPTY_COSMETICS,
+    missions: EMPTY_MISSIONS,
+    login: EMPTY_LOGIN,
     xp: 0,
     mmr: SEASON_RATING.start,
     legacyUnlocked: false,

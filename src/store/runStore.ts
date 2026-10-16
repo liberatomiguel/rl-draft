@@ -288,6 +288,8 @@ export const useRunStore = create<RunStore>()(
         if (!run || run.phase !== "draft") return;
         const rng = createRng(run.rngState);
         const draft = applyPick(run.draft, card, slot, rng);
+        // Missions (v2.0): "select a special card" counts at pick time.
+        if (card.specialId) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
         set({
           run: {
             ...run,
@@ -506,6 +508,25 @@ export const useRunStore = create<RunStore>()(
           entry,
           run.daily ? { date: run.daily.date, label: run.daily.label } : undefined,
         );
+        // Missions (v2.0): one event with the run's facts, folded after the profile
+        // write so mission XP lands on top of the run's own.
+        const starters = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3];
+        useProfileStore.getState().applyMissionEvent({
+          type: "run_completed",
+          mode: run.mode,
+          difficulty: run.difficulty,
+          placement: results.placement,
+          region: run.regionLock ?? null,
+          hiddenOverall: !run.showOverall,
+          seriesWins: entry.swissRecord.wins + results.playoffWins,
+          gameWins: results.userGameWins,
+          goals: results.userGoals,
+          specialsFielded: userTeam?.specialIds.length ?? 0,
+          chemistryTier: userTeam?.chemistry.tier ?? "Poor",
+          sameLineupTrio:
+            starters.every(Boolean) && new Set(starters.map((p) => p!.fromLineupId)).size === 1,
+          teamOverall: entry.teamOverall,
+        });
         set({
           run: { ...run, results, rngState: rng.state, phase: "results" },
         });

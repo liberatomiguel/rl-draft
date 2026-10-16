@@ -69,6 +69,8 @@ const SACRED_PROFILE_FIELDS = [
   "legacy",
   "grants",
   "cosmetics",
+  "missions",
+  "login",
 ];
 
 class MemoryStorage implements Storage {
