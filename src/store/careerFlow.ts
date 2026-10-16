@@ -129,6 +129,7 @@ import {
   contractedSplitsRemaining,
   incomingBidForDay,
 } from "@/engine/career/market";
+import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
@@ -960,6 +961,7 @@ function runWeeklyPayroll(save: CareerSave): void {
   });
   save.finances = payroll.fin;
   if (payroll.bankCleared) {
+    save.flags[ACH_FLAGS.bankCleared] = true;
     pushNews(save, { type: "org", priority: 2, titleKey: "bankCleared" });
     pushMail(save, {
       kind: "finance",
@@ -1220,6 +1222,7 @@ export function payBankLoanFlow(input: CareerSave, amount: number): FlowResult {
     day: save.clock.day,
   });
   if (!save.finances.bankLoan) {
+    save.flags[ACH_FLAGS.bankCleared] = true;
     pushNews(save, { type: "org", priority: 2, titleKey: "bankCleared" });
   }
   return { save: capNews(save) };
@@ -1460,6 +1463,7 @@ export function finishEvent(input: CareerSave): CareerSave {
     const regional = regionalForQualifier(def);
     const advanced = placement !== "swiss_exit";
     if (regional && advanced) {
+      save.flags[ACH_FLAGS.qualifierAdvanced] = true;
       save.pendingEventDef = regional;
       rollUnavailability(save, regional);
       pushNews(save, { type: "milestone", priority: 2, titleKey: "qualifiedRegional", params: { event: regional.name } });
@@ -1487,6 +1491,16 @@ export function finishEvent(input: CareerSave): CareerSave {
   // Worlds resolves the season (and possibly the career).
   if (def.tier === "worlds") {
     if (placement === "champion") {
+      // v2.0 (R32): the roster context the career achievements read.
+      const fieldedOvr = fielded
+        .map((id) => save.squad.find((p) => p.id === id)?.overall ?? 0)
+        .filter((o) => o > 0);
+      (save.flags as Record<string, unknown>)[ACH_FLAGS.worldsMaxStarterOvr] =
+        fieldedOvr.length ? Math.round(Math.max(...fieldedOvr)) : 0;
+      const founding = save.foundingSquadIds;
+      if (founding && save.squad.every((p) => founding.includes(p.id))) {
+        save.flags[ACH_FLAGS.worldsHomegrown] = true;
+      }
       save.end = {
         ...save.end,
         ended: true,
@@ -1885,6 +1899,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     phase: "running",
     squad,
     starterIds: [squad[0].id, squad[1].id, squad[2].id],
+    foundingSquadIds: squad.map((p) => p.id),
     coach: null,
     finances: {
       balance: CAREER_ECONOMY.startingBudget[input.difficulty],
@@ -2747,6 +2762,7 @@ export function scrimProjection(
 
 export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowResult {
   const save = clone(input);
+  save.flags[ACH_FLAGS.sponsorSigned] = true;
   const offer = save.sponsorOffers?.find((o) => o.sponsorId === sponsorId);
   if (!offer) return { save: input, error: "unknown" };
   save.sponsor = { ...offer, progress: 0, hitThisSplit: false, missedCount: 0 };

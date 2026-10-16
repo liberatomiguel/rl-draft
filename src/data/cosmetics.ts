@@ -28,7 +28,9 @@ export type CosmeticSource =
   | { type: "login-streak"; days: number }
   | { type: "challenge-stars"; stars: number }
   | { type: "quiz-solved"; count: number }
-  | { type: "missions-completed"; count: number };
+  | { type: "missions-completed"; count: number }
+  /** v2.0 (career R32): a permanent career achievement id. */
+  | { type: "career-mark"; markId: string };
 
 export type BadgeGlyph =
   | "flag"
@@ -109,7 +111,20 @@ const legacyRankFrames: CosmeticDef[] = Object.keys(RANK_COLORS).map((rankId, i)
   },
 }));
 
+/** v2.0 (career R32): Road to Worlds milestones, worn in the draft game too. */
+const careerCosmetics: CosmeticDef[] = [
+  { id: "career-badge-regional", kind: "badge", tier: "rare", priority: 70, source: { type: "career-mark", markId: "car-first-regional" }, style: { glyph: "trophy", color: "#60a5fa" } },
+  { id: "career-title-major", kind: "title", tier: "epic", priority: 71, source: { type: "career-mark", markId: "car-first-major" }, style: { color: "#fb923c" } },
+  { id: "career-title-world-champion", kind: "title", tier: "legend", priority: 72, source: { type: "career-mark", markId: "car-first-worlds" }, style: { color: "#fcd34d", glow: true } },
+  { id: "career-frame-world-champion", kind: "frame", tier: "legend", priority: 72, source: { type: "career-mark", markId: "car-first-worlds" }, style: { colors: ["#fcd34d", "#fb923c", "#f0abfc"], rings: 2, animated: "sheen" } },
+  { id: "career-badge-underdog", kind: "badge", tier: "legend", priority: 73, source: { type: "career-mark", markId: "car-worlds-underdog" }, style: { glyph: "bolt", color: "#34d399" } },
+  { id: "career-title-homegrown", kind: "title", tier: "legend", priority: 74, source: { type: "career-mark", markId: "car-worlds-homegrown" }, style: { color: "#a7f3d0" } },
+  { id: "career-badge-dynasty", kind: "badge", tier: "legend", priority: 75, source: { type: "career-mark", markId: "car-three-worlds" }, style: { glyph: "crown", color: "#fcd34d" } },
+  { id: "career-badge-road-warrior", kind: "badge", tier: "rare", priority: 69, source: { type: "career-mark", markId: "car-three-seasons" }, style: { glyph: "flag", color: "#22d3ee" } },
+];
+
 export const COSMETICS: CosmeticDef[] = [
+  ...careerCosmetics,
   // --- Pre-season legacy: participation -------------------------------------
   {
     id: "legacy-title-day-one",

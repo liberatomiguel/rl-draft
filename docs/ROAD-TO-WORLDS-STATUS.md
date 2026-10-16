@@ -150,8 +150,16 @@ incl. the new `src/store/careerV2.test.ts`.
   world at rollover (`realOrgIntake`, replacing the region's weakest filler;
   the preseason anchor pass then pulls their real players in) + news.
 
+**Sub-phase F (part 1) — permanent career achievements (DONE, 2026-10-16, R32
++ DESIGN-DECISIONS #118)**
+- Catalog `data/career/achievements.ts` (15), engine
+  `engine/career/achievements.ts`, store memory `achievements` (persisted,
+  cross-save), flow markers (`ACH_FLAGS`, `foundingSquadIds`), Season XP via
+  `profileStore.grantXp`, `profile.careerMarks` → eight `career-mark`
+  cosmetics, achievement toasts, Club "Career achievements" panel.
+
 **Next sub-phases:** E — inserts (random/sponsor/training events) + sponsors
-expanded; F — permanent career achievements + crest/colour palette.
+expanded; F (part 2) — crest/colour palette in the wizard.
 
 ## REMAINING / NEXT (what still needs doing)
 

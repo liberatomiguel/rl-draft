@@ -375,6 +375,27 @@ R31. **Real orgs enter the world when their season arrives.** The season-0
      also what makes local fields "evolve": the scene hardens season by
      season exactly as history did.
 
+R32. **Permanent career achievements, outside the save, with limited Season XP
+     and cosmetics.** Miguel's examples (first regional / Major / Worlds, three
+     Worlds, Worlds under an overall ceiling, Worlds without signings, every
+     difficulty) are the spine of a 15-entry catalog (`data/career/
+     achievements.ts`, hand-maintained; names in career copy). Evaluation is
+     pure (`engine/career/achievements.ts`) and runs after EVERY flow in the
+     store wrappers: it reads lifetime stats, reputation, the season index and
+     one-shot MARKERS the flows leave on `save.flags` (sponsor signed, bank
+     cleared, qualifier advanced, the Worlds-win roster context: max fielded
+     starter overall and "founding roster only" via the new
+     `foundingSquadIds`). Memory lives on the career store (`achievements:
+     { unlocked, worldsWonOn }`, persisted — DESIGN-DECISIONS #118) so it
+     survives abandoned saves and seasons; "Every Road" reads the difficulties
+     Worlds was won on across saves. Each unlock pays its Season XP once
+     through `profileStore.grantXp` (the mode never gates on the calendar;
+     40–800 XP per entry), posts an achievement toast, and mirrors the id into
+     `profile.careerMarks`, from which the cosmetics catalog derives eight
+     career items (Regional Champion badge, Major Winner title, World Champion
+     title + frame, Underdog, Homegrown, Dynasty, Road Warrior). The Club
+     screen lists the whole catalog with unlock dates.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

@@ -187,13 +187,15 @@ describe("persist contract (frozen)", () => {
     for (const [name, files] of writers) expect(files, name).toHaveLength(1);
   });
 
-  it("partialize: run persists only { run }, career only { slots, activeSlot }", () => {
+  // v2.0 (DESIGN-DECISIONS #118 / career R32): the career store also persists
+  // `achievements` (permanent, cross-save). Additive — version stays 3.
+  it("partialize: run persists only { run }, career only { slots, activeSlot, achievements }", () => {
     const runPart = persistOf("run").getOptions().partialize!(stores.run.getState() as never);
     expect(Object.keys(runPart as object).sort()).toStrictEqual(["run"]);
     const careerPart = persistOf("career").getOptions().partialize!(
       stores.career.getState() as never,
     );
-    expect(Object.keys(careerPart as object).sort()).toStrictEqual(["activeSlot", "slots"]);
+    expect(Object.keys(careerPart as object).sort()).toStrictEqual(["achievements", "activeSlot", "slots"]);
   });
 
   it("profile: every sacred progress field is persisted", () => {

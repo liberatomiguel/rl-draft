@@ -157,6 +157,14 @@ with the root cause — that section doubles as the project's bugfix log.
   rolling into 2021-22, 2022-23, 2024… brings that season's new real orgs
   (they replace the region's weakest filler; the preseason anchor pass fills
   their real lineups). News on arrival.
+- **Permanent career achievements** (ROAD-TO-WORLDS-DECISIONS R32): fifteen
+  milestones that are yours across every save and never reset with a season
+  (first sponsor, bank repaid, through a qualifier, 50/100 reputation, third
+  season, Major qualified/won, Worlds qualified/won, Worlds as an underdog or
+  homegrown, three Worlds, every difficulty). Each pays Season XP once, pops
+  an achievement toast and unlocks career cosmetics (Regional Champion, Major
+  Winner, World Champion title + frame, Underdog, Homegrown, Dynasty, Road
+  Warrior). Club screen lists them with unlock dates.
 
 ### Changed
 - **Series simulation variety** (#114): a momentum bounce (`SIMULATION.momentumBounce` 1.5)

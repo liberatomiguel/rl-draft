@@ -21,6 +21,14 @@
  */
 
 import { create } from "zustand";
+import { careerAchievementById } from "@/data/career/achievements";
+import {
+  EMPTY_ACHIEVEMENT_MEMORY,
+  evaluateCareerAchievements,
+  worldsWonOnAfter,
+  type CareerAchievementMemory,
+} from "@/engine/career/achievements";
+import { useProfileStore } from "@/store/profileStore";
 import { persist } from "zustand/middleware";
 import { CAREER_SAVE, CAREER_SEASONS } from "@/config/balance";
 import { seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
@@ -78,7 +86,7 @@ import type { GearItemId } from "@/engine/career/economy";
 /** A popup toast mirrored from a new mail/news item (session-only). */
 export interface CareerToast {
   id: string;
-  source: "mail" | "news";
+  source: "mail" | "news" | "achievement";
   titleKey: string;
   params?: Record<string, string | number>;
   linkTo?: string;
@@ -116,6 +124,11 @@ interface CareerStoreState {
   lastError: string | null;
   /** v0.3 FIFA-style autoplay switch (session-only; driven by CareerAutopilot). */
   autoAdvance: boolean;
+  /**
+   * v2.0 (R32): permanent career achievements — across saves, never reset
+   * by a season. Unlock dates by id + the difficulties Worlds was won on.
+   */
+  achievements: CareerAchievementMemory;
   /** v0.3 popup queue (session-only). */
   toasts: CareerToast[];
 
@@ -195,6 +208,34 @@ export const useCareerStore = create<CareerStoreState>()(
   persist(
     (set, get) => {
       /** Apply a flow mutation to the active save and persist it. */
+      /**
+       * v2.0 (R32): after any flow, unlock the career achievements the save
+       * now satisfies — permanent memory here, a toast, Season XP + the
+       * cosmetic mark on the profile.
+       */
+      const settleAchievements = (save: CareerSave): { memory: CareerAchievementMemory; toasts: CareerToast[] } => {
+        const memory = get().achievements ?? EMPTY_ACHIEVEMENT_MEMORY;
+        const worldsWonOn = worldsWonOnAfter(save, memory);
+        const probe = { ...memory, worldsWonOn };
+        const fresh = evaluateCareerAchievements(save, probe);
+        if (fresh.length === 0 && worldsWonOn === memory.worldsWonOn) return { memory, toasts: [] };
+        const now = Date.now();
+        const unlocked = { ...memory.unlocked };
+        const toasts: CareerToast[] = [];
+        let xp = 0;
+        for (const id of fresh) {
+          unlocked[id] = now;
+          xp += careerAchievementById.get(id)?.xp ?? 0;
+          toasts.push({ id: `ach:${id}:${now}`, source: "achievement", titleKey: id, linkTo: "/career/club" });
+        }
+        if (fresh.length > 0) {
+          const profile = useProfileStore.getState();
+          profile.addCareerMarks(fresh);
+          if (xp > 0) profile.grantXp(xp);
+        }
+        return { memory: { unlocked, worldsWonOn }, toasts };
+      };
+
       const withSave = (fn: (save: CareerSave) => CareerSave): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
@@ -204,11 +245,15 @@ export const useCareerStore = create<CareerStoreState>()(
         const nextSlots = [...slots];
         nextSlots[activeSlot] = next;
         const fresh = collectToasts(next, prevSeq);
+        const ach = settleAchievements(next);
         set((state) => ({
           slots: nextSlots,
           lastError: null,
+          achievements: ach.memory,
           toasts:
-            fresh.length > 0 ? [...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP) : state.toasts,
+            fresh.length + ach.toasts.length > 0
+              ? [...ach.toasts, ...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP)
+              : state.toasts,
         }));
       };
 
@@ -227,11 +272,15 @@ export const useCareerStore = create<CareerStoreState>()(
         const nextSlots = changed ? [...slots] : slots;
         if (changed) nextSlots[activeSlot] = save;
         const fresh = changed ? collectToasts(save, prevSeq) : [];
+        const ach = changed ? settleAchievements(save) : { memory: get().achievements, toasts: [] };
         set((state) => ({
           slots: nextSlots,
           lastError: error ?? null,
+          achievements: ach.memory,
           toasts:
-            fresh.length > 0 ? [...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP) : state.toasts,
+            fresh.length + ach.toasts.length > 0
+              ? [...ach.toasts, ...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP)
+              : state.toasts,
         }));
       };
 
@@ -240,6 +289,7 @@ export const useCareerStore = create<CareerStoreState>()(
         activeSlot: null,
         lastError: null,
         autoAdvance: false,
+        achievements: EMPTY_ACHIEVEMENT_MEMORY,
         toasts: [],
 
         createCareer: (slot, input, customSeed) => {
@@ -378,12 +428,26 @@ export const useCareerStore = create<CareerStoreState>()(
         }
         return state;
       },
-      partialize: (state) => ({ slots: state.slots, activeSlot: state.activeSlot }),
+      partialize: (state) => ({
+        slots: state.slots,
+        activeSlot: state.activeSlot,
+        achievements: state.achievements,
+      }),
       // Load-time self-heal: repair any save whose starterIds drifted out of
       // sync with the squad (the release-crash bug) and make sure the latest
       // migration ran even if zustand skipped `migrate` (same version).
       onRehydrateStorage: () => (state) => {
-        if (!state?.slots) return;
+        if (!state) return;
+        // v2.0 (R32): additive — older stores carry no achievement memory.
+        if (!state.achievements || typeof state.achievements !== "object") {
+          state.achievements = EMPTY_ACHIEVEMENT_MEMORY;
+        } else {
+          state.achievements = {
+            unlocked: state.achievements.unlocked ?? {},
+            worldsWonOn: state.achievements.worldsWonOn ?? {},
+          };
+        }
+        if (!state.slots) return;
         state.slots = state.slots.map((slot) => {
           if (!slot) return null;
           try {

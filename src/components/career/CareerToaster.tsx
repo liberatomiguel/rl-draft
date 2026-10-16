@@ -50,7 +50,8 @@ function Toast({ toast }: { toast: CareerToast }) {
   }, [toast.id, dismiss]);
 
   const title = resolveToastTitle(toast, C);
-  const kicker = toast.source === "mail" ? C.mail.title : C.hub.news;
+  const kicker =
+    toast.source === "achievement" ? C.achievements.unlocked : toast.source === "mail" ? C.mail.title : C.hub.news;
 
   return (
     <button
@@ -61,7 +62,11 @@ function Toast({ toast }: { toast: CareerToast }) {
       }}
       className={cx(
         "panel-strong pop-in pointer-events-auto flex w-full items-start gap-3 p-3 text-left",
-        toast.source === "mail" ? "ring-1 ring-orange/40" : "ring-1 ring-blue/30",
+        toast.source === "achievement"
+          ? "ring-1 ring-amber-300/60"
+          : toast.source === "mail"
+            ? "ring-1 ring-orange/40"
+            : "ring-1 ring-blue/30",
       )}
     >
       <span className="min-w-0 flex-1">

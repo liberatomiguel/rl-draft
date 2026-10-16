@@ -43,6 +43,8 @@ export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy
       return C.sources["quiz-solved"](source.count);
     case "missions-completed":
       return C.sources["missions-completed"](source.count);
+    case "career-mark":
+      return C.sources["career-mark"];
   }
 }
 

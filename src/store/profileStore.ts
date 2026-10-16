@@ -129,6 +129,8 @@ export interface ProfileState {
   challengesCompleted: Record<string, string>;
   /** challengeId → star bit mask (bit 0 = clear, 1 = star 2, 2 = star 3), v2.0. */
   challengeStars: Record<string, number>;
+  /** v2.0 (career R32): career achievement ids mirrored here so cosmetics can derive from them. */
+  careerMarks: string[];
   /** Leaderboard aggregates (v1.4): peak team overall per difficulty and per pool
    *  (worldwide vs SAM). The durable feed for the cloud leaderboards. */
   records: {
@@ -194,6 +196,8 @@ export interface ProfileState {
   /** Grant Season XP from a non-run source (missions, login streak, quiz, career
    *  milestones — v2.0). Also accrues `lifetime.xp`. Ignores non-positive amounts. */
   grantXp: (amount: number) => void;
+  /** v2.0 (career R32): record career achievement marks (idempotent) and refresh cosmetics. */
+  addCareerMarks: (ids: string[]) => void;
   /** Choose what the profile shows (locker, v2.0). Unknown / unowned ids are dropped;
    *  null = auto (best owned), `NONE` = hide the slot. */
   setEquipped: (patch: Partial<EquippedState>) => void;
@@ -248,6 +252,7 @@ const initialData = {
   dailyResults: {} as Record<string, DailyResult>,
   challengesCompleted: {} as Record<string, string>,
   challengeStars: {} as Record<string, number>,
+  careerMarks: [] as string[],
   records: {
     bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
     bestOverallWorldwide: 0,
@@ -371,7 +376,7 @@ function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionE
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
   p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
-    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars">>,
+    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars" | "careerMarks">>,
   now = new Date().toISOString(),
 ): CosmeticsState {
   const owned = refreshOwned(p.cosmetics?.owned ?? {}, cosmeticFacts(p), now);
@@ -622,6 +627,13 @@ export const useProfileStore = create<ProfileState>()(
         });
         if (fresh.length) useAchievementToasts.getState().push(fresh);
       },
+
+      addCareerMarks: (ids) =>
+        set((state) => {
+          const careerMarks = Array.from(new Set([...(state.careerMarks ?? []), ...ids]));
+          if (careerMarks.length === (state.careerMarks ?? []).length) return {};
+          return { careerMarks, cosmetics: withCosmetics({ ...state, careerMarks }) };
+        }),
 
       grantXp: (amount) =>
         set((state) => {

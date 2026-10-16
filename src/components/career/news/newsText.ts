@@ -109,9 +109,13 @@ export function resolveNews(
  * then news tpl, with the same param display fixes as the feeds).
  */
 export function resolveToastTitle(
-  toast: { source: "mail" | "news"; titleKey: string; params?: Record<string, string | number> },
+  toast: { source: "mail" | "news" | "achievement"; titleKey: string; params?: Record<string, string | number> },
   career: CareerCopy,
 ): string {
+  // v2.0 (R32): achievement toasts carry the achievement id.
+  if (toast.source === "achievement") {
+    return career.achievements.items[toast.titleKey]?.name ?? toast.titleKey;
+  }
   const p = displayParams(career, toast.titleKey, toast.params ?? {});
   const mailTitles = career.mail.tpl as unknown as TplMap;
   const newsTitles = career.news.tpl as unknown as TplMap;

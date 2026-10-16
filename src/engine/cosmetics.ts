@@ -47,6 +47,8 @@ export interface CosmeticFacts {
   challengeStars?: number;
   quizSolved?: number;
   missionsCompleted?: number;
+  /** v2.0 (career R32): permanent career achievement ids mirrored on the profile. */
+  careerMarks?: string[];
 }
 
 const rankIndex = (id: string): number => Math.max(0, RANKS.findIndex((r) => r.id === id));
@@ -76,6 +78,9 @@ export function cosmeticFacts(p: {
     challengeStars: stars ? Object.values(stars).reduce((n, mask) => n + countBits(mask), 0) : 0,
     quizSolved: quiz?.solved ?? 0,
     missionsCompleted: missions?.completedTotal ?? 0,
+    careerMarks: Array.isArray((p as { careerMarks?: unknown }).careerMarks)
+      ? ((p as { careerMarks: unknown[] }).careerMarks.filter((x) => typeof x === "string") as string[])
+      : [],
   };
 }
 
@@ -112,6 +117,8 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
       return (f.quizSolved ?? 0) >= source.count;
     case "missions-completed":
       return (f.missionsCompleted ?? 0) >= source.count;
+    case "career-mark":
+      return (f.careerMarks ?? []).includes(source.markId);
   }
 }
 

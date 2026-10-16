@@ -1221,6 +1221,18 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      reads the same constants back as legible per-attribute effects for the
      career Training screen ("Clutch: +0.4 rating in deciding games").
 
+118. **Persist contract: the career store also persists `achievements`
+     (additive, version 3 unchanged); the profile gains `careerMarks`.** Road
+     to Worlds achievements (ROAD-TO-WORLDS-DECISIONS R32) are permanent and
+     cross-save, so they cannot live inside a save slot. The career store's
+     `partialize` now writes `{ slots, activeSlot, achievements }`; older
+     stores rehydrate with an empty memory (`onRehydrateStorage` fills the
+     default — no `migrate`, no version bump). The profile mirrors unlocked
+     ids in `careerMarks` (durable, merged as a union in `mergeProfiles`) so
+     the cosmetics derivation can award career titles/badges/frames from
+     facts like every other source (`career-mark`). `persistContract.test.ts`
+     was updated deliberately for this entry.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

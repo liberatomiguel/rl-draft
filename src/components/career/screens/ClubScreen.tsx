@@ -19,6 +19,7 @@ import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
+import { CAREER_ACHIEVEMENTS } from "@/data/career/achievements";
 import { useCareerStore } from "@/store/careerStore";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -138,6 +139,7 @@ const TROPHY_TINT: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function ClubScreen() {
+  const achievements = useCareerStore((s) => s.achievements);
   const copy = useCareerCopy();
   const mounted = useMounted();
   const save = useCareerSave();
@@ -415,6 +417,54 @@ export function ClubScreen() {
         {titlesTotal === 0 ? (
           <p className="mt-3 text-center text-xs text-faint">{copy.club.trophyEmpty}</p>
         ) : null}
+      </Panel>
+
+      {/* 5b — Career achievements (v2.0 R32) */}
+      <Panel className="rise-in mb-4 p-5" style={{ animationDelay: "165ms" }}>
+        <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+          <p className="kicker">{copy.achievements.title}</p>
+          <span className="text-[11px] font-semibold text-sub">
+            {copy.achievements.progress(
+              CAREER_ACHIEVEMENTS.filter((a) => achievements.unlocked[a.id]).length,
+              CAREER_ACHIEVEMENTS.length,
+            )}
+          </span>
+        </div>
+        <p className="mb-3 text-xs text-faint">{copy.achievements.hint}</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {CAREER_ACHIEVEMENTS.map((a) => {
+            const at = achievements.unlocked[a.id];
+            const item = copy.achievements.items[a.id] ?? { name: a.id, desc: "" };
+            return (
+              <div
+                key={a.id}
+                className={cx(
+                  "flex flex-col rounded-lg border p-3",
+                  at
+                    ? a.tier === "legend"
+                      ? "border-amber-300/50 bg-amber-300/[0.06]"
+                      : "border-good/40 bg-good/[0.05]"
+                    : "border-line bg-white/[0.02] opacity-70",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className={cx("display text-xs font-bold uppercase tracking-[0.1em]", at ? "text-ink" : "text-sub")}>
+                    {item.name}
+                  </span>
+                  <Badge tone={a.tier === "legend" ? "gold" : a.tier === "epic" ? "orange" : a.tier === "rare" ? "blue" : "neutral"}>
+                    {copy.achievements.tier[a.tier]}
+                  </Badge>
+                </div>
+                <p className="mt-1 flex-1 text-[11px] leading-snug text-sub">{item.desc}</p>
+                <p className={cx("mt-1.5 text-[10px] font-semibold", at ? "text-good" : "text-faint")}>
+                  {at ? copy.achievements.unlockedOn(new Date(at).toLocaleDateString()) : copy.achievements.lockedLabel}
+                  {" · "}
+                  {copy.achievements.xp(a.xp)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </Panel>
 
       {/* 6 — Season history */}

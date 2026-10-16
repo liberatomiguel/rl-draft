@@ -635,6 +635,8 @@ export interface CareerSave {
 
   squad: SquadPlayer[];
   starterIds: [string, string, string];
+  /** v2.0 (R32): the roster the org was founded with ("homegrown" Worlds). */
+  foundingSquadIds?: string[];
   coach: CoachState | null;
 
   finances: FinanceState;

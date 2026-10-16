@@ -46,6 +46,7 @@ export type DurableProfile = Pick<
   | "dailyResults"
   | "challengesCompleted"
   | "challengeStars"
+  | "careerMarks"
   | "records"
   | "settings"
   | "flags"
@@ -77,6 +78,7 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "dailyResults",
   "challengesCompleted",
   "challengeStars",
+  "careerMarks",
   "records",
   "settings",
   "flags",
@@ -210,6 +212,7 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     achievements: mergeDateMap(local.achievements, cloud.achievements),
     challengesCompleted: mergeDateMap(local.challengesCompleted, cloud.challengesCompleted),
     challengeStars: mergeStarMasks(local.challengeStars ?? {}, cloud.challengeStars ?? {}),
+    careerMarks: Array.from(new Set([...(local.careerMarks ?? []), ...(cloud.careerMarks ?? [])])),
     dailyResults,
     runHistory,
     records: {
