@@ -1271,3 +1271,15 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      moment once per day in a modal instead of a toast. "Week N of 9" is gone
      until the season length is final.
 
+121. **Cosmetics: the game's own visual language, no avatars, no frames.**
+     Miguel on rc.2: the layered badges were "feias, pobres e mal feitas", the
+     frames all round, the profile and boards "um carnaval", disconnected from
+     the clean, minimal UI (the logo, the Legacy emblem, the achievement
+     icons, the special-card effects). Reset: badges are outlined shapes with
+     a stroke glyph in one gradient stroke; titles are the UI's tag chip;
+     banners stay dark on the left; decoration follows the special-card tiers
+     (basic muted → legend holo). The avatar + frame mechanic is removed
+     entirely (the `equipped_frame` column stays in the SQL, always null, and
+     `equipped_avatar` was never shipped). Supersedes the art parts of #119;
+     the no-auto-equip, `seen` and preview-tools parts stand.
+

@@ -2,8 +2,7 @@
 
 /**
  * Locker (v2.0, rebuilt rc.2): a MODAL that opens on the slot the player tapped
- * in the profile hero. One tab per kind (avatar · frame · title · badges ·
- * banner). Owned items equip on tap (badges: up to three, toggled); items still
+ * in the profile hero. One tab per kind (title · badges · banner). Owned items equip on tap (badges: up to three, toggled); items still
  * to earn show how; exclusive items the player does not own are hidden (they
  * cannot be earned any more). No auto mode: a slot is a choice or empty.
  * Opening a tab marks its owned items as seen (clears the "new" count).
@@ -22,14 +21,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { CosmeticArt, TIER_ACCENT, TIER_RING, useCosmeticCopy } from "./CosmeticViews";
 
-export const LOCKER_KINDS: CosmeticKind[] = ["avatar", "frame", "title", "badge", "banner"];
+export const LOCKER_KINDS: CosmeticKind[] = ["title", "badge", "banner"];
 
 const rankLabel = (id: string): string => RANKS.find((r) => r.id === id)?.label ?? id;
 
 export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy>["COSMETICS"]): string {
   switch (source.type) {
-    case "default":
-      return C.sources.default;
     case "legacy-participation":
       return C.sources["legacy-participation"];
     case "legacy-rank":
@@ -104,7 +101,7 @@ export function CosmeticsLockerModal({
       const current = cosmetics.equipped.badges ?? [];
       const next = current.includes(def.id) ? current.filter((id) => id !== def.id) : [...current, def.id].slice(-MAX_BADGES);
       setEquipped({ badges: next });
-    } else if (shownIds.has(def.id) && def.kind !== "avatar") {
+    } else if (shownIds.has(def.id)) {
       setEquipped({ [def.kind]: null });
     } else {
       setEquipped({ [def.kind]: def.id });
@@ -150,7 +147,7 @@ export function CosmeticsLockerModal({
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-sub">
         <span>{kind === "badge" ? C.badgesHint(MAX_BADGES) : C.kindHint[kind]}</span>
-        {kind !== "avatar" && (kind === "badge" ? resolved.badges.length > 0 : resolved[kind]) ? (
+        {(kind === "badge" ? resolved.badges.length > 0 : resolved[kind]) ? (
           <button type="button" onClick={clearSlot} className="font-semibold text-faint underline-offset-4 hover:text-ink hover:underline">
             {C.unequip}
           </button>
@@ -183,7 +180,7 @@ export function CosmeticsLockerModal({
               <span className="absolute left-2 top-2 flex gap-1">
                 {shown ? <Badge tone="orange">{C.equipped}</Badge> : null}
               </span>
-              {isNew(def.id) && def.source.type !== "default" ? (
+              {isNew(def.id) ? (
                 <span className="absolute right-2 top-2">
                   <Badge tone="good">{C.newTag}</Badge>
                 </span>

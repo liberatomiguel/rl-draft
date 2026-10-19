@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
-import { AvatarMark, BadgeRow, BannerSurface, TitleTag } from "@/components/cosmetics/CosmeticViews";
+import { BadgeRow, BannerSurface, TitleTag } from "@/components/cosmetics/CosmeticViews";
 
 type BoardKey = "season" | "hallOfFame" | "titles" | "legacyOverall" | "regional";
 
@@ -106,7 +106,6 @@ function previewRows(board: BoardKey): Row[] {
           equipped_title: r.equipped_title,
           equipped_frame: r.equipped_frame,
           equipped_banner: r.equipped_banner,
-          equipped_avatar: r.equipped_avatar,
           grants: r.grants,
           equipped_badges: [],
           preseason_position: r.preseason_position,
@@ -201,7 +200,7 @@ export function LeaderboardsView() {
                   <BannerSurface
                     key={`${r.username}-${i}`}
                     banner={r.cosmetics.banner}
-                    className={cx(isYou && "ring-1 ring-inset ring-orange/50")}
+                    className={cx("cos-banner-row", isYou && "ring-1 ring-inset ring-orange/50")}
                     plainClassName={cx(isYou && "bg-orange/5")}
                   >
                     <button
@@ -210,32 +209,22 @@ export function LeaderboardsView() {
                         sfx.click();
                         setPeek(r);
                       }}
-                      className={cx(
-                        "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/5 sm:px-4",
-                        r.cosmetics.banner && "bg-black/30",
-                      )}
+                      className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/5 sm:px-4"
                     >
-                      <span
-                        className={cx(
-                          "display w-7 shrink-0 text-sm font-bold",
-                          place === 1 ? "text-amber-300" : place <= 3 ? "text-sub" : "text-faint",
-                        )}
-                      >
+                      <span className={cx("display w-7 shrink-0 text-sm font-bold", place === 1 ? "text-amber-300" : place <= 3 ? "text-sub" : "text-faint")}>
                         {place}
                       </span>
-                      <AvatarMark avatar={r.cosmetics.avatar} frame={r.cosmetics.frame} size="sm" />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-ink">{r.username}</span>
-                          {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
-                          <BadgeRow badges={r.cosmetics.badges} size="xs" className="hidden sm:inline-flex" />
-                        </span>
-                        <span className="mt-0.5 flex items-center gap-1.5">
-                          <TitleTag title={r.cosmetics.title} size="xs" className="truncate" />
-                        </span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="truncate text-sm font-semibold text-ink">{r.username}</span>
+                        {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
+                        <BadgeRow badges={r.cosmetics.badges} size="xs" />
                       </span>
-                      <RankBadge rank={rank} variant="menu" size="sm" className="hidden !h-7 !w-7 sm:block" />
-                      <span className="display shrink-0 text-sm font-bold text-orange-bright">{r.value}</span>
+                      <TitleTag title={r.cosmetics.title} size="xs" className="hidden shrink-0 sm:inline-flex" />
+                      <span className="hidden w-28 shrink-0 items-center gap-1.5 sm:flex">
+                        <RankBadge rank={rank} variant="menu" size="sm" className="!h-6 !w-6" />
+                        <span className="truncate text-[10px] font-semibold uppercase tracking-wider text-faint">{rank.label}</span>
+                      </span>
+                      <span className="display w-14 shrink-0 text-right text-sm font-bold text-orange-bright">{r.value}</span>
                     </button>
                   </BannerSurface>
                 );
@@ -249,14 +238,15 @@ export function LeaderboardsView() {
         {peek ? (
           <div>
             <BannerSurface banner={peek.cosmetics.banner} className="-mx-2 rounded-xl border border-line-strong" plainClassName="panel">
-              <div className={cx("flex items-center gap-4 p-4", peek.cosmetics.banner && "bg-black/35")}>
-                <AvatarMark avatar={peek.cosmetics.avatar} frame={peek.cosmetics.frame} size="lg" />
-                <div className="min-w-0">
+              <div className="flex items-center gap-4 p-4">
+                <RankBadge rank={rankForXp(peek.rankXp)} variant="menu" size="md" />
+                <div className="min-w-0 flex-1">
                   <p className="display truncate text-xl font-bold uppercase tracking-wide text-ink">{peek.username}</p>
-                  <TitleTag title={peek.cosmetics.title} size="sm" />
-                  <BadgeRow badges={peek.cosmetics.badges} size="md" className="mt-2" />
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <TitleTag title={peek.cosmetics.title} size="sm" />
+                    <BadgeRow badges={peek.cosmetics.badges} size="md" />
+                  </div>
                 </div>
-                <RankBadge rank={rankForXp(peek.rankXp)} variant="menu" size="sm" className="ml-auto" />
               </div>
             </BannerSurface>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">

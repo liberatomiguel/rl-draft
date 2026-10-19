@@ -235,8 +235,6 @@ export interface LeaderboardStats {
   equipped_frame: string | null;
   equipped_banner: string | null;
   equipped_badges: string[];
-  /** rc.2: the profile avatar. */
-  equipped_avatar: string | null;
 }
 
 export function leaderboardStats(p: DurableProfile, dailyStreak: number): LeaderboardStats {
@@ -392,7 +390,7 @@ export async function deleteAccount(): Promise<void> {
 
 export type LeaderboardCategory = Exclude<
   keyof LeaderboardStats,
-  "season_id" | "equipped_title" | "equipped_frame" | "equipped_banner" | "equipped_badges" | "equipped_avatar"
+  "season_id" | "equipped_title" | "equipped_frame" | "equipped_banner" | "equipped_badges"
 >;
 
 /** Columns that only make sense inside the current season (filtered by `season_id`). */
@@ -411,7 +409,6 @@ export interface RowCosmetics {
   equipped_frame: string | null;
   equipped_banner: string | null;
   equipped_badges: string[];
-  equipped_avatar: string | null;
   grants: string[];
   preseason_position: number | null;
 }
@@ -427,7 +424,7 @@ export interface LeaderboardRow extends RowCosmetics {
 }
 
 const ROW_COSMETIC_COLUMNS =
-  "equipped_title, equipped_frame, equipped_banner, equipped_badges, equipped_avatar, grants, preseason_position, season_xp, season_mmr, season_titles, championships";
+  "equipped_title, equipped_frame, equipped_banner, equipped_badges, grants, preseason_position, season_xp, season_mmr, season_titles, championships";
 
 function normalizeRow<T extends Partial<RowCosmetics>>(r: T): T & RowCosmetics {
   const num = (k: string): number => {
@@ -444,7 +441,6 @@ function normalizeRow<T extends Partial<RowCosmetics>>(r: T): T & RowCosmetics {
     equipped_frame: r.equipped_frame ?? null,
     equipped_banner: r.equipped_banner ?? null,
     equipped_badges: Array.isArray(r.equipped_badges) ? r.equipped_badges : [],
-    equipped_avatar: r.equipped_avatar ?? null,
     grants: Array.isArray(r.grants) ? r.grants : [],
     preseason_position:
       typeof r.preseason_position === "number" && r.preseason_position > 0
@@ -494,7 +490,7 @@ export async function fetchHallOfFame(limit = 100): Promise<HallOfFameRow[]> {
   if (!c) return [];
   const { data, error } = await c
     .from("preseason_hall_of_fame")
-    .select("username, position, mmr, xp, championships, equipped_title, equipped_frame, equipped_banner, equipped_avatar, grants")
+    .select("username, position, mmr, xp, championships, equipped_title, equipped_frame, equipped_banner, grants")
     .order("position", { ascending: true })
     .limit(limit);
   if (error || !data) return [];

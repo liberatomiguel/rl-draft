@@ -29,7 +29,6 @@ export interface PreviewRow {
   equipped_frame: string | null;
   equipped_banner: string | null;
   equipped_badges: string[];
-  equipped_avatar: string | null;
   grants: string[];
   preseason_position: number | null;
   /** Frozen pre-season archive (Hall of Fame). */
@@ -65,10 +64,8 @@ export function previewLeaderboardRows(): PreviewRow[] {
   const pick = <T,>(arr: T[]): T => arr[Math.floor(r() * arr.length)];
   const maybe = <T,>(p: number, arr: T[]): T | null => (r() < p ? pick(arr) : null);
   const titles = ofKind("title");
-  const frames = ofKind("frame");
   const banners = ofKind("banner");
   const badges = ofKind("badge");
-  const avatars = ofKind("avatar");
   const rows: PreviewRow[] = NAMES.map((name, i) => {
     // A skewed rating spread: a few elites, a fat middle, a long tail.
     const q = r();
@@ -99,10 +96,9 @@ export function previewLeaderboardRows(): PreviewRow[] {
       login_streak: Math.round(r() * 35),
       challenge_stars: Math.round(r() * 50),
       equipped_title: decorated ? (maybe(0.8, titles)?.id ?? null) : null,
-      equipped_frame: decorated ? (maybe(0.7, frames)?.id ?? null) : null,
+      equipped_frame: null,
       equipped_banner: decorated ? (maybe(0.55, banners)?.id ?? null) : null,
       equipped_badges: [...badgeSet].slice(0, 3),
-      equipped_avatar: pick(avatars).id,
       grants,
       preseason_position: null,
       preseason_mmr: Math.round(900 + Math.pow(r(), 1.4) * 700),

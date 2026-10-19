@@ -3,7 +3,8 @@
 /**
  * Home menu v3 (rc.2) — a bento with a real hierarchy. The SEO surface is
  * untouched on purpose (hero copy, `HomeSeoContent`, metadata in page.tsx).
- *   1. Hero (as before) + a quiet identity line: rank emblem · rank · rating.
+ *   1. Hero (as before) + the identity block: rank emblem, then rank · rating ·
+ *      runs · titles as tags (rc.3).
  *   2. PLAY — Classic Draft (the big one, with Quick Draft as its secondary
  *      action) and Road to Worlds, side by side, nothing else competing.
  *   3. TODAY — Daily Challenge, Challenges, today's missions, and the Daily
@@ -25,7 +26,6 @@ import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
-import { resolveEquipped } from "@/engine/cosmetics";
 import { generateDailyConfig, todayKey } from "@/lib/daily";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -41,7 +41,6 @@ import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { MissionsPanel } from "@/components/MissionsPanel";
-import { AvatarMark } from "@/components/cosmetics/CosmeticViews";
 import { QuizPanel } from "@/app/quiz/QuizView";
 
 export default function HomeMenu() {
@@ -58,14 +57,12 @@ export default function HomeMenu() {
   const achieved = useProfileStore((s) => Object.keys(s.achievements).length);
   const dailyResults = useProfileStore((s) => s.dailyResults);
   const streak = useProfileStore(selectDailyStreak);
-  const cosmetics = useProfileStore((s) => s.cosmetics);
   const quizToday = useProfileStore((s) => s.quiz.results[todayKey()]);
   const collectionOpen = useProfileStore(selectCollectionUnlocked);
   const clearRun = useRunStore((s) => s.clearRun);
   const startDailyRun = useRunStore((s) => s.startDailyRun);
   const setSetupMode = useRunStore((s) => s.setSetupMode);
   const rank = rankForXp(xp);
-  const shown = resolveEquipped(cosmetics);
   const [quizOpen, setQuizOpen] = useState(false);
 
   const goToSetup = (mode: "classic" | "quick") => {
@@ -110,20 +107,20 @@ export default function HomeMenu() {
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
 
-        {/* Identity line: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-6 flex min-h-[64px] max-w-2xl items-center justify-center">
+        {/* Identity: reserved height, mount-gated (persisted state would mismatch SSR). */}
+        <div className="mx-auto mt-7 flex min-h-[132px] max-w-2xl flex-col items-center gap-3">
           {mounted ? (
-            <AppLink href="/profile" className="group inline-flex items-center gap-3 rounded-xl px-3 py-1.5 transition-colors hover:bg-white/5">
-              <RankBadge rank={rank} variant="menu" size="sm" />
-              <span className="text-left">
-                <span className="display block text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</span>
-                <span className="block text-[11px] text-sub">
-                  {HOME.seasonStrip.rating} <span className="display font-bold text-orange-bright">{mmr}</span>
-                  {runs > 0 ? <span className="text-faint"> · {HOME.runs(runs)}</span> : null}
-                  {titles > 0 ? <span className="text-faint"> · {HOME.titles(titles)}</span> : null}
-                </span>
-              </span>
-            </AppLink>
+            <>
+              <RankBadge rank={rank} variant="menu" size="md" />
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                <Badge tone="blue">{rank.label}</Badge>
+                <Badge tone="orange">
+                  {HOME.seasonStrip.rating} {mmr}
+                </Badge>
+                {runs > 0 ? <Badge tone="neutral">{HOME.runs(runs)}</Badge> : null}
+                {titles > 0 ? <Badge tone="gold">{HOME.titles(titles)}</Badge> : null}
+              </div>
+            </>
           ) : null}
         </div>
       </section>
@@ -139,9 +136,6 @@ export default function HomeMenu() {
               className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-orange/40 p-6 md:p-8"
             >
               <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange/15 blur-3xl" aria-hidden />
-              <div className="pointer-events-none absolute right-6 top-6 hidden text-orange/20 md:block" aria-hidden>
-                <BallGlyph className="h-28 w-28" />
-              </div>
               <div className="relative">
                 <div className="mb-2 flex items-center gap-2.5">
                   <h2 className="display text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{HOME.playClassic}</h2>
@@ -177,9 +171,6 @@ export default function HomeMenu() {
                 className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:p-8"
               >
                 <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/15 blur-3xl" aria-hidden />
-                <div className="pointer-events-none absolute right-5 top-5 text-blue/25" aria-hidden>
-                  <GlobeGlyph className="h-20 w-20" />
-                </div>
                 <div className="relative">
                   <div className="mb-2 flex items-center gap-2.5">
                     <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
@@ -207,7 +198,7 @@ export default function HomeMenu() {
 
         {/* ---- TODAY ------------------------------------------------------------ */}
         <p className="kicker mb-2 mt-7">{HOME.sectionDaily}</p>
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12 md:grid-rows-[auto_auto]">
           <Panel className="relative flex flex-col overflow-hidden p-5 md:col-span-4">
             <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-300/10 blur-2xl" aria-hidden />
             <div className="mb-1 flex items-center justify-between gap-2">
@@ -250,14 +241,14 @@ export default function HomeMenu() {
           </Panel>
 
           {locked ? (
-            <div className="cursor-not-allowed md:col-span-3" aria-disabled="true" title={HOME.challengesLocked}>
+            <div className="cursor-not-allowed md:col-span-4" aria-disabled="true" title={HOME.challengesLocked}>
               <Panel className="flex h-full flex-col p-5 opacity-60">
                 <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
                 <p className="mt-1 text-xs text-sub">{HOME.challengesLocked}</p>
               </Panel>
             </div>
           ) : (
-            <AppLink href="/challenges" className="group md:col-span-3">
+            <AppLink href="/challenges" className="group md:col-span-4">
               <Panel className="flex h-full flex-col p-5 transition-colors group-hover:!border-line-strong">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
@@ -270,17 +261,18 @@ export default function HomeMenu() {
             </AppLink>
           )}
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-4 md:row-span-2">
             <MissionsPanel compact />
           </div>
 
-          <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="group text-left md:col-span-2">
-            <Panel className="flex h-full flex-col justify-between p-4 transition-colors group-hover:!border-violet-400/50">
-              <div>
+          <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="group text-left sm:col-span-2 md:col-span-8">
+            <Panel className="flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-violet-400/50">
+              <div className="min-w-0">
                 <p className="kicker !text-[9px] text-violet-300">{HOME.quizKicker}</p>
-                <h3 className="display mt-0.5 text-base font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
+                <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
+                <p className="mt-0.5 hidden text-xs text-sub sm:block">{HOME.quizDesc}</p>
               </div>
-              <div className="mt-3">
+              <div className="shrink-0">
                 {quizDone ? (
                   <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
                 ) : (
@@ -321,7 +313,7 @@ export default function HomeMenu() {
             </span>
           </Tile>
           <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc}>
-            {mounted ? <AvatarMark avatar={shown.avatar} frame={shown.frame} size="sm" /> : null}
+            {mounted ? <RankBadge rank={rank} variant="menu" size="sm" /> : null}
           </Tile>
           <Tile href="/leaderboards" title={HOME.leaderboards} desc={HOME.leaderboardsDesc}>
             <span className="shrink-0 text-cyan" aria-hidden>
@@ -416,25 +408,6 @@ function HomeSignInNudge() {
         {H.signInNudge} →
       </AppLink>
     </p>
-  );
-}
-
-function BallGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" aria-hidden>
-      <circle cx="50" cy="50" r="40" />
-      <path d="M50 28l17 12-6.5 20h-21L33 40Z" />
-      <path d="M50 28V10M67 40l17-5M60.5 60l10 15M39.5 60l-10 15M33 40l-17-5" />
-    </svg>
-  );
-}
-
-function GlobeGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18M12 3c3.5 3.5 3.5 14.5 0 18M12 3c-3.5 3.5-3.5 14.5 0 18M5 7.5c4 2 10 2 14 0M5 16.5c4-2 10-2 14 0" />
-    </svg>
   );
 }
 

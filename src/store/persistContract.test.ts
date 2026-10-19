@@ -282,7 +282,7 @@ describe("profile migrate (old saves keep their progress)", () => {
       // The legacy rewards are derived at migration time (no sync needed): "Day One"
       // + the peak-rank frames up to Gold.
       expect(Object.keys((out.cosmetics as { owned: Record<string, string> }).owned)).toEqual(
-        expect.arrayContaining(["legacy-title-day-one", "legacy-badge-first-chapter", "legacy-frame-gold"]),
+        expect.arrayContaining(["legacy-title-day-one", "legacy-badge-first-chapter", "legacy-badge-gold"]),
       );
       // New fields are backfilled, not missing.
       expect(out).toMatchObject({

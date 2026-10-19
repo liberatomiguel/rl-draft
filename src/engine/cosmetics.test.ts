@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EN } from "@/content/copy.en";
 import { PT } from "@/content/copy.pt";
-import { COSMETICS, cosmeticById, DEFAULT_AVATAR_ID } from "@/data/cosmetics";
+import { COSMETICS, cosmeticById } from "@/data/cosmetics";
 import {
   cosmeticFacts,
   deriveOwnedIds,
@@ -41,8 +41,7 @@ const facts = (over: Partial<CosmeticFacts> = {}): CosmeticFacts => ({
   ...over,
 });
 
-/** Earned ids only — the starter avatars are owned by everyone (rc.2). */
-const earned = (f: CosmeticFacts): string[] => deriveOwnedIds(f).filter((id) => cosmeticById.get(id)?.source.type !== "default");
+const earned = (f: CosmeticFacts): string[] => deriveOwnedIds(f);
 
 describe("catalog integrity", () => {
   it("ids are unique and every item has EN + PT copy", () => {
@@ -57,19 +56,16 @@ describe("catalog integrity", () => {
 });
 
 describe("deriveOwnedIds (the legacy rewards + grants + season track)", () => {
-  it("only the starter avatars without facts", () => {
-    const ids = deriveOwnedIds(facts());
-    expect(ids.length).toBeGreaterThan(0);
-    expect(ids.every((id) => cosmeticById.get(id)?.kind === "avatar" && cosmeticById.get(id)?.source.type === "default")).toBe(true);
-    expect(earned(facts())).toEqual([]);
+  it("nothing without facts", () => {
+    expect(deriveOwnedIds(facts())).toEqual([]);
   });
 
   it("pre-season participation + peak-rank frames (cumulative up to the peak)", () => {
     const ids = deriveOwnedIds(facts({ preseason: snap({ rankId: "gold" }) }));
     expect(ids).toContain("legacy-title-day-one");
     expect(ids).toContain("legacy-badge-first-chapter");
-    expect(ids).toEqual(expect.arrayContaining(["legacy-frame-bronze", "legacy-frame-silver", "legacy-frame-gold"]));
-    expect(ids).not.toContain("legacy-frame-platinum");
+    expect(ids).toEqual(expect.arrayContaining(["legacy-badge-bronze", "legacy-badge-silver", "legacy-badge-gold"]));
+    expect(ids).not.toContain("legacy-badge-platinum");
     expect(ids).not.toContain("legacy-title-preseason-legend");
   });
 
@@ -99,23 +95,22 @@ describe("deriveOwnedIds (the legacy rewards + grants + season track)", () => {
   });
 
   it("the Season 1 track follows the season peak rank, only in Season 1", () => {
-    expect(earned(facts({ seasonPeakRankId: "gold" }))).toEqual(["s1-banner-kickoff", "s1-badge-ignition", "s1-frame-chrome"]);
+    expect(earned(facts({ seasonPeakRankId: "gold" }))).toEqual(["s1-banner-kickoff", "s1-badge-ignition", "s1-badge-gilded"]);
     expect(earned(facts({ seasonId: 2, seasonPeakRankId: "gold" }))).toEqual([]);
-    expect(earned(facts({ seasonPeakRankId: "diamond" }))).toContain("avatar-rocket");
   });
 
   it("streak / stars / quiz / missions thresholds", () => {
-    expect(earned(facts({ loginBestStreak: 7 }))).toEqual(["streak-badge-3", "streak-frame-7"]);
-    expect(earned(facts({ challengeStars: 25 }))).toEqual(["avatar-trophy", "stars-badge-10", "stars-frame-25"]);
-    expect(earned(facts({ quizSolved: 10 }))).toEqual(["avatar-comet", "quiz-badge-10"]);
-    expect(earned(facts({ missionsCompleted: 100 }))).toEqual(["avatar-planet", "missions-badge-25", "missions-title-100"]);
+    expect(earned(facts({ loginBestStreak: 7 }))).toEqual(["streak-badge-3", "streak-badge-7"]);
+    expect(earned(facts({ challengeStars: 25 }))).toEqual(["stars-badge-10", "stars-badge-25"]);
+    expect(earned(facts({ quizSolved: 10 }))).toEqual(["quiz-badge-10"]);
+    expect(earned(facts({ missionsCompleted: 100 }))).toEqual(["missions-badge-25", "missions-title-100"]);
   });
 
   it("the preview switch owns everything; switching it off drops the preview ids again", () => {
     expect(deriveOwnedIds(facts({ previewAll: true }))).toHaveLength(COSMETICS.length);
     const all = refreshOwned({}, facts({ previewAll: true }));
     const back = refreshOwned(all, facts());
-    expect(Object.keys(back).every((id) => cosmeticById.get(id)?.source.type === "default")).toBe(true);
+    expect(Object.keys(back)).toEqual([]);
   });
 });
 
@@ -123,29 +118,25 @@ describe("owned map + equipped resolution", () => {
   it("refreshOwned keeps known dates, dates new ids, drops unknown ids", () => {
     const owned = refreshOwned({ "legacy-title-day-one": "2026-10-20T00:00:00.000Z", "ghost-id": "2026-01-01" }, facts({ preseason: snap() }), "2026-11-01T00:00:00.000Z");
     expect(owned["legacy-title-day-one"]).toBe("2026-10-20T00:00:00.000Z");
-    expect(owned["legacy-frame-platinum"]).toBe("2026-11-01T00:00:00.000Z");
+    expect(owned["legacy-badge-platinum"]).toBe("2026-11-01T00:00:00.000Z");
     expect(owned).not.toHaveProperty("ghost-id");
   });
 
-  it("no auto-equip (rc.2): an empty slot shows nothing, only the avatar falls back; a stale choice resolves to empty", () => {
+  it("no auto-equip (rc.2): an empty slot shows nothing; a stale choice resolves to empty", () => {
     const owned = refreshOwned({}, facts({ preseason: snap({ position: 8 }), grants: ["pro"] }));
     const empty = resolveEquipped({ owned, equipped: EMPTY_COSMETICS.equipped });
     expect(empty.title).toBeNull();
-    expect(empty.frame).toBeNull();
     expect(empty.banner).toBeNull();
     expect(empty.badges).toEqual([]);
-    expect(empty.avatar.id).toBe(DEFAULT_AVATAR_ID);
 
-    const explicit = resolveEquipped({ owned, equipped: { title: "legacy-title-day-one", frame: NONE, banner: "legacy-banner-elite", badges: ["legacy-badge-first-chapter"], avatar: "avatar-phoenix" } });
+    const explicit = resolveEquipped({ owned, equipped: { title: "legacy-title-day-one", banner: "legacy-banner-elite", badges: ["legacy-badge-first-chapter"] } });
     expect(explicit.title?.id).toBe("legacy-title-day-one");
-    expect(explicit.frame).toBeNull();
     expect(explicit.banner?.id).toBe("legacy-banner-elite");
     expect(explicit.badges.map((b) => b.id)).toEqual(["legacy-badge-first-chapter"]);
-    expect(explicit.avatar.id).toBe("avatar-phoenix");
 
-    const stale = resolveEquipped({ owned, equipped: { title: "s1-title-grinder", frame: null, banner: null, badges: null, avatar: "avatar-skull" } });
+    const stale = resolveEquipped({ owned, equipped: { title: "s1-title-grinder", banner: NONE, badges: null } });
     expect(stale.title).toBeNull();
-    expect(stale.avatar.id).toBe(DEFAULT_AVATAR_ID);
+    expect(stale.banner).toBeNull();
   });
 
   it("seen bookkeeping: unseen = owned, earned, not yet looked at; markSeen is idempotent", () => {
@@ -161,27 +152,27 @@ describe("owned map + equipped resolution", () => {
 
   it("sanitizeEquipped drops unowned ids and caps badges", () => {
     const owned = refreshOwned({}, facts({ grants: ["pro", "supporter", "contributor"], loginBestStreak: 3 }));
-    const e = sanitizeEquipped(owned, { title: "legacy-title-champion", frame: "grant-badge-pro-player", banner: NONE, badges: ["grant-badge-pro-player", "grant-badge-pro-player", "grant-badge-early-supporter", "grant-badge-founding-contributor", "streak-badge-3"] });
-    expect(e).toEqual({ title: null, frame: null, banner: null, avatar: null, badges: ["grant-badge-pro-player", "grant-badge-early-supporter", "grant-badge-founding-contributor"] });
+    const e = sanitizeEquipped(owned, { title: "legacy-title-champion", banner: NONE, badges: ["grant-badge-pro-player", "grant-badge-pro-player", "grant-badge-early-supporter", "grant-badge-founding-contributor", "streak-badge-3"] });
+    expect(e).toEqual({ title: null, banner: null, badges: ["grant-badge-pro-player", "grant-badge-early-supporter", "grant-badge-founding-contributor"] });
   });
 
   it("equippedColumns / rowCosmetics round-trip through the leaderboard view shape", () => {
     const owned = refreshOwned({}, facts({ preseason: snap({ position: 1 }) }));
     const cols = equippedColumns({ owned, equipped: { ...EMPTY_COSMETICS.equipped, title: "legacy-title-champion", badges: ["legacy-badge-first-chapter"] } });
     expect(cols.equipped_title).toBe("legacy-title-champion");
-    expect(cols.equipped_avatar).toBe(DEFAULT_AVATAR_ID);
+    expect(cols.equipped_frame).toBeNull();
     const row = rowCosmetics({ ...cols, equipped_badges: [...cols.equipped_badges, "not-a-badge"] });
     expect(row.title?.id).toBe("legacy-title-champion");
     expect(row.badges.map((b) => b.id)).toEqual(cols.equipped_badges);
   });
 
   it("mergeCosmetics unions owned (earliest date) and prefers the local explicit choice", () => {
-    const local = { owned: { a: "2026-10-22", "legacy-frame-gold": "2026-10-22" }, equipped: { title: null, frame: "legacy-frame-gold", banner: null, badges: null }, seen: ["a"] };
-    const cloud = { owned: { a: "2026-10-20", "legacy-title-day-one": "2026-10-21", "legacy-frame-silver": "2026-10-21" }, equipped: { title: "legacy-title-day-one", frame: "legacy-frame-silver", banner: null, badges: null }, seen: ["legacy-title-day-one"] };
+    const local = { owned: { a: "2026-10-22", "legacy-banner-elite": "2026-10-22" }, equipped: { title: null, banner: "legacy-banner-elite", badges: null }, seen: ["a"] };
+    const cloud = { owned: { a: "2026-10-20", "legacy-title-day-one": "2026-10-21", "legacy-banner-challenger": "2026-10-21" }, equipped: { title: "legacy-title-day-one", banner: "legacy-banner-challenger", badges: null }, seen: ["legacy-title-day-one"] };
     const m = mergeCosmetics(local, cloud);
-    expect(m.owned).toEqual({ a: "2026-10-20", "legacy-title-day-one": "2026-10-21", "legacy-frame-gold": "2026-10-22", "legacy-frame-silver": "2026-10-21" });
+    expect(m.owned).toEqual({ a: "2026-10-20", "legacy-title-day-one": "2026-10-21", "legacy-banner-elite": "2026-10-22", "legacy-banner-challenger": "2026-10-21" });
     expect(m.equipped.title).toBe("legacy-title-day-one"); // cloud's choice adopted (local was empty)
-    expect(m.equipped.frame).toBe("legacy-frame-gold"); // local explicit wins
+    expect(m.equipped.banner).toBe("legacy-banner-elite"); // local explicit wins
     expect(m.seen?.sort()).toEqual(["a", "legacy-title-day-one"]);
   });
 

@@ -25,7 +25,7 @@ import { useProfileStore } from "@/store/profileStore";
 import { useAccountStore } from "@/store/accountStore";
 import { Button } from "@/components/ui/Button";
 import { RankBadge } from "@/components/ui/RankBadge";
-import { CosmeticPreview, FrameRing } from "@/components/cosmetics/CosmeticViews";
+import { BadgeEmblem, CosmeticPreview } from "@/components/cosmetics/CosmeticViews";
 
 export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () => void } = {}) {
   const mounted = useMounted();
@@ -49,9 +49,9 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
   };
   const legacyIds = Object.keys(owned).filter((id) => id.startsWith("legacy-"));
   const rank = RANKS.find((r) => r.id === preseason?.rankId) ?? RANKS[0];
-  const frame = legacyIds
+  const rankBadge = legacyIds
     .map((id) => cosmeticById.get(id))
-    .filter((d) => d?.kind === "frame")
+    .filter((d) => d?.kind === "badge" && d.source.type === "legacy-rank")
     .sort((a, b) => (b?.priority ?? 0) - (a?.priority ?? 0))[0];
 
   const positionLine = (() => {
@@ -74,10 +74,9 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
                 <p className="kicker text-orange-bright">{R.kicker}</p>
                 <h2 className="display mt-2 text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{R.title}</h2>
                 <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-sub">{R.subtitle}</p>
-                <div className="mt-7 flex justify-center">
-                  <FrameRing frame={frame ?? null} width={4}>
-                    <RankBadge rank={rank} variant="profile" size="lg" />
-                  </FrameRing>
+                <div className="mt-7 flex items-center justify-center gap-4">
+                  <RankBadge rank={rank} variant="menu" size="lg" />
+                  {rankBadge ? <BadgeEmblem badge={rankBadge} size="lg" /> : null}
                 </div>
                 <p className="display mt-3 text-xl font-bold uppercase tracking-wide text-ink">{rank.label}</p>
                 <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">

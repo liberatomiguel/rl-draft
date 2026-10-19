@@ -40,7 +40,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { FieldView } from "@/components/cards/FieldView";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { AccountSection, ProfileNickname } from "@/components/AccountSection";
-import { AvatarMark, BadgeEmblem, BannerSurface, CosmeticIcon, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
+import { BadgeEmblem, BannerSurface, CosmeticIcon, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { CosmeticsLockerModal } from "@/components/cosmetics/CosmeticsLocker";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 
@@ -88,7 +88,7 @@ export default function ProfilePage() {
         right={
           <button
             type="button"
-            onClick={() => openLocker("avatar")}
+            onClick={() => openLocker("title")}
             className="display relative inline-flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-white/5 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-ink transition-colors hover:border-orange/50"
           >
             <LockerGlyph /> {P.openLocker}
@@ -100,119 +100,93 @@ export default function ProfilePage() {
         className="mb-5"
       />
 
-      {/* ---- HERO ------------------------------------------------------------ */}
-      <BannerSurface
-        banner={shown.banner}
-        className="mb-6 overflow-hidden rounded-2xl border border-line-strong"
-        plainClassName="panel-strong panel-glow-blue"
-      >
-        <div className={cx("relative p-5 sm:p-6", shown.banner && "bg-gradient-to-r from-black/55 via-black/35 to-black/55")}>
-          <div className="flex flex-col items-center gap-5 md:flex-row md:items-start md:gap-7">
-            {/* avatar + frame */}
-            <div className="flex shrink-0 flex-col items-center gap-2">
-              <button
-                type="button"
-                onClick={() => openLocker(shown.frame ? "frame" : "avatar")}
-                className="group relative rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-orange/70"
-                title={P.editAvatar}
-              >
-                <AvatarMark avatar={shown.avatar} frame={shown.frame} size="xl" />
-                <span className="absolute -bottom-1 -right-1 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-line-strong bg-raised text-sub shadow-lg transition-colors group-hover:border-orange/60 group-hover:text-orange-bright">
-                  <PencilGlyph />
-                </span>
-              </button>
-              <div className="flex gap-1.5">
-                <SlotLink onClick={() => openLocker("avatar")}>{CC.kinds.avatar}</SlotLink>
-                <span className="text-faint">·</span>
-                <SlotLink onClick={() => openLocker("frame")}>{CC.kinds.frame}</SlotLink>
+      {/* ---- HERO (the v2 banner, with every cosmetic slot tappable) --------- */}
+      <BannerSurface banner={shown.banner} className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
+        <div className="flex flex-col items-center gap-6 p-6 sm:flex-row">
+          <RankBadge rank={rank} variant="menu" size="lg" />
+
+          <div className="w-full min-w-0 flex-1 text-center sm:text-left">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                {signedIn ? (
+                  <ProfileNickname />
+                ) : (
+                  <p className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{P.guest}</p>
+                )}
+                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  {shown.title ? (
+                    <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
+                      <TitleTag title={shown.title} size="sm" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openLocker("title")}
+                      className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                    >
+                      + {P.editTitle}
+                    </button>
+                  )}
+                  <span className="inline-flex items-center gap-1.5">
+                    {shown.badges.map((b) => (
+                      <button key={b.id} type="button" onClick={() => openLocker("badge")} title={cosmeticCopy.name(b.id)} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
+                        <BadgeEmblem badge={b} size="md" />
+                      </button>
+                    ))}
+                    {shown.badges.length < MAX_BADGES ? (
+                      <button
+                        type="button"
+                        onClick={() => openLocker("badge")}
+                        title={P.addBadge}
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-line-strong text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                      >
+                        <span className="text-sm leading-none">+</span>
+                      </button>
+                    ) : null}
+                  </span>
+                </div>
+                {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
+                {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
+              </div>
+              <div className="shrink-0 sm:text-right">
+                <p className="kicker mb-0.5">{P.seasonRating}</p>
+                <p className="display whitespace-nowrap text-[1.9rem] font-bold leading-none text-orange-bright">
+                  {profile.mmr}
+                  {lastDelta !== null && lastDelta !== 0 ? (
+                    <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-good" : "text-bad")}>
+                      {lastDelta > 0 ? "+" : ""}
+                      {lastDelta}
+                    </span>
+                  ) : null}
+                </p>
+                <p className="display mt-1 whitespace-nowrap text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</p>
               </div>
             </div>
 
-            {/* identity */}
-            <div className="min-w-0 flex-1 text-center md:text-left">
-              {signedIn ? (
-                <ProfileNickname />
-              ) : (
-                <p className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{P.guest}</p>
-              )}
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 md:justify-start">
-                {shown.title ? (
-                  <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
-                    <TitleTag title={shown.title} size="md" />
-                  </button>
-                ) : (
+            <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
+            <div className="mt-2.5 flex items-center justify-between gap-3">
+              <span className="flex items-center gap-3">
+                {signedIn ? (
                   <button
                     type="button"
-                    onClick={() => openLocker("title")}
-                    className="display rounded-md border border-dashed border-line-strong px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                    onClick={accountSignOut}
+                    className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
                   >
-                    + {P.editTitle}
+                    {L.signOut}
                   </button>
-                )}
-              </div>
-              {/* badge slots */}
-              <div className="mt-4 flex items-center justify-center gap-3 md:justify-start">
-                {Array.from({ length: MAX_BADGES }).map((_, i) => {
-                  const b = shown.badges[i];
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => openLocker("badge")}
-                      title={b ? cosmeticCopy.name(b.id) : P.addBadge}
-                      className={cx(
-                        "flex h-16 w-16 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-orange/70",
-                        b ? "bg-black/25 hover:bg-black/40" : "border border-dashed border-line-strong text-faint hover:border-orange/50 hover:text-sub",
-                      )}
-                    >
-                      {b ? <BadgeEmblem badge={b} size="md" /> : <span className="text-xl leading-none">+</span>}
-                    </button>
-                  );
-                })}
-              </div>
-              {signedIn && accountEmail ? <p className="mt-3 truncate text-xs text-faint">{accountEmail}</p> : null}
-              {!signedIn ? <p className="mt-3 text-xs text-faint">{P.guestHint}</p> : null}
-            </div>
-
-            {/* rank + rating */}
-            <div className="flex shrink-0 flex-col items-center gap-1 md:items-end">
-              <RankBadge rank={rank} variant="menu" size="md" />
-              <p className="display text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</p>
-              <p className="kicker mt-2 !text-[10px]">{P.seasonRating}</p>
-              <p className="display whitespace-nowrap text-[2.1rem] font-bold leading-none text-orange-bright">
-                {profile.mmr}
-                {lastDelta !== null && lastDelta !== 0 ? (
-                  <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-good" : "text-bad")}>
-                    {lastDelta > 0 ? "+" : ""}
-                    {lastDelta}
-                  </span>
                 ) : null}
-              </p>
-            </div>
-          </div>
-
-          {/* XP bar + hero actions */}
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex-1">
-              <ProgressBar value={rank.progress} tone="orange" label={P.rank} />
-              <p className="mt-1.5 text-[11px] text-sub">
+                <button
+                  type="button"
+                  onClick={() => openLocker("banner")}
+                  className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+                >
+                  {P.editBanner}
+                </button>
+              </span>
+              <p className="text-xs text-sub">
                 {profile.xp} {P.xp}
                 {rank.next ? <span className="text-faint"> · {P.toNext(rank.xpToNext)}</span> : <span className="text-faint"> · {P.maxRank}</span>}
               </p>
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              {signedIn ? (
-                <button
-                  type="button"
-                  onClick={accountSignOut}
-                  className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
-                >
-                  {L.signOut}
-                </button>
-              ) : null}
-              <Button variant="ghost" size="sm" onClick={() => openLocker("banner")}>
-                {P.editBanner}
-              </Button>
             </div>
           </div>
         </div>
@@ -228,7 +202,7 @@ export default function ProfilePage() {
             <p className="kicker !text-[10px]">{P.seasonTrack}</p>
             <p className="text-[11px] text-faint">{P.seasonTrackHint}</p>
           </div>
-          <SeasonTrackBar peakRankId={profile.season.peakRankId} owned={profile.cosmetics.owned} />
+          <SeasonTrackBar xp={profile.xp} peakRankId={profile.season.peakRankId} owned={profile.cosmetics.owned} />
         </Panel>
         <div className="grid grid-cols-2 gap-3 lg:col-span-2">
           <StatTile label={P.seasonRating} value={String(profile.mmr)} accent />
@@ -349,7 +323,7 @@ export default function ProfilePage() {
         ) : null}
       </div>
 
-      <CosmeticsLockerModal open={locker !== null} kind={locker ?? "avatar"} onClose={() => setLocker(null)} />
+      <CosmeticsLockerModal open={locker !== null} kind={locker ?? "title"} onClose={() => setLocker(null)} />
 
       <Modal
         open={confirmDelete}
@@ -429,14 +403,6 @@ export default function ProfilePage() {
 
       {replayRecap ? <SeasonRecap force onClose={() => setReplayRecap(false)} /> : null}
     </div>
-  );
-}
-
-function SlotLink({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick} className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint transition-colors hover:text-orange-bright">
-      {children}
-    </button>
   );
 }
 
@@ -523,62 +489,58 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
   );
 }
 
-/** The Season 1 rank track as a horizontal progress bar: one node per rank with
- *  the reward art above it, lit once the rank is reached this season. */
-function SeasonTrackBar({ peakRankId, owned }: { peakRankId: string; owned: Record<string, string> }) {
+/** The Season 1 rank track: the rank emblem on top, its reward below, and a
+ *  progress bar that follows the player's XP so it shows how far the next
+ *  reward really is. Rewards light up once the rank was reached this season. */
+function SeasonTrackBar({ xp, peakRankId, owned }: { xp: number; peakRankId: string; owned: Record<string, string> }) {
   const { PROFILE_UI: P } = useCopy();
   const copy = useCosmeticCopy();
   const track = COSMETICS.filter((c) => c.source.type === "season-rank" && c.source.seasonId === SEASON.id);
   const ranks = RANKS.filter((r) => r.id !== "unranked");
   const peakIdx = ranks.findIndex((r) => r.id === peakRankId);
-  const progress = peakIdx < 0 ? 0 : (peakIdx + 0.5) / ranks.length;
-  const next = ranks[peakIdx + 1] ?? null;
+  const now = rankForXp(xp);
+  const nowIdx = ranks.findIndex((r) => r.id === now.id);
+  // Node i sits at the centre of column i; the fill reaches the current rank's
+  // node plus the XP progress toward the next one.
+  const nodeCenter = (i: number) => ((i + 0.5) / ranks.length) * 100;
+  const fill = nowIdx < 0 ? Math.max(0, now.progress * nodeCenter(0)) : nowIdx >= ranks.length - 1 ? 100 : nodeCenter(nowIdx) + now.progress * (nodeCenter(nowIdx + 1) - nodeCenter(nowIdx));
+  const next = ranks[Math.max(peakIdx, nowIdx) + 1] ?? null;
   return (
     <div>
-      <div className="relative">
-        <div className="absolute left-[6%] right-[6%] top-[4.5rem] h-1.5 rounded-full bg-white/8" aria-hidden>
-          <div className="h-full rounded-full bg-gradient-to-r from-orange to-amber-300 transition-[width] duration-700" style={{ width: `${Math.min(100, progress * 100)}%` }} />
-        </div>
-        <ol className="relative grid" style={{ gridTemplateColumns: `repeat(${ranks.length}, minmax(0, 1fr))` }}>
-          {ranks.map((rank, i) => {
-            const reached = i <= peakIdx;
-            const rewards = track.filter((c) => c.source.type === "season-rank" && c.source.rankId === rank.id);
-            return (
-              <li key={rank.id} className={cx("flex flex-col items-center", !reached && "opacity-55")}>
-                <div className="flex h-14 flex-wrap items-end justify-center gap-0.5" title={rewards.map((c) => `${copy.kind(c.kind)} · ${copy.name(c.id)}`).join("\n")}>
-                  {rewards.map((c) => (
-                    <span key={c.id} className={cx("flex items-center justify-center", owned[c.id] ? "" : "saturate-50")}>
-                      <CosmeticIcon def={c} />
-                    </span>
-                  ))}
-                </div>
-                <span
-                  className={cx(
-                    "relative z-10 mt-2 flex h-5 w-5 items-center justify-center rounded-full border-2",
-                    reached ? "border-amber-300 bg-amber-300 text-[#1a0d02]" : "border-line-strong bg-raised",
-                  )}
-                  aria-hidden
-                >
-                  {reached ? <span className="text-[10px] font-bold">✓</span> : null}
-                </span>
-                <RankBadge rank={rank} variant="menu" size="sm" className="mt-1 !h-8 !w-8" />
-                <span className="hidden text-center text-[9px] font-semibold uppercase tracking-wider text-faint sm:block">{rank.label}</span>
-              </li>
-            );
-          })}
-        </ol>
+      <ol className="grid" style={{ gridTemplateColumns: `repeat(${ranks.length}, minmax(0, 1fr))` }}>
+        {ranks.map((rank, i) => (
+          <li key={rank.id} className={cx("flex flex-col items-center", i > peakIdx && "opacity-55")}>
+            <RankBadge rank={rank} variant="menu" size="sm" className="!h-9 !w-9" />
+            <span className="mt-0.5 hidden text-center text-[9px] font-semibold uppercase tracking-wider text-faint sm:block">{rank.label}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="relative my-2 h-1.5 w-full rounded-full bg-white/8" aria-hidden>
+        <div className="h-full rounded-full bg-gradient-to-r from-orange to-amber-300 transition-[width] duration-700" style={{ width: `${Math.min(100, fill)}%` }} />
+        {ranks.map((rank, i) => (
+          <span
+            key={rank.id}
+            className={cx("absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2", i <= peakIdx ? "border-amber-300 bg-amber-300" : "border-line-strong bg-raised")}
+            style={{ left: `${nodeCenter(i)}%` }}
+          />
+        ))}
       </div>
-      <p className="mt-2 text-center text-[11px] text-sub">{next ? P.seasonTrackNext(next.label) : P.seasonTrackDone}</p>
+      <ol className="grid" style={{ gridTemplateColumns: `repeat(${ranks.length}, minmax(0, 1fr))` }}>
+        {ranks.map((rank, i) => {
+          const rewards = track.filter((c) => c.source.type === "season-rank" && c.source.rankId === rank.id);
+          return (
+            <li key={rank.id} className={cx("flex flex-col items-center gap-1 px-0.5", i > peakIdx && "opacity-55")}>
+              {rewards.map((c) => (
+                <span key={c.id} className={cx("flex max-w-full items-center justify-center", owned[c.id] ? "" : "saturate-50")} title={`${copy.kind(c.kind)} · ${copy.name(c.id)}`}>
+                  <CosmeticIcon def={c} className="max-w-full !whitespace-normal text-center leading-tight" />
+                </span>
+              ))}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-center text-[11px] text-sub">{next ? P.seasonTrackNext(next.label) : P.seasonTrackDone}</p>
     </div>
-  );
-}
-
-function PencilGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
-      <path d="m13.5 6.5 3 3" />
-    </svg>
   );
 }
 

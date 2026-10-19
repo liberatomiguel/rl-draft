@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** branch `claude/dazzling-cannon-1d6thr`, published as
-  **v2.0.0-rc.2 on `staging`** (`staging.rocketdraft.app`, career on, noindex,
+  **v2.0.0-rc.3 on `staging`** (`staging.rocketdraft.app`, career on, noindex,
   preview tools on: unlock-all cosmetics switch on /profile, fictional boards).
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
   **Never deploy v2.0 to `main` before the full review.**
@@ -23,9 +23,10 @@ Profile v2, Leaderboard v2 + Hall of Fame, missions UI, Daily Quiz, Home v2;
 Challenges 2.0 (3 stars, 4 gauntlets, 24 validated); Road to Worlds 2.0
 (weekly payroll, bank loan, HQ rebuilt, Training 2.0, Wednesday qualifier,
 real orgs by season, permanent achievements, weekly inserts, colour kits);
-rc.2 UX pass (cosmetics redrawn + avatars, profile v3 + locker modal, home
-bento, login/quiz modals, challenge cards, hub v3, training/finances clarity).
-Decisions: DESIGN-DECISIONS #110–#120, ROAD-TO-WORLDS-DECISIONS R20–R37.
+rc.2 UX pass (profile + locker modal, home bento, login/quiz modals, challenge
+cards, hub v3, training/finances clarity) and the rc.3 visual reset (line-art
+badges, tag-like titles, quiet banners; no avatars/frames).
+Decisions: DESIGN-DECISIONS #110–#121, ROAD-TO-WORLDS-DECISIONS R20–R37.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 
 ## Open before `main` (Phase 4)

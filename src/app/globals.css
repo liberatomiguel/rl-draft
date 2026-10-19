@@ -1180,86 +1180,133 @@ html.force-reduce-motion .flip-card-inner {
 }
 
 /* ---------------------------------------------------------------------------
-   Cosmetics (v2.0, redrawn rc.2) — avatars, frames, badges, titles, banners.
-   Pure SVG + CSS from src/data/cosmetics.ts. Every loop below stops under
+   Cosmetics (v2.0, visual language reset rc.3) — titles, badges, banners.
+   Line art + the chip the UI already uses; effects only on epic / legend,
+   borrowed from the special cards (glow, holo-shift). Every loop stops under
    lite-fx / reduced motion like every other loop in the game.
 --------------------------------------------------------------------------- */
 
-/* Frame + emblem loops (applied to the SVG itself) */
-.cos-fx-sheen {
-  animation: cos-frame-pulse 3.6s ease-in-out infinite;
+/* Badge emblem effects (on the SVG) */
+.cos-glow-epic {
+  filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.45));
 }
-.cos-fx-holo {
-  animation: cos-hue 7s linear infinite;
+.cos-glow-legend {
+  filter: drop-shadow(0 0 5px rgba(252, 211, 77, 0.5));
 }
-.cos-fx-pulse {
-  animation: cos-frame-pulse 2.4s ease-in-out infinite;
+.cos-holo {
+  animation: cos-holo 7s ease-in-out infinite;
 }
-@keyframes cos-hue {
-  to { filter: hue-rotate(360deg); }
-}
-@keyframes cos-frame-pulse {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.25)); }
-  50% { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)); }
-}
-.cos-emblem-epic {
-  filter: drop-shadow(0 0 5px rgba(192, 132, 252, 0.45));
-}
-.cos-emblem-legend {
-  filter: drop-shadow(0 0 7px rgba(252, 211, 77, 0.55));
-  animation: cos-legend-glow 3s ease-in-out infinite;
-}
-@keyframes cos-legend-glow {
-  0%, 100% { filter: drop-shadow(0 0 5px rgba(252, 211, 77, 0.4)); }
-  50% { filter: drop-shadow(0 0 11px rgba(252, 211, 77, 0.8)); }
-}
-.cos-twinkle circle {
-  animation: cos-twinkle 2.6s ease-in-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-@keyframes cos-twinkle {
-  0%, 100% { opacity: 0; transform: scale(0.4); }
-  50% { opacity: 1; transform: scale(1.3); }
+@keyframes cos-holo {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(252, 211, 77, 0.4)) hue-rotate(0deg); }
+  50% { filter: drop-shadow(0 0 7px rgba(252, 211, 77, 0.7)) hue-rotate(28deg); }
 }
 
-/* Banner surface: gradient + pattern overlay (profile hero, board row). */
+/* Title chip: the "Live" / "New" tag, decorated by tier. */
+.cos-title {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.375rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--sub);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cos-title-rare {
+  color: var(--cos-c1);
+  border-color: color-mix(in srgb, var(--cos-c1) 40%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 10%, transparent);
+}
+.cos-title-epic {
+  border-color: color-mix(in srgb, var(--cos-c1) 45%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 8%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--cos-c1) 22%, transparent);
+}
+.cos-title-epic,
+.cos-title-legend {
+  background-image: linear-gradient(90deg, var(--cos-c1), var(--cos-c2), var(--cos-c3));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cos-title-legend {
+  position: relative;
+  border-color: color-mix(in srgb, var(--cos-c2) 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--cos-c1) 30%, transparent);
+  animation: cos-title-holo 5.5s ease-in-out infinite;
+}
+.cos-title-legend::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%);
+  background-size: 220% 100%;
+  animation: card-sheen 3s ease-in-out infinite;
+}
+@keyframes cos-title-holo {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Banner surface: the left stays dark (text lives there); the colour sits on
+   the right. The pattern is quiet; legend adds the holo sheen. */
 .cos-banner {
   position: relative;
-  background: linear-gradient(120deg, var(--cos-from), var(--cos-to));
   overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(5, 8, 15, 0.94) 0%, rgba(5, 8, 15, 0.8) 40%, rgba(5, 8, 15, 0.45) 100%),
+    linear-gradient(120deg, var(--cos-from), var(--cos-to));
+}
+.cos-banner-common {
+  background:
+    linear-gradient(90deg, rgba(5, 8, 15, 0.95) 0%, rgba(5, 8, 15, 0.85) 45%, rgba(5, 8, 15, 0.6) 100%),
+    linear-gradient(120deg, var(--cos-from), var(--cos-to));
+}
+/* A board row: even quieter — the colour is a hint on the far right. */
+.cos-banner.cos-banner-row,
+.cos-banner.cos-banner-row.cos-banner-common {
+  background:
+    linear-gradient(90deg, rgba(5, 8, 15, 0.97) 0%, rgba(5, 8, 15, 0.92) 55%, rgba(5, 8, 15, 0.7) 100%),
+    linear-gradient(120deg, var(--cos-from), var(--cos-to));
+}
+.cos-banner.cos-banner-row::before {
+  left: 60%;
+  opacity: 0.07;
 }
 .cos-banner::before {
   content: "";
   position: absolute;
   inset: 0;
+  left: 35%;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.1;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
 }
 .cos-banner-rays::before {
-  background: repeating-conic-gradient(from 0deg at 85% 50%, transparent 0deg 9deg, var(--cos-accent) 9deg 11deg);
-  opacity: 0.16;
+  background: repeating-conic-gradient(from 0deg at 88% 50%, transparent 0deg 9deg, var(--cos-accent) 9deg 11deg);
 }
 .cos-banner-grid::before {
   background-image:
     linear-gradient(var(--cos-accent) 1px, transparent 1px),
     linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px);
   background-size: 22px 22px;
-  opacity: 0.14;
 }
 .cos-banner-stripes::before {
   background: repeating-linear-gradient(135deg, transparent 0 14px, var(--cos-accent) 14px 16px);
-  opacity: 0.12;
 }
 .cos-banner-hex::before {
-  background-image:
-    radial-gradient(circle at 50% 50%, transparent 9px, var(--cos-accent) 9.5px, var(--cos-accent) 10.5px, transparent 11px);
+  background-image: radial-gradient(circle at 50% 50%, transparent 9px, var(--cos-accent) 9.5px, var(--cos-accent) 10.5px, transparent 11px);
   background-size: 34px 30px;
-  opacity: 0.14;
 }
 .cos-banner-waves::before {
   background: repeating-radial-gradient(ellipse at 50% 130%, transparent 0 18px, var(--cos-accent) 18px 20px);
-  opacity: 0.14;
 }
 .cos-banner-circuit::before {
   background-image:
@@ -1268,29 +1315,22 @@ html.force-reduce-motion .flip-card-inner {
     radial-gradient(circle, var(--cos-accent) 1.6px, transparent 2px);
   background-size: 44px 44px, 44px 44px, 44px 44px;
   background-position: 0 0, 0 0, 22px 22px;
-  opacity: 0.16;
 }
 .cos-banner-aurora::before {
   background:
-    radial-gradient(60% 80% at 20% 20%, var(--cos-accent), transparent 60%),
-    radial-gradient(50% 70% at 80% 80%, var(--cos-accent), transparent 60%);
+    radial-gradient(50% 80% at 70% 20%, var(--cos-accent), transparent 60%),
+    radial-gradient(45% 70% at 95% 85%, var(--cos-accent), transparent 60%);
   opacity: 0.28;
   filter: blur(18px);
-}
-.cos-banner-stadium::before {
-  background:
-    repeating-conic-gradient(from 0deg at 50% 120%, transparent 0deg 6deg, var(--cos-accent) 6deg 7deg),
-    radial-gradient(circle at 50% 120%, var(--cos-accent), transparent 55%);
-  opacity: 0.18;
 }
 .cos-banner-animated::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%);
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
   background-size: 260% 100%;
-  animation: cos-sheen 5.5s ease-in-out infinite;
+  animation: cos-sheen 6s ease-in-out infinite;
 }
 @keyframes cos-sheen {
   0%, 100% { background-position: 120% 0; }
@@ -1301,68 +1341,19 @@ html.force-reduce-motion .flip-card-inner {
   position: relative;
 }
 
-/* Title chip: the container rises with the tier. */
-.cos-title {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 0.375rem;
-  border: 1px solid var(--line-strong);
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--sub);
-  background: rgba(255, 255, 255, 0.04);
-}
-.cos-title-rare {
-  color: var(--cos-color, var(--sub));
-  border-color: color-mix(in srgb, var(--cos-color) 45%, transparent);
-  background: color-mix(in srgb, var(--cos-color) 9%, transparent);
-}
-.cos-title-epic {
-  color: var(--cos-color, var(--sub));
-  border-color: color-mix(in srgb, var(--cos-color) 70%, transparent);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--cos-color) 22%, transparent), rgba(255, 255, 255, 0.03));
-  box-shadow: 0 0 14px color-mix(in srgb, var(--cos-color) 28%, transparent);
-}
-.cos-title-legend {
-  position: relative;
-  color: #fff;
-  border-color: color-mix(in srgb, var(--cos-color) 85%, #fff);
-  background: linear-gradient(120deg, color-mix(in srgb, var(--cos-color) 55%, transparent), rgba(255, 255, 255, 0.06), color-mix(in srgb, var(--cos-color) 55%, transparent));
-  background-size: 220% 100%;
-  box-shadow: 0 0 18px color-mix(in srgb, var(--cos-color) 40%, transparent);
-  animation: cos-title-shift 4.5s ease-in-out infinite;
-}
-.cos-title-glow {
-  text-shadow: 0 0 12px color-mix(in srgb, var(--cos-color) 60%, transparent);
-}
-.cos-title-holo {
-  text-shadow: 0 0 10px color-mix(in srgb, var(--cos-color) 70%, #fff);
-}
-@keyframes cos-title-shift {
-  0%, 100% { background-position: 0% 0; }
-  50% { background-position: 100% 0; }
-}
-
 /* Lite effects: stop the loops, keep the colours. */
-:is(html.lite-fx, html.force-reduce-motion) .cos-banner-animated::after {
+:is(html.lite-fx, html.force-reduce-motion) .cos-banner-animated::after,
+:is(html.lite-fx, html.force-reduce-motion) .cos-title-legend::after {
   animation: none;
   background: none;
 }
-:is(html.lite-fx, html.force-reduce-motion) .cos-fx-sheen,
-:is(html.lite-fx, html.force-reduce-motion) .cos-fx-holo,
-:is(html.lite-fx, html.force-reduce-motion) .cos-fx-pulse,
-:is(html.lite-fx, html.force-reduce-motion) .cos-emblem-legend,
-:is(html.lite-fx, html.force-reduce-motion) .cos-title-legend,
-:is(html.lite-fx, html.force-reduce-motion) .cos-twinkle circle {
+:is(html.lite-fx, html.force-reduce-motion) .cos-holo,
+:is(html.lite-fx, html.force-reduce-motion) .cos-title-legend {
   animation: none;
 }
-:is(html.lite-fx, html.force-reduce-motion) .cos-emblem-epic,
-:is(html.lite-fx, html.force-reduce-motion) .cos-emblem-legend {
-  filter: none;
-}
+:is(html.lite-fx, html.force-reduce-motion) .cos-glow-epic,
+:is(html.lite-fx, html.force-reduce-motion) .cos-glow-legend,
+:is(html.lite-fx, html.force-reduce-motion) .cos-holo,
 :is(html.lite-fx, html.force-reduce-motion) .cos-banner-aurora::before {
   filter: none;
 }

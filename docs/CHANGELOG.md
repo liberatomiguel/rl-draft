@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → `staging` as **v2.0.0-rc.2**)
+## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → `staging` as **v2.0.0-rc.3**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,31 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.3 (visual language reset, 2026-10-19 · DESIGN-DECISIONS #121)
+- **Cosmetics speak the game's language again.** rc.2's layered, bevelled art
+  was rejected ("cara pobre", disconnected from the clean UI). Badges are now
+  LINE ART: an outlined shape (8 shapes) with a stroke glyph (18 glyphs), one
+  gradient stroke, round caps — the Legacy emblem's grammar. Titles are the
+  same chip as the "Live" / "New" tags. Banners keep the left side dark and
+  put the colour on the right. Effects follow the special cards: basic = one
+  muted colour and nothing else; rare = one accent; epic = gradient + glow;
+  legend = prismatic gradient + glow + holo loop.
+- **Avatars and frames removed** (the mechanic, not just the art): a player is
+  name, title, badges and banner. The season track and the legacy rewards that
+  used to be frames became badges / banners (`legacy-badge-<rank>`,
+  `s1-badge-gilded`, `s1-badge-prism`, `s1-banner-supersonic`,
+  `streak-badge-7`, `stars-badge-25`, `career-banner-world-champion`).
+  Titles re-tiered so there are basic (gray) ones. Catalog: 53 items.
+- **Profile hero back to the v2 layout** (rank emblem · name · title · badges ·
+  rating · XP bar), every slot still tappable (title, badge slots, "Change
+  banner"). Season track: rank on top, reward below, the bar follows XP.
+- **Leaderboard** rows are thin again: place · name + badges · title · rank ·
+  value; banners are a hint on the right.
+- **Home**: identity block is the centred rank emblem with rank / rating /
+  runs / titles as tags; no decorative glyphs on the Play cards; Today row is
+  Daily Challenge · Challenges · Missions (tall), with the quiz as a short tile.
+- **Challenge cards**: a divider before the three stars, and the XP each pays.
 
 ### Added — rc.2 (UX & design pass, 2026-10-19 · DESIGN-DECISIONS #119–#120, ROAD-TO-WORLDS-DECISIONS R35–R37)
 - **Cosmetics redrawn** (`src/data/cosmetics.ts`, `CosmeticViews.tsx`): every item

@@ -221,6 +221,7 @@ function ChallengeCard({
   const earnedCount = countStars(starMask);
   const perfect = earnedCount >= total;
   const starLabels = [CH.star1, ...(ch.stars ?? []).map((st) => starLabel(st, CH))];
+  const starXp = CHALLENGE.starXp[ch.tier] ?? 0;
 
   // The same layout for every status (rc.2): a locked card shows what it IS,
   // under a dark overlay that says what opens it.
@@ -256,8 +257,8 @@ function ChallengeCard({
         <span className="display text-sm font-bold text-ink">{bossOverall(ch.opponentLineupId)}</span>
       </div>
 
-      {/* The three stars and what each one asks — on the card, no modal needed. */}
-      <ul className="mt-3 space-y-1">
+      {/* The three stars, what each one asks and what it pays — on the card. */}
+      <ul className="mt-3 space-y-1 border-t border-line/60 pt-3">
         {starLabels.map((label, i) => {
           const earned = Boolean(starMask & (1 << i));
           return (
@@ -265,7 +266,8 @@ function ChallengeCard({
               <span className={cx("mt-px text-sm leading-none", earned ? "text-amber-300" : "text-faint/60")} aria-hidden>
                 ★
               </span>
-              <span className={cx(earned && "font-semibold")}>{label}</span>
+              <span className={cx("min-w-0 flex-1", earned && "font-semibold")}>{label}</span>
+              <span className="display shrink-0 text-[10px] font-bold text-orange-bright">+{i === 0 ? ch.reward.xp : starXp}</span>
             </li>
           );
         })}
