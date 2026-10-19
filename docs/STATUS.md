@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Last updated: **2026-10-16**. History lives in `CHANGELOG.md`; rationale in
+> Last updated: **2026-10-19**. History lives in `CHANGELOG.md`; rationale in
 > `DESIGN-DECISIONS.md`. Grep those, never read them whole.
 
 ## Where things are
@@ -8,7 +8,8 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** branch `claude/dazzling-cannon-1d6thr`, published as
-  **v2.0.0-rc.1 on `staging`** (`staging.rocketdraft.app`, career on, noindex).
+  **v2.0.0-rc.2 on `staging`** (`staging.rocketdraft.app`, career on, noindex,
+  preview tools on: unlock-all cosmetics switch on /profile, fictional boards).
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
   **Never deploy v2.0 to `main` before the full review.**
 - **Road to Worlds (career)** is a separate workstream: `ROAD-TO-WORLDS-STATUS.md`.
@@ -21,8 +22,11 @@ event cards + Special Hunt, series variety, bracket spoiler fix; recap screen,
 Profile v2, Leaderboard v2 + Hall of Fame, missions UI, Daily Quiz, Home v2;
 Challenges 2.0 (3 stars, 4 gauntlets, 24 validated); Road to Worlds 2.0
 (weekly payroll, bank loan, HQ rebuilt, Training 2.0, Wednesday qualifier,
-real orgs by season, permanent achievements, weekly inserts, colour kits).
-Decisions: DESIGN-DECISIONS #110–#118, ROAD-TO-WORLDS-DECISIONS R20–R34.
+real orgs by season, permanent achievements, weekly inserts, colour kits);
+rc.2 UX pass (cosmetics redrawn + avatars, profile v3 + locker modal, home
+bento, login/quiz modals, challenge cards, hub v3, training/finances clarity).
+Decisions: DESIGN-DECISIONS #110–#120, ROAD-TO-WORLDS-DECISIONS R20–R37.
+Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 
 ## Open before `main` (Phase 4)
 
@@ -37,9 +41,9 @@ Decisions: DESIGN-DECISIONS #110–#118, ROAD-TO-WORLDS-DECISIONS R20–R34.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **483** tests / 38 files (385 on `main`)
-  · `npm run lint` at baseline **5 errors + 1 warning** (pre-existing:
-  TournamentScreen, AnimatedNumber, Modal, useMounted, calibrate-rarity)
+- `npm run typecheck` clean · `npm test` **485** tests / 38 files (385 on `main`)
+  · `npm run lint` at baseline **5 errors** (pre-existing:
+  TournamentScreen ×2, AnimatedNumber, Modal, and one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything
   that ships (`prebuild` validates data, contract test, images; `postbuild`
   checks the export).

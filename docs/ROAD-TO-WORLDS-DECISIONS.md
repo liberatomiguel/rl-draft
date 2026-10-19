@@ -417,6 +417,28 @@ R34. **Curated colour kits in the wizard; contrast-guarded custom pairs.**
      crest can no longer be built without contrast. Crest shapes (14),
      symbols (18) and patterns (7) are unchanged.
 
+R35. **Hub v3 — the clock has a hierarchy; squad and training are blocks, not
+     cards.** Miguel on rc.1: "What you can do today" was "horrível com cards
+     básicos e repetitivos", "Suas vantagens" belonged with training, and the
+     primary action should be play/pause. The timeline block now carries
+     Play/Pause (primary), Skip to the next stop (secondary) and +1 day
+     (tertiary, quiet); the Squad block shows the starters as people (OVR,
+     archetype, age, phase, growth ETA) with sub, coach and chemistry; the
+     Training block holds today's status, the drill, the scrim CTA and the
+     edges. Finances moved to a side tile. Any route change pauses autoplay.
+
+R36. **Inserts are rare and block the clock.** 1–2 per split (chance per
+     week 0.35 → 0.14), rendered INSIDE the timeline block with icon rows
+     (cash · reputation · chemistry · training, signed), and `advanceDayFlow`
+     refuses to move while one is pending — the player must answer.
+
+R37. **Local sides keep the regional flavour.** The v2.0 local-scene bank was
+     region-neutral Rocket League slang ("Flip Reset FC") and the players
+     wore numeric tags ("Pivete37"). Now one bank per region with the same
+     flavour the filler orgs have (SAM: "Pão de Queijo FC", "Mate Amargo
+     Juniors", "Bonde do Boost"), and three distinct plain names from the
+     regional player bank. Local sides open a roster sheet from the lobby.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

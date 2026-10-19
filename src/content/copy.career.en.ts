@@ -214,6 +214,29 @@ export const CAREER_EN = {
     edgeSharp: "Bootcamp Sharp · armed for the next official",
     edgeSponsor: (tier: number) => `Sponsor tier ${tier} perks`,
     autoplayOn: "Autoplay on — pausing at the next stop",
+    // rc.2 hub v3
+    skipTo: (label: string) => `Skip to ${label}`,
+    plusDay: "+1 day",
+    squadTitle: "Squad",
+    squadManage: "Manage squad",
+    squadSub: "Sub",
+    squadCoach: "Coach",
+    squadNoCoach: "No coach — hire one in the Market",
+    squadNoSub: "No sub signed",
+    growthNext: (days: number) => (days === 1 ? "+1 OVR tomorrow" : `+1 OVR in ${days} days`),
+    growthStalled: "Growth capped",
+    trainingTitle: "Training",
+    trainingOpen: "Open training",
+    trainingToday: "Session today",
+    trainingRest: "Rest day",
+    trainingMatch: "Match prep",
+    drillNow: "This week's drill",
+    drillNone: "No drill set",
+    drillPick: "Pick a drill",
+    scrimTitle: "Scrim",
+    edgesTitle: "Your edges",
+    financesTitle: "Finances",
+    financesOpen: "Open finances",
   },
 
   // v0.2 Inbox — mail addressed to the manager (offers, sponsors, contracts).
@@ -993,6 +1016,12 @@ export const CAREER_EN = {
       chemistry: "+ chemistry",
       training: (w: number) => (w > 0 ? `+${w} training weeks` : `${w} training weeks`),
       none: "No effect",
+      // rc.2 icon rows
+      money: "Cash",
+      repLabel: "Reputation",
+      chemLabel: "Chemistry",
+      trainingLabel: "Training",
+      trainingWeeks: (w: number) => `${w > 0 ? "+" : ""}${w} wk`,
     },
     items: {
       "ins-showmatch": { title: "A streamer wants a showmatch", body: "A big creator offers the squad a paid showmatch this week. Fun money, good chemistry, one session gone.", a: "Play it", b: "Pass" },
@@ -1249,6 +1278,9 @@ export const CAREER_EN = {
     points: "Season Points",
     viewTeam: "View team",
     prestige: (n: number) => `Prestige ${n}`,
+    // rc.2 local sides
+    localSide: "Local side",
+    localHint: "An amateur team from the regional scene — they only show up in community cups.",
   },
 
   common: {

@@ -37,7 +37,6 @@ import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import {
   activeDrillFor,
-  agendaDays,
   agePhase,
   clockLabel,
   dateOfDay,
@@ -92,8 +91,6 @@ export function TrainingScreen() {
   const runScrim = useCareerStore((s) => s.runScrim);
   const scheduleScrim = useCareerStore((s) => s.scheduleScrim);
   const cancelScrim = useCareerStore((s) => s.cancelScrim);
-  const advanceDay = useCareerStore((s) => s.advanceDay);
-  const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
 
   /** v0.3 sparring — chosen opponent (null = closest) + booking day. */
   const [oppRef, setOppRef] = useState<string | null>(null);
@@ -117,8 +114,6 @@ export function TrainingScreen() {
   const D = C.dates;
   const clock = clockLabel(save);
   const today = save.clock.day;
-  const monday = today - (dayOfWeekOf(today) - 1);
-  const weekDays = agendaDays(save, monday, 7);
 
   // Engine truth (careerFlow daily tick): training only runs Mon-Fri on weeks
   // WITHOUT a committed user event; open/preseason weeks add the +25% bonus.
@@ -212,86 +207,25 @@ export function TrainingScreen() {
 
       <ErrorBanner />
 
-      {/* ==================== 1 — week rhythm strip ==================== */}
-      <Panel strong className="rise-in p-4">
-        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-          <p className="kicker text-[10px]">{C.training.weeklyPlan}</p>
+      {/* ==================== 1 — today's status (rc.2: one line, the hub owns the calendar) ==================== */}
+      <div className="rise-in flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white/[0.03] px-4 py-2.5 text-[11px]">
+        <span className={cx("inline-flex items-center gap-1.5 font-semibold", sessionToday ? "text-cyan" : "text-faint")}>
+          <span className={cx("h-1.5 w-1.5 rounded-full", sessionToday ? "animate-pulse bg-cyan" : "bg-white/15")} aria-hidden />
+          {sessionToday
+            ? C.training.sessionToday
+            : matchPrepWeek && clock.dow <= CAREER_TRAINING.trainingDaysPerWeek
+              ? C.training.matchPrepWeek
+              : C.training.noSessionToday}
+        </span>
+        <span className="flex flex-wrap items-center gap-2">
           {trainingWeek ? (
-            <span className="rounded-full border border-good/40 bg-good/10 px-2.5 py-0.5 text-[11px] font-semibold text-good">
+            <span className="rounded-full border border-good/40 bg-good/10 px-2.5 py-0.5 font-semibold text-good">
               +{trainingWeekPct}% · {C.hub.trainingWeek}
             </span>
           ) : null}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-          {weekDays.map((d) => {
-            const isSession =
-              d.dow <= CAREER_TRAINING.trainingDaysPerWeek && !matchPrepWeek;
-            const isMatch = d.dow === 6 && matchPrepWeek;
-            const isRest = d.dow === 7;
-            return (
-              <div
-                key={d.day}
-                title={
-                  isMatch
-                    ? save.pendingEventDef?.name
-                    : isSession
-                      ? C.calendar.trainingDay
-                      : isRest
-                        ? C.calendar.restDay
-                        : undefined
-                }
-                className={cx(
-                  "flex flex-col items-center gap-0.5 rounded-lg border py-1.5",
-                  isMatch ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
-                  d.isToday && "ring-2 ring-orange",
-                  d.isPast && "opacity-40",
-                )}
-              >
-                <span className="kicker text-[8px] leading-none sm:text-[9px]">
-                  {D.weekdays[d.dow - 1]}
-                </span>
-                <span
-                  className={cx(
-                    "display text-sm font-bold leading-none",
-                    isMatch ? "text-orange-bright" : "text-ink",
-                  )}
-                >
-                  {d.date.d}
-                </span>
-                <span className="flex h-1.5 items-center gap-0.5" aria-hidden>
-                  {isSession ? <span className="h-1.5 w-1.5 rounded-full bg-cyan/80" /> : null}
-                  {isMatch ? <span className="h-1.5 w-1.5 rounded-full bg-orange" /> : null}
-                  {isRest ? <span className="h-px w-2 bg-white/20" /> : null}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-          <span
-            className={cx(
-              "inline-flex items-center gap-1.5 font-semibold",
-              sessionToday ? "text-cyan" : "text-faint",
-            )}
-          >
-            <span
-              className={cx(
-                "h-1.5 w-1.5 rounded-full",
-                sessionToday ? "animate-pulse bg-cyan" : "bg-white/15",
-              )}
-              aria-hidden
-            />
-            {sessionToday
-              ? C.training.sessionToday
-              : matchPrepWeek && clock.dow <= CAREER_TRAINING.trainingDaysPerWeek
-                ? C.training.matchPrepWeek
-                : C.training.noSessionToday}
-          </span>
           <span className="text-faint">{C.training.weeklyPlanHint}</span>
-        </div>
-      </Panel>
+        </span>
+      </div>
 
       {/* ==================== 1b — this week's drill (v2.0 R27) ==================== */}
       <Panel glow={activeDrill ? "blue" : undefined} className="rise-in p-4" style={{ animationDelay: "20ms" }}>
@@ -381,13 +315,18 @@ export function TrainingScreen() {
         </AppLink>
       </div>
 
-      {/* ==================== 2b — what the attributes do (v2.0 R28) ==================== */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "50ms" }}>
-        <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
-          <p className="kicker text-[10px]">{C.training.effectsTitle}</p>
-          <p className="text-[10px] text-faint">{C.training.effectsHint}</p>
-        </div>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
+      {/* ==================== 2b — what the attributes do (v2.0 R28; collapsed by default in rc.2) ==================== */}
+      <details className="rise-in group panel p-0" style={{ animationDelay: "50ms" }}>
+        <summary className="flex cursor-pointer list-none flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+          <span className="kicker text-[10px]">
+            <span className="mr-1.5 inline-block transition-transform group-open:rotate-90" aria-hidden>
+              ▸
+            </span>
+            {C.training.effectsTitle}
+          </span>
+          <span className="text-[10px] text-faint">{C.training.effectsHint}</span>
+        </summary>
+        <div className="grid grid-cols-2 gap-1.5 px-4 pb-4 sm:grid-cols-3 lg:grid-cols-6">
           {effects.map((e) => {
             const positive = e.value > 0;
             return (
@@ -404,7 +343,7 @@ export function TrainingScreen() {
             );
           })}
         </div>
-      </Panel>
+      </details>
 
       {/* ==================== 3 — delegate toggle ==================== */}
       {canDelegate ? (
@@ -669,25 +608,6 @@ export function TrainingScreen() {
         {C.training.matchXpHint}
       </p>
 
-      {/* ==================== 7 — advance footer (v0.3) ==================== */}
-      <Panel strong className="sticky bottom-3 z-10 flex flex-wrap items-center justify-end gap-2 p-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={save.phase !== "running"}
-          onClick={advanceDay}
-        >
-          {C.calendar.advanceDay}
-        </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          disabled={save.phase !== "running"}
-          onClick={advanceToNextStop}
-        >
-          {C.hub.continue}
-        </Button>
-      </Panel>
     </div>
   );
 }

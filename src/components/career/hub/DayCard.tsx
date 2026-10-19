@@ -1,13 +1,17 @@
 "use client";
 
 /**
- * Road to Worlds hub — THE DAY CARD (v2.0 hub rebuild, R26).
+ * Road to Worlds hub — THE TIMELINE BLOCK (v2.0 hub rebuild R26, re-cut rc.2).
  *
  * The clock made tangible: today's date, the season progress, a seven-day
  * strip with a marker that GLIDES to the next chip on every advance (and the
- * whole strip slides in when a new week starts), and the two ways to move
- * time — one day at a time (primary) or skip to the next stop. When the clock
- * is blocked (matchday, season stop) the primary action becomes that stop.
+ * whole strip slides in when a new week starts), and the three ways to move
+ * time in a strict hierarchy:
+ *   PRIMARY   Play / Pause — the clock runs by itself until something needs you.
+ *   SECONDARY Skip to the next stop (event, window, payday, season end).
+ *   TERTIARY  +1 day, quiet.
+ * When a weekly INSERT is pending the whole block becomes that decision: the
+ * clock does not move until the player answers (rc.2).
  */
 
 import { useRouter } from "next/navigation";
@@ -25,17 +29,18 @@ import {
   type AgendaDay,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
+import { NowInsert } from "@/components/career/hub/NowCards";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 
 const PlayGlyph = () => (
-  <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current" aria-hidden>
+  <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-current" aria-hidden>
     <path d="M2.5 1.5v9l8-4.5z" />
   </svg>
 );
 const PauseGlyph = () => (
-  <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current" aria-hidden>
+  <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-current" aria-hidden>
     <path d="M2.5 1.5h2.6v9H2.5zM6.9 1.5h2.6v9H6.9z" />
   </svg>
 );
@@ -101,7 +106,18 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
   );
 }
 
-export function DayCard({ save, C }: { save: CareerSave; C: CareerCopy }) {
+export function DayCard({
+  save,
+  C,
+  insertId,
+  onInsert,
+}: {
+  save: CareerSave;
+  C: CareerCopy;
+  /** A pending weekly insert for today: the block becomes the decision. */
+  insertId?: string | null;
+  onInsert?: (key: "a" | "b") => void;
+}) {
   const D = C.dates;
   const router = useRouter();
   const advanceDay = useCareerStore((s) => s.advanceDay);
@@ -138,8 +154,10 @@ export function DayCard({ save, C }: { save: CareerSave; C: CareerCopy }) {
           ? { label: C.ceremonies.legacyTitle, go: () => router.push("/career/season") }
           : null;
 
+  const inserting = Boolean(insertId && onInsert);
+
   return (
-    <Panel strong glow="orange" className="rise-in overflow-hidden p-4 sm:p-5">
+    <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-hidden p-4 sm:p-5", inserting && "!border-cyan/40")}>
       {/* header: date + season progress */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
@@ -153,7 +171,8 @@ export function DayCard({ save, C }: { save: CareerSave; C: CareerCopy }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {clock.windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
-          {clock.kind === "open" && running ? <Badge tone="good">{C.hub.trainingWeek}</Badge> : null}
+          {clock.kind === "open" && running && !inserting ? <Badge tone="good">{C.hub.trainingWeek}</Badge> : null}
+          {inserting ? <Badge tone="blue">{C.hub.nowDecision}</Badge> : null}
           <span className="text-[11px] text-faint">{C.hub.dayOf(today, DAYS_PER_SEASON)}</span>
         </div>
       </div>
@@ -164,72 +183,73 @@ export function DayCard({ save, C }: { save: CareerSave; C: CareerCopy }) {
         />
       </div>
 
-      {/* the week strip — remounts (and slides in) when the week turns */}
-      <div key={monday} className="week-slide relative mt-4">
-        <div
-          className="day-marker pointer-events-none absolute inset-y-0 z-0 rounded-lg ring-2 ring-orange"
-          style={{ left: `calc(${todayIdx} * (100% + 0.375rem) / 7)`, width: "calc((100% - 6 * 0.375rem) / 7)" }}
-          aria-hidden
-        />
-        <div className="grid grid-cols-7 gap-1.5">
-          {weekDays.map((d) => (
-            // Today's chip remounts when the clock lands on it, so `day-tick`
-            // plays on every advance without any render-time bookkeeping.
-            <DayChip key={d.isToday ? `${d.day}:today` : d.day} d={d} C={C} />
-          ))}
+      {inserting ? (
+        <div className="mt-4">
+          <NowInsert C={C} id={insertId!} onChoose={onInsert!} />
         </div>
-      </div>
+      ) : (
+        <>
+          {/* the week strip — remounts (and slides in) when the week turns */}
+          <div key={monday} className="week-slide relative mt-4">
+            <div
+              className="day-marker pointer-events-none absolute inset-y-0 z-0 rounded-lg ring-2 ring-orange"
+              style={{ left: `calc(${todayIdx} * (100% + 0.375rem) / 7)`, width: "calc((100% - 6 * 0.375rem) / 7)" }}
+              aria-hidden
+            />
+            <div className="grid grid-cols-7 gap-1.5">
+              {weekDays.map((d) => (
+                // Today's chip remounts when the clock lands on it, so `day-tick`
+                // plays on every advance without any render-time bookkeeping.
+                <DayChip key={d.isToday ? `${d.day}:today` : d.day} d={d} C={C} />
+              ))}
+            </div>
+          </div>
 
-      {/* controls */}
-      <div className="mt-4 flex flex-wrap items-center gap-2.5">
-        {blockedPrimary ? (
-          <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={blockedPrimary.go}>
-            {blockedPrimary.label}
-          </Button>
-        ) : (
-          <>
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full sm:w-auto"
-              onClick={advanceDay}
-              disabled={!running || autoAdvance}
-            >
-              {C.hub.advanceDay} <span aria-hidden>→</span>
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              className="min-h-11"
-              onClick={advanceToNextStop}
-              disabled={!running || autoAdvance}
-            >
-              {C.hub.continueTo(stopLabel)}
-            </Button>
-            <Button
-              variant="ghost"
-              size="md"
-              className="min-h-11"
-              onClick={() => setAutoAdvance(!autoAdvance)}
-              aria-pressed={autoAdvance}
-              title={autoAdvance ? C.hub.pause : C.hub.play}
-              disabled={!running}
-            >
-              <span className="flex items-center gap-1.5">
-                {autoAdvance ? <PauseGlyph /> : <PlayGlyph />}
-                {autoAdvance ? C.hub.pause : C.hub.play}
-              </span>
-            </Button>
-          </>
-        )}
-      </div>
-      {!blockedPrimary && nextStop ? (
-        <p className="mt-2 text-xs text-sub">
-          {autoAdvance
-            ? C.hub.autoplayOn
-            : C.hub.nextStop(stopLabel, `${formatDateShort(D, nextStop.date)} · ${formatDaysAway(D, nextStop.daysAway)}`)}
-        </p>
-      ) : null}
+          {/* controls: primary (play/pause) · secondary (skip to stop) · tertiary (+1 day) */}
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            {blockedPrimary ? (
+              <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={blockedPrimary.go}>
+                {blockedPrimary.label}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  onClick={() => setAutoAdvance(!autoAdvance)}
+                  aria-pressed={autoAdvance}
+                  disabled={!running}
+                >
+                  <span className="flex items-center gap-2">
+                    {autoAdvance ? <PauseGlyph /> : <PlayGlyph />}
+                    {autoAdvance ? C.hub.pause : C.hub.play}
+                  </span>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="min-h-11"
+                  onClick={advanceToNextStop}
+                  disabled={!running || autoAdvance}
+                >
+                  {C.hub.skipTo(stopLabel)}
+                </Button>
+                <Button variant="ghost" size="sm" className="ml-auto text-faint" onClick={advanceDay} disabled={!running || autoAdvance}>
+                  {C.hub.plusDay}
+                </Button>
+              </>
+            )}
+          </div>
+          {!blockedPrimary && nextStop ? (
+            <p className="mt-2 text-xs text-sub">
+              {autoAdvance
+                ? C.hub.autoplayOn
+                : C.hub.nextStop(stopLabel, `${formatDateShort(D, nextStop.date)} · ${formatDaysAway(D, nextStop.daysAway)}`)}
+            </p>
+          ) : null}
+        </>
+      )}
     </Panel>
   );
 }

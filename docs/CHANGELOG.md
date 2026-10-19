@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → `staging` as **v2.0.0-rc.1**)
+## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → `staging` as **v2.0.0-rc.2**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,60 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.2 (UX & design pass, 2026-10-19 · DESIGN-DECISIONS #119–#120, ROAD-TO-WORLDS-DECISIONS R35–R37)
+- **Cosmetics redrawn** (`src/data/cosmetics.ts`, `CosmeticViews.tsx`): every item
+  is now layered SVG with a tier language — Basic flat · Rare rimmed · Epic
+  metal + gem + glow · Legend wings/laurels + sparkle + holo. Badges have seven
+  shapes and nineteen glyphs; frames have eight shapes (ring, hex, octagon,
+  shield, square, crest, wings, laurel); titles sit in tiered chips; banners
+  gained hex / waves / circuit / aurora / stadium patterns. Rank rewards use
+  the rank's own palette. 15 **avatars** (6 starters, 9 earnable) are a new
+  cosmetic kind; catalog: `docs/COSMETICS-CATALOG.md` (generated).
+- **Profile v3**: the banner is the stage — avatar in frame, name + title chip,
+  three badge slots, rank art (menu set), Season Rating, XP bar. Every slot
+  opens the **locker modal** on its tab; a "new items" counter on the locker
+  button; exclusive items the player does not own are hidden; **no auto-equip**.
+  Season track is a horizontal progress bar with the reward art per rank;
+  rating history is a small sparkline; lifetime stats in three tiers.
+- **Home v3**: a bento — Play (Classic with Quick Draft as its secondary action,
+  Road to Worlds), Today (Daily Challenge, Challenges, Missions, **Daily Quiz as
+  a modal**), You (Collection, Achievements, Profile, Leaderboards). Identity
+  line is rank art + rank + rating only (no frame, XP, title or badges).
+- **Login streak modal** on app open (seven-day strip with XP per day and the
+  milestone rewards); the login toast is gone.
+- **Missions page**: weekly block featured beside a smaller daily block; the
+  streak is one quiet line.
+- **Challenges**: every card lists its three star requirements; locked cards keep
+  their layout under a dark overlay with the rank emblem and the gate; the star
+  track panel is gone, replaced by a **star reward modal** on a cleared run that
+  earned new stars (with the next cosmetic milestone).
+- **Road to Worlds hub v3**: the timeline block owns the clock with a strict
+  hierarchy (Play/Pause primary · Skip to next stop secondary · +1 day
+  tertiary); a pending insert takes the whole block over with icon-coded
+  effects and blocks the clock; "What you can do today" and "Your edges" are
+  gone — replaced by a **Squad block** (starter cards with OVR, archetype, age,
+  phase, growth ETA; sub, coach, chemistry) and a **Training block** (today's
+  status, this week's drill, scrim CTA, the edges). Finances at a glance in the
+  side column. Leaving the hub pauses autoplay.
+- **Preview tools** (dev + staging only): "Unlock every cosmetic" switch on the
+  profile; a fictional 60-player leaderboard when accounts are disabled, plus
+  `docs/sql/seed-staging-leaderboard.sql` for a real staging project.
+- **Local amateur sides** are clickable in event lobbies (roster sheet) and
+  carry regional names again (per-region banks, no numeric tags).
+
+### Changed — rc.2
+- Training screen: the week strip is a one-line status (the hub owns the
+  calendar), "what your attributes do" is collapsed by default, the sticky
+  advance bar is gone (the top bar has Play / Skip ahead).
+- Finances screen: "Loans & debt" moved below the toolbox and folds away unless
+  a loan is live.
+- "Week N of 9 · days left" removed from the home and the profile (season
+  length is not final).
+- Leaderboard rows show the avatar in its frame (rank emblem small).
+
+### Balance — rc.2
+- `CAREER_INSERTS.chancePerWeek` 0.35 → **0.14** (~1.5 inserts per split).
 
 ### Changed
 - **Docs slimmed for new chats:** `AGENTS.md` now opens with a "Context budget"

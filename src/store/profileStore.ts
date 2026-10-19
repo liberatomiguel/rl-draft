@@ -803,7 +803,13 @@ export const useProfileStore = create<ProfileState>()(
       // rc.2: re-derive the owned cosmetics after hydration so a catalog change
       // (new items, the preview switch) shows up without waiting for a run.
       onRehydrateStorage: () => (state) => {
-        state?.refreshCosmetics();
+        if (!state) return;
+        // Only write when the derivation actually changed the owned set — a
+        // current save must hydrate without a write-back (persist contract).
+        const next = withCosmetics(state);
+        const a = Object.keys(next.owned).sort().join("|");
+        const b = Object.keys(state.cosmetics?.owned ?? {}).sort().join("|");
+        if (a !== b || state.cosmetics?.seen === undefined) state.refreshCosmetics();
       },
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;

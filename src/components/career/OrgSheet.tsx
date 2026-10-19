@@ -13,10 +13,13 @@ import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { CountryChip } from "@/components/ui/Badge";
 import { playerViewById } from "@/engine/career/development";
+import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
+import { localTeamFor } from "@/engine/career/worldSim";
+import { Badge } from "@/components/ui/Badge";
 import { OrgMark } from "./OrgMark";
 import { TeamStars } from "./TeamStars";
-import { viewCtxOf } from "./careerUi";
+import { userTeamPreview, viewCtxOf } from "./careerUi";
 
 export function OrgSheet({
   save,
@@ -29,6 +32,7 @@ export function OrgSheet({
   onClose: () => void;
 }) {
   const C = useCareerCopy();
+  if (orgRef && isLocalRef(orgRef)) return <LocalSheet save={save} orgRef={orgRef} onClose={onClose} />;
   const org = orgRef ? save.world.orgs[orgRef] : null;
   if (!org) return null;
 
@@ -79,6 +83,47 @@ export function OrgSheet({
             {org.coachOverall !== undefined ? org.coachOverall : C.orgSheet.noCoach}
           </span>
         </p>
+      </div>
+    </Modal>
+  );
+}
+
+/** rc.2: a local amateur side (Community Cups) — the same sheet, built from
+ *  the procedural team instead of a world org. */
+function LocalSheet({ save, orgRef, onClose }: { save: CareerSave; orgRef: string; onClose: () => void }) {
+  const C = useCareerCopy();
+  const team = localTeamFor(orgRef, {
+    careerSeed: save.careerSeed,
+    seasonIndex: save.clock.seasonIndex,
+    difficulty: save.difficulty,
+    userRating: userTeamPreview(save).rating.total,
+    region: save.identity.region,
+  });
+  return (
+    <Modal open onClose={onClose} title={team.name}>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <OrgMark save={save} orgRef={orgRef} size="lg" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Badge tone="neutral">{C.orgSheet.localSide}</Badge>
+              <span className="text-xs font-semibold text-sub">{save.identity.region}</span>
+            </div>
+            <p className="mt-1 text-xs text-faint">
+              {C.common.ovrShort(Math.round(team.rating.total))} · {C.orgSheet.localHint}
+            </p>
+          </div>
+        </div>
+        <div>
+          <p className="kicker mb-2 text-[10px]">{C.orgSheet.roster}</p>
+          <ul className="divide-y divide-line rounded-lg border border-line">
+            {team.playerNames.map((name) => (
+              <li key={name} className="flex items-center gap-2 px-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </Modal>
   );

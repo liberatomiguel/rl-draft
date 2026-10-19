@@ -2058,6 +2058,8 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
 export function advanceDayFlow(input: CareerSave): CareerSave {
   if (input.phase !== "running" || input.activeEvent) return input;
   if (input.clock.day >= DAYS_PER_SEASON) return input;
+  // rc.2: a pending weekly insert blocks the clock until the player answers.
+  if (input.pendingInsert && input.pendingInsert.day === input.clock.day) return input;
   // An OFFICIAL matchday must be resolved (play or sim) — never skipped.
   const pending = input.pendingEventDef;
   if (

@@ -122,15 +122,46 @@ export const STAND_IN_NAMES: Record<Region, string> = {
 
 /**
  * v2.0 (R23) local amateur scene — the community teams a new org meets at
- * Community Cups. Deliberately amateur-flavored (in-jokes of the scene) so
- * they read nothing like the pro orgs; region-neutral, picked by hash.
+ * Community Cups. rc.2: PER REGION, with the regional flavour the filler orgs
+ * already have (Miguel: the SAM names should read like SAM — Mate Amargo,
+ * Pão de Queijo — not like generic Rocket League slang). Amateur-sounding on
+ * purpose, so they never read like the pro orgs.
  */
-export const LOCAL_TEAM_NAME_BANK: readonly string[] = [
-  "Garage Kings", "Late Night Rotations", "Pocket Rockets", "Ceiling Shot Club",
-  "Demo Derby", "Kickoff Crew", "Backboard Boys", "Flip Reset FC",
-  "Wavedash Union", "Bump Squad", "Boost Starved", "Double Tap Society",
-  "Musty Collective", "Air Roll Academy", "Pinch Point", "Fake Kickoff",
-  "Shadow Defense", "Ground Game", "Half Flip Hooligans", "Whiff City",
-  "Rotation Nation", "Ballcam Off", "Dribble Department", "Open Net Heroes",
-  "Zap Dash", "Speedflip Syndicate", "Corner Boost", "Last Touch",
-];
+export const LOCAL_TEAM_NAME_BANK: Record<Region, readonly string[]> = {
+  NA: [
+    "Garage Kings", "Late Night Rotations", "Pocket Rockets", "Backboard Boys", "Flip Reset FC",
+    "Dorm Room Demos", "Route 66 Boost", "Tailgate Tappers", "Basement Ballers", "Diner Dashers",
+    "Lake Effect", "Pit Stop Crew", "Half Flip Hooligans", "Whiff City", "Rotation Nation",
+    "Open Net Heroes",
+  ],
+  EU: [
+    "Kebab Kickoffs", "Tram Line Five", "Pub Quiz Rotations", "Autobahn Boost", "Fjordside FC",
+    "Low Countries", "Cobblestone Crew", "Tapas Touch", "Midnight Sun", "Schnitzel Shadow",
+    "Baguette Bumpers", "Canal Side", "Alpine Air Roll", "Pierogi Pinch", "Ballcam Off", "Last Touch",
+  ],
+  SAM: [
+    "Pão de Queijo FC", "Mate Amargo Juniors", "Bonde do Boost", "Galera do Açaí", "Tchê Rocket",
+    "Favela Flyers B", "Quebra-Galho", "Pelada de Sábado", "Alfajor Attack", "Churrasco Crew",
+    "Pastel de Feira", "Sertão Squad B", "Guaraná Jet", "Pampa Pivetes", "Tapioca Touch", "Caipira Kickoff",
+  ],
+  MENA: [
+    "Souk Rockets", "Shawarma Squad", "Corniche Crew", "Falafel Flyers", "Desert Rose FC",
+    "Oasis Juniors", "Casbah Kickoffs", "Dune Drifters", "Medina Boost", "Nile Side",
+    "Karak Collective", "Majlis Rotations", "Sirocco B", "Dhow Dashers", "Mint Tea Touch", "Wadi Wave",
+  ],
+  OCE: [
+    "Servo Snags", "Arvo Rotations", "Bush Telly", "Esky Dashers", "Dropbear Juniors",
+    "Long Weekend FC", "Thongs On", "Sunday Sesh", "Meat Pie Crew", "Jandal Jets",
+    "Pavlova Pinch", "Outback Open Net", "Tradie Touch", "Surf Club B", "Goon Bag Boost", "Flat White FC",
+  ],
+  APAC: [
+    "Hawker Centre FC", "Night Market Crew", "Ramen Rotations", "Boba Boost", "Karaoke Kickoffs",
+    "Tuk-Tuk Touch", "Jeepney Jets", "Mahjong Mechanics", "Kopi Collective", "Durian Demos",
+    "Monsoon Juniors", "Bubble Tea B", "Satay Squad", "Shophouse Shadow", "Tatami Touch", "Padang Pinch",
+  ],
+  SSA: [
+    "Braai Brothers", "Minibus Rotations", "Jollof Jets", "Township Touch", "Boerewors Boost",
+    "Chapati Crew", "Matatu Mechanics", "Biltong Ballers", "Shisa Nyama FC", "Nollywood Nets",
+    "Kota Kickoffs", "Savanna Juniors", "Pap & Boost", "Rooibos B", "Dala Dashers", "Veld Vibes",
+  ],
+};

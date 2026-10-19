@@ -56,6 +56,13 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  // rc.2: leaving a screen pauses the clock — autoplay only runs while the
+  // player is looking at the hub.
+  const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
+  useEffect(() => {
+    setAutoAdvance(false);
+  }, [pathname, setAutoAdvance]);
+
   // SSR-safe skeleton until the persisted store hydrates.
   if (!mounted) {
     return <div className="min-h-[60vh]" />;

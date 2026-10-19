@@ -45,11 +45,11 @@ export function localSceneRefs(region: Region, seasonIndex: number): string[] {
   return out;
 }
 
-/** Team name — bank pick by hash; two teams in one pool never share a name. */
+/** Team name — regional bank pick by hash; two teams in one pool never share a name. */
 export function localTeamName(ref: string, careerSeed: number): string {
   const parsed = parseLocalRef(ref);
   if (!parsed) return ref;
-  const bank = LOCAL_TEAM_NAME_BANK;
+  const bank = LOCAL_TEAM_NAME_BANK[parsed.region] ?? LOCAL_TEAM_NAME_BANK.NA;
   const base = Math.floor(
     derivedFloat(careerSeed, streams.gen("localName", `${parsed.region}:${parsed.seasonIndex}`)) *
       bank.length,
@@ -66,16 +66,15 @@ export function localTeamOffset(ref: string, careerSeed: number): number {
   return Math.round((lo + f * (hi - lo)) * 10) / 10;
 }
 
-/** Three amateur gamertags for the side ("Nexus27"-style, never pro names). */
+/** Three amateur gamertags for the side — the regional bank, no numeric tags
+ *  (rc.2: "Pivete", not "Pivete37"), distinct within the side. */
 export function localPlayerNames(ref: string, careerSeed: number): [string, string, string] {
   const parsed = parseLocalRef(ref);
   const region = parsed?.region ?? "NA";
   const bank = PLAYER_NAME_BANK[region] ?? PLAYER_NAME_BANK.NA;
+  const start = Math.floor(derivedFloat(careerSeed, streams.gen("localPlayer", ref)) * bank.length);
+  const stride = 1 + (Math.floor(derivedFloat(careerSeed, streams.gen("localTag", ref)) * 7) % 7);
   const names: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    const f = derivedFloat(careerSeed, streams.gen("localPlayer", `${ref}:${i}`));
-    const tag = 10 + Math.floor(derivedFloat(careerSeed, streams.gen("localTag", `${ref}:${i}`)) * 90);
-    names.push(`${bank[Math.floor(f * bank.length) % bank.length]}${tag}`);
-  }
+  for (let i = 0; i < 3; i++) names.push(bank[(start + i * stride) % bank.length]);
   return names as [string, string, string];
 }

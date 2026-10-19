@@ -1,13 +1,15 @@
 "use client";
 
 /**
- * v2.0 hub rebuild (R26): HQ is a day you can read at a glance.
- *   main column — DayCard (date, week strip, advance day / skip / autoplay)
+ * v2.0 hub rebuild (R26), re-cut in rc.2: HQ is a day you can read at a glance.
+ *   main column — the TIMELINE block (date, week strip, play/pause · skip ·
+ *                 +1 day; a pending insert takes the whole block over)
  *                 → Needs you (every pending decision as its own card)
- *                 → What you can do today → Your edges → the wire(s)
- *   side column — season goal, Road to Worlds mini, squad, inbox, next unlock.
+ *                 → the SQUAD block → the TRAINING block → the wire(s)
+ *   side column — season goal, Road to Worlds mini, finances, inbox, next unlock.
  * The decision cards live in hub/NowCards.tsx, the clock in hub/DayCard.tsx,
- * the action/edge cards in hub/TodayCards.tsx — this file is layout.
+ * the squad and training blocks in hub/SquadBlock.tsx / TrainingBlock.tsx —
+ * this file is layout.
  */
 
 /**
@@ -49,23 +51,23 @@ import {
   nameOfRef,
   runwayWeeks,
   seasonLabelFor,
-  squadAge,
   standingsRows,
   unlockTrack,
   useCareerSave,
-  userStars,
   userTeamPreview,
   weeklyStatement,
   weekOfDay,
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { DayCard } from "@/components/career/hub/DayCard";
-import { NowBid, NowEvent, NowInsert, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
-import { EdgesStrip, TodayCards } from "@/components/career/hub/TodayCards";
+import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
+import { SquadBlock } from "@/components/career/hub/SquadBlock";
+import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
+import { formatMoneyDelta } from "@/lib/format";
 import { ErrorBanner, withMoneyParams } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -305,7 +307,7 @@ export function HubScreen() {
   const runway = runwayWeeks(save.finances.balance, statement.net);
   const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
   const needsCount =
-    (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0) + (insert ? 1 : 0);
+    (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
 
   // --- Road to Worlds mini --------------------------------------------------
   const rows = standingsRows(save, region, "season");
@@ -316,11 +318,6 @@ export function HubScreen() {
   const miniIdx = [...new Set([0, slots - 1, slots, rows.findIndex((r) => r.isUser)])]
     .filter((i) => i >= 0 && i < rows.length)
     .sort((a, b) => a - b);
-
-  // --- squad strip ------------------------------------------------------------
-  const starters = save.starterIds
-    .map((id) => save.squad.find((p) => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   // --- the wire ----------------------------------------------------------------
   const unreadNews = save.news.filter((n) => !n.read).length;
@@ -362,7 +359,7 @@ export function HubScreen() {
         {/* ============ main column (2fr): NOW · week · office · wire ============ */}
         <div className="space-y-4 lg:col-span-2">
           {/* 1 — THE DAY CARD (clock + week strip + advance) */}
-          <DayCard save={save} C={C} />
+          <DayCard save={save} C={C} insertId={insert?.id ?? null} onInsert={resolveInsert} />
 
           {/* 2 — NEEDS YOU (decisions and stops, one card each) */}
           {needsCount > 0 || expiringContracts > 0 || cashTight || save.finances.loan ? (
@@ -384,11 +381,6 @@ export function HubScreen() {
                     primaryLabel={C.hub.continue}
                     onPrimary={() => router.push("/career/event")}
                   />
-                </Panel>
-              ) : null}
-              {insert ? (
-                <Panel strong className="rise-in border-cyan/40 p-5">
-                  <NowInsert C={C} id={insert.id} onChoose={resolveInsert} />
                 </Panel>
               ) : null}
               {invite ? (
@@ -451,9 +443,9 @@ export function HubScreen() {
             <p className="px-1 text-xs text-faint">{C.hub.nothingNeeded}</p>
           )}
 
-          {/* 3 — WHAT YOU CAN DO TODAY + YOUR EDGES */}
-          <TodayCards save={save} C={C} team={team} />
-          <EdgesStrip save={save} C={C} />
+          {/* 3 — THE SQUAD + TRAINING (rc.2) */}
+          <SquadBlock save={save} C={C} team={team} chemTiers={CHEM} />
+          <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
 
           {/* 7 — THE WIRE (full feed, filterable, expands in place) */}
           <Panel className="rise-in p-4" style={{ animationDelay: "120ms" }}>
@@ -601,39 +593,28 @@ export function HubScreen() {
             </Panel>
           </AppLink>
 
-          {/* 5 — squad strip */}
-          <AppLink href="/career/squad" className="block">
-            <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "120ms" }}>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="kicker text-[10px]">{C.hub.rosterForm}</p>
-                <TeamStars stars={userStars(save)} size="xs" />
+          {/* 5 — finances at a glance (rc.2) */}
+          <AppLink href="/career/finances" className="block">
+            <Panel
+              className={cx(
+                "rise-in p-4 transition-colors hover:border-line-strong",
+                save.finances.balance < 0 ? "border-bad/40" : cashTight ? "border-orange/40" : "",
+              )}
+              style={{ animationDelay: "120ms" }}
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
+                {save.finances.loan ? <Badge tone="orange">{C.finances.backer}</Badge> : save.finances.bankLoan ? <Badge tone="blue">{C.finances.bankTitle}</Badge> : null}
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {starters.map((p) => (
-                  <div
-                    key={p.id}
-                    className="rounded-lg border border-line bg-white/[0.03] p-2.5 text-center"
-                  >
-                    <div className="display text-2xl font-bold leading-none text-ink" title={C.common.ovr}>
-                      {Math.round(p.overall)}
-                    </div>
-                    <div className="mt-1 truncate text-xs font-semibold text-ink">{p.name}</div>
-                    <div className="text-[10px] text-faint">{C.player.age(squadAge(save, p))}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <span className="kicker shrink-0 text-[10px]">{C.hub.chemistry}</span>
-                <ProgressBar
-                  value={team.chemistry.percent / 100}
-                  tone={team.chemistry.percent >= 75 ? "good" : "blue"}
-                  className="flex-1"
-                  label={C.hub.chemistry}
-                />
-                <span className="display shrink-0 text-xs font-bold text-ink">
-                  {CHEM[team.chemistry.tier] ?? team.chemistry.tier} · {team.chemistry.percent}%
-                </span>
-              </div>
+              <p className={cx("display text-2xl font-bold leading-none", save.finances.balance < 0 ? "text-bad" : "text-ink")}>
+                {formatMoney(save.finances.balance, { compact: true })}
+              </p>
+              <p className="mt-1.5 text-xs text-sub">
+                <span className={statement.net >= 0 ? "text-good" : "text-bad"}>{formatMoneyDelta(statement.net, { compact: true })}</span>{" "}
+                <span className="text-faint">/ {C.hub.week(1).toLowerCase().replace(/\s*1$/, "")}</span>
+                {runway !== null ? <span className="text-faint"> · {C.finances.runway(runway)}</span> : null}
+              </p>
+              <p className="mt-2 text-right text-xs font-semibold text-blue-bright">{C.hub.financesOpen} →</p>
             </Panel>
           </AppLink>
 

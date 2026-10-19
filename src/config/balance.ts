@@ -909,7 +909,8 @@ export const CAREER_QUALIFIER = {
  * clear options — the rhythm breaker between tournaments.
  */
 export const CAREER_INSERTS = {
-  chancePerWeek: 0.35,
+  /** rc.2: ~1.5 inserts per split (10–11 weeks), not one every third week. */
+  chancePerWeek: 0.14,
   /** Weekdays an insert can land on (1 = Monday). */
   days: [2, 3, 4] as const,
   /** Ids seen in the last N inserts are not re-rolled. */

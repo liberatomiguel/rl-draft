@@ -9,8 +9,10 @@
  * profile peek. Public and viewable signed out; your row is highlighted.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { FEATURES } from "@/config/balance";
 import { SEASON } from "@/config/season";
+import { previewLeaderboardRows } from "@/data/previewLeaderboard";
 import { useCopy } from "@/content/copy";
 import { rowCosmetics } from "@/engine/cosmetics";
 import { rankForXp } from "@/engine/progression";
@@ -25,11 +27,12 @@ import {
   type LeaderboardRow,
 } from "@/lib/supabase";
 import { useAccountStore } from "@/store/accountStore";
+import { useMounted } from "@/store/useMounted";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
-import { BadgeRow, BannerSurface, FrameRing, TitleTag } from "@/components/cosmetics/CosmeticViews";
+import { AvatarMark, BadgeRow, BannerSurface, TitleTag } from "@/components/cosmetics/CosmeticViews";
 
 type BoardKey = "season" | "hallOfFame" | "titles" | "legacyOverall" | "regional";
 
@@ -81,15 +84,57 @@ function fromHall(r: HallOfFameRow): Row {
   };
 }
 
+/** rc.2: dev/staging builds without Supabase show a fictional full board. */
+const previewMode = !accountsEnabled && FEATURES.previewTools;
+
+function previewRows(board: BoardKey): Row[] {
+  const all = previewLeaderboardRows();
+  if (board === "hallOfFame") {
+    return all
+      .filter((r) => r.preseason_position !== null)
+      .sort((a, b) => (a.preseason_position ?? 0) - (b.preseason_position ?? 0))
+      .map((r) =>
+        fromHall({
+          username: r.username,
+          position: r.preseason_position ?? 0,
+          mmr: r.preseason_mmr,
+          xp: r.preseason_xp,
+          championships: r.championships,
+          season_xp: r.season_xp,
+          season_mmr: r.season_mmr,
+          season_titles: r.season_titles,
+          equipped_title: r.equipped_title,
+          equipped_frame: r.equipped_frame,
+          equipped_banner: r.equipped_banner,
+          equipped_avatar: r.equipped_avatar,
+          grants: r.grants,
+          equipped_badges: [],
+          preseason_position: r.preseason_position,
+        }),
+      );
+  }
+  const key = BOARDS.find((b) => b.key === board)?.category ?? "season_mmr";
+  return all
+    .map((r) => fromBoard({ ...r, value: (r as unknown as Record<string, number>)[key] ?? 0 }))
+    .filter((r) => r.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
 export function LeaderboardsView() {
   const { LEADERBOARDS_UI: L } = useCopy();
+  const mounted = useMounted();
   const username = useAccountStore((s) => s.username);
   const [board, setBoard] = useState<BoardKey>("season");
   const [loaded, setLoaded] = useState<{ board: BoardKey; rows: Row[] } | null>(null);
   const [peek, setPeek] = useState<Row | null>(null);
 
+  // Preview rows are derived, never fetched (no effect, no setState) — and only
+  // after mount, so the exported HTML stays small.
+  const preview = useMemo(() => (previewMode && mounted ? previewRows(board) : null), [board, mounted]);
+
   useEffect(() => {
     let alive = true;
+    if (previewMode) return;
     const def = BOARDS.find((b) => b.key === board)!;
     const p = def.category
       ? fetchLeaderboard(def.category, 100).then((rows) => rows.map(fromBoard))
@@ -102,8 +147,8 @@ export function LeaderboardsView() {
     };
   }, [board]);
 
-  const loading = loaded?.board !== board;
-  const rows = loaded?.board === board ? loaded.rows : [];
+  const loading = !preview && loaded?.board !== board;
+  const rows = preview ?? (loaded?.board === board ? loaded.rows : []);
   const isHall = board === "hallOfFame";
 
   return (
@@ -111,12 +156,17 @@ export function LeaderboardsView() {
       <SectionTitle kicker={L.globalTab} title={L.title} className="mb-2" />
       <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{L.subtitle}</p>
 
-      {!accountsEnabled ? (
+      {!accountsEnabled && !previewMode ? (
         <Panel className="p-4 text-sm leading-relaxed text-sub">
           <p>{L.comingSoon}</p>
         </Panel>
       ) : (
         <>
+          {previewMode ? (
+            <p className="mb-3">
+              <Badge tone="orange">{L.previewData}</Badge>
+            </p>
+          ) : null}
           <div className="mb-3 flex flex-wrap gap-1.5">
             {BOARDS.map((b) => (
               <button
@@ -173,17 +223,18 @@ export function LeaderboardsView() {
                       >
                         {place}
                       </span>
-                      <FrameRing frame={r.cosmetics.frame} width={2}>
-                        <RankBadge rank={rank} variant="menu" size="sm" className="!h-8 !w-8" />
-                      </FrameRing>
+                      <AvatarMark avatar={r.cosmetics.avatar} frame={r.cosmetics.frame} size="sm" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
                           <span className="truncate text-sm font-semibold text-ink">{r.username}</span>
                           {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
                           <BadgeRow badges={r.cosmetics.badges} size="xs" className="hidden sm:inline-flex" />
                         </span>
-                        <TitleTag title={r.cosmetics.title} size="xs" className="block truncate" />
+                        <span className="mt-0.5 flex items-center gap-1.5">
+                          <TitleTag title={r.cosmetics.title} size="xs" className="truncate" />
+                        </span>
                       </span>
+                      <RankBadge rank={rank} variant="menu" size="sm" className="hidden !h-7 !w-7 sm:block" />
                       <span className="display shrink-0 text-sm font-bold text-orange-bright">{r.value}</span>
                     </button>
                   </BannerSurface>
@@ -199,14 +250,13 @@ export function LeaderboardsView() {
           <div>
             <BannerSurface banner={peek.cosmetics.banner} className="-mx-2 rounded-xl border border-line-strong" plainClassName="panel">
               <div className={cx("flex items-center gap-4 p-4", peek.cosmetics.banner && "bg-black/35")}>
-                <FrameRing frame={peek.cosmetics.frame} width={3}>
-                  <RankBadge rank={rankForXp(peek.rankXp)} variant="profile" size="md" />
-                </FrameRing>
+                <AvatarMark avatar={peek.cosmetics.avatar} frame={peek.cosmetics.frame} size="lg" />
                 <div className="min-w-0">
                   <p className="display truncate text-xl font-bold uppercase tracking-wide text-ink">{peek.username}</p>
                   <TitleTag title={peek.cosmetics.title} size="sm" />
-                  <BadgeRow badges={peek.cosmetics.badges} size="sm" className="mt-1" />
+                  <BadgeRow badges={peek.cosmetics.badges} size="md" className="mt-2" />
                 </div>
+                <RankBadge rank={rankForXp(peek.rankXp)} variant="menu" size="sm" className="ml-auto" />
               </div>
             </BannerSurface>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">

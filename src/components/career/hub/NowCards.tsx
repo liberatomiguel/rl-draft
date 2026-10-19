@@ -32,7 +32,9 @@ import { Button } from "@/components/ui/Button";
 
 type DatesCopy = CareerCopy["dates"];
 
-/** v2.0 (R33): the mid-week insert — one question, two clear options. */
+/** v2.0 (R33): the mid-week insert — one question, two clear options. rc.2:
+ *  every consequence is an ICON row (cash · reputation · chemistry · training)
+ *  with a signed value, so the trade-off reads at a glance. */
 export function NowInsert({
   C,
   id,
@@ -45,32 +47,24 @@ export function NowInsert({
   const def = insertById.get(id);
   const item = C.inserts.items[id];
   if (!def || !item) return null;
-  const fxText = (fx: InsertEffects): string => {
-    const parts: string[] = [];
-    if (fx.money) parts.push(formatMoneyDelta(fx.money, { compact: true }));
-    if (fx.rep) parts.push(C.inserts.fx.rep(fx.rep));
-    if (fx.chemistry) parts.push(C.inserts.fx.chemistry);
-    if (fx.trainingWeeks) parts.push(C.inserts.fx.training(fx.trainingWeeks));
-    return parts.length ? parts.join(" · ") : C.inserts.fx.none;
-  };
   return (
     <div>
       <p className="kicker mb-1 text-[10px] text-cyan">{C.inserts.kinds[def.kind]}</p>
       <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{item.title}</h2>
-      <p className="mt-2 max-w-xl text-sm text-sub">{item.body}</p>
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">{item.body}</p>
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {def.options.map((o) => (
           <button
             key={o.key}
             type="button"
             onClick={() => onChoose(o.key)}
             className={cx(
-              "flex min-h-16 flex-col rounded-lg border px-3 py-2.5 text-left transition-colors",
+              "flex min-h-24 flex-col rounded-xl border px-4 py-3 text-left transition-colors",
               o.key === "a" ? "border-orange/50 bg-orange/10 hover:bg-orange/15" : "border-line bg-white/[0.03] hover:border-line-strong",
             )}
           >
-            <span className="display text-xs font-bold uppercase tracking-[0.1em] text-ink">{o.key === "a" ? item.a : item.b}</span>
-            <span className="mt-1 text-[11px] font-semibold text-sub">{fxText(o.effects)}</span>
+            <span className="display text-sm font-bold uppercase tracking-[0.1em] text-ink">{o.key === "a" ? item.a : item.b}</span>
+            <InsertEffectRows fx={o.effects} C={C} />
           </button>
         ))}
       </div>
@@ -78,6 +72,60 @@ export function NowInsert({
     </div>
   );
 }
+
+function InsertEffectRows({ fx, C }: { fx: InsertEffects; C: CareerCopy }) {
+  const rows: { key: string; icon: React.ReactNode; label: string; value: string; good: boolean }[] = [];
+  if (fx.money) rows.push({ key: "money", icon: <CoinGlyph />, label: C.inserts.fx.money, value: formatMoneyDelta(fx.money, { compact: true }), good: fx.money > 0 });
+  if (fx.rep) rows.push({ key: "rep", icon: <RepGlyph />, label: C.inserts.fx.repLabel, value: `${fx.rep > 0 ? "+" : ""}${fx.rep}`, good: fx.rep > 0 });
+  if (fx.chemistry) rows.push({ key: "chem", icon: <ChemGlyph />, label: C.inserts.fx.chemLabel, value: `${fx.chemistry > 0 ? "+" : "−"}`, good: fx.chemistry > 0 });
+  if (fx.trainingWeeks)
+    rows.push({
+      key: "train",
+      icon: <TrainGlyph />,
+      label: C.inserts.fx.trainingLabel,
+      value: C.inserts.fx.trainingWeeks(fx.trainingWeeks),
+      good: fx.trainingWeeks > 0,
+    });
+  if (rows.length === 0) {
+    return <span className="mt-2 text-[11px] text-faint">{C.inserts.fx.none}</span>;
+  }
+  return (
+    <ul className="mt-2 space-y-1">
+      {rows.map((r) => (
+        <li key={r.key} className="flex items-center gap-2 text-[11px]">
+          <span className={cx("flex h-5 w-5 items-center justify-center rounded-md", r.good ? "bg-good/15 text-good" : "bg-bad/15 text-bad")}>{r.icon}</span>
+          <span className="text-sub">{r.label}</span>
+          <span className={cx("display ml-auto font-bold", r.good ? "text-good" : "text-bad")}>{r.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const glyphProps = { viewBox: "0 0 24 24", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+const CoinGlyph = () => (
+  <svg {...glyphProps}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5v9M9.5 10c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.5c0 2.2-5 1.4-5 3.6 0 .9 1 1.5 2.5 1.5s2.5-.6 2.5-1.6" />
+  </svg>
+);
+const RepGlyph = () => (
+  <svg {...glyphProps}>
+    <path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 16.9l-5.3 2.8 1.1-5.9-4.3-4.1 5.9-.8Z" />
+  </svg>
+);
+const ChemGlyph = () => (
+  <svg {...glyphProps}>
+    <path d="M10 14a4 4 0 0 1 0-5.6l2.3-2.3a4 4 0 0 1 5.6 5.6L16.5 13" />
+    <path d="M14 10a4 4 0 0 1 0 5.6l-2.3 2.3a4 4 0 0 1-5.6-5.6L7.5 11" />
+  </svg>
+);
+const TrainGlyph = () => (
+  <svg {...glyphProps}>
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="3.5" />
+  </svg>
+);
 
 /** v2.0: a pending Community Cup / Invitational invite the player has not committed to. */
 export function NowInvite({

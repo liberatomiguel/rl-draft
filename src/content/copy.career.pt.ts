@@ -207,6 +207,29 @@ export const CAREER_PT: CareerCopy = {
     edgeSharp: "Bootcamp Sharp · armado para o próximo oficial",
     edgeSponsor: (tier: number) => `Vantagens do patrocínio tier ${tier}`,
     autoplayOn: "Autoplay ligado — pausa na próxima parada",
+    // rc.2 hub v3
+    skipTo: (label: string) => `Pular até ${label}`,
+    plusDay: "+1 dia",
+    squadTitle: "Elenco",
+    squadManage: "Gerenciar elenco",
+    squadSub: "Reserva",
+    squadCoach: "Técnico",
+    squadNoCoach: "Sem técnico — contrate um no Mercado",
+    squadNoSub: "Sem reserva contratado",
+    growthNext: (days: number) => (days === 1 ? "+1 OVR amanhã" : `+1 OVR em ${days} dias`),
+    growthStalled: "Crescimento no limite",
+    trainingTitle: "Treino",
+    trainingOpen: "Abrir treino",
+    trainingToday: "Sessão hoje",
+    trainingRest: "Dia de descanso",
+    trainingMatch: "Preparação de jogo",
+    drillNow: "Drill da semana",
+    drillNone: "Nenhum drill definido",
+    drillPick: "Escolher drill",
+    scrimTitle: "Scrim",
+    edgesTitle: "Suas vantagens",
+    financesTitle: "Finanças",
+    financesOpen: "Abrir finanças",
   },
 
   // Caixa de entrada v0.2 — correio endereçado ao manager.
@@ -986,6 +1009,12 @@ export const CAREER_PT: CareerCopy = {
       chemistry: "+ química",
       training: (w: number) => (w > 0 ? `+${w} semanas de treino` : `${w} semanas de treino`),
       none: "Sem efeito",
+      // rc.2 linhas com ícone
+      money: "Caixa",
+      repLabel: "Reputação",
+      chemLabel: "Química",
+      trainingLabel: "Treino",
+      trainingWeeks: (w: number) => `${w > 0 ? "+" : ""}${w} sem`,
     },
     items: {
       "ins-showmatch": { title: "Um streamer quer um showmatch", body: "Um criador grande oferece ao elenco um showmatch pago nesta semana. Dinheiro fácil, química boa, uma sessão a menos.", a: "Jogar", b: "Passar" },
@@ -1242,6 +1271,9 @@ export const CAREER_PT: CareerCopy = {
     points: "Pontos da Temporada",
     viewTeam: "Ver time",
     prestige: (n: number) => `Prestígio ${n}`,
+    // rc.2 times locais
+    localSide: "Time local",
+    localHint: "Um time amador da cena regional — eles só aparecem nas community cups.",
   },
 
   common: {

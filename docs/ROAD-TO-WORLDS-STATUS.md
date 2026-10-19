@@ -1,7 +1,7 @@
 # Road to Worlds — status (current state only)
 
-> Last updated: 2026-10-16. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
-> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R34. History: `CHANGELOG.md`
+> Last updated: 2026-10-19. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
+> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R37. History: `CHANGELOG.md`
 > `[1.5.0-alpha]` and `[2.0.0]`. Do not read any of them whole.
 
 ## Run / verify
@@ -26,7 +26,7 @@
 | Market, negotiation, coaches | `market.ts` | `signPlayerFlow`, `hireCoachFlow` | `MarketScreen.tsx` (`#coaches`) |
 | Inserts (weekly decision cards) | `inserts.ts` + `data/career/inserts.ts` | `resolveInsertFlow` | hub `NowCards.tsx` |
 | Achievements (permanent, cross-save) | `achievements.ts` + `data/career/achievements.ts` | `careerStore` `settleAchievements` | `ClubScreen.tsx` |
-| HQ | — | — | `HubScreen.tsx` + `hub/DayCard.tsx`, `TodayCards.tsx`, `NowCards.tsx` |
+| HQ | — | — | `HubScreen.tsx` + `hub/DayCard.tsx` (timeline + inline insert), `SquadBlock.tsx`, `TrainingBlock.tsx`, `NowCards.tsx` |
 
 Tunables: `CAREER_*` blocks in `src/config/balance.ts`. Copy: `copy.career.en.ts`
 / `.pt.ts` via `useCareerCopy()`. Save shape: `engine/career/types.ts`
@@ -34,7 +34,8 @@ Tunables: `CAREER_*` blocks in `src/config/balance.ts`. Copy: `copy.career.en.ts
 
 ## v2.0 state
 
-All Part 3 asks of the v2.0 guide are built (R20–R34): weekly payroll + bank
+All Part 3 asks of the v2.0 guide are built (R20–R34), plus the rc.2 UX pass
+(R35–R37: hub v3 hierarchy, rare blocking inserts, regional local names): weekly payroll + bank
 loan + loans panel; sub-slot signing fix; coach deep link + explicit effects;
 HQ rebuilt around the day card; Training 2.0 (weekly drill, growth ETA,
 attribute effects, scrim tiers); Wednesday qualifier + local amateur scene;

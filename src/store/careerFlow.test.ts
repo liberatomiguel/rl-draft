@@ -23,6 +23,7 @@ import {
   startEvent,
   syncSquadRoles,
   type CreateCareerInput,
+  resolveInsertFlow,
 } from "./careerFlow";
 import { userTeamFor } from "@/engine/career/worldSim";
 
@@ -64,6 +65,8 @@ function playSeason(input: CareerSave): CareerSave {
     guard += 1;
     save = resolveEventIfDue(save);
     if (save.phase !== "running") break;
+    // rc.2: a pending weekly insert blocks the clock until answered — take the quiet option.
+    if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
     const before = save.clock.day;
     save = advanceDayFlow(save);
     if (save.phase !== "running") break;
@@ -151,6 +154,7 @@ describe("careerFlow — full season integration (day clock)", () => {
       guard += 1;
       save = resolveEventIfDue(save);
       if (save.phase !== "running") break;
+      if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
       save = advanceDayFlow(save);
     }
     expect(save.clock.day).toBeGreaterThanOrEqual(targetDay - 1);

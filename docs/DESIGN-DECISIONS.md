@@ -1245,3 +1245,29 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
 - Liquipedia-fetched art is a bootstrap: a curation pass over
   `data-sources/asset-overrides.json` will be needed for misses and
   same-name org collisions (e.g. FUT Esports NA logo).
+
+119. **Cosmetics v3: tiered art, avatars, no auto-equip, exclusive items
+     hidden, preview tools.** Miguel on rc.1: badges were "extremamente simples
+     e feias", frames all round, titles valueless, the locker "jogado". Every
+     cosmetic is now layered SVG whose decoration rises with the tier (Basic
+     flat → Legend wings/laurels + holo); rank rewards borrow the rank's
+     palette. A fifth kind, **avatar** (15 presets, 6 owned by everyone),
+     replaces the framed rank emblem as the profile's face; the rank emblem
+     uses the menu art set everywhere (the profile art set is no longer
+     referenced). `equipped` slots are explicit or empty — the AUTO mode is
+     gone (`resolveEquipped` returns nothing for an empty slot; only the
+     avatar falls back to the starter). `cosmetics.seen` tracks what the
+     player has looked at so the profile can count new items. Items flagged
+     `exclusive` (pre-season legacy, manual grants) are hidden from the locker
+     unless owned. `FEATURES.previewTools` (dev + NEXT_PUBLIC_NOINDEX=1 builds)
+     enables an "unlock everything" switch and a fictional leaderboard — never
+     in the production deploy. Cloud: `equipped_avatar` column added to the
+     v2.0 SQL (plan §6B) before Miguel runs it.
+
+120. **Home is a bento with three tiers; the quiz is a modal; the login streak
+     is a modal.** Hierarchy (Play › Today › You) replaces the flat grid; Quick
+     Draft is Classic's secondary action; the quiz opens in place because it is
+     a minigame (the /quiz page stays for SEO and history); the streak gets its
+     moment once per day in a modal instead of a toast. "Week N of 9" is gone
+     until the season length is final.
+

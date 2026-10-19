@@ -291,6 +291,7 @@ export const PT: Copy = {
     guestNote:
       "Jogando como convidado — seu progresso fica salvo neste dispositivo. Entre com seu email para fazer backup na nuvem e competir globalmente. Seu progresso local é mesclado, nunca perdido.",
     comingSoon: "Os rankings globais abrem quando as contas entrarem no ar. Até lá, seus recordes ficam salvos localmente.",
+    previewData: "Preview — perfis fictícios (staging)",
     globalTab: "Global",
     // v2.0 boards
     boards: {

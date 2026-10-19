@@ -746,89 +746,6 @@ export function FinancesScreen() {
         </Panel>
       </div>
 
-      {/* ================= Loans & debt (v2.0) ================= */}
-      <Panel glow={fin.loan ? "orange" : undefined} className="rise-in p-4">
-        <div className="mb-1 flex items-baseline justify-between gap-2">
-          <p className="kicker text-[10px]">{C.finances.loans}</p>
-          <span className="text-[10px] text-faint">{C.finances.loansHint}</span>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {/* Bank */}
-          <div className="rounded-lg border border-line bg-white/[0.02] p-3">
-            <p className="display text-sm font-bold uppercase tracking-wide text-ink">
-              {C.finances.bankTitle}
-            </p>
-            {fin.bankLoan ? (
-              <>
-                <p className="display mt-1 text-lg font-bold text-orange-bright">
-                  {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining))}
-                </p>
-                <p className="mt-0.5 text-xs text-sub">
-                  {C.finances.bankWeekly(formatMoney(fin.bankLoan.weeklyPayment, { compact: true }))}
-                </p>
-                <PayDown
-                  remaining={fin.bankLoan.remaining}
-                  balance={fin.balance}
-                  onPay={payBankLoan}
-                  cta={C.finances.bankPayEarly}
-                />
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-xs text-sub">
-                  {C.finances.bankHint(CAREER_BANK.termWeeks, Math.round(CAREER_BANK.interestPct * 100))}
-                </p>
-                {fin.loan && CAREER_BANK.blockedWhileBacker ? (
-                  <p className="mt-2 text-xs font-semibold text-faint">{C.finances.bankBlockedBacker}</p>
-                ) : (
-                  <BankLoanRequest rep={rep} balance={fin.balance} />
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Emergency Backer */}
-          <div
-            className={cx(
-              "rounded-lg border bg-white/[0.02] p-3",
-              fin.loan ? "border-orange/40" : fin.loanUsed ? "border-bad/40" : "border-line",
-            )}
-          >
-            <p className="display text-sm font-bold uppercase tracking-wide text-ink">{C.finances.backer}</p>
-            {fin.loan ? (
-              <>
-                <p className="display mt-1 text-lg font-bold text-orange-bright">
-                  {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
-                </p>
-                <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
-                <p className="mt-0.5 text-xs text-sub">
-                  {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
-                </p>
-                <PayDown
-                  remaining={fin.loan.remaining}
-                  balance={fin.balance}
-                  onPay={payDebt}
-                  cta={C.finances.payDebt}
-                  hint={C.finances.payDebtHint}
-                />
-              </>
-            ) : fin.loanUsed ? (
-              <>
-                <p className="mt-1 text-sm font-semibold text-bad">{C.finances.insolvencyWarning}</p>
-                <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
-              </>
-            ) : (
-              <p className="mt-1 text-xs text-sub">
-                {C.finances.backerIdle(
-                  formatMoney(CAREER_LOAN.floor, { compact: true }),
-                  formatMoney(CAREER_LOAN.rescueTo, { compact: true }),
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-      </Panel>
-
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-5">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
         <Panel className="rise-in p-4 sm:p-5 lg:col-span-3" style={{ animationDelay: "120ms" }}>
@@ -1111,6 +1028,98 @@ export function FinancesScreen() {
           </Panel>
         </div>
       </div>
+
+      {/* ================= Loans & debt (v2.0; rc.2: folded away unless a loan is live) ================= */}
+      <details open={Boolean(fin.loan || fin.bankLoan)} className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}>
+        <summary className="flex cursor-pointer list-none flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+          <span className="kicker text-[10px]">
+            <span className="mr-1.5 inline-block transition-transform group-open:rotate-90" aria-hidden>
+              ▸
+            </span>
+            {C.finances.loans}
+            {fin.loan ? <Badge tone="orange" className="ml-2">{C.finances.backer}</Badge> : fin.bankLoan ? <Badge tone="blue" className="ml-2">{C.finances.bankTitle}</Badge> : null}
+          </span>
+          <span className="text-[10px] text-faint">{C.finances.loansHint}</span>
+        </summary>
+        <div className="px-4 pb-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {/* Bank */}
+          <div className="rounded-lg border border-line bg-white/[0.02] p-3">
+            <p className="display text-sm font-bold uppercase tracking-wide text-ink">
+              {C.finances.bankTitle}
+            </p>
+            {fin.bankLoan ? (
+              <>
+                <p className="display mt-1 text-lg font-bold text-orange-bright">
+                  {C.finances.bankRemaining(formatMoney(fin.bankLoan.remaining))}
+                </p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.bankWeekly(formatMoney(fin.bankLoan.weeklyPayment, { compact: true }))}
+                </p>
+                <PayDown
+                  remaining={fin.bankLoan.remaining}
+                  balance={fin.balance}
+                  onPay={payBankLoan}
+                  cta={C.finances.bankPayEarly}
+                />
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-sub">
+                  {C.finances.bankHint(CAREER_BANK.termWeeks, Math.round(CAREER_BANK.interestPct * 100))}
+                </p>
+                {fin.loan && CAREER_BANK.blockedWhileBacker ? (
+                  <p className="mt-2 text-xs font-semibold text-faint">{C.finances.bankBlockedBacker}</p>
+                ) : (
+                  <BankLoanRequest rep={rep} balance={fin.balance} />
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Emergency Backer */}
+          <div
+            className={cx(
+              "rounded-lg border bg-white/[0.02] p-3",
+              fin.loan ? "border-orange/40" : fin.loanUsed ? "border-bad/40" : "border-line",
+            )}
+          >
+            <p className="display text-sm font-bold uppercase tracking-wide text-ink">{C.finances.backer}</p>
+            {fin.loan ? (
+              <>
+                <p className="display mt-1 text-lg font-bold text-orange-bright">
+                  {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
+                </p>
+                <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
+                </p>
+                <PayDown
+                  remaining={fin.loan.remaining}
+                  balance={fin.balance}
+                  onPay={payDebt}
+                  cta={C.finances.payDebt}
+                  hint={C.finances.payDebtHint}
+                />
+              </>
+            ) : fin.loanUsed ? (
+              <>
+                <p className="mt-1 text-sm font-semibold text-bad">{C.finances.insolvencyWarning}</p>
+                <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-sub">
+                {C.finances.backerIdle(
+                  formatMoney(CAREER_LOAN.floor, { compact: true }),
+                  formatMoney(CAREER_LOAN.rescueTo, { compact: true }),
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+      </details>
+
     </div>
   );
 }

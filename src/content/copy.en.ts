@@ -1128,6 +1128,7 @@ export const LEADERBOARDS_UI = {
   guestNote:
     "Playing as a guest — your progress is saved on this device. Sign in with your email to back it up to the cloud and compete globally. Your local progress is merged in, never lost.",
   comingSoon: "Global leaderboards unlock once accounts go live. Your records are tracked locally in the meantime.",
+  previewData: "Preview — fictional profiles (staging)",
   globalTab: "Global",
   // v2.0 boards
   boards: {
