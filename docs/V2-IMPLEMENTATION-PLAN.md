@@ -382,6 +382,7 @@ alter table public.profiles
   add column if not exists equipped_frame     text,
   add column if not exists equipped_banner    text,
   add column if not exists equipped_badges    text[] not null default '{}',
+  add column if not exists equipped_avatar    text,
   add column if not exists preseason_position integer;
 
 -- 2) Manual grants (supporter / pro / contributor). You INSERT rows by hand in
@@ -431,7 +432,7 @@ create view public.leaderboard with (security_invoker = false) as
          p.championships, p.titles_easy, p.titles_normal, p.titles_hard, p.titles_legacy,
          p.daily_streak, p.challenges_cleared, p.challenge_stars,
          p.quiz_solved, p.login_streak,
-         p.equipped_title, p.equipped_frame, p.equipped_banner, p.equipped_badges,
+         p.equipped_title, p.equipped_frame, p.equipped_banner, p.equipped_badges, p.equipped_avatar,
          coalesce((select array_agg(g.grant_id order by g.grant_id)
                    from public.profile_grants g where g.user_id = p.id), '{}'::text[]) as grants
   from public.profiles p;
@@ -441,7 +442,7 @@ grant select on public.leaderboard to anon, authenticated;
 drop view if exists public.preseason_hall_of_fame;
 create view public.preseason_hall_of_fame with (security_invoker = false) as
   select p.username, p.preseason_position as position, p.mmr, p.xp, p.championships,
-         p.equipped_title, p.equipped_frame, p.equipped_banner,
+         p.equipped_title, p.equipped_frame, p.equipped_banner, p.equipped_avatar,
          coalesce((select array_agg(g.grant_id order by g.grant_id)
                    from public.profile_grants g where g.user_id = p.id), '{}'::text[]) as grants
   from public.profiles p

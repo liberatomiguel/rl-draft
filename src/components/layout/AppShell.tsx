@@ -16,6 +16,7 @@ import { rankForXp } from "@/engine/progression";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementToaster } from "@/components/AchievementToaster";
 import { RewardToaster } from "@/components/RewardToaster";
+import { LoginStreakModal } from "@/components/LoginStreakModal";
 import { GuardedHomeLink, LeaveRunProvider } from "./LeaveRunGuard";
 import { SiteFooter } from "./SiteFooter";
 import { SettingsEffects } from "./SettingsEffects";
@@ -117,6 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SettingsEffects />
       <AchievementToaster />
       <RewardToaster />
+      <LoginStreakModal />
 
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}

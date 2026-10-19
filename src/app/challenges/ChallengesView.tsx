@@ -153,8 +153,7 @@ export function ChallengesView() {
         right={<Badge tone="gold">★ {CH.starsCount(starsEarned, starsMax)}</Badge>}
         className="mb-2"
       />
-      <p className="mb-3 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
-      <StarTrack earned={starsEarned} CH={CH} />
+      <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
 
       {modeLocked ? (
         <Panel className="p-8 text-center">
@@ -200,36 +199,6 @@ export function ChallengesView() {
   );
 }
 
-/** The star-track milestones (cosmetics) with the current total (v2.0). */
-function StarTrack({ earned, CH }: { earned: number; CH: ReturnType<typeof useCopy>["CHALLENGES_UI"] }) {
-  const milestones = CHALLENGE.starMilestones;
-  const max = milestones[milestones.length - 1];
-  return (
-    <Panel className="mb-6 flex flex-wrap items-center gap-4 p-4">
-      <div className="min-w-0 flex-1">
-        <p className="kicker !text-[10px]">{CH.starTrack}</p>
-        <p className="text-[11px] text-faint">{CH.starTrackHint}</p>
-        <div className="relative mt-2 h-2 w-full overflow-hidden rounded-full bg-white/8">
-          <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300" style={{ width: `${Math.min(100, (earned / max) * 100)}%` }} />
-        </div>
-      </div>
-      <div className="flex gap-1.5">
-        {milestones.map((m) => (
-          <span
-            key={m}
-            className={cx(
-              "display flex h-9 min-w-9 items-center justify-center rounded-full border px-2 text-xs font-bold",
-              earned >= m ? "border-amber-300/60 bg-amber-300/15 text-amber-200" : "border-line text-faint",
-            )}
-          >
-            ★{m}
-          </span>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
 function ChallengeCard({
   ch,
   status,
@@ -249,87 +218,86 @@ function ChallengeCard({
   const header = lineupHeader(ch.opponentLineupId);
   const twists = twistLabels(ch, CH);
   const total = starsAvailable(ch);
-  const perfect = countStars(starMask) >= total;
+  const earnedCount = countStars(starMask);
+  const perfect = earnedCount >= total;
+  const starLabels = [CH.star1, ...(ch.stars ?? []).map((st) => starLabel(st, CH))];
 
+  // The same layout for every status (rc.2): a locked card shows what it IS,
+  // under a dark overlay that says what opens it.
   const inner = (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
-          <span className={cx("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>
-            {style.label}
-          </span>
+          <span className={cx("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>{style.label}</span>
           {ch.kind === "gauntlet" ? <Badge tone="blue">{CH.gauntletKicker}</Badge> : null}
         </span>
         {perfect ? (
           <Badge tone="gold">✓ {CH.status.cleared}</Badge>
-        ) : locked ? (
-          <Badge tone="neutral">{CH.status.locked}</Badge>
         ) : cleared ? (
           <StarRow mask={starMask} total={total} />
         ) : (
-          <Badge tone="orange">{CH.status.available}</Badge>
+          <Badge tone="blue">{CH.rewardXp(ch.reward.xp)}</Badge>
         )}
       </div>
 
       <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{ch.title}</h3>
-
-      {locked ? (
-        <div className="mt-2 flex items-center gap-2">
-          {/* The rank you need — shown as its badge so the gate is unmistakable (v1.4). */}
-          <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="shrink-0" />
-          <p className="text-xs font-semibold text-faint">
-            {CH.unlocksAt(rankLabel(ch.rankRequired))}
-            {ch.prereq ? ` · ${CH.clearPrereq(challengeById.get(ch.prereq)?.title ?? ch.prereq)}` : ""}
-          </p>
-        </div>
-      ) : (
-        <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-sub">{ch.brief}</p>
-      )}
+      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-sub">{ch.brief}</p>
 
       <div className="mt-3 flex items-center gap-2 border-t border-line/60 pt-3">
         <TeamLogo orgId={lineupById.get(ch.opponentLineupId)!.orgId} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-semibold text-sub">{header.orgName}</p>
-          <p className="text-[10px] uppercase tracking-wider text-faint">{header.seasonShort}</p>
+          <p className="text-[10px] uppercase tracking-wider text-faint">
+            {header.seasonShort}
+            {twists.length ? ` · ${twists[0]}` : ""}
+            {twists.length > 1 ? ` +${twists.length - 1}` : ""}
+          </p>
         </div>
         <span className="display text-sm font-bold text-ink">{bossOverall(ch.opponentLineupId)}</span>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {cleared ? <StarRow mask={starMask} total={total} /> : <Badge tone="blue">{CH.rewardXp(ch.reward.xp)}</Badge>}
-        {twists.slice(0, 1).map((t) => (
-          <Badge key={t} tone="neutral">
-            {t}
-          </Badge>
-        ))}
-        {twists.length > 1 ? <span className="text-[10px] text-faint">+{twists.length - 1}</span> : null}
-      </div>
+      {/* The three stars and what each one asks — on the card, no modal needed. */}
+      <ul className="mt-3 space-y-1">
+        {starLabels.map((label, i) => {
+          const earned = Boolean(starMask & (1 << i));
+          return (
+            <li key={i} className={cx("flex items-start gap-1.5 text-[11px] leading-snug", earned ? "text-ink" : "text-sub")}>
+              <span className={cx("mt-px text-sm leading-none", earned ? "text-amber-300" : "text-faint/60")} aria-hidden>
+                ★
+              </span>
+              <span className={cx(earned && "font-semibold")}>{label}</span>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 
+  if (locked) {
+    return (
+      <div className="relative" aria-disabled="true">
+        <Panel className="p-4">{inner}</Panel>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-bg/85 p-4 text-center backdrop-blur-[2px]">
+          <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="md" />
+          <p className="display text-sm font-bold uppercase tracking-wide text-ink">{CH.unlocksAt(rankLabel(ch.rankRequired))}</p>
+          {ch.prereq ? <p className="text-xs text-sub">{CH.clearPrereq(challengeById.get(ch.prereq)?.title ?? ch.prereq)}</p> : null}
+        </div>
+      </div>
+    );
+  }
   // Cleared challenges stay playable for the missing stars (v2.0).
-  if (status === "available" || (cleared && !perfect)) {
-    return (
-      <button
-        type="button"
-        onClick={onOpen}
-        className={cx("panel p-4 text-left transition-all hover:!border-line-strong", style.glow)}
-      >
-        {inner}
-      </button>
-    );
-  }
-  if (cleared) {
-    return (
-      <button type="button" onClick={onOpen} className={cx("panel p-4 text-left transition-all hover:!border-line-strong", "!border-amber-300/40", style.legend && "ach-legend")}>
-        {inner}
-      </button>
-    );
-  }
   return (
-    <Panel className={cx("p-4", locked && "opacity-55")}>
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cx(
+        "panel p-4 text-left transition-all hover:!border-line-strong",
+        cleared ? "!border-amber-300/40" : style.glow,
+        cleared && style.legend && "ach-legend",
+      )}
+    >
       {inner}
-    </Panel>
+    </button>
   );
 }
 

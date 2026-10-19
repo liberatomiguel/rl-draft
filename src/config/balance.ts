@@ -1544,6 +1544,13 @@ export const FEATURES = {
    * one flag away per the design doc §21.1.
    */
   careerHardStabilityRule: false,
+  /**
+   * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
+   * leaderboard when accounts are disabled). On in dev/tests and on the
+   * staging build (NEXT_PUBLIC_NOINDEX=1); never in the production deploy.
+   */
+  previewTools:
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_NOINDEX === "1",
 } as const;
 
 // ---------------------------------------------------------------------------

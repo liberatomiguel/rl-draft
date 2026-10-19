@@ -1,30 +1,35 @@
 "use client";
 
 /**
- * Locker (v2.0): everything the player owns or can still earn, by kind. Click an
- * owned item to equip it; "Auto" shows the best owned item, "None" hides the
- * slot; badges are a multi-select of up to three. Locked items show how to get
- * them. Shared by the profile page.
+ * Locker (v2.0, rebuilt rc.2): a MODAL that opens on the slot the player tapped
+ * in the profile hero. One tab per kind (avatar · frame · title · badges ·
+ * banner). Owned items equip on tap (badges: up to three, toggled); items still
+ * to earn show how; exclusive items the player does not own are hidden (they
+ * cannot be earned any more). No auto mode: a slot is a choice or empty.
+ * Opening a tab marks its owned items as seen (clears the "new" count).
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RANKS } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { COSMETICS, type CosmeticDef, type CosmeticKind, type CosmeticSource } from "@/data/cosmetics";
-import { MAX_BADGES, NONE, resolveEquipped } from "@/engine/cosmetics";
+import { lockerItems, MAX_BADGES, resolveEquipped, unseenOwnedIds } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useProfileStore } from "@/store/profileStore";
 import { Badge } from "@/components/ui/Badge";
-import { CosmeticPreview } from "./CosmeticViews";
+import { Modal } from "@/components/ui/Modal";
+import { CosmeticArt, TIER_ACCENT, TIER_RING, useCosmeticCopy } from "./CosmeticViews";
 
-const KINDS: CosmeticKind[] = ["title", "badge", "frame", "banner"];
+export const LOCKER_KINDS: CosmeticKind[] = ["avatar", "frame", "title", "badge", "banner"];
 
 const rankLabel = (id: string): string => RANKS.find((r) => r.id === id)?.label ?? id;
 
 export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy>["COSMETICS"]): string {
   switch (source.type) {
+    case "default":
+      return C.sources.default;
     case "legacy-participation":
       return C.sources["legacy-participation"];
     case "legacy-rank":
@@ -48,49 +53,77 @@ export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy
   }
 }
 
-const TIER_RING: Record<CosmeticDef["tier"], string> = {
-  common: "!border-slate-400/35",
-  rare: "!border-blue/45",
-  epic: "!border-violet-400/50",
-  legend: "!border-amber-300/60 shadow-[0_0_18px_rgba(251,191,36,0.16)]",
-};
+/** Count of owned items the player has not looked at yet (profile badge). */
+export function useUnseenCosmetics(): number {
+  const cosmetics = useProfileStore((s) => s.cosmetics);
+  return unseenOwnedIds(cosmetics).length;
+}
 
-export function CosmeticsLocker() {
-  const { COSMETICS: C, PROFILE_UI: P } = useCopy();
+export function CosmeticsLockerModal({
+  open,
+  kind: initialKind,
+  onClose,
+}: {
+  open: boolean;
+  kind: CosmeticKind;
+  onClose: () => void;
+}) {
+  const { COSMETICS: C } = useCopy();
+  const copy = useCosmeticCopy();
   const cosmetics = useProfileStore((s) => s.cosmetics);
   const setEquipped = useProfileStore((s) => s.setEquipped);
-  const [kind, setKind] = useState<CosmeticKind>("title");
+  const markSeen = useProfileStore((s) => s.markCosmeticsSeen);
+  const [kind, setKind] = useState<CosmeticKind>(initialKind);
+  // Follow the slot the player tapped each time the modal opens.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setKind(initialKind);
+  }
   // Captured once per mount (render must stay pure); "NEW" = owned under a week.
   const [now] = useState(() => Date.now());
   const resolved = resolveEquipped(cosmetics);
-  const items = COSMETICS.filter((c) => c.kind === kind);
-  const owned = items.filter((c) => cosmetics.owned[c.id]);
-  const locked = items.filter((c) => !cosmetics.owned[c.id]);
-  const explicit = kind === "badge" ? null : cosmetics.equipped[kind];
-  const shownIds = new Set(
-    kind === "badge" ? resolved.badges.map((b) => b.id) : [resolved[kind]?.id].filter(Boolean),
-  );
-  const isNew = (id: string) => now - Date.parse(cosmetics.owned[id] ?? "") < 7 * 86_400_000;
+  const { owned, locked } = lockerItems(cosmetics.owned, kind);
+  const shownIds = new Set(kind === "badge" ? resolved.badges.map((b) => b.id) : [resolved[kind]?.id].filter(Boolean));
+  const unseen = new Set(unseenOwnedIds(cosmetics));
+  const isNew = (id: string) => unseen.has(id) || now - Date.parse(cosmetics.owned[id] ?? "") < 7 * 86_400_000;
+
+  // Looking at a tab = seeing its items (the "new" count on the profile drops).
+  useEffect(() => {
+    if (!open) return;
+    const ids = owned.map((c) => c.id).filter((id) => unseen.has(id));
+    if (ids.length) markSeen(ids);
+    // `owned`/`unseen` are derived from the store on every render; the effect
+    // only needs to re-run when the tab or the store changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, kind, cosmetics.owned, markSeen]);
 
   const choose = (def: CosmeticDef) => {
     sfx.click();
     if (def.kind === "badge") {
-      const current = cosmetics.equipped.badges ?? resolved.badges.map((b) => b.id);
-      const next = current.includes(def.id)
-        ? current.filter((id) => id !== def.id)
-        : [...current, def.id].slice(-MAX_BADGES);
+      const current = cosmetics.equipped.badges ?? [];
+      const next = current.includes(def.id) ? current.filter((id) => id !== def.id) : [...current, def.id].slice(-MAX_BADGES);
       setEquipped({ badges: next });
+    } else if (shownIds.has(def.id) && def.kind !== "avatar") {
+      setEquipped({ [def.kind]: null });
     } else {
       setEquipped({ [def.kind]: def.id });
     }
   };
 
+  const clearSlot = () => {
+    sfx.click();
+    if (kind === "badge") setEquipped({ badges: [] });
+    else setEquipped({ [kind]: null });
+  };
+
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center gap-1.5">
-        {KINDS.map((k) => {
-          const total = COSMETICS.filter((c) => c.kind === k).length;
+    <Modal open={open} title={C.locker} onClose={onClose} wide>
+      <div className="-mx-1 mb-3 flex flex-wrap items-center gap-1">
+        {LOCKER_KINDS.map((k) => {
+          const total = COSMETICS.filter((c) => c.kind === k && !c.exclusive).length + COSMETICS.filter((c) => c.kind === k && c.exclusive && cosmetics.owned[c.id]).length;
           const have = COSMETICS.filter((c) => c.kind === k && cosmetics.owned[c.id]).length;
+          const fresh = COSMETICS.filter((c) => c.kind === k && unseen.has(c.id)).length;
           return (
             <button
               key={k}
@@ -100,30 +133,31 @@ export function CosmeticsLocker() {
                 setKind(k);
               }}
               className={cx(
-                "display rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors",
+                "display relative rounded-md px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors",
                 kind === k ? "bg-orange/15 text-orange-bright" : "text-sub hover:text-ink",
               )}
             >
               {C.kindsPlural[k]} <span className="text-faint">{have}/{total}</span>
+              {fresh > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-good px-1 text-[9px] font-bold text-[#05140c]">
+                  {fresh}
+                </span>
+              ) : null}
             </button>
           );
         })}
       </div>
 
-      {kind !== "badge" ? (
-        <div className="mb-3 flex flex-wrap gap-2">
-          <ChoiceChip active={explicit === null} onClick={() => setEquipped({ [kind]: null })}>
-            {C.auto}
-          </ChoiceChip>
-          <ChoiceChip active={explicit === NONE} onClick={() => setEquipped({ [kind]: NONE })}>
-            {C.none}
-          </ChoiceChip>
-        </div>
-      ) : (
-        <p className="mb-3 text-xs text-faint">{P.lockerHint}</p>
-      )}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-sub">
+        <span>{kind === "badge" ? C.badgesHint(MAX_BADGES) : C.kindHint[kind]}</span>
+        {kind !== "avatar" && (kind === "badge" ? resolved.badges.length > 0 : resolved[kind]) ? (
+          <button type="button" onClick={clearSlot} className="font-semibold text-faint underline-offset-4 hover:text-ink hover:underline">
+            {C.unequip}
+          </button>
+        ) : null}
+      </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {owned.map((def) => {
           const shown = shownIds.has(def.id);
           return (
@@ -132,46 +166,60 @@ export function CosmeticsLocker() {
               type="button"
               onClick={() => choose(def)}
               className={cx(
-                "panel flex items-center gap-2 p-2.5 text-left transition-colors hover:!border-line-strong",
+                "group relative flex flex-col items-center gap-2 rounded-xl border bg-white/[0.03] p-3 text-center transition-colors hover:bg-white/[0.06]",
                 TIER_RING[def.tier],
-                shown && "ring-1 ring-orange/60",
+                shown && "ring-2 ring-orange/70",
               )}
             >
-              <CosmeticPreview id={def.id} className="min-w-0 flex-1" />
-              <span className="flex shrink-0 flex-col items-end gap-1">
-                {shown ? <Badge tone="orange">{C.equipped}</Badge> : null}
-                {isNew(def.id) ? <Badge tone="good">{C.newTag}</Badge> : null}
+              <span className="flex h-20 items-center justify-center">
+                <CosmeticArt def={def} size="md" />
               </span>
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-bold text-ink">{copy.name(def.id)}</span>
+                <span className="block text-[10px]" style={{ color: TIER_ACCENT[def.tier] }}>
+                  {copy.tier(def.tier)}
+                </span>
+              </span>
+              <span className="absolute left-2 top-2 flex gap-1">
+                {shown ? <Badge tone="orange">{C.equipped}</Badge> : null}
+              </span>
+              {isNew(def.id) && def.source.type !== "default" ? (
+                <span className="absolute right-2 top-2">
+                  <Badge tone="good">{C.newTag}</Badge>
+                </span>
+              ) : null}
             </button>
           );
         })}
         {locked.map((def) => (
-          <div key={def.id} className="panel flex items-center gap-2 p-2.5 opacity-55">
-            <CosmeticPreview id={def.id} className="min-w-0 flex-1" />
-            <span className="max-w-[9rem] shrink-0 text-right text-[10px] leading-snug text-faint">
-              {sourceLabel(def.source, C)}
+          <div
+            key={def.id}
+            className="relative flex flex-col items-center gap-2 rounded-xl border border-line bg-white/[0.02] p-3 text-center"
+            title={copy.desc(def.id)}
+          >
+            <span className="flex h-20 items-center justify-center opacity-35 saturate-50">
+              <CosmeticArt def={def} size="md" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-xs font-bold text-sub">{copy.name(def.id)}</span>
+              <span className="block text-[10px] leading-snug text-faint">{sourceLabel(def.source, C)}</span>
+            </span>
+            <span className="absolute right-2 top-2 text-faint" aria-hidden>
+              <LockGlyph />
             </span>
           </div>
         ))}
       </div>
-    </div>
+      {owned.length === 0 && locked.length === 0 ? <p className="py-6 text-center text-sm text-faint">{C.empty}</p> : null}
+    </Modal>
   );
 }
 
-function ChoiceChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function LockGlyph() {
   return (
-    <button
-      type="button"
-      onClick={() => {
-        sfx.click();
-        onClick();
-      }}
-      className={cx(
-        "display rounded-md border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors",
-        active ? "border-orange/50 bg-orange/10 text-orange-bright" : "border-line text-sub hover:text-ink",
-      )}
-    >
-      {children}
-    </button>
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
   );
 }

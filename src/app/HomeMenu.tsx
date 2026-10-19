@@ -1,47 +1,51 @@
 "use client";
 
 /**
- * Home menu v2 (v2.0). The SEO surface is untouched on purpose (hero copy,
- * `HomeSeoContent`, metadata in page.tsx); only the menu is reorganised:
- *   1. Hero (as before) + the SEASON STRIP (rank · rating · week · streak).
- *   2. Featured: Classic Draft and Road to Worlds.
- *   3. More ways to play: Quick Draft, Daily Challenge, Challenges, Daily Quiz.
- *   4. Your progress: today's missions + Collection / Achievements / Profile /
- *      Leaderboards.
+ * Home menu v3 (rc.2) — a bento with a real hierarchy. The SEO surface is
+ * untouched on purpose (hero copy, `HomeSeoContent`, metadata in page.tsx).
+ *   1. Hero (as before) + a quiet identity line: rank emblem · rank · rating.
+ *   2. PLAY — Classic Draft (the big one, with Quick Draft as its secondary
+ *      action) and Road to Worlds, side by side, nothing else competing.
+ *   3. TODAY — Daily Challenge, Challenges, today's missions, and the Daily
+ *      Quiz as a small tile that opens a MODAL (it is a minigame).
+ *   4. YOU — Collection · Achievements · Profile · Leaderboards in one row.
+ * Everything that matters is within one screen on desktop and two on a phone.
  * Returning to the menu RESETS any run in progress (v0.2 rule).
  * Player state is mount-gated with reserved heights (CLS), like v1.4.
  */
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { COUNTS } from "@/data/counts";
 import { useCopy } from "@/content/copy";
 import { localePath } from "@/content/pageRoutes";
 import { useSettings } from "@/store/settingsStore";
 import { FEATURES } from "@/config/balance";
-import { SEASON, seasonDaysLeft, seasonWeek } from "@/config/season";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
 import { resolveEquipped } from "@/engine/cosmetics";
 import { generateDailyConfig, todayKey } from "@/lib/daily";
+import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useAccountStore } from "@/store/accountStore";
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { MissionsPanel } from "@/components/MissionsPanel";
-import { BadgeRow, FrameRing, TitleTag } from "@/components/cosmetics/CosmeticViews";
+import { AvatarMark } from "@/components/cosmetics/CosmeticViews";
+import { QuizPanel } from "@/app/quiz/QuizView";
 
 export default function HomeMenu() {
-  const { APP, HOME, HOME_SEO } = useCopy();
+  const { APP, HOME, HOME_SEO, QUIZ_UI } = useCopy();
   const mounted = useMounted();
   const lang = useSettings((s) => s.lang);
   const active = mounted ? lang : "en";
@@ -54,7 +58,6 @@ export default function HomeMenu() {
   const achieved = useProfileStore((s) => Object.keys(s.achievements).length);
   const dailyResults = useProfileStore((s) => s.dailyResults);
   const streak = useProfileStore(selectDailyStreak);
-  const loginStreak = useProfileStore((s) => s.login.streak);
   const cosmetics = useProfileStore((s) => s.cosmetics);
   const quizToday = useProfileStore((s) => s.quiz.results[todayKey()]);
   const collectionOpen = useProfileStore(selectCollectionUnlocked);
@@ -63,6 +66,7 @@ export default function HomeMenu() {
   const setSetupMode = useRunStore((s) => s.setSetupMode);
   const rank = rankForXp(xp);
   const shown = resolveEquipped(cosmetics);
+  const [quizOpen, setQuizOpen] = useState(false);
 
   const goToSetup = (mode: "classic" | "quick") => {
     sfx.click();
@@ -74,7 +78,6 @@ export default function HomeMenu() {
   const daily = useMemo(() => generateDailyConfig(today), [today]);
   const dailyDone = mounted ? Boolean(dailyResults[today]) : false;
   const quizDone = mounted ? Boolean(quizToday && (quizToday.solved || quizToday.attempts >= 3)) : false;
-  const daysLeft = seasonDaysLeft();
 
   useEffect(() => {
     if (mounted && useRunStore.getState().run) clearRun();
@@ -99,7 +102,7 @@ export default function HomeMenu() {
       <FirstRunTutorial />
       <SeasonRecap />
       {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
-      <section className="px-2 py-10 text-center md:py-14">
+      <section className="px-2 pb-6 pt-10 text-center md:pt-14">
         <p className="kicker mb-4">{APP.tagline}</p>
         <h1 className="display mx-auto max-w-3xl text-5xl font-bold uppercase leading-[0.95] tracking-[0.08em] md:text-7xl">
           <span className="text-ink">Rocket</span>
@@ -107,78 +110,90 @@ export default function HomeMenu() {
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-sub md:text-base">{APP.description}</p>
 
-        {/* Season strip: reserved height, mount-gated (persisted state would mismatch SSR). */}
-        <div className="mx-auto mt-7 flex min-h-[132px] max-w-2xl flex-col items-center gap-3">
+        {/* Identity line: reserved height, mount-gated (persisted state would mismatch SSR). */}
+        <div className="mx-auto mt-6 flex min-h-[64px] max-w-2xl items-center justify-center">
           {mounted ? (
-            <>
-              <FrameRing frame={shown.frame} width={3}>
-                <RankBadge rank={rank} variant="menu" size="md" />
-              </FrameRing>
-              <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <TitleTag title={shown.title} size="xs" />
-                <BadgeRow badges={shown.badges} size="xs" />
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                <Badge tone="blue">{rank.label}</Badge>
-                <Badge tone="orange">{HOME.seasonStrip.rating} {mmr}</Badge>
-                <Badge tone="neutral">{xp} XP</Badge>
-                {runs > 0 ? <Badge tone="neutral">{HOME.runs(runs)}</Badge> : null}
-                {titles > 0 ? <Badge tone="gold">{HOME.titles(titles)}</Badge> : null}
-                {loginStreak > 1 ? <Badge tone="good">{HOME.seasonStrip.streak} · {HOME.seasonStrip.days(loginStreak)}</Badge> : null}
-              </div>
-              <p className="text-[11px] text-faint">
-                {SEASON.name} · {daysLeft > 0 ? `${HOME.seasonStrip.week(seasonWeek(), SEASON.weeks)} · ${HOME.seasonStrip.daysLeft(daysLeft)}` : ""}
-              </p>
-            </>
+            <AppLink href="/profile" className="group inline-flex items-center gap-3 rounded-xl px-3 py-1.5 transition-colors hover:bg-white/5">
+              <RankBadge rank={rank} variant="menu" size="sm" />
+              <span className="text-left">
+                <span className="display block text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</span>
+                <span className="block text-[11px] text-sub">
+                  {HOME.seasonStrip.rating} <span className="display font-bold text-orange-bright">{mmr}</span>
+                  {runs > 0 ? <span className="text-faint"> · {HOME.runs(runs)}</span> : null}
+                  {titles > 0 ? <span className="text-faint"> · {HOME.titles(titles)}</span> : null}
+                </span>
+              </span>
+            </AppLink>
           ) : null}
         </div>
       </section>
 
       <div className="rise-in">
-        {/* ---- Featured: Classic Draft + Road to Worlds ----------------------- */}
-        <section aria-label="Game modes" className={cxGrid(careerOn)}>
-          <button type="button" onClick={() => goToSetup("classic")} className="group text-left">
+        {/* ---- PLAY ------------------------------------------------------------- */}
+        <p className="kicker mb-2">{HOME.sectionPlay}</p>
+        <section aria-label="Game modes" className="grid grid-cols-1 gap-4 md:grid-cols-12">
+          <div className={cx(careerOn ? "md:col-span-7" : "md:col-span-8")}>
             <Panel
               strong
               glow="orange"
-              className="relative flex h-full flex-col justify-between overflow-hidden !border-orange/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-orange/70 md:p-8"
+              className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-orange/40 p-6 md:p-8"
             >
-              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-orange/10 blur-3xl" aria-hidden />
-              <div>
+              <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange/15 blur-3xl" aria-hidden />
+              <div className="pointer-events-none absolute right-6 top-6 hidden text-orange/20 md:block" aria-hidden>
+                <BallGlyph className="h-28 w-28" />
+              </div>
+              <div className="relative">
                 <div className="mb-2 flex items-center gap-2.5">
-                  <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.playClassic}</h2>
+                  <h2 className="display text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{HOME.playClassic}</h2>
                   <Badge tone="orange">{HOME.liveBadge}</Badge>
                 </div>
-                <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.playClassicDesc}</p>
+                <p className="max-w-md text-sm leading-relaxed text-sub">{HOME.playClassicDesc}</p>
               </div>
-              <span className="display mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all group-hover:brightness-110">
-                {HOME.playNow}
-              </span>
+              <div className="relative mt-6 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => goToSetup("classic")}
+                  className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all hover:brightness-110"
+                >
+                  {HOME.playNow}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToSetup("quick")}
+                  title={HOME.quickDraftDesc}
+                  className="display inline-flex items-center justify-center rounded-xl border border-line-strong px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-sub transition-colors hover:border-orange/50 hover:text-ink"
+                >
+                  {HOME.quickDraftCta}
+                </button>
+              </div>
             </Panel>
-          </button>
+          </div>
 
           {careerOn ? (
-            <AppLink href="/career" className="group block text-left">
+            <AppLink href="/career" className="group block md:col-span-5">
               <Panel
                 strong
                 glow="blue"
-                className="relative flex h-full flex-col justify-between overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:p-8"
+                className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-blue/40 p-6 transition-all group-hover:-translate-y-0.5 group-hover:!border-blue/70 md:p-8"
               >
-                <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/10 blur-3xl" aria-hidden />
-                <div>
+                <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-blue/15 blur-3xl" aria-hidden />
+                <div className="pointer-events-none absolute right-5 top-5 text-blue/25" aria-hidden>
+                  <GlobeGlyph className="h-20 w-20" />
+                </div>
+                <div className="relative">
                   <div className="mb-2 flex items-center gap-2.5">
                     <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">{HOME.careerTitle}</h2>
                     <Badge tone="blue">{HOME.careerBadge}</Badge>
                   </div>
                   <p className="max-w-sm text-sm leading-relaxed text-sub">{HOME.careerDesc}</p>
                 </div>
-                <span className="display mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-7 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
+                <span className="display relative mt-6 inline-flex w-fit items-center justify-center rounded-xl border border-blue/50 bg-blue/10 px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-ink transition-all group-hover:bg-blue/20">
                   {HOME.careerCta}
                 </span>
               </Panel>
             </AppLink>
           ) : (
-            <button type="button" onClick={() => goToSetup("quick")} className="group text-left">
+            <button type="button" onClick={() => goToSetup("quick")} className="group text-left md:col-span-4">
               <Panel className="flex h-full flex-col justify-center p-5 transition-all group-hover:!border-blue/50">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quickDraft}</h3>
@@ -190,22 +205,11 @@ export default function HomeMenu() {
           )}
         </section>
 
-        {/* ---- More ways to play ------------------------------------------------ */}
-        <p className="kicker mb-2 mt-6">{HOME.moreModes}</p>
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {careerOn ? (
-            <button type="button" onClick={() => goToSetup("quick")} className="group text-left">
-              <Panel className="flex h-full flex-col p-5 transition-all group-hover:!border-blue/50">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quickDraft}</h3>
-                  <Badge tone="blue">{HOME.liveBadge}</Badge>
-                </div>
-                <p className="text-xs leading-relaxed text-sub">{HOME.quickDraftDesc}</p>
-              </Panel>
-            </button>
-          ) : null}
-
-          <Panel className="flex h-full flex-col p-5">
+        {/* ---- TODAY ------------------------------------------------------------ */}
+        <p className="kicker mb-2 mt-7">{HOME.sectionDaily}</p>
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12">
+          <Panel className="relative flex flex-col overflow-hidden p-5 md:col-span-4">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-300/10 blur-2xl" aria-hidden />
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                 {HOME.daily}
@@ -246,14 +250,14 @@ export default function HomeMenu() {
           </Panel>
 
           {locked ? (
-            <div className="cursor-not-allowed" aria-disabled="true" title={HOME.challengesLocked}>
+            <div className="cursor-not-allowed md:col-span-3" aria-disabled="true" title={HOME.challengesLocked}>
               <Panel className="flex h-full flex-col p-5 opacity-60">
                 <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
                 <p className="mt-1 text-xs text-sub">{HOME.challengesLocked}</p>
               </Panel>
             </div>
           ) : (
-            <AppLink href="/challenges" className="group">
+            <AppLink href="/challenges" className="group md:col-span-3">
               <Panel className="flex h-full flex-col p-5 transition-colors group-hover:!border-line-strong">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
@@ -266,70 +270,64 @@ export default function HomeMenu() {
             </AppLink>
           )}
 
-          <AppLink href="/quiz" className="group">
-            <Panel className="flex h-full flex-col p-5 transition-colors group-hover:!border-violet-400/50">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
+          <div className="md:col-span-3">
+            <MissionsPanel compact />
+          </div>
+
+          <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="group text-left md:col-span-2">
+            <Panel className="flex h-full flex-col justify-between p-4 transition-colors group-hover:!border-violet-400/50">
+              <div>
+                <p className="kicker !text-[9px] text-violet-300">{HOME.quizKicker}</p>
+                <h3 className="display mt-0.5 text-base font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
+              </div>
+              <div className="mt-3">
                 {quizDone ? (
                   <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
                 ) : (
-                  <Badge tone="blue">{HOME.newBadge}</Badge>
+                  <span className="display text-xs font-bold uppercase tracking-[0.12em] text-violet-300">{HOME.quizOpen} →</span>
                 )}
               </div>
-              <p className="text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>
-              {!quizDone ? (
-                <span className="display mt-3 text-xs font-bold uppercase tracking-[0.12em] text-violet-300">{HOME.quizPlay} →</span>
-              ) : null}
             </Panel>
-          </AppLink>
+          </button>
         </section>
 
-        {/* ---- Your progress ------------------------------------------------------ */}
-        <p className="kicker mb-2 mt-6">{HOME.yourProgress}</p>
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-5">
-          <div className="md:col-span-2">
-            <MissionsPanel compact />
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:col-span-3">
-            {locked ? (
-              <div className="cursor-not-allowed" aria-disabled="true" title={HOME.collectionLocked}>
-                <Panel className="flex h-full items-center justify-between gap-3 p-4 opacity-60">
-                  <div>
-                    <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{HOME.collection}</h3>
-                    <p className="mt-1 text-xs text-sub">{HOME.collectionLocked}</p>
-                  </div>
-                  <span className="shrink-0 text-faint" aria-hidden>
-                    <MenuLockGlyph />
-                  </span>
-                </Panel>
-              </div>
-            ) : (
-              <Tile href="/collection" title={HOME.collection} desc={HOME.collectionDesc}>
-                <span className="display shrink-0 text-2xl font-bold text-cyan">
-                  {mounted ? unlocked : 0}
-                  <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
+        {/* ---- YOU --------------------------------------------------------------- */}
+        <p className="kicker mb-2 mt-7">{HOME.sectionYou}</p>
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {locked ? (
+            <div className="cursor-not-allowed" aria-disabled="true" title={HOME.collectionLocked}>
+              <Panel className="flex h-full items-center justify-between gap-3 p-4 opacity-60">
+                <div>
+                  <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{HOME.collection}</h3>
+                  <p className="mt-1 text-xs text-sub">{HOME.collectionLocked}</p>
+                </div>
+                <span className="shrink-0 text-faint" aria-hidden>
+                  <MenuLockGlyph />
                 </span>
-              </Tile>
-            )}
-            <Tile href="/achievements" title={HOME.achievements} desc={HOME.achievementsDesc}>
-              <span className="display shrink-0 text-2xl font-bold text-orange-bright">
-                {mounted ? achieved : 0}
-                <span className="text-sm text-faint">/{COUNTS.achievements}</span>
+              </Panel>
+            </div>
+          ) : (
+            <Tile href="/collection" title={HOME.collection} desc={HOME.collectionDesc}>
+              <span className="display shrink-0 text-2xl font-bold text-cyan">
+                {mounted ? unlocked : 0}
+                <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
               </span>
             </Tile>
-            <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc}>
-              {mounted ? (
-                <FrameRing frame={shown.frame} width={2}>
-                  <RankBadge rank={rank} variant="menu" size="sm" />
-                </FrameRing>
-              ) : null}
-            </Tile>
-            <Tile href="/leaderboards" title={HOME.leaderboards} desc={HOME.leaderboardsDesc}>
-              <span className="shrink-0 text-cyan" aria-hidden>
-                <TrophyGlyph />
-              </span>
-            </Tile>
-          </div>
+          )}
+          <Tile href="/achievements" title={HOME.achievements} desc={HOME.achievementsDesc}>
+            <span className="display shrink-0 text-2xl font-bold text-orange-bright">
+              {mounted ? achieved : 0}
+              <span className="text-sm text-faint">/{COUNTS.achievements}</span>
+            </span>
+          </Tile>
+          <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc}>
+            {mounted ? <AvatarMark avatar={shown.avatar} frame={shown.frame} size="sm" /> : null}
+          </Tile>
+          <Tile href="/leaderboards" title={HOME.leaderboards} desc={HOME.leaderboardsDesc}>
+            <span className="shrink-0 text-cyan" aria-hidden>
+              <TrophyGlyph />
+            </span>
+          </Tile>
         </section>
 
         <p className="mt-10 text-center">
@@ -376,12 +374,18 @@ export default function HomeMenu() {
         ) : null}
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
+
+      <Modal open={quizOpen} title={QUIZ_UI.title} onClose={() => setQuizOpen(false)} wide>
+        <p className="mb-4 text-xs leading-relaxed text-sub">{QUIZ_UI.subtitle}</p>
+        <QuizPanel compact />
+        <p className="mt-3 text-right">
+          <AppLink href="/quiz" className="text-[11px] font-semibold text-faint underline-offset-4 hover:text-sub hover:underline">
+            {QUIZ_UI.history} →
+          </AppLink>
+        </p>
+      </Modal>
     </>
   );
-}
-
-function cxGrid(careerOn: boolean): string {
-  return careerOn ? "grid grid-cols-1 gap-4 md:grid-cols-2" : "grid grid-cols-1 gap-4 md:grid-cols-3 [&>*:first-child]:md:col-span-2";
 }
 
 function Tile({ href, title, desc, children }: { href: string; title: string; desc: string; children: React.ReactNode }) {
@@ -390,7 +394,7 @@ function Tile({ href, title, desc, children }: { href: string; title: string; de
       <Panel className="flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-line-strong">
         <div className="min-w-0">
           <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
-          <p className="mt-1 text-xs text-sub">{desc}</p>
+          <p className="mt-1 hidden text-xs text-sub sm:block">{desc}</p>
         </div>
         {children}
       </Panel>
@@ -412,6 +416,25 @@ function HomeSignInNudge() {
         {H.signInNudge} →
       </AppLink>
     </p>
+  );
+}
+
+function BallGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" aria-hidden>
+      <circle cx="50" cy="50" r="40" />
+      <path d="M50 28l17 12-6.5 20h-21L33 40Z" />
+      <path d="M50 28V10M67 40l17-5M60.5 60l10 15M39.5 60l-10 15M33 40l-17-5" />
+    </svg>
+  );
+}
+
+function GlobeGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c3.5 3.5 3.5 14.5 0 18M12 3c-3.5 3.5-3.5 14.5 0 18M5 7.5c4 2 10 2 14 0M5 16.5c4-2 10-2 14 0" />
+    </svg>
   );
 }
 

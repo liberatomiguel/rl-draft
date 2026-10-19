@@ -22,6 +22,7 @@ import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import {
   cosmeticFacts,
   EMPTY_COSMETICS,
+  markSeen,
   refreshOwned,
   sanitizeEquipped,
   type CosmeticsState,
@@ -201,6 +202,11 @@ export interface ProfileState {
   /** Choose what the profile shows (locker, v2.0). Unknown / unowned ids are dropped;
    *  null = auto (best owned), `NONE` = hide the slot. */
   setEquipped: (patch: Partial<EquippedState>) => void;
+  /** rc.2: mark owned cosmetics as seen in the locker (clears the "new" count). */
+  markCosmeticsSeen: (ids: string[]) => void;
+  /** rc.2 preview tools (dev / staging only): every cosmetic counts as owned. */
+  previewUnlockAll: boolean;
+  setPreviewUnlockAll: (on: boolean) => void;
   /** Re-derive owned cosmetics from the profile's facts (idempotent). Called after
    *  every progress write; exposed for screens that unlock through other stores. */
   refreshCosmetics: () => void;
@@ -376,12 +382,14 @@ function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionE
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
   p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
-    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars" | "careerMarks">>,
+    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars" | "careerMarks" | "previewUnlockAll">>,
   now = new Date().toISOString(),
 ): CosmeticsState {
-  const owned = refreshOwned(p.cosmetics?.owned ?? {}, cosmeticFacts(p), now);
+  // The preview switch only ever counts where the preview tools exist (dev / staging).
+  const facts = cosmeticFacts({ ...p, previewUnlockAll: FEATURES.previewTools && p.previewUnlockAll === true });
+  const owned = refreshOwned(p.cosmetics?.owned ?? {}, facts, now);
   const equipped = sanitizeEquipped(owned, p.cosmetics?.equipped ?? EMPTY_COSMETICS.equipped);
-  return { owned, equipped };
+  return { owned, equipped, seen: p.cosmetics?.seen ?? [] };
 }
 
 export const useProfileStore = create<ProfileState>()(
@@ -654,13 +662,23 @@ export const useProfileStore = create<ProfileState>()(
       setEquipped: (patch) =>
         set((state) => ({
           cosmetics: {
-            owned: state.cosmetics.owned,
+            ...state.cosmetics,
             equipped: sanitizeEquipped(state.cosmetics.owned, {
               ...state.cosmetics.equipped,
               ...patch,
             }),
           },
         })),
+
+      markCosmeticsSeen: (ids) =>
+        set((state) => {
+          const next = markSeen(state.cosmetics, ids);
+          return next === state.cosmetics ? {} : { cosmetics: next };
+        }),
+
+      previewUnlockAll: false,
+      setPreviewUnlockAll: (on) =>
+        set((state) => ({ previewUnlockAll: on, cosmetics: withCosmetics({ ...state, previewUnlockAll: on }) })),
 
       refreshCosmetics: () => set((state) => ({ cosmetics: withCosmetics(state) })),
 
@@ -728,7 +746,7 @@ export const useProfileStore = create<ProfileState>()(
           };
         });
         if (out.counted) {
-          useRewardToasts.getState().push([{ kind: "login", streak: out.streak, xp: out.xp, milestone: out.milestone }]);
+          useRewardToasts.getState().showLogin({ streak: out.streak, xp: out.xp, milestone: out.milestone });
         }
         return out;
       },
@@ -782,6 +800,11 @@ export const useProfileStore = create<ProfileState>()(
     {
       name: "rocket-draft:profile:v1",
       version: 12,
+      // rc.2: re-derive the owned cosmetics after hydration so a catalog change
+      // (new items, the preview switch) shows up without waiting for a run.
+      onRehydrateStorage: () => (state) => {
+        state?.refreshCosmetics();
+      },
       // v2 added lifetime counters/daily/setup memory; v3 added the regional
       // lock setting + regional onboarding flag; v4 added challengesCompleted;
       // v5 added the leaderboard `records` (backfilled from runHistory below);

@@ -1,13 +1,16 @@
 "use client";
 
 /**
- * Missions + login streak UI (v2.0). `compact` = the home widget (today's three
- * + the streak chip); full = the /missions page (daily, weekly, streak card).
+ * Missions UI (v2.0, re-laid out rc.2). `compact` = the home widget (today's
+ * three, one line each, and a weekly count). Full = the /missions page: two
+ * blocks side by side — WEEKLY takes the stage (the bigger prizes), daily sits
+ * beside it smaller — and the login streak as one discreet line on top (the
+ * modal on app open is where the streak gets its moment).
  * Rolls the periods on mount so a new day's set appears without a run.
  */
 
 import { useEffect } from "react";
-import { LOGIN_STREAK, MISSIONS } from "@/config/balance";
+import { MISSIONS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { missionById, type MissionPeriod, type MissionSlotState } from "@/engine/missions";
 import { cx } from "@/lib/util";
@@ -37,30 +40,33 @@ export function useRollMissions(): void {
   useEffect(() => roll(), [roll]);
 }
 
+const doneCount = (slot: MissionSlotState | null): number => (slot ? slot.ids.filter((id) => slot.completedAt[id]).length : 0);
+
 export function MissionsPanel({ compact }: { compact?: boolean }) {
   const { MISSIONS_UI: M } = useCopy();
   const mounted = useMounted();
   const missions = useProfileStore((s) => s.missions);
   const login = useProfileStore((s) => s.login);
   useRollMissions();
-  if (!mounted) return <div className={cx("animate-pulse rounded-2xl bg-white/5", compact ? "h-40" : "h-96")} aria-busy />;
+  if (!mounted) return <div className={cx("animate-pulse rounded-2xl bg-white/5", compact ? "h-full min-h-40" : "h-96")} aria-busy />;
 
   if (compact) {
     const slot = missions.daily;
-    const done = slot ? slot.ids.filter((id) => slot.completedAt[id]).length : 0;
+    const done = doneCount(slot);
+    const weeklyDone = doneCount(missions.weekly);
     return (
-      <Panel className="flex h-full flex-col p-5">
+      <Panel className="flex h-full flex-col p-4 sm:p-5">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{M.daily}</h3>
+          <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{M.title}</h3>
           <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "—"}</Badge>
         </div>
         {slot ? <MissionList slot={slot} period="daily" dense /> : null}
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-line/60 pt-3 text-xs">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line/60 pt-3 text-xs">
           <span className="text-sub">
-            {M.loginTitle} · <span className="display font-bold text-orange-bright">{M.loginDays(login.streak)}</span>
+            {M.weekly} · <span className="display font-bold text-ink">{missions.weekly ? `${weeklyDone}/${missions.weekly.ids.length}` : "—"}</span>
           </span>
           <AppLink href="/missions" className="font-semibold text-blue-bright underline-offset-4 hover:underline">
-            {M.title} →
+            {M.viewAll} →
           </AppLink>
         </div>
       </Panel>
@@ -69,27 +75,41 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
 
   return (
     <div className="space-y-4">
-      <LoginStreakCard />
-      <PeriodPanel slot={missions.daily} period="daily" />
-      <PeriodPanel slot={missions.weekly} period="weekly" />
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white/[0.03] px-4 py-2.5 text-xs">
+        <span className="text-sub">
+          {M.loginTitle} · <span className="display font-bold text-orange-bright">{M.loginDays(login.streak)}</span>
+          <span className="text-faint"> · {M.loginBest(login.best)}</span>
+        </span>
+        <span className="text-faint">{M.loginStripHint}</span>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+        <div className="md:col-span-3">
+          <PeriodPanel slot={missions.weekly} period="weekly" featured />
+        </div>
+        <div className="md:col-span-2">
+          <PeriodPanel slot={missions.daily} period="daily" />
+        </div>
+      </div>
     </div>
   );
 }
 
-function PeriodPanel({ slot, period }: { slot: MissionSlotState | null; period: MissionPeriod }) {
+function PeriodPanel({ slot, period, featured }: { slot: MissionSlotState | null; period: MissionPeriod; featured?: boolean }) {
   const { MISSIONS_UI: M } = useCopy();
   if (!slot) return null;
-  const done = slot.ids.filter((id) => slot.completedAt[id]).length;
+  const done = doneCount(slot);
   const all = done === slot.ids.length && slot.ids.length > 0;
   const resets = period === "daily" ? M.resetsIn(hoursToMidnightUtc()) : M.resetsInDays(daysToNextMondayUtc());
   return (
-    <Panel className="p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <Panel strong={featured} glow={featured ? "orange" : undefined} className={cx("h-full", featured ? "p-5 sm:p-6" : "p-4 sm:p-5")}>
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{period === "daily" ? M.daily : M.weekly}</h3>
+          <h3 className={cx("display font-bold uppercase tracking-wide text-ink", featured ? "text-xl sm:text-2xl" : "text-base")}>
+            {period === "daily" ? M.daily : M.weekly}
+          </h3>
           <p className="text-[11px] text-faint">{resets}</p>
         </div>
-        <Badge tone={all ? "good" : "blue"}>{all ? M.allDone : `${done}/${slot.ids.length}`}</Badge>
+        <Badge tone={all ? "good" : featured ? "orange" : "blue"}>{all ? M.allDone : `${done}/${slot.ids.length}`}</Badge>
       </div>
       <MissionList slot={slot} period={period} />
       <p className={cx("mt-3 text-xs", slot.bonusAt ? "text-good" : "text-faint")}>
@@ -129,47 +149,5 @@ function MissionList({ slot, period, dense }: { slot: MissionSlotState; period: 
         );
       })}
     </ul>
-  );
-}
-
-export function LoginStreakCard() {
-  const { MISSIONS_UI: M } = useCopy();
-  const login = useProfileStore((s) => s.login);
-  const milestones = Object.keys(LOGIN_STREAK.milestoneBonus)
-    .map(Number)
-    .sort((a, b) => a - b);
-  const next = milestones.find((m) => m > login.streak) ?? null;
-  const prev = [...milestones].reverse().find((m) => m <= login.streak) ?? 0;
-  const span = next ? next - prev : 1;
-  return (
-    <Panel strong glow="orange" className="p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="kicker">{M.loginTitle}</p>
-          <p className="display text-3xl font-bold text-orange-bright">{M.loginDays(login.streak)}</p>
-          <p className="text-xs text-faint">{M.loginBest(login.best)}</p>
-        </div>
-        <div className="flex gap-1.5">
-          {milestones.map((m) => (
-            <span
-              key={m}
-              className={cx(
-                "display flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold",
-                login.best >= m ? "border-orange/60 bg-orange/15 text-orange-bright" : "border-line text-faint",
-              )}
-              title={M.loginMilestone(m)}
-            >
-              {m}
-            </span>
-          ))}
-        </div>
-      </div>
-      {next ? (
-        <div className="mt-3">
-          <ProgressBar value={(login.streak - prev) / span} tone="orange" className="h-1.5" />
-          <p className="mt-1 text-[11px] text-faint">{M.loginNext(next)}</p>
-        </div>
-      ) : null}
-    </Panel>
   );
 }

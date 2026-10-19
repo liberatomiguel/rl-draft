@@ -19,10 +19,20 @@ export type RewardToast =
 type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
 export type RewardToastInput = DistributiveOmit<RewardToast, "id">;
 
+/** rc.2: the login-streak MODAL (shown once per counted day, on app open). */
+export interface LoginModalData {
+  streak: number;
+  xp: number;
+  milestone: number | null;
+}
+
 interface RewardToastStore {
   queue: RewardToast[];
   push: (toasts: RewardToastInput[]) => void;
   dismiss: (id: string) => void;
+  loginModal: LoginModalData | null;
+  showLogin: (data: LoginModalData) => void;
+  dismissLogin: () => void;
 }
 
 let n = 0;
@@ -35,4 +45,7 @@ export const useRewardToasts = create<RewardToastStore>((set) => ({
       toasts.length ? { queue: [...s.queue, ...toasts.map((t) => ({ ...t, id: nextId() } as RewardToast))] } : {},
     ),
   dismiss: (id) => set((s) => ({ queue: s.queue.filter((t) => t.id !== id) })),
+  loginModal: null,
+  showLogin: (data) => set({ loginModal: data }),
+  dismissLogin: () => set({ loginModal: null }),
 }));

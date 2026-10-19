@@ -24,6 +24,20 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 
 export function QuizView() {
   const { QUIZ_UI: Q } = useCopy();
+  return (
+    <div className="rise-in mx-auto max-w-2xl">
+      <BackToMenu />
+      <SectionTitle kicker={Q.kicker} title={Q.title} className="mb-2" />
+      <p className="mb-6 max-w-xl text-sm leading-relaxed text-sub">{Q.subtitle}</p>
+      <QuizPanel />
+    </div>
+  );
+}
+
+/** The playable card + stats + history — the same thing on /quiz and inside
+ *  the home modal (rc.2: the quiz is a minigame, it opens in place). */
+export function QuizPanel({ compact }: { compact?: boolean }) {
+  const { QUIZ_UI: Q } = useCopy();
   const mounted = useMounted();
   const date = todayKey();
   const puzzle = useMemo(() => quizForDate(date), [date]);
@@ -52,11 +66,7 @@ export function QuizView() {
   };
 
   return (
-    <div className="rise-in mx-auto max-w-2xl">
-      <BackToMenu />
-      <SectionTitle kicker={Q.kicker} title={Q.title} className="mb-2" />
-      <p className="mb-6 max-w-xl text-sm leading-relaxed text-sub">{Q.subtitle}</p>
-
+    <div>
       {!mounted ? (
         <div className="h-72 animate-pulse rounded-2xl bg-white/5" aria-busy />
       ) : (
@@ -142,14 +152,14 @@ export function QuizView() {
             )}
           </Panel>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Stat label={Q.played} value={String(quiz.played)} />
-            <Stat label={Q.solvedCount} value={String(quiz.solved)} />
-            <Stat label={Q.streak} value={String(quiz.streak)} />
-            <Stat label={Q.best} value={String(quiz.bestStreak)} />
+          <div className={cx("mt-4 grid gap-3", compact ? "grid-cols-4" : "grid-cols-2 md:grid-cols-4")}>
+            <Stat label={Q.played} value={String(quiz.played)} compact={compact} />
+            <Stat label={Q.solvedCount} value={String(quiz.solved)} compact={compact} />
+            <Stat label={Q.streak} value={String(quiz.streak)} compact={compact} />
+            <Stat label={Q.best} value={String(quiz.bestStreak)} compact={compact} />
           </div>
 
-          <RecentDays results={quiz.results} today={date} />
+          {compact ? null : <RecentDays results={quiz.results} today={date} />}
         </>
       )}
     </div>
@@ -171,11 +181,11 @@ function clueText(c: QuizClue, Q: ReturnType<typeof useCopy>["QUIZ_UI"]): string
   }
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, compact }: { label: string; value: string; compact?: boolean }) {
   return (
-    <Panel className="p-3 text-center">
+    <Panel className={cx("text-center", compact ? "p-2" : "p-3")}>
       <p className="kicker !text-[10px]">{label}</p>
-      <p className="display mt-1 text-xl font-bold text-ink">{value}</p>
+      <p className={cx("display mt-1 font-bold text-ink", compact ? "text-base" : "text-xl")}>{value}</p>
     </Panel>
   );
 }

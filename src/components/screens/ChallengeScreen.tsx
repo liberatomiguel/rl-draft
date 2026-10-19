@@ -11,8 +11,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
-import { countStars, rosterFromLineup, starsAvailable } from "@/engine/challenges";
-import { StarRow } from "@/app/challenges/ChallengesView";
+import { countStars, rosterFromLineup, starsAvailable, totalStars } from "@/engine/challenges";
+import { StarRow, starLabel } from "@/app/challenges/ChallengesView";
+import { CHALLENGE } from "@/config/balance";
+import { COSMETICS } from "@/data/cosmetics";
+import { CosmeticIcon, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
+import { Modal } from "@/components/ui/Modal";
 import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { GameResult, RunState, TournamentTeam } from "@/engine/types";
@@ -310,9 +314,103 @@ export function ChallengeScreen({ run }: { run: RunState }) {
             </div>
           </Panel>
           ) : null}
+          {series && !revealing && cleared && state.starsNew ? (
+            <StarRewardModal
+              challenge={challenge}
+              starsEarned={state.starsEarned ?? 1}
+              starsNew={state.starsNew}
+              xpGained={xpNow - (state.xpBefore ?? xpNow)}
+              CH={CH}
+            />
+          ) : null}
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * rc.2: the reward moment. Opens once per cleared attempt that earned a NEW
+ * star: the stars with what each one asked (new ones lit), the XP, and where
+ * the player now stands on the star track (next cosmetic reward).
+ */
+function StarRewardModal({
+  challenge,
+  starsEarned,
+  starsNew,
+  xpGained,
+  CH,
+}: {
+  challenge: NonNullable<ReturnType<typeof challengeById.get>>;
+  starsEarned: number;
+  starsNew: number;
+  xpGained: number;
+  CH: ReturnType<typeof useCopy>["CHALLENGES_UI"];
+}) {
+  const copy = useCosmeticCopy();
+  const starMasks = useProfileStore((s) => s.challengeStars);
+  const [dismissed, setDismissed] = useState(false);
+  const labels = [CH.star1, ...(challenge.stars ?? []).map((st) => starLabel(st, CH))];
+  const total = totalStars(starMasks);
+  const next = CHALLENGE.starMilestones.find((m) => m > total) ?? null;
+  const reward = next ? COSMETICS.find((c) => c.source.type === "challenge-stars" && c.source.stars === next) ?? null : null;
+  const prev = [...CHALLENGE.starMilestones].reverse().find((m) => m <= total) ?? 0;
+  const pct = next ? Math.min(100, Math.round(((total - prev) / (next - prev)) * 100)) : 100;
+  return (
+    <Modal
+      open={!dismissed}
+      title={CH.starRewardTitle}
+      onClose={() => setDismissed(true)}
+      actions={
+        <Button variant="primary" onClick={() => setDismissed(true)}>
+          {CH.starRewardContinue}
+        </Button>
+      }
+    >
+      <div className="text-center">
+        <StarRow mask={starsEarned} total={starsAvailable(challenge)} size="md" />
+        <p className="display mt-2 text-2xl font-bold text-orange-bright">
+          {countStars(starsNew) === 1 ? CH.newStar : CH.newStars(countStars(starsNew))}
+          {xpGained > 0 ? <span className="ml-2 text-base text-ink">+{xpGained} XP</span> : null}
+        </p>
+      </div>
+      <ul className="mt-4 space-y-1.5">
+        {labels.map((label, i) => {
+          const earned = Boolean(starsEarned & (1 << i));
+          const fresh = Boolean(starsNew & (1 << i));
+          return (
+            <li
+              key={i}
+              className={cx(
+                "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs",
+                fresh ? "border-amber-300/60 bg-amber-300/10 text-ink" : earned ? "border-line text-sub" : "border-line/60 text-faint",
+              )}
+            >
+              <span className={cx("text-base leading-none", earned ? "text-amber-300" : "text-faint/60")} aria-hidden>
+                ★
+              </span>
+              <span className="flex-1">{label}</span>
+              {fresh ? <Badge tone="gold">{CH.newStar}</Badge> : null}
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 rounded-xl border border-line bg-white/[0.03] p-3">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="kicker !text-[10px]">{CH.starTrack}</span>
+          <span className="display font-bold text-ink">{next ? CH.starTrackProgress(total, next) : CH.starsTotal(total)}</span>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/8">
+          <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300" style={{ width: `${pct}%` }} />
+        </div>
+        {reward ? (
+          <div className="mt-2 flex items-center gap-2 text-xs text-sub">
+            <CosmeticIcon def={reward} />
+            <span>{CH.starTrackReward(copy.name(reward.id))}</span>
+          </div>
+        ) : null}
+      </div>
+    </Modal>
   );
 }
 

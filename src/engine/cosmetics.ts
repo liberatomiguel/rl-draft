@@ -5,15 +5,28 @@
  * profile already stores (the pre-season snapshot, the cloud grants, the season
  * peak rank, streaks, stars, quiz solves) through each catalog entry's `source`.
  * The store caches the result with unlock dates (`cosmetics.owned`) so the
- * locker can mark NEW items; `equipped` holds explicit choices (null = AUTO,
- * the best owned item of that kind; `NONE` = deliberately nothing).
+ * locker can mark NEW items; `equipped` holds explicit choices.
+ *
+ * rc.2: there is NO auto-equip any more (Miguel's feedback). A slot is either an
+ * owned id or empty (null / NONE both mean empty); only the avatar falls back
+ * to the starter avatar so the profile always has a face. `seen` records the
+ * owned ids the player has looked at in the locker, so the profile can show
+ * "N new" until they do.
  */
 
 import { RANKS } from "@/config/balance";
-import { COSMETICS, cosmeticById, LEGACY_POSITION_TIERS, type CosmeticDef, type CosmeticKind, type CosmeticSource } from "@/data/cosmetics";
+import {
+  COSMETICS,
+  cosmeticById,
+  DEFAULT_AVATAR_ID,
+  LEGACY_POSITION_TIERS,
+  type CosmeticDef,
+  type CosmeticKind,
+  type CosmeticSource,
+} from "@/data/cosmetics";
 import type { PreseasonSnapshot } from "./season";
 
-/** Explicit "show nothing" choice for a slot (as opposed to null = auto). */
+/** Explicit "show nothing" choice for a slot (kept for saved-state compatibility). */
 export const NONE = "none";
 /** Badges shown at once (profile card + leaderboard row). */
 export const MAX_BADGES = 3;
@@ -22,19 +35,24 @@ export interface EquippedState {
   title: string | null;
   frame: string | null;
   banner: string | null;
-  /** null = auto (best owned badges); an array = the explicit selection. */
+  /** null = none; an array = the explicit selection (up to MAX_BADGES). */
   badges: string[] | null;
+  /** rc.2: the profile avatar (null = the starter avatar). */
+  avatar?: string | null;
 }
 
 export interface CosmeticsState {
   /** id → ISO date first owned (for "NEW" markers and the locker order). */
   owned: Record<string, string>;
   equipped: EquippedState;
+  /** rc.2: owned ids the player has already seen in the locker. */
+  seen?: string[];
 }
 
 export const EMPTY_COSMETICS: CosmeticsState = {
   owned: {},
-  equipped: { title: null, frame: null, banner: null, badges: null },
+  equipped: { title: null, frame: null, banner: null, badges: null, avatar: null },
+  seen: [],
 };
 
 /** Everything the derivation reads. Counters that later systems feed default to 0. */
@@ -49,6 +67,8 @@ export interface CosmeticFacts {
   missionsCompleted?: number;
   /** v2.0 (career R32): permanent career achievement ids mirrored on the profile. */
   careerMarks?: string[];
+  /** rc.2: preview switch (dev / staging only) — every item counts as owned. */
+  previewAll?: boolean;
 }
 
 const rankIndex = (id: string): number => Math.max(0, RANKS.findIndex((r) => r.id === id));
@@ -81,6 +101,7 @@ export function cosmeticFacts(p: {
     careerMarks: Array.isArray((p as { careerMarks?: unknown }).careerMarks)
       ? ((p as { careerMarks: unknown[] }).careerMarks.filter((x) => typeof x === "string") as string[])
       : [],
+    previewAll: (p as { previewUnlockAll?: unknown }).previewUnlockAll === true,
   };
 }
 
@@ -99,6 +120,8 @@ export function legacyPositionTier(position: number | null | undefined): (typeof
 
 function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
   switch (source.type) {
+    case "default":
+      return true;
     case "legacy-participation":
       return !!f.preseason && f.preseason.runsCompleted > 0;
     case "legacy-rank":
@@ -124,6 +147,7 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
 
 /** Ids the facts entitle the player to (catalog order). */
 export function deriveOwnedIds(f: CosmeticFacts): string[] {
+  if (f.previewAll) return COSMETICS.map((c) => c.id);
   return COSMETICS.filter((c) => sourceSatisfied(c.source, f)).map((c) => c.id);
 }
 
@@ -131,16 +155,18 @@ export function deriveOwnedIds(f: CosmeticFacts): string[] {
  * Refresh the owned map: newly earned ids get `now`, known ids keep their date,
  * and ids that are no longer in the catalog are dropped. Entitlements never go
  * away on their own (facts only grow), but a stale id from a renamed catalog
- * entry must not linger.
+ * entry must not linger. Preview ownership (dev switch) is transient: when the
+ * switch is off, ids the facts do not entitle are dropped again.
  */
 export function refreshOwned(
   owned: Record<string, string>,
   f: CosmeticFacts,
   now = new Date().toISOString(),
 ): Record<string, string> {
+  const entitled = new Set(deriveOwnedIds(f));
   const next: Record<string, string> = {};
-  for (const [id, date] of Object.entries(owned)) if (cosmeticById.has(id)) next[id] = date;
-  for (const id of deriveOwnedIds(f)) if (!next[id]) next[id] = now;
+  for (const [id, date] of Object.entries(owned)) if (cosmeticById.has(id) && entitled.has(id)) next[id] = date;
+  for (const id of entitled) if (!next[id]) next[id] = now;
   return next;
 }
 
@@ -152,7 +178,43 @@ export function ownedOfKind(owned: Record<string, string>, kind: CosmeticKind): 
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
 }
 
+/** Owned ids the player has not looked at in the locker yet (starter items never count). */
+export function unseenOwnedIds(c: CosmeticsState): string[] {
+  const seen = new Set(c.seen ?? []);
+  return Object.keys(c.owned).filter((id) => {
+    const def = cosmeticById.get(id);
+    return !!def && def.source.type !== "default" && !seen.has(id);
+  });
+}
+
+/** Mark ids as seen (idempotent). */
+export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
+  const seen = new Set(c.seen ?? []);
+  let changed = false;
+  for (const id of ids) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      changed = true;
+    }
+  }
+  return changed ? { ...c, seen: [...seen] } : c;
+}
+
+/**
+ * Which catalog items the locker LISTS for this player: everything owned, plus
+ * the earnable (non-exclusive) items still to unlock. Exclusive items the
+ * player does not own are hidden — they cannot be earned any more.
+ */
+export function lockerItems(owned: Record<string, string>, kind: CosmeticKind): { owned: CosmeticDef[]; locked: CosmeticDef[] } {
+  const items = COSMETICS.filter((c) => c.kind === kind);
+  return {
+    owned: items.filter((c) => owned[c.id]).sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id)),
+    locked: items.filter((c) => !owned[c.id] && !c.exclusive),
+  };
+}
+
 export interface ResolvedCosmetics {
+  avatar: CosmeticDef;
   title: CosmeticDef | null;
   frame: CosmeticDef | null;
   banner: CosmeticDef | null;
@@ -160,25 +222,29 @@ export interface ResolvedCosmetics {
 }
 
 /**
- * What the profile SHOWS: an explicit, still-owned choice wins; `NONE` hides the
- * slot; null (auto) shows the best owned item. A choice that is no longer owned
- * (a catalog rename) falls back to auto, never to a broken id.
+ * What the profile SHOWS: an explicit, still-owned choice; otherwise nothing.
+ * The avatar is the one slot that always resolves (the starter avatar). A choice
+ * that is no longer owned (a catalog rename) resolves to empty, never to a
+ * broken id.
  */
 export function resolveEquipped(c: CosmeticsState): ResolvedCosmetics {
-  const pick = (kind: "title" | "frame" | "banner"): CosmeticDef | null => {
+  const pick = (kind: "title" | "frame" | "banner" | "avatar"): CosmeticDef | null => {
     const chosen = c.equipped[kind];
-    if (chosen === NONE) return null;
-    if (chosen && c.owned[chosen] && cosmeticById.get(chosen)?.kind === kind) return cosmeticById.get(chosen)!;
-    return ownedOfKind(c.owned, kind)[0] ?? null;
+    if (!chosen || chosen === NONE) return null;
+    if (c.owned[chosen] && cosmeticById.get(chosen)?.kind === kind) return cosmeticById.get(chosen)!;
+    return null;
   };
-  const badges =
-    c.equipped.badges === null
-      ? ownedOfKind(c.owned, "badge").slice(0, MAX_BADGES)
-      : c.equipped.badges
-          .map((id) => cosmeticById.get(id))
-          .filter((d): d is CosmeticDef => !!d && d.kind === "badge" && !!c.owned[d.id])
-          .slice(0, MAX_BADGES);
-  return { title: pick("title"), frame: pick("frame"), banner: pick("banner"), badges };
+  const badges = (c.equipped.badges ?? [])
+    .map((id) => cosmeticById.get(id))
+    .filter((d): d is CosmeticDef => !!d && d.kind === "badge" && !!c.owned[d.id])
+    .slice(0, MAX_BADGES);
+  return {
+    avatar: pick("avatar") ?? cosmeticById.get(DEFAULT_AVATAR_ID)!,
+    title: pick("title"),
+    frame: pick("frame"),
+    banner: pick("banner"),
+    badges,
+  };
 }
 
 /** Flat ids for the cloud row (`equipped_*` columns) — what other players see. */
@@ -187,6 +253,7 @@ export function equippedColumns(c: CosmeticsState): {
   equipped_frame: string | null;
   equipped_banner: string | null;
   equipped_badges: string[];
+  equipped_avatar: string | null;
 } {
   const r = resolveEquipped(c);
   return {
@@ -194,43 +261,47 @@ export function equippedColumns(c: CosmeticsState): {
     equipped_frame: r.frame?.id ?? null,
     equipped_banner: r.banner?.id ?? null,
     equipped_badges: r.badges.map((b) => b.id),
+    equipped_avatar: r.avatar.id,
   };
 }
 
 /** Validate an explicit selection (the locker UI): only owned ids of the kind. */
 export function sanitizeEquipped(owned: Record<string, string>, e: EquippedState): EquippedState {
-  const ok = (id: string | null, kind: CosmeticKind): string | null =>
-    id === null || id === NONE ? id : owned[id] && cosmeticById.get(id)?.kind === kind ? id : null;
+  const ok = (id: string | null | undefined, kind: CosmeticKind): string | null =>
+    id === null || id === undefined || id === NONE ? null : owned[id] && cosmeticById.get(id)?.kind === kind ? id : null;
   return {
     title: ok(e.title, "title"),
     frame: ok(e.frame, "frame"),
     banner: ok(e.banner, "banner"),
+    avatar: ok(e.avatar, "avatar"),
     badges:
-      e.badges === null
+      e.badges === null || e.badges === undefined
         ? null
         : [...new Set(e.badges)].filter((id) => owned[id] && cosmeticById.get(id)?.kind === "badge").slice(0, MAX_BADGES),
   };
 }
 
 /** Merge two cosmetics states (cloud ↔ local): owned = union with the earliest
- *  date; equipped = the local explicit choice, else the cloud's. */
+ *  date; equipped = the local explicit choice, else the cloud's; seen = union. */
 export function mergeCosmetics(local: CosmeticsState, cloud: CosmeticsState): CosmeticsState {
   const owned: Record<string, string> = { ...local.owned };
   for (const [id, date] of Object.entries(cloud.owned)) owned[id] = owned[id] ? (owned[id] < date ? owned[id] : date) : date;
-  const e = (k: "title" | "frame" | "banner") => local.equipped[k] ?? cloud.equipped[k] ?? null;
+  const e = (k: "title" | "frame" | "banner" | "avatar") => local.equipped[k] ?? cloud.equipped[k] ?? null;
   return sanitizeEquippedState({
     owned,
     equipped: {
       title: e("title"),
       frame: e("frame"),
       banner: e("banner"),
+      avatar: e("avatar"),
       badges: local.equipped.badges ?? cloud.equipped.badges ?? null,
     },
+    seen: [...new Set([...(local.seen ?? []), ...(cloud.seen ?? [])])],
   });
 }
 
 function sanitizeEquippedState(c: CosmeticsState): CosmeticsState {
-  return { owned: c.owned, equipped: sanitizeEquipped(c.owned, c.equipped) };
+  return { owned: c.owned, equipped: sanitizeEquipped(c.owned, c.equipped), seen: c.seen ?? [] };
 }
 
 /** The cosmetics a leaderboard row shows (ids straight from the view). */
@@ -239,12 +310,14 @@ export function rowCosmetics(row: {
   equipped_frame: string | null;
   equipped_banner: string | null;
   equipped_badges: string[];
+  equipped_avatar?: string | null;
 }): ResolvedCosmetics {
-  const def = (id: string | null, kind: CosmeticKind): CosmeticDef | null => {
+  const def = (id: string | null | undefined, kind: CosmeticKind): CosmeticDef | null => {
     const d = id ? cosmeticById.get(id) : undefined;
     return d && d.kind === kind ? d : null;
   };
   return {
+    avatar: def(row.equipped_avatar, "avatar") ?? cosmeticById.get(DEFAULT_AVATAR_ID)!,
     title: def(row.equipped_title, "title"),
     frame: def(row.equipped_frame, "frame"),
     banner: def(row.equipped_banner, "banner"),
