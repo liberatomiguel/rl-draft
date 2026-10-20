@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.4** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.5** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
   `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
@@ -30,8 +30,10 @@ titles, quiet banners; no avatars/frames) and rc.4: Miguel's 36 illustrated
 badges (`npm run build:badges` → `public/badges/`), featured badge, locker
 without spoilers + green new-item dots, home missions Daily/Weekly switch,
 quiz tile with Live tag, board rows (badges + title left), and "Reduce visual
-effects" replacing the broken "Reduce motion".
-Decisions: DESIGN-DECISIONS #110–#124, ROAD-TO-WORLDS-DECISIONS R20–R38.
+effects" replacing the broken "Reduce motion"; rc.5: badge slots in the locker
+(first free slot / pick a slot / swap / bin), hero badges above the rating,
+taller board rows, a rebuilt player peek, quiz card reads top-down.
+Decisions: DESIGN-DECISIONS #110–#125, ROAD-TO-WORLDS-DECISIONS R20–R38.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 
 ## Open before `main` (Phase 4)

@@ -265,17 +265,16 @@ export default function HomeMenu() {
             <MissionsPanel compact />
           </div>
 
-          {/* rc.4: same anatomy as the Daily Challenge — title + Live tag, the
-              line, then the CTA (or today's result once it is played). */}
-          <Panel className="flex h-full flex-col justify-between gap-3 p-5 sm:col-span-2 sm:flex-row sm:items-end md:col-span-8">
-            <div className="min-w-0">
-              <div className="mb-1 flex items-center gap-2">
-                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
-                <Badge tone="blue">{HOME.liveBadge}</Badge>
-              </div>
-              <p className="text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>
+          {/* rc.4: same anatomy as the Daily Challenge — title + Live tag on top,
+              the line under it, the CTA (or today's result) at the bottom. */}
+          <Panel className="relative flex h-full flex-col overflow-hidden p-5 sm:col-span-2 md:col-span-8">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-400/10 blur-2xl" aria-hidden />
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
+              <Badge tone="blue">{HOME.liveBadge}</Badge>
             </div>
-            <div className="shrink-0">
+            <p className="flex-1 text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>
+            <div className="mt-3">
               {quizDone ? (
                 <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue/60">
                   <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>

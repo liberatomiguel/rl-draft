@@ -283,10 +283,44 @@ export function unseenOfKind(c: CosmeticsState, kind: CosmeticKind): string[] {
   return unseenOwnedIds(c).filter((id) => cosmeticById.get(id)?.kind === kind);
 }
 
-/** rc.4: move one equipped badge to the front (the featured slot). */
-export function featureBadge(badges: string[], id: string): string[] {
-  if (!badges.includes(id)) return badges;
-  return [id, ...badges.filter((b) => b !== id)];
+// --- Badge slots (rc.5 locker) ---------------------------------------------
+// The equipped list IS the slot order: index 0 is the featured slot. Slots are
+// always packed (no holes), so "the first free slot" is the end of the list.
+
+/** Put a badge in the first free slot. Already shown or no free slot → unchanged
+ *  (the locker then asks which slot to replace). */
+export function addBadge(badges: string[], id: string): string[] {
+  if (badges.includes(id) || badges.length >= MAX_BADGES) return badges;
+  return [...badges, id];
+}
+
+/** Put a badge in slot `index`: a badge already shown elsewhere swaps places
+ *  with that slot's badge; a new one replaces it (or fills the first free slot
+ *  when `index` is past the end). */
+export function placeBadgeAt(badges: string[], index: number, id: string): string[] {
+  const from = badges.indexOf(id);
+  if (from >= 0) return swapBadges(badges, from, index);
+  if (index >= badges.length) return addBadge(badges, id);
+  const next = [...badges];
+  next[index] = id;
+  return next;
+}
+
+/** Swap two shown badges (e.g. to move one into the featured slot). An index
+ *  past the end moves the badge to the last filled slot. */
+export function swapBadges(badges: string[], i: number, j: number): string[] {
+  const a = Math.min(i, badges.length - 1);
+  const b = Math.min(j, badges.length - 1);
+  if (a < 0 || b < 0 || a === b) return badges;
+  const next = [...badges];
+  [next[a], next[b]] = [next[b], next[a]];
+  return next;
+}
+
+/** Take the badge out of slot `index`; the slots behind it close the gap. */
+export function removeBadgeAt(badges: string[], index: number): string[] {
+  if (index < 0 || index >= badges.length) return badges;
+  return badges.filter((_, k) => k !== index);
 }
 
 export interface ResolvedCosmetics {

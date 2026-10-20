@@ -4,8 +4,11 @@
  * Locker (v2.0, rebuilt rc.2, reworked rc.4): a MODAL that opens on the slot
  * the player tapped in the profile hero. One tab per kind (title · badges ·
  * banner); a green DOT on a tab means it holds something new.
- *  · Owned items equip on tap. Badges: up to three, in order — the first is
- *    FEATURED (the showcase strip on top re-orders them: tap one to feature it).
+ *  · Owned items equip on tap. Badges (rc.5): up to three SLOTS, the first
+ *    one FEATURED. A new badge drops into the first free slot; with all three
+ *    full the player picks the slot it replaces. Tapping a shown badge selects
+ *    its slot: tap another slot to swap them, or the small bin to remove it.
+ *    The slot strip is sticky so it stays in view over a long grid.
  *  · Items still to earn by playing show as anonymous LOCKED slots, like the
  *    collection's silhouettes: rarity only, never their art or name.
  *  · Exclusive items, the season track and leaderboard rewards the player does
@@ -18,7 +21,7 @@ import { useEffect, useState } from "react";
 import { RANKS } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { cosmeticById, type CosmeticDef, type CosmeticKind, type CosmeticSource } from "@/data/cosmetics";
-import { featureBadge, lockerItems, MAX_BADGES, resolveEquipped, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
+import { addBadge, lockerItems, MAX_BADGES, placeBadgeAt, removeBadgeAt, resolveEquipped, swapBadges, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
@@ -95,18 +98,23 @@ export function CosmeticsLockerModal({
   const setEquipped = useProfileStore((s) => s.setEquipped);
   const markSeen = useProfileStore((s) => s.markCosmeticsSeen);
   const [kind, setKind] = useState<CosmeticKind>(initialKind);
+  // rc.5 badge slots: a shown badge the player tapped (to swap or remove), or
+  // a new badge waiting for a slot because all three are full.
+  const [selected, setSelected] = useState<number | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
   // Follow the slot the player tapped each time the modal opens.
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) setKind(initialKind);
+    setSelected(null);
+    setPending(null);
   }
   // Captured once per mount (render must stay pure); "NEW" = owned under a week.
   const [now] = useState(() => Date.now());
   const resolved = resolveEquipped(cosmetics);
   const { owned, locked } = lockerItems(cosmetics.owned, kind);
   const shownIds = new Set(kind === "badge" ? resolved.badges.map((b) => b.id) : [resolved[kind]?.id].filter(Boolean));
-  const featuredId = resolved.badges[0]?.id ?? null;
   const unseen = new Set(unseenOwnedIds(cosmetics));
   const isNew = (id: string) => unseen.has(id) || now - Date.parse(cosmetics.owned[id] ?? "") < 7 * 86_400_000;
 
@@ -120,36 +128,67 @@ export function CosmeticsLockerModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, kind, cosmetics.owned, markSeen]);
 
-  const equippedBadges = resolved.badges.map((b) => b.id);
+  const slots = resolved.badges.map((b) => b.id);
+  const putBadges = (next: string[]) => {
+    setEquipped({ badges: next });
+    setSelected(null);
+    setPending(null);
+  };
 
-  const choose = (def: CosmeticDef) => {
+  const switchKind = (k: CosmeticKind) => {
     sfx.click();
-    if (def.kind === "badge") {
-      const current = equippedBadges;
-      let next: string[];
-      if (current.includes(def.id)) next = current.filter((id) => id !== def.id);
-      // Full: the newcomer takes the LAST slot, so the featured badge stays put.
-      else if (current.length >= MAX_BADGES) next = [...current.slice(0, MAX_BADGES - 1), def.id];
-      else next = [...current, def.id];
-      setEquipped({ badges: next });
-    } else if (shownIds.has(def.id)) {
-      setEquipped({ [def.kind]: null });
+    setKind(k);
+    setSelected(null);
+    setPending(null);
+  };
+
+  /** Title / banner: tap to wear, tap again to take off. */
+  const chooseSingle = (def: CosmeticDef) => {
+    sfx.click();
+    if (shownIds.has(def.id)) setEquipped({ [def.kind]: null });
+    else setEquipped({ [def.kind]: def.id });
+  };
+
+  /** A badge tile in the grid. Shown → select its slot. New → the selected slot,
+   *  else the first free slot, else wait for the player to pick a slot. */
+  const tapBadge = (id: string) => {
+    sfx.click();
+    const slot = slots.indexOf(id);
+    if (slot >= 0) {
+      setPending(null);
+      setSelected(selected === slot ? null : slot);
+    } else if (selected !== null) {
+      putBadges(placeBadgeAt(slots, selected, id));
+    } else if (slots.length < MAX_BADGES) {
+      putBadges(addBadge(slots, id));
     } else {
-      setEquipped({ [def.kind]: def.id });
+      setPending(pending === id ? null : id);
     }
   };
 
-  const feature = (id: string) => {
-    if (id === featuredId) return;
+  /** A slot in the "On your banner" strip. */
+  const tapSlot = (i: number) => {
     sfx.click();
-    setEquipped({ badges: featureBadge(equippedBadges, id) });
+    if (pending) return putBadges(placeBadgeAt(slots, i, pending));
+    if (selected !== null) {
+      if (selected === i) return setSelected(null);
+      return putBadges(swapBadges(slots, selected, i));
+    }
+    if (i < slots.length) setSelected(i);
+  };
+
+  const removeSlot = (i: number) => {
+    sfx.click();
+    putBadges(removeBadgeAt(slots, i));
   };
 
   const clearSlot = () => {
     sfx.click();
-    if (kind === "badge") setEquipped({ badges: [] });
+    if (kind === "badge") putBadges([]);
     else setEquipped({ [kind]: null });
   };
+
+  const slotHint = pending ? C.slotHintPending : selected !== null ? C.slotHintSelected : C.slotHintIdle;
 
   return (
     <Modal open={open} title={C.locker} onClose={onClose} wide>
@@ -165,10 +204,7 @@ export function CosmeticsLockerModal({
               type="button"
               role="tab"
               aria-selected={kind === k}
-              onClick={() => {
-                sfx.click();
-                setKind(k);
-              }}
+              onClick={() => switchKind(k)}
               className={cx(
                 "display relative rounded-md px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors",
                 kind === k ? "bg-orange/15 text-orange-bright" : "text-sub hover:text-ink",
@@ -191,57 +227,71 @@ export function CosmeticsLockerModal({
       </div>
 
       {kind === "badge" ? (
-        <div className="mb-4 rounded-xl border border-line bg-white/[0.02] p-3">
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-            <p className="kicker !text-[10px]">{C.showcase}</p>
-            {resolved.badges.length > 1 ? <p className="text-[11px] text-faint">{C.featureHint}</p> : null}
-          </div>
-          <div className="flex items-end gap-3 pt-2">
-            {Array.from({ length: MAX_BADGES }, (_, i) => {
-              const b = resolved.badges[i];
-              const isFeatured = i === 0;
-              if (!b) {
+        // Sticky: the strip stays in view while the player scrolls the grid.
+        <div className="sticky top-0 z-10 -mx-1 mb-4 bg-raised px-1 pb-1">
+          <div className={cx("rounded-xl border p-3 transition-colors", pending ? "border-amber-300/50 bg-amber-300/[0.04]" : "border-line bg-white/[0.02]")}>
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <p className="kicker !text-[10px]">{C.showcase}</p>
+              <p className={cx("text-[11px]", pending ? "font-semibold text-amber-200" : "text-faint")} aria-live="polite">
+                {slotHint}
+                {pending ? (
+                  <button type="button" onClick={() => setPending(null)} className="ml-2 font-semibold text-faint underline-offset-2 hover:text-ink hover:underline">
+                    {C.cancel}
+                  </button>
+                ) : null}
+              </p>
+            </div>
+            <div className="flex items-end gap-3 pt-1.5">
+              {Array.from({ length: MAX_BADGES }, (_, i) => {
+                const b = resolved.badges[i];
+                const isFeatured = i === 0;
+                const isSelected = selected === i;
+                const target = !!pending || (selected !== null && !isSelected && !!b);
+                const box = isFeatured ? "h-[88px] w-[88px]" : "h-16 w-16";
                 return (
-                  <span
-                    key={`empty-${i}`}
-                    className={cx(
-                      "flex flex-col items-center justify-center rounded-lg border border-dashed border-line-strong text-[10px] font-semibold uppercase tracking-wider text-faint",
-                      isFeatured ? "h-[88px] w-[88px]" : "h-16 w-16",
-                    )}
-                  >
-                    {C.emptySlot}
-                  </span>
+                  <div key={i} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => tapSlot(i)}
+                      disabled={!b && !pending && selected === null}
+                      aria-pressed={isSelected}
+                      title={b ? copy.name(b.id) : C.emptySlot}
+                      className={cx(
+                        "flex items-center justify-center rounded-lg border transition-all disabled:cursor-default",
+                        box,
+                        b
+                          ? isFeatured
+                            ? "border-amber-300/50 bg-amber-300/[0.06]"
+                            : "border-line bg-white/[0.02]"
+                          : "border-dashed border-line-strong text-[10px] font-semibold uppercase tracking-wider text-faint",
+                        isSelected && "ring-2 ring-orange ring-offset-2 ring-offset-[var(--bg-raised)]",
+                        target && "!border-amber-300/70 ring-1 ring-amber-300/40 hover:bg-amber-300/10",
+                      )}
+                    >
+                      {b ? <BadgeEmblem badge={b} size={isFeatured ? "xl" : "md"} /> : C.emptySlot}
+                    </button>
+                    {isFeatured ? (
+                      <span className="pointer-events-none absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                        <Badge tone="gold" className="!bg-[#1a1405] !px-1.5 !py-0 !text-[9px]">
+                          ★ {C.featured}
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {isSelected && b ? (
+                      <button
+                        type="button"
+                        onClick={() => removeSlot(i)}
+                        aria-label={C.removeBadge}
+                        title={C.removeBadge}
+                        className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full border border-line-strong bg-raised text-faint shadow-md transition-colors hover:border-bad/60 hover:text-bad"
+                      >
+                        <TrashGlyph />
+                      </button>
+                    ) : null}
+                  </div>
                 );
-              }
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => feature(b.id)}
-                  title={isFeatured ? copy.name(b.id) : `${C.feature} · ${copy.name(b.id)}`}
-                  aria-pressed={isFeatured}
-                  className={cx(
-                    "group relative flex flex-col items-center justify-center rounded-lg border transition-colors",
-                    isFeatured ? "h-[88px] w-[88px] border-amber-300/50 bg-amber-300/[0.06]" : "h-16 w-16 border-line hover:border-amber-300/40",
-                  )}
-                >
-                  <BadgeEmblem badge={b} size={isFeatured ? "xl" : "md"} />
-                  {isFeatured ? (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                      <Badge tone="gold" className="!bg-[#1a1405] !px-1.5 !py-0 !text-[9px]">
-                        ★ {C.featured}
-                      </Badge>
-                    </span>
-                  ) : (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                      <Badge tone="neutral" className="!bg-raised !px-1.5 !py-0 !text-[9px]">
-                        ★ {C.feature}
-                      </Badge>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+              })}
+            </div>
           </div>
         </div>
       ) : null}
@@ -249,17 +299,20 @@ export function CosmeticsLockerModal({
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {owned.map((def) => {
           const shown = shownIds.has(def.id);
-          const featured = def.kind === "badge" && def.id === featuredId;
+          const slot = def.kind === "badge" ? resolved.badges.findIndex((b) => b.id === def.id) : -1;
+          const waiting = pending === def.id;
           return (
             <button
               key={def.id}
               type="button"
-              onClick={() => choose(def)}
+              onClick={() => (def.kind === "badge" ? tapBadge(def.id) : chooseSingle(def))}
               title={`${copy.desc(def.id)}${copy.desc(def.id) ? " · " : ""}${sourceLabel(def.source, C)}`}
               className={cx(
                 "group relative flex flex-col items-center gap-2 rounded-xl border bg-white/[0.03] p-3 text-center transition-colors hover:bg-white/[0.06]",
                 TIER_RING[def.tier],
                 shown && "ring-2 ring-orange/70",
+                slot >= 0 && selected === slot && "ring-orange",
+                waiting && "ring-2 ring-amber-300/80",
               )}
             >
               <span className="flex h-20 items-center justify-center">
@@ -272,7 +325,13 @@ export function CosmeticsLockerModal({
                 </span>
               </span>
               <span className="absolute left-2 top-2 flex gap-1">
-                {featured ? <Badge tone="gold">★ {C.featured}</Badge> : shown ? <Badge tone="orange">{C.equipped}</Badge> : null}
+                {slot === 0 ? (
+                  <Badge tone="gold">★ {C.featured}</Badge>
+                ) : shown ? (
+                  <Badge tone="orange">{C.equipped}</Badge>
+                ) : waiting ? (
+                  <Badge tone="gold">{C.pickSlot}</Badge>
+                ) : null}
               </span>
               {isNew(def.id) ? (
                 <span className="absolute right-2 top-2">
@@ -288,6 +347,14 @@ export function CosmeticsLockerModal({
       </div>
       {owned.length === 0 && locked.length === 0 ? <p className="py-6 text-center text-sm text-faint">{C.empty}</p> : null}
     </Modal>
+  );
+}
+
+function TrashGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4.5 7h15M9.5 7V5h5v2M6.5 7l.8 12h9.4l.8-12M10 10.5v5M14 10.5v5" />
+    </svg>
   );
 }
 

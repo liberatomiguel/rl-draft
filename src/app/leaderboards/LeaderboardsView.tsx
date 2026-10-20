@@ -5,7 +5,9 @@
  * every row carries the player's equipped title, banner (the row background)
  * and badges, straight from the public `leaderboard` view. rc.4 row order:
  * place · name · badges (featured first, a size up) · title on the left; rank
- * and the number on the right. Tabs: Season Rating (headline), the frozen pre-season
+ * and the number on the right. rc.5: taller rows for bigger badges, and the
+ * profile peek is a small showcase (identity, the three badges with the
+ * featured one centred and largest, then the numbers). Tabs: Season Rating (headline), the frozen pre-season
  * Hall of Fame, titles, Legacy overall, Regional overall. Tap a row for a
  * profile peek. Public and viewable signed out; your row is highlighted.
  */
@@ -33,7 +35,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
-import { BadgeRow, BannerSurface, TitleTag } from "@/components/cosmetics/CosmeticViews";
+import { BadgeEmblem, BadgeRow, BannerSurface, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
+import type { CosmeticDef } from "@/data/cosmetics";
+
+/** rc.5 badge boxes (px) — layout, not gameplay. */
+const ROW_BADGE_PX = 28;
+const ROW_FEATURED_PX = 36;
+const PEEK_BADGE_PX = 56;
+const PEEK_FEATURED_PX = 84;
 
 type BoardKey = "season" | "hallOfFame" | "titles" | "legacyOverall" | "regional";
 
@@ -210,19 +219,36 @@ export function LeaderboardsView() {
                         sfx.click();
                         setPeek(r);
                       }}
-                      className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/5 sm:px-4"
+                      className="flex min-h-[52px] w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-white/5 sm:px-4"
                     >
                       <span className={cx("display w-7 shrink-0 text-sm font-bold", place === 1 ? "text-amber-300" : place <= 3 ? "text-sub" : "text-faint")}>
                         {place}
                       </span>
-                      <span className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="min-w-[4.5rem] truncate text-sm font-semibold text-ink">{r.username}</span>
-                        {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
-                        <BadgeRow badges={r.cosmetics.badges} size="xs" featuredSize="sm" className="shrink-0" />
-                        <TitleTag title={r.cosmetics.title} size="xs" className="min-w-0 overflow-hidden" />
+                      <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                        {/* Mobile: the title sits under the name (no room beside the
+                            badges); sm+: place · name · badges · title in one line. */}
+                        <span className="flex min-w-0 flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
+                          <span className="flex min-w-0 max-w-full items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-ink">{r.username}</span>
+                            {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
+                          </span>
+                          {/* Wrapped: .cos-title sets its own display, so the
+                              visibility utility lives on the wrapper. */}
+                          {r.cosmetics.title ? (
+                            <span className="flex max-w-full overflow-hidden sm:hidden">
+                              <TitleTag title={r.cosmetics.title} size="xs" />
+                            </span>
+                          ) : null}
+                        </span>
+                        <BadgeRow badges={r.cosmetics.badges} size={ROW_BADGE_PX} featuredSize={ROW_FEATURED_PX} className="shrink-0" />
+                        {r.cosmetics.title ? (
+                          <span className="hidden min-w-0 overflow-hidden sm:flex">
+                            <TitleTag title={r.cosmetics.title} size="xs" />
+                          </span>
+                        ) : null}
                       </span>
                       <span className="hidden w-28 shrink-0 items-center gap-1.5 sm:flex">
-                        <RankBadge rank={rank} variant="menu" size="sm" className="!h-6 !w-6" />
+                        <RankBadge rank={rank} variant="menu" size="sm" className="!h-7 !w-7" />
                         <span className="truncate text-[10px] font-semibold uppercase tracking-wider text-faint">{rank.label}</span>
                       </span>
                       <span className="display w-14 shrink-0 text-right text-sm font-bold text-orange-bright">{r.value}</span>
@@ -236,43 +262,83 @@ export function LeaderboardsView() {
       )}
 
       <Modal open={!!peek} title={L.peekTitle} onClose={() => setPeek(null)}>
-        {peek ? (
-          <div>
-            <BannerSurface banner={peek.cosmetics.banner} className="-mx-2 rounded-xl border border-line-strong" plainClassName="panel">
-              <div className="flex items-center gap-4 p-4">
-                <RankBadge rank={rankForXp(peek.rankXp)} variant="menu" size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="display truncate text-xl font-bold uppercase tracking-wide text-ink">{peek.username}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <TitleTag title={peek.cosmetics.title} size="sm" />
-                    <BadgeRow badges={peek.cosmetics.badges} size="md" featuredSize="lg" />
-                  </div>
-                </div>
-              </div>
-            </BannerSurface>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              <PeekStat label={L.rating} value={String(peek.seasonMmr)} />
-              <PeekStat label={L.rank} value={rankForXp(peek.rankXp).label} />
-              <PeekStat label={L.titlesShort} value={String(peek.championships)} />
-            </div>
-            {peek.preseasonPosition ? (
-              <p className="mt-3 text-center text-xs text-sub">
-                <Badge tone="gold">{L.preseasonPlace(peek.preseasonPosition)}</Badge>
-              </p>
-            ) : null}
-            <p className="mt-3 text-center text-[10px] text-faint">{SEASON.name}</p>
-          </div>
-        ) : null}
+        {peek ? <PeekCard row={peek} /> : null}
       </Modal>
     </div>
   );
 }
 
-function PeekStat({ label, value }: { label: string; value: string }) {
+/** rc.5: the profile peek — identity on the banner, the badge showcase, the numbers. */
+function PeekCard({ row }: { row: Row }) {
+  const { LEADERBOARDS_UI: L, COSMETICS: C } = useCopy();
+  const copy = useCosmeticCopy();
+  const rank = rankForXp(row.rankXp);
+  const badges = row.cosmetics.badges;
+  // Three badges: the featured one (index 0) stands in the middle, a size up.
+  const showcase: { badge: CosmeticDef; featured: boolean }[] =
+    badges.length === 3
+      ? [
+          { badge: badges[1], featured: false },
+          { badge: badges[0], featured: true },
+          { badge: badges[2], featured: false },
+        ]
+      : badges.map((badge, i) => ({ badge, featured: i === 0 }));
+  return (
+    <div className="space-y-3">
+      <BannerSurface banner={row.cosmetics.banner} className="overflow-hidden rounded-xl border border-line-strong" plainClassName="panel-strong">
+        <div className="flex items-center gap-4 p-4 sm:p-5">
+          <RankBadge rank={rank} variant="menu" size="md" className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="display truncate text-2xl font-bold uppercase leading-tight tracking-wide text-ink">{row.username}</p>
+            {row.cosmetics.title ? (
+              <div className="mt-1.5">
+                <TitleTag title={row.cosmetics.title} size="sm" />
+              </div>
+            ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+                {rank.label} · {SEASON.name}
+              </span>
+              {row.preseasonPosition ? <Badge tone="gold">{L.preseasonPlace(row.preseasonPosition)}</Badge> : null}
+            </div>
+          </div>
+        </div>
+      </BannerSurface>
+
+      <div className="rounded-xl border border-line bg-white/[0.02] px-3 pb-4 pt-3">
+        <p className="kicker mb-3 text-center !text-[10px]">{L.peekBadges}</p>
+        {showcase.length === 0 ? (
+          <p className="py-2 text-center text-xs text-faint">{L.peekNoBadges}</p>
+        ) : (
+          <div className="flex items-start justify-center gap-3 sm:gap-6">
+            {showcase.map(({ badge, featured }) => (
+              <div key={badge.id} className="flex w-24 flex-col items-center gap-1.5 text-center">
+                {/* Same box height for every badge so the names line up. */}
+                <span className="flex items-end justify-center" style={{ height: PEEK_FEATURED_PX }}>
+                  <BadgeEmblem badge={badge} size={featured ? PEEK_FEATURED_PX : PEEK_BADGE_PX} />
+                </span>
+                <span className={cx("line-clamp-2 text-[11px] font-semibold leading-tight", featured ? "text-amber-200" : "text-sub")}>{copy.name(badge.id)}</span>
+                {featured ? <span className="display text-[9px] font-bold uppercase tracking-[0.14em] text-amber-300/80">★ {C.featured}</span> : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <PeekStat label={L.rating} value={String(row.seasonMmr)} accent />
+        <PeekStat label={L.rank} value={rank.label} />
+        <PeekStat label={L.titlesShort} value={String(row.championships)} />
+      </div>
+    </div>
+  );
+}
+
+function PeekStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="panel p-3">
       <p className="kicker !text-[10px]">{label}</p>
-      <p className="display mt-1 truncate text-lg font-bold text-ink">{value}</p>
+      <p className={cx("display mt-1 truncate text-lg font-bold", accent ? "text-orange-bright" : "text-ink")}>{value}</p>
     </div>
   );
 }

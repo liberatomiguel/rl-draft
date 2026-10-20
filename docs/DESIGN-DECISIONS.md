@@ -1318,3 +1318,11 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      teased; season-track and leaderboard / rank / grant rewards appear only
      once owned.
 
+125. **Badges are chosen into SLOTS, not toggled (rc.5).** Miguel on rc.4: the
+     toggle + "tap to feature" strip was confusing. The three slots are the
+     model: a new badge fills the first free slot; when full, the player picks
+     the slot to replace; a shown badge is selected to swap places with
+     another slot (the featured slot is just slot 1) or removed with a bin.
+     Slots stay packed (removing closes the gap), so the saved list and the
+     cloud row are unchanged.
+

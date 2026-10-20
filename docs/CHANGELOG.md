@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.4**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.5**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,31 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.5 (badge slots + profile / board polish, 2026-10-20 · DESIGN-DECISIONS #125)
+- **Locker badge slots.** A badge you tap drops into the first free slot. With all
+  three full, the strip asks which slot to replace (the badge waits, tagged "Pick a
+  slot"; Cancel backs out). Tapping a badge that is already shown selects its slot:
+  tap another slot to swap them (that is how a badge becomes featured), or the small
+  bin on the slot to remove it and open the slot. With a slot selected, tapping a
+  new badge puts it in that slot. The strip is sticky, so it stays in view over the
+  long grid. Pure helpers in `engine/cosmetics.ts` (`addBadge`, `placeBadgeAt`,
+  `swapBadges`, `removeBadgeAt`), tested.
+- **Profile hero:** the three badges moved into the free space above the Season
+  Rating, a step bigger (featured 64 px, others 48), and the banner is shorter.
+- **Leaderboard:** taller rows (52 px) with bigger badges (featured 36, others 28).
+  On phones the title sits under the name so it is never clipped beside the badges.
+- **Player peek** (tap a row) rebuilt as a small profile card: the banner with rank
+  emblem, name, title and rank · season (+ the pre-season place as a gold tag); a
+  badge showcase with the featured badge centred and largest, each with its name;
+  then rating · rank · titles.
+- **Home:** the Daily Quiz card reads top-down like the others (title + Live tag,
+  line, button at the bottom) instead of having its text pushed to the bottom.
+
+### Fixed — rc.5
+- Responsive visibility on title chips (`hidden` / `sm:hidden`) had no effect: the
+  unlayered `.cos-title { display: inline-flex }` rule outranks Tailwind's layered
+  utilities. The breakpoint classes now live on a wrapper.
 
 ### Added — rc.4 (badges, locker, home + board polish, 2026-10-20 · DESIGN-DECISIONS #122–#124, ROAD-TO-WORLDS-DECISIONS R38)
 - **The approved badge catalog: 36 illustrated badges** (Miguel's "Gema & Moldura"

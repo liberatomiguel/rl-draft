@@ -2,8 +2,9 @@
 
 /**
  * Profile v3 (rc.2): the screen that makes the player want the next reward.
- *  · HERO — the banner is the stage: name + title chip, three badge slots
- *    (rc.4: the first is FEATURED and drawn larger), the rank emblem (menu
+ *  · HERO — the banner is the stage: name + title chip on the left; three
+ *    badge slots above the Season Rating on the right (rc.4: the first is
+ *    FEATURED and drawn larger; rc.5 moved them there), the rank emblem (menu
  *    art), Season Rating and the XP bar. Every cosmetic slot is tappable and
  *    opens the LOCKER MODAL on that kind; a green dot on a slot (and on the
  *    locker button) says something new is waiting there.
@@ -44,6 +45,10 @@ import { AccountSection, ProfileNickname } from "@/components/AccountSection";
 import { BadgeEmblem, BannerSurface, CosmeticIcon, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLocker";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
+
+/** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
+const HERO_FEATURED_PX = 64;
+const HERO_BADGE_PX = 48;
 
 export default function ProfilePage() {
   const { PROFILE_UI: P, DIFFICULTY_LABELS, LEADERBOARDS_UI: L, SEASON_RECAP: R, COSMETICS: CC } = useCopy();
@@ -106,11 +111,11 @@ export default function ProfilePage() {
 
       {/* ---- HERO (the v2 banner, with every cosmetic slot tappable) --------- */}
       <BannerSurface banner={shown.banner} className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
-        <div className="flex flex-col items-center gap-6 p-6 sm:flex-row">
+        <div className="flex flex-col items-center gap-5 p-5 sm:flex-row sm:gap-6">
           <RankBadge rank={rank} variant="menu" size="lg" />
 
           <div className="w-full min-w-0 flex-1 text-center sm:text-left">
-            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
                 {signedIn ? (
                   <ProfileNickname />
@@ -135,8 +140,13 @@ export default function ProfilePage() {
                     {fresh.title ? <NewDot className="absolute -right-1 -top-1" label={CC.newItems} /> : null}
                   </span>
                 </div>
-                {/* rc.4: the featured badge leads, a size up; the other two follow. */}
-                <div className="relative mt-2.5 flex w-fit items-end gap-1.5 max-sm:mx-auto">
+                {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
+                {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
+              </div>
+              <div className="flex shrink-0 flex-col items-center gap-2.5 sm:items-end">
+                {/* rc.5: the badges sit above the rating — the featured one
+                    leads and is the largest; an open slot invites the next. */}
+                <div className="relative flex items-end gap-1.5">
                   {shown.badges.map((b, i) => (
                     <button
                       key={b.id}
@@ -145,7 +155,7 @@ export default function ProfilePage() {
                       title={i === 0 ? `${CC.featured} · ${cosmeticCopy.name(b.id)}` : cosmeticCopy.name(b.id)}
                       className="rounded-md outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-orange/70"
                     >
-                      <BadgeEmblem badge={b} size={i === 0 ? "lg" : "md"} />
+                      <BadgeEmblem badge={b} size={i === 0 ? HERO_FEATURED_PX : HERO_BADGE_PX} />
                     </button>
                   ))}
                   {shown.badges.length < MAX_BADGES ? (
@@ -153,31 +163,27 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => openLocker("badge")}
                       title={P.addBadge}
-                      className={cx(
-                        "flex items-center justify-center rounded-md border border-dashed border-line-strong text-faint transition-colors hover:border-orange/50 hover:text-sub",
-                        shown.badges.length === 0 ? "h-14 w-14" : "h-10 w-10",
-                      )}
+                      className="flex items-center justify-center rounded-lg border border-dashed border-line-strong text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                      style={{ width: shown.badges.length === 0 ? HERO_FEATURED_PX : HERO_BADGE_PX, height: shown.badges.length === 0 ? HERO_FEATURED_PX : HERO_BADGE_PX }}
                     >
                       <span className="text-base leading-none">+</span>
                     </button>
                   ) : null}
                   {fresh.badge ? <NewDot className="absolute -right-1.5 -top-1" label={CC.newItems} /> : null}
                 </div>
-                {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
-                {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
-              </div>
-              <div className="shrink-0 sm:text-right">
-                <p className="kicker mb-0.5">{P.seasonRating}</p>
-                <p className="display whitespace-nowrap text-[1.9rem] font-bold leading-none text-orange-bright">
-                  {profile.mmr}
-                  {lastDelta !== null && lastDelta !== 0 ? (
-                    <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-good" : "text-bad")}>
-                      {lastDelta > 0 ? "+" : ""}
-                      {lastDelta}
-                    </span>
-                  ) : null}
-                </p>
-                <p className="display mt-1 whitespace-nowrap text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</p>
+                <div className="text-center sm:text-right">
+                  <p className="kicker mb-0.5">{P.seasonRating}</p>
+                  <p className="display whitespace-nowrap text-[1.9rem] font-bold leading-none text-orange-bright">
+                    {profile.mmr}
+                    {lastDelta !== null && lastDelta !== 0 ? (
+                      <span className={cx("ml-2 text-sm font-bold", lastDelta > 0 ? "text-good" : "text-bad")}>
+                        {lastDelta > 0 ? "+" : ""}
+                        {lastDelta}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="display mt-1 whitespace-nowrap text-sm font-bold uppercase tracking-wide text-ink">{rank.label}</p>
+                </div>
               </div>
             </div>
 

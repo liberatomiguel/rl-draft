@@ -30,6 +30,8 @@ export function useCosmeticCopy() {
 }
 
 export type CosmeticSize = "xs" | "sm" | "md" | "lg" | "xl";
+/** A named size or an exact pixel box (badges, rc.5). */
+export type BadgeSize = CosmeticSize | number;
 
 export const COSMETIC_PX: Record<CosmeticSize, number> = { xs: 20, sm: 28, md: 40, lg: 56, xl: 72 };
 const PX = COSMETIC_PX;
@@ -58,9 +60,9 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 /** A badge: its SVG art (`public/badges/<art>.svg`). The art carries its own
  *  frame, gem and aura, so no CSS effect is layered on top. Lazy + async: a
  *  leaderboard of 100 rows only fetches what scrolls into view. */
-export function BadgeEmblem({ badge, size = "sm", className }: { badge: CosmeticDef; size?: CosmeticSize; className?: string }) {
+export function BadgeEmblem({ badge, size = "sm", className }: { badge: CosmeticDef; size?: BadgeSize; className?: string }) {
   if (badge.kind !== "badge") return null;
-  const px = PX[size];
+  const px = typeof size === "number" ? size : PX[size];
   return (
     // Static SVG from public/ (no next/image: nothing to optimise, and the
     // static export serves it as is).
@@ -81,7 +83,7 @@ export function BadgeEmblem({ badge, size = "sm", className }: { badge: Cosmetic
 }
 
 /** A badge chip: the emblem, optionally with its name. */
-export function BadgeChip({ badge, size = "sm", className, showName }: { badge: CosmeticDef | null | undefined; size?: CosmeticSize; className?: string; showName?: boolean }) {
+export function BadgeChip({ badge, size = "sm", className, showName }: { badge: CosmeticDef | null | undefined; size?: BadgeSize; className?: string; showName?: boolean }) {
   const copy = useCosmeticCopy();
   if (!badge || badge.kind !== "badge") return null;
   const name = copy.name(badge.id);
@@ -102,8 +104,8 @@ export function BadgeRow({
   className,
 }: {
   badges: CosmeticDef[];
-  size?: CosmeticSize;
-  featuredSize?: CosmeticSize;
+  size?: BadgeSize;
+  featuredSize?: BadgeSize;
   className?: string;
 }) {
   if (badges.length === 0) return null;

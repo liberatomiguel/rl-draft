@@ -10,8 +10,11 @@ import {
   deriveOwnedIds,
   EMPTY_COSMETICS,
   equippedColumns,
-  featureBadge,
+  addBadge,
   isTeasedWhenLocked,
+  placeBadgeAt,
+  removeBadgeAt,
+  swapBadges,
   legacyPositionTier,
   lockerItems,
   markSeen,
@@ -226,10 +229,26 @@ describe("owned map + equipped resolution", () => {
     expect(e).toEqual({ title: null, banner: null, badges: ["verified-pro", "supporter", "contributor"] });
   });
 
-  it("featureBadge moves one shown badge to the front (the featured slot)", () => {
-    expect(featureBadge(["a", "b", "c"], "c")).toEqual(["c", "a", "b"]);
-    expect(featureBadge(["a", "b", "c"], "a")).toEqual(["a", "b", "c"]);
-    expect(featureBadge(["a", "b"], "z")).toEqual(["a", "b"]);
+  it("badge slots (rc.5): first free slot, replace when full, swap, remove", () => {
+    // A new badge drops into the first free slot; a shown one or a full row is unchanged.
+    expect(addBadge([], "a")).toEqual(["a"]);
+    expect(addBadge(["a"], "b")).toEqual(["a", "b"]);
+    expect(addBadge(["a", "b"], "a")).toEqual(["a", "b"]);
+    expect(addBadge(["a", "b", "c"], "d")).toEqual(["a", "b", "c"]);
+    // Full: the player picks the slot to replace (slot 0 = featured).
+    expect(placeBadgeAt(["a", "b", "c"], 0, "d")).toEqual(["d", "b", "c"]);
+    expect(placeBadgeAt(["a", "b", "c"], 2, "d")).toEqual(["a", "b", "d"]);
+    // A badge already shown elsewhere swaps places instead of duplicating.
+    expect(placeBadgeAt(["a", "b", "c"], 0, "c")).toEqual(["c", "b", "a"]);
+    // Past the end = the first free slot.
+    expect(placeBadgeAt(["a"], 2, "d")).toEqual(["a", "d"]);
+    // Swap two shown badges (into the featured slot, too); past the end = last filled.
+    expect(swapBadges(["a", "b", "c"], 2, 0)).toEqual(["c", "b", "a"]);
+    expect(swapBadges(["a", "b"], 0, 2)).toEqual(["b", "a"]);
+    expect(swapBadges(["a", "b"], 1, 1)).toEqual(["a", "b"]);
+    // Removing opens the slot; the ones behind close the gap.
+    expect(removeBadgeAt(["a", "b", "c"], 0)).toEqual(["b", "c"]);
+    expect(removeBadgeAt(["a", "b", "c"], 5)).toEqual(["a", "b", "c"]);
   });
 
   it("equippedColumns / rowCosmetics round-trip through the leaderboard view shape (order kept)", () => {
