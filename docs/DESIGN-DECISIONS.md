@@ -1354,3 +1354,12 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      rc.8 (Miguel): rare plain; epic a little softer; legendary still at rest
      (tilt on hover only) with a wide, faint warm halo behind the art.
 
+129. **Badge art ships as pre-rendered WebP; nothing on the board may repaint
+     per frame (rc.9).** The SVGs stay the source (build:badges), but
+     build-images rasterises them (96 / 224 px) like the logos, so the browser
+     never runs their blur filters. Cosmetic loops on the board (legendary
+     title sheen, banner sheen) move with transform; no filter on banner
+     patterns. Legendary look (Miguel): a gentle idle sway again (size-scaled),
+     a slow riding reflection, and a pulsing gold aura in the badge's own
+     silhouette instead of a round halo. Pre-season Champion → rare.
+

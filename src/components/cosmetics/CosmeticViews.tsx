@@ -55,14 +55,18 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 
 // ---------------------------------------------------------------------------
 // Badge emblem (rc.4: Miguel's "Gema & Moldura" art, one static SVG each;
-// rc.7: effects rebuilt light; rc.8: rare plain, legendary still + halo —
-// globals.css "Badge FX")
+// rc.7: effects rebuilt light; rc.8: rare plain; rc.9: pre-rendered WebP in
+// production, legendary sway + silhouette aura, size-aware tilt — globals.css
+// "Badge FX")
 // ---------------------------------------------------------------------------
 
 /** Below this box the effects are invisible noise, so the art renders plain. */
 const BADGE_FX_MIN_PX = 28;
-/** Pointer tilt range (deg) for legendary badges. Rendering, not gameplay. */
-const BADGE_TILT_DEG = 30;
+/** Pointer tilt range (deg) by badge size — a board-row badge tilts far less
+ *  than the profile's. Rendering, not gameplay. */
+const tiltDegFor = (px: number): number => (px >= 64 ? 26 : px >= 44 ? 16 : 9);
+/** At or under this box a badge is "small" (board rows): gentler sway, no twinkles. */
+const BADGE_SMALL_PX = 40;
 
 /**
  * ONE shared IntersectionObserver marks badges on screen (`data-live`); the
@@ -102,13 +106,14 @@ function fxDelay(key: string): string {
 
 /**
  * A badge: its SVG art (`public/badges/<art>.svg`). Lazy + async, so a board of
- * 100 rows only fetches what scrolls into view. Effects stay cheap (transform
- * / opacity only, on screen only): common / uncommon / rare plain (rc.8); epic
- * a soft prismatic sweep and two twinkles; legendary a brighter sweep, a warm
- * halo breathing behind it and three twinkles — still at rest, tilting toward
- * the pointer on hover (desktop). The sweep is masked by the badge's own SVG so
- * it only lights the badge. `reduce-fx` / `lite-fx` / reduced motion switch
- * the motion off (globals.css).
+ * 100 rows only fetches what scrolls into view; in production it is a
+ * pre-rendered WebP (rc.9). Effects stay cheap (transform / opacity only, on
+ * screen only): common / uncommon / rare plain; epic a soft prismatic sweep and
+ * two twinkles; legendary a gentle 3D sway with a slow reflection riding it, a
+ * pulsing gold aura in its own silhouette and three twinkles, with the pointer
+ * taking the tilt on hover (desktop). Sway and tilt scale with the size. The
+ * sweep and the aura are masked by the badge art so they only follow the badge.
+ * `reduce-fx` / `lite-fx` / reduced motion switch the motion off.
  */
 export function BadgeEmblem({
   badge,
@@ -132,7 +137,7 @@ export function BadgeEmblem({
     return observeLive(ref.current);
   }, [live]);
   if (badge.kind !== "badge") return null;
-  const src = badgeArtSrc(badge.style.art);
+  const src = badgeArtSrc(badge.style.art, px);
   const img = (
     // Static SVG from public/ (no next/image: nothing to optimise, and the
     // static export serves it as is).
@@ -152,17 +157,30 @@ export function BadgeEmblem({
   );
   if (!live) return img;
 
-  // Legendary + mouse: tilt toward the pointer (DOM-only CSS vars and a data
-  // attribute, no re-render). At rest a legendary does not move.
+  // Legendary + mouse: the pointer takes over from the sway (DOM-only CSS vars
+  // and data attributes, no re-render).
+  const tiltDeg = tiltDegFor(px);
+  const small = px <= BADGE_SMALL_PX;
   const onMove = (e: React.PointerEvent<HTMLSpanElement>) => {
     const el = ref.current;
     if (e.pointerType !== "mouse" || !el) return;
     const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
     const y = (e.clientY - r.top) / r.height - 0.5;
-    el.dataset.hover = "";
-    el.style.setProperty("--bfx-ry", `${(x * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
-    el.style.setProperty("--bfx-rx", `${(-y * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
+    if (!("hover" in el.dataset)) {
+      // Hand-off without a jump: freeze the sway where it is, then ease it flat
+      // while the pointer tilt (on the outer layer) eases in.
+      const sway = el.querySelector<HTMLElement>(".bfx-sway");
+      if (sway) sway.style.transform = getComputedStyle(sway).transform;
+      el.dataset.hover = "";
+      if (sway) {
+        void sway.offsetWidth;
+        sway.style.transition = "transform 0.35s ease-out";
+        sway.style.transform = "none";
+      }
+    }
+    el.style.setProperty("--bfx-ry", `${(x * tiltDeg * 2).toFixed(1)}deg`);
+    el.style.setProperty("--bfx-rx", `${(-y * tiltDeg * 2).toFixed(1)}deg`);
     el.style.setProperty("--bfx-bx", `${(-x * 70).toFixed(1)}%`);
   };
   const onLeave = () => {
@@ -170,26 +188,33 @@ export function BadgeEmblem({
     if (!el) return;
     delete el.dataset.hover;
     for (const v of ["--bfx-ry", "--bfx-rx", "--bfx-bx"]) el.style.removeProperty(v);
+    const sway = el.querySelector<HTMLElement>(".bfx-sway");
+    if (sway) {
+      sway.style.removeProperty("transform");
+      sway.style.removeProperty("transition");
+    }
   };
   const legend = tier === "legend";
   return (
     <span
       ref={ref}
-      className={cx("bfx", `bfx-${tier}`, className)}
+      className={cx("bfx", `bfx-${tier}`, small && "bfx-sm", className)}
       style={{ width: px, height: px, ["--bfx-mask" as string]: `url("${src}")`, ["--bfx-delay" as string]: fxDelay(badge.id) } as React.CSSProperties}
       onPointerMove={legend ? onMove : undefined}
       onPointerLeave={legend ? onLeave : undefined}
       aria-hidden
     >
-      {legend ? <span className="bfx-glow" /> : null}
       <span className="bfx-tilt">
-        {img}
-        <span className="bfx-holo">
-          <span className="bfx-band" />
+        <span className="bfx-sway">
+          {legend ? <span className="bfx-glow" /> : null}
+          {img}
+          <span className="bfx-holo">
+            <span className="bfx-band" />
+          </span>
+          {!small ? <span className="bfx-spark bfx-spark-a" /> : null}
+          {!small ? <span className="bfx-spark bfx-spark-b" /> : null}
+          {legend && !small ? <span className="bfx-spark bfx-spark-c" /> : null}
         </span>
-        <span className="bfx-spark bfx-spark-a" />
-        <span className="bfx-spark bfx-spark-b" />
-        {legend ? <span className="bfx-spark bfx-spark-c" /> : null}
       </span>
     </span>
   );

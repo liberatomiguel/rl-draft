@@ -135,7 +135,7 @@ const PRESEASON_RANK_BADGES: [rankId: string, id: string, tier: CosmeticTier][] 
   ["gold", "pre-season-gold", "uncommon"],
   ["platinum", "pre-season-platinum", "uncommon"],
   ["diamond", "pre-season-diamond", "rare"],
-  ["champion", "pre-season-champion", "epic"],
+  ["champion", "pre-season-champion", "rare"], // rc.9: Miguel — only GC is epic
   ["grand-champion", "pre-season-grand-champion", "epic"],
   ["supersonic-legend", "pre-season-supersonic", "legend"],
 ];

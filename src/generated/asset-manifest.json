@@ -7,6 +7,10 @@
     "specials": [
       256,
       512
+    ],
+    "badges": [
+      96,
+      224
     ]
   },
   "flags": [
@@ -307,5 +311,44 @@
     "profile/silver": "5c815bf3a0",
     "profile/supersonic-legend": "715bda89e2",
     "profile/unranked": "d0176f6e57"
+  },
+  "badges": {
+    "constellation": "87968d336e",
+    "contributor": "e320384c09",
+    "dynasty": "28f0d52a20",
+    "first-chapter": "360999d723",
+    "on-target": "47c9388af2",
+    "pre-season-bronze": "062e810085",
+    "pre-season-champion": "fe164c38f4",
+    "pre-season-diamond": "8cd59d2b32",
+    "pre-season-gold": "282baf800a",
+    "pre-season-grand-champion": "c531fe29dd",
+    "pre-season-platinum": "a1aa6aa6d2",
+    "pre-season-silver": "9b821304d7",
+    "pre-season-supersonic": "23e186c94b",
+    "rising-star": "5307e16ac0",
+    "road-warrior": "0a723b0ebf",
+    "scholar-1": "99a49c419f",
+    "scholar-2": "d87145fc45",
+    "scholar-3": "cc43159d9d",
+    "season-champion-ps": "ba1ec449f9",
+    "season-elite-ps": "a339ae985b",
+    "season-fifth-place-ps": "494b1ff283",
+    "season-finalist-ps": "cafab29e43",
+    "season-fourth-place-ps": "cc003343a2",
+    "season-runner-up-ps": "8a4a372dad",
+    "season-third-place-ps": "bbac134108",
+    "spark": "d552448631",
+    "supernova": "af9170115d",
+    "supporter": "35df602a9a",
+    "underdog": "c03201334d",
+    "verified-pro": "cd2812a708",
+    "veteran-drafter-1": "fbab1d755f",
+    "veteran-drafter-2": "423d66e559",
+    "veteran-drafter-3": "bf563ce6ff",
+    "veteran-drafter-4": "77c0975f11",
+    "wildfire": "489c298200",
+    "world-champion": "aa8050d2cc",
+    "world-champion-crowned": "264116c850"
   }
 }

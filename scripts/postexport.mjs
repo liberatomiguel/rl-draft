@@ -378,7 +378,7 @@ async function checkRequiredFiles(ctx) {
 async function checkGeneratedImages(ctx) {
   const manifest = JSON.parse(await readFile(MANIFEST_PATH, "utf8"));
   const widths = manifest.widths ?? {};
-  for (const kind of ["orgs", "specials"]) {
+  for (const kind of ["orgs", "specials", "badges"]) {
     if (!validWidths(widths[kind])) {
       throw new Error(
         `asset-manifest.json widths.${kind} must be non-empty, ascending, unique positive integers ` +
@@ -400,6 +400,9 @@ async function checkGeneratedImages(ctx) {
     const rankId = key.slice(slash + 1);
     urls.push(`/img/ranks/${variant}/${seg(rankId)}.${hash}.webp`);
   }
+  for (const [art, hash] of Object.entries(manifest.badges ?? {})) {
+    for (const w of widths.badges) urls.push(`/img/badges/${seg(art)}.${hash}.${w}.webp`);
+  }
   for (const cc of manifest.flags ?? []) urls.push(`/flags/${cc}.png`);
 
   const files = new Set(ctx.files);
@@ -416,7 +419,8 @@ async function checkGeneratedImages(ctx) {
   const n = (o) => Object.keys(o ?? {}).length;
   console.log(
     `  all ${urls.length} manifest image URL(s) exist in out/: ${n(manifest.orgs)} orgs × [${widths.orgs}], ` +
-      `${n(manifest.specials)} specials × [${widths.specials}], ${n(manifest.ranks)} ranks, ${(manifest.flags ?? []).length} flags`,
+      `${n(manifest.specials)} specials × [${widths.specials}], ${n(manifest.ranks)} ranks, ` +
+      `${n(manifest.badges)} badges × [${widths.badges}], ${(manifest.flags ?? []).length} flags`,
   );
 }
 

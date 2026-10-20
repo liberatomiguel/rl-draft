@@ -1162,10 +1162,13 @@ html.reduce-fx .card-float {
      IntersectionObserver in BadgeEmblem), and every badge runs its own
      offset (--bfx-delay) so a grid never pulses in sync.
    Common / uncommon / rare: plain art (rc.8). Epic: a soft prismatic sweep +
-   two twinkles. Legendary: still at rest — a brighter sweep, a warm halo that
-   breathes behind it and three twinkles; on hover (desktop) it tilts toward
-   the pointer, the reflection follows and the halo lifts. Off under lite-fx /
-   reduce-fx (the halo stays, still), still under reduced motion.
+   two twinkles. Legendary (rc.9): a gentle 3D sway at rest with a slow
+   reflection riding it, a gold aura that hugs the badge's silhouette and
+   pulses, and three twinkles; on hover (desktop) the pointer takes the tilt.
+   Sway and tilt scale with the badge size (--bfx-amp). Small badges (board
+   rows) skip the twinkles. In production the art is a pre-rendered WebP.
+   Off under lite-fx / reduce-fx (the aura stays, still), still under reduced
+   motion.
 --------------------------------------------------------------------------- */
 .bfx {
   position: relative;
@@ -1231,42 +1234,77 @@ html.reduce-fx .card-float {
   --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.34) 55%, rgba(253, 230, 138, 0.29) 63%, transparent 74%);
 }
 .bfx-legend {
-  --bfx-cycle: 4.6s;
-  --bfx-band: linear-gradient(100deg, transparent 24%, rgba(244, 114, 182, 0.3) 36%, rgba(255, 255, 255, 0.58) 47%, rgba(125, 211, 252, 0.38) 55%, rgba(253, 230, 138, 0.34) 63%, transparent 76%);
+  --bfx-amp: 18deg;
+  --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.32) 55%, rgba(253, 230, 138, 0.3) 62%, transparent 74%);
+}
+/* Small legendaries (board rows) sway less. */
+.bfx-legend.bfx-sm {
+  --bfx-amp: 9deg;
 }
 
-/* LEGENDARY halo — a warm, soft light behind the art (outside the tilt, so it
-   stays put), breathing slowly. Wider and fainter than the art's own glow, so
-   it frames the badge instead of doubling it. */
+/* LEGENDARY at rest — a gentle sway (both ways from flat, so a restart never
+   jumps) and a slow reflection riding it. */
+.bfx-sway {
+  position: absolute;
+  inset: 0;
+}
+.bfx-legend .bfx-band {
+  opacity: 1;
+  transform: translateX(0);
+}
+.bfx-legend[data-live] .bfx-sway {
+  animation: bfx-sway 8s ease-in-out var(--bfx-delay, 0s) infinite;
+}
+.bfx-legend[data-live] .bfx-band {
+  animation: bfx-reflect 8s ease-in-out var(--bfx-delay, 0s) infinite;
+}
+@keyframes bfx-sway {
+  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+  25% { transform: rotateY(calc(var(--bfx-amp) * -1)) rotateX(3deg); }
+  75% { transform: rotateY(var(--bfx-amp)) rotateX(-3deg); }
+}
+@keyframes bfx-reflect {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-42%); }
+  75% { transform: translateX(42%); }
+}
+
+/* LEGENDARY aura — a gold light in the badge's own silhouette (the art as a
+   mask), a touch larger and behind the art, so it reads as a rim of light
+   around THIS shape; it pulses (opacity + scale only). It rides the sway. */
 .bfx-glow {
   position: absolute;
-  inset: -20%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(253, 230, 138, 0.34), rgba(251, 191, 36, 0.16) 52%, rgba(251, 146, 60, 0) 100%);
-  opacity: 0.75;
+  inset: 0;
   pointer-events: none;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  background: radial-gradient(circle at 50% 45%, #fff3c4 0%, #fcd34d 38%, #f59e0b 70%, #ea580c 100%);
+  -webkit-mask: var(--bfx-mask) center / contain no-repeat;
+  mask: var(--bfx-mask) center / contain no-repeat;
+  opacity: 0.4;
+  transform: scale(1.08);
 }
 .bfx-legend[data-live] .bfx-glow {
-  animation: bfx-breathe 4.6s ease-in-out var(--bfx-delay, 0s) infinite;
+  animation: bfx-aura 2.8s ease-in-out var(--bfx-delay, 0s) infinite;
 }
-@keyframes bfx-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.95); }
-  50% { opacity: 0.9; transform: scale(1.04); }
+@keyframes bfx-aura {
+  0%, 100% { opacity: 0.22; transform: scale(1.04); }
+  50% { opacity: 0.62; transform: scale(1.13); }
 }
 
-/* LEGENDARY on hover (desktop): tilt toward the pointer, the reflection
-   follows it, the halo lifts. At rest nothing moves but the sweep. */
-.bfx-legend[data-hover] .bfx-band {
+/* LEGENDARY on hover (desktop): the pointer takes the tilt (BadgeEmblem
+   eases the sway flat), the reflection follows it, the aura lifts. */
+.bfx-legend[data-hover] .bfx-sway,
+.bfx-legend[data-hover] .bfx-band,
+.bfx-legend[data-hover] .bfx-glow {
   animation: none;
-  opacity: 1;
+}
+.bfx-legend[data-hover] .bfx-band {
   transform: translateX(var(--bfx-bx, 0%));
   transition: transform 0.2s ease-out;
 }
 .bfx-legend[data-hover] .bfx-glow {
-  animation: none;
-  opacity: 1;
-  transform: scale(1.08);
+  opacity: 0.6;
+  transform: scale(1.12);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 /* Twinkles (epic: two, legendary: three) — tiny, transform + opacity only. */
@@ -1296,12 +1334,14 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .bfx .bfx-spark {
   display: none;
 }
-:is(html.lite-fx, html.reduce-fx) .bfx-glow {
+:is(html.lite-fx, html.reduce-fx) .bfx-glow,
+:is(html.lite-fx, html.reduce-fx) .bfx-sway {
   animation: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .bfx-band,
   .bfx-glow,
+  .bfx-sway,
   .bfx-spark {
     animation: none !important;
   }
@@ -1361,25 +1401,30 @@ html.reduce-fx .card-float {
   background-clip: text;
   color: transparent;
 }
+/* rc.9: no animated background-position here (it repainted the clipped text
+   of every legendary title on the board, every frame) — the gradient text is
+   still, and the sheen is a band that moves with transform. */
 .cos-title-legend {
   position: relative;
+  overflow: hidden;
   border-color: color-mix(in srgb, var(--cos-c2) 55%, transparent);
   box-shadow: 0 0 16px color-mix(in srgb, var(--cos-c1) 30%, transparent);
-  animation: cos-title-holo 5.5s ease-in-out infinite;
 }
 .cos-title-legend::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  top: 0;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
   pointer-events: none;
-  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%);
-  background-size: 220% 100%;
-  animation: card-sheen 3s ease-in-out infinite;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.22) 50%, transparent 62%);
+  transform: translateX(-55%);
+  animation: cos-band 5s ease-in-out infinite;
 }
-@keyframes cos-title-holo {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+@keyframes cos-band {
+  0% { transform: translateX(-55%); }
+  45%, 100% { transform: translateX(55%); }
 }
 
 /* Banner surface: the left stays dark (text lives there); the colour sits on
@@ -1444,25 +1489,31 @@ html.reduce-fx .card-float {
   background-size: 44px 44px, 44px 44px, 44px 44px;
   background-position: 0 0, 0 0, 22px 22px;
 }
+/* rc.9: soft radial light without a blur filter (the blur was re-rendered
+   with every repaint of the row). */
 .cos-banner-aurora::before {
   background:
-    radial-gradient(50% 80% at 70% 20%, var(--cos-accent), transparent 60%),
-    radial-gradient(45% 70% at 95% 85%, var(--cos-accent), transparent 60%);
-  opacity: 0.28;
-  filter: blur(18px);
+    radial-gradient(55% 85% at 70% 20%, var(--cos-accent), transparent 75%),
+    radial-gradient(50% 75% at 95% 85%, var(--cos-accent), transparent 75%);
+  opacity: 0.22;
 }
+/* rc.9: the sheen is a band moved with transform (it animated
+   background-position across the whole row, repainting it every frame). */
 .cos-banner-animated::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
-  background-size: 260% 100%;
+  background: linear-gradient(100deg, transparent 42%, rgba(255, 255, 255, 0.08) 50%, transparent 58%);
+  transform: translateX(-55%);
   animation: cos-sheen 6s ease-in-out infinite;
 }
 @keyframes cos-sheen {
-  0%, 100% { background-position: 120% 0; }
-  50% { background-position: -20% 0; }
+  0%, 100% { transform: translateX(-55%); }
+  50% { transform: translateX(55%); }
 }
 .cos-banner::after,
 .cos-banner > * {
@@ -1474,6 +1525,12 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .cos-title-legend::after {
   animation: none;
   background: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-banner-animated::after,
+  .cos-title-legend::after {
+    animation: none;
+  }
 }
 :is(html.lite-fx, html.reduce-fx) .cos-holo,
 :is(html.lite-fx, html.reduce-fx) .cos-title-legend {

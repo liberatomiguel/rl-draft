@@ -17,6 +17,9 @@
  *            (<key> is "<orgId>" or an era variant "<orgId>@<era>")
  *   specials public/cards/specials/<id>.png    → img/specials/<id>.<hash>.<w>.webp    w ∈ SPECIAL_WIDTHS
  *   ranks    public/ranks/<variant>/<id>.png   → img/ranks/<variant>/<id>.<hash>.webp (RANK_BOX_PX[variant])
+ *   badges   public/badges/<art>.svg           → img/badges/<art>.<hash>.<w>.webp     w ∈ BADGE_WIDTHS
+ *            (rc.9: the SVGs carry 3–4 blur filters each; rasterising them in the
+ *            browser — ~180 on a leaderboard — froze it. Pre-rendered once here.)
  *   flags    public/flags/<cc>.png             → not converted (tiny); listed in the manifest only
  *
  * <hash> = first 10 hex chars of sha256(source file bytes + that category's
@@ -83,6 +86,13 @@ const SPECIAL_WEBP = { quality: 80, alphaQuality: 100, effort: 5 };
 const RANK_BOX_PX = { menu: 224, profile: 224 };
 const RANK_WEBP = { quality: 90, alphaQuality: 100, effort: 5, smartSubsample: true };
 
+/** Badges render at 28–108 CSS px (BadgeEmblem); assets.ts picks the smallest
+ *  width ≥ 2 × the CSS size: 96 covers the board rows, 224 the locker / hero /
+ *  peek. Rendered from the 256 px SVG at 2× density, then fitted. */
+const BADGE_WIDTHS = [96, 224];
+const BADGE_SVG_DENSITY = 144;
+const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: true };
+
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
 
@@ -94,6 +104,15 @@ const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
 const byCodeUnit = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 const toPosix = (p) => p.split(sep).join("/");
+
+async function listSvgs(dir) {
+  if (!existsSync(dir)) return [];
+  const entries = await readdir(dir, { withFileTypes: true });
+  return entries
+    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".svg"))
+    .map((e) => e.name)
+    .sort(byCodeUnit);
+}
 
 async function listPngs(dir) {
   if (!existsSync(dir)) return [];
@@ -165,7 +184,7 @@ const mb = (n) => `${(n / 1024 / 1024).toFixed(2)} MB`;
 
 /**
  * @typedef {{ src: string, dest: string, width: number, height?: number,
- *             fit: "inside" | "width", webp: object }} Job
+ *             fit: "inside" | "width", webp: object, density?: number }} Job
  */
 
 async function plan() {
@@ -173,12 +192,14 @@ async function plan() {
   const jobs = [];
   assertWidths("ORG_WIDTHS", ORG_WIDTHS);
   assertWidths("SPECIAL_WIDTHS", SPECIAL_WIDTHS);
+  assertWidths("BADGE_WIDTHS", BADGE_WIDTHS);
   const manifest = {
-    widths: { orgs: [...ORG_WIDTHS], specials: [...SPECIAL_WIDTHS] },
+    widths: { orgs: [...ORG_WIDTHS], specials: [...SPECIAL_WIDTHS], badges: [...BADGE_WIDTHS] },
     flags: [],
     orgs: {},
     specials: {},
     ranks: {},
+    badges: {},
   };
   let sourceBytes = 0;
 
@@ -245,6 +266,26 @@ async function plan() {
     }
   }
 
+  // badges (rc.9): the generated SVGs → raster WebP
+  const badgeDir = join(PUBLIC, "badges");
+  for (const name of await listSvgs(badgeDir)) {
+    const art = name.replace(/\.svg$/i, "");
+    const src = join(badgeDir, name);
+    const hash = hashOf(await read(src), { density: BADGE_SVG_DENSITY, webp: BADGE_WEBP });
+    manifest.badges[art] = hash;
+    for (const w of BADGE_WIDTHS) {
+      jobs.push({
+        src,
+        dest: join(OUT_DIR, "badges", `${art}.${hash}.${w}.webp`),
+        width: w,
+        height: w,
+        fit: "inside",
+        webp: BADGE_WEBP,
+        density: BADGE_SVG_DENSITY,
+      });
+    }
+  }
+
   // flags: listed only (served as-is from /flags/<cc>.png)
   manifest.flags = (await listPngs(join(PUBLIC, "flags")))
     .map((n) => stripPng(n).toLowerCase())
@@ -272,7 +313,8 @@ async function encode(jobs, rebuildAll) {
           job.fit === "inside"
             ? { width: job.width, height: job.height, fit: "inside", withoutEnlargement: true }
             : { width: job.width, withoutEnlargement: true };
-        const buf = await sharp(job.src).resize(resize).webp(job.webp).toBuffer();
+        const input = job.density ? sharp(job.src, { density: job.density }) : sharp(job.src);
+        const buf = await input.resize(resize).webp(job.webp).toBuffer();
         await mkdir(dirname(job.dest), { recursive: true });
         // Write-then-rename so an interrupted run never leaves a truncated file
         // that the "skip existing" check would trust next time.
@@ -308,11 +350,12 @@ function sortKeys(obj) {
 
 async function writeManifest(manifest) {
   const ordered = {
-    widths: { orgs: manifest.widths.orgs, specials: manifest.widths.specials },
+    widths: { orgs: manifest.widths.orgs, specials: manifest.widths.specials, badges: manifest.widths.badges },
     flags: manifest.flags,
     orgs: sortKeys(manifest.orgs),
     specials: sortKeys(manifest.specials),
     ranks: sortKeys(manifest.ranks),
+    badges: sortKeys(manifest.badges),
   };
   const text = `${JSON.stringify(ordered, null, 2)}\n`;
   let current = null;
@@ -355,11 +398,12 @@ async function main() {
     orgs: Object.keys(manifest.orgs).length,
     specials: Object.keys(manifest.specials).length,
     ranks: Object.keys(manifest.ranks).length,
+    badges: Object.keys(manifest.badges).length,
     flags: manifest.flags.length,
   };
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(
-    `build-images: ${counts.orgs} orgs, ${counts.specials} specials, ${counts.ranks} ranks, ${counts.flags} flags` +
+    `build-images: ${counts.orgs} orgs, ${counts.specials} specials, ${counts.ranks} ranks, ${counts.badges} badges, ${counts.flags} flags` +
       ` → ${jobs.length} WebP files (${written} written, ${skipped} skipped, ${deleted} stale deleted) in ${secs}s`,
   );
   console.log(

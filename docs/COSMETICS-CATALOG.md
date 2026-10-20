@@ -26,6 +26,7 @@ Total: **59** items — 0 avatars · 37 badges · 0 frames · 16 titles · 6 ban
 | `rising-star` | Rising Star / Rising Star | Uncommon | 25 challenge stars |  | art `public/badges/rising-star.svg` | Twenty-five challenge stars. |
 | `spark` | Spark / Spark | Uncommon | Login streak 7 days |  | art `public/badges/spark.svg` | Seven days in a row. |
 | `season-finalist-ps` | Season Finalist / Season Finalist | Rare | Pre-season board #11–50 | yes | art `public/badges/season-finalist-ps.svg` | Finished the pre-season in the top 50 of the board. |
+| `pre-season-champion` | Pre-season Champion / Pre-season Champion | Rare | Pre-season peak rank = Champion | yes | art `public/badges/pre-season-champion.svg` | Peak pre-season rank: Champion. |
 | `underdog` | Underdog / Underdog | Rare | Road to Worlds achievement `car-worlds-underdog` |  | art `public/badges/underdog.svg` | Won a regional, Major or Worlds as the underdog. |
 | `road-warrior` | Road Warrior / Road Warrior | Rare | Road to Worlds achievement `car-three-seasons` |  | art `public/badges/road-warrior.svg` | Three seasons on the Road to Worlds. |
 | `first-chapter` | First Chapter / First Chapter | Rare | Pre-season: finished ≥1 run | yes | art `public/badges/first-chapter.svg` | You played the pre-season: the first chapter of Rocket Draft. |
@@ -49,7 +50,6 @@ Total: **59** items — 0 avatars · 37 badges · 0 frames · 16 titles · 6 ban
 | `supernova` | Supernova / Supernova | Epic | 70 challenge stars |  | art `public/badges/supernova.svg` | Seventy challenge stars. Nearly every star there is. |
 | `pre-season-grand-champion` | Pre-season Grand Champion / Pre-season Grand Champion | Epic | Pre-season peak rank = Grand Champion | yes | art `public/badges/pre-season-grand-champion.svg` | Peak pre-season rank: Grand Champion. |
 | `wildfire` | Wildfire / Wildfire | Epic | Login streak 30 days |  | art `public/badges/wildfire.svg` | Thirty days in a row. |
-| `pre-season-champion` | Pre-season Champion / Pre-season Champion | Epic | Pre-season peak rank = Champion | yes | art `public/badges/pre-season-champion.svg` | Peak pre-season rank: Champion. |
 | `dynasty` | Dynasty / Dynasty | Legendary | One season: peak ≥ Supersonic Legend, 3 career Worlds, 25 Legacy titles |  | art `public/badges/dynasty.svg` | One season: Supersonic Legend, three Worlds titles and 25 Legacy wins. |
 | `season-champion-ps` | Season Champion / Season Champion | Legendary | Pre-season board #1 | yes | art `public/badges/season-champion-ps.svg` | Finished the pre-season #1 on the board. |
 | `veteran-drafter-4` | Veteran Drafter IV / Veteran Drafter IV | Legendary | 1000 runs won |  | art `public/badges/veteran-drafter-4.svg` | 1,000 runs won. Few drafters ever get here. |

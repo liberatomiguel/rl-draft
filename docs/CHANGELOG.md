@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.8**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.9**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,31 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.9 (leaderboard performance, legendary aura, 2026-10-20 · DESIGN-DECISIONS #129)
+- **Badges are pre-rendered WebP in production.** `build-images` (prebuild) now
+  rasterises `public/badges/*.svg` once into `/img/badges/<art>.<hash>.<w>.webp`
+  (96 / 224 px, 1-year immutable cache; ~6 KB / ~20 KB each), listed in the asset
+  manifest and checked by `postexport`. `badgeArtSrc(art, px)` picks the width for
+  2× the display size; dev keeps the source SVG. Same number of requests, fewer
+  bytes, and no SVG blur filters in the browser.
+- **Legendary**: the gentle 3D sway is back (±18°, ±9° on small badges; slower,
+  8 s) with a slow reflection riding it; the round halo is replaced by a **gold
+  aura in the badge's own silhouette** (the art as a mask, a touch larger, behind
+  it) that pulses (opacity + scale). Pointer tilt scales with the size (26° /
+  16° / 9°), so board-row badges tilt gently.
+- Small badges (board rows) skip the twinkles.
+- **Pre-season Champion** is now **rare** (only Grand Champion is epic).
+
+### Fixed — rc.9
+- **The leaderboard still stuttered.** Root causes: (1) every row's badges are SVGs
+  with 3–4 blur filters, rasterised in the browser (~180 on a board); (2) legendary
+  titles animated `background-position` on clipped gradient text, and animated
+  banners animated `background-position` across the whole row — both repainting
+  every frame; (3) the aurora banner pattern had a `filter: blur(18px)` redrawn
+  with each repaint. Fixed by the WebP badges above, title and banner sheens moved
+  to `transform`, and the aurora drawn with soft gradients (no filter). Audit on a
+  production build: every animation on the board animates only transform/opacity.
 
 ### Changed — rc.8 (badge effects tuned, 2026-10-20 · DESIGN-DECISIONS #128)
 - **Rare badges are plain** (no holo). **Epic** sweep a little softer.

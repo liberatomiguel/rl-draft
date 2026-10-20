@@ -24,7 +24,7 @@ import manifestJson from "@/generated/asset-manifest.json";
 
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
-  widths: { orgs: readonly number[]; specials: readonly number[] };
+  widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[] };
   /** Lowercase ISO codes with a /flags/<code>.png file. */
   flags: string[];
   /** "<orgId>" or "<orgId>@<era>" → source hash. */
@@ -33,6 +33,8 @@ type AssetManifest = {
   specials: Record<string, string>;
   /** "menu/<rankId>" | "profile/<rankId>" → source hash. */
   ranks: Record<string, string>;
+  /** rc.9: badge art key → source hash (pre-rendered WebP of public/badges/*.svg). */
+  badges?: Record<string, string>;
 };
 
 const manifest = manifestJson as AssetManifest;
@@ -117,12 +119,22 @@ export function rankSrc(variant: RankVariant, rankId: string): string | null {
   return hash ? `/img/ranks/${variant}/${seg(rankId)}.${hash}.webp` : null;
 }
 
+/** Badge raster widths (manifest `widths.badges`, set in build-images.mjs). */
+const BADGE_WIDTHS: readonly number[] = manifest.widths.badges ?? [];
+/** Badges are picked for 2× density (a step under logos: they are art, not text). */
+const BADGE_DENSITY = 2;
+
 /**
- * rc.4: badge art (`public/badges/<art>.svg`, written by `npm run build:badges`).
- * Every catalog art key is guaranteed to exist (the build script and
- * `cosmetics.test.ts` check it), so this never returns null. SVG is served as
- * is — no WebP variant, no manifest hash; `public/_headers` gives it a day.
+ * Badge art for a display size. PRODUCTION (rc.9): the pre-rendered WebP
+ * (`/img/badges/<art>.<hash>.<w>.webp`, 1-year immutable) — the source SVGs
+ * carry 3–4 blur filters each and rasterising them in the browser froze the
+ * leaderboard. DEV / TEST: the source SVG (`public/badges/<art>.svg`, written
+ * by `npm run build:badges`). Every catalog art key exists (the build script
+ * and `cosmetics.test.ts` check it), so this never returns null.
  */
-export function badgeArtSrc(art: string): string {
-  return `/badges/${seg(art)}.svg`;
+export function badgeArtSrc(art: string, displayPx = 64): string {
+  const hash = IS_PROD && BADGE_WIDTHS.length ? hashFor(manifest.badges ?? {}, art) : undefined;
+  if (!hash) return `/badges/${seg(art)}.svg`;
+  const w = pickWidth(BADGE_WIDTHS, displayPx * BADGE_DENSITY);
+  return `/img/badges/${seg(art)}.${hash}.${w}.webp`;
 }
