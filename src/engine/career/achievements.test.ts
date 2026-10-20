@@ -55,14 +55,15 @@ describe("career achievements (R32)", () => {
   });
 
   it("Worlds context: underdog, homegrown, dynasty, every road", () => {
-    const base = fakeSave({ difficulty: "hard", stats: { titlesWorlds: 1 }, flags: { [ACH_FLAGS.worldsMaxStarterOvr]: 84, [ACH_FLAGS.worldsHomegrown]: true } });
+    // rc.4: Underdog = a regional / Major / Worlds title won 3+ overall below the field.
+    const base = fakeSave({ difficulty: "hard", stats: { titlesWorlds: 1 }, flags: { [ACH_FLAGS.underdogGap]: 3.4, [ACH_FLAGS.worldsHomegrown]: true } });
     const fresh = evaluateCareerAchievements(base, EMPTY_ACHIEVEMENT_MEMORY);
     expect(fresh).toContain("car-first-worlds");
     expect(fresh).toContain("car-worlds-underdog");
     expect(fresh).toContain("car-worlds-homegrown");
     expect(fresh).not.toContain("car-three-worlds");
     expect(fresh).not.toContain("car-all-difficulties");
-    const strong = fakeSave({ stats: { titlesWorlds: 3 }, flags: { [ACH_FLAGS.worldsMaxStarterOvr]: 93 } });
+    const strong = fakeSave({ stats: { titlesWorlds: 3 }, flags: { [ACH_FLAGS.underdogGap]: 2.9 } });
     const fresh2 = evaluateCareerAchievements(strong, EMPTY_ACHIEVEMENT_MEMORY);
     expect(fresh2).toContain("car-three-worlds");
     expect(fresh2).not.toContain("car-worlds-underdog");

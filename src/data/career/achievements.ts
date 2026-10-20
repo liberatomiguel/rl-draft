@@ -14,7 +14,9 @@ export type CareerAchievementCondition =
   | { kind: "stat"; stat: "titlesRegional" | "titlesMajor" | "titlesWorlds" | "majorsQualified" | "worldsQualified"; min: number }
   | { kind: "reputation"; min: number }
   | { kind: "seasonIndex"; min: number }
-  | { kind: "worldsUnderdog"; maxStarterOverall: number }
+  /** rc.4: won a regional, Major or Worlds with a team overall at least `margin`
+   *  below the average of the rest of that event's field. */
+  | { kind: "titleUnderdog"; margin: number }
   | { kind: "worldsHomegrown" }
   | { kind: "allDifficulties" };
 
@@ -38,7 +40,7 @@ export const CAREER_ACHIEVEMENTS: readonly CareerAchievementDef[] = [
   { id: "car-rep-100", tier: "epic", xp: 250, condition: { kind: "reputation", min: 100 } },
   { id: "car-first-major", tier: "epic", xp: 300, condition: { kind: "stat", stat: "titlesMajor", min: 1 } },
   { id: "car-first-worlds", tier: "legend", xp: 600, condition: { kind: "stat", stat: "titlesWorlds", min: 1 } },
-  { id: "car-worlds-underdog", tier: "legend", xp: 500, condition: { kind: "worldsUnderdog", maxStarterOverall: 85 } },
+  { id: "car-worlds-underdog", tier: "legend", xp: 500, condition: { kind: "titleUnderdog", margin: 3 } },
   { id: "car-worlds-homegrown", tier: "legend", xp: 500, condition: { kind: "worldsHomegrown" } },
   { id: "car-three-worlds", tier: "legend", xp: 800, condition: { kind: "stat", stat: "titlesWorlds", min: 3 } },
   { id: "car-all-difficulties", tier: "legend", xp: 400, condition: { kind: "allDifficulties" } },

@@ -2,10 +2,11 @@
 
 /**
  * Profile v3 (rc.2): the screen that makes the player want the next reward.
- *  · HERO — the banner is the stage: avatar in its frame, name + title chip,
- *    three badge slots, the rank emblem (menu art), Season Rating and the XP
- *    bar. Every cosmetic slot is tappable and opens the LOCKER MODAL on that
- *    kind; a "new items" counter nags until the player has looked.
+ *  · HERO — the banner is the stage: name + title chip, three badge slots
+ *    (rc.4: the first is FEATURED and drawn larger), the rank emblem (menu
+ *    art), Season Rating and the XP bar. Every cosmetic slot is tappable and
+ *    opens the LOCKER MODAL on that kind; a green dot on a slot (and on the
+ *    locker button) says something new is waiting there.
  *  · Season — the track is a horizontal progress bar with the reward art at
  *    every rank; the rating history is a small sparkline beside it.
  *  · Lifetime — three headline numbers, a secondary grid, then the rest as
@@ -21,7 +22,7 @@ import { SEASON } from "@/config/season";
 import { achievements as achievementDefs, specialCards } from "@/data";
 import { COSMETICS, type CosmeticKind } from "@/data/cosmetics";
 import { useCopy } from "@/content/copy";
-import { MAX_BADGES, resolveEquipped, unseenOwnedIds } from "@/engine/cosmetics";
+import { MAX_BADGES, resolveEquipped, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { rankForXp } from "@/engine/progression";
 import type { Placement, RunHistoryEntry } from "@/engine/types";
 import { cx, formatDate } from "@/lib/util";
@@ -41,7 +42,7 @@ import { FieldView } from "@/components/cards/FieldView";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { AccountSection, ProfileNickname } from "@/components/AccountSection";
 import { BadgeEmblem, BannerSurface, CosmeticIcon, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
-import { CosmeticsLockerModal } from "@/components/cosmetics/CosmeticsLocker";
+import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLocker";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 
 export default function ProfilePage() {
@@ -69,6 +70,11 @@ export default function ProfilePage() {
   const rank = rankForXp(profile.xp);
   const shown = resolveEquipped(profile.cosmetics);
   const unseen = unseenOwnedIds(profile.cosmetics).length;
+  const fresh = {
+    title: unseenOfKind(profile.cosmetics, "title").length > 0,
+    badge: unseenOfKind(profile.cosmetics, "badge").length > 0,
+    banner: unseenOfKind(profile.cosmetics, "banner").length > 0,
+  };
   const unlockedCount = Object.keys(profile.unlockedSpecials).length;
   const earned = profile.achievements;
   const lastDelta = profile.season.ratingHistory[0]?.delta ?? null;
@@ -92,9 +98,7 @@ export default function ProfilePage() {
             className="display relative inline-flex h-9 items-center gap-2 rounded-lg border border-line-strong bg-white/5 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-ink transition-colors hover:border-orange/50"
           >
             <LockerGlyph /> {P.openLocker}
-            {unseen > 0 ? (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-good px-1.5 text-[10px] font-bold text-[#05140c]">{unseen}</span>
-            ) : null}
+            {unseen > 0 ? <NewDot className="absolute -right-1 -top-1 !h-2.5 !w-2.5" label={CC.newItems} /> : null}
           </button>
         }
         className="mb-5"
@@ -114,36 +118,50 @@ export default function ProfilePage() {
                   <p className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{P.guest}</p>
                 )}
                 <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                  {shown.title ? (
-                    <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
-                      <TitleTag title={shown.title} size="sm" />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => openLocker("title")}
-                      className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
-                    >
-                      + {P.editTitle}
-                    </button>
-                  )}
-                  <span className="inline-flex items-center gap-1.5">
-                    {shown.badges.map((b) => (
-                      <button key={b.id} type="button" onClick={() => openLocker("badge")} title={cosmeticCopy.name(b.id)} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
-                        <BadgeEmblem badge={b} size="md" />
+                  <span className="relative inline-flex">
+                    {shown.title ? (
+                      <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
+                        <TitleTag title={shown.title} size="sm" />
                       </button>
-                    ))}
-                    {shown.badges.length < MAX_BADGES ? (
+                    ) : (
                       <button
                         type="button"
-                        onClick={() => openLocker("badge")}
-                        title={P.addBadge}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-line-strong text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                        onClick={() => openLocker("title")}
+                        className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
                       >
-                        <span className="text-sm leading-none">+</span>
+                        + {P.editTitle}
                       </button>
-                    ) : null}
+                    )}
+                    {fresh.title ? <NewDot className="absolute -right-1 -top-1" label={CC.newItems} /> : null}
                   </span>
+                </div>
+                {/* rc.4: the featured badge leads, a size up; the other two follow. */}
+                <div className="relative mt-2.5 flex w-fit items-end gap-1.5 max-sm:mx-auto">
+                  {shown.badges.map((b, i) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => openLocker("badge")}
+                      title={i === 0 ? `${CC.featured} · ${cosmeticCopy.name(b.id)}` : cosmeticCopy.name(b.id)}
+                      className="rounded-md outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-orange/70"
+                    >
+                      <BadgeEmblem badge={b} size={i === 0 ? "lg" : "md"} />
+                    </button>
+                  ))}
+                  {shown.badges.length < MAX_BADGES ? (
+                    <button
+                      type="button"
+                      onClick={() => openLocker("badge")}
+                      title={P.addBadge}
+                      className={cx(
+                        "flex items-center justify-center rounded-md border border-dashed border-line-strong text-faint transition-colors hover:border-orange/50 hover:text-sub",
+                        shown.badges.length === 0 ? "h-14 w-14" : "h-10 w-10",
+                      )}
+                    >
+                      <span className="text-base leading-none">+</span>
+                    </button>
+                  ) : null}
+                  {fresh.badge ? <NewDot className="absolute -right-1.5 -top-1" label={CC.newItems} /> : null}
                 </div>
                 {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
                 {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
@@ -178,9 +196,10 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => openLocker("banner")}
-                  className="text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+                  className="relative text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
                 >
                   {P.editBanner}
+                  {fresh.banner ? <NewDot className="absolute -right-2.5 -top-1" label={CC.newItems} /> : null}
                 </button>
               </span>
               <p className="text-xs text-sub">

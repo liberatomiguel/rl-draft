@@ -994,7 +994,7 @@ export const CAREER_PT: CareerCopy = {
       "car-rep-100": { name: "Nome Conhecido", desc: "Alcance 100 de reputação." },
       "car-first-major": { name: "Vencedor de Major", desc: "Vença um Major internacional." },
       "car-first-worlds": { name: "Campeão Mundial", desc: "Vença o Campeonato Mundial." },
-      "car-worlds-underdog": { name: "Underdog", desc: "Vença o Mundial sem nenhum titular em campo acima de 85 de overall." },
+      "car-worlds-underdog": { name: "Underdog", desc: "Vença um regional, Major ou Mundial como azarão: overall do time 3+ abaixo da média do campo." },
       "car-worlds-homegrown": { name: "Prata da Casa", desc: "Vença o Mundial com o elenco que fundou a org — sem contratações, nunca." },
       "car-three-worlds": { name: "Dinastia", desc: "Vença três Mundiais com uma mesma org." },
       "car-all-difficulties": { name: "Todos os Caminhos", desc: "Vença o Mundial no Fácil, Normal e Difícil (entre saves)." },

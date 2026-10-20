@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * Applies player settings to the document (v1.0): animation-speed scale and a
- * manual reduced-motion override — plus the automatic `lite-fx` class for weak
- * devices (globals.css → "Lite effects"). DOM-only side effects in effects — no
- * state writes, so it's React-Compiler safe. Classes are added after hydration
- * (never in the server HTML), so <html>'s className can't mismatch.
+ * Applies player settings to the document (v1.0): animation-speed scale and the
+ * manual "Reduce visual effects" switch (rc.4, `reduce-fx`) — plus the automatic
+ * `lite-fx` class for weak devices (globals.css → "Lite effects"). DOM-only side
+ * effects in effects — no state writes, so it's React-Compiler safe. Classes are
+ * added after hydration (never in the server HTML), so <html>'s className can't
+ * mismatch.
  */
 
 import { useEffect } from "react";
@@ -21,19 +22,19 @@ const LITE_FX_MAX_DEVICE_MEMORY_GB = 2;
 
 export function SettingsEffects() {
   const animSpeed = useSettings((s) => s.animSpeed);
-  const reducedMotion = useSettings((s) => s.reducedMotion);
+  const reduceEffects = useSettings((s) => s.reduceEffects);
   const lang = useSettings((s) => s.lang);
 
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--anim-scale", String(ANIM_SCALE[animSpeed]));
-    root.classList.toggle("force-reduce-motion", reducedMotion);
+    root.classList.toggle("reduce-fx", reduceEffects);
     root.lang = lang === "pt" ? "pt-BR" : "en";
-  }, [animSpeed, reducedMotion, lang]);
+  }, [animSpeed, reduceEffects, lang]);
 
   // Automatic lite effects: low-memory device OR the OS asks for reduced
-  // motion (followed live). Independent of the manual setting above, which
-  // globals.css treats the same way.
+  // motion (followed live). Independent of the manual switch above, which
+  // globals.css treats as a superset of it.
   useEffect(() => {
     const root = document.documentElement;
     const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;

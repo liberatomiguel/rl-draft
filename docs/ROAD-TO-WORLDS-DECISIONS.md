@@ -439,6 +439,16 @@ R37. **Local sides keep the regional flavour.** The v2.0 local-scene bank was
      Juniors", "Bonde do Boost"), and three distinct plain names from the
      regional player bank. Local sides open a roster sheet from the lobby.
 
+R38. **Underdog is any big title won as the weaker side; Worlds count across
+     saves (rc.4, Miguel's badge catalog).** `car-worlds-underdog` keeps its id
+     but its condition is now "win a regional, Major or Worlds with a team
+     overall at least 3 below the average of the rest of that event's field"
+     (`titleUnderdog`, margin 3 in the catalog; the flow records the biggest
+     gap on `achUnderdogGap`). Was: Worlds with no starter above 85. Every
+     Worlds title also feeds the profile (`addCareerWorlds`: lifetime
+     `careerWorldsWon` + this season's `season.careerWorlds`) for the World
+     Champion / Crowned World Champion / Dynasty badges in the draft game.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

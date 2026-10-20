@@ -27,6 +27,18 @@ const SIZES: Record<Size, string> = {
   lg: "h-12 px-7 text-base",
 };
 
+/** rc.4: the button look for a link (e.g. an AppLink CTA), so a link and a
+ *  button side by side read as the same control. */
+export function buttonClass(variant: Variant = "secondary", size: Size = "md", full?: boolean): string {
+  return cx(
+    "display inline-flex items-center justify-center gap-2 rounded-lg font-bold uppercase tracking-[0.12em] transition-all",
+    "disabled:cursor-not-allowed disabled:opacity-40",
+    VARIANTS[variant],
+    SIZES[size],
+    full && "w-full",
+  );
+}
+
 export function Button({
   variant = "secondary",
   size = "md",
@@ -38,14 +50,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={cx(
-        "display inline-flex items-center justify-center gap-2 rounded-lg font-bold uppercase tracking-[0.12em] transition-all",
-        "disabled:cursor-not-allowed disabled:opacity-40",
-        VARIANTS[variant],
-        SIZES[size],
-        full && "w-full",
-        className,
-      )}
+      className={cx(buttonClass(variant, size, full), className)}
       {...props}
     />
   );

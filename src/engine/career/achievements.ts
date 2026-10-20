@@ -26,6 +26,9 @@ export const ACH_FLAGS = {
   qualifierAdvanced: "achQualifierAdvanced",
   /** Max fielded starter overall at the Worlds win (number, stored as flag value). */
   worldsMaxStarterOvr: "achWorldsMaxStarterOvr",
+  /** rc.4: biggest overall gap (field average − user team) over the regional /
+   *  Major / Worlds titles won (number; the underdog achievement reads it). */
+  underdogGap: "achUnderdogGap",
   /** Worlds won with the founding roster only. */
   worldsHomegrown: "achWorldsHomegrown",
 } as const;
@@ -44,9 +47,9 @@ function satisfied(def: CareerAchievementDef, save: CareerSave, memory: CareerAc
       return save.reputation >= c.min;
     case "seasonIndex":
       return save.clock.seasonIndex >= c.min;
-    case "worldsUnderdog": {
-      const v = flags[ACH_FLAGS.worldsMaxStarterOvr];
-      return typeof v === "number" && v > 0 && v <= c.maxStarterOverall;
+    case "titleUnderdog": {
+      const v = flags[ACH_FLAGS.underdogGap];
+      return typeof v === "number" && v >= c.margin;
     }
     case "worldsHomegrown":
       return Boolean(flags[ACH_FLAGS.worldsHomegrown]);

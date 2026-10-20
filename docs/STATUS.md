@@ -1,15 +1,16 @@
 # Project Status — current state only
 
-> Last updated: **2026-10-19**. History lives in `CHANGELOG.md`; rationale in
+> Last updated: **2026-10-20**. History lives in `CHANGELOG.md`; rationale in
 > `DESIGN-DECISIONS.md`. Grep those, never read them whole.
 
 ## Where things are
 
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `claude/dazzling-cannon-1d6thr`, published as
-  **v2.0.0-rc.3 on `staging`** (`staging.rocketdraft.app`, career on, noindex,
-  preview tools on: unlock-all cosmetics switch on /profile, fictional boards).
+- **v2.0 "Season 1":** built on the `staging` branch, published as
+  **v2.0.0-rc.4** (`staging.rocketdraft.app`, career on, noindex, preview
+  tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
+  `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
   **Never deploy v2.0 to `main` before the full review.**
 - **Road to Worlds (career)** is a separate workstream: `ROAD-TO-WORLDS-STATUS.md`.
@@ -24,9 +25,13 @@ Challenges 2.0 (3 stars, 4 gauntlets, 24 validated); Road to Worlds 2.0
 (weekly payroll, bank loan, HQ rebuilt, Training 2.0, Wednesday qualifier,
 real orgs by season, permanent achievements, weekly inserts, colour kits);
 rc.2 UX pass (profile + locker modal, home bento, login/quiz modals, challenge
-cards, hub v3, training/finances clarity) and the rc.3 visual reset (line-art
-badges, tag-like titles, quiet banners; no avatars/frames).
-Decisions: DESIGN-DECISIONS #110–#121, ROAD-TO-WORLDS-DECISIONS R20–R37.
+cards, hub v3, training/finances clarity), the rc.3 visual reset (tag-like
+titles, quiet banners; no avatars/frames) and rc.4: Miguel's 36 illustrated
+badges (`npm run build:badges` → `public/badges/`), featured badge, locker
+without spoilers + green new-item dots, home missions Daily/Weekly switch,
+quiz tile with Live tag, board rows (badges + title left), and "Reduce visual
+effects" replacing the broken "Reduce motion".
+Decisions: DESIGN-DECISIONS #110–#124, ROAD-TO-WORLDS-DECISIONS R20–R38.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 
 ## Open before `main` (Phase 4)
@@ -38,11 +43,15 @@ Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 - **Manual regression on staging** (plan §7): fresh / pre-season / signed-in
   profiles, two devices, all run modes, event cards, quiz, challenges, career
   end to end. Lighthouse. Event-card curation and a PT pass.
+- **Cosmetics art still to come (Miguel):** the 20 titles, 16 banners and 6
+  generic badges proposed in `data-sources/badges/badges-desbloqueios.md`.
+  Until then titles/banners are the provisional rc.3 set, and the Season 1
+  track's three badges wear the design file's Season 1 rank art.
 - Then merge to `main`, tag `v2.0.0`, move this section into CHANGELOG.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **485** tests / 38 files (385 on `main`)
+- `npm run typecheck` clean · `npm test` **492** tests / 38 files (385 on `main`)
   · `npm run lint` at baseline **5 errors** (pre-existing:
   TournamentScreen ×2, AnimatedNumber, Modal, and one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything

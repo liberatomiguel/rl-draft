@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Player settings (v1.0): sound, motion, animation speed, language.
+ * Player settings (v1.0): sound, visual effects, animation speed, language.
  * Persisted to localStorage. Read by the SFX layer, the SettingsEffects
  * applier (CSS), the tournament playback default and (next pass) i18n.
  */
@@ -29,8 +29,10 @@ export interface SettingsState {
   soundEnabled: boolean;
   /** 0..1 */
   soundVolume: number;
-  /** Manual override on top of the OS prefers-reduced-motion. */
-  reducedMotion: boolean;
+  /** rc.4: "Reduce visual effects" (performance). Replaced "Reduce motion", whose
+   *  manual override stopped the draft reel and stalled the draft. Sets
+   *  `html.reduce-fx` (+ lite-fx); never stops an animation the game waits on. */
+  reduceEffects: boolean;
   animSpeed: AnimSpeedKey;
   /** UI language (wired now; the PT-BR dictionary lands in the i18n pass). */
   lang: "en" | "pt";
@@ -42,7 +44,7 @@ export interface SettingsState {
 const DEFAULTS = {
   soundEnabled: true,
   soundVolume: 0.6,
-  reducedMotion: false,
+  reduceEffects: false,
   animSpeed: "normal" as AnimSpeedKey,
   lang: "en" as const,
 };

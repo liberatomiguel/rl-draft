@@ -18,6 +18,7 @@ import { createPortal } from "react-dom";
 import { RANKS, SEASON_RATING } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { cosmeticById } from "@/data/cosmetics";
+import { isLegacyReward } from "@/engine/cosmetics";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
@@ -47,7 +48,11 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
     if (!seen) markFlag("seenSeasonRecap");
     onClose?.();
   };
-  const legacyIds = Object.keys(owned).filter((id) => id.startsWith("legacy-"));
+  // rc.4: by source, not id prefix — the approved badges have their own ids.
+  const legacyIds = Object.keys(owned).filter((id) => {
+    const def = cosmeticById.get(id);
+    return !!def && isLegacyReward(def);
+  });
   const rank = RANKS.find((r) => r.id === preseason?.rankId) ?? RANKS[0];
   const rankBadge = legacyIds
     .map((id) => cosmeticById.get(id))

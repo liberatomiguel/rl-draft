@@ -40,6 +40,7 @@ import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { ANIM_TOURNAMENT_SPEED, useSettings } from "@/store/settingsStore";
+import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
 import {
@@ -409,7 +410,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const T = copy.TOURNAMENT_UI;
   const playEventRound = useCareerStore((s) => s.playEventRound);
   const simEvent = useCareerStore((s) => s.simEvent);
-  const reduced = useSettings((s) => s.reducedMotion);
+  const reduced = useOsReducedMotion();
 
   const def = ev.def;
   const t = ev.tournament;
@@ -821,7 +822,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const C = useCareerCopy();
   const router = useRouter();
   const completeEvent = useCareerStore((s) => s.completeEvent);
-  const reduced = useSettings((s) => s.reducedMotion);
+  const reduced = useOsReducedMotion();
 
   const def = ev.def;
   const t = ev.tournament;

@@ -12,9 +12,15 @@
  * ids the player has looked at in the locker, so the profile can show "N new"
  * until they do. rc.3: avatars and frames are gone — a player is their name,
  * title, badges and banner.
+ *
+ * rc.4: the FIRST equipped badge is the FEATURED one (shown larger on the
+ * profile hero and first on leaderboard rows) — order is the choice, so the
+ * cloud row shape (`equipped_badges: string[]`) did not change. Rewards whose
+ * facts are season-scoped (the season track, Dynasty) are kept once earned:
+ * `refreshOwned` never drops them when the season moves on.
  */
 
-import { RANKS } from "@/config/balance";
+import { FEATURES, RANKS } from "@/config/balance";
 import {
   COSMETICS,
   cosmeticById,
@@ -27,8 +33,11 @@ import type { PreseasonSnapshot } from "./season";
 
 /** Explicit "show nothing" choice for a slot (kept for saved-state compatibility). */
 export const NONE = "none";
-/** Badges shown at once (profile card + leaderboard row). */
+/** Badges shown at once (profile card + leaderboard row). The first is featured. */
 export const MAX_BADGES = 3;
+
+/** `owned` date marking an item only the preview switch grants (dev / staging). */
+const PREVIEW_DATE = "preview";
 
 export interface EquippedState {
   title: string | null;
@@ -63,6 +72,13 @@ export interface CosmeticFacts {
   missionsCompleted?: number;
   /** v2.0 (career R32): permanent career achievement ids mirrored on the profile. */
   careerMarks?: string[];
+  /** rc.4: tournament runs won, lifetime (every difficulty / mode). */
+  runsWon?: number;
+  /** rc.4: Road to Worlds World Championships won, across saves. */
+  careerWorlds?: number;
+  /** rc.4: this season's Legacy runs won and Worlds won (Dynasty). */
+  seasonLegacyTitles?: number;
+  seasonCareerWorlds?: number;
   /** rc.2: preview switch (dev / staging only) — every item counts as owned. */
   previewAll?: boolean;
 }
@@ -74,7 +90,7 @@ const rankIndex = (id: string): number => Math.max(0, RANKS.findIndex((r) => r.i
 export function cosmeticFacts(p: {
   legacy?: { preseason: PreseasonSnapshot | null } | null;
   grants?: string[];
-  season?: { id: number; peakRankId: string } | null;
+  season?: { id: number; peakRankId: string; legacyTitles?: number; careerWorlds?: number } | null;
   [k: string]: unknown;
 }): CosmeticFacts {
   const num = (k: string): number => {
@@ -85,6 +101,12 @@ export function cosmeticFacts(p: {
   const stars = (p as { challengeStars?: Record<string, number> }).challengeStars;
   const quiz = (p as { quiz?: { solved?: number } }).quiz;
   const missions = (p as { missions?: { completedTotal?: number } }).missions;
+  const wins = (p as { wins?: Record<string, number> }).wins;
+  const careerMarks = Array.isArray((p as { careerMarks?: unknown }).careerMarks)
+    ? ((p as { careerMarks: unknown[] }).careerMarks.filter((x) => typeof x === "string") as string[])
+    : [];
+  // Worlds won before rc.4 counted them are floored from the permanent marks.
+  const worldsFloor = careerMarks.includes("car-three-worlds") ? 3 : careerMarks.includes("car-first-worlds") ? 1 : 0;
   return {
     preseason: p.legacy?.preseason ?? null,
     grants: p.grants ?? [],
@@ -94,9 +116,11 @@ export function cosmeticFacts(p: {
     challengeStars: stars ? Object.values(stars).reduce((n, mask) => n + countBits(mask), 0) : 0,
     quizSolved: quiz?.solved ?? 0,
     missionsCompleted: missions?.completedTotal ?? 0,
-    careerMarks: Array.isArray((p as { careerMarks?: unknown }).careerMarks)
-      ? ((p as { careerMarks: unknown[] }).careerMarks.filter((x) => typeof x === "string") as string[])
-      : [],
+    careerMarks,
+    runsWon: wins ? Object.values(wins).reduce((n, v) => n + (Number.isFinite(v) ? v : 0), 0) : 0,
+    careerWorlds: Math.max(num("careerWorldsWon"), worldsFloor),
+    seasonLegacyTitles: p.season?.legacyTitles ?? 0,
+    seasonCareerWorlds: p.season?.careerWorlds ?? 0,
     previewAll: (p as { previewUnlockAll?: unknown }).previewUnlockAll === true,
   };
 }
@@ -118,10 +142,16 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
   switch (source.type) {
     case "legacy-participation":
       return !!f.preseason && f.preseason.runsCompleted > 0;
-    case "legacy-rank":
-      return !!f.preseason && f.preseason.runsCompleted > 0 && rankIndex(f.preseason.rankId) >= rankIndex(source.rankId);
-    case "legacy-position":
-      return !!f.preseason && !!f.preseason.position && f.preseason.position <= source.maxPosition;
+    case "legacy-rank": {
+      if (!f.preseason || f.preseason.runsCompleted <= 0) return false;
+      const peak = rankIndex(f.preseason.rankId);
+      const want = rankIndex(source.rankId);
+      return source.exact ? peak === want : peak >= want;
+    }
+    case "legacy-position": {
+      const pos = f.preseason?.position;
+      return !!pos && pos >= source.minPosition && pos <= source.maxPosition;
+    }
     case "grant":
       return f.grants.includes(source.grantId);
     case "season-rank":
@@ -134,9 +164,44 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
       return (f.quizSolved ?? 0) >= source.count;
     case "missions-completed":
       return (f.missionsCompleted ?? 0) >= source.count;
+    case "runs-won":
+      return (f.runsWon ?? 0) >= source.count;
     case "career-mark":
       return (f.careerMarks ?? []).includes(source.markId);
+    case "career-worlds":
+      return (f.careerWorlds ?? 0) >= source.count;
+    case "season-feat":
+      return (
+        rankIndex(f.seasonPeakRankId) >= rankIndex(source.rankId) &&
+        (f.seasonCareerWorlds ?? 0) >= source.careerWorlds &&
+        (f.seasonLegacyTitles ?? 0) >= source.legacyTitles
+      );
   }
+}
+
+/** Sources whose facts reset with the season: once earned, the item stays. */
+function keptOnceOwned(source: CosmeticSource): boolean {
+  return source.type === "season-rank" || source.type === "season-feat";
+}
+
+/** Pre-season rewards (the recap lists them; the locker hides the unowned). */
+export function isLegacyReward(def: CosmeticDef): boolean {
+  return def.source.type === "legacy-participation" || def.source.type === "legacy-rank" || def.source.type === "legacy-position";
+}
+
+/**
+ * rc.4: rewards the locker never teases while locked — the season track and
+ * the leaderboard / rank / grant rewards (they have their own screens or
+ * cannot be chased). Only items earned by playing (streaks, stars, runs, quiz,
+ * missions, career) show as locked placeholders.
+ */
+export function isTeasedWhenLocked(def: CosmeticDef): boolean {
+  if (def.exclusive) return false;
+  const t = def.source.type;
+  if (t === "season-rank" || t === "season-feat") return false;
+  // Road to Worlds rewards only tease where the mode is playable.
+  if ((t === "career-mark" || t === "career-worlds") && !FEATURES.careerMode) return false;
+  return true;
 }
 
 /** Ids the facts entitle the player to (catalog order). */
@@ -147,20 +212,28 @@ export function deriveOwnedIds(f: CosmeticFacts): string[] {
 
 /**
  * Refresh the owned map: newly earned ids get `now`, known ids keep their date,
- * and ids that are no longer in the catalog are dropped. Entitlements never go
- * away on their own (facts only grow), but a stale id from a renamed catalog
- * entry must not linger. Preview ownership (dev switch) is transient: when the
- * switch is off, ids the facts do not entitle are dropped again.
+ * and ids that are no longer in the catalog are dropped. A known id the facts
+ * no longer entitle is dropped too (a stale id must not linger), EXCEPT a
+ * season-scoped reward (`keptOnceOwned`): its facts reset with the season, the
+ * reward does not. Preview ownership (dev switch) is transient: those ids carry
+ * the PREVIEW date and go away when the switch is off (or take a real date
+ * once actually earned).
  */
 export function refreshOwned(
   owned: Record<string, string>,
   f: CosmeticFacts,
   now = new Date().toISOString(),
 ): Record<string, string> {
-  const entitled = new Set(deriveOwnedIds(f));
+  const earned = new Set(deriveOwnedIds({ ...f, previewAll: false }));
   const next: Record<string, string> = {};
-  for (const [id, date] of Object.entries(owned)) if (cosmeticById.has(id) && entitled.has(id)) next[id] = date;
-  for (const id of entitled) if (!next[id]) next[id] = now;
+  for (const [id, date] of Object.entries(owned)) {
+    const def = cosmeticById.get(id);
+    if (!def) continue;
+    if (earned.has(id)) next[id] = date === PREVIEW_DATE ? now : date;
+    else if (date !== PREVIEW_DATE && keptOnceOwned(def.source)) next[id] = date;
+  }
+  for (const id of earned) if (!next[id]) next[id] = now;
+  if (f.previewAll) for (const c of COSMETICS) if (!next[c.id]) next[c.id] = PREVIEW_DATE;
   return next;
 }
 
@@ -193,15 +266,27 @@ export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
 
 /**
  * Which catalog items the locker LISTS for this player: everything owned, plus
- * the earnable (non-exclusive) items still to unlock. Exclusive items the
- * player does not own are hidden — they cannot be earned any more.
+ * — as anonymous locked slots, never their art or name (rc.4) — the items
+ * still to earn by playing (`isTeasedWhenLocked`). Exclusive items, the
+ * season track and leaderboard rewards the player does not own are not listed.
  */
 export function lockerItems(owned: Record<string, string>, kind: CosmeticKind): { owned: CosmeticDef[]; locked: CosmeticDef[] } {
   const items = COSMETICS.filter((c) => c.kind === kind);
   return {
     owned: items.filter((c) => owned[c.id]).sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id)),
-    locked: items.filter((c) => !owned[c.id] && !c.exclusive),
+    locked: items.filter((c) => !owned[c.id] && isTeasedWhenLocked(c)).sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id)),
   };
+}
+
+/** Owned-but-unseen ids of one kind (the locker tab dot, the hero slot dot). */
+export function unseenOfKind(c: CosmeticsState, kind: CosmeticKind): string[] {
+  return unseenOwnedIds(c).filter((id) => cosmeticById.get(id)?.kind === kind);
+}
+
+/** rc.4: move one equipped badge to the front (the featured slot). */
+export function featureBadge(badges: string[], id: string): string[] {
+  if (!badges.includes(id)) return badges;
+  return [id, ...badges.filter((b) => b !== id)];
 }
 
 export interface ResolvedCosmetics {

@@ -1039,57 +1039,13 @@ body::before {
   }
 }
 
-/*
- * Manual reduced-motion override (Settings → Reduce motion). Mirrors the
- * media-query block above for players who want it off regardless of the OS
- * setting. `:is()` keeps the selector list compact; pseudo-elements can't go
- * inside :is(), so they're listed separately.
- */
-html.force-reduce-motion
-  :is(
-    .rise-in,
-    .pop-in,
-    .pulse-soft,
-    .card-legendary.card-special,
-    .card-mythic.card-special,
-    .card-epic.card-special,
-    .card-creator.card-special,
-    .card-community.card-special,
-    .card-wings.card-special,
-    .field-fx,
-    .field-holo,
-    .field-slot-glow,
-    .celebrate-rays,
-    .celebrate-rays-prism,
-    .confetti,
-    .champion-title,
-    .immaculate-title,
-    .ceremony-burst,
-    .ceremony-ring,
-    .card-float,
-    .ach-legend,
-    .slot-reel-track,
-    .live-dot
-  ) {
-  animation: none !important;
-}
-
-html.force-reduce-motion .card-special::after,
-html.force-reduce-motion .holo-legendary::after,
-html.force-reduce-motion .ach-legend-chip::after {
-  animation: none !important;
-}
-
-html.force-reduce-motion .flip-card-inner {
-  transition: none !important;
-}
-
 /* ---------------------------------------------------------------------------
    Lite effects (perf on weak devices)
    `html.lite-fx` is set automatically by SettingsEffects only when the device
    reports navigator.deviceMemory ≤ 2 GB (Chromium) or the OS asks for reduced
-   motion; `html.force-reduce-motion` is the manual Settings toggle. Capable
-   devices get neither class, so nothing below changes their look.
+   motion; `html.reduce-fx` is the manual Settings toggle ("Reduce visual
+   effects", rc.4 — it replaced "Reduce motion", which stalled the draft reel).
+   Capable devices get neither class, so nothing below changes their look.
    Under either class:
    1. No backdrop-filter on the LARGE blurred surfaces — panels, sticky bars,
       full-screen overlays and modal scrims. Re-blurring the moving backdrop on
@@ -1101,16 +1057,30 @@ html.force-reduce-motion .flip-card-inner {
       halos, hue shifts, title glows, the legend border shimmer, the ray
       spin) stop, exactly like the reduced-motion blocks above: static rarity
       borders/glows stay. Cheap or meaningful loops (pulse-soft, live-dot, the
-      target-slot glow, card-float, confetti) keep running unless the player
-      asked for reduced motion (blocks above).
+      target-slot glow, card-float, confetti) keep running unless the OS asks
+      for reduced motion (block above).
+   `html.reduce-fx` also drops the special cards' holo layers and the tilt
+   glare (the collection grid is the heaviest screen); TiltCard stops tilting.
+   It never stops an animation the game WAITS on (the draft reel, reveals).
 --------------------------------------------------------------------------- */
 
-:is(html.lite-fx, html.force-reduce-motion) .panel,
-:is(html.lite-fx, html.force-reduce-motion)
+html.reduce-fx .reverse-holo,
+html.reduce-fx .holo-rainbow,
+html.reduce-fx .tilt-glare,
+html.reduce-fx .field-holo {
+  display: none;
+}
+
+html.reduce-fx .card-float {
+  animation: none;
+}
+
+:is(html.lite-fx, html.reduce-fx) .panel,
+:is(html.lite-fx, html.reduce-fx)
   .sticky:is(.backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl),
-:is(html.lite-fx, html.force-reduce-motion)
+:is(html.lite-fx, html.reduce-fx)
   .fixed:is(.backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl),
-:is(html.lite-fx, html.force-reduce-motion)
+:is(html.lite-fx, html.reduce-fx)
   .inset-0:is(.backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -1123,7 +1093,7 @@ html.force-reduce-motion .flip-card-inner {
  * shows through at 8-12% instead of 22-34% unblurred. `.ach-legend` keeps its
  * own (already opaque) prismatic-border background.
  */
-:is(html.lite-fx, html.force-reduce-motion) .panel:not(.ach-legend) {
+:is(html.lite-fx, html.reduce-fx) .panel:not(.ach-legend) {
   background: linear-gradient(160deg, rgba(16, 24, 42, 0.88), rgba(9, 15, 28, 0.92));
 }
 
@@ -1137,45 +1107,45 @@ html.force-reduce-motion .flip-card-inner {
  * ceremonies, Modal scrim); if a class changes there, its rule just stops
  * matching (blur still off, original alpha).
  */
-:is(html.lite-fx, html.force-reduce-motion) .sticky.bg-bg\/80.backdrop-blur-md,
-:is(html.lite-fx, html.force-reduce-motion) .sticky.bg-\[color\:var\(--bg\)\]\/95.backdrop-blur,
-:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-bg\/95.backdrop-blur-sm {
+:is(html.lite-fx, html.reduce-fx) .sticky.bg-bg\/80.backdrop-blur-md,
+:is(html.lite-fx, html.reduce-fx) .sticky.bg-\[color\:var\(--bg\)\]\/95.backdrop-blur,
+:is(html.lite-fx, html.reduce-fx) .fixed.bg-bg\/95.backdrop-blur-sm {
   background-color: var(--bg); /* was 80-95% + blur */
 }
 
-:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-raised\/95.backdrop-blur-md {
+:is(html.lite-fx, html.reduce-fx) .fixed.bg-raised\/95.backdrop-blur-md {
   background-color: var(--bg-raised); /* was 95% + blur */
 }
 
-:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-black\/85.backdrop-blur-sm,
-:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-black\/88.backdrop-blur-sm,
-:is(html.lite-fx, html.force-reduce-motion) .fixed.bg-black\/90.backdrop-blur-sm {
+:is(html.lite-fx, html.reduce-fx) .fixed.bg-black\/85.backdrop-blur-sm,
+:is(html.lite-fx, html.reduce-fx) .fixed.bg-black\/88.backdrop-blur-sm,
+:is(html.lite-fx, html.reduce-fx) .fixed.bg-black\/90.backdrop-blur-sm {
   background-color: rgba(0, 0, 0, 0.95); /* was 85-90% + blur; text sits on it */
 }
 
 /* Modal scrim: no text on it (the dialog is an opaque .panel-strong), only a
    little darker to make up for the page no longer being blurred. */
-:is(html.lite-fx, html.force-reduce-motion) .inset-0.bg-black\/70.backdrop-blur-sm {
+:is(html.lite-fx, html.reduce-fx) .inset-0.bg-black\/70.backdrop-blur-sm {
   background-color: rgba(0, 0, 0, 0.8); /* was 70% + blur */
 }
 
-:is(html.lite-fx, html.force-reduce-motion) .card-legendary.card-special,
-:is(html.lite-fx, html.force-reduce-motion) .card-mythic.card-special,
-:is(html.lite-fx, html.force-reduce-motion) .card-epic.card-special,
-:is(html.lite-fx, html.force-reduce-motion) .card-creator.card-special,
-:is(html.lite-fx, html.force-reduce-motion) .card-community.card-special,
-:is(html.lite-fx, html.force-reduce-motion) .card-wings.card-special,
-:is(html.lite-fx, html.force-reduce-motion) .card-special::after,
-:is(html.lite-fx, html.force-reduce-motion) .holo-legendary::after,
-:is(html.lite-fx, html.force-reduce-motion) .holo-rainbow-legendary,
-:is(html.lite-fx, html.force-reduce-motion) .field-fx,
-:is(html.lite-fx, html.force-reduce-motion) .field-holo,
-:is(html.lite-fx, html.force-reduce-motion) .panel.ach-legend,
-:is(html.lite-fx, html.force-reduce-motion) .ach-legend-chip::after,
-:is(html.lite-fx, html.force-reduce-motion) .champion-title,
-:is(html.lite-fx, html.force-reduce-motion) .immaculate-title,
-:is(html.lite-fx, html.force-reduce-motion) .celebrate-rays,
-:is(html.lite-fx, html.force-reduce-motion) .celebrate-rays-prism {
+:is(html.lite-fx, html.reduce-fx) .card-legendary.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-mythic.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-epic.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-creator.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-community.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-wings.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-special::after,
+:is(html.lite-fx, html.reduce-fx) .holo-legendary::after,
+:is(html.lite-fx, html.reduce-fx) .holo-rainbow-legendary,
+:is(html.lite-fx, html.reduce-fx) .field-fx,
+:is(html.lite-fx, html.reduce-fx) .field-holo,
+:is(html.lite-fx, html.reduce-fx) .panel.ach-legend,
+:is(html.lite-fx, html.reduce-fx) .ach-legend-chip::after,
+:is(html.lite-fx, html.reduce-fx) .champion-title,
+:is(html.lite-fx, html.reduce-fx) .immaculate-title,
+:is(html.lite-fx, html.reduce-fx) .celebrate-rays,
+:is(html.lite-fx, html.reduce-fx) .celebrate-rays-prism {
   animation: none !important;
 }
 
@@ -1342,18 +1312,18 @@ html.force-reduce-motion .flip-card-inner {
 }
 
 /* Lite effects: stop the loops, keep the colours. */
-:is(html.lite-fx, html.force-reduce-motion) .cos-banner-animated::after,
-:is(html.lite-fx, html.force-reduce-motion) .cos-title-legend::after {
+:is(html.lite-fx, html.reduce-fx) .cos-banner-animated::after,
+:is(html.lite-fx, html.reduce-fx) .cos-title-legend::after {
   animation: none;
   background: none;
 }
-:is(html.lite-fx, html.force-reduce-motion) .cos-holo,
-:is(html.lite-fx, html.force-reduce-motion) .cos-title-legend {
+:is(html.lite-fx, html.reduce-fx) .cos-holo,
+:is(html.lite-fx, html.reduce-fx) .cos-title-legend {
   animation: none;
 }
-:is(html.lite-fx, html.force-reduce-motion) .cos-glow-epic,
-:is(html.lite-fx, html.force-reduce-motion) .cos-glow-legend,
-:is(html.lite-fx, html.force-reduce-motion) .cos-holo,
-:is(html.lite-fx, html.force-reduce-motion) .cos-banner-aurora::before {
+:is(html.lite-fx, html.reduce-fx) .cos-glow-epic,
+:is(html.lite-fx, html.reduce-fx) .cos-glow-legend,
+:is(html.lite-fx, html.reduce-fx) .cos-holo,
+:is(html.lite-fx, html.reduce-fx) .cos-banner-aurora::before {
   filter: none;
 }

@@ -1,6 +1,6 @@
 {
   "name": "rocket-draft",
-  "version": "2.0.0-rc.3",
+  "version": "2.0.0-rc.4",
   "private": true,
   "browserslist": [
     "chrome >= 111",
@@ -16,6 +16,7 @@
     "postbuild": "node scripts/postexport.mjs",
     "start": "npm run preview:static",
     "build:images": "node scripts/build-images.mjs",
+    "build:badges": "node scripts/build-badges.mjs",
     "preview:static": "wrangler dev",
     "predeploy": "node scripts/check-deploy.mjs",
     "deploy": "npm run build && wrangler deploy",

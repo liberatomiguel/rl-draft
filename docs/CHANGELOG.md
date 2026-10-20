@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (branch `claude/dazzling-cannon-1d6thr` → `staging` as **v2.0.0-rc.3**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.4**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,69 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.4 (badges, locker, home + board polish, 2026-10-20 · DESIGN-DECISIONS #122–#124, ROAD-TO-WORLDS-DECISIONS R38)
+- **The approved badge catalog: 36 illustrated badges** (Miguel's "Gema & Moldura"
+  design file, `data-sources/badges/`). One static SVG each in `public/badges/`,
+  exported by the new `npm run build:badges` (runs the file's own generator in an
+  empty `node:vm` sandbox, then checks every catalog art key exists). Badge id =
+  art key = file name. Series: login streak (Spark 7 days, Wildfire 30), challenge
+  stars (Rising Star 25, Constellation 50), runs won (Veteran Drafter I–IV: 50 /
+  250 / 500 / 1,000 titles), daily quiz (Scholar I–III: 10 / 25 / 50 solves),
+  missions (On Target, 50), pre-season (First Chapter; Season Finalist / Elite /
+  5th / 4th / 3rd / Runner-up / Champion by final board place; Pre-season Bronze →
+  Supersonic by peak rank), Road to Worlds (Road Warrior, Underdog, World
+  Champion = first Worlds, Crowned World Champion = 3 Worlds across saves, Dynasty)
+  and manual grants (Contributor, Supporter, Verified Pro). Rarity uses the design
+  file's five steps — **Uncommon** is a new tier (common → legendary).
+- **Featured badge.** Up to three badges on the banner, and the first one is
+  FEATURED: drawn a size up on the profile hero, first (and larger) on leaderboard
+  rows and in the profile peek. The locker's badge tab opens with an "On your
+  banner" strip — tap a shown badge to feature it. Order is the choice, so the cloud
+  row (`equipped_badges`) did not change.
+- **New-item dots.** A small green dot on each locker tab that holds something new,
+  and on each slot of the profile hero (title, badges, "Change banner") plus the
+  locker button — replacing the old number bubbles.
+- **Home missions: Daily / Weekly switch** on the widget, and "All missions" is now
+  a real button in the same style as "Play today's challenge".
+- **Daily Quiz tile** has the Daily Challenge anatomy: title + **Live** tag, the
+  line, and a "Play today's quiz" button (replaces the purple "Play →").
+- Settings: **Reduce visual effects** (see Fixed).
+
+### Changed — rc.4
+- **Locker no longer spoils locked items.** Items still to earn by playing show as
+  the collection's silhouettes (lock + rarity, no art, no name). Season-track and
+  leaderboard / rank / grant rewards the player does not own are not listed at all;
+  Road to Worlds rewards only tease where career mode is on.
+- **Pre-season board and peak-rank rewards are non-cumulative** (Miguel's rule): a
+  player gets their own band only (1st → Season Champion, not Elite + Finalist; a
+  Gold peak → Pre-season Gold only). The provisional pre-season titles / banners
+  follow the same bands (#2–10 elite, #11–50 contender, #51–100 challenger).
+- **Season-scoped rewards are kept once earned** (Season 1 track, Dynasty): the
+  derivation no longer drops them when the season's facts reset. Preview-only
+  ownership is now marked so the staging "unlock all" switch still cleans up.
+- **Leaderboard rows**: place · name · badges · title on the left; rank and the
+  number on the right (the title moved next to the badges and shows on mobile too).
+- **/missions** uses the full width: daily missions on the left, weekly on the
+  right in the bigger card.
+- Season 1 track badges (Silver / Gold / Champion) wear the design file's Season 1
+  rank art until the generic track badges are drawn. Titles and banners are still
+  the provisional rc.3 set.
+- Removed the rc.3 line-art badges (`legacy-badge-*`, `streak-badge-*`,
+  `stars-badge-*`, `quiz-badge-10`, `missions-badge-25`, `career-badge-*`,
+  `grant-badge-*`) — staging-only ids, never shipped.
+
+### Fixed — rc.4
+- **The game stopped working with Settings → Reduce motion on.** Root cause: the
+  manual switch added `html.force-reduce-motion`, whose CSS turns off the draft
+  reel's animation (`.slot-reel-track`), but `DraftScreen` only skips the reel for
+  the OS `prefers-reduced-motion` query — so `onAnimationEnd` never fired, the
+  drawn lineup never appeared and the draft stalled on the first pick. The switch is
+  gone; in its place **Reduce visual effects** (`reduceEffects` → `html.reduce-fx`)
+  drops the expensive decoration only (backdrop blur, rarity loops, holo and glare
+  layers on special cards, the collection tilt) and never an animation the game
+  waits on. Career event playback follows the OS preference via
+  `useOsReducedMotion()`. Old saves keep a harmless `reducedMotion` key.
 
 ### Changed — rc.3 (visual language reset, 2026-10-19 · DESIGN-DECISIONS #121)
 - **Cosmetics speak the game's language again.** rc.2's layered, bevelled art

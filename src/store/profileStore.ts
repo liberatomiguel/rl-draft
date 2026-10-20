@@ -132,6 +132,9 @@ export interface ProfileState {
   challengeStars: Record<string, number>;
   /** v2.0 (career R32): career achievement ids mirrored here so cosmetics can derive from them. */
   careerMarks: string[];
+  /** rc.4: Road to Worlds World Championships won, across every career save
+   *  (World Champion badges). This season's share lives in `season.careerWorlds`. */
+  careerWorldsWon: number;
   /** Leaderboard aggregates (v1.4): peak team overall per difficulty and per pool
    *  (worldwide vs SAM). The durable feed for the cloud leaderboards. */
   records: {
@@ -199,6 +202,8 @@ export interface ProfileState {
   grantXp: (amount: number) => void;
   /** v2.0 (career R32): record career achievement marks (idempotent) and refresh cosmetics. */
   addCareerMarks: (ids: string[]) => void;
+  /** rc.4: a career save just won `count` World Championship(s) — lifetime and season counters. */
+  addCareerWorlds: (count: number) => void;
   /** Choose what the profile shows (locker, v2.0). Unknown / unowned ids are dropped;
    *  null = auto (best owned), `NONE` = hide the slot. */
   setEquipped: (patch: Partial<EquippedState>) => void;
@@ -259,6 +264,7 @@ const initialData = {
   challengesCompleted: {} as Record<string, string>,
   challengeStars: {} as Record<string, number>,
   careerMarks: [] as string[],
+  careerWorldsWon: 0,
   records: {
     bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
     bestOverallWorldwide: 0,
@@ -382,7 +388,7 @@ function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionE
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
   p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
-    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars" | "careerMarks" | "previewUnlockAll">>,
+    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars" | "careerMarks" | "careerWorldsWon" | "wins" | "previewUnlockAll">>,
   now = new Date().toISOString(),
 ): CosmeticsState {
   // The preview switch only ever counts where the preview tools exist (dev / staging).
@@ -498,6 +504,9 @@ export const useProfileStore = create<ProfileState>()(
             ...state.season,
             runs: state.season.runs + 1,
             titles: state.season.titles + (results.placement === "champion" ? 1 : 0),
+            legacyTitles:
+              (state.season.legacyTitles ?? 0) +
+              (results.placement === "champion" && entry.difficulty === "legacy" ? 1 : 0),
             peakMmr: Math.max(state.season.peakMmr, mmr),
             peakRankId,
             ratingHistory: pushRatingHistory(state.season.ratingHistory, {
@@ -516,7 +525,7 @@ export const useProfileStore = create<ProfileState>()(
             lastMmrGain,
             season,
             lifetime: { xp: state.lifetime.xp + (xpFinal - state.xp) },
-            cosmetics: withCosmetics({ ...state, season }, now),
+            cosmetics: withCosmetics({ ...state, season, wins }, now),
             legacyUnlocked,
             runsCompleted,
             wins,
@@ -641,6 +650,14 @@ export const useProfileStore = create<ProfileState>()(
           const careerMarks = Array.from(new Set([...(state.careerMarks ?? []), ...ids]));
           if (careerMarks.length === (state.careerMarks ?? []).length) return {};
           return { careerMarks, cosmetics: withCosmetics({ ...state, careerMarks }) };
+        }),
+
+      addCareerWorlds: (count) =>
+        set((state) => {
+          if (!(count > 0)) return {};
+          const careerWorldsWon = (state.careerWorldsWon ?? 0) + count;
+          const season = { ...state.season, careerWorlds: (state.season.careerWorlds ?? 0) + count };
+          return { careerWorldsWon, season, cosmetics: withCosmetics({ ...state, careerWorldsWon, season }) };
         }),
 
       grantXp: (amount) =>

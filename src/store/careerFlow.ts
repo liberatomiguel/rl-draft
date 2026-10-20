@@ -1525,6 +1525,13 @@ export function finishEvent(input: CareerSave): CareerSave {
     if (def.tier === "regional") save.stats.titlesRegional += 1;
     if (def.tier === "major") save.stats.titlesMajor += 1;
     if (def.tier === "worlds") save.stats.titlesWorlds += 1;
+    // rc.4 (Underdog): how far below the rest of the field the user's team was.
+    if (def.tier === "regional" || def.tier === "major" || def.tier === "worlds") {
+      const gap = underdogGapOf(ev.tournament);
+      const flags = save.flags as Record<string, unknown>;
+      const prev = typeof flags[ACH_FLAGS.underdogGap] === "number" ? (flags[ACH_FLAGS.underdogGap] as number) : 0;
+      if (gap > prev) flags[ACH_FLAGS.underdogGap] = gap;
+    }
   }
   if (def.tier === "major") save.stats.majorsQualified += 1;
 
@@ -1594,6 +1601,16 @@ export function finishEvent(input: CareerSave): CareerSave {
     enterSeasonReview(save, result);
   }
   return capNews(save);
+}
+
+/** Field average player overall minus the user team's (positive = underdog), one decimal. */
+function underdogGapOf(t: TournamentState): number {
+  const teams = Object.values(t.teams);
+  const user = teams.find((tm) => tm.isUser);
+  const others = teams.filter((tm) => !tm.isUser);
+  if (!user || others.length === 0) return 0;
+  const avg = others.reduce((n, tm) => n + tm.rating.avgPlayerOverall, 0) / others.length;
+  return Math.round((avg - user.rating.avgPlayerOverall) * 10) / 10;
 }
 
 function fieldedIdsFor(save: CareerSave): string[] {

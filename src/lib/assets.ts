@@ -116,3 +116,13 @@ export function rankSrc(variant: RankVariant, rankId: string): string | null {
   const hash = hashFor(manifest.ranks, `${variant}/${rankId}`);
   return hash ? `/img/ranks/${variant}/${seg(rankId)}.${hash}.webp` : null;
 }
+
+/**
+ * rc.4: badge art (`public/badges/<art>.svg`, written by `npm run build:badges`).
+ * Every catalog art key is guaranteed to exist (the build script and
+ * `cosmetics.test.ts` check it), so this never returns null. SVG is served as
+ * is — no WebP variant, no manifest hash; `public/_headers` gives it a day.
+ */
+export function badgeArtSrc(art: string): string {
+  return `/badges/${seg(art)}.svg`;
+}

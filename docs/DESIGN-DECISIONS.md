@@ -1283,3 +1283,38 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      `equipped_avatar` was never shipped). Supersedes the art parts of #119;
      the no-auto-equip, `seen` and preview-tools parts stand.
 
+122. **No "Reduce motion" switch; "Reduce visual effects" instead (rc.4).** The
+     manual reduced-motion override stopped CSS animations the game waits on
+     (the draft reel's `onAnimationEnd`) and stalled the draft. Rather than
+     teach every awaited animation about a second motion flag, the switch is
+     now a PERFORMANCE switch: `html.reduce-fx` = everything `lite-fx` does
+     (no big backdrop blurs, no decorative loops) + no holo / glare layers on
+     special cards + no collection tilt. Rule: decoration may be dropped,
+     animations with an end the game listens to may not. The OS
+     `prefers-reduced-motion` keeps its own CSS block and the reel's skip.
+
+123. **Badges are illustrated art; the first equipped badge is featured (rc.4).**
+     Supersedes the badge part of #121: Miguel's approved "Gema & Moldura"
+     catalog (36 badges, static SVG per badge, exported from his design file by
+     `npm run build:badges`) replaces the line-art badges; titles and banners
+     stay line art until their replacements land. Rarity gains an **uncommon**
+     step (the file's five-step ladder). "Featured" is POSITIONAL (index 0 of
+     `equipped.badges`) so neither the save nor the cloud row changed shape.
+     The ids of the approved catalog are its art keys; the rc.3 badge ids were
+     staging-only and are dropped (never shipped to players).
+
+124. **Reward rules from the approved catalog (rc.4).** (a) Pre-season board and
+     peak-rank rewards are NOT cumulative: one band per player (Champion #1 ·
+     Runner-up #2 · 3rd · 4th · 5th · Elite #6–10 · Finalist #11–50; peak rank =
+     that rank's badge only); the provisional titles / banners use the same
+     bands. (b) Veteran Drafter counts runs WON (titles, any mode/difficulty);
+     Scholar counts quiz days solved. (c) World Champion badges count Worlds
+     won across every career save (`profile.careerWorldsWon`, floored from the
+     existing marks). (d) Dynasty is one season: peak SSL + 3 Worlds + 25 Legacy
+     titles, in any order (`season.careerWorlds` / `season.legacyTitles`), kept
+     forever once earned — season-scoped rewards (the track, Dynasty) never
+     drop when the season's facts reset. (e) The locker never spoils: locked
+     items show as rarity silhouettes, and only rewards earned by playing are
+     teased; season-track and leaderboard / rank / grant rewards appear only
+     once owned.
+

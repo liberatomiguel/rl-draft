@@ -46,4 +46,17 @@ describe("careerStore — achievements settle after flows (R32)", () => {
     expect(useProfileStore.getState().xp - xpBefore).toBe(careerAchievementById.get("car-first-sponsor")!.xp);
     expect(useCareerStore.getState().toasts.filter((t) => t.source === "achievement")).toHaveLength(1);
   });
+
+  it("rc.4: a Worlds title feeds the profile's lifetime + season counters (World Champion badges)", () => {
+    const before = useProfileStore.getState();
+    const lifetime = before.careerWorldsWon ?? 0;
+    const season = before.season.careerWorlds ?? 0;
+    useProfileStore.getState().addCareerWorlds(1);
+    const p = useProfileStore.getState();
+    expect(p.careerWorldsWon).toBe(lifetime + 1);
+    expect(p.season.careerWorlds).toBe(season + 1);
+    expect(p.cosmetics.owned).toHaveProperty("world-champion");
+    useProfileStore.getState().addCareerWorlds(0);
+    expect(useProfileStore.getState().careerWorldsWon).toBe(lifetime + 1);
+  });
 });

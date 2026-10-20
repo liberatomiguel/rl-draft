@@ -30,6 +30,9 @@
 /ranks/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+/badges/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
 /icon.svg
   Cache-Control: public, max-age=604800
 

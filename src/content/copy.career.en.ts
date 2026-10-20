@@ -1001,7 +1001,7 @@ export const CAREER_EN = {
       "car-rep-100": { name: "Household Name", desc: "Reach 100 reputation." },
       "car-first-major": { name: "Major Winner", desc: "Win an international Major." },
       "car-first-worlds": { name: "World Champion", desc: "Win the World Championship." },
-      "car-worlds-underdog": { name: "Underdog", desc: "Win Worlds with no fielded starter above 85 overall." },
+      "car-worlds-underdog": { name: "Underdog", desc: "Win a regional, Major or Worlds as the underdog: a team overall 3+ below the field's average." },
       "car-worlds-homegrown": { name: "Homegrown", desc: "Win Worlds with the roster you founded the org with — no signings, ever." },
       "car-three-worlds": { name: "Dynasty", desc: "Win three World Championships with one org." },
       "car-all-difficulties": { name: "Every Road", desc: "Win Worlds on Easy, Normal and Hard (across saves)." },

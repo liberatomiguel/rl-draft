@@ -243,7 +243,12 @@ export const useCareerStore = create<CareerStoreState>()(
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
+        const prevWorlds = slots[activeSlot]!.stats.titlesWorlds ?? 0;
         const next = fn(slots[activeSlot]!);
+        // rc.4: Worlds titles feed the profile's cross-save + season counters
+        // (World Champion / Dynasty badges). Read before the flow mutates.
+        const worldsWon = (next.stats.titlesWorlds ?? 0) - prevWorlds;
+        if (worldsWon > 0) useProfileStore.getState().addCareerWorlds(worldsWon);
         next.lastPlayedAt = Date.now();
         const nextSlots = [...slots];
         nextSlots[activeSlot] = next;

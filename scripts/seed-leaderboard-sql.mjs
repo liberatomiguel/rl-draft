@@ -8,20 +8,21 @@
  *
  * NEVER run the SQL against production: it inserts auth.users rows.
  */
-import { build } from "esbuild";
+// rc.4: bundled with rolldown (the bundler Vite ships) — esbuild is no longer installed.
+import { build } from "rolldown";
 import { createHash } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const out = "/tmp/rd-preview-leaderboard.mjs";
+const out = join(mkdtempSync(join(tmpdir(), "rd-seed-")), "preview-leaderboard.mjs");
 await build({
-  entryPoints: ["src/data/previewLeaderboard.ts"],
-  bundle: true,
-  format: "esm",
+  input: "src/data/previewLeaderboard.ts",
   platform: "node",
-  outfile: out,
   logLevel: "silent",
-  alias: { "@": "./src" },
+  resolve: { alias: { "@": join(process.cwd(), "src") } },
+  output: { file: out, format: "esm" },
 });
 const { previewLeaderboardRows } = await import(pathToFileURL(out).href);
 

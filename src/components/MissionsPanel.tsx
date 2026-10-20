@@ -1,15 +1,16 @@
 "use client";
 
 /**
- * Missions UI (v2.0, re-laid out rc.2). `compact` = the home widget (today's
- * three, one line each, and a weekly count). Full = the /missions page: two
- * blocks side by side — WEEKLY takes the stage (the bigger prizes), daily sits
- * beside it smaller — and the login streak as one discreet line on top (the
- * modal on app open is where the streak gets its moment).
+ * Missions UI (v2.0, re-laid out rc.2 / rc.4). `compact` = the home widget:
+ * a Daily / Weekly switch over that period's three missions, one line each,
+ * and the "All missions" button. Full = the /missions page at full width:
+ * daily on the left, WEEKLY on the right in the bigger card (the bigger
+ * prizes), and the login streak as one discreet line on top (the modal on app
+ * open is where the streak gets its moment).
  * Rolls the periods on mount so a new day's set appears without a run.
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MISSIONS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { missionById, type MissionPeriod, type MissionSlotState } from "@/engine/missions";
@@ -18,6 +19,7 @@ import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -47,26 +49,44 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
   const mounted = useMounted();
   const missions = useProfileStore((s) => s.missions);
   const login = useProfileStore((s) => s.login);
+  const [period, setPeriod] = useState<MissionPeriod>("daily");
   useRollMissions();
   if (!mounted) return <div className={cx("animate-pulse rounded-2xl bg-white/5", compact ? "h-full min-h-40" : "h-96")} aria-busy />;
 
   if (compact) {
-    const slot = missions.daily;
+    const slot = missions[period];
     const done = doneCount(slot);
-    const weeklyDone = doneCount(missions.weekly);
+    const resets = period === "daily" ? M.resetsIn(hoursToMidnightUtc()) : M.resetsInDays(daysToNextMondayUtc());
     return (
       <Panel className="flex h-full flex-col p-4 sm:p-5">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{M.title}</h3>
-          <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "—"}</Badge>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="display flex items-center gap-2 text-base font-bold uppercase tracking-wide text-ink">
+            {M.title}
+            <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "—"}</Badge>
+          </h3>
+          <div role="tablist" aria-label={M.periodSwitch} className="inline-flex shrink-0 rounded-lg border border-line bg-white/[0.03] p-0.5">
+            {(["daily", "weekly"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="tab"
+                aria-selected={period === p}
+                onClick={() => setPeriod(p)}
+                className={cx(
+                  "display rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
+                  period === p ? "bg-blue/15 text-blue-bright" : "text-faint hover:text-sub",
+                )}
+              >
+                {p === "daily" ? M.tabDaily : M.tabWeekly}
+              </button>
+            ))}
+          </div>
         </div>
-        {slot ? <MissionList slot={slot} period="daily" dense /> : null}
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line/60 pt-3 text-xs">
-          <span className="text-sub">
-            {M.weekly} · <span className="display font-bold text-ink">{missions.weekly ? `${weeklyDone}/${missions.weekly.ids.length}` : "—"}</span>
-          </span>
-          <AppLink href="/missions" className="font-semibold text-blue-bright underline-offset-4 hover:underline">
-            {M.viewAll} →
+        {slot ? <MissionList slot={slot} period={period} dense /> : null}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+          <span className="text-[11px] text-faint">{resets}</span>
+          <AppLink href="/missions" className={cx(buttonClass("secondary", "sm"), "w-fit")}>
+            {M.viewAll}
           </AppLink>
         </div>
       </Panel>
@@ -82,12 +102,12 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
         </span>
         <span className="text-faint">{M.loginStripHint}</span>
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-        <div className="md:col-span-3">
-          <PeriodPanel slot={missions.weekly} period="weekly" featured />
-        </div>
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-2">
           <PeriodPanel slot={missions.daily} period="daily" />
+        </div>
+        <div className="lg:col-span-3">
+          <PeriodPanel slot={missions.weekly} period="weekly" featured />
         </div>
       </div>
     </div>

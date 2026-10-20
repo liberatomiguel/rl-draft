@@ -2,8 +2,8 @@
 
 /**
  * Pointer-tracked 3D tilt wrapper. Sets --mx/--my for cursor-reactive
- * glare/holo layers. Inert on touch-only devices and under
- * prefers-reduced-motion.
+ * glare/holo layers. Inert on touch-only devices, under
+ * prefers-reduced-motion and under Settings → Reduce visual effects.
  *
  * Intensity tiers: light (base cards) · strong (special cards) ·
  * max (collection detail view).
@@ -39,6 +39,8 @@ export function TiltCard({
   const onMove = (e: React.PointerEvent) => {
     if (e.pointerType !== "mouse") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // rc.4: Settings → "Reduce visual effects".
+    if (document.documentElement.classList.contains("reduce-fx")) return;
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();

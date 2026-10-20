@@ -2,9 +2,10 @@
 
 /**
  * /leaderboards v2 (v2.0) — boards that show who people ARE, not just a number:
- * every row carries the player's equipped title, frame (around their rank
- * emblem), banner (the row background) and badges, straight from the public
- * `leaderboard` view. Tabs: Season Rating (headline), the frozen pre-season
+ * every row carries the player's equipped title, banner (the row background)
+ * and badges, straight from the public `leaderboard` view. rc.4 row order:
+ * place · name · badges (featured first, a size up) · title on the left; rank
+ * and the number on the right. Tabs: Season Rating (headline), the frozen pre-season
  * Hall of Fame, titles, Legacy overall, Regional overall. Tap a row for a
  * profile peek. Public and viewable signed out; your row is highlighted.
  */
@@ -215,11 +216,11 @@ export function LeaderboardsView() {
                         {place}
                       </span>
                       <span className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-ink">{r.username}</span>
+                        <span className="min-w-[4.5rem] truncate text-sm font-semibold text-ink">{r.username}</span>
                         {isYou ? <Badge tone="orange">{L.you}</Badge> : null}
-                        <BadgeRow badges={r.cosmetics.badges} size="xs" />
+                        <BadgeRow badges={r.cosmetics.badges} size="xs" featuredSize="sm" className="shrink-0" />
+                        <TitleTag title={r.cosmetics.title} size="xs" className="min-w-0 overflow-hidden" />
                       </span>
-                      <TitleTag title={r.cosmetics.title} size="xs" className="hidden shrink-0 sm:inline-flex" />
                       <span className="hidden w-28 shrink-0 items-center gap-1.5 sm:flex">
                         <RankBadge rank={rank} variant="menu" size="sm" className="!h-6 !w-6" />
                         <span className="truncate text-[10px] font-semibold uppercase tracking-wider text-faint">{rank.label}</span>
@@ -244,7 +245,7 @@ export function LeaderboardsView() {
                   <p className="display truncate text-xl font-bold uppercase tracking-wide text-ink">{peek.username}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <TitleTag title={peek.cosmetics.title} size="sm" />
-                    <BadgeRow badges={peek.cosmetics.badges} size="md" />
+                    <BadgeRow badges={peek.cosmetics.badges} size="md" featuredSize="lg" />
                   </div>
                 </div>
               </div>

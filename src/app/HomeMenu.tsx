@@ -265,22 +265,28 @@ export default function HomeMenu() {
             <MissionsPanel compact />
           </div>
 
-          <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="group text-left sm:col-span-2 md:col-span-8">
-            <Panel className="flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-violet-400/50">
-              <div className="min-w-0">
-                <p className="kicker !text-[9px] text-violet-300">{HOME.quizKicker}</p>
-                <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
-                <p className="mt-0.5 hidden text-xs text-sub sm:block">{HOME.quizDesc}</p>
+          {/* rc.4: same anatomy as the Daily Challenge — title + Live tag, the
+              line, then the CTA (or today's result once it is played). */}
+          <Panel className="flex h-full flex-col justify-between gap-3 p-5 sm:col-span-2 sm:flex-row sm:items-end md:col-span-8">
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2">
+                <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
+                <Badge tone="blue">{HOME.liveBadge}</Badge>
               </div>
-              <div className="shrink-0">
-                {quizDone ? (
+              <p className="text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>
+            </div>
+            <div className="shrink-0">
+              {quizDone ? (
+                <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue/60">
                   <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
-                ) : (
-                  <span className="display text-xs font-bold uppercase tracking-[0.12em] text-violet-300">{HOME.quizOpen} →</span>
-                )}
-              </div>
-            </Panel>
-          </button>
+                </button>
+              ) : (
+                <Button variant="secondary" size="sm" className="w-fit" onClick={() => { sfx.click(); setQuizOpen(true); }}>
+                  {HOME.quizPlay}
+                </Button>
+              )}
+            </div>
+          </Panel>
         </section>
 
         {/* ---- YOU --------------------------------------------------------------- */}

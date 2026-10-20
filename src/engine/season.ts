@@ -44,6 +44,11 @@ export interface SeasonState {
   /** Titles won this season. */
   titles: number;
   ratingHistory: RatingHistoryEntry[];
+  /** rc.4 (Dynasty badge): Legacy-difficulty titles won this season. Optional —
+   *  saves from before rc.4 read it as 0. */
+  legacyTitles?: number;
+  /** rc.4 (Dynasty badge): Road to Worlds World Championships won this season. */
+  careerWorlds?: number;
 }
 
 /** What the player achieved in the pre-season, frozen at the Season 1 reset. */
@@ -199,6 +204,8 @@ export function mergeSeasonState(a: SeasonState, b: SeasonState): SeasonState {
     runs: Math.max(a.runs, b.runs),
     titles: Math.max(a.titles, b.titles),
     ratingHistory,
+    legacyTitles: Math.max(a.legacyTitles ?? 0, b.legacyTitles ?? 0),
+    careerWorlds: Math.max(a.careerWorlds ?? 0, b.careerWorlds ?? 0),
   };
 }
 

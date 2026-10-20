@@ -8,7 +8,7 @@ import { MissionsPanel } from "@/components/MissionsPanel";
 export function MissionsView() {
   const { MISSIONS_UI: M } = useCopy();
   return (
-    <div className="rise-in mx-auto max-w-2xl">
+    <div className="rise-in">
       <BackToMenu />
       <SectionTitle kicker={M.kicker} title={M.title} className="mb-6" />
       <MissionsPanel />

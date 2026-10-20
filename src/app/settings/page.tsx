@@ -70,10 +70,10 @@ export default function SettingsPage() {
       <Panel className="mb-4 p-5">
         <p className="kicker mb-4">{S.motionSection}</p>
         <Toggle
-          label={S.reducedMotion}
-          hint={S.reducedMotionHint}
-          checked={s.reducedMotion}
-          onChange={(v) => s.set("reducedMotion", v)}
+          label={S.reduceEffects}
+          hint={S.reduceEffectsHint}
+          checked={s.reduceEffects}
+          onChange={(v) => s.set("reduceEffects", v)}
         />
         <div className="mt-5">
           <p className="text-sm font-semibold text-ink">{S.animSpeed}</p>

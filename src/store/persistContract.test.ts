@@ -212,7 +212,7 @@ describe("persist contract (frozen)", () => {
     );
     const persistedKeys = Object.keys(JSON.parse(JSON.stringify(part)) as object);
     expect(persistedKeys).toEqual(
-      expect.arrayContaining(["soundEnabled", "soundVolume", "reducedMotion", "animSpeed", "lang"]),
+      expect.arrayContaining(["soundEnabled", "soundVolume", "reduceEffects", "animSpeed", "lang"]),
     );
   });
 });
@@ -279,10 +279,10 @@ describe("profile migrate (old saves keep their progress)", () => {
         },
       });
       expect(out.challengesCompleted).toStrictEqual({}); // Challenges restart in v2.0
-      // The legacy rewards are derived at migration time (no sync needed): "Day One"
-      // + the peak-rank frames up to Gold.
+      // The legacy rewards are derived at migration time (no sync needed): "Day One",
+      // First Chapter and the peak-rank badge of that exact rank (Gold, rc.4).
       expect(Object.keys((out.cosmetics as { owned: Record<string, string> }).owned)).toEqual(
-        expect.arrayContaining(["legacy-title-day-one", "legacy-badge-first-chapter", "legacy-badge-gold"]),
+        expect.arrayContaining(["legacy-title-day-one", "first-chapter", "pre-season-gold"]),
       );
       // New fields are backfilled, not missing.
       expect(out).toMatchObject({
@@ -354,7 +354,7 @@ describe("run / settings / career hydration", () => {
     const saved = {
       soundEnabled: false,
       soundVolume: 0.25,
-      reducedMotion: true,
+      reducedMotion: true, // pre-rc.4 key (the switch is gone): still hydrates harmlessly
       animSpeed: "fast",
       lang: "pt",
     };
