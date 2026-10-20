@@ -1161,15 +1161,16 @@ html.reduce-fx .card-float {
    · nothing animates until the badge is on screen ([data-live], set by an
      IntersectionObserver in BadgeEmblem), and every badge runs its own
      offset (--bfx-delay) so a grid never pulses in sync.
-   Common / uncommon / rare: plain art (rc.8). Epic: a soft prismatic sweep +
-   two twinkles. Legendary (rc.11): a 3D sway at rest with a slow reflection
-   riding it, a gold glow in the badge's OWN silhouette (a build-time blurred
-   image, --bfx-glow) that breathes gently, short light rays peeking just past
-   the edge, and three twinkles; on hover (desktop) the pointer takes the
-   tilt. Sway and tilt scale with the badge size (--bfx-amp). Small badges
-   (board rows) keep the glow but skip the rays and twinkles. In production
-   the art is a pre-rendered WebP. Off under lite-fx / reduce-fx (the glow
-   stays, still), still under reduced motion.
+   Common / uncommon / rare: plain art (rc.8). Epic: a soft prismatic sweep
+   (+ two twinkles on large badges). Legendary (rc.13): STILL at rest — a gold
+   glow in the badge's OWN silhouette (a build-time blurred image, --bfx-glow)
+   breathing gently, a slow prismatic sweep and three twinkles on large
+   badges; on hover (desktop) it tilts toward the pointer (size-scaled) and
+   the sweep follows it. Twinkles only from 64 px (hero, locker, peek). In
+   production the art is a pre-rendered WebP. Measured (rc.13, headless
+   Chrome + GPU, every badge unlocked): the profile idles at ~50 ms of main
+   thread per second, the board at ~15. Off under lite-fx / reduce-fx (the
+   glow stays, still), still under reduced motion.
 --------------------------------------------------------------------------- */
 .bfx {
   position: relative;
@@ -1235,46 +1236,14 @@ html.reduce-fx .card-float {
   --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.34) 55%, rgba(253, 230, 138, 0.29) 63%, transparent 74%);
 }
 .bfx-legend {
-  --bfx-amp: 24deg;
+  --bfx-cycle: 8s;
   --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.32) 55%, rgba(253, 230, 138, 0.3) 62%, transparent 74%);
-}
-/* Small legendaries (board rows) sway less. */
-.bfx-legend.bfx-sm {
-  --bfx-amp: 12deg;
-}
-
-/* LEGENDARY at rest — a gentle sway (both ways from flat, so a restart never
-   jumps) and a slow reflection riding it. */
-.bfx-sway {
-  position: absolute;
-  inset: 0;
-}
-.bfx-legend .bfx-band {
-  opacity: 1;
-  transform: translateX(0);
-}
-.bfx-legend[data-live] .bfx-sway {
-  animation: bfx-sway 8s ease-in-out var(--bfx-delay, 0s) infinite;
-}
-.bfx-legend[data-live] .bfx-band {
-  animation: bfx-reflect 8s ease-in-out var(--bfx-delay, 0s) infinite;
-}
-@keyframes bfx-sway {
-  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
-  25% { transform: rotateY(calc(var(--bfx-amp) * -1)) rotateX(3deg); }
-  75% { transform: rotateY(var(--bfx-amp)) rotateX(-3deg); }
-}
-@keyframes bfx-reflect {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-42%); }
-  75% { transform: translateX(42%); }
 }
 
 /* LEGENDARY glow — the badge's own silhouette in gold, blurred at BUILD time
    (build-images → *.glow.webp, padded by --bfx-glow-pad of the badge each
    side), so it hugs the wings / shield / ribbons and costs one static image.
-   It sits inside the sway, so it turns with the badge, and breathes gently
-   (opacity only). */
+   It tilts with the badge on hover, and breathes gently (opacity only). */
 .bfx-glow {
   position: absolute;
   inset: calc(var(--bfx-glow-pad, 0.2857) * -100%);
@@ -1289,33 +1258,14 @@ html.reduce-fx .card-float {
   0%, 100% { opacity: 0.72; }
   50% { opacity: 1; }
 }
-/* Short rays — a detail, not a sunburst: they start at the CENTRE (behind
-   the art, so they read as coming out of the badge) and fade a little past
-   its edge. Flat behind the badge, turning slowly (rotate only). */
-.bfx-rays {
-  position: absolute;
-  inset: -12%;
-  border-radius: 50%;
-  pointer-events: none;
-  background: repeating-conic-gradient(rgba(255, 224, 140, 0) 0deg 11deg, rgba(255, 224, 140, 0.27) 12deg 13.5deg, rgba(255, 224, 140, 0) 14.5deg 22.5deg);
-  -webkit-mask: radial-gradient(closest-side, #000 0%, #000 60%, transparent 94%);
-  mask: radial-gradient(closest-side, #000 0%, #000 60%, transparent 94%);
-}
-.bfx-legend[data-live] .bfx-rays {
-  animation: bfx-spin 36s linear infinite;
-}
-@keyframes bfx-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* LEGENDARY on hover (desktop): the pointer takes the tilt (BadgeEmblem
-   eases the sway flat), the reflection follows it, the aura lifts. */
-.bfx-legend[data-hover] .bfx-sway,
+/* LEGENDARY on hover (desktop): the pointer takes the tilt, the sweep
+   follows it, the glow lifts. */
 .bfx-legend[data-hover] .bfx-band,
 .bfx-legend[data-hover] .bfx-glow {
   animation: none;
 }
 .bfx-legend[data-hover] .bfx-band {
+  opacity: 1;
   transform: translateX(var(--bfx-bx, 0%));
   transition: transform 0.2s ease-out;
 }
@@ -1351,18 +1301,12 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .bfx .bfx-spark {
   display: none;
 }
-:is(html.lite-fx, html.reduce-fx) .bfx-glow,
-:is(html.lite-fx, html.reduce-fx) .bfx-sway {
+:is(html.lite-fx, html.reduce-fx) .bfx-glow {
   animation: none !important;
-}
-:is(html.lite-fx, html.reduce-fx) .bfx-rays {
-  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .bfx-band,
   .bfx-glow,
-  .bfx-rays,
-  .bfx-sway,
   .bfx-spark {
     animation: none !important;
   }
@@ -1522,6 +1466,7 @@ html.reduce-fx .card-float {
    background-position across the whole row, repainting it every frame). */
 .cos-banner-animated::after {
   content: "";
+  display: block;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -1536,7 +1481,10 @@ html.reduce-fx .card-float {
   0%, 100% { transform: translateX(-55%); }
   50% { transform: translateX(55%); }
 }
-.cos-banner::after,
+/* Content above the pattern. NOT ::after — that is the absolute sheen (rc.13
+   fix: including it here made the sheen an empty inline box that the GPU
+   cannot animate, so it ran on the main thread every frame — the profile /
+   leaderboard stutter with a legendary banner on screen). */
 .cos-banner > * {
   position: relative;
 }

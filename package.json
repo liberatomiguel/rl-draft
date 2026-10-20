@@ -1,6 +1,6 @@
 {
   "name": "rocket-draft",
-  "version": "2.0.0-rc.12",
+  "version": "2.0.0-rc.13",
   "private": true,
   "browserslist": [
     "chrome >= 111",
@@ -18,6 +18,7 @@
     "build:images": "node scripts/build-images.mjs",
     "build:badges": "node scripts/build-badges.mjs",
     "preview:static": "wrangler dev",
+    "perf:probe": "node scripts/perf-probe.mjs",
     "predeploy": "node scripts/check-deploy.mjs",
     "deploy": "npm run build && wrangler deploy",
     "lint": "eslint",

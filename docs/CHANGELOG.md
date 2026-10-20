@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.12**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.13**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,27 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.13 (2026-10-20 · DESIGN-DECISIONS #130)
+- Legendary badges are **still at rest** (no idle sway) and the **rays are gone**;
+  they keep the silhouette glow (breathing), a slow sweep (8 s) and, on hover,
+  the size-scaled tilt. Twinkles only on badges ≥ 64 px (hero, locker, peek),
+  not on the profile showcase or the board.
+
+### Fixed — rc.13
+- **The profile and the leaderboard stuttered with a legendary banner on screen.**
+  Root cause: `.cos-banner::after, .cos-banner > * { position: relative }` also hit
+  the animated banner's sheen (`.cos-banner-animated::after`), turning the absolute
+  band into an empty INLINE box. A transform can't be GPU-animated on an inline box
+  (Chrome trace: `compositeFailed` "transform-related property cannot be
+  accelerated on target"), so it ran on the main thread every frame — and that
+  dragged every other animation on the page (all the badge effects) through main-
+  thread style updates. The sheen also never showed. Fix: the rule targets
+  `.cos-banner > *` only; the sheen is a block again.
+- Measured on a production build in headless Chrome with GPU compositing, every
+  badge unlocked (main-thread ms per second while idle): profile with a legendary
+  banner 254–330 → **44**; leaderboard 416–480 → **19**; profile animations 78 →
+  28; the trace shows no non-composited animation on either page.
 
 ### Changed — rc.12 (2026-10-20)
 - Legendary rays now start at the badge's centre (behind the art, so they read

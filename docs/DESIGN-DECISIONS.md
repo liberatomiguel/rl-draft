@@ -1370,3 +1370,15 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      *.glow.webp) — elegant and shape-true at the cost of one static image;
      rays shortened to a detail just past the edge; hover tilt 26° / 17° / 10°.
 
+130. **Legendary badges rest still; performance is MEASURED, not assumed
+     (rc.13).** Miguel: drop the idle tilt and the rays, keep the glow. And
+     "transform/opacity only" was not enough on its own: one animation the GPU
+     cannot take (here a sheen on an inline box) forces main-thread frames,
+     and then EVERY animation on the page updates on the main thread. Rule:
+     before shipping visual effects, check a production build in headless
+     Chrome (CDP: idle Performance.getMetrics TaskDuration per second, plus a
+     trace for `Animation` events with `compositeFailed`) — `npm run
+     perf:probe` does it. Budgets with every badge unlocked and a legendary
+     banner on: profile ≤ 80 ms/s, board ≤ 60 ms/s (rc.13 measures ~40 and
+     ~20), zero composite failures.
+

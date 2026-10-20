@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.12** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.13** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
   `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
@@ -39,8 +39,9 @@ sorted by rarity, whole home cards clickable; rc.7: badge effects rebuilt
 light (transform/opacity only, on-screen only); rc.8: rare plain, epic sweep;
 rc.9: badges as pre-rendered WebP (build-images), board loops transform-only,
 legendary sway; rc.10–11: legendary glow pre-blurred in the badge's own
-silhouette (build-images *.glow.webp) + short faint rays from the centre,
-sway ±24°, tilt 26°.
+silhouette (build-images *.glow.webp); rc.13: legendaries still at rest (no
+rays), tilt on hover; fixed the banner-sheen main-thread bug (profile 44 ms/s,
+board 19 ms/s of main thread while idle, everything unlocked).
 Decisions: DESIGN-DECISIONS #110–#129, ROAD-TO-WORLDS-DECISIONS R20–R38.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 
@@ -66,7 +67,8 @@ Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
   TournamentScreen ×2, AnimatedNumber, Modal, and one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything
   that ships (`prebuild` validates data, contract test, images; `postbuild`
-  checks the export).
+  checks the export). For visual effects: `npm run perf:probe` against a
+  staging-like build (DESIGN-DECISIONS #130).
 - Perf reference on `wrangler dev` (rc.1, career on): cold home **25**
   requests, `/career` 34, 0 same-origin 4xx across 21 routes, home HTML 9.8 KB
   gz, `out/` 1,206 files / 40 MB. Keep it there.
