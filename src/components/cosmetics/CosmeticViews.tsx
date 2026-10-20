@@ -55,7 +55,8 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 
 // ---------------------------------------------------------------------------
 // Badge emblem (rc.4: Miguel's "Gema & Moldura" art, one static SVG each;
-// rc.7: rarity effects rebuilt light — globals.css "Badge FX")
+// rc.7: effects rebuilt light; rc.8: rare plain, legendary still + halo —
+// globals.css "Badge FX")
 // ---------------------------------------------------------------------------
 
 /** Below this box the effects are invisible noise, so the art renders plain. */
@@ -101,13 +102,13 @@ function fxDelay(key: string): string {
 
 /**
  * A badge: its SVG art (`public/badges/<art>.svg`). Lazy + async, so a board of
- * 100 rows only fetches what scrolls into view. rc.7 effects grow with rarity
- * and stay cheap (transform / opacity only, on screen only): common /
- * uncommon plain; rare a soft light sweep; epic a prismatic sweep and two
- * twinkles; legendary a strong 3D sway carrying a prismatic reflection, three
- * twinkles and pointer tilt on desktop. The sweep is masked by the badge's own
- * SVG so it only lights the badge. `reduce-fx` / `lite-fx` / reduced motion
- * switch it off (globals.css).
+ * 100 rows only fetches what scrolls into view. Effects stay cheap (transform
+ * / opacity only, on screen only): common / uncommon / rare plain (rc.8); epic
+ * a soft prismatic sweep and two twinkles; legendary a brighter sweep, a warm
+ * halo breathing behind it and three twinkles — still at rest, tilting toward
+ * the pointer on hover (desktop). The sweep is masked by the badge's own SVG so
+ * it only lights the badge. `reduce-fx` / `lite-fx` / reduced motion switch
+ * the motion off (globals.css).
  */
 export function BadgeEmblem({
   badge,
@@ -125,7 +126,7 @@ export function BadgeEmblem({
   const isBadge = badge.kind === "badge";
   const px = typeof size === "number" ? size : PX[size];
   const tier = badge.tier;
-  const live = isBadge && fx && px >= BADGE_FX_MIN_PX && (tier === "rare" || tier === "epic" || tier === "legend");
+  const live = isBadge && fx && px >= BADGE_FX_MIN_PX && (tier === "epic" || tier === "legend");
   useEffect(() => {
     if (!live || !ref.current) return;
     return observeLive(ref.current);
@@ -151,26 +152,15 @@ export function BadgeEmblem({
   );
   if (!live) return img;
 
-  // Legendary + mouse: the pointer takes over from the idle sway (DOM-only CSS
-  // vars and data attributes, no re-render).
+  // Legendary + mouse: tilt toward the pointer (DOM-only CSS vars and a data
+  // attribute, no re-render). At rest a legendary does not move.
   const onMove = (e: React.PointerEvent<HTMLSpanElement>) => {
     const el = ref.current;
     if (e.pointerType !== "mouse" || !el) return;
     const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
     const y = (e.clientY - r.top) / r.height - 0.5;
-    if (!("hover" in el.dataset)) {
-      // Hand-off without a jump: freeze the sway where it is, then ease it flat
-      // while the pointer tilt (on the outer layer) eases in.
-      const sway = el.querySelector<HTMLElement>(".bfx-sway");
-      if (sway) sway.style.transform = getComputedStyle(sway).transform;
-      el.dataset.hover = "";
-      if (sway) {
-        void sway.offsetWidth;
-        sway.style.transition = "transform 0.35s ease-out";
-        sway.style.transform = "none";
-      }
-    }
+    el.dataset.hover = "";
     el.style.setProperty("--bfx-ry", `${(x * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
     el.style.setProperty("--bfx-rx", `${(-y * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
     el.style.setProperty("--bfx-bx", `${(-x * 70).toFixed(1)}%`);
@@ -180,11 +170,6 @@ export function BadgeEmblem({
     if (!el) return;
     delete el.dataset.hover;
     for (const v of ["--bfx-ry", "--bfx-rx", "--bfx-bx"]) el.style.removeProperty(v);
-    const sway = el.querySelector<HTMLElement>(".bfx-sway");
-    if (sway) {
-      sway.style.removeProperty("transform");
-      sway.style.removeProperty("transition");
-    }
   };
   const legend = tier === "legend";
   return (
@@ -196,16 +181,15 @@ export function BadgeEmblem({
       onPointerLeave={legend ? onLeave : undefined}
       aria-hidden
     >
+      {legend ? <span className="bfx-glow" /> : null}
       <span className="bfx-tilt">
-        <span className="bfx-sway">
-          {img}
-          <span className="bfx-holo">
-            <span className="bfx-band" />
-          </span>
-          {tier !== "rare" ? <span className="bfx-spark bfx-spark-a" /> : null}
-          {tier !== "rare" ? <span className="bfx-spark bfx-spark-b" /> : null}
-          {legend ? <span className="bfx-spark bfx-spark-c" /> : null}
+        {img}
+        <span className="bfx-holo">
+          <span className="bfx-band" />
         </span>
+        <span className="bfx-spark bfx-spark-a" />
+        <span className="bfx-spark bfx-spark-b" />
+        {legend ? <span className="bfx-spark bfx-spark-c" /> : null}
       </span>
     </span>
   );

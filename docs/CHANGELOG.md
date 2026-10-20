@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.7**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.8**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,17 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.8 (badge effects tuned, 2026-10-20 · DESIGN-DECISIONS #128)
+- **Rare badges are plain** (no holo). **Epic** sweep a little softer.
+- **Legendary badges no longer move at rest** (the idle sway read as odd): they
+  tilt only under the pointer (desktop, ±30°, the reflection follows). At rest
+  they get a brighter prismatic sweep, three twinkles and a new **warm halo**
+  behind the art — wide and faint, breathing slowly (opacity / scale only), so it
+  frames the badge without doubling the art's own glow; it lifts on hover.
+- Hosting unchanged: pure static export on an assets-only Worker (no script, no
+  `run_worker_first`); badge SVGs are static files with a 1-day cache, and the
+  holo mask reuses the same file — no extra requests.
 
 ### Changed — rc.7 (badge effects rebuilt, 2026-10-20 · DESIGN-DECISIONS #128)
 - **Badge effects redone.** Miguel on rc.6: ugly, the spinning rays behind the

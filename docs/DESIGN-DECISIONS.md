@@ -1351,4 +1351,6 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      only exists on screen. Visual: the art's glow is not doubled — rare and
      epic get a light sweep (epic prismatic + twinkles), legendary a strong
      3D sway with a riding reflection and pointer tilt. No rays.
+     rc.8 (Miguel): rare plain; epic a little softer; legendary still at rest
+     (tilt on hover only) with a wide, faint warm halo behind the art.
 

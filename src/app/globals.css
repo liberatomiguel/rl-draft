@@ -1150,7 +1150,7 @@ html.reduce-fx .card-float {
 }
 
 /* ---------------------------------------------------------------------------
-   Badge FX (rc.7, rebuilt for performance) — BadgeEmblem's rarity effects.
+   Badge FX (rc.7 performance rules, rc.8 look) — BadgeEmblem's effects.
    The badge SVGs carry their own glow AND 3–4 SVG blur filters each, so they
    are expensive to rasterise: nothing here may make the browser re-raster
    them every frame. Rules:
@@ -1161,10 +1161,11 @@ html.reduce-fx .card-float {
    · nothing animates until the badge is on screen ([data-live], set by an
      IntersectionObserver in BadgeEmblem), and every badge runs its own
      offset (--bfx-delay) so a grid never pulses in sync.
-   Rare: a soft cool sweep, slow. Epic: a prismatic sweep + two twinkles.
-   Legendary: a strong 3D sway with a prismatic reflection that rides it,
-   three twinkles, and pointer tilt on desktop. Off under lite-fx /
-   reduce-fx, still under reduced motion.
+   Common / uncommon / rare: plain art (rc.8). Epic: a soft prismatic sweep +
+   two twinkles. Legendary: still at rest — a brighter sweep, a warm halo that
+   breathes behind it and three twinkles; on hover (desktop) it tilts toward
+   the pointer, the reflection follows and the halo lifts. Off under lite-fx /
+   reduce-fx (the halo stays, still), still under reduced motion.
 --------------------------------------------------------------------------- */
 .bfx {
   position: relative;
@@ -1175,14 +1176,11 @@ html.reduce-fx .card-float {
 .bfx-legend {
   perspective: 340px;
 }
-.bfx-tilt,
-.bfx-sway {
+.bfx-tilt {
   position: absolute;
   inset: 0;
-}
-.bfx-tilt {
   transform: rotateX(var(--bfx-rx, 0deg)) rotateY(var(--bfx-ry, 0deg));
-  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .bfx-img {
   position: absolute;
@@ -1219,7 +1217,7 @@ html.reduce-fx .card-float {
   opacity: 0;
 }
 .bfx[data-live] .bfx-band {
-  animation: bfx-pass var(--bfx-cycle, 7s) ease-in-out var(--bfx-delay, 0s) infinite;
+  animation: bfx-pass var(--bfx-cycle, 6s) ease-in-out var(--bfx-delay, 0s) infinite;
 }
 @keyframes bfx-pass {
   0% { transform: translateX(-55%); opacity: 0; }
@@ -1228,48 +1226,47 @@ html.reduce-fx .card-float {
   47%, 100% { transform: translateX(55%); opacity: 0; }
 }
 
-.bfx-rare {
-  --bfx-cycle: 7.5s;
-  --bfx-band: linear-gradient(100deg, transparent 30%, rgba(186, 230, 253, 0.28) 41%, rgba(255, 255, 255, 0.5) 50%, rgba(186, 230, 253, 0.28) 59%, transparent 70%);
-}
 .bfx-epic {
   --bfx-cycle: 5.8s;
-  --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.32) 37%, rgba(255, 255, 255, 0.6) 47%, rgba(125, 211, 252, 0.42) 55%, rgba(253, 230, 138, 0.36) 63%, transparent 74%);
+  --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.34) 55%, rgba(253, 230, 138, 0.29) 63%, transparent 74%);
 }
 .bfx-legend {
-  --bfx-band: linear-gradient(100deg, transparent 28%, rgba(244, 114, 182, 0.22) 38%, rgba(255, 255, 255, 0.46) 47%, rgba(125, 211, 252, 0.3) 55%, rgba(253, 230, 138, 0.26) 62%, transparent 72%);
+  --bfx-cycle: 4.6s;
+  --bfx-band: linear-gradient(100deg, transparent 24%, rgba(244, 114, 182, 0.3) 36%, rgba(255, 255, 255, 0.58) 47%, rgba(125, 211, 252, 0.38) 55%, rgba(253, 230, 138, 0.34) 63%, transparent 76%);
 }
 
-/* LEGENDARY — the sway (both ways from flat, so a restart never jumps) and a
-   reflection that crosses the badge as it turns. */
-.bfx-legend .bfx-band {
-  opacity: 1;
-  transform: translateX(0);
+/* LEGENDARY halo — a warm, soft light behind the art (outside the tilt, so it
+   stays put), breathing slowly. Wider and fainter than the art's own glow, so
+   it frames the badge instead of doubling it. */
+.bfx-glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(253, 230, 138, 0.34), rgba(251, 191, 36, 0.16) 52%, rgba(251, 146, 60, 0) 100%);
+  opacity: 0.75;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
-.bfx-legend[data-live] .bfx-sway {
-  animation: bfx-sway 5.2s ease-in-out var(--bfx-delay, 0s) infinite;
+.bfx-legend[data-live] .bfx-glow {
+  animation: bfx-breathe 4.6s ease-in-out var(--bfx-delay, 0s) infinite;
 }
-.bfx-legend[data-live] .bfx-band {
-  animation: bfx-reflect 5.2s ease-in-out var(--bfx-delay, 0s) infinite;
+@keyframes bfx-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.95); }
+  50% { opacity: 0.9; transform: scale(1.04); }
 }
-@keyframes bfx-sway {
-  0%, 100% { transform: rotateY(0deg) rotateX(0deg) translateY(0); }
-  25% { transform: rotateY(-28deg) rotateX(6deg) translateY(-3%); }
-  75% { transform: rotateY(28deg) rotateX(-6deg) translateY(-3%); }
-}
-@keyframes bfx-reflect {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-40%); }
-  75% { transform: translateX(40%); }
-}
-/* Pointer (desktop): the hand takes over from the sway. */
-.bfx-legend[data-hover] .bfx-sway,
+
+/* LEGENDARY on hover (desktop): tilt toward the pointer, the reflection
+   follows it, the halo lifts. At rest nothing moves but the sweep. */
 .bfx-legend[data-hover] .bfx-band {
   animation: none;
-}
-.bfx-legend[data-hover] .bfx-band {
+  opacity: 1;
   transform: translateX(var(--bfx-bx, 0%));
   transition: transform 0.2s ease-out;
+}
+.bfx-legend[data-hover] .bfx-glow {
+  animation: none;
+  opacity: 1;
+  transform: scale(1.08);
 }
 
 /* Twinkles (epic: two, legendary: three) — tiny, transform + opacity only. */
@@ -1299,12 +1296,12 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .bfx .bfx-spark {
   display: none;
 }
-:is(html.lite-fx, html.reduce-fx) .bfx-sway {
+:is(html.lite-fx, html.reduce-fx) .bfx-glow {
   animation: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .bfx-band,
-  .bfx-sway,
+  .bfx-glow,
   .bfx-spark {
     animation: none !important;
   }
