@@ -11,7 +11,7 @@
  * static SVGs drawn from Miguel's design file.
  */
 
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
 import { badgeArtSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
@@ -55,23 +55,59 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 
 // ---------------------------------------------------------------------------
 // Badge emblem (rc.4: Miguel's "Gema & Moldura" art, one static SVG each;
-// rc.6: rarity effects — globals.css "Badge FX")
+// rc.7: rarity effects rebuilt light — globals.css "Badge FX")
 // ---------------------------------------------------------------------------
 
 /** Below this box the effects are invisible noise, so the art renders plain. */
 const BADGE_FX_MIN_PX = 28;
 /** Pointer tilt range (deg) for legendary badges. Rendering, not gameplay. */
-const BADGE_TILT_DEG = 16;
+const BADGE_TILT_DEG = 30;
+
+/**
+ * ONE shared IntersectionObserver marks badges on screen (`data-live`); the
+ * CSS only animates those, so a long board or locker grid costs nothing off
+ * screen. A data attribute, not a class: React owns `className`.
+ */
+let liveObserver: IntersectionObserver | null | undefined;
+function observeLive(el: Element): () => void {
+  if (liveObserver === undefined) {
+    liveObserver =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                if (e.isIntersecting) (e.target as HTMLElement).dataset.live = "";
+                else delete (e.target as HTMLElement).dataset.live;
+              }
+            },
+            { rootMargin: "48px" },
+          );
+  }
+  if (!liveObserver) {
+    (el as HTMLElement).dataset.live = "";
+    return () => {};
+  }
+  liveObserver.observe(el);
+  return () => liveObserver?.unobserve(el);
+}
+
+/** A stable per-badge offset so a grid never animates in lockstep. */
+function fxDelay(key: string): string {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return `-${(h % 5000) / 1000}s`;
+}
 
 /**
  * A badge: its SVG art (`public/badges/<art>.svg`). Lazy + async, so a board of
- * 100 rows only fetches what scrolls into view. rc.6 effects grow with rarity,
- * like the special cards: common / uncommon plain; rare a prismatic holo with a
- * light sweep; epic a turning rainbow holo, sparkles and a violet aura;
- * legendary all of it stronger, golden rays, a pulsing aura and a 3D tilt
- * (an idle sway, plus pointer tracking on desktop). The holo layers are masked
- * by the badge's own SVG, so they only light the badge. `reduce-fx` /
- * `lite-fx` / reduced motion switch them off (globals.css).
+ * 100 rows only fetches what scrolls into view. rc.7 effects grow with rarity
+ * and stay cheap (transform / opacity only, on screen only): common /
+ * uncommon plain; rare a soft light sweep; epic a prismatic sweep and two
+ * twinkles; legendary a strong 3D sway carrying a prismatic reflection, three
+ * twinkles and pointer tilt on desktop. The sweep is masked by the badge's own
+ * SVG so it only lights the badge. `reduce-fx` / `lite-fx` / reduced motion
+ * switch it off (globals.css).
  */
 export function BadgeEmblem({
   badge,
@@ -86,11 +122,16 @@ export function BadgeEmblem({
   fx?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  if (badge.kind !== "badge") return null;
+  const isBadge = badge.kind === "badge";
   const px = typeof size === "number" ? size : PX[size];
-  const src = badgeArtSrc(badge.style.art);
   const tier = badge.tier;
-  const live = fx && px >= BADGE_FX_MIN_PX && (tier === "rare" || tier === "epic" || tier === "legend");
+  const live = isBadge && fx && px >= BADGE_FX_MIN_PX && (tier === "rare" || tier === "epic" || tier === "legend");
+  useEffect(() => {
+    if (!live || !ref.current) return;
+    return observeLive(ref.current);
+  }, [live]);
+  if (badge.kind !== "badge") return null;
+  const src = badgeArtSrc(badge.style.art);
   const img = (
     // Static SVG from public/ (no next/image: nothing to optimise, and the
     // static export serves it as is).
@@ -110,40 +151,60 @@ export function BadgeEmblem({
   );
   if (!live) return img;
 
-  // Legendary: tilt toward the pointer (DOM-only CSS vars, no re-render).
+  // Legendary + mouse: the pointer takes over from the idle sway (DOM-only CSS
+  // vars and data attributes, no re-render).
   const onMove = (e: React.PointerEvent<HTMLSpanElement>) => {
-    if (e.pointerType !== "mouse" || !ref.current) return;
-    const r = ref.current.getBoundingClientRect();
+    const el = ref.current;
+    if (e.pointerType !== "mouse" || !el) return;
+    const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
     const y = (e.clientY - r.top) / r.height - 0.5;
-    ref.current.style.setProperty("--bfx-ry", `${(x * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
-    ref.current.style.setProperty("--bfx-rx", `${(-y * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
+    if (!("hover" in el.dataset)) {
+      // Hand-off without a jump: freeze the sway where it is, then ease it flat
+      // while the pointer tilt (on the outer layer) eases in.
+      const sway = el.querySelector<HTMLElement>(".bfx-sway");
+      if (sway) sway.style.transform = getComputedStyle(sway).transform;
+      el.dataset.hover = "";
+      if (sway) {
+        void sway.offsetWidth;
+        sway.style.transition = "transform 0.35s ease-out";
+        sway.style.transform = "none";
+      }
+    }
+    el.style.setProperty("--bfx-ry", `${(x * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
+    el.style.setProperty("--bfx-rx", `${(-y * BADGE_TILT_DEG * 2).toFixed(1)}deg`);
+    el.style.setProperty("--bfx-bx", `${(-x * 70).toFixed(1)}%`);
   };
   const onLeave = () => {
-    ref.current?.style.removeProperty("--bfx-ry");
-    ref.current?.style.removeProperty("--bfx-rx");
+    const el = ref.current;
+    if (!el) return;
+    delete el.dataset.hover;
+    for (const v of ["--bfx-ry", "--bfx-rx", "--bfx-bx"]) el.style.removeProperty(v);
+    const sway = el.querySelector<HTMLElement>(".bfx-sway");
+    if (sway) {
+      sway.style.removeProperty("transform");
+      sway.style.removeProperty("transition");
+    }
   };
+  const legend = tier === "legend";
   return (
     <span
       ref={ref}
       className={cx("bfx", `bfx-${tier}`, className)}
-      style={{ width: px, height: px, ["--bfx-mask" as string]: `url("${src}")` } as React.CSSProperties}
-      onPointerMove={tier === "legend" ? onMove : undefined}
-      onPointerLeave={tier === "legend" ? onLeave : undefined}
+      style={{ width: px, height: px, ["--bfx-mask" as string]: `url("${src}")`, ["--bfx-delay" as string]: fxDelay(badge.id) } as React.CSSProperties}
+      onPointerMove={legend ? onMove : undefined}
+      onPointerLeave={legend ? onLeave : undefined}
       aria-hidden
     >
-      <span className="bfx-body">
-        {tier === "legend" ? <span className="bfx-rays" /> : null}
-        <span className="bfx-core">
+      <span className="bfx-tilt">
+        <span className="bfx-sway">
           {img}
-          <span className="bfx-holo" />
-          {tier !== "rare" ? (
-            <>
-              <span className="bfx-spark bfx-spark-a" />
-              <span className="bfx-spark bfx-spark-b" />
-              {tier === "legend" ? <span className="bfx-spark bfx-spark-c" /> : null}
-            </>
-          ) : null}
+          <span className="bfx-holo">
+            <span className="bfx-band" />
+          </span>
+          {tier !== "rare" ? <span className="bfx-spark bfx-spark-a" /> : null}
+          {tier !== "rare" ? <span className="bfx-spark bfx-spark-b" /> : null}
+          {legend ? <span className="bfx-spark bfx-spark-c" /> : null}
         </span>
       </span>
     </span>

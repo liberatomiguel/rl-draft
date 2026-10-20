@@ -1342,3 +1342,13 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      `lite-fx` (#122) and frozen by reduced motion. Below 28 px a badge renders
      plain (the effects would be noise).
 
+128. **Badge effects must never re-raster the art (rc.7, supersedes the look of
+     #127).** The badge SVGs carry their own glow and 3–4 blur filters each;
+     rc.6's animated drop-shadow + color-dodge froze the profile. Rules: only
+     transform / opacity animate; no CSS filter or blend mode on badges; the
+     holo is one soft band inside a static mask, normal alpha; nothing runs
+     off screen (IntersectionObserver → `data-live`), and the masked layer
+     only exists on screen. Visual: the art's glow is not doubled — rare and
+     epic get a light sweep (epic prismatic + twinkles), legendary a strong
+     3D sway with a riding reflection and pointer tilt. No rays.
+

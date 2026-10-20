@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.6**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.7**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,28 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.7 (badge effects rebuilt, 2026-10-20 · DESIGN-DECISIONS #128)
+- **Badge effects redone.** Miguel on rc.6: ugly, the spinning rays behind the
+  legendaries did not work, the holo was too fast and thin to see, and the profile
+  with every badge froze the browser. Now:
+  - **Rare** — one wide, soft, cool light sweep, slow (every ~7.5 s).
+  - **Epic** — a wider prismatic sweep (~every 5.8 s) and two twinkles.
+  - **Legendary** — a strong 3D sway (±28°, with a slight lift) carrying a soft
+    prismatic reflection that rides the turn, three twinkles, and on desktop the
+    pointer takes over the tilt (±30°) with a smooth hand-off. No rays, no extra
+    glow: the art's own glow is left alone.
+- Each badge runs on its own offset, so a grid never pulses in sync.
+
+### Fixed — rc.7
+- **The profile froze with many badges on screen.** Root cause: the rc.6 effects
+  animated `filter: drop-shadow` on the badge images and used `color-dodge`
+  blending over a spinning gradient; every badge SVG carries 3–4 SVG blur filters,
+  so the browser re-rasterised and re-filtered each badge every frame. The effects
+  now animate only `transform` / `opacity` (GPU-composited), use no CSS filter
+  and no blend mode, and only run for badges on screen (one shared
+  IntersectionObserver sets `data-live`); the masked holo layer is not even
+  created for off-screen badges. No new requests.
 
 ### Added — rc.6 (badge effects, Supernova, badge showcase, 2026-10-20 · DESIGN-DECISIONS #126–#127)
 - **Badge effects by rarity**, after the special cards' holo: common / uncommon
