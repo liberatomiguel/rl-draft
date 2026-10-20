@@ -1289,16 +1289,17 @@ html.reduce-fx .card-float {
   0%, 100% { opacity: 0.72; }
   50% { opacity: 1; }
 }
-/* Short rays — a detail peeking just past the badge's edge, not a sunburst.
-   Flat behind the badge, turning slowly (rotate only). */
+/* Short rays — a detail, not a sunburst: they start at the CENTRE (behind
+   the art, so they read as coming out of the badge) and fade a little past
+   its edge. Flat behind the badge, turning slowly (rotate only). */
 .bfx-rays {
   position: absolute;
-  inset: -16%;
+  inset: -12%;
   border-radius: 50%;
   pointer-events: none;
   background: repeating-conic-gradient(rgba(255, 224, 140, 0) 0deg 11deg, rgba(255, 224, 140, 0.27) 12deg 13.5deg, rgba(255, 224, 140, 0) 14.5deg 22.5deg);
-  -webkit-mask: radial-gradient(closest-side, transparent 58%, #000 70%, transparent 92%);
-  mask: radial-gradient(closest-side, transparent 58%, #000 70%, transparent 92%);
+  -webkit-mask: radial-gradient(closest-side, #000 0%, #000 60%, transparent 94%);
+  mask: radial-gradient(closest-side, #000 0%, #000 60%, transparent 94%);
 }
 .bfx-legend[data-live] .bfx-rays {
   animation: bfx-spin 36s linear infinite;

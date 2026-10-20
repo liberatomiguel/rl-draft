@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.11**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.12**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,11 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.12 (2026-10-20)
+- Legendary rays now start at the badge's centre (behind the art, so they read
+  as coming out of it) and end a little closer, fading just past the edge — they
+  used to float in a ring away from the centre.
 
 ### Changed — rc.11 (legendary glow in the silhouette, 2026-10-20 · DESIGN-DECISIONS #129)
 - **Legendary glow follows the badge's own shape.** `build-images` now also makes
