@@ -1162,13 +1162,13 @@ html.reduce-fx .card-float {
      IntersectionObserver in BadgeEmblem), and every badge runs its own
      offset (--bfx-delay) so a grid never pulses in sync.
    Common / uncommon / rare: plain art (rc.8). Epic: a soft prismatic sweep +
-   two twinkles. Legendary (rc.9): a gentle 3D sway at rest with a slow
-   reflection riding it, a gold aura that hugs the badge's silhouette and
-   pulses, and three twinkles; on hover (desktop) the pointer takes the tilt.
-   Sway and tilt scale with the badge size (--bfx-amp). Small badges (board
-   rows) skip the twinkles. In production the art is a pre-rendered WebP.
-   Off under lite-fx / reduce-fx (the aura stays, still), still under reduced
-   motion.
+   two twinkles. Legendary (rc.10): a 3D sway at rest with a slow reflection
+   riding it, a wide soft gold glow behind it with fine light rays turning
+   slowly over it (low opacity), and three twinkles; on hover (desktop) the
+   pointer takes the tilt. Sway and tilt scale with the badge size
+   (--bfx-amp). Small badges (board rows) keep the glow but skip the rays and
+   twinkles. In production the art is a pre-rendered WebP. Off under lite-fx /
+   reduce-fx (the glow stays, still), still under reduced motion.
 --------------------------------------------------------------------------- */
 .bfx {
   position: relative;
@@ -1234,12 +1234,12 @@ html.reduce-fx .card-float {
   --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.34) 55%, rgba(253, 230, 138, 0.29) 63%, transparent 74%);
 }
 .bfx-legend {
-  --bfx-amp: 18deg;
+  --bfx-amp: 24deg;
   --bfx-band: linear-gradient(100deg, transparent 26%, rgba(244, 114, 182, 0.26) 37%, rgba(255, 255, 255, 0.5) 47%, rgba(125, 211, 252, 0.32) 55%, rgba(253, 230, 138, 0.3) 62%, transparent 74%);
 }
 /* Small legendaries (board rows) sway less. */
 .bfx-legend.bfx-sm {
-  --bfx-amp: 9deg;
+  --bfx-amp: 12deg;
 }
 
 /* LEGENDARY at rest — a gentle sway (both ways from flat, so a restart never
@@ -1269,25 +1269,40 @@ html.reduce-fx .card-float {
   75% { transform: translateX(42%); }
 }
 
-/* LEGENDARY aura — a gold light in the badge's own silhouette (the art as a
-   mask), a touch larger and behind the art, so it reads as a rim of light
-   around THIS shape; it pulses (opacity + scale only). It rides the sway. */
-.bfx-glow {
+/* LEGENDARY light — behind the badge and outside the tilt, so it stays put
+   while the badge turns: a wide, soft gold glow that breathes a little
+   (opacity), and fine rays over it turning slowly (rotate). Both are static
+   gradients; only opacity / transform animate. Kept faint: the badge art
+   already has its own glow, this only lifts it off the page. */
+.bfx-glow,
+.bfx-rays {
   position: absolute;
-  inset: 0;
+  border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 45%, #fff3c4 0%, #fcd34d 38%, #f59e0b 70%, #ea580c 100%);
-  -webkit-mask: var(--bfx-mask) center / contain no-repeat;
-  mask: var(--bfx-mask) center / contain no-repeat;
-  opacity: 0.4;
-  transform: scale(1.08);
+}
+.bfx-glow {
+  inset: -34%;
+  background: radial-gradient(closest-side, rgba(253, 224, 140, 0.3), rgba(251, 191, 36, 0.14) 45%, rgba(245, 158, 11, 0.05) 72%, transparent 100%);
+  opacity: 0.85;
 }
 .bfx-legend[data-live] .bfx-glow {
-  animation: bfx-aura 2.8s ease-in-out var(--bfx-delay, 0s) infinite;
+  animation: bfx-breathe 5s ease-in-out var(--bfx-delay, 0s) infinite;
 }
-@keyframes bfx-aura {
-  0%, 100% { opacity: 0.22; transform: scale(1.04); }
-  50% { opacity: 0.62; transform: scale(1.13); }
+@keyframes bfx-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.bfx-rays {
+  inset: -30%;
+  background: repeating-conic-gradient(rgba(255, 220, 130, 0) 0deg 10deg, rgba(255, 220, 130, 0.16) 11deg 12.5deg, rgba(255, 220, 130, 0) 13.5deg 20deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 30%, #000 46%, transparent 100%);
+  mask: radial-gradient(closest-side, transparent 30%, #000 46%, transparent 100%);
+}
+.bfx-legend[data-live] .bfx-rays {
+  animation: bfx-spin 30s linear infinite;
+}
+@keyframes bfx-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* LEGENDARY on hover (desktop): the pointer takes the tilt (BadgeEmblem
@@ -1302,9 +1317,8 @@ html.reduce-fx .card-float {
   transition: transform 0.2s ease-out;
 }
 .bfx-legend[data-hover] .bfx-glow {
-  opacity: 0.6;
-  transform: scale(1.12);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 /* Twinkles (epic: two, legendary: three) — tiny, transform + opacity only. */
@@ -1338,9 +1352,13 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .bfx-sway {
   animation: none !important;
 }
+:is(html.lite-fx, html.reduce-fx) .bfx-rays {
+  display: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .bfx-band,
   .bfx-glow,
+  .bfx-rays,
   .bfx-sway,
   .bfx-spark {
     animation: none !important;

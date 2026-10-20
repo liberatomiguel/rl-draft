@@ -1362,4 +1362,7 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      patterns. Legendary look (Miguel): a gentle idle sway again (size-scaled),
      a slow riding reflection, and a pulsing gold aura in the badge's own
      silhouette instead of a round halo. Pre-season Champion → rare.
+     rc.10 (Miguel): more sway (±24°) and hover tilt (34°); the aura became a
+     wide soft gold glow with fine, faint rays turning slowly behind the badge
+     (transform / opacity only, rays skipped on board-row badges).
 

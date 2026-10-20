@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.9** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.10** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
   `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
@@ -38,7 +38,8 @@ badges), badge showcase on the profile, no in-season rank rewards, locker
 sorted by rarity, whole home cards clickable; rc.7: badge effects rebuilt
 light (transform/opacity only, on-screen only); rc.8: rare plain, epic sweep;
 rc.9: badges as pre-rendered WebP (build-images), board loops transform-only,
-legendary sway + silhouette aura.
+legendary sway + silhouette aura; rc.10: stronger sway / tilt, soft gold glow
+with faint turning rays behind legendaries.
 Decisions: DESIGN-DECISIONS #110–#129, ROAD-TO-WORLDS-DECISIONS R20–R38.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.9**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.10**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,15 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.10 (legendary presence, 2026-10-20 · DESIGN-DECISIONS #129)
+- Legendary badges move more at rest (sway ±24°, ±12° on small badges) and tilt
+  further under the pointer (34° / 22° / 13° by size).
+- The pulsing silhouette aura is replaced by a **wide, soft gold glow** behind the
+  badge (breathing a little, opacity only) with **fine light rays** over it, turning
+  slowly (30 s, rotate only) at low opacity — the rc.6 rays idea, toned down. Both
+  stay flat behind the tilting badge. Board-row badges keep the glow, skip the
+  rays. Under reduce-fx the rays are hidden and the glow is still.
 
 ### Changed — rc.9 (leaderboard performance, legendary aura, 2026-10-20 · DESIGN-DECISIONS #129)
 - **Badges are pre-rendered WebP in production.** `build-images` (prebuild) now
