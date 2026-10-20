@@ -20,6 +20,9 @@
  *   badges   public/badges/<art>.svg           → img/badges/<art>.<hash>.<w>.webp     w ∈ BADGE_WIDTHS
  *            (rc.9: the SVGs carry 3–4 blur filters each; rasterising them in the
  *            browser — ~180 on a leaderboard — froze it. Pre-rendered once here.)
+ *            + img/badges/<art>.<glowHash>.glow.webp (rc.11): the art's silhouette
+ *            in gold, blurred once here, padded — the legendary glow behind the
+ *            badge, so the browser never blurs anything.
  *   flags    public/flags/<cc>.png             → not converted (tiny); listed in the manifest only
  *
  * <hash> = first 10 hex chars of sha256(source file bytes + that category's
@@ -92,6 +95,9 @@ const RANK_WEBP = { quality: 90, alphaQuality: 100, effort: 5, smartSubsample: t
 const BADGE_WIDTHS = [96, 224];
 const BADGE_SVG_DENSITY = 144;
 const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: true };
+/** Legendary glow: the silhouette at BADGE_GLOW.size px, tinted, padded by
+ *  BADGE_GLOW.pad px each side (CSS: inset = -pad/size), blurred by sigma. */
+const BADGE_GLOW = { size: 224, pad: 64, sigma: 13, rgb: [252, 200, 90], webp: { quality: 80, alphaQuality: 90, effort: 5 } };
 
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
@@ -184,7 +190,7 @@ const mb = (n) => `${(n / 1024 / 1024).toFixed(2)} MB`;
 
 /**
  * @typedef {{ src: string, dest: string, width: number, height?: number,
- *             fit: "inside" | "width", webp: object, density?: number }} Job
+ *             fit: "inside" | "width", webp: object, density?: number, glow?: object }} Job
  */
 
 async function plan() {
@@ -200,6 +206,7 @@ async function plan() {
     specials: {},
     ranks: {},
     badges: {},
+    badgeGlows: {},
   };
   let sourceBytes = 0;
 
@@ -284,6 +291,18 @@ async function plan() {
         density: BADGE_SVG_DENSITY,
       });
     }
+    const glowHash = hashOf(await readFile(src), { density: BADGE_SVG_DENSITY, glow: BADGE_GLOW });
+    manifest.badgeGlows[art] = glowHash;
+    jobs.push({
+      src,
+      dest: join(OUT_DIR, "badges", `${art}.${glowHash}.glow.webp`),
+      width: BADGE_GLOW.size,
+      height: BADGE_GLOW.size,
+      fit: "inside",
+      webp: BADGE_GLOW.webp,
+      density: BADGE_SVG_DENSITY,
+      glow: BADGE_GLOW,
+    });
   }
 
   // flags: listed only (served as-is from /flags/<cc>.png)
@@ -314,7 +333,7 @@ async function encode(jobs, rebuildAll) {
             ? { width: job.width, height: job.height, fit: "inside", withoutEnlargement: true }
             : { width: job.width, withoutEnlargement: true };
         const input = job.density ? sharp(job.src, { density: job.density }) : sharp(job.src);
-        const buf = await input.resize(resize).webp(job.webp).toBuffer();
+        const buf = job.glow ? await encodeGlow(input.resize(resize), job.glow) : await input.resize(resize).webp(job.webp).toBuffer();
         await mkdir(dirname(job.dest), { recursive: true });
         // Write-then-rename so an interrupted run never leaves a truncated file
         // that the "skip existing" check would trust next time.
@@ -329,6 +348,24 @@ async function encode(jobs, rebuildAll) {
     CONCURRENCY,
   );
   return { written, skipped, failures };
+}
+
+/** The legendary glow: keep the art's alpha, paint every pixel one gold (so the
+ *  blur only spreads alpha — the padding is the same gold at alpha 0, no dark
+ *  fringe), pad, blur once. */
+async function encodeGlow(pipeline, glow) {
+  const { data, info } = await pipeline.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const [r, g, b] = glow.rgb;
+  for (let i = 0; i < info.width * info.height; i++) {
+    data[i * 4] = r;
+    data[i * 4 + 1] = g;
+    data[i * 4 + 2] = b;
+  }
+  return sharp(data, { raw: info })
+    .extend({ top: glow.pad, bottom: glow.pad, left: glow.pad, right: glow.pad, background: { r, g, b, alpha: 0 } })
+    .blur(glow.sigma)
+    .webp(glow.webp)
+    .toBuffer();
 }
 
 async function deleteStale(jobs) {
@@ -356,6 +393,7 @@ async function writeManifest(manifest) {
     specials: sortKeys(manifest.specials),
     ranks: sortKeys(manifest.ranks),
     badges: sortKeys(manifest.badges),
+    badgeGlows: sortKeys(manifest.badgeGlows),
   };
   const text = `${JSON.stringify(ordered, null, 2)}\n`;
   let current = null;

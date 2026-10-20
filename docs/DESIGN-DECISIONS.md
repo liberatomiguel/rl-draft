@@ -1365,4 +1365,8 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      rc.10 (Miguel): more sway (±24°) and hover tilt (34°); the aura became a
      wide soft gold glow with fine, faint rays turning slowly behind the badge
      (transform / opacity only, rays skipped on board-row badges).
+     rc.11 (Miguel: "the glow went back to a circle; the rays are too long"):
+     the glow is the badge's silhouette blurred at BUILD time (build-images
+     *.glow.webp) — elegant and shape-true at the cost of one static image;
+     rays shortened to a detail just past the edge; hover tilt 26° / 17° / 10°.
 

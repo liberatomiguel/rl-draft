@@ -403,6 +403,9 @@ async function checkGeneratedImages(ctx) {
   for (const [art, hash] of Object.entries(manifest.badges ?? {})) {
     for (const w of widths.badges) urls.push(`/img/badges/${seg(art)}.${hash}.${w}.webp`);
   }
+  for (const [art, hash] of Object.entries(manifest.badgeGlows ?? {})) {
+    urls.push(`/img/badges/${seg(art)}.${hash}.glow.webp`);
+  }
   for (const cc of manifest.flags ?? []) urls.push(`/flags/${cc}.png`);
 
   const files = new Set(ctx.files);

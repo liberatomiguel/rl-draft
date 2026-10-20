@@ -13,7 +13,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
-import { badgeArtSrc } from "@/lib/assets";
+import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 
@@ -64,7 +64,7 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 const BADGE_FX_MIN_PX = 28;
 /** Pointer tilt range (deg) by badge size — a board-row badge tilts far less
  *  than the profile's. Rendering, not gameplay. */
-const tiltDegFor = (px: number): number => (px >= 64 ? 34 : px >= 44 ? 22 : 13);
+const tiltDegFor = (px: number): number => (px >= 64 ? 26 : px >= 44 ? 17 : 10);
 /** At or under this box a badge is "small" (board rows): gentler sway, no twinkles. */
 const BADGE_SMALL_PX = 40;
 
@@ -109,10 +109,11 @@ function fxDelay(key: string): string {
  * 100 rows only fetches what scrolls into view; in production it is a
  * pre-rendered WebP (rc.9). Effects stay cheap (transform / opacity only, on
  * screen only): common / uncommon / rare plain; epic a soft prismatic sweep and
- * two twinkles; legendary a 3D sway with a slow reflection riding it, a wide
- * soft gold glow with fine rays turning slowly behind it and three twinkles,
- * with the pointer taking the tilt on hover (desktop). Sway and tilt scale with
- * the size. The sweep is masked by the badge art so it only lights the badge.
+ * two twinkles; legendary a 3D sway with a slow reflection riding it, a gold
+ * glow in its own silhouette (blurred at build time) breathing gently, short
+ * rays just past the edge and three twinkles, with the pointer taking the tilt
+ * on hover (desktop). Sway and tilt scale with the size. The sweep is masked by
+ * the badge art so it only lights the badge.
  * `reduce-fx` / `lite-fx` / reduced motion switch the motion off.
  */
 export function BadgeEmblem({
@@ -195,19 +196,25 @@ export function BadgeEmblem({
     }
   };
   const legend = tier === "legend";
+  const glow = legend ? badgeGlowSrc(badge.style.art) : null;
+  const vars: Record<string, string | number> = { width: px, height: px, "--bfx-mask": `url("${src}")`, "--bfx-delay": fxDelay(badge.id) };
+  if (glow) {
+    vars["--bfx-glow"] = `url("${glow}")`;
+    vars["--bfx-glow-pad"] = BADGE_GLOW_PAD;
+  }
   return (
     <span
       ref={ref}
       className={cx("bfx", `bfx-${tier}`, small && "bfx-sm", className)}
-      style={{ width: px, height: px, ["--bfx-mask" as string]: `url("${src}")`, ["--bfx-delay" as string]: fxDelay(badge.id) } as React.CSSProperties}
+      style={vars as React.CSSProperties}
       onPointerMove={legend ? onMove : undefined}
       onPointerLeave={legend ? onLeave : undefined}
       aria-hidden
     >
-      {legend ? <span className="bfx-glow" /> : null}
       {legend && !small ? <span className="bfx-rays" /> : null}
       <span className="bfx-tilt">
         <span className="bfx-sway">
+          {glow ? <span className="bfx-glow" /> : null}
           {img}
           <span className="bfx-holo">
             <span className="bfx-band" />

@@ -151,8 +151,9 @@ filenames. Styled fallbacks render while files are missing.
 (do not drop or edit SVGs by hand; replace the HTML and re-run). The catalog
 lives in `src/data/cosmetics.ts`; `cosmetics.test.ts` fails if an art file is
 missing. Production serves them as WebP made by `build:images` (rc.9: the SVGs
-carry blur filters that are too heavy to rasterise in the browser), so after
-`build:badges` also run `npm run build:images` and commit the manifest.
+carry blur filters that are too heavy to rasterise in the browser) plus a
+pre-blurred gold silhouette per badge (`*.glow.webp`, the legendary glow), so
+after `build:badges` also run `npm run build:images` and commit the manifest.
 Badge effects must animate only transform / opacity (DESIGN-DECISIONS #128–#129).
 
 The source PNGs stay the source of truth, so drop them in the same folders as

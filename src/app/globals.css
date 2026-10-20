@@ -1162,13 +1162,14 @@ html.reduce-fx .card-float {
      IntersectionObserver in BadgeEmblem), and every badge runs its own
      offset (--bfx-delay) so a grid never pulses in sync.
    Common / uncommon / rare: plain art (rc.8). Epic: a soft prismatic sweep +
-   two twinkles. Legendary (rc.10): a 3D sway at rest with a slow reflection
-   riding it, a wide soft gold glow behind it with fine light rays turning
-   slowly over it (low opacity), and three twinkles; on hover (desktop) the
-   pointer takes the tilt. Sway and tilt scale with the badge size
-   (--bfx-amp). Small badges (board rows) keep the glow but skip the rays and
-   twinkles. In production the art is a pre-rendered WebP. Off under lite-fx /
-   reduce-fx (the glow stays, still), still under reduced motion.
+   two twinkles. Legendary (rc.11): a 3D sway at rest with a slow reflection
+   riding it, a gold glow in the badge's OWN silhouette (a build-time blurred
+   image, --bfx-glow) that breathes gently, short light rays peeking just past
+   the edge, and three twinkles; on hover (desktop) the pointer takes the
+   tilt. Sway and tilt scale with the badge size (--bfx-amp). Small badges
+   (board rows) keep the glow but skip the rays and twinkles. In production
+   the art is a pre-rendered WebP. Off under lite-fx / reduce-fx (the glow
+   stays, still), still under reduced motion.
 --------------------------------------------------------------------------- */
 .bfx {
   position: relative;
@@ -1269,37 +1270,38 @@ html.reduce-fx .card-float {
   75% { transform: translateX(42%); }
 }
 
-/* LEGENDARY light — behind the badge and outside the tilt, so it stays put
-   while the badge turns: a wide, soft gold glow that breathes a little
-   (opacity), and fine rays over it turning slowly (rotate). Both are static
-   gradients; only opacity / transform animate. Kept faint: the badge art
-   already has its own glow, this only lifts it off the page. */
-.bfx-glow,
-.bfx-rays {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
+/* LEGENDARY glow — the badge's own silhouette in gold, blurred at BUILD time
+   (build-images → *.glow.webp, padded by --bfx-glow-pad of the badge each
+   side), so it hugs the wings / shield / ribbons and costs one static image.
+   It sits inside the sway, so it turns with the badge, and breathes gently
+   (opacity only). */
 .bfx-glow {
-  inset: -34%;
-  background: radial-gradient(closest-side, rgba(253, 224, 140, 0.3), rgba(251, 191, 36, 0.14) 45%, rgba(245, 158, 11, 0.05) 72%, transparent 100%);
+  position: absolute;
+  inset: calc(var(--bfx-glow-pad, 0.2857) * -100%);
+  background: var(--bfx-glow) center / contain no-repeat;
+  pointer-events: none;
   opacity: 0.85;
 }
 .bfx-legend[data-live] .bfx-glow {
-  animation: bfx-breathe 5s ease-in-out var(--bfx-delay, 0s) infinite;
+  animation: bfx-breathe 4.8s ease-in-out var(--bfx-delay, 0s) infinite;
 }
 @keyframes bfx-breathe {
-  0%, 100% { opacity: 0.7; }
+  0%, 100% { opacity: 0.72; }
   50% { opacity: 1; }
 }
+/* Short rays — a detail peeking just past the badge's edge, not a sunburst.
+   Flat behind the badge, turning slowly (rotate only). */
 .bfx-rays {
-  inset: -30%;
-  background: repeating-conic-gradient(rgba(255, 220, 130, 0) 0deg 10deg, rgba(255, 220, 130, 0.16) 11deg 12.5deg, rgba(255, 220, 130, 0) 13.5deg 20deg);
-  -webkit-mask: radial-gradient(closest-side, transparent 30%, #000 46%, transparent 100%);
-  mask: radial-gradient(closest-side, transparent 30%, #000 46%, transparent 100%);
+  position: absolute;
+  inset: -16%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(rgba(255, 224, 140, 0) 0deg 11deg, rgba(255, 224, 140, 0.27) 12deg 13.5deg, rgba(255, 224, 140, 0) 14.5deg 22.5deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 58%, #000 70%, transparent 92%);
+  mask: radial-gradient(closest-side, transparent 58%, #000 70%, transparent 92%);
 }
 .bfx-legend[data-live] .bfx-rays {
-  animation: bfx-spin 30s linear infinite;
+  animation: bfx-spin 36s linear infinite;
 }
 @keyframes bfx-spin {
   to { transform: rotate(360deg); }

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.10**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.11**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,16 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.11 (legendary glow in the silhouette, 2026-10-20 · DESIGN-DECISIONS #129)
+- **Legendary glow follows the badge's own shape.** `build-images` now also makes
+  one `*.glow.webp` per badge: the art's silhouette painted gold, padded and
+  blurred ONCE at build time (~16 KB). The badge shows it behind the art, inside
+  the sway (so it turns with the badge), breathing gently (opacity only) and a bit
+  stronger than before. No round halo, no runtime blur; only legendaries request it.
+- **Rays are a detail now**: short, fainter, peeking just past the edge, turning
+  slowly (36 s).
+- Hover tilt toned down (26° / 17° / 10° by size).
 
 ### Changed — rc.10 (legendary presence, 2026-10-20 · DESIGN-DECISIONS #129)
 - Legendary badges move more at rest (sway ±24°, ±12° on small badges) and tilt

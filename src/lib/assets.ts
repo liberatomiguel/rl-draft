@@ -35,6 +35,8 @@ type AssetManifest = {
   ranks: Record<string, string>;
   /** rc.9: badge art key → source hash (pre-rendered WebP of public/badges/*.svg). */
   badges?: Record<string, string>;
+  /** rc.11: badge art key → hash of its pre-blurred gold silhouette (legendary glow). */
+  badgeGlows?: Record<string, string>;
 };
 
 const manifest = manifestJson as AssetManifest;
@@ -132,6 +134,18 @@ const BADGE_DENSITY = 2;
  * by `npm run build:badges`). Every catalog art key exists (the build script
  * and `cosmetics.test.ts` check it), so this never returns null.
  */
+/**
+ * rc.11: the legendary glow — the art's silhouette in gold, blurred at build
+ * time (build-images), padded so the image box is 1 + 2 × BADGE_GLOW_PAD of
+ * the badge. Same path in dev (public/img exists after any build:images);
+ * `null` when not generated, and the badge simply shows no glow.
+ */
+export const BADGE_GLOW_PAD = 64 / 224;
+export function badgeGlowSrc(art: string): string | null {
+  const hash = hashFor(manifest.badgeGlows ?? {}, art);
+  return hash ? `/img/badges/${seg(art)}.${hash}.glow.webp` : null;
+}
+
 export function badgeArtSrc(art: string, displayPx = 64): string {
   const hash = IS_PROD && BADGE_WIDTHS.length ? hashFor(manifest.badges ?? {}, art) : undefined;
   if (!hash) return `/badges/${seg(art)}.svg`;
