@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.5** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.6** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
   `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
@@ -32,8 +32,11 @@ without spoilers + green new-item dots, home missions Daily/Weekly switch,
 quiz tile with Live tag, board rows (badges + title left), and "Reduce visual
 effects" replacing the broken "Reduce motion"; rc.5: badge slots in the locker
 (first free slot / pick a slot / swap / bin), hero badges above the rating,
-taller board rows, a rebuilt player peek, quiz card reads top-down.
-Decisions: DESIGN-DECISIONS #110–#125, ROAD-TO-WORLDS-DECISIONS R20–R38.
+taller board rows, a rebuilt player peek, quiz card reads top-down; rc.6: badge
+rarity effects (holo → rainbow + sparkles → rays + tilt), Supernova (37
+badges), badge showcase on the profile, no in-season rank rewards, locker
+sorted by rarity, whole home cards clickable.
+Decisions: DESIGN-DECISIONS #110–#127, ROAD-TO-WORLDS-DECISIONS R20–R38.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 
 ## Open before `main` (Phase 4)
@@ -47,13 +50,13 @@ Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
   end to end. Lighthouse. Event-card curation and a PT pass.
 - **Cosmetics art still to come (Miguel):** the 20 titles, 16 banners and 6
   generic badges proposed in `data-sources/badges/badges-desbloqueios.md`.
-  Until then titles/banners are the provisional rc.3 set, and the Season 1
-  track's three badges wear the design file's Season 1 rank art.
+  Until then titles/banners are the provisional rc.3 set. The Season 1
+  rank-reward set (handed out at the season's turnover) is still to define.
 - Then merge to `main`, tag `v2.0.0`, move this section into CHANGELOG.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **492** tests / 38 files (385 on `main`)
+- `npm run typecheck` clean · `npm test` **493** tests / 38 files (385 on `main`)
   · `npm run lint` at baseline **5 errors** (pre-existing:
   TournamentScreen ×2, AnimatedNumber, Modal, and one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything

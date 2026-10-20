@@ -58,13 +58,15 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
     const done = doneCount(slot);
     const resets = period === "daily" ? M.resetsIn(hoursToMidnightUtc()) : M.resetsInDays(daysToNextMondayUtc());
     return (
-      <Panel className="flex h-full flex-col p-4 sm:p-5">
+      <Panel className="relative flex h-full flex-col p-4 transition-colors hover:!border-line-strong sm:p-5">
+        {/* rc.6: the whole card opens /missions; the period switch sits above it. */}
+        <AppLink href="/missions" aria-label={M.viewAll} className="absolute inset-0 z-[1] rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-orange/70" />
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="display flex items-center gap-2 text-base font-bold uppercase tracking-wide text-ink">
             {M.title}
             <Badge tone={slot && done === slot.ids.length ? "good" : "blue"}>{slot ? `${done}/${slot.ids.length}` : "—"}</Badge>
           </h3>
-          <div role="tablist" aria-label={M.periodSwitch} className="inline-flex shrink-0 rounded-lg border border-line bg-white/[0.03] p-0.5">
+          <div role="tablist" aria-label={M.periodSwitch} className="relative z-10 inline-flex shrink-0 rounded-lg border border-line bg-white/[0.03] p-0.5">
             {(["daily", "weekly"] as const).map((p) => (
               <button
                 key={p}
@@ -85,9 +87,9 @@ export function MissionsPanel({ compact }: { compact?: boolean }) {
         {slot ? <MissionList slot={slot} period={period} dense /> : null}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
           <span className="text-[11px] text-faint">{resets}</span>
-          <AppLink href="/missions" className={cx(buttonClass("secondary", "sm"), "w-fit")}>
+          <span aria-hidden className={cx(buttonClass("secondary", "sm"), "pointer-events-none w-fit")}>
             {M.viewAll}
-          </AppLink>
+          </span>
         </div>
       </Panel>
     );

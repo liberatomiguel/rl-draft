@@ -6,15 +6,15 @@
  * and badges, straight from the public `leaderboard` view. rc.4 row order:
  * place · name · badges (featured first, a size up) · title on the left; rank
  * and the number on the right. rc.5: taller rows for bigger badges, and the
- * profile peek is a small showcase (identity, the three badges with the
- * featured one centred and largest, then the numbers). Tabs: Season Rating (headline), the frozen pre-season
+ * profile peek is a small showcase (identity + place on this board, the three
+ * badges with the featured one centred and largest, then the numbers). rc.6:
+ * badges carry their rarity effects (holo, sparkles, tilt) here too. Tabs: Season Rating (headline), the frozen pre-season
  * Hall of Fame, titles, Legacy overall, Regional overall. Tap a row for a
  * profile peek. Public and viewable signed out; your row is highlighted.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { FEATURES } from "@/config/balance";
-import { SEASON } from "@/config/season";
 import { previewLeaderboardRows } from "@/data/previewLeaderboard";
 import { useCopy } from "@/content/copy";
 import { rowCosmetics } from "@/engine/cosmetics";
@@ -41,8 +41,8 @@ import type { CosmeticDef } from "@/data/cosmetics";
 /** rc.5 badge boxes (px) — layout, not gameplay. */
 const ROW_BADGE_PX = 28;
 const ROW_FEATURED_PX = 36;
-const PEEK_BADGE_PX = 56;
-const PEEK_FEATURED_PX = 84;
+const PEEK_BADGE_PX = 76;
+const PEEK_FEATURED_PX = 108;
 
 type BoardKey = "season" | "hallOfFame" | "titles" | "legacyOverall" | "regional";
 
@@ -135,7 +135,7 @@ export function LeaderboardsView() {
   const username = useAccountStore((s) => s.username);
   const [board, setBoard] = useState<BoardKey>("season");
   const [loaded, setLoaded] = useState<{ board: BoardKey; rows: Row[] } | null>(null);
-  const [peek, setPeek] = useState<Row | null>(null);
+  const [peek, setPeek] = useState<{ row: Row; place: number } | null>(null);
 
   // Preview rows are derived, never fetched (no effect, no setState) — and only
   // after mount, so the exported HTML stays small.
@@ -217,7 +217,7 @@ export function LeaderboardsView() {
                       type="button"
                       onClick={() => {
                         sfx.click();
-                        setPeek(r);
+                        setPeek({ row: r, place });
                       }}
                       className="flex min-h-[52px] w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-white/5 sm:px-4"
                     >
@@ -262,15 +262,17 @@ export function LeaderboardsView() {
       )}
 
       <Modal open={!!peek} title={L.peekTitle} onClose={() => setPeek(null)}>
-        {peek ? <PeekCard row={peek} /> : null}
+        {peek ? <PeekCard row={peek.row} place={peek.place} boardLabel={L.boards[board]} /> : null}
       </Modal>
     </div>
   );
 }
 
-/** rc.5: the profile peek — identity on the banner, the badge showcase, the numbers. */
-function PeekCard({ row }: { row: Row }) {
-  const { LEADERBOARDS_UI: L, COSMETICS: C } = useCopy();
+/** The profile peek (rc.5, reworked rc.6): the banner with rank emblem, name,
+ *  title and the player's place on THIS board; the badge showcase (featured in
+ *  the middle and largest, with effects); then the numbers. */
+function PeekCard({ row, place, boardLabel }: { row: Row; place: number; boardLabel: string }) {
+  const { LEADERBOARDS_UI: L } = useCopy();
   const copy = useCosmeticCopy();
   const rank = rankForXp(row.rankXp);
   const badges = row.cosmetics.badges;
@@ -295,30 +297,27 @@ function PeekCard({ row }: { row: Row }) {
                 <TitleTag title={row.cosmetics.title} size="sm" />
               </div>
             ) : null}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-                {rank.label} · {SEASON.name}
-              </span>
-              {row.preseasonPosition ? <Badge tone="gold">{L.preseasonPlace(row.preseasonPosition)}</Badge> : null}
-            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className={cx("display text-4xl font-bold leading-none", place === 1 ? "text-amber-300" : place <= 3 ? "text-ink" : "text-sub")}>#{place}</p>
+            <p className="mt-1 max-w-[7rem] text-[10px] font-semibold uppercase leading-tight tracking-[0.12em] text-faint">{boardLabel}</p>
           </div>
         </div>
       </BannerSurface>
 
-      <div className="rounded-xl border border-line bg-white/[0.02] px-3 pb-4 pt-3">
-        <p className="kicker mb-3 text-center !text-[10px]">{L.peekBadges}</p>
+      <div className="rounded-xl border border-line bg-white/[0.02] px-2 pb-4 pt-3">
+        <p className="kicker mb-2 text-center !text-[10px]">{L.peekBadges}</p>
         {showcase.length === 0 ? (
           <p className="py-2 text-center text-xs text-faint">{L.peekNoBadges}</p>
         ) : (
-          <div className="flex items-start justify-center gap-3 sm:gap-6">
+          <div className="flex items-start justify-center gap-1 sm:gap-3">
             {showcase.map(({ badge, featured }) => (
-              <div key={badge.id} className="flex w-24 flex-col items-center gap-1.5 text-center">
+              <div key={badge.id} className="flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center" style={{ maxWidth: PEEK_FEATURED_PX + 16 }}>
                 {/* Same box height for every badge so the names line up. */}
                 <span className="flex items-end justify-center" style={{ height: PEEK_FEATURED_PX }}>
                   <BadgeEmblem badge={badge} size={featured ? PEEK_FEATURED_PX : PEEK_BADGE_PX} />
                 </span>
-                <span className={cx("line-clamp-2 text-[11px] font-semibold leading-tight", featured ? "text-amber-200" : "text-sub")}>{copy.name(badge.id)}</span>
-                {featured ? <span className="display text-[9px] font-bold uppercase tracking-[0.14em] text-amber-300/80">★ {C.featured}</span> : null}
+                <span className={cx("line-clamp-2 text-[11px] font-semibold leading-tight", featured ? "text-ink" : "text-sub")}>{copy.name(badge.id)}</span>
               </div>
             ))}
           </div>

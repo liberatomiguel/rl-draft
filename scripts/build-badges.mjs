@@ -7,9 +7,10 @@
  * The HTML carries a self-contained generator (`badgeSVG(spec)`, the `SERIES`
  * catalog and `rankBadge(rank, season)`); everything after it is page wiring
  * that touches the DOM. We evaluate ONLY the generator part, in an empty
- * `node:vm` context (no require, no process, no fs), and write:
- *   - every badge of every series, as `<key>.svg` (the approved catalog);
- *   - the Season 1 rank badges the season track uses (`season-1-<rank>.svg`).
+ * `node:vm` context (no require, no process, no fs), and write every badge of
+ * every series as `<key>.svg` (the approved catalog). Season rank badges
+ * (`rankBadge(rank, season)`) are handed out at a season's turnover and get
+ * exported here when that season's set is added to the catalog (rc.6: none yet).
  * Then it checks that every badge art key in `src/data/cosmetics.ts` exists.
  *
  * When Miguel sends a new design file: replace the HTML, run
@@ -21,12 +22,8 @@ import vm from "node:vm";
 
 const SRC = "data-sources/badges/badges-gema-moldura.html";
 const OUT = "public/badges";
-/** Season-track art (cosmetics.ts `s1-badge-*`): [rank key in the file, season]. */
-const TRACK = [
-  ["silver", "s1"],
-  ["gold", "s1"],
-  ["champion", "s1"],
-];
+/** Season rank badges to export: [rank key in the file, season key] (none yet). */
+const SEASON_RANK_BADGES = [];
 
 const html = readFileSync(SRC, "utf8");
 const open = html.lastIndexOf("<script>");
@@ -52,7 +49,7 @@ const write = (key, spec) => {
   written.push([key, spec.name ?? key, svg.length]);
 };
 for (const serie of SERIES) for (const b of serie.badges) write(b.key, b);
-for (const [rank, season] of TRACK) {
+for (const [rank, season] of SEASON_RANK_BADGES) {
   const b = rankBadge(rank, season);
   write(b.key, b);
 }

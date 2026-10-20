@@ -3,13 +3,14 @@
 /**
  * Profile v3 (rc.2): the screen that makes the player want the next reward.
  *  · HERO — the banner is the stage: name + title chip on the left; three
- *    badge slots above the Season Rating on the right (rc.4: the first is
- *    FEATURED and drawn larger; rc.5 moved them there), the rank emblem (menu
+ *    badge slots beside the Season Rating on the right (rc.4: the first is
+ *    FEATURED and drawn larger; rc.6 put them beside it), the rank emblem (menu
  *    art), Season Rating and the XP bar. Every cosmetic slot is tappable and
  *    opens the LOCKER MODAL on that kind; a green dot on a slot (and on the
  *    locker button) says something new is waiting there.
- *  · Season — the track is a horizontal progress bar with the reward art at
- *    every rank; the rating history is a small sparkline beside it.
+ *  · Season — the rank track (rank rewards only come at the season's turnover,
+ *    rc.6), the season numbers + rating sparkline under it, and the BADGE
+ *    SHOWCASE beside it: every badge the player owns, best first.
  *  · Lifetime — three headline numbers, a secondary grid, then the rest as
  *    quiet chips.
  *  · Achievements + run history (as before), the pre-season recap replay,
@@ -21,9 +22,9 @@ import { useState } from "react";
 import { FEATURES, RANKS, SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { achievements as achievementDefs, specialCards } from "@/data";
-import { COSMETICS, type CosmeticKind } from "@/data/cosmetics";
+import type { CosmeticKind } from "@/data/cosmetics";
 import { useCopy } from "@/content/copy";
-import { MAX_BADGES, resolveEquipped, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
+import { lockerItems, MAX_BADGES, resolveEquipped, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { rankForXp } from "@/engine/progression";
 import type { Placement, RunHistoryEntry } from "@/engine/types";
 import { cx, formatDate } from "@/lib/util";
@@ -42,13 +43,13 @@ import { Toggle } from "@/components/ui/Toggle";
 import { FieldView } from "@/components/cards/FieldView";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { AccountSection, ProfileNickname } from "@/components/AccountSection";
-import { BadgeEmblem, BannerSurface, CosmeticIcon, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
+import { BadgeEmblem, BannerSurface, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLocker";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 
 /** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
-const HERO_FEATURED_PX = 64;
-const HERO_BADGE_PX = 48;
+const HERO_FEATURED_PX = 72;
+const HERO_BADGE_PX = 56;
 
 export default function ProfilePage() {
   const { PROFILE_UI: P, DIFFICULTY_LABELS, LEADERBOARDS_UI: L, SEASON_RECAP: R, COSMETICS: CC } = useCopy();
@@ -115,7 +116,7 @@ export default function ProfilePage() {
           <RankBadge rank={rank} variant="menu" size="lg" />
 
           <div className="w-full min-w-0 flex-1 text-center sm:text-left">
-            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 {signedIn ? (
                   <ProfileNickname />
@@ -143,9 +144,10 @@ export default function ProfilePage() {
                 {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
                 {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
               </div>
-              <div className="flex shrink-0 flex-col items-center gap-2.5 sm:items-end">
-                {/* rc.5: the badges sit above the rating — the featured one
-                    leads and is the largest; an open slot invites the next. */}
+              <div className="flex shrink-0 items-center justify-center gap-4 sm:gap-5">
+                {/* rc.6: the badges sit beside the rating (rc.5 had them above,
+                    which left a gap over the name) — the featured one leads
+                    and is the largest; an open slot invites the next. */}
                 <div className="relative flex items-end gap-1.5">
                   {shown.badges.map((b, i) => (
                     <button
@@ -222,19 +224,21 @@ export default function ProfilePage() {
       {/* ---- Season ------------------------------------------------------------ */}
       <SectionTitle title={SEASON.name} className="mb-4" />
       <div className="mb-8 grid grid-cols-1 gap-3 lg:grid-cols-5">
-        <Panel className="p-4 lg:col-span-3">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="kicker !text-[10px]">{P.seasonTrack}</p>
-            <p className="text-[11px] text-faint">{P.seasonTrackHint}</p>
+        <div className="space-y-3 lg:col-span-3">
+          <Panel className="p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="kicker !text-[10px]">{P.seasonTrack}</p>
+              <p className="text-[11px] text-faint">{P.seasonTrackHint}</p>
+            </div>
+            <SeasonTrackBar xp={profile.xp} peakRankId={profile.season.peakRankId} />
+          </Panel>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile label={P.seasonRating} value={String(profile.mmr)} accent />
+            <StatTile label={P.peakRating} value={String(Math.max(profile.season.peakMmr, profile.mmr))} />
+            <StatTile label={P.seasonRuns} value={String(profile.season.runs)} />
+            <StatTile label={P.seasonTitles} value={String(profile.season.titles)} />
           </div>
-          <SeasonTrackBar xp={profile.xp} peakRankId={profile.season.peakRankId} owned={profile.cosmetics.owned} />
-        </Panel>
-        <div className="grid grid-cols-2 gap-3 lg:col-span-2">
-          <StatTile label={P.seasonRating} value={String(profile.mmr)} accent />
-          <StatTile label={P.peakRating} value={String(Math.max(profile.season.peakMmr, profile.mmr))} />
-          <StatTile label={P.seasonRuns} value={String(profile.season.runs)} />
-          <StatTile label={P.seasonTitles} value={String(profile.season.titles)} />
-          <Panel className="col-span-2 p-3">
+          <Panel className="p-3">
             <p className="kicker mb-1 !text-[10px]">{P.ratingHistory}</p>
             {profile.season.ratingHistory.length < 2 ? (
               <p className="text-xs text-faint">{P.ratingHistoryEmpty}</p>
@@ -243,6 +247,7 @@ export default function ProfilePage() {
             )}
           </Panel>
         </div>
+        <BadgeShowcase owned={profile.cosmetics.owned} onOpen={() => openLocker("badge")} className="lg:col-span-2" />
       </div>
 
       {/* ---- Lifetime ---------------------------------------------------------- */}
@@ -514,13 +519,11 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
   );
 }
 
-/** The Season 1 rank track: the rank emblem on top, its reward below, and a
- *  progress bar that follows the player's XP so it shows how far the next
- *  reward really is. Rewards light up once the rank was reached this season. */
-function SeasonTrackBar({ xp, peakRankId, owned }: { xp: number; peakRankId: string; owned: Record<string, string> }) {
+/** The season's rank track: every rank emblem, and a progress bar that follows
+ *  the player's XP toward the next one. rc.6: no per-rank rewards — rank and
+ *  rating rewards are handed out when the season turns over. */
+function SeasonTrackBar({ xp, peakRankId }: { xp: number; peakRankId: string }) {
   const { PROFILE_UI: P } = useCopy();
-  const copy = useCosmeticCopy();
-  const track = COSMETICS.filter((c) => c.source.type === "season-rank" && c.source.seasonId === SEASON.id);
   const ranks = RANKS.filter((r) => r.id !== "unranked");
   const peakIdx = ranks.findIndex((r) => r.id === peakRankId);
   const now = rankForXp(xp);
@@ -550,22 +553,66 @@ function SeasonTrackBar({ xp, peakRankId, owned }: { xp: number; peakRankId: str
           />
         ))}
       </div>
-      <ol className="grid" style={{ gridTemplateColumns: `repeat(${ranks.length}, minmax(0, 1fr))` }}>
-        {ranks.map((rank, i) => {
-          const rewards = track.filter((c) => c.source.type === "season-rank" && c.source.rankId === rank.id);
-          return (
-            <li key={rank.id} className={cx("flex flex-col items-center gap-1 px-0.5", i > peakIdx && "opacity-55")}>
-              {rewards.map((c) => (
-                <span key={c.id} className={cx("flex max-w-full items-center justify-center", owned[c.id] ? "" : "saturate-50")} title={`${copy.kind(c.kind)} · ${copy.name(c.id)}`}>
-                  <CosmeticIcon def={c} className="max-w-full !whitespace-normal text-center leading-tight" />
-                </span>
-              ))}
-            </li>
-          );
-        })}
-      </ol>
       <p className="mt-3 text-center text-[11px] text-sub">{next ? P.seasonTrackNext(next.label) : P.seasonTrackDone}</p>
     </div>
+  );
+}
+
+/** Max badges the showcase draws before a "+N" tile (layout, not gameplay). */
+const SHOWCASE_MAX = 15;
+
+/** rc.6: the locker on display — every badge the player owns, best first
+ *  (rarity, then family), with their effects. Tapping opens the locker. */
+function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, string>; onOpen: () => void; className?: string }) {
+  const { PROFILE_UI: P } = useCopy();
+  const copy = useCosmeticCopy();
+  const { owned: badges, locked } = lockerItems(owned, "badge");
+  const total = badges.length + locked.length;
+  const shown = badges.slice(0, SHOWCASE_MAX);
+  const more = badges.length - shown.length;
+  return (
+    <Panel className={cx("flex flex-col p-4", className)}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="kicker !text-[10px]">{P.showcaseTitle}</p>
+        <span className="display text-xs font-bold text-sub">
+          {badges.length}
+          <span className="text-faint">/{total}</span>
+        </span>
+      </div>
+      {badges.length === 0 ? (
+        <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-xs leading-relaxed text-faint">{P.showcaseEmpty}</p>
+      ) : (
+        <div className="grid flex-1 grid-cols-4 content-start gap-x-2 gap-y-3 sm:grid-cols-5">
+          {shown.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              onClick={onOpen}
+              title={`${copy.name(b.id)} · ${copy.tier(b.tier)}`}
+              className="flex items-center justify-center rounded-lg py-1 outline-none transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-orange/70"
+            >
+              <BadgeEmblem badge={b} size={52} />
+            </button>
+          ))}
+          {more > 0 ? (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="display mx-auto flex h-[52px] w-[52px] items-center justify-center self-center rounded-full border border-dashed border-line-strong text-sm font-bold text-sub transition-colors hover:border-orange/50 hover:text-ink"
+            >
+              +{more}
+            </button>
+          ) : null}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onOpen}
+        className="mt-3 self-center text-[11px] font-semibold uppercase tracking-wider text-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+      >
+        {P.openLocker} →
+      </button>
+    </Panel>
   );
 }
 

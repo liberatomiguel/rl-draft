@@ -9,6 +9,7 @@ Replace the design file and re-run the script to update the art.
 | `wildfire.svg` | Wildfire |
 | `rising-star.svg` | Rising Star |
 | `constellation.svg` | Constellation |
+| `supernova.svg` | Supernova |
 | `veteran-drafter-1.svg` | Veteran Drafter I |
 | `veteran-drafter-2.svg` | Veteran Drafter II |
 | `veteran-drafter-3.svg` | Veteran Drafter III |
@@ -41,6 +42,3 @@ Replace the design file and re-run the script to update the art.
 | `contributor.svg` | Contributor |
 | `verified-pro.svg` | Verified Pro |
 | `supporter.svg` | Supporter |
-| `season-1-silver.svg` | Season 1 Silver |
-| `season-1-gold.svg` | Season 1 Gold |
-| `season-1-champion.svg` | Season 1 Champion |

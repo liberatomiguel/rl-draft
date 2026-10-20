@@ -1326,3 +1326,19 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      Slots stay packed (removing closes the gap), so the saved list and the
      cloud row are unchanged.
 
+126. **Rank and rating rewards only at a season's turnover (rc.6).** Miguel: no
+     in-season rank track. The Season 1 track rewards (`s1-*`) are removed;
+     the `season-rank` source stays for the Season 1 set handed out when the
+     season ends (the design file's `rankBadge(rank, "s1")`). Supersedes the
+     track part of #119/#121. The provisional pre-season titles / banners
+     (board place, SSL title) stay: they were handed out at the pre-season's
+     turnover, consistent with the rule.
+
+127. **Badges have rarity effects, borrowed from the special cards (rc.6).**
+     Common / uncommon plain; rare → epic → legendary escalate (holo sweep →
+     rainbow holo + sparkles + aura → gold rays, pulsing aura, 3D tilt). The
+     holo is masked by the badge's own SVG and blend-composited, repeated
+     motion is transform-only, and everything is dropped by `reduce-fx` /
+     `lite-fx` (#122) and frozen by reduced motion. Below 28 px a badge renders
+     plain (the effects would be noise).
+

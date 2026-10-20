@@ -33,7 +33,7 @@ import { useAccountStore } from "@/store/accountStore";
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
@@ -133,29 +133,30 @@ export default function HomeMenu() {
             <Panel
               strong
               glow="orange"
-              className="relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-orange/40 p-6 md:p-8"
+              className="group relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-orange/40 p-6 transition-all hover:-translate-y-0.5 hover:!border-orange/70 md:p-8"
             >
               <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange/15 blur-3xl" aria-hidden />
-              <div className="relative">
+              <CardHit label={HOME.playNow} onClick={() => goToSetup("classic")} />
+              <div className="pointer-events-none relative">
                 <div className="mb-2 flex items-center gap-2.5">
                   <h2 className="display text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{HOME.playClassic}</h2>
                   <Badge tone="orange">{HOME.liveBadge}</Badge>
                 </div>
                 <p className="max-w-md text-sm leading-relaxed text-sub">{HOME.playClassicDesc}</p>
               </div>
-              <div className="relative mt-6 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => goToSetup("classic")}
-                  className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all hover:brightness-110"
+              <div className="pointer-events-none relative mt-6 flex flex-wrap items-center gap-3">
+                <span
+                  aria-hidden
+                  className="display inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-orange-bright to-orange px-8 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#1a0d02] shadow-[0_0_28px_rgba(249,115,22,0.35)] transition-all group-hover:brightness-110"
                 >
                   {HOME.playNow}
-                </button>
+                </span>
+                {/* The one exception: Quick Draft sits above the card's hit area. */}
                 <button
                   type="button"
                   onClick={() => goToSetup("quick")}
                   title={HOME.quickDraftDesc}
-                  className="display inline-flex items-center justify-center rounded-xl border border-line-strong px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-sub transition-colors hover:border-orange/50 hover:text-ink"
+                  className="display pointer-events-auto relative z-10 inline-flex items-center justify-center rounded-xl border border-line-strong px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-sub transition-colors hover:border-orange/50 hover:text-ink"
                 >
                   {HOME.quickDraftCta}
                 </button>
@@ -199,8 +200,17 @@ export default function HomeMenu() {
         {/* ---- TODAY ------------------------------------------------------------ */}
         <p className="kicker mb-2 mt-7">{HOME.sectionDaily}</p>
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12 md:grid-rows-[auto_auto]">
-          <Panel className="relative flex flex-col overflow-hidden p-5 md:col-span-4">
+          <Panel className={cx("group relative flex flex-col overflow-hidden p-5 md:col-span-4", !dailyDone && "transition-colors hover:!border-line-strong")}>
             <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-300/10 blur-2xl" aria-hidden />
+            {!dailyDone ? (
+              <CardHit
+                label={HOME.dailyPlay}
+                onClick={() => {
+                  startDailyRun();
+                  router.push("/play");
+                }}
+              />
+            ) : null}
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                 {HOME.daily}
@@ -226,17 +236,9 @@ export default function HomeMenu() {
                 <p className="mt-2 text-[11px] text-faint">{HOME.dailyComeBack}</p>
               </div>
             ) : (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="mt-3 w-fit"
-                onClick={() => {
-                  startDailyRun();
-                  router.push("/play");
-                }}
-              >
+              <span aria-hidden className={cx(buttonClass("secondary", "sm"), "pointer-events-none mt-3 w-fit group-hover:bg-blue/20")}>
                 {HOME.dailyPlay}
-              </Button>
+              </span>
             )}
           </Panel>
 
@@ -267,8 +269,15 @@ export default function HomeMenu() {
 
           {/* rc.4: same anatomy as the Daily Challenge — title + Live tag on top,
               the line under it, the CTA (or today's result) at the bottom. */}
-          <Panel className="relative flex h-full flex-col overflow-hidden p-5 sm:col-span-2 md:col-span-8">
+          <Panel className="group relative flex h-full flex-col overflow-hidden p-5 transition-colors hover:!border-line-strong sm:col-span-2 md:col-span-8">
             <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-400/10 blur-2xl" aria-hidden />
+            <CardHit
+              label={quizDone ? HOME.quiz : HOME.quizPlay}
+              onClick={() => {
+                sfx.click();
+                setQuizOpen(true);
+              }}
+            />
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quiz}</h3>
               <Badge tone="blue">{HOME.liveBadge}</Badge>
@@ -276,13 +285,11 @@ export default function HomeMenu() {
             <p className="flex-1 text-xs leading-relaxed text-sub">{HOME.quizDesc}</p>
             <div className="mt-3">
               {quizDone ? (
-                <button type="button" onClick={() => { sfx.click(); setQuizOpen(true); }} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue/60">
-                  <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
-                </button>
+                <Badge tone={quizToday?.solved ? "good" : "neutral"}>{quizToday?.solved ? HOME.quizDone : HOME.quizMissed}</Badge>
               ) : (
-                <Button variant="secondary" size="sm" className="w-fit" onClick={() => { sfx.click(); setQuizOpen(true); }}>
+                <span aria-hidden className={cx(buttonClass("secondary", "sm"), "pointer-events-none w-fit group-hover:bg-blue/20")}>
                   {HOME.quizPlay}
-                </Button>
+                </span>
               )}
             </div>
           </Panel>
@@ -382,6 +389,22 @@ export default function HomeMenu() {
         </p>
       </Modal>
     </>
+  );
+}
+
+/**
+ * rc.6: makes the WHOLE card the action — an invisible button over the card
+ * (absolute, so it sits above the card's in-flow content). Anything inside the
+ * card that needs its own action sits above it with `relative z-10`.
+ */
+function CardHit({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="absolute inset-0 z-[1] cursor-pointer rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-orange/70"
+    />
   );
 }
 

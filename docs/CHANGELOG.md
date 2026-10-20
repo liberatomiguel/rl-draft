@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.5**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.6**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,42 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.6 (badge effects, Supernova, badge showcase, 2026-10-20 · DESIGN-DECISIONS #126–#127)
+- **Badge effects by rarity**, after the special cards' holo: common / uncommon
+  plain; **rare** a prismatic holo with a light sweep; **epic** a turning rainbow
+  holo, a faster sweep, sparkles and a violet aura; **legendary** all of it
+  stronger plus golden rays behind, a pulsing gold aura and a **3D tilt** (an idle
+  sway, and pointer tracking on desktop). The holo is masked by the badge's own SVG,
+  so only the badge lights up. Shown everywhere a badge is ≥ 28 px: locker, profile
+  hero, badge showcase, leaderboard rows (tilt included) and the player peek. Off
+  under "Reduce visual effects" / lite-fx, still under reduced motion.
+- **Supernova** (epic): 70 challenge stars. All badge art refreshed from Miguel's
+  updated design file (`npm run build:badges`). Catalog: 37 badges.
+- **Badge showcase on the profile**: beside the season track, every badge the
+  player owns, best first, with effects (up to 15, then "+N"); tap to open the
+  locker.
+
+### Changed — rc.6
+- **No Season 1 rank rewards.** Rank- and rating-linked rewards are handed out only
+  when a season turns over, so the in-season track lost its badges, titles and
+  banners (`s1-*`); today the only rank/rating rewards are the pre-season (PS) ones.
+  The season card is now the rank track ("your peak rank becomes a badge when the
+  season ends") with the season numbers and rating history under it.
+- **Locker order**: rarity first (owned legendaries, then epics…), then the badge's
+  family (board place, peak rank, manual, career, runs, stars, quiz, missions,
+  streak), then the catalog priority; locked slots follow the same order.
+- **Locker slots**: when a badge is selected, every other slot shows what a tap
+  will do on an overlay (Swap / Move here); with all slots full, "Replace".
+- **Profile hero**: the badges sit beside the Season Rating (they were above it,
+  which left a gap over the name), a step bigger (72 / 56 px).
+- **Home**: every card is clickable as a whole (Classic Draft, Daily Challenge,
+  Missions, Daily Quiz, like the tiles already were); the only control with its
+  own target is Quick Draft on the Classic Draft card (and the missions Daily /
+  Weekly switch).
+- **Player peek**: the player's place on the board you are looking at (#N) replaces
+  the pre-season tag; the rank · season line is gone; bigger badges (108 / 76 px)
+  with their effects; no "featured" label — the middle one is simply bigger.
 
 ### Changed — rc.5 (badge slots + profile / board polish, 2026-10-20 · DESIGN-DECISIONS #125)
 - **Locker badge slots.** A badge you tap drops into the first free slot. With all

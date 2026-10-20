@@ -11,6 +11,7 @@ import {
   EMPTY_COSMETICS,
   equippedColumns,
   addBadge,
+  compareForLocker,
   isTeasedWhenLocked,
   placeBadgeAt,
   removeBadgeAt,
@@ -119,9 +120,9 @@ describe("deriveOwnedIds (the legacy rewards + grants + season track)", () => {
     expect(earned(facts({ grants: ["supporter", "contributor"] }))).toHaveLength(4);
   });
 
-  it("the Season 1 track follows the season peak rank, only in Season 1", () => {
-    expect(earned(facts({ seasonPeakRankId: "gold" })).sort()).toEqual(["s1-badge-gilded", "s1-badge-ignition", "s1-banner-kickoff"]);
-    expect(earned(facts({ seasonId: 2, seasonPeakRankId: "gold" }))).toEqual([]);
+  it("no in-season rank rewards (rc.6): reaching a rank this season owns nothing", () => {
+    expect(earned(facts({ seasonPeakRankId: "supersonic-legend" }))).toEqual([]);
+    expect(COSMETICS.some((c) => c.source.type === "season-rank")).toBe(false);
   });
 
   it("streak / stars / quiz / missions / runs-won thresholds", () => {
@@ -130,6 +131,7 @@ describe("deriveOwnedIds (the legacy rewards + grants + season track)", () => {
     expect(earned(facts({ loginBestStreak: 30 })).sort()).toEqual(["spark", "streak-banner-14", "streak-title-30", "wildfire"]);
     expect(earned(facts({ challengeStars: 25 }))).toEqual(["rising-star"]);
     expect(earned(facts({ challengeStars: 50 })).sort()).toEqual(["constellation", "rising-star", "stars-title-45"]);
+    expect(earned(facts({ challengeStars: 70 })).sort()).toEqual(["constellation", "rising-star", "stars-title-45", "supernova"]);
     expect(earned(facts({ quizSolved: 10 }))).toEqual(["scholar-1"]);
     expect(earned(facts({ quizSolved: 50 })).sort()).toEqual(["quiz-title-30", "scholar-1", "scholar-2", "scholar-3"]);
     expect(earned(facts({ missionsCompleted: 49 }))).toEqual([]);
@@ -169,15 +171,28 @@ describe("owned map + equipped resolution", () => {
     expect(owned).not.toHaveProperty("ghost-id");
   });
 
-  it("season-scoped rewards stay once earned (the season track, Dynasty); other lost facts drop", () => {
-    const s1 = refreshOwned({}, facts({ seasonPeakRankId: "champion", grants: ["pro"] }), "2026-11-01T00:00:00.000Z");
-    expect(s1).toHaveProperty("s1-badge-prism");
-    // Season 2 starts: the facts reset, the Season 1 rewards do not. A revoked grant does.
+  it("season-scoped rewards stay once earned (Dynasty); other lost facts drop", () => {
+    const s1 = refreshOwned({}, facts({ seasonPeakRankId: "supersonic-legend", seasonCareerWorlds: 3, seasonLegacyTitles: 25, grants: ["pro"] }), "2026-11-01T00:00:00.000Z");
+    expect(s1).toHaveProperty("dynasty");
+    // Season 2 starts: the facts reset, Dynasty does not. A revoked grant does go.
     const s2 = refreshOwned(s1, facts({ seasonId: 2, seasonPeakRankId: "unranked" }));
-    expect(s2["s1-badge-prism"]).toBe("2026-11-01T00:00:00.000Z");
+    expect(s2.dynasty).toBe("2026-11-01T00:00:00.000Z");
     expect(s2).not.toHaveProperty("verified-pro");
-    const dyn = refreshOwned({}, facts({ seasonPeakRankId: "supersonic-legend", seasonCareerWorlds: 3, seasonLegacyTitles: 25 }));
-    expect(refreshOwned(dyn, facts({ seasonId: 2 }))).toHaveProperty("dynasty");
+  });
+
+  it("locker order (rc.6): rarity first, then the family, then the catalog priority", () => {
+    const all = refreshOwned({}, facts({ previewAll: true }));
+    const order = lockerItems(all, "badge").owned;
+    const tiers = order.map((c) => c.tier);
+    const rank = ["legend", "epic", "rare", "uncommon", "common"];
+    expect(tiers).toEqual([...tiers].sort((a, b) => rank.indexOf(a) - rank.indexOf(b)));
+    // Within a rarity, a family stays together (the board badges before the peak-rank ones).
+    const epic = order.filter((c) => c.tier === "epic").map((c) => c.source.type);
+    expect(epic.indexOf("legacy-position")).toBeLessThan(epic.indexOf("legacy-rank"));
+    const firstOfEach = new Map<string, number>();
+    epic.forEach((t, i) => (firstOfEach.has(t) ? null : firstOfEach.set(t, i)));
+    for (const [t, i] of firstOfEach) expect(epic.slice(i).filter((x) => x === t).length).toBe(epic.filter((x) => x === t).length);
+    expect(compareForLocker(cosmeticById.get("season-champion-ps")!, cosmeticById.get("spark")!)).toBeLessThan(0);
   });
 
   it("no auto-equip (rc.2): an empty slot shows nothing; a stale choice resolves to empty", () => {
@@ -219,7 +234,6 @@ describe("owned map + equipped resolution", () => {
     expect(badges).toEqual(expect.arrayContaining(["spark", "veteran-drafter-4", "scholar-1", "on-target"]));
     expect(badges).not.toContain("dynasty");
     expect(badges).not.toContain("pre-season-gold");
-    expect(badges).not.toContain("s1-badge-gilded");
     expect(COSMETICS.filter((c) => isTeasedWhenLocked(c)).every((c) => !c.exclusive)).toBe(true);
   });
 
@@ -297,8 +311,9 @@ describe("badge art (rc.4)", () => {
     }
   });
 
-  it("the approved catalog: 36 badges whose id is their art key", () => {
-    const approved = COSMETICS.filter((c) => c.kind === "badge" && c.style.art === c.id);
-    expect(approved).toHaveLength(36);
+  it("the approved catalog: 37 badges (rc.6 + Supernova), each id = its art key", () => {
+    const badges = COSMETICS.filter((c) => c.kind === "badge");
+    expect(badges).toHaveLength(37);
+    expect(badges.every((c) => c.kind === "badge" && c.style.art === c.id)).toBe(true);
   });
 });

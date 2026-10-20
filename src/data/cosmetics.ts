@@ -25,6 +25,9 @@
  * and a soft glow; legend a prismatic gradient, glow and the holo loop. Rank
  * rewards borrow the rank's palette.
  *
+ * Rank- and rating-linked rewards are handed out only at a season's turnover
+ * (rc.6): there is no in-season rank track; today that means the PS badges.
+ *
  * Pre-season board and peak-rank rewards are NOT cumulative (Miguel's rule):
  * a player gets the reward of their own band only — 1st gets Season Champion,
  * not Elite + Finalist too; a Gold peak gets Pre-season Gold only.
@@ -148,7 +151,7 @@ const PRESEASON_BOARD_BADGES: [id: string, tier: CosmeticTier, min: number, max:
   ["season-finalist-ps", "rare", 11, 50],
 ];
 
-/** rc.4: the approved badge catalog (36 entries, `Rocket-Draft-Badges-Desbloqueios.md`). */
+/** The approved badge catalog (rc.4: 36 entries, `Rocket-Draft-Badges-Desbloqueios.md`; rc.6: + Supernova). */
 const BADGES: CosmeticDef[] = [
   // --- Login streak -------------------------------------------------------------
   badge("spark", "uncommon", 22, { type: "login-streak", days: 7 }),
@@ -156,6 +159,7 @@ const BADGES: CosmeticDef[] = [
   // --- Challenge stars ----------------------------------------------------------
   badge("rising-star", "uncommon", 23, { type: "challenge-stars", stars: 25 }),
   badge("constellation", "rare", 43, { type: "challenge-stars", stars: 50 }),
+  badge("supernova", "epic", 63, { type: "challenge-stars", stars: 70 }),
   // --- Runs won -----------------------------------------------------------------
   badge("veteran-drafter-1", "uncommon", 24, { type: "runs-won", count: 50 }),
   badge("veteran-drafter-2", "rare", 44, { type: "runs-won", count: 250 }),
@@ -214,18 +218,9 @@ export const COSMETICS: CosmeticDef[] = [
   { id: "grant-title-early-supporter", kind: "title", tier: "epic", priority: 65, source: { type: "grant", grantId: "supporter" }, exclusive: true, style: { colors: ["#f472b6", "#fb923c"] } },
   { id: "grant-title-founding-contributor", kind: "title", tier: "epic", priority: 66, source: { type: "grant", grantId: "contributor" }, exclusive: true, style: { colors: ["#34d399", "#22d3ee"] } },
   { id: "grant-title-pro-player", kind: "title", tier: "legend", priority: 95, source: { type: "grant", grantId: "pro" }, exclusive: true, style: { colors: ["#38bdf8", "#a78bfa", "#f472b6"] } },
-  // --- Season 1 progression track (one reward per rank, in the rank's colours) --
-  // The three track badges wear the design file's Season 1 rank art for now
-  // (`rankBadge(rank, "s1")`) until the generic track badges are drawn.
-  { id: "s1-banner-kickoff", kind: "banner", tier: "common", priority: 10, source: { type: "season-rank", seasonId: 1, rankId: "bronze" }, style: { from: "#1c1008", to: "#3b1d0a", accent: RANK_COLORS.bronze[0], pattern: "none" } },
-  { id: "s1-badge-ignition", kind: "badge", tier: "common", priority: 10, source: { type: "season-rank", seasonId: 1, rankId: "silver" }, style: { art: "season-1-silver" } },
-  { id: "s1-badge-gilded", kind: "badge", tier: "uncommon", priority: 20, source: { type: "season-rank", seasonId: 1, rankId: "gold" }, style: { art: "season-1-gold" } },
-  { id: "s1-title-grinder", kind: "title", tier: "common", priority: 30, source: { type: "season-rank", seasonId: 1, rankId: "platinum" }, style: { colors: [RANK_COLORS.platinum[0]] } },
-  { id: "s1-banner-neon-circuit", kind: "banner", tier: "epic", priority: 30, source: { type: "season-rank", seasonId: 1, rankId: "diamond" }, style: { from: "#0c4a6e", to: "#1d4ed8", accent: "#7dd3fc", pattern: "circuit" } },
-  { id: "s1-badge-prism", kind: "badge", tier: "epic", priority: 45, source: { type: "season-rank", seasonId: 1, rankId: "champion" }, style: { art: "season-1-champion" } },
-  { id: "s1-title-relentless", kind: "title", tier: "epic", priority: 55, source: { type: "season-rank", seasonId: 1, rankId: "grand-champion" }, style: { colors: RANK_COLORS["grand-champion"] } },
-  { id: "s1-banner-supersonic", kind: "banner", tier: "legend", priority: 70, source: { type: "season-rank", seasonId: 1, rankId: "supersonic-legend" }, style: { from: "#4a044e", to: "#c2410c", accent: "#f0abfc", pattern: "aurora", animated: true } },
-  { id: "s1-title-season-1-legend", kind: "title", tier: "legend", priority: 85, source: { type: "season-rank", seasonId: 1, rankId: "supersonic-legend" }, style: { colors: ["#f97316", "#f0abfc", "#22d3ee"] } },
+  // rc.6: no Season 1 rank rewards — rank- and rating-linked rewards are only
+  // handed out when a season turns over (the pre-season's are the PS badges).
+  // The `season-rank` source stays for the Season 1 set at its turnover.
   // --- Login streak / challenge stars / quiz / missions (titles + banner) ------
   { id: "streak-banner-14", kind: "banner", tier: "epic", priority: 32, source: { type: "login-streak", days: 14 }, style: { from: "#431407", to: "#92400e", accent: "#fcd34d", pattern: "waves" } },
   { id: "streak-title-30", kind: "title", tier: "rare", priority: 58, source: { type: "login-streak", days: 30 }, style: { colors: ["#fcd34d"] } },

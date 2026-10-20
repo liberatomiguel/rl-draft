@@ -1150,6 +1150,179 @@ html.reduce-fx .card-float {
 }
 
 /* ---------------------------------------------------------------------------
+   Badge FX (rc.6) — BadgeEmblem's rarity effects, after the special cards:
+   rare = prismatic holo + a light sweep; epic = a turning rainbow holo, a
+   faster sweep, sparkles, a violet aura; legendary = all of it stronger, gold
+   rays behind, a pulsing gold aura and a 3D tilt (idle sway + pointer, via
+   --bfx-rx / --bfx-ry). The holo layer is MASKED by the badge's own SVG
+   (--bfx-mask) and blended onto it, so only the badge lights up. Motion is
+   transform-only where it repeats (composited). Off under lite-fx / reduce-fx
+   and still under reduced motion.
+--------------------------------------------------------------------------- */
+.bfx {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  perspective: 420px;
+  user-select: none;
+}
+.bfx-body {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(var(--bfx-rx, 0deg)) rotateY(var(--bfx-ry, 0deg));
+  transition: transform 0.25s ease-out;
+}
+.bfx-core {
+  position: absolute;
+  inset: 0;
+}
+.bfx-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+.bfx-holo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask: var(--bfx-mask) center / contain no-repeat;
+  mask: var(--bfx-mask) center / contain no-repeat;
+}
+.bfx-holo::before,
+.bfx-holo::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+/* The light sweep: a narrow white band crossing the badge, then a pause. */
+.bfx-holo::after {
+  inset: -10% -100%;
+  background: linear-gradient(105deg, transparent 43%, rgba(255, 255, 255, 0.9) 50%, transparent 57%);
+  transform: translateX(-60%);
+  animation: bfx-sweep var(--bfx-sweep, 5.6s) ease-in-out infinite;
+}
+@keyframes bfx-sweep {
+  0% { transform: translateX(-60%); }
+  38%, 100% { transform: translateX(60%); }
+}
+@keyframes bfx-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* RARE — a quiet prism: pastel tint + the sweep, overlay-blended. */
+.bfx-rare .bfx-holo {
+  mix-blend-mode: overlay;
+}
+.bfx-rare .bfx-holo::before {
+  inset: 0;
+  background: linear-gradient(135deg, rgba(125, 211, 252, 0.6), rgba(244, 114, 182, 0.5) 50%, rgba(253, 230, 138, 0.55));
+  opacity: 0.6;
+}
+
+/* EPIC — a turning rainbow, a faster sweep, sparkles, a violet aura. */
+.bfx-epic {
+  --bfx-sweep: 4.2s;
+}
+.bfx-epic .bfx-holo {
+  mix-blend-mode: color-dodge;
+  opacity: 0.34;
+}
+.bfx-epic .bfx-holo::before {
+  inset: -40%;
+  background: conic-gradient(#ff5fd2, #7a8bff, #47e0d0, #ffd66b, #ff5fd2);
+  opacity: 0.6;
+  animation: bfx-spin 7s linear infinite;
+}
+.bfx-epic .bfx-img {
+  filter: drop-shadow(0 0 5px rgba(192, 132, 252, 0.55));
+}
+
+/* LEGENDARY — everything louder, gold rays, a gold pulse and a 3D sway. */
+.bfx-legend {
+  --bfx-sweep: 3.2s;
+}
+.bfx-legend .bfx-holo {
+  mix-blend-mode: color-dodge;
+  opacity: 0.42;
+}
+.bfx-legend .bfx-holo::before {
+  inset: -40%;
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.14) 0 2px, transparent 2px 7px),
+    conic-gradient(#ff5fd2, #ffd66b, #47e0d0, #7a8bff, #ff5fd2);
+  opacity: 0.8;
+  animation: bfx-spin 4.5s linear infinite;
+}
+.bfx-legend .bfx-img {
+  animation: bfx-glow 2.8s ease-in-out infinite;
+}
+@keyframes bfx-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(252, 211, 77, 0.45)); }
+  50% { filter: drop-shadow(0 0 11px rgba(252, 211, 77, 0.85)); }
+}
+.bfx-legend .bfx-core {
+  animation: bfx-sway 6s ease-in-out infinite;
+}
+@keyframes bfx-sway {
+  0%, 100% { transform: rotateY(-13deg) rotateX(3deg); }
+  50% { transform: rotateY(13deg) rotateX(-3deg); }
+}
+.bfx-rays {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 214, 107, 0) 0deg 9deg, rgba(255, 214, 107, 0.3) 9deg 13deg);
+  -webkit-mask: radial-gradient(circle, #000 28%, transparent 68%);
+  mask: radial-gradient(circle, #000 28%, transparent 68%);
+  animation: bfx-spin 16s linear infinite;
+  pointer-events: none;
+}
+
+/* Sparkles (epic: two, legendary: three) — a four-point star that twinkles. */
+.bfx-spark {
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  background: radial-gradient(circle, #fff 0 22%, rgba(255, 255, 255, 0.55) 40%, transparent 70%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  transform: scale(0);
+  animation: bfx-twinkle 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.bfx-spark-a { top: 4%; left: 10%; }
+.bfx-spark-b { top: 60%; right: 2%; animation-delay: 0.9s; }
+.bfx-spark-c { top: 14%; right: 12%; animation-delay: 1.7s; width: 15%; height: 15%; }
+@keyframes bfx-twinkle {
+  0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+  20% { transform: scale(1) rotate(45deg); opacity: 1; }
+  40% { transform: scale(0) rotate(90deg); opacity: 0; }
+}
+
+:is(html.lite-fx, html.reduce-fx) .bfx-holo,
+:is(html.lite-fx, html.reduce-fx) .bfx-spark,
+:is(html.lite-fx, html.reduce-fx) .bfx-rays {
+  display: none;
+}
+:is(html.lite-fx, html.reduce-fx) .bfx-core,
+:is(html.lite-fx, html.reduce-fx) .bfx-img {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bfx-holo::before,
+  .bfx-holo::after,
+  .bfx-core,
+  .bfx-img,
+  .bfx-spark,
+  .bfx-rays {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Cosmetics (v2.0, visual language reset rc.3) — titles, badges, banners.
    Line art + the chip the UI already uses; effects only on epic / legend,
    borrowed from the special cards (glow, holo-shift). Every loop stops under

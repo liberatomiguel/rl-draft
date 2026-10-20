@@ -246,7 +246,9 @@ export function CosmeticsLockerModal({
                 const b = resolved.badges[i];
                 const isFeatured = i === 0;
                 const isSelected = selected === i;
-                const target = !!pending || (selected !== null && !isSelected && !!b);
+                const target = !!pending || (selected !== null && !isSelected);
+                // rc.6: what tapping this slot will do, shown ON the slot.
+                const action = pending ? C.replaceHere : selected !== null && !isSelected ? (b ? C.swapHere : C.moveHere) : null;
                 const box = isFeatured ? "h-[88px] w-[88px]" : "h-16 w-16";
                 return (
                   <div key={i} className="relative">
@@ -257,7 +259,7 @@ export function CosmeticsLockerModal({
                       aria-pressed={isSelected}
                       title={b ? copy.name(b.id) : C.emptySlot}
                       className={cx(
-                        "flex items-center justify-center rounded-lg border transition-all disabled:cursor-default",
+                        "relative flex items-center justify-center rounded-lg border transition-all disabled:cursor-default",
                         box,
                         b
                           ? isFeatured
@@ -268,7 +270,13 @@ export function CosmeticsLockerModal({
                         target && "!border-amber-300/70 ring-1 ring-amber-300/40 hover:bg-amber-300/10",
                       )}
                     >
-                      {b ? <BadgeEmblem badge={b} size={isFeatured ? "xl" : "md"} /> : C.emptySlot}
+                      {b ? <BadgeEmblem badge={b} size={isFeatured ? "xl" : "md"} /> : action ? null : C.emptySlot}
+                      {action ? (
+                        <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg bg-black/60 text-amber-200">
+                          <SwapGlyph />
+                          <span className="display text-[9px] font-bold uppercase tracking-[0.14em]">{action}</span>
+                        </span>
+                      ) : null}
                     </button>
                     {isFeatured ? (
                       <span className="pointer-events-none absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -347,6 +355,14 @@ export function CosmeticsLockerModal({
       </div>
       {owned.length === 0 && locked.length === 0 ? <p className="py-6 text-center text-sm text-faint">{C.empty}</p> : null}
     </Modal>
+  );
+}
+
+function SwapGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M7 7h11l-3-3M17 17H6l3 3" />
+    </svg>
   );
 }
 

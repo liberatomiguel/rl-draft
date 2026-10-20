@@ -264,6 +264,34 @@ export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
   return changed ? { ...c, seen: [...seen] } : c;
 }
 
+/** rc.6: locker order — rarity first (legendary → common), then the item's
+ *  family, then the catalog priority (e.g. the higher rank first). */
+const TIER_ORDER: CosmeticDef["tier"][] = ["legend", "epic", "rare", "uncommon", "common"];
+const GROUP_ORDER: CosmeticSource["type"][] = [
+  "legacy-position", // pre-season board (rating)
+  "legacy-rank", // pre-season peak rank
+  "season-rank",
+  "legacy-participation",
+  "grant", // manual
+  "season-feat", // Dynasty
+  "career-worlds",
+  "career-mark",
+  "runs-won",
+  "challenge-stars",
+  "quiz-solved",
+  "missions-completed",
+  "login-streak",
+];
+
+export function compareForLocker(a: CosmeticDef, b: CosmeticDef): number {
+  return (
+    TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier) ||
+    GROUP_ORDER.indexOf(a.source.type) - GROUP_ORDER.indexOf(b.source.type) ||
+    b.priority - a.priority ||
+    a.id.localeCompare(b.id)
+  );
+}
+
 /**
  * Which catalog items the locker LISTS for this player: everything owned, plus
  * — as anonymous locked slots, never their art or name (rc.4) — the items
@@ -273,8 +301,8 @@ export function markSeen(c: CosmeticsState, ids: string[]): CosmeticsState {
 export function lockerItems(owned: Record<string, string>, kind: CosmeticKind): { owned: CosmeticDef[]; locked: CosmeticDef[] } {
   const items = COSMETICS.filter((c) => c.kind === kind);
   return {
-    owned: items.filter((c) => owned[c.id]).sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id)),
-    locked: items.filter((c) => !owned[c.id] && isTeasedWhenLocked(c)).sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id)),
+    owned: items.filter((c) => owned[c.id]).sort(compareForLocker),
+    locked: items.filter((c) => !owned[c.id] && isTeasedWhenLocked(c)).sort(compareForLocker),
   };
 }
 
