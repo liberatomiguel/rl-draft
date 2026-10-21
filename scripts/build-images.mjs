@@ -99,7 +99,7 @@ const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: 
  *  BADGE_GLOW.pad px each side (CSS: inset = -pad/size), blurred by sigma. */
 /** rc.18: two layers — a tight, strong core hugging the silhouette (sigma)
  *  over a wide, faint halo (haloSigma at haloAlpha). */
-const BADGE_GLOW = { size: 224, pad: 84, sigma: 5, haloSigma: 22, haloAlpha: 0.45, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
+const BADGE_GLOW = { size: 224, pad: 84, sigma: 2.2, haloSigma: 16, haloAlpha: 0.3, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
 
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));

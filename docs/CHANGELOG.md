@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.18**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.19**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,10 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.19 (2026-10-20)
+- Legendary glow tighter (core sigma 2.2, halo 16 at 0.3) so badges built from
+  separate pieces (laurel leaves, e.g. Veteran Drafter IV) keep their gaps.
 
 ### Changed — rc.18 (2026-10-20)
 - Legendary glow is two baked layers: a strong core hugging the silhouette over a
