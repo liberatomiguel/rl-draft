@@ -14,6 +14,9 @@
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
   **Never deploy v2.0 to `main` before the full review.**
 - **Road to Worlds (career)** is a separate workstream: `ROAD-TO-WORLDS-STATUS.md`.
+- Note (2026-10-21): the rc.20 push to `staging` did not trigger the
+  `rocket-draft-staging` Workers Build; a second push was needed. If it
+  happens again, check the build's GitHub connection / watch paths.
 
 ## What v2.0 contains (shipped on the branch)
 
