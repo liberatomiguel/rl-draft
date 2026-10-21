@@ -97,7 +97,7 @@ const BADGE_SVG_DENSITY = 144;
 const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: true };
 /** Legendary glow: the silhouette at BADGE_GLOW.size px, tinted, padded by
  *  BADGE_GLOW.pad px each side (CSS: inset = -pad/size), blurred by sigma. */
-const BADGE_GLOW = { size: 224, pad: 64, sigma: 13, rgb: [252, 200, 90], webp: { quality: 80, alphaQuality: 90, effort: 5 } };
+const BADGE_GLOW = { size: 224, pad: 64, sigma: 13, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
 
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
