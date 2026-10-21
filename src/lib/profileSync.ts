@@ -48,6 +48,7 @@ export type DurableProfile = Pick<
   | "challengeStars"
   | "careerMarks"
   | "careerWorldsWon"
+  | "legacyStreak"
   | "records"
   | "settings"
   | "flags"
@@ -81,6 +82,7 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "challengeStars",
   "careerMarks",
   "careerWorldsWon",
+  "legacyStreak",
   "records",
   "settings",
   "flags",
@@ -178,9 +180,30 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
   const cosmeticsMerged = mergeCosmetics(local.cosmetics ?? EMPTY_COSMETICS, cloud.cosmetics ?? EMPTY_COSMETICS);
   // Owned cosmetics are derived facts: refresh them from the MERGED facts so a reward
   // one side earned (a grant, a better pre-season position) exists on the result.
+  const wins = maxRecord(local.wins, cloud.wins);
+  const runsCompleted = Math.max(local.runsCompleted, cloud.runsCompleted);
+  const unlockedSpecials = mergeDateMap(local.unlockedSpecials, cloud.unlockedSpecials);
+  const challengeStars = mergeStarMasks(local.challengeStars ?? {}, cloud.challengeStars ?? {});
+  const careerMarks = Array.from(new Set([...(local.careerMarks ?? []), ...(cloud.careerMarks ?? [])]));
+  const careerWorldsWon = Math.max(local.careerWorldsWon ?? 0, cloud.careerWorldsWon ?? 0);
+  // rc.20: the live Legacy streak follows the copy that has played more runs
+  // (a loss on another device ends it); the best is monotonic.
+  const ls = (p: DurableProfile) => p.legacyStreak ?? { current: 0, best: 0 };
+  const legacyStreak = {
+    current: (local.runsCompleted >= cloud.runsCompleted ? ls(local) : ls(cloud)).current,
+    best: Math.max(ls(local).best, ls(cloud).best, ls(local).current, ls(cloud).current),
+  };
+  // rc.20 fix: refresh from the COMPLETE merged facts. Reading only part of them
+  // (the pre-rc.20 bug) dropped every runs-won / stars / career reward here and
+  // re-dated it on the next store refresh — "NEW" markers (and now the unlock
+  // pop-up) fired again after every sync.
   const cosmetics = {
-    owned: refreshOwned(cosmeticsMerged.owned, cosmeticFacts({ legacy, grants, season, missions, login, quiz })),
+    owned: refreshOwned(
+      cosmeticsMerged.owned,
+      cosmeticFacts({ legacy, grants, season, missions, login, quiz, wins, runsCompleted, unlockedSpecials, challengeStars, careerMarks, careerWorldsWon, legacyStreak }),
+    ),
     equipped: cosmeticsMerged.equipped,
+    seen: cosmeticsMerged.seen,
   };
 
   return {
@@ -203,19 +226,20 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     // Legacy gate: unlocked if EITHER side unlocked it (OR), so it propagates across
     // devices once earned and is never lost.
     legacyUnlocked: Boolean(local.legacyUnlocked) || Boolean(cloud.legacyUnlocked),
-    runsCompleted: Math.max(local.runsCompleted, cloud.runsCompleted),
-    wins: maxRecord(local.wins, cloud.wins),
+    runsCompleted,
+    wins,
     playoffAppearances: Math.max(local.playoffAppearances, cloud.playoffAppearances),
     podiums: Math.max(local.podiums, cloud.podiums),
     swissWinsTotal: Math.max(local.swissWinsTotal, cloud.swissWinsTotal),
     gamesWon: Math.max(local.gamesWon, cloud.gamesWon),
     goalsScored: Math.max(local.goalsScored, cloud.goalsScored),
-    unlockedSpecials: mergeDateMap(local.unlockedSpecials, cloud.unlockedSpecials),
+    unlockedSpecials,
     achievements: mergeDateMap(local.achievements, cloud.achievements),
     challengesCompleted: mergeDateMap(local.challengesCompleted, cloud.challengesCompleted),
-    challengeStars: mergeStarMasks(local.challengeStars ?? {}, cloud.challengeStars ?? {}),
-    careerMarks: Array.from(new Set([...(local.careerMarks ?? []), ...(cloud.careerMarks ?? [])])),
-    careerWorldsWon: Math.max(local.careerWorldsWon ?? 0, cloud.careerWorldsWon ?? 0),
+    challengeStars,
+    careerMarks,
+    careerWorldsWon,
+    legacyStreak,
     dailyResults,
     runHistory,
     records: {

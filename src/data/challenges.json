@@ -736,5 +736,86 @@
         "min": 50
       }
     ]
+  },
+  {
+    "id": "ch-pure-talent",
+    "title": "Pure Talent",
+    "brief": "No specials, no shortcuts. Out-draft Team Envy's 2018 line with base cards only and prove the talent was always yours.",
+    "rankRequired": "silver",
+    "opponentLineupId": "team-envy-s5",
+    "tier": "common",
+    "seed": 41077,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 9
+    },
+    "reward": {
+      "xp": 110,
+      "badge": "pure-talent"
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Good"
+      }
+    ]
+  },
+  {
+    "id": "ch-homegrown",
+    "title": "Homegrown",
+    "brief": "One region, one identity. Draft three starters who all come from the same region and take down NRG's 2019 trio.",
+    "rankRequired": "gold",
+    "opponentLineupId": "nrg-esports-s7",
+    "tier": "rare",
+    "seed": 52311,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -2
+    },
+    "reward": {
+      "xp": 190,
+      "badge": "homegrown"
+    },
+    "stars": [
+      {
+        "kind": "sameRegion"
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      }
+    ]
+  },
+  {
+    "id": "ch-time-capsule",
+    "title": "Time Capsule",
+    "brief": "Pick an era and stay in it. Field three starters from one RLCS season against Gale Force's 2017 world champions.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "gale-force-esports-s4",
+    "tier": "rare",
+    "seed": 63490,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": 1
+    },
+    "reward": {
+      "xp": 210,
+      "badge": "time-capsule"
+    },
+    "stars": [
+      {
+        "kind": "sameSeason"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 2
+      }
+    ]
   }
 ]

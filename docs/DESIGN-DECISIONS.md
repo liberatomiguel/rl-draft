@@ -1233,6 +1233,33 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      facts like every other source (`career-mark`). `persistContract.test.ts`
      was updated deliberately for this entry.
 
+131. **The final Season 1 cosmetics set, and its rules (rc.20).** Source:
+     Miguel's `Rocket-Draft-Cosmeticos-Atualizado.md` (kept at
+     `data-sources/badges/cosmeticos-atualizado.md`) and the revised badge
+     design file. (a) Titles and banners are CSS, no assets: the tier decides
+     the treatment (common grey · uncommon weak colour · rare strong colour
+     + light glow · epic gradient + glow + holo · legendary white gold + glow +
+     holo + tilt; banners add colour and a sheen up the ladder). Banners are
+     gradient stacks; the overlay darkens again at the right edge and on
+     phones so the rating always reads (#130's budgets still apply: only
+     transform moves). (b) Season 1 rewards COUNT FROM THE RESET: the "since
+     Season 1" sources subtract the pre-season snapshot (titles, runs, the
+     specials dated before it). Badges keep their lifetime rules (approved
+     earlier, unchanged). (c) The in-season rank track is BACK (supersedes
+     #126): generic items the first time a rank is reached, lower ranks
+     included, kept once owned. (d) Pre-season peak-rank rewards are
+     CUMULATIVE (supersedes #124a for ranks — the design file says "pico ≥");
+     board rewards stay one band each, now 1 · 2 · 3 · 4–10 · 11–50. (e) The
+     manual grants own four reserved colours no other title may use (a test
+     enforces it). (f) Unlocks get a pop-up in the special-card ceremony
+     language, fed from the owned-map diff in the profile store; hydration and
+     the cloud merge are silent so a sync never re-announces. (g) Three fixed
+     challenges carry exclusive cosmetics for three stars, with draft-shaped
+     stars (`sameRegion`, `sameSeason`) that read the roster — not
+     sim-validated, like chemistry (#116). (h) Consecutive Legacy titles are a
+     durable profile counter (`legacyStreak`); the live streak follows the
+     device that played more, the best is monotonic.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

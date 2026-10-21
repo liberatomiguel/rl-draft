@@ -55,7 +55,8 @@ describe("careerStore — achievements settle after flows (R32)", () => {
     const p = useProfileStore.getState();
     expect(p.careerWorldsWon).toBe(lifetime + 1);
     expect(p.season.careerWorlds).toBe(season + 1);
-    expect(p.cosmetics.owned).toHaveProperty("world-champion");
+    expect(p.cosmetics.owned).toHaveProperty("world-champion-crowned");
+    expect(p.cosmetics.owned).toHaveProperty("career-title-rtw-champion");
     useProfileStore.getState().addCareerWorlds(0);
     expect(useProfileStore.getState().careerWorldsWon).toBe(lifetime + 1);
   });

@@ -221,6 +221,8 @@ export const challengeStarSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("goals"), min: z.number().int().min(1).max(80) }).strict(),
   z.object({ kind: z.literal("concede"), max: z.number().int().min(0).max(30) }).strict(),
   z.object({ kind: z.literal("noLosses") }).strict(),
+  z.object({ kind: z.literal("sameRegion") }).strict(),
+  z.object({ kind: z.literal("sameSeason") }).strict(),
 ]);
 
 export const challengeSchema = z

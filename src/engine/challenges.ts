@@ -10,13 +10,14 @@
 
 import { CHALLENGE, RANKS } from "@/config/balance";
 import { specialCardById } from "@/data";
-import { lineupById, lineupPoolForRegion, lineups, playerCardById } from "@/data";
+import { lineupById, lineupPoolForRegion, lineups, playerById, playerCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { createDraft, drawNextOffer, playerEligibleUnderConstraint } from "./draft";
 import { simulateSeries } from "./match";
 import { rankForXp } from "./progression";
 import { buildLineupTeam } from "./teams";
 import type {
+  PlayerCard,
   Challenge,
   ChallengeConstraint,
   ChallengeStar,
@@ -63,6 +64,21 @@ export interface StarContext {
   all: SeriesResult[];
   bossOverall: number;
   rerollsUsed: number;
+  /** rc.20: the drafted roster (sameRegion / sameSeason stars). Optional so
+   *  the sim harness can evaluate outcome stars without one. */
+  roster?: Roster;
+}
+
+/** The player cards drafted into the three starter slots. */
+function rosterPlayers(roster: Roster | undefined): PlayerCard[] {
+  if (!roster) return [];
+  const out: PlayerCard[] = [];
+  for (const slot of ["player1", "player2", "player3"] as const) {
+    const pick = roster[slot];
+    const card = pick ? playerCardById.get(pick.refId) : undefined;
+    if (card) out.push(card);
+  }
+  return out;
 }
 
 function userGoals(series: SeriesResult[], userId: string): { scored: number; conceded: number } {
@@ -109,6 +125,16 @@ export function starSatisfied(star: ChallengeStar, ctx: StarContext): boolean {
       return userGoals(ctx.all, userId).conceded <= star.max;
     case "noLosses":
       return ctx.all.every((s) => s.winnerTeamId === userId);
+    case "sameRegion": {
+      const cards = rosterPlayers(ctx.roster);
+      if (cards.length < 3) return false;
+      const regions = new Set(cards.map((c) => playerById.get(c.playerId)?.region ?? "?"));
+      return regions.size === 1 && !regions.has("?");
+    }
+    case "sameSeason": {
+      const cards = rosterPlayers(ctx.roster);
+      return cards.length >= 3 && new Set(cards.map((c) => c.seasonId)).size === 1;
+    }
   }
 }
 

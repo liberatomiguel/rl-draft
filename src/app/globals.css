@@ -1352,29 +1352,22 @@ html.reduce-fx .card-float {
 }
 
 /* ---------------------------------------------------------------------------
-   Cosmetics (v2.0, visual language reset rc.3) — titles, badges, banners.
-   Line art + the chip the UI already uses; effects only on epic / legend,
-   borrowed from the special cards (glow, holo-shift). Every loop stops under
-   lite-fx / reduced motion like every other loop in the game.
+   Cosmetics (v2.0; rc.20 final titles + banners) — see the two blocks below.
+   Every loop stops under lite-fx / reduced motion like every other loop in
+   the game.
 --------------------------------------------------------------------------- */
 
-/* Badge emblem effects (on the SVG) */
-.cos-glow-epic {
-  filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.45));
-}
-.cos-glow-legend {
-  filter: drop-shadow(0 0 5px rgba(252, 211, 77, 0.5));
-}
-.cos-holo {
-  animation: cos-holo 7s ease-in-out infinite;
-}
-@keyframes cos-holo {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(252, 211, 77, 0.4)) hue-rotate(0deg); }
-  50% { filter: drop-shadow(0 0 7px rgba(252, 211, 77, 0.7)) hue-rotate(28deg); }
-}
-
-/* Title chip: the "Live" / "New" tag, decorated by tier. */
+/* ---------------------------------------------------------------------------
+   Titles (rc.20, the final set) — the "Live" / "New" chip decorated by tier.
+   common: plain grey · uncommon: a weak colour · rare: a strong colour with a
+   light glow · epic: gradient text, glow and a holo band · legendary: white
+   gold, glow, holo band and pointer tilt (--ct-rx/--ct-ry set by TitleTag).
+   Only transform animates (the band); the gradient text itself is static
+   (rc.9: an animated background-position repainted every legendary title on
+   the board each frame).
+--------------------------------------------------------------------------- */
 .cos-title {
+  position: relative;
   display: inline-flex;
   align-items: center;
   border-radius: 0.375rem;
@@ -1387,33 +1380,75 @@ html.reduce-fx .card-float {
   text-transform: uppercase;
   white-space: nowrap;
 }
+.cos-title-text {
+  position: relative;
+  z-index: 1;
+}
+/* Long names (the pre-season leaderboard titles): tighter and a step smaller
+   so they still sit on one line next to a name. */
+.cos-title-long {
+  letter-spacing: 0.04em;
+  font-size: 0.92em;
+}
+.cos-title-common {
+  color: var(--cos-c1);
+}
+.cos-title-uncommon {
+  color: var(--cos-c1);
+  border-color: color-mix(in srgb, var(--cos-c1) 30%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 7%, transparent);
+}
 .cos-title-rare {
   color: var(--cos-c1);
-  border-color: color-mix(in srgb, var(--cos-c1) 40%, transparent);
-  background: color-mix(in srgb, var(--cos-c1) 10%, transparent);
-}
-.cos-title-epic {
   border-color: color-mix(in srgb, var(--cos-c1) 45%, transparent);
-  background: color-mix(in srgb, var(--cos-c1) 8%, transparent);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--cos-c1) 22%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 10%, transparent);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--cos-c1) 55%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--cos-c1) 18%, transparent);
 }
 .cos-title-epic,
 .cos-title-legend {
+  overflow: hidden;
+}
+.cos-title-epic .cos-title-text,
+.cos-title-legend .cos-title-text {
   background-image: linear-gradient(90deg, var(--cos-c1), var(--cos-c2), var(--cos-c3));
-  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-/* rc.9: no animated background-position here (it repainted the clipped text
-   of every legendary title on the board, every frame) — the gradient text is
-   still, and the sheen is a band that moves with transform. */
-.cos-title-legend {
-  position: relative;
-  overflow: hidden;
-  border-color: color-mix(in srgb, var(--cos-c2) 55%, transparent);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--cos-c1) 30%, transparent);
+.cos-title-epic {
+  border-color: color-mix(in srgb, var(--cos-c1) 50%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 9%, transparent);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--cos-c1) 28%, transparent),
+    inset 0 0 10px color-mix(in srgb, var(--cos-c2) 10%, transparent);
 }
+/* Soft glow behind the text (no text-shadow: it would show through the
+   transparent gradient text). */
+.cos-title-epic::before,
+.cos-title-legend::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  pointer-events: none;
+  background: radial-gradient(60% 70% at 50% 50%, color-mix(in srgb, var(--cos-c1) 30%, transparent), transparent 70%);
+}
+.cos-title-legend {
+  --cos-gold: #f2cf6b;
+  border-color: rgba(242, 207, 107, 0.6);
+  background: linear-gradient(90deg, rgba(242, 207, 107, 0.14), rgba(255, 255, 255, 0.06), rgba(242, 207, 107, 0.14));
+  box-shadow:
+    0 0 18px rgba(242, 207, 107, 0.35),
+    inset 0 0 12px rgba(255, 248, 225, 0.12);
+  transform: perspective(320px) rotateX(var(--ct-rx, 0deg)) rotateY(var(--ct-ry, 0deg));
+  transition: transform 0.18s ease-out;
+  will-change: transform;
+}
+.cos-title-legend::before {
+  background: radial-gradient(60% 70% at 50% 50%, rgba(255, 240, 200, 0.32), transparent 70%);
+}
+/* Holo band: one light band crossing the chip, transform only. */
+.cos-title-epic::after,
 .cos-title-legend::after {
   content: "";
   position: absolute;
@@ -1421,88 +1456,280 @@ html.reduce-fx .card-float {
   bottom: 0;
   left: -50%;
   width: 200%;
+  z-index: 2;
   pointer-events: none;
-  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.22) 50%, transparent 62%);
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.18) 50%, transparent 60%);
   transform: translateX(-55%);
-  animation: cos-band 5s ease-in-out infinite;
+  animation: cos-band 6s ease-in-out infinite;
+}
+.cos-title-legend::after {
+  background: linear-gradient(
+    115deg,
+    transparent 36%,
+    rgba(244, 114, 182, 0.14) 44%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(125, 211, 252, 0.16) 56%,
+    rgba(253, 230, 138, 0.14) 60%,
+    transparent 66%
+  );
+  animation-duration: 5s;
+}
+/* Hover (desktop): the band follows the pointer instead of looping. */
+.cos-title-legend:hover::after {
+  animation: none;
+  transform: translateX(var(--ct-bx, 0%));
+  transition: transform 0.18s ease-out;
 }
 @keyframes cos-band {
   0% { transform: translateX(-55%); }
   45%, 100% { transform: translateX(55%); }
 }
 
-/* Banner surface: the left stays dark (text lives there); the colour sits on
-   the right. The pattern is quiet; legend adds the holo sheen. */
+/* ---------------------------------------------------------------------------
+   Banners (rc.20) — layered CSS gradients, no images, no filters.
+   Stack (bottom → top): the colour wash (--cos-wash, left → right), a glow
+   light for rare+ (part of `background`), the pattern (::before, masked so
+   the left stays dark for the text) and, on legendary, the sheen (::after,
+   transform only). The dark overlay thins as the tier rises so an epic is
+   visibly more colourful than a common and a legendary the most of all.
+--------------------------------------------------------------------------- */
 .cos-banner {
   position: relative;
   overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(5, 8, 15, 0.94) 0%, rgba(5, 8, 15, 0.8) 40%, rgba(5, 8, 15, 0.45) 100%),
-    linear-gradient(120deg, var(--cos-from), var(--cos-to));
+  /* Overlay darkness: left (text), middle, the colour peak at ~78 %, and the
+     far right edge again (the rating / rank sit there — they must read on
+     every banner, the brightest included). */
+  --cos-dark-a: 0.94;
+  --cos-dark-b: 0.82;
+  --cos-dark-c: 0.42;
+  --cos-dark-d: 0.7;
+  --cos-overlay: linear-gradient(90deg, rgba(5, 8, 15, var(--cos-dark-a)) 0%, rgba(5, 8, 15, var(--cos-dark-b)) 35%, rgba(5, 8, 15, var(--cos-dark-c)) 62%, rgba(5, 8, 15, var(--cos-dark-d)) 100%);
+  background: var(--cos-overlay), var(--cos-wash);
 }
 .cos-banner-common {
-  background:
-    linear-gradient(90deg, rgba(5, 8, 15, 0.95) 0%, rgba(5, 8, 15, 0.85) 45%, rgba(5, 8, 15, 0.6) 100%),
-    linear-gradient(120deg, var(--cos-from), var(--cos-to));
+  --cos-dark-a: 0.95;
+  --cos-dark-b: 0.86;
+  --cos-dark-c: 0.62;
 }
-/* A board row: even quieter — the colour is a hint on the far right. */
-.cos-banner.cos-banner-row,
-.cos-banner.cos-banner-row.cos-banner-common {
+.cos-banner-uncommon {
+  --cos-dark-a: 0.94;
+  --cos-dark-b: 0.84;
+  --cos-dark-c: 0.54;
+}
+.cos-banner-rare {
+  --cos-dark-a: 0.93;
+  --cos-dark-b: 0.8;
+  --cos-dark-c: 0.4;
+  --cos-dark-d: 0.68;
   background:
-    linear-gradient(90deg, rgba(5, 8, 15, 0.97) 0%, rgba(5, 8, 15, 0.92) 55%, rgba(5, 8, 15, 0.7) 100%),
-    linear-gradient(120deg, var(--cos-from), var(--cos-to));
+    var(--cos-overlay),
+    radial-gradient(60% 130% at 72% 50%, color-mix(in srgb, var(--cos-glow) 38%, transparent), transparent 70%),
+    var(--cos-wash);
+}
+.cos-banner-epic {
+  --cos-dark-a: 0.92;
+  --cos-dark-b: 0.76;
+  --cos-dark-c: 0.3;
+  --cos-dark-d: 0.68;
+  background:
+    var(--cos-overlay),
+    radial-gradient(55% 140% at 74% 30%, color-mix(in srgb, var(--cos-glow) 50%, transparent), transparent 70%),
+    radial-gradient(45% 120% at 55% 100%, color-mix(in srgb, var(--cos-mid) 45%, transparent), transparent 70%),
+    var(--cos-wash);
+}
+.cos-banner-legend {
+  --cos-dark-a: 0.9;
+  --cos-dark-b: 0.72;
+  --cos-dark-c: 0.26;
+  --cos-dark-d: 0.7;
+  background:
+    var(--cos-overlay),
+    radial-gradient(50% 150% at 74% 25%, color-mix(in srgb, var(--cos-glow) 55%, transparent), transparent 68%),
+    radial-gradient(45% 130% at 58% 110%, color-mix(in srgb, var(--cos-mid) 55%, transparent), transparent 70%),
+    radial-gradient(30% 90% at 45% 0%, color-mix(in srgb, var(--cos-accent) 22%, transparent), transparent 70%),
+    var(--cos-wash);
+}
+/* Phones: the hero stacks and centres its text over the whole width, so the
+   wash stays darker everywhere (the tier still shows in the colour itself). */
+@media (max-width: 639px) {
+  .cos-banner:not(.cos-banner-row) {
+    --cos-dark-a: 0.94;
+    --cos-dark-b: 0.86;
+    --cos-dark-c: 0.66;
+    --cos-dark-d: 0.72;
+  }
+}
+/* A board row: quieter — the colour is a hint on the right, and the rating
+   column at the edge stays dark on every tier. */
+.cos-banner.cos-banner-row {
+  --cos-dark-a: 0.97;
+  --cos-dark-b: 0.92;
+  --cos-dark-c: 0.66;
+  --cos-dark-d: 0.88;
+}
+.cos-banner.cos-banner-row.cos-banner-epic {
+  --cos-dark-c: 0.58;
+}
+.cos-banner.cos-banner-row.cos-banner-legend {
+  --cos-dark-c: 0.52;
 }
 .cos-banner.cos-banner-row::before {
-  left: 60%;
-  opacity: 0.07;
+  left: 58%;
+  opacity: 0.09;
 }
+/* The pattern layer. */
 .cos-banner::before {
   content: "";
   position: absolute;
   inset: 0;
-  left: 35%;
+  left: 30%;
   pointer-events: none;
-  opacity: 0.1;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
-  mask-image: linear-gradient(90deg, transparent, #000 45%);
+  opacity: 0.13;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
+  mask-image: linear-gradient(90deg, transparent, #000 40%);
 }
-.cos-banner-rays::before {
-  background: repeating-conic-gradient(from 0deg at 88% 50%, transparent 0deg 9deg, var(--cos-accent) 9deg 11deg);
+.cos-banner-rare::before { opacity: 0.16; }
+.cos-banner-epic::before { opacity: 0.2; }
+.cos-banner-legend::before { opacity: 0.24; }
+
+/* Kickoff: a stylised pitch — touchlines, the halfway line, the centre circle. */
+.cos-banner-pitch::before {
+  background:
+    radial-gradient(circle at 72% 50%, transparent 0 15%, var(--cos-accent) 15% calc(15% + 2px), transparent calc(15% + 2px)),
+    radial-gradient(circle at 72% 50%, var(--cos-accent) 0 3px, transparent 4px),
+    linear-gradient(90deg, transparent calc(72% - 1px), var(--cos-accent) calc(72% - 1px) calc(72% + 1px), transparent calc(72% + 1px)),
+    linear-gradient(180deg, transparent 12%, var(--cos-accent) 12% calc(12% + 2px), transparent calc(12% + 2px) calc(88% - 2px), var(--cos-accent) calc(88% - 2px) 88%, transparent 88%);
 }
-.cos-banner-grid::before {
-  background-image:
-    linear-gradient(var(--cos-accent) 1px, transparent 1px),
-    linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px);
-  background-size: 22px 22px;
+/* After Hours: side lighting beams over the night arena, a crowd of dots. */
+.cos-banner-arena::before {
+  background:
+    repeating-linear-gradient(104deg, transparent 0 34px, var(--cos-accent) 34px 42px),
+    radial-gradient(circle, var(--cos-accent) 1px, transparent 1.6px) 0 0 / 11px 11px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%), linear-gradient(180deg, #000 55%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 40%), linear-gradient(180deg, #000 55%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
-.cos-banner-stripes::before {
-  background: repeating-linear-gradient(135deg, transparent 0 14px, var(--cos-accent) 14px 16px);
+/* Solar Flare: a sun at the right edge throwing rays. */
+.cos-banner-flare::before {
+  background:
+    radial-gradient(circle at 76% 50%, var(--cos-accent) 0 5%, transparent 26%),
+    repeating-conic-gradient(from 0deg at 76% 50%, transparent 0 7deg, var(--cos-accent) 7deg 8.6deg);
 }
-.cos-banner-hex::before {
-  background-image: radial-gradient(circle at 50% 50%, transparent 9px, var(--cos-accent) 9.5px, var(--cos-accent) 10.5px, transparent 11px);
-  background-size: 34px 30px;
+/* Wildfire: tongues of flame rising from the bottom. */
+.cos-banner-flames::before {
+  background:
+    radial-gradient(28% 95% at 58% 112%, var(--cos-accent), transparent 70%),
+    radial-gradient(24% 85% at 78% 116%, var(--cos-accent), transparent 70%),
+    radial-gradient(20% 75% at 94% 108%, var(--cos-accent), transparent 70%),
+    repeating-radial-gradient(ellipse 60% 100% at 76% 135%, transparent 0 13px, var(--cos-accent) 13px 15px);
 }
-.cos-banner-waves::before {
-  background: repeating-radial-gradient(ellipse at 50% 130%, transparent 0 18px, var(--cos-accent) 18px 20px);
-}
+/* Circuit: a track traced over the dark. */
 .cos-banner-circuit::before {
   background-image:
     linear-gradient(var(--cos-accent) 1px, transparent 1px),
     linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px),
-    radial-gradient(circle, var(--cos-accent) 1.6px, transparent 2px);
+    radial-gradient(circle, var(--cos-accent) 1.6px, transparent 2.2px);
   background-size: 44px 44px, 44px 44px, 44px 44px;
   background-position: 0 0, 0 0, 22px 22px;
 }
-/* rc.9: soft radial light without a blur filter (the blur was re-rendered
-   with every repaint of the row). */
-.cos-banner-aurora::before {
-  background:
-    radial-gradient(55% 85% at 70% 20%, var(--cos-accent), transparent 75%),
-    radial-gradient(50% 75% at 95% 85%, var(--cos-accent), transparent 75%);
-  opacity: 0.22;
+/* Neon Grid: a geometric grid with points of light. */
+.cos-banner-grid::before {
+  background-image:
+    radial-gradient(circle, var(--cos-accent) 1.8px, transparent 2.6px),
+    linear-gradient(var(--cos-accent) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px);
+  background-size: 66px 66px, 22px 22px, 22px 22px;
+  background-position: 11px 11px, 0 0, 0 0;
 }
-/* rc.9: the sheen is a band moved with transform (it animated
-   background-position across the whole row, repainting it every frame). */
+/* Slipstream: curved speed trails sweeping to the right. */
+.cos-banner-slipstream::before {
+  background: repeating-radial-gradient(ellipse 150% 70% at -30% 50%, transparent 0 17px, var(--cos-accent) 17px 19px);
+}
+/* Singularity: concentric rings bending around a bright core. */
+.cos-banner-singularity::before {
+  background:
+    radial-gradient(circle at 72% 50%, var(--cos-accent) 0 4%, transparent 14%),
+    repeating-radial-gradient(circle at 72% 50%, transparent 0 11px, var(--cos-accent) 11px 12.5px),
+    conic-gradient(from 60deg at 72% 50%, transparent 0 62%, var(--cos-accent) 78%, transparent 92%);
+}
+/* Overdrive: overlapping diagonal trails. */
+.cos-banner-overdrive::before {
+  background:
+    repeating-linear-gradient(-22deg, transparent 0 20px, var(--cos-accent) 20px 23px, transparent 23px 38px),
+    repeating-linear-gradient(-22deg, transparent 0 31px, var(--cos-mid) 31px 33px, transparent 33px 52px);
+}
+/* Cosmic Ascension: a star field, iridescent light and cosmic layers. */
+.cos-banner-cosmic::before {
+  background:
+    radial-gradient(circle, #fff 1.2px, transparent 1.8px) 0 0 / 37px 41px,
+    radial-gradient(circle, #fff 0.8px, transparent 1.3px) 13px 19px / 53px 47px,
+    radial-gradient(circle, var(--cos-accent) 1px, transparent 1.5px) 29px 7px / 71px 61px,
+    conic-gradient(from 200deg at 72% 40%, #f0abfc, #22d3ee, #fcd34d, #f0abfc),
+    repeating-radial-gradient(circle at 72% 40%, transparent 0 26px, rgba(255, 255, 255, 0.5) 26px 27px);
+}
+/* Blueprint: the tactics board — a fine grid, nodes and their connections. */
+.cos-banner-blueprint::before {
+  background:
+    radial-gradient(circle, var(--cos-accent) 2.2px, transparent 3px) 9px 9px / 54px 54px,
+    repeating-linear-gradient(35deg, transparent 0 54px, var(--cos-accent) 54px 55px),
+    linear-gradient(var(--cos-accent) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px) 0 0 / 18px 18px;
+}
+/* Victory Lane: a lit lane converging on the finish line, with its chequer. */
+.cos-banner-lane::before {
+  background:
+    repeating-conic-gradient(var(--cos-accent) 0 25%, transparent 0 50%) 100% 0 / 24px 24px repeat-y,
+    repeating-conic-gradient(from 160deg at 112% 50%, transparent 0 4deg, var(--cos-accent) 4deg 4.8deg, transparent 4.8deg 40deg),
+    linear-gradient(90deg, transparent, var(--cos-accent));
+}
+/* Heatwave: heat shimmer — arcs rising over the arena. */
+.cos-banner-heat::before {
+  background:
+    repeating-radial-gradient(ellipse 110% 45% at 50% 125%, transparent 0 15px, var(--cos-accent) 15px 17px),
+    radial-gradient(40% 70% at 80% 100%, var(--cos-accent), transparent 70%);
+}
+/* The Vault: a wall of compartments, a few of them lit. */
+.cos-banner-vault::before {
+  background:
+    radial-gradient(circle, var(--cos-accent) 0 30%, transparent 62%) 44px 26px / 66px 78px,
+    linear-gradient(var(--cos-accent) 1px, transparent 1px) 0 0 / 100% 26px,
+    linear-gradient(90deg, var(--cos-accent) 1px, transparent 1px) 0 0 / 22px 100%;
+}
+/* Target Practice: concentric rings and a crosshair, like the On Target badge. */
+.cos-banner-target::before {
+  background:
+    repeating-radial-gradient(circle at 72% 50%, transparent 0 11px, var(--cos-accent) 11px 12.6px),
+    linear-gradient(90deg, transparent calc(72% - 1px), var(--cos-accent) calc(72% - 1px) calc(72% + 1px), transparent calc(72% + 1px)),
+    linear-gradient(180deg, transparent calc(50% - 1px), var(--cos-accent) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+}
+/* Playbook: tactical diagrams — dashed runs, O markers, overlapping pages. */
+.cos-banner-playbook::before {
+  background:
+    radial-gradient(circle, transparent 5px, var(--cos-accent) 5.5px 7px, transparent 7.6px) 0 0 / 52px 44px,
+    repeating-linear-gradient(90deg, var(--cos-accent) 0 8px, transparent 8px 15px) 0 30% / 100% 1.5px no-repeat,
+    repeating-linear-gradient(90deg, var(--cos-accent) 0 8px, transparent 8px 15px) 0 62% / 100% 1.5px no-repeat,
+    repeating-linear-gradient(-30deg, transparent 0 70px, var(--cos-accent) 70px 71px);
+}
+/* Golden Era: an old broadcast — scanlines, a vignette, a faint grain. */
+.cos-banner-retro::before {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, var(--cos-accent) 3px 4px),
+    radial-gradient(circle, var(--cos-accent) 0.7px, transparent 1.2px) 0 0 / 9px 9px,
+    radial-gradient(90% 120% at 70% 50%, transparent 40%, var(--cos-accent) 100%);
+}
+/* Back to Basics: the pitch from above, bold shapes like a tactics board. */
+.cos-banner-tactic::before {
+  background:
+    radial-gradient(circle at 70% 50%, transparent 0 17%, var(--cos-accent) 17% calc(17% + 3px), transparent calc(17% + 3px)),
+    radial-gradient(circle at 86% 30%, var(--cos-accent) 0 7px, transparent 8px),
+    radial-gradient(circle at 60% 72%, var(--cos-accent) 0 7px, transparent 8px),
+    radial-gradient(circle at 92% 70%, var(--cos-accent) 0 5px, transparent 6px),
+    linear-gradient(90deg, transparent calc(70% - 2px), var(--cos-accent) calc(70% - 2px) calc(70% + 2px), transparent calc(70% + 2px)),
+    linear-gradient(180deg, transparent 10%, var(--cos-accent) 10% calc(10% + 3px), transparent calc(10% + 3px) calc(90% - 3px), var(--cos-accent) calc(90% - 3px) 90%, transparent 90%);
+}
+/* The sheen (legendary): a band moved with transform (rc.9: never
+   background-position — it repainted the whole row every frame). */
 .cos-banner-animated::after {
   content: "";
   display: block;
@@ -1512,9 +1739,16 @@ html.reduce-fx .card-float {
   left: -50%;
   width: 200%;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent 42%, rgba(255, 255, 255, 0.08) 50%, transparent 58%);
+  background: linear-gradient(
+    100deg,
+    transparent 40%,
+    rgba(244, 114, 182, 0.05) 46%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(125, 211, 252, 0.06) 54%,
+    transparent 60%
+  );
   transform: translateX(-55%);
-  animation: cos-sheen 6s ease-in-out infinite;
+  animation: cos-sheen 7s ease-in-out infinite;
 }
 @keyframes cos-sheen {
   0%, 100% { transform: translateX(-55%); }
@@ -1530,23 +1764,22 @@ html.reduce-fx .card-float {
 
 /* Lite effects: stop the loops, keep the colours. */
 :is(html.lite-fx, html.reduce-fx) .cos-banner-animated::after,
+:is(html.lite-fx, html.reduce-fx) .cos-title-epic::after,
 :is(html.lite-fx, html.reduce-fx) .cos-title-legend::after {
   animation: none;
   background: none;
 }
+:is(html.lite-fx, html.reduce-fx) .cos-title-legend {
+  transform: none;
+  transition: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .cos-banner-animated::after,
+  .cos-title-epic::after,
   .cos-title-legend::after {
     animation: none;
   }
-}
-:is(html.lite-fx, html.reduce-fx) .cos-holo,
-:is(html.lite-fx, html.reduce-fx) .cos-title-legend {
-  animation: none;
-}
-:is(html.lite-fx, html.reduce-fx) .cos-glow-epic,
-:is(html.lite-fx, html.reduce-fx) .cos-glow-legend,
-:is(html.lite-fx, html.reduce-fx) .cos-holo,
-:is(html.lite-fx, html.reduce-fx) .cos-banner-aurora::before {
-  filter: none;
+  .cos-title-legend {
+    transition: none;
+  }
 }

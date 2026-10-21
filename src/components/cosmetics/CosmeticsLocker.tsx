@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react";
 import { RANKS } from "@/config/balance";
 import { SEASON } from "@/config/season";
+import { challengeById } from "@/data";
 import { cosmeticById, type CosmeticDef, type CosmeticKind, type CosmeticSource } from "@/data/cosmetics";
 import { addBadge, lockerItems, MAX_BADGES, placeBadgeAt, removeBadgeAt, resolveEquipped, swapBadges, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";
@@ -56,6 +57,16 @@ export function sourceLabel(source: CosmeticSource, C: ReturnType<typeof useCopy
       return C.sources["missions-completed"](source.count);
     case "runs-won":
       return C.sources["runs-won"](source.count);
+    case "runs-won-since-s1":
+      return C.sources["runs-won-since-s1"](source.count);
+    case "runs-finished-since-s1":
+      return C.sources["runs-finished-since-s1"](source.count);
+    case "legacy-streak":
+      return C.sources["legacy-streak"](source.count);
+    case "specials-owned":
+      return C.sources["specials-owned"](source.count);
+    case "challenge-perfect":
+      return C.sources["challenge-perfect"](challengeById.get(source.challengeId)?.title ?? source.challengeId);
     case "career-mark":
       return C.sources["career-mark"];
     case "career-worlds":
@@ -304,7 +315,8 @@ export function CosmeticsLockerModal({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {/* rc.20: titles get two columns — the long pre-season names need the room. */}
+      <div className={cx("grid gap-2", kind === "title" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
         {owned.map((def) => {
           const shown = shownIds.has(def.id);
           const slot = def.kind === "badge" ? resolved.badges.findIndex((b) => b.id === def.id) : -1;

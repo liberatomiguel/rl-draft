@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.19**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.20**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,81 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.20 (the final cosmetics: titles + banners, 2026-10-21 · DESIGN-DECISIONS #131)
+- **The official title / banner set** (`data-sources/badges/cosmeticos-atualizado.md`):
+  36 titles and 18 banners replace the provisional rc.3 set, all CSS (no assets).
+  Tier treatments — common grey · uncommon a weak colour · rare a strong colour
+  with a light glow · epic gradient + glow + holo band · legendary white gold with
+  glow, holo band and pointer tilt (titles) / layered colour with a sheen
+  (banners). Eighteen banner pattern families (pitch, arena, flare, flames,
+  circuit, grid, slipstream, singularity, overdrive, cosmic, blueprint, lane,
+  heat, vault, target, playbook, retro, tactic), each a stack of gradients; only
+  the legendary sheen moves, with transform. The dark overlay thins with the
+  tier and darkens again at the right edge so the rating always reads; phones
+  keep it darker (the hero centres its text).
+- **Login calendar (30 days).** Eight milestone days with cosmetics (3 The
+  Regular · 5 Kickoff · 7 Spark · 10 Locked In · 14 After Hours · 21 Solar
+  Flare + On Fire · 25 Can't Stop · 30 Wildfire badge + banner + Daily Driver),
+  22 XP-only days (`LOGIN_STREAK.milestoneBonus`, `cycleDays`). The modal shows
+  the whole cycle: banked days, today, the items drawn small on their day, the
+  next reward; a milestone whose item is already owned (a new cycle) is ticked
+  and pays XP; past day 30 the calendar reads complete.
+- **Season 1 rank track** (`season-rank`, seasonId 1): Bronze Circuit · Silver
+  Challenger · Gold Neon Grid + Playmaker · Platinum Slipstream · Diamond
+  Unstoppable · Champion Singularity + Rocketeer · GC Overdrive · SSL Cosmic
+  Ascension + Rocket Demigod. Handed out the first time the rank is reached
+  (lower ranks included), kept once owned; teased as locked silhouettes.
+- **Play milestones, counted from the Season 1 reset** (new sources
+  `runs-won-since-s1`, `runs-finished-since-s1`, `legacy-streak`,
+  `specials-owned`, `challenge-perfect`): Rookie (first win) · Blueprint (10
+  runs finished) · Victory Lane (25 wins) · Draft Veteran (100 wins) · On a
+  Roll / Heatwave (3 / 5 consecutive Legacy titles — `profile.legacyStreak`, new
+  durable field, merged in the sync) · Card Hunter / The Vault (1 / 10 specials
+  since the reset) · Target Practice (25 missions) · RL Nerd / Playbook (10 /
+  50 quizzes) · Road to Worlds Champion (first Worlds).
+- **Three fixed challenges with exclusive cosmetics** (all three stars):
+  Pure Talent (Silver, base cards only → Back to Basics banner + Pure Talent
+  title), Homegrown (Gold, three starters from one region → Homegrown title),
+  Time Capsule (Platinum, three starters from one RLCS season → Golden Era
+  banner). New star kinds `sameRegion` / `sameSeason` read the drafted roster
+  (`StarContext.roster`). The challenge card and briefing show the reward strip.
+- **Unlock pop-up** (`CosmeticUnlockModal`, `cosmeticUnlockStore`): every
+  earned title / badge / banner gets the special-card ceremony (burst, ring,
+  float), its rarity, description, how it was earned and "Wear it now". Fed by a
+  profile-store subscription on the owned map; hydration and the cloud merge
+  stay quiet; it waits for the run ceremonies and the login modal.
+- **Pre-season titles** per the document: First Chapter (participation), the
+  board titles (Champion white gold · #2 / #3 gradients · Elite / Finalist
+  solid) and one title per peak rank (grey → white gold), plus the four manual
+  grants with RESERVED colours (early supporter cobalt · supporter raspberry ·
+  contributor emerald · pro baby blue), checked by a test.
+
+### Changed — rc.20
+- **Badges follow the revised design file** (`Badges-Rocket-Draft-Revisado`):
+  Season Elite covers #4–10 (4th / 5th place badges retired), Season Finalist
+  #11–50; Crowned World Champion is the FIRST Worlds title (the original World
+  Champion art retired); Early Supporter badge added (grant `early-supporter`);
+  On Target at 25 missions; Pre-season Champion back to epic. 35 badges.
+- **Pre-season peak-rank rewards are cumulative** (the document: "conceder
+  também os itens dos ranks inferiores"); board rewards stay one band each.
+- The provisional titles / banners (`legacy-title-day-one`, the rc.3 board
+  banners, `streak-*`, `stars-title-45`, `quiz-title-30`, `missions-title-100`,
+  the career title / banner set) are gone — never shipped outside staging.
+- Locker: titles in two columns (the long pre-season names), long names get a
+  tighter chip; the rank track teases as locked slots (rc.4 hid it).
+- `achievementToast`-style XP from mid-run achievements now updates the season
+  peak rank and refreshes cosmetics (the rank track can trigger there).
+
+### Fixed — rc.20
+- **Cloud merge dropped and re-dated playing rewards.** Root cause:
+  `mergeProfiles` refreshed the owned cosmetics from a PARTIAL fact set (no
+  wins, stars, career marks), so `refreshOwned` dropped every runs-won / stars /
+  career item and the next store refresh re-added it with a new date — "NEW"
+  markers (and now the unlock pop-up) fired again after every sync. The merge
+  now reads the complete merged facts.
+- Collecting specials never refreshed cosmetics (no source read them before);
+  it does now (Card Hunter / The Vault).
 
 ### Changed — rc.19 (2026-10-20)
 - Legendary glow tighter (core sigma 2.2, halo 16 at 0.3) so badges built from

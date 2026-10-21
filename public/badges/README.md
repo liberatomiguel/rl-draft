@@ -21,8 +21,6 @@ Replace the design file and re-run the script to update the art.
 | `first-chapter.svg` | First Chapter |
 | `season-finalist-ps.svg` | Season Finalist |
 | `season-elite-ps.svg` | Season Elite |
-| `season-fifth-place-ps.svg` | Season Fifth Place |
-| `season-fourth-place-ps.svg` | Season Fourth Place |
 | `season-third-place-ps.svg` | Season Third Place |
 | `season-runner-up-ps.svg` | Season Runner-up |
 | `season-champion-ps.svg` | Season Champion |
@@ -37,8 +35,8 @@ Replace the design file and re-run the script to update the art.
 | `road-warrior.svg` | Road Warrior |
 | `underdog.svg` | Underdog |
 | `dynasty.svg` | Dynasty |
-| `world-champion-crowned.svg` | World Champion · Coroa |
-| `world-champion.svg` | World Champion · Original |
+| `world-champion-crowned.svg` | Crowned World Champion |
 | `contributor.svg` | Contributor |
 | `verified-pro.svg` | Verified Pro |
 | `supporter.svg` | Supporter |
+| `early-supporter.svg` | Early Supporter |

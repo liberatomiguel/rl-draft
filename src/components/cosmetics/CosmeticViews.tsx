@@ -5,10 +5,12 @@
  * title / badge / banner is drawn, so the profile hero, the leaderboard rows,
  * the locker, the recap and the toasts all look the same.
  *
- * Titles + banners (provisional) speak the game's line-art language: chips
- * that look like the "Live" / "New" tags, effects reserved for the special
- * tiers (glow for epic, holo for legend). Badges (rc.4) are illustrated art:
- * static SVGs drawn from Miguel's design file.
+ * Titles (rc.20, the final set) are the "Live" / "New" chip decorated by
+ * tier: common grey, uncommon a weak colour, rare a strong colour with a soft
+ * glow, epic a gradient with glow and a holo sweep, legendary white gold with
+ * glow, holo and pointer tilt. Banners are layered CSS gradients per pattern
+ * family (no images); only the legendary sheen moves, with transform. Badges
+ * (rc.4) are illustrated art: static SVGs drawn from Miguel's design file.
  */
 
 import { useEffect, useRef, type ReactNode } from "react";
@@ -273,13 +275,51 @@ function stopsVars(colors: Stops): Record<string, string> {
   };
 }
 
-export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef | null | undefined; size?: "xs" | "sm" | "md"; className?: string }) {
+/** Pointer tilt range (deg) for legendary titles — desktop only, no re-render. */
+const TITLE_TILT_DEG = 14;
+/** Names this long get the tighter `cos-title-long` treatment. */
+const LONG_TITLE_CHARS = 22;
+
+const TITLE_SIZE = {
+  xs: "px-1.5 py-px text-[9px]",
+  sm: "px-2 py-0.5 text-[11px]",
+  md: "px-2.5 py-1 text-xs",
+  lg: "px-3.5 py-1.5 text-base",
+  xl: "px-5 py-2.5 text-xl",
+} as const;
+
+export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef | null | undefined; size?: keyof typeof TITLE_SIZE; className?: string }) {
   const copy = useCosmeticCopy();
   if (!title || title.kind !== "title") return null;
-  const sizeClass = size === "xs" ? "px-1.5 py-px text-[9px]" : size === "md" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[11px]";
+  const sizeClass = TITLE_SIZE[size];
+  const legend = title.tier === "legend";
+  const name = copy.name(title.id);
+  // Legendary: tilt toward the pointer (CSS vars on the element, no state).
+  const onMove = legend
+    ? (e: React.PointerEvent<HTMLSpanElement>) => {
+        if (e.pointerType !== "mouse") return;
+        const el = e.currentTarget;
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        el.style.setProperty("--ct-ry", `${(x * TITLE_TILT_DEG * 2).toFixed(1)}deg`);
+        el.style.setProperty("--ct-rx", `${(-y * TITLE_TILT_DEG * 2).toFixed(1)}deg`);
+        el.style.setProperty("--ct-bx", `${(x * 60).toFixed(1)}%`);
+      }
+    : undefined;
+  const onLeave = legend
+    ? (e: React.PointerEvent<HTMLSpanElement>) => {
+        for (const v of ["--ct-ry", "--ct-rx", "--ct-bx"]) e.currentTarget.style.removeProperty(v);
+      }
+    : undefined;
   return (
-    <span className={cx("cos-title", `cos-title-${title.tier}`, sizeClass, className)} style={stopsVars(title.style.colors) as React.CSSProperties}>
-      {copy.name(title.id)}
+    <span
+      className={cx("cos-title", `cos-title-${title.tier}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
+      style={stopsVars(title.style.colors) as React.CSSProperties}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+    >
+      <span className="cos-title-text">{name}</span>
     </span>
   );
 }
@@ -304,22 +344,29 @@ export function BannerSurface({
   plainClassName?: string;
 }) {
   if (!banner || banner.kind !== "banner") return <div className={cx(className, plainClassName)}>{children}</div>;
-  const s = banner.style;
-  const style: Record<string, string> = { "--cos-from": s.from, "--cos-to": s.to, "--cos-accent": s.accent ?? "#ffffff" };
   return (
-    <div
-      className={cx(
-        "cos-banner",
-        `cos-banner-${banner.tier}`,
-        s.pattern && s.pattern !== "none" && `cos-banner-${s.pattern}`,
-        s.animated && "cos-banner-animated",
-        className,
-      )}
-      style={style as React.CSSProperties}
-    >
+    <div className={cx(bannerClasses(banner), className)} style={bannerVars(banner) as React.CSSProperties}>
       {children}
     </div>
   );
+}
+
+/** The class list of a banner surface (shared with the unlock pop-up). */
+export function bannerClasses(banner: Extract<CosmeticDef, { kind: "banner" }>): string {
+  const s = banner.style;
+  return cx("cos-banner", `cos-banner-${banner.tier}`, s.pattern !== "none" && `cos-banner-${s.pattern}`, s.animated && "cos-banner-animated");
+}
+
+/** CSS variables of a banner: the wash gradient, the accent and the glow colour. */
+export function bannerVars(banner: Extract<CosmeticDef, { kind: "banner" }>): Record<string, string> {
+  const s = banner.style;
+  const stops = s.stops.length >= 2 ? s.stops : [s.stops[0] ?? "#111", s.stops[0] ?? "#111"];
+  return {
+    "--cos-wash": `linear-gradient(110deg, ${stops.join(", ")})`,
+    "--cos-accent": s.accent,
+    "--cos-glow": stops[stops.length - 1],
+    "--cos-mid": stops[Math.floor(stops.length / 2)],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -334,13 +381,13 @@ export function CosmeticArt({ def, size = "md", className }: { def: CosmeticDef;
     case "banner":
       return (
         <BannerSurface banner={def} className={cx("rounded-md border border-line-strong", className)}>
-          <span className="block" style={{ width: PX[size] * 2.6, height: PX[size] * 1.15 }} />
+          <span className="block" style={{ width: PX[size] * 2.8, height: PX[size] * 1.25 }} />
         </BannerSurface>
       );
     case "title":
       return (
         <span className={cx("inline-flex items-center", className)}>
-          <TitleTag title={def} size={size === "xs" ? "xs" : size === "sm" ? "sm" : "md"} />
+          <TitleTag title={def} size={size === "xs" ? "xs" : size === "sm" ? "sm" : size === "xl" ? "lg" : "md"} />
         </span>
       );
   }

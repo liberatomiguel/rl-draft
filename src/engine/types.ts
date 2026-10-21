@@ -673,7 +673,10 @@ export type ChallengeStar =
   | { kind: "maxRerolls"; max: number }
   | { kind: "goals"; min: number }
   | { kind: "concede"; max: number }
-  | { kind: "noLosses" };
+  | { kind: "noLosses" }
+  /** rc.20: every drafted player from ONE region / ONE RLCS season. */
+  | { kind: "sameRegion" }
+  | { kind: "sameSeason" };
 
 /** The optional "twist" on a challenge draft. All fields are optional. */
 export interface ChallengeConstraint {

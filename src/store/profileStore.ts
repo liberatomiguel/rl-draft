@@ -23,6 +23,7 @@ import {
   cosmeticFacts,
   EMPTY_COSMETICS,
   markSeen,
+  newlyOwnedIds,
   refreshOwned,
   sanitizeEquipped,
   type CosmeticsState,
@@ -58,6 +59,7 @@ import {
 import { FEATURES, MISSIONS } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
 import { useAchievementToasts } from "./achievementToastStore";
+import { useCosmeticUnlocks } from "./cosmeticUnlockStore";
 import { useRewardToasts } from "./rewardToastStore";
 import type {
   Difficulty,
@@ -135,6 +137,10 @@ export interface ProfileState {
   /** rc.4: Road to Worlds World Championships won, across every career save
    *  (World Champion badges). This season's share lives in `season.careerWorlds`. */
   careerWorldsWon: number;
+  /** rc.20: consecutive Legacy-difficulty titles — the live run and the best
+   *  ever (the "On a Roll" / "Heatwave" cosmetics read `best`). A lost Legacy
+   *  run resets `current`; other difficulties leave it alone. */
+  legacyStreak: { current: number; best: number };
   /** Leaderboard aggregates (v1.4): peak team overall per difficulty and per pool
    *  (worldwide vs SAM). The durable feed for the cloud leaderboards. */
   records: {
@@ -265,6 +271,7 @@ const initialData = {
   challengeStars: {} as Record<string, number>,
   careerMarks: [] as string[],
   careerWorldsWon: 0,
+  legacyStreak: { current: 0, best: 0 },
   records: {
     bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 } as Record<Difficulty, number>,
     bestOverallWorldwide: 0,
@@ -388,7 +395,12 @@ function eligibilityOf(p: Pick<ProfileState, "xp" | "legacyUnlocked">): MissionE
 /** The `cosmetics` patch for a (possibly partially updated) profile. */
 function withCosmetics(
   p: Pick<ProfileState, "legacy" | "grants" | "season" | "cosmetics"> &
-    Partial<Pick<ProfileState, "missions" | "login" | "quiz" | "challengeStars" | "careerMarks" | "careerWorldsWon" | "wins" | "previewUnlockAll">>,
+    Partial<
+      Pick<
+        ProfileState,
+        "missions" | "login" | "quiz" | "challengeStars" | "careerMarks" | "careerWorldsWon" | "wins" | "runsCompleted" | "unlockedSpecials" | "legacyStreak" | "previewUnlockAll"
+      >
+    >,
   now = new Date().toISOString(),
 ): CosmeticsState {
   // The preview switch only ever counts where the preview tools exist (dev / staging).
@@ -397,6 +409,9 @@ function withCosmetics(
   const equipped = sanitizeEquipped(owned, p.cosmetics?.equipped ?? EMPTY_COSMETICS.equipped);
   return { owned, equipped, seen: p.cosmetics?.seen ?? [] };
 }
+
+/** rc.20: > 0 while a hydrate / merge is writing (no unlock pop-ups for those). */
+let quietUnlocks = 0;
 
 export const useProfileStore = create<ProfileState>()(
   persist(
@@ -425,6 +440,15 @@ export const useProfileStore = create<ProfileState>()(
           if (results.placement === "champion") {
             wins[entry.difficulty] += 1;
           }
+          // rc.20: consecutive Legacy titles (On a Roll / Heatwave). Only Legacy
+          // runs touch the streak: a title extends it, any other result ends it.
+          const prevStreak = state.legacyStreak ?? initialData.legacyStreak;
+          const legacyStreak =
+            entry.difficulty !== "legacy"
+              ? prevStreak
+              : results.placement === "champion"
+                ? { current: prevStreak.current + 1, best: Math.max(prevStreak.best, prevStreak.current + 1) }
+                : { ...prevStreak, current: 0 };
 
           // Legacy unlock (v1.4): decoupled from the raw `wins` counter so a Daily or
           // Challenge Hard win still counts as a TITLE (achievements/leaderboard/MMR)
@@ -525,10 +549,11 @@ export const useProfileStore = create<ProfileState>()(
             lastMmrGain,
             season,
             lifetime: { xp: state.lifetime.xp + (xpFinal - state.xp) },
-            cosmetics: withCosmetics({ ...state, season, wins }, now),
+            cosmetics: withCosmetics({ ...state, season, wins, runsCompleted, unlockedSpecials, legacyStreak }, now),
             legacyUnlocked,
             runsCompleted,
             wins,
+            legacyStreak,
             playoffAppearances: state.playoffAppearances + (madePlayoffs ? 1 : 0),
             podiums: state.podiums + (podium ? 1 : 0),
             swissWinsTotal: state.swissWinsTotal + entry.swissRecord.wins,
@@ -611,19 +636,28 @@ export const useProfileStore = create<ProfileState>()(
               changed = true;
             }
           }
-          return changed ? { unlockedSpecials } : {};
+          return changed ? { unlockedSpecials, cosmetics: withCosmetics({ ...state, unlockedSpecials }) } : {};
         }),
 
-      hydrateDurable: (durable) =>
-        set(() => {
-          const next = normalizeToSeason(durable);
-          return {
-            ...next,
-            achievements: pruneEarnedAchievements(durable.achievements),
-            unlockedSpecials: pruneUnlockedSpecials(durable.unlockedSpecials),
-            cosmetics: withCosmetics({ ...next, cosmetics: next.cosmetics ?? EMPTY_COSMETICS }),
-          };
-        }),
+      hydrateDurable: (durable) => {
+        // A cloud / storage merge is never "a new unlock": whatever it brings in
+        // stays silent (the pop-up is for rewards earned in THIS session).
+        quietUnlocks += 1;
+        try {
+          set(() => {
+            const next = normalizeToSeason(durable);
+            return {
+              ...next,
+              legacyStreak: durable.legacyStreak ?? initialData.legacyStreak,
+              achievements: pruneEarnedAchievements(durable.achievements),
+              unlockedSpecials: pruneUnlockedSpecials(durable.unlockedSpecials),
+              cosmetics: withCosmetics({ ...next, cosmetics: next.cosmetics ?? EMPTY_COSMETICS }),
+            };
+          });
+        } finally {
+          quietUnlocks -= 1;
+        }
+      },
 
       awardAchievements: (ids) => {
         const fresh: string[] = [];
@@ -638,9 +672,14 @@ export const useProfileStore = create<ProfileState>()(
               fresh.push(id);
             }
           }
-          return fresh.length
-            ? { achievements, xp: state.xp + xp, lifetime: { xp: state.lifetime.xp + xp } }
-            : {};
+          if (!fresh.length) return {};
+          const total = state.xp + xp;
+          const rank = rankForXp(total);
+          const season = {
+            ...state.season,
+            peakRankId: rank.index >= rankIndexOf(state.season.peakRankId) ? rank.id : state.season.peakRankId,
+          };
+          return { achievements, xp: total, lifetime: { xp: state.lifetime.xp + xp }, season, cosmetics: withCosmetics({ ...state, season }) };
         });
         if (fresh.length) useAchievementToasts.getState().push(fresh);
       },
@@ -913,6 +952,17 @@ export const useProfileStore = create<ProfileState>()(
     },
   ),
 );
+
+// rc.20: the unlock pop-up. Every write that derives a new owned cosmetic
+// (a run, a challenge, a login, a quiz, a mission, a career milestone) is
+// announced here — one place, no per-action bookkeeping. Hydration and the
+// cloud merge are quiet (`quietUnlocks`), and the persist hydrate runs before
+// this subscription exists, so a migrated save never floods the queue.
+useProfileStore.subscribe((state, prev) => {
+  if (quietUnlocks > 0 || state.cosmetics?.owned === prev.cosmetics?.owned) return;
+  const ids = newlyOwnedIds(prev.cosmetics?.owned ?? {}, state.cosmetics?.owned ?? {});
+  if (ids.length) useCosmeticUnlocks.getState().push(ids);
+});
 
 /** Legacy difficulty unlock rule (v1.4): a real Classic/Quick Hard (or Legacy)
  *  championship opens Legacy. Read from the dedicated `legacyUnlocked` latch so a

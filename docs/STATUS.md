@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Last updated: **2026-10-20**. History lives in `CHANGELOG.md`; rationale in
+> Last updated: **2026-10-21**. History lives in `CHANGELOG.md`; rationale in
 > `DESIGN-DECISIONS.md`. Grep those, never read them whole.
 
 ## Where things are
@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.19** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.20** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
   `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
@@ -41,9 +41,15 @@ rc.9: badges as pre-rendered WebP (build-images), board loops transform-only,
 legendary sway; rc.10–11: legendary glow pre-blurred in the badge's own
 silhouette (build-images *.glow.webp); rc.13: legendaries still at rest (no
 rays), tilt on hover; fixed the banner-sheen main-thread bug (profile 44 ms/s,
-board 19 ms/s of main thread while idle, everything unlocked).
-Decisions: DESIGN-DECISIONS #110–#129, ROAD-TO-WORLDS-DECISIONS R20–R38.
-Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
+board 19 ms/s of main thread while idle, everything unlocked); **rc.20: the
+FINAL cosmetics set** — 35 badges (revised design file), 36 titles and 18
+banners (CSS, tiered treatments), the 30-day login calendar, the Season 1 rank
+track, play milestones counted from the reset, three fixed challenges with
+exclusive cosmetics (Pure Talent / Homegrown / Time Capsule), the unlock
+pop-up, and the cloud-merge fix that re-dated playing rewards.
+Decisions: DESIGN-DECISIONS #110–#131, ROAD-TO-WORLDS-DECISIONS R20–R38.
+Cosmetics reference: `COSMETICS-CATALOG.md` (generated); source document:
+`data-sources/badges/cosmeticos-atualizado.md`.
 
 ## Open before `main` (Phase 4)
 
@@ -54,15 +60,15 @@ Cosmetics reference: `COSMETICS-CATALOG.md` (generated).
 - **Manual regression on staging** (plan §7): fresh / pre-season / signed-in
   profiles, two devices, all run modes, event cards, quiz, challenges, career
   end to end. Lighthouse. Event-card curation and a PT pass.
-- **Cosmetics art still to come (Miguel):** the 20 titles, 16 banners and 6
-  generic badges proposed in `data-sources/badges/badges-desbloqueios.md`.
-  Until then titles/banners are the provisional rc.3 set. The Season 1
-  rank-reward set (handed out at the season's turnover) is still to define.
+- **Cosmetics: done (rc.20).** Open: the login-calendar XP values are a first
+  pass (`LOGIN_STREAK.milestoneBonus`, "a definir" in the document); the
+  `early-supporter` grant id must exist in `profile_grants` when Miguel grants
+  it; Season 2 will need its own rank-track items (same milestones, new art).
 - Then merge to `main`, tag `v2.0.0`, move this section into CHANGELOG.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **493** tests / 38 files (385 on `main`)
+- `npm run typecheck` clean · `npm test` **503** tests / 38 files (385 on `main`)
   · `npm run lint` at baseline **5 errors** (pre-existing:
   TournamentScreen ×2, AnimatedNumber, Modal, and one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything

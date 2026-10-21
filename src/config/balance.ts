@@ -809,16 +809,22 @@ export const QUIZ = {
 } as const;
 
 /**
- * Login streak (v2.0). The first open of a UTC day counts (no run needed). XP per
- * day grows with the streak up to `perDayMax`; a gap resets the streak to 1 but
- * never removes earned rewards. Milestone days also pay a flat bonus and unlock the
- * cosmetics in `src/data/cosmetics.ts` (login-streak sources: 3 / 7 / 14 / 30).
+ * Login streak (v2.0; rc.20: the 30-day calendar). The first open of a UTC day
+ * counts (no run needed). XP per day grows with the streak up to `perDayMax`;
+ * past day 30 the calendar shows complete and the day pays the flat max. A gap
+ * resets the streak to 1 but never removes earned rewards: on a new cycle a
+ * milestone whose cosmetic is already owned pays its XP bonus instead. The eight
+ * milestone days (3 / 5 / 7 / 10 / 14 / 21 / 25 / 30) pay a flat bonus and
+ * unlock the cosmetics in `src/data/cosmetics.ts` (login-streak sources); the
+ * other 22 days are XP only.
  */
 export const LOGIN_STREAK = {
   perDayBase: 25,
   perDayStep: 5,
   perDayMax: 75,
-  milestoneBonus: { 3: 50, 7: 100, 14: 200, 30: 400 } as Record<number, number>,
+  /** Days in one calendar cycle (the modal's grid). */
+  cycleDays: 30,
+  milestoneBonus: { 3: 50, 5: 75, 7: 100, 10: 125, 14: 200, 21: 250, 25: 300, 30: 400 } as Record<number, number>,
 } as const;
 
 // ===========================================================================

@@ -18,6 +18,11 @@
  * cloud row shape (`equipped_badges: string[]`) did not change. Rewards whose
  * facts are season-scoped (the season track, Dynasty) are kept once earned:
  * `refreshOwned` never drops them when the season moves on.
+ *
+ * rc.20: the facts also carry the Season 1 counters (runs won / finished since
+ * the reset, the Legacy win streak, specials collected since the reset, the
+ * challenges with all three stars) that the final title / banner set reads.
+ * `newlyOwnedIds` is what the unlock pop-up announces.
  */
 
 import { FEATURES, RANKS } from "@/config/balance";
@@ -79,6 +84,16 @@ export interface CosmeticFacts {
   /** rc.4: this season's Legacy runs won and Worlds won (Dynasty). */
   seasonLegacyTitles?: number;
   seasonCareerWorlds?: number;
+  /** rc.20: runs won / finished since the Season 1 reset (the pre-season
+   *  snapshot subtracted; a fresh account counts everything). */
+  runsWonSinceS1?: number;
+  runsFinishedSinceS1?: number;
+  /** rc.20: best run of consecutive Legacy-difficulty titles. */
+  legacyStreakBest?: number;
+  /** rc.20: different special cards collected since the Season 1 reset. */
+  specialsOwned?: number;
+  /** rc.20: challenge ids with all three stars. */
+  challengePerfect?: string[];
   /** rc.2: preview switch (dev / staging only) — every item counts as owned. */
   previewAll?: boolean;
 }
@@ -102,6 +117,17 @@ export function cosmeticFacts(p: {
   const quiz = (p as { quiz?: { solved?: number } }).quiz;
   const missions = (p as { missions?: { completedTotal?: number } }).missions;
   const wins = (p as { wins?: Record<string, number> }).wins;
+  const runsWon = wins ? Object.values(wins).reduce((n, v) => n + (Number.isFinite(v) ? v : 0), 0) : 0;
+  const preseason = p.legacy?.preseason ?? null;
+  // rc.20: Season 1 milestones count from the reset on — the snapshot holds what
+  // the pre-season had already banked (titles, runs, and when it was frozen).
+  const runsWonSinceS1 = Math.max(0, runsWon - (preseason?.titles ?? 0));
+  const runsFinishedSinceS1 = Math.max(0, num("runsCompleted") - (preseason?.runsCompleted ?? 0));
+  const specialDates = (p as { unlockedSpecials?: Record<string, string> }).unlockedSpecials;
+  const since = preseason?.snapshotAt ?? "";
+  const specialsOwned = specialDates ? Object.values(specialDates).filter((d) => typeof d === "string" && d >= since).length : 0;
+  const legacyStreak = (p as { legacyStreak?: { best?: number } }).legacyStreak;
+  const challengePerfect = stars ? Object.entries(stars).filter(([, mask]) => (mask & 7) === 7).map(([id]) => id) : [];
   const careerMarks = Array.isArray((p as { careerMarks?: unknown }).careerMarks)
     ? ((p as { careerMarks: unknown[] }).careerMarks.filter((x) => typeof x === "string") as string[])
     : [];
@@ -117,7 +143,12 @@ export function cosmeticFacts(p: {
     quizSolved: quiz?.solved ?? 0,
     missionsCompleted: missions?.completedTotal ?? 0,
     careerMarks,
-    runsWon: wins ? Object.values(wins).reduce((n, v) => n + (Number.isFinite(v) ? v : 0), 0) : 0,
+    runsWon,
+    runsWonSinceS1,
+    runsFinishedSinceS1,
+    legacyStreakBest: legacyStreak?.best ?? 0,
+    specialsOwned,
+    challengePerfect,
     careerWorlds: Math.max(num("careerWorldsWon"), worldsFloor),
     seasonLegacyTitles: p.season?.legacyTitles ?? 0,
     seasonCareerWorlds: p.season?.careerWorlds ?? 0,
@@ -166,6 +197,16 @@ function sourceSatisfied(source: CosmeticSource, f: CosmeticFacts): boolean {
       return (f.missionsCompleted ?? 0) >= source.count;
     case "runs-won":
       return (f.runsWon ?? 0) >= source.count;
+    case "runs-won-since-s1":
+      return (f.runsWonSinceS1 ?? 0) >= source.count;
+    case "runs-finished-since-s1":
+      return (f.runsFinishedSinceS1 ?? 0) >= source.count;
+    case "legacy-streak":
+      return (f.legacyStreakBest ?? 0) >= source.count;
+    case "specials-owned":
+      return (f.specialsOwned ?? 0) >= source.count;
+    case "challenge-perfect":
+      return (f.challengePerfect ?? []).includes(source.challengeId);
     case "career-mark":
       return (f.careerMarks ?? []).includes(source.markId);
     case "career-worlds":
@@ -190,15 +231,15 @@ export function isLegacyReward(def: CosmeticDef): boolean {
 }
 
 /**
- * rc.4: rewards the locker never teases while locked — the season track and
- * the leaderboard / rank / grant rewards (they have their own screens or
- * cannot be chased). Only items earned by playing (streaks, stars, runs, quiz,
- * missions, career) show as locked placeholders.
+ * rc.4: rewards the locker never teases while locked — exclusives (pre-season,
+ * grants) and Dynasty (it has its own story). Everything earned by playing
+ * (streaks, stars, runs, quiz, missions, career, challenges and — rc.20 — the
+ * Season 1 rank track) shows as a locked placeholder.
  */
 export function isTeasedWhenLocked(def: CosmeticDef): boolean {
   if (def.exclusive) return false;
   const t = def.source.type;
-  if (t === "season-rank" || t === "season-feat") return false;
+  if (t === "season-feat") return false;
   // Road to Worlds rewards only tease where the mode is playable.
   if ((t === "career-mark" || t === "career-worlds") && !FEATURES.careerMode) return false;
   return true;
@@ -235,6 +276,12 @@ export function refreshOwned(
   for (const id of earned) if (!next[id]) next[id] = now;
   if (f.previewAll) for (const c of COSMETICS) if (!next[c.id]) next[c.id] = PREVIEW_DATE;
   return next;
+}
+
+/** rc.20: ids owned in `next` that `prev` did not have (real unlocks only — the
+ *  preview switch's transient ids are never announced). Feeds the unlock pop-up. */
+export function newlyOwnedIds(prev: Record<string, string>, next: Record<string, string>): string[] {
+  return Object.keys(next).filter((id) => !prev[id] && next[id] !== PREVIEW_DATE && cosmeticById.has(id));
 }
 
 /** Owned definitions of one kind, best first. */
@@ -276,7 +323,12 @@ const GROUP_ORDER: CosmeticSource["type"][] = [
   "season-feat", // Dynasty
   "career-worlds",
   "career-mark",
+  "challenge-perfect",
+  "legacy-streak",
   "runs-won",
+  "runs-won-since-s1",
+  "runs-finished-since-s1",
+  "specials-owned",
   "challenge-stars",
   "quiz-solved",
   "missions-completed",

@@ -612,6 +612,7 @@ export const useRunStore = create<RunStore>()(
               all: [...stageResults, series],
               bossOverall: displayTeamOverall(opponent.rating),
               rerollsUsed,
+              roster: run.draft.roster,
             })
           : 0;
         let starsNew = 0;

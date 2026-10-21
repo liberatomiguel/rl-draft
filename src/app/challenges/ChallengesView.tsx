@@ -39,6 +39,41 @@ import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { TeamLogo } from "@/components/ui/TeamLogo";
+import { COSMETICS, type CosmeticDef } from "@/data/cosmetics";
+import { CosmeticIcon, TIER_ACCENT, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
+
+/** rc.20: the exclusive cosmetics a challenge pays for all three stars. */
+function cosmeticRewards(challengeId: string): CosmeticDef[] {
+  return COSMETICS.filter((c) => c.source.type === "challenge-perfect" && c.source.challengeId === challengeId);
+}
+
+/** The three-star reward strip (card + briefing). */
+function CosmeticRewardStrip({ challengeId, perfect, CH, compact }: { challengeId: string; perfect: boolean; CH: ReturnType<typeof useCopy>["CHALLENGES_UI"]; compact?: boolean }) {
+  const copy = useCosmeticCopy();
+  const rewards = cosmeticRewards(challengeId);
+  if (rewards.length === 0) return null;
+  return (
+    <div className={cx("flex items-center gap-2 rounded-lg border px-2.5 py-2", perfect ? "border-amber-300/40 bg-amber-300/[0.05]" : "border-line/70 bg-white/[0.02]", compact ? "mt-3" : "mt-2")}>
+      <span className="flex shrink-0 items-center gap-1.5">
+        {rewards.map((r) => (
+          <CosmeticIcon key={r.id} def={r} />
+        ))}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-amber-200/90">{CH.cosmeticReward}</span>
+        <span className="block truncate text-[11px] text-sub">
+          {rewards.map((r, i) => (
+            <span key={r.id}>
+              {i > 0 ? " · " : ""}
+              <span className="font-semibold text-ink">{copy.name(r.id)}</span> <span style={{ color: TIER_ACCENT[r.tier] }}>{copy.tier(r.tier)}</span>
+            </span>
+          ))}
+        </span>
+      </span>
+      {perfect ? <span className="text-amber-300" aria-hidden>★</span> : null}
+    </div>
+  );
+}
 
 const rankInfo = (id: string) => RANKS.find((r) => r.id === id) ?? { id, label: id };
 const rankLabel = (id: string) => rankInfo(id).label;
@@ -74,6 +109,10 @@ export function starLabel(star: ChallengeStar, CH: ReturnType<typeof useCopy>["C
       return CH.star.concede(star.max);
     case "noLosses":
       return CH.star.noLosses;
+    case "sameRegion":
+      return CH.star.sameRegion;
+    case "sameSeason":
+      return CH.star.sameSeason;
   }
 }
 
@@ -272,6 +311,7 @@ function ChallengeCard({
           );
         })}
       </ul>
+      <CosmeticRewardStrip challengeId={ch.id} perfect={perfect} CH={CH} compact />
     </>
   );
 
@@ -364,6 +404,8 @@ function BriefingModal({
         })}
       </ul>
       <p className="mt-1.5 text-[11px] text-faint">{CH.starsHint}</p>
+      <CosmeticRewardStrip challengeId={challenge.id} perfect={(starMask & 7) === 7} CH={CH} />
+      {cosmeticRewards(challenge.id).length ? <p className="mt-1.5 text-[11px] text-faint">{CH.cosmeticRewardHint}</p> : null}
 
       {stageIds.length ? (
         <>

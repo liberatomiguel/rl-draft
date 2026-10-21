@@ -37,6 +37,7 @@ function make(over: Partial<DurableProfile> = {}): DurableProfile {
     challengeStars: {},
     careerMarks: [],
     careerWorldsWon: 0,
+    legacyStreak: { current: 0, best: 0 },
     records: { bestOverall: { easy: 0, normal: 0, hard: 0, legacy: 0 }, bestOverallWorldwide: 0, bestOverallSam: 0 },
     settings: { lastDifficulty: "normal", lastShowOverall: true, lastMode: "classic", lastRegionLock: null },
     flags: { seenHowToPlay: false, seenLegacyIntro: false, seenRegionalIntro: false, seenTutorial: false, seenSeasonRecap: false },

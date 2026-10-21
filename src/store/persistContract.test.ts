@@ -279,10 +279,10 @@ describe("profile migrate (old saves keep their progress)", () => {
         },
       });
       expect(out.challengesCompleted).toStrictEqual({}); // Challenges restart in v2.0
-      // The legacy rewards are derived at migration time (no sync needed): "Day One",
-      // First Chapter and the peak-rank badge of that exact rank (Gold, rc.4).
+      // The legacy rewards are derived at migration time (no sync needed): First
+      // Chapter (title + badge) and the peak-rank badges up to Gold (rc.20: cumulative).
       expect(Object.keys((out.cosmetics as { owned: Record<string, string> }).owned)).toEqual(
-        expect.arrayContaining(["legacy-title-day-one", "first-chapter", "pre-season-gold"]),
+        expect.arrayContaining(["legacy-title-first-chapter", "first-chapter", "pre-season-gold", "pre-season-silver", "legacy-title-ps-gold"]),
       );
       // New fields are backfilled, not missing.
       expect(out).toMatchObject({
