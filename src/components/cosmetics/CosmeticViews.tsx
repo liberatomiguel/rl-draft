@@ -64,7 +64,7 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 const BADGE_FX_MIN_PX = 28;
 /** Pointer tilt range (deg) by badge size — a board-row badge tilts far less
  *  than the profile's. Rendering, not gameplay. */
-const tiltDegFor = (px: number): number => (px >= 64 ? 26 : px >= 44 ? 17 : 10);
+const tiltDegFor = (px: number): number => (px >= 64 ? 32 : px >= 44 ? 21 : 12);
 /** Twinkles only on badges at least this big (hero, locker, peek) — on the
  *  board and the profile showcase they are noise and cost main-thread time. */
 const BADGE_SPARK_MIN_PX = 64;
@@ -168,7 +168,18 @@ export function BadgeEmblem({
     const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
     const y = (e.clientY - r.top) / r.height - 0.5;
-    el.dataset.hover = "";
+    if (!("hover" in el.dataset)) {
+      // Hand-off without a jump: freeze the idle sway where it is, then ease it
+      // flat while the pointer tilt (outer layer) eases in.
+      const sway = el.querySelector<HTMLElement>(".bfx-sway");
+      if (sway) sway.style.transform = getComputedStyle(sway).transform;
+      el.dataset.hover = "";
+      if (sway) {
+        void sway.offsetWidth;
+        sway.style.transition = "transform 0.35s ease-out";
+        sway.style.transform = "none";
+      }
+    }
     el.style.setProperty("--bfx-ry", `${(x * tiltDeg * 2).toFixed(1)}deg`);
     el.style.setProperty("--bfx-rx", `${(-y * tiltDeg * 2).toFixed(1)}deg`);
     el.style.setProperty("--bfx-bx", `${(-x * 70).toFixed(1)}%`);
@@ -178,6 +189,9 @@ export function BadgeEmblem({
     if (!el) return;
     delete el.dataset.hover;
     for (const v of ["--bfx-ry", "--bfx-rx", "--bfx-bx"]) el.style.removeProperty(v);
+    const sway = el.querySelector<HTMLElement>(".bfx-sway");
+    sway?.style.removeProperty("transform");
+    sway?.style.removeProperty("transition");
   };
   const legend = tier === "legend";
   const glow = legend ? badgeGlowSrc(badge.style.art) : null;
@@ -189,21 +203,23 @@ export function BadgeEmblem({
   return (
     <span
       ref={ref}
-      className={cx("bfx", `bfx-${tier}`, className)}
+      className={cx("bfx", `bfx-${tier}`, px <= 40 && "bfx-sm", className)}
       style={vars as React.CSSProperties}
       onPointerMove={legend ? onMove : undefined}
       onPointerLeave={legend ? onLeave : undefined}
       aria-hidden
     >
       <span className="bfx-tilt">
-        {glow ? <span className="bfx-glow" /> : null}
-        {img}
-        <span className="bfx-holo">
-          <span className="bfx-band" />
+        <span className="bfx-sway">
+          {glow ? <span className="bfx-glow" /> : null}
+          {img}
+          <span className="bfx-holo">
+            <span className="bfx-band" />
+          </span>
+          {sparks ? <span className="bfx-spark bfx-spark-a" /> : null}
+          {sparks ? <span className="bfx-spark bfx-spark-b" /> : null}
+          {legend && sparks ? <span className="bfx-spark bfx-spark-c" /> : null}
         </span>
-        {sparks ? <span className="bfx-spark bfx-spark-a" /> : null}
-        {sparks ? <span className="bfx-spark bfx-spark-b" /> : null}
-        {legend && sparks ? <span className="bfx-spark bfx-spark-c" /> : null}
       </span>
     </span>
   );

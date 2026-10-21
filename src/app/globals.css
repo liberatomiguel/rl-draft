@@ -1249,20 +1249,54 @@ html.reduce-fx .card-float {
   inset: calc(var(--bfx-glow-pad, 0.2857) * -100%);
   background: var(--bfx-glow) center / contain no-repeat;
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.95;
+  transform: scale(1.08);
 }
 .bfx-legend[data-live] .bfx-glow {
   animation: bfx-breathe 4.8s ease-in-out var(--bfx-delay, 0s) infinite;
 }
 @keyframes bfx-breathe {
-  0%, 100% { opacity: 0.72; }
+  0%, 100% { opacity: 0.85; }
   50% { opacity: 1; }
+}
+/* LEGENDARY idle sway (rc.14, back): plain values, no var() in the keyframes,
+   so the GPU runs it. Both ways from flat, so a restart never jumps. */
+.bfx-sway {
+  position: absolute;
+  inset: 0;
+}
+.bfx-legend[data-live] .bfx-sway {
+  animation: bfx-sway 8s ease-in-out var(--bfx-delay, 0s) infinite;
+}
+.bfx-legend.bfx-sm[data-live] .bfx-sway {
+  animation-name: bfx-sway-sm;
+}
+@keyframes bfx-sway {
+  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+  25% { transform: rotateY(-20deg) rotateX(3deg); }
+  75% { transform: rotateY(20deg) rotateX(-3deg); }
+}
+@keyframes bfx-sway-sm {
+  0%, 100% { transform: rotateY(0deg); }
+  25% { transform: rotateY(-11deg); }
+  75% { transform: rotateY(11deg); }
+}
+.bfx-legend[data-hover] .bfx-sway {
+  animation: none;
 }
 /* LEGENDARY on hover (desktop): the pointer takes the tilt, the sweep
    follows it, the glow lifts. */
 .bfx-legend[data-hover] .bfx-band,
 .bfx-legend[data-hover] .bfx-glow {
   animation: none;
+}
+:is(html.lite-fx, html.reduce-fx) .bfx-sway {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bfx-sway {
+    animation: none !important;
+  }
 }
 .bfx-legend[data-hover] .bfx-band {
   opacity: 1;
