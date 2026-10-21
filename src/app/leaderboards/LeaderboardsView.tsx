@@ -236,14 +236,14 @@ export function LeaderboardsView() {
                           {/* Wrapped: .cos-title sets its own display, so the
                               visibility utility lives on the wrapper. */}
                           {r.cosmetics.title ? (
-                            <span className="flex max-w-full overflow-hidden sm:hidden">
+                            <span className="-mx-3 -my-2 flex max-w-full overflow-hidden px-3 py-2 sm:hidden">
                               <TitleTag title={r.cosmetics.title} size="sm" />
                             </span>
                           ) : null}
                         </span>
                         <BadgeRow badges={r.cosmetics.badges} size={ROW_BADGE_PX} featuredSize={ROW_FEATURED_PX} className="shrink-0" />
                         {r.cosmetics.title ? (
-                          <span className="hidden min-w-0 overflow-hidden sm:flex">
+                          <span className="-mx-3 -my-2 hidden min-w-0 overflow-hidden px-3 py-2 sm:flex">
                             <TitleTag title={r.cosmetics.title} size="sm" />
                           </span>
                         ) : null}
@@ -288,7 +288,7 @@ function PeekCard({ row, place, boardLabel }: { row: Row; place: number; boardLa
       : badges.map((badge, i) => ({ badge, featured: i === 0 }));
   return (
     <div className="space-y-3">
-      <BannerSurface banner={row.cosmetics.banner} className="overflow-hidden rounded-xl border border-line-strong" plainClassName="panel-strong">
+      <BannerSurface banner={row.cosmetics.banner} glow className="overflow-hidden rounded-xl border border-line-strong" plainClassName="panel-strong">
         <div className="flex items-center gap-4 p-4 sm:p-5">
           <RankBadge rank={rank} variant="menu" size="md" className="shrink-0" />
           <div className="min-w-0 flex-1">

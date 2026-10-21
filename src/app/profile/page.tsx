@@ -48,8 +48,8 @@ import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLo
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 
 /** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
-const HERO_FEATURED_PX = 72;
-const HERO_BADGE_PX = 56;
+const HERO_FEATURED_PX = 58;
+const HERO_BADGE_PX = 44;
 
 export default function ProfilePage() {
   const { PROFILE_UI: P, DIFFICULTY_LABELS, LEADERBOARDS_UI: L, SEASON_RECAP: R, COSMETICS: CC } = useCopy();
@@ -118,29 +118,13 @@ export default function ProfilePage() {
           <div className="w-full min-w-0 flex-1 text-center sm:text-left">
             <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                {signedIn ? (
-                  <ProfileNickname />
-                ) : (
-                  <p className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{P.guest}</p>
-                )}
-                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                  <span className="relative inline-flex">
-                    {shown.title ? (
-                      <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
-                        <TitleTag title={shown.title} size="md" />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => openLocker("title")}
-                        className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
-                      >
-                        + {P.editTitle}
-                      </button>
-                    )}
-                    {fresh.title ? <NewDot className="absolute -right-1 -top-1" label={CC.newItems} /> : null}
-                  </span>
-                {/* rc.22: the badges sit by the name and title, on the dark reading
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:justify-start">
+                  {signedIn ? (
+                    <ProfileNickname />
+                  ) : (
+                    <p className="display truncate text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{P.guest}</p>
+                  )}
+                {/* rc.23: the badges sit by the NAME, on the dark reading
                     zone of the banner (Miguel); the featured one leads. */}
                 <div className="relative ml-1 flex items-end gap-1.5">
                   {shown.badges.map((b, i) => (
@@ -167,6 +151,24 @@ export default function ProfilePage() {
                   ) : null}
                   {fresh.badge ? <NewDot className="absolute -right-1.5 -top-1" label={CC.newItems} /> : null}
                 </div>
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <span className="relative inline-flex">
+                    {shown.title ? (
+                      <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
+                        <TitleTag title={shown.title} size="md" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openLocker("title")}
+                        className="display rounded-md border border-dashed border-line-strong px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint transition-colors hover:border-orange/50 hover:text-sub"
+                      >
+                        + {P.editTitle}
+                      </button>
+                    )}
+                    {fresh.title ? <NewDot className="absolute -right-1 -top-1" label={CC.newItems} /> : null}
+                  </span>
                 </div>
                 {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
                 {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}

@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.22**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.23**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,33 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.23 (the banner's animated layer on the profile, 2026-10-21 · DESIGN-DECISIONS #132)
+- **Animated banners on the profile hero, filter-free.** `build:banners` now
+  also extracts, from the design file's animated SVG, ONLY the elements that
+  animate (sparkles, dust, flames, rings) with their ancestors and the
+  gradients / clips they reference, every `filter` stripped, into
+  `public/banners/<art>.anim.svg` (0.3–24 KB; `src/generated/banner-anim.json`
+  lists them). The hero draws it as a second `<img>` over the WebP, so the
+  design file's SMIL motion plays while turbulence / displacement / blur never
+  run in the browser. Hero only (board rows, locker and lists stay still); off
+  under lite / reduced motion. Measured (`perf:probe`, every badge unlocked,
+  Cosmic Ascension equipped): profile **23 ms/s** of main thread (budget 80),
+  board 7 ms/s, zero non-composited animations.
+- `perf:probe` accepts `CHROME_NO_SANDBOX=1` (containers that run as root).
+
+### Changed — rc.23
+- Profile hero: the badges sit beside the NAME; featured 58 px, others 44 px.
+- Titles: the text glows too (a blurred copy of the name behind the gradient
+  text, in the title's glow colour; white gold on legendary), the chip glow a
+  touch stronger; the legendary band passes every 9 s, the epic every 14 s
+  (one way, then rest); board rows no longer clip the glow (the truncation
+  wrappers keep padding for it). Rocketeer: Daily Driver's warm gradient
+  ending in a light violet.
+- Legendary badges are drawn at their larger size (16 %) instead of scaled by
+  CSS — the scaled composited layer looked soft at rest.
+- The board's player peek shows the banner with its glow (and the legendary
+  tilt / pointer band) like the profile; the epic hero glow is lighter.
 
 ### Changed — rc.22 (banner and title polish from Miguel's review, 2026-10-21)
 - Banners: WebP at 2× (800 / 1240 / 2480, quality 88 — 1× looked soft on

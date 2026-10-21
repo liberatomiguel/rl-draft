@@ -20,6 +20,7 @@
  * component's onError fallback still covers files that don't exist).
  */
 
+import bannerAnimList from "@/generated/banner-anim.json";
 import manifestJson from "@/generated/asset-manifest.json";
 
 type AssetManifest = {
@@ -157,6 +158,7 @@ export function badgeShift(art: string): [number, number] | null {
   return v && v.length === 2 ? [v[0], v[1]] : null;
 }
 
+const BANNER_ANIM = new Set<string>(bannerAnimList as string[]);
 /** Banner raster widths (manifest `widths.banners`, set in build-images.mjs). */
 const BANNER_WIDTHS: readonly number[] = manifest.widths.banners ?? [];
 
@@ -173,6 +175,12 @@ export function bannerArtSrc(art: string, displayPx = 1240): string {
   if (!hash) return `/banners/${seg(art)}.svg`;
   const w = pickWidth(BANNER_WIDTHS, displayPx * 2);
   return `/img/banners/${seg(art)}.${hash}.${w}.webp`;
+}
+
+/** rc.23: the hero's animated overlay — the design file's animated elements
+ *  only, no filters (build-banners `<art>.anim.svg`); null for a still banner. */
+export function bannerAnimSrc(art: string): string | null {
+  return BANNER_ANIM.has(art) ? `/banners/${seg(art)}.anim.svg` : null;
 }
 
 export function badgeArtSrc(art: string, displayPx = 64): string {

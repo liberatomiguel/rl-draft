@@ -50,6 +50,8 @@ const chrome = spawn(
     `--user-data-dir=${mkdtempSync(join(tmpdir(), "rd-perf-"))}`,
     "--window-size=1280,900",
     "--no-first-run",
+    // Containers that run as root (the cloud sessions) need the sandbox off.
+    ...(process.env.CHROME_NO_SANDBOX ? ["--no-sandbox"] : []),
     "--no-default-browser-check",
     "about:blank",
   ],

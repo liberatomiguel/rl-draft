@@ -160,7 +160,8 @@ Badge effects must animate only transform / opacity (DESIGN-DECISIONS #128–#12
 by `npm run build:banners` from `data-sources/banners/banners-rocket-draft.html`
 (replace the HTML, re-run, then `npm run build:images`, commit both). The SVGs
 carry heavy filters: production only ever serves the WebP (DESIGN-DECISIONS
-#132); effects on top are CSS, transform / opacity only.
+#132); effects on top are CSS, transform / opacity only. The hero's motion is
+`<art>.anim.svg` (the animated elements only, filters stripped by the script).
 
 The source PNGs stay the source of truth, so drop them in the same folders as
 before.

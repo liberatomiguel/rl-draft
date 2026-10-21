@@ -312,7 +312,7 @@ const RANK_TRACK: CosmeticDef[] = [
   banner("rank-banner-slipstream", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "platinum" }, { art: "slipstream", glow: "#2f7bff", frame: ["#2f7bff", "#36e3ff", "#e6f3ff"] }),
   title("rank-title-unstoppable", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "diamond" }, ["#a3adbd"]),
   banner("rank-banner-singularity", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, { art: "singularity", glow: "#8a5cff", frame: ["#8a5cff", "#ff4fd8", "#9ff4ff"] }),
-  title("rank-title-rocketeer", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, ["#2f7bff", "#b26bff", "#ff8a2a"]),
+  title("rank-title-rocketeer", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, ["#ff5f6d", "#ffc371", "#c9a8ff"]),
   banner("rank-banner-overdrive", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, { art: "overdrive", glow: "#ff2a4a", frame: ["#ff2a4a", "#ff9a2a", "#ffe08a"] }),
   banner("rank-banner-cosmic-ascension", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, { art: "cosmic-ascension", glow: "#8fe9ff", frame: ["#8fe9ff", "#ffb3ec", "#fff3cf"] }),
   title("rank-title-rocket-demigod", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, WHITE_GOLD),

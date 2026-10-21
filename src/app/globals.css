@@ -1181,11 +1181,7 @@ html.reduce-fx .card-float {
 .bfx-legend {
   perspective: 340px;
 }
-/* rc.16: legendaries read a size up from the rest — drawn 16 % larger (rc.22) than
-   their box (layout unchanged, so rows and grids keep their rhythm). */
-.bfx-legend > .bfx-tilt {
-  scale: 1.16;
-}
+/* rc.23: the legendary size-up is drawn at raster size in BadgeEmblem, not scaled here. */
 .bfx-tilt {
   position: absolute;
   inset: 0;
@@ -1424,9 +1420,24 @@ html.reduce-fx .card-float {
   border-color: color-mix(in srgb, var(--cos-glow) 60%, transparent);
   background: color-mix(in srgb, var(--cos-c1) 7%, transparent);
   box-shadow:
-    0 0 3px color-mix(in srgb, var(--cos-glow) 70%, transparent),
-    0 0 8px color-mix(in srgb, var(--cos-glow) 45%, transparent),
-    0 0 16px color-mix(in srgb, var(--cos-glow) 16%, transparent);
+    0 0 4px color-mix(in srgb, var(--cos-glow) 80%, transparent),
+    0 0 10px color-mix(in srgb, var(--cos-glow) 50%, transparent),
+    0 0 20px color-mix(in srgb, var(--cos-glow) 22%, transparent);
+}
+/* The text glows too (behind the clipped gradient text, so it stays legible). */
+.cos-title-epic .cos-title-text::after,
+.cos-title-legend .cos-title-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: var(--cos-glow);
+  opacity: 0.55;
+  filter: blur(4px);
+}
+.cos-title-legend .cos-title-text::after {
+  color: #fff0d0;
+  opacity: 0.6;
 }
 /* Soft glow behind the text (no text-shadow: it would show through the
    transparent gradient text). */
@@ -1440,10 +1451,10 @@ html.reduce-fx .card-float {
   border-color: rgba(255, 240, 205, 0.8);
   background: linear-gradient(90deg, rgba(255, 220, 150, 0.1), rgba(10, 12, 20, 0.3), rgba(255, 190, 230, 0.1));
   box-shadow:
-    0 0 3px rgba(255, 255, 255, 0.85),
-    0 0 7px rgba(255, 226, 150, 0.65),
-    0 0 14px rgba(255, 170, 220, 0.35),
-    0 0 24px rgba(255, 214, 120, 0.14);
+    0 0 4px rgba(255, 255, 255, 0.9),
+    0 0 9px rgba(255, 226, 150, 0.7),
+    0 0 18px rgba(255, 170, 220, 0.4),
+    0 0 30px rgba(255, 214, 120, 0.16);
   transform: perspective(320px) rotateX(var(--ct-rx, 0deg)) rotateY(var(--ct-ry, 0deg));
   transition: transform 0.18s ease-out;
   will-change: transform;
@@ -1461,7 +1472,7 @@ html.reduce-fx .card-float {
   pointer-events: none;
   background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.18) 50%, transparent 60%);
   transform: translateX(-55%);
-  animation: cos-band 6s ease-in-out infinite;
+  animation: cos-band 14s ease-in-out infinite;
 }
 .cos-title-legend::after {
   background: linear-gradient(
@@ -1474,7 +1485,7 @@ html.reduce-fx .card-float {
     rgba(185, 162, 255, 0.34) 60%,
     transparent 70%
   );
-  animation-duration: 4.2s;
+  animation-duration: 9s;
 }
 /* Hover (desktop): the band follows the pointer instead of looping. */
 .cos-title-legend:hover::after {
@@ -1484,7 +1495,7 @@ html.reduce-fx .card-float {
 }
 @keyframes cos-band {
   0% { transform: translateX(-55%); }
-  45%, 100% { transform: translateX(55%); }
+  22%, 100% { transform: translateX(55%); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -1592,6 +1603,26 @@ html.reduce-fx .card-float {
 }
 /* The design file's frame: a ring in the banner's materials (a → b, with the
    highlight), thicker and brighter up the rarities. */
+/* rc.23: the animated overlay (profile hero only) — plain SMIL on a few
+   sparkles / dust / flame shapes, no filters; off under lite / reduced motion. */
+.cos-banner > .cos-anim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  pointer-events: none;
+  user-select: none;
+}
+:is(html.lite-fx, html.reduce-fx) .cos-banner > .cos-anim {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-banner > .cos-anim {
+    display: none;
+  }
+}
 .cos-banner > .cos-frame {
   position: absolute;
   inset: 0;
@@ -1614,8 +1645,8 @@ html.reduce-fx .card-float {
 /* The profile hero glow (epic / legendary), in the banner's own colour. */
 .cos-banner-glow.cos-banner-epic {
   box-shadow:
-    0 0 28px color-mix(in srgb, var(--cos-glow) 32%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--cos-glow) 30%, transparent);
+    0 0 20px color-mix(in srgb, var(--cos-glow) 24%, transparent),
+    0 0 44px color-mix(in srgb, var(--cos-glow) 8%, transparent);
 }
 .cos-banner-glow.cos-banner-legend {
   box-shadow:

@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
-import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc } from "@/lib/assets";
+import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerAnimSrc, bannerArtSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 
@@ -62,6 +62,8 @@ export const TIER_RING: Record<CosmeticTier, string> = {
 // hover only — globals.css "Badge FX")
 // ---------------------------------------------------------------------------
 
+/** Legendary badges are drawn this much larger than their slot (rc.16 / rc.23). */
+const LEGEND_SCALE = 1.16;
 /** Below this box the effects are invisible noise, so the art renders plain. */
 const BADGE_FX_MIN_PX = 28;
 /** Pointer tilt range (deg) by badge size — a board-row badge tilts far less
@@ -132,8 +134,11 @@ export function BadgeEmblem({
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const isBadge = badge.kind === "badge";
-  const px = typeof size === "number" ? size : PX[size];
+  const basePx = typeof size === "number" ? size : PX[size];
   const tier = badge.tier;
+  // rc.23: legendaries read a size up (16 %) — drawn at that size, not scaled
+  // by CSS (a scaled composited layer went soft at rest).
+  const px = tier === "legend" ? Math.round(basePx * LEGEND_SCALE) : basePx;
   const live = isBadge && fx && px >= BADGE_FX_MIN_PX && (tier === "epic" || tier === "legend");
   useEffect(() => {
     if (!live || !ref.current) return;
@@ -203,6 +208,8 @@ export function BadgeEmblem({
   const legend = tier === "legend";
   const glow = legend ? badgeGlowSrc(badge.style.art) : null;
   const vars: Record<string, string | number> = { width: px, height: px, "--bfx-mask": `url("${src}")`, "--bfx-delay": fxDelay(badge.id) };
+  // Keep the slot the base size: the larger legendary overflows it evenly.
+  if (px !== basePx) vars.margin = `${-(px - basePx) / 2}px`;
   if (glow) {
     vars["--bfx-glow"] = `url("${glow}")`;
     vars["--bfx-glow-pad"] = BADGE_GLOW_PAD;
@@ -327,7 +334,9 @@ export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
-      <span className="cos-title-text">{name}</span>
+      <span className="cos-title-text" data-text={name}>
+        {name}
+      </span>
     </span>
   );
 }
@@ -394,6 +403,12 @@ export function BannerSurface({
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
+      {glow && bannerAnimSrc(banner.style.art) ? (
+        // rc.23: the design file's animated elements (sparkles, dust, flames),
+        // filter-free, as a second image over the still art — hero only.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="cos-anim" src={bannerAnimSrc(banner.style.art)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
+      ) : null}
       <span className="cos-frame" aria-hidden />
       {children}
     </div>
