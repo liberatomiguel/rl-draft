@@ -101,7 +101,7 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
   it("legendary titles are white gold; every banner's art exists in public/banners (rc.21)", () => {
     const dir = resolve(dirname(fileURLToPath(import.meta.url)), "../../public/banners");
     for (const c of COSMETICS) {
-      if (c.kind === "title" && c.tier === "legend") expect(c.style.colors).toEqual(["#ffffff", "#f3dc92", "#ffd3ea"]);
+      if (c.kind === "title" && c.tier === "legend") expect(c.style.colors).toEqual(["#ffffff", "#fff4d6", "#ffe6f3"]);
       if (c.kind === "banner") {
         expect(existsSync(resolve(dir, `${c.style.art}.svg`)), c.style.art).toBe(true);
         expect(c.style.glow, c.id).toMatch(/^#[0-9a-f]{6}$/i);

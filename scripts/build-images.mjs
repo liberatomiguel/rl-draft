@@ -104,11 +104,11 @@ const BADGE_GLOW = { size: 224, pad: 84, sigma: 2.2, haloSigma: 16, haloAlpha: 0
 /** Banners (rc.21): the 1240 × 200 SVGs from build-banners → WebP. The profile
  *  hero shows them up to ~1120 CSS px wide, the board rows ~800, the locker /
  *  calendar thumbnails far smaller; assets.ts picks the smallest width ≥ the
- *  CSS width (1× — they are soft art, not line work). The SVGs carry
+ *  CSS width × 2 (2480 = the hero on a retina screen; rc.22 — 1× was soft). The SVGs carry
  *  turbulence / blur / displacement filters: NEVER serve them in production. */
-const BANNER_WIDTHS = [400, 800, 1240];
-const BANNER_SVG_DENSITY = 96;
-const BANNER_WEBP = { quality: 80, alphaQuality: 100, effort: 5 };
+const BANNER_WIDTHS = [800, 1240, 2480];
+const BANNER_SVG_DENSITY = 192;
+const BANNER_WEBP = { quality: 88, alphaQuality: 100, effort: 5 };
 
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));

@@ -13,9 +13,9 @@
       224
     ],
     "banners": [
-      400,
       800,
-      1240
+      1240,
+      2480
     ]
   },
   "flags": [
@@ -522,23 +522,23 @@
     ]
   },
   "banners": {
-    "after-hours": "b59deec141",
-    "back-to-basics": "d9f02b4e0c",
-    "blueprint": "5d8bd37a0e",
-    "circuit": "b3ba051449",
-    "cosmic-ascension": "5b7d30e137",
-    "golden-era": "5217772c6c",
-    "heatwave": "43b77f24e0",
-    "kickoff": "312170d619",
-    "neon-grid": "3e05b55d1b",
-    "overdrive": "ec8dc98407",
-    "playbook": "98f860b90e",
-    "singularity": "d3fe374743",
-    "slipstream": "3889072d28",
-    "solar-flare": "0bc0b452f1",
-    "target-practice": "3c64970842",
-    "the-vault": "3cbc536561",
-    "victory-lane": "9d2cc0719f",
-    "wildfire": "1a7666bb10"
+    "after-hours": "e34141bd92",
+    "back-to-basics": "d53135f02b",
+    "blueprint": "bcaa5c2b61",
+    "circuit": "98ac1bd460",
+    "cosmic-ascension": "8547760ce5",
+    "golden-era": "ceeb8ca2de",
+    "heatwave": "3eefe504d9",
+    "kickoff": "20653d576f",
+    "neon-grid": "2e89d8635c",
+    "overdrive": "0d33e810e5",
+    "playbook": "9b95cd244c",
+    "singularity": "64c0db6388",
+    "slipstream": "d910dfcdf9",
+    "solar-flare": "f286051e9a",
+    "target-practice": "84c889ab3f",
+    "the-vault": "7371a8cc48",
+    "victory-lane": "dac05e44e9",
+    "wildfire": "b9be3f5b7b"
   }
 }

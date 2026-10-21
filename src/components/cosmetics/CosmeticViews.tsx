@@ -289,11 +289,11 @@ const LONG_TITLE_CHARS = 22;
 /** rc.21: a step larger everywhere (Miguel) — md is the profile hero, sm the
  *  board row, xs the compact icon in lists and the calendar. */
 const TITLE_SIZE = {
-  xs: "px-1.5 py-px text-[9px]",
-  sm: "px-2 py-0.5 text-[11.5px]",
-  md: "px-3 py-1 text-[14px]",
-  lg: "px-3.5 py-1.5 text-base",
-  xl: "px-5 py-2.5 text-xl",
+  xs: "px-1.5 py-px text-[9.5px]",
+  sm: "px-1.5 py-px text-[12px]",
+  md: "px-2 py-0.5 text-[15px]",
+  lg: "px-3 py-1 text-lg",
+  xl: "px-4 py-2 text-2xl",
 } as const;
 
 export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef | null | undefined; size?: keyof typeof TITLE_SIZE; className?: string }) {
@@ -339,6 +339,9 @@ export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef
 /** A banner background (profile hero / leaderboard row). The left side is
  *  always kept dark so the text reads; the colour lives on the right. Renders
  *  a plain wrapper when there is no banner so layout never changes. */
+/** Pointer tilt range (deg) for the legendary banner on the profile hero. */
+const BANNER_TILT_DEG = 4;
+
 export function BannerSurface({
   banner,
   children,
@@ -358,8 +361,40 @@ export function BannerSurface({
   displayPx?: number;
 }) {
   if (!banner || banner.kind !== "banner") return <div className={cx(className, plainClassName)}>{children}</div>;
+  const legend = banner.tier === "legend";
+  // Legendary (rc.22): the holo band follows the pointer; on the hero (glow)
+  // the whole surface tilts a little, like the legendary titles. DOM-only CSS
+  // vars, no re-render; transform only.
+  const onMove = legend
+    ? (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.pointerType !== "mouse") return;
+        const el = e.currentTarget;
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        el.dataset.hover = "";
+        el.style.setProperty("--cb-bx", `${(x * 90).toFixed(1)}%`);
+        if (glow) {
+          el.style.setProperty("--cb-ry", `${(x * BANNER_TILT_DEG * 2).toFixed(2)}deg`);
+          el.style.setProperty("--cb-rx", `${(-y * BANNER_TILT_DEG * 2).toFixed(2)}deg`);
+        }
+      }
+    : undefined;
+  const onLeave = legend
+    ? (e: React.PointerEvent<HTMLDivElement>) => {
+        const el = e.currentTarget;
+        delete el.dataset.hover;
+        for (const v of ["--cb-bx", "--cb-ry", "--cb-rx"]) el.style.removeProperty(v);
+      }
+    : undefined;
   return (
-    <div className={cx(bannerClasses(banner), glow && "cos-banner-glow", className)} style={bannerVars(banner, displayPx) as React.CSSProperties}>
+    <div
+      className={cx(bannerClasses(banner), glow && "cos-banner-glow", className)}
+      style={bannerVars(banner, displayPx) as React.CSSProperties}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+    >
+      <span className="cos-frame" aria-hidden />
       {children}
     </div>
   );
@@ -372,9 +407,13 @@ export function bannerClasses(banner: Extract<CosmeticDef, { kind: "banner" }>):
 
 /** CSS variables of a banner: its image (rc.21, pre-rendered art) and glow colour. */
 export function bannerVars(banner: Extract<CosmeticDef, { kind: "banner" }>, displayPx = 1240): Record<string, string> {
+  const [a, b, d] = banner.style.frame;
   return {
     "--cos-img": `url("${bannerArtSrc(banner.style.art, displayPx)}")`,
     "--cos-glow": banner.style.glow,
+    "--cos-fa": a,
+    "--cos-fb": b,
+    "--cos-fd": d,
   };
 }
 

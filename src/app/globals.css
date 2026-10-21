@@ -1181,10 +1181,10 @@ html.reduce-fx .card-float {
 .bfx-legend {
   perspective: 340px;
 }
-/* rc.16: legendaries read a size up from the rest — drawn 22 % larger (rc.21) than
+/* rc.16: legendaries read a size up from the rest — drawn 16 % larger (rc.22) than
    their box (layout unchanged, so rows and grids keep their rhythm). */
 .bfx-legend > .bfx-tilt {
-  scale: 1.22;
+  scale: 1.16;
 }
 .bfx-tilt {
   position: absolute;
@@ -1375,8 +1375,9 @@ html.reduce-fx .card-float {
   background: rgba(255, 255, 255, 0.05);
   color: var(--sub);
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1389,7 +1390,6 @@ html.reduce-fx .card-float {
    the chip itself resolved against the parent (rc.20 bug: long titles grew). */
 .cos-title-long .cos-title-text {
   letter-spacing: 0.04em;
-  font-size: 0.92em;
 }
 .cos-title-common {
   color: var(--cos-c1);
@@ -1405,7 +1405,7 @@ html.reduce-fx .card-float {
   color: var(--cos-c1);
   border-color: color-mix(in srgb, var(--cos-c1) 28%, transparent);
   background: color-mix(in srgb, var(--cos-c1) 6%, transparent);
-  text-shadow: 0 0 6px color-mix(in srgb, var(--cos-glow) 28%, transparent);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--cos-glow) 22%, transparent);
 }
 .cos-title-epic,
 .cos-title-legend {
@@ -1418,45 +1418,35 @@ html.reduce-fx .card-float {
   background-clip: text;
   color: transparent;
 }
+/* rc.22: the glow hugs the silhouette (strong at 0–6 px, fading by 16 px)
+   and never paints the inside of the chip. */
 .cos-title-epic {
-  border-color: color-mix(in srgb, var(--cos-glow) 55%, transparent);
-  background: color-mix(in srgb, var(--cos-c1) 9%, transparent);
+  border-color: color-mix(in srgb, var(--cos-glow) 60%, transparent);
+  background: color-mix(in srgb, var(--cos-c1) 7%, transparent);
   box-shadow:
-    0 0 16px color-mix(in srgb, var(--cos-glow) 48%, transparent),
-    0 0 32px color-mix(in srgb, var(--cos-glow) 18%, transparent),
-    inset 0 0 10px color-mix(in srgb, var(--cos-c2) 12%, transparent);
+    0 0 3px color-mix(in srgb, var(--cos-glow) 70%, transparent),
+    0 0 8px color-mix(in srgb, var(--cos-glow) 45%, transparent),
+    0 0 16px color-mix(in srgb, var(--cos-glow) 16%, transparent);
 }
 /* Soft glow behind the text (no text-shadow: it would show through the
    transparent gradient text). */
 .cos-title-epic::before,
 .cos-title-legend::before {
-  content: "";
-  position: absolute;
-  inset: -40%;
-  pointer-events: none;
-  background: radial-gradient(60% 70% at 50% 50%, color-mix(in srgb, var(--cos-glow) 42%, transparent), transparent 70%);
+  display: none;
 }
 /* Legendary (rc.21): the text pulled to white with white-gold and light-pink
    details; a strong white / gold / pink glow; a vivid holo band; pointer tilt. */
 .cos-title-legend {
-  border-color: rgba(255, 236, 190, 0.7);
-  background: linear-gradient(90deg, rgba(255, 220, 150, 0.12), rgba(10, 12, 20, 0.35), rgba(255, 190, 230, 0.12));
+  border-color: rgba(255, 240, 205, 0.8);
+  background: linear-gradient(90deg, rgba(255, 220, 150, 0.1), rgba(10, 12, 20, 0.3), rgba(255, 190, 230, 0.1));
   box-shadow:
-    0 0 14px rgba(255, 255, 255, 0.4),
-    0 0 26px rgba(255, 214, 120, 0.45),
-    0 0 46px rgba(255, 150, 215, 0.28),
-    inset 0 0 12px rgba(255, 248, 225, 0.18);
+    0 0 3px rgba(255, 255, 255, 0.85),
+    0 0 7px rgba(255, 226, 150, 0.65),
+    0 0 14px rgba(255, 170, 220, 0.35),
+    0 0 24px rgba(255, 214, 120, 0.14);
   transform: perspective(320px) rotateX(var(--ct-rx, 0deg)) rotateY(var(--ct-ry, 0deg));
   transition: transform 0.18s ease-out;
   will-change: transform;
-}
-/* Inside the chip the haze stays light (white text must keep its contrast);
-   the strength lives in the outer box-shadow and the band. */
-.cos-title-legend::before {
-  background:
-    radial-gradient(60% 80% at 30% 50%, rgba(255, 228, 160, 0.2), transparent 70%),
-    radial-gradient(60% 80% at 70% 50%, rgba(255, 170, 220, 0.18), transparent 70%),
-    radial-gradient(40% 60% at 50% 50%, rgba(255, 255, 255, 0.1), transparent 70%);
 }
 /* Holo band: one light band crossing the chip, transform only. */
 .cos-title-epic::after,
@@ -1549,8 +1539,8 @@ html.reduce-fx .card-float {
   pointer-events: none;
   background: linear-gradient(90deg, rgba(5, 8, 15, 0.72) 0%, rgba(5, 8, 15, 0.35) 35%, rgba(5, 8, 15, 0.15) 70%, rgba(5, 8, 15, 0.7) 100%);
 }
-/* Holo band (epic / legendary): a light band moved with transform (rc.9:
-   never background-position — it repainted the whole row every frame). */
+/* Holo band (epic / legendary, rc.22): one wide band crossing ONE way, slowly,
+   then a long rest (transform only; never background-position). */
 .cos-banner-epic::after,
 .cos-banner-legend::after {
   content: "";
@@ -1563,32 +1553,64 @@ html.reduce-fx .card-float {
   pointer-events: none;
   background: linear-gradient(
     100deg,
-    transparent 40%,
-    rgba(244, 114, 182, 0.07) 46%,
-    rgba(255, 255, 255, 0.14) 50%,
-    rgba(125, 211, 252, 0.08) 54%,
-    transparent 60%
+    transparent 30%,
+    rgba(244, 114, 182, 0.06) 40%,
+    rgba(255, 255, 255, 0.13) 50%,
+    rgba(125, 211, 252, 0.07) 60%,
+    transparent 70%
   );
-  transform: translateX(-55%);
-  animation: cos-sheen 7s ease-in-out infinite;
+  transform: translateX(-70%);
+  animation: cos-sheen-pass 16s linear infinite;
 }
 .cos-banner-legend::after {
   background: linear-gradient(
     100deg,
-    transparent 34%,
-    rgba(255, 179, 236, 0.16) 41%,
-    rgba(255, 243, 207, 0.22) 46%,
-    rgba(255, 255, 255, 0.34) 50%,
-    rgba(143, 233, 255, 0.22) 54%,
-    rgba(185, 162, 255, 0.16) 59%,
-    transparent 66%
+    transparent 28%,
+    rgba(255, 179, 236, 0.14) 38%,
+    rgba(255, 243, 207, 0.2) 45%,
+    rgba(255, 255, 255, 0.32) 50%,
+    rgba(143, 233, 255, 0.2) 55%,
+    rgba(185, 162, 255, 0.14) 62%,
+    transparent 72%
   );
-  animation-duration: 5.5s;
+  animation-duration: 13s;
 }
-@keyframes cos-sheen {
-  0%, 100% { transform: translateX(-55%); }
-  50% { transform: translateX(55%); }
+@keyframes cos-sheen-pass {
+  0% { transform: translateX(-70%); }
+  45%, 100% { transform: translateX(70%); }
 }
+/* Legendary + mouse: the band sits where the pointer is; the hero tilts. */
+.cos-banner-legend[data-hover]::after {
+  animation: none;
+  transform: translateX(var(--cb-bx, 0%));
+  transition: transform 0.25s ease-out;
+}
+.cos-banner-glow.cos-banner-legend {
+  transform: perspective(1200px) rotateX(var(--cb-rx, 0deg)) rotateY(var(--cb-ry, 0deg));
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+/* The design file's frame: a ring in the banner's materials (a → b, with the
+   highlight), thicker and brighter up the rarities. */
+.cos-banner > .cos-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--cos-frame-w, 1.5px);
+  pointer-events: none;
+  background: linear-gradient(120deg, var(--cos-fa), var(--cos-fb) 55%, var(--cos-fd));
+  opacity: var(--cos-frame-o, 0.55);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.cos-banner-common { --cos-frame-w: 1px; --cos-frame-o: 0.2; }
+.cos-banner-uncommon { --cos-frame-w: 1.5px; --cos-frame-o: 0.6; }
+.cos-banner-rare { --cos-frame-w: 2px; --cos-frame-o: 0.75; }
+.cos-banner-epic { --cos-frame-w: 2.5px; --cos-frame-o: 0.9; }
+.cos-banner-legend { --cos-frame-w: 3px; --cos-frame-o: 1; }
+.cos-banner-row { --cos-frame-w: 1px; --cos-frame-o: 0.35; }
 /* The profile hero glow (epic / legendary), in the banner's own colour. */
 .cos-banner-glow.cos-banner-epic {
   box-shadow:
@@ -1597,9 +1619,8 @@ html.reduce-fx .card-float {
 }
 .cos-banner-glow.cos-banner-legend {
   box-shadow:
-    0 0 44px color-mix(in srgb, var(--cos-glow) 45%, transparent),
-    0 0 90px color-mix(in srgb, var(--cos-glow) 18%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--cos-glow) 45%, transparent);
+    0 0 18px rgba(255, 236, 190, 0.3),
+    0 0 48px rgba(255, 236, 190, 0.12);
 }
 /* Content above the veil. NOT ::after — that is the absolute sheen (rc.13
    fix: including it here made the sheen an empty inline box that the GPU
@@ -1616,7 +1637,8 @@ html.reduce-fx .card-float {
   animation: none;
   background: none;
 }
-:is(html.lite-fx, html.reduce-fx) .cos-title-legend {
+:is(html.lite-fx, html.reduce-fx) .cos-title-legend,
+:is(html.lite-fx, html.reduce-fx) .cos-banner-glow.cos-banner-legend {
   transform: none;
   transition: none;
 }

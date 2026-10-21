@@ -171,7 +171,7 @@ const BANNER_WIDTHS: readonly number[] = manifest.widths.banners ?? [];
 export function bannerArtSrc(art: string, displayPx = 1240): string {
   const hash = IS_PROD && BANNER_WIDTHS.length ? hashFor(manifest.banners ?? {}, art) : undefined;
   if (!hash) return `/banners/${seg(art)}.svg`;
-  const w = pickWidth(BANNER_WIDTHS, displayPx);
+  const w = pickWidth(BANNER_WIDTHS, displayPx * 2);
   return `/img/banners/${seg(art)}.${hash}.${w}.webp`;
 }
 

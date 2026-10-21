@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.21**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.22**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,24 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.22 (banner and title polish from Miguel's review, 2026-10-21)
+- Banners: WebP at 2× (800 / 1240 / 2480, quality 88 — 1× looked soft on
+  retina); the design file's frame drawn as a CSS ring in the banner's
+  materials (thicker and brighter up the rarities; thin on rows); the holo
+  band is wider, slower and crosses ONE way with a long rest (epic 16 s,
+  legendary 13 s); on a legendary the band follows the mouse (hero and
+  board rows) and the hero tilts a little, like the legendary titles;
+  the legendary hero glow is softer and white gold.
+- Profile hero: the badges sit by the name and title, on the banner's dark
+  reading zone.
+- Titles: text larger inside the chip (less padding), weight 700; the glow
+  hugs the silhouette (3 / 8 / 16 px) and no longer paints the inside;
+  legendary pulled further to white; uncommon and rare generic titles plain
+  grey, the pre-season Platinum / Diamond / Champion / Finalist green;
+  Rocketeer blue → violet → orange; long names keep the same size (only the
+  tracking tightens) so every board row matches.
+- Legendary badges back to 16 % larger.
 
 ### Changed — rc.21 (Miguel's banner art, title polish, 2026-10-21 · DESIGN-DECISIONS #132)
 - **Banners are Miguel's art** (`data-sources/banners/banners-rocket-draft.html`,

@@ -112,8 +112,10 @@ export interface BannerStyle {
   /** File name (no extension) in `public/banners/` — Miguel's art, exported by
    *  `npm run build:banners`; production serves the WebP from build-images. */
   art: string;
-  /** Glow colour (the profile hero, epic+): the design file's frame colour. */
+  /** Glow colour (the profile hero, epic+): the design file's first frame colour. */
   glow: string;
+  /** The design file's frame materials [a, b, highlight] — drawn as a CSS ring. */
+  frame: [string, string, string];
 }
 
 interface Base {
@@ -144,7 +146,7 @@ export const RANK_COLORS: Record<string, [string, string]> = {
 };
 
 /** Legendary titles: white pulled text with white-gold and light-pink details. */
-export const WHITE_GOLD: Stops = ["#ffffff", "#f3dc92", "#ffd3ea"];
+export const WHITE_GOLD: Stops = ["#ffffff", "#fff4d6", "#ffe6f3"];
 
 /** Gold titles (the pre-season podium, the Road to Worlds World Champion). */
 const GOLD: Stops = ["#ffeb5c", "#fff3a0"];
@@ -242,7 +244,7 @@ const PRESEASON_BOARD_TITLES: [id: string, tier: CosmeticTier, min: number, max:
   ["legacy-title-ps-board-2", "epic", 2, 2, GOLD, GOLD_GLOW],
   ["legacy-title-ps-board-3", "epic", 3, 3, GOLD, GOLD_GLOW],
   ["legacy-title-ps-board-elite", "epic", 4, 10, GOLD, GOLD_GLOW],
-  ["legacy-title-ps-board-finalist", "rare", 11, 50, ["#60a5fa"]],
+  ["legacy-title-ps-board-finalist", "rare", 11, 50, ["#20a93e"]],
 ];
 
 /** The approved badge catalog (design file rev. 2026-10-21: 36 entries). */
@@ -290,59 +292,59 @@ const GREY: Stops = ["#a3adbd"];
 /** Login calendar (30 days; the XP-only days live in `LOGIN_STREAK`). */
 const LOGIN: CosmeticDef[] = [
   title("login-title-the-regular", "common", 10, { type: "login-streak", days: 3 }, GREY),
-  banner("login-banner-kickoff", "common", 10, { type: "login-streak", days: 5 }, { art: "kickoff", glow: "#5fd6c4" }),
-  title("login-title-locked-in", "uncommon", 11, { type: "login-streak", days: 10 }, ["#9fd0b8"]),
-  banner("login-banner-after-hours", "uncommon", 11, { type: "login-streak", days: 14 }, { art: "after-hours", glow: "#46c8e8" }),
-  banner("login-banner-solar-flare", "rare", 12, { type: "login-streak", days: 21 }, { art: "solar-flare", glow: "#ff5a2a" }),
-  title("login-title-on-fire", "uncommon", 12, { type: "login-streak", days: 21 }, ["#ff8a3d"]),
-  title("login-title-cant-stop", "uncommon", 13, { type: "login-streak", days: 25 }, ["#ffd166"]),
-  banner("login-banner-wildfire", "epic", 14, { type: "login-streak", days: 30 }, { art: "wildfire", glow: "#ff3a1a" }),
+  banner("login-banner-kickoff", "common", 10, { type: "login-streak", days: 5 }, { art: "kickoff", glow: "#5fd6c4", frame: ["#5fd6c4", "#5fd6c4", "#d9fff7"] }),
+  title("login-title-locked-in", "uncommon", 11, { type: "login-streak", days: 10 }, ["#a3adbd"]),
+  banner("login-banner-after-hours", "uncommon", 11, { type: "login-streak", days: 14 }, { art: "after-hours", glow: "#46c8e8", frame: ["#46c8e8", "#ffb454", "#d8f6ff"] }),
+  banner("login-banner-solar-flare", "rare", 12, { type: "login-streak", days: 21 }, { art: "solar-flare", glow: "#ff5a2a", frame: ["#ff5a2a", "#ff2e7e", "#ffd9a8"] }),
+  title("login-title-on-fire", "uncommon", 12, { type: "login-streak", days: 21 }, ["#a3adbd"]),
+  title("login-title-cant-stop", "uncommon", 13, { type: "login-streak", days: 25 }, ["#a3adbd"]),
+  banner("login-banner-wildfire", "epic", 14, { type: "login-streak", days: 30 }, { art: "wildfire", glow: "#ff3a1a", frame: ["#ff3a1a", "#ffb020", "#fff0c0"] }),
   title("login-title-daily-driver", "epic", 14, { type: "login-streak", days: 30 }, ["#ff5f6d", "#ffc371", "#fff0a8"]),
 ];
 
 /** Season 1 rank track (first time a rank is reached; lower ranks included). */
 const S1 = 1;
 const RANK_TRACK: CosmeticDef[] = [
-  banner("rank-banner-circuit", "common", 20, { type: "season-rank", seasonId: S1, rankId: "bronze" }, { art: "circuit", glow: "#2f7f93" }),
-  title("rank-title-challenger", "common", 20, { type: "season-rank", seasonId: S1, rankId: "silver" }, ["#b8c2cc"]),
-  banner("rank-banner-neon-grid", "uncommon", 21, { type: "season-rank", seasonId: S1, rankId: "gold" }, { art: "neon-grid", glow: "#dcae52" }),
-  title("rank-title-playmaker", "uncommon", 21, { type: "season-rank", seasonId: S1, rankId: "gold" }, ["#8fe0d0"]),
-  banner("rank-banner-slipstream", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "platinum" }, { art: "slipstream", glow: "#2f7bff" }),
-  title("rank-title-unstoppable", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "diamond" }, ["#5ab0ff"]),
-  banner("rank-banner-singularity", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, { art: "singularity", glow: "#8a5cff" }),
-  title("rank-title-rocketeer", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, ["#7c3aed", "#c084fc", "#22d3ee"]),
-  banner("rank-banner-overdrive", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, { art: "overdrive", glow: "#ff2a4a" }),
-  banner("rank-banner-cosmic-ascension", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, { art: "cosmic-ascension", glow: "#8fe9ff" }),
+  banner("rank-banner-circuit", "common", 20, { type: "season-rank", seasonId: S1, rankId: "bronze" }, { art: "circuit", glow: "#2f7f93", frame: ["#2f7f93", "#2f7f93", "#9fdbe6"] }),
+  title("rank-title-challenger", "common", 20, { type: "season-rank", seasonId: S1, rankId: "silver" }, ["#a3adbd"]),
+  banner("rank-banner-neon-grid", "uncommon", 21, { type: "season-rank", seasonId: S1, rankId: "gold" }, { art: "neon-grid", glow: "#dcae52", frame: ["#dcae52", "#7a5cf0", "#fff1cc"] }),
+  title("rank-title-playmaker", "uncommon", 21, { type: "season-rank", seasonId: S1, rankId: "gold" }, ["#a3adbd"]),
+  banner("rank-banner-slipstream", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "platinum" }, { art: "slipstream", glow: "#2f7bff", frame: ["#2f7bff", "#36e3ff", "#e6f3ff"] }),
+  title("rank-title-unstoppable", "rare", 22, { type: "season-rank", seasonId: S1, rankId: "diamond" }, ["#a3adbd"]),
+  banner("rank-banner-singularity", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, { art: "singularity", glow: "#8a5cff", frame: ["#8a5cff", "#ff4fd8", "#9ff4ff"] }),
+  title("rank-title-rocketeer", "epic", 23, { type: "season-rank", seasonId: S1, rankId: "champion" }, ["#2f7bff", "#b26bff", "#ff8a2a"]),
+  banner("rank-banner-overdrive", "epic", 24, { type: "season-rank", seasonId: S1, rankId: "grand-champion" }, { art: "overdrive", glow: "#ff2a4a", frame: ["#ff2a4a", "#ff9a2a", "#ffe08a"] }),
+  banner("rank-banner-cosmic-ascension", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, { art: "cosmic-ascension", glow: "#8fe9ff", frame: ["#8fe9ff", "#ffb3ec", "#fff3cf"] }),
   title("rank-title-rocket-demigod", "legend", 25, { type: "season-rank", seasonId: S1, rankId: "supersonic-legend" }, WHITE_GOLD),
 ];
 
 /** Play milestones (counted from the Season 1 reset on). */
 const PLAY: CosmeticDef[] = [
   title("runs-title-rookie", "common", 30, { type: "runs-won-since-s1", count: 1 }, GREY),
-  banner("runs-banner-blueprint", "common", 30, { type: "runs-finished-since-s1", count: 10 }, { art: "blueprint", glow: "#7fd0ff" }),
-  banner("runs-banner-victory-lane", "uncommon", 31, { type: "runs-won-since-s1", count: 25 }, { art: "victory-lane", glow: "#22e6a8" }),
-  title("runs-title-draft-veteran", "rare", 32, { type: "runs-won-since-s1", count: 100 }, ["#f4b860"]),
-  title("streak-title-on-a-roll", "rare", 33, { type: "legacy-streak", count: 3 }, ["#ff4fd8"]),
-  banner("streak-banner-heatwave", "epic", 34, { type: "legacy-streak", count: 5 }, { art: "heatwave", glow: "#ff4fa3" }),
+  banner("runs-banner-blueprint", "common", 30, { type: "runs-finished-since-s1", count: 10 }, { art: "blueprint", glow: "#7fd0ff", frame: ["#7fd0ff", "#7fd0ff", "#e6f8ff"] }),
+  banner("runs-banner-victory-lane", "uncommon", 31, { type: "runs-won-since-s1", count: 25 }, { art: "victory-lane", glow: "#22e6a8", frame: ["#22e6a8", "#1aa7b8", "#eafff6"] }),
+  title("runs-title-draft-veteran", "rare", 32, { type: "runs-won-since-s1", count: 100 }, ["#a3adbd"]),
+  title("streak-title-on-a-roll", "rare", 33, { type: "legacy-streak", count: 3 }, ["#a3adbd"]),
+  banner("streak-banner-heatwave", "epic", 34, { type: "legacy-streak", count: 5 }, { art: "heatwave", glow: "#ff4fa3", frame: ["#ff4fa3", "#ffc24a", "#fff1d0"] }),
   title("specials-title-card-hunter", "common", 35, { type: "specials-owned", count: 1 }, GREY),
-  banner("specials-banner-the-vault", "rare", 36, { type: "specials-owned", count: 10 }, { art: "the-vault", glow: "#4f7fd6" }),
-  banner("missions-banner-target-practice", "rare", 37, { type: "missions-completed", count: 25 }, { art: "target-practice", glow: "#c8d2de" }),
-  title("quiz-title-rl-nerd", "uncommon", 38, { type: "quiz-solved", count: 10 }, ["#b7a9ff"]),
-  banner("quiz-banner-playbook", "rare", 39, { type: "quiz-solved", count: 50 }, { art: "playbook", glow: "#4fd3ee" }),
+  banner("specials-banner-the-vault", "rare", 36, { type: "specials-owned", count: 10 }, { art: "the-vault", glow: "#4f7fd6", frame: ["#4f7fd6", "#e0b050", "#eaf2ff"] }),
+  banner("missions-banner-target-practice", "rare", 37, { type: "missions-completed", count: 25 }, { art: "target-practice", glow: "#c8d2de", frame: ["#3a3f4a", "#c8d2de", "#ffffff"] }),
+  title("quiz-title-rl-nerd", "uncommon", 38, { type: "quiz-solved", count: 10 }, ["#a3adbd"]),
+  banner("quiz-banner-playbook", "rare", 39, { type: "quiz-solved", count: 50 }, { art: "playbook", glow: "#4fd3ee", frame: ["#4fd3ee", "#2a6fb0", "#e6fbff"] }),
   title("career-title-rtw-champion", "epic", 40, { type: "career-worlds", count: 1 }, GOLD, undefined, GOLD_GLOW),
 ];
 
 /** The three fixed challenges with exclusive cosmetics (three stars each). */
 const CHALLENGES: CosmeticDef[] = [
-  title("challenge-title-homegrown", "rare", 50, { type: "challenge-perfect", challengeId: "ch-homegrown" }, ["#9ccc3c"]),
-  banner("challenge-banner-golden-era", "rare", 50, { type: "challenge-perfect", challengeId: "ch-time-capsule" }, { art: "golden-era", glow: "#e8b25a" }),
-  banner("challenge-banner-back-to-basics", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, { art: "back-to-basics", glow: "#2f7bff" }),
-  title("challenge-title-pure-talent", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, ["#22d3ee"]),
+  title("challenge-title-homegrown", "rare", 50, { type: "challenge-perfect", challengeId: "ch-homegrown" }, ["#a3adbd"]),
+  banner("challenge-banner-golden-era", "rare", 50, { type: "challenge-perfect", challengeId: "ch-time-capsule" }, { art: "golden-era", glow: "#e8b25a", frame: ["#e8b25a", "#9a5a1e", "#fff0cc"] }),
+  banner("challenge-banner-back-to-basics", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, { art: "back-to-basics", glow: "#2f7bff", frame: ["#2f7bff", "#ff8a2a", "#fff1e0"] }),
+  title("challenge-title-pure-talent", "rare", 51, { type: "challenge-perfect", challengeId: "ch-pure-talent" }, ["#a3adbd"]),
 ];
 
 /** Pre-season rewards (handed out at the Season 1 turnover; exclusive). */
 const LEGACY: CosmeticDef[] = [
-  title("legacy-title-first-chapter", "rare", 60, { type: "legacy-participation" }, ["#fb923c"], true),
+  title("legacy-title-first-chapter", "rare", 60, { type: "legacy-participation" }, ["#a3adbd"], true),
   ...PRESEASON_BOARD_TITLES.map(([id, tier, min, max, colors, glow], i) =>
     title(id, tier, 99 - i, { type: "legacy-position", minPosition: min, maxPosition: max }, colors, true, glow),
   ),

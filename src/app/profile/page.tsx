@@ -140,15 +140,9 @@ export default function ProfilePage() {
                     )}
                     {fresh.title ? <NewDot className="absolute -right-1 -top-1" label={CC.newItems} /> : null}
                   </span>
-                </div>
-                {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
-                {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
-              </div>
-              <div className="flex shrink-0 items-center justify-center gap-4 sm:gap-5">
-                {/* rc.6: the badges sit beside the rating (rc.5 had them above,
-                    which left a gap over the name) — the featured one leads
-                    and is the largest; an open slot invites the next. */}
-                <div className="relative flex items-end gap-1.5">
+                {/* rc.22: the badges sit by the name and title, on the dark reading
+                    zone of the banner (Miguel); the featured one leads. */}
+                <div className="relative ml-1 flex items-end gap-1.5">
                   {shown.badges.map((b, i) => (
                     <button
                       key={b.id}
@@ -173,6 +167,11 @@ export default function ProfilePage() {
                   ) : null}
                   {fresh.badge ? <NewDot className="absolute -right-1.5 -top-1" label={CC.newItems} /> : null}
                 </div>
+                </div>
+                {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
+                {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
+              </div>
+              <div className="flex shrink-0 items-center justify-center gap-4 sm:gap-5">
                 <div className="text-center sm:text-right">
                   <p className="kicker mb-0.5">{P.seasonRating}</p>
                   <p className="display whitespace-nowrap text-[1.9rem] font-bold leading-none text-orange-bright">
