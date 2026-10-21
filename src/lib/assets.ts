@@ -140,7 +140,7 @@ const BADGE_DENSITY = 2;
  * the badge. Same path in dev (public/img exists after any build:images);
  * `null` when not generated, and the badge simply shows no glow.
  */
-export const BADGE_GLOW_PAD = 64 / 224;
+export const BADGE_GLOW_PAD = 84 / 224;
 export function badgeGlowSrc(art: string): string | null {
   const hash = hashFor(manifest.badgeGlows ?? {}, art);
   return hash ? `/img/badges/${seg(art)}.${hash}.glow.webp` : null;

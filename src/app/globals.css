@@ -1251,18 +1251,18 @@ html.reduce-fx .card-float {
    It tilts with the badge on hover, and breathes gently (opacity only). */
 .bfx-glow {
   position: absolute;
-  inset: calc(var(--bfx-glow-pad, 0.2857) * -100%);
+  inset: calc(var(--bfx-glow-pad, 0.375) * -100%);
   background: var(--bfx-glow) center / contain no-repeat;
   pointer-events: none;
-  opacity: 0.66;
-  transform: scale(1.28);
+  opacity: 0.85;
+  transform: scale(1.1);
 }
 .bfx-legend[data-live] .bfx-glow {
   animation: bfx-breathe 4.8s ease-in-out var(--bfx-delay, 0s) infinite;
 }
 @keyframes bfx-breathe {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.72; }
+  0%, 100% { opacity: 0.74; }
+  50% { opacity: 0.92; }
 }
 /* LEGENDARY idle sway (rc.14, back): plain values, no var() in the keyframes,
    so the GPU runs it. Both ways from flat, so a restart never jumps. */
@@ -1309,7 +1309,7 @@ html.reduce-fx .card-float {
   transition: transform 0.2s ease-out;
 }
 .bfx-legend[data-hover] .bfx-glow {
-  opacity: 0.78;
+  opacity: 0.95;
   transition: opacity 0.3s ease;
 }
 

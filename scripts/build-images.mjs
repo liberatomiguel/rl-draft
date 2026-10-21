@@ -97,7 +97,9 @@ const BADGE_SVG_DENSITY = 144;
 const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: true };
 /** Legendary glow: the silhouette at BADGE_GLOW.size px, tinted, padded by
  *  BADGE_GLOW.pad px each side (CSS: inset = -pad/size), blurred by sigma. */
-const BADGE_GLOW = { size: 224, pad: 64, sigma: 13, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
+/** rc.18: two layers — a tight, strong core hugging the silhouette (sigma)
+ *  over a wide, faint halo (haloSigma at haloAlpha). */
+const BADGE_GLOW = { size: 224, pad: 84, sigma: 5, haloSigma: 22, haloAlpha: 0.45, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
 
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
@@ -361,11 +363,21 @@ async function encodeGlow(pipeline, glow) {
     data[i * 4 + 1] = g;
     data[i * 4 + 2] = b;
   }
-  return sharp(data, { raw: info })
+  const padded = await sharp(data, { raw: info })
     .extend({ top: glow.pad, bottom: glow.pad, left: glow.pad, right: glow.pad, background: { r, g, b, alpha: 0 } })
-    .blur(glow.sigma)
-    .webp(glow.webp)
-    .toBuffer();
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const raw = { raw: padded.info };
+  const core = await sharp(padded.data, raw).blur(glow.sigma).raw().toBuffer();
+  const halo = await sharp(padded.data, raw).blur(glow.haloSigma).raw().toBuffer();
+  // Alpha = core over a faint halo (source-over on alpha only; colour is uniform).
+  const out = Buffer.from(core);
+  for (let i = 3; i < out.length; i += 4) {
+    const a = core[i] / 255;
+    const h = (halo[i] / 255) * glow.haloAlpha;
+    out[i] = Math.round((a + h * (1 - a)) * 255);
+  }
+  return sharp(out, raw).webp(glow.webp).toBuffer();
 }
 
 async function deleteStale(jobs) {
