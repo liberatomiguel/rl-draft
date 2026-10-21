@@ -1181,6 +1181,11 @@ html.reduce-fx .card-float {
 .bfx-legend {
   perspective: 340px;
 }
+/* rc.16: legendaries read a size up from the rest — drawn 14 % larger than
+   their box (layout unchanged, so rows and grids keep their rhythm). */
+.bfx-legend > .bfx-tilt {
+  scale: 1.14;
+}
 .bfx-tilt {
   position: absolute;
   inset: 0;
