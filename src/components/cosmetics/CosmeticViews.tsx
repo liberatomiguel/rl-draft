@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
-import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc } from "@/lib/assets";
+import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 
@@ -141,6 +141,11 @@ export function BadgeEmblem({
   }, [live]);
   if (badge.kind !== "badge") return null;
   const src = badgeArtSrc(badge.style.art, px);
+  // rc.21: move the art's visual centre onto the box centre (build-images
+  // measures the alpha-weighted centroid; crests / tabs made some badges sit
+  // off-centre next to the others).
+  const shift = badgeShift(badge.style.art);
+  const shiftStyle = shift ? { translate: `${(shift[0] * px).toFixed(1)}px ${(shift[1] * px).toFixed(1)}px` } : undefined;
   const img = (
     // Static SVG from public/ (no next/image: nothing to optimise, and the
     // static export serves it as is).
@@ -155,7 +160,7 @@ export function BadgeEmblem({
       decoding="async"
       draggable={false}
       className={live ? "bfx-img" : cx("shrink-0 select-none object-contain", className)}
-      style={live ? undefined : { width: px, height: px }}
+      style={live ? shiftStyle : { width: px, height: px, ...shiftStyle }}
     />
   );
   if (!live) return img;
@@ -267,11 +272,12 @@ export function BadgeRow({
 // Title tag — the same chip the UI uses for "Live" / "New"
 // ---------------------------------------------------------------------------
 
-function stopsVars(colors: Stops): Record<string, string> {
+function stopsVars(colors: Stops, glow?: string): Record<string, string> {
   return {
     "--cos-c1": colors[0],
     "--cos-c2": colors[1] ?? colors[0],
     "--cos-c3": colors[2] ?? colors[1] ?? colors[0],
+    "--cos-glow": glow ?? colors[0],
   };
 }
 
@@ -280,10 +286,12 @@ const TITLE_TILT_DEG = 14;
 /** Names this long get the tighter `cos-title-long` treatment. */
 const LONG_TITLE_CHARS = 22;
 
+/** rc.21: a step larger everywhere (Miguel) — md is the profile hero, sm the
+ *  board row, xs the compact icon in lists and the calendar. */
 const TITLE_SIZE = {
   xs: "px-1.5 py-px text-[9px]",
-  sm: "px-2 py-0.5 text-[11px]",
-  md: "px-2.5 py-1 text-xs",
+  sm: "px-2 py-0.5 text-[11.5px]",
+  md: "px-3 py-1 text-[14px]",
   lg: "px-3.5 py-1.5 text-base",
   xl: "px-5 py-2.5 text-xl",
 } as const;
@@ -315,7 +323,7 @@ export function TitleTag({ title, size = "sm", className }: { title: CosmeticDef
   return (
     <span
       className={cx("cos-title", `cos-title-${title.tier}`, name.length >= LONG_TITLE_CHARS && "cos-title-long", sizeClass, className)}
-      style={stopsVars(title.style.colors) as React.CSSProperties}
+      style={stopsVars(title.style.colors, title.style.glow) as React.CSSProperties}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
@@ -336,16 +344,22 @@ export function BannerSurface({
   children,
   className,
   plainClassName,
+  glow,
+  displayPx = 1240,
 }: {
   banner: CosmeticDef | null | undefined;
   children: ReactNode;
   className?: string;
   /** Classes used when no banner is equipped. */
   plainClassName?: string;
+  /** The profile hero: epic / legendary glow in the banner's colour. */
+  glow?: boolean;
+  /** Widest the surface renders (CSS px) — picks the WebP width. */
+  displayPx?: number;
 }) {
   if (!banner || banner.kind !== "banner") return <div className={cx(className, plainClassName)}>{children}</div>;
   return (
-    <div className={cx(bannerClasses(banner), className)} style={bannerVars(banner) as React.CSSProperties}>
+    <div className={cx(bannerClasses(banner), glow && "cos-banner-glow", className)} style={bannerVars(banner, displayPx) as React.CSSProperties}>
       {children}
     </div>
   );
@@ -353,19 +367,14 @@ export function BannerSurface({
 
 /** The class list of a banner surface (shared with the unlock pop-up). */
 export function bannerClasses(banner: Extract<CosmeticDef, { kind: "banner" }>): string {
-  const s = banner.style;
-  return cx("cos-banner", `cos-banner-${banner.tier}`, s.pattern !== "none" && `cos-banner-${s.pattern}`, s.animated && "cos-banner-animated");
+  return cx("cos-banner", `cos-banner-${banner.tier}`);
 }
 
-/** CSS variables of a banner: the wash gradient, the accent and the glow colour. */
-export function bannerVars(banner: Extract<CosmeticDef, { kind: "banner" }>): Record<string, string> {
-  const s = banner.style;
-  const stops = s.stops.length >= 2 ? s.stops : [s.stops[0] ?? "#111", s.stops[0] ?? "#111"];
+/** CSS variables of a banner: its image (rc.21, pre-rendered art) and glow colour. */
+export function bannerVars(banner: Extract<CosmeticDef, { kind: "banner" }>, displayPx = 1240): Record<string, string> {
   return {
-    "--cos-wash": `linear-gradient(110deg, ${stops.join(", ")})`,
-    "--cos-accent": s.accent,
-    "--cos-glow": stops[stops.length - 1],
-    "--cos-mid": stops[Math.floor(stops.length / 2)],
+    "--cos-img": `url("${bannerArtSrc(banner.style.art, displayPx)}")`,
+    "--cos-glow": banner.style.glow,
   };
 }
 
@@ -380,7 +389,7 @@ export function CosmeticArt({ def, size = "md", className }: { def: CosmeticDef;
       return <BadgeEmblem badge={def} size={size} className={className} />;
     case "banner":
       return (
-        <BannerSurface banner={def} className={cx("rounded-md border border-line-strong", className)}>
+        <BannerSurface banner={def} displayPx={400} className={cx("cos-banner-thumb rounded-md border border-line-strong", className)}>
           <span className="block" style={{ width: PX[size] * 2.8, height: PX[size] * 1.25 }} />
         </BannerSurface>
       );
@@ -399,7 +408,7 @@ export function CosmeticIcon({ def, className }: { def: CosmeticDef; className?:
   if (def.kind === "title") return <TitleTag title={def} size="xs" className={className} />;
   if (def.kind === "banner") {
     return (
-      <BannerSurface banner={def} className={cx("rounded-md border border-line-strong", className)}>
+      <BannerSurface banner={def} displayPx={400} className={cx("cos-banner-thumb rounded-md border border-line-strong", className)}>
         <span className="block h-5 w-9" />
       </BannerSurface>
     );

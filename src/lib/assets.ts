@@ -24,7 +24,7 @@ import manifestJson from "@/generated/asset-manifest.json";
 
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
-  widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[] };
+  widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[]; banners?: readonly number[] };
   /** Lowercase ISO codes with a /flags/<code>.png file. */
   flags: string[];
   /** "<orgId>" or "<orgId>@<era>" → source hash. */
@@ -37,6 +37,10 @@ type AssetManifest = {
   badges?: Record<string, string>;
   /** rc.11: badge art key → hash of its pre-blurred gold silhouette (legendary glow). */
   badgeGlows?: Record<string, string>;
+  /** rc.21: badge art key → [dx, dy] (fraction of the box) that re-centres its visual weight. */
+  badgeShifts?: Record<string, number[]>;
+  /** rc.21: banner art key → source hash (pre-rendered WebP of public/banners/*.svg). */
+  banners?: Record<string, string>;
 };
 
 const manifest = manifestJson as AssetManifest;
@@ -144,6 +148,31 @@ export const BADGE_GLOW_PAD = 84 / 224;
 export function badgeGlowSrc(art: string): string | null {
   const hash = hashFor(manifest.badgeGlows ?? {}, art);
   return hash ? `/img/badges/${seg(art)}.${hash}.glow.webp` : null;
+}
+
+/** rc.21: the offset that puts a badge's visual centre on its box centre
+ *  (measured at build time by build-images; `null` when the art is balanced). */
+export function badgeShift(art: string): [number, number] | null {
+  const v = manifest.badgeShifts?.[art];
+  return v && v.length === 2 ? [v[0], v[1]] : null;
+}
+
+/** Banner raster widths (manifest `widths.banners`, set in build-images.mjs). */
+const BANNER_WIDTHS: readonly number[] = manifest.widths.banners ?? [];
+
+/**
+ * Banner art for a display width (rc.21). PRODUCTION: the pre-rendered WebP
+ * (`/img/banners/<art>.<hash>.<w>.webp`) — the source SVGs carry turbulence,
+ * blur and displacement filters that must never run in the browser. DEV /
+ * TEST: the source SVG (`public/banners/<art>.svg`, written by
+ * `npm run build:banners`). Every catalog art key exists (the build script and
+ * `cosmetics.test.ts` check it), so this never returns null.
+ */
+export function bannerArtSrc(art: string, displayPx = 1240): string {
+  const hash = IS_PROD && BANNER_WIDTHS.length ? hashFor(manifest.banners ?? {}, art) : undefined;
+  if (!hash) return `/banners/${seg(art)}.svg`;
+  const w = pickWidth(BANNER_WIDTHS, displayPx);
+  return `/img/banners/${seg(art)}.${hash}.${w}.webp`;
 }
 
 export function badgeArtSrc(art: string, displayPx = 64): string {

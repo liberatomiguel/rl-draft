@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.20** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.21** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards). The old
   `claude/dazzling-cannon-1d6thr` branch stopped at rc.3.
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
@@ -49,8 +49,11 @@ FINAL cosmetics set** — 35 badges (revised design file), 36 titles and 18
 banners (CSS, tiered treatments), the 30-day login calendar, the Season 1 rank
 track, play milestones counted from the reset, three fixed challenges with
 exclusive cosmetics (Pure Talent / Homegrown / Time Capsule), the unlock
-pop-up, and the cloud-merge fix that re-dated playing rewards.
-Decisions: DESIGN-DECISIONS #110–#131, ROAD-TO-WORLDS-DECISIONS R20–R38.
+pop-up, and the cloud-merge fix that re-dated playing rewards; **rc.21:**
+Miguel's banner art as pre-rendered WebP (`npm run build:banners` →
+`build:images`), title polish (sizes, quiet rare, gold / grant colours,
+white-gold legendary), badge visual centring (`badgeShifts` in the manifest).
+Decisions: DESIGN-DECISIONS #110–#132, ROAD-TO-WORLDS-DECISIONS R20–R38.
 Cosmetics reference: `COSMETICS-CATALOG.md` (generated); source document:
 `data-sources/badges/cosmeticos-atualizado.md`.
 

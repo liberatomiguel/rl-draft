@@ -1296,7 +1296,7 @@ export const PT: Copy = {
       "missions-banner-target-practice": { name: "Target Practice", desc: "Vinte e cinco missões completas." },
       "quiz-title-rl-nerd": { name: "RL Nerd", desc: "Dez quizzes diários acertados." },
       "quiz-banner-playbook": { name: "Playbook", desc: "Cinquenta quizzes diários acertados." },
-      "career-title-rtw-champion": { name: "Road to Worlds Champion", desc: "Sua org venceu o Campeonato Mundial no Road to Worlds." },
+      "career-title-rtw-champion": { name: "Road to Worlds World Champion", desc: "Sua org venceu o Campeonato Mundial no Road to Worlds." },
       // --- Challenges com cosméticos exclusivos (três estrelas) ----------------
       "challenge-title-homegrown": { name: "Homegrown", desc: "Três estrelas em Homegrown: uma região, uma identidade." },
       "challenge-banner-golden-era": { name: "Golden Era", desc: "Três estrelas em Time Capsule: uma era revisitada." },
@@ -1321,7 +1321,7 @@ export const PT: Copy = {
       "grant-title-early-supporter": { name: "Early Supporter", desc: "Jogou desde o início e ajudou a divulgar o Rocket Draft." },
       "grant-title-supporter": { name: "Supporter", desc: "Apoiou o Rocket Draft quando ele estava só começando." },
       "grant-title-contributor": { name: "Contributor", desc: "Ajudou a construir o jogo: dados, arte, testes ou ideias." },
-      "grant-title-pro": { name: "Pro", desc: "Um profissional de RLCS verificado também joga aqui." },
+      "grant-title-pro": { name: "Pro Player", desc: "Um profissional de RLCS verificado também joga aqui." },
     },
   },
   MISSIONS_UI: {

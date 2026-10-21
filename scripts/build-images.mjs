@@ -101,6 +101,15 @@ const BADGE_WEBP = { quality: 88, alphaQuality: 100, effort: 5, smartSubsample: 
  *  over a wide, faint halo (haloSigma at haloAlpha). */
 const BADGE_GLOW = { size: 224, pad: 84, sigma: 2.2, haloSigma: 16, haloAlpha: 0.3, rgb: [255, 238, 196] /* white gold (rc.17) */, webp: { quality: 80, alphaQuality: 90, effort: 5 } };
 
+/** Banners (rc.21): the 1240 × 200 SVGs from build-banners → WebP. The profile
+ *  hero shows them up to ~1120 CSS px wide, the board rows ~800, the locker /
+ *  calendar thumbnails far smaller; assets.ts picks the smallest width ≥ the
+ *  CSS width (1× — they are soft art, not line work). The SVGs carry
+ *  turbulence / blur / displacement filters: NEVER serve them in production. */
+const BANNER_WIDTHS = [400, 800, 1240];
+const BANNER_SVG_DENSITY = 96;
+const BANNER_WEBP = { quality: 80, alphaQuality: 100, effort: 5 };
+
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
 
@@ -201,14 +210,19 @@ async function plan() {
   assertWidths("ORG_WIDTHS", ORG_WIDTHS);
   assertWidths("SPECIAL_WIDTHS", SPECIAL_WIDTHS);
   assertWidths("BADGE_WIDTHS", BADGE_WIDTHS);
+  assertWidths("BANNER_WIDTHS", BANNER_WIDTHS);
   const manifest = {
-    widths: { orgs: [...ORG_WIDTHS], specials: [...SPECIAL_WIDTHS], badges: [...BADGE_WIDTHS] },
+    widths: { orgs: [...ORG_WIDTHS], specials: [...SPECIAL_WIDTHS], badges: [...BADGE_WIDTHS], banners: [...BANNER_WIDTHS] },
     flags: [],
     orgs: {},
     specials: {},
     ranks: {},
     badges: {},
     badgeGlows: {},
+    /** rc.21: art key → [dx, dy], the offset (fraction of the box) that moves
+     *  the badge's VISUAL centre (alpha-weighted centroid) onto the box centre. */
+    badgeShifts: {},
+    banners: {},
   };
   let sourceBytes = 0;
 
@@ -307,6 +321,55 @@ async function plan() {
     });
   }
 
+  // badge visual centre (rc.21): some badges carry a crest or a tab on one
+  // side, so their bounding box and their visual weight disagree and they look
+  // off-centre next to the others. Measure the alpha-weighted centroid of the
+  // raster and record the shift that re-centres it (BadgeEmblem applies it).
+  for (const name of await listSvgs(badgeDir)) {
+    const art = name.replace(/\.svg$/i, "");
+    const { data, info } = await sharp(join(badgeDir, name), { density: BADGE_SVG_DENSITY })
+      .resize({ width: 128, height: 128, fit: "inside" })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    let sx = 0;
+    let sy = 0;
+    let sum = 0;
+    for (let y = 0; y < info.height; y++) {
+      for (let x = 0; x < info.width; x++) {
+        const a = data[(y * info.width + x) * info.channels + 3];
+        if (!a) continue;
+        sx += a * (x + 0.5);
+        sy += a * (y + 0.5);
+        sum += a;
+      }
+    }
+    if (!sum) continue;
+    const dx = 0.5 - sx / sum / info.width;
+    const dy = 0.5 - sy / sum / info.height;
+    const r3 = (v) => Math.round(v * 1000) / 1000;
+    if (Math.abs(dx) >= 0.004 || Math.abs(dy) >= 0.004) manifest.badgeShifts[art] = [r3(dx), r3(dy)];
+  }
+
+  // banners (rc.21): the generated SVGs → raster WebP, width-fitted
+  const bannerDir = join(PUBLIC, "banners");
+  for (const name of await listSvgs(bannerDir)) {
+    const art = name.replace(/\.svg$/i, "");
+    const src = join(bannerDir, name);
+    const hash = hashOf(await read(src), { density: BANNER_SVG_DENSITY, webp: BANNER_WEBP });
+    manifest.banners[art] = hash;
+    for (const w of BANNER_WIDTHS) {
+      jobs.push({
+        src,
+        dest: join(OUT_DIR, "banners", `${art}.${hash}.${w}.webp`),
+        width: w,
+        fit: "width",
+        webp: BANNER_WEBP,
+        density: BANNER_SVG_DENSITY,
+      });
+    }
+  }
+
   // flags: listed only (served as-is from /flags/<cc>.png)
   manifest.flags = (await listPngs(join(PUBLIC, "flags")))
     .map((n) => stripPng(n).toLowerCase())
@@ -399,13 +462,15 @@ function sortKeys(obj) {
 
 async function writeManifest(manifest) {
   const ordered = {
-    widths: { orgs: manifest.widths.orgs, specials: manifest.widths.specials, badges: manifest.widths.badges },
+    widths: { orgs: manifest.widths.orgs, specials: manifest.widths.specials, badges: manifest.widths.badges, banners: manifest.widths.banners },
     flags: manifest.flags,
     orgs: sortKeys(manifest.orgs),
     specials: sortKeys(manifest.specials),
     ranks: sortKeys(manifest.ranks),
     badges: sortKeys(manifest.badges),
     badgeGlows: sortKeys(manifest.badgeGlows),
+    badgeShifts: sortKeys(manifest.badgeShifts),
+    banners: sortKeys(manifest.banners),
   };
   const text = `${JSON.stringify(ordered, null, 2)}\n`;
   let current = null;
@@ -449,11 +514,12 @@ async function main() {
     specials: Object.keys(manifest.specials).length,
     ranks: Object.keys(manifest.ranks).length,
     badges: Object.keys(manifest.badges).length,
+    banners: Object.keys(manifest.banners).length,
     flags: manifest.flags.length,
   };
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(
-    `build-images: ${counts.orgs} orgs, ${counts.specials} specials, ${counts.ranks} ranks, ${counts.badges} badges, ${counts.flags} flags` +
+    `build-images: ${counts.orgs} orgs, ${counts.specials} specials, ${counts.ranks} ranks, ${counts.badges} badges, ${counts.banners} banners, ${counts.flags} flags` +
       ` → ${jobs.length} WebP files (${written} written, ${skipped} skipped, ${deleted} stale deleted) in ${secs}s`,
   );
   console.log(

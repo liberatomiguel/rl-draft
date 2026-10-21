@@ -154,7 +154,7 @@ function UnlockArt({ def, name }: { def: CosmeticDef; name: string | null }) {
     );
   }
   return (
-    <BannerSurface banner={def} className={cx("w-[min(20rem,calc(100vw-4rem))] rounded-2xl border", "border-line-strong")}>
+    <BannerSurface banner={def} glow displayPx={400} className={cx("w-[min(20rem,calc(100vw-4rem))] rounded-2xl border", "border-line-strong")}>
       <div className="flex h-28 flex-col justify-end p-4 text-left">
         <p className="kicker !text-[9px]">{C.kinds.banner}</p>
         <p className="display truncate text-lg font-bold uppercase tracking-wide text-ink">{name ?? "Rocket Draft"}</p>

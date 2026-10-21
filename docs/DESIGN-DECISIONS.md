@@ -1260,6 +1260,21 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      durable profile counter (`legacyStreak`); the live streak follows the
      device that played more, the best is monotonic.
 
+132. **Banner art is pre-rendered, never live SVG (rc.21).** Miguel's banner
+     generator draws with turbulence, blur and displacement filters — the same
+     class of cost that froze the board with live badge SVGs (#129). Rule:
+     a banner is ONE WebP from build-images (`build:banners` → `build:images`),
+     drawn as a background image; every effect on top is CSS limited to
+     transform / opacity (holo band on epic / legendary) or a static
+     box-shadow (the hero glow), and SMIL animation from the design file is
+     never shipped. The hero shows the full 1240 × 200 art; rows and
+     thumbnails crop it (cover, anchored right / at the focal area) under a
+     thin veil so names and ratings always read. Title treatment calls:
+     uncommon and rare stay quiet (they are the common case on a board);
+     epic and legendary carry the glow and the band; a per-title glow colour
+     lets gold titles glow orange and grant titles keep their reserved
+     colours.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

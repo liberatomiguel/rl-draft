@@ -208,6 +208,7 @@ export function LeaderboardsView() {
                 const rank = rankForXp(r.rankXp);
                 return (
                   <BannerSurface
+                    displayPx={800}
                     key={`${r.username}-${i}`}
                     banner={r.cosmetics.banner}
                     className={cx("cos-banner-row", isYou && "ring-1 ring-inset ring-orange/50")}
@@ -236,14 +237,14 @@ export function LeaderboardsView() {
                               visibility utility lives on the wrapper. */}
                           {r.cosmetics.title ? (
                             <span className="flex max-w-full overflow-hidden sm:hidden">
-                              <TitleTag title={r.cosmetics.title} size="xs" />
+                              <TitleTag title={r.cosmetics.title} size="sm" />
                             </span>
                           ) : null}
                         </span>
                         <BadgeRow badges={r.cosmetics.badges} size={ROW_BADGE_PX} featuredSize={ROW_FEATURED_PX} className="shrink-0" />
                         {r.cosmetics.title ? (
                           <span className="hidden min-w-0 overflow-hidden sm:flex">
-                            <TitleTag title={r.cosmetics.title} size="xs" />
+                            <TitleTag title={r.cosmetics.title} size="sm" />
                           </span>
                         ) : null}
                       </span>

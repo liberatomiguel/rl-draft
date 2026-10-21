@@ -111,7 +111,7 @@ export default function ProfilePage() {
       />
 
       {/* ---- HERO (the v2 banner, with every cosmetic slot tappable) --------- */}
-      <BannerSurface banner={shown.banner} className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
+      <BannerSurface banner={shown.banner} glow className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
         <div className="flex flex-col items-center gap-5 p-5 sm:flex-row sm:gap-6">
           <RankBadge rank={rank} variant="menu" size="lg" />
 
@@ -127,7 +127,7 @@ export default function ProfilePage() {
                   <span className="relative inline-flex">
                     {shown.title ? (
                       <button type="button" onClick={() => openLocker("title")} title={P.editTitle} className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange/70">
-                        <TitleTag title={shown.title} size="sm" />
+                        <TitleTag title={shown.title} size="md" />
                       </button>
                     ) : (
                       <button

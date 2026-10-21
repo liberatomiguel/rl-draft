@@ -128,7 +128,7 @@ function MiniCosmetic({ def, dim }: { def: CosmeticDef; dim?: boolean }) {
   if (def.kind === "badge") return <BadgeEmblem badge={def} size={22} fx={false} className={cx(dim && "opacity-60")} />;
   if (def.kind === "banner") {
     return (
-      <BannerSurface banner={def} className={cx("rounded border border-line-strong", dim && "opacity-60")}>
+      <BannerSurface banner={def} displayPx={400} className={cx("cos-banner-thumb rounded border border-line-strong", dim && "opacity-60")}>
         <span className="block h-3.5 w-6" />
       </BannerSurface>
     );

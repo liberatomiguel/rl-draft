@@ -1329,7 +1329,7 @@ export const COSMETICS = {
     "missions-banner-target-practice": { name: "Target Practice", desc: "Twenty-five missions completed." },
     "quiz-title-rl-nerd": { name: "RL Nerd", desc: "Ten daily quizzes solved." },
     "quiz-banner-playbook": { name: "Playbook", desc: "Fifty daily quizzes solved." },
-    "career-title-rtw-champion": { name: "Road to Worlds Champion", desc: "Your org won the World Championship on the Road to Worlds." },
+    "career-title-rtw-champion": { name: "Road to Worlds World Champion", desc: "Your org won the World Championship on the Road to Worlds." },
     // --- Challenges with exclusive cosmetics (three stars) -----------------------
     "challenge-title-homegrown": { name: "Homegrown", desc: "Three stars on Homegrown: one region, one identity." },
     "challenge-banner-golden-era": { name: "Golden Era", desc: "Three stars on Time Capsule: an era, revisited." },
@@ -1354,7 +1354,7 @@ export const COSMETICS = {
     "grant-title-early-supporter": { name: "Early Supporter", desc: "Played from the very start and helped spread the word." },
     "grant-title-supporter": { name: "Supporter", desc: "Backed Rocket Draft when it was just getting started." },
     "grant-title-contributor": { name: "Contributor", desc: "Helped build the game: data, art, testing or ideas." },
-    "grant-title-pro": { name: "Pro", desc: "A verified RLCS professional plays here too." },
+    "grant-title-pro": { name: "Pro Player", desc: "A verified RLCS professional plays here too." },
   } as Record<string, { name: string; desc: string }>,
 };
 

@@ -62,69 +62,69 @@ Total: **89** items — 0 avatars · 35 badges · 0 frames · 36 titles · 18 ba
 
 | Id | Name (EN / PT) | Tier | Unlock | Exclusive | Look | Description (EN) |
 |---|---|---|---|---|---|---|
-| `legacy-title-ps-silver` | Pre-Season Silver / Pre-Season Silver | Common | Pre-season peak rank ≥ Silver | yes | #c7cfd8 | Reached Silver in the pre-season. |
-| `legacy-title-ps-bronze` | Pre-Season Bronze / Pre-Season Bronze | Common | Pre-season peak rank ≥ Bronze | yes | #9aa3ad | Reached Bronze in the pre-season. |
+| `legacy-title-ps-gold` | Pre-Season Gold / Pre-Season Gold | Common | Pre-season peak rank ≥ Gold | yes | #a3adbd | Reached Gold in the pre-season. |
+| `legacy-title-ps-silver` | Pre-Season Silver / Pre-Season Silver | Common | Pre-season peak rank ≥ Silver | yes | #a3adbd | Reached Silver in the pre-season. |
+| `legacy-title-ps-bronze` | Pre-Season Bronze / Pre-Season Bronze | Common | Pre-season peak rank ≥ Bronze | yes | #a3adbd | Reached Bronze in the pre-season. |
 | `specials-title-card-hunter` | Card Hunter / Card Hunter | Common | specials-owned |  | #a3adbd | Your first special card. |
 | `runs-title-rookie` | Rookie / Rookie | Common | runs-won-since-s1 |  | #a3adbd | Your first run won. |
 | `rank-title-challenger` | Challenger / Challenger | Common | Season 1: reach Silver |  | #b8c2cc | Reached Silver in Season 1. |
 | `login-title-the-regular` | The Regular / The Regular | Common | Login streak 3 days |  | #a3adbd | Three days in a row. A habit in the making. |
-| `legacy-title-ps-platinum` | Pre-Season Platinum / Pre-Season Platinum | Uncommon | Pre-season peak rank ≥ Platinum | yes | #a9cfe0 | Reached Platinum in the pre-season. |
-| `legacy-title-ps-gold` | Pre-Season Gold / Pre-Season Gold | Uncommon | Pre-season peak rank ≥ Gold | yes | #e6d27a | Reached Gold in the pre-season. |
+| `legacy-title-ps-diamond` | Pre-Season Diamond / Pre-Season Diamond | Uncommon | Pre-season peak rank ≥ Diamond | yes | #20a93e | Reached Diamond in the pre-season. |
+| `legacy-title-ps-platinum` | Pre-Season Platinum / Pre-Season Platinum | Uncommon | Pre-season peak rank ≥ Platinum | yes | #20a93e | Reached Platinum in the pre-season. |
 | `quiz-title-rl-nerd` | RL Nerd / RL Nerd | Uncommon | 10 daily quizzes solved |  | #b7a9ff | Ten daily quizzes solved. |
 | `rank-title-playmaker` | Playmaker / Playmaker | Uncommon | Season 1: reach Gold |  | #8fe0d0 | Reached Gold in Season 1. |
+| `login-title-cant-stop` | Can't Stop / Can't Stop | Uncommon | Login streak 25 days |  | #ffd166 | Twenty-five days in a row. |
+| `login-title-on-fire` | On Fire / On Fire | Uncommon | Login streak 21 days |  | #ff8a3d | Twenty-one days in a row. |
 | `login-title-locked-in` | Locked In / Locked In | Uncommon | Login streak 10 days |  | #9fd0b8 | Ten days in a row. |
 | `legacy-title-ps-board-finalist` | Pre-Season Leaderboard Finalist / Pre-Season Leaderboard Finalist | Rare | Pre-season board #11–50 | yes | #60a5fa | Finished the pre-season in the top 50 of the board. |
-| `legacy-title-ps-diamond` | Pre-Season Diamond / Pre-Season Diamond | Rare | Pre-season peak rank ≥ Diamond | yes | #3f8cff | Reached Diamond in the pre-season. |
+| `legacy-title-ps-champion` | Pre-Season Champion / Pre-Season Champion | Rare | Pre-season peak rank ≥ Champion | yes | #20a93e | Reached Champion in the pre-season. |
 | `legacy-title-first-chapter` | First Chapter / First Chapter | Rare | Pre-season: finished ≥1 run | yes | #fb923c | You were here before Season 1 existed. |
 | `challenge-title-pure-talent` | Pure Talent / Pure Talent | Rare | challenge-perfect |  | #22d3ee | Three stars on Pure Talent: no specials, no shortcuts. |
 | `challenge-title-homegrown` | Homegrown / Homegrown | Rare | challenge-perfect |  | #9ccc3c | Three stars on Homegrown: one region, one identity. |
 | `streak-title-on-a-roll` | On a Roll / On a Roll | Rare | legacy-streak |  | #ff4fd8 | Three Legacy runs won in a row. |
 | `runs-title-draft-veteran` | Draft Veteran / Draft Veteran | Rare | runs-won-since-s1 |  | #f4b860 | One hundred runs won. |
 | `rank-title-unstoppable` | Unstoppable / Unstoppable | Rare | Season 1: reach Diamond |  | #5ab0ff | Reached Diamond in Season 1. |
-| `login-title-cant-stop` | Can't Stop / Can't Stop | Rare | Login streak 25 days |  | #ffd166 | Twenty-five days in a row. |
-| `login-title-on-fire` | On Fire / On Fire | Rare | Login streak 21 days |  | #ff8a3d | Twenty-one days in a row. |
-| `legacy-title-ps-board-2` | Pre-Season Leaderboard #2 / Pre-Season Leaderboard #2 | Epic | Pre-season board #2 | yes | #e5e7eb → #9ca3af → #ffffff | Finished the pre-season 2nd on the board. |
-| `legacy-title-ps-board-3` | Pre-Season Leaderboard #3 / Pre-Season Leaderboard #3 | Epic | Pre-season board #3 | yes | #cd7f32 → #ffb876 | Finished the pre-season 3rd on the board. |
-| `legacy-title-ps-board-elite` | Pre-Season Leaderboard Elite / Pre-Season Leaderboard Elite | Epic | Pre-season board #4–10 | yes | #c084fc | Finished the pre-season in the top 10 of the board. |
-| `grant-title-early-supporter` | Early Supporter / Early Supporter | Epic | Manual grant: early-supporter | yes | #2f5bff → #7c9bff | Played from the very start and helped spread the word. |
+| `legacy-title-ps-board-2` | Pre-Season Leaderboard #2 / Pre-Season Leaderboard #2 | Epic | Pre-season board #2 | yes | #ffeb5c → #fff3a0 | Finished the pre-season 2nd on the board. |
+| `legacy-title-ps-board-3` | Pre-Season Leaderboard #3 / Pre-Season Leaderboard #3 | Epic | Pre-season board #3 | yes | #ffeb5c → #fff3a0 | Finished the pre-season 3rd on the board. |
+| `legacy-title-ps-board-elite` | Pre-Season Leaderboard Elite / Pre-Season Leaderboard Elite | Epic | Pre-season board #4–10 | yes | #ffeb5c → #fff3a0 | Finished the pre-season in the top 10 of the board. |
+| `grant-title-early-supporter` | Early Supporter / Early Supporter | Epic | Manual grant: early-supporter | yes | #ff9ec0 → #ffd1e1 | Played from the very start and helped spread the word. |
 | `grant-title-supporter` | Supporter / Supporter | Epic | Manual grant: supporter | yes | #e8356d → #ff7aa2 | Backed Rocket Draft when it was just getting started. |
-| `grant-title-contributor` | Contributor / Contributor | Epic | Manual grant: contributor | yes | #19c37d → #7ef0c0 | Helped build the game: data, art, testing or ideas. |
-| `grant-title-pro` | Pro / Pro | Epic | Manual grant: pro | yes | #8fd3ff → #d6f0ff | A verified RLCS professional plays here too. |
+| `grant-title-contributor` | Contributor / Contributor | Epic | Manual grant: contributor | yes | #19d290 → #7ef0c0 | Helped build the game: data, art, testing or ideas. |
+| `grant-title-pro` | Pro Player / Pro Player | Epic | Manual grant: pro | yes | #aef7ff → #e0fbff | A verified RLCS professional plays here too. |
 | `legacy-title-ps-grand-champion` | Pre-Season Grand Champion / Pre-Season Grand Champion | Epic | Pre-season peak rank ≥ Grand Champion | yes | #ff1f1f → #ff6b6b | Reached Grand Champion in the pre-season. |
-| `legacy-title-ps-champion` | Pre-Season Champion / Pre-Season Champion | Epic | Pre-season peak rank ≥ Champion | yes | #a855f7 → #d8b4fe | Reached Champion in the pre-season. |
-| `career-title-rtw-champion` | Road to Worlds Champion / Road to Worlds Champion | Epic | 1 Road to Worlds Worlds title (any save) |  | #ffd166 → #ff8a3d | Your org won the World Championship on the Road to Worlds. |
-| `rank-title-rocketeer` | Rocketeer / Rocketeer | Epic | Season 1: reach Champion |  | #c084fc → #f0abfc | Reached Champion in Season 1. |
-| `login-title-daily-driver` | Daily Driver / Daily Driver | Epic | Login streak 30 days |  | #ff7a45 → #ffd166 | Thirty days in a row. |
-| `legacy-title-ps-board-champion` | Pre-Season Leaderboard Champion / Pre-Season Leaderboard Champion | Legendary | Pre-season board #1 | yes | #fff8e1 → #f2cf6b → #ffffff | The first name at the top of the first board. |
-| `legacy-title-ps-supersonic-legend` | Pre-Season Supersonic Legend / Pre-Season Supersonic Legend | Legendary | Pre-season peak rank ≥ Supersonic Legend | yes | #fff8e1 → #f2cf6b → #ffffff | Supersonic Legend before the first season even started. |
-| `rank-title-rocket-demigod` | Rocket Demigod / Rocket Demigod | Legendary | Season 1: reach Supersonic Legend |  | #fff8e1 → #f2cf6b → #ffffff | Supersonic Legend in Season 1. |
+| `career-title-rtw-champion` | Road to Worlds World Champion / Road to Worlds World Champion | Epic | 1 Road to Worlds Worlds title (any save) |  | #ffeb5c → #fff3a0 | Your org won the World Championship on the Road to Worlds. |
+| `rank-title-rocketeer` | Rocketeer / Rocketeer | Epic | Season 1: reach Champion |  | #7c3aed → #c084fc → #22d3ee | Reached Champion in Season 1. |
+| `login-title-daily-driver` | Daily Driver / Daily Driver | Epic | Login streak 30 days |  | #ff5f6d → #ffc371 → #fff0a8 | Thirty days in a row. |
+| `legacy-title-ps-board-champion` | Pre-Season Leaderboard Champion / Pre-Season Leaderboard Champion | Legendary | Pre-season board #1 | yes | #ffffff → #f3dc92 → #ffd3ea | The first name at the top of the first board. |
+| `legacy-title-ps-supersonic-legend` | Pre-Season Supersonic Legend / Pre-Season Supersonic Legend | Legendary | Pre-season peak rank ≥ Supersonic Legend | yes | #ffffff → #f3dc92 → #ffd3ea | Supersonic Legend before the first season even started. |
+| `rank-title-rocket-demigod` | Rocket Demigod / Rocket Demigod | Legendary | Season 1: reach Supersonic Legend |  | #ffffff → #f3dc92 → #ffd3ea | Supersonic Legend in Season 1. |
 
 ## Banners (18)
 
 | Id | Name (EN / PT) | Tier | Unlock | Exclusive | Look | Description (EN) |
 |---|---|---|---|---|---|---|
-| `runs-banner-blueprint` | Blueprint / Blueprint | Common | runs-finished-since-s1 |  | blueprint | Ten runs finished, win or lose. |
-| `rank-banner-circuit` | Circuit / Circuit | Common | Season 1: reach Bronze |  | circuit | Reached Bronze in Season 1. |
-| `login-banner-kickoff` | Kickoff / Kickoff | Common | Login streak 5 days |  | pitch | Five days in a row. The pitch is yours. |
-| `runs-banner-victory-lane` | Victory Lane / Victory Lane | Uncommon | runs-won-since-s1 |  | lane | Twenty-five runs won. |
-| `rank-banner-neon-grid` | Neon Grid / Neon Grid | Uncommon | Season 1: reach Gold |  | grid | Reached Gold in Season 1. |
-| `login-banner-after-hours` | After Hours / After Hours | Uncommon | Login streak 14 days |  | arena | Fourteen days in a row. The arena never really closes. |
-| `challenge-banner-back-to-basics` | Back to Basics / Back to Basics | Rare | challenge-perfect |  | tactic | Three stars on Pure Talent: base cards only. |
-| `challenge-banner-golden-era` | Golden Era / Golden Era | Rare | challenge-perfect |  | retro | Three stars on Time Capsule: an era, revisited. |
-| `quiz-banner-playbook` | Playbook / Playbook | Rare | 50 daily quizzes solved |  | playbook | Fifty daily quizzes solved. |
-| `missions-banner-target-practice` | Target Practice / Target Practice | Rare | 25 missions completed |  | target | Twenty-five missions completed. |
-| `specials-banner-the-vault` | The Vault / The Vault | Rare | specials-owned |  | vault | Ten different special cards collected. |
-| `rank-banner-slipstream` | Slipstream / Slipstream | Rare | Season 1: reach Platinum |  | slipstream | Reached Platinum in Season 1. |
-| `login-banner-solar-flare` | Solar Flare / Solar Flare | Rare | Login streak 21 days |  | flare | Twenty-one days in a row. |
-| `streak-banner-heatwave` | Heatwave / Heatwave | Epic | legacy-streak |  | heat | Five Legacy runs won in a row. |
-| `rank-banner-overdrive` | Overdrive / Overdrive | Epic | Season 1: reach Grand Champion |  | overdrive | Reached Grand Champion in Season 1. |
-| `rank-banner-singularity` | Singularity / Singularity | Epic | Season 1: reach Champion |  | singularity | Reached Champion in Season 1. |
-| `login-banner-wildfire` | Wildfire / Wildfire | Epic | Login streak 30 days |  | flames | Thirty days in a row. The flames of the Wildfire badge, full width. |
-| `rank-banner-cosmic-ascension` | Cosmic Ascension / Cosmic Ascension | Legendary | Season 1: reach Supersonic Legend |  | cosmic · animated | Supersonic Legend in Season 1. The top of the ladder. |
+| `runs-banner-blueprint` | Blueprint / Blueprint | Common | runs-finished-since-s1 |  | none | Ten runs finished, win or lose. |
+| `rank-banner-circuit` | Circuit / Circuit | Common | Season 1: reach Bronze |  | none | Reached Bronze in Season 1. |
+| `login-banner-kickoff` | Kickoff / Kickoff | Common | Login streak 5 days |  | none | Five days in a row. The pitch is yours. |
+| `runs-banner-victory-lane` | Victory Lane / Victory Lane | Uncommon | runs-won-since-s1 |  | none | Twenty-five runs won. |
+| `rank-banner-neon-grid` | Neon Grid / Neon Grid | Uncommon | Season 1: reach Gold |  | none | Reached Gold in Season 1. |
+| `login-banner-after-hours` | After Hours / After Hours | Uncommon | Login streak 14 days |  | none | Fourteen days in a row. The arena never really closes. |
+| `challenge-banner-back-to-basics` | Back to Basics / Back to Basics | Rare | challenge-perfect |  | none | Three stars on Pure Talent: base cards only. |
+| `challenge-banner-golden-era` | Golden Era / Golden Era | Rare | challenge-perfect |  | none | Three stars on Time Capsule: an era, revisited. |
+| `quiz-banner-playbook` | Playbook / Playbook | Rare | 50 daily quizzes solved |  | none | Fifty daily quizzes solved. |
+| `missions-banner-target-practice` | Target Practice / Target Practice | Rare | 25 missions completed |  | none | Twenty-five missions completed. |
+| `specials-banner-the-vault` | The Vault / The Vault | Rare | specials-owned |  | none | Ten different special cards collected. |
+| `rank-banner-slipstream` | Slipstream / Slipstream | Rare | Season 1: reach Platinum |  | none | Reached Platinum in Season 1. |
+| `login-banner-solar-flare` | Solar Flare / Solar Flare | Rare | Login streak 21 days |  | none | Twenty-one days in a row. |
+| `streak-banner-heatwave` | Heatwave / Heatwave | Epic | legacy-streak |  | none | Five Legacy runs won in a row. |
+| `rank-banner-overdrive` | Overdrive / Overdrive | Epic | Season 1: reach Grand Champion |  | none | Reached Grand Champion in Season 1. |
+| `rank-banner-singularity` | Singularity / Singularity | Epic | Season 1: reach Champion |  | none | Reached Champion in Season 1. |
+| `login-banner-wildfire` | Wildfire / Wildfire | Epic | Login streak 30 days |  | none | Thirty days in a row. The flames of the Wildfire badge, full width. |
+| `rank-banner-cosmic-ascension` | Cosmic Ascension / Cosmic Ascension | Legendary | Season 1: reach Supersonic Legend |  | none | Supersonic Legend in Season 1. The top of the ladder. |
 
 ## Unlock sources at a glance
 
-- **1 Road to Worlds Worlds title (any save)** → badge: Crowned World Champion, title: Road to Worlds Champion
+- **1 Road to Worlds Worlds title (any save)** → badge: Crowned World Champion, title: Road to Worlds World Champion
 - **10 daily quizzes solved** → badge: Scholar I, title: RL Nerd
 - **1000 runs won** → badge: Veteran Drafter IV
 - **25 challenge stars** → badge: Rising Star
@@ -148,7 +148,7 @@ Total: **89** items — 0 avatars · 35 badges · 0 frames · 36 titles · 18 ba
 - **Login streak 7 days** → badge: Spark
 - **Manual grant: contributor** → badge: Contributor, title: Contributor
 - **Manual grant: early-supporter** → badge: Early Supporter, title: Early Supporter
-- **Manual grant: pro** → badge: Verified Pro, title: Pro
+- **Manual grant: pro** → badge: Verified Pro, title: Pro Player
 - **Manual grant: supporter** → badge: Supporter, title: Supporter
 - **One season: peak ≥ Supersonic Legend, 3 career Worlds, 25 Legacy titles** → badge: Dynasty
 - **Pre-season board #1** → badge: Season Champion, title: Pre-Season Leaderboard Champion

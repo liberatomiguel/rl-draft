@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.20**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.21**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,40 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.21 (Miguel's banner art, title polish, 2026-10-21 · DESIGN-DECISIONS #132)
+- **Banners are Miguel's art** (`data-sources/banners/banners-rocket-draft.html`,
+  the `RDBanners` generator): `npm run build:banners` exports the 18 banners as
+  static, frameless SVGs (`public/banners/`), and build-images rasterises them
+  to WebP (400 / 800 / 1240 px, 8–11 KB each at 1240) — the SVGs carry
+  turbulence, blur and displacement filters that must never run in the
+  browser (the rc.9 lesson from the badges). The card renders ONE image
+  (`--cos-img`, cover, right-anchored; thumbnails frame the focal area) and
+  adds the tier effects in CSS, transform / opacity only: a holo band on epic,
+  a strong prismatic band on legendary, and on the profile hero a glow in the
+  banner's own colour (static box-shadow). Rows keep a thin veil at both
+  edges; phones a uniform one. The rc.20 CSS pattern families are gone.
+- **Titles:** a step larger (profile hero 14 px, board rows 11.5 px);
+  uncommon / rare quiet (faint tint, a whisper of glow on rare); epic glow
+  stronger, with a per-title glow colour; legendary pulled to white with
+  white-gold and light-pink details, a strong white / gold / pink glow and a
+  vivid holo band. Pre-season Champion → rare green, Diamond / Platinum →
+  uncommon green, Gold / Silver / Bronze plain grey; the podium titles (#2, #3,
+  Elite) and the Road to Worlds **World** Champion in gold with an orange
+  glow; Pro → **Pro Player** (ice / sky), Contributor emerald / teal, Early
+  Supporter a rose tone off the Supporter's raspberry; Daily Driver and
+  Rocketeer three-colour gradients; On Fire and Can't Stop → uncommon (fewer
+  rare generics).
+- **Badges:** build-images measures each badge's alpha-weighted centroid and
+  the manifest carries the shift (`badgeShifts`) that BadgeEmblem applies, so
+  crests and tabs no longer make a badge sit off-centre next to the others;
+  legendaries drawn 22 % larger (was 14 %).
+
+### Fixed — rc.21
+- **Long titles rendered larger than the others.** Root cause: the
+  `cos-title-long` rule set `font-size: 0.92em` on the chip itself, and an em
+  there resolves against the PARENT (16 px), overriding the chip's own 11 px
+  class. The rule now targets the inner text span.
 
 ### Added — rc.20 (the final cosmetics: titles + banners, 2026-10-21 · DESIGN-DECISIONS #131)
 - **The official title / banner set** (`data-sources/badges/cosmeticos-atualizado.md`):

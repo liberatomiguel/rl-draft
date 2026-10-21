@@ -378,7 +378,7 @@ async function checkRequiredFiles(ctx) {
 async function checkGeneratedImages(ctx) {
   const manifest = JSON.parse(await readFile(MANIFEST_PATH, "utf8"));
   const widths = manifest.widths ?? {};
-  for (const kind of ["orgs", "specials", "badges"]) {
+  for (const kind of ["orgs", "specials", "badges", "banners"]) {
     if (!validWidths(widths[kind])) {
       throw new Error(
         `asset-manifest.json widths.${kind} must be non-empty, ascending, unique positive integers ` +
@@ -402,6 +402,9 @@ async function checkGeneratedImages(ctx) {
   }
   for (const [art, hash] of Object.entries(manifest.badges ?? {})) {
     for (const w of widths.badges) urls.push(`/img/badges/${seg(art)}.${hash}.${w}.webp`);
+  }
+  for (const [art, hash] of Object.entries(manifest.banners ?? {})) {
+    for (const w of widths.banners) urls.push(`/img/banners/${seg(art)}.${hash}.${w}.webp`);
   }
   for (const [art, hash] of Object.entries(manifest.badgeGlows ?? {})) {
     urls.push(`/img/badges/${seg(art)}.${hash}.glow.webp`);

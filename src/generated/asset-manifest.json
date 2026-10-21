@@ -11,6 +11,11 @@
     "badges": [
       96,
       224
+    ],
+    "banners": [
+      400,
+      800,
+      1240
     ]
   },
   "flags": [
@@ -385,5 +390,155 @@
     "veteran-drafter-4": "cc3abac7e3",
     "wildfire": "2f157f0eb6",
     "world-champion-crowned": "af6f5f85bd"
+  },
+  "badgeShifts": {
+    "constellation": [
+      0,
+      0.011
+    ],
+    "contributor": [
+      -0.012,
+      -0.03
+    ],
+    "dynasty": [
+      0.001,
+      0.007
+    ],
+    "early-supporter": [
+      -0.005,
+      -0.002
+    ],
+    "pre-season-bronze": [
+      0,
+      0.021
+    ],
+    "pre-season-champion": [
+      0.001,
+      0.008
+    ],
+    "pre-season-diamond": [
+      0.001,
+      0.029
+    ],
+    "pre-season-gold": [
+      0,
+      0.015
+    ],
+    "pre-season-grand-champion": [
+      0.001,
+      0.022
+    ],
+    "pre-season-platinum": [
+      0,
+      0.031
+    ],
+    "pre-season-silver": [
+      0,
+      0.022
+    ],
+    "pre-season-supersonic": [
+      0,
+      -0.019
+    ],
+    "rising-star": [
+      0,
+      -0.026
+    ],
+    "scholar-1": [
+      0,
+      -0.007
+    ],
+    "scholar-2": [
+      0,
+      0.007
+    ],
+    "scholar-3": [
+      -0.008,
+      -0.005
+    ],
+    "season-champion-ps": [
+      0,
+      -0.055
+    ],
+    "season-elite-ps": [
+      -0.008,
+      -0.041
+    ],
+    "season-finalist-ps": [
+      0,
+      -0.025
+    ],
+    "season-runner-up-ps": [
+      -0.008,
+      -0.032
+    ],
+    "season-third-place-ps": [
+      -0.008,
+      -0.04
+    ],
+    "spark": [
+      0,
+      -0.005
+    ],
+    "supernova": [
+      0,
+      0.017
+    ],
+    "supporter": [
+      -0.001,
+      0.028
+    ],
+    "underdog": [
+      0,
+      -0.009
+    ],
+    "verified-pro": [
+      0.005,
+      0.016
+    ],
+    "veteran-drafter-1": [
+      0,
+      0.05
+    ],
+    "veteran-drafter-2": [
+      0,
+      0.052
+    ],
+    "veteran-drafter-3": [
+      0,
+      0.029
+    ],
+    "veteran-drafter-4": [
+      -0.008,
+      0.012
+    ],
+    "wildfire": [
+      -0.014,
+      0.008
+    ],
+    "world-champion-crowned": [
+      -0.004,
+      -0.017
+    ]
+  },
+  "banners": {
+    "after-hours": "b59deec141",
+    "back-to-basics": "d9f02b4e0c",
+    "blueprint": "5d8bd37a0e",
+    "circuit": "b3ba051449",
+    "cosmic-ascension": "5b7d30e137",
+    "golden-era": "5217772c6c",
+    "heatwave": "43b77f24e0",
+    "kickoff": "312170d619",
+    "neon-grid": "3e05b55d1b",
+    "overdrive": "ec8dc98407",
+    "playbook": "98f860b90e",
+    "singularity": "d3fe374743",
+    "slipstream": "3889072d28",
+    "solar-flare": "0bc0b452f1",
+    "target-practice": "3c64970842",
+    "the-vault": "3cbc536561",
+    "victory-lane": "9d2cc0719f",
+    "wildfire": "1a7666bb10"
   }
 }

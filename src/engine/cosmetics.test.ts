@@ -87,20 +87,24 @@ describe("catalog integrity (rc.20, the final Season 1 set)", () => {
   });
 
   it("the manual-grant colours are reserved: no other title uses them", () => {
-    const reserved = new Set(Object.values(GRANT_COLORS).flat().map((c) => c.toLowerCase()));
+    const reserved = new Set(
+      Object.values(GRANT_COLORS)
+        .flatMap((g) => [...g.colors, g.glow])
+        .map((c) => c.toLowerCase()),
+    );
     for (const c of COSMETICS) {
       if (c.kind !== "title" || c.source.type === "grant") continue;
       for (const col of c.style.colors) expect(reserved.has(col.toLowerCase()), `${c.id} uses a grant colour`).toBe(false);
     }
   });
 
-  it("legendary titles are white gold; every banner has 2+ stops and a pattern", () => {
+  it("legendary titles are white gold; every banner's art exists in public/banners (rc.21)", () => {
+    const dir = resolve(dirname(fileURLToPath(import.meta.url)), "../../public/banners");
     for (const c of COSMETICS) {
-      if (c.kind === "title" && c.tier === "legend") expect(c.style.colors).toEqual(["#fff8e1", "#f2cf6b", "#ffffff"]);
+      if (c.kind === "title" && c.tier === "legend") expect(c.style.colors).toEqual(["#ffffff", "#f3dc92", "#ffd3ea"]);
       if (c.kind === "banner") {
-        expect(c.style.stops.length, c.id).toBeGreaterThanOrEqual(2);
-        expect(c.style.pattern, c.id).not.toBe("none");
-        if (c.tier === "legend") expect(c.style.animated, c.id).toBe(true);
+        expect(existsSync(resolve(dir, `${c.style.art}.svg`)), c.style.art).toBe(true);
+        expect(c.style.glow, c.id).toMatch(/^#[0-9a-f]{6}$/i);
       }
     }
   });
