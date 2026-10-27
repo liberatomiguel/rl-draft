@@ -20,7 +20,7 @@ import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
-import { draftableLineups, lineupById, seasonById } from "@/data";
+import { draftableLineups, lineupById, nationalSpecialIdsByLineupId, seasonById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
@@ -182,7 +182,10 @@ function OfferReveal({
   onReroll,
   onFreeReroll,
 }: OfferRevealProps) {
-  const { DRAFT_UI } = useCopy();
+  const { DRAFT_UI, NATIONAL_UI } = useCopy();
+  // National team (v2.0): localized name, a gold badge and the rare-draw note.
+  const national = Boolean(lineup.national);
+  const headerName = national ? NATIONAL_UI.teamName(lineup.orgId, header.name) : header.name;
   // Lazy init: the reel names are built ONCE on mount (this component is keyed
   // by round, so each offer gets a fresh mount). When the reel is non-null we
   // render it instead of the drawn name, so the team only appears once the
@@ -201,19 +204,23 @@ function OfferReveal({
     const drawn = lineupById.get(offer.lineupId);
     if (!drawn) return null;
     // Decoy names come from the SAME pool this run draws from — regional / daily
-    // restrict it via poolLineupIds; worldwide uses the full Worlds set. The
-    // easter-egg lineup is excluded so it stays a surprise.
+    // restrict it via poolLineupIds; worldwide uses the full international set.
+    // The easter egg and the national teams are excluded so they stay a surprise.
     const reelPool = (
       run.draft.poolLineupIds
         ? run.draft.poolLineupIds.map((id) => lineupById.get(id)!)
         : draftableLineups
-    ).filter((l) => l && !l.rareSpawn);
+    ).filter((l) => l && !l.rareSpawn && !l.national);
     const names: string[] = [];
     for (let i = 0; i < REEL_LENGTH - 1; i++) {
       const idx = (offer.lineupId.length * 7 + run.draft.round * 13 + i * 29) % reelPool.length;
       names.push(lineupReelName(reelPool[idx]));
     }
-    names.push(lineupReelName(drawn));
+    names.push(
+      drawn.national
+        ? `${NATIONAL_UI.teamName(drawn.orgId, drawn.name)} · ${seasonById.get(drawn.seasonId)?.shortLabel ?? ""}`
+        : lineupReelName(drawn),
+    );
     return names;
   });
 
@@ -284,8 +291,13 @@ function OfferReveal({
               </div>
             </div>
           ) : (
-            <h2 className="display pop-in truncate text-2xl font-bold uppercase tracking-wide text-ink md:text-3xl">
-              {header.name}
+            <h2
+              className={cx(
+                "display pop-in truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
+                national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
+              )}
+            >
+              {headerName}
             </h2>
           )}
           <p
@@ -305,6 +317,7 @@ function OfferReveal({
             </span>
             {/* Region accent color — where is this team from, at a glance */}
             <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
+            {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
           </p>
         </div>
         <Button
@@ -324,6 +337,18 @@ function OfferReveal({
 
       {/* The offer fades in once the reel lands */}
       <div className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
+        {/* National team (v2.0): the rare draw announces itself — and seeing it
+            already collected every one of its cards (runStore). */}
+        {national ? (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-yellow-300/40 bg-yellow-300/[0.06] px-3 py-2 shadow-[0_0_24px_rgba(234,179,8,0.12)]">
+            <span className="display shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-200">
+              {NATIONAL_UI.drawKicker}
+            </span>
+            <span className="min-w-0 text-xs leading-snug text-yellow-50/85">
+              {NATIONAL_UI.drawNote(nationalSpecialIdsByLineupId.get(lineup.id)?.length ?? 0)}
+            </span>
+          </div>
+        ) : null}
         {/* Row 1: the three players (cells stretch; cards cap at max-w) */}
         <div className="mb-3 grid grid-cols-3 gap-2 md:gap-4">
           {playerCards.map(renderOfferCard)}

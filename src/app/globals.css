@@ -317,6 +317,25 @@ body::before {
   box-shadow: 0 0 18px rgba(16, 185, 129, 0.2);
 }
 
+/*
+ * National team (v2.0): trophy gold — deeper and more saturated than the
+ * white-gold legendary so the two never read alike. Every card of a FIFAe
+ * national roster wears it; the flag (the org logo) is the centerpiece, lit
+ * from above by a soft gold stage light.
+ */
+.card-national {
+  background-image:
+    linear-gradient(168deg, #241a05 0%, #150f03 58%, #2b2006 100%),
+    linear-gradient(135deg, #fef08a 0%, #eab308 24%, #854d0e 50%, #facc15 74%, #fef9c3 100%);
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.24);
+}
+
+.card-national .special-fallback-art {
+  background:
+    radial-gradient(90% 60% at 50% 36%, rgba(250, 204, 21, 0.22), transparent 70%),
+    repeating-linear-gradient(115deg, rgba(253, 224, 71, 0.05) 0 3px, transparent 3px 12px);
+}
+
 /* Wings E-Sports easter-egg card — orange (v1.4) */
 .card-wings {
   background-image:
@@ -432,6 +451,16 @@ body::before {
 
 .card-wings.card-special {
   animation: wings-halo 3.4s ease-in-out infinite;
+}
+
+/* National halo pulse — gold (v2.0) */
+@keyframes national-halo {
+  0%, 100% { box-shadow: 0 0 22px rgba(234, 179, 8, 0.26); }
+  50% { box-shadow: 0 0 44px rgba(250, 204, 21, 0.45); }
+}
+
+.card-national.card-special {
+  animation: national-halo 3.2s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -820,6 +849,12 @@ body::before {
   background-size: 220% 100%;
 }
 
+.holo-national::after {
+  background:
+    linear-gradient(115deg, transparent 22%, rgba(254, 240, 138, 0.3) 38%, rgba(255, 255, 255, 0.16) 48%, rgba(234, 179, 8, 0.28) 58%, transparent 74%);
+  background-size: 220% 100%;
+}
+
 /* Cursor-tracked glare (TiltCard sets --mx/--my as percentages) */
 .tilt-glare {
   background: radial-gradient(
@@ -857,6 +892,7 @@ body::before {
 .holo-rainbow-rare { opacity: 0.26; }
 .holo-rainbow-epic { opacity: 0.44; }
 .holo-rainbow-mythic { opacity: 0.6; }
+.holo-rainbow-national { opacity: 0.32; }
 .holo-rainbow-legendary {
   opacity: 0.78;
   animation: holo-shift 6s ease-in-out infinite;
@@ -964,6 +1000,16 @@ body::before {
   color: #fdba74; /* orange matching the Wings border */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(249, 115, 22, 0.6);
 }
+.ovr-national {
+  /* rich trophy-gold number — warmer than the legendary white-gold */
+  background-image: linear-gradient(165deg, #fef9c3 0%, #fde047 34%, #eab308 62%, #fef08a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 8px rgba(234, 179, 8, 0.5));
+}
 
 /* ---------------------------------------------------------------------------
    Unlock ceremony
@@ -1013,6 +1059,7 @@ body::before {
   .card-creator.card-special,
   .card-community.card-special,
   .card-wings.card-special,
+  .card-national.card-special,
   .field-fx,
   .field-holo,
   .field-slot-glow,
@@ -1135,6 +1182,7 @@ html.reduce-fx .card-float {
 :is(html.lite-fx, html.reduce-fx) .card-creator.card-special,
 :is(html.lite-fx, html.reduce-fx) .card-community.card-special,
 :is(html.lite-fx, html.reduce-fx) .card-wings.card-special,
+:is(html.lite-fx, html.reduce-fx) .card-national.card-special,
 :is(html.lite-fx, html.reduce-fx) .card-special::after,
 :is(html.lite-fx, html.reduce-fx) .holo-legendary::after,
 :is(html.lite-fx, html.reduce-fx) .holo-rainbow-legendary,

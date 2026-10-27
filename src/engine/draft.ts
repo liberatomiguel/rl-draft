@@ -25,10 +25,13 @@ import {
   draftableLineups,
   lineupById,
   lineups,
+  nationalSpecialByCardId,
+  nationalSpecialIdsByLineupId,
   playerById,
   playerCardById,
   specialsByPlayerId,
   subById,
+  worldNationalLineups,
 } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
@@ -84,7 +87,10 @@ export function rollSpecial(
   // Wings cards repi/ninja23509) are assigned ONLY via the rareSpawn-lineup path
   // (see drawNextOffer), never a normal roll — otherwise an easter-egg card owned by
   // a player WITH OTHER cards (repi) would leak onto those cards. Exclude them. (v1.4)
-  const rollable = pool?.filter((sp) => sp.rarity !== "creator" && sp.rarity !== "wings");
+  // National cards (v2.0) never sit in a person's pool, but stay excluded here too.
+  const rollable = pool?.filter(
+    (sp) => sp.rarity !== "creator" && sp.rarity !== "wings" && sp.rarity !== "national",
+  );
   // v1.3 rank gate: restrict the person's catalogue to the rarities the player's
   // rank has unlocked. Undefined = no gate (daily / pre-v1.3 callers). An empty
   // list (Unranked) leaves no eligible special, so none appears.
@@ -147,6 +153,11 @@ export interface CreateDraftOptions {
   constraint?: ChallengeConstraint;
   /** Event-exclusive specials live for this run (v2.0, see `eventSpecialsFor`). */
   eventSpecials?: DraftState["eventSpecials"];
+  /**
+   * National-team draws (v2.0) — classic/quick runs only; leave undefined for
+   * dailies/challenges. `discovered` = national lineups the player has collected.
+   */
+  nationalTeams?: DraftState["nationalTeams"];
 }
 
 /**
@@ -187,10 +198,22 @@ export function createDraft(
     scriptedLineups: options.scriptedLineups,
     constraint: options.constraint,
     eventSpecials: options.eventSpecials,
+    ...(options.nationalTeams ? { nationalTeams: options.nationalTeams } : {}),
     offer: null,
     roster: {},
     complete: false,
   };
+}
+
+/**
+ * National specials collected by SEEING an offer (v2.0): a national team shows
+ * one card per pick, so finding the lineup unlocks ALL its cards in the
+ * collection — otherwise a full national set would need the same rare draw three
+ * or four times. Empty for any other lineup. Pure; the store persists it.
+ */
+export function nationalUnlocks(offer: DraftOffer | null): string[] {
+  if (!offer || !lineupById.get(offer.lineupId)?.national) return [];
+  return nationalSpecialIdsByLineupId.get(offer.lineupId) ?? [];
 }
 
 /** Quick mode drafts players only. */
@@ -278,6 +301,9 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
       const eggSpecial = specialsByPlayerId.get(card.playerId)?.[0];
       if (eggSpecial) specialId = eggSpecial.id;
     }
+    // National team (v2.0): EVERY card is its national special — the rare draw
+    // of the lineup is the gate, like the Wings egg.
+    if (lineup.national) specialId = nationalSpecialByCardId.get(cardId)?.id ?? specialId;
     // A challenge constraint (OVR cap / nationality) can mark an otherwise-open
     // player card ineligible — shown dimmed, never pickable (v1.4).
     let availability = availabilityFor("player", card.playerId, draft);
@@ -290,16 +316,17 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   if (draft.mode !== "quick") {
     if (lineup.coachId) {
       const coach = coachById.get(lineup.coachId)!;
+      const rolled = rollSpecial(
+        coachSpecialsByPersonId.get(coach.personId),
+        mult,
+        rng,
+        draft.specialRarities,
+        draft.eventSpecials,
+      );
       cards.push({
         kind: "coach",
         refId: coach.id,
-        specialId: rollSpecial(
-          coachSpecialsByPersonId.get(coach.personId),
-          mult,
-          rng,
-          draft.specialRarities,
-          draft.eventSpecials,
-        ),
+        specialId: lineup.national ? (nationalSpecialByCardId.get(coach.id)?.id ?? rolled) : rolled,
         availability: availabilityFor("coach", coach.personId, draft),
       });
     } else {
@@ -309,18 +336,19 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
 
     if (lineup.subId) {
       const sub = subById.get(lineup.subId)!;
+      // v1.3.3: subs can roll a special too (specials belong to the PERSON, so a
+      // sub who was also a famous player — e.g. Turbopolsa — can show one).
+      const rolled = rollSpecial(
+        specialsByPlayerId.get(sub.personId),
+        mult,
+        rng,
+        draft.specialRarities,
+        draft.eventSpecials,
+      );
       cards.push({
         kind: "sub",
         refId: sub.id,
-        // v1.3.3: subs can roll a special too (specials belong to the PERSON, so a
-        // sub who was also a famous player — e.g. Turbopolsa — can show one).
-        specialId: rollSpecial(
-          specialsByPlayerId.get(sub.personId),
-          mult,
-          rng,
-          draft.specialRarities,
-          draft.eventSpecials,
-        ),
+        specialId: lineup.national ? (nationalSpecialByCardId.get(sub.id)?.id ?? rolled) : rolled,
         availability: availabilityFor("sub", sub.personId, draft),
       });
     } else {
@@ -411,7 +439,16 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   // here and force-injected below at a small chance. So the seeded daily/general
   // draws stay byte-identical (those pools carry no rareSpawn lineup).
   const eggs = fullPool.filter((l) => l.rareSpawn);
-  const base = fullPool.filter((l) => !l.rareSpawn);
+  // National teams (v2.0) never enter the normal draw either. Only a run that
+  // opted in (classic/quick: `nationalTeams`) can inject one — a region pool
+  // brings its own region's, a worldwide run the non-region-only ones — so
+  // dailies and challenges never consume an extra RNG roll for them.
+  const nationals = draft.nationalTeams
+    ? draft.poolLineupIds
+      ? fullPool.filter((l) => l.national)
+      : worldNationalLineups
+    : [];
+  const base = fullPool.filter((l) => !l.rareSpawn && !l.national);
   let pool = base.filter((l) => !draft.shownLineupIds.includes(l.id));
   let shown = draft.shownLineupIds;
 
@@ -437,6 +474,8 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   // reachable in the region-locked pool (worlds/daily carry no rareSpawn, so the
   // `&&` short-circuits and the seeded RNG sequence stays byte-identical).
   const availableEggs = eggs.filter((l) => !draft.shownLineupIds.includes(l.id));
+  const availableNationals = nationals.filter((l) => !draft.shownLineupIds.includes(l.id));
+  const discovered = draft.nationalTeams?.discovered ?? [];
   // Tier bias is classic/quick only — the daily's draw must stay byte-identical
   // (tierBiasOn=false there → the staff branch multiplies by 1 and the open branch
   // stays rng.pick, so the seeded RNG sequence is untouched).
@@ -452,6 +491,11 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   const randomLineup = (): Lineup => {
     if (availableEggs.length > 0 && rng.chance(DRAFT.easterEggChance)) {
       return rng.pick(availableEggs);
+    }
+    if (availableNationals.length > 0 && rng.chance(DRAFT.nationalTeamChance)) {
+      return rng.weightedPick(availableNationals, (l) =>
+        discovered.includes(l.id) ? 1 : DRAFT.nationalUndiscoveredWeight,
+      );
     }
     if (staffNeeds.length > 0) {
       return rng.weightedPick(

@@ -16,7 +16,8 @@ import {
   seasonRatingAfter,
   seasonRatingDelta,
 } from "@/config/balance";
-import { achievementById, specialCardById, specialCards } from "@/data";
+import { achievementById, specialCardById } from "@/data";
+import { COUNTS, isNationalSpecialId } from "@/data/counts";
 import { evaluateCounterAchievements } from "@/engine/achievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import {
@@ -360,7 +361,7 @@ function backfillSatisfiedCounters(
   alreadyEarned: ReadonlySet<string>,
   now: string,
 ): Record<string, string> {
-  const specialIds = new Set(Object.keys(p.unlockedSpecials ?? {}));
+  const specialIds = new Set(Object.keys(p.unlockedSpecials ?? {}).filter((id) => !isNationalSpecialId(id)));
   const ids = evaluateCounterAchievements(
     {
       runsCompleted: p.runsCompleted ?? 0,
@@ -369,7 +370,7 @@ function backfillSatisfiedCounters(
       gamesWon: p.gamesWon ?? 0,
       goalsScored: p.goalsScored ?? 0,
       specialsOwned: specialIds.size,
-      totalSpecials: specialCards.length,
+      totalSpecials: COUNTS.specialCards,
       specialIds,
       dailyStreak: 0,
       rankId: rankForXp(p.xp ?? 0).id,
@@ -501,9 +502,11 @@ export const useProfileStore = create<ProfileState>()(
               legacyTitles: wins.legacy,
               gamesWon,
               goalsScored,
-              specialsOwned: Object.keys(unlockedSpecials).length,
-              totalSpecials: specialCards.length,
-              specialIds: new Set(Object.keys(unlockedSpecials)),
+              // National-team cards (v2.0) have their own album: the special-card
+              // achievements (Collector / Curator / Completionist) skip them.
+              specialsOwned: Object.keys(unlockedSpecials).filter((id) => !isNationalSpecialId(id)).length,
+              totalSpecials: COUNTS.specialCards,
+              specialIds: new Set(Object.keys(unlockedSpecials).filter((id) => !isNationalSpecialId(id))),
               dailyStreak: selectDailyStreak({ ...state, dailyResults } as ProfileState),
               rankId: rankForXp(xpAfterRun).id,
             },

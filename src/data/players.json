@@ -9,37 +9,55 @@
     "id": "2die4",
     "nickname": "2Die4",
     "country": "ZA",
+    "birthday": "2005-06-03",
     "region": "SSA"
   },
   {
     "id": "2piece",
     "nickname": "2Piece",
     "country": "US",
+    "birthday": "2006-05-17",
     "region": "NA"
+  },
+  {
+    "id": "3tiqi",
+    "nickname": "3tiqi",
+    "country": "OM",
+    "region": "MENA"
   },
   {
     "id": "abdullah",
     "nickname": "Abdullah",
     "country": "SA",
+    "birthday": "2008-06-30",
+    "region": "MENA"
+  },
+  {
+    "id": "abdullah-om",
+    "nickname": "Abdullah",
+    "country": "OM",
+    "birthday": "2007-11-21",
     "region": "MENA"
   },
   {
     "id": "accro",
     "nickname": "accro",
     "country": "GB",
+    "birthday": "2005-02-22",
     "region": "EU"
   },
   {
     "id": "acronik",
     "nickname": "AcroniK.",
     "country": "PT",
+    "birthday": "2005-07-07",
     "region": "EU"
   },
   {
     "id": "adambaguette",
     "nickname": "adam_baguette",
     "country": "FR",
-    "region": "NA"
+    "region": "EU"
   },
   {
     "id": "aguesome",
@@ -51,55 +69,70 @@
     "id": "aguz",
     "nickname": "aguz",
     "country": "AR",
+    "birthday": "2004-12-10",
     "region": "SAM"
   },
   {
     "id": "ahmad",
     "nickname": "Ahmad",
     "country": "SA",
+    "birthday": "2002-11-18",
     "region": "MENA"
   },
   {
     "id": "ajg",
     "nickname": "ajg",
     "country": "AR",
+    "birthday": "2004-06-19",
     "region": "SAM"
   },
   {
     "id": "al0t",
     "nickname": "al0t",
     "country": "SE",
+    "birthday": "1997-03-31",
     "region": "EU"
   },
   {
     "id": "allushin",
     "nickname": "Allushin",
     "country": "CA",
+    "birthday": "1999-09-03",
     "region": "NA"
   },
   {
     "id": "alpe",
     "nickname": "alpe",
     "country": "BR",
+    "birthday": "2003-01-11",
     "region": "SAM"
   },
   {
     "id": "alpha54",
     "nickname": "Alpha54",
     "country": "FR",
+    "birthday": "2003-06-27",
     "region": "EU"
   },
   {
     "id": "amphis",
     "nickname": "Amphis",
     "country": "AU",
+    "birthday": "2003-07-21",
     "region": "OCE"
   },
   {
     "id": "ams",
     "nickname": "ams.",
     "country": "SA",
+    "birthday": "2001-01-06",
     "region": "MENA"
+  },
+  {
+    "id": "andeque",
+    "nickname": "Andeque",
+    "country": "TR",
+    "region": "EU"
   },
   {
     "id": "androzz",
@@ -111,84 +144,149 @@
     "id": "andy",
     "nickname": "Andy",
     "country": "US",
+    "birthday": "2004-04-01",
     "region": "NA"
+  },
+  {
+    "id": "andythemandy",
+    "nickname": "ANDYTHEMANDY",
+    "country": "GB",
+    "region": "EU"
   },
   {
     "id": "apparentlyjack",
     "nickname": "ApparentlyJack",
     "country": "GB",
+    "birthday": "2003-09-23",
     "region": "EU"
+  },
+  {
+    "id": "aqua",
+    "nickname": "Aqua",
+    "country": "US",
+    "birthday": "2006-12-21",
+    "region": "NA"
+  },
+  {
+    "id": "arceon",
+    "nickname": "arceon",
+    "country": "ZA",
+    "region": "SSA"
   },
   {
     "id": "archie",
     "nickname": "archie",
     "country": "GB",
+    "birthday": "2005-03-11",
     "region": "EU"
   },
   {
     "id": "arise",
     "nickname": "arise",
+    "country": "DE",
+    "region": "EU"
+  },
+  {
+    "id": "arju",
+    "nickname": "Arju",
+    "country": "IT",
+    "birthday": "2002-11-04",
+    "region": "EU"
+  },
+  {
+    "id": "arleyobi",
+    "nickname": "Arleyobi",
+    "country": "ES",
+    "region": "EU"
+  },
+  {
+    "id": "armonik",
+    "nickname": "armonik",
+    "country": "ES",
     "region": "EU"
   },
   {
     "id": "arsenal",
     "nickname": "Arsenal",
     "country": "US",
+    "birthday": "2002-03-16",
     "region": "NA"
   },
   {
     "id": "asnrubiix",
     "nickname": "ASN_RuBiiX",
     "country": "ES",
+    "birthday": "2003-01-09",
     "region": "SSA"
   },
   {
     "id": "atomic",
     "nickname": "Atomic",
     "country": "US",
+    "birthday": "2003-08-12",
     "region": "NA"
   },
   {
     "id": "atomik",
     "nickname": "AtomiK",
     "country": "ES",
+    "birthday": "2004-10-01",
     "region": "EU"
   },
   {
     "id": "atow",
     "nickname": "Atow.",
     "country": "BE",
+    "birthday": "2007-02-22",
     "region": "EU"
+  },
+  {
+    "id": "audrax",
+    "nickname": "Audrax",
+    "country": "MA",
+    "region": "MENA"
   },
   {
     "id": "axb",
     "nickname": "AxB",
     "country": "CA",
+    "birthday": "1995-09-19",
     "region": "NA"
   },
   {
     "id": "ayjacks",
     "nickname": "ayjacks",
     "country": "US",
+    "birthday": "2001-05-13",
     "region": "NA"
   },
   {
     "id": "ayyjayy",
     "nickname": "AYYJAYY",
     "country": "US",
+    "birthday": "2002-12-10",
     "region": "NA"
   },
   {
     "id": "aztral",
     "nickname": "AztraL",
     "country": "BE",
+    "birthday": "2002-12-26",
     "region": "EU"
   },
   {
     "id": "aztromick",
     "nickname": "Aztromick",
     "country": "BR",
+    "birthday": "2004-05-15",
     "region": "SAM"
+  },
+  {
+    "id": "b2sel",
+    "nickname": "B2seL",
+    "country": "SA",
+    "birthday": "2003-11-28",
+    "region": "MENA"
   },
   {
     "id": "baait",
@@ -197,9 +295,17 @@
     "region": "SAM"
   },
   {
+    "id": "ballerrees",
+    "nickname": "ballerrees",
+    "country": "SG",
+    "birthday": "2002-10-11",
+    "region": "APAC"
+  },
+  {
     "id": "bananahead",
     "nickname": "bananahead",
     "country": "AU",
+    "birthday": "2006-01-23",
     "region": "OCE"
   },
   {
@@ -221,16 +327,51 @@
     "region": "EU"
   },
   {
+    "id": "beastbound",
+    "nickname": "BeastBound",
+    "country": "NL",
+    "region": "MENA"
+  },
+  {
     "id": "beastmode",
     "nickname": "BeastMode",
     "country": "US",
+    "birthday": "2005-08-03",
     "region": "NA"
   },
   {
     "id": "bemmz",
     "nickname": "Bemmz",
     "country": "BR",
+    "birthday": "2006-06-05",
     "region": "SAM"
+  },
+  {
+    "id": "beyond",
+    "nickname": "beyond",
+    "country": "PT",
+    "birthday": "2007-07-09",
+    "region": "EU"
+  },
+  {
+    "id": "bibbaba",
+    "nickname": "bibbaba",
+    "country": "HU",
+    "birthday": "2010-09-22",
+    "region": "EU"
+  },
+  {
+    "id": "billy",
+    "nickname": "billy",
+    "country": "GB",
+    "birthday": "2000-08-31",
+    "region": "EU"
+  },
+  {
+    "id": "black",
+    "nickname": "BLACK",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "bliss",
@@ -239,9 +380,17 @@
     "region": "SAM"
   },
   {
+    "id": "blue",
+    "nickname": "Blue",
+    "country": "MY",
+    "birthday": "2002-02-10",
+    "region": "APAC"
+  },
+  {
     "id": "bluey",
     "nickname": "Bluey",
     "country": "GB",
+    "birthday": "2001-12-11",
     "region": "EU"
   },
   {
@@ -263,21 +412,50 @@
     "region": "MENA"
   },
   {
+    "id": "bora",
+    "nickname": "bora",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "braan",
+    "nickname": "Braan.",
+    "country": "ES",
+    "region": "EU"
+  },
+  {
     "id": "brad",
     "nickname": "brad",
     "country": "BR",
+    "birthday": "2004-11-01",
     "region": "SAM"
+  },
+  {
+    "id": "breezi",
+    "nickname": "Breezi",
+    "country": "GB",
+    "birthday": "2002-06-21",
+    "region": "EU"
+  },
+  {
+    "id": "bruhkay",
+    "nickname": "bruhkay",
+    "country": "NO",
+    "birthday": "2005-09-25",
+    "region": "EU"
   },
   {
     "id": "brunovisquii",
     "nickname": "BRUNOVISQUII",
     "country": "BR",
+    "birthday": "1999-01-02",
     "region": "SAM"
   },
   {
     "id": "burn",
     "nickname": "Burn",
     "country": "JP",
+    "birthday": "2003-10-07",
     "region": "APAC"
   },
   {
@@ -302,43 +480,76 @@
     "id": "caard",
     "nickname": "caard",
     "country": "BR",
+    "birthday": "2003-08-01",
     "region": "SAM"
   },
   {
     "id": "caiotg1",
     "nickname": "caiotg1",
     "country": "BR",
+    "birthday": "2001-05-20",
     "region": "SAM"
+  },
+  {
+    "id": "caleb",
+    "nickname": "caleb.",
+    "country": "NZ",
+    "birthday": "2006-03-14",
+    "region": "OCE"
+  },
+  {
+    "id": "calix",
+    "nickname": "Calix",
+    "country": "DE",
+    "birthday": "2002-02-20",
+    "region": "EU"
   },
   {
     "id": "catalysm",
     "nickname": "Catalysm",
     "country": "DE",
+    "birthday": "2002-02-15",
     "region": "EU"
+  },
+  {
+    "id": "cavemanben",
+    "nickname": "Cavemanben",
+    "country": "AU",
+    "birthday": "2000-05-05",
+    "region": "OCE"
   },
   {
     "id": "cha0s",
     "nickname": "Cha0s",
     "country": "BE",
-    "region": "SAM"
+    "region": "EU"
   },
   {
     "id": "chausette45",
     "nickname": "Chausette45",
     "country": "FR",
+    "birthday": "2001-03-16",
     "region": "EU"
   },
   {
     "id": "cheese",
     "nickname": "CHEESE.",
     "country": "US",
+    "birthday": "2005-06-15",
     "region": "NA"
   },
   {
     "id": "chicago",
     "nickname": "Chicago",
     "country": "US",
+    "birthday": "2001-06-12",
     "region": "NA"
+  },
+  {
+    "id": "chikage",
+    "nickname": "Chikage",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "chr1s",
@@ -350,24 +561,28 @@
     "id": "chrome",
     "nickname": "Chrome",
     "country": "US",
+    "birthday": "1993-03-29",
     "region": "NA"
   },
   {
     "id": "chronic",
     "nickname": "Chronic",
     "country": "US",
+    "birthday": "2005-09-05",
     "region": "NA"
   },
   {
     "id": "cjcj",
     "nickname": "CJCJ",
     "country": "AU",
+    "birthday": "1998-08-06",
     "region": "OCE"
   },
   {
     "id": "comm",
     "nickname": "Comm",
     "country": "US",
+    "birthday": "2003-10-01",
     "region": "NA"
   },
   {
@@ -375,6 +590,13 @@
     "nickname": "Commutator",
     "country": "SG",
     "region": "APAC"
+  },
+  {
+    "id": "compact",
+    "nickname": "Compact",
+    "country": "BE",
+    "birthday": "2004-10-20",
+    "region": "EU"
   },
   {
     "id": "continuum",
@@ -389,8 +611,21 @@
     "region": "NA"
   },
   {
+    "id": "cpzebra",
+    "nickname": "cpZebra",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "creamz",
+    "nickname": "creamz",
+    "country": "GB",
+    "region": "NA"
+  },
+  {
     "id": "crespor",
     "nickname": "crespor",
+    "country": "SA",
     "region": "MENA"
   },
   {
@@ -403,36 +638,55 @@
     "id": "crr",
     "nickname": "crr",
     "country": "ES",
-    "region": "NA"
+    "birthday": "2005-09-15",
+    "region": "EU"
+  },
+  {
+    "id": "crs",
+    "nickname": "Crs",
+    "country": "UY",
+    "region": "SAM"
   },
   {
     "id": "d7oom24",
     "nickname": "d7oom-24",
     "country": "SA",
+    "birthday": "2003-08-03",
     "region": "MENA"
   },
   {
     "id": "daisy",
     "nickname": "Daisy",
     "country": "ZA",
+    "birthday": "2004-11-01",
     "region": "SSA"
   },
   {
     "id": "daniel",
     "nickname": "Daniel",
     "country": "US",
+    "birthday": "2006-12-05",
     "region": "NA"
+  },
+  {
+    "id": "dansku",
+    "nickname": "Dansku",
+    "country": "FI",
+    "birthday": "2003-11-19",
+    "region": "APAC"
   },
   {
     "id": "dappluto",
     "nickname": "Dappluto",
     "country": "BR",
+    "birthday": "2005-10-07",
     "region": "SAM"
   },
   {
     "id": "dappur",
     "nickname": "Dappur",
     "country": "US",
+    "birthday": "1999-02-22",
     "region": "NA"
   },
   {
@@ -445,6 +699,7 @@
     "id": "darth",
     "nickname": "Darth",
     "country": "ZA",
+    "birthday": "2002-12-27",
     "region": "SSA"
   },
   {
@@ -454,16 +709,31 @@
     "region": "SAM"
   },
   {
+    "id": "datalied",
+    "nickname": "Datalied",
+    "country": "GB",
+    "region": "APAC"
+  },
+  {
     "id": "davinsano",
     "nickname": "davinsano",
     "country": "BR",
+    "birthday": "2002-01-21",
     "region": "SAM"
   },
   {
     "id": "davitrox",
     "nickname": "Davitrox",
     "country": "CL",
+    "birthday": "2004-09-21",
     "region": "SAM"
+  },
+  {
+    "id": "davoof",
+    "nickname": "davoof",
+    "country": "IT",
+    "birthday": "2005-07-27",
+    "region": "EU"
   },
   {
     "id": "deathxplosion",
@@ -481,17 +751,26 @@
     "id": "decka",
     "nickname": "Decka",
     "country": "AU",
+    "birthday": "1999-09-11",
     "region": "OCE"
   },
   {
     "id": "deevo",
     "nickname": "Deevo",
     "country": "GB",
+    "birthday": "2000-06-12",
     "region": "EU"
   },
   {
     "id": "diaz",
     "nickname": "diaz",
+    "country": "BR",
+    "birthday": "2008-07-15",
+    "region": "SAM"
+  },
+  {
+    "id": "didi",
+    "nickname": "Didi",
     "country": "US",
     "region": "NA"
   },
@@ -505,6 +784,7 @@
     "id": "dmentza",
     "nickname": "DmentZa",
     "country": "ES",
+    "birthday": "2001-10-19",
     "region": "EU"
   },
   {
@@ -517,36 +797,56 @@
     "id": "dorito",
     "nickname": "dorito",
     "country": "ES",
+    "birthday": "2004-02-19",
     "region": "EU"
   },
   {
     "id": "dralii",
     "nickname": "dralii",
     "country": "MA",
+    "birthday": "2007-10-06",
     "region": "EU"
   },
   {
     "id": "dreaz",
     "nickname": "dreaz",
     "country": "US",
+    "birthday": "2006-03-09",
     "region": "NA"
   },
   {
     "id": "drippay",
     "nickname": "Drippay",
     "country": "AU",
+    "birthday": "2000-03-09",
     "region": "OCE"
+  },
+  {
+    "id": "drknown",
+    "nickname": "DrKnown",
+    "country": "SA",
+    "birthday": "2009-11-17",
+    "region": "MENA"
+  },
+  {
+    "id": "drku",
+    "nickname": "drku.",
+    "country": "GB",
+    "birthday": "2006-11-03",
+    "region": "APAC"
   },
   {
     "id": "droppz",
     "nickname": "droppz",
     "country": "BR",
+    "birthday": "2003-10-20",
     "region": "SAM"
   },
   {
     "id": "drufinho",
     "nickname": "drufinho",
     "country": "BR",
+    "birthday": "2005-06-28",
     "region": "SAM"
   },
   {
@@ -556,10 +856,23 @@
     "region": "NA"
   },
   {
+    "id": "dudsmelow",
+    "nickname": "DudsMelow",
+    "country": "BR",
+    "birthday": "2003-06-09",
+    "region": "SAM"
+  },
+  {
     "id": "dudubrhue",
     "nickname": "DuduBRHue",
     "country": "BR",
     "region": "SAM"
+  },
+  {
+    "id": "duggy",
+    "nickname": "duggy",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "duo",
@@ -568,21 +881,37 @@
     "region": "SAM"
   },
   {
+    "id": "dx7",
+    "nickname": "dx7",
+    "country": "NZ",
+    "region": "OCE"
+  },
+  {
     "id": "eclipse",
     "nickname": "Eclipse",
     "country": "GB",
+    "birthday": "1999-05-26",
     "region": "EU"
   },
   {
     "id": "eekso",
     "nickname": "eekso",
     "country": "GB",
+    "birthday": "2002-06-29",
     "region": "EU"
   },
   {
     "id": "ejby",
     "nickname": "ejby",
     "country": "DK",
+    "birthday": "2003-09-28",
+    "region": "EU"
+  },
+  {
+    "id": "ekon",
+    "nickname": "Ekon",
+    "country": "FR",
+    "birthday": "2000-04-27",
     "region": "EU"
   },
   {
@@ -592,10 +921,29 @@
     "region": "EU"
   },
   {
+    "id": "elliott",
+    "nickname": "elliott",
+    "country": "AU",
+    "birthday": "2005-07-17",
+    "region": "OCE"
+  },
+  {
     "id": "enigma",
     "nickname": "ENiGMA",
     "country": "AU",
     "region": "OCE"
+  },
+  {
+    "id": "epicjonny",
+    "nickname": "EPICJonny",
+    "country": "CA",
+    "region": "NA"
+  },
+  {
+    "id": "errorless",
+    "nickname": "Errorless",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "espeon",
@@ -607,42 +955,69 @@
     "id": "eversax",
     "nickname": "Eversax",
     "country": "BE",
+    "birthday": "1996-06-24",
     "region": "EU"
   },
   {
     "id": "evoh",
     "nickname": "Evoh",
     "country": "US",
+    "birthday": "2007-05-12",
     "region": "NA"
+  },
+  {
+    "id": "evohpaniniwine",
+    "nickname": "Evohpaniniwine",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "exotiik",
     "nickname": "ExoTiiK",
     "country": "FR",
+    "birthday": "2002-10-31",
     "region": "EU"
   },
   {
     "id": "express",
     "nickname": "Express",
     "country": "AU",
+    "birthday": "1998-08-22",
     "region": "OCE"
   },
   {
     "id": "extra",
     "nickname": "Extra",
     "country": "FR",
+    "birthday": "2001-11-12",
     "region": "EU"
   },
   {
     "id": "eyeignite",
     "nickname": "EyeIgnite",
     "country": "GB",
+    "birthday": "1996-04-23",
     "region": "EU"
+  },
+  {
+    "id": "fades",
+    "nickname": "Fades",
+    "country": "TR",
+    "birthday": "2007-03-07",
+    "region": "OCE"
+  },
+  {
+    "id": "fahad",
+    "nickname": "Fahad",
+    "country": "SA",
+    "birthday": "2005-06-04",
+    "region": "MENA"
   },
   {
     "id": "fairypeak",
     "nickname": "Fairy Peak!",
     "country": "FR",
+    "birthday": "1998-05-26",
     "region": "EU"
   },
   {
@@ -655,6 +1030,7 @@
     "id": "fasi",
     "nickname": "fAsi",
     "country": "BR",
+    "birthday": "2000-11-24",
     "region": "SAM"
   },
   {
@@ -667,59 +1043,88 @@
     "id": "ferra",
     "nickname": "Ferra",
     "country": "FR",
+    "birthday": "1996-10-31",
     "region": "EU"
   },
   {
     "id": "fever",
     "nickname": "Fever",
     "country": "AU",
+    "birthday": "2004-12-06",
     "region": "OCE"
   },
   {
     "id": "fiberr",
     "nickname": "Fibérr",
     "country": "AU",
+    "birthday": "2005-03-18",
     "region": "OCE"
+  },
+  {
+    "id": "finish",
+    "nickname": "Finish",
+    "country": "FR",
+    "region": "EU"
   },
   {
     "id": "finn",
     "nickname": "finn",
     "country": "AU",
+    "birthday": "2003-06-02",
     "region": "OCE"
   },
   {
     "id": "fire",
     "nickname": "fire",
     "country": "US",
+    "birthday": "1999-06-28",
     "region": "NA"
   },
   {
     "id": "fireburner",
     "nickname": "Fireburner",
     "country": "US",
+    "birthday": "1997-10-18",
     "region": "NA"
   },
   {
     "id": "firefoxd",
     "nickname": "FirefoxD",
     "country": "BR",
+    "birthday": "2001-11-15",
     "region": "SAM"
   },
   {
     "id": "firewall154",
     "nickname": "Firewall154",
     "country": "BR",
+    "birthday": "2001-02-16",
     "region": "SAM"
   },
   {
     "id": "fireworks",
     "nickname": "fireworks",
+    "country": "US",
     "region": "NA"
   },
   {
     "id": "firstkiller",
     "nickname": "Firstkiller",
     "country": "US",
+    "birthday": "2004-12-19",
+    "region": "NA"
+  },
+  {
+    "id": "fishhr",
+    "nickname": "fishhr",
+    "country": "US",
+    "region": "SSA"
+  },
+  {
+    "id": "fiv3up",
+    "nickname": "Fiv3Up",
+    "country": "US",
+    "birthday": "2006-07-11",
     "region": "NA"
   },
   {
@@ -732,12 +1137,14 @@
     "id": "flakes",
     "nickname": "Flakes",
     "country": "NL",
+    "birthday": "2000-02-12",
     "region": "EU"
   },
   {
     "id": "flame",
     "nickname": "Flame",
     "country": "GB",
+    "birthday": "1999-09-27",
     "region": "EU"
   },
   {
@@ -750,12 +1157,34 @@
     "id": "flasheeyy",
     "nickname": "Flasheeyy",
     "country": "BR",
+    "birthday": "2003-12-27",
     "region": "SAM"
+  },
+  {
+    "id": "flexxy17",
+    "nickname": "Flexxy17",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "flitz",
+    "nickname": "Flitz",
+    "country": "US",
+    "birthday": "2003-12-17",
+    "region": "NA"
+  },
+  {
+    "id": "forece",
+    "nickname": "Forece",
+    "country": "FR",
+    "birthday": "2002-12-14",
+    "region": "EU"
   },
   {
     "id": "freakii",
     "nickname": "freakii",
     "country": "DE",
+    "birthday": "1996-08-02",
     "region": "EU"
   },
   {
@@ -771,15 +1200,30 @@
     "region": "EU"
   },
   {
+    "id": "frost",
+    "nickname": "frost",
+    "country": "US",
+    "region": "OCE"
+  },
+  {
     "id": "fruity",
     "nickname": "fruity",
     "country": "DK",
+    "birthday": "1996-02-22",
     "region": "EU"
+  },
+  {
+    "id": "furlashh",
+    "nickname": "furlashh",
+    "country": "JP",
+    "birthday": "2005-05-13",
+    "region": "APAC"
   },
   {
     "id": "garrettg",
     "nickname": "GarrettG",
     "country": "US",
+    "birthday": "2001-02-06",
     "region": "NA"
   },
   {
@@ -792,6 +1236,7 @@
     "id": "gawfs",
     "nickname": "Gawfs",
     "country": "GB",
+    "birthday": "2005-12-15",
     "region": "EU"
   },
   {
@@ -803,7 +1248,16 @@
   {
     "id": "ghaazi0",
     "nickname": "Ghaazi0",
+    "country": "SA",
+    "birthday": "2005-10-14",
     "region": "MENA"
+  },
+  {
+    "id": "ghost",
+    "nickname": "Ghost",
+    "country": "AU",
+    "birthday": "1998-08-25",
+    "region": "OCE"
   },
   {
     "id": "gian",
@@ -812,15 +1266,30 @@
     "region": "SAM"
   },
   {
+    "id": "gil2",
+    "nickname": "Gil.2",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
     "id": "gimmick",
     "nickname": "Gimmick",
     "country": "US",
+    "birthday": "2000-06-30",
     "region": "NA"
+  },
+  {
+    "id": "giuk",
+    "nickname": "GiuK",
+    "country": "FR",
+    "birthday": "2006-03-22",
+    "region": "EU"
   },
   {
     "id": "gnagflow06",
     "nickname": "Gnagflow06",
     "country": "DE",
+    "birthday": "1999-10-26",
     "region": "EU"
   },
   {
@@ -830,15 +1299,30 @@
     "region": "SAM"
   },
   {
+    "id": "godsmilla",
+    "nickname": "Godsmilla",
+    "country": "DE",
+    "birthday": "2000-02-16",
+    "region": "EU"
+  },
+  {
     "id": "gonk",
     "nickname": "Gonk",
     "country": "CL",
+    "birthday": "2000-07-26",
     "region": "SAM"
+  },
+  {
+    "id": "grayson",
+    "nickname": "grayson",
+    "country": "US",
+    "region": "APAC"
   },
   {
     "id": "greazy",
     "nickname": "Greazy",
-    "country": "NL",
+    "country": "NO",
+    "birthday": "1996-04-05",
     "region": "EU"
   },
   {
@@ -854,6 +1338,26 @@
     "region": "SAM"
   },
   {
+    "id": "growlii",
+    "nickname": "Growlii",
+    "country": "GB",
+    "birthday": "2004-12-29",
+    "region": "EU"
+  },
+  {
+    "id": "grumpz",
+    "nickname": "grumpz",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "gunz",
+    "nickname": "gunz",
+    "country": "ZA",
+    "birthday": "2006-11-06",
+    "region": "SSA"
+  },
+  {
     "id": "gus",
     "nickname": "gus",
     "country": "AU",
@@ -863,37 +1367,70 @@
     "id": "gyro",
     "nickname": "Gyro.",
     "country": "US",
+    "birthday": "2002-10-13",
     "region": "NA"
   },
   {
     "id": "haberkamper",
     "nickname": "Haberkamper",
     "country": "BR",
+    "birthday": "2001-01-27",
     "region": "SAM"
   },
   {
     "id": "happymeal",
     "nickname": "Happymeal",
     "country": "ZA",
+    "birthday": "1999-10-13",
     "region": "SSA"
+  },
+  {
+    "id": "hawk",
+    "nickname": "Hawk",
+    "country": "AU",
+    "birthday": "2005-11-25",
+    "region": "OCE"
+  },
+  {
+    "id": "hawpsu",
+    "nickname": "hawpsu",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "hibbs",
+    "nickname": "hibbs",
+    "country": "GB",
+    "birthday": "2003-07-01",
+    "region": "EU"
   },
   {
     "id": "hisoka",
     "nickname": "Hisoka",
     "country": "SA",
+    "birthday": "2005-09-17",
     "region": "MENA"
   },
   {
     "id": "hntr",
     "nickname": "hntr",
     "country": "AU",
+    "birthday": "2007-08-14",
     "region": "OCE"
   },
   {
     "id": "hockser",
     "nickname": "hockser",
     "country": "US",
+    "birthday": "2002-01-23",
     "region": "NA"
+  },
+  {
+    "id": "homie",
+    "nickname": "Homie",
+    "country": "AU",
+    "birthday": "2002-08-02",
+    "region": "APAC"
   },
   {
     "id": "hugo",
@@ -908,14 +1445,29 @@
     "region": "NA"
   },
   {
+    "id": "hyderr",
+    "nickname": "Hyderr",
+    "country": "IT",
+    "birthday": "2002-10-31",
+    "region": "EU"
+  },
+  {
     "id": "ianpinheiro",
     "nickname": "ianpinheiro",
     "country": "BR",
+    "birthday": "2002-06-13",
     "region": "SAM"
+  },
+  {
+    "id": "idris",
+    "nickname": "Idris",
+    "country": "AF",
+    "region": "MENA"
   },
   {
     "id": "impulse",
     "nickname": "Impulse",
+    "country": "BR",
     "region": "SAM"
   },
   {
@@ -928,18 +1480,28 @@
     "id": "itachi",
     "nickname": "Itachi",
     "country": "MA",
+    "birthday": "2003-08-13",
     "region": "EU"
   },
   {
     "id": "ivn",
     "nickname": "ivn",
-    "country": "DE",
+    "country": "AT",
+    "birthday": "2003-06-21",
     "region": "EU"
+  },
+  {
+    "id": "ix",
+    "nickname": "ix",
+    "country": "SA",
+    "birthday": "2006-09-10",
+    "region": "MENA"
   },
   {
     "id": "jacob",
     "nickname": "Jacob",
     "country": "US",
+    "birthday": "1997-07-01",
     "region": "NA"
   },
   {
@@ -952,6 +1514,7 @@
     "id": "jake",
     "nickname": "Jake",
     "country": "AU",
+    "birthday": "1997-11-24",
     "region": "OCE"
   },
   {
@@ -961,9 +1524,16 @@
     "region": "SAM"
   },
   {
+    "id": "jeff",
+    "nickname": "Jeff",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
     "id": "jessie",
     "nickname": "Jessie",
     "country": "NL",
+    "birthday": "1996-11-04",
     "region": "EU"
   },
   {
@@ -982,60 +1552,103 @@
     "id": "jknaps",
     "nickname": "JKnaps",
     "country": "CA",
+    "birthday": "1999-09-30",
+    "region": "NA"
+  },
+  {
+    "id": "jnr",
+    "nickname": "Jnr",
+    "country": "GB",
+    "birthday": "1999-04-03",
+    "region": "EU"
+  },
+  {
+    "id": "john",
+    "nickname": "john",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
+    "id": "jordan",
+    "nickname": "jordan",
+    "country": "CA",
+    "birthday": "2002-07-29",
     "region": "NA"
   },
   {
     "id": "joreuz",
     "nickname": "Joreuz",
     "country": "NL",
+    "birthday": "2005-03-08",
     "region": "EU"
   },
   {
     "id": "joyo",
     "nickname": "Joyo",
     "country": "GB",
+    "birthday": "2005-12-25",
     "region": "EU"
   },
   {
     "id": "jstn",
     "nickname": "jstn.",
     "country": "US",
+    "birthday": "2002-08-05",
     "region": "NA"
   },
   {
     "id": "juan",
     "nickname": "Juan",
     "country": "BR",
+    "birthday": "2001-11-23",
     "region": "SAM"
   },
   {
     "id": "juicy",
     "nickname": "juicy",
-    "country": "NL",
+    "country": "FR",
+    "birthday": "2005-03-05",
     "region": "EU"
   },
   {
     "id": "julz",
     "nickname": "Julz",
     "country": "AU",
+    "birthday": "2001-02-03",
     "region": "OCE"
+  },
+  {
+    "id": "jup",
+    "nickname": "Jup.",
+    "country": "NO",
+    "birthday": "2006-02-09",
+    "region": "EU"
   },
   {
     "id": "jwismont",
     "nickname": "JWismont",
     "country": "US",
+    "birthday": "1998-12-22",
     "region": "NA"
+  },
+  {
+    "id": "jzmmm",
+    "nickname": "Jzmmm",
+    "country": "TR",
+    "region": "EU"
   },
   {
     "id": "jzr",
     "nickname": "JZR",
     "country": "FI",
+    "birthday": "1996-08-18",
     "region": "EU"
   },
   {
     "id": "kael",
     "nickname": "Kael",
     "country": "ES",
+    "birthday": "1995-06-12",
     "region": "EU"
   },
   {
@@ -1048,12 +1661,14 @@
     "id": "kaka",
     "nickname": "kaka",
     "country": "AU",
+    "birthday": "2003-11-19",
     "region": "OCE"
   },
   {
     "id": "kamii",
     "nickname": "Kamii",
     "country": "NZ",
+    "birthday": "2000-09-21",
     "region": "OCE"
   },
   {
@@ -1063,34 +1678,71 @@
     "region": "SAM"
   },
   {
+    "id": "karion",
+    "nickname": "karion",
+    "country": "CA",
+    "region": "APAC"
+  },
+  {
     "id": "kash",
     "nickname": "Kash",
     "country": "GB",
+    "birthday": "2001-10-30",
+    "region": "EU"
+  },
+  {
+    "id": "kasper",
+    "nickname": "Kasper",
+    "country": "NO",
     "region": "EU"
   },
   {
     "id": "kassio",
     "nickname": "Kassio",
     "country": "FR",
+    "birthday": "2001-04-24",
     "region": "EU"
   },
   {
     "id": "kaydop",
     "nickname": "Kaydop",
     "country": "FR",
+    "birthday": "1998-05-22",
     "region": "EU"
+  },
+  {
+    "id": "kekkles",
+    "nickname": "Kekkles",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "kennysalmon",
     "nickname": "KennySalmon",
     "country": "NZ",
+    "birthday": "2002-02-05",
     "region": "OCE"
+  },
+  {
+    "id": "kerian",
+    "nickname": "Kérian",
+    "country": "FR",
+    "birthday": "2003-08-21",
+    "region": "EU"
   },
   {
     "id": "kevin",
     "nickname": "Kevin",
     "country": "TH",
+    "birthday": "2004-07-25",
     "region": "APAC"
+  },
+  {
+    "id": "kevinacho",
+    "nickname": "Kevinacho",
+    "country": "AR",
+    "birthday": "2009-09-10",
+    "region": "SAM"
   },
   {
     "id": "kia",
@@ -1102,6 +1754,7 @@
     "id": "kiileerrz",
     "nickname": "Kiileerrz",
     "country": "SA",
+    "birthday": "2007-06-10",
     "region": "MENA"
   },
   {
@@ -1109,6 +1762,13 @@
     "nickname": "Killerno7",
     "country": "IT",
     "region": "EU"
+  },
+  {
+    "id": "kinseh",
+    "nickname": "kinseh",
+    "country": "US",
+    "birthday": "2003-08-05",
+    "region": "NA"
   },
   {
     "id": "kixou",
@@ -1126,18 +1786,21 @@
     "id": "klaus",
     "nickname": "klaus",
     "country": "BR",
+    "birthday": "2004-12-16",
     "region": "SAM"
   },
   {
     "id": "kns",
     "nickname": "KnS",
     "country": "BR",
+    "birthday": "2004-01-02",
     "region": "SAM"
   },
   {
     "id": "kofyr",
     "nickname": "kofyr",
     "country": "US",
+    "birthday": "2007-05-02",
     "region": "NA"
   },
   {
@@ -1153,21 +1816,30 @@
     "region": "SAM"
   },
   {
+    "id": "kroado",
+    "nickname": "kroado",
+    "country": "JP",
+    "region": "APAC"
+  },
+  {
     "id": "kronovi",
     "nickname": "Kronovi",
     "country": "US",
+    "birthday": "1997-08-30",
     "region": "NA"
   },
   {
     "id": "kuxir97",
     "nickname": "kuxir97",
     "country": "IT",
+    "birthday": "1997-02-19",
     "region": "EU"
   },
   {
     "id": "kv1",
     "nickname": "kv1",
     "country": "BR",
+    "birthday": "2006-02-20",
     "region": "SAM"
   },
   {
@@ -1198,13 +1870,27 @@
     "id": "lance",
     "nickname": "Lance",
     "country": "CL",
+    "birthday": "1999-10-13",
     "region": "SAM"
+  },
+  {
+    "id": "laru",
+    "nickname": "Laru",
+    "country": "IT",
+    "region": "EU"
   },
   {
     "id": "lawler",
     "nickname": "Lawler",
     "country": "US",
     "region": "SSA"
+  },
+  {
+    "id": "laxin",
+    "nickname": "Laxin",
+    "country": "NZ",
+    "birthday": "2004-04-03",
+    "region": "OCE"
   },
   {
     "id": "lbp",
@@ -1216,36 +1902,54 @@
     "id": "lct",
     "nickname": "LCT",
     "country": "ID",
+    "birthday": "2002-08-18",
     "region": "APAC"
+  },
+  {
+    "id": "ldc",
+    "nickname": "LDC-",
+    "country": "BE",
+    "region": "EU"
   },
   {
     "id": "leduck",
     "nickname": "Le Duck",
     "country": "AU",
+    "birthday": "2001-04-20",
     "region": "OCE"
   },
   {
     "id": "leodkn",
     "nickname": "LeoDkn",
     "country": "BR",
+    "birthday": "2002-10-17",
     "region": "SAM"
   },
   {
     "id": "leoro",
     "nickname": "Leoro",
     "country": "ES",
+    "birthday": "2002-06-26",
     "region": "SSA"
+  },
+  {
+    "id": "lethalforlife",
+    "nickname": "Lethalforlife",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "lethamyr",
     "nickname": "Lethamyr",
     "country": "CA",
+    "birthday": "1995-03-31",
     "region": "NA"
   },
   {
     "id": "lexim",
     "nickname": "Lexim",
     "country": "AR",
+    "birthday": "1999-01-14",
     "region": "SAM"
   },
   {
@@ -1255,15 +1959,44 @@
     "region": "SAM"
   },
   {
+    "id": "life",
+    "nickname": "life",
+    "country": "US",
+    "birthday": "2009-03-05",
+    "region": "NA"
+  },
+  {
+    "id": "lionblaze",
+    "nickname": "LionBlaze",
+    "country": "US",
+    "birthday": "2003-12-30",
+    "region": "NA"
+  },
+  {
     "id": "lj",
     "nickname": "Lj.",
     "country": "US",
+    "birthday": "2005-04-23",
     "region": "NA"
+  },
+  {
+    "id": "loofoo",
+    "nickname": "LooFoo",
+    "country": "US",
+    "region": "APAC"
+  },
+  {
+    "id": "lorely",
+    "nickname": "Lorely",
+    "country": "TR",
+    "birthday": "2003-05-21",
+    "region": "EU"
   },
   {
     "id": "lostt",
     "nickname": "Lostt",
     "country": "BR",
+    "birthday": "2005-03-29",
     "region": "SAM"
   },
   {
@@ -1273,27 +2006,61 @@
     "region": "NA"
   },
   {
+    "id": "ltxsam",
+    "nickname": "LTXSam",
+    "country": "IE",
+    "region": "MENA"
+  },
+  {
     "id": "luc",
     "nickname": "Luc",
     "country": "US",
     "region": "SAM"
   },
   {
+    "id": "lucas06",
+    "nickname": "lucas06",
+    "country": "BR",
+    "region": "SAM"
+  },
+  {
     "id": "luiisp",
     "nickname": "LuiisP",
     "country": "ES",
+    "birthday": "2003-12-11",
     "region": "SSA"
   },
   {
     "id": "luk",
     "nickname": "Luk",
     "country": "BR",
+    "birthday": "2003-09-29",
     "region": "SAM"
+  },
+  {
+    "id": "lumber",
+    "nickname": "Lumber",
+    "country": "OM",
+    "birthday": "2002-05-10",
+    "region": "MENA"
+  },
+  {
+    "id": "lunar",
+    "nickname": "Lunar",
+    "country": "US",
+    "region": "APAC"
+  },
+  {
+    "id": "lyaneii",
+    "nickname": "Lyaneii",
+    "country": "NL",
+    "region": "EU"
   },
   {
     "id": "m0nkeym00n",
     "nickname": "M0nkey M00n",
     "country": "FR",
+    "birthday": "2002-11-15",
     "region": "EU"
   },
   {
@@ -1303,15 +2070,29 @@
     "region": "EU"
   },
   {
+    "id": "m7md",
+    "nickname": "M7md",
+    "country": "KW",
+    "birthday": "2009-11-05",
+    "region": "MENA"
+  },
+  {
     "id": "m7sn",
     "nickname": "M7sn",
     "country": "SA",
+    "birthday": "2005-06-03",
     "region": "MENA"
   },
   {
     "id": "maestro",
     "nickname": "Maestro",
     "country": "DK",
+    "region": "EU"
+  },
+  {
+    "id": "magiczzz",
+    "nickname": "MaGiCzZz",
+    "country": "DE",
     "region": "EU"
   },
   {
@@ -1324,6 +2105,7 @@
     "id": "majicbear",
     "nickname": "MaJicBear",
     "country": "US",
+    "birthday": "2004-12-25",
     "region": "NA"
   },
   {
@@ -1336,6 +2118,7 @@
     "id": "mala",
     "nickname": "Mala",
     "country": "US",
+    "birthday": "2002-02-28",
     "region": "NA"
   },
   {
@@ -1348,6 +2131,7 @@
     "id": "marcby8",
     "nickname": "MaRc_By_8",
     "country": "ES",
+    "birthday": "2001-03-27",
     "region": "EU"
   },
   {
@@ -1355,6 +2139,18 @@
     "nickname": "Markydooda",
     "country": "GB",
     "region": "EU"
+  },
+  {
+    "id": "maru",
+    "nickname": "Maru.",
+    "country": "JP",
+    "region": "APAC"
+  },
+  {
+    "id": "marwan",
+    "nickname": "Marwan",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "mateusstl",
@@ -1366,12 +2162,14 @@
     "id": "math",
     "nickname": "math",
     "country": "BR",
+    "birthday": "2002-10-05",
     "region": "SAM"
   },
   {
     "id": "matix",
     "nickname": "matix",
     "country": "BR",
+    "birthday": "2002-11-13",
     "region": "SAM"
   },
   {
@@ -1384,13 +2182,41 @@
     "id": "maxeew",
     "nickname": "Maxeew",
     "country": "IE",
+    "birthday": "2003-06-28",
     "region": "APAC"
+  },
+  {
+    "id": "mazikeen",
+    "nickname": "mazikeen",
+    "country": "AR",
+    "birthday": "2007-04-21",
+    "region": "SAM"
+  },
+  {
+    "id": "mclando",
+    "nickname": "McLando",
+    "country": "US",
+    "region": "NA"
+  },
+  {
+    "id": "mech",
+    "nickname": "Mech",
+    "country": "US",
+    "birthday": "2010-12-28",
+    "region": "NA"
   },
   {
     "id": "memory",
     "nickname": "Memory",
     "country": "US",
+    "birthday": "2002-01-18",
     "region": "NA"
+  },
+  {
+    "id": "meshal",
+    "nickname": "Meshal",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "mesho",
@@ -1402,6 +2228,7 @@
     "id": "metsanauris",
     "nickname": "Metsanauris",
     "country": "FI",
+    "birthday": "1998-12-12",
     "region": "EU"
   },
   {
@@ -1426,30 +2253,94 @@
     "id": "mikan",
     "nickname": "mikan",
     "country": "JP",
+    "birthday": "2000-12-04",
     "region": "APAC"
+  },
+  {
+    "id": "mikeboy",
+    "nickname": "Mikeboy",
+    "country": "NL",
+    "birthday": "2002-05-04",
+    "region": "EU"
+  },
+  {
+    "id": "miki",
+    "nickname": "Miki",
+    "country": "BE",
+    "region": "MENA"
   },
   {
     "id": "mile",
     "nickname": "Mile",
     "country": "US",
+    "birthday": "2001-11-21",
     "region": "NA"
+  },
+  {
+    "id": "misery",
+    "nickname": "misery",
+    "country": "AR",
+    "birthday": "2007-12-11",
+    "region": "SAM"
   },
   {
     "id": "mist",
     "nickname": "mist",
     "country": "US",
+    "birthday": "2003-08-22",
     "region": "NA"
+  },
+  {
+    "id": "misty",
+    "nickname": "Misty",
+    "country": "AU",
+    "birthday": "2002-03-05",
+    "region": "OCE"
+  },
+  {
+    "id": "misty-my",
+    "nickname": "Misty",
+    "country": "MY",
+    "birthday": "2000-06-14",
+    "region": "APAC"
+  },
+  {
+    "id": "mits",
+    "nickname": "mits",
+    "country": "US",
+    "region": "EU"
+  },
+  {
+    "id": "mittaen",
+    "nickname": "Mittaen",
+    "country": "NL",
+    "birthday": "2001-08-19",
+    "region": "EU"
   },
   {
     "id": "miztik",
     "nickname": "miztik",
     "country": "GB",
+    "birthday": "1996-06-01",
+    "region": "EU"
+  },
+  {
+    "id": "mj",
+    "nickname": "MJ",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "mk",
+    "nickname": "MK.",
+    "country": "DE",
     "region": "EU"
   },
   {
     "id": "mognus",
     "nickname": "Mognus",
     "country": "FI",
+    "birthday": "1999-12-07",
     "region": "EU"
   },
   {
@@ -1468,18 +2359,40 @@
     "id": "moses",
     "nickname": "Moses",
     "country": "US",
+    "birthday": "1996-02-10",
     "region": "NA"
   },
   {
     "id": "motta",
     "nickname": "Motta",
     "country": "BR",
+    "birthday": "2006-10-11",
     "region": "SAM"
   },
   {
     "id": "mout",
     "nickname": "Mout",
     "country": "FR",
+    "birthday": "1995-07-31",
+    "region": "EU"
+  },
+  {
+    "id": "mrlow",
+    "nickname": "Mr.Low",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
+    "id": "msh",
+    "nickname": "Msh",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "mtzr",
+    "nickname": "mtzr",
+    "country": "FR",
+    "birthday": "2006-11-25",
     "region": "EU"
   },
   {
@@ -1487,6 +2400,13 @@
     "nickname": "Mye_bipod_4shor",
     "country": "GB",
     "region": "EU"
+  },
+  {
+    "id": "mysterious",
+    "nickname": "MySTeriOuS",
+    "country": "SA",
+    "birthday": "2003-07-06",
+    "region": "MENA"
   },
   {
     "id": "n0ah",
@@ -1498,6 +2418,7 @@
     "id": "nachosky",
     "nickname": "nachosky",
     "country": "CL",
+    "birthday": "2005-01-10",
     "region": "SAM"
   },
   {
@@ -1505,6 +2426,13 @@
     "nickname": "Nachusky",
     "country": "AR",
     "region": "SAM"
+  },
+  {
+    "id": "nai",
+    "nickname": "nai",
+    "country": "JP",
+    "birthday": "2008-05-29",
+    "region": "APAC"
   },
   {
     "id": "napp",
@@ -1516,19 +2444,34 @@
     "id": "nass",
     "nickname": "nass",
     "country": "MA",
-    "region": "EU"
+    "birthday": "2007-01-12",
+    "region": "NA"
   },
   {
     "id": "neqzo",
     "nickname": "Neqzo",
     "country": "FR",
+    "birthday": "1998-08-31",
     "region": "EU"
+  },
+  {
+    "id": "nerve",
+    "nickname": "nerve",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "nick",
     "nickname": "Nick",
     "country": "US",
     "region": "NA"
+  },
+  {
+    "id": "nico",
+    "nickname": "Nico",
+    "country": "DK",
+    "birthday": "2008-12-12",
+    "region": "EU"
   },
   {
     "id": "ninja23509",
@@ -1540,19 +2483,34 @@
     "id": "noisy",
     "nickname": "Noisy",
     "country": "BR",
+    "birthday": "2001-09-11",
     "region": "SAM"
   },
   {
     "id": "noly",
     "nickname": "Noly",
     "country": "GB",
+    "birthday": "2002-02-02",
     "region": "EU"
+  },
+  {
+    "id": "noone",
+    "nickname": "No One.",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "noxes",
     "nickname": "Noxes",
     "country": "PR",
+    "birthday": "2000-05-08",
     "region": "SSA"
+  },
+  {
+    "id": "nugget",
+    "nickname": "Nugget",
+    "country": "GB",
+    "region": "EU"
   },
   {
     "id": "nunki",
@@ -1561,34 +2519,53 @@
     "region": "APAC"
   },
   {
+    "id": "nush",
+    "nickname": "Nush",
+    "country": "SA",
+    "birthday": "2009-11-15",
+    "region": "MENA"
+  },
+  {
     "id": "nwpo",
     "nickname": "Nwpo",
     "country": "SA",
+    "birthday": "2007-01-15",
     "region": "MENA"
   },
   {
     "id": "nxghtt",
     "nickname": "nxghtt",
     "country": "BR",
+    "birthday": "2006-07-04",
     "region": "SAM"
   },
   {
     "id": "oaly",
     "nickname": "oaly.",
     "country": "NL",
+    "birthday": "2003-11-24",
     "region": "EU"
   },
   {
     "id": "okhalid",
     "nickname": "oKhaliD",
     "country": "SA",
+    "birthday": "2002-12-19",
     "region": "MENA"
   },
   {
     "id": "olpix",
     "nickname": "OLPiX",
     "country": "JP",
+    "birthday": "2001-12-18",
     "region": "APAC"
+  },
+  {
+    "id": "ops",
+    "nickname": "ops",
+    "country": "SA",
+    "birthday": "2009-05-29",
+    "region": "MENA"
   },
   {
     "id": "orbi7",
@@ -1597,21 +2574,44 @@
     "region": "SAM"
   },
   {
+    "id": "ordep",
+    "nickname": "Ordep",
+    "country": "PT",
+    "region": "EU"
+  },
+  {
+    "id": "oscillon",
+    "nickname": "Oscillon",
+    "country": "NL",
+    "birthday": "2001-06-07",
+    "region": "EU"
+  },
+  {
     "id": "oski",
     "nickname": "Oski",
     "country": "PL",
+    "birthday": "2007-02-23",
     "region": "EU"
   },
   {
     "id": "osm",
     "nickname": "OSM",
     "country": "IS",
+    "birthday": "2003-09-19",
     "region": "APAC"
+  },
+  {
+    "id": "paarth",
+    "nickname": "Paarth",
+    "country": "US",
+    "birthday": "2005-04-13",
+    "region": "NA"
   },
   {
     "id": "pan",
     "nickname": "pan",
     "country": "CL",
+    "birthday": "2002-11-08",
     "region": "SAM"
   },
   {
@@ -1619,6 +2619,13 @@
     "nickname": "PansitoFrances",
     "country": "CL",
     "region": "SAM"
+  },
+  {
+    "id": "parka",
+    "nickname": "Parka",
+    "country": "FR",
+    "birthday": "2004-05-27",
+    "region": "EU"
   },
   {
     "id": "paschy90",
@@ -1651,20 +2658,41 @@
     "region": "SAM"
   },
   {
+    "id": "pengoli",
+    "nickname": "pengoli",
+    "country": "AU",
+    "region": "APAC"
+  },
+  {
+    "id": "percy",
+    "nickname": "percy.",
+    "country": "US",
+    "birthday": "2003-12-02",
+    "region": "NA"
+  },
+  {
     "id": "petrick",
     "nickname": "PetricK",
     "country": "PL",
     "region": "EU"
   },
   {
+    "id": "physics",
+    "nickname": "Physics",
+    "country": "ZA",
+    "region": "SSA"
+  },
+  {
     "id": "pj",
     "nickname": "PJ",
     "country": "BR",
+    "birthday": "2002-10-20",
     "region": "SAM"
   },
   {
     "id": "pluoh",
     "nickname": "Plu'oh",
+    "country": "US",
     "region": "NA"
   },
   {
@@ -1674,16 +2702,70 @@
     "region": "NA"
   },
   {
+    "id": "pocketpsych",
+    "nickname": "PocketPsych",
+    "country": "AU",
+    "region": "NA"
+  },
+  {
+    "id": "porsas",
+    "nickname": "Porsas",
+    "country": "FI",
+    "birthday": "2003-05-27",
+    "region": "APAC"
+  },
+  {
+    "id": "porto",
+    "nickname": "Porto",
+    "country": "FR",
+    "region": "EU"
+  },
+  {
+    "id": "prompt",
+    "nickname": "Prompt",
+    "country": "AU",
+    "birthday": "2008-11-09",
+    "region": "OCE"
+  },
+  {
     "id": "quinnlobdell",
     "nickname": "Quinn Lobdell",
     "country": "US",
     "region": "NA"
   },
   {
+    "id": "radoko",
+    "nickname": "radoko.",
+    "country": "CA",
+    "birthday": "2003-05-08",
+    "region": "NA"
+  },
+  {
     "id": "radosin",
     "nickname": "Radosin",
     "country": "FR",
+    "birthday": "2004-01-12",
     "region": "EU"
+  },
+  {
+    "id": "rafa",
+    "nickname": "rafa.",
+    "country": "PT",
+    "birthday": "2007-06-05",
+    "region": "EU"
+  },
+  {
+    "id": "rapid",
+    "nickname": "rapid",
+    "country": "US",
+    "birthday": "2002-02-05",
+    "region": "NA"
+  },
+  {
+    "id": "ravi",
+    "nickname": "Ravi",
+    "country": "ZA",
+    "region": "SSA"
   },
   {
     "id": "rawgreg",
@@ -1695,6 +2777,7 @@
     "id": "realize",
     "nickname": "ReaLize",
     "country": "JP",
+    "birthday": "2001-05-03",
     "region": "APAC"
   },
   {
@@ -1704,27 +2787,45 @@
     "region": "EU"
   },
   {
+    "id": "regser",
+    "nickname": "regser",
+    "country": "FI",
+    "birthday": "2003-07-14",
+    "region": "APAC"
+  },
+  {
+    "id": "rehzzy",
+    "nickname": "rehzzy",
+    "country": "GB",
+    "birthday": "2004-04-25",
+    "region": "EU"
+  },
+  {
     "id": "relatingwave",
     "nickname": "RelatingWave",
     "country": "GB",
+    "birthday": "2002-09-16",
     "region": "EU"
   },
   {
     "id": "remkoe",
     "nickname": "Remkoe",
     "country": "NL",
+    "birthday": "1995-05-27",
     "region": "EU"
   },
   {
     "id": "renan",
     "nickname": "renaN",
     "country": "BR",
+    "birthday": "2003-03-19",
     "region": "SAM"
   },
   {
     "id": "repi",
     "nickname": "repi",
     "country": "BR",
+    "birthday": "2002-02-08",
     "region": "SAM"
   },
   {
@@ -1737,25 +2838,35 @@
     "id": "retals",
     "nickname": "Retals",
     "country": "US",
+    "birthday": "2003-01-02",
     "region": "NA"
   },
   {
     "id": "reveal",
     "nickname": "reveal",
     "country": "US",
+    "birthday": "2007-06-18",
     "region": "NA"
   },
   {
     "id": "reysbull",
     "nickname": "Reysbull",
     "country": "CL",
+    "birthday": "2004-02-20",
     "region": "SAM"
+  },
+  {
+    "id": "rez",
+    "nickname": "Rez",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "rezears",
     "nickname": "Rezears",
-    "country": "AU",
-    "region": "OCE"
+    "country": "DE",
+    "birthday": "2003-08-29",
+    "region": "EU"
   },
   {
     "id": "richy",
@@ -1767,71 +2878,122 @@
     "id": "rise",
     "nickname": "rise.",
     "country": "GB",
+    "birthday": "2004-09-05",
     "region": "EU"
+  },
+  {
+    "id": "risk",
+    "nickname": "risk",
+    "country": "SG",
+    "birthday": "2011-03-05",
+    "region": "APAC"
   },
   {
     "id": "riv",
     "nickname": "Riv",
     "country": "AU",
+    "birthday": "1998-04-08",
     "region": "OCE"
+  },
+  {
+    "id": "rizex",
+    "nickname": "Rizex",
+    "country": "DE",
+    "region": "EU"
   },
   {
     "id": "rizex45",
     "nickname": "Rizex45",
     "country": "DE",
+    "birthday": "2002-04-30",
     "region": "EU"
   },
   {
     "id": "rizzo",
     "nickname": "Rizzo",
     "country": "US",
+    "birthday": "1997-05-26",
     "region": "NA"
+  },
+  {
+    "id": "rmn",
+    "nickname": "Rmn",
+    "country": "AR",
+    "region": "SAM"
   },
   {
     "id": "roken",
     "nickname": "Roken",
+    "country": "GB",
     "region": "EU"
   },
   {
     "id": "rolldizz",
     "nickname": "Roll Dizz",
     "country": "US",
+    "birthday": "1996-09-06",
     "region": "NA"
   },
   {
     "id": "ronaky",
     "nickname": "Ronaky",
     "country": "DK",
+    "birthday": "2000-09-21",
     "region": "EU"
   },
   {
     "id": "royales",
     "nickname": "Royales",
     "country": "BR",
+    "birthday": "2005-05-17",
     "region": "SAM"
   },
   {
     "id": "rw9",
     "nickname": "Rw9",
     "country": "SA",
+    "birthday": "2007-06-10",
     "region": "MENA"
+  },
+  {
+    "id": "rysfox",
+    "nickname": "rysfox.",
+    "country": "BE",
+    "birthday": "2007-09-21",
+    "region": "EU"
+  },
+  {
+    "id": "s1kies",
+    "nickname": "S1kies",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
+    "id": "s5cosmic",
+    "nickname": "S5-Cosmic",
+    "country": "US",
+    "birthday": "2006-07-14",
+    "region": "NA"
   },
   {
     "id": "sadjunior",
     "nickname": "SadJunior",
     "country": "CA",
+    "birthday": "1997-09-20",
     "region": "NA"
   },
   {
     "id": "sadness",
     "nickname": "Sadness",
     "country": "BR",
+    "birthday": "2005-09-08",
     "region": "SAM"
   },
   {
     "id": "saizen",
     "nickname": "saizen",
     "country": "FR",
+    "birthday": "2005-10-21",
     "region": "EU"
   },
   {
@@ -1844,48 +3006,62 @@
     "id": "satthew",
     "nickname": "Satthew",
     "country": "US",
+    "birthday": "1999-04-29",
     "region": "NA"
   },
   {
     "id": "scarth",
     "nickname": "Scarth",
     "country": "NZ",
+    "birthday": "1999-12-20",
     "region": "OCE"
   },
   {
     "id": "scrub",
     "nickname": "Scrub",
     "country": "AU",
+    "birthday": "2005-09-02",
     "region": "OCE"
   },
   {
     "id": "scrubkilla",
     "nickname": "Scrub Killa",
     "country": "GB",
+    "birthday": "2003-05-08",
     "region": "EU"
+  },
+  {
+    "id": "scruffy",
+    "nickname": "Scruffy",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "scrzbbles",
     "nickname": "Scrzbbles",
     "country": "US",
+    "birthday": "2009-11-05",
     "region": "NA"
   },
   {
     "id": "seck",
     "nickname": "seck",
     "country": "AR",
+    "birthday": "2005-06-03",
     "region": "SAM"
   },
   {
     "id": "seeb",
     "nickname": "Seeb",
     "country": "NO",
+    "birthday": "2002-09-17",
     "region": "EU"
   },
   {
     "id": "seikoo",
     "nickname": "Seikoo",
     "country": "FR",
+    "birthday": "2004-06-07",
     "region": "EU"
   },
   {
@@ -1898,12 +3074,14 @@
     "id": "senzo",
     "nickname": "Senzo",
     "country": "SA",
+    "birthday": "2001-05-28",
     "region": "MENA"
   },
   {
     "id": "shad",
     "nickname": "Shad",
     "country": "AR",
+    "birthday": "2003-08-08",
     "region": "SAM"
   },
   {
@@ -1913,15 +3091,31 @@
     "region": "OCE"
   },
   {
+    "id": "shock",
+    "nickname": "Shock",
+    "country": "US",
+    "birthday": "1999-12-17",
+    "region": "NA"
+  },
+  {
+    "id": "shorez",
+    "nickname": "Shorez",
+    "country": "AU",
+    "birthday": "2006-01-11",
+    "region": "OCE"
+  },
+  {
     "id": "sigms",
     "nickname": "sigms",
     "country": "US",
+    "birthday": "1998-09-11",
     "region": "APAC"
   },
   {
     "id": "siki",
     "nickname": "Siki",
     "country": "AU",
+    "birthday": "1999-09-17",
     "region": "OCE"
   },
   {
@@ -1931,15 +3125,23 @@
     "region": "EU"
   },
   {
+    "id": "simple",
+    "nickname": "Simple",
+    "country": "CA",
+    "region": "SAM"
+  },
+  {
     "id": "sizz",
     "nickname": "Sizz",
     "country": "US",
+    "birthday": "1996-11-05",
     "region": "NA"
   },
   {
     "id": "skillsteal",
     "nickname": "SkillSteal",
     "country": "ZA",
+    "birthday": "1996-11-14",
     "region": "SSA"
   },
   {
@@ -1949,9 +3151,30 @@
     "region": "EU"
   },
   {
+    "id": "skyrix",
+    "nickname": "skyrix",
+    "country": "MA",
+    "birthday": "2005-08-01",
+    "region": "MENA"
+  },
+  {
+    "id": "slayer",
+    "nickname": "SlaYeR",
+    "country": "US",
+    "region": "SSA"
+  },
+  {
+    "id": "smokez",
+    "nickname": "Smokez",
+    "country": "GB",
+    "birthday": "2004-01-24",
+    "region": "EU"
+  },
+  {
     "id": "smw",
     "nickname": "Smw",
     "country": "SA",
+    "birthday": "2004-08-11",
     "region": "MENA"
   },
   {
@@ -1970,35 +3193,48 @@
     "id": "snipjz",
     "nickname": "snipjz",
     "country": "BR",
+    "birthday": "2003-04-23",
     "region": "SAM"
+  },
+  {
+    "id": "snowy",
+    "nickname": "Snowy",
+    "country": "AU",
+    "birthday": "1995-06-13",
+    "region": "OCE"
   },
   {
     "id": "snowyy",
     "nickname": "Snowyy",
     "country": "ZA",
+    "birthday": "2000-07-12",
     "region": "SSA"
   },
   {
     "id": "sosa",
     "nickname": "sosa",
     "country": "CA",
-    "region": "APAC"
+    "birthday": "2004-03-15",
+    "region": "NA"
   },
   {
     "id": "speed",
     "nickname": "Speed",
     "country": "GB",
+    "birthday": "2001-02-26",
     "region": "EU"
   },
   {
     "id": "speedhack",
     "nickname": "speedhack",
+    "country": "BR",
     "region": "SAM"
   },
   {
     "id": "sphinx",
     "nickname": "Sphinx",
     "country": "MY",
+    "birthday": "2009-01-14",
     "region": "APAC"
   },
   {
@@ -2011,12 +3247,21 @@
     "id": "spydoge",
     "nickname": "SPYDOGE",
     "country": "AU",
+    "birthday": "2000-12-20",
     "region": "OCE"
+  },
+  {
+    "id": "sqqp",
+    "nickname": "SQQP",
+    "country": "SA",
+    "birthday": "2006-05-22",
+    "region": "MENA"
   },
   {
     "id": "squishymuffinz",
     "nickname": "SquishyMuffinz",
     "country": "CA",
+    "birthday": "2000-11-29",
     "region": "NA"
   },
   {
@@ -2029,12 +3274,27 @@
     "id": "srnanitou",
     "nickname": "SrNaniTou",
     "country": "AR",
+    "birthday": "2002-06-04",
     "region": "SAM"
+  },
+  {
+    "id": "stake",
+    "nickname": "Stake",
+    "country": "ES",
+    "birthday": "2000-07-20",
+    "region": "EU"
+  },
+  {
+    "id": "stealth",
+    "nickname": "Stealth",
+    "country": "GB",
+    "region": "EU"
   },
   {
     "id": "stizzy",
     "nickname": "Stizzy",
     "country": "ES",
+    "birthday": "2006-12-27",
     "region": "EU"
   },
   {
@@ -2056,33 +3316,57 @@
     "region": "SAM"
   },
   {
+    "id": "subn",
+    "nickname": "Sub'N",
+    "country": "US",
+    "region": "NA"
+  },
+  {
     "id": "suco",
     "nickname": "suco",
     "country": "BR",
+    "birthday": "2006-05-15",
     "region": "SAM"
+  },
+  {
+    "id": "sultan",
+    "nickname": "! Sultan.",
+    "country": "OM",
+    "birthday": "2008-10-16",
+    "region": "MENA"
   },
   {
     "id": "superlachie",
     "nickname": "Superlachie",
     "country": "AU",
+    "birthday": "2005-10-16",
     "region": "OCE"
+  },
+  {
+    "id": "suspect",
+    "nickname": "Suspect",
+    "country": "SA",
+    "region": "MENA"
   },
   {
     "id": "sweaty",
     "nickname": "Sweaty",
     "country": "ZA",
+    "birthday": "2005-08-07",
     "region": "SSA"
   },
   {
     "id": "swiftt",
     "nickname": "swiftt",
     "country": "BR",
+    "birthday": "2008-08-15",
     "region": "SAM"
   },
   {
     "id": "sword",
     "nickname": "Sword",
     "country": "BR",
+    "birthday": "2002-05-14",
     "region": "SAM"
   },
   {
@@ -2095,6 +3379,7 @@
     "id": "sypical",
     "nickname": "Sypical",
     "country": "US",
+    "birthday": "2003-08-05",
     "region": "NA"
   },
   {
@@ -2104,21 +3389,44 @@
     "region": "SAM"
   },
   {
+    "id": "t7lm",
+    "nickname": "T7LM",
+    "country": "SA",
+    "birthday": "2002-08-01",
+    "region": "MENA"
+  },
+  {
     "id": "tadpole",
     "nickname": "Tadpole",
     "country": "GB",
+    "birthday": "1997-10-17",
     "region": "EU"
+  },
+  {
+    "id": "taha",
+    "nickname": "Taha",
+    "country": "US",
+    "region": "APAC"
   },
   {
     "id": "tander",
     "nickname": "tander",
     "country": "BR",
+    "birthday": "1998-12-31",
     "region": "SAM"
+  },
+  {
+    "id": "tango",
+    "nickname": "Tango",
+    "country": "AU",
+    "birthday": "2004-05-05",
+    "region": "OCE"
   },
   {
     "id": "taroco",
     "nickname": "Taroco",
     "country": "CA",
+    "birthday": "2003-02-22",
     "region": "NA"
   },
   {
@@ -2128,9 +3436,31 @@
     "region": "SAM"
   },
   {
+    "id": "tawk",
+    "nickname": "Tawk",
+    "country": "CA",
+    "birthday": "2007-08-22",
+    "region": "NA"
+  },
+  {
+    "id": "tcorrell",
+    "nickname": "tcorrell",
+    "country": "US",
+    "birthday": "2001-02-08",
+    "region": "NA"
+  },
+  {
+    "id": "tehqoz",
+    "nickname": "TehQoz",
+    "country": "ES",
+    "birthday": "2006-03-14",
+    "region": "APAC"
+  },
+  {
     "id": "tenhow",
     "nickname": "Tenhow",
     "country": "JP",
+    "birthday": "2000-09-20",
     "region": "APAC"
   },
   {
@@ -2143,12 +3473,14 @@
     "id": "tho",
     "nickname": "ThO.",
     "country": "NL",
+    "birthday": "2001-12-04",
     "region": "EU"
   },
   {
     "id": "thundah",
     "nickname": "Thundah",
     "country": "US",
+    "birthday": "2001-07-07",
     "region": "NA"
   },
   {
@@ -2167,28 +3499,60 @@
     "id": "torment",
     "nickname": "torment",
     "country": "US",
+    "birthday": "2000-06-06",
     "region": "NA"
   },
   {
     "id": "torres823",
     "nickname": "TORRES823",
-    "country": "ZA",
+    "country": "ES",
+    "birthday": "2004-09-22",
     "region": "SSA"
   },
   {
     "id": "torsos",
     "nickname": "Torsos",
     "country": "AU",
+    "birthday": "2000-08-30",
     "region": "OCE"
+  },
+  {
+    "id": "tox",
+    "nickname": "Tox",
+    "country": "DE",
+    "birthday": "2003-07-08",
+    "region": "EU"
+  },
+  {
+    "id": "toxiic",
+    "nickname": "Toxiic",
+    "country": "GB",
+    "birthday": "2004-06-17",
+    "region": "EU"
   },
   {
     "id": "trill",
     "nickname": "trill.",
+    "country": "US",
     "region": "APAC"
+  },
+  {
+    "id": "tristn",
+    "nickname": ".tristn",
+    "country": "US",
+    "birthday": "2000-11-08",
+    "region": "NA"
   },
   {
     "id": "trk511",
     "nickname": "trk511",
+    "country": "SA",
+    "birthday": "2005-07-26",
+    "region": "MENA"
+  },
+  {
+    "id": "trook",
+    "nickname": "Trook",
     "country": "SA",
     "region": "MENA"
   },
@@ -2196,12 +3560,14 @@
     "id": "turbopolsa",
     "nickname": "Turbopolsa",
     "country": "SE",
+    "birthday": "1998-08-09",
     "region": "EU"
   },
   {
     "id": "turinturo",
     "nickname": "Turinturo",
     "country": "US",
+    "birthday": "2003-04-08",
     "region": "NA"
   },
   {
@@ -2214,60 +3580,107 @@
     "id": "twistt",
     "nickname": "twistt",
     "country": "BR",
+    "birthday": "2003-12-28",
     "region": "SAM"
   },
   {
     "id": "twiz",
     "nickname": "Twiz",
     "country": "SA",
+    "birthday": "2004-02-09",
     "region": "MENA"
+  },
+  {
+    "id": "txl",
+    "nickname": "TXL",
+    "country": "FI",
+    "region": "APAC"
   },
   {
     "id": "umbroken",
     "nickname": "UmBroken",
     "country": "AR",
+    "birthday": "2002-06-14",
     "region": "SAM"
+  },
+  {
+    "id": "vadyy",
+    "nickname": "vadyy.",
+    "country": "PT",
+    "birthday": "2008-06-20",
+    "region": "EU"
+  },
+  {
+    "id": "valid",
+    "nickname": "valid",
+    "country": "SA",
+    "region": "APAC"
   },
   {
     "id": "valt",
     "nickname": "valt",
     "country": "BR",
+    "birthday": "2003-10-22",
     "region": "SAM"
+  },
+  {
+    "id": "vantage",
+    "nickname": "Vantage",
+    "country": "FR",
+    "region": "APAC"
   },
   {
     "id": "vatira",
     "nickname": "Vatira",
     "country": "FR",
+    "birthday": "2006-05-14",
     "region": "EU"
   },
   {
     "id": "venom",
     "nickname": "Venom",
     "country": "SA",
+    "birthday": "2002-08-11",
     "region": "MENA"
+  },
+  {
+    "id": "vinlll",
+    "nickname": "vinlll.",
+    "country": "JP",
+    "region": "APAC"
   },
   {
     "id": "violentpanda",
     "nickname": "violentpanda",
     "country": "NL",
+    "birthday": "1998-11-02",
     "region": "EU"
   },
   {
     "id": "virge",
     "nickname": "Virge",
     "country": "US",
+    "birthday": "1996-09-24",
     "region": "EU"
   },
   {
     "id": "virtuoso",
     "nickname": "virtuoso",
     "country": "IE",
-    "region": "APAC"
+    "birthday": "2003-08-21",
+    "region": "EU"
+  },
+  {
+    "id": "vive",
+    "nickname": "Vive",
+    "country": "AU",
+    "region": "OCE"
   },
   {
     "id": "vksailen",
     "nickname": "VKSailen",
     "country": "ES",
+    "birthday": "2003-06-07",
     "region": "EU"
   },
   {
@@ -2275,6 +3688,13 @@
     "nickname": "Vogan",
     "country": "NL",
     "region": "EU"
+  },
+  {
+    "id": "vortexioz",
+    "nickname": "vortexioz",
+    "country": "AU",
+    "birthday": "2004-05-10",
+    "region": "OCE"
   },
   {
     "id": "waantz",
@@ -2286,18 +3706,21 @@
     "id": "wahvey",
     "nickname": "Wahvey",
     "country": "US",
+    "birthday": "2007-05-10",
     "region": "NA"
   },
   {
     "id": "walcott",
     "nickname": "Walcott",
     "country": "AU",
+    "birthday": "1997-02-06",
     "region": "OCE"
   },
   {
     "id": "wells",
     "nickname": "Wells",
     "country": "BR",
+    "birthday": "2003-01-24",
     "region": "SAM"
   },
   {
@@ -2316,13 +3739,35 @@
     "id": "wisty",
     "nickname": "wisty",
     "country": "BR",
+    "birthday": "2006-01-03",
     "region": "SAM"
+  },
+  {
+    "id": "wolf",
+    "nickname": "Wolf.",
+    "country": "ES",
+    "birthday": "1998-02-25",
+    "region": "EU"
+  },
+  {
+    "id": "wondamike",
+    "nickname": "WondaMike",
+    "country": "US",
+    "birthday": "2004-05-25",
+    "region": "NA"
   },
   {
     "id": "wonder",
     "nickname": "Wonder",
     "country": "US",
+    "birthday": "1996-08-02",
     "region": "NA"
+  },
+  {
+    "id": "wozyen",
+    "nickname": "wozyen",
+    "country": "NO",
+    "region": "EU"
   },
   {
     "id": "xkorez",
@@ -2343,15 +3788,23 @@
     "region": "EU"
   },
   {
+    "id": "yagi",
+    "nickname": "Yagi",
+    "country": "CH",
+    "region": "EU"
+  },
+  {
     "id": "yand",
     "nickname": "yanD",
     "country": "BR",
+    "birthday": "2003-02-28",
     "region": "SAM"
   },
   {
     "id": "yanxnz",
     "nickname": "yanxnz",
     "country": "BR",
+    "birthday": "2004-08-10",
     "region": "SAM"
   },
   {
@@ -2364,12 +3817,21 @@
     "id": "yujin",
     "nickname": "yujin",
     "country": "FR",
+    "birthday": "2007-11-27",
     "region": "EU"
   },
   {
     "id": "yukeo",
     "nickname": "Yukeo",
     "country": "AT",
+    "birthday": "2000-01-26",
+    "region": "EU"
+  },
+  {
+    "id": "yukiss",
+    "nickname": "Yukiss",
+    "country": "FR",
+    "birthday": "2000-07-26",
     "region": "EU"
   },
   {
@@ -2379,10 +3841,24 @@
     "region": "EU"
   },
   {
+    "id": "z4",
+    "nickname": "z4",
+    "country": "SA",
+    "region": "MENA"
+  },
+  {
     "id": "zach",
     "nickname": "Zach",
     "country": "US",
+    "birthday": "2009-11-05",
     "region": "NA"
+  },
+  {
+    "id": "zamue",
+    "nickname": "Zamué",
+    "country": "ES",
+    "birthday": "2000-10-19",
+    "region": "EU"
   },
   {
     "id": "zanejackey",
@@ -2394,7 +3870,15 @@
     "id": "zanetti",
     "nickname": "Zanetti",
     "country": "BR",
+    "birthday": "2001-12-21",
     "region": "SAM"
+  },
+  {
+    "id": "zayd",
+    "nickname": "Zayd",
+    "country": "AU",
+    "birthday": "2001-12-06",
+    "region": "OCE"
   },
   {
     "id": "ze",
@@ -2406,6 +3890,7 @@
     "id": "zen",
     "nickname": "zen",
     "country": "FR",
+    "birthday": "2007-02-20",
     "region": "EU"
   },
   {
@@ -2418,6 +3903,28 @@
     "id": "zez0nix",
     "nickname": "Zez0nix",
     "country": "SA",
+    "birthday": "2002-11-17",
     "region": "MENA"
+  },
+  {
+    "id": "zgocbrayt",
+    "nickname": "zgocBrayt",
+    "country": "TR",
+    "birthday": "1997-05-19",
+    "region": "EU"
+  },
+  {
+    "id": "zineel",
+    "nickname": "Zineel",
+    "country": "US",
+    "birthday": "2005-03-01",
+    "region": "NA"
+  },
+  {
+    "id": "zps",
+    "nickname": "ZPS.",
+    "country": "MX",
+    "birthday": "2004-03-22",
+    "region": "NA"
   }
 ]

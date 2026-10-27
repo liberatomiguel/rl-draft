@@ -91,9 +91,23 @@
     "order": 13
   },
   {
+    "id": "fifae-2024",
+    "label": "FIFAe 2024",
+    "shortLabel": "FIFAe '24",
+    "year": "2024",
+    "order": 13
+  },
+  {
     "id": "rlcs-2025",
     "label": "RLCS 2025",
     "shortLabel": "'25",
+    "year": "2025",
+    "order": 14
+  },
+  {
+    "id": "fifae-2025",
+    "label": "FIFAe 2025",
+    "shortLabel": "FIFAe '25",
     "year": "2025",
     "order": 14
   },

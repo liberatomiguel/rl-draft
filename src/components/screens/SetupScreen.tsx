@@ -8,7 +8,8 @@
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
-import { DIFFICULTY } from "@/config/balance";
+import { DIFFICULTY, REGION_LOCK } from "@/config/balance";
+import { lineupById, lineupPoolForRegion } from "@/data";
 import { useCopy } from "@/content/copy";
 import type { Difficulty, Region } from "@/engine/types";
 import { cx } from "@/lib/util";
@@ -22,16 +23,24 @@ import { Toggle } from "@/components/ui/Toggle";
 
 const ORDER: Difficulty[] = ["easy", "normal", "hard", "legacy"];
 
-/** Region-lock options. Only SAM is live in v1.2.0; the rest are "Coming soon". */
-const REGIONS: { id: Region; available: boolean }[] = [
-  { id: "SAM", available: true },
-  { id: "NA", available: false },
-  { id: "EU", available: false },
-  { id: "OCE", available: false },
-  { id: "MENA", available: false },
-  { id: "APAC", available: false },
-  { id: "SSA", available: false },
-];
+/**
+ * Region-lock options (v1.2.0: SAM only; v2.0: every region in
+ * REGION_LOCK.regions). The rest read "Coming soon" and sort last. `rosters`
+ * = the draftable depth of the region pool (national teams and easter eggs
+ * are separate draws, so they are not counted).
+ */
+const REGIONS: { id: Region; available: boolean; rosters: number }[] = (
+  ["SAM", "NA", "EU", "OCE", "MENA", "APAC", "SSA"] as Region[]
+)
+  .map((id) => ({
+    id,
+    available: REGION_LOCK.regions.includes(id),
+    rosters: lineupPoolForRegion(id).filter((lid) => {
+      const l = lineupById.get(lid);
+      return l && !l.national && !l.rareSpawn;
+    }).length,
+  }))
+  .sort((a, b) => Number(b.available) - Number(a.available));
 
 export function SetupScreen() {
   const { HOME, SETUP, DIFFICULTY_LABELS } = useCopy();
@@ -50,9 +59,11 @@ export function SetupScreen() {
     return last;
   });
   const [showOverall, setShowOverall] = useState(settings.lastShowOverall);
-  const [regionLock, setRegionLock] = useState<Region | null>(
-    () => settings.lastRegionLock ?? null,
-  );
+  // A remembered region that is no longer offered falls back to worldwide.
+  const [regionLock, setRegionLock] = useState<Region | null>(() => {
+    const last = settings.lastRegionLock ?? null;
+    return last && REGION_LOCK.regions.includes(last) ? last : null;
+  });
 
   const profile = DIFFICULTY[difficulty];
   const locked = profile.overallLockedHidden;
@@ -192,7 +203,10 @@ export function SetupScreen() {
 
         {regionLock ? (
           <p className="max-w-xl text-xs leading-relaxed text-sub">
-            {SETUP.regionDescLocked(SETUP.regionNames[regionLock])}
+            {SETUP.regionDescLocked(
+              SETUP.regionNames[regionLock],
+              REGIONS.find((r) => r.id === regionLock)?.rosters ?? 0,
+            )}
           </p>
         ) : null}
       </div>

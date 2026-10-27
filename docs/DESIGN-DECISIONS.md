@@ -1274,6 +1274,80 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      epic and legendary carry the glow and the band; a per-title glow colour
      lets gold titles glow orange and grant titles keep their reserved
      colours.
+133. **The v2.0 base export is applied as delivered (rc.24).** Miguel's database
+     project (`rocket-draft-database`, export 2026-10-26, 1383 approved
+     decisions) lands as data: 22 changed blocks and 149 new ones in
+     `teams.md` (289 → 438 lineups), 18 new + 13 edited specials, 204 country
+     entries (six corrections: diaz BR, greazy NO, ivn AT, juicy FR, rezears DE,
+     torres823 ES), 364 birth dates, 62 org logos (incl. the 20 national flags).
+     Generator support: the `· recorte: <name>` segment for a second roster of
+     an org in one season (it joins the id, existing ids never change),
+     `PERSON_ID` for homonyms (`zen|OCE`, `misty|national-my`,
+     `abdullah|national-om`) and `BIRTHDAY`. No saved id disappears (checked
+     file by file) and the export's 425 post-build overall checks pass. **Not
+     applied:** D01 (the Chiefs S6 / Tainted Minds S6 trios are swapped in the
+     game) — fixing it renames six cards that sit in player saves, so it needs a
+     save migration (old → new card ids) first; it stays a known data error.
+134. **Region-only mode for every region with depth (rc.24; was SAM only).** The
+     `sam-only` flag means "region-only" in any region (the JSON field keeps its
+     historical name `samOnly`, read by the base project too). NA, EU, SAM,
+     MENA and OCE get the mode (`REGION_LOCK.regions`): EU 116, NA 95, SAM 93,
+     OCE 45 and MENA 25 draftable rosters. APAC and SSA stay "Coming soon" (too few rosters); their rosters
+     flagged region-only play in the GENERAL pool instead (`isRegionOnly`), so
+     nothing in the dataset becomes unplayable and those rosters move into
+     their mode automatically the day the region opens. A remembered region
+     that is no longer offered falls back to worldwide on the setup screen.
+135. **National teams (FIFAe 2024/2025) are a rare draw, all-special, collected
+     as a set (rc.24).** 32 national rosters live in their own seasons
+     (`fifae-2024` / `fifae-2025`, same `order` as the RLCS season of the year,
+     so era logic and the career are untouched) with `national-<iso>` orgs.
+     Rules: (1) never in the normal draw, the opponent field, dailies,
+     challenges, the quiz or the career's club history; (2) a classic/quick
+     draft injects one at `DRAFT.nationalTeamChance` = 2.5% per offer (≈ one in
+     6 classic runs, one in 10 quick runs; the Wings egg stays 1% and
+     SAM-only), worldwide from the non-region-only teams, in a Region-only run
+     from that region's; (3) undiscovered teams weigh ×3 so the album (133
+     cards) can be completed without making the next find predictable; (4) EVERY
+     card of the lineup shows as its national special — rarity/type `national`,
+     a trophy-gold frame distinct from the white-gold legendary, the flag as the
+     art, the roster's own overall and a +2 all-attribute team buff (≈0.1–0.2
+     rating: the value is the overall); (5) SEEING the team collects all of its
+     cards (you draft one per offer — a full set would otherwise need the same
+     rare draw three or four times), with a toast; (6) they form their own album
+     (one crest per team, by edition) and do NOT count toward the special-card
+     totals or Collector / Curator / Completionist, whose pacing stays as it
+     was. The cards are DERIVED in `@/data` (id `nt-<base card id>`), never
+     hand-written, so a roster edit in `teams.md` carries over. National team
+     names are English in the data (like every org) and Portuguese in the PT
+     UI (`NATIONAL_TEAM_NAMES_PT`).
+136. **Region boosts per region × difficulty, fitted to worldwide parity
+     (rc.24).** Measured before and after the expansion with the realistic
+     reset-draft method (`difficulty.matrix.test.ts`, 600 sessions × 12 runs per
+     cell, plus the population metric). Worldwide did not move (title rate
+     Easy 84.6 → 86.2, Normal 53.7 → 53.5, Hard 40.4 → 39.9, Legacy 9.1 → 8.4 %;
+     the Legacy curve keeps 96-97 ≈ 15 % and 98+ ≈ 54 %), so `DIFFICULTY` is
+     unchanged. The regional field did need its own numbers: with SAM's flat
+     +2/+2/+2/+4, EU Legacy fell to 0.7 %, NA Legacy to 1.9 % and OCE Hard (58 %)
+     was easier than OCE Normal (44 %) — on Hard the AI gets no chemistry, which
+     outweighs the 0.6 shift gap in a small, real-roster field (SAM had the same
+     inversion: Normal 35 % < Hard 40 %). The rule now: **a good drafter wins a
+     Region-only run about as often as a worldwide run at the same difficulty**
+     (≈85 / 54 / 40 / 9 %). Fitted from a 3-point sweep per cell and verified:
+     SAM 83.1 / 53.3 / 40.6 / 9.3, EU 85.2 / 54.4 / 40.6 / 9.5, NA 85.0 / 53.4 /
+     40.0 / 10.0, MENA 85.4 / 54.1 / 40.3 / 8.8, OCE 84.3 / 51.4 (then nudged
+     1.5 → 1.35) / 39.4 / 8.6. Deliberate side effect: SAM Easy and Normal get
+     easier (61 → 83 %, 35 → 53 %) — they were harder than worldwide while being
+     described as the accessible mode. SAM Legacy keeps 4.0 and its #99 curve.
+     Regression guard: the effective opponent shift rises with the difficulty
+     in every region (`regional.test.ts`).
+137. **Challenges re-tuned by boss shift only — every original seed kept
+     (rc.24).** The bigger pool moved 17 of 27 fixed-seed challenge drafts out of
+     band (0–100 %). `challenges.tune.test.ts` (opt-in) scanned the boss
+     `opponentShift` per seed and found an in-band value for all 17 on their
+     ORIGINAL seed, so every challenge keeps its exact draft and theme; only the
+     boss strength moved (e.g. European Dawn +4 → −1.5, Time Capsule +1 → −8,
+     Carry the Rookie −9 → −3.25). The scan is kept as a tool for the next pool
+     change (Miguel's memory note: pool or special-RNG changes always do this).
 
 ## Open questions for review
 

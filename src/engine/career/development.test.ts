@@ -18,7 +18,7 @@ import {
   CAREER_TRAINING,
   CAREER_WORLD,
 } from "@/config/balance";
-import { playerCards, seasonById } from "@/data";
+import { lineupById, playerById, playerCards, seasonById } from "@/data";
 import { PLAYER_NAME_BANK } from "@/data/career/names";
 import type { Rng } from "@/lib/rng";
 import { finalOverall } from "../cards";
@@ -79,6 +79,8 @@ const ctxAt = (seasonIndex: number, world = emptyWorld()) => ({
 /** All dataset player ids that actually have cards, with order-sorted cards. */
 const cardsByPlayer = new Map<string, { order: number; overall: number }[]>();
 for (const card of playerCards) {
+  // Mirrors the engine: national-team (FIFAe) cards are not club history (v2.0).
+  if (lineupById.get(card.lineupId)?.national) continue;
   const order = seasonById.get(card.seasonId)?.order ?? 0;
   const list = cardsByPlayer.get(card.playerId) ?? [];
   list.push({ order, overall: finalOverall(card) });
@@ -197,8 +199,17 @@ describe("deriveBirthYear / age legality", () => {
       const debutYear = Number(/\d{4}/.exec(debutSeason.year)![0]);
       const debutAge = debutYear - deriveBirthYear(id, SEED_A);
       expect(debutAge).toBeGreaterThanOrEqual(13);
-      expect(debutAge).toBeLessThanOrEqual(19);
+      // A REAL birth date (v2.0) is the truth — some pros debuted in their 20s;
+      // only the inferred ages are held to the sampled 13-19 band.
+      if (!playerById.get(id)?.birthday) expect(debutAge).toBeLessThanOrEqual(19);
     }
+  });
+
+  it("a real birth date wins over the inferred debut age (v2.0)", () => {
+    const real = allPlayerIds.find((id) => playerById.get(id)?.birthday)!;
+    const year = Number(playerById.get(real)!.birthday!.slice(0, 4));
+    expect(deriveBirthYear(real, SEED_A)).toBe(year);
+    expect(deriveBirthYear(real, SEED_A + 1)).toBe(year);
   });
 
   it("no visible player is ever younger than 13 at any career season", () => {

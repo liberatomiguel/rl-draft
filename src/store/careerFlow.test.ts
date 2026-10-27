@@ -89,8 +89,13 @@ describe("careerFlow — full season integration (day clock)", () => {
     expect(a.careerSeed).toBe(b.careerSeed);
     expect(Object.keys(a.world.orgs).length).toBe(Object.keys(b.world.orgs).length);
     expect(a.squad.map((p) => p.id)).toEqual(b.squad.map((p) => p.id));
-    // 7 regions × 16 orgs.
-    expect(Object.keys(a.world.orgs).length).toBe(112);
+    // 7 regions × at least 16 orgs (a deep real region — EU in Season X since
+    // v2.0 — keeps every real org; its regionals field the top 16 by rating).
+    expect(Object.keys(a.world.orgs).length).toBeGreaterThanOrEqual(112);
+    for (const region of ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"]) {
+      const n = Object.values(a.world.orgs).filter((o) => o.region === region).length;
+      expect(n, region).toBeGreaterThanOrEqual(16);
+    }
     expect(a.squad).toHaveLength(3);
     expect(a.clock).toEqual({ seasonIndex: 0, day: 1 });
     expect(a.phase).toBe("running");

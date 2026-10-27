@@ -62,6 +62,8 @@ export function quizFacts(): Map<string, PlayerFacts> {
   if (factsCache) return factsCache;
   const byPlayer = new Map<string, PlayerFacts["appearances"]>();
   for (const l of lineups) {
+    // National teams (v2.0) are not club history — the quiz stays on club careers.
+    if (l.national) continue;
     const season = seasonById.get(l.seasonId);
     const year = season ? parseInt(season.year, 10) : NaN;
     const ids = l.playerCardIds.map((cid) => playerCardById.get(cid)).filter((c): c is NonNullable<typeof c> => !!c);

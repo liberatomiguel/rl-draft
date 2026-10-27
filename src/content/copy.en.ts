@@ -134,8 +134,8 @@ export const HOME_SEO = {
     },
     {
       id: "regions",
-      title: "Regional databases — South America & SAM",
-      body: "Region-Locked Draft narrows the pool to one scene's full depth — its World Championship teams plus the regional Top 8 that never reached Worlds. South America (SAM) is live now, with a hand-researched roster of Brazilian and South American teams, local heroes and cult underdogs you will not see in the worldwide draft. More regions are on the way.",
+      title: "Regional databases — NA, EU, SAM, MENA & OCE",
+      body: "Region-Locked Draft narrows the pool to one scene's full depth — its international teams plus the regional rosters that never reached Worlds. North America, Europe, South America, MENA and Oceania are live, each with hand-researched local heroes and cult underdogs you will not see in the worldwide draft. APAC and Sub-Saharan Africa follow as their databases grow.",
     },
     {
       id: "ratings",
@@ -214,13 +214,13 @@ export const SETUP = {
   region: "Region",
   regionHint: "Lock your run to one region's full scene — or draft worldwide.",
   regionWorldwide: "Worldwide",
-  regionWorldwideHint: "Every RLCS World Championship team",
+  regionWorldwideHint: "The international pool — every region's top rosters",
   regionComingSoon: "Coming soon",
   regionLockedBadge: "Region-locked",
   regionDescWorldwide:
-    "Every RLCS World Championship team. Tap a region to lock the draft to its scene — only SAM is live for now, more coming soon.",
-  regionDescLocked: (region: string) =>
-    `${region} only — a deeper pool that also includes teams that never reached Worlds.`,
+    "The international pool — every region's top rosters. Tap a region to lock the draft to its scene.",
+  regionDescLocked: (region: string, rosters: number) =>
+    `${region} only — ${rosters} rosters, a deeper pool that also includes teams that never reached Worlds.`,
   regionNames: {
     NA: "North America", EU: "Europe", SAM: "South America", MENA: "MENA",
     OCE: "Oceania", APAC: "APAC", SSA: "Sub-Saharan Africa",
@@ -286,7 +286,7 @@ export const ONBOARDING = {
   regionalTitle: "Regional Draft",
   regionalIntro: "This run is locked to one region's scene. Here's what changes:",
   regionalSteps: [
-    "The pool is region-only — its Worlds teams PLUS the regional Top 8 that never reached a World Championship.",
+    "The pool is region-only — its international teams PLUS the regional rosters that never reached a World Championship.",
     "Deeper benches, local heroes and cult underdogs you'll never see in the worldwide draft.",
     "Everything else is the same: difficulty, chemistry, the full tournament. Win it to fly your region's flag.",
   ],
@@ -743,6 +743,7 @@ export const SPECIAL_TYPE_LABELS: Record<string, string> = {
   mythic: "Mythic",
   legend: "Legend",
   coach: "Coach",
+  national: "National team",
   masked: "Special",
 };
 
@@ -758,6 +759,7 @@ export const RARITY_LABELS: Record<string, string> = {
   creator: "Creator",
   wings: "Wings",
   community: "Content Creator",
+  national: "National team",
 };
 
 export const EFFECT_LABELS: Record<string, string> = {
@@ -1535,6 +1537,30 @@ export const QUIZ_UI = {
   dayLabel: (n: number) => `Quiz #${n}`,
 };
 
+/** National teams (v2.0) — the FIFAe national rosters: a rare draw of their own
+ *  in Classic and Quick drafts, all-gold special cards and their own album. */
+export const NATIONAL_UI = {
+  /** Card badge + generic label. */
+  label: "National team",
+  /** Team name for display — the data name in English; PT maps it. */
+  teamName: (_orgId: string, dataName: string) => dataName,
+  drawKicker: "Rare draw",
+  drawNote: (n: number) =>
+    `Every card of this national team is a special — all ${n} are now in your collection.`,
+  toastKicker: "National team found",
+  toastCards: (n: number) => `+${n} card${n === 1 ? "" : "s"}`,
+  tabSpecials: "Special cards",
+  tabNational: "National teams",
+  albumIntro:
+    "The FIFAe national rosters. They show up rarely in Classic and Quick drafts — find a team once and every one of its cards joins your album.",
+  teamsFound: (found: number, total: number) => `${found}/${total} teams`,
+  cardsProgress: (got: number, total: number) => `${got}/${total} cards`,
+  notFound: "Not found yet",
+  notFoundHint: "Draw this team in a Classic or Quick draft to collect its cards.",
+  flavor: (name: string, nation: string, edition: string) => `${name} wore ${nation}'s colours at ${edition}.`,
+  effect: (n: number) => `+${n} to every team attribute — the national colours.`,
+};
+
 export const EN = {
   APP,
   NAV,
@@ -1569,6 +1595,7 @@ export const EN = {
   MISSIONS_UI,
   SEASON_RECAP,
   QUIZ_UI,
+  NATIONAL_UI,
 };
 
 export type Copy = typeof EN;

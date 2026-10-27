@@ -48,6 +48,8 @@ export const playerSchema = z.object({
   nickname: z.string().min(1),
   realName: z.string().optional(),
   country: z.string().length(2).optional(),
+  /** v2.0: real birth date (YYYY-MM-DD) — the career's real age. */
+  birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   region: regionSchema,
 });
 
@@ -127,10 +129,12 @@ export const lineupSchema = z.object({
   coachId: z.string().optional(),
   subId: z.string().optional(),
   orgBuffLevel: buffLevelSchema.optional(),
-  /** Regional-only team (SAM Top-8 that missed Worlds) — general draft hides it. */
+  /** Region-only roster (any region since v2.0) — the general draft hides it. */
   samOnly: z.boolean().optional(),
-  /** Easter-egg lineup drawn far less often (DRAFT.rareSpawnWeight). */
+  /** Easter-egg lineup drawn far less often (DRAFT.easterEggChance). */
   rareSpawn: z.boolean().optional(),
+  /** National team (v2.0, FIFAe season): special draw, all-special cards. */
+  national: z.boolean().optional(),
   historicalStrength: z.enum(["elite", "strong", "solid", "underdog"]),
 });
 
@@ -159,8 +163,10 @@ export const specialCardSchema = z.object({
   playerId: z.string().min(1),
   baseCardId: z.string().min(1),
   title: z.string().min(1),
-  cardType: z.enum(["moment", "major_mvp", "worlds_mvp", "season_mvp", "mythic", "legend", "coach"]),
-  rarity: z.enum(["rare", "epic", "mythic", "legendary", "creator", "wings", "community"]),
+  // "national" is DERIVED at load time from the national lineups (@/data), never
+  // hand-written in specialCards.json — the file schema below rejects it.
+  cardType: z.enum(["moment", "major_mvp", "worlds_mvp", "season_mvp", "mythic", "legend", "coach", "national"]),
+  rarity: z.enum(["rare", "epic", "mythic", "legendary", "creator", "wings", "community", "national"]),
   overall: overallSchema,
   stats: statsSchema.optional(),
   effect: specialEffectSchema,
@@ -282,6 +288,10 @@ export const orgsFileSchema = z.array(orgSchema);
 export const coachesFileSchema = z.array(coachCardSchema);
 export const subsFileSchema = z.array(subCardSchema);
 export const lineupsFileSchema = z.array(lineupSchema);
-export const specialCardsFileSchema = z.array(specialCardSchema);
+export const specialCardsFileSchema = z.array(
+  specialCardSchema.refine((sp) => sp.rarity !== "national" && sp.cardType !== "national", {
+    message: "national cards are derived from the national lineups (@/data) — don't hand-write them",
+  }),
+);
 export const achievementsFileSchema = z.array(achievementSchema);
 export const challengesFileSchema = z.array(challengeSchema);

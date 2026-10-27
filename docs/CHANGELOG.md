@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.23**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.24**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,64 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.24 (the v2.0 database expansion, 2026-10-27 · DESIGN-DECISIONS #133–#137 · ROAD-TO-WORLDS R39)
+- **The v2.0 base export** from `rocket-draft-database` (2026-10-26, 1383 approved
+  decisions): 149 new lineups (289 → 438 — international rosters from S3 to 2026,
+  second rosters of an org in one season, regional rosters for every region),
+  22 corrected blocks, 18 new special cards and 13 corrected ones, 62 org logos,
+  204 nationalities and 364 real birth dates. No saved id disappears. Generator:
+  `· recorte: <name>` on the team line for a second roster in a season (it joins
+  the id), `PERSON_ID` for homonyms, `BIRTHDAY`, `NATIONAL_TEAM_NAMES` (#133).
+- **Region-only mode for NA, EU, SAM, MENA and OCE** (was SAM only). The
+  `sam-only` flag now means region-only in any region; APAC and SSA stay "Coming
+  soon" and their flagged rosters play in the general pool until they open. The
+  setup screen shows the selected region's roster count (#134).
+- **National teams** — the FIFAe 2024 and 2025 national rosters (32 teams, 133
+  cards). A rare draw of their own in Classic and Quick drafts (2.5% per offer,
+  undiscovered teams favoured); every card is a gold **National team** special
+  (the flag as art, +2 to every team attribute); seeing the team collects all of
+  its cards at once, with a toast and a "Rare draw" note on the offer. Never an
+  AI opponent, never in dailies, challenges, the quiz or the career (#135).
+- **National-team album** in the collection: a second tab with one crest per
+  team, grouped by edition, progress per edition; a team opens its cards. The
+  existing special-card counters and achievements don't count national cards.
+- **Real ages in Road to Worlds** — players with a known birth date use it; new
+  careers only (R39).
+- Opt-in tuning tools: `difficulty.matrix.test.ts` (before/after matrix, every
+  difficulty × any pool) and `challenges.tune.test.ts` (challenge re-tune scan).
+
+### Changed — rc.24
+- Worldwide is described as "the international pool" (it has held Major teams
+  since v1.4); the regional texts, the home SEO block and the `/sam` page no
+  longer say only SAM is live (EN + PT).
+- National team names show in Portuguese in the PT UI (cards, draft header,
+  album, toast); the data stays English like every org.
+- The career's card history ignores national (FIFAe) cards, so they never become
+  a player's anchor overall or lift a potential (R39).
+- The quiz keeps to club careers (national lineups are not clues).
+
+### Balance — rc.24
+- **Region-only boosts per region × difficulty, fitted to worldwide parity**
+  (#136): SAM −1.2 / −0.1 / 1.4 / 4.0 · EU 0.25 / 0.5 / 1.2 / 1.5 · NA 0.6 / 1.3 /
+  2.3 / 2.0 · MENA −0.1 / 1.4 / 2.6 / 4.1 · OCE 0.9 / 1.35 / 3.3 / 5.0 (Easy /
+  Normal / Hard / Legacy). Every region now lands at ≈85 / 54 / 40 / 9 % title
+  rate for a good drafter, like worldwide. SAM Easy and Normal get easier (61 →
+  83 %, 35 → 53 %); SAM Legacy is unchanged.
+- Worldwide difficulty unchanged — measured before and after the expansion
+  (Easy 85 → 86 %, Normal 54 → 54 %, Hard 40 → 40 %, Legacy 9.1 → 8.4 %).
+- 17 challenges re-tuned by boss shift on their original seeds (#137).
+
+### Fixed — rc.24
+- **Region-only Normal was harder than Hard** (SAM 35 % vs 40 % title rate; OCE
+  would have been 44 % vs 58 %). Root cause: one flat +2 boost for Easy, Normal
+  and Hard, while Hard also sets the AI's chemistry cap to 0 — in a small field
+  of real rosters at full chemistry that outweighs Hard's 0.6 extra shift. The
+  per-region × difficulty boosts absorb it; `regional.test.ts` now asserts the
+  field toughens from Easy to Legacy in every region.
+- Collection detail: the effect line of every special started with an orphan
+  "—". Root cause: only the legacy situational effects have a label, but the
+  separator rendered unconditionally.
 
 ### Added — rc.23 (the banner's animated layer on the profile, 2026-10-21 · DESIGN-DECISIONS #132)
 - **Animated banners on the profile hero, filter-free.** `build:banners` now

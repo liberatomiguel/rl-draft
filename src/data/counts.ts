@@ -8,6 +8,14 @@
 import specialCards from "./specialCards.json";
 import achievements from "./achievements.json";
 
+/**
+ * National-team cards (v2.0) are DERIVED in @/data with this id prefix. They
+ * form their own album, so the special-card counters (home, profile,
+ * achievements, cosmetics) skip them — checkable from an id alone.
+ */
+export const NATIONAL_SPECIAL_PREFIX = "nt-";
+export const isNationalSpecialId = (id: string): boolean => id.startsWith(NATIONAL_SPECIAL_PREFIX);
+
 export const COUNTS = {
   specialCards: (specialCards as unknown[]).length,
   achievements: (achievements as unknown[]).length,

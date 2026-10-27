@@ -2,7 +2,7 @@
 
 /**
  * Reward toaster (v2.0): renders `useRewardToasts` — mission completions, the
- * all-three bonus, login streak XP, quiz solves. Portaled to <body>, stacked
+ * all-three bonus, login streak XP, quiz solves, national-team finds. Portaled to <body>, stacked
  * just under the achievement toaster so both can show at once.
  */
 
@@ -36,10 +36,11 @@ const TONE: Record<RewardToast["kind"], string> = {
   missionBonus: "!border-amber-400/60 shadow-[0_0_22px_rgba(251,191,36,0.22)]",
   login: "!border-orange/50 shadow-[0_0_18px_rgba(249,115,22,0.2)]",
   quiz: "!border-violet-400/50 shadow-[0_0_18px_rgba(167,139,250,0.2)]",
+  nationalTeam: "!border-amber-300/60 shadow-[0_0_22px_rgba(252,211,77,0.25)]",
 };
 
 function Toast({ toast }: { toast: RewardToast }) {
-  const { MISSIONS_UI: M, QUIZ_UI: Q } = useCopy();
+  const { MISSIONS_UI: M, QUIZ_UI: Q, NATIONAL_UI: N } = useCopy();
   const dismiss = useRewardToasts((s) => s.dismiss);
   useEffect(() => {
     sfx.pick();
@@ -60,6 +61,8 @@ function Toast({ toast }: { toast: RewardToast }) {
         };
       case "quiz":
         return { kicker: Q.title, title: Q.solvedToast(toast.attempt) };
+      case "nationalTeam":
+        return { kicker: N.toastKicker, title: `${N.teamName(toast.orgId, toast.name)} · ${toast.edition}` };
     }
   })();
 
@@ -73,7 +76,11 @@ function Toast({ toast }: { toast: RewardToast }) {
         <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-sub">{kicker}</span>
         <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">{title}</span>
       </span>
-      {toast.xp ? <span className="display shrink-0 text-sm font-bold text-orange-bright">+{toast.xp} XP</span> : null}
+      {toast.kind === "nationalTeam" ? (
+        <span className="display shrink-0 text-sm font-bold text-amber-200">{N.toastCards(toast.cards)}</span>
+      ) : toast.xp ? (
+        <span className="display shrink-0 text-sm font-bold text-orange-bright">+{toast.xp} XP</span>
+      ) : null}
     </button>
   );
 }

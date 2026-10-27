@@ -38,7 +38,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 4
+      "opponentShift": -1.5
     },
     "reward": {
       "xp": 90,
@@ -65,7 +65,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 3
+      "opponentShift": 6
     },
     "reward": {
       "xp": 100,
@@ -93,7 +93,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 1
+      "opponentShift": 3
     },
     "constraint": {
       "region": "OCE"
@@ -124,7 +124,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": -4
+      "opponentShift": 0.25
     },
     "constraint": {
       "maxPlayerOverall": 86
@@ -155,7 +155,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -5
+      "opponentShift": -8.75
     },
     "constraint": {
       "region": "SAM"
@@ -215,7 +215,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": 4
+      "opponentShift": -3.5
     },
     "constraint": {
       "country": "FR"
@@ -246,7 +246,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -5
+      "opponentShift": -9.75
     },
     "constraint": {
       "country": "BR"
@@ -278,7 +278,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -3
+      "opponentShift": -8.25
     },
     "constraint": {
       "maxPlayerOverall": 88
@@ -340,7 +340,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -9
+      "opponentShift": -3.25
     },
     "reward": {
       "xp": 300,
@@ -394,7 +394,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": 1
+      "opponentShift": -4.75
     },
     "constraint": {
       "country": "FR"
@@ -425,7 +425,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -8
+      "opponentShift": -3.5
     },
     "reward": {
       "xp": 360,
@@ -452,7 +452,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -3
+      "opponentShift": -9.25
     },
     "reward": {
       "xp": 440,
@@ -480,7 +480,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -6
+      "opponentShift": -8
     },
     "reward": {
       "xp": 500,
@@ -610,7 +610,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 4
+      "opponentShift": 1.25
     },
     "reward": {
       "xp": 130,
@@ -721,7 +721,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -13
+      "opponentShift": -6.75
     },
     "reward": {
       "xp": 600,
@@ -748,7 +748,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 9
+      "opponentShift": 5
     },
     "reward": {
       "xp": 110,
@@ -802,7 +802,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": 1
+      "opponentShift": -8
     },
     "reward": {
       "xp": 210,

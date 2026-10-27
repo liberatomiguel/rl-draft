@@ -26,6 +26,7 @@
  */
 
 import { FEATURES, RANKS } from "@/config/balance";
+import { isNationalSpecialId } from "@/data/counts";
 import {
   COSMETICS,
   cosmeticById,
@@ -125,7 +126,10 @@ export function cosmeticFacts(p: {
   const runsFinishedSinceS1 = Math.max(0, num("runsCompleted") - (preseason?.runsCompleted ?? 0));
   const specialDates = (p as { unlockedSpecials?: Record<string, string> }).unlockedSpecials;
   const since = preseason?.snapshotAt ?? "";
-  const specialsOwned = specialDates ? Object.values(specialDates).filter((d) => typeof d === "string" && d >= since).length : 0;
+  // National-team cards (v2.0) have their own album — not counted here.
+  const specialsOwned = specialDates
+    ? Object.entries(specialDates).filter(([id, d]) => !isNationalSpecialId(id) && typeof d === "string" && d >= since).length
+    : 0;
   const legacyStreak = (p as { legacyStreak?: { best?: number } }).legacyStreak;
   const challengePerfect = stars ? Object.entries(stars).filter(([, mask]) => (mask & 7) === 7).map(([id]) => id) : [];
   const careerMarks = Array.isArray((p as { careerMarks?: unknown }).careerMarks)

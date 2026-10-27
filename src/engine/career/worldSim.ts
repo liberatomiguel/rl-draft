@@ -48,6 +48,7 @@ import {
 } from "@/config/balance";
 import {
   coachById,
+  lineupById,
   lineups,
   orgById,
   playerCardById,
@@ -173,6 +174,7 @@ function lastDatasetCardOrder(playerId: string): number | undefined {
   if (!lastOrderByPlayer) {
     lastOrderByPlayer = new Map();
     for (const card of playerCards) {
+      if (lineupById.get(card.lineupId)?.national) continue; // FIFAe ≠ club history (v2.0)
       const order = seasonById.get(card.seasonId)?.order ?? 0;
       const cur = lastOrderByPlayer.get(card.playerId);
       if (cur === undefined || order > cur) lastOrderByPlayer.set(card.playerId, order);

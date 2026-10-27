@@ -44,7 +44,11 @@ export type SpecialRarity =
   | "wings"
   // Content-creator cards (v1.4): emerald/teal, for creators who help spread the
   // game. Appear in NORMAL draws (not easter-egg), at the rare tier.
-  | "community";
+  | "community"
+  // National-team cards (v2.0, gold): every card of a FIFAe national lineup.
+  // Never rolled — a national lineup is a rare draw of its own and ALL its cards
+  // show as their national special (Lineup.national, DRAFT.nationalTeamChance).
+  | "national";
 
 export type SpecialCardType =
   | "moment"
@@ -53,7 +57,8 @@ export type SpecialCardType =
   | "season_mvp"
   | "mythic"
   | "legend"
-  | "coach";
+  | "coach"
+  | "national";
 
 /** Org / coach buff notation used across the game. `~` means neutral. */
 export type BuffLevel = "~" | "+" | "++" | "+++";
@@ -81,6 +86,11 @@ export interface Player {
    * same-country chemistry only applies when both sides have one.
    */
   country?: string;
+  /**
+   * Birth date "YYYY-MM-DD" (v2.0 base export, PandaScore) — optional. The
+   * career uses its year for the player's real age (deriveBirthYear).
+   */
+  birthday?: string;
   region: Region;
 }
 
@@ -176,9 +186,11 @@ export interface Lineup {
    */
   orgBuffLevel?: BuffLevel;
   /**
-   * Regional-only lineup (v1.2.0): a SAM Top-8 team that did NOT reach
-   * Worlds/Finals. Excluded from the general draft/opponent/daily pools;
-   * appears only in the region-locked mode. Absent/false = a Worlds finals team.
+   * Region-only lineup (v1.2.0; any region since v2.0 — the name is historical):
+   * a roster below the international bar. Excluded from the general
+   * draft/opponent/daily pools; appears only in its region's Region-only mode.
+   * A region WITHOUT that mode (REGION_LOCK.regions) keeps its flagged rosters in
+   * the general pool instead (see isRegionOnly in @/data).
    */
   samOnly?: boolean;
   /**
@@ -188,6 +200,13 @@ export interface Lineup {
    * the creator's card is guaranteed to show as the Creator special.
    */
   rareSpawn?: boolean;
+  /**
+   * National team (v2.0, a FIFAe season): never in the normal draw, the opponent
+   * field, dailies or challenges. Classic/quick drafts inject one at
+   * DRAFT.nationalTeamChance per offer, and then every card shows as its national
+   * special; seeing the lineup collects all of them (engine/draft nationalUnlocks).
+   */
+  national?: boolean;
   historicalStrength: HistoricalStrength;
 }
 
@@ -351,6 +370,13 @@ export interface DraftState {
    * creation so a run stays deterministic across midnight. Undefined = none.
    */
   eventSpecials?: { active: string[]; boosted: string[] };
+  /**
+   * National-team draws (v2.0): set ONLY for classic/quick runs, so dailies and
+   * challenges never see one and keep their seeded RNG sequence. `discovered` =
+   * national lineups whose cards the player already owns — undiscovered ones are
+   * favoured (DRAFT.nationalUndiscoveredWeight) so the album can be completed.
+   */
+  nationalTeams?: { discovered: string[] };
   offer: DraftOffer | null;
   roster: Roster;
   complete: boolean;

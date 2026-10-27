@@ -18,7 +18,7 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { COUNTS } from "@/data/counts";
+import { COUNTS, isNationalSpecialId } from "@/data/counts";
 import { useCopy } from "@/content/copy";
 import { localePath } from "@/content/pageRoutes";
 import { useSettings } from "@/store/settingsStore";
@@ -53,7 +53,10 @@ export default function HomeMenu() {
   const mmr = useProfileStore((s) => s.mmr);
   const runs = useProfileStore((s) => s.runsCompleted);
   const titles = useProfileStore(selectChampionships);
-  const unlocked = useProfileStore((s) => Object.keys(s.unlockedSpecials).length);
+  // National-team cards (v2.0) have their own album — not in this count.
+  const unlocked = useProfileStore(
+    (s) => Object.keys(s.unlockedSpecials).filter((id) => !isNationalSpecialId(id)).length,
+  );
   const achieved = useProfileStore((s) => Object.keys(s.achievements).length);
   const dailyResults = useProfileStore((s) => s.dailyResults);
   const streak = useProfileStore(selectDailyStreak);

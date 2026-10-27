@@ -168,6 +168,7 @@
     "id": "pluoh-sub-selfless-gaming-s3",
     "personId": "pluoh",
     "name": "Plu'oh",
+    "country": "US",
     "region": "NA",
     "orgId": "selfless-gaming",
     "lineupId": "selfless-gaming-s3",
@@ -228,6 +229,17 @@
     "lineupId": "northern-gaming-s3",
     "seasonId": "rlcs-s3",
     "overall": 82
+  },
+  {
+    "id": "turbopolsa-sub-northern-gaming-s3-maestro",
+    "personId": "turbopolsa",
+    "name": "Turbopolsa",
+    "country": "SE",
+    "region": "EU",
+    "orgId": "northern-gaming",
+    "lineupId": "northern-gaming-s3-maestro",
+    "seasonId": "rlcs-s3",
+    "overall": 77
   },
   {
     "id": "enigma-sub-alpha-sydney-s3",
@@ -420,7 +432,7 @@
     "id": "greazy-sub-team-envy-s5",
     "personId": "greazy",
     "name": "Greazy",
-    "country": "NL",
+    "country": "NO",
     "region": "EU",
     "orgId": "team-envy",
     "lineupId": "team-envy-s5",
@@ -736,6 +748,127 @@
     "overall": 73
   },
   {
+    "id": "jake-sub-cringe-society-s9",
+    "personId": "jake",
+    "name": "Jake",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "cringe-society",
+    "lineupId": "cringe-society-s9",
+    "seasonId": "rlcs-s9",
+    "overall": 66
+  },
+  {
+    "id": "creamz-sub-alpine-esports-x",
+    "personId": "creamz",
+    "name": "creamz",
+    "country": "GB",
+    "region": "NA",
+    "orgId": "alpine-esports",
+    "lineupId": "alpine-esports-x",
+    "seasonId": "rlcs-x",
+    "overall": 66
+  },
+  {
+    "id": "flitz-sub-pittsburgh-knights-x",
+    "personId": "flitz",
+    "name": "Flitz",
+    "country": "US",
+    "region": "NA",
+    "orgId": "pittsburgh-knights",
+    "lineupId": "pittsburgh-knights-x",
+    "seasonId": "rlcs-x",
+    "overall": 65
+  },
+  {
+    "id": "jessie-sub-dignitas-x",
+    "personId": "jessie",
+    "name": "Jessie",
+    "country": "NL",
+    "region": "EU",
+    "orgId": "dignitas",
+    "lineupId": "dignitas-x",
+    "seasonId": "rlcs-x",
+    "overall": 70
+  },
+  {
+    "id": "seeb-sub-fc-barcelona-x",
+    "personId": "seeb",
+    "name": "Seeb",
+    "country": "NO",
+    "region": "EU",
+    "orgId": "fc-barcelona",
+    "lineupId": "fc-barcelona-x",
+    "seasonId": "rlcs-x",
+    "overall": 69
+  },
+  {
+    "id": "mk-sub-german-amigos-x",
+    "personId": "mk",
+    "name": "MK.",
+    "country": "DE",
+    "region": "EU",
+    "orgId": "german-amigos",
+    "lineupId": "german-amigos-x",
+    "seasonId": "rlcs-x",
+    "overall": 66
+  },
+  {
+    "id": "yagi-sub-sk-gaming-x",
+    "personId": "yagi",
+    "name": "Yagi",
+    "country": "CH",
+    "region": "EU",
+    "orgId": "sk-gaming",
+    "lineupId": "sk-gaming-x",
+    "seasonId": "rlcs-x",
+    "overall": 69
+  },
+  {
+    "id": "porto-sub-solary-x-fall",
+    "personId": "porto",
+    "name": "Porto",
+    "country": "FR",
+    "region": "EU",
+    "orgId": "solary",
+    "lineupId": "solary-x-fall",
+    "seasonId": "rlcs-x",
+    "overall": 64
+  },
+  {
+    "id": "stealth-sub-team-singularity-x",
+    "personId": "stealth",
+    "name": "Stealth",
+    "country": "GB",
+    "region": "EU",
+    "orgId": "team-singularity",
+    "lineupId": "team-singularity-x",
+    "seasonId": "rlcs-x",
+    "overall": 63
+  },
+  {
+    "id": "jnr-sub-triple-trouble-x",
+    "personId": "jnr",
+    "name": "Jnr",
+    "country": "GB",
+    "region": "EU",
+    "orgId": "triple-trouble",
+    "lineupId": "triple-trouble-x",
+    "seasonId": "rlcs-x",
+    "overall": 64
+  },
+  {
+    "id": "wolf-sub-vodafone-giants-x",
+    "personId": "wolf",
+    "name": "Wolf.",
+    "country": "ES",
+    "region": "EU",
+    "orgId": "vodafone-giants",
+    "lineupId": "vodafone-giants-x",
+    "seasonId": "rlcs-x",
+    "overall": 70
+  },
+  {
     "id": "aguesome-sub-true-neutral-x",
     "personId": "aguesome",
     "name": "Aguesome",
@@ -758,6 +891,39 @@
     "overall": 74
   },
   {
+    "id": "john-sub-avidity-esports-x",
+    "personId": "john",
+    "name": "john",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "avidity-esports",
+    "lineupId": "avidity-esports-x",
+    "seasonId": "rlcs-x",
+    "overall": 75
+  },
+  {
+    "id": "alpe-sub-pdhm-gaming-x",
+    "personId": "alpe",
+    "name": "alpe",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "pdhm-gaming",
+    "lineupId": "pdhm-gaming-x",
+    "seasonId": "rlcs-x",
+    "overall": 65
+  },
+  {
+    "id": "zez0nix-sub-sandrock-gaming-x",
+    "personId": "zez0nix",
+    "name": "Zez0nix",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "sandrock-gaming",
+    "lineupId": "sandrock-gaming-x",
+    "seasonId": "rlcs-x",
+    "overall": 70
+  },
+  {
     "id": "stl-sub-furia-2122",
     "personId": "stl",
     "name": "STL",
@@ -778,6 +944,50 @@
     "lineupId": "the-club-2122",
     "seasonId": "rlcs-2021-22",
     "overall": 77
+  },
+  {
+    "id": "black-sub-ankaa-esports-2122",
+    "personId": "black",
+    "name": "BLACK",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "ankaa-esports",
+    "lineupId": "ankaa-esports-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 63
+  },
+  {
+    "id": "s1kies-sub-f16-esports-2122",
+    "personId": "s1kies",
+    "name": "S1kies",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "f16-esports",
+    "lineupId": "f16-esports-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 68
+  },
+  {
+    "id": "errorless-sub-owl-esports-2122",
+    "personId": "errorless",
+    "name": "Errorless",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "owl-esports",
+    "lineupId": "owl-esports-2122",
+    "seasonId": "rlcs-2021-22",
+    "overall": 62
+  },
+  {
+    "id": "s5cosmic-sub-koi-2223",
+    "personId": "s5cosmic",
+    "name": "S5-Cosmic",
+    "country": "US",
+    "region": "NA",
+    "orgId": "koi",
+    "lineupId": "koi-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 66
   },
   {
     "id": "saizen-sub-team-vitality-2223",
@@ -813,6 +1023,39 @@
     "overall": 60
   },
   {
+    "id": "nugget-sub-hogan-mode-2223",
+    "personId": "nugget",
+    "name": "Nugget",
+    "country": "GB",
+    "region": "EU",
+    "orgId": "hogan-mode",
+    "lineupId": "hogan-mode-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 70
+  },
+  {
+    "id": "arise-sub-psg-tundra-2223",
+    "personId": "arise",
+    "name": "arise",
+    "country": "DE",
+    "region": "EU",
+    "orgId": "psg-tundra",
+    "lineupId": "psg-tundra-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 68
+  },
+  {
+    "id": "physics-sub-nixuh-2223",
+    "personId": "physics",
+    "name": "Physics",
+    "country": "ZA",
+    "region": "SSA",
+    "orgId": "nixuh",
+    "lineupId": "nixuh-2223",
+    "seasonId": "rlcs-2022-23",
+    "overall": 56
+  },
+  {
     "id": "thundah-sub-luminosity-gaming-2024",
     "personId": "thundah",
     "name": "Thundah",
@@ -835,6 +1078,17 @@
     "overall": 73
   },
   {
+    "id": "kinseh-sub-cloud9-2024",
+    "personId": "kinseh",
+    "name": "kinseh",
+    "country": "US",
+    "region": "NA",
+    "orgId": "cloud9",
+    "lineupId": "cloud9-2024",
+    "seasonId": "rlcs-2024",
+    "overall": 68
+  },
+  {
     "id": "mesho-sub-rule-one-2024",
     "personId": "mesho",
     "name": "Mesho",
@@ -844,6 +1098,61 @@
     "lineupId": "rule-one-2024",
     "seasonId": "rlcs-2024",
     "overall": 70
+  },
+  {
+    "id": "toxiic-sub-national-gb-eng-fifae-2024",
+    "personId": "toxiic",
+    "name": "Toxiic",
+    "country": "GB",
+    "region": "EU",
+    "orgId": "national-gb-eng",
+    "lineupId": "national-gb-eng-fifae-2024",
+    "seasonId": "fifae-2024",
+    "overall": 73
+  },
+  {
+    "id": "oscillon-sub-national-nl-fifae-2024",
+    "personId": "oscillon",
+    "name": "Oscillon",
+    "country": "NL",
+    "region": "EU",
+    "orgId": "national-nl",
+    "lineupId": "national-nl-fifae-2024",
+    "seasonId": "fifae-2024",
+    "overall": 70
+  },
+  {
+    "id": "andeque-sub-national-tr-fifae-2024",
+    "personId": "andeque",
+    "name": "Andeque",
+    "country": "TR",
+    "region": "EU",
+    "orgId": "national-tr",
+    "lineupId": "national-tr-fifae-2024",
+    "seasonId": "fifae-2024",
+    "overall": 60
+  },
+  {
+    "id": "audrax-sub-national-ma-fifae-2024",
+    "personId": "audrax",
+    "name": "Audrax",
+    "country": "MA",
+    "region": "MENA",
+    "orgId": "national-ma",
+    "lineupId": "national-ma-fifae-2024",
+    "seasonId": "fifae-2024",
+    "overall": 77
+  },
+  {
+    "id": "rez-sub-national-au-fifae-2024",
+    "personId": "rez",
+    "name": "Rez",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "national-au",
+    "lineupId": "national-au-fifae-2024",
+    "seasonId": "fifae-2024",
+    "overall": 67
   },
   {
     "id": "thundah-sub-gen-g-mobil1-racing-2025",
@@ -866,6 +1175,116 @@
     "lineupId": "twisted-minds-2025",
     "seasonId": "rlcs-2025",
     "overall": 70
+  },
+  {
+    "id": "noone-sub-al-qadsiah-2025",
+    "personId": "noone",
+    "name": "No One.",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "al-qadsiah",
+    "lineupId": "al-qadsiah-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 68
+  },
+  {
+    "id": "z4-sub-team-reds-2025",
+    "personId": "z4",
+    "name": "z4",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "team-reds",
+    "lineupId": "team-reds-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 65
+  },
+  {
+    "id": "meshal-sub-team-vision-2025",
+    "personId": "meshal",
+    "name": "Meshal",
+    "country": "SA",
+    "region": "MENA",
+    "orgId": "team-vision",
+    "lineupId": "team-vision-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 68
+  },
+  {
+    "id": "vantage-sub-tu-tu-du-du-verstappen-2025",
+    "personId": "vantage",
+    "name": "Vantage",
+    "country": "FR",
+    "region": "APAC",
+    "orgId": "tu-tu-du-du-verstappen",
+    "lineupId": "tu-tu-du-du-verstappen-2025",
+    "seasonId": "rlcs-2025",
+    "overall": 60
+  },
+  {
+    "id": "shorez-sub-national-au-fifae-2025",
+    "personId": "shorez",
+    "name": "Shorez",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "national-au",
+    "lineupId": "national-au-fifae-2025",
+    "seasonId": "fifae-2025",
+    "overall": 69
+  },
+  {
+    "id": "dudsmelow-sub-national-br-fifae-2025",
+    "personId": "dudsmelow",
+    "name": "DudsMelow",
+    "country": "BR",
+    "region": "SAM",
+    "orgId": "national-br",
+    "lineupId": "national-br-fifae-2025",
+    "seasonId": "fifae-2025",
+    "overall": 76
+  },
+  {
+    "id": "flitz-sub-m80-2026",
+    "personId": "flitz",
+    "name": "Flitz",
+    "country": "US",
+    "region": "NA",
+    "orgId": "m80",
+    "lineupId": "m80-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 66
+  },
+  {
+    "id": "dx7-sub-canterbury-bankstown-bulldogs-2026",
+    "personId": "dx7",
+    "name": "dx7",
+    "country": "NZ",
+    "region": "OCE",
+    "orgId": "canterbury-bankstown-bulldogs",
+    "lineupId": "canterbury-bankstown-bulldogs-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 67
+  },
+  {
+    "id": "evohpaniniwine-sub-nerve-2026",
+    "personId": "evohpaniniwine",
+    "name": "Evohpaniniwine",
+    "country": "AU",
+    "region": "OCE",
+    "orgId": "nerve",
+    "lineupId": "nerve-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 62
+  },
+  {
+    "id": "vinlll-sub-ground-zero-gaming-2026",
+    "personId": "vinlll",
+    "name": "vinlll.",
+    "country": "JP",
+    "region": "APAC",
+    "orgId": "ground-zero-gaming",
+    "lineupId": "ground-zero-gaming-2026",
+    "seasonId": "rlcs-2026",
+    "overall": 62
   },
   {
     "id": "duo-sub-black-dragons-s1",
@@ -1146,6 +1565,7 @@
     "id": "speedhack-sub-dream-conspiracy-2122",
     "personId": "speedhack",
     "name": "speedhack",
+    "country": "BR",
     "region": "SAM",
     "orgId": "dream-conspiracy",
     "lineupId": "dream-conspiracy-2122",

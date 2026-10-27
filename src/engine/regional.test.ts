@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { DIFFICULTY, REGION_LOCK, regionOpponentBoost } from "@/config/balance";
 import {
   draftableLineups,
+  isRegionOnly,
   lineupById,
   lineupPoolForRegion,
   lineups,
@@ -13,14 +15,45 @@ import { generateOpponents } from "@/engine/opponents";
 import { buildUserTeam } from "@/engine/teams";
 import type { Roster } from "@/engine/types";
 
-describe("regional draft & sam-only separation (v1.2.0)", () => {
-  it("the draftable pool excludes every sam-only lineup", () => {
-    expect(draftableLineups.every((l) => !l.samOnly)).toBe(true);
-    expect(draftableLineups.length + lineups.filter((l) => l.samOnly).length).toBe(
-      lineups.length,
+describe("regional draft & region-only separation (v1.2.0, every region since v2.0)", () => {
+  it("the draftable pool excludes every region-only lineup and every national team", () => {
+    expect(draftableLineups.every((l) => !isRegionOnly(l) && !l.national)).toBe(true);
+    expect(
+      draftableLineups.length + lineups.filter((l) => isRegionOnly(l) || l.national).length,
+    ).toBe(lineups.length);
+    // the regional imports exist in the dataset, in more than one region
+    const regions = new Set(lineups.filter((l) => isRegionOnly(l)).map((l) => l.region));
+    expect(regions.size).toBeGreaterThan(1);
+  });
+
+  it("every Region-only region has a boost per difficulty, and the field toughens Easy → Legacy", () => {
+    // The boosts are fitted per region (#136); whatever the values, the effective
+    // opponent shift must rise with the difficulty — no more Normal-harder-than-Hard.
+    const order = ["easy", "normal", "hard", "legacy"] as const;
+    for (const region of REGION_LOCK.regions) {
+      const effective = order.map((d) => DIFFICULTY[d].opponentRatingShift + regionOpponentBoost(region, d));
+      for (let i = 1; i < effective.length; i++) {
+        expect(effective[i], `${region} ${order[i]}`).toBeGreaterThan(effective[i - 1]);
+      }
+    }
+    expect(regionOpponentBoost("APAC", "legacy")).toBe(0); // no mode → no boost
+  });
+
+  it("a region without a Region-only mode keeps its flagged rosters in the general pool", () => {
+    const fallback = lineups.filter(
+      (l) => l.samOnly && !l.national && !REGION_LOCK.regions.includes(l.region),
     );
-    // the SAM regional import exists in the dataset
-    expect(lineups.some((l) => l.samOnly)).toBe(true);
+    for (const l of fallback) expect(draftableLineups).toContain(l);
+  });
+
+  it("every Region-only region has a deep pool (international + region-only rosters)", () => {
+    for (const region of REGION_LOCK.regions) {
+      const pool = lineupPoolForRegion(region).map((id) => lineupById.get(id)!);
+      const playable = pool.filter((l) => !l.national && !l.rareSpawn);
+      expect(playable.length, region).toBeGreaterThanOrEqual(24);
+      expect(playable.some((l) => l.samOnly), region).toBe(true);
+      expect(playable.some((l) => !l.samOnly), region).toBe(true);
+    }
   });
 
   it("the SAM regional pool mixes Worlds finalists and sam-only Top-8 teams, all SAM", () => {
@@ -31,12 +64,12 @@ describe("regional draft & sam-only separation (v1.2.0)", () => {
     expect(pool.some((l) => !l.samOnly)).toBe(true); // Worlds finalists
   });
 
-  it("a worldwide draft never offers a sam-only lineup", () => {
+  it("a worldwide draft never offers a region-only lineup", () => {
     const rng = createRng(12345);
-    let draft = createDraft("normal");
+    let draft = createDraft("normal", { nationalTeams: { discovered: [] } });
     for (let i = 0; i < 400; i++) {
       draft = drawNextOffer(draft, rng);
-      expect(lineupById.get(draft.offer!.lineupId)!.samOnly).toBeFalsy();
+      expect(isRegionOnly(lineupById.get(draft.offer!.lineupId)!)).toBe(false);
     }
   });
 

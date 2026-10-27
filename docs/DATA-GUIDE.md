@@ -3,8 +3,9 @@
 ## ⚙️ The dataset pipeline (v0.4+)
 
 The JSONs in `src/data/` are **GENERATED** — the source of truth is
-**`data-sources/teams.md`** (the curated "all RLCS finals teams" archive,
-259 lineups across 2016-2026). To update the dataset:
+**`data-sources/teams.md`** (the curated archive: 438 lineups across
+2016-2026 since the v2.0 base export, including 32 FIFAe national teams).
+To update the dataset:
 
 1. Edit `data-sources/teams.md` (same team-block format, see the file).
 2. Run `npm run build:data`.
@@ -72,6 +73,10 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 
 - `country`: ISO 3166-1 alpha-2 (`BR`, `FR`, `US`…). Used for chemistry and
   the country chip. Add display names in `src/lib/util.ts` if missing.
+- `birthday` (optional, v2.0): `YYYY-MM-DD` from the base export
+  (PandaScore), via the generator's `BIRTHDAY` map keyed by the FINAL person
+  id. Road to Worlds uses its year as the player's real age
+  (`deriveBirthYear`); players without one keep the inferred debut age.
 - `region`: `NA | EU | SAM | MENA | OCE | APAC | SSA`.
 - One entry per person. **Strength lives on cards, not here** (base doc §9).
 
@@ -129,14 +134,28 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
   underdog), **but** a block flagged `legacy` in `teams.md` is floored at
   **"strong"** (a naturally-elite lineup keeps elite) — a regional landmark whose
   raw overalls are below the cut still headlines its region's legacy gauntlet.
-- `samOnly` (optional): a SAM Top-8 team that missed Worlds — region-locked.
-  Excluded from `draftableLineups` (the worldwide draw); shown only in the
-  region-locked SAM mode / larger regional pool. Set by the `sam-only` flag in
-  `teams.md`.
-- `rareSpawn` (optional): an easter-egg lineup drawn far less often than normal
-  (`DRAFT.rareSpawnWeight`). Set by the `rare` flag in `teams.md`.
+- `samOnly` (optional; the name is historical): a **region-only** roster, any
+  region since v2.0 — below the international bar. Excluded from
+  `draftableLineups` (the worldwide draw and opponent field); shown only in its
+  region's Region-only mode. Set by the `sam-only` (or `region-only`) flag in
+  `teams.md`. It only takes effect in a region that HAS the mode
+  (`REGION_LOCK.regions` = NA, EU, SAM, MENA, OCE): APAC/SSA rosters carrying the
+  flag stay in the general pool until those regions open (`isRegionOnly` in
+  `@/data`), so nothing becomes unplayable.
+- `rareSpawn` (optional): an easter-egg lineup injected at
+  `DRAFT.easterEggChance` instead of the normal draw. Set by the `rare` flag.
+- `national` (optional, v2.0): a FIFAe national team (any lineup of a season
+  with `national: true` in the generator's `SEASONS`). Never in the normal
+  draw, the opponent field, dailies, challenges, the quiz or the career; a
+  classic/quick draft injects one at `DRAFT.nationalTeamChance`, and EVERY card
+  on it shows as its national special (see specialCards below).
 - Flags live on the team block's `flag:` line in `teams.md`, comma-separated;
-  spellings are `sam-only`, `rare`, `legacy` (unknown flags are ignored).
+  spellings are `sam-only` / `region-only`, `rare`, `legacy` (unknown flags are
+  ignored).
+- **Second roster of an org in one season (v2.0 "recorte"):** add
+  `· recorte: <name>` to the team line (`Solary · RLCS X · 2020-21 · recorte:
+  fall`). The name joins the lineup and card ids (`solary-x-fall`), so it never
+  collides with the first roster; blocks without it keep their ids.
 - `name` is the display name of that era (e.g. "Renault Vitality" vs
   "Team Vitality").
 
@@ -182,6 +201,14 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 Same shape as coaches minus bonus fields, plus optional `stats`.
 
 ## specialCards.json — collectibles
+
+> **National-team cards are NOT in this file (v2.0).** Every card of a
+> national lineup is a special of rarity `national` DERIVED at load time in
+> `src/data/index.ts` (id `nt-<base card id>`, the roster's overall +
+> `SPECIALS.national.overallDelta`, a +`SPECIALS.national.teamBoost` team buff),
+> so a roster edit in `teams.md` carries over by itself. The file schema rejects
+> a hand-written `national` card. Derived cards join `specialCards` /
+> `specialCardById` but never a person's roll pool.
 
 > **HAND-MAINTAINED (since v1.1.1).** Unlike the other data files, this one is
 > NOT generated. Edit it directly, then run `npm run validate:data`.
@@ -306,6 +333,20 @@ pointing at an existing base card, then `npm run validate:data`. It immediately
 becomes draftable + collectible. The `playerId` must match a player exactly —
 watch for nickname-spelling drift (`exotiik`, not `exotiiik`); the validator
 prints the bad id if a ref doesn't resolve.
+
+**Add a national team (v2.0):** put the block under the `## FIFAe YYYY` section
+of `teams.md` (team line `Brasil · FIFAe 2024`, the base's Portuguese names).
+The generator maps the name to its `national-<iso>` id through `ORG_ALIAS` and
+the English display name through `NATIONAL_TEAM_NAMES` (a new country needs
+both, or `build:data` stops with a clear error), and drop the flag as
+`public/orgs/national-<iso>.png`. The Portuguese display name lives in
+`NATIONAL_TEAM_NAMES_PT` (`copy.pt.ts`). Its cards become national specials
+automatically. A new FIFAe edition needs a `SEASONS` entry with
+`national: true` and the RLCS `order` of the same year.
+
+**Two different people with the same nickname (v2.0):** add a `PERSON_ID`
+entry in the generator — `"nick|orgId"` (or `"nick|REGION"`) → person id
+(`"misty|national-my": "misty-my"`). The org key is checked first.
 
 **Add multiple logos for one org (logo eras):** an org that rebranded can show
 a different logo per era. Edit the `ORG_LOGO_ERAS` map in

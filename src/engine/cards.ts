@@ -277,9 +277,10 @@ export function resolvePick(pick: RosterPick): ResolvedCard {
 
 /** Display resolution for a special card (player- or coach-based). */
 export function resolveSpecial(sp: SpecialCard): ResolvedCard {
-  return sp.kind === "coach"
-    ? resolveCoach(sp.baseCardId, sp.id)
-    : resolvePlayerCard(sp.baseCardId, sp.id);
+  if (sp.kind === "coach") return resolveCoach(sp.baseCardId, sp.id);
+  // A national team's sub card is its own base (v2.0 national cards).
+  if (subById.has(sp.baseCardId)) return resolveSub(sp.baseCardId, sp.id);
+  return resolvePlayerCard(sp.baseCardId, sp.id);
 }
 
 /** Lineup header info for the draft screen. */

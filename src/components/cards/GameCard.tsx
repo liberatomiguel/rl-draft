@@ -97,6 +97,7 @@ const SPECIAL_ACCENT: Record<string, string> = {
   creator: "text-pink-200",
   wings: "text-orange-300",
   community: "text-emerald-300",
+  national: "text-yellow-200",
 };
 
 /**
@@ -114,6 +115,7 @@ const SPECIAL_OVR_COLOR: Record<string, string> = {
   creator: "ovr-creator",
   wings: "ovr-wings",
   community: "ovr-community",
+  national: "ovr-national",
 };
 
 /** Compact stat codes for the special-card buff pill (full names don't fit). */
@@ -152,7 +154,7 @@ function specialBuffLabel(effect: SpecialEffect, showOverall: boolean): string |
 
 function frameOf(card: ResolvedCard, showOverall: boolean): string {
   if (card.special) {
-    const holo = ["epic", "mythic", "legendary", "creator", "wings", "community"].includes(card.special.rarity)
+    const holo = ["epic", "mythic", "legendary", "creator", "wings", "community", "national"].includes(card.special.rarity)
       ? ` holo-${card.special.rarity}`
       : "";
     return `card-${card.special.rarity} card-special${holo}`;
@@ -178,7 +180,7 @@ export function GameCard({
   onClick,
   className,
 }: GameCardProps) {
-  const { RARITY_LABELS, SPECIAL_TYPE_LABELS, STAT_LABELS, DRAFT_UI } = useCopy();
+  const { RARITY_LABELS, SPECIAL_TYPE_LABELS, STAT_LABELS, DRAFT_UI, NATIONAL_UI } = useCopy();
   const ROLE_LABEL: Record<ResolvedCard["kind"], string> = {
     player: DRAFT_UI.player,
     coach: DRAFT_UI.slotCoach,
@@ -187,6 +189,12 @@ export function GameCard({
   };
   const isOrg = card.kind === "org";
   const isSpecial = Boolean(card.special);
+  // National-team card (v2.0): the localized team name is the title line, the
+  // edition the sub-line and "National team" the badge — no duplicated labels.
+  const isNational = card.special?.rarity === "national";
+  // A national team's ORG card reads in the player's language too (data is EN).
+  const displayName =
+    isOrg && card.orgId?.startsWith("national-") ? NATIONAL_UI.teamName(card.orgId, card.name) : card.name;
   const hiddenBase = !showOverall && !isSpecial;
   // v1.3: special cards always show their photo, identity, org/season and buff in
   // EVERY mode (base doc §11/§14) — exactly like base cards keep their crest and
@@ -345,7 +353,7 @@ export function GameCard({
             isSpecial ? "text-white" : "text-ink",
           )}
         >
-          {card.name}
+          {displayName}
         </p>
         {card.special ? (
           <p
@@ -354,11 +362,17 @@ export function GameCard({
               SPECIAL_ACCENT[card.special.rarity] ?? "text-orange-bright",
             )}
           >
-            {!specialCollected ? "???" : card.special.title}
+            {!specialCollected
+              ? "???"
+              : isNational
+                ? NATIONAL_UI.teamName(card.orgId ?? "", card.special.title)
+                : card.special.title}
           </p>
         ) : null}
         <p className={cx("mt-0.5 truncate text-[10px]", isSpecial ? "text-white/60" : "text-sub")}>
-          {isOrg
+          {isNational
+            ? card.seasonShort
+            : isOrg
             ? showOverall
               ? card.buffLevel === "~"
                 ? "No buff"
@@ -381,7 +395,9 @@ export function GameCard({
                   ? "?? · ??"
                   : card.special.rarity === "creator"
                     ? RARITY_LABELS.creator
-                    : // v1.3: type stays; only the rarity label hides on no-overall runs.
+                    : isNational
+                      ? SPECIAL_TYPE_LABELS.national
+                      : // v1.3: type stays; only the rarity label hides on no-overall runs.
                       `${SPECIAL_TYPE_LABELS[card.special.cardType]} · ${
                         hideSpecialRarity ? "??" : RARITY_LABELS[card.special.rarity]
                       }`}

@@ -122,8 +122,8 @@ export const PT: Copy = {
       },
       {
         id: "regions",
-        title: "Bancos regionais — América do Sul & SAM",
-        body: "O Draft Regional limita o pool a uma cena inteira — os times de Mundial mais o Top 8 regional que nunca chegou a um Worlds. A América do Sul (SAM) já está no ar, com um elenco pesquisado à mão de times brasileiros e sul-americanos, heróis locais e azarões cult que você não vê no draft mundial. Mais regiões estão a caminho.",
+        title: "Bancos regionais — NA, EU, SAM, MENA e OCE",
+        body: "O Draft Regional limita o pool a uma cena inteira — os times internacionais mais os elencos regionais que nunca chegaram a um Worlds. América do Norte, Europa, América do Sul, MENA e Oceania já estão no ar, cada uma com heróis locais e azarões cult pesquisados à mão que você não vê no draft mundial. APAC e África Subsaariana chegam conforme os bancos crescem.",
       },
       {
         id: "ratings",
@@ -367,13 +367,13 @@ export const PT: Copy = {
     region: "Região",
     regionHint: "Trave sua run em uma região inteira — ou jogue mundial.",
     regionWorldwide: "Mundial",
-    regionWorldwideHint: "Todos os times do Mundial da RLCS",
+    regionWorldwideHint: "O pool internacional — os melhores elencos de cada região",
     regionComingSoon: "Em Breve",
     regionLockedBadge: "Região travada",
     regionDescWorldwide:
-      "Todos os times do Mundial da RLCS. Toque numa região para travar o draft nela — por enquanto só a SAM está disponível, mais em breve.",
-    regionDescLocked: (region: string) =>
-      `Só ${region} — um pool mais profundo, que inclui times que nunca chegaram ao Mundial.`,
+      "O pool internacional — os melhores elencos de cada região. Toque numa região para travar o draft nela.",
+    regionDescLocked: (region: string, rosters: number) =>
+      `Só ${region} — ${rosters} elencos, um pool mais profundo que inclui times que nunca chegaram ao Mundial.`,
     regionNames: {
       NA: "América do Norte", EU: "Europa", SAM: "América do Sul", MENA: "MENA",
       OCE: "Oceania", APAC: "APAC", SSA: "África Subsaariana",
@@ -434,7 +434,7 @@ export const PT: Copy = {
     regionalTitle: "Draft Regional",
     regionalIntro: "Esta run está travada na cena de uma região. Veja o que muda:",
     regionalSteps: [
-      "O pool é só da região — seus times do Worlds MAIS o Top 8 regional que nunca chegou a um Mundial.",
+      "O pool é só da região — seus times internacionais MAIS os elencos regionais que nunca chegaram a um Mundial.",
       "Bancos mais profundos, heróis locais e zebras de culto que você nunca vê no draft mundial.",
       "O resto é igual: dificuldade, química, o torneio completo. Vença para erguer a bandeira da sua região.",
     ],
@@ -891,6 +891,7 @@ export const PT: Copy = {
     mythic: "Mítica",
     legend: "Lenda",
     coach: "Técnico",
+    national: "Seleção",
     masked: "Especial",
   },
 
@@ -906,6 +907,7 @@ export const PT: Copy = {
     creator: "Criador",
     wings: "Wings",
     community: "Criador de Conteúdo",
+    national: "Seleção",
   },
 
   EFFECT_LABELS: {
@@ -1490,4 +1492,48 @@ export const PT: Copy = {
     },
     dayLabel: (n: number) => `Quiz #${n}`,
   },
+
+  NATIONAL_UI: {
+    label: "Seleção",
+    teamName: (orgId: string, dataName: string) => NATIONAL_TEAM_NAMES_PT[orgId] ?? dataName,
+    drawKicker: "Sorteio raro",
+    drawNote: (n: number) =>
+      `Todas as cartas desta seleção são especiais — as ${n} já estão na sua coleção.`,
+    toastKicker: "Seleção encontrada",
+    toastCards: (n: number) => `+${n} carta${n === 1 ? "" : "s"}`,
+    tabSpecials: "Cartas especiais",
+    tabNational: "Seleções",
+    albumIntro:
+      "As seleções da FIFAe. Elas aparecem raramente nos drafts Classic e Quick — encontre uma seleção uma vez e todas as cartas dela entram no seu álbum.",
+    teamsFound: (found: number, total: number) => `${found}/${total} seleções`,
+    cardsProgress: (got: number, total: number) => `${got}/${total} cartas`,
+    notFound: "Ainda não encontrada",
+    notFoundHint: "Sorteie esta seleção num draft Classic ou Quick para colecionar as cartas.",
+    flavor: (name: string, _nation: string, edition: string) => `${name} defendeu a seleção na ${edition}.`,
+    effect: (n: number) => `+${n} em todos os atributos do time — as cores da seleção.`,
+  },
+};
+
+/** National-team names in Portuguese (v2.0), by org id — the data is English. */
+const NATIONAL_TEAM_NAMES_PT: Record<string, string> = {
+  "national-za": "África do Sul",
+  "national-de": "Alemanha",
+  "national-sa": "Arábia Saudita",
+  "national-ar": "Argentina",
+  "national-au": "Austrália",
+  "national-be": "Bélgica",
+  "national-br": "Brasil",
+  "national-cl": "Chile",
+  "national-es": "Espanha",
+  "national-us": "Estados Unidos",
+  "national-fr": "França",
+  "national-gb-eng": "Inglaterra",
+  "national-ma": "Marrocos",
+  "national-nl": "Países Baixos",
+  "national-pt": "Portugal",
+  "national-tr": "Turquia",
+  "national-it": "Itália",
+  "national-my": "Malásia",
+  "national-no": "Noruega",
+  "national-om": "Omã",
 };

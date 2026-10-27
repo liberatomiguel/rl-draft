@@ -21,6 +21,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
+import { NATIONAL_CARD_IDS, NationalAlbum } from "./NationalAlbum";
 
 // Official catalogue rarities only — the per-rarity tiles + filter chips. The
 // special-person rarities (community/wings/creator) are intentionally absent:
@@ -28,6 +29,8 @@ import { GameCard } from "@/components/cards/GameCard";
 // "chase" tile and no rarity filter; an owned one still shows under "all".
 const RARITIES: SpecialRarity[] = ["rare", "epic", "mythic", "legendary"];
 type StatusFilter = "all" | "unlocked" | "locked";
+/** v2.0: the special-card album and the national-team album (its own set). */
+type Album = "specials" | "national";
 
 /**
  * Sort weight per rarity — higher = first within a lock state. Order by direction
@@ -42,6 +45,7 @@ const RARITY_RANK: Record<SpecialRarity, number> = {
   community: 2,
   wings: 1,
   creator: 0,
+  national: -1,
 };
 
 /** Easter-egg rarities — masked in the collection until unlocked (Wings + Creator). */
@@ -59,12 +63,13 @@ const isSecretRarity = (r: SpecialRarity) => SECRET_RARITIES.includes(r);
 const PAGE_BATCH = 24;
 
 export function CollectionView() {
-  const { COLLECTION_UI: C, RARITY_LABELS } = useCopy();
+  const { COLLECTION_UI: C, RARITY_LABELS, NATIONAL_UI: N } = useCopy();
   const mounted = useMounted();
   const unlockedMap = useProfileStore((s) => s.unlockedSpecials);
   const xp = useProfileStore((s) => s.xp);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [rarity, setRarity] = useState<SpecialRarity | "all">("all");
+  const [album, setAlbum] = useState<Album>("specials");
   const [detail, setDetail] = useState<SpecialCard | null>(null);
 
   // Hidden dev preview: visiting /collection?dev=1 renders EVERY special as
@@ -83,10 +88,16 @@ export function CollectionView() {
   // (creator / wings / community) only appear — and only count toward the total —
   // once OWNED. So the denominator reads the official count until one is unlocked,
   // then ticks up. devPreview keeps everything visible.
+  // National-team cards (v2.0) live in their own album (NationalAlbum), so they
+  // never count here.
   const collectibleCards = useMemo(
-    () => specialCards.filter((sp) => !isSpecialPersonRarity(sp.rarity) || isUnlocked(sp.id)),
+    () =>
+      specialCards.filter(
+        (sp) => sp.rarity !== "national" && (!isSpecialPersonRarity(sp.rarity) || isUnlocked(sp.id)),
+      ),
     [isUnlocked],
   );
+  const nationalGot = mounted ? NATIONAL_CARD_IDS.filter((id) => isUnlocked(id)).length : 0;
   const unlockedCount = devPreview
     ? collectibleCards.length
     : mounted
@@ -188,109 +199,152 @@ export function CollectionView() {
                 Dev preview
               </span>
             ) : null}
-            <Badge tone="orange" className="!text-sm">
-              {C.progress(unlockedCount, collectibleCards.length)}
-            </Badge>
+            {album === "national" ? (
+              <Badge tone="gold" className="!text-sm">
+                {C.progress(nationalGot, NATIONAL_CARD_IDS.length)}
+              </Badge>
+            ) : (
+              <Badge tone="orange" className="!text-sm">
+                {C.progress(unlockedCount, collectibleCards.length)}
+              </Badge>
+            )}
           </div>
         }
         className="mb-6"
       />
 
-      {/* Rarity progress */}
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {RARITIES.map((r) => {
-          const total = specialCards.filter((sp) => sp.rarity === r).length;
-          const got = devPreview
-            ? total
-            : mounted
-              ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
-              : 0;
-          const lockRank = rarityLockedAt(r);
-          return (
-            <Panel key={r} className={cx("p-3 text-center", lockRank && "opacity-70")}>
-              <p className="kicker !text-[10px]">{RARITY_LABELS[r]}</p>
-              {lockRank ? (
-                <div className="mt-1 flex flex-col items-center gap-1">
-                  <RankBadge rank={lockRank} variant="menu" size="sm" />
-                  <p className="display flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wide text-faint">
-                    {C.unlocksAt(lockRank.label)}
-                  </p>
-                </div>
-              ) : (
-                <p className="display mt-1 text-xl font-bold text-ink">
-                  {got}
-                  <span className="text-sm text-faint">/{total}</span>
-                </p>
-              )}
-            </Panel>
-          );
-        })}
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {(["all", "unlocked", "locked"] as StatusFilter[]).map((f) => (
-          <FilterChip key={f} active={status === f} onClick={() => setStatus(f)}>
-            {C.filters[f]}
-          </FilterChip>
-        ))}
-        <span className="mx-1 h-4 w-px bg-line-strong" aria-hidden />
-        <FilterChip active={rarity === "all"} onClick={() => setRarity("all")}>
-          {C.filters.all}
-        </FilterChip>
-        {RARITIES.map((r) => (
-          <FilterChip key={r} active={rarity === r} onClick={() => setRarity(r)}>
-            {RARITY_LABELS[r]}
-          </FilterChip>
+      {/* Album switch (v2.0): special cards · national teams */}
+      <div className="mb-6 inline-flex rounded-xl border border-line bg-white/3 p-1" role="tablist">
+        {(["specials", "national"] as Album[]).map((a) => (
+          <button
+            key={a}
+            type="button"
+            role="tab"
+            aria-selected={album === a}
+            onClick={() => setAlbum(a)}
+            className={cx(
+              "display rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
+              album === a
+                ? a === "national"
+                  ? "bg-yellow-300/15 text-yellow-100"
+                  : "bg-orange/15 text-orange-bright"
+                : "text-sub hover:text-ink",
+            )}
+          >
+            {a === "specials" ? N.tabSpecials : N.tabNational}
+          </button>
         ))}
       </div>
 
-      {/* Grid — single grid, unlocked first (rarity → overall), then locked */}
-      {visible.length === 0 ? (
-        <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
+      {album === "national" ? (
+        <NationalAlbum isUnlocked={isUnlocked} onOpenCard={setDetail} />
       ) : (
-        // Mobile (<640px): exactly 2 columns so cards aren't one-per-row huge
-        // (v1.1.0). From sm: up, the original auto-fill grid is restored
-        // unchanged — columns stretch (1fr) to fill the row with no empty
-        // column on the right. Cards are fluid (w-full) to fill their cell, so
-        // shrinking the cell is the intended resize path — no card internals
-        // are touched, and only the collection uses this grid.
-        <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
-          {shown.map((sp, i) => (
-            <FxCard key={sp.id}>
-              {isUnlocked(sp.id) ? (
-                <GameCard
-                  card={resolveSpecial(sp)}
-                  showOverall
-                  specialCollected
-                  size="md"
-                  fluid
-                  lite
-                  // First row(s) are the LCP candidates: load their photos
-                  // eagerly instead of lazily so the largest paint isn't gated
-                  // on scroll/intersection. Unlocked cards sort first, so the
-                  // leading indices are exactly the above-the-fold photos.
-                  priority={i < 6}
-                  onClick={() => setDetail(sp)}
-                />
-              ) : (
-                <LockedCard sp={sp} onClick={() => setDetail(sp)} />
-              )}
-            </FxCard>
+        <>
+        {/* Rarity progress */}
+        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {RARITIES.map((r) => {
+            const total = specialCards.filter((sp) => sp.rarity === r).length;
+            const got = devPreview
+              ? total
+              : mounted
+                ? specialCards.filter((sp) => sp.rarity === r && unlockedMap[sp.id]).length
+                : 0;
+            const lockRank = rarityLockedAt(r);
+            return (
+              <Panel key={r} className={cx("p-3 text-center", lockRank && "opacity-70")}>
+                <p className="kicker !text-[10px]">{RARITY_LABELS[r]}</p>
+                {lockRank ? (
+                  <div className="mt-1 flex flex-col items-center gap-1">
+                    <RankBadge rank={lockRank} variant="menu" size="sm" />
+                    <p className="display flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wide text-faint">
+                      {C.unlocksAt(lockRank.label)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="display mt-1 text-xl font-bold text-ink">
+                    {got}
+                    <span className="text-sm text-faint">/{total}</span>
+                  </p>
+                )}
+              </Panel>
+            );
+          })}
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          {(["all", "unlocked", "locked"] as StatusFilter[]).map((f) => (
+            <FilterChip key={f} active={status === f} onClick={() => setStatus(f)}>
+              {C.filters[f]}
+            </FilterChip>
+          ))}
+          <span className="mx-1 h-4 w-px bg-line-strong" aria-hidden />
+          <FilterChip active={rarity === "all"} onClick={() => setRarity("all")}>
+            {C.filters.all}
+          </FilterChip>
+          {RARITIES.map((r) => (
+            <FilterChip key={r} active={rarity === r} onClick={() => setRarity(r)}>
+              {RARITY_LABELS[r]}
+            </FilterChip>
           ))}
         </div>
-      )}
 
-      {/* Reveal sentinel — appending more cards as it nears the viewport keeps
-          the initial mount small without a "load more" click. Rendered only
-          while cards remain; the 600px rootMargin loads the next batch before
-          the user reaches the bottom so the scroll stays seamless. */}
-      {hasMore ? <div ref={sentinelRef} aria-hidden className="h-px w-full" /> : null}
+        {/* Grid — single grid, unlocked first (rarity → overall), then locked */}
+        {visible.length === 0 ? (
+          <Panel className="p-10 text-center text-sm text-sub">{C.empty}</Panel>
+        ) : (
+          // Mobile (<640px): exactly 2 columns so cards aren't one-per-row huge
+          // (v1.1.0). From sm: up, the original auto-fill grid is restored
+          // unchanged — columns stretch (1fr) to fill the row with no empty
+          // column on the right. Cards are fluid (w-full) to fill their cell, so
+          // shrinking the cell is the intended resize path — no card internals
+          // are touched, and only the collection uses this grid.
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 md:gap-4">
+            {shown.map((sp, i) => (
+              <FxCard key={sp.id}>
+                {isUnlocked(sp.id) ? (
+                  <GameCard
+                    card={resolveSpecial(sp)}
+                    showOverall
+                    specialCollected
+                    size="md"
+                    fluid
+                    lite
+                    // First row(s) are the LCP candidates: load their photos
+                    // eagerly instead of lazily so the largest paint isn't gated
+                    // on scroll/intersection. Unlocked cards sort first, so the
+                    // leading indices are exactly the above-the-fold photos.
+                    priority={i < 6}
+                    onClick={() => setDetail(sp)}
+                  />
+                ) : (
+                  <LockedCard sp={sp} onClick={() => setDetail(sp)} />
+                )}
+              </FxCard>
+            ))}
+          </div>
+        )}
+
+        {/* Reveal sentinel — appending more cards as it nears the viewport keeps
+            the initial mount small without a "load more" click. Rendered only
+            while cards remain; the 600px rootMargin loads the next batch before
+            the user reaches the bottom so the scroll stays seamless. */}
+        {hasMore ? <div ref={sentinelRef} aria-hidden className="h-px w-full" /> : null}
+        </>
+      )}
 
       {/* Detail modal */}
       <Modal
         open={Boolean(detail)}
-        title={detail ? (isUnlocked(detail.id) ? detail.title : C.lockedCard) : ""}
+        title={
+          detail
+            ? isUnlocked(detail.id)
+              ? detail.rarity === "national"
+                ? N.teamName(resolveSpecial(detail).orgId ?? "", detail.title)
+                : detail.title
+              : C.lockedCard
+            : ""
+        }
         onClose={() => setDetail(null)}
         wide
       >
@@ -387,9 +441,13 @@ function LockedCard({ sp, onClick }: { sp: SpecialCard; onClick: () => void }) {
 }
 
 function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: string }) {
-  const { COLLECTION_UI: C, SPECIAL_TYPE_LABELS, RARITY_LABELS, EFFECT_LABELS, STAT_LABELS } = useCopy();
+  const { COLLECTION_UI: C, SPECIAL_TYPE_LABELS, RARITY_LABELS, EFFECT_LABELS, STAT_LABELS, NATIONAL_UI: N } =
+    useCopy();
   const resolved = resolveSpecial(sp);
   const stats = effectiveStats(sp.overall, sp.stats);
+  // National cards (v2.0): localized story + buff, one gold badge (type = rarity).
+  const national = sp.rarity === "national";
+  const nation = N.teamName(resolved.orgId ?? "", sp.title);
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr]">
       <div className="mx-auto">
@@ -401,21 +459,28 @@ function UnlockedDetail({ sp, unlockedAt }: { sp: SpecialCard; unlockedAt: strin
           {!isSecretRarity(sp.rarity) ? (
             <Badge tone="gold">{SPECIAL_TYPE_LABELS[sp.cardType]}</Badge>
           ) : null}
-          <Badge tone="orange">{RARITY_LABELS[sp.rarity]}</Badge>
+          {!national ? <Badge tone="orange">{RARITY_LABELS[sp.rarity]}</Badge> : null}
           <Badge tone="neutral">{resolved.seasonLabel}</Badge>
           {resolved.country ? <Badge tone="neutral">{countryName(resolved.country)}</Badge> : null}
         </div>
         <div>
           <p className="kicker mb-1">{C.context}</p>
-          <p className="text-sm leading-relaxed">{sp.flavor}</p>
+          <p className="text-sm leading-relaxed">
+            {national ? N.flavor(resolved.name, nation, resolved.seasonLabel ?? "") : sp.flavor}
+          </p>
         </div>
         <div>
           <p className="kicker mb-1">{C.effect}</p>
           <p className="text-sm">
-            <span className="font-semibold text-orange-bright">
-              {EFFECT_LABELS[sp.effect.type]}
-            </span>{" "}
-            — {sp.effect.description}
+            {/* Only the legacy situational effects have a label; the v3 boosts
+                read as their description alone (no orphan dash). */}
+            {EFFECT_LABELS[sp.effect.type] ? (
+              <>
+                <span className="font-semibold text-orange-bright">{EFFECT_LABELS[sp.effect.type]}</span>
+                {" — "}
+              </>
+            ) : null}
+            {national ? N.effect(sp.effect.value) : sp.effect.description}
           </p>
         </div>
         <div className="space-y-1.5">

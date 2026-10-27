@@ -35,6 +35,17 @@ import {
 
 const FILES = Object.keys(DATASET_FILES) as (keyof RawDataset)[];
 
+/**
+ * The runtime record list per file. `specialCards` also carries the national-team
+ * cards DERIVED at load time (v2.0, never in the JSON), so the file comparisons
+ * read only the hand-curated part; the derived cards have their own tests below.
+ */
+function fileRecords(key: keyof RawDataset): unknown {
+  return key === "specialCards"
+    ? runtime.specialCards.filter((sp) => sp.rarity !== "national")
+    : runtime[key];
+}
+
 let parsedCache: ParsedDataset | undefined;
 /** The zod-parsed + integrity-checked dataset (throws the `[data] …` error if invalid). */
 function parsed(): ParsedDataset {
@@ -80,7 +91,7 @@ describe("dataset validation (build-time gate)", () => {
     // own; nothing in src/ iterates a record's keys.)
     const p = parsed();
     for (const key of FILES) {
-      expect(runtime[key], key).toStrictEqual(p[key]);
+      expect(fileRecords(key), key).toStrictEqual(p[key]);
     }
   });
 
@@ -101,8 +112,13 @@ describe("dataset validation (build-time gate)", () => {
     for (const key of FILES) {
       const map = maps[key] as Map<string, { id: string }>;
       const records = p[key] as { id: string }[];
-      expect([...map.keys()], key).toStrictEqual(records.map((r) => r.id));
-      expect([...map.values()], key).toStrictEqual(records);
+      // specialCards: the file records first, then the derived national cards (v2.0).
+      const keys = [...map.keys()].slice(0, records.length);
+      const values = [...map.values()].slice(0, records.length);
+      expect(keys, key).toStrictEqual(records.map((r) => r.id));
+      expect(values, key).toStrictEqual(records);
+      const derived = [...map.values()].slice(records.length) as { rarity?: string }[];
+      expect(derived.every((r) => key === "specialCards" && r.rarity === "national"), key).toBe(true);
     }
   });
 
@@ -206,6 +222,13 @@ describe("dataset", () => {
 
   it("special cards map to real base cards inside real lineups", () => {
     for (const sp of specialCards) {
+      // A national team's sub is its own base card (v2.0).
+      const sub = subs.find((s) => s.id === sp.baseCardId);
+      if (sub) {
+        expect(sp.rarity, sp.id).toBe("national");
+        expect(lineupById.get(sub.lineupId)?.national, sp.id).toBe(true);
+        continue;
+      }
       if (sp.kind === "coach") {
         const base = coaches.find((c) => c.id === sp.baseCardId);
         expect(base, sp.id).toBeDefined();

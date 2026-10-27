@@ -24,7 +24,7 @@ import {
   CAREER_WORLD,
   TEAM_RATING,
 } from "@/config/balance";
-import { playerById, playerCards, seasonById } from "@/data";
+import { lineupById, playerById, playerCards, seasonById } from "@/data";
 import { PLAYER_NAME_BANK } from "@/data/career/names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
@@ -144,6 +144,9 @@ function parseFirstYear(label: string): number {
 const cardsByPlayer: Map<string, PlayerCard[]> = (() => {
   const map = new Map<string, PlayerCard[]>();
   for (const card of playerCards) {
+    // National-team cards (v2.0, FIFAe) are not club history: they share the
+    // RLCS season order, so they would hijack the career anchors and potential.
+    if (lineupById.get(card.lineupId)?.national) continue;
     const list = map.get(card.playerId);
     if (list) list.push(card);
     else map.set(card.playerId, [card]);
@@ -187,12 +190,17 @@ function seasonOrderFor(seasonIndex: number): number {
 // ---------------------------------------------------------------------------
 
 /**
- * Debut-age inference: the first dataset card's season gives the debut year;
- * a weighted debut age (13-17) is sampled per career, biased one year younger
- * when the player's last-2-cards trend is rising (still ascending → young) and
- * one year older when falling. Ages never go below 13 at any appearance.
+ * Birth year of a real player. v2.0: a real birth date in the dataset
+ * (players.json `birthday`, from the base export) wins — the career shows the
+ * player's real age. Otherwise, debut-age inference: the first dataset card's
+ * season gives the debut year; a weighted debut age (13-17) is sampled per
+ * career, biased one year younger when the player's last-2-cards trend is
+ * rising (still ascending → young) and one year older when falling. Ages never
+ * go below 13 at any appearance.
  */
 export function deriveBirthYear(playerId: string, careerSeed: number): number {
+  const birthday = playerById.get(playerId)?.birthday;
+  if (birthday) return Number(birthday.slice(0, 4));
   const cards = cardsByPlayer.get(playerId);
   const debutYear =
     cards && cards.length > 0

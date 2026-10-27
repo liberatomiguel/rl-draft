@@ -21,7 +21,8 @@ import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { FEATURES, RANKS, SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
-import { achievements as achievementDefs, specialCards } from "@/data";
+import { achievements as achievementDefs } from "@/data";
+import { COUNTS, isNationalSpecialId } from "@/data/counts";
 import type { CosmeticKind } from "@/data/cosmetics";
 import { useCopy } from "@/content/copy";
 import { lockerItems, MAX_BADGES, resolveEquipped, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
@@ -81,7 +82,8 @@ export default function ProfilePage() {
     badge: unseenOfKind(profile.cosmetics, "badge").length > 0,
     banner: unseenOfKind(profile.cosmetics, "banner").length > 0,
   };
-  const unlockedCount = Object.keys(profile.unlockedSpecials).length;
+  // National-team cards (v2.0) have their own album — not in this count.
+  const unlockedCount = Object.keys(profile.unlockedSpecials).filter((id) => !isNationalSpecialId(id)).length;
   const earned = profile.achievements;
   const lastDelta = profile.season.ratingHistory[0]?.delta ?? null;
   const openLocker = (kind: CosmeticKind) => {
@@ -260,7 +262,7 @@ export default function ProfilePage() {
       </div>
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile label={P.bestClear} value={bestClear ? DIFFICULTY_LABELS[bestClear].label : P.none} />
-        <StatTile label={P.specials} value={`${unlockedCount}/${specialCards.length}`} />
+        <StatTile label={P.specials} value={`${unlockedCount}/${COUNTS.specialCards}`} />
         <StatTile label={P.playoffRate} value={pct(profile.playoffAppearances, profile.runsCompleted)} />
         <StatTile label={P.achievements} value={`${Object.keys(earned).length}/${achievementDefs.length}`} />
       </div>

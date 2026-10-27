@@ -484,7 +484,7 @@
   {
     "id": "sp-rw9-zen-winstreak-killer",
     "playerId": "rw9",
-    "baseCardId": "rw9-team-falcons-2025",
+    "baseCardId": "rw9-rule-one-2223",
     "title": "Zen Winstreak Killer",
     "cardType": "moment",
     "rarity": "mythic",
@@ -506,12 +506,12 @@
       "value": 4,
       "description": "+4 defense and clutch."
     },
-    "flavor": "A 1v1-flavored moment card for rw9 ending the sense of inevitability around zen's run and showing elite defensive control."
+    "flavor": "A 1v1 moment from 2023: rw9, then with Rule One, ended zen's 1v1 win streak with elite defensive control."
   },
   {
     "id": "sp-fairypeak-be-careful",
     "playerId": "fairypeak",
-    "baseCardId": "fairypeak-team-vitality-s7",
+    "baseCardId": "fairypeak-team-vitality-s9",
     "title": "Be Careful!",
     "cardType": "moment",
     "rarity": "mythic",
@@ -533,7 +533,7 @@
       "value": 4,
       "description": "+4 experience and clutch."
     },
-    "flavor": "A Fairy Peak! control card built around the classic warning: give him space and the play is already gone."
+    "flavor": "Fusion, June 2020 (1v1): Fairy Peak!'s classic warning against oKhaliD. Base card from the same era (Season 9); not an RLCS match."
   },
   {
     "id": "sp-deevo-double-tap-king",
@@ -967,8 +967,8 @@
     "id": "sp-exotiiik-2024-world-mvp",
     "playerId": "exotiik",
     "baseCardId": "exotiik-team-bds-2024",
-    "title": "2024 World MVP",
-    "cardType": "worlds_mvp",
+    "title": "RLCS 2024 Season MVP",
+    "cardType": "season_mvp",
     "rarity": "mythic",
     "overall": 97,
     "stats": {
@@ -988,7 +988,7 @@
       "value": 4,
       "description": "+4 consistency and clutch."
     },
-    "flavor": "World Championship MVP card for Team BDS's 2024 title run, replacing the incorrect dralii MVP entry from the previous base."
+    "flavor": "RLCS 2024 Season MVP: exotiik's year at the heart of Team BDS, the season that ended with the world title."
   },
   {
     "id": "sp-beastmode-2025-season-mvp",
@@ -1020,7 +1020,7 @@
   {
     "id": "sp-marcby8-stockholm-major-mvp",
     "playerId": "marcby8",
-    "baseCardId": "marcby8-team-bds-x",
+    "baseCardId": "marcby8-team-bds-2122-marcby8",
     "title": "Stockholm Major MVP",
     "cardType": "major_mvp",
     "rarity": "epic",
@@ -1159,7 +1159,7 @@
     "title": "Boston Spring Major MVP",
     "cardType": "major_mvp",
     "rarity": "epic",
-    "overall": 97,
+    "overall": 98,
     "stats": {
       "offense": 99,
       "defense": 93,
@@ -1346,7 +1346,7 @@
     "playerId": "firstkiller",
     "baseCardId": "firstkiller-faze-clan-2223",
     "title": "NA MVP",
-    "cardType": "moment",
+    "cardType": "season_mvp",
     "rarity": "mythic",
     "overall": 95,
     "stats": {
@@ -1366,7 +1366,7 @@
       "value": 4,
       "description": "+4 offense and mechanics."
     },
-    "flavor": "A high-peak North American card for Firstkiller's individual pressure, speed and ability to reshape entire series."
+    "flavor": "RLCS 2022-23 North American MVP: Firstkiller's pressure and speed reshaping series for FaZe Clan."
   },
   {
     "id": "sp-firstkiller-rogue-era",
@@ -1398,11 +1398,11 @@
   {
     "id": "sp-seikoo-endpoint-breakout",
     "playerId": "seikoo",
-    "baseCardId": "seikoo-team-bds-2122",
+    "baseCardId": "seikoo-endpoint-cex-2122-seikoo",
     "title": "Endpoint Breakout",
     "cardType": "moment",
     "rarity": "epic",
-    "overall": 93,
+    "overall": 95,
     "stats": {
       "offense": 99,
       "defense": 88,
@@ -1798,7 +1798,7 @@
       "value": 3,
       "description": "+3 clutch and mechanics."
     },
-    "flavor": "A lower-tier special card for the APAC/OCE upset energy that makes international Swiss stages unpredictable."
+    "flavor": "A rare card for Wildcard's Oceanic upset energy, the kind that makes international Swiss stages unpredictable."
   },
   {
     "id": "sp-fireburner-third-man-blueprint",
@@ -1888,7 +1888,7 @@
     "title": "Perfect Vitality",
     "cardType": "moment",
     "rarity": "epic",
-    "overall": 93,
+    "overall": 96,
     "stats": {
       "offense": 93,
       "defense": 93,
@@ -2039,7 +2039,7 @@
   {
     "id": "sp-stl-gamers8-furia",
     "playerId": "stl",
-    "baseCardId": "stl-coach-furia-x",
+    "baseCardId": "stl-coach-furia-2223",
     "title": "Gamers8 FURIA",
     "cardType": "coach",
     "rarity": "epic",
@@ -2054,7 +2054,7 @@
       "value": 4,
       "description": "+4 team offense and clutch."
     },
-    "flavor": "FURIA's Gamers8 2022 title was a landmark for Brazilian Rocket League. STL gets a coach card for that run."
+    "flavor": "FURIA's Gamers8 2022 title, a landmark for Brazilian Rocket League, with STL on the staff as assistant coach to head coach Kairos."
   },
   {
     "id": "sp-satthew-na-superteam",
@@ -2137,11 +2137,11 @@
   {
     "id": "sp-snaski-gentle-mates",
     "playerId": "snaski",
-    "baseCardId": "snaski-coach-oxygen-esports-2024",
+    "baseCardId": "snaski-coach-gentle-mates-alpine-2026",
     "title": "Gentle Mates",
     "cardType": "coach",
     "rarity": "rare",
-    "overall": 90,
+    "overall": 93,
     "kind": "coach",
     "effect": {
       "type": "team_attribute_boost",
@@ -2151,7 +2151,7 @@
       "value": 3,
       "description": "+3 team consistency."
     },
-    "flavor": "A fundamentals-focused coach card for Gentle Mates' LAN structure."
+    "flavor": "Coach of the Gentle Mates side that won the 2026 Boston Major: a fundamentals-focused card for their LAN structure."
   },
   {
     "id": "sp-gregan-vitality-blueprint",
@@ -2223,18 +2223,21 @@
     },
     "effect": {
       "type": "attribute_boost",
-      "attributes": ["mechanics", "offense"],
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
       "value": 2,
       "description": "+2 mechanics and offense."
     },
-    "flavor": "A South American standout — a clean rare highlight for Klaus, kept grounded so it rewards a regional run without breaking it."
+    "flavor": "Klaus's Hero Base trio was acquired by LOUD in June 2024: a grounded rare highlight for a South American standout."
   },
   {
     "id": "sp-sam-mvp-drufinho",
     "playerId": "drufinho",
     "baseCardId": "drufinho-furia-2024",
-    "title": "SAM MVP",
-    "cardType": "season_mvp",
+    "title": "FURIA Breakthrough",
+    "cardType": "moment",
     "rarity": "rare",
     "overall": 90,
     "stats": {
@@ -2247,11 +2250,14 @@
     },
     "effect": {
       "type": "attribute_boost",
-      "attributes": ["clutch", "mechanics"],
+      "attributes": [
+        "clutch",
+        "mechanics"
+      ],
       "value": 3,
       "description": "+3 clutch and mechanics."
     },
-    "flavor": "drufinho flying the SAM flag at FURIA — a regional MVP moment immortalized as a rare card."
+    "flavor": "drufinho's breakthrough year with FURIA in 2024: a rare card for his rise in South America, not an official award."
   },
   {
     "id": "sp-brunovisquii-the-architect",
@@ -2387,5 +2393,484 @@
       "description": "+3 experience and consistency."
     },
     "flavor": "A Brazilian legacy card for one of the original faces of the SAM scene — a foundation of the region's history."
+  },
+  {
+    "id": "sp-squishymuffinz-lower-bracket-miracle",
+    "playerId": "squishymuffinz",
+    "baseCardId": "squishymuffinz-cloud9-s6",
+    "title": "Lower Bracket Miracle",
+    "cardType": "legend",
+    "rarity": "legendary",
+    "overall": 98,
+    "stats": {
+      "offense": 97,
+      "defense": 95,
+      "mechanics": 99,
+      "consistency": 97,
+      "experience": 97,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "clutch"
+      ],
+      "value": 5,
+      "description": "+5 mechanics and clutch."
+    },
+    "flavor": "Cloud9's lower-bracket run to the Season 6 world title in 2018: a legacy card for SquishyMuffinz, apart from his Ceiling Shot."
+  },
+  {
+    "id": "sp-jknaps-eleague-champion",
+    "playerId": "jknaps",
+    "baseCardId": "jknaps-g2-esports-s4",
+    "title": "ELEAGUE Champion",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 95,
+    "stats": {
+      "offense": 98,
+      "defense": 92,
+      "mechanics": 94,
+      "consistency": 98,
+      "experience": 94,
+      "clutch": 94
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 offense and consistency."
+    },
+    "flavor": "The ELEAGUE Cup title in December 2017: a veteran milestone for JKnaps from the G2 era."
+  },
+  {
+    "id": "sp-rizzo-g2-legacy",
+    "playerId": "rizzo",
+    "baseCardId": "rizzo-g2-esports-s9",
+    "title": "G2 Legacy",
+    "cardType": "legend",
+    "rarity": "epic",
+    "overall": 92,
+    "stats": {
+      "offense": 89,
+      "defense": 95,
+      "mechanics": 91,
+      "consistency": 95,
+      "experience": 91,
+      "clutch": 91
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 defense and consistency."
+    },
+    "flavor": "A legacy card for rizzo's long G2 career, centered on the 2020 Season 9 North American title."
+  },
+  {
+    "id": "sp-markydooda-flipsid3-world-champion",
+    "playerId": "markydooda",
+    "baseCardId": "markydooda-flipsid3-tactics-s2",
+    "title": "FlipSid3 World Champion",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 94,
+    "stats": {
+      "offense": 91,
+      "defense": 97,
+      "mechanics": 93,
+      "consistency": 97,
+      "experience": 93,
+      "clutch": 93
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 defense and consistency."
+    },
+    "flavor": "FlipSid3 Tactics' Season 2 world title in 2016, with markydooda's support play in the championship trio."
+  },
+  {
+    "id": "sp-aztral-europe-mvp",
+    "playerId": "aztral",
+    "baseCardId": "aztral-dignitas-s9",
+    "title": "Europe MVP",
+    "cardType": "season_mvp",
+    "rarity": "epic",
+    "overall": 95,
+    "stats": {
+      "offense": 98,
+      "defense": 92,
+      "mechanics": 98,
+      "consistency": 94,
+      "experience": 94,
+      "clutch": 94
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "offense"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and offense."
+    },
+    "flavor": "RLCS Season 9 Europe MVP: AztraL's mechanical peak with Dignitas in 2020."
+  },
+  {
+    "id": "sp-comm-the-villain",
+    "playerId": "comm",
+    "baseCardId": "comm-version1-2122",
+    "title": "The Villain",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 92,
+    "stats": {
+      "offense": 95,
+      "defense": 89,
+      "mechanics": 91,
+      "consistency": 91,
+      "experience": 91,
+      "clutch": 95
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 offense and clutch."
+    },
+    "flavor": "Spring Major London 2022: comm played the villain for Version1, all pressure, demos and clutch."
+  },
+  {
+    "id": "sp-reysbull-el-toro",
+    "playerId": "reysbull",
+    "baseCardId": "reysbull-complexity-gaming-2223",
+    "title": "El Toro",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 93,
+    "stats": {
+      "offense": 96,
+      "defense": 90,
+      "mechanics": 96,
+      "consistency": 92,
+      "experience": 92,
+      "clutch": 92
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "mechanics"
+      ],
+      "value": 4,
+      "description": "+4 offense and mechanics."
+    },
+    "flavor": "El Toro: Reysbull's attacking 2022-23 season with Complexity."
+  },
+  {
+    "id": "sp-tander-sam-first-worlds-win",
+    "playerId": "tander",
+    "baseCardId": "tander-lowkey-esports-s8",
+    "title": "SAM First Worlds Win",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 88,
+    "stats": {
+      "offense": 85,
+      "defense": 91,
+      "mechanics": 87,
+      "consistency": 87,
+      "experience": 91,
+      "clutch": 87
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "defense"
+      ],
+      "value": 3,
+      "description": "+3 experience and defense."
+    },
+    "flavor": "Lowkey 3-1 Veloce at the Season 8 World Championship: South America's first series win at Worlds, with tander's experience at its core."
+  },
+  {
+    "id": "sp-aztromick-the-club-worlds-run",
+    "playerId": "aztromick",
+    "baseCardId": "aztromick-the-club-2122",
+    "title": "The Club Worlds Run",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 90,
+    "stats": {
+      "offense": 89,
+      "defense": 87,
+      "mechanics": 93,
+      "consistency": 93,
+      "experience": 89,
+      "clutch": 89
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "consistency",
+        "mechanics"
+      ],
+      "value": 3,
+      "description": "+3 consistency and mechanics."
+    },
+    "flavor": "The Club's run at the 2022 World Championship, a South American generation on the biggest stage."
+  },
+  {
+    "id": "sp-m7sn-riyadh-finalist",
+    "playerId": "m7sn",
+    "baseCardId": "m7sn-rule-one-2223",
+    "title": "Riyadh Finalist",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 91,
+    "stats": {
+      "offense": 88,
+      "defense": 94,
+      "mechanics": 90,
+      "consistency": 90,
+      "experience": 94,
+      "clutch": 90
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "experience"
+      ],
+      "value": 4,
+      "description": "+4 defense and experience."
+    },
+    "flavor": "Gamers8 2023 runner-up in Riyadh with Rule One."
+  },
+  {
+    "id": "sp-snowyy-first-ssa-worlds-series-win",
+    "playerId": "snowyy",
+    "baseCardId": "snowyy-orlando-pirates-exdee-2122",
+    "title": "First SSA Worlds Series Win",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 79,
+    "stats": {
+      "offense": 76,
+      "defense": 82,
+      "mechanics": 78,
+      "consistency": 78,
+      "experience": 78,
+      "clutch": 82
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "clutch"
+      ],
+      "value": 3,
+      "description": "+3 defense and clutch."
+    },
+    "flavor": "Orlando Pirates 4-1 Gaimin in the 2022 Worlds Wildcard: Sub-Saharan Africa's first series win at Worlds."
+  },
+  {
+    "id": "sp-kiileerrz-worlds-2026-tournament-mvp",
+    "playerId": "kiileerrz",
+    "baseCardId": "kiileerrz-team-falcons-2026",
+    "title": "Worlds 2026 Tournament MVP",
+    "cardType": "worlds_mvp",
+    "rarity": "mythic",
+    "overall": 98,
+    "stats": {
+      "offense": 99,
+      "defense": 95,
+      "mechanics": 97,
+      "consistency": 99,
+      "experience": 97,
+      "clutch": 97
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "consistency"
+      ],
+      "value": 5,
+      "description": "+5 offense and consistency."
+    },
+    "flavor": "Tournament MVP of the RLCS 2026 World Championship as Team Falcons took the world title."
+  },
+  {
+    "id": "sp-rw9-worlds-2026-grand-finals-mvp",
+    "playerId": "rw9",
+    "baseCardId": "rw9-team-falcons-2026",
+    "title": "Worlds 2026 Grand Finals MVP",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 97,
+    "stats": {
+      "offense": 94,
+      "defense": 99,
+      "mechanics": 96,
+      "consistency": 96,
+      "experience": 96,
+      "clutch": 99
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "defense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 defense and clutch."
+    },
+    "flavor": "Grand Finals MVP of the RLCS 2026 World Championship, sealing Team Falcons' title."
+  },
+  {
+    "id": "sp-cheese-breakthrough-player-2026",
+    "playerId": "cheese",
+    "baseCardId": "cheese-fut-esports-na-2026",
+    "title": "Breakthrough Player 2026",
+    "cardType": "moment",
+    "rarity": "epic",
+    "overall": 95,
+    "stats": {
+      "offense": 98,
+      "defense": 92,
+      "mechanics": 94,
+      "consistency": 94,
+      "experience": 94,
+      "clutch": 98
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "clutch"
+      ],
+      "value": 4,
+      "description": "+4 offense and clutch."
+    },
+    "flavor": "Breakthrough Player of the RLCS 2026 World Championship, as FUT Esports reached the semifinals."
+  },
+  {
+    "id": "sp-zach-fort-worth-finalist",
+    "playerId": "zach",
+    "baseCardId": "zach-spacestation-gaming-2026",
+    "title": "Fort Worth Finalist",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 96,
+    "stats": {
+      "offense": 99,
+      "defense": 93,
+      "mechanics": 95,
+      "consistency": 99,
+      "experience": 95,
+      "clutch": 95
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "offense",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 offense and consistency."
+    },
+    "flavor": "Spacestation Gaming's run to the 2026 world final, with zach among the event's statistical leaders."
+  },
+  {
+    "id": "sp-nass-rlcs-1v1-world-champion-2026",
+    "playerId": "nass",
+    "baseCardId": "nass-gentle-mates-alpine-2026",
+    "title": "RLCS 1v1 World Champion 2026",
+    "cardType": "moment",
+    "rarity": "mythic",
+    "overall": 97,
+    "stats": {
+      "offense": 96,
+      "defense": 94,
+      "mechanics": 99,
+      "consistency": 99,
+      "experience": 96,
+      "clutch": 96
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "mechanics",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 mechanics and consistency."
+    },
+    "flavor": "RLCS 2026 1v1 World Champion: a duel card whose boost applies to nass alone."
+  },
+  {
+    "id": "sp-kairos-gamers8-furia-head-coach",
+    "playerId": "kairos",
+    "baseCardId": "kairos-coach-furia-2122",
+    "title": "Gamers8 FURIA Head Coach",
+    "cardType": "coach",
+    "rarity": "epic",
+    "overall": 92,
+    "kind": "coach",
+    "effect": {
+      "type": "team_attribute_boost",
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
+      "value": 4,
+      "description": "+4 team experience and consistency."
+    },
+    "flavor": "Head coach of FURIA's Gamers8 2022 title run, alongside assistant STL."
+  },
+  {
+    "id": "sp-realize-apac-pioneer",
+    "playerId": "realize",
+    "baseCardId": "realize-senbei-strikers-2122",
+    "title": "APAC Pioneer",
+    "cardType": "moment",
+    "rarity": "rare",
+    "overall": 85,
+    "stats": {
+      "offense": 82,
+      "defense": 84,
+      "mechanics": 84,
+      "consistency": 88,
+      "experience": 88,
+      "clutch": 84
+    },
+    "effect": {
+      "type": "attribute_boost",
+      "attributes": [
+        "experience",
+        "consistency"
+      ],
+      "value": 3,
+      "description": "+3 experience and consistency."
+    },
+    "flavor": "Tokyo Verdy at the RLCS 2021-22 Fall Major: APAC on the international stage for the first time. Base card from the same season (Senbei Strikers)."
   }
 ]

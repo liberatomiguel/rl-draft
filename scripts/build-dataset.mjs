@@ -61,6 +61,13 @@ const SEASONS = {
   2024: { id: "rlcs-2024", slug: "2024", label: "RLCS 2024", shortLabel: "'24", year: "2024", order: 13 },
   2025: { id: "rlcs-2025", slug: "2025", label: "RLCS 2025", shortLabel: "'25", year: "2025", order: 14 },
   2026: { id: "rlcs-2026", slug: "2026", label: "RLCS 2026", shortLabel: "'26", year: "2026", order: 15 },
+  // v2.0 national teams (FIFAe Nations Cup editions). Same `order` as the RLCS
+  // season of the same year — the career and era logos key off order, and no
+  // season is renumbered; on a tie the map order puts FIFAe after the RLCS.
+  // `national` marks every lineup of the season as a national team (special
+  // draw + all-special cards, see Lineup.national); it is not written out.
+  "FIFAe 2024": { id: "fifae-2024", slug: "fifae-2024", label: "FIFAe 2024", shortLabel: "FIFAe '24", year: "2024", order: 13, national: true },
+  "FIFAe 2025": { id: "fifae-2025", slug: "fifae-2025", label: "FIFAe 2025", shortLabel: "FIFAe '25", year: "2025", order: 14, national: true },
 };
 
 // ---------------------------------------------------------------------------
@@ -211,6 +218,144 @@ const COUNTRY = {
   freedom: "BR", godan: "BR", krames: "BR", duo: "BR",
   saladk1ng: "BR", magomagnifico: "BR", ze: "BR",
   thekillah: "AR",
+  // v2.0 base export (rocket-draft-database, 2026-10-26): new players + six
+  // corrections (diaz BR, greazy NO, ivn AT, juicy FR, rezears DE, torres823
+  // ES). Appended last on purpose — a key repeated below wins over the
+  // earlier entry, so these corrections override the older guesses above.
+  arise: "DE", crespor: "SA", diaz: "BR", fireworks: "US", ghaazi0: "SA", greazy: "NO",
+  impulse: "BR", ivn: "AT", juicy: "FR", pluoh: "US", rezears: "DE", roken: "GB",
+  speedhack: "BR", torres823: "ES", trill: "US", mits: "US", ghost: "AU", percy: "US",
+  jordan: "CA", creamz: "GB", lucas06: "BR", grumpz: "BR", john: "BR", godsmilla: "DE",
+  snowy: "AU", tango: "AU", vortexioz: "AU", wondamike: "US", tristn: "US", subn: "US",
+  mittaen: "NL", arju: "IT", andythemandy: "GB", magiczzz: "DE", mk: "DE", misty: "AU",
+  vive: "AU", cavemanben: "AU", zayd: "AU", lethalforlife: "AU", simple: "CA", flexxy17: "BR",
+  radoko: "CA", zps: "MX", mclando: "US", flitz: "US", scruffy: "AU", mikeboy: "NL",
+  oscillon: "NL", lyaneii: "NL", rapid: "US", hawpsu: "US", tox: "DE", yagi: "CH",
+  kerian: "FR", yukiss: "FR", finish: "FR", porto: "FR", shock: "US", tcorrell: "US",
+  pocketpsych: "AU", hibbs: "GB", breezi: "GB", stealth: "GB", calix: "DE", jnr: "GB",
+  stake: "ES", zamue: "ES", arleyobi: "ES", wolf: "ES", t7lm: "SA", suspect: "SA",
+  black: "SA", b2sel: "SA", beastbound: "NL", s1kies: "SA", parka: "FR", forece: "FR",
+  gil2: "FR", ix: "SA", fahad: "SA", marwan: "SA", errorless: "SA", aqua: "US",
+  billy: "GB", maru: "JP", msh: "SA", chikage: "SA", mj: "SA", growlii: "GB",
+  rehzzy: "GB", nugget: "GB", s5cosmic: "US", smokez: "GB", mrlow: "ZA", arceon: "ZA",
+  fishhr: "US", physics: "ZA", epicjonny: "CA", lionblaze: "US", zineel: "US", didi: "US",
+  kinseh: "US", paarth: "US", rmn: "AR", crs: "UY", cpzebra: "ZA", rizex: "DE",
+  misery: "AR", rez: "AU", compact: "BE", ldc: "BE", braan: "ES", toxiic: "GB",
+  audrax: "MA", rafa: "PT", beyond: "PT", vadyy: "PT", ordep: "PT", zgocbrayt: "TR",
+  lorely: "TR", jzmmm: "TR", andeque: "TR", ballerrees: "SG", kroado: "JP", datalied: "GB",
+  drku: "GB", drknown: "SA", nush: "SA", idris: "AF", noone: "SA", grayson: "US",
+  mazikeen: "AR", porsas: "FI", regser: "FI", dansku: "FI", txl: "FI", furlashh: "JP",
+  homie: "AU", tehqoz: "ES", shorez: "AU", trook: "SA", m7md: "KW", sqqp: "SA",
+  mysterious: "SA", z4: "SA", meshal: "SA", blue: "MY", risk: "SG", lunar: "US",
+  loofoo: "US", vantage: "FR", gunz: "ZA", duggy: "AU", rysfox: "BE", dudsmelow: "BR",
+  davoof: "IT", hyderr: "IT", laru: "IT", "misty-my": "MY", skyrix: "MA", miki: "BE",
+  wozyen: "NO", jup: "NO", bruhkay: "NO", kasper: "NO", "abdullah-om": "OM", lumber: "OM",
+  sultan: "OM", "3tiqi": "OM", jeff: "ZA", ravi: "ZA", slayer: "US", caleb: "NZ",
+  dx7: "NZ", fiv3up: "US", bora: "US", ops: "SA", ltxsam: "IE", bibbaba: "HU",
+  valid: "SA", nai: "JP", vinlll: "JP", mtzr: "FR", ekon: "FR", mech: "US",
+  life: "US", armonik: "ES", laxin: "NZ", kekkles: "AU", nerve: "AU", evohpaniniwine: "AU",
+  hawk: "AU", prompt: "AU", elliott: "AU", frost: "US", pengoli: "AU", taha: "US",
+  karion: "CA", kevinacho: "AR", giuk: "FR", nico: "DK", fades: "TR", tawk: "CA",
+};
+
+/**
+ * Real birth dates (v2.0 base export, from PandaScore), keyed by the FINAL
+ * person id (after PERSON_ID). Written to players.json as `birthday`; the
+ * career derives ages from it (engine/career/development.ts deriveBirthYear)
+ * and only rolls a debut age for players without one.
+ */
+const BIRTHDAY = {
+  "2die4": "2005-06-03", "2piece": "2006-05-17", abdullah: "2008-06-30", "abdullah-om": "2007-11-21",
+  accro: "2005-02-22", acronik: "2005-07-07", aguz: "2004-12-10", ahmad: "2002-11-18",
+  ajg: "2004-06-19", al0t: "1997-03-31", allushin: "1999-09-03", alpe: "2003-01-11",
+  alpha54: "2003-06-27", amphis: "2003-07-21", ams: "2001-01-06", andy: "2004-04-01",
+  apparentlyjack: "2003-09-23", aqua: "2006-12-21", archie: "2005-03-11", arju: "2002-11-04",
+  arsenal: "2002-03-16", asnrubiix: "2003-01-09", atomic: "2003-08-12", atomik: "2004-10-01",
+  atow: "2007-02-22", axb: "1995-09-19", ayjacks: "2001-05-13", ayyjayy: "2002-12-10",
+  aztral: "2002-12-26", aztromick: "2004-05-15", b2sel: "2003-11-28", ballerrees: "2002-10-11",
+  bananahead: "2006-01-23", beastmode: "2005-08-03", bemmz: "2006-06-05", beyond: "2007-07-09",
+  bibbaba: "2010-09-22", billy: "2000-08-31", blue: "2002-02-10", bluey: "2001-12-11",
+  brad: "2004-11-01", breezi: "2002-06-21", bruhkay: "2005-09-25", brunovisquii: "1999-01-02",
+  burn: "2003-10-07", caard: "2003-08-01", caiotg1: "2001-05-20", caleb: "2006-03-14",
+  calix: "2002-02-20", catalysm: "2002-02-15", cavemanben: "2000-05-05", chausette45: "2001-03-16",
+  cheese: "2005-06-15", chicago: "2001-06-12", chrome: "1993-03-29", chronic: "2005-09-05",
+  cjcj: "1998-08-06", comm: "2003-10-01", compact: "2004-10-20", crr: "2005-09-15",
+  d7oom24: "2003-08-03", daisy: "2004-11-01", daniel: "2006-12-05", dansku: "2003-11-19",
+  dappluto: "2005-10-07", dappur: "1999-02-22", darth: "2002-12-27", davinsano: "2002-01-21",
+  davitrox: "2004-09-21", davoof: "2005-07-27", decka: "1999-09-11", deevo: "2000-06-12",
+  diaz: "2008-07-15", dmentza: "2001-10-19", dorito: "2004-02-19", dralii: "2007-10-06",
+  dreaz: "2006-03-09", drippay: "2000-03-09", drknown: "2009-11-17", drku: "2006-11-03",
+  droppz: "2003-10-20", drufinho: "2005-06-28", dudsmelow: "2003-06-09", eclipse: "1999-05-26",
+  eekso: "2002-06-29", ejby: "2003-09-28", ekon: "2000-04-27", elliott: "2005-07-17",
+  eversax: "1996-06-24", evoh: "2007-05-12", exotiik: "2002-10-31", express: "1998-08-22",
+  extra: "2001-11-12", eyeignite: "1996-04-23", fades: "2007-03-07", fahad: "2005-06-04",
+  fairypeak: "1998-05-26", fasi: "2000-11-24", ferra: "1996-10-31", fever: "2004-12-06",
+  fiberr: "2005-03-18", finn: "2003-06-02", fire: "1999-06-28", fireburner: "1997-10-18",
+  firefoxd: "2001-11-15", firewall154: "2001-02-16", firstkiller: "2004-12-19", fiv3up: "2006-07-11",
+  flakes: "2000-02-12", flame: "1999-09-27", flasheeyy: "2003-12-27", flitz: "2003-12-17",
+  forece: "2002-12-14", freakii: "1996-08-02", fruity: "1996-02-22", furlashh: "2005-05-13",
+  garrettg: "2001-02-06", gawfs: "2005-12-15", ghaazi0: "2005-10-14", ghost: "1998-08-25",
+  gimmick: "2000-06-30", giuk: "2006-03-22", gnagflow06: "1999-10-26", godsmilla: "2000-02-16",
+  gonk: "2000-07-26", greazy: "1996-04-05", growlii: "2004-12-29", gunz: "2006-11-06",
+  gyro: "2002-10-13", haberkamper: "2001-01-27", happymeal: "1999-10-13", hawk: "2005-11-25",
+  hibbs: "2003-07-01", hisoka: "2005-09-17", hntr: "2007-08-14", hockser: "2002-01-23",
+  homie: "2002-08-02", hyderr: "2002-10-31", ianpinheiro: "2002-06-13", itachi: "2003-08-13",
+  ivn: "2003-06-21", ix: "2006-09-10", jacob: "1997-07-01", jake: "1997-11-24",
+  jessie: "1996-11-04", jknaps: "1999-09-30", jnr: "1999-04-03", jordan: "2002-07-29",
+  joreuz: "2005-03-08", joyo: "2005-12-25", jstn: "2002-08-05", juan: "2001-11-23",
+  juicy: "2005-03-05", julz: "2001-02-03", jup: "2006-02-09", jwismont: "1998-12-22",
+  jzr: "1996-08-18", kael: "1995-06-12", kaka: "2003-11-19", kamii: "2000-09-21",
+  kash: "2001-10-30", kassio: "2001-04-24", kaydop: "1998-05-22", kennysalmon: "2002-02-05",
+  kerian: "2003-08-21", kevin: "2004-07-25", kevinacho: "2009-09-10", kiileerrz: "2007-06-10",
+  kinseh: "2003-08-05", klaus: "2004-12-16", kns: "2004-01-02", kofyr: "2007-05-02",
+  kronovi: "1997-08-30", kuxir97: "1997-02-19", kv1: "2006-02-20", lance: "1999-10-13",
+  laxin: "2004-04-03", lct: "2002-08-18", leduck: "2001-04-20", leodkn: "2002-10-17",
+  leoro: "2002-06-26", lethamyr: "1995-03-31", lexim: "1999-01-14", life: "2009-03-05",
+  lionblaze: "2003-12-30", lj: "2005-04-23", lorely: "2003-05-21", lostt: "2005-03-29",
+  luiisp: "2003-12-11", luk: "2003-09-29", lumber: "2002-05-10", m0nkeym00n: "2002-11-15",
+  m7md: "2009-11-05", m7sn: "2005-06-03", majicbear: "2004-12-25", mala: "2002-02-28",
+  marcby8: "2001-03-27", math: "2002-10-05", matix: "2002-11-13", maxeew: "2003-06-28",
+  mazikeen: "2007-04-21", mech: "2010-12-28", memory: "2002-01-18", metsanauris: "1998-12-12",
+  mikan: "2000-12-04", mikeboy: "2002-05-04", mile: "2001-11-21", misery: "2007-12-11",
+  mist: "2003-08-22", misty: "2002-03-05", "misty-my": "2000-06-14", mittaen: "2001-08-19",
+  miztik: "1996-06-01", mognus: "1999-12-07", moses: "1996-02-10", motta: "2006-10-11",
+  mout: "1995-07-31", mtzr: "2006-11-25", mysterious: "2003-07-06", nachosky: "2005-01-10",
+  nai: "2008-05-29", nass: "2007-01-12", neqzo: "1998-08-31", nico: "2008-12-12",
+  noisy: "2001-09-11", noly: "2002-02-02", noxes: "2000-05-08", nush: "2009-11-15",
+  nwpo: "2007-01-15", nxghtt: "2006-07-04", oaly: "2003-11-24", okhalid: "2002-12-19",
+  olpix: "2001-12-18", ops: "2009-05-29", oscillon: "2001-06-07", oski: "2007-02-23",
+  osm: "2003-09-19", paarth: "2005-04-13", pan: "2002-11-08", parka: "2004-05-27",
+  percy: "2003-12-02", pj: "2002-10-20", porsas: "2003-05-27", prompt: "2008-11-09",
+  radoko: "2003-05-08", radosin: "2004-01-12", rafa: "2007-06-05", rapid: "2002-02-05",
+  realize: "2001-05-03", regser: "2003-07-14", rehzzy: "2004-04-25", relatingwave: "2002-09-16",
+  remkoe: "1995-05-27", renan: "2003-03-19", repi: "2002-02-08", retals: "2003-01-02",
+  reveal: "2007-06-18", reysbull: "2004-02-20", rezears: "2003-08-29", rise: "2004-09-05",
+  risk: "2011-03-05", riv: "1998-04-08", rizex45: "2002-04-30", rizzo: "1997-05-26",
+  rolldizz: "1996-09-06", ronaky: "2000-09-21", royales: "2005-05-17", rw9: "2007-06-10",
+  rysfox: "2007-09-21", s5cosmic: "2006-07-14", sadjunior: "1997-09-20", sadness: "2005-09-08",
+  saizen: "2005-10-21", satthew: "1999-04-29", scarth: "1999-12-20", scrub: "2005-09-02",
+  scrubkilla: "2003-05-08", scrzbbles: "2009-11-05", seck: "2005-06-03", seeb: "2002-09-17",
+  seikoo: "2004-06-07", senzo: "2001-05-28", shad: "2003-08-08", shock: "1999-12-17",
+  shorez: "2006-01-11", sigms: "1998-09-11", siki: "1999-09-17", sizz: "1996-11-05",
+  skillsteal: "1996-11-14", skyrix: "2005-08-01", smokez: "2004-01-24", smw: "2004-08-11",
+  snipjz: "2003-04-23", snowy: "1995-06-13", snowyy: "2000-07-12", sosa: "2004-03-15",
+  speed: "2001-02-26", sphinx: "2009-01-14", spydoge: "2000-12-20", sqqp: "2006-05-22",
+  squishymuffinz: "2000-11-29", srnanitou: "2002-06-04", stake: "2000-07-20", stizzy: "2006-12-27",
+  suco: "2006-05-15", sultan: "2008-10-16", superlachie: "2005-10-16", sweaty: "2005-08-07",
+  swiftt: "2008-08-15", sword: "2002-05-14", sypical: "2003-08-05", t7lm: "2002-08-01",
+  tadpole: "1997-10-17", tander: "1998-12-31", tango: "2004-05-05", taroco: "2003-02-22",
+  tawk: "2007-08-22", tcorrell: "2001-02-08", tehqoz: "2006-03-14", tenhow: "2000-09-20",
+  tho: "2001-12-04", thundah: "2001-07-07", torment: "2000-06-06", torres823: "2004-09-22",
+  torsos: "2000-08-30", tox: "2003-07-08", toxiic: "2004-06-17", tristn: "2000-11-08",
+  trk511: "2005-07-26", turbopolsa: "1998-08-09", turinturo: "2003-04-08", twistt: "2003-12-28",
+  twiz: "2004-02-09", umbroken: "2002-06-14", vadyy: "2008-06-20", valt: "2003-10-22",
+  vatira: "2006-05-14", venom: "2002-08-11", violentpanda: "1998-11-02", virge: "1996-09-24",
+  virtuoso: "2003-08-21", vksailen: "2003-06-07", vortexioz: "2004-05-10", wahvey: "2007-05-10",
+  walcott: "1997-02-06", wells: "2003-01-24", wisty: "2006-01-03", wolf: "1998-02-25",
+  wondamike: "2004-05-25", wonder: "1996-08-02", yand: "2003-02-28", yanxnz: "2004-08-10",
+  yujin: "2007-11-27", yukeo: "2000-01-26", yukiss: "2000-07-26", zach: "2009-11-05",
+  zamue: "2000-10-19", zanetti: "2001-12-21", zayd: "2001-12-06", zen: "2007-02-20",
+  zez0nix: "2002-11-17", zgocbrayt: "1997-05-19", zineel: "2005-03-01", zps: "2004-03-22",
 };
 
 const ORG_BUFF_TYPE = {
@@ -249,6 +394,68 @@ const ORG_ALIAS = {
   "mockit-esports": "mock-it-esports",
   "mock-it-esports-eu": "mock-it-esports",
   "quiktrip-pioneers-gaming": "pioneers",
+  // v2.0 national teams: the base (rocket-draft-database) names them in
+  // Portuguese; the alias pins each to its `national-<iso>` id, shared with
+  // the base. Display names come from NATIONAL_TEAM_NAMES below.
+  "africa-do-sul": "national-za",
+  alemanha: "national-de",
+  "arabia-saudita": "national-sa",
+  argentina: "national-ar",
+  australia: "national-au",
+  belgica: "national-be",
+  brasil: "national-br",
+  chile: "national-cl",
+  espanha: "national-es",
+  "estados-unidos": "national-us",
+  franca: "national-fr",
+  inglaterra: "national-gb-eng",
+  marrocos: "national-ma",
+  "paises-baixos": "national-nl",
+  portugal: "national-pt",
+  turquia: "national-tr",
+  italia: "national-it",
+  malasia: "national-my",
+  noruega: "national-no",
+  oma: "national-om",
+};
+
+/**
+ * English display name per national team (v2.0). The data is English like the
+ * rest of the dataset (org names, countryName()); teams.md keeps the base's
+ * Portuguese team lines so both projects share the same blocks and ids.
+ */
+const NATIONAL_TEAM_NAMES = {
+  "national-za": "South Africa",
+  "national-de": "Germany",
+  "national-sa": "Saudi Arabia",
+  "national-ar": "Argentina",
+  "national-au": "Australia",
+  "national-be": "Belgium",
+  "national-br": "Brazil",
+  "national-cl": "Chile",
+  "national-es": "Spain",
+  "national-us": "United States",
+  "national-fr": "France",
+  "national-gb-eng": "England",
+  "national-ma": "Morocco",
+  "national-nl": "Netherlands",
+  "national-pt": "Portugal",
+  "national-tr": "Türkiye",
+  "national-it": "Italy",
+  "national-my": "Malaysia",
+  "national-no": "Norway",
+  "national-om": "Oman",
+};
+
+/**
+ * Homonyms (v2.0): "nick|orgId" (or "nick|REGION") → person id, for different
+ * people who share a nickname. Checked org first, then region.
+ */
+const PERSON_ID = {
+  // OCE "ZeN" (Renegades S7) is NOT the French superstar.
+  "zen|OCE": "zen-oce",
+  "misty|national-my": "misty-my",
+  "abdullah|national-om": "abdullah-om",
 };
 
 /**
@@ -368,8 +575,15 @@ function parsePersonEntry(value) {
 }
 
 const teams = rawTeams.map((raw) => {
-  const [orgName, seasonKeyRaw] = raw.teamLine.split("·").map((s) => s.trim());
+  const parts = raw.teamLine.split("·").map((s) => s.trim());
+  const [orgName, seasonKeyRaw] = parts;
   const seasonKey = seasonKeyRaw;
+  // v2.0 "recorte" (cut): a SECOND roster of the same org in the same season
+  // carries "· recorte: <name>" on the team line; the name joins the lineup id
+  // (northern-gaming-s3-maestro) so it can't collide with the first roster.
+  // Blocks without the segment keep their ids unchanged.
+  const cut =
+    parts.find((p) => /^recorte:/i.test(p))?.replace(/^recorte:\s*/i, "").trim() || null;
   const season = SEASONS[seasonKey];
   if (!season) throw new Error(`Unknown season "${seasonKey}" in team "${raw.teamLine}"`);
   if (!raw.region) throw new Error(`Team without region: ${raw.teamLine}`);
@@ -394,35 +608,38 @@ const teams = rawTeams.map((raw) => {
     // Org line and team line should agree; trust the team line for display.
   }
 
-  // Flags (v1.2.0): `sam-only` = SAM Top-8 team that missed Worlds (excluded
-  // from the general draft, shown only in the region-locked SAM mode); `rare` =
-  // easter-egg lineup drawn far less often. `legacy` = a regional
-  // landmark roster whose raw overalls sit below the strong/elite cut but that
-  // should still headline its region's legacy gauntlet (floors historicalStrength
-  // at "strong" below). Flags are comma-separated; unknown flags are ignored.
+  // Flags (v1.2.0): `sam-only` = a REGION-ONLY roster (v2.0: any region, the
+  // name is historical; `region-only` is accepted too) — excluded from the
+  // general draft and the general opponent field, shown only in its region's
+  // Region-only mode; `rare` = easter-egg lineup drawn far less often. `legacy`
+  // = a regional landmark roster whose raw overalls sit below the strong/elite
+  // cut but that should still headline its region's legacy gauntlet (floors
+  // historicalStrength at "strong" below). Flags are comma-separated; unknown
+  // flags are ignored.
   const flagRaw = get("flag");
-  const samOnly = /\bsam-only\b/i.test(flagRaw);
+  const samOnly = /\b(sam|region)-only\b/i.test(flagRaw);
   const rareSpawn = /\brare\b/i.test(flagRaw);
   const legacy = /\blegacy\b/i.test(flagRaw);
 
-  return { orgName, orgDisplay: orgDisplay || orgName, season, region: raw.region, players, sub, coach, orgBuffLevel, samOnly, rareSpawn, legacy };
+  return { orgName, orgDisplay: orgDisplay || orgName, season, cut, region: raw.region, players, sub, coach, orgBuffLevel, samOnly, rareSpawn, legacy };
 });
 
 // ---------------------------------------------------------------------------
 // Registries
 // ---------------------------------------------------------------------------
 
-const persons = new Map(); // key → { id, nickname, country?, region, lastOrder }
-function registerPerson(nick, region, seasonOrder) {
-  let key = personKeyOf(nick);
-  // Known collision: OCE "ZeN" (Renegades S7) is NOT the French superstar.
-  if (key === "zen" && region === "OCE") key = "zen-oce";
+const persons = new Map(); // key → { id, nickname, country?, birthday?, region, lastOrder }
+function registerPerson(nick, region, seasonOrder, orgId) {
+  const base = personKeyOf(nick);
+  // Homonyms (PERSON_ID): same nickname, different people — org first, then region.
+  const key = PERSON_ID[`${base}|${orgId}`] ?? PERSON_ID[`${base}|${region}`] ?? base;
   const existing = persons.get(key);
   if (!existing) {
     persons.set(key, {
       id: key,
       nickname: nick,
       country: COUNTRY[key],
+      birthday: BIRTHDAY[key],
       region,
       lastOrder: seasonOrder,
     });
@@ -434,8 +651,9 @@ function registerPerson(nick, region, seasonOrder) {
 }
 
 const orgs = new Map(); // slug → { id, name, region, buffLevelMax, lastOrder }
-function registerOrg(name, region, buffLevel, seasonOrder) {
-  const id = orgIdOf(name, region);
+function registerOrg(rawName, region, buffLevel, seasonOrder) {
+  const id = orgIdOf(rawName, region);
+  const name = NATIONAL_TEAM_NAMES[id] ?? rawName;
   const existing = orgs.get(id);
   const levelIdx = BUFF_SYMBOLS.indexOf(buffLevel);
   if (!existing) {
@@ -461,13 +679,24 @@ const lineups = [];
 
 for (const team of teams) {
   const orgId = registerOrg(team.orgDisplay, team.region, team.orgBuffLevel, team.season.order);
-  const lineupId = `${orgId}-${team.season.slug}`;
+  const lineupId = `${orgId}-${team.season.slug}${team.cut ? `-${slugOf(team.cut)}` : ""}`;
   if (lineups.some((l) => l.id === lineupId)) {
     throw new Error(`Duplicate lineup id ${lineupId}`);
   }
+  // A national-team season must resolve every team to a national-<iso> org with
+  // an English name — a new country needs ORG_ALIAS + NATIONAL_TEAM_NAMES.
+  const national = Boolean(team.season.national);
+  if (national && !NATIONAL_TEAM_NAMES[orgId]) {
+    throw new Error(
+      `National team "${team.orgDisplay}" (${team.season.label}) resolved to "${orgId}" — add it to ORG_ALIAS and NATIONAL_TEAM_NAMES`,
+    );
+  }
+  if (!national && orgId.startsWith("national-")) {
+    throw new Error(`"${team.orgDisplay}" is a national team outside a national season (${team.season.label})`);
+  }
 
   const playerCardIds = team.players.map((p) => {
-    const personId = registerPerson(p.nick, team.region, team.season.order);
+    const personId = registerPerson(p.nick, team.region, team.season.order, orgId);
     const cardId = `${personId}-${lineupId}`;
     playerCards.push({
       id: cardId,
@@ -483,7 +712,7 @@ for (const team of teams) {
 
   let coachId;
   if (team.coach) {
-    const personId = registerPerson(team.coach.nick, team.region, team.season.order);
+    const personId = registerPerson(team.coach.nick, team.region, team.season.order, orgId);
     coachId = `${personId}-coach-${lineupId}`;
     const person = persons.get(personId);
     coachCards.push({
@@ -503,7 +732,7 @@ for (const team of teams) {
 
   let subId;
   if (team.sub) {
-    const personId = registerPerson(team.sub.nick, team.region, team.season.order);
+    const personId = registerPerson(team.sub.nick, team.region, team.season.order, orgId);
     subId = `${personId}-sub-${lineupId}`;
     const person = persons.get(personId);
     subCards.push({
@@ -531,7 +760,7 @@ for (const team of teams) {
 
   lineups.push({
     id: lineupId,
-    name: team.orgDisplay,
+    name: NATIONAL_TEAM_NAMES[orgId] ?? team.orgDisplay,
     seasonId: team.season.id,
     orgId,
     region: team.region,
@@ -540,6 +769,7 @@ for (const team of teams) {
     ...(subId ? { subId } : {}),
     ...(team.samOnly ? { samOnly: true } : {}),
     ...(team.rareSpawn ? { rareSpawn: true } : {}),
+    ...(national ? { national: true } : {}),
     orgBuffLevel: team.orgBuffLevel,
     historicalStrength,
   });
@@ -550,6 +780,7 @@ const playersOut = [...persons.values()]
     id: p.id,
     nickname: p.nickname,
     ...(p.country ? { country: p.country } : {}),
+    ...(p.birthday ? { birthday: p.birthday } : {}),
     region: p.region,
   }))
   .sort((a, b) => a.id.localeCompare(b.id));

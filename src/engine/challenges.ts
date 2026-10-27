@@ -206,10 +206,13 @@ export function challengeStatus(
  */
 export function challengePool(constraint: ChallengeConstraint | undefined): string[] | undefined {
   if (!constraint) return undefined;
-  if (constraint.region) return lineupPoolForRegion(constraint.region);
+  // National teams (v2.0) are never part of a challenge draft.
+  if (constraint.region) {
+    return lineupPoolForRegion(constraint.region).filter((id) => !lineupById.get(id)?.national);
+  }
   if (constraint.seasonId) {
     return lineups
-      .filter((l) => l.seasonId === constraint.seasonId && !l.rareSpawn)
+      .filter((l) => l.seasonId === constraint.seasonId && !l.rareSpawn && !l.national)
       .map((l) => l.id);
   }
   // Nationality twist (v1.4): restrict the pool to lineups that actually CONTAIN
@@ -221,6 +224,7 @@ export function challengePool(constraint: ChallengeConstraint | undefined): stri
       .filter(
         (l) =>
           !l.rareSpawn &&
+          !l.national &&
           l.playerCardIds.some((cid) => playerEligibleUnderConstraint(cid, constraint)),
       )
       .map((l) => l.id);

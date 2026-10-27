@@ -19,10 +19,11 @@ export function generateOpponents(
   extraShift = 0,
 ): TournamentTeam[] {
   const profile = DIFFICULTY[difficulty];
-  // Easter-egg lineups (Wings) are draft-only treasures — never AI opponents.
+  // Easter-egg lineups (Wings) and national teams (v2.0) are draft-only
+  // treasures — never AI opponents.
   const base = (
     poolLineupIds ? lineups.filter((l) => poolLineupIds.includes(l.id)) : [...draftableLineups]
-  ).filter((l) => !l.rareSpawn);
+  ).filter((l) => !l.rareSpawn && !l.national);
   const weight = (l: (typeof base)[number]) =>
     profile.opponentTierWeights[l.historicalStrength] ?? 0.5;
   const picked: typeof base = [];

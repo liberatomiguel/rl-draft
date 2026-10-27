@@ -1,7 +1,7 @@
 # Road to Worlds — status (current state only)
 
-> Last updated: 2026-10-19. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
-> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R37. History: `CHANGELOG.md`
+> Last updated: 2026-10-27. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
+> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R39. History: `CHANGELOG.md`
 > `[1.5.0-alpha]` and `[2.0.0]`. Do not read any of them whole.
 
 ## Run / verify
@@ -40,12 +40,16 @@ loan + loans panel; sub-slot signing fix; coach deep link + explicit effects;
 HQ rebuilt around the day card; Training 2.0 (weekly drill, growth ETA,
 attribute effects, scrim tiers); Wednesday qualifier + local amateur scene;
 real orgs enter by season; permanent achievements; weekly inserts; colour kits.
+rc.24 (R39): real players use their real birth year (364 from the base
+export; others keep the inferred debut age; existing careers keep theirs), and
+the FIFAe national cards stay out of the career's card history.
 
 ## Remaining / open
 
 - Manual playtest on staging (plan §7 career line): creation → first week →
   qualifier → regional; payroll; loan; drill; insert.
-- Content: scripted beats corpus (~30, EN+PT), `born:` rows for modern players.
+- Content: scripted beats corpus (~30, EN+PT). Birth dates now come from the
+  base export (`BIRTHDAY` in the generator); more go there, not in `born:` rows.
 - `CAREER_ARC` pacing harness (120-career sweep) not built; economy bands need
   re-validation after Miguel plays.
 - Deferred by design: org relocation, t1 circuit, PvP.

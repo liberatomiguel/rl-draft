@@ -33,7 +33,7 @@
 
 import { describe, expect, it } from "vitest";
 import { coachById, lineupPoolForRegion, playerById, playerCardById, specialCardById, subById } from "@/data";
-import { REGION_LOCK } from "@/config/balance";
+import { regionOpponentBoost } from "@/config/balance";
 import { createRng, type Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
 import { applyPick, applyReroll, createDraft, drawNextOffer, neededKinds, slotsForKind } from "./draft";
@@ -123,7 +123,7 @@ const BUCKETS_SAM: [string, (r: number) => boolean][] = [
  */
 function curve(label: string, difficulty: Difficulty, region: "SAM" | undefined, sessions: number, maxResets: number, perTeam: number, boostOverride?: number): Record<string, number> {
   const pool = region === "SAM" ? lineupPoolForRegion("SAM") : undefined;
-  const oppBoost = boostOverride ?? (region === "SAM" ? REGION_LOCK.opponentRatingBoost[difficulty] : 0);
+  const oppBoost = boostOverride ?? (region === "SAM" ? regionOpponentBoost("SAM", difficulty) : 0);
   const buckets = region === "SAM" ? BUCKETS_SAM : BUCKETS_WW;
   const tally: Record<string, { runs: number; titles: number; finals: number }> = {};
   let runs = 0, titles = 0, finals = 0;

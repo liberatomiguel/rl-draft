@@ -13,7 +13,10 @@ export type RewardToast =
   | { id: string; kind: "mission"; missionId: string; xp: number }
   | { id: string; kind: "missionBonus"; period: "daily" | "weekly"; xp: number }
   | { id: string; kind: "login"; streak: number; xp: number; milestone: number | null }
-  | { id: string; kind: "quiz"; attempt: number; xp: number };
+  | { id: string; kind: "quiz"; attempt: number; xp: number }
+  // v2.0: a national team was drawn — `cards` of its cards were new. Name and
+  // edition are data; the toaster localizes the name by org id.
+  | { id: string; kind: "nationalTeam"; orgId: string; name: string; edition: string; cards: number };
 
 /** `Omit` distributed over the union (a plain Omit collapses to the common keys). */
 type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;

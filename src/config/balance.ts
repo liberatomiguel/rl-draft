@@ -6,7 +6,7 @@
  * See docs/BALANCE-GUIDE.md for what each knob does and its safe range.
  */
 
-import type { BuffLevel, Difficulty, HistoricalStrength, Placement } from "@/engine/types";
+import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } from "@/engine/types";
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -305,11 +305,36 @@ export const REGION_LOCK = {
   //    (`difficulty.sim.test.ts`, SAM — title / reach-final): 88-89 ≈ 0.6% / 2%, 90-91 ≈
   //    3% / 14%, 92-93 ≈ 13% / 48%, the 94-95 ceiling ≈ 32% / 87%, blended ≈ 10% / 34%.
   //    The flat SAM curve means hardening the top also hardens the middle.
-  opponentRatingBoost: { easy: 2, normal: 2, hard: 2, legacy: 4.0 } as Record<
-    Difficulty,
-    number
-  >,
+  // v2.0 (#136): the boost is per REGION × difficulty — every region's pool has
+  // its own ceiling and depth — read it through regionOpponentBoost(). Target:
+  // WORLDWIDE PARITY — a good drafter wins a Region-only run about as often as a
+  // worldwide run at the same difficulty (realistic reset-draft title rate:
+  // Easy ≈85% · Normal ≈54% · Hard ≈40% · Legacy ≈9%, `difficulty.sim.test.ts`
+  // method). Fitted on the expanded v2.0 dataset from a 3-point sweep per cell.
+  // Side effects, on purpose: SAM Easy/Normal get easier (61% / 35% before —
+  // harder than worldwide, though meant as the accessible mode) and the old
+  // Normal-harder-than-Hard inversion is gone (Hard zeroes the AI's chemistry,
+  // which outweighs the shift gap in a small field — the boost now absorbs it).
+  // A negative value lets the regional field play below its nominal rating.
+  opponentRatingBoost: {
+    SAM: { easy: -1.2, normal: -0.1, hard: 1.4, legacy: 4.0 },
+    EU: { easy: 0.25, normal: 0.5, hard: 1.2, legacy: 1.5 },
+    NA: { easy: 0.6, normal: 1.3, hard: 2.3, legacy: 2.0 },
+    MENA: { easy: -0.1, normal: 1.4, hard: 2.6, legacy: 4.1 },
+    OCE: { easy: 0.9, normal: 1.35, hard: 3.3, legacy: 5.0 },
+  } as Partial<Record<Region, Record<Difficulty, number>>>,
+  /**
+   * Regions that offer a Region-only mode (v2.0; SAM only before). APAC and SSA
+   * stay "Coming soon" — too few rosters for a full regional draft — so their
+   * rosters flagged region-only play in the general pool instead.
+   */
+  regions: ["NA", "EU", "SAM", "MENA", "OCE"] as readonly Region[],
 } as const;
+
+/** Region-only opponent boost for a run (0 when the region has no mode). */
+export function regionOpponentBoost(region: Region, difficulty: Difficulty): number {
+  return REGION_LOCK.opponentRatingBoost[region]?.[difficulty] ?? 0;
+}
 
 // ---------------------------------------------------------------------------
 // Draft
@@ -358,6 +383,21 @@ export const DRAFT = {
    * (v1.2.0)
    */
   easterEggChance: 0.01,
+  /**
+   * National teams (v2.0, FIFAe lineups): never in the normal draw — injected
+   * into one offer at this per-offer chance, classic/quick only (never the daily
+   * or a challenge). 2.5% ≈ one national team every ~6 classic runs (~7-8 offers
+   * a run) and ~10 quick runs: rare, but findable — 2.5× the Wings egg, which
+   * stays the true secret. Worldwide runs draw from the national teams that are
+   * not region-only; a Region-only run from its own region's.
+   */
+  nationalTeamChance: 0.025,
+  /**
+   * Which national team shows: uniform, except that a team whose cards the
+   * player has NOT collected yet weighs this much more — a full album (32 teams)
+   * stays reachable without making the next find predictable.
+   */
+  nationalUndiscoveredWeight: 3,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -393,9 +433,22 @@ export const SPECIALS = {
     // Content-creator cards (v1.4): sit at the RARE tier (same rate), a fun find
     // when their (coach) card is drawn, without flooding the special economy.
     community: 0.045,
+    // National cards are never rolled: they show only on a national lineup,
+    // drawn at DRAFT.nationalTeamChance — nominal 0 here.
+    national: 0,
   } as Record<string, number>,
   /** Roll order — rarest first. The first tier the person owns that procs wins. */
   rarityOrder: ["creator", "wings", "legendary", "mythic", "epic", "rare", "community"] as const,
+  /**
+   * National-team cards (v2.0) — derived for every card of a national lineup
+   * (@/data). The card keeps the national roster's overall (+ overallDelta) and
+   * carries one shared buff: +teamBoost to every team attribute (the shirt).
+   * ~0.1-0.2 rating — the card's real value is its overall and its rarity.
+   */
+  national: {
+    overallDelta: 0,
+    teamBoost: 2,
+  },
   /**
    * Baseline rank special chance (Bronze–Platinum). `specialChanceMult` is
    * `rewards.specialChance / this`, so the common ranks sit at mult 1.0 and the

@@ -12,8 +12,18 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DIFFICULTY, REGION_LOCK, SPECIALS } from "@/config/balance";
-import { challengeById, lineupPoolForRegion, playerById, playerCardById, specialCardById, specialCards } from "@/data";
+import { DIFFICULTY, regionOpponentBoost, SPECIALS } from "@/config/balance";
+import {
+  challengeById,
+  lineupById,
+  lineupPoolForRegion,
+  nationalSpecialIdsByLineupId,
+  playerById,
+  playerCardById,
+  seasonById,
+  specialCardById,
+  specialCards,
+} from "@/data";
 import { rankRewardsForXp } from "@/engine/progression";
 import {
   applyFreeReroll,
@@ -22,6 +32,7 @@ import {
   createDraft,
   drawNextOffer,
   eventSpecialsFor,
+  nationalUnlocks,
 } from "@/engine/draft";
 import {
   buildChallengeOpponent,
@@ -47,6 +58,7 @@ import { userSwissRecord } from "@/engine/swiss";
 import type {
   Difficulty,
   DraftOfferCard,
+  DraftState,
   Region,
   RosterSlotId,
   RunHistoryEntry,
@@ -59,6 +71,44 @@ import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
 import { trackEvent } from "@/lib/analytics";
 import { useProfileStore } from "./profileStore";
+import { useRewardToasts } from "./rewardToastStore";
+
+/**
+ * National teams the player has fully collected (v2.0) — the draft favours the
+ * others (DRAFT.nationalUndiscoveredWeight) so the album can be completed.
+ */
+function discoveredNationalLineups(unlocked: Record<string, string>): string[] {
+  const out: string[] = [];
+  for (const [lineupId, ids] of nationalSpecialIdsByLineupId) {
+    if (ids.every((id) => unlocked[id])) out.push(lineupId);
+  }
+  return out;
+}
+
+/**
+ * Seeing a national team collects ALL its cards (v2.0, engine nationalUnlocks);
+ * a find that adds new cards gets a toast. Idempotent — re-renders and
+ * re-hydrated offers collect nothing new.
+ */
+function collectNationalOffer(draft: DraftState): void {
+  const ids = nationalUnlocks(draft.offer);
+  if (ids.length === 0 || !draft.offer) return;
+  const profile = useProfileStore.getState();
+  const fresh = ids.filter((id) => !profile.unlockedSpecials[id]);
+  if (fresh.length === 0) return;
+  profile.collectSpecials(ids);
+  const lineup = lineupById.get(draft.offer.lineupId);
+  if (!lineup) return;
+  useRewardToasts.getState().push([
+    {
+      kind: "nationalTeam",
+      orgId: lineup.orgId,
+      name: lineup.name,
+      edition: seasonById.get(lineup.seasonId)?.shortLabel ?? "",
+      cards: fresh.length,
+    },
+  ]);
+}
 
 export interface StartRunOptions {
   mode: Exclude<RunMode, "daily">;
@@ -130,9 +180,12 @@ export const useRunStore = create<RunStore>()(
             specialRarities: rewards.rarities,
             // Event-exclusive cards live today + the Special Hunt boost (v2.0).
             eventSpecials: eventSpecialsFor(specialCards, todayKey(), useProfileStore.getState().events),
+            // National teams (v2.0): a rare draw of their own in classic/quick.
+            nationalTeams: { discovered: discoveredNationalLineups(useProfileStore.getState().unlockedSpecials) },
           }),
           rng,
         );
+        collectNationalOffer(draft);
 
         // Remember the setup for next time (and for "Play again").
         useProfileStore.getState().setLastSetup(difficulty, showOverall, mode, region);
@@ -306,6 +359,7 @@ export const useRunStore = create<RunStore>()(
         const draft = applyPick(run.draft, card, slot, rng);
         // Missions (v2.0): "select a special card" counts at pick time.
         if (card.specialId) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
+        collectNationalOffer(draft);
         set({
           run: {
             ...run,
@@ -321,6 +375,7 @@ export const useRunStore = create<RunStore>()(
         if (!run || run.phase !== "draft" || run.draft.rerollsLeft <= 0) return;
         const rng = createRng(run.rngState);
         const draft = applyReroll(run.draft, rng);
+        collectNationalOffer(draft);
         set({ run: { ...run, draft, rngState: rng.state } });
       },
 
@@ -330,6 +385,7 @@ export const useRunStore = create<RunStore>()(
         if (run.draft.offer?.hasPickableCard) return;
         const rng = createRng(run.rngState);
         const draft = applyFreeReroll(run.draft, rng);
+        collectNationalOffer(draft);
         set({ run: { ...run, draft, rngState: rng.state } });
       },
 
@@ -400,7 +456,7 @@ export const useRunStore = create<RunStore>()(
           // difficulty curve matches worldwide with adapted overalls (v1.3.1;
           // per-difficulty boost since v1.3.3).
           opponentRatingBoost: run.regionLock
-            ? REGION_LOCK.opponentRatingBoost[run.difficulty]
+            ? regionOpponentBoost(run.regionLock, run.difficulty)
             : 0,
         });
         set({

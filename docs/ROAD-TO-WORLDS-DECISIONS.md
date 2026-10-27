@@ -449,6 +449,21 @@ R38. **Underdog is any big title won as the weaker side; Worlds count across
      `careerWorldsWon` + this season's `season.careerWorlds`) for the World
      Champion / Crowned World Champion / Dynasty badges in the draft game.
 
+R39. **Real players have their real age; FIFAe cards are not club history
+     (rc.24, the v2.0 base export).** `deriveBirthYear` returns the year of
+     the player's real birth date (`players.json` `birthday`, 364 players,
+     from PandaScore) and only samples a debut age for players without one.
+     Ages stay year-based (`seasonYear − birthYear`), like before. A career
+     that already exists keeps the `birthYear` stored on its squad; only new
+     careers (and players met for the first time) get the real age — no save
+     migration. The national-team cards (FIFAe 2024/2025) share the RLCS
+     season `order` of their year, so they are kept OUT of the career's card
+     history (`cardsByPlayer`, `lastDatasetCardOrder`): a national card would
+     otherwise become a player's anchor overall for that season and lift
+     their potential (Saudi Arabia 2024 is rated 95–96). Season X now has 18 real EU
+     orgs (was 6), so the world can hold more than 16 orgs in a region; the
+     regionals already field the top 16 by rating.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
