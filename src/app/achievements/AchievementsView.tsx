@@ -2,7 +2,7 @@
 
 /** Achievements album — discoverable straight from the home screen. */
 
-import { achievements as achievementDefs } from "@/data";
+import { achievements as achievementDefs } from "@/data/catalog";
 import { useCopy } from "@/content/copy";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";

@@ -9,7 +9,7 @@
  */
 
 import type { AchievementDef } from "@/engine/types";
-import { achievements as achievementDefs } from "@/data";
+import { achievements as achievementDefs } from "@/data/catalog";
 import { useCopy } from "@/content/copy";
 import { cx, formatDate } from "@/lib/util";
 import { Panel } from "@/components/ui/Panel";

@@ -3,7 +3,7 @@ import { SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { EMPTY_COSMETICS } from "@/engine/cosmetics";
 import { EMPTY_LOGIN, EMPTY_MISSIONS } from "@/engine/missions";
-import { EMPTY_QUIZ } from "@/engine/quiz";
+import { EMPTY_QUIZ } from "@/engine/quizState";
 import { freshSeason } from "@/engine/season";
 import { mergeProfiles, type DurableProfile } from "./profileSync";
 

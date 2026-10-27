@@ -4,7 +4,9 @@
  * Loads the JSON dataset once and exposes typed arrays + lookup maps.
  * Everything else in the app reads data through this module — swapping JSON
  * for a Liquipedia-fed database later means changing only this file's
- * implementation, not its exports.
+ * implementation, not its exports. The one exception is the SHARED path (root
+ * layout, home, content pages): it reads `./catalog` and `./counts`, so the
+ * dataset loads only on the pages that play with it (rc.26, #60).
  *
  * Validation (zod schemas + referential integrity) is NOT done here: it runs at
  * build/CI time via `validateDataset()` in `./validate.ts`, called by
@@ -25,15 +27,12 @@ import coachesJson from "./coaches.json";
 import subsJson from "./subs.json";
 import lineupsJson from "./lineups.json";
 import specialCardsJson from "./specialCards.json";
-import achievementsJson from "./achievements.json";
-import challengesJson from "./challenges.json";
 import cardIdAliasesJson from "./cardIdAliases.json";
 
 import { REGION_LOCK, SPECIALS } from "@/config/balance";
+import { achievementById, achievements, challengeById, challenges, toMap } from "./catalog";
 import { NATIONAL_SPECIAL_PREFIX } from "./counts";
 import type {
-  AchievementDef,
-  Challenge,
   CoachCard,
   Lineup,
   Org,
@@ -69,7 +68,7 @@ export const lineups = lineupsJson as Lineup[];
  * historical name). It never enters the general draft, the general opponent
  * field or the dailies: it plays only in its region's Region-only mode. In a
  * region WITHOUT that mode (APAC, SSA — too few rosters for a 16-team regional
- * event) it stays dormant until the region opens (rc.25, Miguel's call).
+ * event) it stays dormant until the region opens (rc.26, Miguel's call).
  */
 export function isRegionOnly(l: Lineup): boolean {
   return Boolean(l.samOnly);
@@ -122,26 +121,16 @@ function withoutUndeclaredKeys(card: SpecialCard): SpecialCard {
 /** The hand-curated catalogue (specialCards.json). */
 const fileSpecialCards = (specialCardsJson as SpecialCard[]).map(withoutUndeclaredKeys);
 
-export const achievements = achievementsJson as AchievementDef[];
-
-export const challenges = challengesJson as Challenge[];
+/**
+ * Achievements and challenges come from the light catalog (rc.26, #60): the
+ * root layout reads them without this barrel, and re-exporting keeps one copy
+ * of each map on the pages that load both.
+ */
+export { achievementById, achievements, challengeById, challenges };
 
 // ---------------------------------------------------------------------------
-// Lookup maps
+// Lookup maps (`toMap`, from ./catalog, rejects a duplicate id)
 // ---------------------------------------------------------------------------
-
-/** Id → record. Duplicate ids are rejected by `validateDataset()` in CI; the
- *  throw here is a free last-resort guard (we iterate to build the map anyway). */
-function toMap<T extends { id: string }>(label: string, items: T[]): Map<string, T> {
-  const map = new Map<string, T>();
-  for (const item of items) {
-    if (map.has(item.id)) {
-      throw new Error(`[data] Duplicate id "${item.id}" in ${label}.json`);
-    }
-    map.set(item.id, item);
-  }
-  return map;
-}
 
 export const playerById = toMap("players", players);
 export const seasonById = toMap("seasons", seasons);
@@ -233,8 +222,6 @@ for (const lineup of lineups) {
 /** Every special: the curated catalogue, then the derived national cards. */
 export const specialCards: SpecialCard[] = [...fileSpecialCards, ...nationalSpecialCards];
 export const specialCardById = toMap("specialCards", specialCards);
-export const achievementById = toMap("achievements", achievements);
-export const challengeById = toMap("challenges", challenges);
 
 /**
  * Special versions per PERSON (v0.5): a special belongs to the player, so any

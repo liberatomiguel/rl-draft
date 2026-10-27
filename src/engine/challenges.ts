@@ -12,6 +12,7 @@ import { CHALLENGE, RANKS } from "@/config/balance";
 import { specialCardById } from "@/data";
 import { lineupById, lineupPoolForRegion, lineups, playerById, playerCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
+import { STAR_2, STAR_3, STAR_CLEAR } from "./challengeStars";
 import { createDraft, drawNextOffer, playerEligibleUnderConstraint } from "./draft";
 import { simulateSeries } from "./match";
 import { rankForXp } from "./progression";
@@ -33,22 +34,9 @@ export type ChallengeStatus = "locked" | "available" | "cleared";
 
 const rankIndex = (id: string): number => RANKS.findIndex((r) => r.id === id);
 
-/** Bit masks for the three stars (v2.0). */
-export const STAR_CLEAR = 1;
-export const STAR_2 = 2;
-export const STAR_3 = 4;
-export const ALL_STARS = STAR_CLEAR | STAR_2 | STAR_3;
-
-export function countStars(mask: number): number {
-  let n = 0;
-  for (let m = mask | 0; m; m >>>= 1) n += m & 1;
-  return n;
-}
-
-/** Total stars across a profile's `challengeStars` map. */
-export function totalStars(stars: Record<string, number>): number {
-  return Object.values(stars).reduce((n, m) => n + countStars(m), 0);
-}
+// The star masks live in ./challengeStars (no dataset: the cloud sync counts
+// them on every page, #60); re-exported so this stays the challenges API.
+export { ALL_STARS, countStars, STAR_2, STAR_3, STAR_CLEAR, totalStars } from "./challengeStars";
 
 /** Number of stars a challenge can award (3 with `stars`, 1 without). */
 export function starsAvailable(challenge: Challenge): number {

@@ -20,7 +20,7 @@
 import { useEffect, useState } from "react";
 import { RANKS } from "@/config/balance";
 import { SEASON } from "@/config/season";
-import { challengeById } from "@/data";
+import { challengeById } from "@/data/catalog";
 import { cosmeticById, type CosmeticDef, type CosmeticKind, type CosmeticSource } from "@/data/cosmetics";
 import { addBadge, lockerItems, MAX_BADGES, placeBadgeAt, removeBadgeAt, resolveEquipped, swapBadges, unseenOfKind, unseenOwnedIds } from "@/engine/cosmetics";
 import { useCopy } from "@/content/copy";

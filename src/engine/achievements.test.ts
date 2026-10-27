@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { achievements, playerById, playerCardById, playerCards } from "@/data";
-import {
-  evaluateCounterAchievements,
-  liveAchievements,
-  teamAchievements,
-  type CounterSnapshot,
-} from "./achievements";
+import { liveAchievements, teamAchievements } from "./achievements";
+import { evaluateCounterAchievements, type CounterSnapshot } from "./counterAchievements";
 import type {
   ChemistryResult,
   GameResult,

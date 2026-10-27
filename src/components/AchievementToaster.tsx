@@ -10,7 +10,7 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { achievementById } from "@/data";
+import { achievementById } from "@/data/catalog";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";

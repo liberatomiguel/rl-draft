@@ -66,10 +66,12 @@ import type {
   RunState,
   SeriesResult,
 } from "@/engine/types";
-import { generateDailyConfig, seedFromDate, todayKey } from "@/lib/daily";
+import { generateDailyConfig } from "@/lib/daily";
+import { seedFromDate, todayKey } from "@/lib/dailyPlan";
 import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
 import { trackEvent } from "@/lib/analytics";
+import { registerRunStore } from "./lazyRunStore";
 import { useProfileStore } from "./profileStore";
 import { useRewardToasts } from "./rewardToastStore";
 
@@ -716,3 +718,6 @@ export const useRunStore = create<RunStore>()(
     },
   ),
 );
+
+// AppShell and the home menu reach the store through ./lazyRunStore (#60).
+registerRunStore(useRunStore);

@@ -7,7 +7,7 @@ import { FEATURES } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
-import { useRunStore } from "@/store/runStore";
+import { clearRunInProgress } from "@/store/lazyRunStore";
 import { useSettings } from "@/store/settingsStore";
 import { useAccountStore } from "@/store/accountStore";
 import { useProfileStore } from "@/store/profileStore";
@@ -57,10 +57,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // (v0.7.0 — the leave-confirmation modal was removed by direction). The run
   // only lives on /play; a refresh there still resumes because pathname stays
   // /play on load. Idempotent and safe under React strict mode (no cleanup).
+  // The run store (dataset + engine) loads only when a run exists (#60).
   useEffect(() => {
-    if (pathname !== "/play" && useRunStore.getState().run) {
-      useRunStore.getState().clearRun();
-    }
+    if (pathname !== "/play") clearRunInProgress();
   }, [pathname]);
 
   // Wire the account session once (no-op when accounts are disabled) — v1.4.
@@ -107,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           sfx.click();
           // Play always starts a fresh run at Setup — clear any run in progress so
           // /play shows Setup even when you're already on /play mid-run (v1.3.1).
-          if (item.key === "play") useRunStore.getState().clearRun();
+          if (item.key === "play") clearRunInProgress();
         }}
       >
         {children}

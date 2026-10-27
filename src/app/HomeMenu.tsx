@@ -16,6 +16,7 @@
  */
 
 import { AppLink } from "@/components/ui/AppLink";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
@@ -26,12 +27,12 @@ import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
-import { generateDailyConfig, todayKey } from "@/lib/daily";
+import { dailyInfo, todayKey } from "@/lib/dailyPlan";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useAccountStore } from "@/store/accountStore";
+import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/lazyRunStore";
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
-import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -41,7 +42,24 @@ import { HomeSeoContent } from "@/components/content/HomeSeoContent";
 import { FirstRunTutorial } from "@/components/screens/FirstRunTutorial";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { MissionsPanel } from "@/components/MissionsPanel";
-import { QuizPanel } from "@/app/quiz/QuizView";
+
+// The home stays off the dataset (#60): the quiz builds its puzzle from it, so
+// its panel loads when the modal opens, and the run store (dataset + engine)
+// loads when a run is about to start.
+const QuizPanel = dynamic(() => import("@/app/quiz/QuizView").then((m) => m.QuizPanel), {
+  ssr: false,
+  loading: () => <div className="h-72 animate-pulse rounded-2xl bg-white/5" aria-busy />,
+});
+
+/** Hover (mouse) or focus on a play card starts loading the run store, so the
+ *  click rarely waits for it. A touch skips the hover: a scroll starts the same way. */
+const warmUp = () => void loadRunStore().catch(() => {});
+const warmRunStore = {
+  onPointerEnter: (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse") warmUp();
+  },
+  onFocus: warmUp,
+};
 
 export default function HomeMenu() {
   const { APP, HOME, HOME_SEO, QUIZ_UI } = useCopy();
@@ -62,26 +80,30 @@ export default function HomeMenu() {
   const streak = useProfileStore(selectDailyStreak);
   const quizToday = useProfileStore((s) => s.quiz.results[todayKey()]);
   const collectionOpen = useProfileStore(selectCollectionUnlocked);
-  const clearRun = useRunStore((s) => s.clearRun);
-  const startDailyRun = useRunStore((s) => s.startDailyRun);
-  const setSetupMode = useRunStore((s) => s.setSetupMode);
   const rank = rankForXp(xp);
   const [quizOpen, setQuizOpen] = useState(false);
 
+  // The play cards load the run store, set it up, then open /play. If it cannot
+  // load (offline, or a deploy replaced the chunk), /play still opens.
+  const playWith = (setUp: (run: RunStoreState) => void) =>
+    void loadRunStore()
+      .then(({ useRunStore }) => setUp(useRunStore.getState()))
+      .catch(() => {})
+      .then(() => router.push("/play"));
+
   const goToSetup = (mode: "classic" | "quick") => {
     sfx.click();
-    setSetupMode(mode);
-    router.push("/play");
+    playWith((run) => run.setSetupMode(mode));
   };
 
   const today = todayKey();
-  const daily = useMemo(() => generateDailyConfig(today), [today]);
+  const daily = useMemo(() => dailyInfo(today), [today]);
   const dailyDone = mounted ? Boolean(dailyResults[today]) : false;
   const quizDone = mounted ? Boolean(quizToday && (quizToday.solved || quizToday.attempts >= 3)) : false;
 
   useEffect(() => {
-    if (mounted && useRunStore.getState().run) clearRun();
-  }, [mounted, clearRun]);
+    if (mounted) clearRunInProgress();
+  }, [mounted]);
 
   const seoLinks = [
     { label: HOME_SEO.links.play, href: "/play" },
@@ -139,7 +161,7 @@ export default function HomeMenu() {
               className="group relative flex h-full min-h-[15rem] flex-col justify-between overflow-hidden !border-orange/40 p-6 transition-all hover:-translate-y-0.5 hover:!border-orange/70 md:p-8"
             >
               <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange/15 blur-3xl" aria-hidden />
-              <CardHit label={HOME.playNow} onClick={() => goToSetup("classic")} />
+              <CardHit label={HOME.playNow} onClick={() => goToSetup("classic")} {...warmRunStore} />
               <div className="pointer-events-none relative">
                 <div className="mb-2 flex items-center gap-2.5">
                   <h2 className="display text-3xl font-bold uppercase tracking-wide text-ink md:text-4xl">{HOME.playClassic}</h2>
@@ -158,6 +180,7 @@ export default function HomeMenu() {
                 <button
                   type="button"
                   onClick={() => goToSetup("quick")}
+                  {...warmRunStore}
                   title={HOME.quickDraftDesc}
                   className="display pointer-events-auto relative z-10 inline-flex items-center justify-center rounded-xl border border-line-strong px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-sub transition-colors hover:border-orange/50 hover:text-ink"
                 >
@@ -188,7 +211,7 @@ export default function HomeMenu() {
               </Panel>
             </AppLink>
           ) : (
-            <button type="button" onClick={() => goToSetup("quick")} className="group text-left md:col-span-4">
+            <button type="button" onClick={() => goToSetup("quick")} {...warmRunStore} className="group text-left md:col-span-4">
               <Panel className="flex h-full flex-col justify-center p-5 transition-all group-hover:!border-blue/50">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.quickDraft}</h3>
@@ -206,26 +229,20 @@ export default function HomeMenu() {
           <Panel className={cx("group relative flex flex-col overflow-hidden p-5 md:col-span-4", !dailyDone && "transition-colors hover:!border-line-strong")}>
             <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-300/10 blur-2xl" aria-hidden />
             {!dailyDone ? (
-              <CardHit
-                label={HOME.dailyPlay}
-                onClick={() => {
-                  startDailyRun();
-                  router.push("/play");
-                }}
-              />
+              <CardHit label={HOME.dailyPlay} onClick={() => playWith((run) => run.startDailyRun())} {...warmRunStore} />
             ) : null}
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">
                 {HOME.daily}
-                <span className="ml-2 text-sm text-faint">{mounted ? `#${daily.info.n}` : ""}</span>
+                <span className="ml-2 text-sm text-faint">{mounted ? `#${daily.n}` : ""}</span>
               </h3>
               {mounted && streak > 0 ? <Badge tone="gold">{HOME.dailyStreak(streak)}</Badge> : <Badge tone="blue">{HOME.liveBadge}</Badge>}
             </div>
             <div className="min-h-[56px] flex-1">
               {mounted ? (
                 <>
-                  <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">{daily.info.label}</p>
-                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-sub">{daily.info.description}</p>
+                  <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">{daily.label}</p>
+                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-sub">{daily.description}</p>
                 </>
               ) : null}
             </div>
@@ -400,12 +417,24 @@ export default function HomeMenu() {
  * (absolute, so it sits above the card's in-flow content). Anything inside the
  * card that needs its own action sits above it with `relative z-10`.
  */
-function CardHit({ label, onClick }: { label: string; onClick: () => void }) {
+function CardHit({
+  label,
+  onClick,
+  onPointerEnter,
+  onFocus,
+}: {
+  label: string;
+  onClick: () => void;
+  onPointerEnter?: (e: React.PointerEvent) => void;
+  onFocus?: () => void;
+}) {
   return (
     <button
       type="button"
       aria-label={label}
       onClick={onClick}
+      onPointerEnter={onPointerEnter}
+      onFocus={onFocus}
       className="absolute inset-0 z-[1] cursor-pointer rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-orange/70"
     />
   );

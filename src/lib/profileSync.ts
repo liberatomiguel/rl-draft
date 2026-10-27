@@ -18,7 +18,7 @@
 import { HISTORY_LIMIT } from "@/config/balance";
 import { cosmeticFacts, EMPTY_COSMETICS, mergeCosmetics, refreshOwned } from "@/engine/cosmetics";
 import { EMPTY_LOGIN, EMPTY_MISSIONS, mergeLogin, mergeMissions } from "@/engine/missions";
-import { EMPTY_QUIZ, mergeQuiz } from "@/engine/quiz";
+import { EMPTY_QUIZ, mergeQuiz } from "@/engine/quizState";
 import {
   mergeRating,
   mergeSeasonState,

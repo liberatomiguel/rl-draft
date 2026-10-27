@@ -1,19 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { QUIZ } from "@/config/balance";
 import { playerById } from "@/data";
-import {
-  applyGuess,
-  cluesFor,
-  EMPTY_QUIZ,
-  foldQuizDay,
-  mergeQuiz,
-  normalizeGuess,
-  quizFacts,
-  quizForDate,
-  quizSuggestions,
-  resolveGuess,
-  visibleClues,
-} from "./quiz";
+import { cluesFor, normalizeGuess, quizFacts, quizForDate, quizSuggestions, resolveGuess } from "./quiz";
+import { applyGuess, EMPTY_QUIZ, foldQuizDay, mergeQuiz, visibleClues } from "./quizState";
 
 describe("quiz puzzle generation", () => {
   it("is deterministic per date and picks a player with enough history", () => {

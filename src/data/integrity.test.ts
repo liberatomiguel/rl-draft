@@ -11,7 +11,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import * as catalog from "./catalog";
 import * as runtime from "./index";
+import nationalSpecialIdsJson from "./nationalSpecialIds.json";
 import {
   achievements,
   challenges,
@@ -139,6 +141,15 @@ describe("dataset validation (build-time gate)", () => {
       expect(oldId.startsWith(`${card.playerId}-`), `${oldId} → another player's card`).toBe(true);
       expect(runtime.playerCardById.get(oldId)).toBe(card);
     }
+  });
+
+  it("the light catalog agrees with the barrel: every special id, one copy of each map (#60)", () => {
+    // build:data writes the national ids the barrel derives at load time.
+    const derived = runtime.specialCards.filter((sp) => sp.rarity === "national").map((sp) => sp.id);
+    expect(nationalSpecialIdsJson, "stale nationalSpecialIds.json: run npm run build:data").toStrictEqual(derived);
+    expect([...catalog.specialCardIds].sort()).toStrictEqual([...runtime.specialCardById.keys()].sort());
+    expect(runtime.achievementById).toBe(catalog.achievementById);
+    expect(runtime.challengeById).toBe(catalog.challengeById);
   });
 
   it("rejects a schema violation with the file name", () => {

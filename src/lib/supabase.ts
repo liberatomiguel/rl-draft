@@ -22,7 +22,7 @@
 
 import type { AuthChangeEvent, Session, SupabaseClient } from "@supabase/supabase-js";
 import { SEASON } from "@/config/season";
-import { totalStars } from "@/engine/challenges";
+import { totalStars } from "@/engine/challengeStars";
 import { EMPTY_COSMETICS, equippedColumns } from "@/engine/cosmetics";
 import type { DurableProfile } from "./profileSync";
 

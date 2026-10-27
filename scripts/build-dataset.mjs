@@ -1090,6 +1090,19 @@ writeJson("subs.json", subCards);
 writeJson("lineups.json", lineups);
 // specialCards.json intentionally NOT written — hand-maintained since v1.1.0.
 
+// National-team special ids (v2.0): src/data/index.ts DERIVES one special per
+// card of a national lineup (`nt-<base card id>`: players, then coach, then
+// sub). The light catalog (src/data/catalog.ts) needs the ids without loading
+// the dataset (rc.26, #60), so the same list is written here;
+// integrity.test.ts asserts it matches the load-time derivation.
+writeJson(
+  "nationalSpecialIds.json",
+  lineups
+    .filter((l) => l.national)
+    .flatMap((l) => [...l.playerCardIds, ...(l.coachId ? [l.coachId] : []), ...(l.subId ? [l.subId] : [])])
+    .map((id) => `nt-${id}`),
+);
+
 // Asset manifests — drop-in image filenames.
 mkdirSync(join(root, "public", "orgs"), { recursive: true });
 writeFileSync(

@@ -16,9 +16,9 @@ import {
   seasonRatingAfter,
   seasonRatingDelta,
 } from "@/config/balance";
-import { achievementById, specialCardById } from "@/data";
+import { achievementById, specialCardIds } from "@/data/catalog";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
-import { evaluateCounterAchievements } from "@/engine/achievements";
+import { evaluateCounterAchievements } from "@/engine/counterAchievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
 import {
   cosmeticFacts,
@@ -49,7 +49,7 @@ import {
   foldQuizDay,
   type QuizPuzzle,
   type QuizState,
-} from "@/engine/quiz";
+} from "@/engine/quizState";
 import {
   freshSeason,
   normalizeToSeason,
@@ -337,12 +337,15 @@ export function pruneEarnedAchievements(
  * `specialCards.json`. A removed/renamed special would otherwise inflate the
  * Collection counter ("X / N" with X counting ghosts) and the `specialsOwned`
  * achievement counter, even though no card renders for it. (v1.4)
+ * Since v2.0 the valid set also holds the derived national-team cards; it comes
+ * from the light catalog (`specialCardIds`, the same ids as `specialCardById`),
+ * so this store never loads the dataset (rc.26, #60).
  */
 export function pruneUnlockedSpecials(
   m: Record<string, string> | undefined,
 ): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(m ?? {}).filter(([id]) => specialCardById.has(id)),
+    Object.entries(m ?? {}).filter(([id]) => specialCardIds.has(id)),
   );
 }
 

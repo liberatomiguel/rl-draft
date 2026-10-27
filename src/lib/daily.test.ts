@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { lineupById } from "@/data";
-import { generateDailyConfig, seedFromDate } from "./daily";
+import { generateDailyConfig, viablePool } from "./daily";
+import { dailyInfo, LOCKDOWN_REGIONS, seedFromDate, type DailyPool } from "./dailyPlan";
 
 describe("daily challenge generator", () => {
   it("is deterministic for a given date", () => {
@@ -48,6 +49,25 @@ describe("daily challenge generator", () => {
           expect(lineupById.has(id)).toBe(true);
         }
       }
+    }
+  });
+
+  // The home menu reads `dailyInfo` (no dataset, #60), which takes every pool as
+  // viable. If a data change shrank one below a draft, the run would fall back
+  // to Pure Bracket while the menu still named the template: fix the data, or
+  // give the menu the pool sizes.
+  it("every pool a template can ask for is viable, so the menu names the run's challenge", () => {
+    const pools: DailyPool[] = [
+      ...LOCKDOWN_REGIONS.map((region): DailyPool => ({ kind: "region", region })),
+      { kind: "era", era: "old-school" },
+      { kind: "era", era: "modern" },
+      { kind: "champions" },
+    ];
+    for (const pool of pools) expect(viablePool(pool), JSON.stringify(pool)).toBe(true);
+    const start = Date.parse("2026-06-15T00:00:00Z");
+    for (let day = 0; day < 730; day++) {
+      const date = new Date(start + day * 86_400_000).toISOString().slice(0, 10);
+      expect(dailyInfo(date), date).toStrictEqual(generateDailyConfig(date).info);
     }
   });
 });
