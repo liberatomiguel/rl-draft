@@ -263,6 +263,8 @@ export const useRunStore = create<RunStore>()(
           mode: "daily",
           difficulty: config.difficulty,
           hiddenOverall: !run.showOverall,
+          // Explicit (rc.25): without it the dashboards bucket dailies as region "None".
+          region: "daily",
         });
       },
 

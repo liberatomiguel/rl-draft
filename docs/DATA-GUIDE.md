@@ -82,6 +82,13 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 
 ## playerCards.json — one card per player per lineup
 
+> **Renamed cards (rc.25):** a card id is `<person>-<lineup>`, so a data fix that
+> moves a player to another lineup renames the card. Add the old → new pair to
+> `src/data/cardIdAliases.json`: the old id stays a lookup key for the corrected
+> card, so saves, runs in progress and cloud rows keep resolving (first used for
+> D01, the swapped Chiefs / Tainted Minds S6 trios). `integrity.test.ts` checks
+> that every old id is retired and points at the same player's live card.
+
 ```json
 {
   "id": "kaydop-vitality-s7",
@@ -138,10 +145,10 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
   region since v2.0 — below the international bar. Excluded from
   `draftableLineups` (the worldwide draw and opponent field); shown only in its
   region's Region-only mode. Set by the `sam-only` (or `region-only`) flag in
-  `teams.md`. It only takes effect in a region that HAS the mode
-  (`REGION_LOCK.regions` = NA, EU, SAM, MENA, OCE): APAC/SSA rosters carrying the
-  flag stay in the general pool until those regions open (`isRegionOnly` in
-  `@/data`), so nothing becomes unplayable.
+  `teams.md`. The mode exists in `REGION_LOCK.regions` (NA, EU, SAM, MENA, OCE);
+  in APAC and SSA (too few rosters for a 16-team regional event) flagged rosters
+  — national teams included — stay DORMANT until the region opens: never in the
+  general draft, not in the national album (`isObtainable` in `@/data`, rc.25).
 - `rareSpawn` (optional): an easter-egg lineup injected at
   `DRAFT.easterEggChance` instead of the normal draw. Set by the `rare` flag.
 - `national` (optional, v2.0): a FIFAe national team (any lineup of a season

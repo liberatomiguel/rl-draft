@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.24** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.25** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards).
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
   **Never deploy v2.0 to `main` before the full review.**
@@ -29,8 +29,11 @@ WebP art (`build:banners`), login calendar, rank track, unlock pop-up.
 NA, EU, SAM, MENA and OCE** with per-region boosts fitted to worldwide parity,
 and **national teams** (FIFAe 2024/2025, 32 teams): a rare draw (2.5% per
 offer), all-gold "National team" specials, the whole team collected on sight,
-their own collection album. Decisions: DESIGN-DECISIONS #110–#137,
-ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics reference: `COSMETICS-CATALOG.md`.
+their own collection album. **rc.25:** difficulty calibrated on live PostHog
+play by reset profile (every pool ≈ live worldwide rates; Hard/Legacy grinders
+capped at the live level; worldwide Legacy 1.6), APAC/SSA closed with their
+regional rosters dormant, D01 fixed via card-id aliases. Decisions:
+DESIGN-DECISIONS #110–#141, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics reference: `COSMETICS-CATALOG.md`.
 
 ## Open before `main` (Phase 4)
 
@@ -45,8 +48,10 @@ ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics reference: `COSMETICS-CATALOG.md`.
   album), the album in EN and PT, a new career (real ages). Lighthouse.
   Event-card curation and a PT pass. The in-game changelog page still stops
   at 1.4.2 (write the v2.0 player notes at launch).
-- **Data to decide:** D01 — Chiefs S6 and Tainted Minds S6 have swapped trios;
-  fixing it renames six saved cards, so it needs a save migration first.
+- **Decide:** worldwide Legacy is 1.6 (typical ≈2.8 %, grinders ≈12.5 % = live);
+  1.3 keeps typical ≈3.7 % but grinders ≈16 % (#140).
+- **#60** (dataset off the shared bundle) is on its own branch
+  `data-off-shared-path` (separate session) — review and merge into `staging`.
 - Open details: login-calendar XP values are a first pass; `early-supporter`
   must exist in `profile_grants` when granted; Season 2 needs its own
   rank-track items.
@@ -54,7 +59,7 @@ ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics reference: `COSMETICS-CATALOG.md`.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **523** tests / 40 files (+2 opt-in
+- `npm run typecheck` clean · `npm test` **526** tests / 41 files (+2 opt-in
   tools skipped) · `npm run lint` at baseline **5 errors** (pre-existing:
   TournamentScreen ×2, AnimatedNumber, Modal, one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything

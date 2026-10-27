@@ -61,7 +61,7 @@ entre dispositivos (e é proposital, pela política de privacidade).
 | Evento | Quando dispara | Properties úteis |
 |---|---|---|
 | `$pageview` | Cada página/rota (automático) | `$current_url`, `$pathname` |
-| `run_started` | Run criada (classic/quick/daily/challenge) | `mode`, `difficulty`, `hiddenOverall`, `region` |
+| `run_started` | Run criada (classic/quick/daily/challenge) | `mode`, `difficulty`, `hiddenOverall`, `region` (`worldwide`, a região do Region only, ou `daily` desde a rc.25 — antes a daily ia sem região e aparecia como "None") |
 | `tournament_started` | Draft confirmado, bracket começou | `mode`, `difficulty` |
 | `run_completed` | Chegou na tela de resultado (desfecho) | `mode`, `difficulty`, `placement`, `won`, `teamOverall`, `swissWins`, `swissLosses`, `xpGained`, `hiddenOverall` |
 | `run_abandoned` | Saiu antes do resultado | `mode`, `difficulty`, `phase` (draft/review/tournament), `reason` (quit/restart), `hiddenOverall`, `region` |

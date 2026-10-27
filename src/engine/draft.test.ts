@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coachById, coaches, lineups, orgs, playerCardById, playerCards, specialCards, subById, subs } from "@/data";
+import { coachById, coaches, draftableLineups, lineups, orgs, playerCardById, playerCards, specialCards, subById, subs } from "@/data";
 import { createRng, type Rng } from "@/lib/rng";
 import {
   applyFreeReroll,
@@ -264,19 +264,23 @@ describe("draft (§4-§6, v0.2 rules)", () => {
         org: { slot: "org", kind: "org", refId: orgs[0].id, fromLineupId: "x" },
       },
     };
-    const withStaffShare =
-      lineups.filter((l) => l.coachId || l.subId).length / lineups.length;
+    // Natural share of the pool this draft actually draws from (the general pool).
+    // rc.25: since the v2.0 base export most rosters carry staff (~80%), so a
+    // fixed "+12 points" bar sat at the ceiling — assert the effect instead: the
+    // weighting must at least HALVE the share of offers that can't fill the slots.
+    const unstaffedShare =
+      draftableLineups.filter((l) => !l.coachId && !l.subId).length / draftableLineups.length;
+    expect(unstaffedShare).toBeGreaterThan(0.05); // the premise: some exist to avoid
 
     const rng = createRng(79);
-    let staffDraws = 0;
+    let unstaffedDraws = 0;
     const draws = 300;
     for (let i = 0; i < draws; i++) {
       const drawn = drawNextOffer({ ...base, shownLineupIds: [] }, rng);
       const lineup = lineups.find((l) => l.id === drawn.offer!.lineupId)!;
-      if (lineup.coachId || lineup.subId) staffDraws += 1;
+      if (!lineup.coachId && !lineup.subId) unstaffedDraws += 1;
     }
-    // Weighted draws must clearly beat the natural share of staffed lineups.
-    expect(staffDraws / draws).toBeGreaterThan(Math.min(0.95, withStaffShare + 0.12));
+    expect(unstaffedDraws / draws).toBeLessThan(unstaffedShare * 0.5);
   });
 
   it("rolls specials from the PLAYER's pool, on any of their cards (v0.5)", () => {

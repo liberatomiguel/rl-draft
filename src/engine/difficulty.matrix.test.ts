@@ -19,7 +19,7 @@ import { coachById, lineupPoolForRegion, lineups, playerById, playerCardById, sp
 import { createRng, type Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
 import { rosterFromLineup } from "./challenges";
-import { applyPick, applyReroll, createDraft, drawNextOffer, neededKinds, slotsForKind } from "./draft";
+import { applyFreeReroll, applyPick, applyReroll, createDraft, drawNextOffer, neededKinds, slotsForKind } from "./draft";
 import { displayTeamOverall } from "./rating";
 import { buildUserTeam } from "./teams";
 import { fastForward, initTournament, userPlacement } from "./tournament";
@@ -34,6 +34,13 @@ const RESETS = Number(env.SIM_RESETS ?? 16);
 const PER = Number(env.SIM_PER ?? 8);
 const POP_PER = Number(env.SIM_POP_PER ?? 10);
 const SKIP_REAL = env.SIM_SKIP_REAL === "1";
+/**
+ * Reset profile: session i resets SIM_RESET_SET[i % n] times (e.g. "0,1,2,3,5,8,12,20")
+ * — every session's count is recorded, so any player mix (casual / grinder / a fit
+ * to live analytics) can be weighted afterwards. Unset: uniform 0..SIM_RESETS.
+ */
+const RESET_SET = env.SIM_RESET_SET ? env.SIM_RESET_SET.split(",").map(Number) : null;
+const resetsFor = (i: number) => (RESET_SET ? RESET_SET[i % RESET_SET.length] : i % (RESETS + 1));
 const SKIP_POP = env.SIM_SKIP_POP === "1";
 /** Optional override: {"SAM":{"legacy":4}} or {"*":{"hard":-0.2}} (WW shift delta). */
 const BOOST_OVERRIDE: Record<string, Partial<Record<Difficulty, number>>> | null = env.SIM_BOOST
@@ -82,7 +89,16 @@ function synergy(kind: CardKind, refId: string, roster: Roster): number {
 }
 const SYN_W = 3.5;
 function realisticDraft(difficulty: Difficulty, rng: Rng, pool?: string[]): Roster | null {
-  let draft = drawNextOffer(createDraft(difficulty, { mode: "classic", poolLineupIds: pool, specialChanceMult: SPECIAL_MULT[difficulty] }), rng);
+  // Like a real classic run: national teams can be drawn (v2.0; older builds ignore the option).
+  let draft = drawNextOffer(
+    createDraft(difficulty, {
+      mode: "classic",
+      poolLineupIds: pool,
+      specialChanceMult: SPECIAL_MULT[difficulty],
+      nationalTeams: { discovered: [] },
+    } as Parameters<typeof createDraft>[1]),
+    rng,
+  );
   let guard = 0;
   while (!draft.complete && guard++ < 200) {
     const offer = draft.offer; if (!offer) break;
@@ -92,6 +108,8 @@ function realisticDraft(difficulty: Difficulty, rng: Rng, pool?: string[]): Rost
     pickable.sort((a, b) => (a.kind === "player" ? 1 : 0) - (b.kind === "player" ? 1 : 0) || score(b) - score(a));
     const best = pickable.find((c) => c.kind === "player") ?? pickable[pickable.length - 1] ?? null;
     if (!best) {
+      // Nothing pickable: the game grants a FREE reroll (it never ends the draft).
+      if (!offer.hasPickableCard) { draft = applyFreeReroll(draft, rng); continue; }
       if (draft.rerollsLeft > 0) { draft = applyReroll(draft, rng); continue; }
       const any = offer.cards.find((c) => c.availability === "available" && slotsForKind(c.kind).some((s) => !draft.roster[s]));
       if (!any) return null;
@@ -129,19 +147,24 @@ function realistic(poolName: string, d: Difficulty) {
   const boost = boostFor(poolName, d);
   const tally: Record<string, { n: number; t: number; f: number }> = {};
   const ovrs: number[] = [];
+  /** One row per session: [resets, kept OVR, titles, finals] out of PER tourneys. */
+  const sessions: [number, number, number, number][] = [];
   let n = 0, t = 0, f = 0;
   for (let i = 0; i < SESS; i++) {
-    const got = draftBestOf(d, 200000 + i * 131, pool, i % (RESETS + 1));
+    const r = resetsFor(i);
+    const got = draftBestOf(d, 200000 + i * 131, pool, r);
     if (!got) continue;
     ovrs.push(got.ovr);
     const key = BUCKETS.find(([, hit]) => hit(got.ovr))![0];
     tally[key] = tally[key] ?? { n: 0, t: 0, f: 0 };
+    let st = 0, sf = 0;
     for (let j = 0; j < PER; j++) {
       const place = play(got.team, d, 700000 + i * 311 + j * 17, pool, boost);
       tally[key].n++; n++;
-      if (place === "champion") { tally[key].t++; t++; }
-      if (place === "champion" || place === "runner_up") { tally[key].f++; f++; }
+      if (place === "champion") { tally[key].t++; t++; st++; }
+      if (place === "champion" || place === "runner_up") { tally[key].f++; f++; sf++; }
     }
+    sessions.push([r, got.ovr, st, sf]);
   }
   ovrs.sort((a, b) => a - b);
   const q = (p: number) => ovrs[Math.min(ovrs.length - 1, Math.floor(p * ovrs.length))];
@@ -149,6 +172,8 @@ function realistic(poolName: string, d: Difficulty) {
     boost, blendedTitle: t / n, blendedFinal: f / n,
     ovr: { mean: ovrs.reduce((s, x) => s + x, 0) / ovrs.length, p10: q(0.1), p50: q(0.5), p90: q(0.9), max: ovrs[ovrs.length - 1] },
     buckets: Object.fromEntries(BUCKETS.filter(([k]) => tally[k]).map(([k]) => [k, { n: tally[k].n, title: tally[k].t / tally[k].n, final: tally[k].f / tally[k].n }])),
+    per: PER,
+    sessions,
   };
 }
 function population(poolName: string, d: Difficulty) {
