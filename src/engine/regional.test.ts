@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import { DIFFICULTY, REGION_LOCK, regionOpponentBoost } from "@/config/balance";
 import {
   draftableLineups,
+  isObtainable,
   isRegionOnly,
   lineupById,
   lineupPoolForRegion,
   lineups,
   playerCardById,
   specialCardById,
+  worldNationalLineups,
 } from "@/data";
 import { createRng } from "@/lib/rng";
 import { createDraft, drawNextOffer } from "@/engine/draft";
@@ -39,11 +41,17 @@ describe("regional draft & region-only separation (v1.2.0, every region since v2
     expect(regionOpponentBoost("APAC", "legacy")).toBe(0); // no mode → no boost
   });
 
-  it("a region without a Region-only mode keeps its flagged rosters in the general pool", () => {
-    const fallback = lineups.filter(
-      (l) => l.samOnly && !l.national && !REGION_LOCK.regions.includes(l.region),
-    );
-    for (const l of fallback) expect(draftableLineups).toContain(l);
+  it("a region without a Region-only mode keeps its region-only rosters dormant (rc.25)", () => {
+    // APAC / SSA: too few rosters for a 16-team regional event, so the mode stays
+    // closed — and their regional rosters must NOT leak into the general draft.
+    const dormant = lineups.filter((l) => l.samOnly && !REGION_LOCK.regions.includes(l.region));
+    expect(dormant.length).toBeGreaterThan(0);
+    for (const l of dormant) {
+      expect(draftableLineups, l.id).not.toContain(l);
+      expect(isObtainable(l), l.id).toBe(false);
+    }
+    // …nor any national team of theirs into the worldwide national draw.
+    for (const l of worldNationalLineups) expect(l.samOnly, l.id).toBeFalsy();
   });
 
   it("every Region-only region has a deep pool (international + region-only rosters)", () => {

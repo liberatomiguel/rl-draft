@@ -553,18 +553,18 @@ org: PSG Esports +
 ### OCE
 
 ```team: Chiefs Esports Club · S6 · 2018
-player 1: CJCJ 80
-player 2: Express 81
-player 3: Shadey 78
+player 1: Torsos 84
+player 2: Drippay 87
+player 3: Kamii 84
 sub: -
 coach: -
 org: Chiefs Esports Club +
 ```
 
 ```team: Tainted Minds · S6 · 2018
-player 1: Torsos 84
-player 2: Drippay 87
-player 3: Kamii 84
+player 1: CJCJ 80
+player 2: Express 81
+player 3: Shadey 78
 sub: -
 coach: -
 org: Tainted Minds ~

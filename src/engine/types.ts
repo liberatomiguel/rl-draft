@@ -189,8 +189,8 @@ export interface Lineup {
    * Region-only lineup (v1.2.0; any region since v2.0 — the name is historical):
    * a roster below the international bar. Excluded from the general
    * draft/opponent/daily pools; appears only in its region's Region-only mode.
-   * A region WITHOUT that mode (REGION_LOCK.regions) keeps its flagged rosters in
-   * the general pool instead (see isRegionOnly in @/data).
+   * In a region WITHOUT that mode (REGION_LOCK.regions: APAC, SSA) it stays
+   * dormant until the region opens (rc.25; see isRegionOnly / isObtainable).
    */
   samOnly?: boolean;
   /**

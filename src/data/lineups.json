@@ -824,12 +824,12 @@
     "orgId": "chiefs-esports-club",
     "region": "OCE",
     "playerCardIds": [
-      "cjcj-chiefs-esports-club-s6",
-      "express-chiefs-esports-club-s6",
-      "shadey-chiefs-esports-club-s6"
+      "torsos-chiefs-esports-club-s6",
+      "drippay-chiefs-esports-club-s6",
+      "kamii-chiefs-esports-club-s6"
     ],
     "orgBuffLevel": "+",
-    "historicalStrength": "underdog"
+    "historicalStrength": "solid"
   },
   {
     "id": "tainted-minds-s6",
@@ -838,12 +838,12 @@
     "orgId": "tainted-minds",
     "region": "OCE",
     "playerCardIds": [
-      "torsos-tainted-minds-s6",
-      "drippay-tainted-minds-s6",
-      "kamii-tainted-minds-s6"
+      "cjcj-tainted-minds-s6",
+      "express-tainted-minds-s6",
+      "shadey-tainted-minds-s6"
     ],
     "orgBuffLevel": "~",
-    "historicalStrength": "solid"
+    "historicalStrength": "underdog"
   },
   {
     "id": "g2-esports-s7",

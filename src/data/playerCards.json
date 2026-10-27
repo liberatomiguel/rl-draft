@@ -1485,57 +1485,57 @@
     "manualAdjustment": 0
   },
   {
-    "id": "cjcj-chiefs-esports-club-s6",
-    "playerId": "cjcj",
-    "orgId": "chiefs-esports-club",
-    "lineupId": "chiefs-esports-club-s6",
-    "seasonId": "rlcs-s6",
-    "overall": 80,
-    "manualAdjustment": 0
-  },
-  {
-    "id": "express-chiefs-esports-club-s6",
-    "playerId": "express",
-    "orgId": "chiefs-esports-club",
-    "lineupId": "chiefs-esports-club-s6",
-    "seasonId": "rlcs-s6",
-    "overall": 81,
-    "manualAdjustment": 0
-  },
-  {
-    "id": "shadey-chiefs-esports-club-s6",
-    "playerId": "shadey",
-    "orgId": "chiefs-esports-club",
-    "lineupId": "chiefs-esports-club-s6",
-    "seasonId": "rlcs-s6",
-    "overall": 78,
-    "manualAdjustment": 0
-  },
-  {
-    "id": "torsos-tainted-minds-s6",
+    "id": "torsos-chiefs-esports-club-s6",
     "playerId": "torsos",
-    "orgId": "tainted-minds",
-    "lineupId": "tainted-minds-s6",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-s6",
     "seasonId": "rlcs-s6",
     "overall": 84,
     "manualAdjustment": 0
   },
   {
-    "id": "drippay-tainted-minds-s6",
+    "id": "drippay-chiefs-esports-club-s6",
     "playerId": "drippay",
-    "orgId": "tainted-minds",
-    "lineupId": "tainted-minds-s6",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-s6",
     "seasonId": "rlcs-s6",
     "overall": 87,
     "manualAdjustment": 0
   },
   {
-    "id": "kamii-tainted-minds-s6",
+    "id": "kamii-chiefs-esports-club-s6",
     "playerId": "kamii",
+    "orgId": "chiefs-esports-club",
+    "lineupId": "chiefs-esports-club-s6",
+    "seasonId": "rlcs-s6",
+    "overall": 84,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "cjcj-tainted-minds-s6",
+    "playerId": "cjcj",
     "orgId": "tainted-minds",
     "lineupId": "tainted-minds-s6",
     "seasonId": "rlcs-s6",
-    "overall": 84,
+    "overall": 80,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "express-tainted-minds-s6",
+    "playerId": "express",
+    "orgId": "tainted-minds",
+    "lineupId": "tainted-minds-s6",
+    "seasonId": "rlcs-s6",
+    "overall": 81,
+    "manualAdjustment": 0
+  },
+  {
+    "id": "shadey-tainted-minds-s6",
+    "playerId": "shadey",
+    "orgId": "tainted-minds",
+    "lineupId": "tainted-minds-s6",
+    "seasonId": "rlcs-s6",
+    "overall": 78,
     "manualAdjustment": 0
   },
   {

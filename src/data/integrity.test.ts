@@ -112,13 +112,32 @@ describe("dataset validation (build-time gate)", () => {
     for (const key of FILES) {
       const map = maps[key] as Map<string, { id: string }>;
       const records = p[key] as { id: string }[];
-      // specialCards: the file records first, then the derived national cards (v2.0).
+      // The file records first; after them only two kinds of extra keys exist:
+      // the derived national cards (specialCards, v2.0) and the renamed-card
+      // aliases (playerCards, D01 — each old id points at its corrected card).
       const keys = [...map.keys()].slice(0, records.length);
       const values = [...map.values()].slice(0, records.length);
       expect(keys, key).toStrictEqual(records.map((r) => r.id));
       expect(values, key).toStrictEqual(records);
-      const derived = [...map.values()].slice(records.length) as { rarity?: string }[];
-      expect(derived.every((r) => key === "specialCards" && r.rarity === "national"), key).toBe(true);
+      const extraKeys = [...map.keys()].slice(records.length);
+      if (key === "playerCards") {
+        expect([...extraKeys].sort(), key).toStrictEqual(Object.keys(runtime.cardIdAliases).sort());
+        for (const k of extraKeys) expect(map.get(k)!.id, k).toBe(runtime.cardIdAliases[k]);
+      } else {
+        const derived = [...map.values()].slice(records.length) as { rarity?: string }[];
+        expect(derived.every((r) => key === "specialCards" && r.rarity === "national"), key).toBe(true);
+      }
+    }
+  });
+
+  it("card id aliases retire old ids onto real cards of the same player (D01)", () => {
+    const ids = new Set(runtime.playerCards.map((c) => c.id));
+    for (const [oldId, newId] of Object.entries(runtime.cardIdAliases)) {
+      expect(ids.has(oldId), `${oldId} is still a live card id`).toBe(false);
+      expect(ids.has(newId), `${newId} is not a card`).toBe(true);
+      const card = runtime.playerCardById.get(newId)!;
+      expect(oldId.startsWith(`${card.playerId}-`), `${oldId} → another player's card`).toBe(true);
+      expect(runtime.playerCardById.get(oldId)).toBe(card);
     }
   });
 

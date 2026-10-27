@@ -27,6 +27,7 @@ import lineupsJson from "./lineups.json";
 import specialCardsJson from "./specialCards.json";
 import achievementsJson from "./achievements.json";
 import challengesJson from "./challenges.json";
+import cardIdAliasesJson from "./cardIdAliases.json";
 
 import { REGION_LOCK, SPECIALS } from "@/config/balance";
 import { NATIONAL_SPECIAL_PREFIX } from "./counts";
@@ -64,13 +65,19 @@ export const subs = subsJson as SubCard[];
 export const lineups = lineupsJson as Lineup[];
 
 /**
- * A region-only roster that really lives in a Region-only mode (v2.0). The
- * `samOnly` flag (historical name — any region now) only takes effect in the
- * regions that offer the mode (REGION_LOCK.regions); APAC/SSA rosters carrying
- * it stay in the general pool until those regions open.
+ * A region-only roster (v1.2.0; any region since v2.0 — `samOnly` is the
+ * historical name). It never enters the general draft, the general opponent
+ * field or the dailies: it plays only in its region's Region-only mode. In a
+ * region WITHOUT that mode (APAC, SSA — too few rosters for a 16-team regional
+ * event) it stays dormant until the region opens (rc.25, Miguel's call).
  */
 export function isRegionOnly(l: Lineup): boolean {
-  return Boolean(l.samOnly) && REGION_LOCK.regions.includes(l.region);
+  return Boolean(l.samOnly);
+}
+
+/** Whether a lineup can show up in some draft today (dormant region-only = no). */
+export function isObtainable(l: Lineup): boolean {
+  return !l.samOnly || REGION_LOCK.regions.includes(l.region);
 }
 
 /**
@@ -84,6 +91,9 @@ export const draftableLineups = lineups.filter((l) => !isRegionOnly(l) && !l.nat
 
 /** National teams a WORLDWIDE classic/quick draft can inject (v2.0): not region-only. */
 export const worldNationalLineups = lineups.filter((l) => l.national && !isRegionOnly(l));
+
+/** National teams that can be found today — the album's set (dormant ones join when their region opens). */
+export const obtainableNationalLineups = lineups.filter((l) => l.national && isObtainable(l));
 
 /**
  * Lineup ids for the Region-only mode (v1.2.0). Includes the region's
@@ -136,6 +146,20 @@ function toMap<T extends { id: string }>(label: string, items: T[]): Map<string,
 export const playerById = toMap("players", players);
 export const seasonById = toMap("seasons", seasons);
 export const playerCardById = toMap("playerCards", playerCards);
+
+/**
+ * Renamed player cards (v2.0, data fix D01). A fix that moves a player to the
+ * right lineup changes the card id (`<person>-<lineup>`), but old ids live on in
+ * saves — run-history replays, a run in progress during a deploy, cloud rows
+ * written by older builds. Each old id stays a LOOKUP KEY for the corrected
+ * card, so everything saved keeps resolving and the persist contract is
+ * untouched. `cardIdAliases.json` (old → new) is checked by integrity.test.ts.
+ */
+export const cardIdAliases = cardIdAliasesJson as Record<string, string>;
+for (const [oldId, newId] of Object.entries(cardIdAliases)) {
+  const card = playerCardById.get(newId);
+  if (card && !playerCardById.has(oldId)) playerCardById.set(oldId, card);
+}
 export const orgById = toMap("orgs", orgs);
 export const coachById = toMap("coaches", coaches);
 export const subById = toMap("subs", subs);

@@ -9,7 +9,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { lineups, nationalSpecialIdsByLineupId, seasonById, specialCardById, subById } from "@/data";
+import { nationalSpecialIdsByLineupId, obtainableNationalLineups, seasonById, specialCardById, subById } from "@/data";
 import { useCopy } from "@/content/copy";
 import { resolveSpecial } from "@/engine/cards";
 import type { Lineup, SpecialCard } from "@/engine/types";
@@ -19,11 +19,14 @@ import { Modal } from "@/components/ui/Modal";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { GameCard } from "@/components/cards/GameCard";
 
-/** National lineups per edition (season), newest edition first. */
+/**
+ * National lineups per edition (season), newest edition first. Only teams that
+ * can be found today: a closed region's region-only teams (APAC/SSA) stay out
+ * of the album until that region opens — no slot the player could never fill.
+ */
 const EDITIONS: { seasonId: string; teams: Lineup[] }[] = (() => {
   const bySeason = new Map<string, Lineup[]>();
-  for (const l of lineups) {
-    if (!l.national) continue;
+  for (const l of obtainableNationalLineups) {
     bySeason.set(l.seasonId, [...(bySeason.get(l.seasonId) ?? []), l]);
   }
   return [...bySeason.entries()]
