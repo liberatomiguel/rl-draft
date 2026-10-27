@@ -213,7 +213,9 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // v1.3.1: Normal is the "you can win with a good team" mode. A -1.0 field
     // shift makes a 90-overall team a real (if modest ~3%) title threat and a
     // 92 elite a strong one (~13%), per Miguel's targets.
-    opponentRatingShift: -1.3,
+    // rc.25 (#140): -1.3 → -1.05 — the v2.0 pool made typical Normal play a little
+    // easier (live-calibrated model: 36.3% vs the live 34.5%); this restores it.
+    opponentRatingShift: -1.05,
     opponentSpecialChance: 0.05,
     opponentTierWeights: { elite: 0.7, strong: 1.0, solid: 1.25, underdog: 1.3 },
     xpMultiplier: 1.0,
@@ -240,7 +242,9 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // toward ~15% (Miguel's target; faithful sim showed ~12.5% at -0.2). The curve
     // is flat (weak teams dominate the blend), so this is a measured, not drastic,
     // move; the §25 anchors are about rating DIFFS, untouched.
-    opponentRatingShift: -0.7,
+    // rc.25 (#140): -0.7 → -0.5 restores the live rates on the v2.0 pool — typical
+    // play 22% (live 22.3%) and runs reset 12+ times 54% (live 54.3%).
+    opponentRatingShift: -0.5,
     opponentSpecialChance: 0.12,
     opponentTierWeights: { elite: 1.0, strong: 1.1, solid: 1.0, underdog: 0.7 },
     xpMultiplier: 1.5,
@@ -273,7 +277,12 @@ export const DIFFICULTY: Record<Difficulty, DifficultyProfile> = {
     // whole elite tier; this +0.1 nudges it back down a hair, concentrated at 98+.
     // SAM lives on its own flatter scale via REGION_LOCK.legacy and is hardened
     // SEPARATELY this pass (boost 1.5 → 1.65, NOT lockstep) so both scales toughen.
-    opponentRatingShift: 1.3,
+    // rc.25 (#140): 1.3 → 1.6. The v2.0 pool raised the ceiling (97-98 mythics,
+    // national teams at 95-96): a run reset 12+ times won 16% (live: 12.3%) while
+    // typical play stayed near the live 4.1%. Miguel's rule — Legacy must not get
+    // easy for players who reset until a good run — caps grinders back at the live
+    // level; typical Legacy lands ≈3%. 1.3 keeps typical ≈3.7% if he prefers.
+    opponentRatingShift: 1.6,
     opponentSpecialChance: 0.18,
     opponentTierWeights: { elite: 1.8, strong: 1.1, solid: 0.3, underdog: 0.15 },
     xpMultiplier: 2.0,
@@ -305,28 +314,31 @@ export const REGION_LOCK = {
   //    (`difficulty.sim.test.ts`, SAM — title / reach-final): 88-89 ≈ 0.6% / 2%, 90-91 ≈
   //    3% / 14%, 92-93 ≈ 13% / 48%, the 94-95 ceiling ≈ 32% / 87%, blended ≈ 10% / 34%.
   //    The flat SAM curve means hardening the top also hardens the middle.
-  // v2.0 (#136): the boost is per REGION × difficulty — every region's pool has
-  // its own ceiling and depth — read it through regionOpponentBoost(). Target:
-  // WORLDWIDE PARITY — a good drafter wins a Region-only run about as often as a
-  // worldwide run at the same difficulty (realistic reset-draft title rate:
-  // Easy ≈85% · Normal ≈54% · Hard ≈40% · Legacy ≈9%, `difficulty.sim.test.ts`
-  // method). Fitted on the expanded v2.0 dataset from a 3-point sweep per cell.
-  // Side effects, on purpose: SAM Easy/Normal get easier (61% / 35% before —
-  // harder than worldwide, though meant as the accessible mode) and the old
-  // Normal-harder-than-Hard inversion is gone (Hard zeroes the AI's chemistry,
-  // which outweighs the shift gap in a small field — the boost now absorbs it).
+  // v2.0 (#136 → #140): the boost is per REGION × difficulty — every region's pool
+  // has its own ceiling, depth and Legacy field — read it through
+  // regionOpponentBoost(). rc.25 calibrates on LIVE play: a reset model fitted so
+  // `main` worldwide reproduces PostHog (Oct 13–26: Easy 64.6 · Normal 34.5 ·
+  // Hard 22.3 · Legacy 4.1 % win rate; players reset ≈0.6× per finished run on
+  // Easy, ≈2× on Normal/Hard/Legacy). Rule, the same for every pool (worldwide
+  // too): typical play wins as often as live worldwide, and on Hard/Legacy a run
+  // reset 12+ times never wins more often than it does live (Hard ≈54 %, Legacy
+  // ≈12 %) — the stricter of the two sets the value. Fitted from a 4-point sweep
+  // per cell (`difficulty.matrix.test.ts`, SIM_RESET_SET). Effects: SAM Easy and
+  // Normal are no longer harder than worldwide (live SAM Easy ≈30 %), the old
+  // Normal-harder-than-Hard inversion is gone (Hard zeroes the AI's chemistry),
+  // and OCE/MENA Legacy no longer reward grinding (OCE grinders won ≈32 %).
   // A negative value lets the regional field play below its nominal rating.
   opponentRatingBoost: {
-    SAM: { easy: -1.2, normal: -0.1, hard: 1.4, legacy: 4.0 },
-    EU: { easy: 0.25, normal: 0.5, hard: 1.2, legacy: 1.5 },
-    NA: { easy: 0.6, normal: 1.3, hard: 2.3, legacy: 2.0 },
-    MENA: { easy: -0.1, normal: 1.4, hard: 2.6, legacy: 4.1 },
-    OCE: { easy: 0.9, normal: 1.35, hard: 3.3, legacy: 5.0 },
+    SAM: { easy: -1.85, normal: -0.35, hard: 1.45, legacy: 3.95 },
+    EU: { easy: -0.05, normal: 0.45, hard: 0.9, legacy: 1.5 },
+    NA: { easy: 0.4, normal: 1.15, hard: 2.55, legacy: 2.15 },
+    MENA: { easy: -0.55, normal: 1.45, hard: 2.9, legacy: 4.05 },
+    OCE: { easy: 0.25, normal: 1.35, hard: 3.5, legacy: 5.35 },
   } as Partial<Record<Region, Record<Difficulty, number>>>,
   /**
    * Regions that offer a Region-only mode (v2.0; SAM only before). APAC and SSA
-   * stay "Coming soon" — too few rosters for a full regional draft — so their
-   * rosters flagged region-only play in the general pool instead.
+   * stay "Coming soon" — too few rosters for a 16-team regional event — and their
+   * region-only rosters stay dormant until they open (#138).
    */
   regions: ["NA", "EU", "SAM", "MENA", "OCE"] as readonly Region[],
 } as const;

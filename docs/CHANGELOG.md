@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.24**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.25**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,41 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.25 (live-data difficulty pass, APAC/SSA, D01 · 2026-10-27 · DESIGN-DECISIONS #138–#141)
+- **APAC and SSA stay closed, and their region-only rosters are dormant**: they no
+  longer play in the general draft, their national teams (Malaysia 2025, South
+  Africa 2024/2025) are not drawn, and the national album lists only teams you
+  can find today (they join when those regions open) (#138).
+- Analytics: daily runs now send `region: "daily"` on `run_started` (they showed up
+  as region "None" on the dashboards).
+- The difficulty sim bots (`difficulty.sim.test.ts`, `difficulty.matrix.test.ts`)
+  take the free reroll on an offer with nothing pickable, like the game — they used
+  to abandon the draft, silently dropping about 1 in 4 Legacy drafts from samples.
+  The matrix tool also records reset counts per session (`SIM_RESET_SET`) and lets
+  national teams appear, like a real classic run.
+
+### Balance — rc.25 (#140, #141)
+- **Difficulty calibrated on live play.** A reset model fitted on `main` reproduces
+  the last 14 days of PostHog (Easy 64.6 · Normal 34.5 · Hard 22.3 · Legacy 4.1 %).
+  Every pool now gives typical players the live worldwide rates, and on Hard and
+  Legacy a run reset 12+ times can't win more often than it does live (54 / 12 %).
+- Worldwide shifts: Normal −1.3 → −1.05, Hard −0.7 → −0.5, Legacy 1.3 → 1.6 (the
+  new 97–98 mythics and national teams had lifted Legacy grinders to 16 %).
+  Typical worldwide Legacy lands ≈2.8 % (was ≈4.1 %).
+- Region boosts (Easy / Normal / Hard / Legacy): SAM −1.85 / −0.35 / 1.45 / 3.95 ·
+  EU −0.05 / 0.45 / 0.9 / 1.5 · NA 0.4 / 1.15 / 2.55 / 2.15 · MENA −0.55 / 1.45 /
+  2.9 / 4.05 · OCE 0.25 / 1.35 / 3.5 / 5.35. SAM Easy/Normal stop being far harder
+  than worldwide (live ≈30 / 17 %), and OCE/MENA Legacy stop rewarding grinding
+  (OCE grinders won ≈32 %).
+- 9 challenges re-tuned (8 by boss shift on their seed; Perfect Storm re-seeded).
+
+### Fixed — rc.25
+- **D01: Chiefs Esports Club S6 and Tainted Minds S6 had swapped player trios.**
+  Root cause: the two `teams.md` blocks carried each other's players since the
+  original import. The six renamed card ids stay lookup keys for the corrected
+  cards (`src/data/cardIdAliases.json`), so run-history replays, runs in progress
+  and cloud rows from older builds keep resolving — no save migration (#139).
 
 ### Added — rc.24 (the v2.0 database expansion, 2026-10-27 · DESIGN-DECISIONS #133–#137 · ROAD-TO-WORLDS R39)
 - **The v2.0 base export** from `rocket-draft-database` (2026-10-26, 1383 approved

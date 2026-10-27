@@ -124,7 +124,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 0.25
+      "opponentShift": -4
     },
     "constraint": {
       "maxPlayerOverall": 86
@@ -278,7 +278,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -8.25
+      "opponentShift": -5.75
     },
     "constraint": {
       "maxPlayerOverall": 88
@@ -308,7 +308,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -4
+      "opponentShift": -6.5
     },
     "constraint": {
       "noSpecials": true
@@ -340,7 +340,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -3.25
+      "opponentShift": -4.5
     },
     "reward": {
       "xp": 300,
@@ -425,7 +425,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -3.5
+      "opponentShift": -8
     },
     "reward": {
       "xp": 360,
@@ -567,11 +567,11 @@
     "prereq": "ch-topple-the-titans",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
-    "seed": 29610,
+    "seed": 29812,
     "sim": {
       "difficulty": "legacy",
       "bestOf": 7,
-      "opponentShift": -9
+      "opponentShift": -5
     },
     "constraint": {
       "maxPlayerOverall": 90
@@ -684,7 +684,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -7
+      "opponentShift": -8.75
     },
     "reward": {
       "xp": 380,
@@ -721,7 +721,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -6.75
+      "opponentShift": -9.75
     },
     "reward": {
       "xp": 600,
@@ -802,7 +802,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -8
+      "opponentShift": -1.75
     },
     "reward": {
       "xp": 210,

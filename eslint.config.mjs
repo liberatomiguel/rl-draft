@@ -33,6 +33,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // wrangler dev scratch output
     ".wrangler/**",
+    // Claude Code session worktrees (full repo copies, git-ignored) — linting them
+    // multiplied the problem count by ~100 while a parallel session was open.
+    ".claude/**",
   ]),
 ]);
 

@@ -1348,6 +1348,58 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      boss strength moved (e.g. European Dawn +4 → −1.5, Time Capsule +1 → −8,
      Carry the Rookie −9 → −3.25). The scan is kept as a tool for the next pool
      change (Miguel's memory note: pool or special-RNG changes always do this).
+138. **APAC and SSA stay closed; their region-only rosters are dormant (rc.25,
+     supersedes #134's fallback).** Depth check: a Region-only run fields 15
+     opponents (one per org when possible). SSA has 11 rosters / 10 orgs — it
+     cannot fill the bracket. APAC has 20 rosters / 16 orgs (overall 64–82): it
+     can, but every run would face 75% of the region and draft from the same 20
+     teams. MENA (25) is the smallest viable region. Miguel's call: rosters
+     flagged region-only in a closed region must NOT play in the general draft
+     (rc.24 had moved them there). They — and their national teams (Malaysia
+     2025, South Africa 2024/2025) — stay dormant: no draft, no opponent field,
+     and no slot in the national album until the region opens
+     (`isRegionOnly` = the flag; `isObtainable` = flag + open region).
+139. **Renamed cards keep their old ids as aliases (rc.25, D01).** Chiefs
+     Esports Club S6 and Tainted Minds S6 had swapped trios. Card ids are
+     `<person>-<lineup>`, so the fix renames six cards that live in run-history
+     replays (synced to the cloud), runs in progress and cloud rows written by
+     older builds. Instead of a save migration (two persist-contract bumps and
+     no reach into other players' cloud rows), `src/data/cardIdAliases.json`
+     keeps each old id as a lookup key for the corrected card: everything saved
+     resolves forever, chemistry and display use the corrected lineup, and the
+     persist contract is untouched. The alias test retires each old id and
+     requires it to point at the same player's live card.
+140. **Difficulty is calibrated on live play, by reset profile (rc.25,
+     supersedes #136's "realistic-metric parity").** Miguel's guidance: Hard and
+     Legacy have no rerolls, so players RESET until a good run — Legacy must not
+     get easy for those runs; Legacy's opponent field differs; each region drafts
+     from its own pool. Method: `difficulty.matrix.test.ts` records each drafted
+     team's reset count (profile 0,1,2,3,5,8,12,20); a geometric reset model fitted
+     on `main` worldwide reproduces PostHog exactly (Oct 13–26, volume-weighted
+     win rate Easy 64.6 · Normal 34.5 · Hard 22.3 · Legacy 4.1 %; mean resets ≈0.6
+     on Easy, ≈2 on the others — consistent with ~0.75 draft restarts per finished
+     run). That model gives each pool a **live-like** rate; **grinders** = 12+
+     resets. Rule for every pool, worldwide included: live-like ≈ live worldwide;
+     on Hard/Legacy grinders may not beat live worldwide grinders (54.3 / 12.3 %);
+     the stricter side sets the value. Live baseline facts: SAM Easy/Normal were
+     far harder than worldwide (30 / 17 % vs 65 / 35 %) with Normal < Hard; SAM
+     Legacy already matched worldwide (3.7 / 12.0 %). On the v2.0 pool, typical
+     worldwide play barely moved, but Legacy grinders rose to 16 % (97-98 mythics,
+     national teams at 95-96). Result (live-like / grinders, final values):
+     WW 65.5 · 33.7 · 21.8/54.3 · 2.8/12.5 — SAM 65.0 · 34.7 · 23.3/52.5 · 4.3/13.3 —
+     EU 63.3 · 34.0 · 21.2/54.3 · 3.0/12.6 — NA 63.2 · 34.9 · 22.3/44.6 · 3.8/11.5 —
+     MENA 64.5 · 34.4 · 22.6/45.0 · 3.9/10.4 — OCE 65.9 · 34.0 · 21.8/54.3 · 3.2/11.5
+     (Easy · Normal · Hard · Legacy). Worldwide shifts: Normal −1.3 → −1.05,
+     Hard −0.7 → −0.5, Legacy 1.3 → 1.6; the region table is in `REGION_LOCK`.
+     The trade-off, flagged for Miguel: typical worldwide Legacy lands ≈2.8 %
+     (live ≈4.1 %) because capping grinders costs everyone a little; Legacy 1.3
+     would keep typical ≈3.7 % with grinders ≈16 %.
+141. **Challenges, round two (rc.25).** The dormant APAC/SSA rosters and D01
+     changed the worldwide pool again, moving 9 fixed-seed challenges out of
+     band (the new difficulty shifts moved none on their own). The scan found
+     in-band boss shifts on the original seed for 8 of them; Perfect Storm
+     (Legacy, overall cap 90) needed a new seed (29610 → 29812) — theme-safe, the
+     cap is its constraint.
 
 ## Open questions for review
 

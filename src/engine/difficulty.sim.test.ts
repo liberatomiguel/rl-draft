@@ -36,7 +36,7 @@ import { coachById, lineupPoolForRegion, playerById, playerCardById, specialCard
 import { regionOpponentBoost } from "@/config/balance";
 import { createRng, type Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
-import { applyPick, applyReroll, createDraft, drawNextOffer, neededKinds, slotsForKind } from "./draft";
+import { applyFreeReroll, applyPick, applyReroll, createDraft, drawNextOffer, neededKinds, slotsForKind } from "./draft";
 import { displayTeamOverall } from "./rating";
 import { buildUserTeam } from "./teams";
 import { fastForward, initTournament, userPlacement } from "./tournament";
@@ -81,6 +81,9 @@ function realisticDraft(difficulty: Difficulty, rng: Rng, poolLineupIds?: string
     pickable.sort((a, b) => (a.kind === "player" ? 1 : 0) - (b.kind === "player" ? 1 : 0) || score(b) - score(a));
     const best = pickable.find((c) => c.kind === "player") ?? pickable[pickable.length - 1] ?? null;
     if (!best) {
+      // Nothing pickable: the game grants a FREE reroll (rc.25 fix — the bot used to
+      // abandon the draft, silently dropping ~1 in 4 Legacy drafts from the sample).
+      if (!offer.hasPickableCard) { draft = applyFreeReroll(draft, rng); continue; }
       if (draft.rerollsLeft > 0) { draft = applyReroll(draft, rng); continue; }
       const any = offer.cards.find((c) => c.availability === "available" && slotsForKind(c.kind).some((s) => !draft.roster[s]));
       if (!any) return null;
