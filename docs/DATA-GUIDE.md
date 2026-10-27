@@ -215,7 +215,11 @@ Same shape as coaches minus bonus fields, plus optional `stats`.
 > `SPECIALS.national.overallDelta`, a +`SPECIALS.national.teamBoost` team buff),
 > so a roster edit in `teams.md` carries over by itself. The file schema rejects
 > a hand-written `national` card. Derived cards join `specialCards` /
-> `specialCardById` but never a person's roll pool.
+> `specialCardById` but never a person's roll pool. `build:data` also writes
+> their ids to `src/data/nationalSpecialIds.json` (generated, never hand-edit)
+> for the light catalog `src/data/catalog.ts`, which the root layout reads
+> instead of the dataset (DESIGN-DECISIONS #142); `validate:data` fails when it
+> is stale.
 
 > **HAND-MAINTAINED (since v1.1.1).** Unlike the other data files, this one is
 > NOT generated. Edit it directly, then run `npm run validate:data`.

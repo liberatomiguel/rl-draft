@@ -1400,6 +1400,33 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      in-band boss shifts on the original seed for 8 of them; Perfect Storm
      (Legacy, overall cap 90) needed a new seed (29610 → 29812) — theme-safe, the
      cap is its constraint.
+142. **The shared path never loads the dataset (rc.26, closes the #60
+     follow-up).** The root layout, the home and the content pages reach no
+     `@/data` barrel through static imports; only the game pages (`/play`,
+     `/challenges`, `/collection`, `/profile`, `/quiz`, career) load the dataset
+     chunk. (a) The run store loads on demand (`store/lazyRunStore.ts`): AppShell
+     clears a run through a persisted-run check, or directly once the store is
+     loaded (as before, and `clearRun` still logs the abandonment); the home's
+     play cards load it, set it up, then open `/play` — which opens anyway if
+     the chunk cannot load. (b) The profile store, toasts and locker read a light
+     catalog (`data/catalog.ts`): achievements, challenges, every valid special
+     id. National ids are derived from the lineups, so `build:data` writes them
+     (`nationalSpecialIds.json`) and the integrity suite asserts they equal the
+     barrel's derivation: the saved-special prune (persist migrate, cloud
+     hydrate, cloud merge) keeps exactly the old set. `@/data` re-exports the
+     catalog's maps, one copy per page. (c) Dataset-free halves for counter
+     achievements, the quiz player state, challenge stars and the daily plan.
+     (d) The home's daily tile takes every restricted pool as viable; the run
+     still checks the real pool (Pure Bracket fallback), so a test requires every
+     pool a template can ask for to stay viable — the smallest, MENA, has 20
+     lineups for a threshold of 8 (#15's determinism: same config over five
+     years of dates). (e) `src/data/sharedPath.test.ts` walks the static imports
+     and fails `validate:data`, and with it the build, when the layout or a light
+     page reaches the barrel; a new game page joins its `GAME_ROUTES`.
+     Trade-off: the first Play click after a cold home waits for the run-store
+     chunk (warmed on mouse hover / keyboard focus); every light page ships
+     ~79 KB gz less JS. `specialCards.json` (~10 KB gz) stays shared for the
+     counters and the prune.
 
 ## Open questions for review
 

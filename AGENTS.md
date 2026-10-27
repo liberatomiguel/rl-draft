@@ -79,6 +79,10 @@ narrative to CHANGELOG.md and trim STATUS. Keep both under ~600 words.
   The one exception is GameCard's special photo. It passes the raw
   `/cards/specials/<id>.png` to `next/image`, gated by `hasSpecialPhoto`, and
   `src/lib/imageLoader.ts` maps it to WebP.
+- **The shared path never static-imports `@/data` or the run store** (root
+  layout, home, content pages): use `@/data/catalog`, `@/data/counts`,
+  `@/lib/dailyPlan`, `@/engine/quizState`, `@/store/lazyRunStore`.
+  `src/data/sharedPath.test.ts` fails the build otherwise (DESIGN-DECISIONS #142).
 - **Player saves = `localStorage` on `https://rocketdraft.app` only.** The
   persist keys/versions are frozen by `src/store/persistContract.test.ts`.
   Change its `CONTRACT` only on purpose, with a DESIGN-DECISIONS entry and an

@@ -33,7 +33,7 @@ their own collection album. **rc.25:** difficulty calibrated on live PostHog
 play by reset profile (every pool ≈ live worldwide rates; Hard/Legacy grinders
 capped at the live level; worldwide Legacy 1.6), APAC/SSA closed with their
 regional rosters dormant, D01 fixed via card-id aliases. Decisions:
-DESIGN-DECISIONS #110–#141, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics reference: `COSMETICS-CATALOG.md`.
+DESIGN-DECISIONS #110–#142, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics reference: `COSMETICS-CATALOG.md`.
 
 ## Open before `main` (Phase 4)
 
@@ -45,13 +45,13 @@ DESIGN-DECISIONS #110–#141, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics refe
   profiles, two devices, all run modes, event cards, quiz, challenges, career
   end to end. **rc.24 adds:** one Region-only run per region (feel of each
   difficulty), a national-team find (rare — `/collection?dev=1` previews the
-  album), the album in EN and PT, a new career (real ages). Lighthouse.
+  album), the album in EN and PT, a new career (real ages). **rc.26 adds:**
+  Classic / Quick / Daily from a cold home, the home quiz modal, leaving a run
+  mid-draft (#142). Lighthouse.
   Event-card curation and a PT pass. The in-game changelog page still stops
   at 1.4.2 (write the v2.0 player notes at launch).
 - **Decide:** worldwide Legacy is 1.6 (typical ≈2.8 %, grinders ≈12.5 % = live);
   1.3 keeps typical ≈3.7 % but grinders ≈16 % (#140).
-- **#60** (dataset off the shared bundle) is on its own branch
-  `data-off-shared-path` (separate session) — review and merge into `staging`.
 - Open details: login-calendar XP values are a first pass; `early-supporter`
   must exist in `profile_grants` when granted; Season 2 needs its own
   rank-track items.
@@ -59,7 +59,7 @@ DESIGN-DECISIONS #110–#141, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics refe
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **526** tests / 41 files (+2 opt-in
+- `npm run typecheck` clean · `npm test` **555** tests / 43 files (+2 opt-in
   tools skipped) · `npm run lint` at baseline **5 errors** (pre-existing:
   TournamentScreen ×2, AnimatedNumber, Modal, one more react-hooks rule)
   · `build:data` + `validate:data` green · green `npm run build` for anything
@@ -70,7 +70,9 @@ DESIGN-DECISIONS #110–#141, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics refe
   leave their bands (DESIGN-DECISIONS #136–#137).
 - Perf reference on `wrangler dev` (rc.1, career on): cold home **25**
   requests, `/career` 34, 0 same-origin 4xx across 21 routes, home HTML 9.8 KB
-  gz. Bundled dataset since rc.24: **75 KB gz** (was 50).
+  gz. Dataset chunk (rc.26, #142): **62 KB gz**, loaded only by the game pages
+  (`src/data/sharedPath.test.ts` keeps the layout, home and content pages off
+  it); home first-load JS **288 KB gz** (was 367).
 
 ## Standing facts
 
@@ -89,10 +91,11 @@ DESIGN-DECISIONS #110–#141, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics refe
 
 ## Backlog (not blocking)
 
-- `@/data` barrel still on the shared path (#60), now 75 KB gz; PT locale not
-  lazy-loaded; `CAREER_*` constants still in `balance.ts`; deploy-skew 404s
-  after a deploy (keep previous `_next/static` or show a reload hint); content
-  pages lack `og:image`; lazy PostHog can miss UTMs.
+- `specialCards.json` (~10 KB gz) still ships on every page (counters,
+  prune); PT locale not lazy-loaded; `CAREER_*` constants still in
+  `balance.ts`; deploy-skew 404s after a deploy (keep previous
+  `_next/static` or show a reload hint); content pages lack `og:image`; lazy
+  PostHog can miss UTMs.
 - Missing optional art (fallbacks render): special photos for the Wings pair,
   `sp-freedom-og-brazil-goat` and the 18 rc.24 specials; 23 org logos
   (`public/orgs/README.md` lists every expected file).

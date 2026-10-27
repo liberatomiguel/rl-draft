@@ -172,6 +172,28 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
 
+### Changed — rc.26 (the dataset leaves the shared path · 2026-10-27 · DESIGN-DECISIONS #142)
+- **The layout, the home and the content pages stop loading the dataset (#60).** The
+  dataset chunk (505 KB raw / 62 KB gz) now loads only on the pages that play with it
+  (`/play`, `/challenges`, `/collection`, `/profile`, `/quiz`, career): 5 of the 28
+  exported pages, down from all 28. Home first-load JS 367 → 288 KB gz (1.51 → 0.95 MB
+  raw), content pages 349 → 270 KB gz; `/achievements`, `/leaderboards` and `/missions`
+  went light too. Root cause: the root layout's `AppShell` imported the run store
+  (dataset + the whole engine) just to clear a run on navigation, the profile store took
+  two lookups from the `@/data` barrel, and the home built its daily tile and quiz panel
+  from the dataset.
+- In their place: `store/lazyRunStore.ts` (a persisted-run check; the run store loads only
+  when a run exists or is about to start, warmed on hover/focus of a play card, and `/play`
+  still opens if the chunk fails to load); `data/catalog.ts` (achievements, challenges and
+  every special id, the national ones from `nationalSpecialIds.json`, now written by
+  `build:data`); dataset-free halves `engine/counterAchievements`, `engine/quizState`,
+  `engine/challengeStars`, `lib/dailyPlan`; the home quiz panel loads with its modal.
+- Guards: `src/data/sharedPath.test.ts` runs in `validate:data`, so `npm run build` fails
+  when the layout, the home or a content page static-imports the barrel again; the
+  integrity suite checks the catalog against the barrel. The daily is unchanged (same
+  config over five years of dates) and every daily pool must stay viable, since the home
+  now names the day's template without the dataset.
+
 ### Changed — rc.25 (live-data difficulty pass, APAC/SSA, D01 · 2026-10-27 · DESIGN-DECISIONS #138–#141)
 - **APAC and SSA stay closed, and their region-only rosters are dormant**: they no
   longer play in the general draft, their national teams (Malaysia 2025, South
