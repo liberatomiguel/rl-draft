@@ -464,6 +464,66 @@ R39. **Real players have their real age; FIFAe cards are not club history
      orgs (was 6), so the world can hold more than 16 orgs in a region; the
      regionals already field the top 16 by rating.
 
+R40. **The weekend calendar: Saturday qualifier → Sunday regional; Major and
+     Worlds over two days (rc.28, GAME-02/03).** Event, stage and day are
+     separate things, and a qualifier never produces a champion. Regional
+     week: the qualifier plays SATURDAY as a 16-team Swiss only (format
+     `swissOnly`: the 8 teams that reach 3 wins qualify and it ends there —
+     no playoffs, champion, champion rep, prize or news); the regional plays
+     SUNDAY with the direct 8 + the 8 qualified (meeting a qualifier opponent
+     again is fine: another tournament). Major / Worlds: Saturday lobby and
+     Swiss, a pause, then the playoffs on "Championship Sunday"; finishEvent
+     runs once. Open weeks and Mon-Fri training are unchanged. (a) No new
+     `Placement` (it is the Draft's too): in a qualifier `top8` = Qualified,
+     `swiss_exit` = Eliminated (`qualifierOutcomeOf`); its `championRef` is
+     the top Swiss seed and `hasChampion` is false. (b) Days are balance
+     constants; `CareerEventDef.day` is the day the event opens, the
+     Major/Worlds Sunday is derived (`playoffsDayFor`), `eventIdFor` is
+     untouched. (c) The pause is derived from saved state (two-day event,
+     clock before its playoffs day, Swiss finished, no playoff round played):
+     stepping and sim hold, the clock may move exactly one day, and Saturday
+     + Sunday equal one uninterrupted run. (d) The week's commitment owns the
+     user's event (pending, active or played); AI events resolve on their last
+     day and never twice; with the user in a direct seat, the AI qualifier of
+     their region is seeded with the user in it, so the displaced org plays
+     Saturday (it used to miss both events). (e) The team is fixed at
+     `startEvent` (`fieldedIds` gets the XP and stability credit; the lineup
+     locks until the event ends). (f) The results list (cap 90) never drops
+     the user's own current-season rows — the season review counts from it.
+     (g) Rewards: `qualifierAdvance` rep only (`qualifierWin` removed), a flat
+     `swissOnlyPct` 9 % / 3 % prize (provisional, ECO-01), no points; one rep
+     rule in the engine (`eventRepKindFor`). (h) UI: weekend strip in the
+     lobbies, Swiss verdict strip, the Swiss-complete pause panel ("Continue
+     to Championship Sunday"; its own ContinueKind, so autoplay stops), the
+     top bar waits for the replay before it moves on (session-only
+     `careerRevealStore`), a once-per-event Championship Sunday title card
+     (pairings only, skippable, static under reduced motion), a spectator
+     Sunday for a user out in the Swiss; PT keeps the name "Championship
+     Sunday". (i) Saves: additive `migrateSaveToV4` (saveVersion 4, persist
+     version 3 frozen) re-dates pending defs, ends a legacy qualifier at its
+     Swiss, pauses a legacy Major mid-Swiss (one already in its playoffs
+     finishes Saturday); history is untouched. Rejected: a new "qualified"
+     placement, a stored pause field, raising the results cap.
+
+R41. **The Match Center tells each game as a timeline (rc.28, GAME-04).** The
+     engine still settles a game as a winner, a winner-first score, an OT flag
+     and per-player goals; `engine/career/matchTimeline.ts` turns that into a
+     story, presentation only: a local RNG seeded from the round, both teams,
+     the rating gap and every saved game result — never the event cursor — so
+     reloads replay the same story and winners, drafts and balance cannot
+     move. Regulation interleaves the goals uniformly (the loser can open and
+     lead; a 3-0 never fakes a comeback), on clock times inside 4:55-0:01, at
+     least 4 s apart. Overtime (W-(W-1)): regulation ends tied, an END OF
+     REGULATION / OVERTIME beat lands, an accelerated +M:SS clock runs to the
+     winner's golden goal at an OT length from weighted buckets (0:30-2:00
+     55 %, 2-5 min 30 %, 5-10 min 12 %, 10-20 min 3 %; median about 1:52).
+     Scorers keep the engine's counts. One plan (`clockPlayback.ts`) drives
+     the beat timer and the `GameClock`, and a shared record of how far the
+     step played (`BeatSync`) keeps them together through pause, speed
+     changes and remounts. No spoilers: OVERTIME comes from the revealed beat,
+     game chips read left team - right team, and upcoming chips look the same
+     until the series is fully shown. Tunables: `CAREER_MATCH_CLOCK`.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

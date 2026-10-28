@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.27**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.28**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,56 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Changed — rc.28 (Etapa 1, part 2: the career weekend and the match timeline · 2026-10-28 · ROAD-TO-WORLDS-DECISIONS R40–R41)
+- **The weekend calendar (GAME-02/03, R40).** Regional week: the qualifier moves from
+  Wednesday to **Saturday** and is a 16-team Swiss only — the 8 teams that reach 3 wins
+  qualify and it ends there (no playoffs, no champion). The regional plays **Sunday** with
+  the direct 8 + Saturday's 8. **Major and Worlds span the weekend:** the Swiss on Saturday,
+  a pause (a reload keeps it), the playoffs on **Championship Sunday**; prize, points, rep and
+  XP land once. Events you are not in resolve on their last day (AI qualifiers Saturday, AI
+  regionals Sunday, an AI-only Major/Worlds in full on Sunday; an unattended Worlds closes
+  the season on day 224). On screen: Saturday/Sunday labels in HQ and the calendar (Rest on
+  empty weekend days, a Major you only watch shown muted), a "The weekend" strip in the
+  lobbies, a live Swiss verdict strip, the Qualified / Eliminated qualifier results with the
+  qualified eight, the Swiss-complete panel with "Continue to Championship Sunday", a
+  skippable once-per-event Championship Sunday title card (pairings only, static under
+  reduced motion), a spectator Sunday when you are out in the Swiss, and the lineup locked
+  while an event runs. Saves: additive `migrateSaveToV4` (saveVersion 4; persist version
+  unchanged) re-dates pending events and ends a qualifier in progress at its Swiss.
+- **The match timeline (GAME-04, R41).** Each of your games in the Match Center plays on a
+  running 5:00 clock: either side can open the scoring and lead (any order the final score
+  allows), every goal shows its time, an overtime game ends regulation tied, shows END OF
+  REGULATION / OVERTIME, runs an accelerated +M:SS clock (0:30–20:00, mostly short) and
+  ends on the winner's GOLDEN GOAL. Presentation only: seeded from each game's saved result,
+  never the match RNG — scores, scorers, winners and balance are unchanged. Pacing in
+  `CAREER_MATCH_CLOCK`; pause, 1×/2×/4×, skip series and reduced motion stay in sync.
+- **Balance:** qualifier rewards are `qualifierAdvance` rep only (`qualifierWin` removed) and a
+  flat `CAREER_PRIZES.swissOnlyPct` of 9 % of the pool per qualified team / 3 % per eliminated
+  team (provisional until the economy pass, ECO-01); still no Season Points.
+
+### Fixed — rc.28
+- **Match Center game chips read backwards when the right-hand team won a game.** Root cause:
+  `game.score` is winner-first and the chips printed it as left–right.
+- **The side with more goals always scored first** (every scoreline 1-0 … 8-7). Root cause:
+  `goalTimeline` spread each side's goals evenly and merged them, which always put the bigger
+  side first. **OVERTIME only showed after the golden goal** (gated on the finished game).
+- **The chip row gave away the length of your live series** (a sweep dimmed G4/G5 from game
+  1). Root cause: placeholder chips read the simulated series length during the reveal.
+- **The top bar and the Sim label spoiled a Major's Saturday result.** Root cause: both read the
+  engine, which pauses as soon as it has simulated the deciding series, before the replay.
+- **With the user seeded direct, one AI org played neither the qualifier nor the regional**
+  (since R30). Root cause: that region's AI qualifier was seeded as if the user did not exist.
+- **The season review could undercount Majors and titles** (since R30). Root cause: the results
+  list keeps 90 rows, oldest first, while a season files about 130 since the qualifiers.
+- **Lineup changes during the overnight pause moved match XP and stability credit** to players
+  who never played. Root cause: `finishEvent` read the lineup at the end.
+- **Local amateur sides shared names** — a pool of 8 sides could use only 4 team names, and one
+  gamertag could score for both teams. Root cause: the name stride could share a factor with
+  the 16-name bank, and each side drew its players independently.
+- **An intermittent test** (`runStore.national.test.ts`): it pre-owned the national cards only
+  after `startRun`, so a run whose first offer was a national team (~2.5 % of seeds) collected
+  it into an empty album.
 
 ### Fixed — rc.27 (Etapa 1 of the 2.0 completion plan · 2026-10-28 · DESIGN-DECISIONS #143)
 - **A Swiss never pairs two teams that already met (every Draft mode and Road to Worlds).**
