@@ -320,19 +320,34 @@ function OfferReveal({
             {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
           </p>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onReroll}
-          disabled={run.draft.rerollsLeft <= 0 || rolling}
-          title={DRAFT_UI.reroll}
-        >
-          <RerollIcon />
-          {DRAFT_UI.reroll} ·{" "}
-          {run.draft.rerollsLeft > 0
-            ? DRAFT_UI.rerollsLeft(run.draft.rerollsLeft)
-            : DRAFT_UI.noRerolls}
-        </Button>
+        {/* Nothing in the offer fits: the top button is the free reroll too, so
+            the paid one is never spent on a dead offer (rc.29). */}
+        {offer.hasPickableCard ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onReroll}
+            disabled={run.draft.rerollsLeft <= 0 || rolling}
+            title={DRAFT_UI.reroll}
+          >
+            <RerollIcon />
+            {DRAFT_UI.reroll} ·{" "}
+            {run.draft.rerollsLeft > 0
+              ? DRAFT_UI.rerollsLeft(run.draft.rerollsLeft)
+              : DRAFT_UI.noRerolls}
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onFreeReroll}
+            disabled={rolling}
+            title={DRAFT_UI.freeReroll}
+          >
+            <RerollIcon />
+            {DRAFT_UI.freeReroll}
+          </Button>
+        )}
       </div>
 
       {/* The offer fades in once the reel lands */}

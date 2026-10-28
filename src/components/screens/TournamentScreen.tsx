@@ -263,9 +263,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
       <RunStepper run={run} />
 
       <SectionTitle
-        kicker={
-          run.mode === "quick" || t.stage !== "swiss" ? T.playoffs : T.swiss
-        }
+        kicker={playoffsOnScreen(run.mode, t, revealedSwissRounds) ? T.playoffs : T.swiss}
         title={run.daily ? `Daily · ${run.daily.label}` : T.title}
         right={
           run.mode !== "quick" ? (
@@ -392,6 +390,29 @@ interface DerivedRecord {
   wins: number;
   losses: number;
   gameDiff: number;
+}
+
+/**
+ * rc.29 spoiler guard: the stage kicker reads what the viewer has SEEN. The
+ * engine resolves the AI-only rounds the moment the user's last Swiss series
+ * is simulated — before its first game is shown — so `t.stage` flipped to
+ * playoffs at the start of the deciding series and gave the result away.
+ */
+export function playoffsOnScreen(
+  mode: RunState["mode"],
+  t: TournamentState,
+  revealedSwissRounds: number,
+): boolean {
+  return mode === "quick" || (t.swiss.finished && revealedSwissRounds >= t.swiss.rounds.length);
+}
+
+/** Whether the user's Swiss is over as far as the viewer knows (revealed series only). */
+export function userSwissOverOnScreen(t: TournamentState, revealed: Set<string>): boolean {
+  const shown = deriveSwissRecords(t, revealed).get("user");
+  return (
+    (shown?.wins ?? 0) >= TOURNAMENT.swiss.winsToAdvance ||
+    (shown?.losses ?? 0) >= TOURNAMENT.swiss.lossesToEliminate
+  );
 }
 
 function deriveSwissRecords(
@@ -686,7 +707,10 @@ function SwissPath({
     });
   }
 
-  while (cells.length < 5 && cells.length > 0 && !t.swiss.finished) {
+  // Placeholders up to the 5-round cap while the user's Swiss is still open
+  // as far as the viewer knows (3 cells = a win, 5 = a loss used to leak).
+  const swissOver = userSwissOverOnScreen(t, revealed);
+  while (cells.length < 5 && cells.length > 0 && !swissOver) {
     cells.push({ key: null, round: cells.length + 1, series: null, state: "none" });
   }
 
@@ -842,7 +866,9 @@ function PlayoffBracketView({
     const spoiler = ri !== undefined && ri > revealedRounds;
     const series = ri !== undefined && !spoiler ? p.rounds[ri].series : null;
     return (
-      <div key={name} className="flex min-w-[150px] flex-1 flex-col justify-around gap-2">
+      // rc.29: 132 px columns keep the five lower-bracket columns (third place
+      // included) inside the 1280 px layout instead of clipping the last one.
+      <div key={name} className="flex min-w-[132px] flex-1 flex-col justify-around gap-2">
         <p className="kicker text-center !text-[9px]">{T.roundNames[name]}</p>
         {Array.from({ length: SLOTS[name] }).map((_, si) => {
           const s = series?.[si] ?? null;
@@ -1026,7 +1052,14 @@ function SwissStandings({
             </span>
           ) : null}
         </div>
-        <table className="w-full text-left text-xs">
+        {/* Fixed numeric columns: the team name gets every spare pixel (rc.29). */}
+        <table className="w-full table-fixed text-left text-xs">
+          <colgroup>
+            <col />
+            <col className="w-11" />
+            <col className="w-9" />
+            <col className="w-9" />
+          </colgroup>
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-faint">
               <th className="pb-2 font-semibold">{T.team}</th>
