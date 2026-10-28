@@ -33,7 +33,7 @@ export const PT: Copy = {
 
   HOME: {
     playClassic: "Draft Clássico",
-    playClassicDesc: "3 jogadores, técnico, reserva e org. Suíça e playoffs de dupla eliminação.",
+    playClassicDesc: "3 jogadores, técnico, reserva e org. Swiss e playoffs de dupla eliminação.",
     quickDraft: "Draft Rápido",
     quickDraftDesc: "Só jogadores, chave curta. Feito para partidas rápidas.",
     daily: "Desafio Diário",
@@ -108,12 +108,12 @@ export const PT: Copy = {
       {
         id: "how-it-works",
         title: "Como funciona o draft da RLCS",
-        body: "A cada rodada entra uma lineup real e histórica da RLCS. Pegue uma única carta — um jogador, o técnico, o reserva ou a organização — até fechar um elenco de três jogadores, técnico, reserva e org. Junte mesmo país, mesma organização ou a mesma lineup e sua chemistry sobe, então um time coeso pode derrubar um mix de estrelas mais bem avaliado. Aí o torneio roda sozinho: fase suíça e playoffs de dupla eliminação, igual à RLCS de verdade.",
+        body: "A cada rodada entra uma lineup real e histórica da RLCS. Pegue uma única carta — um jogador, o técnico, o reserva ou a organização — até fechar um elenco de três jogadores, técnico, reserva e org. Junte mesmo país, mesma organização ou a mesma lineup e sua chemistry sobe, então um time coeso pode derrubar um mix de estrelas mais bem avaliado. Aí o torneio roda sozinho: fase Swiss e playoffs de dupla eliminação, igual à RLCS de verdade.",
       },
       {
         id: "modes",
         title: "Três formas de draftar",
-        body: "O Draft Clássico é a experiência completa — seis slots, suíça e dupla eliminação. O Draft Rápido é só jogadores, com uma chave curta para uma partida ligeira. O Desafio Diário é um draft com seed por dia, igual para todo mundo, com uma streak para defender. São quatro dificuldades, e vencer no Hard libera o Legacy — um gauntlet histórico de elencos campeões com os overalls escondidos.",
+        body: "O Draft Clássico é a experiência completa — seis slots, Swiss e dupla eliminação. O Draft Rápido é só jogadores, com uma chave curta para uma partida ligeira. O Desafio Diário é um draft com seed por dia, igual para todo mundo, com uma streak para defender. São quatro dificuldades, e vencer no Hard libera o Legacy — um gauntlet histórico de elencos campeões com os overalls escondidos.",
       },
       {
         id: "special-cards",
@@ -357,7 +357,7 @@ export const PT: Copy = {
     hardLocked: "Chegue ao Prata para desbloquear o Difícil.",
     mode: "Modo de jogo",
     modeClassic: "Draft Clássico",
-    modeClassicHint: "6 vagas · suíça + playoffs de dupla eliminação",
+    modeClassicHint: "6 vagas · Swiss + playoffs de dupla eliminação",
     modeQuick: "Draft Rápido",
     modeQuickHint: "só 3 jogadores · chave direta de 8 times",
     ovrOptional: "OVR opcional",
@@ -419,7 +419,7 @@ export const PT: Copy = {
     howToSteps: [
       "A cada rodada sai uma lineup histórica da RLCS. Toque numa carta para draftá-la no seu time.",
       "Preencha 3 jogadores, um técnico, um reserva e uma org. A química é seu trunfo: junte mesmo país, org ou lineup histórica e um elenco coeso pode bater um time de estrelas com overall maior — o maior overall nem sempre é a escolha certa.",
-      "Então um torneio joga sozinho: suíça e playoffs de dupla eliminação. Mais overall + química vence mais séries.",
+      "Então um torneio joga sozinho: Swiss e playoffs de dupla eliminação. Mais overall + química vence mais séries.",
       "Termine as runs — vencendo ou perdendo — para ganhar XP, subir de rank e desbloquear cartas especiais para sua coleção.",
     ],
     howToCta: "Bora draftar",
@@ -499,7 +499,7 @@ export const PT: Copy = {
       {
         icon: "field",
         title: "Depois, simule",
-        body: "Seu time joga um campeonato completo — Suíço e depois playoffs. O overall dos jogadores mais a química decidem quem levanta a taça.",
+        body: "Seu time joga um campeonato completo — Swiss e depois playoffs. O overall dos jogadores mais a química decidem quem levanta a taça.",
       },
       {
         icon: "collection",
@@ -521,7 +521,7 @@ export const PT: Copy = {
 
   TOURNAMENT_UI: {
     title: "Campeonato Estilo RLCS",
-    swiss: "Fase Suíça",
+    swiss: "Fase Swiss",
     playoffs: "Playoffs",
     round: (n: number) => `Rodada ${n}`,
     record: (w: number, l: number) => `${w} – ${l}`,
@@ -583,9 +583,9 @@ export const PT: Copy = {
     top6Sub: "A chave inferior encerrou a run.",
     top8: "Top 8",
     top8Sub: "Chegou aos playoffs, caiu no primeiro obstáculo.",
-    swissExit: "Eliminado na Suíça",
+    swissExit: "Eliminado no Swiss",
     swissExitSub: "A chave fica fora de alcance desta vez.",
-    swissRecord: "Campanha na suíça",
+    swissRecord: "Campanha no Swiss",
     finalPlacement: "Colocação final",
     champion0f: (name: string) => `${name} acabou levando o título.`,
     untouchableNote: "Nenhum gol sofrido na run inteira. Histórico.",
@@ -701,7 +701,7 @@ export const PT: Copy = {
     titleRate: "Taxa de títulos",
     playoffRate: "Taxa de playoffs",
     podiums: "Pódios",
-    swissWins: "Vitórias na suíça",
+    swissWins: "Vitórias no Swiss",
     achievements: "Conquistas",
     viewAll: (n: number, total: number) => `${n}/${total} — ver todas`,
     history: "Histórico de runs",
@@ -770,7 +770,7 @@ export const PT: Copy = {
       top4: "Top 4",
       top6: "Top 6",
       top8: "Top 8",
-      swiss_exit: "Suíça",
+      swiss_exit: "Swiss",
       semifinalist: "Top 4",
       quarterfinalist: "Top 8",
     },
@@ -811,7 +811,7 @@ export const PT: Copy = {
       },
       {
         title: "Sobreviva à chave",
-        body: "16 times. Fase suíça em melhor de 5: 3 vitórias para avançar, 3 derrotas e você está fora. O Top 8 entra numa chave de dupla eliminação em melhor de 7 — uma derrota na chave superior te joga para a inferior, não para fora do evento. O rating do seu time vem principalmente dos overalls dos jogadores — química, buffs de org, técnico e efeitos especiais dão a vantagem.",
+        body: "16 times. Fase Swiss em melhor de 5: 3 vitórias para avançar, 3 derrotas e você está fora. O Top 8 entra numa chave de dupla eliminação em melhor de 7 — uma derrota na chave superior te joga para a inferior, não para fora do evento. O rating do seu time vem principalmente dos overalls dos jogadores — química, buffs de org, técnico e efeitos especiais dão a vantagem.",
       },
       {
         title: "Colecione cartas especiais",
@@ -912,7 +912,7 @@ export const PT: Copy = {
 
   EFFECT_LABELS: {
     clutch_boost: "Clutch (jogos decisivos)",
-    swiss_consistency: "Consistência (fase suíça)",
+    swiss_consistency: "Consistência (fase Swiss)",
     playoff_experience: "Experiência (playoffs)",
     upset_boost: "Fator zebra (vs times mais cotados)",
     defense_stability: "Estabilidade defensiva",
@@ -1150,7 +1150,7 @@ export const PT: Copy = {
         date: "2025–2026",
         current: false,
         notes: [
-          "Draft principal, torneio Suíço + dupla eliminação, coleção, conquistas e progressão.",
+          "Draft principal, torneio Swiss + dupla eliminação, coleção, conquistas e progressão.",
           "Modos Draft Rápido e Desafio Diário.",
         ],
       },
@@ -1376,7 +1376,7 @@ export const PT: Copy = {
       "d-special-pick": { title: "Selecione uma carta especial", desc: "Escolha uma special em qualquer draft." },
       "d-draft-2": { title: "Conclua 2 drafts", desc: "Duas runs de torneio, qualquer modo." },
       "d-series-6": { title: "Vença 6 séries", desc: "Vitórias em séries de qualquer run contam." },
-      "d-playoffs-1": { title: "Chegue aos playoffs", desc: "Passe da fase suíça." },
+      "d-playoffs-1": { title: "Chegue aos playoffs", desc: "Passe da fase Swiss." },
       "d-win-1": { title: "Vença um torneio", desc: "Levante um troféu em qualquer modo ou dificuldade." },
       "d-chem-great": { title: "Monte uma química Great", desc: "Conclua um draft com química Great ou melhor." },
       "d-hidden-1": { title: "Draft às cegas", desc: "Conclua uma run com overalls ocultos." },
@@ -1405,7 +1405,7 @@ export const PT: Copy = {
       "w-quick-3": { title: "Jogue 3 Quick Drafts", desc: "Três runs de Quick Draft nesta semana." },
       "w-draft-12": { title: "Conclua 12 drafts", desc: "Doze runs de torneio nesta semana." },
       "w-win-3": { title: "Vença 3 torneios", desc: "Três títulos nesta semana, qualquer modo." },
-      "w-playoffs-5": { title: "Chegue a 5 playoffs", desc: "Cinco runs além da fase suíça." },
+      "w-playoffs-5": { title: "Chegue a 5 playoffs", desc: "Cinco runs além da fase Swiss." },
       "w-series-30": { title: "Vença 30 séries", desc: "Vitórias em séries ao longo da semana." },
       "w-chem-great-3": { title: "Química Great ×3", desc: "Três drafts com química Great ou melhor." },
       "w-special-field-5": { title: "Escale 5 cartas especiais", desc: "Specials nas suas lines ao longo da semana." },

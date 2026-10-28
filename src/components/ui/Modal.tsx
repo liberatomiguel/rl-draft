@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cx } from "@/lib/util";
+import { useMounted } from "@/store/useMounted";
 
 interface ModalProps {
   open: boolean;
@@ -16,8 +17,7 @@ interface ModalProps {
 export function Modal({ open, title, children, actions, onClose, wide }: ModalProps) {
   // Portal target — animated ancestors create transform containing blocks
   // that would re-anchor position:fixed, so the dialog must live on <body>.
-  const [host, setHost] = useState<HTMLElement | null>(null);
-  useEffect(() => setHost(document.body), []);
+  const host = useMounted() ? document.body : null;
 
   useEffect(() => {
     if (!open) return;

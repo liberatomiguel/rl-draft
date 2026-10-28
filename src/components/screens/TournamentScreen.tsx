@@ -213,7 +213,8 @@ export function TournamentScreen({ run }: { run: RunState }) {
     } else if (t.stage !== "finished") {
       tick(PACE.advance, advanceRound);
     } else {
-      setRunning(false);
+      // Everything revealed and the tournament is done — park the clock.
+      tick(0, () => setRunning(false));
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -476,7 +477,9 @@ function MatchCenter({
   const isUserSeries = entry.isUser;
   const userWon = series.winnerTeamId === "user";
 
-  const narration = useMemo(() => {
+  // Plain derivation: the React Compiler memoizes it (a manual useMemo here made
+  // the compiler skip the whole component — preserve-manual-memoization).
+  const narration = (() => {
     if (!done || !isUserSeries) return null;
     const margin = Math.abs(series.score[0] - series.score[1]);
     const userDiff = series.teamAId === "user" ? series.ratingDiff : -series.ratingDiff;
@@ -510,7 +513,7 @@ function MatchCenter({
       lines.push(NARRATION.overtimeNote);
     }
     return lines;
-  }, [done, isUserSeries, series, userWon, NARRATION]);
+  })();
 
   return (
     <Panel strong glow={live ? "orange" : undefined} className="p-5">

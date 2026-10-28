@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 
 /** Count-up number used on results / XP reveals. */
 export function AnimatedNumber({
@@ -14,14 +15,12 @@ export function AnimatedNumber({
 }) {
   const [display, setDisplay] = useState(0);
   const startRef = useRef<number | null>(null);
+  // Reduced motion shows the final value straight away (derived, no effect write).
+  const reduced = useOsReducedMotion();
 
   useEffect(() => {
+    if (reduced) return;
     let frame: number;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setDisplay(value);
-      return;
-    }
     const tick = (now: number) => {
       if (startRef.current === null) startRef.current = now;
       const t = Math.min(1, (now - startRef.current) / duration);
@@ -31,7 +30,7 @@ export function AnimatedNumber({
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [value, duration]);
+  }, [value, duration, reduced]);
 
-  return <span className={className}>{display}</span>;
+  return <span className={className}>{reduced ? value : display}</span>;
 }
