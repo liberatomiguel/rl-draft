@@ -1438,22 +1438,37 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      order) and the search tries the old pop order first, so every round the
      old pairer got right is byte-identical: a test replays the old pairer on
      2,000 campaigns and checks pairs, sides and the RNG cursor. (b) For 16
-     teams / 3W-3L a rematch-free same-record round always exists: the round
-     2-3 groups hold at most one past opponent per team, the round-4 groups of
-     six at most two (Dirac: degree >= 3 in the allowed graph), and in the
-     round-5 2-2 group every team met at most three of the other five (its
-     round-4 opponent left the group), which leaves no Tutte obstacle (that
-     would take a K3,3 or a K4 of past meetings, or a team that met four of
-     them). Checked on 2 M random campaigns offline and 5,000 in the suite.
-     (c) A run or career event saved mid-Swiss before rc.27 may hold a
-     pre-computed round with a rematch: `upcomingSwissPairings` keeps a clean
-     stored round and repairs a dirty one from its own seed (FNV of the
-     records), never the run cursor, and the next-opponent cells read the same
-     helper as the engine. (d) The difficulty matrix (WW, 200 sessions, same
-     seeds) moved within noise — titles easy 84.7 -> 83.1 %, normal 49.9 ->
-     48.8 %, hard 39.5 -> 39.8 %, legacy 5.5 -> 6.1 %; population +-0.3 pp —
-     and every challenge stayed in band. The golden master's seed 20260709 (a
-     round-3 rematch) was regenerated; seed 555555 had none and is unchanged.
+     teams / 3W-3L a rematch-free same-record round always exists, even after
+     rounds an older build paired with rematches: the round 2-3 groups hold at
+     most one past opponent per team, the round-4 groups of six at most two
+     (Dirac: degree >= 3 in the allowed graph). In the round-5 2-2 group of
+     six every team met at most three of the others (its round-4 opponent left
+     the group), a WWLL/LLWW member at most two (its round-3 opponent went 3-0
+     or 0-3), and any other member's round-2 opponent can only be a WWLL/LLWW
+     member, so no K3,3 or K4 of past meetings forms — the only Tutte
+     obstacles left. The independent review ran an exhaustive search over every
+     same-record matching and result: 4.27 M states entering round 4 and
+     1.71 B round-5 groups (5.69 M / 2.27 B with legacy histories), none
+     without a clean pairing; the allowance and the node budget only guard
+     input outside the format. (c) A run or career event saved mid-Swiss
+     before rc.27 may hold a pre-computed round with a rematch (about 1 in 5
+     mid-Swiss saves): `upcomingSwissPairings` keeps a clean stored round as
+     it is, and repairs a dirty one group by group — record groups without a
+     rematch keep their pairs, a group holding one takes its closest clean
+     pairing (two pairs change, the player's pair is kept when it was clean,
+     so the announced opponent stays) — with no RNG at all; a stored round that
+     does not fit the records is re-paired from its own seed (FNV of the
+     records). The next-opponent cells read the same helper as the engine.
+     (d) What changes for players: under the old pairer 82.5 % of 6,000
+     simulated Swiss stages had a rematch; exactly those stages now differ
+     from the first round that would have rematched (fixed seeds included:
+     52 of 60 sampled daily seeds play a different Swiss than before). The
+     difficulty matrix (WW, 200 sessions, same seeds) moved within noise —
+     titles easy 84.7 -> 83.1 %, normal 49.9 -> 48.8 %, hard 39.5 -> 39.8 %,
+     legacy 5.5 -> 6.1 %; population +-0.3 pp — and challenges never use a
+     Swiss. Cost: about +0.1 ms per Swiss stage. The golden master's seed
+     20260709 (rematches in rounds 3 and 5) was regenerated; seed 555555 had
+     none and is unchanged.
 
 ## Open questions for review
 

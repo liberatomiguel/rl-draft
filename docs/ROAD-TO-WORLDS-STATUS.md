@@ -9,7 +9,7 @@
 - `npm run dev` → home card "Road to Worlds" → `/career` wizard → HQ.
 - Career tests: `npx vitest run src/engine/career src/store/careerFlow.test.ts
   src/store/careerV03.test.ts src/store/careerV2.test.ts
-  src/store/careerStore.achievements.test.ts` (part of the full suite, 562 tests at rc.27).
+  src/store/careerStore.achievements.test.ts` (part of the full suite, 563 tests at rc.27).
 - Flag `FEATURES.careerMode` (balance.ts): on in dev/tests; production builds
   only with `NEXT_PUBLIC_CAREER_MODE=1` (staging Worker has it). `/career` is
   always noindex; with the flag off the routes are not exported.

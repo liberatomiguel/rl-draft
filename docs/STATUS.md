@@ -60,7 +60,7 @@ DESIGN-DECISIONS #110–#142, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics refe
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **562** tests / 43 files (+2 opt-in
+- `npm run typecheck` clean · `npm test` **563** tests / 43 files (+2 opt-in
   tools skipped) · `npm run lint` **0 errors, 0 warnings** (rc.27)
   · `build:data` + `validate:data` green · green `npm run build` for anything
   that ships (`prebuild` validates data, contract test, images; `postbuild`

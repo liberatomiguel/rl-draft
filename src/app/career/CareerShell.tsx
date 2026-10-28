@@ -14,7 +14,7 @@
  */
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
@@ -52,7 +52,10 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
 
   // v0.3 mobile fix: switching career screens always lands at the top —
   // Next preserves scroll on client nav, which read as broken on phones.
-  useEffect(() => {
+  // A layout effect, so it runs before any screen's own mount-time scroll
+  // (passive effects run child-first: the Calendar's jump to the current month
+  // must land last, now that screens render their content on the first pass).
+  useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 

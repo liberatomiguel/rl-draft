@@ -15,12 +15,17 @@ export function AnimatedNumber({
 }) {
   const [display, setDisplay] = useState(0);
   const startRef = useRef<number | null>(null);
-  // Reduced motion shows the final value straight away (derived, no effect write).
+  // Reduced motion shows the final value straight away (derived in render).
   const reduced = useOsReducedMotion();
 
   useEffect(() => {
-    if (reduced) return;
     let frame: number;
+    if (reduced) {
+      // Count as finished: turning motion back on later must not re-count.
+      startRef.current = Number.NEGATIVE_INFINITY;
+      frame = requestAnimationFrame(() => setDisplay(value));
+      return () => cancelAnimationFrame(frame);
+    }
     const tick = (now: number) => {
       if (startRef.current === null) startRef.current = now;
       const t = Math.min(1, (now - startRef.current) / duration);

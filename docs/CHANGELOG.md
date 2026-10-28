@@ -186,6 +186,15 @@ with the root cause — that section doubles as the project's bugfix log.
   from its own seed (never the run's RNG), and the next-opponent cells show the round
   the engine will actually play. Difficulty matrix before/after within noise;
   challenges unchanged. Golden master seed 20260709 regenerated (it rematched in round 3).
+- **Review fixes (rc.27, after the independent review of #143 and the lint pass).** A
+  stored pre-rc.27 round with a rematch is now repaired group by group (clean record
+  groups keep their pairs; the player keeps the opponent they were shown when that pair
+  was clean) instead of being re-paired whole. The career Calendar jumps to the current
+  month again on in-app navigation — root cause: with `useMounted` true on the first
+  client render, the shell's scroll-to-top effect ran after the Calendar's own scroll
+  (passive effects run child-first); it is a layout effect now. A client navigation into
+  a `/pt` page no longer shows one frame of EN (`SyncLocale` writes in a layout effect),
+  and `AnimatedNumber` no longer re-counts when the OS motion setting is turned back on.
 - **Lint back to zero (5 errors + 1 warning since rc.20).** Root cause: React 19's
   `react-hooks` rules flag a setState called synchronously inside an effect, and the React
   Compiler skipped the whole Draft Match Center because a manual `useMemo` depended on a

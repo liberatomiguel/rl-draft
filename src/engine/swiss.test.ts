@@ -323,6 +323,51 @@ describe("swiss pairing never repeats a series (rc.27, #143)", () => {
     expect(checked).toBeGreaterThan(5);
   });
 
+  it("a repair only moves the pairs around the rematch and keeps the player's announced opponent", () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 600 && checked < 40; seed++) {
+      const teams = fieldOf("equal", seed);
+      teams.user = { ...teams.t0, id: "user", name: "user", isUser: true };
+      delete teams.t0;
+      const rng = createRng(seed);
+      let state = createSwissState(Object.keys(teams), rng);
+      state = playSwissRound(state, teams, "normal", rng);
+      state = playSwissRound(state, teams, "normal", rng);
+      const played = swissHistory(state.rounds);
+      const pairs = state.nextPairings!;
+      // Forge the old bug between two AI pairs of one record group (what the old
+      // pairer produced): (a,b)(c,d) -> (a,c)(b,d) with a-c already played.
+      const recordOf = new Map(state.records.map((r) => [r.teamId, `${r.wins}-${r.losses}`]));
+      let forged: [string, string][] | null = null;
+      let touched: Set<string> | null = null;
+      for (let i = 0; i < pairs.length && !forged; i++) {
+        for (let j = i + 1; j < pairs.length && !forged; j++) {
+          const [a, b] = pairs[i];
+          const [c, d] = pairs[j];
+          if ([a, b, c, d].includes("user") || !played.has(pairKey(a, c))) continue;
+          if (recordOf.get(a) !== recordOf.get(c)) continue;
+          forged = pairs.map((p, k) => (k === i ? [a, c] : k === j ? [b, d] : p) as [string, string]);
+          touched = new Set([a, b, c, d]);
+        }
+      }
+      if (!forged || !touched) continue;
+      const fixed = upcomingSwissPairings({ ...state, nextPairings: forged })!;
+      expect(roundViolation(state.records, fixed, played)).toBeNull();
+      const userPair = (ps: [string, string][]) => ps.find(([a, b]) => a === "user" || b === "user");
+      expect(userPair(fixed)).toEqual(userPair(forged));
+      // The closest clean round: two stored pairs change (the minimum to break
+      // one rematch), and every other record group keeps its pairs and sides.
+      const changed = forged.filter((p) => !fixed.some((q) => q[0] === p[0] && q[1] === p[1]));
+      expect(changed.length).toBeLessThanOrEqual(2);
+      const forgedGroup = recordOf.get([...touched][0]);
+      for (const p of forged) {
+        if (recordOf.get(p[0]) !== forgedGroup) expect(fixed).toContainEqual(p);
+      }
+      checked += 1;
+    }
+    expect(checked).toBeGreaterThan(10);
+  });
+
   it("floats one team out of an odd group when that is the only rematch-free way", () => {
     // 2-0: a1 a2 a3 · 1-1: b1 b2 b3. a1 met a2, a3, b1 and b2 → the only clean
     // round is a2–a3, a1 floats to face b3, and b1–b2.

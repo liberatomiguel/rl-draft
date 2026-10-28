@@ -43,7 +43,7 @@
    `wrangler deploy --env staging` from the `staging` branch, career on,
    noindex). `main` = production = untouched until the full review passes.
 6. **Gates before every commit:** `npm run typecheck`, `npm test`, `npm run
-   lint` at baseline (5 errors + 1 warning pre-existing, do not add),
+   lint` at 0 errors / 0 warnings (since rc.27 — any new one is a regression),
    `npm run build` green for anything that ships (runs `validate:data`,
    `test:contract`, `build:images`, export, `postexport` checks).
 7. **Every tunable number in `src/config/balance.ts`; every string in
