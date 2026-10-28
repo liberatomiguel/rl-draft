@@ -15,8 +15,8 @@ Cloudflare Workers Static Assets** (runbook: `docs/DEPLOY-CLOUDFLARE.md`).
 
 **Orientation path, in order, and nothing more:**
 1. This file (you already have it).
-2. `docs/STATUS.md` (~550 words, current state + gates + what is open).
-3. Only for career work: `docs/ROAD-TO-WORLDS-STATUS.md` (~450 words; it has a
+2. `docs/STATUS.md` (~600 words, current state + gates + what is open).
+3. Only for career work: `docs/ROAD-TO-WORLDS-STATUS.md` (~600 words; it has a
    system → engine/flow/screen map so you can jump straight to the right file).
 4. For v2.0 completion work: `docs/ROADMAP.md`, **the stage you are on only**
    (stages, approval gates, backlog IDs, the decisions waiting on Miguel).
@@ -26,9 +26,9 @@ Cloudflare Workers Static Assets** (runbook: `docs/DEPLOY-CLOUDFLARE.md`).
    to-do, regression checklist, open decisions). Phases 0–3 are done.
 
 **Never read whole, grep for the entry you need** (sizes in words):
-`docs/CHANGELOG.md` (28k), `docs/DESIGN-DECISIONS.md` (12k),
-`docs/ROAD-TO-WORLDS-DESIGN.md` (9k), `data-sources/teams.md` (8k),
-`docs/GAME-DESIGN.md` (5k), `docs/ROAD-TO-WORLDS-DECISIONS.md` (4k),
+`docs/CHANGELOG.md` (37k), `docs/DESIGN-DECISIONS.md` (16k),
+`docs/ROAD-TO-WORLDS-DESIGN.md` (9k), `data-sources/teams.md` (12k),
+`docs/GAME-DESIGN.md` (5k), `docs/ROAD-TO-WORLDS-DECISIONS.md` (5k),
 `docs/ARCHITECTURE.md`, `data-sources/*-audit.md`, `src/data/*.json`
 (hundreds of records: query with grep or a Node one-liner).
 

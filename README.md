@@ -83,6 +83,7 @@ Start with `AGENTS.md` (conventions + the reading path), then `docs/STATUS.md`
 | Doc | Contents |
 | --- | --- |
 | [docs/STATUS.md](docs/STATUS.md) | Current state, gates, what is open (short, current-state only) |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | The 2.0 plan of record: stages, approval gates, backlog IDs, decisions waiting on Miguel |
 | [docs/V2-IMPLEMENTATION-PLAN.md](docs/V2-IMPLEMENTATION-PLAN.md) | v2.0 plan: Miguel's to-do (§6), launch regression checklist (§7), open decisions (§8) |
 | [docs/ROAD-TO-WORLDS-STATUS.md](docs/ROAD-TO-WORLDS-STATUS.md) | Career mode state + system → file map |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, data flow, how a run works end to end |

@@ -1,7 +1,7 @@
 # Road to Worlds — status (current state only)
 
 > Last updated: 2026-10-28. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
-> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R41. History: `CHANGELOG.md`
+> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R44. History: `CHANGELOG.md`
 > `[1.5.0-alpha]` and `[2.0.0]`. Do not read any of them whole.
 
 ## Run / verify
@@ -25,7 +25,7 @@
 | Results, standings, qualified refs (`qualifierOutcomeOf`, `hasChampion`) | `careerResults.ts` | `finishEvent` | `StandingsScreen.tsx` |
 | Match Center story: goal timeline, clock, OT (R41) | `matchTimeline.ts` | — | `event/CareerMatchCenter.tsx`, `GameClock.tsx`, `clockPlayback.ts`, `EventScreen.tsx` |
 | Development, drills, ETA, coach effects | `development.ts` | `applyDailyTraining`, `setDrillFlow` | `TrainingScreen.tsx` |
-| Economy: weekly payroll, bank loan, sponsors, gear | `economy.ts` | `runWeeklyPayroll`, `takeBankLoanFlow` | `FinancesScreen.tsx` |
+| Economy: weekly payroll, Emergency Backer (bailout), bank loan, sponsors, gear | `economy.ts` (`weeklyPayroll`) | `runWeeklyPayroll`, `payDebtFlow`, `takeBankLoanFlow` | `FinancesScreen.tsx` |
 | Market, negotiation, coaches | `market.ts` | `signPlayerFlow`, `hireCoachFlow` | `MarketScreen.tsx` (`#coaches`) |
 | Inserts (weekly decision cards) | `inserts.ts` + `data/career/inserts.ts` | `resolveInsertFlow` | hub `NowCards.tsx` |
 | Achievements (permanent, cross-save) | `achievements.ts` + `data/career/achievements.ts` | `careerStore` `settleAchievements` | `ClubScreen.tsx` |
@@ -47,21 +47,15 @@ the reveal cursor, the paid prize in every lobby). Details: the R entries.
 
 ## Remaining / open
 
-- Manual playtest on staging (plan §7 career line): creation → first week →
-  Saturday qualifier → Sunday regional (watch and instant); a Major weekend
-  (Saturday → pause → Championship Sunday, a reload in between); an OT game in
-  the Match Center; payroll; loan; drill; insert.
-- Miguel to confirm (defaults shipped; full list in `ROADMAP.md`): PT keeps
-  "Championship Sunday"; the 10 %/2.5 % qualifier split and paid totals in the
-  lobbies (R44, ECO-01); the PT tag "Avançou"; whether running careers get a
-  one-time fix for old name clashes (R42); a weekend you only watch is not an
-  Advance stop; OT games take ~6-7 s at 1× (`CAREER_MATCH_CLOCK`); in your own
-  qualifier the local sides are rated around YOUR team (a strong user who
-  drops out of the direct 8 meets strong locals).
+- Manual playtest on staging (V2 plan §7, career line): creation → first
+  week → Saturday qualifier → Sunday regional (watch and instant); a Major
+  weekend (Saturday → pause → Championship Sunday, a reload in between); an
+  OT game in the Match Center; payroll; loan; drill; insert.
+- Miguel to confirm: the career decisions in `ROADMAP.md` ("Waiting on
+  Miguel").
 - Content: scripted beats corpus (~30, EN+PT). New birth dates go in the base
   export (`BIRTHDAY`), not in `born:` rows.
-- `CAREER_ARC` pacing harness (120-career sweep) not built: Etapa 2 (OBS-02),
-  then the economy and growth recalibration (`ROADMAP.md`).
+- `CAREER_ARC` pacing harness: not built (Etapa 2, OBS-02 in `ROADMAP.md`).
 - Deferred by design: org relocation, t1 circuit, PvP.
 
 ## Guardrails

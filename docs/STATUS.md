@@ -22,14 +22,13 @@ Season reset (profile v12) + Season Rating, Supabase v2 client, missions,
 login streak, event cards, recap, Profile/Leaderboard/Home v2, Daily Quiz,
 Challenges 2.0, final cosmetics, the database expansion (438 lineups, real
 ages, Region-only, national teams), live-data difficulty (rc.25), the dataset
-off the shared path (rc.26), Road to Worlds 2.0, Etapa 1 (rc.27–28: no
-rematch in a Swiss #143, lint at zero, the career weekend R40, the Match
-Center timeline R41) and Etapa 1b (rc.29: the E2E fixes, #144, R42–R44).
+off the shared path (rc.26), Road to Worlds 2.0, and Etapas 1 and 1b
+(rc.27–29, #143–#144, R40–R44; `ROADMAP.md` "Done").
 
 ## Where the completion plan stands
 
 - **Etapa 1 + 1b: done** (rc.27–29).
-- **Gate 1, now:** Miguel plays rc.29 on staging and answers the ten
+- **Gate 1, now:** Miguel plays rc.29 on staging and answers the
   decisions in `ROADMAP.md` ("Waiting on Miguel"). Nothing in Etapa 2 starts
   before that.
 - **Etapa 2, next:** first the instruments (long-career harness, save
@@ -43,7 +42,7 @@ Center timeline R41) and Etapa 1b (rc.29: the E2E fixes, #144, R42–R44).
   production SQL (§6-B — its freeze trigger goes in at the cutover if any v1.x
   client signs in); C freeze the pre-season board; D grants; E Cloudflare vars
   + resubmit the sitemap.
-- **Manual regression on staging** (plan §7) plus: a Region-only run per
+- **Manual regression on staging** (V2 plan §7) plus: a Region-only run per
   region, a national-team find, Classic/Quick/Daily from a cold home, leaving
   mid-draft, a Swiss without rematches, a Saturday qualifier → Sunday
   regional, a Major weekend (reload on Saturday), an OT game in the Match
