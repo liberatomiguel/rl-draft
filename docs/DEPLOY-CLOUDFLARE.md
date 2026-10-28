@@ -195,6 +195,17 @@ staging or career:
   - Staging is a separate origin, so its saves never touch players' saves.
   - The production project keeps `main` and `npx wrangler deploy` (the
     "multiple environments" warning it prints is expected).
+- **External playtest — `playtest.rocketdraft.app`** (configured): `env.playtest`
+  → Worker **`rocket-draft-playtest`**. A **third** Workers Builds project:
+  - Worker name `rocket-draft-playtest`, same repo, production branch `staging`
+    (always the latest staging) or a frozen `playtest` branch cut from it.
+  - Build command `npm run build`; deploy command `npx wrangler deploy --env playtest`.
+  - Build variables: `NEXT_PUBLIC_PLAYTEST=1`, `NEXT_PUBLIC_CAREER_MODE=1`,
+    `NEXT_PUBLIC_NOINDEX=1`; no PostHog / Supabase vars.
+  - `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`) ships only the new dataset,
+    Classic / Quick Draft, Challenges and Road to Worlds: no Daily Challenge,
+    Daily Quiz, missions, login streak, profile cosmetics or season extras;
+    postexport deletes `/quiz` and `/missions`. Preview tools stay off.
 
 ## 6. Custom domain (apex)
 

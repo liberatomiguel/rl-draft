@@ -91,6 +91,9 @@ export default function ProfilePage() {
     setLocker(kind);
   };
 
+  // Playtest build: no cosmetics (locker, badges, title, banner) or season extras.
+  const extras = !FEATURES.playtest;
+
   const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : P.none);
 
   return (
@@ -100,6 +103,7 @@ export default function ProfilePage() {
         kicker={P.career}
         title={P.title}
         right={
+          extras ? (
           <button
             type="button"
             onClick={() => openLocker("title")}
@@ -108,12 +112,13 @@ export default function ProfilePage() {
             <LockerGlyph /> {P.openLocker}
             {unseen > 0 ? <NewDot className="absolute -right-1 -top-1 !h-2.5 !w-2.5" label={CC.newItems} /> : null}
           </button>
+          ) : undefined
         }
         className="mb-5"
       />
 
       {/* ---- HERO (the v2 banner, with every cosmetic slot tappable) --------- */}
-      <BannerSurface banner={shown.banner} glow className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
+      <BannerSurface banner={extras ? shown.banner : null} glow className="mb-6 rounded-2xl border border-line-strong" plainClassName="panel-strong panel-glow-blue">
         <div className="flex flex-col items-center gap-5 p-5 sm:flex-row sm:gap-6">
           <RankBadge rank={rank} variant="menu" size="lg" />
 
@@ -128,6 +133,7 @@ export default function ProfilePage() {
                   )}
                 {/* rc.23: the badges sit by the NAME, on the dark reading
                     zone of the banner (Miguel); the featured one leads. */}
+                {extras ? (
                 <div className="relative ml-1 flex items-end gap-1.5">
                   {shown.badges.map((b, i) => (
                     <button
@@ -153,7 +159,9 @@ export default function ProfilePage() {
                   ) : null}
                   {fresh.badge ? <NewDot className="absolute -right-1.5 -top-1" label={CC.newItems} /> : null}
                 </div>
+                ) : null}
                 </div>
+                {extras ? (
                 <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                   <span className="relative inline-flex">
                     {shown.title ? (
@@ -172,6 +180,7 @@ export default function ProfilePage() {
                     {fresh.title ? <NewDot className="absolute -right-1 -top-1" label={CC.newItems} /> : null}
                   </span>
                 </div>
+                ) : null}
                 {signedIn && accountEmail ? <p className="mt-1.5 truncate text-xs text-faint">{accountEmail}</p> : null}
                 {!signedIn ? <p className="mt-1.5 text-xs text-faint">{P.guestHint}</p> : null}
               </div>
@@ -204,6 +213,7 @@ export default function ProfilePage() {
                     {L.signOut}
                   </button>
                 ) : null}
+                {extras ? (
                 <button
                   type="button"
                   onClick={() => openLocker("banner")}
@@ -212,6 +222,7 @@ export default function ProfilePage() {
                   {P.editBanner}
                   {fresh.banner ? <NewDot className="absolute -right-2.5 -top-1" label={CC.newItems} /> : null}
                 </button>
+                ) : null}
               </span>
               <p className="text-xs text-sub">
                 {profile.xp} {P.xp}
@@ -225,6 +236,8 @@ export default function ProfilePage() {
       <AccountSection />
 
       {/* ---- Season ------------------------------------------------------------ */}
+      {extras ? (
+      <>
       <SectionTitle title={SEASON.name} className="mb-4" />
       <div className="mb-8 grid grid-cols-1 gap-3 lg:grid-cols-5">
         <div className="space-y-3 lg:col-span-3">
@@ -252,6 +265,8 @@ export default function ProfilePage() {
         </div>
         <BadgeShowcase owned={profile.cosmetics.owned} onOpen={() => openLocker("badge")} className="lg:col-span-2" />
       </div>
+      </>
+      ) : null}
 
       {/* ---- Lifetime ---------------------------------------------------------- */}
       <SectionTitle title={P.lifetime} className="mb-4" />
@@ -272,15 +287,19 @@ export default function ProfilePage() {
         <MiniStat label={P.gamesWon} value={String(profile.gamesWon)} />
         <MiniStat label={P.goals} value={String(profile.goalsScored)} />
         <MiniStat label={P.lifetimeXp} value={String(profile.lifetime.xp)} />
-        <MiniStat label={P.quizSolved} value={String(profile.quiz.solved)} />
-        <MiniStat label={P.missionsDone} value={String(profile.missions.completedTotal)} />
-        <MiniStat label={P.loginBest} value={String(profile.login.best)} />
+        {extras ? (
+          <>
+            <MiniStat label={P.quizSolved} value={String(profile.quiz.solved)} />
+            <MiniStat label={P.missionsDone} value={String(profile.missions.completedTotal)} />
+            <MiniStat label={P.loginBest} value={String(profile.login.best)} />
+          </>
+        ) : null}
         <MiniStat
           label={P.winsBy}
           value={(["easy", "normal", "hard", "legacy"] as const).map((d) => `${DIFFICULTY_LABELS[d].label.slice(0, 1)} ${profile.wins[d]}`).join(" · ")}
         />
       </Panel>
-      {profile.legacy.preseason ? (
+      {extras && profile.legacy.preseason ? (
         <div className="mb-8 flex justify-center">
           <Button variant="ghost" size="sm" onClick={() => setReplayRecap(true)}>
             {R.replay}

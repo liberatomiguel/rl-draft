@@ -1619,10 +1619,23 @@ export const FEATURES = {
   /**
    * rc.2: preview tools (the "unlock everything" cosmetics switch, the fake
    * leaderboard when accounts are disabled). On in dev/tests and on the
-   * staging build (NEXT_PUBLIC_NOINDEX=1); never in the production deploy.
+   * staging build (NEXT_PUBLIC_NOINDEX=1); never in the production deploy or
+   * the external playtest build.
    */
   previewTools:
-    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_NOINDEX === "1",
+    process.env.NEXT_PUBLIC_PLAYTEST !== "1" &&
+    (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_NOINDEX === "1"),
+  /**
+   * v2.0 external playtest build (playtest.rocketdraft.app). Set only by the
+   * playtest Worker's build (NEXT_PUBLIC_PLAYTEST=1, together with
+   * NEXT_PUBLIC_CAREER_MODE=1 and NEXT_PUBLIC_NOINDEX=1). On → the build ships
+   * just the new dataset + Classic / Quick Draft, Challenges and Road to
+   * Worlds: no Daily Challenge, Daily Quiz, missions, login streak, profile
+   * cosmetics (locker, badges, titles, banners) or season extras (recap,
+   * season panel). Off everywhere else, dev included.
+   * `scripts/postexport.mjs` deletes the cut routes — keep them in sync.
+   */
+  playtest: process.env.NEXT_PUBLIC_PLAYTEST === "1",
 } as const;
 
 // ---------------------------------------------------------------------------

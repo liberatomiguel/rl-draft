@@ -118,11 +118,13 @@ export default function HomeMenu() {
 
   const locked = mounted && !collectionOpen && rank.id === "unranked";
   const careerOn = FEATURES.careerMode;
+  // Playtest build: TODAY keeps only Challenges (no daily, missions or quiz).
+  const playtest = FEATURES.playtest;
 
   return (
     <>
       <FirstRunTutorial />
-      <SeasonRecap />
+      {playtest ? null : <SeasonRecap />}
       {/* Hero — rendered OUTSIDE the rise-in wrapper so the LCP paints immediately. */}
       <section className="px-2 pb-6 pt-10 text-center md:pt-14">
         <p className="kicker mb-4">{APP.tagline}</p>
@@ -226,6 +228,7 @@ export default function HomeMenu() {
         {/* ---- TODAY ------------------------------------------------------------ */}
         <p className="kicker mb-2 mt-7">{HOME.sectionDaily}</p>
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12 md:grid-rows-[auto_auto]">
+          {playtest ? null : (
           <Panel className={cx("group relative flex flex-col overflow-hidden p-5 md:col-span-4", !dailyDone && "transition-colors hover:!border-line-strong")}>
             <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-300/10 blur-2xl" aria-hidden />
             {!dailyDone ? (
@@ -261,16 +264,17 @@ export default function HomeMenu() {
               </span>
             )}
           </Panel>
+          )}
 
           {locked ? (
-            <div className="cursor-not-allowed md:col-span-4" aria-disabled="true" title={HOME.challengesLocked}>
+            <div className={cx("cursor-not-allowed", playtest ? "sm:col-span-2 md:col-span-12" : "md:col-span-4")} aria-disabled="true" title={HOME.challengesLocked}>
               <Panel className="flex h-full flex-col p-5 opacity-60">
                 <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
                 <p className="mt-1 text-xs text-sub">{HOME.challengesLocked}</p>
               </Panel>
             </div>
           ) : (
-            <AppLink href="/challenges" className="group md:col-span-4">
+            <AppLink href="/challenges" className={cx("group", playtest ? "sm:col-span-2 md:col-span-12" : "md:col-span-4")}>
               <Panel className="flex h-full flex-col p-5 transition-colors group-hover:!border-line-strong">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
@@ -283,6 +287,8 @@ export default function HomeMenu() {
             </AppLink>
           )}
 
+          {playtest ? null : (
+          <>
           <div className="md:col-span-4 md:row-span-2">
             <MissionsPanel compact />
           </div>
@@ -313,6 +319,8 @@ export default function HomeMenu() {
               )}
             </div>
           </Panel>
+          </>
+          )}
         </section>
 
         {/* ---- YOU --------------------------------------------------------------- */}
@@ -399,7 +407,7 @@ export default function HomeMenu() {
       </div>
       <HomeSeoContent content={HOME_SEO} links={seoLinks} />
 
-      <Modal open={quizOpen} title={QUIZ_UI.title} onClose={() => setQuizOpen(false)} wide>
+      <Modal open={quizOpen && !playtest} title={QUIZ_UI.title} onClose={() => setQuizOpen(false)} wide>
         <p className="mb-4 text-xs leading-relaxed text-sub">{QUIZ_UI.subtitle}</p>
         <QuizPanel compact />
         <p className="mt-3 text-right">

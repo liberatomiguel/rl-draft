@@ -68,6 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // v2.0: count today's login and roll the mission periods once the persisted
   // profile is loaded (never on the server; idempotent per UTC day).
   useEffect(() => {
+    if (FEATURES.playtest) return; // playtest build: no login streak or missions
     const run = () => {
       useProfileStore.getState().recordLogin();
       useProfileStore.getState().rollMissions();
@@ -118,8 +119,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SettingsEffects />
       <AchievementToaster />
       <RewardToaster />
-      <LoginStreakModal />
-      <CosmeticUnlockModal />
+      {FEATURES.playtest ? null : (
+        <>
+          <LoginStreakModal />
+          <CosmeticUnlockModal />
+        </>
+      )}
 
       <div className="flex min-h-dvh flex-col">
         {/* Top bar */}

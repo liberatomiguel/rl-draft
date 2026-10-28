@@ -54,6 +54,21 @@
       "workers_dev": false,
       "preview_urls": false,
       "routes": [{ "pattern": "staging.rocketdraft.app", "custom_domain": true }]
+    },
+    // External v2.0 playtest: the staging code with NEXT_PUBLIC_PLAYTEST=1
+    // (plus NEXT_PUBLIC_CAREER_MODE=1 and NEXT_PUBLIC_NOINDEX=1), which cuts the
+    // daily quiz/challenge, missions, cosmetics and season extras. Deployed with
+    // `npx wrangler deploy --env playtest`. Own origin → own saves.
+    "playtest": {
+      "name": "rocket-draft-playtest",
+      "assets": {
+        "directory": "./out",
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+      },
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [{ "pattern": "playtest.rocketdraft.app", "custom_domain": true }]
     }
   }
 }

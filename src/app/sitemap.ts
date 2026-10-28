@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { PAGE_ROUTES } from "@/content/pages";
 
@@ -39,7 +40,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Single-URL app/hub pages (language follows the in-app toggle).
   const solo: { path: string; priority: number; changeFrequency: Freq }[] = [
     { path: "/play", priority: 0.9, changeFrequency: "weekly" },
-    { path: "/quiz", priority: 0.7, changeFrequency: "daily" },
+    // Cut from the playtest build (the route 404s there).
+    ...(FEATURES.playtest ? [] : [{ path: "/quiz", priority: 0.7, changeFrequency: "daily" as const }]),
     { path: "/how-to-play", priority: 0.7, changeFrequency: "monthly" },
     { path: "/collection", priority: 0.6, changeFrequency: "weekly" },
     { path: "/achievements", priority: 0.4, changeFrequency: "monthly" },

@@ -752,6 +752,7 @@ export const useProfileStore = create<ProfileState>()(
 
       applyMissionEvent: (event) => {
         let result: MissionApplyResult = { state: EMPTY_MISSIONS, xp: 0, completed: [], bonuses: [] };
+        if (FEATURES.playtest) return result; // playtest build: missions are cut
         set((state) => {
           const now = new Date();
           const rolled = rollMissionPeriods(state.missions, eligibilityOf(state), now);

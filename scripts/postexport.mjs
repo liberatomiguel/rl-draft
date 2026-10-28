@@ -49,6 +49,9 @@ const REQUIRED_FILES = ["index.html", "404.html", "_headers", "opengraph-image.p
  */
 const CAREER_ENTRY = /^career(\.[a-z]+)?$/;
 
+/** Top-level out/ entries of the routes the playtest build cuts (/quiz, /missions). */
+const PLAYTEST_CUT_ENTRY = /^(quiz|missions)(\.[a-z]+)?$/;
+
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
@@ -282,6 +285,22 @@ async function flattenWindowsSegmentDirs() {
   );
 }
 
+async function stripPlaytestCuts(ctx) {
+  // PLAYTEST GATE. Mirrors `FEATURES.playtest` (NEXT_PUBLIC_PLAYTEST === "1"),
+  // KEEP IN SYNC: /quiz and /missions call notFound() on that build, so delete
+  // their 200-status 404 boundaries and let the host serve the real 404.
+  const playtest = process.env.NEXT_PUBLIC_PLAYTEST === "1";
+  ctx.summary.push(`playtest ${playtest ? "ON" : "OFF"}`);
+  if (!playtest) return;
+  const home = await readFile(join(ctx.out, "index.html"), "utf8");
+  if (home.includes('href="/quiz') || home.includes('href="/missions')) {
+    throw new Error("NEXT_PUBLIC_PLAYTEST=1 but out/index.html links to /quiz or /missions — the build saw a different flag");
+  }
+  const entries = (await readdir(ctx.out, { withFileTypes: true })).filter((e) => PLAYTEST_CUT_ENTRY.test(e.name));
+  for (const e of entries) await rm(join(ctx.out, e.name), { recursive: true, force: true });
+  console.log(`  playtest ON — removed ${entries.map((e) => e.name).join(", ") || "nothing"}`);
+}
+
 /**
  * CAREER GATE. Road to Worlds (alpha) is OFF in production builds unless the
  * build sets NEXT_PUBLIC_CAREER_MODE=1 — `FEATURES.careerMode` in
@@ -457,6 +476,7 @@ const STEPS = [
   { name: "check service endpoints", run: checkServiceEndpoints },
   { name: "flatten Windows segment folders", run: flattenWindowsSegmentDirs, mutates: true },
   { name: "strip /career when career mode is off", run: stripCareerWhenDisabled, mutates: true },
+  { name: "strip cut routes on the playtest build", run: stripPlaytestCuts, mutates: true },
   { name: "check prefetch segment names", run: checkSegmentNames },
   { name: "check required files", run: checkRequiredFiles },
   { name: "check generated images", run: checkGeneratedImages },

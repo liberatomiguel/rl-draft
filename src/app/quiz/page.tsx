@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { SITE } from "@/config/site";
+import { notFound } from "next/navigation";
+import { FEATURES } from "@/config/balance";
 import { QuizView } from "./QuizView";
 
 export const metadata: Metadata = {
@@ -10,5 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default function QuizPage() {
+  if (FEATURES.playtest) notFound(); // cut from the playtest build (postexport deletes it)
   return <QuizView />;
 }
