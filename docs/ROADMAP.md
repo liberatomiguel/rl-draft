@@ -48,8 +48,7 @@ Fixed along the way: the 8th AI org was missing from the qualifier and the
 regional (R30); the season review undercounted; local amateur sides repeated
 names; one album test failed intermittently.
 
-**Etapa 1b, rc.29 (the package now running; Draft and shared UI are on
-staging, the career part lands next):**
+**Etapa 1b, rc.29 (this package; it ends at its staging publish):**
 - Draft: the Swiss result showed before its playback (DRAFT-01, blocker); a
   paid reroll was wasted on an offer with no pickable card (DRAFT-12); the
   bracket and standings layout (DRAFT-08/15).
@@ -75,6 +74,10 @@ staging, the career part lands next):**
   already played as the next stop, and a Major already in its playoffs on
   Saturday is titled "Championship Sunday" (SEAM-1/2) → Etapa 2, ENG-03.
 - `nextUserStopDay` is dead code (SEAM-3) → Etapa 2, ENG-01 audit.
+- Near the direct-8 line, Monday's commit (HQ, calendar) rates the user by
+  the starters' average while the engine seeds the fielded team, so an org
+  can play Saturday and also take a direct seat → Etapa 2 (one rating;
+  changes the fields of running careers).
 - 375×667: achievement toasts cover the top of the rank-up ceremony; the XP
   breakdown lines and "Daily · Legacy Day" stay in English in PT → Etapa 4.
 - Existing careers keep their old name clashes and Season X players listed on

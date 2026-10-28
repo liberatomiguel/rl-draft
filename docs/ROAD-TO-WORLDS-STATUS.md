@@ -8,7 +8,7 @@
 
 - `npm run dev` → home card "Road to Worlds" → `/career` wizard → HQ.
 - Career tests: `npx vitest run src/engine/career src/store/career
-  src/components/career` (part of the full suite, 710 tests at rc.29 part 2; the
+  src/components/career` (part of the full suite, 736 tests at rc.29; the
   weekend lives in `src/store/careerWeekend.test.ts`).
 - Flag `FEATURES.careerMode` (balance.ts): on in dev/tests; production builds
   only with `NEXT_PUBLIC_CAREER_MODE=1` (staging Worker has it). `/career` is
@@ -42,7 +42,7 @@ Built: the v2.0 guide's Part 3 (R20–R34: weekly payroll, bank loan, coach
 effects, HQ around the day card, Training 2.0, local amateur scene, real orgs
 by season, permanent achievements, weekly inserts, colour kits), the rc.2 UX
 pass (R35–R37), real birth years (R39), the weekend calendar (R40), the Match
-Center timeline (R41) and the rc.29 E2E fixes (part 3, landing; R42–R44: name banks by role,
+Center timeline (R41) and the rc.29 E2E fixes (R42–R44: name banks by role,
 the reveal cursor, the paid prize in every lobby). Details: the R entries.
 
 ## Remaining / open

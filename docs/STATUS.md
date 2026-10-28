@@ -9,8 +9,8 @@
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.29** (parts 1–2; the career fixes
-  land as part 3) (`staging.rocketdraft.app`: career on, noindex, preview tools on).
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.29**
+  (`staging.rocketdraft.app`: career on, noindex, preview tools on).
   **Never deploy v2.0 to `main` before the full review.**
 - Road to Worlds (career): `ROAD-TO-WORLDS-STATUS.md`. If a push to `staging`
   does not trigger the `rocket-draft-staging` Workers Build, check its GitHub
@@ -28,8 +28,7 @@ Center timeline R41) and Etapa 1b (rc.29: the E2E fixes, #144, R42–R44).
 
 ## Where the completion plan stands
 
-- **Etapa 1: done** (rc.27–28). **Etapa 1b (rc.29):** Draft and shared UI
-  are on staging; the career fixes (part 3, reviewed) land next.
+- **Etapa 1 + 1b: done** (rc.27–29).
 - **Gate 1, now:** Miguel plays rc.29 on staging and answers the ten
   decisions in `ROADMAP.md` ("Waiting on Miguel"). Nothing in Etapa 2 starts
   before that.
@@ -52,7 +51,7 @@ Center timeline R41) and Etapa 1b (rc.29: the E2E fixes, #144, R42–R44).
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **710** tests (+2 opt-in tools
+- `npm run typecheck` clean · `npm test` **736** tests (+2 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).

@@ -175,7 +175,6 @@ with the root cause — that section doubles as the project's bugfix log.
 ### Fixed — rc.29 (Etapa 1b: the rc.28 E2E pass · 2026-10-28 · DESIGN-DECISIONS #144 · ROAD-TO-WORLDS-DECISIONS R42–R44)
 Every item was found by a browser E2E pass on rc.28 (desktop + mobile, EN + PT), fixed,
 reviewed independently and re-checked in the browser.
-**Landing:** parts 1–2 (Draft, shared UI) are on staging; part 3 (Career, below) lands next.
 
 **Draft**
 - **The tournament gave away the Swiss before its playback** (DRAFT-01, blocker). The kicker
@@ -230,18 +229,22 @@ reviewed independently and re-checked in the browser.
   the playback was mounted. A per-event reveal cursor fixes both (R43).
 - **Reduced motion never showed the deciding series** (CAR-03). Root cause: every simulated round
   counted as revealed, so the digest replaced the last round in the same render. The day now stops
-  on its last round with "See results" / "See the Swiss result".
+  on its last round with "See results" / "See the Swiss result", only after the click that plays
+  it; reopening an event already at its results opens on them.
 - **Digest and Swiss standings cut team names** (CAR-04/05). Root cause: the auto table layout gave
   the spare width to the other columns, and the long PT tag "Classificado" took the rest. Fixed
   layouts; on phones the placement moves under the name; PT tag "Avançou".
-- **The Community Cup lobby could list a team that did not play** (CAR-06), and so could the
-  Invitational and a regional without Saturday's list. Root cause: the lobby ranked orgs by stored
-  ratings against a preview rating; the engine ranks intrinsic ratings against the fielded team. The
-  lobby now calls the engine's own field helpers (`t3CupRefsFor`, `orgsByPointsFor`).
+- **An event lobby could list a team that did not play** (CAR-06): the Community Cup, the
+  Invitational, a regional, and the Saturday qualifier near the direct-8 line. Root cause: the lobby
+  ranked orgs by stored ratings against a preview rating and seeded the user with the starters'
+  plain average; the engine uses intrinsic ratings and the fielded team. The lobby now calls the
+  engine's own selections (`qualifierEventRefsFor`, `regionalEventRefsFor`, `t3CupRefsFor`,
+  `orgsByPointsFor`); a probe over 291 lobbies found 0 mismatches.
 - **The mobile top bar cut its label** (CAR-07). Root cause: one label at every width in a 42vw
   button. Phones get a short label.
 - **The qualifier lobby said $6k and paid $5.2k** (CAR-08). Root cause: the 9 % / 3 % shares were
   truncated to $50, and lobbies showed the season-0 base pool with no growth or difficulty (R44).
+  Every format's simulated payouts are now tested against the pool the lobby shows.
 - **The calendar's day detail opened under the sticky Advance bar** (CAR-09). Root cause: no
   scroll into view, and `sticky bottom-3` sat under the fixed mobile nav.
 - **The Championship Sunday header showed Saturday's record unlabelled, and "Tap anywhere to skip"
