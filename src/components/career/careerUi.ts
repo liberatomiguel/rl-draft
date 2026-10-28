@@ -64,6 +64,8 @@ import type {
 } from "@/engine/career/types";
 import type { Region, Stats, TournamentTeam } from "@/engine/types";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
+import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
+import { roundsOf } from "@/components/career/event/eventPlayback";
 import { participationOf, type Participation } from "@/components/career/event/weekendView";
 import {
   activeDrillFor,
@@ -77,6 +79,7 @@ import {
   userIsDirect,
   userOwnsQualifier,
   userSeedingFor,
+  userTeamForEvent,
 } from "@/store/careerFlow";
 
 // ---------------------------------------------------------------------------
@@ -378,6 +381,14 @@ export function userTeamPreview(save: CareerSave): TournamentTeam {
   }).team;
 }
 
+/**
+ * rc.29 (CAR-06): the team the user fields at `def` — startEvent's own build
+ * (this event's ruled-out player included), for the lobby's field and ratings.
+ */
+export function eventTeamPreview(save: CareerSave, def: CareerEventDef): TournamentTeam {
+  return userTeamForEvent(save, def).team;
+}
+
 /** The user org's star read (0-5, half steps) — world-percentile based. */
 export function userStars(save: CareerSave): number {
   const team = userTeamPreview(save);
@@ -573,6 +584,30 @@ export function visibleContinueKind(save: CareerSave, revealHeldEventId: string 
   return kind === "eventPaused" && revealHeldEventId !== null && revealHeldEventId === save.activeEvent?.def.id
     ? "event"
     : kind;
+}
+
+/**
+ * rc.29 (CAR-02): the hold the session reveal cursor implies when the event
+ * screen is NOT mounted (a reload, a trip to HQ mid-round): a watched Major /
+ * Worlds paused after its Saturday Swiss whose playback has not revealed every
+ * Saturday round yet. HQ, the calendar and the top bar then keep the event's
+ * own Continue — it leads back to the replay — instead of "Championship
+ * Sunday" (a spoiler, and a skip of the unfinished round). No cursor = no hold.
+ */
+export function persistedRevealHold(save: CareerSave, cursor: number | null | undefined): string | null {
+  const ev = save.activeEvent;
+  if (!ev || !ev.watched || cursor === null || cursor === undefined) return null;
+  if (!isEventPaused(save)) return null;
+  return cursor < roundsOf(ev.tournament).length ? ev.def.id : null;
+}
+
+/** rc.29 (CAR-02): the playback's live hold, else the one its session cursor implies. */
+export function useRevealHeldEventId(save: CareerSave | null): string | null {
+  const live = useCareerRevealStore((s) => s.heldEventId);
+  const key = save?.activeEvent ? revealCursorKey(save.careerSeed, save.activeEvent.def.id) : null;
+  const cursor = useCareerRevealStore((s) => (key ? s.cursors[key] : undefined));
+  if (live) return live;
+  return save ? persistedRevealHold(save, cursor) : null;
 }
 
 export { nameOfRef };

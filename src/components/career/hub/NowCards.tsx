@@ -155,7 +155,7 @@ export function NowInvite({
         <TierChip tier={def.tier} />
         <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))}</Badge>
         <Badge tone="blue">{formatDaysAway(D, daysAway)}</Badge>
-        <Badge tone="orange">{formatMoney(prizePoolOf(def.tier), { compact: true })}</Badge>
+        <Badge tone="orange">{formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}</Badge>
       </div>
       <p className="mt-3 max-w-md text-sm text-sub">
         {C.hub.inviteBody(formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day)))}
@@ -255,7 +255,7 @@ export function NowEvent({
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
           <p className="kicker text-[9px]">{C.calendar.prizePool}</p>
           <p className="display text-lg font-bold text-orange-bright">
-            {formatMoney(prizePoolOf(def.tier), { compact: true })}
+            {formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}
           </p>
         </div>
         <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">

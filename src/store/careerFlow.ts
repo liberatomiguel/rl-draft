@@ -52,7 +52,7 @@ import {
 } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { CAREER_BEATS } from "@/data/career/beats";
-import { PLAYER_NAME_BANK } from "@/data/career/names";
+import { playerNameBankFor } from "@/data/career/names";
 import { simulateSeries } from "@/engine/match";
 import {
   asSwissOnly,
@@ -1424,16 +1424,18 @@ export function payBankLoanFlow(input: CareerSave, amount: number): FlowResult {
 // Event lifecycle
 // ---------------------------------------------------------------------------
 
-export function startEvent(input: CareerSave, watch: boolean): CareerSave {
-  const save = clone(input);
-  const def = save.pendingEventDef;
-  if (!def || save.activeEvent) return save;
-  // The lobby opens on the matchday only (the day clock stops there).
-  if (save.clock.day !== def.day) return save;
-
+/**
+ * The user team an event fields (startEvent's build: this event's ruled-out
+ * player, the armed bootcamp edge). rc.29 (CAR-06): shared with the event
+ * lobby, so the Community Cup field it lists is the one that plays.
+ */
+export function userTeamForEvent(
+  save: CareerSave,
+  def: CareerEventDef,
+): ReturnType<typeof userTeamFor> {
   const unavailable =
     save.pendingUnavailability?.eventId === def.id ? save.pendingUnavailability.playerId : null;
-  const { team, usedStandIn, fieldedIds } = userTeamFor({
+  return userTeamFor({
     identity: save.identity,
     squad: save.squad,
     starterIds: save.starterIds,
@@ -1445,6 +1447,16 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     difficulty: save.difficulty,
     unavailablePlayerId: unavailable,
   });
+}
+
+export function startEvent(input: CareerSave, watch: boolean): CareerSave {
+  const save = clone(input);
+  const def = save.pendingEventDef;
+  if (!def || save.activeEvent) return save;
+  // The lobby opens on the matchday only (the day clock stops there).
+  if (save.clock.day !== def.day) return save;
+
+  const { team, usedStandIn, fieldedIds } = userTeamForEvent(save, def);
   if (usedStandIn) {
     save.finances = pushLedger(save.finances, {
       seasonIndex: save.clock.seasonIndex,
@@ -1980,6 +1992,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     save.careerSeed,
     save.squad.map((p) => p.id),
     nextSeason >= CAREER_SEASONS.length,
+    save.squad.map((p) => p.name),
   );
   save.world = pass.world;
   // v2.0 (R31): real orgs whose first lineup is this season enter the world.
@@ -2774,7 +2787,7 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
     windowIdx: windowIndexOf(weekOfDay(save.clock.day)) ?? 0,
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
-    nameBank: [...PLAYER_NAME_BANK[save.identity.region]],
+    nameBank: [...playerNameBankFor(save.identity.region, save.world.nameBankVersion)],
   });
 }
 

@@ -2,8 +2,12 @@
  * Road to Worlds — fictional name banks (career-only data).
  *
  * Used by deterministic generators (filler teams, procedural rookies,
- * emergency stand-ins). Every name here is INVENTED — no real player or org
- * names — flagged fictional so they never touch achievements/collection.
+ * emergency stand-ins, the founding roster, the local amateur scene). Every
+ * name here is INVENTED — no real player or org names — flagged fictional so
+ * they never touch achievements/collection. rc.29: the founding roster
+ * (STARTER_NAME_BANK) and the local scene (LOCAL_PLAYER_NAME_BANK) have banks
+ * of their own, disjoint from PLAYER_NAME_BANK, so those three sources never
+ * put one gamertag on both sides of a fixture.
  *
  * NEVER imported by src/data/index.ts (the main barrel stays career-free);
  * loaded lazily with the rest of the career layer.
@@ -65,6 +69,33 @@ export const PLAYER_NAME_BANK: Record<Region, string[]> = {
   ],
 };
 
+/**
+ * rc.29 (CAR-01) — PLAYER_NAME_BANK entries that turned out to be real
+ * players' nicknames (Skyline, Sultan, Idris, Zayd, Fahad: the bank predates
+ * the dataset check, and MENA's real Fahad met the filler Fahad in a
+ * regional). A world created from rc.29 on (`world.nameBankVersion` 2) reads
+ * these replacements; older careers keep the original names — nobody is
+ * renamed.
+ */
+export const PLAYER_NAME_BANK_SWAPS: Partial<Record<Region, Readonly<Record<string, string>>>> = {
+  NA: { Skyline: "Skydive" },
+  MENA: { Sultan: "Zarqa", Idris: "Jabal", Zayd: "Sahil", Fahad: "Nimr" },
+};
+
+const swappedBanks = new Map<Region, readonly string[]>();
+
+/** The filler / rookie / coach bank a world reads (rc.29: the swaps from version 2). */
+export function playerNameBankFor(region: Region, nameBankVersion: number | undefined): readonly string[] {
+  const swaps = PLAYER_NAME_BANK_SWAPS[region];
+  if ((nameBankVersion ?? 1) < 2 || !swaps) return PLAYER_NAME_BANK[region];
+  let bank = swappedBanks.get(region);
+  if (!bank) {
+    bank = PLAYER_NAME_BANK[region].map((name) => swaps[name] ?? name);
+    swappedBanks.set(region, bank);
+  }
+  return bank;
+}
+
 /** Fictional filler-org names per region (~14 each — enough for 16-team fields). */
 export const FILLER_ORG_NAME_BANK: Record<Region, string[]> = {
   NA: [
@@ -118,6 +149,106 @@ export const T2_EVENT_NAMES = [
 export const STAND_IN_NAMES: Record<Region, string> = {
   NA: "FillerUp", EU: "LastCall", SAM: "QuebraGalho", MENA: "Sandstorm",
   OCE: "PinchHit", APAC: "Kaeru", SSA: "Sharpline",
+};
+
+/**
+ * rc.29 (CAR-01) — the FOUNDING ROSTER's names (the creation wizard's three
+ * offers, nine unknowns per career). Their own bank: the filler pros of the
+ * thin regions (MENA, APAC, SSA) use every PLAYER_NAME_BANK name, so a starter
+ * drawn from it always shared a gamertag with a filler pro the user meets in
+ * the regional. Disjoint from every other bank and from the dataset
+ * (localScene.test.ts); only new careers draw from it — signed starters are
+ * stored on the squad, so existing careers keep their names.
+ */
+export const STARTER_NAME_BANK: Record<Region, readonly string[]> = {
+  NA: [
+    "Ricochet", "Hailstorm", "Brightside", "Northstar", "Upshot", "Longshot", "Sidewinder",
+    "Hardline", "Lowkey", "Overdrive", "Headwind", "Breakaway", "Ironside", "Wildcard",
+  ],
+  EU: [
+    "Nordlicht", "Vireo", "Kestrel", "Solenne", "Faraday", "Corvid", "Lysander",
+    "Marlin", "Halden", "Tessel", "Volant", "Aurel", "Brecht", "Sorrel",
+  ],
+  SAM: [
+    "Garoa", "Ventania", "Carcara", "Sucuri", "Boitata", "Curupira", "Jangada",
+    "Mandacaru", "Pororoca", "Tempestade", "Neblina", "Colibri", "Quetzal", "Yaguarete",
+  ],
+  MENA: [
+    "Simoom", "Khamsin", "Haboob", "Shamal", "Najm", "Thurayya", "Falak",
+    "Barq", "Qasr", "Nakhla", "Mizan", "Tarab", "Rimal", "Sarab",
+  ],
+  OCE: [
+    "Southerly", "Riptide", "Breaker", "Longboard", "Saltwater", "Spinifex", "Gidgee",
+    "Mallee", "Kauri", "Totara", "Rimu", "Coldfront", "Swell", "Undertow",
+  ],
+  APAC: [
+    "Hayate", "Shiden", "Kagero", "Raijin", "Tsubame", "Hoshi", "Kumo",
+    "Hayabusa", "Seiryu", "Byakko", "Suzaku", "Genbu", "Hwarang", "Tenkai",
+  ],
+  SSA: [
+    "Kifaru", "Chui", "Tembo", "Nyati", "Mvua", "Radi", "Upepo",
+    "Nyota", "Inkanyezi", "Umoya", "Ilanga", "Sankofa", "Kilele", "Mosi",
+  ],
+};
+
+/**
+ * rc.29 (CAR-01) — the LOCAL AMATEUR SCENE's gamertags (localScene.ts), 36 per
+ * region, regional flavour, no numeric tags. The local sides used to draw from
+ * PLAYER_NAME_BANK — the same names as the wizard starters, the filler pros
+ * and the rookies — so a fixture could show one gamertag scoring for both
+ * teams. Disjoint from every other bank and from every real name in the
+ * dataset (localScene.test.ts); one pool of 8 sides uses 24 of the 36.
+ */
+export const LOCAL_PLAYER_NAME_BANK: Record<Region, readonly string[]> = {
+  NA: [
+    "Flapjack", "Corndog", "Lugnut", "Tailpipe", "Snowday", "Hotsauce", "Trailmix", "Buckshot",
+    "Minivan", "Carpool", "Hoagie", "Jalopy", "Gravyboat", "Mudflap", "Rooftop", "Toaster",
+    "Sledhead", "Crockpot", "Shortstop", "Bleachers", "Overpass", "Tumbleweed", "Bootlace", "Sweatband",
+    "Pretzel", "Waffles", "Paperboy", "Bigrig", "Backroad", "Lawnchair", "Cornfield", "Gumball",
+    "Popcorn", "Hashbrown", "Turnpike", "Drivethru",
+  ],
+  EU: [
+    "Bratwurst", "Croissant", "Paella", "Stroopwafel", "Kartoffel", "Gnocchi", "Kielbasa", "Crumpet",
+    "Fromage", "Halloumi", "Gouda", "Strudel", "Spaetzle", "Moped", "Tramstop", "Scooter",
+    "Doner", "Fika", "Hygge", "Biscotti", "Espresso", "Raclette", "Fondue", "Frikandel",
+    "Bitterbal", "Haggis", "Scone", "Goulash", "Pelmeni", "Souvlaki", "Polenta", "Risotto",
+    "Tiramisu", "Muesli", "Windmill", "Kettle",
+  ],
+  SAM: [
+    "Coxinha", "Brigadeiro", "Pastelzinho", "Farofa", "Mandioca", "Pamonha", "Quindim", "Pacoca",
+    "Biscoito", "Moleque", "Parceiro", "Chinelo", "Caipora", "Saci", "Baixinho", "Bagunca",
+    "Zueira", "Marmita", "Fominha", "Empanada", "Choripan", "Asado", "Dulcito", "Medialuna",
+    "Matecito", "Arepa", "Chipa", "Chamo", "Parcero", "Chevere", "Peladeiro", "Tranquilo",
+    "Jabuti", "Capivara", "Sabia", "Quati",
+  ],
+  MENA: [
+    "Kunafa", "Baklava", "Hummus", "Tabbouleh", "Zaatar", "Manakish", "Labneh", "Kibbeh",
+    "Mansaf", "Machboos", "Harissa", "Couscous", "Tagine", "Shakshuka", "Basbousa", "Luqaimat",
+    "Dallah", "Finjan", "Simit", "Ayran", "Lokum", "Kofta", "Sambousa", "Maamoul",
+    "Qahwa", "Medjool", "Bakhoor", "Habibi", "Yalla", "Khalas", "Sahbi", "Fatayer",
+    "Kaak", "Pistachio", "Cardamom", "Saffron",
+  ],
+  OCE: [
+    "Ripper", "Bonzer", "Strewth", "Grommet", "Lamington", "Chookie", "Budgie", "Kookaburra",
+    "Brumby", "Possum", "Bilby", "Numbat", "Emu", "Platypus", "Pukeko", "Tui",
+    "Kea", "Weta", "Chillybin", "Togs", "Sunnies", "Cuppa", "Swaggie", "Coolabah",
+    "Banksia", "Goanna", "Barra", "Yakka", "Doona", "Sanga", "Brolga", "Magpie",
+    "Tassie", "Pikelet", "Brekkie", "Ute",
+  ],
+  APAC: [
+    "Onigiri", "Takoyaki", "Dango", "Gyoza", "Ramune", "Tamago", "Udon", "Soba",
+    "Natto", "Matcha", "Kimchi", "Tteok", "Bibimbap", "Hotteok", "Bulgogi", "Dimsum",
+    "Baozi", "Jianbing", "Mantou", "Laksa", "Rendang", "Kaya", "Pandan", "Tehtarik",
+    "Halohalo", "Adobo", "Lumpia", "Banhmi", "Pho", "Tomyum", "Mangosteen", "Rambutan",
+    "Lychee", "Becak", "Gachapon", "Tanuki",
+  ],
+  SSA: [
+    "Bobotie", "Bunnychow", "Vetkoek", "Koeksister", "Melktert", "Sosatie", "Chakalaka", "Droewors",
+    "Samp", "Mageu", "Amagwinya", "Ugali", "Sukuma", "Mandazi", "Mukimo", "Githeri",
+    "Suya", "Puffpuff", "Chinchin", "Moimoi", "Kelewele", "Fufu", "Banku", "Waakye",
+    "Howzit", "Eish", "Aweh", "Mzansi", "Polepole", "Wahala", "Oga", "Jabula",
+    "Injera", "Kenkey", "Bissap", "Sadza",
+  ],
 };
 
 /**

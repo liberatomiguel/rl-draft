@@ -34,8 +34,15 @@ import {
 } from "@/engine/career/calendar";
 import { hasChampion, qualifierOutcomeOf } from "@/engine/career/careerResults";
 import { applyMatchXp } from "@/engine/career/development";
-import { gearTrainingBonus, pointsFor, prizeFor, quantize, repGainFor } from "@/engine/career/economy";
-import type { CareerEventDef, CareerSave, CompactEventResult } from "@/engine/career/types";
+import { gearTrainingBonus, pointsFor, prizeFor, prizePoolPaidFor, quantize, repGainFor } from "@/engine/career/economy";
+import type {
+  CareerDifficulty,
+  CareerEventDef,
+  CareerEventFormat,
+  CareerSave,
+  CompactEventResult,
+  EventTier,
+} from "@/engine/career/types";
 import { seedsFromSwiss } from "@/engine/swiss";
 import { fastForward, playNextRound } from "@/engine/tournament";
 import type { Region } from "@/engine/types";
@@ -309,7 +316,7 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     expect(qualifierOutcomeOf(result.tier, "top8")).toBe("qualified");
     expect(qualifierOutcomeOf(result.tier, "swiss_exit")).toBe("eliminated");
     expect(qualifierOutcomeOf("regional", "top8")).toBeNull();
-    // Points: none. Prize: flat by outcome (9% qualified / 3% eliminated of the pool).
+    // Points: none. Prize: flat by outcome (rc.29: 10% qualified / 2.5% eliminated of the pool).
     expect(result.rows.every((r) => r.points === 0)).toBe(true);
     const pool = CAREER_PRIZES.pools.qualifier * CAREER_ECONOMY.prizeMult.normal;
     expect(prizeFor("qualifier", "top8", "swissOnly", "normal", 0)).toBe(quantize((pool * CAREER_PRIZES.swissOnlyPct.qualified) / 100));
@@ -317,9 +324,13 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     for (const row of result.rows) {
       expect(row.prize).toBe(prizeFor("qualifier", row.placement, "swissOnly", "normal", 0));
     }
-    // The flat table pays out ~96% of the pool.
+    // rc.29 (CAR-08): the flat table pays out the whole pool — the 16 rows sum
+    // to the paid total the lobby advertises (prizePoolPaidFor).
     const paid = 8 * CAREER_PRIZES.swissOnlyPct.qualified + 8 * CAREER_PRIZES.swissOnlyPct.eliminated;
-    expect(paid).toBe(96);
+    expect(paid).toBe(100);
+    expect(result.rows.reduce((sum, r) => sum + r.prize, 0)).toBe(
+      prizePoolPaidFor("qualifier", "swissOnly", "normal", def.seasonIndex),
+    );
     expect(done.finances.balance - simmed.finances.balance).toBe(result.rows.find((r) => r.ref === "user")!.prize);
     // Rep: qualifying pays qualifierAdvance — and nothing else (no qualifierWin any more).
     expect("qualifierWin" in CAREER_REP.gains).toBe(false);
@@ -680,6 +691,96 @@ describe("Worlds on the season's last weekend (R40)", { timeout: 30_000 }, () =>
     expect(save.history[0].userWorldsPlacement).not.toBeNull();
     if (save.phase === "seasonReview") {
       expect(rolloverToNextSeason(save).clock).toEqual({ seasonIndex: 1, day: 1 });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rc.29 review (R3): every format pays exactly the pool its lobby advertises
+// ---------------------------------------------------------------------------
+
+/** The format each tier is played in (the calendar's own defs are checked below). */
+const FORMAT_OF: Record<EventTier, CareerEventFormat> = {
+  qualifier: "swissOnly",
+  regional: "swiss",
+  major: "swiss",
+  worlds: "swiss",
+  t3: "single",
+  t2: "single",
+};
+
+/**
+ * A filed result's REAL finishing places — whatever the bracket produced
+ * (the double-elimination top 8 with its third-place series, the 8-team
+ * single elimination, the Swiss-only 8 / 8) — pay exactly the figure the
+ * lobby, the calendar and HQ show (prizePoolPaidFor).
+ */
+function expectPaysItsPool(result: CompactEventResult, difficulty: CareerDifficulty): void {
+  const format = FORMAT_OF[result.tier];
+  expect(result.rows, result.eventId).toHaveLength(format === "single" ? 8 : 16);
+  expect(new Set(result.rows.map((r) => r.ref)).size, result.eventId).toBe(result.rows.length);
+  expect(
+    result.rows.reduce((sum, r) => sum + r.prize, 0),
+    `${result.eventId} (${result.tier}, ${difficulty})`,
+  ).toBe(prizePoolPaidFor(result.tier, format, difficulty, result.seasonIndex));
+}
+
+describe("every format pays exactly its advertised pool — real results (rc.29 review R3)", { timeout: 60_000 }, () => {
+  it("the regional weekend: seven Swiss-only qualifiers and seven regionals, the user's included", () => {
+    const sat = advanceTo(freshCareer(), qualifierDayFor(W));
+    const played = simToday(withStrength(sat, 99));
+    const sun = advanceToNextStopFlow(quiet(played));
+    expect(eventDayPhaseOf(sun)).toBe("lobby");
+    const done = simToday(sun);
+    const weekend = done.eventResults.filter((r) => r.seasonIndex === 0 && r.week === W);
+    expect(weekend.filter((r) => r.tier === "qualifier")).toHaveLength(7);
+    expect(weekend.filter((r) => r.tier === "regional")).toHaveLength(7);
+    expect(weekend.filter((r) => r.rows.some((row) => row.ref === "user"))).toHaveLength(2);
+    for (const result of weekend) expectPaysItsPool(result, "normal");
+    for (const def of [...qualifierDefsForWeek(0, W), ...officialEventDefsForWeek(0, W)]) {
+      expect(def.format, def.id).toBe(FORMAT_OF[def.tier]);
+    }
+  });
+
+  it("a two-day Major and Worlds: Saturday's Swiss + Sunday's double-elimination playoffs", () => {
+    const sat = majorSaturday(99);
+    const majorDef = sat.pendingEventDef!;
+    expect(majorDef.format).toBe(FORMAT_OF.major);
+    const paused = simEventToEnd(startEvent(sat, false));
+    expect(isEventPaused(paused)).toBe(true);
+    const major = finishEvent(simEventToEnd(advanceToNextStopFlow(paused)));
+    expectPaysItsPool(resultOf(major, majorDef), "normal");
+
+    let worlds = advanceToNextStopFlow(quiet(advanceDayFlow(worldsEve(true))));
+    expect(eventDayPhaseOf(worlds)).toBe("lobby");
+    const worldsDef = worlds.pendingEventDef!;
+    expect(worldsDef).toMatchObject({ tier: "worlds", format: FORMAT_OF.worlds });
+    worlds = simEventToEnd(startEvent(worlds, false));
+    expect(isEventPaused(worlds)).toBe(true);
+    worlds = finishEvent(simEventToEnd(advanceToNextStopFlow(worlds)));
+    expectPaysItsPool(resultOf(worlds, worldsDef), "normal");
+  });
+
+  it("the Community Cup and the Invitational: an 8-team single elimination, at every difficulty", () => {
+    const week = seasonSchedule().find((w) => w.kind === "open")!.week;
+    for (const difficulty of ["easy", "normal", "hard"] as const) {
+      for (const tier of ["t3", "t2"] as const) {
+        const save = createCareerSave({ ...INPUT, difficulty }, SEED);
+        const def: CareerEventDef = {
+          id: `0:${week}:unofficial`,
+          tier,
+          seasonIndex: 0,
+          week,
+          day: eventDayFor(week),
+          name: tier === "t3" ? "Review Cup" : "Review Invitational",
+          format: FORMAT_OF[tier],
+        };
+        save.clock.day = def.day;
+        save.pendingEventDef = def;
+        save.unofficialOffer = null;
+        const done = finishEvent(simEventToEnd(startEvent(save, false)));
+        expectPaysItsPool(resultOf(done, def), difficulty);
+      }
     }
   });
 });

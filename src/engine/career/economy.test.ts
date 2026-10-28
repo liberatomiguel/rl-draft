@@ -6,6 +6,7 @@ import {
   CAREER_LOAN,
   CAREER_PAYROLL,
   CAREER_POINTS,
+  CAREER_PRIZES,
   CAREER_REP,
   CAREER_SALARY,
   CAREER_SAVE,
@@ -25,6 +26,7 @@ import {
   gearUpkeepPerSplit,
   pointsFor,
   prizeFor,
+  prizePoolPaidFor,
   pushLedger,
   quantize,
   repGainFor,
@@ -163,6 +165,42 @@ describe("prizeFor", () => {
     const top4 = prizeFor("t3", "top4", "single", "normal");
     expect(prizeFor("t3", "third", "single", "normal")).toBe(top4);
     expect(prizeFor("t3", "fourth", "single", "normal")).toBe(top4);
+  });
+
+  it("rc.29 (CAR-08): the qualifier pays exactly its advertised $6k at season 0 — 8 × $600 + 8 × $150", () => {
+    expect(CAREER_PRIZES.swissOnlyPct).toEqual({ qualified: 10, eliminated: 2.5 });
+    expect(8 * CAREER_PRIZES.swissOnlyPct.qualified + 8 * CAREER_PRIZES.swissOnlyPct.eliminated).toBe(100);
+    expect(prizeFor("qualifier", "top8", "swissOnly", "normal", 0)).toBe(600);
+    expect(prizeFor("qualifier", "swiss_exit", "swissOnly", "normal", 0)).toBe(150);
+    expect(prizePoolPaidFor("qualifier", "swissOnly", "normal", 0)).toBe(CAREER_PRIZES.pools.qualifier);
+  });
+
+  it("rc.29 (CAR-08): the paid pool is $50-quantized and grows with the scene and the difficulty's prize multiplier", () => {
+    // What each format's REAL finishing places pay is checked against this
+    // figure on simulated events — careerWeekend.test.ts (review R3). A
+    // placement table restated here would only compare the helper with itself.
+    const events = [
+      ["qualifier", "swissOnly"],
+      ["regional", "swiss"],
+      ["major", "swiss"],
+      ["worlds", "swiss"],
+      ["t3", "single"],
+      ["t2", "single"],
+    ] as const;
+    for (const [tier, format] of events) {
+      for (const difficulty of difficulties) {
+        let previous = 0;
+        for (let seasonIndex = 0; seasonIndex <= 12; seasonIndex++) {
+          const paid = prizePoolPaidFor(tier, format, difficulty, seasonIndex);
+          expect(paid % QUANTUM, `${tier} ${difficulty} S${seasonIndex}`).toBe(0);
+          expect(paid, `${tier} ${difficulty} S${seasonIndex}`).toBeGreaterThanOrEqual(previous);
+          previous = paid;
+        }
+      }
+      expect(prizePoolPaidFor(tier, format, "easy", 0)).toBeGreaterThan(prizePoolPaidFor(tier, format, "hard", 0));
+      // The pool grows ×1.12 a season — the lobby shows that growth now.
+      expect(prizePoolPaidFor(tier, format, "normal", 3)).toBeGreaterThan(prizePoolPaidFor(tier, format, "normal", 0));
+    }
   });
 });
 

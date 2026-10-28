@@ -1136,7 +1136,8 @@ export const CAREER_PT: CareerCopy = {
     throughRound: (n: number) => `Até a rodada ${n}`,
     record: "V-D",
     gameDiff: "SG",
-    advancedTag: "Classificado",
+    // rc.29 (CAR-05): curto — "Classificado" cortava o nome do time no trilho de 1280 px.
+    advancedTag: "Avançou",
     eliminatedTag: "Fora",
     liveTag: "AO VIVO",
     nextUp: "A seguir",
@@ -1199,6 +1200,14 @@ export const CAREER_PT: CareerCopy = {
     swissRecord: "Campanha",
     qualifiedEight: "Classificados para domingo",
     onToSunday: "Rumo ao domingo",
+    // rc.29 — correções do E2E (CAR-03 · CAR-10)
+    /** Ponteiro fino (mouse): o card de abertura pula com um clique ou Esc. */
+    clickToSkip: "Clique ou aperte Esc para pular",
+    /** Movimento reduzido: a última rodada do dia aparece antes; os resultados esperam este clique. */
+    seeResults: "Ver resultados",
+    seeSwissResult: "Ver o resultado do Swiss",
+    /** Selo dos playoffs quando o usuário não tem seed: a campanha de sábado, rotulada. */
+    swissRecordBadge: (record: string) => `Swiss ${record}`,
   },
 
   spectate: {
@@ -1331,7 +1340,8 @@ export const CAREER_PT: CareerCopy = {
     prestige: (n: number) => `Prestígio ${n}`,
     // rc.2 times locais
     localSide: "Time local",
-    localHint: "Um time amador da cena regional — eles só aparecem nas community cups.",
+    // rc.29: desde a R30 a cena local também completa as qualificatórias de sábado.
+    localHint: "Um time amador da cena regional — joga as community cups e completa as qualificatórias de sábado.",
   },
 
   common: {

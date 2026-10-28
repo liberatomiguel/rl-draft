@@ -20,11 +20,14 @@ export function SwissVerdict({
   verdict,
   context,
   regionalName,
+  seed = null,
 }: {
   verdict: Verdict | null;
   context: "qualifier" | "twoDay";
   /** The regional a qualifier feeds (its Sunday). */
   regionalName: string;
+  /** rc.29: the locked seed once every Swiss round is on screen (Major / Worlds). */
+  seed?: number | null;
 }) {
   const C = useCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
@@ -43,7 +46,9 @@ export function SwissVerdict({
         ? C.event.qualifiedFor(regionalName)
         : C.event.regionalWithoutYou(regionalName)
       : through
-        ? C.event.seedLocks
+        ? seed !== null
+          ? C.event.yourSeed(seed)
+          : C.event.seedLocks
         : C.event.sundayWithoutYou;
 
   return (

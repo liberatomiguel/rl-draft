@@ -29,7 +29,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isLocalRef, localTeamName, localTeamOffset } from "@/engine/career/localScene";
-import { qualifierFieldRefsFor, t3FieldRefsFor } from "@/engine/career/worldSim";
 import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_QUALIFIER, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -48,7 +47,7 @@ import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
-import { useCareerRevealStore } from "@/store/careerRevealStore";
+import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { ANIM_TOURNAMENT_SPEED, useSettings } from "@/store/settingsStore";
 import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 import { useMounted } from "@/store/useMounted";
@@ -56,12 +55,11 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import {
   dateOfDay,
   eventDayPhaseOf,
+  eventTeamPreview,
   isEventPaused,
   qualifierOutcomeOf,
   useCareerSave,
-  userSeedingFor,
   userStars,
-  userTeamPreview,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import {
@@ -92,6 +90,7 @@ import { ChampionshipSunday } from "@/components/career/event/ChampionshipSunday
 import { SeedList } from "@/components/career/event/SeedList";
 import { SwissCompletePanel } from "@/components/career/event/SwissCompletePanel";
 import { SwissVerdict } from "@/components/career/event/SwissVerdict";
+import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
 import { WeekendPlan, formatLineOf, type WeekendNote } from "@/components/career/event/WeekendPlan";
 import {
   advancedSeedsOf,
@@ -106,10 +105,13 @@ import {
   sundayIntroDue,
   swissTableOrder,
   swissVerdictOf,
+  userSeedOf,
   type WeekendRole,
 } from "@/components/career/event/weekendView";
 import {
+  initialRevealedRounds,
   placementRankOf,
+  resultsSeenOnMount,
   revealedKeysFor,
   revealedSwissRounds,
   roundsOf,
@@ -198,82 +200,6 @@ export function EventScreen() {
 // 1 — LOBBY
 // ---------------------------------------------------------------------------
 
-/**
- * R40: the lobby is always the USER's event — like fieldForEvent, the week's
- * commit is the authority: if today's seeding drifted the user out of the
- * list (a signing or the Mon-Fri training lifted them into the direct 8),
- * the lowest seat makes room.
- */
-function withUserSeat(refs: string[], seats: number): string[] {
-  if (refs.includes("user")) return refs;
-  return [...(refs.length >= seats ? refs.slice(0, seats - 1) : refs), "user"];
-}
-
-/** Field preview mirroring worldSim.fieldForEvent's selection (display only). */
-function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating: number): string[] {
-  if (def.tier === "major") return save.competition.majorFieldRefs ?? [];
-  if (def.tier === "worlds") return save.competition.worldsFieldRefs ?? [];
-  const region = def.region ?? save.identity.region;
-  const orgs = Object.values(save.world.orgs).filter((o) => o.region === region);
-  if (def.tier === "qualifier") {
-    // v2.0 (R30): the same seeding/field rule the engine uses.
-    const seeding = userSeedingFor(save);
-    return withUserSeat(
-      qualifierFieldRefsFor({
-        region,
-        seasonIndex: def.seasonIndex,
-        seeding,
-        seats: TOURNAMENT.swiss.teams,
-      }),
-      TOURNAMENT.swiss.teams,
-    );
-  }
-  if (def.tier === "regional") {
-    const qualified = save.competition.qualifiedRefs?.[region];
-    if (qualified && qualified.eventId === def.id) {
-      const seeding = userSeedingFor(save);
-      const refs = [...seeding.direct, ...qualified.refs.filter((r) => !seeding.direct.includes(r))];
-      // Backfill like fieldForEvent (a qualified team now seeded direct): next-best non-direct orgs.
-      for (const ref of seeding.rest) {
-        if (refs.length >= TOURNAMENT.swiss.teams) break;
-        if (!refs.includes(ref)) refs.push(ref);
-      }
-      return withUserSeat(refs, TOURNAMENT.swiss.teams);
-    }
-    const pts = save.competition.splitPoints[region] ?? {};
-    const ranked = [...orgs].sort(
-      (a, b) =>
-        (pts[b.ref] ?? 0) - (pts[a.ref] ?? 0) ||
-        b.prestige - a.prestige ||
-        (b.rating ?? 0) - (a.rating ?? 0) ||
-        a.ref.localeCompare(b.ref),
-    );
-    return ["user", ...ranked.slice(0, TOURNAMENT.swiss.teams - 1).map((o) => o.ref)];
-  }
-  if (def.tier === "t3") {
-    // v2.0 (R23): the same selection the engine fields (closest orgs, ≤2 stronger, locals fill).
-    return [
-      "user",
-      ...t3FieldRefsFor({
-        region,
-        seasonIndex: def.seasonIndex,
-        userRating,
-        orgRatings: orgs.map((o) => ({ ref: o.ref, rating: o.rating ?? 70 })),
-        seats: TOURNAMENT.quick.teams - 1,
-      }),
-    ];
-  }
-  const pts = save.competition.seasonPoints[region] ?? {};
-  const ranked = [...orgs].sort(
-    (a, b) =>
-      (pts[b.ref] ?? 0) - (pts[a.ref] ?? 0) ||
-      b.prestige - a.prestige ||
-      (b.rating ?? 0) - (a.rating ?? 0) ||
-      a.ref.localeCompare(b.ref),
-  );
-  return ["user", ...ranked.slice(0, TOURNAMENT.quick.teams - 1).map((o) => o.ref)];
-}
-
 function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const C = useCareerCopy();
   const D = C.dates;
@@ -284,7 +210,9 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   // One sheet for the lobby — any AI org in the field opens it.
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
-  const preview = useMemo(() => userTeamPreview(save), [save]);
+  // rc.29 (CAR-06): the team this event fields (a ruled-out player included) —
+  // the Community Cup field below is selected around it, like the engine's.
+  const preview = useMemo(() => eventTeamPreview(save, def), [save, def]);
   const userRating = Math.round(preview.rating.total);
   const myStars = userStars(save);
 
@@ -365,7 +293,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           <div className="rounded-lg border border-line bg-white/[0.03] p-2.5">
             <p className="kicker text-[9px]">{C.calendar.prizePool}</p>
             <p className="display text-lg font-bold text-orange-bright">
-              {formatMoney(prizePoolOf(def.tier), { compact: true })}
+              {formatMoney(prizePoolOf(def, save.difficulty), { compact: true })}
             </p>
           </div>
           {isQualifier ? (
@@ -541,9 +469,19 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
         : null;
 
   // Reveal state. On mount, everything ALREADY simulated counts as revealed —
-  // a fresh enterEvent has zero rounds (auto-starts); a mid-event refresh
-  // resumes without replaying what was seen.
-  const [revealedRounds, setRevealedRounds] = useState(() => roundsOf(ev.tournament).length);
+  // a fresh enterEvent has zero rounds (auto-starts) — unless this tab's
+  // session cursor says otherwise. rc.29 (CAR-02): the cursor follows the
+  // rounds fully revealed, so a reload or a trip to HQ mid-round replays that
+  // round from its start (it used to count as seen: a reload during the
+  // deciding Swiss round landed straight on the pause panel).
+  const cursorKey = revealCursorKey(save.careerSeed, def.id);
+  const setCursor = useCareerRevealStore((s) => s.setCursor);
+  const [revealedRounds, setRevealedRounds] = useState(() =>
+    initialRevealedRounds(
+      useCareerRevealStore.getState().cursors[cursorKey],
+      roundsOf(ev.tournament).length,
+    ),
+  );
   const [anim, setAnim] = useState<AnimSlice | null>(null);
   const [live, setLive] = useState({ game: 0, goal: 0 });
   const [running, setRunning] = useState(true);
@@ -651,10 +589,33 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const effRevealed = reduced ? rounds.length : revealedRounds;
   const effAnim = reduced ? null : anim;
 
+  // rc.29 (CAR-02): the session cursor = the rounds on screen (reduced motion
+  // shows every simulated round at once, so its cursor never lags).
+  useEffect(() => {
+    setCursor(cursorKey, effRevealed);
+  }, [cursorKey, effRevealed, setCursor]);
+
+  // rc.29 (CAR-03): under reduced motion the click that plays the day's last
+  // round shows THAT round first (the deciding series in the Match Center);
+  // the digest / pause panel wait for an explicit "See results". Review R2:
+  // the stop belongs to that click — a playback that mounts on results
+  // already seen opens on them — and it is kept per day (Saturday's "See the
+  // Swiss result" never answers for Sunday's final).
+  const [resultsSeenDay, setResultsSeenDay] = useState<number | null>(() =>
+    resultsSeenOnMount({
+      atResults: t.stage === "finished" || paused,
+      cursor: useCareerRevealStore.getState().cursors[cursorKey],
+      simulated: rounds.length,
+    })
+      ? save.clock.day
+      : null,
+  );
+  const resultsGated = reduced && resultsSeenDay !== save.clock.day;
+
   const digestReady =
-    t.stage === "finished" && effRevealed >= rounds.length && !effAnim;
+    t.stage === "finished" && effRevealed >= rounds.length && !effAnim && !resultsGated;
   // R40: every Saturday round revealed and the event paused → the pause panel.
-  const swissCompleteReady = paused && effRevealed >= rounds.length && !effAnim;
+  const swissCompleteReady = paused && effRevealed >= rounds.length && !effAnim && !resultsGated;
 
   // R40 review: the engine pauses as soon as it has SIMULATED the deciding
   // Swiss series — while this screen is still revealing Saturday, the top
@@ -683,7 +644,11 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
 
   const hasSwiss = def.format !== "single"; // "swiss" and the R40 "swissOnly" qualifier
   const swissFullyRevealed = throughRound >= t.swiss.rounds.length;
-  const showBracket = Boolean(t.playoffs) && (!hasSwiss || (t.swiss.finished && swissFullyRevealed));
+  // R40: a Major / Worlds Saturday never shows the bracket — its playoffs are
+  // Sunday's (rc.29: the reduced-motion results stop shows Saturday's end here).
+  const saturdayOfTwoDay = twoDay && !championshipSunday;
+  const showBracket =
+    Boolean(t.playoffs) && !saturdayOfTwoDay && (!hasSwiss || (t.swiss.finished && swissFullyRevealed));
 
   const labelOf = (round: RoundRef): string =>
     round.stage === "swiss"
@@ -834,6 +799,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     setAnim(null);
     setLive({ game: 0, goal: 0 });
     setRunning(false);
+    // Asked for the end: no "See results" stop under reduced motion.
+    setResultsSeenDay(save.clock.day);
   };
 
   // R40: on a Major / Worlds Saturday the sim stops at the end of the Swiss
@@ -845,9 +812,24 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   let revealStage: "swiss" | "playoffs";
   if (t.swissOnly) revealStage = "swiss";
   else if (championshipSunday) revealStage = "playoffs";
+  // rc.29 (CAR-03): Saturday paused at the Swiss end (the reduced-motion
+  // results stop) is still the Swiss stage — the engine's seeded bracket is Sunday's.
+  else if (saturdayOfTwoDay && paused) revealStage = "swiss";
   else if (animRound) revealStage = animRound.stage;
   else if (effRevealed >= rounds.length) revealStage = t.stage === "swiss" ? "swiss" : "playoffs";
   else revealStage = rounds[effRevealed - 1]?.stage ?? "swiss";
+
+  // rc.29 (CAR-10): in the playoffs the header badge is the user's seed —
+  // Saturday's Swiss record (unlabelled) read like a playoff score; without a
+  // seed (out in the Swiss) it is labelled as the Swiss record.
+  const playoffSeed = hasSwiss && revealStage === "playoffs" ? userSeedOf(t) : null;
+  const recordText = T.record(userRecord.wins, userRecord.losses);
+  const headerBadge =
+    playoffSeed !== null
+      ? C.event.yourSeed(playoffSeed)
+      : revealStage === "playoffs"
+        ? C.event.swissRecordBadge(recordText)
+        : recordText;
 
   if (digestReady) return <EventDigest save={save} ev={ev} />;
   if (swissCompleteReady) return <SwissCompletePanel save={save} ev={ev} />;
@@ -865,8 +847,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
         }
         right={
           hasSwiss ? (
-            <Badge tone="blue" className="!text-sm">
-              {T.record(userRecord.wins, userRecord.losses)}
+            <Badge tone={playoffSeed !== null ? "orange" : "blue"} className="!text-sm">
+              {headerBadge}
             </Badge>
           ) : (
             <TierChip tier={def.tier} />
@@ -878,18 +860,22 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
       {/* controls — every one of them works */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {reduced ? (
-          <>
-            <Button
-              variant="primary"
-              onClick={playEventRound}
-              disabled={t.stage === "finished" || paused}
-            >
-              {C.hub.continue}
+          t.stage === "finished" || paused ? (
+            // rc.29 (CAR-03): the day is played and on screen — the results
+            // (digest, or Saturday's pause panel) open on this click.
+            <Button variant="primary" onClick={() => setResultsSeenDay(save.clock.day)}>
+              {paused ? C.event.seeSwissResult : C.event.seeResults}
             </Button>
-            <Button variant="ghost" size="sm" onClick={simToEnd}>
-              {simLabel}
-            </Button>
-          </>
+          ) : (
+            <>
+              <Button variant="primary" onClick={playEventRound}>
+                {C.hub.continue}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={simToEnd}>
+                {simLabel}
+              </Button>
+            </>
+          )
         ) : (
           <>
             {running ? (
@@ -965,7 +951,12 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
           )}
 
           {swissVerdictContext ? (
-            <SwissVerdict verdict={swissVerdict} context={swissVerdictContext} regionalName={regionalName} />
+            <SwissVerdict
+              verdict={swissVerdict}
+              context={swissVerdictContext}
+              regionalName={regionalName}
+              seed={swissFullyRevealed ? userSeedOf(t) : null}
+            />
           ) : null}
 
           {showBracket && hasSwiss ? (
@@ -1217,29 +1208,32 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
         />
       ) : null}
 
-      {/* full final standings */}
+      {/* full final standings — rc.29 (CAR-04): a fixed layout where the TEAM
+          column takes every pixel the numbers do not (it was starved to ~3
+          characters at 390 px, and cut on desktop while PLACEMENT had room);
+          below sm the placement drops under the team name. */}
       <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
         <p className="kicker mb-2.5 text-[10px]">{C.event.resultsDigest}</p>
-        <table className="w-full text-left text-xs">
+        <table className="w-full table-fixed text-left text-xs">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-faint">
-              <th className="pb-2 font-semibold" scope="col">
+              <th className="hidden w-36 pb-2 font-semibold sm:table-cell" scope="col">
                 {C.event.digestPlacement}
               </th>
               <th className="pb-2 font-semibold" scope="col">
                 {T.team}
               </th>
               {isQualifier ? (
-                <th className="pb-2 text-center font-semibold" scope="col">
+                <th className="w-14 pb-2 text-center font-semibold" scope="col">
                   {C.event.record}
                 </th>
               ) : null}
               {showPoints ? (
-                <th className="pb-2 text-right font-semibold" scope="col">
+                <th className="w-12 pb-2 text-right font-semibold" scope="col">
                   {C.standings.ptsShort}
                 </th>
               ) : null}
-              <th className="pb-2 text-right font-semibold" scope="col">
+              <th className="w-20 pb-2 text-right font-semibold" scope="col">
                 {C.common.prize}
               </th>
             </tr>
@@ -1251,6 +1245,9 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
               const rowPoints = pointsFor(def.tier, row.placement);
               const rec = isQualifier ? recordOf(row.id) : undefined;
               const rowQualified = isQualifier && row.placement !== "swiss_exit";
+              const placementLabel = placementLabelOf(labels, def.tier, row.placement);
+              const placementTone = rowQualified ? "font-semibold text-good" : "text-sub";
+              const teamName = t.teams[row.id]?.name ?? row.id;
               return (
                 <tr
                   key={row.id}
@@ -1261,24 +1258,26 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
                   )}
                 >
                   <td
-                    className={cx(
-                      "whitespace-nowrap py-1.5 pr-2",
-                      rowQualified ? "font-semibold text-good" : "text-sub",
-                    )}
+                    className={cx("hidden truncate py-1.5 pr-2 sm:table-cell", placementTone)}
+                    title={placementLabel}
                   >
-                    {placementLabelOf(labels, def.tier, row.placement)}
+                    {placementLabel}
                   </td>
-                  <td className="max-w-0 truncate py-1.5 pr-2">
-                    <span className="flex items-center gap-1.5">
-                      <OrgMark save={save} orgRef={row.id} size="xs" />
+                  <td className="py-1.5 pr-2">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <OrgMark save={save} orgRef={row.id} size="xs" className="shrink-0" />
                       <span
+                        title={teamName}
                         className={cx(
                           "min-w-0 truncate",
                           isUser ? "font-bold text-orange-bright" : "text-ink",
                         )}
                       >
-                        {t.teams[row.id]?.name ?? row.id}
+                        {teamName}
                       </span>
+                    </span>
+                    <span className={cx("mt-0.5 block truncate text-[10px] leading-tight sm:hidden", placementTone)}>
+                      {placementLabel}
                     </span>
                   </td>
                   {isQualifier ? (

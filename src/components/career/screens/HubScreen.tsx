@@ -55,6 +55,7 @@ import {
   standingsRows,
   unlockTrack,
   useCareerSave,
+  useRevealHeldEventId,
   userTeamPreview,
   weeklyStatement,
   weekOfDay,
@@ -227,6 +228,7 @@ export function HubScreen() {
   const markNewsRead = useCareerStore((s) => s.markNewsRead);
   const markFlag = useCareerStore((s) => s.markFlag);
   const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
+  const revealHeld = useRevealHeldEventId(save);
 
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [wireOpen, setWireOpen] = useState(false);
@@ -289,7 +291,12 @@ export function HubScreen() {
     save.activeEvent?.def ??
     (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null);
   // R40: the weekend phase of today's event (Saturday Swiss · the pause · Championship Sunday).
-  const eventPhase = eventDayPhaseOf(save);
+  // rc.29 (CAR-02): a Saturday the playback has not finished revealing still
+  // reads as the Swiss stage — "Swiss stage complete" and the Sunday CTA would
+  // spoil the unfinished round (and skip its replay).
+  const rawPhase = eventDayPhaseOf(save);
+  const eventPhase =
+    rawPhase === "paused" && revealHeld !== null && revealHeld === save.activeEvent?.def.id ? "swiss" : rawPhase;
   const eventRole = eventNow ? weekendRoleOf(eventNow, today) : null;
   const eventStage =
     eventPhase === "paused"

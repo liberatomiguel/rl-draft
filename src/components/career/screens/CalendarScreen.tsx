@@ -25,6 +25,7 @@ import type {
   EventTier,
 } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
+import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
@@ -40,6 +41,7 @@ import {
   nameOfRef,
   upcomingStops,
   useCareerSave,
+  useRevealHeldEventId,
   weekOfDay,
   type AgendaDay,
   type DayKind,
@@ -73,6 +75,21 @@ interface MonthGroup {
   days: AgendaDay[];
 }
 
+/**
+ * rc.29 (CAR-09): scroll the opened day detail into view ABOVE the sticky
+ * advance bar. The bar's height plus its bottom offset (the mobile nav's
+ * clearance included) becomes the detail's bottom scroll-margin; "nearest"
+ * moves the page only as far as needed (the top margin clears the headers).
+ */
+function revealAboveBar(detail: HTMLElement | null, bar: HTMLElement | null, reduced: boolean): void {
+  if (!detail) return;
+  const clearance = bar
+    ? bar.getBoundingClientRect().height + (Number.parseFloat(getComputedStyle(bar).bottom) || 0) + 8
+    : 96;
+  detail.style.scrollMarginBottom = `${Math.round(clearance)}px`;
+  detail.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+}
+
 export function CalendarScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
@@ -86,11 +103,15 @@ export function CalendarScreen() {
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const cancelScrim = useCareerStore((s) => s.cancelScrim);
+  const revealHeld = useRevealHeldEventId(save);
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showWorld, setShowWorld] = useState(false);
   const currentMonthRef = useRef<HTMLDivElement | null>(null);
   const didScroll = useRef(false);
+  const detailRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+  const reducedMotion = useOsReducedMotion();
 
   // --- derived season data (all guarded for the pre-mount pass) ------------
   const days = useMemo(
@@ -142,6 +163,12 @@ export function CalendarScreen() {
     currentMonthRef.current.scrollIntoView({ block: "start" });
   }, [mounted, save]);
 
+  // rc.29 (CAR-09): an opened day detail scrolls into view above the sticky
+  // advance bar (it used to open under it, out of sight).
+  useEffect(() => {
+    if (selectedDay !== null) revealAboveBar(detailRef.current, footerRef.current, reducedMotion);
+  }, [selectedDay, reducedMotion]);
+
   if (!mounted || !save) {
     return (
       <div className="mx-auto max-w-3xl px-3 py-5 sm:px-4">
@@ -155,8 +182,10 @@ export function CalendarScreen() {
   const currentMonthKey = `${clk.date.y}-${clk.date.m}`;
   const sel = selectedDay !== null ? (days[selectedDay - 1] ?? null) : null;
 
-  // R40: a Major / Worlds paused after its Saturday Swiss continues to Sunday.
-  const paused = isEventPaused(save);
+  // R40: a Major / Worlds paused after its Saturday Swiss continues to Sunday —
+  // rc.29 (CAR-02): once its playback has revealed Saturday (else back to it).
+  const paused =
+    isEventPaused(save) && !(revealHeld !== null && revealHeld === save.activeEvent?.def.id);
   const placementLabels = { placement: C.common.placement, qualifierOutcome: C.common.qualifierOutcome };
   const eventDue: CareerEventDef | null =
     save.activeEvent?.def ??
@@ -175,13 +204,11 @@ export function CalendarScreen() {
           : C.calendar.seasonEnd
     : C.calendar.seasonEnd;
 
+  // rc.29 (CAR-09): the opened detail scrolls itself into view (revealAboveBar);
+  // re-selecting the open day scrolls back to it.
   const selectDay = (day: number) => {
-    setSelectedDay(day);
-    const d = days[day - 1];
-    if (!d) return;
-    document
-      .getElementById(`cal-month-${d.date.y}-${d.date.m}`)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (day === selectedDay) revealAboveBar(detailRef.current, footerRef.current, reducedMotion);
+    else setSelectedDay(day);
   };
 
   const kindLabel = (k: DayKind): string | null => {
@@ -215,155 +242,157 @@ export function CalendarScreen() {
     const kindBadges = day.kinds.filter((k) => k !== "matchday" && k !== "idle");
 
     return (
-      <Panel className="rise-in mt-2 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="kicker mb-1 text-[11px]">
-              {formatDateShort(D, day.date)}
-              {day.isToday ? ` · ${C.calendar.today}` : ""}
-            </p>
-            {event ? (
-              <>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="display text-base font-bold text-ink">{event.name}</span>
-                  <TierChip tier={event.tier} />
-                  {twoDayRole ? (
-                    <Badge tone={twoDayRole === "championshipSunday" ? "gold" : "orange"}>
-                      {roleTitleOf(C, twoDayRole, event)}
-                    </Badge>
-                  ) : null}
-                  {event.region ? (
-                    <Badge className={REGION_BADGE[event.region]}>{event.region}</Badge>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-xs text-sub">{formatLineOf(C, event)}</p>
-              </>
-            ) : kindBadges.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {kindBadges.map((k) => {
-                  const label = kindLabel(k);
-                  if (!label) return null;
-                  return (
-                    <Badge
-                      key={k}
-                      tone={k === "windowOpen" ? "blue" : k === "payday" ? "good" : "neutral"}
-                    >
-                      {label}
-                    </Badge>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-faint">{C.calendar.openWeek}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setSelectedDay(null)}
-            aria-label={C.common.close}
-            className="shrink-0 rounded-md px-2 py-1 text-sub transition-colors hover:bg-white/10 hover:text-ink"
-          >
-            ✕
-          </button>
-        </div>
-
-        {event ? (
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
-            <span>
-              <span className="text-faint">{C.calendar.prizePool} </span>
-              <span className="font-semibold text-ink">
-                {formatMoney(prizePoolOf(event.tier), { compact: true })}
-              </span>
-            </span>
-            {points !== null ? (
-              <span>
-                <span className="text-faint">{C.calendar.points} </span>
-                <span className="font-semibold text-ink">{points}</span>
-              </span>
-            ) : null}
-            {result?.userPlacement ? (
-              <Badge tone="blue">{placementLabelOf(placementLabels, event.tier, result.userPlacement)}</Badge>
-            ) : save.pendingEventDef?.id === event.id ? (
-              <Badge tone="orange">{C.calendar.registered}</Badge>
-            ) : !isUserEventDef(save, event) ? (
-              <span className="text-faint">{C.calendar.notQualified}</span>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* v0.3 — booked scrim on this day (future: cancellable) */}
-        {(() => {
-          const booked = save.scheduledScrims.filter((s) => s.day === day.day);
-          if (booked.length === 0) return null;
-          return (
-            <div className="mt-3 border-t border-line pt-2.5">
-              {booked.map((s) => (
-                <div key={s.oppRef} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="font-semibold text-sub">
-                    {C.scrim.title} · {C.scrim.vs(nameOfRef(save, s.oppRef))}
-                  </span>
-                  {day.day > save.clock.day ? (
-                    <Button size="sm" variant="ghost" onClick={() => cancelScrim(s.day)}>
-                      {C.scrim.cancel}
-                    </Button>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          );
-        })()}
-
-        {/* v0.3 — scrim results played on this day */}
-        {(() => {
-          const played = save.scrimLog.filter(
-            (e) => e.seasonIndex === save.clock.seasonIndex && e.day === day.day,
-          );
-          if (played.length === 0) return null;
-          return (
-            <div className="mt-3 border-t border-line pt-2.5 space-y-1.5">
-              {played.map((e) => (
-                <div key={e.id} className="flex flex-wrap items-center gap-2 text-xs">
-                  <Badge tone={e.won ? "good" : "neutral"}>
-                    {e.won
-                      ? C.scrim.won(e.oppName, e.scoreA, e.scoreB)
-                      : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
-                  </Badge>
-                  <span className="text-faint">{C.scrim.gameLine(e.games.join(" · "))}</span>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
-
-        {worldDefs.length > 0 ? (
-          <div className="mt-3 border-t border-line pt-2.5">
-            <p className="kicker mb-1.5 text-[10px]">{C.calendar.worldEvents}</p>
-            <ul className="space-y-1">
-              {worldDefs.map((def) => {
-                const res = resultByEvent.get(def.id);
-                return (
-                  <li
-                    key={def.id}
-                    className="flex flex-wrap items-center gap-2 text-xs text-sub"
-                  >
-                    {def.region ? (
-                      <Badge className={cx("!px-1.5 !text-[9px]", REGION_BADGE[def.region])}>
-                        {def.region}
+      <div ref={detailRef} className="scroll-mt-28">
+        <Panel className="rise-in mt-2 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="kicker mb-1 text-[11px]">
+                {formatDateShort(D, day.date)}
+                {day.isToday ? ` · ${C.calendar.today}` : ""}
+              </p>
+              {event ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="display text-base font-bold text-ink">{event.name}</span>
+                    <TierChip tier={event.tier} />
+                    {twoDayRole ? (
+                      <Badge tone={twoDayRole === "championshipSunday" ? "gold" : "orange"}>
+                        {roleTitleOf(C, twoDayRole, event)}
                       </Badge>
                     ) : null}
-                    <span>{def.name}</span>
-                    {res && hasChampion(res) ? (
-                      <span className="text-faint">
-                        · {C.common.placement.champion}: {nameOfRef(save, res.championRef)}
-                      </span>
+                    {event.region ? (
+                      <Badge className={REGION_BADGE[event.region]}>{event.region}</Badge>
                     ) : null}
-                  </li>
-                );
-              })}
-            </ul>
+                  </div>
+                  <p className="mt-1 text-xs text-sub">{formatLineOf(C, event)}</p>
+                </>
+              ) : kindBadges.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {kindBadges.map((k) => {
+                    const label = kindLabel(k);
+                    if (!label) return null;
+                    return (
+                      <Badge
+                        key={k}
+                        tone={k === "windowOpen" ? "blue" : k === "payday" ? "good" : "neutral"}
+                      >
+                        {label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-faint">{C.calendar.openWeek}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedDay(null)}
+              aria-label={C.common.close}
+              className="shrink-0 rounded-md px-2 py-1 text-sub transition-colors hover:bg-white/10 hover:text-ink"
+            >
+              ✕
+            </button>
           </div>
-        ) : null}
-      </Panel>
+
+          {event ? (
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
+              <span>
+                <span className="text-faint">{C.calendar.prizePool} </span>
+                <span className="font-semibold text-ink">
+                  {formatMoney(prizePoolOf(event, save.difficulty), { compact: true })}
+                </span>
+              </span>
+              {points !== null ? (
+                <span>
+                  <span className="text-faint">{C.calendar.points} </span>
+                  <span className="font-semibold text-ink">{points}</span>
+                </span>
+              ) : null}
+              {result?.userPlacement ? (
+                <Badge tone="blue">{placementLabelOf(placementLabels, event.tier, result.userPlacement)}</Badge>
+              ) : save.pendingEventDef?.id === event.id ? (
+                <Badge tone="orange">{C.calendar.registered}</Badge>
+              ) : !isUserEventDef(save, event) ? (
+                <span className="text-faint">{C.calendar.notQualified}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* v0.3 — booked scrim on this day (future: cancellable) */}
+          {(() => {
+            const booked = save.scheduledScrims.filter((s) => s.day === day.day);
+            if (booked.length === 0) return null;
+            return (
+              <div className="mt-3 border-t border-line pt-2.5">
+                {booked.map((s) => (
+                  <div key={s.oppRef} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold text-sub">
+                      {C.scrim.title} · {C.scrim.vs(nameOfRef(save, s.oppRef))}
+                    </span>
+                    {day.day > save.clock.day ? (
+                      <Button size="sm" variant="ghost" onClick={() => cancelScrim(s.day)}>
+                        {C.scrim.cancel}
+                      </Button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* v0.3 — scrim results played on this day */}
+          {(() => {
+            const played = save.scrimLog.filter(
+              (e) => e.seasonIndex === save.clock.seasonIndex && e.day === day.day,
+            );
+            if (played.length === 0) return null;
+            return (
+              <div className="mt-3 border-t border-line pt-2.5 space-y-1.5">
+                {played.map((e) => (
+                  <div key={e.id} className="flex flex-wrap items-center gap-2 text-xs">
+                    <Badge tone={e.won ? "good" : "neutral"}>
+                      {e.won
+                        ? C.scrim.won(e.oppName, e.scoreA, e.scoreB)
+                        : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
+                    </Badge>
+                    <span className="text-faint">{C.scrim.gameLine(e.games.join(" · "))}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {worldDefs.length > 0 ? (
+            <div className="mt-3 border-t border-line pt-2.5">
+              <p className="kicker mb-1.5 text-[10px]">{C.calendar.worldEvents}</p>
+              <ul className="space-y-1">
+                {worldDefs.map((def) => {
+                  const res = resultByEvent.get(def.id);
+                  return (
+                    <li
+                      key={def.id}
+                      className="flex flex-wrap items-center gap-2 text-xs text-sub"
+                    >
+                      {def.region ? (
+                        <Badge className={cx("!px-1.5 !text-[9px]", REGION_BADGE[def.region])}>
+                          {def.region}
+                        </Badge>
+                      ) : null}
+                      <span>{def.name}</span>
+                      {res && hasChampion(res) ? (
+                        <span className="text-faint">
+                          · {C.common.placement.champion}: {nameOfRef(save, res.championRef)}
+                        </span>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+        </Panel>
+      </div>
     );
   };
 
@@ -677,7 +706,9 @@ export function CalendarScreen() {
       </Panel>
 
       {/* 6 — footer actions ----------------------------------------------------- */}
-      <div className="sticky bottom-3 z-10">
+      {/* rc.29 (CAR-09): below md the app's fixed bottom nav (~53 px) covered
+          half of this bar — it now sits above it. */}
+      <div ref={footerRef} className="sticky bottom-[4.25rem] z-10 md:bottom-3">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
           {paused ? (
             <Button

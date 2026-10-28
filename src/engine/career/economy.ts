@@ -113,6 +113,36 @@ export function prizeFor(
 }
 
 /**
+ * How many teams finish on each placement, per event format: a 16-team Swiss
+ * into a top-8 double elimination (3rd/4th from the third-place series, two
+ * lb_round2 exits = top6, two lb_round1 exits = top8); an 8-team single
+ * elimination (no third-place series); the Swiss-only qualifier (8 / 8).
+ */
+const PLACEMENTS_BY_FORMAT: Record<CareerEventFormat, Partial<Record<Placement, number>>> = {
+  swiss: { champion: 1, runner_up: 1, third: 1, fourth: 1, top6: 2, top8: 2, swiss_exit: 8 },
+  single: { champion: 1, runner_up: 1, top4: 2, top8: 4 },
+  swissOnly: { top8: 8, swiss_exit: 8 },
+};
+
+/**
+ * rc.29 (CAR-08): an event's REAL prize pool — every finishing place's
+ * prizeFor summed over the field (season growth, difficulty and the $50
+ * rounding included), so the figure a lobby advertises is what the event pays.
+ */
+export function prizePoolPaidFor(
+  tier: EventTier,
+  format: CareerEventFormat,
+  difficulty: CareerDifficulty,
+  seasonIndex = 0,
+): number {
+  let total = 0;
+  for (const [placement, count] of Object.entries(PLACEMENTS_BY_FORMAT[format])) {
+    total += (count ?? 0) * prizeFor(tier, placement as Placement, format, difficulty, seasonIndex);
+  }
+  return total;
+}
+
+/**
  * Season Points: 0 for unofficials (t3/t2) and Worlds (the finale pays no
  * points); regionals use the placement table; Majors pay exactly ×2.
  */

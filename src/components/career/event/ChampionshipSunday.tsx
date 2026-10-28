@@ -10,7 +10,8 @@
  *   watch mode     auto hand-off to the playoffs after
  *                  CAREER_PLAYBACK.sundayIntroMs (× the animation-speed
  *                  scale), skippable: the button, a tap / click anywhere on
- *                  the card, or Escape.
+ *                  the card, or Escape (the hint names the click and Esc on
+ *                  fine pointers, the tap on touch — rc.29).
  *   instant mode   Sunday re-opens the choice: Play it out / Instant result.
  *   reduced motion no motion and no timer — a static card and a button.
  *
@@ -198,7 +199,13 @@ export function ChampionshipSunday({
               >
                 {auto ? C.event.startNow : C.event.startPlayoffs}
               </button>
-              {auto ? <p className="mt-2 text-[11px] text-faint">{C.event.tapToSkip}</p> : null}
+              {auto ? (
+                // rc.29 (CAR-10): a mouse skips with a click or Escape — "tap" only on touch.
+                <p className="mt-2 text-[11px] text-faint">
+                  <span className="pointer-fine:hidden">{C.event.tapToSkip}</span>
+                  <span className="hidden pointer-fine:inline">{C.event.clickToSkip}</span>
+                </p>
+              ) : null}
             </div>
           )}
         </div>

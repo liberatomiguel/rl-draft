@@ -25,7 +25,7 @@ import {
   TEAM_RATING,
 } from "@/config/balance";
 import { lineupById, playerById, playerCards, seasonById } from "@/data";
-import { PLAYER_NAME_BANK } from "@/data/career/names";
+import { PLAYER_NAME_BANK, playerNameBankFor } from "@/data/career/names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
@@ -350,7 +350,8 @@ export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView
 export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): CareerPlayerView {
   const id = `fic:${region}:${n}`;
   const key = `${region}:${n}`;
-  const bank = PLAYER_NAME_BANK[region];
+  // rc.29: a world created from rc.29 on reads the bank without real nicknames.
+  const bank = playerNameBankFor(region, ctx.world.nameBankVersion);
   const wrap = Math.floor(n / bank.length);
   const name = bank[n % bank.length] + (wrap > 0 ? ` ${roman(wrap + 1)}` : "");
 
@@ -421,11 +422,14 @@ export function rookieView(
   n: number,
   careerSeed: number,
   infinite: boolean,
+  /** rc.29 (CAR-01): the name stored at intake (world.rookieNames), if any. */
+  storedName?: string,
 ): CareerPlayerView {
   const id = `rook:${seasonIndex}:${region}:${n}`;
   const key = `${seasonIndex}:${region}:${n}`;
   const bank = PLAYER_NAME_BANK[region];
-  const name = bank[intFrom(derivedFloat(careerSeed, streams.gen("rook-name", key)), 0, bank.length - 1)];
+  const name =
+    storedName ?? bank[intFrom(derivedFloat(careerSeed, streams.gen("rook-name", key)), 0, bank.length - 1)];
 
   const [aMin, aMax] = CAREER_WORLD.rookieAgeRange;
   const age = intFrom(derivedFloat(careerSeed, streams.gen("rook-age", key)), aMin, aMax);
@@ -493,7 +497,7 @@ export function playerViewById(id: string, ctx: ViewCtx): CareerPlayerView | nul
     }
     if (genSeason > ctx.seasonIndex) return null; // not yet in the world
     const infinite = genSeason >= CAREER_SEASONS.length;
-    const base = rookieView(region as Region, genSeason, n, ctx.careerSeed, infinite);
+    const base = rookieView(region as Region, genSeason, n, ctx.careerSeed, infinite, ctx.world.rookieNames?.[id]);
     const overall = clamp(base.overall + (ctx.world.overallDelta[id] ?? 0), 60, 99);
     return {
       ...base,

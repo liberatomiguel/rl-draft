@@ -27,10 +27,11 @@ import { useCareerStore } from "@/store/careerStore";
 import {
   agendaDays,
   clockLabel,
-  continueKind,
   DAYS_PER_SEASON,
   dayOfWeekOf,
   upcomingStops,
+  useRevealHeldEventId,
+  visibleContinueKind,
   type AgendaDay,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
@@ -154,6 +155,7 @@ export function DayCard({
   const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const autoAdvance = useCareerStore((s) => s.autoAdvance);
   const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
+  const revealHeld = useRevealHeldEventId(save);
 
   const clock = clockLabel(save);
   const today = save.clock.day;
@@ -161,7 +163,8 @@ export function DayCard({
   const weekDays = agendaDays(save, monday, 7);
   const todayIdx = Math.max(0, weekDays.findIndex((d) => d.isToday));
 
-  const kind = continueKind(save);
+  // rc.29 (CAR-02): an unfinished Saturday reveal keeps the event's own Continue.
+  const kind = visibleContinueKind(save, revealHeld);
   const running = save.phase === "running";
   const nextStop = upcomingStops(save, 1)[0] ?? null;
   const stopLabel = nextStop

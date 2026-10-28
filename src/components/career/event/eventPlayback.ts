@@ -74,6 +74,37 @@ export function seriesKey(round: RoundRef, seriesIndex: number): string {
   return `${round.key}:${seriesIndex}`;
 }
 
+/**
+ * rc.29 (CAR-02): how many rounds count as already seen when the playback
+ * mounts. Without a session cursor, everything simulated (a fresh enterEvent
+ * has none; a new tab resumes where the engine is). With one — written as
+ * rounds finish revealing — the unfinished round replays from its start
+ * (clamped: a cursor never reveals a round the engine has not played).
+ */
+export function initialRevealedRounds(cursor: number | null | undefined, simulated: number): number {
+  if (cursor === null || cursor === undefined || !Number.isFinite(cursor)) return simulated;
+  return Math.max(0, Math.min(Math.floor(cursor), simulated));
+}
+
+/**
+ * rc.29 review (CAREER-UX-R2): whether the reduced-motion "See results" stop
+ * (CAR-03) is already behind the player when the playback mounts. The stop
+ * belongs to the click that plays the day's last round, so that round shows
+ * first. A playback that MOUNTS on an event already at its results — finished,
+ * or Saturday paused at the Swiss end (`atResults`) — with every simulated
+ * round already seen (no session cursor behind) opens on the digest / pause
+ * panel, as it does without reduced motion. It used to stop again on every
+ * reload or return from HQ, and the live spoiler hold flipped the top bar
+ * back to the event's label meanwhile.
+ */
+export function resultsSeenOnMount(input: {
+  atResults: boolean;
+  cursor: number | null | undefined;
+  simulated: number;
+}): boolean {
+  return input.atResults && initialRevealedRounds(input.cursor, input.simulated) >= input.simulated;
+}
+
 // ---------------------------------------------------------------------------
 // Spoiler-safe reveal bookkeeping
 // ---------------------------------------------------------------------------

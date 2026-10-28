@@ -179,6 +179,18 @@ export interface WorldState {
   retiredIds: string[];
   /** Bumped on any roster/overall change — invalidates team-assembly caches. */
   version: number;
+  /**
+   * rc.29 (CAR-01): the gamertag each rookie got at his intake (id → name),
+   * chosen so nobody in his region already holds it. Optional and additive:
+   * rookies generated before rc.29 have no entry and keep their derived name.
+   */
+  rookieNames?: Record<string, string>;
+  /**
+   * rc.29 (CAR-01): which filler/rookie name bank the world reads — 2 =
+   * PLAYER_NAME_BANK with PLAYER_NAME_BANK_SWAPS (the real nicknames swapped
+   * out), set at creation; absent = the original bank (older careers).
+   */
+  nameBankVersion?: number;
 }
 
 // ---------------------------------------------------------------------------

@@ -1205,6 +1205,14 @@ export const CAREER_EN = {
     swissRecord: "Record",
     qualifiedEight: "Qualified for Sunday",
     onToSunday: "On to Sunday",
+    // rc.29 — E2E fixes (CAR-03 · CAR-10)
+    /** Fine pointers (mouse): the intro card skips on a click or Escape. */
+    clickToSkip: "Click or press Esc to skip",
+    /** Reduced motion: the day's last round shows first; the results wait for this. */
+    seeResults: "See results",
+    seeSwissResult: "See the Swiss result",
+    /** The playoffs header badge when the user has no seed: Saturday's record, labelled. */
+    swissRecordBadge: (record: string) => `Swiss ${record}`,
   },
 
   spectate: {
@@ -1337,7 +1345,8 @@ export const CAREER_EN = {
     prestige: (n: number) => `Prestige ${n}`,
     // rc.2 local sides
     localSide: "Local side",
-    localHint: "An amateur team from the regional scene — they only show up in community cups.",
+    // rc.29: since R30 the local scene also fills the Saturday qualifiers.
+    localHint: "An amateur team from the regional scene — they play the community cups and fill the Saturday qualifiers.",
   },
 
   common: {

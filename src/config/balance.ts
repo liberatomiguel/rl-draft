@@ -1020,10 +1020,12 @@ export const CAREER_PRIZES = {
   single8Pct: { champion: 40, runner_up: 22, top4: 11, top8: 4 } as Record<string, number>,
   /**
    * v2.0 (R40): Swiss-only events (the regional qualifier) pay flat by
-   * outcome — the 8 qualified 9% each, the 8 eliminated 3% each (96% of the
-   * pool paid out). Provisional: ECO-01 recalibrates the economy.
+   * outcome. rc.29 (CAR-08): the 8 qualified 10% each, the 8 eliminated 2.5%
+   * each — exactly the advertised pool at season 0 ($600 / $150 of $6k; the
+   * 9% / 3% split paid $5.2k after the $50 rounding). Lobbies show the real
+   * paid total (economy.prizePoolPaidFor). Provisional: ECO-01 recalibrates.
    */
-  swissOnlyPct: { qualified: 9, eliminated: 3 },
+  swissOnlyPct: { qualified: 10, eliminated: 2.5 },
 } as const;
 
 /** Unofficial tournaments (t3 Community Cup · t2 Invitational; t1 LAN = v1.1). */

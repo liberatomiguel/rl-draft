@@ -13,7 +13,7 @@
  */
 
 import { CAREER_UNOFFICIAL } from "@/config/balance";
-import { LOCAL_TEAM_NAME_BANK, PLAYER_NAME_BANK } from "@/data/career/names";
+import { LOCAL_PLAYER_NAME_BANK, LOCAL_TEAM_NAME_BANK } from "@/data/career/names";
 import { createRng } from "@/lib/rng";
 import type { Region } from "../types";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
@@ -80,15 +80,17 @@ export function localTeamOffset(ref: string, careerSeed: number): number {
   return Math.round((lo + f * (hi - lo)) * 10) / 10;
 }
 
-/** Three amateur gamertags for the side — the regional bank, no numeric tags
- *  (rc.2: "Pivete", not "Pivete37"). rc.28: one shuffle of the bank per
- *  region-season, three consecutive names per slot, so no two local sides of
- *  a pool share a player (8 sides × 3 = 24 of the 40 names) — a fixture used
- *  to show the same gamertag scoring for both teams. */
+/** Three amateur gamertags for the side — no numeric tags (rc.2: "Pivete",
+ *  not "Pivete37"). rc.28: one shuffle of the bank per region-season, three
+ *  consecutive names per slot, so no two local sides of a pool share a player
+ *  (8 sides × 3 = 24 of the 36 names). rc.29 (CAR-01): the local scene's OWN
+ *  bank (LOCAL_PLAYER_NAME_BANK) — it drew from PLAYER_NAME_BANK, the bank of
+ *  the wizard starters, the filler pros and the rookies, so a local side could
+ *  field the same gamertag as the team across the fixture. */
 export function localPlayerNames(ref: string, careerSeed: number): [string, string, string] {
   const parsed = parseLocalRef(ref);
   const region = parsed?.region ?? "NA";
-  const bank = PLAYER_NAME_BANK[region] ?? PLAYER_NAME_BANK.NA;
+  const bank = LOCAL_PLAYER_NAME_BANK[region] ?? LOCAL_PLAYER_NAME_BANK.NA;
   const order = createRng(
     deriveSeed(careerSeed, streams.gen("localPlayers", `${region}:${parsed?.seasonIndex ?? 0}`)),
   ).shuffle(bank);

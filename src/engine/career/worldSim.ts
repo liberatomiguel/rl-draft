@@ -56,7 +56,13 @@ import {
   players,
   seasonById,
 } from "@/data";
-import { FILLER_ORG_NAME_BANK, PLAYER_NAME_BANK, STAND_IN_NAMES } from "@/data/career/names";
+import {
+  FILLER_ORG_NAME_BANK,
+  PLAYER_NAME_BANK,
+  STAND_IN_NAMES,
+  STARTER_NAME_BANK,
+  playerNameBankFor,
+} from "@/data/career/names";
 import {
   isLocalRef,
   localPlayerNames,
@@ -214,12 +220,23 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
   const rosteredPlayerIds = new Set<string>();
 
   // 1. Real Season X lineups → AI orgs (one per orgId, dataset order).
+  //    rc.29 (CAR-01): a player who changed teams during Season X sits on two
+  //    of its lineups (Itachi: FC Barcelona and Vodafone Giants; Erased shares
+  //    all three with Dracon, The Three Sins and PDHM), and the world fielded
+  //    him for both — one gamertag scoring for both sides of a regional
+  //    fixture. He stays on the FIRST org in dataset order; the later seat is
+  //    a hole the best regional free agent fills (below), so no player is ever
+  //    on two rosters.
+  const holes: { ref: string; slot: number; region: Region }[] = [];
   for (const lineup of lineups) {
     if (lineup.seasonId !== season0.seasonId || lineup.rareSpawn) continue;
     if (orgs[lineup.orgId]) continue; // one org per orgId
     const playerIds = lineup.playerCardIds.map(
       (cardId) => playerCardById.get(cardId)!.playerId,
     ) as [string, string, string];
+    playerIds.forEach((id, slot) => {
+      if (rosteredPlayerIds.has(id)) holes.push({ ref: lineup.orgId, slot, region: lineup.region });
+    });
     const coach = lineup.coachId ? coachById.get(lineup.coachId) : undefined;
     const prestige = PRESTIGE_BY_STRENGTH[lineup.historicalStrength];
     orgs[lineup.orgId] = {
@@ -278,6 +295,19 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     .filter((p): p is { id: string; region: Region; overall: number } => p.overall !== null)
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
 
+  // rc.29: the step-1 holes sign the best free agent of their region (a
+  // region with none left gets a fresh filler, numbered after the filler orgs).
+  let pool = candidates;
+  for (const hole of holes) {
+    const pick = pool.find((c) => c.region === hole.region);
+    if (pick) {
+      orgs[hole.ref].playerIds[hole.slot] = pick.id;
+      pool = pool.filter((c) => c.id !== pick.id);
+    } else {
+      orgs[hole.ref].playerIds[hole.slot] = `fic:${hole.region}:${ficNext[hole.region]++}`;
+    }
+  }
+
   const fillersNeededFor = (real: { region: Region }[]): number => {
     let need = 0;
     for (const region of REGIONS) {
@@ -286,7 +316,7 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     }
     return need;
   };
-  let realFAs = candidates;
+  let realFAs = pool;
   let fillerCount = fillersNeededFor(realFAs);
   for (let guard = 0; guard < 8 && realFAs.length + fillerCount > FA_POOL_CAP; guard++) {
     realFAs = realFAs.slice(0, Math.max(0, FA_POOL_CAP - fillerCount));
@@ -306,6 +336,8 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     freeAgentIds: [...realFAs.map((r) => r.id), ...fillerFAIds],
     retiredIds: [],
     version: 0,
+    // rc.29 (CAR-01): this world's fillers never wear a real nickname.
+    nameBankVersion: 2,
   };
 }
 
@@ -324,10 +356,13 @@ export interface StarterOffer {
  * never collide with the world's numeric filler ids. Fully deterministic per
  * (careerSeed, region) via derivedFloat — no RNG cursor consumed. Once signed
  * they live as full SquadPlayer records; nothing resolves these ids later.
+ * rc.29 (CAR-01): the names come from STARTER_NAME_BANK, disjoint from the
+ * filler / rookie bank — in MENA, APAC and SSA every PLAYER_NAME_BANK name is
+ * a filler pro's, so each starter shared a gamertag with a regional opponent.
  */
 export function starterRosterOffers(region: Region, careerSeed: number): StarterOffer[] {
   // Nine distinct names: rank the bank deterministically, take the first nine.
-  const bank = PLAYER_NAME_BANK[region];
+  const bank = STARTER_NAME_BANK[region];
   const names = bank
     .map((name, i) => ({
       name,
@@ -751,6 +786,92 @@ export function t3FieldRefsFor(input: {
 }
 
 /**
+ * rc.29 (CAR-06): a region's orgs ranked for a points-seeded field (split
+ * points → prestige → intrinsic team rating → ref) — the order fieldForEvent
+ * seeds an Invitational or a regional without Saturday's qualified list by,
+ * shared with the event lobby (it used the orgs' STORED ratings for the
+ * tie-break, which can lag the rosters, and listed another team).
+ */
+export function orgsByPointsFor(input: {
+  world: WorldState;
+  region: Region;
+  points: Record<string, number>;
+  seasonIndex: number;
+  careerSeed: number;
+  difficulty: CareerDifficulty;
+  /** fieldForEvent passes its team cache; the lobby builds the teams here. */
+  teamFor?: (ref: string) => TournamentTeam;
+}): string[] {
+  const cache = new Map<string, number>();
+  const ratingOf = (ref: string): number => {
+    let r = cache.get(ref);
+    if (r === undefined) {
+      r = intrinsicRating(
+        input.teamFor?.(ref) ??
+          orgTeamFor(ref, {
+            world: input.world,
+            seasonIndex: input.seasonIndex,
+            careerSeed: input.careerSeed,
+            difficulty: input.difficulty,
+          }),
+      );
+      cache.set(ref, r);
+    }
+    return r;
+  };
+  const pts = input.points;
+  return Object.values(input.world.orgs)
+    .filter((o) => o.region === input.region)
+    .sort(
+      (a, b) =>
+        (pts[b.ref] ?? 0) - (pts[a.ref] ?? 0) ||
+        b.prestige - a.prestige ||
+        ratingOf(b.ref) - ratingOf(a.ref) ||
+        a.ref.localeCompare(b.ref),
+    )
+    .map((o) => o.ref);
+}
+
+/**
+ * rc.29 (CAR-06): the Community Cup's opponents — the ONE selection
+ * fieldForEvent fields and the event lobby lists. The lobby used to rank by
+ * the orgs' STORED ratings against the preview rating while the engine ranked
+ * intrinsic team ratings against the fielded user team, so "The field" could
+ * list a team that did not play and miss one that did. `userRating` is the
+ * fielded user team's rating.total (careerFlow.userTeamForEvent).
+ */
+export function t3CupRefsFor(input: {
+  world: WorldState;
+  region: Region;
+  seasonIndex: number;
+  careerSeed: number;
+  difficulty: CareerDifficulty;
+  userRating: number;
+  /** fieldForEvent passes its team cache; the lobby builds the teams here. */
+  teamFor?: (ref: string) => TournamentTeam;
+}): string[] {
+  const teamFor =
+    input.teamFor ??
+    ((ref: string) =>
+      orgTeamFor(ref, {
+        world: input.world,
+        seasonIndex: input.seasonIndex,
+        careerSeed: input.careerSeed,
+        difficulty: input.difficulty,
+      }));
+  const orgs = Object.values(input.world.orgs)
+    .filter((o) => o.region === input.region)
+    .sort((a, b) => a.ref.localeCompare(b.ref));
+  return t3FieldRefsFor({
+    region: input.region,
+    seasonIndex: input.seasonIndex,
+    userRating: input.userRating,
+    orgRatings: orgs.map((o) => ({ ref: o.ref, rating: intrinsicRating(teamFor(o.ref)) })),
+    seats: SINGLE_ELIM_TEAMS - 1,
+  });
+}
+
+/**
  * A local amateur side for a Community Cup: three generated gamertags whose
  * overalls are fitted (two passes) so the assembled intrinsic rating lands on
  * userRating + localTeamOffset. Never persisted; same inputs → same team.
@@ -852,6 +973,85 @@ export function qualifierFieldRefsFor(input: {
   return refs;
 }
 
+/**
+ * R40: the user's own qualifier / regional always fields the user — the
+ * week's commit is the authority. If today's seeding drifted the user out of
+ * the list (a signing or the Mon-Fri training lifted them into the direct 8),
+ * the lowest seat makes room.
+ */
+export function withUserSeat(refs: string[], seats: number): string[] {
+  if (refs.includes("user")) return refs;
+  return [...(refs.length >= seats ? refs.slice(0, seats - 1) : refs), "user"];
+}
+
+/** The inputs of a seeded official field (a Saturday qualifier, a Sunday regional). */
+interface SeededFieldInput {
+  world: WorldState;
+  competition: CompetitionState;
+  region: Region;
+  /**
+   * The user's row in the region's direct-8 race, or null (another region).
+   * fieldForEvent: the FIELDED team's rating.total (careerFlow.userTeamForEvent)
+   * with the reputation tier as prestige; an AI resolution: its seeding row.
+   */
+  userSeed: { rating: number; prestige: number } | null;
+  /** The user plays this event: they always take a seat (withUserSeat). */
+  fieldsUser: boolean;
+}
+
+function seedingOfField(input: SeededFieldInput): { direct: string[]; rest: string[] } {
+  return regionalSeedingFor({
+    orgs: Object.values(input.world.orgs)
+      .filter((o) => o.region === input.region)
+      .sort((a, b) => a.ref.localeCompare(b.ref)),
+    splitPoints: input.competition.splitPoints[input.region] ?? {},
+    user: input.userSeed,
+  });
+}
+
+/**
+ * rc.29 review (CAREER-UX-R1): the refs a Saturday qualifier fields ("user" =
+ * the user's team) — the ONE selection fieldForEvent builds and the event
+ * lobby lists. The lobby seeded the user with the starters' plain average
+ * (careerFlow.userSeedingFor, the Monday commit's read) while the engine
+ * seeds with the fielded team's rating, so near the direct-8 line the lobby
+ * listed a local side in place of the org the engine dropped into Saturday.
+ */
+export function qualifierEventRefsFor(input: SeededFieldInput & { seasonIndex: number }): string[] {
+  const seeding = seedingOfField(input);
+  const refs = qualifierFieldRefsFor({
+    region: input.region,
+    seasonIndex: input.seasonIndex,
+    // A seeding row without a team (AI resolution) never takes a seat.
+    seeding: input.fieldsUser ? seeding : { ...seeding, rest: seeding.rest.filter((r) => r !== "user") },
+    seats: TOURNAMENT.swiss.teams,
+  });
+  return input.fieldsUser ? withUserSeat(refs, TOURNAMENT.swiss.teams) : refs;
+}
+
+/**
+ * rc.29 review (CAREER-UX-R1): the refs a Sunday regional with Saturday's
+ * qualified list fields — today's direct top 8 (the user's row as in
+ * qualifierEventRefsFor) + the qualified eight, backfilled with the
+ * next-best non-direct orgs when a qualified ref no longer resolves.
+ * Shared by fieldForEvent and the event lobby.
+ */
+export function regionalEventRefsFor(input: SeededFieldInput & { qualified: string[] }): string[] {
+  const seats = TOURNAMENT.swiss.teams;
+  const seeding = seedingOfField(input);
+  // fieldForEvent's teamForRef: "user" needs the fielded team; an org must still exist.
+  const resolves = (ref: string): boolean =>
+    ref === "user" ? input.fieldsUser : isLocalRef(ref) || Boolean(input.world.orgs[ref]);
+  const listed = [...seeding.direct, ...input.qualified.filter((r) => !seeding.direct.includes(r))];
+  const refs = listed.filter(resolves);
+  for (const ref of seeding.rest) {
+    if (refs.length >= seats) break;
+    if (listed.includes(ref)) continue;
+    if (resolves(ref)) refs.push(ref);
+  }
+  return input.fieldsUser ? withUserSeat(refs, seats) : refs;
+}
+
 export function fieldForEvent(
   def: CareerEventDef,
   ctx: FieldCtx,
@@ -870,13 +1070,17 @@ export function fieldForEvent(
     }
     return team;
   };
-  const pointsRank =
-    (points: Record<string, number>) =>
-    (a: WorldOrgState, b: WorldOrgState): number =>
-      (points[b.ref] ?? 0) - (points[a.ref] ?? 0) ||
-      b.prestige - a.prestige ||
-      intrinsicRating(teamFor(b.ref)) - intrinsicRating(teamFor(a.ref)) ||
-      a.ref.localeCompare(b.ref);
+  // rc.29 (CAR-06): points-seeded fields share the lobby's ranking helper.
+  const rankedByPoints = (region: Region, points: Record<string, number>): string[] =>
+    orgsByPointsFor({
+      world: ctx.world,
+      region,
+      points,
+      seasonIndex: def.seasonIndex,
+      careerSeed: ctx.careerSeed,
+      difficulty: ctx.difficulty,
+      teamFor,
+    });
   const regionOrgs = (region: Region): WorldOrgState[] =>
     Object.values(ctx.world.orgs)
       .filter((o) => o.region === region)
@@ -912,62 +1116,45 @@ export function fieldForEvent(
 
   if (def.tier === "qualifier") {
     const region = def.region ?? ctx.userRegion;
-    const seeding = regionalSeedingFor({
-      orgs: regionOrgs(region),
-      splitPoints: ctx.competition.splitPoints[region] ?? {},
-      user: userSeed(region),
-    });
-    const refs = qualifierFieldRefsFor({
-      region,
-      seasonIndex: def.seasonIndex,
-      // A seeding row without a team (AI resolution) never takes a seat.
-      seeding: ctx.userTeam ? seeding : { ...seeding, rest: seeding.rest.filter((r) => r !== "user") },
-      seats: TOURNAMENT.swiss.teams,
-    });
-    field = refs.map((ref) => teamForRef(ref, region)).filter((t): t is TournamentTeam => t !== null);
     // The user's qualifier must field the user; AI qualifiers never do. R40:
     // the week's commit is the authority — if today's seeding drifted since
     // Monday (a signing or the Mon-Fri training lifted the user into the
     // direct 8), the committed user still plays; the lowest seat makes room.
-    if (ctx.userTeam && region === ctx.userRegion && !field.some((t) => t.isUser)) {
-      if (field.length >= TOURNAMENT.swiss.teams) field.pop();
-      field.push(ctx.userTeam);
-    }
+    // rc.29 review (R1): the selection the event lobby lists too.
+    const refs = qualifierEventRefsFor({
+      world: ctx.world,
+      competition: ctx.competition,
+      region,
+      seasonIndex: def.seasonIndex,
+      userSeed: userSeed(region),
+      fieldsUser: Boolean(ctx.userTeam) && region === ctx.userRegion,
+    });
+    field = refs.map((ref) => teamForRef(ref, region)).filter((t): t is TournamentTeam => t !== null);
   } else if (def.tier === "regional") {
     const region = def.region ?? ctx.userRegion;
     const qualified = ctx.competition.qualifiedRefs?.[region];
     if (qualified && qualified.eventId === def.id) {
       // v2.0 (R30): direct top 8 + the qualifier's 8 (R40: Saturday → Sunday).
-      const seeding = regionalSeedingFor({
-        orgs: regionOrgs(region),
-        splitPoints: ctx.competition.splitPoints[region] ?? {},
-        user: userSeed(region),
+      // R40: the user's own regional always fields the user — committed as
+      // direct on Monday (or qualified on Saturday) even if today's seeding
+      // drifted; the lowest qualified seat makes room. rc.29 review (R1): the
+      // selection the event lobby lists too.
+      const refs = regionalEventRefsFor({
+        world: ctx.world,
+        competition: ctx.competition,
+        region,
+        qualified: qualified.refs,
+        userSeed: userSeed(region),
+        fieldsUser: Boolean(ctx.userTeam) && region === ctx.userRegion,
       });
-      const refs = [...seeding.direct, ...qualified.refs.filter((r) => !seeding.direct.includes(r))];
       field = refs
         .map((ref) => teamForRef(ref, region))
         .filter((t): t is TournamentTeam => t !== null);
-      // Backfill (a qualified ref that no longer resolves): next-best non-direct orgs.
-      for (const ref of seeding.rest) {
-        if (field.length >= TOURNAMENT.swiss.teams) break;
-        if (refs.includes(ref)) continue;
-        const t = teamForRef(ref, region);
-        if (t) field.push(t);
-      }
-      // R40: the user's own regional always fields the user — committed as
-      // direct on Monday (or qualified on Saturday) even if today's seeding
-      // drifted; the lowest qualified seat makes room.
-      if (ctx.userTeam && region === ctx.userRegion && !field.some((t) => t.isUser)) {
-        if (field.length >= TOURNAMENT.swiss.teams) field.pop();
-        field.push(ctx.userTeam);
-      }
     } else {
-      const ranked = regionOrgs(region).sort(
-        pointsRank(ctx.competition.splitPoints[region] ?? {}),
-      );
+      const ranked = rankedByPoints(region, ctx.competition.splitPoints[region] ?? {});
       const includeUser = Boolean(ctx.userTeam) && region === ctx.userRegion;
       const take = includeUser ? TOURNAMENT.swiss.teams - 1 : TOURNAMENT.swiss.teams;
-      field = ranked.slice(0, take).map((o) => teamFor(o.ref));
+      field = ranked.slice(0, take).map((ref) => teamFor(ref));
       if (includeUser) field.push(ctx.userTeam!);
     }
   } else if (def.tier === "major" || def.tier === "worlds") {
@@ -1012,14 +1199,17 @@ export function fieldForEvent(
     }
     const region = def.region ?? ctx.userRegion;
     if (def.tier === "t3") {
-      // v2.0 (R23): the local scene around the user — see t3FieldRefsFor.
+      // v2.0 (R23): the local scene around the user — rc.29: t3CupRefsFor, the
+      // selection the lobby lists too.
       const userRating = ctx.userTeam.rating.total;
-      const refs = t3FieldRefsFor({
+      const refs = t3CupRefsFor({
+        world: ctx.world,
         region,
         seasonIndex: def.seasonIndex,
+        careerSeed: ctx.careerSeed,
+        difficulty: ctx.difficulty,
         userRating,
-        orgRatings: regionOrgs(region).map((o) => ({ ref: o.ref, rating: intrinsicRating(teamFor(o.ref)) })),
-        seats: SINGLE_ELIM_TEAMS - 1,
+        teamFor,
       });
       field = [
         ctx.userTeam,
@@ -1036,13 +1226,8 @@ export function fieldForEvent(
         ),
       ];
     } else {
-      const ranked = regionOrgs(region).sort(
-        pointsRank(ctx.competition.seasonPoints[region] ?? {}),
-      );
-      field = [
-        ctx.userTeam,
-        ...ranked.slice(0, SINGLE_ELIM_TEAMS - 1).map((o) => teamFor(o.ref)),
-      ];
+      const ranked = rankedByPoints(region, ctx.competition.seasonPoints[region] ?? {});
+      field = [ctx.userTeam, ...ranked.slice(0, SINGLE_ELIM_TEAMS - 1).map((ref) => teamFor(ref))];
     }
   }
 
@@ -1139,7 +1324,9 @@ function nextFillerId(region: Region, world: WorldState): string {
  *     the CAREER_AGE/CAREER_TRAINING curves, rng-free. Anchored players stay
  *     absent — they snap to their new season card via anchorOverall.
  *  4. Rookie intake: rookiesPerRegionPerSeason procedural rookies per region
- *     into the FA pool ("rook:{toSeasonIndex}:{region}:{i}").
+ *     into the FA pool ("rook:{toSeasonIndex}:{region}:{i}"). rc.29: each
+ *     rookie's gamertag is picked here and stored (world.rookieNames) — see
+ *     pickRookieName.
  */
 export function agePassAndIntake(
   world: WorldState,
@@ -1147,6 +1334,8 @@ export function agePassAndIntake(
   careerSeed: number,
   userSquadIds: string[],
   infinite: boolean,
+  /** rc.29: the user's squad names — a rookie never takes one of them. */
+  userSquadNames: readonly string[] = [],
 ): {
   world: WorldState;
   retired: { id: string; name: string }[];
@@ -1165,6 +1354,8 @@ export function agePassAndIntake(
     freeAgentIds: [...world.freeAgentIds],
     retiredIds: [...world.retiredIds],
     version: world.version + 1,
+    ...(world.rookieNames ? { rookieNames: { ...world.rookieNames } } : {}),
+    ...(world.nameBankVersion !== undefined ? { nameBankVersion: world.nameBankVersion } : {}),
   };
   for (const ref of Object.keys(world.orgs)) {
     next.orgs[ref] = {
@@ -1197,6 +1388,8 @@ export function agePassAndIntake(
     retiredNow.add(id);
     next.retiredIds.push(id);
     delete next.overallDelta[id];
+    // A retired id never resolves again — its stored name can go (bounded save).
+    if (next.rookieNames) delete next.rookieNames[id];
   };
 
   // 1a. Org rosters (sorted refs → slots in order: stable rng consumption).
@@ -1272,17 +1465,102 @@ export function agePassAndIntake(
     next.overallDelta[id] += newOverall - view.overall;
   }
 
-  // 4. Rookie intake.
+  // 4. Rookie intake. rc.29 (CAR-01): the gamertag is chosen here, against
+  //    every name already held in the rookie's region, and stored.
+  const held = heldNamesByRegion(next, toSeasonIndex, careerSeed, userSquadNames);
   const rookies: { id: string; name: string; region: Region }[] = [];
+  const rookieNames: Record<string, string> = { ...(next.rookieNames ?? {}) };
   for (const region of REGIONS) {
     for (let i = 0; i < CAREER_WORLD.rookiesPerRegionPerSeason; i++) {
       const view = rookieView(region, toSeasonIndex, i, careerSeed, infinite);
+      const name = pickRookieName(
+        region,
+        view.name,
+        held.get(region)!,
+        playerNameBankFor(region, next.nameBankVersion),
+      );
+      held.get(region)!.add(nameKey(name));
+      rookieNames[view.id] = name;
       next.freeAgentIds.push(view.id);
-      rookies.push({ id: view.id, name: view.name, region });
+      rookies.push({ id: view.id, name, region });
     }
   }
+  next.rookieNames = rookieNames;
 
   return { world: next, retired, rookies };
+}
+
+/** Case-insensitive name key (accents and punctuation folded). */
+function nameKey(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Every real nickname in the dataset — a rookie never borrows one (a real
+ *  player may debut, or return, after the rookie's intake). */
+let realNameKeys: Set<string> | null = null;
+function realNicknameKeys(): Set<string> {
+  realNameKeys ??= new Set(players.map((p) => nameKey(p.nickname)));
+  return realNameKeys;
+}
+
+/**
+ * rc.29 (CAR-01): the gamertags already in use per region — every org roster
+ * and free agent of the region (their views, stored rookie names included)
+ * plus the user's squad (held in every region: it meets them all).
+ */
+function heldNamesByRegion(
+  world: WorldState,
+  seasonIndex: number,
+  careerSeed: number,
+  userSquadNames: readonly string[],
+): Map<Region, Set<string>> {
+  const held = new Map<Region, Set<string>>(REGIONS.map((r) => [r, new Set<string>()]));
+  const ctx = { careerSeed, seasonIndex, world };
+  for (const org of Object.values(world.orgs)) {
+    for (const id of org.playerIds) {
+      const view = playerViewById(id, ctx);
+      if (view) held.get(org.region)?.add(nameKey(view.name));
+    }
+  }
+  for (const id of world.freeAgentIds) {
+    const view = playerViewById(id, ctx);
+    if (view) held.get(view.region)?.add(nameKey(view.name));
+  }
+  for (const name of userSquadNames) for (const set of held.values()) set.add(nameKey(name));
+  return held;
+}
+
+/**
+ * rc.29 (CAR-01): a rookie's gamertag — the derived bank pick (read through
+ * the world's bank) when nobody in the region holds it and no real player
+ * carries it, else the next free bank name, else the fillers' own numeral
+ * wrap ("Name II"). The bare pick used to collide: in MENA, APAC and SSA every
+ * bank name is a filler pro's, and eight picks a season from forty names
+ * repeat inside the class.
+ */
+export function pickRookieName(
+  region: Region,
+  derived: string,
+  held: ReadonlySet<string>,
+  bank: readonly string[] = playerNameBankFor(region, 2),
+): string {
+  const real = realNicknameKeys();
+  const free = (name: string) => !held.has(nameKey(name)) && !real.has(nameKey(name));
+  const start = Math.max(0, PLAYER_NAME_BANK[region].indexOf(derived));
+  for (let k = 0; k < bank.length; k++) {
+    const name = bank[(start + k) % bank.length];
+    if (free(name)) return name;
+  }
+  for (let wrap = 1; ; wrap++) {
+    for (let k = 0; k < bank.length; k++) {
+      const name = `${bank[(start + k) % bank.length]} ${ROMAN[wrap] ?? String(wrap + 1)}`;
+      if (free(name)) return name;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

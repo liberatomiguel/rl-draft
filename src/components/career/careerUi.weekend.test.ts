@@ -22,6 +22,7 @@ import {
   createCareerSave,
   eventDayPhaseOf,
   finishEvent,
+  isEventPaused,
   simEventToEnd,
   startEvent,
   type CreateCareerInput,
@@ -30,9 +31,11 @@ import {
   agendaDays,
   continueKind,
   isUserEventDef,
+  persistedRevealHold,
   upcomingStops,
   visibleContinueKind,
 } from "./careerUi";
+import { initialRevealedRounds, resultsSeenOnMount, roundsOf } from "./event/eventPlayback";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -128,6 +131,66 @@ describe("next stops around a two-day event (R40 review)", { timeout: 30_000 }, 
     // On Sunday the hold no longer matters (nothing is paused).
     const sun = advanceDayFlow(sat);
     expect(visibleContinueKind(sun, id)).toBe(continueKind(sun));
+  });
+
+  it("rc.29 (CAR-02): a reload / trip to HQ mid-Saturday keeps the hold from the session cursor until the replay ends", () => {
+    const sat = pausedMajor();
+    const id = sat.activeEvent!.def.id;
+    const saturday = roundsOf(sat.activeEvent!.tournament).length;
+    expect(saturday).toBeGreaterThan(2);
+    // The deciding round was mid-reveal: the cursor sits one round short.
+    expect(persistedRevealHold(sat, saturday - 1)).toBe(id);
+    expect(visibleContinueKind(sat, persistedRevealHold(sat, saturday - 1))).toBe("event");
+    expect(persistedRevealHold(sat, 0)).toBe(id);
+    // Every Saturday round revealed — or no cursor at all (a new tab): no hold.
+    expect(persistedRevealHold(sat, saturday)).toBeNull();
+    expect(persistedRevealHold(sat, null)).toBeNull();
+    expect(persistedRevealHold(sat, undefined)).toBeNull();
+    expect(visibleContinueKind(sat, persistedRevealHold(sat, saturday))).toBe("eventPaused");
+    // An instant Saturday has nothing to replay; Sunday is not paused.
+    expect(persistedRevealHold({ ...sat, activeEvent: { ...sat.activeEvent!, watched: false } }, 0)).toBeNull();
+    expect(persistedRevealHold(advanceDayFlow(sat), 0)).toBeNull();
+  });
+});
+
+describe("the playback's starting cursor (rc.29 CAR-02)", () => {
+  it("resumes at the session cursor, clamped to what the engine played; no cursor = everything simulated", () => {
+    expect(initialRevealedRounds(undefined, 5)).toBe(5);
+    expect(initialRevealedRounds(null, 5)).toBe(5);
+    expect(initialRevealedRounds(3, 5)).toBe(3);
+    expect(initialRevealedRounds(0, 5)).toBe(0);
+    expect(initialRevealedRounds(9, 5)).toBe(5);
+    expect(initialRevealedRounds(-2, 5)).toBe(0);
+    expect(initialRevealedRounds(Number.NaN, 5)).toBe(5);
+    expect(initialRevealedRounds(2, 0)).toBe(0);
+  });
+});
+
+describe("the reduced-motion results stop on mount (rc.29 review R2)", { timeout: 30_000 }, () => {
+  it("re-entering an event already at its results opens on them; the stop is for the click that plays the last round", () => {
+    const sat = pausedMajor();
+    expect(isEventPaused(sat)).toBe(true);
+    const saturday = roundsOf(sat.activeEvent!.tournament).length;
+    const atResults = isEventPaused(sat) || sat.activeEvent!.tournament.stage === "finished";
+    // A reload / return from HQ on the paused Saturday (reduced motion writes
+    // every round as shown; a new tab has no cursor): straight to the panel.
+    expect(resultsSeenOnMount({ atResults, cursor: saturday, simulated: saturday })).toBe(true);
+    expect(resultsSeenOnMount({ atResults, cursor: undefined, simulated: saturday })).toBe(true);
+    expect(resultsSeenOnMount({ atResults, cursor: null, simulated: saturday })).toBe(true);
+    // A watched replay left mid-round (the cursor is behind): the last round
+    // shows first, then "See the Swiss result".
+    expect(resultsSeenOnMount({ atResults, cursor: saturday - 1, simulated: saturday })).toBe(false);
+    // Mid-event (Sunday's playoffs to play): the stop waits for the final.
+    const sun = advanceDayFlow(sat);
+    expect(isEventPaused(sun)).toBe(false);
+    expect(sun.activeEvent!.tournament.stage).not.toBe("finished");
+    const sunday = roundsOf(sun.activeEvent!.tournament).length;
+    expect(resultsSeenOnMount({ atResults: false, cursor: sunday, simulated: sunday })).toBe(false);
+    // The finished event (digest) re-entered: no stop.
+    const done = simEventToEnd(sun);
+    expect(done.activeEvent!.tournament.stage).toBe("finished");
+    const all = roundsOf(done.activeEvent!.tournament).length;
+    expect(resultsSeenOnMount({ atResults: true, cursor: all, simulated: all })).toBe(true);
   });
 });
 
