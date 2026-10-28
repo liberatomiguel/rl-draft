@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.26**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.27**)
 
 > The biggest release in the project's history. Plan + execution order:
 > **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
@@ -171,6 +171,37 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Fixed — rc.27 (Etapa 1 of the 2.0 completion plan · 2026-10-28 · DESIGN-DECISIONS #143)
+- **A Swiss never pairs two teams that already met (every Draft mode and Road to Worlds).**
+  Root cause: `pairActiveTeams` shuffled each record group and popped pairs off the end
+  with no memory of earlier rounds, so most 16-team Swisses replayed at least one series
+  (181 of 200 all-AI Swisses in the plan's sweep; seed 1 round 4 had `team6` × `team9`
+  twice). The pairer now searches every same-record pairing against the played history
+  (derived from the saved rounds — no new save field), trying the old order first with
+  the same RNG draws, so rounds that were already clean are byte-identical. For the
+  16-team 3W/3L format a rematch-free round always exists (proof sketch in #143; 2 M
+  random campaigns offline, 5,000 in the suite). Runs and career events saved mid-Swiss
+  by an older build are handled explicitly: a stored round with a rematch is re-paired
+  from its own seed (never the run's RNG), and the next-opponent cells show the round
+  the engine will actually play. Difficulty matrix before/after within noise;
+  challenges unchanged. Golden master seed 20260709 regenerated (it rematched in round 3).
+- **Lint back to zero (5 errors + 1 warning since rc.20).** Root cause: React 19's
+  `react-hooks` rules flag a setState called synchronously inside an effect, and the React
+  Compiler skipped the whole Draft Match Center because a manual `useMemo` depended on a
+  value it could not prove immutable. `useMounted` is now a `useSyncExternalStore` gate
+  (false on the server and during hydration, as before; true on the first render of a
+  client-side navigation, where there is nothing to hydrate); `Modal` derives its portal
+  host from it; `AnimatedNumber` reads reduced motion through `useOsReducedMotion`; the
+  Draft playback parks its clock through its timer (like the career one); the Match Center
+  narration is a plain derivation the compiler memoizes.
+- **PT says "Swiss", the RLCS term, everywhere** ("Fase Swiss", "Eliminado no Swiss",
+  "Vitórias no Swiss"…) instead of "Suíça/suíço", matching the career copy. Root cause:
+  the draft copy was translated literally ("Suíça" reads as the country).
+- **Runbook:** the `profile_grants` check in `V2-IMPLEMENTATION-PLAN.md` §6-B now accepts
+  `early-supporter` (a `GrantId` since rc.4) and replaces the old constraint idempotently;
+  §6-B step 3 notes that the freeze trigger stops every client from moving `xp`/`mmr` the
+  moment it exists. README brought up to date (scripts, layout, docs, scope).
 
 ### Changed — rc.26 (the dataset leaves the shared path · 2026-10-27 · DESIGN-DECISIONS #142)
 - **The layout, the home and the content pages stop loading the dataset (#60).** The

@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Last updated: **2026-10-27**. History lives in `CHANGELOG.md`; rationale in
+> Last updated: **2026-10-28**. History lives in `CHANGELOG.md`; rationale in
 > `DESIGN-DECISIONS.md`. Grep those, never read them whole.
 
 ## Where things are
@@ -8,7 +8,7 @@
 - **Production:** `main` @ v1.4.6, live on Cloudflare (`rocketdraft.app`,
   static export, assets-only Worker). Season 1 announcement pop-up is up.
 - **v2.0 "Season 1":** built on the `staging` branch, published as
-  **v2.0.0-rc.26** (`staging.rocketdraft.app`, career on, noindex, preview
+  **v2.0.0-rc.27** (`staging.rocketdraft.app`, career on, noindex, preview
   tools on: unlock-all cosmetics switch on /profile, fictional boards).
   Phases 0–3 of `V2-IMPLEMENTATION-PLAN.md` are done; Phase 4 is in progress.
   **Never deploy v2.0 to `main` before the full review.**
@@ -47,21 +47,21 @@ DESIGN-DECISIONS #110–#142, ROAD-TO-WORLDS-DECISIONS R20–R39. Cosmetics refe
   difficulty), a national-team find (rare — `/collection?dev=1` previews the
   album), the album in EN and PT, a new career (real ages). **rc.26 adds:**
   Classic / Quick / Daily from a cold home, the home quiz modal, leaving a run
-  mid-draft (#142). Lighthouse.
+  mid-draft (#142). **rc.27 adds:** a full Swiss in Classic / Regional and a
+  career event without any rematch (#143). Lighthouse.
   Event-card curation and a PT pass. The in-game changelog page still stops
   at 1.4.2 (write the v2.0 player notes at launch).
 - **Decide:** worldwide Legacy is 1.6 (typical ≈2.8 %, grinders ≈12.5 % = live);
   1.3 keeps typical ≈3.7 % but grinders ≈16 % (#140).
-- Open details: login-calendar XP values are a first pass; `early-supporter`
-  must exist in `profile_grants` when granted; Season 2 needs its own
-  rank-track items.
+- Open details: login-calendar XP values are a first pass; the §6-B
+  `profile_grants` check accepts `early-supporter` since rc.27 (re-run §6-B on a
+  project created earlier); Season 2 needs its own rank-track items.
 - Then merge to `main`, tag `v2.0.0`, move this section into CHANGELOG.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **555** tests / 43 files (+2 opt-in
-  tools skipped) · `npm run lint` at baseline **5 errors** (pre-existing:
-  TournamentScreen ×2, AnimatedNumber, Modal, one more react-hooks rule)
+- `npm run typecheck` clean · `npm test` **562** tests / 43 files (+2 opt-in
+  tools skipped) · `npm run lint` **0 errors, 0 warnings** (rc.27)
   · `build:data` + `validate:data` green · green `npm run build` for anything
   that ships (`prebuild` validates data, contract test, images; `postbuild`
   checks the export). For visual effects: `npm run perf:probe` (#130).

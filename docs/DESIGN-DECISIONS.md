@@ -1427,6 +1427,33 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      chunk (warmed on mouse hover / keyboard focus); every light page ships
      ~79 KB gz less JS. `specialCards.json` (~10 KB gz) stays shared for the
      counters and the prune.
+143. **A Swiss never replays a series (rc.27, GAME-01).** The pairer used to
+     shuffle each record group and pop pairs off the end with no memory of
+     earlier rounds, so most 16-team Swisses replayed at least one series
+     (181 of 200 all-AI Swisses in the v2.0 plan's sweep). It now reads the
+     history from the played `rounds` (no new persisted field) and pairs the
+     record groups by a complete depth-first search with a rematch allowance
+     that only rises above 0 when a stored history already holds a rematch.
+     (a) The RNG is consumed exactly as before (one shuffle per group, in
+     order) and the search tries the old pop order first, so every round the
+     old pairer got right is byte-identical: a test replays the old pairer on
+     2,000 campaigns and checks pairs, sides and the RNG cursor. (b) For 16
+     teams / 3W-3L a rematch-free same-record round always exists: the round
+     2-3 groups hold at most one past opponent per team, the round-4 groups of
+     six at most two (Dirac: degree >= 3 in the allowed graph), and in the
+     round-5 2-2 group every team met at most three of the other five (its
+     round-4 opponent left the group), which leaves no Tutte obstacle (that
+     would take a K3,3 or a K4 of past meetings, or a team that met four of
+     them). Checked on 2 M random campaigns offline and 5,000 in the suite.
+     (c) A run or career event saved mid-Swiss before rc.27 may hold a
+     pre-computed round with a rematch: `upcomingSwissPairings` keeps a clean
+     stored round and repairs a dirty one from its own seed (FNV of the
+     records), never the run cursor, and the next-opponent cells read the same
+     helper as the engine. (d) The difficulty matrix (WW, 200 sessions, same
+     seeds) moved within noise — titles easy 84.7 -> 83.1 %, normal 49.9 ->
+     48.8 %, hard 39.5 -> 39.8 %, legacy 5.5 -> 6.1 %; population +-0.3 pp —
+     and every challenge stayed in band. The golden master's seed 20260709 (a
+     round-3 rematch) was regenerated; seed 555555 had none and is unchanged.
 
 ## Open questions for review
 
