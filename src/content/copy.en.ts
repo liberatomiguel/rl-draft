@@ -283,6 +283,8 @@ export const ONBOARDING = {
     "Win here and you've beaten the best of the best. Good luck.",
   ],
   legacyCta: "Bring it on",
+  /** rc.29: the Legacy intro on a Daily "Legacy Day" (Legacy not unlocked). */
+  legacyDailyIntro: "Today's Daily Challenge opens the all-time gauntlet — no unlock needed. It plays differently:",
   regionalTitle: "Regional Draft",
   regionalIntro: "This run is locked to one region's scene. Here's what changes:",
   regionalSteps: [
@@ -403,6 +405,10 @@ export const TOURNAMENT_UI = {
   matchPoint: "Match point",
   opponentHidden: "Opponent ratings stay hidden until the results screen.",
   team: "Team",
+  /** rc.29: the user's team wherever the engine's "user" team is named. */
+  yourTeam: "Your Team",
+  /** rc.29: a Swiss round as a results stage ("Biggest win" detail, eliminator). */
+  swissRound: (n: number) => `Swiss Round ${n}`,
   roundNames: {
     ub_quarterfinal: "UB Quarterfinal",
     lb_round1: "LB Round 1",
@@ -456,6 +462,13 @@ export const RESULTS_UI = {
   achievementToast: "Achievement unlocked",
   xpGained: "XP earned",
   difficultyMultiplier: "Difficulty multiplier",
+  /** rc.29: the game-mode factor, shown apart from the difficulty one. */
+  modeMultiplier: {
+    quick: "Quick Draft multiplier",
+    daily: "Daily Challenge multiplier",
+  } as Record<string, string>,
+  /** rc.29: the combined factor of a run saved before the split / another mode. */
+  xpMultiplier: "XP multiplier",
   hiddenOverallBonus: "Hidden overall bonus",
   total: "Total",
   mmrEarned: "Rating change",

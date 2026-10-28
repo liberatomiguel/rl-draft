@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { CAREER_CALENDAR, CAREER_POINTS } from "@/config/balance";
 // Sanctioned by the UI build brief: the remaining-events scan needs the pure
 // schedule helper, which careerUi does not re-export.
-import { officialEventDefsForWeek } from "@/engine/career/calendar";
+import { eventEndDayFor, officialEventDefsForWeek } from "@/engine/career/calendar";
 import type { CareerSave } from "@/engine/career/types";
 import type { Placement } from "@/engine/types";
 import type { Region } from "@/engine/types";
@@ -32,7 +32,6 @@ import { OrgSheet } from "@/components/career/OrgSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import {
   CAREER_SLOTS,
-  eventDayFor,
   standingsRows,
   useCareerSave,
   userStars,
@@ -65,13 +64,15 @@ function fullTable(save: CareerSave, region: Region, kind: "split" | "season"): 
 /**
  * Official events still ahead this season where the user can score points —
  * v0.2 day clock: an event only counts while its matchday is still ahead.
+ * v2.0 (R40): per event, by its LAST day (the regional is Sunday; a Major's
+ * points land on Championship Sunday) — not by the week's Saturday.
  */
 function remainingOfficialEvents(save: CareerSave): { regionals: number; majors: number } {
   let regionals = 0;
   let majors = 0;
   for (let w = weekOfDay(save.clock.day); w <= CAREER_CALENDAR.weeksPerSeason; w++) {
-    if (eventDayFor(w) <= save.clock.day) continue;
     for (const def of officialEventDefsForWeek(save.clock.seasonIndex, w)) {
+      if (eventEndDayFor(def) <= save.clock.day) continue;
       if (def.tier === "major") majors += 1;
       else if (def.tier === "regional" && def.region === save.identity.region) regionals += 1;
     }
@@ -79,10 +80,16 @@ function remainingOfficialEvents(save: CareerSave): { regionals: number; majors:
   return { regionals, majors };
 }
 
-/** Last placements per org-ref this season (chronological, newest last). */
+/**
+ * Last placements per org-ref this season (chronological, newest last).
+ * v2.0 (R40): points events only — a qualifier is Swiss only (its "top8"
+ * means qualified, not a bracket finish), so it never reads as form.
+ */
 function formMap(save: CareerSave, keep: number): Map<string, Placement[]> {
   const map = new Map<string, Placement[]>();
-  const events = [...save.eventResults].sort((a, b) => a.week - b.week);
+  const events = save.eventResults
+    .filter((ev) => ev.tier !== "qualifier")
+    .sort((a, b) => a.week - b.week);
   for (const ev of events) {
     for (const row of ev.rows) {
       const arr = map.get(row.ref);

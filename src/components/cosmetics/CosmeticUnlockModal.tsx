@@ -7,11 +7,14 @@
  * short description, how it was earned, and a one-tap "wear it now".
  *
  * Reads `useCosmeticUnlocks` (fed by profileStore) and shows one item at a
- * time. It sits BELOW the run ceremonies (z-60: special reveal, rank-up,
- * Legacy unlock) so those play first, and waits while the login modal is up.
+ * time. It waits while the login modal is up and, since rc.29, while an
+ * overlay hold is active (`overlayHoldStore`): a Draft tournament in progress,
+ * a challenge series playing, the run ceremonies (special reveal, rank-up,
+ * Legacy unlock), the first-run tour. Unlocks earned mid-tournament queue up
+ * and appear after the results ceremonies (E2E DRAFT-02).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cosmeticById, type CosmeticDef } from "@/data/cosmetics";
 import { addBadge, MAX_BADGES, resolveEquipped } from "@/engine/cosmetics";
@@ -21,9 +24,11 @@ import { sfx } from "@/lib/sfx";
 import { useAccountStore } from "@/store/accountStore";
 import { useCosmeticUnlocks } from "@/store/cosmeticUnlockStore";
 import { useMounted } from "@/store/useMounted";
+import { selectHeld, useOverlayHolds, useSettled } from "@/store/overlayHoldStore";
 import { useProfileStore } from "@/store/profileStore";
 import { useRewardToasts } from "@/store/rewardToastStore";
 import { Button } from "@/components/ui/Button";
+import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { BadgeEmblem, BannerSurface, TIER_ACCENT, TitleTag, useCosmeticCopy } from "./CosmeticViews";
 import { sourceLabel } from "./CosmeticsLocker";
 
@@ -42,6 +47,7 @@ export function CosmeticUnlockModal() {
   const queue = useCosmeticUnlocks((s) => s.queue);
   const shift = useCosmeticUnlocks((s) => s.shift);
   const loginOpen = useRewardToasts((s) => !!s.loginModal);
+  const held = useOverlayHolds(selectHeld);
   const cosmetics = useProfileStore((s) => s.cosmetics);
   const setEquipped = useProfileStore((s) => s.setEquipped);
   const nickname = useAccountStore((s) => s.username);
@@ -51,29 +57,30 @@ export function CosmeticUnlockModal() {
   const id = queue[0];
   const def = id ? cosmeticById.get(id) : undefined;
   const defId = def?.id ?? null;
+  // Ready, and still ready a frame later (see `useSettled`).
+  const visible = useSettled(mounted && !!def && !loginOpen && !held);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // An id the catalog no longer knows would block the queue (and the results
+  // XP count-up waiting for it) forever: drop it.
+  useEffect(() => {
+    if (id && !def) shift();
+  }, [id, def, shift]);
 
   // One sting per item, once it is actually on screen.
   useEffect(() => {
-    if (defId && !loginOpen) sfx.unlock();
-  }, [defId, loginOpen]);
+    if (defId && visible) sfx.unlock();
+  }, [defId, visible]);
 
   const next = () => {
     setBatch((b) => (queue.length <= 1 ? { done: 0, total: 0 } : { done: b.done + 1, total: Math.max(b.total, b.done + queue.length) }));
     shift();
   };
 
-  useEffect(() => {
-    if (!def || loginOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") next();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // `next` is stable enough for a key handler; re-binding per item is intended.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [def, loginOpen]);
+  usePageScrollLock(visible);
+  useDialogFocus(rootRef, visible, { onEscape: next });
 
-  if (!mounted || !def || loginOpen) return null;
+  if (!visible || !def) return null;
 
   const resolved = resolveEquipped(cosmetics);
   const worn = def.kind === "badge" ? resolved.badges.some((b) => b.id === def.id) : resolved[def.kind]?.id === def.id;
@@ -88,6 +95,9 @@ export function CosmeticUnlockModal() {
 
   return createPortal(
     <div
+      ref={rootRef}
+      tabIndex={-1}
+      style={{ outline: "none" }}
       className="fixed inset-0 z-[58] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/85 p-6 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"

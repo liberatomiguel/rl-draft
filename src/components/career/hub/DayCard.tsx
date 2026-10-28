@@ -12,6 +12,11 @@
  *   TERTIARY  +1 day, quiet.
  * When a weekly INSERT is pending the whole block becomes that decision: the
  * clock does not move until the player answers (rc.2).
+ * v2.0 (R40): the weekend reads at a glance — Saturday = Qualifier / Swiss
+ * stage, Sunday = the Regional / Championship Sunday (a spectated Major is a
+ * muted chip, not a matchday) — and a Major / Worlds paused after its
+ * Saturday Swiss turns the primary control into "Continue to Championship
+ * Sunday".
  */
 
 import { useRouter } from "next/navigation";
@@ -22,13 +27,16 @@ import { useCareerStore } from "@/store/careerStore";
 import {
   agendaDays,
   clockLabel,
-  continueKind,
   DAYS_PER_SEASON,
   dayOfWeekOf,
   upcomingStops,
+  useRevealHeldEventId,
+  visibleContinueKind,
   type AgendaDay,
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
+import { ContinueToSundayLabel, roleTitleOf } from "@/components/career/event/WeekendPlan";
+import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { NowInsert } from "@/components/career/hub/NowCards";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -45,9 +53,27 @@ const PauseGlyph = () => (
   </svg>
 );
 
+/** R40: a two-day event's chips read Swiss stage / Championship Sunday; others the event name. */
+function eventChipLabel(C: CareerCopy, d: AgendaDay): string {
+  if (!d.event) return "";
+  const role = weekendRoleOf(d.event, d.day);
+  return role === "swissDay" || role === "championshipSunday" ? roleTitleOf(C, role, d.event) : d.event.name;
+}
+
+/** R40: today's header badge — Qualifier / Swiss stage / Championship Sunday / Matchday. */
+function dayBadgeOf(C: CareerCopy, d: AgendaDay): string | null {
+  if (!d.event || d.participation === "spectating") return null;
+  const role = weekendRoleOf(d.event, d.day);
+  if (role === "qualifier") return C.common.tier.qualifier;
+  if (role === "swissDay" || role === "championshipSunday") return roleTitleOf(C, role, d.event);
+  return C.calendar.matchday;
+}
+
 function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
   const D = C.dates;
-  const matchday = d.kinds.includes("matchday");
+  // R40: a spectated Major / Worlds is on the agenda but is not the user's matchday.
+  const spectating = d.participation === "spectating";
+  const matchday = d.kinds.includes("matchday") && !spectating;
   const windowOpens = d.kinds.includes("windowOpen");
   const payday = d.kinds.includes("payday");
   const scrim = d.kinds.includes("scrim");
@@ -55,7 +81,7 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
   const training = d.kinds.includes("training");
 
   const label = d.event
-    ? d.event.name
+    ? eventChipLabel(C, d)
     : windowOpens
       ? C.calendar.window
       : payday
@@ -68,9 +94,11 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
               ? C.calendar.trainingDay
               : "";
 
+  const title = d.event && label !== d.event.name ? `${d.event.name} · ${label}` : label;
+
   return (
     <div
-      title={label || undefined}
+      title={title || undefined}
       className={cx(
         "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5",
         matchday ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
@@ -89,14 +117,16 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       </span>
       <span className="flex h-1.5 items-center gap-0.5" aria-hidden>
         {matchday ? <span className="h-1.5 w-1.5 rounded-full bg-orange" /> : null}
+        {spectating ? <span className="h-1.5 w-1.5 rounded-full ring-1 ring-white/35" /> : null}
         {windowOpens ? <span className="h-1.5 w-1.5 rounded-full bg-blue" /> : null}
         {payday ? <span className="h-1.5 w-1.5 rounded-full bg-amber-300" /> : null}
         {scrim ? <span className="h-1.5 w-1.5 rounded-full bg-cyan" /> : null}
-        {rest && !matchday ? <span className="h-px w-2 bg-white/20" /> : null}
+        {rest && !matchday && !spectating ? <span className="h-px w-2 bg-white/20" /> : null}
       </span>
       <span
         className={cx(
-          "hidden w-full truncate text-center text-[9px] leading-tight sm:block",
+          // R40: two lines, so "Championship Sunday" reads whole.
+          "hidden w-full text-center text-[9px] leading-tight [overflow-wrap:anywhere] sm:line-clamp-2",
           matchday ? "font-semibold text-orange-bright" : "text-faint",
         )}
       >
@@ -122,8 +152,10 @@ export function DayCard({
   const router = useRouter();
   const advanceDay = useCareerStore((s) => s.advanceDay);
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
+  const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const autoAdvance = useCareerStore((s) => s.autoAdvance);
   const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
+  const revealHeld = useRevealHeldEventId(save);
 
   const clock = clockLabel(save);
   const today = save.clock.day;
@@ -131,7 +163,8 @@ export function DayCard({
   const weekDays = agendaDays(save, monday, 7);
   const todayIdx = Math.max(0, weekDays.findIndex((d) => d.isToday));
 
-  const kind = continueKind(save);
+  // rc.29 (CAR-02): an unfinished Saturday reveal keeps the event's own Continue.
+  const kind = visibleContinueKind(save, revealHeld);
   const running = save.phase === "running";
   const nextStop = upcomingStops(save, 1)[0] ?? null;
   const stopLabel = nextStop
@@ -145,14 +178,30 @@ export function DayCard({
     : C.calendar.seasonEnd;
 
   const eventName = save.pendingEventDef?.name ?? save.activeEvent?.def.name ?? "";
+  // R40: today's role on the weekend (the header badge) — the user's own events only.
+  const todayRole =
+    kind === "eventPaused"
+      ? C.event.swissComplete
+      : weekDays[todayIdx]
+        ? dayBadgeOf(C, weekDays[todayIdx])
+        : null;
   const blockedPrimary =
-    kind === "event"
-      ? { label: C.hub.continueTo(eventName), go: () => router.push("/career/event") }
-      : kind === "seasonReview"
-        ? { label: C.ceremonies.seasonReview, go: () => router.push("/career/season") }
-        : kind === "ended"
-          ? { label: C.ceremonies.legacyTitle, go: () => router.push("/career/season") }
-          : null;
+    kind === "eventPaused"
+      ? {
+          // R40: Saturday's Swiss is done — exactly one day on, then the Sunday card.
+          label: <ContinueToSundayLabel />,
+          go: () => {
+            continueEventToNextDay();
+            router.push("/career/event");
+          },
+        }
+      : kind === "event"
+        ? { label: C.hub.continueTo(eventName), go: () => router.push("/career/event") }
+        : kind === "seasonReview"
+          ? { label: C.ceremonies.seasonReview, go: () => router.push("/career/season") }
+          : kind === "ended"
+            ? { label: C.ceremonies.legacyTitle, go: () => router.push("/career/season") }
+            : null;
 
   const inserting = Boolean(insertId && onInsert);
 
@@ -170,6 +219,7 @@ export function DayCard({
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {todayRole && !inserting ? <Badge tone="orange">{todayRole}</Badge> : null}
           {clock.windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
           {clock.kind === "open" && running && !inserting ? <Badge tone="good">{C.hub.trainingWeek}</Badge> : null}
           {inserting ? <Badge tone="blue">{C.hub.nowDecision}</Badge> : null}

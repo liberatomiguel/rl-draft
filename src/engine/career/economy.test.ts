@@ -6,6 +6,7 @@ import {
   CAREER_LOAN,
   CAREER_PAYROLL,
   CAREER_POINTS,
+  CAREER_PRIZES,
   CAREER_REP,
   CAREER_SALARY,
   CAREER_SAVE,
@@ -17,6 +18,7 @@ import {
   bootcampTierFor,
   coachSalaryFor,
   computeSalaryAsk,
+  eventRepKindFor,
   gearBuffLevels,
   gearNextItem,
   gearPriceFor,
@@ -24,6 +26,7 @@ import {
   gearUpkeepPerSplit,
   pointsFor,
   prizeFor,
+  prizePoolPaidFor,
   pushLedger,
   quantize,
   repGainFor,
@@ -33,6 +36,7 @@ import {
   signingBonusFor,
   sponsorOffersFor,
   starsFor,
+  t3RepKeyFor,
   transferFeeFor,
   unlocksFor,
   bankLoanLimitFor,
@@ -161,6 +165,42 @@ describe("prizeFor", () => {
     const top4 = prizeFor("t3", "top4", "single", "normal");
     expect(prizeFor("t3", "third", "single", "normal")).toBe(top4);
     expect(prizeFor("t3", "fourth", "single", "normal")).toBe(top4);
+  });
+
+  it("rc.29 (CAR-08): the qualifier pays exactly its advertised $6k at season 0 — 8 × $600 + 8 × $150", () => {
+    expect(CAREER_PRIZES.swissOnlyPct).toEqual({ qualified: 10, eliminated: 2.5 });
+    expect(8 * CAREER_PRIZES.swissOnlyPct.qualified + 8 * CAREER_PRIZES.swissOnlyPct.eliminated).toBe(100);
+    expect(prizeFor("qualifier", "top8", "swissOnly", "normal", 0)).toBe(600);
+    expect(prizeFor("qualifier", "swiss_exit", "swissOnly", "normal", 0)).toBe(150);
+    expect(prizePoolPaidFor("qualifier", "swissOnly", "normal", 0)).toBe(CAREER_PRIZES.pools.qualifier);
+  });
+
+  it("rc.29 (CAR-08): the paid pool is $50-quantized and grows with the scene and the difficulty's prize multiplier", () => {
+    // What each format's REAL finishing places pay is checked against this
+    // figure on simulated events — careerWeekend.test.ts (review R3). A
+    // placement table restated here would only compare the helper with itself.
+    const events = [
+      ["qualifier", "swissOnly"],
+      ["regional", "swiss"],
+      ["major", "swiss"],
+      ["worlds", "swiss"],
+      ["t3", "single"],
+      ["t2", "single"],
+    ] as const;
+    for (const [tier, format] of events) {
+      for (const difficulty of difficulties) {
+        let previous = 0;
+        for (let seasonIndex = 0; seasonIndex <= 12; seasonIndex++) {
+          const paid = prizePoolPaidFor(tier, format, difficulty, seasonIndex);
+          expect(paid % QUANTUM, `${tier} ${difficulty} S${seasonIndex}`).toBe(0);
+          expect(paid, `${tier} ${difficulty} S${seasonIndex}`).toBeGreaterThanOrEqual(previous);
+          previous = paid;
+        }
+      }
+      expect(prizePoolPaidFor(tier, format, "easy", 0)).toBeGreaterThan(prizePoolPaidFor(tier, format, "hard", 0));
+      // The pool grows ×1.12 a season — the lobby shows that growth now.
+      expect(prizePoolPaidFor(tier, format, "normal", 3)).toBeGreaterThan(prizePoolPaidFor(tier, format, "normal", 0));
+    }
   });
 });
 
@@ -643,5 +683,36 @@ describe("unlocks & reputation", () => {
     expect(repLossFloor(60, 1)).toBe(0); // tier-1 gate 0 → max(0, −slack) = 0
     // a floor can never sit above the current rep
     expect(repLossFloor(40, 3)).toBe(40);
+  });
+});
+
+describe("eventRepKindFor (R40 review: one rule for finishEvent and the digest)", () => {
+  const uncapped = { t3CapReached: false };
+  it("maps every tier and placement to the rep it pays (null = none)", () => {
+    expect(eventRepKindFor("qualifier", "top8", uncapped)).toBe("qualifierAdvance");
+    expect(eventRepKindFor("qualifier", "swiss_exit", uncapped)).toBeNull();
+    expect(eventRepKindFor("regional", "champion", uncapped)).toBe("regionalWin");
+    expect(eventRepKindFor("regional", "runner_up", uncapped)).toBe("regionalTop4");
+    expect(eventRepKindFor("regional", "top6", uncapped)).toBe("regionalTop8");
+    expect(eventRepKindFor("regional", "swiss_exit", uncapped)).toBe("regionalSwissExit");
+    expect(eventRepKindFor("major", "champion", uncapped)).toBe("majorWin");
+    expect(eventRepKindFor("major", "fourth", uncapped)).toBe("majorTop4");
+    expect(eventRepKindFor("major", "top8", uncapped)).toBeNull();
+    expect(eventRepKindFor("worlds", "champion", uncapped)).toBe("worldsTop4");
+    expect(eventRepKindFor("worlds", "third", uncapped)).toBe("worldsTop4");
+    expect(eventRepKindFor("worlds", "top6", uncapped)).toBeNull();
+    expect(eventRepKindFor("t2", "champion", uncapped)).toBe("t2Win");
+    expect(eventRepKindFor("t2", "runner_up", uncapped)).toBe("t2Final");
+    expect(eventRepKindFor("t2", "top4", uncapped)).toBeNull();
+    expect(eventRepKindFor("t3", "champion", uncapped)).toBe("t3Win");
+    expect(eventRepKindFor("t3", "runner_up", uncapped)).toBe("t3Final");
+  });
+
+  it("the t3 per-split cap silences t3 rep only", () => {
+    const capped = { t3CapReached: true };
+    expect(eventRepKindFor("t3", "champion", capped)).toBeNull();
+    expect(eventRepKindFor("t2", "champion", capped)).toBe("t2Win");
+    expect(t3RepKeyFor(1, 2)).toBe("t3rep:1:2");
+    expect(t3RepKeyFor(0, null)).toBe("t3rep:0:0");
   });
 });

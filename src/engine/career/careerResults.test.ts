@@ -15,6 +15,7 @@ import {
   FEATURES,
 } from "@/config/balance";
 import { createRng } from "@/lib/rng";
+import { seedsFromSwiss } from "../swiss";
 import { fastForward, initFieldTournament, userPlacement } from "../tournament";
 import type { Placement, Region, Stats, TournamentState, TournamentTeam } from "../types";
 import { eventDayFor } from "./calendar";
@@ -165,6 +166,19 @@ const majorDef: CareerEventDef = {
   format: "swiss",
 };
 
+const qualifierDef: CareerEventDef = {
+  id: "0:1:qual1:EU",
+  tier: "qualifier",
+  region: "EU",
+  seasonIndex: 0,
+  week: 4,
+  day: eventDayFor(4),
+  split: 1,
+  ordinal: 1,
+  name: "EU Qualifier 1",
+  format: "swissOnly",
+};
+
 const t3Def: CareerEventDef = {
   id: "0:3:unofficial",
   tier: "t3",
@@ -225,6 +239,25 @@ describe("compileEventResult", () => {
     const result = compileEventResult(regionalDef, state, ctx);
     expect(result.userPlacement).toBeUndefined();
     expect(result.rows.some((r) => r.ref === "user")).toBe(false);
+  });
+
+  it("a Swiss-only qualifier follows the engine's seeding (seedsFromSwiss) — exact ties included", () => {
+    // Ids in REVERSE alphabetical record order, so an id tiebreak would disagree with the engine.
+    const teams = Array.from({ length: 16 }, (_, i) =>
+      fakeTeam(i === 0 ? "user" : `t${String(16 - i).padStart(2, "0")}`, 92.5 - i * 0.75, (i % 3) - 1),
+    );
+    const rng = createRng(4242);
+    const state = fastForward(initFieldTournament(teams, "swissOnly", rng), "normal", rng);
+    const [a, b] = state.swiss.records.filter((r) => r.status === "advanced");
+    // An exact tie on every seeding key between two qualified teams.
+    b.losses = a.losses;
+    b.gameDiff = a.gameDiff;
+    state.teams[b.teamId].rating.total = state.teams[a.teamId].rating.total;
+    const seeds = seedsFromSwiss(state.swiss, state.teams);
+    const result = compileEventResult(qualifierDef, state, ctx);
+    expect(result.rows.filter((r) => r.placement === "top8").map((r) => r.ref)).toEqual(seeds);
+    expect(result.championRef).toBe(seeds[0]);
+    expect(result.rows.slice(8).every((r) => r.placement === "swiss_exit")).toBe(true);
   });
 });
 

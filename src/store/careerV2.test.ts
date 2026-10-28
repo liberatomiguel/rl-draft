@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { CAREER_BANK, CAREER_UNOFFICIAL } from "@/config/balance";
-import { firstDayOfWeek, qualifierDayFor, seasonSchedule } from "@/engine/career/calendar";
+import { firstDayOfWeek, qualifierDayFor, regionalDayFor, seasonSchedule } from "@/engine/career/calendar";
 import { bankLoanTerms } from "@/engine/career/economy";
 import { rollInsertFor } from "@/engine/career/inserts";
 import { isLocalRef } from "@/engine/career/localScene";
@@ -125,8 +125,8 @@ describe("weekly drill through the day clock (R27)", () => {
   });
 });
 
-describe("regional qualifier (R30)", () => {
-  it("a starter roster outside the direct 8 plays the Wednesday qualifier; AI regions resolve theirs; the regional fields 8 + 8", () => {
+describe("regional qualifier (R30, R40 weekend)", () => {
+  it("a starter roster outside the direct 8 plays the Saturday qualifier; AI regions resolve theirs; Sunday's regional fields 8 + 8", () => {
     let save = createCareerSave(INPUT, 55501);
     const W = seasonSchedule().find((w) => w.kind === "regional")!.week;
     // The first regional week: Monday commits the qualifier (not the regional).
@@ -134,7 +134,7 @@ describe("regional qualifier (R30)", () => {
     expect(userIsDirect(save)).toBe(false);
     expect(save.pendingEventDef?.tier).toBe("qualifier");
     expect(save.pendingEventDef?.day).toBe(qualifierDayFor(W));
-    // Wednesday: the user's qualifier waits in the lobby; the other six regions resolved.
+    // Saturday: the user's qualifier waits in the lobby; the other six regions resolved.
     save = advanceTo(save, qualifierDayFor(W));
     expect(save.clock.day).toBe(qualifierDayFor(W));
     const resolved = Object.entries(save.competition.qualifiedRefs ?? {}).filter(([, v]) => v);
@@ -149,27 +149,31 @@ describe("regional qualifier (R30)", () => {
     const through = mine!.refs.includes("user");
     if (through) {
       expect(played.pendingEventDef?.tier).toBe("regional");
+      expect(played.pendingEventDef?.day).toBe(regionalDayFor(W));
       expect(played.news.some((n) => n.titleKey === "qualifiedRegional")).toBe(true);
     } else {
       expect(played.pendingEventDef).toBeNull();
       expect(played.news.some((n) => n.titleKey === "missedRegional")).toBe(true);
     }
-    // Saturday: the regional (user's or AI-resolved) fields direct 8 + qualified 8.
-    let sat = advanceTo(played, firstDayOfWeek(W) + 5);
-    if (sat.pendingEventDef?.tier === "regional") {
-      const reg = startEvent(sat, false);
+    // No regional resolves on Saturday — they all play Sunday.
+    expect(played.eventResults.some((r) => r.tier === "regional")).toBe(false);
+    // Sunday: the regional (user's or AI-resolved) fields direct 8 + qualified 8.
+    let sun = advanceTo(played, regionalDayFor(W));
+    expect(sun.clock.day).toBe(regionalDayFor(W));
+    if (sun.pendingEventDef?.tier === "regional") {
+      const reg = startEvent(sun, false);
       const ids = Object.keys(reg.activeEvent!.tournament.teams);
       expect(ids).toHaveLength(16);
       expect(ids).toContain("user");
-      sat = finishEvent(simEventToEnd(reg));
+      sun = finishEvent(simEventToEnd(reg));
     }
-    const regional = sat.eventResults.find((r) => r.tier === "regional" && r.region === "SAM");
+    const regional = sun.eventResults.find((r) => r.tier === "regional" && r.region === "SAM");
     expect(regional).toBeDefined();
     expect(regional!.rows).toHaveLength(16);
-    // Locals never enter the points tables, even if one made Saturday.
-    for (const ref of Object.keys(sat.competition.splitPoints.SAM)) expect(isLocalRef(ref)).toBe(false);
+    // Locals never enter the points tables, even if one made Sunday.
+    for (const ref of Object.keys(sun.competition.splitPoints.SAM)) expect(isLocalRef(ref)).toBe(false);
     // The qualifier paid no Season Points.
-    const q = sat.eventResults.find((r) => r.tier === "qualifier" && r.region === "SAM");
+    const q = sun.eventResults.find((r) => r.tier === "qualifier" && r.region === "SAM");
     expect(q!.rows.every((r) => r.points === 0)).toBe(true);
   });
 });

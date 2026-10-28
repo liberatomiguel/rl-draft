@@ -7,6 +7,10 @@
  * stops itself at every decision point); "skip ahead" batches to the next
  * stop. When something blocks (matchday, decision, ceremony) the play
  * control becomes the orange routed CONTINUE, exactly as before.
+ * v2.0 (R40): a Major / Worlds paused after its Saturday Swiss is its own
+ * routed CONTINUE — "Advance — Championship Sunday" moves exactly one day
+ * (continueEventToNextDay) and opens the event screen's Sunday card — once
+ * the event screen has revealed Saturday's verdict (careerRevealStore).
  * The news tab pill counts unread MAIL (the Inbox).
  */
 
@@ -23,10 +27,11 @@ import { UserCrest } from "@/components/career/UserCrest";
 import { formatDateShort } from "@/components/career/dateText";
 import {
   clockLabel,
-  continueKind,
   upcomingStops,
   useCareerSave,
+  useRevealHeldEventId,
   userStars,
+  visibleContinueKind,
 } from "@/components/career/careerUi";
 
 /** Inline glyphs (the design system has no icon set — keep them tiny). */
@@ -59,8 +64,11 @@ export function CareerTopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
+  const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const autoAdvance = useCareerStore((s) => s.autoAdvance);
   const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
+  // R40 review / rc.29 (CAR-02): the playback's hold — live, or from its session cursor.
+  const revealHeldEventId = useRevealHeldEventId(save);
 
   // The star read runs world-percentile math — memo on the save snapshot so
   // it recomputes per store write, not on every navigation re-render.
@@ -69,7 +77,8 @@ export function CareerTopBar() {
   if (!save) return null;
 
   const clock = clockLabel(save);
-  const kind = continueKind(save);
+  // R40 review: no spoiler while the event screen still reveals Saturday.
+  const kind = visibleContinueKind(save, revealHeldEventId);
   const unreadMail = save.mail.filter((m) => !m.read).length;
 
   // Plain advance names its destination: the next stop ahead of the clock.
@@ -85,6 +94,7 @@ export function CareerTopBar() {
     : null;
 
   const continueLabel = (() => {
+    if (kind === "eventPaused") return copy.hub.continueTo(copy.event.championshipSunday);
     if (kind === "event") {
       return copy.hub.continueTo(save.pendingEventDef?.name ?? save.activeEvent?.def.name ?? "");
     }
@@ -93,8 +103,22 @@ export function CareerTopBar() {
     if (kind === "decision") return copy.hub.nowDecision;
     return nextStopLabel ? copy.hub.continueTo(nextStopLabel) : copy.hub.continue;
   })();
+  // rc.29 (CAR-07): below sm the routed button shows a SHORT label — the full
+  // one ("Advance — Championship Sunday") truncated to "ADVANCE — CHAMPIONS…"
+  // at 390 px: Sunday's own short label, the event's name, the next stop.
+  const continueShort = (() => {
+    if (kind === "eventPaused") return copy.event.continueToSundayShort;
+    if (kind === "event") return save.pendingEventDef?.name ?? save.activeEvent?.def.name ?? continueLabel;
+    if (kind === "advance" && nextStopLabel) return nextStopLabel;
+    return continueLabel;
+  })();
 
   const onContinue = () => {
+    if (kind === "eventPaused") {
+      continueEventToNextDay();
+      router.push("/career/event");
+      return;
+    }
     if (kind === "event") {
       router.push("/career/event");
       return;
@@ -194,8 +218,9 @@ export function CareerTopBar() {
             </Button>
           </div>
         ) : (
-          <Button size="sm" onClick={onContinue} className="max-w-[42vw] shrink-0 sm:max-w-none">
-            <span className="truncate">{continueLabel}</span>
+          <Button size="sm" onClick={onContinue} className="max-w-[48vw] shrink-0 sm:max-w-none">
+            <span className="truncate sm:hidden">{continueShort}</span>
+            <span className="hidden truncate sm:inline">{continueLabel}</span>
           </Button>
         )}
       </div>

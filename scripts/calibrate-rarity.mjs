@@ -43,7 +43,7 @@ for (const l of draftable) {
 // --- CURRENT model -------------------------------------------------------
 const OLD_WEIGHTS = { rare: 100, epic: 55, mythic: 28, legendary: 12, creator: 12 };
 const OLD_CHANCE = 0.04; // diamond+ effective: appearanceChance(0.05) * mult(0.8)
-function rollOld(pool, rng) {
+function rollOld(pool) {
   if (Math.random() >= OLD_CHANCE) return null;
   const total = pool.reduce((s, r) => s + (OLD_WEIGHTS[r] ?? 1), 0);
   let x = Math.random() * total;

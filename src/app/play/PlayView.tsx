@@ -9,6 +9,7 @@
 
 import { useEffect } from "react";
 import { useMounted } from "@/store/useMounted";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 import { useRunStore } from "@/store/runStore";
 import { SetupScreen } from "@/components/screens/SetupScreen";
 import { DraftScreen } from "@/components/screens/DraftScreen";
@@ -30,6 +31,11 @@ export function PlayView() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0 });
   }, [phase, draftRound]);
+
+  // rc.29 (DRAFT-02): cosmetic unlocks earned while the tournament plays (live
+  // feats crossing a rank) wait for the results — the ceremonies there hold
+  // them in turn, so they open once those are done, never over the playback.
+  useOverlayHold("live", phase === "tournament");
 
   if (!mounted) return <PageSkeleton />;
   if (!run) return <SetupScreen />;

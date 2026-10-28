@@ -17,6 +17,7 @@ import type {
   RunState,
   SeriesHighlight,
   SeriesResult,
+  StageRef,
   TournamentState,
   XpLine,
 } from "./types";
@@ -28,6 +29,7 @@ interface ProfileSnapshot {
 
 interface LabeledSeries {
   label: string;
+  ref: StageRef;
   series: SeriesResult;
 }
 
@@ -36,7 +38,7 @@ function labeledUserSeries(t: TournamentState): LabeledSeries[] {
   for (const round of t.swiss.rounds) {
     for (const series of round.series) {
       if (series.teamAId === "user" || series.teamBId === "user") {
-        out.push({ label: `Swiss Round ${round.round}`, series });
+        out.push({ label: `Swiss Round ${round.round}`, ref: { kind: "swiss", round: round.round }, series });
       }
     }
   }
@@ -55,7 +57,11 @@ function labeledUserSeries(t: TournamentState): LabeledSeries[] {
     final: "Final",
   };
   for (const entry of userPlayoffSeries(t.playoffs)) {
-    out.push({ label: playoffLabels[entry.round] ?? entry.round, series: entry.series });
+    out.push({
+      label: playoffLabels[entry.round] ?? entry.round,
+      ref: { kind: "playoffs", round: entry.round },
+      series: entry.series,
+    });
   }
   return out;
 }
@@ -73,7 +79,7 @@ function goalsConcededBy(userId: string, all: LabeledSeries[]): number {
 }
 
 function highlight(t: TournamentState, entry: LabeledSeries): SeriesHighlight {
-  const { series, label } = entry;
+  const { series, label, ref } = entry;
   const oppId = series.teamAId === "user" ? series.teamBId : series.teamAId;
   const userFirstScore: [number, number] =
     series.teamAId === "user" ? series.score : [series.score[1], series.score[0]];
@@ -81,6 +87,7 @@ function highlight(t: TournamentState, entry: LabeledSeries): SeriesHighlight {
     opponentName: t.teams[oppId]?.name ?? "Unknown",
     score: userFirstScore,
     stage: label,
+    stageRef: ref,
   };
 }
 
@@ -240,7 +247,8 @@ export function compileResults(
   }
 
   const modeMultiplier = XP.modeMultiplier[run.mode] ?? 1;
-  const difficultyMultiplier = DIFFICULTY[run.difficulty].xpMultiplier * modeMultiplier;
+  const difficultyFactor = DIFFICULTY[run.difficulty].xpMultiplier;
+  const difficultyMultiplier = difficultyFactor * modeMultiplier;
   const hiddenOverallBonus = run.showOverall ? 0 : XP.hiddenOverallBonus;
   const base = lines.reduce((sum, l) => sum + l.amount, 0);
 
@@ -283,6 +291,7 @@ export function compileResults(
             lineupId: opp.lineupId,
             name: opp.name,
             stage: h.stage,
+            stageRef: h.stageRef,
             score: h.score,
             // Show the BOOSTED overall the team actually played at (rating.total
             // includes the difficulty shift), so players see why a "lower" team
@@ -308,7 +317,13 @@ export function compileResults(
     newAchievementIds,
     userGoals: runTotals.goals,
     userGameWins: runTotals.gameWins,
-    xp: { lines, difficultyMultiplier, hiddenOverallBonus, total },
+    xp: {
+      lines,
+      difficultyMultiplier,
+      factors: { difficulty: difficultyFactor, mode: modeMultiplier },
+      hiddenOverallBonus,
+      total,
+    },
     eliminatedBy,
   };
 }

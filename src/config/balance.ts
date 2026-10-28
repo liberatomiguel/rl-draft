@@ -923,8 +923,15 @@ export const CAREER_SEASONS = [
  * Monday-start weeks). The week grid above stays the scheduling skeleton —
  * seed streams and event ids remain week-keyed — but the player advances one
  * day at a time: weekly world processing lands on Mondays, training runs
- * Mon-Fri, official/unofficial events resolve on `eventDayOfWeek` (Saturday),
- * Sunday rests.
+ * Mon-Fri, and the weekend is matchday.
+ *
+ * v2.0 (R40) THE WEEKEND: Saturday (`eventDayOfWeek`) hosts the unofficial
+ * cups, the regional week's qualifier (CAREER_QUALIFIER.dayOfWeek) and the
+ * Major/Worlds Swiss stage; Sunday hosts the regional (`regionalDayOfWeek`)
+ * and the Major/Worlds playoffs (`playoffsDayOfWeek`, "Championship Sunday").
+ * Open weeks keep Sunday as the rest day. Invariants (calendar.test.ts):
+ * training days < qualifier day < regional day ≤ 7 and Swiss day <
+ * playoffs day ≤ 7.
  */
 export const CAREER_CALENDAR = {
   weeksPerSeason: 32,
@@ -938,9 +945,17 @@ export const CAREER_CALENDAR = {
   worldsWeek: 32,
   /** Training-efficiency bonus on a week spent without an event ("Training Week"). */
   trainingWeekBonus: 0.25,
-  /** Day grid: 7-day weeks starting Monday; events play on Saturday (dow 6). */
+  /** Day grid: 7-day weeks starting Monday (dow 1 = Mon .. 7 = Sun). */
   daysPerWeek: 7,
+  /**
+   * Saturday — the default matchday: unofficial cups, and the day a Major or
+   * Worlds opens (lobby + Swiss stage). `CareerEventDef.day` of those events.
+   */
   eventDayOfWeek: 6,
+  /** v2.0 (R40): Sunday — the regional (direct 8 + Saturday's qualified 8). */
+  regionalDayOfWeek: 7,
+  /** v2.0 (R40): Sunday — the Major/Worlds playoffs ("Championship Sunday"). */
+  playoffsDayOfWeek: 7,
 } as const;
 
 /** Placement → Season Points (regionals; Majors pay ×2; Worlds pays none). */
@@ -963,16 +978,18 @@ export const CAREER_SLOTS = {
  * every placement; 9-16th flat. 8-team single-elim uses the `single8` shape.
  */
 /**
- * v2.0 REGIONAL QUALIFIER (R30): every regional week opens with a 16-team
- * Swiss on the Wednesday for everyone outside the split's direct top 8 — the
- * eight non-direct orgs, the user when not direct, and local amateur sides
- * (R23) filling the rest. Its top 8 join the direct 8 on Saturday.
+ * v2.0 REGIONAL QUALIFIER (R30, re-timed by R40): every regional week opens
+ * with a 16-team Swiss on SATURDAY for everyone outside the split's direct
+ * top 8 — the eight non-direct orgs, the user when not direct, and local
+ * amateur sides (R23) filling the rest. It is a Swiss stage ONLY (no
+ * playoffs, no champion): the eight that reach 3 wins qualify and join the
+ * direct 8 at Sunday's regional.
  */
 export const CAREER_QUALIFIER = {
   directSlots: 8,
   advanceSlots: 8,
-  /** Qualifier matchday = the regional's Saturday minus this many days (3 = Wednesday). */
-  dayOffset: 3,
+  /** v2.0 (R40): the qualifier's matchday — Saturday of the regional week (the regional is Sunday). */
+  dayOfWeek: 6,
 } as const;
 
 /**
@@ -1001,6 +1018,14 @@ export const CAREER_PRIZES = {
     top6: 6.5, top8: 4, swiss_exit: 1,
   } as Record<string, number>,
   single8Pct: { champion: 40, runner_up: 22, top4: 11, top8: 4 } as Record<string, number>,
+  /**
+   * v2.0 (R40): Swiss-only events (the regional qualifier) pay flat by
+   * outcome. rc.29 (CAR-08): the 8 qualified 10% each, the 8 eliminated 2.5%
+   * each — exactly the advertised pool at season 0 ($600 / $150 of $6k; the
+   * 9% / 3% split paid $5.2k after the $50 rounding). Lobbies show the real
+   * paid total (economy.prizePoolPaidFor). Provisional: ECO-01 recalibrates.
+   */
+  swissOnlyPct: { qualified: 10, eliminated: 2.5 },
 } as const;
 
 /** Unofficial tournaments (t3 Community Cup · t2 Invitational; t1 LAN = v1.1). */
@@ -1327,8 +1352,11 @@ export const CAREER_REP = {
   gains: {
     t3Win: 1, t3Final: 1, t2Win: 2, t2Final: 1,
     regionalSwissExit: 1, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
-    /** v2.0 (R30): getting through the Wednesday qualifier is standing too. */
-    qualifierAdvance: 1, qualifierWin: 1,
+    /**
+     * v2.0 (R30): getting through the qualifier is standing too. R40: the
+     * qualifier is Swiss-only (no champion), so `qualifierWin` is gone.
+     */
+    qualifierAdvance: 1,
     majorQualify: 2, majorTop4: 4, majorWin: 7, worldsQualify: 8, worldsTop4: 10,
   },
   softCapAt: 80,
@@ -1530,11 +1558,74 @@ export const CAREER_STARS = {
 } as const;
 
 /**
+ * GAME-04 (R41) — the Match Center goal timeline: the broadcast clock model
+ * (game seconds) and how fast it plays (ms at 1×, ÷ the speed toggle).
+ * Presentation only: `engine/career/matchTimeline.ts` draws these from a local
+ * stream seeded by each game's persisted result, never the competitive RNG.
+ */
+export const CAREER_MATCH_CLOCK = {
+  /** RL regulation: a 5:00 countdown. */
+  regulationSeconds: 300,
+  /**
+   * Regulation goals land with this many seconds LEFT (inclusive): never at
+   * 5:00 (no goal inside the first 5 s of kickoff) and never at 0:00.
+   */
+  goalMaxLeft: 295,
+  goalMinLeft: 1,
+  /** Fewest game seconds between two goals (replay + kickoff restart). */
+  minGoalGapSeconds: 4,
+  /**
+   * Overtime length in seconds: weighted buckets, uniform inside one
+   * (inclusive). Median ≈ 1:52 · over 5:00 = 15 % · over 10:00 = 3 %.
+   */
+  overtime: {
+    minSeconds: 30,
+    maxSeconds: 1_200,
+    buckets: [
+      { fromS: 30, toS: 120, weight: 55 },
+      { fromS: 121, toS: 300, weight: 30 },
+      { fromS: 301, toS: 600, weight: 12 },
+      { fromS: 601, toS: 1_200, weight: 3 },
+    ],
+  },
+  /** Playback pacing — ms at 1× (÷ the speed toggle). */
+  pacing: {
+    /** Regulation clock speed: an empty 5:00 runs in 1.2 s. */
+    regulationMsPerSecond: 4,
+    /** The new game on the board (0 : 0, 5:00) before the clock starts. */
+    kickoffHoldMs: 350,
+    /** The clock stops after every goal (replay + kickoff). */
+    goalHoldMs: 420,
+    /** Tied at 0:00: the breath before the OVERTIME beat lands. */
+    regulationBuzzerMs: 300,
+    /** The OVERTIME beat on screen before the OT clock starts. */
+    overtimeIntroMs: 800,
+    /** The OT clock run, log-scaled by OT length: 0:30 → min, 20:00 → max. */
+    overtimeRunMinMs: 1_600,
+    overtimeRunMaxMs: 3_500,
+    /** The golden goal holds the board before the game gap. */
+    goldenGoalLingerMs: 600,
+    /**
+     * Absolute ms (not ÷ speed) the clock settles BEFORE its beat lands,
+     * covering a few frames of render latency: the clock stops on the goal's
+     * time, then the goal pops.
+     */
+    clockLeadMs: 60,
+    /**
+     * Repaint cap of a running clock (broadcast frame rate). It runs at up to
+     * 250 game seconds a second, so 60 fps buys nothing visible and costs
+     * twice the main-thread frames (measured on the export).
+     */
+    clockMaxFps: 30,
+  },
+} as const;
+
+/**
  * Career event playback pacing (ms at 1× speed; divided by the speed factor).
- * Mirrors the classic TournamentScreen PACE table with a career tempo.
+ * Mirrors the classic TournamentScreen PACE table with a career tempo. The
+ * user series' in-game beats (goals, OT) follow CAREER_MATCH_CLOCK.pacing.
  */
 export const CAREER_PLAYBACK = {
-  userGoalMs: 700,
   userGameGapMs: 650,
   userSeriesLingerMs: 2_400,
   aiSwissMs: 120,
@@ -1549,6 +1640,15 @@ export const CAREER_PLAYBACK = {
    * secondary action.
    */
   autoAdvanceDayMs: 850,
+  /**
+   * v2.0 (R40) Championship Sunday title card (watch mode): ms before it
+   * hands over to the playoffs on its own (× the animation-speed scale;
+   * skippable; never under OS reduced motion), the delay before its bracket
+   * preview starts and the stagger between the opening matchups.
+   */
+  sundayIntroMs: 4_200,
+  sundayIntroBracketDelayMs: 450,
+  sundayIntroStaggerMs: 110,
 } as const;
 
 export const CAREER_SIM = {

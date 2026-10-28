@@ -376,7 +376,14 @@ export const useRunStore = create<RunStore>()(
 
       reroll: () => {
         const { run } = get();
-        if (!run || run.phase !== "draft" || run.draft.rerollsLeft <= 0) return;
+        if (!run || run.phase !== "draft") return;
+        // rc.29: when nothing in the offer fits, the reroll is the free one — a
+        // paid reroll is never spent on a dead offer.
+        if (run.draft.offer && !run.draft.offer.hasPickableCard) {
+          get().freeReroll();
+          return;
+        }
+        if (run.draft.rerollsLeft <= 0) return;
         const rng = createRng(run.rngState);
         const draft = applyReroll(run.draft, rng);
         collectNationalOffer(draft);

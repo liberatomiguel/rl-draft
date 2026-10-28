@@ -46,13 +46,16 @@ describe("national teams — seeing one collects every card (v2.0)", () => {
   });
 
   it("a team already in the album collects nothing new and stays quiet", () => {
-    useRunStore.getState().startRun({ mode: "classic", difficulty: "normal", showOverall: true, regionLock: null });
-    const run = useRunStore.getState().run!;
-    // Pre-own EVERY national card: any national draw is then a repeat.
+    // Pre-own EVERY national card: any national draw is then a repeat. Before
+    // startRun — its first offer is a national team for ~2.5 % of the random
+    // seeds, and that one used to be collected into an empty album (rc.28 fix
+    // of an intermittent failure).
     const owned = Object.fromEntries(
       [...nationalSpecialIdsByLineupId.values()].flat().map((id) => [id, "2026-01-01T00:00:00.000Z"]),
     );
     useProfileStore.setState({ unlockedSpecials: owned });
+    useRunStore.getState().startRun({ mode: "classic", difficulty: "normal", showOverall: true, regionLock: null });
+    const run = useRunStore.getState().run!;
     useRunStore.setState({ run: { ...run, draft: { ...run.draft, rerollsLeft: 5000 } } });
 
     expect(rerollToNational()).not.toBeNull();

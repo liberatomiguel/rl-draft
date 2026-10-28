@@ -4,13 +4,17 @@
  * The store calls `playNextRound` once per user click; each call simulates a
  * full round (the user series plus every AI series). When the user is out,
  * `fastForward` completes the rest so the results screen can name a champion.
+ *
+ * Career v2.0 (R40) adds a Swiss-ONLY shape (`swissOnly` on the state): the
+ * Swiss stage is the whole tournament — it finishes with playoffs null. Every
+ * other path (all Draft modes included) draws exactly as before.
  */
 
 import { TOURNAMENT } from "@/config/balance";
 import type { Rng } from "@/lib/rng";
 import { generateOpponents } from "./opponents";
 import { createPlayoffs, playPlayoffRound, userPlayoffSeries } from "./playoffs";
-import { createSwissState, playSwissRound, seedsFromSwiss } from "./swiss";
+import { createSwissState, playSwissRound, seedsFromSwiss, upcomingSwissPairings } from "./swiss";
 import type {
   Difficulty,
   Placement,
@@ -89,19 +93,25 @@ export function initTournament(
   };
 }
 
+/** The shapes `initFieldTournament` builds (career events). */
+export type FieldTournamentFormat = "swiss" | "swissOnly" | "single";
+
 /**
  * Explicit-field tournament initializer (Road to Worlds, v1.5).
  *
  * Career events supply their OWN field of assembled teams (which may or may
  * not include a `user` team — AI-only events run headless via fastForward):
  * - "swiss": 16 teams → Swiss (Bo5) → 8-team double-elim (the RLCS shape).
+ * - "swissOnly": v2.0 (R40) 16 teams → Swiss (Bo5) and nothing else — the
+ *   regional qualifier: the 8 teams that reach 3 wins advance, no champion.
+ *   Same rng draws as "swiss" up to the end of the Swiss stage.
  * - "single": 8 teams → straight single-elim bracket (unofficial cups).
  *
  * Purely additive: `initTournament` and every existing mode are untouched.
  */
 export function initFieldTournament(
   field: TournamentTeam[],
-  format: "swiss" | "single",
+  format: FieldTournamentFormat,
   rng: Rng,
 ): TournamentState {
   const teams: Record<string, TournamentTeam> = {};
@@ -136,15 +146,35 @@ export function initFieldTournament(
 
   if (field.length !== TOURNAMENT.swiss.teams) {
     throw new Error(
-      `initFieldTournament(swiss) needs exactly ${TOURNAMENT.swiss.teams} teams, got ${field.length}`,
+      `initFieldTournament(${format}) needs exactly ${TOURNAMENT.swiss.teams} teams, got ${field.length}`,
     );
   }
-  return {
+  const state: TournamentState = {
     teams,
     swiss: createSwissState(Object.keys(teams), rng),
     playoffs: null,
     stage: "swiss",
     userEliminated: false,
+  };
+  return format === "swissOnly" ? { ...state, swissOnly: true } : state;
+}
+
+/**
+ * v2.0 (R40): re-shape an existing state as Swiss-only — the legacy-save
+ * path for a qualifier that was started under the old "swiss" format. A
+ * Swiss still in progress simply finishes at its end; a Swiss that already
+ * finished ends the tournament right there: any playoff rounds played are
+ * DROPPED (placements come from the Swiss alone, so no qualifier champion is
+ * ever produced). Pure; draws nothing.
+ */
+export function asSwissOnly(state: TournamentState): TournamentState {
+  if (!state.swiss.finished) return { ...state, swissOnly: true };
+  return {
+    ...state,
+    swissOnly: true,
+    playoffs: null,
+    stage: "finished",
+    userEliminated: userStatus(state) === "eliminated",
   };
 }
 
@@ -161,7 +191,10 @@ export function playNextRound(
     const swiss = playSwissRound(state.swiss, state.teams, difficulty, rng);
     let next: TournamentState = { ...state, swiss };
 
-    if (swiss.finished) {
+    if (swiss.finished && state.swissOnly) {
+      // v2.0 (R40): a Swiss-only event ends with its Swiss — no playoffs.
+      next = { ...next, stage: "finished", userEliminated: userStatus(next) === "eliminated" };
+    } else if (swiss.finished) {
       const seeds = seedsFromSwiss(swiss, state.teams);
       next = {
         ...next,
@@ -227,12 +260,28 @@ export function userIsAlive(state: TournamentState): boolean {
  */
 export function userHasPendingSeries(state: TournamentState): boolean {
   if (state.stage === "swiss") {
-    return state.swiss.nextPairings?.some(([a, b]) => a === "user" || b === "user") ?? false;
+    return upcomingSwissPairings(state.swiss)?.some(([a, b]) => a === "user" || b === "user") ?? false;
   }
   if (state.stage === "playoffs" && state.playoffs && !state.playoffs.finished) {
     return !state.userEliminated;
   }
   return false;
+}
+
+/**
+ * v2.0 (R40): true when a real Swiss stage has just completed and the
+ * playoffs are seeded but not one playoff round has been played — the point
+ * where a two-day career event (Major/Worlds) pauses between its Saturday
+ * Swiss and its Sunday playoffs. False for the dummy Swiss of the
+ * single-elimination shapes (no Swiss rounds were ever played there).
+ */
+export function atPlayoffsStart(state: TournamentState): boolean {
+  return (
+    state.stage === "playoffs" &&
+    state.swiss.rounds.length > 0 &&
+    state.playoffs !== null &&
+    state.playoffs.rounds.length === 0
+  );
 }
 
 /** Complete every remaining round (used once the user is out, or to skip). */

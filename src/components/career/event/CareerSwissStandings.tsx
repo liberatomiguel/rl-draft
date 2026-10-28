@@ -10,6 +10,7 @@
  */
 
 import { TOURNAMENT } from "@/config/balance";
+import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import type { TournamentState } from "@/engine/types";
@@ -34,6 +35,7 @@ export function CareerSwissStandings({
   nextUpRef?: string | null;
 }) {
   const C = useCareerCopy();
+  const T = useCopy().TOURNAMENT_UI;
 
   const sorted = Object.keys(t.teams).sort((a, b) => {
     const ra = records.get(a) ?? { wins: 0, losses: 0, gameDiff: 0 };
@@ -60,16 +62,18 @@ export function CareerSwissStandings({
         ) : null}
       </div>
 
-      <table className="w-full text-left text-xs">
+      {/* rc.29 (CAR-05): a fixed layout — the auto one handed the spare width to
+          W-L / GD and cut team names to a few letters on the 1280 px rail. */}
+      <table className="w-full table-fixed text-left text-xs">
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-faint">
             <th className="pb-2 font-semibold" scope="col">
-              {C.calendar.field}
+              {T.team}
             </th>
-            <th className="pb-2 text-center font-semibold" scope="col">
+            <th className="w-12 pb-2 text-center font-semibold" scope="col">
               {C.event.record}
             </th>
-            <th className="pb-2 text-right font-semibold" scope="col">
+            <th className="w-10 pb-2 text-right font-semibold" scope="col">
               {C.event.gameDiff}
             </th>
           </tr>
@@ -91,10 +95,11 @@ export function CareerSwissStandings({
                   out && "opacity-45",
                 )}
               >
-                <td className="max-w-0 truncate py-1.5 pr-2">
-                  <span className="flex items-center gap-1.5">
-                    <OrgMark save={save} orgRef={teamId} size="xs" />
+                <td className="py-1.5 pr-2">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <OrgMark save={save} orgRef={teamId} size="xs" className="shrink-0" />
                     <span
+                      title={team?.name ?? teamId}
                       className={cx(
                         "min-w-0 truncate",
                         isUser ? "font-bold text-orange-bright" : "text-ink",
@@ -102,6 +107,7 @@ export function CareerSwissStandings({
                     >
                       {team?.name ?? teamId}
                     </span>
+                    {/* rc.29 (CAR-05): short tags (PT "Classificado" cut the name at 1280 px). */}
                     {through ? (
                       <span className="display shrink-0 rounded bg-good/15 px-1 text-[8px] font-bold uppercase tracking-wider text-good">
                         {C.event.advancedTag}

@@ -13,7 +13,7 @@
  * (rc.4) are illustrated art: static SVGs drawn from Miguel's design file.
  */
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
 import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerAnimSrc, bannerArtSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
@@ -436,12 +436,45 @@ export function bannerVars(banner: Extract<CosmeticDef, { kind: "banner" }>, dis
 // Previews (locker tiles, recap chips, track nodes)
 // ---------------------------------------------------------------------------
 
-/** The art of any cosmetic at preview size (no text). */
-export function CosmeticArt({ def, size = "md", className }: { def: CosmeticDef; size?: CosmeticSize; className?: string }) {
+/**
+ * rc.29: a banner at swatch size in CSS only — its own frame materials over the
+ * dark left side every banner keeps for its text. The smallest generated
+ * banner WebP is 800 px wide, far too heavy for a 24-80 px preview that sits in
+ * a pop-up on a cold home (E2E DRAFT-03); the full art shows where it is big.
+ */
+export function BannerSwatch({ banner, className, style }: { banner: CosmeticDef; className?: string; style?: CSSProperties }) {
+  if (banner.kind !== "banner") return null;
+  const [a, b, d] = banner.style.frame;
+  const vars = { "--cos-fa": a, "--cos-fb": b, "--cos-fd": d, "--cos-glow": banner.style.glow, ...style } as CSSProperties;
+  return <span className={cx("cos-swatch", className)} style={vars} aria-hidden />;
+}
+
+/** rc.29: a badge not shown in full yet (a later login-calendar day) — a gem in
+ *  its tier colour, CSS only, so the calendar requests no art for it. */
+export function BadgeGem({ badge, size = 22, className }: { badge: CosmeticDef; size?: number; className?: string }) {
+  return (
+    <span className={cx("flex shrink-0 items-center justify-center", className)} style={{ width: size, height: size }} aria-hidden>
+      <span className="cos-gem" style={{ "--gem": TIER_ACCENT[badge.tier] } as CSSProperties} />
+    </span>
+  );
+}
+
+/** The art of any cosmetic at preview size (no text). `swatch`: a banner as
+ *  its CSS swatch (no image request). */
+export function CosmeticArt({ def, size = "md", className, swatch }: { def: CosmeticDef; size?: CosmeticSize; className?: string; swatch?: boolean }) {
   switch (def.kind) {
     case "badge":
       return <BadgeEmblem badge={def} size={size} className={className} />;
     case "banner":
+      if (swatch) {
+        return (
+          <BannerSwatch
+            banner={def}
+            className={cx("rounded-md border border-line-strong", className)}
+            style={{ width: PX[size] * 2.8, height: PX[size] * 1.25 }}
+          />
+        );
+      }
       return (
         <BannerSurface banner={def} displayPx={400} className={cx("cos-banner-thumb rounded-md border border-line-strong", className)}>
           <span className="block" style={{ width: PX[size] * 2.8, height: PX[size] * 1.25 }} />
@@ -470,15 +503,16 @@ export function CosmeticIcon({ def, className }: { def: CosmeticDef; className?:
   return <BadgeEmblem badge={def} size="sm" className={className} />;
 }
 
-/** Preview of any cosmetic (locker tile / recap chip): art + name + kind. */
-export function CosmeticPreview({ id, className, compact, size = "md" }: { id: string; className?: string; compact?: boolean; size?: CosmeticSize }) {
+/** Preview of any cosmetic (locker tile / recap chip): art + name + kind.
+ *  `swatch`: draw a banner as its CSS swatch (see BannerSwatch). */
+export function CosmeticPreview({ id, className, compact, size = "md", swatch }: { id: string; className?: string; compact?: boolean; size?: CosmeticSize; swatch?: boolean }) {
   const def = cosmeticById.get(id);
   const copy = useCosmeticCopy();
   if (!def) return null;
   return (
     <span className={cx("inline-flex items-center gap-3", className)}>
       <span className="flex shrink-0 items-center justify-center" style={{ minWidth: PX[size] * 1.4, minHeight: PX[size] * 1.2 }}>
-        <CosmeticArt def={def} size={size} />
+        <CosmeticArt def={def} size={size} swatch={swatch} />
       </span>
       {compact ? null : (
         <span className="min-w-0">

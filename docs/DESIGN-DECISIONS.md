@@ -1427,6 +1427,69 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      chunk (warmed on mouse hover / keyboard focus); every light page ships
      ~79 KB gz less JS. `specialCards.json` (~10 KB gz) stays shared for the
      counters and the prune.
+143. **A Swiss never replays a series (rc.27, GAME-01).** The pairer used to
+     shuffle each record group and pop pairs off the end with no memory of
+     earlier rounds, so most 16-team Swisses replayed at least one series
+     (181 of 200 all-AI Swisses in the v2.0 plan's sweep). It now reads the
+     history from the played `rounds` (no new persisted field) and pairs the
+     record groups by a complete depth-first search with a rematch allowance
+     that only rises above 0 when a stored history already holds a rematch.
+     (a) The RNG is consumed exactly as before (one shuffle per group, in
+     order) and the search tries the old pop order first, so every round the
+     old pairer got right is byte-identical: a test replays the old pairer on
+     2,000 campaigns and checks pairs, sides and the RNG cursor. (b) For 16
+     teams / 3W-3L a rematch-free same-record round always exists, even after
+     rounds an older build paired with rematches: the round 2-3 groups hold at
+     most one past opponent per team, the round-4 groups of six at most two
+     (Dirac: degree >= 3 in the allowed graph). In the round-5 2-2 group of
+     six every team met at most three of the others (its round-4 opponent left
+     the group), a WWLL/LLWW member at most two (its round-3 opponent went 3-0
+     or 0-3), and any other member's round-2 opponent can only be a WWLL/LLWW
+     member, so no K3,3 or K4 of past meetings forms — the only Tutte
+     obstacles left. The independent review ran an exhaustive search over every
+     same-record matching and result: 4.27 M states entering round 4 and
+     1.71 B round-5 groups (5.69 M / 2.27 B with legacy histories), none
+     without a clean pairing; the allowance and the node budget only guard
+     input outside the format. (c) A run or career event saved mid-Swiss
+     before rc.27 may hold a pre-computed round with a rematch (about 1 in 5
+     mid-Swiss saves): `upcomingSwissPairings` keeps a clean stored round as
+     it is, and repairs a dirty one group by group — record groups without a
+     rematch keep their pairs, a group holding one takes its closest clean
+     pairing (two pairs change, the player's pair is kept when it was clean,
+     so the announced opponent stays) — with no RNG at all; a stored round that
+     does not fit the records is re-paired from its own seed (FNV of the
+     records). The next-opponent cells read the same helper as the engine.
+     (d) What changes for players: under the old pairer 82.5 % of 6,000
+     simulated Swiss stages had a rematch; exactly those stages now differ
+     from the first round that would have rematched (fixed seeds included:
+     52 of 60 sampled daily seeds play a different Swiss than before). The
+     difficulty matrix (WW, 200 sessions, same seeds) moved within noise —
+     titles easy 84.7 -> 83.1 %, normal 49.9 -> 48.8 %, hard 39.5 -> 39.8 %,
+     legacy 5.5 -> 6.1 %; population +-0.3 pp — and challenges never use a
+     Swiss. Cost: about +0.1 ms per Swiss stage. The golden master's seed
+     20260709 (rematches in rounds 3 and 5) was regenerated; seed 555555 had
+     none and is unchanged.
+
+144. **Dialogs never move the page; a reserved scrollbar gutter (rc.29,
+     DRAFT-02/06/07).** Three rules for every overlay (Modal, ceremonies,
+     unlock pop-up, tour):
+     - One ref-counted lock (`components/ui/dialog.ts`) owns the scroll lock,
+       the focus trap and Escape. Escape reaches only the topmost dialog, and
+       focus returns to the opener.
+     - `html { scrollbar-gutter: stable }` keeps a classic scrollbar's space,
+       so neither a dialog nor a route change shifts the layout. Browsers
+       without it get body padding. While a lock holds and a gutter is
+       reserved, the canvas turns `--bg-dimmed` (black, the only tone that
+       matches it seen through the 70–95 % scrims).
+     - Pop-ups that are not part of the run (cosmetic unlocks, the login
+       calendar) wait in `store/overlayHoldStore.ts` while a live tournament,
+       a challenge series, a ceremony, the tour or the season recap is up.
+       They settle for one frame first, so a hold set by the same click wins.
+     Trade-off, Miguel to confirm: on desktops with classic scrollbars
+     (Windows/Linux), a short page ends its header and footer borders and the
+     ambient glow 10–15 px before the window's edge, as a long page does beside
+     its scrollbar. The alternative is a gutter only while a dialog is open,
+     but then routes jump sideways again, as before rc.29.
 
 ## Open questions for review
 

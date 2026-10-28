@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { cx } from "@/lib/util";
+import { useMounted } from "@/store/useMounted";
+import { useDialogFocus, usePageScrollLock } from "./dialog";
 
 interface ModalProps {
   open: boolean;
@@ -16,23 +18,17 @@ interface ModalProps {
 export function Modal({ open, title, children, actions, onClose, wide }: ModalProps) {
   // Portal target — animated ancestors create transform containing blocks
   // that would re-anchor position:fixed, so the dialog must live on <body>.
-  const [host, setHost] = useState<HTMLElement | null>(null);
-  useEffect(() => setHost(document.body), []);
+  const host = useMounted() ? document.body : null;
+  const shown = open && host !== null;
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open, onClose]);
+  // rc.29 (DRAFT-06/07): the page keeps its place under the lock (no
+  // scrollbar jump), the focus moves into the card, Tab stays inside it,
+  // Escape closes it (topmost dialog only) and the focus returns to the opener.
+  usePageScrollLock(shown);
+  useDialogFocus(panelRef, shown, { onEscape: onClose });
 
-  if (!open || !host) return null;
+  if (!shown) return null;
 
   return createPortal(
     <div
@@ -41,8 +37,10 @@ export function Modal({ open, title, children, actions, onClose, wide }: ModalPr
       aria-modal="true"
       aria-label={title}
     >
+      {/* Mouse / touch dismiss only: keyboards have Escape and the close button. */}
       <button
         aria-label="Close"
+        tabIndex={-1}
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -51,6 +49,9 @@ export function Modal({ open, title, children, actions, onClose, wide }: ModalPr
           scrolls when content is tall — this is the v1.4 fix for the close button
           rendering off the top of the screen on mobile. */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
+        style={{ outline: "none" }}
         className={cx(
           "panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] w-full flex-col p-6",
           wide ? "max-w-2xl" : "max-w-md",

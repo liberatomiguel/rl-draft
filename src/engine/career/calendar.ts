@@ -11,6 +11,12 @@
  *   W31    Worlds window (1-week last roster call)
  *   W32    Worlds
  *
+ * v2.0 (R40) the weekend is matchday: on a regional week the qualifier plays
+ * SATURDAY (Swiss only) and the regional SUNDAY; a Major / Worlds opens
+ * SATURDAY (lobby + Swiss stage) and plays its playoffs SUNDAY ("Championship
+ * Sunday"); open weeks keep the Saturday unofficial cups. Day-of-week
+ * constants live in CAREER_CALENDAR / CAREER_QUALIFIER.
+ *
  * Everything here is pure and derived from balance config; the ONLY random
  * surface is the t2-offer roll, which is cursor-free (`derivedFloat`).
  *
@@ -57,9 +63,19 @@ export function firstDayOfWeek(week: number): number {
   return (week - 1) * CAREER_CALENDAR.daysPerWeek + 1;
 }
 
-/** The matchday (Saturday) of a schedule week, as a day number. */
+/** A weekday (1=Mon .. 7=Sun) of a schedule week, as a day number. */
+function dayInWeek(week: number, dow: number): number {
+  return (week - 1) * CAREER_CALENDAR.daysPerWeek + dow;
+}
+
+/**
+ * The Saturday of a schedule week (CAREER_CALENDAR.eventDayOfWeek) — the
+ * default matchday: unofficial cups, the qualifier, the Major/Worlds Swiss.
+ * NOT every event's day any more (R40): the regional plays Sunday — read
+ * `def.day` / `eventEndDayFor(def)` instead of assuming this.
+ */
 export function eventDayFor(week: number): number {
-  return (week - 1) * CAREER_CALENDAR.daysPerWeek + CAREER_CALENDAR.eventDayOfWeek;
+  return dayInWeek(week, CAREER_CALENDAR.eventDayOfWeek);
 }
 
 /** Mon-Fri are training days. */
@@ -250,16 +266,48 @@ export function eventIdFor(
     : `${seasonIndex}:${split}:reg${ordinal}:${region}`;
 }
 
-/** v2.0 (R30): the qualifier's matchday on a regional week (Wednesday). */
+/** v2.0 (R30 → R40): the qualifier's matchday on a regional week (Saturday). */
 export function qualifierDayFor(week: number): number {
-  return eventDayFor(week) - CAREER_QUALIFIER.dayOffset;
+  return dayInWeek(week, CAREER_QUALIFIER.dayOfWeek);
+}
+
+/** v2.0 (R40): the regional's matchday on a regional week (Sunday). */
+export function regionalDayFor(week: number): number {
+  return dayInWeek(week, CAREER_CALENDAR.regionalDayOfWeek);
 }
 
 /**
- * v2.0 (R30): the Wednesday qualifiers of a regional week — one per region,
- * same split/ordinal grammar as the regional they feed. [] on other weeks.
- * Kept SEPARATE from officialEventDefsForWeek (every consumer of that list
- * assumes Saturday).
+ * v2.0 (R40): a Major or Worlds spans the weekend — Saturday opens it (lobby
+ * + Swiss stage, `def.day`), Sunday plays the playoffs. Every other event is
+ * a one-day event.
+ */
+export function isTwoDayEvent(def: Pick<CareerEventDef, "tier">): boolean {
+  return def.tier === "major" || def.tier === "worlds";
+}
+
+/**
+ * v2.0 (R40): the day an event's playoffs are played — Sunday of the week for
+ * a two-day event ("Championship Sunday"), the event's own day otherwise.
+ * Derived from the week (never persisted), so legacy defs need no new field.
+ */
+export function playoffsDayFor(def: Pick<CareerEventDef, "tier" | "week" | "day">): number {
+  return isTwoDayEvent(def) ? dayInWeek(def.week, CAREER_CALENDAR.playoffsDayOfWeek) : def.day;
+}
+
+/**
+ * v2.0 (R40): the last day an event occupies — where its result lands (and
+ * where an event the user is not playing resolves headlessly).
+ */
+export function eventEndDayFor(def: Pick<CareerEventDef, "tier" | "week" | "day">): number {
+  return playoffsDayFor(def);
+}
+
+/**
+ * v2.0 (R30, re-timed by R40): the Saturday qualifiers of a regional week —
+ * one per region, same split/ordinal grammar as the regional they feed, a
+ * Swiss-ONLY format (the 8 that reach 3 wins qualify; no playoffs, no
+ * champion). [] on other weeks. Kept SEPARATE from officialEventDefsForWeek
+ * (that list is the points events: regionals, Majors, Worlds).
  */
 export function qualifierDefsForWeek(seasonIndex: number, week: number): CareerEventDef[] {
   const wk = weekAt(week);
@@ -277,7 +325,7 @@ export function qualifierDefsForWeek(seasonIndex: number, week: number): CareerE
     split,
     ordinal,
     name: `${region} Qualifier ${ordinal}`,
-    format: "swiss" as const,
+    format: "swissOnly" as const,
   }));
 }
 
@@ -295,6 +343,8 @@ export function regionalForQualifier(def: CareerEventDef): CareerEventDef | null
  * The official events scheduled on a given week: one regional PER REGION on a
  * regional week (all 7 resolve in the same world tick), one cross-region Major
  * on a major week, the Worlds event on W32, [] otherwise.
+ * v2.0 (R40): `day` is the day each event OPENS — the regionals' Sunday, the
+ * Major/Worlds Saturday (their playoffs follow on `playoffsDayFor(def)`).
  */
 export function officialEventDefsForWeek(seasonIndex: number, week: number): CareerEventDef[] {
   const wk = weekAt(week);
@@ -303,13 +353,14 @@ export function officialEventDefsForWeek(seasonIndex: number, week: number): Car
   if (wk.kind === "regional") {
     const split = wk.split as 1 | 2 | 3;
     const ordinal = wk.ordinal as 1 | 2 | 3;
+    const regionalDay = regionalDayFor(week);
     return REGION_ORDER.map((region) => ({
       id: eventIdFor(seasonIndex, "regional", split, ordinal, region),
       tier: "regional" as const,
       region,
       seasonIndex,
       week,
-      day,
+      day: regionalDay,
       split,
       ordinal,
       name: `${region} Regional ${ordinal}`,
@@ -411,21 +462,35 @@ export function isWindowStartWeek(week: number): boolean {
 }
 
 /**
- * The next day ≥ fromDay the batched Advance must stop at: the matchday of an
- * official event relevant to the user (own-region regional, any Major,
- * Worlds), the Monday a transfer window opens, or — failing everything — the
- * season's last day. (The store adds dynamic stops: accepted unofficials,
- * pending decisions.)
+ * The next day ≥ fromDay the batched Advance must stop at (pure preview):
+ *  - the Monday a transfer window opens;
+ *  - v2.0 (R40) on a regional week: the own-region qualifier SATURDAY for a
+ *    user outside the direct 8 (`opts.direct` false, the default), and the
+ *    own regional's SUNDAY (direct, or reached through Saturday);
+ *  - on a Major / Worlds week: Saturday (Swiss stage) and Sunday (playoffs);
+ *  - failing everything, the season's last day.
+ * `opts.direct` reads TODAY's seeding for every week ahead (the honest
+ * preview). The store's stop rule (isStopState) is the authority: it adds the
+ * dynamic stops (accepted unofficials, pending decisions, an event in
+ * progress) and skips official days the user is not playing.
  */
-export function nextUserStopDay(seasonIndex: number, fromDay: number, userRegion: Region): number {
+export function nextUserStopDay(
+  seasonIndex: number,
+  fromDay: number,
+  userRegion: Region,
+  opts: { direct?: boolean } = {},
+): number {
   const start = Math.max(1, Math.min(fromDay, DAYS_PER_SEASON));
 
   for (let day = start; day <= DAYS_PER_SEASON; day++) {
     const week = weekOfDay(day);
     if (dayOfWeekOf(day) === 1 && isWindowStartWeek(week)) return day;
-    if (day === eventDayFor(week)) {
-      const defs = officialEventDefsForWeek(seasonIndex, week);
-      if (defs.some((d) => d.region === undefined || d.region === userRegion)) return day;
+    if (!opts.direct && day === qualifierDayFor(week)) {
+      if (qualifierDefsForWeek(seasonIndex, week).some((d) => d.region === userRegion)) return day;
+    }
+    for (const def of officialEventDefsForWeek(seasonIndex, week)) {
+      if (def.region !== undefined && def.region !== userRegion) continue;
+      if (day === def.day || day === eventEndDayFor(def)) return day;
     }
   }
   return DAYS_PER_SEASON;

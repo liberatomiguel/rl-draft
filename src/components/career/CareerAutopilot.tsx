@@ -6,7 +6,9 @@
  * Mounted once in the /career layout. While the store's `autoAdvance` switch
  * is ON, it ticks `advanceDay` every CAREER_PLAYBACK.autoAdvanceDayMs — and
  * pauses ITSELF the moment the career needs the manager:
- *  - continueKind ≠ "advance" (matchday lobby, decision, season review, end)
+ *  - continueKind ≠ "advance" (matchday lobby, decision, season review, end;
+ *    R40: the Saturday pause before Championship Sunday — never rolled into
+ *    on its own)
  *  - a fresh unofficial invite surfaced and isn't committed
  *  - the clock refused to move (blocked)
  * The user can pause any day from the TopBar; navigation never stops it —

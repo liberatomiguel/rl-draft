@@ -11,9 +11,17 @@
  * duplicate was removed with the v0.2 hub rebuild.
  */
 
-import { CAREER_POINTS, CAREER_PRIZES } from "@/config/balance";
+import { CAREER_POINTS } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import type { CalendarWeek, EventTier, MailItem, NewsItem } from "@/engine/career/types";
+import { prizePoolPaidFor } from "@/engine/career/economy";
+import type {
+  CalendarWeek,
+  CareerDifficulty,
+  CareerEventDef,
+  EventTier,
+  MailItem,
+  NewsItem,
+} from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -59,6 +67,8 @@ function errorTextFor(C: CareerCopy, key: string): string {
       return C.finances.backerWarning;
     case "loanActive":
       return C.finances.insolvencyWarning;
+    case "eventLocked":
+      return C.event.lineupLocked;
     default:
       // locked / maxed / used / none / unknown / invalid — no CAREER.errors.*
       // group exists yet; "Locked" is the least-wrong neutral fallback.
@@ -120,8 +130,17 @@ export function kindLabelOf(C: CareerCopy, cal: CalendarWeek): string {
 // Event stakes (display-side reads over the prize/points tables)
 // ---------------------------------------------------------------------------
 
-export function prizePoolOf(tier: EventTier): number {
-  return CAREER_PRIZES.pools[tier];
+/**
+ * The prize pool an event card advertises. rc.29 (CAR-08): the REAL paid
+ * total (economy.prizePoolPaidFor — this season's growth, the difficulty, the
+ * rounding), not the season-0 base pool: the qualifier lobby said $6k while
+ * its payouts summed to $5.2k, and every pool lagged the ×1.12 season growth.
+ */
+export function prizePoolOf(
+  def: Pick<CareerEventDef, "tier" | "format" | "seasonIndex">,
+  difficulty: CareerDifficulty,
+): number {
+  return prizePoolPaidFor(def.tier, def.format, difficulty, def.seasonIndex);
 }
 
 /** Max Season Points on the line (champion row); null for unofficials/Worlds. */

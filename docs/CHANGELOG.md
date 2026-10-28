@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.26**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.29**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -177,6 +177,183 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Fixed — rc.29 (Etapa 1b: the rc.28 E2E pass · 2026-10-28 · DESIGN-DECISIONS #144 · ROAD-TO-WORLDS-DECISIONS R42–R44)
+Every item was found by a browser E2E pass on rc.28 (desktop + mobile, EN + PT), fixed,
+reviewed independently and re-checked in the browser.
+
+**Draft**
+- **The tournament gave away the Swiss before its playback** (DRAFT-01, blocker). The kicker
+  switched to the playoffs and "Your path" dropped its placeholders while rounds were still being
+  revealed. Root cause: both read the engine's finished Swiss and the user's final record, not the
+  rounds on screen. `playoffsOnScreen` / `userSwissOverOnScreen` now read the revealed rounds.
+- **A paid reroll was spent on an offer with no pickable card** (DRAFT-12). Root cause: `reroll`
+  never checked `hasPickableCard`, so the dead-offer free reroll was skipped. It now takes the free
+  path, and the top button reads "Free reroll".
+- **Bracket and standings cut team names** (DRAFT-08/15). Root cause: the auto table layout gave the
+  spare width to the numeric columns. Fixed-layout standings, a minimum bracket column width.
+
+**Shared UI**
+- **The "New unlock" pop-up opened over a live tournament** (DRAFT-02, since rc.20) and gave away
+  the results rank-up. Root cause: `CosmeticUnlockModal` showed each unlock as soon as it was queued.
+  An overlay hold (`store/overlayHoldStore.ts`) now keeps it, and the login calendar, waiting during
+  the tournament, a challenge series, a ceremony, the tour or the season recap (#144).
+- **Cold home 33 → 28 requests** (DRAFT-03). Root cause: the login calendar drew every milestone's
+  art: four 800-px banners behind ~24-px cells, plus two badges. Art now loads for today and the
+  next milestone only; the rest are CSS swatches and gems.
+- **The rank-up ceremony had no way out** (DRAFT-04). Root cause: the unlock list replaced the hint,
+  and the overlay had no button or keys. It now has Continue and the hint; Escape/Enter continue.
+- **The XP count-up ran behind the ceremony** (DRAFT-05). Root cause: it started on mount. It now
+  waits for the ceremonies and the pop-ups they held back.
+- **Opening a dialog shifted the page** (DRAFT-06). Root cause: `overflow: hidden` removed the
+  classic scrollbar, in two separate locks. One ref-counted lock plus `scrollbar-gutter: stable`;
+  the reserved gutter is dimmed while a dialog is open (#144).
+- **Dialogs leaked focus** (DRAFT-07): Tab reached the cards and Enter drafted one behind "Reset
+  this run?". Root cause: Modal handled Escape only. Focus now moves in and is trapped, Escape
+  closes the topmost dialog only, and focus returns to the opener.
+- **Quick Draft results showed "Swiss record: 0–0" and labelled ×0.5 as difficulty** (DRAFT-09).
+  Root cause: the badge was always on, and the engine folded the mode factor into
+  `difficultyMultiplier`. Results now carry `xp.factors` (old results fall back to "XP multiplier").
+- **PT runs said "Your Team" and English stage names** (DRAFT-10), in the Match Center, bracket,
+  standings, results and the challenge screen. Root cause: the screens printed the engine's English
+  team name and stage strings, and the Match Center built its labels once. Results carry `stageRef`;
+  labels render in the active language (`lib/runLabels.ts`).
+- **The welcome tour stacked on the login calendar** (DRAFT-13). Root cause: both mounted together,
+  and Escape closed the hidden Modal. The tour opens alone and is skipped once a run is finished.
+- Copy: the Daily "Legacy Day" intro (DRAFT-14); the "±0" Season Rating line (DRAFT-16).
+
+**Career**
+- **One gamertag on both sides of a fixture** (CAR-01). Local sides, founders, fillers and rookies
+  all drew from `PLAYER_NAME_BANK`, and in MENA, APAC and SSA every name in it already belongs to a
+  filler pro. `buildWorldAtCreation` also rostered every Season X lineup, so players who changed
+  teams mid-season sat on two orgs (EU: Itachi, eekso, Deevo, Godsmilla; SAM: Luk, PJ, Sadness, pan,
+  fAsi, BrunoVisquii), and the bank held five real nicknames. Root cause: one shared bank and no
+  uniqueness rule. Fix in R42; new careers are clean (0 clashes in 280 fresh fields), and existing
+  careers keep their names.
+- **A reload or a trip to HQ during a live round counted it as seen** (CAR-02). Root cause:
+  `EventPlayback` started with every simulated round revealed, and the spoiler hold lived only while
+  the playback was mounted. A per-event reveal cursor fixes both (R43).
+- **Reduced motion never showed the deciding series** (CAR-03). Root cause: every simulated round
+  counted as revealed, so the digest replaced the last round in the same render. The day now stops
+  on its last round with "See results" / "See the Swiss result", only after the click that plays
+  it; reopening an event already at its results opens on them.
+- **Digest and Swiss standings cut team names** (CAR-04/05). Root cause: the auto table layout gave
+  the spare width to the other columns, and the long PT tag "Classificado" took the rest. Fixed
+  layouts; on phones the placement moves under the name; PT tag "Avançou".
+- **An event lobby could list a team that did not play** (CAR-06): the Community Cup, the
+  Invitational, a regional, and the Saturday qualifier near the direct-8 line. Root cause: the lobby
+  ranked orgs by stored ratings against a preview rating and seeded the user with the starters'
+  plain average; the engine uses intrinsic ratings and the fielded team. The lobby now calls the
+  engine's own selections (`qualifierEventRefsFor`, `regionalEventRefsFor`, `t3CupRefsFor`,
+  `orgsByPointsFor`); a probe over 291 lobbies found 0 mismatches.
+- **The mobile top bar cut its label** (CAR-07). Root cause: one label at every width in a 42vw
+  button. Phones get a short label.
+- **The qualifier lobby said $6k and paid $5.2k** (CAR-08). Root cause: the 9 % / 3 % shares were
+  truncated to $50, and lobbies showed the season-0 base pool with no growth or difficulty (R44).
+  Every format's simulated payouts are now tested against the pool the lobby shows.
+- **The calendar's day detail opened under the sticky Advance bar** (CAR-09). Root cause: no
+  scroll into view, and `sticky bottom-3` sat under the fixed mobile nav.
+- **The Championship Sunday header showed Saturday's record unlabelled, and "Tap anywhere to skip"
+  on desktop** (CAR-10). It reads "Seed #N" (or "Swiss W – L" when out), and fine pointers see
+  "Click or press Esc to skip".
+
+### Changed — rc.29
+- Career lobbies, the calendar detail and the HQ cards show the prize that is paid (R44).
+- The local-side sheet says local sides also fill the Saturday qualifiers (true since R30).
+
+### Balance — rc.29
+- `CAREER_PRIZES.swissOnlyPct` 9 / 3 → 10 / 2.5: a season-0 qualifier pays exactly $6k. Provisional,
+  ECO-01.
+
+### Changed — rc.28 (Etapa 1, part 2: the career weekend and the match timeline · 2026-10-28 · ROAD-TO-WORLDS-DECISIONS R40–R41)
+- **The weekend calendar (GAME-02/03, R40).** Regional week: the qualifier moves from
+  Wednesday to **Saturday** and is a 16-team Swiss only — the 8 teams that reach 3 wins
+  qualify and it ends there (no playoffs, no champion). The regional plays **Sunday** with
+  the direct 8 + Saturday's 8. **Major and Worlds span the weekend:** the Swiss on Saturday,
+  a pause (a reload keeps it), the playoffs on **Championship Sunday**; prize, points, rep and
+  XP land once. Events you are not in resolve on their last day (AI qualifiers Saturday, AI
+  regionals Sunday, an AI-only Major/Worlds in full on Sunday; an unattended Worlds closes
+  the season on day 224). On screen: Saturday/Sunday labels in HQ and the calendar (Rest on
+  empty weekend days, a Major you only watch shown muted), a "The weekend" strip in the
+  lobbies, a live Swiss verdict strip, the Qualified / Eliminated qualifier results with the
+  qualified eight, the Swiss-complete panel with "Continue to Championship Sunday", a
+  skippable once-per-event Championship Sunday title card (pairings only, static under
+  reduced motion), a spectator Sunday when you are out in the Swiss, and the lineup locked
+  while an event runs. Saves: additive `migrateSaveToV4` (saveVersion 4; persist version
+  unchanged) re-dates pending events and ends a qualifier in progress at its Swiss.
+- **The match timeline (GAME-04, R41).** Each of your games in the Match Center plays on a
+  running 5:00 clock: either side can open the scoring and lead (any order the final score
+  allows), every goal shows its time, an overtime game ends regulation tied, shows END OF
+  REGULATION / OVERTIME, runs an accelerated +M:SS clock (0:30–20:00, mostly short) and
+  ends on the winner's GOLDEN GOAL. Presentation only: seeded from each game's saved result,
+  never the match RNG — scores, scorers, winners and balance are unchanged. Pacing in
+  `CAREER_MATCH_CLOCK`; pause, 1×/2×/4×, skip series and reduced motion stay in sync.
+- **Balance:** qualifier rewards are `qualifierAdvance` rep only (`qualifierWin` removed) and a
+  flat `CAREER_PRIZES.swissOnlyPct` of 9 % of the pool per qualified team / 3 % per eliminated
+  team (provisional until the economy pass, ECO-01); still no Season Points.
+
+### Fixed — rc.28
+- **Match Center game chips read backwards when the right-hand team won a game.** Root cause:
+  `game.score` is winner-first and the chips printed it as left–right.
+- **The side with more goals always scored first** (every scoreline 1-0 … 8-7). Root cause:
+  `goalTimeline` spread each side's goals evenly and merged them, which always put the bigger
+  side first. **OVERTIME only showed after the golden goal** (gated on the finished game).
+- **The chip row gave away the length of your live series** (a sweep dimmed G4/G5 from game
+  1). Root cause: placeholder chips read the simulated series length during the reveal.
+- **The top bar and the Sim label spoiled a Major's Saturday result.** Root cause: both read the
+  engine, which pauses as soon as it has simulated the deciding series, before the replay.
+- **With the user seeded direct, one AI org played neither the qualifier nor the regional**
+  (since R30). Root cause: that region's AI qualifier was seeded as if the user did not exist.
+- **The season review could undercount Majors and titles** (since R30). Root cause: the results
+  list keeps 90 rows, oldest first, while a season files about 130 since the qualifiers.
+- **Lineup changes during the overnight pause moved match XP and stability credit** to players
+  who never played. Root cause: `finishEvent` read the lineup at the end.
+- **Local amateur sides shared names** — a pool of 8 sides could use only 4 team names, and one
+  gamertag could score for both teams. Root cause: the name stride could share a factor with
+  the 16-name bank, and each side drew its players independently.
+- **An intermittent test** (`runStore.national.test.ts`): it pre-owned the national cards only
+  after `startRun`, so a run whose first offer was a national team (~2.5 % of seeds) collected
+  it into an empty album.
+
+### Fixed — rc.27 (Etapa 1 of the 2.0 completion plan · 2026-10-28 · DESIGN-DECISIONS #143)
+- **A Swiss never pairs two teams that already met (every Draft mode and Road to Worlds).**
+  Root cause: `pairActiveTeams` shuffled each record group and popped pairs off the end
+  with no memory of earlier rounds, so most 16-team Swisses replayed at least one series
+  (181 of 200 all-AI Swisses in the plan's sweep; seed 1 round 4 had `team6` × `team9`
+  twice). The pairer now searches every same-record pairing against the played history
+  (derived from the saved rounds — no new save field), trying the old order first with
+  the same RNG draws, so rounds that were already clean are byte-identical. For the
+  16-team 3W/3L format a rematch-free round always exists (proof sketch in #143; 2 M
+  random campaigns offline, 5,000 in the suite). Runs and career events saved mid-Swiss
+  by an older build are handled explicitly: a stored round with a rematch is re-paired
+  from its own seed (never the run's RNG), and the next-opponent cells show the round
+  the engine will actually play. Difficulty matrix before/after within noise;
+  challenges unchanged. Golden master seed 20260709 regenerated (it rematched in round 3).
+- **Review fixes (rc.27, after the independent review of #143 and the lint pass).** A
+  stored pre-rc.27 round with a rematch is now repaired group by group (clean record
+  groups keep their pairs; the player keeps the opponent they were shown when that pair
+  was clean) instead of being re-paired whole. The career Calendar jumps to the current
+  month again on in-app navigation — root cause: with `useMounted` true on the first
+  client render, the shell's scroll-to-top effect ran after the Calendar's own scroll
+  (passive effects run child-first); it is a layout effect now. A client navigation into
+  a `/pt` page no longer shows one frame of EN (`SyncLocale` writes in a layout effect),
+  and `AnimatedNumber` no longer re-counts when the OS motion setting is turned back on.
+- **Lint back to zero (5 errors + 1 warning since rc.20).** Root cause: React 19's
+  `react-hooks` rules flag a setState called synchronously inside an effect, and the React
+  Compiler skipped the whole Draft Match Center because a manual `useMemo` depended on a
+  value it could not prove immutable. `useMounted` is now a `useSyncExternalStore` gate
+  (false on the server and during hydration, as before; true on the first render of a
+  client-side navigation, where there is nothing to hydrate); `Modal` derives its portal
+  host from it; `AnimatedNumber` reads reduced motion through `useOsReducedMotion`; the
+  Draft playback parks its clock through its timer (like the career one); the Match Center
+  narration is a plain derivation the compiler memoizes.
+- **PT says "Swiss", the RLCS term, everywhere** ("Fase Swiss", "Eliminado no Swiss",
+  "Vitórias no Swiss"…) instead of "Suíça/suíço", matching the career copy. Root cause:
+  the draft copy was translated literally ("Suíça" reads as the country).
+- **Runbook:** the `profile_grants` check in `V2-IMPLEMENTATION-PLAN.md` §6-B now accepts
+  `early-supporter` (a `GrantId` since rc.4) and replaces the old constraint idempotently;
+  §6-B step 3 notes that the freeze trigger stops every client from moving `xp`/`mmr` the
+  moment it exists. README brought up to date (scripts, layout, docs, scope).
 
 ### Changed — rc.26 (the dataset leaves the shared path · 2026-10-27 · DESIGN-DECISIONS #142)
 - **The layout, the home and the content pages stop loading the dataset (#60).** The

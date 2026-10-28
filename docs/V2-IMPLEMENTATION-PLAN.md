@@ -43,7 +43,7 @@
    `wrangler deploy --env staging` from the `staging` branch, career on,
    noindex). `main` = production = untouched until the full review passes.
 6. **Gates before every commit:** `npm run typecheck`, `npm test`, `npm run
-   lint` at baseline (5 errors + 1 warning pre-existing, do not add),
+   lint` at 0 errors / 0 warnings (since rc.27 — any new one is a regression),
    `npm run build` green for anything that ships (runs `validate:data`,
    `test:contract`, `build:images`, export, `postexport` checks).
 7. **Every tunable number in `src/config/balance.ts`; every string in
@@ -384,18 +384,24 @@ alter table public.profiles
   add column if not exists equipped_badges    text[] not null default '{}',
   add column if not exists preseason_position integer;
 
--- 2) Manual grants (supporter / pro / contributor). You INSERT rows by hand in
---    Table Editor: user_id (from auth.users), grant_id, optional note.
+-- 2) Manual grants (early-supporter / supporter / pro / contributor — every
+--    GrantId of src/data/cosmetics.ts). You INSERT rows by hand in Table Editor:
+--    user_id (from auth.users), grant_id, optional note.
 --    Players can only READ their own rows; nobody can write through the app.
 create table if not exists public.profile_grants (
   -- references profiles (not auth.users) so the app can embed the grants in the
   -- profile read (one request). Grant only players who already have a profile row.
   user_id    uuid not null references public.profiles(id) on delete cascade,
-  grant_id   text not null check (grant_id in ('supporter', 'pro', 'contributor')),
+  grant_id   text not null check (grant_id in ('early-supporter', 'supporter', 'pro', 'contributor')),
   note       text,
   granted_at timestamptz not null default now(),
   primary key (user_id, grant_id)
 );
+-- rc.27: projects that ran an older copy of this block have a check without
+-- 'early-supporter' — replace it (idempotent; the default constraint name).
+alter table public.profile_grants drop constraint if exists profile_grants_grant_id_check;
+alter table public.profile_grants add constraint profile_grants_grant_id_check
+  check (grant_id in ('early-supporter', 'supporter', 'pro', 'contributor'));
 alter table public.profile_grants enable row level security;
 drop policy if exists "a user reads only their own grants" on public.profile_grants;
 create policy "a user reads only their own grants"
@@ -403,6 +409,10 @@ create policy "a user reads only their own grants"
 
 -- 3) Freeze protection: the app can never change the pre-season archive columns
 --    (xp, mmr, preseason_position) once v2.0 is live — only the dashboard can.
+--    TIMING (rc.27 review): from the moment this trigger exists, no client can move
+--    xp/mmr any more. That is harmless while no pre-2.0 client signs in to this
+--    project (production accounts are still dormant), but if a v1.x build with
+--    accounts is live, create this trigger at the cutover (with step C), not before.
 create or replace function public.protect_preseason_columns()
   returns trigger language plpgsql as $$
 begin
@@ -478,7 +488,8 @@ day after the deploy gives the same result as running it before.
 
 ### D. Grants (any time after B)
 Table Editor → `profile_grants` → Insert row: `user_id` (copy from
-Authentication → Users), `grant_id` = `supporter` | `pro` | `contributor`.
+Authentication → Users), `grant_id` = `early-supporter` | `supporter` | `pro` |
+`contributor`.
 The player sees the title/badge on their next sync (open the site).
 
 ### E. Cloudflare

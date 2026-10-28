@@ -1,16 +1,18 @@
 /**
  * Season clock tests: 32-week schedule shape, the v0.2 day clock (224 days,
- * Monday-start weeks, Saturday matchdays, real calendar dates), event-day
- * placement, the stable event-id grammar, unofficial-offer gating and the
- * batched-advance stop days. Dataset-agnostic — everything derives from
- * balance config.
+ * Monday-start weeks, real calendar dates), the v2.0 (R40) weekend (qualifier
+ * Saturday → regional Sunday; Major/Worlds Swiss Saturday → playoffs Sunday),
+ * the stable event-id grammar, unofficial-offer gating and the batched-advance
+ * stop days. Dataset-agnostic — everything derives from balance config.
  */
 
 import { describe, expect, it } from "vitest";
 import {
   CAREER_CALENDAR,
+  CAREER_QUALIFIER,
   CAREER_SEASONS,
   CAREER_SLOTS,
+  CAREER_TRAINING,
   CAREER_UNOFFICIAL,
 } from "@/config/balance";
 import { T2_EVENT_NAMES, T3_EVENT_NAMES } from "@/data/career/names";
@@ -20,14 +22,21 @@ import {
   dateOfDay,
   dayOfWeekOf,
   eventDayFor,
+  eventEndDayFor,
   eventIdFor,
   firstDayOfWeek,
   isTrainingDay,
+  isTwoDayEvent,
   isWindowStartWeek,
   isWindowWeek,
   nextUserStopDay,
   officialEventDefsForWeek,
   orderFor,
+  playoffsDayFor,
+  qualifierDayFor,
+  qualifierDefsForWeek,
+  regionalDayFor,
+  regionalForQualifier,
   seasonIdFor,
   seasonLabelFor,
   seasonSchedule,
@@ -221,7 +230,9 @@ describe("officialEventDefsForWeek", () => {
       expect(def.split).toBe(1);
       expect(def.ordinal).toBe(2);
       expect(def.week).toBe(6);
-      expect(def.day).toBe(eventDayFor(6)); // the week's Saturday
+      expect(def.day).toBe(regionalDayFor(6)); // R40: the week's SUNDAY
+      expect(dayOfWeekOf(def.day)).toBe(7);
+      expect(eventEndDayFor(def)).toBe(def.day); // one-day event
       expect(def.id).toBe(`0:1:reg2:${def.region}`);
       expect(def.name).toBe(`${def.region} Regional 2`);
     }
@@ -239,6 +250,10 @@ describe("officialEventDefsForWeek", () => {
       format: "swiss",
     });
     expect(defs[0].region).toBeUndefined();
+    // R40: Saturday opens it (Swiss), Sunday plays the playoffs.
+    expect(dayOfWeekOf(defs[0].day)).toBe(6);
+    expect(playoffsDayFor(defs[0])).toBe(defs[0].day + 1);
+    expect(eventEndDayFor(defs[0])).toBe(defs[0].day + 1);
   });
 
   it("schedules Worlds on the last week", () => {
@@ -251,12 +266,61 @@ describe("officialEventDefsForWeek", () => {
       name: "World Championship",
       format: "swiss",
     });
+    // R40: Championship Sunday IS the season's last day.
+    expect(playoffsDayFor(defs[0])).toBe(DAYS_PER_SEASON);
   });
 
   it("schedules nothing on open, window and preseason weeks", () => {
     for (const week of [1, 3, 11, 31]) {
       expect(officialEventDefsForWeek(0, week)).toEqual([]);
     }
+  });
+});
+
+describe("the weekend (v2.0 R40)", () => {
+  it("keeps the day-of-week constants ordered: training < qualifier < regional, Swiss < playoffs", () => {
+    expect(CAREER_TRAINING.trainingDaysPerWeek).toBeLessThan(CAREER_QUALIFIER.dayOfWeek);
+    expect(CAREER_QUALIFIER.dayOfWeek).toBeLessThan(CAREER_CALENDAR.regionalDayOfWeek);
+    expect(CAREER_CALENDAR.regionalDayOfWeek).toBeLessThanOrEqual(CAREER_CALENDAR.daysPerWeek);
+    expect(CAREER_CALENDAR.eventDayOfWeek).toBeLessThan(CAREER_CALENDAR.playoffsDayOfWeek);
+    expect(CAREER_CALENDAR.playoffsDayOfWeek).toBeLessThanOrEqual(CAREER_CALENDAR.daysPerWeek);
+    // Miguel's table: qualifier Saturday, regional Sunday, Swiss Saturday, playoffs Sunday.
+    expect([CAREER_QUALIFIER.dayOfWeek, CAREER_CALENDAR.regionalDayOfWeek]).toEqual([6, 7]);
+    expect([CAREER_CALENDAR.eventDayOfWeek, CAREER_CALENDAR.playoffsDayOfWeek]).toEqual([6, 7]);
+  });
+
+  it("puts one Swiss-only qualifier per region on the regional week's Saturday", () => {
+    for (const week of seasonSchedule().filter((w) => w.kind === "regional").map((w) => w.week)) {
+      const qs = qualifierDefsForWeek(0, week);
+      expect(qs.map((q) => q.region)).toEqual(REGIONS);
+      for (const q of qs) {
+        expect(q.tier).toBe("qualifier");
+        expect(q.format).toBe("swissOnly");
+        expect(q.day).toBe(qualifierDayFor(week));
+        expect(q.day).toBe(eventDayFor(week)); // Saturday
+        expect(isTwoDayEvent(q)).toBe(false);
+        expect(eventEndDayFor(q)).toBe(q.day);
+        // The regional it feeds: same week/region, the next day.
+        const reg = regionalForQualifier(q)!;
+        expect(reg.tier).toBe("regional");
+        expect(reg.region).toBe(q.region);
+        expect(reg.day).toBe(q.day + 1);
+        expect(reg.day).toBe(regionalDayFor(week));
+        // The stable grammar: qual ↔ reg differ only in the tag.
+        expect(q.id.replace(":qual", ":reg")).toBe(reg.id);
+      }
+    }
+    // No qualifier off regional weeks.
+    for (const week of [1, 3, 10, 11, 31, 32]) expect(qualifierDefsForWeek(0, week)).toEqual([]);
+  });
+
+  it("only the Major and Worlds span two days", () => {
+    const tiers = ["t3", "t2", "qualifier", "regional", "major", "worlds"] as const;
+    expect(tiers.filter((tier) => isTwoDayEvent({ tier }))).toEqual(["major", "worlds"]);
+    // A one-day event's playoffs/end day is its own day.
+    const t3 = unofficialOfferFor(0, 3, { userTeamRating: 78, rep: 0, t3EntriesThisSplit: 0, careerSeed: 7 })!;
+    expect(playoffsDayFor(t3)).toBe(t3.day);
+    expect(dayOfWeekOf(t3.day)).toBe(6);
   });
 });
 
@@ -364,6 +428,18 @@ describe("nextUserStopDay", () => {
     for (const region of REGIONS) {
       expect(nextUserStopDay(0, firstDayOfWeek(3), region)).toBe(eventDayFor(4));
     }
+  });
+
+  it("R40: a direct user skips the Saturday qualifier and stops on the Sunday regional", () => {
+    expect(nextUserStopDay(0, firstDayOfWeek(3), "EU", { direct: true })).toBe(regionalDayFor(4));
+    // Outside the direct 8: the Saturday qualifier, then the Sunday regional.
+    expect(nextUserStopDay(0, eventDayFor(4) + 1, "EU")).toBe(regionalDayFor(4));
+  });
+
+  it("R40: a Major / Worlds stops on Saturday (Swiss) and again on Sunday (playoffs)", () => {
+    expect(nextUserStopDay(0, eventDayFor(10) + 1, "EU")).toBe(eventDayFor(10) + 1);
+    expect(nextUserStopDay(0, eventDayFor(32), "SAM", { direct: true })).toBe(eventDayFor(32));
+    expect(nextUserStopDay(0, eventDayFor(32) + 1, "SAM")).toBe(DAYS_PER_SEASON);
   });
 });
 

@@ -15,6 +15,7 @@ import {
   advanceDayFlow,
   createCareerSave,
   finishEvent,
+  isEventPaused,
   migrateSaveToV2,
   releasePlayerFlow,
   rolloverToNextSeason,
@@ -50,6 +51,12 @@ function resolveEventIfDue(input: CareerSave): CareerSave {
     save = startEvent(save, false);
     expect(save.activeEvent).not.toBeNull();
     save = simEventToEnd(save);
+    // v2.0 (R40): a Major/Worlds pauses after its Saturday Swiss — Sunday
+    // (one Advance) plays the playoffs.
+    if (isEventPaused(save)) {
+      save = advanceDayFlow(save);
+      save = simEventToEnd(save);
+    }
     expect(save.activeEvent!.tournament.stage).toBe("finished");
     save = finishEvent(save);
     expect(save.activeEvent).toBeNull();

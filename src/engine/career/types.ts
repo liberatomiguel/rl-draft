@@ -179,6 +179,18 @@ export interface WorldState {
   retiredIds: string[];
   /** Bumped on any roster/overall change — invalidates team-assembly caches. */
   version: number;
+  /**
+   * rc.29 (CAR-01): the gamertag each rookie got at his intake (id → name),
+   * chosen so nobody in his region already holds it. Optional and additive:
+   * rookies generated before rc.29 have no entry and keep their derived name.
+   */
+  rookieNames?: Record<string, string>;
+  /**
+   * rc.29 (CAR-01): which filler/rookie name bank the world reads — 2 =
+   * PLAYER_NAME_BANK with PLAYER_NAME_BANK_SWAPS (the real nicknames swapped
+   * out), set at creation; absent = the original bank (older careers).
+   */
+  nameBankVersion?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,14 +237,29 @@ export interface CareerEventDef {
   region?: Region;
   seasonIndex: number;
   week: number;
-  /** Matchday — the Saturday of `week` on the day clock. */
+  /**
+   * The day the event STARTS (its lobby opens) on the day clock. v2.0 (R40):
+   * Saturday for the unofficial cups, the qualifier and the Major/Worlds
+   * (Swiss stage); Sunday for the regional. A Major/Worlds continues on
+   * `playoffsDayFor(def)` (Sunday, "Championship Sunday") — derived, never
+   * stored.
+   */
   day: number;
   split?: 1 | 2 | 3;
   ordinal?: 1 | 2 | 3;
   /** Display name (official events from copy; unofficials generated). */
   name: string;
-  format: "swiss" | "single";
+  /**
+   * Tournament shape: "swiss" = 16-team Swiss → 8-team double elimination;
+   * "swissOnly" = v2.0 (R40) 16-team Swiss that ENDS with the Swiss (the
+   * regional qualifier: the 8 that reach 3 wins qualify — no playoffs, no
+   * champion); "single" = 8-team single elimination (unofficial cups).
+   */
+  format: CareerEventFormat;
 }
+
+/** v2.0 (R40): the tournament shapes a career event can take. */
+export type CareerEventFormat = "swiss" | "swissOnly" | "single";
 
 /** One team's line in a compiled event result (compact — brackets are discarded). */
 export interface CompactPlacementRow {
@@ -253,6 +280,11 @@ export interface CompactEventResult {
   split?: 1 | 2 | 3;
   name: string;
   rows: CompactPlacementRow[];
+  /**
+   * The playoffs champion. v2.0 (R40): a Swiss-only event (tier "qualifier")
+   * has NO champion — this holds its TOP SWISS SEED (rows[0]) so the field
+   * stays a plain string; never label it a champion (see `hasChampion`).
+   */
   championRef: string;
   userPlacement?: Placement;
   /** Field quality multiplier used for match-XP (persisted for the recap). */
@@ -275,8 +307,10 @@ export interface CompetitionState {
   /** Worst stability tier already applied this split (0 | 25 | 60 %). */
   stabilityTierApplied: 0 | 25 | 60;
   /**
-   * v2.0 (R30): per region, the latest Wednesday qualifier's top 8 and the
-   * regional event id they qualified for (absent on pre-2.0 saves).
+   * v2.0 (R30): per region, the latest qualifier's 8 qualified refs (R40:
+   * Saturday's Swiss-only qualifier — the teams that reached 3 wins, in seed
+   * order) and the regional event id they qualified for (absent on pre-2.0
+   * saves).
    */
   qualifiedRefs?: Partial<Record<Region, { eventId: string; refs: string[] } | null>>;
 }
@@ -542,6 +576,14 @@ export interface ActiveEventState {
   fieldQuality: number;
   /** True when the user chose watch-mode (playback) rather than instant sim. */
   watched: boolean;
+  /**
+   * v2.0 (R40 review): the squad ids fielded when the event started — the
+   * team is frozen for the whole event (Saturday and Sunday of a two-day
+   * one), so finishEvent credits match XP / roster stability to the players
+   * who actually played. Absent on older saves (finishEvent then reads the
+   * current lineup, as before).
+   */
+  fieldedIds?: string[];
 }
 
 export interface StandingRowSnapshot {

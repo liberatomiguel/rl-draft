@@ -13,9 +13,10 @@
  */
 
 import { CAREER_UNOFFICIAL } from "@/config/balance";
-import { LOCAL_TEAM_NAME_BANK, PLAYER_NAME_BANK } from "@/data/career/names";
+import { LOCAL_PLAYER_NAME_BANK, LOCAL_TEAM_NAME_BANK } from "@/data/career/names";
+import { createRng } from "@/lib/rng";
 import type { Region } from "../types";
-import { derivedFloat, streams } from "./seeds";
+import { deriveSeed, derivedFloat, streams } from "./seeds";
 
 export const LOCAL_PREFIX = "local:";
 
@@ -55,8 +56,21 @@ export function localTeamName(ref: string, careerSeed: number): string {
       bank.length,
   );
   // Stride through the bank from a per-season start so the k slots are distinct.
-  const stride = 1 + (Math.floor(derivedFloat(careerSeed, streams.gen("localStride", parsed.region)) * 5) % 5);
+  // rc.28: a stride sharing a factor with the bank length cycles early (4 over
+  // the 16-name banks gave a pool of 8 sides only 4 names, each twice), so it
+  // steps up until one cycle covers the whole pool.
+  let stride = 1 + (Math.floor(derivedFloat(careerSeed, streams.gen("localStride", parsed.region)) * 5) % 5);
+  while (
+    bank.length / gcd(stride, bank.length) < CAREER_UNOFFICIAL.localScenePool &&
+    stride < bank.length
+  ) {
+    stride += 1;
+  }
   return bank[(base + parsed.k * stride) % bank.length];
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
 }
 
 /** Rating offset vs. the user team, uniform in localSceneBand (one decimal). */
@@ -66,15 +80,20 @@ export function localTeamOffset(ref: string, careerSeed: number): number {
   return Math.round((lo + f * (hi - lo)) * 10) / 10;
 }
 
-/** Three amateur gamertags for the side — the regional bank, no numeric tags
- *  (rc.2: "Pivete", not "Pivete37"), distinct within the side. */
+/** Three amateur gamertags for the side — no numeric tags (rc.2: "Pivete",
+ *  not "Pivete37"). rc.28: one shuffle of the bank per region-season, three
+ *  consecutive names per slot, so no two local sides of a pool share a player
+ *  (8 sides × 3 = 24 of the 36 names). rc.29 (CAR-01): the local scene's OWN
+ *  bank (LOCAL_PLAYER_NAME_BANK) — it drew from PLAYER_NAME_BANK, the bank of
+ *  the wizard starters, the filler pros and the rookies, so a local side could
+ *  field the same gamertag as the team across the fixture. */
 export function localPlayerNames(ref: string, careerSeed: number): [string, string, string] {
   const parsed = parseLocalRef(ref);
   const region = parsed?.region ?? "NA";
-  const bank = PLAYER_NAME_BANK[region] ?? PLAYER_NAME_BANK.NA;
-  const start = Math.floor(derivedFloat(careerSeed, streams.gen("localPlayer", ref)) * bank.length);
-  const stride = 1 + (Math.floor(derivedFloat(careerSeed, streams.gen("localTag", ref)) * 7) % 7);
-  const names: string[] = [];
-  for (let i = 0; i < 3; i++) names.push(bank[(start + i * stride) % bank.length]);
-  return names as [string, string, string];
+  const bank = LOCAL_PLAYER_NAME_BANK[region] ?? LOCAL_PLAYER_NAME_BANK.NA;
+  const order = createRng(
+    deriveSeed(careerSeed, streams.gen("localPlayers", `${region}:${parsed?.seasonIndex ?? 0}`)),
+  ).shuffle(bank);
+  const at = (parsed?.k ?? 0) * 3;
+  return [0, 1, 2].map((i) => order[(at + i) % order.length]) as [string, string, string];
 }

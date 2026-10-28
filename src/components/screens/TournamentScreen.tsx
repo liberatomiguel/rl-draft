@@ -17,10 +17,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TOURNAMENT } from "@/config/balance";
-import { useCopy, type Copy } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { lineupById } from "@/data";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { displayTeamOverall } from "@/engine/rating";
+import { upcomingSwissPairings } from "@/engine/swiss";
 import type {
   PlayoffRoundName,
   RunState,
@@ -28,6 +29,7 @@ import type {
   TournamentState,
   TournamentTeam,
 } from "@/engine/types";
+import { seriesStageLabel, teamDisplayName } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
@@ -42,9 +44,10 @@ import { RunStepper } from "./RunStepper";
 // Series indexing helpers
 // ---------------------------------------------------------------------------
 
+// No label stored: the screen names the stage at render time
+// (`seriesStageLabel`), so a language switch mid-run relabels it (rc.29).
 interface SeriesEntry {
   key: string;
-  label: string;
   isUser: boolean;
   stage: "swiss" | "playoffs";
   roundIndex: number;
@@ -55,7 +58,7 @@ function entryKey(stage: string, roundIndex: number, seriesIndex: number): strin
   return `${stage}:${roundIndex}:${seriesIndex}`;
 }
 
-function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[] {
+function allEntries(t: TournamentState): SeriesEntry[] {
   const out: SeriesEntry[] = [];
   // Within each round the user's series reveals FIRST (it's the story);
   // AI series follow as quick background pops. Sort is stable, so rebuilt
@@ -67,7 +70,6 @@ function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[]
     pushRound(
       round.series.map((s, si) => ({
         key: entryKey("swiss", ri, si),
-        label: `${T.swiss} · ${T.round(round.round)}`,
         isUser: s.teamAId === "user" || s.teamBId === "user",
         stage: "swiss" as const,
         roundIndex: ri,
@@ -79,7 +81,6 @@ function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[]
     pushRound(
       round.series.map((s, si) => ({
         key: entryKey("playoffs", ri, si),
-        label: T.roundNames[round.name] ?? round.name,
         isUser: s.teamAId === "user" || s.teamBId === "user",
         stage: "playoffs" as const,
         roundIndex: ri,
@@ -136,11 +137,11 @@ export function TournamentScreen({ run }: { run: RunState }) {
   // Playback state. On mount (or refresh) everything already simulated is
   // treated as revealed. A FRESH tournament (straight from team review)
   // auto-starts — no extra click needed.
-  const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t, T) : []));
-  const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t, T).length : 0));
+  const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t) : []));
+  const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t).length : 0));
   const [gamesShown, setGamesShown] = useState(0);
   const [running, setRunning] = useState(
-    () => Boolean(t) && allEntries(t!, T).length === 0 && t!.stage !== "finished",
+    () => Boolean(t) && allEntries(t!).length === 0 && t!.stage !== "finished",
   );
   // Default playback speed follows the Settings → Animation speed preference.
   const [speed, setSpeed] = useState<1 | 2 | 4>(
@@ -163,9 +164,9 @@ export function TournamentScreen({ run }: { run: RunState }) {
     playRound();
     const fresh = useRunStore.getState().run?.tournament;
     if (!fresh) return;
-    const entries = allEntries(fresh, T);
+    const entries = allEntries(fresh);
     setQueue(entries); // cursor stays — new entries are beyond it
-  }, [playRound, T]);
+  }, [playRound]);
 
   // The autoplay engine. Pace depends on what is being revealed: the user's
   // series plays game by game then lingers; AI series pop quickly; crossing
@@ -212,7 +213,8 @@ export function TournamentScreen({ run }: { run: RunState }) {
     } else if (t.stage !== "finished") {
       tick(PACE.advance, advanceRound);
     } else {
-      setRunning(false);
+      // Everything revealed and the tournament is done — park the clock.
+      tick(0, () => setRunning(false));
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -230,7 +232,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
     }
     const fresh = useRunStore.getState().run?.tournament;
     if (fresh) {
-      const entries = allEntries(fresh, T);
+      const entries = allEntries(fresh);
       setQueue(entries);
       setCursor(entries.length);
       // Everything is revealed at once on skip — award all live feats now.
@@ -261,9 +263,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
       <RunStepper run={run} />
 
       <SectionTitle
-        kicker={
-          run.mode === "quick" || t.stage !== "swiss" ? T.playoffs : T.swiss
-        }
+        kicker={playoffsOnScreen(run.mode, t, revealedSwissRounds) ? T.playoffs : T.swiss}
         title={run.daily ? `Daily · ${run.daily.label}` : T.title}
         right={
           run.mode !== "quick" ? (
@@ -392,6 +392,29 @@ interface DerivedRecord {
   gameDiff: number;
 }
 
+/**
+ * rc.29 spoiler guard: the stage kicker reads what the viewer has SEEN. The
+ * engine resolves the AI-only rounds the moment the user's last Swiss series
+ * is simulated — before its first game is shown — so `t.stage` flipped to
+ * playoffs at the start of the deciding series and gave the result away.
+ */
+export function playoffsOnScreen(
+  mode: RunState["mode"],
+  t: TournamentState,
+  revealedSwissRounds: number,
+): boolean {
+  return mode === "quick" || (t.swiss.finished && revealedSwissRounds >= t.swiss.rounds.length);
+}
+
+/** Whether the user's Swiss is over as far as the viewer knows (revealed series only). */
+export function userSwissOverOnScreen(t: TournamentState, revealed: Set<string>): boolean {
+  const shown = deriveSwissRecords(t, revealed).get("user");
+  return (
+    (shown?.wins ?? 0) >= TOURNAMENT.swiss.winsToAdvance ||
+    (shown?.losses ?? 0) >= TOURNAMENT.swiss.lossesToEliminate
+  );
+}
+
 function deriveSwissRecords(
   t: TournamentState,
   revealed: Set<string>,
@@ -475,7 +498,9 @@ function MatchCenter({
   const isUserSeries = entry.isUser;
   const userWon = series.winnerTeamId === "user";
 
-  const narration = useMemo(() => {
+  // Plain derivation: the React Compiler memoizes it (a manual useMemo here made
+  // the compiler skip the whole component — preserve-manual-memoization).
+  const narration = (() => {
     if (!done || !isUserSeries) return null;
     const margin = Math.abs(series.score[0] - series.score[1]);
     const userDiff = series.teamAId === "user" ? series.ratingDiff : -series.ratingDiff;
@@ -509,13 +534,13 @@ function MatchCenter({
       lines.push(NARRATION.overtimeNote);
     }
     return lines;
-  }, [done, isUserSeries, series, userWon, NARRATION]);
+  })();
 
   return (
     <Panel strong glow={live ? "orange" : undefined} className="p-5">
       <div className="mb-1 flex items-center justify-between gap-3">
         <p className="kicker">
-          {entry.label} ·{" "}
+          {seriesStageLabel(t, entry, T)} ·{" "}
           {T.bestOf(
             entry.stage === "swiss"
               ? TOURNAMENT.swiss.bestOf
@@ -545,7 +570,7 @@ function MatchCenter({
         <div className="flex min-w-0 items-center gap-2">
           <TeamLogo orgId={teamA.orgId} seasonId={teamSeasonId(teamA)} size="sm" />
           <p className={cx("display min-w-0 truncate text-base font-bold uppercase tracking-wide md:text-lg", teamA.isUser ? "text-orange-bright" : "text-ink")}>
-            {teamA.name}
+            {teamDisplayName(teamA, T)}
           </p>
         </div>
         <p className="display shrink-0 text-3xl font-bold">
@@ -555,7 +580,7 @@ function MatchCenter({
         </p>
         <div className="flex min-w-0 items-center justify-end gap-2">
           <p className={cx("display min-w-0 truncate text-right text-base font-bold uppercase tracking-wide md:text-lg", teamB.isUser ? "text-orange-bright" : "text-ink")}>
-            {teamB.name}
+            {teamDisplayName(teamB, T)}
           </p>
           <TeamLogo orgId={teamB.orgId} seasonId={teamSeasonId(teamB)} size="sm" />
         </div>
@@ -670,7 +695,7 @@ function SwissPath({
   // round has been revealed; earlier it spoils the round still animating.
   const upcomingPair =
     revealedRounds >= t.swiss.rounds.length
-      ? t.swiss.nextPairings?.find(([a, b]) => a === "user" || b === "user")
+      ? upcomingSwissPairings(t.swiss)?.find(([a, b]) => a === "user" || b === "user")
       : undefined;
   if (upcomingPair) {
     cells.push({
@@ -682,7 +707,10 @@ function SwissPath({
     });
   }
 
-  while (cells.length < 5 && cells.length > 0 && !t.swiss.finished) {
+  // Placeholders up to the 5-round cap while the user's Swiss is still open
+  // as far as the viewer knows (3 cells = a win, 5 = a loss used to leak).
+  const swissOver = userSwissOverOnScreen(t, revealed);
+  while (cells.length < 5 && cells.length > 0 && !swissOver) {
     cells.push({ key: null, round: cells.length + 1, series: null, state: "none" });
   }
 
@@ -838,7 +866,9 @@ function PlayoffBracketView({
     const spoiler = ri !== undefined && ri > revealedRounds;
     const series = ri !== undefined && !spoiler ? p.rounds[ri].series : null;
     return (
-      <div key={name} className="flex min-w-[150px] flex-1 flex-col justify-around gap-2">
+      // rc.29: 132 px columns keep the five lower-bracket columns (third place
+      // included) inside the 1280 px layout instead of clipping the last one.
+      <div key={name} className="flex min-w-[132px] flex-1 flex-col justify-around gap-2">
         <p className="kicker text-center !text-[9px]">{T.roundNames[name]}</p>
         {Array.from({ length: SLOTS[name] }).map((_, si) => {
           const s = series?.[si] ?? null;
@@ -937,7 +967,7 @@ function BracketCell({
       <p className={cx("flex items-center gap-1.5 py-0.5 text-xs", won === false && "opacity-45")}>
         {team ? <TeamLogo orgId={team.orgId} seasonId={teamSeasonId(team)} size="xs" /> : <span className="h-4 w-4 rounded bg-white/5" />}
         <span className={cx("min-w-0 flex-1 truncate", team?.isUser ? "font-bold text-orange-bright" : team ? "text-ink" : "italic text-faint")}>
-          {team?.name ?? T.tbd}
+          {team ? teamDisplayName(team, T) : T.tbd}
         </span>
         {score !== null ? (
           <span className={cx("display shrink-0 font-bold", won ? "text-good" : "text-sub")}>{score}</span>
@@ -1022,7 +1052,14 @@ function SwissStandings({
             </span>
           ) : null}
         </div>
-        <table className="w-full text-left text-xs">
+        {/* Fixed numeric columns: the team name gets every spare pixel (rc.29). */}
+        <table className="w-full table-fixed text-left text-xs">
+          <colgroup>
+            <col />
+            <col className="w-11" />
+            <col className="w-9" />
+            <col className="w-9" />
+          </colgroup>
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-faint">
               <th className="pb-2 font-semibold">{T.team}</th>
@@ -1045,7 +1082,7 @@ function SwissStandings({
                     <span className="flex items-center gap-1.5">
                       <TeamLogo orgId={team.orgId} seasonId={teamSeasonId(team)} size="xs" />
                       <span className={cx("min-w-0 truncate", isUser ? "font-bold text-orange-bright" : "text-ink")}>
-                        {team.name}
+                        {teamDisplayName(team, T)}
                       </span>
                       {through ? <span className="text-[9px] font-bold text-good">✓</span> : null}
                     </span>

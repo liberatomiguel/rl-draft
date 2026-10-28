@@ -33,6 +33,7 @@ import { derivedFloat, streams } from "./seeds";
 import type {
   BankLoanState,
   CareerDifficulty,
+  CareerEventFormat,
   EventTier,
   FinanceState,
   GearState,
@@ -58,9 +59,15 @@ export function repTierOf(rep: number): 0 | 1 | 2 | 3 | 4 {
 
 /**
  * Placement → percent of the pool. Swiss16 pays every placement ("top4"
- * maps onto the fourth row); single8 collapses third/fourth into top4.
+ * maps onto the fourth row); single8 collapses third/fourth into top4;
+ * v2.0 (R40) Swiss-only pays flat by outcome (qualified "top8" vs
+ * eliminated "swiss_exit").
  */
-function prizePctFor(placement: Placement, format: "swiss" | "single"): number {
+function prizePctFor(placement: Placement, format: CareerEventFormat): number {
+  if (format === "swissOnly") {
+    const table = CAREER_PRIZES.swissOnlyPct;
+    return placement === "swiss_exit" ? table.eliminated : table.qualified;
+  }
   if (format === "swiss") {
     const table = CAREER_PRIZES.swiss16Pct;
     if (placement === "top4") return table.fourth;
@@ -90,7 +97,7 @@ function prizePctFor(placement: Placement, format: "swiss" | "single"): number {
 export function prizeFor(
   tier: EventTier,
   placement: Placement,
-  format: "swiss" | "single",
+  format: CareerEventFormat,
   difficulty: CareerDifficulty,
   /** v0.3: pools grow ×growthPerSeason^seasonIndex (default 0 = season X). */
   seasonIndex = 0,
@@ -103,6 +110,36 @@ export function prizeFor(
   const quantized = quantize(raw);
   if (quantized === 0 && raw > 0) return CAREER_ECONOMY.roundQuantum;
   return quantized;
+}
+
+/**
+ * How many teams finish on each placement, per event format: a 16-team Swiss
+ * into a top-8 double elimination (3rd/4th from the third-place series, two
+ * lb_round2 exits = top6, two lb_round1 exits = top8); an 8-team single
+ * elimination (no third-place series); the Swiss-only qualifier (8 / 8).
+ */
+const PLACEMENTS_BY_FORMAT: Record<CareerEventFormat, Partial<Record<Placement, number>>> = {
+  swiss: { champion: 1, runner_up: 1, third: 1, fourth: 1, top6: 2, top8: 2, swiss_exit: 8 },
+  single: { champion: 1, runner_up: 1, top4: 2, top8: 4 },
+  swissOnly: { top8: 8, swiss_exit: 8 },
+};
+
+/**
+ * rc.29 (CAR-08): an event's REAL prize pool — every finishing place's
+ * prizeFor summed over the field (season growth, difficulty and the $50
+ * rounding included), so the figure a lobby advertises is what the event pays.
+ */
+export function prizePoolPaidFor(
+  tier: EventTier,
+  format: CareerEventFormat,
+  difficulty: CareerDifficulty,
+  seasonIndex = 0,
+): number {
+  let total = 0;
+  for (const [placement, count] of Object.entries(PLACEMENTS_BY_FORMAT[format])) {
+    total += (count ?? 0) * prizeFor(tier, placement as Placement, format, difficulty, seasonIndex);
+  }
+  return total;
 }
 
 /**
@@ -937,6 +974,47 @@ export function repGainFor(kind: keyof typeof CAREER_REP.gains, currentRep: numb
     return Math.ceil(base * CAREER_REP.softCapFactor);
   }
   return base;
+}
+
+/** The save flag counting the t3 rep awards of one split (CAREER_UNOFFICIAL.t3RepCapPerSplit). */
+export function t3RepKeyFor(seasonIndex: number, split: number | null): string {
+  return `t3rep:${seasonIndex}:${split ?? 0}`;
+}
+
+const TOP4_PLACEMENTS: readonly Placement[] = ["runner_up", "third", "fourth", "top4"];
+
+/**
+ * v2.0 (R40 review): the ONE rule for the reputation an event placement
+ * pays — finishEvent awards it, the results digest previews it. Null = no
+ * rep. The qualifier is Swiss-only (qualifying is all it pays); the t3 win /
+ * final share a per-split cap (`t3CapReached`); the regional pays a small
+ * floor even for a Swiss exit; a Worlds podium pays `worldsTop4` (the title
+ * itself then sets reputation to 100 in finishEvent).
+ */
+export function eventRepKindFor(
+  tier: EventTier,
+  placement: Placement,
+  opts: { t3CapReached: boolean },
+): keyof typeof CAREER_REP.gains | null {
+  const top4 = TOP4_PLACEMENTS.includes(placement);
+  switch (tier) {
+    case "t3":
+      if (opts.t3CapReached) return null;
+      return placement === "champion" ? "t3Win" : placement === "runner_up" ? "t3Final" : null;
+    case "t2":
+      return placement === "champion" ? "t2Win" : placement === "runner_up" ? "t2Final" : null;
+    case "qualifier":
+      return placement !== "swiss_exit" ? "qualifierAdvance" : null;
+    case "regional":
+      if (placement === "champion") return "regionalWin";
+      if (top4) return "regionalTop4";
+      return placement !== "swiss_exit" ? "regionalTop8" : "regionalSwissExit";
+    case "major":
+      if (placement === "champion") return "majorWin";
+      return top4 ? "majorTop4" : null;
+    case "worlds":
+      return placement === "champion" || top4 ? "worldsTop4" : null;
+  }
 }
 
 /**
