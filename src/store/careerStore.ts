@@ -11,7 +11,9 @@
  * Persistence: rocket-draft:career:v1 · { slots, activeSlot } only.
  * v0.2 bumped the persist version to 2 (day clock + gear ladder + mail);
  * v0.3 bumps to 3 (scrim scheduling/log, transfer wire, negotiation):
- * migrateSaveToV3 upgrades each slot in place — never a reset.
+ * migrateSaveToV3 upgrades each slot in place — never a reset. v2.0 (R40)
+ * chains migrateSaveToV4 (the weekend calendar) WITHOUT a persist bump: it is
+ * gated by each save's own `saveVersion` (4) and runs on every rehydrate.
  * AppShell's leave-run clearing NEVER touches this store (design §11).
  *
  * v0.3 session-only state (never persisted): `autoAdvance` (the FIFA-style
@@ -51,6 +53,7 @@ import {
   buyScoutReportFlow,
   cancelScrimFlow,
   chooseSponsorFlow,
+  continueEventToNextDayFlow,
   createCareerSave,
   declineBidFlow,
   declineUnofficial,
@@ -58,7 +61,7 @@ import {
   finishEvent,
   fireCoachFlow,
   hireCoachFlow,
-  migrateSaveToV3,
+  migrateSaveToV4,
   payBankLoanFlow,
   payDebtFlow,
   resolveInsertFlow,
@@ -77,6 +80,7 @@ import {
   takeBankLoanFlow,
   signPlayerFlow,
   simEventToEnd,
+  startChampionshipSundayFlow,
   startEvent,
   stepEventRound,
   syncSquadRoles,
@@ -139,10 +143,23 @@ interface CareerStoreState {
 
   advanceDay: () => void;
   advanceToNextStop: () => void;
+  /**
+   * v2.0 (R40): a Major/Worlds paused after its Saturday Swiss → Championship
+   * Sunday (one day; no-op unless `isEventPaused`). `advanceDay` /
+   * `advanceToNextStop` also move a paused Saturday on — this names the intent.
+   */
+  continueEventToNextDay: () => void;
   setAutoAdvance: (on: boolean) => void;
   dismissToast: (id: string) => void;
 
   enterEvent: (watch: boolean) => void;
+  /**
+   * v2.0 (R40): the Championship Sunday title card's CTA — marks the intro
+   * seen, re-picks watch / instant for the playoffs and (instant) sims them to
+   * the finish, in one write. No-op unless it is Championship Sunday before
+   * the first playoff round. Never changes a result.
+   */
+  startChampionshipSunday: (watch: boolean) => void;
   playEventRound: () => void;
   simEvent: () => void;
   completeEvent: () => void;
@@ -322,10 +339,12 @@ export const useCareerStore = create<CareerStoreState>()(
 
         advanceDay: () => withSave(advanceDayFlow),
         advanceToNextStop: () => withSave(advanceToNextStopFlow),
+        continueEventToNextDay: () => withSave(continueEventToNextDayFlow),
         setAutoAdvance: (on) => set({ autoAdvance: on }),
         dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 
         enterEvent: (watch) => withSave((s) => startEvent(s, watch)),
+        startChampionshipSunday: (watch) => withSave((s) => startChampionshipSundayFlow(s, watch)),
         playEventRound: () => withSave(stepEventRound),
         simEvent: () => withSave(simEventToEnd),
         completeEvent: () => withSave(finishEvent),
@@ -433,7 +452,7 @@ export const useCareerStore = create<CareerStoreState>()(
       migrate: (persisted) => {
         const state = persisted as CareerStoreState;
         if (state?.slots) {
-          state.slots = state.slots.map((slot) => (slot ? migrateSaveToV3(slot) : null));
+          state.slots = state.slots.map((slot) => (slot ? migrateSaveToV4(slot) : null));
         }
         return state;
       },
@@ -460,7 +479,7 @@ export const useCareerStore = create<CareerStoreState>()(
         state.slots = state.slots.map((slot) => {
           if (!slot) return null;
           try {
-            const upgraded = migrateSaveToV3(slot) ?? slot;
+            const upgraded = migrateSaveToV4(slot) ?? slot;
             syncSquadRoles(upgraded);
             return upgraded;
           } catch {

@@ -13,6 +13,7 @@
 import { CAREER_REP, CAREER_SLOTS, CAREER_STABILITY, FEATURES } from "@/config/balance";
 import type { Placement, PlayoffState, Region, TournamentState } from "../types";
 import { pointsFor, prizeFor, repTierOf } from "./economy";
+import { seedsFromSwiss } from "../swiss";
 import { isLocalRef } from "./localScene";
 import { derivedFloat, streams } from "./seeds";
 import type {
@@ -49,8 +50,15 @@ function teamPlayoffSeries(playoffs: PlayoffState | null, teamId: string) {
  * (champion/runner_up); teams that never reached playoffs are swiss_exit.
  * Single elim: quarterfinal losers top8, semifinal losers top4, final loser
  * runner_up.
+ * Swiss-only (v2.0 R40, the qualifier): the teams that reached 3 wins are
+ * "top8" (= QUALIFIED), the rest "swiss_exit" (= eliminated) — no champion
+ * and no new Placement value (Placement is shared with the Draft).
  */
 export function placementOf(state: TournamentState, teamId: string): Placement {
+  if (state.swissOnly) {
+    const record = state.swiss.records.find((r) => r.teamId === teamId);
+    return record?.status === "advanced" ? "top8" : "swiss_exit";
+  }
   if (state.playoffs?.championTeamId === teamId) return "champion";
 
   const runs = teamPlayoffSeries(state.playoffs, teamId);
@@ -96,9 +104,55 @@ const PLACEMENT_RANK: Record<Placement, number> = {
 };
 
 /**
+ * v2.0 (R40): did this compiled event crown a champion? False for the
+ * Swiss-only qualifier — its `championRef` is the TOP SWISS SEED, which no
+ * screen, news item or digest may call a champion.
+ */
+export function hasChampion(result: Pick<CompactEventResult, "tier">): boolean {
+  return result.tier !== "qualifier";
+}
+
+/**
+ * v2.0 (R40): a qualifier row's outcome — "qualified" (reached 3 wins,
+ * placement "top8") or "eliminated" ("swiss_exit"). Null for other tiers.
+ */
+export function qualifierOutcomeOf(
+  tier: CompactEventResult["tier"],
+  placement: Placement,
+): "qualified" | "eliminated" | null {
+  if (tier !== "qualifier") return null;
+  return placement === "swiss_exit" ? "eliminated" : "qualified";
+}
+
+/**
+ * The final order of a Swiss-only event: the qualified teams in the engine's
+ * own bracket seeding (`seedsFromSwiss` — the ONE seeding rule, the same list
+ * the digest's "qualified eight" shows), then everyone else by Swiss standing
+ * (wins ↓, losses ↑, game diff ↓, rating ↓, id).
+ */
+function swissOnlyOrder(state: TournamentState): Map<string, number> {
+  const seeds = seedsFromSwiss(state.swiss, state.teams);
+  const seeded = new Set(seeds);
+  const rest = state.swiss.records
+    .filter((r) => !seeded.has(r.teamId))
+    .sort(
+      (a, b) =>
+        b.wins - a.wins ||
+        a.losses - b.losses ||
+        b.gameDiff - a.gameDiff ||
+        (state.teams[b.teamId]?.rating.total ?? 0) - (state.teams[a.teamId]?.rating.total ?? 0) ||
+        a.teamId.localeCompare(b.teamId),
+    )
+    .map((r) => r.teamId);
+  return new Map([...seeds, ...rest].map((id, i) => [id, i]));
+}
+
+/**
  * Compile a finished tournament into the compact result the save keeps
  * (brackets are discarded). One row per team — refs are team ids, the user
  * team stays "user" — sorted champion-first for the recap screens.
+ * Swiss-only (R40): qualified first, each group in Swiss seed order; the
+ * `championRef` slot then holds the top seed (see `hasChampion`).
  */
 export function compileEventResult(
   def: CareerEventDef,
@@ -119,9 +173,18 @@ export function compileEventResult(
       prize: prizeFor(def.tier, placement, def.format, ctx.difficulty, def.seasonIndex),
     };
   });
-  rows.sort(
-    (a, b) => PLACEMENT_RANK[a.placement] - PLACEMENT_RANK[b.placement] || a.ref.localeCompare(b.ref),
-  );
+  if (state.swissOnly) {
+    const rank = swissOnlyOrder(state);
+    rows.sort(
+      (a, b) =>
+        PLACEMENT_RANK[a.placement] - PLACEMENT_RANK[b.placement] ||
+        (rank.get(a.ref) ?? 0) - (rank.get(b.ref) ?? 0),
+    );
+  } else {
+    rows.sort(
+      (a, b) => PLACEMENT_RANK[a.placement] - PLACEMENT_RANK[b.placement] || a.ref.localeCompare(b.ref),
+    );
+  }
 
   const userRow = rows.find((r) => r.ref === "user");
 
@@ -156,7 +219,8 @@ export function applyResultToStandings(
   result: CompactEventResult,
   regionOf: (ref: string) => Region,
 ): CompetitionState {
-  // v2.0 (R30): a qualifier banks no points — it names Saturday's field.
+  // v2.0 (R30): a qualifier banks no points — it names the regional's field
+  // (R40: Saturday's Swiss-only qualifier → Sunday's regional, exactly 8 refs).
   if (result.tier === "qualifier") {
     const region = result.region;
     if (!region) return competition;

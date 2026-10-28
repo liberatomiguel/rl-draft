@@ -523,6 +523,12 @@ export interface TournamentState {
   playoffs: PlayoffState | null;
   stage: TournamentStage;
   userEliminated: boolean;
+  /**
+   * Career v2.0 (R40): a Swiss-ONLY event (the regional qualifier) — the
+   * tournament is "finished" the moment the Swiss stage ends, `playoffs`
+   * stays null. Absent on every Draft-mode state (their shape is unchanged).
+   */
+  swissOnly?: true;
 }
 
 // --- Results ---

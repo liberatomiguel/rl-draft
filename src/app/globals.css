@@ -511,6 +511,31 @@ body::before {
   animation: day-tick 0.4s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
+/*
+ * v2.0 (R40) career — the Championship Sunday title card: a one-shot title
+ * entrance and the scaleX hand-off bar (its animationend opens the playoffs;
+ * the duration is set inline from CAREER_PLAYBACK.sundayIntroMs). Transform /
+ * opacity only (DESIGN-DECISIONS #128–#130). Off under reduced motion, where
+ * the card is static and a button opens the playoffs.
+ */
+@keyframes sunday-title {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sunday-title {
+  animation: sunday-title calc(0.7s * var(--anim-scale, 1)) cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+@keyframes sunday-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.sunday-progress {
+  transform-origin: left center;
+  animation-name: sunday-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }
@@ -1051,6 +1076,8 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
   .pop-in,
+  .sunday-title,
+  .sunday-progress,
   .pulse-soft,
   .card-special::after,
   .card-legendary.card-special,

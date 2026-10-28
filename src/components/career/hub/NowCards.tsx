@@ -27,6 +27,7 @@ import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { TeamStars } from "@/components/career/TeamStars";
 import { TierChip, maxPointsOf, prizePoolOf } from "@/components/career/hub/hubShared";
+import { formatLineOf } from "@/components/career/event/WeekendPlan";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
@@ -197,15 +198,24 @@ export function NowEvent({
   primaryLabel,
   onPrimary,
   onAdvanceDay,
+  stage,
+  day,
 }: {
   save: CareerSave;
   C: CareerCopy;
   D: DatesCopy;
   def: CareerEventDef;
   daysAway: number;
-  primaryLabel: string;
+  primaryLabel: React.ReactNode;
   onPrimary: () => void;
   onAdvanceDay?: () => void;
+  /**
+   * v2.0 (R40): the weekend phase, in place of the matchday badge — "Swiss
+   * stage" / "Swiss stage complete" (Saturday) / "Championship Sunday".
+   */
+  stage?: { label: string; tone: "orange" | "good" | "gold"; live?: boolean };
+  /** The day the card is about (Sunday of a two-day event); defaults to `def.day`. */
+  day?: number;
 }) {
   const fieldRegion =
     def.region ?? (def.tier === "t2" || def.tier === "t3" ? save.identity.region : null);
@@ -227,12 +237,18 @@ export function NowEvent({
         {def.name}
       </h2>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge tone="orange" className={cx(daysAway === 0 && "animate-pulse")}>
-          {C.hub.matchdayIn(daysAway)}
-        </Badge>
+        {stage ? (
+          <Badge tone={stage.tone} className={cx(stage.live && "animate-pulse")}>
+            {stage.label}
+          </Badge>
+        ) : (
+          <Badge tone="orange" className={cx(daysAway === 0 && "animate-pulse")}>
+            {C.hub.matchdayIn(daysAway)}
+          </Badge>
+        )}
         <TierChip tier={def.tier} />
         {def.region ? <Badge className={REGION_BADGE[def.region]}>{def.region}</Badge> : null}
-        <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))}</Badge>
+        <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, day ?? def.day))}</Badge>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
@@ -253,9 +269,7 @@ export function NowEvent({
           <TeamStars stars={Math.round(fieldStars)} size="md" className="mt-1" />
         </div>
       </div>
-      <p className="mt-2 text-xs text-faint">
-        {def.format === "swiss" ? C.event.formatSwiss : C.event.formatSingle}
-      </p>
+      <p className="mt-2 text-xs text-faint">{formatLineOf(C, def)}</p>
 
       {unavailable ? (
         <p className="mt-3 rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-xs text-bad">

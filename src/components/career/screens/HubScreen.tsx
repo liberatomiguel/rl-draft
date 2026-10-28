@@ -47,6 +47,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import {
   CAREER_SLOTS,
   dateOfDay,
+  eventDayPhaseOf,
   isWindowWeek,
   nameOfRef,
   runwayWeeks,
@@ -59,6 +60,8 @@ import {
   weekOfDay,
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
+import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
+import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { DayCard } from "@/components/career/hub/DayCard";
 import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
@@ -223,6 +226,7 @@ export function HubScreen() {
   const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
   const markNewsRead = useCareerStore((s) => s.markNewsRead);
   const markFlag = useCareerStore((s) => s.markFlag);
+  const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
 
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [wireOpen, setWireOpen] = useState(false);
@@ -284,6 +288,17 @@ export function HubScreen() {
   const eventNow =
     save.activeEvent?.def ??
     (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null);
+  // R40: the weekend phase of today's event (Saturday Swiss · the pause · Championship Sunday).
+  const eventPhase = eventDayPhaseOf(save);
+  const eventRole = eventNow ? weekendRoleOf(eventNow, today) : null;
+  const eventStage =
+    eventPhase === "paused"
+      ? { label: C.event.swissComplete, tone: "good" as const }
+      : eventRole === "championshipSunday"
+        ? { label: C.event.championshipSunday, tone: "gold" as const, live: true }
+        : eventRole === "swissDay"
+          ? { label: C.event.swissStage, tone: "orange" as const, live: true }
+          : undefined;
   const outBid =
     save.pendingOffers.find((o) => o.status === "pending" && o.direction === "out") ?? null;
   const sponsorOffers =
@@ -378,8 +393,14 @@ export function HubScreen() {
                     D={D}
                     def={eventNow}
                     daysAway={0}
-                    primaryLabel={C.hub.continue}
-                    onPrimary={() => router.push("/career/event")}
+                    day={today}
+                    stage={eventStage}
+                    primaryLabel={eventPhase === "paused" ? <ContinueToSundayLabel /> : C.hub.continue}
+                    onPrimary={() => {
+                      // R40: the paused Saturday moves exactly one day, to Championship Sunday.
+                      if (eventPhase === "paused") continueEventToNextDay();
+                      router.push("/career/event");
+                    }}
                   />
                 </Panel>
               ) : null}

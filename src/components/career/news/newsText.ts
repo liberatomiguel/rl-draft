@@ -15,6 +15,18 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import type { MailItem, NewsItem } from "@/engine/career/types";
 
+/**
+ * v2.0 (R40): a qualifier's "resultUser" reads Qualified / Eliminated (its
+ * own templates), never a bracket placement. Legacy items (no `tier`) keep
+ * the generic template.
+ */
+function templateKeyOf(titleKey: string, raw: Record<string, string | number>): string {
+  if (titleKey === "resultUser" && raw.tier === "qualifier") {
+    return raw.placement === "swiss_exit" ? "resultUserEliminated" : "resultUserQualified";
+  }
+  return titleKey;
+}
+
 /** Param keys that carry raw dollar amounts (formatted before interpolation). */
 const MONEY_PARAM_KEYS = new Set(["fee", "bonus", "f1", "f2", "f3"]);
 
@@ -82,6 +94,7 @@ export function resolveNews(
 
   const raw = item.params ?? {};
   const p = displayParams(career, item.titleKey, raw);
+  const key = templateKeyOf(item.titleKey, raw);
 
   // A few titleKeys have no news.tpl entry — route them to their home groups.
   if (item.titleKey === "digest") return { title: career.news.digest(Number(p.n ?? 0)) };
@@ -101,9 +114,9 @@ export function resolveNews(
 
   const titles = career.news.tpl as unknown as TplMap;
   const bodies = career.news.body as unknown as TplMap;
-  const tpl = titles[item.titleKey];
+  const tpl = titles[key];
   const title = tpl ? tpl(p) : item.titleKey;
-  const bodyTpl = bodies[item.titleKey];
+  const bodyTpl = bodies[key];
   return { title, body: bodyTpl ? bodyTpl(p) : undefined };
 }
 
@@ -127,8 +140,9 @@ export function resolveToastTitle(
   const p = displayParams(career, toast.titleKey, toast.params ?? {});
   const mailTitles = career.mail.tpl as unknown as TplMap;
   const newsTitles = career.news.tpl as unknown as TplMap;
+  const newsKey = templateKeyOf(toast.titleKey, toast.params ?? {});
   if (toast.source === "mail" && mailTitles[toast.titleKey]) return mailTitles[toast.titleKey](p);
-  if (newsTitles[toast.titleKey]) return newsTitles[toast.titleKey](p);
+  if (newsTitles[newsKey]) return newsTitles[newsKey](p);
   if (mailTitles[toast.titleKey]) return mailTitles[toast.titleKey](p);
   return toast.titleKey;
 }

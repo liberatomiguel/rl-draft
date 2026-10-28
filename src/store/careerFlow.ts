@@ -13,9 +13,16 @@
  *    upcoming-event commit (lobby opens on its matchday) + random-event roll →
  *    unofficial offer → split-boundary payday → contract telegraphs.
  *  - MON-FRI: the daily training tick (skipped on committed event weeks).
- *  - SATURDAY (matchday): AI events resolve; the user's committed event waits
- *    in the lobby (Advance stops here).
- *  - SUNDAY: rest.
+ *  - v2.0 (R40) THE WEEKEND — every event resolves on its own day, and an
+ *    event the user is not playing resolves headlessly on its LAST day
+ *    (`eventEndDayFor`); the user's committed event waits in the lobby
+ *    (Advance stops there):
+ *      regional week  SAT the qualifiers (Swiss only)   SUN the regionals
+ *      Major / Worlds SAT lobby + Swiss stage           SUN the playoffs
+ *      open week      SAT unofficial cups               SUN rest
+ *    A two-day event the user plays PAUSES after its Swiss on Saturday
+ *    (`isEventPaused`): the clock may then move to Sunday, where its
+ *    playoffs play and `finishEvent` runs once.
  * Seed streams stay WEEK-keyed (each fires once per week) — the day clock
  * changes when things surface, never how they roll.
  */
@@ -48,7 +55,8 @@ import { CAREER_BEATS } from "@/data/career/beats";
 import { PLAYER_NAME_BANK } from "@/data/career/names";
 import { simulateSeries } from "@/engine/match";
 import {
-  fastForward,
+  asSwissOnly,
+  atPlayoffsStart,
   initFieldTournament,
   playNextRound,
   userHasPendingSeries,
@@ -58,11 +66,15 @@ import {
   DAYS_PER_SEASON,
   dayOfWeekOf,
   eventDayFor,
+  eventEndDayFor,
+  isTwoDayEvent,
   isWindowStartWeek,
   isWindowWeek,
   officialEventDefsForWeek,
+  playoffsDayFor,
   qualifierDayFor,
   qualifierDefsForWeek,
+  regionalDayFor,
   regionalForQualifier,
   seasonIdFor,
   seasonLabelFor,
@@ -75,6 +87,7 @@ import {
 import {
   compileEventResult,
   applyResultToStandings,
+  hasChampion,
   legacyGradeFor,
   majorFieldFor,
   placementOf,
@@ -105,6 +118,7 @@ import {
   bankLoanRefusal,
   bootcampTierFor,
   computeSalaryAsk,
+  eventRepKindFor,
   gearNextItem,
   gearPriceFor,
   gearTrainingBonus,
@@ -120,6 +134,7 @@ import {
   runwayWeeks,
   signableOverallCap,
   sponsorOffersFor,
+  t3RepKeyFor,
   takeBankLoan,
   unlocksFor,
   weeklyPayroll,
@@ -332,19 +347,86 @@ export function userIsDirect(save: CareerSave): boolean {
   return userSeedingFor(save).direct.includes("user");
 }
 
+/** The user's own result for an event, when they played it (and it is still on file). */
+function userResultFor(save: CareerSave, eventId: string): CompactEventResult | null {
+  return save.eventResults.find((r) => r.eventId === eventId && r.userPlacement) ?? null;
+}
+
 /**
  * v2.0 (R30): may the user play this regional? Direct, or through the
- * Wednesday qualifier; a regional whose qualifier was played without the
- * user making it is off. Regionals without qualifier data (pre-2.0 saves
- * mid-season) stay open, as before.
+ * qualifier (R40: Saturday → Sunday's regional); a regional whose qualifier
+ * was played without the user making it is off. Regionals without qualifier
+ * data (pre-2.0 saves mid-season) stay open, as before.
+ * R40 review: the week's commit and results outrank today's seeding — a
+ * committed, in-progress or played regional is the user's, and a qualifier
+ * the user PLAYED decides (through → yes, out → no) even if the seeding has
+ * drifted across the direct-8 line since (the flow resolves it the same way).
  */
 export function regionalUserEligible(save: CareerSave, def: CareerEventDef): boolean {
   if (def.tier !== "regional" || def.region !== save.identity.region) return false;
-  if (save.pendingEventDef?.id === def.id) return true;
+  if (isUsersOwnEvent(save, def) || userResultFor(save, def.id)) return true;
+  const q = qualifierDefsForWeek(def.seasonIndex, def.week).find((d) => d.region === def.region);
+  const played = q ? userResultFor(save, q.id) : null;
+  if (played) return played.userPlacement !== "swiss_exit";
   if (userIsDirect(save)) return true;
-  const q = save.competition.qualifiedRefs?.[def.region];
-  if (!q || q.eventId !== def.id) return true;
-  return q.refs.includes("user");
+  const qualified = save.competition.qualifiedRefs?.[def.region];
+  if (!qualified || qualified.eventId !== def.id) return true;
+  return qualified.refs.includes("user");
+}
+
+/**
+ * v2.0 (R40): is this own-region qualifier the user's? For the week holding
+ * the clock (and earlier weeks) the commit decides — the qualifier committed
+ * on Monday (outside the direct 8), in progress or played — never today's
+ * seeding: a user committed direct who drifts out of the 8 still plays
+ * Sunday, while Saturday's qualifier resolves without them. Future weeks
+ * preview with today's seeding (outside the direct 8 → the qualifier).
+ */
+export function userOwnsQualifier(save: CareerSave, def: CareerEventDef): boolean {
+  if (def.tier !== "qualifier" || def.region !== save.identity.region) return false;
+  if (isUsersOwnEvent(save, def) || userResultFor(save, def.id)) return true;
+  const committed =
+    def.seasonIndex < save.clock.seasonIndex ||
+    (def.seasonIndex === save.clock.seasonIndex && def.week <= weekOfDay(save.clock.day));
+  return !committed && !userIsDirect(save);
+}
+
+/**
+ * v2.0 (R40): the user-relevant event occupying `day` — committed, in
+ * progress or scheduled (the agenda / calendar / next-stop source):
+ *  - the own-region qualifier on Saturday (`userOwnsQualifier`: this week's
+ *    commit or result; future weeks preview a user outside the direct 8 of
+ *    the CURRENT split standings — the honest preview);
+ *  - the own regional on Sunday, until a played qualifier rules the user out
+ *    (`regionalUserEligible`);
+ *  - a Major / Worlds on BOTH weekend days — `def.day` (Saturday, Swiss) and
+ *    `playoffsDayFor(def)` (Sunday, Championship Sunday) — spectators too.
+ * Compare `day` with `def.day` / `playoffsDayFor(def)` to tell the phase.
+ */
+export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef | null {
+  const covers = (def: CareerEventDef) => day === def.day || day === eventEndDayFor(def);
+  const active = save.activeEvent?.def;
+  if (active && covers(active)) return active;
+  const pending = save.pendingEventDef;
+  if (pending && covers(pending)) return pending;
+  const week = weekOfDay(day);
+  const seasonIndex = save.clock.seasonIndex;
+  // The user's committed / in-progress event lands only on its OWN day(s)
+  // (matched above) — a pre-R40 event still running keeps the day it really
+  // started, and never shows again on the re-timed weekend day.
+  if (day === qualifierDayFor(week)) {
+    const q = qualifierDefsForWeek(seasonIndex, week).find((d) => d.region === save.identity.region);
+    if (q && !isUsersOwnEvent(save, q) && userOwnsQualifier(save, q)) return q;
+  }
+  for (const def of officialEventDefsForWeek(seasonIndex, week)) {
+    if (!covers(def) || isUsersOwnEvent(save, def)) continue;
+    if (def.tier === "regional") {
+      if (def.region !== save.identity.region) continue;
+      return regionalUserEligible(save, def) ? def : null;
+    }
+    return def;
+  }
+  return null;
 }
 
 function userQualifiedFor(save: CareerSave, def: CareerEventDef): boolean {
@@ -558,8 +640,9 @@ export function processDayArrival(input: CareerSave): CareerSave {
     save.unofficialOffer = null;
 
     const defs = officialEventDefsForWeek(seasonIndex, week);
-    // v2.0 (R30): on a regional week, a user outside the direct 8 plays the
-    // Wednesday qualifier first — the regional only lands if they get through.
+    // v2.0 (R30 → R40): on a regional week, a user outside the direct 8 plays
+    // the SATURDAY qualifier first — Sunday's regional only lands if they get
+    // through. A direct user commits straight to the Sunday regional.
     const qualifier = qualifierDefsForWeek(seasonIndex, week).find(
       (q) => q.region === save.identity.region,
     );
@@ -719,39 +802,42 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
   }
 
-  // ==================== WEDNESDAY (v2.0 R30: qualifiers) ===================
+  // ============ THE WEEKEND (v2.0 R40: every event on its own day) ==========
+  // SATURDAY of a regional week: every AI qualifier resolves (Swiss only); the
+  // user's own — outside the direct 8 — waits in the lobby.
   if (day === qualifierDayFor(week)) {
     for (const q of qualifierDefsForWeek(seasonIndex, week)) {
-      // The user's own qualifier waits in the lobby; every other one resolves.
-      if (save.pendingEventDef?.id === q.id) continue;
+      if (isUsersOwnEvent(save, q)) continue;
       resolveAiEvent(save, q);
     }
   }
-
-  // ==================== SATURDAY (matchday) ================================
-  if (dow === CAREER_CALENDAR.eventDayOfWeek) {
-    const defs = officialEventDefsForWeek(seasonIndex, week);
-    for (const def of defs) {
-      const isUsers =
-        userQualifiedFor(save, def) &&
-        (def.tier !== "regional" || def.region === save.identity.region);
-      if (!isUsers) {
-        resolveAiEvent(save, def);
-        // An unattended Worlds still closes the season (watch-party digest →
-        // straight to the review; design §7 spectator weeks).
-        if (def.tier === "worlds") {
-          const worldsResult =
-            save.eventResults.find(
-              (r) => r.seasonIndex === seasonIndex && r.tier === "worlds",
-            ) ?? null;
-          enterSeasonReview(save, worldsResult);
-          return capNews(save);
-        }
-      }
+  // An official event the user is not playing resolves on its LAST day: the
+  // regionals on SUNDAY, an AI-only Major/Worlds on SUNDAY as well (its
+  // champion and news land on Championship Sunday). The user's own regional
+  // (direct or qualified), Major or Worlds waits in the lobby / is in progress.
+  for (const def of officialEventDefsForWeek(seasonIndex, week)) {
+    if (day !== eventEndDayFor(def) || isUsersOwnEvent(save, def)) continue;
+    resolveAiEvent(save, def);
+    // An unattended Worlds still closes the season (watch-party digest →
+    // straight to the review; design §7 spectator weeks) — on the season's
+    // last day (W32 Sunday = DAYS_PER_SEASON).
+    if (def.tier === "worlds") {
+      const worldsResult = save.eventResults.find((r) => r.eventId === def.id) ?? null;
+      enterSeasonReview(save, worldsResult);
+      return capNews(save);
     }
   }
 
   return capNews(save);
+}
+
+/**
+ * v2.0 (R40): the user's OWN instance of an event — committed (lobby) or in
+ * progress. The commit (Monday, or Saturday's qualifier → Sunday's regional)
+ * is the authority: today's seeding never re-decides whose event it is.
+ */
+function isUsersOwnEvent(save: CareerSave, def: CareerEventDef): boolean {
+  return save.pendingEventDef?.id === def.id || save.activeEvent?.def.id === def.id;
 }
 
 function capNews(save: CareerSave): CareerSave {
@@ -806,11 +892,26 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
 }
 
 function resolveAiEvent(save: CareerSave, def: CareerEventDef): void {
+  // v2.0 (R40): idempotent — an event already on file (a legacy save that
+  // resolved it under the pre-R40 weekday layout, e.g. a midweek (day 3)
+  // qualifier or a Saturday regional) is never simulated twice: no double
+  // points or news.
+  if (save.eventResults.some((r) => r.eventId === def.id)) return;
+  // R40 review: the user's own-region qualifier resolves without them only
+  // when they hold a direct seat in Sunday's regional (the week's commit) —
+  // seed the region with the user in it, so the org the user displaced from
+  // the direct 8 plays Saturday instead of missing both events.
+  const regional = def.tier === "qualifier" ? regionalForQualifier(def) : null;
+  const userSeedRow =
+    regional && def.region === save.identity.region && isUsersOwnEvent(save, regional)
+      ? { rating: approxUserRating(save), prestige: repTierOf(save.reputation) }
+      : null;
   const state = simulateAiEvent(def, {
     world: save.world,
     competition: save.competition,
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
+    userSeedRow,
   });
   const result = compileEventResult(def, state, {
     difficulty: save.difficulty,
@@ -862,7 +963,17 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
   );
   save.eventResults.push(result);
   if (save.eventResults.length > CAREER_SAVE.eventResultsCap) {
-    save.eventResults = save.eventResults.slice(-CAREER_SAVE.eventResultsCap);
+    // R40 review: the oldest rows go first — but never the user's OWN results
+    // of the running season: the season review counts its Majors and titles
+    // from this list (a season files ~130 results, mostly AI qualifiers and
+    // regionals, so a plain FIFO dropped the split-1 Major before Worlds).
+    const season = save.clock.seasonIndex;
+    let excess = save.eventResults.length - CAREER_SAVE.eventResultsCap;
+    save.eventResults = save.eventResults.filter((r) => {
+      if (excess <= 0 || (r.seasonIndex === season && r.userPlacement)) return true;
+      excess -= 1;
+      return false;
+    });
   }
 }
 
@@ -1322,7 +1433,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
 
   const unavailable =
     save.pendingUnavailability?.eventId === def.id ? save.pendingUnavailability.playerId : null;
-  const { team, usedStandIn } = userTeamFor({
+  const { team, usedStandIn, fieldedIds } = userTeamFor({
     identity: save.identity,
     squad: save.squad,
     starterIds: save.starterIds,
@@ -1362,6 +1473,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     tournament,
     fieldQuality,
     watched: watch,
+    fieldedIds,
   };
   // Consumed the bootcamp edge (applies to this event's team build).
   if (save.finances.bootcampSharp > 0 && def.tier !== "t3" && def.tier !== "t2") {
@@ -1401,14 +1513,110 @@ export function declineUnofficial(input: CareerSave): CareerSave {
   return save;
 }
 
+// --- v2.0 (R40): the two-day Major / Worlds -----------------------------------
+
+/**
+ * True while the user's two-day event (Major/Worlds) sits between its
+ * Saturday Swiss and its Sunday playoffs: the Swiss stage is complete, the
+ * bracket is seeded, no playoff round has been played and the clock is still
+ * before the playoffs day. Derived purely from persisted fields (activeEvent
+ * + clock), so the pause survives a reload with no extra state. While paused,
+ * stepEventRound / simEventToEnd refuse and advanceDayFlow may move the clock
+ * to Sunday. A legacy event already INTO its playoffs on Saturday is not
+ * paused (it simply finishes that day).
+ */
+export function isEventPaused(save: CareerSave): boolean {
+  const ev = save.activeEvent;
+  if (!ev || !isTwoDayEvent(ev.def)) return false;
+  return save.clock.day < playoffsDayFor(ev.def) && atPlayoffsStart(ev.tournament);
+}
+
+/** Where the user's event stands today (the screens' single source). */
+export type EventDayPhase =
+  /** No user event today. */
+  | "none"
+  /** `pendingEventDef` opens today; `startEvent` (store `enterEvent`) not called yet. */
+  | "lobby"
+  /** `activeEvent` in its Swiss stage (Saturday for a Major/Worlds). */
+  | "swiss"
+  /** Two-day event, Saturday: Swiss complete, playoffs seeded — waits for Sunday (`isEventPaused`). */
+  | "paused"
+  /** `activeEvent` in its playoffs (Sunday for a Major/Worlds — "Championship Sunday"). */
+  | "playoffs"
+  /** Tournament finished; `finishEvent` (store `completeEvent`) pending — the digest. */
+  | "finished";
+
+export function eventDayPhaseOf(save: CareerSave): EventDayPhase {
+  const ev = save.activeEvent;
+  if (ev) {
+    if (ev.tournament.stage === "finished") return "finished";
+    if (isEventPaused(save)) return "paused";
+    return ev.tournament.stage;
+  }
+  if (save.pendingEventDef && save.pendingEventDef.day === save.clock.day) return "lobby";
+  return "none";
+}
+
+/**
+ * True when the in-progress Major/Worlds is on its playoffs day (Sunday) —
+ * "Championship Sunday", whether or not a playoff round has been played yet.
+ */
+export function isChampionshipSunday(save: CareerSave): boolean {
+  const ev = save.activeEvent;
+  return Boolean(
+    ev && isTwoDayEvent(ev.def) && ev.tournament.stage !== "finished" &&
+      save.clock.day >= playoffsDayFor(ev.def) && save.clock.day !== ev.def.day,
+  );
+}
+
+/** v2.0 (R40): the save flag marking an event's Championship Sunday intro as seen. */
+export function sundayIntroFlagFor(eventId: string): string {
+  return `sundayIntro:${eventId}`;
+}
+
+/**
+ * v2.0 (R40): Championship Sunday opens like a matchday — the CTA of its
+ * title card. In ONE write: marks the intro seen (it plays at most once per
+ * event), re-picks watch / instant for the playoffs (`watched` is a UI flag
+ * and never feeds the sim, so the choice cannot change a result) and, for
+ * instant, sims the playoffs to the finish (the digest follows). Only on
+ * Championship Sunday before the first playoff round; the SAME save otherwise.
+ */
+export function startChampionshipSundayFlow(input: CareerSave, watch: boolean): CareerSave {
+  const ev = input.activeEvent;
+  if (!ev || !isChampionshipSunday(input) || !atPlayoffsStart(ev.tournament)) return input;
+  const save = clone(input);
+  save.activeEvent!.watched = watch;
+  save.flags[sundayIntroFlagFor(ev.def.id)] = true;
+  return watch ? save : simEventToEnd(save);
+}
+
+/**
+ * A two-day event must not cross from its Swiss into its playoffs before the
+ * playoffs day: true when `t` sits exactly on that boundary too early.
+ */
+function holdsForPlayoffsDay(save: CareerSave, t: TournamentState): boolean {
+  const ev = save.activeEvent;
+  if (!ev || !isTwoDayEvent(ev.def)) return false;
+  return save.clock.day < playoffsDayFor(ev.def) && atPlayoffsStart(t);
+}
+
 export function stepEventRound(input: CareerSave): CareerSave {
+  // R40: the Saturday pause — nothing to play until Sunday (same object back,
+  // so a watch-mode clock calling this cannot spin store writes).
+  if (isEventPaused(input)) return input;
   const save = clone(input);
   const ev = save.activeEvent;
   if (!ev || ev.tournament.stage === "finished") return save;
   const rng = createRng(ev.rngState);
   let t: TournamentState = playNextRound(ev.tournament, save.difficulty, rng);
   let guard = 0;
-  while (t.stage !== "finished" && !userHasPendingSeries(t) && guard < 16) {
+  while (
+    t.stage !== "finished" &&
+    !userHasPendingSeries(t) &&
+    !holdsForPlayoffsDay(save, t) &&
+    guard < 16
+  ) {
     t = playNextRound(t, save.difficulty, rng);
     guard += 1;
   }
@@ -1417,12 +1625,25 @@ export function stepEventRound(input: CareerSave): CareerSave {
   return save;
 }
 
+/**
+ * Instant sim. R40: on a two-day event's Saturday it sims to the END OF THE
+ * SWISS only (the event then pauses); on Sunday — or for any one-day event —
+ * it runs to the finish. Same rng order as stepping round by round, so a
+ * paused-and-resumed event ends exactly where an uninterrupted one would.
+ */
 export function simEventToEnd(input: CareerSave): CareerSave {
+  if (isEventPaused(input)) return input;
   const save = clone(input);
   const ev = save.activeEvent;
   if (!ev || ev.tournament.stage === "finished") return save;
   const rng = createRng(ev.rngState);
-  ev.tournament = fastForward(ev.tournament, save.difficulty, rng);
+  let t = ev.tournament;
+  let guard = 0;
+  while (t.stage !== "finished" && !holdsForPlayoffsDay(save, t) && guard < 20) {
+    t = playNextRound(t, save.difficulty, rng);
+    guard += 1;
+  }
+  ev.tournament = t;
   ev.rngState = rng.state;
   return save;
 }
@@ -1473,8 +1694,10 @@ export function finishEvent(input: CareerSave): CareerSave {
     }
   }
 
-  // Roster stability (fielded new faces).
-  const fielded = fieldedIdsFor(save);
+  // Roster stability (fielded new faces). R40 review: the players who
+  // actually played — the team froze at startEvent (a two-day event pauses
+  // overnight; the lineup is locked meanwhile, older saves read it now).
+  const fielded = ev.fieldedIds ?? fieldedIdsFor(save);
   const stab = stabilityAssess({
     fieldedIds: fielded,
     squadAtSplitStart: save.competition.squadAtSplitStart,
@@ -1539,14 +1762,16 @@ export function finishEvent(input: CareerSave): CareerSave {
     type: "result",
     priority: 2,
     titleKey: "resultUser",
-    params: { event: def.name, placement },
+    // R40: `tier` lets the feed read a qualifier's "top8" as "Qualified".
+    params: { event: def.name, placement, tier: def.tier },
   });
 
   save.activeEvent = null;
   save.pendingEventDef = null;
   save.pendingUnavailability = null;
 
-  // v2.0 (R30): through the Wednesday qualifier → Saturday's regional is on.
+  // v2.0 (R30 → R40): through Saturday's qualifier → Sunday's regional is on
+  // (the player advances one day to its lobby); out → it plays without them.
   if (def.tier === "qualifier") {
     const regional = regionalForQualifier(def);
     const advanced = placement !== "swiss_exit";
@@ -1613,6 +1838,7 @@ function underdogGapOf(t: TournamentState): number {
   return Math.round((avg - user.rating.avgPlayerOverall) * 10) / 10;
 }
 
+/** The lineup as it stands now — the fallback for events started before `fieldedIds` existed. */
 function fieldedIdsFor(save: CareerSave): string[] {
   const unavailable = save.pendingUnavailability?.playerId;
   const ids = save.starterIds.filter((id) => id !== unavailable);
@@ -1624,38 +1850,17 @@ function fieldedIdsFor(save: CareerSave): string[] {
 }
 
 function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placement): void {
-  // t3 rep (win or final) shares one per-split cap counter.
-  if (def.tier === "t3" && (placement === "champion" || placement === "runner_up")) {
-    const key = `t3rep:${save.clock.seasonIndex}:${splitOfWeek(weekOfDay(save.clock.day)) ?? 0}`;
-    const used = (save.flags[key] as unknown as number) || 0;
-    if (Number(used) < CAREER_UNOFFICIAL.t3RepCapPerSplit) {
-      gainRep(save, placement === "champion" ? "t3Win" : "t3Final");
-      (save.flags as Record<string, unknown>)[key] = Number(used) + 1;
-    }
-  }
-  if (def.tier === "qualifier") {
-    if (placement !== "swiss_exit") gainRep(save, "qualifierAdvance");
-    if (placement === "champion") gainRep(save, "qualifierWin");
-  }
-  if (def.tier === "t2" && placement === "champion") gainRep(save, "t2Win");
-  if (def.tier === "t2" && placement === "runner_up") gainRep(save, "t2Final");
-  if (def.tier === "regional") {
-    if (placement === "champion") gainRep(save, "regionalWin");
-    else if (["runner_up", "third", "fourth", "top4"].includes(placement)) gainRep(save, "regionalTop4");
-    else if (placement !== "swiss_exit") gainRep(save, "regionalTop8");
-    // v0.3 early floor: showing up at an official pays a little standing —
-    // a losing season 1 still climbs toward the first unlocks.
-    else gainRep(save, "regionalSwissExit");
-  }
-  if (def.tier === "major") {
-    if (placement === "champion") gainRep(save, "majorWin");
-    else if (["runner_up", "third", "fourth", "top4"].includes(placement)) gainRep(save, "majorTop4");
-  }
-  if (def.tier === "worlds") {
-    if (["champion", "runner_up", "third", "fourth", "top4"].includes(placement)) {
-      gainRep(save, "worldsTop4");
-    }
-  }
+  // The rule lives in the engine (eventRepKindFor — the digest previews the
+  // same one). t3 rep (win or final) shares one per-split cap counter; the
+  // regional's Swiss-exit floor keeps a losing season 1 climbing.
+  const key = t3RepKeyFor(save.clock.seasonIndex, splitOfWeek(weekOfDay(save.clock.day)));
+  const used = Number(save.flags[key] as unknown as number) || 0;
+  const kind = eventRepKindFor(def.tier, placement, {
+    t3CapReached: used >= CAREER_UNOFFICIAL.t3RepCapPerSplit,
+  });
+  if (!kind) return;
+  gainRep(save, kind);
+  if (def.tier === "t3") (save.flags as Record<string, unknown>)[key] = used + 1;
 }
 
 function accumulateStats(save: CareerSave, t: TournamentState): void {
@@ -1729,7 +1934,8 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
     repEnd: save.reputation,
     grade,
     majorsQualified,
-    titles: seasonEvents.filter((r) => r.rows.find((x) => x.ref === "user")?.placement === "champion")
+    // R40: a qualifier never crowns anyone (legacy pre-R40 qualifier rows included).
+    titles: seasonEvents.filter((r) => hasChampion(r) && r.rows.find((x) => x.ref === "user")?.placement === "champion")
       .length,
   };
   save.history.push(record);
@@ -1986,7 +2192,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
   const squad = squadFromOffer(offer, input, careerSeed);
 
   const save: CareerSave = {
-    saveVersion: 3,
+    saveVersion: 4,
     createdAtAppVersion: SITE.version,
     careerSeed,
     identity: input.identity,
@@ -2073,14 +2279,20 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
 // ---------------------------------------------------------------------------
 
 export function advanceDayFlow(input: CareerSave): CareerSave {
-  if (input.phase !== "running" || input.activeEvent) return input;
+  if (input.phase !== "running") return input;
+  // An event in progress blocks the clock — EXCEPT a two-day event paused
+  // after its Saturday Swiss (R40): moving to Sunday is how its playoffs open.
+  const paused = isEventPaused(input);
+  if (input.activeEvent && !paused) return input;
   if (input.clock.day >= DAYS_PER_SEASON) return input;
   // rc.2: a pending weekly insert blocks the clock until the player answers.
   if (input.pendingInsert && input.pendingInsert.day === input.clock.day) return input;
-  // An OFFICIAL matchday must be resolved (play or sim) — never skipped.
+  // An OFFICIAL matchday must be resolved (play or sim) — never skipped. The
+  // paused Saturday counts as resolved for the day (its Swiss is complete).
   const pending = input.pendingEventDef;
   if (
     pending &&
+    !paused &&
     input.clock.day === pending.day &&
     pending.tier !== "t3" &&
     pending.tier !== "t2"
@@ -2101,11 +2313,25 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   return processDayArrival(save);
 }
 
+/**
+ * v2.0 (R40): "Continue to Championship Sunday" — moves a Major/Worlds paused
+ * after its Saturday Swiss to its playoffs day (exactly one day arrival).
+ * Returns the SAME save unless `isEventPaused(save)`. (A plain advanceDayFlow
+ * does the same on a paused Saturday; this is the intention-revealing name.)
+ */
+export function continueEventToNextDayFlow(input: CareerSave): CareerSave {
+  return isEventPaused(input) ? advanceDayFlow(input) : input;
+}
+
 /** True when the save is at a state the batched Advance must stop at. */
 function isStopState(save: CareerSave, startedAtDay: number): boolean {
   if (save.phase !== "running") return true;
   const day = save.clock.day;
-  // A committed event's matchday (the lobby).
+  // R40: an event in progress — Championship Sunday after the Saturday pause.
+  if (save.activeEvent) return true;
+  // A committed event's matchday (the lobby): the Saturday qualifier (outside
+  // the direct 8), the Sunday regional (direct or qualified), the Saturday
+  // Major/Worlds, the Saturday unofficial cup.
   if (save.pendingEventDef && day === save.pendingEventDef.day) return true;
   // A fresh unofficial invite the player hasn't committed to: stop ONCE, on
   // the Monday it surfaces (hands-on players get the decision moment; a
@@ -2893,6 +3119,10 @@ export function setStartersFlow(
   input: CareerSave,
   starterIds: [string, string, string],
 ): FlowResult {
+  // R40 review: the event's team froze at startEvent (a Major / Worlds pauses
+  // overnight) — the lineup is locked until the event ends, so a change can
+  // never look like it applies to Sunday's playoffs.
+  if (input.activeEvent) return { save: input, error: "eventLocked" };
   const save = clone(input);
   const ids = new Set(starterIds);
   if (ids.size !== 3) return { save: input, error: "invalid" };
@@ -3016,5 +3246,61 @@ export function migrateSaveToV3(raw: unknown): CareerSave | null {
   save.lastBidDay ??= -99;
 
   save.saveVersion = 3;
+  return save;
+}
+
+/**
+ * v2.0 (R40) additive migration — the weekend calendar (qualifier Saturday,
+ * regional Sunday, Major/Worlds over Saturday + Sunday). Chained after
+ * migrateSaveToV3; the store runs it in `migrate` AND on every rehydrate, so
+ * it is idempotent and gated by saveVersion (the zustand persist version
+ * stays 3 — frozen by persistContract.test.ts). Never a reset:
+ *  - pending qualifier (the pre-R40 midweek day 3) → re-dated to that week's Saturday,
+ *    Swiss-only format.
+ *  - pending regional (old Saturday) while the clock is on/before Sunday →
+ *    re-dated to Sunday (a lobby already open on Saturday re-opens Sunday).
+ *  - pending Major/Worlds → unchanged (Saturday Swiss, Sunday playoffs).
+ *  - active legacy qualifier → Swiss-only (`asSwissOnly`): a Swiss still in
+ *    progress ends at its end; one already played ends there and then — any
+ *    playoff rounds are dropped, placements come from the Swiss, so no
+ *    qualifier champion is ever produced. Its `def.day` stays the day it
+ *    actually started — and so does its `pendingEventDef` copy (an event in
+ *    progress is never re-dated, so the agenda lists it once).
+ *  - active Major/Worlds → unchanged: it pauses at the Swiss end like a new
+ *    one; one ALREADY into its playoffs simply finishes on Saturday.
+ *  - history (eventResults incl. old qualifier rows, news, qualifiedRefs) is
+ *    left exactly as it is; AI events the old layout already resolved this
+ *    week are never re-run (resolveAiEvent is idempotent by event id).
+ */
+export function migrateSaveToV4(raw: unknown): CareerSave | null {
+  const save = migrateSaveToV3(raw);
+  if (!save) return null;
+  if ((save.saveVersion ?? 3) >= 4) return save;
+
+  const day = save.clock?.day ?? 1;
+  const redate = (def: CareerEventDef | null | undefined): CareerEventDef | null => {
+    if (!def) return null;
+    if (def.tier === "qualifier") {
+      const saturday = qualifierDayFor(def.week);
+      return day <= saturday ? { ...def, day: saturday, format: "swissOnly" } : { ...def, format: "swissOnly" };
+    }
+    if (def.tier === "regional") {
+      const sunday = regionalDayFor(def.week);
+      return day <= sunday ? { ...def, day: sunday } : def;
+    }
+    return def;
+  };
+  const ev = save.activeEvent;
+  if (ev && ev.def.tier === "qualifier") {
+    ev.def = { ...ev.def, format: "swissOnly" };
+    ev.tournament = asSwissOnly(ev.tournament);
+  }
+  // startEvent never clears pendingEventDef: an event already in progress
+  // keeps ONE def — the day it actually started — so the agenda never shows
+  // it twice (its own day + the re-dated copy).
+  save.pendingEventDef =
+    ev && save.pendingEventDef?.id === ev.def.id ? { ...ev.def } : redate(save.pendingEventDef);
+
+  save.saveVersion = 4;
   return save;
 }

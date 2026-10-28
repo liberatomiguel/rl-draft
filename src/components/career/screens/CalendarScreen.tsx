@@ -7,13 +7,18 @@
  * month-by-month 7-col grids (Mon-Sun) with day markers and a tap-to-open
  * day-detail panel · unofficial invite · season overview pips · advance
  * footer. MY schedule only by default; a toggle reveals other regions'
- * regional Saturdays as neutral dots + a list in the day detail.
+ * regional Sundays as neutral dots + a list in the day detail.
+ * v2.0 (R40): the weekend reads per day — Saturday Qualifier / Swiss stage,
+ * Sunday Regional / Championship Sunday; a spectated Major is a muted cell;
+ * qualifier results read Qualified / Eliminated (never a champion).
  */
 
 import { AppLink } from "@/components/ui/AppLink";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { officialEventDefsForWeek } from "@/engine/career/calendar";
+import { hasChampion } from "@/engine/career/careerResults";
 import type {
   CareerEventDef,
   CompactEventResult,
@@ -30,7 +35,7 @@ import {
   clockLabel,
   dateOfDay,
   daysUntilWindowCloses,
-  eventDayFor,
+  isEventPaused,
   isUserEventDef,
   nameOfRef,
   upcomingStops,
@@ -45,6 +50,8 @@ import {
   formatDaysAway,
 } from "@/components/career/dateText";
 import { TierChip, maxPointsOf, prizePoolOf } from "@/components/career/hub/hubShared";
+import { formatLineOf, roleTitleOf } from "@/components/career/event/WeekendPlan";
+import { placementLabelOf, weekendRoleOf } from "@/components/career/event/weekendView";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
@@ -71,9 +78,11 @@ export function CalendarScreen() {
   const save = useCareerSave();
   const C = useCareerCopy();
   const D = C.dates;
+  const router = useRouter();
 
   const advanceDay = useCareerStore((s) => s.advanceDay);
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
+  const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const cancelScrim = useCareerStore((s) => s.cancelScrim);
@@ -102,15 +111,13 @@ export function CalendarScreen() {
     return out;
   }, [days]);
 
-  /** Other regions' regionals per matchday (Saturday) — the "world" layer. */
+  /** Other regions' regionals per matchday (R40: their Sunday, `def.day`) — the "world" layer. */
   const worldByDay = useMemo(() => {
     const map = new Map<number, CareerEventDef[]>();
     if (!save) return map;
     for (const d of days) {
-      const week = weekOfDay(d.day);
-      if (d.day !== eventDayFor(week)) continue;
-      const others = officialEventDefsForWeek(save.clock.seasonIndex, week).filter(
-        (def) => def.tier === "regional" && def.region !== save.identity.region,
+      const others = officialEventDefsForWeek(save.clock.seasonIndex, weekOfDay(d.day)).filter(
+        (def) => def.tier === "regional" && def.region !== save.identity.region && def.day === d.day,
       );
       if (others.length > 0) map.set(d.day, others);
     }
@@ -148,6 +155,9 @@ export function CalendarScreen() {
   const currentMonthKey = `${clk.date.y}-${clk.date.m}`;
   const sel = selectedDay !== null ? (days[selectedDay - 1] ?? null) : null;
 
+  // R40: a Major / Worlds paused after its Saturday Swiss continues to Sunday.
+  const paused = isEventPaused(save);
+  const placementLabels = { placement: C.common.placement, qualifierOutcome: C.common.qualifierOutcome };
   const eventDue: CareerEventDef | null =
     save.activeEvent?.def ??
     (save.pendingEventDef && save.clock.day === save.pendingEventDef.day
@@ -198,6 +208,9 @@ export function CalendarScreen() {
     const event = day.event;
     const result = event ? resultByEvent.get(event.id) : undefined;
     const points = event ? maxPointsOf(event.tier) : null;
+    // R40: which day of the weekend this is (Swiss stage / Championship Sunday).
+    const role = event ? weekendRoleOf(event, day.day) : null;
+    const twoDayRole = role === "swissDay" || role === "championshipSunday" ? role : null;
     const worldDefs = showWorld ? (worldByDay.get(day.day) ?? []) : [];
     const kindBadges = day.kinds.filter((k) => k !== "matchday" && k !== "idle");
 
@@ -210,13 +223,21 @@ export function CalendarScreen() {
               {day.isToday ? ` · ${C.calendar.today}` : ""}
             </p>
             {event ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="display text-base font-bold text-ink">{event.name}</span>
-                <TierChip tier={event.tier} />
-                {event.region ? (
-                  <Badge className={REGION_BADGE[event.region]}>{event.region}</Badge>
-                ) : null}
-              </div>
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="display text-base font-bold text-ink">{event.name}</span>
+                  <TierChip tier={event.tier} />
+                  {twoDayRole ? (
+                    <Badge tone={twoDayRole === "championshipSunday" ? "gold" : "orange"}>
+                      {roleTitleOf(C, twoDayRole, event)}
+                    </Badge>
+                  ) : null}
+                  {event.region ? (
+                    <Badge className={REGION_BADGE[event.region]}>{event.region}</Badge>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-xs text-sub">{formatLineOf(C, event)}</p>
+              </>
             ) : kindBadges.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5">
                 {kindBadges.map((k) => {
@@ -261,7 +282,7 @@ export function CalendarScreen() {
               </span>
             ) : null}
             {result?.userPlacement ? (
-              <Badge tone="blue">{C.common.placement[result.userPlacement]}</Badge>
+              <Badge tone="blue">{placementLabelOf(placementLabels, event.tier, result.userPlacement)}</Badge>
             ) : save.pendingEventDef?.id === event.id ? (
               <Badge tone="orange">{C.calendar.registered}</Badge>
             ) : !isUserEventDef(save, event) ? (
@@ -331,7 +352,7 @@ export function CalendarScreen() {
                       </Badge>
                     ) : null}
                     <span>{def.name}</span>
-                    {res ? (
+                    {res && hasChampion(res) ? (
                       <span className="text-faint">
                         · {C.common.placement.champion}: {nameOfRef(save, res.championRef)}
                       </span>
@@ -497,6 +518,14 @@ export function CalendarScreen() {
                   ))}
                   {g.days.map((d) => {
                     const ev = d.event;
+                    // R40: a spectated Major / Worlds stays visible, but muted.
+                    const spectating = d.participation === "spectating";
+                    const cellRole = ev ? weekendRoleOf(ev, d.day) : null;
+                    const cellLabel = ev
+                      ? cellRole === "swissDay" || cellRole === "championshipSunday"
+                        ? `${ev.name} · ${roleTitleOf(C, cellRole, ev)}`
+                        : ev.name
+                      : undefined;
                     const isSelected = selectedDay === d.day;
                     const worldCount = showWorld ? (worldByDay.get(d.day)?.length ?? 0) : 0;
                     return (
@@ -505,14 +534,14 @@ export function CalendarScreen() {
                         type="button"
                         onClick={() => setSelectedDay(isSelected ? null : d.day)}
                         aria-pressed={isSelected}
-                        aria-label={
-                          formatDateShort(D, d.date) + (ev ? ` — ${ev.name}` : "")
-                        }
-                        title={ev?.name}
+                        aria-label={formatDateShort(D, d.date) + (cellLabel ? ` — ${cellLabel}` : "")}
+                        title={cellLabel}
                         className={cx(
                           "relative flex min-h-10 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
                           ev
-                            ? MATCHDAY_FILL[ev.tier]
+                            ? spectating
+                              ? "border-line/60 bg-white/[0.03] hover:bg-white/[0.06]"
+                              : MATCHDAY_FILL[ev.tier]
                             : d.windowOpen
                               ? "border-line/60 bg-blue/[0.06] hover:bg-blue/10"
                               : "border-line/50 bg-white/[0.015] hover:bg-white/[0.05]",
@@ -538,7 +567,11 @@ export function CalendarScreen() {
                             <span
                               className={cx(
                                 "h-1.5 w-1.5 rounded-full",
-                                ev.tier === "worlds" ? "bg-amber-300" : "bg-orange-bright",
+                                spectating
+                                  ? "ring-1 ring-white/40"
+                                  : ev.tier === "worlds"
+                                    ? "bg-amber-300"
+                                    : "bg-orange-bright",
                               )}
                             />
                           ) : d.kinds.includes("scrim") ? (
@@ -646,7 +679,17 @@ export function CalendarScreen() {
       {/* 6 — footer actions ----------------------------------------------------- */}
       <div className="sticky bottom-3 z-10">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
-          {eventDue ? (
+          {paused ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                continueEventToNextDay();
+                router.push("/career/event");
+              }}
+            >
+              {C.calendar.advanceToStop(C.event.championshipSunday)}
+            </Button>
+          ) : eventDue ? (
             <AppLink
               href="/career/event"
               className={cx(

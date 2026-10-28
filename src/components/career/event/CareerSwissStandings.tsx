@@ -10,6 +10,7 @@
  */
 
 import { TOURNAMENT } from "@/config/balance";
+import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import type { TournamentState } from "@/engine/types";
@@ -34,6 +35,7 @@ export function CareerSwissStandings({
   nextUpRef?: string | null;
 }) {
   const C = useCareerCopy();
+  const T = useCopy().TOURNAMENT_UI;
 
   const sorted = Object.keys(t.teams).sort((a, b) => {
     const ra = records.get(a) ?? { wins: 0, losses: 0, gameDiff: 0 };
@@ -64,7 +66,7 @@ export function CareerSwissStandings({
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-faint">
             <th className="pb-2 font-semibold" scope="col">
-              {C.calendar.field}
+              {T.team}
             </th>
             <th className="pb-2 text-center font-semibold" scope="col">
               {C.event.record}

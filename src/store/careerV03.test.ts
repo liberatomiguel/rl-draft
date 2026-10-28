@@ -464,7 +464,7 @@ describe("v0.3 migration", () => {
     expect(upgraded!.bidsThisWindow).toBe(0);
   });
 
-  it("new saves are already v3", () => {
-    expect(makeSave().saveVersion).toBe(3);
+  it("new saves are born at the latest save version (v2.0 R40: 4, the weekend calendar)", () => {
+    expect(makeSave().saveVersion).toBe(4);
   });
 });

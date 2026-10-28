@@ -25,9 +25,6 @@ import {
   isWindowWeek,
   seasonLabelFor,
   splitOfWeek,
-  officialEventDefsForWeek,
-  qualifierDayFor,
-  qualifierDefsForWeek,
   weekAt,
   weekOfDay,
   windowCloseDayFor,
@@ -67,12 +64,18 @@ import type {
 } from "@/engine/career/types";
 import type { Region, Stats, TournamentTeam } from "@/engine/types";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
+import { participationOf, type Participation } from "@/components/career/event/weekendView";
 import {
   activeDrillFor,
+  eventDayPhaseOf,
+  isChampionshipSunday,
+  isEventPaused,
   nameOfRef,
   regionalUserEligible,
   scrimOpponentFor,
+  userEventDefOnDay,
   userIsDirect,
+  userOwnsQualifier,
   userSeedingFor,
 } from "@/store/careerFlow";
 
@@ -151,6 +154,11 @@ export interface AgendaDay {
   kinds: DayKind[];
   /** The user-relevant event on this day, when any. */
   event: CareerEventDef | null;
+  /**
+   * v2.0 (R40): is the user IN `event`? A Major / Worlds reaches the agenda
+   * for spectators too — "spectating" days read as not-a-matchday.
+   */
+  participation: Participation | null;
   isToday: boolean;
   isPast: boolean;
   windowOpen: boolean;
@@ -159,38 +167,23 @@ export interface AgendaDay {
 /** True when the def is one the user plays (own-region official or qualified). */
 export function isUserEventDef(save: CareerSave, def: CareerEventDef): boolean {
   if (def.tier === "regional") return regionalUserEligible(save, def);
-  if (def.tier === "qualifier") return def.region === save.identity.region && !userIsDirect(save);
+  // R40: the week's commit / result decides; future weeks preview today's seeding.
+  if (def.tier === "qualifier") return userOwnsQualifier(save, def);
   if (def.tier === "major") return save.competition.majorFieldRefs?.includes("user") ?? false;
   if (def.tier === "worlds") return save.competition.worldsFieldRefs?.includes("user") ?? false;
   return true;
 }
 
 /**
- * The user-relevant event def landing on `day`, if any (committed or
- * scheduled). v2.0 (R30): the Wednesday qualifier shows for a user outside
- * the direct 8 of the CURRENT split standings (future weeks read today's
- * seeding — the honest preview); the regional stays on the agenda until a
- * played qualifier rules the user out.
+ * The user-relevant event def landing on `day`, if any (committed, in
+ * progress or scheduled). v2.0 (R40): the qualifier on Saturday (outside the
+ * direct 8 of the CURRENT split standings — the honest preview), the
+ * regional on Sunday until a played qualifier rules the user out, a
+ * Major/Worlds on both weekend days. Pure logic lives in the flow
+ * (`userEventDefOnDay`).
  */
 export function userEventOnDay(save: CareerSave, day: number): CareerEventDef | null {
-  if (save.pendingEventDef?.day === day) return save.pendingEventDef;
-  const week = weekOfDay(day);
-  if (day === qualifierDayFor(week)) {
-    const q = qualifierDefsForWeek(save.clock.seasonIndex, week).find(
-      (d) => d.region === save.identity.region,
-    );
-    if (q && !userIsDirect(save)) return q;
-    return null;
-  }
-  if (day !== eventDayFor(week)) return null;
-  const defs = officialEventDefsForWeek(save.clock.seasonIndex, week);
-  for (const def of defs) {
-    if (def.tier === "regional" && def.region === save.identity.region) {
-      return regionalUserEligible(save, def) ? def : null;
-    }
-    if (def.tier === "major" || def.tier === "worlds") return def;
-  }
-  return null;
+  return userEventDefOnDay(save, day);
 }
 
 /** A day-by-day agenda strip: `count` days starting at `fromDay`. */
@@ -202,6 +195,8 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
     const dow = dayOfWeekOf(day);
     const cal = weekAt(week);
     const event = userEventOnDay(save, day);
+    const participation = event ? participationOf(save, event) : null;
+    const playing = event !== null && participation !== "spectating";
     const kinds: DayKind[] = [];
     if (event) kinds.push("matchday");
     if (dow === 1 && isWindowStartWeek(week)) kinds.push("windowOpen");
@@ -210,7 +205,10 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
     // v0.3: booked scrims show as training events on the calendar.
     if (save.scheduledScrims?.some((s) => s.day === day)) kinds.push("scrim");
     if (!event && dow <= CAREER_TRAINING.trainingDaysPerWeek) kinds.push("training");
-    if (dow === 7) kinds.push("rest");
+    // v2.0 (R40): the weekend is matchday (qualifier / Swiss stage Saturday,
+    // regional / Championship Sunday Sunday); a weekend day without a match
+    // for the user — a direct seed's Saturday, a spectated Major — is rest.
+    if (dow > CAREER_TRAINING.trainingDaysPerWeek && !playing) kinds.push("rest");
     if (kinds.length === 0) kinds.push("idle");
     out.push({
       day,
@@ -218,6 +216,7 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
       dow,
       kinds,
       event,
+      participation,
       isToday: day === today,
       isPast: day < today,
       windowOpen: cal.windowOpen,
@@ -238,11 +237,24 @@ export interface UpcomingStop {
 export function upcomingStops(save: CareerSave, count: number): UpcomingStop[] {
   const out: UpcomingStop[] = [];
   const today = save.clock.day;
+  // R40: a Major/Worlds paused after its Saturday Swiss is a stop TOMORROW
+  // (Championship Sunday), not today; on Sunday the event in progress is
+  // today's stop. Today otherwise counts for a lobby that opens today.
+  const paused = isEventPaused(save);
+  const isTodaysStop = (event: CareerEventDef): boolean =>
+    !paused &&
+    (save.activeEvent?.def.id === event.id ||
+      (save.pendingEventDef?.id === event.id && save.pendingEventDef.day === today));
   for (let day = today; day <= DAYS_PER_SEASON && out.length < count; day++) {
     const week = weekOfDay(day);
     const dow = dayOfWeekOf(day);
-    const event = userEventOnDay(save, day);
-    if (event && (day > today || save.pendingEventDef?.day === day)) {
+    const found = userEventOnDay(save, day);
+    // R40: a spectated Major/Worlds is not a stop (the batched Advance runs
+    // through it) — the preview must not promise one.
+    const event = found && participationOf(save, found) !== "spectating" ? found : null;
+    // R40: a two-day Major/Worlds covers Saturday AND Sunday — list it once.
+    const listed = event !== null && out.some((s) => s.event?.id === event.id);
+    if (event && !listed && (day > today || isTodaysStop(event))) {
       out.push({
         day,
         date: dateOfDay(save.clock.seasonIndex, day),
@@ -524,6 +536,7 @@ export { CAREER_GEAR };
 
 export type ContinueKind =
   | "event" // an event awaits (lobby or in progress) → /career/event
+  | "eventPaused" // v2.0 (R40): Major/Worlds Saturday Swiss done → continueEventToNextDay
   | "seasonReview" // → /career/season
   | "ended" // → /career/season (legacy screen)
   | "decision" // pending out-bid / sponsor choice on the hub
@@ -532,6 +545,10 @@ export type ContinueKind =
 export function continueKind(save: CareerSave): ContinueKind {
   if (save.phase === "ended") return "ended";
   if (save.phase === "seasonReview") return "seasonReview";
+  // v2.0 (R40): a Major/Worlds paused after its Saturday Swiss — the routed
+  // CONTINUE moves the clock to Championship Sunday (continueEventToNextDay).
+  // A kind of its own, so the day autopilot never rolls into Sunday alone.
+  if (isEventPaused(save)) return "eventPaused";
   if (save.activeEvent) return "event";
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) return "event";
   if (save.pendingInsert && save.pendingInsert.day === save.clock.day) return "decision";
@@ -544,4 +561,23 @@ export function continueKind(save: CareerSave): ContinueKind {
   return "advance";
 }
 
+/**
+ * R40 review: what the top bar's routed Continue shows. While the event
+ * screen is still revealing a Major / Worlds Saturday (`revealHeldEventId`,
+ * careerRevealStore), the engine may already sit at the pause — the bar keeps
+ * the event's own Continue until the playback lands the verdict, or its
+ * "Championship Sunday" label would spoil the deciding series.
+ */
+export function visibleContinueKind(save: CareerSave, revealHeldEventId: string | null): ContinueKind {
+  const kind = continueKind(save);
+  return kind === "eventPaused" && revealHeldEventId !== null && revealHeldEventId === save.activeEvent?.def.id
+    ? "event"
+    : kind;
+}
+
 export { nameOfRef };
+
+// v2.0 (R40): the weekend's event phases (single source: careerFlow).
+export { eventDayPhaseOf, isChampionshipSunday, isEventPaused };
+// v2.0 (R40): a qualifier row reads Qualified / Eliminated, never a placement.
+export { qualifierOutcomeOf } from "@/engine/career/careerResults";

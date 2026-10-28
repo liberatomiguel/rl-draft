@@ -374,4 +374,44 @@ describe("run / settings / career hydration", () => {
     expect(out.slots).toStrictEqual([null, null, null]);
     expect(out.activeSlot).toBeNull();
   });
+
+  // v2.0 (R40): the weekend-calendar step (migrateSaveToV4) is gated by each
+  // save's own saveVersion — the persist version stays 3 — so it must run on
+  // BOTH paths: `migrate` (older store) and the same-version rehydrate.
+  it("career: a saveVersion-3 slot is upgraded to 4 by migrate AND by a same-version rehydrate", async () => {
+    const { createCareerSave } = await import("./careerFlow");
+    const legacySlot = () => {
+      const slot = createCareerSave(
+        {
+          identity: {
+            orgName: "Contract Org",
+            abbrev: "CTR",
+            managerName: "Bot",
+            country: "BR",
+            region: "SAM",
+            crestId: "shield",
+            colors: { primary: "#f97316", secondary: "#fde68a" },
+            buffType: "consistency",
+          },
+          difficulty: "normal",
+          style: "balanced",
+          rosterKey: "balanced",
+        },
+        4242,
+      );
+      return { ...JSON.parse(JSON.stringify(slot)), saveVersion: 3 };
+    };
+    const migrate = persistOf("career").getOptions().migrate!;
+    const out = migrate({ slots: [legacySlot(), null, null], activeSlot: 0 }, 2) as {
+      slots: ({ saveVersion: number } | null)[];
+    };
+    expect(out.slots[0]?.saveVersion).toBe(4);
+
+    storage.setItem(
+      CONTRACT.career.name,
+      rawSave({ slots: [legacySlot(), null, null], activeSlot: 0 }, CONTRACT.career.version),
+    );
+    await persistOf("career").rehydrate();
+    expect(stores.career.getState().slots[0]?.saveVersion).toBe(4);
+  });
 });

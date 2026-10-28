@@ -102,8 +102,13 @@ export function SquadScreen() {
   const teamRating = Math.round(team.rating.total);
   const chemTierLabel = t.CHEM_TIERS[team.chemistry.tier] ?? team.chemistry.tier;
 
+  // R40 review: an event in progress froze its team at the start (a Major /
+  // Worlds pauses overnight) — the lineup is locked until it ends.
+  const lineupLocked = save.activeEvent !== null;
+
   // --- two-tap swap ---------------------------------------------------------
   const onTileClick = (id: string) => {
+    if (lineupLocked) return;
     if (selected === null) {
       setSelected(id);
       setSwapBefore(null);
@@ -260,7 +265,11 @@ export function SquadScreen() {
 
           {/* swap affordance / feedback line */}
           <div className="mt-2 min-h-[1.25rem] text-center text-[11px]">
-            {selected ? (
+            {lineupLocked ? (
+              <span className="rounded-full bg-orange/10 px-2.5 py-0.5 font-semibold text-orange-bright">
+                {C.event.lineupLocked}
+              </span>
+            ) : selected ? (
               <span className="text-orange-bright">
                 {C.squad.makeStarter} ↔ {C.squad.makeSub}
               </span>

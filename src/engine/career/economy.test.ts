@@ -17,6 +17,7 @@ import {
   bootcampTierFor,
   coachSalaryFor,
   computeSalaryAsk,
+  eventRepKindFor,
   gearBuffLevels,
   gearNextItem,
   gearPriceFor,
@@ -33,6 +34,7 @@ import {
   signingBonusFor,
   sponsorOffersFor,
   starsFor,
+  t3RepKeyFor,
   transferFeeFor,
   unlocksFor,
   bankLoanLimitFor,
@@ -643,5 +645,36 @@ describe("unlocks & reputation", () => {
     expect(repLossFloor(60, 1)).toBe(0); // tier-1 gate 0 → max(0, −slack) = 0
     // a floor can never sit above the current rep
     expect(repLossFloor(40, 3)).toBe(40);
+  });
+});
+
+describe("eventRepKindFor (R40 review: one rule for finishEvent and the digest)", () => {
+  const uncapped = { t3CapReached: false };
+  it("maps every tier and placement to the rep it pays (null = none)", () => {
+    expect(eventRepKindFor("qualifier", "top8", uncapped)).toBe("qualifierAdvance");
+    expect(eventRepKindFor("qualifier", "swiss_exit", uncapped)).toBeNull();
+    expect(eventRepKindFor("regional", "champion", uncapped)).toBe("regionalWin");
+    expect(eventRepKindFor("regional", "runner_up", uncapped)).toBe("regionalTop4");
+    expect(eventRepKindFor("regional", "top6", uncapped)).toBe("regionalTop8");
+    expect(eventRepKindFor("regional", "swiss_exit", uncapped)).toBe("regionalSwissExit");
+    expect(eventRepKindFor("major", "champion", uncapped)).toBe("majorWin");
+    expect(eventRepKindFor("major", "fourth", uncapped)).toBe("majorTop4");
+    expect(eventRepKindFor("major", "top8", uncapped)).toBeNull();
+    expect(eventRepKindFor("worlds", "champion", uncapped)).toBe("worldsTop4");
+    expect(eventRepKindFor("worlds", "third", uncapped)).toBe("worldsTop4");
+    expect(eventRepKindFor("worlds", "top6", uncapped)).toBeNull();
+    expect(eventRepKindFor("t2", "champion", uncapped)).toBe("t2Win");
+    expect(eventRepKindFor("t2", "runner_up", uncapped)).toBe("t2Final");
+    expect(eventRepKindFor("t2", "top4", uncapped)).toBeNull();
+    expect(eventRepKindFor("t3", "champion", uncapped)).toBe("t3Win");
+    expect(eventRepKindFor("t3", "runner_up", uncapped)).toBe("t3Final");
+  });
+
+  it("the t3 per-split cap silences t3 rep only", () => {
+    const capped = { t3CapReached: true };
+    expect(eventRepKindFor("t3", "champion", capped)).toBeNull();
+    expect(eventRepKindFor("t2", "champion", capped)).toBe("t2Win");
+    expect(t3RepKeyFor(1, 2)).toBe("t3rep:1:2");
+    expect(t3RepKeyFor(0, null)).toBe("t3rep:0:0");
   });
 });

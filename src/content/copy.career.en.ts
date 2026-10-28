@@ -303,9 +303,9 @@ export const CAREER_EN = {
       cashWarning: (p: Record<string, string | number>) =>
         `At ${p.net} per week the balance covers about ${p.weeks} more Mondays. Trim wages, win prize money, or arrange a bank loan before the Backer has to.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
-        `Eight teams went through on the Wednesday and you were one of them. ${p.event} is Saturday — the direct eight are waiting.`,
+        `Saturday's Swiss is done and the org is one of the eight through. ${p.event} is Sunday — the direct eight are waiting.`,
       missedRegional: (p: Record<string, string | number>) =>
-        `The qualifier ended in the Swiss. ${p.event} happens without you; the week is yours to train and the next split resets the race.`,
+        `Three losses in Saturday's Swiss — ${p.event} goes ahead on Sunday without you. Rest up; a new training week starts Monday.`,
       backerIn: () =>
         `The books breached the floor and the Emergency Backer stepped in — once. Repayment is garnished from prize money. A second collapse ends the org.`,
       unlock: (p: Record<string, string | number>) =>
@@ -493,7 +493,7 @@ export const CAREER_EN = {
     report: (delta: string) => `Training report: squad ${delta} OVR`,
     // v0.2 — distinct focuses, intensity, weekly rhythm
     weeklyPlan: "Weekly plan",
-    weeklyPlanHint: "Sessions run Monday to Friday. Matchday Saturday. Sunday rests.",
+    weeklyPlanHint: "Sessions run Monday to Friday. Weekends are for matches.",
     perWeekOverall: (v: string) => `+${v} OVR / week`,
     perWeekOffset: (v: string, stat: string) => `+${v} ${stat} / week`,
     focusHintBalanced: "Pure overall growth — nothing sharpened.",
@@ -843,6 +843,9 @@ export const CAREER_EN = {
       userReleased: (p: Record<string, string | number>) => `${p.org} releases ${p.player}`,
       result: (p: Record<string, string | number>) => `${p.org} take ${p.event}`,
       resultUser: (p: Record<string, string | number>) => `${p.event}: you finish ${p.placement}`,
+      // v2.0 (R40): a qualifier result reads qualified / eliminated, never a placement.
+      resultUserQualified: (p: Record<string, string | number>) => `${p.event}: qualified for Sunday`,
+      resultUserEliminated: (p: Record<string, string | number>) => `${p.event}: out in the Swiss`,
       qualifiedRegional: (p: Record<string, string | number>) => `Through the qualifier: ${p.event} is on`,
       missedRegional: (p: Record<string, string | number>) => `Out at the qualifier — ${p.event} goes on without you`,
       qualifiedMajor: () => `You're in. The Major awaits.`,
@@ -907,10 +910,14 @@ export const CAREER_EN = {
         `${p.org} closed out ${p.event}. The desk will replay that grand final for weeks.`,
       resultUser: (p: Record<string, string | number>) =>
         `The org's ${p.event} run ends at ${p.placement}. Every placement pays — and the table remembers.`,
+      resultUserQualified: (p: Record<string, string | number>) =>
+        `Three Swiss wins at ${p.event} and the org has its regional seat. A qualifier pays prize money and standing — the Season Points are played for on Sunday.`,
+      resultUserEliminated: (p: Record<string, string | number>) =>
+        `Three losses ended the org's ${p.event} in the Swiss. The prize money still lands — and the next regional week is another shot.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
-        `Eight teams went through on the Wednesday and you were one of them. ${p.event} is Saturday — the direct eight are waiting.`,
+        `Saturday's Swiss is done and the org is one of the eight through. ${p.event} is Sunday — the direct eight are waiting.`,
       missedRegional: (p: Record<string, string | number>) =>
-        `The qualifier ended in the Swiss. ${p.event} happens without you; the week is yours to train and the next split resets the race.`,
+        `Three losses in Saturday's Swiss — ${p.event} goes ahead on Sunday without you. Rest up; a new training week starts Monday.`,
       qualifiedMajor: () =>
         `The split standings locked and your name is above the line. Cross-region field, doubled points — the real test.`,
       missedMajor: () =>
@@ -992,7 +999,7 @@ export const CAREER_EN = {
     items: {
       "car-first-sponsor": { name: "Open for Business", desc: "Sign your first sponsor." },
       "car-bank-cleared": { name: "Good Credit", desc: "Repay a bank loan in full." },
-      "car-first-qualifier": { name: "Through the Door", desc: "Get through a Wednesday qualifier into a regional." },
+      "car-first-qualifier": { name: "Through the Door", desc: "Get through a Saturday qualifier into Sunday's regional." },
       "car-rep-50": { name: "A Name in the Scene", desc: "Reach 50 reputation." },
       "car-three-seasons": { name: "Road Warrior", desc: "Reach your third season with one org." },
       "car-major-qualified": { name: "International", desc: "Qualify for a Major." },
@@ -1148,6 +1155,50 @@ export const CAREER_EN = {
     fieldTitle: "The field",
     avgOvr: "Avg OVR",
     seedLabel: "Seed",
+    // v2.0 (R40) — the weekend: qualifier Saturday → regional Sunday;
+    // Major / Worlds: Swiss stage Saturday → Championship Sunday.
+    formatQualifier: (teams: number, slots: number, wins: number, regional: string) =>
+      `${teams}-team Swiss · the ${slots} that reach ${wins} wins qualify for Sunday's ${regional}`,
+    formatTwoDay: (teams: number, playoffTeams: number) =>
+      `Saturday: ${teams}-team Swiss · Sunday: top-${playoffTeams} double elimination`,
+    championshipSunday: "Championship Sunday",
+    weekendTitle: "The weekend",
+    roleQualifierSub: (teams: number, slots: number) => `${teams}-team Swiss · top ${slots} go through`,
+    roleRegionalSub: (direct: number, qualified: number) => `${direct} direct + ${qualified} from Saturday`,
+    roleSwissSub: (teams: number, wins: number) => `${teams}-team Swiss · ${wins} wins to advance`,
+    roleSundaySub: (playoffTeams: number) => `Top-${playoffTeams} double elimination`,
+    entryQualified: "You qualified",
+    entryDirect: "Seeded direct",
+    spots: "Spots",
+    spotsValue: (slots: number, teams: number) => `${slots} of ${teams}`,
+    qualifiedTag: "Q",
+    qualifiedTagHint: "Came through Saturday's qualifier",
+    simSwiss: "Sim the Swiss",
+    qualified: "Qualified",
+    eliminatedTitle: "Eliminated",
+    qualifiedForSunday: "Qualified for Sunday",
+    eliminatedInSwiss: "Eliminated in the Swiss",
+    qualifiedFor: (regional: string) => `Through to Sunday's ${regional}`,
+    regionalWithoutYou: (regional: string) => `${regional} goes on Sunday without you`,
+    throughToSunday: "Through to Championship Sunday",
+    seedLocks: "Your seed locks when the last Swiss round ends",
+    sundayWithoutYou: "Sunday's playoffs go on without you",
+    swissComplete: "Swiss stage complete",
+    playoffEight: "The playoff eight",
+    pauseHint: "Nothing on Sunday is played until you continue.",
+    continueToSunday: "Continue to Championship Sunday",
+    continueToSundayShort: "Continue to Sunday",
+    sundaySub: (playoffTeams: number, bestOf: number) =>
+      `Top ${playoffTeams} · double elimination · best of ${bestOf}`,
+    sundayOpener: (opp: string, seed: number, oppSeed: number) =>
+      `Seed #${seed} — you open against ${opp} (#${oppSeed})`,
+    sundaySpectating: "Out in the Swiss — the crown is decided without you today",
+    startNow: "Start now",
+    startPlayoffs: "Start the playoffs",
+    tapToSkip: "Tap anywhere to skip",
+    swissRecord: "Record",
+    qualifiedEight: "Qualified for Sunday",
+    onToSunday: "On to Sunday",
   },
 
   spectate: {
@@ -1226,7 +1277,7 @@ export const CAREER_EN = {
     },
     calendar: {
       title: "The season at a glance",
-      body: "Three splits, three regionals each, a Major to close every split. Season Points decide who makes the Major — and Worlds.",
+      body: "Three splits, three regional weekends each — qualifier Saturday, regional Sunday — and a Major to close every split: Swiss stage Saturday, playoffs on Championship Sunday. Season Points decide who makes the Major — and Worlds.",
     },
     squad: {
       title: "Your squad",
@@ -1311,6 +1362,8 @@ export const CAREER_EN = {
       top8: "Top 8",
       swiss_exit: "Swiss exit",
     },
+    /** v2.0 (R40): a qualifier row never has a bracket placement (top8 = qualified). */
+    qualifierOutcome: { qualified: "Qualified", eliminated: "Eliminated" },
     tier: {
       t3: "Community Cup",
       t2: "Invitational",

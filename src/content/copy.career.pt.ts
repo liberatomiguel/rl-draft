@@ -296,9 +296,9 @@ export const CAREER_PT: CareerCopy = {
       cashWarning: (p: Record<string, string | number>) =>
         `A ${p.net} por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Corte salários, ganhe premiação ou negocie um empréstimo antes que o Investidor precise entrar.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
-        `Oito times passaram na quarta-feira e você estava entre eles. ${p.event} é no sábado — os oito diretos esperam.`,
+        `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo — os oito diretos esperam.`,
       missedRegional: (p: Record<string, string | number>) =>
-        `A qualificatória terminou no Swiss. ${p.event} acontece sem você; a semana é sua para treinar e o próximo split zera a corrida.`,
+        `Três derrotas no Swiss de sábado — o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
       backerIn: () =>
         `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`,
       unlock: (p: Record<string, string | number>) =>
@@ -486,7 +486,7 @@ export const CAREER_PT: CareerCopy = {
     report: (delta: string) => `Relatório de treinos: elenco ${delta} OVR`,
     // v0.2 — focos com identidade, intensidade, ritmo semanal
     weeklyPlan: "Plano semanal",
-    weeklyPlanHint: "Sessões de segunda a sexta. Jogo no sábado. Domingo descansa.",
+    weeklyPlanHint: "Sessões de segunda a sexta. Fim de semana é dia de jogo.",
     perWeekOverall: (v: string) => `+${v} OVR / semana`,
     perWeekOffset: (v: string, stat: string) => `+${v} ${stat} / semana`,
     focusHintBalanced: "Crescimento puro de overall — nada afiado.",
@@ -836,6 +836,9 @@ export const CAREER_PT: CareerCopy = {
       userReleased: (p: Record<string, string | number>) => `${p.org} dispensa ${p.player}`,
       result: (p: Record<string, string | number>) => `${p.org} levam o ${p.event}`,
       resultUser: (p: Record<string, string | number>) => `${p.event}: você termina em ${p.placement}`,
+      // v2.0 (R40): resultado de qualificatória é classificado / eliminado, nunca colocação.
+      resultUserQualified: (p: Record<string, string | number>) => `${p.event}: classificado para domingo`,
+      resultUserEliminated: (p: Record<string, string | number>) => `${p.event}: eliminado no Swiss`,
       qualifiedRegional: (p: Record<string, string | number>) => `Passou na qualificatória: ${p.event} está marcado`,
       missedRegional: (p: Record<string, string | number>) => `Fora na qualificatória — ${p.event} acontece sem você`,
       qualifiedMajor: () => `Está dentro. O Major espera.`,
@@ -900,10 +903,14 @@ export const CAREER_PT: CareerCopy = {
         `${p.org} fecharam o ${p.event}. A bancada vai reprisar essa grande final por semanas.`,
       resultUser: (p: Record<string, string | number>) =>
         `A campanha da org no ${p.event} termina em ${p.placement}. Toda colocação paga — e a tabela lembra.`,
+      resultUserQualified: (p: Record<string, string | number>) =>
+        `Três vitórias no Swiss do ${p.event} e a org garantiu a vaga no regional. A qualificatória paga premiação e reputação — os Pontos da Temporada estão em jogo no domingo.`,
+      resultUserEliminated: (p: Record<string, string | number>) =>
+        `Três derrotas encerraram o ${p.event} da org no Swiss. A premiação entra mesmo assim — e a próxima semana de regional é outra chance.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
-        `Oito times passaram na quarta-feira e você estava entre eles. ${p.event} é no sábado — os oito diretos esperam.`,
+        `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo — os oito diretos esperam.`,
       missedRegional: (p: Record<string, string | number>) =>
-        `A qualificatória terminou no Swiss. ${p.event} acontece sem você; a semana é sua para treinar e o próximo split zera a corrida.`,
+        `Três derrotas no Swiss de sábado — o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
       qualifiedMajor: () =>
         `A classificação do split travou e o seu nome está acima da linha. Chave inter-regional, pontos em dobro — o teste de verdade.`,
       missedMajor: () =>
@@ -985,7 +992,7 @@ export const CAREER_PT: CareerCopy = {
     items: {
       "car-first-sponsor": { name: "Aberta para Negócios", desc: "Assine seu primeiro patrocínio." },
       "car-bank-cleared": { name: "Bom Pagador", desc: "Quite um empréstimo bancário por completo." },
-      "car-first-qualifier": { name: "Pela Porta da Frente", desc: "Passe por uma qualificatória de quarta-feira até um regional." },
+      "car-first-qualifier": { name: "Pela Porta da Frente", desc: "Passe por uma qualificatória de sábado até o regional de domingo." },
       "car-rep-50": { name: "Um Nome na Cena", desc: "Alcance 50 de reputação." },
       "car-three-seasons": { name: "Road Warrior", desc: "Chegue à terceira temporada com uma mesma org." },
       "car-major-qualified": { name: "Internacional", desc: "Classifique-se para um Major." },
@@ -1141,6 +1148,51 @@ export const CAREER_PT: CareerCopy = {
     fieldTitle: "A chave",
     avgOvr: "OVR médio",
     seedLabel: "Seed",
+    // v2.0 (R40) — o fim de semana: qualificatória no sábado → regional no
+    // domingo; Major / Worlds: fase Swiss no sábado → Championship Sunday
+    // (nome do evento, mantido em inglês como Swiss / Major / Worlds).
+    formatQualifier: (teams: number, slots: number, wins: number, regional: string) =>
+      `Swiss de ${teams} times · os ${slots} que chegarem a ${wins} vitórias garantem vaga no ${regional} de domingo`,
+    formatTwoDay: (teams: number, playoffTeams: number) =>
+      `Sábado: Swiss de ${teams} times · Domingo: top-${playoffTeams} em eliminação dupla`,
+    championshipSunday: "Championship Sunday",
+    weekendTitle: "O fim de semana",
+    roleQualifierSub: (teams: number, slots: number) => `Swiss de ${teams} times · top ${slots} avançam`,
+    roleRegionalSub: (direct: number, qualified: number) => `${direct} diretos + ${qualified} de sábado`,
+    roleSwissSub: (teams: number, wins: number) => `Swiss de ${teams} times · ${wins} vitórias para avançar`,
+    roleSundaySub: (playoffTeams: number) => `Top-${playoffTeams} em eliminação dupla`,
+    entryQualified: "Você se classificou",
+    entryDirect: "Vaga direta",
+    spots: "Vagas",
+    spotsValue: (slots: number, teams: number) => `${slots} de ${teams}`,
+    qualifiedTag: "Q",
+    qualifiedTagHint: "Veio da qualificatória de sábado",
+    simSwiss: "Simular o Swiss",
+    qualified: "Classificado",
+    eliminatedTitle: "Eliminado",
+    qualifiedForSunday: "Classificado para domingo",
+    eliminatedInSwiss: "Eliminado no Swiss",
+    qualifiedFor: (regional: string) => `Vaga garantida no ${regional} de domingo`,
+    regionalWithoutYou: (regional: string) => `O ${regional} segue no domingo sem você`,
+    throughToSunday: "Classificado para o Championship Sunday",
+    seedLocks: "Seu seed se define quando a última rodada do Swiss acabar",
+    sundayWithoutYou: "Os playoffs de domingo seguem sem você",
+    swissComplete: "Fase Swiss encerrada",
+    playoffEight: "Os oito dos playoffs",
+    pauseHint: "Nada de domingo é jogado até você continuar.",
+    continueToSunday: "Seguir para o Championship Sunday",
+    continueToSundayShort: "Seguir para domingo",
+    sundaySub: (playoffTeams: number, bestOf: number) =>
+      `Top ${playoffTeams} · eliminação dupla · melhor de ${bestOf}`,
+    sundayOpener: (opp: string, seed: number, oppSeed: number) =>
+      `Seed nº ${seed} — sua estreia é contra ${opp} (nº ${oppSeed})`,
+    sundaySpectating: "Fora no Swiss — hoje a taça é decidida sem você",
+    startNow: "Começar agora",
+    startPlayoffs: "Começar os playoffs",
+    tapToSkip: "Toque em qualquer lugar para pular",
+    swissRecord: "Campanha",
+    qualifiedEight: "Classificados para domingo",
+    onToSunday: "Rumo ao domingo",
   },
 
   spectate: {
@@ -1219,7 +1271,7 @@ export const CAREER_PT: CareerCopy = {
     },
     calendar: {
       title: "A temporada num relance",
-      body: "Três splits, três regionais cada, um Major fechando cada split. Os Pontos da Temporada decidem quem vai ao Major — e ao Worlds.",
+      body: "Três splits, três fins de semana de regional cada — qualificatória no sábado, regional no domingo — e um Major fechando cada split: fase Swiss no sábado, playoffs no Championship Sunday. Os Pontos da Temporada decidem quem vai ao Major — e ao Worlds.",
     },
     squad: {
       title: "Seu elenco",
@@ -1304,6 +1356,8 @@ export const CAREER_PT: CareerCopy = {
       top8: "Top 8",
       swiss_exit: "Eliminado no Swiss",
     },
+    /** v2.0 (R40): linha de qualificatória nunca tem colocação de chave (top8 = classificado). */
+    qualifierOutcome: { qualified: "Classificado", eliminated: "Eliminado" },
     tier: {
       t3: "Community Cup",
       t2: "Invitational",

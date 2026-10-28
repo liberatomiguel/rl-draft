@@ -494,6 +494,8 @@ export function userTeamFor(input: UserTeamInput): {
   team: TournamentTeam;
   usedStandIn: boolean;
   usedSubId: string | null;
+  /** v2.0 (R40 review): the squad players actually fielded (a stand-in is not one). */
+  fieldedIds: string[];
 } {
   const byId = new Map(input.squad.map((p) => [p.id, p]));
   const unavailable = input.unavailablePlayerId ?? null;
@@ -577,7 +579,8 @@ export function userTeamFor(input: UserTeamInput): {
     ratingBonus: Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax),
   });
 
-  return { team, usedStandIn, usedSubId };
+  const fieldedIds = fieldedPlayers.filter((p): p is SquadPlayer => p !== null).map((p) => p.id);
+  return { team, usedStandIn, usedSubId, fieldedIds };
 }
 
 // ---------------------------------------------------------------------------
@@ -684,6 +687,14 @@ export interface FieldCtx {
   difficulty: CareerDifficulty;
   /** v2.0 (R30): the user's seeding prestige (reputation tier) for the direct-8 race. */
   userPrestige?: number;
+  /**
+   * v2.0 (R40 review): the user's seeding row for an AI-resolved event of the
+   * user's region (no `userTeam`): a qualifier played while the user holds a
+   * direct regional seat must seed the region exactly as Sunday's regional
+   * will — the user takes one of the direct 8, so the 8th org plays Saturday
+   * instead of missing both events. The user is never fielded from it.
+   */
+  userSeedRow?: { rating: number; prestige: number } | null;
 }
 
 /** Intrinsic (shift-stripped) rating — comparisons and field quality use this. */
@@ -692,7 +703,8 @@ function intrinsicRating(team: TournamentTeam): number {
 }
 
 function expectedFieldSize(def: CareerEventDef): number {
-  return def.format === "swiss" ? TOURNAMENT.swiss.teams : SINGLE_ELIM_TEAMS;
+  // "swiss" and "swissOnly" (R40 qualifier) both field 16; cups field 8.
+  return def.format === "single" ? SINGLE_ELIM_TEAMS : TOURNAMENT.swiss.teams;
 }
 
 /**
@@ -822,7 +834,7 @@ export function regionalSeedingFor(input: {
 }
 
 /**
- * v2.0 (R30): the refs of a Wednesday qualifier field — the non-direct orgs
+ * v2.0 (R30): the refs of a qualifier field (R40: Saturday) — the non-direct orgs
  * (and the user when not direct) plus local amateur sides up to 16 (the
  * lowest-seeded orgs drop out when the pool overflows).
  */
@@ -892,9 +904,11 @@ export function fieldForEvent(
     return ctx.world.orgs[ref] ? teamFor(ref) : null;
   };
   const userSeed = (region: Region) =>
-    ctx.userTeam && region === ctx.userRegion
-      ? { rating: ctx.userTeam.rating.total, prestige: ctx.userPrestige ?? 0 }
-      : null;
+    region !== ctx.userRegion
+      ? null
+      : ctx.userTeam
+        ? { rating: ctx.userTeam.rating.total, prestige: ctx.userPrestige ?? 0 }
+        : (ctx.userSeedRow ?? null);
 
   if (def.tier === "qualifier") {
     const region = def.region ?? ctx.userRegion;
@@ -906,19 +920,24 @@ export function fieldForEvent(
     const refs = qualifierFieldRefsFor({
       region,
       seasonIndex: def.seasonIndex,
-      seeding,
+      // A seeding row without a team (AI resolution) never takes a seat.
+      seeding: ctx.userTeam ? seeding : { ...seeding, rest: seeding.rest.filter((r) => r !== "user") },
       seats: TOURNAMENT.swiss.teams,
     });
     field = refs.map((ref) => teamForRef(ref, region)).filter((t): t is TournamentTeam => t !== null);
-    // The user's qualifier must field the user; AI qualifiers never do.
-    if (ctx.userTeam && region === ctx.userRegion && !seeding.direct.includes("user") && !field.some((t) => t.isUser)) {
+    // The user's qualifier must field the user; AI qualifiers never do. R40:
+    // the week's commit is the authority — if today's seeding drifted since
+    // Monday (a signing or the Mon-Fri training lifted the user into the
+    // direct 8), the committed user still plays; the lowest seat makes room.
+    if (ctx.userTeam && region === ctx.userRegion && !field.some((t) => t.isUser)) {
+      if (field.length >= TOURNAMENT.swiss.teams) field.pop();
       field.push(ctx.userTeam);
     }
   } else if (def.tier === "regional") {
     const region = def.region ?? ctx.userRegion;
     const qualified = ctx.competition.qualifiedRefs?.[region];
     if (qualified && qualified.eventId === def.id) {
-      // v2.0 (R30): direct top 8 + the Wednesday's top 8.
+      // v2.0 (R30): direct top 8 + the qualifier's 8 (R40: Saturday → Sunday).
       const seeding = regionalSeedingFor({
         orgs: regionOrgs(region),
         splitPoints: ctx.competition.splitPoints[region] ?? {},
@@ -934,6 +953,13 @@ export function fieldForEvent(
         if (refs.includes(ref)) continue;
         const t = teamForRef(ref, region);
         if (t) field.push(t);
+      }
+      // R40: the user's own regional always fields the user — committed as
+      // direct on Monday (or qualified on Saturday) even if today's seeding
+      // drifted; the lowest qualified seat makes room.
+      if (ctx.userTeam && region === ctx.userRegion && !field.some((t) => t.isUser)) {
+        if (field.length >= TOURNAMENT.swiss.teams) field.pop();
+        field.push(ctx.userTeam);
       }
     } else {
       const ranked = regionOrgs(region).sort(
@@ -1045,15 +1071,18 @@ export function simulateAiEvent(
     competition: CompetitionState;
     careerSeed: number;
     difficulty: CareerDifficulty;
+    /** R40 review: the user's seeding row when the user holds a seat in this region (FieldCtx.userSeedRow). */
+    userSeedRow?: { rating: number; prestige: number } | null;
   },
 ): TournamentState {
   const { field } = fieldForEvent(def, {
     world: ctx.world,
     competition: ctx.competition,
     userTeam: null,
-    userRegion: def.region ?? REGIONS[0], // unused without a user team
+    userRegion: def.region ?? REGIONS[0], // only the seeding row reads it
     careerSeed: ctx.careerSeed,
     difficulty: ctx.difficulty,
+    userSeedRow: ctx.userSeedRow ?? null,
   });
   const rng: Rng = createRng(deriveSeed(ctx.careerSeed, `evt:${def.id}`));
   const state = initFieldTournament(field, def.format, rng);
