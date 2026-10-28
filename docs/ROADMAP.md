@@ -32,7 +32,7 @@
 | Etapa | Milestone | Scope | State |
 |---|---|---|---|
 | 1 | M1 rules | Swiss, weekend calendar, match timeline, lint | ✅ rc.27–28 |
-| 1b | M1 hardening | Bugs the rc.28 E2E found | 🔄 rc.29, ends at its staging publish |
+| 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Miguel plays rc.29 and answers the decisions below | ⏸ |
 | 2 | M0 rest + M2 | Instruments, then a sustainable career | next |
 | 3 | M3 | The new RTW loop (contract first) | |
@@ -59,7 +59,7 @@ Fixed along the way: the 8th AI org was missing from the qualifier and the
 regional, and the season review undercounted (both since R30, fixed in R40);
 local amateur sides repeated names; one album test failed intermittently.
 
-**Etapa 1b, rc.29 (this package; it ends at its staging publish):**
+**Etapa 1b, rc.29 (on staging):**
 - Draft: the Swiss result showed before its playback (DRAFT-01, blocker); a
   paid reroll was wasted on an offer with no pickable card (DRAFT-12); the
   bracket and standings layout (DRAFT-08/15).
@@ -77,6 +77,9 @@ local amateur sides repeated names; one album test failed intermittently.
   (09); the Championship Sunday header and skip hint (10).
 
 ## Deferred from the rc.28/29 E2E (owner Etapa)
+
+- The final cross-package check of the merged rc.29 (seams review + browser
+  E2E) was stopped before it reported: re-run it at the start of Etapa 2.
 
 - `/pt` first paint shows English chrome and `lang="en"` (DRAFT-11) → Etapa 5, WEB-01.
 - A whole Classic run from a cold home makes 77–80 requests against a 75
