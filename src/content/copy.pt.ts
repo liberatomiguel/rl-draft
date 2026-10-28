@@ -431,6 +431,7 @@ export const PT: Copy = {
       "Vença aqui e você terá batido os melhores dos melhores. Boa sorte.",
     ],
     legacyCta: "Pode vir",
+    legacyDailyIntro: "O Desafio Diário de hoje abre o gauntlet histórico — sem precisar desbloquear. Ele é diferente:",
     regionalTitle: "Draft Regional",
     regionalIntro: "Esta run está travada na cena de uma região. Veja o que muda:",
     regionalSteps: [
@@ -551,6 +552,8 @@ export const PT: Copy = {
     matchPoint: "Match point",
     opponentHidden: "Os ratings do oponente ficam ocultos até a tela de resultados.",
     team: "Time",
+    yourTeam: "Seu Time",
+    swissRound: (n: number) => `Swiss · Rodada ${n}`,
     roundNames: {
       ub_quarterfinal: "Quartas (Sup)",
       lb_round1: "Inferior R1",
@@ -604,6 +607,11 @@ export const PT: Copy = {
     achievementToast: "Conquista desbloqueada",
     xpGained: "XP ganho",
     difficultyMultiplier: "Multiplicador de dificuldade",
+    modeMultiplier: {
+      quick: "Multiplicador do Draft Rápido",
+      daily: "Multiplicador do Desafio Diário",
+    },
+    xpMultiplier: "Multiplicador de XP",
     hiddenOverallBonus: "Bônus de overall oculto",
     total: "Total",
     mmrEarned: "Variação de rating",

@@ -7,7 +7,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { achievementById, lineupById, playerCardById, specialCardById } from "@/data";
 import { DIFFICULTY, RANK_REWARDS } from "@/config/balance";
@@ -31,10 +31,14 @@ import {
   type ShareCardData,
 } from "@/lib/shareCard";
 import { orgLogoSrc } from "@/lib/assets";
+import { resultStageLabel, signedDelta, xpMultiplierRows } from "@/lib/runLabels";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
+import { useCosmeticUnlocks } from "@/store/cosmeticUnlockStore";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 import { useProfileStore } from "@/store/profileStore";
+import { useRewardToasts } from "@/store/rewardToastStore";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -42,6 +46,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Modal } from "@/components/ui/Modal";
+import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { GameCard } from "@/components/cards/GameCard";
 import { rosterSlots } from "@/components/cards/rosterView";
@@ -55,7 +60,7 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T } = useCopy();
   const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, sub: R.championSub, tone: "orange" },
     runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
@@ -73,6 +78,10 @@ export function ResultsScreen({ run }: { run: RunState }) {
   const mmrGain = useProfileStore((s) => s.lastMmrGain);
   const winsHard = useProfileStore((s) => s.wins.hard);
   const winsLegacy = useProfileStore((s) => s.wins.legacy);
+  // Pop-ups the ceremonies held back (unlocks, the login calendar) — the XP
+  // count-up waits for them too.
+  const unlockPending = useCosmeticUnlocks((s) => s.queue.length > 0);
+  const loginPending = useRewardToasts((s) => !!s.loginModal);
 
   const results = run.results;
   const team = run.tournament?.teams["user"];
@@ -122,6 +131,11 @@ export function ResultsScreen({ run }: { run: RunState }) {
     results.placement === "champion" &&
     winsHard === 1 &&
     winsLegacy === 0;
+  // rc.29 (DRAFT-05): the XP total counts up once nothing covers it — the
+  // ceremonies first, then the pop-ups they held back.
+  const ceremonyUp =
+    ceremonyOpen || (rankedUp && !rankUpSeen) || (legacyJustUnlocked && !legacySeen);
+  const countXp = !ceremonyUp && !unlockPending && !loginPending;
 
   const bestPick = [run.draft.roster.player1, run.draft.roster.player2, run.draft.roster.player3]
     .find((p) => p?.refId === results.bestPlayerCardId);
@@ -254,9 +268,12 @@ export function ResultsScreen({ run }: { run: RunState }) {
             <p className="mt-1 text-xs text-orange-bright">Daily · {run.daily.label}</p>
           ) : null}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            <Badge tone="blue">
-              {R.swissRecord}: {results.swissRecord.wins}–{results.swissRecord.losses}
-            </Badge>
+            {/* Quick Draft has no Swiss stage (single-elim bracket) — DRAFT-09. */}
+            {run.mode !== "quick" ? (
+              <Badge tone="blue">
+                {R.swissRecord}: {results.swissRecord.wins}–{results.swissRecord.losses}
+              </Badge>
+            ) : null}
             <Badge tone="neutral">{R.teamOvrBadge(displayTeamOverall(team.rating))}</Badge>
             <Badge tone={team.chemistry.percent >= 62 ? "good" : "neutral"}>
               {R.chemistryBadge(CHEM_TIERS[team.chemistry.tier] ?? team.chemistry.tier)}
@@ -281,21 +298,21 @@ export function ResultsScreen({ run }: { run: RunState }) {
           <HighlightTile
             label={R.biggestWin}
             value={`${results.biggestWin.score[0]}–${results.biggestWin.score[1]} vs ${results.biggestWin.opponentName}`}
-            detail={results.biggestWin.stage}
+            detail={resultStageLabel(results.biggestWin, T)}
           />
         ) : null}
         {results.closestSeries ? (
           <HighlightTile
             label={R.closestSeries}
             value={`${results.closestSeries.score[0]}–${results.closestSeries.score[1]} vs ${results.closestSeries.opponentName}`}
-            detail={results.closestSeries.stage}
+            detail={resultStageLabel(results.closestSeries, T)}
           />
         ) : null}
         {results.worstLoss ? (
           <HighlightTile
             label={R.worstLoss}
             value={`${results.worstLoss.score[0]}–${results.worstLoss.score[1]} vs ${results.worstLoss.opponentName}`}
-            detail={results.worstLoss.stage}
+            detail={resultStageLabel(results.worstLoss, T)}
           />
         ) : null}
       </div>
@@ -377,12 +394,13 @@ export function ResultsScreen({ run }: { run: RunState }) {
                 <span className="display font-bold text-ink">+{line.amount}</span>
               </li>
             ))}
-            {results.xp.difficultyMultiplier !== 1 ? (
-              <li className="flex items-center justify-between text-sm text-sub">
-                <span>{R.difficultyMultiplier}</span>
-                <span className="display font-bold text-cyan">×{results.xp.difficultyMultiplier}</span>
+            {/* Difficulty and game mode apart (Quick ×0.5 is not a difficulty) — DRAFT-09. */}
+            {xpMultiplierRows(results.xp, run.mode, R).map((row) => (
+              <li key={row.label} className="flex items-center justify-between text-sm text-sub">
+                <span>{row.label}</span>
+                <span className="display font-bold text-cyan">×{row.value}</span>
               </li>
-            ) : null}
+            ))}
             {results.xp.hiddenOverallBonus > 0 ? (
               <li className="flex items-center justify-between text-sm text-sub">
                 <span>{R.hiddenOverallBonus}</span>
@@ -395,32 +413,26 @@ export function ResultsScreen({ run }: { run: RunState }) {
           <div className="mt-4 flex items-end justify-between border-t border-line pt-4">
             <span className="text-sm font-semibold text-sub">{R.total}</span>
             <span className="display text-3xl font-bold text-orange-bright">
-              +<AnimatedNumber value={results.xp.total} />
+              +<AnimatedNumber value={results.xp.total} play={countXp} />
               <span className="ml-1 text-base">XP</span>
             </span>
           </div>
 
           {/* Season Rating (v2.0): a signed delta on every run — titles pay, early exits
-              at the higher difficulties cost a little; 0 just shows the total. */}
+              at the higher difficulties cost a little. One label each side, "±0"
+              when nothing moved (rc.29, DRAFT-16: 0 used to print the label twice). */}
           <div className="mt-2 flex items-end justify-between">
-            <span className="text-xs font-semibold text-sub">
-              {mmrGain !== 0 ? R.mmrEarned : R.mmrTotal}
-            </span>
-            <span className={cx("display text-base font-bold", mmrGain < 0 ? "text-bad" : "text-cyan")}>
-              {mmrGain !== 0 ? (
-                <>
-                  {mmrGain > 0 ? "+" : ""}
-                  {mmrGain}
-                  <span className="ml-1 text-xs font-semibold text-faint">
-                    · {mmrNow} {R.mmrTotal}
-                  </span>
-                </>
-              ) : (
-                <>
-                  {mmrNow}
-                  <span className="ml-1 text-xs font-semibold text-faint">{R.mmrTotal}</span>
-                </>
+            <span className="text-xs font-semibold text-sub">{R.mmrEarned}</span>
+            <span
+              className={cx(
+                "display text-base font-bold",
+                mmrGain < 0 ? "text-bad" : mmrGain > 0 ? "text-cyan" : "text-sub",
               )}
+            >
+              {signedDelta(mmrGain)}
+              <span className="ml-1 text-xs font-semibold text-faint">
+                · {mmrNow} {R.mmrTotal}
+              </span>
             </span>
           </div>
 
@@ -674,6 +686,11 @@ function Confetti({ prism, legacy }: { prism?: boolean; legacy?: boolean }) {
  * `position: fixed` backdrop covers the viewport even though the results screen
  * animates with a transform (`rise-in`) that would otherwise re-anchor it. Locks
  * body scroll while open. Advances ONLY on user input — no auto-dismiss timers.
+ *
+ * rc.29: the keyboard continues like a tap (Escape / Enter — DRAFT-04) and the
+ * focus starts inside; the scroll lock is the shared, shift-free one (DRAFT-06);
+ * and while any ceremony is up it holds the login calendar and the cosmetic
+ * unlock pop-ups, which open once the ceremonies are done (DRAFT-02).
  */
 function CeremonyPortal({
   onClick,
@@ -687,18 +704,16 @@ function CeremonyPortal({
   children: React.ReactNode;
 }) {
   const mounted = useMounted();
-  useEffect(() => {
-    // Capture + restore the prior value (not a hardcoded '') so concurrent lock
-    // owners (e.g. a Modal) can't be desynced by this overlay's cleanup.
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useOverlayHold("ceremony", true);
+  usePageScrollLock(mounted);
+  useDialogFocus(rootRef, mounted, { onEscape: onClick, onEnter: onClick });
   if (!mounted) return null;
   return createPortal(
     <div
+      ref={rootRef}
+      tabIndex={-1}
+      style={{ outline: "none" }}
       // Full-screen SCROLL container: tall ceremony content (e.g. the Legacy
       // unlock on a SHORT viewport) stays reachable and the "tap to continue"
       // hint is never clipped off-screen. Body scroll stays locked (intended) —
@@ -708,6 +723,7 @@ function CeremonyPortal({
         className,
       )}
       role="dialog"
+      aria-modal="true"
       aria-label={ariaLabel}
       onClick={onClick}
     >
@@ -878,9 +894,21 @@ export function RankUpCelebration({
               ))}
             </ul>
           </div>
-        ) : (
-          <p className="mt-3 text-xs text-sub">{R.rankUpHint}</p>
-        )}
+        ) : null}
+      </div>
+      {/* rc.29 (DRAFT-04): always a way out — the button, the hint, Escape / Enter.
+          The unlock list used to replace the hint, leaving no cue at all. */}
+      <div className="flex flex-col items-center gap-2">
+        <Button
+          variant="primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDone();
+          }}
+        >
+          {R.ceremonyContinue}
+        </Button>
+        <p className="text-xs text-sub">{R.rankUpHint}</p>
       </div>
     </CeremonyPortal>
   );
@@ -941,7 +969,7 @@ function LegacyEmblem() {
  * Renders nothing when `results.eliminatedBy` is null (champion / flag off).
  */
 function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
-  const { RESULTS_UI: R } = useCopy();
+  const { RESULTS_UI: R, TOURNAMENT_UI: T } = useCopy();
   const lineup = lineupById.get(eliminator.lineupId);
   if (!lineup) return null;
   // The specials the eliminator actually fielded (AI upgrades player cards), keyed
@@ -985,7 +1013,7 @@ function EliminatorReveal({ eliminator }: { eliminator: EliminatorTeam }) {
             ) : null}
           </span>
           <Badge tone="bad">
-            {eliminator.stage} ·{" "}
+            {resultStageLabel(eliminator, T)} ·{" "}
             {R.eliminatorScore(eliminator.score[0], eliminator.score[1])}
           </Badge>
         </div>

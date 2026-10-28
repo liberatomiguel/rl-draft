@@ -993,6 +993,12 @@ export function selectCollectionUnlocked(state: ProfileState): boolean {
   return rankRewardsForXp(state.xp).collection || Object.keys(state.unlockedSpecials).length > 0;
 }
 
+/** The first-run tour (home) is still due: never seen AND no run finished yet.
+ *  A player whose first stop was /play already knows the game (rc.29, DRAFT-13). */
+export function selectTutorialDue(state: Pick<ProfileState, "flags" | "runsCompleted">): boolean {
+  return !state.flags.seenTutorial && state.runsCompleted === 0;
+}
+
 /** Ladder position of a rank id (0 = Unranked / unknown). */
 function rankIndexOf(rankId: string): number {
   const i = RANKS.findIndex((r) => r.id === rankId);

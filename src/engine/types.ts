@@ -550,16 +550,27 @@ export interface XpLine {
 
 export interface XpSummary {
   lines: XpLine[];
-  /** e.g. 1.5 for Hard. Applied to run lines, not achievement lines. */
+  /** The whole run-line multiplier: difficulty × game mode (e.g. 1.5 for Hard,
+   *  0.75 for a Hard Quick Draft). Applied to run lines, not achievement lines. */
   difficultyMultiplier: number;
+  /** rc.29: the two factors inside `difficultyMultiplier`, for the results
+   *  breakdown. Optional so results saved before rc.29 stay valid. */
+  factors?: { difficulty: number; mode: number };
   hiddenOverallBonus: number;
   total: number;
 }
 
+/** rc.29: which stage a series was played in, as data — the screens name it in
+ *  the active language (`stage` strings are English). */
+export type StageRef = { kind: "swiss"; round: number } | { kind: "playoffs"; round: string };
+
 export interface SeriesHighlight {
   opponentName: string;
   score: [number, number];
+  /** English stage label ("Swiss Round 2", "Grand Final"); the fallback name. */
   stage: string;
+  /** rc.29: the stage as data (absent on results saved before rc.29). */
+  stageRef?: StageRef;
 }
 
 export interface RunResults {
@@ -593,6 +604,8 @@ export interface EliminatorTeam {
   name: string;
   /** Stage label, e.g. "Grand Final" / "Swiss Round 5". */
   stage: string;
+  /** rc.29: the stage as data (absent on results saved before rc.29). */
+  stageRef?: StageRef;
   /** Final series score, user's wins first. */
   score: [number, number];
   /** The eliminator's team overall (intrinsic — difficulty shift stripped). */

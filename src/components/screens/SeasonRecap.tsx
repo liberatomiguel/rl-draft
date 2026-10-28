@@ -22,7 +22,8 @@ import { isLegacyReward } from "@/engine/cosmetics";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
-import { useProfileStore } from "@/store/profileStore";
+import { useOverlayHold } from "@/store/overlayHoldStore";
+import { selectTutorialDue, useProfileStore } from "@/store/profileStore";
 import { useAccountStore } from "@/store/accountStore";
 import { Button } from "@/components/ui/Button";
 import { RankBadge } from "@/components/ui/RankBadge";
@@ -31,7 +32,7 @@ import { BadgeEmblem, CosmeticPreview } from "@/components/cosmetics/CosmeticVie
 export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () => void } = {}) {
   const mounted = useMounted();
   const seen = useProfileStore((s) => s.flags.seenSeasonRecap);
-  const tutorialSeen = useProfileStore((s) => s.flags.seenTutorial);
+  const tutorialDue = useProfileStore(selectTutorialDue);
   const preseason = useProfileStore((s) => s.legacy.preseason);
   const owned = useProfileStore((s) => s.cosmetics.owned);
   const markFlag = useProfileStore((s) => s.markFlag);
@@ -41,8 +42,12 @@ export function SeasonRecap({ force, onClose }: { force?: boolean; onClose?: () 
   const [step, setStep] = useState(0);
 
   // Automatic showing: once, never on top of the tutorial, only for pre-season profiles.
-  const auto = !seen && !!preseason && tutorialSeen;
-  if (!mounted || (!force && !auto)) return null;
+  // rc.29: "after the tutorial" = once it is no longer due (a veteran skips it).
+  const auto = !seen && !!preseason && !tutorialDue;
+  const show = mounted && (force || auto);
+  // The login calendar and the unlock pop-ups wait behind it (DRAFT-13).
+  useOverlayHold("intro", show);
+  if (!show) return null;
 
   const finish = () => {
     if (!seen) markFlag("seenSeasonRecap");

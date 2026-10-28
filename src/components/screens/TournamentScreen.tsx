@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TOURNAMENT } from "@/config/balance";
-import { useCopy, type Copy } from "@/content/copy";
+import { useCopy } from "@/content/copy";
 import { lineupById } from "@/data";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { displayTeamOverall } from "@/engine/rating";
@@ -29,6 +29,7 @@ import type {
   TournamentState,
   TournamentTeam,
 } from "@/engine/types";
+import { seriesStageLabel, teamDisplayName } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
@@ -43,9 +44,10 @@ import { RunStepper } from "./RunStepper";
 // Series indexing helpers
 // ---------------------------------------------------------------------------
 
+// No label stored: the screen names the stage at render time
+// (`seriesStageLabel`), so a language switch mid-run relabels it (rc.29).
 interface SeriesEntry {
   key: string;
-  label: string;
   isUser: boolean;
   stage: "swiss" | "playoffs";
   roundIndex: number;
@@ -56,7 +58,7 @@ function entryKey(stage: string, roundIndex: number, seriesIndex: number): strin
   return `${stage}:${roundIndex}:${seriesIndex}`;
 }
 
-function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[] {
+function allEntries(t: TournamentState): SeriesEntry[] {
   const out: SeriesEntry[] = [];
   // Within each round the user's series reveals FIRST (it's the story);
   // AI series follow as quick background pops. Sort is stable, so rebuilt
@@ -68,7 +70,6 @@ function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[]
     pushRound(
       round.series.map((s, si) => ({
         key: entryKey("swiss", ri, si),
-        label: `${T.swiss} · ${T.round(round.round)}`,
         isUser: s.teamAId === "user" || s.teamBId === "user",
         stage: "swiss" as const,
         roundIndex: ri,
@@ -80,7 +81,6 @@ function allEntries(t: TournamentState, T: Copy["TOURNAMENT_UI"]): SeriesEntry[]
     pushRound(
       round.series.map((s, si) => ({
         key: entryKey("playoffs", ri, si),
-        label: T.roundNames[round.name] ?? round.name,
         isUser: s.teamAId === "user" || s.teamBId === "user",
         stage: "playoffs" as const,
         roundIndex: ri,
@@ -137,11 +137,11 @@ export function TournamentScreen({ run }: { run: RunState }) {
   // Playback state. On mount (or refresh) everything already simulated is
   // treated as revealed. A FRESH tournament (straight from team review)
   // auto-starts — no extra click needed.
-  const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t, T) : []));
-  const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t, T).length : 0));
+  const [queue, setQueue] = useState<SeriesEntry[]>(() => (t ? allEntries(t) : []));
+  const [cursor, setCursor] = useState<number>(() => (t ? allEntries(t).length : 0));
   const [gamesShown, setGamesShown] = useState(0);
   const [running, setRunning] = useState(
-    () => Boolean(t) && allEntries(t!, T).length === 0 && t!.stage !== "finished",
+    () => Boolean(t) && allEntries(t!).length === 0 && t!.stage !== "finished",
   );
   // Default playback speed follows the Settings → Animation speed preference.
   const [speed, setSpeed] = useState<1 | 2 | 4>(
@@ -164,9 +164,9 @@ export function TournamentScreen({ run }: { run: RunState }) {
     playRound();
     const fresh = useRunStore.getState().run?.tournament;
     if (!fresh) return;
-    const entries = allEntries(fresh, T);
+    const entries = allEntries(fresh);
     setQueue(entries); // cursor stays — new entries are beyond it
-  }, [playRound, T]);
+  }, [playRound]);
 
   // The autoplay engine. Pace depends on what is being revealed: the user's
   // series plays game by game then lingers; AI series pop quickly; crossing
@@ -232,7 +232,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
     }
     const fresh = useRunStore.getState().run?.tournament;
     if (fresh) {
-      const entries = allEntries(fresh, T);
+      const entries = allEntries(fresh);
       setQueue(entries);
       setCursor(entries.length);
       // Everything is revealed at once on skip — award all live feats now.
@@ -540,7 +540,7 @@ function MatchCenter({
     <Panel strong glow={live ? "orange" : undefined} className="p-5">
       <div className="mb-1 flex items-center justify-between gap-3">
         <p className="kicker">
-          {entry.label} ·{" "}
+          {seriesStageLabel(t, entry, T)} ·{" "}
           {T.bestOf(
             entry.stage === "swiss"
               ? TOURNAMENT.swiss.bestOf
@@ -570,7 +570,7 @@ function MatchCenter({
         <div className="flex min-w-0 items-center gap-2">
           <TeamLogo orgId={teamA.orgId} seasonId={teamSeasonId(teamA)} size="sm" />
           <p className={cx("display min-w-0 truncate text-base font-bold uppercase tracking-wide md:text-lg", teamA.isUser ? "text-orange-bright" : "text-ink")}>
-            {teamA.name}
+            {teamDisplayName(teamA, T)}
           </p>
         </div>
         <p className="display shrink-0 text-3xl font-bold">
@@ -580,7 +580,7 @@ function MatchCenter({
         </p>
         <div className="flex min-w-0 items-center justify-end gap-2">
           <p className={cx("display min-w-0 truncate text-right text-base font-bold uppercase tracking-wide md:text-lg", teamB.isUser ? "text-orange-bright" : "text-ink")}>
-            {teamB.name}
+            {teamDisplayName(teamB, T)}
           </p>
           <TeamLogo orgId={teamB.orgId} seasonId={teamSeasonId(teamB)} size="sm" />
         </div>
@@ -967,7 +967,7 @@ function BracketCell({
       <p className={cx("flex items-center gap-1.5 py-0.5 text-xs", won === false && "opacity-45")}>
         {team ? <TeamLogo orgId={team.orgId} seasonId={teamSeasonId(team)} size="xs" /> : <span className="h-4 w-4 rounded bg-white/5" />}
         <span className={cx("min-w-0 flex-1 truncate", team?.isUser ? "font-bold text-orange-bright" : team ? "text-ink" : "italic text-faint")}>
-          {team?.name ?? T.tbd}
+          {team ? teamDisplayName(team, T) : T.tbd}
         </span>
         {score !== null ? (
           <span className={cx("display shrink-0 font-bold", won ? "text-good" : "text-sub")}>{score}</span>
@@ -1082,7 +1082,7 @@ function SwissStandings({
                     <span className="flex items-center gap-1.5">
                       <TeamLogo orgId={team.orgId} seasonId={teamSeasonId(team)} size="xs" />
                       <span className={cx("min-w-0 truncate", isUser ? "font-bold text-orange-bright" : "text-ink")}>
-                        {team.name}
+                        {teamDisplayName(team, T)}
                       </span>
                       {through ? <span className="text-[9px] font-bold text-good">✓</span> : null}
                     </span>

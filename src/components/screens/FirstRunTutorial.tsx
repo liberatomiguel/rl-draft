@@ -7,33 +7,49 @@
  * gated, so it renders nothing on the server — zero SEO / page-speed impact.
  * Portaled to <body> so it sits above everything and isn't trapped by any
  * transformed ancestor (project pitfall: position:fixed inside an animated box).
+ *
+ * rc.29 (E2E DRAFT-13): skipped for a player who already finished a run (their
+ * first stop was /play); it holds the daily-login calendar and the unlock
+ * pop-ups behind it (they open once it is done, never stacked under it);
+ * Escape skips it; the focus starts inside it and the page under it is locked.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
-import { useProfileStore } from "@/store/profileStore";
+import { useOverlayHold } from "@/store/overlayHoldStore";
+import { selectTutorialDue, useProfileStore } from "@/store/profileStore";
 import { Button } from "@/components/ui/Button";
+import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 
 export function FirstRunTutorial() {
   const mounted = useMounted();
-  const seen = useProfileStore((s) => s.flags.seenTutorial);
+  const due = useProfileStore(selectTutorialDue);
   const markFlag = useProfileStore((s) => s.markFlag);
   const { TUTORIAL: T } = useCopy();
   const [step, setStep] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const show = mounted && due;
+  const finish = () => markFlag("seenTutorial");
 
-  if (!mounted || seen) return null;
+  useOverlayHold("intro", show);
+  usePageScrollLock(show);
+  useDialogFocus(rootRef, show, { onEscape: finish });
+
+  if (!show) return null;
 
   const steps = T.steps;
   const cur = steps[step];
   const last = step === steps.length - 1;
-  const finish = () => markFlag("seenTutorial");
 
   return createPortal(
     <div
+      ref={rootRef}
+      tabIndex={-1}
+      style={{ outline: "none" }}
       className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"

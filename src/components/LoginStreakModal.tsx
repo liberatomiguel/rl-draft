@@ -8,16 +8,24 @@
  * XP. A milestone whose item the player already owns (a new cycle after a
  * missed day) shows the item ticked and pays XP instead. Past day 30 the
  * calendar reads complete and every day pays the flat maximum.
+ *
+ * rc.29 (E2E DRAFT-03 / DRAFT-13): the calendar is open on a cold home, so it
+ * draws reward art in full only for today and the next milestone; banners are
+ * always CSS swatches (the smallest banner WebP is 800 px) and later badges
+ * CSS gems — the unlock pop-up shows the earned item at full size right after.
+ * It also waits behind an overlay hold (the first-run tour, a ceremony).
  */
 
 import { LOGIN_STREAK } from "@/config/balance";
 import { COSMETICS, type CosmeticDef } from "@/data/cosmetics";
 import { useCopy } from "@/content/copy";
 import { loginDayXp } from "@/engine/missions";
+import { loginCalendarFocus } from "@/lib/loginCalendar";
 import { cx } from "@/lib/util";
+import { selectHeld, useOverlayHolds, useSettled } from "@/store/overlayHoldStore";
 import { useProfileStore } from "@/store/profileStore";
 import { useRewardToasts } from "@/store/rewardToastStore";
-import { BadgeEmblem, BannerSurface, CosmeticPreview, TIER_ACCENT, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
+import { BadgeEmblem, BadgeGem, BannerSwatch, CosmeticPreview, TIER_ACCENT, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 
@@ -28,18 +36,19 @@ export function LoginStreakModal() {
   const copy = useCosmeticCopy();
   const data = useRewardToasts((s) => s.loginModal);
   const dismiss = useRewardToasts((s) => s.dismissLogin);
+  const held = useOverlayHolds(selectHeld);
   const owned = useProfileStore((s) => s.cosmetics.owned);
-  if (!data) return null;
+  // Waits behind the tour / a ceremony, and a frame more (see `useSettled`).
+  const ready = useSettled(!!data && !held);
+  if (!data || !ready) return null;
 
   const { streak, xp, milestone } = data;
   const cycle = LOGIN_STREAK.cycleDays;
-  const complete = streak >= cycle;
-  const today = Math.min(streak, cycle);
+  const { today, nextRewardDay, complete, artDays } = loginCalendarFocus(streak);
   const days = Array.from({ length: cycle }, (_, i) => i + 1);
   const todayIso = new Date().toISOString().slice(0, 10);
   /** Owned before today = earned in an earlier cycle (the day pays XP instead). */
   const ownedBefore = (id: string) => !!owned[id] && owned[id] !== "preview" && owned[id].slice(0, 10) < todayIso;
-  const nextRewardDay = days.find((d) => d > today && LOGIN_STREAK.milestoneBonus[d] !== undefined) ?? null;
   const todayRewards = milestone ? rewardsFor(milestone) : [];
 
   return (
@@ -55,7 +64,7 @@ export function LoginStreakModal() {
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {todayRewards.map((r) => (
             <div key={r.id} className={cx("panel flex items-center justify-between gap-2 p-2.5", ownedBefore(r.id) ? "opacity-80" : "!border-orange/40")}>
-              <CosmeticPreview id={r.id} size="sm" />
+              <CosmeticPreview id={r.id} size="sm" swatch />
               {ownedBefore(r.id) ? (
                 <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-good" title={M.loginOwnedHint}>
                   ✓ {M.loginOwned}
@@ -94,7 +103,7 @@ export function LoginStreakModal() {
               <span className={cx("display text-[8px] font-bold leading-none tracking-wider", isToday ? "text-orange-bright" : past ? "text-good" : "text-faint")}>{d}</span>
               <span className="flex max-w-full flex-wrap items-center justify-center gap-0.5">
                 {rewards.length ? (
-                  rewards.map((r) => <MiniCosmetic key={r.id} def={r} dim={ownedBefore(r.id)} />)
+                  rewards.map((r) => <MiniCosmetic key={r.id} def={r} dim={ownedBefore(r.id)} full={artDays.has(d)} />)
                 ) : (
                   <span className={cx("text-sm leading-none", past ? "text-good" : "text-faint/70")} aria-hidden>
                     {past ? "✓" : "·"}
@@ -122,16 +131,20 @@ export function LoginStreakModal() {
   );
 }
 
-/** A cosmetic at calendar-cell size: a badge at 24 px, a banner as a swatch,
- *  a title as a small pill in its colours (the name is in the tooltip). */
-function MiniCosmetic({ def, dim }: { def: CosmeticDef; dim?: boolean }) {
-  if (def.kind === "badge") return <BadgeEmblem badge={def} size={22} fx={false} className={cx(dim && "opacity-60")} />;
-  if (def.kind === "banner") {
-    return (
-      <BannerSurface banner={def} displayPx={400} className={cx("cos-banner-thumb rounded border border-line-strong", dim && "opacity-60")}>
-        <span className="block h-3.5 w-6" />
-      </BannerSurface>
+/** A cosmetic at calendar-cell size, the name in the tooltip: a badge at 22 px
+ *  (its art on today / the next milestone, a gem in its tier colour on the
+ *  other days), a banner as a CSS swatch, a title as a small pill in its
+ *  colours. Only a `full` badge requests an image. */
+function MiniCosmetic({ def, dim, full }: { def: CosmeticDef; dim?: boolean; full?: boolean }) {
+  if (def.kind === "badge") {
+    return full ? (
+      <BadgeEmblem badge={def} size={22} fx={false} className={cx(dim && "opacity-60")} />
+    ) : (
+      <BadgeGem badge={def} size={22} className={cx(dim && "opacity-60")} />
     );
+  }
+  if (def.kind === "banner") {
+    return <BannerSwatch banner={def} className={cx("h-3.5 w-6 rounded border border-line-strong", dim && "opacity-60")} />;
   }
   const c = def.style.colors;
   return (

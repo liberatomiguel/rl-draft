@@ -21,8 +21,10 @@ import { rankForXp } from "@/engine/progression";
 import { displayTeamOverall } from "@/engine/rating";
 import type { GameResult, RunState, TournamentTeam } from "@/engine/types";
 import { useCopy } from "@/content/copy";
+import { teamDisplayName } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
 import { RankUpCelebration } from "./ResultsScreen";
@@ -64,6 +66,13 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   const totalGames = series?.games.length ?? 0;
   const shownGames = started ? Math.min(revealed, totalGames) : totalGames;
   const revealing = started && series != null && revealed < totalGames;
+  // rc.29 (DRAFT-02): the clear's XP lands when the series is computed, before
+  // it plays — its cosmetic unlocks wait until the series has been shown (and
+  // the rank-up ceremony after it holds them in turn). Held from before "Play"
+  // so the hold is already up when they arrive; a gauntlet lost at a stage
+  // has no boss series to show.
+  const played = series != null || (state?.stages?.failedAt ?? null) !== null;
+  useOverlayHold("live", !played || revealing);
 
   const play = () => {
     sfx.start();
@@ -134,7 +143,7 @@ export function ChallengeScreen({ run }: { run: RunState }) {
       {/* Matchup header */}
       <Panel className="p-5">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <TeamSide team={user} name={CH.yourTeam} align="start" />
+          <TeamSide team={user} kicker={CH.yourTeam} name={teamDisplayName(user, T)} align="start" />
           <span className="display text-xs font-bold uppercase tracking-[0.2em] text-faint">{CH.vs}</span>
           <BossSide team={opponent} orgId={lineupById.get(challenge.opponentLineupId)!.orgId} name={boss.orgName} align="end" />
         </div>
@@ -218,7 +227,7 @@ export function ChallengeScreen({ run }: { run: RunState }) {
           {/* Scoreline (running while the games reveal) */}
           <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
             <p className="display min-w-0 truncate text-base font-bold uppercase tracking-wide text-orange-bright md:text-lg">
-              {user.name}
+              {teamDisplayName(user, T)}
             </p>
             <p className="display shrink-0 text-3xl font-bold tabular-nums">
               <span className={cx(!revealing && userWins > oppWins ? "text-good" : "text-ink")}>{userWins}</span>
@@ -441,11 +450,23 @@ function renderGame(
   );
 }
 
-function TeamSide({ team, name, align }: { team: TournamentTeam; name: string; align: "start" | "end" }) {
+/** The player's side of the matchup header. `name` is the team's display name
+ *  (rc.29 review R1: `teamDisplayName`, never the engine's English default). */
+function TeamSide({
+  team,
+  kicker,
+  name,
+  align,
+}: {
+  team: TournamentTeam;
+  kicker: string;
+  name: string;
+  align: "start" | "end";
+}) {
   return (
     <div className={cx("min-w-0", align === "end" ? "text-right" : "text-left")}>
-      <p className="kicker !text-[10px]">{name}</p>
-      <p className="display mt-1 truncate text-sm font-bold uppercase tracking-wide text-ink">{team.name}</p>
+      <p className="kicker !text-[10px]">{kicker}</p>
+      <p className="display mt-1 truncate text-sm font-bold uppercase tracking-wide text-ink">{name}</p>
       <p className="display mt-1 text-2xl font-bold text-orange-bright">{displayTeamOverall(team.rating)}</p>
     </div>
   );

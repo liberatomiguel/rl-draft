@@ -4,7 +4,9 @@
  * First-run onboarding. One-time modals, gated by persisted flags:
  *  - How to play: the very first time the player enters a draft.
  *  - Regional draft: the first time they start a region-locked run.
- *  - Legacy intro: the first time they draft on Legacy difficulty.
+ *  - Legacy intro: the first time they draft on Legacy difficulty. On a Daily
+ *    "Legacy Day" it says so instead of "you unlocked" (rc.29, DRAFT-14): the
+ *    Daily opens Legacy to everyone for the day.
  * They chain naturally — dismissing one flips its flag and the next (if due)
  * appears on the re-render. Each tutorial carries an accent color so the steps
  * read as a themed, scannable card stack (v1.2.0 visual pass).
@@ -14,6 +16,7 @@ import { useCopy } from "@/content/copy";
 import type { Difficulty, Region } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { useProfileStore } from "@/store/profileStore";
+import { useRunStore } from "@/store/runStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
@@ -97,6 +100,7 @@ export function RunOnboarding({
   const seenRegional = useProfileStore((s) => s.flags.seenRegionalIntro);
   const seenLegacy = useProfileStore((s) => s.flags.seenLegacyIntro);
   const markFlag = useProfileStore((s) => s.markFlag);
+  const daily = useRunStore((s) => Boolean(s.run?.daily));
 
   if (!seenHowTo) {
     return (
@@ -144,7 +148,11 @@ export function RunOnboarding({
           </Button>
         }
       >
-        <Steps intro={ONBOARDING.legacyIntro} steps={ONBOARDING.legacySteps} accent="cyan" />
+        <Steps
+          intro={daily ? ONBOARDING.legacyDailyIntro : ONBOARDING.legacyIntro}
+          steps={ONBOARDING.legacySteps}
+          accent="cyan"
+        />
       </Modal>
     );
   }
