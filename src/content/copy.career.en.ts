@@ -1116,6 +1116,12 @@ export const CAREER_EN = {
     game: (n: number) => `Game ${n}`,
     goal: "GOAL",
     overtime: "OVERTIME",
+    // GAME-04 — goal timeline + overtime presentation
+    goldenGoal: "GOLDEN GOAL",
+    endOfRegulation: "End of regulation",
+    gameClock: "Game clock",
+    playByPlay: "Play-by-play",
+    seriesTag: "Series",
     matchPoint: "Match point",
     deciding: "Deciding game",
     upset: "UPSET",

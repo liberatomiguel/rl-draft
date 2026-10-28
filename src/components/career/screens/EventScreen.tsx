@@ -79,6 +79,14 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { CareerAiTicker, type TickerItem } from "@/components/career/event/CareerAiTicker";
 import { CareerBracket } from "@/components/career/event/CareerBracket";
 import { CareerMatchCenter } from "@/components/career/event/CareerMatchCenter";
+import {
+  beatStepKey,
+  createBeatSync,
+  gamePlayback,
+  startBeat,
+  stopBeat,
+} from "@/components/career/event/clockPlayback";
+import { buildGameTimeline } from "@/engine/career/matchTimeline";
 import { CareerSwissStandings } from "@/components/career/event/CareerSwissStandings";
 import { ChampionshipSunday } from "@/components/career/event/ChampionshipSunday";
 import { SeedList } from "@/components/career/event/SeedList";
@@ -546,6 +554,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** User series whose result cue (sfx) already fired — once each. */
   const cuedRef = useRef<Set<string>>(new Set());
+  /** How far the live Match Center step has played: the timer keeps it, the clock reads it. */
+  const beatSyncRef = useRef(createBeatSync());
 
   // The playback clock — ONE effect, paced by what is being revealed.
   useEffect(() => {
@@ -561,15 +571,33 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
       const userSeries = userIdx !== null ? round.series[userIdx] : null;
 
       if (userSeries && !anim.banner) {
-        // Phase 1 — the user's series, goal by goal.
+        // Phase 1 — the user's series, beat by beat (GAME-04): each game's
+        // timeline (goals on the 5:00 clock; in OT the end-of-regulation
+        // beat, then the golden goal) waits out the clock segment the Match
+        // Center plays — same plan, same numbers. `live.goal` counts BEATS.
         const game = userSeries.games[live.game];
         if (game) {
-          const goals = game.score[0] + game.score[1];
-          if (live.goal < goals) {
-            tick(P.userGoalMs, () => setLive((l) => ({ ...l, goal: l.goal + 1 })));
-          } else {
-            tick(P.userGameGapMs, () => setLive((l) => ({ game: l.game + 1, goal: 0 })));
-          }
+          const plan = gamePlayback(buildGameTimeline(userSeries, game, round.key));
+          const tail = live.goal >= plan.steps.length;
+          // A re-run mid-step (pause, speed change) RESUMES the step: it waits
+          // only what is left, and the clock reads the same record, so the
+          // two still land together.
+          const sync = beatSyncRef.current;
+          const wait = startBeat(
+            sync,
+            beatStepKey(round.key, live.game, live.goal),
+            tail ? plan.tail.delayMs + P.userGameGapMs : plan.steps[live.goal].delayMs,
+            speed,
+            performance.now(),
+          );
+          timerRef.current = setTimeout(
+            () => setLive((l) => (tail ? { game: l.game + 1, goal: 0 } : { ...l, goal: l.goal + 1 })),
+            wait,
+          );
+          return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            stopBeat(sync, performance.now());
+          };
         } else {
           // Every game shown — land the banner (with its one-shot cue).
           tick(0, () => {
@@ -910,7 +938,10 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               t={t}
               round={center.round}
               series={center.round.series[center.si]}
-              progress={centerMidReveal ? live : null}
+              progress={centerMidReveal ? { game: live.game, beat: live.goal } : null}
+              clockSpeed={speed}
+              clockPaused={!running}
+              clockSync={beatSyncRef}
               status={centerStatus}
               onClose={inspected ? () => setInspectKey(null) : undefined}
             />

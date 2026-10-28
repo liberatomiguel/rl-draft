@@ -4,32 +4,41 @@
  * Road to Worlds — the event Match Center (v0.2 rebuild).
  *
  * The cinematic heart of the event screen: a broadcast-style scoreboard for
- * ONE series. Live user series reveal goal by goal (scorer feed, running
- * score, OT/deciding badges, game chips filling); finished series show the
- * full result plus a desk-narration banner (verdict, series star, what it
- * means for the run). AI series can be inspected here after they reveal.
+ * ONE series. Live user series reveal beat by beat (GAME-04 timeline: goals
+ * on a running 5:00 clock, the end-of-regulation / OVERTIME beat, the OT
+ * clock and the golden goal; scorer feed, running score, game chips
+ * filling); finished series show the full result plus a desk-narration
+ * banner (verdict, series star, what it means for the run). AI series can be
+ * inspected here after they reveal.
  *
- * Pure skin: all reveal pacing lives in EventScreen; this renders a snapshot.
+ * Pure skin: reveal pacing lives in EventScreen (the beat cursor) and
+ * clockPlayback.ts (the shared plan); this renders a snapshot plus the clock.
  */
 
-import { useMemo } from "react";
+import { useMemo, type RefObject } from "react";
 import { TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
+import {
+  buildGameTimeline,
+  gameScoreAB,
+  type GameTimeline,
+  type TimelineGoal,
+} from "@/engine/career/matchTimeline";
 import type { GameResult, SeriesResult, TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
 import { Badge } from "@/components/ui/Badge";
 import { Panel } from "@/components/ui/Panel";
 import {
-  goalTimeline,
   seriesShape,
   seriesStarOf,
-  type GoalEvent,
   type RoundRef,
   type UserSeriesStatus,
 } from "./eventPlayback";
+import { beatStepKey, gamePlayback, type BeatSync, type GamePlayback } from "./clockPlayback";
+import { ClockStamp, GameClock } from "./GameClock";
 
 export function bestOfFor(round: RoundRef, t: TournamentState): number {
   if (round.stage === "swiss") return TOURNAMENT.swiss.bestOf;
@@ -38,7 +47,7 @@ export function bestOfFor(round: RoundRef, t: TournamentState): number {
     : TOURNAMENT.playoffs.bestOf;
 }
 
-/** How many recent goals the feed keeps on screen. */
+/** How many recent beats (goals, the OT beat) the feed keeps on screen. */
 const FEED_TAIL = 4;
 
 export function CareerMatchCenter({
@@ -47,6 +56,9 @@ export function CareerMatchCenter({
   round,
   series,
   progress,
+  clockSpeed = 1,
+  clockPaused = false,
+  clockSync,
   status,
   onClose,
 }: {
@@ -56,10 +68,15 @@ export function CareerMatchCenter({
   series: SeriesResult;
   /**
    * Reveal cursor for a LIVE user series: `game` fully revealed games,
-   * `goal` goals shown of games[game]. Null = fully revealed (banner /
-   * inspect view).
+   * `beat` timeline beats shown of games[game] (goals plus, in overtime
+   * games, the OT beat). Null = fully revealed (banner / inspect view).
    */
-  progress: { game: number; goal: number } | null;
+  progress: { game: number; beat: number } | null;
+  /** Live clock pacing: the playback speed factor and the pause state. */
+  clockSpeed?: number;
+  clockPaused?: boolean;
+  /** The reveal timer's step record (EventScreen), so the clock lands with each beat. */
+  clockSync?: RefObject<BeatSync>;
   /** What the result means for the run (user series only, null otherwise). */
   status: UserSeriesStatus;
   /** Present on inspected series — renders the close affordance. */
@@ -84,14 +101,26 @@ export function CareerMatchCenter({
   const currentGame: GameResult | undefined = live
     ? series.games[progress.game]
     : undefined;
-  const timeline: GoalEvent[] = useMemo(
-    () => (currentGame ? goalTimeline(series, currentGame) : []),
-    [series, currentGame],
+  const roundKey = round.key;
+  const timeline: GameTimeline | null = useMemo(
+    () => (currentGame ? buildGameTimeline(series, currentGame, roundKey) : null),
+    [series, currentGame, roundKey],
   );
-  const shownGoals = currentGame ? timeline.slice(0, progress?.goal ?? 0) : [];
+  const playback: GamePlayback | null = useMemo(
+    () => (timeline ? gamePlayback(timeline) : null),
+    [timeline],
+  );
+  const beatCursor = progress?.beat ?? 0;
+  const shownBeats = timeline ? timeline.beats.slice(0, beatCursor) : [];
   const gameScore: [number, number] =
-    shownGoals.length > 0 ? shownGoals[shownGoals.length - 1].scoreAfter : [0, 0];
-  const currentGameComplete = Boolean(currentGame) && shownGoals.length === timeline.length;
+    shownBeats.length > 0 ? shownBeats[shownBeats.length - 1].scoreAfter : [0, 0];
+  // OVERTIME shows from the OT beat on — never read off game.overtime early.
+  const overtimeReached = shownBeats.some((b) => b.kind === "overtime");
+  // The segment the clock plays while the next beat is pending (tail = after the last).
+  const clockSegment = playback
+    ? (playback.steps[beatCursor]?.segment ?? playback.tail.segment)
+    : null;
+  const clockStep = progress ? beatStepKey(roundKey, progress.game, progress.beat) : undefined;
 
   let winsA = 0;
   let winsB = 0;
@@ -133,7 +162,7 @@ export function CareerMatchCenter({
   const star = done ? seriesStarOf(series) : null;
   const shape = done ? seriesShape(series) : { sweep: false, reverseSweep: false };
 
-  const scorerNameOf = (e: GoalEvent): string => {
+  const scorerNameOf = (e: TimelineGoal): string => {
     const team = e.side === "a" ? teamA : teamB;
     if (e.playerIdx === null) return team?.name ?? "";
     return team?.playerNames[e.playerIdx] ?? team?.name ?? "";
@@ -175,12 +204,41 @@ export function CareerMatchCenter({
           {currentGame ? (
             <>
               <p className="kicker !text-[10px] text-faint">{C.event.game(currentGame.index)}</p>
-              <p className="display text-4xl font-bold leading-tight text-ink sm:text-5xl" aria-live="polite">
-                {gameScore[0]}
-                <span className="mx-1.5 text-faint sm:mx-2">:</span>
-                {gameScore[1]}
-              </p>
-              <p className="display mt-0.5 text-sm font-bold text-sub">
+              {/* RL broadcast board: goals · clock · goals. The goal feed is the
+                  live region; the numbers re-key so each goal pops its side. */}
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                <span
+                  key={`a${gameScore[0]}`}
+                  className="display pop-in min-w-[1ch] text-4xl font-bold leading-tight text-ink sm:text-5xl"
+                >
+                  {gameScore[0]}
+                </span>
+                {clockSegment ? (
+                  <GameClock
+                    key={`${currentGame.index}:${beatCursor}`}
+                    segment={clockSegment}
+                    speed={clockSpeed}
+                    paused={clockPaused}
+                    sync={clockSync}
+                    syncKey={clockStep}
+                    label={C.event.gameClock}
+                    className={cx(
+                      "display rounded-md border px-1.5 py-0.5 text-sm font-bold leading-snug sm:px-2 sm:text-base",
+                      overtimeReached
+                        ? "border-orange/60 bg-orange/15 text-orange-bright"
+                        : "border-line-strong bg-black/30 text-ink",
+                    )}
+                  />
+                ) : null}
+                <span
+                  key={`b${gameScore[1]}`}
+                  className="display pop-in min-w-[1ch] text-4xl font-bold leading-tight text-ink sm:text-5xl"
+                >
+                  {gameScore[1]}
+                </span>
+              </div>
+              <p className="display mt-0.5 flex items-baseline justify-center gap-1.5 text-sm font-bold text-sub">
+                <span className="kicker !text-[9px] text-faint">{C.event.seriesTag}</span>
                 {winsA} – {winsB}
               </p>
             </>
@@ -195,8 +253,8 @@ export function CareerMatchCenter({
             </>
           )}
           <div className="mt-1 flex min-h-5 flex-wrap items-center justify-center gap-1">
-            {currentGame?.overtime && currentGameComplete ? (
-              <Badge tone="orange" className="!text-[9px]">{C.event.overtime}</Badge>
+            {overtimeReached ? (
+              <Badge tone="orange" className="pop-in !text-[9px]">{C.event.overtime}</Badge>
             ) : null}
             {currentGame?.deciding ? (
               <Badge tone="blue" className="!text-[9px]">{C.event.deciding}</Badge>
@@ -215,6 +273,8 @@ export function CareerMatchCenter({
           const isCurrent = live && i === progress.game && i < series.games.length;
           if (g) {
             const aWonGame = g.winnerTeamId === series.teamAId;
+            // game.score is winner-first; the chips read like the board (A–B).
+            const [goalsA, goalsB] = gameScoreAB(series, g);
             const wonByUser = isUserSeries && g.winnerTeamId === "user";
             const lostByUser = isUserSeries && g.winnerTeamId !== "user";
             return (
@@ -230,14 +290,16 @@ export function CareerMatchCenter({
                         ? "border-line-strong bg-white/8 text-ink"
                         : "border-line-strong bg-white/8 text-sub",
                 )}
-                title={`${C.event.game(g.index)} · ${g.score[0]}–${g.score[1]}${g.overtime ? ` ${C.event.overtime}` : ""}`}
+                title={`${C.event.game(g.index)} · ${goalsA}–${goalsB}${g.overtime ? ` ${C.event.overtime}` : ""}`}
               >
-                {g.score[0]}–{g.score[1]}
+                {goalsA}–{goalsB}
                 {g.overtime ? <span className="text-orange-bright">{T.overtime}</span> : null}
               </span>
             );
           }
-          const played = i < series.games.length;
+          // Live, every slot still to come looks alike: dimming the ones the
+          // series never reaches would give away its length (a sweep from G1).
+          const unreachable = done && i >= series.games.length;
           return (
             <span
               key={i}
@@ -246,7 +308,7 @@ export function CareerMatchCenter({
                 isCurrent
                   ? "pulse-soft border-orange/70 bg-orange/15 text-orange-bright"
                   : "border-line bg-white/[0.03] text-faint",
-                !played && !isCurrent && "opacity-40",
+                unreachable && "opacity-40",
               )}
               aria-hidden
             >
@@ -256,42 +318,75 @@ export function CareerMatchCenter({
         })}
       </div>
 
-      {/* goal feed (live game) */}
+      {/* play-by-play (live game): goals with their clock, the OT beat */}
       {currentGame ? (
-        <div className="mt-4 min-h-[104px] space-y-1" aria-live="polite">
-          {shownGoals.slice(-FEED_TAIL).map((e, i, arr) => {
+        <ol
+          className="mt-4 min-h-[112px] space-y-1"
+          aria-live="polite"
+          aria-label={C.event.playByPlay}
+        >
+          {shownBeats.slice(-FEED_TAIL).map((beat, i, arr) => {
             const newest = i === arr.length - 1;
-            const isLastOfGame =
-              shownGoals.length === timeline.length &&
-              i === arr.length - 1;
-            const otGoal = isLastOfGame && currentGame.overtime;
+            const key = `${currentGame.index}:${shownBeats.length - arr.length + i}`;
+            if (beat.kind === "overtime") {
+              return (
+                <li
+                  key={key}
+                  className={cx(
+                    "flex items-center justify-center gap-2 rounded-md border border-orange/35 bg-orange/[0.07] px-2 py-1 text-center",
+                    newest ? "pop-in" : "opacity-70",
+                  )}
+                >
+                  <span className="kicker !text-[9px] !tracking-[0.16em] text-orange-bright">
+                    {C.event.endOfRegulation}
+                  </span>
+                  <span className="display shrink-0 text-xs font-bold text-ink">
+                    {beat.scoreAfter[0]}–{beat.scoreAfter[1]}
+                  </span>
+                  <Badge tone="orange" className="!px-1.5 !text-[8px]">{C.event.overtime}</Badge>
+                </li>
+              );
+            }
             return (
-              <div
-                key={`${e.scoreAfter[0]}-${e.scoreAfter[1]}-${e.side}`}
+              <li
+                key={key}
                 className={cx(
                   "flex items-center gap-2 rounded-md px-2 py-1 text-sm",
-                  e.side === "b" && "flex-row-reverse text-right",
-                  newest && "pop-in bg-orange/8",
+                  beat.side === "b" && "flex-row-reverse text-right",
+                  beat.golden && "border border-orange/45 bg-orange/12",
+                  newest && "pop-in",
+                  newest && !beat.golden && "bg-orange/8",
                   !newest && "opacity-70",
                 )}
               >
+                <ClockStamp
+                  period={beat.period}
+                  seconds={beat.clock}
+                  className={cx(
+                    "display shrink-0 text-[11px] font-bold",
+                    beat.golden ? "text-orange-bright" : "text-faint",
+                  )}
+                />
                 <span
                   className={cx(
                     "display shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider",
-                    newest ? "bg-orange/25 text-orange-bright" : "bg-white/8 text-sub",
+                    beat.golden
+                      ? "bg-gradient-to-b from-orange-bright to-orange text-[#1a0d02]"
+                      : newest
+                        ? "bg-orange/25 text-orange-bright"
+                        : "bg-white/8 text-sub",
                   )}
                 >
-                  {C.event.goal}
+                  {beat.golden ? C.event.goldenGoal : C.event.goal}
                 </span>
-                <span className="min-w-0 truncate font-semibold text-ink">{scorerNameOf(e)}</span>
+                <span className="min-w-0 truncate font-semibold text-ink">{scorerNameOf(beat)}</span>
                 <span className="display shrink-0 text-xs font-bold text-sub">
-                  {e.scoreAfter[0]}–{e.scoreAfter[1]}
+                  {beat.scoreAfter[0]}–{beat.scoreAfter[1]}
                 </span>
-                {otGoal ? <Badge tone="orange" className="!text-[8px]">{C.event.overtime}</Badge> : null}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       ) : null}
 
       {/* series banner (finished reveal) */}

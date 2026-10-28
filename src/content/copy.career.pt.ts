@@ -1109,6 +1109,12 @@ export const CAREER_PT: CareerCopy = {
     game: (n: number) => `Jogo ${n}`,
     goal: "GOL",
     overtime: "PRORROGAÇÃO",
+    // GAME-04 — linha do tempo dos gols + apresentação da prorrogação
+    goldenGoal: "GOL DE OURO",
+    endOfRegulation: "Fim do tempo normal",
+    gameClock: "Relógio da partida",
+    playByPlay: "Lance a lance",
+    seriesTag: "Série",
     matchPoint: "Match point",
     deciding: "Jogo decisivo",
     upset: "ZEBRA",

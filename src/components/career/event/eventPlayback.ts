@@ -3,15 +3,13 @@
  *
  * The engine simulates ahead (rounds land in the save whole); these helpers
  * slice that finished state into a reveal-ordered structure the screen can
- * animate: flattened rounds, per-goal timelines synthesized from the engine's
- * per-game scorer data, and spoiler-safe swiss records that only count what
- * has been revealed. Determinism note: nothing here rolls dice — goal order
- * is derived from the persisted scorer counts, so a replayed reveal is
- * identical every time.
+ * animate: flattened rounds and spoiler-safe swiss records that only count
+ * what has been revealed. Nothing here rolls dice. The per-game goal
+ * timelines (goal order, clock, overtime) live in engine/career/matchTimeline
+ * (seeded off each game's persisted result) and their pacing in clockPlayback.ts.
  */
 
 import type {
-  GameResult,
   Placement,
   PlayoffRoundName,
   SeriesResult,
@@ -74,75 +72,6 @@ export function roundsOf(t: TournamentState): RoundRef[] {
 
 export function seriesKey(round: RoundRef, seriesIndex: number): string {
   return `${round.key}:${seriesIndex}`;
-}
-
-// ---------------------------------------------------------------------------
-// Goal timelines (per game, synthesized from engine scorer counts)
-// ---------------------------------------------------------------------------
-
-export interface GoalEvent {
-  /** Which side scored: "a" = series.teamAId, "b" = series.teamBId. */
-  side: "a" | "b";
-  /** Roster index into that team's playerNames (null = unattributed). */
-  playerIdx: number | null;
-  /** Running score AFTER this goal, teamA first. */
-  scoreAfter: [number, number];
-}
-
-/** Round-robin expansion: counts [2,1] → player order [0,1,0]. */
-function scorerSequence(counts: number[]): number[] {
-  const remaining = [...counts];
-  const total = remaining.reduce((s, n) => s + n, 0);
-  const out: number[] = [];
-  while (out.length < total) {
-    for (let i = 0; i < remaining.length && out.length < total; i++) {
-      if (remaining[i] > 0) {
-        out.push(i);
-        remaining[i] -= 1;
-      }
-    }
-  }
-  return out;
-}
-
-/**
- * Deterministic goal order for one game: each side's goals are spread evenly
- * across a virtual clock ((i+1)/(n+1)) and merged — a 4-1 game reads as the
- * favorite scoring around a lone reply, never as two blocks. Scorers map to
- * roster indices via the engine's per-game scorer counts (round-robin within
- * the side); games persisted without scorer data degrade to unattributed
- * team goals.
- */
-export function goalTimeline(series: SeriesResult, game: GameResult): GoalEvent[] {
-  const aWon = game.winnerTeamId === series.teamAId;
-  // game.score is [winnerGoals, loserGoals] — orient to teamA/teamB.
-  const aTotal = aWon ? game.score[0] : game.score[1];
-  const bTotal = aWon ? game.score[1] : game.score[0];
-
-  const aSeq: (number | null)[] = game.scorers
-    ? scorerSequence(game.scorers.a)
-    : Array.from({ length: aTotal }, () => null);
-  const bSeq: (number | null)[] = game.scorers
-    ? scorerSequence(game.scorers.b)
-    : Array.from({ length: bTotal }, () => null);
-
-  const timed: { side: "a" | "b"; playerIdx: number | null; t: number }[] = [];
-  aSeq.forEach((idx, i) => timed.push({ side: "a", playerIdx: idx, t: (i + 1) / (aSeq.length + 1) }));
-  bSeq.forEach((idx, i) => timed.push({ side: "b", playerIdx: idx, t: (i + 1) / (bSeq.length + 1) }));
-  timed.sort((x, y) => x.t - y.t || (x.side === y.side ? 0 : x.side === "a" ? -1 : 1));
-
-  let a = 0;
-  let b = 0;
-  return timed.map((e) => {
-    if (e.side === "a") a += 1;
-    else b += 1;
-    return { side: e.side, playerIdx: e.playerIdx, scoreAfter: [a, b] as [number, number] };
-  });
-}
-
-/** Total goal pops in a game (both sides). */
-export function goalsInGame(game: GameResult): number {
-  return game.score[0] + game.score[1];
 }
 
 // ---------------------------------------------------------------------------

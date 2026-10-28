@@ -1556,11 +1556,74 @@ export const CAREER_STARS = {
 } as const;
 
 /**
+ * GAME-04 (R41) — the Match Center goal timeline: the broadcast clock model
+ * (game seconds) and how fast it plays (ms at 1×, ÷ the speed toggle).
+ * Presentation only: `engine/career/matchTimeline.ts` draws these from a local
+ * stream seeded by each game's persisted result, never the competitive RNG.
+ */
+export const CAREER_MATCH_CLOCK = {
+  /** RL regulation: a 5:00 countdown. */
+  regulationSeconds: 300,
+  /**
+   * Regulation goals land with this many seconds LEFT (inclusive): never at
+   * 5:00 (no goal inside the first 5 s of kickoff) and never at 0:00.
+   */
+  goalMaxLeft: 295,
+  goalMinLeft: 1,
+  /** Fewest game seconds between two goals (replay + kickoff restart). */
+  minGoalGapSeconds: 4,
+  /**
+   * Overtime length in seconds: weighted buckets, uniform inside one
+   * (inclusive). Median ≈ 1:52 · over 5:00 = 15 % · over 10:00 = 3 %.
+   */
+  overtime: {
+    minSeconds: 30,
+    maxSeconds: 1_200,
+    buckets: [
+      { fromS: 30, toS: 120, weight: 55 },
+      { fromS: 121, toS: 300, weight: 30 },
+      { fromS: 301, toS: 600, weight: 12 },
+      { fromS: 601, toS: 1_200, weight: 3 },
+    ],
+  },
+  /** Playback pacing — ms at 1× (÷ the speed toggle). */
+  pacing: {
+    /** Regulation clock speed: an empty 5:00 runs in 1.2 s. */
+    regulationMsPerSecond: 4,
+    /** The new game on the board (0 : 0, 5:00) before the clock starts. */
+    kickoffHoldMs: 350,
+    /** The clock stops after every goal (replay + kickoff). */
+    goalHoldMs: 420,
+    /** Tied at 0:00: the breath before the OVERTIME beat lands. */
+    regulationBuzzerMs: 300,
+    /** The OVERTIME beat on screen before the OT clock starts. */
+    overtimeIntroMs: 800,
+    /** The OT clock run, log-scaled by OT length: 0:30 → min, 20:00 → max. */
+    overtimeRunMinMs: 1_600,
+    overtimeRunMaxMs: 3_500,
+    /** The golden goal holds the board before the game gap. */
+    goldenGoalLingerMs: 600,
+    /**
+     * Absolute ms (not ÷ speed) the clock settles BEFORE its beat lands,
+     * covering a few frames of render latency: the clock stops on the goal's
+     * time, then the goal pops.
+     */
+    clockLeadMs: 60,
+    /**
+     * Repaint cap of a running clock (broadcast frame rate). It runs at up to
+     * 250 game seconds a second, so 60 fps buys nothing visible and costs
+     * twice the main-thread frames (measured on the export).
+     */
+    clockMaxFps: 30,
+  },
+} as const;
+
+/**
  * Career event playback pacing (ms at 1× speed; divided by the speed factor).
- * Mirrors the classic TournamentScreen PACE table with a career tempo.
+ * Mirrors the classic TournamentScreen PACE table with a career tempo. The
+ * user series' in-game beats (goals, OT) follow CAREER_MATCH_CLOCK.pacing.
  */
 export const CAREER_PLAYBACK = {
-  userGoalMs: 700,
   userGameGapMs: 650,
   userSeriesLingerMs: 2_400,
   aiSwissMs: 120,
