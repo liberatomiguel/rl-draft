@@ -29,6 +29,7 @@ import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { repGainFor, prizeFor, pointsFor } from "@/engine/career/economy";
 import { placementOf } from "@/engine/career/careerResults";
+import { upcomingSwissPairings } from "@/engine/swiss";
 import type {
   ActiveEventState,
   CareerEventDef,
@@ -611,7 +612,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   // Next known opponent (swiss) — only once nothing on screen can be spoiled.
   const nextPair =
     hasSwiss && t.stage === "swiss" && allSimRevealed
-      ? (t.swiss.nextPairings?.find(([a, b]) => a === "user" || b === "user") ?? null)
+      ? (upcomingSwissPairings(t.swiss)?.find(([a, b]) => a === "user" || b === "user") ?? null)
       : null;
   const nextUpRef = nextPair ? (nextPair[0] === "user" ? nextPair[1] : nextPair[0]) : null;
 

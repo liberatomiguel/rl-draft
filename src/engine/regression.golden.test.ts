@@ -128,8 +128,11 @@ describe("golden master — shared sim pipeline draw order", () => {
     if (PRINT_GOLDENS) console.log("tournament goldens:", JSON.stringify(sig));
     // Regenerated for v2.0 (momentum bounce + scoreline re-tune, CHANGELOG [2.0.0]).
     expect(sig).toEqual([
-      // v2.0 R28 / DESIGN-DECISIONS #117: offense+defense weigh on every game.
-      "user|0-4|1929090907|t01,t02,t03,t04,t05,t06,t07,user",
+      // rc.27 / DESIGN-DECISIONS #143: the old pairer rematched in round 3 of this
+      // seed; the Swiss now avoids it (rngEnd happens to land on the same total
+      // draw count). Was "user|0-4|1929090907|t01,t02,t03,t04,t05,t06,t07,user".
+      "t01|3-4|1929090907|t01,t02,t03,t04,t05,t06,t07,user",
+      // No rematch on this seed: byte-identical to the pre-rc.27 pairer.
       "user|3-4|4188539945|t01,t02,t03,t05,t06,t09,t11,user",
     ]);
   });

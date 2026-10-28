@@ -10,7 +10,7 @@ import { TOURNAMENT } from "@/config/balance";
 import type { Rng } from "@/lib/rng";
 import { generateOpponents } from "./opponents";
 import { createPlayoffs, playPlayoffRound, userPlayoffSeries } from "./playoffs";
-import { createSwissState, playSwissRound, seedsFromSwiss } from "./swiss";
+import { createSwissState, playSwissRound, seedsFromSwiss, upcomingSwissPairings } from "./swiss";
 import type {
   Difficulty,
   Placement,
@@ -227,7 +227,7 @@ export function userIsAlive(state: TournamentState): boolean {
  */
 export function userHasPendingSeries(state: TournamentState): boolean {
   if (state.stage === "swiss") {
-    return state.swiss.nextPairings?.some(([a, b]) => a === "user" || b === "user") ?? false;
+    return upcomingSwissPairings(state.swiss)?.some(([a, b]) => a === "user" || b === "user") ?? false;
   }
   if (state.stage === "playoffs" && state.playoffs && !state.playoffs.finished) {
     return !state.userEliminated;

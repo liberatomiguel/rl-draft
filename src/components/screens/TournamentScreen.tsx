@@ -21,6 +21,7 @@ import { useCopy, type Copy } from "@/content/copy";
 import { lineupById } from "@/data";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { displayTeamOverall } from "@/engine/rating";
+import { upcomingSwissPairings } from "@/engine/swiss";
 import type {
   PlayoffRoundName,
   RunState,
@@ -670,7 +671,7 @@ function SwissPath({
   // round has been revealed; earlier it spoils the round still animating.
   const upcomingPair =
     revealedRounds >= t.swiss.rounds.length
-      ? t.swiss.nextPairings?.find(([a, b]) => a === "user" || b === "user")
+      ? upcomingSwissPairings(t.swiss)?.find(([a, b]) => a === "user" || b === "user")
       : undefined;
   if (upcomingPair) {
     cells.push({
