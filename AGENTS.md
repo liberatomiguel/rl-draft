@@ -18,8 +18,12 @@ Cloudflare Workers Static Assets** (runbook: `docs/DEPLOY-CLOUDFLARE.md`).
 2. `docs/STATUS.md` (~550 words, current state + gates + what is open).
 3. Only for career work: `docs/ROAD-TO-WORLDS-STATUS.md` (~450 words; it has a
    system → engine/flow/screen map so you can jump straight to the right file).
-4. For v2.0 release work: `docs/V2-IMPLEMENTATION-PLAN.md` **§6–§8 only**
-   (Miguel's to-do, regression checklist, open decisions). Phases 0–3 are done.
+4. For v2.0 completion work: `docs/ROADMAP.md`, **the stage you are on only**
+   (stages, approval gates, backlog IDs, the decisions waiting on Miguel).
+   Every stage ends at a gate: publish the rc to `staging`, list what to play
+   and what to decide, and stop until Miguel approves.
+5. For the cutover: `docs/V2-IMPLEMENTATION-PLAN.md` **§6–§8 only** (Miguel's
+   to-do, regression checklist, open decisions). Phases 0–3 are done.
 
 **Never read whole, grep for the entry you need** (sizes in words):
 `docs/CHANGELOG.md` (28k), `docs/DESIGN-DECISIONS.md` (12k),
@@ -37,7 +41,7 @@ Cloudflare Workers Static Assets** (runbook: `docs/DEPLOY-CLOUDFLARE.md`).
   grep -E "error|warning" | head`, `npm run typecheck 2>&1 | head -40`. Never
   dump a full test run, build log or `git diff` of generated files
   (`src/generated/*`, `src/data/*.json`, `out/`).
-- Run the targeted test file while iterating; the full suite (659 tests) only
+- Run the targeted test file while iterating; the full suite (710 tests) only
   before a commit. `npm run build` only when something ships or the export is
   in question.
 - Do not re-explore: the status docs already tell you where things are. Trust

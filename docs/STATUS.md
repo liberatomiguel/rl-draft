@@ -2,14 +2,15 @@
 
 > Last updated: **2026-10-28**. History: `CHANGELOG.md`; rationale:
 > `DESIGN-DECISIONS.md` / `ROAD-TO-WORLDS-DECISIONS.md` (grep them, never read
-> them whole). Miguel's 2.0 completion plan runs in stages (below).
+> them whole). The 2.0 plan of record, its stages and approval gates:
+> `ROADMAP.md`.
 
 ## Where things are
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.28**
-  (`staging.rocketdraft.app`: career on, noindex, preview tools on).
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.29** (parts 1–2; the career fixes
+  land as part 3) (`staging.rocketdraft.app`: career on, noindex, preview tools on).
   **Never deploy v2.0 to `main` before the full review.**
 - Road to Worlds (career): `ROAD-TO-WORLDS-STATUS.md`. If a push to `staging`
   does not trigger the `rocket-draft-staging` Workers Build, check its GitHub
@@ -21,22 +22,21 @@ Season reset (profile v12) + Season Rating, Supabase v2 client, missions,
 login streak, event cards, recap, Profile/Leaderboard/Home v2, Daily Quiz,
 Challenges 2.0, final cosmetics, the database expansion (438 lineups, real
 ages, Region-only, national teams), live-data difficulty (rc.25), the dataset
-off the shared path (rc.26), Road to Worlds 2.0, and Etapa 1 (rc.27–28): no
-rematch in a Swiss (#143), lint at zero, PT "Swiss", the career weekend (R40)
-and the Match Center timeline (R41).
+off the shared path (rc.26), Road to Worlds 2.0, Etapa 1 (rc.27–28: no
+rematch in a Swiss #143, lint at zero, the career weekend R40, the Match
+Center timeline R41) and Etapa 1b (rc.29: the E2E fixes, #144, R42–R44).
 
-## Completion plan — stages
+## Where the completion plan stands
 
-- **Etapa 1 — done (rc.27–28):** GAME-01, GAME-02/03, GAME-04, ENG-01 (lint),
-  UI-02 (Swiss wording), grants runbook (`early-supporter`).
-- **Etapa 2 — next (M2, a sustainable career):** ECO-01/02/03 (economy, bank
-  loan, no offers in split 1, sub-salary exploit), DEV-01/02 (potential, age
-  and growth curves), a long-career harness (OBS-02), the RTW difficulty
-  contract (BAL-02), career analytics events (OBS-01).
-- **Later:** Etapa 3 (M3) training + scrims + coaches, sponsors, HQ, goals,
-  news, creation, achievements, tutorials · Etapa 4 (M4) album, collection,
-  Challenges, daily/quiz, Season Pass viewer · Etapa 5 (M5) calibration,
-  SEO/perf, art · Etapa 6 (M6) freeze, grants, migration, launch.
+- **Etapa 1: done** (rc.27–28). **Etapa 1b (rc.29):** Draft and shared UI
+  are on staging; the career fixes (part 3, reviewed) land next.
+- **Gate 1, now:** Miguel plays rc.29 on staging and answers the ten
+  decisions in `ROADMAP.md` ("Waiting on Miguel"). Nothing in Etapa 2 starts
+  before that.
+- **Etapa 2, next:** first the instruments (long-career harness, save
+  fixtures, module audit, dataset check), then the economy, growth curves
+  and the RTW difficulty contract (ECO-01/02/03, DEV-01/02, BAL-02, RTW-01,
+  OBS-01).
 
 ## Open before `main`
 
@@ -49,13 +49,10 @@ and the Match Center timeline (R41).
   mid-draft, a Swiss without rematches, a Saturday qualifier → Sunday
   regional, a Major weekend (reload on Saturday), an OT game in the Match
   Center. Lighthouse; event-card curation; a PT pass; the v2.0 player notes.
-- **Decide:** worldwide Legacy 1.6 vs 1.3 (#140); the real Season 1 dates
-  (`season.ts` still says 2026-10-20 → 12-22); the RTW defaults listed in its
-  status file.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **659** tests (+2 opt-in tools
+- `npm run typecheck` clean · `npm test` **710** tests (+2 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).
@@ -63,8 +60,9 @@ and the Match Center timeline (R41).
   after; `challenges.tune.test.ts` (`CH_TUNE=1`) if challenges leave their
   bands (#136–#137). Shared-sim changes regenerate the golden master only with
   a CHANGELOG-documented decision.
-- Perf reference (rc.26): cold home 25 requests; the dataset chunk (62 KB gz)
-  loads on game pages only; home first-load JS 288 KB gz.
+- Perf reference (rc.29, webpack export): cold home 28 requests; a whole
+  Classic run from a cold home 77–80 (budget 75, Etapa 5 WEB-02). The dataset
+  chunk (62 KB gz) loads on game pages only; home first-load JS 288 KB gz.
 
 ## Standing facts
 
@@ -83,6 +81,4 @@ and the Match Center timeline (R41).
 - `specialCards.json` (~10 KB gz) on every page; PT locale not lazy;
   deploy-skew 404s; content pages lack `og:image`; lazy PostHog can miss UTMs.
 - Missing optional art (fallbacks render): 20 special photos, 23 org logos.
-- Difficulty snapshot (rc.27 matrix, simulated): title rates near worldwide
-  parity; SAM Normal ~7 pp easier, NA Hard ~5 pp harder — check against live
-  data in Etapa 5.
+- Deferred E2E items and their owner stage: `ROADMAP.md` ("Deferred").

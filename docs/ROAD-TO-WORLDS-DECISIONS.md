@@ -524,6 +524,37 @@ R41. **The Match Center tells each game as a timeline (rc.28, GAME-04).** The
      game chips read left team - right team, and upcoming chips look the same
      until the series is fully shown. Tunables: `CAREER_MATCH_CLOCK`.
 
+R42. **Name banks split by role (rc.29, CAR-01).** Local amateur sides
+     (`LOCAL_PLAYER_NAME_BANK`, 36 per region), the wizard's founders
+     (`STARTER_NAME_BANK`) and the filler/rookie bank are disjoint from each
+     other and from every name in the dataset. Rookies get a gamertag at
+     intake that nobody in their region holds, stored in the additive
+     `world.rookieNames`. A new world has `nameBankVersion` 2, which swaps the
+     five real nicknames the old bank held. A Season X player who changed
+     teams mid-season is rostered once: the first org in dataset order keeps
+     them, and the other seat signs the best free agent of that region.
+     Existing careers keep every persisted or derived name, along with their
+     old clashes. No save migration (persist v3 and saveVersion 4 are
+     unchanged). Rejected: renaming players in running careers.
+
+R43. **The reveal cursor lives in sessionStorage, not in the save (rc.29,
+     CAR-02/03).** `rd:career:reveal:<careerSeed>:<eventId>` records how many
+     rounds of an event the player has watched. A reload or a trip to HQ
+     replays the unfinished round from its start. The top bar, HQ and the
+     calendar hold the event's own Continue until that replay ends, so none of
+     them can give away a result. A new tab treats every simulated round as
+     seen. Under reduced motion, an event day stops on its last round ("See
+     results" / "See the Swiss result") before the digest or the pause panel.
+
+R44. **Lobbies advertise the prize that is paid (rc.29, CAR-08).**
+     `economy.prizePoolPaidFor` sums `prizeFor` over each format's
+     placements, with this season's growth, the difficulty and the rounding.
+     The lobby, the calendar detail and the HQ cards show it. The qualifier's
+     flat split becomes 10 % / 2.5 % (8 × $600 + 8 × $150 = $6k at season
+     0). Provisional, to recalibrate in ECO-01. Side effect: the regional shows
+     $40.8k because the swiss16 table pays 102 %, and the Community Cup shows
+     $1.8k after rounding to $50. Miguel to confirm, or reshape the tables.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

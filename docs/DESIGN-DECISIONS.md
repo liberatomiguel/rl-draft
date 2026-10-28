@@ -1470,6 +1470,27 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      20260709 (rematches in rounds 3 and 5) was regenerated; seed 555555 had
      none and is unchanged.
 
+144. **Dialogs never move the page; a reserved scrollbar gutter (rc.29,
+     DRAFT-02/06/07).** Three rules for every overlay (Modal, ceremonies,
+     unlock pop-up, tour):
+     - One ref-counted lock (`components/ui/dialog.ts`) owns the scroll lock,
+       the focus trap and Escape. Escape reaches only the topmost dialog, and
+       focus returns to the opener.
+     - `html { scrollbar-gutter: stable }` keeps a classic scrollbar's space,
+       so neither a dialog nor a route change shifts the layout. Browsers
+       without it get body padding. While a lock holds and a gutter is
+       reserved, the canvas turns `--bg-dimmed` (black, the only tone that
+       matches it seen through the 70–95 % scrims).
+     - Pop-ups that are not part of the run (cosmetic unlocks, the login
+       calendar) wait in `store/overlayHoldStore.ts` while a live tournament,
+       a challenge series, a ceremony, the tour or the season recap is up.
+       They settle for one frame first, so a hold set by the same click wins.
+     Trade-off, Miguel to confirm: on desktops with classic scrollbars
+     (Windows/Linux), a short page ends its header and footer borders and the
+     ambient glow 10–15 px before the window's edge, as a long page does beside
+     its scrollbar. The alternative is a gutter only while a dialog is open,
+     but then routes jump sideways again, as before rc.29.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).
