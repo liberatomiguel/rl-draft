@@ -1630,7 +1630,6 @@ export const CAREER_EN = {
       major: "Major",
       worlds: "Worlds",
     },
-    difficultyNote: "Difficulty shapes opponents and money — never who you can sign.",
   },
 };
 

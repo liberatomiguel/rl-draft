@@ -803,9 +803,8 @@ export function WizardScreen() {
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-faint">{C.common.difficultyNote}</p>
-
-            <p className="mt-1 text-xs text-faint">{C.wizard.presetsNote}</p>
+            {/* rc.32: the step's kicker already says what difficulty shapes (finalKicker). */}
+            <p className="mt-2 text-xs text-faint">{C.wizard.presetsNote}</p>
 
             {/* Recap */}
             <Panel strong className="mt-6 p-5">

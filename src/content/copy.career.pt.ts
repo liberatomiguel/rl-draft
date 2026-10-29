@@ -1626,6 +1626,5 @@ export const CAREER_PT: CareerCopy = {
       major: "Major",
       worlds: "Worlds",
     },
-    difficultyNote: "A dificuldade molda adversários e dinheiro — nunca quem você pode contratar.",
   },
 };
