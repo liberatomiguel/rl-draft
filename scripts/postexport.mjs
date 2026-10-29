@@ -377,6 +377,50 @@ async function checkSegmentNames(ctx) {
   console.log(`  ${routeDirs.length + 1} route(s) have their __PAGE__ prefetch segment`);
 }
 
+/**
+ * PAGE LANGUAGE (rc.32, DRAFT-11; DESIGN-DECISIONS #148). The exported HTML of
+ * every page under /pt must carry lang="pt-BR" and the PT chrome, every other
+ * page lang="en" and the EN chrome (src/lib/locale.ts decides it from the URL;
+ * keep the "pt-BR" tag in sync with its HTML_LANG). The chrome check is
+ * structural, so no copy is duplicated here: the language toggle has the
+ * page's language pressed, and the header and footer text is the same on every
+ * page of one language and differs between the two.
+ */
+async function checkPageLanguages(ctx) {
+  const strip = (html) =>
+    html
+      .replace(/<script[\s\S]*?<\/script>/g, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const chrome = { en: new Map(), pt: new Map() }; // header+footer text → pages
+  const problems = [];
+  for (const file of ctx.files.filter((f) => f.endsWith(".html"))) {
+    const route = `/${file.replace(/\.html$/, "")}`.replace(/^\/index$/, "/");
+    const want = route === "/pt" || route.startsWith("/pt/") ? "pt" : "en";
+    const html = await readFile(join(OUT, file), "utf8");
+    const lang = html.match(/<html\b[^>]*\blang="([^"]*)"/)?.[1] ?? "(none)";
+    if (lang !== (want === "pt" ? "pt-BR" : "en")) problems.push(`${file}: <html lang="${lang}">`);
+    const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] ?? "";
+    const footer = html.match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? "";
+    const pressed = [...header.matchAll(/aria-pressed="true"[^>]*>([^<]*)</g)].map((m) => m[1].trim());
+    if (pressed.join() !== want) problems.push(`${file}: language toggle pressed = "${pressed.join() || "none"}"`);
+    const text = `${strip(header)} ¦ ${strip(footer)}`;
+    chrome[want].set(text, [...(chrome[want].get(text) ?? []), file]);
+  }
+  for (const want of ["en", "pt"]) {
+    if (chrome[want].size > 1) {
+      const variants = [...chrome[want].values()].map((files) => files.slice(0, 3).join(", "));
+      problems.push(`${want.toUpperCase()} pages disagree on the header/footer text: ${variants.join(" | ")}`);
+    }
+  }
+  const [en] = chrome.en.keys();
+  if (en !== undefined && chrome.pt.has(en)) problems.push("the PT pages show the EN header/footer");
+  if (problems.length) throw new Error(`page language:\n    ${problems.join("\n    ")}`);
+  const count = (want) => [...chrome[want].values()].reduce((n, files) => n + files.length, 0);
+  console.log(`  ${count("pt")} PT page(s) lang="pt-BR" with PT chrome · ${count("en")} EN page(s) lang="en"`);
+}
+
 async function checkRequiredFiles(ctx) {
   const files = new Set(ctx.files);
   const missing = REQUIRED_FILES.filter((f) => !files.has(f));
@@ -388,8 +432,9 @@ async function checkRequiredFiles(ctx) {
  * GENERATED IMAGES. src/lib/assets.ts only ever builds URLs for assets in
  * src/generated/asset-manifest.json, choosing a width from the manifest's
  * `widths`. Rebuild every URL it can return — each org key × widths.orgs,
- * each special × widths.specials, each rank, each flag — with the SAME
- * formats as orgLogoSrc / specialPhotoSrc / rankSrc / flagSrc (KEEP IN SYNC),
+ * each special × widths.specials, each rank, each flag, the flag sprite — with
+ * the SAME formats as orgLogoSrc / specialPhotoSrc / rankSrc / flagSrc /
+ * flagSprite (KEEP IN SYNC),
  * and fail if the file the static host would serve is missing from out/. A
  * miss here would otherwise ship as a 404 cached `immutable` for a year
  * (public/_headers applies to error responses too).
@@ -429,6 +474,7 @@ async function checkGeneratedImages(ctx) {
     urls.push(`/img/badges/${seg(art)}.${hash}.glow.webp`);
   }
   for (const cc of manifest.flags ?? []) urls.push(`/flags/${cc}.png`);
+  if (manifest.flagSprite) urls.push(`/img/flags/flags.${manifest.flagSprite.hash}.png`);
 
   const files = new Set(ctx.files);
   const missing = urls.filter((u) => !files.has(urlToOutFile(u)));
@@ -445,7 +491,8 @@ async function checkGeneratedImages(ctx) {
   console.log(
     `  all ${urls.length} manifest image URL(s) exist in out/: ${n(manifest.orgs)} orgs × [${widths.orgs}], ` +
       `${n(manifest.specials)} specials × [${widths.specials}], ${n(manifest.ranks)} ranks, ` +
-      `${n(manifest.badges)} badges × [${widths.badges}], ${(manifest.flags ?? []).length} flags`,
+      `${n(manifest.badges)} badges × [${widths.badges}], ${(manifest.flags ?? []).length} flags` +
+      (manifest.flagSprite ? " + their sprite" : ""),
   );
 }
 
@@ -478,6 +525,7 @@ const STEPS = [
   { name: "strip /career when career mode is off", run: stripCareerWhenDisabled, mutates: true },
   { name: "strip cut routes on the playtest build", run: stripPlaytestCuts, mutates: true },
   { name: "check prefetch segment names", run: checkSegmentNames },
+  { name: "check page languages", run: checkPageLanguages },
   { name: "check required files", run: checkRequiredFiles },
   { name: "check generated images", run: checkGeneratedImages },
   { name: "check Cloudflare limits", run: checkHostLimits },

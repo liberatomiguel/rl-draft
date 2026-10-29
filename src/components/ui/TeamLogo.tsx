@@ -19,7 +19,7 @@
 
 import { useState } from "react";
 import { orgById, seasonById } from "@/data";
-import { orgLogoSrc } from "@/lib/assets";
+import { noteOrgLogoLoaded, orgLogoSrc } from "@/lib/assets";
 import { cx, initials } from "@/lib/util";
 
 const SIZES = {
@@ -102,6 +102,8 @@ export function TeamLogo({
       height={px}
       loading="lazy"
       decoding="async"
+      // rc.32 (WEB-02): a loaded wide variant serves later, smaller logos of this org.
+      onLoad={() => noteOrgLogoLoaded(src)}
       onError={() => setFailed((f) => (f.includes(src) ? f : [...f, src]))}
       className={cx("shrink-0 object-contain", SIZES[size], className)}
     />

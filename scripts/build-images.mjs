@@ -23,11 +23,14 @@
  *            + img/badges/<art>.<glowHash>.glow.webp (rc.11): the art's silhouette
  *            in gold, blurred once here, padded — the legendary glow behind the
  *            badge, so the browser never blurs anything.
- *   flags    public/flags/<cc>.png             → not converted (tiny); listed in the manifest only
+ *   flags    public/flags/<cc>.png             → img/flags/flags.<hash>.png (rc.32): ONE sprite
+ *            of every flag (FLAG_SPRITE), so a run's flags cost one request; the
+ *            source PNGs stay in /flags/ (dev, and the manifest's flag list).
  *
  * <hash> = first 10 hex chars of sha256(source file bytes + that category's
  * ENCODER SETTINGS below — orgs: ORG_WEBP, specials: SPECIAL_WEBP, ranks:
- * { box, webp }). A replaced PNG OR a changed quality/box size gets a new URL,
+ * { box, webp }; the flag sprite: every flag's code and bytes + FLAG_SPRITE).
+ * A replaced PNG OR a changed quality/box size gets a new URL,
  * so the immutable cache can never serve a stale encode. (Widths need no
  * hashing: they are already a URL segment.)
  *
@@ -109,6 +112,18 @@ const BADGE_GLOW = { size: 224, pad: 84, sigma: 2.2, haloSigma: 16, haloAlpha: 0
 const BANNER_WIDTHS = [800, 1240, 2480];
 const BANNER_SVG_DENSITY = 192;
 const BANNER_WEBP = { quality: 88, alphaQuality: 100, effort: 5 };
+
+/** Flags (rc.32, WEB-02, DESIGN-DECISIONS #149): every flag in ONE sprite, so
+ *  the 10–15 flags of a draft cost one request (cached a year) instead of one
+ *  each. CountryChip shows a flag in an 18 × 12 CSS px box (h-3.5 w-5 minus
+ *  its 1 px border) with object-cover: each cell is that box at `density` 3
+ *  (the logos' density), cover-cropped from the centre here as object-cover
+ *  crops it, laid out in one row in manifest.flags order, with an edge-copied
+ *  `gutter` so a downscaled neighbour never bleeds into the box. `cell` and
+ *  `gutter` are source px. A palette PNG: 9 KB for 34 flags, smaller than WebP
+ *  at the same look (measured rc.32: q90 14 KB, q85 12 KB, lossless 21 KB).
+ *  Written to the manifest (`flagSprite`); src/lib/assets.ts positions from it. */
+const FLAG_SPRITE = { cell: [54, 36], gutter: 3, density: 3, png: { palette: true, effort: 10 } };
 
 const force = process.argv.includes("--force");
 const CONCURRENCY = Math.max(1, Math.min(8, availableParallelism()));
@@ -370,10 +385,19 @@ async function plan() {
     }
   }
 
-  // flags: listed only (served as-is from /flags/<cc>.png)
-  manifest.flags = (await listPngs(join(PUBLIC, "flags")))
-    .map((n) => stripPng(n).toLowerCase())
-    .sort(byCodeUnit);
+  // flags: the manifest lists the codes (sprite order); rc.32: one sprite of all
+  const flagDir = join(PUBLIC, "flags");
+  const flagFiles = new Map((await listPngs(flagDir)).map((n) => [stripPng(n).toLowerCase(), n]));
+  manifest.flags = [...flagFiles.keys()].sort(byCodeUnit);
+  if (manifest.flags.length) {
+    const srcs = manifest.flags.map((cc) => join(flagDir, flagFiles.get(cc)));
+    const parts = [];
+    for (const [i, src] of srcs.entries()) parts.push(Buffer.from(`${manifest.flags[i]}\0`), await read(src));
+    const hash = hashOf(Buffer.concat(parts), FLAG_SPRITE);
+    const { cell, gutter, density } = FLAG_SPRITE;
+    manifest.flagSprite = { hash, cell: [...cell], gutter, density };
+    jobs.push({ src: flagDir, dest: join(OUT_DIR, "flags", `flags.${hash}.png`), sprite: srcs });
+  }
 
   return { jobs, manifest, sourceBytes };
 }
@@ -393,12 +417,17 @@ async function encode(jobs, rebuildAll) {
         return;
       }
       try {
-        const resize =
-          job.fit === "inside"
-            ? { width: job.width, height: job.height, fit: "inside", withoutEnlargement: true }
-            : { width: job.width, withoutEnlargement: true };
-        const input = job.density ? sharp(job.src, { density: job.density }) : sharp(job.src);
-        const buf = job.glow ? await encodeGlow(input.resize(resize), job.glow) : await input.resize(resize).webp(job.webp).toBuffer();
+        let buf;
+        if (job.sprite) {
+          buf = await encodeFlagSprite(job.sprite);
+        } else {
+          const resize =
+            job.fit === "inside"
+              ? { width: job.width, height: job.height, fit: "inside", withoutEnlargement: true }
+              : { width: job.width, withoutEnlargement: true };
+          const input = job.density ? sharp(job.src, { density: job.density }) : sharp(job.src);
+          buf = job.glow ? await encodeGlow(input.resize(resize), job.glow) : await input.resize(resize).webp(job.webp).toBuffer();
+        }
         await mkdir(dirname(job.dest), { recursive: true });
         // Write-then-rename so an interrupted run never leaves a truncated file
         // that the "skip existing" check would trust next time.
@@ -413,6 +442,23 @@ async function encode(jobs, rebuildAll) {
     CONCURRENCY,
   );
   return { written, skipped, failures };
+}
+
+/** The flag sprite (FLAG_SPRITE): each flag cover-cropped into its cell, its
+ *  edges copied into the gutter, the cells side by side in `srcs` order. */
+async function encodeFlagSprite(srcs) {
+  const [cw, ch] = FLAG_SPRITE.cell;
+  const g = FLAG_SPRITE.gutter;
+  const pitch = cw + 2 * g;
+  const cells = [];
+  for (const src of srcs) {
+    const cell = await sharp(src).resize({ width: cw, height: ch, fit: "cover", position: "centre" }).png().toBuffer();
+    cells.push(await sharp(cell).extend({ top: g, bottom: g, left: g, right: g, extendWith: "copy" }).png().toBuffer());
+  }
+  return sharp({ create: { width: srcs.length * pitch, height: ch + 2 * g, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite(cells.map((input, i) => ({ input, left: i * pitch, top: 0 })))
+    .png(FLAG_SPRITE.png)
+    .toBuffer();
 }
 
 /** The legendary glow: keep the art's alpha, paint every pixel one gold (so the
@@ -464,6 +510,7 @@ async function writeManifest(manifest) {
   const ordered = {
     widths: { orgs: manifest.widths.orgs, specials: manifest.widths.specials, badges: manifest.widths.badges, banners: manifest.widths.banners },
     flags: manifest.flags,
+    flagSprite: manifest.flagSprite,
     orgs: sortKeys(manifest.orgs),
     specials: sortKeys(manifest.specials),
     ranks: sortKeys(manifest.ranks),
@@ -519,8 +566,8 @@ async function main() {
   };
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(
-    `build-images: ${counts.orgs} orgs, ${counts.specials} specials, ${counts.ranks} ranks, ${counts.badges} badges, ${counts.banners} banners, ${counts.flags} flags` +
-      ` → ${jobs.length} WebP files (${written} written, ${skipped} skipped, ${deleted} stale deleted) in ${secs}s`,
+    `build-images: ${counts.orgs} orgs, ${counts.specials} specials, ${counts.ranks} ranks, ${counts.badges} badges, ${counts.banners} banners, ${counts.flags} flags (1 sprite)` +
+      ` → ${jobs.length} WebP/PNG files (${written} written, ${skipped} skipped, ${deleted} stale deleted) in ${secs}s`,
   );
   console.log(
     `build-images: sources ${mb(sourceBytes)} PNG → outputs ${mb(afterBytes)} WebP` +

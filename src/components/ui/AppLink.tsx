@@ -13,7 +13,10 @@
  * Behaviour:
  * - Renders with `prefetch={false}` (no viewport prefetch).
  * - Switches to `prefetch={null}` (Next's default "auto") once the user shows
- *   intent: a real MOUSE pointer entering the link, or KEYBOARD focus. The
+ *   intent: a real MOUSE pointer moving over the link, or KEYBOARD focus. A
+ *   link that slides under a resting cursor (the page scrolls, a dialog
+ *   closes) gets pointer events with zero movement: not intent (rc.32,
+ *   WEB-02 — one such accidental prefetch cost a run 8 requests). The
  *   re-render re-registers the link with Next's visibility observer, which
  *   finds it on screen and prefetches it (later hovers also bump it to intent
  *   priority). The switch is sticky for the life of this link.
@@ -26,8 +29,8 @@
  * - An explicit `prefetch` prop from the caller (including `null`) always wins.
  *
  * All other props (href, className, aria-*, title, onClick, onMouseEnter,
- * scroll, replace, ref, children…) are forwarded unchanged, and the caller's
- * onPointerEnter / onFocus handlers are still called.
+ * onPointerEnter, scroll, replace, ref, children…) are forwarded unchanged,
+ * and the caller's onPointerMove / onFocus handlers are still called.
  */
 
 import Link from "next/link";
@@ -45,16 +48,22 @@ function isKeyboardFocus(el: Element): boolean {
   }
 }
 
-export function AppLink({ prefetch, onPointerEnter, onFocus, ...rest }: AppLinkProps) {
+/** A mouse pointer that really moved: the browser's own pointer events for a
+ *  link that slid under a resting cursor carry no movement. */
+export function isMouseIntent(e: { pointerType: string; movementX: number; movementY: number }): boolean {
+  return e.pointerType === "mouse" && (e.movementX !== 0 || e.movementY !== 0);
+}
+
+export function AppLink({ prefetch, onPointerMove, onFocus, ...rest }: AppLinkProps) {
   const [intent, setIntent] = useState(false);
 
   return (
     <Link
       {...rest}
       prefetch={prefetch !== undefined ? prefetch : intent ? null : false}
-      onPointerEnter={(e) => {
-        onPointerEnter?.(e);
-        if (!intent && e.pointerType === "mouse") setIntent(true);
+      onPointerMove={(e) => {
+        onPointerMove?.(e);
+        if (!intent && isMouseIntent(e)) setIntent(true);
       }}
       onFocus={(e) => {
         onFocus?.(e);

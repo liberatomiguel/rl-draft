@@ -26,8 +26,11 @@ import manifestJson from "@/generated/asset-manifest.json";
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
   widths: { orgs: readonly number[]; specials: readonly number[]; badges?: readonly number[]; banners?: readonly number[] };
-  /** Lowercase ISO codes with a /flags/<code>.png file. */
+  /** Lowercase ISO codes with a /flags/<code>.png file (also the sprite's order). */
   flags: string[];
+  /** rc.32: the flag sprite — every flag in one PNG (build-images FLAG_SPRITE):
+   *  `cell` and `gutter` in source px, `density` source px per CSS px. */
+  flagSprite?: { hash: string; cell: number[]; gutter: number; density: number };
   /** "<orgId>" or "<orgId>@<era>" → source hash. */
   orgs: Record<string, string>;
   /** Special-card id → source hash. */
@@ -47,6 +50,7 @@ type AssetManifest = {
 const manifest = manifestJson as AssetManifest;
 const IS_PROD = process.env.NODE_ENV === "production";
 const FLAGS = new Set(manifest.flags);
+const FLAG_INDEX = new Map(manifest.flags.map((cc, i) => [cc, i]));
 
 /** Widths generated per org logo (fit inside a w×w box), ascending — from the
  *  manifest (currently 96, 264). Change them in scripts/build-images.mjs only. */
@@ -85,19 +89,72 @@ export function flagSrc(code: string): string | null {
   return FLAGS.has(cc) ? `/flags/${cc}.png` : null;
 }
 
+/** Where one flag sits in the flag sprite, in CSS px: the sprite image is
+ *  `width` × `height` and is drawn at (-left, -top) inside the flag's box. */
+export type FlagSpriteCell = { src: string; left: number; top: number; width: number; height: number };
+
+/**
+ * rc.32 (WEB-02, DESIGN-DECISIONS #149): the flag as a cell of the one flag
+ * sprite (`/img/flags/flags.<hash>.png`, made by build-images, 1-year
+ * immutable), so every flag on a page costs the same single request. The cell
+ * is CountryChip's 18 × 12 CSS px box (FLAG_SPRITE in build-images.mjs).
+ * `null` outside production (dev shows the raw PNGs: flagSrc), without a
+ * sprite in the manifest, or for a code with no flag (region codes → the text
+ * chip, no request).
+ */
+export function flagSprite(code: string): FlagSpriteCell | null {
+  const sprite = manifest.flagSprite;
+  if (!IS_PROD || !sprite) return null;
+  const i = FLAG_INDEX.get(code.toLowerCase());
+  if (i === undefined) return null;
+  const pitch = sprite.cell[0] + 2 * sprite.gutter;
+  return {
+    src: `/img/flags/flags.${sprite.hash}.png`,
+    left: (i * pitch + sprite.gutter) / sprite.density,
+    top: sprite.gutter / sprite.density,
+    width: (FLAG_INDEX.size * pitch) / sprite.density,
+    height: (sprite.cell[1] + 2 * sprite.gutter) / sprite.density,
+  };
+}
+
+/**
+ * rc.32 (WEB-02, #149): the widest variant of each logo key that has LOADED in
+ * this tab. orgLogoSrc answers it whenever it covers the requested size, so a
+ * logo shown small after it was shown large (the drafted org's offer at 72 CSS
+ * px, then the roster and the bracket at 16–24) costs no second request: the
+ * browser already holds the file. Filled by `noteOrgLogoLoaded` (TeamLogo's
+ * onLoad), so it is empty on the server and during hydration, and the static
+ * HTML never depends on it.
+ */
+const loadedOrgWidth = new Map<string, number>();
+const ORG_LOGO_URL = /^\/img\/orgs\/(.+)\.[0-9a-f]+\.(\d+)\.webp$/;
+
+/** Records a logo URL (from orgLogoSrc) that finished loading. */
+export function noteOrgLogoLoaded(src: string): void {
+  const m = ORG_LOGO_URL.exec(src);
+  if (!m) return;
+  const key = decodeURIComponent(m[1]);
+  const width = Number(m[2]);
+  if (width > (loadedOrgWidth.get(key) ?? 0)) loadedOrgWidth.set(key, width);
+}
+
 /**
  * Org logo for `key` ("<orgId>" or the era variant "<orgId>@<era>") rendered at
  * `displayPx` CSS px (the larger side of its box). Picks the smallest variant
  * that covers it at 3× density — with widths 96 / 264: the 96 px variant up to
  * 32 CSS px, the 264 px one above (xl = 88 CSS px at 3×; larger sizes also get
- * the biggest variant). `null` = no logo file →
+ * the biggest variant). A wider variant that has already loaded in this tab is
+ * reused instead (rc.32, `noteOrgLogoLoaded`). `null` = no logo file →
  * try the next source in the chain / render the monogram.
  */
 export function orgLogoSrc(key: string, displayPx: number): string | null {
   if (!IS_PROD) return `/orgs/${key}.png`;
   const hash = hashFor(manifest.orgs, key);
   if (!hash) return null;
-  const w = pickWidth(ORG_LOGO_WIDTHS, displayPx * ORG_LOGO_DENSITY);
+  const need = pickWidth(ORG_LOGO_WIDTHS, displayPx * ORG_LOGO_DENSITY);
+  // A wider variant already in the browser's cache serves this size too.
+  const loaded = loadedOrgWidth.get(key) ?? 0;
+  const w = loaded > need && ORG_LOGO_WIDTHS.includes(loaded) ? loaded : need;
   return `/img/orgs/${seg(key)}.${hash}.${w}.webp`;
 }
 

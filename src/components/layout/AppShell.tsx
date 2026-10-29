@@ -4,7 +4,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { FEATURES } from "@/config/balance";
-import { useCopy } from "@/content/copy";
+import { useCopy, useUiLocale } from "@/content/copy";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { clearRunInProgress } from "@/store/lazyRunStore";
@@ -269,10 +269,9 @@ function AccountChip() {
 
 /** EN / PT language switch — always visible in the header. */
 function LangToggle() {
-  const lang = useSettings((s) => s.lang);
   const set = useSettings((s) => s.set);
-  const mounted = useMounted();
-  const active = mounted ? lang : "en";
+  // The URL's language in the static HTML (PT on /pt pages), then the player's.
+  const active = useUiLocale();
   return (
     <div className="mr-0.5 flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Language">
       {(["en", "pt"] as const).map((l) => (

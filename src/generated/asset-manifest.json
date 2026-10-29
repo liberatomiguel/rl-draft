@@ -54,6 +54,15 @@
     "us",
     "za"
   ],
+  "flagSprite": {
+    "hash": "ad2a87f3c1",
+    "cell": [
+      54,
+      36
+    ],
+    "gutter": 3,
+    "density": 3
+  },
   "orgs": {
     "01-esports": "fe7a4004c6",
     "3rats": "7c84d75aa8",

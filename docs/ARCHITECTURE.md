@@ -260,12 +260,17 @@ migrations around the four persisted stores without changing what they save.
 - `components/ui/*` — small presentational primitives.
 - `src/content/copy.ts` is the **access layer** for player-facing strings (tone:
   broadcast desk); the actual strings live in `copy.en.ts` + `copy.pt.ts`, with
-  the active language selected via `settingsStore` (`lang`). Career strings are
-  split out into `copy.career.{en,pt}.ts`, read only through `useCareerCopy()`
-  (`src/content/careerCopy.ts`), so they never ship in the core copy chunk.
+  the active language selected via `settingsStore` (`lang`) once the client
+  has mounted. Before that (the static HTML and hydration) it is the URL's
+  language: `<html>` is `components/layout/LocaleRoot.tsx`, which exports the
+  `/pt` pages with `lang="pt-BR"` and PT chrome (`lib/locale.ts`, rc.32 #148).
+  Career strings are split out into `copy.career.{en,pt}.ts`, read only through
+  `useCareerCopy()` (`src/content/careerCopy.ts`), so they never ship in the
+  core copy chunk.
 - **Internal links use `AppLink`** (`components/ui/AppLink.tsx`), never
-  `next/link` directly; ESLint enforces it. It prefetches only on intent (mouse
-  hover / keyboard focus), not on viewport entry (DESIGN-DECISIONS #103).
+  `next/link` directly; ESLint enforces it. It prefetches only on intent (a
+  mouse moving over the link / keyboard focus), not on viewport entry
+  (DESIGN-DECISIONS #103) nor when a link slides under a resting cursor (#150).
 - **Images go through `src/lib/assets.ts`** (see Asset pipeline). Never
   hard-code `/orgs/…`, `/flags/…`, `/ranks/…` or `/cards/specials/…` URLs in a
   component.
@@ -293,7 +298,10 @@ production is generated from them:
   - org logos at 96 and 264 px (`orgs/<key>.<hash>.<w>.webp`; `<key>` is
     `<orgId>` or `<orgId>@<era>`);
   - special photos at 256 and 512 px;
-  - rank emblems in a 224 px box.
+  - rank emblems in a 224 px box;
+  - rc.32: every flag in ONE palette PNG sprite (`flags/flags.<hash>.png`,
+    the geometry in the manifest's `flagSprite`), so a page's flags cost one
+    request.
 
   It also writes the committed **`src/generated/asset-manifest.json`**, which
   says which flags, orgs, specials and ranks have a file. It is deterministic
@@ -304,10 +312,13 @@ production is generated from them:
   them only in `scripts/build-images.mjs` (`ORG_WIDTHS` / `SPECIAL_WIDTHS`).
   `postexport` verifies that every manifest URL exists in `out/`.
 - **`src/lib/assets.ts`** is the only place that builds asset URLs: `flagSrc`,
-  `orgLogoSrc(key, displayPx)` (≤ 32 CSS px → 96 px file, else 264 px),
+  `flagSprite(code)` (the flag's cell in the sprite, rc.32),
+  `orgLogoSrc(key, displayPx)` (≤ 32 CSS px → 96 px file, else 264 px; a wider
+  variant that has already loaded in the tab is reused, rc.32 #149),
   `hasSpecialPhoto`, `specialPhotoSrc(id, width)` and `rankSrc(variant, id)`.
   - In production they return the hashed, percent-encoded `/img/…` URL
-    (`/flags/<cc>.png` for flags), **or `null` when the file doesn't exist**.
+    (flags: a sprite cell; `flagSrc`'s raw `/flags/<cc>.png` is CountryChip's
+    fallback), **or `null` when the file doesn't exist**.
     Components then render their fallback (text chip, monogram, CSS emblem,
     stylized art) without making a request.
   - In dev/test they return the raw PNG paths and treat every asset as present,
