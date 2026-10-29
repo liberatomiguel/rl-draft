@@ -81,12 +81,21 @@ export interface MarketListing {
 }
 
 const LISTING_CAP = 120;
+/**
+ * rc.32: free agents the org can sign that the listing always shows (one
+ * market page). The top LISTING_CAP by overall can all sit above a low
+ * reputation's signing cap — a restructured org at rep 0 saw only locked
+ * rows and could never sign again.
+ */
+const LISTING_MIN_SIGNABLE = 24;
 
 export function listingFor(ctx: {
   world: WorldState;
   squadIds: string[];
   seasonIndex: number;
   careerSeed: number;
+  /** rc.32: the org's signing cap (economy.signableOverallCap) — tops the free agents up with signable ones. */
+  signableCap?: number;
 }): MarketListing {
   const viewCtx: ViewCtx = {
     careerSeed: ctx.careerSeed,
@@ -119,8 +128,15 @@ export function listingFor(ctx: {
   }
   contracted.sort((a, b) => b.view.overall - a.view.overall);
 
+  const listedFree = freeAgents.slice(0, LISTING_CAP);
+  const cap = ctx.signableCap;
+  if (cap !== undefined) {
+    const signable = (v: CareerPlayerView) => Math.round(v.overall) <= cap;
+    const missing = LISTING_MIN_SIGNABLE - listedFree.filter(signable).length;
+    if (missing > 0) listedFree.push(...freeAgents.slice(LISTING_CAP).filter(signable).slice(0, missing));
+  }
   return {
-    freeAgents: freeAgents.slice(0, LISTING_CAP),
+    freeAgents: listedFree,
     contracted: contracted.slice(0, LISTING_CAP),
   };
 }
@@ -175,6 +191,7 @@ export function askPackageFor(
           seasonIndex: ctx.seasonIndex,
         }),
         ctx.contracted.splitsRemaining,
+        ctx.seasonIndex,
       )
     : 0;
   const signingBonus = ctx.contracted ? 0 : signingBonusFor(salaryPerSplit);
@@ -192,7 +209,8 @@ export function askPackageFor(
  * (design §9). ONE function for renewPlayerFlow and the renewal screen.
  */
 export function renewalAskFor(
-  player: Pick<SquadPlayer, "id" | "overall" | "potential" | "birthYear">,
+  player: Pick<SquadPlayer, "id" | "overall" | "potential" | "birthYear"> &
+    Partial<Pick<SquadPlayer, "contractEndSeason" | "blockbusterRefusedUntil">>,
   ctx: {
     rep: number;
     seasonIndex: number;
@@ -212,7 +230,24 @@ export function renewalAskFor(
     careerSeed: ctx.careerSeed,
     playerId: player.id,
     ambitious: player.overall >= CAREER_SALARY.ambitiousOverall && repTierOf(ctx.rep) < 3,
+    // rc.32: a Blockbuster bid refused during THIS deal surcharges its renewal
+    // (CAREER_SALARY.blockbusterRefusalRenewalMult; declared since v0.2, never
+    // passed before — the offer and the mail now say so).
+    blockbusterRefused: blockbusterRefusalApplies(player),
   });
+}
+
+/**
+ * rc.32: does the refused-Blockbuster surcharge apply to this player's next
+ * renewal? Only for the deal that ran when he was kept (the stamp is that
+ * deal's end season; a renewed deal ends later, so it applies once).
+ */
+export function blockbusterRefusalApplies(
+  player: Partial<Pick<SquadPlayer, "contractEndSeason" | "blockbusterRefusedUntil">>,
+): boolean {
+  return (
+    player.blockbusterRefusedUntil !== undefined && player.blockbusterRefusedUntil === player.contractEndSeason
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -628,6 +663,96 @@ export function incomingBidForDay(ctx: {
     resolveSeason: ctx.seasonIndex,
     resolveDay: windowCloseDayFor((ctx.windowIdx as 0 | 1 | 2 | 3) ?? 0),
     factors: [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// rc.32 M8 (ECONOMY-CONTRACT §5, decision 8-B — provisional): "List for sale"
+// ---------------------------------------------------------------------------
+
+/**
+ * Eligible window days a new listing waits for its offer — a seeded draw in
+ * CAREER_TRANSFER.listingOfferDays, fixed per (player, listing day).
+ */
+export function listingWaitDaysFor(playerId: string, seasonIndex: number, day: number, careerSeed: number): number {
+  const [lo, hi] = CAREER_TRANSFER.listingOfferDays;
+  const f = derivedFloat(careerSeed, streams.gen("listWait", `${playerId}:${seasonIndex}:${day}`));
+  return lo + Math.min(hi - lo, Math.floor(f * (hi - lo + 1)));
+}
+
+/**
+ * The AI org that buys a user player outside a bid (a listing, a
+ * restructuring): an org of his region that would field him (he beats its
+ * weakest player; any org of the region when none would), picked by a
+ * seeded draw on `key`. Null when his region has no org at all.
+ */
+export function fieldingBuyerFor(ctx: {
+  world: WorldState;
+  player: Pick<SquadPlayer, "id" | "region" | "overall">;
+  seasonIndex: number;
+  careerSeed: number;
+  key: string;
+}): string | null {
+  const { player } = ctx;
+  const viewCtx: ViewCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, world: ctx.world };
+  const orgs = Object.values(ctx.world.orgs)
+    .filter((o) => o.region === player.region && !o.playerIds.includes(player.id))
+    .sort((a, b) => a.ref.localeCompare(b.ref));
+  if (orgs.length === 0) return null;
+  const weakestOf = (playerIds: readonly string[]) =>
+    Math.min(...playerIds.map((id) => playerViewById(id, viewCtx)?.overall ?? 60));
+  const fielding = orgs.filter((o) => player.overall > weakestOf(o.playerIds));
+  const pool = fielding.length > 0 ? fielding : orgs;
+  const pick = Math.floor(derivedFloat(ctx.careerSeed, streams.gen("buyer", `${ctx.key}:${player.id}`)) * pool.length);
+  return pool[Math.min(pick, pool.length - 1)].ref;
+}
+
+/**
+ * The AI offer a listed player draws: from fieldingBuyerFor's org, at market
+ * value × CAREER_TRANSFER.listingOfferRange. It expires when the window
+ * closes, like a bid. Null when his region has no org at all.
+ */
+export function listingOfferFor(ctx: {
+  world: WorldState;
+  player: SquadPlayer;
+  seasonIndex: number;
+  windowIdx: 0 | 1 | 2 | 3;
+  day: number;
+  careerSeed: number;
+}): TransferOffer | null {
+  const { player } = ctx;
+  const key = `${ctx.seasonIndex}:${ctx.day}:${player.id}`;
+  const buyer = fieldingBuyerFor({
+    world: ctx.world,
+    player,
+    seasonIndex: ctx.seasonIndex,
+    careerSeed: ctx.careerSeed,
+    key: `list:${ctx.seasonIndex}:${ctx.day}`,
+  });
+  if (!buyer) return null;
+  const value = marketValueFor({
+    overall: player.overall,
+    age: ageOf(player.birthYear ?? deriveBirthYear(player.id, ctx.careerSeed), ctx.seasonIndex),
+    potential: player.potential,
+    seasonIndex: ctx.seasonIndex,
+  });
+  const [lo, hi] = CAREER_TRANSFER.listingOfferRange;
+  const mult = lo + (hi - lo) * derivedFloat(ctx.careerSeed, streams.gen("listFee", key));
+  return {
+    id: `list:${key}`,
+    direction: "out",
+    playerId: player.id,
+    playerName: player.name,
+    fee: quantize(value * mult),
+    salaryPerSplit: 0,
+    lengthSeasons: 2,
+    role: "starter",
+    otherRef: buyer,
+    status: "pending",
+    resolveSeason: ctx.seasonIndex,
+    resolveDay: windowCloseDayFor(ctx.windowIdx),
+    factors: [],
+    listing: true,
   };
 }
 

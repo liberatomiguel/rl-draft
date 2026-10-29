@@ -133,10 +133,13 @@ const mkSquad = (over: Partial<SquadPlayer> = {}): SquadPlayer => ({
 // ---------------------------------------------------------------------------
 
 describe("seasonYear", () => {
-  it("maps the historical timeline and extends into the infinite era", () => {
-    expect(seasonYear(0)).toBe(2020);
-    expect(seasonYear(1)).toBe(2021);
-    expect(seasonYear(2)).toBe(2022);
+  // rc.32 (Miguel, 30/10 — the age bug): the age clock reads the year a
+  // season ENDS, so it steps exactly one year a season (rc.31 read the first
+  // year — 2020, 2021, 2022, then 2024 — and aged everyone two years there).
+  it("maps the historical timeline on the year each season ends and extends into the infinite era", () => {
+    expect(seasonYear(0)).toBe(2021); // 2020-21
+    expect(seasonYear(1)).toBe(2022); // 2021-22
+    expect(seasonYear(2)).toBe(2023); // 2022-23
     expect(seasonYear(3)).toBe(2024);
     expect(seasonYear(4)).toBe(2025);
     expect(seasonYear(5)).toBe(2026);
@@ -144,8 +147,12 @@ describe("seasonYear", () => {
     expect(seasonYear(9)).toBe(2030);
   });
 
+  it("steps exactly +1 every season, the 2022-23 → 2024 rollover included", () => {
+    for (let s = 0; s < 12; s++) expect(seasonYear(s + 1) - seasonYear(s)).toBe(1);
+  });
+
   it("ageOf is the year difference", () => {
-    expect(ageOf(2004, 0)).toBe(16);
+    expect(ageOf(2004, 0)).toBe(17);
     expect(ageOf(2004, 5)).toBe(22);
   });
 });

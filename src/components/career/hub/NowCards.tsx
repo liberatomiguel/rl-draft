@@ -8,9 +8,10 @@
  */
 
 import { useRouter } from "next/navigation";
+import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
-import { weeklyOf } from "@/engine/career/economy";
+import { breachOutcomeFor, insertMoneyFor, loanBreachesOf, weeklyOf } from "@/engine/career/economy";
 import type {
   CareerEventDef,
   CareerSave,
@@ -40,10 +41,13 @@ export function NowInsert({
   C,
   id,
   onChoose,
+  seasonIndex = 0,
 }: {
   C: CareerCopy;
   id: string;
   onChoose: (key: "a" | "b") => void;
+  /** rc.32 (M1): the catalogue's money is season-0 money — shown on the money index, as booked. */
+  seasonIndex?: number;
 }) {
   const def = insertById.get(id);
   const item = C.inserts.items[id];
@@ -65,7 +69,7 @@ export function NowInsert({
             )}
           >
             <span className="display text-sm font-bold uppercase tracking-[0.1em] text-ink">{o.key === "a" ? item.a : item.b}</span>
-            <InsertEffectRows fx={o.effects} C={C} />
+            <InsertEffectRows fx={o.effects} C={C} seasonIndex={seasonIndex} />
           </button>
         ))}
       </div>
@@ -74,9 +78,10 @@ export function NowInsert({
   );
 }
 
-function InsertEffectRows({ fx, C }: { fx: InsertEffects; C: CareerCopy }) {
+function InsertEffectRows({ fx, C, seasonIndex }: { fx: InsertEffects; C: CareerCopy; seasonIndex: number }) {
   const rows: { key: string; icon: React.ReactNode; label: string; value: string; good: boolean }[] = [];
-  if (fx.money) rows.push({ key: "money", icon: <CoinGlyph />, label: C.inserts.fx.money, value: formatMoneyDelta(fx.money, { compact: true }), good: fx.money > 0 });
+  const money = fx.money ? insertMoneyFor(fx.money, seasonIndex) : 0;
+  if (money) rows.push({ key: "money", icon: <CoinGlyph />, label: C.inserts.fx.money, value: formatMoneyDelta(money, { compact: true }), good: money > 0 });
   if (fx.rep) rows.push({ key: "rep", icon: <RepGlyph />, label: C.inserts.fx.repLabel, value: `${fx.rep > 0 ? "+" : ""}${fx.rep}`, good: fx.rep > 0 });
   if (fx.chemistry) rows.push({ key: "chem", icon: <ChemGlyph />, label: C.inserts.fx.chemLabel, value: `${fx.chemistry > 0 ? "+" : "−"}`, good: fx.chemistry > 0 });
   if (fx.trainingWeeks)
@@ -311,8 +316,18 @@ export function NowBid({
   return (
     <div>
       {offer.blockbuster ? (
-        <Badge tone="gold" className="mb-2">
-          {C.market.blockbuster}
+        <>
+          <Badge tone="gold" className="mb-2">
+            {C.market.blockbuster}
+          </Badge>
+          {/* rc.32 (Miguel, 30/10): what a Blockbuster is, its price, the cost of refusing. */}
+          <p className="mb-3 max-w-xl text-xs leading-relaxed text-sub">
+            {blockbusterWhatOf(C, orgName)}
+          </p>
+        </>
+      ) : offer.listing ? (
+        <Badge tone="blue" className="mb-2">
+          {C.market.listingTag}
         </Badge>
       ) : null}
       <div className="flex items-center gap-3">
@@ -343,7 +358,7 @@ export function NowBid({
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-faint">{C.market.declineHint}</p>
+      <p className="mt-2 text-xs text-faint">{C.market.declineHint(refusalPct())}</p>
 
       <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="primary" size="lg" onClick={onAccept}>
@@ -353,6 +368,35 @@ export function NowBid({
           {C.market.decline}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** rc.32: the renewal surcharge a refused Blockbuster carries, in percent (balance.ts). */
+export function refusalPct(): number {
+  return Math.round((CAREER_SALARY.blockbusterRefusalRenewalMult - 1) * 100);
+}
+
+/** rc.32 (Miguel, 30/10): the Blockbuster explainer, numbers from balance.ts — the HQ card and the Market's deals share it. */
+export function blockbusterWhatOf(C: CareerCopy, orgName: string): string {
+  return C.market.blockbusterWhat(orgName, String(CAREER_TRANSFER.blockbusterFeeMult), refusalPct());
+}
+
+/**
+ * rc.32 (ECONOMY-CONTRACT M4 — provisional): the HQ's Backer line — the debt
+ * still owed and what the next Monday below the floor would mean
+ * (economy.breachOutcomeFor), plus the restructurings so far.
+ */
+export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; owed: string }) {
+  const breaches = loanBreachesOf(save.finances);
+  const next = breachOutcomeFor(breaches + 1, save.difficulty);
+  return (
+    <div className="space-y-1">
+      <p>{C.hub.backerOpen(owed)}</p>
+      {breaches >= 2 ? <p className="text-xs text-faint">{C.hub.restructuredLine(breaches)}</p> : null}
+      <p className={cx("text-xs font-semibold", next === "insolvent" ? "text-bad" : "text-orange-bright")}>
+        {C.hub.backerNextBreach(next)}
+      </p>
     </div>
   );
 }

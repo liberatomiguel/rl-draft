@@ -21,7 +21,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, playerViewById, scoutedBand } from "@/engine/career/development";
-import { quantize, signableOverallCap, weeklyOf, weeklyStatement } from "@/engine/career/economy";
+import { quantize, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type { CareerDifficulty, CareerEndReason, CareerPlayerView, CareerSave, ScoutLevel } from "@/engine/career/types";
 import type { Placement, Region } from "@/engine/types";
@@ -45,6 +45,7 @@ import {
   startEvent,
   takeBankLoanFlow,
   userSeedRatingFor,
+  weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
 
@@ -236,15 +237,9 @@ function track(save: CareerSave, t: Tally): void {
 // Money helpers
 // ---------------------------------------------------------------------------
 
+/** rc.32: the statement the Monday books (the season's money index, the founding partner) — what Finances shows. */
 function statementOf(save: CareerSave) {
-  return weeklyStatement({
-    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
-    coachSalary: save.coach?.salaryPerSplit ?? null,
-    sponsor: save.sponsor,
-    rep: save.reputation,
-    gear: save.finances.gear,
-    bankLoan: save.finances.bankLoan ?? null,
-  });
+  return weeklyStatementOf(save);
 }
 
 /** Can the books carry `extraPerSplit` more in wages and `cost` up front? */
@@ -271,13 +266,15 @@ interface Candidate {
 }
 
 function candidatesFor(save: CareerSave): Candidate[] {
+  const cap = signableOverallCap(save.reputation);
+  // rc.32: the Market's own listing (a page of signable free agents always shown).
   const listing = listingFor({
     world: save.world,
     squadIds: save.squad.map((p) => p.id),
     seasonIndex: save.clock.seasonIndex,
     careerSeed: save.careerSeed,
+    signableCap: cap,
   });
-  const cap = signableOverallCap(save.reputation);
   const out: Candidate[] = [];
   const add = (view: CareerPlayerView, splitsRemaining: number | null) => {
     if (Math.round(view.overall) > cap) return;

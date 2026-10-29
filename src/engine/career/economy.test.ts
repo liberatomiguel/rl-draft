@@ -49,6 +49,10 @@ import {
   weeklyPayroll,
   weeklyStatement,
   weeklyWage,
+  backerLineFor,
+  moneyIndex,
+  prizeTables,
+  weeklyWageBill,
   type SalaryAskInput,
 } from "./economy";
 import type { CareerDifficulty, FinanceState, GearState, SponsorState } from "./types";
@@ -129,8 +133,9 @@ describe("prizeFor", () => {
   ];
   const difficulties: CareerDifficulty[] = ["easy", "normal", "hard"];
 
-  it("regional champion pays 30% of the pool × prizeMult", () => {
-    const pool = 0.3 * 40_000;
+  // rc.32 (M5, provisional): the champion's share is the active table's (28 %; rc.31: 30 %).
+  it("regional champion pays the table's champion share of the pool × prizeMult", () => {
+    const pool = (prizeTables().swiss16.champion / 100) * 40_000;
     expect(prizeFor("regional", "champion", "swiss", "normal")).toBe(quantize(pool));
     expect(prizeFor("regional", "champion", "swiss", "easy")).toBe(
       quantize(pool * CAREER_ECONOMY.prizeMult.easy),
@@ -498,10 +503,14 @@ describe("weekly payroll (v2.0 R20)", () => {
     expect(fin.ledger.every((e) => e.amount !== 0)).toBe(true);
   });
 
-  it("rescues once via the Emergency Backer, then a second breach is insolvency", () => {
+  // rc.32 (M4, provisional): the Backer's line is weeks of the wage bill, and
+  // what a later breach does depends on the difficulty (Hard: the second ends it).
+  it("rescues once via the Emergency Backer, then on Hard a second breach is insolvency", () => {
     const heavy = [{ name: "Alpha", amount: 70_000 }]; // ≈ 6.5k / week
+    const line = backerLineFor(weeklyWageBill([70_000], null), 1);
+    expect(line.floor).toBe(-quantize(CAREER_LOAN.floorWeeks * weeklyWage(70_000)));
     const first = weeklyPayroll({
-      fin: freshFin(1_000),
+      fin: freshFin(line.floor + 1_000),
       squadSalaries: heavy,
       coachSalary: null,
       sponsor: null,
@@ -509,18 +518,20 @@ describe("weekly payroll (v2.0 R20)", () => {
       gear: freshGear(),
       seasonIndex: 1,
       week: 4,
-      difficulty: "normal",
+      difficulty: "hard",
     });
     expect(first.rescued).toBe(true);
     expect(first.insolvent).toBe(false);
-    expect(first.fin.balance).toBe(CAREER_LOAN.rescueTo);
+    expect(first.line).toEqual(line);
+    expect(first.fin.balance).toBe(line.rescueTo);
     expect(first.fin.loanUsed).toBe(true);
+    expect(first.fin.loanBreaches).toBe(1);
     const grant = first.fin.ledger.find((e) => e.kind === "loanGrant");
     expect(grant).toBeDefined();
     expect(first.fin.loan?.remaining).toBeCloseTo(grant!.amount * CAREER_LOAN.repayFactor, 6);
 
     const second = weeklyPayroll({
-      fin: { ...first.fin, balance: CAREER_LOAN.floor + 100 },
+      fin: { ...first.fin, balance: line.floor + 100 },
       squadSalaries: heavy,
       coachSalary: null,
       sponsor: null,
@@ -528,11 +539,12 @@ describe("weekly payroll (v2.0 R20)", () => {
       gear: freshGear(),
       seasonIndex: 1,
       week: 5,
-      difficulty: "normal",
+      difficulty: "hard",
     });
     expect(second.rescued).toBe(false);
+    expect(second.restructure).toBe(false);
     expect(second.insolvent).toBe(true);
-    expect(second.fin.balance).toBeLessThan(CAREER_LOAN.floor);
+    expect(second.fin.balance).toBeLessThan(line.floor);
   });
 
   it("runwayWeeks: null in the black, floor(balance / burn) otherwise", () => {
@@ -630,7 +642,8 @@ describe("sponsorOffersFor", () => {
 
   it("bakes sponsorMult AND per-season growth into the signed figures, quantized", () => {
     const seasonIndex = 2;
-    const growth = Math.pow(CAREER_SPONSOR.growthPerSeason, seasonIndex);
+    // rc.32 (M1, provisional): new deals grow on the one money index.
+    const growth = moneyIndex(seasonIndex, "sponsor");
     for (const difficulty of ["easy", "normal", "hard"] as CareerDifficulty[]) {
       const [best] = sponsorOffersFor(80, seasonIndex, 11, null, false, difficulty);
       const row = CAREER_SPONSOR.tiers[best.tier - 1];

@@ -19,7 +19,14 @@
  */
 
 import { useState } from "react";
-import { CAREER_BANK, CAREER_ECONOMY, CAREER_LOAN, CAREER_PAYROLL, CAREER_SPONSOR } from "@/config/balance";
+import {
+  CAREER_BANK,
+  CAREER_ECONOMY,
+  CAREER_LOAN,
+  CAREER_PAYROLL,
+  CAREER_PRIZES,
+  CAREER_SPONSOR,
+} from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import {
@@ -27,15 +34,23 @@ import {
   bankLoanLimitFor,
   bankLoanRefusal,
   bankLoanTerms,
+  bankMinAmountFor,
+  bootcampCostFor,
+  breachOutcomeFor,
   debtPaymentFor,
+  foundingPartnerActive,
+  loanBreachesOf,
+  moneyIndex,
   nextPaydayFor,
+  psychologistPerSplitFor,
   quantize,
   runwayWeeks,
   weeklyOf,
-  weeklyStatement,
   type BankLoanRefusal,
+  type BreachOutcome,
   type WeeklyStatement,
 } from "@/engine/career/economy";
+import { backerLineOf, foundingPartnerPerSplitOf, weeklyStatementOf } from "@/store/careerFlow";
 import type {
   BankLoanState,
   FinanceState,
@@ -112,15 +127,18 @@ function PayDown({
   onPay,
   cta,
   hint,
-  backerUsed,
+  floor,
+  next,
 }: {
   remaining: number;
   balance: number;
   onPay: (amount: number) => void;
   cta: string;
   hint?: string;
-  /** The Backer already rescued once: going under the floor now ends the career. */
-  backerUsed: boolean;
+  /** rc.32 (M4): the Backer's floor on this wage bill (the flows' own `backerLineOf`). */
+  floor: number;
+  /** rc.32 (M4): what the next breach would do (the rescue, a restructuring, the end). */
+  next: BreachOutcome;
 }) {
   const C = useCareerCopy();
   const [raw, setRaw] = useState<number | null>(null);
@@ -129,11 +147,11 @@ function PayDown({
   // debt off the $50 quantum is paid to the dollar, a stub included.
   const payMin = Math.min(CAREER_ECONOMY.roundQuantum, remaining);
   const step = Math.max(payMin, quantize(remaining / 10));
-  const maxPay = debtPaymentFor(remaining, balance - CAREER_LOAN.floor);
+  const maxPay = debtPaymentFor(remaining, balance - floor);
   const canPay = maxPay > 0 && maxPay >= payMin;
   const clamp = (n: number) => Math.min(Math.max(n, payMin), Math.max(payMin, maxPay));
   const amount = debtPaymentFor(remaining, clamp(raw ?? step));
-  const canPayAll = balance - remaining >= CAREER_LOAN.floor;
+  const canPayAll = balance - remaining >= floor;
   const balanceAfter = balance - amount;
 
   return (
@@ -179,9 +197,9 @@ function PayDown({
       ) : null}
       {canPay && balanceAfter < 0 ? (
         <p className="mt-1 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">
-          {(backerUsed ? C.finances.payRiskEnd : C.finances.payRiskBacker)(
-            formatMoney(CAREER_LOAN.floor, { compact: true }),
-          )}
+          {next === "rescue"
+            ? C.finances.payRiskBacker(formatMoney(floor, { compact: true }))
+            : C.finances.payRiskNext(formatMoney(floor, { compact: true }), next)}
         </p>
       ) : null}
       {hint ? <p className="mt-2 text-[10px] text-faint">{hint}</p> : null}
@@ -248,19 +266,31 @@ const BANK_REFUSAL_COPY: Record<BankLoanRefusal, "bankActive" | "bankBacker" | "
 };
 
 /** v2.0 (R21): request a bank loan — amount stepper, live terms, one button. */
-function BankLoanRequest({ fin, rep, balance }: { fin: FinanceState; rep: number; balance: number }) {
+function BankLoanRequest({
+  fin,
+  rep,
+  balance,
+  seasonIndex,
+}: {
+  fin: FinanceState;
+  rep: number;
+  balance: number;
+  /** rc.32 (M1): the bank's limits are on the season money index. */
+  seasonIndex: number;
+}) {
   const C = useCareerCopy();
   const takeBankLoan = useCareerStore((s) => s.takeBankLoan);
-  const limit = bankLoanLimitFor(rep);
+  const limit = bankLoanLimitFor(rep, seasonIndex);
+  const minAmount = bankMinAmountFor(seasonIndex);
   const step = Math.max(CAREER_ECONOMY.roundQuantum, quantize(limit / 10));
   const [raw, setRaw] = useState<number | null>(null);
-  const clamp = (n: number) => Math.min(limit, Math.max(CAREER_BANK.minAmount, quantize(n)));
-  const amount = clamp(raw ?? Math.min(limit, Math.max(CAREER_BANK.minAmount, quantize(limit / 2))));
+  const clamp = (n: number) => Math.min(limit, Math.max(minAmount, quantize(n)));
+  const amount = clamp(raw ?? Math.min(limit, Math.max(minAmount, quantize(limit / 2))));
   const terms = bankLoanTerms(amount);
   // ECO-02 (R46): the panel states the REAL reason the bank would refuse —
   // the same bankLoanRefusal takeBankLoanFlow runs — instead of its own guess.
-  const refusal = bankLoanRefusal(fin, rep, amount);
-  if (limit < CAREER_BANK.minAmount) {
+  const refusal = bankLoanRefusal(fin, rep, amount, seasonIndex);
+  if (limit < minAmount) {
     return <p className="mt-2 text-xs text-faint">{C.finances.bankLockedRep}</p>;
   }
   if (refusal === "active" || refusal === "backer") {
@@ -277,7 +307,7 @@ function BankLoanRequest({ fin, rep, balance }: { fin: FinanceState; rep: number
           aria-label={C.finances.amountDown}
           className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => setRaw(clamp(amount - step))}
-          disabled={amount - step < CAREER_BANK.minAmount}
+          disabled={amount - step < minAmount}
         >
           −
         </button>
@@ -326,6 +356,7 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
   const C = useCareerCopy();
   const rows: { key: keyof typeof C.finances.line; amount: number }[] = [
     { key: "sponsorBase", amount: st.sponsorBase },
+    { key: "foundingPartner", amount: st.foundingPartner },
     { key: "fanbase", amount: st.fanbase },
     { key: "payroll", amount: -st.payroll },
     { key: "coach", amount: -st.coach },
@@ -548,17 +579,17 @@ export function FinancesScreen() {
   const sponsorTier = save.sponsor?.tier ?? null;
 
   // --- statement (v2.0: THE weekly statement the Monday funnel books) --------
-  const statement = weeklyStatement({
-    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
-    coachSalary: save.coach?.salaryPerSplit ?? null,
-    sponsor: save.sponsor,
-    rep,
-    gear,
-    bankLoan: fin.bankLoan ?? null,
-  });
+  // rc.32: weeklyStatementOf — the season's money index and the founding partner.
+  const statement = weeklyStatementOf(save);
   const { income, expenses, net } = statement;
   const projected = fin.balance + net;
   const runway = runwayWeeks(fin.balance, net);
+  // rc.32 (M1): season-0 prices on the money index; (M4) the Backer's line and the next breach.
+  const seasonIndex = save.clock.seasonIndex;
+  const flatIndex = moneyIndex(seasonIndex, "flat");
+  const backer = backerLineOf(save);
+  const breaches = loanBreachesOf(fin);
+  const nextBreach = breachOutcomeFor(breaches + 1, save.difficulty);
 
   // --- sparkline series: running balance reconstructed backwards ------------
   const sparkSeries: number[] = [];
@@ -587,12 +618,12 @@ export function FinancesScreen() {
 
   const gearAside = (item: (typeof CAREER_GEAR.items)[number]): React.ReactNode => {
     const status = gearStatus(item);
-    const price = gearPriceFor(item.cost, sponsorTier);
+    const price = gearPriceFor(item.cost, sponsorTier, seasonIndex);
     if (status === "owned") return null;
     if (status === "next") {
       return (
         <>
-          <PriceTag base={item.cost} price={price} />
+          <PriceTag base={gearPriceFor(item.cost, null, seasonIndex)} price={price} />
           <Button variant="primary" size="sm" onClick={() => buyGear(item.id)}>
             {C.finances.buy} · {formatMoney(price, { compact: true })}
           </Button>
@@ -608,7 +639,7 @@ export function FinancesScreen() {
       <>
         {item.upkeepPerSplit > 0 ? (
           <p className="mt-1 text-[10px] text-faint">
-            {C.finances.upkeepLabel(formatMoney(weeklyOf(item.upkeepPerSplit), { compact: true }))}
+            {C.finances.upkeepLabel(formatMoney(weeklyOf(item.upkeepPerSplit * flatIndex), { compact: true }))}
           </p>
         ) : null}
         {status === "locked" ? (
@@ -622,6 +653,7 @@ export function FinancesScreen() {
 
   const bootcampStep = (tier: 1 | 2, last = false): React.ReactNode => {
     const def = CAREER_GEAR.bootcamp[tier - 1];
+    const campCost = bootcampCostFor(tier, seasonIndex);
     const unlocked = rep >= def.repGate;
     const isActiveTier = bootTier === tier;
     const superseded = bootTier > tier;
@@ -644,7 +676,7 @@ export function FinancesScreen() {
           isActiveTier ? (
             <>
               {nextRunFree ? (
-                <s className="text-xs text-faint">{formatMoney(def.cost, { compact: true })}</s>
+                <s className="text-xs text-faint">{formatMoney(campCost, { compact: true })}</s>
               ) : null}
               <Button
                 variant="primary"
@@ -653,7 +685,7 @@ export function FinancesScreen() {
                 onClick={runBootcamp}
               >
                 {C.finances.buy}
-                {nextRunFree ? null : <> · {formatMoney(def.cost, { compact: true })}</>}
+                {nextRunFree ? null : <> · {formatMoney(campCost, { compact: true })}</>}
               </Button>
             </>
           ) : !unlocked ? null : undefined
@@ -893,7 +925,7 @@ export function FinancesScreen() {
                 ) : psychUnlocked ? (
                   <Button variant="primary" size="sm" onClick={() => setPsychologist(true)}>
                     {C.finances.hireLabel} ·{" "}
-                    {C.squad.perWeek(formatMoney(weeklyOf(CAREER_GEAR.psychologistPerSplit), { compact: true }))}
+                    {C.squad.perWeek(formatMoney(weeklyOf(psychologistPerSplitFor(seasonIndex)), { compact: true }))}
                   </Button>
                 ) : null
               }
@@ -901,7 +933,7 @@ export function FinancesScreen() {
                 <>
                   <p className="mt-1 text-[10px] text-faint">
                     {C.finances.upkeepLabel(
-                      formatMoney(weeklyOf(CAREER_GEAR.psychologistPerSplit), { compact: true }),
+                      formatMoney(weeklyOf(psychologistPerSplitFor(seasonIndex)), { compact: true }),
                     )}
                   </p>
                   {!psychUnlocked ? (
@@ -940,6 +972,34 @@ export function FinancesScreen() {
           {/* Sponsors */}
           <Panel className="rise-in p-4" style={{ animationDelay: "160ms" }}>
             <p className="kicker mb-3 text-[11px]">{C.finances.sponsors}</p>
+
+            {/* rc.32 (M3, provisional): the founding partner, its own named line and its end condition. */}
+            {foundingPartnerActive(save.foundingPartner) ? (
+              <div
+                className={cx(
+                  "rounded-lg border border-good/40 bg-good/[0.04] p-3",
+                  Boolean(save.sponsor || save.sponsorOffers?.length) && "mb-3",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                    {C.finances.foundingTitle}
+                  </span>
+                  <Badge tone="good">{C.finances.activeLabel}</Badge>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-good">
+                  {C.finances.perWeekBase(formatMoney(weeklyOf(foundingPartnerPerSplitOf(save)), { compact: true }))}
+                </p>
+                <p className="text-xs text-sub">
+                  {C.finances.foundingTerms(Math.round(CAREER_SPONSOR.founding.payrollShare * 100))}
+                </p>
+                <p className="mt-1.5 text-[11px] text-faint">
+                  {C.finances.foundingEnds(seasonLabelFor(CAREER_SPONSOR.founding.throughSeasonIndex))}
+                </p>
+              </div>
+            ) : save.foundingPartner?.endedSeason === seasonIndex ? (
+              <p className="mb-3 text-[11px] text-faint">{C.finances.foundingEnded}</p>
+            ) : null}
 
             {save.sponsor ? (
               <div className="rounded-lg border border-line-strong bg-white/[0.02] p-3">
@@ -1091,6 +1151,16 @@ export function FinancesScreen() {
               </div>
             </div>
 
+            {/* rc.32 (M6, provisional): the players' share of podium prizes, stated where it is booked. */}
+            {CAREER_PRIZES.playerShare.enabled ? (
+              <p className="mb-2 text-[10px] text-faint">
+                {C.finances.playerShareRule(
+                  Math.round(CAREER_PRIZES.playerShare.regional * 100),
+                  Math.round(CAREER_PRIZES.playerShare.major * 100),
+                  Math.round(CAREER_PRIZES.playerShare.worlds * 100),
+                )}
+              </p>
+            ) : null}
             {ledgerGroups.length === 0 ? (
               <p className="py-6 text-center text-xs text-faint">—</p>
             ) : (
@@ -1165,7 +1235,8 @@ export function FinancesScreen() {
                   balance={fin.balance}
                   onPay={payBankLoan}
                   cta={C.finances.bankPayEarly}
-                  backerUsed={fin.loanUsed}
+                  floor={backer.floor}
+                  next={nextBreach}
                 />
                 <p className="mt-2 text-[10px] text-faint">{C.finances.bankBlockedActive}</p>
               </>
@@ -1174,7 +1245,7 @@ export function FinancesScreen() {
                 <p className="mt-1 text-xs text-sub">
                   {C.finances.bankHint(CAREER_BANK.termWeeks, Math.round(CAREER_BANK.interestPct * 100))}
                 </p>
-                <BankLoanRequest fin={fin} rep={rep} balance={fin.balance} />
+                <BankLoanRequest fin={fin} rep={rep} balance={fin.balance} seasonIndex={seasonIndex} />
               </>
             )}
           </div>
@@ -1196,27 +1267,49 @@ export function FinancesScreen() {
                 <p className="mt-0.5 text-xs text-sub">
                   {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
                 </p>
+                {/* rc.32 (M4): the lock, the count and what the next breach means. */}
+                {CAREER_LOAN.lockCommitments ? (
+                  <p className="mt-0.5 text-xs text-sub">{C.finances.backerLock}</p>
+                ) : null}
+                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches)}</p>
+                <p className={cx("mt-0.5 text-xs font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
+                  {C.hub.backerNextBreach(nextBreach)}
+                </p>
                 <PayDown
                   remaining={fin.loan.remaining}
                   balance={fin.balance}
                   onPay={payDebt}
                   cta={C.finances.payDebt}
                   hint={C.finances.payDebtHint}
-                  backerUsed={fin.loanUsed}
+                  floor={backer.floor}
+                  next={nextBreach}
                 />
               </>
             ) : fin.loanUsed ? (
               <>
-                <p className="mt-1 text-sm font-semibold text-bad">{C.finances.insolvencyWarning}</p>
+                <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
+                  {nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.hub.backerNextBreach(nextBreach)}
+                </p>
                 <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
+                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches)}</p>
               </>
             ) : (
-              <p className="mt-1 text-xs text-sub">
-                {C.finances.backerIdle(
-                  formatMoney(CAREER_LOAN.floor, { compact: true }),
-                  formatMoney(CAREER_LOAN.rescueTo, { compact: true }),
-                )}
-              </p>
+              <>
+                <p className="mt-1 text-xs text-sub">
+                  {C.finances.backerIdle(
+                    formatMoney(backer.floor, { compact: true }),
+                    formatMoney(backer.rescueTo, { compact: true }),
+                  )}
+                </p>
+                {CAREER_LOAN.sizing === "weeks" ? (
+                  <p className="mt-1 text-[11px] text-faint">
+                    {C.finances.backerWeeksLine(CAREER_LOAN.floorWeeks, CAREER_LOAN.rescueToWeeks)}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-[11px] text-faint">
+                  {C.finances.breachLadder(CAREER_LOAN.breachesToEnd[save.difficulty] ?? null)}
+                </p>
+              </>
             )}
           </div>
         </div>

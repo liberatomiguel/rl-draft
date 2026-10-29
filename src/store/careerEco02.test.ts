@@ -17,18 +17,19 @@ import {
   quantize,
   salePreviewFor,
   weeklyPayroll,
-  weeklyStatement,
 } from "@/engine/career/economy";
 import type { CareerSave, TransferOffer } from "@/engine/career/types";
 import {
   acceptBidFlow,
   advanceDayFlow,
+  backerLineOf,
   continueInfiniteFlow,
   createCareerSave,
   payBankLoanFlow,
   payDebtFlow,
   rolloverToNextSeason,
   takeBankLoanFlow,
+  weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
 import { slotMetaFor } from "./careerStore";
@@ -146,14 +147,16 @@ describe("ECO-02 — pay-downs settle exactly what they quote", () => {
 });
 
 describe("ECO-02 — the Backer once, the bank one at a time (real day clock)", () => {
-  it("a structural deficit gets exactly one rescue, then the second breach ends the career", () => {
-    let save = makeSave(46_101);
+  // rc.32 (M4, provisional): on Hard the second breach ends the career (rc.31's
+  // rule everywhere); Normal restructures it first (careerEco04.test.ts).
+  it("a structural deficit gets exactly one rescue, then on Hard the second breach ends the career", () => {
+    let save = createCareerSave({ ...INPUT, difficulty: "hard" }, 46_101);
     // Wages far above any income: every Monday burns ~$2.8k.
     for (const p of save.squad) p.salaryPerSplit = 10_000;
     save = quietSunday(save, 2);
     save.finances.balance = 2_000;
     let guard = 0;
-    while (save.phase === "running" && guard++ < 120) {
+    while (save.phase === "running" && guard++ < 400) {
       const before = save.clock.day;
       save = advanceDayFlow(save);
       if (save.clock.day === before && save.phase === "running") {
@@ -191,14 +194,8 @@ describe("ECO-02 — the Backer once, the bank one at a time (real day clock)", 
     let save = makeSave();
     save = takeBankLoanFlow(save, 3_000).save;
     save = quietSunday(save, 3);
-    const quoted = weeklyStatement({
-      squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
-      coachSalary: save.coach?.salaryPerSplit ?? null,
-      sponsor: save.sponsor,
-      rep: save.reputation,
-      gear: save.finances.gear,
-      bankLoan: save.finances.bankLoan ?? null,
-    });
+    // rc.32: the screens read weeklyStatementOf (the season's money index, the founding partner).
+    const quoted = weeklyStatementOf(save);
     const before = save.finances.balance;
     const seen = new Set(save.finances.ledger.map((l) => l.id));
     const monday = advanceDayFlow(save);
@@ -232,9 +229,11 @@ describe("ECO-02 — insolvency is final, whatever ending came before", () => {
       legacyGrade: "legend",
     };
     save.finances.loanUsed = true;
+    // rc.32 (M4): one breach before the one that ends a Normal career.
+    save.finances.loanBreaches = (CAREER_LOAN.breachesToEnd.normal ?? 2) - 1;
     save.finances.loan = null;
-    save.finances.balance = CAREER_LOAN.floor + 10;
     for (const p of save.squad) p.salaryPerSplit = 10_000;
+    save.finances.balance = backerLineOf(save).floor + 10;
     return save;
   }
 

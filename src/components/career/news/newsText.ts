@@ -27,8 +27,12 @@ function templateKeyOf(titleKey: string, raw: Record<string, string | number>): 
   return titleKey;
 }
 
-/** Param keys that carry raw dollar amounts (formatted before interpolation). */
-const MONEY_PARAM_KEYS = new Set(["fee", "bonus", "f1", "f2", "f3"]);
+/**
+ * Param keys that carry raw dollar amounts (formatted before interpolation).
+ * rc.32: the economy mails' amounts too (the runway's net and burn, the
+ * Backer's floor / rescue / debt, the founding partner's base).
+ */
+const MONEY_PARAM_KEYS = new Set(["fee", "bonus", "f1", "f2", "f3", "net", "burn", "floor", "rescueTo", "owed", "base"]);
 
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;
 

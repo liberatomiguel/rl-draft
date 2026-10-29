@@ -780,6 +780,167 @@ R49. **Local sides score and race for Major and Worlds slots (rc.31, Etapa
      Major), and keeping local sides out of the direct 8 or the Major slots
      (they are teams of the region, and they do not crowd the orgs out).
 
+R50. **One money scale: one season index, tables that pay the pool (rc.32,
+     Etapa 2b part 2, ECONOMY-CONTRACT M1 + M5 — provisional default
+     (30/10), to be confirmed by Miguel).** (a) M1, decision 1-A:
+     `economy.moneyIndex(seasonIndex, stream)` is the one season index.
+     `CAREER_ECONOMY.indexMode` "single" puts every stream on
+     `indexPerSeason` 1.08^s: wage asks and fees (they read
+     `CAREER_SALARY.inflationPerSeason` before), prizes (1.12),
+     new sponsor deals (1.10), and the amounts that were flat — the fanbase,
+     the bank's limits and minimum, the minimum fee and salary, the stand-in,
+     scouting, gear prices and upkeep, the psychologist, the founding partner
+     (R51) and the inserts' money (`indexedAmount`, quantized, never to $0).
+     Signed contracts and stored sponsor deals keep their figure. The Backer
+     is sized in weeks of payroll (R52), so it follows wages without a second
+     index; the start budget is a day-one amount. "rc31" restores rc.31
+     exactly (the three rates, every other amount flat). (b) M5, decision 6-B:
+     `CAREER_PRIZES.tables` "contract" — Swiss-16 28 / 18 / 12 / 9 / 6.5 / 5 /
+     1.25 and single-elimination 40 / 20 / 10 / 5, both 100 % (a season-0
+     regional pays its $40k, the Community Cup its $2k); the qualifier's
+     10 % / 2.5 % and every pool are unchanged and the lobby still shows the
+     paid total (R44). "rc31" restores rc.31's tables (`swiss16PctRc31`, which
+     paid 102 %). (c) Saves: nothing stored moves; a running career reads the
+     new prices from its next purchase or Monday. (d) Measured (indicative,
+     the probe's 21 Normal careers of EU, SAM and OCE, seed 9100, before
+     R52's two soft-lock fixes): with M1 switched back and the rest of rc.32
+     on, 48 % went insolvent instead of 62 % — M1 lowers late prizes and new
+     deals while the renewal shock stands (M2, front B, is what the contract
+     pairs it with); its gain is the snowball (p90 2.5 → 0.8 seasons of
+     payroll). Re-measure with M2.
+
+R51. **The founding partner (rc.32, Etapa 2b part 2, ECONOMY-CONTRACT M3 —
+     provisional default (30/10), to be confirmed by Miguel).** Decision 3-A.
+     A day-one tier-0 deal (`CAREER_SPONSOR.founding`): base per split =
+     `payrollShare` 0.7 × the founding wage bill (squad + coach, fixed at
+     creation, then on the sponsor stream's index), objective "enter events",
+     no signing bonus, paid every Monday as its own statement and ledger line
+     ("Founding partner") and shown in Finances with its end condition. It
+     runs until the first real deal or the end of season index
+     `throughSeasonIndex` 1, whichever is later: a deal signed in the first
+     two seasons runs alongside it and it steps back on the first Monday of
+     season index 2 ("Season 3"); a first deal signed later ends it there and
+     then (a mail says so). Saves: optional `foundingPartner` (null = none). A save from before
+     rc.32 gets it at load only while in season index ≤ 1 with no sponsor
+     ever signed, sized on its wage bill at that load and announced once in
+     the inbox (`backfillEconomyOnLoad`, run by migrateSaveToV5 on every
+     load, idempotent, no version bump); every other one records null.
+     `enabled: false` restores rc.31 (no partner, no mail, no line).
+
+R52. **The safety net: warnings with the breach, the Backer in weeks, what
+     ends a career (rc.32, Etapa 2b part 2, ECONOMY-CONTRACT M4 — provisional
+     default (30/10), to be confirmed by Miguel).** Decision 4-B. (a)
+     Warnings (`CAREER_PAYROLL.runwayWarnMode` "weekly"): the accountant
+     writes every Monday the runway is ≤ `runwayWarnWeeks` 4 (the overdraft
+     included; the news line once a squeeze) and once when it first drops to
+     ≤ `runwayNoticeWeeks` 8, each with the projected breach (the Monday the
+     books would close below the floor at this net, `mondaysToBreach`), what
+     that breach would mean and a recovery checklist; a runway back above 8
+     re-arms both. rc.31 mailed once, at exactly 4 weeks with a positive
+     balance, so a fast burn or an overdraft skipped it ("rc31" restores
+     that). The Market's offer sheet shows the runway a signing leaves
+     (`economy.runwayWeeksAfter`, ready for the renewal readout). (b) The
+     Backer in weeks of payroll (`CAREER_LOAN.sizing` "weeks"): the floor is
+     −`floorWeeks` 8 and the rescue target +`rescueToWeeks` 6 × the weekly
+     wage bill (squad + coach, at least `weeksBasisMin`), so season 0 keeps
+     about rc.31's line (−$4k / +$3k on a $500 week) and a season-6 $11k week
+     gets −$88k / +$66k. Every "funds" check reads the same line
+     (`backerLineOf`). "flat" restores −$5k / +$3k. (c) While the Backer is
+     owed, a signing, a coach hire or the psychologist that would shorten the
+     runway is refused with the reason ("loanRunway", `lockCommitments`), on
+     top of rc.31's lock (fees, gear, the bank — R21's "no bank loan while the
+     Backer is owed" is kept). One exception: a free agent into an empty
+     starting seat (a restructured squad under three) — the probe found Easy
+     careers sold down to an empty squad that could never sign again.
+     Renewals are not locked (front B's flow). (d)
+     What ends a career (`breachesToEnd`, by difficulty): Easy never, Normal
+     the third breach, Hard the second (rc.31: 2 everywhere). The first breach
+     is the rescue; every breach strictly between is a RESTRUCTURING: the
+     highest-paid player is sold at market value to an AI org of his region
+     that would field him (half the fee to the debt, like any sale), rep −5
+     (`restructureRepLoss`, never below the rep floor) and the Backer's rescue
+     rule tops the books back up to its target (a grant repaid ×1.2 on top of
+     what is owed). The squad stays playable (the reserve moves up, an empty
+     seat takes a stand-in) and can be rebuilt: the Market always lists a
+     page (24) of free agents the org can sign (`market.listingFor`'s
+     `signableCap`; the top 120 by overall could all sit above a rep-0 cap,
+     so a restructured org saw only locked rows). An inbox mail, a news line
+     and the HQ's Backer card say what happened, why and what the next breach
+     means.
+     Saves: optional `finances.loanBreaches`, read from `loanUsed` (1) until
+     the next breach writes it. (e) Measured with the whole rc.32 package
+     (the probe's 63 careers — EU, SAM, OCE × 7 policies × Easy / Normal /
+     Hard, seed 9100 — rc.31 → rc.32): insolvent over 8 seasons 43 → 0 % /
+     76 → 57 % / 90 → 86 %, by season 3 33 → 0 / 62 → 29 / 86 → 43 %; the
+     newcomers' first two seasons pay their way without a big win 44 → 67 /
+     11 → 67 / 11 → 67 %; every rescue is warned in the 8 weeks before
+     (rc.31: 0–67 %), the first warning 13–32 weeks ahead, and the Backer buys
+     13–27 weeks of burn (rc.31: 2–8); restructured careers 33 / 71 / 0 %.
+     Money still decides: season-rows with a tight Monday in S3–S5 32 → 52 /
+     50 → 90 / 42 → 91 %, the spender still goes broke on Normal and Hard
+     (67 / 100 %), snowball p90 1.6 / 0.8 / 1.7 seasons of payroll, and no
+     Normal or Hard career can carry a 90+ at S3–S7. The late break stands
+     without front B's M2 (Normal 57 %): re-measure the full sweep with it.
+
+R53. **Stars, the snowball and selling (rc.32, Etapa 2b part 2,
+     ECONOMY-CONTRACT M6 + M8 — provisional default (30/10), to be confirmed
+     by Miguel).** (a) M6, decision 5-B: the comfort level stops at
+     `CAREER_SALARY.repComfortMax` 86, so a star always carries a premium (at
+     rep 100 a 90 pays ×1.16 and a 95 ×1.36, P2b; null restores rc.31); the
+     players' share of podium prizes (`CAREER_PRIZES.playerShare`: regional
+     0.2, Major 0.35, Worlds 0.5, 1st–4th only) is booked as its own ledger
+     line right after the prize, the Backer garnishes the org's part, and the
+     event result and Finances show it (`enabled: false` restores rc.31).
+     The probe's curves: a 90's season wage ÷ the T4-contender income is
+     0.85 every season (P8; rc.31 drifted 0.74 → 0.63), and a dominant
+     season's prizes kept ÷ a three-85 squad's wages 1.13 (P4b, band e2 ≤ 1.5).
+     Lever C (the title raise) stays in reserve. Decision 7-A: the T4
+     contender stays the yardstick only; no AI money. Decision 9-B: tier bases
+     and the fanbase rate are not retuned (M1 only indexes them); 10-A: §3's
+     bands stand. (b) M8, decision 8-B: "List for sale"
+     (`CAREER_TRANSFER.listingEnabled`) — after `listingOfferDays` 1–3
+     eligible window days an AI org of his region that would field him
+     offers market value × `listingOfferRange` 0.9–1.15; accept it like any
+     bid (atomic, R47; the Backer's half while owed), decline it (he stays,
+     the listing ends) or withdraw it. The window rules apply, R47's bid-free
+     first window included (the Market says so). A seat sold in a window can
+     be refilled with one free agent until `lateSigningDays` 7 after the
+     window closes (one per window, so one per split); 0 = option C. Saves:
+     optional `saleListings`, `lateSigning`; offers carry `listing`.
+
+R54. **The age clock steps one year a season; the Blockbuster bid explained
+     (rc.32, Miguel 30/10 — fixes).** (a) RLCS 2022-23 started in 2022 and the
+     next season is "2024": `seasonYear` read each label's first year (2020,
+     2021, 2022, 2024), so every age jumped two years at that rollover and
+     R48's "the 2022 → 2024 gap makes 28 the last" followed. It now reads the
+     year a season ends (2021, 2022, 2023, 2024, 2025, 2026, +1 per infinite
+     season), so ages step exactly +1, real birth dates (R39) give the real
+     age from RLCS 2024 on, and the birth-year inference reads the debut
+     season on the same clock (inferred debut ages keep their 13–17 band ±1).
+     `retirementChanceFor`, `signsForFinalSeason` and the rollover's
+     `calendarStep` keep their formulas (the step is now always 1): only a
+     29-year-old signs for his final season. The retirement table is
+     unchanged, and so is its outcome (4 seeds × 10 seasons, the world):
+     retirees' last season p10 / p50 / p90 24 / 26 / 28, always 24–29, no
+     season at 30, before and after; fewer go at 28–29 (371 → 275 of about
+     1.5k, the phantom year pushed them past 29) and the world holds 637
+     players instead of 618. The squad rule's final season stays p50 27 with
+     badges from 24 (300 seeds). A running save shifts once, at its first
+     load, never at a rollover: in seasons 0–2 a squad player, a real player
+     with a birth date and an inferred one who debuted before Season X read
+     one year older; from RLCS 2024 on a squad player and a real player with
+     a birth date read as before, while fillers, rookies and inferred players
+     who debuted in Season X–2022-23 read one year younger (the phantom year
+     is gone). (b) The scripted Blockbuster bid explains itself in the offer
+     (Market deals, the HQ card) and in its mail (EN + PT, numbers from
+     balance.ts): a scripted moment — a big-money org chasing the player it
+     built around in real history —, a fee of ×`blockbusterFeeMult` 1.5 his
+     value, and refusing it raises his next renewal ask by
+     `blockbusterRefusalRenewalMult` (+10 %). That surcharge was declared
+     since v0.2 but no caller passed it: declining or letting a Blockbuster
+     expire now stamps the deal in force (`blockbusterRefusedUntil`), and its
+     renewal asks the 10 % more (`market.renewalAskFor`), once.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

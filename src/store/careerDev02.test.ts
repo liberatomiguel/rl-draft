@@ -88,9 +88,10 @@ describe("DEV-02 — the retirement window (engine rule)", () => {
     }
     expect(rule(29)).toBe(1);
     expect(rule(31)).toBe(1);
-    // The calendar's 2022 → 2024 jump: 28 is the last season if the next is at 30.
+    // The rule reads the next season's age: a calendar jump past 29 would end it
+    // early — rc.32's age clock has none (2022-23 → 2024 is one year), so 29 is the last.
     expect(rule(28, 30)).toBe(1);
-    expect(seasonYear(3) - seasonYear(2)).toBeGreaterThanOrEqual(1);
+    for (let s = 0; s < 8; s++) expect(seasonYear(s + 1) - seasonYear(s)).toBe(1);
   });
 
   it("never before the peak (read through peakAgeOf); the 29 cap still wins over a late peak", () => {
@@ -342,10 +343,13 @@ describe("DEV-02 — minimum competitive age 13: signable and playable", () => {
 });
 
 describe("DEV-02 — a signing at the cap joins for his final season only", { timeout: 120_000 }, () => {
-  it("signsForFinalSeason: true when the coming rollover would take him past 29, the 2022 → 2024 gap included", () => {
+  // rc.32 (the age bug, Miguel 30/10): 2022-23 → 2024 is one year on the age
+  // clock, so only a 29-year-old signs for his final season — in every season.
+  it("signsForFinalSeason: true when the coming rollover would take him past 29 — a 29-year-old, 2022-23 included", () => {
     const p = (age: number) => ({ age, peakAge: 20, overall: 80 });
-    expect(seasonYear(3) - seasonYear(2)).toBe(2); // 2022-23 → 2024
-    expect(signsForFinalSeason(p(28), 2)).toBe(true);
+    expect(seasonYear(3) - seasonYear(2)).toBe(1); // 2022-23 → 2024
+    expect(signsForFinalSeason(p(28), 2)).toBe(false);
+    expect(signsForFinalSeason(p(29), 2)).toBe(true);
     expect(signsForFinalSeason(p(27), 2)).toBe(false);
     expect(signsForFinalSeason(p(28), 3)).toBe(false);
     expect(signsForFinalSeason(p(29), 3)).toBe(true);
@@ -404,38 +408,58 @@ describe("DEV-02 — a signing at the cap joins for his final season only", { ti
     signAtTheCap(save, pro!.id);
   });
 
-  it("a 28-year-old signed in 2022-23 (2024 would make him 30): the same final-season deal", () => {
+  /** In 2022-23 (season index 2), sign one of this season's rookies read as `age` for the check. */
+  function signRookieIn202223(age: number): { save: CareerSave; signed: CareerSave; id: string; finalSeason: boolean } {
     let save = createCareerSave(INPUT, 48_303);
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
-    expect(seasonYear(save.clock.seasonIndex)).toBe(2022);
+    expect(CAREER_SEASONS[save.clock.seasonIndex].year).toBe("2022-23");
+    expect(seasonYear(save.clock.seasonIndex)).toBe(2023);
     save.reputation = 100;
     save.finances.balance = 5_000_000;
-    // The real intake starts at 13: this season's rookies are read as 28-year-olds for the check.
+    // The real intake starts at 13: this season's rookies are read at `age` for the check.
     const range = CAREER_WORLD.rookieAgeRange as unknown as [number, number];
     const saved = [range[0], range[1]] as const;
-    let signed: CareerSave | null = null;
-    let id = "";
     try {
-      range[0] = 28;
-      range[1] = 28;
-      id = save.world.freeAgentIds.find((x) => x.startsWith(`rook:${save.clock.seasonIndex}:`))!;
+      range[0] = age;
+      range[1] = age;
+      const id = save.world.freeAgentIds.find((x) => x.startsWith(`rook:${save.clock.seasonIndex}:`))!;
       const view = playerViewById(id, { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world })!;
-      expect(view.age).toBe(28);
+      expect(view.age).toBe(age);
+      const planned = signingPlanFor(save, id, { lengthSeasons: 2 });
       const res = signPlayerFlow(save, id, { lengthSeasons: 2 });
       expect(res.error).toBeUndefined();
-      signed = res.save;
-      const planned = signingPlanFor(save, id, { lengthSeasons: 2 });
-      expect("plan" in planned && planned.plan.finalSeason).toBe(true);
+      return { save, signed: res.save, id, finalSeason: "plan" in planned && planned.plan.finalSeason };
     } finally {
       range[0] = saved[0];
       range[1] = saved[1];
     }
-    const player = signed!.squad.find((p) => p.id === id)!;
+  }
+
+  it("the age bug is gone: a 28-year-old signed in 2022-23 is 29 in 2024 and signs a normal deal", () => {
+    const { save, signed, id, finalSeason } = signRookieIn202223(28);
+    expect(finalSeason).toBe(false);
+    const player = signed.squad.find((p) => p.id === id)!;
+    expect(player.finalSeasonAnnounced).toBeUndefined();
+    expect(player.contractEndSeason).toBe(save.clock.seasonIndex + 2);
+    expect(ageOf(player.birthYear, save.clock.seasonIndex + 1)).toBe(29);
+    // The rollover into 2024 ages him one year — never two — and he plays it.
+    const next = rolloverToNextSeason({ ...signed, phase: "seasonReview" });
+    const kept = next.squad.find((p) => p.id === id)!;
+    expect(kept).toBeTruthy();
+    expect(ageOf(kept.birthYear, next.clock.seasonIndex)).toBe(29);
+    // At 29 the season is his last: announced at that rollover (never abrupt).
+    expect(kept.finalSeasonAnnounced).toBe(true);
+  });
+
+  it("a 29-year-old signed in 2022-23 gets the final-season deal (2024 would make him 30)", () => {
+    const { save, signed, id, finalSeason } = signRookieIn202223(29);
+    expect(finalSeason).toBe(true);
+    const player = signed.squad.find((p) => p.id === id)!;
     expect(player.finalSeasonAnnounced).toBe(true);
     expect(player.contractEndSeason).toBe(save.clock.seasonIndex + 1);
     expect(ageOf(player.birthYear, save.clock.seasonIndex + 1)).toBe(30);
-    const next = rolloverToNextSeason({ ...signed!, phase: "seasonReview" });
+    const next = rolloverToNextSeason({ ...signed, phase: "seasonReview" });
     expect(next.squad.some((p) => p.id === id)).toBe(false);
     expect(next.world.retiredIds).toContain(id);
   });

@@ -8,8 +8,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_CALENDAR, CAREER_GEAR } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_GEAR, CAREER_SPONSOR } from "@/config/balance";
 import { DAYS_PER_SEASON, firstDayOfWeek } from "@/engine/career/calendar";
+import { seasonYear } from "@/engine/career/development";
 import type { CareerSave } from "@/engine/career/types";
 import {
   advanceDayFlow,
@@ -106,16 +107,17 @@ describe("careerFlow — full season integration (day clock)", () => {
     expect(a.squad).toHaveLength(3);
     expect(a.clock).toEqual({ seasonIndex: 0, day: 1 });
     expect(a.phase).toBe("running");
-    // RL-realistic squad ages (13+ only).
+    // RL-realistic squad ages (13+ only) — rc.32: on the age clock, not a hard-coded year.
     for (const p of a.squad) {
-      const age = 2020 - p.birthYear;
+      const age = seasonYear(0) - p.birthYear;
       expect(age).toBeGreaterThanOrEqual(13);
       expect(age).toBeLessThanOrEqual(27);
     }
     // v0.2 fields present from day one.
     expect(a.finances.gear.peripherals).toBe(false);
     expect(a.finances.bootcampSharp).toBe(0);
-    expect(a.mail).toEqual([]);
+    // rc.32 (M3, provisional): the only day-one mail is the founding partner's.
+    expect(a.mail.map((m) => m.titleKey)).toEqual(CAREER_SPONSOR.founding.enabled ? ["foundingPartner"] : []);
     expect(a.scrimsThisWeek).toBe(0);
   });
 

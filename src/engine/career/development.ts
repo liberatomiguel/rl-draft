@@ -136,10 +136,19 @@ function weightedFrom<T>(f: number, items: readonly T[], weightOf: (item: T) => 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 const roman = (n: number): string => ROMAN[n] ?? `x${n}`;
 
-/** First 4-digit year in a season's `year` label ("2020-21" → 2020). */
-function parseFirstYear(label: string): number {
-  const match = /\d{4}/.exec(label);
-  return match ? Number(match[0]) : NaN;
+/**
+ * rc.32 — THE AGE CLOCK's year for a season `year` label: the year the
+ * season ENDS ("2020-21" → 2021, "2022-23" → 2023, "2024" → 2024). Every
+ * label steps exactly one year from the one before it (RLCS 2022-23 ran into
+ * 2023, then came 2024), so ages tick +1 a season. The old anchor (the first
+ * year: 2020, 2021, 2022, then 2024) aged everyone two years at the
+ * 2022-23 → 2024 rollover. Real birth dates (R39) give the real age from
+ * RLCS 2024 on.
+ */
+function labelEndYear(label: string): number {
+  const match = /(\d{4})(-\d{2,4})?/.exec(label);
+  if (!match) return NaN;
+  return Number(match[1]) + (match[2] ? 1 : 0);
 }
 
 /** Player cards ordered by season chronology, per player (built once). */
@@ -167,13 +176,18 @@ const cardOrder = (card: PlayerCard): number => seasonById.get(card.seasonId)?.o
 // Calendar
 // ---------------------------------------------------------------------------
 
-/** Calendar year a season starts (2020,2021,2022,2024,2025,2026; infinite: 2026+n-5). */
+/**
+ * The age clock's year of a season — the year it ENDS (labelEndYear): 2021,
+ * 2022, 2023, 2024, 2025, 2026; infinite: 2026 + n − 5. Exactly +1 a season.
+ * Ages only: the calendar's day clock and the labels shown (`year`,
+ * `startDate`) are unchanged.
+ */
 export function seasonYear(seasonIndex: number): number {
   const last = CAREER_SEASONS.length - 1;
   if (seasonIndex <= last) {
-    return parseFirstYear(CAREER_SEASONS[Math.max(0, seasonIndex)].year);
+    return labelEndYear(CAREER_SEASONS[Math.max(0, seasonIndex)].year);
   }
-  return parseFirstYear(CAREER_SEASONS[last].year) + (seasonIndex - last);
+  return labelEndYear(CAREER_SEASONS[last].year) + (seasonIndex - last);
 }
 
 export function ageOf(birthYear: number, seasonIndex: number): number {
@@ -198,7 +212,9 @@ function seasonOrderFor(seasonIndex: number): number {
  * season gives the debut year; a weighted debut age (13-17) is sampled per
  * career, biased one year younger when the player's last-2-cards trend is
  * rising (still ascending → young) and one year older when falling. Ages never
- * go below 13 at any appearance.
+ * go below 13 at any appearance. rc.32: the debut year is read on the age
+ * clock itself (labelEndYear, the year a season ends), so an inferred debut
+ * age stays 13–17 in the career's seasons too.
  */
 export function deriveBirthYear(playerId: string, careerSeed: number): number {
   const birthday = playerById.get(playerId)?.birthday;
@@ -206,7 +222,7 @@ export function deriveBirthYear(playerId: string, careerSeed: number): number {
   const cards = cardsByPlayer.get(playerId);
   const debutYear =
     cards && cards.length > 0
-      ? parseFirstYear(seasonById.get(cards[0].seasonId)?.year ?? "") || seasonYear(0)
+      ? labelEndYear(seasonById.get(cards[0].seasonId)?.year ?? "") || seasonYear(0)
       : seasonYear(0);
 
   const f = derivedFloat(careerSeed, streams.gen("age", playerId));
@@ -303,9 +319,10 @@ export function isCompetitiveAge(age: number): boolean {
 /**
  * The chance that the season a player plays at `age` is his last. Zero before
  * the window (retireMinAge) or before his peak; one when the next season would
- * take him past retireMaxAge (the calendar's 2022 → 2024 gap ages a player two
- * years, so 28 can be the last); otherwise CAREER_AGE.retirementByAge, times
- * retirementStarMult for a star — stars linger, inside the window only.
+ * take him past retireMaxAge (rc.32: the age clock steps +1 a season, so that
+ * is the season at 29 — rc.31's 2022 → 2024 jump made 28 the last there);
+ * otherwise CAREER_AGE.retirementByAge, times retirementStarMult for a star —
+ * stars linger, inside the window only.
  */
 export function retirementChanceFor(p: {
   age: number;
@@ -325,10 +342,11 @@ export function retirementChanceFor(p: {
 /**
  * DEV-02 (R48): is the season being played now certainly his last? True when
  * the coming rollover retires him for sure (`retirementChanceFor` is 1: the
- * next season would take him past retireMaxAge — the 2022 → 2024 gap
- * included). The squad only decides at a rollover, so a player SIGNED in that
- * season would otherwise play one more (at 30 or 31): he joins for this final
- * season instead — announced at signing, a 1-season contract.
+ * next season would take him past retireMaxAge — rc.32: a 29-year-old, in
+ * every season, now that the age clock steps +1). The squad only decides at a
+ * rollover, so a player SIGNED in that season would otherwise play one more
+ * (at 30): he joins for this final season instead — announced at signing, a
+ * 1-season contract.
  */
 export function signsForFinalSeason(
   p: { age: number; peakAge: number; overall: number },

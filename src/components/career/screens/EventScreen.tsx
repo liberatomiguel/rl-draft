@@ -35,7 +35,7 @@ import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { isTwoDayEvent, regionalForQualifier } from "@/engine/career/calendar";
 import { nextPlayoffPairings } from "@/engine/playoffs";
-import { prizeFor, pointsFor } from "@/engine/career/economy";
+import { playerShareFor, prizeFor, pointsFor } from "@/engine/career/economy";
 import { placementOf } from "@/engine/career/careerResults";
 import { upcomingSwissPairings } from "@/engine/swiss";
 import type {
@@ -1035,6 +1035,8 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const qualified = outcome === "qualified";
   const isChamp = placement === "champion";
   const prize = prizeFor(def.tier, placement, def.format, save.difficulty, def.seasonIndex);
+  // rc.32 (M6, provisional): the players' share finishEvent books out of a podium prize.
+  const playerShare = playerShareFor(def.tier, placement, prize);
   const points = pointsFor(def.tier, placement);
   // Display mirror of finishEvent's applyEventRep (pure, unit-tested).
   const rep = eventRepPreview({
@@ -1148,6 +1150,11 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
               <p className="display text-xl font-bold text-good sm:text-2xl">
                 <CountUp value={prize} reduced={reduced} format={(n) => formatMoney(n, { compact: true })} />
               </p>
+              {playerShare > 0 ? (
+                <p className="mt-0.5 text-[10px] font-semibold text-sub">
+                  {C.event.digestPlayerShare(formatMoney(playerShare, { compact: true }))}
+                </p>
+              ) : null}
             </div>
             {isQualifier ? (
               <div className="rounded-lg border border-line bg-white/[0.04] p-3">

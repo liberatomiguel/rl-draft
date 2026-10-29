@@ -7,6 +7,7 @@
 
 import { CAREER_INSERTS } from "@/config/balance";
 import { CAREER_INSERTS_CATALOG, type InsertDef } from "@/data/career/inserts";
+import { insertMoneyFor } from "./economy";
 import type { CareerSave } from "./types";
 import { derivedFloat, streams } from "./seeds";
 
@@ -16,7 +17,10 @@ export function insertEligible(def: InsertDef, save: CareerSave): boolean {
   if (r.sponsor && !save.sponsor) return false;
   if (r.coach && !save.coach) return false;
   if (r.minRep !== undefined && save.reputation < r.minRep) return false;
-  if (r.minBalance !== undefined && save.finances.balance < r.minBalance) return false;
+  // rc.32 (M1): the catalogue's money is season-0 money, on the money index.
+  if (r.minBalance !== undefined && save.finances.balance < insertMoneyFor(r.minBalance, save.clock.seasonIndex)) {
+    return false;
+  }
   return true;
 }
 
