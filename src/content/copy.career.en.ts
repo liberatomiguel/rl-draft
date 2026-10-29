@@ -130,13 +130,39 @@ export const CAREER_EN = {
     // Step 5 — difficulty + summary
     finalTitle: "Final call",
     finalKicker: "Difficulty shapes opponents and money pressure — never who you can sign.",
-    styleTitle: "Management style",
-    styleHandsOn: "Hands-on",
-    styleHandsOnDesc: "You set every focus, every offer, every lineup.",
-    styleBalanced: "Balanced",
-    styleBalancedDesc: "Smart defaults, recommendations highlighted. You confirm.",
-    styleDelegate: "Delegate",
-    styleDelegateDesc: "The coach handles routine — every action reported, takeover any time.",
+    // rc.32 (BAL-02): the career presets replace the Management Style step.
+    presets: {
+      easy: {
+        label: "Easy",
+        sentence: "A forgiving first career: a small edge in every match and more money to learn with.",
+      },
+      normal: {
+        label: "Normal",
+        sentence: "The career as intended: fair matches and a budget that makes every signing a choice.",
+      },
+      hard: {
+        label: "Hard",
+        sentence: "Stronger rivals and tighter money — and you run every week yourself.",
+      },
+    } as Record<"easy" | "normal" | "hard", { label: string; sentence: string }>,
+    presetRows: {
+      matches: "Your match edge",
+      chemistry: "Chemistry worth (you / rivals)",
+      budget: "Starting budget",
+      prizes: "Prize money",
+      asks: "Wage asks",
+      sponsors: "Sponsor deals",
+      training: "Training",
+      cups: "Community cups",
+    } as Record<string, string>,
+    presetEdge: (n: string) => `${n} rating`,
+    presetChemistry: (you: string, them: string) => `up to +${you} / +${them}`,
+    presetMult: (x: string) => `×${x}`,
+    presetTrainingGuided: "Delegated to your coach",
+    presetTrainingManual: "You plan every week",
+    presetCupsAuto: "Entered for you",
+    presetCupsManual: "You choose",
+    presetsNote: "Settings stay yours: delegation can be switched on or off on the Training screen.",
     summaryTitle: "The paperwork",
     found: (org: string) => `Found ${org}`,
     founded: "EST. 2020",
@@ -491,6 +517,21 @@ export const CAREER_EN = {
       `Fielding another new face costs ${pct}% of your ${pts} Season Points`,
     finalSeason: "Final season",
     squadFull: "Squad full (3 starters + 1 sub)",
+    // rc.32 (M2, provisional): the renewal rule and both numbers.
+    renewalTerms: "Renewal terms",
+    renewalRuleCapFloor: (cap: string, floorPct: number) =>
+      `Renewing your own player: the raise is capped at ×${cap} his current wage, never under ${floorPct}% of his market ask.`,
+    renewalRuleFresh: "Renewing prices his market ask.",
+    renewalMarketAsk: "Market ask",
+    renewalAsk: "Renewal ask",
+    renewalBoundFresh: "Under the cap — he renews at his market ask.",
+    renewalBoundCap: (cap: string) => `Capped at ×${cap} his current wage.`,
+    renewalBoundFloor: (floorPct: number) => `Held at ${floorPct}% of his market ask.`,
+    renewalAmbition: (pct: number) => `+${pct}% ambition: a star at a smaller org asks more.`,
+    renewalBlockbuster: (pct: number) => `+${pct}%: you turned down a Blockbuster bid for him.`,
+    renewalsTitle: "Contracts up for renewal",
+    renewalsEmpty: "No contract ends this season.",
+    renewalsGo: "Renew on Squad",
   },
 
   player: {
@@ -592,6 +633,10 @@ export const CAREER_EN = {
     etaAtPotential: "At potential — nothing left to learn here",
     capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
       `This split +${split} of ${splitMax} · season +${season} of ${seasonMax}`,
+    // rc.32 (DEV-01): the growth contract has a season cap only, a peak and a decline.
+    capLineSeason: (season: string, seasonMax: number) => `This season +${season} of ${seasonMax}`,
+    etaAtPeak: "At his peak — he holds this level for now",
+    declineLine: (perWeek: string) => `Past his prime: about −${perWeek} OVR a week`,
     effectsTitle: "What your attributes do",
     effectsHint: "Team stat line → the exact modifiers the match sim applies. Train what your results need.",
     effectWhen: {

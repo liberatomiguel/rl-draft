@@ -115,6 +115,8 @@ import {
   trainWeek,
   trainingProjection,
   type DrillEffect,
+  growthCtxOf,
+  userSeriesPlayed,
 } from "@/engine/career/development";
 import { insertById } from "@/data/career/inserts";
 import { insertDowFor, rollInsertFor } from "@/engine/career/inserts";
@@ -176,10 +178,11 @@ import {
   incomingBidForDay,
   listingOfferFor,
   listingWaitDaysFor,
-  renewalAskFor,
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
+import { renewalTermsFor } from "@/engine/career/renewal";
+import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
@@ -199,6 +202,7 @@ import {
   starterRosterOffers,
   userTeamFor,
   type StarterOffer,
+  worldGrowthWeek,
 } from "@/engine/career/worldSim";
 import type {
   CareerDifficulty,
@@ -701,6 +705,15 @@ export function processDayArrival(input: CareerSave): CareerSave {
       runWeeklyPayroll(save);
       if (save.phase === "ended") return capNews(save);
     }
+
+    // --- 0c. DEV-01 (rc.32): the AI world develops one week (model 2 only;
+    //     rc.31's model grows it at the rollover) ----------------------------
+    save.world = worldGrowthWeek(save.world, {
+      seasonIndex,
+      week,
+      careerSeed: save.careerSeed,
+      userSquadIds: save.squad.map((p) => p.id),
+    });
 
     // --- 1. scripted beats --------------------------------------------------
     if (!isInfinite(save)) {
@@ -1313,6 +1326,9 @@ export function setDrillFlow(input: CareerSave, id: DrillId | null): CareerSave 
 function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekShare = 1): void {
   const gearBonus = gearTrainingBonus(save.finances.gear);
   const drill = activeDrillFor(save);
+  // DEV-01 (rc.32): the save's growth model and today — a calendar training
+  // day also ages the player (the decline lands day by day, model 2).
+  const growth = growthCtxOf(save);
   for (const p of save.squad) {
     const res = trainDay(
       p,
@@ -1324,6 +1340,8 @@ function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekSh
         splitGained: p.gainedThisSplit,
         seasonGained: p.gainedThisSeason,
         drill,
+        ...growth,
+        aging: true,
       },
       weekShare,
     );
@@ -1923,11 +1941,12 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
           seasonGained: p.gainedThisSeason,
           weeks,
           drill,
+          ...growthCtxOf(save),
         });
         Object.assign(p, res.player);
       } else {
         // A lost session: a small, capped step back (never below 60).
-        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, drill });
+        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, drill, ...growthCtxOf(save) });
         p.overall = Math.max(60, p.overall - proj.weeklyOverall * -weeks);
       }
     }
@@ -2057,6 +2076,7 @@ export function declineUnofficial(input: CareerSave): CareerSave {
       trainingWeekBonus: true,
       splitGained: p.gainedThisSplit,
       seasonGained: p.gainedThisSeason,
+      ...growthCtxOf(save),
     });
     Object.assign(p, res.player);
   }
@@ -2288,8 +2308,10 @@ export function finishEvent(input: CareerSave): CareerSave {
     });
   }
 
-  // Match XP (field-quality scaled, ALL events).
+  // Match XP (field-quality scaled, ALL events). DEV-01 (model 2): per series
+  // the fielded players actually played; a reserve who did not play earns none.
   const gearBonus = gearTrainingBonus(save.finances.gear);
+  const seriesPlayed = userSeriesPlayed(ev.tournament);
   for (const p of save.squad) {
     const wasFielded = fielded.includes(p.id);
     const isSub = !wasFielded && p.role === "sub";
@@ -2300,6 +2322,8 @@ export function finishEvent(input: CareerSave): CareerSave {
         isSub,
         coachOverall: save.coach?.overall ?? null,
         gearBonus,
+        seriesPlayed,
+        ...growthCtxOf(save),
       });
       Object.assign(p, next);
     }
@@ -2599,7 +2623,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // 2. User squad: aging, decline, retirement announcements, contract expiry.
   const keep: SquadPlayer[] = [];
   for (const p of save.squad) {
-    const res = squadRollover(p, nextSeason, rng);
+    const res = squadRollover(p, nextSeason, rng, growthCtxOf(save));
     if (res.retiresNow) {
       // DEV-02 (R48): he leaves the world for good (a retired id never
       // resolves again — the anchor pass used to re-sign a real one to his
@@ -2721,11 +2745,25 @@ export function emptyCompetition(): CareerSave["competition"] {
 export interface CreateCareerInput {
   identity: CareerIdentity;
   difficulty: CareerDifficulty;
-  style: ManagementStyle;
+  /**
+   * @deprecated rc.32 (BAL-02): the wizard no longer asks — the difficulty
+   * preset sets the prefs (CAREER_DIFFICULTY.prefs). Kept for older callers
+   * (tests, tools): when given, rc.31's style → prefs mapping applies.
+   */
+  style?: ManagementStyle;
+  /** rc.32 (BAL-02): explicit starting prefs over the preset's (the arc bot keeps rc.31's "balanced"). */
+  prefs?: Partial<CareerPrefs>;
   rosterKey: "prospects" | "journeymen" | "balanced";
 }
 
-function prefsFor(style: ManagementStyle): CareerPrefs {
+/** rc.32 (BAL-02): a new career's prefs — the preset's, or rc.31's style mapping, then any explicit ones. */
+function prefsFor(input: CreateCareerInput): CareerPrefs {
+  const base = input.style ? stylePrefsFor(input.style) : presetPrefs(input.difficulty);
+  return { ...base, ...(input.prefs ?? {}) };
+}
+
+/** rc.31's Management Style → prefs (an existing save keeps whatever it got). */
+function stylePrefsFor(style: ManagementStyle): CareerPrefs {
   if (style === "handsOn") {
     return {
       managementStyle: style,
@@ -2804,7 +2842,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     careerSeed,
     identity: input.identity,
     difficulty: input.difficulty,
-    prefs: prefsFor(input.style),
+    prefs: prefsFor(input),
     flags: {},
     clock: { seasonIndex: 0, day: 1 },
     phase: "running",
@@ -3351,13 +3389,16 @@ export function renewPlayerFlow(
   if (!player) return { save: input, error: "unknown" };
   // ECO-03 (R47): a reserve renews at his normal value, like a starter — and
   // an old save's cheap sub contract reprices here, never retroactively.
-  const ask = renewalAskFor(player, {
+  // rc.32 (M2, PROVISIONAL 30/10): the raise cap and the market floor
+  // (CAREER_SALARY.renewalRule) spread that repricing, and a developed
+  // player's, over renewals; ambition and a refused Blockbuster stay on top.
+  const ask = renewalTermsFor(player, {
     rep: save.reputation,
     seasonIndex: save.clock.seasonIndex,
     difficulty: save.difficulty,
     careerSeed: save.careerSeed,
     lengthSeasons,
-  });
+  }).ask;
   const negotiated = resolveSalaryOffer(save, playerId, ask, offeredSalary);
   if ("error" in negotiated) return { save, error: negotiated.error };
   player.salaryPerSplit = negotiated.salary;
@@ -3724,6 +3765,7 @@ function performScrim(save: CareerSave, oppRefWanted: string | null): string | n
       coachOverall: save.coach?.overall ?? null,
       gearBonus,
       xpWeeksOverride: CAREER_SCRIM.xpWeeks,
+      ...growthCtxOf(save),
     });
     Object.assign(p, next);
   }
@@ -3832,6 +3874,7 @@ export function scrimProjection(
         coachOverall: save.coach?.overall ?? null,
         gearBonus,
         trainingWeekBonus: false,
+        ...growthCtxOf(save),
       }).weeklyOverall * weeks,
   );
   const avg = gains.length > 0 ? gains.reduce((s, g) => s + g, 0) / gains.length : 0;

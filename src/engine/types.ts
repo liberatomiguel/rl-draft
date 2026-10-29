@@ -426,6 +426,12 @@ export interface TournamentTeam {
   /** Player nicknames — used for star-of-the-game narration. */
   playerNames: string[];
   orgId: string;
+  /**
+   * Road to Worlds (rc.32, BAL-02): this side's per-game form roll, from the
+   * career's own CAREER_DIFFICULTY. Absent on every Draft team (match.ts then
+   * reads DIFFICULTY, unchanged — locked by regression.golden.test.ts).
+   */
+  rollRange?: readonly [number, number];
 }
 
 export interface GameResult {

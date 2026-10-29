@@ -941,6 +941,178 @@ R54. **The age clock steps one year a season; the Blockbuster bid explained
      expire now stamps the deal in force (`blockbusterRefusedUntil`), and its
      renewal asks the 10 % more (`market.renewalAskFor`), once.
 
+R55. **The growth contract: an individual arc, and potential is the expected
+     peak (rc.32, Etapa 2b DEV-01b/d; direction decided by Miguel 29/10).**
+     (a) Versioned per career. `CAREER_DEV.growthModel` 2 is stamped on a
+     new career's world (`world.growthModel`, optional and additive); a save
+     without it, every rc.31 career, keeps rc.31's development for life (its
+     potentials, bands, curve, caps and rollover), so nothing it scouted,
+     trained or signed moves on load and no overall jumps to "compensate".
+     The key at 1 starts new careers on rc.31's model again. (b) Three
+     separate dimensions, derived from (career seed, player id) and never
+     rerolled by a signing, a sale, a renewal or a new club
+     (`developmentProfileOf`): the maturity (early 18–20, standard 20–22,
+     late 22–24; weights 0.3 / 0.45 / 0.25) sets the peak age; a plateau of
+     1–4 years holds the top; then the decline (`declinePerYear` 0.5 / 1.5 /
+     2 / 2.5 / 3 a year after the plateau, × the decline rate, the squad ×
+     0.7 as before). A real player peaks at the age of his best moment (the
+     card or special his potential comes from, inside 17–26) and stays at the
+     top at least as long as his club cards do. A generated player is never
+     promised a peak sooner than his gap needs (ceil(gap ÷ 7) + 1 seasons, at
+     most 26). `peakAgeOf` keeps its meaning (the age he reaches his peak:
+     the stored or derived `peakAge`), so DEV-02's "never retire before the
+     peak" reads the new peak. (c) The potential is the EXPECTED peak: his
+     real peak is the potential plus an offset of −2…+2 (`peakTolerance`,
+     weights 10/20/40/20/10 %), rolled once; growth never passes it. (d) The
+     curve: pace = 2 × gap ÷ years to the peak age (at least 0.6 a year while
+     a gap remains, at most 7), × the training multipliers (coach, gear,
+     focus, intensity, drill, Training Week), in units of 40 training-week
+     equivalents a year (a no-coach starter's days and series); a late
+     arrival keeps catching up through his plateau, never after it. No
+     per-split cap; the season cap stays 7 (`seasonGainCap`). Ages are exact
+     (the season age plus the share of the season played), so nothing steps
+     on a birthday; the decline lands on each training day instead of the
+     rollover; the AI world develops every Monday (`worldGrowthWeek`, the
+     same pace at `worldTrainingMult` 1, the decline undampened like rc.31's
+     world) and the rollover pass grows nobody on model 2. (e) Measured
+     (`CAREER-GROWTH-rc32.md`, 24 seeds, the default setup): a prospect's
+     season gain at 15 goes from 7.0 to 4.5 and at 18 from 0.1 to 1.9; the
+     peak lands at 18.6 / 20.0 / 21.3 (early / standard / late, p50) instead
+     of 17.7 for everyone; 100 % end within ±2 of their potential; a
+     13–14-year-old with potential 85+ peaks in his 7th season; the AI world
+     reaches its real peak (gap p50 0.0 at 21, rc.31 stalled 2.0 under).
+     Rejected: rerolling the profile at a signing; the fixed 18–22 window; a
+     split cap; growing the AI world at the rollover (a visible jump);
+     migrating rc.31 saves onto the new derivation (their bought bands would
+     move).
+
+R56. **Rare elite prospects in every era, and the potential of a real player
+     with special cards (rc.32, DEV-01a/c).** (a) Model 2's dataset-era
+     rookie intake keeps the pyramid and the 88 ceiling, but a kid aged 13–15
+     whose tier reaches past the ceiling becomes an elite prospect with
+     `CAREER_WORLD.eliteProspect.chance` 0.08: potential 93–98 by weight
+     (93 25 %, 94 22 %, 95 19 %, 96 15 %, 97 11 %, 98 8 %). The 88+ share does
+     not grow (the elite kids come out of the capped ones); the infinite era
+     keeps its pyramid. Measured over 24 seeds: 0.8 % of dataset-era rookies
+     (0.2–0.5 per region per career, about two in the whole world), seven
+     97–98s in 6,720 kids; by region and class in the growth doc's G1. (b) A real player's potential = max(best
+     club card from his debut + the stable jitter, his best eligible special
+     at its printed overall), fixed (it no longer climbs with his current
+     overall); his debut overall is untouched. The explicit rule for
+     "eligible": his own player card (by playerId, never a coach card) of a
+     real RLCS moment (legend, moment, Worlds/season/Major MVP) with a real
+     rarity (rare, epic, legendary, mythic) whose moment is inside the
+     career's own seasons (RLCS X on, `potentialSpecialCareerEraOnly`).
+     Never: national-team cards (a derived +boost), the community vote, the
+     Creator and the Wings tributes (fan or easter-egg cards), and pre-2020
+     legend cards (a 2016 peak a 2020 free agent would otherwise read
+     forever). Measured: 47 players hold an eligible special; none sits under
+     it (rc.31: 85 %).
+
+R57. **Honest bands that never move; base growth is days plus the series
+     played (rc.32, DEV-01e and the base-growth rule).** (a) Model 2's band
+     reads the potential only — never the current overall, the day or a
+     reload — and nests: each report narrows inside the band shown before (L0
+     ⊇ L1 ⊇ L2 ⊇ the exact L3), widths unchanged (`bandWidthByLevel`). At each
+     level the truth's place is a uniform draw over what the outer band
+     allows, kept inside 60–99, so the truth can sit at the floor, in the
+     middle or at the top. The floor may fall under the current overall: a
+     player at or past his expected peak reads so instead of a ceiling he
+     never reaches. Measured: settled players (headroom 0–2) at the floor 35
+     → 22 %, mean position 0.31 → 0.46; nested 42 → 100 %; a growing overall
+     moves the band 88 → 0 %. Near 99 the band cannot pass the top, so 90+
+     potentials read top-heavy (inherent). An rc.31 save keeps rc.31's band
+     (floored at the overall), so a report it bought never moves. (b) Base
+     growth without a package: a player's training days plus the series he
+     actually plays (`xpWeeksPerSeries` 0.4 training-week equivalents × the
+     field quality per series; rc.31 paid two weeks an event whatever its
+     length). A reserve who did not play keeps his training days and earns
+     no event or scrim XP (rc.31 paid the registered sub 70 % of a starter's
+     event XP). Packages (Etapa 3, DEV-03) can only speed this up. (c) The
+     expectation is rolled once per player and career (the profile and the
+     offset); more series reach the peak sooner, never past it.
+
+R58. **Renewing your own players: a raise cap and a market floor (rc.32,
+     ECONOMY-CONTRACT M2, decision 2 option B — a provisional default
+     (30/10), to be confirmed by Miguel).** (a) `renewPlayerFlow` prices
+     `renewalTermsFor` (engine/career/renewal.ts — one function for the
+     flow, the Squad renewal sheet and the Market's renewal panel): ask =
+     min(fresh, max(current wage × `CAREER_SALARY.renewalRaiseCap` 1.5,
+     fresh × `renewalMarketFloor` 0.5)) on the core fresh ask (without the
+     ambition premium), then the ambition premium (×1.25) and the
+     Blockbuster-refusal surcharge (×1.1) on top. A declining veteran renews
+     at his lower fresh ask: the rule only ever lowers the price. It also
+     spreads the repricing of an old cheap reserve contract (R47 removed the
+     0.4 sub factor) over his renewals. (b) The Blockbuster surcharge was
+     declared but never applied (nothing passed `blockbusterRefused`):
+     declining a scripted Blockbuster bid now leaves
+     `save.flags["blockbusterRefused:<id>"]` (no new save field) and his
+     next renewal carries it. (c) The readout (EN + PT) states the rule, his
+     market ask and the renewal ask, which bound priced it, and the
+     ambition / Blockbuster lines: on Squad's renewal sheet and in the
+     Market's "My deals" tab (this season's expiring contracts). (d) Switch:
+     `renewalRule` "fresh" restores rc.31 exactly (the plain fresh ask, no
+     surcharge). (e) Measured on top of DEV-01, the same 147 careers (one
+     seed, 8 seasons): insolvent 71 → 61 % (Easy 49 → 43, Normal 80 → 69,
+     Hard 84 → 71); payroll ÷ guaranteed income p50 3.97 → 3.18; the median
+     payroll per split in seasons 3–5 64–75k → 53–57k; careers alive at S7
+     44 → 63; youth 43 → 24 % insolvent. Money still decides: p90 six
+     Mondays below $0 a season, the spender still breaks in 86 %, the
+     snowball p90 at S7 is $537k. Rejected: option A (a cap alone keeps a
+     breakout star far under his value) and C (a homegrown ×0.7 leaves the
+     founders at ×3).
+
+R59. **The career's own difficulty presets, and filler orgs capped at the
+     region's best real lineup (rc.32, Etapa 2b BAL-02; the filler cap a
+     provisional default (30/10), to be confirmed by Miguel).** (a) Road to
+     Worlds reads `CAREER_DIFFICULTY` (balance.ts,
+     `engine/career/difficulty.ts`), never the Draft's `DIFFICULTY`: every
+     career team carries its own form roll (`TournamentTeam.rollRange`,
+     career-only, optional) and chemistry cap
+     (`AssembleInput.chemistryMaxBonus`), and the AI shift comes from the
+     career block. A Draft retune of `DIFFICULTY` moves no career team or
+     series (tested); Draft teams never carry the fields, so the golden
+     master is untouched. (b) Easy and Normal keep rc.31's values exactly.
+     Hard was the Draft's Hard, whose AI chemistry cap 0 stripped every
+     career AI org of the chemistry its standing roster earns, so in the
+     career Hard played as easy as Easy: at equal player strength the user
+     won 81 % of Bo5 series on Easy, 65 % on Normal and 81 % on Hard. Hard
+     now counts the AI's chemistry (2) and shifts it −0.2 (was −0.5): 81 /
+     65 / 55 %; the user keeps Hard's 2.4 chemistry reward. (c) The presets
+     replace the wizard's Management Style step: one sentence each and their
+     real effects, read live from balance.ts (the match edge, chemistry, the
+     starting budget, the prize / ask / sponsor multipliers — front A's
+     keys, read and not moved — and how much is guided), from one descriptor
+     list (`PRESET_ROWS`): a new row, e.g. `CAREER_LOAN.breachesToEnd`, is
+     one entry plus its label in both copy files. How much is guided: Easy
+     and Normal delegate the weekly drill to the coach and enter the cups for
+     you (Normal is rc.31's "balanced"); Hard starts hands-on (you plan every
+     week and choose every cup); the Training screen's delegation toggle
+     stays. A new career's prefs come from its preset (`presetPrefs`); an
+     existing save keeps its prefs and `managementStyle`; the deprecated
+     `style` input still maps as rc.31 (tests, tools); the arc bot passes
+     rc.31's "balanced" prefs explicitly, so the economy probe stays
+     comparable. (d) The filler cap (`CAREER_WORLD.fillerCapToBestReal`;
+     rc.31 uncapped = false): a filler org's team rating never passes the
+     strongest real org of its region at that moment (a region with no real
+     org yet stays uncapped; the players keep their overalls). Over 6 seeds ×
+     6 seasons it lowers the bar only where fillers ruled: APAC's top org
+     83.0 → 81.9 and SSA's 83.3 → 81.4 (the top filler had sat 1.3 / 2.2
+     above the best real org), MENA 87.7 → 87.5; NA, EU, SAM and OCE
+     unchanged; APAC and SSA have no real org in season 0. Local sides stay
+     rated around the user, frozen at the season's first regional Monday
+     (R49, unchanged). (e) Measured on top of DEV-01 and M2, the same 147
+     careers as the rc.31 baseline: first Major by S2 Easy 14 → 35 %, Normal
+     2 → 29 %, Hard 6 → 20 % (rc.31: 29 / 18 / 6 %); Majors qualified per
+     season 0.37 / 0.24 / 0.22 → 0.74 / 0.53 / 0.25 (rc.31 0.82 / 0.62 /
+     0.30); insolvent Easy 43 → 39 %, Normal 69 → 65 %, Hard 71 → 84 % (rc.31
+     49 / 69 / 84 %). The swing sits in APAC and SSA, where the cap meets
+     weak real orgs (Normal first Major by S2 0 → 100 % in both); elsewhere
+     it is within one seed's noise. The regional identities keep their slots
+     (SAM 2, EU 4). Rejected: tuning Easy's edge down (it is rc.31's),
+     zeroing the user's Hard chemistry reward, and capping the filler
+     players instead of the org.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

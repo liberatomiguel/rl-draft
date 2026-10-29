@@ -217,6 +217,8 @@ export function renewalAskFor(
     difficulty: CareerDifficulty;
     careerSeed: number;
     lengthSeasons: 1 | 2 | 3;
+    /** rc.32 (M2): false = the core ask, without the ambition premium or the Blockbuster surcharge (renewalTermsFor adds them on top). */
+    surcharges?: boolean;
   },
 ): number {
   return computeSalaryAsk({
@@ -229,12 +231,19 @@ export function renewalAskFor(
     difficulty: ctx.difficulty,
     careerSeed: ctx.careerSeed,
     playerId: player.id,
-    ambitious: player.overall >= CAREER_SALARY.ambitiousOverall && repTierOf(ctx.rep) < 3,
+    // rc.32 (M2): `surcharges: false` prices the core ask — no ambition
+    // premium and no Blockbuster surcharge (renewalTermsFor adds both on top).
+    ambitious: ctx.surcharges !== false && isAmbitiousRenewal(player.overall, ctx.rep),
     // rc.32: a Blockbuster bid refused during THIS deal surcharges its renewal
     // (CAREER_SALARY.blockbusterRefusalRenewalMult; declared since v0.2, never
     // passed before — the offer and the mail now say so).
-    blockbusterRefused: blockbusterRefusalApplies(player),
+    blockbusterRefused: ctx.surcharges !== false && blockbusterRefusalApplies(player),
   });
+}
+
+/** The "ambitious" renewal premium's condition (design §9): a star at an org below rep tier 3. */
+export function isAmbitiousRenewal(overall: number, rep: number): boolean {
+  return overall >= CAREER_SALARY.ambitiousOverall && repTierOf(rep) < 3;
 }
 
 /**

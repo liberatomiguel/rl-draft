@@ -1169,6 +1169,106 @@ export const CAREER_DEV = {
     allround: 0.3, mechanical: 0.18, playmaker: 0.16,
     anchor: 0.14, icecold: 0.11, veteranmind: 0.11,
   } as Record<string, number>,
+  /**
+   * DEV-01 (rc.32, R55–R57): the growth contract. The development model a NEW
+   * career starts on (stored once on its world, `world.growthModel`): 2 =
+   * DEV-01 (individual peaks, potential as the expected peak, no split cap,
+   * nested scouting bands, the world growing week by week); 1 = rc.31's
+   * model. A save keeps the model it was created with — an rc.31 save stays
+   * on 1 for life. Set 1 to start new careers on rc.31's model again.
+   */
+  growthModel: 2,
+  /**
+   * DEV-01b: the maturation profile of a generated player — when he reaches
+   * his top (`peakAgeOf`). Weighted pick, then an age inside the range.
+   */
+  maturity: {
+    early: { weight: 0.3, peakAge: [18, 20] },
+    standard: { weight: 0.45, peakAge: [20, 22] },
+    late: { weight: 0.25, peakAge: [22, 24] },
+  },
+  /**
+   * DEV-01b: a REAL player peaks at the age of his best moment (the club card
+   * or eligible special his potential comes from), held inside this range —
+   * signing him never moves his real peak.
+   */
+  realPeakAgeRange: [17, 26] as const,
+  /** DEV-01b: the maintenance phase — whole years at the top before the decline (weights). */
+  plateauYearsWeights: { 1: 0.2, 2: 0.35, 3: 0.3, 4: 0.15 } as Record<number, number>,
+  /**
+   * DEV-01b: the gradual decline — overall lost per year after the plateau, by
+   * whole years past it (last value repeats), × CAREER_AGE.declineRateMult;
+   * the user's squad also × CAREER_AGE.trainingDeclineDampen. Applied day by
+   * day (no step at the rollover).
+   */
+  declinePerYear: [0.5, 1.5, 2, 2.5, 3] as const,
+  /**
+   * DEV-01b: potential is the EXPECTED peak, not a wall — the real peak sits
+   * `peakTolerance` points under or over it at most, rolled once per player
+   * and career (offset → weight).
+   */
+  peakTolerance: 2,
+  peakOffsetWeights: [
+    { offset: -2, weight: 0.1 },
+    { offset: -1, weight: 0.2 },
+    { offset: 0, weight: 0.4 },
+    { offset: 1, weight: 0.2 },
+    { offset: 2, weight: 0.1 },
+  ] as const,
+  /**
+   * DEV-01d: the growth pace (points per year) toward the real peak:
+   * `paceCurvature` × gap ÷ years left to the peak age (never under
+   * `paceMinYears`), never below `paceFloorPerYear` while a gap remains — so
+   * it is steep when young, slows near the peak and never stops short of it.
+   * Training multipliers (coach, gear, focus, intensity, drill) scale it.
+   */
+  paceCurvature: 2,
+  paceMinYears: 0.5,
+  paceFloorPerYear: 0.6,
+  /**
+   * DEV-01d: training-week equivalents a starter banks in a season (his
+   * training days plus the series he plays, ≈ 25 + 20, at the no-coach 0.85)
+   * — the unit that turns the yearly pace into a day's or a series' gain, so
+   * the default setup runs the base pace (a coach and gear run ahead of it).
+   */
+  trainingWeeksPerYear: 40,
+  /**
+   * DEV-01b: a generated player is never promised a peak sooner than his gap
+   * needs — peak age ≥ his age + ceil(gap ÷ seasonGainCap) + this slack.
+   */
+  peakRoomSlackYears: 1,
+  /** DEV-01d: the season cap on growth (model 2 has no split cap; rc.31: 3 a split, 7 a season). */
+  seasonGainCap: 7,
+  /**
+   * DEV-01 base growth: match XP per series a player actually plays, in
+   * training-week equivalents × field quality. A reserve who does not play
+   * keeps his training days (no starter XP; rc.31 paid the registered sub
+   * 0.7 of a starter's event XP).
+   */
+  xpWeeksPerSeries: 0.4,
+  /** DEV-01: the AI world's training multiplier for its weekly growth (1 = a default setup). */
+  worldTrainingMult: 1,
+  /**
+   * DEV-01e: a non-wonderkid filler's FIXED potential = his base overall +
+   * years to his peak × a rate in this range (rc.31: the current overall + 2,
+   * which moved with him every season).
+   */
+  fillerHeadroomPerYear: [0.8, 2.2] as const,
+  /**
+   * DEV-01c: the special cards that set a real player's potential — his own
+   * (by playerId), at the card's printed overall (no effect, boost or
+   * chemistry): real RLCS moments only. National-team cards (a derived boost),
+   * the community vote, the Creator and the Wings tributes never count, nor
+   * do coach cards. Potential = max(best club card + jitter, best such special).
+   */
+  potentialSpecialTypes: ["legend", "moment", "worlds_mvp", "season_mvp", "major_mvp"] as readonly string[],
+  potentialSpecialRarities: ["rare", "epic", "legendary", "mythic"] as readonly string[],
+  /**
+   * DEV-01c: only a moment inside the career's own seasons (RLCS X on) counts —
+   * a legend card of an earlier era is a peak the career never replays (a
+   * 2016 legend still in the 2020 free-agent pool would read 95+ forever).
+   */
+  potentialSpecialCareerEraOnly: true,
 } as const;
 
 export const CAREER_TRAINING = {
@@ -1363,6 +1463,20 @@ export const CAREER_SALARY = {
   ambitiousOverall: 88,
   blockbusterRefusalRenewalMult: 1.1,
   lengthDiscountPerSeason: 0.95,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 2, option B (M2,
+   * ROAD-TO-WORLDS-DECISIONS R58): renewing a player you already have.
+   * "capFloor": ask = min(fresh ask, max(current wage × renewalRaiseCap,
+   * fresh ask × renewalMarketFloor)), then the ambition premium and the
+   * Blockbuster-refusal surcharge on top; a declining veteran renews at his
+   * lower fresh ask. rc.31 priced the plain fresh ask (renewalAskFor, no
+   * Blockbuster surcharge): switch back with "fresh".
+   */
+  renewalRule: "capFloor" as "capFloor" | "fresh",
+  /** M2, PROVISIONAL (30/10, decision 2-B): the raise cap — a renewal asks at most this × his current wage (contract range 1.3–2.0). */
+  renewalRaiseCap: 1.5,
+  /** M2, PROVISIONAL (30/10, decision 2-B): the market floor — never under this share of his fresh ask (contract range 0.4–0.65). */
+  renewalMarketFloor: 0.5,
 } as const;
 
 export const CAREER_CONTRACT = {
@@ -1705,6 +1819,14 @@ export const CAREER_WORLD = {
    */
   fillerHeadlinerChance: 0.1,
   fillerHeadlinerRange: [77, 84] as const,
+  /**
+   * PROVISIONAL (30/10) — ROADMAP "Waiting on Miguel", the 30/10 note:
+   * "filler orgs capped at the region's best real lineup (with BAL-02)"
+   * (R59). A filler org's team rating never passes the strongest real org of
+   * its region at that moment (a region with no real org yet is uncapped);
+   * its players keep their overalls. rc.31: uncapped — switch back with false.
+   */
+  fillerCapToBestReal: true,
   rookiesPerRegionPerSeason: 8,
   rookieAgeRange: [13, 16] as const,
   rookieOverallRange: [60, 72] as const,
@@ -1716,6 +1838,20 @@ export const CAREER_WORLD = {
     { p: 0.03, range: [94, 99] },
   ] as const,
   datasetEraPotentialCeiling: 88,
+  /**
+   * DEV-01a (rc.32, model 2): rare generic elite prospects in the historical
+   * eras too. A dataset-era rookie aged ≤ `maxAge` whose pyramid tier reaches
+   * past the ceiling becomes an elite prospect with `chance`, his potential
+   * drawn from `weights` (93–98, 97/98 the rarest); the other capped kids keep
+   * the ceiling, so the wonderkid share (88+) does not grow. ≈ 0.9 % of all
+   * dataset-era rookies (0.75 aged 13–15 × 0.15 top tiers × chance). The
+   * infinite era keeps its pyramid.
+   */
+  eliteProspect: {
+    chance: 0.08,
+    maxAge: 15,
+    weights: { 93: 0.25, 94: 0.22, 95: 0.19, 96: 0.15, 97: 0.11, 98: 0.08 } as Record<number, number>,
+  },
   faPoolFloorPerRegion: 10,
   /** Random events: one type in v1 ("starter unavailable"), ≤1 per split. */
   unavailabilityChancePerWeek: 0.02,
@@ -1855,6 +1991,71 @@ export const CAREER_SAVE = {
   scrimLogCap: 12,
   transferLogCap: 150,
   maxSaveBytes: 400_000,
+} as const;
+
+/**
+ * BAL-02 (rc.32, ROAD-TO-WORLDS-DECISIONS R59): the career's OWN difficulty
+ * presets — Easy / Normal / Hard, Normal the default. Road to Worlds reads
+ * these instead of the Draft's DIFFICULTY (worldSim → teams → match), so a
+ * Draft retune can no longer move the career. They replace the wizard's
+ * Management Style step: one sentence each plus their real effects, read
+ * from here and from the money keys (CAREER_ECONOMY.startingBudget /
+ * prizeMult / salaryAskMult / sponsorMult — not moved). Overall stays the
+ * match engine's main signal: every shift here is a couple of points.
+ */
+export const CAREER_DIFFICULTY = {
+  /** The preset a new career starts on. */
+  defaultPreset: "normal" as "easy" | "normal" | "hard",
+  /**
+   * The match profile per preset. rc.31's values (the Draft's easy / normal /
+   * hard at rc.31) were copied first, then tuned on purpose (R59):
+   *  - user / ai roll ranges: the per-game form roll of each side;
+   *  - chemistry / opponentChemistry: the rating a side's full chemistry is
+   *    worth (an AI org's standing roster runs near full chemistry);
+   *  - opponentRatingShift: a flat add to every AI side's rating.
+   * Easy and Normal are rc.31's exactly. Hard was rc.31's Draft Hard
+   * (opponentChemistryMaxBonus 0, opponentRatingShift −0.5), which in the
+   * career played as easy as Easy — the Draft's "chemistry is the player's
+   * edge" stripped every AI org of the chemistry its standing roster earns:
+   * at equal player strength the user won 81 % of Bo5 series on Easy, 65 % on
+   * Normal and 81 % on Hard. Now AI chemistry counts (2) and the shift is
+   * −0.2: 81 / 65 / 55 % (the user keeps Hard's 2.4 chemistry reward).
+   */
+  match: {
+    easy: {
+      userRollRange: [-3, 5] as const,
+      aiRollRange: [-4, 4] as const,
+      chemistryMaxBonus: 1.3,
+      opponentChemistryMaxBonus: 1.3,
+      opponentRatingShift: -2,
+    },
+    normal: {
+      userRollRange: [-3, 4] as const,
+      aiRollRange: [-4, 4] as const,
+      chemistryMaxBonus: 2,
+      opponentChemistryMaxBonus: 2,
+      opponentRatingShift: -1.05,
+    },
+    hard: {
+      userRollRange: [-3.5, 4] as const,
+      aiRollRange: [-4, 4] as const,
+      chemistryMaxBonus: 2.4,
+      opponentChemistryMaxBonus: 2,
+      opponentRatingShift: -0.2,
+    },
+  },
+  /**
+   * How much of the running is guided — the preset's starting prefs (the
+   * Training screen's "delegate to coach" toggle stays). Easy: staff plan the
+   * week, cups are entered for you, events resolve instantly by default;
+   * Normal: rc.31's default ("balanced"); Hard: you plan every week and choose
+   * every cup ("hands-on").
+   */
+  prefs: {
+    easy: { managementStyle: "delegate", autoTrain: true, autoEnterUnofficials: true, playbackDefault: "instant", newsDigest: true },
+    normal: { managementStyle: "balanced", autoTrain: true, autoEnterUnofficials: true, playbackDefault: "full", newsDigest: true },
+    hard: { managementStyle: "handsOn", autoTrain: false, autoEnterUnofficials: false, playbackDefault: "full", newsDigest: false },
+  },
 } as const;
 
 /** Master pacing anchors — every career harness imports these, none restates them. */

@@ -71,7 +71,9 @@ function gameSide(
 ): GameSideResult {
   const notes: string[] = [];
   const profile = DIFFICULTY[ctx.difficulty];
-  const [rollMin, rollMax] = team.isUser ? profile.userRollRange : profile.aiRollRange;
+  // Road to Worlds (rc.32, BAL-02) carries its own roll range on the team;
+  // every Draft team reads its difficulty profile, as always.
+  const [rollMin, rollMax] = team.rollRange ?? (team.isUser ? profile.userRollRange : profile.aiRollRange);
 
   const roll = dampenIfNegative(rng.roll(rollMin, rollMax), team, effects);
 

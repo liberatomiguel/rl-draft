@@ -24,11 +24,19 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CAREER_ARC, CAREER_SEASONS, CAREER_WORLD } from "@/config/balance";
+import { CAREER_ARC, CAREER_CALENDAR, CAREER_DEV, CAREER_SEASONS, CAREER_WORLD } from "@/config/balance";
 import { specialCards } from "@/data";
-import { derivePotential, playerViewById, rookieView, scoutedBand } from "@/engine/career/development";
+import {
+  bestEligibleSpecialOverall,
+  derivePotential,
+  derivePotentialV2,
+  isGrowthContract,
+  playerViewById,
+  rookieView,
+  scoutedBand,
+} from "@/engine/career/development";
 import type { CareerDifficulty, CareerPlayerView, ScoutLevel, WorldState } from "@/engine/career/types";
-import { agePassAndIntake, buildWorldAtCreation } from "@/engine/career/worldSim";
+import { agePassAndIntake, buildWorldAtCreation, worldGrowthWeek } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
 import { ARC_POLICIES, playArcCareer, type ArcCareer, type ArcPolicyId } from "./careerArcBot";
 
@@ -208,6 +216,38 @@ function arcReport(careers: ArcCareer[], seasons: number): string {
   }
   lines.push("");
 
+  // 4b. rc.32 (BAL-02): region × difficulty, every policy — the presets' slices.
+  lines.push("### Region × difficulty — every policy (insolvent · first Major by S2 · Worlds by S4 · team rating at S3 p50)");
+  lines.push("");
+  lines.push("| Region | easy | normal | hard |");
+  lines.push("|---|---|---|---|");
+  for (const [region, rcs] of group((c) => c.region)) {
+    const cells = (["easy", "normal", "hard"] as const).map((d) => {
+      const cs = rcs.filter((c) => c.difficulty === d);
+      if (cs.length === 0) return "–";
+      const n = cs.length;
+      const rating = q(cs.map((c) => c.seasons[3]?.teamRating).filter((x): x is number => x !== undefined), 0.5);
+      return `${pct(cs.filter((c) => c.ended === "insolvency").length, n)} · ${pct(cs.filter((c) => c.firstMajorSeason !== null && c.firstMajorSeason <= 2).length, n)} · ${pct(cs.filter((c) => c.firstWorldsSeason !== null && c.firstWorldsSeason <= 4).length, n)} · ${Number.isNaN(rating) ? "–" : rating.toFixed(1)}`;
+    });
+    lines.push(`| ${region} | ${cells.join(" | ")} |`);
+  }
+  lines.push("");
+  // 4c. rc.32 (BAL-02): the competitive line by difficulty — Majors and Worlds per season played.
+  lines.push("### Competitive line by difficulty — per season played (every policy)");
+  lines.push("");
+  lines.push("| Difficulty | season-rows | Majors qualified per season | Worlds reached | titles per season | region rank p50 |");
+  lines.push("|---|---|---|---|---|---|");
+  for (const [d, cs] of group((c) => c.difficulty)) {
+    const rows = cs.flatMap((c) => c.seasons);
+    const majors = rows.reduce((n, r) => n + r.majorsQualified, 0) / Math.max(1, rows.length);
+    const worlds = rows.filter((r) => r.worlds !== null).length;
+    const titles = rows.reduce((n, r) => n + r.titles, 0) / Math.max(1, rows.length);
+    lines.push(
+      `| ${d} | ${rows.length} | ${majors.toFixed(2)} | ${pct(worlds, rows.length)} | ${titles.toFixed(2)} | ${q(rows.map((r) => r.regionRank).filter((x) => x > 0), 0.5)} |`,
+    );
+  }
+  lines.push("");
+
   // 5. Squad development: overall gained per season by age (every squad player seen two seasons running).
   lines.push("### Squad development — overall gained over a season, by age at its start");
   lines.push("");
@@ -269,6 +309,10 @@ function worldViews(world: WorldState, seasonIndex: number, careerSeed: number):
 
 function curvesReport(seeds: number): string {
   const lines: string[] = [];
+  // rc.32 (DEV-01): sample the model a new career runs (CAREER_DEV.growthModel).
+  const model = CAREER_DEV.growthModel;
+  lines.push(`Development model: ${model} (${isGrowthContract(model) ? "DEV-01, rc.32" : "rc.31"}).`);
+  lines.push("");
   const share = (n: number, d: number) => (d === 0 ? "–" : `${((100 * n) / d).toFixed(1)}%`);
   const seedOf = (k: number) => 1000 + k * 7919;
 
@@ -285,7 +329,7 @@ function curvesReport(seeds: number): string {
       for (let season = from; season <= to; season++)
         for (const region of ALL_REGIONS)
           for (let n = 0; n < CAREER_WORLD.rookiesPerRegionPerSeason; n++) {
-            const v = rookieView(region, season, n, seedOf(k), season >= CAREER_SEASONS.length);
+            const v = rookieView(region, season, n, seedOf(k), season >= CAREER_SEASONS.length, undefined, model);
             rows.push({ age: v.age, pot: v.potential });
           }
     const at = (a: number) => share(rows.filter((r) => r.age === a).length, rows.length);
@@ -328,14 +372,32 @@ function curvesReport(seeds: number): string {
   let below = 0;
   for (const [playerId, sp] of best) {
     for (let k = 0; k < 5; k++) {
-      const pot = derivePotential(playerId, seedOf(k), 60);
+      const pot = isGrowthContract(model) ? derivePotentialV2(playerId, seedOf(k)) : derivePotential(playerId, seedOf(k), 60);
       gaps.push(sp.overall - pot);
       if (sp.overall > pot) below += 1;
     }
   }
   const sorted = [...gaps].sort((a, b) => a - b);
   lines.push(
-    `Players with a special card: ${best.size}. Potential (derivePotential, 5 seeds) sits BELOW the best special's overall in ${share(below, gaps.length)} of samples; special − potential p50 ${sorted[Math.floor(sorted.length / 2)]}, p90 ${sorted[Math.floor(sorted.length * 0.9)]}, max ${sorted[sorted.length - 1]}.`,
+    `Players with a special card: ${best.size}. Potential (the model's, 5 seeds) sits BELOW the best special's overall in ${share(below, gaps.length)} of samples; special − potential p50 ${sorted[Math.floor(sorted.length / 2)]}, p90 ${sorted[Math.floor(sorted.length * 0.9)]}, max ${sorted[sorted.length - 1]}.`,
+  );
+  // rc.32 (DEV-01c): against the ELIGIBLE special only (the rule: own real-moment
+  // player cards of the career's era; never national, community, Creator, Wings, coach).
+  let eligiblePlayers = 0;
+  let eligibleBelow = 0;
+  let eligibleSamples = 0;
+  for (const playerId of best.keys()) {
+    const sp = bestEligibleSpecialOverall(playerId);
+    if (sp === null) continue;
+    eligiblePlayers += 1;
+    for (let k = 0; k < 5; k++) {
+      const pot = isGrowthContract(model) ? derivePotentialV2(playerId, seedOf(k)) : derivePotential(playerId, seedOf(k), 60);
+      eligibleSamples += 1;
+      if (sp > pot) eligibleBelow += 1;
+    }
+  }
+  lines.push(
+    `With an eligible special (DEV-01c's rule): ${eligiblePlayers} players; potential below it in ${share(eligibleBelow, eligibleSamples)} of samples.`,
   );
   lines.push("");
 
@@ -353,7 +415,7 @@ function curvesReport(seeds: number): string {
       for (const v of sample) {
         const h = Math.round(v.potential - v.overall);
         if (h < lo || h > hi) continue;
-        const band = scoutedBand(v.potential, v.overall, level, 1, v.id);
+        const band = scoutedBand(v.potential, v.overall, level, 1, v.id, model);
         if (band.max <= band.min) continue;
         pos.push((v.potential - band.min) / (band.max - band.min));
         above.push(band.max - v.potential);
@@ -377,6 +439,10 @@ function curvesReport(seeds: number): string {
     let world = buildWorldAtCreation(seed);
     let prev = new Map(worldViews(world, 0, seed).filter((v) => v.kind === "fictional").map((v) => [v.id, v]));
     for (let season = 1; season <= 9; season++) {
+      // DEV-01 (model 2): the world grows every Monday; rc.31's grows at the rollover.
+      if (isGrowthContract(model))
+        for (let week = 1; week <= CAREER_CALENDAR.weeksPerSeason; week++)
+          world = worldGrowthWeek(world, { seasonIndex: season - 1, week, careerSeed: seed, userSquadIds: [] });
       world = agePassAndIntake(world, season, seed, [], season >= CAREER_SEASONS.length, []).world;
       const now = worldViews(world, season, seed).filter((v) => v.kind === "fictional");
       for (const v of now) {

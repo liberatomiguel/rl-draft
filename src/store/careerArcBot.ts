@@ -20,10 +20,10 @@ import {
   seasonLabelFor,
   weekOfDay,
 } from "@/engine/career/calendar";
-import { ageOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
 import { quantize, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
-import type { CareerDifficulty, CareerEndReason, CareerPlayerView, CareerSave, ScoutLevel } from "@/engine/career/types";
+import type { CareerDifficulty, CareerEndReason, CareerPlayerView, CareerPrefs, CareerSave, ScoutLevel } from "@/engine/career/types";
 import type { Placement, Region } from "@/engine/types";
 import {
   acceptBidFlow,
@@ -287,7 +287,8 @@ function candidatesFor(save: CareerSave): Candidate[] {
       contracted: splitsRemaining === null ? undefined : { splitsRemaining },
     });
     const level = Math.min(2, Math.max(0, Number(save.scouted[view.id] ?? 0))) as ScoutLevel;
-    const band = scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id);
+    // rc.32: the band the market screen shows (the save's development model).
+    const band = scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world));
     out.push({
       view,
       cost: pack.fee + pack.signingBonus,
@@ -471,6 +472,19 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
 // The career
 // ---------------------------------------------------------------------------
 
+/**
+ * rc.32 (BAL-02): the bot keeps rc.31's "balanced" prefs on every difficulty
+ * (the presets would otherwise change how much is delegated), so the economy
+ * probe and the arc sweeps stay comparable across versions.
+ */
+const ARC_BOT_PREFS: CareerPrefs = {
+  managementStyle: "balanced",
+  autoTrain: true,
+  autoEnterUnofficials: true,
+  playbackDefault: "full",
+  newsDigest: true,
+};
+
 function inputFor(region: Region, difficulty: CareerDifficulty, policy: ArcPolicy): CreateCareerInput {
   return {
     identity: {
@@ -484,7 +498,7 @@ function inputFor(region: Region, difficulty: CareerDifficulty, policy: ArcPolic
       buffType: "consistency",
     },
     difficulty,
-    style: "balanced",
+    prefs: ARC_BOT_PREFS,
     rosterKey: policy.rosterKey,
   };
 }

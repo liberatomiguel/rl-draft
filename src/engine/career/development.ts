@@ -24,12 +24,12 @@ import {
   CAREER_WORLD,
   TEAM_RATING,
 } from "@/config/balance";
-import { lineupById, playerById, playerCards, seasonById } from "@/data";
+import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards } from "@/data";
 import { PLAYER_NAME_BANK, playerNameBankFor } from "@/data/career/names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
-import type { BuffLevel, PlayerCard, Region, StatKey, Stats } from "../types";
+import type { BuffLevel, PlayerCard, Region, StatKey, Stats, TournamentState } from "../types";
 import { derivedFloat, streams } from "./seeds";
 import type {
   ArchetypeId,
@@ -299,6 +299,254 @@ export function derivePeakAge(playerId: string, careerSeed: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// DEV-01 (rc.32, R55–R57): the growth contract — development model 2
+// ---------------------------------------------------------------------------
+
+/** The development model a world runs on: absent = rc.31's model (1). */
+export function growthModelOf(world: { growthModel?: number } | null | undefined): number {
+  return world?.growthModel ?? 1;
+}
+
+/** True when a career runs the DEV-01 growth contract (model 2+). */
+export function isGrowthContract(model: number | undefined): boolean {
+  return (model ?? 1) >= 2;
+}
+
+/** DEV-01: a career's growth context right now — its model, today and its seed (see GrowthCtx). */
+export function growthCtxOf(save: {
+  world: { growthModel?: number };
+  careerSeed: number;
+  clock: { day: number };
+}): { model: number; day: number; careerSeed: number } {
+  return { model: growthModelOf(save.world), day: save.clock.day, careerSeed: save.careerSeed };
+}
+
+/** DEV-01b: when a player reaches his top. */
+export type MaturityProfile = "early" | "standard" | "late";
+
+/**
+ * DEV-01b: the three separate dimensions of a player's arc — when he reaches
+ * his top (maturity → `peakAge`), how long he stays there (`plateauYears`)
+ * and how fast he declines after (`declineRate`) — plus how far his real peak
+ * lands from his potential (`peakOffset`, within ±CAREER_DEV.peakTolerance).
+ * Derived from (careerSeed, playerId) only: a signing, a sale, a renewal or a
+ * new club never rerolls it.
+ */
+export interface DevelopmentProfile {
+  maturity: MaturityProfile;
+  peakAge: number;
+  plateauYears: number;
+  declineRate: DeclineRate;
+  peakOffset: number;
+}
+
+/** Fixed pick order — NEVER reorder (derivation stability). */
+const MATURITIES: MaturityProfile[] = ["early", "standard", "late"];
+
+/**
+ * The age clock's year of each dataset season order (for a real player's
+ * moments): the year a season ends, as `seasonYear` (rc.32 R54) — a
+ * single-year label is its own year, "2020-21" is 2021.
+ */
+const yearByOrder: Map<number, number> = (() => {
+  const map = new Map<number, number>();
+  for (const s of seasonById.values()) map.set(s.order, labelEndYear(s.year));
+  return map;
+})();
+
+/**
+ * DEV-01c: per real player, his best ELIGIBLE special — the card's printed
+ * overall (no effect, boost or chemistry) and the season of its moment.
+ * Eligible: his own player card (by playerId, never a coach card) of a real
+ * RLCS moment type and rarity (CAREER_DEV.potentialSpecialTypes /
+ * potentialSpecialRarities). National-team cards (a derived boost), the
+ * community vote, the Creator and the Wings tributes would bend the curve
+ * and never count.
+ */
+const bestSpecialByPlayer: Map<string, { overall: number; order: number }> = (() => {
+  const types = new Set(CAREER_DEV.potentialSpecialTypes);
+  const rarities = new Set(CAREER_DEV.potentialSpecialRarities);
+  const firstCareerOrder = CAREER_SEASONS[0].order;
+  const map = new Map<string, { overall: number; order: number }>();
+  for (const sp of specialCards) {
+    if (sp.kind === "coach" || !types.has(sp.cardType) || !rarities.has(sp.rarity)) continue;
+    const base = playerCardById.get(sp.baseCardId);
+    if (!base || base.playerId !== sp.playerId || lineupById.get(base.lineupId)?.national) continue;
+    const order = seasonById.get(base.seasonId)?.order ?? 0;
+    if (CAREER_DEV.potentialSpecialCareerEraOnly && order < firstCareerOrder) continue;
+    const was = map.get(sp.playerId);
+    if (!was || sp.overall > was.overall || (sp.overall === was.overall && order < was.order)) {
+      map.set(sp.playerId, { overall: sp.overall, order });
+    }
+  }
+  return map;
+})();
+
+/** DEV-01c: a real player's best eligible special overall (null = none). */
+export function bestEligibleSpecialOverall(playerId: string): number | null {
+  return bestSpecialByPlayer.get(playerId)?.overall ?? null;
+}
+
+/**
+ * DEV-01c (model 2): a real player's FIXED potential — his best club card
+ * (from his debut on) plus the stable jitter, or his best eligible special
+ * when that is higher (the special sets it exactly). It never reads his
+ * current overall, so it never moves; his debut overall is untouched.
+ */
+export function derivePotentialV2(playerId: string, careerSeed: number): number {
+  const cards = cardsByPlayer.get(playerId);
+  let best = -Infinity;
+  for (const card of cards ?? []) best = Math.max(best, finalOverall(card));
+  const special = bestSpecialByPlayer.get(playerId)?.overall ?? -Infinity;
+  if (best === -Infinity && special === -Infinity) return 60 + CAREER_DEV.endedCareerHeadroom;
+  const f = derivedFloat(careerSeed, streams.gen("pot", playerId));
+  const [jMin, jMax] = CAREER_DEV.potentialJitter;
+  const fromCards = best === -Infinity ? -Infinity : best + intFrom(f, jMin, jMax);
+  return clamp(Math.max(fromCards, special), 60, 99);
+}
+
+/** A player's age in the season of a dataset `order` — the career's own clock inside the career era. */
+function ageAtOrder(birthYear: number, order: number): number {
+  const idx = CAREER_SEASONS.findIndex((s) => s.order === order);
+  if (idx >= 0) return ageOf(birthYear, idx);
+  return (yearByOrder.get(order) ?? seasonYear(0)) - birthYear;
+}
+
+/**
+ * DEV-01b: the development profile of any player id, model 2. A generated
+ * player draws his maturity (CAREER_DEV.maturity) and a peak age inside it; a
+ * REAL player peaks at the age of his best moment (the club card or special
+ * his potential comes from, inside realPeakAgeRange) and stays at the top at
+ * least as long as his real cards do (within peakTolerance of his best club
+ * card). Plateau, decline rate and the peak offset are separate rolls.
+ */
+export function developmentProfileOf(playerId: string, careerSeed: number): DevelopmentProfile {
+  const f = (what: string) => derivedFloat(careerSeed, streams.gen(what, playerId));
+  const years = Object.keys(CAREER_DEV.plateauYearsWeights)
+    .map(Number)
+    .sort((a, b) => a - b);
+  let plateauYears = weightedFrom(f("dev-plateau"), years, (y) => CAREER_DEV.plateauYearsWeights[y] ?? 0);
+  const peakOffset = weightedFrom(f("dev-offset"), CAREER_DEV.peakOffsetWeights, (o) => o.weight).offset;
+  const declineRate = deriveDeclineRate(playerId, careerSeed);
+
+  const cards = playerById.has(playerId) ? cardsByPlayer.get(playerId) : undefined;
+  if (cards && cards.length > 0) {
+    const birthYear = deriveBirthYear(playerId, careerSeed);
+    let bestClub = -Infinity;
+    let bestOrder = cardOrder(cards[0]);
+    for (const card of cards) {
+      const o = finalOverall(card);
+      if (o > bestClub) {
+        bestClub = o;
+        bestOrder = cardOrder(card);
+      }
+    }
+    const special = bestSpecialByPlayer.get(playerId);
+    const momentOrder = special && special.overall > bestClub ? special.order : bestOrder;
+    const [lo, hi] = CAREER_DEV.realPeakAgeRange;
+    const peakAge = clamp(ageAtOrder(birthYear, momentOrder), lo, hi);
+    // His real top years: the last club card within peakTolerance of his best.
+    let lastTop = momentOrder;
+    for (const card of cards) {
+      if (finalOverall(card) >= bestClub - CAREER_DEV.peakTolerance) lastTop = Math.max(lastTop, cardOrder(card));
+    }
+    const realTopYears = Math.max(0, ageAtOrder(birthYear, lastTop) - ageAtOrder(birthYear, momentOrder));
+    plateauYears = Math.max(plateauYears, realTopYears);
+    const m = CAREER_DEV.maturity;
+    const maturity: MaturityProfile =
+      peakAge < m.standard.peakAge[0] ? "early" : peakAge > m.standard.peakAge[1] ? "late" : "standard";
+    return { maturity, peakAge, plateauYears, declineRate, peakOffset };
+  }
+
+  const maturity = weightedFrom(f("dev-maturity"), MATURITIES, (k) => CAREER_DEV.maturity[k].weight);
+  const [lo, hi] = CAREER_DEV.maturity[maturity].peakAge;
+  return { maturity, peakAge: intFrom(f("dev-peak"), lo, hi), plateauYears, declineRate, peakOffset };
+}
+
+/**
+ * DEV-01b: a generated player's peak age, never sooner than his gap needs —
+ * at least ceil(gap ÷ seasonGainCap) + peakRoomSlackYears seasons away, so a
+ * big-headroom kid cannot be an early maturer who runs out of time — and
+ * never past the top of CAREER_DEV.realPeakAgeRange (26), so the retirement
+ * window (24–29) always closes on schedule.
+ */
+export function peakAgeWithRoom(profilePeak: number, age: number, gap: number): number {
+  if (gap <= 0) return profilePeak;
+  const need = age + Math.ceil(gap / CAREER_DEV.seasonGainCap) + CAREER_DEV.peakRoomSlackYears;
+  return Math.max(profilePeak, Math.min(need, CAREER_DEV.realPeakAgeRange[1]));
+}
+
+/** DEV-01b: the real peak a player grows toward — his potential ± his offset (60–99). */
+export function peakTargetOf(potential: number, profile: Pick<DevelopmentProfile, "peakOffset">): number {
+  return clamp(Math.round(potential) + profile.peakOffset, 60, 99);
+}
+
+/** DEV-01b: where a player stands on his arc at an exact age. */
+export type DevelopmentPhase = "growing" | "peak" | "declining";
+
+export function developmentPhaseOf(
+  exactAge: number,
+  profile: Pick<DevelopmentProfile, "peakAge" | "plateauYears">,
+): DevelopmentPhase {
+  if (exactAge < profile.peakAge) return "growing";
+  if (exactAge < profile.peakAge + profile.plateauYears) return "peak";
+  return "declining";
+}
+
+/** A season age plus the share of the season played (day 1 = +0) — no step at the rollover. */
+export function exactAgeOf(seasonAge: number, day: number | undefined): number {
+  const days = CAREER_CALENDAR.weeksPerSeason * CAREER_CALENDAR.daysPerWeek;
+  const d = day ?? days / 2;
+  return seasonAge + clamp(d - 1, 0, days) / days;
+}
+
+/**
+ * DEV-01d: the base growth pace in overall points per YEAR — steep when young,
+ * slowing near the peak, never stopping short of it: paceCurvature × gap ÷
+ * years left to the peak age (never under paceMinYears), at least
+ * paceFloorPerYear while a gap remains, at most the season cap a year (so a
+ * season's growth spreads over the season instead of front-loading it). Zero
+ * once he is at his real peak or past his plateau (a declining player never
+ * closes an old gap).
+ */
+export function growthPacePerYear(input: {
+  overall: number;
+  target: number;
+  exactAge: number;
+  peakAge: number;
+  plateauYears: number;
+}): number {
+  const gap = input.target - input.overall;
+  if (gap <= 0) return 0;
+  if (input.exactAge >= input.peakAge + input.plateauYears) return 0;
+  const D = CAREER_DEV;
+  const yearsLeft = Math.max(D.paceMinYears, input.peakAge - input.exactAge);
+  return clamp((D.paceCurvature * gap) / yearsLeft, D.paceFloorPerYear, D.seasonGainCap);
+}
+
+/** DEV-01b: overall lost per year at an exact age — zero until his plateau ends, then gradual. */
+export function declinePerYearOf(input: {
+  exactAge: number;
+  peakAge: number;
+  plateauYears: number;
+  declineRate: DeclineRate;
+}): number {
+  const past = input.exactAge - (input.peakAge + input.plateauYears);
+  if (past < 0) return 0;
+  const table = CAREER_DEV.declinePerYear;
+  const base = table[Math.min(table.length - 1, Math.floor(past))];
+  return base * (CAREER_AGE.declineRateMult[input.declineRate] ?? 1);
+}
+
+/** DEV-01 base growth: the series the user's team played in an event (every fielded player played them all). */
+export function userSeriesPlayed(t: Pick<TournamentState, "swiss" | "playoffs">): number {
+  let n = 0;
+  for (const r of t.swiss.rounds) for (const s of r.series) if (s.teamAId === "user" || s.teamBId === "user") n += 1;
+  for (const r of t.playoffs?.rounds ?? []) for (const s of r.series) if (s.teamAId === "user" || s.teamBId === "user") n += 1;
+  return n;
+}
+
+// ---------------------------------------------------------------------------
 // DEV-02 (R48): the competitive window — age 13 in, retirement 24–29
 // ---------------------------------------------------------------------------
 
@@ -419,6 +667,10 @@ export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView
   const offScript = playerId in ctx.world.overallDelta;
   const overall = clamp(anchor + (ctx.world.overallDelta[playerId] ?? 0), 60, 99);
   const archetype = deriveArchetype(playerId, ctx.careerSeed);
+  // DEV-01 (model 2): a fixed potential (cards + eligible specials) and the
+  // real-moment peak; rc.31 derived both per view (potential clamped up to the
+  // current overall, peak 18–22).
+  const dev01 = isGrowthContract(growthModelOf(ctx.world));
   return {
     id: playerId,
     kind: "real",
@@ -429,8 +681,10 @@ export function realPlayerView(playerId: string, ctx: ViewCtx): CareerPlayerView
     archetype,
     overall,
     attrOffsets: deriveAttrOffsets(playerId, ctx.careerSeed, archetype),
-    potential: derivePotential(playerId, ctx.careerSeed, overall),
-    peakAge: derivePeakAge(playerId, ctx.careerSeed),
+    potential: dev01 ? derivePotentialV2(playerId, ctx.careerSeed) : derivePotential(playerId, ctx.careerSeed, overall),
+    peakAge: dev01
+      ? developmentProfileOf(playerId, ctx.careerSeed).peakAge
+      : derivePeakAge(playerId, ctx.careerSeed),
     declineRate: deriveDeclineRate(playerId, ctx.careerSeed),
     anchored: !offScript,
   };
@@ -464,25 +718,42 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
   const baseOverall = intFrom(derivedFloat(ctx.careerSeed, streams.gen("fic-ovr", key)), oMin, oMax);
   const overall = clamp(baseOverall + (ctx.world.overallDelta[id] ?? 0), 60, 99);
 
-  const wonderkid =
-    derivedFloat(ctx.careerSeed, streams.gen("fic-wk", key)) < CAREER_WORLD.fillerWonderkidChance;
-  const potential = wonderkid
-    ? Math.max(
-        intFrom(
-          derivedFloat(ctx.careerSeed, streams.gen("fic-pot", key)),
-          FILLER_WONDERKID_POTENTIAL[0],
-          FILLER_WONDERKID_POTENTIAL[1],
-        ),
-        overall,
-      )
-    : derivePotential(id, ctx.careerSeed, overall);
-
   const age0 = intFrom(
     derivedFloat(ctx.careerSeed, streams.gen("fic-age", key)),
     FILLER_AGE_RANGE[0],
     FILLER_AGE_RANGE[1],
   );
   const birthYear = seasonYear(0) - age0;
+
+  const dev01 = isGrowthContract(growthModelOf(ctx.world));
+  const profile = dev01 ? developmentProfileOf(id, ctx.careerSeed) : null;
+  const wonderkidRoll = derivedFloat(ctx.careerSeed, streams.gen("fic-wk", key)) < CAREER_WORLD.fillerWonderkidChance;
+  const wonderkidPot = () =>
+    intFrom(
+      derivedFloat(ctx.careerSeed, streams.gen("fic-pot", key)),
+      FILLER_WONDERKID_POTENTIAL[0],
+      FILLER_WONDERKID_POTENTIAL[1],
+    );
+  let potential: number;
+  let peakAge = profile?.peakAge ?? 0;
+  if (profile) {
+    // DEV-01 (model 2): a FIXED ceiling that fits his arc — a wonderkid only
+    // with two seasons or more to grow (and a peak late enough for his gap),
+    // otherwise his base overall plus the years to his peak ×
+    // CAREER_DEV.fillerHeadroomPerYear (0 once past it). rc.31: the current
+    // overall + 2, which moved with him every season.
+    const yearsToPeak = Math.max(0, profile.peakAge - age0);
+    if (wonderkidRoll && yearsToPeak >= 2) {
+      potential = Math.max(wonderkidPot(), baseOverall);
+      peakAge = peakAgeWithRoom(profile.peakAge, age0, potential - baseOverall);
+    } else {
+      const [rLo, rHi] = CAREER_DEV.fillerHeadroomPerYear;
+      const rate = rLo + derivedFloat(ctx.careerSeed, streams.gen("fic-room", key)) * (rHi - rLo);
+      potential = clamp(baseOverall + Math.round(yearsToPeak * rate), baseOverall, 99);
+    }
+  } else {
+    potential = wonderkidRoll ? Math.max(wonderkidPot(), overall) : derivePotential(id, ctx.careerSeed, overall);
+  }
 
   const countries = REGION_COUNTRIES[region];
   const country =
@@ -500,7 +771,7 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
     overall,
     attrOffsets: deriveAttrOffsets(id, ctx.careerSeed, archetype),
     potential,
-    peakAge: derivePeakAge(id, ctx.careerSeed),
+    peakAge: profile ? peakAge : derivePeakAge(id, ctx.careerSeed),
     declineRate: deriveDeclineRate(id, ctx.careerSeed),
     anchored: false,
   };
@@ -520,6 +791,8 @@ export function rookieView(
   infinite: boolean,
   /** rc.29 (CAR-01): the name stored at intake (world.rookieNames), if any. */
   storedName?: string,
+  /** rc.32 (DEV-01): the world's development model (absent = rc.31's). */
+  model?: number,
 ): CareerPlayerView {
   const id = `rook:${seasonIndex}:${region}:${n}`;
   const key = `${seasonIndex}:${region}:${n}`;
@@ -542,7 +815,27 @@ export function rookieView(
     tier.range[0],
     tier.range[1],
   );
-  if (!infinite) potential = Math.min(potential, CAREER_WORLD.datasetEraPotentialCeiling);
+  const ceiling = CAREER_WORLD.datasetEraPotentialCeiling;
+  const dev01 = isGrowthContract(model);
+  if (!infinite) {
+    // DEV-01a (model 2): a kid of 13–15 from a top tier the dataset era caps
+    // may be a rare elite prospect (93–98) instead of sitting at the ceiling —
+    // the share of 88+ kids does not grow. rc.31: every one capped at 88.
+    const elite = CAREER_WORLD.eliteProspect;
+    if (
+      dev01 &&
+      tier.range[1] > ceiling &&
+      age <= elite.maxAge &&
+      derivedFloat(careerSeed, streams.gen("rook-elite", key)) < elite.chance
+    ) {
+      const pots = Object.keys(elite.weights)
+        .map(Number)
+        .sort((a, b) => a - b);
+      potential = weightedFrom(derivedFloat(careerSeed, streams.gen("rook-elite-pot", key)), pots, (p) => elite.weights[p] ?? 0);
+    } else {
+      potential = Math.min(potential, ceiling);
+    }
+  }
   potential = clamp(potential, overall, 99);
 
   const countries = REGION_COUNTRIES[region];
@@ -561,7 +854,11 @@ export function rookieView(
     overall,
     attrOffsets: deriveAttrOffsets(id, careerSeed, archetype),
     potential,
-    peakAge: derivePeakAge(id, careerSeed),
+    // DEV-01b (model 2): his maturity profile's peak, never sooner than his
+    // gap needs (an elite kid is never an early maturer out of time).
+    peakAge: dev01
+      ? peakAgeWithRoom(developmentProfileOf(id, careerSeed).peakAge, age, potential - overall)
+      : derivePeakAge(id, careerSeed),
     declineRate: deriveDeclineRate(id, careerSeed),
     anchored: false,
   };
@@ -593,13 +890,15 @@ export function playerViewById(id: string, ctx: ViewCtx): CareerPlayerView | nul
     }
     if (genSeason > ctx.seasonIndex) return null; // not yet in the world
     const infinite = genSeason >= CAREER_SEASONS.length;
-    const base = rookieView(region as Region, genSeason, n, ctx.careerSeed, infinite, ctx.world.rookieNames?.[id]);
+    const model = growthModelOf(ctx.world);
+    const base = rookieView(region as Region, genSeason, n, ctx.careerSeed, infinite, ctx.world.rookieNames?.[id], model);
     const overall = clamp(base.overall + (ctx.world.overallDelta[id] ?? 0), 60, 99);
     return {
       ...base,
       age: base.age + (seasonYear(ctx.seasonIndex) - seasonYear(genSeason)),
       overall,
-      potential: Math.max(base.potential, overall),
+      // DEV-01e (model 2): the potential never moves (rc.31 lifted it to the overall).
+      potential: isGrowthContract(model) ? base.potential : Math.max(base.potential, overall),
     };
   }
 
@@ -641,7 +940,10 @@ export function scoutedBand(
   level: ScoutLevel,
   careerSeed: number,
   playerId: string,
+  /** rc.32 (DEV-01e): the career's development model (absent = rc.31's band). */
+  model?: number,
 ): PotentialBand {
+  if (isGrowthContract(model)) return nestedBand(potential, level, careerSeed, playerId);
   const w = CAREER_SCOUT.bandWidthByLevel[level] ?? 0;
   if (w <= 0) {
     const exact = Math.round(potential);
@@ -654,6 +956,38 @@ export function scoutedBand(
   const min = Math.max(Math.floor(potential - below), Math.floor(overall));
   const max = Math.min(Math.ceil(potential + (2 * w - below)), 99);
   return { min, max, level };
+}
+
+/**
+ * DEV-01e (model 2): the honest band. It reads the potential only — never the
+ * current overall, the day or a reload — so it never moves; each report
+ * narrows INSIDE the band shown before (level 0 → 1 → 2 → exact at 3). At
+ * each level the truth's place is a uniform draw over every position the
+ * previous band allows, so it can sit at the floor, in the middle or at the
+ * top; the widths are CAREER_SCOUT.bandWidthByLevel × 2 (rc.31's). The floor
+ * may sit under the current overall: a player at or past his expected peak
+ * reads so, instead of a ceiling he can never reach. Kept inside 60–99.
+ */
+function nestedBand(potential: number, level: ScoutLevel, careerSeed: number, playerId: string): PotentialBand {
+  const truth = clamp(Math.round(potential), 60, 99);
+  let below = 0;
+  let width = 0;
+  for (let l = 0; l <= level; l++) {
+    const w = 2 * (CAREER_SCOUT.bandWidthByLevel[l] ?? 0);
+    if (w <= 0) return { min: truth, max: truth, level };
+    // Points of the band under the truth: any value the outer band allows.
+    let lo = l === 0 ? 0 : Math.max(0, below - (width - w));
+    let hi = l === 0 ? w : Math.min(w, below);
+    if (l === 0) {
+      lo = Math.max(lo, truth + w - 99); // never above 99
+      hi = Math.min(hi, truth - 60); // never under 60
+      if (hi < lo) hi = lo;
+    }
+    const f = derivedFloat(careerSeed, streams.gen("band2", `${playerId}:${l}`));
+    below = lo + Math.min(hi - lo, Math.floor(f * (hi - lo + 1)));
+    width = w;
+  }
+  return { min: truth - below, max: truth - below + width, level };
 }
 
 // ---------------------------------------------------------------------------
@@ -748,7 +1082,19 @@ export function autoDrillFor(coachBonusType: StatKey | null, week: number): Dril
   return drills[Math.max(0, week - 1) % drills.length].id;
 }
 
-interface GainCtx {
+/**
+ * rc.32 (DEV-01): what the growth contract needs on top of rc.31's tick
+ * context — the save's development model, the day (an exact age, so no step
+ * at the rollover) and the career seed (the player's derived profile). All
+ * optional: absent = rc.31's model.
+ */
+export interface GrowthCtx {
+  model?: number;
+  day?: number;
+  careerSeed?: number;
+}
+
+interface GainCtx extends GrowthCtx {
   seasonIndex: number;
   coachOverall: number | null;
   /** Additive training-efficiency bonus from the gear ladder (0..~0.35). */
@@ -758,6 +1104,32 @@ interface GainCtx {
   weeks: number;
   /** v2.0 (R27): this week's team drill, if any. */
   drill?: DrillEffect | null;
+}
+
+/** DEV-01: a squad player's profile and real peak under the growth contract. */
+function squadArcOf(
+  p: Pick<SquadPlayer, "id" | "potential">,
+  careerSeed: number | undefined,
+): { profile: DevelopmentProfile; target: number } {
+  const profile = developmentProfileOf(p.id, careerSeed ?? 0);
+  return { profile, target: peakTargetOf(p.potential, profile) };
+}
+
+/**
+ * DEV-01d (model 2): the base pace per training-week equivalent — the yearly
+ * pace toward his real peak (his stored peak age, his profile's plateau and
+ * offset) over CAREER_DEV.trainingWeeksPerYear.
+ */
+function contractPacePerWeek(p: SquadPlayer, ctx: GainCtx): number {
+  const { profile, target } = squadArcOf(p, ctx.careerSeed);
+  const pace = growthPacePerYear({
+    overall: p.overall,
+    target,
+    exactAge: exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day),
+    peakAge: p.peakAge,
+    plateauYears: profile.plateauYears,
+  });
+  return pace / CAREER_DEV.trainingWeeksPerYear;
 }
 
 /**
@@ -784,13 +1156,20 @@ export function intensityMultFor(intensity: SquadPlayer["trainingIntensity"]): n
 
 /** Raw overall gain for `weeks` training-week equivalents (before caps). */
 function rawGain(p: SquadPlayer, ctx: GainCtx): number {
-  const age = ageOf(p.birthYear, ctx.seasonIndex);
-  const headroom = Math.max(0, p.potential - p.overall);
-  const headroomMult = headroom / (headroom + CAREER_TRAINING.headroomSoftK);
+  // DEV-01 (model 2): the pace toward his real peak replaces rc.31's
+  // weeklyBase × age band × headroom/(headroom + K); the training multipliers
+  // below are unchanged.
+  let base: number;
+  if (isGrowthContract(ctx.model)) {
+    base = contractPacePerWeek(p, ctx);
+  } else {
+    const age = ageOf(p.birthYear, ctx.seasonIndex);
+    const headroom = Math.max(0, p.potential - p.overall);
+    const headroomMult = headroom / (headroom + CAREER_TRAINING.headroomSoftK);
+    base = CAREER_TRAINING.weeklyBase * growthMultFor(age) * headroomMult;
+  }
   return (
-    CAREER_TRAINING.weeklyBase *
-    growthMultFor(age) *
-    headroomMult *
+    base *
     coachMultFor(ctx.coachOverall) *
     (1 + ctx.gearBonus) *
     focusShareFor(p.trainingFocus, ctx.coachOverall) *
@@ -825,7 +1204,7 @@ function grownOffsets(
   return out;
 }
 
-export interface TrainTickCtx {
+export interface TrainTickCtx extends GrowthCtx {
   seasonIndex: number;
   coachOverall: number | null;
   /** Additive training-efficiency bonus from the gear ladder. */
@@ -837,6 +1216,47 @@ export interface TrainTickCtx {
   weeks?: number;
   /** v2.0 (R27): this week's team drill, if any. */
   drill?: DrillEffect | null;
+  /**
+   * DEV-01b (model 2): the share of a year this tick lives through — the
+   * calendar day of the daily tick (1/160 of a season). Bonus training (an
+   * insert, a freed matchday) passes none: only time ages a player.
+   */
+  agingYears?: number;
+}
+
+/** DEV-01 (model 2): a training day's share of the year (32 weeks × Mon–Fri). */
+const TRAINING_DAY_YEARS = 1 / (CAREER_TRAINING.trainingDaysPerWeek * CAREER_CALENDAR.weeksPerSeason);
+
+/**
+ * DEV-01 (model 2): one tick of the growth contract. Growth runs at the pace
+ * toward his real peak (potential ± offset), never past it, under the season
+ * cap only (no split cap); past his plateau the tick instead loses
+ * declinePerYear × the year share it lives × trainingDeclineDampen — the
+ * decline lands day by day, never at the rollover.
+ */
+function contractTick(p: SquadPlayer, ctx: TrainTickCtx & { weeks: number }): { player: SquadPlayer; gained: number } {
+  const { profile, target } = squadArcOf(p, ctx.careerSeed);
+  const raw = rawGain(p, ctx);
+  const gained = floor4(
+    Math.max(0, Math.min(raw, CAREER_DEV.seasonGainCap - ctx.seasonGained, target - p.overall)),
+  );
+  const exactAge = exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day);
+  const decline = ctx.agingYears
+    ? declinePerYearOf({ exactAge, peakAge: p.peakAge, plateauYears: profile.plateauYears, declineRate: p.declineRate }) *
+      ctx.agingYears *
+      CAREER_AGE.trainingDeclineDampen
+    : 0;
+  const overall = clamp(round4(p.overall + gained - decline), 60, 99);
+  return {
+    player: {
+      ...p,
+      overall,
+      attrOffsets: grownOffsets(p, ctx.weeks, overall, ctx.drill),
+      gainedThisSplit: round4(ctx.splitGained + gained),
+      gainedThisSeason: round4(ctx.seasonGained + gained),
+    },
+    gained,
+  };
 }
 
 /**
@@ -852,6 +1272,7 @@ export function trainWeek(
   ctx: TrainTickCtx,
 ): { player: SquadPlayer; gained: number } {
   const weeks = ctx.weeks ?? 1;
+  if (isGrowthContract(ctx.model)) return contractTick(p, { ...ctx, weeks });
   const raw = rawGain(p, { ...ctx, weeks });
   const gained = floor4(
     Math.max(
@@ -884,10 +1305,18 @@ export function trainWeek(
  */
 export function trainDay(
   p: SquadPlayer,
-  ctx: Omit<TrainTickCtx, "weeks">,
+  ctx: Omit<TrainTickCtx, "weeks" | "agingYears"> & {
+    /** DEV-01 (model 2): a calendar training day — he also ages a day's share of the year. */
+    aging?: boolean;
+  },
   weekShare = 1,
 ): { player: SquadPlayer; gained: number } {
-  return trainWeek(p, { ...ctx, weeks: weekShare / CAREER_TRAINING.trainingDaysPerWeek });
+  const { aging, ...rest } = ctx;
+  return trainWeek(p, {
+    ...rest,
+    weeks: weekShare / CAREER_TRAINING.trainingDaysPerWeek,
+    ...(aging ? { agingYears: TRAINING_DAY_YEARS } : {}),
+  });
 }
 
 /**
@@ -897,22 +1326,36 @@ export function trainDay(
  */
 export function trainingProjection(
   p: SquadPlayer,
-  ctx: {
+  ctx: GrowthCtx & {
     seasonIndex: number;
     coachOverall: number | null;
     gearBonus: number;
     trainingWeekBonus: boolean;
     drill?: DrillEffect | null;
   },
-): { weeklyOverall: number; weeklyOffset: number } {
+): {
+  weeklyOverall: number;
+  weeklyOffset: number;
+  /** DEV-01 (model 2): overall lost per week past his plateau (0 before it; rc.31: 0, the rollover took it). */
+  weeklyDecline: number;
+} {
+  const focused = p.trainingFocus !== "balanced" && p.trainingFocus !== "auto";
+  const weeklyOffset = focused ? CAREER_TRAINING.focusOffsetPerWeek : 0;
+  if (isGrowthContract(ctx.model)) {
+    const { profile, target } = squadArcOf(p, ctx.careerSeed);
+    const exactAge = exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day);
+    const weeklyDecline = round2(
+      (declinePerYearOf({ exactAge, peakAge: p.peakAge, plateauYears: profile.plateauYears, declineRate: p.declineRate }) *
+        CAREER_AGE.trainingDeclineDampen) /
+        CAREER_CALENDAR.weeksPerSeason,
+    );
+    const weeklyOverall = round2(Math.max(0, Math.min(rawGain(p, { ...ctx, weeks: 1 }), target - p.overall)));
+    return { weeklyOverall, weeklyOffset, weeklyDecline };
+  }
   const weeklyOverall = round2(
     Math.max(0, Math.min(rawGain(p, { ...ctx, weeks: 1 }), p.potential - p.overall)),
   );
-  const focused = p.trainingFocus !== "balanced" && p.trainingFocus !== "auto";
-  return {
-    weeklyOverall,
-    weeklyOffset: focused ? CAREER_TRAINING.focusOffsetPerWeek : 0,
-  };
+  return { weeklyOverall, weeklyOffset, weeklyDecline: 0 };
 }
 
 /**
@@ -923,7 +1366,7 @@ export function trainingProjection(
  */
 export function trainingEta(
   p: SquadPlayer,
-  ctx: {
+  ctx: GrowthCtx & {
     seasonIndex: number;
     coachOverall: number | null;
     gearBonus: number;
@@ -938,20 +1381,27 @@ export function trainingEta(
   splitCapLeft: number;
   seasonCapLeft: number;
   atPotential: boolean;
+  /** DEV-01 (model 2): false — the split has no cap of its own (rc.31: true, CAREER_TRAINING.maxSplitGain). */
+  splitCapped: boolean;
 } {
   const whole = Math.floor(p.overall + 1e-9);
   const progress = clamp(p.overall - whole, 0, 1);
   const toNext = round2(Math.max(0, whole + 1 - p.overall));
-  const splitCapLeft = round2(Math.max(0, CAREER_TRAINING.maxSplitGain - p.gainedThisSplit));
-  const seasonCapLeft = round2(Math.max(0, CAREER_TRAINING.maxSeasonGain - p.gainedThisSeason));
-  const atPotential = p.potential - p.overall < 1e-6;
+  const dev01 = isGrowthContract(ctx.model);
+  // DEV-01 (model 2): the season cap only, and his real peak (potential ± offset) as the ceiling.
+  const ceiling = dev01 ? squadArcOf(p, ctx.careerSeed).target : p.potential;
+  const seasonCapLeft = round2(
+    Math.max(0, (dev01 ? CAREER_DEV.seasonGainCap : CAREER_TRAINING.maxSeasonGain) - p.gainedThisSeason),
+  );
+  const splitCapLeft = dev01 ? seasonCapLeft : round2(Math.max(0, CAREER_TRAINING.maxSplitGain - p.gainedThisSplit));
+  const atPotential = ceiling - p.overall < 1e-6;
   const weeklyRate = trainingProjection(p, ctx).weeklyOverall;
-  const capLeft = Math.min(splitCapLeft, seasonCapLeft, Math.max(0, p.potential - p.overall));
+  const capLeft = Math.min(splitCapLeft, seasonCapLeft, Math.max(0, ceiling - p.overall));
   const daysToNext =
     weeklyRate <= 0 || capLeft < toNext - 1e-9
       ? null
       : Math.max(1, Math.ceil((toNext / weeklyRate) * CAREER_TRAINING.trainingDaysPerWeek));
-  return { progress, toNext, daysToNext, weeklyRate, splitCapLeft, seasonCapLeft, atPotential };
+  return { progress, toNext, daysToNext, weeklyRate, splitCapLeft, seasonCapLeft, atPotential, splitCapped: !dev01 };
 }
 
 /**
@@ -963,7 +1413,7 @@ export function trainingEta(
  */
 export function applyMatchXp(
   p: SquadPlayer,
-  ctx: {
+  ctx: GrowthCtx & {
     seasonIndex: number;
     fieldQuality: number;
     isSub: boolean;
@@ -971,6 +1421,11 @@ export function applyMatchXp(
     gearBonus: number;
     /** Scale for partial match XP (scrims grant a fraction; default 1). */
     xpWeeksOverride?: number;
+    /**
+     * DEV-01 (model 2): the series this player actually played in the event —
+     * XP = series × CAREER_DEV.xpWeeksPerSeries × field quality.
+     */
+    seriesPlayed?: number;
   },
 ): SquadPlayer {
   const quality = clamp(
@@ -978,6 +1433,29 @@ export function applyMatchXp(
     CAREER_TRAINING.fieldQualityMin,
     CAREER_TRAINING.fieldQualityMax,
   );
+  if (isGrowthContract(ctx.model)) {
+    // DEV-01 base growth: XP comes from the series a player actually plays.
+    // A reserve who did not play keeps his training days and earns no
+    // starter XP (rc.31 paid the registered sub subXpFactor of the event).
+    if (ctx.isSub) return p;
+    const weeks =
+      (ctx.xpWeeksOverride !== undefined
+        ? ctx.xpWeeksOverride
+        : (ctx.seriesPlayed ?? 0) * CAREER_DEV.xpWeeksPerSeries) * quality;
+    if (weeks <= 0) return p;
+    return trainWeek(p, {
+      seasonIndex: ctx.seasonIndex,
+      coachOverall: ctx.coachOverall,
+      gearBonus: ctx.gearBonus,
+      trainingWeekBonus: false,
+      splitGained: p.gainedThisSplit,
+      seasonGained: p.gainedThisSeason,
+      weeks,
+      model: ctx.model,
+      day: ctx.day,
+      careerSeed: ctx.careerSeed,
+    }).player;
+  }
   const baseWeeks = ctx.xpWeeksOverride ?? CAREER_TRAINING.matchXpWeeks;
   const weeks = baseWeeks * quality * (ctx.isSub ? CAREER_TRAINING.subXpFactor : 1);
   const raw = rawGain(p, {
@@ -1028,24 +1506,37 @@ export function squadRollover(
   p: SquadPlayer,
   seasonIndex: number,
   rng: Rng,
+  /** rc.32 (DEV-01): the save's development model (absent = rc.31's rollover decline). */
+  growth?: GrowthCtx,
 ): { player: SquadPlayer; declined: number; announcedRetirement: boolean; retiresNow: boolean } {
   const age = ageOf(p.birthYear, seasonIndex);
   const cap = CAREER_DEV.attrOffsetCap;
+  // DEV-01b (model 2): the decline already landed day by day through the
+  // season (contractTick) — the rollover moves no overall; past his plateau
+  // the mechanics-first offset drift still applies.
+  const dev01 = isGrowthContract(growth?.model);
 
   const d = CAREER_AGE.declineByAge;
   const baseDecline = age >= 27 ? d.a27plus : age >= 25 ? d.a25_26 : age >= 23 ? d.a23_24 : age >= 22 ? d.a22 : 0;
-  const declineAmount =
-    baseDecline *
-    (CAREER_AGE.declineRateMult[p.declineRate] ?? 1) *
-    // v1: training focus is always set (auto by default), so active-training
-    // dampening applies to every squad player.
-    CAREER_AGE.trainingDeclineDampen;
+  const declineAmount = dev01
+    ? 0
+    : baseDecline *
+      (CAREER_AGE.declineRateMult[p.declineRate] ?? 1) *
+      // v1: training focus is always set (auto by default), so active-training
+      // dampening applies to every squad player.
+      CAREER_AGE.trainingDeclineDampen;
 
-  const overall = clamp(round2(p.overall - declineAmount), 60, 99);
+  const overall = dev01 ? p.overall : clamp(round2(p.overall - declineAmount), 60, 99);
   const declined = round2(p.overall - overall);
+  const declining = dev01
+    ? developmentPhaseOf(exactAgeOf(age, 1), {
+        peakAge: p.peakAge,
+        plateauYears: squadArcOf(p, growth?.careerSeed).profile.plateauYears,
+      }) === "declining"
+    : declined > 0;
 
   const attrOffsets = { ...p.attrOffsets };
-  if (declined > 0) {
+  if (declining) {
     // Mechanics decline first…
     attrOffsets.mechanics = round2(
       Math.max(attrOffsets.mechanics - CAREER_AGE.mechanicsDeclineOffset, -cap),

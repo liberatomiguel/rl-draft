@@ -33,7 +33,7 @@ import {
   seasonSchedule,
 } from "@/engine/career/calendar";
 import { hasChampion, qualifierOutcomeOf } from "@/engine/career/careerResults";
-import { applyMatchXp } from "@/engine/career/development";
+import { applyMatchXp, growthCtxOf, userSeriesPlayed } from "@/engine/career/development";
 import { gearTrainingBonus, pointsFor, prizeFor, prizePoolPaidFor, quantize, repGainFor, repTierOf } from "@/engine/career/economy";
 import type {
   CareerDifficulty,
@@ -690,6 +690,7 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     save = stepEventRound(save);
     expect(save.activeEvent!.tournament.stage).toBe("finished");
     // Match XP lands exactly once, at the finish (white-box mirror of finishEvent).
+    // rc.32 (DEV-01): the XP is per series the fielded players actually played.
     const gearBonus = gearTrainingBonus(save.finances.gear);
     const expectedXp = save.squad.map(
       (p) =>
@@ -699,6 +700,8 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
           isSub: false,
           coachOverall: save.coach?.overall ?? null,
           gearBonus,
+          seriesPlayed: userSeriesPlayed(save.activeEvent!.tournament),
+          ...growthCtxOf(save),
         }).gainedThisSeason,
     );
     const done = finishEvent(save);

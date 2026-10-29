@@ -123,13 +123,39 @@ export const CAREER_PT: CareerCopy = {
     avgOverall: "OVR médio",
     finalTitle: "Última chamada",
     finalKicker: "A dificuldade molda adversários e pressão financeira — nunca quem você pode contratar.",
-    styleTitle: "Estilo de gestão",
-    styleHandsOn: "Mão na massa",
-    styleHandsOnDesc: "Você define cada foco, cada proposta, cada escalação.",
-    styleBalanced: "Equilibrado",
-    styleBalancedDesc: "Padrões inteligentes, recomendações em destaque. Você confirma.",
-    styleDelegate: "Delegar",
-    styleDelegateDesc: "O coach cuida da rotina — tudo reportado, assuma quando quiser.",
+    // rc.32 (BAL-02): os presets da carreira substituem a etapa de Estilo de gestão.
+    presets: {
+      easy: {
+        label: "Fácil",
+        sentence: "Uma primeira carreira tolerante: uma pequena vantagem em cada partida e mais dinheiro para aprender.",
+      },
+      normal: {
+        label: "Normal",
+        sentence: "A carreira como foi pensada: partidas justas e um orçamento que faz de cada contratação uma escolha.",
+      },
+      hard: {
+        label: "Difícil",
+        sentence: "Rivais mais fortes e dinheiro mais curto — e você toca cada semana sozinho.",
+      },
+    } as Record<"easy" | "normal" | "hard", { label: string; sentence: string }>,
+    presetRows: {
+      matches: "Sua vantagem nas partidas",
+      chemistry: "Valor da química (você / rivais)",
+      budget: "Orçamento inicial",
+      prizes: "Premiações",
+      asks: "Pedidas salariais",
+      sponsors: "Patrocínios",
+      training: "Treino",
+      cups: "Copas comunitárias",
+    } as Record<string, string>,
+    presetEdge: (n: string) => `${n} de rating`,
+    presetChemistry: (you: string, them: string) => `até +${you} / +${them}`,
+    presetMult: (x: string) => `×${x}`,
+    presetTrainingGuided: "Delegado ao seu coach",
+    presetTrainingManual: "Você planeja cada semana",
+    presetCupsAuto: "Inscrição automática",
+    presetCupsManual: "Você escolhe",
+    presetsNote: "As configurações continuam suas: a delegação liga e desliga na tela de Treino.",
     summaryTitle: "A papelada",
     found: (org: string) => `Fundar ${org}`,
     founded: "EST. 2020",
@@ -484,6 +510,21 @@ export const CAREER_PT: CareerCopy = {
       `Escalar mais uma cara nova custa ${pct}% dos seus ${pts} Pontos da Temporada`,
     finalSeason: "Última temporada",
     squadFull: "Elenco cheio (3 titulares + 1 sub)",
+    // rc.32 (M2, provisório): a regra da renovação e os dois valores.
+    renewalTerms: "Termos da renovação",
+    renewalRuleCapFloor: (cap: string, floorPct: number) =>
+      `Renovando um jogador seu: o aumento tem teto de ×${cap} o salário atual e nunca fica abaixo de ${floorPct}% do valor de mercado.`,
+    renewalRuleFresh: "A renovação cobra o valor de mercado dele.",
+    renewalMarketAsk: "Valor de mercado",
+    renewalAsk: "Pedida na renovação",
+    renewalBoundFresh: "Abaixo do teto — ele renova pelo valor de mercado.",
+    renewalBoundCap: (cap: string) => `No teto de ×${cap} o salário atual.`,
+    renewalBoundFloor: (floorPct: number) => `Segurado em ${floorPct}% do valor de mercado.`,
+    renewalAmbition: (pct: number) => `+${pct}% de ambição: um craque num clube menor pede mais.`,
+    renewalBlockbuster: (pct: number) => `+${pct}%: você recusou uma proposta bombástica por ele.`,
+    renewalsTitle: "Contratos para renovar",
+    renewalsEmpty: "Nenhum contrato termina nesta temporada.",
+    renewalsGo: "Renovar no Elenco",
   },
 
   player: {
@@ -585,6 +626,10 @@ export const CAREER_PT: CareerCopy = {
     etaAtPotential: "No potencial — não há mais o que aprender aqui",
     capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
       `Neste split +${split} de ${splitMax} · temporada +${season} de ${seasonMax}`,
+    // rc.32 (DEV-01): o contrato de evolução tem só o teto da temporada, um auge e um declínio.
+    capLineSeason: (season: string, seasonMax: number) => `Nesta temporada +${season} de ${seasonMax}`,
+    etaAtPeak: "No auge — ele segura esse nível por enquanto",
+    declineLine: (perWeek: string) => `Passou do auge: cerca de −${perWeek} OVR por semana`,
     effectsTitle: "O que seus atributos fazem",
     effectsHint: "Linha de atributos do time → os modificadores exatos que a simulação aplica. Treine o que seus resultados pedem.",
     effectWhen: {

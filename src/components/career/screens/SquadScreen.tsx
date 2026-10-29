@@ -12,7 +12,7 @@
  * counter-offer widget — rejections keep the modal open and harden the odds)
  * and release (severance from the same formula releasePlayerFlow charges).
  *
- * All money math mirrors the flow layer 1:1 — renewalAskFor/severanceFor/payrollProjection are
+ * All money math mirrors the flow layer 1:1 — renewalTermsFor/severanceFor/payrollProjection are
  * imported READ-ONLY from the engine so the preview can never drift.
  */
 
@@ -22,7 +22,6 @@ import { CAREER_STABILITY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { payrollProjection, severanceFor } from "@/engine/career/economy";
-import { renewalAskFor } from "@/engine/career/market";
 import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -44,6 +43,7 @@ import { CoachEffectLines } from "@/components/career/CoachEffects";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
+import { RenewalReadout, renewalTermsOf } from "@/components/career/RenewalReadout";
 import { PlayerSheet, type PlayerSheetData } from "@/components/career/PlayerSheet";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -153,16 +153,10 @@ export function SquadScreen() {
           : t.STAT_LABELS[p.trainingFocus],
     });
 
-  // --- renew ask preview (the same renewalAskFor renewPlayerFlow prices) -----
+  // --- renew ask preview (the same renewalTermsFor renewPlayerFlow prices) ---
   // ECO-03 (R47): a reserve renews at his normal value, like a starter.
-  const askFor = (p: SquadPlayer, lengthSeasons: 1 | 2 | 3): number =>
-    renewalAskFor(p, {
-      rep: save.reputation,
-      seasonIndex: save.clock.seasonIndex,
-      difficulty: save.difficulty,
-      careerSeed: save.careerSeed,
-      lengthSeasons,
-    });
+  // rc.32 (M2, provisional): the raise cap and the market floor, readout below.
+  const askFor = (p: SquadPlayer, lengthSeasons: 1 | 2 | 3): number => renewalTermsOf(save, p, lengthSeasons).ask;
 
   // v0.3 wage talk — fresh ask + this window's rejected counters (both re-read
   // from the live save so a rejection refreshes the widget in place).
@@ -604,6 +598,7 @@ export function SquadScreen() {
                 ))}
               </div>
             </div>
+            <RenewalReadout terms={renewalTermsOf(save, renew, renewLen)} C={C} />
             <SalaryNegotiator
               ask={renewAsk}
               offered={Math.min(renewOffer || renewAsk, renewAsk)}

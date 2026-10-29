@@ -34,6 +34,7 @@ import {
   CAREER_AGE,
   CAREER_CALENDAR,
   CAREER_CHEMISTRY,
+  CAREER_DEV,
   CAREER_GEAR,
   CAREER_QUALIFIER,
   CAREER_SEASONS,
@@ -42,9 +43,10 @@ import {
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
   CHEMISTRY,
-  DIFFICULTY,
+  TEAM_RATING,
   TOURNAMENT,
 } from "@/config/balance";
+import { careerMatchProfile } from "./difficulty";
 import {
   coachById,
   lineupById,
@@ -84,13 +86,21 @@ import type {
 } from "../types";
 import {
   anchorOverall,
+  declinePerYearOf,
   deriveArchetype,
   deriveAttrOffsets,
   deriveDeclineRate,
   derivePeakAge,
+  developmentProfileOf,
+  exactAgeOf,
   fieldQualityFor,
   fillerPlayerView,
+  growthModelOf,
+  growthPacePerYear,
+  isGrowthContract,
   peakAgeOf,
+  peakAgeWithRoom,
+  peakTargetOf,
   playerViewById,
   retirementChanceFor,
   rookieView,
@@ -339,6 +349,8 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     version: 0,
     // rc.29 (CAR-01): this world's fillers never wear a real nickname.
     nameBankVersion: 2,
+    // rc.32 (DEV-01, R55): a new career runs CAREER_DEV.growthModel for life.
+    ...(isGrowthContract(CAREER_DEV.growthModel) ? { growthModel: CAREER_DEV.growthModel } : {}),
   };
 }
 
@@ -361,7 +373,12 @@ export interface StarterOffer {
  * filler / rookie bank — in MENA, APAC and SSA every PLAYER_NAME_BANK name is
  * a filler pro's, so each starter shared a gamertag with a regional opponent.
  */
-export function starterRosterOffers(region: Region, careerSeed: number): StarterOffer[] {
+export function starterRosterOffers(
+  region: Region,
+  careerSeed: number,
+  /** rc.32 (DEV-01): the model the new career runs (a founding roster is always new). */
+  model: number = CAREER_DEV.growthModel,
+): StarterOffer[] {
   // Nine distinct names: rank the bank deterministically, take the first nine.
   const bank = STARTER_NAME_BANK[region];
   const names = bank
@@ -403,7 +420,11 @@ export function starterRosterOffers(region: Region, careerSeed: number): Starter
         overall,
         attrOffsets: deriveAttrOffsets(id, careerSeed, archetype),
         potential,
-        peakAge: derivePeakAge(id, careerSeed),
+        // DEV-01b (model 2): his maturity profile's peak — never sooner than
+        // the headroom the offer promises needs, so the ceiling stays reachable.
+        peakAge: isGrowthContract(model)
+          ? peakAgeWithRoom(developmentProfileOf(id, careerSeed).peakAge, age, potential - overall)
+          : derivePeakAge(id, careerSeed),
         declineRate: deriveDeclineRate(id, careerSeed),
         anchored: false,
       });
@@ -613,6 +634,9 @@ export function userTeamFor(input: UserTeamInput): {
     difficulty: input.difficulty,
     difficultyShift: 0,
     ratingBonus: Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax),
+    // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
+    chemistryMaxBonus: careerMatchProfile(input.difficulty).chemistryMaxBonus,
+    rollRange: careerMatchProfile(input.difficulty).userRollRange,
   });
 
   const fieldedIds = fieldedPlayers.filter((p): p is SquadPlayer => p !== null).map((p) => p.id);
@@ -740,9 +764,52 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
       : undefined,
     specialIds: [],
     difficulty: ctx.difficulty,
-    difficultyShift: DIFFICULTY[ctx.difficulty].opponentRatingShift,
+    // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
+    difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
+    chemistryMaxBonus: careerMatchProfile(ctx.difficulty).opponentChemistryMaxBonus,
+    rollRange: careerMatchProfile(ctx.difficulty).aiRollRange,
   };
-  return assembleTournamentTeam(input);
+  const team = assembleTournamentTeam(input);
+  // rc.32 (30/10, PROVISIONAL — CAREER_WORLD.fillerCapToBestReal): a filler
+  // org never out-rates the region's best real lineup.
+  if (!isFiller || !CAREER_WORLD.fillerCapToBestReal) return team;
+  const cap = bestRealOrgRating(org.region, ctx);
+  if (cap === null || intrinsicRating(team) <= cap) return team;
+  // A flat cut lands on the cap; a second pass corrects the superteam
+  // compression when the side sat above TEAM_RATING.superteamPivot.
+  let bonus = cap - intrinsicRating(team);
+  let capped = assembleTournamentTeam({ ...input, ratingBonus: bonus });
+  const left = intrinsicRating(capped) - cap;
+  if (left > 0.05) {
+    bonus -= left / TEAM_RATING.superteamSlope;
+    capped = assembleTournamentTeam({ ...input, ratingBonus: bonus });
+  }
+  return capped;
+}
+
+/**
+ * rc.32 (30/10, PROVISIONAL): the intrinsic rating of the region's strongest
+ * REAL org right now (null when the region has none yet) — the filler cap.
+ * Memoized per world state and context (pure inputs, deterministic).
+ */
+const bestRealMemo = new WeakMap<WorldState, Map<string, number | null>>();
+function bestRealOrgRating(region: Region, ctx: OrgTeamCtx): number | null {
+  let memo = bestRealMemo.get(ctx.world);
+  if (!memo) {
+    memo = new Map();
+    bestRealMemo.set(ctx.world, memo);
+  }
+  const key = `${region}|${ctx.seasonIndex}|${ctx.careerSeed}|${ctx.difficulty}`;
+  const hit = memo.get(key);
+  if (hit !== undefined) return hit;
+  let best: number | null = null;
+  for (const org of Object.values(ctx.world.orgs)) {
+    if (org.region !== region || !orgById.has(org.ref)) continue;
+    const r = intrinsicRating(orgTeamFor(org.ref, ctx));
+    if (best === null || r > best) best = r;
+  }
+  memo.set(key, best);
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -1024,7 +1091,10 @@ export function localTeamFor(
       },
       specialIds: [],
       difficulty: ctx.difficulty,
-      difficultyShift: DIFFICULTY[ctx.difficulty].opponentRatingShift,
+      // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
+      difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
+      chemistryMaxBonus: careerMatchProfile(ctx.difficulty).opponentChemistryMaxBonus,
+      rollRange: careerMatchProfile(ctx.difficulty).aiRollRange,
     });
   };
   const first = assemble(0);
@@ -1507,6 +1577,7 @@ export function agePassAndIntake(
     version: world.version + 1,
     ...(world.rookieNames ? { rookieNames: { ...world.rookieNames } } : {}),
     ...(world.nameBankVersion !== undefined ? { nameBankVersion: world.nameBankVersion } : {}),
+    ...(world.growthModel !== undefined ? { growthModel: world.growthModel } : {}),
   };
   for (const ref of Object.keys(world.orgs)) {
     next.orgs[ref] = {
@@ -1597,9 +1668,12 @@ export function agePassAndIntake(
   //    ids the market had touched (present in overallDelta) ever grew, so
   //    fillers and rookies never reached their potential. Growth is written
   //    into overallDelta (a fictional's first entry initializes at 0).
-  const devIds = new Set<string>(Object.keys(next.overallDelta));
+  //    rc.32 (DEV-01, model 2): the world grows week by week instead
+  //    (`worldGrowthWeek`, every Monday) — no lump at the rollover.
+  const lumpGrowth = !isGrowthContract(growthModelOf(world));
+  const devIds = new Set<string>(lumpGrowth ? Object.keys(next.overallDelta) : []);
   const addFictional = (id: string) => {
-    if (id.startsWith("fic:") || id.startsWith("rook:")) devIds.add(id);
+    if (lumpGrowth && (id.startsWith("fic:") || id.startsWith("rook:"))) devIds.add(id);
   };
   for (const ref of Object.keys(next.orgs)) next.orgs[ref].playerIds.forEach(addFictional);
   next.freeAgentIds.forEach(addFictional);
@@ -1631,7 +1705,7 @@ export function agePassAndIntake(
   const rookieNames: Record<string, string> = { ...(next.rookieNames ?? {}) };
   for (const region of REGIONS) {
     for (let i = 0; i < CAREER_WORLD.rookiesPerRegionPerSeason; i++) {
-      const view = rookieView(region, toSeasonIndex, i, careerSeed, infinite);
+      const view = rookieView(region, toSeasonIndex, i, careerSeed, infinite, undefined, growthModelOf(world));
       const name = pickRookieName(
         region,
         view.name,
@@ -1647,6 +1721,65 @@ export function agePassAndIntake(
   next.rookieNames = rookieNames;
 
   return { world: next, retired, rookies };
+}
+
+/**
+ * DEV-01 (rc.32, model 2): one week of the AI world's development, every
+ * Monday — the same contract as the user's squad, at CAREER_DEV.worldTrainingMult:
+ * the pace toward each player's real peak (potential ± offset) for 1/32 of a
+ * year, never past it, the season cap shared out per week, and past his
+ * plateau a 1/32 share of his yearly decline (undampened, like rc.31's world).
+ * Fictional players and off-script real ones develop (an anchored real player
+ * follows his cards); the user's squad is skipped. Rng-free and sorted, so
+ * the same world gives the same week. A world on rc.31's model is returned
+ * untouched (it develops at the rollover, `agePassAndIntake`).
+ */
+export function worldGrowthWeek(
+  world: WorldState,
+  ctx: { seasonIndex: number; week: number; careerSeed: number; userSquadIds: readonly string[] },
+): WorldState {
+  if (!isGrowthContract(growthModelOf(world))) return world;
+  const weeks = CAREER_CALENDAR.weeksPerSeason;
+  const viewCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, world };
+  const user = new Set(ctx.userSquadIds);
+  const ids = new Set<string>(Object.keys(world.overallDelta));
+  const addFictional = (id: string) => {
+    if (id.startsWith("fic:") || id.startsWith("rook:")) ids.add(id);
+  };
+  for (const org of Object.values(world.orgs)) org.playerIds.forEach(addFictional);
+  world.freeAgentIds.forEach(addFictional);
+
+  const delta: Record<string, number> = { ...world.overallDelta };
+  let changed = false;
+  for (const id of [...ids].sort()) {
+    if (user.has(id)) continue;
+    const view = playerViewById(id, viewCtx);
+    if (!view) continue;
+    const profile = developmentProfileOf(id, ctx.careerSeed);
+    const exactAge = exactAgeOf(view.age, (ctx.week - 1) * CAREER_CALENDAR.daysPerWeek + 1);
+    const target = peakTargetOf(view.potential, profile);
+    const pace = growthPacePerYear({
+      overall: view.overall,
+      target,
+      exactAge,
+      peakAge: view.peakAge,
+      plateauYears: profile.plateauYears,
+    });
+    const grow = Math.min(
+      (pace * CAREER_DEV.worldTrainingMult) / weeks,
+      CAREER_DEV.seasonGainCap / weeks,
+      Math.max(0, target - view.overall),
+    );
+    const decline =
+      declinePerYearOf({ exactAge, peakAge: view.peakAge, plateauYears: profile.plateauYears, declineRate: view.declineRate }) /
+      weeks;
+    const next = clamp(view.overall + grow - decline, 60, 99);
+    const step = Math.round((next - view.overall) * 10000) / 10000;
+    if (step === 0 && id in delta) continue;
+    delta[id] = Math.round(((delta[id] ?? 0) + step) * 10000) / 10000;
+    changed = true;
+  }
+  return changed ? { ...world, overallDelta: delta, version: world.version + 1 } : world;
 }
 
 /** Case-insensitive name key (accents and punctuation folded). */
