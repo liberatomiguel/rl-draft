@@ -469,6 +469,23 @@ export const RESULTS_UI = {
   } as Record<string, string>,
   /** rc.29: the combined factor of a run saved before the split / another mode. */
   xpMultiplier: "XP multiplier",
+  /** rc.30: the XP breakdown's lines (XpLine.key); a result saved before rc.30 shows its stored label. */
+  xpLines: {
+    completeRun: "Run completed",
+    swissWins: (n: number) => `Swiss wins ×${n}`,
+    qualified: "Qualified for playoffs",
+    playoffWins: (n: number) => `Playoff series wins ×${n}`,
+    placement: {
+      champion: "Tournament champion",
+      runner_up: "Grand finalist",
+      third: "Third place",
+      fourth: "Fourth place",
+    } as Record<string, string>,
+    placementBonus: "Placement bonus",
+    objective: (label: string) => `Objective: ${label}`,
+    achievements: "Achievements",
+    specials: "New special cards",
+  },
   hiddenOverallBonus: "Hidden overall bonus",
   total: "Total",
   mmrEarned: "Rating change",
@@ -1574,6 +1591,72 @@ export const NATIONAL_UI = {
   effect: (n: number) => `+${n} to every team attribute — the national colours.`,
 };
 
+/** rc.30: the Daily Challenge's templates and objectives (src/lib/dailyPlan.ts ids),
+ *  read by every screen that names the day; a run saved before rc.30 shows its stored text. */
+export const DAILY_TEXT = {
+  /** "Daily · Legacy Day" — the short tag in run titles. */
+  tag: "Daily",
+  templates: {
+    pureBracket: {
+      label: () => "Pure Bracket",
+      description: () => "No modifiers. A clean classic run — same seed for everyone.",
+    },
+    regionalLockdown: {
+      label: (region: string) => `Regional Lockdown: ${region}`,
+      description: (region: string) => `Only ${region} lineups in the draft and the bracket.`,
+    },
+    oldSchool: {
+      label: () => "Old School",
+      description: () => "2016-2019 lineups only. The classics decide it.",
+    },
+    modern: {
+      label: () => "Modern Era",
+      description: () => "RLCS X and later only. Today's game, today's stars.",
+    },
+    blackout: {
+      label: () => "Blackout",
+      description: () => "Overalls hidden everywhere. Draft on knowledge alone.",
+    },
+    noSafetyNet: {
+      label: () => "No Safety Net",
+      description: () => "Zero rerolls. The first read has to be the right one.",
+    },
+    gauntlet: {
+      label: () => "Gauntlet",
+      description: () => "Hard rules: hidden overalls and a stronger field.",
+    },
+    specialsSurge: {
+      label: () => "Specials Surge",
+      description: () => "Special cards appear far more often — collectors' day.",
+    },
+    legacyDay: {
+      label: () => "Legacy Day",
+      description: () =>
+        "The all-time gauntlet — championship rosters, hidden overalls, no rerolls. No unlock needed today.",
+    },
+    underdog: {
+      label: () => "Underdog",
+      description: () => "Take the long shot all the way. Win the title with a team under 88 OVR.",
+    },
+    championsOnly: {
+      label: () => "Champions Only",
+      description: () => "Only the all-time great rosters are in the pool. Greatness vs greatness.",
+    },
+    loadedDraft: {
+      label: () => "Loaded Draft",
+      description: () =>
+        "Two special cards are guaranteed to show up in your draft — but the bracket bites back with a stronger, sharper field. Make the star power count.",
+    },
+  },
+  objectives: {
+    chemistry_good: () => "Finish with Good+ chemistry",
+    chemistry_great: () => "Finish with Great+ chemistry",
+    concede_under: (n: number) => `Concede fewer than ${n} goals`,
+    win_title: () => "Win the whole thing",
+    team_overall_under: (n: number) => `Win the title with a team under ${n} OVR`,
+  },
+};
+
 export const EN = {
   APP,
   NAV,
@@ -1609,6 +1692,7 @@ export const EN = {
   SEASON_RECAP,
   QUIZ_UI,
   NATIONAL_UI,
+  DAILY_TEXT,
 };
 
 export type Copy = typeof EN;

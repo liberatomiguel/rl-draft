@@ -195,17 +195,26 @@ export function compileResults(
   const runTotals = userRunTotals(tournament);
 
   // --- XP ---
-  const lines: XpLine[] = [{ label: "Run completed", amount: XP.completeRun }];
+  // rc.30: every line carries a key (+ its count) — the results screen labels it in the
+  // player's language; `label` stays the English fallback.
+  const lines: XpLine[] = [{ label: "Run completed", amount: XP.completeRun, key: "completeRun" }];
   if (swissRecord.wins > 0) {
-    lines.push({ label: `Swiss wins ×${swissRecord.wins}`, amount: swissRecord.wins * XP.swissWin });
+    lines.push({
+      label: `Swiss wins ×${swissRecord.wins}`,
+      amount: swissRecord.wins * XP.swissWin,
+      key: "swissWins",
+      n: swissRecord.wins,
+    });
   }
   if (placement !== "swiss_exit") {
-    lines.push({ label: "Qualified for playoffs", amount: XP.qualifyPlayoffs });
+    lines.push({ label: "Qualified for playoffs", amount: XP.qualifyPlayoffs, key: "qualified" });
   }
   if (playoffWins > 0) {
     lines.push({
       label: `Playoff series wins ×${playoffWins}`,
       amount: playoffWins * XP.playoffSeriesWin,
+      key: "playoffWins",
+      n: playoffWins,
     });
   }
   const placementBonus = XP.placementBonus[placement] ?? 0;
@@ -216,7 +225,12 @@ export function compileResults(
       third: "Third place",
       fourth: "Fourth place",
     };
-    lines.push({ label: placementLabel[placement] ?? "Placement bonus", amount: placementBonus });
+    lines.push({
+      label: placementLabel[placement] ?? "Placement bonus",
+      amount: placementBonus,
+      key: "placement",
+      placement,
+    });
   }
 
   // Daily challenge bonus objective.
@@ -242,7 +256,7 @@ export function compileResults(
                 ? placement === "champion" && teamOvr <= (obj.value ?? 0)
                 : false;
     if (met) {
-      lines.push({ label: `Objective: ${obj.label}`, amount: obj.bonusXp });
+      lines.push({ label: `Objective: ${obj.label}`, amount: obj.bonusXp, key: "objective", objective: obj });
     }
   }
 
@@ -257,7 +271,7 @@ export function compileResults(
     0,
   );
   if (achievementXp > 0) {
-    lines.push({ label: "Achievements", amount: achievementXp });
+    lines.push({ label: "Achievements", amount: achievementXp, key: "achievements" });
   }
 
   // New special cards grant flat XP by rarity (v0.7.0) — a collection reward,
@@ -267,7 +281,7 @@ export function compileResults(
     0,
   );
   if (specialUnlockXp > 0) {
-    lines.push({ label: "New special cards", amount: specialUnlockXp });
+    lines.push({ label: "New special cards", amount: specialUnlockXp, key: "specials" });
   }
 
   const total =

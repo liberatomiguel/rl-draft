@@ -464,7 +464,7 @@ describe("v0.3 migration", () => {
     expect(upgraded!.bidsThisWindow).toBe(0);
   });
 
-  it("new saves are born at the latest save version (v2.0 R40: 4, the weekend calendar)", () => {
-    expect(makeSave().saveVersion).toBe(4);
+  it("new saves are born at the latest save version (rc.30: 5, the world repair + week seeding)", () => {
+    expect(makeSave().saveVersion).toBe(5);
   });
 });

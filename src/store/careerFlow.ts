@@ -35,6 +35,7 @@ import {
   CAREER_LOAN,
   CAREER_NEGOTIATION,
   CAREER_PAYROLL,
+  CAREER_QUALIFIER,
   CAREER_REP,
   CAREER_SALARY,
   CAREER_SAVE,
@@ -153,11 +154,13 @@ import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
   buildWorldAtCreation,
+  committedSeedingFor,
   computeStars,
   fieldForEvent,
   orgTeamFor,
   realOrgIntake,
   regionalSeedingFor,
+  repairLegacyWorld,
   simulateAiEvent,
   starterRosterOffers,
   userTeamFor,
@@ -330,21 +333,59 @@ function isInfinite(save: CareerSave): boolean {
 }
 
 /**
- * v2.0 (R30): the user's regional seeding this week — stored fields only
- * (split points → prestige → rating), the same rule the engine fields with.
+ * rc.30 (direct-8): the user's seeding rating — the team rating HQ and the
+ * squad screen show (the fielded trio with chemistry, coach and gear), on the
+ * scale of the orgs' stored intrinsic ratings it is ranked against. It
+ * replaced the starters' plain average, which sat on another scale.
  */
-export function userSeedingFor(save: CareerSave): { direct: string[]; rest: string[] } {
+export function userSeedRatingFor(save: CareerSave): number {
+  return userTeamFor({
+    identity: save.identity,
+    squad: save.squad,
+    starterIds: save.starterIds,
+    coach: save.coach,
+    gear: save.finances.gear,
+    bootcampSharp: save.finances.bootcampSharp,
+    seasonIndex: save.clock.seasonIndex,
+    careerSeed: save.careerSeed,
+    difficulty: save.difficulty,
+    unavailablePlayerId: null,
+  }).team.rating.total;
+}
+
+/** Today's seeding of the user's region: stored fields + the user's current team rating. */
+function liveUserSeeding(save: CareerSave): { direct: string[]; rest: string[] } {
   const region = save.identity.region;
   return regionalSeedingFor({
     orgs: Object.values(save.world.orgs).filter((o) => o.region === region),
     splitPoints: save.competition.splitPoints[region] ?? {},
-    user: { rating: approxUserRating(save), prestige: repTierOf(save.reputation) },
+    user: { rating: userSeedRatingFor(save), prestige: repTierOf(save.reputation) },
   });
 }
 
-/** True when the user holds one of the split's direct regional slots right now. */
-export function userIsDirect(save: CareerSave): boolean {
-  return userSeedingFor(save).direct.includes("user");
+/**
+ * v2.0 (R30): the user's regional seeding for `week` of the current season
+ * (default: the week holding the clock) — split points → prestige → rating,
+ * the rule the engine fields with. rc.30 (direct-8): a regional week's
+ * Monday commits it (`competition.weekSeeding`) and that decision answers
+ * for the rest of the week; any other week previews it live.
+ */
+export function userSeedingFor(
+  save: CareerSave,
+  week: number = weekOfDay(save.clock.day),
+): { direct: string[]; rest: string[] } {
+  return (
+    committedSeedingFor(save.competition, {
+      region: save.identity.region,
+      seasonIndex: save.clock.seasonIndex,
+      week,
+    }) ?? liveUserSeeding(save)
+  );
+}
+
+/** True when the user holds one of the split's direct regional slots on `week` (default: this week). */
+export function userIsDirect(save: CareerSave, week?: number): boolean {
+  return userSeedingFor(save, week).direct.includes("user");
 }
 
 /** The user's own result for an event, when they played it (and it is still on file). */
@@ -368,7 +409,7 @@ export function regionalUserEligible(save: CareerSave, def: CareerEventDef): boo
   const q = qualifierDefsForWeek(def.seasonIndex, def.week).find((d) => d.region === def.region);
   const played = q ? userResultFor(save, q.id) : null;
   if (played) return played.userPlacement !== "swiss_exit";
-  if (userIsDirect(save)) return true;
+  if (userIsDirect(save, def.week)) return true;
   const qualified = save.competition.qualifiedRefs?.[def.region];
   if (!qualified || qualified.eventId !== def.id) return true;
   return qualified.refs.includes("user");
@@ -388,7 +429,7 @@ export function userOwnsQualifier(save: CareerSave, def: CareerEventDef): boolea
   const committed =
     def.seasonIndex < save.clock.seasonIndex ||
     (def.seasonIndex === save.clock.seasonIndex && def.week <= weekOfDay(save.clock.day));
-  return !committed && !userIsDirect(save);
+  return !committed && !userIsDirect(save, def.week);
 }
 
 /**
@@ -402,9 +443,15 @@ export function userOwnsQualifier(save: CareerSave, def: CareerEventDef): boolea
  *  - a Major / Worlds on BOTH weekend days — `def.day` (Saturday, Swiss) and
  *    `playoffsDayFor(def)` (Sunday, Championship Sunday) — spectators too.
  * Compare `day` with `def.day` / `playoffsDayFor(def)` to tell the phase.
+ * rc.30 (SEAM-1): an event the user already PLAYED never lands on a day ahead
+ * of the clock — a save from before rc.28 played its qualifier midweek (or
+ * its regional, or a whole Major, on Saturday), and the re-timed weekend day
+ * still to come is not a stop.
  */
 export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef | null {
-  const covers = (def: CareerEventDef) => day === def.day || day === eventEndDayFor(def);
+  const playedAhead = (def: CareerEventDef) => day > save.clock.day && userResultFor(save, def.id) !== null;
+  const covers = (def: CareerEventDef) =>
+    (day === def.day || day === eventEndDayFor(def)) && !playedAhead(def);
   const active = save.activeEvent?.def;
   if (active && covers(active)) return active;
   const pending = save.pendingEventDef;
@@ -416,7 +463,7 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
   // started, and never shows again on the re-timed weekend day.
   if (day === qualifierDayFor(week)) {
     const q = qualifierDefsForWeek(seasonIndex, week).find((d) => d.region === save.identity.region);
-    if (q && !isUsersOwnEvent(save, q) && userOwnsQualifier(save, q)) return q;
+    if (q && !isUsersOwnEvent(save, q) && !playedAhead(q) && userOwnsQualifier(save, q)) return q;
   }
   for (const def of officialEventDefsForWeek(seasonIndex, week)) {
     if (!covers(def) || isUsersOwnEvent(save, def)) continue;
@@ -431,7 +478,7 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
 
 function userQualifiedFor(save: CareerSave, def: CareerEventDef): boolean {
   if (def.tier === "regional") return regionalUserEligible(save, def);
-  if (def.tier === "qualifier") return def.region === save.identity.region && !userIsDirect(save);
+  if (def.tier === "qualifier") return def.region === save.identity.region && !userIsDirect(save, def.week);
   if (def.tier === "major") return save.competition.majorFieldRefs?.includes("user") ?? false;
   if (def.tier === "worlds") return save.competition.worldsFieldRefs?.includes("user") ?? false;
   return true; // unofficials are invitations
@@ -646,6 +693,12 @@ export function processDayArrival(input: CareerSave): CareerSave {
     const qualifier = qualifierDefsForWeek(seasonIndex, week).find(
       (q) => q.region === save.identity.region,
     );
+    // rc.30 (direct-8): the week's seeding is decided ONCE, here, and stored —
+    // Saturday, Sunday, the lobby and HQ read this decision, never a re-seed.
+    if (qualifier) {
+      const seeding = liveUserSeeding(save);
+      save.competition.weekSeeding = { seasonIndex, week, region: save.identity.region, ...seeding };
+    }
     if (qualifier && !userIsDirect(save)) {
       save.pendingEventDef = qualifier;
       rollUnavailability(save, qualifier);
@@ -845,6 +898,11 @@ function capNews(save: CareerSave): CareerSave {
   return save;
 }
 
+/**
+ * The starters' plain average overall — the unofficial-offer and scrim
+ * matchmaking read (DEV-03 rebuilds scrims). Never the direct-8 seeding:
+ * that is `userSeedRatingFor` (rc.30).
+ */
 function approxUserRating(save: CareerSave): number {
   const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
   if (starters.length === 0) return 70;
@@ -902,9 +960,11 @@ function resolveAiEvent(save: CareerSave, def: CareerEventDef): void {
   // seed the region with the user in it, so the org the user displaced from
   // the direct 8 plays Saturday instead of missing both events.
   const regional = def.tier === "qualifier" ? regionalForQualifier(def) : null;
+  // rc.30: the week's committed seeding (competition.weekSeeding) already
+  // holds the user's row; this one only serves a week without it.
   const userSeedRow =
     regional && def.region === save.identity.region && isUsersOwnEvent(save, regional)
-      ? { rating: approxUserRating(save), prestige: repTierOf(save.reputation) }
+      ? { rating: userSeedRatingFor(save), prestige: repTierOf(save.reputation) }
       : null;
   const state = simulateAiEvent(def, {
     world: save.world,
@@ -1570,6 +1630,20 @@ export function eventDayPhaseOf(save: CareerSave): EventDayPhase {
 }
 
 /**
+ * rc.30 (SEAM-2): a Major/Worlds already PAST its Swiss on its Saturday — only
+ * a save from before rc.28, whose flow had no pause (migrateSaveToV4 lets it
+ * finish on Saturday). Its playoffs are today's: a plain playoffs day, never
+ * "Championship Sunday", and nothing waits for tomorrow.
+ */
+export function isLegacySaturdayPlayoffs(save: CareerSave): boolean {
+  const ev = save.activeEvent;
+  return Boolean(
+    ev && isTwoDayEvent(ev.def) && save.clock.day === ev.def.day &&
+      ev.tournament.stage !== "swiss" && !isEventPaused(save),
+  );
+}
+
+/**
  * True when the in-progress Major/Worlds is on its playoffs day (Sunday) —
  * "Championship Sunday", whether or not a playoff round has been played yet.
  */
@@ -2205,7 +2279,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
   const squad = squadFromOffer(offer, input, careerSeed);
 
   const save: CareerSave = {
-    saveVersion: 4,
+    saveVersion: 5,
     createdAtAppVersion: SITE.version,
     careerSeed,
     identity: input.identity,
@@ -3316,4 +3390,67 @@ export function migrateSaveToV4(raw: unknown): CareerSave | null {
 
   save.saveVersion = 4;
   return save;
+}
+
+/**
+ * rc.30: upgrade a persisted save in place to saveVersion 5. Additive and
+ * idempotent, gated by saveVersion (persist version 3 stays frozen):
+ *  - A4: the world's one-time repair (worldSim.repairLegacyWorld — one roster
+ *    per player, one gamertag per player in a region; a no-op on a clean
+ *    world) with one news line when it changed anything. IDs, the squad,
+ *    contracts, results and cards are untouched.
+ *  - direct-8: a save inside a regional week whose Monday commit predates
+ *    rc.30 gets that week's seeding from the commit it already made (the
+ *    qualifier it plays or played → outside the 8; the regional it holds
+ *    without one → inside), so Saturday and Sunday cannot re-seed the user.
+ */
+export function migrateSaveToV5(raw: unknown): CareerSave | null {
+  const save = migrateSaveToV4(raw);
+  if (!save) return null;
+  if ((save.saveVersion ?? 4) >= 5) return save;
+
+  const repair = repairLegacyWorld(save.world, {
+    seasonIndex: save.clock.seasonIndex,
+    careerSeed: save.careerSeed,
+    userSquad: save.squad,
+  });
+  save.world = repair.world;
+  const fixes = repair.reseated + repair.renamed;
+  if (fixes > 0) pushNews(save, { type: "org", priority: 1, titleKey: "registryRepair", params: { n: fixes } });
+
+  backfillWeekSeeding(save);
+  save.saveVersion = 5;
+  return save;
+}
+
+/** rc.30 (direct-8): the in-flight regional week's seeding, rebuilt from its commit (migrateSaveToV5). */
+function backfillWeekSeeding(save: CareerSave): void {
+  const { seasonIndex, day } = save.clock;
+  const week = weekOfDay(day);
+  const region = save.identity.region;
+  const q = qualifierDefsForWeek(seasonIndex, week).find((d) => d.region === region);
+  if (!q || committedSeedingFor(save.competition, { region, seasonIndex, week })) return;
+  const regional = regionalForQualifier(q);
+  const outside = isUsersOwnEvent(save, q) || userResultFor(save, q.id) !== null;
+  const inside =
+    !outside && regional !== null && (isUsersOwnEvent(save, regional) || userResultFor(save, regional.id) !== null);
+  if (!outside && !inside) return; // no commit on file: the live preview stands
+  const live = liveUserSeeding(save);
+  const seeding = live.direct.includes("user") === inside ? live : moveUserAcrossLine(live, inside);
+  save.competition.weekSeeding = { seasonIndex, week, region, ...seeding };
+}
+
+/** The same seeding with the user on the other side of the direct-8 line (8 stay direct). */
+function moveUserAcrossLine(
+  seeding: { direct: string[]; rest: string[] },
+  toDirect: boolean,
+): { direct: string[]; rest: string[] } {
+  const direct = seeding.direct.filter((r) => r !== "user");
+  const rest = seeding.rest.filter((r) => r !== "user");
+  if (toDirect) {
+    const bumped = direct.length >= CAREER_QUALIFIER.directSlots ? direct.splice(CAREER_QUALIFIER.directSlots - 1) : [];
+    return { direct: [...direct, "user"], rest: [...bumped, ...rest] };
+  }
+  const promoted = rest.splice(0, Math.max(0, CAREER_QUALIFIER.directSlots - direct.length));
+  return { direct: [...direct, ...promoted], rest: ["user", ...rest] };
 }

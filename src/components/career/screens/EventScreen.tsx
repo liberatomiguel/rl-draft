@@ -57,6 +57,7 @@ import {
   eventDayPhaseOf,
   eventTeamPreview,
   isEventPaused,
+  isLegacySaturdayPlayoffs,
   qualifierOutcomeOf,
   useCareerSave,
   userStars,
@@ -456,6 +457,10 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const twoDay = isTwoDayEvent(def);
   // Championship Sunday: the playoffs' day (Saturday's Swiss is yesterday's story).
   const championshipSunday = twoDay && save.clock.day !== def.day;
+  // rc.30 (SEAM-2): a save from before rc.28 can hold a Major already INTO its
+  // playoffs on Saturday (no pause back then) — it finishes today as a plain
+  // playoffs day: bracket on, no Sunday title, nothing promised for tomorrow.
+  const legacyPlayoffs = isLegacySaturdayPlayoffs(save);
   // R40 review: out in Saturday's Swiss, the user WATCHES Championship Sunday.
   const sundaySpectator = isSundaySpectator(save);
   const ownsSwissVerdict = def.tier === "qualifier" || twoDay;
@@ -464,7 +469,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const swissVerdictContext: "qualifier" | "twoDay" | null =
     def.tier === "qualifier"
       ? "qualifier"
-      : twoDay && (save.clock.day === def.day || sundaySpectator)
+      : twoDay && !legacyPlayoffs && (save.clock.day === def.day || sundaySpectator)
         ? "twoDay"
         : null;
 
@@ -622,7 +627,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   // bar keeps the event's own Continue (its "Championship Sunday" label would
   // spoil the verdict); the hold clears with the pause panel.
   const setRevealHold = useCareerRevealStore((s) => s.setHeldEventId);
-  const holdsReveal = twoDay && !championshipSunday && !swissCompleteReady;
+  const holdsReveal = twoDay && !championshipSunday && !legacyPlayoffs && !swissCompleteReady;
   useEffect(() => {
     if (!holdsReveal) return;
     setRevealHold(def.id);
@@ -646,7 +651,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
   const swissFullyRevealed = throughRound >= t.swiss.rounds.length;
   // R40: a Major / Worlds Saturday never shows the bracket — its playoffs are
   // Sunday's (rc.29: the reduced-motion results stop shows Saturday's end here).
-  const saturdayOfTwoDay = twoDay && !championshipSunday;
+  const saturdayOfTwoDay = twoDay && !championshipSunday && !legacyPlayoffs;
   const showBracket =
     Boolean(t.playoffs) && !saturdayOfTwoDay && (!hasSwiss || (t.swiss.finished && swissFullyRevealed));
 
@@ -805,7 +810,8 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
 
   // R40: on a Major / Worlds Saturday the sim stops at the end of the Swiss
   // — keyed on the day (a stage-keyed label flipped mid-series, a spoiler).
-  const simLabel = simStopsAtSwissEnd(def, save.clock.day) ? C.event.simSwiss : C.event.simToEnd;
+  const simLabel =
+    simStopsAtSwissEnd(def, save.clock.day) && !legacyPlayoffs ? C.event.simSwiss : C.event.simToEnd;
   // The stage ON SCREEN — the round being revealed, not the engine's stage
   // (it runs ahead: a qualifier is "finished" while its Swiss still plays
   // out, a regional's playoffs are seeded before its last Swiss round shows).
@@ -841,7 +847,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
         title={
           revealStage === "swiss"
             ? C.event.swissStage
-            : twoDay
+            : championshipSunday
               ? C.event.championshipSunday
               : C.event.playoffs
         }

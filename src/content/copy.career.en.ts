@@ -873,6 +873,9 @@ export const CAREER_EN = {
       repDown: (p: Record<string, string | number>) => `Pundits pile on after ${p.org}'s stumble`,
       starUp: (p: Record<string, string | number>) => `${p.org} reaches ${p.n}-star status`,
       unlock: (p: Record<string, string | number>) => `Unlocked: ${p.name}`,
+      // rc.30 (A4): the one-time cleanup of a career started before rc.29.
+      registryRepair: (p: Record<string, string | number>) =>
+        `League registry updated: ${p.n} roster and gamertag fixes`,
       unavailable: (p: Record<string, string | number>) => `${p.player} unavailable for ${p.event}`,
       standIn: (p: Record<string, string | number>) => `Emergency stand-in suits up for ${p.event}`,
       bankLoan: (p: Record<string, string | number>) => `The org takes a ${p.amount} bank loan`,
@@ -952,6 +955,8 @@ export const CAREER_EN = {
         `${p.org} and ${p.name} signed for the season. Guaranteed base, bonus on the objective — deliver and the tier grows.`,
       unlock: (p: Record<string, string | number>) =>
         `Reputation opened a new door: ${p.name}. The progression track shows what's still ahead.`,
+      registryRepair: () =>
+        `Players listed by two orgs now sit on one roster, and repeated gamertags were renamed. Your squad, contracts and results are unchanged.`,
       unavailable: (p: Record<string, string | number>) =>
         `${p.player} can't play ${p.event} — visas, health, life. The sub steps in with his chemistry; without one, a stand-in fills the seat.`,
       standIn: (p: Record<string, string | number>) =>

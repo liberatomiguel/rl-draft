@@ -29,7 +29,7 @@ import type {
   TournamentState,
   TournamentTeam,
 } from "@/engine/types";
-import { seriesStageLabel, teamDisplayName } from "@/lib/runLabels";
+import { dailyRunTag, seriesStageLabel, teamDisplayName } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useRunStore } from "@/store/runStore";
@@ -128,7 +128,7 @@ function teamSeasonId(team: TournamentTeam | undefined): string | undefined {
 // ---------------------------------------------------------------------------
 
 export function TournamentScreen({ run }: { run: RunState }) {
-  const { TOURNAMENT_UI: T } = useCopy();
+  const { TOURNAMENT_UI: T, DAILY_TEXT } = useCopy();
   const playRound = useRunStore((s) => s.playRound);
   const finishRun = useRunStore((s) => s.finishRun);
   const awardRevealedAchievements = useRunStore((s) => s.awardRevealedAchievements);
@@ -264,7 +264,7 @@ export function TournamentScreen({ run }: { run: RunState }) {
 
       <SectionTitle
         kicker={playoffsOnScreen(run.mode, t, revealedSwissRounds) ? T.playoffs : T.swiss}
-        title={run.daily ? `Daily · ${run.daily.label}` : T.title}
+        title={run.daily ? dailyRunTag(run.daily, DAILY_TEXT) : T.title}
         right={
           run.mode !== "quick" ? (
             <Badge tone="blue" className="!text-sm">

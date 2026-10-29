@@ -16,6 +16,7 @@ import { createRng } from "@/lib/rng";
 import type {
   DailyInfo,
   DailyObjective,
+  DailyTemplateId,
   Difficulty,
   DraftScriptStep,
   Region,
@@ -87,6 +88,7 @@ const AUTHORED_DAILIES: Record<string, (date: string) => DailyPlan> = {
       date,
       n: dailyNumber(date),
       label: "Loaded Draft",
+      templateId: "loadedDraft",
       description:
         "Two special cards are guaranteed to show up in your draft — but the bracket bites back with a stronger, sharper field. Make the star power count.",
       objective: { type: "win_title", label: "Win the whole thing", bonusXp: 100 },
@@ -121,6 +123,9 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
   const rng = createRng(seedFromDate(date) ^ 0x5eed);
 
   type TemplateResult = Omit<DailyPlan, "info"> & {
+    /** rc.30: the copy key (DAILY_TEXT.templates); label/description stay the English fallback. */
+    templateId: DailyTemplateId;
+    region?: Region;
     label: string;
     description: string;
     /** A template may pin its own bonus objective (overrides the random one). */
@@ -129,6 +134,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
   type Template = () => TemplateResult;
 
   const pureBracket = (): TemplateResult => ({
+    templateId: "pureBracket",
     label: "Pure Bracket",
     description: "No modifiers. A clean classic run — same seed for everyone.",
     difficulty: "normal",
@@ -144,6 +150,8 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       return restricted(
         { kind: "region", region },
         {
+          templateId: "regionalLockdown",
+          region,
           label: `Regional Lockdown: ${region}`,
           description: `Only ${region} lineups in the draft and the bracket.`,
           difficulty: "normal",
@@ -155,6 +163,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       restricted(
         { kind: "era", era: "old-school" },
         {
+          templateId: "oldSchool",
           label: "Old School",
           description: "2016-2019 lineups only. The classics decide it.",
           difficulty: "normal",
@@ -165,6 +174,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       restricted(
         { kind: "era", era: "modern" },
         {
+          templateId: "modern",
           label: "Modern Era",
           description: "RLCS X and later only. Today's game, today's stars.",
           difficulty: "normal",
@@ -172,12 +182,14 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
         },
       ),
     () => ({
+      templateId: "blackout",
       label: "Blackout",
       description: "Overalls hidden everywhere. Draft on knowledge alone.",
       difficulty: "normal",
       hiddenOverall: true,
     }),
     () => ({
+      templateId: "noSafetyNet",
       label: "No Safety Net",
       description: "Zero rerolls. The first read has to be the right one.",
       difficulty: "normal",
@@ -185,12 +197,14 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       rerollsOverride: 0,
     }),
     () => ({
+      templateId: "gauntlet",
       label: "Gauntlet",
       description: "Hard rules: hidden overalls and a stronger field.",
       difficulty: "hard",
       hiddenOverall: true,
     }),
     () => ({
+      templateId: "specialsSurge",
       label: "Specials Surge",
       description: "Special cards appear far more often — collectors' day.",
       difficulty: "normal",
@@ -201,6 +215,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
     }),
     // --- v1.0 models ---
     () => ({
+      templateId: "legacyDay",
       label: "Legacy Day",
       description:
         "The all-time gauntlet — championship rosters, hidden overalls, no rerolls. No unlock needed today.",
@@ -208,6 +223,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       hiddenOverall: true,
     }),
     () => ({
+      templateId: "underdog",
       label: "Underdog",
       description: "Take the long shot all the way. Win the title with a team under 88 OVR.",
       difficulty: "normal",
@@ -223,6 +239,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       restricted(
         { kind: "champions" },
         {
+          templateId: "championsOnly",
           label: "Champions Only",
           description: "Only the all-time great rosters are in the pool. Greatness vs greatness.",
           difficulty: "hard",
@@ -252,6 +269,8 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       label: picked.label,
       description: picked.description,
       objective,
+      templateId: picked.templateId,
+      ...(picked.region ? { region: picked.region } : {}),
     },
     difficulty: picked.difficulty,
     hiddenOverall: picked.hiddenOverall,

@@ -28,6 +28,7 @@ import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
 import { dailyInfo, todayKey } from "@/lib/dailyPlan";
+import { dailyDescription, dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useAccountStore } from "@/store/accountStore";
@@ -62,7 +63,7 @@ const warmRunStore = {
 };
 
 export default function HomeMenu() {
-  const { APP, HOME, HOME_SEO, QUIZ_UI } = useCopy();
+  const { APP, HOME, HOME_SEO, QUIZ_UI, DAILY_TEXT } = useCopy();
   const mounted = useMounted();
   const lang = useSettings((s) => s.lang);
   const active = mounted ? lang : "en";
@@ -244,8 +245,12 @@ export default function HomeMenu() {
             <div className="min-h-[56px] flex-1">
               {mounted ? (
                 <>
-                  <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">{daily.label}</p>
-                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-sub">{daily.description}</p>
+                  <p className="display text-sm font-bold uppercase tracking-wide text-orange-bright">
+                    {dailyLabel(daily, DAILY_TEXT)}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-sub">
+                    {dailyDescription(daily, DAILY_TEXT)}
+                  </p>
                 </>
               ) : null}
             </div>

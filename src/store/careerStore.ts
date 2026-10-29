@@ -14,6 +14,8 @@
  * migrateSaveToV3 upgrades each slot in place — never a reset. v2.0 (R40)
  * chains migrateSaveToV4 (the weekend calendar) WITHOUT a persist bump: it is
  * gated by each save's own `saveVersion` (4) and runs on every rehydrate.
+ * rc.30 chains migrateSaveToV5 the same way (saveVersion 5: the one-time
+ * world repair and the week's committed direct-8 seeding).
  * AppShell's leave-run clearing NEVER touches this store (design §11).
  *
  * v0.3 session-only state (never persisted): `autoAdvance` (the FIFA-style
@@ -61,7 +63,7 @@ import {
   finishEvent,
   fireCoachFlow,
   hireCoachFlow,
-  migrateSaveToV4,
+  migrateSaveToV5,
   payBankLoanFlow,
   payDebtFlow,
   resolveInsertFlow,
@@ -452,7 +454,7 @@ export const useCareerStore = create<CareerStoreState>()(
       migrate: (persisted) => {
         const state = persisted as CareerStoreState;
         if (state?.slots) {
-          state.slots = state.slots.map((slot) => (slot ? migrateSaveToV4(slot) : null));
+          state.slots = state.slots.map((slot) => (slot ? migrateSaveToV5(slot) : null));
         }
         return state;
       },
@@ -479,7 +481,7 @@ export const useCareerStore = create<CareerStoreState>()(
         state.slots = state.slots.map((slot) => {
           if (!slot) return null;
           try {
-            const upgraded = migrateSaveToV4(slot) ?? slot;
+            const upgraded = migrateSaveToV5(slot) ?? slot;
             syncSquadRoles(upgraded);
             return upgraded;
           } catch {

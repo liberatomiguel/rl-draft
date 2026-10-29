@@ -22,6 +22,7 @@ import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
 import { draftableLineups, lineupById, nationalSpecialIdsByLineupId, seasonById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
+import { dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useProfileStore } from "@/store/profileStore";
@@ -182,7 +183,7 @@ function OfferReveal({
   onReroll,
   onFreeReroll,
 }: OfferRevealProps) {
-  const { DRAFT_UI, NATIONAL_UI } = useCopy();
+  const { DRAFT_UI, NATIONAL_UI, DAILY_TEXT } = useCopy();
   // National team (v2.0): localized name, a gold badge and the rare-draw note.
   const national = Boolean(lineup.national);
   const headerName = national ? NATIONAL_UI.teamName(lineup.orgId, header.name) : header.name;
@@ -271,7 +272,7 @@ function OfferReveal({
         <div className="min-w-0">
           <p className="kicker mb-1">
             {DRAFT_UI.roundLabel(run.draft.round)} · {DRAFT_UI.pickProgress(filled, slotTotal)}
-            {run.daily ? <span className="text-orange-bright"> · {run.daily.label}</span> : null}
+            {run.daily ? <span className="text-orange-bright"> · {dailyLabel(run.daily, DAILY_TEXT)}</span> : null}
           </p>
           {rolling ? (
             <div

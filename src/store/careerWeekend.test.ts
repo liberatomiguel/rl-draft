@@ -34,7 +34,7 @@ import {
 } from "@/engine/career/calendar";
 import { hasChampion, qualifierOutcomeOf } from "@/engine/career/careerResults";
 import { applyMatchXp } from "@/engine/career/development";
-import { gearTrainingBonus, pointsFor, prizeFor, prizePoolPaidFor, quantize, repGainFor } from "@/engine/career/economy";
+import { gearTrainingBonus, pointsFor, prizeFor, prizePoolPaidFor, quantize, repGainFor, repTierOf } from "@/engine/career/economy";
 import type {
   CareerDifficulty,
   CareerEventDef,
@@ -56,6 +56,7 @@ import {
   finishEvent,
   isChampionshipSunday,
   isEventPaused,
+  isLegacySaturdayPlayoffs,
   migrateSaveToV4,
   regionalUserEligible,
   rolloverToNextSeason,
@@ -66,8 +67,11 @@ import {
   userEventDefOnDay,
   userIsDirect,
   userOwnsQualifier,
+  userSeedRatingFor,
   type CreateCareerInput,
 } from "./careerFlow";
+import { eventTeamPreview, upcomingStops } from "@/components/career/careerUi";
+import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -87,6 +91,8 @@ const INPUT: CreateCareerInput = {
 /** A starter roster outside the direct 8 at the first regional (careerV2.test). */
 const SEED = 55501;
 const W = seasonSchedule().find((w) => w.kind === "regional")!.week;
+/** The regional week after W — a week the current seeding only previews. */
+const NEXT_W = seasonSchedule().find((w) => w.kind === "regional" && w.week > W)!.week;
 const MAJOR_W = seasonSchedule().find((w) => w.kind === "major")!.week;
 const WORLDS_W = CAREER_CALENDAR.worldsWeek;
 
@@ -382,7 +388,10 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     expect(sat.pendingEventDef?.tier).toBe("qualifier");
     const drifted = structuredClone(sat);
     drifted.competition.splitPoints.SAM = { ...drifted.competition.splitPoints.SAM, user: 10_000 };
-    expect(userIsDirect(drifted)).toBe(true);
+    // rc.30 (direct-8): Monday's committed seeding answers for this week;
+    // only a later week previews the drift.
+    expect(userIsDirect(drifted)).toBe(false);
+    expect(userIsDirect(drifted, NEXT_W)).toBe(true);
     const lobby = startEvent(drifted, false);
     const ids = Object.keys(lobby.activeEvent!.tournament.teams);
     expect(ids).toHaveLength(16);
@@ -396,7 +405,8 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     expect(eventDayPhaseOf(save)).toBe("lobby");
     const drifted = structuredClone(save);
     delete drifted.competition.splitPoints.SAM.user;
-    expect(userIsDirect(drifted)).toBe(false);
+    expect(userIsDirect(drifted)).toBe(true); // rc.30: the commit holds…
+    expect(userIsDirect(drifted, NEXT_W)).toBe(false); // …a later week previews the drift
     const lobby = startEvent(drifted, false);
     const ids = Object.keys(lobby.activeEvent!.tournament.teams);
     expect(ids).toHaveLength(16);
@@ -410,7 +420,8 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     const regional = save.pendingEventDef!;
     expect(regional).toMatchObject({ tier: "regional", day: regionalDayFor(W) });
     delete save.competition.splitPoints.SAM.user; // drifts out of the direct 8 mid-week
-    expect(userIsDirect(save)).toBe(false);
+    expect(userIsDirect(save)).toBe(true); // rc.30: Monday's committed seeding holds
+    expect(userIsDirect(save, NEXT_W)).toBe(false);
     const q = qualifierDefsForWeek(0, W).find((d) => d.region === "SAM")!;
     expect(userOwnsQualifier(save, q)).toBe(false);
     expect(userEventDefOnDay(save, qualifierDayFor(W))).toBeNull();
@@ -430,7 +441,8 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     const drifted = structuredClone(simToday(withStrength(sat, 40)));
     expect(drifted.pendingEventDef).toBeNull();
     drifted.competition.splitPoints.SAM = { ...drifted.competition.splitPoints.SAM, user: 10_000 };
-    expect(userIsDirect(drifted)).toBe(true);
+    expect(userIsDirect(drifted)).toBe(false); // rc.30: Monday's committed seeding holds
+    expect(userIsDirect(drifted, NEXT_W)).toBe(true);
     const regional = officialEventDefsForWeek(0, W).find((d) => d.tier === "regional" && d.region === "SAM")!;
     expect(regionalUserEligible(drifted, regional)).toBe(false);
     expect(userEventDefOnDay(drifted, regionalDayFor(W))).toBeNull();
@@ -460,6 +472,112 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     // …so none may miss BOTH events.
     const inQualifier = new Set(qualifier.rows.map((r) => r.ref));
     expect(orgs.filter((ref) => !inQualifier.has(ref) && !regionalField.has(ref))).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Direct-8 (rc.30): Monday's seeding is the week's one decision
+// ---------------------------------------------------------------------------
+
+/**
+ * Puts SAM's direct-8 line a hair from the user's team rating (the Monday
+ * read, userSeedRatingFor): seven orgs clear above, the 8th just below
+ * (`userAbove`) or just above it, the rest far below; nobody has split
+ * points. Returns the 8th org's ref.
+ */
+function straddleLine(save: CareerSave, userAbove: boolean): string {
+  const rating = userSeedRatingFor(save);
+  const prestige = repTierOf(save.reputation) as 0 | 1 | 2 | 3;
+  save.competition.splitPoints.SAM = {};
+  const orgs = Object.values(save.world.orgs)
+    .filter((o) => o.region === "SAM")
+    .sort((a, b) => a.ref.localeCompare(b.ref));
+  orgs.forEach((org, i) => {
+    org.prestige = prestige;
+    org.rating = i < 7 ? 99 - i : i === 7 ? rating + (userAbove ? -0.25 : 0.25) : 40 + i / 10;
+  });
+  return orgs[7].ref;
+}
+
+/** The event's field as the engine builds it, and as its lobby lists it. */
+function fieldAndLobby(save: CareerSave): { field: string[]; lobby: string[] } {
+  const def = save.pendingEventDef!;
+  const field = Object.keys(startEvent(save, false).activeEvent!.tournament.teams).sort();
+  const lobby = lobbyFieldRefs(save, def, eventTeamPreview(save, def).rating.total).sort();
+  return { field, lobby };
+}
+
+describe("direct-8 (rc.30): Monday's seeding is the week's one decision", { timeout: 60_000 }, () => {
+  it("a user seated in the 8 on Monday keeps the seat however the team drifts: Saturday fields the displaced org, Sunday is 8 + 8", () => {
+    let save = advanceTo(freshCareer(), firstDayOfWeek(W) - 1);
+    const eighth = straddleLine(save, true);
+    save = advanceDayFlow(save); // Monday: the commit
+    const committed = save.competition.weekSeeding!;
+    expect(committed).toMatchObject({ seasonIndex: 0, week: W, region: "SAM" });
+    expect(committed.direct).toHaveLength(CAREER_QUALIFIER.directSlots);
+    expect(committed.direct).toContain("user");
+    expect(committed.rest[0]).toBe(eighth);
+    expect(save.pendingEventDef).toMatchObject({ tier: "regional", day: regionalDayFor(W) });
+    // Mid-week the team collapses: a live read would drop the user out of the 8.
+    save = withStrength(save, 40);
+    expect(userIsDirect(save)).toBe(true);
+    save = advanceToNextStopFlow(quiet(save));
+    expect(save.clock.day).toBe(regionalDayFor(W));
+    expect(eventDayPhaseOf(save)).toBe("lobby");
+    // Saturday's AI qualifier fielded the displaced org, never the user or a direct org.
+    const q = qualifierDefsForWeek(0, W).find((d) => d.region === "SAM")!;
+    const inQualifier = resultOf(save, q).rows.map((r) => r.ref);
+    expect(inQualifier).toContain(eighth);
+    for (const ref of committed.direct) expect(inQualifier).not.toContain(ref);
+    // Sunday: the committed direct 8 + Saturday's eight — lobby and engine alike.
+    const qualified = save.competition.qualifiedRefs!.SAM!.refs;
+    const { field, lobby } = fieldAndLobby(save);
+    expect(field).toHaveLength(TOURNAMENT.swiss.teams);
+    expect(field).toEqual([...committed.direct, ...qualified].sort());
+    expect(lobby).toEqual(field);
+  });
+
+  it("a user outside the 8 on Monday plays Saturday and never takes a direct seat Sunday, even after drifting above the line", () => {
+    let save = advanceTo(freshCareer(), firstDayOfWeek(W) - 1);
+    const eighth = straddleLine(save, false);
+    save = advanceDayFlow(save);
+    const committed = save.competition.weekSeeding!;
+    expect(committed.direct).not.toContain("user");
+    expect(committed.direct).toContain(eighth);
+    expect(save.pendingEventDef).toMatchObject({ tier: "qualifier", day: qualifierDayFor(W) });
+    // Mid-week the team surges: a live read would now seat the user in the 8.
+    save = withStrength(save, 99);
+    expect(userIsDirect(save)).toBe(false);
+    save = advanceToNextStopFlow(quiet(save));
+    expect(save.clock.day).toBe(qualifierDayFor(W));
+    const sat = fieldAndLobby(save);
+    expect(sat.field).toContain("user");
+    expect(sat.field).not.toContain(eighth);
+    expect(sat.lobby).toEqual(sat.field);
+    save = simToday(save); // 99s: through to Sunday
+    const qualified = save.competition.qualifiedRefs!.SAM!.refs;
+    expect(qualified).toContain("user");
+    save = advanceToNextStopFlow(quiet(save));
+    expect(save.clock.day).toBe(regionalDayFor(W));
+    const sun = fieldAndLobby(save);
+    expect(sun.field).toHaveLength(TOURNAMENT.swiss.teams);
+    expect(sun.field).toEqual([...committed.direct, ...qualified].sort());
+    expect(sun.lobby).toEqual(sun.field);
+  });
+
+  it("other weeks preview live; the seeding is re-decided on the next regional Monday", () => {
+    let save = advanceTo(freshCareer(), firstDayOfWeek(W) - 1);
+    straddleLine(save, true);
+    save = advanceDayFlow(save);
+    expect(userIsDirect(save)).toBe(true);
+    // A collapse previews as "outside the 8" for the next regional week only.
+    save = withStrength(save, 40);
+    expect(userIsDirect(save, NEXT_W)).toBe(false);
+    save = autoPlayTo(quiet(save), firstDayOfWeek(NEXT_W) - 1);
+    expect(save.competition.weekSeeding!.week).toBe(W);
+    save = advanceDayFlow(quiet(save));
+    expect(save.competition.weekSeeding).toMatchObject({ seasonIndex: 0, week: NEXT_W });
+    expect(save.competition.weekSeeding!.direct).toHaveLength(CAREER_QUALIFIER.directSlots);
   });
 });
 
@@ -996,6 +1114,59 @@ describe("legacy saves (R40 migration)", { timeout: 30_000 }, () => {
     expect(sun.clock.day).toBe(eventDayFor(MAJOR_W) + 1);
     expect(sun.eventResults.filter((r) => r.tier === "major")).toHaveLength(1);
     expect(sun.news.filter((n) => n.titleKey === "seasonChampion")).toHaveLength(0);
+  });
+
+  it("SEAM-1 (rc.30): a qualifier already played midweek is never Saturday's stop — the next stop is Sunday's regional", () => {
+    const sat = advanceTo(freshCareer(), qualifierDayFor(W));
+    const through = simToday(withStrength(sat, 99)); // qualified: Sunday's regional pending
+    expect(through.pendingEventDef).toMatchObject({ tier: "regional" });
+    // The old layout: the qualifier was played midweek, the regional pending on Saturday.
+    let save = migrateSaveToV4(
+      asLegacy(through, (s) => {
+        s.clock.day = OLD_QUALIFIER_DAY;
+        s.pendingEventDef = { ...s.pendingEventDef!, day: eventDayFor(W) };
+      }),
+    )!;
+    expect(save.pendingEventDef?.day).toBe(regionalDayFor(W));
+    expect(userEventDefOnDay(save, qualifierDayFor(W))).toBeNull();
+    const next = upcomingStops(save, 2).find((x) => x.kind === "event")!;
+    expect(next).toMatchObject({ day: regionalDayFor(W), event: { tier: "regional" } });
+    // The flow agrees: the batched Advance runs through Saturday to Sunday's lobby.
+    save = advanceToNextStopFlow(quiet(save));
+    expect(save.clock.day).toBe(regionalDayFor(W));
+    expect(eventDayPhaseOf(save)).toBe("lobby");
+    expect(save.eventResults.filter((r) => r.tier === "qualifier" && r.region === "SAM")).toHaveLength(1);
+  });
+
+  it("SEAM-1 (rc.30): a regional already played on the old Saturday is never Sunday's stop", () => {
+    const sat = advanceTo(freshCareer(), qualifierDayFor(W));
+    const sun = advanceDayFlow(simToday(withStrength(sat, 99)));
+    const played = simToday(sun);
+    const regional = officialEventDefsForWeek(0, W).find((d) => d.tier === "regional" && d.region === "SAM")!;
+    expect(played.eventResults.some((r) => r.eventId === regional.id && r.userPlacement)).toBe(true);
+    const save = migrateSaveToV4(asLegacy(played, (s) => (s.clock.day = eventDayFor(W))))!;
+    expect(userEventDefOnDay(save, regionalDayFor(W))).toBeNull();
+    expect(upcomingStops(save, 3).some((x) => x.event?.id === regional.id)).toBe(false);
+    // Today's own history still reads on its day (the clock's).
+    expect(userEventDefOnDay(save, qualifierDayFor(W))?.tier).toBe("qualifier");
+  });
+
+  it("SEAM-2 (rc.30): only a legacy Major already INTO its playoffs on Saturday reads as a plain playoffs day", () => {
+    const paused = simEventToEnd(startEvent(majorSaturday(80), false));
+    expect(isEventPaused(paused)).toBe(true);
+    expect(isLegacySaturdayPlayoffs(paused)).toBe(false); // the new flow's Saturday
+    const ev = paused.activeEvent!;
+    const rng = createRng(ev.rngState);
+    const t = playNextRound(ev.tournament, paused.difficulty, rng);
+    const legacy = migrateSaveToV4(
+      asLegacy({ ...paused, activeEvent: { ...ev, tournament: t, rngState: rng.state } }),
+    )!;
+    expect(isLegacySaturdayPlayoffs(legacy)).toBe(true);
+    expect(isChampionshipSunday(legacy)).toBe(false);
+    // The new flow's Sunday is Championship Sunday, never the legacy case.
+    const sunday = advanceToNextStopFlow(paused);
+    expect(isChampionshipSunday(sunday)).toBe(true);
+    expect(isLegacySaturdayPlayoffs(sunday)).toBe(false);
   });
 
   it("history stays exactly as it was (old qualifier rows with a champion included) and never counts as a title", () => {

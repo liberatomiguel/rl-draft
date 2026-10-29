@@ -6,14 +6,20 @@
 import { describe, expect, it } from "vitest";
 import { EN } from "@/content/copy.en";
 import { PT } from "@/content/copy.pt";
-import type { TournamentState } from "@/engine/types";
+import type { DailyObjective, TournamentState, XpLine } from "@/engine/types";
+import { planDaily } from "./dailyPlan";
 import {
   USER_TEAM_ID,
+  dailyDescription,
+  dailyLabel,
+  dailyObjectiveLabel,
+  dailyRunTag,
   resultStageLabel,
   seriesStageLabel,
   signedDelta,
   stageRefLabel,
   teamDisplayName,
+  xpLineLabel,
   xpMultiplierRows,
 } from "./runLabels";
 
@@ -111,5 +117,71 @@ describe("xpMultiplierRows", () => {
   it("a result saved before the split shows one neutral row", () => {
     expect(xpMultiplierRows({ difficultyMultiplier: 0.5 }, "quick", EN.RESULTS_UI)).toEqual([{ label: "XP multiplier", value: 0.5 }]);
     expect(xpMultiplierRows({ difficultyMultiplier: 1 }, "classic", EN.RESULTS_UI)).toEqual([]);
+  });
+});
+
+/** A year of days: every template, region and objective the wheel can roll (+ the authored day). */
+const DAYS = [
+  "2026-06-17",
+  ...Array.from({ length: 366 }, (_, i) => new Date(Date.UTC(2026, 6, 1) + i * 86_400_000).toISOString().slice(0, 10)),
+];
+const plans = DAYS.map((d) => planDaily(d, () => true).info);
+
+describe("Daily text in the active language (rc.30)", () => {
+  it("every day names its template; EN copy reads exactly the plan's own English text", () => {
+    const ids = new Set<string>();
+    for (const info of plans) {
+      expect(info.templateId, info.date).toBeDefined();
+      ids.add(info.templateId!);
+      expect(dailyLabel(info, EN.DAILY_TEXT)).toBe(info.label);
+      expect(dailyDescription(info, EN.DAILY_TEXT)).toBe(info.description);
+      if (info.objective) expect(dailyObjectiveLabel(info.objective, EN.DAILY_TEXT)).toBe(info.objective.label);
+    }
+    // The wheel really covers the copy table (every template rolls within a year).
+    expect([...ids].sort()).toEqual(Object.keys(EN.DAILY_TEXT.templates).sort());
+  });
+
+  it("PT names the day in Portuguese; a run saved before rc.30 keeps its stored text", () => {
+    const legacy = plans.find((p) => p.templateId === "legacyDay")!;
+    expect(dailyRunTag(legacy, EN.DAILY_TEXT)).toBe("Daily · Legacy Day");
+    expect(dailyRunTag(legacy, PT.DAILY_TEXT)).toBe("Diário · Dia Legacy");
+    const lockdown = plans.find((p) => p.templateId === "regionalLockdown")!;
+    expect(dailyLabel(lockdown, PT.DAILY_TEXT)).toBe(`Bloqueio Regional: ${lockdown.region}`);
+    const saved = { ...legacy, templateId: undefined, region: undefined };
+    expect(dailyLabel(saved, PT.DAILY_TEXT)).toBe("Legacy Day");
+    expect(dailyDescription(saved, PT.DAILY_TEXT)).toBe(legacy.description);
+    const objective: DailyObjective = { type: "concede_under", value: 25, label: "Concede fewer than 25 goals", bonusXp: 50 };
+    expect(dailyObjectiveLabel(objective, PT.DAILY_TEXT)).toBe("Sofra menos de 25 gols");
+  });
+});
+
+describe("xpLineLabel (rc.30)", () => {
+  const lines: XpLine[] = [
+    { label: "Run completed", amount: 50, key: "completeRun" },
+    { label: "Swiss wins ×3", amount: 60, key: "swissWins", n: 3 },
+    { label: "Qualified for playoffs", amount: 40, key: "qualified" },
+    { label: "Playoff series wins ×2", amount: 80, key: "playoffWins", n: 2 },
+    { label: "Grand finalist", amount: 60, key: "placement", placement: "runner_up" },
+    {
+      label: "Objective: Win the whole thing",
+      amount: 75,
+      key: "objective",
+      objective: { type: "win_title", label: "Win the whole thing", bonusXp: 75 },
+    },
+    { label: "Achievements", amount: 30, key: "achievements" },
+    { label: "New special cards", amount: 20, key: "specials" },
+  ];
+
+  it("EN reads the engine's own labels; PT translates every line", () => {
+    for (const line of lines) {
+      expect(xpLineLabel(line, EN.RESULTS_UI, EN.DAILY_TEXT)).toBe(line.label);
+      expect(xpLineLabel(line, PT.RESULTS_UI, PT.DAILY_TEXT)).not.toBe(line.label);
+    }
+    expect(xpLineLabel(lines[1], PT.RESULTS_UI, PT.DAILY_TEXT)).toBe("Vitórias no Swiss ×3");
+    expect(xpLineLabel(lines[5], PT.RESULTS_UI, PT.DAILY_TEXT)).toBe("Objetivo: Vença o torneio inteiro");
+  });
+
+  it("a result saved before rc.30 (no key) shows its stored label", () => {
+    expect(xpLineLabel({ label: "Run completed", amount: 50 }, PT.RESULTS_UI, PT.DAILY_TEXT)).toBe("Run completed");
   });
 });

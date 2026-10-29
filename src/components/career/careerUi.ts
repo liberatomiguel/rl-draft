@@ -72,6 +72,7 @@ import {
   eventDayPhaseOf,
   isChampionshipSunday,
   isEventPaused,
+  isLegacySaturdayPlayoffs,
   nameOfRef,
   regionalUserEligible,
   scrimOpponentFor,
@@ -613,6 +614,6 @@ export function useRevealHeldEventId(save: CareerSave | null): string | null {
 export { nameOfRef };
 
 // v2.0 (R40): the weekend's event phases (single source: careerFlow).
-export { eventDayPhaseOf, isChampionshipSunday, isEventPaused };
+export { eventDayPhaseOf, isChampionshipSunday, isEventPaused, isLegacySaturdayPlayoffs };
 // v2.0 (R40): a qualifier row reads Qualified / Eliminated, never a placement.
 export { qualifierOutcomeOf } from "@/engine/career/careerResults";

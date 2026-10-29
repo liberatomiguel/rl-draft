@@ -989,17 +989,39 @@ interface SeededFieldInput {
   world: WorldState;
   competition: CompetitionState;
   region: Region;
+  /** The event's season and week — the key of the committed `competition.weekSeeding`. */
+  seasonIndex: number;
+  week: number;
   /**
-   * The user's row in the region's direct-8 race, or null (another region).
-   * fieldForEvent: the FIELDED team's rating.total (careerFlow.userTeamForEvent)
-   * with the reputation tier as prestige; an AI resolution: its seeding row.
+   * The user's row in the region's direct-8 race, or null (another region) —
+   * read only when the week has no committed seeding (a save from before
+   * rc.30 that the load repair could not date). fieldForEvent: the fielded
+   * team's rating.total with the reputation tier as prestige; an AI
+   * resolution: its seeding row.
    */
   userSeed: { rating: number; prestige: number } | null;
   /** The user plays this event: they always take a seat (withUserSeat). */
   fieldsUser: boolean;
 }
 
+/**
+ * rc.30 (direct-8): the region's committed seeding for a week
+ * (`competition.weekSeeding`, decided on its Monday), or null.
+ */
+export function committedSeedingFor(
+  competition: CompetitionState,
+  at: { region: Region; seasonIndex: number; week: number },
+): { direct: string[]; rest: string[] } | null {
+  const s = competition.weekSeeding;
+  if (!s || s.region !== at.region || s.seasonIndex !== at.seasonIndex || s.week !== at.week) return null;
+  return { direct: s.direct, rest: s.rest };
+}
+
 function seedingOfField(input: SeededFieldInput): { direct: string[]; rest: string[] } {
+  // rc.30 (direct-8): the week's Monday decision is the authority — the
+  // user's rating is never re-read on Saturday or Sunday.
+  const committed = committedSeedingFor(input.competition, input);
+  if (committed) return committed;
   return regionalSeedingFor({
     orgs: Object.values(input.world.orgs)
       .filter((o) => o.region === input.region)
@@ -1016,8 +1038,9 @@ function seedingOfField(input: SeededFieldInput): { direct: string[]; rest: stri
  * (careerFlow.userSeedingFor, the Monday commit's read) while the engine
  * seeds with the fielded team's rating, so near the direct-8 line the lobby
  * listed a local side in place of the org the engine dropped into Saturday.
+ * rc.30 (direct-8): both now read the week's committed seeding.
  */
-export function qualifierEventRefsFor(input: SeededFieldInput & { seasonIndex: number }): string[] {
+export function qualifierEventRefsFor(input: SeededFieldInput): string[] {
   const seeding = seedingOfField(input);
   const refs = qualifierFieldRefsFor({
     region: input.region,
@@ -1031,10 +1054,10 @@ export function qualifierEventRefsFor(input: SeededFieldInput & { seasonIndex: n
 
 /**
  * rc.29 review (CAREER-UX-R1): the refs a Sunday regional with Saturday's
- * qualified list fields — today's direct top 8 (the user's row as in
- * qualifierEventRefsFor) + the qualified eight, backfilled with the
- * next-best non-direct orgs when a qualified ref no longer resolves.
- * Shared by fieldForEvent and the event lobby.
+ * qualified list fields — the week's direct top 8 (rc.30: Monday's committed
+ * seeding, the user's row as in qualifierEventRefsFor) + the qualified
+ * eight, backfilled with the next-best non-direct orgs when a qualified ref
+ * no longer resolves. Shared by fieldForEvent and the event lobby.
  */
 export function regionalEventRefsFor(input: SeededFieldInput & { qualified: string[] }): string[] {
   const seats = TOURNAMENT.swiss.teams;
@@ -1126,6 +1149,7 @@ export function fieldForEvent(
       competition: ctx.competition,
       region,
       seasonIndex: def.seasonIndex,
+      week: def.week,
       userSeed: userSeed(region),
       fieldsUser: Boolean(ctx.userTeam) && region === ctx.userRegion,
     });
@@ -1143,6 +1167,8 @@ export function fieldForEvent(
         world: ctx.world,
         competition: ctx.competition,
         region,
+        seasonIndex: def.seasonIndex,
+        week: def.week,
         qualified: qualified.refs,
         userSeed: userSeed(region),
         fieldsUser: Boolean(ctx.userTeam) && region === ctx.userRegion,
@@ -1561,6 +1587,101 @@ export function pickRookieName(
       if (free(name)) return name;
     }
   }
+}
+
+/**
+ * rc.30 (A4): the one-time repair of a world built before rc.29 (CAR-01),
+ * run once by the save migration (careerFlow.migrateSaveToV5). Org refs,
+ * player ids, the user's squad, contracts, results and cards are untouched.
+ *  1. One roster per player. A Season X player who changed teams sat on two
+ *     lineups (Itachi, Erased), and a player the user signed could still be
+ *     listed by a second org: the user's squad keeps its players, the first
+ *     org in dataset order (then by ref) keeps the rest, and every other seat
+ *     signs the best free agent of its region (a fresh filler when the region
+ *     has none). No rostered player stays a free agent.
+ *  2. One gamertag per player in a region, as rc.29 gives new worlds: the
+ *     world moves to nameBankVersion 2 (the bank without real nicknames); a
+ *     filler or a pre-rc.29 rookie whose name is already held — by a real
+ *     player, by the user's squad (held in every region: it meets them all)
+ *     or by an earlier player of the region — or is a real nickname takes the
+ *     next free bank name (pickRookieName), stored in `rookieNames`. Real
+ *     players and the user's players are never renamed; a filler the user
+ *     signed keeps its squad name for good through a stored entry.
+ * Idempotent: a repaired world comes back unchanged.
+ */
+export function repairLegacyWorld(
+  world: WorldState,
+  ctx: { seasonIndex: number; careerSeed: number; userSquad: readonly { id: string; name: string }[] },
+): { world: WorldState; reseated: number; renamed: number } {
+  const next: WorldState = structuredClone(world);
+  const userIds = new Set(ctx.userSquad.map((p) => p.id));
+
+  // 1. Rosters — dataset order first (the season-0 builder's order), then by ref.
+  const datasetOrder = new Map<string, number>();
+  for (const lineup of lineups) {
+    if (lineup.seasonId !== CAREER_SEASONS[0].seasonId || lineup.rareSpawn) continue;
+    if (!datasetOrder.has(lineup.orgId)) datasetOrder.set(lineup.orgId, datasetOrder.size);
+  }
+  const orderOf = (ref: string) => datasetOrder.get(ref) ?? Number.MAX_SAFE_INTEGER;
+  const refs = Object.keys(next.orgs).sort((a, b) => orderOf(a) - orderOf(b) || a.localeCompare(b));
+  const seated = new Set<string>(userIds);
+  const holes: { ref: string; slot: number; region: Region }[] = [];
+  for (const ref of refs) {
+    const org = next.orgs[ref];
+    org.playerIds.forEach((id, slot) => {
+      if (seated.has(id)) holes.push({ ref, slot, region: org.region });
+      else seated.add(id);
+    });
+  }
+  const freeAgents = [...new Set(next.freeAgentIds)].filter((id) => !seated.has(id));
+  const viewCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, world: next };
+  let pool = freeAgents
+    .map((id) => playerViewById(id, viewCtx))
+    .filter((v): v is CareerPlayerView => v !== null)
+    .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
+  for (const hole of holes) {
+    const pick = pool.find((v) => v.region === hole.region);
+    if (pick) pool = pool.filter((v) => v.id !== pick.id);
+    next.orgs[hole.ref].playerIds[hole.slot] = pick ? pick.id : nextFillerId(hole.region, next);
+  }
+  const signed = new Set(holes.map((h) => next.orgs[h.ref].playerIds[h.slot]));
+  next.freeAgentIds = freeAgents.filter((id) => !signed.has(id));
+
+  // 2. Names — read every name through the new bank, then settle clashes.
+  const renames: Record<string, string> = { ...(next.rookieNames ?? {}) };
+  // A world filler the user signed keeps the name on its squad record (stored;
+  // the founders' "fic:{region}:starterN" ids never resolve in the world).
+  for (const p of ctx.userSquad) if (/^fic:[A-Z]+:\d+$/.test(p.id)) renames[p.id] = p.name;
+  next.nameBankVersion = 2;
+  next.rookieNames = renames;
+  const real = realNicknameKeys();
+  const squadKeys = new Set(ctx.userSquad.map((p) => nameKey(p.name)));
+  const held = new Map<Region, Set<string>>(REGIONS.map((r) => [r, new Set(squadKeys)]));
+  const worldIds = [...new Set([...Object.values(next.orgs).flatMap((o) => o.playerIds), ...next.freeAgentIds])];
+  const views = worldIds
+    .map((id) => playerViewById(id, { ...viewCtx, world: next }))
+    .filter((v): v is CareerPlayerView => v !== null);
+  // Real players hold their names first; generated players settle in id order.
+  for (const v of views) if (v.kind === "real") held.get(v.region)?.add(nameKey(v.name));
+  let renamed = 0;
+  const generated = views.filter((v) => v.kind !== "real").sort((a, b) => a.id.localeCompare(b.id));
+  for (const v of generated) {
+    const set = held.get(v.region)!;
+    const k = nameKey(v.name);
+    const clash = set.has(k) || real.has(k);
+    // The user's own filler is the squad's player: its name is never moved.
+    if (clash && !userIds.has(v.id)) {
+      const name = pickRookieName(v.region, v.name, set, playerNameBankFor(v.region, 2));
+      renames[v.id] = name;
+      set.add(nameKey(name));
+      renamed += 1;
+    } else {
+      set.add(k);
+    }
+  }
+  if (Object.keys(renames).length === 0 && !world.rookieNames) delete next.rookieNames;
+  if (holes.length > 0 || renamed > 0 || world.nameBankVersion !== 2) next.version = world.version + 1;
+  return { world: next, reseated: holes.length, renamed };
 }
 
 // ---------------------------------------------------------------------------

@@ -178,6 +178,51 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
 
+### Fixed — rc.30 (Etapa 2a, package A: closing the rc.29 integration · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R45)
+
+**Career**
+- **Near the direct-8 line, an org could play Saturday's qualifier and also take a direct seat on
+  Sunday, and a Saturday loser could take a direct seat while a qualified side lost its own.** Root
+  cause: Monday's commit (HQ, calendar) rated the user by the starters' plain average, which is not
+  on the same scale as the orgs' stored intrinsic team ratings. Saturday and Sunday then re-seeded
+  the region with the fielded team's rating, so the two reads could fall on different sides of the
+  line. Monday now decides the week once, with the team rating HQ shows (`userSeedRatingFor`), and
+  stores the decision (`competition.weekSeeding`). The qualifier, the regional, the lobby, the
+  agenda and the calendar all read it; other weeks preview it live with the same rule.
+- **Saves from before rc.28: the agenda and the next stop listed an event that had already been
+  played** (SEAM-1). A qualifier played midweek came back on Saturday, and a regional played on the
+  old Saturday came back on Sunday. Root cause: `userEventDefOnDay` matched played events by their
+  re-timed weekend day. A played event now never lands on a day ahead of the clock.
+- **Saves from before rc.28: a Major already in its playoffs on Saturday was titled "Championship
+  Sunday" and hid its bracket** (SEAM-2). Root cause: the event screen treated every two-day
+  playoffs stage as Sunday's. `isLegacySaturdayPlayoffs` marks that case: a plain playoffs day,
+  bracket on, "Sim to end", nothing promised for Sunday.
+- **Careers started before rc.29 kept their name clashes and Season X players listed by two orgs**
+  (Gate 1 decision 10: yes, a one-time repair). Root cause: the rc.29 fixes (R42) applied to new
+  worlds only. The saveVersion 5 migration runs `repairLegacyWorld` once:
+  - one roster per player: the squad and the first org in dataset order keep their players, and
+    each other seat signs the best free agent in its region;
+  - one gamertag per player in a region: a filler or a pre-rc.29 rookie that clashes, or wears a
+    real nickname, takes the next free bank name (the user's players and real players are never
+    renamed);
+  - the bank without real nicknames.
+
+  IDs, contracts, results and cards are untouched, and one news line says what changed.
+- `nextUserStopDay`, dead since R40 (SEAM-3), is removed.
+
+**Draft and shared UI**
+- **PT showed the Daily Challenge and the XP breakdown in English** ("Daily · Legacy Day", "Run
+  completed"). Root cause: `dailyPlan.ts` and `results.ts` wrote English text into the run and its
+  result. Each daily template and XP line now carries a key, and the screens read `DAILY_TEXT` /
+  `RESULTS_UI.xpLines` in the player's language. A run saved before rc.30 keeps its stored text,
+  except its objective, which is localized from its type.
+- **On a phone, achievement toasts covered the rank-up ceremony** (375×667). Root cause: the
+  toaster (z-80) ignored the "ceremony" overlay hold. Toasts now wait for the ceremony, and each
+  toast's timer starts once it shows.
+
+### Changed — rc.30
+- Career saves move to saveVersion 5 (additive `migrateSaveToV5`; the persist version stays 3).
+
 ### Fixed — rc.29 (Etapa 1b: the rc.28 E2E pass · 2026-10-28 · DESIGN-DECISIONS #144 · ROAD-TO-WORLDS-DECISIONS R42–R44)
 Every item was found by a browser E2E pass on rc.28 (desktop + mobile, EN + PT), fixed,
 reviewed independently and re-checked in the browser.

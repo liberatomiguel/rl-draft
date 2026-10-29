@@ -183,6 +183,8 @@ export interface WorldState {
    * rc.29 (CAR-01): the gamertag each rookie got at his intake (id → name),
    * chosen so nobody in his region already holds it. Optional and additive:
    * rookies generated before rc.29 have no entry and keep their derived name.
+   * rc.30: also the stored name of a filler the one-time legacy repair
+   * renamed or kept (`repairLegacyWorld`) — read before the bank's.
    */
   rookieNames?: Record<string, string>;
   /**
@@ -313,6 +315,24 @@ export interface CompetitionState {
    * saves).
    */
   qualifiedRefs?: Partial<Record<Region, { eventId: string; refs: string[] } | null>>;
+  /**
+   * rc.30 (direct-8): the user's region seeding for a regional week, decided
+   * ONCE on its Monday with the team rating HQ shows — the direct top 8 and
+   * everyone else ("user" included). Saturday's qualifier, Sunday's regional,
+   * the lobby, the agenda and the calendar all read it for that week, so a
+   * signing or the Mon–Fri training can never move the user across the line
+   * mid-week. Absent on older saves and before the first regional Monday.
+   */
+  weekSeeding?: WeekSeeding | null;
+}
+
+/** rc.30 (direct-8): one region's regional seeding, committed on the week's Monday. */
+export interface WeekSeeding {
+  seasonIndex: number;
+  week: number;
+  region: Region;
+  direct: string[];
+  rest: string[];
 }
 
 // ---------------------------------------------------------------------------

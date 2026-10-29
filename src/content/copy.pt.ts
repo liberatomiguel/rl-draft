@@ -612,6 +612,22 @@ export const PT: Copy = {
       daily: "Multiplicador do Desafio Diário",
     },
     xpMultiplier: "Multiplicador de XP",
+    xpLines: {
+      completeRun: "Run concluída",
+      swissWins: (n: number) => `Vitórias no Swiss ×${n}`,
+      qualified: "Classificado para os playoffs",
+      playoffWins: (n: number) => `Séries vencidas nos playoffs ×${n}`,
+      placement: {
+        champion: "Campeão do torneio",
+        runner_up: "Finalista",
+        third: "Terceiro lugar",
+        fourth: "Quarto lugar",
+      },
+      placementBonus: "Bônus de colocação",
+      objective: (label: string) => `Objetivo: ${label}`,
+      achievements: "Conquistas",
+      specials: "Novas cartas especiais",
+    },
     hiddenOverallBonus: "Bônus de overall oculto",
     total: "Total",
     mmrEarned: "Variação de rating",
@@ -1519,6 +1535,68 @@ export const PT: Copy = {
     notFoundHint: "Sorteie esta seleção num draft Classic ou Quick para colecionar as cartas.",
     flavor: (name: string, _nation: string, edition: string) => `${name} defendeu a seleção na ${edition}.`,
     effect: (n: number) => `+${n} em todos os atributos do time — as cores da seleção.`,
+  },
+  DAILY_TEXT: {
+    tag: "Diário",
+    templates: {
+      pureBracket: {
+        label: () => "Chave Pura",
+        description: () => "Sem modificadores. Uma run clássica e limpa — a mesma seed para todos.",
+      },
+      regionalLockdown: {
+        label: (region: string) => `Bloqueio Regional: ${region}`,
+        description: (region: string) => `Só lineups de ${region} no draft e na chave.`,
+      },
+      oldSchool: {
+        label: () => "Old School",
+        description: () => "Só lineups de 2016 a 2019. Os clássicos decidem.",
+      },
+      modern: {
+        label: () => "Era Moderna",
+        description: () => "Só da RLCS X em diante. O jogo de hoje, as estrelas de hoje.",
+      },
+      blackout: {
+        label: () => "Blackout",
+        description: () => "Overalls ocultos em tudo. Draft só no conhecimento.",
+      },
+      noSafetyNet: {
+        label: () => "Sem Rede de Proteção",
+        description: () => "Zero rerolls. A primeira leitura tem que ser a certa.",
+      },
+      gauntlet: {
+        label: () => "Gauntlet",
+        description: () => "Regras do Difícil: overalls ocultos e um campo mais forte.",
+      },
+      specialsSurge: {
+        label: () => "Chuva de Especiais",
+        description: () => "Cartas especiais aparecem com muito mais frequência — dia de colecionador.",
+      },
+      legacyDay: {
+        label: () => "Dia Legacy",
+        description: () =>
+          "O desafio de todos os tempos — elencos campeões, overalls ocultos, sem rerolls. Hoje não precisa desbloquear.",
+      },
+      underdog: {
+        label: () => "Azarão",
+        description: () => "Aposte no azarão até o fim. Vença o título com um time abaixo de 88 OVR.",
+      },
+      championsOnly: {
+        label: () => "Só Campeões",
+        description: () => "Só os grandes elencos de todos os tempos no pool. Grandeza contra grandeza.",
+      },
+      loadedDraft: {
+        label: () => "Draft Turbinado",
+        description: () =>
+          "Duas cartas especiais aparecem garantidas no seu draft — mas a chave responde com um campo mais forte e afiado. Faça o poder das estrelas valer.",
+      },
+    },
+    objectives: {
+      chemistry_good: () => "Termine com química Boa ou melhor",
+      chemistry_great: () => "Termine com química Ótima ou melhor",
+      concede_under: (n: number) => `Sofra menos de ${n} gols`,
+      win_title: () => "Vença o torneio inteiro",
+      team_overall_under: (n: number) => `Vença o título com um time abaixo de ${n} OVR`,
+    },
   },
 };
 

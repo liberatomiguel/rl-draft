@@ -461,41 +461,6 @@ export function isWindowStartWeek(week: number): boolean {
   return week === 1 || !SCHEDULE[week - 2].windowOpen;
 }
 
-/**
- * The next day ≥ fromDay the batched Advance must stop at (pure preview):
- *  - the Monday a transfer window opens;
- *  - v2.0 (R40) on a regional week: the own-region qualifier SATURDAY for a
- *    user outside the direct 8 (`opts.direct` false, the default), and the
- *    own regional's SUNDAY (direct, or reached through Saturday);
- *  - on a Major / Worlds week: Saturday (Swiss stage) and Sunday (playoffs);
- *  - failing everything, the season's last day.
- * `opts.direct` reads TODAY's seeding for every week ahead (the honest
- * preview). The store's stop rule (isStopState) is the authority: it adds the
- * dynamic stops (accepted unofficials, pending decisions, an event in
- * progress) and skips official days the user is not playing.
- */
-export function nextUserStopDay(
-  seasonIndex: number,
-  fromDay: number,
-  userRegion: Region,
-  opts: { direct?: boolean } = {},
-): number {
-  const start = Math.max(1, Math.min(fromDay, DAYS_PER_SEASON));
-
-  for (let day = start; day <= DAYS_PER_SEASON; day++) {
-    const week = weekOfDay(day);
-    if (dayOfWeekOf(day) === 1 && isWindowStartWeek(week)) return day;
-    if (!opts.direct && day === qualifierDayFor(week)) {
-      if (qualifierDefsForWeek(seasonIndex, week).some((d) => d.region === userRegion)) return day;
-    }
-    for (const def of officialEventDefsForWeek(seasonIndex, week)) {
-      if (def.region !== undefined && def.region !== userRegion) continue;
-      if (day === def.day || day === eventEndDayFor(def)) return day;
-    }
-  }
-  return DAYS_PER_SEASON;
-}
-
 // ---------------------------------------------------------------------------
 // Season identity
 // ---------------------------------------------------------------------------

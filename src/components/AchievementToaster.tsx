@@ -6,6 +6,9 @@
  * above everything and isn't trapped by an animated ancestor. Each toast
  * auto-dismisses; tap to dismiss early. This is what makes achievements pop the
  * MOMENT they're earned — mid-draft, mid-match — not only on the results screen.
+ * rc.30: they wait while a ceremony is on screen (the "ceremony" overlay hold —
+ * card unlock, rank-up): on a phone the stack covered the ceremony's title, and
+ * each toast's timer now starts only once it can be seen.
  */
 
 import { useEffect } from "react";
@@ -16,13 +19,15 @@ import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
 import { useAchievementToasts } from "@/store/achievementToastStore";
+import { useOverlayHolds } from "@/store/overlayHoldStore";
 import { achievementStyle } from "@/components/achievementStyle";
 import { AchievementIcon } from "@/components/AchievementIcon";
 
 export function AchievementToaster() {
   const mounted = useMounted();
   const queue = useAchievementToasts((s) => s.queue);
-  if (!mounted || queue.length === 0) return null;
+  const ceremony = useOverlayHolds((s) => s.holds.ceremony > 0);
+  if (!mounted || queue.length === 0 || ceremony) return null;
   return createPortal(
     <div
       className="pointer-events-none fixed right-3 top-16 z-[80] flex w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2"

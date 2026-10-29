@@ -7,9 +7,10 @@
  */
 
 import type { Copy } from "@/content/copy.en";
-import type { StageRef, TournamentState } from "@/engine/types";
+import type { DailyInfo, DailyObjective, StageRef, TournamentState, XpLine } from "@/engine/types";
 
 type TournamentCopy = Copy["TOURNAMENT_UI"];
+type DailyCopy = Copy["DAILY_TEXT"];
 
 /** The engine's id for the player's team in a Draft run. */
 export const USER_TEAM_ID = "user";
@@ -71,4 +72,55 @@ export function xpMultiplierRows(
   if (f.difficulty !== 1) rows.push({ label: R.difficultyMultiplier, value: f.difficulty });
   if (f.mode !== 1) rows.push({ label: R.modeMultiplier[mode] ?? R.xpMultiplier, value: f.mode });
   return rows;
+}
+
+/**
+ * rc.30: the Daily's name, description and objective in the active language
+ * (DAILY_TEXT, keyed by the template the day rolled). A run saved before rc.30
+ * carries no `templateId` and keeps its stored English text.
+ */
+export function dailyLabel(info: DailyInfo, D: DailyCopy): string {
+  return info.templateId ? D.templates[info.templateId].label(info.region ?? "") : info.label;
+}
+
+export function dailyDescription(info: DailyInfo, D: DailyCopy): string {
+  return info.templateId ? D.templates[info.templateId].description(info.region ?? "") : info.description;
+}
+
+/** A Daily bonus objective — localized from its type and threshold (every objective carries both). */
+export function dailyObjectiveLabel(obj: DailyObjective, D: DailyCopy): string {
+  return D.objectives[obj.type](obj.value ?? 0);
+}
+
+/** "Daily · Legacy Day" / "Diário · Dia Legacy" — the run-title tag. */
+export function dailyRunTag(info: DailyInfo, D: DailyCopy): string {
+  return `${D.tag} · ${dailyLabel(info, D)}`;
+}
+
+/**
+ * rc.30: an XP breakdown line in the active language (RESULTS_UI.xpLines,
+ * keyed by `XpLine.key`); a result saved before rc.30 keeps its stored label.
+ */
+export function xpLineLabel(line: XpLine, R: Pick<Copy["RESULTS_UI"], "xpLines">, D: DailyCopy): string {
+  const L = R.xpLines;
+  switch (line.key) {
+    case "completeRun":
+      return L.completeRun;
+    case "swissWins":
+      return L.swissWins(line.n ?? 0);
+    case "qualified":
+      return L.qualified;
+    case "playoffWins":
+      return L.playoffWins(line.n ?? 0);
+    case "placement":
+      return (line.placement && L.placement[line.placement]) || L.placementBonus;
+    case "objective":
+      return line.objective ? L.objective(dailyObjectiveLabel(line.objective, D)) : line.label;
+    case "achievements":
+      return L.achievements;
+    case "specials":
+      return L.specials;
+    default:
+      return line.label;
+  }
 }

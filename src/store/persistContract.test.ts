@@ -378,7 +378,8 @@ describe("run / settings / career hydration", () => {
   // v2.0 (R40): the weekend-calendar step (migrateSaveToV4) is gated by each
   // save's own saveVersion — the persist version stays 3 — so it must run on
   // BOTH paths: `migrate` (older store) and the same-version rehydrate.
-  it("career: a saveVersion-3 slot is upgraded to 4 by migrate AND by a same-version rehydrate", async () => {
+  // rc.30 (R45): the chain now ends at saveVersion 5 (migrateSaveToV5).
+  it("career: a saveVersion-3 slot is upgraded to the latest (5) by migrate AND by a same-version rehydrate", async () => {
     const { createCareerSave } = await import("./careerFlow");
     const legacySlot = () => {
       const slot = createCareerSave(
@@ -405,13 +406,13 @@ describe("run / settings / career hydration", () => {
     const out = migrate({ slots: [legacySlot(), null, null], activeSlot: 0 }, 2) as {
       slots: ({ saveVersion: number } | null)[];
     };
-    expect(out.slots[0]?.saveVersion).toBe(4);
+    expect(out.slots[0]?.saveVersion).toBe(5);
 
     storage.setItem(
       CONTRACT.career.name,
       rawSave({ slots: [legacySlot(), null, null], activeSlot: 0 }, CONTRACT.career.version),
     );
     await persistOf("career").rehydrate();
-    expect(stores.career.getState().slots[0]?.saveVersion).toBe(4);
+    expect(stores.career.getState().slots[0]?.saveVersion).toBe(5);
   });
 });

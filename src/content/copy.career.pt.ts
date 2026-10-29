@@ -866,6 +866,9 @@ export const CAREER_PT: CareerCopy = {
       repDown: (p: Record<string, string | number>) => `Analistas pegam pesado após o tropeço de ${p.org}`,
       starUp: (p: Record<string, string | number>) => `${p.org} alcança o status de ${p.n} estrelas`,
       unlock: (p: Record<string, string | number>) => `Desbloqueado: ${p.name}`,
+      // rc.30 (A4): a limpeza única de uma carreira criada antes da rc.29.
+      registryRepair: (p: Record<string, string | number>) =>
+        `Registro da liga atualizado: ${p.n} ajustes de elenco e gamertag`,
       unavailable: (p: Record<string, string | number>) => `${p.player} está fora de ${p.event}`,
       standIn: (p: Record<string, string | number>) => `Substituto de emergência entra em ${p.event}`,
       bankLoan: (p: Record<string, string | number>) => `A org pega um empréstimo de ${p.amount}`,
@@ -945,6 +948,8 @@ export const CAREER_PT: CareerCopy = {
         `${p.org} e ${p.name} assinaram pela temporada. Base garantida, bônus na meta — entregue e o nível cresce.`,
       unlock: (p: Record<string, string | number>) =>
         `A reputação abriu uma porta nova: ${p.name}. A trilha de progressão mostra o que ainda vem.`,
+      registryRepair: () =>
+        `Jogadores listados por duas orgs agora ficam em um só elenco, e gamertags repetidas foram renomeadas. Seu elenco, seus contratos e seus resultados não mudaram.`,
       unavailable: (p: Record<string, string | number>) =>
         `${p.player} está fora de ${p.event} — visto, saúde, vida. O sub entra com a química dele; sem sub, um contratado tampa o buraco.`,
       standIn: (p: Record<string, string | number>) =>

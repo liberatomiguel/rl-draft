@@ -35,10 +35,14 @@ export function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating
   // fieldForEvent's user row: the user competes for the direct 8 of their
   // own region only, with the fielded rating and the reputation tier.
   const ownRegion = region === save.identity.region;
+  // rc.30 (direct-8): the seeded fields read the week's committed seeding
+  // (competition.weekSeeding) when it exists, exactly like the engine.
   const seeded = {
     world: save.world,
     competition: save.competition,
     region,
+    seasonIndex: def.seasonIndex,
+    week: def.week,
     userSeed: ownRegion ? { rating: userRating, prestige: repTierOf(save.reputation) } : null,
     fieldsUser: ownRegion,
   };
@@ -53,7 +57,7 @@ export function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating
     });
   if (def.tier === "qualifier") {
     // v2.0 (R30 / R40): the non-direct orgs + the local scene, the user seated.
-    return qualifierEventRefsFor({ ...seeded, seasonIndex: def.seasonIndex });
+    return qualifierEventRefsFor(seeded);
   }
   if (def.tier === "regional") {
     const qualified = save.competition.qualifiedRefs?.[region];

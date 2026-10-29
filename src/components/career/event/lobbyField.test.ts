@@ -8,7 +8,9 @@
  * own helpers; every check starts the event for real and compares. Review R1:
  * the seeded fields (the Saturday qualifier, a regional with Saturday's list)
  * also seed the user as the engine does — the fielded rating, not the
- * starters' plain average — so the direct-8 line cannot split them.
+ * starters' plain average — so the direct-8 line cannot split them. rc.30
+ * (direct-8): the Monday commit reads that same team rating, so the HQ, the
+ * lobby and the engine sit on the same side of the line.
  */
 
 import { describe, expect, it } from "vitest";
@@ -18,11 +20,11 @@ import { repTierOf } from "@/engine/career/economy";
 import { localSceneRefs } from "@/engine/career/localScene";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
-import { qualifierFieldRefsFor, t3FieldRefsFor, withUserSeat } from "@/engine/career/worldSim";
+import { regionalSeedingFor, t3FieldRefsFor } from "@/engine/career/worldSim";
 import {
   createCareerSave,
   startEvent,
-  userSeedingFor,
+  userIsDirect,
   userTeamForEvent,
   type CreateCareerInput,
 } from "@/store/careerFlow";
@@ -86,6 +88,17 @@ function straddleDirectLine(save: CareerSave, def: CareerEventDef): string {
     org.rating = i < 7 ? 99 - i : i === 7 ? (average + fielded) / 2 : 40 + i / 10;
   });
   return orgs[7].ref;
+}
+
+/** Would the starters' plain average (the pre-rc.30 Monday read) seat the user in the direct 8? */
+function starterAverageSeating(save: CareerSave): boolean {
+  const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
+  const average = starters.reduce((s, p) => s + p.overall, 0) / starters.length;
+  return regionalSeedingFor({
+    orgs: Object.values(save.world.orgs).filter((o) => o.region === "SAM"),
+    splitPoints: save.competition.splitPoints.SAM ?? {},
+    user: { rating: average, prestige: repTierOf(save.reputation) },
+  }).direct.includes("user");
 }
 
 function playedRefs(save: CareerSave): string[] {
@@ -166,37 +179,29 @@ describe("the lobby lists exactly the teams that play (rc.29 CAR-06)", { timeout
     expect(listed).toEqual(playedRefs(save));
   });
 
-  it("review R1: the qualifier seeds the user with the FIELDED rating — near the direct-8 line too", () => {
+  it("review R1 / rc.30: near the direct-8 line the qualifier lobby, the engine and the Monday read agree", () => {
     const W = seasonSchedule().find((w) => w.kind === "regional")!.week;
     const def = qualifierDefsForWeek(0, W).find((d) => d.region === "SAM")!;
-    let oldRuleMissed = 0;
+    let averageMissed = 0;
     for (const seed of [55501, 66602, 77703, 88804]) {
       const save = onMatchday(seed, def);
       const eighth = straddleDirectLine(save, def);
       const played = playedRefs(save);
       expect(played).toContain("user");
       expect(listedRefs(save, def), `seed ${seed}`).toEqual(played);
-      // The pre-review lobby rule (the starters' plain average) listed a
-      // local side where the engine fields the org on the direct-8 line.
-      const old = withUserSeat(
-        qualifierFieldRefsFor({
-          region: "SAM",
-          seasonIndex: 0,
-          seeding: userSeedingFor(save),
-          seats: TOURNAMENT.swiss.teams,
-        }),
-        TOURNAMENT.swiss.teams,
-      ).sort();
-      if (old.join() !== played.join()) oldRuleMissed += 1;
-      expect(old.includes(eighth)).not.toBe(played.includes(eighth));
+      // A user the Monday read seats in the direct 8 displaces the org on the
+      // line into Saturday — exactly the field the engine builds.
+      expect(played.includes(eighth), `seed ${seed}`).toBe(userIsDirect(save));
+      // The starters' plain average (the pre-rc.30 Monday read) sits on the
+      // other side of the line every time.
+      if (starterAverageSeating(save) !== userIsDirect(save)) averageMissed += 1;
     }
-    expect(oldRuleMissed).toBe(4);
+    expect(averageMissed).toBe(4);
   });
 
-  it("review R1: Sunday's regional with Saturday's list seeds its direct 8 the same way", () => {
+  it("review R1 / rc.30: Sunday's regional with Saturday's list seeds its direct 8 the same way", () => {
     const W = seasonSchedule().find((w) => w.kind === "regional")!.week;
     const def = officialEventDefsForWeek(0, W).find((d) => d.tier === "regional" && d.region === "SAM")!;
-    let oldRuleMissed = 0;
     for (const seed of [55501, 66602, 77703, 88804]) {
       const save = onMatchday(seed, def);
       const eighth = straddleDirectLine(save, def);
@@ -212,17 +217,8 @@ describe("the lobby lists exactly the teams that play (rc.29 CAR-06)", { timeout
       const played = playedRefs(save);
       expect(played).toContain("user");
       expect(listedRefs(save, def), `seed ${seed}`).toEqual(played);
-      // The pre-review rule: today's seeding from the starters' plain average.
-      const seeding = userSeedingFor(save);
-      const oldRefs = [...seeding.direct, ...qualified.filter((r) => !seeding.direct.includes(r))];
-      for (const ref of seeding.rest) {
-        if (oldRefs.length >= TOURNAMENT.swiss.teams) break;
-        if (!oldRefs.includes(ref)) oldRefs.push(ref);
-      }
-      const old = withUserSeat(oldRefs, TOURNAMENT.swiss.teams).sort();
-      if (old.join() !== played.join()) oldRuleMissed += 1;
-      expect(old.includes(eighth)).not.toBe(played.includes(eighth));
+      // The org on the line plays Sunday only from a direct seat the user did not take.
+      expect(played.includes(eighth), `seed ${seed}`).toBe(!userIsDirect(save));
     }
-    expect(oldRuleMissed).toBe(4);
   });
 });

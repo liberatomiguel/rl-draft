@@ -29,7 +29,6 @@ import {
   isTwoDayEvent,
   isWindowStartWeek,
   isWindowWeek,
-  nextUserStopDay,
   officialEventDefsForWeek,
   orderFor,
   playoffsDayFor,
@@ -396,50 +395,6 @@ describe("unofficialOfferFor", () => {
     const a = unofficialOfferFor(1, 5, lowRepCtx);
     const b = unofficialOfferFor(1, 5, lowRepCtx);
     expect(a).toEqual(b);
-  });
-});
-
-describe("nextUserStopDay", () => {
-  it("stops at window-open Mondays and user-relevant matchdays", () => {
-    expect(nextUserStopDay(0, 1, "EU")).toBe(1); // preseason window opens day 1
-    // Inside the preseason window (W2 Monday) → next stop is R1's Saturday.
-    expect(nextUserStopDay(0, firstDayOfWeek(2), "EU")).toBe(eventDayFor(4));
-    expect(nextUserStopDay(0, firstDayOfWeek(5), "EU")).toBe(eventDayFor(6));
-    expect(nextUserStopDay(0, firstDayOfWeek(9), "EU")).toBe(eventDayFor(10)); // the Major
-    expect(nextUserStopDay(0, firstDayOfWeek(11), "EU")).toBe(firstDayOfWeek(11)); // window opens
-    // Past the window's opening Monday → next stop is the next regional.
-    expect(nextUserStopDay(0, firstDayOfWeek(11) + 1, "EU")).toBe(eventDayFor(14));
-    expect(nextUserStopDay(0, firstDayOfWeek(21), "EU")).toBe(firstDayOfWeek(21));
-    expect(nextUserStopDay(0, firstDayOfWeek(30), "NA")).toBe(eventDayFor(30));
-    expect(nextUserStopDay(0, firstDayOfWeek(31), "SAM")).toBe(firstDayOfWeek(31)); // worlds window
-    expect(nextUserStopDay(0, firstDayOfWeek(32), "SAM")).toBe(eventDayFor(32)); // worlds
-  });
-
-  it("returns the stop day itself when starting exactly on it", () => {
-    expect(nextUserStopDay(0, eventDayFor(4), "EU")).toBe(eventDayFor(4));
-    expect(nextUserStopDay(0, firstDayOfWeek(21), "APAC")).toBe(firstDayOfWeek(21));
-  });
-
-  it("clamps past the end of the season", () => {
-    expect(nextUserStopDay(0, DAYS_PER_SEASON + 40, "EU")).toBe(DAYS_PER_SEASON);
-  });
-
-  it("regional matchdays stop every region (all seven play the same weeks)", () => {
-    for (const region of REGIONS) {
-      expect(nextUserStopDay(0, firstDayOfWeek(3), region)).toBe(eventDayFor(4));
-    }
-  });
-
-  it("R40: a direct user skips the Saturday qualifier and stops on the Sunday regional", () => {
-    expect(nextUserStopDay(0, firstDayOfWeek(3), "EU", { direct: true })).toBe(regionalDayFor(4));
-    // Outside the direct 8: the Saturday qualifier, then the Sunday regional.
-    expect(nextUserStopDay(0, eventDayFor(4) + 1, "EU")).toBe(regionalDayFor(4));
-  });
-
-  it("R40: a Major / Worlds stops on Saturday (Swiss) and again on Sunday (playoffs)", () => {
-    expect(nextUserStopDay(0, eventDayFor(10) + 1, "EU")).toBe(eventDayFor(10) + 1);
-    expect(nextUserStopDay(0, eventDayFor(32), "SAM", { direct: true })).toBe(eventDayFor(32));
-    expect(nextUserStopDay(0, eventDayFor(32) + 1, "SAM")).toBe(DAYS_PER_SEASON);
   });
 });
 

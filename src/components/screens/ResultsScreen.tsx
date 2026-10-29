@@ -31,7 +31,7 @@ import {
   type ShareCardData,
 } from "@/lib/shareCard";
 import { orgLogoSrc } from "@/lib/assets";
-import { resultStageLabel, signedDelta, xpMultiplierRows } from "@/lib/runLabels";
+import { dailyRunTag, resultStageLabel, signedDelta, xpLineLabel, xpMultiplierRows } from "@/lib/runLabels";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -60,7 +60,7 @@ const CONFETTI_COLORS = ["#f97316", "#fbbf24", "#3b82f6", "#38bdf8", "#e9eef8"];
 
 export function ResultsScreen({ run }: { run: RunState }) {
   const router = useRouter();
-  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T } = useCopy();
+  const { RESULTS_UI: R, REVIEW, RARITY_LABELS, CHEM_TIERS, TOURNAMENT_UI: T, DAILY_TEXT } = useCopy();
   const PLACEMENT_COPY: Record<Placement, { title: string; sub: string; tone: "orange" | "blue" }> = {
     champion: { title: R.champion, sub: R.championSub, tone: "orange" },
     runner_up: { title: R.runnerUp, sub: R.runnerUpSub, tone: "blue" },
@@ -265,7 +265,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
           ) : null}
           <p className="mt-3 text-sm text-sub">{placement.sub}</p>
           {run.daily ? (
-            <p className="mt-1 text-xs text-orange-bright">Daily · {run.daily.label}</p>
+            <p className="mt-1 text-xs text-orange-bright">{dailyRunTag(run.daily, DAILY_TEXT)}</p>
           ) : null}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             {/* Quick Draft has no Swiss stage (single-elim bracket) — DRAFT-09. */}
@@ -390,7 +390,7 @@ export function ResultsScreen({ run }: { run: RunState }) {
           <ul className="space-y-1.5">
             {results.xp.lines.map((line, i) => (
               <li key={i} className="flex items-center justify-between text-sm text-sub">
-                <span>{line.label}</span>
+                <span>{xpLineLabel(line, R, DAILY_TEXT)}</span>
                 <span className="display font-bold text-ink">+{line.amount}</span>
               </li>
             ))}

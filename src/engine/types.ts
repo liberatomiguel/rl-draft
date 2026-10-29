@@ -544,9 +544,28 @@ export type Placement =
   | "swiss_exit";
 
 export interface XpLine {
+  /** English label — the fallback for a result saved before rc.30 (no `key`). */
   label: string;
   amount: number;
+  /** rc.30: what the line counts, for the label in the player's language (RESULTS_UI.xpLines). */
+  key?: XpLineKey;
+  /** rc.30: the count a line names (Swiss wins, playoff series wins). */
+  n?: number;
+  /** rc.30: the placement a "placement" line rewards. */
+  placement?: Placement;
+  /** rc.30: the objective an "objective" line rewards. */
+  objective?: DailyObjective;
 }
+
+export type XpLineKey =
+  | "completeRun"
+  | "swissWins"
+  | "qualified"
+  | "playoffWins"
+  | "placement"
+  | "objective"
+  | "achievements"
+  | "specials";
 
 export interface XpSummary {
   lines: XpLine[];
@@ -622,11 +641,31 @@ export interface DailyInfo {
   date: string;
   /** Sequential challenge number since launch (#1, #2, …). */
   n: number;
+  /** English label and description — the fallback for a run saved before rc.30 (no `templateId`). */
   label: string;
   description: string;
   /** Optional bonus objective evaluated at results time. */
   objective?: DailyObjective;
+  /** rc.30: the template the day rolled — screens read its copy (DAILY_TEXT) in the player's language. */
+  templateId?: DailyTemplateId;
+  /** rc.30: the Regional Lockdown's region. */
+  region?: Region;
 }
+
+/** rc.30: the Daily's templates (src/lib/dailyPlan.ts), keys of DAILY_TEXT.templates. */
+export type DailyTemplateId =
+  | "pureBracket"
+  | "regionalLockdown"
+  | "oldSchool"
+  | "modern"
+  | "blackout"
+  | "noSafetyNet"
+  | "gauntlet"
+  | "specialsSurge"
+  | "legacyDay"
+  | "underdog"
+  | "championsOnly"
+  | "loadedDraft";
 
 export interface DailyObjective {
   type:

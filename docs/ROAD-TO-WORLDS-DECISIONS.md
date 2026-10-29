@@ -555,6 +555,24 @@ R44. **Lobbies advertise the prize that is paid (rc.29, CAR-08).**
      $40.8k because the swiss16 table pays 102 %, and the Community Cup shows
      $1.8k after rounding to $50. Miguel to confirm, or reshape the tables.
 
+R45. **One direct-8 decision per week, and the one-time repair (rc.30, Etapa
+     2a).** (a) The user's seeding rating is the team rating HQ shows
+     (`userSeedRatingFor`: the fielded trio with chemistry, coach, gear and the
+     bootcamp edge), on the scale of the orgs' stored intrinsic ratings. The
+     starters' plain average now feeds only scrim matchmaking and the
+     unofficial offers (DEV-03 rebuilds scrims). (b) A regional week's Monday
+     commits the user's region seeding (`competition.weekSeeding`). Saturday's
+     qualifier, Sunday's regional, the lobby, the agenda, the calendar and
+     `userIsDirect` read it for that week, so a signing, the Mon–Fri training
+     or a change in points never moves the user across the line mid-week.
+     Later weeks preview live. (c) saveVersion 5 (`migrateSaveToV5`; persist
+     version 3 frozen) runs the world's one-time repair
+     (`repairLegacyWorld`) for careers started before rc.29, which reverses
+     R42's "existing careers keep every name". It also rebuilds an in-flight
+     week's seeding from the commit the save already made. (d) Rejected:
+     re-seeding the weekend with a frozen user rating (stored org ratings can
+     still split the AI side) and renaming the user's players.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

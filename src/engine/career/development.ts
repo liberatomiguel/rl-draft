@@ -351,9 +351,11 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
   const id = `fic:${region}:${n}`;
   const key = `${region}:${n}`;
   // rc.29: a world created from rc.29 on reads the bank without real nicknames.
+  // rc.30: a name the legacy repair stored for this filler comes first.
   const bank = playerNameBankFor(region, ctx.world.nameBankVersion);
   const wrap = Math.floor(n / bank.length);
-  const name = bank[n % bank.length] + (wrap > 0 ? ` ${roman(wrap + 1)}` : "");
+  const name =
+    ctx.world.rookieNames?.[id] ?? bank[n % bank.length] + (wrap > 0 ? ` ${roman(wrap + 1)}` : "");
 
   // v0.3 headliner: the first slot of each filler-org triplet (n % 3 === 0)
   // may roll a stronger base — one visible name per filler org, chance-gated,
