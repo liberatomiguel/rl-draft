@@ -34,9 +34,10 @@ plan's Etapas 1–2a so far (rc.27–30; `ROADMAP.md` "Done", CHANGELOG).
   93+ rookie in the dataset eras; specials above potential). The analytics
   contract is a proposal (`ANALYTICS-EVENTS-2.0.md`). Still open in 2a:
   ENG-01 audit, DATA-01, ENG-02 rest, real-save fixtures.
-- **Next, 2b** (after Miguel's four answers in `ROADMAP.md`): ECO-02/03 and
-  DEV-01/02 first, then ECO-01, BAL-02, RTW-01, OBS-01, re-measured on the
-  same seeds.
+- **Next, 2b** (Miguel answered the four decisions on 29/10; `ROADMAP.md`):
+  ECO-02/03 fixes and the economy contract first, then DEV-01/02, RTW-01's
+  two tables, BAL-02, each re-measured on the same seeds and played by
+  Miguel.
 
 ## Open before `main`
 

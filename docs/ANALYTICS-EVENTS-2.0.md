@@ -90,6 +90,7 @@ transfers — far below the free tier, and nothing per Advance.
 
 1. Approve the catalogue, or cut events (the career finance summary is the
    biggest one).
-2. Staging/playtest: a separate PostHog project, or no analytics there at all?
+2. ~~Staging/playtest~~ — **decided 29/10:** no analytics there for now (few
+   players); tests verify the payloads, production gets the events at launch.
 3. `BALANCE_VERSION`: a hand-bumped constant (proposed), or the git short hash
    at build time?

@@ -163,11 +163,12 @@ Etapa 3 packages and coaches will add):
   flow first (the harness ends most careers through it, baseline §1).
 - ECO-03a, stars: fee, wage, contract length, reputation and opportunity
   cost, priced without leaning on the sub discount.
-- ECO-03b, bids: no incoming bids for the user's players in the initial
-  period Miguel asked for. Bids arrive only in transfer windows
-  (`incomingBidForDay`, plus the scripted Blockbuster bids in W1-2), never
-  inside a split, so the block maps to season 0's preseason window (W1-2)
-  and stays explicit in the code (proposal; Miguel confirms).
+- ECO-03b, bids (**decided 29/10**): no incoming bids for the user's players
+  during the career's **first transfer window** (season 1, weeks 1–2; the
+  code calls it the preseason window, `windowIdx` 0 of season 0), the
+  scripted Blockbuster bids of W1-2 included. From the next window on, bids
+  arrive as today (`incomingBidForDay`, windows only). Keep the block
+  explicit in the code.
 - ECO-03, the sub contract (P0, still open after the old "sub-slot fix"):
   the lineup slot is separate from the price of the job. No "signed as a sub"
   wage discount (`CAREER_SALARY.subRoleFactor` 0.4 in `computeSalaryAsk`,
@@ -193,6 +194,21 @@ Etapa 3 packages and coaches will add):
   bankruptcy nor wealth. Report p10/p50/p90 of balance, debt, payroll ÷
   guaranteed income, rescues, bankruptcy and access to stars over 8+
   seasons, every pool and difficulty.
+  - **Miguel's input (29/10):** playing it himself he never went bankrupt;
+    friends less familiar with the game did. Star players become easy to
+    buy at some point. Humans take different paths: develop their own
+    players, sell and trade up, buy stars. The money scale should grow
+    progressively over the seasons.
+  - So the economy gets a **written contract before any retune** (like
+    DEV-03), for Miguel's approval. It covers: a newcomer who plays normally
+    never goes bankrupt (clear warnings, a recovery path that is not the
+    end), a progressive money scale (prizes, wages, fees and sponsors grow
+    together season by season), stars that stay a real decision late in the
+    career (priced against the league's top budgets, not only the curve),
+    and each path viable (developing your own players must not be punished
+    at renewal; selling and trading up must work).
+  - The harness is a regression check on fixed seeds, not a model of human
+    play. The gate is a human playtest by Miguel and by newcomers.
 - DEV-01, the growth contract (direction decided by Miguel; parameters are
   tuning):
   - a) rare generic prospects aged 13–15 with potential 93–98, in the
@@ -227,9 +243,12 @@ Etapa 3 packages and coaches will add):
     "compensate" the old curve; bought scouting stays coherent.
 - DEV-02: signing, registering, fielding, substitution and rollover
   aligned with the new longevity; no retirement before the peak; youth
-  never depends on the sub exploit. **Miguel decides** the minimum
-  competitive age and the final retirement rule (today the rollover roll
-  reaches 70 % from 28, half for stars).
+  never depends on the sub exploit. **Decided 29/10:** the minimum
+  competitive age is **13** (signable and playable from 13, as in the RLCS
+  today). Players retire **between 24 and 29** (Miguel's estimate; today the
+  rollover roll reaches 70 % from 28, half for stars). A retiring player
+  either leaves the game or **becomes a coach**: real ex-pros then feed the
+  DEV-03 coach market.
 - BAL-02: difficulty presets for the career, Easy / Normal / Hard (Normal
   default), each moving matches (a small edge for the user on Easy, stronger
   opponents on Hard), money (starting budget) and how much of the training
@@ -245,14 +264,21 @@ Etapa 3 packages and coaches will add):
   measure P(win Worlds | won a Major) by squad strength, region, difficulty
   and career stage, and check the field takes the best qualifiers. Never a
   forced loss or a secret penalty for winning a Major.
-- RTW-01: orgs enter by era (prove none arrives early); standings with the
-  generic orgs, with points and eligibility defined, not just zero-point
-  rows. `applyResultToStandings` drops local sides' points (R23/R30):
-  keeping them, and letting them take a Major slot (`majorFieldFor` takes
-  the top split points), is **Miguel's call**. HQ shows the split race to
-  the Major, not only the season race (UX-01d).
+- RTW-01: orgs enter by era (prove none arrives early). **Decided 29/10:**
+  local sides **score in the regional and can earn a Major slot** (reverses
+  R23/R30: `applyResultToStandings` stops dropping their points, and
+  `majorFieldFor` / the Major and Worlds fields resolve them). **Two
+  tables, both viewable** (the Standings screen and the HQ toggle,
+  UX-01d): the per-split **Major table** (that split's regional points) and
+  the season **Worlds table** (regional + Major points). The focus stays
+  on real orgs; generic teams (filler orgs and local sides) can take part
+  too.
 - OBS-01: build the approved catalogue (`ANALYTICS-EVENTS-2.0.md`) in
   `src/lib/analytics.ts`, fired from the store once per saved action.
+  **Decided 29/10:** no analytics on staging/playtest for now (few players
+  there). The events are verified by tests (a fake sink), and production
+  gets them at launch, so the build can wait for the end of 2b or Etapa 5,
+  before the cutover.
 
 **Gate 2:** Miguel approves the new numbers (curves, economy) and plays a
 long career on staging.
@@ -451,13 +477,16 @@ one-time repair and its news line), a regional week near the direct-8 line
 release attempted on Saturday night (locked), the Daily and a run's results
 in PT, and the playtest build's results XP count-up.
 
-**Decisions that shape Etapa 2b (asked now):**
-1. DEV-02: the minimum competitive age, and the final retirement rule.
-2. RTW-01: may local sides that score in a regional enter the tables, and
-   can they then take a Major slot (yes reverses R23/R30)?
-3. ECO-03b: the bid block maps to season 0's preseason window (W1-2)?
-4. OBS-01: approve `ANALYTICS-EVENTS-2.0.md` (and its three questions:
-   staging/playtest project, the finance summary, `BALANCE_VERSION`).
+**Decided 29/10** (written into the 2b items above): DEV-02 (age 13,
+retirement 24–29, retirees may become coaches), RTW-01 (local sides score
+and can earn a Major slot; a split Major table and a season Worlds table),
+ECO-03b (no bids in the career's first window), OBS-01 (no staging data;
+build before launch), and Miguel's economy input (ECO-01).
+
+**Still to approve for Etapa 2b:**
+1. The economy contract (ECO-01/02/03), once written.
+2. The event catalogue (`ANALYTICS-EVENTS-2.0.md`; `BALANCE_VERSION` as a
+   hand-bumped constant, proposed).
 
 **Still open from Gate 1** (the 28/10 plan did not answer them; the
 shipped defaults stay until Miguel says otherwise):
