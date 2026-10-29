@@ -91,6 +91,7 @@ import {
   legacyGradeFor,
   majorFieldFor,
   placementOf,
+  rankByPoints,
   seasonGoalsFor,
   seasonGradeFor,
   stabilityAssess,
@@ -155,7 +156,7 @@ import {
   type AskPackage,
 } from "@/engine/career/market";
 import { ACH_FLAGS } from "@/engine/career/achievements";
-import { isLocalRef, localTeamName } from "@/engine/career/localScene";
+import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
@@ -163,6 +164,7 @@ import {
   committedSeedingFor,
   computeStars,
   fieldForEvent,
+  localSeedRowsFor,
   orgTeamFor,
   realOrgIntake,
   regionalSeedingFor,
@@ -236,7 +238,9 @@ export function syncSquadRoles(save: CareerSave): void {
 
 export function regionOfRef(save: CareerSave, ref: string): Region {
   if (ref === "user") return save.identity.region;
-  return save.world.orgs[ref]?.region ?? save.identity.region;
+  // RTW-01 (R49): a local side's home is in its ref — its Major points bank
+  // into ITS region's season table (it fell back to the user's region).
+  return save.world.orgs[ref]?.region ?? localRegionOf(ref) ?? save.identity.region;
 }
 
 function nextSeq(save: CareerSave): number {
@@ -339,6 +343,12 @@ function isInfinite(save: CareerSave): boolean {
   return save.clock.seasonIndex >= CAREER_SEASONS.length;
 }
 
+/** R49: the season's first regional week (W4) — the local scene's anchor freezes on its Monday. */
+const FIRST_REGIONAL_WEEK =
+  Array.from({ length: CAREER_CALENDAR.weeksPerSeason }, (_, i) => i + 1).find(
+    (w) => weekAt(w).kind === "regional",
+  ) ?? 1;
+
 /**
  * rc.30 (direct-8): the user's seeding rating — the team rating HQ and the
  * squad screen show (the fielded trio with chemistry, coach and gear), on the
@@ -360,13 +370,25 @@ export function userSeedRatingFor(save: CareerSave): number {
   }).team.rating.total;
 }
 
-/** Today's seeding of the user's region: stored fields + the user's current team rating. */
-function liveUserSeeding(save: CareerSave): { direct: string[]; rest: string[] } {
+/**
+ * Today's seeding of the user's region: stored fields + the user's current
+ * team rating. R49: local sides holding split points race for the direct 8 too.
+ */
+function liveUserSeeding(
+  save: CareerSave,
+  seedRating: number = userSeedRatingFor(save),
+): { direct: string[]; rest: string[] } {
   const region = save.identity.region;
   return regionalSeedingFor({
     orgs: Object.values(save.world.orgs).filter((o) => o.region === region),
     splitPoints: save.competition.splitPoints[region] ?? {},
-    user: { rating: userSeedRatingFor(save), prestige: repTierOf(save.reputation) },
+    user: { rating: seedRating, prestige: repTierOf(save.reputation) },
+    locals: localSeedRowsFor({
+      world: save.world,
+      competition: save.competition,
+      region,
+      careerSeed: save.careerSeed,
+    }),
   });
 }
 
@@ -703,10 +725,17 @@ export function processDayArrival(input: CareerSave): CareerSave {
     const qualifier = qualifierDefsForWeek(seasonIndex, week).find(
       (q) => q.region === save.identity.region,
     );
+    // RTW-01 (R49): the user's region's local scene is rated around the user's
+    // team as it stands on the season's first regional Monday, for the whole
+    // season (the Saturday qualifier, Sunday, a Major, Worlds, the cups). A
+    // save from before rc.31 freezes it on its next Monday.
+    const needsAnchor = !save.competition.localAnchor && week >= FIRST_REGIONAL_WEEK;
+    const seedRating = qualifier || needsAnchor ? userSeedRatingFor(save) : 0;
+    if (needsAnchor) save.competition.localAnchor = { region: save.identity.region, rating: seedRating };
     // rc.30 (direct-8): the week's seeding is decided ONCE, here, and stored —
     // Saturday, Sunday, the lobby and HQ read this decision, never a re-seed.
     if (qualifier) {
-      const seeding = liveUserSeeding(save);
+      const seeding = liveUserSeeding(save, seedRating);
       save.competition.weekSeeding = { seasonIndex, week, region: save.identity.region, ...seeding };
     }
     if (qualifier && !userIsDirect(save)) {
@@ -2010,9 +2039,12 @@ function accumulateStats(save: CareerSave, t: TournamentState): void {
 export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventResult | null): void {
   const region = save.identity.region;
   const table = save.competition.seasonPoints[region] ?? {};
-  const rows = Object.entries(table)
-    .map(([ref, points]) => ({ ref, name: nameOfRef(save, ref), points }))
-    .sort((a, b) => b.points - a.points);
+  // R49: the Worlds table's own order (rankByPoints — local sides included).
+  const rows = rankByPoints(table, region, save.careerSeed).map((ref) => ({
+    ref,
+    name: nameOfRef(save, ref),
+    points: table[ref],
+  }));
   const rank = Math.max(1, rows.findIndex((r) => r.ref === "user") + 1 || rows.length + 1);
   const seasonEvents = save.eventResults.filter((r) => r.seasonIndex === save.clock.seasonIndex);
   const majorsQualified = seasonEvents.filter(

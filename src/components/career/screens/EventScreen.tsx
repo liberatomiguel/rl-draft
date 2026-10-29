@@ -28,7 +28,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isLocalRef, localTeamName, localTeamOffset } from "@/engine/career/localScene";
+import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, CAREER_QUALIFIER, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -59,6 +59,7 @@ import {
   eventTeamPreview,
   isEventPaused,
   isLegacySaturdayPlayoffs,
+  localSideRatingOf,
   qualifierOutcomeOf,
   useCareerSave,
   userStars,
@@ -230,11 +231,12 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         }
         const org = save.world.orgs[ref];
         if (!org && isLocalRef(ref)) {
+          // R49: the rating the engine fields this side at in THIS event.
           return {
             ref,
             name: localTeamName(ref, save.careerSeed),
             stars: 0,
-            rating: Math.round(userRating + localTeamOffset(ref, save.careerSeed)),
+            rating: Math.round(localSideRatingOf(save, ref, { def, userRating: preview.rating.total })),
           };
         }
         return {

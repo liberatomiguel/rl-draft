@@ -4,10 +4,13 @@
  * Community Cups used to field the seven closest world orgs — and at season
  * 0 every org in a region out-rates a starter roster, so a new org lost every
  * cup for splits (Miguel's playtests). Local teams are procedural amateur
- * sides that exist only inside t3 fields: deterministic per (career, region,
- * season, slot), rated within CAREER_UNOFFICIAL.localSceneBand of the user
- * team, never persisted, never in standings. Refs look like
- * `local:<region>:<seasonIndex>:<k>` and resolve by hash — no save state.
+ * sides: deterministic per (career, region, season, slot), never persisted as
+ * teams. Refs look like `local:<region>:<seasonIndex>:<k>` and resolve by hash.
+ * R30: they also fill the Saturday qualifiers. RTW-01 (R49): a local side
+ * that reaches a regional SCORES like any team of its region — its points
+ * enter the split (Major) and season (Worlds) tables, and it can earn a Major
+ * or Worlds slot. Its strength is fixed for the season: the region's anchor
+ * (worldSim.localAnchorFor) + its hashed offset in localSceneBand.
  *
  * Pure TS: names and offsets come from `derivedFloat` (no Rng cursor).
  */
@@ -37,6 +40,11 @@ export function parseLocalRef(
   const slot = Number(k);
   if (!region || !Number.isFinite(seasonIndex) || !Number.isFinite(slot)) return null;
   return { region: region as Region, seasonIndex, k: slot };
+}
+
+/** RTW-01 (R49): a local side's home region (from its ref), or null for any other ref. */
+export function localRegionOf(ref: string): Region | null {
+  return parseLocalRef(ref)?.region ?? null;
 }
 
 /** The pool of local refs for a region-season (CAREER_UNOFFICIAL.localScenePool). */
@@ -73,7 +81,7 @@ function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
 }
 
-/** Rating offset vs. the user team, uniform in localSceneBand (one decimal). */
+/** Rating offset vs. the region's local-scene anchor (R49), uniform in localSceneBand (one decimal). */
 export function localTeamOffset(ref: string, careerSeed: number): number {
   const [lo, hi] = CAREER_UNOFFICIAL.localSceneBand;
   const f = derivedFloat(careerSeed, streams.gen("localOffset", ref));

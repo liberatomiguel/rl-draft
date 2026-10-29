@@ -856,6 +856,36 @@ export const CAREER_EN = {
     fieldRevealPending: "Revealed when every region concludes",
   },
 
+  // RTW-01 (R49): the two race tables — the Standings tabs and the HQ toggle.
+  race: {
+    majorTab: "Major table",
+    worldsTab: "Worlds table",
+    majorToggle: "Major",
+    worldsToggle: "Worlds",
+    majorScope: (split: number, slots: number) =>
+      `Split ${split} · regional points · ${slots === 1 ? "the leader reaches" : `top ${slots} reach`} the Major`,
+    worldsScope: (slots: number) =>
+      `Season · regional + Major points · ${slots === 1 ? "the leader reaches" : `top ${slots} reach`} Worlds`,
+    fixturesMajor: (n: number) =>
+      n === 0 ? "Split complete" : n === 1 ? "1 regional left in the split" : `${n} regionals left in the split`,
+    fixturesWorlds: (regionals: number, majors: number) => {
+      const parts = [
+        regionals ? `${regionals} regional${regionals === 1 ? "" : "s"}` : "",
+        majors ? `${majors} Major${majors === 1 ? "" : "s"}` : "",
+      ].filter(Boolean);
+      return parts.length ? `${parts.join(" + ")} left in the season` : "Season complete";
+    },
+    status: { clinched: "Slot secured", contention: "In the race", out: "Out of reach" },
+    localTag: "Local",
+    localLegend: "Local: an amateur side from the regional scene. It scores like any team and can earn a slot.",
+    qualifiedTag: "Qualified",
+    majorField: "Major field",
+    majorFieldPending: "Announced on the Major week's Monday",
+    open: "Full standings",
+    toggleLabel: "Race table",
+    fixturesLabel: "Still to play",
+  },
+
   news: {
     title: "Inbox",
     unread: (n: number) => `${n} unread`,
@@ -1388,7 +1418,9 @@ export const CAREER_EN = {
     // rc.2 local sides
     localSide: "Local side",
     // rc.29: since R30 the local scene also fills the Saturday qualifiers.
-    localHint: "An amateur team from the regional scene — they play the community cups and fill the Saturday qualifiers.",
+    // rc.31 (R49): its regional points count in the Major and Worlds races.
+    localHint:
+      "An amateur team from the regional scene — they play the community cups and the Saturday qualifiers, and their regional points count in the Major and Worlds races.",
   },
 
   common: {

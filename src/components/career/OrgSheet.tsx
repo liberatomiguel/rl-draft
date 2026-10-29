@@ -13,13 +13,12 @@ import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { CountryChip } from "@/components/ui/Badge";
 import { playerViewById } from "@/engine/career/development";
-import { isLocalRef } from "@/engine/career/localScene";
+import { isLocalRef, localRegionOf } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
-import { localTeamFor } from "@/engine/career/worldSim";
 import { Badge } from "@/components/ui/Badge";
 import { OrgMark } from "./OrgMark";
 import { TeamStars } from "./TeamStars";
-import { userTeamPreview, viewCtxOf } from "./careerUi";
+import { localSideRatingOf, localSideTeamOf, viewCtxOf } from "./careerUi";
 
 export function OrgSheet({
   save,
@@ -88,17 +87,14 @@ export function OrgSheet({
   );
 }
 
-/** rc.2: a local amateur side (Community Cups) — the same sheet, built from
- *  the procedural team instead of a world org. */
+/** rc.2: a local amateur side — the same sheet, built from the procedural
+ *  team instead of a world org. R49: its own region (from the ref), its
+ *  season rating (the one every event fields it at) and its Season Points. */
 function LocalSheet({ save, orgRef, onClose }: { save: CareerSave; orgRef: string; onClose: () => void }) {
   const C = useCareerCopy();
-  const team = localTeamFor(orgRef, {
-    careerSeed: save.careerSeed,
-    seasonIndex: save.clock.seasonIndex,
-    difficulty: save.difficulty,
-    userRating: userTeamPreview(save).rating.total,
-    region: save.identity.region,
-  });
+  const team = localSideTeamOf(save, orgRef);
+  const region = localRegionOf(orgRef) ?? save.identity.region;
+  const points = save.competition.seasonPoints[region]?.[orgRef] ?? 0;
   return (
     <Modal open onClose={onClose} title={team.name}>
       <div className="space-y-4">
@@ -107,11 +103,13 @@ function LocalSheet({ save, orgRef, onClose }: { save: CareerSave; orgRef: strin
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Badge tone="neutral">{C.orgSheet.localSide}</Badge>
-              <span className="text-xs font-semibold text-sub">{save.identity.region}</span>
+              <span className="text-xs font-semibold text-sub">{region}</span>
             </div>
             <p className="mt-1 text-xs text-faint">
-              {C.common.ovrShort(Math.round(team.rating.total))} · {C.orgSheet.localHint}
+              {C.common.ovrShort(Math.round(localSideRatingOf(save, orgRef)))} · {C.orgSheet.points}:{" "}
+              <span className="font-semibold text-sub">{points}</span>
             </p>
+            <p className="mt-1 text-xs text-faint">{C.orgSheet.localHint}</p>
           </div>
         </div>
         <div>

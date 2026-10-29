@@ -55,7 +55,23 @@ import {
   type ViewCtx,
 } from "@/engine/career/development";
 import { askPackageFor, contractedSplitsRemaining, listingFor } from "@/engine/career/market";
-import { userStarsFor, userTeamFor } from "@/engine/career/worldSim";
+import { localRegionOf } from "@/engine/career/localScene";
+import {
+  raceTableFor,
+  type RaceKind,
+  type RaceRow,
+  type RaceSide,
+  type RaceStatus,
+  type RaceTable,
+} from "@/engine/career/raceTable";
+import {
+  localAnchorFor,
+  localAnchorForEvent,
+  localTeamFor,
+  localTeamTarget,
+  userStarsFor,
+  userTeamFor,
+} from "@/engine/career/worldSim";
 import type {
   CareerEventDef,
   CareerPlayerView,
@@ -435,42 +451,79 @@ export function scrimAvailability(save: CareerSave): {
 }
 
 // ---------------------------------------------------------------------------
-// Standings rows
+// The two race tables (RTW-01, R49) — the Standings screen and the HQ toggle
 // ---------------------------------------------------------------------------
 
-export interface StandingsRow {
-  ref: string;
-  name: string;
-  points: number;
-  isUser: boolean;
-  stars: number;
-  rank: number;
+/**
+ * A region's Major table (this split's regional points) or Worlds table (the
+ * season's regional + Major points) — engine/career/raceTable.ts, the order
+ * and the cut the Major / Worlds selection uses, local sides included.
+ */
+export function raceTableOf(save: CareerSave, region: Region, kind: RaceKind): RaceTable {
+  return raceTableFor({
+    kind,
+    region,
+    competition: save.competition,
+    world: save.world,
+    clock: save.clock,
+    userRegion: save.identity.region,
+    careerSeed: save.careerSeed,
+    results: save.eventResults,
+    nameOf: (ref) => nameOfRef(save, ref),
+  });
 }
 
-export function standingsRows(
-  save: CareerSave,
-  region: Region,
-  kind: "split" | "season",
-): StandingsRow[] {
-  const table =
-    kind === "split" ? save.competition.splitPoints[region] : save.competition.seasonPoints[region];
-  const rows = Object.entries(table ?? {}).map(([ref, points]) => ({
-    ref,
-    name: nameOfRef(save, ref),
-    points,
-    isUser: ref === "user",
-    stars: save.world.orgs[ref]?.stars ?? 0,
-  }));
-  // Ensure the user row exists even before any points land.
-  if (region === save.identity.region && !rows.some((r) => r.isUser)) {
-    rows.push({ ref: "user", name: save.identity.orgName, points: 0, isUser: true, stars: 0 });
-  }
-  rows.sort((a, b) => b.points - a.points);
-  return rows.map((r, i) => ({ ...r, rank: i + 1 }));
-}
+export type { RaceKind, RaceRow, RaceSide, RaceStatus, RaceTable };
 
 /** Qualification cut-line size for a region (Major/Worlds slot table). */
 export { CAREER_SLOTS } from "@/config/balance";
+
+/**
+ * R49: the anchor a region's local sides are rated around this season — the
+ * user's region reads its frozen anchor (before it freezes, the user's
+ * current team, as the season's first cups field them); other regions their
+ * stored median.
+ */
+function seasonLocalAnchorOf(save: CareerSave, region: Region): number {
+  const live =
+    region === save.identity.region && !save.competition.localAnchor ? userTeamPreview(save).rating.total : null;
+  return localAnchorFor(region, { world: save.world, competition: save.competition, liveUserRating: live });
+}
+
+/**
+ * R49: a local side's rating (its region's anchor + its offset) — the number
+ * the event lobby and the side's sheet show, the target the engine fits its
+ * team to. With `at` (the event and the user's fielded rating) it applies the
+ * engine's own anchor rule for that event (`localAnchorForEvent`).
+ */
+export function localSideRatingOf(
+  save: CareerSave,
+  ref: string,
+  at?: { def: Pick<CareerEventDef, "tier">; userRating: number },
+): number {
+  const region = localRegionOf(ref) ?? save.identity.region;
+  const anchor = at
+    ? localAnchorForEvent(at.def, region, {
+        world: save.world,
+        competition: save.competition,
+        userRegion: save.identity.region,
+        userTeamRating: at.userRating,
+      })
+    : seasonLocalAnchorOf(save, region);
+  return localTeamTarget(ref, anchor, save.careerSeed);
+}
+
+/** R49: a local side as the engine fields it this season (its sheet's roster and rating). */
+export function localSideTeamOf(save: CareerSave, ref: string): TournamentTeam {
+  const region = localRegionOf(ref) ?? save.identity.region;
+  return localTeamFor(ref, {
+    careerSeed: save.careerSeed,
+    seasonIndex: save.clock.seasonIndex,
+    difficulty: save.difficulty,
+    anchor: seasonLocalAnchorOf(save, region),
+    region,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Progression track (v0.2 gear ladder — what's ahead is always visible)
