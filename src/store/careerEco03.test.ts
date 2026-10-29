@@ -24,6 +24,7 @@ import {
   weeklyStatement,
 } from "@/engine/career/economy";
 import { askPackageFor, incomingBidForDay, renewalAskFor, userBidsBlocked } from "@/engine/career/market";
+import { renewalTermsFor } from "@/engine/career/renewal";
 import type { CareerPlayerView, CareerSave, TransferOffer } from "@/engine/career/types";
 import {
   acceptBidFlow,
@@ -263,15 +264,19 @@ describe("ECO-03 — the slot is separate from the price", () => {
     monday.clock.day = firstDayOfWeek(2) - 1;
     monday = advanceDayFlow(monday);
     expect(monday.squad.find((p) => p.id === reserve.id)?.salaryPerSplit).toBe(legacyWage);
-    // The renewal reprices to his normal value and the projection says so.
-    const ask = renewalAskFor(reserve, {
+    // The renewal reprices toward his normal value and the projection says so.
+    // rc.32 (M2, provisional): the raise is capped (renewalTermsFor), so the
+    // old cheap deal reprices over renewals, not to the full ask in one step.
+    const renewCtx = {
       rep: monday.reputation,
       seasonIndex: monday.clock.seasonIndex,
       difficulty: monday.difficulty,
       careerSeed: monday.careerSeed,
-      lengthSeasons: 2,
-    });
+      lengthSeasons: 2 as const,
+    };
+    const ask = renewalTermsFor(reserve, renewCtx).ask;
     expect(ask).toBeGreaterThan(legacyWage);
+    expect(ask).toBeLessThanOrEqual(renewalAskFor(reserve, renewCtx));
     const projection = payrollProjection({
       squadSalaries: monday.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
       coachSalary: null,

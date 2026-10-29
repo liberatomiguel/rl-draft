@@ -450,6 +450,21 @@ export const CAREER_EN = {
       `Fielding another new face costs ${pct}% of your ${pts} Season Points`,
     finalSeason: "Final season",
     squadFull: "Squad full (3 starters + 1 sub)",
+    // rc.32 (M2, provisional): the renewal rule and both numbers.
+    renewalTerms: "Renewal terms",
+    renewalRuleCapFloor: (cap: string, floorPct: number) =>
+      `Renewing your own player: the raise is capped at ×${cap} his current wage, never under ${floorPct}% of his market ask.`,
+    renewalRuleFresh: "Renewing prices his market ask.",
+    renewalMarketAsk: "Market ask",
+    renewalAsk: "Renewal ask",
+    renewalBoundFresh: "Under the cap — he renews at his market ask.",
+    renewalBoundCap: (cap: string) => `Capped at ×${cap} his current wage.`,
+    renewalBoundFloor: (floorPct: number) => `Held at ${floorPct}% of his market ask.`,
+    renewalAmbition: (pct: number) => `+${pct}% ambition: a star at a smaller org asks more.`,
+    renewalBlockbuster: (pct: number) => `+${pct}%: you turned down a Blockbuster bid for him.`,
+    renewalsTitle: "Contracts up for renewal",
+    renewalsEmpty: "No contract ends this season.",
+    renewalsGo: "Renew on Squad",
   },
 
   player: {

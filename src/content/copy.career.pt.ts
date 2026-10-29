@@ -443,6 +443,21 @@ export const CAREER_PT: CareerCopy = {
       `Escalar mais uma cara nova custa ${pct}% dos seus ${pts} Pontos da Temporada`,
     finalSeason: "Última temporada",
     squadFull: "Elenco cheio (3 titulares + 1 sub)",
+    // rc.32 (M2, provisório): a regra da renovação e os dois valores.
+    renewalTerms: "Termos da renovação",
+    renewalRuleCapFloor: (cap: string, floorPct: number) =>
+      `Renovando um jogador seu: o aumento tem teto de ×${cap} o salário atual e nunca fica abaixo de ${floorPct}% do valor de mercado.`,
+    renewalRuleFresh: "A renovação cobra o valor de mercado dele.",
+    renewalMarketAsk: "Valor de mercado",
+    renewalAsk: "Pedida na renovação",
+    renewalBoundFresh: "Abaixo do teto — ele renova pelo valor de mercado.",
+    renewalBoundCap: (cap: string) => `No teto de ×${cap} o salário atual.`,
+    renewalBoundFloor: (floorPct: number) => `Segurado em ${floorPct}% do valor de mercado.`,
+    renewalAmbition: (pct: number) => `+${pct}% de ambição: um craque num clube menor pede mais.`,
+    renewalBlockbuster: (pct: number) => `+${pct}%: você recusou uma proposta bombástica por ele.`,
+    renewalsTitle: "Contratos para renovar",
+    renewalsEmpty: "Nenhum contrato termina nesta temporada.",
+    renewalsGo: "Renovar no Elenco",
   },
 
   player: {

@@ -154,10 +154,10 @@ import {
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
   incomingBidForDay,
-  renewalAskFor,
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
+import { blockbusterRefusedFlag, renewalTermsFor } from "@/engine/career/renewal";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
@@ -2959,13 +2959,17 @@ export function renewPlayerFlow(
   if (!player) return { save: input, error: "unknown" };
   // ECO-03 (R47): a reserve renews at his normal value, like a starter — and
   // an old save's cheap sub contract reprices here, never retroactively.
-  const ask = renewalAskFor(player, {
+  // rc.32 (M2, PROVISIONAL 30/10): the raise cap and the market floor
+  // (CAREER_SALARY.renewalRule) spread that repricing, and a developed
+  // player's, over renewals; ambition and a refused Blockbuster stay on top.
+  const ask = renewalTermsFor(player, {
     rep: save.reputation,
     seasonIndex: save.clock.seasonIndex,
     difficulty: save.difficulty,
     careerSeed: save.careerSeed,
     lengthSeasons,
-  });
+    blockbusterRefused: Boolean(save.flags[blockbusterRefusedFlag(player.id)]),
+  }).ask;
   const negotiated = resolveSalaryOffer(save, playerId, ask, offeredSalary);
   if ("error" in negotiated) return { save, error: negotiated.error };
   player.salaryPerSplit = negotiated.salary;
@@ -2975,6 +2979,10 @@ export function renewPlayerFlow(
 
 export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
   const save = clone(input);
+  // rc.32 (M2): a declined Blockbuster bid is remembered on its player — his
+  // next renewal carries CAREER_SALARY.blockbusterRefusalRenewalMult.
+  const offer = save.pendingOffers.find((o) => o.id === offerId);
+  if (offer?.blockbuster) save.flags[blockbusterRefusedFlag(offer.playerId)] = true;
   save.pendingOffers = save.pendingOffers.filter((o) => o.id !== offerId);
   return save;
 }

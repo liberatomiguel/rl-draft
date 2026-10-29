@@ -48,6 +48,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
+import { RenewalsPanel } from "@/components/career/RenewalReadout";
 import {
   askPackageFor,
   dateOfDay,
@@ -672,6 +673,8 @@ export function MarketScreen() {
       {/* ================= my deals tab ================= */}
       {tab === "deals" ? (
         <div className="rise-in space-y-2.5" style={{ animationDelay: "60ms" }}>
+          {/* rc.32 (M2, provisional): the renewal rule and both numbers for this season's expiring contracts. */}
+          <RenewalsPanel save={save} C={C} />
           {bids.length === 0 ? (
             <Panel className="p-8 text-center text-sm text-faint">{C.market.dealsEmpty}</Panel>
           ) : (

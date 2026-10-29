@@ -1401,6 +1401,20 @@ export const CAREER_SALARY = {
   ambitiousOverall: 88,
   blockbusterRefusalRenewalMult: 1.1,
   lengthDiscountPerSeason: 0.95,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 2, option B (M2,
+   * ROAD-TO-WORLDS-DECISIONS R58): renewing a player you already have.
+   * "capFloor": ask = min(fresh ask, max(current wage × renewalRaiseCap,
+   * fresh ask × renewalMarketFloor)), then the ambition premium and the
+   * Blockbuster-refusal surcharge on top; a declining veteran renews at his
+   * lower fresh ask. rc.31 priced the plain fresh ask (renewalAskFor, no
+   * Blockbuster surcharge): switch back with "fresh".
+   */
+  renewalRule: "capFloor" as "capFloor" | "fresh",
+  /** M2, PROVISIONAL (30/10, decision 2-B): the raise cap — a renewal asks at most this × his current wage (contract range 1.3–2.0). */
+  renewalRaiseCap: 1.5,
+  /** M2, PROVISIONAL (30/10, decision 2-B): the market floor — never under this share of his fresh ask (contract range 0.4–0.65). */
+  renewalMarketFloor: 0.5,
 } as const;
 
 export const CAREER_CONTRACT = {

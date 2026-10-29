@@ -871,6 +871,36 @@ R57. **Honest bands that never move; base growth is days plus the series
      expectation is rolled once per player and career (the profile and the
      offset); more series reach the peak sooner, never past it.
 
+R58. **Renewing your own players: a raise cap and a market floor (rc.32,
+     ECONOMY-CONTRACT M2, decision 2 option B — a provisional default
+     (30/10), to be confirmed by Miguel).** (a) `renewPlayerFlow` prices
+     `renewalTermsFor` (engine/career/renewal.ts — one function for the
+     flow, the Squad renewal sheet and the Market's renewal panel): ask =
+     min(fresh, max(current wage × `CAREER_SALARY.renewalRaiseCap` 1.5,
+     fresh × `renewalMarketFloor` 0.5)) on the core fresh ask (without the
+     ambition premium), then the ambition premium (×1.25) and the
+     Blockbuster-refusal surcharge (×1.1) on top. A declining veteran renews
+     at his lower fresh ask: the rule only ever lowers the price. It also
+     spreads the repricing of an old cheap reserve contract (R47 removed the
+     0.4 sub factor) over his renewals. (b) The Blockbuster surcharge was
+     declared but never applied (nothing passed `blockbusterRefused`):
+     declining a scripted Blockbuster bid now leaves
+     `save.flags["blockbusterRefused:<id>"]` (no new save field) and his
+     next renewal carries it. (c) The readout (EN + PT) states the rule, his
+     market ask and the renewal ask, which bound priced it, and the
+     ambition / Blockbuster lines: on Squad's renewal sheet and in the
+     Market's "My deals" tab (this season's expiring contracts). (d) Switch:
+     `renewalRule` "fresh" restores rc.31 exactly (the plain fresh ask, no
+     surcharge). (e) Measured on top of DEV-01, the same 147 careers (one
+     seed, 8 seasons): insolvent 71 → 61 % (Easy 49 → 43, Normal 80 → 69,
+     Hard 84 → 71); payroll ÷ guaranteed income p50 3.97 → 3.18; the median
+     payroll per split in seasons 3–5 64–75k → 53–57k; careers alive at S7
+     44 → 63; youth 43 → 24 % insolvent. Money still decides: p90 six
+     Mondays below $0 a season, the spender still breaks in 86 %, the
+     snowball p90 at S7 is $537k. Rejected: option A (a cap alone keeps a
+     breakout star far under his value) and C (a homegrown ×0.7 leaves the
+     founders at ×3).
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

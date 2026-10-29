@@ -199,6 +199,8 @@ export function renewalAskFor(
     difficulty: CareerDifficulty;
     careerSeed: number;
     lengthSeasons: 1 | 2 | 3;
+    /** rc.32 (M2): false = the core ask without the ambition premium (renewalTermsFor adds it on top). */
+    surcharges?: boolean;
   },
 ): number {
   return computeSalaryAsk({
@@ -211,8 +213,13 @@ export function renewalAskFor(
     difficulty: ctx.difficulty,
     careerSeed: ctx.careerSeed,
     playerId: player.id,
-    ambitious: player.overall >= CAREER_SALARY.ambitiousOverall && repTierOf(ctx.rep) < 3,
+    ambitious: ctx.surcharges !== false && isAmbitiousRenewal(player.overall, ctx.rep),
   });
+}
+
+/** The "ambitious" renewal premium's condition (design §9): a star at an org below rep tier 3. */
+export function isAmbitiousRenewal(overall: number, rep: number): boolean {
+  return overall >= CAREER_SALARY.ambitiousOverall && repTierOf(rep) < 3;
 }
 
 // ---------------------------------------------------------------------------
