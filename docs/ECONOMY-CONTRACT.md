@@ -7,7 +7,8 @@
 > for ECO-04 (sponsors) and ECO-05 (other income) in Etapa 3. The numbers
 > come from `CAREER-BASELINE-rc30.md` and the economy probe
 > (`src/store/careerEconomy.probe.test.ts`), whose tables are the appendix.
-> Regenerate them; never hand-edit them.
+> Regenerate them; never hand-edit them. §8 re-measures rc.31 (fronts A and
+> C merged): the same seeds, the deltas.
 
 ## 1. Why a contract
 
@@ -353,6 +354,40 @@ after it (one per split).
    like a punishment? Was a star tempting and out of reach? Did money matter
    after a title? A newcomer's bankruptcy, or "money stopped mattering",
    sends the package back whatever the harness says.
+
+## 8. After the merge — the rc.31 re-measure
+
+Same probe, same 294 careers (seeds 9100 and 17019), on rc.31: fronts A and
+C merged and the review fixes in. No money number moved; what moved is what
+Miguel decided on 29/10 and the integrity fixes. The appendix stays the rc.30
+"before" that §4 cites; regenerate the rc.31 tables with the appendix
+command (the bot is deterministic; the run was split by `ECON_REGIONS` into
+four processes and merged, ~14 minutes).
+
+| | rc.30 | rc.31 |
+|---|---|---|
+| Insolvent, all careers | 64 % (187 of 294) | 68 % (201 of 294) |
+| Easy / Normal / Hard (mean over the 7 policies) | 46 / 67 / 77 % | 44 / 76 / 85 % |
+| Normal, insolvent by S3 (autopilot · tuned · youth) | 43 · 36 · 57 % | 43 · 29 · 43 % |
+| Insolvencies the harness logged under another ending | 14 | 0 (R46) |
+| Normal by region: SAM · MENA · OCE · APAC · SSA (EU, NA) | 86 · 64 · 43 · 43 · 36 % (100) | 93 · 100 · 50 · 43 · 50 % (100) |
+| Renewal shock p50: developed founders · signed at ≤ 19 | ×2.95 · ×1.61 | ×2.90 · ×2.26 |
+| Snowball p90 at S7, seasons of payroll: Easy · Normal | 1.6 · 1.0 | 3.3 · 2.0 |
+
+How to read it:
+- **The early failures are unchanged; the late ones grew.** By season 3 the
+  rates hold, but more Normal and Hard careers break in seasons 4–7
+  (Normal autopilot 64 → 86 %, tuned 43 → 64 %, coachChurn 43 → 64 %).
+- **The likely drivers are rc.31's decided rules, not new bugs** (the
+  mechanics point there; the probe does not isolate them one by one):
+  players now retire at 24–29 (many left at 21–23 before), so founders and
+  veterans stay on the payroll longer and renew at fresh asks; a reserve
+  now costs a starter's wage; and no bid arrives in the first window.
+- **So the contract's order holds, with M2 first.** The renewal rule (M2)
+  and the money index (M1) target exactly the late break; the newcomer
+  income (M3) still targets the early one; M4 decides what a break means.
+- **The bands of §3 do not change.** The next re-run, after Miguel's
+  decisions, is measured against these rc.31 numbers.
 
 ## Appendix — the probe tables (generated)
 

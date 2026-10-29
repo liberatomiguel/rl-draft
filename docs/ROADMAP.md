@@ -521,6 +521,9 @@ OBS-01 (no staging data; build before launch) is still to build.
    the newcomer's income, what ends a career, stars and the snowball, the
    prize tables = Gate-1 question 2, the "top budgets" anchor, selling,
    guaranteed income, the bands). Approving them starts its packages E1–E4.
+   Its §8 re-measures rc.31: the late insolvencies grew (Normal 67 → 76 %)
+   with the decided longevity and the end of the sub discount, so the
+   renewal rule (M2) comes first.
 2. rc.31's shipped defaults, keep or change: the retirement table
    (24–29: 10/20/30/45/60/100 %, ×0.5 for stars; median last season ≈26);
    60 % of real ex-pros coach, fictional retirees never; debt pay-downs may

@@ -61,8 +61,9 @@ entries.
 - Content: scripted beats corpus (~30, EN+PT). New birth dates go in the base
   export (`BIRTHDAY`), not in `born:` rows.
 - The money: `ECONOMY-CONTRACT.md` (ECO-01) waits on Miguel's ten
-  decisions; no number moves before. rc.30 measured 64 % of careers
-  insolvent (the baseline's 59 % missed late insolvencies, fixed in R46).
+  decisions; no number moves before. Insolvent careers: 64 % on rc.30, 68 %
+  on rc.31 (Normal 67 → 76 %): the late break grew with DEV-02 and ECO-03
+  (the contract's §8).
   Next in 2b: the contract's packages, DEV-01 (growth), BAL-02 (presets),
   each re-measured on the same seeds.
 - Deferred by design: org relocation, t1 circuit, PvP.
