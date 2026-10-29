@@ -1308,7 +1308,13 @@ function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: stri
 export function acceptBidFlow(input: CareerSave, offerId: string): FlowResult {
   if (input.activeEvent) return { save: input, error: "rosterLocked" };
   const offer = input.pendingOffers.find((o) => o.id === offerId);
-  return offer ? { save: resolveAcceptedBid(input, offer) } : { save: input, error: "unknown" };
+  if (!offer) return { save: input, error: "unknown" };
+  // ECO-03 (R47): a bid for a player no longer on the squad cannot complete —
+  // say so and drop it, instead of "accepting" a sale that moves nothing.
+  if (!input.squad.some((p) => p.id === offer.playerId)) {
+    return { save: declineBidFlow(input, offerId), error: "unknown" };
+  }
+  return { save: resolveAcceptedBid(input, offer) };
 }
 
 export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): CareerSave {
@@ -2704,6 +2710,8 @@ function releaseFromSquad(save: CareerSave, player: SquadPlayer, severance: numb
   });
   save.squad = save.squad.filter((p) => p.id !== player.id);
   if (refill) syncSquadRoles(save);
+  // A pending bid for him can no longer complete.
+  save.pendingOffers = save.pendingOffers.filter((o) => o.playerId !== player.id || o.direction !== "out");
   save.world.freeAgentIds.push(player.id);
   save.world.version += 1;
   pushNews(save, {

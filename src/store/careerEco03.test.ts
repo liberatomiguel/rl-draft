@@ -29,6 +29,7 @@ import {
   acceptBidFlow,
   advanceDayFlow,
   createCareerSave,
+  releasePlayerFlow,
   renewPlayerFlow,
   setStartersFlow,
   signingPlanFor,
@@ -339,6 +340,20 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     const plan = signingPlanFor(sold, target.id, { lengthSeasons: 2 });
     expect("plan" in plan && plan.plan.slot).toBe("starter");
     expect(signOk(sold, target.id).starterIds).toContain(target.id);
+  });
+
+  it("a bid for a player who already left cannot 'complete': refused, dropped, nothing moves", () => {
+    const seller = makeSave().starterIds[1];
+    const withBid = bidFor(makeSave(), seller, 6_000);
+    // Releasing him drops his pending bid with him.
+    const released = releasePlayerFlow(withBid, seller).save;
+    expect(released.pendingOffers).toEqual([]);
+    // A stale bid (e.g. an old save) is refused and removed, money untouched.
+    const stale = { ...structuredClone(released), pendingOffers: withBid.pendingOffers };
+    const res = acceptBidFlow(stale, `bid:test:${seller}`);
+    expect(res.error).toBe("unknown");
+    expect(res.save.pendingOffers).toEqual([]);
+    expect(moneyAndSlots(res.save)).toBe(moneyAndSlots(stale));
   });
 
   it("a failed transfer leaves money and squad untouched (funds, loan lock, rejected counter, bad leaver)", () => {

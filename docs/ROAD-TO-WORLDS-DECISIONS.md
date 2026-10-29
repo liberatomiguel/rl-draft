@@ -573,6 +573,111 @@ R45. **One direct-8 decision per week, and the one-time repair (rc.30, Etapa
      re-seeding the weekend with a frozen user rating (stored org ratings can
      still split the AI side) and renaming the user's players.
 
+R46. **The Backer and the bank keep their rules, and the screens quote what
+     the ledger books (rc.31, Etapa 2b ECO-02).** The engine already granted
+     the Backer once (`loanUsed`) and the bank one loan at a time; the harness
+     shows one rescue per insolvent career. Four integrity bugs sat around it.
+     (a) A manual pay-down quantized the payment down
+     (`quantize(min(amount, remaining))`), but the Backer's ×1.2 and the
+     bank's interest leave debts off the $50 quantum (a $9,612 Backer debt).
+     "Pay it all" left a $2–48 stub that no button could pay ("invalid"), and
+     the stub kept the Backer lock alive: no bank loan, no fee transfer, no
+     gear. `economy.debtPaymentFor` now settles the exact remainder when the
+     request covers it and stays on the quantum otherwise, for both debts
+     (the bank's stub used to wait for Monday). (b) An insolvency after a
+     Worlds title or in the endless era kept the earlier ending's reason
+     (`endCareer` wrote `reason ?? "insolvency"`), and the season screen
+     offered "Defend the title" / "Endless era" for any ending but
+     retirement. A broke org rolled into a new season and broke again on its
+     first Monday. Now an insolvency always records itself (a retirement
+     still keeps the ending it earned, and the legacy grade stays), an ended
+     career never rolls over (`rolloverToNextSeason`, the new
+     `continueInfiniteFlow`), the screen shows only Retire, the saves list
+     archives it, and the money flows refuse an ended career. (c) The bank
+     panel guessed its own refusal. It now shows the real `bankLoanRefusal`
+     reason (the strings the flow returns, EN+PT) and disables the request.
+     While a loan runs it shows the next instalment (`nextPaydayFor`: the
+     amount, the Monday's date) and the instalments left
+     (`bankInstalmentsLeft`). HQ names the Backer debt and the next bank
+     payment. The Backer has no schedule (prize and sale garnish), which the
+     panel already states. (d) A pay-down may still use the overdraft down to
+     the floor (unchanged rule), but it now shows the balance after and warns
+     when that is below zero: below the floor on a Monday "the Backer steps
+     in", or, once it has, "the career ends". No economy number moved.
+
+R47. **The lineup slot is not the price of the job, and the first window is
+     bid-free (rc.31, Etapa 2b ECO-03 / ECO-03b).** (a) The "signed as a sub"
+     discount is gone (`CAREER_SALARY.subRoleFactor` 0.4 removed;
+     `computeSalaryAsk` has no role factor). Signing cheap as a sub and then
+     promoting for free was the exploit. A player signs at his normal value
+     and then the lineup is set. He takes an open seat in the starting three,
+     otherwise the reserve slot, and nobody is demoted. `role` stays an
+     ignored, deprecated option so older callers compile. (b) The squad cap
+     is explicit (`CAREER_CONTRACT.squadCap` 4, R3). A full squad must name
+     who leaves (`signPlayerFlow` `releaseId`), and that player is released,
+     with severance, in the same operation. If he was a starter, the signing
+     takes his seat. The market's offer sheet asks (EN+PT) and shows the
+     severance and the weekly wage bill before and after. (c)
+     `signingPlanFor` validates everything (window, slot, age, rep cap,
+     funds = fee + bonus + severance, the Backer lock) before anything moves.
+     The flow applies exactly that plan and the sheet renders it. A rejected
+     counter keeps only the hardened negotiation count; a failed transfer
+     moves no money and no slot. Promotion stays a free `setStartersFlow`.
+     Renewals price through `market.renewalAskFor` (a reserve renews like a
+     starter), and the renewal sheet shows the payroll projection
+     (`economy.payrollProjection`, the Monday funnel's own rounding). (d) Old
+     saves: no save change. Existing contracts keep their stored wage until
+     renewal and reprice then; no retroactive raise. (e) ECO-03b, decided
+     29/10: no bid of any kind for the user's players in the career's first
+     transfer window (season 0's preseason window, windowIdx 0 = weeks 1–2 of
+     "Season 1"). The flag is `CAREER_TRANSFER.firstWindowBidFree` and the
+     guard `market.userBidsBlocked`, read by `incomingBidForDay` and by the
+     scripted-beat Blockbuster degrade, which reads "preempted" there. Today
+     no degrade beat falls in that window; the guard covers the corpus to
+     come. The daily roll is a hash, so later windows' bids are unchanged.
+
+R48. **Longevity: 13 to play, 24–29 to retire (rc.31, Etapa 2b DEV-02,
+     decided 29/10).** (a) `CAREER_AGE.minCompetitiveAge` 13 is the one
+     minimum. Debut ages clamp to it (`MIN_AGE`), the market lists and the
+     signing accepts only 13+ (`isCompetitiveAge`, error "tooYoung"), and the
+     youth intake starts at 13 (`rookieAgeRange`). Audit: fielding,
+     registration and substitution carry no age rule and need none (nobody
+     under 13 can join the squad); the wizard's rosters start at 15 and the
+     fillers at 16. (b) `retirementChanceFor` is one rule for the user's
+     squad and the world: the chance that the season a player plays at age A
+     is his last. It is 0 before `retireMinAge` 24 or before his peak, read
+     through `peakAgeOf` (today the stored 18–22 peak; DEV-01 individualises
+     it there). Inside the window it is `retirementByAge` {24: 10 %, 25: 20 %,
+     26: 30 %, 27: 45 %, 28: 60 %}, × 0.5 for stars, inside the window only.
+     It is 1 when the next season would pass `retireMaxAge` 29: the season at
+     29 always ends it, and the 2022 → 2024 calendar gap makes 28 the last.
+     The squad still announces at the rollover into the final season and
+     retires at the next (never abrupt). A legacy player already past 29
+     announces at once and plays one farewell season. An announcement made
+     under the old table is honoured. The world decides on the season just
+     played. rc.30 rolled on the new season's age with no cap, so players
+     left after a season at 21–23 (the gap) and a few played on past 29.
+     Measured over 4 seeds × 10 seasons: every world retirement now follows
+     a season at 24–29, nobody plays at 30, and the world holds ~15 % more
+     players (≈610 vs ≈530). (c) Real history: a real player plays every
+     season he has a club card for. The old guard (`last > orderNow`) let him
+     retire before his final dataset season; across 4 seeds, 116 cases were
+     exposed. Once his history ends the window applies, so a real player
+     already older than the window when his history ends retires at that
+     first rollover (no extra season). A user-signed real player is off
+     script and follows the squad rule. (d) A retiring real ex-pro becomes a
+     coach with `retireCoachConvertRate` 60 %, decided per (career, player)
+     from the seed (`becomesCoachOnRetirement`; no save state). Only those
+     feed the coach market's real pool. Generic (fictional) retirees always
+     leave the game: the market's generated coaches stay anonymous, and a
+     fictional coach would need a stored name and record (DEV-03). Coaches
+     already hired stay; coach quality and effects are untouched (DEV-03).
+     World retirees keep the generic "hangs up the controller" line. (e) The
+     user's retiring player now leaves the world for good (`retiredIds`).
+     Before, the anchor pass re-signed a real one to his real org the next
+     preseason (GarrettG back at NRG). The season-start news and a mail say
+     which way he went (`retiredToCoach` / `retiredLeaves`, EN+PT).
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
