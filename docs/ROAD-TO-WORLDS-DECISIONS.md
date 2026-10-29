@@ -780,6 +780,97 @@ R49. **Local sides score and race for Major and Worlds slots (rc.31, Etapa
      Major), and keeping local sides out of the direct 8 or the Major slots
      (they are teams of the region, and they do not crowd the orgs out).
 
+R55. **The growth contract: an individual arc, and potential is the expected
+     peak (rc.32, Etapa 2b DEV-01b/d; direction decided by Miguel 29/10).**
+     (a) Versioned per career. `CAREER_DEV.growthModel` 2 is stamped on a
+     new career's world (`world.growthModel`, optional and additive); a save
+     without it, every rc.31 career, keeps rc.31's development for life (its
+     potentials, bands, curve, caps and rollover), so nothing it scouted,
+     trained or signed moves on load and no overall jumps to "compensate".
+     The key at 1 starts new careers on rc.31's model again. (b) Three
+     separate dimensions, derived from (career seed, player id) and never
+     rerolled by a signing, a sale, a renewal or a new club
+     (`developmentProfileOf`): the maturity (early 18–20, standard 20–22,
+     late 22–24; weights 0.3 / 0.45 / 0.25) sets the peak age; a plateau of
+     1–4 years holds the top; then the decline (`declinePerYear` 0.5 / 1.5 /
+     2 / 2.5 / 3 a year after the plateau, × the decline rate, the squad ×
+     0.7 as before). A real player peaks at the age of his best moment (the
+     card or special his potential comes from, inside 17–26) and stays at the
+     top at least as long as his club cards do. A generated player is never
+     promised a peak sooner than his gap needs (ceil(gap ÷ 7) + 1 seasons, at
+     most 26). `peakAgeOf` keeps its meaning (the age he reaches his peak:
+     the stored or derived `peakAge`), so DEV-02's "never retire before the
+     peak" reads the new peak. (c) The potential is the EXPECTED peak: his
+     real peak is the potential plus an offset of −2…+2 (`peakTolerance`,
+     weights 10/20/40/20/10 %), rolled once; growth never passes it. (d) The
+     curve: pace = 2 × gap ÷ years to the peak age (at least 0.6 a year while
+     a gap remains, at most 7), × the training multipliers (coach, gear,
+     focus, intensity, drill, Training Week), in units of 40 training-week
+     equivalents a year (a no-coach starter's days and series); a late
+     arrival keeps catching up through his plateau, never after it. No
+     per-split cap; the season cap stays 7 (`seasonGainCap`). Ages are exact
+     (the season age plus the share of the season played), so nothing steps
+     on a birthday; the decline lands on each training day instead of the
+     rollover; the AI world develops every Monday (`worldGrowthWeek`, the
+     same pace at `worldTrainingMult` 1, the decline undampened like rc.31's
+     world) and the rollover pass grows nobody on model 2. (e) Measured
+     (`CAREER-GROWTH-rc32.md`, 24 seeds, the default setup): a prospect's
+     season gain at 15 goes from 7.0 to 4.5 and at 18 from 0.1 to 1.9; the
+     peak lands at 18.6 / 20.0 / 21.3 (early / standard / late, p50) instead
+     of 17.7 for everyone; 100 % end within ±2 of their potential; a
+     13–14-year-old with potential 85+ peaks in his 7th season; the AI world
+     reaches its real peak (gap p50 0.0 at 21, rc.31 stalled 2.0 under).
+     Rejected: rerolling the profile at a signing; the fixed 18–22 window; a
+     split cap; growing the AI world at the rollover (a visible jump);
+     migrating rc.31 saves onto the new derivation (their bought bands would
+     move).
+
+R56. **Rare elite prospects in every era, and the potential of a real player
+     with special cards (rc.32, DEV-01a/c).** (a) Model 2's dataset-era
+     rookie intake keeps the pyramid and the 88 ceiling, but a kid aged 13–15
+     whose tier reaches past the ceiling becomes an elite prospect with
+     `CAREER_WORLD.eliteProspect.chance` 0.08: potential 93–98 by weight
+     (93 25 %, 94 22 %, 95 19 %, 96 15 %, 97 11 %, 98 8 %). The 88+ share does
+     not grow (the elite kids come out of the capped ones); the infinite era
+     keeps its pyramid. Measured over 24 seeds: 0.8 % of dataset-era rookies
+     (0.2–0.5 per region per career, about two in the whole world), seven
+     97–98s in 6,720 kids; by region and class in the growth doc's G1. (b) A real player's potential = max(best
+     club card from his debut + the stable jitter, his best eligible special
+     at its printed overall), fixed (it no longer climbs with his current
+     overall); his debut overall is untouched. The explicit rule for
+     "eligible": his own player card (by playerId, never a coach card) of a
+     real RLCS moment (legend, moment, Worlds/season/Major MVP) with a real
+     rarity (rare, epic, legendary, mythic) whose moment is inside the
+     career's own seasons (RLCS X on, `potentialSpecialCareerEraOnly`).
+     Never: national-team cards (a derived +boost), the community vote, the
+     Creator and the Wings tributes (fan or easter-egg cards), and pre-2020
+     legend cards (a 2016 peak a 2020 free agent would otherwise read
+     forever). Measured: 47 players hold an eligible special; none sits under
+     it (rc.31: 85 %).
+
+R57. **Honest bands that never move; base growth is days plus the series
+     played (rc.32, DEV-01e and the base-growth rule).** (a) Model 2's band
+     reads the potential only — never the current overall, the day or a
+     reload — and nests: each report narrows inside the band shown before (L0
+     ⊇ L1 ⊇ L2 ⊇ the exact L3), widths unchanged (`bandWidthByLevel`). At each
+     level the truth's place is a uniform draw over what the outer band
+     allows, kept inside 60–99, so the truth can sit at the floor, in the
+     middle or at the top. The floor may fall under the current overall: a
+     player at or past his expected peak reads so instead of a ceiling he
+     never reaches. Measured: settled players (headroom 0–2) at the floor 35
+     → 22 %, mean position 0.31 → 0.46; nested 42 → 100 %; a growing overall
+     moves the band 88 → 0 %. Near 99 the band cannot pass the top, so 90+
+     potentials read top-heavy (inherent). An rc.31 save keeps rc.31's band
+     (floored at the overall), so a report it bought never moves. (b) Base
+     growth without a package: a player's training days plus the series he
+     actually plays (`xpWeeksPerSeries` 0.4 training-week equivalents × the
+     field quality per series; rc.31 paid two weeks an event whatever its
+     length). A reserve who did not play keeps his training days and earns
+     no event or scrim XP (rc.31 paid the registered sub 70 % of a starter's
+     event XP). Packages (Etapa 3, DEV-03) can only speed this up. (c) The
+     expectation is rolled once per player and career (the profile and the
+     offset); more series reach the peak sooner, never past it.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

@@ -1134,6 +1134,106 @@ export const CAREER_DEV = {
     allround: 0.3, mechanical: 0.18, playmaker: 0.16,
     anchor: 0.14, icecold: 0.11, veteranmind: 0.11,
   } as Record<string, number>,
+  /**
+   * DEV-01 (rc.32, R55–R57): the growth contract. The development model a NEW
+   * career starts on (stored once on its world, `world.growthModel`): 2 =
+   * DEV-01 (individual peaks, potential as the expected peak, no split cap,
+   * nested scouting bands, the world growing week by week); 1 = rc.31's
+   * model. A save keeps the model it was created with — an rc.31 save stays
+   * on 1 for life. Set 1 to start new careers on rc.31's model again.
+   */
+  growthModel: 2,
+  /**
+   * DEV-01b: the maturation profile of a generated player — when he reaches
+   * his top (`peakAgeOf`). Weighted pick, then an age inside the range.
+   */
+  maturity: {
+    early: { weight: 0.3, peakAge: [18, 20] },
+    standard: { weight: 0.45, peakAge: [20, 22] },
+    late: { weight: 0.25, peakAge: [22, 24] },
+  },
+  /**
+   * DEV-01b: a REAL player peaks at the age of his best moment (the club card
+   * or eligible special his potential comes from), held inside this range —
+   * signing him never moves his real peak.
+   */
+  realPeakAgeRange: [17, 26] as const,
+  /** DEV-01b: the maintenance phase — whole years at the top before the decline (weights). */
+  plateauYearsWeights: { 1: 0.2, 2: 0.35, 3: 0.3, 4: 0.15 } as Record<number, number>,
+  /**
+   * DEV-01b: the gradual decline — overall lost per year after the plateau, by
+   * whole years past it (last value repeats), × CAREER_AGE.declineRateMult;
+   * the user's squad also × CAREER_AGE.trainingDeclineDampen. Applied day by
+   * day (no step at the rollover).
+   */
+  declinePerYear: [0.5, 1.5, 2, 2.5, 3] as const,
+  /**
+   * DEV-01b: potential is the EXPECTED peak, not a wall — the real peak sits
+   * `peakTolerance` points under or over it at most, rolled once per player
+   * and career (offset → weight).
+   */
+  peakTolerance: 2,
+  peakOffsetWeights: [
+    { offset: -2, weight: 0.1 },
+    { offset: -1, weight: 0.2 },
+    { offset: 0, weight: 0.4 },
+    { offset: 1, weight: 0.2 },
+    { offset: 2, weight: 0.1 },
+  ] as const,
+  /**
+   * DEV-01d: the growth pace (points per year) toward the real peak:
+   * `paceCurvature` × gap ÷ years left to the peak age (never under
+   * `paceMinYears`), never below `paceFloorPerYear` while a gap remains — so
+   * it is steep when young, slows near the peak and never stops short of it.
+   * Training multipliers (coach, gear, focus, intensity, drill) scale it.
+   */
+  paceCurvature: 2,
+  paceMinYears: 0.5,
+  paceFloorPerYear: 0.6,
+  /**
+   * DEV-01d: training-week equivalents a starter banks in a season (his
+   * training days plus the series he plays, ≈ 25 + 20, at the no-coach 0.85)
+   * — the unit that turns the yearly pace into a day's or a series' gain, so
+   * the default setup runs the base pace (a coach and gear run ahead of it).
+   */
+  trainingWeeksPerYear: 40,
+  /**
+   * DEV-01b: a generated player is never promised a peak sooner than his gap
+   * needs — peak age ≥ his age + ceil(gap ÷ seasonGainCap) + this slack.
+   */
+  peakRoomSlackYears: 1,
+  /** DEV-01d: the season cap on growth (model 2 has no split cap; rc.31: 3 a split, 7 a season). */
+  seasonGainCap: 7,
+  /**
+   * DEV-01 base growth: match XP per series a player actually plays, in
+   * training-week equivalents × field quality. A reserve who does not play
+   * keeps his training days (no starter XP; rc.31 paid the registered sub
+   * 0.7 of a starter's event XP).
+   */
+  xpWeeksPerSeries: 0.4,
+  /** DEV-01: the AI world's training multiplier for its weekly growth (1 = a default setup). */
+  worldTrainingMult: 1,
+  /**
+   * DEV-01e: a non-wonderkid filler's FIXED potential = his base overall +
+   * years to his peak × a rate in this range (rc.31: the current overall + 2,
+   * which moved with him every season).
+   */
+  fillerHeadroomPerYear: [0.8, 2.2] as const,
+  /**
+   * DEV-01c: the special cards that set a real player's potential — his own
+   * (by playerId), at the card's printed overall (no effect, boost or
+   * chemistry): real RLCS moments only. National-team cards (a derived boost),
+   * the community vote, the Creator and the Wings tributes never count, nor
+   * do coach cards. Potential = max(best club card + jitter, best such special).
+   */
+  potentialSpecialTypes: ["legend", "moment", "worlds_mvp", "season_mvp", "major_mvp"] as readonly string[],
+  potentialSpecialRarities: ["rare", "epic", "legendary", "mythic"] as readonly string[],
+  /**
+   * DEV-01c: only a moment inside the career's own seasons (RLCS X on) counts —
+   * a legend card of an earlier era is a peak the career never replays (a
+   * 2016 legend still in the 2020 free-agent pool would read 95+ forever).
+   */
+  potentialSpecialCareerEraOnly: true,
 } as const;
 
 export const CAREER_TRAINING = {
@@ -1575,6 +1675,20 @@ export const CAREER_WORLD = {
     { p: 0.03, range: [94, 99] },
   ] as const,
   datasetEraPotentialCeiling: 88,
+  /**
+   * DEV-01a (rc.32, model 2): rare generic elite prospects in the historical
+   * eras too. A dataset-era rookie aged ≤ `maxAge` whose pyramid tier reaches
+   * past the ceiling becomes an elite prospect with `chance`, his potential
+   * drawn from `weights` (93–98, 97/98 the rarest); the other capped kids keep
+   * the ceiling, so the wonderkid share (88+) does not grow. ≈ 0.9 % of all
+   * dataset-era rookies (0.75 aged 13–15 × 0.15 top tiers × chance). The
+   * infinite era keeps its pyramid.
+   */
+  eliteProspect: {
+    chance: 0.08,
+    maxAge: 15,
+    weights: { 93: 0.25, 94: 0.22, 95: 0.19, 96: 0.15, 97: 0.11, 98: 0.08 } as Record<number, number>,
+  },
   faPoolFloorPerRegion: 10,
   /** Random events: one type in v1 ("starter unavailable"), ≤1 per split. */
   unavailabilityChancePerWeek: 0.02,

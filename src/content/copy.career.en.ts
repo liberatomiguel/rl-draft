@@ -551,6 +551,10 @@ export const CAREER_EN = {
     etaAtPotential: "At potential — nothing left to learn here",
     capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
       `This split +${split} of ${splitMax} · season +${season} of ${seasonMax}`,
+    // rc.32 (DEV-01): the growth contract has a season cap only, a peak and a decline.
+    capLineSeason: (season: string, seasonMax: number) => `This season +${season} of ${seasonMax}`,
+    etaAtPeak: "At his peak — he holds this level for now",
+    declineLine: (perWeek: string) => `Past his prime: about −${perWeek} OVR a week`,
     effectsTitle: "What your attributes do",
     effectsHint: "Team stat line → the exact modifiers the match sim applies. Train what your results need.",
     effectWhen: {

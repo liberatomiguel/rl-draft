@@ -47,6 +47,12 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import {
   ageOf,
+  developmentPhaseOf,
+  developmentProfileOf,
+  exactAgeOf,
+  growthCtxOf,
+  growthModelOf,
+  isGrowthContract,
   playerViewById,
   scoutedBand,
   statsFromView,
@@ -333,13 +339,13 @@ export function squadAge(save: CareerSave, p: SquadPlayer): number {
 }
 
 export function potBandOfSquad(save: CareerSave, p: SquadPlayer): PotentialBand {
-  return scoutedBand(p.potential, p.overall, p.scoutLevel, save.careerSeed, p.id);
+  return scoutedBand(p.potential, p.overall, p.scoutLevel, save.careerSeed, p.id, growthModelOf(save.world));
 }
 
 export function potBandOfView(save: CareerSave, view: CareerPlayerView): PotentialBand {
   const paid = Number(save.scouted[view.id] ?? 0);
   const level = Math.min(CAREER_SCOUT.reportMaxLevel, Math.max(0, paid)) as 0 | 1 | 2 | 3;
-  return scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id);
+  return scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world));
 }
 
 export function statsOfSquad(p: SquadPlayer): Stats {
@@ -348,6 +354,15 @@ export function statsOfSquad(p: SquadPlayer): Stats {
 
 export function agePhase(save: CareerSave, p: SquadPlayer): "growing" | "prime" | "declining" {
   const age = squadAge(save, p);
+  // DEV-01 (model 2): his own arc — growing to his peak age, at the top for
+  // his plateau, then declining (rc.31: fixed ages 20 / 22).
+  if (isGrowthContract(growthModelOf(save.world))) {
+    const phase = developmentPhaseOf(exactAgeOf(age, save.clock.day), {
+      peakAge: p.peakAge,
+      plateauYears: developmentProfileOf(p.id, save.careerSeed).plateauYears,
+    });
+    return phase === "peak" ? "prime" : phase;
+  }
   if (age <= 20) return "growing";
   if (age <= 22) return "prime";
   return "declining";
@@ -357,13 +372,14 @@ export function agePhase(save: CareerSave, p: SquadPlayer): "growing" | "prime" 
 export function squadTrainingProjection(
   save: CareerSave,
   p: SquadPlayer,
-): { weeklyOverall: number; weeklyOffset: number } {
+): ReturnType<typeof trainingProjection> {
   return trainingProjection(p, {
     seasonIndex: save.clock.seasonIndex,
     coachOverall: save.coach?.overall ?? null,
     gearBonus: gearTrainingBonus(save.finances.gear),
     drill: activeDrillFor(save),
     trainingWeekBonus: false,
+    ...growthCtxOf(save),
   });
 }
 
@@ -376,6 +392,7 @@ export function squadTrainingEta(save: CareerSave, p: SquadPlayer): ReturnType<t
     gearBonus: gearTrainingBonus(save.finances.gear),
     trainingWeekBonus: (week.kind === "open" || week.kind === "preseason") && !save.pendingEventDef,
     drill: activeDrillFor(save),
+    ...growthCtxOf(save),
   });
 }
 

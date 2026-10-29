@@ -544,6 +544,10 @@ export const CAREER_PT: CareerCopy = {
     etaAtPotential: "No potencial — não há mais o que aprender aqui",
     capLine: (split: string, splitMax: number, season: string, seasonMax: number) =>
       `Neste split +${split} de ${splitMax} · temporada +${season} de ${seasonMax}`,
+    // rc.32 (DEV-01): o contrato de evolução tem só o teto da temporada, um auge e um declínio.
+    capLineSeason: (season: string, seasonMax: number) => `Nesta temporada +${season} de ${seasonMax}`,
+    etaAtPeak: "No auge — ele segura esse nível por enquanto",
+    declineLine: (perWeek: string) => `Passou do auge: cerca de −${perWeek} OVR por semana`,
     effectsTitle: "O que seus atributos fazem",
     effectsHint: "Linha de atributos do time → os modificadores exatos que a simulação aplica. Treine o que seus resultados pedem.",
     effectWhen: {

@@ -18,7 +18,7 @@
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
-import { CAREER_CALENDAR, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_DEV, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
 import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
@@ -677,6 +677,8 @@ function TrainingCard({
 
   const growth = clamp((p.overall - 60) / Math.max(1, band.max - 60), 0, 1);
   const eta = squadTrainingEta(save, p);
+  // rc.32 (DEV-01): the growth contract — a season cap only, his peak, a weekly decline past his plateau.
+  const weeklyDecline = eta.splitCapped ? 0 : squadTrainingProjection(save, p).weeklyDecline;
 
   return (
     <Panel className="rise-in p-4" style={style}>
@@ -708,7 +710,11 @@ function TrainingCard({
       <div className="mt-2 rounded-lg border border-line bg-black/20 px-2.5 py-2">
         <div className="flex items-center justify-between gap-2 text-[11px]">
           <span className="font-semibold text-ink">
-            {eta.atPotential ? C.training.etaAtPotential : C.training.nextPoint(Math.floor(p.overall) + 1)}
+            {eta.atPotential
+              ? eta.splitCapped
+                ? C.training.etaAtPotential
+                : C.training.etaAtPeak
+              : C.training.nextPoint(Math.floor(p.overall) + 1)}
           </span>
           <span className={cx("font-semibold", eta.daysToNext !== null ? "text-good" : "text-faint")}>
             {eta.atPotential ? "" : eta.daysToNext !== null ? C.training.etaDays(eta.daysToNext) : C.training.etaNone}
@@ -716,13 +722,18 @@ function TrainingCard({
         </div>
         <ProgressBar value={eta.progress} tone={eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
         <p className="mt-1 text-[10px] text-faint">
-          {C.training.capLine(
-            p.gainedThisSplit.toFixed(1),
-            CAREER_TRAINING.maxSplitGain,
-            p.gainedThisSeason.toFixed(1),
-            CAREER_TRAINING.maxSeasonGain,
-          )}
+          {eta.splitCapped
+            ? C.training.capLine(
+                p.gainedThisSplit.toFixed(1),
+                CAREER_TRAINING.maxSplitGain,
+                p.gainedThisSeason.toFixed(1),
+                CAREER_TRAINING.maxSeasonGain,
+              )
+            : C.training.capLineSeason(p.gainedThisSeason.toFixed(1), CAREER_DEV.seasonGainCap)}
         </p>
+        {weeklyDecline > 0 ? (
+          <p className="mt-0.5 text-[10px] text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p>
+        ) : null}
       </div>
 
       {/* --- focus ------------------------------------------------------------ */}

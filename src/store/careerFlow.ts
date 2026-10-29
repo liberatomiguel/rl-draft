@@ -113,6 +113,8 @@ import {
   trainWeek,
   trainingProjection,
   type DrillEffect,
+  growthCtxOf,
+  userSeriesPlayed,
 } from "@/engine/career/development";
 import { insertById } from "@/data/career/inserts";
 import { insertDowFor, rollInsertFor } from "@/engine/career/inserts";
@@ -175,6 +177,7 @@ import {
   starterRosterOffers,
   userTeamFor,
   type StarterOffer,
+  worldGrowthWeek,
 } from "@/engine/career/worldSim";
 import type {
   CareerDifficulty,
@@ -568,6 +571,15 @@ export function processDayArrival(input: CareerSave): CareerSave {
       runWeeklyPayroll(save);
       if (save.phase === "ended") return capNews(save);
     }
+
+    // --- 0c. DEV-01 (rc.32): the AI world develops one week (model 2 only;
+    //     rc.31's model grows it at the rollover) ----------------------------
+    save.world = worldGrowthWeek(save.world, {
+      seasonIndex,
+      week,
+      careerSeed: save.careerSeed,
+      userSquadIds: save.squad.map((p) => p.id),
+    });
 
     // --- 1. scripted beats --------------------------------------------------
     if (!isInfinite(save)) {
@@ -1124,6 +1136,9 @@ export function setDrillFlow(input: CareerSave, id: DrillId | null): CareerSave 
 function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekShare = 1): void {
   const gearBonus = gearTrainingBonus(save.finances.gear);
   const drill = activeDrillFor(save);
+  // DEV-01 (rc.32): the save's growth model and today — a calendar training
+  // day also ages the player (the decline lands day by day, model 2).
+  const growth = growthCtxOf(save);
   for (const p of save.squad) {
     const res = trainDay(
       p,
@@ -1135,6 +1150,8 @@ function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekSh
         splitGained: p.gainedThisSplit,
         seasonGained: p.gainedThisSeason,
         drill,
+        ...growth,
+        aging: true,
       },
       weekShare,
     );
@@ -1530,11 +1547,12 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
           seasonGained: p.gainedThisSeason,
           weeks,
           drill,
+          ...growthCtxOf(save),
         });
         Object.assign(p, res.player);
       } else {
         // A lost session: a small, capped step back (never below 60).
-        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, drill });
+        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, drill, ...growthCtxOf(save) });
         p.overall = Math.max(60, p.overall - proj.weeklyOverall * -weeks);
       }
     }
@@ -1664,6 +1682,7 @@ export function declineUnofficial(input: CareerSave): CareerSave {
       trainingWeekBonus: true,
       splitGained: p.gainedThisSplit,
       seasonGained: p.gainedThisSeason,
+      ...growthCtxOf(save),
     });
     Object.assign(p, res.player);
   }
@@ -1894,8 +1913,10 @@ export function finishEvent(input: CareerSave): CareerSave {
     });
   }
 
-  // Match XP (field-quality scaled, ALL events).
+  // Match XP (field-quality scaled, ALL events). DEV-01 (model 2): per series
+  // the fielded players actually played; a reserve who did not play earns none.
   const gearBonus = gearTrainingBonus(save.finances.gear);
+  const seriesPlayed = userSeriesPlayed(ev.tournament);
   for (const p of save.squad) {
     const wasFielded = fielded.includes(p.id);
     const isSub = !wasFielded && p.role === "sub";
@@ -1906,6 +1927,8 @@ export function finishEvent(input: CareerSave): CareerSave {
         isSub,
         coachOverall: save.coach?.overall ?? null,
         gearBonus,
+        seriesPlayed,
+        ...growthCtxOf(save),
       });
       Object.assign(p, next);
     }
@@ -2205,7 +2228,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // 2. User squad: aging, decline, retirement announcements, contract expiry.
   const keep: SquadPlayer[] = [];
   for (const p of save.squad) {
-    const res = squadRollover(p, nextSeason, rng);
+    const res = squadRollover(p, nextSeason, rng, growthCtxOf(save));
     if (res.retiresNow) {
       // DEV-02 (R48): he leaves the world for good (a retired id never
       // resolves again — the anchor pass used to re-sign a real one to his
@@ -3255,6 +3278,7 @@ function performScrim(save: CareerSave, oppRefWanted: string | null): string | n
       coachOverall: save.coach?.overall ?? null,
       gearBonus,
       xpWeeksOverride: CAREER_SCRIM.xpWeeks,
+      ...growthCtxOf(save),
     });
     Object.assign(p, next);
   }
@@ -3363,6 +3387,7 @@ export function scrimProjection(
         coachOverall: save.coach?.overall ?? null,
         gearBonus,
         trainingWeekBonus: false,
+        ...growthCtxOf(save),
       }).weeklyOverall * weeks,
   );
   const avg = gains.length > 0 ? gains.reduce((s, g) => s + g, 0) / gains.length : 0;

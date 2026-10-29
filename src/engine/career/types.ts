@@ -193,6 +193,14 @@ export interface WorldState {
    * out), set at creation; absent = the original bank (older careers).
    */
   nameBankVersion?: number;
+  /**
+   * rc.32 (DEV-01, R55): the development model this career runs on, set once
+   * at creation from CAREER_DEV.growthModel — 2 = the growth contract
+   * (individual peaks, potential as the expected peak, nested scouting
+   * bands, weekly world growth); absent = rc.31's model (older careers keep
+   * it for life, so nothing they scouted or built moves).
+   */
+  growthModel?: number;
 }
 
 // ---------------------------------------------------------------------------
