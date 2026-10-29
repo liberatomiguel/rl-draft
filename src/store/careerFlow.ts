@@ -1566,6 +1566,7 @@ function restructureAfterBreach(save: CareerSave): void {
       sold = { player: top.name, org: nameOfRef(save, buyer), fee };
     }
   }
+  const repBefore = save.reputation;
   loseRep(save, CAREER_LOAN.restructureRepLoss, "repDown");
   const line = backerLineOf(save);
   const topUp = backerTopUp(save.finances, line.rescueTo, { seasonIndex, week, day });
@@ -1576,7 +1577,8 @@ function restructureAfterBreach(save: CareerSave): void {
     player: sold?.player ?? "",
     org: sold?.org ?? "",
     fee: sold?.fee ?? 0,
-    rep: CAREER_LOAN.restructureRepLoss,
+    // The real drop: the shipped rep floor (repLossFloor) can make it smaller than restructureRepLoss.
+    rep: Math.round(repBefore - save.reputation),
     rescueTo: line.rescueTo,
     owed: save.finances.loan?.remaining ?? 0,
     next,
@@ -3146,14 +3148,17 @@ export function signingPlanFor(
   const cost = pack.fee + pack.signingBonus + severance;
   if (save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
   if (pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
-  // rc.32 (M4, provisional): while the Backer is owed, no signing that shortens the runway.
+  // rc.32 (M4, provisional): while the Backer is owed, no signing that shortens the runway —
+  // except a free agent into an empty starting seat (a restructuring can sell a squad down
+  // below three; the org must be able to field its own three again, never a soft lock).
   const bill = payrollProjection({
     squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
     coachSalary: save.coach?.salaryPerSplit ?? null,
     remove: leaver ? [leaver.id] : [],
     add: [pack.salaryPerSplit],
   });
-  if (backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
+  const refillsEmptySeat = !onOrg && !leaver && save.squad.length < 3;
+  if (!refillsEmptySeat && backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
 
   const openSeats =
     3 - save.starterIds.filter((id) => id !== leaver?.id && save.squad.some((p) => p.id === id)).length;

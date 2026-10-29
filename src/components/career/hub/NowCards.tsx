@@ -325,6 +325,10 @@ export function NowBid({
             {blockbusterWhatOf(C, orgName)}
           </p>
         </>
+      ) : offer.listing ? (
+        <Badge tone="blue" className="mb-2">
+          {C.market.listingTag}
+        </Badge>
       ) : null}
       <div className="flex items-center gap-3">
         {offer.otherRef ? <OrgMark save={save} orgRef={offer.otherRef} size="lg" /> : null}

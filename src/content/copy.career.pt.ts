@@ -314,7 +314,7 @@ export const CAREER_PT: CareerCopy = {
         `${p.org} formalizaram uma proposta de ${p.fee} por ${p.player}. Ela expira quando a janela fechar — aceite ou recuse na aba de negociações do Mercado.`,
       // rc.32 (Miguel, 30/10): o que é uma proposta Bomba, por que veio, o preço e o custo de recusar.
       blockbusterBid: (p: Record<string, string | number>) =>
-        `${p.org} vieram com tudo: ${p.fee} por ${p.player}. Uma proposta Bombástica é um dos momentos roteirizados da temporada — uma org endinheirada atrás do jogador em torno de quem ela montou o time na história real — por isso paga ${p.mult === undefined ? "bem acima do" : `×${p.mult} o`} valor de mercado dele. Recuse, ou deixe expirar, e ele fica${p.pct === undefined ? " — mas a próxima pedida de renovação dele pode subir." : `, mas a próxima pedida de renovação dele sobe ${p.pct}%.`}`,
+        `${p.org} vieram com tudo: ${p.fee} por ${p.player}. Uma proposta Bombástica é um dos momentos roteirizados da temporada — uma org endinheirada atrás do jogador em torno de quem ela montou o time na história real — por isso paga ${p.mult === undefined ? "bem acima do" : `×${String(p.mult).replace(".", ",")} o`} valor de mercado dele. Recuse, ou deixe expirar, e ele fica${p.pct === undefined ? " — mas a próxima pedida de renovação dele pode subir." : `, mas a próxima pedida de renovação dele sobe ${p.pct}%.`}`,
       foundingPartner: (p: Record<string, string | number>) =>
         `Um parceiro local apoia os primeiros passos da org: ${p.base} por split (${p.pct}% da folha salarial de fundação), pagos junto com a folha de toda segunda-feira. A única exigência é disputar eventos, e não há luvas. Ele segue até o seu primeiro contrato de patrocínio — e pelo menos até o fim de ${p.through}, mesmo ao lado de um contrato assinado antes. Finanças mostra a linha dele à parte.`,
       foundingPartnerEnds: () =>
@@ -322,7 +322,7 @@ export const CAREER_PT: CareerCopy = {
       cashNotice: (p: Record<string, string | number>) =>
         `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas cruzariam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next)} Agora é a hora barata de agir: anuncie ou venda um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
       restructured: (p: Record<string, string | number>) =>
-        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele, metade para a dívida` : ""}. Reputação −${p.rep}, e o saldo volta a ${p.rescueTo}; a dívida é de ${p.owed}. O elenco segue jogando — o reserva sobe, ou um substituto ocupa a vaga vazia. ${nextBreachPt(p.next)}`,
+        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele, metade para a dívida` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}, e o saldo` : "O saldo"} volta a ${p.rescueTo}; a dívida é de ${p.owed}. O elenco segue jogando — o reserva sobe, ou um substituto ocupa a vaga vazia. ${nextBreachPt(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} responderam ao seu anúncio: ${p.fee} por ${p.player}. Aceite na aba de negociações do Mercado antes de a janela fechar, ou recuse para mantê-lo — recusar encerra o anúncio.`,
       sponsorOffers: () =>
@@ -644,7 +644,7 @@ export const CAREER_PT: CareerCopy = {
     blockbuster: "Bombástica",
     // rc.32 (Miguel, 30/10): a proposta Bombástica explicada na própria oferta.
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `Um momento roteirizado da história da cena: ${org}, com dinheiro de sobra, estão atrás do jogador em torno de quem montaram o time de verdade. A taxa é ×${mult} o valor de mercado dele. Recuse — ou deixe expirar — e ele fica, mas a próxima pedida de renovação dele sobe ${pct}%.`,
+      `Um momento roteirizado da história da cena: ${org}, com dinheiro de sobra, estão atrás do jogador em torno de quem montaram o time de verdade. A taxa é ×${mult.replace(".", ",")} o valor de mercado dele. Recuse — ou deixe expirar — e ele fica, mas a próxima pedida de renovação dele sobe ${pct}%.`,
     consequences: "Depois deste negócio",
     balanceAfter: (s: string) => `Saldo após: ${s}`,
     // rc.32 (M4, provisório): o fôlego que a contratação deixa.

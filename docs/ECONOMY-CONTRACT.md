@@ -180,6 +180,11 @@ unchanged here.
 
 ## 5. Mechanisms and levers — *proposed, not applied*
 
+> **rc.32 (Etapa 2b part 2, front A):** M1, M3, M4, M5, M6 (levers 1–2) and
+> M8 are built as **provisional defaults** (30/10, not approved), each behind
+> its own `balance.ts` key that restores rc.31 when flipped (R50–R53). M2 is
+> front B's (decision 2-B); M7 is held (9-B); M6 lever 3 stays in reserve.
+
 Every value is a candidate with a range; each package is re-measured on the
 same seeds (§7). New keys go in the existing `CAREER_*` blocks; any new save
 field is optional and additive (no persist bump; the contract test stays
@@ -196,6 +201,8 @@ including today's flat ones: `passivePerRepPoint`, `CAREER_LOAN`,
 - *Candidate:* **1.08** (range 1.06–1.10). *Effect:* at season 7, prizes are
   23 % and new sponsor deals 12 % below today; the fanbase is ×1.71 instead
   of flat. *Verify:* P1; C9 p50 flat; C1 after season 4.
+- *Built (rc.32, provisional, R50):* `CAREER_ECONOMY.indexMode` "single" /
+  `indexPerSeason` 1.08 ("rc31" restores the three rates).
 
 **M2. Renewing players you already have** (d). In `renewPlayerFlow`: ask =
 min(fresh ask, max(old wage × `renewalRaiseCap`, fresh ask ×
@@ -220,6 +227,8 @@ A's ban on bids in the first window.
 - *Candidate:* **0.7** (range 0.5–0.8). *Effect:* the Normal founders burn
   about $130 a week before prizes instead of $480 (P0).
 - *Verify:* C1c, the newcomer rows of C1, C1b, C5.
+- *Built (rc.32, provisional, R51):* `CAREER_SPONSOR.founding` (`enabled`,
+  `payrollShare` 0.7, `throughSeasonIndex` 1).
 
 **M4. The safety net** (a; ECO-02 on top of front A).
 - *Warnings:* the inbox mail every Monday at ≤ 4 weeks of runway
@@ -238,6 +247,10 @@ A's ban on bids in the first window.
 - *Effect:* season 0 keeps about today's net (−$4k / +$3k); a season-6 squad
   at $11k a week gets −$88k / +$66k.
 - *Verify:* C1 (warned, lead, window, survival), C4, C1b.
+- *Built (rc.32, provisional, R52):* `CAREER_PAYROLL.runwayWarnMode` /
+  `runwayNoticeWeeks` 8; `CAREER_LOAN.sizing` "weeks" (`floorWeeks` 8,
+  `rescueToWeeks` 6), `lockCommitments`, `breachesToEnd` (Easy never, Normal 3,
+  Hard 2), `restructureRepLoss` 5.
 
 **M5. The prize tables** (a, e; Gate-1 question 2). `swiss16Pct` **28 / 18 /
 12 / 9 / 6.5 / 5 / 1.25** (1st … 9–16th: $11.2k … $500 at a season-0 regional)
@@ -246,6 +259,8 @@ values. The qualifier's 10 % / 2.5 % and every pool stay unchanged, and the
 lobby keeps showing the paid total (R44).
 - *Effect:* a regional pays its $40k, the Community Cup its $2k, the title
   28 % instead of 30 %. *Verify:* P4, P4b.
+- *Built (rc.32, provisional, R50):* `CAREER_PRIZES.tables` "contract"
+  (rc.31's tables kept as `swiss16PctRc31` / `single8PctRc31`).
 
 **M6. Stars and the snowball** (c, e; ECO-03a). Four levers for decision 5:
 1. **A comfort cap.** `CAREER_SALARY.repComfortMax` **86**, so a star always
@@ -263,6 +278,9 @@ lobby keeps showing the paid total (R44).
 
 The yardstick for (c) is the T4-contender profile (P8), indexed; 2b builds no
 AI money (decision 7). *Verify:* C7, C7b, C9 p90, P4b.
+- *Built (rc.32, provisional, R53):* levers 1–2 — `CAREER_SALARY.repComfortMax`
+  86 and `CAREER_PRIZES.playerShare` (regional 0.2, Major 0.35, Worlds 0.5);
+  lever 3 in reserve, lever 4 for Etapa 3.
 
 **M7. Guaranteed income** (a, b, e). Tier bases that bring payroll ÷
 guaranteed to about 1.5 once M2 has lowered the payrolls. Today T1 holders
@@ -280,6 +298,8 @@ sale", an AI offer within a few window days at value ×
 him. A seat sold in a window can be refilled with a free agent for a week
 after it (one per split).
 - *Verify:* C2c; the tuned and youth rows of C1.
+- *Built (rc.32, provisional, R53):* `CAREER_TRANSFER.listingEnabled`,
+  `listingOfferRange` 0.9–1.15, `listingOfferDays` 1–3, `lateSigningDays` 7.
 
 ## 6. Decisions for Miguel
 
@@ -290,6 +310,10 @@ after it (one per split).
 > `balance.ts` key so it can be switched back, is re-measured with the probe
 > on the same seeds (against §8), and is listed in the gate report for Miguel
 > to play and confirm or reject. Nothing here is final until he says so.
+>
+> **Built in rc.32** (front A, R50–R53): 1-A, 3-A, 4-B, 5-B (levers 1–2), 6-B
+> and 8-B, each behind its own key; 7-A, 9-B and 10-A need no code; 2-B is
+> front B's.
 >
 > **The guardrail on every default (Miguel, 30/10): not too easy, not
 > punitive.** Managing money stays part of the experience: a median career

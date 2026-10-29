@@ -1004,10 +1004,10 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("#### C1. Outcomes and the safety net — by difficulty × policy");
   lines.push("");
   lines.push(
-    "Rescued = the Emergency Backer granted (one per career). Restructured (rc.32, M4) = a later breach that sold the highest-paid player instead of ending the career (Easy and Normal). Warned = a cash-warning mail (rc.32: or the 8-week notice) in the 8 weeks before the rescue; lead = weeks from that mail to the rescue. Rescue window = the weeks of the burn on the rescue Monday that the Backer's swing (floor → rescue, on that Monday's wage bill) buys. Rescue → end = weeks from the Backer to insolvency. Tight Mondays = runway ≤ 4 weeks or the balance below $0.",
+    "Rescued = the Emergency Backer granted (one per career). Restructured (rc.32, M4) = a later breach that sold the highest-paid player instead of ending the career (Easy and Normal). Warned = a cash-warning mail (rc.32: or the 8-week notice) in the 8 weeks before the rescue; lead = weeks from the last such mail to the rescue (rc.32's warnings are weekly, so it reads 1); first warning → rescue = from the earliest warning in the season before it. Rescue window = the weeks of the burn on the rescue Monday that the Backer's swing (floor → rescue, on that Monday's wage bill) buys. Rescue → end = weeks from the Backer to insolvency. Tight Mondays = runway ≤ 4 weeks or the balance below $0.",
   );
   lines.push("");
-  head(["Difficulty · policy", "n", "insolvent", "insolvent by S3", "rescued", "rescued that survive", "restructured", "restructurings / career", "warned in the 8 weeks before the rescue", "warning lead p50", "rescue window p50", "rescue → end p50", "bank loans / career", "tight Mondays p50 (per season)"]);
+  head(["Difficulty · policy", "n", "insolvent", "insolvent by S3", "rescued", "rescued that survive", "restructured", "restructurings / career", "warned in the 8 weeks before the rescue", "warning lead p50", "first warning → rescue p50", "rescue window p50", "rescue → end p50", "bank loans / career", "tight Mondays p50 (per season)"]);
   for (const d of diffs)
     for (const p of policies) {
       const cs = careers.filter((c) => c.difficulty === d && c.policy === p);
@@ -1018,6 +1018,10 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
       const lastWarning = (c: EconCareer) => Math.max(-1, ...(c.warningWeeks ?? []).filter((w) => w < c.rescueWeek!));
       const warned = resc.filter((c) => lastWarning(c) >= 0 && c.rescueWeek! - lastWarning(c) <= 8);
       const lead = warned.map((c) => c.rescueWeek! - lastWarning(c));
+      // rc.32: warnings are weekly, so the last one is a week out — the first of the squeeze (a season back) is the real lead.
+      const firstWarning = (c: EconCareer) =>
+        Math.min(Infinity, ...(c.warningWeeks ?? []).filter((w) => w < c.rescueWeek! && w >= c.rescueWeek! - W));
+      const firstLead = warned.map((c) => c.rescueWeek! - firstWarning(c));
       const toEnd = ins.filter((c) => c.rescueWeek !== null && c.endWeek !== null).map((c) => c.endWeek! - c.rescueWeek!);
       const tight = cs.flatMap((c) => c.seasons.map((x) => x.mondaysTight));
       const windows = resc
@@ -1034,6 +1038,7 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
         ratio(mean(cs.map((c) => c.restructureWeeks?.length ?? 0)), 1),
         pct(warned.length, resc.length),
         lead.length ? `${q(lead, 0.5)} wk` : "–",
+        firstLead.length ? `${q(firstLead, 0.5)} wk` : "–",
         windows.length ? `${ratio(q(windows, 0.5), 0)} wk` : "–",
         toEnd.length ? `${q(toEnd, 0.5)} wk` : "–",
         ratio(mean(cs.map((c) => c.seasons.reduce((n, x) => n + x.bankLoans, 0))), 1),

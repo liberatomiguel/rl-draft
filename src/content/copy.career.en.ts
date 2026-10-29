@@ -329,7 +329,7 @@ export const CAREER_EN = {
       cashNotice: (p: Record<string, string | number>) =>
         `A heads-up from the accountant: at ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays, and the books would cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next)} This is the cheap moment to act: list or sell a player, aim the squad at prize money, keep the next renewal in check${Number(p.backer) ? "" : ", or line up a bank loan"}.`,
       restructured: (p: Record<string, string | number>) =>
-        `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value, half of it to the debt` : ""}. Reputation −${p.rep}, and the balance is back at ${p.rescueTo}; you owe ${p.owed}. The squad plays on — the sub steps up, or a stand-in fills an empty seat. ${nextBreachEn(p.next)}`,
+        `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value, half of it to the debt` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}, and the balance` : "The balance"} is back at ${p.rescueTo}; you owe ${p.owed}. The squad plays on — the sub steps up, or a stand-in fills an empty seat. ${nextBreachEn(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} answered your listing: ${p.fee} for ${p.player}. Accept it in the Market's deals tab before the window closes, or decline to keep him — declining ends the listing.`,
       sponsorOffers: () =>

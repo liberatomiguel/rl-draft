@@ -466,7 +466,7 @@ describe("rc.32 M4 — the Backer in weeks of payroll and what each breach does"
     expect(save.reputation).toBe(Math.max(0, repBefore - CAREER_LOAN.restructureRepLoss));
     expect(save.finances.balance).toBeGreaterThanOrEqual(backerLineOf(save).rescueTo);
     const mail = save.mail.find((m) => m.titleKey === "restructured")!;
-    expect(mail.params).toMatchObject({ n: 2, player: top.name, next: "insolvent" });
+    expect(mail.params).toMatchObject({ n: 2, player: top.name, next: "insolvent", rep: repBefore - save.reputation });
     expect(save.news.some((n) => n.titleKey === "restructured")).toBe(true);
     // Playable: two players and a stand-in in the third seat, no softlock.
     const regional = officialEventDefsForWeek(0, 4).find((d) => d.region === "SAM")!;
@@ -594,6 +594,21 @@ describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runwa
     expect(res.save).toBe(save);
     expect(CAREER_EN.market.errors.loanRunway.length).toBeGreaterThan(0);
     expect(CAREER_PT.market.errors.loanRunway.length).toBeGreaterThan(0);
+  });
+
+  it("never a soft lock: a free agent may still fill an empty starting seat (a restructured squad under three)", () => {
+    const save = owedInWindow();
+    save.squad = save.squad.slice(0, 2);
+    save.starterIds = [save.squad[0].id, save.squad[1].id, ""];
+    save.finances.balance = -weeklyStatementOf(save).net * 10;
+    const fa = cheapFa(save);
+    const planned = signingPlanFor(save, fa.id, { lengthSeasons: 2 });
+    expect("plan" in planned).toBe(true);
+    const signed = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
+    expect(signed.error).toBeUndefined();
+    // Back at three: the next signing (a reserve) is a commitment again.
+    const next = cheapFa(signed.save);
+    expect(signPlayerFlow(signed.save, next.id, { lengthSeasons: 2 }).error).toBe("loanRunway");
   });
 
   it("a coach hire that adds wages is refused the same way", () => {
@@ -785,12 +800,15 @@ describe("rc.32 — a refused Blockbuster raises that deal's renewal ask (and th
   it("the offer and the mail explain it — the scripted moment, ×1.5 his value, +10 % at renewal (EN and PT, from balance.ts)", () => {
     const pct = Math.round((CAREER_SALARY.blockbusterRefusalRenewalMult - 1) * 100);
     const mult = String(CAREER_TRANSFER.blockbusterFeeMult);
-    for (const C of [CAREER_EN, CAREER_PT]) {
+    for (const [C, shown] of [
+      [CAREER_EN, `×${mult}`],
+      [CAREER_PT, `×${mult.replace(".", ",")}`], // PT: the decimal comma
+    ] as const) {
       const offerLine = C.market.blockbusterWhat("FaZe Clan", mult, pct);
-      expect(offerLine).toContain(`×${mult}`);
+      expect(offerLine).toContain(shown);
       expect(offerLine).toContain(`${pct}%`);
       const mail = C.mail.body.blockbusterBid({ org: "FaZe Clan", player: "Firstkiller", fee: "$80,000", mult: CAREER_TRANSFER.blockbusterFeeMult, pct });
-      expect(mail).toContain(`×${mult}`);
+      expect(mail).toContain(shown);
       expect(mail).toContain(`${pct}%`);
       expect(C.market.declineHint(pct)).toContain(`${pct}%`);
     }

@@ -1601,6 +1601,8 @@ export const CAREER_LOAN = {
    * PROVISIONAL (30/10) — M4: while the Backer is owed, a signing, a coach
    * hire or the psychologist that would shorten the runway is refused
    * ("loanRunway"), on top of rc.31's lock (transfer fees, gear, the bank).
+   * A free agent into an empty starting seat (squad under three — after a
+   * restructuring) is always allowed: the org can field its three again.
    * rc.31: false.
    */
   lockCommitments: true,
