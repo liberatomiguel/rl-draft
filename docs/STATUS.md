@@ -1,6 +1,6 @@
 # Project Status — current state only
 
-> Last updated: **2026-10-28**. History: `CHANGELOG.md`; rationale:
+> Last updated: **2026-10-29**. History: `CHANGELOG.md`; rationale:
 > `DESIGN-DECISIONS.md` / `ROAD-TO-WORLDS-DECISIONS.md` (grep them, never read
 > them whole). The 2.0 plan of record, its stages and approval gates:
 > `ROADMAP.md`.
@@ -9,7 +9,7 @@
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.29**
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.30**
   (`staging.rocketdraft.app`: career on, noindex, preview tools on).
   **Never deploy v2.0 to `main` before the full review.**
 - Road to Worlds (career): `ROAD-TO-WORLDS-STATUS.md`. If a push to `staging`
@@ -18,23 +18,25 @@
 
 ## What v2.0 contains
 
-Season reset (profile v12) + Season Rating, Supabase v2 client, missions,
-login streak, event cards, recap, Profile/Leaderboard/Home v2, Daily Quiz,
-Challenges 2.0, final cosmetics, the database expansion (438 lineups, real
-ages, Region-only, national teams), live-data difficulty (rc.25), the dataset
-off the shared path (rc.26), Road to Worlds 2.0, and Etapas 1 and 1b
-(rc.27–29, #143–#144, R40–R44; `ROADMAP.md` "Done").
+The Season reset and Season Rating, accounts v2, missions, login streak,
+event cards, Profile/Leaderboard/Home v2, Daily Quiz, Challenges 2.0,
+cosmetics, the database expansion, Road to Worlds 2.0 and the completion
+plan's Etapas 1–2a so far (rc.27–30; `ROADMAP.md` "Done", CHANGELOG).
 
 ## Where the completion plan stands
 
-- **Etapa 1 + 1b: done** (rc.27–29).
-- **Gate 1, now:** Miguel plays rc.29 on staging and answers the
-  decisions in `ROADMAP.md` ("Waiting on Miguel"). Nothing in Etapa 2 starts
-  before that.
-- **Etapa 2, next:** first the instruments (long-career harness, save
-  fixtures, module audit, dataset check), then the economy, growth curves
-  and the RTW difficulty contract (ECO-01/02/03, DEV-01/02, BAL-02, RTW-01,
-  OBS-01).
+- **Etapa 1 + 1b: done** (rc.27–29). **Gate 1:** answered by Miguel's 28/10
+  plan (playtest + direction), now written into `ROADMAP.md` by ID.
+- **Etapa 2a, rc.30:** package A closed the rc.29 integration (review
+  fixes, direct-8 decided once a week, legacy saves, the one-time career
+  repair, PT run labels). The long-career harness and its baseline are in
+  (`CAREER-BASELINE-rc30.md`: 59 % of careers insolvent, 63 % on Normal; no
+  93+ rookie in the dataset eras; specials above potential). The analytics
+  contract is a proposal (`ANALYTICS-EVENTS-2.0.md`). Still open in 2a:
+  ENG-01 audit, DATA-01, ENG-02 rest, real-save fixtures.
+- **Next, 2b** (after Miguel's four answers in `ROADMAP.md`): ECO-02/03 and
+  DEV-01/02 first, then ECO-01, BAL-02, RTW-01, OBS-01, re-measured on the
+  same seeds.
 
 ## Open before `main`
 
@@ -50,7 +52,7 @@ off the shared path (rc.26), Road to Worlds 2.0, and Etapas 1 and 1b
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **736** tests (+2 opt-in tools
+- `npm run typecheck` clean · `npm test` **751** tests (+5 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).
@@ -58,6 +60,8 @@ off the shared path (rc.26), Road to Worlds 2.0, and Etapas 1 and 1b
   after; `challenges.tune.test.ts` (`CH_TUNE=1`) if challenges leave their
   bands (#136–#137). Shared-sim changes regenerate the golden master only with
   a CHANGELOG-documented decision.
+- Career sweeps: `CAREER_ARC=1` / `CAREER_CURVES=1` (`careerArc.test.ts`)
+  before and after any economy or growth change (Etapa 2b).
 - Perf reference (rc.29, webpack export): cold home 28 requests; a whole
   Classic run from a cold home 77–80 (budget 75, Etapa 5 WEB-02). The dataset
   chunk (62 KB gz) loads on game pages only; home first-load JS 288 KB gz.
@@ -77,6 +81,6 @@ off the shared path (rc.26), Road to Worlds 2.0, and Etapas 1 and 1b
 ## Backlog (not blocking)
 
 - `specialCards.json` (~10 KB gz) on every page; PT locale not lazy;
-  deploy-skew 404s; content pages lack `og:image`; lazy PostHog can miss UTMs.
-- Missing optional art (fallbacks render): 20 special photos, 23 org logos.
-- Deferred E2E items and their owner stage: `ROADMAP.md` ("Deferred").
+  deploy-skew 404s; no `og:image` on content pages; lazy PostHog can miss
+  UTMs. Missing optional art (fallbacks render): 20 special photos, 23 org
+  logos. Deferred items: `ROADMAP.md` ("Deferred").

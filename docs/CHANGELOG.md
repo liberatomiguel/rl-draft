@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.29**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.30**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -235,8 +235,26 @@ open):
   Release, signing and accepting a bid now wait until the event ends ("Roster moves wait until
   the event ends"), and the homegrown check also reads the fielded players.
 
+### Added — rc.30 (Etapa 2a, the instruments)
+- **The long-career harness (OBS-02).** `src/store/careerArcBot.ts` (test support, never
+  imported by the app) plays whole careers through the real flow under seven manager policies.
+  `careerArc.test.ts` keeps a smoke test in the suite and two opt-in sweeps: `CAREER_ARC=1`
+  (every region × difficulty × policy × seed, sliceable across processes, merged into a
+  Markdown report) and `CAREER_CURVES=1` (the development model sampled from the engine).
+- **The baseline** (`docs/CAREER-BASELINE-rc30.md`, 294 careers × 8 seasons). 59 % of careers
+  go insolvent (63 % on Normal); no policy wins Worlds by 2026 on Normal; EU and NA end
+  insolvent every time on Normal. Rookies never reach 93+ in the dataset eras, specials sit
+  above their players' potential in 76 % of samples, and squad growth stops at potential by
+  18–19. Etapa 2b re-runs the same seeds.
+- **The analytics contract for 2.0** (`docs/ANALYTICS-EVENTS-2.0.md`, OBS-01): a proposal for
+  Miguel, no capture code yet.
+
 ### Changed — rc.30
 - Career saves move to saveVersion 5 (additive `migrateSaveToV5`; the persist version stays 3).
+- `ROADMAP.md` carries the 28/10 completion plan by ID (DEV-01a–e, DEV-02/03, ECO-01..06,
+  BAL-02/03, UX-01..06, CAL-01, SUN-01..03, COL-01/02, UI-01a/02a/02b, EVT-01/02, FORM-01);
+  Gate 1 is answered by that plan.
+- Session worktrees (`.claude/worktrees/`) are git-ignored and outside the typecheck.
 
 ### Fixed — rc.29 (Etapa 1b: the rc.28 E2E pass · 2026-10-28 · DESIGN-DECISIONS #144 · ROAD-TO-WORLDS-DECISIONS R42–R44)
 Every item was found by a browser E2E pass on rc.28 (desktop + mobile, EN + PT), fixed,

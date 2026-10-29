@@ -1,11 +1,13 @@
 # Roadmap — finishing v2.0 "Season 1"
 
 > Plan of record for the 2.0 launch, built from Miguel's completion plan
-> (analysed on rc.26 @ 082a854; its backlog IDs are used below). That plan is
-> not in the repo: "plan §3/§10" cite it; "V2 plan" is
-> `V2-IMPLEMENTATION-PLAN.md`. Last updated **2026-10-28**. Current state:
-> `STATUS.md`. History: `CHANGELOG.md`. Grep this file for a stage or an ID;
-> it is not meant to be read whole.
+> (analysed on rc.26 @ 082a854) and its **28/10 update** (checked on rc.29 @
+> 4faffe9: the same IDs, his new playtest folded in, the product direction for
+> growth, training and HQ decided). Neither file is in the repo; "plan §N"
+> cites the 28/10 update, and its new requirements are written into the
+> Etapas below by ID. "V2 plan" is `V2-IMPLEMENTATION-PLAN.md`. Last updated
+> **2026-10-29**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
+> this file for a stage or an ID; it is not meant to be read whole.
 
 ## How the stages run
 
@@ -21,8 +23,15 @@
   the experience, a playtest Miguel approves.
 - A mechanic that is still a proposal gets a written contract first, and a
   task with an open product decision gets Miguel's answer first: most of
-  Etapa 3, and also the DEV-02 age rule (plan §5.1), COL-01 (§5.4) and
-  CH-01 (§5.7). Miguel approves before any code (plan §10).
+  Etapa 3, and also the DEV-02 age rule, COL-01 and CH-01. Miguel approves
+  before any code. Directions the 28/10 plan already decided (prospects and
+  peaks, no per-split cap, specials as potential, training as a period
+  package, the HQ and profile asks) are not re-asked (plan §10).
+- Priority (plan §3): **P0** integrity (direct-8 and legacy saves, the sub
+  signing, the loan, broken growth, impossible challenges, migration and
+  rewards); **P1** the redesigns asked for 2.0 (never deferred silently);
+  **P2** new hypotheses that need a scope call (FIFAe/EWC, the form state, a
+  harder Worlds).
 - Each task: a short diagnosis first (bug, tuning or redesign) → implement →
   independent review → fixes → browser E2E (desktop + mobile, EN + PT) →
   gates → rc commits → push to `staging`.
@@ -33,8 +42,8 @@
 |---|---|---|---|
 | 1 | M1 rules | Swiss, weekend calendar, match timeline, lint | ✅ rc.27–28 |
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
-| — | **Gate 1** | Miguel plays rc.29 and answers the decisions below | ⏸ |
-| 2 | M0 rest + M2 | Instruments, then a sustainable career | next |
+| — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
+| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a in rc.30; 2b next |
 | 3 | M3 | The new RTW loop (contract first) | |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
@@ -76,27 +85,28 @@ local amateur sides repeated names; one album test failed intermittently.
   said $6k and paid $5.2k (08); the calendar detail under the sticky bar
   (09); the Championship Sunday header and skip hint (10).
 
-## Deferred from the rc.28/29 E2E (owner Etapa)
+**Etapa 2a, rc.30 (package A + the instruments):**
+- The cross-package review of rc.27–29 that rc.29 left open: the playtest
+  build froze the results XP at "+0" (P1); a live RTW event let the login
+  calendar and the unlock pop-up open over it; a release or sale mid-event
+  changed the squad while the event fielded the frozen team.
+- Direct-8: Monday decides the week once, with the team rating HQ shows
+  (R45). No more playing Saturday and taking a direct seat.
+- Saves from before rc.28 (SEAM-1/2) and the one-time repair of careers from
+  before rc.29 (one roster and one gamertag per player; saveVersion 5).
+- PT: the Daily text and the XP breakdown; achievement toasts wait for a
+  ceremony; `nextUserStopDay` removed.
+- OBS-02: the long-career harness and its baseline
+  (`CAREER-BASELINE-rc30.md`). OBS-01: the event contract, a proposal
+  (`ANALYTICS-EVENTS-2.0.md`).
 
-- The final cross-package check of the merged rc.29 (seams review + browser
-  E2E) was stopped before it reported: re-run it at the start of Etapa 2.
+## Deferred (owner Etapa)
 
 - `/pt` first paint shows English chrome and `lang="en"` (DRAFT-11) → Etapa 5, WEB-01.
 - A whole Classic run from a cold home makes 77–80 requests against a 75
   budget (org logos and flags in the draft and the bracket) → Etapa 5, WEB-02.
-- Saves from before rc.28 only: the agenda can list an event that was
-  already played as the next stop, and a Major already in its playoffs on
-  Saturday is titled "Championship Sunday" (SEAM-1/2) → Etapa 2, ENG-03.
-- `nextUserStopDay` is dead code (SEAM-3) → Etapa 2, ENG-01 audit.
-- Near the direct-8 line, Monday's commit (HQ, calendar) rates the user by
-  the starters' average while the engine seeds the fielded team, so an org
-  can play Saturday and also take a direct seat → Etapa 2 (one rating;
-  changes the fields of running careers).
-- 375×667: achievement toasts cover the top of the rank-up ceremony; the XP
-  breakdown lines and "Daily · Legacy Day" stay in English in PT → Etapa 4.
-- Existing careers keep their old name clashes and Season X players listed on
-  two teams; new careers are clean → decision for Miguel (a one-time
-  migration?).
+- The share card's text (mode, difficulty) is English in PT → Etapa 5, with
+  the PT pass.
 
 ## Etapa 2 — instruments, then a sustainable career
 
@@ -108,126 +118,282 @@ Backer pay-down, bids, negotiation, v3 migration), `careerWeekend.test.ts`
 (`economy.test.ts` covers the Backer and the bank). `market.ts` and
 `worldSim.ts` have no test file.
 
-**2a, measure first:**
-- OBS-02: a long-career harness: 8+ seasons, a set of seeds, simple
-  manager policies, short reports. Grow it from the season bot in
-  `careerFlow.test.ts`; spec `ROAD-TO-WORLDS-DESIGN.md` §17 (asserts
-  `CAREER_ARC`); keep the long sweep opt-in, like
-  `difficulty.matrix.test.ts`. Every RTW region × 3 difficulties. Policies:
-  losing start, median, title run, costly squad, youth core, coach change,
-  bad sponsor, Backer or bank use; stop early on a softlock or insolvency.
-  Report seed, version, policy, failures that reproduce, balance
-  p10/p50/p90, debt, Backer and insolvency rates, growth by age and
-  potential.
-- ENG-03: save fixtures (v1.x, rc.20+, pre-R40) and the persist contract.
-  Isolate staging from production. Fix SEAM-1/2 here. No fixture files exist:
-  `persistContract.test.ts` migrates one synthetic `oldProfile()` from each
-  profile version (1–11); `careerWeekend.test.ts` makes pre-R40 saves with
-  `asLegacy`. Staging has its own origin but still needs its own Supabase
-  project (V2 plan §6-A) and never the production PostHog key.
-- ENG-01: the module audit, written as an inventory (a new doc, e.g.
-  `docs/MODULE-AUDIT.md`: one row per module with its job, persistence,
-  tests, findings with severity, and status), audited in packages (data,
-  shared engine, stores/sync, economy, growth, calendar, UI,
-  export/perf/SEO), each closed with its commit and evidence. SEAM-3 goes
-  here.
-- OBS-01, contract: the event catalogue and common properties (plan §6, a
-  proposal). Miguel approves it; 2b then builds the events.
+**2a, measure first** (rc.30: package A and the instruments are in; the
+audit, the dataset check and the doc pass are still open):
+- ✅ OBS-02, the long-career harness: `src/store/careerArcBot.ts` (test
+  support, never imported by the app) plays whole careers through the real
+  flow under seven policies: autopilot (median, hands-off), tuned (title
+  run), youth (youth core), spender (costly squad + bank), badSponsor,
+  losingStart (the prospects roster) and coachChurn. `careerArc.test.ts`
+  runs a smoke test in the suite. Opt-in: `CAREER_ARC=1` sweeps every region ×
+  difficulty × policy × seed (knobs `ARC_*`, `ARC_SLICE=i/n` for parallel
+  processes, `ARC_REPORT=1` merges slices into Markdown), and
+  `CAREER_CURVES=1` samples the development model from the engine. Nothing
+  asserts balance yet: 2b re-runs the same seeds for "after".
+- ✅ The baseline ("before"), `CAREER-BASELINE-rc30.md`.
+- ENG-03, partial: synthetic legacy fixtures now cover pre-R40 saves
+  (`asLegacy`), a pre-rc.29 world and a pre-rc.30 week (`careerRepair.test.ts`).
+  Still open: fixtures from real exported saves (v1.x profile, rc.20+
+  careers, which need saves from Miguel), and isolating staging (its own
+  Supabase project, V2 plan §6-A, and never the production PostHog key).
+- ENG-01: the module audit, written as an inventory (`docs/MODULE-AUDIT.md`:
+  one row per module with its job, persistence, tests, findings with
+  severity, and status), audited in packages (data, shared engine,
+  stores/sync, economy, growth, calendar, UI, export/perf/SEO), each closed
+  with its commit and evidence.
+- ✅ OBS-01, the contract: `ANALYTICS-EVENTS-2.0.md` (a proposal; Miguel
+  approves, 2b builds it).
 - DATA-01: check the expanded dataset (eras, IDs, overalls, chemistry), not
   redo it: `npm run validate:data`, `cardAliases.test.ts`,
   `chemistry.test.ts`; report by era and region; old ids still resolve via
-  `cardIdAliases.json`.
+  `cardIdAliases.json`. Prove each org enters in its right season.
 - ENG-02, rest: no old doc read as the current plan or spec (the V2 plan and
   the CHANGELOG's 2.0 header still call the V2 plan the execution order;
   CHALLENGES-DESIGN still describes the v1.4 set), and the runbooks that
   drift from the code.
-- A quantified diagnosis of ECO-01/02/03 and DEV-01: the "before" curves
-  from the OBS-02 harness; 2b re-runs the same seeds for the "after" curves.
 
-**2b, fix:**
+**2b, fix** (order: ECO-02/03 and DEV-01/02 are P0; the rest follow the
+same seeds; never recalibrate the economy without the growth that the
+Etapa 3 packages and coaches will add):
 - ECO-02: bank loan and bailout: granted once, the debt and payments
   consistent, no softlock, the UI shows why it is refused and when the next
   payment is due. The bailout is the Emergency Backer (`weeklyPayroll` floor
   check, `CAREER_LOAN`, `payDebtFlow`); the bank is `bankLoanRefusal` /
   `takeBankLoanFlow` (`CAREER_BANK`). Reproduce the problem in the real
-  flow first.
-- ECO-03: no incoming offers in split 1; no signing as a sub to cut salary.
-  Incoming bids arrive only in transfer windows (`incomingBidForDay`, plus
-  the scripted Blockbuster bids in W1-2), never inside a split, so Miguel
-  names the windows (season 0's preseason, W1-2, and/or W11-12). The
-  discount is `CAREER_SALARY.subRoleFactor` in `computeSalaryAsk`
-  (`economy.ts`; signing asks reach it through `askPackageFor` in
-  `market.ts`); `setStartersFlow` promotes a sub with no new wage and
-  `renewPlayerFlow` prices at the current role. Fix it in the flow, not the
-  button.
-- ECO-01: recalibrate salaries, income and prizes together (the 10/2.5
-  qualifier split is provisional here). Per season today: salary asks ×1.08
-  (`CAREER_SALARY.inflationPerSeason`), prize pools ×1.12 and new sponsor
-  deals ×1.1 (`growthPerSeason` in `CAREER_PRIZES` / `CAREER_SPONSOR`); the
-  week's money is `weeklyStatement`. Done when a first career pays its way
-  without an unlikely prize, money stays a challenge, and inflation forces
-  neither bankruptcy nor wealth.
-- DEV-01/02: potential, age and growth curves; prospects. Squad growth:
-  `development.ts` (`trainDay`, `squadRollover`); world growth, retirements
-  and rookies: `agePassAndIntake` (`worldSim.ts`); tunables `CAREER_AGE`,
-  `CAREER_DEV`, `CAREER_TRAINING`. Done when the curves reproduce with no
-  rounding stall, odd age jump or unreachable ceiling, the talent spread is
-  written down, and the fix is not just more XP. DEV-02 needs Miguel's rule
-  first: hiring age, playing age, retirement (today the rollover roll
+  flow first (the harness ends most careers through it, baseline §1).
+- ECO-03a, stars: fee, wage, contract length, reputation and opportunity
+  cost, priced without leaning on the sub discount.
+- ECO-03b, bids: no incoming bids for the user's players in the initial
+  period Miguel asked for. Bids arrive only in transfer windows
+  (`incomingBidForDay`, plus the scripted Blockbuster bids in W1-2), never
+  inside a split, so the block maps to season 0's preseason window (W1-2)
+  and stays explicit in the code (proposal; Miguel confirms).
+- ECO-03, the sub contract (P0, still open after the old "sub-slot fix"):
+  the lineup slot is separate from the price of the job. No "signed as a sub"
+  wage discount (`CAREER_SALARY.subRoleFactor` 0.4 in `computeSalaryAsk`,
+  reached through `askPackageFor`): a player signs at his normal value, then
+  the lineup is set. A full squad asks the user who leaves; nothing is
+  released or demoted silently. Promotion never needs a renegotiation
+  (`setStartersFlow`), and renewing a reserve prices the player
+  (`renewPlayerFlow`). Every operation is atomic: fee, bonus, wage and slots
+  move together. Old saves get no abrupt retroactive raise; their contracts
+  reprice at renewal, with a payroll projection. Tests: sell a starter with
+  and without a sub; promote; sign with three starters; renew a reserve;
+  swap the lineup; sign and promote the same day; refresh mid-negotiation;
+  a failed transfer.
+- ECO-01: the whole money curve by era, season and event tier: wages,
+  fines, fees, signing bonuses, prizes and income, in consistent units
+  (week, split, season). Today, per season: asks ×1.08
+  (`CAREER_SALARY.inflationPerSeason`), prizes ×1.12 and new sponsor deals
+  ×1.1 (`growthPerSeason`); the week's money is `weeklyStatement`. The ask
+  grows ×1.2 per overall point (`growthPerPoint`), so a founder who develops
+  from 73 to 79 asks about 3× at renewal. Done when a first career pays its
+  way without an unlikely win, a median career meets real choices, a title
+  run does not snowball (baseline §1–§3), and inflation forces neither
+  bankruptcy nor wealth. Report p10/p50/p90 of balance, debt, payroll ÷
+  guaranteed income, rescues, bankruptcy and access to stars over 8+
+  seasons, every pool and difficulty.
+- DEV-01, the growth contract (direction decided by Miguel; parameters are
+  tuning):
+  - a) rare generic prospects aged 13–15 with potential 93–98, in the
+    historical eras too (today 0 %: `datasetEraPotentialCeiling` 88).
+    Frequency configurable and measured by region, class and season,
+    97/98 included. Not more wonderkids overall, not only the infinite era.
+  - b) an individual peak: maturation profile (early or late), a
+    maintenance phase at the top, then a gradual decline. These are three
+    separate dimensions, fixed per save (signing, selling, renewing or a new
+    club never rerolls them), not tied to a fixed 18–22 window
+    (`peakAgeRange`). A prospect signed at 14 reaches his best within
+    seasons the career plays. Potential becomes the **expected peak**, not a
+    hard wall: finishing 1–2 points under or over is allowed (the tolerance
+    is to be tested).
+  - c) a real player with special cards: potential from the overall of his
+    eligible special (by `playerId`, without effects, boosts or chemistry);
+    his debut overall is unchanged. Community or fantasy cards that would
+    bend the curve need an explicit rule. Today `derivePotential` reads only
+    the normal cards (baseline §5).
+  - d) no per-split cap (`maxSplitGain` 3) and a revised season cap (7): a
+    non-linear curve, steep when young and slowing near the peak without
+    stopping short of it. No jump on a birthday or at the rollover.
+  - e) scouting: the potential never moves when a report is bought or the
+    page reloads, and bands are honest (the truth can sit at the floor, the
+    middle or the top; no systematically impossible ceiling). The baseline
+    measures the floor bias Miguel reported (§6).
+  - Base growth without a package: days plus series actually played, per
+    player (a reserve who did not play keeps his base growth, not starter
+    XP). Packages speed it up (Etapa 3), never as a toll for growing.
+    Expectation rolled once per player and career; no XP inflation.
+  - Migration: IDs, contracts and progress kept; no instant overall jump to
+    "compensate" the old curve; bought scouting stays coherent.
+- DEV-02: signing, registering, fielding, substitution and rollover
+  aligned with the new longevity; no retirement before the peak; youth
+  never depends on the sub exploit. **Miguel decides** the minimum
+  competitive age and the final retirement rule (today the rollover roll
   reaches 70 % from 28, half for stars).
-- BAL-02: the RTW difficulty contract across every region (APAC and SSA
-  too). RTW reads the Draft's `DIFFICULTY` (`worldSim.ts`, `match.ts`,
-  `teams.ts`), so a Draft retune (BAL-01) moves it: the plan asks for RTW's
-  own contract (rolls, opponent shift, chemistry caps, and the money in
-  `CAREER_ECONOMY` and `CAREER_LOAN.garnishRate`) and selector text that
-  says what it changes. The Draft matrix test does not cover RTW; use the
-  OBS-02 harness and `CAREER_ARC`.
-- RTW-01: orgs enter by era; rankings include generic orgs; Major/Worlds
-  points in HQ. `realOrgIntake` (R31) exists: prove no org arrives early.
-  `applyResultToStandings` drops local sides' points (R23/R30): keeping
-  them needs Miguel, and so does whether they can then take a Major slot
-  (`majorFieldFor` takes the top split points). HQ's Road to Worlds mini
-  (`HubScreen.tsx`) shows only the season race, not the split race to the
-  Major.
-- OBS-01: typed career analytics events, added to `GameEvents` in
-  `src/lib/analytics.ts` (today only `runStore.ts` calls `trackEvent`), fired
-  from the store once per saved action, plus the plan's common properties
-  (release, environment, region; `run_completed` has no `region` today). The
-  runbook advises no PostHog on staging, so checking the events needs a
-  separate PostHog project (Miguel).
+- BAL-02: difficulty presets for the career, Easy / Normal / Hard (Normal
+  default), each moving matches (a small edge for the user on Easy, stronger
+  opponents on Hard), money (starting budget) and how much of the training
+  is guided. They replace the Management Style step in the wizard (one
+  sentence + the real effects). Manual work is never the only lever, and no
+  hidden malus stops a team from reaching its potential. RTW gets its own
+  contract instead of reading the Draft's `DIFFICULTY` (`worldSim.ts`,
+  `match.ts`, `teams.ts`), so a Draft retune cannot move the career; overall
+  stays the engine's main signal. Keep the regional identities (SAM: an
+  easier pool with 2 slots; EU: a stronger pool with 4). The Draft matrix
+  test does not cover RTW; use the OBS-02 harness and `CAREER_ARC`.
+- BAL-03 (experiment, not approved): a slightly harder Worlds. First
+  measure P(win Worlds | won a Major) by squad strength, region, difficulty
+  and career stage, and check the field takes the best qualifiers. Never a
+  forced loss or a secret penalty for winning a Major.
+- RTW-01: orgs enter by era (prove none arrives early); standings with the
+  generic orgs, with points and eligibility defined, not just zero-point
+  rows. `applyResultToStandings` drops local sides' points (R23/R30):
+  keeping them, and letting them take a Major slot (`majorFieldFor` takes
+  the top split points), is **Miguel's call**. HQ shows the split race to
+  the Major, not only the season race (UX-01d).
+- OBS-01: build the approved catalogue (`ANALYTICS-EVENTS-2.0.md`) in
+  `src/lib/analytics.ts`, fired from the store once per saved action.
 
 **Gate 2:** Miguel approves the new numbers (curves, economy) and plays a
 long career on staging.
 
 ## Etapa 3 — the new RTW loop (contracts first)
 
-Covers DEV-03 (training plans + scrims + distinct coaches), ECO-04
-(sponsors), ECO-05 (other income and boosts in HQ), UX-01 (HQ around the next
-decision) and UX-02 (season goals). Also UX-03 (useful news, 50/50), UX-04
-(creation: no Management Style; crest, shapes and colours), UX-05 (RTW
-achievements in the general list) and UX-06 ("New" markers, unlock pop-ups,
-tutorial).
+Covers DEV-03 (training packages, scrims, distinct coaches), ECO-04
+(sponsors), ECO-05 (other income), UX-01 (HQ around the next decision),
+UX-02 (season goals), UX-03 (news, 50/50), UX-04 (creation), UX-05 (RTW
+achievements in the general list), UX-06 (unlocks, "New", contracts),
+CAL-01 and SUN-01..03. The written contract of DEV-03 starts now, so 2b
+never calibrates the old training model as if it were final.
+
+- **DEV-03, a package per period** (direction approved): pick a routine for
+  a period, see its benefit and cost, get the result at the end; training
+  is never "click the same scrim every week".
+  - Flow: the coach suggests or the user configures → approve or delegate →
+    the routine runs inside the calendar → a summary → renew, adjust or
+    keep the base growth.
+  - Parts: period (test default 28 days; compare 3–4 weeks with a whole
+    split), objective (development, competitive preparation, recovery /
+    consistency), one squad focus (optional per-player tweaks, never a
+    form for every player), scrims (count and level), execution (automatic,
+    around events and windows; an Advance or a reload never doubles a
+    session), the end summary (overall before/after, attributes,
+    series/scrims, the coach's effect, wear; kept as history, not a
+    toast), delegation (the coach renews and adjusts without asking every
+    week; exceptional decisions stay visible).
+  - Scrim levels: easy (confidence, little growth), even (synergy, a
+    moderate return), hard (more learning, more wear and risk). Scrims never
+    give official points, prizes, win achievements or endless XP.
+  - Coaches: technical quality + experience + specialization, each with a
+    measurable effect (the plan's suggestion, focus efficiency, scrim
+    quality, recovery). Ex-pros cost a little more and bring a bit more,
+    good generic coaches exist too, and coaches grow with relevant
+    experience. Today's problem: generic coaches are 62–84 and an ex-pro is
+    `55 + 0.25 × last normal card`, so even a 99 card makes an ~80 coach.
+    The hire screen compares wage, specialty, package effect and expected
+    impact.
+  - Acceptance: a whole period with and without a package; three coach
+    profiles; three scrim levels; delegation over several periods; a coach
+    change mid-period; refresh and fast advance; events in the period; a
+    young reserve and a starter.
+- **ECO-04 sponsors:** weekly pay, a fixed or milestone payment and a
+  performance bonus; goals, deadlines and proportional fines, announced
+  upfront and scaled to the team's level and to opportunities the calendar
+  really offers. Compare stability, total return, length, risk and the goal
+  in one component. **ECO-05:** appearance fees and partner actions with a
+  cap and an agenda cost, never free money that hides an imbalance.
+- **UX-01, HQ:** a) one main block per decision (offers, random events,
+  invites replace the Advance block like the weekly insert does; the clock
+  never passes a needed decision); b) squad as compact Draft-style cards
+  (rating border, club icon; no initials square; age, trait, growth and
+  potential readable on mobile); c) the training block (active plan,
+  progress, days left, focus, scrims, coach, last result; adjust, approve or
+  delegate from it); d) a Major / Worlds standings toggle (points, position,
+  the cut, fixtures left) from the same source as the seeding; e) finances
+  (balance, next payroll, guaranteed income, debt, projection; the chart
+  opens larger with more history, no invented data); f) the toolbox (boosts
+  bought in HQ, price/buff/duration visible; the bootcamp lasts one split
+  and shows its end).
+- **UX-06:** a) a centred unlock modal for the toolbox and "New" markers
+  on tabs (unlocked to buy ≠ bought; once per novelty, seen state
+  persisted); b) contracts: a warning on the HQ squad card, the time left,
+  reminders before the player can leave, and an explicit review before the
+  rollover (today: one general warning at week 23 and a news line).
+- **UX-02 season goals:** realistic for the squad, resources, region,
+  stage and past results; deadline and progress visible; no trivial or
+  impossible goal, no goal that moves after each win.
+- **UX-04 creation:** more crests, symbols and layouts; independent
+  primary/secondary colours with an instant preview and a contrast guard;
+  presets help without locking the combinations. The Management Style step
+  goes (BAL-02 presets replace it).
+- **CAL-01 calendar:** the whole window in blue, more visual events, no
+  payroll marker (payroll stays correct in Finances; the event keeps
+  priority over the window background).
+- **SUN-01..03 the weekend:** back to HQ after Saturday's qualifier or
+  Swiss, an optional preparation and a conscious start of Sunday (existing
+  dates; no free training day or payroll; no replayed qualifier or double
+  prize); a short full-screen intro before Championship Sunday (skippable,
+  reduced motion, plays once, no spoiler); the rest of an event the user
+  is out of (qualified teams and rounds, readable results, watch / sim /
+  skip). Hypothesis for the optional activity: a coach briefing (keep the
+  plan, recover, or prepare for the opponent) with a small, transparent
+  effect; skipping keeps the career viable.
+- **UX-03 news and 50/50:** a more visual feed (one headline, crests, a
+  short subject, the consequence or action); historical beats conditioned on
+  the save's state or labelled as archive (Vitality signing Zen, FURIA
+  moving to NA). "The Wire" becomes a **50/50** presentation with its logo,
+  if the partner agrees on material, naming and credit; never an invented
+  quote. A minimum partnership is planned for 2.0.
+- **UX-05:** RTW achievements in the general list, filterable by mode;
+  one source per id, permanent across saves, never granted twice or lost at
+  a Season reset.
+- **"New" markers (all areas):** identity + profile/save scope + seen
+  state; they clear when the content is opened, not when a tab is
+  visited; urgent items (contracts) above cosmetics.
 
 - **Gate 3a:** Miguel approves the written contracts.
 - **Gate 3b:** a playtest. The loop must not need a repetitive weekly chore.
 
 ## Etapa 4 — collect and progress
 
-- COL-01: the national-team album, where discovering a team is separate from
-  collecting its cards (if adopted).
-- COL-02: filters, counters and "New" on the profile and collection.
+- COL-01a: the album looks like an album; inside a national team, the
+  players in a formation instead of a grid (country and edition, slots,
+  progress, locked and collected cards; no overlap on mobile).
+- COL-01b: finding a national team reveals its page; drafting each player
+  collects his card (discovery is separate from ownership; incomplete teams
+  stay favoured in the drop; cards already granted are kept). Today every
+  card of the team is granted on the find.
+- COL-02a: a NEW tag in the draft on a special or national card not owned
+  yet, decided against the inventory BEFORE the offer (the find grants the
+  cards today, so a later check hides the tag). "Not owned" is not "not
+  seen".
+- COL-02b: an org/country card of a national team gets a national visual
+  (player, coach and sub carry a specialId today; the org does not). No new
+  collectible or mechanic unless needed; coach/sub/org's place in the album
+  progress is written down.
+- COL-02c: "New" across collection, profile, Challenges and the album,
+  persisted per item, coherent outside and inside, never everything new at
+  each login. Reuse the profile's unseen-cosmetics dots.
 - DATA-02: new special cards, their art, eligibility and windows (none
   leaks into RTW unless intended), and a regression of the Region-only modes
   already built (NA, EU, SAM, MENA, OCE; APAC and SSA have no Region-only
   mode but play in the RTW circuit).
-- CH-01: Challenges with more varied mechanics.
-- CH-02: test each Challenge and each star, one by one.
-- CH-03: keep the quiz and the daily or not.
-- UI-01: Season Pass rewards viewer; the daily login modal.
+- CH-01: Challenges with more varied mechanics. CH-02: every Challenge and
+  every star solvable from the real options, prerequisites right, reward
+  once; a win sample does not prove a composition star. CH-03: test the
+  daily quiz and the daily Challenge (seed, UTC reset, tries, rewards,
+  PT) and decide whether they stay.
+- UI-01a: the Season Tracker previews each rank's reward under the bar
+  (pick a rank → the item, its art and condition), respecting when the
+  reward is really given (today: at the cutover). UI-01: the daily login
+  modal redesign.
+- UI-02a: banner animations, Overdrive first, each banner in the profile,
+  the picker, the preview and other screens, animated and static, EN/PT,
+  desktop/mobile, reduced motion. UI-02b: badge centring one by one, First
+  Chapter included: optical alignment and the useful area at every size.
 - SEA-01, review part: XP versus Season Rating, cadence and gains (no endless
   farm), the season's events and rewards. Plan §3 puts XP/rating and rewards
   in M4; the dates stay in Etapa 6.
-- UI-02, rest: banner animations; badge size and alignment.
 - ECO-06: decide on active sales and trades.
 
 **Gate 4:** every card reachable, every Challenge star shown reachable in a
@@ -261,39 +427,55 @@ runbook). Then V2 plan §6 A–E, the production deploy, MKT-01 and monitoring.
 P0 is fixed. Every P1 is delivered and approved, or Miguel has explicitly
 decided its change of scope. Nothing is dropped silently.
 
-## Waiting on Miguel (Gate 1)
+## Scope proposals (P2, not authorized)
 
-**What to play:** the manual regression in `STATUS.md` ("Open before
-`main`") and the career playtest in `ROAD-TO-WORLDS-STATUS.md` ("Remaining /
-open"), on rc.29.
+- **EVT-01 EWC (clubs)** and **EVT-02 FIFAe (national teams)** in RTW:
+  proposals; format, frequency, field, dates and version are open. Design
+  one event at a time (EWC reuses the club engine best; FIFAe needs the
+  user's role, call-ups and the return to clubs). Guardrails: no Major or
+  Worlds points by accident, extra money under control, own event
+  namespaces (seeds and ids stay), and only once the base career is
+  measured; never a fix for a broken economy.
+- **FORM-01, a player "in form":** a small, short, clearly sourced
+  temporary bonus (e.g. +1 to +3 for an event or a few days), apart from the
+  permanent overall and potential, shown as base + bonus + expiry; one
+  positive rule first, never stacked, never rerolled by a reload, the same
+  treatment for AI teams, and never counted twice with the engine's
+  per-series form. Patch scope open.
 
-**Decisions:**
+## Waiting on Miguel
+
+**What to play on rc.30:** the career with a save from before rc.29 (the
+one-time repair and its news line), a regional week near the direct-8 line
+(Monday decides; Saturday and Sunday follow), a Major weekend with a
+release attempted on Saturday night (locked), the Daily and a run's results
+in PT, and the playtest build's results XP count-up.
+
+**Decisions that shape Etapa 2b (asked now):**
+1. DEV-02: the minimum competitive age, and the final retirement rule.
+2. RTW-01: may local sides that score in a regional enter the tables, and
+   can they then take a Major slot (yes reverses R23/R30)?
+3. ECO-03b: the bid block maps to season 0's preseason window (W1-2)?
+4. OBS-01: approve `ANALYTICS-EVENTS-2.0.md` (and its three questions:
+   staging/playtest project, the finance summary, `BALANCE_VERSION`).
+
+**Still open from Gate 1** (the 28/10 plan did not answer them; the
+shipped defaults stay until Miguel says otherwise):
 1. PT for "Championship Sunday": keep it, or "Domingo de Finais"?
-2. The qualifier pays 10 % / 2.5 % ($6k at season 0). Lobbies now show the
-   real paid totals: the regional is $40.8k because swiss16 pays 102 %; the
-   Community Cup is $1.8k after rounding to $50. Keep this, or reshape the
-   tables in ECO-01?
+2. The qualifier pays 10 % / 2.5 % ($6k at season 0); the regional shows
+   $40.8k (swiss16 pays 102 %), the Community Cup $1.8k. Keep, or reshape
+   the tables in ECO-01?
 3. Overtime pacing, about 6–7 s at 1×.
 4. Worldwide Legacy at 1.6 or 1.3 (#140).
 5. The real Season 1 dates (`season.ts`: 2026-10-20 → 12-22).
 6. In the user's own qualifier, local sides are rated around the user. Keep that?
 7. Weekends the user only watches are not Advance stops. Keep that?
-8. Classic scrollbars (#144): the gutter is always reserved, so neither a
-   dialog nor a route change shifts the page, but a short page ends its
-   header and footer borders and its glow 10–15 px before the window's
-   edge. Keep it, or reserve the gutter only while a dialog is open (routes
-   jump again)?
-9. PT standings tag "Avançou"/"Fora", and the new local-side sheet wording.
-10. Existing careers: a one-time migration for old name clashes and Season X
-    players listed twice?
-11. Before Etapa 2b: which transfer windows lose incoming bids (ECO-03);
-    hiring age, playing age and retirement (DEV-02); do local sides that
-    score in a regional enter the tables, and can they take a Major slot
-    (RTW-01; yes would reverse R23/R30)? Does staging get its own PostHog
-    project (OBS-01)?
+8. Classic scrollbars (#144): always reserve the gutter (no shift; short
+   pages end their borders 10–15 px early), or only while a dialog is open?
+9. PT standings tag "Avançou"/"Fora", and the local-side sheet wording.
 
-**Not needed for Gate 1 (V2 plan §8):** the Season Rating deltas and whether
-a Swiss exit costs rating (defaults shipped; SEA-01); which 8–10 event cards,
+**Not needed yet (V2 plan §8):** the Season Rating deltas and whether a
+Swiss exit costs rating (defaults shipped; SEA-01); which 8–10 event cards,
 one per week (none is set in `specialCards.json` yet; DATA-02).
 
 **Career items still open** (ROAD-TO-WORLDS-DECISIONS, "Still open for
