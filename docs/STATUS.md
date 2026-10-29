@@ -52,7 +52,7 @@ plan's Etapas 1–2a so far (rc.27–30; `ROADMAP.md` "Done", CHANGELOG).
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **751** tests (+5 opt-in tools
+- `npm run typecheck` clean · `npm test` **752** tests (+5 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).

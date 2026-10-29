@@ -204,7 +204,8 @@ with the root cause — that section doubles as the project's bugfix log.
     each other seat signs the best free agent in its region;
   - one gamertag per player in a region: a filler or a pre-rc.29 rookie that clashes, or wears a
     real nickname, takes the next free bank name (the user's players and real players are never
-    renamed);
+    renamed; a filler the user signed keeps his squad name for good, unless it is a real
+    nickname, which he drops if he returns to the world);
   - the bank without real nicknames.
 
   IDs, contracts, results and cards are untouched, and one news line says what changed.
@@ -217,8 +218,8 @@ with the root cause — that section doubles as the project's bugfix log.
   `RESULTS_UI.xpLines` in the player's language. A run saved before rc.30 keeps its stored text,
   except its objective, which is localized from its type.
 - **On a phone, achievement toasts covered the rank-up ceremony** (375×667). Root cause: the
-  toaster (z-80) ignored the "ceremony" overlay hold. Toasts now wait for the ceremony, and each
-  toast's timer starts once it shows.
+  toaster (z-80) ignored the "ceremony" overlay hold. During a ceremony, toasts now stay mounted
+  but hidden, with their timer paused, and each one plays its sound once, when it first shows.
 
 **Found by the independent cross-package review of rc.27–rc.29** (the check the rc.29 E2E left
 open):

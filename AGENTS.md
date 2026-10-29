@@ -41,7 +41,7 @@ Cloudflare Workers Static Assets** (runbook: `docs/DEPLOY-CLOUDFLARE.md`).
   grep -E "error|warning" | head`, `npm run typecheck 2>&1 | head -40`. Never
   dump a full test run, build log or `git diff` of generated files
   (`src/generated/*`, `src/data/*.json`, `out/`).
-- Run the targeted test file while iterating; the full suite (751 tests) only
+- Run the targeted test file while iterating; the full suite (752 tests) only
   before a commit. `npm run build` only when something ships or the export is
   in question.
 - Do not re-explore: the status docs already tell you where things are. Trust

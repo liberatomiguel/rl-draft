@@ -7,11 +7,12 @@
  * auto-dismisses; tap to dismiss early. This is what makes achievements pop the
  * MOMENT they're earned — mid-draft, mid-match — not only on the results screen.
  * rc.30: they wait while a ceremony is on screen (the "ceremony" overlay hold —
- * card unlock, rank-up): on a phone the stack covered the ceremony's title, and
- * each toast's timer now starts only once it can be seen.
+ * card unlock, rank-up): on a phone the stack covered the ceremony's title.
+ * Held toasts stay mounted but hidden, their timer paused; each plays its
+ * sound once, when it first shows.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { achievementById } from "@/data/catalog";
 import { useCopy } from "@/content/copy";
@@ -26,31 +27,41 @@ import { AchievementIcon } from "@/components/AchievementIcon";
 export function AchievementToaster() {
   const mounted = useMounted();
   const queue = useAchievementToasts((s) => s.queue);
-  const ceremony = useOverlayHolds((s) => s.holds.ceremony > 0);
-  if (!mounted || queue.length === 0 || ceremony) return null;
+  const held = useOverlayHolds((s) => s.holds.ceremony > 0);
+  if (!mounted || queue.length === 0) return null;
   return createPortal(
     <div
-      className="pointer-events-none fixed right-3 top-16 z-[80] flex w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2"
+      className={cx(
+        "pointer-events-none fixed right-3 top-16 z-[80] flex w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-2",
+        held && "invisible",
+      )}
       aria-live="polite"
+      aria-hidden={held || undefined}
     >
       {queue.slice(0, 4).map((id) => (
-        <Toast key={id} id={id} />
+        <Toast key={id} id={id} held={held} />
       ))}
     </div>,
     document.body,
   );
 }
 
-function Toast({ id }: { id: string }) {
+function Toast({ id, held }: { id: string; held: boolean }) {
   const { ACH_UI } = useCopy();
   const dismiss = useAchievementToasts((s) => s.dismiss);
   const def = achievementById.get(id);
+  const announced = useRef(false);
 
   useEffect(() => {
-    sfx.unlock();
+    // Behind a ceremony: no sound and no clock until it can be seen.
+    if (held) return;
+    if (!announced.current) {
+      announced.current = true;
+      sfx.unlock();
+    }
     const t = setTimeout(() => dismiss(id), 4800);
     return () => clearTimeout(t);
-  }, [id, dismiss]);
+  }, [id, dismiss, held]);
 
   if (!def) return null;
   const style = achievementStyle(def);

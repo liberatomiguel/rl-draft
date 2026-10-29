@@ -189,12 +189,16 @@ describe("repairLegacyWorld (rc.30 A4): one roster and one gamertag per player",
     }
   });
 
-  it("a world filler the user signed keeps its squad name after it leaves the squad", () => {
+  it("a world filler the user signed keeps its squad name after it leaves the squad — never a real nickname", () => {
     const { save } = legacyCareer();
-    // fic:MENA:37 wears the real nickname "Fahad" in the old bank ("Nimr" in the new).
-    const userSquad = [...save.squad, { id: "fic:MENA:37", name: "Fahad" }];
+    // fic:MENA:12 keeps the name the squad knows him by, wherever he goes next…
+    const kept = playerViewById("fic:MENA:12", ctxOf(save))!.name;
+    // …while fic:MENA:37 wears the real nickname "Fahad" in the old bank ("Nimr" in the new).
+    const userSquad = [...save.squad, { id: "fic:MENA:12", name: kept }, { id: "fic:MENA:37", name: "Fahad" }];
     const { world } = repairLegacyWorld(save.world, { seasonIndex: 0, careerSeed: save.careerSeed, userSquad });
-    expect(world.rookieNames?.["fic:MENA:37"]).toBe("Fahad");
+    expect(world.rookieNames?.["fic:MENA:12"]).toBe(kept);
+    expect(world.rookieNames?.["fic:MENA:37"]).toBeUndefined();
+    expect(playerViewById("fic:MENA:37", ctxOf(save, world))?.name).toBe("Nimr");
     // The founders' ids never resolve in the world: nothing stored for them.
     for (const p of save.squad) expect(world.rookieNames?.[p.id]).toBeUndefined();
   });

@@ -1606,7 +1606,8 @@ export function pickRookieName(
  *     or by an earlier player of the region — or is a real nickname takes the
  *     next free bank name (pickRookieName), stored in `rookieNames`. Real
  *     players and the user's players are never renamed; a filler the user
- *     signed keeps its squad name for good through a stored entry.
+ *     signed keeps its squad name for good through a stored entry (unless
+ *     that name is a real nickname — back in the world, he reads the new bank).
  * Idempotent: a repaired world comes back unchanged.
  */
 export function repairLegacyWorld(
@@ -1649,12 +1650,16 @@ export function repairLegacyWorld(
 
   // 2. Names — read every name through the new bank, then settle clashes.
   const renames: Record<string, string> = { ...(next.rookieNames ?? {}) };
+  const real = realNicknameKeys();
   // A world filler the user signed keeps the name on its squad record (stored;
-  // the founders' "fic:{region}:starterN" ids never resolve in the world).
-  for (const p of ctx.userSquad) if (/^fic:[A-Z]+:\d+$/.test(p.id)) renames[p.id] = p.name;
+  // the founders' "fic:{region}:starterN" ids never resolve in the world) —
+  // unless it is one of the old bank's real nicknames: back in the world, he
+  // then reads the new bank's name instead of meeting the real player.
+  for (const p of ctx.userSquad) {
+    if (/^fic:[A-Z]+:\d+$/.test(p.id) && !real.has(nameKey(p.name))) renames[p.id] = p.name;
+  }
   next.nameBankVersion = 2;
   next.rookieNames = renames;
-  const real = realNicknameKeys();
   const squadKeys = new Set(ctx.userSquad.map((p) => nameKey(p.name)));
   const held = new Map<Region, Set<string>>(REGIONS.map((r) => [r, new Set(squadKeys)]));
   const worldIds = [...new Set([...Object.values(next.orgs).flatMap((o) => o.playerIds), ...next.freeAgentIds])];

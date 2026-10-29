@@ -21,7 +21,8 @@
  * scouting band, and the world's growth curve by age over nine seasons.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CAREER_ARC, CAREER_SEASONS, CAREER_WORLD } from "@/config/balance";
 import { specialCards } from "@/data";
@@ -36,7 +37,21 @@ const ALL_REGIONS: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const list = <T extends string>(v: string | undefined, all: readonly T[]): T[] =>
   v ? (v.split(",").filter((x) => (all as readonly string[]).includes(x)) as T[]) : [...all];
 
+/** Every non-test source file under src/ (the app's code). */
+function appSources(dir = "src"): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const path = join(dir, e.name);
+    if (e.isDirectory()) return appSources(path);
+    return /\.(ts|tsx)$/.test(e.name) && !/\.test\.tsx?$/.test(e.name) ? [path] : [];
+  });
+}
+
 describe("career arc harness — smoke (rc.30 OBS-02)", { timeout: 60_000 }, () => {
+  it("the bot is test support: no app file imports it", () => {
+    const importers = appSources().filter((f) => !f.endsWith("careerArcBot.ts") && readFileSync(f, "utf8").includes("careerArcBot"));
+    expect(importers).toEqual([]);
+  });
+
   it("an engaged and a hands-off career each play a season through the real flow, deterministically", () => {
     const tuned = playArcCareer({ region: "SAM", difficulty: "normal", policy: "tuned", seed: 31337, seasons: 1 });
     expect(tuned.softlock).toBeNull();
