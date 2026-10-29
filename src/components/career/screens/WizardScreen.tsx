@@ -11,12 +11,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CAREER_ECONOMY, CAREER_REP } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_REP } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs } from "@/data";
 import { computeSalaryAsk, weeklyWage } from "@/engine/career/economy";
-import type { CareerColors, CareerDifficulty, ManagementStyle } from "@/engine/career/types";
+import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
 import { formatMoney } from "@/lib/format";
@@ -47,6 +47,7 @@ import { starterOffersForRegion } from "@/store/careerFlow";
 import { useMounted } from "@/store/useMounted";
 import { CountrySelect } from "@/components/career/wizard/CountrySelect";
 import { FoundingSplash } from "@/components/career/wizard/FoundingSplash";
+import { PresetEffects } from "@/components/career/wizard/PresetEffects";
 import {
   QUICKSTART_MANAGER_NAMES,
   QUICKSTART_ORG_NAMES,
@@ -59,7 +60,6 @@ const TOTAL_STEPS = 5;
 const REGION_ORDER: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const STAT_KEYS: StatKey[] = ["offense", "defense", "mechanics", "consistency", "experience", "clutch"];
 const DIFFICULTIES: CareerDifficulty[] = ["easy", "normal", "hard"];
-const STYLES: ManagementStyle[] = ["handsOn", "balanced", "delegate"];
 const ROSTER_KEYS = ["prospects", "journeymen", "balanced"] as const;
 type RosterKey = (typeof ROSTER_KEYS)[number];
 
@@ -148,9 +148,8 @@ export function WizardScreen() {
   const [regionPick, setRegionPick] = useState<Region | null>(null);
   // Step 4 — starter roster
   const [rosterKey, setRosterKey] = useState<RosterKey>("balanced");
-  // Step 5 — difficulty & style
-  const [difficulty, setDifficulty] = useState<CareerDifficulty>("normal");
-  const [style, setStyle] = useState<ManagementStyle>("balanced");
+  // Step 5 — the career preset (rc.32, BAL-02: it replaces the Management Style step)
+  const [difficulty, setDifficulty] = useState<CareerDifficulty>(CAREER_DIFFICULTY.defaultPreset);
 
   const [slotsFull, setSlotsFull] = useState(false);
   const [founding, setFounding] = useState(false);
@@ -230,8 +229,7 @@ export function WizardScreen() {
     randomizeCrest();
     setBuffType(pickRandom(STAT_KEYS));
     setRosterKey("balanced");
-    setDifficulty("normal");
-    setStyle("balanced");
+    setDifficulty(CAREER_DIFFICULTY.defaultPreset);
     setStep(TOTAL_STEPS);
   };
 
@@ -255,7 +253,6 @@ export function WizardScreen() {
           buffType,
         },
         difficulty,
-        style,
         rosterKey,
       },
       seed,
@@ -796,55 +793,19 @@ export function WizardScreen() {
                   >
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <span className="display text-base font-bold uppercase tracking-wide text-ink">
-                        {copy.DIFFICULTY_LABELS[id].label}
+                        {C.wizard.presets[id].label}
                       </span>
                       {active ? <Badge tone="orange">{copy.SETUP.selected}</Badge> : null}
                     </div>
-                    <p className="mb-3 text-xs leading-relaxed text-sub">
-                      {copy.DIFFICULTY_LABELS[id].tagline}
-                    </p>
-                    <Badge tone="blue">
-                      {C.finances.balance}: {formatMoney(CAREER_ECONOMY.startingBudget[id])}
-                    </Badge>
+                    <p className="mb-3 text-xs leading-relaxed text-sub">{C.wizard.presets[id].sentence}</p>
+                    <PresetEffects difficulty={id} C={C} />
                   </button>
                 );
               })}
             </div>
             <p className="mt-2 text-xs text-faint">{C.common.difficultyNote}</p>
 
-            <p className="kicker mb-3 mt-6">{C.wizard.styleTitle}</p>
-            <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label={C.wizard.styleTitle}>
-              {STYLES.map((id) => {
-                const active = style === id;
-                const labels: Record<ManagementStyle, { label: string; desc: string }> = {
-                  handsOn: { label: C.wizard.styleHandsOn, desc: C.wizard.styleHandsOnDesc },
-                  balanced: { label: C.wizard.styleBalanced, desc: C.wizard.styleBalancedDesc },
-                  delegate: { label: C.wizard.styleDelegate, desc: C.wizard.styleDelegateDesc },
-                };
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setStyle(id)}
-                    className={cx(
-                      "panel p-4 text-left transition-all",
-                      active && "panel-glow-blue !border-blue/60",
-                      !active && "hover:!border-line-strong",
-                    )}
-                  >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="display text-base font-bold uppercase tracking-wide text-ink">
-                        {labels[id].label}
-                      </span>
-                      {active ? <Badge tone="blue">{copy.SETUP.selected}</Badge> : null}
-                    </div>
-                    <p className="text-xs leading-relaxed text-sub">{labels[id].desc}</p>
-                  </button>
-                );
-              })}
-            </div>
+            <p className="mt-1 text-xs text-faint">{C.wizard.presetsNote}</p>
 
             {/* Recap */}
             <Panel strong className="mt-6 p-5">
@@ -870,7 +831,7 @@ export function WizardScreen() {
                         ? C.wizard.rosterJourneymen
                         : C.wizard.rosterBalanced}
                   </Badge>
-                  <Badge tone="neutral">{copy.DIFFICULTY_LABELS[difficulty].label}</Badge>
+                  <Badge tone="neutral">{C.wizard.presets[difficulty].label}</Badge>
                   <Badge tone="blue">{formatMoney(budget)}</Badge>
                 </div>
               </div>

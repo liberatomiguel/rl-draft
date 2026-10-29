@@ -1678,6 +1678,14 @@ export const CAREER_WORLD = {
    */
   fillerHeadlinerChance: 0.1,
   fillerHeadlinerRange: [77, 84] as const,
+  /**
+   * PROVISIONAL (30/10) — ROADMAP "Waiting on Miguel", the 30/10 note:
+   * "filler orgs capped at the region's best real lineup (with BAL-02)"
+   * (R59). A filler org's team rating never passes the strongest real org of
+   * its region at that moment (a region with no real org yet is uncapped);
+   * its players keep their overalls. rc.31: uncapped — switch back with false.
+   */
+  fillerCapToBestReal: true,
   rookiesPerRegionPerSeason: 8,
   rookieAgeRange: [13, 16] as const,
   rookieOverallRange: [60, 72] as const,
@@ -1842,6 +1850,71 @@ export const CAREER_SAVE = {
   scrimLogCap: 12,
   transferLogCap: 150,
   maxSaveBytes: 400_000,
+} as const;
+
+/**
+ * BAL-02 (rc.32, ROAD-TO-WORLDS-DECISIONS R59): the career's OWN difficulty
+ * presets — Easy / Normal / Hard, Normal the default. Road to Worlds reads
+ * these instead of the Draft's DIFFICULTY (worldSim → teams → match), so a
+ * Draft retune can no longer move the career. They replace the wizard's
+ * Management Style step: one sentence each plus their real effects, read
+ * from here and from the money keys (CAREER_ECONOMY.startingBudget /
+ * prizeMult / salaryAskMult / sponsorMult — not moved). Overall stays the
+ * match engine's main signal: every shift here is a couple of points.
+ */
+export const CAREER_DIFFICULTY = {
+  /** The preset a new career starts on. */
+  defaultPreset: "normal" as "easy" | "normal" | "hard",
+  /**
+   * The match profile per preset. rc.31's values (the Draft's easy / normal /
+   * hard at rc.31) were copied first, then tuned on purpose (R59):
+   *  - user / ai roll ranges: the per-game form roll of each side;
+   *  - chemistry / opponentChemistry: the rating a side's full chemistry is
+   *    worth (an AI org's standing roster runs near full chemistry);
+   *  - opponentRatingShift: a flat add to every AI side's rating.
+   * Easy and Normal are rc.31's exactly. Hard was rc.31's Draft Hard
+   * (opponentChemistryMaxBonus 0, opponentRatingShift −0.5), which in the
+   * career played as easy as Easy — the Draft's "chemistry is the player's
+   * edge" stripped every AI org of the chemistry its standing roster earns:
+   * at equal player strength the user won 81 % of Bo5 series on Easy, 65 % on
+   * Normal and 81 % on Hard. Now AI chemistry counts (2) and the shift is
+   * −0.2: 81 / 65 / 55 % (the user keeps Hard's 2.4 chemistry reward).
+   */
+  match: {
+    easy: {
+      userRollRange: [-3, 5] as const,
+      aiRollRange: [-4, 4] as const,
+      chemistryMaxBonus: 1.3,
+      opponentChemistryMaxBonus: 1.3,
+      opponentRatingShift: -2,
+    },
+    normal: {
+      userRollRange: [-3, 4] as const,
+      aiRollRange: [-4, 4] as const,
+      chemistryMaxBonus: 2,
+      opponentChemistryMaxBonus: 2,
+      opponentRatingShift: -1.05,
+    },
+    hard: {
+      userRollRange: [-3.5, 4] as const,
+      aiRollRange: [-4, 4] as const,
+      chemistryMaxBonus: 2.4,
+      opponentChemistryMaxBonus: 2,
+      opponentRatingShift: -0.2,
+    },
+  },
+  /**
+   * How much of the running is guided — the preset's starting prefs (the
+   * Training screen's "delegate to coach" toggle stays). Easy: staff plan the
+   * week, cups are entered for you, events resolve instantly by default;
+   * Normal: rc.31's default ("balanced"); Hard: you plan every week and choose
+   * every cup ("hands-on").
+   */
+  prefs: {
+    easy: { managementStyle: "delegate", autoTrain: true, autoEnterUnofficials: true, playbackDefault: "instant", newsDigest: true },
+    normal: { managementStyle: "balanced", autoTrain: true, autoEnterUnofficials: true, playbackDefault: "full", newsDigest: true },
+    hard: { managementStyle: "handsOn", autoTrain: false, autoEnterUnofficials: false, playbackDefault: "full", newsDigest: false },
+  },
 } as const;
 
 /** Master pacing anchors — every career harness imports these, none restates them. */

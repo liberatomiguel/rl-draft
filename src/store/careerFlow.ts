@@ -158,6 +158,7 @@ import {
   type AskPackage,
 } from "@/engine/career/market";
 import { blockbusterRefusedFlag, renewalTermsFor } from "@/engine/career/renewal";
+import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
@@ -2350,11 +2351,25 @@ export function emptyCompetition(): CareerSave["competition"] {
 export interface CreateCareerInput {
   identity: CareerIdentity;
   difficulty: CareerDifficulty;
-  style: ManagementStyle;
+  /**
+   * @deprecated rc.32 (BAL-02): the wizard no longer asks — the difficulty
+   * preset sets the prefs (CAREER_DIFFICULTY.prefs). Kept for older callers
+   * (tests, tools): when given, rc.31's style → prefs mapping applies.
+   */
+  style?: ManagementStyle;
+  /** rc.32 (BAL-02): explicit starting prefs over the preset's (the arc bot keeps rc.31's "balanced"). */
+  prefs?: Partial<CareerPrefs>;
   rosterKey: "prospects" | "journeymen" | "balanced";
 }
 
-function prefsFor(style: ManagementStyle): CareerPrefs {
+/** rc.32 (BAL-02): a new career's prefs — the preset's, or rc.31's style mapping, then any explicit ones. */
+function prefsFor(input: CreateCareerInput): CareerPrefs {
+  const base = input.style ? stylePrefsFor(input.style) : presetPrefs(input.difficulty);
+  return { ...base, ...(input.prefs ?? {}) };
+}
+
+/** rc.31's Management Style → prefs (an existing save keeps whatever it got). */
+function stylePrefsFor(style: ManagementStyle): CareerPrefs {
   if (style === "handsOn") {
     return {
       managementStyle: style,
@@ -2433,7 +2448,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     careerSeed,
     identity: input.identity,
     difficulty: input.difficulty,
-    prefs: prefsFor(input.style),
+    prefs: prefsFor(input),
     flags: {},
     clock: { seasonIndex: 0, day: 1 },
     phase: "running",

@@ -82,6 +82,13 @@ export interface AssembleInput {
    * against CAREER_BUFFS.tempRatingMax. Absent for all existing modes.
    */
   ratingBonus?: number;
+  /**
+   * Road to Worlds (rc.32, BAL-02): the career's own chemistry cap and form
+   * roll (CAREER_DIFFICULTY), so a Draft retune of DIFFICULTY cannot move the
+   * career. Absent for all existing modes (they read DIFFICULTY, unchanged).
+   */
+  chemistryMaxBonus?: number;
+  rollRange?: readonly [number, number];
 }
 
 function averageStats(players: MemberView[]): Stats {
@@ -150,9 +157,11 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     chemistryPercent: chemistry.percent,
     // Chemistry is the PLAYER's edge: opponents use their own (Hard/Legacy = 0)
     // cap so a coherent draft can out-chemistry a higher-overall AI lineup.
-    chemistryMaxBonus: input.isUser
-      ? DIFFICULTY[input.difficulty].chemistryMaxBonus
-      : DIFFICULTY[input.difficulty].opponentChemistryMaxBonus,
+    chemistryMaxBonus:
+      input.chemistryMaxBonus ??
+      (input.isUser
+        ? DIFFICULTY[input.difficulty].chemistryMaxBonus
+        : DIFFICULTY[input.difficulty].opponentChemistryMaxBonus),
     specialCount: input.specialIds.length,
     // Direct team-overall bonuses from special effects (Creator card). Summed
     // here so both the user and AI paths honour it (AI never holds such a card).
@@ -211,6 +220,7 @@ function assembleTeam(input: AssembleInput): TournamentTeam {
     specialIds: input.specialIds,
     playerNames: input.players.map((p) => p.name),
     orgId: input.orgId ?? "",
+    ...(input.rollRange ? { rollRange: input.rollRange } : {}),
   };
 }
 

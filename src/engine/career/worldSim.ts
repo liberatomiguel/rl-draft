@@ -43,9 +43,10 @@ import {
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
   CHEMISTRY,
-  DIFFICULTY,
+  TEAM_RATING,
   TOURNAMENT,
 } from "@/config/balance";
+import { careerMatchProfile } from "./difficulty";
 import {
   coachById,
   lineupById,
@@ -633,6 +634,9 @@ export function userTeamFor(input: UserTeamInput): {
     difficulty: input.difficulty,
     difficultyShift: 0,
     ratingBonus: Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax),
+    // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
+    chemistryMaxBonus: careerMatchProfile(input.difficulty).chemistryMaxBonus,
+    rollRange: careerMatchProfile(input.difficulty).userRollRange,
   });
 
   const fieldedIds = fieldedPlayers.filter((p): p is SquadPlayer => p !== null).map((p) => p.id);
@@ -760,9 +764,52 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
       : undefined,
     specialIds: [],
     difficulty: ctx.difficulty,
-    difficultyShift: DIFFICULTY[ctx.difficulty].opponentRatingShift,
+    // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
+    difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
+    chemistryMaxBonus: careerMatchProfile(ctx.difficulty).opponentChemistryMaxBonus,
+    rollRange: careerMatchProfile(ctx.difficulty).aiRollRange,
   };
-  return assembleTournamentTeam(input);
+  const team = assembleTournamentTeam(input);
+  // rc.32 (30/10, PROVISIONAL — CAREER_WORLD.fillerCapToBestReal): a filler
+  // org never out-rates the region's best real lineup.
+  if (!isFiller || !CAREER_WORLD.fillerCapToBestReal) return team;
+  const cap = bestRealOrgRating(org.region, ctx);
+  if (cap === null || intrinsicRating(team) <= cap) return team;
+  // A flat cut lands on the cap; a second pass corrects the superteam
+  // compression when the side sat above TEAM_RATING.superteamPivot.
+  let bonus = cap - intrinsicRating(team);
+  let capped = assembleTournamentTeam({ ...input, ratingBonus: bonus });
+  const left = intrinsicRating(capped) - cap;
+  if (left > 0.05) {
+    bonus -= left / TEAM_RATING.superteamSlope;
+    capped = assembleTournamentTeam({ ...input, ratingBonus: bonus });
+  }
+  return capped;
+}
+
+/**
+ * rc.32 (30/10, PROVISIONAL): the intrinsic rating of the region's strongest
+ * REAL org right now (null when the region has none yet) — the filler cap.
+ * Memoized per world state and context (pure inputs, deterministic).
+ */
+const bestRealMemo = new WeakMap<WorldState, Map<string, number | null>>();
+function bestRealOrgRating(region: Region, ctx: OrgTeamCtx): number | null {
+  let memo = bestRealMemo.get(ctx.world);
+  if (!memo) {
+    memo = new Map();
+    bestRealMemo.set(ctx.world, memo);
+  }
+  const key = `${region}|${ctx.seasonIndex}|${ctx.careerSeed}|${ctx.difficulty}`;
+  const hit = memo.get(key);
+  if (hit !== undefined) return hit;
+  let best: number | null = null;
+  for (const org of Object.values(ctx.world.orgs)) {
+    if (org.region !== region || !orgById.has(org.ref)) continue;
+    const r = intrinsicRating(orgTeamFor(org.ref, ctx));
+    if (best === null || r > best) best = r;
+  }
+  memo.set(key, best);
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -1044,7 +1091,10 @@ export function localTeamFor(
       },
       specialIds: [],
       difficulty: ctx.difficulty,
-      difficultyShift: DIFFICULTY[ctx.difficulty].opponentRatingShift,
+      // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
+      difficultyShift: careerMatchProfile(ctx.difficulty).opponentRatingShift,
+      chemistryMaxBonus: careerMatchProfile(ctx.difficulty).opponentChemistryMaxBonus,
+      rollRange: careerMatchProfile(ctx.difficulty).aiRollRange,
     });
   };
   const first = assemble(0);

@@ -216,6 +216,38 @@ function arcReport(careers: ArcCareer[], seasons: number): string {
   }
   lines.push("");
 
+  // 4b. rc.32 (BAL-02): region × difficulty, every policy — the presets' slices.
+  lines.push("### Region × difficulty — every policy (insolvent · first Major by S2 · Worlds by S4 · team rating at S3 p50)");
+  lines.push("");
+  lines.push("| Region | easy | normal | hard |");
+  lines.push("|---|---|---|---|");
+  for (const [region, rcs] of group((c) => c.region)) {
+    const cells = (["easy", "normal", "hard"] as const).map((d) => {
+      const cs = rcs.filter((c) => c.difficulty === d);
+      if (cs.length === 0) return "–";
+      const n = cs.length;
+      const rating = q(cs.map((c) => c.seasons[3]?.teamRating).filter((x): x is number => x !== undefined), 0.5);
+      return `${pct(cs.filter((c) => c.ended === "insolvency").length, n)} · ${pct(cs.filter((c) => c.firstMajorSeason !== null && c.firstMajorSeason <= 2).length, n)} · ${pct(cs.filter((c) => c.firstWorldsSeason !== null && c.firstWorldsSeason <= 4).length, n)} · ${Number.isNaN(rating) ? "–" : rating.toFixed(1)}`;
+    });
+    lines.push(`| ${region} | ${cells.join(" | ")} |`);
+  }
+  lines.push("");
+  // 4c. rc.32 (BAL-02): the competitive line by difficulty — Majors and Worlds per season played.
+  lines.push("### Competitive line by difficulty — per season played (every policy)");
+  lines.push("");
+  lines.push("| Difficulty | season-rows | Majors qualified per season | Worlds reached | titles per season | region rank p50 |");
+  lines.push("|---|---|---|---|---|---|");
+  for (const [d, cs] of group((c) => c.difficulty)) {
+    const rows = cs.flatMap((c) => c.seasons);
+    const majors = rows.reduce((n, r) => n + r.majorsQualified, 0) / Math.max(1, rows.length);
+    const worlds = rows.filter((r) => r.worlds !== null).length;
+    const titles = rows.reduce((n, r) => n + r.titles, 0) / Math.max(1, rows.length);
+    lines.push(
+      `| ${d} | ${rows.length} | ${majors.toFixed(2)} | ${pct(worlds, rows.length)} | ${titles.toFixed(2)} | ${q(rows.map((r) => r.regionRank).filter((x) => x > 0), 0.5)} |`,
+    );
+  }
+  lines.push("");
+
   // 5. Squad development: overall gained per season by age (every squad player seen two seasons running).
   lines.push("### Squad development — overall gained over a season, by age at its start");
   lines.push("");

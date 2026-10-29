@@ -901,6 +901,57 @@ R58. **Renewing your own players: a raise cap and a market floor (rc.32,
      breakout star far under his value) and C (a homegrown ×0.7 leaves the
      founders at ×3).
 
+R59. **The career's own difficulty presets, and filler orgs capped at the
+     region's best real lineup (rc.32, Etapa 2b BAL-02; the filler cap a
+     provisional default (30/10), to be confirmed by Miguel).** (a) Road to
+     Worlds reads `CAREER_DIFFICULTY` (balance.ts,
+     `engine/career/difficulty.ts`), never the Draft's `DIFFICULTY`: every
+     career team carries its own form roll (`TournamentTeam.rollRange`,
+     career-only, optional) and chemistry cap
+     (`AssembleInput.chemistryMaxBonus`), and the AI shift comes from the
+     career block. A Draft retune of `DIFFICULTY` moves no career team or
+     series (tested); Draft teams never carry the fields, so the golden
+     master is untouched. (b) Easy and Normal keep rc.31's values exactly.
+     Hard was the Draft's Hard, whose AI chemistry cap 0 stripped every
+     career AI org of the chemistry its standing roster earns, so in the
+     career Hard played as easy as Easy: at equal player strength the user
+     won 81 % of Bo5 series on Easy, 65 % on Normal and 81 % on Hard. Hard
+     now counts the AI's chemistry (2) and shifts it −0.2 (was −0.5): 81 /
+     65 / 55 %; the user keeps Hard's 2.4 chemistry reward. (c) The presets
+     replace the wizard's Management Style step: one sentence each and their
+     real effects, read live from balance.ts (the match edge, chemistry, the
+     starting budget, the prize / ask / sponsor multipliers — front A's
+     keys, read and not moved — and how much is guided), from one descriptor
+     list (`PRESET_ROWS`): a new row, e.g. `CAREER_LOAN.breachesToEnd`, is
+     one entry plus its label in both copy files. How much is guided: Easy
+     and Normal delegate the weekly drill to the coach and enter the cups for
+     you (Normal is rc.31's "balanced"); Hard starts hands-on (you plan every
+     week and choose every cup); the Training screen's delegation toggle
+     stays. A new career's prefs come from its preset (`presetPrefs`); an
+     existing save keeps its prefs and `managementStyle`; the deprecated
+     `style` input still maps as rc.31 (tests, tools); the arc bot passes
+     rc.31's "balanced" prefs explicitly, so the economy probe stays
+     comparable. (d) The filler cap (`CAREER_WORLD.fillerCapToBestReal`;
+     rc.31 uncapped = false): a filler org's team rating never passes the
+     strongest real org of its region at that moment (a region with no real
+     org yet stays uncapped; the players keep their overalls). Over 6 seeds ×
+     6 seasons it lowers the bar only where fillers ruled: APAC's top org
+     83.0 → 81.9 and SSA's 83.3 → 81.4 (the top filler had sat 1.3 / 2.2
+     above the best real org), MENA 87.7 → 87.5; NA, EU, SAM and OCE
+     unchanged; APAC and SSA have no real org in season 0. Local sides stay
+     rated around the user, frozen at the season's first regional Monday
+     (R49, unchanged). (e) Measured on top of DEV-01 and M2, the same 147
+     careers as the rc.31 baseline: first Major by S2 Easy 14 → 35 %, Normal
+     2 → 29 %, Hard 6 → 20 % (rc.31: 29 / 18 / 6 %); Majors qualified per
+     season 0.37 / 0.24 / 0.22 → 0.74 / 0.53 / 0.25 (rc.31 0.82 / 0.62 /
+     0.30); insolvent Easy 43 → 39 %, Normal 69 → 65 %, Hard 71 → 84 % (rc.31
+     49 / 69 / 84 %). The swing sits in APAC and SSA, where the cap meets
+     weak real orgs (Normal first Major by S2 0 → 100 % in both); elsewhere
+     it is within one seed's noise. The regional identities keep their slots
+     (SAM 2, EU 4). Rejected: tuning Easy's edge down (it is rc.31's),
+     zeroing the user's Hard chemistry reward, and capping the filler
+     players instead of the org.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
