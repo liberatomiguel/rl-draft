@@ -4,8 +4,11 @@
  * Copy access layer (i18n, v1.0).
  *
  * - `useCopy()` — reactive dictionary for client components. MOUNTED-GATED:
- *   returns EN on the first render (matching the server) and then the persisted
- *   language, so there's no hydration mismatch/flash.
+ *   the first render (the static HTML, then hydration) uses the URL's language
+ *   (`UrlLocaleContext`, set by the root layout's `LocaleRoot`: PT on the /pt
+ *   pages, EN elsewhere — rc.32, DRAFT-11), then the persisted language, so
+ *   there's no hydration mismatch and a /pt page never paints English chrome.
+ * - `useUiLocale()` — the same choice as a language code ("en" | "pt").
  * - `getCopy()` — non-reactive access for helpers / outside React (EN on the
  *   server; tracks the language on the client).
  * - The EN named groups are re-exported for back-compat (server metadata reads
@@ -16,19 +19,31 @@
  *   the draft-game pages don't ship it.
  */
 
+import { createContext, useContext } from "react";
+import type { UiLocale } from "@/lib/locale";
 import { useSettings } from "@/store/settingsStore";
 import { useMounted } from "@/store/useMounted";
 import { EN, type Copy } from "./copy.en";
 import { PT } from "./copy.pt";
 
-const DICT: Record<"en" | "pt", Copy> = { en: EN, pt: PT };
+const DICT: Record<UiLocale, Copy> = { en: EN, pt: PT };
 
 export type { Copy };
 
-export function useCopy(): Copy {
+/** The URL's language (`localeOfPath`), provided once by the root layout.
+ *  Outside a provider (tests, a detached render) it is EN, as before rc.32. */
+export const UrlLocaleContext = createContext<UiLocale>("en");
+
+/** The UI language: the URL's until the client has mounted, then the player's. */
+export function useUiLocale(): UiLocale {
+  const urlLocale = useContext(UrlLocaleContext);
   const lang = useSettings((s) => s.lang);
   const mounted = useMounted();
-  return DICT[mounted ? lang : "en"];
+  return mounted ? lang : urlLocale;
+}
+
+export function useCopy(): Copy {
+  return DICT[useUiLocale()];
 }
 
 let active: Copy = EN;

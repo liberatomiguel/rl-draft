@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { APP } from "@/content/copy.en";
 import { SITE } from "@/config/site";
 import { AppShell } from "@/components/layout/AppShell";
+import { LocaleRoot } from "@/components/layout/LocaleRoot";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import "./globals.css";
 
@@ -144,9 +145,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // <html> comes from LocaleRoot (a Client Component): it reads the URL, so
+  // the /pt pages export lang="pt-BR" and PT chrome (rc.32, DRAFT-11, #148).
   return (
-    <html
-      lang="en"
+    <LocaleRoot
       className={`${GeistSans.variable} ${GeistMono.variable} ${rajdhani.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
@@ -158,6 +160,6 @@ export default function RootLayout({
           <AppShell>{children}</AppShell>
         </PostHogProvider>
       </body>
-    </html>
+    </LocaleRoot>
   );
 }
