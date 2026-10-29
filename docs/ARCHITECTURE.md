@@ -17,12 +17,17 @@ below it. **Game logic never imports React; UI never computes game rules.**
 
 ## Data layer
 
-- `src/data/*.json` — the hand-curated dataset (see DATA-GUIDE.md).
+- `src/data/*.json` — the dataset, GENERATED from `data-sources/teams.md` by
+  `npm run build:data`, except the hand-maintained `achievements.json`,
+  `specialCards.json`, `challenges.json` and `cardIdAliases.json` (see
+  DATA-GUIDE.md; a by-era report: `DATA-AUDIT-rc32.md`).
 - `src/data/index.ts` — the runtime data layer. It serves **typed casts** of the
   JSON (no zod in the browser), builds the lookup `Map`s (throwing on a
   duplicate id), and exports typed arrays/maps. **Every other module reads data
   through here** — a future Liquipedia/Supabase source only changes this file's
-  internals. It still mirrors zod's one transform: it strips the undeclared
+  internals. The one exception is the shared path: the light `catalog.ts` and
+  `counts.ts` read the small JSONs directly, so the root layout and the light
+  pages never load the dataset chunk (#142, `sharedPath.test.ts`). It still mirrors zod's one transform: it strips the undeclared
   `secret` key from 2 special cards.
 - `src/data/schemas.ts` + `src/data/validate.ts` — **build/CI-time validation
   only.** `validateDataset()` runs the zod schemas, duplicate-id checks,
@@ -69,13 +74,18 @@ same primitive: a date-derived seed makes every player's daily run identical
 
 ## State layer (`src/store`)
 
-FOUR Zustand stores, three with their own localStorage key + schema version.
+Four PERSISTED Zustand stores, each with its own localStorage key + schema
+version: settings (unversioned), profile (version **12**, the v2.0 Season 1
+reset, DESIGN-DECISIONS #110), run (version 3) and career (version 3).
 **The `:v1` suffix in every key is a fixed namespace string, NOT the schema
 version** — the actual schema version is the `version` number passed to the
-persist middleware (runStore at version 3, profileStore at version 11, settings
-unversioned). The fourth, `accountStore` (v1.4), holds the live Supabase
-session/sync state and is **not localStorage-persisted** — it rehydrates from
-the Supabase session at runtime. The Supabase SDK is a lazy chunk, loaded at
+persist middleware. Since rc.32 they write through `store/persistStorage.ts`
+(zustand's own localStorage reads and writes, plus a report of save errors and
+migrations to analytics, #145). Not persisted: `accountStore` (v1.4) holds the
+live Supabase session/sync state — it rehydrates from the Supabase session at
+runtime; the pop-up queues (`achievementToastStore`, `rewardToastStore`,
+`cosmeticUnlockStore`) and `overlayHoldStore` live in memory, and
+`careerRevealStore` keeps the career's reveal cursor in sessionStorage. The Supabase SDK is a lazy chunk, loaded at
 startup only when a stored session exists. A full sync runs once per page load
 per signed-in user, then a debounced push (`CLOUD_SYNC.pushDebounceMs`) sends
 later profile changes. Every sync waits for profile hydration, folds in the
@@ -83,8 +93,7 @@ profile currently saved in localStorage, and aborts without pushing if the
 cloud read fails (see `ACCOUNTS-SETUP.md`). The persist keys and versions are
 frozen by `src/store/persistContract.test.ts` (DESIGN-DECISIONS #107). The
 career store (`rocket-draft:career:v1`, version 3) loads only when career mode
-is on. A fifth store, `achievementToastStore`, is also
-**non-persisted** (an in-memory toast queue, no localStorage key).
+is on.
 
 - `runStore.ts` — the active run (one state machine:
   `draft → review → tournament → results`).
@@ -95,26 +104,32 @@ is on. A fifth store, `achievementToastStore`, is also
     run is discarded rather than resumed broken.
   - Actions are thin: they call engine functions and store the result.
 - `profileStore.ts` — long-term progress.
-  - key `rocket-draft:profile:v1`, version **11**.
+  - key `rocket-draft:profile:v1`, version **12**.
   - `migrate` deep-merges `settings`/`flags` (so new keys pick up defaults on
     old saves) and backfills the lifetime counters (`playoffAppearances`,
-    `podiums`, `swissWinsTotal`) + `dailyResults`/setup-memory for pre-v2 saves.
+    `podiums`, `swissWinsTotal`) + `dailyResults`/setup-memory for pre-v2 saves;
+    v12 archives the pre-season (xp, mmr, rank, titles, challenges cleared) into
+    `legacy.preseason` and starts Season 1 (#110).
   - `applyRunResults` is called exactly once per run by `finishRun`.
   - Derived selectors live in the same module: `selectLegacyUnlocked`,
     `selectDailyStreak`, `selectChampionships`, `selectBestClear`.
 - `settingsStore.ts` (`useSettings`) — player settings.
   - key `rocket-draft:settings:v1`, no schema version.
-  - fields: `soundEnabled`/`soundVolume`, `reducedMotion` (motion override),
-    `animSpeed` (`slow`/`normal`/`fast`), `lang` (`en`/`pt`). Read by the SFX
-    layer, the CSS animation-speed applier, the tournament-playback default,
-    and copy access (language).
+  - fields: `soundEnabled`/`soundVolume`, `reduceEffects` ("Reduce visual
+    effects", rc.4 — it replaced the motion override), `animSpeed`
+    (`slow`/`normal`/`fast`), `lang` (`en`/`pt`). Read by the SFX layer, the CSS
+    effects / animation-speed applier, the tournament-playback default, copy
+    access (language) and the analytics `locale`.
 - `accountStore.ts` (`useAccountStore`, v1.4) — Supabase session/sync state
   (am I signed in, who am I, am I syncing). Read by the header chip, the Profile
   account hub and the Leaderboards. Not localStorage-persisted; with no Supabase
   env it sits in a permanent `signedOut` state and every action is a no-op, so
   the app is unchanged for guests.
-- `achievementToastStore.ts` — non-persisted in-memory queue for achievement
-  toasts.
+- `careerStore.ts` — Road to Worlds: three save slots, a thin shell over
+  `careerFlow.ts` (see `ROAD-TO-WORLDS-STATUS.md`).
+- `achievementToastStore.ts`, `rewardToastStore.ts`, `cosmeticUnlockStore.ts`
+  — non-persisted in-memory pop-up queues; `overlayHoldStore.ts` holds them
+  while a live screen is up (#144).
 - `useMounted.ts` — SSR-safety gate: persisted state renders after first
   client mount to avoid hydration mismatches.
 
@@ -129,11 +144,16 @@ mirror lives in `accountStore` + `src/lib/supabase.ts` (auth/queries) +
   by design (leaving to the menu clears it; there is no resume system beyond a
   single in-flight run). It does NOT need to sync anywhere.
 - **`profileStore` is the DURABLE, sync-worthy progress** — the only store a
-  cloud mirror has to carry. Its full `ProfileState` (verified against
-  `profileStore.ts`) is:
+  cloud mirror has to carry. The fields that ARE progress (they must always
+  reach storage) are `SACRED_PROFILE_FIELDS` in `persistContract.test.ts`, the
+  authoritative list; besides the v1.x core below, v2.0 adds the `season`,
+  `lifetime`, `legacy`, `grants`, `cosmetics`, `missions`, `login`, `events`
+  and `quiz` blocks, `challengeStars` (a star mask per challenge),
+  `careerMarks` / `careerWorldsWon` and `legacyStreak`. The v1.x core:
   - `xp`
-  - `mmr` — cosmetic skill rating (v1.4), parallel to XP; profile card +
-    leaderboard only, never spent or lost
+  - `mmr` — since v2.0 the Season Rating (`SEASON_RATING`, #111; the field kept
+    its name), reset each season; the v1.4 title-only MMR lives on only in
+    the pre-season snapshot
   - `legacyUnlocked` (v1.4) — the Legacy-difficulty gate, set once by a real
     Classic/Quick Hard (or Legacy) championship (`selectLegacyUnlocked`)
   - `runsCompleted`
@@ -145,13 +165,14 @@ mirror lives in `accountStore` + `src/lib/supabase.ts` (auth/queries) +
   - `achievements` — achievementId → ISO earned date
   - `runHistory` — most-recent-first, capped at `HISTORY_LIMIT`
   - `dailyResults` — ISO date → daily result (placement/xp/label)
-  - `challengesCompleted` (v1.4) — challengeId → ISO date cleared (one-and-done)
+  - `challengesCompleted` (v1.4) — challengeId → ISO date of the first clear
+    (reset by the Season 1 migrate; v2.0 stars live in `challengeStars`)
   - `records` (v1.4) — leaderboard aggregates: peak team overall per difficulty
     and per pool (`bestOverallWorldwide`/`bestOverallSam`)
   - `settings` (setup memory) — `lastDifficulty`, `lastShowOverall`,
     `lastMode`, `lastRegionLock`
   - `flags` (onboarding) — `seenHowToPlay`, `seenLegacyIntro`,
-    `seenRegionalIntro`
+    `seenRegionalIntro`, `seenTutorial`, `seenSeasonRecap`
 - `settingsStore` is per-device preference (sound/motion/anim/lang) and is not
   progress — it stays local.
 
@@ -213,6 +234,16 @@ it — **the engine must NEVER import analytics** (it has to stay pure and
 deterministic, AGENTS.md hard rule). The event catalogue is the typed `GameEvents`
 in `analytics.ts`; for how to read the data (funnels/filters, the funnel-vs-Trends
 gotcha) see the operator guide **`docs/ANALYTICS.md`**.
+
+**Production only (rc.32, DESIGN-DECISIONS #145).** `analyticsAllowed()` needs a
+production build (no `NEXT_PUBLIC_NOINDEX` / `NEXT_PUBLIC_PLAYTEST`) running on
+`rocketdraft.app`; elsewhere the provider never loads the SDK and `trackEvent`
+drops the event, key or no key. Every event carries `release`, `balanceVersion`
+(`BALANCE_VERSION`), `schemaVersion`, `environment`, `locale` and `gameMode`. The
+2.0 catalogue (`ANALYTICS-EVENTS-2.0.md`) fires from the stores at the write: the
+career events are read off each career-store write (`store/careerAnalytics.ts`,
+before vs after), and `store/persistStorage.ts` reports save errors and
+migrations around the four persisted stores without changing what they save.
 
 ## UI layer
 
@@ -315,6 +346,8 @@ dynamic routes without `generateStaticParams`.
   The `postexport` steps:
   - flatten Next's Windows-only `__next.*` segment folders (a no-op on Linux);
   - strip `out/career*` when career mode is off;
+  - strip `/quiz` and `/missions` on the playtest build
+    (`NEXT_PUBLIC_PLAYTEST=1`, `FEATURES.playtest`);
   - check that every route has its `__PAGE__` prefetch file;
   - check that the required files exist;
   - check that every image URL `assets.ts` can request exists in `out/`;
@@ -355,7 +388,7 @@ dynamic routes without `generateStaticParams`.
 ```txt
 SetupScreen ── startRun(difficulty, showOverall)
   └─ engine/draft.createDraft + drawNextOffer       phase: draft
-DraftScreen ── pickCard / reroll / skipLineup  (×6 picks)
+DraftScreen ── pickCard / reroll / freeReroll  (×6 picks)
   └─ engine/draft.applyPick … complete             phase: review
 ReviewScreen ── startTournament
   └─ engine/teams.buildUserTeam

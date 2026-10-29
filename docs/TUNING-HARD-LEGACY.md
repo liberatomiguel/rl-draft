@@ -1,13 +1,21 @@
 # Tuning Hard & Legacy difficulty (quick reference)
 
+> **Status (rc.32): the knobs below still hold; the METHOD and the figures are
+> v1.4's.** Since rc.25 (DESIGN-DECISIONS #140) difficulty is calibrated on live
+> play, by reset profile, with `difficulty.matrix.test.ts` (`SIM_MATRIX=1`), for
+> worldwide and for each Region-only pool (`REGION_LOCK.opponentRatingBoost` is
+> per region AND difficulty). The values it set (Hard −0.5, Legacy +1.6, the
+> region table) are in `BALANCE-GUIDE.md`; `balance.ts` is authoritative. Read
+> the targets and the "measured now" lines below as history.
+
 All knobs live in **`src/config/balance.ts`** → `DIFFICULTY.hard` / `DIFFICULTY.legacy`
 (and `REGION_LOCK` for SAM). Edit a value, run `npm test`, playtest. No other file needs touching.
 
 ## The one lever you'll use 95% of the time
 
 ```ts
-DIFFICULTY.hard.opponentRatingShift    // currently -0.7
-DIFFICULTY.legacy.opponentRatingShift  // currently +1.3  (NOTE: positive — Legacy opponents are BUFFED)
+DIFFICULTY.hard.opponentRatingShift    // -0.5 since rc.25 (#140; v1.4: -0.7)
+DIFFICULTY.legacy.opponentRatingShift  // +1.6 since rc.25 (#140; v1.4: +1.3)  (NOTE: positive — Legacy opponents are BUFFED)
 ```
 
 A flat rating added to **every opponent**. Note the **signs differ**: Hard

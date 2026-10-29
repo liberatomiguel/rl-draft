@@ -180,7 +180,8 @@ the public boards only ever show display name + the score columns.
 
 The Season 1 columns, the manual-grants table, the pre-season freeze and the
 leaderboard view v2 are in **`docs/V2-IMPLEMENTATION-PLAN.md` §6** (steps A–E, in
-order). Run §6-B before the v2.0 deploy and §6-C once at launch.
+order; that list stays live). Run §6-B before the v2.0 deploy and §6-C once at
+launch; when the cutover happens is ROADMAP.md's Etapa 6.
 
 ## 2. Email sending (the 6-digit code)
 

@@ -1,6 +1,18 @@
 # Challenges — design (SHIPPED in v1.4)
 
-> Status: **SHIPPED in v1.4.** Built per this design. Engine `engine/challenges.ts`,
+> **Status (rc.32): HISTORY — the v1.4 design, not the live set.** The live set is
+> `src/data/challenges.json`: **27 challenges** at rc.31 (23 boss challenges and 4
+> gauntlets; tiers common 7 · rare 8 · epic 6 · legend 6), each with **three stars**
+> (Challenges 2.0: `V2-IMPLEMENTATION-PLAN.md` §2.9, DESIGN-DECISIONS #116; the
+> re-tunes #137 and #141). Progress is `profileStore.challengeStars` (a star mask per
+> challenge); `challengesCompleted` keeps first-clear dates and was reset by the
+> Season 1 migrate (#110). Still true below: the idea, the engine reuse, the Bo7
+> rule, rank gating, the reroll scale and the sim win bands (`challenges.test.ts`;
+> re-tune with `CH_TUNE=1`, `challenges.tune.test.ts`). No longer true: the count
+> (20), the single one-and-done reward (stars pay once each), "no gauntlet". Next
+> work: ROADMAP Etapa 4 (CH-01 to CH-03).
+>
+> v1.4 status: **SHIPPED in v1.4.** Built per this design. Engine `engine/challenges.ts`,
 > data `src/data/challenges.json` (hand-authored, **20 challenges** as of the
 > 2026-06-21 staging pass), `/challenges` route + nav, briefing + match screens,
 > `profileStore.challengesCompleted`.

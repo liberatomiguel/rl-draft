@@ -1529,6 +1529,20 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      report again after a reload with no action in between (same `actionId`:
      count distinct).
 
+146. **One plan of record; an old plan or spec says it is history (rc.32,
+     ENG-02).** `ROADMAP.md` is the plan of record for 2.0 (since rc.26);
+     `STATUS.md` / `ROAD-TO-WORLDS-STATUS.md` are the current state. A doc
+     that used to be a plan or a spec keeps its text (the history and the
+     rationale stay greppable) and opens with a **"Status: HISTORY"** banner
+     that names what supersedes it and what in it is still live: the V2 plan
+     (its §6–§8 stay live), `CHALLENGES-DESIGN.md` (the live set is
+     `challenges.json`), `TUNING-HARD-LEGACY.md` (the method is #140's). A
+     generated doc says how to regenerate it (`COSMETICS-CATALOG.md`,
+     `DATA-AUDIT-rc32.md`, `CAREER-BASELINE-rc30.md`) and is never hand-edited.
+     Runbooks are checked against the code when touched: every cited path and
+     `npm run` script must exist, and a quoted value must match `balance.ts`
+     or say it is a snapshot.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).
