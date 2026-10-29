@@ -1491,6 +1491,44 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      its scrollbar. The alternative is a gutter only while a dialog is open,
      but then routes jump sideways again, as before rc.29.
 
+145. **Analytics is production-only and read off the store's write (rc.32,
+     OBS-01).** The 2.0 catalogue (`ANALYTICS-EVENTS-2.0.md`) is built in
+     `src/lib/analytics.ts`, provisional until Miguel approves it.
+     (a) A hard guard, not only a missing key (Miguel, 29/10):
+     `analyticsAllowed()` needs a production build (NODE_ENV production, no
+     `NEXT_PUBLIC_NOINDEX`, no `NEXT_PUBLIC_PLAYTEST`) AND the host
+     `rocketdraft.app`. Elsewhere the provider never downloads the SDK (no
+     pageviews either), `trackEvent` drops the event and `connectAnalytics`
+     refuses a sink, so staging, playtest, a local preview, dev and tests send
+     nothing even with a key set by mistake.
+     (b) Every event carries `release` (`SITE.version`, kept equal to
+     package.json by a test), `balanceVersion` (`BALANCE_VERSION`, an integer
+     hand-bumped by any tuning commit; `balanceVersion.test.ts` fingerprints
+     every balance.ts export except FEATURES and fails until the bump),
+     `schemaVersion`, `environment`, `locale` (registered by the settings
+     store: analytics imports no store, so it loads before `window` exists in
+     tests) and `gameMode`. Scalars only, strings capped, no names.
+     (c) The career events are DERIVED from the write: `careerAnalytics.ts`
+     compares the save before the action with the save the career store just
+     wrote (a result banked, a milestone first set, a split boundary crossed,
+     a review written, the squad / staff / scout / mail change of a named
+     action). No hook in `careerFlow.ts` (shared with the arc bot and the
+     other fronts); exactly once per saved change, whatever path banked it;
+     a reload only rehydrates, so it never fires one. Each `actionId`
+     (careerId:season:day:kind:ref) is sent at most once per session.
+     (d) `careerId` is a random id the store stamps at creation
+     (`CareerSave.careerId`, optional, never read by the engine); an older
+     save derives a stable one from its seed.
+     (e) The quality events wrap persistence without changing it:
+     `store/persistStorage.ts` makes zustand's own localStorage reads and
+     writes and returns each migrate's result, reporting a failed write
+     (quota), an unreadable save or a failing migrate, then rethrowing to
+     where the error went before. Keys and versions are untouched.
+     Trade-off: each career write runs the diff (a few array scans) when
+     analytics is allowed; the career's load-time `saveVersion` upgrade can
+     report again after a reload with no action in between (same `actionId`:
+     count distinct).
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

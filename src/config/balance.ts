@@ -8,6 +8,15 @@
 
 import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } from "@/engine/types";
 
+/**
+ * OBS-01 (DESIGN-DECISIONS #145): the tuning generation of this file, sent as
+ * `balanceVersion` with every analytics event so data splits across retunes
+ * inside one release. HAND-BUMPED: any commit that changes a value (or a
+ * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
+ * of every export except FEATURES and fails until the bump is made.
+ */
+export const BALANCE_VERSION = 1;
+
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
 // ---------------------------------------------------------------------------

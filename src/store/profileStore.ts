@@ -16,7 +16,7 @@ import {
   seasonRatingAfter,
   seasonRatingDelta,
 } from "@/config/balance";
-import { achievementById, specialCardIds } from "@/data/catalog";
+import { achievementById, specialCardIds, specialRarityOf } from "@/data/catalog";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
 import { evaluateCounterAchievements } from "@/engine/counterAchievements";
 import { rankForXp, rankRewardsForXp } from "@/engine/progression";
@@ -59,9 +59,11 @@ import {
 } from "@/engine/season";
 import { FEATURES, MISSIONS } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
+import { trackEvent } from "@/lib/analytics";
 import { useAchievementToasts } from "./achievementToastStore";
 import { useCosmeticUnlocks } from "./cosmeticUnlockStore";
 import { useRewardToasts } from "./rewardToastStore";
+import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
 import type {
   Difficulty,
   Placement,
@@ -179,7 +181,11 @@ export interface ProfileState {
     mode: RunMode,
     regionLock: Region | null,
   ) => void;
-  markFlag: (flag: keyof ProfileState["flags"]) => void;
+  /** OBS-01: a multi-step tutorial passes where it closed (`ux_tutorial`). */
+  markFlag: (
+    flag: keyof ProfileState["flags"],
+    tutorial?: { step: number; outcome: "completed" | "skipped" },
+  ) => void;
   /** Mark a challenge cleared (v1.4) — idempotent: re-clearing never re-rewards. */
   completeChallenge: (
     challengeId: string,
@@ -198,7 +204,7 @@ export interface ProfileState {
   /** Add fielded special cards to the collection — the same unlock a normal run
    *  does (compileResults → applyRunResults), exposed standalone so the Challenge
    *  flow can collect the specials it drafted too. Idempotent. (v1.4.3, #100) */
-  collectSpecials: (specialIds: string[]) => void;
+  collectSpecials: (specialIds: string[], mode?: RunMode) => void;
   /** Replace the durable slice wholesale (v1.4 cloud sync — after a merge). */
   hydrateDurable: (durable: DurableProfile) => void;
   /** Award achievements the MOMENT they're earned (v1.4): mark + grant XP +
@@ -417,6 +423,27 @@ function withCosmetics(
 /** rc.20: > 0 while a hydrate / merge is writing (no unlock pop-ups for those). */
 let quietUnlocks = 0;
 
+/** OBS-01: the onboarding flags that close a tutorial or an explainer (`ux_tutorial`). */
+const TUTORIAL_FLAGS: ReadonlySet<string> = new Set([
+  "seenTutorial",
+  "seenHowToPlay",
+  "seenRegionalIntro",
+  "seenLegacyIntro",
+]);
+
+/** OBS-01: one `special_discovered` per card that just entered the collection
+ *  (fired by the actions that unlock — never by a hydrate or a cloud merge). */
+function trackDiscoveries(ids: readonly string[], mode: string): void {
+  for (const id of ids) {
+    trackEvent("special_discovered", {
+      specialId: id,
+      rarity: specialRarityOf(id) ?? "unknown",
+      national: isNationalSpecialId(id),
+      mode,
+    });
+  }
+}
+
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set, get) => ({
@@ -424,12 +451,16 @@ export const useProfileStore = create<ProfileState>()(
 
       applyRunResults: (results, entry, daily) => {
         const freshToasts: string[] = [];
+        const discovered: string[] = [];
         set((state) => {
           const now = new Date().toISOString();
 
           const unlockedSpecials = { ...state.unlockedSpecials };
           for (const id of results.unlockedSpecialIds) {
-            if (!unlockedSpecials[id]) unlockedSpecials[id] = now;
+            if (!unlockedSpecials[id]) {
+              unlockedSpecials[id] = now;
+              discovered.push(id);
+            }
           }
 
           const achievements = { ...state.achievements };
@@ -573,22 +604,41 @@ export const useProfileStore = create<ProfileState>()(
           };
         });
         if (freshToasts.length) useAchievementToasts.getState().push(freshToasts);
+        trackDiscoveries(discovered, entry.mode);
       },
 
       setLastSetup: (lastDifficulty, lastShowOverall, lastMode, lastRegionLock) =>
         set({ settings: { lastDifficulty, lastShowOverall, lastMode, lastRegionLock } }),
 
-      markFlag: (flag) => set((state) => ({ flags: { ...state.flags, [flag]: true } })),
+      markFlag: (flag, tutorial) => {
+        const was = get().flags[flag];
+        set((state) => ({ flags: { ...state.flags, [flag]: true } }));
+        if (!was && TUTORIAL_FLAGS.has(flag)) {
+          trackEvent("ux_tutorial", {
+            gameMode: "draft",
+            actionId: `tutorial:${flag}`,
+            id: flag,
+            step: tutorial?.step ?? 1,
+            outcome: tutorial?.outcome ?? "completed",
+          });
+        }
+      },
 
-      completeChallenge: (challengeId, reward) =>
+      completeChallenge: (challengeId, reward) => {
+        const refused: string[] = [];
+        const discovered: string[] = [];
         set((state) => {
-          if (state.challengesCompleted[challengeId]) return {}; // one-and-done
+          if (state.challengesCompleted[challengeId]) {
+            refused.push(challengeId);
+            return {}; // one-and-done
+          }
           const now = new Date().toISOString();
           const unlockedSpecials = { ...state.unlockedSpecials };
           // An earned reward special bypasses the rank rarity-gate — it just lands
           // in the collection (challenge design §9-B).
           if (reward.specialId && !unlockedSpecials[reward.specialId]) {
             unlockedSpecials[reward.specialId] = now;
+            discovered.push(reward.specialId);
           }
           return {
             xp: state.xp + reward.xp,
@@ -596,10 +646,21 @@ export const useProfileStore = create<ProfileState>()(
             challengesCompleted: { ...state.challengesCompleted, [challengeId]: now },
             unlockedSpecials,
           };
-        }),
+        });
+        for (const id of refused) {
+          trackEvent("quality_duplicate_reward", {
+            gameMode: "draft",
+            actionId: `duplicate:challenge_clear:${id}`,
+            kind: "challenge_clear",
+            id,
+          });
+        }
+        trackDiscoveries(discovered, "challenge");
+      },
 
       recordChallengeResult: (challengeId, starsMask, xpForNew, reward) => {
         let fresh = 0;
+        const discovered: string[] = [];
         set((state) => {
           const had = state.challengeStars[challengeId] ?? 0;
           fresh = starsMask & ~had;
@@ -611,6 +672,7 @@ export const useProfileStore = create<ProfileState>()(
           const unlockedSpecials = { ...state.unlockedSpecials };
           if (fresh & 1 && reward.specialId && !unlockedSpecials[reward.specialId]) {
             unlockedSpecials[reward.specialId] = now;
+            discovered.push(reward.specialId);
           }
           const xp = state.xp + Math.max(0, xpForNew);
           const rank = rankForXp(xp);
@@ -628,10 +690,21 @@ export const useProfileStore = create<ProfileState>()(
             cosmetics: withCosmetics({ ...state, season, challengeStars }),
           };
         });
+        // OBS-01: XP offered for stars the profile already holds = a duplicate grant, refused above.
+        if (!fresh && xpForNew > 0) {
+          trackEvent("quality_duplicate_reward", {
+            gameMode: "draft",
+            actionId: `duplicate:challenge_stars:${challengeId}:${starsMask}`,
+            kind: "challenge_stars",
+            id: challengeId,
+          });
+        }
+        trackDiscoveries(discovered, "challenge");
         return fresh;
       },
 
-      collectSpecials: (specialIds) =>
+      collectSpecials: (specialIds, mode) => {
+        const discovered: string[] = [];
         set((state) => {
           const unlockedSpecials = { ...state.unlockedSpecials };
           const now = new Date().toISOString();
@@ -640,10 +713,13 @@ export const useProfileStore = create<ProfileState>()(
             if (!unlockedSpecials[id]) {
               unlockedSpecials[id] = now;
               changed = true;
+              discovered.push(id);
             }
           }
           return changed ? { unlockedSpecials, cosmetics: withCosmetics({ ...state, unlockedSpecials }) } : {};
-        }),
+        });
+        trackDiscoveries(discovered, mode ?? "unknown");
+      },
 
       hydrateDurable: (durable) => {
         // A cloud / storage merge is never "a new unlock": whatever it brings in
@@ -732,11 +808,18 @@ export const useProfileStore = create<ProfileState>()(
           },
         })),
 
-      markCosmeticsSeen: (ids) =>
+      markCosmeticsSeen: (ids) => {
+        const before = new Set(get().cosmetics?.seen ?? []);
         set((state) => {
           const next = markSeen(state.cosmetics, ids);
           return next === state.cosmetics ? {} : { cosmetics: next };
-        }),
+        });
+        // OBS-01: each cosmetic the locker shows for the first time.
+        for (const id of get().cosmetics?.seen ?? []) {
+          if (before.has(id)) continue;
+          trackEvent("ux_unlock_seen", { gameMode: "draft", actionId: `unlock_seen:cosmetic:${id}`, kind: "cosmetic", id });
+        }
+      },
 
       previewUnlockAll: false,
       setPreviewUnlockAll: (on) =>
@@ -863,6 +946,7 @@ export const useProfileStore = create<ProfileState>()(
     {
       name: "rocket-draft:profile:v1",
       version: 12,
+      storage: reportingJSONStorage("profile"),
       // rc.2: re-derive the owned cosmetics after hydration so a catalog change
       // (new items, the preview switch) shows up without waiting for a run.
       onRehydrateStorage: () => (state) => {
@@ -896,7 +980,7 @@ export const useProfileStore = create<ProfileState>()(
       // block; `lifetime.xp` keeps the cumulative total. Collection, achievements,
       // lifetime counters, run history and records are untouched. All other new
       // fields backfill from initialData via the deep-merge.
-      migrate: (persisted, version) => {
+      migrate: reportingMigrate("profile", 12, (persisted, version) => {
         const prev = (persisted ?? {}) as Partial<ProfileState>;
         const base =
           version < 2
@@ -955,7 +1039,7 @@ export const useProfileStore = create<ProfileState>()(
         const inSeason = normalizeToSeason(preV12 as ProfileState);
         // The legacy rewards appear the moment the save migrates (no sync needed).
         return { ...inSeason, cosmetics: withCosmetics({ ...inSeason, cosmetics: inSeason.cosmetics ?? EMPTY_COSMETICS }) };
-      },
+      }),
     },
   ),
 );

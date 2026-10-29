@@ -72,6 +72,7 @@ import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
 import { trackEvent } from "@/lib/analytics";
 import { registerRunStore } from "./lazyRunStore";
+import { reportingJSONStorage, reportingMigrate } from "./persistStorage";
 import { useProfileStore } from "./profileStore";
 import { useRewardToasts } from "./rewardToastStore";
 
@@ -90,15 +91,15 @@ function discoveredNationalLineups(unlocked: Record<string, string>): string[] {
 /**
  * Seeing a national team collects ALL its cards (v2.0, engine nationalUnlocks);
  * a find that adds new cards gets a toast. Idempotent — re-renders and
- * re-hydrated offers collect nothing new.
+ * re-hydrated offers collect nothing new. `mode` labels the discovery (OBS-01).
  */
-function collectNationalOffer(draft: DraftState): void {
+function collectNationalOffer(draft: DraftState, mode: RunMode): void {
   const ids = nationalUnlocks(draft.offer);
   if (ids.length === 0 || !draft.offer) return;
   const profile = useProfileStore.getState();
   const fresh = ids.filter((id) => !profile.unlockedSpecials[id]);
   if (fresh.length === 0) return;
-  profile.collectSpecials(ids);
+  profile.collectSpecials(ids, mode);
   const lineup = lineupById.get(draft.offer.lineupId);
   if (!lineup) return;
   useRewardToasts.getState().push([
@@ -110,6 +111,25 @@ function collectNationalOffer(draft: DraftState): void {
       cards: fresh.length,
     },
   ]);
+}
+
+/**
+ * OBS-01: the `region` every Draft event reports — the region lock, "daily",
+ * a challenge's constraint region, else "worldwide" (rc.25: never empty, or
+ * the dashboards bucket the run as "None").
+ */
+function regionLabelOf(run: RunState): string {
+  if (run.mode === "daily") return "daily";
+  if (run.mode === "challenge") {
+    return (run.challengeId ? challengeById.get(run.challengeId)?.constraint?.region : undefined) ?? "worldwide";
+  }
+  return run.regionLock ?? "worldwide";
+}
+
+/** OBS-01 (COL-02a): a special the profile did not own when this run started. */
+function isNewThisRun(run: RunState, specialId: string): boolean {
+  const since = useProfileStore.getState().unlockedSpecials[specialId];
+  return !since || since >= run.startedAt;
 }
 
 export interface StartRunOptions {
@@ -162,6 +182,9 @@ export const useRunStore = create<RunStore>()(
       setSetupMode: (setupMode) => set({ setupMode }),
 
       startRun: ({ mode, difficulty, showOverall, regionLock }) => {
+        // Stamped before the first offer collects a national team, so a card
+        // found in it counts as new this run (`special_used.isNew`, OBS-01).
+        const startedAt = new Date().toISOString();
         const seed = randomSeed();
         const rng = createRng(seed);
         const profile = DIFFICULTY[difficulty];
@@ -187,7 +210,7 @@ export const useRunStore = create<RunStore>()(
           }),
           rng,
         );
-        collectNationalOffer(draft);
+        collectNationalOffer(draft, mode);
 
         // Remember the setup for next time (and for "Play again").
         useProfileStore.getState().setLastSetup(difficulty, showOverall, mode, region);
@@ -201,7 +224,7 @@ export const useRunStore = create<RunStore>()(
           difficulty,
           showOverall: profile.overallLockedHidden ? false : showOverall,
           phase: "draft",
-          startedAt: new Date().toISOString(),
+          startedAt,
           xpAtStart,
           draft,
           tournament: null,
@@ -210,10 +233,11 @@ export const useRunStore = create<RunStore>()(
         };
         set({ run });
         trackEvent("run_started", {
+          runId: run.runId,
           mode,
           difficulty,
           hiddenOverall: !run.showOverall,
-          region: region ?? "worldwide",
+          region: regionLabelOf(run),
         });
       },
 
@@ -262,11 +286,12 @@ export const useRunStore = create<RunStore>()(
         };
         set({ run });
         trackEvent("run_started", {
+          runId: run.runId,
           mode: "daily",
           difficulty: config.difficulty,
           hiddenOverall: !run.showOverall,
           // Explicit (rc.25): without it the dashboards bucket dailies as region "None".
-          region: "daily",
+          region: regionLabelOf(run),
         });
       },
 
@@ -295,10 +320,11 @@ export const useRunStore = create<RunStore>()(
         };
         set({ run });
         trackEvent("run_started", {
+          runId: run.runId,
           mode: "challenge",
           difficulty: challenge.sim.difficulty,
           hiddenOverall: false,
-          region: challenge.constraint?.region ?? "worldwide",
+          region: regionLabelOf(run),
         });
       },
 
@@ -309,12 +335,13 @@ export const useRunStore = create<RunStore>()(
         const { run } = get();
         if (run && run.phase !== "results") {
           trackEvent("run_abandoned", {
+            runId: run.runId,
             mode: run.mode,
             difficulty: run.difficulty,
             phase: run.phase,
             reason: "quit",
             hiddenOverall: !run.showOverall,
-            region: run.regionLock ?? "worldwide",
+            region: regionLabelOf(run),
           });
         }
         set({ run: null });
@@ -328,12 +355,13 @@ export const useRunStore = create<RunStore>()(
         // just "play again", so it isn't counted as an abandonment.
         if (run.phase !== "results") {
           trackEvent("run_abandoned", {
+            runId: run.runId,
             mode: run.mode,
             difficulty: run.difficulty,
             phase: run.phase,
             reason: "restart",
             hiddenOverall: !run.showOverall,
-            region: run.regionLock ?? "worldwide",
+            region: regionLabelOf(run),
           });
         }
         // Daily restarts re-roll today's seeded run; everything else re-runs
@@ -363,7 +391,7 @@ export const useRunStore = create<RunStore>()(
         const draft = applyPick(run.draft, card, slot, rng);
         // Missions (v2.0): "select a special card" counts at pick time.
         if (card.specialId) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
-        collectNationalOffer(draft);
+        collectNationalOffer(draft, run.mode);
         set({
           run: {
             ...run,
@@ -386,7 +414,7 @@ export const useRunStore = create<RunStore>()(
         if (run.draft.rerollsLeft <= 0) return;
         const rng = createRng(run.rngState);
         const draft = applyReroll(run.draft, rng);
-        collectNationalOffer(draft);
+        collectNationalOffer(draft, run.mode);
         set({ run: { ...run, draft, rngState: rng.state } });
       },
 
@@ -396,7 +424,7 @@ export const useRunStore = create<RunStore>()(
         if (run.draft.offer?.hasPickableCard) return;
         const rng = createRng(run.rngState);
         const draft = applyFreeReroll(run.draft, rng);
-        collectNationalOffer(draft);
+        collectNationalOffer(draft, run.mode);
         set({ run: { ...run, draft, rngState: rng.state } });
       },
 
@@ -434,8 +462,10 @@ export const useRunStore = create<RunStore>()(
             },
           });
           trackEvent("tournament_started", {
+            runId: run.runId,
             mode: "challenge",
             difficulty: run.difficulty,
+            region: regionLabelOf(run),
           });
           for (const id of userTeam.specialIds) {
             const sp = specialCardById.get(id);
@@ -446,6 +476,7 @@ export const useRunStore = create<RunStore>()(
                 rarity: sp.rarity,
                 mode: "challenge",
                 difficulty: run.difficulty,
+                isNew: isNewThisRun(run, id),
               });
             }
           }
@@ -474,8 +505,10 @@ export const useRunStore = create<RunStore>()(
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },
         });
         trackEvent("tournament_started", {
+          runId: run.runId,
           mode: run.mode,
           difficulty: run.difficulty,
+          region: regionLabelOf(run),
         });
         // Special-card usage: one event per special on the locked roster, so
         // PostHog can rank which specials players actually take into a tournament.
@@ -488,6 +521,7 @@ export const useRunStore = create<RunStore>()(
               rarity: sp.rarity,
               mode: run.mode,
               difficulty: run.difficulty,
+              isNew: isNewThisRun(run, id),
             });
           }
         }
@@ -584,9 +618,12 @@ export const useRunStore = create<RunStore>()(
           },
         };
 
+        const startedMs = Date.parse(run.startedAt);
         trackEvent("run_completed", {
+          runId: run.runId,
           mode: run.mode,
           difficulty: run.difficulty,
+          region: regionLabelOf(run),
           placement: results.placement,
           won: results.placement === "champion",
           hiddenOverall: !run.showOverall,
@@ -594,6 +631,10 @@ export const useRunStore = create<RunStore>()(
           swissWins: entry.swissRecord.wins,
           swissLosses: entry.swissRecord.losses,
           xpGained: entry.xpGained,
+          chemistryTier: entry.recap?.chemistryTier ?? "Poor",
+          chemistryPercent: entry.recap?.chemistryPercent ?? 0,
+          durationSec: Number.isFinite(startedMs) ? Math.max(0, Math.round((Date.now() - startedMs) / 1000)) : null,
+          dailyTemplate: run.daily?.templateId ?? null,
         });
 
         profile.applyRunResults(
@@ -665,7 +706,7 @@ export const useRunStore = create<RunStore>()(
 
         // Specials drafted onto the challenge team unlock into the collection just
         // like a normal run, win or lose (v1.4.3, #100).
-        profile.collectSpecials(user.specialIds);
+        profile.collectSpecials(user.specialIds, "challenge");
         // Capture XP BEFORE the reward so the cleared screen can fire the rank-up
         // celebration if the reward crossed a rank threshold (v1.4).
         const xpBefore = profile.xp;
@@ -713,16 +754,19 @@ export const useRunStore = create<RunStore>()(
           challengeId: challenge.id,
           difficulty: challenge.sim.difficulty,
           cleared,
+          stars: countStars(starsEarned),
         });
       },
     }),
     {
       name: "rocket-draft:run:v1",
       version: 3,
+      storage: reportingJSONStorage("run"),
       // The run shape changed in v0.2 (double elim) and v0.3 (modes):
       // discard older persisted runs instead of resuming a broken one.
-      migrate: (persisted, version) =>
+      migrate: reportingMigrate("run", 3, (persisted, version) =>
         version < 3 ? { run: null } : (persisted as { run: RunState | null }),
+      ),
       partialize: (state) => ({ run: state.run }),
     },
   ),

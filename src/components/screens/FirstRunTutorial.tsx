@@ -33,11 +33,13 @@ export function FirstRunTutorial() {
   const [step, setStep] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const show = mounted && due;
-  const finish = () => markFlag("seenTutorial");
+  // OBS-01: the store reports where the tour closed (`ux_tutorial`).
+  const finish = (outcome: "completed" | "skipped" = "skipped") =>
+    markFlag("seenTutorial", { step: step + 1, outcome });
 
   useOverlayHold("intro", show);
   usePageScrollLock(show);
-  useDialogFocus(rootRef, show, { onEscape: finish });
+  useDialogFocus(rootRef, show, { onEscape: () => finish("skipped") });
 
   if (!show) return null;
 
@@ -58,7 +60,7 @@ export function FirstRunTutorial() {
       {/* Skip sits on the non-scrolling backdrop and respects the safe-area so it
           never tucks under a notch/dynamic island on mobile (v1.4). */}
       <button
-        onClick={finish}
+        onClick={() => finish("skipped")}
         className="absolute right-[max(1rem,env(safe-area-inset-right))] top-[max(1rem,env(safe-area-inset-top))] z-10 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-sub transition-colors hover:text-ink"
       >
         {T.skip}
@@ -102,7 +104,7 @@ export function FirstRunTutorial() {
             onClick={() => {
               if (last) {
                 sfx.start();
-                finish();
+                finish("completed");
               } else {
                 sfx.click();
                 setStep((s) => s + 1);

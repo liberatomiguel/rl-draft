@@ -161,7 +161,7 @@ values from the old Vercel project or `.env.local`.
 
 | Name | Set it? | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_POSTHOG_KEY` | Yes | Without it, analytics is off (the game still works). |
+| `NEXT_PUBLIC_POSTHOG_KEY` | Yes | Without it, analytics is off (the game still works). Only a production build on `rocketdraft.app` ever sends (DESIGN-DECISIONS #145). |
 | `NEXT_PUBLIC_POSTHOG_HOST` | Yes | EU host. The code falls back to the EU host if it's unset. |
 | `GOOGLE_SITE_VERIFICATION` | Only if the Vercel project had it | Adds the GSC `<meta>` tag (`src/app/layout.tsx`). The Domain property is already verified by the DNS TXT record. |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Only when accounts go live** | These switch on sign-in and the global leaderboards. Finish `docs/ACCOUNTS-SETUP.md` (SQL + email) first. |
@@ -190,8 +190,9 @@ staging or career:
   - Worker name `rocket-draft-staging`, same repo, **production branch `staging`**.
   - Build command `npm run build`; deploy command `npx wrangler deploy --env staging`.
   - Build variables: `NEXT_PUBLIC_CAREER_MODE=1`, `NEXT_PUBLIC_NOINDEX=1`
-    (robots.txt `Disallow: /` + `noindex` meta), plus the PostHog vars if you want
-    staging analytics (better: leave PostHog unset so tests don't pollute prod data).
+    (robots.txt `Disallow: /` + `noindex` meta). No PostHog vars: since rc.32
+    the staging build never sends analytics, even with a key (a build + host
+    guard, DESIGN-DECISIONS #145; Miguel, 29/10).
   - Staging is a separate origin, so its saves never touch players' saves.
   - The production project keeps `main` and `npx wrangler deploy` (the
     "multiple environments" warning it prints is expected).

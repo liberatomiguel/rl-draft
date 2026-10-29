@@ -8,6 +8,8 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { setAnalyticsLocaleSource } from "@/lib/analytics";
+import { reportingJSONStorage } from "./persistStorage";
 
 export type AnimSpeedKey = "slow" | "normal" | "fast";
 
@@ -56,6 +58,9 @@ export const useSettings = create<SettingsState>()(
       set: (key, value) => set({ [key]: value } as Partial<SettingsState>),
       resetSettings: () => set({ ...DEFAULTS }),
     }),
-    { name: "rocket-draft:settings:v1" },
+    { name: "rocket-draft:settings:v1", storage: reportingJSONStorage("settings") },
   ),
 );
+
+// OBS-01: every analytics event carries the UI language as `locale`.
+setAnalyticsLocaleSource(() => useSettings.getState().lang);

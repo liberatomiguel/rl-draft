@@ -46,3 +46,16 @@ export const specialCardIds: ReadonlySet<string> = new Set([
   ...(specialCardsJson as { id: string }[]).map((sp) => sp.id),
   ...(nationalSpecialIdsJson as string[]),
 ]);
+
+const specialRarities = new Map(
+  (specialCardsJson as { id: string; rarity: string }[]).map((sp) => [sp.id, sp.rarity]),
+);
+
+/**
+ * A special's rarity without the barrel (OBS-01 `special_discovered`): the
+ * curated catalogue's own, "national" for the derived national-team cards
+ * (the `nt-` ids `@/data` builds with that rarity), null for an unknown id.
+ */
+export function specialRarityOf(id: string): string | null {
+  return specialRarities.get(id) ?? (specialCardIds.has(id) ? "national" : null);
+}

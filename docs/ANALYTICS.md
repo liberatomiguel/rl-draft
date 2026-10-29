@@ -71,6 +71,15 @@ entre dispositivos (e é proposital, pela política de privacidade).
 `region` = `"worldwide"` ou `"SAM"`. `difficulty` = easy/normal/hard/legacy.
 `cleared` = `true` quando o desafio foi resolvido (série vencida).
 
+> **2.0 (rc.32):** o catálogo completo da 2.0 (o Draft estendido com `runId`,
+> `region` em todos, química, duração, estrelas e `special_discovered`; os
+> eventos `career_*`; os de UX e qualidade) está em `ANALYTICS-EVENTS-2.0.md`,
+> **provisório até o Miguel aprovar**. Todo evento leva as propriedades comuns
+> `release`, `balanceVersion`, `schemaVersion`, `environment`, `locale` e
+> `gameMode` (filtre o painel do Draft por `gameMode = draft`). **Só produção
+> envia:** staging, playtest, preview local e dev não mandam nada, nem
+> pageview (guarda de build + host em `analyticsAllowed()`), mesmo com a chave.
+
 ---
 
 ## 4. Receitas (clique a clique)
@@ -159,7 +168,9 @@ ou use **Breakdown by** = `region` pra comparar lado a lado.
 
 ## 7. Notas
 - Mudar evento/property é no código (`src/lib/analytics.ts` — catálogo tipado);
-  adicione uma chave em `GameEvents` e chame `trackEvent(...)` na camada de UI/store.
+  adicione uma chave num dos grupos (`DraftEvents`, `CareerEvents`,
+  `SharedEvents`) e chame `trackEvent(...)` na store, no momento em que o save
+  é gravado (nunca no engine, nunca num render).
 - **PostHog é o único sink.** O Vercel Web Analytics foi REMOVIDO na v1.4 (era
   redundante com o PostHog e os beacons por evento estouravam o limite de "edge
   requests" do plano Hobby). `trackEvent` agora envia pra um sink só (PostHog).
