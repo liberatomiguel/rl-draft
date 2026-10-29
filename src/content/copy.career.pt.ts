@@ -147,6 +147,7 @@ export const CAREER_PT: CareerCopy = {
       sponsors: "Patrocínios",
       training: "Treino",
       cups: "Copas comunitárias",
+      money: "O dinheiro encerra a carreira",
     } as Record<string, string>,
     presetEdge: (n: string) => `${n} de rating`,
     presetChemistry: (you: string, them: string) => `até +${you} / +${them}`,
@@ -155,6 +156,9 @@ export const CAREER_PT: CareerCopy = {
     presetTrainingManual: "Você planeja cada semana",
     presetCupsAuto: "Inscrição automática",
     presetCupsManual: "Você escolhe",
+    // rc.32 (M4, provisório): CAREER_LOAN.breachesToEnd por preset.
+    presetMoneyNever: "Nunca: cada nova quebra reestrutura",
+    presetMoneyAt: (n: number) => `Na ${n}ª quebra do piso do Investidor`,
     presetsNote: "As configurações continuam suas: a delegação liga e desliga na tela de Treino.",
     summaryTitle: "A papelada",
     found: (org: string) => `Fundar ${org}`,

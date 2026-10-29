@@ -598,7 +598,7 @@ export function SquadScreen() {
                 ))}
               </div>
             </div>
-            <RenewalReadout terms={renewalTermsOf(save, renew, renewLen)} C={C} />
+            <RenewalReadout terms={renewalTermsOf(save, renew, renewLen)} C={C} save={save} player={renew} />
             <SalaryNegotiator
               ask={renewAsk}
               offered={Math.min(renewOffer || renewAsk, renewAsk)}

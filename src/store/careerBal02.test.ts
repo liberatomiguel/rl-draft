@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_WORLD, DIFFICULTY, TOURNAMENT } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_LOAN, CAREER_WORLD, DIFFICULTY, TOURNAMENT } from "@/config/balance";
 import { getCareerCopy } from "@/content/careerCopy";
 import { orgById } from "@/data";
 import { careerMatchProfile, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
@@ -170,6 +170,9 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
       expect(rows.asks).toBe(C.wizard.presetMult(String(CAREER_ECONOMY.salaryAskMult[d])));
       expect(rows.sponsors).toBe(C.wizard.presetMult(String(CAREER_ECONOMY.sponsorMult[d])));
       expect(rows.training).toBe(presetPrefs(d).autoTrain ? C.wizard.presetTrainingGuided : C.wizard.presetTrainingManual);
+      // rc.32 integration: what ends a career through money (front A's M4).
+      const ends = CAREER_LOAN.breachesToEnd[d];
+      expect(rows.money).toBe(ends === null || ends === undefined ? C.wizard.presetMoneyNever : C.wizard.presetMoneyAt(ends));
       for (const r of PRESET_ROWS) expect(C.wizard.presetRows[r.key], r.key).toBeTruthy();
     }
   });

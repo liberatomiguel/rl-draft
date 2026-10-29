@@ -154,6 +154,7 @@ export const CAREER_EN = {
       sponsors: "Sponsor deals",
       training: "Training",
       cups: "Community cups",
+      money: "Money ends the career",
     } as Record<string, string>,
     presetEdge: (n: string) => `${n} rating`,
     presetChemistry: (you: string, them: string) => `up to +${you} / +${them}`,
@@ -162,6 +163,9 @@ export const CAREER_EN = {
     presetTrainingManual: "You plan every week",
     presetCupsAuto: "Entered for you",
     presetCupsManual: "You choose",
+    // rc.32 (M4, provisional): CAREER_LOAN.breachesToEnd by preset.
+    presetMoneyNever: "Never: each later breach restructures",
+    presetMoneyAt: (n: number) => `At breach ${n} of the Backer's floor`,
     presetsNote: "Settings stay yours: delegation can be switched on or off on the Training screen.",
     summaryTitle: "The paperwork",
     found: (org: string) => `Found ${org}`,

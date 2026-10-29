@@ -3,15 +3,16 @@
 /**
  * Road to Worlds — a career preset's real effects (rc.32, BAL-02, R59), every
  * value read live from balance.ts: the match profile (CAREER_DIFFICULTY), the
- * money (CAREER_ECONOMY's per-difficulty keys) and how much is guided (the
- * preset's prefs).
+ * money (CAREER_ECONOMY's per-difficulty keys, and CAREER_LOAN.breachesToEnd —
+ * what ends a career through money, M4), and how much is guided (the preset's
+ * prefs).
  *
  * ONE descriptor list: to add a row — e.g. CAREER_LOAN.breachesToEnd by
  * difficulty — append `{ key, value }` to PRESET_ROWS and its label to
  * `wizard.presetRows` in copy.career.en.ts AND copy.career.pt.ts.
  */
 
-import { CAREER_ECONOMY } from "@/config/balance";
+import { CAREER_ECONOMY, CAREER_LOAN } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { careerMatchProfile, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
 import type { CareerDifficulty } from "@/engine/career/types";
@@ -37,6 +38,13 @@ export const PRESET_ROWS: PresetRow[] = [
   { key: "prizes", value: (d, C) => C.wizard.presetMult(String(CAREER_ECONOMY.prizeMult[d])) },
   { key: "asks", value: (d, C) => C.wizard.presetMult(String(CAREER_ECONOMY.salaryAskMult[d])) },
   { key: "sponsors", value: (d, C) => C.wizard.presetMult(String(CAREER_ECONOMY.sponsorMult[d])) },
+  {
+    key: "money",
+    value: (d, C) => {
+      const n = CAREER_LOAN.breachesToEnd[d];
+      return n === null || n === undefined ? C.wizard.presetMoneyNever : C.wizard.presetMoneyAt(n);
+    },
+  },
   {
     key: "training",
     value: (d, C) => (presetPrefs(d).autoTrain ? C.wizard.presetTrainingGuided : C.wizard.presetTrainingManual),
