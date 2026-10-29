@@ -64,6 +64,7 @@ import {
   finishEvent,
   fireCoachFlow,
   hireCoachFlow,
+  listForSaleFlow,
   migrateSaveToV5,
   payBankLoanFlow,
   payDebtFlow,
@@ -86,6 +87,7 @@ import {
   startEvent,
   stepEventRound,
   syncSquadRoles,
+  withdrawListingFlow,
   type CreateCareerInput,
 } from "./careerFlow";
 import type { GearItemId } from "@/engine/career/economy";
@@ -188,6 +190,9 @@ interface CareerStoreState {
   renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3, offeredSalary?: number) => void;
   acceptBid: (offerId: string) => void;
   declineBid: (offerId: string) => void;
+  /** rc.32 (M8, provisional): list a squad player for sale / withdraw the listing. */
+  listForSale: (playerId: string) => void;
+  withdrawListing: (playerId: string) => void;
 
   setStarters: (ids: [string, string, string]) => void;
   setTrainingFocus: (playerId: string, focus: SquadPlayer["trainingFocus"]) => void;
@@ -389,6 +394,8 @@ export const useCareerStore = create<CareerStoreState>()(
           withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary)),
         acceptBid: (offerId) => withResult((s) => acceptBidFlow(s, offerId)),
         declineBid: (offerId) => withSave((s) => declineBidFlow(s, offerId)),
+        listForSale: (playerId) => withResult((s) => listForSaleFlow(s, playerId)),
+        withdrawListing: (playerId) => withResult((s) => withdrawListingFlow(s, playerId)),
 
         setStarters: (ids) => withResult((s) => setStartersFlow(s, ids)),
         setTrainingFocus: (playerId, focus) =>

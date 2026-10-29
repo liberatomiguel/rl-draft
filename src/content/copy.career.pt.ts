@@ -10,6 +10,21 @@
 
 import type { CareerCopy } from "./copy.career.en";
 
+/**
+ * rc.32 (ECONOMY-CONTRACT M4, provisório): o que a próxima segunda abaixo do
+ * piso do Investidor faz — `next` é a resposta de economy.breachOutcomeFor.
+ */
+const nextBreachPt = (next: string | number | undefined): string =>
+  next === "insolvent"
+    ? "A próxima quebra do piso encerra a carreira."
+    : next === "restructure"
+      ? "A próxima quebra força uma reestruturação: o jogador de maior salário é vendido e a reputação cai."
+      : "Abaixo do piso numa segunda-feira, o Investidor de emergência entra.";
+
+/** rc.32 (M4): a quebra projetada, como os alertas a citam (semana desta temporada ou da próxima). */
+const breachWhenPt = (p: Record<string, string | number>): string =>
+  `a segunda-feira da semana ${p.breachWeek}${Number(p.nextSeason) ? " da próxima temporada" : ""}`;
+
 export const CAREER_PT: CareerCopy = {
   meta: {
     title: "Road to Worlds",
@@ -191,6 +206,9 @@ export const CAREER_PT: CareerCopy = {
     // ECO-02 (R46): o card cita a dívida que Finanças mostra.
     backerOpen: (owed: string) =>
       `Dívida com o Investidor aberta — ${owed} a reembolsar. A premiação é descontada até quitar.`,
+    // rc.32 (M4, provisório): a linha do QG abaixo dele — o que significa a próxima quebra.
+    backerNextBreach: (next: string) => nextBreachPt(next),
+    restructuredLine: (n: number) => `A org foi reestruturada após a quebra ${n} do piso.`,
     cards: {
       training: "Treino",
       trainingOn: "Sessão hoje. De segunda a sexta o elenco evolui.",
@@ -284,12 +302,29 @@ export const CAREER_PT: CareerCopy = {
       // DEV-02 (R48): o aposentado do próprio elenco — para onde ele foi.
       retiredToCoach: (p: Record<string, string | number>) => `${p.player} se aposenta — e vira treinador`,
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} se aposenta das competições`,
+      // rc.32 (ECONOMY-CONTRACT M3 / M4 / M8, provisório).
+      foundingPartner: () => `Um parceiro fundador apoia a org`,
+      foundingPartnerEnds: () => `O parceiro fundador se despede`,
+      cashNotice: (p: Record<string, string | number>) => `Aviso de caixa: cerca de ${p.weeks} semanas de fôlego`,
+      restructured: () => `O Investidor reestruturou a org`,
+      listingOffer: (p: Record<string, string | number>) => `Proposta por ${p.player} — seu anúncio`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
         `${p.org} formalizaram uma proposta de ${p.fee} por ${p.player}. Ela expira quando a janela fechar — aceite ou recuse na aba de negociações do Mercado.`,
+      // rc.32 (Miguel, 30/10): o que é uma proposta Bomba, por que veio, o preço e o custo de recusar.
       blockbusterBid: (p: Record<string, string | number>) =>
-        `${p.org} vieram com tudo: ${p.fee} por ${p.player}. Recusar uma proposta desse tamanho pode inflar a próxima renovação dele — mas ninguém vende o próprio core de graça.`,
+        `${p.org} vieram com tudo: ${p.fee} por ${p.player}. Uma proposta Bombástica é um dos momentos roteirizados da temporada — uma org endinheirada atrás do jogador em torno de quem ela montou o time na história real — por isso paga ${p.mult === undefined ? "bem acima do" : `×${p.mult} o`} valor de mercado dele. Recuse, ou deixe expirar, e ele fica${p.pct === undefined ? " — mas a próxima pedida de renovação dele pode subir." : `, mas a próxima pedida de renovação dele sobe ${p.pct}%.`}`,
+      foundingPartner: (p: Record<string, string | number>) =>
+        `Um parceiro local apoia os primeiros passos da org: ${p.base} por split (${p.pct}% da folha salarial de fundação), pagos junto com a folha de toda segunda-feira. A única exigência é disputar eventos, e não há luvas. Ele segue até o seu primeiro contrato de patrocínio — e pelo menos até o fim de ${p.through}, mesmo ao lado de um contrato assinado antes. Finanças mostra a linha dele à parte.`,
+      foundingPartnerEnds: () =>
+        `O ciclo do parceiro fundador acabou: a org já tem o próprio patrocínio e deixou as primeiras temporadas para trás. Daqui em diante as contas se apoiam em patrocínio, premiação e torcida.`,
+      cashNotice: (p: Record<string, string | number>) =>
+        `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas cruzariam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next)} Agora é a hora barata de agir: anuncie ou venda um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
+      restructured: (p: Record<string, string | number>) =>
+        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele, metade para a dívida` : ""}. Reputação −${p.rep}, e o saldo volta a ${p.rescueTo}; a dívida é de ${p.owed}. O elenco segue jogando — o reserva sobe, ou um substituto ocupa a vaga vazia. ${nextBreachPt(p.next)}`,
+      listingOffer: (p: Record<string, string | number>) =>
+        `${p.org} responderam ao seu anúncio: ${p.fee} por ${p.player}. Aceite na aba de negociações do Mercado antes de a janela fechar, ou recuse para mantê-lo — recusar encerra o anúncio.`,
       sponsorOffers: () =>
         `Marcas estão de olho na org. Avalie as propostas em Finanças — a base é garantida; o bônus depende da meta.`,
       objectiveHit: (p: Record<string, string | number>) =>
@@ -302,14 +337,20 @@ export const CAREER_PT: CareerCopy = {
         `O banco liberou ${p.amount}. Parcelas de ${p.weekly} caem toda segunda-feira até quitar ${p.total}. Gaste em algo que se pague.`,
       bankCleared: () =>
         `A última parcela foi paga. A linha de crédito está aberta de novo, se a org precisar.`,
+      // rc.32 (M4, provisório): toda segunda com ≤ 4 semanas — a quebra projetada e a saída.
       cashWarning: (p: Record<string, string | number>) =>
-        `A ${p.net} por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Corte salários, ganhe premiação ou negocie um empréstimo antes que o Investidor precise entrar.`,
+        p.breachWeek === undefined
+          ? `A ${p.net} por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Corte salários, ganhe premiação ou negocie um empréstimo antes que o Investidor precise entrar.`
+          : `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras; nesse ritmo as contas cruzam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next)} Saídas: vender ou anunciar um jogador, ganhar premiação, enxugar a folha na renovação${Number(p.backer) ? "" : " ou pegar um empréstimo no banco"}.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
         `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo — os oito diretos esperam.`,
       missedRegional: (p: Record<string, string | number>) =>
         `Três derrotas no Swiss de sábado — o ${p.event} acontece no domingo sem você. Descanse; segunda começa uma nova semana de treino.`,
-      backerIn: () =>
-        `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`,
+      // rc.32 (M4, provisório): a janela que ele compra, a dívida, a trava e a próxima quebra.
+      backerIn: (p: Record<string, string | number>) =>
+        p.rescueTo === undefined
+          ? `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`
+          : `As contas fecharam uma segunda-feira abaixo do piso e o Investidor de emergência entrou: o saldo voltou a ${p.rescueTo}${Number(p.weeks) > 0 ? ` (cerca de ${p.weeks} semanas de salários)` : ""}. A dívida é de ${p.owed} — ${p.garnishPct}% de cada premiação e metade de qualquer venda vão para ela até quitar, ou abata em Finanças. Enquanto ela existir, taxas de transferência, equipamentos${Number(p.lock) ? " e novos compromissos que encurtam o fôlego" : ""} ficam suspensos. ${nextBreachPt(p.next)}`,
       unlock: (p: Record<string, string | number>) =>
         `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no Clube — o arsenal cresce com a reputação.`,
       windowReport: (p: Record<string, string | number>) =>
@@ -597,10 +638,35 @@ export const CAREER_PT: CareerCopy = {
     bidFrom: (org: string) => `Proposta de ${org}`,
     accept: "Aceitar",
     decline: "Recusar",
-    declineHint: "Recusar uma proposta grande pode aumentar a próxima pedida de renovação.",
+    // rc.32: só a proposta Bombástica tem custo ao ser recusada (CAREER_SALARY.blockbusterRefusalRenewalMult).
+    declineHint: (pct: number) =>
+      `Recusar uma proposta Bombástica aumenta em ${pct}% a próxima pedida de renovação do jogador; recusar qualquer outra não custa nada.`,
     blockbuster: "Bombástica",
+    // rc.32 (Miguel, 30/10): a proposta Bombástica explicada na própria oferta.
+    blockbusterWhat: (org: string, mult: string, pct: number) =>
+      `Um momento roteirizado da história da cena: ${org}, com dinheiro de sobra, estão atrás do jogador em torno de quem montaram o time de verdade. A taxa é ×${mult} o valor de mercado dele. Recuse — ou deixe expirar — e ele fica, mas a próxima pedida de renovação dele sobe ${pct}%.`,
     consequences: "Depois deste negócio",
     balanceAfter: (s: string) => `Saldo após: ${s}`,
+    // rc.32 (M4, provisório): o fôlego que a contratação deixa.
+    runwayAfter: (weeks: number | null) =>
+      weeks === null
+        ? "Fôlego depois: as contas seguem no azul"
+        : `Fôlego depois: ${weeks === 1 ? "1 semana" : `${weeks} semanas`} com a nova queima`,
+    // rc.32 (M8, provisório): "Anunciar para venda" e a contratação tardia.
+    listTitle: "Vender um jogador",
+    listHint: (lo: number, hi: number) =>
+      `Anuncie um jogador e uma org que o escalaria faz uma proposta em poucos dias de janela, entre ${lo}% e ${hi}% do valor de mercado dele. Aceite, recuse (ele fica) ou retire o anúncio.`,
+    listCta: "Anunciar para venda",
+    listedTag: "Anunciado",
+    listedWaiting: "Anunciado — uma proposta chega em poucos dias de janela.",
+    listedOffer: "Há uma proposta na mesa, logo acima.",
+    listedFirstWindow: "A primeira janela da carreira não tem propostas — elas começam na janela seguinte.",
+    listedNextWindow: (label: string) => `As propostas chegam em dias de janela — a próxima janela abre ${label}.`,
+    withdrawListing: "Retirar",
+    listingTag: "Seu anúncio",
+    lateSigningOpen: (date: string) =>
+      `Contratação tardia aberta: uma vaga vendida na janela pode ser preenchida com um agente livre até ${date}.`,
+    lateSigningTag: "Contratação tardia",
     // ECO-02 (R46): uma venda com o Investidor em aberto — a parte dele na taxa.
     saleBackerRepaid: (s: string) => `Reembolso ao Investidor: ${s}`,
     // ECO-03 (R47): a vaga é definida depois da contratação e nunca muda o preço.
@@ -689,6 +755,11 @@ export const CAREER_PT: CareerCopy = {
       rosterLocked: "Mudanças no elenco só depois do fim do evento.",
       /** DEV-02 (R48): a idade mínima para competir. */
       tooYoung: "Jovem demais para competir — jogadores assinam a partir dos 13 anos.",
+      /** rc.32 (M4, provisório): a trava do Investidor sobre compromissos que encurtam o fôlego. */
+      loanRunway: "Enquanto o Investidor tiver a receber, nada que encurte o fôlego — quite a dívida ou libere salários antes.",
+      /** rc.32 (M8, provisório). */
+      listingOff: "O anúncio de jogadores está desligado.",
+      alreadyListed: "Já anunciado para venda.",
     },
   },
 
@@ -704,6 +775,7 @@ export const CAREER_PT: CareerCopy = {
     nextPayday: (s: string) => `Próximo pagamento ${s}`,
     line: {
       sponsorBase: "Base do patrocínio",
+      foundingPartner: "Parceiro fundador",
       fanbase: "Torcida",
       payroll: "Salários do elenco",
       coach: "Coach",
@@ -735,6 +807,9 @@ export const CAREER_PT: CareerCopy = {
       `Isso deixa as contas no vermelho. Abaixo de ${floor} numa segunda, o Investidor de emergência entra.`,
     payRiskEnd: (floor: string) =>
       `Isso deixa as contas no vermelho. Abaixo de ${floor} numa segunda, a carreira acaba — não há segundo resgate.`,
+    // rc.32 (M4, provisório): depois do resgate, uma quebra reestrutura ou encerra — conforme a dificuldade.
+    payRiskNext: (floor: string, next: string) =>
+      `Isso deixa as contas no vermelho. Abaixo de ${floor} numa segunda-feira é uma quebra. ${nextBreachPt(next)}`,
     // Os nomes acessíveis dos ajustes de valor (pagamentos e o pedido ao banco).
     amountDown: "Diminuir o valor",
     amountUp: "Aumentar o valor",
@@ -761,6 +836,8 @@ export const CAREER_PT: CareerCopy = {
       loanGrant: "Resgate do investidor",
       loanGarnish: "Reembolso ao investidor",
       loanPayment: "Pagamento da dívida",
+      foundingPartner: "Parceiro fundador",
+      playerShare: "Parte dos jogadores no prêmio",
       fanbase: "Receita de torcida",
       payroll: "Salários do elenco",
       bankLoan: "Empréstimo bancário recebido",
@@ -795,10 +872,31 @@ export const CAREER_PT: CareerCopy = {
     payDebtHint: "Quite a dívida para liberar transferências com taxa e compras de equipamento.",
     debtCleared: "Dívida quitada — a org está livre de novo.",
     backerIdle: (floor: string, rescueTo: string) =>
-      `Sem uso. Se o saldo cair abaixo de ${floor}, o Investidor entra uma única vez — um aporte até ${rescueTo}, reembolsado da premiação. Uma segunda quebra encerra a carreira.`,
+      `Sem uso. Se uma segunda-feira fechar abaixo de ${floor}, o Investidor entra uma única vez — um aporte até ${rescueTo}, reembolsado da premiação e das vendas.`,
     backerWarning: "Este negócio provavelmente aciona o investidor de emergência.",
-    backerRescued: "O investidor entrou — um resgate por carreira. Quebrar de novo encerra a história.",
-    insolvencyWarning: "As contas estão ruindo. Um segundo colapso encerra a carreira.",
+    backerRescued: "O Investidor já entrou uma vez; o resgate está quitado.",
+    insolvencyWarning: "As contas estão ruindo — a próxima quebra do piso encerra a carreira.",
+    // rc.32 (M4, provisório): a linha em semanas de salário e o que cada quebra faz nesta dificuldade.
+    backerWeeksLine: (floorWeeks: number, rescueWeeks: number) =>
+      `A linha acompanha a folha: o piso fica ${floorWeeks} semanas de salário abaixo de zero, e o resgate recompõe ${rescueWeeks} semanas acima.`,
+    breachLadder: (end: number | null) =>
+      end === null
+        ? "Nesta dificuldade o dinheiro nunca encerra a carreira: toda quebra depois do resgate força uma reestruturação — o jogador de maior salário vendido, reputação em queda."
+        : end <= 2
+          ? "Depois do resgate, a próxima quebra encerra a carreira."
+          : end === 3
+            ? "Depois do resgate, a próxima quebra força uma reestruturação — o jogador de maior salário vendido, reputação em queda; a seguinte encerra a carreira."
+            : `Depois do resgate, as quebras 2 a ${end - 1} forçam uma reestruturação — o jogador de maior salário vendido, reputação em queda; a quebra ${end} encerra a carreira.`,
+    breachCount: (n: number) => (n === 1 ? "Quebras até aqui: 1 (o resgate)" : `Quebras até aqui: ${n}`),
+    backerLock: "Enquanto houver dívida: sem taxas de transferência, sem equipamento, nada que encurte o fôlego.",
+    // rc.32 (M3, provisório): o card do parceiro fundador.
+    foundingTitle: "Parceiro fundador",
+    foundingTerms: (pct: number) => `${pct}% da folha de fundação · meta: disputar eventos · sem luvas`,
+    foundingEnds: (through: string) => `Termina no seu primeiro contrato de patrocínio — não antes do fim de ${through}.`,
+    foundingEnded: "Saiu de cena quando a org assinou o próprio patrocínio.",
+    // rc.32 (M6, provisório): a parte dos jogadores nos prêmios de pódio.
+    playerShareRule: (regional: number, major: number, worlds: number) =>
+      `Prêmios de pódio são divididos com os jogadores: ${regional}% do prêmio de um top 4 regional, ${major}% num Major, ${worlds}% no Worlds — lançados como linha própria.`,
     boosts: "Boosts & staff",
     psychologist: "Psicóloga esportiva",
     psychologistDesc: "+1 Clutch, +1 Consistência enquanto contratada. A contratação que vence jogos decisivos.",
@@ -957,6 +1055,11 @@ export const CAREER_PT: CareerCopy = {
       scrimWin: (p: Record<string, string | number>) => `Portas fechadas: scrim V ${p.a}-${p.b} vs ${p.opponent}`,
       scrimLoss: (p: Record<string, string | number>) => `Portas fechadas: scrim D ${p.a}-${p.b} vs ${p.opponent}`,
       blockbusterBid: (p: Record<string, string | number>) => `${p.org} fazem proposta bombástica por ${p.player}`,
+      // rc.32 (M4 / M8, provisório).
+      restructured: (p: Record<string, string | number>) =>
+        p.player ? `Reestruturação: ${p.player} vendido para equilibrar as contas` : `Reestruturação: o Investidor entra de novo`,
+      listingOffer: (p: Record<string, string | number>) => `${p.org} fazem proposta por ${p.player}, anunciado`,
+      listed: (p: Record<string, string | number>) => `${p.player} está no mercado — a org o anunciou`,
       flavor1: () => `Notas da bancada: disciplina de rotação é o novo jargão do meta`,
       flavor2: () => `Servidores de scrim lotados — a região inteira está no grind`,
       flavor3: () => `O microfone de um caster pegou uma análise bem sincera no intervalo`,
@@ -1038,9 +1141,9 @@ export const CAREER_PT: CareerCopy = {
       cashWarning: (p: Record<string, string | number>) =>
         `Os custos semanais passam a receita e a reserva está em ${p.weeks} semanas. Quem ignora isso conhece o Investidor.`,
       backerIn: () =>
-        `O piso rompeu e o aporte do investidor caiu. O reembolso sai descontado da premiação até quitar. Não existe segundo resgate.`,
+        `O piso rompeu e o aporte do investidor caiu. O reembolso sai descontado da premiação e das vendas até quitar — a caixa de entrada diz o que a próxima quebra significaria.`,
       insolvency: () =>
-        `O segundo colapso. Salários sem pagar, cadeiras vazias, servidores no escuro — a história da org termina no livro-caixa.`,
+        `O colapso final. Salários sem pagar, cadeiras vazias, servidores no escuro — a história da org termina no livro-caixa.`,
       seasonChampion: (p: Record<string, string | number>) =>
         `${p.org} levantam o troféu do ${p.event}. A régua de todo mundo acabou de subir.`,
       incomingBid: (p: Record<string, string | number>) =>
@@ -1057,6 +1160,12 @@ export const CAREER_PT: CareerCopy = {
         `${p.opponent} levou o set de scrim. Derrota de portas fechadas é a lição mais barata dos esports.`,
       blockbusterBid: (p: Record<string, string | number>) =>
         `${p.org} vieram com intenção real por ${p.player}. A história quer essa transferência — você decide se ela acontece.`,
+      restructured: (p: Record<string, string | number>) =>
+        `A org fechou de novo abaixo do piso e o Investidor forçou a mão${p.player ? `: ${p.player} vai para ${p.org}` : ""}. A reputação sente; as contas voltam a ter fôlego. ${nextBreachPt(p.next)}`,
+      listingOffer: (p: Record<string, string | number>) =>
+        `${p.org} responderam ao anúncio com uma proposta formal por ${p.player}. Aceite antes de a janela fechar, ou fique com ele.`,
+      listed: (p: Record<string, string | number>) =>
+        `A org colocou ${p.player} no mercado. Uma proposta de um time que o escalaria chega em poucos dias de janela.`,
       repDown: (p: Record<string, string | number>) =>
         `As expectativas foram declaradas e não cumpridas; o prestígio de ${p.org} sente. Reputação se recupera do mesmo jeito que se constrói.`,
     },
@@ -1229,6 +1338,8 @@ export const CAREER_PT: CareerCopy = {
     resultsDigest: "Resumo de resultados",
     digestPlacement: "Colocação",
     digestPrize: "Premiação",
+    // rc.32 (M6, provisório): a parte dos jogadores lançada de um prêmio de pódio.
+    digestPlayerShare: (s: string) => `Parte dos jogadores −${s}`,
     digestPoints: "Pontos da Temporada",
     digestRep: "Reputação",
     digestTopScorer: "Artilheiro",
@@ -1319,7 +1430,7 @@ export const CAREER_PT: CareerCopy = {
     finalWhistle: "Apito final",
     finalWhistleBody: "A temporada 2026 fecha o livro — mas não a história da org.",
     insolvencyTitle: "Insolvência",
-    insolvencyBody: "As contas não sobreviveram a um segundo colapso. A história da org termina aqui.",
+    insolvencyBody: "As contas não sobreviveram a mais um colapso. A história da org termina aqui.",
     legacyTitle: "Legado da carreira",
     legacyGrade: { legend: "Lenda", contender: "Contendor", challenger: "Desafiante", journeyman: "Batalhador" },
     retire: "Aposentar",

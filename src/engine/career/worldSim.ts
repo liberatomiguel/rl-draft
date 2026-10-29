@@ -1516,9 +1516,10 @@ export function agePassAndIntake(
   }
 
   // DEV-02 (R48): the decision is whether the season just played was his last
-  // (the age he played it at = this season's age − the calendar step, two
-  // years across 2022 → 2024), inside the 24–29 window and never before his
-  // peak; a season at 30 is never played.
+  // (the age he played it at = this season's age − the calendar step), inside
+  // the 24–29 window and never before his peak; a season at 30 is never
+  // played. rc.32: the age clock steps exactly one year a season (rc.31's
+  // was two across 2022-23 → 2024), so the step is 1 at every rollover.
   const calendarStep = seasonYear(toSeasonIndex) - seasonYear(Math.max(0, toSeasonIndex - 1));
   const rollsRetirement = (view: CareerPlayerView): boolean => {
     if (view.kind === "real") {

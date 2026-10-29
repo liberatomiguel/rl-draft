@@ -23,8 +23,10 @@ import {
   CAREER_REP,
   CAREER_SALARY,
   CAREER_SAVE,
+  CAREER_SCOUT,
   CAREER_SPONSOR,
   CAREER_STARS,
+  CAREER_SUB,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
 } from "@/config/balance";
@@ -38,6 +40,7 @@ import type {
   CareerEventFormat,
   EventTier,
   FinanceState,
+  FoundingPartnerState,
   GearState,
   LedgerEntry,
   SponsorObjectiveKind,
@@ -59,6 +62,72 @@ export function repTierOf(rep: number): 0 | 1 | 2 | 3 | 4 {
   return Math.min(4, Math.max(0, Math.floor(rep / 20))) as 0 | 1 | 2 | 3 | 4;
 }
 
+// ---------------------------------------------------------------------------
+// M1 (ECONOMY-CONTRACT §5, decision 1-A — provisional, 30/10): ONE money index
+// ---------------------------------------------------------------------------
+
+/** The rc.31 rate a stream followed — read only in CAREER_ECONOMY.indexMode "rc31". */
+export type MoneyStream = "wages" | "prizes" | "sponsor" | "flat";
+
+/**
+ * The season money index — ×1 at season 0 in every mode. "single" (M1):
+ * every stream on CAREER_ECONOMY.indexPerSeason^seasonIndex, so no ratio
+ * between two streams drifts with time. "rc31": the stream's own rc.31 rate —
+ * wages and fees ×1.08, prizes ×1.12, new sponsor deals ×1.10, every other
+ * amount flat.
+ */
+export function moneyIndex(seasonIndex: number, stream: MoneyStream = "flat"): number {
+  const s = Math.max(0, seasonIndex);
+  if (CAREER_ECONOMY.indexMode === "single") return Math.pow(CAREER_ECONOMY.indexPerSeason, s);
+  switch (stream) {
+    case "wages":
+      return Math.pow(CAREER_SALARY.inflationPerSeason, s);
+    case "prizes":
+      return Math.pow(CAREER_PRIZES.growthPerSeason, s);
+    case "sponsor":
+      return Math.pow(CAREER_SPONSOR.growthPerSeason, s);
+    default:
+      return 1;
+  }
+}
+
+/**
+ * A season-0 amount (a price, a limit, an insert's money) in this season's
+ * money: ×moneyIndex (the "flat" stream, so untouched in rc.31), quantized,
+ * never to $0 when the amount is not (one quantum, its sign kept).
+ */
+export function indexedAmount(amount: number, seasonIndex: number): number {
+  const idx = moneyIndex(seasonIndex, "flat");
+  if (amount === 0 || idx === 1) return amount;
+  const q = quantize(amount * idx);
+  return q !== 0 ? q : Math.sign(amount) * CAREER_ECONOMY.roundQuantum;
+}
+
+/** The scouting report's price this season (CAREER_SCOUT.reportCost, indexed). */
+export function scoutReportCostFor(seasonIndex: number): number {
+  return indexedAmount(CAREER_SCOUT.reportCost, seasonIndex);
+}
+
+/** The emergency stand-in's fee this season (CAREER_SUB.standInFee, indexed). */
+export function standInFeeFor(seasonIndex: number): number {
+  return indexedAmount(CAREER_SUB.standInFee, seasonIndex);
+}
+
+/** An insert option's money (data/career/inserts.ts is season-0 money), indexed. */
+export function insertMoneyFor(amount: number, seasonIndex: number): number {
+  return indexedAmount(amount, seasonIndex);
+}
+
+/**
+ * M5 (decision 6-B — provisional): the active prize tables. "contract": the
+ * 100 % tables; "rc31": rc.31's (the Swiss-16 one paid 102 %).
+ */
+export function prizeTables(): { swiss16: Record<string, number>; single8: Record<string, number> } {
+  return CAREER_PRIZES.tables === "rc31"
+    ? { swiss16: CAREER_PRIZES.swiss16PctRc31, single8: CAREER_PRIZES.single8PctRc31 }
+    : { swiss16: CAREER_PRIZES.swiss16Pct, single8: CAREER_PRIZES.single8Pct };
+}
+
 /**
  * Placement → percent of the pool. Swiss16 pays every placement ("top4"
  * maps onto the fourth row); single8 collapses third/fourth into top4;
@@ -71,11 +140,11 @@ function prizePctFor(placement: Placement, format: CareerEventFormat): number {
     return placement === "swiss_exit" ? table.eliminated : table.qualified;
   }
   if (format === "swiss") {
-    const table = CAREER_PRIZES.swiss16Pct;
+    const table = prizeTables().swiss16;
     if (placement === "top4") return table.fourth;
     return table[placement] ?? table.swiss_exit;
   }
-  const table = CAREER_PRIZES.single8Pct;
+  const table = prizeTables().single8;
   switch (placement) {
     case "champion":
       return table.champion;
@@ -101,12 +170,10 @@ export function prizeFor(
   placement: Placement,
   format: CareerEventFormat,
   difficulty: CareerDifficulty,
-  /** v0.3: pools grow ×growthPerSeason^seasonIndex (default 0 = season X). */
+  /** v0.3: pools grow with the season (rc.32 M1: the money index; default 0 = season X). */
   seasonIndex = 0,
 ): number {
-  const pool =
-    CAREER_PRIZES.pools[tier] *
-    Math.pow(CAREER_PRIZES.growthPerSeason, Math.max(0, seasonIndex));
+  const pool = CAREER_PRIZES.pools[tier] * moneyIndex(seasonIndex, "prizes");
   const pct = prizePctFor(placement, format);
   const raw = pool * (pct / 100) * CAREER_ECONOMY.prizeMult[difficulty];
   const quantized = quantize(raw);
@@ -142,6 +209,23 @@ export function prizePoolPaidFor(
     total += (count ?? 0) * prizeFor(tier, placement as Placement, format, difficulty, seasonIndex);
   }
   return total;
+}
+
+/** The podium a players' share is paid on (1st–4th; "top4" is single-elim's 3rd/4th). */
+const PODIUM_PLACEMENTS: readonly Placement[] = ["champion", "runner_up", "third", "fourth", "top4"];
+
+/**
+ * M6 lever 2 (decision 5-B — provisional): the players' share of a podium
+ * prize — CAREER_PRIZES.playerShare of 1st–4th at a regional, a Major or
+ * Worlds, quantized; 0 for every other event and place (newcomers' prizes
+ * are untouched), and 0 when the share is switched off (rc.31).
+ */
+export function playerShareFor(tier: EventTier, placement: Placement, prize: number): number {
+  const share = CAREER_PRIZES.playerShare;
+  if (!share.enabled || prize <= 0 || !PODIUM_PLACEMENTS.includes(placement)) return 0;
+  const rate =
+    tier === "regional" ? share.regional : tier === "major" ? share.major : tier === "worlds" ? share.worlds : 0;
+  return rate > 0 ? Math.min(prize, quantize(prize * rate)) : 0;
 }
 
 /**
@@ -223,16 +307,23 @@ function potentialFactorFor(overall: number, potential: number): number {
   );
 }
 
-/** The soft star-gate: money, never a hard refusal (design §9). */
-function repPremiumFor(overall: number, rep: number): number {
-  const comfort = CAREER_SALARY.repComfortBase + CAREER_SALARY.repComfortSlope * rep;
+/**
+ * The soft star-gate: money, never a hard refusal (design §9). rc.32 (M6
+ * lever 1, decision 5-B — provisional): the comfort level stops at
+ * CAREER_SALARY.repComfortMax, so a star carries a premium even at rep 100
+ * (null = rc.31, no cap). Exported for the probe's P2b.
+ */
+export function repPremiumFor(overall: number, rep: number): number {
+  const raw = CAREER_SALARY.repComfortBase + CAREER_SALARY.repComfortSlope * rep;
+  const cap = CAREER_SALARY.repComfortMax;
+  const comfort = cap === null ? raw : Math.min(cap, raw);
   return Math.min(
     CAREER_SALARY.repPremiumCap,
     1 + CAREER_SALARY.repPremiumPerPoint * Math.max(0, overall - comfort),
   );
 }
 
-/** Shared base curve: $base × growth^(OVR−anchor) × askMult × inflation. */
+/** Shared base curve: $base × growth^(OVR−anchor) × askMult × the season index (M1). */
 function baseCurve(
   overall: number,
   seasonIndex: number,
@@ -242,7 +333,7 @@ function baseCurve(
     CAREER_SALARY.basePerSplit *
     Math.pow(CAREER_SALARY.growthPerPoint, overall - CAREER_SALARY.anchorOverall) *
     CAREER_ECONOMY.salaryAskMult[difficulty] *
-    Math.pow(CAREER_SALARY.inflationPerSeason, seasonIndex)
+    moneyIndex(seasonIndex, "wages")
   );
 }
 
@@ -270,7 +361,7 @@ export function computeSalaryAsk(input: SalaryAskInput): number {
     (input.ambitious ? CAREER_SALARY.ambitionRenewalMult : 1) *
     (input.blockbusterRefused ? CAREER_SALARY.blockbusterRefusalRenewalMult : 1) *
     askJitterFor(input.careerSeed, input.playerId);
-  return quantize(Math.max(CAREER_SALARY.minSalary, raw));
+  return quantize(Math.max(indexedAmount(CAREER_SALARY.minSalary, input.seasonIndex), raw));
 }
 
 /**
@@ -307,11 +398,11 @@ export function salaryAskFactors(input: SalaryAskInput): { key: string; delta: n
   return factors;
 }
 
-/** Under-contract fee: ask × remaining splits × factor, min fee, quantized. */
-export function transferFeeFor(askPerSplit: number, splitsRemaining: number): number {
+/** Under-contract fee: ask × remaining splits × factor, min fee (indexed, M1), quantized. */
+export function transferFeeFor(askPerSplit: number, splitsRemaining: number, seasonIndex = 0): number {
   return quantize(
     Math.max(
-      CAREER_TRANSFER.minFee,
+      indexedAmount(CAREER_TRANSFER.minFee, seasonIndex),
       askPerSplit * splitsRemaining * CAREER_TRANSFER.feePerRemainingSplit,
     ),
   );
@@ -339,19 +430,19 @@ export function marketValueFor(input: MarketValueInput): number {
   const raw =
     CAREER_SALARY.basePerSplit *
     Math.pow(CAREER_SALARY.growthPerPoint, input.overall - CAREER_SALARY.anchorOverall) *
-    Math.pow(CAREER_SALARY.inflationPerSeason, input.seasonIndex) *
+    moneyIndex(input.seasonIndex, "wages") *
     ageFactorFor(input.age) *
     potentialFactorFor(input.overall, input.potential) *
     CAREER_TRANSFER.valueMultiple;
-  return quantize(Math.max(CAREER_TRANSFER.minFee, raw));
+  return quantize(Math.max(indexedAmount(CAREER_TRANSFER.minFee, input.seasonIndex), raw));
 }
 
-/** User buys under-contract: value × bounded contract load (was ask×splits×1.4). */
-export function contractedFeeFor(value: number, splitsRemaining: number): number {
+/** User buys under-contract: value × bounded contract load (was ask×splits×1.4); min fee indexed (M1). */
+export function contractedFeeFor(value: number, splitsRemaining: number, seasonIndex = 0): number {
   const load =
     CAREER_TRANSFER.contractLoadBase +
     CAREER_TRANSFER.contractLoadPerSplit * Math.max(1, splitsRemaining);
-  return quantize(Math.max(CAREER_TRANSFER.minFee, value * load));
+  return quantize(Math.max(indexedAmount(CAREER_TRANSFER.minFee, seasonIndex), value * load));
 }
 
 // ---------------------------------------------------------------------------
@@ -511,16 +602,26 @@ export function pushLedger(fin: FinanceState, entry: Omit<LedgerEntry, "id">): F
 }
 
 /**
- * Prize payout: one prize line; while the Backer loan is active, a
- * garnishRate[difficulty] slice is line-itemized on the same payout and
- * reduces loan.remaining (the loan clears at 0 — final slice may be
- * sub-quantum so the debt zeroes exactly).
+ * Prize payout: one prize line; rc.32 (M6, provisional) the players' share
+ * of a podium prize as its own line right after it (`ctx.playerShare`, see
+ * playerShareFor); while the Backer loan is active, a garnishRate[difficulty]
+ * slice of the org's part (prize − share) is line-itemized on the same
+ * payout and reduces loan.remaining (the loan clears at 0 — final slice may
+ * be sub-quantum so the debt zeroes exactly).
  */
 export function applyPrize(
   fin: FinanceState,
   amount: number,
-  ctx: { seasonIndex: number; week: number; day?: number; refName: string; difficulty: CareerDifficulty },
-): { fin: FinanceState; garnished: number } {
+  ctx: {
+    seasonIndex: number;
+    week: number;
+    day?: number;
+    refName: string;
+    difficulty: CareerDifficulty;
+    /** The players' share booked out of this prize (0 / omitted = none). */
+    playerShare?: number;
+  },
+): { fin: FinanceState; garnished: number; playerShare: number } {
   let next = pushLedger(fin, {
     seasonIndex: ctx.seasonIndex,
     week: ctx.week,
@@ -529,11 +630,23 @@ export function applyPrize(
     amount,
     refName: ctx.refName,
   });
+  const playerShare = Math.min(Math.max(0, amount), Math.max(0, ctx.playerShare ?? 0));
+  if (playerShare > 0) {
+    next = pushLedger(next, {
+      seasonIndex: ctx.seasonIndex,
+      week: ctx.week,
+      day: ctx.day,
+      kind: "playerShare",
+      amount: -playerShare,
+      refName: ctx.refName,
+    });
+  }
+  const orgPart = amount - playerShare;
   let garnished = 0;
-  if (next.loan && amount > 0) {
+  if (next.loan && orgPart > 0) {
     garnished = Math.min(
       next.loan.remaining,
-      quantize(CAREER_LOAN.garnishRate[ctx.difficulty] * amount),
+      quantize(CAREER_LOAN.garnishRate[ctx.difficulty] * orgPart),
     );
     if (garnished > 0) {
       next = pushLedger(next, {
@@ -548,7 +661,7 @@ export function applyPrize(
       next = { ...next, loan: remaining > 0 ? { remaining } : null };
     }
   }
-  return { fin: next, garnished };
+  return { fin: next, garnished, playerShare };
 }
 
 /**
@@ -696,10 +809,20 @@ export interface WeeklyStatementInput {
   rep: number;
   gear: GearState;
   bankLoan?: BankLoanState | null;
+  /**
+   * rc.32 (M1): the season the money is in — the fanbase, the psychologist
+   * and the gear upkeep are season-0 amounts on the money index. Omitted =
+   * season 0 (rc.31's flat amounts).
+   */
+  seasonIndex?: number;
+  /** rc.32 (M3): the founding partner's base this split (foundingPartnerBaseFor; 0 / omitted = none). */
+  foundingPartnerPerSplit?: number;
 }
 
 export interface WeeklyStatement {
   sponsorBase: number;
+  /** rc.32 (M3, provisional): the founding partner's weekly base (0 = none). */
+  foundingPartner: number;
   fanbase: number;
   payroll: number;
   coach: number;
@@ -717,19 +840,23 @@ export interface WeeklyStatement {
  * `net` is income − expenses.
  */
 export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
+  const s = input.seasonIndex ?? 0;
   const sponsorBase = input.sponsor ? weeklyOf(input.sponsor.basePerSplit) : 0;
-  const fanbase = weeklyOf(Math.max(0, input.rep) * CAREER_ECONOMY.passivePerRepPoint);
+  const foundingPartner =
+    input.foundingPartnerPerSplit && input.foundingPartnerPerSplit > 0 ? weeklyOf(input.foundingPartnerPerSplit) : 0;
+  const fanbase = weeklyOf(Math.max(0, input.rep) * CAREER_ECONOMY.passivePerRepPoint * moneyIndex(s, "flat"));
   const payroll = input.squadSalaries.reduce((sum, l) => sum + weeklyWage(l.amount), 0);
   const coach = input.coachSalary !== null && input.coachSalary > 0 ? weeklyWage(input.coachSalary) : 0;
-  const psychologist = input.gear.psychologist ? weeklyOf(CAREER_GEAR.psychologistPerSplit) : 0;
-  const upkeep = weeklyOf(gearUpkeepPerSplit(input.gear));
+  const psychologist = input.gear.psychologist ? weeklyOf(psychologistPerSplitFor(s)) : 0;
+  const upkeep = weeklyOf(gearUpkeepPerSplit(input.gear, s));
   const bankPayment = input.bankLoan
     ? Math.min(input.bankLoan.remaining, input.bankLoan.weeklyPayment)
     : 0;
-  const income = sponsorBase + fanbase;
+  const income = sponsorBase + foundingPartner + fanbase;
   const expenses = payroll + coach + psychologist + upkeep + bankPayment;
   return {
     sponsorBase,
+    foundingPartner,
     fanbase,
     payroll,
     coach,
@@ -751,6 +878,118 @@ export function runwayWeeks(balance: number, weeklyNet: number): number | null {
   return Math.max(0, Math.floor(balance / -weeklyNet));
 }
 
+/**
+ * rc.32 (M4): the runway a decision leaves — the balance after its one-off
+ * cost (`upfront`: fee, bonus, severance) at the weekly net after its
+ * recurring change (`weeklyChange`: negative = a new weekly cost, e.g. minus
+ * payrollProjection's wage-bill delta). null = not burning. The signing and
+ * renewal readouts quote it; the Backer's lock compares it with today's.
+ */
+export function runwayWeeksAfter(input: {
+  balance: number;
+  weeklyNet: number;
+  upfront?: number;
+  weeklyChange?: number;
+}): number | null {
+  return runwayWeeks(input.balance - (input.upfront ?? 0), input.weeklyNet + (input.weeklyChange ?? 0));
+}
+
+/** Does `after` leave a shorter runway than `now`? null = not burning (no end in sight). */
+export function runwayShortened(now: number | null, after: number | null): boolean {
+  if (after === null) return false;
+  if (now === null) return true;
+  return after < now;
+}
+
+/**
+ * rc.32 (M4): Mondays until the books close below `floor` at this weekly net
+ * — the projected breach the warnings quote (null = not burning; at least 1,
+ * the next Monday).
+ */
+export function mondaysToBreach(balance: number, weeklyNet: number, floor: number): number | null {
+  if (weeklyNet >= 0) return null;
+  return Math.max(1, Math.floor((balance - floor) / -weeklyNet) + 1);
+}
+
+// ---------------------------------------------------------------------------
+// rc.32 M4 (ECONOMY-CONTRACT §5, decision 4-B — provisional): the safety net
+// ---------------------------------------------------------------------------
+
+/** The weekly wage bill (squad + coach) at the Monday funnel's own rounding (weeklyWage per line). */
+export function weeklyWageBill(squadSalaries: readonly number[], coachSalary: number | null): number {
+  const coach = coachSalary !== null && coachSalary > 0 ? weeklyWage(coachSalary) : 0;
+  return squadSalaries.reduce((sum, amount) => sum + weeklyWage(amount), coach);
+}
+
+export interface BackerLine {
+  /** A Monday below this is a breach. */
+  floor: number;
+  /** The Backer's rescue tops the balance back up to this. */
+  rescueTo: number;
+}
+
+/**
+ * The Backer's floor and rescue target. "weeks" (M4): −floorWeeks and
+ * +rescueToWeeks × the weekly wage bill, counted on at least
+ * `weeksBasisMin` (season-0 money, indexed) — weeks of payroll already scale
+ * with the squad, so M1 does not index them again. "flat" (rc.31): the flat
+ * −$5k / +$3k, on M1's index (flat in rc.31's own).
+ */
+export function backerLineFor(weeklyBill: number, seasonIndex: number): BackerLine {
+  const L = CAREER_LOAN;
+  if (L.sizing === "flat") {
+    return { floor: indexedAmount(L.floor, seasonIndex), rescueTo: indexedAmount(L.rescueTo, seasonIndex) };
+  }
+  const basis = Math.max(weeklyBill, L.weeksBasisMin * moneyIndex(seasonIndex, "flat"));
+  return { floor: -quantize(L.floorWeeks * basis), rescueTo: quantize(L.rescueToWeeks * basis) };
+}
+
+/** Mondays the books closed below the floor so far — an older save reads its one rescue. */
+export function loanBreachesOf(fin: Pick<FinanceState, "loanBreaches" | "loanUsed">): number {
+  return fin.loanBreaches ?? (fin.loanUsed ? 1 : 0);
+}
+
+export type BreachOutcome = "rescue" | "restructure" | "insolvent";
+
+/**
+ * What the `breach`-th Monday below the floor does on this difficulty: the
+ * first is the Backer's rescue; CAREER_LOAN.breachesToEnd[difficulty] ends
+ * the career (null = never); every breach strictly between is a
+ * restructuring (the store sells the highest-paid player, rep falls, and
+ * the Backer tops the books back up — backerTopUp).
+ */
+export function breachOutcomeFor(breach: number, difficulty: CareerDifficulty): BreachOutcome {
+  if (breach <= 1) return "rescue";
+  const end = CAREER_LOAN.breachesToEnd[difficulty] ?? null;
+  if (end !== null && breach >= end) return "insolvent";
+  return "restructure";
+}
+
+/**
+ * The Backer's rescue rule after a restructuring: below `rescueTo`, a grant
+ * tops the balance back up to it, repaid ×repayFactor on top of whatever is
+ * still owed (one "loanGrant" line). At or above it, nothing moves.
+ */
+export function backerTopUp(
+  fin: FinanceState,
+  rescueTo: number,
+  ctx: { seasonIndex: number; week: number; day?: number },
+): { fin: FinanceState; granted: number } {
+  if (fin.balance >= rescueTo) return { fin, granted: 0 };
+  const granted = rescueTo - fin.balance;
+  const next = pushLedger(fin, {
+    seasonIndex: ctx.seasonIndex,
+    week: ctx.week,
+    day: ctx.day,
+    kind: "loanGrant",
+    amount: granted,
+  });
+  return {
+    fin: { ...next, loan: { remaining: (fin.loan?.remaining ?? 0) + granted * CAREER_LOAN.repayFactor } },
+    granted,
+  };
+}
+
 export interface WeeklyPayrollInput extends WeeklyStatementInput {
   fin: FinanceState;
   seasonIndex: number;
@@ -761,19 +1000,28 @@ export interface WeeklyPayrollInput extends WeeklyStatementInput {
 
 /**
  * The Monday money funnel (v2.0 — replaces the per-split payday): sponsor
- * base in → fanbase in → squad payroll out (ONE aggregated line) → coach out →
- * psychologist out → upkeep out → bank instalment out → floor check.
+ * base in → the founding partner in (rc.32) → fanbase in → squad payroll out
+ * (ONE aggregated line) → coach out → psychologist out → upkeep out → bank
+ * instalment out → floor check.
  *
- * Floor check (design §9 Emergency Backer, unchanged): balance below
- * CAREER_LOAN.floor → first time the Backer grants back to `rescueTo`
- * (repayable at repayFactor, garnished from prizes); a second breach after
- * the rescue = insolvency (the STORE owns the ending).
+ * Floor check (design §9 Emergency Backer; rc.32 M4, provisional): a Monday
+ * below the Backer's floor (backerLineFor, on the wage bill booked) is a
+ * breach, counted in `fin.loanBreaches`. The first: the Backer grants back
+ * to the rescue target (repayable at repayFactor, garnished from prizes and
+ * sales). Later ones by breachOutcomeFor: a restructuring (`restructure` —
+ * the STORE sells the highest-paid player and calls backerTopUp) or
+ * insolvency (the STORE owns the ending). rc.31's keys (sizing "flat",
+ * breachesToEnd 2) restore rc.31: −$5k / +$3k, the second breach ends it.
  */
 export function weeklyPayroll(input: WeeklyPayrollInput): {
   fin: FinanceState;
   statement: WeeklyStatement;
   insolvent: boolean;
   rescued: boolean;
+  /** rc.32 (M4): a breach the store restructures (decision 4-B). */
+  restructure: boolean;
+  /** The Backer's line this Monday (on the wage bill just booked). */
+  line: BackerLine;
   bankCleared: boolean;
 } {
   const { seasonIndex, week, day } = input;
@@ -785,6 +1033,7 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
   };
 
   line("sponsorBase", statement.sponsorBase, input.sponsor?.sponsorId);
+  line("foundingPartner", statement.foundingPartner);
   line("fanbase", statement.fanbase);
   line("payroll", -statement.payroll);
   line("coachSalary", -statement.coach);
@@ -799,11 +1048,16 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     fin = { ...fin, bankLoan: remaining > 0 ? { ...fin.bankLoan, remaining } : null };
   }
 
+  const backer = backerLineFor(statement.payroll + statement.coach, seasonIndex);
   let insolvent = false;
   let rescued = false;
-  if (fin.balance < CAREER_LOAN.floor) {
-    if (!fin.loanUsed) {
-      const grant = CAREER_LOAN.rescueTo - fin.balance;
+  let restructure = false;
+  if (fin.balance < backer.floor) {
+    const breach = loanBreachesOf(fin) + 1;
+    const outcome = breachOutcomeFor(breach, input.difficulty);
+    fin = { ...fin, loanBreaches: breach };
+    if (outcome === "rescue") {
+      const grant = backer.rescueTo - fin.balance;
       fin = pushLedger(fin, { seasonIndex, week, day, kind: "loanGrant", amount: grant });
       fin = {
         ...fin,
@@ -811,20 +1065,27 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
         loanUsed: true,
       };
       rescued = true;
-    } else {
+    } else if (outcome === "insolvent") {
       insolvent = true;
+    } else {
+      restructure = true;
     }
   }
-  return { fin, statement, insolvent, rescued, bankCleared };
+  return { fin, statement, insolvent, rescued, restructure, line: backer, bankCleared };
 }
 
 // ---------------------------------------------------------------------------
 // v2.0 bank loan (R21)
 // ---------------------------------------------------------------------------
 
-/** Max principal the bank offers at this reputation (0 = nothing yet). */
-export function bankLoanLimitFor(rep: number): number {
-  return CAREER_BANK.maxByRepTier[repTierOf(rep)];
+/** Max principal the bank offers at this reputation (0 = nothing yet); rc.32: on the money index (M1). */
+export function bankLoanLimitFor(rep: number, seasonIndex = 0): number {
+  return indexedAmount(CAREER_BANK.maxByRepTier[repTierOf(rep)], seasonIndex);
+}
+
+/** The smallest loan the bank writes this season (CAREER_BANK.minAmount, indexed). */
+export function bankMinAmountFor(seasonIndex = 0): number {
+  return indexedAmount(CAREER_BANK.minAmount, seasonIndex);
 }
 
 /** Repayment terms for a principal: total owed, weekly instalment, term. */
@@ -855,11 +1116,12 @@ export function bankLoanRefusal(
   fin: FinanceState,
   rep: number,
   principal: number,
+  seasonIndex = 0,
 ): BankLoanRefusal | null {
   if (fin.bankLoan) return "active";
   if (CAREER_BANK.blockedWhileBacker && fin.loan) return "backer";
-  if (principal < CAREER_BANK.minAmount || principal !== quantize(principal)) return "amount";
-  if (principal > bankLoanLimitFor(rep)) return "limit";
+  if (principal < bankMinAmountFor(seasonIndex) || principal !== quantize(principal)) return "amount";
+  if (principal > bankLoanLimitFor(rep, seasonIndex)) return "limit";
   return null;
 }
 
@@ -932,10 +1194,9 @@ function sponsorOfferForTier(
   const row = CAREER_SPONSOR.tiers[tier - 1];
   const pick = derivedFloat(careerSeed, streams.gen("sponsor", `${seasonIndex}:${tier}`));
   // v0.3: sponsor money grows with the scene (new deals only — offers are
-  // generated per season, so the growth bakes in at offer time).
-  const mult =
-    CAREER_ECONOMY.sponsorMult[difficulty] *
-    Math.pow(CAREER_SPONSOR.growthPerSeason, Math.max(0, seasonIndex));
+  // generated per season, so the growth bakes in at offer time). rc.32: on
+  // the one money index (M1).
+  const mult = CAREER_ECONOMY.sponsorMult[difficulty] * moneyIndex(seasonIndex, "sponsor");
   return {
     sponsorId: SPONSOR_POOL[tier][pick < 0.5 ? 0 : 1],
     tier,
@@ -978,6 +1239,39 @@ export function sponsorOffersFor(
 }
 
 // ---------------------------------------------------------------------------
+// rc.32 M3 (ECONOMY-CONTRACT §5, decision 3-A — provisional): the founding partner
+// ---------------------------------------------------------------------------
+
+/** Is the founding partner still paying (switched on, created, not ended)? */
+export function foundingPartnerActive(fp: FoundingPartnerState | null | undefined): boolean {
+  return CAREER_SPONSOR.founding.enabled && !!fp && fp.endedSeason === undefined;
+}
+
+/**
+ * The founding partner's base per split this season: payrollShare × the
+ * wage bill it was sized on, moved from `sizedSeason` to this season on the
+ * sponsor stream's index, quantized. 0 when it is off, absent or ended.
+ */
+export function foundingPartnerBaseFor(fp: FoundingPartnerState | null | undefined, seasonIndex: number): number {
+  if (!fp || !foundingPartnerActive(fp)) return 0;
+  const idx = moneyIndex(seasonIndex, "sponsor") / moneyIndex(fp.sizedSeason, "sponsor");
+  return quantize(CAREER_SPONSOR.founding.payrollShare * fp.wageBillPerSplit * idx);
+}
+
+/**
+ * Does the founding partner step back now? It runs until the first real
+ * deal or the end of season index `throughSeasonIndex`, whichever is later:
+ * so only past that season, and only once a real deal has been signed.
+ */
+export function foundingPartnerEnds(
+  fp: FoundingPartnerState | null | undefined,
+  seasonIndex: number,
+  realDealSigned: boolean,
+): boolean {
+  return foundingPartnerActive(fp) && realDealSigned && seasonIndex > CAREER_SPONSOR.founding.throughSeasonIndex;
+}
+
+// ---------------------------------------------------------------------------
 // Gear & staff ladder (v0.2 — the progressive toolbox)
 // ---------------------------------------------------------------------------
 
@@ -1016,11 +1310,25 @@ export function gearBuffLevels(gear: GearState): 0 | 1 | 2 | 3 {
   return Math.min(3, levels) as 0 | 1 | 2 | 3;
 }
 
-/** Per-split upkeep of owned gear (the psychologist retainer bills separately). */
-export function gearUpkeepPerSplit(gear: GearState): number {
+/**
+ * Per-split upkeep of owned gear (the psychologist retainer bills
+ * separately); rc.32: on the money index (M1) — the Monday funnel's
+ * weeklyOf rounds it.
+ */
+export function gearUpkeepPerSplit(gear: GearState, seasonIndex = 0): number {
   let upkeep = 0;
   for (const item of CAREER_GEAR.items) if (gear[item.id]) upkeep += item.upkeepPerSplit;
-  return upkeep;
+  return upkeep * moneyIndex(seasonIndex, "flat");
+}
+
+/** The psychologist's retainer per split this season (CAREER_GEAR.psychologistPerSplit, M1 index). */
+export function psychologistPerSplitFor(seasonIndex = 0): number {
+  return CAREER_GEAR.psychologistPerSplit * moneyIndex(seasonIndex, "flat");
+}
+
+/** A bootcamp run's price this season (tier 1 or 2; M1 index). */
+export function bootcampCostFor(tier: 1 | 2, seasonIndex = 0): number {
+  return indexedAmount(CAREER_GEAR.bootcamp[tier - 1].cost, seasonIndex);
 }
 
 /** Highest bootcamp tier the org's reputation unlocks (0 = none yet). */
@@ -1030,12 +1338,13 @@ export function bootcampTierFor(rep: number): 0 | 1 | 2 {
   return tier;
 }
 
-/** Gear price after the active sponsor's perk discount. */
-export function gearPriceFor(baseCost: number, sponsorTier: number | null): number {
-  if (!sponsorTier) return baseCost;
+/** Gear price after the active sponsor's perk discount; rc.32: the list price on the money index (M1). */
+export function gearPriceFor(baseCost: number, sponsorTier: number | null, seasonIndex = 0): number {
+  const listed = indexedAmount(baseCost, seasonIndex);
+  if (!sponsorTier) return listed;
   const row = CAREER_SPONSOR.tiers[sponsorTier - 1];
   const pct = row?.gearDiscountPct ?? 0;
-  return quantize(baseCost * (1 - pct / 100)) || baseCost;
+  return quantize(listed * (1 - pct / 100)) || listed;
 }
 
 /** Progressive unlock gates (v0.2: gear ladder + the non-gear gates). */

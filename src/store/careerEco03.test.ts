@@ -10,7 +10,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { CAREER_CONTRACT, CAREER_LOAN, CAREER_NEGOTIATION } from "@/config/balance";
+import { CAREER_CONTRACT, CAREER_NEGOTIATION } from "@/config/balance";
 import { CAREER_BEATS, type CareerBeat } from "@/data/career/beats";
 import { DAYS_PER_SEASON, firstDayOfWeek, weekOfDay, windowIndexOf } from "@/engine/career/calendar";
 import { playerViewById } from "@/engine/career/development";
@@ -28,6 +28,7 @@ import type { CareerPlayerView, CareerSave, TransferOffer } from "@/engine/caree
 import {
   acceptBidFlow,
   advanceDayFlow,
+  backerLineOf,
   createCareerSave,
   releasePlayerFlow,
   renewPlayerFlow,
@@ -380,9 +381,9 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     const target = freeAgents(makeSave())[0];
     const save = makeSave();
     const ask = marketAsk(save, target);
-    // Funds: one dollar short of the floor.
+    // Funds: one dollar short of the floor (rc.32: the Backer's line on this wage bill).
     const broke = structuredClone(save);
-    broke.finances.balance = CAREER_LOAN.floor + ask.fee + ask.signingBonus - 1;
+    broke.finances.balance = backerLineOf(broke).floor + ask.fee + ask.signingBonus - 1;
     const r1 = signPlayerFlow(broke, target.id, { lengthSeasons: 2 });
     expect(r1.error).toBe("funds");
     expect(moneyAndSlots(r1.save)).toBe(moneyAndSlots(broke));
@@ -403,7 +404,7 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     const otherAsk = marketAsk(tight, other);
     const leaver = tight.squad[0];
     tight.finances.balance =
-      CAREER_LOAN.floor + otherAsk.fee + otherAsk.signingBonus + severanceFor(leaver, 0) - 1;
+      backerLineOf(tight).floor + otherAsk.fee + otherAsk.signingBonus + severanceFor(leaver, 0) - 1;
     const r4 = signPlayerFlow(tight, other.id, { lengthSeasons: 2, releaseId: leaver.id });
     expect(r4.error).toBe("funds");
     expect(moneyAndSlots(r4.save)).toBe(moneyAndSlots(tight));

@@ -235,7 +235,7 @@ export function DayCard({
 
       {inserting ? (
         <div className="mt-4">
-          <NowInsert C={C} id={insertId!} onChoose={onInsert!} />
+          <NowInsert C={C} id={insertId!} onChoose={onInsert!} seasonIndex={save.clock.seasonIndex} />
         </div>
       ) : (
         <>

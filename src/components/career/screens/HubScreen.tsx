@@ -56,14 +56,14 @@ import {
   useCareerSave,
   useRevealHeldEventId,
   userTeamPreview,
-  weeklyStatement,
   weekOfDay,
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { DayCard } from "@/components/career/hub/DayCard";
-import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
+import { NowBacker, NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
+import { weeklyStatementOf } from "@/store/careerFlow";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
@@ -322,14 +322,8 @@ export function HubScreen() {
     !ended && weekOfDay(today) >= 23
       ? save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex).length
       : 0;
-  const statement = weeklyStatement({
-    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
-    coachSalary: save.coach?.salaryPerSplit ?? null,
-    sponsor: save.sponsor,
-    rep: save.reputation,
-    gear: save.finances.gear,
-    bankLoan: save.finances.bankLoan ?? null,
-  });
+  // rc.32: the statement the Monday books (the season's money index, the founding partner).
+  const statement = weeklyStatementOf(save);
   // No runway, Backer or instalment notices once the books are closed.
   const runway = ended ? null : runwayWeeks(save.finances.balance, statement.net);
   const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
@@ -457,7 +451,8 @@ export function HubScreen() {
               {backerOwed ? (
                 <AppLink href="/career/finances" className="block">
                   <Panel className="rise-in border-orange/30 p-3.5 text-sm text-sub transition-colors hover:border-orange/60">
-                    {C.hub.backerOpen(formatMoney(backerOwed.remaining))}
+                    {/* rc.32 (M4): the debt and what the next breach means. */}
+                    <NowBacker save={save} C={C} owed={formatMoney(backerOwed.remaining)} />
                   </Panel>
                 </AppLink>
               ) : null}

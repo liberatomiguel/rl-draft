@@ -19,9 +19,10 @@
 import { useMemo, useState } from "react";
 import {
   CAREER_CONTRACT,
-  CAREER_LOAN,
+  CAREER_PAYROLL,
   CAREER_SCOUT,
   CAREER_TRAINING,
+  CAREER_TRANSFER,
   CAREER_UNLOCKS,
 } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -29,19 +30,32 @@ import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import {
   payrollProjection,
   repNeededForOverall,
+  runwayWeeksAfter,
+  scoutReportCostFor,
   severanceFor,
   signableOverallCap,
 } from "@/engine/career/economy";
+import { userBidsBlocked } from "@/engine/career/market";
+import { windowIndexOf } from "@/engine/career/calendar";
 import { signsForFinalSeason } from "@/engine/career/development";
 import type {
   CareerPlayerView,
+  CareerSave,
   PotentialBand,
   TransferOffer,
 } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { coachCandidatesFor, negotiationTriesFor, signingPlanFor } from "@/store/careerFlow";
+import {
+  backerLineOf,
+  coachCandidatesFor,
+  lateSigningOpen,
+  negotiationTriesFor,
+  signingPlanFor,
+  weeklyStatementOf,
+} from "@/store/careerFlow";
+import { blockbusterWhatOf, refusalPct } from "@/components/career/hub/NowCards";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
@@ -127,6 +141,77 @@ function MarketErrorNotice({ className }: { className?: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// rc.32 M8 (ECONOMY-CONTRACT §6 decision 8-B — provisional): "List for sale"
+// ---------------------------------------------------------------------------
+
+function ListingPanel({
+  save,
+  C,
+  onList,
+  onWithdraw,
+}: {
+  save: CareerSave;
+  C: CareerCopy;
+  onList: (playerId: string) => void;
+  onWithdraw: (playerId: string) => void;
+}) {
+  if (!CAREER_TRANSFER.listingEnabled || save.squad.length === 0) return null;
+  const D = C.dates;
+  const listings = save.saleListings ?? [];
+  const windowIdx = windowIndexOf(weekOfDay(save.clock.day));
+  // R47: the career's first window is bid-free — a listing waits for the next one (the UI says so).
+  const bidFree = userBidsBlocked(save.clock.seasonIndex, windowIdx);
+  const nextWindow = windowIdx === null ? (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null) : null;
+  const [lo, hi] = CAREER_TRANSFER.listingOfferRange;
+  return (
+    <Panel className="p-4">
+      <p className="kicker mb-1 text-[11px]">{C.market.listTitle}</p>
+      <p className="mb-3 text-xs text-sub">{C.market.listHint(Math.round(lo * 100), Math.round(hi * 100))}</p>
+      {bidFree ? (
+        <p className="mb-2 text-[11px] font-semibold text-orange-bright">{C.market.listedFirstWindow}</p>
+      ) : null}
+      {nextWindow && listings.length > 0 ? (
+        <p className="mb-2 text-[11px] text-faint">
+          {C.market.listedNextWindow(formatDaysAway(D, nextWindow.daysAway))}
+        </p>
+      ) : null}
+      <div className="space-y-2">
+        {save.squad.map((p) => {
+          const listed = listings.some((l) => l.playerId === p.id);
+          const offer = save.pendingOffers.some((o) => o.listing && o.playerId === p.id && o.status === "pending");
+          return (
+            <div
+              key={p.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-white/[0.02] px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="flex items-center gap-2">
+                  <span className="display truncate text-sm font-bold text-ink">{p.name}</span>
+                  {listed ? <Badge tone="blue">{C.market.listedTag}</Badge> : null}
+                </p>
+                <p className="text-[11px] text-sub">
+                  {C.common.ovrShort(Math.round(p.overall))}
+                  {listed ? <> · {offer ? C.market.listedOffer : C.market.listedWaiting}</> : null}
+                </p>
+              </div>
+              {listed ? (
+                <Button variant="ghost" size="sm" onClick={() => onWithdraw(p.id)}>
+                  {C.market.withdrawListing}
+                </Button>
+              ) : (
+                <Button variant="secondary" size="sm" onClick={() => onList(p.id)}>
+                  {C.market.listCta}
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Toolbar chip (tabs, sort, region filter)
 // ---------------------------------------------------------------------------
 
@@ -175,6 +260,8 @@ export function MarketScreen() {
   const signPlayer = useCareerStore((s) => s.signPlayer);
   const acceptBid = useCareerStore((s) => s.acceptBid);
   const declineBid = useCareerStore((s) => s.declineBid);
+  const listForSale = useCareerStore((s) => s.listForSale);
+  const withdrawListing = useCareerStore((s) => s.withdrawListing);
   const hireCoach = useCareerStore((s) => s.hireCoach);
   const fireCoach = useCareerStore((s) => s.fireCoach);
   const buyScoutReport = useCareerStore((s) => s.buyScoutReport);
@@ -304,6 +391,8 @@ export function MarketScreen() {
 
   // --- window state ----------------------------------------------------------
   const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
+  // rc.32 (M8, provisional): after a window sale, one free agent may still sign for a few days.
+  const lateOpen = lateSigningOpen(save);
   const closesIn = daysUntilWindowCloses(save);
   // v0.3 visible signing gate (new signings only; renewals/squad exempt).
   const signableCap = signableOverallCap(save.reputation);
@@ -369,8 +458,15 @@ export function MarketScreen() {
     add: [proposal],
   });
   const targetRejects = target ? negotiationTriesFor(save, target.view.id) : 0;
+  // rc.32 (M4): the Backer's line on this wage bill, and the runway the deal leaves.
   const backerRisk =
-    pack !== null && !blockReason && balanceAfter < CAREER_LOAN.floor + pack.salaryPerSplit;
+    pack !== null && !blockReason && balanceAfter < backerLineOf(save).floor + pack.salaryPerSplit;
+  const runwayLeft = runwayWeeksAfter({
+    balance: save.finances.balance,
+    weeklyNet: weeklyStatementOf(save).net,
+    upfront: cost,
+    weeklyChange: -(wageBill.after - wageBill.now),
+  });
   const targetBand = target ? potBandOfView(save, target.view) : null;
 
   const factorLabel = (key: string): string =>
@@ -408,6 +504,14 @@ export function MarketScreen() {
           {nextWindowStop ? (
             <span className="text-xs font-semibold text-blue-bright">
               {C.market.windowClosedHint(formatDaysAway(D, nextWindowStop.daysAway))}
+            </span>
+          ) : null}
+          {lateOpen && save.lateSigning ? (
+            <span className="flex w-full items-center gap-2 text-xs font-semibold text-good">
+              <Badge tone="good">{C.market.lateSigningTag}</Badge>
+              {C.market.lateSigningOpen(
+                formatDateTiny(D, dateOfDay(save.clock.seasonIndex, save.lateSigning.untilDay)),
+              )}
             </span>
           ) : null}
         </Panel>
@@ -701,7 +805,14 @@ export function MarketScreen() {
                           {o.blockbuster ? (
                             <Badge tone="gold">{C.market.blockbuster}</Badge>
                           ) : null}
+                          {o.listing ? <Badge tone="blue">{C.market.listingTag}</Badge> : null}
                         </div>
+                        {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
+                        {o.blockbuster ? (
+                          <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-sub">
+                            {blockbusterWhatOf(C, orgName)}
+                          </p>
+                        ) : null}
                         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-sub">
                           {o.otherRef ? (
                             <button
@@ -750,9 +861,11 @@ export function MarketScreen() {
                   </Panel>
                 );
               })}
-              <p className="text-center text-[11px] text-faint">{C.market.declineHint}</p>
+              <p className="text-center text-[11px] text-faint">{C.market.declineHint(refusalPct())}</p>
             </>
           )}
+          {/* rc.32 (M8, provisional): "List for sale". */}
+          <ListingPanel save={save} C={C} onList={listForSale} onWithdraw={withdrawListing} />
         </div>
       ) : null}
 
@@ -783,7 +896,7 @@ export function MarketScreen() {
                   onClick={() => buyScoutReport(target.view.id)}
                   title={C.player.scoutHint}
                 >
-                  {C.player.scoutCost(formatMoney(CAREER_SCOUT.reportCost, { compact: true }))}
+                  {C.player.scoutCost(formatMoney(scoutReportCostFor(save.clock.seasonIndex), { compact: true }))}
                 </Button>
               ) : (
                 <Badge tone="blue" className="self-center">
@@ -803,8 +916,8 @@ export function MarketScreen() {
                 <Button
                   variant="primary"
                   size="md"
-                  disabled={!windowOpen}
-                  title={windowOpen ? undefined : C.market.windowClosed}
+                  disabled={!windowOpen && !(lateOpen && target.orgRef === null)}
+                  title={windowOpen || (lateOpen && target.orgRef === null) ? undefined : C.market.windowClosed}
                   onClick={() => setOfferOpen(true)}
                 >
                   {C.market.signCta}
@@ -1010,6 +1123,19 @@ export function MarketScreen() {
               ) : null}
               <p className="mt-0.5 font-semibold text-ink">
                 {C.market.payrollWeek(formatMoney(wageBill.now), formatMoney(wageBill.after))}
+              </p>
+              {/* rc.32 (M4, provisional): the runway this signing leaves. */}
+              <p
+                className={cx(
+                  "mt-0.5 text-xs font-semibold",
+                  runwayLeft === null
+                    ? "text-good"
+                    : runwayLeft <= CAREER_PAYROLL.runwayWarnWeeks
+                      ? "text-bad"
+                      : "text-sub",
+                )}
+              >
+                {C.market.runwayAfter(runwayLeft)}
               </p>
               {backerRisk ? (
                 <p className="mt-2 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">

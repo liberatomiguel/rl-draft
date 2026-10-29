@@ -37,6 +37,7 @@ import {
   CAREER_PAYROLL,
   CAREER_QUALIFIER,
   CAREER_REP,
+  CAREER_SALARY,
   CAREER_SAVE,
   CAREER_SCOUT,
   CAREER_SCRIM,
@@ -82,6 +83,7 @@ import {
   unofficialOfferFor,
   weekAt,
   weekOfDay,
+  windowCloseDayFor,
   windowIndexOf,
 } from "@/engine/career/calendar";
 import {
@@ -119,39 +121,61 @@ import { insertDowFor, rollInsertFor } from "@/engine/career/inserts";
 import {
   applyPrize,
   applyTransferIncome,
+  backerLineFor,
+  backerTopUp,
   bankLoanRefusal,
+  bootcampCostFor,
   bootcampTierFor,
+  breachOutcomeFor,
   computeSalaryAsk,
   debtPaymentFor,
   eventRepKindFor,
+  foundingPartnerBaseFor,
+  foundingPartnerEnds,
   gearNextItem,
   gearPriceFor,
   gearTrainingBonus,
+  insertMoneyFor,
+  loanBreachesOf,
   marketValueFor,
+  mondaysToBreach,
   negotiationAccepts,
   payBankLoanDown,
   payLoanDown,
+  payrollProjection,
+  playerShareFor,
   pushLedger,
   quantize,
   repGainFor,
   repLossFloor,
   repTierOf,
+  runwayShortened,
   runwayWeeks,
+  runwayWeeksAfter,
+  scoutReportCostFor,
   severanceFor,
   signableOverallCap,
   sponsorOffersFor,
+  standInFeeFor,
   t3RepKeyFor,
   takeBankLoan,
   unlocksFor,
   weeklyPayroll,
+  weeklyStatement,
+  weeklyWageBill,
+  type BackerLine,
   type GearItemId,
+  type WeeklyStatement,
 } from "@/engine/career/economy";
 import {
   aiWindowMoves,
   askPackageFor,
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
+  fieldingBuyerFor,
   incomingBidForDay,
+  listingOfferFor,
+  listingWaitDaysFor,
   renewalAskFor,
   userBidsBlocked,
   type AskPackage,
@@ -533,6 +557,110 @@ function userQualifiedFor(save: CareerSave, def: CareerEventDef): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// rc.32 money reads (ECONOMY-CONTRACT M1 / M3 / M4 — provisional): ONE source
+// for the Monday funnel, the screens, the bot and the probe
+// ---------------------------------------------------------------------------
+
+/** The founding partner's base this split (0 = none, ended or switched off). */
+export function foundingPartnerPerSplitOf(save: CareerSave): number {
+  return foundingPartnerBaseFor(save.foundingPartner, save.clock.seasonIndex);
+}
+
+/** The weekly statement of THIS save — what the next Monday books (economy.weeklyStatement). */
+export function weeklyStatementOf(save: CareerSave): WeeklyStatement {
+  return weeklyStatement({
+    squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
+    coachSalary: save.coach?.salaryPerSplit ?? null,
+    sponsor: save.sponsor,
+    rep: save.reputation,
+    gear: save.finances.gear,
+    bankLoan: save.finances.bankLoan ?? null,
+    seasonIndex: save.clock.seasonIndex,
+    foundingPartnerPerSplit: foundingPartnerPerSplitOf(save),
+  });
+}
+
+/** The Backer's floor and rescue target on this save's wage bill (economy.backerLineFor). */
+export function backerLineOf(save: CareerSave): BackerLine {
+  return backerLineFor(
+    weeklyWageBill(
+      save.squad.map((p) => p.salaryPerSplit),
+      save.coach?.salaryPerSplit ?? null,
+    ),
+    save.clock.seasonIndex,
+  );
+}
+
+/** Has the org ever signed a real sponsor deal (the founding partner's end condition)? */
+function realDealSigned(save: CareerSave): boolean {
+  return Boolean(save.flags[ACH_FLAGS.sponsorSigned]) || save.sponsor !== null;
+}
+
+/**
+ * M4 (decision 4-B — provisional): while the Backer is owed, would this
+ * decision shorten the runway? `upfront` = its one-off cost, `weeklyCost` =
+ * the weekly cost it adds (negative = a saving). False when the lock is off
+ * (CAREER_LOAN.lockCommitments) or nothing is owed.
+ */
+export function backerLocks(save: CareerSave, upfront: number, weeklyCost: number): boolean {
+  if (!CAREER_LOAN.lockCommitments || !save.finances.loan) return false;
+  const net = weeklyStatementOf(save).net;
+  const now = runwayWeeks(save.finances.balance, net);
+  const after = runwayWeeksAfter({ balance: save.finances.balance, weeklyNet: net, upfront, weeklyChange: -weeklyCost });
+  return runwayShortened(now, after);
+}
+
+/**
+ * M3 (decision 3-A — provisional): the founding partner, sized on the wage
+ * bill per split right now (squad + coach) in this season's money. Called on
+ * the founding day and by the load backfill; announced once in the inbox.
+ */
+function openFoundingPartner(save: CareerSave): void {
+  const wageBillPerSplit = save.squad.reduce((n, p) => n + p.salaryPerSplit, save.coach?.salaryPerSplit ?? 0);
+  save.foundingPartner = { wageBillPerSplit, sizedSeason: save.clock.seasonIndex };
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "foundingPartner",
+    bodyKey: "foundingPartner",
+    params: {
+      base: foundingPartnerPerSplitOf(save),
+      pct: Math.round(CAREER_SPONSOR.founding.payrollShare * 100),
+      through: seasonLabelFor(CAREER_SPONSOR.founding.throughSeasonIndex),
+    },
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+}
+
+/** M3: the founding partner steps back (its end condition met) — a mail says so. */
+function closeFoundingPartner(save: CareerSave): void {
+  if (!save.foundingPartner) return;
+  save.foundingPartner = { ...save.foundingPartner, endedSeason: save.clock.seasonIndex };
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "foundingPartnerEnds",
+    bodyKey: "foundingPartnerEnds",
+    params: {},
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+}
+
+/** M8: drop listings whose player left the squad (sold, released, retired, out of contract). */
+function pruneListings(save: CareerSave): void {
+  if (!save.saleListings || save.saleListings.length === 0) return;
+  const ids = new Set(save.squad.map((p) => p.id));
+  save.saleListings = save.saleListings.filter((l) => ids.has(l.playerId));
+}
+
+/** rc.32: a Blockbuster bid the user refused (declined or let expire) surcharges that deal's renewal. */
+function stampBlockbusterRefusal(save: CareerSave, offer: TransferOffer): void {
+  if (!offer.blockbuster || offer.direction !== "out") return;
+  const player = save.squad.find((p) => p.id === offer.playerId);
+  if (player) player.blockbusterRefusedUntil = player.contractEndSeason;
+}
+
+// ---------------------------------------------------------------------------
 // Day arrival — the heart of Advance (v0.2 day clock)
 // ---------------------------------------------------------------------------
 
@@ -561,6 +689,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
         save.sponsor.progress = 0;
         save.sponsor.hitThisSplit = false;
       }
+    }
+
+    // --- 0a. rc.32 (M3, provisional): the founding partner opens on the founding day.
+    if (seasonIndex === 0 && day === 1 && save.foundingPartner === undefined && CAREER_SPONSOR.founding.enabled) {
+      openFoundingPartner(save);
     }
 
     // --- 0b. v2.0 WEEKLY PAYROLL (R20) — every Monday but the founding day --
@@ -609,11 +742,19 @@ export function processDayArrival(input: CareerSave): CareerSave {
             blockbuster: true,
           });
           pushNews(save, { type: "beat", priority: 3, titleKey: "beat", beatId: beat.id });
+          // rc.32 (Miguel, 30/10): the mail explains the bid — the scripted
+          // moment behind it, the fee multiple, the renewal cost of refusing.
           pushMail(save, {
             kind: "offer",
             titleKey: "blockbusterBid",
             bodyKey: "blockbusterBid",
-            params: { player: player.name, org: toOrg ? nameOfRef(save, toOrg) : "?", fee },
+            params: {
+              player: player.name,
+              org: toOrg ? nameOfRef(save, toOrg) : "?",
+              fee,
+              mult: CAREER_TRANSFER.blockbusterFeeMult,
+              pct: Math.round((CAREER_SALARY.blockbusterRefusalRenewalMult - 1) * 100),
+            },
             fromKey: "agent",
             linkTo: "/career/market",
           });
@@ -860,6 +1001,48 @@ export function processDayArrival(input: CareerSave): CareerSave {
     }
   }
 
+  // ===== WINDOW DAYS: rc.32 (M8, provisional) — a listed player's offer =====
+  // Each eligible window day counts a listing down; at zero an AI org that
+  // would field him makes its offer. The career's bid-free first window (R47)
+  // is not an eligible day.
+  if (
+    dayWindowIdx !== null &&
+    save.phase === "running" &&
+    CAREER_TRANSFER.listingEnabled &&
+    (save.saleListings?.length ?? 0) > 0 &&
+    !userBidsBlocked(seasonIndex, dayWindowIdx)
+  ) {
+    pruneListings(save);
+    for (const listing of save.saleListings ?? []) {
+      if (save.pendingOffers.some((o) => o.listing && o.playerId === listing.playerId)) continue;
+      if (listing.waitDays > 0) listing.waitDays -= 1;
+      if (listing.waitDays > 0) continue;
+      const player = save.squad.find((p) => p.id === listing.playerId);
+      const offer = player
+        ? listingOfferFor({
+            world: save.world,
+            player,
+            seasonIndex,
+            windowIdx: dayWindowIdx as 0 | 1 | 2 | 3,
+            day,
+            careerSeed: save.careerSeed,
+          })
+        : null;
+      if (!offer) continue;
+      save.pendingOffers.push(offer);
+      const org = offer.otherRef ? nameOfRef(save, offer.otherRef) : "?";
+      pushNews(save, { type: "transfer", priority: 2, titleKey: "listingOffer", params: { player: offer.playerName, org } });
+      pushMail(save, {
+        kind: "offer",
+        titleKey: "listingOffer",
+        bodyKey: "listingOffer",
+        params: { player: offer.playerName, org, fee: offer.fee },
+        fromKey: "agent",
+        linkTo: "/career/market",
+      });
+    }
+  }
+
   // ==================== EVERY DAY: offer expiry ============================
   const beforeCount = save.pendingOffers.length;
   for (const offer of save.pendingOffers) {
@@ -870,6 +1053,12 @@ export function processDayArrival(input: CareerSave): CareerSave {
         (save.clock.seasonIndex === offer.resolveSeason && day > offer.resolveDay))
     ) {
       offer.status = "expired";
+      // rc.32: letting a Blockbuster lapse refuses it (the renewal surcharge);
+      // a listing whose offer lapsed is over — he stays.
+      stampBlockbusterRefusal(save, offer);
+      if (offer.listing && save.saleListings) {
+        save.saleListings = save.saleListings.filter((l) => l.playerId !== offer.playerId);
+      }
     }
   }
   if (beforeCount > 0) {
@@ -1194,10 +1383,15 @@ function emitWindowReport(save: CareerSave, lastWindowWeek: number): void {
  * economy.weeklyPayroll, then owns the consequences: Backer rescue news,
  * insolvency (career end), bank loan cleared, and the runway warning when
  * the balance covers only CAREER_PAYROLL.runwayWarnWeeks more Mondays.
+ * rc.32 (provisional): the founding partner's end condition (M3), the
+ * restructuring of a breach between the rescue and the last one (M4), and
+ * the weekly warnings with the projected breach (M4).
  */
 function runWeeklyPayroll(save: CareerSave): void {
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
+  // rc.32 (M3): past season index throughSeasonIndex with a real deal signed, the founding partner steps back.
+  if (foundingPartnerEnds(save.foundingPartner, seasonIndex, realDealSigned(save))) closeFoundingPartner(save);
   const payroll = weeklyPayroll({
     fin: save.finances,
     squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
@@ -1209,6 +1403,7 @@ function runWeeklyPayroll(save: CareerSave): void {
     week,
     day,
     difficulty: save.difficulty,
+    foundingPartnerPerSplit: foundingPartnerPerSplitOf(save),
   });
   save.finances = payroll.fin;
   if (payroll.bankCleared) {
@@ -1229,7 +1424,15 @@ function runWeeklyPayroll(save: CareerSave): void {
       kind: "finance",
       titleKey: "backerIn",
       bodyKey: "backerIn",
-      params: {},
+      // rc.32 (M4): the window it buys, what is owed and what the next breach means.
+      params: {
+        rescueTo: payroll.line.rescueTo,
+        owed: save.finances.loan?.remaining ?? 0,
+        weeks: CAREER_LOAN.sizing === "weeks" ? CAREER_LOAN.rescueToWeeks : 0,
+        garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
+        lock: CAREER_LOAN.lockCommitments ? 1 : 0,
+        next: breachOutcomeFor(loanBreachesOf(save.finances) + 1, save.difficulty),
+      },
       fromKey: "backer",
       linkTo: "/career/finances",
     });
@@ -1239,23 +1442,154 @@ function runWeeklyPayroll(save: CareerSave): void {
     pushNews(save, { type: "org", priority: 3, titleKey: "insolvency" });
     return;
   }
-  const runway = runwayWeeks(save.finances.balance, payroll.statement.net);
-  if (runway !== null && runway === CAREER_PAYROLL.runwayWarnWeeks && save.finances.balance > 0) {
-    pushNews(save, {
-      type: "org",
-      priority: 2,
-      titleKey: "cashWarning",
-      params: { weeks: runway },
-    });
+  if (payroll.restructure) restructureAfterBreach(save);
+  if (CAREER_PAYROLL.runwayWarnMode === "rc31") {
+    const runway = runwayWeeks(save.finances.balance, payroll.statement.net);
+    if (runway !== null && runway === CAREER_PAYROLL.runwayWarnWeeks && save.finances.balance > 0) {
+      pushNews(save, {
+        type: "org",
+        priority: 2,
+        titleKey: "cashWarning",
+        params: { weeks: runway },
+      });
+      pushMail(save, {
+        kind: "finance",
+        titleKey: "cashWarning",
+        bodyKey: "cashWarning",
+        params: { weeks: runway, net: payroll.statement.net },
+        fromKey: "accountant",
+        linkTo: "/career/finances",
+      });
+    }
+    return;
+  }
+  warnRunway(save, payroll.restructure ? weeklyStatementOf(save).net : payroll.statement.net);
+}
+
+/** Save flags of the M4 warnings: the 8-week notice sent, the 4-week news line sent (this squeeze). */
+const RUNWAY_NOTICE_FLAG = "runwayNotice";
+const RUNWAY_WARNED_FLAG = "runwayWarned";
+
+/**
+ * rc.32 M4 (decision 4-B — provisional): the accountant's warnings, read on
+ * the Monday just booked. At ≤ runwayWarnWeeks of runway (the overdraft
+ * included): a mail every Monday (the news line once a squeeze); once, when
+ * it first drops to ≤ runwayNoticeWeeks: a notice. Each quotes the projected
+ * breach (the Monday the books would close below the Backer's floor at this
+ * net) and what that breach would mean; the copy carries the recovery
+ * checklist. A runway back above the notice level re-arms both.
+ */
+function warnRunway(save: CareerSave, net: number): void {
+  const balance = save.finances.balance;
+  const runway = runwayWeeks(balance, net);
+  if (runway === null || runway > CAREER_PAYROLL.runwayNoticeWeeks) {
+    delete save.flags[RUNWAY_NOTICE_FLAG];
+    delete save.flags[RUNWAY_WARNED_FLAG];
+    return;
+  }
+  const line = backerLineOf(save);
+  const mondays = mondaysToBreach(balance, net, line.floor) ?? 1;
+  const breachWeek = weekOfDay(save.clock.day) + mondays;
+  const nextSeason = breachWeek > CAREER_CALENDAR.weeksPerSeason;
+  const params = {
+    weeks: runway,
+    net,
+    burn: -net,
+    mondays,
+    breachWeek: nextSeason ? breachWeek - CAREER_CALENDAR.weeksPerSeason : breachWeek,
+    nextSeason: nextSeason ? 1 : 0,
+    floor: line.floor,
+    next: breachOutcomeFor(loanBreachesOf(save.finances) + 1, save.difficulty),
+    backer: save.finances.loan ? 1 : 0,
+  };
+  if (runway <= CAREER_PAYROLL.runwayWarnWeeks) {
+    if (!save.flags[RUNWAY_WARNED_FLAG]) {
+      save.flags[RUNWAY_WARNED_FLAG] = true;
+      pushNews(save, { type: "org", priority: 2, titleKey: "cashWarning", params: { weeks: runway } });
+    }
     pushMail(save, {
       kind: "finance",
       titleKey: "cashWarning",
       bodyKey: "cashWarning",
-      params: { weeks: runway, net: payroll.statement.net },
+      params,
+      fromKey: "accountant",
+      linkTo: "/career/finances",
+    });
+  } else if (!save.flags[RUNWAY_NOTICE_FLAG]) {
+    save.flags[RUNWAY_NOTICE_FLAG] = true;
+    pushMail(save, {
+      kind: "finance",
+      titleKey: "cashNotice",
+      bodyKey: "cashNotice",
+      params,
       fromKey: "accountant",
       linkTo: "/career/finances",
     });
   }
+}
+
+/**
+ * rc.32 M4 (decision 4-B — provisional): a breach strictly between the
+ * Backer's rescue and the last one (CAREER_LOAN.breachesToEnd). The
+ * highest-paid player is sold at market value to an AI org of his region
+ * that would field him (half the fee to the Backer while it is owed, like
+ * any sale), reputation drops by restructureRepLoss (never below the rep
+ * floor) and the Backer's rescue rule tops the books back up to its target.
+ * The squad stays playable: the reserve is promoted (syncSquadRoles) and an
+ * event short of three starters fields a stand-in. An inbox mail and an HQ
+ * line say what happened, why, and what the next breach means.
+ */
+function restructureAfterBreach(save: CareerSave): void {
+  const { seasonIndex, day } = save.clock;
+  const week = weekOfDay(day);
+  const breach = loanBreachesOf(save.finances);
+  const top = [...save.squad].sort(
+    (a, b) => b.salaryPerSplit - a.salaryPerSplit || b.overall - a.overall || a.id.localeCompare(b.id),
+  )[0];
+  let sold: { player: string; org: string; fee: number } | null = null;
+  if (top) {
+    const buyer = fieldingBuyerFor({
+      world: save.world,
+      player: top,
+      seasonIndex,
+      careerSeed: save.careerSeed,
+      key: `restructure:${seasonIndex}:${day}`,
+    });
+    if (buyer) {
+      const fee = marketValueFor({
+        overall: top.overall,
+        age: ageOf(top.birthYear, seasonIndex),
+        potential: top.potential,
+        seasonIndex,
+      });
+      sellSquadPlayer(save, top, fee, buyer, { lateSigning: false });
+      sold = { player: top.name, org: nameOfRef(save, buyer), fee };
+    }
+  }
+  loseRep(save, CAREER_LOAN.restructureRepLoss, "repDown");
+  const line = backerLineOf(save);
+  const topUp = backerTopUp(save.finances, line.rescueTo, { seasonIndex, week, day });
+  save.finances = topUp.fin;
+  const next = breachOutcomeFor(breach + 1, save.difficulty);
+  const params = {
+    n: breach,
+    player: sold?.player ?? "",
+    org: sold?.org ?? "",
+    fee: sold?.fee ?? 0,
+    rep: CAREER_LOAN.restructureRepLoss,
+    rescueTo: line.rescueTo,
+    owed: save.finances.loan?.remaining ?? 0,
+    next,
+  };
+  pushNews(save, { type: "org", priority: 3, titleKey: "restructured", params });
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "restructured",
+    bodyKey: "restructured",
+    params,
+    fromKey: "backer",
+    linkTo: "/career/finances",
+  });
 }
 
 function runSplitBoundary(save: CareerSave): void {
@@ -1370,13 +1704,35 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
   const save = clone(input);
   const player = save.squad.find((p) => p.id === offer.playerId);
   if (!player) return save;
-  save.squad = save.squad.filter((p) => p.id !== offer.playerId);
+  save.pendingOffers = save.pendingOffers.filter((o) => o.id !== offer.id);
+  // rc.32 (M8): a seat sold in a window may be refilled after it closes.
+  sellSquadPlayer(save, player, offer.fee, offer.otherRef ?? null, { lateSigning: true });
+  return save;
+}
+
+/**
+ * ONE sale of a squad player (an accepted bid or listing offer, a
+ * restructuring — ECO-03 / R47: atomic, fee + wages + slot together): he
+ * leaves the squad (the lineup re-syncs), the buying org takes him (or he
+ * lands in its world roster slot), the fee books through
+ * applyTransferIncome (half to the Backer while it is owed — selling pays
+ * the Backer), the wire logs it and every other bid or listing for him is
+ * settled. rc.32 (M8): a sale inside a window opens the late signing.
+ */
+function sellSquadPlayer(
+  save: CareerSave,
+  player: SquadPlayer,
+  fee: number,
+  toRef: string | null,
+  opts: { lateSigning: boolean },
+): void {
+  save.squad = save.squad.filter((p) => p.id !== player.id);
   syncSquadRoles(save);
   // The buying org takes him (or he lands in their world roster slot).
-  if (offer.otherRef) forceTransferInWorld(save, offer.playerId, offer.otherRef);
+  if (toRef) forceTransferInWorld(save, player.id, toRef);
   // v0.3 debt-lock fix: while the Backer loan is active, half the sale
   // amortizes the debt (line-itemized) — selling finally pays the Backer.
-  const { fin, garnished } = applyTransferIncome(save.finances, offer.fee, {
+  const { fin, garnished } = applyTransferIncome(save.finances, fee, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
     day: save.clock.day,
@@ -1398,16 +1754,15 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
     playerId: player.id,
     playerName: player.name,
     fromRef: "user",
-    toRef: offer.otherRef ?? null,
-    fee: offer.fee,
+    toRef,
+    fee,
     kind: "userOut",
     region: save.identity.region,
   });
   // ECO-03 (R47): the sale settles every bid for him — none is left to
   // "complete" later (a release drops them the same way).
-  save.pendingOffers = save.pendingOffers.filter(
-    (o) => o.id !== offer.id && !(o.direction === "out" && o.playerId === offer.playerId),
-  );
+  save.pendingOffers = save.pendingOffers.filter((o) => !(o.direction === "out" && o.playerId === player.id));
+  pruneListings(save);
   pushNews(save, {
     type: "transfer",
     priority: 2,
@@ -1415,10 +1770,45 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
     params: {
       player: player.name,
       org: save.identity.orgName,
-      to: offer.otherRef ? nameOfRef(save, offer.otherRef) : "?",
+      to: toRef ? nameOfRef(save, toRef) : "?",
     },
   });
-  return save;
+  if (opts.lateSigning) openLateSigning(save);
+}
+
+/**
+ * rc.32 M8 (decision 8-B — provisional): a seat sold in a window may be
+ * refilled with a free agent until CAREER_TRANSFER.lateSigningDays after the
+ * window closes — one late signing per window (so one per split).
+ */
+function openLateSigning(save: CareerSave): void {
+  if (!CAREER_TRANSFER.listingEnabled || CAREER_TRANSFER.lateSigningDays <= 0) return;
+  const windowIdx = windowIndexOf(weekOfDay(save.clock.day));
+  if (windowIdx === null) return;
+  const { seasonIndex } = save.clock;
+  const prev = save.lateSigning;
+  if (prev && prev.seasonIndex === seasonIndex && prev.windowIdx === windowIdx) return;
+  save.lateSigning = {
+    seasonIndex,
+    windowIdx,
+    untilDay: Math.min(
+      DAYS_PER_SEASON,
+      windowCloseDayFor(windowIdx as 0 | 1 | 2 | 3) + CAREER_TRANSFER.lateSigningDays,
+    ),
+    used: false,
+  };
+}
+
+/**
+ * rc.32 M8: is the late signing open today? After a window sale, between the
+ * window's close and `untilDay`, unused — a free agent only (signingPlanFor).
+ */
+export function lateSigningOpen(save: CareerSave): boolean {
+  const late = save.lateSigning;
+  if (!late || late.used || !CAREER_TRANSFER.listingEnabled || CAREER_TRANSFER.lateSigningDays <= 0) return false;
+  if (late.seasonIndex !== save.clock.seasonIndex) return false;
+  const day = save.clock.day;
+  return day > windowCloseDayFor(late.windowIdx as 0 | 1 | 2 | 3) && day <= late.untilDay;
 }
 
 /**
@@ -1432,7 +1822,7 @@ export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
   // ECO-02 (R46): settle the exact remainder when the request covers it.
   const pay = debtPaymentFor(save.finances.loan.remaining, amount);
   if (pay <= 0) return { save: input, error: "invalid" };
-  if (save.finances.balance - pay < CAREER_LOAN.floor) return { save: input, error: "funds" };
+  if (save.finances.balance - pay < backerLineOf(save).floor) return { save: input, error: "funds" };
   save.finances = payLoanDown(save.finances, pay, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
@@ -1461,7 +1851,7 @@ export function takeBankLoanFlow(input: CareerSave, principal: number): FlowResu
   if (input.phase === "ended") return { save: input, error: "blocked" }; // ECO-02: no loan to a closed org
   const save = clone(input);
   const amount = quantize(principal);
-  const refusal = bankLoanRefusal(save.finances, save.reputation, amount);
+  const refusal = bankLoanRefusal(save.finances, save.reputation, amount, save.clock.seasonIndex);
   if (refusal === "active") return { save: input, error: "bankActive" };
   if (refusal === "backer") return { save: input, error: "bankBacker" };
   if (refusal === "amount") return { save: input, error: "bankAmount" };
@@ -1508,7 +1898,8 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
       week,
       day: save.clock.day,
       kind: "insert",
-      amount: fx.money,
+      // rc.32 (M1): the catalogue is season-0 money, on the money index.
+      amount: insertMoneyFor(fx.money, seasonIndex),
       refName: def.id,
     });
   }
@@ -1552,7 +1943,7 @@ export function payBankLoanFlow(input: CareerSave, amount: number): FlowResult {
   // ECO-02 (R46): "pay it all" settles the exact remainder (no stub left).
   const pay = debtPaymentFor(save.finances.bankLoan.remaining, amount);
   if (pay <= 0) return { save: input, error: "invalid" };
-  if (save.finances.balance - pay < CAREER_LOAN.floor) return { save: input, error: "funds" };
+  if (save.finances.balance - pay < backerLineOf(save).floor) return { save: input, error: "funds" };
   save.finances = payBankLoanDown(save.finances, pay, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
@@ -1608,7 +1999,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
       week: weekOfDay(save.clock.day),
       day: save.clock.day,
       kind: "standInFee",
-      amount: -CAREER_SUB.standInFee,
+      amount: -standInFeeFor(save.clock.seasonIndex),
       refName: def.name,
     });
     pushNews(save, { type: "org", priority: 2, titleKey: "standIn", params: { event: def.name } });
@@ -1835,7 +2226,7 @@ export function finishEvent(input: CareerSave): CareerSave {
   const placement = result.userPlacement ?? placementOf(ev.tournament, "user");
   const userRow = result.rows.find((r) => r.ref === "user");
 
-  // Prize (+ Backer garnish).
+  // Prize (+ rc.32 the players' share of a podium, M6 provisional; + Backer garnish).
   if (userRow && userRow.prize > 0) {
     const { fin } = applyPrize(save.finances, userRow.prize, {
       seasonIndex: save.clock.seasonIndex,
@@ -1843,6 +2234,7 @@ export function finishEvent(input: CareerSave): CareerSave {
       day: save.clock.day,
       refName: def.name,
       difficulty: save.difficulty,
+      playerShare: playerShareFor(def.tier, placement, userRow.prize),
     });
     save.finances = fin;
     save.stats.totalPrize += userRow.prize;
@@ -2698,6 +3090,8 @@ export interface SigningPlan {
   finalSeason: boolean;
   /** The contract the plan prices and writes: 1 season for a final-season signing. */
   lengthSeasons: 1 | 2 | 3;
+  /** rc.32 (M8): outside a window — the late signing a window sale opened (a free agent only). */
+  lateSigning: boolean;
 }
 
 export function signingPlanFor(
@@ -2706,7 +3100,9 @@ export function signingPlanFor(
   opts: { lengthSeasons: 1 | 2 | 3; releaseId?: string },
 ): { plan: SigningPlan } | { error: string } {
   if (save.activeEvent) return { error: "rosterLocked" }; // rc.30: roster moves wait for the event
-  if (!isWindowWeek(weekOfDay(save.clock.day))) return { error: "windowClosed" };
+  // rc.32 (M8, provisional): outside a window only the late signing a window sale opened.
+  const lateSigning = !isWindowWeek(weekOfDay(save.clock.day));
+  if (lateSigning && !lateSigningOpen(save)) return { error: "windowClosed" };
   if (save.squad.some((p) => p.id === playerId)) return { error: "alreadySigned" };
   const leaver = opts.releaseId ? (save.squad.find((p) => p.id === opts.releaseId) ?? null) : null;
   if (opts.releaseId && !leaver) return { error: "invalid" };
@@ -2718,6 +3114,9 @@ export function signingPlanFor(
   };
   const view = playerViewById(playerId, viewCtx);
   if (!view) return { error: "unavailable" };
+  const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
+  // rc.32 (M8): the late seat takes a free agent only — say so before any other reason.
+  if (lateSigning && onOrg) return { error: "windowClosed" };
   // DEV-02 (R48): signable (and so playable) from the minimum competitive age, 13.
   if (!isCompetitiveAge(view.age)) return { error: "tooYoung" };
 
@@ -2733,7 +3132,6 @@ export function signingPlanFor(
   const finalSeason = signsForFinalSeason(view, save.clock.seasonIndex);
   const lengthSeasons = finalSeason ? 1 : opts.lengthSeasons;
 
-  const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   const pack = askPackageFor(view, {
     rep: save.reputation,
     seasonIndex: save.clock.seasonIndex,
@@ -2746,8 +3144,16 @@ export function signingPlanFor(
   });
   const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   const cost = pack.fee + pack.signingBonus + severance;
-  if (save.finances.balance - cost < CAREER_LOAN.floor) return { error: "funds" };
+  if (save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
   if (pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
+  // rc.32 (M4, provisional): while the Backer is owed, no signing that shortens the runway.
+  const bill = payrollProjection({
+    squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
+    coachSalary: save.coach?.salaryPerSplit ?? null,
+    remove: leaver ? [leaver.id] : [],
+    add: [pack.salaryPerSplit],
+  });
+  if (backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
 
   const openSeats =
     3 - save.starterIds.filter((id) => id !== leaver?.id && save.squad.some((p) => p.id === id)).length;
@@ -2762,6 +3168,7 @@ export function signingPlanFor(
       slot: openSeats > 0 ? "starter" : "reserve",
       finalSeason,
       lengthSeasons,
+      lateSigning,
     },
   };
 }
@@ -2784,6 +3191,7 @@ function releaseFromSquad(save: CareerSave, player: SquadPlayer, severance: numb
   if (refill) syncSquadRoles(save);
   // A pending bid for him can no longer complete.
   save.pendingOffers = save.pendingOffers.filter((o) => o.playerId !== player.id || o.direction !== "out");
+  pruneListings(save); // rc.32 (M8): nor can a listing
   save.world.freeAgentIds.push(player.id);
   save.world.version += 1;
   pushNews(save, {
@@ -2813,7 +3221,7 @@ export function signPlayerFlow(
 ): FlowResult {
   const planned = signingPlanFor(input, playerId, opts);
   if ("error" in planned) return { save: input, error: planned.error };
-  const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons } = planned.plan;
+  const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons, lateSigning } = planned.plan;
   const save = clone(input);
 
   // v0.3 negotiation: a counter-offer may sign cheaper — or harden the agent.
@@ -2910,6 +3318,8 @@ export function signPlayerFlow(
     titleKey: "userSigned",
     params: { player: view.name, org: save.identity.orgName },
   });
+  // rc.32 (M8): the late seat is used — one per window.
+  if (lateSigning && save.lateSigning) save.lateSigning = { ...save.lateSigning, used: true };
   return { save: capNews(save) };
 }
 
@@ -2952,8 +3362,51 @@ export function renewPlayerFlow(
 
 export function declineBidFlow(input: CareerSave, offerId: string): CareerSave {
   const save = clone(input);
+  const offer = save.pendingOffers.find((o) => o.id === offerId);
   save.pendingOffers = save.pendingOffers.filter((o) => o.id !== offerId);
+  if (offer) {
+    // rc.32: refusing a Blockbuster surcharges his next renewal (the offer and
+    // the mail say so); declining a listing's offer keeps him and ends it.
+    stampBlockbusterRefusal(save, offer);
+    if (offer.listing && save.saleListings) {
+      save.saleListings = save.saleListings.filter((l) => l.playerId !== offer.playerId);
+    }
+  }
   return save;
+}
+
+/**
+ * rc.32 M8 (ECONOMY-CONTRACT §6 decision 8-B — provisional): "List for sale".
+ * A squad player under contract goes on the market: after
+ * CAREER_TRANSFER.listingOfferDays eligible window days (never the career's
+ * bid-free first window, R47) an AI org of his region that would field him
+ * offers market value × listingOfferRange. Accept it like any bid (atomic,
+ * the Backer's share included), decline it (he stays, the listing ends) or
+ * withdraw the listing first.
+ */
+export function listForSaleFlow(input: CareerSave, playerId: string): FlowResult {
+  if (input.phase === "ended") return { save: input, error: "blocked" };
+  if (!CAREER_TRANSFER.listingEnabled) return { save: input, error: "listingOff" };
+  const player = input.squad.find((p) => p.id === playerId);
+  if (!player) return { save: input, error: "unknown" };
+  if ((input.saleListings ?? []).some((l) => l.playerId === playerId)) return { save: input, error: "alreadyListed" };
+  const save = clone(input);
+  const { seasonIndex, day } = save.clock;
+  save.saleListings = [
+    ...(save.saleListings ?? []),
+    { playerId, seasonIndex, day, waitDays: listingWaitDaysFor(playerId, seasonIndex, day, save.careerSeed) },
+  ];
+  pushNews(save, { type: "transfer", priority: 1, titleKey: "listed", params: { player: player.name } });
+  return { save: capNews(save) };
+}
+
+/** rc.32 M8: take a player off the market — the listing and any offer it drew. */
+export function withdrawListingFlow(input: CareerSave, playerId: string): FlowResult {
+  if (!(input.saleListings ?? []).some((l) => l.playerId === playerId)) return { save: input, error: "none" };
+  const save = clone(input);
+  save.saleListings = (save.saleListings ?? []).filter((l) => l.playerId !== playerId);
+  save.pendingOffers = save.pendingOffers.filter((o) => !(o.listing && o.playerId === playerId));
+  return { save };
 }
 
 // ---------------------------------------------------------------------------
@@ -2967,8 +3420,8 @@ export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
   if (next.id !== itemId) return { save: input, error: "locked" }; // strict ladder order
   if (save.reputation < next.repGate) return { save: input, error: "locked" };
   if (save.finances.loan) return { save: input, error: "loanActive" };
-  const cost = gearPriceFor(next.cost, save.sponsor?.tier ?? null);
-  if (save.finances.balance - cost < CAREER_LOAN.floor) return { save: input, error: "funds" };
+  const cost = gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
+  if (save.finances.balance - cost < backerLineOf(save).floor) return { save: input, error: "funds" };
   save.finances = pushLedger(save.finances, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
@@ -2985,6 +3438,11 @@ export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
 export function setPsychologistFlow(input: CareerSave, on: boolean): FlowResult {
   const save = clone(input);
   if (on && !unlocksFor(save.reputation).psychologist) return { save: input, error: "locked" };
+  // rc.32 (M4, provisional): a new retainer while the Backer is owed must not shorten the runway.
+  if (on && !save.finances.gear.psychologist) {
+    const withRetainer = weeklyStatementOf({ ...save, finances: { ...save.finances, gear: { ...save.finances.gear, psychologist: true } } });
+    if (backerLocks(save, 0, weeklyStatementOf(save).net - withRetainer.net)) return { save: input, error: "loanRunway" };
+  }
   save.finances.gear.psychologist = on;
   return { save };
 }
@@ -2995,13 +3453,14 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
   if (tier === 0) return { save: input, error: "locked" };
   if (save.finances.bootcampUsedThisSplit) return { save: input, error: "used" };
   const camp = CAREER_GEAR.bootcamp[tier - 1];
+  const campCost = bootcampCostFor(tier, save.clock.seasonIndex); // rc.32 (M1): indexed
 
   // Sponsor perk: free bootcamps per season (tier 3+ deals).
   const freeAllowance = save.sponsor
     ? (CAREER_SPONSOR.tiers[save.sponsor.tier - 1]?.freeBootcampsPerSeason ?? 0)
     : 0;
   const isFree = save.finances.freeBootcampsUsedThisSeason < freeAllowance;
-  if (!isFree && save.finances.balance - camp.cost < CAREER_LOAN.floor) {
+  if (!isFree && save.finances.balance - campCost < backerLineOf(save).floor) {
     return { save: input, error: "funds" };
   }
   if (isFree) {
@@ -3012,7 +3471,7 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
       week: weekOfDay(save.clock.day),
       day: save.clock.day,
       kind: "buff",
-      amount: -camp.cost,
+      amount: -campCost,
       refName: "Bootcamp",
     });
   }
@@ -3032,7 +3491,8 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
 
 export function buyScoutReportFlow(input: CareerSave, playerId: string): FlowResult {
   const save = clone(input);
-  if (save.finances.balance - CAREER_SCOUT.reportCost < CAREER_LOAN.floor) {
+  const cost = scoutReportCostFor(save.clock.seasonIndex); // rc.32 (M1): indexed
+  if (save.finances.balance - cost < backerLineOf(save).floor) {
     return { save: input, error: "funds" };
   }
   const current = Number(save.scouted[playerId] ?? 0);
@@ -3042,7 +3502,7 @@ export function buyScoutReportFlow(input: CareerSave, playerId: string): FlowRes
     week: weekOfDay(save.clock.day),
     day: save.clock.day,
     kind: "buff",
-    amount: -CAREER_SCOUT.reportCost,
+    amount: -cost,
     refName: "Scout report",
   });
   save.scouted[playerId] = CAREER_SCOUT.reportMaxLevel;
@@ -3074,6 +3534,10 @@ export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult 
   const valid = candidates.find((c) => c.id === coach.id);
   if (!valid) return { save: input, error: "unknown" };
   if (save.coach?.id === valid.id) return { save: input, error: "alreadySigned" };
+  // rc.32 (M4, provisional): while the Backer is owed, a hire must not shorten the runway.
+  const coachWeeklyDelta =
+    weeklyWageBill([], valid.salaryPerSplit) - weeklyWageBill([], save.coach?.salaryPerSplit ?? null);
+  if (backerLocks(save, save.coach?.salaryPerSplit ?? 0, coachWeeklyDelta)) return { save: input, error: "loanRunway" };
   // Replacing a coach pays one split of severance (rolling deal).
   if (save.coach) {
     save.finances = pushLedger(save.finances, {
@@ -3395,6 +3859,8 @@ export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowRes
     titleKey: "sponsorSigned",
     params: { org: save.identity.orgName, name: offer.sponsorId },
   });
+  // rc.32 (M3): past its minimum term, the first real deal ends the founding partner.
+  if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) closeFoundingPartner(save);
   return { save: capNews(save) };
 }
 
@@ -3607,6 +4073,7 @@ export function migrateSaveToV4(raw: unknown): CareerSave | null {
 export function migrateSaveToV5(raw: unknown): CareerSave | null {
   const save = migrateSaveToV4(raw);
   if (!save) return null;
+  backfillEconomyOnLoad(save); // rc.32: every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {
@@ -3621,6 +4088,32 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   backfillWeekSeeding(save);
   save.saveVersion = 5;
   return save;
+}
+
+/**
+ * rc.32 (ECONOMY-CONTRACT M3 — provisional): the economy's additive load
+ * step, run by migrateSaveToV5 on every load BEFORE its saveVersion gate
+ * (idempotent; persist version 3 and saveVersion 5 unchanged). A save from
+ * before rc.32 still in season index ≤ CAREER_SPONSOR.founding.
+ * throughSeasonIndex that never signed a sponsor gets the founding partner,
+ * sized on its wage bill at this load and announced once in the inbox;
+ * every other one records `null` (decided: none). Nothing else moves: IDs,
+ * contracts, the Backer and the progress are as saved; `loanBreaches` reads
+ * from `loanUsed` until the next breach writes it.
+ */
+export function backfillEconomyOnLoad(save: CareerSave): void {
+  if (!CAREER_SPONSOR.founding.enabled || save.foundingPartner !== undefined) return;
+  if (!save.clock || !Array.isArray(save.squad) || !save.finances) return;
+  save.flags ??= {};
+  save.mail ??= [];
+  const neverSigned =
+    !realDealSigned(save) &&
+    !(save.finances.ledger ?? []).some((l) => l.kind === "sponsorSigning" || l.kind === "sponsorBase");
+  if (save.phase !== "ended" && save.clock.seasonIndex <= CAREER_SPONSOR.founding.throughSeasonIndex && neverSigned) {
+    openFoundingPartner(save);
+  } else {
+    save.foundingPartner = null;
+  }
 }
 
 /** rc.30 (direct-8): the in-flight regional week's seeding, rebuilt from its commit (migrateSaveToV5). */

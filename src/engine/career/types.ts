@@ -143,6 +143,13 @@ export interface SquadPlayer {
   joinedSeason: number;
   /** Set one season ahead when the retirement roll hits a user player. */
   finalSeasonAnnounced?: boolean;
+  /**
+   * rc.32: the user refused a Blockbuster bid for him while this deal ran —
+   * its `contractEndSeason`. The renewal of THAT deal asks
+   * CAREER_SALARY.blockbusterRefusalRenewalMult more (`market.renewalAskFor`);
+   * a renewed deal ends later, so the surcharge applies once.
+   */
+  blockbusterRefusedUntil?: number;
   /** Training-cap accumulators (CAREER_TRAINING.maxSplitGain/maxSeasonGain). */
   gainedThisSplit: number;
   gainedThisSeason: number;
@@ -375,6 +382,8 @@ export type LedgerKind =
   | "loanGrant"
   | "loanGarnish"
   | "loanPayment" // v0.3: manual Backer pay-down
+  | "foundingPartner" // rc.32 (M3, provisional): the founding partner's weekly base
+  | "playerShare" // rc.32 (M6, provisional): the players' share of a podium prize
   | "fanbase"
   | "payroll" // v2.0: the squad aggregated weekly wages (one line per Monday)
   | "bankLoan" // v2.0: bank loan principal received
@@ -428,6 +437,12 @@ export interface FinanceState {
   loan: { remaining: number } | null;
   /** One rescue per career — a second breach after this is set ends the career. */
   loanUsed: boolean;
+  /**
+   * rc.32 (M4, provisional): Mondays the books closed below the Backer's
+   * floor so far (the rescue was the first). Absent on older saves: read as
+   * 1 when `loanUsed`, else 0 (`economy.loanBreachesOf`).
+   */
+  loanBreaches?: number;
   /** v2.0 bank loan (absent on pre-2.0 saves = none). */
   bankLoan?: BankLoanState | null;
   gear: GearState;
@@ -496,6 +511,42 @@ export interface TransferOffer {
   factors: OfferFactor[];
   /** True when this offer came from a degraded scripted beat (Blockbuster). */
   blockbuster?: boolean;
+  /** rc.32 (M8, provisional): the offer answers the user's "List for sale". */
+  listing?: boolean;
+}
+
+/** rc.32 (M8, provisional): a squad player the user listed for sale. */
+export interface SaleListing {
+  playerId: string;
+  seasonIndex: number;
+  day: number;
+  /** Eligible window days left before the offer arrives (counts down; 0 = offer made). */
+  waitDays: number;
+}
+
+/**
+ * rc.32 (M8, provisional): a seat sold in a window may be refilled with a
+ * free agent until `untilDay` (one late signing per window).
+ */
+export interface LateSigningState {
+  seasonIndex: number;
+  windowIdx: number;
+  untilDay: number;
+  used: boolean;
+}
+
+/**
+ * rc.32 (M3, provisional): the founding partner — a tier-0 deal sized on the
+ * founding wage bill (CAREER_SPONSOR.founding). Paid every Monday while it
+ * has no `endedSeason`.
+ */
+export interface FoundingPartnerState {
+  /** The wage bill per split it is sized on (squad + coach) … */
+  wageBillPerSplit: number;
+  /** … priced in this season's money (0 at creation; the load season for an older save). */
+  sizedSeason: number;
+  /** Set when it ends: the first real deal, never before throughSeasonIndex is over. */
+  endedSeason?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -758,6 +809,12 @@ export interface CareerSave {
   bidsThisWindow: number;
   lastBidDay: number;
   pendingOffers: TransferOffer[];
+  /** rc.32 (M3, provisional): the founding partner; null = none; absent = not decided yet (older save). */
+  foundingPartner?: FoundingPartnerState | null;
+  /** rc.32 (M8, provisional): players listed for sale. */
+  saleListings?: SaleListing[];
+  /** rc.32 (M8, provisional): the late signing a window sale opened, if any. */
+  lateSigning?: LateSigningState | null;
   /** A starter is unavailable for this event (random event, sub steps in). */
   pendingUnavailability: { playerId: string; eventId: string } | null;
 

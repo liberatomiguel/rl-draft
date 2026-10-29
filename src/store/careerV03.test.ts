@@ -9,7 +9,6 @@ import { describe, expect, it } from "vitest";
 import {
   CAREER_LOAN,
   CAREER_NEGOTIATION,
-  CAREER_PRIZES,
   CAREER_TRAINING,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
@@ -19,6 +18,7 @@ import {
   applyTransferIncome,
   contractedFeeFor,
   marketValueFor,
+  moneyIndex,
   negotiationAcceptChance,
   negotiationAccepts,
   payLoanDown,
@@ -202,7 +202,8 @@ describe("v0.3 market value", () => {
     const s0 = prizeFor("regional", "champion", "swiss", "normal", 0);
     const s3 = prizeFor("regional", "champion", "swiss", "normal", 3);
     expect(s3).toBeGreaterThan(s0);
-    expect(s3 / s0).toBeCloseTo(Math.pow(CAREER_PRIZES.growthPerSeason, 3), 1);
+    // rc.32 (M1, provisional): prizes ride the one season money index.
+    expect(s3 / s0).toBeCloseTo(moneyIndex(3, "prizes"), 1);
   });
 });
 

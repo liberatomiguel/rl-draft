@@ -1010,14 +1010,40 @@ export const CAREER_PRIZES = {
   /**
    * v0.3: pools grow ×this^seasonIndex (esports money arrives as the scene
    * matures) — the income-side counterweight to salary inflation 1.08^N.
+   * Read only in CAREER_ECONOMY.indexMode "rc31" (M1 puts prizes on the one
+   * season index).
    */
   growthPerSeason: 1.12,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 6, option B (M5):
+   * tables that pay exactly the pool. "contract": Swiss-16 28 / 18 / 12 / 9 /
+   * 6.5 each 5–6th / 5 each 7–8th / 1.25 each 9–16th and single-elimination
+   * 40 / 20 / 10 each 3–4th / 5 each 5–8th — both 100 %, round season-0
+   * values ($11.2k … $500 at a regional). The qualifier's swissOnlyPct and
+   * every pool are unchanged; lobbies keep showing the paid total (R44).
+   * "rc31" restores rc.31's tables (swiss16PctRc31 paid 102 %).
+   */
+  tables: "contract" as "contract" | "rc31",
   /** Percent per placement for swiss16 events (champion → swiss_exit-flat ×8). */
   swiss16Pct: {
+    champion: 28, runner_up: 18, third: 12, fourth: 9,
+    top6: 6.5, top8: 5, swiss_exit: 1.25,
+  } as Record<string, number>,
+  single8Pct: { champion: 40, runner_up: 20, top4: 10, top8: 5 } as Record<string, number>,
+  /** rc.31's tables, read when `tables` is "rc31". */
+  swiss16PctRc31: {
     champion: 30, runner_up: 20, third: 13, fourth: 10,
     top6: 6.5, top8: 4, swiss_exit: 1,
   } as Record<string, number>,
-  single8Pct: { champion: 40, runner_up: 22, top4: 11, top8: 4 } as Record<string, number>,
+  single8PctRc31: { champion: 40, runner_up: 22, top4: 11, top8: 4 } as Record<string, number>,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 5, option B (M6 lever
+   * 2): the players' share of a podium prize — 1st to 4th of a regional, a
+   * Major or Worlds (never a qualifier or an unofficial cup) — booked as its
+   * own ledger line ("playerShare") right after the prize; the Backer's
+   * garnish reads the org's part. rc.31: no share (`enabled: false`).
+   */
+  playerShare: { enabled: true, regional: 0.2, major: 0.35, worlds: 0.5 },
   /**
    * v2.0 (R40): Swiss-only events (the regional qualifier) pay flat by
    * outcome. rc.29 (CAR-08): the 8 qualified 10% each, the 8 eliminated 2.5%
@@ -1230,7 +1256,10 @@ export const CAREER_AGE = {
    * his LAST — the user's squad announces it at the rollover into that
    * season (one season ahead, never an abrupt exit); the world retires him at
    * the rollover after it. 29 always ends it (a season at 30 is never
-   * played; calendar gaps — 2022 → 2024 — force it a season early).
+   * played). rc.32: the age clock steps exactly +1 a season
+   * (`development.seasonYear` reads the year a season ends: 2020-21 → 2021,
+   * 2022-23 → 2023, then 2024 …), so no calendar gap forces it early any
+   * more (rc.31's clock jumped 2022 → 2024 and made 28 the last).
    * Was (rc.30): 23 → 5 % … 28+ → 70 % per rollover, with no cap.
    */
   retirementByAge: { 24: 0.1, 25: 0.2, 26: 0.3, 27: 0.45, 28: 0.6, 29: 1 } as Record<number, number>,
@@ -1275,6 +1304,21 @@ export const CAREER_ECONOMY = {
   sponsorMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
   /** Fanbase trickle per split = reputation × this. */
   passivePerRepPoint: 40,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 1, option A (M1): ONE
+   * season money index, read through `economy.moneyIndex`. "single": every
+   * stream grows ×indexPerSeason^seasonIndex — wages, fees and coach asks,
+   * prizes, new sponsor deals, the fanbase, the bank's limits, the minimum
+   * fee and salary, the stand-in, scouting, gear (costs and upkeep), the
+   * founding partner and the inserts' money. Signed contracts keep their
+   * figure. The Backer is sized in weeks of payroll (M4), so it is not
+   * indexed again. "rc31" restores rc.31 exactly: wages and fees
+   * ×CAREER_SALARY.inflationPerSeason (1.08), prizes
+   * ×CAREER_PRIZES.growthPerSeason (1.12), new sponsor deals
+   * ×CAREER_SPONSOR.growthPerSeason (1.10), every other amount flat.
+   */
+  indexMode: "single" as "single" | "rc31",
+  indexPerSeason: 1.08,
 } as const;
 
 export const CAREER_SALARY = {
@@ -1288,12 +1332,21 @@ export const CAREER_SALARY = {
   potentialCap: 1.3,
   repComfortBase: 62,
   repComfortSlope: 0.35,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 5, option B (M6 lever
+   * 1): the comfort level (repComfortBase + repComfortSlope × rep) stops
+   * here, so a star always carries a premium — at rep 100 a 90 pays ×1.16
+   * and a 95 ×1.36 (P2b). rc.31: no cap (`null`; comfort reached 97 at rep
+   * 100, so nobody below 97 paid a premium there).
+   */
+  repComfortMax: 86 as number | null,
   repPremiumPerPoint: 0.04,
   repPremiumCap: 2.0,
   askJitterPct: 0.08,
   // ECO-03 (R47): `subRoleFactor` 0.4 (the "signed as a sub" discount) is
   // gone — the lineup slot never prices a contract.
   coachFactor: 0.35,
+  /** Wage and fee inflation — read only in CAREER_ECONOMY.indexMode "rc31" (M1: the one index). */
   inflationPerSeason: 1.08,
   /** "Ambitious" renewal premium when player prestige > org rep tier 2+ splits. */
   ambitionRenewalMult: 1.25,
@@ -1359,6 +1412,25 @@ export const CAREER_TRANSFER = {
   /** AI bid fee = marketValue × this band (selling should tempt). */
   aiBidRange: [1.0, 1.35] as const,
   blockbusterFeeMult: 1.5,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 8, option B (M8):
+   * "List for sale". A listed player under contract draws one offer from an
+   * AI org of his region that would field him, after `listingOfferDays`
+   * eligible window days (the window rules apply, the bid-free first window
+   * included), at market value × listingOfferRange; accept or decline
+   * (declining keeps him), or withdraw the listing. rc.31: no listing
+   * (`listingEnabled: false`).
+   */
+  listingEnabled: true,
+  listingOfferRange: [0.9, 1.15] as const,
+  listingOfferDays: [1, 3] as const,
+  /**
+   * PROVISIONAL (30/10) — decision 8-B's replacement signing: a seat sold
+   * in a window can be refilled with a free agent for this many days after
+   * the window closes (one such late signing per window, so one per split).
+   * 0 = none (option C; rc.31 had no late signing).
+   */
+  lateSigningDays: 7,
 } as const;
 
 export const CAREER_SPONSOR = {
@@ -1374,8 +1446,23 @@ export const CAREER_SPONSOR = {
     { tier: 4, repGate: 75, base: 45_000, bonus: 25_000, objective: "majorTop4", gearDiscountPct: 50, freeBootcampsPerSeason: 2 },
   ] as const,
   signingBonusSplits: 1,
-  /** v0.3: tier base/bonus grow ×this^seasonIndex at offer time (new deals). */
+  /**
+   * v0.3: tier base/bonus grow ×this^seasonIndex at offer time (new deals).
+   * Read only in CAREER_ECONOMY.indexMode "rc31" (M1: the one index).
+   */
   growthPerSeason: 1.1,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 3, option A (M3): the
+   * founding partner, a day-one tier-0 deal. Base per split = payrollShare ×
+   * the founding wage bill (fixed at creation, then on the money index),
+   * objective "enter events", no signing bonus. It runs until the first real
+   * deal or the end of season index `throughSeasonIndex`, whichever is
+   * later — alongside a real deal signed earlier. A save from before rc.32
+   * gets it only while still in season index ≤ throughSeasonIndex with no
+   * sponsor ever signed, sized on its wage bill at that load. rc.31: none
+   * (`enabled: false`).
+   */
+  founding: { enabled: true, payrollShare: 0.7, throughSeasonIndex: 1 },
   /** Misses within a deal before the renewal drops one tier. Never clawbacks. */
   patienceMisses: 3,
   enterEventsTarget: 2,
@@ -1483,8 +1570,40 @@ export const CAREER_SUB = {
 } as const;
 
 export const CAREER_LOAN = {
+  /** rc.31's flat Backer line, read when `sizing` is "flat" (×the M1 index there). */
   floor: -5_000,
   rescueTo: 3_000,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 4, option B (M4): the
+   * Backer in weeks of payroll (`economy.backerLineFor`). The floor is
+   * −floorWeeks and the rescue target +rescueToWeeks × the weekly wage bill
+   * (squad + coach, never below `weeksBasisMin` × the money index), so the
+   * rescue buys the same weeks at season 0 (≈ −$4k / +$3k on a $500 week) and
+   * at season 6. "flat" restores rc.31 (−$5k / +$3k, flat in rc.31's index).
+   */
+  sizing: "weeks" as "weeks" | "flat",
+  floorWeeks: 8,
+  rescueToWeeks: 6,
+  /** Guard for a squad with (almost) no wages: the weekly bill the weeks count, season-0 money. */
+  weeksBasisMin: 100,
+  /**
+   * PROVISIONAL (30/10) — decision 4-B: the breach (Monday below the floor)
+   * that ends the career, by difficulty; null = never. The first breach is
+   * the Backer's rescue; every breach strictly between the first and that
+   * one is a RESTRUCTURING (the highest-paid player sold at market value,
+   * rep −restructureRepLoss, and the Backer's rescue tops the books back up).
+   * Easy: every later breach restructures; Hard: the second ends it. rc.31:
+   * 2 on every difficulty (no restructuring).
+   */
+  breachesToEnd: { easy: null, normal: 3, hard: 2 } as Record<string, number | null>,
+  restructureRepLoss: 5,
+  /**
+   * PROVISIONAL (30/10) — M4: while the Backer is owed, a signing, a coach
+   * hire or the psychologist that would shorten the runway is refused
+   * ("loanRunway"), on top of rc.31's lock (transfer fees, gear, the bank).
+   * rc.31: false.
+   */
+  lockCommitments: true,
   repayFactor: 1.2,
   garnishRate: { easy: 0.1, normal: 0.15, hard: 0.2 } as Record<string, number>,
   /**
@@ -1508,6 +1627,17 @@ export const CAREER_PAYROLL = {
   weeklyQuantum: 10,
   /** Runway warning (weeks of negative net the balance still covers). */
   runwayWarnWeeks: 4,
+  /**
+   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 4, option B (M4): the
+   * warnings. "weekly": the accountant's mail every Monday the runway is at
+   * or under runwayWarnWeeks (the overdraft included) and once, when it
+   * first drops to runwayNoticeWeeks, each with the projected breach (the
+   * Monday the books would cross the Backer's floor) and a recovery
+   * checklist. "rc31": one mail on the Monday the runway is exactly
+   * runwayWarnWeeks with a positive balance, no notice.
+   */
+  runwayWarnMode: "weekly" as "weekly" | "rc31",
+  runwayNoticeWeeks: 8,
 } as const;
 
 /**

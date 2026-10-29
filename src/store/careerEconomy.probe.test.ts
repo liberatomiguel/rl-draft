@@ -177,10 +177,10 @@ async function curvesReport(): Promise<string> {
   lines.push("#### P0. Day one — the founding payroll against the start budget (median of the 7 regions, seed 9100)");
   lines.push("");
   lines.push(
-    `No sponsor until rep ${B.CAREER_SPONSOR.firstOfferRepGate}; the fanbase at rep ${B.CAREER_REP.start} pays ${money(perWeek(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint))}/wk. Runway = weeks of wages the start budget covers with no other income, then the Backer (floor ${money(B.CAREER_LOAN.floor)}, one rescue back to ${money(B.CAREER_LOAN.rescueTo)}). The founders' deals end after season 1.`,
+    `No sponsor until rep ${B.CAREER_SPONSOR.firstOfferRepGate}; the fanbase at rep ${B.CAREER_REP.start} pays ${money(perWeek(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint))}/wk. ${B.CAREER_SPONSOR.founding.enabled ? `The founding partner (M3) pays ${Math.round(B.CAREER_SPONSOR.founding.payrollShare * 100)}% of the founding wage bill through season ${B.CAREER_SPONSOR.founding.throughSeasonIndex} at least. ` : ""}Runway = weeks the start budget covers at that burn (wages − fanbase − founding partner, no prizes), then the Backer: ${B.CAREER_LOAN.sizing === "weeks" ? `floor ${B.CAREER_LOAN.floorWeeks} weeks of wages below zero, one rescue back to ${B.CAREER_LOAN.rescueToWeeks} weeks above (M4)` : `floor ${money(B.CAREER_LOAN.floor)}, one rescue back to ${money(B.CAREER_LOAN.rescueTo)}`}. The founders' deals end after season 1.`,
   );
   lines.push("");
-  head(["Difficulty · founding roster", "wages / wk (season)", "start budget", "runway to $0", "… to the second breach (end)", "S0 prizes / wk: out early · qualifier side"]);
+  head(["Difficulty · founding roster", "wages / wk (season)", "founding partner / wk", "start budget", "Backer floor · rescue", "runway to $0", "… to the second breach", "S0 prizes / wk: out early · qualifier side"]);
   for (const difficulty of ["easy", "normal", "hard"] as const)
     for (const rosterKey of ["balanced", "prospects", "journeymen"] as const) {
       const bills = ALL_REGIONS.map((region) => {
@@ -202,14 +202,19 @@ async function curvesReport(): Promise<string> {
           },
           9100,
         );
-        return save.squad.reduce((n, p) => n + E.weeklyWage(p.salaryPerSplit), 0);
+        return {
+          wk: save.squad.reduce((n, p) => n + E.weeklyWage(p.salaryPerSplit), 0),
+          partner: E.weeklyOf(E.foundingPartnerBaseFor(save.foundingPartner, 0)),
+        };
       });
-      const wk = q(bills, 0.5);
+      const wk = q(bills.map((b) => b.wk), 0.5);
+      const partner = q(bills.map((b) => b.partner), 0.5);
       const fan = E.weeklyOf(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint);
-      const burn = wk - fan;
+      const burn = Math.max(1, wk - fan - partner);
       const budget = B.CAREER_ECONOMY.startingBudget[difficulty];
+      const line = E.backerLineFor(wk, 0);
       const toZero = budget / burn;
-      const toEnd = toZero + -B.CAREER_LOAN.floor / burn + (B.CAREER_LOAN.rescueTo - B.CAREER_LOAN.floor) / burn;
+      const toEnd = toZero + -line.floor / burn + (line.rescueTo - line.floor) / burn;
       const pzd = (tier: Parameters<typeof E.prizeFor>[0], pl: Parameters<typeof E.prizeFor>[1]) =>
         E.prizeFor(tier, pl, tier === "qualifier" ? "swissOnly" : "swiss", difficulty, 0);
       const outEarly = 6 * pzd("qualifier", "swiss_exit") + 3 * (pzd("qualifier", "top8") + pzd("regional", "swiss_exit"));
@@ -217,7 +222,9 @@ async function curvesReport(): Promise<string> {
       row([
         `${difficulty} · ${rosterKey}`,
         `${money(wk)} (${money(wk * W)})`,
+        money(partner),
         money(budget),
+        `${money(line.floor)} · ${money(line.rescueTo)}`,
         `${toZero.toFixed(0)} wk`,
         `${toEnd.toFixed(0)} wk`,
         `${money(outEarly / W)} · ${money(qualSide / W)}`,
@@ -229,27 +236,40 @@ async function curvesReport(): Promise<string> {
   lines.push("#### P1. The season index of each money stream (season 0 = ×1.00)");
   lines.push("");
   lines.push(
-    "Read off the engine's own functions at normal difficulty. A flat row never grows, so it shrinks against the rest: by season 7 the Backer's $3k rescue and the $12k start budget are worth a fraction of a week of wages.",
+    `Read off the engine's own functions at normal difficulty (\`CAREER_ECONOMY.indexMode\` "${B.CAREER_ECONOMY.indexMode}"). A flat row never grows, so it shrinks against the rest. rc.32 (M1): "single" puts every stream on one index; the Backer moves in weeks of the wage bill (M4), so it follows wages without being indexed again; the start budget is a day-one amount.`,
   );
   lines.push("");
   head(["Stream (engine source)", ...seasons.map((s) => `S${s}`)]);
   const idx = (f: (s: number) => number) => seasons.map((s) => `×${(f(s) / f(0)).toFixed(2)}`);
-  row(["Wage asks, new deals (`computeSalaryAsk`, ×1.08)", ...idx((s) => ask({ overall: 80, seasonIndex: s }))]);
+  const rate = (stream: Parameters<typeof E.moneyIndex>[1]) => `×${E.moneyIndex(1, stream).toFixed(2)}`;
+  row([`Wage asks, new deals (\`computeSalaryAsk\`, ${rate("wages")})`, ...idx((s) => ask({ overall: 80, seasonIndex: s }))]);
   row([
-    "Market value / fees (`marketValueFor`, ×1.08)",
+    `Market value / fees (\`marketValueFor\`, ${rate("wages")})`,
     ...idx((s) => E.marketValueFor({ overall: 80, age: 20, potential: 80, seasonIndex: s })),
   ]);
-  row(["Coach asks (`coachSalaryFor`, ×1.08)", ...idx((s) => E.coachSalaryFor(80, s, "normal"))]);
+  row([`Coach asks (\`coachSalaryFor\`, ${rate("wages")})`, ...idx((s) => E.coachSalaryFor(80, s, "normal"))]);
   row([
-    "Prizes, every tier (`prizeFor`, ×1.12)",
+    `Prizes, every tier (\`prizeFor\`, ${rate("prizes")})`,
     ...idx((s) => E.prizeFor("regional", "champion", "swiss", "normal", s)),
   ]);
-  row(["New sponsor deals (`sponsorOffersFor`, ×1.10)", ...idx((s) => sponsorAt(75, s).basePerSplit)]);
-  row(["Fanbase (rep × $40 a split)", ...idx(() => 50 * B.CAREER_ECONOMY.passivePerRepPoint)]);
+  row([`New sponsor deals (\`sponsorOffersFor\`, ${rate("sponsor")})`, ...idx((s) => sponsorAt(75, s).basePerSplit)]);
   row([
-    "Start budget, Backer floor/rescue, bank limits, min fee, gear, scouting, stand-in, inserts",
-    ...seasons.map(() => "×1.00"),
+    `Fanbase (\`weeklyStatement\`, rep × $${B.CAREER_ECONOMY.passivePerRepPoint} a split, ${rate("flat")})`,
+    ...idx((s) => 50 * B.CAREER_ECONOMY.passivePerRepPoint * E.moneyIndex(s, "flat")),
   ]);
+  row([
+    `Founding partner (\`foundingPartnerBaseFor\`, ${rate("sponsor")})`,
+    ...idx((s) => E.foundingPartnerBaseFor({ wageBillPerSplit: 15_000, sizedSeason: 0 }, s) || 1),
+  ]);
+  row([
+    `Bank limits, min fee, gear, scouting, stand-in, inserts (\`indexedAmount\`, ${rate("flat")})`,
+    ...idx((s) => E.bankLoanLimitFor(50, s) + E.scoutReportCostFor(s) + E.standInFeeFor(s) + E.gearPriceFor(10_000, null, s)),
+  ]);
+  row([
+    `Backer line (\`backerLineFor\`, ${B.CAREER_LOAN.sizing === "weeks" ? "weeks of a three-80 wage bill" : "flat"})`,
+    ...idx((s) => -E.backerLineFor(3 * E.weeklyWage(ask({ overall: 80, seasonIndex: s })), s).floor),
+  ]);
+  row(["Start budget (day one only)", ...seasons.map(() => "×1.00")]);
   row([
     "Prizes ÷ asks",
     ...seasons.map((s) =>
@@ -276,7 +296,7 @@ async function curvesReport(): Promise<string> {
   lines.push("#### P2. The wage ask by overall and season (per week · per season)");
   lines.push("");
   lines.push(
-    "Prime age 20, potential = overall (no upside premium), rep 100 (no rep premium), normal, a 2-season deal, the median of the jitter. Each overall point is ×1.2 (`CAREER_SALARY.growthPerPoint`), so +5 points is ×2.49 and +10 is ×6.19.",
+    "Prime age 20, potential = overall (no upside premium), rep 100 (no rep premium below the comfort cap — rc.32: a 90+ still pays it, P2b), normal, a 2-season deal, the median of the jitter. Each overall point is ×1.2 (`CAREER_SALARY.growthPerPoint`), so +5 points is ×2.49 and +10 is ×6.19.",
   );
   lines.push("");
   head(["Overall", ...seasons.map((s) => `S${s}`)]);
@@ -295,14 +315,19 @@ async function curvesReport(): Promise<string> {
   lines.push("#### P2b. The rep premium (× the ask at rep 100) and the signing cap, season 0");
   lines.push("");
   const reps = [5, 12, 25, 50, 75, 90];
-  head(["Overall", ...reps.map((r) => `rep ${r}`)]);
+  lines.push(
+    `rc.32 (M6 lever 1): the comfort level stops at \`CAREER_SALARY.repComfortMax\` (${B.CAREER_SALARY.repComfortMax ?? "no cap"}), so the last column — the premium at rep 100 itself, × the premium-free ask — is above ×1.00 for a star.`,
+  );
+  lines.push("");
+  head(["Overall", ...reps.map((r) => `rep ${r}`), "rep 100 (× premium-free)"]);
   for (const o of [75, 80, 85, 90, 95]) {
     row([
       `${o}`,
       ...reps.map((r) => `×${(ask({ overall: o, rep: r, seasonIndex: 0 }) / ask({ overall: o, rep: 100, seasonIndex: 0 })).toFixed(2)}`),
+      `×${E.repPremiumFor(o, 100).toFixed(2)}`,
     ]);
   }
-  row(["Signable cap (new signings)", ...reps.map((r) => `${Math.floor(E.signableOverallCap(r))}`)]);
+  row(["Signable cap (new signings)", ...reps.map((r) => `${Math.floor(E.signableOverallCap(r))}`), "99"]);
   lines.push("");
 
   // P3. Fees.
@@ -339,17 +364,18 @@ async function curvesReport(): Promise<string> {
     { tier: "worlds", format: "swiss", name: "Worlds" },
   ] as const;
   head(["Event", "advertised pool", "table sums to", "paid S0", "paid S3", "paid S7", "S0: 1st · 2nd · 3rd · 4th · 5–6 · 7–8 · 9–16 (qualifier: advance · out)"]);
+  const tables = E.prizeTables(); // rc.32 (M5): the active tables (`CAREER_PRIZES.tables`)
   for (const t of tiers) {
     const pool = B.CAREER_PRIZES.pools[t.tier];
     const pr = (pl: Parameters<typeof E.prizeFor>[1]) => E.prizeFor(t.tier, pl, t.format, "normal", 0);
     const sumPct =
       t.format === "swiss"
-        ? Object.entries(B.CAREER_PRIZES.swiss16Pct).reduce(
+        ? Object.entries(tables.swiss16).reduce(
             (n, [k, v]) => n + v * ({ top6: 2, top8: 2, swiss_exit: 8 }[k] ?? 1),
             0,
           )
         : t.format === "single"
-          ? B.CAREER_PRIZES.single8Pct.champion + B.CAREER_PRIZES.single8Pct.runner_up + 2 * B.CAREER_PRIZES.single8Pct.top4 + 4 * B.CAREER_PRIZES.single8Pct.top8
+          ? tables.single8.champion + tables.single8.runner_up + 2 * tables.single8.top4 + 4 * tables.single8.top8
           : 8 * B.CAREER_PRIZES.swissOnlyPct.qualified + 8 * B.CAREER_PRIZES.swissOnlyPct.eliminated;
     const placements =
       t.format === "swiss"
@@ -387,17 +413,29 @@ async function curvesReport(): Promise<string> {
   ];
   head(["Season money", ...seasons.map((s) => `S${s}`)]);
   for (const p of profiles) row([`Prizes — ${p.name}`, ...seasons.map((s) => money(p.f(s)))]);
+  // rc.32 (M6 lever 2): what the org keeps of the two podium profiles after the players' share.
+  const net = (tier: Parameters<typeof E.prizeFor>[0], pl: Parameters<typeof E.prizeFor>[1], s: number) =>
+    pz(tier, pl, s) - E.playerShareFor(tier, pl, pz(tier, pl, s));
+  const netProfiles: { name: string; f: (s: number) => number }[] = [
+    { name: "contender", f: (s) => 9 * net("regional", "third", s) + 3 * net("major", "top6", s) + net("worlds", "top8", s) },
+    { name: "dominant", f: (s) => 9 * net("regional", "champion", s) + 3 * net("major", "champion", s) + net("worlds", "champion", s) },
+  ];
+  for (const p of netProfiles) row([`Prizes kept (after the players' share) — ${p.name}`, ...seasons.map((s) => money(p.f(s)))]);
   for (const o of [75, 80, 85, 90]) row([`Wages — 3 × ${o}`, ...seasons.map((s) => money(3 * S * ask({ overall: o, seasonIndex: s })))]);
+  row([
+    "Dominant prizes kept ÷ 3 × 85 wages (e2)",
+    ...seasons.map((s) => ratio(netProfiles[1].f(s) / (3 * S * ask({ overall: 85, seasonIndex: s })))),
+  ]);
   lines.push("");
 
   // P5. Sponsors and fanbase.
   lines.push("#### P5. Guaranteed income: sponsor offers by reputation, and the fanbase (normal)");
   lines.push("");
   lines.push(
-    `First offer at rep ${B.CAREER_SPONSOR.firstOfferRepGate} (\`firstOfferRepGate\`); deals last one season, pay ${B.CAREER_SPONSOR.signingBonusSplits}× base on signing and a bonus per split when the objective is hit. Fanbase = rep × $${B.CAREER_ECONOMY.passivePerRepPoint} a split, never indexed. Cells: base per week · per season (bonus per split).`,
+    `First offer at rep ${B.CAREER_SPONSOR.firstOfferRepGate} (\`firstOfferRepGate\`); deals last one season, pay ${B.CAREER_SPONSOR.signingBonusSplits}× base on signing and a bonus per split when the objective is hit. Fanbase = rep × $${B.CAREER_ECONOMY.passivePerRepPoint} a split at season 0 (rc.32 M1: ×the money index after). Cells: base per week · per season (bonus per split).`,
   );
   lines.push("");
-  head(["Reputation (best tier)", ...[0, 1, 3, 5, 7].map((s) => `S${s}`), "fanbase per week · season"]);
+  head(["Reputation (best tier)", ...[0, 1, 3, 5, 7].map((s) => `S${s}`), "fanbase per week · season (S0)"]);
   for (const rep of [5, 12, 25, 50, 75, 90]) {
     const fan = rep * B.CAREER_ECONOMY.passivePerRepPoint;
     row([
@@ -447,7 +485,7 @@ async function curvesReport(): Promise<string> {
       ...[0, 1, 3, 5, 7].map((s) => {
         const g =
           (rep >= B.CAREER_SPONSOR.firstOfferRepGate ? sponsorAt(rep, s).basePerSplit : 0) +
-          rep * B.CAREER_ECONOMY.passivePerRepPoint;
+          rep * B.CAREER_ECONOMY.passivePerRepPoint * E.moneyIndex(s, "flat");
         let best = 0;
         for (let o = 60; o <= 99; o++) if (3 * ask({ overall: o, rep, seasonIndex: s }) <= g) best = o;
         return best ? `${best} (${money(perWeek(g))}/wk)` : `– (${money(perWeek(g))}/wk)`;
@@ -469,14 +507,14 @@ async function curvesReport(): Promise<string> {
     "Top sponsor (T4) base + bonus, every split hit",
     ...seasons.map((s) => money(S * (sponsorAt(75, s).basePerSplit + sponsorAt(75, s).bonus))),
   ]);
-  row(["Contender profile: T4 base + fanbase (rep 80) + contender prizes", ...seasons.map((s) => money(S * sponsorAt(80, s).basePerSplit + S * 80 * B.CAREER_ECONOMY.passivePerRepPoint + profiles[3].f(s)))]);
+  row(["Contender profile: T4 base + fanbase (rep 80) + contender prizes", ...seasons.map((s) => money(S * sponsorAt(80, s).basePerSplit + S * 80 * B.CAREER_ECONOMY.passivePerRepPoint * E.moneyIndex(s, "flat") + profiles[3].f(s)))]);
   row(["One 90 star's wage", ...seasons.map((s) => money(S * ask({ overall: 90, seasonIndex: s })))]);
   row([
     "Star ÷ contender income",
     ...seasons.map((s) =>
       ratio(
         (S * ask({ overall: 90, seasonIndex: s })) /
-          (S * sponsorAt(80, s).basePerSplit + S * 80 * B.CAREER_ECONOMY.passivePerRepPoint + profiles[3].f(s)),
+          (S * sponsorAt(80, s).basePerSplit + S * 80 * B.CAREER_ECONOMY.passivePerRepPoint * E.moneyIndex(s, "flat") + profiles[3].f(s)),
       ),
     ),
   ]);
@@ -571,12 +609,16 @@ interface EconCareer {
   ended: ArcCareer["ended"];
   /** Absolute weeks (season × 32 + week): the first cash warning, the Backer, the end. */
   firstWarningWeek: number | null;
-  /** Every cash-warning mail (absolute weeks). */
+  /** Every cash-warning mail (absolute weeks; rc.32: the 8-week notice counts too). */
   warningWeeks: number[];
   rescueWeek: number | null;
   /** The weekly burn (−net of the standing commitments) and the weekly wages on the rescue Monday. */
   rescueBurn: number | null;
   rescueWages: number | null;
+  /** rc.32 (M4): the Backer's swing (rescue target − floor) on the rescue Monday's wage bill. */
+  rescueSwing?: number | null;
+  /** rc.32 (M4): every restructuring (absolute weeks). */
+  restructureWeeks?: number[];
   endWeek: number | null;
   firstSponsorSeason: number | null;
   arcRows: Pick<ArcCareer["seasons"][number], "seasonIndex" | "regionRank" | "majorsQualified" | "worlds" | "titles" | "sales" | "signings" | "starSignings">[];
@@ -592,6 +634,8 @@ const SPEND_GROUPS: Record<string, string[]> = {
   "gear, upkeep, psychologist": ["facility", "upkeep", "buff"],
   "debt service (garnish, Backer, bank)": ["loanGarnish", "loanPayment", "bankPayment"],
   inserts: ["insert"],
+  // rc.32 (M6, provisional).
+  "players' prize share": ["playerShare"],
 };
 const INCOME_GROUPS: Record<string, string[]> = {
   "prizes — t3 cups": ["prize:t3"],
@@ -603,6 +647,8 @@ const INCOME_GROUPS: Record<string, string[]> = {
   "sponsor base": ["sponsorBase"],
   "sponsor bonus": ["sponsorBonus"],
   "sponsor signing": ["sponsorSigning"],
+  // rc.32 (M3, provisional).
+  "founding partner": ["foundingPartner"],
   fanbase: ["fanbase"],
   "fees received (sales)": ["transferIn"],
   inserts: ["insert"],
@@ -622,7 +668,7 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
   const M = await import("@/engine/career/market");
   const { T2_EVENT_NAMES, T3_EVENT_NAMES } = await import("@/data/career/names");
   const B = await import("@/config/balance");
-  const { userSeedRatingFor } = await import("./careerFlow");
+  const { userSeedRatingFor, weeklyStatementOf, backerLineOf } = await import("./careerFlow");
   const t2 = new Set<string>(T2_EVENT_NAMES);
   const t3 = new Set<string>(T3_EVENT_NAMES);
   const W = B.CAREER_PAYROLL.weeksPerSeason;
@@ -636,19 +682,17 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
     if (t3.has(name)) return "t3";
     return "other";
   };
-  const statementOf = (save: CareerSave) =>
-    E.weeklyStatement({
-      squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
-      coachSalary: save.coach?.salaryPerSplit ?? null,
-      sponsor: save.sponsor,
-      rep: save.reputation,
-      gear: save.finances.gear,
-      bankLoan: save.finances.bankLoan ?? null,
-    });
+  // rc.32: the statement the Monday books (the money index, the founding partner) — the screens' own.
+  const statementOf = (save: CareerSave) => weeklyStatementOf(save);
   const guaranteedPerSplit = (save: CareerSave) => {
     const base =
       save.sponsor?.basePerSplit ?? Math.max(0, ...(save.sponsorOffers ?? []).map((o) => o.basePerSplit));
-    return base + Math.max(0, save.reputation) * B.CAREER_ECONOMY.passivePerRepPoint;
+    // rc.32: the fanbase on the money index, and the founding partner (M3) is guaranteed income too.
+    return (
+      base +
+      Math.max(0, save.reputation) * B.CAREER_ECONOMY.passivePerRepPoint * E.moneyIndex(save.clock.seasonIndex, "flat") +
+      E.foundingPartnerBaseFor(save.foundingPartner, save.clock.seasonIndex)
+    );
   };
   const absWeek = (save: CareerSave) => save.clock.seasonIndex * W + weekOfDay(save.clock.day);
 
@@ -711,7 +755,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       for (const m of save.mail) {
         if (seenMail.has(m.id)) continue;
         seenMail.add(m.id);
-        if (m.titleKey === "cashWarning") {
+        // rc.32 (M4): the weekly warning and the one-off 8-week notice are both inbox warnings.
+        if (m.titleKey === "cashWarning" || m.titleKey === "cashNotice") {
           seasonOf(m.seasonIndex).cashWarnings += 1;
           c.firstWarningWeek ??= m.seasonIndex * W + weekOfDay(m.day);
           c.warningWeeks.push(m.seasonIndex * W + weekOfDay(m.day));
@@ -721,6 +766,11 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
           const stmt = statementOf(save);
           c.rescueBurn = Math.max(0, -stmt.net);
           c.rescueWages = stmt.payroll + stmt.coach;
+          const line = backerLineOf(save);
+          c.rescueSwing = line.rescueTo - line.floor;
+        }
+        if (m.titleKey === "restructured") {
+          (c.restructureWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
         }
       }
       const x = seasonOf(save.clock.seasonIndex);
@@ -843,6 +893,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
           rescueBurn: null,
           rescueWages: null,
           rescueWeek: null,
+          rescueSwing: null,
+          restructureWeeks: [],
           endWeek: null,
           firstSponsorSeason: null,
           arcRows: [],
@@ -926,6 +978,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
 /** Insolvent = the career's phase went "ended" (the bot never retires). Read from the save, not
  * `ArcCareer.ended`: past the timeline or a title, `endCareer` keeps the earlier reason. */
 const insolvent = (c: EconCareer) => c.endWeek !== null;
+/** rc.32 (M4): at least one restructuring (a breach that did not end the career). */
+const restructured = (c: EconCareer) => (c.restructureWeeks?.length ?? 0) > 0;
 
 function careersReport(careers: EconCareer[], seasons: number, rescueSwing: number): string {
   const lines: string[] = [];
@@ -950,10 +1004,10 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("#### C1. Outcomes and the safety net — by difficulty × policy");
   lines.push("");
   lines.push(
-    "Rescued = the Emergency Backer granted (one per career). Warned = a cash-warning mail in the 8 weeks before the rescue; lead = weeks from that mail to the rescue. Rescue window = the weeks of the burn on the rescue Monday that the Backer's swing (floor → rescue) buys. Rescue → end = weeks from the Backer to insolvency. Tight Mondays = runway ≤ 4 weeks or the balance below $0.",
+    "Rescued = the Emergency Backer granted (one per career). Restructured (rc.32, M4) = a later breach that sold the highest-paid player instead of ending the career (Easy and Normal). Warned = a cash-warning mail (rc.32: or the 8-week notice) in the 8 weeks before the rescue; lead = weeks from that mail to the rescue. Rescue window = the weeks of the burn on the rescue Monday that the Backer's swing (floor → rescue, on that Monday's wage bill) buys. Rescue → end = weeks from the Backer to insolvency. Tight Mondays = runway ≤ 4 weeks or the balance below $0.",
   );
   lines.push("");
-  head(["Difficulty · policy", "n", "insolvent", "insolvent by S3", "rescued", "rescued that survive", "warned in the 8 weeks before the rescue", "warning lead p50", "rescue window p50", "rescue → end p50", "bank loans / career", "tight Mondays p50 (per season)"]);
+  head(["Difficulty · policy", "n", "insolvent", "insolvent by S3", "rescued", "rescued that survive", "restructured", "restructurings / career", "warned in the 8 weeks before the rescue", "warning lead p50", "rescue window p50", "rescue → end p50", "bank loans / career", "tight Mondays p50 (per season)"]);
   for (const d of diffs)
     for (const p of policies) {
       const cs = careers.filter((c) => c.difficulty === d && c.policy === p);
@@ -966,8 +1020,9 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
       const lead = warned.map((c) => c.rescueWeek! - lastWarning(c));
       const toEnd = ins.filter((c) => c.rescueWeek !== null && c.endWeek !== null).map((c) => c.endWeek! - c.rescueWeek!);
       const tight = cs.flatMap((c) => c.seasons.map((x) => x.mondaysTight));
-      const swing = rescueSwing;
-      const windows = resc.filter((c) => (c.rescueBurn ?? 0) > 0).map((c) => swing / c.rescueBurn!);
+      const windows = resc
+        .filter((c) => (c.rescueBurn ?? 0) > 0)
+        .map((c) => (c.rescueSwing ?? rescueSwing) / c.rescueBurn!);
       row([
         `${d} · ${p}`,
         cs.length,
@@ -975,6 +1030,8 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
         pct(ins.filter((c) => c.endWeek !== null && c.endWeek < 4 * W).length, cs.length),
         pct(resc.length, cs.length),
         pct(resc.filter((c) => !insolvent(c)).length, resc.length),
+        pct(cs.filter(restructured).length, cs.length),
+        ratio(mean(cs.map((c) => c.restructureWeeks?.length ?? 0)), 1),
         pct(warned.length, resc.length),
         lead.length ? `${q(lead, 0.5)} wk` : "–",
         windows.length ? `${ratio(q(windows, 0.5), 0)} wk` : "–",
@@ -991,7 +1048,7 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("");
 
   // C1b. Region × difficulty.
-  lines.push("#### C1b. Insolvent (rescued) by region × difficulty — every policy");
+  lines.push("#### C1b. Insolvent (rescued · restructured) by region × difficulty — every policy");
   lines.push("");
   head(["Region", ...diffs]);
   for (const region of ALL_REGIONS) {
@@ -1001,7 +1058,9 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
       region,
       ...diffs.map((d) => {
         const xs = cs.filter((c) => c.difficulty === d);
-        return xs.length ? `${pct(xs.filter(insolvent).length, xs.length)} (${pct(xs.filter((c) => c.rescueWeek !== null).length, xs.length)})` : "–";
+        return xs.length
+          ? `${pct(xs.filter(insolvent).length, xs.length)} (${pct(xs.filter((c) => c.rescueWeek !== null).length, xs.length)} · ${pct(xs.filter(restructured).length, xs.length)})`
+          : "–";
       }),
     ]);
   }
@@ -1180,7 +1239,7 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("");
   lines.push("Rep and the money columns are p50 at the end of the season named. First sponsor = the season the first deal was signed (– never).");
   lines.push("");
-  head(["Region", "n", "insolvent", "rescued", "first sponsor p50", "no sponsor by end S1", "rep S0 · S1", "guaranteed / wk S1", "wages / wk S1", "balance S1 · S3", "seasons alive p50"]);
+  head(["Region", "n", "insolvent", "rescued", "restructured", "first sponsor p50", "no sponsor by end S1", "rep S0 · S1", "guaranteed / wk S1", "wages / wk S1", "balance S1 · S3", "seasons alive p50"]);
   for (const region of ALL_REGIONS) {
     const cs = careers.filter((c) => c.difficulty === "normal" && c.region === region);
     if (!cs.length) continue;
@@ -1191,6 +1250,7 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
       cs.length,
       pct(cs.filter(insolvent).length, cs.length),
       pct(cs.filter((c) => c.rescueWeek !== null).length, cs.length),
+      pct(cs.filter(restructured).length, cs.length),
       first.length ? `S${q(first, 0.5)}` : "–",
       pct(cs.filter((c) => c.firstSponsorSeason === null || c.firstSponsorSeason > 1).length, cs.length),
       `${ratio(at(0, (x) => x.repEnd), 0)} · ${ratio(at(1, (x) => x.repEnd), 0)}`,
@@ -1364,6 +1424,38 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
         const xs = rowsAt(cs, s);
         return pct(xs.filter((x) => x.mondaysTight > 0).length, xs.length);
       }),
+    ]);
+  }
+  lines.push("");
+
+  // C10. rc.32: Miguel's guardrail (30/10) — both sides on one table.
+  lines.push("#### C10. Both sides of the guardrail — by difficulty (rc.32; Miguel, 30/10: not too easy, not punitive)");
+  lines.push("");
+  lines.push(
+    "Left of the bar, the unfair break: insolvent (the career ended through money), the newcomer policies (autopilot, badSponsor, losingStart), rescued, restructured. Right of it, money still decides: the spender still going broke, season-rows with a tight Monday in S3–S5, the snowball p90 (balance in seasons of payroll, S2–S7 worst), careers with an 88+ signing by S4.",
+  );
+  lines.push("");
+  head(["Difficulty", "n", "insolvent", "newcomers insolvent", "rescued", "restructured", "‖ spender insolvent", "tight Monday S3–S5", "snowball p90 S2–S7 (max)", "88+ signing by S4"]);
+  const newcomer = new Set(["autopilot", "badSponsor", "losingStart"]);
+  for (const d of diffs) {
+    const cs = careers.filter((c) => c.difficulty === d);
+    if (!cs.length) continue;
+    const nw = cs.filter((c) => newcomer.has(c.policy));
+    const sp = cs.filter((c) => c.policy === "spender");
+    const mid = cs.flatMap((c) => c.seasons.filter((x) => x.s >= 3 && x.s <= 5));
+    const banked = (x: EconSeason) => x.balanceEnd / Math.max(1, sumKeys(x.spend, ["payroll", "salary", "coachSalary"]));
+    const p90s = cols.filter((s) => s >= 2).map((s) => rowsAt(cs, s)).filter((xs) => xs.length > 0).map((xs) => q(xs.map(banked), 0.9));
+    row([
+      d,
+      cs.length,
+      pct(cs.filter(insolvent).length, cs.length),
+      pct(nw.filter(insolvent).length, nw.length),
+      pct(cs.filter((c) => c.rescueWeek !== null).length, cs.length),
+      pct(cs.filter(restructured).length, cs.length),
+      pct(sp.filter(insolvent).length, sp.length),
+      pct(mid.filter((x) => x.mondaysTight > 0).length, mid.length),
+      p90s.length ? ratio(Math.max(...p90s), 1) : "–",
+      pct(cs.filter((c) => c.signings.some((x) => x.s <= 4 && x.overall >= 88)).length, cs.length),
     ]);
   }
   lines.push("");

@@ -16,6 +16,7 @@ import type { CareerPlayerView, CareerSave, TransferOffer } from "@/engine/caree
 import {
   acceptBidFlow,
   advanceDayFlow,
+  backerLineOf,
   buyGearFlow,
   buyScoutReportFlow,
   coachCandidatesFor,
@@ -44,7 +45,12 @@ const INPUT: CreateCareerInput = {
   rosterKey: "balanced",
 };
 
-/** A real insolvency: the Backer already used, the books just over the floor, wages far above income, then W2's Monday. */
+/**
+ * A real insolvency: the Backer already used, the books just over the floor,
+ * wages far above income, then W2's Monday. rc.32 (M4): the breach that ends
+ * a Normal career is CAREER_LOAN.breachesToEnd.normal, so the fixture stands
+ * one breach before it, just over the Backer's line on its own wage bill.
+ */
 function insolventSave(): CareerSave {
   const save = createCareerSave(INPUT, 46_505);
   save.clock.day = firstDayOfWeek(2) - 1;
@@ -53,9 +59,10 @@ function insolventSave(): CareerSave {
   save.pendingInsert = null;
   save.sponsorOffers = null;
   save.finances.loanUsed = true;
+  save.finances.loanBreaches = (CAREER_LOAN.breachesToEnd.normal ?? 2) - 1;
   save.finances.loan = null;
-  save.finances.balance = CAREER_LOAN.floor + 10;
   for (const p of save.squad) p.salaryPerSplit = 10_000;
+  save.finances.balance = backerLineOf(save).floor + 10;
   return advanceDayFlow(save);
 }
 
