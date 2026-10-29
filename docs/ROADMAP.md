@@ -516,6 +516,20 @@ still holds if it was not played):
 OBS-01 (no staging data; build before launch) is still to build.
 
 **Still to approve for Etapa 2b** (the next numbers wait on these):
+
+> **30/10: provisional defaults, to be tested.** Miguel cannot decide these
+> yet. Etapa 2b part 2 implements the recommended options as provisional
+> defaults (each switchable in `balance.ts`, re-measured on the same seeds),
+> and the gate asks him to play them and confirm: the contract's 1-A, 2-B,
+> 3-A, 4-B, 5-B, 6-B, 7-A, 8-B, 9-B, 10-A; rc.31's shipped values kept as
+> they are; local sides around the user, frozen at W4; filler orgs capped at
+> the region's best real lineup (with BAL-02). Also new from Miguel:
+> (a) **bug**: 2022-23 starts in 2022 and the next season is 2024, so ages
+> must not jump two years at that rollover (R48's "2022 → 2024 gap" assumed
+> it did; fix the age clock and re-check the retirement rule); (b) the
+> scripted **Blockbuster bids** are invisible to players: explain what they
+> are, why they came, the ×1.5 fee and the +10 % renewal ask if refused, in
+> the offer and the inbox, EN and PT.
 1. The economy contract: `ECONOMY-CONTRACT.md` §6, ten decisions with a
    recommendation each (the season money index, renewing your own players,
    the newcomer's income, what ends a career, stars and the snowball, the

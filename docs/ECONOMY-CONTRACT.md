@@ -283,6 +283,14 @@ after it (one per split).
 
 ## 6. Decisions for Miguel
 
+> **Provisional defaults (30/10, Miguel: "I can't decide this yet").** Etapa
+> 2b part 2 builds the recommended option of each decision below, as a
+> **provisional default to be tested, not an approved rule**: 1-A, 2-B, 3-A,
+> 4-B, 5-B, 6-B, 7-A, 8-B, 9-B, 10-A. Each one ships behind its own
+> `balance.ts` key so it can be switched back, is re-measured with the probe
+> on the same seeds (against §8), and is listed in the gate report for Miguel
+> to play and confirm or reject. Nothing here is final until he says so.
+
 1. **The season money index (M1).** A. One index at 1.08 for every stream,
    the flat ones included. B. One index at 1.10. C. Keep the three rates and
    index only the flat amounts. *Recommendation: A* (no ratio drifts, and late
