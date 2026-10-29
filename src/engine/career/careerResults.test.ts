@@ -25,12 +25,14 @@ import {
   legacyGradeFor,
   majorFieldFor,
   placementOf,
+  rankByPoints,
   seasonGoalsFor,
   seasonGradeFor,
   stabilityAssess,
   worldsFieldFor,
 } from "./careerResults";
 import { pointsFor, prizeFor } from "./economy";
+import { isLocalRef, localRef, localRegionOf } from "./localScene";
 import { derivedFloat, streams } from "./seeds";
 import type { CareerEventDef, CareerLifetimeStats, CompetitionState } from "./types";
 
@@ -383,6 +385,81 @@ describe("majorFieldFor / worldsFieldFor", () => {
     expect(eu).not.toContain(expected === "tiedA" ? "tiedB" : "tiedA");
     // Deterministic: same inputs, same field.
     expect(majorFieldFor(competition, careerSeed)).toEqual(majorFieldFor(competition, careerSeed));
+  });
+});
+
+// --- RTW-01 (R49): local amateur sides score and race for slots -------------------
+
+describe("local sides in the tables (RTW-01, R49)", () => {
+  /** A 16-team Swiss whose last four seeds are local sides of `region`. */
+  function swissWithLocals(seed: number, region: Region): TournamentState {
+    const teams = field(16, false).map((t, i) =>
+      i >= 12 ? { ...fakeTeam(localRef(region, 0, i - 12), t.rating.total), region } : t,
+    );
+    const rng = createRng(seed);
+    return fastForward(initFieldTournament(teams, "swiss", rng), "normal", rng);
+  }
+  // The store's resolver (careerFlow.regionOfRef): orgs from the world, a local side from its ref.
+  const homeOf = (ref: string): Region => localRegionOf(ref) ?? "NA";
+
+  it("a regional banks its local sides like any team — split and season tables of the event region", () => {
+    const result = compileEventResult(regionalDef, swissWithLocals(4242, "EU"), ctx);
+    const locals = result.rows.filter((r) => isLocalRef(r.ref));
+    expect(locals).toHaveLength(4);
+    const after = applyResultToStandings(emptyCompetition(), result, homeOf);
+    for (const row of result.rows) {
+      expect(after.splitPoints.EU[row.ref]).toBe(row.points);
+      expect(after.seasonPoints.EU[row.ref]).toBe(row.points);
+    }
+    // Every row scores (a Swiss exit pays 60), locals included.
+    for (const row of locals) expect(after.splitPoints.EU[row.ref]).toBeGreaterThanOrEqual(CAREER_POINTS.regional.swiss_exit);
+  });
+
+  it("a Major banks a local side into ITS home region's season table (parsed from the ref)", () => {
+    const teams = field(16, false).map((t, i) =>
+      i === 3 ? fakeTeam(localRef("SAM", 0, 2), 90) : i === 9 ? fakeTeam(localRef("OCE", 0, 6), 85) : t,
+    );
+    const rng = createRng(99);
+    const state = fastForward(initFieldTournament(teams, "swiss", rng), "normal", rng);
+    const result = compileEventResult(majorDef, state, ctx);
+    const after = applyResultToStandings(emptyCompetition(), result, homeOf);
+    const sam = result.rows.find((r) => r.ref === localRef("SAM", 0, 2))!;
+    const oce = result.rows.find((r) => r.ref === localRef("OCE", 0, 6))!;
+    expect(after.seasonPoints.SAM).toEqual({ [sam.ref]: sam.points });
+    expect(after.seasonPoints.OCE).toEqual({ [oce.ref]: oce.points });
+    expect(after.seasonPoints.NA[sam.ref]).toBeUndefined();
+    for (const region of REGIONS) expect(after.splitPoints[region]).toEqual({});
+  });
+
+  it("majorFieldFor / worldsFieldFor take a local side that holds a slot's points", () => {
+    const competition = emptyCompetition();
+    const local = localRef("SAM", 0, 3);
+    // SAM has 2 slots: the local side leads, one org follows, one misses.
+    competition.splitPoints.SAM = { orgA: 600, [local]: 700, orgB: 500 };
+    competition.seasonPoints.SAM = { orgA: 900, orgB: 1200, [local]: 1000 };
+    const major = majorFieldFor(competition, 7).filter((r) => ["orgA", "orgB", local].includes(r));
+    const worlds = worldsFieldFor(competition, 7).filter((r) => ["orgA", "orgB", local].includes(r));
+    expect(major).toEqual([local, "orgA"]);
+    expect(worlds).toEqual(["orgB", local]);
+    expect(CAREER_SLOTS.major.SAM).toBe(2);
+  });
+
+  it("a points tie between a local side and an org is the committee's float — insertion-order-proof", () => {
+    const careerSeed = 314159;
+    const local = localRef("APAC", 0, 1);
+    // APAC has 1 slot, tied on points.
+    const tables = [
+      { orgX: 640, [local]: 640, orgY: 200 },
+      { orgY: 200, [local]: 640, orgX: 640 },
+    ];
+    const floatOf = (ref: string) => derivedFloat(careerSeed, streams.gen("tie", `APAC${ref}`));
+    const expected = floatOf("orgX") < floatOf(local) ? "orgX" : local;
+    for (const t of tables) {
+      const competition = { ...emptyCompetition(), splitPoints: { ...emptyPoints(), APAC: t } };
+      const apac = majorFieldFor(competition, careerSeed).filter((r) => ["orgX", "orgY", local].includes(r));
+      expect(apac).toEqual([expected]);
+      expect(rankByPoints(t, "APAC", careerSeed)[0]).toBe(expected);
+    }
   });
 });
 

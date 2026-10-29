@@ -66,6 +66,7 @@ import {
 import {
   isLocalRef,
   localPlayerNames,
+  localRegionOf,
   localSceneRefs,
   localTeamName,
   localTeamOffset,
@@ -872,16 +873,93 @@ export function t3CupRefsFor(input: {
 }
 
 /**
- * A local amateur side for a Community Cup: three generated gamertags whose
- * overalls are fitted (two passes) so the assembled intrinsic rating lands on
- * userRating + localTeamOffset. Never persisted; same inputs → same team.
+ * RTW-01 (R49): the median of a region's STORED org ratings — the snapshot
+ * computeStars writes at creation and at each rollover, so it holds still for
+ * the whole season (the market moves players, never the snapshot).
+ */
+export function regionMedianRating(world: WorldState, region: Region): number {
+  const ratings = Object.values(world.orgs)
+    .filter((o) => o.region === region)
+    .map((o) => o.rating ?? 70 + o.prestige * 6)
+    .sort((a, b) => a - b);
+  return ratings.length ? ratings[Math.floor(ratings.length / 2)] : 72;
+}
+
+/**
+ * RTW-01 (R49): the local scene's anchor for a region this season — ONE
+ * number per region-season, whichever event asks. The user's region reads the
+ * rating frozen on the season's first regional Monday
+ * (`competition.localAnchor`: "rated around the user", Gate-1 question 6);
+ * every other region reads its stored median. `liveUserRating` (the user's
+ * fielded rating) is passed only by the user's own regional-week events and
+ * cups: it answers for the user's region until the freeze (the season's
+ * W1–3 cups, and a pre-rc.31 save's first week) — the shipped R23 behaviour.
+ */
+export function localAnchorFor(
+  region: Region,
+  input: { world: WorldState; competition: CompetitionState; liveUserRating?: number | null },
+): number {
+  const frozen = input.competition.localAnchor;
+  if (frozen && frozen.region === region) return frozen.rating;
+  if (input.liveUserRating !== undefined && input.liveUserRating !== null) return input.liveUserRating;
+  return regionMedianRating(input.world, region);
+}
+
+/**
+ * R49: the anchor of `region`'s local sides in event `def`. A Major or Worlds
+ * — and any event the user does not play (`userTeamRating` null) — never
+ * reads the user's current squad; the user's own qualifier, regional or cup
+ * passes it as the pre-freeze fallback (`localAnchorFor`).
+ */
+export function localAnchorForEvent(
+  def: Pick<CareerEventDef, "tier">,
+  region: Region,
+  ctx: { world: WorldState; competition: CompetitionState; userRegion: Region; userTeamRating: number | null },
+): number {
+  const live = def.tier !== "major" && def.tier !== "worlds" && region === ctx.userRegion ? ctx.userTeamRating : null;
+  return localAnchorFor(region, { world: ctx.world, competition: ctx.competition, liveUserRating: live });
+}
+
+/** R49: a local side's intrinsic rating target — its region's anchor + its hashed offset. */
+export function localTeamTarget(ref: string, anchor: number, careerSeed: number): number {
+  return clamp(anchor + localTeamOffset(ref, careerSeed), 55, 96);
+}
+
+/**
+ * R49: the region's local sides on its split table, as direct-8 seeding rows
+ * — stored fields only (the frozen or median anchor), like the orgs' stored
+ * ratings, so the hub, the lobby and the engine seed them identically.
+ */
+export function localSeedRowsFor(input: {
+  world: WorldState;
+  competition: CompetitionState;
+  region: Region;
+  careerSeed: number;
+}): { ref: string; rating: number }[] {
+  const table = input.competition.splitPoints[input.region] ?? {};
+  const refs = Object.keys(table)
+    .filter((ref) => localRegionOf(ref) === input.region)
+    .sort();
+  if (refs.length === 0) return [];
+  const anchor = localAnchorFor(input.region, { world: input.world, competition: input.competition });
+  return refs.map((ref) => ({ ref, rating: localTeamTarget(ref, anchor, input.careerSeed) }));
+}
+
+/**
+ * A local amateur side: three generated gamertags whose overalls are fitted
+ * (two passes) so the assembled intrinsic rating lands on
+ * `localTeamTarget(ref, anchor)`. R49: its region comes from the ref (a SAM
+ * side is a SAM side in a cross-region Major too) and `anchor` from
+ * `localAnchorFor`, so the same side is the same team wherever it plays.
+ * Never persisted; same inputs → same team.
  */
 export function localTeamFor(
   ref: string,
-  ctx: { careerSeed: number; seasonIndex: number; difficulty: CareerDifficulty; userRating: number; region: Region },
+  ctx: { careerSeed: number; seasonIndex: number; difficulty: CareerDifficulty; anchor: number; region?: Region },
 ): TournamentTeam {
+  const region = localRegionOf(ref) ?? ctx.region ?? REGIONS[0];
   const name = localTeamName(ref, ctx.careerSeed);
-  const target = clamp(ctx.userRating + localTeamOffset(ref, ctx.careerSeed), 55, 96);
+  const target = localTeamTarget(ref, ctx.anchor, ctx.careerSeed);
   const names = localPlayerNames(ref, ctx.careerSeed);
   const assemble = (shift: number): TournamentTeam => {
     const players: MemberView[] = names.map((n, i) => {
@@ -895,14 +973,14 @@ export function localTeamFor(
         stats: statsFromView({ overall, attrOffsets: deriveAttrOffsets(id, ctx.careerSeed, archetype) }),
         lineupId: ref,
         orgId: ref,
-        region: ctx.region,
+        region,
       };
     });
     return assembleTournamentTeam({
       id: ref,
       name,
       isUser: false,
-      region: ctx.region,
+      region,
       players,
       orgOverride: {
         name,
@@ -925,23 +1003,31 @@ export function localTeamFor(
  * stored rating → ref), so the hub, the calendar, the lobby and the engine
  * all agree without building a single team. The user (when given) competes
  * for a direct slot like any org, with reputation tier as prestige.
+ * RTW-01 (R49): local sides holding split points (`localSeedRowsFor`) are
+ * teams of the region too — prestige 0, their season rating — so a local
+ * side can earn a direct seat; the regional then fields it on Sunday and the
+ * qualifier skips it.
  */
 export function regionalSeedingFor(input: {
   orgs: WorldOrgState[];
   splitPoints: Record<string, number>;
   user: { rating: number; prestige: number } | null;
+  locals?: { ref: string; rating: number }[];
 }): { direct: string[]; rest: string[] } {
   const rows = input.orgs.map((o) => ({
     ref: o.ref,
     points: input.splitPoints[o.ref] ?? 0,
-    prestige: o.prestige,
+    prestige: o.prestige as number,
     rating: o.rating ?? 70 + o.prestige * 6,
   }));
+  for (const local of input.locals ?? []) {
+    rows.push({ ref: local.ref, points: input.splitPoints[local.ref] ?? 0, prestige: 0, rating: local.rating });
+  }
   if (input.user) {
     rows.push({
       ref: "user",
       points: input.splitPoints.user ?? 0,
-      prestige: input.user.prestige as WorldOrgState["prestige"],
+      prestige: input.user.prestige,
       rating: input.user.rating,
     });
   }
@@ -956,8 +1042,12 @@ export function regionalSeedingFor(input: {
 
 /**
  * v2.0 (R30): the refs of a qualifier field (R40: Saturday) — the non-direct orgs
- * (and the user when not direct) plus local amateur sides up to 16 (the
- * lowest-seeded orgs drop out when the pool overflows).
+ * (and the user when not direct) plus local amateur sides up to 16.
+ * RTW-01 (R49): local sides with split points are seeded in `rest` like any
+ * team; the pool's other sides fill the empty seats (a side in the direct 8
+ * or already seeded never twice). When the pool overflows, the lowest-seeded
+ * LOCAL sides make room, so every org of the region keeps a Saturday seat or
+ * a direct one (never out of both — the R40 "missing 8th org" rule).
  */
 export function qualifierFieldRefsFor(input: {
   region: Region;
@@ -965,10 +1055,15 @@ export function qualifierFieldRefsFor(input: {
   seeding: { direct: string[]; rest: string[] };
   seats: number;
 }): string[] {
-  const refs = input.seeding.rest.slice(0, input.seats);
+  const refs = [...input.seeding.rest];
+  for (let i = refs.length - 1; i >= 0 && refs.length > input.seats; i--) {
+    if (isLocalRef(refs[i])) refs.splice(i, 1);
+  }
+  if (refs.length > input.seats) refs.length = input.seats; // defensive: 16 orgs never overflow alone
+  const seeded = new Set([...input.seeding.direct, ...input.seeding.rest]);
   for (const ref of localSceneRefs(input.region, input.seasonIndex)) {
     if (refs.length >= input.seats) break;
-    refs.push(ref);
+    if (!seeded.has(ref)) refs.push(ref);
   }
   return refs;
 }
@@ -1002,6 +1097,8 @@ interface SeededFieldInput {
   userSeed: { rating: number; prestige: number } | null;
   /** The user plays this event: they always take a seat (withUserSeat). */
   fieldsUser: boolean;
+  /** R49: the career seed — the local sides' seeding ratings (`localSeedRowsFor`). */
+  careerSeed: number;
 }
 
 /**
@@ -1028,6 +1125,7 @@ function seedingOfField(input: SeededFieldInput): { direct: string[]; rest: stri
       .sort((a, b) => a.ref.localeCompare(b.ref)),
     splitPoints: input.competition.splitPoints[input.region] ?? {},
     user: input.userSeed,
+    locals: localSeedRowsFor(input),
   });
 }
 
@@ -1104,30 +1202,31 @@ export function fieldForEvent(
       difficulty: ctx.difficulty,
       teamFor,
     });
-  const regionOrgs = (region: Region): WorldOrgState[] =>
-    Object.values(ctx.world.orgs)
-      .filter((o) => o.region === region)
-      .sort((a, b) => a.ref.localeCompare(b.ref));
-
   let field: TournamentTeam[];
 
-  // v2.0 (R30): a ref from the seeding/qualifier lists → a team (user, org, local).
-  const localAnchor = (region: Region): number => {
-    if (ctx.userTeam && region === ctx.userRegion) return ctx.userTeam.rating.total;
-    const ratings = regionOrgs(region).map((o) => o.rating ?? 70 + o.prestige * 6).sort((a, b) => a - b);
-    return ratings.length ? ratings[Math.floor(ratings.length / 2)] : 72;
+  // RTW-01 (R49): a local side is the same team wherever it plays — its home
+  // region from the ref, the region-season anchor (`localAnchorForEvent`:
+  // never the user's current squad in a Major/Worlds or an event the user is
+  // not in).
+  const localTeam = (ref: string): TournamentTeam => {
+    const region = localRegionOf(ref) ?? def.region ?? ctx.userRegion;
+    return localTeamFor(ref, {
+      careerSeed: ctx.careerSeed,
+      seasonIndex: def.seasonIndex,
+      difficulty: ctx.difficulty,
+      anchor: localAnchorForEvent(def, region, {
+        world: ctx.world,
+        competition: ctx.competition,
+        userRegion: ctx.userRegion,
+        userTeamRating: ctx.userTeam ? ctx.userTeam.rating.total : null,
+      }),
+      region,
+    });
   };
-  const teamForRef = (ref: string, region: Region): TournamentTeam | null => {
+  // v2.0 (R30): a ref from the seeding/qualifier lists → a team (user, org, local).
+  const teamForRef = (ref: string): TournamentTeam | null => {
     if (ref === "user") return ctx.userTeam;
-    if (isLocalRef(ref)) {
-      return localTeamFor(ref, {
-        careerSeed: ctx.careerSeed,
-        seasonIndex: def.seasonIndex,
-        difficulty: ctx.difficulty,
-        userRating: localAnchor(region),
-        region,
-      });
-    }
+    if (isLocalRef(ref)) return localTeam(ref);
     return ctx.world.orgs[ref] ? teamFor(ref) : null;
   };
   const userSeed = (region: Region) =>
@@ -1152,8 +1251,9 @@ export function fieldForEvent(
       week: def.week,
       userSeed: userSeed(region),
       fieldsUser: Boolean(ctx.userTeam) && region === ctx.userRegion,
+      careerSeed: ctx.careerSeed,
     });
-    field = refs.map((ref) => teamForRef(ref, region)).filter((t): t is TournamentTeam => t !== null);
+    field = refs.map((ref) => teamForRef(ref)).filter((t): t is TournamentTeam => t !== null);
   } else if (def.tier === "regional") {
     const region = def.region ?? ctx.userRegion;
     const qualified = ctx.competition.qualifiedRefs?.[region];
@@ -1172,10 +1272,9 @@ export function fieldForEvent(
         qualified: qualified.refs,
         userSeed: userSeed(region),
         fieldsUser: Boolean(ctx.userTeam) && region === ctx.userRegion,
+        careerSeed: ctx.careerSeed,
       });
-      field = refs
-        .map((ref) => teamForRef(ref, region))
-        .filter((t): t is TournamentTeam => t !== null);
+      field = refs.map((ref) => teamForRef(ref)).filter((t): t is TournamentTeam => t !== null);
     } else {
       const ranked = rankedByPoints(region, ctx.competition.splitPoints[region] ?? {});
       const includeUser = Boolean(ctx.userTeam) && region === ctx.userRegion;
@@ -1196,7 +1295,8 @@ export function fieldForEvent(
         if (ctx.userTeam) field.push(ctx.userTeam);
         else missing += 1; // defensive: qualified slot with no user team
       } else {
-        field.push(teamFor(ref));
+        // RTW-01 (R49): a local side that earned the slot plays it.
+        field.push(isLocalRef(ref) ? localTeam(ref) : teamFor(ref));
       }
     }
     if (missing > 0) {
@@ -1226,31 +1326,18 @@ export function fieldForEvent(
     const region = def.region ?? ctx.userRegion;
     if (def.tier === "t3") {
       // v2.0 (R23): the local scene around the user — rc.29: t3CupRefsFor, the
-      // selection the lobby lists too.
-      const userRating = ctx.userTeam.rating.total;
+      // selection the lobby lists too. R49: its local sides at their season
+      // rating (the user's live rating only until the season's anchor freezes).
       const refs = t3CupRefsFor({
         world: ctx.world,
         region,
         seasonIndex: def.seasonIndex,
         careerSeed: ctx.careerSeed,
         difficulty: ctx.difficulty,
-        userRating,
+        userRating: ctx.userTeam.rating.total,
         teamFor,
       });
-      field = [
-        ctx.userTeam,
-        ...refs.map((ref) =>
-          isLocalRef(ref)
-            ? localTeamFor(ref, {
-                careerSeed: ctx.careerSeed,
-                seasonIndex: def.seasonIndex,
-                difficulty: ctx.difficulty,
-                userRating,
-                region,
-              })
-            : teamFor(ref),
-        ),
-      ];
+      field = [ctx.userTeam, ...refs.map((ref) => (isLocalRef(ref) ? localTeam(ref) : teamFor(ref)))];
     } else {
       const ranked = rankedByPoints(region, ctx.competition.seasonPoints[region] ?? {});
       field = [ctx.userTeam, ...ranked.slice(0, SINGLE_ELIM_TEAMS - 1).map((ref) => teamFor(ref))];

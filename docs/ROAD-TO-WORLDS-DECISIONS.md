@@ -573,6 +573,65 @@ R45. **One direct-8 decision per week, and the one-time repair (rc.30, Etapa
      re-seeding the weekend with a frozen user rating (stored org ratings can
      still split the AI side) and renaming the user's players.
 
+R49. **Local sides score and race for Major and Worlds slots (rc.31, Etapa
+     2b, RTW-01).** Miguel (29/10): local amateur sides score in the regional
+     and can earn a Major slot; a split Major table and a season Worlds
+     table, both viewable. Reverses R23's "never in standings" and R30's
+     "they never enter the points tables"; local sides are still never
+     persisted as teams, and R23's cup selection, R30's qualifier layout, the
+     pool of 8 per region-season and `localSceneBand` are unchanged.
+     (a) Points: `applyResultToStandings` banks every regional row, a local
+     side that came through Saturday included, into its region's split and
+     season tables. A Major banks it at home: `regionOfRef` parses
+     `local:<region>:…` (it fell back to the user's region).
+     `majorFieldFor` / `worldsFieldFor` rank every team on the table, and
+     `fieldForEvent` fields a local side that earned a slot.
+     (b) Strength: one rating per side per season, its region's anchor plus
+     its hashed offset (`localAnchorFor`). The user's region is rated around
+     the user's team, frozen on the season's first regional Monday
+     (`competition.localAnchor`, optional, reset with the competition at the
+     rollover). Every other region uses the median of its stored org ratings,
+     the season's computeStars snapshot. The side is the same team in a cup,
+     on Saturday, on Sunday, in a Major and at Worlds, whether the user plays
+     or watches, and a Major never reads the user's current squad. Before
+     the freeze (the season's W1–3 cups) and on a save from before rc.31
+     until its next Monday, the user's own events read the user's current
+     rating, as shipped. This keeps Gate-1 question 6's default ("rated
+     around the user"), frozen instead of live: an improving squad no longer
+     drags its local scene up, so late-season cups and qualifiers get a
+     little easier. If Miguel answers 6 with "no", the user's region takes
+     the median like the others (drop the freeze).
+     (c) Seeding (R45): a local side holding split points is a team of the
+     region in the direct-8 race (prestige 0, its season rating,
+     `localSeedRowsFor`). A direct local side plays Sunday and skips
+     Saturday, and no side is seeded twice. When the qualifier pool
+     overflows (the user's region with all eight sides scoring: 25 teams for
+     24 seats), the lowest-seeded local side drops, so every org keeps a
+     Saturday or a direct seat. Invitationals still invite orgs only.
+     (d) Tables: one view-model (`engine/career/raceTable.ts`) for the
+     Standings tabs and the HQ toggle. The Major table is the split's
+     regional points, cut at `CAREER_SLOTS.major`; the Worlds table is the
+     season's regional and Major points, cut at `CAREER_SLOTS.worlds`. Both
+     rank with `rankByPoints`, the selection's own order and tie-break, list
+     every team of the region (zero-point orgs by name), mark local sides,
+     give the user's status (secured, in the race, out of reach; conservative
+     until the field is announced) and count the fixtures left. The season
+     review's region table reads the same order.
+     (e) Measured (opt-in `RTW_LOCALS=1`, 42 hands-off careers × 4 seasons):
+     local sides take 0.2 % of the Major slots and 0.04 % of the Worlds
+     slots; they hold 14–24 % of the Sunday regional seats and 3–8 % of the
+     direct seats in AI regions. Real orgs keep 84 % of the slots; the rest
+     are filler orgs, nearly all of APAC's and SSA's single slot (their real
+     orgs from 2021-22 rate below the top fillers, which predates R49). No
+     retune.
+     (f) Saves: persist version 3 and saveVersion 5 unchanged. An old save
+     banks local points from its next regional on, nothing retroactive, and
+     keeps any announced field. Rejected: storing an anchor for every region
+     (the median is already a season snapshot), the user's live rating in
+     the user's events (a side would change strength between Saturday and a
+     Major), and keeping local sides out of the direct 8 or the Major slots
+     (they are teams of the region, and they do not crowd the orgs out).
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

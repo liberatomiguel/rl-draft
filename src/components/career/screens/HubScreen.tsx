@@ -45,14 +45,12 @@ import { useSettings } from "@/store/settingsStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
 import {
-  CAREER_SLOTS,
   dateOfDay,
   eventDayPhaseOf,
   isWindowWeek,
   nameOfRef,
   runwayWeeks,
   seasonLabelFor,
-  standingsRows,
   unlockTrack,
   useCareerSave,
   useRevealHeldEventId,
@@ -67,10 +65,10 @@ import { DayCard } from "@/components/career/hub/DayCard";
 import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
+import { RaceBlock } from "@/components/career/hub/RaceBlock";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
-import { TeamStars } from "@/components/career/TeamStars";
 import { formatMoneyDelta } from "@/lib/format";
 import { ErrorBanner, withMoneyParams } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
@@ -331,16 +329,6 @@ export function HubScreen() {
   const needsCount =
     (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
 
-  // --- Road to Worlds mini --------------------------------------------------
-  const rows = standingsRows(save, region, "season");
-  const userRow = rows.find((r) => r.isUser);
-  const slots = CAREER_SLOTS.worlds[region] ?? 0;
-  const gapToLine =
-    userRow && userRow.rank > slots ? (rows[slots - 1]?.points ?? 0) - userRow.points : 0;
-  const miniIdx = [...new Set([0, slots - 1, slots, rows.findIndex((r) => r.isUser)])]
-    .filter((i) => i >= 0 && i < rows.length)
-    .sort((a, b) => a - b);
-
   // --- the wire ----------------------------------------------------------------
   const unreadNews = save.news.filter((n) => !n.read).length;
   const wireItems = wireOpen
@@ -551,75 +539,8 @@ export function HubScreen() {
             </Panel>
           ) : null}
 
-          {/* 4b — Road to Worlds mini */}
-          <AppLink href="/career/standings" className="block">
-            <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "90ms" }}>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="kicker text-[10px]">{C.hub.pointsRace}</p>
-                <Badge className={REGION_BADGE[region]}>{region}</Badge>
-              </div>
-              {userRow ? (
-                <>
-                  <p className="display text-xl font-bold text-ink">
-                    {C.hub.pointsRank(userRow.rank, userRow.points)}
-                  </p>
-                  {userRow.rank <= slots ? (
-                    <Badge tone="good" className="mt-1">
-                      {C.hub.pointsSafe}
-                    </Badge>
-                  ) : (
-                    <p className="mt-1 text-xs font-semibold text-bad">{C.hub.pointsGap(gapToLine)}</p>
-                  )}
-                  <ul className="mt-3 space-y-1">
-                    {miniIdx.map((i, k) => {
-                      const r = rows[i];
-                      const prev = k > 0 ? rows[miniIdx[k - 1]] : null;
-                      return (
-                        <li key={r.ref}>
-                          {prev && prev.rank <= slots && r.rank > slots ? (
-                            <div className="my-1.5 flex items-center gap-2" aria-hidden>
-                              <span className="flex-1 border-t border-dashed border-blue/60" />
-                              <span className="kicker text-[9px] text-blue-bright">
-                                {C.standings.worldsLine}
-                              </span>
-                              <span className="flex-1 border-t border-dashed border-blue/60" />
-                            </div>
-                          ) : prev && r.rank > prev.rank + 1 ? (
-                            <p className="text-center text-[10px] leading-3 text-faint" aria-hidden>
-                              ···
-                            </p>
-                          ) : null}
-                          <div
-                            className={cx(
-                              "flex items-center gap-2 rounded-md px-1.5 py-1",
-                              r.isUser && "border border-orange/40 bg-orange/10",
-                            )}
-                          >
-                            <span className="display w-5 shrink-0 text-right text-xs font-bold text-faint">
-                              {r.rank}
-                            </span>
-                            <OrgMark save={save} orgRef={r.ref} size="xs" />
-                            <span
-                              className={cx(
-                                "min-w-0 flex-1 truncate text-xs",
-                                r.isUser ? "font-bold text-ink" : "text-sub",
-                              )}
-                            >
-                              {r.name}
-                            </span>
-                            <TeamStars stars={r.stars} size="xs" />
-                            <span className="display shrink-0 text-xs font-bold text-ink">
-                              {r.points}
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              ) : null}
-            </Panel>
-          </AppLink>
+          {/* 4b — RTW-01 (R49, UX-01d): the Major / Worlds race toggle */}
+          <RaceBlock save={save} C={C} />
 
           {/* 5 — finances at a glance (rc.2) */}
           <AppLink href="/career/finances" className="block">

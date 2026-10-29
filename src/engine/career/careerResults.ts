@@ -14,7 +14,6 @@ import { CAREER_REP, CAREER_SLOTS, CAREER_STABILITY, FEATURES } from "@/config/b
 import type { Placement, PlayoffState, Region, TournamentState } from "../types";
 import { pointsFor, prizeFor, repTierOf } from "./economy";
 import { seedsFromSwiss } from "../swiss";
-import { isLocalRef } from "./localScene";
 import { derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -211,8 +210,10 @@ export function compileEventResult(
  * Fold a compiled result into the competition ledger (immutably).
  * Regionals bank into BOTH the split table and the season table of the event
  * region; Majors (cross-region) bank into the season table of each team's
- * HOME region (`regionOf` resolves it — the store knows org homes);
- * unofficials and Worlds award no Season Points.
+ * HOME region (`regionOf` resolves it — the store knows org homes, and a
+ * local side's home is in its ref); unofficials and Worlds award no Season
+ * Points. RTW-01 (R49, reversing R23/R30's "never in standings"): local
+ * amateur sides bank like any team, so they race for Major and Worlds slots.
  */
 export function applyResultToStandings(
   competition: CompetitionState,
@@ -237,8 +238,6 @@ export function applyResultToStandings(
     const split = { ...competition.splitPoints[region] };
     const season = { ...competition.seasonPoints[region] };
     for (const row of result.rows) {
-      // Local amateur sides (R23/R30) never enter the tables.
-      if (isLocalRef(row.ref)) continue;
       split[row.ref] = (split[row.ref] ?? 0) + row.points;
       season[row.ref] = (season[row.ref] ?? 0) + row.points;
     }
@@ -268,9 +267,24 @@ export function applyResultToStandings(
 }
 
 /**
- * Top-K per region from a points table, K from the slot table. Ties break by
- * a per-(region, ref) derived float — deterministic, insertion-order-proof
- * (the "committee decision"). Region blocks follow the slot table's order.
+ * The ONE order of a region's points table — the Major/Worlds selection, the
+ * Standings tables, the HQ race and the season review all read it: points ↓,
+ * ties broken by a per-(region, ref) derived float — deterministic and
+ * insertion-order-proof (the "committee decision"). Only refs ON the table
+ * (teams that played a points event) are ranked.
+ */
+export function rankByPoints(table: Record<string, number>, region: Region, careerSeed: number): string[] {
+  return Object.keys(table).sort(
+    (a, b) =>
+      table[b] - table[a] ||
+      derivedFloat(careerSeed, streams.gen("tie", region + a)) -
+        derivedFloat(careerSeed, streams.gen("tie", region + b)),
+  );
+}
+
+/**
+ * Top-K per region from a points table, K from the slot table, in the
+ * `rankByPoints` order. Region blocks follow the slot table's order.
  */
 function qualifiersFrom(
   points: Record<Region, Record<string, number>>,
@@ -279,24 +293,20 @@ function qualifiersFrom(
 ): string[] {
   const field: string[] = [];
   for (const region of Object.keys(slots) as Region[]) {
-    const table = points[region] ?? {};
-    const refs = Object.keys(table).sort(
-      (a, b) =>
-        table[b] - table[a] ||
-        derivedFloat(careerSeed, streams.gen("tie", region + a)) -
-          derivedFloat(careerSeed, streams.gen("tie", region + b)),
-    );
-    field.push(...refs.slice(0, slots[region]));
+    field.push(...rankByPoints(points[region] ?? {}, region, careerSeed).slice(0, slots[region]));
   }
   return field;
 }
 
-/** The split's Major field (16 org refs) from the locked split standings. */
+/**
+ * The split's Major field (16 refs) from the locked split standings. RTW-01
+ * (R49): any team of the table — an org, the user or a local side.
+ */
 export function majorFieldFor(competition: CompetitionState, careerSeed: number): string[] {
   return qualifiersFrom(competition.splitPoints, CAREER_SLOTS.major, careerSeed);
 }
 
-/** The Worlds field (16 org refs) from the full-season standings. */
+/** The Worlds field (16 refs) from the full-season standings (R49: local sides included). */
 export function worldsFieldFor(competition: CompetitionState, careerSeed: number): string[] {
   return qualifiersFrom(competition.seasonPoints, CAREER_SLOTS.worlds, careerSeed);
 }

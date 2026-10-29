@@ -324,6 +324,23 @@ export interface CompetitionState {
    * mid-week. Absent on older saves and before the first regional Monday.
    */
   weekSeeding?: WeekSeeding | null;
+  /**
+   * RTW-01 (R49): the local scene's strength anchor in the user's region for
+   * this season — the user's team rating (`userSeedRatingFor`) frozen on the
+   * season's first regional Monday, so a local side has ONE rating wherever
+   * it plays (qualifier, regional, Major, Worlds, cups). Other regions anchor
+   * on the median of their stored org ratings (the season's snapshot) and need
+   * no field. Optional and season-scoped (the competition resets at the
+   * rollover): absent before the first regional Monday and on saves from
+   * before rc.31 until their next Monday.
+   */
+  localAnchor?: LocalSceneAnchor | null;
+}
+
+/** RTW-01 (R49): the user's region and the team rating its local scene is rated around this season. */
+export interface LocalSceneAnchor {
+  region: Region;
+  rating: number;
 }
 
 /** rc.30 (direct-8): one region's regional seeding, committed on the week's Monday. */

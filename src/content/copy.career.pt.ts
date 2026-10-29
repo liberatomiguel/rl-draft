@@ -821,6 +821,38 @@ export const CAREER_PT: CareerCopy = {
     fieldRevealPending: "Revelada quando todas as regiões concluírem",
   },
 
+  // RTW-01 (R49): as duas tabelas da corrida — as abas da Classificação e o seletor do QG.
+  race: {
+    majorTab: "Tabela do Major",
+    worldsTab: "Tabela do Worlds",
+    majorToggle: "Major",
+    worldsToggle: "Worlds",
+    majorScope: (split: number, slots: number) =>
+      `Split ${split} · pontos dos regionais · ${slots === 1 ? "o líder vai" : `os ${slots} primeiros vão`} ao Major`,
+    worldsScope: (slots: number) =>
+      `Temporada · pontos dos regionais + Majors · ${slots === 1 ? "o líder vai" : `os ${slots} primeiros vão`} ao Worlds`,
+    fixturesMajor: (n: number) =>
+      n === 0 ? "Split concluído" : n === 1 ? "Falta 1 regional no split" : `Faltam ${n} regionais no split`,
+    fixturesWorlds: (regionals: number, majors: number) => {
+      const parts = [
+        regionals ? `${regionals} regiona${regionals === 1 ? "l" : "is"}` : "",
+        majors ? `${majors} Major${majors === 1 ? "" : "s"}` : "",
+      ].filter(Boolean);
+      return parts.length
+        ? `${regionals + majors === 1 ? "Falta" : "Faltam"} ${parts.join(" + ")} na temporada`
+        : "Temporada concluída";
+    },
+    status: { clinched: "Vaga garantida", contention: "Na briga", out: "Fora de alcance" },
+    localTag: "Local",
+    localLegend: "Local: um time amador da cena regional. Pontua como qualquer time e pode conquistar uma vaga.",
+    qualifiedTag: "Classificado",
+    majorField: "Chave do Major",
+    majorFieldPending: "Anunciada na segunda-feira da semana do Major",
+    open: "Classificação completa",
+    toggleLabel: "Tabela da corrida",
+    fixturesLabel: "Ainda por jogar",
+  },
+
   news: {
     title: "Central",
     unread: (n: number) => `${n} não lidas`,
@@ -1347,7 +1379,9 @@ export const CAREER_PT: CareerCopy = {
     // rc.2 times locais
     localSide: "Time local",
     // rc.29: desde a R30 a cena local também completa as qualificatórias de sábado.
-    localHint: "Um time amador da cena regional — joga as community cups e completa as qualificatórias de sábado.",
+    // rc.31 (R49): seus pontos de regional contam na corrida do Major e do Worlds.
+    localHint:
+      "Um time amador da cena regional — joga as community cups e as qualificatórias de sábado, e seus pontos de regional contam na corrida do Major e do Worlds.",
   },
 
   common: {

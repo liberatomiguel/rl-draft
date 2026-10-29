@@ -170,8 +170,14 @@ describe("regional qualifier (R30, R40 weekend)", () => {
     const regional = sun.eventResults.find((r) => r.tier === "regional" && r.region === "SAM");
     expect(regional).toBeDefined();
     expect(regional!.rows).toHaveLength(16);
-    // Locals never enter the points tables, even if one made Sunday.
-    for (const ref of Object.keys(sun.competition.splitPoints.SAM)) expect(isLocalRef(ref)).toBe(false);
+    // RTW-01 (R49, reversing R23/R30): every team that played Sunday banks its
+    // points — a local side that came through Saturday included — and no local
+    // side that missed Sunday is on the table.
+    for (const row of regional!.rows) expect(sun.competition.splitPoints.SAM[row.ref]).toBe(row.points);
+    const sunday = new Set(regional!.rows.map((r) => r.ref));
+    for (const ref of Object.keys(sun.competition.splitPoints.SAM)) {
+      if (isLocalRef(ref)) expect(sunday.has(ref)).toBe(true);
+    }
     // The qualifier paid no Season Points.
     const q = sun.eventResults.find((r) => r.tier === "qualifier" && r.region === "SAM");
     expect(q!.rows.every((r) => r.points === 0)).toBe(true);

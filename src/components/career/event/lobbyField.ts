@@ -45,6 +45,7 @@ export function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating
     week: def.week,
     userSeed: ownRegion ? { rating: userRating, prestige: repTierOf(save.reputation) } : null,
     fieldsUser: ownRegion,
+    careerSeed: save.careerSeed,
   };
   const ranked = (points: Record<string, number>) =>
     orgsByPointsFor({
