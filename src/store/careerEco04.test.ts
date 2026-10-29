@@ -67,7 +67,7 @@ import {
   weeklyOf,
   weeklyStatement,
 } from "@/engine/career/economy";
-import { blockbusterRefusalApplies, renewalAskFor } from "@/engine/career/market";
+import { blockbusterRefusalApplies, listingFor, renewalAskFor } from "@/engine/career/market";
 import type { CareerPlayerView, CareerSave, FinanceState, TransferOffer } from "@/engine/career/types";
 import { buildWorldAtCreation, agePassAndIntake } from "@/engine/career/worldSim";
 import {
@@ -609,6 +609,22 @@ describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runwa
     // Back at three: the next signing (a reserve) is a commitment again.
     const next = cheapFa(signed.save);
     expect(signPlayerFlow(signed.save, next.id, { lengthSeasons: 2 }).error).toBe("loanRunway");
+  });
+
+  it("never a soft lock: the Market always lists a page of free agents a low-reputation org can sign", () => {
+    let world = buildWorldAtCreation(50_404);
+    for (let s = 0; s < 4; s++) world = agePassAndIntake(world, s + 1, 50_404, [], false, []).world;
+    const ctx = { world, squadIds: [], seasonIndex: 4, careerSeed: 50_404 };
+    const plain = listingFor(ctx);
+    expect(plain.freeAgents.length).toBe(120);
+    const cap = Math.min(...plain.freeAgents.map((v) => Math.round(v.overall))) - 1;
+    const pool = world.freeAgentIds
+      .map((id) => playerViewById(id, { careerSeed: 50_404, seasonIndex: 4, world }))
+      .filter((v): v is CareerPlayerView => v !== null && v.age >= 13 && Math.round(v.overall) <= cap);
+    expect(pool.length).toBeGreaterThan(0);
+    const topped = listingFor({ ...ctx, signableCap: cap });
+    expect(topped.freeAgents.slice(0, 120)).toEqual(plain.freeAgents);
+    expect(topped.freeAgents.filter((v) => Math.round(v.overall) <= cap)).toHaveLength(Math.min(24, pool.length));
   });
 
   it("a coach hire that adds wages is refused the same way", () => {

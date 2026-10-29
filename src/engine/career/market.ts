@@ -81,12 +81,21 @@ export interface MarketListing {
 }
 
 const LISTING_CAP = 120;
+/**
+ * rc.32: free agents the org can sign that the listing always shows (one
+ * market page). The top LISTING_CAP by overall can all sit above a low
+ * reputation's signing cap — a restructured org at rep 0 saw only locked
+ * rows and could never sign again.
+ */
+const LISTING_MIN_SIGNABLE = 24;
 
 export function listingFor(ctx: {
   world: WorldState;
   squadIds: string[];
   seasonIndex: number;
   careerSeed: number;
+  /** rc.32: the org's signing cap (economy.signableOverallCap) — tops the free agents up with signable ones. */
+  signableCap?: number;
 }): MarketListing {
   const viewCtx: ViewCtx = {
     careerSeed: ctx.careerSeed,
@@ -119,8 +128,15 @@ export function listingFor(ctx: {
   }
   contracted.sort((a, b) => b.view.overall - a.view.overall);
 
+  const listedFree = freeAgents.slice(0, LISTING_CAP);
+  const cap = ctx.signableCap;
+  if (cap !== undefined) {
+    const signable = (v: CareerPlayerView) => Math.round(v.overall) <= cap;
+    const missing = LISTING_MIN_SIGNABLE - listedFree.filter(signable).length;
+    if (missing > 0) listedFree.push(...freeAgents.slice(LISTING_CAP).filter(signable).slice(0, missing));
+  }
   return {
-    freeAgents: freeAgents.slice(0, LISTING_CAP),
+    freeAgents: listedFree,
     contracted: contracted.slice(0, LISTING_CAP),
   };
 }

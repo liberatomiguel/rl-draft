@@ -313,9 +313,11 @@ export function MarketScreen() {
       squadIds: save.squad.map((p) => p.id),
       seasonIndex: save.clock.seasonIndex,
       careerSeed: save.careerSeed,
+      // rc.32: always a page of free agents this org can actually sign.
+      signableCap: signableOverallCap(save.reputation),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [save?.world.version, save?.clock.seasonIndex, save?.careerSeed, squadKey]);
+  }, [save?.world.version, save?.clock.seasonIndex, save?.careerSeed, squadKey, save?.reputation]);
 
   // --- ask quotes + scouted bands, memoized per card (NOT per render) --------
   const rows: MarketRow[] = useMemo(() => {

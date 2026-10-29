@@ -266,13 +266,15 @@ interface Candidate {
 }
 
 function candidatesFor(save: CareerSave): Candidate[] {
+  const cap = signableOverallCap(save.reputation);
+  // rc.32: the Market's own listing (a page of signable free agents always shown).
   const listing = listingFor({
     world: save.world,
     squadIds: save.squad.map((p) => p.id),
     seasonIndex: save.clock.seasonIndex,
     careerSeed: save.careerSeed,
+    signableCap: cap,
   });
-  const cap = signableOverallCap(save.reputation);
   const out: Candidate[] = [];
   const add = (view: CareerPlayerView, splitsRemaining: number | null) => {
     if (Math.round(view.overall) > cap) return;
