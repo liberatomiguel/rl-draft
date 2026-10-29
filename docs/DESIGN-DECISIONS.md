@@ -1543,6 +1543,19 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      `npm run` script must exist, and a quoted value must match `balance.ts`
      or say it is a snapshot.
 
+147. **The module inventory and its severity scale (rc.32, ENG-01).**
+     `MODULE-AUDIT.md` lists every module once — its job, persistence, the
+     tests that import it, findings and status — in eight packages, each
+     closed with the commit and the command that show it. Severity follows
+     ROADMAP's priorities: P0 integrity (saves, money, softlocks), P1 a
+     visible wrong result or a 2.0 redesign item, P2 a real defect with a
+     narrow case, P3 hygiene (a tunable outside `balance.ts`, a missing
+     direct test, a stale comment). A front fixes only P0/P1 in its own
+     files; a finding in another front's files is listed "for the rc.32
+     integration", and one that would change a design rule goes to Miguel
+     (C-1: R31's 16-org seats keep Karmine Corp and most later EU, SAM and NA
+     orgs out of every career). A row changes with its module.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).
