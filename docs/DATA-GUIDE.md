@@ -13,9 +13,9 @@ To update the dataset:
 
 The generator (`scripts/build-dataset.mjs`) handles: person identity
 de-duplication across nickname variants ("jstn"/"JSTN"/"jstn."), the
-known ZeN(OCE) ≠ zen(FR) collision, curated nationalities (near-full
-coverage, 371/377 players; the rest have none — same-country chemistry
-skips them), org buff levels
+known ZeN(OCE) ≠ zen(FR) collision, curated nationalities (every one of
+the 594 players has one at rc.31; a player without one simply gets no
+same-country chemistry), org buff levels
 **per season** (`lineups[].orgBuffLevel` override; the org entity keeps the
 strongest level as default), derived coach bonuses (level from overall,
 type from a stable hash), derived `historicalStrength` (avg overall:
@@ -51,17 +51,19 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 
 ## Files at a glance
 
-| File | Entity | Counts (approx — run build:data) |
+| File | Entity | Counts at rc.31 (per era and region: `DATA-AUDIT-rc32.md`, generated) |
 | --- | --- | --- |
-| `seasons.json` | RLCS seasons (labels) | 15 |
-| `players.json` | Real player identities | 377 |
-| `playerCards.json` | Player versions per lineup/season | 777 |
-| `orgs.json` | Organizations + buffs | 138 |
-| `coaches.json` | Coach cards (incl. generic staff) | 132 |
-| `subs.json` | Substitute cards | 104 |
-| `lineups.json` | Historical rosters (the draft pool) | 259 |
-| `specialCards.json` | Collectible special versions | 86 |
-| `achievements.json` | Achievement definitions | 56 |
+| `seasons.json` | RLCS + FIFAe seasons (labels) | 17 |
+| `players.json` | Real player identities | 594 |
+| `playerCards.json` | Player versions per lineup/season | 1314 |
+| `orgs.json` | Organizations + buffs | 227 |
+| `coaches.json` | Coach cards | 289 |
+| `subs.json` | Substitute cards | 147 |
+| `lineups.json` | Historical rosters (the draft pool) | 438 (32 national) |
+| `specialCards.json` | Collectible special versions (hand-maintained) | 111 (+ 133 national cards derived at load) |
+| `achievements.json` | Achievement definitions (hand-maintained) | 56 |
+| `challenges.json` | Challenges (hand-maintained) | 27 |
+| `cardIdAliases.json` | Retired card ids → live cards | 6 |
 
 ---
 
@@ -105,7 +107,8 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 
 - `overall` (60-99): the calculated base. The game uses
   `overall + manualAdjustment`, but **`manualAdjustment` is always `0`** —
-  the generator hardcodes it (`build-dataset.mjs:463`), so any hand-set value
+  the generator hardcodes it (`manualAdjustment: 0` in `build-dataset.mjs`'s
+  card builder), so any hand-set value
   is wiped on the next `build:data`. It's a reserved hook for a future curator
   layer (base doc §17); today it does nothing. **To change a player's strength,
   edit the overall in `teams.md`** (or use `scripts/apply-overall-review.mjs`)

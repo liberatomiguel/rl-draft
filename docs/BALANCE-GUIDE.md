@@ -52,7 +52,7 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 - Favorites stomp too much → raise it.
 - Keep `userRollRange` asymmetries small; they tilt every single game.
 
-## Difficulty profiles (`DIFFICULTY`) — current (v1.4)
+## Difficulty profiles (`DIFFICULTY`) — current (rc.25, #140)
 
 > The figures in the tables below are an illustrative snapshot; **`src/config/balance.ts`
 > is authoritative** and drifts with every balance patch. When in doubt, read the
@@ -66,21 +66,31 @@ Consistency (stat) and `defense_stability` (special effect) dampen the
 | `aiRollRange` | [-4, 4] | [-4, 4] | [-4, 4] | [-4, 4] |
 | `chemistryMaxBonus` (user) | 1.3 | 2.0 | 2.4 | 3.0 |
 | `opponentChemistryMaxBonus` (AI) | 1.3 | 2.0 | 0 | 0 |
-| `opponentRatingShift` | -2.0 | -1.3 | -0.7 | +1.3 |
+| `opponentRatingShift` | -2.0 | -1.05 | -0.5 | +1.6 |
 | `opponentSpecialChance` | 2% | 5% | 12% | 18% |
-
-Legacy's `+1.3` (v1.4 retune; #79.1 set 1.2, #94 nudged 1.2 → 1.3) was tuned on the
-**realistic-draft win-rate curve** (`difficulty.sim.test.ts`): a ~92 team ≈ 0%, the elite
-tier climbs to 96-97 ≈ 15% and a 98+ pinnacle ≈ 49%. Region-locked (SAM) runs add a
-**per-difficulty** flat boost to every opponent (`REGION_LOCK.opponentRatingBoost` is a
-per-difficulty record: easy/normal/hard +2, **legacy +4.0** — tuned on SAM's OWN curve, NOT
-in lockstep with the WW shift). SAM lives on its own flatter scale, re-anchored to its **~95
-achievable ceiling** (v1.4.3, #99): the 94-95 ceiling ≈ 32% title, non-elite walled out, never
-impossible — so the weaker regional field plays at its intended curve. Watch the **reach-the-
-final %** the sim now logs, not just the title rate: it was a 90-91 making the grand final 32%
-of runs (not the title rate) that exposed the pre-#99 ease.
 | `opponentTierWeights` | favors solid | slightly soft | favors elite | heavily elite |
 | `xpMultiplier` | 1.0 | 1.0 | 1.5 | 2.0 |
+
+Since rc.25 (#140) the shifts are **calibrated on live play, by reset profile**:
+`difficulty.matrix.test.ts` (`SIM_MATRIX=1`) records how many times each drafted
+team was reset and a model fitted on the live PostHog rates gives every pool a
+live-like rate; on Hard/Legacy the "grinders" (12+ resets) may not beat live
+worldwide grinders. That moved Normal −1.3 → −1.05, Hard −0.7 → −0.5 and Legacy
+1.3 → 1.6 (v1.4 had tuned on the realistic-draft curve of `difficulty.sim.test.ts`,
+#79.1 / #94). Region-only runs add a flat boost to every opponent **per region and
+difficulty** (`REGION_LOCK.opponentRatingBoost`, #136 → #140), each pool fitted to
+the same live worldwide rates (easy · normal · hard · legacy):
+
+| Region | easy | normal | hard | legacy |
+| --- | --- | --- | --- | --- |
+| SAM | -1.85 | -0.35 | +1.45 | +3.95 |
+| EU | -0.05 | +0.45 | +0.9 | +1.5 |
+| NA | +0.4 | +1.15 | +2.55 | +2.15 |
+| MENA | -0.55 | +1.45 | +2.9 | +4.05 |
+| OCE | +0.25 | +1.35 | +3.5 | +5.35 |
+
+The earlier SAM-only scale (one per-difficulty record, the "~95 ceiling" of v1.4.3,
+#99) is history.
 
 `requiresLegacyUnlock` is set on **legacy only** — it needs a Hard tournament
 win to play.
@@ -217,7 +227,17 @@ run; the rest was stretched in v1.3.5 for a longer endgame. Average run ≈ 150-
 XP, winning run ≈ 500-800. Mode multipliers: classic ×1.0 · quick ×0.5 · daily ×1.5.
 Tune `RANKS` minXp to stretch or compress the grind.
 
-## MMR (`MMR`, v1.4)
+## Season Rating (`SEASON_RATING`, v2.0, #111) and the legacy MMR
+
+**Live play uses the Season Rating since v2.0.** Every season starts at **400**
+(`start`), a run moves it by a signed placement × difficulty delta (`delta`:
+Easy title +6 … Legacy title +26, Swiss exits −2 … −5), floor 0, the first 5
+runs of a season never lose (`placementRuns`), × mode (`modeMultiplier`: classic
+1 · quick 0.5 · daily 1.25), and hidden overalls add `hiddenOverallBonus` to
+gains only. Functions: `seasonRatingDelta`, `seasonRatingAfter`.
+
+The v1.4 `MMR` below no longer moves in play: it survives as the pre-season
+snapshot (`legacy.preseason.mmr`, the Hall of Fame) and the v11 backfill.
 
 A cosmetic "skill rating" parallel to XP — surfaced on the profile card, results
 screen and leaderboard; it never touches gameplay. Everyone starts at **1000**.
@@ -243,9 +263,14 @@ profiles: a saturating curve (`backfillScale` K = 120) of a profile's title
 history lands the best current players near 1600 and a fresh account at ~1000.
 Functions: `mmrRawGain`, `mmrAfterRun`, `mmrBackfillFloor`.
 
-## Challenges (`CHALLENGE`, v1.4)
+## Challenges (`CHALLENGE`, v1.4 → Challenges 2.0)
 
-20 authored puzzles — a constrained draft then a single **Bo7** vs a fixed boss.
+27 authored puzzles at rc.31 (`src/data/challenges.json`: 23 boss challenges and
+4 gauntlets) — a constrained draft then a single **Bo7** vs a fixed boss (a
+gauntlet plays its stages first). Each has three stars, paid once each
+(`CHALLENGE.starXp`: common 40 · rare 70 · epic 110 · legend 160 per extra star;
+the clear pays the challenge's own `reward.xp`, #116), and the star track's
+cosmetics unlock at `starMilestones` 10 · 25 · 45 stars.
 Rerolls scale with the challenge's sim difficulty via
 `CHALLENGE.rerollsByDifficulty`: **easy 8 · normal 5 · hard 3 · legacy 0** (the
 easy tiers let you assemble freely; the brutal ones make every pick count). The

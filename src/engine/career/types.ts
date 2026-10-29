@@ -704,6 +704,11 @@ export interface CareerSave {
   saveVersion: number;
   createdAtAppVersion: string;
   careerSeed: number;
+  /**
+   * OBS-01 (#145): a random anonymous id the STORE stamps at creation, sent as
+   * the analytics `careerId`. Never read by the engine; older saves derive one.
+   */
+  careerId?: string;
   identity: CareerIdentity;
   difficulty: CareerDifficulty;
   prefs: CareerPrefs;

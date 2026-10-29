@@ -18,9 +18,12 @@ with the root cause — that section doubles as the project's bugfix log.
 > Challenge, Daily Quiz, missions, login streak, cosmetics and season extras
 > hidden; `/quiz` and `/missions` 404). Runbook: DEPLOY-CLOUDFLARE.md.
 
-> The biggest release in the project's history. Plan + execution order:
-> **`docs/V2-IMPLEMENTATION-PLAN.md`** (phases, DB steps for Miguel, launch checklist).
-> This entry grows as phases land. Never deployed to `main` before the full review.
+> The biggest release in the project's history. Plan of record: **`docs/ROADMAP.md`**
+> (the completion plan's Etapas and approval gates, since rc.26).
+> `docs/V2-IMPLEMENTATION-PLAN.md` is the history of Phases 0–3 (rc.1) and Phase 4
+> (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
+> regression checklist (§7) and the open decisions (§8). This entry grows with every
+> rc. Never deployed to `main` before the full review.
 
 ### Added — Phase 0 (technical base)
 - **Season model** (`src/config/season.ts`): the current season is a build-time constant

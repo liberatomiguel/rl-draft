@@ -24,11 +24,16 @@
  * No-op until configured: with no NEXT_PUBLIC_POSTHOG_KEY (e.g. local dev, or a
  * build before the key is set) nothing is downloaded, init never runs and
  * `trackEvent` skips the PostHog sink — the app behaves exactly as before.
+ *
+ * Production only (OBS-01, #145): the SDK is never downloaded unless
+ * `analyticsAllowed()` — a production build (no NEXT_PUBLIC_NOINDEX /
+ * NEXT_PUBLIC_PLAYTEST) running on rocketdraft.app. Staging, playtest, a local
+ * preview and dev send nothing, not even pageviews, even with a key set.
  */
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { connectAnalytics, disableAnalytics, notePageview } from "@/lib/analytics";
+import { analyticsAllowed, connectAnalytics, disableAnalytics, notePageview } from "@/lib/analytics";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
@@ -112,7 +117,7 @@ function PageviewRecorder() {
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (!POSTHOG_KEY || scheduled) return;
+    if (!POSTHOG_KEY || scheduled || !analyticsAllowed()) return;
     scheduled = true;
     afterLoadThenIdle(() => loadPostHog(POSTHOG_KEY));
   }, []);

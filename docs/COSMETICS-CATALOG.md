@@ -93,7 +93,7 @@ Total: **89** items — 0 avatars · 35 badges · 0 frames · 36 titles · 18 ba
 | `grant-title-pro` | Pro Player / Pro Player | Epic | Manual grant: pro | yes | #aef7ff → #e0fbff | A verified RLCS professional plays here too. |
 | `legacy-title-ps-grand-champion` | Pre-Season Grand Champion / Pre-Season Grand Champion | Epic | Pre-season peak rank ≥ Grand Champion | yes | #ff1f1f → #ff6b6b | Reached Grand Champion in the pre-season. |
 | `career-title-rtw-champion` | Road to Worlds World Champion / Road to Worlds World Champion | Epic | 1 Road to Worlds Worlds title (any save) |  | #ffeb5c → #fff3a0 | Your org won the World Championship on the Road to Worlds. |
-| `rank-title-rocketeer` | Rocketeer / Rocketeer | Epic | Season 1: reach Champion |  | #2f7bff → #b26bff → #ff8a2a | Reached Champion in Season 1. |
+| `rank-title-rocketeer` | Rocketeer / Rocketeer | Epic | Season 1: reach Champion |  | #ff5f6d → #ffc371 → #c9a8ff | Reached Champion in Season 1. |
 | `login-title-daily-driver` | Daily Driver / Daily Driver | Epic | Login streak 30 days |  | #ff5f6d → #ffc371 → #fff0a8 | Thirty days in a row. |
 | `legacy-title-ps-board-champion` | Pre-Season Leaderboard Champion / Pre-Season Leaderboard Champion | Legendary | Pre-season board #1 | yes | #ffffff → #fff4d6 → #ffe6f3 | The first name at the top of the first board. |
 | `legacy-title-ps-supersonic-legend` | Pre-Season Supersonic Legend / Pre-Season Supersonic Legend | Legendary | Pre-season peak rank ≥ Supersonic Legend | yes | #ffffff → #fff4d6 → #ffe6f3 | Supersonic Legend before the first season even started. |

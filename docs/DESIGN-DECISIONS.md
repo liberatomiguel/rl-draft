@@ -1491,6 +1491,71 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      its scrollbar. The alternative is a gutter only while a dialog is open,
      but then routes jump sideways again, as before rc.29.
 
+145. **Analytics is production-only and read off the store's write (rc.32,
+     OBS-01).** The 2.0 catalogue (`ANALYTICS-EVENTS-2.0.md`) is built in
+     `src/lib/analytics.ts`, provisional until Miguel approves it.
+     (a) A hard guard, not only a missing key (Miguel, 29/10):
+     `analyticsAllowed()` needs a production build (NODE_ENV production, no
+     `NEXT_PUBLIC_NOINDEX`, no `NEXT_PUBLIC_PLAYTEST`) AND the host
+     `rocketdraft.app`. Elsewhere the provider never downloads the SDK (no
+     pageviews either), `trackEvent` drops the event and `connectAnalytics`
+     refuses a sink, so staging, playtest, a local preview, dev and tests send
+     nothing even with a key set by mistake.
+     (b) Every event carries `release` (`SITE.version`, kept equal to
+     package.json by a test), `balanceVersion` (`BALANCE_VERSION`, an integer
+     hand-bumped by any tuning commit; `balanceVersion.test.ts` fingerprints
+     every balance.ts export except FEATURES and fails until the bump),
+     `schemaVersion`, `environment`, `locale` (registered by the settings
+     store: analytics imports no store, so it loads before `window` exists in
+     tests) and `gameMode`. Scalars only, strings capped, no names.
+     (c) The career events are DERIVED from the write: `careerAnalytics.ts`
+     compares the save before the action with the save the career store just
+     wrote (a result banked, a milestone first set, a split boundary crossed,
+     a review written, the squad / staff / scout / mail change of a named
+     action). No hook in `careerFlow.ts` (shared with the arc bot and the
+     other fronts); exactly once per saved change, whatever path banked it;
+     a reload only rehydrates, so it never fires one. Each `actionId`
+     (careerId:season:day:kind:ref) is sent at most once per session.
+     (d) `careerId` is a random id the store stamps at creation
+     (`CareerSave.careerId`, optional, never read by the engine); an older
+     save derives a stable one from its seed.
+     (e) The quality events wrap persistence without changing it:
+     `store/persistStorage.ts` makes zustand's own localStorage reads and
+     writes and returns each migrate's result, reporting a failed write
+     (quota), an unreadable save or a failing migrate, then rethrowing to
+     where the error went before. Keys and versions are untouched.
+     Trade-off: each career write runs the diff (a few array scans) when
+     analytics is allowed; the career's load-time `saveVersion` upgrade can
+     report again after a reload with no action in between (same `actionId`:
+     count distinct).
+
+146. **One plan of record; an old plan or spec says it is history (rc.32,
+     ENG-02).** `ROADMAP.md` is the plan of record for 2.0 (since rc.26);
+     `STATUS.md` / `ROAD-TO-WORLDS-STATUS.md` are the current state. A doc
+     that used to be a plan or a spec keeps its text (the history and the
+     rationale stay greppable) and opens with a **"Status: HISTORY"** banner
+     that names what supersedes it and what in it is still live: the V2 plan
+     (its §6–§8 stay live), `CHALLENGES-DESIGN.md` (the live set is
+     `challenges.json`), `TUNING-HARD-LEGACY.md` (the method is #140's). A
+     generated doc says how to regenerate it (`COSMETICS-CATALOG.md`,
+     `DATA-AUDIT-rc32.md`, `CAREER-BASELINE-rc30.md`) and is never hand-edited.
+     Runbooks are checked against the code when touched: every cited path and
+     `npm run` script must exist, and a quoted value must match `balance.ts`
+     or say it is a snapshot.
+
+147. **The module inventory and its severity scale (rc.32, ENG-01).**
+     `MODULE-AUDIT.md` lists every module once — its job, persistence, the
+     tests that import it, findings and status — in eight packages, each
+     closed with the commit and the command that show it. Severity follows
+     ROADMAP's priorities: P0 integrity (saves, money, softlocks), P1 a
+     visible wrong result or a 2.0 redesign item, P2 a real defect with a
+     narrow case, P3 hygiene (a tunable outside `balance.ts`, a missing
+     direct test, a stale comment). A front fixes only P0/P1 in its own
+     files; a finding in another front's files is listed "for the rc.32
+     integration", and one that would change a design rule goes to Miguel
+     (C-1: R31's 16-org seats keep Karmine Corp and most later EU, SAM and NA
+     orgs out of every career). A row changes with its module.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

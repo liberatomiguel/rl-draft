@@ -89,6 +89,9 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import type { GearItemId } from "@/engine/career/economy";
+import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
+import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
+import { reportingJSONStorage, reportingMigrate, reportMigration } from "./persistStorage";
 
 /** A popup toast mirrored from a new mail/news item (session-only). */
 export interface CareerToast {
@@ -229,6 +232,19 @@ function emptySlots(): (CareerSave | null)[] {
   return Array.from({ length: CAREER_SAVE.maxSlots }, () => null);
 }
 
+/**
+ * OBS-01 (#145): send the career events this write produced — read off the
+ * save before the action and the save just written (`careerAnalytics.ts`).
+ * Production only, and never throws into gameplay.
+ */
+function trackCareerWrite(prev: CareerSave, next: CareerSave, action?: CareerAction): void {
+  try {
+    if (analyticsAllowed()) trackEvents(careerEventsFor(prev, next, action));
+  } catch {
+    // analytics must never break a save
+  }
+}
+
 export const useCareerStore = create<CareerStoreState>()(
   persist(
     (set, get) => {
@@ -276,10 +292,14 @@ export const useCareerStore = create<CareerStoreState>()(
         return true;
       };
 
-      const withSave = (fn: (save: CareerSave) => CareerSave, opts?: { allowEnded?: boolean }): void => {
+      const withSave = (
+        fn: (save: CareerSave) => CareerSave,
+        opts?: { allowEnded?: boolean; track?: CareerAction },
+      ): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
         if (!opts?.allowEnded && refuseEnded()) return;
+        const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const prevWorlds = slots[activeSlot]!.stats.titlesWorlds ?? 0;
         const next = fn(slots[activeSlot]!);
@@ -301,6 +321,7 @@ export const useCareerStore = create<CareerStoreState>()(
               ? [...ach.toasts, ...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP)
               : state.toasts,
         }));
+        trackCareerWrite(prevSave, next, opts?.track);
       };
 
       /**
@@ -308,10 +329,14 @@ export const useCareerStore = create<CareerStoreState>()(
        * The returned save persists EVEN on error — v0.3 negotiation rejections
        * mutate bookkeeping (the agent hardens) and must stick.
        */
-      const withResult = (fn: (save: CareerSave) => { save: CareerSave; error?: string }): void => {
+      const withResult = (
+        fn: (save: CareerSave) => { save: CareerSave; error?: string },
+        track?: CareerAction,
+      ): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
         if (refuseEnded()) return;
+        const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const { save, error } = fn(slots[activeSlot]!);
         const changed = save !== slots[activeSlot];
@@ -329,6 +354,7 @@ export const useCareerStore = create<CareerStoreState>()(
               ? [...ach.toasts, ...fresh, ...state.toasts].slice(0, TOAST_QUEUE_CAP)
               : state.toasts,
         }));
+        if (changed) trackCareerWrite(prevSave, save, track);
       };
 
       return {
@@ -342,10 +368,13 @@ export const useCareerStore = create<CareerStoreState>()(
         createCareer: (slot, input, customSeed) => {
           const seed = (customSeed ?? randomSeed()) >>> 0;
           const save = createCareerSave(input, seed);
+          save.careerId = anonymousId("c"); // OBS-01: the anonymous analytics id
           save.lastPlayedAt = Date.now();
           const slots = [...get().slots];
           slots[slot] = save;
           set({ slots, activeSlot: slot, lastError: null, autoAdvance: false, toasts: [] });
+          const created = careerCreatedEvent(save, input.rosterKey);
+          trackEvent(created.name, created.props);
         },
 
         selectSlot: (slot) => {
@@ -383,11 +412,13 @@ export const useCareerStore = create<CareerStoreState>()(
         scheduleScrim: (day, oppRef) => withResult((s) => scheduleScrimFlow(s, day, oppRef)),
         cancelScrim: (day) => withResult((s) => cancelScrimFlow(s, day)),
 
-        signPlayer: (playerId, opts) => withResult((s) => signPlayerFlow(s, playerId, opts)),
-        releasePlayer: (playerId) => withResult((s) => releasePlayerFlow(s, playerId)),
+        signPlayer: (playerId, opts) =>
+          withResult((s) => signPlayerFlow(s, playerId, opts), { kind: "sign", playerId }),
+        releasePlayer: (playerId) =>
+          withResult((s) => releasePlayerFlow(s, playerId), { kind: "release", playerId }),
         renewPlayer: (playerId, lengthSeasons, offeredSalary) =>
-          withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary)),
-        acceptBid: (offerId) => withResult((s) => acceptBidFlow(s, offerId)),
+          withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary), { kind: "renew", playerId }),
+        acceptBid: (offerId) => withResult((s) => acceptBidFlow(s, offerId), { kind: "sell", offerId }),
         declineBid: (offerId) => withSave((s) => declineBidFlow(s, offerId)),
 
         setStarters: (ids) => withResult((s) => setStartersFlow(s, ids)),
@@ -410,10 +441,12 @@ export const useCareerStore = create<CareerStoreState>()(
         buyGear: (itemId) => withResult((s) => buyGearFlow(s, itemId)),
         setPsychologist: (on) => withResult((s) => setPsychologistFlow(s, on)),
         runBootcamp: () => withResult(runBootcampFlow),
-        buyScoutReport: (playerId) => withResult((s) => buyScoutReportFlow(s, playerId)),
-        hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach)),
-        fireCoach: () => withResult(fireCoachFlow),
-        chooseSponsor: (sponsorId) => withResult((s) => chooseSponsorFlow(s, sponsorId)),
+        buyScoutReport: (playerId) =>
+          withResult((s) => buyScoutReportFlow(s, playerId), { kind: "scout", playerId }),
+        hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach), { kind: "hireCoach" }),
+        fireCoach: () => withResult(fireCoachFlow, { kind: "fireCoach" }),
+        chooseSponsor: (sponsorId) =>
+          withResult((s) => chooseSponsorFlow(s, sponsorId), { kind: "chooseSponsor" }),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
         takeBankLoan: (principal) => withResult((s) => takeBankLoanFlow(s, principal)),
         payBankLoan: (amount) => withResult((s) => payBankLoanFlow(s, amount)),
@@ -457,7 +490,7 @@ export const useCareerStore = create<CareerStoreState>()(
               if (item) item.read = true;
               return next;
             },
-            { allowEnded: true },
+            { allowEnded: true, track: { kind: "readMail", mailId } },
           ),
         markAllMailRead: () =>
           withSave(
@@ -474,15 +507,16 @@ export const useCareerStore = create<CareerStoreState>()(
     {
       name: "rocket-draft:career:v1",
       version: 3,
+      storage: reportingJSONStorage("career"),
       // ADDITIVE migrate, forever: upgrade each slot in place — new versions
       // add defaults for new fields per slot instead of resetting saves.
-      migrate: (persisted) => {
+      migrate: reportingMigrate("career", 3, (persisted) => {
         const state = persisted as CareerStoreState;
         if (state?.slots) {
           state.slots = state.slots.map((slot) => (slot ? migrateSaveToV5(slot) : null));
         }
         return state;
-      },
+      }),
       partialize: (state) => ({
         slots: state.slots,
         activeSlot: state.activeSlot,
@@ -505,9 +539,14 @@ export const useCareerStore = create<CareerStoreState>()(
         if (!state.slots) return;
         state.slots = state.slots.map((slot) => {
           if (!slot) return null;
+          // OBS-01: read before the migration, which upgrades the slot in place.
+          const fromVersion = slot.saveVersion ?? 1;
           try {
             const upgraded = migrateSaveToV5(slot) ?? slot;
             syncSquadRoles(upgraded);
+            if (upgraded.saveVersion > fromVersion) {
+              reportMigration("career", fromVersion, upgraded.saveVersion, `career:${careerIdOf(upgraded)}`);
+            }
             return upgraded;
           } catch {
             /* never block hydration on a repair */

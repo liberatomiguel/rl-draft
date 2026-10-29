@@ -1,18 +1,19 @@
 # Rocket Draft v2.0 "Season 1" — implementation plan
 
-> **Status: LIVING DOCUMENT.** Written 2026-10-16 from Miguel's v2.0 design
-> guides. It is the execution order for the biggest release in the project's
-> history. Each phase lists its deliverables, the files it touches, its gates and
-> what Miguel has to do on his side. Update the checkboxes as work lands.
+> **Status: HISTORY, plus three live lists (since rc.26).** The plan of record
+> for finishing 2.0 is **`docs/ROADMAP.md`** (the completion plan's Etapas 1–6
+> and their approval gates); where the two differ, ROADMAP wins. This file was
+> the execution order from 2026-10-16 (Miguel's v2.0 design guides) until
+> rc.26: Phases 0–3 (§3) shipped as rc.1, Phase 4 ran through rc.2–rc.26 and
+> its open items became ROADMAP's Etapas 5–6; §0–§2 are rules and
+> architecture that now live in the code.
+> **Still live, and pointed to by ROADMAP and STATUS:** **§6** (what Miguel
+> does in Supabase and Cloudflare, in order), **§7** (the staging regression
+> checklist) and **§8** (open decisions). Keep those three current; do not
+> plan new work here.
 >
-> Read `docs/STATUS.md` first for the current state of the repo; this file is the
-> plan, not the status.
->
-> **Navigation (save context):** Phases 0–3 (§3) are done and shipped as
-> v2.0.0-rc.1 on `staging`; §0–§2 are the rules and architecture that are now
-> in the code. For remaining work read only **§6** (what Miguel does, in
-> order), **§7** (staging regression checklist) and **§8** (open decisions).
-> Jump with `grep -n "^## " docs/V2-IMPLEMENTATION-PLAN.md`.
+> Read `docs/STATUS.md` first for the current state of the repo. Jump with
+> `grep -n "^## " docs/V2-IMPLEMENTATION-PLAN.md`.
 
 ---
 
