@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { flagSrc } from "@/lib/assets";
+import { flagSprite, flagSrc } from "@/lib/assets";
 import { cx } from "@/lib/util";
 
 type Tone = "neutral" | "blue" | "orange" | "good" | "bad" | "gold";
@@ -37,30 +37,54 @@ export function Badge({
   );
 }
 
+/** The flag chip's box: 20 × 14 CSS px with a 1 px border, so the flag fills
+ *  18 × 12 — the flag sprite's cell (FLAG_SPRITE in build-images.mjs). */
+const FLAG_BOX = "inline-block h-3.5 w-5 rounded-[3px] border border-line-strong shadow-sm";
+
 /**
  * Country chip: real flag from public/flags/<cc>.png when present
  * (populated by `npm run fetch:assets -- --flags`), text code otherwise.
  * Region codes (NA/EU/…) have no flag file: the asset manifest knows that
  * (flagSrc → null), so they render the text chip with no request at all.
  * onError stays as a safety net for a flag that fails to load.
+ * Production (rc.32, WEB-02, #149): every flag is a cell of ONE sprite (one
+ * request for all the flags of a page); the chip clips the sprite <img> to its
+ * box. If the sprite fails, the raw PNG is next, then the text chip. Dev
+ * shows the raw PNGs. `className` styles the box (not its size).
  */
 export function CountryChip({ code, className }: { code: string; className?: string }) {
-  const src = flagSrc(code);
-  // The URL that failed to load (derived reset: a new code → a new src → retry).
-  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const cell = flagSprite(code);
+  const raw = flagSrc(code);
+  // URLs that failed to load on this mount (derived reset: a new code → a new
+  // raw URL → retried; a failed sprite stays skipped, it serves every code).
+  const [failed, setFailed] = useState<readonly string[]>([]);
+  const fail = (url: string) => setFailed((f) => (f.includes(url) ? f : [...f, url]));
 
-  if (src && src !== failedSrc) {
+  if (cell && !failed.includes(cell.src)) {
+    return (
+      <span role="img" aria-label={code} title={code} className={cx("relative overflow-hidden", FLAG_BOX, className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={cell.src}
+          alt=""
+          decoding="async"
+          onError={() => fail(cell.src)}
+          className="absolute max-w-none"
+          style={{ left: -cell.left, top: -cell.top, width: cell.width, height: cell.height }}
+        />
+      </span>
+    );
+  }
+
+  if (raw && !failed.includes(raw)) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={src}
+        src={raw}
         alt={code}
         title={code}
-        onError={() => setFailedSrc(src)}
-        className={cx(
-          "inline-block h-3.5 w-5 rounded-[3px] border border-line-strong object-cover shadow-sm",
-          className,
-        )}
+        onError={() => fail(raw)}
+        className={cx(FLAG_BOX, "object-cover", className)}
       />
     );
   }

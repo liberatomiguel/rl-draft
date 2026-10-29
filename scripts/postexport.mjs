@@ -432,8 +432,9 @@ async function checkRequiredFiles(ctx) {
  * GENERATED IMAGES. src/lib/assets.ts only ever builds URLs for assets in
  * src/generated/asset-manifest.json, choosing a width from the manifest's
  * `widths`. Rebuild every URL it can return — each org key × widths.orgs,
- * each special × widths.specials, each rank, each flag — with the SAME
- * formats as orgLogoSrc / specialPhotoSrc / rankSrc / flagSrc (KEEP IN SYNC),
+ * each special × widths.specials, each rank, each flag, the flag sprite — with
+ * the SAME formats as orgLogoSrc / specialPhotoSrc / rankSrc / flagSrc /
+ * flagSprite (KEEP IN SYNC),
  * and fail if the file the static host would serve is missing from out/. A
  * miss here would otherwise ship as a 404 cached `immutable` for a year
  * (public/_headers applies to error responses too).
@@ -473,6 +474,7 @@ async function checkGeneratedImages(ctx) {
     urls.push(`/img/badges/${seg(art)}.${hash}.glow.webp`);
   }
   for (const cc of manifest.flags ?? []) urls.push(`/flags/${cc}.png`);
+  if (manifest.flagSprite) urls.push(`/img/flags/flags.${manifest.flagSprite.hash}.png`);
 
   const files = new Set(ctx.files);
   const missing = urls.filter((u) => !files.has(urlToOutFile(u)));
@@ -489,7 +491,8 @@ async function checkGeneratedImages(ctx) {
   console.log(
     `  all ${urls.length} manifest image URL(s) exist in out/: ${n(manifest.orgs)} orgs × [${widths.orgs}], ` +
       `${n(manifest.specials)} specials × [${widths.specials}], ${n(manifest.ranks)} ranks, ` +
-      `${n(manifest.badges)} badges × [${widths.badges}], ${(manifest.flags ?? []).length} flags`,
+      `${n(manifest.badges)} badges × [${widths.badges}], ${(manifest.flags ?? []).length} flags` +
+      (manifest.flagSprite ? " + their sprite" : ""),
   );
 }
 
