@@ -220,6 +220,21 @@ with the root cause — that section doubles as the project's bugfix log.
   toaster (z-80) ignored the "ceremony" overlay hold. Toasts now wait for the ceremony, and each
   toast's timer starts once it shows.
 
+**Found by the independent cross-package review of rc.27–rc.29** (the check the rc.29 E2E left
+open):
+- **The playtest build froze the results XP total at "+0 XP"** for the rest of the tab after any
+  unlock (P1, playtest.rocketdraft.app). Root cause: the playtest build mounts no unlock pop-up,
+  but the profile store still queued every new cosmetic, and since rc.29 the count-up waits for
+  that queue to empty. The playtest build no longer queues.
+- **The login calendar and the unlock pop-up could open over a live career event**, which kept
+  playing underneath. Root cause: the Road to Worlds playback held nothing back (the Draft
+  tournament holds "live"). It now holds "live" until the digest or the Saturday pause panel.
+- **Releasing a player during an event changed the squad while the event kept fielding the
+  frozen team.** For example, a release between Saturday's Swiss and Sunday's playoffs, and
+  "Worlds homegrown" then read the edited squad. Root cause: only the lineup swap was locked.
+  Release, signing and accepting a bid now wait until the event ends ("Roster moves wait until
+  the event ends"), and the homegrown check also reads the fielded players.
+
 ### Changed — rc.30
 - Career saves move to saveVersion 5 (additive `migrateSaveToV5`; the persist version stays 3).
 

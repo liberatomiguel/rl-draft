@@ -45,10 +45,10 @@ import type {
   CoachState,
   DrillId,
   SquadPlayer,
-  TransferOffer,
 } from "@/engine/career/types";
 import { createRng, randomSeed } from "@/lib/rng";
 import {
+  acceptBidFlow,
   advanceDayFlow,
   advanceToNextStopFlow,
   buyGearFlow,
@@ -69,7 +69,6 @@ import {
   resolveInsertFlow,
   releasePlayerFlow,
   renewPlayerFlow,
-  resolveAcceptedBid,
   rolloverToNextSeason,
   runBootcampFlow,
   runScrimFlow,
@@ -368,11 +367,7 @@ export const useCareerStore = create<CareerStoreState>()(
         releasePlayer: (playerId) => withResult((s) => releasePlayerFlow(s, playerId)),
         renewPlayer: (playerId, lengthSeasons, offeredSalary) =>
           withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary)),
-        acceptBid: (offerId) =>
-          withSave((s) => {
-            const offer = s.pendingOffers.find((o: TransferOffer) => o.id === offerId);
-            return offer ? resolveAcceptedBid(s, offer) : s;
-          }),
+        acceptBid: (offerId) => withResult((s) => acceptBidFlow(s, offerId)),
         declineBid: (offerId) => withSave((s) => declineBidFlow(s, offerId)),
 
         setStarters: (ids) => withResult((s) => setStartersFlow(s, ids)),

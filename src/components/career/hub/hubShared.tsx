@@ -69,6 +69,8 @@ function errorTextFor(C: CareerCopy, key: string): string {
       return C.finances.insolvencyWarning;
     case "eventLocked":
       return C.event.lineupLocked;
+    case "rosterLocked":
+      return C.market.errors.rosterLocked;
     default:
       // locked / maxed / used / none / unknown / invalid — no CAREER.errors.*
       // group exists yet; "Locked" is the least-wrong neutral fallback.

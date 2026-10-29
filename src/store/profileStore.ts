@@ -966,6 +966,9 @@ export const useProfileStore = create<ProfileState>()(
 // cloud merge are quiet (`quietUnlocks`), and the persist hydrate runs before
 // this subscription exists, so a migrated save never floods the queue.
 useProfileStore.subscribe((state, prev) => {
+  // rc.30: the playtest build mounts no unlock pop-up, so nothing may wait in its
+  // queue — the results XP count-up waits for that queue to empty (stayed "+0 XP").
+  if (FEATURES.playtest) return;
   if (quietUnlocks > 0 || state.cosmetics?.owned === prev.cosmetics?.owned) return;
   const ids = newlyOwnedIds(prev.cosmetics?.owned ?? {}, state.cosmetics?.owned ?? {});
   if (ids.length) useCosmeticUnlocks.getState().push(ids);

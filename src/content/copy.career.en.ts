@@ -668,6 +668,8 @@ export const CAREER_EN = {
       negotiationLocked: "Negotiations soured — only the full ask signs this window.",
       lowball: "That offer would insult the player.",
       sameDay: "Already scrimmed this team today.",
+      /** rc.30: signing, releasing or selling during an event in progress. */
+      rosterLocked: "Roster moves wait until the event ends.",
     },
   },
 

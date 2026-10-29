@@ -661,6 +661,7 @@ export const CAREER_PT: CareerCopy = {
       negotiationLocked: "A negociação azedou — só a pedida cheia assina nesta janela.",
       lowball: "Essa oferta ofenderia o jogador.",
       sameDay: "Vocês já treinaram contra esse time hoje.",
+      rosterLocked: "Mudanças no elenco só depois do fim do evento.",
     },
   },
 

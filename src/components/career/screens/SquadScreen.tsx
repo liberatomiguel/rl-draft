@@ -487,7 +487,14 @@ export function SquadScreen() {
                   >
                     {C.squad.renew}
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setRelease(p)}>
+                  {/* rc.30: roster moves wait for the event (its team froze at the start). */}
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={lineupLocked}
+                    title={lineupLocked ? C.market.errors.rosterLocked : undefined}
+                    onClick={() => setRelease(p)}
+                  >
                     {C.squad.release}
                   </Button>
                 </div>

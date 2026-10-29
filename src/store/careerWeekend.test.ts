@@ -48,6 +48,7 @@ import { fastForward, playNextRound } from "@/engine/tournament";
 import type { Region } from "@/engine/types";
 import { createRng } from "@/lib/rng";
 import {
+  acceptBidFlow,
   advanceDayFlow,
   advanceToNextStopFlow,
   continueEventToNextDayFlow,
@@ -59,8 +60,10 @@ import {
   isLegacySaturdayPlayoffs,
   migrateSaveToV4,
   regionalUserEligible,
+  releasePlayerFlow,
   rolloverToNextSeason,
   setStartersFlow,
+  signPlayerFlow,
   simEventToEnd,
   startEvent,
   stepEventRound,
@@ -765,6 +768,48 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     expect(news[0].day).toBe(eventDayFor(MAJOR_W) + 1);
     // A spectator weekend is never a stop.
     expect(advanceToNextStopFlow(quiet(save)).clock.day).toBeGreaterThan(sun.clock.day);
+  });
+});
+
+describe("roster moves wait for the event (rc.30, rc.29 review)", { timeout: 30_000 }, () => {
+  it("no release, signing or sale between Saturday's Swiss and Sunday's playoffs; they open again after", () => {
+    const paused = simEventToEnd(startEvent(majorSaturday(80), false));
+    expect(isEventPaused(paused)).toBe(true);
+    const starter = paused.starterIds[0];
+    const released = releasePlayerFlow(paused, starter);
+    expect(released.error).toBe("rosterLocked");
+    expect(released.save).toBe(paused);
+    const signed = signPlayerFlow(paused, paused.world.freeAgentIds[0], { role: "sub", lengthSeasons: 1 });
+    expect(signed.error).toBe("rosterLocked");
+    const withBid: CareerSave = {
+      ...paused,
+      pendingOffers: [
+        {
+          id: "bid:test",
+          direction: "out",
+          playerId: starter,
+          playerName: "Starter",
+          fee: 1000,
+          salaryPerSplit: 0,
+          lengthSeasons: 2,
+          role: "starter",
+          otherRef: Object.keys(paused.world.orgs)[0],
+          status: "pending",
+          resolveSeason: 0,
+          resolveDay: paused.clock.day + 7,
+          factors: [],
+        },
+      ],
+    };
+    const sold = acceptBidFlow(withBid, "bid:test");
+    expect(sold.error).toBe("rosterLocked");
+    expect(sold.save.squad.map((p) => p.id)).toContain(starter);
+    // Sunday: the playoffs, the finish — then the market is open for business again.
+    const done = finishEvent(simEventToEnd(advanceToNextStopFlow(withBid)));
+    expect(done.activeEvent).toBeNull();
+    const after = acceptBidFlow(done, "bid:test");
+    expect(after.error).toBeUndefined();
+    expect(after.save.squad.map((p) => p.id)).not.toContain(starter);
   });
 });
 

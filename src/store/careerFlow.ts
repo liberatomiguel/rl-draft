@@ -1290,6 +1290,17 @@ function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: stri
 // Offers (market decisions resolved through the store)
 // ---------------------------------------------------------------------------
 
+/**
+ * rc.30 (review): accepting a bid is a roster move — locked while an event is
+ * in progress (its team froze at startEvent; a sold starter would still play
+ * Sunday's playoffs for the user).
+ */
+export function acceptBidFlow(input: CareerSave, offerId: string): FlowResult {
+  if (input.activeEvent) return { save: input, error: "rosterLocked" };
+  const offer = input.pendingOffers.find((o) => o.id === offerId);
+  return offer ? { save: resolveAcceptedBid(input, offer) } : { save: input, error: "unknown" };
+}
+
 export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): CareerSave {
   const save = clone(input);
   const player = save.squad.find((p) => p.id === offer.playerId);
@@ -1897,7 +1908,8 @@ export function finishEvent(input: CareerSave): CareerSave {
       (save.flags as Record<string, unknown>)[ACH_FLAGS.worldsMaxStarterOvr] =
         fieldedOvr.length ? Math.round(Math.max(...fieldedOvr)) : 0;
       const founding = save.foundingSquadIds;
-      if (founding && save.squad.every((p) => founding.includes(p.id))) {
+      // rc.30 (review): every player who took the stage counts, not only the squad at the end.
+      if (founding && save.squad.every((p) => founding.includes(p.id)) && fielded.every((id) => founding.includes(id))) {
         save.flags[ACH_FLAGS.worldsHomegrown] = true;
       }
       save.end = {
@@ -2552,6 +2564,7 @@ export function signPlayerFlow(
     offeredSalary?: number;
   },
 ): FlowResult {
+  if (input.activeEvent) return { save: input, error: "rosterLocked" }; // rc.30: roster moves wait for the event
   const save = clone(input);
   if (!isWindowWeek(weekOfDay(save.clock.day))) return { save: input, error: "windowClosed" };
   if (save.squad.some((p) => p.id === playerId)) return { save: input, error: "alreadySigned" };
@@ -2689,6 +2702,9 @@ export function signPlayerFlow(
 }
 
 export function releasePlayerFlow(input: CareerSave, playerId: string): FlowResult {
+  // rc.30 (review): the event's team froze at startEvent — a release mid-event
+  // (a Major paused overnight) changed the squad while Sunday fielded the old one.
+  if (input.activeEvent) return { save: input, error: "rosterLocked" };
   const save = clone(input);
   const player = save.squad.find((p) => p.id === playerId);
   if (!player) return { save: input, error: "unknown" };

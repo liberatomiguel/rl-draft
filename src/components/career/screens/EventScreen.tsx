@@ -48,6 +48,7 @@ import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 import { ANIM_TOURNAMENT_SPEED, useSettings } from "@/store/settingsStore";
 import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 import { useMounted } from "@/store/useMounted";
@@ -621,6 +622,10 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     t.stage === "finished" && effRevealed >= rounds.length && !effAnim && !resultsGated;
   // R40: every Saturday round revealed and the event paused → the pause panel.
   const swissCompleteReady = paused && effRevealed >= rounds.length && !effAnim && !resultsGated;
+  // rc.30 (review): a live event holds the quieter pop-ups (the login
+  // calendar, the unlock pop-up) like a Draft tournament does — they used to
+  // open over a playing round, which kept running underneath.
+  useOverlayHold("live", !digestReady && !swissCompleteReady);
 
   // R40 review: the engine pauses as soon as it has SIMULATED the deciding
   // Swiss series — while this screen is still revealing Saturday, the top
