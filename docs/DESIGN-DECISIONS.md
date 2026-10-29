@@ -1491,6 +1491,80 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      its scrollbar. The alternative is a gutter only while a dialog is open,
      but then routes jump sideways again, as before rc.29.
 
+148. **The URL decides the language of a page's static HTML (rc.32,
+     DRAFT-11).** The export renders each page once, and the root layout
+     hard-coded `lang="en"` while `useCopy()` answered EN until the client had
+     mounted: a visitor landing on a `/pt` page saw English chrome (header,
+     footer, nav, the EN toggle pressed) and `lang="en"` until hydration.
+     - `<html>` is a Client Component, `components/layout/LocaleRoot.tsx`. The
+       export renders it with each page's pathname, so it knows the URL's
+       language and provides it (`UrlLocaleContext`). `/pt` and the PT content
+       pages export `lang="pt-BR"` (the hreflang tag) and PT chrome. The other
+       34 pages export the same HTML as before.
+     - `lib/locale.ts` lists exact URLs (`PT_PATHS`, from `PAGE_ROUTES`), not a
+       `/pt/` prefix: the 404 page is rendered once, in English, and served at
+       `/pt/<typo>` too, so a prefix rule would make its hydration disagree.
+     - `useUiLocale()` (copy.ts) is the URL's language before mount and the
+       saved one after; `useCopy()` and the EN/PT toggle use it. `SyncLocale`
+       still sets a PT page's language before the first paint, so nothing
+       flashes. `<html lang>` moved from SettingsEffects to LocaleRoot (one
+       owner); React writes only `lang` there, so the runtime classes stay.
+     - Locked three ways: `locale.test.ts` ties `PT_PATHS` to the route files,
+       `LocaleRoot.test.ts` checks the server render, and postexport's "check
+       page languages" checks the exported HTML (`lang`, the pressed toggle,
+       one header/footer text per language).
+     Rejected: a second root layout in route groups (every EN↔PT link would be
+     a full page load) and a post-export HTML rewrite (the chrome would stay
+     English and the HTML would disagree with the hydration). Not changed: a
+     returning player who saved PT still sees one English frame on the EN URLs
+     (`/`, `/play`…); only per-language copies of those pages could avoid it.
+     The PT chrome's links still point at the EN URLs (`/about`, not
+     `/pt/sobre`), as they did after hydration: a WEB-01 question.
+
+149. **One flag sprite, and a loaded logo serves the smaller sizes (rc.32,
+     WEB-02).** Measured with `scripts/request-budget.mjs` (#150), a whole
+     Classic run from a cold home was 65–78 requests over ten seeds, against
+     the budget of 75. Flags were 5–14 of them (one PNG per country). Logos
+     cost 6–7 more, because each drafted org was fetched at 264 px for the
+     offer and again at 96 px for the roster.
+     - Flags: `build:images` packs every `public/flags/<cc>.png` into one
+       palette PNG, `img/flags/flags.<hash>.png` (9 KB for 34 flags, 1-year
+       immutable). Each flag is cover-cropped into CountryChip's 18 × 12 CSS px
+       box at 3×, with an edge-copied gutter so a downscaled neighbour never
+       bleeds in. The manifest's `flagSprite` gives the geometry, and
+       CountryChip clips the sprite `<img>` to its box. On an error it falls
+       back to the raw PNG (every deploy keeps `/flags/`), then the text chip.
+       Dev shows the raw PNGs. A palette PNG beat WebP here (q90 14 KB,
+       lossless 21 KB), and data URIs would have cost 35 KB of JS.
+     - Logos: assets.ts remembers the widest variant of each logo that has
+       loaded in the tab (TeamLogo's `onLoad`), and `orgLogoSrc` answers it
+       for any smaller size, never the other way. It is empty on the server and
+       during hydration, so no HTML changes.
+     Result over ten seeds (desktop; seeds 1–3 count the same on mobile): a
+     whole Classic run went from 65–78 requests (mean 72.8) to 56–59 (mean
+     57.6). Flags fell from 5–14 to 1 and logos from 24–28 to 19–22, and the
+     cold home stayed at 26. A drop-in flag or logo still needs only
+     `npm run build:images` and the manifest commit.
+
+150. **Prefetch on a mouse that moves; the request budget is a script (rc.32,
+     WEB-02).** AppLink took any mouse `pointerenter` as intent. Browsers also
+     send pointer events when a link slides under a resting cursor (a scroll,
+     a closing dialog), with zero movement. In a measured run that prefetched
+     `/profile`, a route the run never visits: 8 requests (HEAD, 5 segments,
+     2 chunks), enough to break the budget on its own.
+     - Intent is now a mouse `pointermove` with movement (`isMouseIntent`), or
+       keyboard focus. Checked on both builds: a real hover still prefetches,
+       and a link scrolled under a resting cursor fetches nothing.
+     - `scripts/request-budget.mjs` (Playwright) is the measure. Each run gets
+       a fresh context and a seeded `Math.random` with a fixed clock, so a seed
+       always drafts the same run. Desktop clicks park the mouse in the margin,
+       mobile (Pixel 7) taps, and each screen is scrolled once. It counts the
+       requests to the site's own origin that reached the network, by stage
+       and type, and exits 1 over the budget (75 for the whole run). The rc.29
+       reference (77–80) matches its `--natural-mouse` runs on rc.31 (78–83),
+       which include that accidental prefetch. On rc.32 those runs give 56–59,
+       the same as with the mouse parked.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

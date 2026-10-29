@@ -37,10 +37,11 @@
  * network settles, before any interaction (stage "home"); "home+" is the
  * home's first-visit dialogs and the read-through.
  *
- * Reference (Turbopack export, seeds 1–3; desktop and mobile count alike;
+ * Reference (Turbopack export; desktop and mobile count alike on seeds 1–3;
  * ~90 s per run, a failure leaves a screenshot in the working directory):
- *   rc.31          whole run 70–75 · cold home 26 · natural mouse 78–83
- *   rc.32 part E   whole run 56–59 · cold home 26   (DESIGN-DECISIONS #149–#150)
+ *   rc.31          seeds 1–3: 70–75 · seeds 1–10: 65–78 · natural mouse 78–83 · cold home 26
+ *   rc.32 part E   seeds 1–3: 56–59 · seeds 1–10: 56–59 · natural mouse 56–59 · cold home 26
+ *                  (DESIGN-DECISIONS #149–#150)
  *
  * Options:
  *   --seeds 1,2,3      seeds to run (default 1,2,3); "random" = unpinned
