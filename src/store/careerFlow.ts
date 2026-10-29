@@ -37,7 +37,6 @@ import {
   CAREER_PAYROLL,
   CAREER_QUALIFIER,
   CAREER_REP,
-  CAREER_SALARY,
   CAREER_SAVE,
   CAREER_SCOUT,
   CAREER_SCRIM,
@@ -101,6 +100,8 @@ import {
   ageOf,
   applyMatchXp,
   autoDrillFor,
+  becomesCoachOnRetirement,
+  isCompetitiveAge,
   drillEffectFor,
   fieldQualityFor,
   playerViewById,
@@ -119,6 +120,7 @@ import {
   bankLoanRefusal,
   bootcampTierFor,
   computeSalaryAsk,
+  debtPaymentFor,
   eventRepKindFor,
   gearNextItem,
   gearPriceFor,
@@ -133,6 +135,7 @@ import {
   repLossFloor,
   repTierOf,
   runwayWeeks,
+  severanceFor,
   signableOverallCap,
   sponsorOffersFor,
   t3RepKeyFor,
@@ -147,6 +150,9 @@ import {
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
   incomingBidForDay,
+  renewalAskFor,
+  userBidsBlocked,
+  type AskPackage,
 } from "@/engine/career/market";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
@@ -170,6 +176,7 @@ import type {
   CareerDifficulty,
   CareerEventDef,
   CareerIdentity,
+  CareerPlayerView,
   CareerPrefs,
   CareerSave,
   CoachState,
@@ -529,7 +536,10 @@ export function processDayArrival(input: CareerSave): CareerSave {
         save.firedBeatIds.push(beat.id);
         const targetOnSquad =
           beat.requiresPlayerFree && save.squad.some((p) => p.id === beat.requiresPlayerFree);
-        if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree) {
+        // ECO-03b (ROADMAP, R47): the career's first window is bid-free — a
+        // Blockbuster for a user-owned target there reads as preempted instead.
+        const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week));
+        if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree && !bidFree) {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
           const fee = quantize(
@@ -1298,7 +1308,13 @@ function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: stri
 export function acceptBidFlow(input: CareerSave, offerId: string): FlowResult {
   if (input.activeEvent) return { save: input, error: "rosterLocked" };
   const offer = input.pendingOffers.find((o) => o.id === offerId);
-  return offer ? { save: resolveAcceptedBid(input, offer) } : { save: input, error: "unknown" };
+  if (!offer) return { save: input, error: "unknown" };
+  // ECO-03 (R47): a bid for a player no longer on the squad cannot complete —
+  // say so and drop it, instead of "accepting" a sale that moves nothing.
+  if (!input.squad.some((p) => p.id === offer.playerId)) {
+    return { save: declineBidFlow(input, offerId), error: "unknown" };
+  }
+  return { save: resolveAcceptedBid(input, offer) };
 }
 
 export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): CareerSave {
@@ -1357,9 +1373,11 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
  * time (clamped to the outstanding debt and the available balance headroom).
  */
 export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
+  if (input.phase === "ended") return { save: input, error: "blocked" }; // ECO-02: the books are closed
   const save = clone(input);
   if (!save.finances.loan) return { save: input, error: "none" };
-  const pay = quantize(Math.min(amount, save.finances.loan.remaining));
+  // ECO-02 (R46): settle the exact remainder when the request covers it.
+  const pay = debtPaymentFor(save.finances.loan.remaining, amount);
   if (pay <= 0) return { save: input, error: "invalid" };
   if (save.finances.balance - pay < CAREER_LOAN.floor) return { save: input, error: "funds" };
   save.finances = payLoanDown(save.finances, pay, {
@@ -1387,6 +1405,7 @@ export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
  * limit); the principal lands immediately and instalments book every Monday.
  */
 export function takeBankLoanFlow(input: CareerSave, principal: number): FlowResult {
+  if (input.phase === "ended") return { save: input, error: "blocked" }; // ECO-02: no loan to a closed org
   const save = clone(input);
   const amount = quantize(principal);
   const refusal = bankLoanRefusal(save.finances, save.reputation, amount);
@@ -1474,9 +1493,11 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
 
 /** v2.0 (R21): pay the bank loan down early, any amount from the balance. */
 export function payBankLoanFlow(input: CareerSave, amount: number): FlowResult {
+  if (input.phase === "ended") return { save: input, error: "blocked" }; // ECO-02: the books are closed
   const save = clone(input);
   if (!save.finances.bankLoan) return { save: input, error: "none" };
-  const pay = Math.min(quantize(amount), save.finances.bankLoan.remaining);
+  // ECO-02 (R46): "pay it all" settles the exact remainder (no stub left).
+  const pay = debtPaymentFor(save.finances.bankLoan.remaining, amount);
   if (pay <= 0) return { save: input, error: "invalid" };
   if (save.finances.balance - pay < CAREER_LOAN.floor) return { save: input, error: "funds" };
   save.finances = payBankLoanDown(save.finances, pay, {
@@ -2059,14 +2080,34 @@ export function endCareer(save: CareerSave, reason: "insolvency" | "retired"): v
   save.end = {
     ...save.end,
     ended: true,
-    reason: save.end.reason ?? reason,
+    // ECO-02 (R46): an insolvency always records itself. A career that played
+    // on past a Worlds title or the timeline (continuable endings) and then
+    // broke the floor again used to keep "worlds_won" / "timeline_complete",
+    // so the season screen offered "Defend the title" / "Endless era" and the
+    // broke org rolled into a new season. Retiring keeps the earned ending.
+    reason: reason === "insolvency" ? "insolvency" : (save.end.reason ?? reason),
     endedSeasonIndex: save.clock.seasonIndex,
     legacyGrade: save.end.legacyGrade ?? legacyGradeFor(save.stats),
   };
   save.phase = "ended";
 }
 
+/**
+ * The season screen's "Endless era" (store `continueInfinite`): past the
+ * timeline or a Worlds title, into the procedural seasons. ECO-02 (R46): an
+ * ended career (insolvency, retired) never continues.
+ */
+export function continueInfiniteFlow(input: CareerSave): CareerSave {
+  if (input.phase === "ended") return input;
+  const save = clone(input);
+  save.end.infinite = true;
+  save.end.creditsShown = true;
+  return rolloverToNextSeason(save);
+}
+
 export function rolloverToNextSeason(input: CareerSave): CareerSave {
+  // ECO-02 (R46): an ended career (insolvency, retired) is final — no rollover.
+  if (input.phase === "ended") return input;
   const save = clone(input);
   const nextSeason = save.clock.seasonIndex + 1;
   const rng = createRng(deriveSeed(save.careerSeed, streams.rollover(nextSeason)));
@@ -2110,7 +2151,24 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   for (const p of save.squad) {
     const res = squadRollover(p, nextSeason, rng);
     if (res.retiresNow) {
-      pushNews(save, { type: "milestone", priority: 2, titleKey: "retired", params: { player: p.name } });
+      // DEV-02 (R48): he leaves the world for good (a retired id never
+      // resolves again — the anchor pass used to re-sign a real one to his
+      // real org), and the news says which way he went: a real ex-pro may move
+      // into coaching (then he is on the coach market), else he leaves.
+      const coach = becomesCoachOnRetirement(p.id, save.careerSeed);
+      if (!save.world.retiredIds.includes(p.id)) save.world.retiredIds.push(p.id);
+      delete save.world.overallDelta[p.id];
+      save.world.version += 1;
+      const key = coach ? "retiredToCoach" : "retiredLeaves";
+      pushNews(save, { type: "milestone", priority: 2, titleKey: key, params: { player: p.name } });
+      pushMail(save, {
+        kind: "club",
+        titleKey: key,
+        bodyKey: key,
+        params: { player: p.name },
+        fromKey: "staff",
+        linkTo: coach ? "/career/market#coaches" : "/career/squad",
+      });
       continue;
     }
     if (res.announcedRetirement) {
@@ -2554,24 +2612,40 @@ function resolveSalaryOffer(
   return { salary: offered };
 }
 
-export function signPlayerFlow(
-  input: CareerSave,
+/**
+ * ECO-03 (R47): everything a signing would move, validated BEFORE anything
+ * moves — the flow applies exactly this plan and the offer sheet renders it,
+ * so the screen can never quote a different deal. The price is the player's
+ * normal value whatever slot he takes (no "signed as a sub" discount); a full
+ * squad must name who leaves (`releaseId`, released with severance in the
+ * same operation). He lands in an open seat of the starting three, otherwise
+ * in the reserve slot — the lineup is the player's call afterwards, and a
+ * promotion never renegotiates (`setStartersFlow`).
+ */
+export interface SigningPlan {
+  view: CareerPlayerView;
+  /** The org he leaves (a fee transfer), null for a free agent. */
+  fromRef: string | null;
+  pack: AskPackage;
+  /** The squad player the user chose to release for the slot, if any. */
+  leaver: SquadPlayer | null;
+  severance: number;
+  /** Fee + signing bonus + severance: what the signing moves today. */
+  cost: number;
+  /** An open seat in the starting three, or the reserve slot. */
+  slot: "starter" | "reserve";
+}
+
+export function signingPlanFor(
+  save: CareerSave,
   playerId: string,
-  opts: {
-    role: "starter" | "sub";
-    lengthSeasons: 1 | 2 | 3;
-    /** v0.3 negotiation: counter-offer below the ask (omit = pay the ask). */
-    offeredSalary?: number;
-  },
-): FlowResult {
-  if (input.activeEvent) return { save: input, error: "rosterLocked" }; // rc.30: roster moves wait for the event
-  const save = clone(input);
-  if (!isWindowWeek(weekOfDay(save.clock.day))) return { save: input, error: "windowClosed" };
-  if (save.squad.some((p) => p.id === playerId)) return { save: input, error: "alreadySigned" };
-  const starters = save.squad.filter((p) => p.role === "starter").length;
-  const subs = save.squad.filter((p) => p.role === "sub").length;
-  if (opts.role === "starter" && starters >= 3) return { save: input, error: "squadFull" };
-  if (opts.role === "sub" && subs >= 1) return { save: input, error: "squadFull" };
+  opts: { lengthSeasons: 1 | 2 | 3; releaseId?: string },
+): { plan: SigningPlan } | { error: string } {
+  if (save.activeEvent) return { error: "rosterLocked" }; // rc.30: roster moves wait for the event
+  if (!isWindowWeek(weekOfDay(save.clock.day))) return { error: "windowClosed" };
+  if (save.squad.some((p) => p.id === playerId)) return { error: "alreadySigned" };
+  const leaver = opts.releaseId ? (save.squad.find((p) => p.id === opts.releaseId) ?? null) : null;
+  if (opts.releaseId && !leaver) return { error: "invalid" };
 
   const viewCtx = {
     careerSeed: save.careerSeed,
@@ -2579,12 +2653,15 @@ export function signPlayerFlow(
     world: save.world,
   };
   const view = playerViewById(playerId, viewCtx);
-  if (!view) return { save: input, error: "unavailable" };
+  if (!view) return { error: "unavailable" };
+  // DEV-02 (R48): signable (and so playable) from the minimum competitive age, 13.
+  if (!isCompetitiveAge(view.age)) return { error: "tooYoung" };
 
   // v0.3 visible signing gate: new signings accept only up to the rep cap.
-  if (Math.round(view.overall) > signableOverallCap(save.reputation)) {
-    return { save: input, error: "repGate" };
-  }
+  if (Math.round(view.overall) > signableOverallCap(save.reputation)) return { error: "repGate" };
+
+  // ECO-03 (R47): a full squad asks who leaves — never a silent release or demotion.
+  if (save.squad.length - (leaver ? 1 : 0) >= CAREER_CONTRACT.squadCap) return { error: "squadFull" };
 
   const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   const pack = askPackageFor(view, {
@@ -2592,27 +2669,90 @@ export function signPlayerFlow(
     seasonIndex: save.clock.seasonIndex,
     difficulty: save.difficulty,
     careerSeed: save.careerSeed,
-    role: opts.role,
     lengthSeasons: opts.lengthSeasons,
     contracted: onOrg
-      ? {
-          splitsRemaining: contractedSplitsRemaining(
-            playerId,
-            save.clock.seasonIndex,
-            save.careerSeed,
-          ),
-        }
+      ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
       : undefined,
   });
-  const cost = pack.fee + pack.signingBonus;
-  if (save.finances.balance - cost < CAREER_LOAN.floor) return { save: input, error: "funds" };
-  if (pack.fee > 0 && save.finances.loan) return { save: input, error: "loanActive" };
+  const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
+  const cost = pack.fee + pack.signingBonus + severance;
+  if (save.finances.balance - cost < CAREER_LOAN.floor) return { error: "funds" };
+  if (pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
+
+  const openSeats =
+    3 - save.starterIds.filter((id) => id !== leaver?.id && save.squad.some((p) => p.id === id)).length;
+  return {
+    plan: {
+      view,
+      fromRef: onOrg?.ref ?? null,
+      pack,
+      leaver,
+      severance,
+      cost,
+      slot: openSeats > 0 ? "starter" : "reserve",
+    },
+  };
+}
+
+/**
+ * Release a squad player into free agency, paying `severance` (one ledger
+ * line). `refill` false = a signing takes his seat right after (the caller
+ * syncs the lineup), so the reserve is not promoted into it in between.
+ */
+function releaseFromSquad(save: CareerSave, player: SquadPlayer, severance: number, refill = true): void {
+  save.finances = pushLedger(save.finances, {
+    seasonIndex: save.clock.seasonIndex,
+    week: weekOfDay(save.clock.day),
+    day: save.clock.day,
+    kind: "severance",
+    amount: -severance,
+    refName: player.name,
+  });
+  save.squad = save.squad.filter((p) => p.id !== player.id);
+  if (refill) syncSquadRoles(save);
+  // A pending bid for him can no longer complete.
+  save.pendingOffers = save.pendingOffers.filter((o) => o.playerId !== player.id || o.direction !== "out");
+  save.world.freeAgentIds.push(player.id);
+  save.world.version += 1;
+  pushNews(save, {
+    type: "transfer",
+    priority: 2,
+    titleKey: "userReleased",
+    params: { player: player.name, org: save.identity.orgName },
+  });
+}
+
+export function signPlayerFlow(
+  input: CareerSave,
+  playerId: string,
+  opts: {
+    /**
+     * @deprecated ECO-03 (R47): the slot is decided by the squad (an open seat
+     * in the starting three, else the reserve slot) and never prices the deal.
+     * Kept optional so older callers compile; ignored.
+     */
+    role?: "starter" | "sub";
+    lengthSeasons: 1 | 2 | 3;
+    /** v0.3 negotiation: counter-offer below the ask (omit = pay the ask). */
+    offeredSalary?: number;
+    /** ECO-03 (R47): with a full squad, who leaves (released, severance paid) in the same operation. */
+    releaseId?: string;
+  },
+): FlowResult {
+  const planned = signingPlanFor(input, playerId, opts);
+  if ("error" in planned) return { save: input, error: planned.error };
+  const { view, pack, leaver, severance, slot, fromRef } = planned.plan;
+  const save = clone(input);
 
   // v0.3 negotiation: a counter-offer may sign cheaper — or harden the agent.
+  // A rejection keeps only the hardened counter: no money and no slot moves.
   const negotiated = resolveSalaryOffer(save, playerId, pack.salaryPerSplit, opts.offeredSalary);
   if ("error" in negotiated) return { save: capNews(save), error: negotiated.error };
   const finalSalary = negotiated.salary;
 
+  // ECO-03 (R47): from here everything moves together — the leaver and his
+  // severance, the fee, the bonus, the wage and the slot.
+  if (leaver) releaseFromSquad(save, leaver, severance, false);
   if (pack.fee > 0) {
     save.finances = pushLedger(save.finances, {
       seasonIndex: save.clock.seasonIndex,
@@ -2659,7 +2799,7 @@ export function signPlayerFlow(
     potential: view.potential,
     peakAge: view.peakAge,
     declineRate: view.declineRate,
-    role: opts.role,
+    role: slot === "starter" ? "starter" : "sub",
     salaryPerSplit: finalSalary,
     contractEndSeason: save.clock.seasonIndex + opts.lengthSeasons,
     trainingFocus: "auto",
@@ -2670,23 +2810,21 @@ export function signPlayerFlow(
     gainedThisSplit: 0,
     gainedThisSeason: 0,
   });
-  // A starter signing only takes the pitch if there's an open lineup slot
-  // (fewer than 3 valid starters); otherwise it's depth. syncSquadRoles is the
-  // single source of truth for starterIds + roles.
-  if (opts.role === "starter") {
-    const validStarters = save.starterIds.filter((id) =>
-      save.squad.some((p) => p.id === id && p.id !== view.id),
-    );
-    if (validStarters.length < 3) {
-      save.starterIds = [...validStarters, view.id].slice(0, 3) as [string, string, string];
-    }
+  // He takes the open seat — the leaver's own seat when a starter left —
+  // otherwise he is the reserve and nobody is demoted. syncSquadRoles stays
+  // the single source of truth for starterIds + roles.
+  if (slot === "starter") {
+    const seats = [...save.starterIds];
+    const seat = seats.findIndex((id) => !save.squad.some((p) => p.id === id && p.id !== view.id));
+    if (seat >= 0) seats[seat] = view.id;
+    save.starterIds = seats as [string, string, string];
   }
   syncSquadRoles(save);
 
   logTransfer(save, {
     playerId: view.id,
     playerName: view.name,
-    fromRef: onOrg?.ref ?? null,
+    fromRef,
     toRef: "user",
     fee: pack.fee,
     kind: "userIn",
@@ -2708,28 +2846,7 @@ export function releasePlayerFlow(input: CareerSave, playerId: string): FlowResu
   const save = clone(input);
   const player = save.squad.find((p) => p.id === playerId);
   if (!player) return { save: input, error: "unknown" };
-  const splitsLeft = Math.max(1, (player.contractEndSeason - save.clock.seasonIndex) * 3);
-  const severance = quantize(
-    player.salaryPerSplit * splitsLeft * CAREER_CONTRACT.releaseFeeFactor,
-  );
-  save.finances = pushLedger(save.finances, {
-    seasonIndex: save.clock.seasonIndex,
-    week: weekOfDay(save.clock.day),
-    day: save.clock.day,
-    kind: "severance",
-    amount: -severance,
-    refName: player.name,
-  });
-  save.squad = save.squad.filter((p) => p.id !== playerId);
-  syncSquadRoles(save);
-  save.world.freeAgentIds.push(playerId);
-  save.world.version += 1;
-  pushNews(save, {
-    type: "transfer",
-    priority: 2,
-    titleKey: "userReleased",
-    params: { player: player.name, org: save.identity.orgName },
-  });
+  releaseFromSquad(save, player, severanceFor(player, save.clock.seasonIndex));
   return { save: capNews(save) };
 }
 
@@ -2743,21 +2860,14 @@ export function renewPlayerFlow(
   const save = clone(input);
   const player = save.squad.find((p) => p.id === playerId);
   if (!player) return { save: input, error: "unknown" };
-  const age = ageOf(player.birthYear, save.clock.seasonIndex);
-  const prestige = repTierOf(save.reputation);
-  const ambitious = player.overall >= CAREER_SALARY.ambitiousOverall && prestige < 3;
-  const ask = computeSalaryAsk({
-    overall: player.overall,
-    age,
-    potential: player.potential,
+  // ECO-03 (R47): a reserve renews at his normal value, like a starter — and
+  // an old save's cheap sub contract reprices here, never retroactively.
+  const ask = renewalAskFor(player, {
     rep: save.reputation,
-    role: player.role,
     seasonIndex: save.clock.seasonIndex,
-    lengthSeasons,
     difficulty: save.difficulty,
     careerSeed: save.careerSeed,
-    playerId: player.id,
-    ambitious,
+    lengthSeasons,
   });
   const negotiated = resolveSalaryOffer(save, playerId, ask, offeredSalary);
   if ("error" in negotiated) return { save, error: negotiated.error };

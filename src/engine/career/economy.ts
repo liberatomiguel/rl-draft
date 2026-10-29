@@ -12,6 +12,7 @@
 
 import {
   CAREER_BANK,
+  CAREER_CONTRACT,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
@@ -29,6 +30,7 @@ import {
 } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { Placement } from "../types";
+import { DAYS_PER_SEASON, dayOfWeekOf } from "./calendar";
 import { derivedFloat, streams } from "./seeds";
 import type {
   BankLoanState,
@@ -189,7 +191,12 @@ export interface SalaryAskInput {
   age: number;
   potential: number;
   rep: number;
-  role: "starter" | "sub";
+  /**
+   * @deprecated ECO-03 (R47): the lineup slot never prices a contract — a
+   * player signs (and renews) at his normal value, starter or reserve. Kept
+   * optional so older callers compile; ignored.
+   */
+  role?: "starter" | "sub";
   seasonIndex: number;
   lengthSeasons: 1 | 2 | 3;
   difficulty: CareerDifficulty;
@@ -246,7 +253,10 @@ function askJitterFor(careerSeed: number, playerId: string): number {
 }
 
 /**
- * Per-split salary ask (design §9). Curve anchors (prime age, neutral rest):
+ * Per-split salary ask (design §9). ECO-03 (R47): no role factor — the old
+ * ×0.4 "signed as a sub" discount (sign cheap, promote for free) is gone; the
+ * lineup slot is set after the signing and never reprices it.
+ * Curve anchors (prime age, neutral rest):
  * 75 ≈ $14.5k · 80 ≈ $27k · 85 ≈ $50k · 90 ≈ $92k · 95 ≈ $170k.
  * Floor CAREER_SALARY.minSalary, quantized.
  */
@@ -256,7 +266,6 @@ export function computeSalaryAsk(input: SalaryAskInput): number {
     ageFactorFor(input.age) *
     potentialFactorFor(input.overall, input.potential) *
     repPremiumFor(input.overall, input.rep) *
-    (input.role === "sub" ? CAREER_SALARY.subRoleFactor : 1) *
     Math.pow(CAREER_SALARY.lengthDiscountPerSeason, input.lengthSeasons - 1) *
     (input.ambitious ? CAREER_SALARY.ambitionRenewalMult : 1) *
     (input.blockbusterRefused ? CAREER_SALARY.blockbusterRefusalRenewalMult : 1) *
@@ -272,10 +281,9 @@ export function computeSalaryAsk(input: SalaryAskInput): number {
  */
 export function salaryAskFactors(input: SalaryAskInput): { key: string; delta: number }[] {
   // Core = curve at this OVR with everything person-specific neutral (but
-  // role/difficulty/inflation/jitter folded in — they apply to every candidate).
+  // difficulty/inflation/jitter folded in — they apply to every candidate).
   const core =
     baseCurve(input.overall, input.seasonIndex, input.difficulty) *
-    (input.role === "sub" ? CAREER_SALARY.subRoleFactor : 1) *
     askJitterFor(input.careerSeed, input.playerId);
   const steps: { key: string; factor: number }[] = [
     { key: "age", factor: ageFactorFor(input.age) },
@@ -434,6 +442,41 @@ export function signingBonusFor(salaryPerSplit: number): number {
   return quantize(salaryPerSplit * 3 * CAREER_TRANSFER.signingBonusPct);
 }
 
+/**
+ * Severance for releasing a squad player: half (releaseFeeFactor) of the
+ * wages left on his deal, at least one split. ECO-03 (R47): ONE formula for
+ * the release button, the squad screen and a signing that names who leaves.
+ */
+export function severanceFor(
+  player: { salaryPerSplit: number; contractEndSeason: number },
+  seasonIndex: number,
+): number {
+  const splitsLeft = Math.max(1, (player.contractEndSeason - seasonIndex) * 3);
+  return quantize(player.salaryPerSplit * splitsLeft * CAREER_CONTRACT.releaseFeeFactor);
+}
+
+/**
+ * ECO-03 (R47): the weekly wage bill (squad + coach) the Monday funnel books
+ * today and after a contract change — `remove` the deals that end (a sale, a
+ * release, a renewed player's old wage), `add` the new per-split wages. Same
+ * per-line rounding as weeklyStatement, so the projection equals the ledger.
+ */
+export function payrollProjection(input: {
+  squadSalaries: { id: string; amount: number }[];
+  coachSalary: number | null;
+  remove?: readonly string[];
+  add?: readonly number[];
+}): { now: number; after: number } {
+  const coach = input.coachSalary !== null && input.coachSalary > 0 ? weeklyWage(input.coachSalary) : 0;
+  const now = input.squadSalaries.reduce((sum, l) => sum + weeklyWage(l.amount), coach);
+  const removed = new Set(input.remove ?? []);
+  const kept = input.squadSalaries
+    .filter((l) => !removed.has(l.id))
+    .reduce((sum, l) => sum + weeklyWage(l.amount), coach);
+  const after = kept + (input.add ?? []).reduce((sum, a) => sum + weeklyWage(a), 0);
+  return { now, after };
+}
+
 /** Coach hire ask: the plain overall curve × coachFactor (no age/potential/rep). */
 export function coachSalaryFor(
   coachOverall: number,
@@ -546,6 +589,35 @@ export function applyTransferIncome(
     }
   }
   return { fin: next, garnished };
+}
+
+/**
+ * ECO-02 (R46): what a manual pay-down actually settles. A request that covers
+ * the debt settles the EXACT remainder — the Backer's ×1.2 and the bank's
+ * interest leave debts off the $50 quantum (a $9,612 Backer debt), and the old
+ * `quantize(min(amount, remaining))` left a $2–48 stub no button could pay,
+ * which kept the Backer lock (no bank, no fee transfers, no gear) alive. A
+ * partial request stays on the quantum. Never more than is owed; 0 = nothing.
+ */
+export function debtPaymentFor(remaining: number, requested: number): number {
+  if (remaining <= 0 || requested <= 0) return 0;
+  if (requested >= remaining) return remaining;
+  return Math.max(0, quantize(requested));
+}
+
+/**
+ * ECO-02 (R46): the next Monday the books move (weeklyPayroll), as a career
+ * clock position — the next Monday after `clock.day` (today's Monday already
+ * booked on arrival), or the next season's opening Monday after week 32.
+ */
+export function nextPaydayFor(clock: { seasonIndex: number; day: number }): {
+  seasonIndex: number;
+  day: number;
+} {
+  const next = clock.day + (8 - dayOfWeekOf(clock.day));
+  return next > DAYS_PER_SEASON
+    ? { seasonIndex: clock.seasonIndex + 1, day: 1 }
+    : { seasonIndex: clock.seasonIndex, day: next };
 }
 
 /**
@@ -749,6 +821,12 @@ export function bankLoanTerms(principal: number): {
       CAREER_PAYROLL.weeklyQuantum,
   );
   return { total, weeklyPayment, termWeeks: CAREER_BANK.termWeeks };
+}
+
+/** ECO-02 (R46): Monday instalments still to book (the last one may be short). */
+export function bankInstalmentsLeft(loan: Pick<BankLoanState, "remaining" | "weeklyPayment">): number {
+  if (loan.remaining <= 0) return 0;
+  return Math.ceil(loan.remaining / Math.max(1, loan.weeklyPayment));
 }
 
 export type BankLoanRefusal = "active" | "backer" | "amount" | "limit";

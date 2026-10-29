@@ -50,6 +50,7 @@ import {
   eventDayPhaseOf,
   isWindowWeek,
   nameOfRef,
+  nextPaydayFor,
   runwayWeeks,
   seasonLabelFor,
   standingsRows,
@@ -328,6 +329,7 @@ export function HubScreen() {
   const wages = statement.payroll + statement.coach;
   const runway = runwayWeeks(save.finances.balance, statement.net);
   const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
+  const nextPayday = nextPaydayFor(save.clock);
   const needsCount =
     (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
 
@@ -462,7 +464,7 @@ export function HubScreen() {
               {save.finances.loan ? (
                 <AppLink href="/career/finances" className="block">
                   <Panel className="rise-in border-orange/30 p-3.5 text-sm text-sub transition-colors hover:border-orange/60">
-                    {C.hub.backerOpen}
+                    {C.hub.backerOpen(formatMoney(save.finances.loan.remaining))}
                   </Panel>
                 </AppLink>
               ) : null}
@@ -642,6 +644,20 @@ export function HubScreen() {
                 <span className="text-faint">/ {C.hub.week(1).toLowerCase().replace(/\s*1$/, "")}</span>
                 {runway !== null ? <span className="text-faint"> · {C.finances.runway(runway)}</span> : null}
               </p>
+              {/* ECO-02 (R46): the debts as Finances and the ledger have them. */}
+              {save.finances.loan ? (
+                <p className="mt-1 text-xs font-semibold text-orange-bright">
+                  {C.finances.backerRemaining(formatMoney(save.finances.loan.remaining))}
+                </p>
+              ) : null}
+              {save.finances.bankLoan ? (
+                <p className="mt-1 text-xs text-sub">
+                  {C.finances.bankNext(
+                    formatMoney(Math.min(save.finances.bankLoan.remaining, save.finances.bankLoan.weeklyPayment)),
+                    formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day)),
+                  )}
+                </p>
+              ) : null}
               <p className="mt-2 text-right text-xs font-semibold text-blue-bright">{C.hub.financesOpen} →</p>
             </Panel>
           </AppLink>

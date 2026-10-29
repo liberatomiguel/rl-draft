@@ -251,10 +251,12 @@ describe("v0.3 Backer debt lock fix", () => {
 describe("v0.3 incoming bids", () => {
   it("respects the per-window cap and cooldown, and can target non-best players", () => {
     const save = makeSave();
+    // ECO-03b (R47): season 0's first window is bid-free — exercise the next
+    // season's preseason window, where the daily roll runs as before.
     const capBid = incomingBidForDay({
       world: save.world,
       squad: save.squad,
-      seasonIndex: 0,
+      seasonIndex: 1,
       windowIdx: 0,
       day: 3,
       careerSeed: SEED,
@@ -267,7 +269,7 @@ describe("v0.3 incoming bids", () => {
     const cooled = incomingBidForDay({
       world: save.world,
       squad: save.squad,
-      seasonIndex: 0,
+      seasonIndex: 1,
       windowIdx: 0,
       day: 3,
       careerSeed: SEED,
@@ -284,7 +286,7 @@ describe("v0.3 incoming bids", () => {
       const a = incomingBidForDay({
         world: save.world,
         squad: save.squad,
-        seasonIndex: 0,
+        seasonIndex: 1,
         windowIdx: 0,
         day,
         careerSeed: SEED,
@@ -296,7 +298,7 @@ describe("v0.3 incoming bids", () => {
       const b = incomingBidForDay({
         world: save.world,
         squad: save.squad,
-        seasonIndex: 0,
+        seasonIndex: 1,
         windowIdx: 0,
         day,
         careerSeed: SEED,

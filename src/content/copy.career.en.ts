@@ -191,7 +191,9 @@ export const CAREER_EN = {
     invitePass: "Pass",
     contractsExpiring: (n: number) => (n === 1 ? "1 contract ends this season — renew or let it run out." : `${n} contracts end this season — renew or let them run out.`),
     cashWarningCard: (weeks: number) => `Cash runs out in about ${weeks} weeks at this burn.`,
-    backerOpen: "Backer debt open — prize money is garnished until it clears.",
+    // ECO-02 (R46): the card names the debt Finances shows.
+    backerOpen: (owed: string) =>
+      `Backer debt open — ${owed} to repay. Prize money is garnished until it clears.`,
     cards: {
       training: "Training",
       trainingOn: "Session today. Mon–Fri develop the squad.",
@@ -282,6 +284,9 @@ export const CAREER_EN = {
       windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves`,
       unavailable: (p: Record<string, string | number>) => `${p.player} out for ${p.event}`,
       debtCleared: () => `Backer repaid in full`,
+      // DEV-02 (R48): the user's own retiree — which way he went.
+      retiredToCoach: (p: Record<string, string | number>) => `${p.player} retires — and moves into coaching`,
+      retiredLeaves: (p: Record<string, string | number>) => `${p.player} retires from competition`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -316,6 +321,10 @@ export const CAREER_EN = {
         `${p.player} can't play ${p.event} — the sub steps in with his chemistry; without one, an emergency stand-in fills the seat for a fee.`,
       debtCleared: () =>
         `The Emergency Backer is repaid in full. Transfer fees and gear purchases are unlocked again — the org owns its future.`,
+      retiredToCoach: (p: Record<string, string | number>) =>
+        `${p.player} played his final season and steps away from competition — straight into coaching. He is in the coach pool now: from the next window he can turn up on the coach shortlist.`,
+      retiredLeaves: (p: Record<string, string | number>) =>
+        `${p.player} played his final season and leaves the scene for good. His slot is open — the market is where the next chapter starts.`,
     },
   },
 
@@ -596,6 +605,15 @@ export const CAREER_EN = {
     squadFullWarning: "Squad is full — release or sell first.",
     startersFull: "Starters are full — this signing joins as the substitute.",
     subTaken: "The sub slot is taken — release or sell first.",
+    // ECO-03 (R47): the slot is set after the signing and never prices it.
+    slotLabel: "Squad slot",
+    slotStarter: "Takes an open seat in the starting three.",
+    slotReplaces: (name: string) => `Takes ${name}'s seat in the starting three.`,
+    slotReserve: "Joins as the reserve. Promote him on the Squad screen at any time — the contract stays the same.",
+    samePrice: "Same price as a starter: the slot never changes the contract.",
+    chooseLeaver: "Squad full (4) — choose who leaves to make room.",
+    leaverSeverance: (s: string) => `Severance ${s}`,
+    payrollWeek: (now: string, after: string) => `Wage bill: ${now} → ${after} / week`,
     coachEffects: "What this coach does",
     coachTraining: (pct: number) => `${pct > 0 ? "+" : ""}${pct}% training speed vs. no coach`,
     coachRating: (n: number) => `+${n} team rating in every series`,
@@ -670,6 +688,8 @@ export const CAREER_EN = {
       sameDay: "Already scrimmed this team today.",
       /** rc.30: signing, releasing or selling during an event in progress. */
       rosterLocked: "Roster moves wait until the event ends.",
+      /** DEV-02 (R48): the minimum competitive age. */
+      tooYoung: "Too young to compete — players sign from age 13.",
     },
   },
 
@@ -709,6 +729,14 @@ export const CAREER_EN = {
     bankBlockedBacker: "No bank loans while the Backer debt is open.",
     bankBlockedActive: "One bank loan at a time — clear this one first.",
     bankLockedRep: "The bank opens its doors once the org has a little reputation.",
+    // ECO-02 (R46): the bank's schedule, as the Monday payroll books it.
+    bankNext: (amount: string, date: string) => `Next instalment ${amount} on ${date}`,
+    bankLeft: (n: number) => (n === 1 ? "last instalment" : `${n} instalments left`),
+    // ECO-02 (R46): a pay-down that leaves the balance below zero warns first.
+    payRiskBacker: (floor: string) =>
+      `This leaves the books in the red. Below ${floor} on a Monday, the Emergency Backer steps in.`,
+    payRiskEnd: (floor: string) =>
+      `This leaves the books in the red. Below ${floor} on a Monday, the career ends — there is no second rescue.`,
     income: "In",
     expenses: "Out",
     ledger: "Movements",
@@ -859,6 +887,9 @@ export const CAREER_EN = {
       playerLeft: (p: Record<string, string | number>) => `${p.player} walks as a free agent`,
       retirementAnnounce: (p: Record<string, string | number>) => `${p.player} announces his final season`,
       retired: (p: Record<string, string | number>) => `${p.player} hangs up the controller`,
+      // DEV-02 (R48): the user's own retiree — coaching or out of the game.
+      retiredToCoach: (p: Record<string, string | number>) => `${p.player} hangs up the controller for a coach's headset`,
+      retiredLeaves: (p: Record<string, string | number>) => `${p.player} hangs up the controller for good`,
       insertResolved: (p: Record<string, string | number>) => `Decision made: ${p.insert}`,
       orgEnters: (p: Record<string, string | number>) => `${p.org} enters the ${p.region} scene`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives — ${p.name} headlines`,
@@ -941,6 +972,10 @@ export const CAREER_EN = {
         `${p.player} will retire at season's end. One more run together — make it count.`,
       retired: (p: Record<string, string | number>) =>
         `${p.player} steps away from the game. The scene is younger — and a little poorer — today.`,
+      retiredToCoach: (p: Record<string, string | number>) =>
+        `${p.player} retires from competition and moves into coaching. The coach market has a new name — one you know well.`,
+      retiredLeaves: (p: Record<string, string | number>) =>
+        `${p.player} retires and leaves the scene. The org thanks him for every season in its colours.`,
       orgEnters: (p: Record<string, string | number>) =>
         `A new badge on the ${p.region} circuit: ${p.org} fields a roster this season. History arrives on schedule — and the table gets harder.`,
       rookieClass: (p: Record<string, string | number>) =>

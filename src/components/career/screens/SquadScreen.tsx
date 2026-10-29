@@ -12,16 +12,17 @@
  * counter-offer widget — rejections keep the modal open and harden the odds)
  * and release (severance from the same formula releasePlayerFlow charges).
  *
- * All money math mirrors the flow layer 1:1 — computeSalaryAsk/quantize are
+ * All money math mirrors the flow layer 1:1 — renewalAskFor/severanceFor/payrollProjection are
  * imported READ-ONLY from the engine so the preview can never drift.
  */
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
-import { CAREER_CONTRACT, CAREER_SALARY, CAREER_STABILITY } from "@/config/balance";
+import { CAREER_STABILITY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
-import { computeSalaryAsk, quantize } from "@/engine/career/economy";
+import { payrollProjection, severanceFor } from "@/engine/career/economy";
+import { renewalAskFor } from "@/engine/career/market";
 import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -32,7 +33,6 @@ import {
   agePhase,
   clockLabel,
   potBandOfSquad,
-  repTierOf,
   seasonLabelFor,
   squadAge,
   statsOfSquad,
@@ -153,21 +153,15 @@ export function SquadScreen() {
           : t.STAT_LABELS[p.trainingFocus],
     });
 
-  // --- renew ask preview (mirrors renewPlayerFlow exactly) ------------------
+  // --- renew ask preview (the same renewalAskFor renewPlayerFlow prices) -----
+  // ECO-03 (R47): a reserve renews at his normal value, like a starter.
   const askFor = (p: SquadPlayer, lengthSeasons: 1 | 2 | 3): number =>
-    computeSalaryAsk({
-      overall: p.overall,
-      age: squadAge(save, p),
-      potential: p.potential,
+    renewalAskFor(p, {
       rep: save.reputation,
-      role: p.role,
       seasonIndex: save.clock.seasonIndex,
-      lengthSeasons,
       difficulty: save.difficulty,
       careerSeed: save.careerSeed,
-      playerId: p.id,
-      // Same ambition rule renewPlayerFlow applies (careerFlow.ts).
-      ambitious: p.overall >= CAREER_SALARY.ambitiousOverall && repTierOf(save.reputation) < 3,
+      lengthSeasons,
     });
 
   // v0.3 wage talk — fresh ask + this window's rejected counters (both re-read
@@ -179,14 +173,18 @@ export function SquadScreen() {
     clearError();
   };
 
-  // --- release severance (same formula + quantize as releasePlayerFlow) -----
-  const severanceFor = (p: SquadPlayer): number =>
-    quantize(
-      p.salaryPerSplit *
-        // splits left on the deal — 3 splits per season (mirrors releasePlayerFlow).
-        Math.max(1, (p.contractEndSeason - save.clock.seasonIndex) * 3) *
-        CAREER_CONTRACT.releaseFeeFactor,
-    );
+  // --- release severance (the engine formula releasePlayerFlow charges) ------
+  const severanceOf = (p: SquadPlayer): number => severanceFor(p, save.clock.seasonIndex);
+  // ECO-03 (R47): the renewal's payroll projection — today's weekly wage bill
+  // vs. the one with the new deal (the Monday funnel's own rounding).
+  const renewWageBill = renew
+    ? payrollProjection({
+        squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
+        coachSalary: save.coach?.salaryPerSplit ?? null,
+        remove: [renew.id],
+        add: [Math.min(renewOffer || renewAsk, renewAsk)],
+      })
+    : null;
 
   // --- roster stability -----------------------------------------------------
   const maxFaces = save.starterIds.length;
@@ -531,7 +529,7 @@ export function SquadScreen() {
         <p className="text-sm text-sub">{C.squad.releaseBody}</p>
         {release ? (
           <p className="mt-2 text-sm font-semibold text-bad">
-            {C.squad.releaseFee(formatMoney(severanceFor(release)))}
+            {C.squad.releaseFee(formatMoney(severanceOf(release)))}
           </p>
         ) : null}
       </Modal>
@@ -626,6 +624,17 @@ export function SquadScreen() {
                   {C.squad.expires(seasonLabelFor(save.clock.seasonIndex + renewLen))}
                 </span>
               </div>
+              {/* ECO-03 (R47): the payroll projection — new weekly bill vs today. */}
+              {renewWageBill ? (
+                <p
+                  className={cx(
+                    "mt-1.5 text-xs font-semibold",
+                    renewWageBill.after > renewWageBill.now ? "text-orange-bright" : "text-sub",
+                  )}
+                >
+                  {C.market.payrollWeek(formatMoney(renewWageBill.now), formatMoney(renewWageBill.after))}
+                </p>
+              ) : null}
             </div>
           </div>
         ) : null}

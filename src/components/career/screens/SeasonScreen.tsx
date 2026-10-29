@@ -356,7 +356,8 @@ export function SeasonScreen() {
       >
         {ended ? (
           <>
-            {!isRetired ? (
+            {/* ECO-02 (R46): an insolvency is final — only the archive remains. */}
+            {!isRetired && !isInsolvent ? (
               <Button
                 variant="primary"
                 onClick={() => {

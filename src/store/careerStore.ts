@@ -56,6 +56,7 @@ import {
   cancelScrimFlow,
   chooseSponsorFlow,
   continueEventToNextDayFlow,
+  continueInfiniteFlow,
   createCareerSave,
   declineBidFlow,
   declineUnofficial,
@@ -174,11 +175,14 @@ interface CareerStoreState {
   scheduleScrim: (day: number, oppRef: string) => void;
   cancelScrim: (day: number) => void;
 
+  /**
+   * ECO-03 (R47): sign at the player's normal value; he takes an open seat in
+   * the starting three, else the reserve slot. A full squad names who leaves
+   * (`releaseId`), released in the same operation.
+   */
   signPlayer: (
     playerId: string,
-    role: "starter" | "sub",
-    lengthSeasons: 1 | 2 | 3,
-    offeredSalary?: number,
+    opts: { lengthSeasons: 1 | 2 | 3; offeredSalary?: number; releaseId?: string },
   ) => void;
   releasePlayer: (playerId: string) => void;
   renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3, offeredSalary?: number) => void;
@@ -362,8 +366,7 @@ export const useCareerStore = create<CareerStoreState>()(
         scheduleScrim: (day, oppRef) => withResult((s) => scheduleScrimFlow(s, day, oppRef)),
         cancelScrim: (day) => withResult((s) => cancelScrimFlow(s, day)),
 
-        signPlayer: (playerId, role, lengthSeasons, offeredSalary) =>
-          withResult((s) => signPlayerFlow(s, playerId, { role, lengthSeasons, offeredSalary })),
+        signPlayer: (playerId, opts) => withResult((s) => signPlayerFlow(s, playerId, opts)),
         releasePlayer: (playerId) => withResult((s) => releasePlayerFlow(s, playerId)),
         renewPlayer: (playerId, lengthSeasons, offeredSalary) =>
           withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary)),
@@ -399,13 +402,7 @@ export const useCareerStore = create<CareerStoreState>()(
         payBankLoan: (amount) => withResult((s) => payBankLoanFlow(s, amount)),
 
         continueToNextSeason: () => withSave(rolloverToNextSeason),
-        continueInfinite: () =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            next.end.infinite = true;
-            next.end.creditsShown = true;
-            return rolloverToNextSeason(next);
-          }),
+        continueInfinite: () => withSave(continueInfiniteFlow),
         retireCareer: () =>
           withSave((s) => {
             const next = structuredClone(s);
@@ -526,7 +523,8 @@ export function slotMetaFor(slots: (CareerSave | null)[]): (CareerSlotMeta | nul
         repTier: repTierOf(save.reputation),
       }),
       champion: save.stats.titlesWorlds > 0,
-      ended: save.end.ended && !save.end.infinite,
+      // ECO-02 (R46): an insolvency (or retirement) in the endless era archives too.
+      ended: save.phase === "ended" || (save.end.ended && !save.end.infinite),
       lastPlayedAt: save.lastPlayedAt,
     };
   });

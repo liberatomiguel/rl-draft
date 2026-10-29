@@ -1123,7 +1123,7 @@ export const CAREER_NEGOTIATION = {
   minOfferFactor: 0.85,
 } as const;
 
-/** Player derivation (ages are RL-realistic: debut 13-15, careers end ~24-25). */
+/** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
 export const CAREER_DEV = {
   attrOffsetCap: 6,
   potentialJitter: [-1, 2] as const,
@@ -1216,9 +1216,31 @@ export const CAREER_AGE = {
   trainingDeclineDampen: 0.7,
   mechanicsDeclineOffset: 0.5,
   expGrowthPerSeason: 0.5,
-  /** Retirement roll at rollover, from age 23. Guaranteed-ish by 28. */
-  retirementByAge: { 23: 0.05, 24: 0.12, 25: 0.25, 26: 0.4, 27: 0.55, 28: 0.7 } as Record<number, number>,
+  /**
+   * DEV-02 (ROADMAP Etapa 2, decided 29/10 — R48): the competitive window.
+   * Signable and playable from `minCompetitiveAge` (the RLCS minimum). Nobody
+   * retires before `retireMinAge` (nor before his peak, `peakAgeOf`), and
+   * everyone has retired by the end of `retireMaxAge`.
+   */
+  minCompetitiveAge: 13,
+  retireMinAge: 24,
+  retireMaxAge: 29,
+  /**
+   * DEV-02 (R48): the chance that the season a player plays at this age is
+   * his LAST — the user's squad announces it at the rollover into that
+   * season (one season ahead, never an abrupt exit); the world retires him at
+   * the rollover after it. 29 always ends it (a season at 30 is never
+   * played; calendar gaps — 2022 → 2024 — force it a season early).
+   * Was (rc.30): 23 → 5 % … 28+ → 70 % per rollover, with no cap.
+   */
+  retirementByAge: { 24: 0.1, 25: 0.2, 26: 0.3, 27: 0.45, 28: 0.6, 29: 1 } as Record<number, number>,
+  /** Stars linger: their chance is multiplied by this — inside the window only. */
   retirementStarMult: 0.5,
+  /**
+   * DEV-02 (R48): share of retiring REAL ex-pros who move into coaching (they
+   * feed the coach market); the rest leave the game. Decided per (career,
+   * player) from the seed — no save state. Generic players always leave.
+   */
   retireCoachConvertRate: 0.6,
 } as const;
 
@@ -1261,7 +1283,8 @@ export const CAREER_SALARY = {
   repPremiumPerPoint: 0.04,
   repPremiumCap: 2.0,
   askJitterPct: 0.08,
-  subRoleFactor: 0.4,
+  // ECO-03 (R47): `subRoleFactor` 0.4 (the "signed as a sub" discount) is
+  // gone — the lineup slot never prices a contract.
   coachFactor: 0.35,
   inflationPerSeason: 1.08,
   /** "Ambitious" renewal premium when player prestige > org rep tier 2+ splits. */
@@ -1273,6 +1296,11 @@ export const CAREER_SALARY = {
 } as const;
 
 export const CAREER_CONTRACT = {
+  /**
+   * ECO-03 (R47): squad slots (R3: three starters + one reserve). A signing
+   * that would exceed it names who leaves, in the same operation.
+   */
+  squadCap: 4,
   maxSeasons: 3,
   releaseFeeFactor: 0.5,
   /** Exclusive re-sign window for the user's own expiring players: split 3. */
@@ -1311,6 +1339,15 @@ export const CAREER_TRANSFER = {
   prospectUpside: 6,
   maxBidsPerWindow: 2,
   bidCooldownDays: 2,
+  /**
+   * ECO-03b (ROADMAP Etapa 2, decided 29/10 — R47): the career's FIRST
+   * transfer window (season 0's preseason window, windowIdx 0 = weeks 1–2 of
+   * "Season 1" in the UI) is bid-free for the user's players: no AI bid
+   * (`incomingBidForDay`) and no scripted Blockbuster bid (the beat degrade in
+   * `processDayArrival`). From the next window on, bids arrive as before. The
+   * guard is `market.userBidsBlocked`.
+   */
+  firstWindowBidFree: true,
   /** AI bid fee = marketValue × this band (selling should tempt). */
   aiBidRange: [1.0, 1.35] as const,
   blockbusterFeeMult: 1.5,

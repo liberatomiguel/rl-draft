@@ -11,6 +11,7 @@
 
 import {
   CAREER_COACH_MARKET,
+  CAREER_SALARY,
   CAREER_SEASONS,
   CAREER_TRANSFER,
   CAREER_WORLD,
@@ -22,7 +23,9 @@ import { windowCloseDayFor } from "./calendar";
 import {
   ageOf,
   anchorOverall,
+  becomesCoachOnRetirement,
   deriveBirthYear,
+  isCompetitiveAge,
   playerViewById,
   type ViewCtx,
 } from "./development";
@@ -32,6 +35,7 @@ import {
   contractedFeeFor,
   marketValueFor,
   quantize,
+  repTierOf,
   salaryAskFactors,
   signingBonusFor,
 } from "./economy";
@@ -91,11 +95,12 @@ export function listingFor(ctx: {
   };
   const squad = new Set(ctx.squadIds);
 
+  // DEV-02 (R48): the market lists only players of competitive age (13+).
   const freeAgents: CareerPlayerView[] = [];
   for (const id of ctx.world.freeAgentIds) {
     if (squad.has(id)) continue;
     const view = playerViewById(id, viewCtx);
-    if (view) freeAgents.push(view);
+    if (view && isCompetitiveAge(view.age)) freeAgents.push(view);
   }
   freeAgents.sort((a, b) => b.overall - a.overall);
 
@@ -104,7 +109,7 @@ export function listingFor(ctx: {
     for (const id of org.playerIds) {
       if (squad.has(id)) continue;
       const view = playerViewById(id, viewCtx);
-      if (!view) continue;
+      if (!view || !isCompetitiveAge(view.age)) continue;
       contracted.push({
         view,
         orgRef: org.ref,
@@ -138,7 +143,11 @@ export function askPackageFor(
     seasonIndex: number;
     difficulty: CareerDifficulty;
     careerSeed: number;
-    role: "starter" | "sub";
+    /**
+     * @deprecated ECO-03 (R47): the slot he takes never changes his price —
+     * ignored (kept optional so older callers compile).
+     */
+    role?: "starter" | "sub";
     lengthSeasons: 1 | 2 | 3;
     contracted?: { splitsRemaining: number };
   },
@@ -148,7 +157,6 @@ export function askPackageFor(
     age: view.age,
     potential: view.potential,
     rep: ctx.rep,
-    role: ctx.role,
     seasonIndex: ctx.seasonIndex,
     lengthSeasons: ctx.lengthSeasons,
     difficulty: ctx.difficulty,
@@ -175,6 +183,36 @@ export function askPackageFor(
     factors.push({ key: "contract", delta: fee });
   }
   return { salaryPerSplit, fee, signingBonus, factors };
+}
+
+/**
+ * ECO-03 (R47): the fresh ask for renewing a squad player — his normal value
+ * at today's overall, age, potential and the org's reputation, whatever his
+ * slot (a reserve renews like a starter), with the "ambitious" premium
+ * (design §9). ONE function for renewPlayerFlow and the renewal screen.
+ */
+export function renewalAskFor(
+  player: Pick<SquadPlayer, "id" | "overall" | "potential" | "birthYear">,
+  ctx: {
+    rep: number;
+    seasonIndex: number;
+    difficulty: CareerDifficulty;
+    careerSeed: number;
+    lengthSeasons: 1 | 2 | 3;
+  },
+): number {
+  return computeSalaryAsk({
+    overall: player.overall,
+    age: ageOf(player.birthYear, ctx.seasonIndex),
+    potential: player.potential,
+    rep: ctx.rep,
+    seasonIndex: ctx.seasonIndex,
+    lengthSeasons: ctx.lengthSeasons,
+    difficulty: ctx.difficulty,
+    careerSeed: ctx.careerSeed,
+    playerId: player.id,
+    ambitious: player.overall >= CAREER_SALARY.ambitiousOverall && repTierOf(ctx.rep) < 3,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -482,6 +520,16 @@ export function aiWindowMoves(
 // ---------------------------------------------------------------------------
 
 /**
+ * ECO-03b (ROADMAP Etapa 2, decided 29/10 — R47): no bid of any kind for the
+ * user's players during the career's first transfer window (season 0's
+ * preseason window, windowIdx 0). `CAREER_TRANSFER.firstWindowBidFree`.
+ * Read by `incomingBidForDay` and by the scripted-beat Blockbuster degrade.
+ */
+export function userBidsBlocked(seasonIndex: number, windowIdx: number | null): boolean {
+  return CAREER_TRANSFER.firstWindowBidFree && seasonIndex === 0 && windowIdx === 0;
+}
+
+/**
  * v0.3 daily poach roll: bids for user players can land on ANY window day
  * (was: only the window's first Monday, only ever for the single best
  * player). Chance scales with squad attractiveness — stars AND developing
@@ -503,6 +551,8 @@ export function incomingBidForDay(ctx: {
 }): TransferOffer | null {
   const T = CAREER_TRANSFER;
   if (ctx.squad.length === 0) return null;
+  // ECO-03b (R47): the career's first window is bid-free.
+  if (userBidsBlocked(ctx.seasonIndex, ctx.windowIdx)) return null;
   if (ctx.bidsThisWindow >= T.maxBidsPerWindow) return null;
   if (ctx.day - ctx.lastBidDay < T.bidCooldownDays) return null;
 
@@ -617,10 +667,11 @@ export function coachCandidatesFor(ctx: {
   const out: CoachState[] = [];
   const key = (i: number) => `${ctx.seasonIndex}:${ctx.windowIdx}:${i}`;
 
-  // Real candidates: retired real players (stable ids), ranked by a derived
-  // float so the shortlist rotates between windows.
+  // Real candidates: retired real players WHO BECAME COACHES (DEV-02, R48 —
+  // the rest left the game), stable ids, ranked by a derived float so the
+  // shortlist rotates between windows.
   const realPool = ctx.world.retiredIds
-    .filter((id) => !id.startsWith("fic:") && !id.startsWith("rook:"))
+    .filter((id) => becomesCoachOnRetirement(id, ctx.careerSeed))
     .map((id) => ({
       id,
       f: derivedFloat(ctx.careerSeed, streams.gen("coachReal", `${key(0)}:${id}`)),

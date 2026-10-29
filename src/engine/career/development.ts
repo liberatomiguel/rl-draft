@@ -85,8 +85,12 @@ const FILLER_AGE_RANGE: readonly [number, number] = [16, 23];
 const FILLER_WONDERKID_POTENTIAL: readonly [number, number] = [88, 95];
 /** "Stars linger" retirement threshold (design §8) — contract-pinned OVR 85. */
 const RETIREMENT_STAR_OVERALL = 85;
-/** No player is ever younger than this at any season they appear in. */
-const MIN_AGE = 13;
+/**
+ * No player is ever younger than this at any season they appear in.
+ * DEV-02 (R48): the minimum competitive age — one constant for debut ages,
+ * the market and the signing gate.
+ */
+const MIN_AGE = CAREER_AGE.minCompetitiveAge;
 
 /** Plausible ISO2 nationalities per region for generated fictional players. */
 const REGION_COUNTRIES: Record<Region, readonly string[]> = {
@@ -278,6 +282,57 @@ export function derivePotential(
 export function derivePeakAge(playerId: string, careerSeed: number): number {
   const [min, max] = CAREER_DEV.peakAgeRange;
   return intFrom(derivedFloat(careerSeed, streams.gen("peak", playerId)), min, max);
+}
+
+// ---------------------------------------------------------------------------
+// DEV-02 (R48): the competitive window — age 13 in, retirement 24–29
+// ---------------------------------------------------------------------------
+
+/**
+ * The player's peak age — the ONE read every longevity rule goes through (no
+ * retirement before it). Today the stored / derived `peakAge`
+ * (CAREER_DEV.peakAgeRange, 18–22); DEV-01 individualises the peak here.
+ */
+export function peakAgeOf(p: { peakAge: number }): number {
+  return p.peakAge;
+}
+
+/** Old enough to be signed, registered and fielded (CAREER_AGE.minCompetitiveAge). */
+export function isCompetitiveAge(age: number): boolean {
+  return age >= MIN_AGE;
+}
+
+/**
+ * The chance that the season a player plays at `age` is his last. Zero before
+ * the window (retireMinAge) or before his peak; one when the next season would
+ * take him past retireMaxAge (the calendar's 2022 → 2024 gap ages a player two
+ * years, so 28 can be the last); otherwise CAREER_AGE.retirementByAge, times
+ * retirementStarMult for a star — stars linger, inside the window only.
+ */
+export function retirementChanceFor(p: {
+  age: number;
+  nextAge: number;
+  peakAge: number;
+  overall: number;
+  starOverall: number;
+}): number {
+  const A = CAREER_AGE;
+  const earliest = Math.min(A.retireMaxAge, Math.max(A.retireMinAge, p.peakAge));
+  if (p.age < earliest) return 0;
+  if (p.nextAge > A.retireMaxAge) return 1;
+  const base = A.retirementByAge[Math.min(p.age, A.retireMaxAge)] ?? 0;
+  return clamp(base * (p.overall >= p.starOverall ? A.retirementStarMult : 1), 0, 1);
+}
+
+/**
+ * Does this retiring player move into coaching? Real ex-pros only (the coach
+ * market lists real names; generated coaches fill the rest), a
+ * retireCoachConvertRate share of them, fixed per (career, player) from the
+ * seed — no save state. Generic (fictional) players leave the game.
+ */
+export function becomesCoachOnRetirement(playerId: string, careerSeed: number): boolean {
+  if (!playerById.has(playerId)) return false;
+  return derivedFloat(careerSeed, streams.gen("retireCoach", playerId)) < CAREER_AGE.retireCoachConvertRate;
 }
 
 export function deriveDeclineRate(playerId: string, careerSeed: number): DeclineRate {
@@ -925,7 +980,10 @@ export function applyMatchXp(
  * training focus set, so the dampen always applies), the mechanics-first /
  * experience-grows offset drift, and the retirement rolls: an announced final
  * season retires NOW; otherwise the age roll (halved for stars) announces
- * retirement one season ahead — never an abrupt exit. `rng` = rollover stream.
+ * retirement one season ahead — never an abrupt exit. DEV-02 (R48): the roll
+ * is `retirementChanceFor` (the 24–29 window, never before the peak); a
+ * legacy player already past 29 announces at once and plays one farewell
+ * season. `rng` = rollover stream.
  */
 export function squadRollover(
   p: SquadPlayer,
@@ -968,9 +1026,16 @@ export function squadRollover(
     };
   }
 
-  const baseChance = CAREER_AGE.retirementByAge[Math.min(age, 28)] ?? 0;
-  const chance =
-    baseChance * (p.overall >= RETIREMENT_STAR_OVERALL ? CAREER_AGE.retirementStarMult : 1);
+  // DEV-02 (R48): announce at the rollover into his final season — only
+  // inside the 24–29 window and never before his peak; the season at 29 (or
+  // the last one before a calendar jump past 29) always ends it.
+  const chance = retirementChanceFor({
+    age,
+    nextAge: ageOf(p.birthYear, seasonIndex + 1),
+    peakAge: peakAgeOf(p),
+    overall: p.overall,
+    starOverall: RETIREMENT_STAR_OVERALL,
+  });
   // Always consume exactly one roll — keeps the rollover stream stable per player.
   const announcedRetirement = rng.chance(chance);
 
