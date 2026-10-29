@@ -107,6 +107,7 @@ import {
   fieldQualityFor,
   playerViewById,
   seasonYear,
+  signsForFinalSeason,
   squadRollover,
   trainDay,
   trainWeek,
@@ -160,6 +161,7 @@ import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localS
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
+  bestTrioRatingFor,
   buildWorldAtCreation,
   committedSeedingFor,
   computeStars,
@@ -371,18 +373,35 @@ export function userSeedRatingFor(save: CareerSave): number {
 }
 
 /**
+ * RTW-01 (R49): what the user's region's local scene is rated around — the
+ * squad's best trio (worldSim.bestTrioRatingFor: userTeamFor's own team
+ * rating with chemistry, coach and gear), never the lineup the user fields
+ * nor the bootcamp edge. Frozen on the season's first regional Monday
+ * (`competition.localAnchor`), so a lineup swap or an armed bootcamp on the
+ * eve of the freeze cannot soften the season's local sides.
+ */
+export function localAnchorRatingFor(save: CareerSave): number {
+  return bestTrioRatingFor({
+    identity: save.identity,
+    squad: save.squad,
+    coach: save.coach,
+    gear: save.finances.gear,
+    seasonIndex: save.clock.seasonIndex,
+    careerSeed: save.careerSeed,
+    difficulty: save.difficulty,
+  });
+}
+
+/**
  * Today's seeding of the user's region: stored fields + the user's current
  * team rating. R49: local sides holding split points race for the direct 8 too.
  */
-function liveUserSeeding(
-  save: CareerSave,
-  seedRating: number = userSeedRatingFor(save),
-): { direct: string[]; rest: string[] } {
+function liveUserSeeding(save: CareerSave): { direct: string[]; rest: string[] } {
   const region = save.identity.region;
   return regionalSeedingFor({
     orgs: Object.values(save.world.orgs).filter((o) => o.region === region),
     splitPoints: save.competition.splitPoints[region] ?? {},
-    user: { rating: seedRating, prestige: repTierOf(save.reputation) },
+    user: { rating: userSeedRatingFor(save), prestige: repTierOf(save.reputation) },
     locals: localSeedRowsFor({
       world: save.world,
       competition: save.competition,
@@ -725,17 +744,18 @@ export function processDayArrival(input: CareerSave): CareerSave {
     const qualifier = qualifierDefsForWeek(seasonIndex, week).find(
       (q) => q.region === save.identity.region,
     );
-    // RTW-01 (R49): the user's region's local scene is rated around the user's
-    // team as it stands on the season's first regional Monday, for the whole
-    // season (the Saturday qualifier, Sunday, a Major, Worlds, the cups). A
+    // RTW-01 (R49): the user's region's local scene is rated around the
+    // squad's best trio as it stands on the season's first regional Monday,
+    // for the whole season (the Saturday qualifier, Sunday, a Major, Worlds,
+    // the cups) — the lineup fielded and an armed bootcamp never move it. A
     // save from before rc.31 freezes it on its next Monday.
-    const needsAnchor = !save.competition.localAnchor && week >= FIRST_REGIONAL_WEEK;
-    const seedRating = qualifier || needsAnchor ? userSeedRatingFor(save) : 0;
-    if (needsAnchor) save.competition.localAnchor = { region: save.identity.region, rating: seedRating };
+    if (!save.competition.localAnchor && week >= FIRST_REGIONAL_WEEK) {
+      save.competition.localAnchor = { region: save.identity.region, rating: localAnchorRatingFor(save) };
+    }
     // rc.30 (direct-8): the week's seeding is decided ONCE, here, and stored —
     // Saturday, Sunday, the lobby and HQ read this decision, never a re-seed.
     if (qualifier) {
-      const seeding = liveUserSeeding(save, seedRating);
+      const seeding = liveUserSeeding(save);
       save.competition.weekSeeding = { seasonIndex, week, region: save.identity.region, ...seeding };
     }
     if (qualifier && !userIsDirect(save)) {
@@ -1383,7 +1403,11 @@ export function resolveAcceptedBid(input: CareerSave, offer: TransferOffer): Car
     kind: "userOut",
     region: save.identity.region,
   });
-  save.pendingOffers = save.pendingOffers.filter((o) => o.id !== offer.id);
+  // ECO-03 (R47): the sale settles every bid for him — none is left to
+  // "complete" later (a release drops them the same way).
+  save.pendingOffers = save.pendingOffers.filter(
+    (o) => o.id !== offer.id && !(o.direction === "out" && o.playerId === offer.playerId),
+  );
   pushNews(save, {
     type: "transfer",
     priority: 2,
@@ -2666,6 +2690,14 @@ export interface SigningPlan {
   cost: number;
   /** An open seat in the starting three, or the reserve slot. */
   slot: "starter" | "reserve";
+  /**
+   * DEV-02 (R48): this season must be his last (`signsForFinalSeason`: the
+   * coming rollover retires him for sure) — he signs with his final season
+   * announced and only for it.
+   */
+  finalSeason: boolean;
+  /** The contract the plan prices and writes: 1 season for a final-season signing. */
+  lengthSeasons: 1 | 2 | 3;
 }
 
 export function signingPlanFor(
@@ -2695,13 +2727,19 @@ export function signingPlanFor(
   // ECO-03 (R47): a full squad asks who leaves — never a silent release or demotion.
   if (save.squad.length - (leaver ? 1 : 0) >= CAREER_CONTRACT.squadCap) return { error: "squadFull" };
 
+  // DEV-02 (R48): a player whose season now must be his last (the coming
+  // rollover retires him for sure) signs for that final season only — he
+  // never plays at 30 for the user.
+  const finalSeason = signsForFinalSeason(view, save.clock.seasonIndex);
+  const lengthSeasons = finalSeason ? 1 : opts.lengthSeasons;
+
   const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   const pack = askPackageFor(view, {
     rep: save.reputation,
     seasonIndex: save.clock.seasonIndex,
     difficulty: save.difficulty,
     careerSeed: save.careerSeed,
-    lengthSeasons: opts.lengthSeasons,
+    lengthSeasons,
     contracted: onOrg
       ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
       : undefined,
@@ -2722,6 +2760,8 @@ export function signingPlanFor(
       severance,
       cost,
       slot: openSeats > 0 ? "starter" : "reserve",
+      finalSeason,
+      lengthSeasons,
     },
   };
 }
@@ -2773,7 +2813,7 @@ export function signPlayerFlow(
 ): FlowResult {
   const planned = signingPlanFor(input, playerId, opts);
   if ("error" in planned) return { save: input, error: planned.error };
-  const { view, pack, leaver, severance, slot, fromRef } = planned.plan;
+  const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons } = planned.plan;
   const save = clone(input);
 
   // v0.3 negotiation: a counter-offer may sign cheaper — or harden the agent.
@@ -2833,7 +2873,7 @@ export function signPlayerFlow(
     declineRate: view.declineRate,
     role: slot === "starter" ? "starter" : "sub",
     salaryPerSplit: finalSalary,
-    contractEndSeason: save.clock.seasonIndex + opts.lengthSeasons,
+    contractEndSeason: save.clock.seasonIndex + lengthSeasons,
     trainingFocus: "auto",
     trainingIntensity: "normal",
     scoutLevel,
@@ -2841,6 +2881,8 @@ export function signPlayerFlow(
     joinedSeason: save.clock.seasonIndex,
     gainedThisSplit: 0,
     gainedThisSeason: 0,
+    // DEV-02 (R48): announced at signing — he retires at the coming rollover.
+    ...(finalSeason ? { finalSeasonAnnounced: true } : {}),
   });
   // He takes the open seat — the leaver's own seat when a starter left —
   // otherwise he is the reserve and nobody is demoted. syncSquadRoles stays

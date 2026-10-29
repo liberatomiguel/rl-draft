@@ -1,7 +1,7 @@
 # Road to Worlds — status (current state only)
 
 > Last updated: 2026-10-29. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
-> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R45. History: `CHANGELOG.md`
+> you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R49. History: `CHANGELOG.md`
 > `[1.5.0-alpha]` and `[2.0.0]`. Do not read any of them whole.
 
 ## Run / verify
@@ -10,10 +10,11 @@
 - Career tests: `npx vitest run src/engine/career src/store/career
   src/components/career` (part of the full suite; the weekend lives in
   `src/store/careerWeekend.test.ts`, the save repair in `careerRepair.test.ts`).
-- Long-career harness (rc.30, OBS-02): `src/store/careerArcBot.ts` (test
-  support) + `careerArc.test.ts`. Opt-in sweep `CAREER_ARC=1` (knobs
-  `ARC_*`, `ARC_SLICE=i/n`, merge with `ARC_REPORT=1 ARC_IN=… ARC_MD=…`),
-  engine curves `CAREER_CURVES=1`. Baseline: `CAREER-BASELINE-rc30.md`.
+- Opt-in instruments (commands in each file's header): the long-career
+  harness `CAREER_ARC=1` / `CAREER_CURVES=1` (`careerArc.test.ts` + the bot
+  `careerArcBot.ts`; baseline `CAREER-BASELINE-rc30.md`), the money probe
+  `CAREER_ECON=1` (`careerEconomy.probe.test.ts`, ~35 min) and local sides in
+  the fields `RTW_LOCALS=1` (`careerRace.test.ts`).
 - Flag `FEATURES.careerMode` (balance.ts): on in dev/tests; production builds
   only with `NEXT_PUBLIC_CAREER_MODE=1` (staging Worker has it). `/career` is
   always noindex; with the flag off the routes are not exported.
@@ -22,46 +23,48 @@
 
 | System | Engine | Flow / store | Screen |
 |---|---|---|---|
-| Calendar, day clock, the weekend (R40: Sat qualifier → Sun regional; Major/Worlds Sat Swiss → pause → Sun playoffs) | `engine/career/calendar.ts` (`playoffsDayFor`, `eventEndDayFor`) | `store/careerFlow.ts` `processDayArrival`, `eventDayPhaseOf`, `continueEventToNextDayFlow` | `screens/CalendarScreen.tsx`, `event/weekendView.ts` + `WeekendPlan`, `SwissCompletePanel`, `ChampionshipSunday` |
-| Direct-8 seeding (R45: decided on the regional Monday, `competition.weekSeeding`) | `worldSim.ts` `regionalSeedingFor`, `committedSeedingFor` | `careerFlow.ts` `userSeedRatingFor`, `userSeedingFor`, `userIsDirect` | lobby `event/lobbyField.ts` |
-| World, fields, seeding, local scene, real-org intake | `worldSim.ts`, `localScene.ts` | rollover in `careerFlow.ts` | `EventScreen.tsx`, lobby `event/lobbyField.ts` |
+| Calendar, day clock, the R40 weekend | `calendar.ts` (`playoffsDayFor`) | `careerFlow.ts` `processDayArrival`, `eventDayPhaseOf` | `CalendarScreen.tsx`, `event/weekendView.ts`, `ChampionshipSunday` |
+| Direct-8 seeding (R45, `competition.weekSeeding`) | `worldSim.ts` `regionalSeedingFor` | `userSeedRatingFor`, `userIsDirect` | `event/lobbyField.ts` |
+| World, fields, seeding, local scene (R49 anchor `localAnchorFor`), real-org intake | `worldSim.ts`, `localScene.ts` | rollover, Monday block in `careerFlow.ts` | `EventScreen.tsx`, `event/lobbyField.ts` |
 | Name banks by role, rookie gamertags (R42) | `data/career/names.ts`, `localScene.ts`, `development.ts` | `world.rookieNames` | — |
 | Reveal cursor, spoiler hold (R43) | — | `careerRevealStore.ts` (sessionStorage) | `event/eventPlayback.ts`, `careerUi.ts` `useRevealHeldEventId` |
-| Results, standings, qualified refs (`qualifierOutcomeOf`, `hasChampion`) | `careerResults.ts` | `finishEvent` | `StandingsScreen.tsx` |
-| Match Center story: goal timeline, clock, OT (R41) | `matchTimeline.ts` | — | `event/CareerMatchCenter.tsx`, `GameClock.tsx`, `clockPlayback.ts`, `EventScreen.tsx` |
-| Development, drills, ETA, coach effects | `development.ts` | `applyDailyTraining`, `setDrillFlow` | `TrainingScreen.tsx` |
-| Economy: weekly payroll, Emergency Backer (bailout), bank loan, sponsors, gear | `economy.ts` (`weeklyPayroll`) | `runWeeklyPayroll`, `payDebtFlow`, `takeBankLoanFlow` | `FinancesScreen.tsx` |
-| Market, negotiation, coaches | `market.ts` | `signPlayerFlow`, `hireCoachFlow` | `MarketScreen.tsx` (`#coaches`) |
+| Results, standings, qualified refs, the R49 race tables | `careerResults.ts`, `raceTable.ts` | `finishEvent`, `careerUi.raceTableOf` | `StandingsScreen.tsx`, `hub/RaceBlock.tsx` |
+| Match Center timeline, clock, OT (R41) | `matchTimeline.ts` | — | `event/CareerMatchCenter.tsx`, `GameClock.tsx` |
+| Development, drills, ETA, coach effects, ages and retirement (R48 `retirementChanceFor`) | `development.ts`, `worldSim.ts` | `applyDailyTraining`, `setDrillFlow`, rollover | `TrainingScreen.tsx` |
+| Economy: weekly payroll, Emergency Backer, bank loan, sponsors, gear | `economy.ts` (`weeklyPayroll`, `debtPaymentFor`) | `runWeeklyPayroll`, `payDebtFlow`, `takeBankLoanFlow` | `FinancesScreen.tsx` |
+| Market, negotiation, coaches (R47 `signingPlanFor`, cap 4) | `market.ts` | `signPlayerFlow`, `renewPlayerFlow`, `hireCoachFlow` | `MarketScreen.tsx` (`#coaches`) |
 | Inserts (weekly decision cards) | `inserts.ts` + `data/career/inserts.ts` | `resolveInsertFlow` | hub `NowCards.tsx` |
 | Achievements (permanent, cross-save) | `achievements.ts` + `data/career/achievements.ts` | `careerStore` `settleAchievements` | `ClubScreen.tsx` |
-| HQ | — | — | `HubScreen.tsx` + `hub/DayCard.tsx` (timeline + inline insert), `SquadBlock.tsx`, `TrainingBlock.tsx`, `NowCards.tsx` |
+| HQ | — | — | `HubScreen.tsx` + `hub/` (`DayCard`, `SquadBlock`, `RaceBlock`, `NowCards`) |
 
 Tunables: `CAREER_*` blocks in `src/config/balance.ts`. Copy: `copy.career.en.ts`
 / `.pt.ts` via `useCareerCopy()`. Save shape: `engine/career/types.ts`
 (`CareerSave`, persist v3 frozen, saveVersion 5: additive migrations up to
-`migrateSaveToV5` — the one-time world repair `repairLegacyWorld` and the
-week's seeding — run on every load).
+`migrateSaveToV5` run on every load).
 
 ## v2.0 state
 
 Built: the v2.0 guide's Part 3 (R20–R34), the rc.2 UX pass (R35–R37), real
 birth years (R39), the weekend calendar (R40), the Match Center timeline
-(R41), the rc.29 E2E fixes (R42–R44) and rc.30's direct-8 week decision and
-one-time save repair (R45). Details: the R entries.
+(R41), the rc.29 E2E fixes (R42–R44), rc.30's direct-8 week decision and
+one-time save repair (R45), and rc.31's Etapa 2b part 1 (R46–R49: the
+Backer/bank integrity, the sub contract and a bid-free first window,
+longevity, local sides in the races with the two tables). Details: the R
+entries.
 
 ## Remaining / open
 
-- Manual playtest on staging (V2 plan §7, career line): creation → first
-  week → Saturday qualifier → Sunday regional (watch and instant); a Major
-  weekend (Saturday → pause → Championship Sunday, a reload in between); an
-  OT game in the Match Center; payroll; loan; drill; insert.
+- Manual playtest on staging: V2 plan §7's career line plus rc.31's list
+  (`ROADMAP.md`, "Waiting on Miguel").
 - Miguel to confirm: the career decisions in `ROADMAP.md` ("Waiting on
   Miguel").
 - Content: scripted beats corpus (~30, EN+PT). New birth dates go in the base
   export (`BIRTHDAY`), not in `born:` rows.
-- `CAREER_ARC`: the harness measures it (rc.30); nothing asserts it yet. The
-  baseline misses every anchor: 59 % of careers go insolvent (63 % on
-  Normal), mostly in their 2nd–4th season (ECO-01/02, Etapa 2b).
+- The money: `ECONOMY-CONTRACT.md` (ECO-01) waits on Miguel's ten
+  decisions; no number moves before. rc.30 measured 64 % of careers
+  insolvent (the baseline's 59 % missed late insolvencies, fixed in R46).
+  Next in 2b: the contract's packages, DEV-01 (growth), BAL-02 (presets),
+  each re-measured on the same seeds.
 - Deferred by design: org relocation, t1 circuit, PvP.
 
 ## Guardrails

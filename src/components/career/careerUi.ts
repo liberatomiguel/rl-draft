@@ -57,8 +57,10 @@ import {
 import { askPackageFor, contractedSplitsRemaining, listingFor } from "@/engine/career/market";
 import { localRegionOf } from "@/engine/career/localScene";
 import {
+  raceLineOf,
   raceTableFor,
   type RaceKind,
+  type RaceLine,
   type RaceRow,
   type RaceSide,
   type RaceStatus,
@@ -473,7 +475,8 @@ export function raceTableOf(save: CareerSave, region: Region, kind: RaceKind): R
   });
 }
 
-export type { RaceKind, RaceRow, RaceSide, RaceStatus, RaceTable };
+export type { RaceKind, RaceLine, RaceRow, RaceSide, RaceStatus, RaceTable };
+export { raceLineOf };
 
 /** Qualification cut-line size for a region (Major/Worlds slot table). */
 export { CAREER_SLOTS } from "@/config/balance";

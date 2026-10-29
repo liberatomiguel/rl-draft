@@ -1237,6 +1237,14 @@ export const CAREER_AGE = {
   /** Stars linger: their chance is multiplied by this — inside the window only. */
   retirementStarMult: 0.5,
   /**
+   * DEV-02 (R48): who counts as a star for retirementStarMult — the bar
+   * differs by caller. The user's squad: overall 85 (design §8,
+   * contract-pinned). The world: overall 90 (the blue-card bar today, kept as
+   * a career number so a Draft rarity retune cannot move the career).
+   */
+  retirementStarOverallSquad: 85,
+  retirementStarOverallWorld: 90,
+  /**
    * DEV-02 (R48): share of retiring REAL ex-pros who move into coaching (they
    * feed the coach market); the rest leave the game. Decided per (career,
    * player) from the seed — no save state. Generic players always leave.

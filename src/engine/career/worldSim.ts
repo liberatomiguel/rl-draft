@@ -43,7 +43,6 @@ import {
   CAREER_WORLD,
   CHEMISTRY,
   DIFFICULTY,
-  RARITY,
   TOURNAMENT,
 } from "@/config/balance";
 import {
@@ -150,8 +149,6 @@ const SINGLE_ELIM_TEAMS = 8;
 const FILLER_PRESTIGE_ONE_CHANCE = 0.15;
 /** Hard cap on the creation FA pool (save size / market scan cost). */
 const FA_POOL_CAP = 300;
-/** "Stars linger" retirement dampening applies at/above the blue-card bar. */
-const STAR_RETIREMENT_OVERALL = RARITY.blueMin;
 /** AI coach bonus level thresholds (orgTeamFor contract). */
 const COACH_BONUS_STRONG = 85;
 const COACH_BONUS_MID = 75;
@@ -620,6 +617,41 @@ export function userTeamFor(input: UserTeamInput): {
 
   const fieldedIds = fieldedPlayers.filter((p): p is SquadPlayer => p !== null).map((p) => p.id);
   return { team, usedStandIn, usedSubId, fieldedIds };
+}
+
+/**
+ * RTW-01 (R49): the squad's BEST trio on userTeamFor's own scale — the same
+ * team rating (chemistry, coach and gear included), every three-player
+ * lineup of the squad rated with the others on the bench, the best kept. It
+ * ignores who the user happens to field and the bootcamp edge (bootcampSharp
+ * 0), so a lineup swap or an armed bootcamp cannot move what is frozen on it
+ * (the local scene's anchor). A squad under three fields its stand-ins.
+ */
+export function bestTrioRatingFor(
+  input: Omit<UserTeamInput, "starterIds" | "bootcampSharp" | "unavailablePlayerId">,
+): number {
+  const ids = input.squad.map((p) => p.id);
+  const trios: string[][] = [];
+  if (ids.length <= 3) trios.push(ids);
+  else {
+    for (let a = 0; a < ids.length; a++) {
+      for (let b = a + 1; b < ids.length; b++) {
+        for (let c = b + 1; c < ids.length; c++) trios.push([ids[a], ids[b], ids[c]]);
+      }
+    }
+  }
+  let best = -Infinity;
+  for (const trio of trios) {
+    const starterIds = [trio[0] ?? "", trio[1] ?? "", trio[2] ?? ""] as [string, string, string];
+    const squad = input.squad.map((p) => ({
+      ...p,
+      role: starterIds.includes(p.id) ? ("starter" as const) : ("sub" as const),
+    }));
+    const rating = userTeamFor({ ...input, squad, starterIds, bootcampSharp: 0, unavailablePlayerId: null }).team
+      .rating.total;
+    best = Math.max(best, rating);
+  }
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -1433,8 +1465,9 @@ function nextFillerId(region: Region, world: WorldState): string {
  *     a real player can only retire once his LAST dataset card's season order
  *     is < the new season's order (R48: he plays his final real season). The
  *     roll is DEV-02's `retirementChanceFor` on the season just played: the
- *     24–29 window, never before the peak, stars (overall ≥ blue-card bar)
- *     lingering at retirementStarMult inside it.
+ *     24–29 window, never before the peak, stars (overall ≥
+ *     CAREER_AGE.retirementStarOverallWorld) lingering at retirementStarMult
+ *     inside it.
  *  2. Org holes backfill from the FA pool, best regional overall first (a
  *     fresh filler id is minted if a region's pool runs dry).
  *  3. Off-anchor development (ids present in overallDelta — presence in the
@@ -1501,7 +1534,7 @@ export function agePassAndIntake(
       nextAge: view.age,
       peakAge: peakAgeOf(view),
       overall: view.overall,
-      starOverall: STAR_RETIREMENT_OVERALL,
+      starOverall: CAREER_AGE.retirementStarOverallWorld,
     });
     return p > 0 && rng.chance(p);
   };

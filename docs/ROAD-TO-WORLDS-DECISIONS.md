@@ -592,8 +592,14 @@ R46. **The Backer and the bank keep their rules, and the screens quote what
      first Monday. Now an insolvency always records itself (a retirement
      still keeps the ending it earned, and the legacy grade stays), an ended
      career never rolls over (`rolloverToNextSeason`, the new
-     `continueInfiniteFlow`), the screen shows only Retire, the saves list
-     archives it, and the money flows refuse an ended career. (c) The bank
+     `continueInfiniteFlow`), the screen shows only Retire, and the saves
+     list archives it. An ended career is closed: ONE guard in the store
+     (`careerStore` `withSave` / `withResult`) refuses every action that
+     changes the career (money, roster, staff, events, the clock) with
+     "blocked" and leaves the save untouched; only retiring and the viewing
+     state (read marks, seen flags) pass. HQ then shows the season stop and
+     no decision card or money notice (runway, the Backer, the next bank
+     instalment). (c) The bank
      panel guessed its own refusal. It now shows the real `bankLoanRefusal`
      reason (the strings the flow returns, EN+PT) and disables the request.
      While a loan runs it shows the next instalment (`nextPaydayFor`: the
@@ -603,7 +609,14 @@ R46. **The Backer and the bank keep their rules, and the screens quote what
      panel already states. (d) A pay-down may still use the overdraft down to
      the floor (unchanged rule), but it now shows the balance after and warns
      when that is below zero: below the floor on a Monday "the Backer steps
-     in", or, once it has, "the career ends". No economy number moved.
+     in", or, once it has, "the career ends". The "Loans & debt" panel opens
+     by default while a debt exists and then follows the user's toggling, so
+     paying a debt off never folds it away under the cursor. (e) A sale's
+     confirmation (Market and HQ, one `SaleConsequences` block) quotes
+     `economy.salePreviewFor`: the balance after net of the Backer's share
+     (`saleGarnishFor`, the rule `applyTransferIncome` books), "Backer repaid
+     $X" while it is owed, and the weekly wage bill before → after. No
+     economy number moved.
 
 R47. **The lineup slot is not the price of the job, and the first window is
      bid-free (rc.31, Etapa 2b ECO-03 / ECO-03b).** (a) The "signed as a sub"
@@ -617,12 +630,19 @@ R47. **The lineup slot is not the price of the job, and the first window is
      who leaves (`signPlayerFlow` `releaseId`), and that player is released,
      with severance, in the same operation. If he was a starter, the signing
      takes his seat. The market's offer sheet asks (EN+PT) and shows the
-     severance and the weekly wage bill before and after. (c)
+     severance and the weekly wage bill before and after; the severance and
+     the balance after come from the chosen leaver even when the plan is
+     refused (funds, the loan lock), so the reason and the numbers agree.
+     Its "why this price" keeps the wage effects per split, labelled (the
+     weekly wage line rounds them, so converted rows would not add up), and
+     the under-contract fee as a one-off. (c)
      `signingPlanFor` validates everything (window, slot, age, rep cap,
      funds = fee + bonus + severance, the Backer lock) before anything moves.
      The flow applies exactly that plan and the sheet renders it. A rejected
      counter keeps only the hardened negotiation count; a failed transfer
-     moves no money and no slot. Promotion stays a free `setStartersFlow`.
+     moves no money and no slot. A sale settles every pending bid for that
+     player, as a release does, and a bid for a player who already left is
+     refused and dropped. Promotion stays a free `setStartersFlow`.
      Renewals price through `market.renewalAskFor` (a reserve renews like a
      starter), and the renewal sheet shows the payroll projection
      (`economy.payrollProjection`, the Monday funnel's own rounding). (d) Old
@@ -649,12 +669,21 @@ R48. **Longevity: 13 to play, 24–29 to retire (rc.31, Etapa 2b DEV-02,
      through `peakAgeOf` (today the stored 18–22 peak; DEV-01 individualises
      it there). Inside the window it is `retirementByAge` {24: 10 %, 25: 20 %,
      26: 30 %, 27: 45 %, 28: 60 %}, × 0.5 for stars, inside the window only.
+     Who counts as a star differs by caller (both kept from rc.30, now named
+     in `CAREER_AGE`): overall 85 in the user's squad
+     (`retirementStarOverallSquad`), 90 in the world
+     (`retirementStarOverallWorld`, the blue-card bar today).
      It is 1 when the next season would pass `retireMaxAge` 29: the season at
      29 always ends it, and the 2022 → 2024 calendar gap makes 28 the last.
      The squad still announces at the rollover into the final season and
-     retires at the next (never abrupt). A legacy player already past 29
-     announces at once and plays one farewell season. An announcement made
-     under the old table is honoured. The world decides on the season just
+     retires at the next (never abrupt). A player signed in a season that
+     must be his last (`signsForFinalSeason`: the coming rollover's chance
+     is 1 — a 29-year-old, or a 28-year-old in 2022-23) signs with that final
+     season announced and for one season only; the offer sheet says so
+     (EN+PT) and offers only the 1-season deal, so he never plays at 30 for
+     the user. A legacy player already past 29 announces at once and plays
+     one farewell season. An announcement made under the old table is
+     honoured. The world decides on the season just
      played. rc.30 rolled on the new season's age with no cap, so players
      left after a season at 21–23 (the gap) and a few played on past 29.
      Measured over 4 seeds × 10 seasons: every world retirement now follows
@@ -693,9 +722,15 @@ R49. **Local sides score and race for Major and Worlds slots (rc.31, Etapa
      `fieldForEvent` fields a local side that earned a slot.
      (b) Strength: one rating per side per season, its region's anchor plus
      its hashed offset (`localAnchorFor`). The user's region is rated around
-     the user's team, frozen on the season's first regional Monday
-     (`competition.localAnchor`, optional, reset with the competition at the
-     rollover). Every other region uses the median of its stored org ratings,
+     the user's squad: its best trio on the team-rating scale
+     (`worldSim.bestTrioRatingFor` via `careerFlow.localAnchorRatingFor`:
+     userTeamFor's own rating with chemistry, coach and gear, every
+     three-player lineup of the squad rated, the bootcamp edge left out),
+     frozen on the season's first regional Monday (`competition.localAnchor`,
+     optional, reset with the competition at the rollover). Who the user
+     fields that Monday and an armed bootcamp never move it, so a lineup swap
+     on the eve cannot soften the season's local scene (the R45 week seeding
+     still reads the fielded rating, `userSeedRatingFor`). Every other region uses the median of its stored org ratings,
      the season's computeStars snapshot. The side is the same team in a cup,
      on Saturday, on Sunday, in a Major and at Worlds, whether the user plays
      or watches, and a Major never reads the user's current squad. Before
@@ -720,8 +755,16 @@ R49. **Local sides score and race for Major and Worlds slots (rc.31, Etapa
      rank with `rankByPoints`, the selection's own order and tie-break, list
      every team of the region (zero-point orgs by name), mark local sides,
      give the user's status (secured, in the race, out of reach; conservative
-     until the field is announced) and count the fixtures left. The season
-     review's region table reads the same order.
+     until the field is announced) and count the fixtures left. Before the
+     table has points (`started`) the rows are only listed by name: nobody
+     is inside the cut and the user's line reads "No points yet", neutral.
+     Level with the last seat on points but below it on the tie-break reads
+     "Level with the line", neutral, never "0 pts below the line"
+     (`raceLineOf`, one wording for the toggle and the Standings hero). The
+     season review's region table reads the same order, and so does the
+     season grade: its region rank (the top-2 / top-4 bonus,
+     `seasonGradeFor`, and through it the season goal) now counts local sides
+     like any team of the region.
      (e) Measured (opt-in `RTW_LOCALS=1`, 42 hands-off careers × 4 seasons):
      local sides take 0.2 % of the Major slots and 0.04 % of the Worlds
      slots; they hold 14–24 % of the Sunday regional seats and 3–8 % of the

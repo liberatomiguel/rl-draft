@@ -27,6 +27,13 @@ export type RaceSide = "user" | "org" | "generic" | "local";
 /** The user's standing in the race: safe whatever happens, still open, or out of reach. */
 export type RaceStatus = "clinched" | "contention" | "out";
 
+/**
+ * How the HQ toggle and the Standings hero word the user's line (raceLineOf):
+ * no points on the table yet, secured, out of reach, inside the cut, level
+ * with the last seat on points (below it only on the tie-break), or behind.
+ */
+export type RaceLine = "unscored" | "clinched" | "out" | "inside" | "level" | "behind";
+
 export interface RaceRow {
   ref: string;
   name: string;
@@ -34,7 +41,10 @@ export interface RaceRow {
   /** 1-based position, in the selection's own order. */
   rank: number;
   side: RaceSide;
-  /** Inside the cut (rank ≤ cut): holds a slot if the race ended today. */
+  /**
+   * Inside the cut (rank ≤ cut): holds a slot if the race ended today. Never
+   * before the table has points — an order by name is not a race.
+   */
   inCut: boolean;
   /** In the announced field; null while the field is not announced. */
   qualified: boolean | null;
@@ -60,6 +70,8 @@ export interface RaceTable {
   maxPointsLeft: number;
   /** The field this race decides is announced (`majorFieldRefs` / `worldsFieldRefs`). */
   announced: boolean;
+  /** The table has points (a points event has banked): before that the rows are listed by name. */
+  started: boolean;
 }
 
 export interface RaceTableInput {
@@ -133,13 +145,16 @@ export function raceTableFor(input: RaceTableInput): RaceTable {
   const names = new Map([...ranked, ...zero].map((ref) => [ref, input.nameOf(ref)]));
   zero.sort((a, b) => names.get(a)!.localeCompare(names.get(b)!) || a.localeCompare(b));
 
+  // No points on the table yet (the split or season has not banked a points
+  // event): the rows are only listed by name — nobody is inside the cut.
+  const started = ranked.length > 0;
   const rows: RaceRow[] = [...ranked, ...zero].map((ref, i) => ({
     ref,
     name: names.get(ref)!,
     points: table[ref] ?? 0,
     rank: i + 1,
     side: sideOfRef(ref),
-    inCut: i < cut,
+    inCut: started && i < cut,
     qualified: field ? field.includes(ref) : null,
   }));
 
@@ -164,7 +179,27 @@ export function raceTableFor(input: RaceTableInput): RaceTable {
     fixturesLeft,
     maxPointsLeft,
     announced: Boolean(field),
+    started,
   };
+}
+
+/**
+ * The user's line, worded the same on the HQ toggle and the Standings hero.
+ * An announced field decides; before any points the race has not started
+ * ("unscored", neutral); then secured / out of reach (statusOf), inside the
+ * cut, "level" when the user has the last seat's points but sits below it on
+ * the tie-break (neutral, never "0 pts below"), else behind by `userGap`.
+ * Null outside the user's region.
+ */
+export function raceLineOf(table: RaceTable): RaceLine | null {
+  const user = table.userRow;
+  if (!user) return null;
+  if (user.qualified !== null) return user.qualified ? "clinched" : "out";
+  if (!table.started) return "unscored";
+  if (table.userStatus === "clinched") return "clinched";
+  if (table.userStatus === "out") return "out";
+  if (user.inCut) return "inside";
+  return table.userGap === 0 ? "level" : "behind";
 }
 
 /**

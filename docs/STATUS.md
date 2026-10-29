@@ -9,7 +9,7 @@
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.30**
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.31**
   (`staging.rocketdraft.app`: career on, noindex, preview tools on).
   **Never deploy v2.0 to `main` before the full review.**
 - Road to Worlds (career): `ROAD-TO-WORLDS-STATUS.md`. If a push to `staging`
@@ -21,23 +21,24 @@
 The Season reset and Season Rating, accounts v2, missions, login streak,
 event cards, Profile/Leaderboard/Home v2, Daily Quiz, Challenges 2.0,
 cosmetics, the database expansion, Road to Worlds 2.0 and the completion
-plan's Etapas 1–2a so far (rc.27–30; `ROADMAP.md` "Done", CHANGELOG).
+plan's Etapas 1, 2a and 2b part 1 so far (rc.27–31; `ROADMAP.md` "Done",
+CHANGELOG).
 
 ## Where the completion plan stands
 
 - **Etapa 1 + 1b: done** (rc.27–29). **Gate 1:** answered by Miguel's 28/10
   plan (playtest + direction), now written into `ROADMAP.md` by ID.
-- **Etapa 2a, rc.30:** package A closed the rc.29 integration (review
-  fixes, direct-8 decided once a week, legacy saves, the one-time career
-  repair, PT run labels). The long-career harness and its baseline are in
-  (`CAREER-BASELINE-rc30.md`: 59 % of careers insolvent, 63 % on Normal; no
-  93+ rookie in the dataset eras; specials above potential). The analytics
-  contract is a proposal (`ANALYTICS-EVENTS-2.0.md`). Still open in 2a:
-  ENG-01 audit, DATA-01, ENG-02 rest, real-save fixtures.
-- **Next, 2b** (Miguel answered the four decisions on 29/10; `ROADMAP.md`):
-  ECO-02/03 fixes and the economy contract first, then DEV-01/02, RTW-01's
-  two tables, BAL-02, each re-measured on the same seeds and played by
-  Miguel.
+- **Etapa 2a, rc.30:** package A and the instruments (the long-career
+  harness, `CAREER-BASELINE-rc30.md`, the analytics contract). Still open in
+  2a: ENG-01 audit, DATA-01, ENG-02 rest, real-save fixtures.
+- **Etapa 2b part 1, rc.31** (three parallel fronts + an independent
+  review): ECO-02 (the Backer/bank integrity, insolvency is final), ECO-03
+  (no sub discount, who-leaves signing) and 03b (a bid-free first window),
+  DEV-02 (13 to play, retire at 24–29, ex-pros coach), RTW-01 (local sides
+  score; the split Major table and the season Worlds table). R46–R49.
+- **Next, at the gate:** Miguel plays rc.31 and answers the economy
+  contract's ten decisions (`ECONOMY-CONTRACT.md` §6). Then the contract's
+  packages, DEV-01 and BAL-02, each re-measured on the same seeds.
 
 ## Open before `main`
 
@@ -53,7 +54,7 @@ plan's Etapas 1–2a so far (rc.27–30; `ROADMAP.md` "Done", CHANGELOG).
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **752** tests (+5 opt-in tools
+- `npm run typecheck` clean · `npm test` **840** tests (+7 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).
@@ -62,7 +63,8 @@ plan's Etapas 1–2a so far (rc.27–30; `ROADMAP.md` "Done", CHANGELOG).
   bands (#136–#137). Shared-sim changes regenerate the golden master only with
   a CHANGELOG-documented decision.
 - Career sweeps: `CAREER_ARC=1` / `CAREER_CURVES=1` (`careerArc.test.ts`)
-  before and after any economy or growth change (Etapa 2b).
+  and the money probe `CAREER_ECON=1` (`careerEconomy.probe.test.ts`) before
+  and after any economy or growth change (Etapa 2b).
 - Perf reference (rc.29, webpack export): cold home 28 requests; a whole
   Classic run from a cold home 77–80 (budget 75, Etapa 5 WEB-02). The dataset
   chunk (62 KB gz) loads on game pages only; home first-load JS 288 KB gz.

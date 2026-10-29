@@ -141,7 +141,7 @@ function PayDown({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          aria-label="-"
+          aria-label={C.finances.amountDown}
           className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => setRaw(clamp(amount - step))}
           disabled={!canPay || amount - step < payMin}
@@ -154,7 +154,7 @@ function PayDown({
         </div>
         <button
           type="button"
-          aria-label="+"
+          aria-label={C.finances.amountUp}
           className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => setRaw(clamp(amount + step))}
           disabled={!canPay || amount >= maxPay}
@@ -186,6 +186,36 @@ function PayDown({
       ) : null}
       {hint ? <p className="mt-2 text-[10px] text-faint">{hint}</p> : null}
     </div>
+  );
+}
+
+/**
+ * ECO-02 (R46): the "Loans & debt" panel — open by default while a debt
+ * exists (or once one appears on this screen), then it follows the user's own
+ * toggling. Paying a debt off inside it never folds it away under the cursor
+ * (the old `open={Boolean(fin.loan || fin.bankLoan)}` was controlled by the
+ * debt, so "Pay it all" collapsed the panel and hid the bank's Request).
+ */
+function LoansDetails({
+  hasDebt,
+  className,
+  children,
+}: {
+  hasDebt: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const [debtSeen, setDebtSeen] = useState(hasDebt);
+  if (hasDebt && !debtSeen) setDebtSeen(true);
+  return (
+    <details
+      open={userOpen ?? debtSeen}
+      onToggle={(e) => setUserOpen(e.currentTarget.open)}
+      className={className}
+    >
+      {children}
+    </details>
   );
 }
 
@@ -244,7 +274,7 @@ function BankLoanRequest({ fin, rep, balance }: { fin: FinanceState; rep: number
       <div className="mt-2 flex items-center gap-2">
         <button
           type="button"
-          aria-label="-"
+          aria-label={C.finances.amountDown}
           className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => setRaw(clamp(amount - step))}
           disabled={amount - step < CAREER_BANK.minAmount}
@@ -257,7 +287,7 @@ function BankLoanRequest({ fin, rep, balance }: { fin: FinanceState; rep: number
         </div>
         <button
           type="button"
-          aria-label="+"
+          aria-label={C.finances.amountUp}
           className="h-11 w-11 shrink-0 rounded-lg border border-line text-lg font-bold text-sub transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => setRaw(clamp(amount + step))}
           disabled={amount >= limit}
@@ -1100,7 +1130,10 @@ export function FinancesScreen() {
       </div>
 
       {/* ================= Loans & debt (v2.0; rc.2: folded away unless a loan is live) ================= */}
-      <details open={Boolean(fin.loan || fin.bankLoan)} className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}>
+      <LoansDetails
+        hasDebt={Boolean(fin.loan || fin.bankLoan)}
+        className={cx("rise-in group panel p-0", fin.loan && "panel-glow-orange")}
+      >
         <summary className="flex cursor-pointer list-none flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
           <span className="kicker text-[10px]">
             <span className="mr-1.5 inline-block transition-transform group-open:rotate-90" aria-hidden>
@@ -1188,7 +1221,7 @@ export function FinancesScreen() {
           </div>
         </div>
       </div>
-      </details>
+      </LoansDetails>
 
     </div>
   );

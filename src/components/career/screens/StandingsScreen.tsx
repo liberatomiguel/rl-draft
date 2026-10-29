@@ -14,7 +14,7 @@
  * placements this season), expandable user row, crest-led hero.
  */
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { isLocalRef } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
 import type { Placement } from "@/engine/types";
@@ -32,10 +32,12 @@ import { defaultRaceKind } from "@/components/career/hub/RaceBlock";
 import {
   CAREER_SLOTS,
   nameOfRef,
+  raceLineOf,
   raceTableOf,
   useCareerSave,
   userStars,
   type RaceKind,
+  type RaceLine,
   type RaceRow,
   type RaceTable,
 } from "@/components/career/careerUi";
@@ -177,7 +179,7 @@ function StandingsTable({
               row.qualified ? "text-good" : isUser ? "text-ink" : row.inCut ? "text-sub" : "text-faint",
             )}
           >
-            {row.rank}
+            {table.started ? row.rank : "–"}
           </span>
         </td>
         <td className="px-2 py-2">
@@ -342,6 +344,16 @@ function FieldGrid({
 // Screen
 // ---------------------------------------------------------------------------
 
+/** RTW-01 (R49): the hero's line tone — neutral before any points and when level with the last seat. */
+const LINE_TONE: Record<RaceLine, string> = {
+  unscored: "text-sub",
+  clinched: "text-good",
+  out: "text-bad",
+  inside: "text-good",
+  level: "text-sub",
+  behind: "text-bad",
+};
+
 export function StandingsScreen() {
   const copy = useCareerCopy();
   const mounted = useMounted();
@@ -350,6 +362,7 @@ export function StandingsScreen() {
   const [pickedRegion, setPickedRegion] = useState<Region | null>(null);
   // One sheet for the whole screen — any AI org row/card opens it.
   const [sheetRef, setSheetRef] = useState<string | null>(null);
+  const tabIds = useId();
 
   // Team assembly is not free — recompute only when the squad/world can have
   // actually moved, not on every save tick.
@@ -390,11 +403,24 @@ export function StandingsScreen() {
     ? copy.race.fixturesMajor(table.fixturesLeft.regionals)
     : copy.race.fixturesWorlds(table.fixturesLeft.regionals, table.fixturesLeft.majors);
   const user = homeTable.userRow;
+  const line = raceLineOf(homeTable);
   const field = isMajor ? save.competition.majorFieldRefs : save.competition.worldsFieldRefs;
   const hasLocals = table.rows.some((r) => r.side === "local");
 
   const chipBase =
     "display inline-flex min-h-11 items-center rounded-md border px-3 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors";
+  const lineText = (l: RaceLine | null, gap: number): string =>
+    l === "clinched"
+      ? copy.race.status.clinched
+      : l === "out"
+        ? copy.race.status.out
+        : l === "inside"
+          ? copy.hub.pointsSafe
+          : l === "level"
+            ? copy.hub.pointsLevel
+            : l === "behind"
+              ? copy.hub.pointsGap(gap)
+              : copy.hub.pointsNone;
 
   return (
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
@@ -410,9 +436,11 @@ export function StandingsScreen() {
         ).map(([key, label]) => (
           <button
             key={key}
+            id={`${tabIds}-tab-${key}`}
             type="button"
             role="tab"
             aria-selected={kind === key}
+            aria-controls={`${tabIds}-panel`}
             onClick={() => setTab(key)}
             className={cx(
               chipBase,
@@ -425,6 +453,7 @@ export function StandingsScreen() {
           </button>
         ))}
       </div>
+      <div id={`${tabIds}-panel`} role="tabpanel" aria-labelledby={`${tabIds}-tab-${kind}`}>
       <p className="mb-4 text-xs text-sub">{scope}</p>
 
       {/* Hero: the user's own race (home region) in the selected table */}
@@ -453,23 +482,14 @@ export function StandingsScreen() {
             <div className="grid flex-1 gap-4 sm:grid-cols-3">
               <div>
                 <p className="kicker mb-1">{isMajor ? copy.race.majorTab : copy.race.worldsTab}</p>
-                <p className="display text-2xl font-bold text-ink">{copy.hub.pointsRank(user.rank, user.points)}</p>
+                <p className="display text-2xl font-bold text-ink">
+                  {homeTable.started ? copy.hub.pointsRank(user.rank, user.points) : "–"}
+                </p>
               </div>
               <div>
                 <p className="kicker mb-1">{cutLabel}</p>
-                <p
-                  className={cx(
-                    "display text-2xl font-bold",
-                    homeTable.userStatus === "out" ? "text-bad" : user.inCut ? "text-good" : "text-bad",
-                  )}
-                >
-                  {homeTable.userStatus === "clinched"
-                    ? copy.race.status.clinched
-                    : homeTable.userStatus === "out"
-                      ? copy.race.status.out
-                      : user.inCut
-                        ? copy.hub.pointsSafe
-                        : copy.hub.pointsGap(homeTable.userGap)}
+                <p className={cx("display text-2xl font-bold", LINE_TONE[line ?? "unscored"])}>
+                  {lineText(line, homeTable.userGap)}
                 </p>
               </div>
               <div>
@@ -539,6 +559,7 @@ export function StandingsScreen() {
           {isMajor ? copy.race.majorFieldPending : copy.standings.fieldRevealPending}
         </p>
       )}
+      </div>
 
       <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </div>

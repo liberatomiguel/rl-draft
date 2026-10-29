@@ -20,11 +20,12 @@ import {
   playerViewById,
   retirementChanceFor,
   seasonYear,
+  signsForFinalSeason,
   squadRollover,
 } from "@/engine/career/development";
-import { coachCandidatesFor, listingFor } from "@/engine/career/market";
+import { askPackageFor, coachCandidatesFor, contractedSplitsRemaining, listingFor } from "@/engine/career/market";
 import { deriveSeed, streams } from "@/engine/career/seeds";
-import type { CareerPlayerView, SquadPlayer, WorldState } from "@/engine/career/types";
+import type { CareerPlayerView, CareerSave, SquadPlayer, WorldState } from "@/engine/career/types";
 import { agePassAndIntake, buildWorldAtCreation } from "@/engine/career/worldSim";
 import { createRng } from "@/lib/rng";
 import {
@@ -295,8 +296,16 @@ describe("DEV-02 — minimum competitive age 13: signable and playable", () => {
       .map((id) => playerViewById(id, ctx))
       .find((v) => v !== null && v.age === CAREER_AGE.minCompetitiveAge && v.region === "SAM");
     expect(kid).toBeTruthy();
-    const listing = listingFor({ world: save.world, squadIds: [], seasonIndex: save.clock.seasonIndex, careerSeed: save.careerSeed });
-    expect(listing.freeAgents.some((v) => v.id === kid!.id) || listing.freeAgents.length === 120).toBe(true);
+    // A short pool, so the listing's cap (strongest first) cannot hide him: the
+    // age filter alone decides whether a 13-year-old is listed.
+    const pool = [kid!.id, ...save.world.freeAgentIds.filter((id) => id !== kid!.id).slice(0, 10)];
+    const listing = listingFor({
+      world: { ...save.world, freeAgentIds: pool },
+      squadIds: [],
+      seasonIndex: save.clock.seasonIndex,
+      careerSeed: save.careerSeed,
+    });
+    expect(listing.freeAgents.some((v) => v.id === kid!.id)).toBe(true);
     const plan = signingPlanFor(save, kid!.id, { lengthSeasons: 2 });
     expect("plan" in plan).toBe(true);
     save = signPlayerFlow(save, kid!.id, { lengthSeasons: 2 }).save;
@@ -329,5 +338,121 @@ describe("DEV-02 — minimum competitive age 13: signable and playable", () => {
       range[0] = saved[0];
       range[1] = saved[1];
     }
+  });
+});
+
+describe("DEV-02 — a signing at the cap joins for his final season only", { timeout: 120_000 }, () => {
+  it("signsForFinalSeason: true when the coming rollover would take him past 29, the 2022 → 2024 gap included", () => {
+    const p = (age: number) => ({ age, peakAge: 20, overall: 80 });
+    expect(seasonYear(3) - seasonYear(2)).toBe(2); // 2022-23 → 2024
+    expect(signsForFinalSeason(p(28), 2)).toBe(true);
+    expect(signsForFinalSeason(p(27), 2)).toBe(false);
+    expect(signsForFinalSeason(p(28), 3)).toBe(false);
+    expect(signsForFinalSeason(p(29), 3)).toBe(true);
+    expect(signsForFinalSeason(p(25), 0)).toBe(false);
+  });
+
+  /** Signs `id` (asking for 3 seasons), checks the plan and the contract, rolls over: he must retire, never playing at 30+. */
+  function signAtTheCap(save: CareerSave, id: string): void {
+    const s = save.clock.seasonIndex;
+    const view = playerViewById(id, { careerSeed: save.careerSeed, seasonIndex: s, world: save.world })!;
+    expect(signsForFinalSeason(view, s)).toBe(true);
+    const planned = signingPlanFor(save, id, { lengthSeasons: 3 });
+    expect("plan" in planned).toBe(true);
+    if (!("plan" in planned)) return;
+    expect(planned.plan.finalSeason).toBe(true);
+    expect(planned.plan.lengthSeasons).toBe(1);
+    // Priced as the 1-season deal he gets (never the 3 seasons asked for).
+    const onOrg = Object.values(save.world.orgs).some((o) => o.playerIds.includes(id));
+    const oneSeason = askPackageFor(view, {
+      rep: save.reputation,
+      seasonIndex: s,
+      difficulty: save.difficulty,
+      careerSeed: save.careerSeed,
+      lengthSeasons: 1,
+      contracted: onOrg ? { splitsRemaining: contractedSplitsRemaining(id, s, save.careerSeed) } : undefined,
+    });
+    expect(planned.plan.pack).toEqual(oneSeason);
+
+    const signed = signPlayerFlow(save, id, { lengthSeasons: 3 });
+    expect(signed.error).toBeUndefined();
+    const player = signed.save.squad.find((p) => p.id === id)!;
+    expect(player.finalSeasonAnnounced).toBe(true);
+    expect(player.contractEndSeason).toBe(s + 1);
+    expect(player.salaryPerSplit).toBe(oneSeason.salaryPerSplit);
+    // Without the rule he would have played the next season at 30 or more.
+    expect(ageOf(player.birthYear, s + 1)).toBeGreaterThanOrEqual(CAREER_AGE.retireMaxAge + 1);
+
+    const next = rolloverToNextSeason({ ...signed.save, phase: "seasonReview" });
+    expect(next.squad.some((p) => p.id === id)).toBe(false);
+    expect(next.world.retiredIds).toContain(id);
+    for (const p of next.squad) expect(ageOf(p.birthYear, next.clock.seasonIndex)).toBeLessThanOrEqual(CAREER_AGE.retireMaxAge);
+  }
+
+  it("a real pro at 29 signs for one season, retires at the next rollover and never plays at 30+", () => {
+    let save = createCareerSave(INPUT, 61_061);
+    let pro: CareerPlayerView | undefined;
+    for (let s = 0; s < 6 && !pro; s++) {
+      pro = worldViews(save.world, save.clock.seasonIndex, save.careerSeed).find(
+        (v) => v.kind === "real" && v.age === CAREER_AGE.retireMaxAge,
+      );
+      if (!pro) save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
+    }
+    expect(pro, "a real 29-year-old in some season's world").toBeTruthy();
+    save.reputation = 100; // any real player is signable for this check
+    save.finances.balance = 5_000_000;
+    signAtTheCap(save, pro!.id);
+  });
+
+  it("a 28-year-old signed in 2022-23 (2024 would make him 30): the same final-season deal", () => {
+    let save = createCareerSave(INPUT, 48_303);
+    save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
+    save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
+    expect(seasonYear(save.clock.seasonIndex)).toBe(2022);
+    save.reputation = 100;
+    save.finances.balance = 5_000_000;
+    // The real intake starts at 13: this season's rookies are read as 28-year-olds for the check.
+    const range = CAREER_WORLD.rookieAgeRange as unknown as [number, number];
+    const saved = [range[0], range[1]] as const;
+    let signed: CareerSave | null = null;
+    let id = "";
+    try {
+      range[0] = 28;
+      range[1] = 28;
+      id = save.world.freeAgentIds.find((x) => x.startsWith(`rook:${save.clock.seasonIndex}:`))!;
+      const view = playerViewById(id, { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world })!;
+      expect(view.age).toBe(28);
+      const res = signPlayerFlow(save, id, { lengthSeasons: 2 });
+      expect(res.error).toBeUndefined();
+      signed = res.save;
+      const planned = signingPlanFor(save, id, { lengthSeasons: 2 });
+      expect("plan" in planned && planned.plan.finalSeason).toBe(true);
+    } finally {
+      range[0] = saved[0];
+      range[1] = saved[1];
+    }
+    const player = signed!.squad.find((p) => p.id === id)!;
+    expect(player.finalSeasonAnnounced).toBe(true);
+    expect(player.contractEndSeason).toBe(save.clock.seasonIndex + 1);
+    expect(ageOf(player.birthYear, save.clock.seasonIndex + 1)).toBe(30);
+    const next = rolloverToNextSeason({ ...signed!, phase: "seasonReview" });
+    expect(next.squad.some((p) => p.id === id)).toBe(false);
+    expect(next.world.retiredIds).toContain(id);
+  });
+
+  it("below the cap nothing changes: the length asked for, no announcement", () => {
+    const save = createCareerSave(INPUT, 48_404);
+    save.finances.balance = 500_000;
+    const ctx = { careerSeed: save.careerSeed, seasonIndex: 0, world: save.world };
+    const fa = save.world.freeAgentIds
+      .map((id) => playerViewById(id, ctx))
+      .find((v): v is CareerPlayerView => v !== null && v.age < CAREER_AGE.retireMinAge && Math.round(v.overall) <= 70)!;
+    expect(fa).toBeTruthy();
+    const planned = signingPlanFor(save, fa.id, { lengthSeasons: 3 });
+    expect("plan" in planned && planned.plan.finalSeason).toBe(false);
+    expect("plan" in planned && planned.plan.lengthSeasons).toBe(3);
+    const signed = signPlayerFlow(save, fa.id, { lengthSeasons: 3 }).save.squad.find((p) => p.id === fa.id)!;
+    expect(signed.finalSeasonAnnounced).toBeUndefined();
+    expect(signed.contractEndSeason).toBe(3);
   });
 });

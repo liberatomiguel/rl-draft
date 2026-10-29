@@ -146,6 +146,10 @@ export const CAREER_EN = {
     pointsRank: (rank: number, pts: number) => `#${rank} · ${pts} pts`,
     pointsGap: (pts: number) => `${pts} pts below the line`,
     pointsSafe: "Above the cut-line",
+    // RTW-01 (R49): level with the last seat on points, below it on the tie-break.
+    pointsLevel: "Level with the line",
+    // RTW-01 (R49): before the race has points (the table is only an order by name).
+    pointsNone: "No points yet",
     budget: "Balance",
     budgetNet: (s: string) => `${s} / week`,
     budgetWarning: "Projected negative by Monday's payday",
@@ -322,7 +326,7 @@ export const CAREER_EN = {
       debtCleared: () =>
         `The Emergency Backer is repaid in full. Transfer fees and gear purchases are unlocked again — the org owns its future.`,
       retiredToCoach: (p: Record<string, string | number>) =>
-        `${p.player} played his final season and steps away from competition — straight into coaching. He is in the coach pool now: from the next window he can turn up on the coach shortlist.`,
+        `${p.player} played his final season and steps away from competition — straight into coaching. He is in the coach pool now and can turn up on the coach shortlist.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} played his final season and leaves the scene for good. His slot is open — the market is where the next chapter starts.`,
     },
@@ -573,6 +577,10 @@ export const CAREER_EN = {
     freeAgentTag: "Free agent",
     ask: "Asking terms",
     whyPrice: "Why this price",
+    // The wage effects keep their unit: per split (the weekly wage line rounds them).
+    whyPriceWages: "Wage effects · per split",
+    perSplit: (s: string) => `${s} / split`,
+    oneOff: (s: string) => `${s} one-off`,
     factor: {
       overall: "Rating",
       age: "Age",
@@ -583,9 +591,8 @@ export const CAREER_EN = {
     },
     lengthLabel: "Contract length",
     seasons: (n: number) => (n === 1 ? "1 season" : `${n} seasons`),
-    roleLabel: "Role",
     starter: "Starter",
-    sub: "Substitute",
+    sub: "Sub",
     signCta: "Sign",
     offerSent: "Deal registered — resolves on the next advance.",
     signed: (name: string) => `${name} signs for the org`,
@@ -601,17 +608,17 @@ export const CAREER_EN = {
     blockbuster: "Blockbuster",
     consequences: "After this deal",
     balanceAfter: (s: string) => `Balance after: ${s}`,
-    wageAfter: (s: string) => `Payroll after: ${s} / split`,
-    squadFullWarning: "Squad is full — release or sell first.",
-    startersFull: "Starters are full — this signing joins as the substitute.",
-    subTaken: "The sub slot is taken — release or sell first.",
+    // ECO-02 (R46): a sale while the Backer is owed — its share of the fee.
+    saleBackerRepaid: (s: string) => `Backer repaid ${s}`,
     // ECO-03 (R47): the slot is set after the signing and never prices it.
     slotLabel: "Squad slot",
     slotStarter: "Takes an open seat in the starting three.",
     slotReplaces: (name: string) => `Takes ${name}'s seat in the starting three.`,
-    slotReserve: "Joins as the reserve. Promote him on the Squad screen at any time — the contract stays the same.",
+    slotReserve: "Joins as the sub. Promote him on the Squad screen at any time — the contract stays the same.",
     samePrice: "Same price as a starter: the slot never changes the contract.",
-    chooseLeaver: "Squad full (4) — choose who leaves to make room.",
+    chooseLeaver: (cap: number) => `Squad full (${cap}) — choose who leaves to make room.`,
+    // DEV-02 (R48): a signing whose current season must be his last.
+    finalSeasonDeal: "Final season: he retires when this season ends — a 1-season deal only.",
     leaverSeverance: (s: string) => `Severance ${s}`,
     payrollWeek: (now: string, after: string) => `Wage bill: ${now} → ${after} / week`,
     coachEffects: "What this coach does",
@@ -726,7 +733,6 @@ export const CAREER_EN = {
     bankRemaining: (s: string) => `Bank: ${s} to repay`,
     bankWeekly: (s: string) => `${s} / week instalment`,
     bankPayEarly: "Pay the bank early",
-    bankBlockedBacker: "No bank loans while the Backer debt is open.",
     bankBlockedActive: "One bank loan at a time — clear this one first.",
     bankLockedRep: "The bank opens its doors once the org has a little reputation.",
     // ECO-02 (R46): the bank's schedule, as the Monday payroll books it.
@@ -737,6 +743,9 @@ export const CAREER_EN = {
       `This leaves the books in the red. Below ${floor} on a Monday, the Emergency Backer steps in.`,
     payRiskEnd: (floor: string) =>
       `This leaves the books in the red. Below ${floor} on a Monday, the career ends — there is no second rescue.`,
+    // The amount steppers' accessible names (pay-downs and the bank request).
+    amountDown: "Lower the amount",
+    amountUp: "Raise the amount",
     income: "In",
     expenses: "Out",
     ledger: "Movements",

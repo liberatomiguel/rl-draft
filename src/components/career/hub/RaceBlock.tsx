@@ -8,11 +8,19 @@
  * the cut the Major / Worlds selection uses), so the two always agree.
  */
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
-import { raceTableOf, weekAt, weekOfDay, type RaceKind, type RaceTable } from "@/components/career/careerUi";
+import {
+  raceLineOf,
+  raceTableOf,
+  weekAt,
+  weekOfDay,
+  type RaceKind,
+  type RaceLine,
+  type RaceTable,
+} from "@/components/career/careerUi";
 import { OrgMark } from "@/components/career/OrgMark";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { AppLink } from "@/components/ui/AppLink";
@@ -27,6 +35,28 @@ import { Panel } from "@/components/ui/Panel";
 export function defaultRaceKind(save: CareerSave): RaceKind {
   const kind = weekAt(weekOfDay(save.clock.day)).kind;
   return kind === "window" || kind === "worldsWindow" || kind === "worlds" ? "worlds" : "major";
+}
+
+/**
+ * RTW-01 (R49): the user's line as words — the HQ toggle and the Standings
+ * hero share it (raceTable.raceLineOf). Neutral before any points and when
+ * level with the last seat (below it only on the tie-break).
+ */
+function RaceLineMark({ line, gap, C }: { line: RaceLine | null; gap: number; C: CareerCopy }) {
+  switch (line) {
+    case "clinched":
+      return <Badge tone="good">{C.race.status.clinched}</Badge>;
+    case "out":
+      return <Badge tone="bad">{C.race.status.out}</Badge>;
+    case "inside":
+      return <Badge tone="good">{C.hub.pointsSafe}</Badge>;
+    case "level":
+      return <span className="text-xs font-semibold text-sub">{C.hub.pointsLevel}</span>;
+    case "behind":
+      return <span className="text-xs font-semibold text-bad">{C.hub.pointsGap(gap)}</span>;
+    default:
+      return null;
+  }
 }
 
 /** Row indices the compact list shows: the top two, both sides of the cut, the user. */
@@ -44,9 +74,11 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     [save, region],
   );
   const [picked, setPicked] = useState<RaceKind | null>(null);
+  const ids = useId();
   const kind = picked ?? defaultRaceKind(save);
   const table = tables[kind];
   const user = table.userRow;
+  const line = raceLineOf(table);
   const idx = compactIndices(table);
   const lineLabel = kind === "major" ? C.standings.majorLine : C.standings.worldsLine;
   const fixtures =
@@ -69,9 +101,11 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         {(["major", "worlds"] as const).map((k) => (
           <button
             key={k}
+            id={`${ids}-tab-${k}`}
             type="button"
             role="tab"
             aria-selected={kind === k}
+            aria-controls={`${ids}-panel`}
             onClick={() => setPicked(k)}
             className={cx(
               "display min-h-11 rounded-md border text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
@@ -85,18 +119,16 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         ))}
       </div>
 
+      <div id={`${ids}-panel`} role="tabpanel" aria-labelledby={`${ids}-tab-${kind}`}>
       {user ? (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="display text-xl font-bold text-ink">{C.hub.pointsRank(user.rank, user.points)}</p>
-          {table.userStatus === "clinched" ? (
-            <Badge tone="good">{C.race.status.clinched}</Badge>
-          ) : table.userStatus === "out" ? (
-            <Badge tone="bad">{C.race.status.out}</Badge>
-          ) : user.inCut ? (
-            <Badge tone="good">{C.hub.pointsSafe}</Badge>
+          {/* Before any points the order is by name: no rank, a neutral line. */}
+          {line === "unscored" ? (
+            <p className="display text-xl font-bold text-sub">{C.hub.pointsNone}</p>
           ) : (
-            <span className="text-xs font-semibold text-bad">{C.hub.pointsGap(table.userGap)}</span>
+            <p className="display text-xl font-bold text-ink">{C.hub.pointsRank(user.rank, user.points)}</p>
           )}
+          <RaceLineMark line={line} gap={table.userGap} C={C} />
         </div>
       ) : null}
 
@@ -123,7 +155,9 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
                   r.side === "user" && "border border-orange/40 bg-orange/10",
                 )}
               >
-                <span className="display w-5 shrink-0 text-right text-xs font-bold text-faint">{r.rank}</span>
+                <span className="display w-5 shrink-0 text-right text-xs font-bold text-faint">
+                  {table.started ? r.rank : "–"}
+                </span>
                 <OrgMark save={save} orgRef={r.ref} size="xs" />
                 <span
                   className={cx(
@@ -148,6 +182,7 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <AppLink href="/career/standings" className="text-xs font-semibold text-blue-bright hover:underline">
           {C.race.open} →
         </AppLink>
+      </div>
       </div>
     </Panel>
   );

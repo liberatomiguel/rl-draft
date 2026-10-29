@@ -83,8 +83,6 @@ const ARCHETYPE_OFFSETS: Record<ArchetypeId, Record<StatKey, number>> = {
 const FILLER_AGE_RANGE: readonly [number, number] = [16, 23];
 /** Wonderkid filler hidden ceiling band — contract-pinned 88-95. */
 const FILLER_WONDERKID_POTENTIAL: readonly [number, number] = [88, 95];
-/** "Stars linger" retirement threshold (design §8) — contract-pinned OVR 85. */
-const RETIREMENT_STAR_OVERALL = 85;
 /**
  * No player is ever younger than this at any season they appear in.
  * DEV-02 (R48): the minimum competitive age — one constant for debut ages,
@@ -322,6 +320,29 @@ export function retirementChanceFor(p: {
   if (p.nextAge > A.retireMaxAge) return 1;
   const base = A.retirementByAge[Math.min(p.age, A.retireMaxAge)] ?? 0;
   return clamp(base * (p.overall >= p.starOverall ? A.retirementStarMult : 1), 0, 1);
+}
+
+/**
+ * DEV-02 (R48): is the season being played now certainly his last? True when
+ * the coming rollover retires him for sure (`retirementChanceFor` is 1: the
+ * next season would take him past retireMaxAge — the 2022 → 2024 gap
+ * included). The squad only decides at a rollover, so a player SIGNED in that
+ * season would otherwise play one more (at 30 or 31): he joins for this final
+ * season instead — announced at signing, a 1-season contract.
+ */
+export function signsForFinalSeason(
+  p: { age: number; peakAge: number; overall: number },
+  seasonIndex: number,
+): boolean {
+  return (
+    retirementChanceFor({
+      age: p.age,
+      nextAge: p.age + (seasonYear(seasonIndex + 1) - seasonYear(seasonIndex)),
+      peakAge: peakAgeOf(p),
+      overall: p.overall,
+      starOverall: CAREER_AGE.retirementStarOverallSquad,
+    }) >= 1
+  );
 }
 
 /**
@@ -1034,7 +1055,7 @@ export function squadRollover(
     nextAge: ageOf(p.birthYear, seasonIndex + 1),
     peakAge: peakAgeOf(p),
     overall: p.overall,
-    starOverall: RETIREMENT_STAR_OVERALL,
+    starOverall: CAREER_AGE.retirementStarOverallSquad,
   });
   // Always consume exactly one roll — keeps the rollover stream stable per player.
   const announcedRetirement = rng.chance(chance);

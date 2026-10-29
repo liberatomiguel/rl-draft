@@ -10,9 +10,16 @@ import { describe, expect, it } from "vitest";
 import { CAREER_CALENDAR, CAREER_POINTS, CAREER_SLOTS } from "@/config/balance";
 import type { Region } from "../types";
 import { firstDayOfWeek, officialEventDefsForWeek, regionalDayFor } from "./calendar";
-import { majorFieldFor, worldsFieldFor } from "./careerResults";
+import { majorFieldFor, rankByPoints, worldsFieldFor } from "./careerResults";
 import { localRef } from "./localScene";
-import { fixturesLeftFor, raceTableFor, sideOfRef, tableSplitOf, type RaceTableInput } from "./raceTable";
+import {
+  fixturesLeftFor,
+  raceLineOf,
+  raceTableFor,
+  sideOfRef,
+  tableSplitOf,
+  type RaceTableInput,
+} from "./raceTable";
 import type { CompetitionState, WorldOrgState, WorldState } from "./types";
 
 const REGIONS = Object.keys(CAREER_SLOTS.major) as Region[];
@@ -172,5 +179,53 @@ describe("race tables — fixtures left", () => {
   it("max points left is a champion's haul in every fixture left (Majors double)", () => {
     const t = raceTableFor(input({ kind: "worlds", clock: { seasonIndex: 0, day: 1 } }));
     expect(t.maxPointsLeft).toBe(9 * CAREER_POINTS.regional.champion + 3 * CAREER_POINTS.regional.champion * CAREER_POINTS.majorMultiplier);
+  });
+});
+
+describe("race tables — before any points, and level with the line (R49)", () => {
+  it("an empty table is listed by name only: not started, nobody inside the cut, the line reads 'unscored'", () => {
+    const i = input();
+    i.competition.splitPoints.SAM = {};
+    const t = raceTableFor(i);
+    expect(t.started).toBe(false);
+    expect(t.rows.length).toBeGreaterThan(t.cut);
+    expect(t.rows.some((r) => r.inCut)).toBe(false);
+    expect(t.userRow?.inCut).toBe(false);
+    expect(raceLineOf(t)).toBe("unscored");
+    // The first points start the race: the cut is real again.
+    i.competition.splitPoints.SAM = { furia: 60 };
+    const started = raceTableFor(i);
+    expect(started.started).toBe(true);
+    expect(started.rows.filter((r) => r.inCut)).toHaveLength(started.cut);
+  });
+
+  it("level with the last seat on points, below it on the tie-break: 'level', gap 0 — never '0 pts below'", () => {
+    // SAM has 2 seats: FURIA leads, the user and LOUD tie for the second.
+    const points = { furia: 520, loud: 380, user: 380, ts: 60 };
+    let careerSeed = 1;
+    while (rankByPoints(points, "SAM", careerSeed).indexOf("user") < rankByPoints(points, "SAM", careerSeed).indexOf("loud")) {
+      careerSeed += 1;
+    }
+    const i = input({ careerSeed });
+    i.competition.splitPoints.SAM = { ...points };
+    const t = raceTableFor(i);
+    expect(t.userRow).toMatchObject({ rank: 3, points: 380, inCut: false });
+    expect(t.userGap).toBe(0);
+    expect(t.userStatus).toBe("contention");
+    expect(raceLineOf(t)).toBe("level");
+  });
+
+  it("the line otherwise follows the race: inside, behind, secured, out, and the announced field", () => {
+    const i = input();
+    expect(raceLineOf(raceTableFor(i))).toBe("behind"); // 140 behind with a regional left
+    i.competition.splitPoints.SAM.user = 540; // second, but catchable
+    expect(raceLineOf(raceTableFor(i))).toBe("inside");
+    i.competition.splitPoints.SAM.user = 2_000;
+    expect(raceLineOf(raceTableFor(i))).toBe("clinched");
+    i.competition.splitPoints.SAM = { furia: 1_000, loud: 1_000, user: 0 };
+    expect(raceLineOf(raceTableFor(i))).toBe("out");
+    i.competition.majorFieldRefs = ["user"];
+    expect(raceLineOf(raceTableFor(i))).toBe("clinched");
+    expect(raceLineOf(raceTableFor({ ...input(), region: "EU" }))).toBeNull();
   });
 });

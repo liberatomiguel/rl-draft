@@ -10,8 +10,9 @@
  * AI bids with expiry dates and consequence-first confirms).
  *
  * Signing flow: card → PlayerSheet (scout report stays available between
- * windows) → offer modal with role/length pickers, the "why this price"
- * factor readout and balance/payroll consequences BEFORE commit. Errors
+ * windows) → offer modal with the squad slot and the length picker, the
+ * "why this price" factor readout and balance/payroll consequences BEFORE
+ * commit. Errors
  * surface the store's real lastError via career.market.errors.
  */
 
@@ -31,6 +32,7 @@ import {
   severanceFor,
   signableOverallCap,
 } from "@/engine/career/economy";
+import { signsForFinalSeason } from "@/engine/career/development";
 import type {
   CareerPlayerView,
   PotentialBand,
@@ -45,6 +47,7 @@ import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
+import { SaleConsequences } from "@/components/career/SaleConsequences";
 import {
   askPackageFor,
   dateOfDay,
@@ -319,6 +322,11 @@ export function MarketScreen() {
     (o) => o.status === "pending" && o.direction === "out",
   );
 
+  // DEV-02 (R48): a player whose current season must be his last signs for
+  // it only — the sheet offers the 1-season deal and says why.
+  const finalSeason = target ? signsForFinalSeason(target.view, save.clock.seasonIndex) : false;
+  const offerLen: 1 | 2 | 3 = finalSeason ? 1 : len;
+
   // --- live offer package (single target — cheap, always fresh) ---------------
   const pack = target
     ? askPackageFor(target.view, {
@@ -326,7 +334,7 @@ export function MarketScreen() {
         seasonIndex: save.clock.seasonIndex,
         difficulty: save.difficulty,
         careerSeed: save.careerSeed,
-        lengthSeasons: len,
+        lengthSeasons: offerLen,
         contracted:
           target.splitsRemaining !== null
             ? { splitsRemaining: target.splitsRemaining }
@@ -337,17 +345,19 @@ export function MarketScreen() {
   // refusal come from signingPlanFor, the function signPlayerFlow applies.
   const leaver = leaverId ? (save.squad.find((p) => p.id === leaverId) ?? null) : null;
   const planned = target
-    ? signingPlanFor(save, target.view.id, { lengthSeasons: len, releaseId: leaver?.id })
+    ? signingPlanFor(save, target.view.id, { lengthSeasons: offerLen, releaseId: leaver?.id })
     : null;
   const plan = planned && "plan" in planned ? planned.plan : null;
   const planError = planned && "error" in planned ? planned.error : null;
-  const severance = plan?.severance ?? 0;
+  // The chosen leaver's severance counts whatever the plan says — a refusal
+  // for funds or the loan lock still shows the numbers behind it.
+  const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   const cost = pack ? pack.fee + pack.signingBonus + severance : 0;
   const balanceAfter = save.finances.balance - cost;
   const blockReason = !planError
     ? null
     : planError === "squadFull"
-      ? C.market.chooseLeaver
+      ? C.market.chooseLeaver(CAREER_CONTRACT.squadCap)
       : ((C.market.errors as Record<string, string>)[planError] ?? C.market.errors.unknown);
   // v0.3 wage talk — the live proposal (0 = pay the ask) + hardened count.
   const askNow = pack?.salaryPerSplit ?? 0;
@@ -362,12 +372,6 @@ export function MarketScreen() {
   const backerRisk =
     pack !== null && !blockReason && balanceAfter < CAREER_LOAN.floor + pack.salaryPerSplit;
   const targetBand = target ? potBandOfView(save, target.view) : null;
-
-  const soldWageBill = payrollProjection({
-    squadSalaries,
-    coachSalary,
-    remove: confirmBid ? [confirmBid.playerId] : [],
-  });
 
   const factorLabel = (key: string): string =>
     (C.market.factor as Record<string, string>)[key] ?? key;
@@ -828,7 +832,7 @@ export function MarketScreen() {
               onClick={() => {
                 if (!target) return;
                 signPlayer(target.view.id, {
-                  lengthSeasons: len,
+                  lengthSeasons: offerLen,
                   offeredSalary: proposal < askNow ? proposal : undefined,
                   releaseId: leaver?.id,
                 });
@@ -867,10 +871,10 @@ export function MarketScreen() {
               <div>
                 <p className="kicker mb-1.5 text-[10px]">{C.market.lengthLabel}</p>
                 <div className="flex gap-1.5">
-                  {([1, 2, 3] as const).map((l) => (
+                  {(finalSeason ? ([1] as const) : ([1, 2, 3] as const)).map((l) => (
                     <Chip
                       key={l}
-                      active={len === l}
+                      active={offerLen === l}
                       onClick={() => setLen(l)}
                       className="flex-1 justify-center"
                     >
@@ -878,13 +882,18 @@ export function MarketScreen() {
                     </Chip>
                   ))}
                 </div>
+                {finalSeason ? (
+                  <p className="mt-1 text-[10px] font-semibold text-orange-bright">{C.market.finalSeasonDeal}</p>
+                ) : null}
               </div>
             </div>
 
             {/* ECO-03 (R47): a full squad asks who leaves — nothing moves silently */}
             {squadFull ? (
               <div className="rounded-lg border border-orange/40 bg-orange/[0.06] p-3">
-                <p className="text-xs font-semibold text-orange-bright">{C.market.chooseLeaver}</p>
+                <p className="text-xs font-semibold text-orange-bright">
+                  {C.market.chooseLeaver(CAREER_CONTRACT.squadCap)}
+                </p>
                 <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                   {save.squad.map((p) => (
                     <Chip
@@ -894,7 +903,7 @@ export function MarketScreen() {
                       activeClass="border-orange/60 bg-orange/15 text-orange-bright"
                       className="w-full justify-between normal-case tracking-normal"
                     >
-                      <span className="truncate">
+                      <span className="min-w-0 truncate">
                         {p.name} · {Math.round(p.overall)} ·{" "}
                         {p.role === "starter" ? C.market.starter : C.market.sub}
                       </span>
@@ -946,29 +955,45 @@ export function MarketScreen() {
               disabled={Boolean(blockReason)}
             />
 
-            {/* Why this price */}
+            {/* Why this price — the wage effects carry their unit (per split:
+                converted to the weekly line they would not add up after its
+                rounding); the under-contract fee is a one-off. */}
             <div className="rounded-lg border border-line bg-white/[0.02] p-3">
-              <p className="kicker mb-2 text-[10px]">{C.market.whyPrice}</p>
+              <p className="kicker mb-1 text-[10px]">{C.market.whyPrice}</p>
+              <p className="mb-2 text-[10px] text-faint">{C.market.whyPriceWages}</p>
               <div className="space-y-1">
-                {pack.factors.map((f) => (
-                  <div key={f.key} className="flex items-center justify-between text-xs">
-                    <span className="text-sub">{factorLabel(f.key)}</span>
-                    <span
-                      className={cx(
-                        "font-semibold",
-                        f.key === "overall"
-                          ? "text-ink"
-                          : f.delta >= 0
-                            ? "text-bad"
-                            : "text-good",
-                      )}
+                {pack.factors
+                  .filter((f) => f.key !== "contract")
+                  .map((f) => (
+                    <div key={f.key} className="flex items-center justify-between text-xs">
+                      <span className="text-sub">{factorLabel(f.key)}</span>
+                      <span
+                        className={cx(
+                          "font-semibold",
+                          f.key === "overall" ? "text-ink" : f.delta >= 0 ? "text-bad" : "text-good",
+                        )}
+                      >
+                        {C.market.perSplit(
+                          f.key === "overall"
+                            ? formatMoney(f.delta, { compact: true })
+                            : formatMoneyDelta(f.delta, { compact: true }),
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                {pack.factors
+                  .filter((f) => f.key === "contract")
+                  .map((f) => (
+                    <div
+                      key={f.key}
+                      className="mt-1.5 flex items-center justify-between border-t border-line pt-1.5 text-xs"
                     >
-                      {f.key === "overall"
-                        ? formatMoney(f.delta, { compact: true })
-                        : formatMoneyDelta(f.delta, { compact: true })}
-                    </span>
-                  </div>
-                ))}
+                      <span className="text-sub">{factorLabel(f.key)}</span>
+                      <span className="font-semibold text-bad">
+                        {C.market.oneOff(formatMoney(f.delta, { compact: true }))}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -1029,11 +1054,8 @@ export function MarketScreen() {
               {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")}{" "}
               — {confirmBid.playerName} · {formatMoney(confirmBid.fee)}
             </p>
-            <p className="kicker text-[10px]">{C.market.consequences}</p>
-            <p className="font-semibold text-good">
-              {C.market.balanceAfter(formatMoney(save.finances.balance + confirmBid.fee))}
-            </p>
-            <p>{C.market.payrollWeek(formatMoney(soldWageBill.now), formatMoney(soldWageBill.after))}</p>
+            {/* ECO-02 (R46) / ECO-03 (R47): what the sale books — the Backer's share included. */}
+            <SaleConsequences save={save} offer={confirmBid} />
           </div>
         ) : null}
       </Modal>

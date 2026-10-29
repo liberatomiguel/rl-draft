@@ -139,6 +139,10 @@ export const CAREER_PT: CareerCopy = {
     pointsRank: (rank: number, pts: number) => `#${rank} · ${pts} pts`,
     pointsGap: (pts: number) => `${pts} pts abaixo da linha`,
     pointsSafe: "Acima da linha de corte",
+    // RTW-01 (R49): empatado em pontos com a última vaga, abaixo dela no desempate.
+    pointsLevel: "Empatado com a linha",
+    // RTW-01 (R49): antes de a corrida ter pontos (a tabela é só uma ordem por nome).
+    pointsNone: "Ainda sem pontos",
     budget: "Saldo",
     budgetNet: (s: string) => `${s} / semana`,
     budgetWarning: "Projeção negativa no pagamento de segunda",
@@ -315,7 +319,7 @@ export const CAREER_PT: CareerCopy = {
       debtCleared: () =>
         `O Investidor de emergência foi quitado por completo. Transferências com taxa e compras de equipamento estão liberadas de novo — a org é dona do próprio futuro.`,
       retiredToCoach: (p: Record<string, string | number>) =>
-        `${p.player} jogou sua última temporada e deixa as competições — direto para a carreira de treinador. Ele já está no grupo de técnicos: a partir da próxima janela pode aparecer na lista de treinadores.`,
+        `${p.player} jogou sua última temporada e deixa as competições — direto para a carreira de treinador. Ele já está no grupo de técnicos e pode aparecer na lista de treinadores.`,
       retiredLeaves: (p: Record<string, string | number>) =>
         `${p.player} jogou sua última temporada e deixa a cena de vez. A vaga está aberta — o mercado é onde começa o próximo capítulo.`,
     },
@@ -566,6 +570,10 @@ export const CAREER_PT: CareerCopy = {
     freeAgentTag: "Agente livre",
     ask: "Pedida",
     whyPrice: "Por que esse preço",
+    // Os efeitos no salário mantêm a unidade: por split (a linha semanal os arredonda).
+    whyPriceWages: "Efeitos no salário · por split",
+    perSplit: (s: string) => `${s} / split`,
+    oneOff: (s: string) => `${s} pagamento único`,
     factor: {
       overall: "Rating",
       age: "Idade",
@@ -576,9 +584,8 @@ export const CAREER_PT: CareerCopy = {
     },
     lengthLabel: "Duração do contrato",
     seasons: (n: number) => (n === 1 ? "1 temporada" : `${n} temporadas`),
-    roleLabel: "Função",
     starter: "Titular",
-    sub: "Substituto",
+    sub: "Reserva",
     signCta: "Contratar",
     offerSent: "Negócio registrado — resolve no próximo avanço.",
     signed: (name: string) => `${name} assina com a org`,
@@ -594,17 +601,17 @@ export const CAREER_PT: CareerCopy = {
     blockbuster: "Bombástica",
     consequences: "Depois deste negócio",
     balanceAfter: (s: string) => `Saldo após: ${s}`,
-    wageAfter: (s: string) => `Folha após: ${s} / split`,
-    squadFullWarning: "Elenco cheio — dispense ou venda antes.",
-    startersFull: "Titulares completos — esta contratação entra como substituto.",
-    subTaken: "A vaga de substituto está ocupada — dispense ou venda antes.",
+    // ECO-02 (R46): uma venda com o Investidor em aberto — a parte dele na taxa.
+    saleBackerRepaid: (s: string) => `Reembolso ao Investidor: ${s}`,
     // ECO-03 (R47): a vaga é definida depois da contratação e nunca muda o preço.
     slotLabel: "Vaga no elenco",
     slotStarter: "Assume uma vaga aberta no trio titular.",
     slotReplaces: (name: string) => `Assume a vaga de ${name} no trio titular.`,
     slotReserve: "Entra como reserva. Promova-o na tela de Elenco quando quiser — o contrato não muda.",
     samePrice: "Mesmo preço de um titular: a vaga nunca muda o contrato.",
-    chooseLeaver: "Elenco completo (4) — escolha quem sai para abrir a vaga.",
+    chooseLeaver: (cap: number) => `Elenco completo (${cap}) — escolha quem sai para abrir a vaga.`,
+    // DEV-02 (R48): uma contratação cuja temporada atual tem de ser a última.
+    finalSeasonDeal: "Última temporada: ele se aposenta ao fim desta temporada — só contrato de 1 temporada.",
     leaverSeverance: (s: string) => `Rescisão ${s}`,
     payrollWeek: (now: string, after: string) => `Folha: ${now} → ${after} / semana`,
     coachEffects: "O que este coach faz",
@@ -718,7 +725,6 @@ export const CAREER_PT: CareerCopy = {
     bankRemaining: (s: string) => `Banco: ${s} a pagar`,
     bankWeekly: (s: string) => `Parcela de ${s} / semana`,
     bankPayEarly: "Antecipar o banco",
-    bankBlockedBacker: "Sem empréstimo bancário enquanto a dívida com o Investidor estiver aberta.",
     bankBlockedActive: "Um empréstimo por vez — quite este primeiro.",
     bankLockedRep: "O banco abre as portas quando a org tiver um pouco de reputação.",
     // ECO-02 (R46): o cronograma do banco, como a folha de segunda lança.
@@ -729,6 +735,9 @@ export const CAREER_PT: CareerCopy = {
       `Isso deixa as contas no vermelho. Abaixo de ${floor} numa segunda, o Investidor de emergência entra.`,
     payRiskEnd: (floor: string) =>
       `Isso deixa as contas no vermelho. Abaixo de ${floor} numa segunda, a carreira acaba — não há segundo resgate.`,
+    // Os nomes acessíveis dos ajustes de valor (pagamentos e o pedido ao banco).
+    amountDown: "Diminuir o valor",
+    amountUp: "Aumentar o valor",
     income: "Entradas",
     expenses: "Saídas",
     ledger: "Movimentações",

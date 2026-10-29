@@ -67,6 +67,7 @@ import { NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/comp
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
+import { SaleConsequences } from "@/components/career/SaleConsequences";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
@@ -284,11 +285,15 @@ export function HubScreen() {
 
   const region = save.identity.region;
   const today = save.clock.day;
+  // ECO-02 (R46): an ended career is closed — HQ keeps the season stop and
+  // drops every decision card and money warning (the actions are refused).
+  const ended = save.phase === "ended";
 
   // --- Needs you: every pending decision / stop, each its own card ----------
-  const eventNow =
-    save.activeEvent?.def ??
-    (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null);
+  const eventNow = ended
+    ? null
+    : (save.activeEvent?.def ??
+      (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null));
   // R40: the weekend phase of today's event (Saturday Swiss · the pause · Championship Sunday).
   // rc.29 (CAR-02): a Saturday the playback has not finished revealing still
   // reads as the Swiss stage — "Swiss stage complete" and the Sunday CTA would
@@ -305,15 +310,16 @@ export function HubScreen() {
         : eventRole === "swissDay"
           ? { label: C.event.swissStage, tone: "orange" as const, live: true }
           : undefined;
-  const outBid =
-    save.pendingOffers.find((o) => o.status === "pending" && o.direction === "out") ?? null;
+  const outBid = ended
+    ? null
+    : (save.pendingOffers.find((o) => o.status === "pending" && o.direction === "out") ?? null);
   const sponsorOffers =
-    save.sponsorOffers && save.sponsorOffers.length > 0 ? save.sponsorOffers : null;
-  const phaseStop = save.phase === "seasonReview" || save.phase === "ended";
-  const invite = !save.pendingEventDef && save.unofficialOffer ? save.unofficialOffer : null;
-  const insert = save.pendingInsert && save.pendingInsert.day === today ? save.pendingInsert : null;
+    !ended && save.sponsorOffers && save.sponsorOffers.length > 0 ? save.sponsorOffers : null;
+  const phaseStop = save.phase === "seasonReview" || ended;
+  const invite = !ended && !save.pendingEventDef && save.unofficialOffer ? save.unofficialOffer : null;
+  const insert = !ended && save.pendingInsert && save.pendingInsert.day === today ? save.pendingInsert : null;
   const expiringContracts =
-    weekOfDay(today) >= 23
+    !ended && weekOfDay(today) >= 23
       ? save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex).length
       : 0;
   const statement = weeklyStatement({
@@ -324,9 +330,11 @@ export function HubScreen() {
     gear: save.finances.gear,
     bankLoan: save.finances.bankLoan ?? null,
   });
-  const wages = statement.payroll + statement.coach;
-  const runway = runwayWeeks(save.finances.balance, statement.net);
+  // No runway, Backer or instalment notices once the books are closed.
+  const runway = ended ? null : runwayWeeks(save.finances.balance, statement.net);
   const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
+  const backerOwed = ended ? null : save.finances.loan;
+  const bankLoan = ended ? null : (save.finances.bankLoan ?? null);
   const nextPayday = nextPaydayFor(save.clock);
   const needsCount =
     (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
@@ -358,9 +366,6 @@ export function HubScreen() {
     return typeof v === "string" ? v : key;
   };
 
-  const confirmSoldSalary = confirmBid
-    ? (save.squad.find((p) => p.id === confirmBid.playerId)?.salaryPerSplit ?? 0)
-    : 0;
 
 
   return (
@@ -374,7 +379,7 @@ export function HubScreen() {
           <DayCard save={save} C={C} insertId={insert?.id ?? null} onInsert={resolveInsert} />
 
           {/* 2 — NEEDS YOU (decisions and stops, one card each) */}
-          {needsCount > 0 || expiringContracts > 0 || cashTight || save.finances.loan ? (
+          {needsCount > 0 || expiringContracts > 0 || cashTight || backerOwed ? (
             <div className="space-y-3">
               <p className="kicker text-[10px] text-orange-bright">{C.hub.needsYou}</p>
               {phaseStop ? (
@@ -449,15 +454,16 @@ export function HubScreen() {
                   </Panel>
                 </AppLink>
               ) : null}
-              {save.finances.loan ? (
+              {backerOwed ? (
                 <AppLink href="/career/finances" className="block">
                   <Panel className="rise-in border-orange/30 p-3.5 text-sm text-sub transition-colors hover:border-orange/60">
-                    {C.hub.backerOpen(formatMoney(save.finances.loan.remaining))}
+                    {C.hub.backerOpen(formatMoney(backerOwed.remaining))}
                   </Panel>
                 </AppLink>
               ) : null}
             </div>
-          ) : (
+          ) : insert ? null : (
+            // rc.31: the day card's inline insert IS today's decision — never say "nothing needs one" under it.
             <p className="px-1 text-xs text-faint">{C.hub.nothingNeeded}</p>
           )}
 
@@ -555,7 +561,7 @@ export function HubScreen() {
             >
               <div className="mb-1 flex items-center justify-between gap-2">
                 <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
-                {save.finances.loan ? <Badge tone="orange">{C.finances.backer}</Badge> : save.finances.bankLoan ? <Badge tone="blue">{C.finances.bankTitle}</Badge> : null}
+                {backerOwed ? <Badge tone="orange">{C.finances.backer}</Badge> : bankLoan ? <Badge tone="blue">{C.finances.bankTitle}</Badge> : null}
               </div>
               <p className={cx("display text-2xl font-bold leading-none", save.finances.balance < 0 ? "text-bad" : "text-ink")}>
                 {formatMoney(save.finances.balance, { compact: true })}
@@ -565,16 +571,16 @@ export function HubScreen() {
                 <span className="text-faint">/ {C.hub.week(1).toLowerCase().replace(/\s*1$/, "")}</span>
                 {runway !== null ? <span className="text-faint"> · {C.finances.runway(runway)}</span> : null}
               </p>
-              {/* ECO-02 (R46): the debts as Finances and the ledger have them. */}
-              {save.finances.loan ? (
+              {/* ECO-02 (R46): the debts as Finances and the ledger have them (not once the career ended). */}
+              {backerOwed ? (
                 <p className="mt-1 text-xs font-semibold text-orange-bright">
-                  {C.finances.backerRemaining(formatMoney(save.finances.loan.remaining))}
+                  {C.finances.backerRemaining(formatMoney(backerOwed.remaining))}
                 </p>
               ) : null}
-              {save.finances.bankLoan ? (
+              {bankLoan ? (
                 <p className="mt-1 text-xs text-sub">
                   {C.finances.bankNext(
-                    formatMoney(Math.min(save.finances.bankLoan.remaining, save.finances.bankLoan.weeklyPayment)),
+                    formatMoney(Math.min(bankLoan.remaining, bankLoan.weeklyPayment)),
                     formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day)),
                   )}
                 </p>
@@ -688,11 +694,8 @@ export function HubScreen() {
               {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")} —{" "}
               {confirmBid.playerName}
             </p>
-            <p className="kicker text-[10px]">{C.market.consequences}</p>
-            <p className="font-semibold text-good">
-              {C.market.balanceAfter(formatMoney(save.finances.balance + confirmBid.fee))}
-            </p>
-            <p>{C.market.wageAfter(formatMoney(wages - confirmSoldSalary))}</p>
+            {/* ECO-02 (R46) / ECO-03 (R47): the Market's own sale block — the Backer's share and the weekly bill. */}
+            <SaleConsequences save={save} offer={confirmBid} />
           </div>
         ) : null}
       </Modal>

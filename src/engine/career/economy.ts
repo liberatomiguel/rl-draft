@@ -569,26 +569,45 @@ export function applyTransferIncome(
     amount,
     refName: ctx.refName,
   });
-  let garnished = 0;
-  if (next.loan && amount > 0) {
-    garnished = Math.min(
-      next.loan.remaining,
-      quantize(CAREER_LOAN.saleGarnishRate * amount),
-    );
-    if (garnished > 0) {
-      next = pushLedger(next, {
-        seasonIndex: ctx.seasonIndex,
-        week: ctx.week,
-        day: ctx.day,
-        kind: "loanGarnish",
-        amount: -garnished,
-        refName: ctx.refName,
-      });
-      const remaining = next.loan!.remaining - garnished;
-      next = { ...next, loan: remaining > 0 ? { remaining } : null };
-    }
+  const garnished = saleGarnishFor(next.loan, amount);
+  if (garnished > 0) {
+    next = pushLedger(next, {
+      seasonIndex: ctx.seasonIndex,
+      week: ctx.week,
+      day: ctx.day,
+      kind: "loanGarnish",
+      amount: -garnished,
+      refName: ctx.refName,
+    });
+    const remaining = next.loan!.remaining - garnished;
+    next = { ...next, loan: remaining > 0 ? { remaining } : null };
   }
   return { fin: next, garnished };
+}
+
+/**
+ * ECO-02 (R46): the Backer's share of a sale — saleGarnishRate of the fee,
+ * quantized, never more than the debt; 0 when nothing is owed. The ONE rule
+ * applyTransferIncome books and salePreviewFor quotes.
+ */
+export function saleGarnishFor(loan: { remaining: number } | null | undefined, fee: number): number {
+  if (!loan || fee <= 0) return 0;
+  return Math.min(loan.remaining, quantize(CAREER_LOAN.saleGarnishRate * fee));
+}
+
+/**
+ * ECO-02 (R46): what accepting a sale books — the fee in, the Backer's share
+ * out (applyTransferIncome's own garnish), the net to the balance and the
+ * balance after. The sale confirmations quote this, so the screen says what
+ * the ledger books.
+ */
+export function salePreviewFor(
+  fin: Pick<FinanceState, "balance" | "loan">,
+  fee: number,
+): { garnished: number; net: number; balanceAfter: number } {
+  const garnished = saleGarnishFor(fin.loan, fee);
+  const net = fee - garnished;
+  return { garnished, net, balanceAfter: fin.balance + net };
 }
 
 /**

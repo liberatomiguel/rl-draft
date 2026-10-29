@@ -15,11 +15,13 @@ import {
   debtPaymentFor,
   nextPaydayFor,
   quantize,
+  salePreviewFor,
   weeklyPayroll,
   weeklyStatement,
 } from "@/engine/career/economy";
-import type { CareerSave } from "@/engine/career/types";
+import type { CareerSave, TransferOffer } from "@/engine/career/types";
 import {
+  acceptBidFlow,
   advanceDayFlow,
   continueInfiniteFlow,
   createCareerSave,
@@ -248,6 +250,52 @@ describe("ECO-02 — insolvency is final, whatever ending came before", () => {
       expect(continueInfiniteFlow(broke).phase).toBe("ended");
       // The saves picker archives it.
       expect(slotMetaFor([broke])[0]?.ended).toBe(true);
+    });
+  }
+});
+
+describe("ECO-02 — a sale's preview is what the ledger books", () => {
+  /** A $20k bid for the first starter, with `owed` on the Backer (0 = none). */
+  function sale(owed: number): { save: CareerSave; offer: TransferOffer } {
+    const save = makeSave(46_404);
+    if (owed > 0) {
+      save.finances.loan = { remaining: owed };
+      save.finances.loanUsed = true;
+    }
+    const offer: TransferOffer = {
+      id: "bid:preview",
+      direction: "out",
+      playerId: save.starterIds[0],
+      playerName: "Seller",
+      fee: 20_000,
+      salaryPerSplit: 0,
+      lengthSeasons: 2,
+      role: "starter",
+      otherRef: Object.values(save.world.orgs).find((o) => o.region === "SAM")!.ref,
+      status: "pending",
+      resolveSeason: save.clock.seasonIndex,
+      resolveDay: save.clock.day + 7,
+      factors: [],
+    };
+    save.pendingOffers = [offer];
+    return { save, offer };
+  }
+
+  // Nothing owed; a debt the sale clears (half the fee covers it); a debt it only cuts.
+  for (const owed of [0, 9_612, 30_000]) {
+    it(`Backer owed $${owed}: the balance after, the Backer's share and the debt left`, () => {
+      const { save, offer } = sale(owed);
+      const preview = salePreviewFor(save.finances, offer.fee);
+      const res = acceptBidFlow(save, offer.id);
+      expect(res.error).toBeUndefined();
+      const booked = res.save.finances.ledger.slice(save.finances.ledger.length);
+      expect(booked.reduce((sum, l) => sum + l.amount, 0)).toBe(preview.net);
+      expect(res.save.finances.balance).toBe(preview.balanceAfter);
+      const garnish = booked.find((l) => l.kind === "loanGarnish");
+      expect(garnish ? -garnish.amount : 0).toBe(preview.garnished);
+      expect(res.save.finances.loan?.remaining ?? 0).toBe(Math.max(0, owed - preview.garnished));
+      if (owed === 0) expect(preview).toEqual({ garnished: 0, net: offer.fee, balanceAfter: save.finances.balance + offer.fee });
+      else expect(preview.garnished).toBe(Math.min(owed, quantize(CAREER_LOAN.saleGarnishRate * offer.fee)));
     });
   }
 });

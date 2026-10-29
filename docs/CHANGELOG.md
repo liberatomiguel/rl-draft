@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.30**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.31**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -177,6 +177,134 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.31 (Etapa 2b part 1: the money's integrity, the sub contract, longevity, the race tables, the economy contract · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R46–R49)
+
+Built as three parallel fronts (A: ECO-02/03/03b + DEV-02, B: the ECO-01 contract, C: RTW-01),
+merged, then an independent review and a browser E2E pass (desktop + mobile, EN + PT).
+
+**Career**
+- **Two race tables, both viewable (RTW-01, R49; UX-01d).** The per-split **Major table** (that
+  split's regional points) and the season **Worlds table** (regional + Major points) are tabs on
+  Standings and a Major/Worlds toggle on HQ: position, points, the cut at the region's slots, the
+  user's status, the events still to play, local sides marked. Both read the field selection's
+  own order (`raceTable.ts`), so the line on screen is the line that picks the field. The Major
+  field grid sits under the Major table once it is announced.
+- **The offer sheet sets the slot after the price (ECO-03, R47).** It says where the player goes
+  (an open seat or the sub slot), that the slot never changes the contract, and the weekly wage
+  bill before and after. With a full squad (4) it asks who leaves, with each player's severance:
+  the leaver goes in the same deal and the new player takes his seat. Renewals show the payroll
+  projection.
+- **Finances quote what the ledger books (ECO-02, R46).** The bank panel shows its real refusal
+  reason, the next instalment (amount and Monday) and the instalments left; HQ names the Backer
+  debt and the next bank payment; a pay-down that leaves the books in the red warns first.
+- **A retiring player of yours moves into coaching or leaves the scene (DEV-02, R48)**, in the news
+  and a mail; real ex-pros who coach join the coach market.
+
+**Docs and instruments**
+- **The economy contract (ECO-01), a proposal for Miguel:** `docs/ECONOMY-CONTRACT.md`. Six
+  principles (newcomer protection, one season money index, stars a real decision late, every
+  path viable, no snowball, no regional trap), relative acceptance bands per difficulty with
+  today's values, eight proposed mechanisms with their `balance.ts` keys and ranges (not
+  applied), ten decisions (Gate-1 question 2 included) and the order of work. No number moved.
+- **The money probe** (`src/store/careerEconomy.probe.test.ts`, opt-in `CAREER_ECON=1`): pure
+  curves P0–P8 and the harness careers read through a passthrough tap on the real flow (C1–C9);
+  `ECON_OUT` / `ECON_IN` dump and re-render. **The local-sides sweep** (`RTW_LOCALS=1`,
+  `careerRace.test.ts`): local sides vs real orgs in the Major/Worlds fields.
+
+### Changed — rc.31
+- **No "signed as a sub" discount (ECO-03, R47).** A player signs and renews at his normal value;
+  the lineup slot is set afterwards and never changes the contract (`CAREER_SALARY.subRoleFactor`
+  removed). Old contracts keep their wage until renewal. The squad cap is explicit (4,
+  `CAREER_CONTRACT.squadCap`), and only a release frees a seat in a full squad.
+- **The career's first transfer window is bid-free (ECO-03b, decided 29/10):** no incoming bid,
+  scripted Blockbusters included, in weeks 1–2 of season 1 (`CAREER_TRANSFER.firstWindowBidFree`,
+  `market.userBidsBlocked`); later windows as before.
+- **Longevity (DEV-02, decided 29/10, R48):** signable and playable from 13; players retire between
+  24 and 29, never before their peak, announced a season ahead (stars linger inside the window);
+  a real player keeps every season of his real history. 60 % of retiring real ex-pros become
+  coaches, and only they appear in the coach market. The world holds about 15 % more players.
+- **Local sides score (RTW-01, decided 29/10, R49; reverses R23/R30's "never in standings"):** they
+  bank regional points, race for the direct 8 and can earn Major and Worlds slots (their Major
+  points bank at home). One rating per side per season: the user's region is rated around the
+  user's squad as it stood on the season's first regional Monday, the other regions around their
+  org median; a Major or Worlds never reads the user's squad. When the user's region overflows its
+  qualifier a local side drops, never an org. The season review and its grade rank in the
+  selection's order, local sides included. In the sweep they took 0.2 % of Major slots and
+  0.04 % of Worlds slots; real orgs keep ~84 %.
+- The "stars linger" bars are named (`CAREER_AGE.retirementStarOverallSquad` 85,
+  `retirementStarOverallWorld` 90: today's values, so a Draft rarity retune can no longer move
+  the career's retirements).
+
+### Balance — rc.31
+- `CAREER_AGE`: `minCompetitiveAge` 13, `retireMinAge` 24, `retireMaxAge` 29,
+  `retirementByAge` {24: 10 %, 25: 20 %, 26: 30 %, 27: 45 %, 28: 60 %, 29: 100 %} (× 0.5 for
+  stars, inside the window only); `retireCoachConvertRate` 0.6 (declared since v0.2, now read).
+  No economy number moved: ECO-01 waits for Miguel's approval.
+
+### Fixed — rc.31
+- **"Pay it all" left an unpayable $2–48 Backer stub** that kept the bank, fee transfers and gear
+  locked until a prize or a sale cleared it. Root cause: the pay-down quantized the payment down
+  to $50 while Backer debts (the grant × 1.2) and bank debts are off the quantum.
+  `economy.debtPaymentFor` settles the exact remainder.
+- **An insolvency after a Worlds title or in the endless era could be continued into a new
+  season** (it broke again on its first Monday; the harness logged those careers as
+  `timeline_complete`, so the rc.30 baseline undercounts insolvency: 64 %, not 59 %). Root cause:
+  `endCareer` kept the earlier ending's reason, the season screen offered "continue" for every
+  ending but retirement, and the rollover had no guard.
+- **A player who retired from your squad could be re-signed by his real org** (GarrettG back at
+  NRG). Root cause: the user's retirees never entered the world's retired list.
+- **Real players could retire before their last dataset season** (116 cases over 4 seeds). Root
+  cause: an off-by-one in the anchor guard (`>` for `>=`).
+- **World players retired after a season at 21–23, or played past 29.** Root cause: the world
+  rolled on the new season's age (the 2022 → 2024 calendar gap adds two years) and the table had
+  no cap.
+- **Accepting a bid for a player who had already left reported success and moved nothing.** Root
+  cause: `resolveAcceptedBid` returned the save unchanged without an error.
+- **Latent until R49:** a local side's Major points would have banked in the user's region, and
+  a Major/Worlds field holding a local side would have thrown. Root causes: `regionOfRef` fell back
+  to the user's region for any ref that is not an org; every non-user field ref went through
+  `orgTeamFor`.
+- **The Standings cut line could disagree with the real field on a points tie.** Root cause: the
+  table broke ties by name, the selection by the committee float.
+- **Every local-side sheet showed the user's region and a rating built from the user's squad**,
+  and the Worlds field grid could print a raw `local:` ref. Root causes: `OrgSheet` passed the
+  user's identity region and preview rating; names read `world.orgs[ref]?.name ?? ref`.
+
+**From the independent review of the integration (rc.31 part 4)**
+- **A player signed at 29 (or at 28 into the 2022 → 2024 gap) played a season past the cap.** Root
+  cause: a signing never announced the final season, and the squad only announces at the next
+  rollover. He now signs for his final season only (a one-season deal, said on the offer sheet).
+- **The local scene's anchor could be lowered by benching a starter on the eve of week 4, or
+  raised by an armed bootcamp.** Root cause: the freeze read the fielded trio's rating. It now
+  freezes the squad's best trio, without the bootcamp edge (`bestTrioRatingFor`).
+- **Sale confirmations promised the whole fee while the Backer was owed.** The ledger sends half
+  of it to the Backer. Root cause: both screens added the fee to the balance. They now quote
+  `salePreviewFor` (the net, and "Backer repaid $X"), the same rule `applyTransferIncome` books.
+- **HQ's sale confirmation mixed a weekly wage bill with a per-split salary** ("Payroll after:
+  −$14,390 / split"). Root cause: `wageAfter(wages − salaryPerSplit)`. It now shows the Market's
+  weekly wage-bill line.
+- **The offer sheet hid the severance exactly when the severance made the deal unaffordable.**
+  Root cause: its numbers came from the signing plan, which is null on an error.
+- **An ended career could still sign, sell, renew and buy on a window week.** Root cause: only the
+  debt flows checked the ending. One guard in the store now refuses every action that changes an
+  ended career (retiring and the read marks pass; a Worlds title or the Final Whistle is not an
+  ended career, so "Defend the title" and "Endless era" still go through). HQ drops its money
+  warnings and action cards once the career has ended.
+- **Accepting a bid left the other bids for that player pending** until tapped ("no longer
+  available") or expired. Root cause: only the accepted bid was dropped.
+- **Before any points, the race tables marked the alphabetical top as "Above the cut-line", and a
+  tie on points read "0 pts below the line" in red.** They now read "No points yet" and "Level
+  with the line", in a neutral tone.
+- **The loans panel collapsed under the cursor right after "Pay it all"** (since v2.0 alpha). Root
+  cause: its open state was bound to "a debt exists". It now opens with a debt and then follows
+  the user.
+- **"Why this price" listed per-split amounts next to a weekly wage, without a unit** (since
+  v0.3). They are now labelled "/ split", and the under-contract fee "one-off".
+- Copy and accessibility: EN says "sub" everywhere (the offer sheet said "reserve"); the leaver
+  prompt reads the squad cap; the coaching mail no longer promises "the next window"; six dead
+  keys removed; the − / + steppers have accessible names; the race tabs carry `aria-controls` and
+  a `tabpanel`.
 
 ### Fixed — rc.30 (Etapa 2a, package A: closing the rc.29 integration · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R45)
 

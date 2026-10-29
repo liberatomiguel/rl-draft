@@ -35,7 +35,8 @@ import {
 import { majorFieldFor, worldsFieldFor } from "@/engine/career/careerResults";
 import { isLocalRef, localRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
 import { sideOfRef } from "@/engine/career/raceTable";
-import type { CareerDifficulty, CareerSave, CompactEventResult } from "@/engine/career/types";
+import { isCompetitiveAge, playerViewById } from "@/engine/career/development";
+import type { CareerDifficulty, CareerPlayerView, CareerSave, CompactEventResult } from "@/engine/career/types";
 import { fieldForEvent, localTeamTarget, regionMedianRating, simulateAiEvent } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
 import {
@@ -43,12 +44,15 @@ import {
   createCareerSave,
   eventDayPhaseOf,
   finishEvent,
+  localAnchorRatingFor,
   migrateSaveToV5,
   nameOfRef,
   regionOfRef,
   renewPlayerFlow,
   resolveInsertFlow,
   rolloverToNextSeason,
+  setStartersFlow,
+  signPlayerFlow,
   simEventToEnd,
   startEvent,
   syncSquadRoles,
@@ -275,7 +279,8 @@ describe("RTW-01 (R49): seeding, the anchor, a Major and the race tables", { tim
   it("the anchor freezes on the first regional Monday and holds: a better squad never moves a local side", () => {
     let save = playUntil(freshCareer(), (s) => s.clock.day >= firstDayOfWeek(FIRST_REG) - 1);
     expect(save.competition.localAnchor ?? null).toBeNull();
-    const expected = userSeedRatingFor(advanceDayFlow(structuredClone(save)));
+    // The squad's best trio as it stands on the eve (nothing trains on a weekend).
+    const expected = localAnchorRatingFor(save);
     save = advanceDayFlow(save);
     expect(save.competition.localAnchor).toEqual({ region: "SAM", rating: expected });
     const ref = localRef("SAM", 0, 5);
@@ -288,6 +293,38 @@ describe("RTW-01 (R49): seeding, the anchor, a Major and the race tables", { tim
     // Another region's sides sit around its stored median.
     const eu = localRef("EU", 0, 1);
     expect(localSideRatingOf(save, eu)).toBe(localTeamTarget(eu, regionMedianRating(save.world, "EU"), save.careerSeed));
+  });
+
+  it("the anchor is the squad's best trio: a weaker lineup or an armed bootcamp on the eve never moves it", () => {
+    const base = freshCareer();
+    base.finances.balance = 1_000_000;
+    // A weak sub, signed in the preseason window.
+    const ctx = { careerSeed: base.careerSeed, seasonIndex: 0, world: base.world };
+    const weakest = base.world.freeAgentIds
+      .map((id) => playerViewById(id, ctx))
+      .filter((v): v is CareerPlayerView => v !== null && isCompetitiveAge(v.age))
+      .sort((a, b) => a.overall - b.overall || a.id.localeCompare(b.id))[0];
+    const signed = signPlayerFlow(base, weakest.id, { lengthSeasons: 1 });
+    expect(signed.error).toBeUndefined();
+    const eve = playUntil(signed.save, (s) => s.clock.day >= firstDayOfWeek(FIRST_REG) - 1);
+    expect(eve.squad).toHaveLength(4);
+    const best = eve.squad.filter((p) => eve.starterIds.includes(p.id)).sort((a, b) => b.overall - a.overall)[0];
+    const swapped = setStartersFlow(
+      eve,
+      eve.starterIds.map((id) => (id === best.id ? weakest.id : id)) as [string, string, string],
+    );
+    expect(swapped.error).toBeUndefined();
+    const armed = structuredClone(eve);
+    armed.finances.bootcampSharp = 1;
+    // Both really move the fielded rating (the R45 seeding number)…
+    expect(userSeedRatingFor(swapped.save)).toBeLessThan(userSeedRatingFor(eve));
+    expect(userSeedRatingFor(armed)).toBeGreaterThan(userSeedRatingFor(eve));
+    // …and neither moves the anchor frozen that Monday.
+    const anchorOf = (s: CareerSave) => advanceDayFlow(s).competition.localAnchor;
+    const honest = anchorOf(eve);
+    expect(honest).toEqual({ region: "SAM", rating: localAnchorRatingFor(eve) });
+    expect(anchorOf(swapped.save)).toEqual(honest);
+    expect(anchorOf(armed)).toEqual(honest);
   });
 
   it("a Major with local sides plays end to end through the real flow, deterministically, and banks at home", () => {

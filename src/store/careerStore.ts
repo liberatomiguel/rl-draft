@@ -261,9 +261,25 @@ export const useCareerStore = create<CareerStoreState>()(
         return { memory: { unlocked, worldsWonOn }, toasts };
       };
 
-      const withSave = (fn: (save: CareerSave) => CareerSave): void => {
+      /**
+       * ECO-02 (R46): an ended career is closed — the ONE guard every action
+       * that changes the career passes (money, roster, staff, events, the
+       * clock): on an ended save it is refused with "blocked" and the save is
+       * left untouched. Only what the end still needs opts out
+       * (`allowEnded`): retiring (the legacy screen) and the viewing state
+       * (read marks, seen flags).
+       */
+      const refuseEnded = (): boolean => {
+        const { slots, activeSlot } = get();
+        if (activeSlot === null || slots[activeSlot]?.phase !== "ended") return false;
+        set({ lastError: "blocked" });
+        return true;
+      };
+
+      const withSave = (fn: (save: CareerSave) => CareerSave, opts?: { allowEnded?: boolean }): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
+        if (!opts?.allowEnded && refuseEnded()) return;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const prevWorlds = slots[activeSlot]!.stats.titlesWorlds ?? 0;
         const next = fn(slots[activeSlot]!);
@@ -295,6 +311,7 @@ export const useCareerStore = create<CareerStoreState>()(
       const withResult = (fn: (save: CareerSave) => { save: CareerSave; error?: string }): void => {
         const { slots, activeSlot } = get();
         if (activeSlot === null || !slots[activeSlot]) return;
+        if (refuseEnded()) return;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const { save, error } = fn(slots[activeSlot]!);
         const changed = save !== slots[activeSlot];
@@ -403,38 +420,54 @@ export const useCareerStore = create<CareerStoreState>()(
 
         continueToNextSeason: () => withSave(rolloverToNextSeason),
         continueInfinite: () => withSave(continueInfiniteFlow),
+        // ECO-02 (R46): the end flow and the viewing state pass the closed-career guard.
         retireCareer: () =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            endCareer(next, "retired");
-            return next;
-          }),
+          withSave(
+            (s) => {
+              const next = structuredClone(s);
+              endCareer(next, "retired");
+              return next;
+            },
+            { allowEnded: true },
+          ),
 
         markFlag: (flag) =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            next.flags[flag] = true;
-            return next;
-          }),
+          withSave(
+            (s) => {
+              const next = structuredClone(s);
+              next.flags[flag] = true;
+              return next;
+            },
+            { allowEnded: true },
+          ),
         markNewsRead: () =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            for (const n of next.news) n.read = true;
-            return next;
-          }),
+          withSave(
+            (s) => {
+              const next = structuredClone(s);
+              for (const n of next.news) n.read = true;
+              return next;
+            },
+            { allowEnded: true },
+          ),
         markMailRead: (mailId) =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            const item = next.mail.find((m) => m.id === mailId);
-            if (item) item.read = true;
-            return next;
-          }),
+          withSave(
+            (s) => {
+              const next = structuredClone(s);
+              const item = next.mail.find((m) => m.id === mailId);
+              if (item) item.read = true;
+              return next;
+            },
+            { allowEnded: true },
+          ),
         markAllMailRead: () =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            for (const m of next.mail) m.read = true;
-            return next;
-          }),
+          withSave(
+            (s) => {
+              const next = structuredClone(s);
+              for (const m of next.mail) m.read = true;
+              return next;
+            },
+            { allowEnded: true },
+          ),
         clearError: () => set({ lastError: null }),
       };
     },

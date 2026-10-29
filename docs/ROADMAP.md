@@ -43,7 +43,7 @@
 | 1 | M1 rules | Swiss, weekend calendar, match timeline, lint | ✅ rc.27–28 |
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
-| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a in rc.30; 2b next |
+| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a in rc.30; 2b part 1 in rc.31 |
 | 3 | M3 | The new RTW loop (contract first) | |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
@@ -100,6 +100,27 @@ local amateur sides repeated names; one album test failed intermittently.
   (`CAREER-BASELINE-rc30.md`). OBS-01: the event contract, a proposal
   (`ANALYTICS-EVENTS-2.0.md`).
 
+**Etapa 2b, rc.31 (part 1: the decided 29/10 items and the money's
+integrity, built as three parallel fronts, then an independent review):**
+- ECO-02 (R46): the Backer and the bank keep their rules and the screens
+  quote what the ledger books. "Pay it all" settles the exact remainder (the
+  $50 quantum left an unpayable stub that kept the Backer lock); an
+  insolvency is final (it could be continued after a Worlds title or in the
+  endless era); the bank panel shows its real refusal and its schedule.
+- ECO-03 + 03b (R47): no "signed as a sub" discount; the slot is set after
+  the price; a full squad (4) names who leaves, in the same deal; a reserve
+  renews like a starter, with the payroll projection; no bids in the
+  career's first window.
+- DEV-02 (R48): 13 to play; retirement between 24 and 29, never before the
+  peak, real history kept; 60 % of retiring real ex-pros coach; the user's
+  retirees leave the world for good.
+- RTW-01 (R49): local sides score, race for the direct 8 and can take Major
+  and Worlds slots (0.2 % / 0.04 % of the slots in the sweep); one rating per
+  side per season; the split Major table and the season Worlds table on
+  Standings and the HQ toggle (UX-01d); no org arrives before its era.
+- ECO-01: the economy contract, written (`ECONOMY-CONTRACT.md`), with its
+  probe (`CAREER_ECON=1`). A proposal: no number moved.
+
 ## Deferred (owner Etapa)
 
 - `/pt` first paint shows English chrome and `lang="en"` (DRAFT-11) → Etapa 5, WEB-01.
@@ -155,21 +176,22 @@ audit, the dataset check and the doc pass are still open):
 **2b, fix** (order: ECO-02/03 and DEV-01/02 are P0; the rest follow the
 same seeds; never recalibrate the economy without the growth that the
 Etapa 3 packages and coaches will add):
-- ECO-02: bank loan and bailout: granted once, the debt and payments
+- ✅ ECO-02 (rc.31, R46): bank loan and bailout: granted once, the debt and payments
   consistent, no softlock, the UI shows why it is refused and when the next
   payment is due. The bailout is the Emergency Backer (`weeklyPayroll` floor
   check, `CAREER_LOAN`, `payDebtFlow`); the bank is `bankLoanRefusal` /
   `takeBankLoanFlow` (`CAREER_BANK`). Reproduce the problem in the real
   flow first (the harness ends most careers through it, baseline §1).
 - ECO-03a, stars: fee, wage, contract length, reputation and opportunity
-  cost, priced without leaning on the sub discount.
-- ECO-03b, bids (**decided 29/10**): no incoming bids for the user's players
+  cost, priced without leaning on the sub discount (rc.31 removed the
+  discount; the pricing itself is the ECO-01 contract's M6).
+- ✅ ECO-03b, bids (**decided 29/10**; rc.31, R47): no incoming bids for the user's players
   during the career's **first transfer window** (season 1, weeks 1–2; the
   code calls it the preseason window, `windowIdx` 0 of season 0), the
   scripted Blockbuster bids of W1-2 included. From the next window on, bids
   arrive as today (`incomingBidForDay`, windows only). Keep the block
   explicit in the code.
-- ECO-03, the sub contract (P0, still open after the old "sub-slot fix"):
+- ✅ ECO-03, the sub contract (P0; rc.31, R47):
   the lineup slot is separate from the price of the job. No "signed as a sub"
   wage discount (`CAREER_SALARY.subRoleFactor` 0.4 in `computeSalaryAsk`,
   reached through `askPackageFor`): a player signs at his normal value, then
@@ -182,7 +204,8 @@ Etapa 3 packages and coaches will add):
   and without a sub; promote; sign with three starters; renew a reserve;
   swap the lineup; sign and promote the same day; refresh mid-negotiation;
   a failed transfer.
-- ECO-01: the whole money curve by era, season and event tier: wages,
+- ECO-01 (the contract is written, rc.31: `ECONOMY-CONTRACT.md`; it waits
+  on Miguel's ten decisions): the whole money curve by era, season and event tier: wages,
   fines, fees, signing bonuses, prizes and income, in consistent units
   (week, split, season). Today, per season: asks ×1.08
   (`CAREER_SALARY.inflationPerSeason`), prizes ×1.12 and new sponsor deals
@@ -241,7 +264,7 @@ Etapa 3 packages and coaches will add):
     Expectation rolled once per player and career; no XP inflation.
   - Migration: IDs, contracts and progress kept; no instant overall jump to
     "compensate" the old curve; bought scouting stays coherent.
-- DEV-02: signing, registering, fielding, substitution and rollover
+- ✅ DEV-02 (rc.31, R48): signing, registering, fielding, substitution and rollover
   aligned with the new longevity; no retirement before the peak; youth
   never depends on the sub exploit. **Decided 29/10:** the minimum
   competitive age is **13** (signable and playable from 13, as in the RLCS
@@ -264,7 +287,7 @@ Etapa 3 packages and coaches will add):
   measure P(win Worlds | won a Major) by squad strength, region, difficulty
   and career stage, and check the field takes the best qualifiers. Never a
   forced loss or a secret penalty for winning a Major.
-- RTW-01: orgs enter by era (prove none arrives early). **Decided 29/10:**
+- ✅ RTW-01 (rc.31, R49): orgs enter by era (prove none arrives early). **Decided 29/10:**
   local sides **score in the regional and can earn a Major slot** (reverses
   R23/R30: `applyResultToStandings` stops dropping their points, and
   `majorFieldFor` / the Major and Worlds fields resolve them). **Two
@@ -471,37 +494,59 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**What to play on rc.30:** the career with a save from before rc.29 (the
-one-time repair and its news line), a regional week near the direct-8 line
-(Monday decides; Saturday and Sunday follow), a Major weekend with a
-release attempted on Saturday night (locked), the Daily and a run's results
-in PT, and the playtest build's results XP count-up.
+**What to play on rc.31** (desktop and mobile, EN and PT; rc.30's list
+still holds if it was not played):
+- Market, week 1: sign a free agent with three starters (no Starter/Sub
+  choice, the same price as a starter), promote him on Squad (his wage does
+  not move), then sign a fifth: "Squad full (4)", pick who leaves, read the
+  severance and the weekly wage bill line.
+- Finances: a bank loan (the next instalment and the count), then "Pay the
+  bank early → Pay it all" (exactly $0). A Backer rescue (EU or NA on Normal,
+  hands-off, usually by season 1): HQ names the debt, the bank says why it
+  will not lend, "Pay it all" reopens it. A second breach: only Retire, and
+  the saves list says Archived.
+- Weeks 1–2 of season 1: no bid for your players; from week 11 they come.
+- Week 4: after Sunday's regional, Standings → Major table / Worlds table, a
+  region with "Local" sides (tap one: its own region, OVR, Season Points),
+  the HQ Major/Worlds toggle; the week-10 Major's field grid.
+- Seasons 2–3: final-season badges only from 24; the retirement news says
+  coach or "for good"; a 13-year-old free agent signs.
 
-**Decided 29/10** (written into the 2b items above): DEV-02 (age 13,
-retirement 24–29, retirees may become coaches), RTW-01 (local sides score
-and can earn a Major slot; a split Major table and a season Worlds table),
-ECO-03b (no bids in the career's first window), OBS-01 (no staging data;
-build before launch), and Miguel's economy input (ECO-01).
+**Decided 29/10** (built in rc.31, R46–R49): DEV-02, RTW-01, ECO-03b;
+OBS-01 (no staging data; build before launch) is still to build.
 
-**Still to approve for Etapa 2b:**
-1. The economy contract (ECO-01/02/03), once written.
-2. The event catalogue (`ANALYTICS-EVENTS-2.0.md`; `BALANCE_VERSION` as a
+**Still to approve for Etapa 2b** (the next numbers wait on these):
+1. The economy contract: `ECONOMY-CONTRACT.md` §6, ten decisions with a
+   recommendation each (the season money index, renewing your own players,
+   the newcomer's income, what ends a career, stars and the snowball, the
+   prize tables = Gate-1 question 2, the "top budgets" anchor, selling,
+   guaranteed income, the bands). Approving them starts its packages E1–E4.
+2. rc.31's shipped defaults, keep or change: the retirement table
+   (24–29: 10/20/30/45/60/100 %, ×0.5 for stars; median last season ≈26);
+   60 % of real ex-pros coach, fictional retirees never; debt pay-downs may
+   use the overdraft to the floor, with a warning; no bank loan while the
+   Backer is owed (R21; the contract's M4 revisits it); only a release frees
+   a seat in a full squad (a sale list is the contract's M8); local sides may
+   hold direct seats and Major/Worlds slots; filler orgs carry no chip.
+3. The event catalogue (`ANALYTICS-EVENTS-2.0.md`; `BALANCE_VERSION` as a
    hand-bumped constant, proposed).
 
 **Still open from Gate 1** (the 28/10 plan did not answer them; the
 shipped defaults stay until Miguel says otherwise):
 1. PT for "Championship Sunday": keep it, or "Domingo de Finais"?
-2. The qualifier pays 10 % / 2.5 % ($6k at season 0); the regional shows
-   $40.8k (swiss16 pays 102 %), the Community Cup $1.8k. Keep, or reshape
-   the tables in ECO-01?
+2. The prize tables: now decision 6 of the economy contract.
 3. Overtime pacing, about 6–7 s at 1×.
 4. Worldwide Legacy at 1.6 or 1.3 (#140).
 5. The real Season 1 dates (`season.ts`: 2026-10-20 → 12-22).
-6. In the user's own qualifier, local sides are rated around the user. Keep that?
+6. In the user's region, local sides are rated around the user's squad,
+   frozen since rc.31 at the season's first regional Monday (R49). Keep
+   that, or rate them on the region's org median like the other regions
+   (much harder for a starter: NA sides ≈79–87 against a 68–74 squad)?
 7. Weekends the user only watches are not Advance stops. Keep that?
 8. Classic scrollbars (#144): always reserve the gutter (no shift; short
    pages end their borders 10–15 px early), or only while a dialog is open?
-9. PT standings tag "Avançou"/"Fora", and the local-side sheet wording.
+9. PT standings tag "Avançou"/"Fora", and the local-side sheet wording
+   (rewritten in rc.31: their points count in both races).
 
 **Not needed yet (V2 plan §8):** the Season Rating deltas and whether a
 Swiss exit costs rating (defaults shipped; SEA-01); which 8–10 event cards,

@@ -356,6 +356,26 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     expect(moneyAndSlots(res.save)).toBe(moneyAndSlots(stale));
   });
 
+  it("accepting a bid settles every pending bid for that player (as a release does); other players' bids stay", () => {
+    const save = makeSave();
+    const [seller, other] = save.starterIds;
+    const bid = (id: string, playerId: string, fee: number, blockbuster = false): TransferOffer => ({
+      ...bidFor(save, playerId, fee).pendingOffers[0],
+      id,
+      ...(blockbuster ? { blockbuster: true } : {}),
+    });
+    // A Blockbuster beat bid can sit next to a daily bid for the same player.
+    const withBids = {
+      ...structuredClone(save),
+      pendingOffers: [bid("bid:a", seller, 9_000), bid("bid:b", seller, 15_000, true), bid("bid:c", other, 7_000)],
+    };
+    const sold = acceptBidFlow(withBids, "bid:a");
+    expect(sold.error).toBeUndefined();
+    expect(sold.save.squad.some((p) => p.id === seller)).toBe(false);
+    expect(sold.save.pendingOffers.map((o) => o.id)).toEqual(["bid:c"]);
+    expect(sold.save.finances.balance).toBe(save.finances.balance + 9_000);
+  });
+
   it("a failed transfer leaves money and squad untouched (funds, loan lock, rejected counter, bad leaver)", () => {
     const target = freeAgents(makeSave())[0];
     const save = makeSave();
