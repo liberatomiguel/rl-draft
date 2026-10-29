@@ -90,8 +90,11 @@ import {
   derivePeakAge,
   fieldQualityFor,
   fillerPlayerView,
+  peakAgeOf,
   playerViewById,
+  retirementChanceFor,
   rookieView,
+  seasonYear,
   statsFromView,
 } from "./development";
 import { gearBuffLevels, starsFor } from "./economy";
@@ -1341,8 +1344,10 @@ function nextFillerId(region: Region, world: WorldState): string {
  *  1. Retirement rolls for every world player (org rosters in sorted-ref
  *     order, then FAs in pool order; user squad skipped). Anchor protection:
  *     a real player can only retire once his LAST dataset card's season order
- *     is ≤ the new season's order. Stars (overall ≥ blue-card bar) linger at
- *     retirementStarMult.
+ *     is < the new season's order (R48: he plays his final real season). The
+ *     roll is DEV-02's `retirementChanceFor` on the season just played: the
+ *     24–29 window, never before the peak, stars (overall ≥ blue-card bar)
+ *     lingering at retirementStarMult inside it.
  *  2. Org holes backfill from the FA pool, best regional overall first (a
  *     fresh filler id is minted if a region's pool runs dry).
  *  3. Off-anchor development (ids present in overallDelta — presence in the
@@ -1390,20 +1395,27 @@ export function agePassAndIntake(
     };
   }
 
-  const retirementTable = CAREER_AGE.retirementByAge;
-  const tableAges = Object.keys(retirementTable).map(Number);
-  const minRetireAge = Math.min(...tableAges);
-  const maxRetireAge = Math.max(...tableAges);
-
+  // DEV-02 (R48): the decision is whether the season just played was his last
+  // (the age he played it at = this season's age − the calendar step, two
+  // years across 2022 → 2024), inside the 24–29 window and never before his
+  // peak; a season at 30 is never played.
+  const calendarStep = seasonYear(toSeasonIndex) - seasonYear(Math.max(0, toSeasonIndex - 1));
   const rollsRetirement = (view: CareerPlayerView): boolean => {
-    if (view.age < minRetireAge) return false;
     if (view.kind === "real") {
-      // Anchor protection: never before the real career's last dataset card.
+      // Anchor protection: a real player plays every season he has a club
+      // card for (R48 fixes the off-by-one that let him retire before his
+      // final dataset season). Once his history ends, the window applies — a
+      // player already past it retires at that first rollover.
       const last = lastDatasetCardOrder(view.id);
-      if (last !== undefined && last > orderNow) return false;
+      if (last !== undefined && last >= orderNow) return false;
     }
-    let p = retirementTable[Math.min(view.age, maxRetireAge)] ?? 0;
-    if (view.overall >= STAR_RETIREMENT_OVERALL) p *= CAREER_AGE.retirementStarMult;
+    const p = retirementChanceFor({
+      age: view.age - calendarStep,
+      nextAge: view.age,
+      peakAge: peakAgeOf(view),
+      overall: view.overall,
+      starOverall: STAR_RETIREMENT_OVERALL,
+    });
     return p > 0 && rng.chance(p);
   };
 

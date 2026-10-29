@@ -267,11 +267,13 @@ describe("computeSalaryAsk (v0.2 rescale)", () => {
     expect(entry).toBeGreaterThanOrEqual(CAREER_SALARY.minSalary);
   });
 
-  it("subs cost ≈0.4× the starter formula", () => {
+  it("ECO-03 (R47): the slot never prices the job — a reserve asks exactly what a starter asks", () => {
     const starter = computeSalaryAsk(askInput({ overall: 82, potential: 82 }));
     const sub = computeSalaryAsk(askInput({ overall: 82, potential: 82, role: "sub" }));
-    expect(sub / starter).toBeGreaterThan(CAREER_SALARY.subRoleFactor - 0.05);
-    expect(sub / starter).toBeLessThan(CAREER_SALARY.subRoleFactor + 0.05);
+    expect(sub).toBe(starter);
+    expect(salaryAskFactors(askInput({ overall: 82, role: "sub" }))).toEqual(
+      salaryAskFactors(askInput({ overall: 82, role: "starter" })),
+    );
   });
 
   it("a 25yo veteran is cheaper than a 21yo prime at equal OVR", () => {

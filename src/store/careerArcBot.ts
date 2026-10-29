@@ -286,7 +286,6 @@ function candidatesFor(save: CareerSave): Candidate[] {
       seasonIndex: save.clock.seasonIndex,
       difficulty: save.difficulty,
       careerSeed: save.careerSeed,
-      role: "starter",
       lengthSeasons: 2,
       contracted: splitsRemaining === null ? undefined : { splitsRemaining },
     });
@@ -309,7 +308,8 @@ function starters(save: CareerSave) {
 }
 
 function sign(save: CareerSave, c: Candidate, t: Tally): CareerSave | null {
-  const res = signPlayerFlow(save, c.view.id, { role: "starter", lengthSeasons: 2 });
+  // ECO-03 (R47): the slot follows the squad (an open seat, else the reserve); the price never changes.
+  const res = signPlayerFlow(save, c.view.id, { lengthSeasons: 2 });
   if (res.error) return null;
   t.signings += 1;
   if (c.view.overall >= 88) t.starSignings += 1;

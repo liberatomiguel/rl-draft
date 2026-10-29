@@ -23,15 +23,22 @@ import { CAREER_BANK, CAREER_ECONOMY, CAREER_LOAN, CAREER_PAYROLL, CAREER_SPONSO
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import {
+  bankInstalmentsLeft,
   bankLoanLimitFor,
+  bankLoanRefusal,
   bankLoanTerms,
+  debtPaymentFor,
+  nextPaydayFor,
   quantize,
   runwayWeeks,
   weeklyOf,
   weeklyStatement,
+  type BankLoanRefusal,
   type WeeklyStatement,
 } from "@/engine/career/economy";
 import type {
+  BankLoanState,
+  FinanceState,
   LedgerEntry,
   SponsorObjectiveKind,
   SponsorState,
@@ -105,23 +112,29 @@ function PayDown({
   onPay,
   cta,
   hint,
+  backerUsed,
 }: {
   remaining: number;
   balance: number;
   onPay: (amount: number) => void;
   cta: string;
   hint?: string;
+  /** The Backer already rescued once: going under the floor now ends the career. */
+  backerUsed: boolean;
 }) {
   const C = useCareerCopy();
   const [raw, setRaw] = useState<number | null>(null);
 
-  const payMin = CAREER_ECONOMY.roundQuantum;
+  // ECO-02 (R46): the quote is what the flow settles (debtPaymentFor) — a
+  // debt off the $50 quantum is paid to the dollar, a stub included.
+  const payMin = Math.min(CAREER_ECONOMY.roundQuantum, remaining);
   const step = Math.max(payMin, quantize(remaining / 10));
-  const maxPay = Math.min(remaining, quantize(balance - CAREER_LOAN.floor));
-  const canPay = maxPay >= payMin;
+  const maxPay = debtPaymentFor(remaining, balance - CAREER_LOAN.floor);
+  const canPay = maxPay > 0 && maxPay >= payMin;
   const clamp = (n: number) => Math.min(Math.max(n, payMin), Math.max(payMin, maxPay));
-  const amount = clamp(raw ?? step);
+  const amount = debtPaymentFor(remaining, clamp(raw ?? step));
   const canPayAll = balance - remaining >= CAREER_LOAN.floor;
+  const balanceAfter = balance - amount;
 
   return (
     <div className="mt-3 border-t border-line pt-3">
@@ -159,13 +172,53 @@ function PayDown({
         </Button>
       </div>
 
+      {canPay ? (
+        <p className={cx("mt-2 text-xs font-semibold", balanceAfter < 0 ? "text-bad" : "text-sub")}>
+          {C.market.balanceAfter(formatMoney(balanceAfter))}
+        </p>
+      ) : null}
+      {canPay && balanceAfter < 0 ? (
+        <p className="mt-1 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">
+          {(backerUsed ? C.finances.payRiskEnd : C.finances.payRiskBacker)(
+            formatMoney(CAREER_LOAN.floor, { compact: true }),
+          )}
+        </p>
+      ) : null}
       {hint ? <p className="mt-2 text-[10px] text-faint">{hint}</p> : null}
     </div>
   );
 }
 
+/**
+ * ECO-02 (R46): the bank loan's schedule as the Monday funnel books it — the
+ * next instalment (min(remaining, weekly)), its date, and how many are left.
+ */
+function BankSchedule({ loan, clock }: { loan: BankLoanState; clock: { seasonIndex: number; day: number } }) {
+  const C = useCareerCopy();
+  const D = C.dates;
+  const next = nextPaydayFor(clock);
+  const due = Math.min(loan.remaining, loan.weeklyPayment);
+  return (
+    <p className="mt-0.5 text-xs text-sub">
+      {C.finances.bankNext(
+        formatMoney(due),
+        formatDateTiny(D, dateOfDay(next.seasonIndex, next.day)),
+      )}{" "}
+      · {C.finances.bankLeft(bankInstalmentsLeft(loan))}
+    </p>
+  );
+}
+
+/** ECO-02 (R46): the flow's own refusal (bankLoanRefusal) → the error string the flow returns. */
+const BANK_REFUSAL_COPY: Record<BankLoanRefusal, "bankActive" | "bankBacker" | "bankAmount" | "bankLimit"> = {
+  active: "bankActive",
+  backer: "bankBacker",
+  amount: "bankAmount",
+  limit: "bankLimit",
+};
+
 /** v2.0 (R21): request a bank loan — amount stepper, live terms, one button. */
-function BankLoanRequest({ rep, balance }: { rep: number; balance: number }) {
+function BankLoanRequest({ fin, rep, balance }: { fin: FinanceState; rep: number; balance: number }) {
   const C = useCareerCopy();
   const takeBankLoan = useCareerStore((s) => s.takeBankLoan);
   const limit = bankLoanLimitFor(rep);
@@ -174,8 +227,16 @@ function BankLoanRequest({ rep, balance }: { rep: number; balance: number }) {
   const clamp = (n: number) => Math.min(limit, Math.max(CAREER_BANK.minAmount, quantize(n)));
   const amount = clamp(raw ?? Math.min(limit, Math.max(CAREER_BANK.minAmount, quantize(limit / 2))));
   const terms = bankLoanTerms(amount);
+  // ECO-02 (R46): the panel states the REAL reason the bank would refuse —
+  // the same bankLoanRefusal takeBankLoanFlow runs — instead of its own guess.
+  const refusal = bankLoanRefusal(fin, rep, amount);
   if (limit < CAREER_BANK.minAmount) {
     return <p className="mt-2 text-xs text-faint">{C.finances.bankLockedRep}</p>;
+  }
+  if (refusal === "active" || refusal === "backer") {
+    return (
+      <p className="mt-2 text-xs font-semibold text-faint">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
+    );
   }
   return (
     <div className="mt-3 border-t border-line pt-3">
@@ -211,7 +272,16 @@ function BankLoanRequest({ rep, balance }: { rep: number; balance: number }) {
           formatMoney(terms.total, { compact: true }),
         )}
       </p>
-      <Button variant="primary" size="sm" className="mt-3" onClick={() => takeBankLoan(amount)}>
+      {refusal ? (
+        <p className="mt-2 text-xs font-semibold text-bad">{C.market.errors[BANK_REFUSAL_COPY[refusal]]}</p>
+      ) : null}
+      <Button
+        variant="primary"
+        size="sm"
+        className="mt-3"
+        disabled={refusal !== null}
+        onClick={() => takeBankLoan(amount)}
+      >
         {C.finances.bankRequest} · {formatMoney(amount, { compact: true })}
       </Button>
       <p className="mt-2 text-[10px] text-faint">
@@ -1056,23 +1126,22 @@ export function FinancesScreen() {
                 <p className="mt-0.5 text-xs text-sub">
                   {C.finances.bankWeekly(formatMoney(fin.bankLoan.weeklyPayment, { compact: true }))}
                 </p>
+                <BankSchedule loan={fin.bankLoan} clock={save.clock} />
                 <PayDown
                   remaining={fin.bankLoan.remaining}
                   balance={fin.balance}
                   onPay={payBankLoan}
                   cta={C.finances.bankPayEarly}
+                  backerUsed={fin.loanUsed}
                 />
+                <p className="mt-2 text-[10px] text-faint">{C.finances.bankBlockedActive}</p>
               </>
             ) : (
               <>
                 <p className="mt-1 text-xs text-sub">
                   {C.finances.bankHint(CAREER_BANK.termWeeks, Math.round(CAREER_BANK.interestPct * 100))}
                 </p>
-                {fin.loan && CAREER_BANK.blockedWhileBacker ? (
-                  <p className="mt-2 text-xs font-semibold text-faint">{C.finances.bankBlockedBacker}</p>
-                ) : (
-                  <BankLoanRequest rep={rep} balance={fin.balance} />
-                )}
+                <BankLoanRequest fin={fin} rep={rep} balance={fin.balance} />
               </>
             )}
           </div>
@@ -1100,6 +1169,7 @@ export function FinancesScreen() {
                   onPay={payDebt}
                   cta={C.finances.payDebt}
                   hint={C.finances.payDebtHint}
+                  backerUsed={fin.loanUsed}
                 />
               </>
             ) : fin.loanUsed ? (

@@ -36,6 +36,7 @@ import {
   gearNextItem,
   gearPriceFor,
   gearTrainingBonus,
+  nextPaydayFor,
   repTierOf,
   runwayWeeks,
   unlocksFor,
@@ -534,7 +535,7 @@ export function unlockTrack(save: CareerSave): UnlockEntry[] {
 }
 
 export { bootcampTierFor, gearNextItem, gearPriceFor, gearTrainingBonus, repTierOf, unlocksFor };
-export { weeklyWage, weeklyStatement, runwayWeeks };
+export { weeklyWage, weeklyStatement, runwayWeeks, nextPaydayFor };
 
 /** v2.0: every wage label shows the WEEKLY figure of a per-split contract. */
 export function wageLabel(C: CareerCopy, salaryPerSplit: number, compact = true): string {
