@@ -530,6 +530,11 @@ OBS-01 (no staging data; build before launch) is still to build.
 > scripted **Blockbuster bids** are invisible to players: explain what they
 > are, why they came, the ×1.5 fee and the +10 % renewal ask if refused, in
 > the offer and the inbox, EN and PT.
+> **Guardrail (Miguel, 30/10):** money stays part of the game. Do not make it
+> too easy (tight weeks, real trade-offs and a costly star must remain; a
+> careless spender can still go broke on Normal/Hard), nor punitive (no
+> unfair break for a newcomer or for developing your own players). Every
+> re-measure reports both sides (ECONOMY-CONTRACT §6 note).
 1. The economy contract: `ECONOMY-CONTRACT.md` §6, ten decisions with a
    recommendation each (the season money index, renewing your own players,
    the newcomer's income, what ends a career, stars and the snowball, the

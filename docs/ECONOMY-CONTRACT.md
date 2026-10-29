@@ -290,6 +290,17 @@ after it (one per split).
 > `balance.ts` key so it can be switched back, is re-measured with the probe
 > on the same seeds (against §8), and is listed in the gate report for Miguel
 > to play and confirm or reject. Nothing here is final until he says so.
+>
+> **The guardrail on every default (Miguel, 30/10): not too easy, not
+> punitive.** Managing money stays part of the experience: a median career
+> still meets tight weeks and real trade-offs, stars still cost a real
+> sacrifice, and a careless spender can still go broke on Normal and Hard.
+> What goes is the unfair break (a newcomer playing normally, or a team
+> punished for developing its own players). Every re-measure reports both
+> sides: insolvency inside §3's bands AND the "money still decides" rows
+> (tight Mondays, snowball p90, star access) staying above their floors. A
+> default that makes money irrelevant fails the gate as surely as one that
+> bankrupts newcomers.
 
 1. **The season money index (M1).** A. One index at 1.08 for every stream,
    the flat ones included. B. One index at 1.10. C. Keep the three rates and
