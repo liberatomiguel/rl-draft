@@ -1,14 +1,17 @@
 # Road to Worlds — the economy contract (ECO-01, PROPOSAL)
 
 > Status: **a proposal for Miguel's approval** (ROADMAP Etapa 2b, written at
-> rc.31 on top of rc.30). **No number or behaviour changes until he approves
-> it.** It binds ECO-01, frames ECO-02 (bank and Backer), ECO-03/03a/03b
-> (contracts, stars, bids) and BAL-02 (difficulty presets), and leaves room
-> for ECO-04 (sponsors) and ECO-05 (other income) in Etapa 3. The numbers
-> come from `CAREER-BASELINE-rc30.md` and the economy probe
-> (`src/store/careerEconomy.probe.test.ts`), whose tables are the appendix.
-> Regenerate them; never hand-edit them. §8 re-measures rc.31 (fronts A and
-> C merged): the same seeds, the deltas.
+> rc.31 on top of rc.30). Miguel (30/10): build the recommended options as
+> provisional defaults to test; **rc.32 did** (§5–§6, R50–R53, R58), each
+> behind a `balance.ts` key that restores rc.31, re-measured in §9. Nothing
+> is final until he confirms it at Gate 2. It binds ECO-01, frames ECO-02
+> (bank and Backer), ECO-03/03a/03b (contracts, stars, bids) and BAL-02
+> (difficulty presets), and leaves room for ECO-04 (sponsors) and ECO-05
+> (other income) in Etapa 3. The numbers come from `CAREER-BASELINE-rc30.md`
+> and the economy probe (`src/store/careerEconomy.probe.test.ts`), whose
+> tables are the appendix. Regenerate them; never hand-edit them. §8
+> re-measures rc.31 (fronts A and C merged) and §9 rc.32: the same seeds,
+> the deltas.
 
 ## 1. Why a contract
 
@@ -178,7 +181,7 @@ from that field, so such a career gets the Final Whistle (or the Worlds-won
 ceremony) instead of the insolvency screen. That is a bug for 2b, left
 unchanged here.
 
-## 5. Mechanisms and levers — *proposed, not applied*
+## 5. Mechanisms and levers — *proposed; rc.32 built them as provisional defaults*
 
 > **rc.32 (Etapa 2b part 2, front A):** M1, M3, M4, M5, M6 (levers 1–2) and
 > M8 are built as **provisional defaults** (30/10, not approved), each behind

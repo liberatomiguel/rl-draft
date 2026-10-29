@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.31**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.32**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -180,6 +180,150 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.32 (Etapa 2b part 2: the economy contract's provisional defaults, the growth contract, renewals, career presets, the 2a leftovers, the Etapa 3 contracts, /pt and the request budget · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R50–R60 · DESIGN-DECISIONS #145–#150)
+
+Built as five parallel fronts (A economy, B growth / renewals / presets, C the Etapa 2a leftovers,
+D the Etapa 3 contracts, E web), merged and wired together, then an independent review (two P2 and
+five P3 findings, all fixed: R60) and a browser E2E pass (desktop + mobile, EN + PT). **Every
+pending decision ships as a provisional default** (Miguel, 30/10: not approved yet): each sits
+behind its own `balance.ts` key, commented `PROVISIONAL (30/10)`, that restores rc.31 when flipped.
+
+**Career — money (front A; ECONOMY-CONTRACT §6 decisions 1-A, 3-A, 4-B, 5-B, 6-B, 7-A, 8-B)**
+- **The founding partner (M3, R51):** a day-one tier-0 deal paying 70 % of the founding wage bill
+  (`CAREER_SPONSOR.founding`), objective "enter events", no signing bonus, until the first real deal
+  and at least through the second season; its own ledger line, a Finances card with its end
+  condition, a mail. rc.31 careers still in their first two seasons without a sponsor get it once.
+- **Warnings and the safety net (M4, R52):** a notice at 8 weeks of runway and a mail every Monday
+  at ≤ 4, each with the projected breach week and a recovery checklist; the Market's offer sheet and
+  the renewal readout show the runway a deal leaves. The Emergency Backer is sized in weeks of
+  payroll (floor −8, rescue to +6). **What ends a career by difficulty:** Easy never, Normal at the
+  third breach, Hard at the second (`CAREER_LOAN.breachesToEnd`); a breach in between
+  **restructures** the org (the highest-paid player sold at market value, rep −5, the books topped
+  back up, the squad kept playable) with a mail and an HQ line. While the Backer is owed, a signing,
+  a coach or the psychologist that shortens the runway is refused, with the reason.
+- **"List for sale" (M8, R53):** a player listed in the Market's deals tab draws one offer within a
+  few window days at 90–115 % of his value from an org that would field him (never in the career's
+  bid-free first window); a seat sold in a window can be refilled with a free agent for 7 days after
+  it closes.
+- **The players' share of podium prizes (M6, R53):** 20 % of a regional's, 35 % of a Major's, 50 %
+  of Worlds' 1st–4th prize, as its own line in the event result and in Finances.
+- **The Blockbuster bid explained (R54):** the offer (Market, HQ) and its mail say what it is (a
+  scripted moment from the scene's history), the ×1.5 fee and that refusing it raises his next
+  renewal ask by 10 %, EN + PT.
+
+**Career — growth, renewals, presets (front B)**
+- **Growth model 2, the growth contract (DEV-01, R55–R57), new careers only:** an individual arc per
+  player (an early / standard / late peak, a plateau, then a gradual decline, fixed per save);
+  potential is the expected peak (±2); real players with special cards take the potential of their
+  eligible special; rare 93–98 prospects in every era (0.8 % of 13–15-year-olds); no per-split cap,
+  one season cap of 7 on a curve that slows near the peak; exact ages (no jump on a birthday or at
+  the rollover); honest scouting bands that never move; base growth = training days + the series a
+  player actually played. rc.31 careers keep their development for life (`world.growthModel`).
+- **Renewals with a raise cap and a market floor (M2, decision 2-B, R58):** the renewal asks at
+  most ×1.5 his wage and never under half his market ask (ambition and a refused Blockbuster on top);
+  the readout on Squad and in the Market's new renewals panel shows the rule, both numbers, which
+  bound priced it and the runway it leaves.
+- **Career difficulty presets (BAL-02, R59):** Easy / Normal / Hard replace the wizard's Management
+  Style step, each with one sentence and its real effects (match edge, chemistry, budget, prize /
+  ask / sponsor multipliers, what ends a career through money, how much is delegated). The career
+  reads its own `CAREER_DIFFICULTY`, so a Draft retune can no longer move it.
+
+**Analytics, audits, docs (fronts C and D)**
+- **Analytics 2.0, production only (OBS-01, #145):** the whole `ANALYTICS-EVENTS-2.0.md` catalogue,
+  typed, with its common properties (`release`, `balanceVersion`, `schemaVersion`, `environment`,
+  `locale`, `gameMode`); career events read off each career-store write (once per action, never on
+  a reload); persist quality events. A hard guard sends only from a production build on
+  `rocketdraft.app`: staging, playtest, dev and tests never send and never load the SDK, even with a
+  key. Built, provisional until Miguel approves the catalogue. `BALANCE_VERSION` (now 2) with a
+  fingerprint test that fails until a tuning change bumps it.
+- **The module audit (ENG-01, #147):** `docs/MODULE-AUDIT.md`, 258 modules in eight packages with
+  findings by severity. **The dataset check (DATA-01):** `docs/DATA-AUDIT-rc32.md` (generated,
+  `DATA_AUDIT=1`) and `careerOrgEntry.test.ts` (each org enters in its season, through the real
+  rollover); no data edit needed. **The doc pass (ENG-02, #146):** history banners on the old plans,
+  runbooks checked against the code.
+- **The Etapa 3 contracts, proposals for Gate 3a (front D):** `TRAINING-CONTRACT.md` (DEV-03),
+  `SPONSOR-CONTRACT.md` (ECO-04 + ECO-05's caps), `HQ-CONTRACT.md` (UX-01), seven decisions each.
+- **Instruments:** the economy probe's C10 (both sides of the guardrail) and restructuring counts;
+  `CAREER_GROWTH=1` (`docs/CAREER-GROWTH-rc32.md`); the arc report's region × difficulty tables;
+  `scripts/request-budget.mjs` (WEB-02).
+
+**Web (front E)**
+- postexport "check page languages" (DRAFT-11) and a flag sprite in `build:images` (WEB-02).
+
+### Changed — rc.32
+- **One money index (M1, decision 1-A, R50):** every stream (wages, fees, coaches, prizes, sponsor
+  deals, the fanbase, the founding partner, the bank, the minimum fee and salary, the stand-in,
+  scouting, gear, the money inserts) grows ×1.08 a season (`CAREER_ECONOMY.indexMode` "single");
+  rc.31 had three rates (1.08 / 1.12 / 1.10) and flat amounts. Signed contracts keep their figure.
+- **Prize tables that pay the advertised pool (M5, decision 6-B, R50):** Swiss-16 28 / 18 / 12 / 9 /
+  6.5 / 5 / 1.25 % and single-elimination 40 / 20 / 10 / 5 % (rc.31's Swiss-16 paid 102 %).
+- **A rep comfort cap on wage asks (M6, R53):** `repComfortMax` 86, so a star always carries a
+  premium (a 90 at rep 100 asks ×1.16, a 95 ×1.36).
+- **The Market always lists a page of free agents the org can sign** (24 under its signing cap):
+  rc.31's top-120 list could be entirely above a low-reputation org's cap.
+- **The filler cap (BAL-02, provisional):** a filler org is never rated above its region's best real
+  lineup (`CAREER_WORLD.fillerCapToBestReal`).
+- The harness bot and the money probe read the screens' weekly statement (`weeklyStatementOf`); no
+  bot policy changed.
+- **Web:** production flags are cells of one sprite; a logo already loaded at 264 px serves the
+  smaller sizes of the same org; `AppLink` prefetches on a mouse that moves over a link or keyboard
+  focus, not on a link that slides under a resting cursor; `<html>` is rendered by `LocaleRoot`.
+- The wizard's final step says once what difficulty shapes.
+- Analytics region labels shared by `run_started`, `tournament_started`, `run_completed` and
+  `run_abandoned`; history banners on the V2 plan, `CHALLENGES-DESIGN` and `TUNING-HARD-LEGACY`.
+
+### Balance — rc.32
+- **Career Hard (BAL-02, R59):** the AI keeps its chemistry (cap 0 → 2) and shifts −0.5 → −0.2: the
+  user's Bo5 win rate at equal strength is 81 / 65 / 55 % on Easy / Normal / Hard (rc.31: 81 / 65 /
+  81 %). Easy and Normal unchanged.
+- **The re-measure** (the economy probe, the same 294 careers as §8, seeds 9100 and 17019):
+  ECONOMY-CONTRACT §9.
+
+### Fixed — rc.32
+- **Ages jumped two years at the 2022-23 → 2024 rollover.** Root cause: `seasonYear` read each
+  label's first year (2020, 2021, 2022, then 2024). The age clock now reads the year a season ends:
+  +1 a season, real ages right from RLCS 2024 on; the retirement rule lost its "calendar gap" case
+  (R54). Running careers in seasons 0–2 read one year older once, at load.
+- **The cash warning fired only on the Monday the runway read exactly 4 weeks**, so a renewal, a
+  signing or a rescue that jumped past 4 left the player unwarned (24 % of Normal rescues were
+  warned in rc.31). Root cause: an equality test (`runway === runwayWarnWeeks`). Now a mail every
+  Monday at ≤ 4 weeks plus a notice at 8 (`runwayWarnMode` "weekly"; "rc31" restores it).
+- **A refused Blockbuster bid never raised the renewal ask.** Root cause: `computeSalaryAsk`'s
+  `blockbusterRefused` input was declared since v0.2, but no caller passed it and no refusal was
+  recorded. A decline or an expiry now stamps the deal (`blockbusterRefusedUntil`), once.
+- **Career Hard played as easy as Easy.** Root cause: the career read the Draft's Hard, whose AI
+  chemistry cap 0 stripped career AI orgs (standing rosters at near-full chemistry) of their
+  chemistry.
+- **Scouting bands moved on a new report or as the overall grew; potentials moved with the
+  overall** (model 2). Root causes: independent per-level draws and a floor clamped to the overall;
+  fillers at overall + 2 and real players clamped up to their current overall.
+- **A restructured org at reputation 0 could never sign.** Root cause: `listingFor` capped the list
+  at the top 120 before the reputation gate.
+- **The cash-warning mail printed raw numbers ("−860").** Root cause: `net` was not among the money
+  params `newsText` formats.
+- **The Backer's commitment lock was off in the overdraft** (review, P2). Root cause: measured to $0
+  in whole weeks, it read 0 before and after any commitment between $0 and the floor.
+- **A founder sold to an AI org vanished, and the buyer fielded a stand-in** (review, P2). Root
+  cause: founders' `fic:{region}:starterN` ids come from no world generator; `WorldState.formerSquad`
+  now keeps his record on a sale, a release or an expired deal.
+- **The restructuring mail misstated the money** (review). Root cause: fixed text ("half to the
+  debt", "back at the rescue line") whatever happened.
+- **The late signing could be used as an extra out-of-window swap** (review). Root cause: nothing
+  checked that the sold seat was still empty.
+- **Analytics reported rc.31's potential band for new careers** (review). Root cause: `scoutedBand`
+  was called without the growth model.
+- **`/pt` pages painted English chrome and `lang="en"` until hydration (DRAFT-11, #148).** Root
+  cause: the root layout hard-coded `lang="en"` and `useCopy()` answered EN until mount, while the
+  export renders each page's HTML once.
+- **A whole Classic run broke the 75-request budget (WEB-02, #149–#150): 65–78 → 56–59.** Root
+  cause: one request per flag, a second request per drafted org's logo, and accidental prefetches
+  from links sliding under a resting cursor.
+- **`run_abandoned` sent region "worldwide" for dailies and region challenges.** Root cause: it read
+  only `run.regionLock`, while `run_started` labelled each mode itself.
+- **Stale runbooks and `COSMETICS-CATALOG.md`.** Root cause: rc.25's retune, the v12 persist and
+  rc.4's `reduceEffects` never reached the docs; the catalog was not regenerated after a gradient
+  change.
 
 ### Added — rc.31 (Etapa 2b part 1: the money's integrity, the sub contract, longevity, the race tables, the economy contract · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R46–R49)
 

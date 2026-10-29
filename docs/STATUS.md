@@ -9,9 +9,9 @@
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.31**
-  (`staging.rocketdraft.app`: career on, noindex, preview tools on).
-  **Never deploy v2.0 to `main` before the full review.**
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.32**
+  (`staging.rocketdraft.app`: career on, noindex, preview tools on, no
+  analytics). **Never deploy v2.0 to `main` before the full review.**
 - Road to Worlds (career): `ROAD-TO-WORLDS-STATUS.md`. If a push to `staging`
   does not trigger the `rocket-draft-staging` Workers Build, check its GitHub
   connection / watch paths.
@@ -21,24 +21,21 @@
 The Season reset and Season Rating, accounts v2, missions, login streak,
 event cards, Profile/Leaderboard/Home v2, Daily Quiz, Challenges 2.0,
 cosmetics, the database expansion, Road to Worlds 2.0 and the completion
-plan's Etapas 1, 2a and 2b part 1 so far (rc.27–31; `ROADMAP.md` "Done",
-CHANGELOG).
+plan's Etapas 1, 2a and 2b (rc.27–32; `ROADMAP.md` "Done", CHANGELOG).
 
 ## Where the completion plan stands
 
 - **Etapa 1 + 1b: done** (rc.27–29). **Gate 1:** answered by Miguel's 28/10
-  plan (playtest + direction), now written into `ROADMAP.md` by ID.
-- **Etapa 2a, rc.30:** package A and the instruments (the long-career
-  harness, `CAREER-BASELINE-rc30.md`, the analytics contract). Still open in
-  2a: ENG-01 audit, DATA-01, ENG-02 rest, real-save fixtures.
-- **Etapa 2b part 1, rc.31** (three parallel fronts + an independent
-  review): ECO-02 (the Backer/bank integrity, insolvency is final), ECO-03
-  (no sub discount, who-leaves signing) and 03b (a bid-free first window),
-  DEV-02 (13 to play, retire at 24–29, ex-pros coach), RTW-01 (local sides
-  score; the split Major table and the season Worlds table). R46–R49.
-- **Next, at the gate:** Miguel plays rc.31 and answers the economy
-  contract's ten decisions (`ECONOMY-CONTRACT.md` §6). Then the contract's
-  packages, DEV-01 and BAL-02, each re-measured on the same seeds.
+  plan.
+- **Etapa 2a: done** (rc.30 + rc.32) except ENG-03's fixtures from real
+  exported saves.
+- **Etapa 2b:** part 1 in rc.31 (R46–R49); **part 2 in rc.32** (R50–R60):
+  the economy decisions as **provisional defaults** (each flips back to
+  rc.31 by its `balance.ts` key), DEV-01, M2, BAL-02, the age clock; the
+  Etapa 3 contracts written; DRAFT-11 and WEB-02 pulled forward.
+- **Now, at Gate 2:** Miguel plays rc.32 (new careers) and confirms or
+  rejects each default (`ROADMAP.md`, "Waiting on Miguel"; the re-measure
+  is `ECONOMY-CONTRACT.md` §9).
 
 ## Open before `main`
 
@@ -46,28 +43,31 @@ CHANGELOG).
   production SQL (§6-B — its freeze trigger goes in at the cutover if any v1.x
   client signs in); C freeze the pre-season board; D grants; E Cloudflare vars
   + resubmit the sitemap.
-- **Manual regression on staging** (V2 plan §7) plus: a Region-only run per
-  region, a national-team find, Classic/Quick/Daily from a cold home, leaving
-  mid-draft, a Swiss without rematches, a Saturday qualifier → Sunday
-  regional, a Major weekend (reload on Saturday), an OT game in the Match
-  Center. Lighthouse; event-card curation; a PT pass; the v2.0 player notes.
+- **Manual regression on staging** (V2 plan §7) plus the rc.29–rc.32 lists in
+  `ROADMAP.md`. Lighthouse; event-card curation; a PT pass; the v2.0 player
+  notes.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **840** tests (+7 opt-in tools
+- `npm run typecheck` clean · `npm test` **1021** tests (+9 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).
+- A change to a `balance.ts` value bumps `BALANCE_VERSION` (now 2):
+  `balanceVersion.test.ts` prints the new fingerprint.
 - Data or pool changes: `difficulty.matrix.test.ts` (`SIM_MATRIX=1`) before and
   after; `challenges.tune.test.ts` (`CH_TUNE=1`) if challenges leave their
   bands (#136–#137). Shared-sim changes regenerate the golden master only with
   a CHANGELOG-documented decision.
-- Career sweeps: `CAREER_ARC=1` / `CAREER_CURVES=1` (`careerArc.test.ts`)
-  and the money probe `CAREER_ECON=1` (`careerEconomy.probe.test.ts`) before
-  and after any economy or growth change (Etapa 2b).
-- Perf reference (rc.29, webpack export): cold home 28 requests; a whole
-  Classic run from a cold home 77–80 (budget 75, Etapa 5 WEB-02). The dataset
-  chunk (62 KB gz) loads on game pages only; home first-load JS 288 KB gz.
+- Career sweeps before and after any economy or growth change:
+  `CAREER_ECON=1` (294 careers, ~25 min in four processes by
+  `ECON_REGIONS`), `CAREER_ARC=1` / `CAREER_CURVES=1`, `CAREER_GROWTH=1`
+  (never set `CAREER_ARC` with `ARC_REPORT`: it replays the sweep).
+- Perf reference (rc.32, a staging-like Turbopack export, `node
+  scripts/request-budget.mjs`): cold home **26** requests; a whole Classic run
+  from a cold home **56–59**, desktop and mobile (budget 75; rc.31 65–78). The
+  dataset chunk (62 KB gz) loads on game pages only; home first-load JS 288 KB
+  gz.
 
 ## Standing facts
 
@@ -76,7 +76,9 @@ CHANGELOG).
 - Career is off in production builds unless `NEXT_PUBLIC_CAREER_MODE=1`;
   `/career` is always noindex.
 - Accounts are code-complete; production never had the Supabase variables
-  (#55, `ACCOUNTS-SETUP.md`). Analytics: PostHog, EU, cookieless, lazy.
+  (#55, `ACCOUNTS-SETUP.md`).
+- Analytics: PostHog, EU, cookieless, lazy, **production only** (staging,
+  playtest and dev never send, #145); the 2.0 catalogue is provisional.
 - A local `npm run build` rewrites badge/banner hashes in
   `src/generated/asset-manifest.json` (platform rasterization): don't commit
   hash-only changes.
@@ -86,4 +88,4 @@ CHANGELOG).
 - `specialCards.json` (~10 KB gz) on every page; PT locale not lazy;
   deploy-skew 404s; no `og:image` on content pages; lazy PostHog can miss
   UTMs. Missing optional art (fallbacks render): 20 special photos, 23 org
-  logos. Deferred items: `ROADMAP.md` ("Deferred").
+  logos. Deferred items and rc.32's findings: `ROADMAP.md` ("Deferred").

@@ -43,7 +43,7 @@
 | 1 | M1 rules | Swiss, weekend calendar, match timeline, lint | ✅ rc.27–28 |
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
-| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a in rc.30; 2b part 1 in rc.31 |
+| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a rc.30 + rc.32; 2b rc.31 + rc.32 (provisional defaults, at Gate 2) |
 | 3 | M3 | The new RTW loop (contract first) | |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
@@ -121,13 +121,56 @@ integrity, built as three parallel fronts, then an independent review):**
 - ECO-01: the economy contract, written (`ECONOMY-CONTRACT.md`), with its
   probe (`CAREER_ECON=1`). A proposal: no number moved.
 
+**Etapa 2b, rc.32 (part 2: the pending decisions as provisional defaults —
+Miguel, 30/10 — five parallel fronts, the integration and an independent
+review):**
+- ECO-01's mechanisms, each behind its own `balance.ts` key (R50–R53): M1
+  one money index (1-A), M3 the founding partner (3-A), M4 warnings, the
+  Backer in weeks, what ends a career by difficulty, restructurings and
+  the commitment lock (4-B), M5 tables that pay 100 % (6-B), M6 the comfort
+  cap and the players' share (5-B), M8 "List for sale" and the late signing
+  (8-B); M7 held (9-B), 7-A and 10-A need no code. Re-measured in the
+  contract's §9.
+- M2, renewals with a raise cap and a market floor (2-B, R58); DEV-01, growth
+  model 2 for new careers (R55–R57); BAL-02, the career presets, the
+  career's own difficulty and the filler cap (R59).
+- The age clock steps one year a season (R54); the Blockbuster bid explains
+  itself (R54).
+- The 2a leftovers: ENG-01 (`MODULE-AUDIT.md`, #147), DATA-01
+  (`DATA-AUDIT-rc32.md`), ENG-02 (#146), OBS-01 (built, production only,
+  #145).
+- Etapa 3's written contracts, for Gate 3a: `TRAINING-CONTRACT.md`,
+  `SPONSOR-CONTRACT.md`, `HQ-CONTRACT.md`.
+- Pulled forward from Etapa 5: DRAFT-11 (#148) and WEB-02's request budget
+  (#149–#150: a whole Classic run 65–78 → 56–59 of 75).
+- The integration review's fixes (R60): the Backer lock in the overdraft,
+  sold founders kept in the world, the restructuring mail's money, the late
+  seat, the analytics band.
+
 ## Deferred (owner Etapa)
 
-- `/pt` first paint shows English chrome and `lang="en"` (DRAFT-11) → Etapa 5, WEB-01.
-- A whole Classic run from a cold home makes 77–80 requests against a 75
-  budget (org logos and flags in the draft and the bracket) → Etapa 5, WEB-02.
 - The share card's text (mode, difficulty) is English in PT → Etapa 5, with
   the PT pass.
+- Found in rc.32 (audit, review, fronts), not fixed there:
+  - PT pass (Etapa 5): achievement names stay English in the PT unlock toast;
+    English-only aria-labels (`AppShell`); the privacy text still names
+    Vercel Web Analytics (dropped in v1.4; Miguel reviews the wording).
+  - WEB-01: a player who saved PT sees one English frame on an EN URL (`/`,
+    `/play`); the PT chrome's links point at the EN URLs (`/about`).
+  - Etapa 3 (the contracts cite them): Advance and "+1 day" stay active
+    under a bid, a sponsor choice or an invite, so a day can pass a needed
+    decision (UX-01a); the bootcamp's edge is spent by the next official
+    event, not the split (UX-01f); Training says match weeks pause sessions,
+    the engine trains them at half rate; the Finances sparkline plots ledger
+    lines, not weeks (UX-01e); a coach rated 65 or below trains like no
+    coach and the "++" level never appears (DEV-03).
+  - Instruments: the harness bot answers every insert "b", so the money
+    probe has never measured insert money; it also never lists players or
+    takes a late signing (M8 is unmeasured by the bot).
+  - Engineering (MODULE-AUDIT P2/P3): a guest with two tabs open can lose
+    progress (the stale tab's write wins); split weeks hard-coded in
+    `careerFlow.ts`; a few tunables outside `balance.ts` (`worldSim.ts`,
+    `development.ts`, `match.ts`, `teams.ts`).
 
 ## Etapa 2 — instruments, then a sustainable career
 
@@ -139,8 +182,9 @@ Backer pay-down, bids, negotiation, v3 migration), `careerWeekend.test.ts`
 (`economy.test.ts` covers the Backer and the bank). `market.ts` and
 `worldSim.ts` have no test file.
 
-**2a, measure first** (rc.30: package A and the instruments are in; the
-audit, the dataset check and the doc pass are still open):
+**2a, measure first** (rc.30: package A and the instruments; rc.32: the
+audit, the dataset check, the doc pass and OBS-01; only ENG-03's real-save
+fixtures remain):
 - ✅ OBS-02, the long-career harness: `src/store/careerArcBot.ts` (test
   support, never imported by the app) plays whole careers through the real
   flow under seven policies: autopilot (median, hands-off), tuned (title
@@ -157,18 +201,18 @@ audit, the dataset check and the doc pass are still open):
   Still open: fixtures from real exported saves (v1.x profile, rc.20+
   careers, which need saves from Miguel), and isolating staging (its own
   Supabase project, V2 plan §6-A, and never the production PostHog key).
-- ENG-01: the module audit, written as an inventory (`docs/MODULE-AUDIT.md`:
+- ✅ ENG-01 (rc.32, #147): the module audit, written as an inventory (`docs/MODULE-AUDIT.md`:
   one row per module with its job, persistence, tests, findings with
   severity, and status), audited in packages (data, shared engine,
   stores/sync, economy, growth, calendar, UI, export/perf/SEO), each closed
   with its commit and evidence.
 - ✅ OBS-01, the contract: `ANALYTICS-EVENTS-2.0.md` (a proposal; Miguel
   approves, 2b builds it).
-- DATA-01: check the expanded dataset (eras, IDs, overalls, chemistry), not
+- ✅ DATA-01 (rc.32, `DATA-AUDIT-rc32.md`; no data edit needed): check the expanded dataset (eras, IDs, overalls, chemistry), not
   redo it: `npm run validate:data`, `cardAliases.test.ts`,
   `chemistry.test.ts`; report by era and region; old ids still resolve via
   `cardIdAliases.json`. Prove each org enters in its right season.
-- ENG-02, rest: no old doc read as the current plan or spec (the V2 plan and
+- ✅ ENG-02, rest (rc.32, #146): no old doc read as the current plan or spec (the V2 plan and
   the CHANGELOG's 2.0 header still call the V2 plan the execution order;
   CHALLENGES-DESIGN still describes the v1.4 set), and the runbooks that
   drift from the code.
@@ -182,7 +226,8 @@ Etapa 3 packages and coaches will add):
   check, `CAREER_LOAN`, `payDebtFlow`); the bank is `bankLoanRefusal` /
   `takeBankLoanFlow` (`CAREER_BANK`). Reproduce the problem in the real
   flow first (the harness ends most careers through it, baseline §1).
-- ECO-03a, stars: fee, wage, contract length, reputation and opportunity
+- ECO-03a, stars (rc.32: M6's comfort cap and the players' share built as
+  provisional defaults, R53; the wage budget waits for Etapa 3): fee, wage, contract length, reputation and opportunity
   cost, priced without leaning on the sub discount (rc.31 removed the
   discount; the pricing itself is the ECO-01 contract's M6).
 - ✅ ECO-03b, bids (**decided 29/10**; rc.31, R47): no incoming bids for the user's players
@@ -204,8 +249,9 @@ Etapa 3 packages and coaches will add):
   and without a sub; promote; sign with three starters; renew a reserve;
   swap the lineup; sign and promote the same day; refresh mid-negotiation;
   a failed transfer.
-- ECO-01 (the contract is written, rc.31: `ECONOMY-CONTRACT.md`; it waits
-  on Miguel's ten decisions): the whole money curve by era, season and event tier: wages,
+- ECO-01 (the contract, rc.31: `ECONOMY-CONTRACT.md`; rc.32 built its
+  mechanisms as provisional defaults, R50–R53, re-measured in its §9; Miguel
+  confirms them at Gate 2): the whole money curve by era, season and event tier: wages,
   fines, fees, signing bonuses, prizes and income, in consistent units
   (week, split, season). Today, per season: asks ×1.08
   (`CAREER_SALARY.inflationPerSeason`), prizes ×1.12 and new sponsor deals
@@ -232,8 +278,8 @@ Etapa 3 packages and coaches will add):
     at renewal; selling and trading up must work).
   - The harness is a regression check on fixed seeds, not a model of human
     play. The gate is a human playtest by Miguel and by newcomers.
-- DEV-01, the growth contract (direction decided by Miguel; parameters are
-  tuning):
+- ✅ DEV-01, the growth contract (rc.32, R55–R57: growth model 2, new careers
+  only; direction decided by Miguel; parameters are tuning):
   - a) rare generic prospects aged 13–15 with potential 93–98, in the
     historical eras too (today 0 %: `datasetEraPotentialCeiling` 88).
     Frequency configurable and measured by region, class and season,
@@ -272,7 +318,7 @@ Etapa 3 packages and coaches will add):
   rollover roll reaches 70 % from 28, half for stars). A retiring player
   either leaves the game or **becomes a coach**: real ex-pros then feed the
   DEV-03 coach market.
-- BAL-02: difficulty presets for the career, Easy / Normal / Hard (Normal
+- ✅ BAL-02 (rc.32, R59; Hard retuned, the filler cap provisional): difficulty presets for the career, Easy / Normal / Hard (Normal
   default), each moving matches (a small edge for the user on Easy, stronger
   opponents on Hard), money (starting budget) and how much of the training
   is guided. They replace the Management Style step in the wizard (one
@@ -296,7 +342,8 @@ Etapa 3 packages and coaches will add):
   the season **Worlds table** (regional + Major points). The focus stays
   on real orgs; generic teams (filler orgs and local sides) can take part
   too.
-- OBS-01: build the approved catalogue (`ANALYTICS-EVENTS-2.0.md`) in
+- ✅ OBS-01 (rc.32, #145: built, production only; the catalogue provisional
+  until Miguel approves it): build the approved catalogue (`ANALYTICS-EVENTS-2.0.md`) in
   `src/lib/analytics.ts`, fired from the store once per saved action.
   **Decided 29/10:** no analytics on staging/playtest for now (few players
   there). The events are verified by tests (a fake sink), and production
@@ -314,6 +361,12 @@ UX-02 (season goals), UX-03 (news, 50/50), UX-04 (creation), UX-05 (RTW
 achievements in the general list), UX-06 (unlocks, "New", contracts),
 CAL-01 and SUN-01..03. The written contract of DEV-03 starts now, so 2b
 never calibrates the old training model as if it were final.
+
+- **The written contracts (rc.32, proposals for Gate 3a):** DEV-03 →
+  `TRAINING-CONTRACT.md`, ECO-04 + ECO-05's caps → `SPONSOR-CONTRACT.md`,
+  UX-01 → `HQ-CONTRACT.md`: today against the contract with code
+  references, acceptance criteria, candidates with ranges, seven decisions
+  each, the order of work. No number moves before Miguel approves.
 
 - **DEV-03, a package per period** (direction approved): pick a routine for
   a period, see its benefit and cost, get the result at the end; training
@@ -457,8 +510,10 @@ plays it on staging.
 - BAL-03: does Worlds need more pressure than a Major?
 - UI-03: the 2.0 tutorial and what's new.
 - ART-01: era logos, new special art; decide the national-team art.
-- WEB-01: SEO and Search Console (with DRAFT-11).
-- WEB-02: performance (with the whole-run request budget).
+- WEB-01: SEO and Search Console (DRAFT-11 done in rc.32, #148: the PT pages
+  export `lang="pt-BR"` and PT chrome).
+- WEB-02: performance (the whole-run request budget done in rc.32, #149–#150:
+  56–59 of 75; `node scripts/request-budget.mjs`).
 - REL-01: a playtest by difficulty and region, plus mobile.
 - MKT-01 prep: the 50/50 presence and patch notes.
 
