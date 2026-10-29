@@ -1469,8 +1469,9 @@ export const CAREER_SALARY = {
    * "capFloor": ask = min(fresh ask, max(current wage × renewalRaiseCap,
    * fresh ask × renewalMarketFloor)), then the ambition premium and the
    * Blockbuster-refusal surcharge on top; a declining veteran renews at his
-   * lower fresh ask. rc.31 priced the plain fresh ask (renewalAskFor, no
-   * Blockbuster surcharge): switch back with "fresh".
+   * lower fresh ask. rc.31 priced the plain fresh ask (renewalAskFor):
+   * switch back with "fresh" (a refused Blockbuster's surcharge stays — the
+   * rc.32 fix of a surcharge that was never applied, R54/R58).
    */
   renewalRule: "capFloor" as "capFloor" | "fresh",
   /** M2, PROVISIONAL (30/10, decision 2-B): the raise cap — a renewal asks at most this × his current wage (contract range 1.3–2.0). */

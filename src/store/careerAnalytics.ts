@@ -19,7 +19,7 @@
 import { CAREER_CALENDAR, CAREER_SAVE, CAREER_SCOUT } from "@/config/balance";
 import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
-import { ageOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
 import type { CareerMilestoneKind, TrackedEvent } from "@/lib/analytics";
@@ -73,7 +73,8 @@ function clampLevel(level: number): ScoutLevel {
 
 /** Midpoint of the band the squad screen shows for this player. */
 function bandMidOf(save: CareerSave, p: SquadPlayer): number {
-  const band = scoutedBand(p.potential, p.overall, clampLevel(p.scoutLevel), save.careerSeed, p.id);
+  // The band the screens show: the save's development model (rc.32 review).
+  const band = scoutedBand(p.potential, p.overall, clampLevel(p.scoutLevel), save.careerSeed, p.id, growthModelOf(save.world));
   return (band.min + band.max) / 2;
 }
 
@@ -366,7 +367,14 @@ function scoutReports(prev: CareerSave, next: CareerSave, action: CareerAction):
     ? { overall: own.overall, potential: own.potential, age: ageOf(own.birthYear, seasonIndex) }
     : playerViewById(id, { careerSeed: next.careerSeed, seasonIndex, world: next.world });
   if (!view) return [];
-  const band = scoutedBand(view.potential, view.overall, clampLevel(Math.min(level, CAREER_SCOUT.reportMaxLevel)), next.careerSeed, id);
+  const band = scoutedBand(
+    view.potential,
+    view.overall,
+    clampLevel(Math.min(level, CAREER_SCOUT.reportMaxLevel)),
+    next.careerSeed,
+    id,
+    growthModelOf(next.world),
+  );
   return [
     {
       name: "career_scout_report",

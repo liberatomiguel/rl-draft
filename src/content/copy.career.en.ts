@@ -359,7 +359,7 @@ export const CAREER_EN = {
       cashNotice: (p: Record<string, string | number>) =>
         `A heads-up from the accountant: at ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays, and the books would cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next)} This is the cheap moment to act: list or sell a player, aim the squad at prize money, keep the next renewal in check${Number(p.backer) ? "" : ", or line up a bank loan"}.`,
       restructured: (p: Record<string, string | number>) =>
-        `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value, half of it to the debt` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}, and the balance` : "The balance"} is back at ${p.rescueTo}; you owe ${p.owed}. The squad plays on — the sub steps up, or a stand-in fills an empty seat. ${nextBreachEn(p.next)}`,
+        `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value${Number(p.garnished) > 0 ? ` (${p.garnished} of it went to the debt)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `The Backer topped the balance back up to ${p.rescueTo}` : `The balance stands at ${p.balance}`}; ${Number(p.owed) > 0 ? `you owe ${p.owed}` : "nothing is owed"}. The squad plays on — the sub steps up, or a stand-in fills an empty seat. ${nextBreachEn(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} answered your listing: ${p.fee} for ${p.player}. Accept it in the Market's deals tab before the window closes, or decline to keep him — declining ends the listing.`,
       sponsorOffers: () =>
@@ -1216,7 +1216,7 @@ export const CAREER_EN = {
       blockbusterBid: (p: Record<string, string | number>) =>
         `${p.org} moved with real intent for ${p.player}. History wants this transfer — you decide if it happens.`,
       restructured: (p: Record<string, string | number>) =>
-        `The org closed below the floor again and the Backer forced its hand${p.player ? `: ${p.player} heads to ${p.org}` : ""}. Reputation takes the hit; the books are topped back up. ${nextBreachEn(p.next)}`,
+        `The org closed below the floor again and the Backer forced its hand${p.player ? `: ${p.player} heads to ${p.org}` : ""}. Reputation takes the hit; ${Number(p.granted) > 0 ? "the books are topped back up" : "the sale covers the books"}. ${nextBreachEn(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} answered the listing with a formal offer for ${p.player}. Accept it before the window closes, or keep him.`,
       listed: (p: Record<string, string | number>) =>

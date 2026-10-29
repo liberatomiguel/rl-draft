@@ -153,7 +153,6 @@ import {
   repTierOf,
   runwayShortened,
   runwayWeeks,
-  runwayWeeksAfter,
   scoutReportCostFor,
   severanceFor,
   signableOverallCap,
@@ -605,13 +604,21 @@ function realDealSigned(save: CareerSave): boolean {
  * decision shorten the runway? `upfront` = its one-off cost, `weeklyCost` =
  * the weekly cost it adds (negative = a saving). False when the lock is off
  * (CAREER_LOAN.lockCommitments) or nothing is owed.
+ *
+ * Measured to the Backer's floor (the next breach), not to $0: the books
+ * spend most of an open Backer in the overdraft between $0 and the floor,
+ * where a runway to $0 reads 0 weeks before and after any commitment (rc.32
+ * review: the lock was off exactly when it mattered).
  */
 export function backerLocks(save: CareerSave, upfront: number, weeklyCost: number): boolean {
   if (!CAREER_LOAN.lockCommitments || !save.finances.loan) return false;
   const net = weeklyStatementOf(save).net;
-  const now = runwayWeeks(save.finances.balance, net);
-  const after = runwayWeeksAfter({ balance: save.finances.balance, weeklyNet: net, upfront, weeklyChange: -weeklyCost });
-  return runwayShortened(now, after);
+  const floor = backerLineOf(save).floor;
+  // Exact weeks of burn left above the floor (null = not burning): whole
+  // weeks would let a small commitment through without moving the count.
+  const room = (balance: number, weeklyNet: number): number | null =>
+    weeklyNet >= 0 ? null : (balance - floor) / -weeklyNet;
+  return runwayShortened(room(save.finances.balance, net), room(save.finances.balance - upfront, net - weeklyCost));
 }
 
 /**
@@ -1564,7 +1571,7 @@ function restructureAfterBreach(save: CareerSave): void {
   const top = [...save.squad].sort(
     (a, b) => b.salaryPerSplit - a.salaryPerSplit || b.overall - a.overall || a.id.localeCompare(b.id),
   )[0];
-  let sold: { player: string; org: string; fee: number } | null = null;
+  let sold: { player: string; org: string; fee: number; garnished: number } | null = null;
   if (top) {
     const buyer = fieldingBuyerFor({
       world: save.world,
@@ -1580,8 +1587,8 @@ function restructureAfterBreach(save: CareerSave): void {
         potential: top.potential,
         seasonIndex,
       });
-      sellSquadPlayer(save, top, fee, buyer, { lateSigning: false });
-      sold = { player: top.name, org: nameOfRef(save, buyer), fee };
+      const { garnished } = sellSquadPlayer(save, top, fee, buyer, { lateSigning: false });
+      sold = { player: top.name, org: nameOfRef(save, buyer), fee, garnished };
     }
   }
   const repBefore = save.reputation;
@@ -1595,6 +1602,12 @@ function restructureAfterBreach(save: CareerSave): void {
     player: sold?.player ?? "",
     org: sold?.org ?? "",
     fee: sold?.fee ?? 0,
+    // rc.32 review: what the sale and the Backer really did — the share that
+    // went to the debt (none once it was repaid), the top-up (none when the
+    // sale already covered the books) and the balance it left.
+    garnished: sold?.garnished ?? 0,
+    granted: topUp.granted,
+    balance: save.finances.balance,
     // The real drop: the shipped rep floor (repLossFloor) can make it smaller than restructureRepLoss.
     rep: Math.round(repBefore - save.reputation),
     rescueTo: line.rescueTo,
@@ -1665,6 +1678,35 @@ function runSplitBoundary(save: CareerSave): void {
 
   // Sponsor offers appear once the org has earned some standing.
   maybeOfferSponsors(save);
+}
+
+/**
+ * rc.32 (integration review): a squad player going back into the world (a
+ * sale, a release, an expired deal) must resolve there. Real players, world
+ * fillers and rookies do by id; a FOUNDER's "fic:{region}:starterN" id comes
+ * from no generator, so his record is kept in WorldState.formerSquad (and
+ * any stale world delta cleared: the record is his overall as he leaves).
+ */
+function keepInWorld(save: CareerSave, player: SquadPlayer): void {
+  const ctx = { careerSeed: save.careerSeed, seasonIndex: save.clock.seasonIndex, world: save.world };
+  if (save.world.formerSquad?.[player.id] === undefined && playerViewById(player.id, ctx) !== null) return;
+  const { name, country, region, birthYear, archetype, overall, attrOffsets, potential, peakAge, declineRate } = player;
+  save.world.formerSquad = {
+    ...(save.world.formerSquad ?? {}),
+    [player.id]: {
+      name,
+      ...(country !== undefined ? { country } : {}),
+      region,
+      birthYear,
+      archetype,
+      overall,
+      attrOffsets: { ...attrOffsets },
+      potential,
+      peakAge,
+      declineRate,
+    },
+  };
+  delete save.world.overallDelta[player.id];
 }
 
 function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: string): void {
@@ -1745,11 +1787,14 @@ function sellSquadPlayer(
   fee: number,
   toRef: string | null,
   opts: { lateSigning: boolean },
-): void {
+): { garnished: number } {
   save.squad = save.squad.filter((p) => p.id !== player.id);
   syncSquadRoles(save);
   // The buying org takes him (or he lands in their world roster slot).
-  if (toRef) forceTransferInWorld(save, player.id, toRef);
+  if (toRef) {
+    keepInWorld(save, player);
+    forceTransferInWorld(save, player.id, toRef);
+  }
   // v0.3 debt-lock fix: while the Backer loan is active, half the sale
   // amortizes the debt (line-itemized) — selling finally pays the Backer.
   const { fin, garnished } = applyTransferIncome(save.finances, fee, {
@@ -1794,6 +1839,7 @@ function sellSquadPlayer(
     },
   });
   if (opts.lateSigning) openLateSigning(save);
+  return { garnished };
 }
 
 /**
@@ -1807,7 +1853,11 @@ function openLateSigning(save: CareerSave): void {
   if (windowIdx === null) return;
   const { seasonIndex } = save.clock;
   const prev = save.lateSigning;
-  if (prev && prev.seasonIndex === seasonIndex && prev.windowIdx === windowIdx) return;
+  if (prev && prev.seasonIndex === seasonIndex && prev.windowIdx === windowIdx) {
+    // A second sale in the same window: still one late signing, for the seat left open.
+    save.lateSigning = { ...prev, squadAfterSale: Math.min(prev.squadAfterSale ?? save.squad.length, save.squad.length) };
+    return;
+  }
   save.lateSigning = {
     seasonIndex,
     windowIdx,
@@ -1816,17 +1866,21 @@ function openLateSigning(save: CareerSave): void {
       windowCloseDayFor(windowIdx as 0 | 1 | 2 | 3) + CAREER_TRANSFER.lateSigningDays,
     ),
     used: false,
+    squadAfterSale: save.squad.length,
   };
 }
 
 /**
  * rc.32 M8: is the late signing open today? After a window sale, between the
- * window's close and `untilDay`, unused — a free agent only (signingPlanFor).
+ * window's close and `untilDay`, unused, while the sold seat is still open
+ * (the squad no bigger than the sale left it) — a free agent only, never a
+ * swap (signingPlanFor).
  */
 export function lateSigningOpen(save: CareerSave): boolean {
   const late = save.lateSigning;
   if (!late || late.used || !CAREER_TRANSFER.listingEnabled || CAREER_TRANSFER.lateSigningDays <= 0) return false;
   if (late.seasonIndex !== save.clock.seasonIndex) return false;
+  if (late.squadAfterSale !== undefined && save.squad.length > late.squadAfterSale) return false;
   const day = save.clock.day;
   return day > windowCloseDayFor(late.windowIdx as 0 | 1 | 2 | 3) && day <= late.untilDay;
 }
@@ -2663,6 +2717,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     }
     if (p.contractEndSeason < nextSeason) {
       pushNews(save, { type: "org", priority: 2, titleKey: "playerLeft", params: { player: p.name } });
+      keepInWorld(save, res.player);
       save.world.freeAgentIds.push(p.id);
       continue;
     }
@@ -3143,6 +3198,8 @@ export function signingPlanFor(
   // rc.32 (M8, provisional): outside a window only the late signing a window sale opened.
   const lateSigning = !isWindowWeek(weekOfDay(save.clock.day));
   if (lateSigning && !lateSigningOpen(save)) return { error: "windowClosed" };
+  // rc.32 review: the late signing refills the sold seat — never a swap.
+  if (lateSigning && opts.releaseId) return { error: "windowClosed" };
   if (save.squad.some((p) => p.id === playerId)) return { error: "alreadySigned" };
   const leaver = opts.releaseId ? (save.squad.find((p) => p.id === opts.releaseId) ?? null) : null;
   if (opts.releaseId && !leaver) return { error: "invalid" };
@@ -3235,6 +3292,7 @@ function releaseFromSquad(save: CareerSave, player: SquadPlayer, severance: numb
   // A pending bid for him can no longer complete.
   save.pendingOffers = save.pendingOffers.filter((o) => o.playerId !== player.id || o.direction !== "out");
   pruneListings(save); // rc.32 (M8): nor can a listing
+  keepInWorld(save, player);
   save.world.freeAgentIds.push(player.id);
   save.world.version += 1;
   pushNews(save, {

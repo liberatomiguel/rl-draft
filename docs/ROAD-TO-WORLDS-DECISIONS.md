@@ -939,7 +939,15 @@ R54. **The age clock steps one year a season; the Blockbuster bid explained
      `blockbusterRefusalRenewalMult` (+10 %). That surcharge was declared
      since v0.2 but no caller passed it: declining or letting a Blockbuster
      expire now stamps the deal in force (`blockbusterRefusedUntil`), and its
-     renewal asks the 10 % more (`market.renewalAskFor`), once.
+     renewal asks the 10 % more (`market.renewalAskFor`), once. (c) The
+     integration review: an rc.31 save keeps growth model 1 (R55a), and model
+     1's growth multipliers and rollover decline are banded by age, so in
+     seasons 0–2 its players also develop and decline one age band later
+     than they did in rc.31 (weekly gain 0.15 → 0.12 at the band edge; a
+     rollover decline step rc.31 skipped). Kept on purpose: reading model 1
+     on the old first-year clock would bring back the two-year jump at
+     2022-23 → 2024 inside the curves. Only existing staging and playtest
+     careers meet it; a new career runs model 2 on the one clock.
 
 R55. **The growth contract: an individual arc, and potential is the expected
      peak (rc.32, Etapa 2b DEV-01b/d; direction decided by Miguel 29/10).**
@@ -948,6 +956,8 @@ R55. **The growth contract: an individual arc, and potential is the expected
      without it, every rc.31 career, keeps rc.31's development for life (its
      potentials, bands, curve, caps and rollover), so nothing it scouted,
      trained or signed moves on load and no overall jumps to "compensate".
+     Its curve reads R54's age clock, one age band later in seasons 0–2
+     (R54c).
      The key at 1 starts new careers on rc.31's model again. (b) Three
      separate dimensions, derived from (career seed, player id) and never
      rerolled by a signing, a sale, a renewal or a new club
@@ -1044,15 +1054,19 @@ R58. **Renewing your own players: a raise cap and a market floor (rc.32,
      at his lower fresh ask: the rule only ever lowers the price. It also
      spreads the repricing of an old cheap reserve contract (R47 removed the
      0.4 sub factor) over his renewals. (b) The Blockbuster surcharge was
-     declared but never applied (nothing passed `blockbusterRefused`):
-     declining a scripted Blockbuster bid now leaves
-     `save.flags["blockbusterRefused:<id>"]` (no new save field) and his
-     next renewal carries it. (c) The readout (EN + PT) states the rule, his
+     declared but never applied (nothing passed `blockbusterRefused`). Front
+     A fixed it too (R54); the integration kept ONE source, A's stamp on the
+     deal (`SquadPlayer.blockbusterRefusedUntil`, set on a decline or an
+     expiry, read by `market.blockbusterRefusalApplies`): `renewalAskFor`'s
+     `surcharges: false` prices the core ask without either surcharge, and
+     `renewalTermsFor` adds both on top, once. (c) The readout (EN + PT) states the rule, his
      market ask and the renewal ask, which bound priced it, and the
      ambition / Blockbuster lines: on Squad's renewal sheet and in the
-     Market's "My deals" tab (this season's expiring contracts). (d) Switch:
-     `renewalRule` "fresh" restores rc.31 exactly (the plain fresh ask, no
-     surcharge). (e) Measured on top of DEV-01, the same 147 careers (one
+     Market's "My deals" tab (this season's expiring contracts), with the
+     runway the renewal leaves (M4's `runwayWeeksAfter`, wired at the
+     integration). (d) Switch: `renewalRule` "fresh" restores rc.31's rule
+     (the plain fresh ask); a refused Blockbuster still surcharges it, which
+     is the bug fix (b), not part of M2. (e) Measured on top of DEV-01, the same 147 careers (one
      seed, 8 seasons): insolvent 71 → 61 % (Easy 49 → 43, Normal 80 → 69,
      Hard 84 → 71); payroll ÷ guaranteed income p50 3.97 → 3.18; the median
      payroll per split in seasons 3–5 64–75k → 53–57k; careers alive at S7
@@ -1112,6 +1126,30 @@ R59. **The career's own difficulty presets, and filler orgs capped at the
      (SAM 2, EU 4). Rejected: tuning Easy's edge down (it is rc.31's),
      zeroing the user's Hard chemistry reward, and capping the filler
      players instead of the org.
+
+R60. **The integration of Etapa 2b part 2, and the fixes from its
+     independent review (rc.32).** (a) Wired across fronts: the renewal
+     readout shows the runway the renewal leaves (R52 on R58); the wizard's
+     presets say what ends a career through money (`breachesToEnd`, R52 on
+     R59); one Blockbuster stamp (R58b); the moment-age table reads R54's
+     clock. (b) The Backer's commitment lock is measured to the floor in
+     exact weeks of burn (`backerLocks`): measured to $0 in whole weeks it
+     read 0 before and after any commitment in the overdraft, where an open
+     Backer spends most of its weeks, so it was off exactly when it
+     mattered. (c) A founder who leaves the squad stays in the world: his
+     "fic:{region}:starterN" id comes from no generator, so a sold founder
+     vanished and his buyer fielded a stand-in (since rc.31's accepted bids;
+     the restructurings and listings made it common). His record is kept in
+     `WorldState.formerSquad` (optional, additive) on a sale, a release or
+     an expired deal, and `playerViewById` resolves it: the buyer fields
+     him, and a released founder is a free agent like any other. (d) The
+     restructuring mail and news state what the sale and the Backer did
+     (the share to the debt, the top-up, the real balance), not "half to the
+     debt, back at the rescue line" whatever happened. (e) The late signing
+     refills the seat a window sale left open: not once the squad was
+     refilled inside the window, and never as a swap
+     (`LateSigningState.squadAfterSale`). (f) Analytics reads the potential
+     band of the save's development model, as the screens do (#145).
 
 ## Still open for Miguel (career mode)
 

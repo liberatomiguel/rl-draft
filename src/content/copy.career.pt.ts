@@ -352,7 +352,7 @@ export const CAREER_PT: CareerCopy = {
       cashNotice: (p: Record<string, string | number>) =>
         `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas cruzariam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next)} Agora é a hora barata de agir: anuncie ou venda um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
       restructured: (p: Record<string, string | number>) =>
-        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele, metade para a dívida` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}, e o saldo` : "O saldo"} volta a ${p.rescueTo}; a dívida é de ${p.owed}. O elenco segue jogando — o reserva sobe, ou um substituto ocupa a vaga vazia. ${nextBreachPt(p.next)}`,
+        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${Number(p.garnished) > 0 ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${Number(p.owed) > 0 ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando — o reserva sobe, ou um substituto ocupa a vaga vazia. ${nextBreachPt(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} responderam ao seu anúncio: ${p.fee} por ${p.player}. Aceite na aba de negociações do Mercado antes de a janela fechar, ou recuse para mantê-lo — recusar encerra o anúncio.`,
       sponsorOffers: () =>
@@ -1210,7 +1210,7 @@ export const CAREER_PT: CareerCopy = {
       blockbusterBid: (p: Record<string, string | number>) =>
         `${p.org} vieram com intenção real por ${p.player}. A história quer essa transferência — você decide se ela acontece.`,
       restructured: (p: Record<string, string | number>) =>
-        `A org fechou de novo abaixo do piso e o Investidor forçou a mão${p.player ? `: ${p.player} vai para ${p.org}` : ""}. A reputação sente; as contas voltam a ter fôlego. ${nextBreachPt(p.next)}`,
+        `A org fechou de novo abaixo do piso e o Investidor forçou a mão${p.player ? `: ${p.player} vai para ${p.org}` : ""}. A reputação sente; ${Number(p.granted) > 0 ? "as contas voltam a ter fôlego" : "a venda cobre as contas"}. ${nextBreachPt(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} responderam ao anúncio com uma proposta formal por ${p.player}. Aceite antes de a janela fechar, ou fique com ele.`,
       listed: (p: Record<string, string | number>) =>

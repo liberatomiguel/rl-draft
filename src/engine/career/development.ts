@@ -36,6 +36,7 @@ import type {
   DrillId,
   CareerPlayerView,
   DeclineRate,
+  FormerSquadPlayer,
   PotentialBand,
   ScoutLevel,
   SquadPlayer,
@@ -778,6 +779,29 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
 }
 
 /**
+ * rc.32 (integration review): a former founder of the user's squad, read off
+ * the record kept when he left (WorldState.formerSquad); world growth and
+ * decline move him through world.overallDelta like any generated player.
+ */
+function formerSquadView(id: string, p: FormerSquadPlayer, ctx: ViewCtx): CareerPlayerView {
+  return {
+    id,
+    kind: "fictional",
+    name: ctx.world.rookieNames?.[id] ?? p.name,
+    country: p.country,
+    region: p.region,
+    age: ageOf(p.birthYear, ctx.seasonIndex),
+    archetype: p.archetype,
+    overall: clamp(p.overall + (ctx.world.overallDelta[id] ?? 0), 60, 99),
+    attrOffsets: { ...p.attrOffsets },
+    potential: p.potential,
+    peakAge: p.peakAge,
+    declineRate: p.declineRate,
+    anchored: false,
+  };
+}
+
+/**
  * Procedural rookie (id "rook:{seasonIndex}:{region}:{n}"), generated at the
  * given season's intake. Potential rolls the pyramid; the "generational" top
  * tier is reachable only in the infinite era — the dataset era caps at
@@ -877,7 +901,12 @@ export function playerViewById(id: string, ctx: ViewCtx): CareerPlayerView | nul
   if (id.startsWith("fic:")) {
     const [, region, nRaw] = id.split(":");
     const n = Number(nRaw);
-    if (!REGION_SET.has(region) || !Number.isInteger(n) || n < 0) return null;
+    if (!REGION_SET.has(region)) return null;
+    if (!Number.isInteger(n) || n < 0) {
+      // rc.32: a founder who left the user's squad ("fic:{region}:starterN").
+      const former = ctx.world.formerSquad?.[id];
+      return former ? formerSquadView(id, former, ctx) : null;
+    }
     return fillerPlayerView(region as Region, n, ctx);
   }
 

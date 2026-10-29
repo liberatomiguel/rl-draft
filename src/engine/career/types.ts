@@ -208,7 +208,22 @@ export interface WorldState {
    * it for life, so nothing they scouted or built moves).
    */
   growthModel?: number;
+  /**
+   * rc.32 (integration review): the user's former FOUNDERS, kept as they
+   * left the squad (a sale, a release, an expired deal). Their
+   * "fic:{region}:starterN" ids come from no world generator, so without
+   * this a sold founder vanished and his buyer fielded a stand-in (since
+   * rc.31's AI bids; rc.32's restructurings and listings made it common).
+   * Optional and additive: absent = none.
+   */
+  formerSquad?: Record<string, FormerSquadPlayer>;
 }
+
+/** A former founder as he left the user's squad (WorldState.formerSquad). */
+export type FormerSquadPlayer = Pick<
+  SquadPlayer,
+  "name" | "country" | "region" | "birthYear" | "archetype" | "overall" | "attrOffsets" | "potential" | "peakAge" | "declineRate"
+>;
 
 // ---------------------------------------------------------------------------
 // Calendar & competition
@@ -541,6 +556,12 @@ export interface LateSigningState {
   windowIdx: number;
   untilDay: number;
   used: boolean;
+  /**
+   * rc.32 (integration review): the squad size the window's sale left. The
+   * late signing refills THAT seat: once the squad is back above it (a
+   * signing inside the window) there is no sold seat left to refill.
+   */
+  squadAfterSale?: number;
 }
 
 /**
