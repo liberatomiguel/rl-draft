@@ -18,7 +18,8 @@
  *  - home: the raw HTML and the hydrated chrome are in the URL's language (DRAFT-11);
  *  - classic (PT): /pt sets the saved language, then a whole Classic run to the results;
  *  - career: /career → Quick start → the presets step (labels, the money row) → found →
- *    HQ → a week of "+1 day" (a weekly decision card is answered with its first option)
+ *    HQ → a week of "+1 day" (a weekly decision card is answered with its first option; rc.34:
+ *    HQ's decision block — the coach's training proposal on Normal — is approved)
  *    → Finances (no founding partner, rc.33), Market (the reputation filter; no sale
  *    listing in the deals tab, rc.33), Squad, Training, Standings,
  *    Calendar, News, each in the right language.
@@ -42,13 +43,13 @@ const L = {
     playNow: /^Play now/, startDraft: /^Start Draft$/, reroll: /^Free reroll/, startT: /^Start Tournament$/, skip: /^Skip to end$/,
     results: /^View results$/, quick: /^Quick start$/, next: /^Next$/, found: /^Found /, presets: ["Easy", "Normal", "Hard"],
     moneyRow: "bank loan", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
-    signable: "Signable at my reputation",
+    signable: "Signable at my reputation", approve: /^Approve$/,
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
     results: /^Ver resultados$/, quick: /^Início rápido$/, next: /^(Próximo|Avançar)$/, found: /^Fundar /, presets: ["Fácil", "Normal", "Difícil"],
     moneyRow: "empréstimo", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
-    signable: "Contratáveis com minha reputação",
+    signable: "Contratáveis com minha reputação", approve: /^Aprovar$/,
   },
 };
 const DIALOG_PREF = [/^let's (play|go)$/i, /^vamos (jogar|lá)/i, /^start season 1$/i, /^continue$/i, /^continuar$/i, /^got it/i, /^entendi/i, /^next$/i, /^próximo$/i, /^skip$/i, /^pular$/i, /^close$/i, /^fechar$/i, /^ok$/i];
@@ -242,13 +243,22 @@ async function scenarioCareer(browser, viewport, locale) {
     await dismiss(page, mobile);
     await shot(page, `${tag}-hq`);
     // Advance a week, day by day (Monday payroll lands on the way).
-    for (let d = 0; d < 14; d++) {
+    for (let d = 0; d < 18; d++) {
       await dismiss(page, mobile);
       // A weekly decision card (R33/R37) blocks the clock: take its first option.
       const option = page.locator("main button.min-h-24:visible").first();
       if (await option.count()) {
         await press(option, mobile).catch(() => {});
         checks.push({ step: `${tag} answered a decision card`, ok: true });
+        await sleep(700);
+        continue;
+      }
+      // rc.34 (UX-01, R71): HQ's decision block holds the clock — on Normal the coach's
+      // training proposal waits on each period's first Monday.
+      const approve = page.locator("main").getByRole("button", { name: C.approve }).first();
+      if (await approve.count()) {
+        await press(approve, mobile).catch(() => {});
+        checks.push({ step: `${tag} approved the coach's training proposal`, ok: true });
         await sleep(700);
         continue;
       }

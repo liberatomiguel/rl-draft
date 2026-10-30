@@ -9,34 +9,32 @@
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.33**
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.34**
   (`staging.rocketdraft.app`: career on, noindex, preview tools on, no
   analytics). **Never deploy v2.0 to `main` before the full review.**
-- Road to Worlds (career): `ROAD-TO-WORLDS-STATUS.md`. If a push to `staging`
-  does not trigger the `rocket-draft-staging` Workers Build, check its GitHub
+- Career: `ROAD-TO-WORLDS-STATUS.md`. A push to `staging` that does not
+  trigger the `rocket-draft-staging` Workers Build: check its GitHub
   connection / watch paths.
 
 ## What v2.0 contains
 
 The Season reset and Season Rating, accounts v2, missions, login streak,
 event cards, Profile/Leaderboard/Home v2, Daily Quiz, Challenges 2.0,
-cosmetics, the database expansion, Road to Worlds 2.0 and the completion
-plan's Etapas 1, 2a and 2b (rc.27–33; `ROADMAP.md` "Done", CHANGELOG), plus
-Etapa 4's COL-01/COL-02 (the national album, rc.33).
+cosmetics, the database expansion, Road to Worlds 2.0, the completion plan's
+Etapas 1–2 and most of 3 (rc.27–34), and Etapa 4's national album (rc.33).
 
 ## Where the completion plan stands
 
-- **Etapa 1 + 1b: done** (rc.27–29). **Gate 1:** answered by Miguel's 28/10
-  plan.
-- **Etapa 2a: done** (rc.30 + rc.32) except ENG-03's fixtures from real
-  exported saves.
-- **Etapa 2b: built** — rc.31 (R46–R49), rc.32 (R50–R60), **rc.33** (R61–R70:
-  Miguel's 30/10 answers and the integration's renewal tuning; re-measured
-  in `ECONOMY-CONTRACT.md` §10). **Gate 2** waits on Miguel's play
+- **Etapas 1–2: built** (rc.27–33; ENG-03's fixtures from real saves
+  open). **Gate 2** waits on Miguel's play.
+- **Etapa 3: built in rc.34** (R71–R80): training packages (DEV-03),
+  sponsors (ECO-04/05), HQ around the next decision (UX-01), "New" markers and
+  contracts (UX-06), and Miguel's 31/10 answers on rc.33 (the bank's loan and
+  its deadline, the talk, the difficulty step). Re-measured in
+  `ECONOMY-CONTRACT.md` §11. **Gate 3b** waits on Miguel's play
   (`ROADMAP.md` "Waiting on Miguel").
-- **Gate 3a: approved** (30/10). **Next: Etapa 3 as rc.34** — DEV-03
-  (training packages), ECO-04/05 (sponsors), UX-01 (HQ around the next
-  decision) and UX-06 ("New" markers, contracts).
+- **Next in Etapa 3:** UX-02 (season goals), UX-03 (news, 50/50), UX-04
+  (creation), UX-05 (achievements), CAL-01, SUN-01..03.
 
 ## Open before `main`
 
@@ -44,34 +42,36 @@ Etapa 4's COL-01/COL-02 (the national album, rc.33).
   production SQL (§6-B — its freeze trigger goes in at the cutover if any v1.x
   client signs in); C freeze the pre-season board; D grants; E Cloudflare vars
   + resubmit the sitemap.
-- **Manual regression on staging** (V2 plan §7) plus the rc.29–rc.33 lists in
+- **Manual regression on staging** (V2 plan §7) plus the rc.29–rc.34 lists in
   `ROADMAP.md`. Lighthouse; event-card curation; a PT pass; the v2.0 player
   notes.
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **1167** tests (+9 opt-in tools
+- `npm run typecheck` clean · `npm test` **1331** tests (+10 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).
-- A change to a `balance.ts` value bumps `BALANCE_VERSION` (now 3):
-  `balanceVersion.test.ts` prints the new fingerprint.
+- A `balance.ts` value change bumps `BALANCE_VERSION` (now 4;
+  `balanceVersion.test.ts` prints the fingerprint). A version bump touches
+  `package.json`, `package-lock.json` and `src/config/site.ts`; run the full
+  suite after it.
 - Data or pool changes: `difficulty.matrix.test.ts` (`SIM_MATRIX=1`) before and
   after; `challenges.tune.test.ts` (`CH_TUNE=1`) if challenges leave their
   bands (#136–#137). Shared-sim changes regenerate the golden master only with
   a CHANGELOG-documented decision.
 - Career sweeps before and after any economy or growth change:
-  `CAREER_ECON=1` (294 careers, ~30 min in four processes by
-  `ECON_REGIONS`), `CAREER_ARC=1` / `CAREER_CURVES=1`, `CAREER_GROWTH=1`
-  (never set `CAREER_ARC` with `ARC_REPORT`: it replays the sweep).
+  `CAREER_ECON=1` (294 careers, ~37 min in four processes by
+  `ECON_REGIONS`), `CAREER_ARC=1` (alone on the machine: its bot stops a
+  career at 120 s; never with `ARC_REPORT`), `CAREER_GROWTH=1`,
+  `CAREER_TRAINING=1`.
 - Browser E2E of an rc: `node scripts/e2e-smoke.mjs` (home, a PT Classic run,
-  a career's first week; desktop + mobile, EN + PT) on the export served by
+  a career's first weeks; desktop + mobile, EN + PT) on the export served by
   `wrangler dev`.
-- Perf reference (rc.33, a staging-like Turbopack export, `node
-  scripts/request-budget.mjs`): cold home **26** requests; a whole Classic run
-  from a cold home **57–60**, desktop and mobile (budget 75; rc.32 56–59). The
-  dataset chunk (62 KB gz) loads on game pages only; home first-load JS 288 KB
-  gz.
+- Perf (rc.34, staging-like export, `node scripts/request-budget.mjs`):
+  cold home **26** requests, a whole Classic run **57–60** (budget 75; as
+  rc.33). The dataset chunk (62 KB gz) loads on game pages only; the home's
+  scripts are 340 KB gz (rc.33 339).
 
 ## Standing facts
 

@@ -1,6 +1,12 @@
 # Road to Worlds — the training contract (DEV-03)
 
-> **PROPOSAL — waiting for Miguel's approval (Gate 3a).** ROADMAP Etapa 3,
+> **APPROVED (Gate 3a, 30/10: decisions 1–7 A) and BUILT in rc.34**
+> (ROAD-TO-WORLDS-DECISIONS R74–R75, R80; the values are Claude's, behind
+> `CAREER_PLAN`, `CAREER_SCRIM`, `CAREER_COACH_MARKET` and
+> `CAREER_TRAINING`, tested at Gate 3b). The proposal below is kept as
+> written.
+>
+> *Original status:* PROPOSAL — waiting for Miguel's approval (Gate 3a). ROADMAP Etapa 3,
 > DEV-03 (direction approved 28/10: a package per period). **No code, number
 > or save shape changes until Miguel approves.** Written at rc.31 (`staging`
 > a187654) in the form of `ECONOMY-CONTRACT.md`, against the ROADMAP's spec

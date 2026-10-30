@@ -1,6 +1,12 @@
 # Road to Worlds — the sponsor contract (ECO-04, with ECO-05's caps)
 
-> **PROPOSAL — waiting for Miguel's approval (Gate 3a).** ROADMAP Etapa 3,
+> **APPROVED (Gate 3a, 30/10: decisions 1–5 A, 6-B, 7-A, adjusted to
+> ECO-07/08) and BUILT in rc.34** (ROAD-TO-WORLDS-DECISIONS R76, R80; the
+> values are Claude's, behind `CAREER_SPONSOR`, tested at Gate 3b). Since
+> rc.33 no career opens with a founding partner: (f) and S6 apply only to an
+> rc.32 career still running one. The proposal below is kept as written.
+>
+> *Original status:* PROPOSAL — waiting for Miguel's approval (Gate 3a). ROADMAP Etapa 3,
 > ECO-04 (sponsors) and the caps of ECO-05 (other income). It lives inside
 > `ECONOMY-CONTRACT.md`: its bands (§3), its money index (M1), the founding
 > partner (M3) and the guaranteed-income bases (M7, which decision 9-B tunes
@@ -47,7 +53,10 @@ on M1's index at offer time; a signed deal keeps its figures (so a long deal
 hedges the index); bands b3 (payroll ÷ guaranteed income) and b4 (prize
 share) hold.
 
-**(f) The founding partner hands over without a cliff.**
+**(f) The founding partner hands over without a cliff.** *(rc.34, adjusted
+to ECO-07/08:)* where a founding partner still runs, it hands over without a
+cliff. Since rc.33 no career opens with one, and Easy's rescue partner (rc.34:
+the investor on the first emergency loan) does not taper.
 
 **(g) Other income is capped and costs agenda time.** It never counts as
 guaranteed income.
@@ -200,7 +209,15 @@ deal at season-0 money, on the candidates above):
 
 PT rows: Estabilidade · Retorno total · Duração · Risco · Meta.
 
-**S6. The founding partner's handover (M3).** M3, being built in 2b part 2
+**S6. The founding partner's handover (M3).** *Built in rc.34:* only an
+rc.32 career still running a founding partner (`honourRunning`) hands over.
+Once its end condition is met (past season index 1 with a real deal), it pays
+⅔ of its indexed base for one split, then ⅓ for one split, then ends
+(`founding.taper`; `[]` restores the cliff). The steps land on boundary
+Mondays; a mail gives both dates when the handover begins, and the decision
+card and Finances show it with the net weekly change. Band: each step ≤ ⅓ of
+the full pay at that Monday's index, plus rounding; measured 0.36.
+*As proposed:* M3, being built in 2b part 2
 as a provisional default: a tier-0 deal from day one paying 0.7 × the
 founding wage bill per split, indexed, until the first real deal and at
 least through season index 1. *Formula:* a Normal balanced roster costs $500

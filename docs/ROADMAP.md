@@ -6,7 +6,7 @@
 > growth, training and HQ decided). Neither file is in the repo; "plan §N"
 > cites the 28/10 update, and its new requirements are written into the
 > Etapas below by ID. "V2 plan" is `V2-IMPLEMENTATION-PLAN.md`. Last updated
-> **2026-10-29**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
+> **2026-10-30**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
 > this file for a stage or an ID; it is not meant to be read whole.
 
 ## How the stages run
@@ -43,8 +43,8 @@
 | 1 | M1 rules | Swiss, weekend calendar, match timeline, lint | ✅ rc.27–28 |
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
-| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a rc.30 + rc.32; 2b rc.31 + rc.32; 2b part 3 next (Miguel's 30/10 answers) |
-| 3 | M3 | The new RTW loop (contract first) | |
+| 2 | M0 rest + M2 | Instruments, then a sustainable career | ✅ built: 2a rc.30 + rc.32; 2b rc.31–rc.33 (Gate 2: Miguel's play) |
+| 3 | M3 | The new RTW loop (contract first) | ▶ rc.34: DEV-03, ECO-04/05, UX-01, UX-06 + the 31/10 answers; UX-02–05, CAL-01, SUN-01..03 next |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
 | 6 | M6 | Freeze, migration, cutover, launch | |
@@ -165,6 +165,27 @@ fronts, the integration's tuning, two independent reviews):**
   titles raise the renewal (M6 lever 3). The reviews' fixes (R70).
   Re-measured in the economy contract's §10.
 - Pulled forward from Etapa 4: COL-01 and COL-02 (#151–#154).
+
+**Etapa 3, rc.34 (Gate 3a's three contracts, and Miguel's 31/10 answers on
+rc.33 — five parallel fronts, three independent reviews):**
+- HQ around the next decision (R71–R73): one decision queue for every clock
+  path (UX-01a, HQ 1-B), the blocks from engine truth (UX-01b–f), "New" per
+  career save and the contract clock (UX-06), skipping a regional with a
+  short squad (RTW-06).
+- Training (R74–R75): a package per 28-day period with its projection and
+  report, three scrim levels, delegation by preset, distinct coaches
+  (DEV-03).
+- Sponsors (R76): three profiles in one comparison, dated goals by their
+  word, fines on Balanced and Bold, money scaled to the team's level,
+  ECO-05's cap, the founding partner's handover for rc.32 careers (ECO-04,
+  ECO-05).
+- Money (R77–R78): the bank's emergency loan with a deadline and caps, the
+  investor on Easy's first loan, the money modal, no lock while owing
+  (ECO-13/14/15); every founding roster carries its first split (BAL-05).
+- The talk and the difficulty step (R79): every lever moves or says why
+  (ECO-16), a prize share only above 79 (ECO-17), the difficulty step
+  rewritten (UX-08). The integration and the reviews' 21 fixes (R80).
+  Re-measured in the economy contract's §11.
 
 ## Deferred (owner Etapa)
 
@@ -524,7 +545,12 @@ never calibrates the old training model as if it were final.
   state; they clear when the content is opened, not when a tab is
   visited; urgent items (contracts) above cosmetics.
 
-- **rc.34 additions — Miguel's first rc.33 run (31/10):**
+- **Built in rc.34** (R71–R80; "Done" above): DEV-03, ECO-04/05, UX-01,
+  UX-06 and the 31/10 additions below. **Not built yet, next in Etapa 3:**
+  UX-02 (season goals), UX-03 (news and 50/50), UX-04 (creation), UX-05
+  (RTW achievements in the general list), CAL-01 (the calendar) and
+  SUN-01..03 (the weekend).
+- **rc.34 additions — Miguel's first rc.33 run (31/10), built in rc.34:**
   - ECO-13, the rescue is a bank loan: a breach brings the bank's emergency
     loan (the money), never an "investor"; an investor may come with the
     first loan and help the income lightly; a modal says what happened.
@@ -644,72 +670,92 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**Gate 2 — what to play on rc.33** (desktop and mobile, EN and PT). Start
-**new careers**: an rc.32 career keeps a running founding-partner deal to its
-end and reads rc.33's breach rules from its next breach.
-- Creation: the preset step's three lines (matches; money — the third /
-  second / first cash breach ends the career; day to day); the wizard's
-  potential bands match HQ's.
-- Day one: no founding partner. EU or NA: the first sponsor in season 0 —
-  cup semi-finals from seed 3 or lower and two Swiss wins in a qualifier from
-  outside the eight pay reputation ("An underdog's run" in the digest), below
-  reputation 25.
-- Money: on Easy, overspend to the warnings → breach 1 brings the Backer and
-  the Overtime Fund (the mail's weekly amount, the Finances card, the
-  statement line; the warnings' week counts its end) → breach 2 a second
-  rescue → breach 3 ends it. Normal: breach 2 ends it. Hard: no Backer,
-  breach 1 ends it (the deal warning says "likely ends the career").
-- Finances: tap the sparkline → the expanded chart (drag or arrow keys, the
-  per-season table), at 360 px.
-- Market: "Signable at my reputation"; a signing with four players warns and
-  links to Squad; no "List for sale"; a plain bid against a Blockbuster bid
-  (the sentence only on the Blockbuster).
-- The contract talk, on a signing and a renewal: every wage press moves the
-  weekly wage; a higher prize share lowers his wage; below his zone he
-  counters, and "Take his counter" signs; Sign stays off until he accepts.
-- Season 1's renewals (W23–24): the readout's rule (×1.5, never under 50 %
-  of his market ask, at most ×2.5 in one renewal) and "+X % for the titles he
-  won with you". A podium: the players' share line, per contract.
-- Potential: veterans' and stars' bands (5 wide at most, never far above),
-  the phase tag after a report.
-- World: the rollover into 2021-22 (Karmine Corp enters; an "org leaves"
-  line); few known free agents in seasons 0–1.
-- A full squad: release a player mid-week → the clock holds on the eve (HQ:
-  Market, Squad, Pass for a cup); a free agent signs outside the window (the
-  cheapest one even when broke); a short squad cannot scrim.
-- Match difficulty: Normal a bit harder than rc.32 (65 % at equal rating,
-  was 71 %), Easy 81 %, Hard 56 %.
-- Collection: find a national team (its album page and a "New album page"
-  toast, no cards); draft one of its cards and finish the run (the ceremony,
-  the album); abandon a run (the discovery stays, no card); NEW on unowned
-  cards in the draft; the national org card's frame; the "New" dots (nav,
-  home, album tabs, Challenges) clear when the content is opened; an old
-  profile shows nothing new.
-- `/pt` as in rc.32; rc.31's list where not played (promote; the bank loan
-  and "Pay it all"; no bid in weeks 1–2; the Major and Worlds tables; final
-  seasons, retirements, a 13-year-old free agent).
+**Gate 2 + Gate 3b — what to play on rc.34** (desktop and mobile, EN and
+PT). Start **new careers**. An older save loads too: an open Backer debt
+becomes the bank's loan, due from the update; training restarts on the base;
+a pending sponsor offer becomes an rc.34 decision.
+- Creation: the difficulty step (a promise and three plain bullets; the
+  money line says whether the bank lends, how many loans and the deadline);
+  the roster step's "Start budget" and the weeks of wages it covers; the
+  veterans roster through its first split on Normal.
+- HQ: one main block — the decision that waits, or the clock — with the
+  "Also" line. Nothing walks past a needed decision (+1 day, the batched
+  Advance, the autoplay, Championship Sunday, a reload); "Later" only on bids
+  and sponsor offers, up to their deadline. An invite shows inline and stops
+  the batched Advance once. The squad as Draft cards, the seeding line, the
+  finance block (the chart opens larger), the toolbox's confirm sheet, the
+  bootcamp lasting the split.
+- Training: on Normal the coach proposes on each period's first Monday
+  (approve, adjust, keep the base); the builder's projection; the three scrim
+  levels; the period report; a coach's hire card (quality, experience,
+  specialty; an ex-pro). Easy: the coach runs it. Hard: you set it, with
+  Repeat.
+- Sponsors: the three cards (Steady, Balanced, Bold) at 360 px in EN and PT;
+  "Later", then the deadline holds the clock; a missed Balanced or Bold goal
+  → the fine on Finances; Bold's milestone payment; a Steady deal with three
+  misses renews a tier lower; no fines on Easy.
+- Money: overspend below the floor → the modal (the bank's loan; on Easy the
+  investor too); the warnings at 8, 4 and 1 weeks with the projection; sign a
+  player while owing; "Pay it all"; reach the deadline without the money →
+  the career ends. Hard's first breach is now a 24-week loan.
+- The contract talk: every lever moves or says why; a prize share only from
+  80 up (none for founders).
+- A short squad: release a player → "Skip this regional" (or sign a free
+  agent outside the window).
+- "New": dots on Squad and Finances, the unlock modal once; the contract
+  clock on the squad cards, reminders in weeks 28 and 31, the review before
+  the rollover.
+- From rc.33, where not played yet: the expanded balance chart, the
+  reputation filter, renewals (the ×2.5 cap, the title raise), the potential
+  bands, the 2021-22 rollover (Karmine Corp), match difficulty, the national
+  album.
 
-**Decide (rc.33):**
-1. The album's pacing: a card per find needs about 420 Classic runs for the
-   worldwide album (150–180 in rc.32). Keep it, or raise
-   `nationalTeamChance` / weight found-but-incomplete teams? And the card
-   at the run's end (built: one rule for every special, no farming) or at
-   the pick?
-2. Hard in EU and NA: the first breach ends the career (ECO-08), and the
-   engaged and spending policies still break there (§10). Keep it as Hard's
-   identity, or soften Hard's start (budget, sponsor multiplier)?
-3. The snowball at the top (hands-off careers in APAC and SSA banking many
-   seasons of payroll): leave it to Etapa 3's sponsors (ECO-04: goals,
-   fines, performance pay) and then the wage budget (M6 lever 4)?
-4. DEV-04's band: with a top at most 2 above the truth and a width of 5, the
-   truth always sits in the band's top three points. Keep it, or narrow the
-   band instead?
-5. The "New" markers stay on the device (not synced). OK?
+**Decide (rc.34):**
+1. **Hard's first breach** is now a 24-week loan (one loan a career). Keep
+   it, or restore "Hard ends at the first breach" (`breachesToEnd.hard: 1`)?
+2. **The loan's numbers:** deadlines 64 / 48 / 24 weeks, 20 % interest,
+   three top-ups, 3 / 2 / 1 loans a career; the investor only on Easy (20 %
+   of the wage bill for 10 weeks). Keep them, or the investor on Normal too?
+3. **Bold sponsors' fines:** careers that only take Bold deals go over the
+   season-fines band in 24 % of seasons (band 10 %). A: accept it as Bold's
+   risk; B: Bold's fine 0.5 → 0.35; C: a season's fines at most two weeks of
+   payroll.
+4. **EU on Normal:** 36 % of its careers (5 of 14) end on the loan's
+   48-week deadline — the spender, tuned, badSponsor and coachChurn bots,
+   owing 0.6–1.4 seasons of wages; the band is 20 % a region (the other six
+   regions: 0–7 %). A 64-week term only moves four of the five endings 16
+   weeks later (measured). A: keep it — the newcomers do not break there,
+   these are the spending bots in the hardest region (recommended); B: a
+   last-chance extension when half the debt is repaid; C: more guaranteed
+   income in EU (against contract (f): the same money rules everywhere).
+5. **The snowball at the top** (hands-off careers in weak regions bank many
+   seasons of payroll; p90 14.9 / 8.6 / 6.8, flat since rc.33): the sponsors'
+   level scale does not reach them. Next lever: the wage budget (M6 lever 4)
+   or a steeper level scale?
+6. The album's pacing (about 420 Classic runs for the worldwide album), and
+   the card at the run's end or at the pick (rc.33's decision 1).
+7. DEV-04's band: the truth always sits in the band's top three points.
+   Keep it, or narrow the band (rc.33's decision 4)?
+8. The "New" markers (the album's and the career's) stay on the device,
+   not synced. OK?
+9. **The older roster later on:** its first split is fixed (all 42
+   measured careers carry it), but hands-off its veterans retire in seasons
+   3–4 and the costly refill ends 43 / 64 / 86 % of those careers in seasons
+   5–7. A retirement warning and a cheaper rebuild path: now, or with
+   Etapa 5's calibration?
+
+**Answered 31/10 (Miguel's first rc.33 run), built in rc.34:** the rescue is
+the bank's loan with a deadline (ECO-13, ECO-15), an investor only with the
+first loan, a modal, no lock while owing (ECO-14); "Skip this regional" with
+a short squad, and a free agent outside the window (RTW-06, R67); the
+difficulty screen again (UX-08); the talk's levers (ECO-16); a prize share
+only for higher overalls (ECO-17); the veterans roster's first split
+(BAL-05).
 
 **Answered 30/10 (Gate 3a):** the three Etapa 3 contracts as recommended —
 training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A — with the sponsor
-contract adjusted to ECO-07/08 (no day-one founding partner). Etapa 3 is
-built on rc.33 as rc.34.
+contract adjusted to ECO-07/08 (no day-one founding partner). Built in
+rc.34.
 
 **Answered 30/10 on rc.32** (the work is Etapa 2's "2b part 3"): 3-A
 rejected (ECO-07: a rescue partner at the first breach on Easy/Normal

@@ -1,6 +1,11 @@
 # Road to Worlds — the HQ contract (UX-01)
 
-> **PROPOSAL — waiting for Miguel's approval (Gate 3a).** ROADMAP Etapa 3,
+> **APPROVED (Gate 3a, 30/10: decisions 1-B, 2–7 A) and BUILT in rc.34**
+> (ROAD-TO-WORLDS-DECISIONS R71–R73, R80; `CAREER_HQ`, the decision queue
+> `store/careerDecisions.ts`; tested at Gate 3b). The proposal below is kept
+> as written.
+>
+> *Original status:* PROPOSAL — waiting for Miguel's approval (Gate 3a). ROADMAP Etapa 3,
 > UX-01 a–f: the HQ around the next decision. The asks themselves were
 > decided in the 28/10 plan ("the HQ and profile asks" are not re-asked);
 > this contract fixes how they are built and how each is checked. **No code

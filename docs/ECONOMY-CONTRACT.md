@@ -22,6 +22,17 @@
 > (ECO-12), M6's fixed share replaced by a share per contract (ECO-10), M7
 > built (9-B), 2-B kept with a ×2.5 jump cap and M6 lever 3 shipped (R69).
 > The other values are Claude's call, tested at Gate 2.
+>
+> **rc.34 (Etapa 3 and Miguel's 31/10 answers on rc.33):** the breach count
+> gives way to the bank's emergency loan with a deadline (ECO-13/15: due in
+> 64 / 48 / 24 weeks, at most 3 / 2 / 1 loans a career and three top-ups;
+> `breachesToEnd` null), the investor joins Easy's first loan only, nothing
+> is locked while owing (ECO-14), the start budget covers 44 / 24 / 13 weeks
+> of the founding roster's wages (BAL-05), sponsors carry profiles, dated
+> goals and fines with money scaled to the team's level (ECO-04, the
+> snowball's brake), other income is capped (ECO-05), and only players above
+> 79 ask a prize share (ECO-17). §2(a) now reads "a newcomer playing normally
+> never reaches a deadline he cannot pay". Re-measured in §11 (R76–R80).
 
 ## 1. Why a contract
 
@@ -584,6 +595,100 @@ How to read it:
   while owing, a modal at the breach, and a check of the veterans roster
   (he went broke in the first split with it; no bot policy plays it
   hands-off). Built in rc.34 and re-measured here as §11.
+
+## 11. The rc.34 re-measure — Etapa 3 and Miguel's 31/10 answers
+
+Same probe, same 294 careers (seeds 9100 and 17019, 8 seasons) as §8–§10, on
+rc.34 (`6cde0db`): the bank's emergency loan with its deadline and caps
+(ECO-13/15: 64 / 48 / 24 weeks, 3 / 2 / 1 loans, three top-ups), the investor
+on Easy's first loan, no lock while owing (ECO-14), the start budget by
+roster (BAL-05), sponsors with profiles, dated goals, fines and money scaled
+to the team's level (ECO-04), ECO-05's cap, a prize share only above 79
+(ECO-17), the talk's minimum zone (ECO-16), training packages (DEV-03) and
+the split-long bootcamp. Full tables: `ECONOMY-PROBE-rc34.md` (about 37 min
+in four processes split by `ECON_REGIONS`). Easy / Normal / Hard unless
+noted.
+
+| | rc.33 | rc.34 | band (§3) |
+|---|---|---|---|
+| Insolvent, mean over the 7 policies (a1) | 0 / 6 / 30 % | **1 / 6 / 16 %** | ≤ 2 / 10 / 25 % |
+| Newcomer policies insolvent (a2) | 0 / 2 / 26 % | **0 / 2 / 12 %** | 0 / ≤ 5 / ≤ 20 % |
+| Newcomers' S0–S1 pay their way without a big win (a7) | 100 / 100 / 93–100 % | 93–100 / 71–100 / 79–100 % | ≥ 80 / 60 / 40 % |
+| Rescued (a loan opened) · topped up | 8 · 1 / 26 · 0 / 0 · 0 % | 6 · 1 / 14 · 6 / 21 · 1 % | — |
+| Ended on the loan's deadline · the bank collected | — | 1 · 0 / 6 · 3 / 14 · 3 % | — |
+| The first cash warning before a rescue, p50 | — | 27 / 27 / 31 weeks | ≥ 8 weeks |
+| Normal by region: NA · EU · SAM · MENA · OCE · APAC · SSA (f1) | 14 · 14 · 7 · 7 · 0 · 0 · 0 % | **0 · 36 · 0 · 7 · 0 · 0 · 0 %** | ≤ 20 % |
+| Renewal raise p50: developed founders · signed at ≤ 19 (d1) | ×2.00 · ×2.49 | ×2.00 · ×2.21 | ≤ ×1.6 |
+| A renewal's new ask ÷ guaranteed income, p50 (d1) | 0.37 | 0.34 | ≤ 1.5 |
+| Payroll ÷ guaranteed income, p50, Normal, S0 · S1–S7 (b3) | 2.7 · 1.1–1.7 | 2.8 · 1.2–2.1 | 1.0–2.0 |
+| *Money still decides:* the spender insolvent (d2) | 0 / 21 / 79 % | 7 / 21 / 36 % | — |
+| Season-rows with a tight Monday, S3–S5 (e3) | 23 / 26 / 29 % | 16 / 22 / 34 % | ≥ 10 / 20 / 30 % |
+| A 90's wage ÷ the T4-contender income (c1) | 1.12 | 1.12 | ≥ 0.35 |
+| A dominant season's kept prizes ÷ three-85 wages (e2) | 1.05 | 1.23 | ≤ 1.5 |
+| Snowball p90, S2–S7 worst, in seasons of payroll (e1) | 15.3 / 8.5 / 6.8 | 14.9 / 8.6 / 6.8 | ≤ 3.0 / 2.0 / 1.5 |
+| Careers with an 88+ signing by S4 (c3) | 14 / 3 / 2 % | 7 / 4 / 3 % | ≥ 20 / 15 / 10 % |
+| Every stream on one index (b1) | ×2.21–2.23 | ×2.20–2.23 | ±2 % |
+| Sponsors: an offer's EV against its decision's mean (s1) · goals hit at their word, Likely / Even / Stretch (s2) | — | ±0.5 % · 79 / 57 / 30 % | ±10 % · ≥ 65 / 35–65 / 15–35 % |
+| Seasons with fines over two weeks of payroll (s3) · other income ÷ earned, p90 (s7) | — | 0 / 5 / 2 % · 1.4–2.2 % | ≤ 10 % · ≤ 10 % |
+
+How to read it:
+- **The rescue is the bank's now, and Hard came into its band.** Hard's
+  insolvent careers fell 30 → 16 % and its newcomers 26 → 12 % (its first
+  breach is a 24-week loan, not the end); Easy and Normal hold (1 % and 6 %;
+  newcomers 0 % and 2 %). What ends a career through money is the deadline:
+  1 / 6 / 14 % ended on it, and the bank collected on it in 3 % of Normal
+  and Hard careers. Every rescue was warned about half a season ahead (the
+  first cash warning, p50).
+- **EU on Normal is out of band (36 %).** Five of its 14 careers end on a
+  loan's deadline: the spender twice, the tuned, the badSponsor and the
+  coachChurn careers; the newcomers' autopilot and losingStart do not. They
+  owed $21k–$219k when the term ran out, 0.6–1.4 seasons of their wages.
+  Under rc.33 two of them ended on a second breach, two carried the Backer's
+  open debt to the end of the run, and one repaid it and finished the run in
+  the overdraft. With Normal's loan due in 64 weeks instead of 48
+  (measured on the same 14 careers), four of the five end 16 weeks later and
+  the fifth's deadline falls past the run: a longer term delays these
+  endings, it does not prevent them. NA, out of band until
+  rc.33's newcomer path, went 14 → 0 %. A decision for Miguel (ROADMAP
+  "Decide").
+- **Money still decides.** The spender breaks in 7 / 21 / 36 % (Hard 79 →
+  36: the loan gives it a term instead of an end), tight Mondays stay above
+  their floors, and a star still costs more than a contender's income
+  (c1 1.12).
+- **The sponsors work as designed but do not brake the snowball.** A
+  decision's three offers sit within ±0.5 % of one expected value; goals hit
+  at their word (79 / 57 / 30 %, and every split's calibration within a few
+  points of the model); fines stay small (over two weeks of payroll in 0 / 5
+  / 2 % of seasons — the bot signs Balanced and Bold deals, so front F's 24 %
+  for Bold-only careers is not in this table); other income stays a sliver.
+  The snowball p90 is flat (14.9 / 8.6 / 6.8): the hands-off careers that
+  bank T3–T4 base pay in the weak regions are not weak in their region, so
+  `levelValue` does not touch them. The next levers are the wage budget (M6
+  lever 4) or a steeper level scale — a decision for Miguel.
+- **Still out of band:** EU on Normal (above), the snowball, the star path
+  (c3 7 / 4 / 3 %), the renewal raise's p50 (×2.0–2.2: the star bend lifts
+  the asks the 50 % floor follows; the asks stay a third of the guaranteed
+  income), and b3's first season (2.8: the founders' wages before any
+  sponsor) and last (2.1).
+- **The founding rosters, hands-off** (C10b): every balanced and prospects
+  career carried its first split on every difficulty (no Monday below $0 in
+  weeks 1–12); Normal's balanced S0 low p50 is $7.7k. The veterans roster
+  (the opt-in `veterans` policy, 42 careers on the same seeds) carried its
+  first split in every career too (S0 low p50 $28.7k / $15.9k / $4.9k) —
+  Miguel's rc.33 run. Hands-off it still ends 43 / 64 / 86 % of its careers,
+  nearly all in seasons 5–7: the veterans retire in seasons 3–4, the bot
+  refills the squad at market wages (the wage bill ×4–8 against a guaranteed
+  income ×1.5), and the loan's term runs out. A player who rebuilds before
+  the retirements avoids it; the bot does not.
+- **The long-career run on the same seeds** (`CAREER-ARC-rc34.md`, at normal
+  priority on a quiet machine; rc.33's run is the before), Normal by region
+  — first Major by S2 · Worlds by S4 · balance at S3 p50: EU 0 · 0 % · $30.5k
+  (rc.33 0 · 0 % · $21.8k); NA 0 · 21 % · $76.1k (0 · 21 % · $72.5k); SAM 7 ·
+  7 % (7 · 14 %); MENA 21 · 0 % (14 · 7 %); OCE 43 · 50 % (36 · 50 %); APAC
+  100 · 86 % (93 · 79 %); SSA 100 · 93 % (86 · 86 %). At an even rating the
+  user wins 80 / 65 / 57 % of series on Easy / Normal / Hard (R59's target
+  81 / 65 / 55). No career stopped on the bot's 120 s budget (about 29 s a
+  career; rc.33's 57 stops came from a machine shared with five agents).
 
 ## Appendix — the probe tables (generated)
 

@@ -1327,6 +1327,198 @@ R70. **The integration of Etapa 2b part 3, and the fixes from its two
      width. (k) The Backer analytics milestone fires on every rescue
      (`backer:N`).
 
+R71. **HQ around the next decision: one queue for every clock path (rc.34,
+     UX-01a; HQ-CONTRACT decision 1-B, Gate 3a 30/10).** `pendingDecisionsOf`
+     (`store/careerDecisions.ts`) lists every needed decision, urgent first:
+     a matchday, the money notice, the contract review, a short squad, the
+     weekly insert, the training proposal, a bid, the sponsor offers.
+     `clockHoldOf` is read by `advanceDayFlow`, `isStopState` and
+     `continueKind`, so the Advance, the batched Advance, the autoplay,
+     Championship Sunday and a reload cannot walk past one. "Later" only for
+     bids and sponsor offers, up to their deadline; on the deadline the clock
+     waits for an answer (a bid never lapses silently; the sponsor offers are
+     signed or declined). A cup the user entered holds its matchday (Play or
+     Pass); a fresh invite only stops the batched Advance once (an invite's
+     default is "not entered", so it is not a needed decision — the review's
+     Gate 3b finding). The other fronts plug in through `DECISION_SOURCES`
+     (training, sponsor, notice: `{id, deadline?, holds?}`); a money notice
+     holds only its own Monday (the modal itself waits for "OK").
+
+R72. **HQ's blocks show engine truth (rc.34, UX-01b–f; HQ decisions 2-A,
+     3-A, 4-A, 5-A, 6-A, 7-A).** The squad as Draft cards (`baseRarityOf`'s
+     frame, the user's crest); the race block's seeding line from
+     `userIsDirect`; the finance block from `hqFinanceOf`, the projection
+     Finances shows, rc.33's ring opening larger; the toolbox with a confirm
+     sheet whose refusals come from a dry run of the flow; the bootcamp lasts
+     the split (`CAREER_GEAR.bootcampSpan` "split", its end shown;
+     `bootcampSplitEdgeShare` 0.5 = 5-B in reserve). Measured: a camp every
+     split moved official series won 56.7 → 56.9 % and Major series 24.4 →
+     29.5 %, and costs more per rating point than a coach who also trains —
+     so the price stays.
+
+R73. **"New" per career save and the contract clock (rc.34, UX-06).** rc.33's
+     seen-state module (#154) with a per-save scope (`careerNew.ts`):
+     contracts first, then toolbox items; an existing save sees nothing new;
+     opening (or buying) marks seen; dots on Squad and Finances; the unlock
+     modal once per novelty. Contracts: time left on the cards and on Squad,
+     reminders in weeks 28 and 31 (`CAREER_HQ.contractReminderWeeks`), and
+     an explicit review the rollover waits for. With two players a regional
+     cannot be played: each regional (or its qualifier) offers "Skip this
+     regional" (RTW-06, Miguel 31/10) — no points, no prize, training goes
+     on, the region still gets its result; a Major keeps the hold.
+
+R74. **Training is a package per period (rc.34, DEV-03; TRAINING-CONTRACT
+     1–7 A).** (a) A 28-day grid, 8 a season (`CAREER_PLAN.periodMode`;
+     "split" behind the key). (b) A package only speeds the road to DEV-01's
+     peak and shapes the attributes; with no package and no coach a player
+     grows at the base (`baseRateMult` 0.85 keeps rc.33's measured base);
+     the coach acts through the package. (c) Three scrim levels, practice
+     only, capped at 25 % of a period's gain, with a local side when no org
+     fits the level's gap. (d) Wear feeds the pre-event roll, at most +4
+     points. (e) Delegation by preset — Easy: the coach runs it; Normal: he
+     proposes on the period's first Monday (HQ waits); Hard: you set it, with
+     Repeat; a mode switch takes its own repeat flag. (f) Reports filed as
+     history (a ring of 16). (g) Old saves load on the base
+     (`repairTrainingOnLoad`); the weekly drill and per-card controls
+     retired into the package. Measured (`CAREER_TRAINING`): a development
+     package takes a 13–19-year-old 1.14–1.31× the base speed (band
+     1.10–1.35), the peak unchanged; scrims are 17–26 % of a coached
+     player's gain (rc.33 uncapped: up to 41 %).
+
+R75. **Coaches are distinct (rc.34, DEV-03; decision 5-A).** Quality (focus
+     efficiency, 0.5–1.1), experience (plan quality and less wear) and a
+     specialty (+25 % on its objective), each printed on the hire card;
+     senior generics 72–90 and standard 60–84; ex-pros from their
+     career-best card (66 + 0.8 × (best − 75) ± 4, 64–94, experience 3, the
+     archetype's specialty, ×1.15 wage); a coach grows +1 experience a
+     season he worked (+0.5 quality, +1 when most periods ran his specialty),
+     up to a ceiling. "Pass" on an invite no longer grants a hidden training
+     day.
+
+R76. **Sponsors (rc.34, ECO-04 + ECO-05; SPONSOR-CONTRACT 1–5 A, 6-B, 7-A,
+     adjusted to ECO-07/08).** (a) Each decision offers three deals of
+     equal expected value, one per profile, at the best tier the
+     reputation allows (decisions 2-A, 3-A): Steady (6 splits, "Likely"
+     goals, a signing payment, no fines, the patience meter kept — 7-A),
+     Balanced (3 splits, "Even", fines) and Bold (1 split, "Stretch", a
+     milestone payment, the biggest bonuses and fines). Weekly pay is a
+     fixed share of the tier's value (Steady 0.76 ≥ Balanced 0.70 ≥ Bold
+     0.65 a Monday); the fixed part and the bonuses absorb the goal's
+     chance (the review's finding: a share of a ceiling that grew as the
+     chance fell put Bold's weekly pay above the others' in 15 % of
+     decisions). (b) Goals only from events still ahead, worded by the
+     modelled chance (`goalModel`, logistic curves fitted on the harness;
+     `wordChance` 0.8 / 0.5 / 0.25, never under `wordMin` 0.66 / 0.38 /
+     0.16, so never unreachable) and priced at it; set at a split's start,
+     settled at its boundary. (c) Fines (1-A): `fineShare` (0 / 0.15 / 0.5)
+     × the goal's bonus × the shortfall, at most a week of the deal's pay,
+     over 4 Mondays, waived where an instalment would take the books under
+     the bank's floor, booked after the loan's deadline check; none on
+     Steady deals or on Easy. (d) `levelValue` (0.08 a rating point, floors
+     T2 0.7 / T3 0.5 / T4 0.4): T2–T4 pay in full against the region's 8th,
+     the Major's 8th and the Major's 4th — the snowball's brake (at 0.06
+     the p90 fell only 12.9 → 11.0). (e) ECO-05 (6-B): the money inserts stay
+     random inserts, indexed and capped (2 a split, 10 % of the season's
+     earned income), never guaranteed; the jersey shoot costs agenda time.
+     (f) The deadline is the Sunday before the split's first event week;
+     "Later" until then (1-B), then the clock waits for a signature or a
+     decline. A Worlds-window renewal keeps its one-tier demotion across
+     the rollover (`sponsorDemotedSlot`) and the season review waits for
+     it. (g) The founding partner's handover (5-A) applies only to an rc.32
+     career still running one (ECO-07/08 left no day-one partner): ⅔, then
+     ⅓, then nothing, on boundary Mondays (`founding.taper`; `[]` restores
+     the cliff), each card showing the net weekly change; measured 0.36 of
+     the full pay a step (band ⅓ plus rounding). Measured on a slice before
+     the review (20 careers a difficulty): Normal insolvent 10 → 5 %, Hard
+     45 → 15 %, Normal's snowball p90 12.9 → 9.9; goals hit at their word
+     72 / 50 / 34 %. Open for Miguel: Bold-only careers break the
+     season-fines band (s3) in 24 % of seasons against 10 % — accept it as
+     Bold's risk, lower Bold's fine to 0.35, or cap a season's fines at two
+     weeks of payroll.
+
+R77. **The rescue is the bank's emergency loan, and the debt's deadline ends
+     a career (rc.34, ECO-13/14/15; Miguel 31/10, replacing R61's breach
+     count).** (a) A Monday below the floor opens the
+     bank's emergency loan (`CAREER_LOAN.emergency`): the balance lent back
+     to the rescue line, owed ×1.2, repaid from prizes (10 / 15 / 20 %),
+     sales (half) and Finances. `finances.loan` keeps its name; the product
+     says "emergency loan". (b) The investor (rc.33's rescue partner, the
+     Overtime Fund) joins only the career's first loan, where
+     `investor.payrollShare` has a share (Easy 0.2, Claude's call — Miguel
+     can extend it), for 10 Mondays. (c) The deadline: `deadlineWeeks` 64 /
+     48 / 24 from the first loan; a later breach adds to it (the deadline
+     stays; `maxTopUps` 3, the next one ends the career); at most
+     `maxLoans` 3 / 2 / 1 loans a career (the review: a loan paid on its
+     deadline into the overdraft broke the floor again and opened a fresh
+     loan with a fresh term). Warnings at `warnWeeks` 8, 4 and 1 quote the
+     projection (the balance plus the weeks left × the weekly net), and
+     inside the last `slipWatchWeeks` 4 a notice fires the day it stops
+     covering the debt. On the day the bank collects when the books stay at
+     or above its floor after paying (`canSettleLoan`, "Pay it all"'s own
+     test: the overdraft counts); otherwise the career ends (`end.moneyCause`
+     "deadline"). `breachesToEnd` null everywhere; `hard: 1` restores Hard's
+     first-breach end. (d) The money notice: a modal at the career shell for
+     each event that changes the stakes, once per save (`moneyNotices`); the
+     batched Advance stops on its Monday, the autoplay pauses. (e) No lock
+     while a loan is owed (`lockCommitments` false; true restores R52(c));
+     the bank still writes one loan at a time. (f) Saves: `repairLoanOnLoad`
+     (in `migrateSaveToV5`'s chain) turns an open Backer debt into the
+     emergency loan with a deadline from the update, announced once.
+     Front H first collected only from a balance that covered the debt;
+     the review moved the deadline to "Pay it all"'s test so the two never
+     disagree (in the measured careers no ending moved: 2 of 19 were within
+     the floor's room before the other fixes). Rejected: shorter terms (32 /
+     24 / 16) — no rescued bot career covered its debt in time, so every
+     rescue became a delayed end.
+
+R78. **Every founding roster carries its first split (rc.34, BAL-05).** The
+     start budget is at least `startingBudgetWeeks` (44 / 24 / 13) of the
+     roster's founding wage bill (`startingBudgetFor`), the flat budget as a
+     floor; the wizard shows each roster's budget. Root cause of Miguel's
+     rc.33 run: one flat budget for founding payrolls that differ ×3–5
+     between rosters (Normal journeymen had 15 weeks of runway, EU's about
+     10, against the balanced roster's 25). The hands-off veterans policy
+     (`veterans`, opt-in) measures it.
+
+R79. **The contract talk's levers always move; a prize share only above 79
+     (rc.34, ECO-16, ECO-17; Miguel 31/10).** (a) The zone is at least one
+     wage press wide (`minZoneSteps`), never under the league minimum; a
+     share press moves the wage one point the other way (`talkPressFor`) and
+     the zone keeps its width across shares; every closed lever names its
+     reason. Root cause: the zone was (1 − flex) × the ask with its floor
+     rounded up to $10, which collapsed on 85 % of founder renewals. (b) No
+     share at or under 79 (`shareThresholdOverall`), +1.2 a point above (85
+     → 7 %, 90 → 13 %, cap 18 %); founding deals carry none (an rc.33
+     founder's founding share is zeroed on load); signed deals keep theirs;
+     e2 at the lowest share 1.38 (≤ 1.5). (c) The difficulty step is a
+     promise and three plain bullets per preset; its money line states the
+     preset's rule from the keys (the loan and its deadline). Rejected:
+     rc.33's slope (e2 1.52), a two-press minimum zone, a wider flexibility.
+
+R80. **The integration of Etapa 3 and Miguel's 31/10 answers, and the fixes
+     from its three independent reviews (rc.34).** (a) The integration: G's queue takes the other
+     fronts' decisions through `DECISION_SOURCES` — the training proposal,
+     the sponsor decision and the money notice (which holds only its own
+     Monday; the modal waits for "OK"). The sponsor offers hold on their
+     deadline (1-B) instead of lapsing silently. A fine settled on a
+     boundary Monday books its first instalment the next Monday
+     (`SponsorFineState.from`), because the review moved the boundary
+     before the payroll. (b) Three independent reviews (money, talk and
+     wizard; HQ queue and training; sponsors) found 21 issues, each fixed
+     against a test that failed first: one rule for the deadline and "Pay
+     it all"; a loan cap per career; the boundary's bonus before the
+     deadline; a projected "covered" with a 1-week warning and a slip
+     notice; fines after the deadline check; "Backer" gone from what a new
+     career shows; rc.33 founders' shares zeroed on load; the skip on the
+     event's own day; the training mode switch and its repeat; the bootcamp
+     allowance at the rollover; no hidden training day for passing a cup;
+     coach growth by tenure; invites that never hold the clock; a
+     Worlds-window renewal that keeps its demotion and holds the review;
+     weekly pay ordered Steady ≥ Balanced ≥ Bold; rc.33's demotion carried
+     on load; fines in HQ's projection; the handover note by season with
+     its net change; signing validated before any change. (c) Re-measured
+     on the §9 seeds in `ECONOMY-CONTRACT.md` §11.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
