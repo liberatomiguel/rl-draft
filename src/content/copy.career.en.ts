@@ -11,21 +11,30 @@
  */
 
 /**
- * rc.32 (ECONOMY-CONTRACT M4, provisional): what the next Monday below the
- * Backer's floor does — `next` is economy.breachOutcomeFor's answer.
+ * rc.32 (ECONOMY-CONTRACT M4): what the next Monday below the Backer's floor
+ * does — `next` is economy.breachOutcomeFor's answer; rc.33 (ECO-07):
+ * `partner` (1) when that breach also brings the rescue partner. rc.32's
+ * "restructure" is gone (ECO-08): an older save's mail that still carries it
+ * predicts nothing rather than a rule that no longer exists.
  */
-const nextBreachEn = (next: string | number | undefined): string =>
+const nextBreachEn = (next: string | number | undefined, partner?: string | number): string =>
   next === "insolvent"
     ? "The next breach of the floor ends the career."
     : next === "restructure"
-      ? "The next breach forces a restructuring: the highest-paid player is sold and reputation drops."
-      : "Below the floor on a Monday, the Emergency Backer steps in.";
+      ? ""
+      : Number(partner)
+        ? "Below the floor on a Monday, the Emergency Backer steps in — and a rescue partner adds income for a split."
+        : "Below the floor on a Monday, the Emergency Backer steps in.";
 
 /** rc.32 (M4): the projected breach, as the warnings quote it (week of this or next season). */
 const breachWhenEn = (p: Record<string, string | number>): string =>
   `the Monday of ${Number(p.nextSeason) ? "next season's " : ""}week ${p.breachWeek}`;
 
-/** rc.33 (UX-07): "first", "second"… for the wizard's money line (any count from the key). */
+/** rc.33 (ECO-07): the rescue partner's last payday, as the rescue mail quotes it. */
+const partnerUntilEn = (p: Record<string, string | number>): string =>
+  `the Monday of ${Number(p.partnerNextSeason) ? "next season's " : ""}week ${p.partnerUntilWeek}`;
+
+/** rc.33 (UX-07, ECO-08): "first", "second"… for the wizard's money line and the rescue mail (any count). */
 const ordinalEn = (n: number): string =>
   ["first", "second", "third", "fourth", "fifth"][n - 1] ??
   `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th")}`;
@@ -251,9 +260,8 @@ export const CAREER_EN = {
     // ECO-02 (R46): the card names the debt Finances shows.
     backerOpen: (owed: string) =>
       `Backer debt open — ${owed} to repay. Prize money is garnished until it clears.`,
-    // rc.32 (M4, provisional): the HQ line under it — what the next breach means.
-    backerNextBreach: (next: string) => nextBreachEn(next),
-    restructuredLine: (n: number) => `The org was restructured after breach ${n} of the floor.`,
+    // rc.32 (M4): the HQ line under it — what the next breach means (rc.33: the rescue partner too).
+    backerNextBreach: (next: string, partner?: boolean) => nextBreachEn(next, partner ? 1 : 0),
     cards: {
       training: "Training",
       trainingOn: "Session today. Mon–Fri develop the squad.",
@@ -347,10 +355,11 @@ export const CAREER_EN = {
       // DEV-02 (R48): the user's own retiree — which way he went.
       retiredToCoach: (p: Record<string, string | number>) => `${p.player} retires — and moves into coaching`,
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} retires from competition`,
-      // rc.32 (ECONOMY-CONTRACT M3 / M4 / M8, provisional).
+      // rc.32 (ECONOMY-CONTRACT M3 / M4).
       foundingPartner: () => `A founding partner backs the org`,
       foundingPartnerEnds: () => `The founding partner steps back`,
       cashNotice: (p: Record<string, string | number>) => `Cash notice: about ${p.weeks} weeks of runway`,
+      // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's inbox still reads.
       restructured: () => `The Backer restructured the org`,
       listingOffer: (p: Record<string, string | number>) => `Offer for ${p.player} — your listing`,
     },
@@ -365,7 +374,8 @@ export const CAREER_EN = {
       foundingPartnerEnds: () =>
         `The founding partner's term is over: the org has its own sponsorship deal and its first seasons behind it. From here the books stand on sponsors, prizes and the fanbase.`,
       cashNotice: (p: Record<string, string | number>) =>
-        `A heads-up from the accountant: at ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays, and the books would cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next)} This is the cheap moment to act: list or sell a player, aim the squad at prize money, keep the next renewal in check${Number(p.backer) ? "" : ", or line up a bank loan"}.`,
+        `A heads-up from the accountant: at ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays, and the books would cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next, p.nextPartner)} This is the cheap moment to act: take a good bid for a player, aim the squad at prize money, keep the next renewal in check${Number(p.backer) ? "" : ", or line up a bank loan"}.`,
+      // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's inbox still reads.
       restructured: (p: Record<string, string | number>) =>
         `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value${Number(p.garnished) > 0 ? ` (${p.garnished} of it went to the debt)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `The Backer topped the balance back up to ${p.rescueTo}` : `The balance stands at ${p.balance}`}; ${Number(p.owed) > 0 ? `you owe ${p.owed}` : "nothing is owed"}. The squad plays on — the sub steps up; an empty seat needs a free agent before the next event. ${nextBreachEn(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
@@ -386,16 +396,17 @@ export const CAREER_EN = {
       cashWarning: (p: Record<string, string | number>) =>
         p.breachWeek === undefined
           ? `At ${p.net} per week the balance covers about ${p.weeks} more Mondays. Trim wages, win prize money, or arrange a bank loan before the Backer has to.`
-          : `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays; on this pace the books cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next)} Ways out: sell or list a player, win prize money, trim the wage bill at renewal${Number(p.backer) ? "" : ", or take a bank loan"}.`,
+          : `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays; on this pace the books cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next, p.nextPartner)} Ways out: take a good bid for a player, win prize money, trim the wage bill at renewal${Number(p.backer) ? "" : ", or take a bank loan"}.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
         `Saturday's Swiss is done and the org is one of the eight through. ${p.event} is Sunday — the direct eight are waiting.`,
       missedRegional: (p: Record<string, string | number>) =>
         `Three losses in Saturday's Swiss — ${p.event} goes ahead on Sunday without you. Rest up; a new training week starts Monday.`,
-      // rc.32 (M4, provisional): the window it buys, the debt, the lock, and the next breach.
+      // rc.32 (M4): the window it buys, the debt, the lock, and the next breach.
+      // rc.33 (ECO-07/08): which rescue this is, and the rescue partner when it comes with it.
       backerIn: (p: Record<string, string | number>) =>
         p.rescueTo === undefined
           ? `The books breached the floor and the Emergency Backer stepped in — once. Repayment is garnished from prize money. A second collapse ends the org.`
-          : `The books closed a Monday below the floor and the Emergency Backer stepped in: the balance is back at ${p.rescueTo}${Number(p.weeks) > 0 ? ` (about ${p.weeks} weeks of wages)` : ""}. You owe ${p.owed} — ${p.garnishPct}% of every prize and half of any sale go to it until it clears, or pay it down from Finances. While it is owed, transfer fees, gear${Number(p.lock) ? " and new commitments that shorten the runway" : ""} are on hold. ${nextBreachEn(p.next)}`,
+          : `The books closed a Monday below the floor${Number(p.n) > 1 ? ` for the ${ordinalEn(Number(p.n))} time` : ""} and the Emergency Backer stepped in: the balance is back at ${p.rescueTo}${Number(p.weeks) > 0 ? ` (about ${p.weeks} weeks of wages)` : ""}. You owe ${p.owed} — ${p.garnishPct}% of every prize and half of any sale go to it until it clears, or pay it down from Finances. While it is owed, transfer fees, gear${Number(p.lock) ? " and new commitments that shorten the runway" : ""} are on hold.${Number(p.partnerWeekly) > 0 ? ` A rescue partner, ${p.partnerName}, comes in with it: ${p.partnerWeekly} a week from next Monday for ${p.partnerWeeks} weeks — the last payment on ${partnerUntilEn(p)}. It is income, never garnished; Finances shows it while it runs.` : ""} ${nextBreachEn(p.next, p.nextPartner)}`,
       unlock: (p: Record<string, string | number>) =>
         `The org's progress unlocked: ${p.name}. Check the Club's progression track — the toolbox grows with reputation.`,
       windowReport: (p: Record<string, string | number>) =>
@@ -723,21 +734,6 @@ export const CAREER_EN = {
       weeks === null
         ? "Runway after: the books stay in the black"
         : `Runway after: ${weeks === 1 ? "1 week" : `${weeks} weeks`} at the new burn`,
-    // rc.32 (M8, provisional): "List for sale" and the late signing.
-    listTitle: "Sell a player",
-    listHint: (lo: number, hi: number) =>
-      `List a player and an org that would start him makes one offer within a few window days, at ${lo}–${hi}% of his market value. Accept it, decline it (he stays) or withdraw the listing.`,
-    listCta: "List for sale",
-    listedTag: "Listed",
-    listedWaiting: "Listed — an offer comes within a few window days.",
-    listedOffer: "An offer is on the table above.",
-    listedFirstWindow: "The career's first window is bid-free — offers start in the next window.",
-    listedNextWindow: (label: string) => `Offers arrive on window days — the next window opens ${label}.`,
-    withdrawListing: "Withdraw",
-    listingTag: "Your listing",
-    lateSigningOpen: (date: string) =>
-      `Late signing open: a seat sold in the window can be refilled with one free agent until ${date}.`,
-    lateSigningTag: "Late signing",
     // ECO-02 (R46): a sale while the Backer is owed — its share of the fee.
     saleBackerRepaid: (s: string) => `Backer repaid ${s}`,
     // ECO-03 (R47): the slot is set after the signing and never prices it.
@@ -834,9 +830,6 @@ export const CAREER_EN = {
       tooYoung: "Too young to compete — players sign from age 13.",
       /** rc.32 (M4, provisional): the Backer's lock on commitments that shorten the runway. */
       loanRunway: "While the Backer is owed, nothing that shortens the runway — clear the debt or free some wages first.",
-      /** rc.32 (M8, provisional). */
-      listingOff: "Listing players is switched off.",
-      alreadyListed: "Already listed for sale.",
     },
   },
 
@@ -850,9 +843,29 @@ export const CAREER_EN = {
     runway: (weeks: number) => (weeks === 1 ? "Runway: 1 week at this burn" : `Runway: ${weeks} weeks at this burn`),
     runwayOk: "The books run in the black",
     nextPayday: (s: string) => `Next payday ${s}`,
+    // rc.33 (UX-07): the balance chart's expanded view — the Mondays the save recorded.
+    chartOpen: "Open the balance chart",
+    chartTitle: "Balance history",
+    chartRange: (n: number, from: string, to: string) =>
+      n === 1 ? `One Monday on record: ${from}.` : `${n} Mondays on record, ${from} to ${to}.`,
+    chartEmpty: "The chart fills in from Monday to Monday — come back after the next payday.",
+    chartLegendBalance: "Balance after Monday's payroll",
+    chartLegendFloor: "Backer's floor (a Monday below it is a breach)",
+    chartLegendSeason: "Season start",
+    chartHigh: (s: string) => `High ${s}`,
+    chartLow: (s: string) => `Low ${s}`,
+    chartFloor: (s: string) => `Floor ${s}`,
+    chartColSeason: "Season",
+    chartColLow: "Low",
+    chartColHigh: "High",
+    chartColLast: "Last Monday",
+    chartSummary: (n: number, first: string, last: string, low: string, high: string) =>
+      `Balance over ${n} Mondays: from ${first} to ${last}, low ${low}, high ${high}.`,
+    chartClose: "Close",
     line: {
       sponsorBase: "Sponsor base",
       foundingPartner: "Founding partner",
+      rescuePartner: "Rescue partner",
       fanbase: "Fanbase",
       payroll: "Squad wages",
       coach: "Coach",
@@ -914,6 +927,7 @@ export const CAREER_EN = {
       loanGarnish: "Backer repayment",
       loanPayment: "Debt payment",
       foundingPartner: "Founding partner",
+      rescuePartner: "Rescue partner",
       playerShare: "Players' prize share",
       fanbase: "Fanbase revenue",
       payroll: "Squad wages",
@@ -950,22 +964,40 @@ export const CAREER_EN = {
     debtCleared: "Debt cleared — the org is free again.",
     backerWarning: "This deal likely triggers the Emergency Backer.",
     backerIdle: (floor: string, rescueTo: string) =>
-      `Not in use. If a Monday closes below ${floor}, the Backer steps in once — a grant back to ${rescueTo}, repaid from prize money and sales.`,
-    backerRescued: "The Backer stepped in once already; its rescue is repaid.",
+      `Not in use. If a Monday closes below ${floor}, the Backer steps in — a grant back to ${rescueTo}, repaid from prize money and sales.`,
+    // rc.33 (ECO-08): Hard has no Backer — the first breach ends the career.
+    backerIdleNone: (floor: string) =>
+      `No Backer on this difficulty: a Monday that closes below ${floor} ends the career.`,
+    backerRescued: "The Backer's rescue is repaid.",
     insolvencyWarning: "The books are failing — the next breach of the floor ends the career.",
-    // rc.32 (M4, provisional): the line in weeks of wages, and what each breach does on this difficulty.
+    // rc.32 (M4): the line in weeks of wages, and what each breach does on this difficulty.
     backerWeeksLine: (floorWeeks: number, rescueWeeks: number) =>
       `The line moves with the wage bill: the floor is ${floorWeeks} weeks of wages below zero, the rescue tops up to ${rescueWeeks} weeks above.`,
-    breachLadder: (end: number | null) =>
+    // rc.33 (ECO-07/08): CAREER_LOAN.breachesToEnd and rescuePartner.atBreach on this difficulty — no restructuring.
+    breachLadder: (end: number | null, partnerAt: number | null) => {
+      const partner = (n: number) => (partnerAt === n ? " with a rescue partner's help for a split" : "");
+      if (end === null)
+        return `On this difficulty money never ends the career: every breach brings the Emergency Backer${partnerAt !== null ? ` (the ${ordinalEn(partnerAt)}${partner(partnerAt)})` : ""}.`;
+      if (end <= 1) return "On this difficulty the first breach of the floor ends the career.";
+      if (end === 2) return `The first breach brings the Emergency Backer${partner(1)}; the second ends the career.`;
+      if (end === 3)
+        return `The first breach brings the Emergency Backer${partner(1)}; the second, the Backer again${partner(2)}; the third ends the career.`;
+      return `Breaches 1 to ${end - 1} bring the Emergency Backer${partnerAt !== null && partnerAt < end ? ` (the ${ordinalEn(partnerAt)}${partner(partnerAt)})` : ""}; breach ${end} ends the career.`;
+    },
+    // rc.33 (ECO-08): the count against the breach that ends it (`end` null = never).
+    breachCount: (n: number, end: number | null) =>
       end === null
-        ? "On this difficulty money never ends the career: every breach after the rescue forces a restructuring — the highest-paid player sold, reputation down."
-        : end <= 2
-          ? "After the rescue, the next breach ends the career."
-          : end === 3
-            ? "After the rescue, the next breach forces a restructuring — the highest-paid player sold, reputation down; the one after that ends the career."
-            : `After the rescue, breaches 2 to ${end - 1} force a restructuring — the highest-paid player sold, reputation down; breach ${end} ends the career.`,
-    breachCount: (n: number) => (n === 1 ? "Breaches so far: 1 (the rescue)" : `Breaches so far: ${n}`),
+        ? `Breaches so far: ${n}`
+        : n + 1 >= end
+          ? `Breaches so far: ${n} — the next one ends the career`
+          : `Breaches so far: ${n} — the career ends at breach ${end}`,
     backerLock: "While it is owed: no transfer fees, no gear, nothing that shortens the runway.",
+    // rc.33 (ECO-07): the rescue partner card — who, how much a week, until when.
+    rescueTitle: "Rescue partner",
+    rescueTerms: (pct: number, weeks: number) =>
+      `${pct}% of the wage bill on the rescue Monday, for ${weeks} weeks · income, never garnished`,
+    rescueUntil: (date: string, left: number) =>
+      left === 1 ? `Last payment ${date}.` : `${left} payments left — the last on ${date}.`,
     // rc.32 (M3, provisional): the founding partner card.
     foundingTitle: "Founding partner",
     foundingTerms: (pct: number) => `${pct}% of the founding wage bill · objective: enter events · no signing bonus`,
@@ -1133,7 +1165,7 @@ export const CAREER_EN = {
       scrimWin: (p: Record<string, string | number>) => `Closed doors: scrim W ${p.a}-${p.b} vs ${p.opponent}`,
       scrimLoss: (p: Record<string, string | number>) => `Closed doors: scrim L ${p.a}-${p.b} vs ${p.opponent}`,
       blockbusterBid: (p: Record<string, string | number>) => `${p.org} table a blockbuster for ${p.player}`,
-      // rc.32 (M4 / M8, provisional).
+      // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's feed still reads.
       restructured: (p: Record<string, string | number>) =>
         p.player ? `Restructuring: ${p.player} sold to balance the books` : `Restructuring: the Backer steps in again`,
       listingOffer: (p: Record<string, string | number>) => `${p.org} bid for listed ${p.player}`,
@@ -1240,6 +1272,7 @@ export const CAREER_EN = {
         `${p.opponent} took the scrim set. Losses behind closed doors are the cheapest lessons in esports.`,
       blockbusterBid: (p: Record<string, string | number>) =>
         `${p.org} moved with real intent for ${p.player}. History wants this transfer — you decide if it happens.`,
+      // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's feed still reads.
       restructured: (p: Record<string, string | number>) =>
         `The org closed below the floor again and the Backer forced its hand${p.player ? `: ${p.player} heads to ${p.org}` : ""}. Reputation takes the hit; ${Number(p.granted) > 0 ? "the books are topped back up" : "the sale covers the books"}. ${nextBreachEn(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
@@ -1510,7 +1543,8 @@ export const CAREER_EN = {
     finalWhistle: "Final whistle",
     finalWhistleBody: "The 2026 season closes the book — but not the org's story.",
     insolvencyTitle: "Insolvency",
-    insolvencyBody: "The books didn't survive one more collapse. The org's story ends here.",
+    // rc.33 (ECO-08): on Hard the first breach ends it — no "one more" collapse.
+    insolvencyBody: "The books closed below the floor one time too many. The org's story ends here.",
     legacyTitle: "Career legacy",
     legacyGrade: { legend: "Legend", contender: "Contender", challenger: "Challenger", journeyman: "Journeyman" },
     retire: "Retire",
@@ -1579,7 +1613,7 @@ export const CAREER_EN = {
     },
     finances: {
       title: "The books",
-      body: "Prizes and sponsors in, wages and upkeep out, payday every split. Go broke once and a backer saves you. Once.",
+      body: "Prizes and sponsors in, wages and upkeep out, every Monday. Below the floor, the Emergency Backer may step in — how many times depends on the difficulty.",
     },
     standings: {
       title: "The cut-line",

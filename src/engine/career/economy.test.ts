@@ -104,7 +104,9 @@ function askInput(overrides: Partial<SalaryAskInput> = {}): SalaryAskInput {
 function curveAt(overall: number): number {
   return (
     CAREER_SALARY.basePerSplit *
-    CAREER_SALARY.growthPerPoint ** (overall - CAREER_SALARY.anchorOverall)
+    CAREER_SALARY.growthPerPoint ** (overall - CAREER_SALARY.anchorOverall) *
+    // rc.33 (ECO-09): the strong-player bend above starCurveFrom.
+    CAREER_SALARY.starGrowthPerPoint ** Math.max(0, overall - CAREER_SALARY.starCurveFrom)
   );
 }
 
@@ -503,9 +505,9 @@ describe("weekly payroll (v2.0 R20)", () => {
     expect(fin.ledger.every((e) => e.amount !== 0)).toBe(true);
   });
 
-  // rc.32 (M4, provisional): the Backer's line is weeks of the wage bill, and
-  // what a later breach does depends on the difficulty (Hard: the second ends it).
-  it("rescues once via the Emergency Backer, then on Hard a second breach is insolvency", () => {
+  // rc.32 (M4): the Backer's line is weeks of the wage bill; rc.33 (ECO-08):
+  // what a breach does depends on the difficulty (Normal: the second ends it).
+  it("rescues once via the Emergency Backer, then on Normal a second breach is insolvency", () => {
     const heavy = [{ name: "Alpha", amount: 70_000 }]; // ≈ 6.5k / week
     const line = backerLineFor(weeklyWageBill([70_000], null), 1);
     expect(line.floor).toBe(-quantize(CAREER_LOAN.floorWeeks * weeklyWage(70_000)));
@@ -518,10 +520,11 @@ describe("weekly payroll (v2.0 R20)", () => {
       gear: freshGear(),
       seasonIndex: 1,
       week: 4,
-      difficulty: "hard",
+      difficulty: "normal",
     });
     expect(first.rescued).toBe(true);
     expect(first.insolvent).toBe(false);
+    expect(first.rescuePartner).toBeNull(); // Normal's rescue comes without the partner (Easy only)
     expect(first.line).toEqual(line);
     expect(first.fin.balance).toBe(line.rescueTo);
     expect(first.fin.loanUsed).toBe(true);
@@ -539,12 +542,32 @@ describe("weekly payroll (v2.0 R20)", () => {
       gear: freshGear(),
       seasonIndex: 1,
       week: 5,
-      difficulty: "hard",
+      difficulty: "normal",
     });
     expect(second.rescued).toBe(false);
-    expect(second.restructure).toBe(false);
     expect(second.insolvent).toBe(true);
     expect(second.fin.balance).toBeLessThan(line.floor);
+  });
+
+  it("rc.33 (ECO-08): on Hard the first breach is insolvency — no Backer", () => {
+    const heavy = [{ name: "Alpha", amount: 70_000 }];
+    const line = backerLineFor(weeklyWageBill([70_000], null), 1);
+    const res = weeklyPayroll({
+      fin: freshFin(line.floor + 1_000),
+      squadSalaries: heavy,
+      coachSalary: null,
+      sponsor: null,
+      rep: 0,
+      gear: freshGear(),
+      seasonIndex: 1,
+      week: 4,
+      difficulty: "hard",
+    });
+    expect(res.insolvent).toBe(true);
+    expect(res.rescued).toBe(false);
+    expect(res.fin.loan).toBeNull();
+    expect(res.fin.loanBreaches).toBe(1);
+    expect(res.fin.ledger.some((e) => e.kind === "loanGrant")).toBe(false);
   });
 
   it("runwayWeeks: null in the black, floor(balance / burn) otherwise", () => {

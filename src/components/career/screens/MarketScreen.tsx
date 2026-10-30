@@ -22,7 +22,6 @@ import {
   CAREER_PAYROLL,
   CAREER_SCOUT,
   CAREER_TRAINING,
-  CAREER_TRANSFER,
   CAREER_UNLOCKS,
 } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -34,13 +33,11 @@ import {
   scoutReportCostFor,
   signableOverallCap,
 } from "@/engine/career/economy";
-import { signableAtRep, userBidsBlocked } from "@/engine/career/market";
+import { signableAtRep } from "@/engine/career/market";
 import type { ContractOffer } from "@/engine/career/contract";
-import { windowIndexOf } from "@/engine/career/calendar";
 import { signsForFinalSeason } from "@/engine/career/development";
 import type {
   CareerPlayerView,
-  CareerSave,
   PotentialBand,
   TransferOffer,
 } from "@/engine/career/types";
@@ -50,7 +47,6 @@ import { cx } from "@/lib/util";
 import {
   backerLineOf,
   coachCandidatesFor,
-  lateSigningOpen,
   signingPlanFor,
   signingTalkFor,
   squadIsShort,
@@ -145,76 +141,8 @@ function MarketErrorNotice({ className }: { className?: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// rc.32 M8 (ECONOMY-CONTRACT §6 decision 8-B — provisional): "List for sale"
-// ---------------------------------------------------------------------------
-
-function ListingPanel({
-  save,
-  C,
-  onList,
-  onWithdraw,
-}: {
-  save: CareerSave;
-  C: CareerCopy;
-  onList: (playerId: string) => void;
-  onWithdraw: (playerId: string) => void;
-}) {
-  if (!CAREER_TRANSFER.listingEnabled || save.squad.length === 0) return null;
-  const D = C.dates;
-  const listings = save.saleListings ?? [];
-  const windowIdx = windowIndexOf(weekOfDay(save.clock.day));
-  // R47: the career's first window is bid-free — a listing waits for the next one (the UI says so).
-  const bidFree = userBidsBlocked(save.clock.seasonIndex, windowIdx);
-  const nextWindow = windowIdx === null ? (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null) : null;
-  const [lo, hi] = CAREER_TRANSFER.listingOfferRange;
-  return (
-    <Panel className="p-4">
-      <p className="kicker mb-1 text-[11px]">{C.market.listTitle}</p>
-      <p className="mb-3 text-xs text-sub">{C.market.listHint(Math.round(lo * 100), Math.round(hi * 100))}</p>
-      {bidFree ? (
-        <p className="mb-2 text-[11px] font-semibold text-orange-bright">{C.market.listedFirstWindow}</p>
-      ) : null}
-      {nextWindow && listings.length > 0 ? (
-        <p className="mb-2 text-[11px] text-faint">
-          {C.market.listedNextWindow(formatDaysAway(D, nextWindow.daysAway))}
-        </p>
-      ) : null}
-      <div className="space-y-2">
-        {save.squad.map((p) => {
-          const listed = listings.some((l) => l.playerId === p.id);
-          const offer = save.pendingOffers.some((o) => o.listing && o.playerId === p.id && o.status === "pending");
-          return (
-            <div
-              key={p.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-white/[0.02] px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="flex items-center gap-2">
-                  <span className="display truncate text-sm font-bold text-ink">{p.name}</span>
-                  {listed ? <Badge tone="blue">{C.market.listedTag}</Badge> : null}
-                </p>
-                <p className="text-[11px] text-sub">
-                  {C.common.ovrShort(Math.round(p.overall))}
-                  {listed ? <> · {offer ? C.market.listedOffer : C.market.listedWaiting}</> : null}
-                </p>
-              </div>
-              {listed ? (
-                <Button variant="ghost" size="sm" onClick={() => onWithdraw(p.id)}>
-                  {C.market.withdrawListing}
-                </Button>
-              ) : (
-                <Button variant="secondary" size="sm" onClick={() => onList(p.id)}>
-                  {C.market.listCta}
-                </Button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </Panel>
-  );
-}
+// rc.33 (ECO-12): rc.32's "List for sale" panel and the late signing are
+// gone — a future update rethinks selling (ECO-06); random AI bids stay.
 
 // ---------------------------------------------------------------------------
 // Toolbar chip (tabs, sort, region filter)
@@ -265,8 +193,6 @@ export function MarketScreen() {
   const signPlayer = useCareerStore((s) => s.signPlayer);
   const acceptBid = useCareerStore((s) => s.acceptBid);
   const declineBid = useCareerStore((s) => s.declineBid);
-  const listForSale = useCareerStore((s) => s.listForSale);
-  const withdrawListing = useCareerStore((s) => s.withdrawListing);
   const hireCoach = useCareerStore((s) => s.hireCoach);
   const fireCoach = useCareerStore((s) => s.fireCoach);
   const buyScoutReport = useCareerStore((s) => s.buyScoutReport);
@@ -400,11 +326,9 @@ export function MarketScreen() {
 
   // --- window state ----------------------------------------------------------
   const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
-  // rc.32 (M8, provisional): after a window sale, one free agent may still sign for a few days.
-  const lateOpen = lateSigningOpen(save);
   // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat, window or not.
   const emptySeatOpen = !windowOpen && squadIsShort(save);
-  const freeAgentSignable = windowOpen || lateOpen || emptySeatOpen;
+  const freeAgentSignable = windowOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
   const targetLocked = target ? !signableAtRep(target.view.overall, save.reputation) : false;
   const nextWindowStop = windowOpen
@@ -511,14 +435,6 @@ export function MarketScreen() {
           ) : null}
           {emptySeatOpen ? (
             <span className="w-full text-xs font-semibold text-good">{C.market.emptySeatOpen}</span>
-          ) : null}
-          {lateOpen && save.lateSigning ? (
-            <span className="flex w-full items-center gap-2 text-xs font-semibold text-good">
-              <Badge tone="good">{C.market.lateSigningTag}</Badge>
-              {C.market.lateSigningOpen(
-                formatDateTiny(D, dateOfDay(save.clock.seasonIndex, save.lateSigning.untilDay)),
-              )}
-            </span>
           ) : null}
         </Panel>
       ) : null}
@@ -815,7 +731,6 @@ export function MarketScreen() {
                           {o.blockbuster ? (
                             <Badge tone="gold">{C.market.blockbuster}</Badge>
                           ) : null}
-                          {o.listing ? <Badge tone="blue">{C.market.listingTag}</Badge> : null}
                         </div>
                         {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
                         {o.blockbuster ? (
@@ -873,8 +788,6 @@ export function MarketScreen() {
               })}
             </>
           )}
-          {/* rc.32 (M8, provisional): "List for sale". */}
-          <ListingPanel save={save} C={C} onList={listForSale} onWithdraw={withdrawListing} />
         </div>
       ) : null}
 

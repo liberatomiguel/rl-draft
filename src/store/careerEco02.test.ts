@@ -147,10 +147,10 @@ describe("ECO-02 — pay-downs settle exactly what they quote", () => {
 });
 
 describe("ECO-02 — the Backer once, the bank one at a time (real day clock)", () => {
-  // rc.32 (M4, provisional): on Hard the second breach ends the career (rc.31's
-  // rule everywhere); Normal restructures it first (careerEco04.test.ts).
-  it("a structural deficit gets exactly one rescue, then on Hard the second breach ends the career", () => {
-    let save = createCareerSave({ ...INPUT, difficulty: "hard" }, 46_101);
+  // rc.33 (ECO-08): on Normal the second breach ends the career (rc.31's rule
+  // everywhere); Easy rescues twice, Hard ends at the first (careerEco07.test.ts).
+  it("a structural deficit gets exactly one rescue, then on Normal the second breach ends the career", () => {
+    let save = createCareerSave({ ...INPUT, difficulty: "normal" }, 46_101);
     // Wages far above any income: every Monday burns ~$2.8k.
     for (const p of save.squad) p.salaryPerSplit = 10_000;
     save = quietSunday(save, 2);

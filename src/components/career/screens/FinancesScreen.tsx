@@ -28,7 +28,7 @@ import {
   CAREER_SPONSOR,
 } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import { sponsorBrandById } from "@/data/career/sponsors";
+import { RESCUE_PARTNER_BRAND, sponsorBrandById } from "@/data/career/sponsors";
 import {
   bankInstalmentsLeft,
   bankLoanLimitFor,
@@ -37,6 +37,7 @@ import {
   bankMinAmountFor,
   bootcampCostFor,
   breachOutcomeFor,
+  breachesToEndFor,
   debtPaymentFor,
   foundingPartnerActive,
   loanBreachesOf,
@@ -44,13 +45,15 @@ import {
   nextPaydayFor,
   psychologistPerSplitFor,
   quantize,
+  rescuePartnerAt,
+  rescuePartnerLastPayday,
   runwayWeeks,
   weeklyOf,
   type BankLoanRefusal,
   type BreachOutcome,
   type WeeklyStatement,
 } from "@/engine/career/economy";
-import { backerLineOf, foundingPartnerPerSplitOf, weeklyStatementOf } from "@/store/careerFlow";
+import { backerLineOf, foundingPartnerPerSplitOf, mondayBalancesOf, weeklyStatementOf } from "@/store/careerFlow";
 import type {
   BankLoanState,
   FinanceState,
@@ -73,8 +76,10 @@ import {
   useCareerSave,
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
+import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -357,6 +362,7 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
   const rows: { key: keyof typeof C.finances.line; amount: number }[] = [
     { key: "sponsorBase", amount: st.sponsorBase },
     { key: "foundingPartner", amount: st.foundingPartner },
+    { key: "rescuePartner", amount: st.rescuePartner },
     { key: "fanbase", amount: st.fanbase },
     { key: "payroll", amount: -st.payroll },
     { key: "coach", amount: -st.coach },
@@ -552,6 +558,8 @@ export function FinancesScreen() {
   const payBankLoan = useCareerStore((s) => s.payBankLoan);
 
   const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>("all");
+  // rc.33 (UX-07): the expanded balance chart.
+  const [chartOpen, setChartOpen] = useState(false);
 
   if (!mounted || !save) {
     return (
@@ -590,6 +598,10 @@ export function FinancesScreen() {
   const backer = backerLineOf(save);
   const breaches = loanBreachesOf(fin);
   const nextBreach = breachOutcomeFor(breaches + 1, save.difficulty);
+  // rc.33 (ECO-07/08): the breach that ends it here, the rescue partner on the next one, its last payday.
+  const breachEnd = breachesToEndFor(save.difficulty);
+  const nextPartner = rescuePartnerAt(breaches + 1, save.difficulty);
+  const rescueLast = rescuePartnerLastPayday(fin.rescuePartner, save.clock);
 
   // --- sparkline series: running balance reconstructed backwards ------------
   const sparkSeries: number[] = [];
@@ -819,9 +831,25 @@ export function FinancesScreen() {
               </Badge>
             ) : null}
           </div>
-          <div className="mt-3 border-t border-line pt-2">
-            <BalanceSparkline data={sparkTail} />
-          </div>
+          {/* rc.33 (UX-07): the sparkline opens the expanded chart of the recorded Mondays. */}
+          <button
+            type="button"
+            onClick={() => setChartOpen(true)}
+            aria-label={C.finances.chartOpen}
+            title={C.finances.chartOpen}
+            className="group mt-3 flex min-h-11 w-full items-center gap-2 border-t border-line pt-2 text-left outline-none transition-colors hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-cyan/60"
+          >
+            <span className="min-w-0 flex-1">
+              {sparkTail.length >= 2 ? (
+                <BalanceSparkline data={sparkTail} />
+              ) : (
+                <span className="text-[11px] text-faint">{C.finances.chartTitle}</span>
+              )}
+            </span>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-faint transition-colors group-hover:text-ink" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </Panel>
 
         <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
@@ -999,6 +1027,38 @@ export function FinancesScreen() {
               </div>
             ) : save.foundingPartner?.endedSeason === seasonIndex ? (
               <p className="mb-3 text-[11px] text-faint">{C.finances.foundingEnded}</p>
+            ) : null}
+
+            {/* rc.33 (ECO-07): the rescue partner while it runs — who, the weekly help, its last payday. */}
+            {rescueLast && fin.rescuePartner ? (
+              <div
+                className={cx(
+                  "rounded-lg border border-good/40 bg-good/[0.04] p-3",
+                  Boolean(save.sponsor || save.sponsorOffers?.length) && "mb-3",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                    {RESCUE_PARTNER_BRAND.name}
+                  </span>
+                  <Badge tone="good">{C.finances.rescueTitle}</Badge>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-good">
+                  {C.finances.perWeekBase(formatMoney(fin.rescuePartner.weekly, { compact: true }))}
+                </p>
+                <p className="text-xs text-sub">
+                  {C.finances.rescueTerms(
+                    Math.round(CAREER_LOAN.rescuePartner.payrollShare * 100),
+                    CAREER_LOAN.rescuePartner.weeks,
+                  )}
+                </p>
+                <p className="mt-1.5 text-[11px] text-faint">
+                  {C.finances.rescueUntil(
+                    formatDateTiny(D, dateOfDay(rescueLast.seasonIndex, rescueLast.day)),
+                    fin.rescuePartner.mondaysLeft,
+                  )}
+                </p>
+              </div>
             ) : null}
 
             {save.sponsor ? (
@@ -1265,9 +1325,9 @@ export function FinancesScreen() {
                 {CAREER_LOAN.lockCommitments ? (
                   <p className="mt-0.5 text-xs text-sub">{C.finances.backerLock}</p>
                 ) : null}
-                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches)}</p>
+                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
                 <p className={cx("mt-0.5 text-xs font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {C.hub.backerNextBreach(nextBreach)}
+                  {C.hub.backerNextBreach(nextBreach, nextPartner)}
                 </p>
                 <PayDown
                   remaining={fin.loan.remaining}
@@ -1282,26 +1342,29 @@ export function FinancesScreen() {
             ) : fin.loanUsed ? (
               <>
                 <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.hub.backerNextBreach(nextBreach)}
+                  {nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.hub.backerNextBreach(nextBreach, nextPartner)}
                 </p>
                 <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
-                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches)}</p>
+                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
               </>
             ) : (
               <>
+                {/* rc.33 (ECO-08): on Hard the first breach ends the career — no Backer to describe. */}
                 <p className="mt-1 text-xs text-sub">
-                  {C.finances.backerIdle(
-                    formatMoney(backer.floor, { compact: true }),
-                    formatMoney(backer.rescueTo, { compact: true }),
-                  )}
+                  {nextBreach === "insolvent"
+                    ? C.finances.backerIdleNone(formatMoney(backer.floor, { compact: true }))
+                    : C.finances.backerIdle(
+                        formatMoney(backer.floor, { compact: true }),
+                        formatMoney(backer.rescueTo, { compact: true }),
+                      )}
                 </p>
-                {CAREER_LOAN.sizing === "weeks" ? (
+                {CAREER_LOAN.sizing === "weeks" && nextBreach !== "insolvent" ? (
                   <p className="mt-1 text-[11px] text-faint">
                     {C.finances.backerWeeksLine(CAREER_LOAN.floorWeeks, CAREER_LOAN.rescueToWeeks)}
                   </p>
                 ) : null}
                 <p className="mt-1 text-[11px] text-faint">
-                  {C.finances.breachLadder(CAREER_LOAN.breachesToEnd[save.difficulty] ?? null)}
+                  {C.finances.breachLadder(breachEnd, CAREER_LOAN.rescuePartner.atBreach[save.difficulty] ?? null)}
                 </p>
               </>
             )}
@@ -1310,6 +1373,20 @@ export function FinancesScreen() {
       </div>
       </LoansDetails>
 
+      {/* rc.33 (UX-07): the expanded balance chart (portal Modal; 360 px, no horizontal scroll). */}
+      <Modal
+        open={chartOpen}
+        title={C.finances.chartTitle}
+        onClose={() => setChartOpen(false)}
+        wide
+        actions={
+          <Button variant="secondary" className="min-h-11" onClick={() => setChartOpen(false)}>
+            {C.finances.chartClose}
+          </Button>
+        }
+      >
+        <BalanceHistory ring={mondayBalancesOf(save)} />
+      </Modal>
     </div>
   );
 }

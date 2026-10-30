@@ -11,7 +11,14 @@ import { useRouter } from "next/navigation";
 import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
-import { breachOutcomeFor, insertMoneyFor, loanBreachesOf, weeklyOf } from "@/engine/career/economy";
+import {
+  breachOutcomeFor,
+  breachesToEndFor,
+  insertMoneyFor,
+  loanBreachesOf,
+  rescuePartnerAt,
+  weeklyOf,
+} from "@/engine/career/economy";
 import { ruledOutFor } from "@/store/careerFlow";
 import type {
   CareerEventDef,
@@ -366,10 +373,6 @@ export function NowBid({
             {blockbusterWhatOf(C, orgName)}
           </p>
         </>
-      ) : offer.listing ? (
-        <Badge tone="blue" className="mb-2">
-          {C.market.listingTag}
-        </Badge>
       ) : null}
       <div className="flex items-center gap-3">
         {offer.otherRef ? <OrgMark save={save} orgRef={offer.otherRef} size="lg" /> : null}
@@ -424,9 +427,10 @@ export function blockbusterWhatOf(C: CareerCopy, orgName: string): string {
 }
 
 /**
- * rc.32 (ECONOMY-CONTRACT M4 — provisional): the HQ's Backer line — the debt
- * still owed and what the next Monday below the floor would mean
- * (economy.breachOutcomeFor), plus the restructurings so far.
+ * rc.32 (ECONOMY-CONTRACT M4): the HQ's Backer line — the debt still owed and
+ * what the next Monday below the floor would mean (economy.breachOutcomeFor).
+ * rc.33 (ECO-07/08): the breaches so far against the one that ends the
+ * career on this difficulty (CAREER_LOAN.breachesToEnd) — no restructuring.
  */
 export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; owed: string }) {
   const breaches = loanBreachesOf(save.finances);
@@ -434,9 +438,11 @@ export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; 
   return (
     <div className="space-y-1">
       <p>{C.hub.backerOpen(owed)}</p>
-      {breaches >= 2 ? <p className="text-xs text-faint">{C.hub.restructuredLine(breaches)}</p> : null}
+      {breaches >= 1 ? (
+        <p className="text-xs text-faint">{C.finances.breachCount(breaches, breachesToEndFor(save.difficulty))}</p>
+      ) : null}
       <p className={cx("text-xs font-semibold", next === "insolvent" ? "text-bad" : "text-orange-bright")}>
-        {C.hub.backerNextBreach(next)}
+        {C.hub.backerNextBreach(next, rescuePartnerAt(breaches + 1, save.difficulty))}
       </p>
     </div>
   );

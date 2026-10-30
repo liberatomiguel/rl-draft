@@ -182,10 +182,10 @@ async function curvesReport(): Promise<string> {
   lines.push("#### P0. Day one — the founding payroll against the start budget (median of the 7 regions, seed 9100)");
   lines.push("");
   lines.push(
-    `No sponsor until rep ${B.CAREER_SPONSOR.firstOfferRepGate}; the fanbase at rep ${B.CAREER_REP.start} pays ${money(perWeek(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint))}/wk. ${B.CAREER_SPONSOR.founding.enabled ? `The founding partner (M3) pays ${Math.round(B.CAREER_SPONSOR.founding.payrollShare * 100)}% of the founding wage bill through season ${B.CAREER_SPONSOR.founding.throughSeasonIndex} at least. ` : ""}Runway = weeks the start budget covers at that burn (wages − fanbase − founding partner, no prizes), then the Backer: ${B.CAREER_LOAN.sizing === "weeks" ? `floor ${B.CAREER_LOAN.floorWeeks} weeks of wages below zero, one rescue back to ${B.CAREER_LOAN.rescueToWeeks} weeks above (M4)` : `floor ${money(B.CAREER_LOAN.floor)}, one rescue back to ${money(B.CAREER_LOAN.rescueTo)}`}. The founders' deals end after season 1.`,
+    `No sponsor until rep ${B.CAREER_SPONSOR.firstOfferRepGate}; the fanbase at rep ${B.CAREER_REP.start} pays ${money(perWeek(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint))}/wk. ${B.CAREER_SPONSOR.founding.enabled ? `The founding partner (M3) pays ${Math.round(B.CAREER_SPONSOR.founding.payrollShare * 100)}% of the founding wage bill through season ${B.CAREER_SPONSOR.founding.throughSeasonIndex} at least. ` : ""}Runway = weeks the start budget covers at that burn (wages − fanbase − founding partner, no prizes), then the Backer: ${B.CAREER_LOAN.sizing === "weeks" ? `floor ${B.CAREER_LOAN.floorWeeks} weeks of wages below zero, each rescue back to ${B.CAREER_LOAN.rescueToWeeks} weeks above (M4)` : `floor ${money(B.CAREER_LOAN.floor)}, each rescue back to ${money(B.CAREER_LOAN.rescueTo)}`} — rc.33 (ECO-08): the career ends at breach ${["easy", "normal", "hard"].map((d) => `${B.CAREER_LOAN.breachesToEnd[d] ?? "never"} (${d})`).join(" / ")}, the breaches before it are rescues (Easy's first adds the rescue partner, not counted here). The founders' deals end after season 1.`,
   );
   lines.push("");
-  head(["Difficulty · founding roster", "wages / wk (season)", "founding partner / wk", "start budget", "Backer floor · rescue", "runway to $0", "… to the second breach", "S0 prizes / wk: out early · qualifier side"]);
+  head(["Difficulty · founding roster", "wages / wk (season)", "founding partner / wk", "start budget", "Backer floor · rescue", "runway to $0", "… to the breach that ends it", "S0 prizes / wk: out early · qualifier side"]);
   for (const difficulty of ["easy", "normal", "hard"] as const)
     for (const rosterKey of ["balanced", "prospects", "journeymen"] as const) {
       const bills = ALL_REGIONS.map((region) => {
@@ -219,7 +219,9 @@ async function curvesReport(): Promise<string> {
       const budget = B.CAREER_ECONOMY.startingBudget[difficulty];
       const line = E.backerLineFor(wk, 0);
       const toZero = budget / burn;
-      const toEnd = toZero + -line.floor / burn + (line.rescueTo - line.floor) / burn;
+      // rc.33 (ECO-08): every breach before CAREER_LOAN.breachesToEnd is a Backer rescue (Easy 2, Normal 1, Hard 0).
+      const rescues = Math.max(0, (B.CAREER_LOAN.breachesToEnd[difficulty] ?? 2) - 1);
+      const toEnd = toZero + -line.floor / burn + (rescues * (line.rescueTo - line.floor)) / burn;
       const pzd = (tier: Parameters<typeof E.prizeFor>[0], pl: Parameters<typeof E.prizeFor>[1]) =>
         E.prizeFor(tier, pl, tier === "qualifier" ? "swissOnly" : "swiss", difficulty, 0);
       const outEarly = 6 * pzd("qualifier", "swiss_exit") + 3 * (pzd("qualifier", "top8") + pzd("regional", "swiss_exit"));
@@ -625,8 +627,10 @@ interface EconCareer {
   rescueWages: number | null;
   /** rc.32 (M4): the Backer's swing (rescue target − floor) on the rescue Monday's wage bill. */
   rescueSwing?: number | null;
-  /** rc.32 (M4): every restructuring (absolute weeks). */
+  /** rc.32 (M4): every restructuring (absolute weeks; none since rc.33, ECO-08 — kept to read rc.32 dumps). */
   restructureWeeks?: number[];
+  /** rc.33 (ECO-08): every Backer rescue (absolute weeks) — Easy can be rescued twice. */
+  rescueWeeks?: number[];
   endWeek: number | null;
   firstSponsorSeason: number | null;
   arcRows: Pick<ArcCareer["seasons"][number], "seasonIndex" | "regionRank" | "majorsQualified" | "worlds" | "titles" | "sales" | "signings" | "starSignings">[];
@@ -657,6 +661,8 @@ const INCOME_GROUPS: Record<string, string[]> = {
   "sponsor signing": ["sponsorSigning"],
   // rc.32 (M3, provisional).
   "founding partner": ["foundingPartner"],
+  // rc.33 (ECO-07): Easy's rescue partner.
+  "rescue partner": ["rescuePartner"],
   fanbase: ["fanbase"],
   "fees received (sales)": ["transferIn"],
   inserts: ["insert"],
@@ -769,6 +775,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
           c.firstWarningWeek ??= m.seasonIndex * W + weekOfDay(m.day);
           c.warningWeeks.push(m.seasonIndex * W + weekOfDay(m.day));
         }
+        // rc.33 (ECO-08): Easy's Backer can rescue twice — every rescue is recorded.
+        if (m.titleKey === "backerIn") (c.rescueWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
         if (m.titleKey === "backerIn" && c.rescueWeek === null) {
           c.rescueWeek = m.seasonIndex * W + weekOfDay(m.day);
           const stmt = statementOf(save);
@@ -902,6 +910,7 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
           rescueWages: null,
           rescueWeek: null,
           rescueSwing: null,
+          rescueWeeks: [],
           restructureWeeks: [],
           endWeek: null,
           firstSponsorSeason: null,
@@ -1012,7 +1021,7 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("#### C1. Outcomes and the safety net — by difficulty × policy");
   lines.push("");
   lines.push(
-    "Rescued = the Emergency Backer granted (one per career). Restructured (rc.32, M4) = a later breach that sold the highest-paid player instead of ending the career (Easy and Normal). Warned = a cash-warning mail (rc.32: or the 8-week notice) in the 8 weeks before the rescue; lead = weeks from the last such mail to the rescue (rc.32's warnings are weekly, so it reads 1); first warning → rescue = from the earliest warning in the season before it. Rescue window = the weeks of the burn on the rescue Monday that the Backer's swing (floor → rescue, on that Monday's wage bill) buys. Rescue → end = weeks from the Backer to insolvency. Tight Mondays = runway ≤ 4 weeks or the balance below $0.",
+    "Rescued = the Emergency Backer granted (rc.33, ECO-08: Easy can be rescued twice; the columns read the first rescue). Restructured (rc.32 only, M4) = a later breach that sold the highest-paid player instead of ending the career. Warned = a cash-warning mail (rc.32: or the 8-week notice) in the 8 weeks before the rescue; lead = weeks from the last such mail to the rescue (rc.32's warnings are weekly, so it reads 1); first warning → rescue = from the earliest warning in the season before it. Rescue window = the weeks of the burn on the rescue Monday that the Backer's swing (floor → rescue, on that Monday's wage bill) buys. Rescue → end = weeks from the Backer to insolvency. Tight Mondays = runway ≤ 4 weeks or the balance below $0.",
   );
   lines.push("");
   head(["Difficulty · policy", "n", "insolvent", "insolvent by S3", "rescued", "rescued that survive", "restructured", "restructurings / career", "warned in the 8 weeks before the rescue", "warning lead p50", "first warning → rescue p50", "rescue window p50", "rescue → end p50", "bank loans / career", "tight Mondays p50 (per season)"]);
@@ -1445,10 +1454,10 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("#### C10. Both sides of the guardrail — by difficulty (rc.32; Miguel, 30/10: not too easy, not punitive)");
   lines.push("");
   lines.push(
-    "Left of the bar, the unfair break: insolvent (the career ended through money), the newcomer policies (autopilot, badSponsor, losingStart), rescued, restructured. Right of it, money still decides: the spender still going broke, season-rows with a tight Monday in S3–S5, the snowball p90 (balance in seasons of payroll, S2–S7 worst), careers with an 88+ signing by S4.",
+    "Left of the bar, the unfair break: insolvent (the career ended through money), the newcomer policies (autopilot, badSponsor, losingStart), rescued, restructured (rc.32 only), rescued twice (rc.33: Easy's second Backer loan). Right of it, money still decides: the spender still going broke, season-rows with a tight Monday in S3–S5, the snowball p90 (balance in seasons of payroll, S2–S7 worst), careers with an 88+ signing by S4.",
   );
   lines.push("");
-  head(["Difficulty", "n", "insolvent", "newcomers insolvent", "rescued", "restructured", "‖ spender insolvent", "tight Monday S3–S5", "snowball p90 S2–S7 (max)", "88+ signing by S4"]);
+  head(["Difficulty", "n", "insolvent", "newcomers insolvent", "rescued", "restructured", "rescued twice", "‖ spender insolvent", "tight Monday S3–S5", "snowball p90 S2–S7 (max)", "88+ signing by S4"]);
   const newcomer = new Set(["autopilot", "badSponsor", "losingStart"]);
   for (const d of diffs) {
     const cs = careers.filter((c) => c.difficulty === d);
@@ -1465,6 +1474,7 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
       pct(nw.filter(insolvent).length, nw.length),
       pct(cs.filter((c) => c.rescueWeek !== null).length, cs.length),
       pct(cs.filter(restructured).length, cs.length),
+      pct(cs.filter((c) => (c.rescueWeeks?.length ?? 0) >= 2).length, cs.length),
       pct(sp.filter(insolvent).length, sp.length),
       pct(mid.filter((x) => x.mondaysTight > 0).length, mid.length),
       p90s.length ? ratio(Math.max(...p90s), 1) : "–",
