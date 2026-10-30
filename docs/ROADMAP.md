@@ -632,6 +632,13 @@ never calibrates the old training model as if it were final.
       CAREER_ARC's "Competitive line" and tune back to it, with the levers
       behind keys (the newcomer's reputation pay, the prospect headliner, the
       season growth room, founding wages). Never use the match difficulty.
+    - **First lever (Miguel, 31/10): slower growth, a later peak.** rc.35
+      made prospects grow faster: the stall fix spreads the season room and
+      lifts the ceiling to 13, and a package adds on top. Slow the base pace
+      and move the peak age later (DEV-01's age curve), and bring the season
+      ceiling down (about 8–9). The same peak, reached later. Check
+      `CAREER_GROWTH=1` and the training probe's 1.10–1.35× band, and keep the
+      stall fixed (no flat weeks).
     - Re-measure both sides of the guardrail.
 - **Gate 3a: approved 30/10** — the recommended options of all three
   contracts (training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A), the
