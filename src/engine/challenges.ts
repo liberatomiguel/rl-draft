@@ -8,14 +8,13 @@
  * and reuses the existing draft + series engine — it adds no new game math.
  */
 
-import { CHALLENGE, RANKS } from "@/config/balance";
+import { CHALLENGE } from "@/config/balance";
 import { specialCardById } from "@/data";
 import { lineupById, lineupPoolForRegion, lineups, playerById, playerCardById } from "@/data";
 import type { Rng } from "@/lib/rng";
 import { STAR_2, STAR_3, STAR_CLEAR } from "./challengeStars";
 import { createDraft, drawNextOffer, playerEligibleUnderConstraint } from "./draft";
 import { simulateSeries } from "./match";
-import { rankForXp } from "./progression";
 import { buildLineupTeam } from "./teams";
 import type {
   PlayerCard,
@@ -30,13 +29,19 @@ import type {
 } from "./types";
 import { displayTeamOverall } from "./rating";
 
-export type ChallengeStatus = "locked" | "available" | "cleared";
-
-const rankIndex = (id: string): number => RANKS.findIndex((r) => r.id === id);
-
-// The star masks live in ./challengeStars (no dataset: the cloud sync counts
-// them on every page, #60); re-exported so this stays the challenges API.
-export { ALL_STARS, countStars, STAR_2, STAR_3, STAR_CLEAR, totalStars } from "./challengeStars";
+// The star masks and the status live in ./challengeStars (no dataset: the cloud
+// sync counts stars and the "New" dots read the status on every page, #60);
+// re-exported so this stays the challenges API.
+export {
+  ALL_STARS,
+  challengeStatus,
+  countStars,
+  STAR_2,
+  STAR_3,
+  STAR_CLEAR,
+  totalStars,
+  type ChallengeStatus,
+} from "./challengeStars";
 
 /** Number of stars a challenge can award (3 with `stars`, 1 without). */
 export function starsAvailable(challenge: Challenge): number {
@@ -169,22 +174,6 @@ export function playGauntletStage(
     { bestOf: challenge.gauntlet?.bestOf ?? 5, stage: "playoff", difficulty: challenge.sim.difficulty },
     rng,
   );
-}
-
-/**
- * Locked until the player reaches `rankRequired` AND clears any `prereq`.
- * Cleared once it's in the player's `challengesCompleted` map (one-and-done).
- */
-export function challengeStatus(
-  challenge: Challenge,
-  xp: number,
-  completed: Record<string, string>,
-): ChallengeStatus {
-  if (completed[challenge.id]) return "cleared";
-  const haveIdx = rankIndex(rankForXp(xp).id);
-  if (haveIdx < rankIndex(challenge.rankRequired)) return "locked";
-  if (challenge.prereq && !completed[challenge.prereq]) return "locked";
-  return "available";
 }
 
 /**

@@ -5,7 +5,8 @@
  * in MUST NOT lose anything. `mergeProfiles` guarantees the result is >= BOTH
  * inputs in every dimension:
  *   - monotonic counters (xp, wins, lifetime totals, peak overalls) → MAX
- *   - collections (specials, achievements, challenges) → UNION, earliest date
+ *   - collections (specials, achievements, challenges, national teams found)
+ *     → UNION, earliest date
  *   - dailyResults → per-date best (higher xp)
  *   - runHistory → union by runId, newest first, capped
  *   - onboarding flags → OR (seen if either saw it)
@@ -41,6 +42,7 @@ export type DurableProfile = Pick<
   | "gamesWon"
   | "goalsScored"
   | "unlockedSpecials"
+  | "nationalDiscovered"
   | "achievements"
   | "runHistory"
   | "dailyResults"
@@ -75,6 +77,7 @@ const DURABLE_KEYS: (keyof DurableProfile)[] = [
   "gamesWon",
   "goalsScored",
   "unlockedSpecials",
+  "nationalDiscovered",
   "achievements",
   "runHistory",
   "dailyResults",
@@ -234,6 +237,8 @@ export function mergeProfiles(localIn: DurableProfile, cloudIn: DurableProfile):
     gamesWon: Math.max(local.gamesWon, cloud.gamesWon),
     goalsScored: Math.max(local.goalsScored, cloud.goalsScored),
     unlockedSpecials,
+    // rc.33: national teams found (album pages revealed) — a union, like the cards.
+    nationalDiscovered: mergeDateMap(local.nationalDiscovered ?? {}, cloud.nationalDiscovered ?? {}),
     achievements: mergeDateMap(local.achievements, cloud.achievements),
     challengesCompleted: mergeDateMap(local.challengesCompleted, cloud.challengesCompleted),
     challengeStars,

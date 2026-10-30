@@ -204,7 +204,8 @@ export interface Lineup {
    * National team (v2.0, a FIFAe season): never in the normal draw, the opponent
    * field, dailies or challenges. Classic/quick drafts inject one at
    * DRAFT.nationalTeamChance per offer, and then every card shows as its national
-   * special; seeing the lineup collects all of them (engine/draft nationalUnlocks).
+   * special. rc.33: seeing the lineup reveals its album page; each card is
+   * collected by drafting it and finishing the run (engine/collection).
    */
   national?: boolean;
   historicalStrength: HistoricalStrength;
@@ -372,11 +373,13 @@ export interface DraftState {
   eventSpecials?: { active: string[]; boosted: string[] };
   /**
    * National-team draws (v2.0): set ONLY for classic/quick runs, so dailies and
-   * challenges never see one and keep their seeded RNG sequence. `discovered` =
-   * national lineups whose cards the player already owns — undiscovered ones are
-   * favoured (DRAFT.nationalUndiscoveredWeight) so the album can be completed.
+   * challenges never see one and keep their seeded RNG sequence. `complete` =
+   * national lineups whose every card the player owns — the others are favoured
+   * (DRAFT.nationalUndiscoveredWeight) so the album can be completed. rc.33
+   * renamed it: "discovered" now means a team's album page is revealed. A run
+   * saved before rc.33 carries the same list as `discovered`, still read.
    */
-  nationalTeams?: { discovered: string[] };
+  nationalTeams?: { complete?: string[]; discovered?: string[] };
   offer: DraftOffer | null;
   roster: Roster;
   complete: boolean;
@@ -710,6 +713,13 @@ export interface RunState {
   /** Set on `mode: "challenge"` runs (v1.4) — the puzzle being attempted. */
   challengeId?: string;
   draft: DraftState;
+  /**
+   * COL-02a (rc.33): the special cards of the current offer the player did not
+   * own when it was drawn — decided before anything is collected and kept with
+   * the offer (`round` = the offer's `draft.round`), so the NEW tag never
+   * re-checks the inventory after a grant. Missing on runs saved before rc.33.
+   */
+  offerNew?: { round: number; ids: string[] };
   tournament: TournamentState | null;
   /** The challenge match (single Bo7 vs a fixed boss) — challenge mode only. */
   challenge: ChallengeRunState | null;

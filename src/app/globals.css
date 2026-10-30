@@ -350,6 +350,34 @@ body::before {
     repeating-linear-gradient(115deg, rgba(253, 224, 71, 0.05) 0 3px, transparent 3px 12px);
 }
 
+/* rc.33 (COL-01a): the national album. A PAGE per edition (and the team page's
+   header): a dark sheet with faint ruled lines and a gold wash from the top, so
+   the editions read as album pages, not panels. The PITCH holds a team in
+   formation: a gold-lit field with a halfway line and centre circle. Static. */
+.album-page {
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(250, 204, 21, 0.06), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 24px),
+    linear-gradient(160deg, rgba(20, 29, 51, 0.7), rgba(10, 16, 30, 0.82));
+}
+
+.album-pitch {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 58px, rgba(250, 204, 21, 0.1) 58px 59.5px, transparent 59.5px),
+    linear-gradient(90deg, transparent calc(50% - 0.75px), rgba(250, 204, 21, 0.1) calc(50% - 0.75px) calc(50% + 0.75px), transparent calc(50% + 0.75px)),
+    radial-gradient(90% 60% at 50% 30%, rgba(250, 204, 21, 0.08), transparent 70%),
+    linear-gradient(180deg, rgba(36, 26, 5, 0.55), rgba(10, 16, 30, 0.85));
+}
+
+/* rc.33 (COL-02b): a national team's ORG card — the same trophy-gold frame and
+   stage light behind the flag, without the special halo or sheen (it is no
+   special and no collectible). Static: nothing animates. */
+.card-national-org .card-texture {
+  background:
+    radial-gradient(90% 70% at 50% 42%, rgba(250, 204, 21, 0.2), transparent 72%),
+    repeating-linear-gradient(115deg, rgba(253, 224, 71, 0.05) 0 3px, transparent 3px 12px);
+}
+
 /* Wings E-Sports easter-egg card — orange (v1.4) */
 .card-wings {
   background-image:

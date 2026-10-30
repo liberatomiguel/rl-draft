@@ -3,20 +3,27 @@
 /**
  * Collection album (special cards). Unlocked cards open a detail modal with
  * full stats; locked cards show as silhouettes with their rarity to chase.
+ * rc.33 (COL-02c): a card collected and not opened yet wears NEW; opening its
+ * detail clears it (visiting the tab does not). The tabs carry the dot of the
+ * album that holds something new — the same items the nav dot counts.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { specialCards } from "@/data";
 import { useCopy } from "@/content/copy";
 import { effectiveStats, isSpecialPersonRarity, resolveSpecial } from "@/engine/cards";
+import { isNationalTeamDiscovered } from "@/engine/collection";
+import { specialKey } from "@/engine/profileNew";
 import type { SpecialCard, SpecialRarity } from "@/engine/types";
 import { cx, countryName, formatDate } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
+import { useOpenContent, useProfileNew } from "@/store/useNewItems";
 import { rankRewardsForXp, rankThatUnlocksRarity } from "@/engine/progression";
 import { Badge } from "@/components/ui/Badge";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
 import { Modal } from "@/components/ui/Modal";
+import { NewDot } from "@/components/ui/NewDot";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { StatBar } from "@/components/ui/ProgressBar";
@@ -63,10 +70,13 @@ const isSecretRarity = (r: SpecialRarity) => SECRET_RARITIES.includes(r);
 const PAGE_BATCH = 24;
 
 export function CollectionView() {
-  const { COLLECTION_UI: C, RARITY_LABELS, NATIONAL_UI: N } = useCopy();
+  const { COLLECTION_UI: C, RARITY_LABELS, NATIONAL_UI: N, NAV_UI } = useCopy();
   const mounted = useMounted();
   const unlockedMap = useProfileStore((s) => s.unlockedSpecials);
+  const nationalDiscovered = useProfileStore((s) => s.nationalDiscovered);
   const xp = useProfileStore((s) => s.xp);
+  const fresh = useProfileNew();
+  const openContent = useOpenContent();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [rarity, setRarity] = useState<SpecialRarity | "all">("all");
   const [album, setAlbum] = useState<Album>("specials");
@@ -83,6 +93,28 @@ export function CollectionView() {
     (id: string) => devPreview || (mounted && Boolean(unlockedMap[id])),
     [devPreview, mounted, unlockedMap],
   );
+  // National teams (rc.33): a page is revealed by the find, or by an owned card.
+  const isDiscovered = useCallback(
+    (lineupId: string) =>
+      devPreview || (mounted && isNationalTeamDiscovered(lineupId, nationalDiscovered, unlockedMap)),
+    [devPreview, mounted, nationalDiscovered, unlockedMap],
+  );
+  const foundOn = useCallback(
+    (lineupId: string) => (mounted ? nationalDiscovered?.[lineupId] ?? null : null),
+    [mounted, nationalDiscovered],
+  );
+  // Opening a card's detail is opening that content: it stops being new.
+  const openDetail = useCallback(
+    (sp: SpecialCard) => {
+      openContent([specialKey(sp.id)]);
+      setDetail(sp);
+    },
+    [openContent],
+  );
+  const albumDot: Record<Album, boolean> = {
+    specials: fresh.specials.length > 0,
+    national: fresh.nationalCards.length + fresh.nationalTeams.length > 0,
+  };
 
   // The album shows the OFFICIAL catalogue by default; the special-person cards
   // (creator / wings / community) only appear — and only count toward the total —
@@ -223,7 +255,7 @@ export function CollectionView() {
             aria-selected={album === a}
             onClick={() => setAlbum(a)}
             className={cx(
-              "display rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
+              "display relative rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors",
               album === a
                 ? a === "national"
                   ? "bg-yellow-300/15 text-yellow-100"
@@ -232,12 +264,13 @@ export function CollectionView() {
             )}
           >
             {a === "specials" ? N.tabSpecials : N.tabNational}
+            {albumDot[a] ? <NewDot className="absolute right-1 top-1" label={NAV_UI.newHere} /> : null}
           </button>
         ))}
       </div>
 
       {album === "national" ? (
-        <NationalAlbum isUnlocked={isUnlocked} onOpenCard={setDetail} />
+        <NationalAlbum isUnlocked={isUnlocked} isDiscovered={isDiscovered} foundOn={foundOn} onOpenCard={openDetail} />
       ) : (
         <>
         {/* Rarity progress */}
@@ -315,7 +348,9 @@ export function CollectionView() {
                     // on scroll/intersection. Unlocked cards sort first, so the
                     // leading indices are exactly the above-the-fold photos.
                     priority={i < 6}
-                    onClick={() => setDetail(sp)}
+                    newTag={fresh.keys.has(specialKey(sp.id))}
+                    newTagText={C.newTag}
+                    onClick={() => openDetail(sp)}
                   />
                 ) : (
                   <LockedCard sp={sp} onClick={() => setDetail(sp)} />

@@ -21,7 +21,8 @@ import { createRng } from "@/lib/rng";
 import { resolveSpecial } from "./cards";
 import { challengePool } from "./challenges";
 import { anchorOverall, deriveBirthYear } from "./career/development";
-import { createDraft, drawNextOffer, nationalUnlocks } from "./draft";
+import { completeNationalLineups, nationalCardIdsOf } from "./collection";
+import { createDraft, drawNextOffer } from "./draft";
 import { generateOpponents } from "./opponents";
 import { buildUserTeam } from "./teams";
 import type { DraftState, Roster } from "./types";
@@ -117,7 +118,7 @@ describe("national teams — the draw (v2.0)", () => {
 
   it("worldwide: rare but findable, at ≈ DRAFT.nationalTeamChance per offer", () => {
     const { national, lineupIds } = firstOffers(() =>
-      createDraft("normal", { nationalTeams: { discovered: [] } }),
+      createDraft("normal", { nationalTeams: { complete: [] } }),
     );
     const rate = national / N;
     expect(rate).toBeGreaterThan(DRAFT.nationalTeamChance * 0.6);
@@ -129,19 +130,19 @@ describe("national teams — the draw (v2.0)", () => {
 
   it("a Region-only run draws only its own region's national teams", () => {
     const { lineupIds } = firstOffers(() =>
-      createDraft("normal", { poolLineupIds: lineupPoolForRegion("EU"), nationalTeams: { discovered: [] } }),
+      createDraft("normal", { poolLineupIds: lineupPoolForRegion("EU"), nationalTeams: { complete: [] } }),
     );
     expect(lineupIds.length).toBeGreaterThan(0);
     for (const id of lineupIds) expect(lineupById.get(id)!.region).toBe("EU");
   });
 
-  it("every card of a national offer shows as its national special, and seeing it unlocks all", () => {
+  it("every card of a national offer shows as its national special (each one a card to collect)", () => {
     let checked = 0;
     for (let s = 0; s < N && checked < 25; s++) {
-      const draft = drawNextOffer(createDraft("normal", { nationalTeams: { discovered: [] } }), createRng(50_000 + s));
+      const draft = drawNextOffer(createDraft("normal", { nationalTeams: { complete: [] } }), createRng(50_000 + s));
       const lineup = lineupById.get(draft.offer!.lineupId)!;
       if (!lineup.national) {
-        expect(nationalUnlocks(draft.offer)).toEqual([]);
+        expect(nationalCardIdsOf(lineup.id)).toEqual([]);
         continue;
       }
       checked++;
@@ -149,21 +150,45 @@ describe("national teams — the draw (v2.0)", () => {
         if (card.kind === "org" || card.availability === "vacant") continue;
         expect(card.specialId, card.refId).toBe(nationalSpecialByCardId.get(card.refId)!.id);
       }
-      expect(nationalUnlocks(draft.offer)).toEqual(nationalSpecialIdsByLineupId.get(lineup.id));
+      // The org card carries no special (COL-02b: national visual only, no collectible).
+      expect(draft.offer!.cards.find((c) => c.kind === "org")?.specialId).toBeUndefined();
+      const offered = draft.offer!.cards.map((c) => c.specialId).filter(Boolean).sort();
+      expect(offered).toEqual([...nationalSpecialIdsByLineupId.get(lineup.id)!].sort());
     }
     expect(checked).toBeGreaterThan(5);
   });
 
-  it("undiscovered national teams are favoured, so the album can be completed", () => {
+  it("teams not complete yet are favoured, so the album can be completed (rc.33: complete = every card owned)", () => {
     const all = worldNationalLineups.map((l) => l.id);
     const missing = all[0];
-    const discovered = all.slice(1);
-    const { lineupIds } = firstOffers(() => createDraft("normal", { nationalTeams: { discovered } }));
+    const complete = all.slice(1);
+    const { lineupIds } = firstOffers(() => createDraft("normal", { nationalTeams: { complete } }));
     const share = lineupIds.filter((id) => id === missing).length / lineupIds.length;
     const uniform = 1 / all.length;
     const expected = DRAFT.nationalUndiscoveredWeight / (DRAFT.nationalUndiscoveredWeight + all.length - 1);
     expect(share).toBeGreaterThan(uniform * 1.5);
     expect(share).toBeGreaterThan(expected * 0.5);
+  });
+
+  it("a found team with a card still missing stays favoured: only a COMPLETE team loses the weight", () => {
+    const team = worldNationalLineups[0];
+    const ids = nationalCardIdsOf(team.id);
+    const now = "2026-10-30T00:00:00.000Z";
+    // Found and partly collected: still not complete.
+    const partial = Object.fromEntries(ids.slice(0, ids.length - 1).map((id) => [id, now]));
+    expect(completeNationalLineups(partial)).not.toContain(team.id);
+    // Every card owned: complete.
+    const full = Object.fromEntries(ids.map((id) => [id, now]));
+    expect(completeNationalLineups(full)).toContain(team.id);
+  });
+
+  it("a run saved before rc.33 (`discovered`) draws exactly like `complete` — same RNG use, same offers", () => {
+    const complete = worldNationalLineups.slice(2).map((l) => l.id);
+    for (let s = 0; s < 400; s++) {
+      const a = drawNextOffer(createDraft("normal", { nationalTeams: { complete } }), createRng(70_000 + s));
+      const b = drawNextOffer(createDraft("normal", { nationalTeams: { discovered: complete } }), createRng(70_000 + s));
+      expect(b.offer).toEqual(a.offer);
+    }
   });
 
   it("a drafted national card lifts every team attribute", () => {
