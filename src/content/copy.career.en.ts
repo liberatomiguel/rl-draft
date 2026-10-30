@@ -572,7 +572,7 @@ export const CAREER_EN = {
       sponsorGoalMissed: (p: Record<string, string | number>) =>
         `${goalOfParamsEn(p)}: ${p.done} of ${p.target}. ${
           positive(p.fine)
-            ? `The fine is ${p.fine}, paid as ${p.perMonday} on each of the next ${p.mondays} Mondays — never below the Backer's floor.`
+            ? `The fine is ${p.fine}, paid as ${p.perMonday} on each of the next ${p.mondays} Mondays — never below the bank's floor.`
             : Number(p.steady)
               ? `No fine on a Steady deal — but the brand's patience drops: ${p.misses} of ${p.patience} misses; at ${p.patience}, the next offer comes a tier lower.`
               : "No fine."
@@ -1378,6 +1378,10 @@ export const CAREER_EN = {
       stabilityBar: (pct: number) => `${pct}% of the most it pays is sure`,
       handover: (first: number, second: number) =>
         `Your founding partner steps back once this deal starts: ${first}%, then ${second}% of its pay, one split each.`,
+      // rc.34 review (S6): before season index 2 signing does not start the handover — the partner pays in full through its term.
+      handoverLater: (season: string, first: number, second: number) =>
+        `Your founding partner pays in full through the end of ${season}, whatever you sign; then it steps back: ${first}%, then ${second}% of its pay, one split each.`,
+      handoverNet: (delta: string, date: string) => `Net weekly change at the handover (${date}): ${delta}`,
       activeTitle: "Current deal",
       endsOn: (date: string) => `Ends ${date}`,
       signingPaid: (s: string) => `${s} paid on signing`,
@@ -1393,7 +1397,7 @@ export const CAREER_EN = {
       fineIfMissed: (s: string) => `up to ${s} if missed`,
       record: (hits: number, misses: number) => `Goals so far: ${hits} reached, ${misses} missed`,
       finesOwed: (s: string, mondays: number) => `Fines still to pay: ${s} over the next ${mondays} Mondays`,
-      fineFloorNote: "An instalment never takes the books below the Backer's floor.",
+      fineFloorNote: "An instalment never takes the books below the bank's floor.",
       otherIncome: "Other income",
       otherIncomeLine: (taken: string, cap: string, n: number, max: number) =>
         `${taken} of ${cap} this season · ${n} of ${max} this split`,

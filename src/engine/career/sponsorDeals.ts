@@ -7,11 +7,13 @@
  * index). Pure and deterministic: brand picks come from `derivedFloat`, the
  * team's level and the results are handed in by the flow.
  *
- *  - The deal (S1): three profiles share their own ceiling between weekly
- *    pay, a fixed part (on signing, or — Bold — the day its first goal is
- *    reached) and a bonus per goal; one split, one season or two seasons.
- *    Each ceiling is sized so the deal's expected value at its goals' word
- *    equals the tier's value for the Mondays it pays (s1).
+ *  - The deal (S1): three profiles pay weekly pay, a fixed part (on
+ *    signing, or — Bold — the day its first goal is reached) and a bonus
+ *    per goal; one split, one season or two seasons. The weekly pay is the
+ *    profile's share of the tier's value a Monday (Steady ≥ Balanced ≥ Bold
+ *    in every decision, rc.34 review); the fixed part and the bonuses are
+ *    sized so the deal's expected value at its goals' chance equals the
+ *    tier's value for the Mondays it pays (s1).
  *  - Goals (S2): one per split, built from the team's level (its seed
  *    rating ranked in its region) and the split's events, all still ahead
  *    when the goal is set; a word (Likely / Even / Stretch) from the
@@ -31,7 +33,7 @@ import {
 } from "@/config/balance";
 import { SPONSOR_BRANDS } from "@/data/career/sponsors";
 import type { Placement, Region } from "../types";
-import { firstDayOfWeek, weekOfDay } from "./calendar";
+import { firstDayOfWeek, splitBoundaryWeeks, weekOfDay } from "./calendar";
 import { moneyIndex, periodOfWeek, quantize, quantizeWeekly } from "./economy";
 import { derivedFloat, streams } from "./seeds";
 import type {
@@ -71,12 +73,36 @@ export function isAfter(a: CareerDay, b: CareerDay): boolean {
 // Splits ("slots") and their dates
 // ---------------------------------------------------------------------------
 
-/** The split weeks: its first Monday, its first regional week, its Major week, the Monday it settles. */
-const SPLIT_WEEKS: Record<1 | 2 | 3, { start: number; firstEvent: number; lastRegional: number; major: number; settle: number }> = {
-  1: { start: 3, firstEvent: 4, lastRegional: 8, major: 10, settle: 11 },
-  2: { start: 13, firstEvent: 14, lastRegional: 18, major: 20, settle: 21 },
-  3: { start: 23, firstEvent: 24, lastRegional: 28, major: 30, settle: CAREER_CALENDAR.worldsWindowWeek },
-};
+interface SplitWeeks {
+  start: number;
+  firstEvent: number;
+  lastRegional: number;
+  major: number;
+  settle: number;
+}
+
+/**
+ * The split weeks, from CAREER_CALENDAR (rc.34 review: not a copy of it):
+ * its first week, its first and last regional weeks, its Major week and the
+ * boundary Monday it settles on (calendar.splitBoundaryWeeks — W11, W21 and
+ * the Worlds window's W31).
+ */
+const SPLIT_WEEKS: Record<1 | 2 | 3, SplitWeeks> = (() => {
+  const C = CAREER_CALENDAR;
+  const settle = splitBoundaryWeeks();
+  const out = {} as Record<1 | 2 | 3, SplitWeeks>;
+  for (const split of [1, 2, 3] as const) {
+    const start = C.preseasonWeeks + (split - 1) * (C.splitWeeks + C.windowWeeks) + 1;
+    out[split] = {
+      start,
+      firstEvent: start + C.regionalOffsets[0] - 1,
+      lastRegional: start + C.regionalOffsets[C.regionalOffsets.length - 1] - 1,
+      major: start + C.majorOffset - 1,
+      settle: settle[split - 1],
+    };
+  }
+  return out;
+})();
 
 /** A split as one number: seasonIndex × 3 + split − 1. */
 export function slotOf(seasonIndex: number, split: 1 | 2 | 3): number {
@@ -501,7 +527,7 @@ export function fineScheduleFor(sponsorId: string, fine: number): SponsorFineSta
 }
 
 interface ProfileRow {
-  weeklyShare: number;
+  weeklyOfValue: number;
   fixedShare: number;
   fixedKind: "signing" | "milestone";
   bonusShare: number;
@@ -547,9 +573,17 @@ export interface DealQuote {
 }
 
 /**
- * Price a profile at a tier for the Mondays it pays: the ceiling C solves
- * EV(C) = the tier's value × Mondays (every term is linear in C), then the
- * figures are quantized and the EV and the ceiling re-read from them.
+ * Price a profile at a tier for the Mondays it pays. rc.34 review: the
+ * weekly pay is the profile's share of the tier's value a Monday
+ * (`weeklyOfValue`) — the same whatever the goal, so one decision's weekly
+ * pay always reads Steady ≥ Balanced ≥ Bold. The rest of the value is the
+ * fixed part's and the bonuses' (in the profile's `fixedShare` :
+ * `bonusShare` ratio): their sum C solves EV(C) = the tier's value ×
+ * Mondays at the goals' chance — EV is the weekly pay, plus C at that
+ * chance, less a miss's fine (the profile's share of a bonus, up to the
+ * cap of `fines.capWeeks` weeks of weekly pay: piecewise linear in C,
+ * solved on the piece that holds). The figures are then quantized and the
+ * EV and the most it pays (`ceiling`) re-read from them.
  */
 export function quoteDeal(input: {
   profile: SponsorProfile;
@@ -567,24 +601,27 @@ export function quoteDeal(input: {
   const p = Math.min(0.99, Math.max(0.01, input.chance ?? CAREER_SPONSOR.wordChance[row.word]));
   const mondays = Math.max(1, input.mondays);
   const n = Math.max(1, input.goals);
-  const value = tierValuePerWeek(input.tier, input.seasonIndex, input.difficulty) * mondays * (input.valueShare ?? 1);
+  const perMonday = tierValuePerWeek(input.tier, input.seasonIndex, input.difficulty) * (input.valueShare ?? 1);
+  const value = perMonday * mondays;
   const fines = finesApply(input.profile, input.difficulty);
-  // The fine per full miss as a share of C: min(capWeeks × weekly, fineShare × bonus per goal).
-  const finePerC = fines
-    ? Math.min((CAREER_SPONSOR.fines.capWeeks * row.weeklyShare) / mondays, (row.fineShare * row.bonusShare) / n)
-    : 0;
-  const anyHit = 1 - Math.pow(1 - p, n);
-  const k =
-    row.weeklyShare +
-    row.fixedShare * (row.fixedKind === "milestone" ? anyHit : 1) +
-    row.bonusShare * p -
-    n * (1 - p) * finePerC;
-  const ceiling = value / Math.max(0.05, k);
-  const weekly = Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly((row.weeklyShare * ceiling) / mondays));
-  const fixed = quantize(row.fixedShare * ceiling);
-  const bonus = quantize((row.bonusShare * ceiling) / n);
+  const weekly = Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(row.weeklyOfValue * perMonday));
   const fineShare = fines ? row.fineShare : 0;
   const fineCap = fines ? quantize(CAREER_SPONSOR.fines.capWeeks * weekly) : 0;
+  // The rest of the value comes from C: the fixed part (fx of it) and the bonuses (bx of it, over n goals).
+  const rest = Math.max(0, value - weekly * mondays);
+  const fx = row.fixedShare / (row.fixedShare + row.bonusShare);
+  const bx = 1 - fx;
+  const anyHit = 1 - Math.pow(1 - p, n);
+  // What C returns at the chance (a milestone at the chance any goal is reached), and a full miss's fine per C below the cap.
+  const gain = fx * (row.fixedKind === "milestone" ? anyHit : 1) + bx * p;
+  const finePerC = (fineShare * bx) / n;
+  const belowCap = gain - n * (1 - p) * finePerC;
+  const c =
+    belowCap > 0 && (rest / belowCap) * finePerC <= fineCap
+      ? rest / belowCap
+      : (rest + n * (1 - p) * fineCap) / gain;
+  const fixed = quantize(fx * c);
+  const bonus = quantize((bx * c) / n);
   const fineMax = fineMaxOf({ fineShare, fineCap }, bonus);
   return {
     weekly,
@@ -615,6 +652,8 @@ function brandsOfTier(tier: 1 | 2 | 3 | 4): string[] {
  * `tier`, each from a different brand of that tier, priced on today's money
  * index, with the first split's goal at the profile's word. Sorted Steady,
  * Balanced, Bold (the comparison's order — never a "recommended" one).
+ * `demoted` (rc.34 review): a renewal one tier lower — recorded on every
+ * offer (`terms.demoted`), so the rollover can carry it.
  */
 export function sponsorDecisionFor(input: {
   tier: 1 | 2 | 3 | 4;
@@ -622,6 +661,7 @@ export function sponsorDecisionFor(input: {
   careerSeed: number;
   difficulty: CareerDifficulty;
   level: TeamLevel;
+  demoted?: boolean;
 }): SponsorState[] {
   const { tier, today, careerSeed, difficulty, level } = input;
   const firstSlot = firstSlotFrom(today);
@@ -663,6 +703,7 @@ export function sponsorDecisionFor(input: {
       decideBy,
     };
     if (valueShare < 1) terms.levelShare = valueShare;
+    if (input.demoted) terms.demoted = true;
     return {
       sponsorId: pool.length > 0 ? pool[(start + i) % pool.length] : `sponsor-${tier}-${profile}`,
       tier,

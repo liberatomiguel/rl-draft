@@ -1977,11 +1977,26 @@ export const CAREER_SPONSOR = {
    * Bold's goals are Stretch goals — at the candidates (0.5 / 0.3), the
    * ceiling that keeps its expected value level makes Bold's weekly pay the
    * HIGHEST of the three, the opposite of the profile.
+   *
+   * rc.34 review (P3): the weekly pay is no longer a share of that ceiling.
+   * Sized at the goal's chance, the ceiling grew as the chance fell, so a
+   * Stretch goal near its floor (`wordMin.stretch`) still lifted Bold's
+   * weekly pay above Balanced's, at times above Steady's (1 decision in 6
+   * of the review's grid). `weeklyOfValue` is now the weekly pay as a share
+   * of the tier's value a Monday — the same whatever the goal, so it reads
+   * Steady ≥ Balanced ≥ Bold in every decision. The goal's chance moves only
+   * the rest of the deal's value, shared between the fixed part and the
+   * bonuses in the ratio `fixedShare` : `bonusShare` (unchanged) and sized so
+   * the expected value still equals the tier's value (s1). Claude's values:
+   * what the old shares paid at the profile's own word — Steady 0.75–0.78,
+   * Balanced 0.67–0.73 — and Bold below Balanced (0.61–0.82 there, 0.72 at
+   * its word's chance): 0.65, a tenth less sure money than before at its
+   * word, the rest moved to its milestone and bonus.
    */
   profiles: {
-    steady: { weeklyShare: 0.75, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, word: "likely", lengthSplits: 6 },
-    balanced: { weeklyShare: 0.6, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.15, word: "even", lengthSplits: 3 },
-    bold: { weeklyShare: 0.35, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.5, word: "stretch", lengthSplits: 1 },
+    steady: { weeklyOfValue: 0.76, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, word: "likely", lengthSplits: 6 },
+    balanced: { weeklyOfValue: 0.7, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.15, word: "even", lengthSplits: 3 },
+    bold: { weeklyOfValue: 0.65, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.5, word: "stretch", lengthSplits: 1 },
   } as const,
   /**
    * rc.34 — ECO-04 (s1): the tier's value per season, at season-0 money
@@ -2075,8 +2090,9 @@ export const CAREER_SPONSOR = {
    * bottom of it, for s3: a season of misses stays near two weeks of
    * payroll), booked as its own line over the next `spreadMondays` Mondays (2–6),
    * never a lump sum. `neverBreaches`: an instalment never takes the books
-   * below the Backer's floor — what would is waived (s4: a fine never
-   * triggers a rescue).
+   * below the bank's floor — what would is waived (s4: a fine never
+   * triggers a rescue). rc.34 review: the instalments book after the
+   * emergency loan's deadline check, so one never decides that check.
    */
   fines: { capWeeks: 1, spreadMondays: 4, neverBreaches: true },
   /**

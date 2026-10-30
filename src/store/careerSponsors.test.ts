@@ -17,24 +17,38 @@
  *  - The arc bot's three profiles play without a softlock.
  */
 
-import { declineSponsorOffersFlow } from "./careerDecisions";
+import {
+  clockHoldOf,
+  continueToNextSeasonFlow,
+  declineSponsorOffersFlow,
+  parkDecisionFlow,
+  pendingDecisionsOf,
+  reviewContractsFlow,
+  rolloverHoldOf,
+} from "./careerDecisions";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CAREER_INSERTS, CAREER_SPONSOR } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import { CAREER_INSERTS_CATALOG, insertById } from "@/data/career/inserts";
 import { ACH_FLAGS } from "@/engine/career/achievements";
-import { firstDayOfWeek, weekOfDay } from "@/engine/career/calendar";
+import { DAYS_PER_SEASON, firstDayOfWeek, seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
 import { foundingPartnerBaseFor, sponsorOffersFor, weeklyOf } from "@/engine/career/economy";
 import { insertWithinCap, rollInsertFor } from "@/engine/career/inserts";
-import { fineFor, slotOf } from "@/engine/career/sponsorDeals";
+import { absDayOf, fineFor, slotOf } from "@/engine/career/sponsorDeals";
 import type { CareerSave, CompactEventResult, SponsorGoal, SponsorState } from "@/engine/career/types";
+import { formatMoneyDelta } from "@/lib/format";
+import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
 import { playArcCareer } from "./careerArcBot";
 import {
   advanceDayFlow,
   backerLineOf,
   chooseSponsorFlow,
   createCareerSave,
+  foundingHandoverOf,
+  handoverNetWeeklyOf,
   migrateSaveToV5,
   repairSponsorsOnLoad,
   resolveInsertFlow,
@@ -181,6 +195,105 @@ describe("rc.34 ECO-04 — a sponsor decision (S4: three profiles, one tier, a d
     expect(sponsorDecisionOf({ ...save, sponsorOffers: null })).toBeNull();
     expect(sponsorDecisionOf({ ...save, phase: "ended" })).toBeNull();
   });
+
+  it("rc.34 review: an expired sign attempt marks nothing as signed (validated before anything moves)", () => {
+    const save = decisionAtW11(34_005);
+    expect(save.flags[ACH_FLAGS.sponsorSigned]).toBeFalsy();
+    const late = { ...save, clock: { seasonIndex: 0, day: 13 * 7 + 1 } };
+    const res = chooseSponsorFlow(late, late.sponsorOffers![0].sponsorId);
+    expect(res.error).toBe("expired");
+    expect(res.save.flags[ACH_FLAGS.sponsorSigned]).toBeFalsy();
+    expect(res.save.sponsor).toBeNull();
+    // An unknown offer moves nothing at all.
+    expect(chooseSponsorFlow(save, "no-such-brand")).toEqual({ save, error: "unknown" });
+    // A real signing sets it.
+    expect(sign(save, "steady").flags[ACH_FLAGS.sponsorSigned]).toBe(true);
+  });
+});
+
+// ===========================================================================
+// rc.34 review — a Worlds-window decision across the rollover
+// ===========================================================================
+
+/** A Steady deal signed at the rollover into season 1 runs to season 2's W31: its renewal is the Worlds window's decision. */
+function renewalAtW31(seed: number, misses: number, rep = 30): CareerSave {
+  let save = createCareerSave(INPUT, seed);
+  save.reputation = rep;
+  save = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 0, day: DAYS_PER_SEASON } });
+  save = sign(save, "steady");
+  expect(save.sponsor!.terms!.endsOn).toEqual({ seasonIndex: 2, day: firstDayOfWeek(31) });
+  save = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 1, day: DAYS_PER_SEASON } });
+  save.sponsor!.missedCount = misses;
+  save.reputation = rep;
+  save = withGoal(save, { slot: slotOf(2, 3), kind: "regionalFinish", count: 3, place: 1 });
+  return mondayAfter(save, 30, 2);
+}
+
+/** The season review on its day (224), the contract review given, no bid pending. */
+function atReview(save: CareerSave): CareerSave {
+  return reviewContractsFlow({ ...save, phase: "seasonReview", clock: { seasonIndex: save.clock.seasonIndex, day: DAYS_PER_SEASON }, pendingOffers: [] }).save;
+}
+
+describe("rc.34 review — a Worlds-window renewal survives the rollover (no way around 7-A)", () => {
+  it("its offers record the demotion; pending or declined at the rollover, the new season's offers keep it", () => {
+    const w31 = renewalAtW31(34_061, CAREER_SPONSOR.patienceMisses - 1);
+    const d = sponsorDecisionOf(w31)!;
+    expect(d.offers.map((o) => o.tier)).toEqual([1, 1, 1]);
+    expect(d.offers.every((o) => o.terms!.demoted)).toBe(true);
+    // The window's decision covers the next season's first split; its deadline is the season's last day.
+    expect(d.offers[0].terms!.firstSlot).toBe(slotOf(3, 1));
+    expect(d.deadlineOn).toEqual({ seasonIndex: 2, day: DAYS_PER_SEASON });
+    // Still pending at the rollover: offered again in the new season's money, one tier lower still.
+    const next = rolloverToNextSeason(atReview(w31));
+    expect(next.sponsorOffers!.map((o) => o.tier)).toEqual([1, 1, 1]);
+    expect(next.sponsorOffers!.every((o) => o.terms!.demoted && o.terms!.pricedSeason === 3)).toBe(true);
+    // Declined at the window: the rollover's fresh decision for the same split stays one tier lower.
+    const declined = declineSponsorOffersFlow(w31);
+    expect(declined.error).toBeUndefined();
+    const after = rolloverToNextSeason(atReview(declined.save));
+    expect(after.sponsorOffers!.map((o) => o.tier)).toEqual([1, 1, 1]);
+    // Signing one of them clears it: the next decision is at the full tier.
+    expect(sign(after, "bold").sponsorDemotedSlot).toBeUndefined();
+    // Without the misses the renewal is the full tier, before and after the rollover.
+    const kept = renewalAtW31(34_061, 0);
+    expect(sponsorDecisionOf(kept)!.offers.map((o) => o.tier)).toEqual([2, 2, 2]);
+    expect(rolloverToNextSeason(atReview(kept)).sponsorOffers!.map((o) => o.tier)).toEqual([2, 2, 2]);
+  });
+
+  it("parked with Later, it holds on its deadline: the season review's continue waits for sign or decline", () => {
+    const w31 = renewalAtW31(34_062, 0);
+    const id = sponsorDecisionOf(w31)!.id;
+    const parked = parkDecisionFlow(w31, id);
+    expect(parked.error).toBeUndefined();
+    // Before its deadline it waits under the block, not holding the clock.
+    const eve = { ...parked.save, clock: { seasonIndex: 2, day: DAYS_PER_SEASON - 1 } };
+    expect(pendingDecisionsOf(eve).find((x) => x.kind === "sponsor")).toMatchObject({ parked: true, holds: false });
+    expect(clockHoldOf(eve)?.kind).not.toBe("sponsor");
+    // Day 224 opens the season review: the decision holds the rollover until answered.
+    const review = atReview(parked.save);
+    expect(rolloverHoldOf(review)).toMatchObject({ kind: "sponsor", id, holds: true, canWait: false });
+    expect(continueToNextSeasonFlow(review).error).toBe("decisionPending");
+    // Signed in the review, the deal runs into the new season.
+    const signed = chooseSponsorFlow(review, sponsorDecisionOf(review)!.offers[1].sponsorId);
+    expect(signed.error).toBeUndefined();
+    const on = continueToNextSeasonFlow(signed.save);
+    expect(on.error).toBeUndefined();
+    expect(on.save.sponsor?.terms?.profile).toBe("balanced");
+    // Declined in the review, the season goes on.
+    const declined = declineSponsorOffersFlow(review);
+    expect(declined.error).toBeUndefined();
+    expect(continueToNextSeasonFlow(declined.save).error).toBeUndefined();
+  });
+
+  it("below the reputation gate at the rollover, a pending renewal is still offered — with its demotion", () => {
+    const w31 = renewalAtW31(34_063, CAREER_SPONSOR.patienceMisses - 1);
+    const low = atReview({ ...w31, reputation: CAREER_SPONSOR.firstOfferRepGate - 1 });
+    const next = rolloverToNextSeason(low);
+    expect(next.sponsorOffers).toHaveLength(3);
+    expect(next.sponsorOffers!.every((o) => o.terms!.demoted)).toBe(true);
+    // Nothing pending and below the gate: nothing offered (as before).
+    expect(rolloverToNextSeason(atReview({ ...low, sponsorOffers: null, sponsorDemotedSlot: undefined })).sponsorOffers).toBeNull();
+  });
 });
 
 // ===========================================================================
@@ -261,7 +374,16 @@ describe("rc.34 ECO-04 — the deal: three dated parts (S1)", () => {
     expect(s.finances.sponsorFines).toBeUndefined();
   });
 
-  it("an instalment never takes the books below the Backer's floor — what would is waived (s4)", () => {
+  it("rc.34 review: the fine's copy names the bank's floor (rc.34 retired the Backer), EN and PT", () => {
+    const p = { name: "voltway", fine: 400, perMonday: 100, mondays: 4, done: 0, target: 1, steady: 0, profile: "balanced", misses: 0, patience: 3, goalKind: "regionalFinish", goalCount: 1, goalPlace: 8, goalSplit: 2, word: "even", chance: 0.5 };
+    const en = [CAREER_EN.mail.body.sponsorGoalMissed(p), CAREER_EN.finances.deal.fineFloorNote];
+    const pt = [CAREER_PT.mail.body.sponsorGoalMissed(p), CAREER_PT.finances.deal.fineFloorNote];
+    for (const s of en) expect(s).toContain("the bank's floor");
+    for (const s of pt) expect(s).toContain("o piso do banco");
+    for (const s of [...en, ...pt]) expect(s).not.toContain("Backer");
+  });
+
+  it("an instalment never takes the books below the bank's floor — what would is waived (s4)", () => {
     let save = sign(decisionAtW11(34_015), "balanced");
     save = withGoal(save, { slot: slotOf(0, 2), kind: "regionalFinish", count: 3, place: 1 });
     save.finances.balance = 1_000_000;
@@ -351,6 +473,27 @@ describe("rc.34 — saves from before rc.34", () => {
     expect(ended.sponsorOffers).toBeNull();
   });
 
+  it("rc.34 review: an rc.33 renewal one tier lower (its patience meter) converts one tier lower — the demotion carried", () => {
+    const save = createCareerSave(INPUT, 34_033);
+    save.reputation = 30;
+    save.clock = { seasonIndex: 1, day: firstDayOfWeek(2) };
+    // rc.33's renewal after three misses at a Tier 2 reputation: one Tier 1 offer.
+    save.sponsorOffers = sponsorOffersFor(30, 1, save.careerSeed, 2, true, "normal");
+    expect(save.sponsorOffers.map((o) => o.tier)).toEqual([1]);
+    const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(save)))!;
+    expect(loaded.sponsorOffers?.map((o) => o.tier)).toEqual([1, 1, 1]);
+    expect(loaded.sponsorOffers?.every((o) => o.terms?.demoted)).toBe(true);
+    const again = structuredClone(loaded);
+    repairSponsorsOnLoad(again);
+    expect(again).toEqual(loaded);
+    // rc.33's offers at the full tier convert at the full tier.
+    save.sponsorOffers = sponsorOffersFor(30, 1, save.careerSeed, 2, false, "normal");
+    expect(save.sponsorOffers.map((o) => o.tier)).toEqual([2, 1]);
+    const full = migrateSaveToV5(JSON.parse(JSON.stringify(save)))!;
+    expect(full.sponsorOffers?.map((o) => o.tier)).toEqual([2, 2, 2]);
+    expect(full.sponsorOffers?.some((o) => o.terms?.demoted)).toBe(false);
+  });
+
   it("a deal from before rc.34 runs out on its old rules: its objective settles at the boundary, it ends at the rollover", () => {
     const save = createCareerSave(INPUT, 34_032);
     save.reputation = 30;
@@ -414,6 +557,45 @@ describe("rc.34 S6 — the founding partner hands over in steps (decision 5-A as
       expect(cliff.foundingPartner?.endedSeason).toBe(2);
       expect(weeklyStatementOf(cliff).foundingPartner).toBe(0);
     });
+  }));
+
+  it("rc.34 review: the offers say when the handover starts (season 2's first Monday before it, the deal past it) and each one's net weekly change", () => withFounding(() => {
+    const T = CAREER_EN.finances.deal;
+    const html = (s: CareerSave) => renderToStaticMarkup(createElement(SponsorDecision, { save: s, onSign: () => {} }));
+    // Season 1: the partner pays in full through season index 1 whatever is signed.
+    let save = createCareerSave(INPUT, 34_043);
+    save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
+    save.reputation = 30;
+    const s1 = mondayAfter({ ...save, sponsorOffers: null }, 10);
+    const early = foundingHandoverOf(s1)!;
+    expect(early).toMatchObject({ onSigning: false, startsOn: { seasonIndex: 2, day: 1 } });
+    expect(sign(s1, "steady").foundingPartner?.taperStep).toBeUndefined();
+    const step = early.partnerWeekly - early.firstStepWeekly;
+    expect(step).toBeGreaterThan(0);
+    for (const o of s1.sponsorOffers!) {
+      const pays = absDayOf(o.terms!.endsOn) >= absDayOf(early.startsOn);
+      expect(handoverNetWeeklyOf(early, o)).toBe((pays ? o.terms!.weekly : 0) - step);
+    }
+    const page1 = html(s1);
+    expect(page1).toContain(T.handoverLater(seasonLabelFor(1), 67, 33));
+    expect(page1).not.toContain(T.handover(67, 33));
+    expect(page1).toContain(formatMoneyDelta(handoverNetWeeklyOf(early, s1.sponsorOffers![0]), { compact: true }));
+    // Season 2 with no deal yet: signing starts it — the next Monday pays the deal and the partner's first step.
+    save = rolloverToNextSeason({ ...s1, sponsorOffers: null, phase: "seasonReview" });
+    save.reputation = 30;
+    const s2 = mondayAfter({ ...save, sponsorOffers: null }, 10);
+    const late = foundingHandoverOf(s2)!;
+    expect(late.onSigning).toBe(true);
+    const balanced = s2.sponsorOffers!.find((o) => o.terms!.profile === "balanced")!;
+    const before = weeklyStatementOf(s2);
+    const after = weeklyStatementOf(sign(s2, "balanced"));
+    expect(after.sponsorBase + after.foundingPartner - (before.sponsorBase + before.foundingPartner)).toBe(handoverNetWeeklyOf(late, balanced));
+    const page2 = html(s2);
+    expect(page2).toContain(T.handover(67, 33));
+    expect(page2).toContain(formatMoneyDelta(handoverNetWeeklyOf(late, balanced), { compact: true }));
+    // Once the handover runs (or without a partner), no note.
+    expect(foundingHandoverOf(sign(s2, "balanced"))).toBeNull();
+    expect(foundingHandoverOf({ ...s2, foundingPartner: null })).toBeNull();
   }));
 });
 

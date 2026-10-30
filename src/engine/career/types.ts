@@ -888,6 +888,12 @@ export interface SponsorTerms {
   offeredOn: { seasonIndex: number; day: number };
   /** Offers only: the decision's deadline — unsigned offers lapse after this day. */
   decideBy?: { seasonIndex: number; day: number };
+  /**
+   * Offers only (rc.34 review): a renewal one tier lower — the last Steady
+   * deal ran out of patience (7-A), or an rc.33 renewal its meter lowered.
+   * A decision still pending at the rollover is offered again with it.
+   */
+  demoted?: boolean;
 }
 
 export interface CoachState {
@@ -1237,6 +1243,14 @@ export interface CareerSave {
   sponsor: SponsorState | null;
   /** Sponsor offers pending a decision (season start). */
   sponsorOffers: SponsorState[] | null;
+  /**
+   * rc.34 review: the first split (a slot) of the last sponsor decision
+   * offered one tier lower (SponsorTerms.demoted). Any other decision for
+   * that split — the rollover's, after a Worlds-window renewal was declined
+   * — is one tier lower too; a signing, or a decision for another split,
+   * clears it. Optional, additive.
+   */
+  sponsorDemotedSlot?: number;
   reputation: number;
 
   competition: CompetitionState;

@@ -555,7 +555,7 @@ export const CAREER_PT: CareerCopy = {
       sponsorGoalMissed: (p: Record<string, string | number>) =>
         `${goalOfParamsPt(p)}: ${p.done} de ${p.target}. ${
           positive(p.fine)
-            ? `A multa é de ${p.fine}, paga em parcelas de ${p.perMonday} nas próximas ${p.mondays} segundas — nunca abaixo do piso do Backer.`
+            ? `A multa é de ${p.fine}, paga em parcelas de ${p.perMonday} nas próximas ${p.mondays} segundas — nunca abaixo do piso do banco.`
             : Number(p.steady)
               ? `Contrato Estável não tem multa — mas a paciência da marca cai: ${p.misses} de ${p.patience} metas perdidas; em ${p.patience}, a próxima proposta vem um tier abaixo.`
               : "Sem multa."
@@ -1354,6 +1354,10 @@ export const CAREER_PT: CareerCopy = {
       stabilityBar: (pct: number) => `${pct}% do máximo é garantido`,
       handover: (first: number, second: number) =>
         `Seu parceiro fundador sai aos poucos quando este contrato começar: ${first}%, depois ${second}% do valor, um split cada.`,
+      // rc.34 review (S6): antes da temporada de índice 2, assinar não inicia a transição — o parceiro paga integralmente até o fim do prazo.
+      handoverLater: (season: string, first: number, second: number) =>
+        `Seu parceiro fundador paga o valor cheio até o fim de ${season}, assine o que assinar; depois sai aos poucos: ${first}%, depois ${second}% do valor, um split cada.`,
+      handoverNet: (delta: string, date: string) => `Variação semanal líquida na transição (${date}): ${delta}`,
       activeTitle: "Contrato atual",
       endsOn: (date: string) => `Termina ${date}`,
       signingPaid: (s: string) => `${s} pagos na assinatura`,
@@ -1369,7 +1373,7 @@ export const CAREER_PT: CareerCopy = {
       fineIfMissed: (s: string) => `até ${s} se perder`,
       record: (hits: number, misses: number) => `Metas até aqui: ${hits} batidas, ${misses} perdidas`,
       finesOwed: (s: string, mondays: number) => `Multas a pagar: ${s} nas próximas ${mondays} segundas`,
-      fineFloorNote: "Uma parcela nunca leva o caixa abaixo do piso do Backer.",
+      fineFloorNote: "Uma parcela nunca leva o caixa abaixo do piso do banco.",
       otherIncome: "Outras receitas",
       otherIncomeLine: (taken: string, cap: string, n: number, max: number) =>
         `${taken} de ${cap} na temporada · ${n} de ${max} neste split`,

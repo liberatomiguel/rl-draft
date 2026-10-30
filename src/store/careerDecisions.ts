@@ -19,7 +19,9 @@
  * Decision 1-B: bids and sponsor offers offer "Later" (CAREER_HQ.laterKinds)
  * up to their deadline day — parked, they stop holding until that day, when
  * the clock stops again and only an answer moves it (a bid: accept or
- * decline; offers: sign one or decline them). Every other needed decision
+ * decline; offers: sign one or decline them). One due on the season's last
+ * day holds the season review's continue instead (`rolloverHoldOf`; rc.34
+ * review: the Worlds window's sponsor offers too). Every other needed decision
  * holds until answered, like the weekly insert. The order (urgent first):
  * today's matchday and the season review, the contract review, a short
  * squad, what is due today, then by deadline; parked ones last.
@@ -112,15 +114,18 @@ export function moneyNoticeSource(save: CareerSave): DecisionSourceItem | null {
 }
 
 /**
- * ECO-04 (front F): the sponsor choice. rc.33's offers (`save.sponsorOffers`)
- * carry no deadline of their own: they stand until the Sunday before the next
- * split boundary (`splitEndDayFor`), the Monday `maybeOfferSponsors` would
- * offer again — "Later" parks them until then. The integrator points this at
- * F's `sponsorDecisionOf(save)` (its id and deadline).
+ * ECO-04 (front F): the sponsor choice — F's `sponsorDecisionOf(save)` (its
+ * id and deadline: the Sunday before its first split's first event week,
+ * never past the season's last day). "Later" parks it until that day.
+ *
+ * rc.34 review: a Worlds-window decision's deadline is the season's last day
+ * (224), the day the season review opens — so it is reported in the review
+ * too, where it holds the season's continue (`rolloverHoldOf`) until signed
+ * or declined, as a bid on its last day does. The rollover never replaces a
+ * parked decision unanswered.
  */
 export function sponsorDecisionSource(save: CareerSave): DecisionSourceItem | null {
-  if (save.phase !== "running") return null;
-  // rc.34 (front F): the decision's own deadline — the Sunday before its first split's first event week.
+  if (save.phase !== "running" && save.phase !== "seasonReview") return null;
   const decision = sponsorDecisionOf(save);
   return decision ? { id: decision.id, deadline: { seasonIndex: decision.deadlineOn.seasonIndex, day: decision.deadlineOn.day } } : null;
 }
@@ -326,12 +331,17 @@ export function parkDecisionFlow(input: CareerSave, id: string): FlowResult {
 }
 
 /**
- * The sponsor offers' answer besides signing (rc.33's offers; front F's deals
- * bring their own): no deal for now — the Monday of the next split boundary
- * offers again (`maybeOfferSponsors`). Allowed any day, the deadline day too.
+ * The sponsor offers' answer besides signing: no deal for now — the Monday
+ * of the next split boundary offers again (`maybeOfferSponsors`; after the
+ * Worlds window, the rollover — one tier lower still when this was a
+ * demoted renewal, `sponsorDemotedSlot`). Allowed any day, the deadline day
+ * too, and in the season review (rc.34 review: a Worlds-window decision
+ * holds the rollover there until answered).
  */
 export function declineSponsorOffersFlow(input: CareerSave): FlowResult {
-  if (input.phase !== "running" || !input.sponsorOffers?.length) return { save: input, error: "none" };
+  if ((input.phase !== "running" && input.phase !== "seasonReview") || !input.sponsorOffers?.length) {
+    return { save: input, error: "none" };
+  }
   const save = structuredClone(input);
   save.sponsorOffers = null;
   return { save };

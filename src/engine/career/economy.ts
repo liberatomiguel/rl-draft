@@ -1294,9 +1294,26 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
   }
 
   const backer = backerLineFor(statement.payroll + statement.coach, seasonIndex);
+  // rc.34: the emergency loan's deadline — the bank takes what it is owed if
+  // the balance covers it; otherwise the career ends (no floor check after).
+  let collected = 0;
+  let endCause: "deadline" | "breach" | null = null;
+  if (fin.loan?.deadline && absWeekOf({ seasonIndex, week }) >= absWeekOf(fin.loan.deadline)) {
+    if (fin.balance >= fin.loan.remaining) {
+      collected = fin.loan.remaining;
+      line("loanPayment", -collected);
+      fin = { ...fin, loan: null };
+    } else {
+      endCause = "deadline";
+    }
+  }
+
   // rc.34 (ECO-04, S3): missed goals' fines, one instalment each, as their
   // own line. `neverBreaches`: an instalment never takes the books below the
-  // Backer's floor — what would is waived, so a fine never triggers a rescue.
+  // bank's floor — what would is waived, so a fine never triggers a rescue.
+  // rc.34 review: booked after the loan's deadline check — keeping the books
+  // above the floor is not covering the debt, so an instalment must never
+  // decide whether the bank collects or the career ends.
   let fineWaived = 0;
   if (fin.sponsorFines && fin.sponsorFines.length > 0) {
     const left: SponsorFineState[] = [];
@@ -1311,19 +1328,6 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     }
     fin = { ...fin, sponsorFines: left };
     if (left.length === 0) delete fin.sponsorFines;
-  }
-  // rc.34: the emergency loan's deadline — the bank takes what it is owed if
-  // the balance covers it; otherwise the career ends (no floor check after).
-  let collected = 0;
-  let endCause: "deadline" | "breach" | null = null;
-  if (fin.loan?.deadline && absWeekOf({ seasonIndex, week }) >= absWeekOf(fin.loan.deadline)) {
-    if (fin.balance >= fin.loan.remaining) {
-      collected = fin.loan.remaining;
-      line("loanPayment", -collected);
-      fin = { ...fin, loan: null };
-    } else {
-      endCause = "deadline";
-    }
   }
 
   let rescued = false;

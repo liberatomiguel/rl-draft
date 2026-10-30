@@ -587,6 +587,29 @@ describe("weekly payroll (v2.0 R20)", () => {
     expect(heavyMonday(freshFin(200_000, { loan, loanUsed: true }), 8, "normal").collected).toBe(0);
   });
 
+  it("rc.34 review: a sponsor fine's instalment books after the deadline — it never turns a collected loan into the end", () => {
+    const due = { seasonIndex: 1, week: 9 };
+    const loan = { remaining: 30_000, deadline: due, topUps: 0 };
+    const floor = backerLineFor(weeklyWageBill([70_000], null), 1).floor;
+    // The week's other lines leave the books exactly at the debt; the instalment is larger than the room below $0 to the floor.
+    const week = heavyMonday(freshFin(1_000_000), 9, "normal").fin.balance - 1_000_000;
+    const instalment = -floor + 10_000;
+    const fin = freshFin(loan.remaining - week, {
+      loan,
+      loanUsed: true,
+      sponsorFines: [{ sponsorId: "voltway", remaining: instalment, perMonday: instalment }],
+    });
+    const res = heavyMonday(fin, 9, "normal");
+    expect(res).toMatchObject({ insolvent: false, endCause: null, collected: loan.remaining, rescued: false });
+    expect(res.fin.loan).toBeNull();
+    // The instalment then takes what the books hold above the floor; the rest is waived (never a breach).
+    const fineLines = res.fin.ledger.filter((e) => e.kind === "sponsorFine");
+    expect(fineLines.map((e) => e.amount)).toEqual([floor]);
+    expect(res.fineWaived).toBe(instalment + floor);
+    expect(res.fin.balance).toBe(floor);
+    expect(res.fin.sponsorFines).toBeUndefined();
+  });
+
   it("runwayWeeks: null in the black, floor(balance / burn) otherwise", () => {
     expect(runwayWeeks(10_000, 0)).toBeNull();
     expect(runwayWeeks(10_000, 250)).toBeNull();
