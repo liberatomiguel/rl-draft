@@ -497,9 +497,11 @@ export const CAREER_PT: CareerCopy = {
     financeGuaranteedParts: (sponsor: string, partner: string, fans: string) =>
       `patrocínio ${sponsor} · parceiro ${partner} · loja e streams ${fans}`,
     financePartnerWeeks: (n: number) => (n === 1 ? "mais 1 semana" : `mais ${n} semanas`),
-    financeDebt: "Dívida",
     financeDebtNone: "Nenhuma",
     financeRunway: "Fôlego",
+    // rc.36 (POL-02): o valor da linha de fôlego.
+    financeRunwayWeeks: (weeks: number) => (weeks === 1 ? "1 semana nesse ritmo" : `${weeks} semanas nesse ritmo`),
+    financeRunwayOk: "No azul",
     financeWeek: "Esta semana",
     // rc.34 review: o empréstimo emergencial (o "Backer" do rc.31–rc.33 saiu do produto).
     financeDebtBacker: (owed: string) => `Empréstimo emergencial ${owed}`,
@@ -1747,6 +1749,8 @@ export const CAREER_PT: CareerCopy = {
     unlockLater: "Depois",
     newTag: "Novo",
     unlockKicker: "Desbloqueado",
+    // rc.36: o anúncio não tem Comprar — onde o item espera.
+    unlockNote: "Ainda não comprado: está em Progressão, pronto para comprar.",
     benefits: "Benefícios",
     close: "Fechar",
   },
@@ -1758,7 +1762,6 @@ export const CAREER_PT: CareerCopy = {
     progress: (rep: number, gate: number) => `${rep} / ${gate} rep`,
     top: "Escada completa",
     seeMore: "Ver mais",
-    seeLess: "Ver menos",
     owned: "Seu",
     open: "Desbloqueado",
     locked: "Bloqueado",

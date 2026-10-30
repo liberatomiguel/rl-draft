@@ -14,6 +14,11 @@
  * rc.35 (front C, Miguel on rc.34): the three starter seats in a row, the
  * reserve seat beside the coach under them (as before rc.34), each card a
  * bit larger with its phase as an icon chip (PhaseChip); no star text.
+ * rc.36 (POL-02, Miguel on rc.35): the reserve and the coach thin again, as
+ * in rc.33 — one row each under the starters (stacked on a phone, side by
+ * side from `sm`): the reserve's OVR in his rarity frame, name, "New", role ·
+ * age · trait and the contract chip (a tap opens his sheet); the coach's
+ * whistle, name, OVR and training edge (a tap opens Training).
  */
 
 import { useState } from "react";
@@ -22,7 +27,7 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { baseRarityOf } from "@/engine/cards";
 import { careerNewSummary, contractNewKey, contractWarnsFor } from "@/engine/career/careerNew";
 import { coachEffectsFor } from "@/engine/career/development";
-import type { CareerSave, SquadPlayer } from "@/engine/career/types";
+import type { CareerSave, CoachState, SquadPlayer } from "@/engine/career/types";
 import type { TournamentTeam } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -43,9 +48,125 @@ import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
 import { AppLink } from "@/components/ui/AppLink";
 import { NewTag } from "@/components/ui/NewDot";
-import { ClipboardIcon, TrendUpIcon } from "@/components/ui/icons";
+import { TrendDownIcon, TrendUpIcon, WhistleIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+
+/** A player's contract as his card and row print it (UX-06b): the season it runs to, or its time left once it warns. */
+function contractLabelOf(save: CareerSave, p: SquadPlayer, C: CareerCopy): { text: string; warns: boolean } {
+  const clock = contractClockOf(save, p);
+  const warns = contractWarnsFor(save, p);
+  const text =
+    clock.seasonsAfter > 0
+      ? C.hub.cardUntil(seasonLabelFor(p.contractEndSeason))
+      : warns
+        ? C.hub.cardEndsIn(clock.weeksLeft ?? 0)
+        : C.hub.cardFinalSeason;
+  return { text, warns };
+}
+
+/** The shell of a thin row (rc.36): an icon, then two lines — the name, and the role line with its chip. */
+const THIN_ROW =
+  "flex min-h-14 w-full min-w-0 items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors";
+
+/** rc.36: the reserve as one thin row — his OVR in the Draft's rarity frame (3-A); a tap opens his sheet. */
+function ReserveRow({
+  save,
+  p,
+  C,
+  isNew,
+  onOpen,
+}: {
+  save: CareerSave;
+  p: SquadPlayer;
+  C: CareerCopy;
+  isNew: boolean;
+  onOpen: () => void;
+}) {
+  const ovr = Math.round(p.overall);
+  const contract = contractLabelOf(save, p, C);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${p.name} · ${ovr}`}
+      className={cx(THIN_ROW, "border-line bg-white/[0.03] hover:border-line-strong")}
+    >
+      <span
+        className={cx("card-frame flex h-10 w-10 shrink-0 items-center justify-center !rounded-lg", `card-${baseRarityOf(ovr)}`)}
+        title={C.common.ovr}
+      >
+        <span className="display relative text-lg font-bold leading-none text-ink">{ovr}</span>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-sm font-bold text-ink">{p.name}</span>
+          {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
+        </span>
+        <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-sub">
+          <span className="shrink-0">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-faint">{C.hub.cardReserve}</span> · {squadAge(save, p)}
+            {/* The trait from `sm` (a phone keeps the line whole beside the contract chip). */}
+            <span className="hidden sm:inline"> · {C.player.archetype[p.archetype]}</span>
+          </span>
+          <span
+            className={cx(
+              "min-w-0 truncate rounded px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
+              contract.warns ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-faint",
+            )}
+          >
+            {contract.text}
+          </span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/** rc.36: the coach as one thin row — the whistle (as Training's block), name and OVR, his training edge; a tap opens Training. */
+function CoachRow({ coach, C }: { coach: CoachState; C: CareerCopy }) {
+  const pct = coachEffectsFor(coach).trainingPct;
+  return (
+    <AppLink href="/career/training" className={cx(THIN_ROW, "border-line bg-white/[0.03] hover:border-line-strong")}>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan/10 text-cyan">
+        <WhistleIcon className="h-5 w-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold text-ink">{coach.name}</span>
+        <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-sub">
+          <span className="truncate">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-faint">{C.hub.squadCoach}</span> ·{" "}
+            <span className="display font-bold text-ink">{Math.round(coach.overall)}</span> {C.common.ovr}
+          </span>
+          <span
+            className={cx(
+              "inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-px text-[10px] font-semibold",
+              pct >= 0 ? "border-good/40 bg-good/10 text-good" : "border-bad/40 bg-bad/10 text-bad",
+            )}
+          >
+            {pct >= 0 ? <TrendUpIcon className="h-3 w-3" /> : <TrendDownIcon className="h-3 w-3" />}
+            {C.hub.coachTrainingPct(pct)}
+          </span>
+        </span>
+      </span>
+    </AppLink>
+  );
+}
+
+/** rc.36: an empty reserve or coach seat as a thin dashed row with the way to fill it. */
+function EmptyRow({ href, icon, text, hint }: { href: string; icon: React.ReactNode; text: string; hint?: string }) {
+  return (
+    <AppLink href={href} className={cx(THIN_ROW, "border-dashed border-line hover:border-line-strong")}>
+      <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-line-strong text-faint">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="line-clamp-2 text-[11px] text-faint">{text}</span>
+        {hint ? <span className="block truncate text-[11px] font-semibold text-blue-bright">{hint} →</span> : null}
+      </span>
+    </AppLink>
+  );
+}
 
 function SquadCard({
   save,
@@ -64,14 +185,7 @@ function SquadCard({
   const phase = agePhase(save, p);
   const band = potBandOfSquad(save, p);
   const ovr = Math.round(p.overall);
-  const clock = contractClockOf(save, p);
-  const warns = contractWarnsFor(save, p);
-  const contract =
-    clock.seasonsAfter > 0
-      ? C.hub.cardUntil(seasonLabelFor(p.contractEndSeason))
-      : warns
-        ? C.hub.cardEndsIn(clock.weeksLeft ?? 0)
-        : C.hub.cardFinalSeason;
+  const { text: contract, warns } = contractLabelOf(save, p, C);
   return (
     <button
       type="button"
@@ -145,7 +259,6 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
     .filter((p): p is SquadPlayer => Boolean(p));
   const sub = save.squad.find((p) => !save.starterIds.includes(p.id)) ?? null;
   const coach = save.coach;
-  const coachFx = coach ? coachEffectsFor(coach) : null;
   const fresh = careerNewSummary(save).keys;
   // Three starter seats; an empty seat (R67) shows the way to the Market.
   const slots: (SquadPlayer | null)[] = [starters[0] ?? null, starters[1] ?? null, starters[2] ?? null];
@@ -196,47 +309,24 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
       <div className="grid grid-cols-3 gap-2">
         {slots.map((p, i) => (p ? cardOf(p) : <EmptySeat key={`empty:${i}`} C={C} />))}
       </div>
-      {/* The reserve seat beside the coach (as before rc.34). */}
-      <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-3">
-        <div className="min-w-0">
-          <p className="kicker mb-1.5 !text-[9px]">{C.hub.cardReserve}</p>
-          {sub ? (
-            cardOf(sub)
-          ) : (
-            <div className="flex min-h-52 items-center justify-center rounded-[14px] border border-dashed border-line px-2 text-center text-[11px] text-faint">
-              {C.hub.squadNoSub}
-            </div>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-col lg:col-span-2">
-          <p className="kicker mb-1.5 !text-[9px]">{C.hub.squadCoach}</p>
-          <AppLink
-            href="/career/training"
-            className="flex min-h-52 flex-1 flex-col justify-between rounded-[14px] border border-line bg-white/[0.03] p-3 transition-colors hover:border-line-strong"
-          >
-            <span className="flex items-center justify-between gap-2">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue/15 text-blue-bright">
-                <ClipboardIcon className="h-6 w-6" />
-              </span>
-              {coach ? (
-                <span className="display text-4xl font-bold leading-none text-ink" title={C.common.ovr}>
-                  {Math.round(coach.overall)}
-                </span>
-              ) : null}
-            </span>
-            {coach && coachFx ? (
-              <span className="mt-2 min-w-0">
-                <span className="block truncate text-sm font-bold text-ink sm:text-base">{coach.name}</span>
-                <span className="mt-1 inline-flex items-center gap-1 rounded border border-good/40 bg-good/10 px-1.5 py-px text-[10px] font-semibold text-good">
-                  <TrendUpIcon className="h-3 w-3" />
-                  {C.hub.coachTrainingPct(coachFx.trainingPct)}
-                </span>
-              </span>
-            ) : (
-              <span className="mt-2 text-[11px] text-faint">{C.hub.squadNoCoach}</span>
-            )}
-          </AppLink>
-        </div>
+      {/* rc.36: the reserve and the coach thin again (rc.33's rows), stacked on a phone. */}
+      <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {sub ? (
+          <ReserveRow
+            save={save}
+            p={sub}
+            C={C}
+            isNew={fresh.has(contractNewKey(sub.id, sub.contractEndSeason))}
+            onOpen={() => open(sub)}
+          />
+        ) : (
+          <EmptyRow href="/career/market" icon={<span className="text-lg leading-none">+</span>} text={C.hub.squadNoSub} hint={C.hub.cardSignHint} />
+        )}
+        {coach ? (
+          <CoachRow coach={coach} C={C} />
+        ) : (
+          <EmptyRow href="/career/market#coaches" icon={<WhistleIcon className="h-5 w-5" />} text={C.hub.squadNoCoach} />
+        )}
       </div>
       <div className="mt-3 flex items-center gap-3">
         <span className="kicker shrink-0 text-[10px]">{C.hub.chemistry}</span>

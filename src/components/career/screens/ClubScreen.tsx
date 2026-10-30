@@ -233,16 +233,14 @@ export function ClubScreen() {
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
               <Badge className={REGION_BADGE[save.identity.region]}>{save.identity.region}</Badge>
               <Badge>{copy.wizard.founded}</Badge>
-              <span className="inline-flex items-center gap-1.5">
-                <TeamStars stars={stars} size="md" />
-                <span className="text-xs font-semibold text-sub">{copy.club.starLabel(stars)}</span>
-              </span>
+              {/* rc.36 (POL-02, Miguel on rc.35): the stars only — no "0.5-star org" text (its words stay the stars' accessible name). */}
+              <TeamStars stars={stars} size="md" label={copy.club.starLabel(stars)} />
             </div>
           </div>
         </div>
       </Panel>
 
-      <div className="mb-4 grid gap-4 md:grid-cols-5">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-5">
         {/* 2 — Reputation track */}
         <div className="flex flex-col gap-4 md:col-span-2">
           <Panel className="rise-in p-5" style={{ animationDelay: "60ms" }}>

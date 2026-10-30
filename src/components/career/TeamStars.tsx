@@ -20,11 +20,14 @@ export function TeamStars({
   stars,
   size = "sm",
   className,
+  label,
 }: {
   /** 0..5 in half steps (engine-clamped; re-clamped defensively here). */
   stars: number;
   size?: keyof typeof SIZES;
   className?: string;
+  /** rc.36: the accessible name in the UI language, where no text sits beside the stars. */
+  label?: string;
 }) {
   const max = CAREER_STARS.maxStars;
   const value = Math.max(0, Math.min(max, Math.round(stars * 2) / 2));
@@ -33,7 +36,7 @@ export function TeamStars({
     <span
       className={`inline-flex items-center gap-[1px] ${className ?? ""}`}
       role="img"
-      aria-label={`${value}-star team`}
+      aria-label={label ?? `${value}-star team`}
     >
       {Array.from({ length: max }, (_, i) => {
         const fillLevel = Math.max(0, Math.min(1, value - i)); // 0 | 0.5 | 1

@@ -14,7 +14,9 @@
  * the GEAR LADDER as the progression centerpiece
  * (7 steps: peripherals → monitors → PCs → bootcamp T1 → bootcamp T2 →
  * psychologist → Performance Center, unlocked by rep, bought in order, sponsor
- * perks discounting), the sponsor desk (active deal with objective/patience/
+ * perks discounting; rc.36 (POL-02, Miguel on rc.35): back to the stacked
+ * list of every step, each with its icon badge on the rail, as before
+ * rc.35's compact track), the sponsor desk (active deal with objective/patience/
  * perks + season offers), the date-grouped ledger and the emergency loan
  * panel. Every gate and price reads from CAREER_* constants — zero literals.
  */
@@ -98,8 +100,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
-import { LadderStrip } from "@/components/career/ladder/LadderParts";
-import { ladderOf } from "@/engine/career/ladder";
+import { RungBadge } from "@/components/career/ladder/LadderParts";
+import type { LadderRungId } from "@/engine/career/ladder";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 type LedgerFilter = "all" | "in" | "out";
@@ -472,35 +474,18 @@ function BalanceSparkline({ data }: { data: number[] }) {
 // Gear ladder step (timeline node + card)
 // ---------------------------------------------------------------------------
 
-function StepNode({ status }: { status: StepStatus }) {
-  return (
-    <span
-      aria-hidden
-      className={cx(
-        "absolute left-0 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2",
-        status === "owned" && "border-orange bg-orange/20 text-orange-bright",
-        status === "next" && "border-orange bg-orange/10 text-orange-bright",
-        status === "locked" && "border-line-strong bg-white/5 text-faint",
-      )}
-    >
-      {status === "owned" ? (
-        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3">
-          <path d="m5 13 4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ) : status === "next" ? (
-        <span className="h-2 w-2 animate-pulse rounded-full bg-orange" />
-      ) : (
-        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="5" y="11" width="14" height="9" rx="2" />
-          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-        </svg>
-      )}
-    </span>
-  );
-}
+/** rc.36: the step's state as the ladder's icon badge reads it (owned · open to buy · locked). */
+const BADGE_STATUS: Record<StepStatus, "owned" | "open" | "locked"> = { owned: "owned", next: "open", locked: "locked" };
 
+/**
+ * One step of the arsenal (rc.34's stacked list). rc.36: its node on the rail
+ * is the item's icon badge (the HQ ladder's: a check when owned, a lock when
+ * locked, the glow on the one to buy next); on a phone the price / Buy sits
+ * under the text instead of squeezing it.
+ */
 function LadderStep({
   status,
+  rung,
   title,
   desc,
   badges,
@@ -509,6 +494,7 @@ function LadderStep({
   last,
 }: {
   status: StepStatus;
+  rung: LadderRungId;
   title: string;
   desc: string;
   badges?: React.ReactNode;
@@ -517,17 +503,19 @@ function LadderStep({
   last?: boolean;
 }) {
   return (
-    <li className={cx("relative pl-10", !last && "pb-3")}>
+    <li className={cx("relative pl-11", !last && "pb-3")}>
       {!last ? (
         <span
           aria-hidden
           className={cx(
-            "absolute left-[11px] top-7 h-[calc(100%-20px)] w-0.5 rounded",
+            "absolute left-[15px] top-10 h-[calc(100%-34px)] w-0.5 rounded",
             status === "owned" ? "bg-orange/50" : "bg-line",
           )}
         />
       ) : null}
-      <StepNode status={status} />
+      <span className="absolute left-0 top-1.5 z-10">
+        <RungBadge rung={{ id: rung, status: BADGE_STATUS[status] }} size="sm" highlight={status === "next"} />
+      </span>
       <div
         className={cx(
           "rounded-lg border p-3 transition-colors",
@@ -537,7 +525,7 @@ function LadderStep({
           status === "locked" && "border-line bg-white/[0.02] opacity-70",
         )}
       >
-        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="display text-sm font-bold uppercase tracking-wide text-ink">
@@ -548,7 +536,7 @@ function LadderStep({
             <p className="mt-1 text-xs leading-relaxed text-sub">{desc}</p>
             {notes}
           </div>
-          {aside ? <div className="flex shrink-0 items-center gap-2">{aside}</div> : null}
+          {aside ? <div className="flex shrink-0 flex-wrap items-center gap-2">{aside}</div> : null}
         </div>
       </div>
     </li>
@@ -582,9 +570,6 @@ export function FinancesScreen() {
   const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>("all");
   // rc.33 (UX-07): the expanded balance chart.
   const [chartOpen, setChartOpen] = useState(false);
-  // rc.35: the ladder is compact (the icon track + the rungs to act on); "See more" shows every step.
-  const [ladderAll, setLadderAll] = useState(false);
-  const stepShown = (status: StepStatus) => ladderAll || status === "next";
 
   if (!mounted || !save) {
     return (
@@ -651,7 +636,6 @@ export function FinancesScreen() {
 
   // --- gear ladder state ------------------------------------------------------
   const nextGear = gearNextItem(gear);
-  const ladderRungsState = ladderOf(save);
   const bootTier = bootcampTierFor(rep);
   const freeAllowance = sponsorFreeBootcampsOf(save.sponsor);
   const freeLeft = Math.max(0, freeAllowance - fin.freeBootcampsUsedThisSeason);
@@ -703,10 +687,10 @@ export function FinancesScreen() {
     const superseded = bootTier > tier;
     const status: StepStatus = superseded ? "owned" : isActiveTier ? "next" : "locked";
     const nextRunFree = freeLeft > 0;
-    if (!stepShown(status)) return null;
     return (
       <LadderStep
         status={status}
+        rung={tier === 1 ? "bootcamp1" : "bootcamp2"}
         last={last}
         title={tier === 1 ? C.finances.bootcampT1 : C.finances.bootcampT2}
         desc={tier === 1 ? C.finances.bootcampT1Desc : C.finances.bootcampT2Desc}
@@ -970,16 +954,15 @@ export function FinancesScreen() {
             </span>
           </div>
           <p className="mb-4 text-xs text-sub">{C.finances.gearLadderHint}</p>
-          <div className="mb-3">
-            <LadderStrip rungs={ladderRungsState} C={C} expanded={ladderAll} onToggle={() => setLadderAll((v) => !v)} />
-          </div>
 
+          {/* rc.36: every step stacked again (rc.34's list), each with its icon. */}
           <ol>
             {/* 1-3 · peripherals → monitors → PCs */}
-            {gearFront.filter((item) => stepShown(gearStatus(item))).map((item) => (
+            {gearFront.map((item) => (
               <LadderStep
                 key={item.id}
                 status={gearStatus(item)}
+                rung={item.id}
                 title={C.finances.gear[item.id as keyof typeof C.finances.gear]}
                 desc={C.finances.gearDesc[item.id as keyof typeof C.finances.gearDesc]}
                 badges={
@@ -995,9 +978,9 @@ export function FinancesScreen() {
             {bootcampStep(2)}
 
             {/* 6 · sports psychologist (rolling retainer) */}
-            {stepShown(psychStatus) ? (
             <LadderStep
               status={psychStatus}
+              rung="psychologist"
               title={C.finances.psychologist}
               desc={C.finances.psychologistDesc}
               badges={
@@ -1031,12 +1014,10 @@ export function FinancesScreen() {
               }
             />
 
-            ) : null}
-
             {/* 7 · Performance Center (the summit) */}
-            {stepShown(gearStatus(perfCenter)) ? (
             <LadderStep
               status={gearStatus(perfCenter)}
+              rung={perfCenter.id}
               last
               title={C.finances.gear[perfCenter.id as keyof typeof C.finances.gear]}
               desc={C.finances.gearDesc[perfCenter.id as keyof typeof C.finances.gearDesc]}
@@ -1046,7 +1027,6 @@ export function FinancesScreen() {
               aside={gearAside(perfCenter)}
               notes={gearNotes(perfCenter)}
             />
-            ) : null}
           </ol>
         </Panel>
 

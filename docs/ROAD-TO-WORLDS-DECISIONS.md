@@ -1556,6 +1556,37 @@ R82. **Sponsors priced by risk; one level model for the season goal; the
      grade rule). (c) `sponsorAccessFor(level)` (CAREER_SPONSOR.access):
      levels 0–1 two offers, no Bold; 2–3 three, ×1.05; 4 global, ×1.1 and
      2 free bootcamps. Level = `repTierOf(rep)` until front P's ladder.
+R84. **HQ and the screens polished to Miguel's rc.35 playtest (rc.36 front
+     H2, POL-02).** (a) HQ squad: the reserve and the coach are thin rows
+     again (rc.33's shape) under the three starter cards, stacked on a phone
+     and side by side from `sm`. The reserve: his OVR in the Draft's rarity
+     frame (3-A), name, "New", role · age (the trait from `sm`) and the
+     contract chip; a tap opens his sheet. The coach: Training's whistle,
+     name, OVR and his training edge. An empty seat is a dashed row with the
+     way to fill it. (b) The progression card leads with the next unlock;
+     then a three-rung track (`HQ_LADDER_WINDOW` 3, a layout constant: five
+     gave each name ~50 px at 360 px and PT's long words ran together), the
+     items to buy as icon rows (no orphan tiles), and one footer row for
+     "See more" and Finances. "See more" opens the whole ladder in a modal
+     (`LadderGrid`), so the card never grows. (c) HQ finances: the balance,
+     the weekly net ("the weekly out"), the Monday chart, and next payroll
+     and runway as full-width lines (rc.35's tiles truncated at 360 px). No
+     debt tile or loan badge: the loan keeps its own HQ card. `hqFinanceOf`
+     still returns `debt` and `guaranteed`, unrendered, to stay clear of
+     front M's "Merch & streams" edit; trim them after the merge. (d) The
+     unlock announcement only informs: Close, no Buy, and "not bought yet:
+     it waits in Progression". A row the manager taps keeps Buy (Gate 3a
+     7-A). (e) Market: "Signable at my reputation" is a chip in the filter
+     row again (rc.34's place), with its icon and count. (f) Finances'
+     arsenal: every step stacked again (rc.34's list), each rail node its
+     ladder icon badge (check, lock, the glow on the next buy); on a phone
+     the price and Buy sit under the text. rc.35's track and "See more"
+     leave Finances. (g) Club: the stars without the "0.5-star org" words,
+     which stay their accessible name. (h) "Recommended": audited; the only
+     tags are training's (front T2) and the wizard's (front B). No balance
+     change. Rejected: Close only on a tapped row too (it undoes 7-A); the
+     weekly expenses as "the weekly out" (the payroll line carries them);
+     four or five rungs with hyphenated names.
 
 ## Still open for Miguel (career mode)
 

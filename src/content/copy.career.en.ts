@@ -517,9 +517,11 @@ export const CAREER_EN = {
     financeGuaranteedParts: (sponsor: string, partner: string, fans: string) =>
       `sponsor ${sponsor} · partner ${partner} · merch & streams ${fans}`,
     financePartnerWeeks: (n: number) => (n === 1 ? "1 more week" : `${n} more weeks`),
-    financeDebt: "Debt",
     financeDebtNone: "None",
     financeRunway: "Runway",
+    // rc.36 (POL-02): the runway line's value.
+    financeRunwayWeeks: (weeks: number) => (weeks === 1 ? "1 week at this burn" : `${weeks} weeks at this burn`),
+    financeRunwayOk: "In the black",
     financeWeek: "This week",
     // rc.34 review: the emergency loan (rc.31–rc.33's "Backer" is gone from the product).
     financeDebtBacker: (owed: string) => `Emergency loan ${owed}`,
@@ -1770,6 +1772,8 @@ export const CAREER_EN = {
     newTag: "New",
     // rc.35: the visual unlock / buy modal.
     unlockKicker: "Unlocked",
+    // rc.36: the announcement has no Buy — where the item waits.
+    unlockNote: "Not bought yet: it waits in Progression, ready to buy.",
     benefits: "Benefits",
     close: "Close",
   },
@@ -1782,7 +1786,6 @@ export const CAREER_EN = {
     progress: (rep: number, gate: number) => `${rep} / ${gate} rep`,
     top: "Ladder complete",
     seeMore: "See more",
-    seeLess: "See less",
     owned: "Owned",
     open: "Unlocked",
     locked: "Locked",
