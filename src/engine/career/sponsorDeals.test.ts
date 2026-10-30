@@ -410,7 +410,7 @@ describe("rc.34 ECO-05 — other income, capped (S7, decision 6-B)", () => {
 
 describe("rc.35 front S — the ladder's sponsor access, the season fine cap, the season goal", () => {
   it("early: two offers, no Bold, tier ≤ 2; better: three with Bold; global: the most money and bootcamps", () => {
-    const early = sponsorAccessFor(0);
+    const early = sponsorAccessFor(1);
     expect(early).toMatchObject({ offers: 2, boldAllowed: false, tierCap: 2, global: false });
     expect(sponsorAccessFor(2)).toMatchObject({ offers: 3, boldAllowed: true, global: false });
     const global = sponsorAccessFor(4);

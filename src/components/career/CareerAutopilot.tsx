@@ -19,6 +19,7 @@
  * the calendar keeps rolling on every career screen.
  */
 
+import { trainingReportOf } from "@/store/careerTraining";
 import { useEffect, useRef } from "react";
 import { CAREER_PLAYBACK } from "@/config/balance";
 import { inviteSurfacedToday, moneyNoticeOf } from "@/store/careerFlow";
@@ -55,6 +56,11 @@ export function CareerAutopilot() {
     }
     // rc.34: a money notice (the emergency loan, a top-up, the deadline) waits to be read.
     if (moneyNoticeOf(save)) {
+      setAutoAdvance(false);
+      return;
+    }
+    // rc.35 review: a finished training cycle's report waits to be read (two cycles never stack).
+    if (trainingReportOf(save)) {
       setAutoAdvance(false);
       return;
     }

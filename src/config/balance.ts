@@ -2079,7 +2079,10 @@ export const CAREER_SPONSOR = {
    */
   access: {
     levels: [
-      { minLevel: 0, offers: 2, boldAllowed: false, tierCap: 2, global: false, valueMult: 1 },
+      // rc.35 integration: before the "local sponsors" rung (rep 10, with the
+      // generic coach) only the smallest local deals; the rung opens tier 2.
+      { minLevel: 0, offers: 2, boldAllowed: false, tierCap: 1, global: false, valueMult: 1 },
+      { minLevel: 1, offers: 2, boldAllowed: false, tierCap: 2, global: false, valueMult: 1 },
       { minLevel: 2, offers: 3, boldAllowed: true, tierCap: 4, global: false, valueMult: 1.05 },
       { minLevel: 3, offers: 3, boldAllowed: true, tierCap: 4, global: true, valueMult: 1.1 },
     ],

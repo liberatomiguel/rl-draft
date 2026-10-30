@@ -658,7 +658,7 @@ export function sponsorAccessFor(level: number): SponsorAccess {
   let row: (typeof rows)[number] = rows[0];
   for (const r of rows) if (level >= r.minLevel) row = r;
   return {
-    offers: (row.boldAllowed ? Math.min(3, row.offers) : 2) as 2 | 3,
+    offers: row.offers as 2 | 3,
     boldAllowed: row.boldAllowed,
     tierCap: row.tierCap as 1 | 2 | 3 | 4,
     global: row.global,
