@@ -37,6 +37,7 @@ import {
   quantize,
   repTierOf,
   salaryAskFactors,
+  signableOverallCap,
   signingBonusFor,
 } from "./economy";
 import { derivedFloat, deriveSeed, streams } from "./seeds";
@@ -69,6 +70,16 @@ export function contractedSplitsRemaining(
 ): number {
   const f = derivedFloat(careerSeed, streams.gen("contract", `${playerId}:${seasonIndex}`));
   return 1 + Math.floor(f * 6); // 1..6
+}
+
+/**
+ * UX-07 (rc.33): the ONE reputation rule for a new signing — he signs only up
+ * to the org's cap (`economy.signableOverallCap`). The refusal in
+ * `signingPlanFor` ("repGate"), the Market's locked tiles and its "signable
+ * at my reputation" filter all read it. Renewals and the squad are exempt.
+ */
+export function signableAtRep(overall: number, rep: number): boolean {
+  return Math.round(overall) <= signableOverallCap(rep);
 }
 
 // ---------------------------------------------------------------------------

@@ -1151,15 +1151,9 @@ export function FinancesScreen() {
               </div>
             </div>
 
-            {/* rc.32 (M6, provisional): the players' share of podium prizes, stated where it is booked. */}
+            {/* The players' share of podium prizes, stated where it is booked (rc.33 ECO-10: per contract). */}
             {CAREER_PRIZES.playerShare.enabled ? (
-              <p className="mb-2 text-[10px] text-faint">
-                {C.finances.playerShareRule(
-                  Math.round(CAREER_PRIZES.playerShare.regional * 100),
-                  Math.round(CAREER_PRIZES.playerShare.major * 100),
-                  Math.round(CAREER_PRIZES.playerShare.worlds * 100),
-                )}
-              </p>
+              <p className="mb-2 text-[10px] text-faint">{C.finances.playerShareRule}</p>
             ) : null}
             {ledgerGroups.length === 0 ? (
               <p className="py-6 text-center text-xs text-faint">—</p>

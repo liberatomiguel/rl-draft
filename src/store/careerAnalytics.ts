@@ -19,7 +19,7 @@
 import { CAREER_CALENDAR, CAREER_SAVE, CAREER_SCOUT } from "@/config/balance";
 import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
-import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, exactAgeOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
 import type { CareerMilestoneKind, TrackedEvent } from "@/lib/analytics";
@@ -73,8 +73,13 @@ function clampLevel(level: number): ScoutLevel {
 
 /** Midpoint of the band the squad screen shows for this player. */
 function bandMidOf(save: CareerSave, p: SquadPlayer): number {
-  // The band the screens show: the save's development model (rc.32 review).
-  const band = scoutedBand(p.potential, p.overall, clampLevel(p.scoutLevel), save.careerSeed, p.id, growthModelOf(save.world));
+  // The band the screens show: the save's development model (rc.32 review);
+  // rc.33 (DEV-04): with the age clock's cap and an older career's reports.
+  const exactAge = exactAgeOf(ageOf(p.birthYear, save.clock.seasonIndex), save.clock.day);
+  const band = scoutedBand(p.potential, p.overall, clampLevel(p.scoutLevel), save.careerSeed, p.id, growthModelOf(save.world), {
+    arc: { peakAge: p.peakAge, exactAge },
+    rc32Reports: save.bandModel === undefined,
+  });
   return (band.min + band.max) / 2;
 }
 
@@ -364,7 +369,7 @@ function scoutReports(prev: CareerSave, next: CareerSave, action: CareerAction):
   const seasonIndex = next.clock.seasonIndex;
   const own = next.squad.find((p) => p.id === id);
   const view = own
-    ? { overall: own.overall, potential: own.potential, age: ageOf(own.birthYear, seasonIndex) }
+    ? { overall: own.overall, potential: own.potential, age: ageOf(own.birthYear, seasonIndex), peakAge: own.peakAge }
     : playerViewById(id, { careerSeed: next.careerSeed, seasonIndex, world: next.world });
   if (!view) return [];
   const band = scoutedBand(
@@ -374,6 +379,8 @@ function scoutReports(prev: CareerSave, next: CareerSave, action: CareerAction):
     next.careerSeed,
     id,
     growthModelOf(next.world),
+    // rc.33 (DEV-04): the band the sheet shows — the age clock's cap, an older career's reports.
+    { arc: { peakAge: view.peakAge, exactAge: exactAgeOf(view.age, next.clock.day) }, rc32Reports: next.bandModel === undefined },
   );
   return [
     {

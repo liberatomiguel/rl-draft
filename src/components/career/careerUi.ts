@@ -10,6 +10,7 @@
 
 import {
   CAREER_GEAR,
+  CAREER_PRIZES,
   CAREER_SCOUT,
   CAREER_SCRIM,
   CAREER_SPONSOR,
@@ -47,14 +48,13 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import {
   ageOf,
-  developmentPhaseOf,
-  developmentProfileOf,
   exactAgeOf,
   growthCtxOf,
   growthModelOf,
-  isGrowthContract,
+  phaseTagFor,
   playerViewById,
   scoutedBand,
+  type PhaseTag,
   statsFromView,
   trainingEta,
   trainingProjection,
@@ -338,34 +338,78 @@ export function squadAge(save: CareerSave, p: SquadPlayer): number {
   return ageOf(p.birthYear, save.clock.seasonIndex);
 }
 
+// DEV-04 (rc.33): the band is capped at what the age clock still lets him reach (model 2),
+// and a career created before rc.33 keeps its bought reports inside rc.32's band.
 export function potBandOfSquad(save: CareerSave, p: SquadPlayer): PotentialBand {
-  return scoutedBand(p.potential, p.overall, p.scoutLevel, save.careerSeed, p.id, growthModelOf(save.world));
+  const arc = { peakAge: p.peakAge, exactAge: exactAgeOf(squadAge(save, p), save.clock.day) };
+  return scoutedBand(p.potential, p.overall, p.scoutLevel, save.careerSeed, p.id, growthModelOf(save.world), {
+    arc,
+    rc32Reports: save.bandModel === undefined,
+  });
+}
+
+/** The report level the user holds on a market player (bought reports, capped at reportMaxLevel). */
+function marketLevelOf(save: CareerSave, id: string): 0 | 1 | 2 | 3 {
+  const paid = Number(save.scouted[id] ?? 0);
+  return Math.min(CAREER_SCOUT.reportMaxLevel, Math.max(0, paid)) as 0 | 1 | 2 | 3;
 }
 
 export function potBandOfView(save: CareerSave, view: CareerPlayerView): PotentialBand {
-  const paid = Number(save.scouted[view.id] ?? 0);
-  const level = Math.min(CAREER_SCOUT.reportMaxLevel, Math.max(0, paid)) as 0 | 1 | 2 | 3;
-  return scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world));
+  const arc = { peakAge: view.peakAge, exactAge: exactAgeOf(view.age, save.clock.day) };
+  return scoutedBand(
+    view.potential,
+    view.overall,
+    marketLevelOf(save, view.id),
+    save.careerSeed,
+    view.id,
+    growthModelOf(save.world),
+    { arc, rc32Reports: save.bandModel === undefined },
+  );
+}
+
+/** DEV-04 (rc.33): a market player's phase tag — "unknown" until a report reveals it. */
+export function phaseOfView(save: CareerSave, view: CareerPlayerView): PhaseTag {
+  return phaseTagFor(view, {
+    level: marketLevelOf(save, view.id),
+    careerSeed: save.careerSeed,
+    model: growthModelOf(save.world),
+    seasonAge: view.age,
+    day: save.clock.day,
+  });
+}
+
+/** ECO-10 (rc.33): the prize share a squad contract carries, as a label (an older deal reads the rc.32 rule). */
+export function prizeShareLabelOf(C: CareerCopy, p: Pick<SquadPlayer, "prizeSharePct">): string {
+  if (p.prizeSharePct !== undefined) return C.player.prizeSharePct(p.prizeSharePct);
+  const s = CAREER_PRIZES.playerShare;
+  return C.player.prizeShareLegacy(Math.round(s.regional * 100), Math.round(s.major * 100), Math.round(s.worlds * 100));
 }
 
 export function statsOfSquad(p: SquadPlayer): Stats {
   return statsFromView(p);
 }
 
-export function agePhase(save: CareerSave, p: SquadPlayer): "growing" | "prime" | "declining" {
-  const age = squadAge(save, p);
+/** A squad player's phase tag (the copy's keys: growing / prime / declining / unknown). */
+export type PhaseLabel = "growing" | "prime" | "declining" | "unknown";
+
+/** The copy key of an engine phase tag ("peak" reads "prime"). */
+export function phaseLabelOf(tag: PhaseTag): PhaseLabel {
+  return tag === "peak" ? "prime" : tag;
+}
+
+export function agePhase(save: CareerSave, p: SquadPlayer): PhaseLabel {
   // DEV-01 (model 2): his own arc — growing to his peak age, at the top for
-  // his plateau, then declining (rc.31: fixed ages 20 / 22).
-  if (isGrowthContract(growthModelOf(save.world))) {
-    const phase = developmentPhaseOf(exactAgeOf(age, save.clock.day), {
-      peakAge: p.peakAge,
-      plateauYears: developmentProfileOf(p.id, save.careerSeed).plateauYears,
-    });
-    return phase === "peak" ? "prime" : phase;
-  }
-  if (age <= 20) return "growing";
-  if (age <= 22) return "prime";
-  return "declining";
+  // his plateau, then declining (rc.31: fixed ages 20 / 22). DEV-04 (rc.33):
+  // the engine's tag, "unknown" until his report level reveals it.
+  return phaseLabelOf(
+    phaseTagFor(p, {
+      level: p.scoutLevel,
+      careerSeed: save.careerSeed,
+      model: growthModelOf(save.world),
+      seasonAge: squadAge(save, p),
+      day: save.clock.day,
+    }),
+  );
 }
 
 /** Truthful training projection straight from the engine (no UI math). */

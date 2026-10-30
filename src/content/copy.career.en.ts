@@ -551,9 +551,16 @@ export const CAREER_EN = {
     scoutReport: "Scout report",
     scoutCost: (s: string) => `Order report · ${s}`,
     scoutDone: "Fully scouted",
-    scoutHint: "Narrows the potential range.",
+    scoutHint: "Narrows the potential range and reveals his phase.",
     growthRoom: "Growth room",
-    phase: { growing: "Developing", prime: "Prime", declining: "Declining" },
+    // DEV-04 (rc.33): his phase on his own arc — "?" until a scouting report reveals it.
+    phase: { growing: "Developing", prime: "At his peak", declining: "Declining", unknown: "Phase ?" },
+    phaseUnknownHint: "A scouting report reveals whether he is developing, at his peak or declining.",
+    // ECO-10 (rc.33): the prize share his contract carries.
+    prizeShare: "Prize share",
+    prizeSharePct: (pct: number) => `${pct}% of podium prizes`,
+    prizeShareLegacy: (regional: number, major: number, worlds: number) =>
+      `Older deal: a third of the team's ${regional} / ${major} / ${worlds}% (regional / Major / Worlds)`,
     projected: (v: string) => `Projected: ${v} by split's end`,
     trainingFocusLabel: "Training focus",
     archetype: {
@@ -694,13 +701,11 @@ export const CAREER_EN = {
     bidFrom: (org: string) => `${org} bid`,
     accept: "Accept",
     decline: "Decline",
-    // rc.32: only a Blockbuster carries a cost when refused (CAREER_SALARY.blockbusterRefusalRenewalMult).
-    declineHint: (pct: number) =>
-      `Refusing a Blockbuster bid raises the player's next renewal ask by ${pct}%; declining any other offer costs nothing.`,
     blockbuster: "Blockbuster",
-    // rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself.
+    // rc.33 (UX-07): the Blockbuster explained in one sentence, on a Blockbuster bid only
+    // (its refusal cost included — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `A scripted moment from the scene's history: ${org}, big money behind them, are chasing the player they built around for real. The fee is ×${mult} his market value. Refuse it — or let it expire — and he stays, but his next renewal ask rises ${pct}%.`,
+      `A Blockbuster is one of the season's scripted moments: ${org} pay ×${mult} his market value, and if you refuse it or let it expire he stays, but his next renewal asks ${pct}% more.`,
     consequences: "After this deal",
     balanceAfter: (s: string) => `Balance after: ${s}`,
     // rc.32 (M4, provisional): the runway a signing leaves.
@@ -728,13 +733,14 @@ export const CAREER_EN = {
     // ECO-03 (R47): the slot is set after the signing and never prices it.
     slotLabel: "Squad slot",
     slotStarter: "Takes an open seat in the starting three.",
-    slotReplaces: (name: string) => `Takes ${name}'s seat in the starting three.`,
     slotReserve: "Joins as the sub. Promote him on the Squad screen at any time — the contract stays the same.",
     samePrice: "Same price as a starter: the slot never changes the contract.",
-    chooseLeaver: (cap: number) => `Squad full (${cap}) — choose who leaves to make room.`,
+    // rc.33 (UX-07): a full squad only warns and points to Squad; the signing waits for a free seat.
+    squadFullWarn: (cap: number) =>
+      `Your squad is full (${cap} of ${cap}). Release or sell a player on the Squad screen, then sign him.`,
+    toSquad: "Go to Squad",
     // DEV-02 (R48): a signing whose current season must be his last.
     finalSeasonDeal: "Final season: he retires when this season ends — a 1-season deal only.",
-    leaverSeverance: (s: string) => `Severance ${s}`,
     payrollWeek: (now: string, after: string) => `Wage bill: ${now} → ${after} / week`,
     coachEffects: "What this coach does",
     coachTraining: (pct: number) => `${pct > 0 ? "+" : ""}${pct}% training speed vs. no coach`,
@@ -762,6 +768,8 @@ export const CAREER_EN = {
     sortDesc: "High → low",
     filterRegion: "Region",
     allRegions: "All regions",
+    // rc.33 (UX-07): only the players the org's reputation can sign (the rule a signing checks).
+    filterSignable: "Signable at my reputation",
     viewSheet: "View sheet",
     noResults: "No players match the filters.",
     dealsEmpty: "No active deals. Offers land here when a window is open.",
@@ -769,20 +777,23 @@ export const CAREER_EN = {
     lockedAtRep: (rep: number) => `Signs at ${rep} reputation`,
     lockedHint: "Players of this level won't join the org yet — reputation opens the door.",
     coachLockedAt: (rep: number) => `Coach hiring unlocks at ${rep} reputation`,
-    // v0.3 salary negotiation
+    // rc.33 (ECO-10 + ECO-11): the contract talk — two levers, the zone shown, one answer.
     negotiation: {
-      title: "Wage talk",
-      yourOffer: "Your offer",
+      title: "Contract talk",
       perWeek: "/ week",
-      fullAsk: "Pay the ask",
-      chance: (pct: number) => `${pct}% to accept`,
-      safe: "Safe",
-      likely: "Likely",
-      risky: "Risky",
-      lowball: "Insulting",
-      hardened: (n: number) =>
-        n === 1 ? "One counter rejected — the ask hardened." : `${n} counters rejected — only the full ask signs now.`,
-      savings: (s: string) => `Saves ${s} / split`,
+      fullAsk: "Pay his ask",
+      wage: "Weekly wage",
+      share: "Prize share",
+      shareHint: "His cut of every podium prize the team wins (top four of a regional, Major or Worlds).",
+      shareAsk: (pct: number) => `He asks ${pct}%`,
+      trade: (pct: number) => `Each share point you give him is worth ${pct}% of his wage.`,
+      zone: (floor: string, top: string) => `At this share he signs from ${floor} to ${top} a week.`,
+      zoneFixed: (top: string) => `At this share he signs only at his ask, ${top} a week.`,
+      signs: (wage: string, pct: number) => `He signs: ${wage} / week + ${pct}% of podium prizes`,
+      counter: (wage: string, pct: number) => `Under his floor — he counters at ${wage} / week with ${pct}%`,
+      takeCounter: "Take his counter",
+      saves: (s: string) => `${s} / week under his ask`,
+      costs: (s: string) => `${s} / week over his ask, for a smaller share`,
     },
     errors: {
       windowClosed: "The transfer window is closed.",
@@ -804,9 +815,8 @@ export const CAREER_EN = {
       none: "Nothing to do.",
       invalid: "Invalid selection.",
       repGate: "The org's reputation is too low for a player of this level.",
-      negotiationRejected: "Offer rejected — the agent hardened the ask.",
-      negotiationLocked: "Negotiations soured — only the full ask signs this window.",
-      lowball: "That offer would insult the player.",
+      // rc.33 (ECO-11): an offer under his floor — the sheet shows his counter.
+      negotiationCounter: "That is under his floor — take his counter or raise the offer.",
       sameDay: "Already scrimmed this team today.",
       /** rc.30: signing, releasing or selling during an event in progress. */
       rosterLocked: "Roster moves wait until the event ends.",
@@ -952,8 +962,9 @@ export const CAREER_EN = {
     foundingEnds: (through: string) => `Ends with your first sponsorship deal — not before the end of ${through}.`,
     foundingEnded: "Stepped back once the org signed its own sponsorship deal.",
     // rc.32 (M6, provisional): the players' share of podium prizes.
-    playerShareRule: (regional: number, major: number, worlds: number) =>
-      `Podium prizes are shared with the players: ${regional}% of a regional top-four prize, ${major}% at a Major, ${worlds}% at Worlds — booked as its own line.`,
+    // rc.33 (ECO-10): each contract carries its own share (Squad and the offer show it).
+    playerShareRule:
+      "Podium prizes are shared with the players who played: each contract keeps its own share of a top-four prize at a regional, Major or Worlds (Squad shows it) — booked as its own line.",
     boosts: "Boosts & staff",
     psychologist: "Sports Psychologist",
     psychologistDesc: "+1 Clutch, +1 Consistency while retained. The hire that wins deciding games.",

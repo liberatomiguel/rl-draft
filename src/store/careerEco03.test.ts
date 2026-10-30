@@ -10,13 +10,13 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { CAREER_CONTRACT, CAREER_NEGOTIATION } from "@/config/balance";
+import { CAREER_CONTRACT } from "@/config/balance";
 import { CAREER_BEATS, type CareerBeat } from "@/data/career/beats";
 import { DAYS_PER_SEASON, firstDayOfWeek, weekOfDay, windowIndexOf } from "@/engine/career/calendar";
+import type { ContractOffer } from "@/engine/career/contract";
 import { playerViewById } from "@/engine/career/development";
 import {
   computeSalaryAsk,
-  negotiationAccepts,
   payrollProjection,
   quantize,
   severanceFor,
@@ -35,6 +35,7 @@ import {
   renewPlayerFlow,
   setStartersFlow,
   signingPlanFor,
+  signingTalkFor,
   signPlayerFlow,
   type CreateCareerInput,
 } from "./careerFlow";
@@ -396,12 +397,11 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     const r2 = signPlayerFlow(save, target.id, { lengthSeasons: 2, releaseId: "nobody" });
     expect(r2.error).toBe("invalid");
     expect(moneyAndSlots(r2.save)).toBe(moneyAndSlots(save));
-    // A rejected counter: only the hardened tries move.
-    const counter = rejectedCounter(save, target, ask.salaryPerSplit);
-    const r3 = signPlayerFlow(save, target.id, { lengthSeasons: 2, offeredSalary: counter });
-    expect(r3.error).toBe("negotiationRejected");
+    // rc.33 (ECO-11): an offer under his floor — nothing moves, and nothing hardens.
+    const r3 = signPlayerFlow(save, target.id, { lengthSeasons: 2, offer: underFloorOffer(save, target) });
+    expect(r3.error).toBe("negotiationCounter");
+    expect(r3.save).toBe(save);
     expect(moneyAndSlots(r3.save)).toBe(moneyAndSlots(save));
-    expect(Object.values(r3.save.negotiationTries)).toEqual([1]);
     // A full squad + a leaver whose severance breaks the floor: nothing moves.
     const full = signOk(save, target.id);
     const other = freeAgents(full)[0];
@@ -416,22 +416,11 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
   });
 });
 
-/** An offer at/above the insult floor that the hidden reserve rejects (deterministic). */
-function rejectedCounter(save: CareerSave, view: CareerPlayerView, ask: number): number {
-  const windowKey = `w${windowIndexOf(weekOfDay(save.clock.day))}`;
-  for (let offered = quantize(ask * CAREER_NEGOTIATION.minOfferFactor); offered < ask; offered += 50) {
-    const ok = negotiationAccepts({
-      careerSeed: save.careerSeed,
-      playerId: view.id,
-      seasonIndex: save.clock.seasonIndex,
-      windowKey,
-      offered,
-      ask,
-      rejects: 0,
-    });
-    if (!ok) return offered;
-  }
-  throw new Error("no rejected counter for this ask");
+/** rc.33 (ECO-11): an offer one weekly quantum under his floor, at the share he asks. */
+function underFloorOffer(save: CareerSave, view: CareerPlayerView): ContractOffer {
+  const talk = signingTalkFor(save, view, marketAsk(save, view));
+  expect(talk.zone.floorWeekly).toBeGreaterThan(10);
+  return { weekly: talk.zone.floorWeekly - 10, sharePct: talk.ask.sharePct };
 }
 
 // ---------------------------------------------------------------------------
@@ -464,19 +453,20 @@ describe("ECO-03 — refresh mid-negotiation (store reload)", () => {
     return store.getState().slots[store.getState().activeSlot!]!;
   }
 
-  it("a rejected counter survives the reload; the signing then charges exactly once", async () => {
+  it("an offer under his floor moves nothing across a reload; the signing then charges exactly once", async () => {
     store.getState().createCareer(0, INPUT, 47_101);
     const fresh = store.getState().slots[0]!;
     const target = freeAgents(fresh)[0];
     const ask = marketAsk(fresh, target);
-    const counter = rejectedCounter(fresh, target, ask.salaryPerSplit);
-    store.getState().signPlayer(target.id, { lengthSeasons: 2, offeredSalary: counter });
-    expect(store.getState().lastError).toBe("negotiationRejected");
+    const under = underFloorOffer(fresh, target);
+    store.getState().signPlayer(target.id, { lengthSeasons: 2, offer: under });
+    expect(store.getState().lastError).toBe("negotiationCounter");
 
     const reloaded = await reload();
     expect(reloaded.finances.balance).toBe(fresh.finances.balance);
     expect(reloaded.squad.map((p) => p.id)).toEqual(fresh.squad.map((p) => p.id));
-    expect(Object.values(reloaded.negotiationTries)).toEqual([1]); // no free re-roll by reloading
+    // rc.33 (ECO-11): nothing hardens and nothing re-rolls — the reload answers the same.
+    expect(signingTalkFor(reloaded, target, ask, under)).toEqual(signingTalkFor(fresh, target, ask, under));
 
     store.getState().signPlayer(target.id, { lengthSeasons: 2 });
     expect(store.getState().lastError).toBeNull();

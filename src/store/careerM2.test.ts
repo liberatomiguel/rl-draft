@@ -12,12 +12,19 @@
 
 import { describe, expect, it } from "vitest";
 import { CAREER_SALARY } from "@/config/balance";
-import { quantize, runwayWeeks } from "@/engine/career/economy";
+import { quantize, runwayWeeks, weeklyWage } from "@/engine/career/economy";
 import { renewalAskFor } from "@/engine/career/market";
 import { renewalTermsFor } from "@/engine/career/renewal";
 import type { CareerSave, SquadPlayer, TransferOffer } from "@/engine/career/types";
 import { renewalRunwayOf } from "@/components/career/RenewalReadout";
-import { createCareerSave, declineBidFlow, renewPlayerFlow, weeklyStatementOf, type CreateCareerInput } from "./careerFlow";
+import {
+  createCareerSave,
+  declineBidFlow,
+  renewalTalkFor,
+  renewPlayerFlow,
+  weeklyStatementOf,
+  type CreateCareerInput,
+} from "./careerFlow";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -157,13 +164,18 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     }
   });
 
-  it("the wage talk negotiates against the M2 price (a counter under it consults the hidden reserve)", () => {
+  it("the wage talk negotiates against the M2 price (rc.33: under his floor nothing moves; the floor signs)", () => {
     const { save, p } = withPlayer({ overall: 79, potential: 82, salaryPerSplit: 6_000 });
     const ask = renewalTermsFor(p, ctxOf(save)).ask;
-    const low = renewPlayerFlow(save, p.id, 2, quantize(ask * 0.3));
-    expect(low.error).toBe("lowball");
-    const atAsk = renewPlayerFlow(save, p.id, 2, ask);
+    const talk = renewalTalkFor(save, p, 2);
+    expect(talk.ask.wagePerSplit).toBe(ask);
+    const low = renewPlayerFlow(save, p.id, 2, { weekly: weeklyWage(quantize(ask * 0.3)) });
+    expect(low.error).toBe("negotiationCounter");
+    expect(low.save).toBe(save);
+    const atAsk = renewPlayerFlow(save, p.id, 2);
     expect(atAsk.save.squad.find((x) => x.id === p.id)!.salaryPerSplit).toBe(ask);
+    const atFloor = renewPlayerFlow(save, p.id, 2, { weekly: talk.zone.floorWeekly });
+    expect(weeklyWage(atFloor.save.squad.find((x) => x.id === p.id)!.salaryPerSplit)).toBe(talk.zone.floorWeekly);
   });
 
   it("the readout's runway is the Monday books after the renewal (M4's runwayWeeksAfter, his wage swapped for the ask)", () => {
@@ -173,7 +185,7 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     const terms = renewalTermsFor(p, ctxOf(save));
     const runway = renewalRunwayOf(save, p, terms);
     // Renew him, then read the books the next Monday would see.
-    const after = renewPlayerFlow(save, p.id, 2, terms.ask).save;
+    const after = renewPlayerFlow(save, p.id, 2).save;
     expect(runway).toBe(runwayWeeks(after.finances.balance, weeklyStatementOf(after).net));
     // A raise never lengthens the runway.
     const now = runwayWeeks(save.finances.balance, weeklyStatementOf(save).net);

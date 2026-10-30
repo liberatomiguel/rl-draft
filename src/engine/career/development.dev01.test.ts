@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_AGE, CAREER_CALENDAR, CAREER_DEV, CAREER_SEASONS, CAREER_TRAINING, CAREER_WORLD } from "@/config/balance";
+import { CAREER_AGE, CAREER_CALENDAR, CAREER_DEV, CAREER_SCOUT, CAREER_SEASONS, CAREER_TRAINING, CAREER_WORLD } from "@/config/balance";
 import { playerCardById, seasonById, specialCards } from "@/data";
 import { createRng } from "@/lib/rng";
 import {
@@ -415,20 +415,21 @@ describe("DEV-01e — honest scouting bands that never move", () => {
     }
   });
 
-  it("the truth can sit at the floor, the middle or the top — for settled players too", () => {
-    const settled = sample().filter((v) => Math.abs(v.potential - v.overall) <= 2);
-    const pos = settled.map((v) => {
-      const b = scoutedBand(v.potential, v.overall, 0, SEED, v.id, 2);
-      return (Math.round(v.potential) - b.min) / (b.max - b.min);
-    });
-    const floor = pos.filter((x) => x <= 0.15).length / pos.length;
-    const top = pos.filter((x) => x >= 0.85).length / pos.length;
-    const mean = pos.reduce((a, b) => a + b, 0) / pos.length;
-    expect(floor).toBeGreaterThan(0.08);
-    expect(floor).toBeLessThan(0.3);
-    expect(top).toBeGreaterThan(0.08);
-    expect(mean).toBeGreaterThan(0.4);
-    expect(mean).toBeLessThan(0.6);
+  it("DEV-04 (rc.33) revisits where the truth sits: at the top or at most bandMaxAbove under it, each place used", () => {
+    // rc.32 (DEV-01e) spread it over the whole 10-wide band, so a 91 could read "89–99".
+    const players = sample();
+    const aboveAt = (level: ScoutLevel) =>
+      players.map((v) => scoutedBand(v.potential, v.overall, level, SEED, v.id, 2).max - Math.round(v.potential));
+    for (const level of [0, 1] as ScoutLevel[]) {
+      const above = aboveAt(level);
+      for (let a = 0; a <= CAREER_SCOUT.bandMaxAbove; a++) expect(above.filter((x) => x === a).length / above.length).toBeGreaterThan(0.03);
+      expect(Math.max(...above)).toBe(CAREER_SCOUT.bandMaxAbove);
+    }
+    // The deepest report keeps its whole uncertainty: the truth at either end about half the time.
+    const deepest = aboveAt(2);
+    const atTop = deepest.filter((x) => x === 0).length / deepest.length;
+    expect(atTop).toBeGreaterThan(0.35);
+    expect(atTop).toBeLessThan(0.65);
   });
 
   it("model 1 keeps rc.31's band (floored at the overall, so an rc.31 save's bought reports never move)", () => {

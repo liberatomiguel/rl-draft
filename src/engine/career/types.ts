@@ -132,6 +132,13 @@ export interface SquadPlayer {
   declineRate: DeclineRate;
   role: "starter" | "sub";
   salaryPerSplit: number;
+  /**
+   * rc.33 (ECO-10): the share of a podium prize (percent) this contract lets
+   * him keep, set by the talk (`contract.negotiationAnswerFor`). Optional and
+   * additive: a deal signed before rc.33 has none and reads the rc.32 rule
+   * (`contract.contractSharePctFor`), so no save is migrated.
+   */
+  prizeSharePct?: number;
   /** Last seasonIndex (inclusive) the contract covers. */
   contractEndSeason: number;
   trainingFocus: TrainingFocus;
@@ -837,8 +844,18 @@ export interface CareerSave {
   /**
    * v0.3 negotiation bookkeeping: rejected-counter counts keyed
    * "{playerId}:{seasonIndex}:{windowKey}" (pruned at each window close).
+   * rc.33 (ECO-11): no longer written — the contract talk stores nothing
+   * (`contract.negotiationAnswerFor`); kept so older saves load unchanged.
    */
   negotiationTries: Record<string, number>;
+  /**
+   * rc.33 (DEV-04): the scouting band this career reads — 2 = DEV-04's honest
+   * band, stamped at creation. Absent = a career created before rc.33: on
+   * growth model 2 a bought or earned report (level ≥ 1) also stays inside
+   * the band rc.32 showed at that level, so a report it already holds only
+   * narrows (`development.scoutedBand`'s `rc32Reports`). Optional, additive.
+   */
+  bandModel?: number;
   /** v0.3: bookkeeping for the per-window incoming-bid cap/cooldown. */
   bidsThisWindow: number;
   lastBidDay: number;

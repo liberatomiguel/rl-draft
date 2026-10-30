@@ -21,7 +21,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
-import { quantize, signableOverallCap, weeklyOf } from "@/engine/career/economy";
+import { signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type { CareerDifficulty, CareerEndReason, CareerPlayerView, CareerPrefs, CareerSave, ScoutLevel } from "@/engine/career/types";
 import type { Placement, Region } from "@/engine/types";
@@ -37,6 +37,7 @@ import {
   isEventPaused,
   releasePlayerFlow,
   renewPlayerFlow,
+  renewalTalkFor,
   resolveInsertFlow,
   rolloverToNextSeason,
   runScrimFlow,
@@ -364,7 +365,8 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
  * The final-season renewals (W24, after the W23 telegraph). "all" signs every
  * expiring player at the fresh ask — the naive manager. "selective" keeps a
  * player only while he is worth a seat and the books carry the new wage, and
- * opens at 92 % of the ask (a rejection pays the ask, if still affordable).
+ * signs at the floor of the talk's zone (rc.33 ECO-11; rc.32 opened at 92 % of
+ * the ask and paid the ask on a rejection).
  */
 function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
   let save = input;
@@ -381,12 +383,15 @@ function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
     }
     const young = ageOf(p.birthYear, seasonIndex) <= 21;
     if (p.overall < lineupFloor - 1 && !young) continue;
-    // The fresh ask, read off a probe (renewPlayerFlow prices it).
-    const probe = renewPlayerFlow(save, p.id, 2);
-    const ask = probe.save.squad.find((x) => x.id === p.id)?.salaryPerSplit ?? p.salaryPerSplit;
+    // The renewal ask, from the talk renewPlayerFlow answers with.
+    const talk = renewalTalkFor(save, p, 2);
+    const ask = talk.ask.wagePerSplit;
     if (!affordable(save, 0, ask - p.salaryPerSplit, policy)) continue;
-    const counter = renewPlayerFlow(save, p.id, 2, quantize(ask * 0.92));
-    save = counter.error ? renewPlayerFlow(counter.save, p.id, 2).save : counter.save;
+    // rc.33 (ECO-11): the zone is shown, so a negotiating manager signs at his
+    // floor (his share ask, the least wage he takes this window) — about what
+    // rc.32's 92 % opening paid on average (a third of them took it).
+    const res = renewPlayerFlow(save, p.id, 2, { weekly: talk.zone.floorWeekly });
+    save = res.error ? renewPlayerFlow(save, p.id, 2).save : res.save;
   }
   return save;
 }

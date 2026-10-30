@@ -880,7 +880,7 @@ describe("rc.32 — a refused Blockbuster raises that deal's renewal ask (and th
     expect(next.squad.find((x) => x.id === p.id)!.blockbusterRefusedUntil).toBe(p.contractEndSeason);
   });
 
-  it("the offer and the mail explain it — the scripted moment, ×1.5 his value, +10 % at renewal (EN and PT, from balance.ts)", () => {
+  it("the offer and the mail explain it — the scripted moment, ×1.5 his value, +10 % at renewal (EN and PT, from balance.ts; rc.33: one sentence)", () => {
     const pct = Math.round((CAREER_SALARY.blockbusterRefusalRenewalMult - 1) * 100);
     const mult = String(CAREER_TRANSFER.blockbusterFeeMult);
     for (const [C, shown] of [
@@ -890,10 +890,11 @@ describe("rc.32 — a refused Blockbuster raises that deal's renewal ask (and th
       const offerLine = C.market.blockbusterWhat("FaZe Clan", mult, pct);
       expect(offerLine).toContain(shown);
       expect(offerLine).toContain(`${pct}%`);
+      // rc.33 (UX-07): one sentence — no full stop before its end.
+      expect(offerLine.slice(0, -1)).not.toMatch(/[.!?]\s/);
       const mail = C.mail.body.blockbusterBid({ org: "FaZe Clan", player: "Firstkiller", fee: "$80,000", mult: CAREER_TRANSFER.blockbusterFeeMult, pct });
       expect(mail).toContain(shown);
       expect(mail).toContain(`${pct}%`);
-      expect(C.market.declineHint(pct)).toContain(`${pct}%`);
     }
   });
 });

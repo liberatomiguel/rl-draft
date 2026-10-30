@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
-const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral" } as const;
+const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral", unknown: "neutral" } as const;
 
 function initials(name: string): string {
   return name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase() || "?";

@@ -544,9 +544,16 @@ export const CAREER_PT: CareerCopy = {
     scoutReport: "Relatório de olheiro",
     scoutCost: (s: string) => `Encomendar relatório · ${s}`,
     scoutDone: "Totalmente observado",
-    scoutHint: "Estreita a faixa de potencial.",
+    scoutHint: "Estreita a faixa de potencial e revela a fase dele.",
     growthRoom: "Margem de evolução",
-    phase: { growing: "Em evolução", prime: "Auge", declining: "Em declínio" },
+    // DEV-04 (rc.33): a fase dele na própria trajetória — "?" até um relatório de scout revelar.
+    phase: { growing: "Em evolução", prime: "No auge", declining: "Em declínio", unknown: "Fase ?" },
+    phaseUnknownHint: "Um relatório de scout revela se ele está em evolução, no auge ou em declínio.",
+    // ECO-10 (rc.33): a parte do prêmio que o contrato dele garante.
+    prizeShare: "Parte do prêmio",
+    prizeSharePct: (pct: number) => `${pct}% dos prêmios de pódio`,
+    prizeShareLegacy: (regional: number, major: number, worlds: number) =>
+      `Contrato antigo: um terço dos ${regional} / ${major} / ${worlds}% do time (regional / Major / Worlds)`,
     projected: (v: string) => `Projeção: ${v} até o fim do split`,
     trainingFocusLabel: "Foco de treino",
     archetype: {
@@ -687,13 +694,11 @@ export const CAREER_PT: CareerCopy = {
     bidFrom: (org: string) => `Proposta de ${org}`,
     accept: "Aceitar",
     decline: "Recusar",
-    // rc.32: só a proposta Bombástica tem custo ao ser recusada (CAREER_SALARY.blockbusterRefusalRenewalMult).
-    declineHint: (pct: number) =>
-      `Recusar uma proposta Bombástica aumenta em ${pct}% a próxima pedida de renovação do jogador; recusar qualquer outra não custa nada.`,
     blockbuster: "Bombástica",
-    // rc.32 (Miguel, 30/10): a proposta Bombástica explicada na própria oferta.
+    // rc.33 (UX-07): a Bombástica explicada numa frase, só numa proposta Bombástica
+    // (com o custo de recusar — CAREER_SALARY.blockbusterRefusalRenewalMult).
     blockbusterWhat: (org: string, mult: string, pct: number) =>
-      `Um momento roteirizado da história da cena: ${org}, com dinheiro de sobra, estão atrás do jogador em torno de quem montaram o time de verdade. A taxa é ×${mult.replace(".", ",")} o valor de mercado dele. Recuse — ou deixe expirar — e ele fica, mas a próxima pedida de renovação dele sobe ${pct}%.`,
+      `Uma proposta Bombástica é um dos momentos roteirizados da temporada: ${org} paga ×${mult.replace(".", ",")} o valor de mercado dele e, se você recusar ou deixar expirar, ele fica, mas a próxima renovação dele pede ${pct}% a mais.`,
     consequences: "Depois deste negócio",
     balanceAfter: (s: string) => `Saldo após: ${s}`,
     // rc.32 (M4, provisório): o fôlego que a contratação deixa.
@@ -721,13 +726,14 @@ export const CAREER_PT: CareerCopy = {
     // ECO-03 (R47): a vaga é definida depois da contratação e nunca muda o preço.
     slotLabel: "Vaga no elenco",
     slotStarter: "Assume uma vaga aberta no trio titular.",
-    slotReplaces: (name: string) => `Assume a vaga de ${name} no trio titular.`,
     slotReserve: "Entra como reserva. Promova-o na tela de Elenco quando quiser — o contrato não muda.",
     samePrice: "Mesmo preço de um titular: a vaga nunca muda o contrato.",
-    chooseLeaver: (cap: number) => `Elenco completo (${cap}) — escolha quem sai para abrir a vaga.`,
+    // rc.33 (UX-07): elenco cheio só avisa e leva ao Elenco; a contratação espera uma vaga livre.
+    squadFullWarn: (cap: number) =>
+      `Seu elenco está cheio (${cap} de ${cap}). Dispense ou venda um jogador na tela de Elenco e depois contrate.`,
+    toSquad: "Ir para o Elenco",
     // DEV-02 (R48): uma contratação cuja temporada atual tem de ser a última.
     finalSeasonDeal: "Última temporada: ele se aposenta ao fim desta temporada — só contrato de 1 temporada.",
-    leaverSeverance: (s: string) => `Rescisão ${s}`,
     payrollWeek: (now: string, after: string) => `Folha: ${now} → ${after} / semana`,
     coachEffects: "O que este coach faz",
     coachTraining: (pct: number) => `${pct > 0 ? "+" : ""}${pct}% de velocidade de treino vs. sem coach`,
@@ -755,6 +761,8 @@ export const CAREER_PT: CareerCopy = {
     sortDesc: "Maior → menor",
     filterRegion: "Região",
     allRegions: "Todas as regiões",
+    // rc.33 (UX-07): só os jogadores que a reputação da org consegue contratar (a regra que a contratação confere).
+    filterSignable: "Contratáveis com minha reputação",
     viewSheet: "Ver ficha",
     noResults: "Nenhum jogador com esses filtros.",
     dealsEmpty: "Nenhuma negociação ativa. Propostas chegam aqui com a janela aberta.",
@@ -762,20 +770,23 @@ export const CAREER_PT: CareerCopy = {
     lockedAtRep: (rep: number) => `Assina com ${rep} de reputação`,
     lockedHint: "Jogadores desse nível ainda não topam a org — a reputação abre essa porta.",
     coachLockedAt: (rep: number) => `Contratar coach desbloqueia com ${rep} de reputação`,
-    // v0.3 negociação salarial
+    // rc.33 (ECO-10 + ECO-11): a negociação do contrato — duas alavancas, a faixa à vista, uma resposta.
     negotiation: {
-      title: "Conversa salarial",
-      yourOffer: "Sua oferta",
+      title: "Negociação do contrato",
       perWeek: "/ semana",
       fullAsk: "Pagar a pedida",
-      chance: (pct: number) => `${pct}% de aceitar`,
-      safe: "Seguro",
-      likely: "Provável",
-      risky: "Arriscado",
-      lowball: "Ofensivo",
-      hardened: (n: number) =>
-        n === 1 ? "Uma contraproposta recusada — a pedida endureceu." : `${n} contrapropostas recusadas — agora só a pedida cheia assina.`,
-      savings: (s: string) => `Economiza ${s} / split`,
+      wage: "Salário semanal",
+      share: "Parte do prêmio",
+      shareHint: "A fatia dele em cada prêmio de pódio do time (top 4 de um regional, Major ou Worlds).",
+      shareAsk: (pct: number) => `Ele pede ${pct}%`,
+      trade: (pct: number) => `Cada ponto de parte que você dá vale ${pct}% do salário dele.`,
+      zone: (floor: string, top: string) => `Com essa parte ele assina de ${floor} a ${top} por semana.`,
+      zoneFixed: (top: string) => `Com essa parte ele só assina pela pedida, ${top} por semana.`,
+      signs: (wage: string, pct: number) => `Ele assina: ${wage} / semana + ${pct}% dos prêmios de pódio`,
+      counter: (wage: string, pct: number) => `Abaixo do piso dele — contraproposta: ${wage} / semana com ${pct}%`,
+      takeCounter: "Aceitar a contraproposta",
+      saves: (s: string) => `${s} / semana abaixo da pedida`,
+      costs: (s: string) => `${s} / semana acima da pedida, por uma parte menor`,
     },
     errors: {
       windowClosed: "A janela de transferências está fechada.",
@@ -797,9 +808,8 @@ export const CAREER_PT: CareerCopy = {
       none: "Nada a fazer.",
       invalid: "Seleção inválida.",
       repGate: "A reputação da org ainda é baixa para um jogador desse nível.",
-      negotiationRejected: "Oferta recusada — o agente endureceu a pedida.",
-      negotiationLocked: "A negociação azedou — só a pedida cheia assina nesta janela.",
-      lowball: "Essa oferta ofenderia o jogador.",
+      // rc.33 (ECO-11): uma oferta abaixo do piso dele — a ficha mostra a contraproposta.
+      negotiationCounter: "Isso está abaixo do piso dele — aceite a contraproposta ou suba a oferta.",
       sameDay: "Vocês já treinaram contra esse time hoje.",
       rosterLocked: "Mudanças no elenco só depois do fim do evento.",
       /** DEV-02 (R48): a idade mínima para competir. */
@@ -944,8 +954,9 @@ export const CAREER_PT: CareerCopy = {
     foundingEnds: (through: string) => `Termina no seu primeiro contrato de patrocínio — não antes do fim de ${through}.`,
     foundingEnded: "Saiu de cena quando a org assinou o próprio patrocínio.",
     // rc.32 (M6, provisório): a parte dos jogadores nos prêmios de pódio.
-    playerShareRule: (regional: number, major: number, worlds: number) =>
-      `Prêmios de pódio são divididos com os jogadores: ${regional}% do prêmio de um top 4 regional, ${major}% num Major, ${worlds}% no Worlds — lançados como linha própria.`,
+    // rc.33 (ECO-10): cada contrato tem a própria parte (o Elenco e a oferta mostram).
+    playerShareRule:
+      "Prêmios de pódio são divididos com os jogadores que jogaram: cada contrato garante a própria parte de um prêmio de top 4 num regional, Major ou Worlds (o Elenco mostra) — lançados como linha própria.",
     boosts: "Boosts & staff",
     psychologist: "Psicóloga esportiva",
     psychologistDesc: "+1 Clutch, +1 Consistência enquanto contratada. A contratação que vence jogos decisivos.",

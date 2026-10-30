@@ -8,7 +8,6 @@
 import { describe, expect, it } from "vitest";
 import {
   CAREER_LOAN,
-  CAREER_NEGOTIATION,
   CAREER_TRAINING,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
@@ -19,8 +18,6 @@ import {
   contractedFeeFor,
   marketValueFor,
   moneyIndex,
-  negotiationAcceptChance,
-  negotiationAccepts,
   payLoanDown,
   prizeFor,
   repNeededForOverall,
@@ -384,61 +381,16 @@ describe("v0.3 scrim scheduling", () => {
 // Negotiation
 // ---------------------------------------------------------------------------
 
-describe("v0.3 negotiation", () => {
-  it("full ask always signs; the shown chance is the true CDF", () => {
-    expect(
-      negotiationAccepts({
-        careerSeed: SEED,
-        playerId: "p1",
-        seasonIndex: 0,
-        windowKey: "w0",
-        offered: 1000,
-        ask: 1000,
-        rejects: 0,
-      }),
-    ).toBe(true);
-    expect(negotiationAcceptChance(1000, 1000, 0)).toBe(1);
-    expect(negotiationAcceptChance(800, 1000, 0)).toBe(0); // below the floor
-    const mid = negotiationAcceptChance(940, 1000, 0);
-    expect(mid).toBeGreaterThan(0);
-    expect(mid).toBeLessThan(1);
-    // Hardening shrinks the odds.
-    expect(negotiationAcceptChance(940, 1000, 1)).toBeLessThan(mid);
-  });
-
-  it("is deterministic per window and locks after maxRejects", () => {
-    const args = {
-      careerSeed: SEED,
-      playerId: "p1",
-      seasonIndex: 0,
-      windowKey: "w1",
-      offered: 950,
-      ask: 1000,
-    };
-    const a = negotiationAccepts({ ...args, rejects: 0 });
-    const b = negotiationAccepts({ ...args, rejects: 0 });
-    expect(a).toBe(b);
-    expect(negotiationAccepts({ ...args, rejects: CAREER_NEGOTIATION.maxRejects })).toBe(false);
-  });
-
-  it("signPlayerFlow persists the hardened counter on rejection", () => {
+describe("v0.3 negotiation → rc.33 contract talk (ECO-11; the model's own tests: engine/career/contract.test.ts)", () => {
+  it("an offer under his floor is refused with nothing moved — no hidden dice, no hardening", () => {
     const save = makeSave();
-    // Any signable FA below the cap:
-    const target = save.world.freeAgentIds
-      .map((id) => id)
-      .find((id) => {
-        // fictional fillers are cheap and under the cap
-        return id.startsWith("fic:");
-      });
+    // fictional fillers are cheap and under the cap
+    const target = save.world.freeAgentIds.find((id) => id.startsWith("fic:"));
     if (!target) return;
-    // Release someone to open a slot? Squad starts with 3 starters + 0 subs —
-    // sign as sub instead.
-    const askProbe = signPlayerFlow(save, target, {
-      role: "sub",
-      lengthSeasons: 1,
-      offeredSalary: 1, // guaranteed lowball → error path
-    });
-    expect(["lowball", "windowClosed", "repGate"]).toContain(askProbe.error);
+    const res = signPlayerFlow(save, target, { lengthSeasons: 1, offer: { weekly: 0 } });
+    expect(["negotiationCounter", "windowClosed", "repGate"]).toContain(res.error);
+    expect(res.save).toBe(save);
+    expect(res.save.negotiationTries).toEqual(save.negotiationTries);
   });
 });
 

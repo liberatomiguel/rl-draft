@@ -35,7 +35,8 @@ import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { isTwoDayEvent, regionalForQualifier } from "@/engine/career/calendar";
 import { nextPlayoffPairings } from "@/engine/playoffs";
-import { playerShareFor, prizeFor, pointsFor } from "@/engine/career/economy";
+import { prizeFor, pointsFor } from "@/engine/career/economy";
+import { eventPlayerShareFor } from "@/store/careerFlow";
 import { placementOf } from "@/engine/career/careerResults";
 import { upcomingSwissPairings } from "@/engine/swiss";
 import type {
@@ -1035,8 +1036,8 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const qualified = outcome === "qualified";
   const isChamp = placement === "champion";
   const prize = prizeFor(def.tier, placement, def.format, save.difficulty, def.seasonIndex);
-  // rc.32 (M6, provisional): the players' share finishEvent books out of a podium prize.
-  const playerShare = playerShareFor(def.tier, placement, prize);
+  // The players' share finishEvent books out of a podium prize (rc.33 ECO-10: each played contract's own share).
+  const playerShare = eventPlayerShareFor(save, ev, placement, prize);
   const points = pointsFor(def.tier, placement);
   // Display mirror of finishEvent's applyEventRep (pure, unit-tested).
   const rep = eventRepPreview({
