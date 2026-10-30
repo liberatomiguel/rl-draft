@@ -1875,7 +1875,7 @@ export const CAREER_SALARY = {
    * "the veterans' founding wages must fit it"): an offer's founding weekly
    * bill (after foundingWageMult) is at most the start budget ÷ these weeks;
    * above it the three founding wages are scaled down together
-   * (`careerFlow.foundingFitOf`, never under minSalary). The weeks are
+   * (`economy.foundingWagesFor`, never under minSalary). The weeks are
    * BAL-05's runway (the balanced roster's in a median region), so every
    * roster still starts with at least that runway on the flat budget: on
    * Normal the journeymen's ~$770 a week (up to $970) fits $500, the

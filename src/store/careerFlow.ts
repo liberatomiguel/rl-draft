@@ -144,6 +144,7 @@ import {
   breachOutcomeOf,
   canSettleLoan,
   computeSalaryAsk,
+  foundingWagesFor,
   deadlineWeeksFor,
   debtPaymentFor,
   emergencyLoansLeftOf,
@@ -3693,7 +3694,7 @@ const FOUNDING_DEAL_END_SEASON = 1;
  * and the starting budget reads the full ask (`full`).
  * rc.36 (POL-04): the deal also fits the start budget — his offer's founding
  * bill is at most the budget ÷ CAREER_SALARY.foundingFitWeeks
- * (`foundingFitOf`), so the veterans sign for less instead of the budget
+ * (`foundingWagesFor`), so the veterans sign for less instead of the budget
  * growing with their bill (BAL-05 reversed).
  */
 export function foundingWageOf(
@@ -3704,33 +3705,10 @@ export function foundingWageOf(
 ): number {
   const ask = foundingAskOf(view, difficulty, careerSeed);
   if (full) return ask;
-  const fit = foundingFitOf(view, difficulty, careerSeed);
-  return fit >= 1 ? discountedFoundingWage(ask) : Math.max(CAREER_SALARY.minSalary, quantize(discountedFoundingWage(ask) * fit));
-}
-
-/** rc.35: a founding deal's wage before the fit — foundingWageMult of the ask. */
-function discountedFoundingWage(ask: number): number {
-  return Math.max(CAREER_SALARY.minSalary, quantize(ask * CAREER_SALARY.foundingWageMult));
-}
-
-/**
- * rc.36 (POL-04, Miguel on rc.35: one start budget for every roster): the
- * share of the discounted founding wages his offer pays so its weekly bill
- * is at most the career's start budget (`startingBudgetFor`, the flow's
- * rule: CAREER_ECONOMY.startingBudget on the difficulty) ÷
- * CAREER_SALARY.foundingFitWeeks (1 = it fits; null weeks = rc.35, no fit).
- * The offer is the founder's own (`starterRosterOffers`, deterministic per
- * seed), so the wizard and the flow read the same deal.
- */
-function foundingFitOf(view: StarterOffer["players"][number], difficulty: CareerDifficulty, careerSeed: number): number {
-  const weeks = CAREER_SALARY.foundingFitWeeks[difficulty] ?? null;
-  if (weeks === null || weeks <= 0) return 1;
   const offer = starterRosterOffers(view.region, careerSeed).find((o) => o.players.some((p) => p.id === view.id));
-  if (!offer) return 1;
-  const asks = offer.players.map((p) => foundingAskOf(p, difficulty, careerSeed));
-  const bill = weeklyWageBill(asks.map(discountedFoundingWage), null);
-  const cap = startingBudgetFor(difficulty, weeklyWageBill(asks, null)) / weeks;
-  return bill > cap ? cap / bill : 1;
+  const players = offer?.players ?? [view];
+  const wages = foundingWagesFor(players.map((p) => foundingAskOf(p, difficulty, careerSeed)), difficulty);
+  return wages[players.findIndex((p) => p.id === view.id)];
 }
 
 /** The founding ask: the market ask at the starting reputation, 2 seasons. */
@@ -3832,7 +3810,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     finances: {
       // rc.34: at least CAREER_ECONOMY.startingBudgetWeeks of the founding wage bill (every roster's runway).
       // rc.35 (front N): on the founders' full asks, so the founding discount is extra runway.
-      // rc.36 (POL-04): the weeks are off — one budget per difficulty; the founders' wages fit it (foundingFitOf).
+      // rc.36 (POL-04): the weeks are off — one budget per difficulty; the founders' wages fit it (foundingWagesFor).
       balance: startingBudgetFor(
         input.difficulty,
         weeklyWageBill(

@@ -25,6 +25,25 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Changed / Balance — rc.36, POL-04 (R86)
+- Every founding roster now receives the same budget for its difficulty.
+  Founding wages fit that budget, including the veterans; existing deals and
+  balances remain as signed. Removed the Merch & streams income.
+- Free-agent prospects replenish in every region at each seasonal intake and
+  appear in the market alongside its best-overall and signable selections.
+- Generated players reach the same potential later: a one-year peak shift,
+  a gentler base growth curve and a nine-point season ceiling. Growth room
+  spreads over the remaining weeks to preserve the no-flat-weeks fix.
+
+### Fixed — rc.36, POL-04
+- Young free agents could disappear from the market despite being available:
+  the shared overall-only listing cap crowded them out behind veterans.
+  Prospect listings now bypass that cap without removing signable options.
+- Founding wage fitting is an engine money rule used by both creation and the
+  wizard, rather than a separate formula in the save flow. The interrupted
+  empty-seat test now picks the seat's actual cheapest eligible player;
+  lowest overall alone did not imply the cheapest salary ask.
+
 ### Added — Phase 0 (technical base)
 - **Season model** (`src/config/season.ts`): the current season is a build-time constant
   (`SEASON.id = 1`, pre-season = 0). `profile.season` tags the season-scoped fields

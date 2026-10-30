@@ -1557,6 +1557,36 @@ R82. **Sponsors priced by risk; one level model for the season goal; the
      levels 0–1 two offers, no Bold; 2–3 three, ×1.05; 4 global, ×1.1 and
      2 free bootcamps. Level = `repTierOf(rep)` until front P's ladder.
 
+R86. **One founding budget, no passive fanbase pay, prospects throughout
+     the career, and a slower route to the same peak (rc.36, POL-04).**
+     (a) Reverses R78's roster-sized budget: startingBudgetWeeks is null for
+     every difficulty. Every roster starts with the preset's flat budget;
+     foundingWagesFor fits its discounted founding wages to at least
+     foundingFitWeeks 44 / 24 / 13 of that budget, with the normal salary
+     floor. The engine owns the money formula; the wizard and creation use
+     the same seeded roster and fitted deals. Existing saves keep their
+     booked balance and signed contracts. (b) passivePerRepPoint 60 to 0;
+     Finances drops the line. Old fanbase ledger entries remain readable;
+     they are never erased or refunded. (c) After every seasonal intake each
+     region replenishes its free-agent prospects to four with potential 81+
+     and at least three points left to grow (bounded seeded rookie scan).
+     The listing appends all competitive-age free-agent prospects with
+     potential 80+ and three points of room, so the overall-ranked top 120
+     cannot hide the new kids. The signable-player top-up still applies.
+     (d) First pace lever approved by Miguel: generated peakAgeShift +1
+     year, paceCurvature 2 to 1.5, seasonGainHardCap 13 to 9 and
+     seasonCapSpread 2 to 1. Filler potential reads the unshifted peak:
+     the same potential, reached later. Real players retain their historical
+     peak. A strong package keeps growing each week instead of exhausting
+     the cap early. Match difficulty is unchanged. Final CAREER_GROWTH,
+     CAREER_TRAINING, CAREER_ECON and CAREER_ARC measurements are integration
+     gates; the Normal competitive target remains 0.44 Majors per season
+     and Worlds in 16% of season rows. (e) rc.34 decisions 1/2 (loan rules),
+     4 (EU spending policies), 5 (the wage budget), 7 (scouted bands) and
+     9 (the older roster's rebuild) remain explicit Gate 3b choices.
+     Their existing defaults are retained for the remeasurement; POL-04
+     does not silently approve a different loan, band or wage-budget rule.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
