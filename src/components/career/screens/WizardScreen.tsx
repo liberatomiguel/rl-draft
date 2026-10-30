@@ -775,6 +775,9 @@ export function WizardScreen() {
         {step === 5 ? (
           <>
             <StepHeader title={C.wizard.finalTitle} kicker={C.wizard.finalKicker} />
+            {/* rc.34 (front I, Miguel 31/10): three clear choices for a first-time
+                player on a phone — a promise and three plain bullets each, the
+                selected card unmistakable (orange frame, tint and check). */}
             <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label={C.wizard.finalTitle}>
               {DIFFICULTIES.map((id) => {
                 const active = difficulty === id;
@@ -786,25 +789,35 @@ export function WizardScreen() {
                     aria-checked={active}
                     onClick={() => setDifficulty(id)}
                     className={cx(
-                      "panel p-4 text-left transition-all",
-                      active && "panel-glow-orange !border-orange/60",
-                      !active && "hover:!border-line-strong",
+                      "panel flex min-h-11 flex-col p-4 text-left transition-all",
+                      active ? "panel-glow-orange !border-orange !bg-orange/10" : "hover:!border-line-strong",
                     )}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="display text-base font-bold uppercase tracking-wide text-ink">
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={cx(
+                          "display text-lg font-bold uppercase tracking-wide",
+                          active ? "text-orange-bright" : "text-ink",
+                        )}
+                      >
                         {C.wizard.presets[id].label}
                       </span>
-                      {active ? <Badge tone="orange">{copy.SETUP.selected}</Badge> : null}
+                      <span
+                        aria-hidden
+                        className={cx(
+                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black leading-none",
+                          active ? "border-orange bg-orange text-white" : "border-line-strong",
+                        )}
+                      >
+                        {active ? "✓" : null}
+                      </span>
                     </div>
-                    <p className="mb-3 text-xs leading-relaxed text-sub">{C.wizard.presets[id].sentence}</p>
+                    <p className="mt-1 text-sm font-semibold leading-snug text-ink">{C.wizard.presets[id].promise}</p>
                     <PresetEffects difficulty={id} C={C} />
                   </button>
                 );
               })}
             </div>
-            {/* rc.32: the step's kicker already says what difficulty shapes (finalKicker). */}
-            <p className="mt-2 text-xs text-faint">{C.wizard.presetsNote}</p>
 
             {/* Recap */}
             <Panel strong className="mt-6 p-5">

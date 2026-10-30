@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 3;
+export const BALANCE_VERSION = 4;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1172,6 +1172,19 @@ export const CAREER_NEGOTIATION = {
    * every press moves the wage shown.
    */
   wageStepPct: 0.02,
+  /**
+   * rc.34 (front I; Miguel 31/10: "sometimes you just can't move anything"):
+   * the zone where he signs is always at least this many wage-stepper
+   * presses wide (`contract.negotiationAnswerFor`), never under the least a
+   * contract pays. rc.33's zone was only (1 − flex) × his ask, its floor
+   * rounded up to the $10 weekly grid: every ask under ~$170 a week, and any
+   * ask under $1,000 a week with a flexibility of 0.99 or more, collapsed to
+   * his ask — 85 % of the founders' renewals and 63 % of the rookies on the
+   * market could not move the wage at all. 1: a firm player still gives one
+   * press (2 % of his ask, or $10); the average saving moves from 3 % to
+   * 3.3 %. 0 restores rc.33's zone.
+   */
+  minZoneSteps: 1,
 } as const;
 
 /**
@@ -1184,21 +1197,42 @@ export const CAREER_NEGOTIATION = {
  * at all), and its tier rates are now only the default of a contract signed
  * before rc.33 (÷ `legacySeats`). A star asks a bigger share, so the share
  * stays a snowball brake (contract e2: a dominant season's kept prizes ÷ a
- * three-85 squad's wages ≤ 1.5).
+ * three-85 squad's wages ≤ 1.5). rc.34 (front I; Miguel 31/10: "starting
+ * players and lower-overall players shouldn't get any percentage"): only a
+ * player above `shareThresholdOverall` asks a share, and the founders'
+ * founding deals carry none (`squadFromOffer`); a deal already signed keeps
+ * its share.
  */
 export const CAREER_PRIZE_SHARE = {
-  /** ECO-10 (rc.33): the share (percent of a podium prize) a player of `pivotOverall` asks. */
-  askAtPivot: 8,
-  /** ECO-10 (rc.33): the overall the share ask is anchored at. */
-  pivotOverall: 80,
-  /** ECO-10 (rc.33): points more (less) per overall point above (below) the pivot — a 70 asks 3 %, an 85 11 %, a 90 13 %. */
-  askPerPoint: 0.5,
+  /**
+   * rc.34 (front I, Miguel 31/10): at or under this overall a player asks no
+   * prize share (0 %, and the talk hides the share lever); above it the ask
+   * starts from 0 and grows `askPerPoint` a point, so the first player who
+   * asks one is an 80 — a gold card. Measured at season 0: every founder
+   * (65–74), every free agent (the best is a 79, in EU) and most of the
+   * orgs' starters in MENA / APAC / SSA (81–96 %) ask none; 87 % of EU's and
+   * 75 % of NA's ask one. rc.33 had no threshold (a 70 asked 3 %, a 75 6 %).
+   */
+  shareThresholdOverall: 79,
+  /**
+   * ECO-10 (rc.33): share points per overall point. rc.34 (front I): from 0
+   * at the threshold, 1.2 a point — an 80 asks 1 %, an 85 7 %, a 90 13 %
+   * (rc.33's figure for a 90) and a 94 or more the cap. The e2 guard holds
+   * at the lowest share the talk allows an 85 (7 − maxBelowAsk = 4 %): a
+   * dominant season keeps 1.38 × three 85s' wages (rc.33: 1.19 at 8 %; 1.0 a
+   * point would leave 1.42, 0.5 — rc.33's slope — 1.52, over the guard).
+   */
+  askPerPoint: 1.2,
   /** ECO-10 (rc.33): at this age or younger a player asks `youngDiscount` points less (a prospect sells his upside on the wage). */
   youngAge: 18,
   /** ECO-10 (rc.33): see youngAge. */
   youngDiscount: 1,
-  /** ECO-10 (rc.33): no contract keeps less than this share of a podium prize (percent). */
-  minPct: 2,
+  /**
+   * ECO-10 (rc.33): no contract keeps less than this share of a podium prize
+   * (percent). rc.34 (front I): 0 — a player under the threshold asks none,
+   * and the talk can take one who asks a little down to none (rc.33: 2).
+   */
+  minPct: 0,
   /** ECO-10 (rc.33): no contract keeps more than this share (percent). */
   maxPct: 18,
   /** ECO-10 (rc.33): the talk can raise the share this many points over his ask… */

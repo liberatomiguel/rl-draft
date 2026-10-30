@@ -214,16 +214,11 @@ describe("rc.33 ECO-08 — what ends a career through money, by difficulty", () 
         const text = at(d);
         expect(text).not.toMatch(/restructur|reestrutur/i);
       }
-      // The wizard's money line (front C's preset step) spells the key's count as an ordinal:
-      // each preset's line differs and follows the count, never a fixed word.
-      const lines = (["easy", "normal", "hard"] as const).map((d) => C.wizard.presetMoneyAt(breachesToEndFor(d)!));
-      expect(new Set(lines).size).toBe(3);
-      expect(C.wizard.presetMoneyAt(1)).not.toBe(C.wizard.presetMoneyAt(2));
-      expect(C.wizard.presetMoneyAt(7)).toContain("7");
+      // rc.34 (front I): the wizard's money line reads the loan's deadline now
+      // (difficulty.loanDeadlineWeeksFor, tested in careerBal02.test.ts).
       // The count reads the end too.
       expect(C.finances.breachCount(1, 2)).toMatch(/1/);
       expect(C.finances.breachCount(2, 3)).not.toBe(C.finances.breachCount(1, 3));
-      expect(C.wizard.presetMoneyNever).not.toMatch(/restructur|reestrutur/i);
       // No screen string promises a restructuring any more (the rc.32 mail and news
       // templates stay only to render an older save's inbox).
       const screens = JSON.stringify([C.hub, C.finances, C.market, C.wizard], (_k, v) => (typeof v === "function" ? v.toString() : v));

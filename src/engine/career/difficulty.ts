@@ -6,8 +6,30 @@
  * built with, and the prefs a new career starts on. Pure; no React.
  */
 
-import { CAREER_DIFFICULTY } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_LOAN } from "@/config/balance";
 import type { CareerDifficulty, CareerPrefs } from "./types";
+
+/**
+ * rc.34 (front I) — INTEGRATION SCAFFOLD: front H's
+ * `CAREER_LOAN.emergency.deadlineWeeks` does not exist on this branch yet;
+ * until it does, the wizard reads these weeks. When H's key merges, point
+ * `loanDeadlineWeeksFor` at it and delete this fallback.
+ */
+const LOAN_DEADLINE_FALLBACK: Record<CareerDifficulty, number | null> = { easy: 12, normal: 8, hard: 4 };
+
+/**
+ * rc.34 (front I): the weeks the bank gives to repay the emergency loan on
+ * this preset before the career ends (front H: "the bank lends you the
+ * money; repay it within N weeks or the career ends") — the wizard's money
+ * line. Reads `CAREER_LOAN.emergency.deadlineWeeks`, else the scaffold
+ * above. null = no loan on this preset: running out of money ends it.
+ */
+export function loanDeadlineWeeksFor(difficulty: CareerDifficulty): number | null {
+  type Emergency = { emergency?: { deadlineWeeks?: Partial<Record<CareerDifficulty, number | null>> } };
+  const fromKey = (CAREER_LOAN as unknown as Emergency).emergency?.deadlineWeeks;
+  const weeks = fromKey && difficulty in fromKey ? fromKey[difficulty] : LOAN_DEADLINE_FALLBACK[difficulty];
+  return weeks === null || weeks === undefined ? null : Math.max(1, Math.round(weeks));
+}
 
 export type CareerMatchProfile = (typeof CAREER_DIFFICULTY.match)[CareerDifficulty];
 

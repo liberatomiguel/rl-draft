@@ -148,41 +148,28 @@ export const CAREER_PT: CareerCopy = {
     wageBill: "Folha salarial",
     avgAge: "Idade média",
     avgOverall: "OVR médio",
-    finalTitle: "Última chamada",
-    finalKicker: "A dificuldade molda adversários e pressão financeira — nunca quem você pode contratar.",
+    // Etapa 5 — dificuldade + resumo. rc.34 (front I, Miguel 31/10): reescrita
+    // para quem joga pela primeira vez, no celular — uma promessa e três tópicos simples.
+    finalTitle: "Dificuldade",
+    finalKicker: "A escolha vale para a carreira inteira.",
     // rc.32 (BAL-02): os presets da carreira substituem a etapa de Estilo de gestão.
     presets: {
-      easy: {
-        label: "Fácil",
-        sentence: "Uma primeira carreira tolerante: uma pequena vantagem em cada partida e mais dinheiro para aprender.",
-      },
-      normal: {
-        label: "Normal",
-        sentence: "A carreira como foi pensada: partidas justas e um orçamento que faz de cada contratação uma escolha.",
-      },
-      hard: {
-        label: "Difícil",
-        sentence: "Rivais mais fortes e dinheiro mais curto — e você toca cada semana sozinho.",
-      },
-    } as Record<"easy" | "normal" | "hard", { label: string; sentence: string }>,
-    // rc.33 (UX-07): só o básico de cada preset — três linhas, lidas ao vivo de balance.ts.
-    presetRows: {
-      matches: "Partidas",
-      money: "Dinheiro",
-      start: "Dia a dia",
-    } as Record<string, string>,
-    presetMatchFeel: {
-      easier: "Mais fáceis: uma pequena vantagem em cada partida",
-      even: "Equilibradas: partidas justas",
-      harder: "Mais difíceis: rivais mais fortes",
+      easy: { label: "Fácil", promise: "Uma primeira carreira mais tranquila, com espaço para errar." },
+      normal: { label: "Normal", promise: "A carreira do jeito que ela foi pensada." },
+      hard: { label: "Difícil", promise: "Um desafio de verdade, para quem já conhece o caminho." },
+    } as Record<"easy" | "normal" | "hard", { label: string; promise: string }>,
+    // Os tópicos (wizard/PresetEffects.tsx), lidos ao vivo de balance.ts.
+    presetMatches: {
+      easier: "As partidas pendem a seu favor.",
+      even: "Partidas equilibradas.",
+      harder: "Adversários mais fortes.",
     } as Record<"easier" | "even" | "harder", string>,
-    // CAREER_LOAN.breachesToEnd por preset (null = nunca), montado a partir da chave.
-    presetMoneyNever: "Ficar sem dinheiro nunca encerra a carreira",
-    presetMoneyAt: (n: number) => `A ${ordinalPt(n)} quebra de caixa encerra a carreira`,
-    presetStartGuided: "Guiado: a comissão planeja os treinos e inscreve nas copas",
-    presetStartHandsOn: "Na mão: você planeja cada semana e escolhe cada copa",
-    presetsNote:
-      "Quebra de caixa: o saldo cai abaixo do piso do Investidor numa segunda-feira. A delegação liga e desliga na tela de Treino.",
+    // As semanas que o banco dá para quitar o empréstimo (difficulty.loanDeadlineWeeksFor).
+    presetMoney: (weeks: number) =>
+      `Sem dinheiro? O banco empresta — pague em até ${weeks} ${weeks === 1 ? "semana" : "semanas"} ou a carreira acaba.`,
+    presetMoneyNoLoan: "Sem dinheiro, a carreira acaba.",
+    presetHelpGuided: "Sua comissão cuida dos treinos e inscreve o time nas copas.",
+    presetHelpHandsOn: "Você planeja cada semana e escolhe cada copa.",
     summaryTitle: "A papelada",
     found: (org: string) => `Fundar ${org}`,
     founded: "EST. 2020",
@@ -588,6 +575,8 @@ export const CAREER_PT: CareerCopy = {
     // ECO-10 (rc.33): a parte do prêmio que o contrato dele garante.
     prizeShare: "Parte do prêmio",
     prizeSharePct: (pct: number) => `${pct}% dos prêmios de pódio`,
+    // rc.34 (front I): um contrato sem parte do prêmio (abaixo do corte, um contrato de fundação, ou negociado a 0 %).
+    prizeShareNone: "Sem parte do prêmio",
     prizeShareLegacy: (seats: number, regional: number, major: number, worlds: number) =>
       `Contrato antigo: os ${regional} / ${major} / ${worlds}% do time divididos por ${seats} (regional / Major / Worlds)`,
     projected: (v: string) => `Projeção: ${v} até o fim do split`,
@@ -812,7 +801,20 @@ export const CAREER_PT: CareerCopy = {
       zone: (floor: string, top: string) => `Com essa parte ele assina de ${floor} a ${top} por semana.`,
       zoneFixed: (top: string) => `Com essa parte ele só assina pela pedida, ${top} por semana.`,
       signs: (wage: string, pct: number) => `Ele assina: ${wage} / semana + ${pct}% dos prêmios de pódio`,
+      // rc.34 (front I): um contrato sem parte do prêmio (ele não pede, ou a negociação levou a 0 %).
+      signsNoShare: (wage: string) => `Ele assina: ${wage} / semana, sem parte do prêmio`,
       counter: (wage: string, pct: number) => `Abaixo do piso dele — contraproposta: ${wage} / semana com ${pct}%`,
+      counterNoShare: (wage: string) => `Abaixo do piso dele — contraproposta: ${wage} / semana`,
+      // rc.34 (front I): por que uma alavanca para, embaixo do botão que ela trava (contract.TalkLimits).
+      why: {
+        floor: "Piso dele",
+        minimum: "Mínimo da liga",
+        ask: "Pedida cheia",
+        shareLeast: "O mínimo que ele aceita",
+        shareMost: "O máximo que ele aceita",
+        shareMinimum: "Salário no mínimo",
+        noShare: "Sem parte",
+      },
       takeCounter: "Aceitar a contraproposta",
       saves: (s: string) => `${s} / semana abaixo da pedida`,
       costs: (s: string) => `${s} / semana acima da pedida, por uma parte menor`,

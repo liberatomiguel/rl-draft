@@ -73,6 +73,7 @@ import {
   phaseLabelOf,
   phaseOfView,
   potBandOfView,
+  prizeShareLabelOf,
   statsFromView,
   upcomingStops,
   useCareerSave,
@@ -951,11 +952,13 @@ export function MarketScreen() {
                     {C.squad.perWeek(formatMoney(weeklyWage(pack.salaryPerSplit)))}
                   </span>
                 </div>
-                {/* rc.33 (ECO-10): the prize share he asks. */}
+                {/* rc.33 (ECO-10): the prize share he asks (rc.34: "No prize share" under the threshold). */}
                 {talk ? (
                   <div className="flex items-center justify-between">
                     <span className="text-sub">{C.player.prizeShare}</span>
-                    <span className="display font-bold text-ink">{C.player.prizeSharePct(talk.ask.sharePct)}</span>
+                    <span className="display font-bold text-ink">
+                      {prizeShareLabelOf(C, { prizeSharePct: talk.ask.sharePct })}
+                    </span>
                   </div>
                 ) : null}
                 {target.orgRef ? (

@@ -14,14 +14,14 @@ import { CAREER_DIFFICULTY, CAREER_LOAN, CAREER_WORLD, DIFFICULTY, TOURNAMENT } 
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import { orgById } from "@/data";
-import { careerMatchProfile, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
+import { careerMatchProfile, loanDeadlineWeeksFor, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
 import { localSceneRefs } from "@/engine/career/localScene";
 import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
 import { computeStars, localTeamFor, orgTeamFor, userTeamFor } from "@/engine/career/worldSim";
 import { simulateSeries } from "@/engine/match";
 import type { Region, TournamentTeam } from "@/engine/types";
 import { createRng } from "@/lib/rng";
-import { PRESET_ROWS, matchFeelOf } from "@/components/career/wizard/PresetEffects";
+import { PRESET_BULLETS, matchFeelOf } from "@/components/career/wizard/PresetEffects";
 import { createCareerSave, migrateSaveToV5, type CreateCareerInput } from "./careerFlow";
 
 const identity = (region: Region) => ({
@@ -165,42 +165,60 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
     expect(loaded.prefs.managementStyle).toBe("handsOn");
   });
 
-  it("the wizard shows each preset's basics straight from balance.ts (rc.33 UX-07: three lines, no numbers)", () => {
+  it("rc.34 (front I, Miguel 31/10): each preset is a promise and three plain bullets — matches, money, help — read live from balance.ts, EN and PT", () => {
+    // The jargon a first-time player should never meet on this step.
+    const JARGON = /breach|backer|chemistry|quebra|investidor|química|rating|×|\$|\d\.\d/i;
     for (const lang of ["en", "pt"] as const) {
       const C = COPY[lang];
-      expect(PRESET_ROWS.map((r) => r.key)).toEqual(["matches", "money", "start"]);
+      expect(PRESET_BULLETS.map((b) => b.key)).toEqual(["matches", "money", "help"]);
       for (const d of DIFFS) {
-        const rows = Object.fromEntries(PRESET_ROWS.map((r) => [r.key, r.value(d, C)]));
-        expect(rows.matches).toBe(C.wizard.presetMatchFeel[matchFeelOf(d)]);
-        expect(rows.start).toBe(presetPrefs(d).autoTrain ? C.wizard.presetStartGuided : C.wizard.presetStartHandsOn);
-        // What ends a career through money: CAREER_LOAN.breachesToEnd, whatever its value.
-        const ends = CAREER_LOAN.breachesToEnd[d];
-        expect(rows.money).toBe(ends === null || ends === undefined ? C.wizard.presetMoneyNever : C.wizard.presetMoneyAt(ends));
-        for (const r of PRESET_ROWS) expect(C.wizard.presetRows[r.key], r.key).toBeTruthy();
-        // The basics only: no rolls, caps, multipliers or money figures.
-        for (const v of Object.values(rows)) expect(v, `${lang} ${d}`).not.toMatch(/[×$]|\d\.\d/);
+        const bullets = Object.fromEntries(PRESET_BULLETS.map((b) => [b.key, b.value(d, C)]));
+        expect(bullets.matches).toBe(C.wizard.presetMatches[matchFeelOf(d)]);
+        expect(bullets.help).toBe(presetPrefs(d).autoTrain ? C.wizard.presetHelpGuided : C.wizard.presetHelpHandsOn);
+        const weeks = loanDeadlineWeeksFor(d);
+        expect(bullets.money).toBe(weeks === null ? C.wizard.presetMoneyNoLoan : C.wizard.presetMoney(weeks));
+        // Short and plain: one line of promise, bullets of a few words — no jargon, no figures but the weeks.
+        const promise = C.wizard.presets[d].promise;
+        expect(promise.split(/\s+/).length, `${lang} ${d} promise`).toBeLessThanOrEqual(12);
+        for (const text of [promise, ...Object.values(bullets)]) {
+          expect(text, `${lang} ${d}`).not.toMatch(JARGON);
+          expect(text.split(/\s+/).length, `${lang} ${d}: ${text}`).toBeLessThanOrEqual(16);
+        }
+        expect(bullets.money.replace(String(weeks), "")).not.toMatch(/\d/);
       }
+      // Three different promises, and the matches bullet tells the presets apart.
+      expect(new Set(DIFFS.map((d) => C.wizard.presets[d].promise)).size).toBe(3);
+      expect(new Set(DIFFS.map((d) => C.wizard.presetMatches[matchFeelOf(d)])).size).toBe(3);
+      expect(C.wizard.finalKicker).not.toMatch(JARGON);
       expect([matchFeelOf("easy"), matchFeelOf("normal"), matchFeelOf("hard")]).toEqual(["easier", "even", "harder"]);
     }
   });
 
-  it("the money line renders any breach count from the key (front A moves breachesToEnd)", () => {
-    const L = CAREER_LOAN as { breachesToEnd: Record<string, number | null> };
-    const saved = { ...L.breachesToEnd };
+  it("the money bullet reads the loan's deadline from front H's key when it exists (CAREER_LOAN.emergency.deadlineWeeks), else the scaffold; no loan reads plainly", () => {
+    const L = CAREER_LOAN as unknown as { emergency?: { deadlineWeeks?: Record<string, number | null> } };
+    const had = "emergency" in L;
+    const saved = L.emergency;
+    const money = PRESET_BULLETS.find((b) => b.key === "money")!;
     try {
-      L.breachesToEnd = { easy: 3, normal: 2, hard: 1 };
-      const money = PRESET_ROWS.find((r) => r.key === "money")!;
-      expect(money.value("easy", COPY.en)).toBe("The third cash breach ends the career");
-      expect(money.value("normal", COPY.en)).toBe("The second cash breach ends the career");
-      expect(money.value("hard", COPY.en)).toBe("The first cash breach ends the career");
-      expect(money.value("hard", COPY.pt)).toBe("A primeira quebra de caixa encerra a carreira");
-      L.breachesToEnd = { easy: null, normal: 7, hard: 12 };
-      expect(money.value("easy", COPY.en)).toBe(COPY.en.wizard.presetMoneyNever);
-      expect(money.value("normal", COPY.en)).toBe("The 7th cash breach ends the career");
-      expect(money.value("hard", COPY.en)).toBe("The 12th cash breach ends the career");
-      expect(money.value("normal", COPY.pt)).toBe("A 7ª quebra de caixa encerra a carreira");
+      if (!had) {
+        // The scaffold: a deadline for every preset, shorter as the preset gets harder.
+        const [e, n, h] = DIFFS.map((d) => loanDeadlineWeeksFor(d)!);
+        expect(e).toBeGreaterThanOrEqual(n);
+        expect(n).toBeGreaterThanOrEqual(h);
+        expect(h).toBeGreaterThanOrEqual(1);
+      }
+      L.emergency = { ...(saved ?? {}), deadlineWeeks: { easy: 10, normal: 6, hard: 1 } };
+      expect(DIFFS.map((d) => loanDeadlineWeeksFor(d))).toEqual([10, 6, 1]);
+      expect(money.value("easy", COPY.en)).toBe("Out of money? The bank lends it — repay within 10 weeks or the career ends.");
+      expect(money.value("hard", COPY.en)).toBe("Out of money? The bank lends it — repay within 1 week or the career ends.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? O banco empresta — pague em até 6 semanas ou a carreira acaba.");
+      expect(money.value("hard", COPY.pt)).toBe("Sem dinheiro? O banco empresta — pague em até 1 semana ou a carreira acaba.");
+      L.emergency = { ...(saved ?? {}), deadlineWeeks: { easy: 12, normal: 8, hard: null } };
+      expect(money.value("hard", COPY.en)).toBe(COPY.en.wizard.presetMoneyNoLoan);
+      expect(money.value("hard", COPY.pt)).toBe(COPY.pt.wizard.presetMoneyNoLoan);
     } finally {
-      L.breachesToEnd = saved;
+      if (had) L.emergency = saved;
+      else delete L.emergency;
     }
   });
 });

@@ -156,42 +156,28 @@ export const CAREER_EN = {
     wageBill: "Wage bill",
     avgAge: "Avg age",
     avgOverall: "Avg OVR",
-    // Step 5 — difficulty + summary
-    finalTitle: "Final call",
-    finalKicker: "Difficulty shapes opponents and money pressure — never who you can sign.",
+    // Step 5 — difficulty + summary. rc.34 (front I, Miguel 31/10): rewritten
+    // for a first-time player on a phone — a promise and three plain bullets.
+    finalTitle: "Difficulty",
+    finalKicker: "Your pick stays for the whole career.",
     // rc.32 (BAL-02): the career presets replace the Management Style step.
     presets: {
-      easy: {
-        label: "Easy",
-        sentence: "A forgiving first career: a small edge in every match and more money to learn with.",
-      },
-      normal: {
-        label: "Normal",
-        sentence: "The career as intended: fair matches and a budget that makes every signing a choice.",
-      },
-      hard: {
-        label: "Hard",
-        sentence: "Stronger rivals and tighter money — and you run every week yourself.",
-      },
-    } as Record<"easy" | "normal" | "hard", { label: string; sentence: string }>,
-    // rc.33 (UX-07): only the basics of each preset — three lines, read live from balance.ts.
-    presetRows: {
-      matches: "Matches",
-      money: "Money",
-      start: "Day to day",
-    } as Record<string, string>,
-    presetMatchFeel: {
-      easier: "Easier: a small edge in every match",
-      even: "Even: fair matches",
-      harder: "Harder: stronger rivals",
+      easy: { label: "Easy", promise: "A forgiving first career, with room to learn." },
+      normal: { label: "Normal", promise: "The career as it's meant to be played." },
+      hard: { label: "Hard", promise: "A real test for experienced managers." },
+    } as Record<"easy" | "normal" | "hard", { label: string; promise: string }>,
+    // The bullets (wizard/PresetEffects.tsx), read live from balance.ts.
+    presetMatches: {
+      easier: "Matches lean your way.",
+      even: "Fair matches.",
+      harder: "Tougher rivals.",
     } as Record<"easier" | "even" | "harder", string>,
-    // CAREER_LOAN.breachesToEnd by preset (null = never), rendered from the key.
-    presetMoneyNever: "Running short of money never ends the career",
-    presetMoneyAt: (n: number) => `The ${ordinalEn(n)} cash breach ends the career`,
-    presetStartGuided: "Guided: your staff plan training and enter the cups",
-    presetStartHandsOn: "Hands-on: you plan every week and choose every cup",
-    presetsNote:
-      "A cash breach: the balance falls below the Backer's floor on a Monday. Delegation can be switched on or off on the Training screen.",
+    // The weeks the bank gives to repay its loan (difficulty.loanDeadlineWeeksFor).
+    presetMoney: (weeks: number) =>
+      `Out of money? The bank lends it — repay within ${weeks} ${weeks === 1 ? "week" : "weeks"} or the career ends.`,
+    presetMoneyNoLoan: "Out of money? The career ends.",
+    presetHelpGuided: "Your staff run training and enter you into cups.",
+    presetHelpHandsOn: "You plan every week and pick every cup.",
     summaryTitle: "The paperwork",
     found: (org: string) => `Found ${org}`,
     founded: "EST. 2020",
@@ -598,6 +584,8 @@ export const CAREER_EN = {
     // ECO-10 (rc.33): the prize share his contract carries.
     prizeShare: "Prize share",
     prizeSharePct: (pct: number) => `${pct}% of podium prizes`,
+    // rc.34 (front I): a contract with no prize share (under the threshold, a founding deal, or talked to 0 %).
+    prizeShareNone: "No prize share",
     // rc.33 review: the seats the old team share is split over (CAREER_PRIZE_SHARE.legacySeats).
     prizeShareLegacy: (seats: number, regional: number, major: number, worlds: number) =>
       `Older deal: the team's ${regional} / ${major} / ${worlds}% split ${seats} ways (regional / Major / Worlds)`,
@@ -826,7 +814,20 @@ export const CAREER_EN = {
       zone: (floor: string, top: string) => `At this share he signs from ${floor} to ${top} a week.`,
       zoneFixed: (top: string) => `At this share he signs only at his ask, ${top} a week.`,
       signs: (wage: string, pct: number) => `He signs: ${wage} / week + ${pct}% of podium prizes`,
+      // rc.34 (front I): a deal with no prize share (he asks none, or the talk took it to 0 %).
+      signsNoShare: (wage: string) => `He signs: ${wage} / week, no prize share`,
       counter: (wage: string, pct: number) => `Under his floor — he counters at ${wage} / week with ${pct}%`,
+      counterNoShare: (wage: string) => `Under his floor — he counters at ${wage} / week`,
+      // rc.34 (front I): why a lever stops, under the button it closes (contract.TalkLimits).
+      why: {
+        floor: "His floor",
+        minimum: "League minimum",
+        ask: "His full ask",
+        shareLeast: "The least he takes",
+        shareMost: "The most he takes",
+        shareMinimum: "Wage at the minimum",
+        noShare: "No share",
+      },
       takeCounter: "Take his counter",
       saves: (s: string) => `${s} / week under his ask`,
       costs: (s: string) => `${s} / week over his ask, for a smaller share`,

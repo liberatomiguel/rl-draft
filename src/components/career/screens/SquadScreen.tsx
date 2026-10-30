@@ -613,7 +613,7 @@ export function SquadScreen() {
                 <span className="text-sub">{C.player.prizeShare}</span>
                 <span className="text-right font-semibold text-ink">
                   {prizeShareLabelOf(C, renew)} →{" "}
-                  {renewTalk ? C.player.prizeSharePct(renewTalk.terms.sharePct) : "—"}
+                  {renewTalk ? prizeShareLabelOf(C, { prizeSharePct: renewTalk.terms.sharePct }) : "—"}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center justify-between">
