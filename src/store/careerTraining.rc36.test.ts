@@ -91,6 +91,20 @@ const heldOf = (s: CareerSave): Record<string, number> =>
 const reload = (s: CareerSave): CareerSave => migrateSaveToV5(JSON.parse(JSON.stringify(s)))!;
 
 describe("rc.36 T2 — the promise: paid along the way, the rest on completion", { timeout: 120_000 }, () => {
+  it("starting after today's base session runs from the next session without repaying today", () => {
+    const start = createCareerSave(INPUT, 36_009);
+    const started = setTrainingPackageFlow(start, DEV).save;
+    expect(started.squad).toEqual(start.squad);
+    expect(trainingOf(started).plan).toMatchObject({ cycleFrom: 2, packageFromDay: 2, lastSessionDay: 1 });
+    expect(trainingBlockOf(started).cycle).toMatchObject({ fromDay: 2, progress: 0 });
+    const tomorrow = step(started);
+    expect(trainingOf(tomorrow).plan!.lastSessionDay).toBe(2);
+    expect(Object.values(trainingOf(tomorrow).plan!.players).some((p) => (p.cycleGain ?? 0) > 0)).toBe(true);
+    const again = setTrainingPackageFlow(tomorrow, DEV).save;
+    expect(again.squad).toEqual(tomorrow.squad);
+    expect(trainingBlockOf(started).promise!.paid).toBe(0);
+  });
+
   it("a cycle climbs to about 8–9 of 10 along the way and lands the held rest on its last day — never under the base", () => {
     const start = createCareerSave(INPUT, 36_001);
     const pkg = setTrainingPackageFlow(start, DEV).save;

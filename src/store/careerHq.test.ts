@@ -72,7 +72,7 @@ function fresh(seed = 34_101): CareerSave {
 }
 
 describe("rc.34 UX-01e (H5) — the finance block reads the Finances desk", () => {
-  it("balance, net, runway, the next payroll and the guaranteed income are the statement's", () => {
+  it("balance, net, runway and the next payroll are the statement's", () => {
     const save = fresh();
     const f = hqFinanceOf(save);
     const st = weeklyStatementOf(save);
@@ -81,8 +81,6 @@ describe("rc.34 UX-01e (H5) — the finance block reads the Finances desk", () =
     expect(f.runway).toBe(runwayWeeksOf(save, st.net));
     const payday = nextPaydayFor(save.clock);
     expect(f.payroll).toEqual({ seasonIndex: payday.seasonIndex, day: payday.day, amount: st.expenses });
-    expect(f.guaranteed.total).toBe(st.sponsorBase + st.foundingPartner + st.rescuePartner + st.fanbase);
-    expect(f.debt).toEqual({ backer: null, bankRemaining: null, bankNext: null });
   });
 
   it("the projection runs the committed Mondays to the split's end — the bank's instalments end, no prize counted", () => {
@@ -91,7 +89,6 @@ describe("rc.34 UX-01e (H5) — the finance block reads the Finances desk", () =
     const save = loaned.save;
     const f = hqFinanceOf(save);
     const bank = save.finances.bankLoan!;
-    expect(f.debt).toEqual({ backer: null, bankRemaining: bank.remaining, bankNext: Math.min(bank.remaining, bank.weeklyPayment) });
     const end = splitEndDayFor(save.clock.day);
     expect(f.projection.day).toBe(end);
     // By hand: each Monday's statement, the instalment while the loan lasts.

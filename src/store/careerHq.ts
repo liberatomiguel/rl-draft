@@ -57,10 +57,6 @@ export interface HqFinance {
   runway: number | null;
   /** The next payroll: its Monday and the week's expenses it books (the statement's expenses). */
   payroll: { seasonIndex: number; day: number; amount: number };
-  /** Guaranteed income a week: sponsor base, a partner (founding / rescue), the fanbase. */
-  guaranteed: { sponsor: number; partner: number; partnerMondays: number | null; fans: number; total: number };
-  /** Debt: the Backer's remainder, the bank's remainder and its next instalment. */
-  debt: { backer: number | null; bankRemaining: number | null; bankNext: number | null };
   /**
    * The balance at the end of the split (its last day, `splitEndDayFor`) from
    * committed flows only — every Monday's statement, the bank's instalments
@@ -114,18 +110,6 @@ export function hqFinanceOf(save: CareerSave): HqFinance {
     net: st.net,
     runway: save.phase === "ended" ? null : runwayWeeksOf(save, st.net),
     payroll: { seasonIndex: payday.seasonIndex, day: payday.day, amount: st.expenses },
-    guaranteed: {
-      sponsor: st.sponsorBase,
-      partner,
-      partnerMondays: rescue && st.rescuePartner > 0 ? rescue.mondaysLeft : null,
-      fans: st.fanbase,
-      total: st.sponsorBase + partner + st.fanbase,
-    },
-    debt: {
-      backer: fin.loan ? fin.loan.remaining : null,
-      bankRemaining: bank ? bank.remaining : null,
-      bankNext: bank ? Math.min(bank.remaining, bank.weeklyPayment) : null,
-    },
     projection: { seasonIndex: save.clock.seasonIndex, day: endDay, mondays, balance },
   };
 }
