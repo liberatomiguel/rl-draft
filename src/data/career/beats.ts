@@ -11,7 +11,27 @@
  *    to a Blockbuster incoming offer (degradeToOffer) or a preempted headline.
  *  - Champions are NEVER asserted — the sim decides results; beats cover
  *    entries, signings and narratives only.
+ *  - rc.36 (UX-03, R87): a beat never claims what the save contradicts.
+ *    `check` names the state it needs (the org in the world, near the top of
+ *    its region, the player still playing, a region's Major run); when it
+ *    does not hold, the beat files "From the archive" — the real history,
+ *    labelled as such — and its effect does not run. `archiveOnly` beats are
+ *    real history this timeline does not replay (always archive).
  */
+
+/** rc.36 (UX-03): what a beat needs from the save to run as live news (every field must hold). */
+export interface BeatCheck {
+  /** Each org is in the world. */
+  orgs?: string[];
+  /** …and among the top this-many of its region by rating. */
+  top?: number;
+  /** Each player is still playing (in the world or on the user's squad, not retired). */
+  players?: string[];
+  /** Each player is on no roster yet (a free agent, or not in the world yet), and not retired. */
+  unsigned?: string[];
+  /** An org of one of these regions finished at this place or better at a Major this season. */
+  majorRun?: { regions: string[]; place: number };
+}
 
 export interface CareerBeat {
   id: string;
@@ -26,6 +46,12 @@ export interface CareerBeat {
   /** Shown when the beat was preempted by the user owning the target. */
   preemptedEn?: string;
   preemptedPt?: string;
+  /** rc.36 (UX-03): the state the beat needs to run live (else it files as archive). */
+  check?: BeatCheck;
+  /** rc.36: real history the sim does not replay — always "From the archive". */
+  archiveOnly?: boolean;
+  /** rc.36: the orgs the beat is about (the feed's crests). */
+  orgRefs?: string[];
 }
 
 export const CAREER_BEATS: CareerBeat[] = [
@@ -45,6 +71,8 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "sx-bds-rise",
     trigger: { seasonIndex: 0, week: 5 },
+    check: { orgs: ["team-bds"], top: 3 },
+    orgRefs: ["team-bds"],
     en: {
       title: "That BDS roster is turning heads",
       body: "Scrim results leak, and the numbers coming out of Team BDS's block are absurd. Europe may have a new benchmark.",
@@ -57,6 +85,8 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "sx-na-guard",
     trigger: { seasonIndex: 0, week: 13 },
+    check: { orgs: ["nrg-esports", "spacestation-gaming"], top: 4 },
+    orgRefs: ["nrg-esports", "spacestation-gaming"],
     en: {
       title: "NA's old guard isn't done",
       body: "NRG and Spacestation keep trading blows at the top of North America. Every regional final feels like a grudge match.",
@@ -69,6 +99,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "sx-sam-hungry",
     trigger: { seasonIndex: 0, week: 23 },
+    check: { majorRun: { regions: ["SAM"], place: 8 } },
     en: {
       title: "South America wants a seat at the table",
       body: "The SAM region keeps punching up in every international appearance. The talent is there — the world is starting to notice.",
@@ -86,20 +117,25 @@ export const CAREER_BEATS: CareerBeat[] = [
     requiresPlayerFree: "firstkiller",
     effect: { forceTransfer: { playerId: "firstkiller", toOrgRef: "faze-clan" } },
     degradeToOffer: true,
+    // rc.36 (UX-03): FaZe already plays in this timeline (a Season X lineup) — the beat is the signing.
+    check: { orgs: ["faze-clan"], players: ["firstkiller"] },
+    orgRefs: ["faze-clan"],
     en: {
-      title: "FaZe Clan enters Rocket League",
-      body: "One of the biggest brands in esports steps into the scene, building around Firstkiller's ceiling. NA's power map just got redrawn.",
+      title: "FaZe Clan build around Firstkiller",
+      body: "One of the biggest brands in esports bets its North American project on Firstkiller's ceiling. NA's power map just got redrawn.",
     },
     pt: {
-      title: "FaZe Clan entra no Rocket League",
-      body: "Uma das maiores marcas do esport entra na cena, construindo em torno do teto de Firstkiller. O mapa de poder da NA acaba de ser redesenhado.",
+      title: "FaZe Clan monta o time em torno de Firstkiller",
+      body: "Uma das maiores marcas do esport aposta seu projeto na América do Norte no teto de Firstkiller. O mapa de poder da NA acaba de ser redesenhado.",
     },
-    preemptedEn: "FaZe Clan enters Rocket League — their first-choice star was already under contract elsewhere.",
-    preemptedPt: "FaZe Clan entra no Rocket League — a primeira opção de estrela já tinha contrato em outro lugar.",
+    preemptedEn: "FaZe Clan's rebuild misses its first choice — Firstkiller is already under contract elsewhere.",
+    preemptedPt: "A reformulação da FaZe Clan perde a primeira opção — Firstkiller já tem contrato em outro lugar.",
   },
   {
     id: "s1-kc-enters",
     trigger: { seasonIndex: 1, week: 2 },
+    check: { orgs: ["karmine-corp"] },
+    orgRefs: ["karmine-corp"],
     en: {
       title: "Karmine Corp arrives with the blue wall",
       body: "The French organization brings its famously loud fanbase into Rocket League. Europe's crowds will never sound the same.",
@@ -112,6 +148,8 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s1-lan-back",
     trigger: { seasonIndex: 1, week: 10 },
+    // rc.36 (UX-03): in this timeline the LANs never stopped (sx-format) — real history only.
+    archiveOnly: true,
     en: {
       title: "The roar is back",
       body: "International LANs in full arenas again. Players who grinded through online seasons finally hear the crowd.",
@@ -124,6 +162,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s1-mena-rising",
     trigger: { seasonIndex: 1, week: 15 },
+    check: { majorRun: { regions: ["MENA"], place: 8 } },
     en: {
       title: "Don't sleep on MENA",
       body: "The Middle East servers are producing mechanical monsters at an alarming rate. Scouts are booking flights.",
@@ -141,6 +180,8 @@ export const CAREER_BEATS: CareerBeat[] = [
     requiresPlayerFree: "vatira",
     effect: { forceTransfer: { playerId: "vatira", toOrgRef: "moist-esports" } },
     degradeToOffer: true,
+    check: { orgs: ["moist-esports"], players: ["vatira"] },
+    orgRefs: ["moist-esports"],
     en: {
       title: "Moist Esports backs the UK core",
       body: "The creator-owned org bets on a young British-French core with Vatira as the headline. Nobody laughs at the name after the first bracket run.",
@@ -149,12 +190,15 @@ export const CAREER_BEATS: CareerBeat[] = [
       title: "Moist Esports banca o núcleo do Reino Unido",
       body: "A org de creators aposta num núcleo jovem anglo-francês com Vatira como manchete. Ninguém ri do nome depois da primeira campanha no chaveamento.",
     },
-    preemptedEn: "Moist Esports enters Rocket League — their headline target was already off the market.",
-    preemptedPt: "Moist Esports entra no Rocket League — o alvo principal já estava fora do mercado.",
+    // rc.36 (UX-03): Moist entered the world a season earlier (its 2021-22 lineup) — no "enters" here.
+    preemptedEn: "Moist Esports' push for a headliner comes up empty — their first target was already off the market.",
+    preemptedPt: "A busca da Moist Esports por uma estrela volta vazia — o alvo principal já estava fora do mercado.",
   },
   {
     id: "s2-geng-enters",
     trigger: { seasonIndex: 2, week: 2 },
+    check: { orgs: ["gen-g-mobil1-racing"] },
+    orgRefs: ["gen-g-mobil1-racing"],
     en: {
       title: "Gen.G Mobil1 Racing joins the grid",
       body: "A global brand with racing money enters NA. The offseason market just got more expensive for everyone.",
@@ -167,6 +211,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s2-zen-whispers",
     trigger: { seasonIndex: 2, week: 13 },
+    check: { unsigned: ["zen"] },
     en: {
       title: "Who is this kid in EU ranked?",
       body: "A teenager keeps deleting pros in high-elo lobbies. He's too young for the league — for now. Every big org already has the name written down: zen.",
@@ -177,8 +222,25 @@ export const CAREER_BEATS: CareerBeat[] = [
     },
   },
   {
+    // rc.36 (UX-03): Miguel's example — real history this timeline keeps out (no org moves region).
+    id: "s2-furia-north",
+    trigger: { seasonIndex: 2, week: 3 },
+    archiveOnly: true,
+    orgRefs: ["furia"],
+    en: {
+      title: "FURIA take their project north",
+      body: "In the real 2022–23 season, FURIA fielded its Rocket League roster in North America. In this timeline every org keeps its home region — FURIA included.",
+    },
+    pt: {
+      title: "A FURIA leva o projeto para o norte",
+      body: "Na temporada real de 2022–23, a FURIA disputou o Rocket League com seu elenco na América do Norte. Nesta linha do tempo, toda org fica na sua região de origem — a FURIA também.",
+    },
+  },
+  {
     id: "s2-falcons-project",
     trigger: { seasonIndex: 2, week: 21 },
+    check: { orgs: ["team-falcons"], top: 3 },
+    orgRefs: ["team-falcons"],
     en: {
       title: "Team Falcons are building something",
       body: "The Saudi organization is assembling MENA's best pieces with clear intent. The region's first superteam is taking shape.",
@@ -196,6 +258,8 @@ export const CAREER_BEATS: CareerBeat[] = [
     requiresPlayerFree: "zen",
     effect: { forceTransfer: { playerId: "zen", toOrgRef: "team-vitality" } },
     degradeToOffer: true,
+    check: { orgs: ["team-vitality"], players: ["zen"] },
+    orgRefs: ["team-vitality"],
     en: {
       title: "Vitality sign zen — the wait is over",
       body: "The prodigy everyone tracked through ranked lobbies is finally of age, and Vitality didn't hesitate. The most hyped debut in RLCS history is set.",
@@ -213,6 +277,8 @@ export const CAREER_BEATS: CareerBeat[] = [
     requiresPlayerFree: "vatira",
     effect: { forceTransfer: { playerId: "vatira", toOrgRef: "karmine-corp" } },
     degradeToOffer: true,
+    check: { orgs: ["karmine-corp"], players: ["vatira"] },
+    orgRefs: ["karmine-corp"],
     en: {
       title: "Karmine Corp land Vatira",
       body: "The blue wall gets its superstar. France's loudest crowd now has France's most electric player to scream for.",
@@ -227,6 +293,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s3-prodigy-era",
     trigger: { seasonIndex: 3, week: 13 },
+    archiveOnly: true,
     en: {
       title: "The teenagers are taking over",
       body: "Half the scene's hottest names can't legally rent a car. The average age of a title contender keeps dropping — this game belongs to the kids.",
@@ -239,6 +306,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s3-ssa-apac",
     trigger: { seasonIndex: 3, week: 21 },
+    check: { majorRun: { regions: ["SSA", "APAC"], place: 8 } },
     en: {
       title: "The world keeps getting wider",
       body: "Sub-Saharan Africa and APAC keep closing the gap on the traditional regions. Wildcard runs aren't miracles anymore — they're warnings.",
@@ -253,6 +321,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s4-money-era",
     trigger: { seasonIndex: 4, week: 1 },
+    archiveOnly: true,
     en: {
       title: "Salaries are exploding",
       body: "Agents confirm what everyone suspected: top-line contracts have doubled in two seasons. Keeping a championship core together has never cost more.",
@@ -265,6 +334,7 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s4-old-guard",
     trigger: { seasonIndex: 4, week: 13 },
+    archiveOnly: true,
     en: {
       title: "The last of the old guard",
       body: "A handful of Season-X-era names are still competing at the top against players seven years younger. Every series they win feels like history refusing to end.",
@@ -277,6 +347,8 @@ export const CAREER_BEATS: CareerBeat[] = [
   {
     id: "s4-sam-worlds",
     trigger: { seasonIndex: 4, week: 23 },
+    check: { orgs: ["furia"], top: 2 },
+    orgRefs: ["furia"],
     en: {
       title: "SAM's golden generation peaks",
       body: "Furia and the Brazilian scene have turned 'dark horse' into an insult. Nobody wants them in their bracket anymore.",

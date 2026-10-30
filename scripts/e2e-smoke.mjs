@@ -44,12 +44,15 @@ const L = {
     results: /^View results$/, quick: /^Quick start$/, next: /^Next$/, found: /^Found /, presets: ["Easy", "Normal", "Hard"],
     moneyRow: "bank loan", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
     signable: "Signable at my reputation", approve: /^Approve$/,
+    // rc.36 (UX-02): the season goal card's deadline line.
+    goalDeadline: /Last chance:|Decided when/,
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
     results: /^Ver resultados$/, quick: /^Início rápido$/, next: /^(Próximo|Avançar)$/, found: /^Fundar /, presets: ["Fácil", "Normal", "Difícil"],
     moneyRow: "empréstimo", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
     signable: "Contratáveis com minha reputação", approve: /^Aprovar$/,
+    goalDeadline: /Última chance:|Decidida quando/,
   },
 };
 const DIALOG_PREF = [/^let's (play|go)$/i, /^vamos (jogar|lá)/i, /^start season 1$/i, /^continue$/i, /^continuar$/i, /^got it/i, /^entendi/i, /^next$/i, /^próximo$/i, /^skip$/i, /^pular$/i, /^close$/i, /^fechar$/i, /^ok$/i];
@@ -242,6 +245,8 @@ async function scenarioCareer(browser, viewport, locale) {
     await settle(page, 1500);
     await dismiss(page, mobile);
     await shot(page, `${tag}-hq`);
+    // rc.36 (UX-02): HQ's season goal shows its deadline (the last event that can count).
+    checks.push({ step: `${tag} season goal with its deadline`, ok: C.goalDeadline.test(await bodyText(page)) });
     // Advance a week, day by day (Monday payroll lands on the way).
     for (let d = 0; d < 18; d++) {
       await dismiss(page, mobile);

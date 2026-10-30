@@ -835,6 +835,8 @@ export function playArcCareer(cfg: {
   sponsor?: ArcSponsorPick;
   /** rc.34: override the policy's other-income answer (the probe's ECON_OTHERS). */
   others?: ArcPolicy["others"];
+  /** rc.36 (UX-02): read each season's start (day 1, its goal set) and end (the review) — the goals probe. */
+  onSeason?: (moment: "start" | "end", save: CareerSave) => void;
 }): ArcCareer {
   const t0 = Date.now();
   const policy: ArcPolicy = {
@@ -861,6 +863,7 @@ export function playArcCareer(cfg: {
 
   for (let s = 0; s < cfg.seasons; s++) {
     const t = newTally(save, seen);
+    cfg.onSeason?.("start", save);
     let blocked = 0;
     let guard = 0;
     while (save.phase === "running" && guard++ < DAYS_PER_SEASON * 4) {
@@ -887,6 +890,7 @@ export function playArcCareer(cfg: {
       } else blocked = 0;
     }
     const last = save.history[save.history.length - 1];
+    cfg.onSeason?.("end", save);
     const stmt = statementOf(save);
     out.seasons.push({
       seasonIndex: save.clock.seasonIndex,

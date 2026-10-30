@@ -29,6 +29,8 @@ import { careerAchievementById } from "@/data/career/achievements";
 import {
   EMPTY_ACHIEVEMENT_MEMORY,
   evaluateCareerAchievements,
+  marksMissingFrom,
+  withProfileMarks,
   worldsWonOnAfter,
   type CareerAchievementMemory,
 } from "@/engine/career/achievements";
@@ -296,7 +298,13 @@ export const useCareerStore = create<CareerStoreState>()(
        * cosmetic mark on the profile.
        */
       const settleAchievements = (save: CareerSave): { memory: CareerAchievementMemory; toasts: CareerToast[] } => {
-        const memory = get().achievements ?? EMPTY_ACHIEVEMENT_MEMORY;
+        // rc.36 (UX-05, #155): the profile's marks are unlocked too (another device, an older
+        // store) — they join silently, so nothing is ever granted twice.
+        const memory = withProfileMarks(
+          get().achievements ?? EMPTY_ACHIEVEMENT_MEMORY,
+          useProfileStore.getState().careerMarks ?? [],
+          Date.now(),
+        );
         const worldsWonOn = worldsWonOnAfter(save, memory);
         const probe = { ...memory, worldsWonOn };
         const fresh = evaluateCareerAchievements(save, probe);
@@ -614,6 +622,16 @@ export const useCareerStore = create<CareerStoreState>()(
             unlocked: state.achievements.unlocked ?? {},
             worldsWonOn: state.achievements.worldsWonOn ?? {},
           };
+        }
+        // rc.36 (UX-05, #155): one record — the profile's marks join the memory and the
+        // memory's ids join the marks (the general list reads them), silently both ways.
+        try {
+          const profile = useProfileStore.getState();
+          state.achievements = withProfileMarks(state.achievements, profile.careerMarks ?? [], Date.now());
+          const missing = marksMissingFrom(state.achievements, profile.careerMarks ?? []);
+          if (missing.length > 0) profile.addCareerMarks(missing);
+        } catch {
+          /* never block hydration on the mirror */
         }
         if (!state.slots) return;
         state.slots = state.slots.map((slot) => {

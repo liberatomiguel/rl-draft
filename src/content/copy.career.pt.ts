@@ -1854,6 +1854,38 @@ export const CAREER_PT: CareerCopy = {
     markAllRead: "Marcar tudo como lido",
     filter: { all: "Tudo", mine: "Minha org", region: "Minha região", world: "Mundo", deals: "Negócios" },
     wire: "PLANTÃO",
+    feed: {
+      lead: "Manchete",
+      archive: "Do arquivo",
+      archiveNote: "História real da RLCS — esta linha do tempo segue o próprio rumo.",
+      subject: {
+        result: "Resultado",
+        transfer: "Transferência",
+        beat: "A cena",
+        org: "Sua org",
+        training: "Treino",
+        milestone: "Marco",
+        window: "Janela",
+        rep: "Reputação",
+        flavor: "Pela cena",
+      } as Record<string, string>,
+      action: {
+        market: "Mercado",
+        standings: "Classificação",
+        squad: "Elenco",
+        finances: "Finanças",
+        training: "Treinos",
+        club: "Clube",
+        calendar: "Calendário",
+      } as Record<string, string>,
+      moved: (player: string, org: string) => `${player} → ${org}`,
+      newIn: (region: string) => `Nova na ${region}`,
+      leftScene: (region: string) => `Deixa a ${region}`,
+    },
+    brand: {
+      wire: { name: "O plantão", kicker: "PLANTÃO", credit: "" },
+      fiftyFifty: { name: "50/50", kicker: "50/50", credit: "Central de notícias apresentada com a 50/50 · manchetes escritas pelo jogo" },
+    } as Record<string, { name: string; kicker: string; credit: string }>,
     digest: (n: number) => `Giro pela liga: mais ${n} movimentações`,
     tpl: {
       transfer: (p: Record<string, string | number>) => `${p.player} assina com ${p.to}`,
@@ -2073,23 +2105,8 @@ export const CAREER_PT: CareerCopy = {
     xp: (n: number) => `+${n} Season XP`,
     progress: (done: number, total: number) => `${done} de ${total}`,
     tier: { common: "Comum", rare: "Rara", epic: "Épica", legend: "Lenda" } as Record<string, string>,
-    items: {
-      "car-first-sponsor": { name: "Aberta para Negócios", desc: "Assine seu primeiro patrocínio." },
-      "car-bank-cleared": { name: "Bom Pagador", desc: "Quite um empréstimo bancário por completo." },
-      "car-first-qualifier": { name: "Pela Porta da Frente", desc: "Passe por uma qualificatória de sábado até o regional de domingo." },
-      "car-rep-50": { name: "Um Nome na Cena", desc: "Alcance 50 de reputação." },
-      "car-three-seasons": { name: "Road Warrior", desc: "Chegue à terceira temporada com uma mesma org." },
-      "car-major-qualified": { name: "Internacional", desc: "Classifique-se para um Major." },
-      "car-first-regional": { name: "Campeão Regional", desc: "Vença um regional." },
-      "car-worlds-qualified": { name: "No Grande Palco", desc: "Classifique-se para o Campeonato Mundial." },
-      "car-rep-100": { name: "Nome Conhecido", desc: "Alcance 100 de reputação." },
-      "car-first-major": { name: "Vencedor de Major", desc: "Vença um Major internacional." },
-      "car-first-worlds": { name: "Campeão Mundial", desc: "Vença o Campeonato Mundial." },
-      "car-worlds-underdog": { name: "Underdog", desc: "Vença um regional, Major ou Mundial como azarão: overall do time 3+ abaixo da média do campo." },
-      "car-worlds-homegrown": { name: "Prata da Casa", desc: "Vença o Mundial com o elenco que fundou a org — sem contratações, nunca." },
-      "car-three-worlds": { name: "Dinastia", desc: "Vença três Mundiais com uma mesma org." },
-      "car-all-difficulties": { name: "Todos os Caminhos", desc: "Vença o Mundial no Fácil, Normal e Difícil (entre saves)." },
-    } as Record<string, { name: string; desc: string }>,
+    // rc.36 (UX-05, #155): the achievements' names and descriptions moved to the core copy
+    // (ACH_UI.careerItems) — one source, read by the general list and the career screens.
   },
 
   inserts: {
@@ -2389,6 +2406,56 @@ export const CAREER_PT: CareerCopy = {
       }
     },
     repRisk: (n: number) => `Sua reputação espera isso (−${n} se falhar)`,
+    season: (kind: string, count: number, place: number): string => {
+      switch (kind) {
+        case "cupFinal":
+          return count === 1 ? "Chegue a uma final de Community Cup" : `Chegue a ${count} finais de Community Cup`;
+        case "cupWin":
+          return count === 1 ? "Vença uma Community Cup" : `Vença ${count} Community Cups`;
+        case "regionalReach":
+          return count === 1 ? "Jogue um regional de domingo" : `Jogue ${count} regionais de domingo`;
+        case "regionalFinish":
+          if (place <= 1) return count === 1 ? "Vença um regional" : `Vença ${count} regionais`;
+          return count === 1 ? `Um top ${place} em regional` : `Top ${place} em ${count} regionais`;
+        case "majorQualify":
+          return count === 1 ? "Classifique-se para um Major" : count === 3 ? "Classifique-se para os três Majors" : `Classifique-se para ${count} Majors`;
+        case "majorFinish":
+          if (place <= 1) return "Vença um Major";
+          return count === 1 ? `Um top ${place} em Major` : `Top ${place} em ${count} Majors`;
+        case "worldsQualify":
+          return "Classifique-se para o Worlds";
+        case "worldsFinish":
+          return place <= 1 ? "Vença o Worlds" : `Um top ${place} no Worlds`;
+        default:
+          return "";
+      }
+    },
+    role: { target: "Meta", stretch: "Meta ousada" } as Record<string, string>,
+    deadline: {
+      lastCup: (w: number) => `Última chance: a última Community Cup · sem. ${w}`,
+      lastRegional: (w: number) => `Última chance: o último regional do Split 3 · sem. ${w}`,
+      majorField: (w: number) => `Decidida quando o campo do Major do Split 3 sai · sem. ${w}`,
+      majorFinal: (w: number) => `Última chance: o Major do Split 3 · sem. ${w}`,
+      worldsField: (w: number) => `Decidida quando o campo do Worlds sai · sem. ${w}`,
+      worldsFinal: (w: number) => `Última chance: o Worlds · sem. ${w}`,
+    } as Record<string, (w: number) => string>,
+    status: { done: "Feita", open: "Em jogo", out: "Fora de alcance", met: "Cumprida", missed: "Não cumprida" } as Record<string, string>,
+    left: (n: number, kind: string): string => {
+      if (kind === "cupFinal" || kind === "cupWin") return n === 1 ? "Falta 1 copa" : `Faltam ${n} copas`;
+      if (kind === "majorQualify" || kind === "majorFinish") return n === 1 ? "Falta 1 Major" : `Faltam ${n} Majors`;
+      if (kind === "worldsQualify" || kind === "worldsFinish") return "O Worlds segue aberto";
+      return n === 1 ? "Falta 1 regional" : `Faltam ${n} regionais`;
+    },
+    splitLeft: (n: number) => (n === 1 ? "Falta 1 split" : `Faltam ${n} splits`),
+    missCost: (n: number) => `Se falhar: −${n} de reputação`,
+    noCost: "Sem reputação em jogo",
+    fixedNote: "Definida pela diretoria no início da temporada — os resultados a preenchem, nunca a mudam.",
+    why: {
+      rank: (rank: number, teams: number) => `#${rank} de ${teams} na sua região`,
+      stage: { founding: "Temporada de fundação", rising: "Org em ascensão", established: "Org estabelecida" } as Record<string, string>,
+      money: { tight: "Caixa apertado: meta aliviada", flush: "Caixa saudável: meta elevada" } as Record<string, string>,
+      last: { met: "Última meta cumprida: elevada", missed: "Última meta perdida: aliviada" } as Record<string, string>,
+    },
   },
 
   explainers: {

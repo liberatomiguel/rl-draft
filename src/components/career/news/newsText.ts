@@ -12,6 +12,7 @@
 import { CAREER_BEATS } from "@/data/career/beats";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import type { CareerCopy } from "@/content/careerCopy";
+import { getCopy } from "@/content/copy";
 import { formatMoney } from "@/lib/format";
 import type { MailItem, NewsItem } from "@/engine/career/types";
 
@@ -79,6 +80,10 @@ export interface ResolvedNews {
   title: string;
   body?: string;
   wire?: boolean;
+  /** rc.36 (UX-03): a beat filed "From the archive" — real history, not this save's. */
+  archive?: boolean;
+  /** rc.36: a beat's orgs (the feed's crests). */
+  orgRefs?: readonly string[];
 }
 
 /** Params with unlock keys swapped for their Club display labels. */
@@ -131,6 +136,8 @@ export function resolveNews(
         title: text.title,
         body: item.titleKey === "beatPreempted" ? (preempted ?? text.body) : text.body,
         wire: true,
+        ...(item.titleKey === "beatArchive" ? { archive: true } : {}),
+        ...(beat.orgRefs ? { orgRefs: beat.orgRefs } : {}),
       };
     }
   }
@@ -178,7 +185,8 @@ export function resolveToastTitle(
 ): string {
   // v2.0 (R32): achievement toasts carry the achievement id.
   if (toast.source === "achievement") {
-    return career.achievements.items[toast.titleKey]?.name ?? toast.titleKey;
+    // rc.36 (UX-05, #155): one source for the words — the core copy the general list reads.
+    return getCopy().ACH_UI.careerItems[toast.titleKey]?.name ?? toast.titleKey;
   }
   const p = displayParams(career, toast.titleKey, toast.params ?? {});
   const mailTitles = career.mail.tpl as unknown as TplMap;

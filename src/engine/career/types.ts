@@ -1243,6 +1243,55 @@ export interface SeasonGoals {
     target: { kind: SponsorGoal["kind"]; count: number; place?: number; word: SponsorGoalWord };
     stretch: { kind: SponsorGoal["kind"]; count: number; place?: number; word: SponsorGoalWord };
   };
+  /**
+   * rc.36 (UX-02, R87): the season-scope goal (engine/career/seasonGoals.ts),
+   * fixed at the season's start — it wins over `model`. Absent on older
+   * saves: their current season keeps the goal it started with.
+   */
+  plan?: SeasonGoalPlan;
+  /** rc.36: the stretch settled at the season review too (null until then; absent on older saves). */
+  stretchMet?: boolean | null;
+}
+
+/** rc.36 (UX-02): what a season goal asks — over the whole season (its Community Cups, nine regionals, three Majors, Worlds). */
+export type SeasonGoalKind =
+  | "cupFinal"
+  | "cupWin"
+  | "regionalReach"
+  | "regionalFinish"
+  | "majorQualify"
+  | "majorFinish"
+  | "worldsQualify"
+  | "worldsFinish";
+
+export interface SeasonGoalSpec {
+  kind: SeasonGoalKind;
+  /** How many: Community Cups, regionals of the season's nine, Majors of its three; 1 for Worlds. */
+  count: number;
+  /** A finish at this place or better: 8 / 4 / 1 at a regional, 4 / 1 at a Major or Worlds. */
+  place?: number;
+  /** The engine's estimate at the season's start (0–1). */
+  chance: number;
+}
+
+/** rc.36: the career's stage the board reads — its first season, a rising org, an established one. */
+export type SeasonGoalStage = "founding" | "rising" | "established";
+
+export interface SeasonGoalPlan {
+  seasonIndex: number;
+  target: SeasonGoalSpec;
+  stretch: SeasonGoalSpec;
+  /** What the board read at the season's start (the card's "why" chips). */
+  basis: {
+    stage: SeasonGoalStage;
+    /** The squad's rank among its region's teams, of `teams`. */
+    rank: number;
+    teams: number;
+    /** Resources: a tight budget eased the goal, a healthy one raised it. */
+    money?: "tight" | "flush";
+    /** Last season's target: met (asks a little more) or missed (eases). */
+    last?: "met" | "missed";
+  };
 }
 
 export interface CareerLifetimeStats {

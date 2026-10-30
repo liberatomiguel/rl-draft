@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 6;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2799,6 +2799,105 @@ export const CAREER_NEWS = {
   maxItemsPerTick: 12,
   feedRetention: 250,
   maxToastsPerTick: 2,
+  /**
+   * rc.36 — UX-03 (R87): who presents the news desk. "wire" = the game's own
+   * "The Wire"; "fiftyFifty" = the 50/50 presentation (its name, logo slot
+   * and credit line). It stays "wire" until the partner agrees on material,
+   * naming and credit; the headlines are the game's own either way (never a
+   * quote put in the partner's mouth).
+   */
+  brand: "wire" as "wire" | "fiftyFifty",
+  /** The feed's lead story: the most important headline (newest on a tie) of at least this priority… */
+  leadMinPriority: 1,
+  /** …from the last this-many days (older news reads as rows only). */
+  leadMaxAgeDays: 7,
+  /** A beat that runs as archive (its history did not happen in this save) files at this priority. */
+  archivePriority: 1,
+} as const;
+
+/**
+ * rc.36 — UX-02 (R87): the board's season goal. Set once at the season's
+ * start (the rollover, or the founding day) from the squad's level against
+ * its region's field (sponsorDeals.teamLevelFor: the rating, the region, the
+ * difficulty edge), the career's stage, its resources and last season's
+ * goal; never moved by a result. A goal counts over the whole season — the
+ * cups, the nine regionals, the three Majors, Worlds — and its deadline is
+ * the last event that can count. Measured on CAREER_GOALS=1
+ * (`careerSeasonGoals.probe.test.ts`, 252 seasons: 7 regions × 3 presets ×
+ * 3 policies × 4 seasons; GOALS_FIT replays these settings): target met
+ * 63 % (Easy 70, Normal 56, Hard 63), stretch 29 % (37 / 23 / 29) — rc.35's
+ * any-split rule met 94 % and 88 % on the same seasons.
+ */
+export const CAREER_SEASON_GOAL = {
+  /**
+   * "season" (rc.36): a season-scope goal sized to the bands below. "anySplit"
+   * (rc.35, R82 b): the target a Balanced deal sets for one split, met if
+   * reached in any split — measured too easy (see R87), kept for comparison.
+   */
+  rule: "season" as "season" | "anySplit",
+  /** The target's aimed chance by the career's stage: the founding season, a rising org, an established one. */
+  targetAim: { founding: 0.6, rising: 0.56, established: 0.52 },
+  /** Reputation from which a career counts as established (the sponsor ladder's level 2). */
+  establishedRep: 40,
+  /** Past results: last season's target met asks a little more; missed eases. */
+  afterMetShift: -0.03,
+  afterMissShift: 0.05,
+  /** Resources: a tight runway (or an emergency loan owed) eases the aim; a long one raises it. */
+  tightRunwayWeeks: 8,
+  tightShift: 0.04,
+  flushRunwayWeeks: 26,
+  flushShift: -0.02,
+  /** The aim after the shifts stays inside this range. */
+  aimClamp: { min: 0.45, max: 0.68 },
+  /** A target is picked inside this band of the model's chance (never trivial, never impossible). */
+  targetBand: { min: 0.4, max: 0.75 },
+  /**
+   * The stretch: aimed here, inside its band, and at least `stretchGap` less
+   * likely than the target (a target always leaves room for one). 0.17, not
+   * the band's middle: the model's low chances come in high (squads grow).
+   */
+  stretchAim: 0.17,
+  stretchBand: { min: 0.1, max: 0.35 },
+  stretchGap: 0.15,
+  /** The counts a goal may ask, of the season's nine regionals and three Majors. */
+  regionalCounts: [1, 2, 3, 5, 7] as readonly number[],
+  majorCounts: [1, 2, 3] as readonly number[],
+  /** Worlds is decided on Season Points; the model reads it as this many of the three Majors qualified. */
+  worldsFromMajors: 2,
+  /**
+   * Season form: a squad grows through the season (CAREER_GOALS: +4.3 rating
+   * points p50 from the start to the review, p10 0.6, p90 8.9), so the
+   * season-start level under-reads its regionals and Majors. The league
+   * goals read the level this many points higher — the likelihood's optimum
+   * lies at 1.5–2 on the probe's seasons; at 1.5 the model's 0.49 is reached
+   * 0.55 of the time (0.75 unshifted).
+   */
+  seasonForm: 1.5,
+  /**
+   * Playing a Sunday regional, read over a season: one regional week, the
+   * margin over the Saturday qualifier's line (the region's 16th org —
+   * CAREER_QUALIFIER direct + advancing; seasonForm added). The sponsors'
+   * per-split curve on the 12th org read EU's deep pool and the smaller
+   * regions' local sides alike (EU's weak squads 0–25 % where it said 50 %).
+   * Maximum likelihood on the probe's seasons.
+   */
+  reachCurve: { mid: -2, scale: 4.5 },
+  /**
+   * The newcomer's rung: Community Cup finals and titles (a squad that cannot
+   * reach a Sunday regional yet still has a season to win). Offered while the
+   * squad is cup-eligible (CAREER_UNOFFICIAL.t3RatingCeiling). A cup seats
+   * the two closest stronger orgs (t3MaxStrongerTeams): the semi-final is
+   * against the closer one, the final against the other; the quarter-final
+   * against a side `cupQuarterMargin` points weaker. One series is a
+   * logistic in the margin (+ CAREER_SPONSOR.levelEdge), fitted on rc.35's
+   * series by rating gap (CAREER-ARC-rc35: Normal 1 / 17 / 66 / 96 % at
+   * ≤ −6 / −4 / even / +4).
+   */
+  cupCounts: [1, 2, 3] as readonly number[],
+  cupWinCounts: [1, 2] as readonly number[],
+  cupsPerSeason: 6,
+  cupQuarterMargin: 3,
+  cupSeries: { mid: -1.2, scale: 1.8 },
 } as const;
 
 /**

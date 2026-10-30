@@ -473,6 +473,10 @@ async function checkGeneratedImages(ctx) {
   for (const [art, hash] of Object.entries(manifest.badgeGlows ?? {})) {
     urls.push(`/img/badges/${seg(art)}.${hash}.glow.webp`);
   }
+  // rc.36 (UX-03): a news partner's logo (assets.ts partnerLogoSrc).
+  for (const [id, hash] of Object.entries(manifest.partners ?? {})) {
+    urls.push(`/img/partners/${seg(id)}.${hash}.webp`);
+  }
   for (const cc of manifest.flags ?? []) urls.push(`/flags/${cc}.png`);
   if (manifest.flagSprite) urls.push(`/img/flags/flags.${manifest.flagSprite.hash}.png`);
 

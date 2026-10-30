@@ -42,12 +42,14 @@ import {
   CAREER_SCOUT,
   CAREER_SCRIM,
   CAREER_SEASONS,
+  CAREER_SEASON_GOAL,
   CAREER_SPONSOR,
   CAREER_SUB,
   CAREER_TRAINING,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
   CAREER_LADDER,
+  CAREER_NEWS,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
 } from "@/config/balance";
@@ -254,6 +256,8 @@ import {
   type GoalProgress,
   type TeamLevel,
 } from "@/engine/career/sponsorDeals";
+import { fieldDrawFor, seasonGoalMetAtReview, seasonGoalPlanFor, type FieldDraw } from "@/engine/career/seasonGoals";
+import { beatModeFor } from "@/engine/career/beats";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
@@ -1120,6 +1124,19 @@ export function processDayArrival(input: CareerSave): CareerSave {
         if (beat.trigger.seasonIndex !== seasonIndex || beat.trigger.week !== week) continue;
         if (save.firedBeatIds.includes(beat.id)) continue;
         save.firedBeatIds.push(beat.id);
+        // rc.36 (UX-03, R87): a beat the save contradicts (or real history only) files as archive — no effect.
+        const mode = beatModeFor(beat, {
+          world: save.world,
+          careerSeed: save.careerSeed,
+          seasonIndex,
+          squadIds: save.squad.map((p) => p.id),
+          results: save.eventResults,
+          userRegion: save.identity.region,
+        });
+        if (mode === "archive") {
+          pushNews(save, { type: "beat", priority: CAREER_NEWS.archivePriority, titleKey: "beatArchive", beatId: beat.id });
+          continue;
+        }
         const targetOnSquad =
           beat.requiresPlayerFree && save.squad.some((p) => p.id === beat.requiresPlayerFree);
         // ECO-03b (ROADMAP, R47): the career's first window is bid-free — a
@@ -1740,6 +1757,45 @@ function attachSeasonGoalModel(save: CareerSave, seasonIndex: number): void {
     return out;
   };
   save.seasonGoals.model = { target: strip(target), stretch: strip(stretch) };
+}
+
+/**
+ * rc.36 (UX-02, R87): the season's goal, set once at the season's start —
+ * the squad's level against its region (the sponsors' model), the career's
+ * stage, its runway and loan, and last season's target (`lastMet`). Never
+ * recomputed: results only fill its progress (seasonGoals.seasonGoalsViewOf).
+ * CAREER_SEASON_GOAL.rule "anySplit" keeps rc.35's split model instead.
+ */
+function attachSeasonGoal(save: CareerSave, seasonIndex: number, lastMet: boolean | null): void {
+  if (!save.seasonGoals || save.squad.length === 0) return;
+  if (CAREER_SEASON_GOAL.rule === "anySplit") {
+    attachSeasonGoalModel(save, seasonIndex);
+    return;
+  }
+  save.seasonGoals.plan = seasonGoalPlanFor({
+    level: sponsorLevelOf(save),
+    cup: fieldDrawOf(save),
+    seasonIndex,
+    rep: save.reputation,
+    hasHistory: save.history.length > 0,
+    lastTargetMet: lastMet,
+    runwayWeeks: runwayWeeksOf(save),
+    loanOwed: (save.finances.loan?.remaining ?? 0) > 0,
+  });
+  save.seasonGoals.stretchMet = null;
+}
+
+/**
+ * rc.36 (UX-02): the squad against the lower end of its region — its Community
+ * Cup draw and the Saturday qualifier's line — from the ratings `sponsorLevelOf` reads.
+ */
+export function fieldDrawOf(save: CareerSave): FieldDraw {
+  return fieldDrawFor({
+    region: save.identity.region,
+    userRating: save.squad.length > 0 ? userSeedRatingFor(save) : 0,
+    difficulty: save.difficulty,
+    orgs: Object.values(save.world.orgs).map((o) => ({ region: o.region, rating: o.rating ?? 70 + o.prestige * 6 })),
+  });
 }
 
 /** rc.34 (ECO-04): a sponsor decision on the desk, as HQ's queue and the cards read it. */
@@ -3378,11 +3434,17 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
   // Season-goal settlement (rep risk telegraphed on the goals card).
   if (save.seasonGoals && save.seasonGoals.targetMet === null) {
     // rc.35 (front S): a modelled goal is met if reached in any split; older saves settle on the grade.
+    // rc.36 (UX-02): a planned goal (the season's own) wins, and its stretch settles too.
     const model = save.seasonGoals.model;
-    const met = model
-      ? seasonGoalMetOf(model.target, save.clock.seasonIndex, save.eventResults)
-      : grade === "S" || grade === "A" || grade === "B";
+    const plan = save.seasonGoals.plan?.seasonIndex === save.clock.seasonIndex ? save.seasonGoals.plan : null;
+    const met = plan
+      ? seasonGoalMetAtReview(plan.target, save)
+      : model
+        ? seasonGoalMetOf(model.target, save.clock.seasonIndex, save.eventResults)
+        : grade === "S" || grade === "A" || grade === "B";
     save.seasonGoals.targetMet = met;
+    if (plan) save.seasonGoals.stretchMet = seasonGoalMetAtReview(plan.stretch, save);
+    else if (model) save.seasonGoals.stretchMet = seasonGoalMetOf(model.stretch, save.clock.seasonIndex, save.eventResults);
     if (!met && save.seasonGoals.repRisk > 0) {
       loseRep(save, save.seasonGoals.repRisk, "repDown");
     }
@@ -3597,8 +3659,9 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
 
   // 4. Fresh competition + goals + clock; stars refresh.
   save.competition = emptyCompetition();
+  // rc.36 (UX-02): last season's target is read before the new goals replace it.
+  const lastGoalMet = save.seasonGoals?.targetMet ?? null;
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
-  attachSeasonGoalModel(save, nextSeason);
   save.eventResults = [];
   // v0.3 season-scoped bookkeeping resets.
   save.scheduledScrims = [];
@@ -3615,6 +3678,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
   });
+  // rc.36 (UX-02): the season's goal, once the new season's world and clock are set.
+  attachSeasonGoal(save, nextSeason, lastGoalMet);
   if (sponsorDecision) offerSponsorDecision(save, sponsorDecision.demote);
 
   return processDayArrival(save);
@@ -3872,7 +3937,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     seq: 0,
     lastPlayedAt: 0,
   };
-  attachSeasonGoalModel(save, 0);
+  attachSeasonGoal(save, 0, null);
 
   return processDayArrival(save);
 }

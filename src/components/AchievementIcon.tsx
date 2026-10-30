@@ -12,7 +12,8 @@ export function AchievementIcon({
   group,
   className = "h-4 w-4",
 }: {
-  group: AchievementDef["group"];
+  /** rc.36 (UX-05): "career" = a Road to Worlds achievement (the general list's mode filter). */
+  group: AchievementDef["group"] | "career";
   className?: string;
 }) {
   const common = {
@@ -72,6 +73,13 @@ export function AchievementIcon({
       return (
         <svg {...common}>
           <path d="M6 13l6-6 6 6M6 18l6-6 6 6" {...P} />
+        </svg>
+      );
+    case "career": // the road, to the horizon (Road to Worlds)
+      return (
+        <svg {...common}>
+          <path d="M5 21 10.2 4M19 21 13.8 4" {...P} />
+          <path d="M12 19.5v-2.2M12 13.6v-1.8M12 8.6V7.4" {...P} />
         </svg>
       );
     default:

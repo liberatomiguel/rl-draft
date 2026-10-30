@@ -45,6 +45,8 @@ type AssetManifest = {
   badgeShifts?: Record<string, number[]>;
   /** rc.21: banner art key → source hash (pre-rendered WebP of public/banners/*.svg). */
   banners?: Record<string, string>;
+  /** rc.36 (UX-03): news partner id → source hash (WebP of public/partners/<id>.png); absent until art exists. */
+  partners?: Record<string, string>;
 };
 
 const manifest = manifestJson as AssetManifest;
@@ -174,6 +176,20 @@ export function specialPhotoSrc(id: string, width: number): string | null {
   if (!hash) return null;
   const w = pickWidth(SPECIAL_PHOTO_WIDTHS, width);
   return `/img/specials/${seg(id)}.${hash}.${w}.webp`;
+}
+
+/**
+ * rc.36 (UX-03, R87): a news partner's logo (`public/partners/<id>.png` — the
+ * 50/50 desk's, once the partner sends it), or `null` when the art is not in
+ * the build: the caller renders its styled fallback, never a stand-in drawn
+ * after the partner's real mark. PRODUCTION: the WebP build-images makes
+ * (`/img/partners/<id>.<hash>.webp`, fitted inside 192 px); DEV / TEST: the
+ * source PNG (the component's onError fallback covers a missing file).
+ */
+export function partnerLogoSrc(id: string): string | null {
+  if (!IS_PROD) return `/partners/${seg(id)}.png`;
+  const hash = hashFor(manifest.partners ?? {}, id);
+  return hash ? `/img/partners/${seg(id)}.${hash}.webp` : null;
 }
 
 /** Rank emblem art for one of the two art sets, or `null` when missing. */

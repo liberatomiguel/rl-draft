@@ -21,7 +21,6 @@ import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
 import { FEATURES, RANKS, SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
-import { achievements as achievementDefs } from "@/data";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
 import type { CosmeticKind } from "@/data/cosmetics";
 import { useCopy } from "@/content/copy";
@@ -42,7 +41,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { Toggle } from "@/components/ui/Toggle";
 import { FieldView } from "@/components/cards/FieldView";
-import { AchievementsGrid } from "@/components/AchievementsGrid";
+import { AchievementsGrid, achievementTotals } from "@/components/AchievementsGrid";
 import { AccountSection, ProfileNickname } from "@/components/AccountSection";
 import { BadgeEmblem, BannerSurface, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLocker";
@@ -85,6 +84,8 @@ export default function ProfilePage() {
   // National-team cards (v2.0) have their own album — not in this count.
   const unlockedCount = Object.keys(profile.unlockedSpecials).filter((id) => !isNationalSpecialId(id)).length;
   const earned = profile.achievements;
+  // rc.36 (UX-05): the draft set plus Road to Worlds' marks (the list's mode filter).
+  const achTotals = achievementTotals(earned, profile.careerMarks);
   const lastDelta = profile.season.ratingHistory[0]?.delta ?? null;
   const openLocker = (kind: CosmeticKind) => {
     sfx.click();
@@ -279,7 +280,7 @@ export default function ProfilePage() {
         <StatTile label={P.bestClear} value={bestClear ? DIFFICULTY_LABELS[bestClear].label : P.none} />
         <StatTile label={P.specials} value={`${unlockedCount}/${COUNTS.specialCards}`} />
         <StatTile label={P.playoffRate} value={pct(profile.playoffAppearances, profile.runsCompleted)} />
-        <StatTile label={P.achievements} value={`${Object.keys(earned).length}/${achievementDefs.length}`} />
+        <StatTile label={P.achievements} value={`${achTotals.earned}/${achTotals.total}`} />
       </div>
       <Panel className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
         <MiniStat label={P.podiums} value={String(profile.podiums)} />
@@ -315,14 +316,14 @@ export default function ProfilePage() {
         right={
           <AppLink href="/achievements">
             <Badge tone="blue" className="cursor-pointer hover:bg-blue/20">
-              {P.viewAll(Object.keys(earned).length, achievementDefs.length)}
+              {P.viewAll(achTotals.earned, achTotals.total)}
             </Badge>
           </AppLink>
         }
         className="mb-4"
       />
       <div className="mb-8">
-        <AchievementsGrid earned={earned} />
+        <AchievementsGrid earned={earned} careerMarks={profile.careerMarks} />
       </div>
 
       {/* ---- Run history ------------------------------------------------------ */}
