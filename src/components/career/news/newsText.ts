@@ -72,6 +72,8 @@ const SPONSOR_NAME_KEYS = new Set([
   "sponsorGoalMissed",
   "sponsorGoalSet",
   "sponsorEnded",
+  // rc.36 (front S2): the "signSafest" deadline rule's mail.
+  "sponsorAutoSigned",
 ]);
 
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;

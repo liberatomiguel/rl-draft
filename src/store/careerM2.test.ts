@@ -191,7 +191,9 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     expect(talk.ask.wagePerSplit).toBe(ask);
     const low = renewPlayerFlow(save, p.id, 2, { weekly: weeklyWage(quantize(ask * 0.3)) });
     expect(low.error).toBe("negotiationCounter");
-    expect(low.save).toBe(save);
+    // rc.36 (front S2): the deal is untouched — only his refusal is counted.
+    expect(low.save.squad).toEqual(save.squad);
+    expect(low.save.finances).toEqual(save.finances);
     const atAsk = renewPlayerFlow(save, p.id, 2);
     expect(atAsk.save.squad.find((x) => x.id === p.id)!.salaryPerSplit).toBe(ask);
     const atFloor = renewPlayerFlow(save, p.id, 2, { weekly: talk.zone.floorWeekly });

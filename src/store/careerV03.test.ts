@@ -382,15 +382,18 @@ describe("v0.3 scrim scheduling", () => {
 // ---------------------------------------------------------------------------
 
 describe("v0.3 negotiation → rc.33 contract talk (ECO-11; the model's own tests: engine/career/contract.test.ts)", () => {
-  it("an offer under his floor is refused with nothing moved — no hidden dice, no hardening", () => {
+  it("an offer under his floor is refused with nothing moved — no hidden dice; rc.36: only the refusal is counted", () => {
     const save = makeSave();
     // fictional fillers are cheap and under the cap
     const target = save.world.freeAgentIds.find((id) => id.startsWith("fic:"));
     if (!target) return;
     const res = signPlayerFlow(save, target, { lengthSeasons: 1, offer: { weekly: 0 } });
     expect(["negotiationCounter", "windowClosed", "repGate"]).toContain(res.error);
-    expect(res.save).toBe(save);
-    expect(res.save.negotiationTries).toEqual(save.negotiationTries);
+    expect(res.save.squad).toEqual(save.squad);
+    expect(res.save.finances).toEqual(save.finances);
+    // rc.36 (front S2): a refusal raises what he needs this window — counted under its own "talk:" key.
+    const written = Object.keys(res.save.negotiationTries).filter((k) => !(k in save.negotiationTries));
+    expect(written).toEqual(res.error === "negotiationCounter" ? [`talk:${target}:0:${written[0]?.split(":").pop()}`] : []);
   });
 });
 

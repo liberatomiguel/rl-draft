@@ -485,10 +485,12 @@ export const CAREER_EN = {
     noticeBody: "Read and acknowledge the notice — the clock moves once you have.",
     trainingDecisionTitle: "The coach has a plan",
     trainingDecisionBody: "The coach's training proposal waits for your answer.",
-    sponsorDecline: "No deal for now",
-    // rc.35 (front S): beside "Decline" on the sponsor decision.
+    // rc.36 (front S2, Miguel on rc.35): the sponsor choice is a pop-up; the block only prompts it, with "Decide later".
     sponsorLater: "Decide later",
-    sponsorDeclineHint: "The brands come back at the next split.",
+    sponsorPromptTitle: (n: number) => (n === 1 ? "A brand wants to sponsor the org" : `${n} brands want to sponsor the org`),
+    sponsorSeeOffers: "See the offers",
+    sponsorDueBy: (date: string) => `Pick one by ${date}`,
+    sponsorAutoSign: (date: string) => `On ${date} the safest deal is signed for you.`,
     // rc.34 (Miguel, 31/10): a short squad can sit a regional out.
     squadShortSkip: "Skip this regional",
     squadShortSkipHint: (event: string) =>
@@ -600,6 +602,8 @@ export const CAREER_EN = {
       listingOffer: (p: Record<string, string | number>) => `Offer for ${p.player} — your listing`,
       // rc.34 (ECO-04): the deals' mails.
       sponsorLapsed: () => `The sponsorship offers lapsed`,
+      // rc.36 (front S2): CAREER_SPONSOR.deadlineRule "signSafest" — nobody picked by the deadline.
+      sponsorAutoSigned: (p: Record<string, string | number>) => `${p.name}: the safest deal, signed for you`,
       sponsorGoalHit: (p: Record<string, string | number>) => `${p.name}: goal reached`,
       sponsorGoalMissed: (p: Record<string, string | number>) => `${p.name}: goal missed`,
       sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: the Split ${p.goalSplit} goal`,
@@ -630,10 +634,13 @@ export const CAREER_EN = {
       objectiveMissed: (p: Record<string, string | number>) =>
         `The split objective slipped. No money is clawed back — but repeated misses lower next season's renewal tier. (Misses so far: ${p.misses}.)`,
       // rc.34 (ECO-04): the deals' mails.
+      // rc.36 (front S2): two or three brands (the ladder's access), priced by risk (rc.35), and the deadline rule.
       sponsorDecision: (p: Record<string, string | number>) =>
-        `Three brands want the org at Tier ${p.tier}: a Steady deal, a Balanced one and a Bold one. On average they are worth about the same — they differ in how sure the money is, how long they run and what they ask. Compare them in Finances and sign one by the Sunday of week ${p.byWeek}, or they lapse.${Number(p.demoted) ? " Three goals slipped on the last Steady deal, so this round comes one tier lower." : ""}`,
+        `${Number(p.n) === 2 ? "Two brands want the org at Tier " + p.tier + ": a Steady deal and a Balanced one" : "Three brands want the org at Tier " + p.tier + ": a Steady deal, a Balanced one and a Bold one"}. The bolder the deal, the more it pays — for a harder goal and a bigger fine. Compare them in HQ and sign one by the Sunday of week ${p.byWeek}${Number(p.auto) ? " — after that the safest is signed for you" : " — that day the clock waits for your pick"}.${Number(p.demoted) ? " Three goals slipped on the last Steady deal, so this round comes one tier lower." : ""}`,
       sponsorLapsed: () =>
         `Nobody signed before the deadline, so the brands moved on. The next offers come at the next split boundary.`,
+      sponsorAutoSigned: (p: Record<string, string | number>) =>
+        `Nobody picked a deal by the deadline, so the org signed the safest one on the desk: ${p.name}. Its figures are in Finances.`,
       sponsorGoalHit: (p: Record<string, string | number>) =>
         `${goalOfParamsEn(p)}: done. The bonus of ${p.bonus} lands today${positive(p.milestone) ? `, with the milestone payment of ${p.milestone}` : ""}.`,
       sponsorGoalMissed: (p: Record<string, string | number>) =>
@@ -1248,7 +1255,6 @@ export const CAREER_EN = {
       length: "Contract length",
       contract: "Under contract",
     },
-    lengthLabel: "Contract length",
     seasons: (n: number) => (n === 1 ? "1 season" : `${n} seasons`),
     starter: "Starter",
     sub: "Sub",
@@ -1346,7 +1352,7 @@ export const CAREER_EN = {
     // rc.33 (ECO-10 + ECO-11): the contract talk — two levers, the zone shown, one answer.
     negotiation: {
       title: "Contract talk",
-      // rc.35 (front N): the visual talk — a third lever, the odds meter, the length relief.
+      // rc.35 (front N): the visual talk — a third lever and the odds.
       bonus: "Signing bonus",
       bonusAsk: (amount: string) => `Asks ${amount}`,
       bonusDown: "Lower the signing bonus",
@@ -1354,31 +1360,16 @@ export const CAREER_EN = {
       shareAskNone: "Asks none",
       odds: "Chance he signs",
       oddsSure: "Sure",
-      zoneLegend: "Signs for sure",
-      riskLegend: "Maybe",
-      lengthRelief: (perWeek: string, seasons: number) => `${seasons}-season deal: ${perWeek} / week off his floor`,
-      refuses: (wage: string) => `He refuses — he signs at ${wage} / week`,
-      upfront: (amount: string) => `+ ${amount} up front`,
       perWeek: "/ week",
       fullAsk: "Pay his ask",
       wage: "Weekly wage",
       share: "Prize share",
-      shareHint: "His cut of every podium prize the team wins (top four of a regional, Major or Worlds).",
       shareAsk: (pct: number) => `He asks ${pct}%`,
-      // rc.33 review: a share point is priced in weekly money (contract.sharePointWeeklyFor).
-      trade: (perWeek: string) => `Each share point you give him is worth ${perWeek} a week of his wage.`,
       // rc.33 review: each stepper names its own lever for screen readers.
       wageDown: "Lower the weekly wage",
       wageUp: "Raise the weekly wage",
       shareDown: "Lower his prize share",
       shareUp: "Raise his prize share",
-      zone: (floor: string, top: string) => `At this share he signs from ${floor} to ${top} a week.`,
-      zoneFixed: (top: string) => `At this share he signs only at his ask, ${top} a week.`,
-      signs: (wage: string, pct: number) => `He signs: ${wage} / week + ${pct}% of podium prizes`,
-      // rc.34 (front I): a deal with no prize share (he asks none, or the talk took it to 0 %).
-      signsNoShare: (wage: string) => `He signs: ${wage} / week, no prize share`,
-      counter: (wage: string, pct: number) => `Under his floor — he counters at ${wage} / week with ${pct}%`,
-      counterNoShare: (wage: string) => `Under his floor — he counters at ${wage} / week`,
       // rc.34 (front I): why a lever stops, under the button it closes (contract.TalkLimits).
       why: {
         floor: "His floor",
@@ -1388,10 +1379,30 @@ export const CAREER_EN = {
         shareMost: "The most he takes",
         shareMinimum: "Wage at the minimum",
         noShare: "No share",
+        // rc.36 (front S2): the bonus's own ends.
+        noBonus: "No bonus",
+        bonusMost: "The most on offer",
       },
-      takeCounter: "Take his counter",
-      saves: (s: string) => `${s} / week under his ask`,
-      costs: (s: string) => `${s} / week over his ask, for a smaller share`,
+      // rc.36 (front S2, Miguel on rc.35): three groups — your offer, his position, send — and his answer only once sent.
+      groupOffer: "Your offer",
+      groupPosition: "His position",
+      length: "Length",
+      asks: (wage: string, pct: number, bonus: string | null) =>
+        `Asks ${wage} / wk${pct > 0 ? ` · ${pct}%` : ""}${bonus ? ` · ${bonus}` : ""}`,
+      worthTitle: "Your offer is worth to him",
+      sureFrom: (wage: string) => `Signs for sure from ${wage}`,
+      askMark: (wage: string) => `His ask ${wage}`,
+      effectsTitle: "What moves his answer",
+      effectShare: (pts: number) => `Share ${pts > 0 ? "+" : "−"}${Math.abs(pts)} pt${Math.abs(pts) === 1 ? "" : "s"}`,
+      effectBonus: (delta: string) => `Bonus ${delta}`,
+      effectLength: (seasons: number) => `${seasons}-season deal`,
+      effectRefusals: (n: number) => (n === 1 ? "1 offer refused" : `${n} offers refused`),
+      effectWeekly: (amount: string) => `${amount} / wk`,
+      send: "Send offer",
+      sendHint: "He answers when you send it. A refusal raises what he needs.",
+      refused: (wage: string) => `He turned down ${wage} / week.`,
+      nowWants: (wage: string) => `With this share and bonus he now signs for sure from ${wage} / week.`,
+      meetPrice: "Meet his price",
     },
     errors: {
       windowClosed: "The transfer window is closed.",
@@ -1399,6 +1410,8 @@ export const CAREER_EN = {
       squadFull: "Squad is full — release or sell first.",
       unavailable: "Player unavailable.",
       funds: "Not enough money for this deal.",
+      // rc.36 (front S2, rc.35-(d)): a broke short squad's waiver covers the empty seat at the bonus he asks.
+      fundsSeatBonus: "Short of money, the empty seat is covered only at the signing bonus he asks — lower the bonus.",
       loanActive: "No fee transfers while the emergency loan is owed.",
       bankActive: "One bank loan at a time — clear the current one first.",
       bankBacker: "The bank writes no other loan while its emergency loan is open — repay that one first.",
@@ -1610,7 +1623,9 @@ export const CAREER_EN = {
       goalBy: (date: string) => `by ${date}`,
       laterGoals: "Then a new goal every split, at the same difficulty",
       sign: "Sign",
-      decideBy: (date: string) => `Sign by ${date} — after that the offers lapse.`,
+      // rc.36 (front S2): CAREER_SPONSOR.deadlineRule — "hold" (the deadline day waits for a pick) or "signSafest".
+      decideBy: (date: string) => `Pick one by ${date} — that day the clock waits for your pick.`,
+      decideBySafest: (date: string) => `Pick one by ${date} — after that the safest deal is signed for you.`,
       compareHint:
         "All three are worth about the same on average. They differ in how sure the money is, how long they run and what they ask.",
       // rc.34: a Tier 3 / 4 brand pays a side below its level less (sponsorDeals.levelValueShareOf).

@@ -27,7 +27,7 @@
  * squad, what is due today, then by deadline; parked ones last.
  */
 
-import { CAREER_HQ } from "@/config/balance";
+import { CAREER_HQ, CAREER_SPONSOR } from "@/config/balance";
 import type { CareerSave } from "@/engine/career/types";
 import {
   isEventPaused,
@@ -123,11 +123,19 @@ export function moneyNoticeSource(save: CareerSave): DecisionSourceItem | null {
  * too, where it holds the season's continue (`rolloverHoldOf`) until signed
  * or declined, as a bid on its last day does. The rollover never replaces a
  * parked decision unanswered.
+ *
+ * rc.36 (front S2, Miguel on rc.35: only "Decide later", no "No deal for
+ * now"): CAREER_SPONSOR.deadlineRule "hold" keeps that — the deadline day
+ * holds until a card is signed. "signSafest": from the deadline day it holds
+ * nothing (the day after it signs the safest offer, `lapseSponsorOffers`).
  */
 export function sponsorDecisionSource(save: CareerSave): DecisionSourceItem | null {
   if (save.phase !== "running" && save.phase !== "seasonReview") return null;
   const decision = sponsorDecisionOf(save);
-  return decision ? { id: decision.id, deadline: { seasonIndex: decision.deadlineOn.seasonIndex, day: decision.deadlineOn.day } } : null;
+  if (!decision) return null;
+  const deadline = { seasonIndex: decision.deadlineOn.seasonIndex, day: decision.deadlineOn.day };
+  const autoSigns = CAREER_SPONSOR.deadlineRule === "signSafest" && !isBefore(save.clock, deadline);
+  return autoSigns ? { id: decision.id, deadline, holds: false } : { id: decision.id, deadline };
 }
 
 /**
@@ -155,12 +163,12 @@ const isBefore = (a: DecisionDate, b: DecisionDate): boolean =>
 
 const laterKind = (kind: DecisionKind): boolean => CAREER_HQ.laterKinds.includes(kind);
 
-/** A decision with a deadline: "Later" before its day (1-B kinds only), a hold on it. */
+/** A decision with a deadline: "Later" before its day (1-B kinds only), a hold on it (unless its source holds nothing today). */
 function decisionFrom(kind: DecisionKind, item: DecisionSourceItem, save: CareerSave): PendingDecision {
   const deadline = item.deadline ?? null;
   const canWait = laterKind(kind) && save.phase === "running" && deadline !== null && isBefore(save.clock, deadline);
   const parked = canWait && (save.parkedDecisions ?? []).includes(item.id);
-  return { kind, id: item.id, deadline, canWait, parked, holds: !parked };
+  return { kind, id: item.id, deadline, canWait, parked, holds: !parked && item.holds !== false };
 }
 
 /** A decision due now: no deadline, no "Later", it holds. */
@@ -347,7 +355,9 @@ export function parkDecisionFlow(input: CareerSave, id: string): FlowResult {
  * Worlds window, the rollover — one tier lower still when this was a
  * demoted renewal, `sponsorDemotedSlot`). Allowed any day, the deadline day
  * too, and in the season review (rc.34 review: a Worlds-window decision
- * holds the rollover there until answered).
+ * holds the rollover there until answered). rc.36 (front S2, Miguel on
+ * rc.35): HQ no longer offers it ("Decide later" only); kept for the tests'
+ * clock walker and the store's API.
  */
 export function declineSponsorOffersFlow(input: CareerSave): FlowResult {
   if ((input.phase !== "running" && input.phase !== "seasonReview") || !input.sponsorOffers?.length) {

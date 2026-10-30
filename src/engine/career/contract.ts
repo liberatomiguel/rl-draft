@@ -26,6 +26,17 @@
  * every closed way names its reason (`NegotiationAnswer.limits`), and only a
  * player above CAREER_PRIZE_SHARE.shareThresholdOverall asks a share.
  *
+ * rc.36 (front S2, Miguel on rc.35: "he answers only after you send the
+ * offer, and a refusal raises his requirements; every lever counts, the
+ * signing bonus included"): the answer is read on the offer's WORTH to him
+ * (its wage plus what its share and bonus are worth against his ask), so
+ * under his ask every lever moves it on its own — a share or bonus press no
+ * longer moves the wage back (only an offer at his full ask still trades
+ * one for the other). Each refusal this window (`refusals`, counted in the
+ * save by the flows) raises what he needs (CAREER_NEGOTIATION
+ * `refusalRaisePct` × his ask, at most `refusalsCounted` times); the
+ * answer names what each lever is worth (`effects`).
+ *
  * Engine rules: pure, deterministic (his flexibility is a seeded draw per
  * player and window), no React; every number from balance.ts.
  */
@@ -211,6 +222,30 @@ export interface NegotiationZone {
   bonusStep: number;
   /** rc.35 (front N): what the contract length takes off his floor this talk (weekly). */
   lengthReliefWeekly: number;
+  /** rc.36 (front S2): what his refusals this window add to his floor (weekly; never past his ask). */
+  raiseWeekly: number;
+  /**
+   * rc.36 (front S2): the talk in the offer's worth to him (weekly money at
+   * his own share and bonus) — what he needs for sure (his floor), his ask,
+   * and where his odds reach 0 %. Every lever moves the offer's worth
+   * (`NegotiationAnswer.worth`) along this line; only his refusals move it.
+   */
+  needWorth: number;
+  askWorth: number;
+  zeroWorth: number;
+}
+
+/**
+ * rc.36 (front S2): what each lever adds to the offer against his ask, in
+ * weekly money (positive = it helps the offer): the share and the bonus
+ * over (or under) what he asks, the length's relief on his floor, and minus
+ * what his refusals raised it by.
+ */
+export interface TalkEffects {
+  share: number;
+  bonus: number;
+  length: number;
+  refusals: number;
 }
 
 /**
@@ -244,6 +279,12 @@ export interface NegotiationAnswer {
   accepted: boolean;
   /** The deal on the table: the offer when he signs it, else his counter. A confirm writes it only when `accepted`. */
   terms: ContractTerms;
+  /**
+   * rc.36 (front S2): the offer as a contract, whatever he answers — what a
+   * sheet prices (the money it would move) before the offer is sent, so the
+   * consequences never give his answer away.
+   */
+  offered: ContractTerms;
   /** When he refuses: the nearest deal he signs for sure (the share and bonus offered, his floor). Null when he signs. */
   counter: ContractTerms | null;
   /** His weekly ask at his own share minus the weekly wage on the table (what the talk saves; negative = it costs more). */
@@ -252,6 +293,24 @@ export interface NegotiationAnswer {
   flex: number;
   /** rc.35 (front N): the contract length the talk was priced on. */
   lengthSeasons: number;
+  /** rc.36 (front S2): the offer's worth to him (weekly; at most his ask) — what his odds read. */
+  worth: number;
+  /** rc.36 (front S2): what each lever is worth to him (`TalkEffects`). */
+  effects: TalkEffects;
+  /** rc.36 (front S2): the offers he refused this window, as counted (0 … refusalsCounted). */
+  refusals: number;
+}
+
+/** rc.36 (front S2): the refusals a talk counts — whole, 0 … CAREER_NEGOTIATION.refusalsCounted. */
+export function countedRefusals(refusals: number | undefined): number {
+  return clamp(Math.floor(refusals ?? 0), 0, Math.max(0, CAREER_NEGOTIATION.refusalsCounted));
+}
+
+/** rc.36 (front S2): what one refusal adds to his floor (weekly) — refusalRaisePct of his ask, whole quanta, at least one. */
+export function refusalRaiseWeeklyFor(askWeekly: number): number {
+  const q = CAREER_PAYROLL.weeklyQuantum;
+  if (CAREER_NEGOTIATION.refusalRaisePct <= 0) return 0;
+  return Math.max(q, Math.round((askWeekly * CAREER_NEGOTIATION.refusalRaisePct) / q) * q);
 }
 
 /** rc.35 (front N): his odds at `deficit` weekly money under his floor — smoothstep from 1 (at the floor) to 0 (`fall` under it). */
@@ -291,6 +350,12 @@ export function negotiationRollFor(
  * window; omitted = 1, he never signs under the floor). When he refuses he
  * counters with his floor at the same share and bonus. Monotone in every
  * lever, deterministic, one round.
+ *
+ * rc.36 (front S2): his odds read the offer's exact worth (`worth`: the wage
+ * plus the share and bonus shifts, unrounded), so every lever press moves
+ * them under his floor; `refusals` (the offers he turned down this window)
+ * raise his floor by `refusalRaiseWeeklyFor` each, at most refusalsCounted
+ * times and never past his ask.
  */
 export function negotiationAnswerFor(input: {
   ask: { wagePerSplit: number; sharePct: number; bonus?: number };
@@ -302,6 +367,8 @@ export function negotiationAnswerFor(input: {
   lengthSeasons?: number;
   /** rc.35: this window's roll (`negotiationRollFor`); omitted = 1 (never signs under the floor). */
   roll?: number;
+  /** rc.36: the offers he refused this window (`countedRefusals`); omitted = 0. */
+  refusals?: number;
 }): NegotiationAnswer {
   const S = CAREER_PRIZE_SHARE;
   const N = CAREER_NEGOTIATION;
@@ -321,11 +388,15 @@ export function negotiationAnswerFor(input: {
   const flexGap = Math.floor(((1 - input.flex) * askWeekly) / q + 1e-9) * q;
   const lengthReliefWeekly = Math.floor((askWeekly * N.lengthReliefPerSeason * (len - 1)) / q + 1e-9) * q;
   const gapWeekly = clamp(Math.max(flexGap, N.minZoneSteps * stepWeekly) + lengthReliefWeekly, 0, askWeekly - minWeekly);
-  const floorAtAsk = askWeekly - gapWeekly;
+  const baseFloorAtAsk = askWeekly - gapWeekly;
+  // rc.36 (front S2): his refusals this window raise the floor, never past his ask.
+  const refusals = countedRefusals(input.refusals);
+  const raiseWeekly = Math.min(gapWeekly, refusals * refusalRaiseWeeklyFor(askWeekly));
+  const floorAtAsk = baseFloorAtAsk + raiseWeekly;
 
-  // The share lever (rc.35: also for a player who asks none).
+  // The share lever (rc.35: also for a player who asks none). Its range reads the floor before any refusal.
   const shareLever = CAREER_PRIZES.playerShare.enabled;
-  const roomAbove = Math.max(0, Math.floor((floorAtAsk - minWeekly) / pointWeekly));
+  const roomAbove = Math.max(0, Math.floor((baseFloorAtAsk - minWeekly) / pointWeekly));
   const mostAbove = Math.min(S.maxPct, askShare + S.maxAboveAsk);
   const shareMin = shareLever ? Math.min(askShare, Math.max(S.minPct, askShare - S.maxBelowAsk)) : askShare;
   const shareMax = shareLever ? Math.max(askShare, Math.min(mostAbove, askShare + roomAbove)) : askShare;
@@ -354,20 +425,32 @@ export function negotiationAnswerFor(input: {
     const wagePerSplit = weekly >= topWeekly ? topPerSplit : perSplitForWeekly(weekly);
     return { wagePerSplit, weekly: weeklyWage(wagePerSplit), sharePct: share, bonus };
   };
-  const odds = talkOddsFor(floorWeekly - offerWeekly, fall);
+  // rc.36 (front S2): his odds read the offer's exact worth, so every lever moves them (the
+  // rounded floor above is the wage where they reach 100 %: at it the worth meets his floor).
+  const worth = Math.min(askWeekly, offerWeekly + shift);
+  const odds = talkOddsFor(floorAtAsk - (offerWeekly + shift), fall);
   const roll = input.roll ?? 1;
   const accepted = odds >= 1 || odds > roll;
+  const offered = termsAt(offerWeekly);
   const counter = accepted ? null : termsAt(floorWeekly);
-  const terms = accepted ? termsAt(offerWeekly) : counter!;
+  const terms = accepted ? offered : counter!;
+  // At his full ask the share and bonus trade against the wage (`talkPressFor`); under it they add worth.
+  const atTop = offerWeekly >= topWeekly;
   const limits: TalkLimits = {
     wageDown: offerWeekly > minWeekly ? null : "minimum",
     wageUp: offerWeekly < topWeekly ? null : "ask",
     shareDown: share > shareMin ? null : share <= 0 ? "none" : "least",
-    // A share point or a bonus step that would push the wage under the league minimum buys nothing: closed.
+    // At his full ask a share point or a bonus step that would push the wage under the league minimum buys nothing: closed.
     shareUp:
-      share >= shareMax ? (shareMax < mostAbove ? "minimum" : "most") : offerWeekly - pointWeekly < minWeekly ? "minimum" : null,
+      share >= shareMax
+        ? shareMax < mostAbove
+          ? "minimum"
+          : "most"
+        : atTop && offerWeekly - pointWeekly < minWeekly
+          ? "minimum"
+          : null,
     bonusDown: bonus > 0 ? null : "none",
-    bonusUp: bonus >= bonusMax ? "most" : offerWeekly <= minWeekly ? "minimum" : null,
+    bonusUp: bonus >= bonusMax ? "most" : atTop && offerWeekly <= minWeekly ? "minimum" : null,
   };
   return {
     ask: { wagePerSplit: askWage, weekly: askWeekly, sharePct: askShare, bonus: askBonus },
@@ -386,31 +469,53 @@ export function negotiationAnswerFor(input: {
       bonusMax,
       bonusStep,
       lengthReliefWeekly,
+      raiseWeekly,
+      needWorth: floorAtAsk,
+      askWorth: askWeekly,
+      zeroWorth: floorAtAsk - fall,
     },
     limits,
     odds,
     accepted,
     terms,
+    offered,
     counter,
     savingWeekly: askWeekly - terms.weekly,
     flex: input.flex,
     lengthSeasons: len,
+    worth,
+    effects: {
+      share: Math.round((share - askShare) * pointWeekly),
+      bonus: Math.round(bonusShift),
+      length: lengthReliefWeekly,
+      refusals: -raiseWeekly,
+    },
+    refusals,
   };
 }
 
 /** rc.34 (front I) / rc.35 (front N): the three levers of the talk. */
 export type TalkLever = "wage" | "share" | "bonus";
 
+/** rc.36 (front S2): the offer is at his full ask (its wage at the zone's top) — the share and bonus trade against the wage there. */
+export function talkAtFullAsk(answer: NegotiationAnswer): boolean {
+  return answer.offer.weekly >= answer.zone.topWeekly;
+}
+
 /**
  * rc.34 (front I), rc.35 (front N): the offer one press of a lever makes —
  * the wage by one stepper press (between the minimum and his ask; rc.35: it
- * may go under his floor), the share by one point and the bonus by one step
- * with the wage moved the other way by what that lever is worth, so the
- * offer keeps its place against the zone. Null when that way is closed
- * (`answer.limits` says why).
+ * may go under his floor), the share by one point and the bonus by one step.
+ * rc.36 (front S2, Miguel on rc.35: "every lever counts"): under his ask a
+ * share or bonus press moves only that lever, so its worth moves his answer
+ * (rc.35 moved the wage back, and the answer never changed); at his full
+ * ask it still trades against the wage (the offer stays his full ask — more
+ * than that buys nothing). Null when that way is closed (`answer.limits`
+ * says why).
  */
 export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1 | -1): ContractOffer | null {
   const { zone, offer, limits } = answer;
+  const trade = talkAtFullAsk(answer);
   if (lever === "wage") {
     if (dir < 0) {
       return limits.wageDown ? null : { ...offer, weekly: Math.max(zone.minWeekly, offer.weekly - zone.stepWeekly) };
@@ -419,11 +524,16 @@ export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1
   }
   if (lever === "share") {
     if (!zone.shareLever) return null;
-    if (dir < 0) return limits.shareDown ? null : { ...offer, weekly: offer.weekly + zone.pointWeekly, sharePct: offer.sharePct - 1 };
-    return limits.shareUp ? null : { ...offer, weekly: Math.max(0, offer.weekly - zone.pointWeekly), sharePct: offer.sharePct + 1 };
+    if (dir < 0) {
+      if (limits.shareDown) return null;
+      return { ...offer, sharePct: offer.sharePct - 1, weekly: trade ? offer.weekly + zone.pointWeekly : offer.weekly };
+    }
+    if (limits.shareUp) return null;
+    return { ...offer, sharePct: offer.sharePct + 1, weekly: trade ? Math.max(0, offer.weekly - zone.pointWeekly) : offer.weekly };
   }
   const nextBonus = clamp(offer.bonus + dir * zone.bonusStep, 0, zone.bonusMax);
   if ((dir < 0 && limits.bonusDown) || (dir > 0 && limits.bonusUp)) return null;
+  if (!trade) return { ...offer, bonus: nextBonus };
   const perDollar = CAREER_NEGOTIATION.bonusWeight / (answer.lengthSeasons * CAREER_PAYROLL.weeksPerSeason);
   const q = CAREER_PAYROLL.weeklyQuantum;
   const wageMove = Math.round(((nextBonus - offer.bonus) * perDollar) / q) * q;
@@ -433,19 +543,23 @@ export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1
 /**
  * rc.35 (front N): the offer a slider makes when it sets one lever to
  * `value` — the wage as is (on the weekly quantum); the share or the bonus
- * with the wage moved the other way by what the change is worth, so the
- * offer keeps its place against the zone (several presses of `talkPressFor`
- * at once). The engine clamps whatever comes back.
+ * as set (rc.36: under his ask the wage stays, so the lever's worth moves
+ * his answer; at his full ask the wage moves the other way by what the
+ * change is worth — several presses of `talkPressFor` at once). The engine
+ * clamps whatever comes back.
  */
 export function talkSetFor(answer: NegotiationAnswer, lever: TalkLever, value: number): ContractOffer {
   const { offer, zone } = answer;
   const q = CAREER_PAYROLL.weeklyQuantum;
+  const trade = talkAtFullAsk(answer);
   if (lever === "wage") return { ...offer, weekly: Math.round(value / q) * q };
   if (lever === "share") {
     const share = clamp(Math.round(value), zone.shareMin, zone.shareMax);
+    if (!trade) return { ...offer, sharePct: share };
     return { ...offer, sharePct: share, weekly: Math.max(0, offer.weekly - (share - offer.sharePct) * zone.pointWeekly) };
   }
   const bonus = clamp(Math.round(value / CAREER_ECONOMY.roundQuantum) * CAREER_ECONOMY.roundQuantum, 0, zone.bonusMax);
+  if (!trade) return { ...offer, bonus };
   const perDollar = CAREER_NEGOTIATION.bonusWeight / (answer.lengthSeasons * CAREER_PAYROLL.weeksPerSeason);
   const wageMove = Math.round(((bonus - offer.bonus) * perDollar) / q) * q;
   return { ...offer, bonus, weekly: Math.max(0, offer.weekly - wageMove) };

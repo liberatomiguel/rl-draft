@@ -36,6 +36,7 @@ import {
   setStartersFlow,
   signingPlanFor,
   signingTalkFor,
+  talkRefusalsOf,
   signPlayerFlow,
   type CreateCareerInput,
 } from "./careerFlow";
@@ -397,10 +398,9 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     const r2 = signPlayerFlow(save, target.id, { lengthSeasons: 2, releaseId: "nobody" });
     expect(r2.error).toBe("invalid");
     expect(moneyAndSlots(r2.save)).toBe(moneyAndSlots(save));
-    // rc.33 (ECO-11): an offer under his floor — nothing moves, and nothing hardens.
+    // rc.33 (ECO-11): an offer under his floor — nothing moves (rc.36: only his refusal is counted).
     const r3 = signPlayerFlow(save, target.id, { lengthSeasons: 2, offer: underFloorOffer(save, target) });
     expect(r3.error).toBe("negotiationCounter");
-    expect(r3.save).toBe(save);
     expect(moneyAndSlots(r3.save)).toBe(moneyAndSlots(save));
     // A full squad + a leaver whose severance breaks the floor: nothing moves.
     const full = signOk(save, target.id);
@@ -454,7 +454,7 @@ describe("ECO-03 — refresh mid-negotiation (store reload)", () => {
     return store.getState().slots[store.getState().activeSlot!]!;
   }
 
-  it("an offer under his floor moves nothing across a reload; the signing then charges exactly once", async () => {
+  it("an offer under his floor moves no money across a reload; his refusal survives it; the signing then charges exactly once", async () => {
     store.getState().createCareer(0, INPUT, 47_101);
     const fresh = store.getState().slots[0]!;
     const target = freeAgents(fresh)[0];
@@ -462,12 +462,18 @@ describe("ECO-03 — refresh mid-negotiation (store reload)", () => {
     const under = underFloorOffer(fresh, target);
     store.getState().signPlayer(target.id, { lengthSeasons: 2, offer: under });
     expect(store.getState().lastError).toBe("negotiationCounter");
+    const answered = store.getState().slots[0]!;
 
     const reloaded = await reload();
     expect(reloaded.finances.balance).toBe(fresh.finances.balance);
     expect(reloaded.squad.map((p) => p.id)).toEqual(fresh.squad.map((p) => p.id));
-    // rc.33 (ECO-11): nothing hardens and nothing re-rolls — the reload answers the same.
-    expect(signingTalkFor(reloaded, target, ask, under)).toEqual(signingTalkFor(fresh, target, ask, under));
+    // rc.33 (ECO-11): nothing re-rolls. rc.36 (front S2): the refusal is persisted — a reload cannot
+    // reset what he now needs, and answers exactly as before the reload.
+    expect(talkRefusalsOf(reloaded, target.id)).toBe(1);
+    expect(signingTalkFor(reloaded, target, ask, under)).toEqual(signingTalkFor(answered, target, ask, under));
+    expect(signingTalkFor(reloaded, target, ask, under).zone.needWorth).toBeGreaterThan(
+      signingTalkFor(fresh, target, ask, under).zone.needWorth,
+    );
 
     store.getState().signPlayer(target.id, { lengthSeasons: 2 });
     expect(store.getState().lastError).toBeNull();

@@ -950,7 +950,7 @@ export function runPackageScrims(save: CareerSave): void {
   const t = save.training;
   const plan = t?.plan;
   const day = save.clock.day;
-  if (!t || !plan?.package || plan.lastScrimDay >= day) return;
+  if (!t || !plan?.package || day < plan.packageFromDay || plan.lastScrimDay >= day) return;
   if (save.phase !== "running" || save.activeEvent || proposalHoldsToday(save)) return;
   const days = scrimDaysOf(plan.package.scrimsPerWeek);
   const dow = dayOfWeekOf(day);

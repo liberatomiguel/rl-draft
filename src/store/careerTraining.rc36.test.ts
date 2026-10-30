@@ -105,6 +105,16 @@ describe("rc.36 T2 — the promise: paid along the way, the rest on completion",
     expect(trainingBlockOf(started).promise!.paid).toBe(0);
   });
 
+  it.each([2, 4])("a cycle started after day %i's session does not run a scrim before its start", (day) => {
+    const start = playTo(createCareerSave(INPUT, 36_010), day);
+    const started = setTrainingPackageFlow(start, DEV).save;
+    expect(trainingOf(started).plan!.cycleFrom).toBe(day + 1);
+    expect(started.squad).toEqual(start.squad);
+    expect(started.scrimLog).toEqual(start.scrimLog);
+    const nextScrim = playTo(started, day === 2 ? 4 : 9);
+    expect(nextScrim.scrimLog.some((entry) => entry.day > day)).toBe(true);
+  });
+
   it("a cycle climbs to about 8–9 of 10 along the way and lands the held rest on its last day — never under the base", () => {
     const start = createCareerSave(INPUT, 36_001);
     const pkg = setTrainingPackageFlow(start, DEV).save;

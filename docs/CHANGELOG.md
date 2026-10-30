@@ -25,6 +25,14 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Fixed — rc.36 integration
+- Starting a training package after the daily session no longer runs an early
+  scrim outside its displayed window. Root cause: sessions respected
+  `packageFromDay`, but package scrims did not. Tuesday/Thursday starts and
+  repeated same-day choices are covered; the base session is never paid twice.
+- Removed the HQ finance view's unused guaranteed-income and debt fields after
+  the compact finance block replaced them; the committed cash projection stays.
+
 ### Added — Phase 0 (technical base)
 - **Season model** (`src/config/season.ts`): the current season is a build-time constant
   (`SEASON.id = 1`, pre-season = 0). `profile.season` tags the season-scoped fields

@@ -124,7 +124,8 @@ function MarketErrorNotice({ className }: { className?: string }) {
   const C = useCareerCopy();
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
-  if (!lastError) return null;
+  // rc.36 (front S2): a refused offer is answered in the talk itself (SalaryNegotiator's send row).
+  if (!lastError || lastError === "negotiationCounter") return null;
   return (
     <div
       role="alert"
@@ -234,8 +235,9 @@ export function MarketScreen() {
     setShown(PAGE);
   }
 
-  // The offer resets to his ask whenever the quote changes.
-  const offerSig = `${target?.view.id ?? ""}|${len}`;
+  // The offer resets to his ask whenever the player changes. rc.36 (front S2): the length is one of the
+  // offer's levers — the offer keeps its place when it changes, so a longer deal moves his answer.
+  const offerSig = target?.view.id ?? "";
   const [prevOfferSig, setPrevOfferSig] = useState(offerSig);
   if (offerSig !== prevOfferSig) {
     setPrevOfferSig(offerSig);
@@ -362,19 +364,16 @@ export function MarketScreen() {
   const offerLen: 1 | 2 | 3 = finalSeason ? 1 : len;
 
   // --- live offer package (single target — cheap, always fresh) ---------------
-  const pack = target
-    ? askPackageFor(target.view, {
-        rep: save.reputation,
-        seasonIndex: save.clock.seasonIndex,
-        difficulty: save.difficulty,
-        careerSeed: save.careerSeed,
-        lengthSeasons: offerLen,
-        contracted:
-          target.splitsRemaining !== null
-            ? { splitsRemaining: target.splitsRemaining }
-            : undefined,
-      })
-    : null;
+  const packFor = (row: MarketRow, lengthSeasons: 1 | 2 | 3) =>
+    askPackageFor(row.view, {
+      rep: save.reputation,
+      seasonIndex: save.clock.seasonIndex,
+      difficulty: save.difficulty,
+      careerSeed: save.careerSeed,
+      lengthSeasons,
+      contracted: row.splitsRemaining !== null ? { splitsRemaining: row.splitsRemaining } : undefined,
+    });
+  const pack = target ? packFor(target, offerLen) : null;
   // ECO-03 (R47): the flow's own plan — the slot and every refusal come from
   // signingPlanFor, the function signPlayerFlow applies. rc.33 (UX-07): a full
   // squad is refused there ("squadFull") — the sheet warns and points to Squad.
@@ -384,7 +383,8 @@ export function MarketScreen() {
   // rc.33 (ECO-10/11): the talk — the engine's one answer to the offer on the table.
   // rc.35 (front N): priced on the contract length; the signing bonus is its lever.
   const talk = target && pack ? signingTalkFor(save, target.view, pack, offer, offerLen) : null;
-  const cost = pack ? pack.fee + (talk ? talk.terms.bonus : pack.signingBonus) : 0;
+  // rc.36 (front S2): the consequences price the offer itself — his answer comes only once it is sent.
+  const cost = pack ? pack.fee + (talk ? talk.offered.bonus : pack.signingBonus) : 0;
   const balanceAfter = save.finances.balance - cost;
   const blockReason = !planError
     ? null
@@ -401,11 +401,11 @@ export function MarketScreen() {
     squadSalaries,
     coachSalary,
     remove: [],
-    add: [talk?.terms.wagePerSplit ?? 0],
+    add: [talk?.offered.wagePerSplit ?? 0],
   });
   // rc.32 (M4): the Backer's line on this wage bill, and the runway the deal leaves.
   const backerRisk =
-    pack !== null && !blockReason && balanceAfter < backerLineOf(save).floor + (talk?.terms.wagePerSplit ?? pack.salaryPerSplit);
+    pack !== null && !blockReason && balanceAfter < backerLineOf(save).floor + (talk?.offered.wagePerSplit ?? pack.salaryPerSplit);
   const runwayLeft = runwayWeeksAfter({
     balance: save.finances.balance,
     weeklyNet: weeklyStatementOf(save).net,
@@ -874,29 +874,6 @@ export function MarketScreen() {
         onClose={() => setOfferOpen(false)}
         title={target?.view.name ?? ""}
         wide
-        actions={
-          <>
-            <Button variant="ghost" onClick={() => setOfferOpen(false)}>
-              {C.common.cancel}
-            </Button>
-            <Button
-              variant="primary"
-              disabled={Boolean(blockReason) || !talk?.accepted}
-              onClick={() => {
-                if (!target) return;
-                signPlayer(target.view.id, { lengthSeasons: offerLen, offer });
-                // A refusal keeps the modal open with the reason (the talk's
-                // answer is shown before this confirm, so it is never a surprise).
-                if (!useCareerStore.getState().lastError) {
-                  setOfferOpen(false);
-                  setTarget(null);
-                }
-              }}
-            >
-              {C.market.signCta}
-            </Button>
-          </>
-        }
       >
         {target && pack ? (
           <div className="space-y-4">
@@ -918,76 +895,89 @@ export function MarketScreen() {
               </div>
             ) : null}
 
-            {/* ECO-03 (R47): the squad slot (never the price) + contract length */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <p className="kicker mb-1.5 text-[10px]">{C.market.slotLabel}</p>
+            {/* ECO-03 (R47): the squad slot (never the price); rc.36 (front S2): the length is a lever of the talk below */}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <div className="min-w-0">
+                <p className="kicker mb-1 text-[10px]">{C.market.slotLabel}</p>
                 {plan ? (
                   <p className="text-xs font-semibold text-ink">
                     {plan.slot === "reserve" ? C.market.slotReserve : C.market.slotStarter}
                   </p>
                 ) : null}
-                <p className="mt-1 text-[10px] text-faint">{C.market.samePrice}</p>
               </div>
-              <div>
-                <p className="kicker mb-1.5 text-[10px]">{C.market.lengthLabel}</p>
-                <div className="flex gap-1.5">
-                  {(finalSeason ? ([1] as const) : ([1, 2, 3] as const)).map((l) => (
-                    <Chip
-                      key={l}
-                      active={offerLen === l}
-                      onClick={() => setLen(l)}
-                      className="flex-1 justify-center"
-                    >
-                      {C.market.seasons(l)}
-                    </Chip>
-                  ))}
-                </div>
-                {finalSeason ? (
-                  <p className="mt-1 text-[10px] font-semibold text-orange-bright">{C.market.finalSeasonDeal}</p>
-                ) : null}
-              </div>
+              <p className="text-[10px] text-faint">{C.market.samePrice}</p>
             </div>
 
-            {/* Asking terms */}
-            <div className="rounded-lg border border-line-strong bg-white/[0.03] p-3">
-              <p className="kicker mb-2 text-[10px]">{C.market.ask}</p>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-sub">{C.squad.wage}</span>
-                  <span className="display font-bold text-ink">
-                    {C.squad.perWeek(formatMoney(weeklyWage(pack.salaryPerSplit)))}
-                  </span>
+            {/* Asking terms: rc.36 (front S2) — the talk shows his wage, share and bonus; the fee is not negotiable */}
+            {target.orgRef || squadFull ? (
+              <div className="rounded-lg border border-line-strong bg-white/[0.03] p-3">
+                <p className="kicker mb-2 text-[10px]">{C.market.ask}</p>
+                <div className="space-y-1 text-sm">
+                  {squadFull ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sub">{C.squad.wage}</span>
+                      <span className="display font-bold text-ink">
+                        {C.squad.perWeek(formatMoney(weeklyWage(pack.salaryPerSplit)))}
+                      </span>
+                    </div>
+                  ) : null}
+                  {/* rc.33 (ECO-10): the prize share he asks (rc.34: "No prize share" under the threshold). */}
+                  {talk && squadFull ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sub">{C.player.prizeShare}</span>
+                      <span className="display font-bold text-ink">
+                        {prizeShareLabelOf(C, { prizeSharePct: talk.ask.sharePct })}
+                      </span>
+                    </div>
+                  ) : null}
+                  {target.orgRef ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sub">{C.market.fee}</span>
+                      <span className="display font-bold text-orange-bright">
+                        {formatMoney(pack.fee)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sub">{C.market.signingBonus}</span>
+                      <span className="display font-bold text-ink">{formatMoney(pack.signingBonus)}</span>
+                    </div>
+                  )}
                 </div>
-                {/* rc.33 (ECO-10): the prize share he asks (rc.34: "No prize share" under the threshold). */}
-                {talk ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sub">{C.player.prizeShare}</span>
-                    <span className="display font-bold text-ink">
-                      {prizeShareLabelOf(C, { prizeSharePct: talk.ask.sharePct })}
-                    </span>
-                  </div>
-                ) : null}
-                {target.orgRef ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sub">{C.market.fee}</span>
-                    <span className="display font-bold text-orange-bright">
-                      {formatMoney(pack.fee)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sub">{C.market.signingBonus}</span>
-                    <span className="display font-bold text-ink">
-                      {formatMoney(talk ? talk.terms.bonus : pack.signingBonus)}
-                    </span>
-                  </div>
-                )}
               </div>
-            </div>
+            ) : null}
 
-            {/* rc.33 (ECO-10/11): the contract talk — wage + prize share, the zone, the answer */}
-            {talk && !squadFull ? <SalaryNegotiator talk={talk} onChange={setOffer} /> : null}
+            {/* rc.33 (ECO-10/11): the contract talk. rc.36 (front S2): the levers shape the offer,
+                "Send offer" gets his answer (a refusal raises what he needs this window). */}
+            {talk && !squadFull ? (
+              <SalaryNegotiator
+                key={target.view.id}
+                talk={talk}
+                onChange={setOffer}
+                length={{
+                  value: offerLen,
+                  options: finalSeason ? ([1] as const) : ([1, 2, 3] as const),
+                  onChange: setLen,
+                  // rc.36 (front S2): his weekly ask at each length — the length moves the price and his floor.
+                  sub: (l) => formatMoney(weeklyWage(packFor(target, l).salaryPerSplit), { compact: true }),
+                  note: finalSeason ? C.market.finalSeasonDeal : undefined,
+                }}
+                blocked={blockReason && planError !== "squadFull" ? blockReason : null}
+                onSend={() => {
+                  signPlayer(target.view.id, { lengthSeasons: offerLen, offer });
+                  const error = useCareerStore.getState().lastError;
+                  if (!error) {
+                    setOfferOpen(false);
+                    setTarget(null);
+                    return "signed";
+                  }
+                  if (error !== "negotiationCounter") return "error";
+                  // rc.36 (front S2): the talk shows his answer itself — no error lingers into other screens.
+                  useCareerStore.getState().clearError();
+                  return "refused";
+                }}
+              />
+            ) : null}
 
             {/* Why this price — the wage effects carry their unit (per split:
                 converted to the weekly line they would not add up after its

@@ -694,6 +694,33 @@ export function cappedSeasonFine(
   return { fine: allowed, finedSeason: { s: seasonIndex, amount: prior + allowed } };
 }
 
+/**
+ * rc.36 (front S2, CAREER_SPONSOR.deadlineRule "signSafest"): the offer a
+ * decision nobody answered signs — the smallest fine a miss can cost, then
+ * the most weekly pay, then the brand id (stable). A Steady offer when one
+ * is on the desk; an offer from before rc.34 (no terms) reads its base.
+ */
+export function safestSponsorOfferOf<T extends Pick<SponsorState, "sponsorId" | "basePerSplit" | "bonus" | "terms">>(
+  offers: readonly T[],
+): T | null {
+  let best: T | null = null;
+  let bestFine = Infinity;
+  let bestWeekly = -Infinity;
+  for (const o of offers) {
+    const fine = o.terms ? fineMaxOf(o.terms, o.bonus) : 0;
+    const weekly = o.terms?.weekly ?? o.basePerSplit;
+    const better =
+      fine < bestFine ||
+      (fine === bestFine && (weekly > bestWeekly || (weekly === bestWeekly && best !== null && o.sponsorId < best.sponsorId)));
+    if (better) {
+      best = o;
+      bestFine = fine;
+      bestWeekly = weekly;
+    }
+  }
+  return best;
+}
+
 /** The best tier the reputation allows (one lower after a Steady deal ran out of patience). */
 export function offerTierFor(rep: number, demote: boolean): 1 | 2 | 3 | 4 {
   let best = 1;

@@ -23,6 +23,9 @@ import {
   prizeShareOfPodium,
   sharePaysOn,
   sharePointWeeklyFor,
+  countedRefusals,
+  refusalRaiseWeeklyFor,
+  talkAtFullAsk,
   talkPressFor,
   talkSetFor,
   wageStepWeeklyFor,
@@ -356,7 +359,7 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
     }
   });
 
-  it("every press the sheet can make moves the number it names; a share press moves the wage one point the other way and never turns a yes into a counter", () => {
+  it("every press the sheet can make moves the number it names; at his full ask a share press moves the wage one point the other way, under it only the share moves (rc.36)", () => {
     let states = 0;
     for (const ask of GRID_ASKS) {
       for (const share of GRID_SHARES) {
@@ -381,8 +384,18 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
                 expect(Math.abs(b.offer.weekly - a.offer.weekly)).toBeGreaterThanOrEqual(q);
               } else {
                 expect(b.offer.sharePct - a.offer.sharePct).toBe(dir);
-                expect(a.offer.weekly - b.offer.weekly).toBe(dir * a.zone.pointWeekly);
-                expect(b.accepted).toBe(a.accepted);
+                if (talkAtFullAsk(a)) {
+                  // At his full ask the share trades against the wage: the offer stays his full ask.
+                  expect(a.offer.weekly - b.offer.weekly).toBe(dir * a.zone.pointWeekly);
+                  expect(b.accepted).toBe(a.accepted);
+                } else {
+                  // rc.36 (front S2): under his ask only the share moves (the wage only ever clamps to his ask),
+                  // so its worth moves his answer the press's way.
+                  expect(b.offer.weekly).toBe(Math.min(a.offer.weekly, b.zone.topWeekly));
+                  expect(Math.sign(b.worth - a.worth)).toBe(dir);
+                  if (dir > 0) expect(b.odds).toBeGreaterThanOrEqual(a.odds);
+                  else expect(b.odds).toBeLessThanOrEqual(a.odds);
+                }
               }
             }
           }
@@ -599,5 +612,121 @@ describe("rc.35 front N — under the zone, the signing bonus and the contract l
     expect(withShare.zone.topWeekly).toBe(none.zone.topWeekly - 2 * none.zone.pointWeekly);
     const set = talkSetFor(none, "share", 2);
     expect(talk({ offer: set }).accepted).toBe(true);
+  });
+});
+
+describe("rc.36 front S2 — he answers the offer sent; a refusal raises what he needs; every lever counts (Miguel on rc.35)", () => {
+  const talk = (o: { ask?: number; share?: number; bonus?: number; len?: number; roll?: number; refusals?: number; offer?: ContractOffer }) =>
+    negotiationAnswerFor({
+      ask: { wagePerSplit: o.ask ?? 12_000, sharePct: o.share ?? 4, bonus: o.bonus ?? 4_000 },
+      flex: 0.97,
+      offer: o.offer,
+      minWagePerSplit: 250,
+      lengthSeasons: o.len,
+      roll: o.roll,
+      refusals: o.refusals,
+    });
+
+  it("each refusal raises his floor by refusalRaisePct of his ask, at most refusalsCounted times and never past his ask; the ask always signs", () => {
+    const N = CAREER_NEGOTIATION;
+    for (const ask of [1_100, 5_600, 12_000, 72_000]) {
+      for (const len of [1, 2, 3]) {
+        const base = talk({ ask, len });
+        const step = refusalRaiseWeeklyFor(base.ask.weekly);
+        let prev = base;
+        for (let r = 1; r <= N.refusalsCounted + 2; r++) {
+          const a = talk({ ask, len, refusals: r });
+          const counted = Math.min(r, N.refusalsCounted);
+          expect(a.refusals).toBe(counted);
+          // What he needs (in the offer's worth) rises one step a refusal, capped at his ask.
+          expect(a.zone.needWorth).toBe(Math.min(base.ask.weekly, base.zone.needWorth + counted * step));
+          expect(a.zone.raiseWeekly).toBe(a.zone.needWorth - base.zone.needWorth);
+          expect(a.effects.refusals).toBe(-a.zone.raiseWeekly);
+          expect(a.zone.floorWeekly).toBeGreaterThanOrEqual(prev.zone.floorWeekly);
+          // His full ask always signs; his counter (the raised floor) signs.
+          expect(talk({ ask, len, refusals: r }).accepted).toBe(true);
+          const low = talk({ ask, len, refusals: r, offer: { weekly: a.zone.minWeekly } });
+          if (!low.accepted) expect(talk({ ask, len, refusals: r, offer: { ...low.offer, weekly: low.counter!.weekly } }).accepted).toBe(true);
+          prev = a;
+        }
+      }
+    }
+    expect(countedRefusals(undefined)).toBe(0);
+    expect(countedRefusals(-2)).toBe(0);
+    expect(countedRefusals(99)).toBe(N.refusalsCounted);
+  });
+
+  it("the roll is the window's: an offer he refused stays refused after more refusals, and more money never turns a yes into a no", () => {
+    for (const roll of [0.1, 0.4, 0.7, 0.95]) {
+      const top = talk({ roll });
+      for (let w = top.zone.floorWeekly; w >= top.zone.minWeekly; w -= 20) {
+        const offer = { weekly: w };
+        let refusedAt = -1;
+        for (let r = 0; r <= CAREER_NEGOTIATION.refusalsCounted; r++) {
+          const a = talk({ roll, refusals: r, offer });
+          if (refusedAt >= 0) expect(a.accepted).toBe(false);
+          if (!a.accepted && refusedAt < 0) refusedAt = r;
+          if (r > 0) expect(a.odds).toBeLessThanOrEqual(talk({ roll, refusals: r - 1, offer }).odds);
+          if (a.accepted) expect(talk({ roll, refusals: r, offer: { weekly: w + 10 } }).accepted).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("under his ask every lever moves his answer on its own — wage, share, bonus and length — and the answer names what each is worth", () => {
+    const base = talk({});
+    // An offer under his floor, where his odds are between 0 and 100 %.
+    const low = talk({ offer: { weekly: base.zone.floorWeekly - 4 * base.zone.stepWeekly } });
+    expect(low.odds).toBeGreaterThan(0);
+    expect(low.odds).toBeLessThan(1);
+    expect(talkAtFullAsk(low)).toBe(false);
+    for (const lever of ["wage", "share", "bonus"] as TalkLever[]) {
+      const up = talk({ offer: talkPressFor(low, lever, 1)! });
+      const down = talk({ offer: talkPressFor(low, lever, -1)! });
+      expect(up.odds, `${lever}+`).toBeGreaterThan(low.odds);
+      expect(down.odds, `${lever}−`).toBeLessThan(low.odds);
+      if (lever !== "wage") {
+        // Only that lever moved: the wage offered is the same.
+        expect(up.offer.weekly).toBe(low.offer.weekly);
+        expect(down.offer.weekly).toBe(low.offer.weekly);
+      }
+    }
+    // The slider sets a lever the same way: more bonus at the same wage, better odds.
+    const set = talk({ offer: talkSetFor(low, "bonus", low.offer.bonus + 2 * low.zone.bonusStep) });
+    expect(set.offer.weekly).toBe(low.offer.weekly);
+    expect(set.odds).toBeGreaterThan(low.odds);
+    // A longer deal: the same wage has better odds (his floor falls), and the answer says by how much.
+    const long = talk({ len: 3, offer: low.offer });
+    expect(long.odds).toBeGreaterThan(low.odds);
+    expect(long.effects.length).toBe(long.zone.lengthReliefWeekly);
+    expect(long.effects.length).toBeGreaterThan(0);
+    // The effects: the share and bonus over his ask, in weekly money.
+    const rich = talk({ offer: { weekly: low.offer.weekly, sharePct: 6, bonus: 6_000 } });
+    expect(rich.effects.share).toBe(2 * rich.zone.pointWeekly);
+    expect(rich.effects.bonus).toBe(Math.round((2_000 * CAREER_NEGOTIATION.bonusWeight) / 32));
+    expect(rich.worth).toBeCloseTo(Math.min(rich.ask.weekly, low.offer.weekly + rich.effects.share + (2_000 * CAREER_NEGOTIATION.bonusWeight) / 32), 6);
+    // His odds read that worth against what he needs.
+    expect(rich.odds).toBeGreaterThan(low.odds);
+  });
+
+  it("the offer's own terms are priced whatever he answers (a sheet never gives the answer away)", () => {
+    const base = talk({});
+    const low = talk({ offer: { weekly: base.zone.floorWeekly - 6 * base.zone.stepWeekly } });
+    expect(low.accepted).toBe(false);
+    expect(low.offered.weekly).toBe(low.offer.weekly);
+    expect(low.offered.bonus).toBe(low.offer.bonus);
+    expect(low.terms).toEqual(low.counter);
+    expect(base.offered).toEqual(base.terms);
+  });
+
+  it("with refusalRaisePct 0 nothing hardens (rc.35)", () => {
+    const N = CAREER_NEGOTIATION as unknown as { refusalRaisePct: number };
+    const was = N.refusalRaisePct;
+    N.refusalRaisePct = 0;
+    try {
+      expect(talk({ refusals: 3 }).zone.needWorth).toBe(talk({}).zone.needWorth);
+    } finally {
+      N.refusalRaisePct = was;
+    }
   });
 });
