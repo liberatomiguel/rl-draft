@@ -1609,6 +1609,11 @@ R88. **The weekend goes back to HQ, a coach briefing, Championship Sunday
      re-simulating it (the field moves after Sunday); rc.35's disabled
      low-contrast swatches (a silent block).
 
+     Completion review: the full-screen intro also uses the shared dialog focus
+     trap and restoration (Tab never enters the obscured navigation). Verification
+     tools accept CHROME_PATH to reuse an installed Chrome/Edge; it changes no
+     game dependency, save or hosting behavior.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

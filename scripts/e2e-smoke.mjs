@@ -24,7 +24,8 @@
  *    listing in the deals tab, rc.33), Squad, Training, Standings,
  *    Calendar (rc.36, CAL-01: no payroll marker), News, each in the right language.
  * The labels it presses are the copy's (EN and PT, `L` below): update them with the copy.
- * Needs Playwright with its Chromium (cloud sessions have it; never `playwright install`).
+ * Needs Playwright with its Chromium, or CHROME_PATH pointing to an existing Chrome/Edge
+ * installation (the same override as perf-probe; never `playwright install`).
  * Prints one line per scenario ("n/m checks ok, k errors") and the failures.
  */
 import { createRequire } from "node:module";
@@ -313,7 +314,7 @@ async function scenarioCareer(browser, viewport, locale) {
   return { tag, errors, checks };
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
 const out = [];
 for (const viewport of VIEWPORTS) {
   for (const locale of LOCALES) {

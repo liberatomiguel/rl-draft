@@ -38,7 +38,7 @@ import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 import { cx } from "@/lib/util";
 import { useOverlayHold } from "@/store/overlayHoldStore";
 import { ANIM_SCALE, useSettings } from "@/store/settingsStore";
-import { usePageScrollLock } from "@/components/ui/dialog";
+import { useDialogFocus, usePageScrollLock } from "@/components/ui/dialog";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
@@ -64,6 +64,7 @@ export function ChampionshipSunday({
   const animSpeed = useSettings((s) => s.animSpeed);
   const startedRef = useRef(false);
   const primaryRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   // rc.36 (SUN-02): the portal host resolves after mount (SSR-safe), deferred a tick
   // so the set never runs synchronously inside the effect body (React Compiler rule).
   const [host, setHost] = useState<HTMLElement | null>(null);
@@ -90,17 +91,12 @@ export function ChampionshipSunday({
 
   // Keyboard: the primary control takes focus (Enter / Space start), and in
   // watch mode Escape skips the card too.
+  useDialogFocus(dialogRef, host !== null, {
+    onEscape: () => { if (auto) start(true); },
+  });
   useEffect(() => {
     primaryRef.current?.focus({ preventScroll: true });
   }, [host]);
-  useEffect(() => {
-    if (!auto) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") start(true);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
 
   const nameOf = (id: string) => t.teams[id]?.name ?? id;
   const userLine = preview?.opener
@@ -113,6 +109,8 @@ export function ChampionshipSunday({
 
   return createPortal(
     <div
+      ref={dialogRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="championship-sunday-title"

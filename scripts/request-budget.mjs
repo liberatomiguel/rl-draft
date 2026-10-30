@@ -9,9 +9,9 @@
  *                                                   (default http://127.0.0.1:8787)
  *   4. Stop the server (Ctrl+C in its terminal).
  *
- * Needs Playwright with its Chromium (not a project dependency: the cloud
- * sessions have it globally; elsewhere `npm i -g playwright` and
- * `npx playwright install chromium` once).
+ * Needs Playwright with its Chromium, or CHROME_PATH pointing to an existing
+ * Chrome/Edge installation (the same override as perf-probe). Playwright is
+ * a verification tool, not a project dependency.
  *
  * Every run is a FRESH browser context (no cache, no storage): it lands on
  * `/`, lets the cold home settle, clicks "Play now", starts a Classic draft
@@ -458,7 +458,7 @@ function summarize({ viewport, seed, rec }) {
   };
 }
 
-const browser = await chromium.launch({ headless: !flag("headed") });
+const browser = await chromium.launch({ headless: !flag("headed"), ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
 const results = [];
 let failed = false;
 try {

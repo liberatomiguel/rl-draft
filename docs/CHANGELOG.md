@@ -181,6 +181,26 @@ with the root cause — that section doubles as the project's bugfix log.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
 
+### Added — rc.36 front B (UX-04, CAL-01, SUN-01..03; R88)
+- Creation has more crest shapes, symbols and patterns, three layouts, independent free colours,
+  live previews and contrast warnings with suggested fixes. Presets never restrict the choices;
+  older saved crests and procedural rivals keep their appearance.
+- Saturday returns to HQ before the user's Sunday. Start Sunday records an optional, transparent
+  coach briefing and moves exactly one calendar day. Sunday has no extra training or payroll.
+- Championship Sunday opens with a skippable full-screen introduction, static under reduced
+  motion and shown once. Events without the user can be watched round by round, read as results
+  or skipped; their already-settled results are kept compactly for the follow screen.
+
+### Changed — rc.36 front B
+- Transfer windows fill the calendar in blue behind event icons; day details show the champion's
+  crest. Payroll markers leave the calendar and HQ week, with payroll still recorded in Finances.
+- Browser verification tools accept CHROME_PATH for an existing Chrome/Edge installation.
+
+### Fixed — rc.36 front B
+- Keyboard focus stays inside the full-screen Sunday introduction and returns on close. Root
+  cause: moving the card to a custom portal supplied initial focus and scroll locking, but omitted
+  the shared dialog focus trap and restoration used by other modal overlays.
+
 ### Added — rc.35 (Miguel's rc.34 playtest, 31/10 · ROAD-TO-WORLDS-DECISIONS R81–R82)
 
 Five parallel fronts, one independent review, the full re-measure and the browser E2E. The owner's rule
