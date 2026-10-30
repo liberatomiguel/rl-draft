@@ -1,6 +1,6 @@
 # Road to Worlds — status (current state only)
 
-> Last updated: 2026-10-29. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
+> Last updated: 2026-10-30. Spec: `ROAD-TO-WORLDS-DESIGN.md` (grep the section
 > you need). Why: `ROAD-TO-WORLDS-DECISIONS.md` R1–R60. History: `CHANGELOG.md`
 > `[1.5.0-alpha]` and `[2.0.0]`. Do not read any of them whole.
 
@@ -25,14 +25,16 @@
 |---|---|---|---|
 | Calendar, day clock, the R40 weekend | `calendar.ts` (`playoffsDayFor`) | `careerFlow.ts` `processDayArrival`, `eventDayPhaseOf` | `CalendarScreen.tsx`, `event/weekendView.ts`, `ChampionshipSunday` |
 | Direct-8 seeding (R45, `competition.weekSeeding`) | `worldSim.ts` `regionalSeedingFor` | `userSeedRatingFor`, `userIsDirect` | `event/lobbyField.ts` |
-| World, fields, seeding, local scene (R49 anchor `localAnchorFor`), real-org intake | `worldSim.ts`, `localScene.ts` | rollover, Monday block in `careerFlow.ts` | `EventScreen.tsx`, `event/lobbyField.ts` |
+| World, fields, seeding, local scene (R49 anchor `localAnchorFor`), real-org intake (R66 `orgIntake`) | `worldSim.ts`, `localScene.ts` | rollover, Monday block in `careerFlow.ts` | `EventScreen.tsx`, `event/lobbyField.ts` |
 | Name banks by role, rookie gamertags (R42) | `data/career/names.ts`, `localScene.ts`, `development.ts` | `world.rookieNames` | — |
 | Reveal cursor, spoiler hold (R43) | — | `careerRevealStore.ts` (sessionStorage) | `event/eventPlayback.ts`, `careerUi.ts` `useRevealHeldEventId` |
 | Results, standings, qualified refs, the R49 race tables | `careerResults.ts`, `raceTable.ts` | `finishEvent`, `careerUi.raceTableOf` | `StandingsScreen.tsx`, `hub/RaceBlock.tsx` |
 | Match Center timeline, clock, OT (R41) | `matchTimeline.ts` | — | `event/CareerMatchCenter.tsx`, `GameClock.tsx` |
 | Development (model 2, R55–R57 `developmentProfileOf`), drills, coach effects, the age clock (R54) and retirement (R48) | `development.ts`, `worldSim.ts` | `applyDailyTraining`, `setDrillFlow`, rollover | `TrainingScreen.tsx` |
-| Economy: the money index (R50), payroll, the founding partner (R51), the Backer and breaches (R52 `backerLineFor`, `restructureAfterBreach`), bank, sponsors, gear | `economy.ts` | `runWeeklyPayroll`, `weeklyStatementOf`, `takeBankLoanFlow` | `FinancesScreen.tsx` |
-| Market, coaches (R47), renewals (R58), listing and late signing (R53) | `market.ts`, `renewal.ts` | `signPlayerFlow`, `renewPlayerFlow`, `listForSaleFlow` | `MarketScreen.tsx`, `RenewalReadout.tsx` |
+| Economy: the money index (R50, R62), payroll, breaches by difficulty and Easy's rescue partner (R61 `breachesToEndFor`, `backerLineFor`), the Monday ring (R63), bank, sponsors, gear | `economy.ts` | `runWeeklyPayroll`, `weeklyStatementOf`, `runwayWeeksOf`, `mondayBalancesOf`, `repairMoneyOnLoad` | `FinancesScreen.tsx`, `finances/BalanceHistory.tsx` |
+| Market, coaches (R47), renewals (R58, R69 jump cap + title raise), the contract talk and the prize share (R64), honest bands (R65) | `market.ts`, `renewal.ts`, `contract.ts` | `signPlayerFlow`, `renewPlayerFlow`, `renewalTermsOfSave`, `signingTalkFor` | `MarketScreen.tsx`, `SalaryNegotiator.tsx`, `RenewalReadout.tsx` |
+| Reputation, the newcomer's path (R68) | `reputation.ts` | `finishEvent` | event digest |
+| A full squad to play (R67) | — | `squadHoldFor`, `emptySeatPriceFor` | hub `NowCards.tsx` |
 | Presets, the career's difficulty (R59) | `difficulty.ts` | `createCareerSave` | `WizardScreen.tsx` |
 | Analytics (#145) | — | `careerAnalytics.ts` | — |
 | Inserts (weekly decision cards) | `inserts.ts` + `data/career/inserts.ts` | `resolveInsertFlow` | hub `NowCards.tsx` |

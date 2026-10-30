@@ -1630,6 +1630,56 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
        which include that accidental prefetch. On rc.32 those runs give 56–59,
        the same as with the mouse parked.
 
+151. **National teams: finding one is not owning its cards (rc.33, COL-01b;
+     supersedes #135's grant on the find).** The find records
+     `profile.nationalDiscovered[lineupId]` (the date, synced to the cloud as
+     a union keeping the earliest) and reveals the album page with a "New
+     album page" toast; it grants nothing. Each drafted national card is
+     collected when the run ends, won or lost, through the same path as
+     every special, and the results ceremony announces it; an abandoned run
+     keeps the discovery only. Why the run's end and not the pick: one rule
+     for every special (the collection already says "draft it and finish the
+     run"), the ceremony already exists, and a pick-and-restart cannot farm
+     cards. Old profiles: a team with any owned card counts as discovered
+     (derived, never written back); granted cards are kept. The drop: a
+     complete team weighs 1, every other ×`nationalUndiscoveredWeight` (3,
+     unchanged); the engine field is `nationalTeams.complete` (a run saved
+     before rc.33 is read through `discovered`, same RNG use). Pacing: the
+     worldwide album (17 teams, 72 cards) now needs at least 72 finds, about
+     420 Classic runs against 150–180 in rc.32 — a Gate 4 question
+     (`nationalTeamChance` or a weight for found-but-incomplete teams).
+
+152. **NEW in the draft means "not owned", decided before the offer
+     (rc.33, COL-02a).** `RunState.offerNew = {round, ids}` is stamped right
+     after every offer is drawn (start, daily, challenge, pick, reroll),
+     before discovery or any grant, and the draft reads it; a run saved
+     before rc.33 falls back to the inventory. NEW shows only on cards that
+     can be drafted. "Not owned" is not "not seen". An unowned national card
+     keeps its name (the header already names the team).
+
+153. **A national team's org card gets the national visual only (rc.33,
+     COL-02b).** `components/cards/cardFrame.ts`: a `national-*` org card
+     draws a static gold frame, the stage light behind the flag and a
+     "National team" tag, hidden-overall runs included; its buff is
+     unchanged. It is not a collectible (no specialId, no slot; the flag is
+     the page's crest). The album counts one slot per collectible card: the
+     three players, the coach, and the sub for the five teams that fielded
+     one — 133 cards, 121 in the obtainable album.
+
+154. **"New" markers: one seen-state per scope (rc.33, COL-02c; reused by
+     Etapa 3's UX-06).** `engine/newItems.ts` (pure): a `SeenState` of item
+     keys; `newKeys(state, available)` (an absent state means nothing is
+     new), `markSeen`, `seedOnChange` (the first arrival seeds from what was
+     there before), `withQuietArrivals` (content a cloud merge brings counts
+     as seen). The profile scope (`engine/profileNew.ts`: `sp:` specials,
+     `nt:` national teams, `ch:` Challenges) feeds tags and dots from one
+     summary. Opening the content clears an item; visiting a tab does not.
+     Stored on the device only (`profile.newItems`, not in the cloud slice);
+     an existing profile sees nothing new on its first load after the
+     update. The persist contract keeps its keys and versions
+     (`nationalDiscovered` joins its SACRED list).
+
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

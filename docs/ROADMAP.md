@@ -147,6 +147,25 @@ review):**
   sold founders kept in the world, the restructuring mail's money, the late
   seat, the analytics band.
 
+**Etapa 2b, rc.33 (part 3: Miguel's 30/10 answers on rc.32 — four parallel
+fronts, the integration's tuning, two independent reviews):**
+- Money (R61–R63): breaches 3 / 2 / 1 by difficulty with Easy's rescue
+  partner, no day-one founding partner, no restructuring (ECO-07/08); one
+  index at 12 % and a star bend (ECO-09); guaranteed income (M7); no sale
+  listing (ECO-12); the Monday ring and the expanded balance chart (UX-07).
+- Contracts and market (R64–R65): the prize share per contract (ECO-10), the
+  contract talk (ECO-11), honest potential and the phase tag (DEV-04), the
+  reputation filter, the full-squad warning and the Blockbuster sentence
+  (UX-07).
+- World and competition (R66–R68): every org enters its history (RTW-03),
+  fewer known free agents (RTW-04), a full squad to play (RTW-05), the
+  newcomer's reputation path (RTW-02), match difficulty (BAL-04) and the
+  preset step (UX-07).
+- The integration's tuning (R69): one renewal lifts a wage at most ×2.5, and
+  titles raise the renewal (M6 lever 3). The reviews' fixes (R70).
+  Re-measured in the economy contract's §10.
+- Pulled forward from Etapa 4: COL-01 and COL-02 (#151–#154).
+
 ## Deferred (owner Etapa)
 
 - The share card's text (mode, difficulty) is English in PT → Etapa 5, with
@@ -351,7 +370,8 @@ Etapa 3 packages and coaches will add):
   before the cutover.
 
 **2b part 3 — Miguel's answers on rc.32 (30/10, his first rc.32 playtest;
-he plays more before the numbers settle).** Each item is a behaviour
+he plays more before the numbers settle). Built in rc.33 (R61–R70; "Done"
+above).** Each item is a behaviour
 package; every value stays a `balance.ts` key and is re-measured on the
 §9 seeds (`CAREER_ECON=1`, `CAREER_ARC=1`) before and after.
 - **ECO-07 + ECO-08, breaches by difficulty (decided 30/10, replaces 3-A and
@@ -509,6 +529,12 @@ never calibrates the old training model as if it were final.
 
 ## Etapa 4 — collect and progress
 
+- **COL-01 and COL-02 were pulled forward and built in rc.33** (#151–#154).
+  Open for Gate 4: the album's pacing (a card per find now: about 420
+  Classic runs for the worldwide album against 150–180 in rc.32;
+  `nationalTeamChance` or a weight for found-but-incomplete teams), whether
+  the "New" markers sync across devices, and an analytics event for the
+  find itself.
 - COL-01a: the album looks like an album; inside a national team, the
   players in a formation instead of a grid (country and edition, slots,
   progress, locked and collected cards; no overlap on mobile).

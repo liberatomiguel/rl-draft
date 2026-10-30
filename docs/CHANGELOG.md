@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.32**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.33**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -180,6 +180,188 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.33 (Etapa 2b part 3: Miguel's 30/10 answers on rc.32, and Etapa 4's COL-01/COL-02 pulled forward · 2026-10-30 · ROAD-TO-WORLDS-DECISIONS R61–R70 · DESIGN-DECISIONS #151–#154)
+
+Built as four parallel fronts (A money, B contracts and market, C world and competition, D the
+collection), merged and wired together, then two independent reviews (no P1; four P2 and nine P3, all fixed with a failing test first: R70) and a browser
+E2E pass (desktop + mobile, EN + PT). Miguel decided ECO-07/08, ECO-12 and the shape of the rest;
+the values he left to Claude ship as **tested defaults**, each behind its own `balance.ts` key.
+
+**Career — money (front A; ECO-07, ECO-08, ECO-09, M7, ECO-12, UX-07)**
+- **What ends a career through money (ECO-08, decided 30/10):** `CAREER_LOAN.breachesToEnd` Easy 3 /
+  Normal 2 / Hard 1. Every breach before the last brings the Emergency Backer (a second rescue adds
+  to the debt); the last one ends the career. The restructuring (the forced sale of the highest-paid
+  player and its reputation loss) is gone. The warnings stay: a notice at 8 weeks of runway, then a
+  mail every Monday at ≤ 4. The wizard, Finances' ladder, the HQ Backer card and the mails all read
+  the rule from the key; on Hard the Backer panel says there is none.
+- **No day-one founding partner (ECO-07):** `CAREER_SPONSOR.founding.enabled` is off; an rc.32 career
+  already holding the deal keeps it to its own end (`honourRunning`), nothing new is granted.
+  **Easy's rescue partner:** at Easy's first breach the "Overtime Fund" comes in with the Backer and
+  pays 50 % of the rescue Monday's wage bill every Monday for 10 weeks (`CAREER_LOAN.rescuePartner`):
+  its own ledger line, never garnished, in the statement and the runway, announced in the rescue
+  mail and shown on a Finances card while it runs.
+- **The expanded balance chart (UX-07):** the Finances sparkline opens a larger chart (the balance,
+  the Backer's floor, $0, season starts, low and high, a crosshair by pointer, touch or arrow keys,
+  and a per-season table). It draws a ring of up to 96 Monday balances (`FinanceState.balanceRing`,
+  `CAREER_PAYROLL.balanceRingWeeks`), recorded once per Monday whatever moves the clock; an older
+  save starts it from the Mondays its ledger really booked (no invented data). `mondayBalancesOf`
+  serves Etapa 3's HQ.
+
+**Career — contracts and market (front B; ECO-10, ECO-11, DEV-04, UX-07)**
+- **The prize share per contract (ECO-10):** each contract carries the share of podium prize money
+  the player keeps (`SquadPlayer.prizeSharePct`), shown and negotiable in the offer and the renewal,
+  and shown on Squad's contract rows and the player sheet. His ask grows with his overall (a 70 asks
+  3 %, an 85 11 %, a 90 13 %; `CAREER_PRIZE_SHARE`); in the talk a share point is worth 2 % of his
+  wage. It is paid only to the players who played, on a 1st–4th at a regional, Major or Worlds, as
+  one "players' share" line. A deal signed before rc.33 reads rc.32's rule (20 / 35 / 50 % ÷ 3 seats).
+- **The contract talk (ECO-11):** one engine answer (`contract.negotiationAnswerFor`) for signings and
+  renewals, with two levers (the weekly wage and the prize share; the length still reprices his
+  ask). A visible zone where he signs (his flexibility × his ask up to the ask, seeded per player,
+  season and window); below it he counters at the zone's floor, and taking the counter always signs;
+  "Sign" stays disabled until he accepts. No hidden reserve, no hardening after a refusal.
+- **Honest potential (DEV-04):** model-2 bands at most 5 / 3 / 1 points wide by report level, their
+  top 0–2 points above the truth; a player past his plateau shows no potential above what the age
+  clock still allows (`reachableOverallOf`); a phase tag (growing / at his peak / declining) reads "?"
+  until a scouting report reveals it. A bought report in an rc.32 career only narrows its band.
+- **The Market (UX-07):** a "Signable at my reputation" filter (the same rule as the refusal,
+  `market.signableAtRep`); with a full squad the offer sheet warns and links to Squad (the who-leaves
+  picker is gone); the Blockbuster explanation shows only on a Blockbuster bid, as one sentence with
+  the refusal's cost.
+
+**Career — world and competition (front C; RTW-02, RTW-03, RTW-04, RTW-05, BAL-04, UX-07)**
+- **Every org enters its history (RTW-03, C-1):** an entrant takes the weakest filler's seat; else the
+  weakest org whose history is over (no lineup that season or later) leaves; else the region grows
+  (`CAREER_WORLD.orgIntake: "everyOrg"`; rc.32's rule is `"fillersOnly"`). Event fields still take 16
+  by the seeding. Karmine Corp and the other later EU, SAM and NA orgs appear in their season; an
+  "org leaves" news line in the user's region.
+- **A full squad to play (RTW-05):** the clock never enters the user's matchday with fewer than three
+  players (Advance, the batched Advance, the autoplay, Championship Sunday, a reload): HQ's card
+  offers Market and Squad (and Pass for a cup). A free agent can take an empty seat any day, window
+  or not. The unavailability roll needs a reserve (without one nobody is ruled out). No stand-in: an
+  empty seat is rated 0 and chemistry counts three pairs.
+- **The newcomer's reputation path (RTW-02):** results judged against the seed — a cup semi-final from
+  seed 3 or lower (+1, inside the cup's cap) and a qualifier run of two Swiss wins from outside the
+  qualifying eight (+1, once a split), paid only below reputation 25 (`CAREER_REPUTATION.newcomer`,
+  `engine/career/reputation.ts`). The digest calls it "An underdog's run".
+- **The preset step (UX-07):** three lines per preset — matches (easier / even / harder), money (which
+  breach ends the career, read from the key), day to day (guided or hands-on).
+- **The harness:** series won and lost per season by tier and rating gap, and the first sponsor's
+  season; new tables in the arc report (win rate by difficulty × region, at an even gap, by tier and
+  by season; the reputation path). Older dumps render "–".
+
+**Collection (front D; Etapa 4's COL-01 and COL-02, pulled forward)**
+- **The national album (COL-01a):** each edition is a page with its progress; each team a sticker
+  slot (a pip per card, "✓ Complete", NEW, dashed while not found). A team page shows the flag,
+  edition, region, progress and the date found, the three players in a V on a pitch and the coach
+  and sub on a bench; a locked slot names the missing person once the team is found.
+- **Finding is not owning (COL-01b):** finding a national team reveals its page ("New album page")
+  and grants nothing; each card is collected by drafting it and finishing the run, won or lost; an
+  abandoned run keeps the discovery only. Cards already granted stay, and a team with an owned card
+  counts as found. Teams not yet complete stay favoured in the drop (×`nationalUndiscoveredWeight`).
+- **NEW in the draft (COL-02a):** decided against the inventory before the offer and stored with it
+  (`RunState.offerNew`), only on cards that can be drafted.
+- **The national org card (COL-02b):** a static gold frame, the stage light behind the flag and a
+  "National team" tag. It is not a collectible: the album counts players, coach and sub (133 cards,
+  121 obtainable).
+- **"New" markers (COL-02c):** NEW tags on the special-card grid, the album and Challenges; dots on
+  the nav, the home tiles and the album tabs. Opening the content clears them (visiting a tab does
+  not); persisted per item on the device; an existing profile sees nothing new on its first load. A
+  reusable seen-state module (`engine/newItems.ts`, `engine/profileNew.ts`, `store/useNewItems.ts`)
+  for Etapa 3's career markers.
+
+### Changed — rc.33
+- Signings happen in a window again (the late signing went with ECO-12), except a free agent into an
+  empty seat (RTW-05). Random AI bids stay.
+- The money warnings read next Monday's statement, not the one just booked.
+- The draft engine's `nationalTeams.discovered` is now `complete` (a run saved before rc.33 still reads
+  `discovered`, same RNG use); `challengeStatus` moved to the dataset-free `challengeStars.ts`.
+- Unowned national cards keep their name in the draft (the header names the team); the draft banner
+  shows the album's x / y.
+- The arc bot: a short squad signs first; the "selective" renewal signs at the zone's floor.
+- **Renewals (2-B's values, Claude's call):** one renewal lifts a wage at most ×2.5 (`renewalMaxJump`;
+  the readout names the bound), and a player renews dearer for the titles won with him in the last
+  two seasons (+10 % a Major or Worlds title, +5 % a regional title, at most +30 %;
+  `titleRenewalPremium`, ECONOMY-CONTRACT M6 lever 3). One price (`renewalTermsOfSave`) for the
+  talk, the flow and the readout. R69.
+- Old careers (growth model 1) get the honest band's width and top too; scrims refuse a squad of
+  fewer than three (a booked scrim is called off with a news line).
+- The money warnings, HQ and Finances read the rescue partner's remaining Mondays; the deal warning
+  and the loan hints say when the next breach ends the career instead of naming a Backer.
+
+### Balance — rc.33
+- **The money scale (ECO-09):** one index at 12 % a season (`indexPerSeason` 1.12, every stream
+  ×2.20–2.23 by S7) and a steeper ask for strong players (`starCurveFrom` 80, `starGrowthPerPoint`
+  1.03: an 85 asks ×1.16 of rc.32, a 90 ×1.34, a 95 ×1.56; market values follow, coaches do not).
+- **Guaranteed income (M7):** sponsor tier bases $5k / $12k / $22k / $45k a split (rc.32 1.5 / 6 / 18 /
+  45k), the fanbase $60 a reputation point (was 40). The money goes to the newcomer tiers.
+- **The talk:** `CAREER_NEGOTIATION.flexFloor` 0.94 (the zone; the average saving about 3 %, close to
+  what rc.32's gamble paid), `wageStepPct` 0.02; rc.32's `reserveFloor`, `hardenPerReject`,
+  `maxRejects` and `minOfferFactor` are gone. The share: `CAREER_PRIZE_SHARE` (ask 8 % at 80, ±0.5 a
+  point, 2–18 %, −3 / +4 around the ask, 2 % of the wage a point). Scouting: `CAREER_SCOUT`
+  (`honestWidthByLevel` 5 / 3 / 1 / 0, `bandMaxAbove` 2, `phaseRevealLevel` 1).
+- **Match difficulty (BAL-04):** Easy's AI shift −2 → −1.6, Normal's −1.05 → −0.6. At equal team
+  rating the user's series win rate is 81 / 65 / 56 % on Easy / Normal / Hard (rc.32: 85 / 71 / 56 %),
+  R59's intent; Hard and the filler cap unchanged (`fillerCapMargin` 0).
+- **Known free agents (RTW-04):** the creation pool keeps only careers that ended within one season of
+  Season X (`creationFreeAgentRecentSeasons` 1); a real free agent whose history is over leaves at a
+  dataset rollover with chance 0.5. EU's real free agents at week 3: 55–56 → 5–8 in S0, 63–64 →
+  18–24 in S3.
+- **Renewals:** `renewalMaxJump` 2.5 and `titleRenewalPremium` (0.10 / 0.05 / max 0.30 over two
+  seasons). Measured on the same careers (EU, NA, APAC, SSA × every difficulty and policy): the
+  newcomers' insolvency on Normal 21 → 4 %, Easy 4 → 0 %, Hard 50 → 42 %; the spender still breaks
+  (38 % Normal, 63 % Hard); the title raise alone takes the Hard snowball p90 6.1 → 4.0.
+- `BALANCE_VERSION` 2 → 3.
+- **The re-measure** (294 careers, seeds 9100 and 17019, ECONOMY-CONTRACT §10, `ECONOMY-PROBE-rc33.md`
+  and `CAREER-ARC-rc33.md`): @@REMEASURE@@
+
+### Fixed — rc.33
+- **The negotiated wage did not move, or moved the wrong way (ECO-11).** Root causes: the stepper
+  moved the per-split wage by $50 (about $4.69 a week) under a weekly label rounded to $10, so a press
+  often showed the same wage and "save $0"; the stepper's floor (0.85 of the ask) sat below the hidden
+  reserve's (0.88), so some offers had 0 % odds and each hardened the player; a refusal raised the
+  reserve by 4 %, away from agreement, and the odds shown after it ignored the refusal (37 % for a
+  sure refusal). The saving label also said "/ split" over a weekly number.
+- **Karmine Corp and the later EU, SAM and NA orgs never entered (RTW-03).** Root cause: an entrant
+  could only take a filler's seat; EU had none, so none of its 23 later orgs ever entered (SAM 28 of
+  31 and NA 6 of 10 missed too).
+- **Retired stars displaced active pros, and known players sat without a team for years (RTW-04).**
+  Root cause: the creation pool held 72 real players whose careers had ended before Season X (44
+  rated 80+, at their peak); the first window put 33 of them on rosters and pushed 20 active pros out,
+  who then stayed free agents.
+- **EU reputation stayed at 5 for two seasons (RTW-02).** Root cause: only placements paid reputation,
+  and EU/NA cups seat the two closest stronger orgs, so the rating-seeded bracket ended every cup in
+  the semi-final (which paid nothing) and every Saturday qualifier in the Swiss.
+- **A short squad played with a 60-rated stand-in (RTW-05).** Root cause: `userTeamFor`'s fallback.
+- **Potential bands read up to 10 points over the truth, and 99 on players who could never reach it
+  (DEV-04).** Root cause: rc.32's model-2 band was 10 wide at level 0 with the truth anywhere inside
+  it, and nothing capped it at what the age clock still allows.
+- **A podium's players' share booked $50 short on some prizes.** Root cause: the per-seat rounding (a
+  $45k Major title paid $15,700 instead of $15,750).
+- **The money explainer and the career-end text promised "once" / "one more collapse".** Root cause:
+  they predated the per-difficulty rule.
+- **The share lever could leave the weekly wage unchanged.** Root cause: the share was priced per split
+  in $50 steps, then rounded to the $10 weekly label.
+- **The wizard's potential band was 10 wide and centred on the truth.** Root cause: the wizard drew its
+  own band instead of the engine's.
+- **A short squad could sign any free agent while broke.** Root cause: the empty-seat waiver skipped the
+  money checks for every free agent; it now covers only one no dearer than the cheapest signable.
+- **With the prize share switched off, the share lever still bought wage.** Root cause: the talk ignored
+  `playerShare.enabled`.
+- **A two-player squad still scrimmed.** Root cause: scrims had no short-squad check.
+- **rc.31 careers kept the 10-wide band.** Root cause: DEV-04 applied only to growth model 2.
+- **The rescue mail printed "1540 a week".** Root cause: `partnerWeekly` was not a money param. The
+  templates now test amounts with `positive()` (`Number("$1,540")` is NaN), which also fixes rc.32's
+  restructure mail always saying "nothing is owed".
+- **The warnings projected the breach as if the rescue partner paid forever** (a warning in week 7
+  quoted week 32 for a breach in week 23). Root cause: the projection used this week's net, partner
+  included.
+- **Copy promised the Emergency Backer where the next breach ends the career.** Root cause: the text
+  ignored the next breach's outcome (ECO-08).
+- **An older save's balance chart counted a Monday purchase as payroll; the chart could stay 280 px
+  wide.** Root causes: the seed extended a Monday through any same-day line of those kinds; the width
+  was measured only on the first render.
+- **The Backer analytics milestone fired only on the first rescue.** Root cause: it keyed on `loanUsed`.
 
 ### Added — rc.32 (Etapa 2b part 2: the economy contract's provisional defaults, the growth contract, renewals, career presets, the 2a leftovers, the Etapa 3 contracts, /pt and the request budget · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R50–R60 · DESIGN-DECISIONS #145–#150)
 

@@ -1151,6 +1151,182 @@ R60. **The integration of Etapa 2b part 2, and the fixes from its
      (`LateSigningState.squadAfterSale`). (f) Analytics reads the potential
      band of the save's development model, as the screens do (#145).
 
+R61. **What ends a career through money, by difficulty, and Easy's rescue
+     partner (rc.33, ECO-07 + ECO-08; decided by Miguel 30/10, replaces
+     ECONOMY-CONTRACT decisions 3-A and 4-B).** (a) `breachesToEnd` Easy 3 /
+     Normal 2 / Hard 1 (`breachesToEndFor`): every breach before the last is
+     an Emergency Backer rescue (a second one adds to the debt), the last
+     ends the career. The restructuring is gone (`restructureAfterBreach`,
+     `restructureRepLoss`, the "restructure" outcome): no forced sale of the
+     highest-paid player. rc.32's `restructured`, `listingOffer` and `listed`
+     mail and news templates stay only so an older save's inbox still
+     renders; a stored `next: "restructure"` predicts nothing. The warnings
+     (8 weeks, then every Monday at ≤ 4) stay and now read next Monday's
+     statement. (b) No day-one founding partner: `founding.enabled` off; an
+     rc.32 career holding the deal is paid to its own end (`honourRunning`),
+     a new career and the load backfill record `null`. (c) Easy's "partner's
+     help" is the rescue partner (`CAREER_LOAN.rescuePartner`: at breach 1 on
+     Easy, 50 % of the rescue Monday's wage bill each Monday for 10 weeks,
+     "Overtime Fund"): income, never garnished, its own ledger line, in the
+     statement and the runway, announced in the rescue mail with its last
+     payday and shown on a Finances card while it runs. Rejected: a partner
+     on Normal (Miguel: Normal gets the loan only), a partner sized in money
+     (it would not scale with the squad), and keeping the restructuring as a
+     softer step (Miguel: restructurings go).
+
+R62. **The money scale at 12 % with a star bend, and guaranteed income
+     (rc.33, ECO-09 and M7; values are Claude's call, tested at Gate 2).**
+     (a) One index, `indexPerSeason` 1.12, for every stream (each ×2.20–2.23
+     by S7, b1 within ±2 %). (b) Above `starCurveFrom` 80 the ask grows
+     `starGrowthPerPoint` 1.03 a point on top of the curve (an 85 ×1.16 of
+     rc.32, a 90 ×1.34, a 95 ×1.56); market values follow, coaches do not. A
+     90's wage is 1.12 × the T4-contender income (rc.32 0.85; band ≥ 0.35).
+     (c) M7: sponsor tier bases $5k / $12k / $22k / $45k a split and the
+     fanbase $60 a reputation point. The money went to the newcomer tiers:
+     T3/T4 holders were already at payroll ÷ guaranteed 1.5 / 1.1, and
+     $35k / $60k bases raised the snowball in the first measurement.
+     Rejected: 1.10 (Miguel: 12 % felt better), indexing coaches with the
+     bend, raising T3/T4.
+
+R63. **No sale listing, and the Monday ring behind the expanded balance
+     chart (rc.33, ECO-12 withdraws ECONOMY-CONTRACT 8-B; UX-07, HQ-CONTRACT
+     decision 4-A).** (a) The listing and the late signing are removed (the
+     flows, the store actions, the Market panel, badge and banner, the market
+     helpers, their four keys and copy); random AI bids stay; a future update
+     rethinks selling (ECO-06). `repairMoneyOnLoad` (idempotent, in the load
+     chain next to `backfillEconomyOnLoad`, no version bump) drops
+     `saleListings` and `lateSigning` and turns a listing's pending offer into
+     a plain bid. (b) `FinanceState.balanceRing` keeps up to 96 Monday
+     balances (`balanceRingWeeks`); the Monday funnel and the founding day
+     record each Monday once (re-recording replaces); an older save seeds it
+     only from the Mondays its ledger really booked. The chart lives in the
+     portal Modal; its geometry is pure (`balanceChart.ts`).
+
+R64. **The prize share per contract and the contract talk (rc.33, ECO-10
+     replaces M6's fixed 20 / 35 / 50 %; ECO-11; the share values are
+     Claude's call, tested at Gate 2).** (a) One number per contract
+     (`SquadPlayer.prizeSharePct`), not scaled by tier: the ask is 8 % at an
+     80, ±0.5 a point (`CAREER_PRIZE_SHARE`, 2–18 %), the talk moves it from 3
+     below to 4 above the ask, and a point is worth 2 % of the wage. Paid only
+     to the players who played, only on a 1st–4th at a regional, Major or
+     Worlds, booked once from `eventPlayerShareFor` (the digest reads the
+     same function). A deal without the field reads rc.32's rule ÷ 3 seats.
+     The e2 guard (a dominant season's kept prizes ÷ three 85s' wages ≤ 1.5)
+     holds at S0, S3 and S7. (b) One answer for signings and renewals
+     (`negotiationAnswerFor`): a visible zone from his flexibility
+     (`flexFloor` 0.94, seeded per player, season and window) to his ask at
+     the share offered; below it he counters at the zone's floor and taking
+     it signs; nothing is stored between tries (`negotiationTries` stays in
+     the save, unwritten). M2's renewal rule (2-B) is unchanged. Rejected: a
+     hidden reserve, any hardening after a refusal, a share on every prize
+     (it would tax newcomers' cups), paying a reserve who did not play.
+
+R65. **Honest potential, and the Market's filter and full squad (rc.33,
+     DEV-04 revisits DEV-01e; UX-07).** (a) Model-2 bands at most 5 / 3 / 1
+     points wide by report level, their top 0–2 above the truth
+     (`CAREER_SCOUT.honestWidthByLevel`, `bandMaxAbove`), drawn from the
+     deepest report outward so the deepest stays uncertain; capped at
+     `reachableOverallOf` (development.ts's own model: past his plateau a
+     player tops at his overall); `phaseTagFor` (growing / at his peak /
+     declining) from the real development state, "?" below report level 1.
+     Careers created before rc.33 (no `CareerSave.bandModel`) keep rc.32's
+     band for reports, so a bought report only narrows. By design the truth
+     sits in the band's top three points. (b) "Signable at my reputation"
+     reads `signableAtRep`, the rule behind the "repGate" refusal and the
+     locked tiles. A full squad warns and links to Squad; the flow still
+     refuses "squadFull" (its `releaseId` swap stays for tests and the bot).
+     The Blockbuster sentence shows only on a Blockbuster bid.
+
+R66. **Every org enters its history, and fewer known players without a
+     team (rc.33, RTW-03 answers C-1; RTW-04).** (a) `orgIntake: "everyOrg"`:
+     an entrant takes the weakest filler; else the weakest org whose history
+     is over (no lineup that season or later) leaves; else the region grows.
+     A dry run over the dataset never needs the growth case; event fields
+     still take 16 by the seeding (R45). `nameOfRef` falls back to the
+     dataset name for an org that left, and a bid from one sends the player
+     to free agency. Older saves need no repair: the missing orgs enter at
+     the next rollover. (b) `creationFreeAgentRecentSeasons` 1 (only careers
+     that ended within one season of Season X, or resume later, start as
+     free agents) and `historyOverFreeAgentLeaveChance` 0.5 (a real free
+     agent whose history is over leaves at a dataset rollover; his id goes
+     to `retiredIds` but not to the age-retirement list, so DEV-02 holds).
+
+R67. **A full squad to play (rc.33, RTW-05).** Miguel: no event with fewer
+     than three players, no stand-in, an empty seat counts 0. (a)
+     `squadHoldFor`: `advanceDayFlow` refuses to enter the user's matchday
+     with under three players (Advance, the batched Advance, the autoplay —
+     `continueKind` "decision" — Championship Sunday, a reload); `startEvent`
+     refuses too; HQ's `NowSquadShort` card offers Market and Squad, plus
+     Pass for a cup. (b) A free agent can take an empty seat any day, window
+     or not; the funds and Backer checks are waived only for a free agent no
+     dearer than the cheapest one the user can sign (the review's fix), so a
+     broke squad can always fill the seat without a loophole. (c) The
+     unavailability roll needs a reserve; without one nobody is ruled out.
+     (d) `userTeamFor` rates an empty seat 0 and reports `emptySeats`;
+     chemistry counts three pairs; `approxUserRating`, the save slot's stars
+     and the local-anchor freeze count three seats. Scrims refuse a short
+     squad. The arc bot signs first when short (0 softlocks).
+
+R68. **The newcomer's reputation path, match difficulty and the preset
+     step (rc.33, RTW-02, BAL-04, UX-07; values are Claude's call).** (a)
+     Results judged against the seed (`engine/career/reputation.ts`): a cup
+     semi-final from seed 3 or lower pays `gains.t3Semi` 1 inside the cup's
+     cap; two Swiss wins from outside the qualifying eight pay
+     `gains.qualifierDeepRun` 1, once a split; nothing pays at reputation 25
+     or above (`newcomer.repCeiling`). (b) BAL-04's yardstick is a series
+     between sides of equal team rating: rc.32 gave 84.7 / 70.5 / 56.2 % on
+     Easy / Normal / Hard against R59's 81 / 65 / 55 (R59's numbers had the
+     user rated slightly below), so Normal carried a 1.55-point edge. Easy's
+     shift −2 → −1.6 and Normal's −1.05 → −0.6 give 81.4 / 65.2 / 56.2 %;
+     Hard is at its intent and stays; the filler cap stays
+     (`fillerCapMargin` 0: a 1-point margin moved nothing in APAC/SSA). (c)
+     The preset step shows three lines (matches from `matchEdgeOf` against
+     Normal, money from `breachesToEnd`, day to day), no numbers.
+
+R69. **A renewal climbs at most ×2.5, and winning raises the renewal
+     (rc.33, the integration's tuning; 2-B's values and M6 lever 3 are
+     Claude's call, tested at Gate 2).** The first re-measure of the merged
+     fronts (294 careers, §10) put the unfair break where it lived: the
+     hands-off prospects careers renewed developed players at ×3.9 p50 /
+     ×12 p90 (up to ×25) of their wage — 2-B's market floor reprices a
+     breakout at half his value in one step, and ECO-09's star bend raised
+     that value — and every such career in EU and NA on Normal went broke in
+     seasons 4–6. (a) `renewalMaxJump` 2.5: the market floor never lifts a
+     wage more than ×2.5 in one renewal (`bound: "jump"`, named by the
+     readout); a breakout climbs to his value over two renewals. (b) The
+     development dividend feeds the snowball, so the contract's reserved
+     brake ships with it: `titleRenewalPremium` (+10 % a Major or Worlds
+     title, +5 % a regional title won with him in the last two seasons, at
+     most +30 %), read by `renewalTermsOfSave` — the talk, `renewPlayerFlow`
+     and the readout price the same number. Rejected: lowering the floor
+     itself (it is the contract's "far below his market value" line),
+     regional prize or sponsor scales (contract f: the money rules are the
+     same everywhere), and a wage budget (lever 4, Etapa 3).
+
+R70. **The integration of Etapa 2b part 3, and the fixes from its two
+     independent reviews (rc.33).** (a) Wired across fronts: the empty-seat
+     signing (RTW-05) meets ECO-12's window-only rule; the preset step reads
+     ECO-08's key; the arc bot signs when short and renews at the talk's
+     floor. (b) The share lever priced per split in $50 steps under a $10
+     weekly label, so a press could leave the wage unchanged: the share is
+     priced in weekly money (`sharePointWeeklyFor`). (c) The wizard drew its
+     own ±5 band: it reads the engine's (`founderPotentialBandFor`). (d) The
+     empty-seat waiver covered any free agent: only one no dearer than the
+     cheapest signable (`emptySeatPriceFor`). (e) The share lever ignored
+     the switch; scrims ran with a short squad. (f) Model-1 careers get the
+     honest width and top too (no age cap: model 1 never stops growing by
+     age); a bought report still only narrows. (g) The rescue mail printed
+     a raw "1540 a week" (`partnerWeekly` not a money param; templates now
+     test amounts with `positive()`, which also fixes rc.32's restructure
+     mail always saying "nothing is owed"). (h) The warnings projected the
+     breach as if the rescue partner paid forever (a warning in week 7
+     quoted week 32 for a breach in week 23): the runway reads the partner's
+     remaining Mondays. (i) Copy promised a Backer where the next breach
+     ends the career (`nextBreachOutcomeOf`). (j) An older save's chart seed
+     counted a Monday purchase as payroll; the chart now re-measures its
+     width. (k) The Backer analytics milestone fires on every rescue
+     (`backer:N`).
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
@@ -1166,5 +1342,5 @@ LOCKED and built. Remaining review items:
   yet; v0.3 moved the whole money surface, so the economy bands need a
   re-validation pass after Miguel plays.
 - **First-guess tunables to confirm after playtests:** scrim chemistryCredit
-  0.05 / xpWeeks 0.5, the daily-poach rates, negotiation reserveFloor 0.88,
+  0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
   the filler headliner band 77–84.
