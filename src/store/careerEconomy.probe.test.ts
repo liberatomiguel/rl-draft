@@ -1527,8 +1527,11 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
       const t0 = Date.now();
       const regions = list(env.ECON_REGIONS, ALL_REGIONS);
       const diffs = list<CareerDifficulty>(env.ECON_DIFFS, ALL_DIFFS);
-      const { ARC_POLICIES } = await import("./careerArcBot");
-      const policies = list<ArcPolicyId>(env.ECON_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[]);
+      const { ARC_DEFAULT_POLICIES, ARC_POLICIES } = await import("./careerArcBot");
+      // rc.34: the seven baseline policies by default; ECON_POLICIES may name the two training ones.
+      const policies = env.ECON_POLICIES
+        ? list<ArcPolicyId>(env.ECON_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[])
+        : [...ARC_DEFAULT_POLICIES];
       const seeds = Number(env.ECON_SEEDS ?? 1);
       const seasons = Number(env.ECON_SEASONS ?? 8);
       const knobs = [

@@ -24,13 +24,16 @@ import {
   ageOf,
   anchorOverall,
   becomesCoachOnRetirement,
+  bestCardOverall,
+  deriveArchetype,
   deriveBirthYear,
   isCompetitiveAge,
   playerViewById,
   type ViewCtx,
 } from "./development";
+import { OBJECTIVES, coachBonusLevelFor } from "./training";
 import {
-  coachSalaryFor,
+  coachWageFor,
   computeSalaryAsk,
   contractedFeeFor,
   marketValueFor,
@@ -705,8 +708,30 @@ const COACH_STATS: StatKey[] = [
   "clutch",
 ];
 
-function coachBonusLevel(overall: number): string {
-  return overall >= 85 ? "++" : overall >= 75 ? "+" : "~";
+/** A triangular draw on [min, mode, max] from a uniform float (most values near the mode). */
+function triangularFrom(f: number, [lo, mode, hi]: readonly [number, number, number]): number {
+  const fc = (mode - lo) / (hi - lo);
+  return f < fc ? lo + Math.sqrt(f * (hi - lo) * (mode - lo)) : hi - Math.sqrt((1 - f) * (hi - lo) * (hi - mode));
+}
+
+/** rc.34 (DEV-03 T4): a whole number of seasons inside [lo, hi] from a uniform float. */
+const intIn = (f: number, [lo, hi]: readonly [number, number]): number => lo + Math.min(hi - lo, Math.floor(f * (hi - lo + 1)));
+
+/** rc.34 (T4): the quality a coach can grow to — his quality at hire + a stable room, never above the max. */
+function coachCeilingFor(quality: number, f: number): number {
+  const g = CAREER_COACH_MARKET.growth;
+  return Math.min(g.ceilingMax, Math.max(quality, quality + intIn(f, g.ceilingRoom)));
+}
+
+/**
+ * rc.34 (decision 5-A): an ex-pro's coaching quality from his CAREER-BEST
+ * club card — base + slope × (best − anchor) ± jitter, clamped to the range
+ * (rc.33: min(92, 55 + 0.25 × the last card)). `f` is a stable 0..1.
+ */
+export function exProCoachQuality(bestCard: number, f: number): number {
+  const X = CAREER_COACH_MARKET.exPro;
+  const raw = X.base + X.slope * (bestCard - X.anchor) + (f * 2 - 1) * X.jitter;
+  return Math.round(Math.min(X.range[1], Math.max(X.range[0], raw)));
 }
 
 /**
@@ -714,6 +739,9 @@ function coachBonusLevel(overall: number): string {
  * world's retired list — familiar names feed the coach market, design §8)
  * mixed with generated candidates. Derived, never persisted; the same
  * (careerSeed, seasonIndex, windowIdx) always yields the same shortlist.
+ * rc.34 (DEV-03 T4): every coach carries quality, experience and a
+ * specialty (each with its printed effect, `training.coachProfileOf`), his
+ * ceiling, and a wage on quality + experience (`economy.coachWageFor`).
  */
 export function coachCandidatesFor(ctx: {
   world: WorldState;
@@ -727,6 +755,7 @@ export function coachCandidatesFor(ctx: {
   const M = CAREER_COACH_MARKET;
   const out: CoachState[] = [];
   const key = (i: number) => `${ctx.seasonIndex}:${ctx.windowIdx}:${i}`;
+  const objectives = OBJECTIVES;
 
   // Real candidates: retired real players WHO BECAME COACHES (DEV-02, R48 —
   // the rest left the game), stable ids, ranked by a derived float so the
@@ -744,16 +773,19 @@ export function coachCandidatesFor(ctx: {
     if (out.length >= realTarget) break;
     const person = playerById.get(cand.id);
     if (!person) continue;
-    // Final playing overall = the player's last dataset card (design §8:
-    // coachOVR ≈ base + factor × final OVR).
-    const finalOvr = anchorOverall(cand.id, Number.MAX_SAFE_INTEGER) ?? 74;
-    const overall = Math.round(
-      Math.min(92, M.retiredCoachBase + M.retiredCoachFinalOvrFactor * finalOvr),
-    );
-    const name = person.nickname;
+    // rc.34 (5-A): his career-best club card, the slope 0.8 formula, the
+    // archetype's specialty (an all-rounder rolls one), 3 seasons of
+    // experience and the ex-pro wage premium. Stable per (career, player).
+    const bestCard = bestCardOverall(cand.id) ?? anchorOverall(cand.id, Number.MAX_SAFE_INTEGER) ?? 74;
+    const overall = exProCoachQuality(bestCard, derivedFloat(ctx.careerSeed, streams.gen("coachJitter", cand.id)));
+    const archetype = deriveArchetype(cand.id, ctx.careerSeed);
+    const specialty =
+      M.exPro.specialtyByArchetype[archetype] ??
+      objectives[Math.floor(derivedFloat(ctx.careerSeed, streams.gen("coachSpec", cand.id)) * objectives.length) % objectives.length];
+    const experience = M.exPro.experience;
     out.push({
       id: `coach:real:${cand.id}`,
-      name,
+      name: person.nickname,
       overall,
       bonusType:
         COACH_STATS[
@@ -761,27 +793,39 @@ export function coachCandidatesFor(ctx: {
             derivedFloat(ctx.careerSeed, streams.gen("coachBuff", cand.id)) * COACH_STATS.length,
           ) % COACH_STATS.length
         ],
-      bonusLevel: coachBonusLevel(overall),
-      salaryPerSplit: coachSalaryFor(overall, ctx.seasonIndex, ctx.difficulty),
+      bonusLevel: coachBonusLevelFor(overall),
+      salaryPerSplit: coachWageFor({ quality: overall, experience, exPro: true }, ctx.seasonIndex, ctx.difficulty),
       source: "real",
+      experience,
+      specialty,
+      ceiling: coachCeilingFor(overall, derivedFloat(ctx.careerSeed, streams.gen("coachCeil", cand.id))),
+      bestCard,
     });
   }
 
-  // Generated candidates fill the shortlist.
+  // Generated candidates fill the shortlist: the first is a senior profile
+  // (t7: a good generic in most windows), the rest standard.
   for (let i = 0; out.length < M.candidatesPerWindow; i++) {
     const f = derivedFloat(ctx.careerSeed, streams.gen("coach", `${key(i)}`));
     const f2 = derivedFloat(ctx.careerSeed, streams.gen("coachName", `${key(i)}`));
-    const [lo, hi] = M.generatedOverallRange;
-    const overall = lo + Math.floor(f * (hi - lo + 1));
+    const f3 = derivedFloat(ctx.careerSeed, streams.gen("coachExp", `${key(i)}`));
+    const f4 = derivedFloat(ctx.careerSeed, streams.gen("coachSpec", `${key(i)}`));
+    const f5 = derivedFloat(ctx.careerSeed, streams.gen("coachCeil", `${key(i)}`));
+    const profile = i === 0 ? M.generated.senior : M.generated.standard;
+    const overall = Math.round(triangularFrom(f, profile.quality));
+    const experience = intIn(f3, profile.experience);
     const name = `Coach ${ctx.nameBank[Math.floor(f2 * ctx.nameBank.length) % ctx.nameBank.length]}`;
     out.push({
       id: `coach:gen:${key(i)}`,
       name,
       overall,
       bonusType: COACH_STATS[Math.floor(f2 * COACH_STATS.length) % COACH_STATS.length],
-      bonusLevel: coachBonusLevel(overall),
-      salaryPerSplit: coachSalaryFor(overall, ctx.seasonIndex, ctx.difficulty),
+      bonusLevel: coachBonusLevelFor(overall),
+      salaryPerSplit: coachWageFor({ quality: overall, experience, exPro: false }, ctx.seasonIndex, ctx.difficulty),
       source: "generated",
+      experience,
+      specialty: objectives[Math.floor(f4 * objectives.length) % objectives.length],
+      ceiling: coachCeilingFor(overall, f5),
     });
     if (i > M.candidatesPerWindow * 3) break; // defensive
   }

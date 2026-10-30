@@ -547,55 +547,39 @@ describe("trainWeek", () => {
     expect(kidGain).toBeGreaterThan(vetGain * 3);
   });
 
-  it("focus trades overall share for offset growth; auto rides the coach plan", () => {
+  it("rc.34 (DEV-03, decision 7-A): the base ignores the coach, the per-card focus and intensity — one rate for everyone", () => {
     const base = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74, potential: 88 });
-    const balanced = trainWeek(base, trainCtx()).gained;
+    const plain = trainWeek(base, trainCtx()).gained;
+    expect(trainWeek(base, trainCtx({ coachOverall: null })).gained).toBe(plain);
+    expect(trainWeek(base, trainCtx({ coachOverall: 60 })).gained).toBe(plain);
+    expect(trainWeek({ ...base, trainingFocus: "mechanics" }, trainCtx()).gained).toBe(plain);
+    expect(trainWeek({ ...base, trainingFocus: "auto" }, trainCtx()).gained).toBe(plain);
+    expect(trainWeek({ ...base, trainingIntensity: "heavy" }, trainCtx()).gained).toBe(plain);
+    // …and no attribute moves without a package's focus.
     const focused = trainWeek({ ...base, trainingFocus: "mechanics" }, trainCtx());
-    const auto = trainWeek({ ...base, trainingFocus: "auto" }, trainCtx()).gained;
-
-    expect(focused.gained).toBeLessThan(balanced);
-    expect(focused.gained).toBeCloseTo(balanced * CAREER_TRAINING.focusOverallShare, 1);
-    expect(focused.player.attrOffsets.mechanics).toBeCloseTo(
-      CAREER_TRAINING.focusOffsetPerWeek,
-      5,
-    );
-    // With a coach, auto costs a small share; WITHOUT one it falls back to
-    // balanced (the missing coach already costs via coachMult.min).
-    expect(auto).toBeLessThanOrEqual(balanced);
-    expect(auto).toBeCloseTo(balanced * CAREER_TRAINING.autoShare, 1);
-    const autoNoCoach = trainWeek(
-      { ...base, trainingFocus: "auto" },
-      trainCtx({ coachOverall: null }),
-    ).gained;
-    const balancedNoCoach = trainWeek(base, trainCtx({ coachOverall: null })).gained;
-    expect(autoNoCoach).toBe(balancedNoCoach);
+    expect(focused.player.attrOffsets.mechanics).toBe(base.attrOffsets.mechanics);
   });
 
-  it("v2.0 (R27): a team drill sharpens its attribute(s) for everyone and runs sessions hotter", () => {
+  it("rc.34 (DEV-03): a package multiplies the base (never below ×1) and grows its focus attributes", () => {
     const base = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74, potential: 88 });
     const drill = drillEffectFor("film-room")!;
     expect(drill.attrs).toEqual(["consistency", "experience"]);
     const plain = trainWeek(base, trainCtx());
-    const drilled = trainWeek(base, { ...trainCtx(), drill });
-    expect(drilled.gained).toBeCloseTo(plain.gained * CAREER_TRAINING.drillOverallMult, 2);
-    expect(drilled.player.attrOffsets.consistency).toBeCloseTo(
-      (base.attrOffsets.consistency ?? 0) + CAREER_TRAINING.drillOffsetPerWeek,
-      5,
+    const boosted = trainWeek(base, trainCtx({ packageMult: 1.2, offsetGrowth: { consistency: 0.25, experience: 0.25 } }));
+    expect(boosted.gained).toBeCloseTo(plain.gained * 1.2, 3);
+    expect(boosted.player.attrOffsets.consistency).toBeCloseTo((base.attrOffsets.consistency ?? 0) + 0.25, 5);
+    expect(boosted.player.attrOffsets.experience).toBeCloseTo((base.attrOffsets.experience ?? 0) + 0.25, 5);
+    // A multiplier under 1 is the base (a package is never a malus).
+    expect(trainWeek(base, trainCtx({ packageMult: 0.5 })).gained).toBe(plain.gained);
+    // The offset cap still holds.
+    const capped = trainWeek(
+      { ...base, attrOffsets: { ...base.attrOffsets, consistency: CAREER_DEV.attrOffsetCap - 0.1 } },
+      trainCtx({ offsetGrowth: { consistency: 0.35 } }),
     );
-    expect(drilled.player.attrOffsets.experience).toBeCloseTo(
-      (base.attrOffsets.experience ?? 0) + CAREER_TRAINING.drillOffsetPerWeek,
-      5,
-    );
-    // Personal focus stacks with the drill but the offset cap still holds.
-    const stacked = trainWeek(
-      { ...base, trainingFocus: "consistency", attrOffsets: { ...base.attrOffsets, consistency: CAREER_DEV.attrOffsetCap - 0.1 } },
-      { ...trainCtx(), drill },
-    );
-    expect(stacked.player.attrOffsets.consistency).toBeLessThanOrEqual(CAREER_DEV.attrOffsetCap);
-    // The coach's auto pick trains the coach's own buff; no coach rotates by week.
+    expect(capped.player.attrOffsets.consistency).toBeLessThanOrEqual(CAREER_DEV.attrOffsetCap);
+    // The legacy drill helpers are kept for tools: the coach's buff picks its theme.
     expect(autoDrillFor("defense", 3)).toBe("rotations");
     expect(autoDrillFor(null, 1)).toBe(CAREER_TRAINING.drills[0].id);
-    expect(autoDrillFor(null, 6)).toBe(CAREER_TRAINING.drills[0].id);
   });
 
   it("v2.0 (R29): trainingEta counts training days to the next point and respects the caps", () => {
@@ -617,14 +601,12 @@ describe("trainWeek", () => {
     expect(done.daysToNext).toBeNull();
   });
 
-  it("intensity scales the tick: heavy > normal > light (v0.2)", () => {
+  it("rc.34: the package's multiplier scales the tick (the workload lives in the package now)", () => {
     const base = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74, potential: 88 });
-    const light = trainWeek({ ...base, trainingIntensity: "light" }, trainCtx()).gained;
     const normal = trainWeek(base, trainCtx()).gained;
-    const heavy = trainWeek({ ...base, trainingIntensity: "heavy" }, trainCtx()).gained;
-    expect(light).toBeLessThan(normal);
+    const heavy = trainWeek(base, trainCtx({ packageMult: 1.3 })).gained;
     expect(heavy).toBeGreaterThan(normal);
-    expect(heavy).toBeCloseTo(normal * CAREER_TRAINING.intensityMult.heavy, 1);
+    expect(heavy).toBeCloseTo(normal * 1.3, 2);
   });
 
   it("trainDay ticks at 1/trainingDaysPerWeek of a week", () => {

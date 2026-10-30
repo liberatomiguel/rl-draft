@@ -21,7 +21,6 @@ import {
   CAREER_CONTRACT,
   CAREER_PAYROLL,
   CAREER_SCOUT,
-  CAREER_TRAINING,
   CAREER_UNLOCKS,
 } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -86,7 +85,8 @@ import { OrgMark } from "@/components/career/OrgMark";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
-import { CoachEffectLines } from "@/components/career/CoachEffects";
+import { CoachAttributeLines, CoachHireCard } from "@/components/career/training/CoachHireCard";
+import { objectiveEffectPct } from "@/engine/career/training";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -621,7 +621,8 @@ export function MarketScreen() {
         <div className="rise-in space-y-4" style={{ animationDelay: "60ms" }}>
           {!save.coach ? (
             <Panel className="p-3 text-xs font-semibold text-orange-bright">
-              {C.market.coachNoneEffects(Math.round((1 - CAREER_TRAINING.coachMult.min) * 100))}
+              {/* rc.34 (DEV-03 7-A): no coach = the base; a package lands at the coachless efficiency. */}
+              {C.market.coachNoneEffects(objectiveEffectPct("development", null))}
             </Panel>
           ) : null}
           {save.coach ? (
@@ -639,16 +640,14 @@ export function MarketScreen() {
                       <Badge tone="neutral">{C.market.coachGenTag}</Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-sub">
-                    {C.market.coachBonus(t.STAT_LABELS[save.coach.bonusType])}{" "}
-                    <span className="font-mono font-bold text-cyan">{save.coach.bonusLevel}</span>
-                    <span className="mx-1.5 text-faint">·</span>
-                    {wageLabel(C, save.coach.salaryPerSplit)}
-                  </p>
-                  <CoachEffectLines coach={save.coach} className="mt-2" />
+                  <p className="mt-1 text-xs text-sub">{wageLabel(C, save.coach.salaryPerSplit)}</p>
+                  {/* rc.34 (DEV-03 T4): his three attributes and their effects. */}
+                  <div className="mt-2">
+                    <CoachAttributeLines save={save} coach={save.coach} C={C} statLabels={t.STAT_LABELS} showImpact={false} />
+                  </div>
                 </div>
                 <div className="text-right leading-none">
-                  <div className="display text-3xl font-bold text-ink">{save.coach.overall}</div>
+                  <div className="display text-3xl font-bold text-ink">{Math.round(save.coach.overall)}</div>
                   <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
                 </div>
                 <Button variant="danger" size="sm" onClick={() => setConfirmFire(true)}>
@@ -661,43 +660,16 @@ export function MarketScreen() {
 
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {coaches.map((c) => (
-              <div
+              // rc.34 (DEV-03 T4): the hire card compares wage, specialty, the package effect and the expected impact.
+              <CoachHireCard
                 key={c.id}
-                className="flex flex-col rounded-xl border border-line-strong bg-gradient-to-b from-white/[0.04] to-transparent p-3.5"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="display truncate text-base font-bold text-ink">{c.name}</div>
-                    <div className="mt-1">
-                      {c.source === "real" ? (
-                        <Badge tone="gold">{C.market.coachRealTag}</Badge>
-                      ) : (
-                        <Badge tone="neutral">{C.market.coachGenTag}</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right leading-none">
-                    <div className="display text-2xl font-bold text-ink">{c.overall}</div>
-                    <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-sub">
-                  {C.market.coachBonus(t.STAT_LABELS[c.bonusType])}{" "}
-                  <span className="font-mono font-bold text-cyan">{c.bonusLevel}</span>
-                </p>
-                <p className="mt-0.5 text-xs text-faint">{wageLabel(C, c.salaryPerSplit)}</p>
-                <CoachEffectLines coach={c} className="mt-2" />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  full
-                  className="mt-3"
-                  disabled={save.coach?.id === c.id}
-                  onClick={() => hireCoach(c)}
-                >
-                  {C.market.hireCoach}
-                </Button>
-              </div>
+                save={save}
+                coach={c}
+                C={C}
+                statLabels={t.STAT_LABELS}
+                disabled={save.coach?.id === c.id}
+                onHire={() => hireCoach(c)}
+              />
             ))}
           </div>
           {save.coach ? (

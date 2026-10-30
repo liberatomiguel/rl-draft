@@ -81,6 +81,161 @@ export interface WeeklyDrill {
 export type TrainingIntensity = "light" | "normal" | "heavy";
 export type ScoutLevel = 0 | 1 | 2 | 3;
 
+// ---------------------------------------------------------------------------
+// rc.34 (DEV-03, TRAINING-CONTRACT.md): training packages per period
+// ---------------------------------------------------------------------------
+
+/** T2: what a package is for. Also a coach's specialty (T4). */
+export type TrainingObjective = "development" | "preparation" | "recovery";
+/** T2: the squad's load (also a per-player tweak). */
+export type TrainingWorkload = "light" | "normal" | "heavy";
+/** T3: a scrim's level by the opponent's rating gap. */
+export type ScrimLevel = "easy" | "even" | "hard";
+/** T2: one squad focus — balanced, or one of the five drill themes (CAREER_TRAINING.drills). */
+export type SquadFocus = "balanced" | DrillId;
+/** T5: who decides the package at each period boundary. */
+export type TrainingMode = "coach" | "approve" | "manual";
+
+/** T2: an optional per-player tweak — the card lists only the players who differ. */
+export interface PlayerTweak {
+  /** His own attribute focus instead of the squad's (CAREER_PLAN.tweakFocus). */
+  focus?: StatKey;
+  /** His own workload instead of the squad's. */
+  workload?: TrainingWorkload;
+  /** Rest: he trains at the base (×1.00), plays no scrim and takes no wear. */
+  rest?: boolean;
+}
+
+/** T2: one training package — the period's routine. */
+export interface TrainingPackage {
+  objective: TrainingObjective;
+  focus: SquadFocus;
+  workload: TrainingWorkload;
+  /** 0..CAREER_SCRIM.package.maxPerWeek scrims a week, on fixed weekdays. */
+  scrimsPerWeek: number;
+  /** "auto" = the coach picks (even without a coach). */
+  scrimLevel: ScrimLevel | "auto";
+  tweaks?: Record<string, PlayerTweak>;
+}
+
+/** T6: a squad player's running totals inside a period (the summary reads them). */
+export interface TrainingPeriodPlayer {
+  name: string;
+  overallStart: number;
+  offsetsStart: Record<StatKey, number>;
+  /** The day he joined the plan when he arrived mid-period (a signing). */
+  joinedDay?: number;
+  /** Overall from training sessions (decline not netted). */
+  sessions: number;
+  /** Overall from package scrims. */
+  scrims: number;
+  /** Official series played and the overall they paid. */
+  series: number;
+  seriesGain: number;
+  /** The gain above the coachless package rate, summed per day (T7). */
+  coachShare: number;
+  /** Overall lost to DEV-01's decline. */
+  declined: number;
+  /** Wear points taken (T3). */
+  wear: number;
+  /** Ruled out of an event in this period (the pre-event roll). */
+  unavailable?: boolean;
+}
+
+/** T6: the running period — one per season grid slot, never crossing a season. */
+export interface TrainingPlan {
+  seasonIndex: number;
+  periodIndex: number;
+  startDay: number;
+  endDay: number;
+  /** null = DEV-01's base (no package). */
+  package: TrainingPackage | null;
+  author: "coach" | "user" | "base";
+  /** The day the current package took over (a mid-period change runs to the boundary). */
+  packageFromDay: number;
+  lastSessionDay: number;
+  lastScrimDay: number;
+  /** Days per coach (and their share), in order of arrival; id "none" = coachless days. */
+  coaches: { id: string; name: string; days: number; share: number }[];
+  players: Record<string, TrainingPeriodPlayer>;
+  /** Package scrims won / lost by level. */
+  scrims: Partial<Record<ScrimLevel, [number, number]>>;
+  /** Team chemistry (percent) at the period's start. */
+  chemStart: number;
+  /** The squad's projected wear for the period (the pre-event roll reads it, T3/t6). */
+  wearProjected: number;
+  /** Per player: the most overall package scrims may pay in this period (T3's cap). */
+  scrimCap: Record<string, number>;
+  /** Exception lines the summary carries (copy keys under career.training.notes). */
+  notes: { key: string; params?: Record<string, string | number> }[];
+}
+
+/** T5: a proposal waiting for the manager ("the coach proposes, I approve"). */
+export interface TrainingProposal {
+  seasonIndex: number;
+  periodIndex: number;
+  /** The day the clock holds on (the period's first day). */
+  day: number;
+  package: TrainingPackage;
+  coachId: string;
+  reasonKey: "default" | "event" | "wear";
+}
+
+/** T7: one player's line in a period summary. */
+export interface TrainingSummaryPlayer {
+  id: string;
+  name: string;
+  before: number;
+  after: number;
+  /** Attribute offset changes (non-zero only, 2 decimals). */
+  attrs: Partial<Record<StatKey, number>>;
+  sessions: number;
+  scrims: number;
+  series: number;
+  seriesGain: number;
+  coachShare: number;
+  declined: number;
+  wear: number;
+  unavailable?: boolean;
+  joined?: boolean;
+}
+
+/** T7: a closed period, filed as history (Training → History, HQ's "last period"). */
+export interface TrainingSummary {
+  seasonIndex: number;
+  periodIndex: number;
+  startDay: number;
+  endDay: number;
+  package: TrainingPackage | null;
+  author: "coach" | "user" | "base";
+  players: TrainingSummaryPlayer[];
+  scrims: Partial<Record<ScrimLevel, [number, number]>>;
+  chemStart: number;
+  chemEnd: number;
+  coaches: { name: string; days: number; share: number }[];
+  notes: { key: string; params?: Record<string, string | number> }[];
+  /** The next period's package objective (null = the base), when known. */
+  next?: TrainingObjective | null;
+}
+
+/** rc.34 (DEV-03): the career's training state (CareerSave.training). */
+export interface TrainingState {
+  mode: TrainingMode;
+  /** "Repeat until I change it": the last package runs again at the boundary. */
+  repeat: boolean;
+  /** The package the manager set ("I set it"/"adjust"): what "repeat" renews. */
+  userPackage: TrainingPackage | null;
+  plan: TrainingPlan | null;
+  proposal: TrainingProposal | null;
+  /** Ring of CAREER_PLAN.historySize summaries, newest first. */
+  history: TrainingSummary[];
+  /**
+   * T8: an older save's per-player focus / intensity, offered as the tweaks
+   * of the first package the manager builds (then cleared). Optional.
+   */
+  carryTweaks?: Record<string, PlayerTweak>;
+}
+
 /**
  * A world player as the career sees them RIGHT NOW. For real players most
  * fields are derived from the dataset + careerSeed (pure functions in
@@ -556,6 +711,18 @@ export interface CoachState {
   salaryPerSplit: number;
   /** "real" = a retired real pro turned coach (v0.2 coach market). */
   source: "dataset" | "generated" | "real";
+  /**
+   * rc.34 (DEV-03 T4): seasons of coaching experience (0–10+). Optional and
+   * additive: a coach hired before rc.34 reads `training.coachProfileOf`'s
+   * default (an ex-pro 3, a generic derived from his id).
+   */
+  experience?: number;
+  /** rc.34 (T4): the objective he is best at (+CAREER_PLAN.coach.specialtyBoost on its main effect). */
+  specialty?: TrainingObjective;
+  /** rc.34 (T4): the quality he can grow to (a personal ceiling, never above CAREER_COACH_MARKET.growth.ceilingMax). */
+  ceiling?: number;
+  /** rc.34 (T4): an ex-pro's career-best card (his quality's source, printed on the card). */
+  bestCard?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -657,6 +824,8 @@ export interface ScrimLogEntry {
   scoreB: number;
   /** Per-game scores, user first (e.g. ["3-1", "2-4", "5-2", "1-0"]). */
   games: string[];
+  /** rc.34 (DEV-03 T3): a package scrim's level (absent = a booked or run-now scrim). */
+  level?: ScrimLevel;
 }
 
 /**
@@ -879,8 +1048,19 @@ export interface CareerSave {
   t3EntriesThisSplit: number;
   /** Scrims run this week (CAREER_SCRIM.maxPerWeek; resets each Monday). */
   scrimsThisWeek: number;
-  /** v2.0 (R27): this week's team drill (null/stale week = none chosen). */
+  /**
+   * v2.0 (R27): this week's team drill (null/stale week = none chosen).
+   * @deprecated rc.34 (DEV-03): the weekly drill retired into the package's
+   * squad focus — never written; an older save's drill expires with its week.
+   */
   drill?: WeeklyDrill | null;
+  /**
+   * rc.34 (DEV-03): training packages per period — the mode, the running
+   * period, a waiting proposal and the history. Optional and additive: the
+   * load repair (careerTraining.repairTrainingOnLoad) gives an older save
+   * one on DEV-01's base.
+   */
+  training?: TrainingState;
   /** v2.0 (R33): the mid-week insert waiting for a decision (expires with its day). */
   pendingInsert?: { id: string; day: number } | null;
   /** v2.0 (R33): insert ids surfaced so far (recency window). */

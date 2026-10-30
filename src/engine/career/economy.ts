@@ -12,6 +12,7 @@
 
 import {
   CAREER_BANK,
+  CAREER_COACH_MARKET,
   CAREER_CONTRACT,
   CAREER_ECONOMY,
   CAREER_GEAR,
@@ -534,6 +535,24 @@ export function coachSalaryFor(
 ): number {
   return quantize(
     baseCurve(coachOverall, seasonIndex, difficulty, false) * CAREER_SALARY.coachFactor,
+  );
+}
+
+/**
+ * rc.34 (DEV-03 T4, decision 5-A): a coach's wage per split — the coach curve
+ * on his quality plus CAREER_COACH_MARKET.wagePointsPerExperience a season of
+ * experience, × the ex-pro premium (exPro.wageMult) for a former pro.
+ */
+export function coachWageFor(
+  coach: { quality: number; experience: number; exPro: boolean },
+  seasonIndex: number,
+  difficulty: CareerDifficulty,
+): number {
+  const points = coach.quality + CAREER_COACH_MARKET.wagePointsPerExperience * Math.max(0, coach.experience);
+  return quantize(
+    baseCurve(points, seasonIndex, difficulty, false) *
+      CAREER_SALARY.coachFactor *
+      (coach.exPro ? CAREER_COACH_MARKET.exPro.wageMult : 1),
   );
 }
 

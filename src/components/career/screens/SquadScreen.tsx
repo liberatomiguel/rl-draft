@@ -45,6 +45,7 @@ import {
   wageLabel,
 } from "@/components/career/careerUi";
 import { CoachEffectLines } from "@/components/career/CoachEffects";
+import { playerFocusLabel } from "@/components/career/training/TrainingPackageParts";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
@@ -161,10 +162,8 @@ export function SquadScreen() {
       contractLabel: seasonLabelFor(p.contractEndSeason),
       shareLabel: prizeShareLabelOf(C, p),
       phase: agePhase(save, p),
-      focusLabel:
-        p.trainingFocus === "auto" || p.trainingFocus === "balanced"
-          ? C.training[p.trainingFocus]
-          : t.STAT_LABELS[p.trainingFocus],
+      // rc.34 (DEV-03): the period's package for him (his tweak, the squad focus or the base).
+      focusLabel: playerFocusLabel(save, p.id, C, t.STAT_LABELS),
     });
 
   // --- renew ask preview (the same renewalTermsFor renewPlayerFlow prices) ---

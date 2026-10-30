@@ -26,6 +26,8 @@ import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { canSkipShortSquadEvent, runwayWeeksOf, squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
 import { pendingDecisionsOf, type PendingDecision } from "@/store/careerDecisions";
+import { trainingDecisionOf } from "@/store/careerTraining";
+import { TrainingProposalCard } from "@/components/career/training/TrainingPackageParts";
 import { useSettings } from "@/store/settingsStore";
 import { contractWarnsFor } from "@/engine/career/careerNew";
 import {
@@ -96,6 +98,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const declineSponsorOffers = useCareerStore((s) => s.declineSponsorOffers);
   const parkDecision = useCareerStore((s) => s.parkDecision);
   const skipShortSquadEvent = useCareerStore((s) => s.skipShortSquadEvent);
+  const approveTrainingProposal = useCareerStore((s) => s.approveTrainingProposal);
+  const keepBaseTraining = useCareerStore((s) => s.keepBaseTraining);
   const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const revealHeld = useRevealHeldEventId(save);
 
@@ -205,18 +209,20 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         return save.unofficialOffer ? (
           <NowInvite save={save} C={C} D={D} def={save.unofficialOffer} onAccept={acceptUnofficial} onPass={passUnofficial} />
         ) : null;
-      case "training":
-        // DEV-03 (front E) places its proposal card here; until then, the way to Training.
-        return (
-          <div>
-            <p className="kicker mb-1 text-[10px] text-cyan">{C.hub.decisionKind.training}</p>
-            <h2 className="display text-xl font-bold uppercase tracking-wide text-ink">{C.hub.trainingDecisionTitle}</h2>
-            <p className="mt-2 max-w-xl text-sm text-sub">{C.hub.trainingDecisionBody}</p>
-            <Button variant="primary" size="md" className="mt-4 min-h-11" onClick={() => router.push("/career/training")}>
-              {C.hub.trainingOpen}
-            </Button>
-          </div>
-        );
+      case "training": {
+        // DEV-03 (front E): the coach's plan for the period — approve, adjust on Training, or keep the base.
+        const decision = trainingDecisionOf(save);
+        return decision ? (
+          <TrainingProposalCard
+            save={save}
+            decision={decision}
+            C={C}
+            onApprove={approveTrainingProposal}
+            onAdjust={() => router.push("/career/training")}
+            onKeepBase={keepBaseTraining}
+          />
+        ) : null;
+      }
       case "bid": {
         const offer = save.pendingOffers.find((o) => o.id === d.id);
         if (!offer) return null;

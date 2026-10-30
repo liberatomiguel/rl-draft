@@ -29,6 +29,7 @@ import { CAREER_HQ } from "@/config/balance";
 import { splitEndDayFor } from "@/engine/career/calendar";
 import type { CareerSave } from "@/engine/career/types";
 import { isEventPaused, rolloverToNextSeason, squadHoldFor, type FlowResult } from "./careerFlow";
+import { trainingDecisionOf } from "./careerTraining";
 
 export type DecisionKind =
   | "event" // today's matchday, an event in progress, the Saturday pause (R40)
@@ -81,8 +82,8 @@ export interface DecisionSourceItem {
  * `trainingDecisionOf(save)`. Kind "training": no "Later" (1-B).
  */
 export function trainingDecisionSource(save: CareerSave): DecisionSourceItem | null {
-  void save;
-  return null;
+  const d = trainingDecisionOf(save);
+  return d ? { id: d.id, deadline: { seasonIndex: d.seasonIndex, day: d.deadlineDay } } : null;
 }
 
 /**

@@ -43,8 +43,8 @@ import type {
   CareerSave,
   CareerSlotMeta,
   CoachState,
-  DrillId,
-  SquadPlayer,
+  TrainingMode,
+  TrainingPackage,
 } from "@/engine/career/types";
 import { createRng, randomSeed } from "@/lib/rng";
 import {
@@ -75,9 +75,6 @@ import {
   scheduleScrimFlow,
   setPsychologistFlow,
   setStartersFlow,
-  setTrainingFocusFlow,
-  setDrillFlow,
-  setTrainingIntensityFlow,
   skipShortSquadEventFlow,
   takeBankLoanFlow,
   signPlayerFlow,
@@ -97,6 +94,13 @@ import {
 import { bootcampTierFor, type GearItemId } from "@/engine/career/economy";
 import { careerAvailableKeys, seedCareerNew, toolboxNewKey } from "@/engine/career/careerNew";
 import { markSeen } from "@/engine/newItems";
+import {
+  approveTrainingProposalFlow,
+  keepBaseTrainingFlow,
+  setTrainingModeFlow,
+  setTrainingPackageFlow,
+  setTrainingRepeatFlow,
+} from "./careerTraining";
 import type { ContractOffer } from "@/engine/career/contract";
 import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
@@ -203,14 +207,17 @@ interface CareerStoreState {
   declineBid: (offerId: string) => void;
 
   setStarters: (ids: [string, string, string]) => void;
-  setTrainingFocus: (playerId: string, focus: SquadPlayer["trainingFocus"]) => void;
-  setTrainingIntensity: (
-    playerId: string,
-    intensity: SquadPlayer["trainingIntensity"],
-  ) => void;
-  setAutoTrain: (on: boolean) => void;
-  /** v2.0 (R27): this week's team drill. */
-  setDrill: (id: DrillId | null) => void;
+  /**
+   * rc.34 (DEV-03): the period's training package ("I set it" / "Adjust"; null
+   * = the base) — it replaces rc.33's weekly drill and per-card focus /
+   * intensity. The rest: the delegation mode, "repeat", and the coach's
+   * waiting proposal (approve or keep the base).
+   */
+  setTrainingPackage: (pkg: TrainingPackage | null) => void;
+  setTrainingMode: (mode: TrainingMode) => void;
+  setTrainingRepeat: (on: boolean) => void;
+  approveTrainingProposal: () => void;
+  keepBaseTraining: () => void;
   /** v2.0 (R33): answer the pending mid-week insert. */
   resolveInsert: (key: "a" | "b") => void;
 
@@ -452,21 +459,12 @@ export const useCareerStore = create<CareerStoreState>()(
         declineBid: (offerId) => withSave((s) => declineBidFlow(s, offerId)),
 
         setStarters: (ids) => withResult((s) => setStartersFlow(s, ids)),
-        setTrainingFocus: (playerId, focus) =>
-          withSave((s) => setTrainingFocusFlow(s, playerId, focus)),
-        setTrainingIntensity: (playerId, intensity) =>
-          withSave((s) => setTrainingIntensityFlow(s, playerId, intensity)),
-        setDrill: (id) => withSave((s) => setDrillFlow(s, id)),
+        setTrainingPackage: (pkg) => withResult((s) => setTrainingPackageFlow(s, pkg)),
+        setTrainingMode: (mode) => withResult((s) => setTrainingModeFlow(s, mode)),
+        setTrainingRepeat: (on) => withResult((s) => setTrainingRepeatFlow(s, on)),
+        approveTrainingProposal: () => withResult(approveTrainingProposalFlow),
+        keepBaseTraining: () => withResult(keepBaseTrainingFlow),
         resolveInsert: (key) => withResult((s) => resolveInsertFlow(s, key)),
-        setAutoTrain: (on) =>
-          withSave((s) => {
-            const next = structuredClone(s);
-            next.prefs.autoTrain = on;
-            for (const p of next.squad) {
-              if (on && p.trainingFocus !== "auto") p.trainingFocus = "auto";
-            }
-            return next;
-          }),
 
         // rc.34 (UX-06a): buying opens the item — its "New" mark clears.
         buyGear: (itemId) => {
