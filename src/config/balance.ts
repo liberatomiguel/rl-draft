@@ -1716,9 +1716,149 @@ export const CAREER_SPONSOR = {
    * paid to its own end condition (a signed deal is honoured; nothing new is
    * granted). `enabled: true` restores rc.32 (the backfill included).
    */
-  founding: { enabled: false, honourRunning: true, payrollShare: 0.7, throughSeasonIndex: 1 },
-  /** Misses within a deal before the renewal drops one tier. Never clawbacks. */
+  founding: {
+    enabled: false,
+    honourRunning: true,
+    payrollShare: 0.7,
+    throughSeasonIndex: 1,
+    /**
+     * rc.34 — SPONSOR-CONTRACT S6 (decision 5-A, as Miguel adjusted it to
+     * ECO-07/08: no day-one partner any more, so this only touches an rc.32
+     * career still running one, `honourRunning`): the handover tapers instead
+     * of a cliff. Through season index `throughSeasonIndex` the partner pays
+     * in full whatever deal is held; from then, starting with the first real
+     * deal (or at that season's first Monday when one is already held), it
+     * pays these shares of its base, one split each (each split boundary
+     * moves a step), then ends. [] restores rc.33's cliff (it ends at once).
+     */
+    taper: [2 / 3, 1 / 3] as readonly number[],
+  },
+  /**
+   * Misses within a deal before the renewal drops one tier. Never clawbacks.
+   * rc.34 (decision 7-A): the meter stays on Steady deals (and deals from
+   * before rc.34); fines replace it on Balanced and Bold deals — one
+   * consequence per miss.
+   */
   patienceMisses: 3,
+  /**
+   * rc.34 — ECO-04, SPONSOR-CONTRACT S1 (Gate 3a, 30/10: decisions 2-A, 3-A).
+   * Each decision offers three deals at the best tier the reputation allows
+   * (a Steady deal that missed `patienceMisses` goals renews one tier lower),
+   * one per profile. A profile shares its own ceiling between weekly pay, a
+   * fixed part (paid on signing, or — Bold — the day its first goal is
+   * reached) and a bonus per goal, sets every split's goal at its word, and
+   * runs for `lengthSplits` splits (6 = two seasons, 3 = one season, 1 = one
+   * split). Each ceiling is sized so the deal's expected value at its word's
+   * `wordChance` equals the tier's value for the Mondays it pays (s1).
+   * Claude's values (Miguel fixed the decisions, not the shares): the
+   * contract's candidates for Steady and Balanced; Bold's weekly share
+   * 0.35 and bonus 0.45 sit outside the candidate ranges (50–85 % / 10–35 %)
+   * because Bold's goals are Stretch goals — at the candidates (0.5 / 0.3),
+   * the ceiling that keeps its expected value level makes Bold's weekly pay
+   * the HIGHEST of the three, the opposite of the profile.
+   */
+  profiles: {
+    steady: { weeklyShare: 0.8, fixedShare: 0.1, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, word: "likely", lengthSplits: 6 },
+    balanced: { weeklyShare: 0.65, fixedShare: 0.1, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.25, word: "even", lengthSplits: 3 },
+    bold: { weeklyShare: 0.35, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.5, word: "stretch", lengthSplits: 1 },
+  } as const,
+  /**
+   * rc.34 — ECO-04 (s1): the tier's value per season, at season-0 money
+   * before the difficulty and the index: base × (splits + the signing
+   * payment's splits) + bonus × splits × this share — what a tier paid in
+   * rc.33 with its objective hit one split in two (an "Even" objective, the
+   * contract's S1 yardstick). M7's bases and bonuses stay the money.
+   */
+  valueBonusShare: 0.5,
+  /**
+   * rc.34 — ECO-04, "deals scaled to the team's level" (the snowball lever at
+   * the top; Miguel, 30/10: not too easy, not punitive). The newcomer tiers
+   * pay in full; a Tier 3 brand pays a side that reaches the Major in full
+   * (its margin over the region's last Major seat), a Tier 4 brand a world
+   * contender (its margin over the expected Major field's 4th). Below it,
+   * `perPoint` less per rating point, never under the tier's `floor`.
+   * Why: rc.33's patience meter demoted the top tiers every season
+   * (objectives a regional king never reaches — a Major top 4 for an APAC
+   * side), which kept their money near T2–T3; with fines replacing the
+   * meter (7-A), a rep-90 side on a cheap squad drew full T4 money, 3–4× its
+   * payroll (the harness: APAC/SSA sponsor income ×2–3 of rc.33). Measured:
+   * the probe's C10 / C11.
+   */
+  levelValue: { perPoint: 0.06, floor: { 3: 0.6, 4: 0.5 } as Record<number, number> },
+  /**
+   * rc.34 — ECO-04, decision 4-A: the chance each word stands for. A goal is
+   * picked as close as possible to its profile's `wordChance`; the ceilings
+   * are sized on it. A word shows for an estimate in its band: Likely from
+   * `wordMin.likely`, Even from `wordMin.even`, Stretch from
+   * `wordMin.stretch` (below it a goal is never offered: never unreachable).
+   * Calibrated on the harness (the probe's "deals by profile": s2 wants
+   * Likely ≥ 65 %, Even 35–65 %, Stretch 15–35 %).
+   */
+  wordChance: { likely: 0.8, even: 0.5, stretch: 0.25 } as const,
+  wordMin: { likely: 0.66, even: 0.38, stretch: 0.16 } as const,
+  /**
+   * rc.34 — ECO-04 (S2): a goal comes from the team's level — its seed
+   * rating (the R45 seeding's) against its region's teams — after this
+   * difficulty edge in rating points (the match engine's AI shift: at an
+   * equal rating the user wins 81 / 65 / 56 % of series on Easy / Normal /
+   * Hard, R68), so a word means the same chance on every difficulty. Hard's
+   * −1.1 is fitted on the harness (its sides reach Normal's curves about a
+   * point lower); Easy's +1.5 is read off the series rates (the harness
+   * does not measure Easy).
+   */
+  levelEdge: { easy: 1.5, normal: 0, hard: -1.1 } as Record<string, number>,
+  /**
+   * rc.34 — ECO-04 (S2, s2): the engine's chance model. Each curve is a
+   * logistic in a rating margin (the user's rating plus `levelEdge` minus
+   * the team that decides it), centred on `mid`, `scale` points wide:
+   * one regional week — playing its Sunday regional at all (direct, or
+   * through the Saturday qualifier) against the region's 12th org, a top 8
+   * against its 8th, a top 4 against its 4th, a title against its best (K
+   * of a split's three: the binomial tail); the Major against the region's
+   * last Major seat; a Major top 4 or title, once qualified, against the
+   * expected Major field's 4th and best. A margin reads dominance where a
+   * rank cannot (a rank-1 side in a weak region). `enterEvents`: the
+   * split's three regional weeks (the qualifier counts).
+   * Fitted on the harness by maximum likelihood (the probe's C11 dumps:
+   * about 900 splits of EU, NA, APAC and SSA, Normal and Hard, five
+   * policies). No harness team reached a Major within six points of the
+   * field's 4th, so the Major's top 4 and title keep a prior, steeper than
+   * a regional's.
+   */
+  goalModel: {
+    regionalReach: { mid: -4.6, scale: 2.05 },
+    regionalTop8: { mid: -0.1, scale: 1.55 },
+    // A top 6 sits between the top 8 and the top 4 (against the region's 6th org).
+    regionalTop6: { mid: 0.1, scale: 1.55 },
+    regionalTop4: { mid: 0.3, scale: 1.6 },
+    regionalWin: { mid: 3.1, scale: 1.95 },
+    majorQualify: { mid: 1.9, scale: 1.55 },
+    majorTop4: { mid: 2, scale: 1.5 },
+    majorWin: { mid: 4, scale: 1.5 },
+    enterEvents: { count: 3, p: 0.95 },
+  },
+  /**
+   * rc.34 — ECO-04, S3 (decision 1-A: fines on Balanced and Bold deals
+   * only, never on Steady deals or on Easy). A missed goal's fine is the
+   * profile's `fineShare` × the goal's bonus × the shortfall, at most
+   * `capWeeks` weeks of the deal's weekly pay (contract range 1–4; 1, so a
+   * season of misses on a Balanced deal stays under two weeks of payroll,
+   * s3), booked as its own line over the next `spreadMondays` Mondays (2–6),
+   * never a lump sum. `neverBreaches`: an instalment never takes the books
+   * below the Backer's floor — what would is waived (s4: a fine never
+   * triggers a rescue).
+   */
+  fines: { capWeeks: 1, spreadMondays: 4, neverBreaches: true },
+  /**
+   * rc.34 — ECO-05, S7 (decision 6-B: today's money inserts stay random
+   * inserts, indexed and counted against the cap). Other income — an
+   * insert's fee (a showmatch, a partner's content day, a jersey shoot) —
+   * at most `perSplitCap` a split (range 1–3) and `seasonShare` (5–15 %) of
+   * the season's earned income (at least the season's guaranteed income, so
+   * the cap is known before the prizes land). Beyond it such an insert does
+   * not come. Never guaranteed: outside the statement and band b3.
+   */
+  otherIncome: { perSplitCap: 2, seasonShare: 0.1 },
   enterEventsTarget: 2,
   /**
    * No sponsor offers until the org has earned a little standing (v0.1

@@ -54,6 +54,41 @@ const ordinalEn = (n: number): string =>
   ["first", "second", "third", "fourth", "fifth"][n - 1] ??
   `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th")}`;
 
+/**
+ * rc.34 (ECO-04): a sponsor goal in words — its kind, count, place and split
+ * (sponsorDeals.SponsorGoal). One function for the offer card, the desk and
+ * the mails.
+ */
+const sponsorGoalEn = (kind: string, count: number, place: number, split: number): string => {
+  const regionals = `Split ${split}'s 3 regionals`;
+  switch (kind) {
+    case "enterEvents":
+      return `Enter ${count} events in Split ${split}`;
+    case "regionalReach":
+      return count === 1 ? `Reach a Split ${split} regional` : `Reach ${count} of ${regionals}`;
+    case "regionalFinish":
+      if (place <= 1) return count === 1 ? `Win a Split ${split} regional` : `Win ${count} of ${regionals}`;
+      return count === 1 ? `A regional top ${place} in Split ${split}` : `Top ${place} at ${count} of ${regionals}`;
+    case "majorQualify":
+      return `Qualify for the Split ${split} Major`;
+    case "majorFinish":
+      return place <= 1 ? `Win the Split ${split} Major` : `Top ${place} at the Split ${split} Major`;
+    default:
+      return "";
+  }
+};
+
+/** rc.34 (ECO-04, decision 4-A): a goal's difficulty word. */
+const SPONSOR_WORD_EN: Record<string, string> = { likely: "Likely", even: "Even", stretch: "Stretch" };
+
+/** rc.34: a goal carried in mail params (goalKind, goalCount, goalPlace, goalSplit). */
+const goalOfParamsEn = (p: Record<string, string | number>): string =>
+  sponsorGoalEn(String(p.goalKind), Number(p.goalCount), Number(p.goalPlace), Number(p.goalSplit));
+
+/** rc.34 (S6): a handover step's Monday, as the mail quotes it. */
+const stepWhenEn = (week: string | number | undefined, nextSeason: string | number | undefined): string =>
+  `the Monday of ${Number(nextSeason) ? "next season's " : ""}week ${week}`;
+
 export const CAREER_EN = {
   meta: {
     title: "Road to Worlds",
@@ -378,6 +413,13 @@ export const CAREER_EN = {
       // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's inbox still reads.
       restructured: () => `The Backer restructured the org`,
       listingOffer: (p: Record<string, string | number>) => `Offer for ${p.player} — your listing`,
+      // rc.34 (ECO-04): the deals' mails.
+      sponsorLapsed: () => `The sponsorship offers lapsed`,
+      sponsorGoalHit: (p: Record<string, string | number>) => `${p.name}: goal reached`,
+      sponsorGoalMissed: (p: Record<string, string | number>) => `${p.name}: goal missed`,
+      sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: the Split ${p.goalSplit} goal`,
+      sponsorEnded: (p: Record<string, string | number>) => `${p.name}: the deal is complete`,
+      foundingHandover: () => `The founding partner hands over`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -402,6 +444,27 @@ export const CAREER_EN = {
         `The split objective was delivered. The bonus of ${p.bonus} lands with the payday. Good business.`,
       objectiveMissed: (p: Record<string, string | number>) =>
         `The split objective slipped. No money is clawed back — but repeated misses lower next season's renewal tier. (Misses so far: ${p.misses}.)`,
+      // rc.34 (ECO-04): the deals' mails.
+      sponsorDecision: (p: Record<string, string | number>) =>
+        `Three brands want the org at Tier ${p.tier}: a Steady deal, a Balanced one and a Bold one. On average they are worth about the same — they differ in how sure the money is, how long they run and what they ask. Compare them in Finances and sign one by the Sunday of week ${p.byWeek}, or they lapse.${Number(p.demoted) ? " Three goals slipped on the last Steady deal, so this round comes one tier lower." : ""}`,
+      sponsorLapsed: () =>
+        `Nobody signed before the deadline, so the brands moved on. The next offers come at the next split boundary.`,
+      sponsorGoalHit: (p: Record<string, string | number>) =>
+        `${goalOfParamsEn(p)}: done. The bonus of ${p.bonus} lands today${positive(p.milestone) ? `, with the milestone payment of ${p.milestone}` : ""}.`,
+      sponsorGoalMissed: (p: Record<string, string | number>) =>
+        `${goalOfParamsEn(p)}: ${p.done} of ${p.target}. ${
+          positive(p.fine)
+            ? `The fine is ${p.fine}, paid as ${p.perMonday} on each of the next ${p.mondays} Mondays — never below the Backer's floor.`
+            : Number(p.steady)
+              ? `No fine on a Steady deal — but the brand's patience drops: ${p.misses} of ${p.patience} misses; at ${p.patience}, the next offer comes a tier lower.`
+              : "No fine."
+        }`,
+      sponsorGoalSet: (p: Record<string, string | number>) =>
+        `The new split's goal: ${goalOfParamsEn(p)} — ${SPONSOR_WORD_EN[String(p.word)] ?? p.word}. Reaching it pays ${p.bonus}${positive(p.fine) ? `; a miss costs up to ${p.fine}` : ""}.`,
+      sponsorEnded: (p: Record<string, string | number>) =>
+        `The deal ran its course: ${p.hits} of ${p.goals} goals reached. New offers are on your desk.${Number(p.demoted) ? " After three misses on a Steady deal, they come one tier lower." : ""}`,
+      foundingHandover: (p: Record<string, string | number>) =>
+        `With a deal of its own and its first seasons behind it, the org no longer leans on the founding partner. It steps back gradually: ${p.first}% of its pay until ${stepWhenEn(p.stepWeek, p.stepNextSeason)}, then ${p.second}% until ${stepWhenEn(p.endWeek, p.endNextSeason)}, and then it ends.`,
       contractExpiring: (p: Record<string, string | number>) =>
         `${p.player} is in the final season of his deal. You hold an exclusive re-sign window through Split 3 — after that, he walks for free.`,
       bankLoan: (p: Record<string, string | number>) =>
@@ -904,6 +967,8 @@ export const CAREER_EN = {
       psychologist: "Sports psychologist",
       upkeep: "Facility upkeep",
       bankPayment: "Bank instalment",
+      // rc.34 (ECO-04): a missed goal's fine, in Monday instalments.
+      sponsorFine: "Sponsor fine",
     },
     loans: "Loans & debt",
     loansHint: "Two ways to borrow: the bank, on your terms, or the Emergency Backer, on theirs.",
@@ -970,6 +1035,9 @@ export const CAREER_EN = {
       bankLoan: "Bank loan received",
       bankPayment: "Bank instalment",
       insert: "Side event",
+      // rc.34 (ECO-04): a Bold deal's milestone payment and a missed goal's fine instalment.
+      sponsorMilestone: "Sponsor milestone",
+      sponsorFine: "Sponsor fine",
     },
     sponsors: "Sponsors",
     sponsorTier: (t: number) => `Tier ${t}`,
@@ -988,6 +1056,66 @@ export const CAREER_EN = {
     offerTitle: "Sponsorship offers",
     perWeekBase: (s: string) => `${s} / week guaranteed`,
     bonusFor: (s: string) => `+${s} per objective hit`,
+    // rc.34 (ECO-04, SPONSOR-CONTRACT S5): the deals — the comparison card's five rows and the desk.
+    deal: {
+      profile: { steady: "Steady", balanced: "Balanced", bold: "Bold" } as Record<string, string>,
+      profileHint: {
+        steady: "Most of the money is sure. A small bonus per goal, no fines.",
+        balanced: "A solid weekly base, a real bonus per goal, a small fine for a miss.",
+        bold: "Less sure money, a big bonus per goal and a payment the day you reach the first. A miss is fined.",
+      } as Record<string, string>,
+      word: SPONSOR_WORD_EN,
+      rowStability: "Stability",
+      rowTotal: "Total return",
+      rowLength: "Length",
+      rowRisk: "Risk",
+      rowGoal: "Goal",
+      weeklySure: (s: string) => `${s} a week, sure`,
+      plusSigning: (s: string) => `+ ${s} on signing`,
+      plusMilestone: (s: string) => `+ ${s} the day you reach a first goal`,
+      total: (sure: string, upTo: string) => `${sure} sure · up to ${upTo}`,
+      length: (splits: number, date: string) =>
+        `${splits === 1 ? "One split" : splits === 3 ? "One season" : splits === 6 ? "Two seasons" : `${splits} splits`} · ends ${date}`,
+      riskSteady: (n: number) => `No fines · ${n} missed goals lower the next offer a tier`,
+      riskFine: (s: string, mondays: number) => `A missed goal costs up to ${s}, paid over ${mondays} Mondays`,
+      riskNone: "No fines on this difficulty",
+      goal: sponsorGoalEn,
+      goalBy: (date: string) => `by ${date}`,
+      laterGoals: "Then a new goal every split, at the same difficulty",
+      sign: "Sign",
+      decideBy: (date: string) => `Sign by ${date} — after that the offers lapse.`,
+      compareHint:
+        "All three are worth about the same on average. They differ in how sure the money is, how long they run and what they ask.",
+      // rc.34: a Tier 3 / 4 brand pays a side below its level less (sponsorDeals.levelValueShareOf).
+      levelScaled: (tier: number, pct: number) =>
+        tier >= 4
+          ? `Tier 4 brands pay world contenders in full — at the team's level today, they offer ${pct}% of that.`
+          : `Tier 3 brands pay a side that reaches the Major in full — at the team's level today, they offer ${pct}% of that.`,
+      stabilityBar: (pct: number) => `${pct}% of the most it pays is sure`,
+      handover: (first: number, second: number) =>
+        `Your founding partner steps back once this deal starts: ${first}%, then ${second}% of its pay, one split each.`,
+      activeTitle: "Current deal",
+      endsOn: (date: string) => `Ends ${date}`,
+      signingPaid: (s: string) => `${s} paid on signing`,
+      milestonePending: (s: string) => `${s} the day you reach a first goal`,
+      milestonePaid: (s: string) => `Milestone of ${s} paid`,
+      thisGoal: "This split's goal",
+      nextGoal: (date: string) => `The next goal is set on ${date}`,
+      progress: (done: number, target: number) => `${done} of ${target}`,
+      goalReached: "Reached",
+      goalMissed: "Missed",
+      goalOpen: "Open",
+      bonusIfHit: (s: string) => `${s} if reached`,
+      fineIfMissed: (s: string) => `up to ${s} if missed`,
+      record: (hits: number, misses: number) => `Goals so far: ${hits} reached, ${misses} missed`,
+      finesOwed: (s: string, mondays: number) => `Fines still to pay: ${s} over the next ${mondays} Mondays`,
+      fineFloorNote: "An instalment never takes the books below the Backer's floor.",
+      otherIncome: "Other income",
+      otherIncomeLine: (taken: string, cap: string, n: number, max: number) =>
+        `${taken} of ${cap} this season · ${n} of ${max} this split`,
+      otherIncomeHint: (pct: number, max: number) =>
+        `Showmatches and partner days pay outside the guaranteed income — at most ${pct}% of the season's earnings, ${max} a split.`,
+    },
     backer: "Emergency Backer",
     backerRemaining: (s: string) => `Backer: ${s} to repay`,
     backerLine: (pct: number) => `Repaid from prize money (${pct}%) — or pay it down below`,
@@ -1041,6 +1169,9 @@ export const CAREER_EN = {
     foundingTerms: (pct: number) => `${pct}% of the founding wage bill · objective: enter events · no signing bonus`,
     foundingEnds: (through: string) => `Ends with your first sponsorship deal — not before the end of ${through}.`,
     foundingEnded: "Stepped back once the org signed its own sponsorship deal.",
+    // rc.34 (S6): the handover — a share of its pay, one split per step.
+    foundingTapering: (pct: number, last: boolean) =>
+      last ? `Handing over: ${pct}% of its pay this split — its last.` : `Handing over: ${pct}% of its pay this split, less the next, then it ends.`,
     // rc.32 (M6, provisional): the players' share of podium prizes.
     // rc.33 (ECO-10): each contract carries its own share (Squad and the offer show it).
     playerShareRule:
@@ -1180,6 +1311,8 @@ export const CAREER_EN = {
       windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves across the regions`,
       debtCleared: () => `Backer repaid — the org walks free`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} announces ${p.name} partnership`,
+      // rc.34 (ECO-04): a deal that ran its course (it ends on a split boundary).
+      sponsorEnded: (p: Record<string, string | number>) => `${p.name}: the sponsorship deal is complete`,
       sponsorDropped: (p: Record<string, string | number>) => `${p.name} cools on the partnership`,
       repUp: (p: Record<string, string | number>) => `The scene is talking about ${p.org}`,
       repDown: (p: Record<string, string | number>) => `Pundits pile on after ${p.org}'s stumble`,
@@ -1277,8 +1410,9 @@ export const CAREER_EN = {
         `${p.n} moves logged before the window shut. The full wire — fees, free agents, every region — is on the HQ.`,
       debtCleared: () =>
         `The last installment cleared the Emergency Backer's books. Fee transfers and gear purchases are open again.`,
+      // rc.34 (ECO-04): a deal now runs one split, one season or two, with a goal every split.
       sponsorSigned: (p: Record<string, string | number>) =>
-        `${p.org} and ${p.name} signed for the season. Guaranteed base, bonus on the objective — deliver and the tier grows.`,
+        `${p.org} and ${p.name} signed a partnership: weekly pay, and a bonus for every goal reached. The terms are on the Finances desk.`,
       unlock: (p: Record<string, string | number>) =>
         `Reputation opened a new door: ${p.name}. The progression track shows what's still ahead.`,
       registryRepair: () =>

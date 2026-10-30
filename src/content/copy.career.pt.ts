@@ -52,6 +52,40 @@ const partnerUntilPt = (p: Record<string, string | number>): string =>
 /** rc.33 (UX-07, ECO-08): "primeira", "segunda"… para a linha de dinheiro do assistente e o e-mail do resgate (qualquer número). */
 const ordinalPt = (n: number): string => ["primeira", "segunda", "terceira", "quarta", "quinta"][n - 1] ?? `${n}ª`;
 
+/**
+ * rc.34 (ECO-04): uma meta de patrocínio em palavras — tipo, quantidade,
+ * colocação e split (sponsorDeals.SponsorGoal).
+ */
+const sponsorGoalPt = (kind: string, count: number, place: number, split: number): string => {
+  const regionals = `${count} dos 3 regionais do Split ${split}`;
+  switch (kind) {
+    case "enterEvents":
+      return `Disputar ${count} eventos no Split ${split}`;
+    case "regionalReach":
+      return count === 1 ? `Chegar a um regional do Split ${split}` : `Chegar a ${regionals}`;
+    case "regionalFinish":
+      if (place <= 1) return count === 1 ? `Vencer um regional do Split ${split}` : `Vencer ${regionals}`;
+      return count === 1 ? `Um top ${place} em regional no Split ${split}` : `Top ${place} em ${regionals}`;
+    case "majorQualify":
+      return `Classificar para o Major do Split ${split}`;
+    case "majorFinish":
+      return place <= 1 ? `Vencer o Major do Split ${split}` : `Top ${place} no Major do Split ${split}`;
+    default:
+      return "";
+  }
+};
+
+/** rc.34 (ECO-04, decisão 4-A): a dificuldade da meta em uma palavra. */
+const SPONSOR_WORD_PT: Record<string, string> = { likely: "Provável", even: "Meio a meio", stretch: "Desafiadora" };
+
+/** rc.34: uma meta nos parâmetros do e-mail (goalKind, goalCount, goalPlace, goalSplit). */
+const goalOfParamsPt = (p: Record<string, string | number>): string =>
+  sponsorGoalPt(String(p.goalKind), Number(p.goalCount), Number(p.goalPlace), Number(p.goalSplit));
+
+/** rc.34 (S6): a segunda-feira de um passo da transição, como o e-mail cita. */
+const stepWhenPt = (week: string | number | undefined, nextSeason: string | number | undefined): string =>
+  `a segunda-feira da semana ${week}${Number(nextSeason) ? " da próxima temporada" : ""}`;
+
 export const CAREER_PT: CareerCopy = {
   meta: {
     title: "Road to Worlds",
@@ -369,6 +403,13 @@ export const CAREER_PT: CareerCopy = {
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para a caixa de um save antigo.
       restructured: () => `O Investidor reestruturou a org`,
       listingOffer: (p: Record<string, string | number>) => `Proposta por ${p.player} — seu anúncio`,
+      // rc.34 (ECO-04): os e-mails dos contratos.
+      sponsorLapsed: () => `As propostas de patrocínio expiraram`,
+      sponsorGoalHit: (p: Record<string, string | number>) => `${p.name}: meta batida`,
+      sponsorGoalMissed: (p: Record<string, string | number>) => `${p.name}: meta perdida`,
+      sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: a meta do Split ${p.goalSplit}`,
+      sponsorEnded: (p: Record<string, string | number>) => `${p.name}: contrato concluído`,
+      foundingHandover: () => `O parceiro fundador passa o bastão`,
     },
     body: {
       incomingBid: (p: Record<string, string | number>) =>
@@ -393,6 +434,27 @@ export const CAREER_PT: CareerCopy = {
         `A meta do split foi entregue. O bônus de ${p.bonus} cai junto com o pagamento. Bom negócio.`,
       objectiveMissed: (p: Record<string, string | number>) =>
         `A meta do split escapou. Ninguém cobra dinheiro de volta — mas faltas repetidas derrubam o tier da renovação. (Faltas até aqui: ${p.misses}.)`,
+      // rc.34 (ECO-04): os e-mails dos contratos.
+      sponsorDecision: (p: Record<string, string | number>) =>
+        `Três marcas querem a organização no Tier ${p.tier}: um contrato Estável, um Equilibrado e um Ousado. Em média valem mais ou menos o mesmo — mudam no quanto do dinheiro é garantido, na duração e no que pedem. Compare em Finanças e assine um até o domingo da semana ${p.byWeek}, ou elas expiram.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um tier abaixo." : ""}`,
+      sponsorLapsed: () =>
+        `Ninguém assinou antes do prazo e as marcas seguiram em frente. As próximas propostas chegam na próxima virada de split.`,
+      sponsorGoalHit: (p: Record<string, string | number>) =>
+        `${goalOfParamsPt(p)}: feito. O bônus de ${p.bonus} entra hoje${positive(p.milestone) ? `, junto com o pagamento do marco de ${p.milestone}` : ""}.`,
+      sponsorGoalMissed: (p: Record<string, string | number>) =>
+        `${goalOfParamsPt(p)}: ${p.done} de ${p.target}. ${
+          positive(p.fine)
+            ? `A multa é de ${p.fine}, paga em parcelas de ${p.perMonday} nas próximas ${p.mondays} segundas — nunca abaixo do piso do Backer.`
+            : Number(p.steady)
+              ? `Contrato Estável não tem multa — mas a paciência da marca cai: ${p.misses} de ${p.patience} metas perdidas; em ${p.patience}, a próxima proposta vem um tier abaixo.`
+              : "Sem multa."
+        }`,
+      sponsorGoalSet: (p: Record<string, string | number>) =>
+        `A meta do novo split: ${goalOfParamsPt(p)} — ${SPONSOR_WORD_PT[String(p.word)] ?? p.word}. Bater paga ${p.bonus}${positive(p.fine) ? `; perder custa até ${p.fine}` : ""}.`,
+      sponsorEnded: (p: Record<string, string | number>) =>
+        `O contrato chegou ao fim: ${p.hits} de ${p.goals} metas batidas. Novas propostas estão na sua mesa.${Number(p.demoted) ? " Depois de três metas perdidas num contrato Estável, elas vêm um tier abaixo." : ""}`,
+      foundingHandover: (p: Record<string, string | number>) =>
+        `Com um contrato próprio e as primeiras temporadas para trás, a organização não depende mais do parceiro fundador. Ele sai aos poucos: ${p.first}% do valor até ${stepWhenPt(p.stepWeek, p.stepNextSeason)}, depois ${p.second}% até ${stepWhenPt(p.endWeek, p.endNextSeason)}, e então encerra.`,
       contractExpiring: (p: Record<string, string | number>) =>
         `${p.player} está na última temporada de contrato. Você tem janela exclusiva de renovação até o fim do Split 3 — depois disso, ele sai de graça.`,
       bankLoan: (p: Record<string, string | number>) =>
@@ -888,6 +950,8 @@ export const CAREER_PT: CareerCopy = {
       psychologist: "Psicólogo esportivo",
       upkeep: "Manutenção das instalações",
       bankPayment: "Parcela do banco",
+      // rc.34 (ECO-04): a missed goal's fine, in Monday instalments.
+      sponsorFine: "Multa do patrocinador",
     },
     loans: "Empréstimos & dívidas",
     loansHint: "Dois jeitos de se financiar: o banco, nos seus termos, ou o Investidor de emergência, nos dele.",
@@ -953,6 +1017,9 @@ export const CAREER_PT: CareerCopy = {
       bankLoan: "Empréstimo bancário recebido",
       bankPayment: "Parcela do banco",
       insert: "Evento paralelo",
+      // rc.34 (ECO-04): a Bold deal's milestone payment and a missed goal's fine instalment.
+      sponsorMilestone: "Marco do patrocinador",
+      sponsorFine: "Multa do patrocinador",
     },
     sponsors: "Patrocinadores",
     sponsorTier: (t: number) => `Nível ${t}`,
@@ -971,6 +1038,66 @@ export const CAREER_PT: CareerCopy = {
     offerTitle: "Ofertas de patrocínio",
     perWeekBase: (s: string) => `${s} / semana garantidos`,
     bonusFor: (s: string) => `+${s} por meta batida`,
+    // rc.34 (ECO-04, SPONSOR-CONTRACT S5): os contratos — as cinco linhas do comparativo e a mesa.
+    deal: {
+      profile: { steady: "Estável", balanced: "Equilibrado", bold: "Ousado" } as Record<string, string>,
+      profileHint: {
+        steady: "Quase todo o dinheiro é garantido. Bônus pequeno por meta, sem multas.",
+        balanced: "Uma base semanal sólida, um bônus de verdade por meta e uma multa pequena por meta perdida.",
+        bold: "Menos dinheiro garantido, bônus grande por meta e um pagamento no dia da primeira meta batida. Meta perdida gera multa.",
+      } as Record<string, string>,
+      word: SPONSOR_WORD_PT,
+      rowStability: "Estabilidade",
+      rowTotal: "Retorno total",
+      rowLength: "Duração",
+      rowRisk: "Risco",
+      rowGoal: "Meta",
+      weeklySure: (s: string) => `${s} por semana, garantido`,
+      plusSigning: (s: string) => `+ ${s} na assinatura`,
+      plusMilestone: (s: string) => `+ ${s} no dia da primeira meta batida`,
+      total: (sure: string, upTo: string) => `${sure} garantido · até ${upTo}`,
+      length: (splits: number, date: string) =>
+        `${splits === 1 ? "Um split" : splits === 3 ? "Uma temporada" : splits === 6 ? "Duas temporadas" : `${splits} splits`} · termina ${date}`,
+      riskSteady: (n: number) => `Sem multas · ${n} metas perdidas baixam a próxima proposta em um tier`,
+      riskFine: (s: string, mondays: number) => `Meta perdida custa até ${s}, pago em ${mondays} segundas`,
+      riskNone: "Sem multas nesta dificuldade",
+      goal: sponsorGoalPt,
+      goalBy: (date: string) => `até ${date}`,
+      laterGoals: "Depois, uma meta nova a cada split, na mesma dificuldade",
+      sign: "Assinar",
+      decideBy: (date: string) => `Assine até ${date} — depois disso as propostas expiram.`,
+      compareHint:
+        "As três valem mais ou menos o mesmo em média. Mudam no quanto do dinheiro é garantido, na duração e no que pedem.",
+      // rc.34: uma marca de Tier 3 / 4 paga menos a um time abaixo do nível dela (sponsorDeals.levelValueShareOf).
+      levelScaled: (tier: number, pct: number) =>
+        tier >= 4
+          ? `Marcas de Tier 4 pagam o valor cheio a candidatos ao título mundial — no nível atual do time, oferecem ${pct}% disso.`
+          : `Marcas de Tier 3 pagam o valor cheio a quem chega ao Major — no nível atual do time, oferecem ${pct}% disso.`,
+      stabilityBar: (pct: number) => `${pct}% do máximo é garantido`,
+      handover: (first: number, second: number) =>
+        `Seu parceiro fundador sai aos poucos quando este contrato começar: ${first}%, depois ${second}% do valor, um split cada.`,
+      activeTitle: "Contrato atual",
+      endsOn: (date: string) => `Termina ${date}`,
+      signingPaid: (s: string) => `${s} pagos na assinatura`,
+      milestonePending: (s: string) => `${s} no dia da primeira meta batida`,
+      milestonePaid: (s: string) => `Marco de ${s} pago`,
+      thisGoal: "Meta deste split",
+      nextGoal: (date: string) => `A próxima meta sai em ${date}`,
+      progress: (done: number, target: number) => `${done} de ${target}`,
+      goalReached: "Batida",
+      goalMissed: "Perdida",
+      goalOpen: "Em aberto",
+      bonusIfHit: (s: string) => `${s} se bater`,
+      fineIfMissed: (s: string) => `até ${s} se perder`,
+      record: (hits: number, misses: number) => `Metas até aqui: ${hits} batidas, ${misses} perdidas`,
+      finesOwed: (s: string, mondays: number) => `Multas a pagar: ${s} nas próximas ${mondays} segundas`,
+      fineFloorNote: "Uma parcela nunca leva o caixa abaixo do piso do Backer.",
+      otherIncome: "Outras receitas",
+      otherIncomeLine: (taken: string, cap: string, n: number, max: number) =>
+        `${taken} de ${cap} na temporada · ${n} de ${max} neste split`,
+      otherIncomeHint: (pct: number, max: number) =>
+        `Showmatches e ações de parceiros pagam fora da receita garantida — no máximo ${pct}% do faturamento da temporada, ${max} por split.`,
+    },
     backer: "Investidor de emergência",
     backerRemaining: (s: string) => `Investidor: ${s} a reembolsar`,
     backerLine: (pct: number) => `Reembolsado da premiação (${pct}%) — ou amortize abaixo`,
@@ -1023,6 +1150,9 @@ export const CAREER_PT: CareerCopy = {
     foundingTerms: (pct: number) => `${pct}% da folha de fundação · meta: disputar eventos · sem luvas`,
     foundingEnds: (through: string) => `Termina no seu primeiro contrato de patrocínio — não antes do fim de ${through}.`,
     foundingEnded: "Saiu de cena quando a org assinou o próprio patrocínio.",
+    // rc.34 (S6): a transição — uma parte do valor, um split por passo.
+    foundingTapering: (pct: number, last: boolean) =>
+      last ? `Passando o bastão: ${pct}% do valor neste split — o último.` : `Passando o bastão: ${pct}% do valor neste split, menos no próximo, e então encerra.`,
     // rc.32 (M6, provisório): a parte dos jogadores nos prêmios de pódio.
     // rc.33 (ECO-10): cada contrato tem a própria parte (o Elenco e a oferta mostram).
     playerShareRule:
@@ -1164,6 +1294,8 @@ export const CAREER_PT: CareerCopy = {
       windowReport: (p: Record<string, string | number>) => `Relatório da janela: ${p.n} trocas pelas regiões`,
       debtCleared: () => `Investidor quitado — a org anda livre`,
       sponsorSigned: (p: Record<string, string | number>) => `${p.org} anuncia parceria com ${p.name}`,
+      // rc.34 (ECO-04): um contrato que chegou ao fim (termina numa virada de split).
+      sponsorEnded: (p: Record<string, string | number>) => `${p.name}: contrato de patrocínio concluído`,
       sponsorDropped: (p: Record<string, string | number>) => `${p.name} esfria a parceria`,
       repUp: (p: Record<string, string | number>) => `A cena está falando de ${p.org}`,
       repDown: (p: Record<string, string | number>) => `Analistas pegam pesado após o tropeço de ${p.org}`,
@@ -1260,8 +1392,9 @@ export const CAREER_PT: CareerCopy = {
         `${p.n} trocas registradas antes da janela fechar. O plantão completo — taxas, agentes livres, todas as regiões — está no QG.`,
       debtCleared: () =>
         `A última parcela zerou os livros do Investidor de emergência. Transferências com taxa e equipamentos liberados de novo.`,
+      // rc.34 (ECO-04): um contrato agora dura um split, uma temporada ou duas, com uma meta por split.
       sponsorSigned: (p: Record<string, string | number>) =>
-        `${p.org} e ${p.name} assinaram pela temporada. Base garantida, bônus na meta — entregue e o nível cresce.`,
+        `${p.org} e ${p.name} assinaram uma parceria: pagamento semanal e um bônus por meta batida. Os termos estão na mesa de Finanças.`,
       unlock: (p: Record<string, string | number>) =>
         `A reputação abriu uma porta nova: ${p.name}. A trilha de progressão mostra o que ainda vem.`,
       registryRepair: () =>

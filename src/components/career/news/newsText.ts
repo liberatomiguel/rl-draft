@@ -50,6 +50,21 @@ const MONEY_PARAM_KEYS = new Set([
   "garnished",
   "balance",
   "partnerWeekly",
+  // rc.34 (ECO-04): the deals' mails — a fine, its instalment, a milestone payment.
+  "fine",
+  "perMonday",
+  "milestone",
+]);
+
+/** rc.34 (ECO-04): the sponsor mails and news whose `name` is a brand id (shown as the brand's name). */
+const SPONSOR_NAME_KEYS = new Set([
+  "objectiveHit",
+  "objectiveMissed",
+  "sponsorSigned",
+  "sponsorGoalHit",
+  "sponsorGoalMissed",
+  "sponsorGoalSet",
+  "sponsorEnded",
 ]);
 
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;
@@ -83,7 +98,7 @@ function displayParams(
       String(p.name ?? "");
     return { ...p, name: label };
   }
-  if (titleKey === "objectiveHit" || titleKey === "objectiveMissed" || titleKey === "sponsorSigned") {
+  if (SPONSOR_NAME_KEYS.has(titleKey)) {
     const brand = sponsorBrandById.get(String(p.name ?? ""))?.name ?? String(p.name ?? "");
     return { ...p, name: brand };
   }

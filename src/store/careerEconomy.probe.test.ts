@@ -20,6 +20,14 @@
  *    priced against the wage it replaces, and the stars on the market at each
  *    season start against the user's books and the best AI rosters' wage bill.
  *
+ * rc.34 (ECO-04/05): ECON_SPONSOR (steady | balanced | bold | best | worst)
+ * overrides every policy's sponsor pick, ECON_OTHERS (take | skip) their
+ * answer to the inserts that pay a fee, and ECON_FOUNDING=1 plays the
+ * careers with rc.32's founding partner (`founding.enabled`) to measure the
+ * handover (s6). Table C11, "deals by profile", reads the decisions, the
+ * deals, every split's level and outcomes (the goal model's calibration,
+ * every word at every split), the fines and the other income.
+ *
  * Knobs: ECON_REGIONS (default all seven), ECON_DIFFS (easy,normal,hard),
  * ECON_POLICIES (default all seven ARC_POLICIES), ECON_SEEDS (careers per
  * cell, default 1: seed 9100, the first seed of CAREER-BASELINE-rc30),
@@ -41,7 +49,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import type { CareerDifficulty, CareerSave, LedgerEntry } from "@/engine/career/types";
 import type { Region } from "@/engine/types";
-import type { ArcCareer, ArcPolicyId } from "./careerArcBot";
+import type { ArcCareer, ArcPolicyId, ArcSponsorPick } from "./careerArcBot";
 import type { FlowResult } from "./careerFlow";
 
 // ---------------------------------------------------------------------------
@@ -561,6 +569,51 @@ interface EconSeason {
   ended: boolean;
   /** Prize money from regional titles (the champion's line) this season. */
   regionalTitles: number;
+  /** rc.34 (ECO-04): the profile of the deal held at the season's end ("" = none or a deal from before rc.34). */
+  profileEnd?: string;
+}
+
+/** rc.34 (ECO-04): one split of a career — the team's level at its start and what it reached. */
+interface SplitRec {
+  s: number;
+  split: 1 | 2 | 3;
+  /** The team's level at the split's first Monday (sponsorDeals.teamLevelFor, the difficulty edge included). */
+  level: import("@/engine/career/sponsorDeals").TeamLevel;
+  /** The places at the split's regionals the user played (1 = won, 16 = out in the Swiss). */
+  regionalPlaces: number[];
+  majorQualified: boolean;
+  /** The place at the split's Major (null = not qualified). */
+  majorPlace: number | null;
+  /** Events the user entered in the split (cups, qualifiers, regionals, the Major). */
+  events: number;
+}
+
+/** rc.34: one signed deal and how its goals went. */
+interface DealRec {
+  key: string;
+  s: number;
+  profile: string;
+  tier: number;
+  lengthSplits: number;
+  weekly: number;
+  fixed: number;
+  fixedKind: string;
+  bonus: number;
+  fineCap: number;
+  fineShare: number;
+  ev: number;
+  ceiling: number;
+  mondays: number;
+  /** Its goals as they settled (read off the goal mails: a hit the day it lands, a miss on its boundary Monday). */
+  goals: { word: string; chance: number; kind: string; hit: boolean; shortfall: number; fine: number }[];
+}
+
+/** rc.34: one decision's three offers. */
+interface DecisionRec {
+  s: number;
+  day: number;
+  tier: number;
+  offers: { profile: string; ev: number; mondays: number; ceiling: number; sure: number; weekly: number; word: string; chance: number }[];
 }
 
 interface RenewalRec {
@@ -634,6 +687,15 @@ interface EconCareer {
   endWeek: number | null;
   firstSponsorSeason: number | null;
   arcRows: Pick<ArcCareer["seasons"][number], "seasonIndex" | "regionRank" | "majorsQualified" | "worlds" | "titles" | "sales" | "signings" | "starSignings">[];
+  /** rc.34 (ECO-04): every split's level and outcomes, the decisions offered, the deals signed. */
+  splits?: SplitRec[];
+  decisions?: DecisionRec[];
+  deals?: DealRec[];
+  /** rc.34: absolute weeks a missed goal's fine was set (s4). */
+  fineWeeks?: number[];
+  /** rc.34 (ECO_FOUNDING): the weekly guaranteed income on each Monday of S0–S2, and the partner's full weekly pay. */
+  guaranteedWeeks?: { s: number; w: number; g: number }[];
+  partnerWeekly?: number;
 }
 
 const SPEND_GROUPS: Record<string, string[]> = {
@@ -682,7 +744,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
   const M = await import("@/engine/career/market");
   const { T2_EVENT_NAMES, T3_EVENT_NAMES } = await import("@/data/career/names");
   const B = await import("@/config/balance");
-  const { userSeedRatingFor, weeklyStatementOf, backerLineOf } = await import("./careerFlow");
+  const { userSeedRatingFor, weeklyStatementOf, backerLineOf, sponsorLevelOf } = await import("./careerFlow");
+  const SD = await import("@/engine/career/sponsorDeals");
   const t2 = new Set<string>(T2_EVENT_NAMES);
   const t3 = new Set<string>(T3_EVENT_NAMES);
   const W = B.CAREER_PAYROLL.weeksPerSeason;
@@ -717,6 +780,100 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
     const seenMail = new Set<string>();
     const joined = new Map<string, { age: number; overall: number; founder: boolean }>();
     const renewSeen = new Set<string>();
+    // rc.34 (ECO-04): the splits' level and outcomes, the decisions, the deals.
+    const splitOpen = new Map<string, SplitRec>();
+    const dealIndex = new Map<string, DealRec>();
+    const lastDealBySponsor = new Map<string, DealRec>();
+    const decisionSeen = new Set<string>();
+    const PLACE: Record<string, number> = { champion: 1, runner_up: 2, third: 3, fourth: 4, top4: 4, top6: 6, top8: 8, swiss_exit: 16 };
+    const recordSponsors = (save: CareerSave, kind: TapEvent["kind"]) => {
+      const career = c!;
+      const offers = save.sponsorOffers ?? [];
+      const t0 = offers[0]?.terms;
+      if (t0) {
+        const key = `${t0.offeredOn.seasonIndex}:${t0.offeredOn.day}`;
+        if (!decisionSeen.has(key)) {
+          decisionSeen.add(key);
+          (career.decisions ??= []).push({
+            s: t0.offeredOn.seasonIndex,
+            day: t0.offeredOn.day,
+            tier: offers[0].tier,
+            offers: offers.map((o) => ({
+              profile: o.terms!.profile,
+              ev: o.terms!.ev,
+              mondays: SD.mondaysBetween(o.terms!.offeredOn, o.terms!.endsOn),
+              ceiling: o.terms!.ceiling,
+              sure: SD.sureMoneyOf(o.terms!, o.terms!.offeredOn),
+              weekly: o.terms!.weekly,
+              word: o.terms!.goals[0]?.word ?? "",
+              chance: o.terms!.goals[0]?.chance ?? 0,
+            })),
+          });
+        }
+      }
+      const sp = save.sponsor;
+      if (sp?.terms) {
+        const key = `${sp.sponsorId}:${sp.terms.firstSlot}`;
+        let d = dealIndex.get(key);
+        if (!d) {
+          d = {
+            key,
+            s: save.clock.seasonIndex,
+            profile: sp.terms.profile,
+            tier: sp.tier,
+            lengthSplits: sp.terms.lengthSplits,
+            weekly: sp.terms.weekly,
+            fixed: sp.terms.fixed,
+            fixedKind: sp.terms.fixedKind,
+            bonus: sp.bonus,
+            fineCap: sp.terms.fineCap,
+            fineShare: sp.terms.fineShare,
+            ev: sp.terms.ev,
+            ceiling: sp.terms.ceiling,
+            mondays: SD.mondaysBetween(sp.terms.offeredOn, sp.terms.endsOn),
+            goals: [],
+          };
+          dealIndex.set(key, d);
+          lastDealBySponsor.set(sp.sponsorId, d);
+          (career.deals ??= []).push(d);
+        }
+      }
+      if (!((kind === "day" || kind === "rollover") && dayOfWeekOf(save.clock.day) === 1)) return;
+      const week = weekOfDay(save.clock.day);
+      const startSplit = week === 3 ? 1 : week === 13 ? 2 : week === 23 ? 3 : 0;
+      if (startSplit && save.squad.length > 0) {
+        const k = `${save.clock.seasonIndex}:${startSplit}`;
+        if (!splitOpen.has(k)) {
+          const lv = sponsorLevelOf(save);
+          splitOpen.set(k, {
+            s: save.clock.seasonIndex,
+            split: startSplit as 1 | 2 | 3,
+            level: lv,
+            regionalPlaces: [],
+            majorQualified: false,
+            majorPlace: null,
+            events: -1,
+          });
+        }
+      }
+      const endSplit = week === 11 ? 1 : week === 21 ? 2 : week === 31 ? 3 : 0;
+      const rec = endSplit ? splitOpen.get(`${save.clock.seasonIndex}:${endSplit}`) : undefined;
+      if (rec && rec.events < 0 && save.phase !== "ended") {
+        const mine = save.eventResults.filter((r) => r.userPlacement && r.seasonIndex === rec.s && r.split === endSplit);
+        rec.regionalPlaces = mine.filter((r) => r.tier === "regional").map((r) => PLACE[r.userPlacement!] ?? 16);
+        const major = mine.find((r) => r.tier === "major");
+        rec.majorQualified = Boolean(major);
+        rec.majorPlace = major ? (PLACE[major.userPlacement!] ?? 16) : null;
+        rec.events = mine.length;
+        (career.splits ??= []).push(rec);
+      }
+      // ECON_FOUNDING (s6): the weekly guaranteed income of S0–S2 and the partner's full weekly pay.
+      if (env.ECON_FOUNDING && save.clock.seasonIndex <= 2 && save.phase !== "ended") {
+        const st = statementOf(save);
+        (career.guaranteedWeeks ??= []).push({ s: save.clock.seasonIndex, w: week, g: st.sponsorBase + st.foundingPartner + st.fanbase });
+        if (save.foundingPartner && !save.foundingPartner.taperStep && st.foundingPartner > 0) career.partnerWeekly = st.foundingPartner;
+      }
+    };
     const seasonOf = (s: number): EconSeason => {
       const career = c!;
       let x = career.seasons.find((r) => r.s === s);
@@ -788,7 +945,26 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
         if (m.titleKey === "restructured") {
           (c.restructureWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
         }
+        // rc.34 (ECO-04): a missed goal's fine (s4 reads the rescues in the 4 weeks after).
+        if (m.titleKey === "sponsorGoalMissed" && Number(m.params?.fine ?? 0) > 0) {
+          (c.fineWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
+        }
+        // rc.34: a goal settled — scored on the deal that set it (the latest deal with that brand).
+        if (m.titleKey === "sponsorGoalHit" || m.titleKey === "sponsorGoalMissed") {
+          const d = lastDealBySponsor.get(String(m.params?.name ?? ""));
+          const hit = m.titleKey === "sponsorGoalHit";
+          const target = Number(m.params?.target ?? 1);
+          d?.goals.push({
+            word: String(m.params?.word ?? ""),
+            chance: Number(m.params?.chance ?? 0),
+            kind: String(m.params?.goalKind ?? ""),
+            hit,
+            shortfall: hit ? 0 : Math.max(0, (target - Number(m.params?.done ?? 0)) / Math.max(1, target)),
+            fine: hit ? 0 : Number(m.params?.fine ?? 0),
+          });
+        }
       }
+      recordSponsors(save, kind);
       const x = seasonOf(save.clock.seasonIndex);
       const fin = save.finances;
       x.balanceMin = Math.min(x.balanceMin, fin.balance);
@@ -799,6 +975,7 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       x.coachPerSplitEnd = save.coach?.salaryPerSplit ?? 0;
       x.guaranteedPerSplitEnd = guaranteedPerSplit(save);
       x.sponsorTierEnd = save.sponsor?.tier ?? 0;
+      x.profileEnd = save.sponsor?.terms?.profile ?? "";
       x.repEnd = save.reputation;
       if (save.sponsor && c.firstSponsorSeason === null) c.firstSponsorSeason = save.clock.seasonIndex;
       const isMonday = dayOfWeekOf(save.clock.day) === 1 && !(save.clock.seasonIndex === 0 && save.clock.day === 1);
@@ -971,7 +1148,12 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       if (e.kind === "rollover") sampleStars(e.save);
     };
 
-    const arc = playArcCareer({ ...cell, seasons });
+    const arc = playArcCareer({
+      ...cell,
+      seasons,
+      sponsor: (env.ECON_SPONSOR as ArcSponsorPick | undefined) || undefined,
+      others: (env.ECON_OTHERS as "take" | "skip" | undefined) || undefined,
+    });
     hub.tap = null;
     const done = c as EconCareer | null;
     if (!done) throw new Error("the tap never saw the career start");
@@ -998,7 +1180,12 @@ const insolvent = (c: EconCareer) => c.endWeek !== null;
 /** rc.32 (M4): at least one restructuring (a breach that did not end the career). */
 const restructured = (c: EconCareer) => (c.restructureWeeks?.length ?? 0) > 0;
 
-function careersReport(careers: EconCareer[], seasons: number, rescueSwing: number): string {
+function careersReport(
+  careers: EconCareer[],
+  seasons: number,
+  rescueSwing: number,
+  SD: typeof import("@/engine/career/sponsorDeals"),
+): string {
   const lines: string[] = [];
   const row = (cells: (string | number)[]) => lines.push(`| ${cells.join(" | ")} |`);
   const head = (cells: string[]) => {
@@ -1482,6 +1669,223 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
     ]);
   }
   lines.push("");
+  lines.push(dealsReport(careers, SD));
+  return lines.join("\n");
+}
+
+/**
+ * C11 — rc.34 (ECO-04 / ECO-05, SPONSOR-CONTRACT §3 s1–s7): deals by
+ * profile. Reads the decisions offered, the deals signed, every split's
+ * level and outcomes (each word's goal at every split: the chance model's
+ * calibration, whatever the bot signed), the fines and the other income.
+ */
+function dealsReport(careers: EconCareer[], SD: typeof import("@/engine/career/sponsorDeals")): string {
+  const lines: string[] = [];
+  const row = (cells: (string | number)[]) => lines.push(`| ${cells.join(" | ")} |`);
+  const head = (cells: string[]) => {
+    row(cells);
+    lines.push(`|${cells.map(() => "---").join("|")}|`);
+  };
+  const W = 32;
+  const diffs = ALL_DIFFS.filter((d) => careers.some((c) => c.difficulty === d));
+  const words = ["likely", "even", "stretch"] as const;
+  const profiles = ["steady", "balanced", "bold"] as const;
+  lines.push("#### C11. Deals by profile — rc.34 (ECO-04 / ECO-05, SPONSOR-CONTRACT §3)");
+  lines.push("");
+
+  // (a) s1: the expected value per Monday across one decision's offers.
+  const decisions = careers.flatMap((c) => c.decisions ?? []);
+  const devs = decisions.flatMap((d) => {
+    const per = d.offers.map((o) => o.ev / Math.max(1, o.mondays));
+    const m = mean(per);
+    return per.map((v) => v / m - 1);
+  });
+  const within = decisions.filter((d) => {
+    const per = d.offers.map((o) => o.ev / Math.max(1, o.mondays));
+    const m = mean(per);
+    return per.every((v) => Math.abs(v / m - 1) <= 0.1);
+  }).length;
+  lines.push(
+    `s1 — decisions offered: ${decisions.length}; each offer's expected value per Monday against its decision's mean: p10 / p50 / p90 ${p3(devs, (n) => `${(n * 100).toFixed(1)}%`)}, the widest ${devs.length ? `${(Math.max(...devs.map(Math.abs)) * 100).toFixed(1)}%` : "–"}; decisions within ±10 %: ${pct(within, decisions.length)}.`,
+  );
+  lines.push("");
+  head(["Profile (offered)", "n", "weekly ÷ value-week p50", "sure ÷ EV p50", "up to ÷ EV p50", "first goal: likely / even / stretch"]);
+  for (const prof of profiles) {
+    const os = decisions.flatMap((d) => d.offers.filter((o) => o.profile === prof).map((o) => ({ o, d })));
+    if (!os.length) continue;
+    const valueWeek = (x: { o: DecisionRec["offers"][number] }) => x.o.ev / Math.max(1, x.o.mondays);
+    row([
+      prof,
+      os.length,
+      ratio(q(os.map((x) => x.o.weekly / valueWeek(x)), 0.5), 2),
+      ratio(q(os.map((x) => x.o.sure / x.o.ev), 0.5), 2),
+      ratio(q(os.map((x) => x.o.ceiling / x.o.ev), 0.5), 2),
+      words.map((w) => pct(os.filter((x) => x.o.word === w).length, os.length)).join(" / "),
+    ]);
+  }
+  lines.push("");
+
+  // (b) signed deals by profile, (c) s2 on the signed goals.
+  const deals = careers.flatMap((c) => c.deals ?? []);
+  head(["Profile (signed)", "deals", "tiers T1/T2/T3/T4", "goals settled", "hit %", "fines booked / deal (mean)", "realized ÷ EV p50 (completed deals)"]);
+  for (const prof of profiles) {
+    const ds = deals.filter((d) => d.profile === prof);
+    if (!ds.length) continue;
+    const settled = ds.flatMap((d) => d.goals);
+    const fines = ds.map((d) => d.goals.reduce((n, g) => n + g.fine, 0));
+    const done = ds.filter((d) => d.goals.length === d.lengthSplits);
+    const realized = done.map((d) => {
+      const hits = d.goals.filter((g) => g.hit).length;
+      const fine = d.goals.reduce((n, g) => n + g.fine, 0);
+      const fixed = d.fixedKind === "milestone" ? (hits > 0 ? d.fixed : 0) : d.fixed;
+      return (d.weekly * d.mondays + fixed + hits * d.bonus - fine) / Math.max(1, d.ev);
+    });
+    row([
+      prof,
+      ds.length,
+      [1, 2, 3, 4].map((t) => ds.filter((d) => d.tier === t).length).join(" / "),
+      settled.length,
+      pct(settled.filter((g) => g.hit).length, settled.length),
+      money(mean(fines)),
+      realized.length ? ratio(q(realized, 0.5), 2) : "–",
+    ]);
+  }
+  lines.push("");
+  lines.push("s2 — goals hit at their word (bands: Likely ≥ 65 %, Even 35–65 %, Stretch 15–35 %). Signed = the goals of the deals the bot signed; every split = the goal each word would set at every recorded split (the level at its first Monday, `pickGoal`), scored on what the career then reached — the model's calibration whatever the bot signed.");
+  lines.push("");
+  const splits = careers.flatMap((c) => (c.splits ?? []).map((r) => ({ r, d: c.difficulty })));
+  const hitOf = (g: { kind: string; count: number; place?: number }, r: SplitRec): boolean => {
+    switch (g.kind) {
+      case "enterEvents":
+        return r.events >= g.count;
+      case "regionalReach":
+        return r.regionalPlaces.length >= g.count;
+      case "regionalFinish":
+        return r.regionalPlaces.filter((p) => p <= (g.place ?? 8)).length >= g.count;
+      case "majorQualify":
+        return r.majorQualified;
+      default:
+        return r.majorPlace !== null && r.majorPlace <= (g.place ?? 4);
+    }
+  };
+  head(["Word", "signed: goals", "signed: hit % · model", ...diffs.map((d) => `every split, ${d}: n · hit % · model`), "every split: goal kinds"]);
+  for (const w of words) {
+    const signed = deals.flatMap((d) => d.goals.filter((g) => g.word === w));
+    const virt = (d: string) =>
+      splits
+        .filter((x) => x.d === d)
+        .map((x) => ({ g: SD.pickGoal(w, x.r.level, 0), r: x.r }))
+        .filter((x) => x.g.word === w);
+    const kinds = new Map<string, number>();
+    for (const d of diffs) for (const x of virt(d)) {
+      const k = `${x.g.kind}${x.g.place ? `≤${x.g.place}` : ""}×${x.g.count}`;
+      kinds.set(k, (kinds.get(k) ?? 0) + 1);
+    }
+    row([
+      w,
+      signed.length,
+      signed.length ? `${pct(signed.filter((g) => g.hit).length, signed.length)} · ${Math.round(100 * mean(signed.map((g) => g.chance)))}%` : "–",
+      ...diffs.map((d) => {
+        const xs = virt(d);
+        return xs.length ? `${xs.length} · ${pct(xs.filter((x) => hitOf(x.g, x.r)).length, xs.length)} · ${Math.round(100 * mean(xs.map((x) => x.g.chance)))}%` : "–";
+      }),
+      [...kinds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, n]) => `${k} ${n}`).join(", "),
+    ]);
+  }
+  lines.push("");
+
+  // (e) the chance model against the splits, by rating margin (measured · model's mean over the same splits).
+  lines.push("The chance model by rating margin — measured · the model's mean on the same splits. Per regional = one of the split's three regional weeks (out at the Saturday qualifier is a miss). The margin is the user's rating (with the difficulty edge) minus the team that decides it.");
+  lines.push("");
+  const marginBands: [number, number][] = [[-99, -6], [-6, -3], [-3, -1], [-1, 1], [1, 3], [3, 6], [6, 99]];
+  const bandName = ([lo, hi]: [number, number]) => (lo <= -99 ? `< ${hi}` : hi >= 99 ? `≥ ${lo}` : `${lo} to ${hi}`);
+  const levels = splits.map((x) => x.r);
+  const perRegional = (xs: SplitRec[], place: number) =>
+    xs.reduce((n, r) => n + r.regionalPlaces.filter((p) => p <= place).length, 0) / (3 * Math.max(1, xs.length));
+  const cell = (meas: number, model: number, n: number) => (n ? `${Math.round(100 * meas)}% · ${Math.round(100 * model)}% (${n})` : "–");
+  head(["Margin", "reach a regional (vs the 12th)", "top 8 / regional (vs the 8th)", "top 4 / regional (vs the 4th)", "win / regional (vs the best)", "≥ 2 top-8s (vs the 8th)", "Major qualify (vs the cut)", "Major top 4 | qualified (vs the field's 4th)", "Major won | qualified (vs the field's best)"]);
+  for (const band of marginBands) {
+    const inB = (m: number) => m >= band[0] && m < band[1];
+    const b12 = levels.filter((r) => r.level.vs12 !== undefined && inB(r.level.vs12));
+    const b8 = levels.filter((r) => inB(r.level.vs8));
+    const b4 = levels.filter((r) => inB(r.level.vs4));
+    const b1 = levels.filter((r) => inB(r.level.vs1));
+    const bq = levels.filter((r) => inB(r.level.vsCut));
+    const bm4 = levels.filter((r) => r.majorQualified && inB(r.level.vsMajor4));
+    const bm1 = levels.filter((r) => r.majorQualified && inB(r.level.vsMajor1));
+    row([
+      bandName(band),
+      cell(perRegional(b12, 16), mean(b12.map((r) => SD.regionalChance(r.level, 16))), b12.length),
+      cell(perRegional(b8, 8), mean(b8.map((r) => SD.regionalChance(r.level, 8))), b8.length),
+      cell(perRegional(b4, 4), mean(b4.map((r) => SD.regionalChance(r.level, 4))), b4.length),
+      cell(perRegional(b1, 1), mean(b1.map((r) => SD.regionalChance(r.level, 1))), b1.length),
+      cell(
+        b8.filter((r) => r.regionalPlaces.filter((p) => p <= 8).length >= 2).length / Math.max(1, b8.length),
+        mean(b8.map((r) => SD.binomialTail(3, 2, SD.regionalChance(r.level, 8)))),
+        b8.length,
+      ),
+      cell(bq.filter((r) => r.majorQualified).length / Math.max(1, bq.length), mean(bq.map((r) => SD.majorQualifyChance(r.level))), bq.length),
+      cell(
+        bm4.filter((r) => (r.majorPlace ?? 99) <= 4).length / Math.max(1, bm4.length),
+        mean(bm4.map((r) => SD.goalChance({ kind: "majorFinish", count: 1, place: 4 }, r.level) / Math.max(0.01, SD.majorQualifyChance(r.level)))),
+        bm4.length,
+      ),
+      cell(
+        bm1.filter((r) => (r.majorPlace ?? 99) <= 1).length / Math.max(1, bm1.length),
+        mean(bm1.map((r) => SD.goalChance({ kind: "majorFinish", count: 1, place: 1 }, r.level) / Math.max(0.01, SD.majorQualifyChance(r.level)))),
+        bm1.length,
+      ),
+    ]);
+  }
+  lines.push("");
+
+  // (f) s3, (g) s4, (h) s5, (i) s7.
+  head(["Difficulty", "s3: seasons with fines > 2 weeks of payroll", "fines / season p50 · p90 (seasons with a fine)", "s4: rescues within 4 weeks after a fine ÷ fines", "s7: other ÷ earned p50 · p90", "seasons with other income", "s5: b3 p50 — steady · balanced · bold"]);
+  for (const d of diffs) {
+    const cs = careers.filter((c) => c.difficulty === d);
+    const rows = cs.flatMap((c) => c.seasons);
+    const payrollWeek = (x: EconSeason) => sumKeys(x.spend, ["payroll", "salary", "coachSalary"]) / W;
+    const fined = rows.filter((x) => (x.spend.sponsorFine ?? 0) > 0);
+    const over = rows.filter((x) => (x.spend.sponsorFine ?? 0) > 2 * payrollWeek(x));
+    const fineCount = cs.reduce((n, c) => n + (c.fineWeeks?.length ?? 0), 0);
+    const rescuedAfter = cs.reduce(
+      (n, c) => n + (c.rescueWeeks ?? []).filter((w) => (c.fineWeeks ?? []).some((f) => w > f && w - f <= 4)).length,
+      0,
+    );
+    const other = rows.filter((x) => earned(x) > 0).map((x) => (x.income.insert ?? 0) / earned(x));
+    const b3 = (prof: string) =>
+      rows
+        .filter((x) => x.profileEnd === prof && sumKeys(x.income, ["sponsorBase", "fanbase"]) > 0)
+        .map((x) => sumKeys(x.spend, ["payroll", "salary", "coachSalary"]) / sumKeys(x.income, ["sponsorBase", "fanbase"]));
+    row([
+      d,
+      pct(over.length, rows.length),
+      fined.length ? `${money(q(fined.map((x) => x.spend.sponsorFine), 0.5))} · ${money(q(fined.map((x) => x.spend.sponsorFine), 0.9))}` : "–",
+      fineCount ? `${rescuedAfter} ÷ ${fineCount} (${pct(rescuedAfter, fineCount)})` : "–",
+      other.length ? `${(q(other, 0.5) * 100).toFixed(1)}% · ${(q(other, 0.9) * 100).toFixed(1)}%` : "–",
+      pct(rows.filter((x) => (x.income.insert ?? 0) > 0).length, rows.length),
+      profiles.map((pr) => {
+        const xs = b3(pr);
+        return xs.length ? `${ratio(q(xs, 0.5), 2)} (${xs.length})` : "–";
+      }).join(" · "),
+    ]);
+  }
+  lines.push("");
+
+  // (j) s6 — the handover (ECON_FOUNDING only).
+  const handed = careers.filter((c) => (c.guaranteedWeeks?.length ?? 0) > 1 && (c.partnerWeekly ?? 0) > 0);
+  if (handed.length) {
+    const falls = handed.map((c) => {
+      const g = c.guaranteedWeeks!;
+      let worst = 0;
+      for (let i = 1; i < g.length; i++) worst = Math.max(worst, g[i - 1].g - g[i].g);
+      return worst / c.partnerWeekly!;
+    });
+    lines.push(
+      `s6 — the founding partner's handover (ECON_FOUNDING, ${handed.length} careers): the largest one-step fall in weekly guaranteed income in S0–S2 ÷ the partner's weekly pay, p50 ${ratio(q(falls, 0.5), 2)}, p90 ${ratio(q(falls, 0.9), 2)}, max ${ratio(Math.max(...falls), 2)} (band ≤ 0.33).`,
+    );
+    lines.push("");
+  }
   return lines.join("\n");
 }
 
@@ -1494,6 +1898,11 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
     "writes the curves and the careers' money tables",
     async () => {
       const t0 = Date.now();
+      // rc.34 (s6): ECON_FOUNDING plays the careers with rc.32's founding partner (its handover is measured).
+      if (env.ECON_FOUNDING) {
+        const { CAREER_SPONSOR } = await import("@/config/balance");
+        (CAREER_SPONSOR.founding as { enabled: boolean }).enabled = true;
+      }
       const regions = list(env.ECON_REGIONS, ALL_REGIONS);
       const diffs = list<CareerDifficulty>(env.ECON_DIFFS, ALL_DIFFS);
       const { ARC_POLICIES } = await import("./careerArcBot");
@@ -1508,6 +1917,9 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
         env.ECON_SEEDS ? `ECON_SEEDS=${env.ECON_SEEDS}` : "",
         env.ECON_SEASONS ? `ECON_SEASONS=${env.ECON_SEASONS}` : "",
         env.ECON_CURVES_ONLY ? "ECON_CURVES_ONLY=1" : "",
+        env.ECON_SPONSOR ? `ECON_SPONSOR=${env.ECON_SPONSOR}` : "",
+        env.ECON_OTHERS ? `ECON_OTHERS=${env.ECON_OTHERS}` : "",
+        env.ECON_FOUNDING ? "ECON_FOUNDING=1" : "",
       ]
         .filter(Boolean)
         .join(" ");
@@ -1533,7 +1945,8 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
         parts.push("### Part 2 — careers through the real flow (the long-career bot)");
         parts.push("");
         const { CAREER_LOAN } = await import("@/config/balance");
-        parts.push(careersReport(careers, saved ? saved.seasons : seasons, CAREER_LOAN.rescueTo - CAREER_LOAN.floor));
+        const SD = await import("@/engine/career/sponsorDeals");
+        parts.push(careersReport(careers, saved ? saved.seasons : seasons, CAREER_LOAN.rescueTo - CAREER_LOAN.floor, SD));
       }
       const secs = Math.round((Date.now() - t0) / 1000);
       parts.push(
