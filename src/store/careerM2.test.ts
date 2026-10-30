@@ -86,12 +86,27 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     expect(renewed(save, p.id).salaryPerSplit).toBe(terms.ask);
   });
 
-  it("a breakout star on a cheap old deal: never under 50 % of his market value", () => {
-    const { save, p } = withPlayer({ overall: 86, potential: 88, salaryPerSplit: 1_000 });
+  it("a breakout star on a modest old deal: never under 50 % of his market value", () => {
+    // His wage × renewalMaxJump is above the floor, so the floor prices him.
+    const probe = withPlayer({ overall: 86, potential: 88, salaryPerSplit: 1_000 });
+    const floor = quantize(renewalTermsFor(probe.p, ctxOf(probe.save)).freshAsk * CAREER_SALARY.renewalMarketFloor);
+    const wage = quantize((floor / CAREER_SALARY.renewalMaxJump) * 1.2);
+    expect(wage * CAREER_SALARY.renewalRaiseCap).toBeLessThan(floor);
+    const { save, p } = withPlayer({ overall: 86, potential: 88, salaryPerSplit: wage });
     const terms = renewalTermsFor(p, ctxOf(save));
     expect(terms.bound).toBe("floor");
     expect(terms.ask).toBe(quantize(terms.freshAsk * CAREER_SALARY.renewalMarketFloor));
-    expect(terms.ask).toBeGreaterThan(1_000 * CAREER_SALARY.renewalRaiseCap);
+    expect(terms.ask).toBeGreaterThan(wage * CAREER_SALARY.renewalRaiseCap);
+    expect(renewed(save, p.id).salaryPerSplit).toBe(terms.ask);
+  });
+
+  it("rc.33: a breakout star on a cheap old deal climbs at most ×renewalMaxJump in one renewal", () => {
+    const { save, p } = withPlayer({ overall: 86, potential: 88, salaryPerSplit: 1_000 });
+    const terms = renewalTermsFor(p, ctxOf(save));
+    expect(quantize(terms.freshAsk * CAREER_SALARY.renewalMarketFloor)).toBeGreaterThan(1_000 * CAREER_SALARY.renewalMaxJump);
+    expect(terms.bound).toBe("jump");
+    expect(terms.ask).toBe(quantize(1_000 * CAREER_SALARY.renewalMaxJump));
+    expect(terms.ask).toBeLessThan(terms.freshAsk);
     expect(renewed(save, p.id).salaryPerSplit).toBe(terms.ask);
   });
 

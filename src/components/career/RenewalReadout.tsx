@@ -99,12 +99,13 @@ export function RenewalReadout({
   const runway = save && player ? renewalRunwayOf(save, player, terms) : undefined;
   const cap = String(S.renewalRaiseCap);
   const floorPct = Math.round(S.renewalMarketFloor * 100);
+  const jump = String(S.renewalMaxJump);
   const capFloor = terms.rule === "capFloor";
   return (
     <div className={cx("rounded-lg border border-line bg-white/[0.02] p-3 text-xs", className)}>
       <p className="kicker mb-1.5 text-[10px]">{C.squad.renewalTerms}</p>
       <p className="leading-relaxed text-sub">
-        {capFloor ? C.squad.renewalRuleCapFloor(cap, floorPct) : C.squad.renewalRuleFresh}
+        {capFloor ? C.squad.renewalRuleCapFloor(cap, floorPct, jump) : C.squad.renewalRuleFresh}
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div>
@@ -124,7 +125,9 @@ export function RenewalReadout({
             ? C.squad.renewalBoundCap(cap)
             : terms.bound === "floor"
               ? C.squad.renewalBoundFloor(floorPct)
-              : C.squad.renewalBoundFresh}
+              : terms.bound === "jump"
+                ? C.squad.renewalBoundJump(jump)
+                : C.squad.renewalBoundFresh}
         </p>
       ) : null}
       {capFloor && terms.ambitious ? (

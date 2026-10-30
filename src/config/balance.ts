@@ -1586,6 +1586,14 @@ export const CAREER_SALARY = {
   renewalRaiseCap: 1.5,
   /** M2, PROVISIONAL (30/10, decision 2-B): the market floor — never under this share of his fresh ask (contract range 0.4–0.65). */
   renewalMarketFloor: 0.5,
+  /**
+   * rc.33 (2-B, Claude's call — tested at Gate 2): the most one renewal
+   * multiplies his current wage, the market floor included. A breakout
+   * prospect climbs to his value over two renewals, not one: rc.33's first
+   * re-measure had the prospects' renewals at ×3.9 p50 / ×12 p90 (up to
+   * ×25), which broke every hands-off prospects career in EU/NA on Normal.
+   */
+  renewalMaxJump: 2.5,
 } as const;
 
 export const CAREER_CONTRACT = {

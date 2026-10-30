@@ -8,6 +8,7 @@
  *
  *   ask = min(fresh, max(current wage × renewalRaiseCap, fresh × renewalMarketFloor))
  *
+ * where the floor never exceeds current wage × renewalMaxJump (rc.33),
  * on the core fresh ask (no ambition premium, no Blockbuster surcharge),
  * then the ambition premium and the Blockbuster-refusal surcharge on top. A
  * player who developed is not repriced at full market value in one step (the
@@ -35,10 +36,13 @@ export interface RenewalTerms {
   rule: "capFloor" | "fresh";
   /** Current wage × renewalRaiseCap (quantized). */
   raiseCap: number;
-  /** The core fresh ask × renewalMarketFloor (quantized). */
+  /** The core fresh ask × renewalMarketFloor (quantized), never above current wage × renewalMaxJump. */
   marketFloor: number;
-  /** What priced it: his fresh ask (lower than the cap), the raise cap, or the market floor. */
-  bound: "fresh" | "cap" | "floor";
+  /**
+   * What priced it: his fresh ask (lower than the cap), the raise cap, the
+   * market floor, or the floor held at renewalMaxJump × his wage (rc.33).
+   */
+  bound: "fresh" | "cap" | "floor" | "jump";
   ambitious: boolean;
   blockbusterRefused: boolean;
 }
@@ -69,13 +73,17 @@ export function renewalTermsFor(
   const oldWage = player.salaryPerSplit;
   const core = ambitious || refused ? renewalAskFor(player, { ...askCtx, surcharges: false }) : freshAsk;
   const raiseCap = quantize(oldWage * S.renewalRaiseCap);
-  const marketFloor = quantize(core * S.renewalMarketFloor);
+  // rc.33: the floor never lifts him more than renewalMaxJump × in one renewal.
+  const fullFloor = quantize(core * S.renewalMarketFloor);
+  const jumpCap = quantize(oldWage * S.renewalMaxJump);
+  const marketFloor = Math.min(fullFloor, Math.max(jumpCap, raiseCap));
   if (S.renewalRule !== "capFloor") {
     return { ask: freshAsk, freshAsk, oldWage, rule: "fresh", raiseCap, marketFloor, bound: "fresh", ambitious, blockbusterRefused: refused };
   }
   const bounded = Math.max(raiseCap, marketFloor);
   const ruled = Math.min(core, bounded);
-  const bound: RenewalTerms["bound"] = ruled >= core ? "fresh" : raiseCap >= marketFloor ? "cap" : "floor";
+  const bound: RenewalTerms["bound"] =
+    ruled >= core ? "fresh" : raiseCap >= marketFloor ? "cap" : marketFloor < fullFloor ? "jump" : "floor";
   const surcharge = refused ? S.blockbusterRefusalRenewalMult : 1;
   // Under the cap his fresh ask stands (both surcharges already in it);
   // otherwise the bound, with the ambition premium and the Blockbuster
