@@ -542,6 +542,7 @@ export const CAREER_PT: CareerCopy = {
     renewalBoundCap: (cap: string) => `No teto de ×${cap} o salário atual.`,
     renewalBoundFloor: (floorPct: number) => `Segurado em ${floorPct}% do valor de mercado.`,
     renewalBoundJump: (jump: string) => `Segurado em ×${jump} o salário atual — o máximo que uma renovação sobe.`,
+    renewalTitles: (pct: number) => `+${pct}% pelos títulos que ele ganhou com você nas últimas temporadas.`,
     renewalAmbition: (pct: number) => `+${pct}% de ambição: um craque num clube menor pede mais.`,
     renewalBlockbuster: (pct: number) => `+${pct}%: você recusou uma proposta bombástica por ele.`,
     renewalsTitle: "Contratos para renovar",

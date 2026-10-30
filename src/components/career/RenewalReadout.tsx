@@ -15,10 +15,10 @@ import { Panel } from "@/components/ui/Panel";
 import { CAREER_PAYROLL, CAREER_SALARY } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { payrollProjection, runwayWeeksAfter } from "@/engine/career/economy";
-import { renewalTermsFor, type RenewalTerms } from "@/engine/career/renewal";
+import type { RenewalTerms } from "@/engine/career/renewal";
 import type { CareerSave, SquadPlayer } from "@/engine/career/types";
 import { cx } from "@/lib/util";
-import { weeklyStatementOf } from "@/store/careerFlow";
+import { renewalTermsOfSave, weeklyStatementOf } from "@/store/careerFlow";
 import { wageLabel } from "./careerUi";
 
 /** The Market's renewal panel (My deals): this season's expiring contracts, priced for two seasons. */
@@ -52,13 +52,7 @@ export function RenewalsPanel({ save, C }: { save: CareerSave; C: CareerCopy }) 
 
 /** The terms the flow would price for `p` today (the same inputs as renewPlayerFlow). */
 export function renewalTermsOf(save: CareerSave, p: SquadPlayer, lengthSeasons: 1 | 2 | 3): RenewalTerms {
-  return renewalTermsFor(p, {
-    rep: save.reputation,
-    seasonIndex: save.clock.seasonIndex,
-    difficulty: save.difficulty,
-    careerSeed: save.careerSeed,
-    lengthSeasons,
-  });
+  return renewalTermsOfSave(save, p, lengthSeasons);
 }
 
 /**
@@ -129,6 +123,9 @@ export function RenewalReadout({
                 ? C.squad.renewalBoundJump(jump)
                 : C.squad.renewalBoundFresh}
         </p>
+      ) : null}
+      {terms.titlePremium > 0 ? (
+        <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalTitles(Math.round(terms.titlePremium * 100))}</p>
       ) : null}
       {capFloor && terms.ambitious ? (
         <p className="mt-1 text-[11px] text-orange-bright">{C.squad.renewalAmbition(pct(S.ambitionRenewalMult))}</p>

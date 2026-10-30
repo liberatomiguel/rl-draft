@@ -45,6 +45,22 @@ export interface RenewalTerms {
   bound: "fresh" | "cap" | "floor" | "jump";
   ambitious: boolean;
   blockbusterRefused: boolean;
+  /** rc.33 (M6 lever 3): the title raise applied on top (0 = none), from `titlePremiumFor`. */
+  titlePremium: number;
+}
+
+/** The titles the user won while this player was in the squad, inside the premium's window. */
+export interface RenewalTitles {
+  majorOrWorlds: number;
+  regional: number;
+}
+
+/** rc.33 (M6 lever 3): the title raise a renewal carries — capped, 0 without titles. */
+export function titlePremiumFor(titles: RenewalTitles | undefined): number {
+  if (!titles) return 0;
+  const T = CAREER_SALARY.titleRenewalPremium;
+  const raw = titles.majorOrWorlds * T.perMajorOrWorlds + titles.regional * T.perRegional;
+  return Math.max(0, Math.min(T.max, Math.round(raw * 100) / 100));
 }
 
 export function renewalTermsFor(
@@ -56,6 +72,8 @@ export function renewalTermsFor(
     difficulty: CareerDifficulty;
     careerSeed: number;
     lengthSeasons: 1 | 2 | 3;
+    /** rc.33 (M6 lever 3): the titles won with him in the window (`renewalTitlesOf`); none = no raise. */
+    titles?: RenewalTitles;
   },
 ): RenewalTerms {
   const S = CAREER_SALARY;
@@ -77,8 +95,21 @@ export function renewalTermsFor(
   const fullFloor = quantize(core * S.renewalMarketFloor);
   const jumpCap = quantize(oldWage * S.renewalMaxJump);
   const marketFloor = Math.min(fullFloor, Math.max(jumpCap, raiseCap));
+  const titlePremium = titlePremiumFor(ctx.titles);
+  const withTitles = (x: number) => (titlePremium > 0 ? quantize(x * (1 + titlePremium)) : x);
   if (S.renewalRule !== "capFloor") {
-    return { ask: freshAsk, freshAsk, oldWage, rule: "fresh", raiseCap, marketFloor, bound: "fresh", ambitious, blockbusterRefused: refused };
+    return {
+      ask: withTitles(freshAsk),
+      freshAsk,
+      oldWage,
+      rule: "fresh",
+      raiseCap,
+      marketFloor,
+      bound: "fresh",
+      ambitious,
+      blockbusterRefused: refused,
+      titlePremium,
+    };
   }
   const bounded = Math.max(raiseCap, marketFloor);
   const ruled = Math.min(core, bounded);
@@ -88,7 +119,8 @@ export function renewalTermsFor(
   // Under the cap his fresh ask stands (both surcharges already in it);
   // otherwise the bound, with the ambition premium and the Blockbuster
   // surcharge on top.
-  const ask =
-    bound === "fresh" ? freshAsk : quantize(ruled * (ambitious ? S.ambitionRenewalMult : 1) * surcharge);
-  return { ask, freshAsk, oldWage, rule: "capFloor", raiseCap, marketFloor, bound, ambitious, blockbusterRefused: refused };
+  const ask = withTitles(
+    bound === "fresh" ? freshAsk : quantize(ruled * (ambitious ? S.ambitionRenewalMult : 1) * surcharge),
+  );
+  return { ask, freshAsk, oldWage, rule: "capFloor", raiseCap, marketFloor, bound, ambitious, blockbusterRefused: refused, titlePremium };
 }

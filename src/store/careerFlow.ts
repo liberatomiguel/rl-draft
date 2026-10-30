@@ -175,7 +175,7 @@ import {
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
-import { renewalTermsFor } from "@/engine/career/renewal";
+import { renewalTermsFor, type RenewalTerms, type RenewalTitles } from "@/engine/career/renewal";
 // rc.33 (ECO-10/11): the contract's prize share and the wage talk.
 import {
   contractMinWageFor,
@@ -3109,20 +3109,46 @@ export function signingTalkFor(
   });
 }
 
-/** ECO-10/11: the talk on a renewal — the M2 ask (`renewalTermsFor`) and the share he asks today. */
+/**
+ * rc.33 (ECONOMY-CONTRACT M6 lever 3): the titles the user won while `player`
+ * was in the squad, in the title raise's window (this season and the ones
+ * before it, never before he joined): regional titles and Major/Worlds
+ * titles, read from the stored event results.
+ */
+export function renewalTitlesOf(save: CareerSave, player: Pick<SquadPlayer, "joinedSeason">): RenewalTitles {
+  const from = Math.max(
+    player.joinedSeason ?? 0,
+    save.clock.seasonIndex - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1),
+  );
+  const titles: RenewalTitles = { majorOrWorlds: 0, regional: 0 };
+  for (const r of save.eventResults) {
+    if (r.seasonIndex < from || r.userPlacement !== "champion") continue;
+    if (r.tier === "major" || r.tier === "worlds") titles.majorOrWorlds++;
+    else if (r.tier === "regional") titles.regional++;
+  }
+  return titles;
+}
+
+/** The renewal terms the flow prices for `player` today — renewPlayerFlow, the talk and the readout read this. */
+export function renewalTermsOfSave(save: CareerSave, player: SquadPlayer, lengthSeasons: 1 | 2 | 3): RenewalTerms {
+  return renewalTermsFor(player, {
+    rep: save.reputation,
+    seasonIndex: save.clock.seasonIndex,
+    difficulty: save.difficulty,
+    careerSeed: save.careerSeed,
+    lengthSeasons,
+    titles: renewalTitlesOf(save, player),
+  });
+}
+
+/** ECO-10/11: the talk on a renewal — the M2 ask (`renewalTermsOfSave`) and the share he asks today. */
 export function renewalTalkFor(
   save: CareerSave,
   player: SquadPlayer,
   lengthSeasons: 1 | 2 | 3,
   offer?: ContractOffer,
 ): NegotiationAnswer {
-  const terms = renewalTermsFor(player, {
-    rep: save.reputation,
-    seasonIndex: save.clock.seasonIndex,
-    difficulty: save.difficulty,
-    careerSeed: save.careerSeed,
-    lengthSeasons,
-  });
+  const terms = renewalTermsOfSave(save, player, lengthSeasons);
   return contractTalkFor(save, {
     playerId: player.id,
     askWagePerSplit: terms.ask,

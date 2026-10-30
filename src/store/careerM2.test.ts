@@ -14,13 +14,15 @@ import { describe, expect, it } from "vitest";
 import { CAREER_SALARY } from "@/config/balance";
 import { quantize, runwayWeeks, weeklyWage } from "@/engine/career/economy";
 import { renewalAskFor } from "@/engine/career/market";
-import { renewalTermsFor } from "@/engine/career/renewal";
+import { renewalTermsFor, titlePremiumFor } from "@/engine/career/renewal";
 import type { CareerSave, SquadPlayer, TransferOffer } from "@/engine/career/types";
 import { renewalRunwayOf } from "@/components/career/RenewalReadout";
 import {
   createCareerSave,
   declineBidFlow,
   renewalTalkFor,
+  renewalTermsOfSave,
+  renewalTitlesOf,
   renewPlayerFlow,
   weeklyStatementOf,
   type CreateCareerInput,
@@ -210,3 +212,59 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     if (terms.ask > p.salaryPerSplit && now !== null) expect(runway).not.toBeNull();
   });
 });
+
+describe("rc.33 — the title raise at renewal (ECONOMY-CONTRACT M6 lever 3)", () => {
+  const T = CAREER_SALARY.titleRenewalPremium;
+  let nextId = 0;
+  /** A stored result the user won (or not) at `tier` in `seasonIndex`. */
+  const result = (tier: "t3" | "regional" | "major" | "worlds", seasonIndex: number, won = true) => ({
+    eventId: `${seasonIndex}:${tier}:${nextId++}`,
+    tier,
+    seasonIndex,
+    week: 4,
+    name: tier,
+    rows: [],
+    championRef: won ? "user" : "org:x",
+    userPlacement: won ? ("champion" as const) : ("top4" as const),
+    fieldQuality: 1,
+  });
+
+  it("prices +10 % a Major or Worlds title and +5 % a regional title, capped at +30 %", () => {
+    expect(titlePremiumFor(undefined)).toBe(0);
+    expect(titlePremiumFor({ majorOrWorlds: 0, regional: 0 })).toBe(0);
+    expect(titlePremiumFor({ majorOrWorlds: 2, regional: 1 })).toBeCloseTo(2 * T.perMajorOrWorlds + T.perRegional);
+    expect(titlePremiumFor({ majorOrWorlds: 9, regional: 9 })).toBe(T.max);
+  });
+
+  it("counts only the user's regional / Major / Worlds titles in the window, and never before he joined", () => {
+    const { save, p } = withPlayer({ overall: 79, potential: 82, salaryPerSplit: 6_000, joinedSeason: 0 }, (s) => {
+      s.eventResults = [
+        result("major", 1),
+        result("regional", 1),
+        result("regional", 0),
+        result("t3", 1), // a cup is not a title here
+        result("worlds", 1, false), // a loss
+        result("regional", 0), // season 0 again, inside the two-season window
+      ] as unknown as CareerSave["eventResults"];
+    });
+    expect(renewalTitlesOf(save, p)).toEqual({ majorOrWorlds: 1, regional: 3 });
+    // A player who joined this season only counts this season's titles.
+    expect(renewalTitlesOf(save, { joinedSeason: 1 })).toEqual({ majorOrWorlds: 1, regional: 1 });
+  });
+
+  it("the renewal the flow prices carries the raise; without titles it is the M2 ask", () => {
+    const plain = withPlayer({ overall: 79, potential: 82, salaryPerSplit: 6_000, joinedSeason: 0 });
+    const base = renewalTermsOfSave(plain.save, plain.p, 2);
+    expect(base.titlePremium).toBe(0);
+    expect(base.ask).toBe(renewalTermsFor(plain.p, ctxOf(plain.save)).ask);
+    const won = withPlayer({ overall: 79, potential: 82, salaryPerSplit: 6_000, joinedSeason: 0 }, (s) => {
+      s.eventResults = [result("major", 1), result("regional", 1)] as unknown as CareerSave["eventResults"];
+    });
+    const terms = renewalTermsOfSave(won.save, won.p, 2);
+    expect(terms.titlePremium).toBeCloseTo(T.perMajorOrWorlds + T.perRegional);
+    expect(terms.ask).toBe(quantize(base.ask * (1 + terms.titlePremium)));
+    // The talk and the flow read the same terms.
+    expect(renewalTalkFor(won.save, won.p, 2).ask.weekly).toBeGreaterThan(renewalTalkFor(plain.save, plain.p, 2).ask.weekly);
+  });
+});
+

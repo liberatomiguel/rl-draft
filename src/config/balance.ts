@@ -1594,6 +1594,16 @@ export const CAREER_SALARY = {
    * ×25), which broke every hands-off prospects career in EU/NA on Normal.
    */
   renewalMaxJump: 2.5,
+  /**
+   * rc.33 (ECONOMY-CONTRACT M6 lever 3, the title raise; Claude's call —
+   * tested at Gate 2): a player renews dearer for the titles the user won
+   * while he was in the squad over the last `windowSeasons` seasons (this one
+   * included): +perMajorOrWorlds for a Major or Worlds title, +perRegional
+   * for a regional title, at most +max, on top of the renewal rule. Winning
+   * carries its own costs (contract e): the brake on the snowball that
+   * renewalMaxJump's development dividend would otherwise feed.
+   */
+  titleRenewalPremium: { perMajorOrWorlds: 0.1, perRegional: 0.05, max: 0.3, windowSeasons: 2 },
 } as const;
 
 export const CAREER_CONTRACT = {

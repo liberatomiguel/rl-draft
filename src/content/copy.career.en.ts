@@ -551,6 +551,7 @@ export const CAREER_EN = {
     renewalBoundCap: (cap: string) => `Capped at ×${cap} his current wage.`,
     renewalBoundFloor: (floorPct: number) => `Held at ${floorPct}% of his market ask.`,
     renewalBoundJump: (jump: string) => `Held at ×${jump} his current wage — the most one renewal moves it.`,
+    renewalTitles: (pct: number) => `+${pct}% for the titles he won with you lately.`,
     renewalAmbition: (pct: number) => `+${pct}% ambition: a star at a smaller org asks more.`,
     renewalBlockbuster: (pct: number) => `+${pct}%: you turned down a Blockbuster bid for him.`,
     renewalsTitle: "Contracts up for renewal",
