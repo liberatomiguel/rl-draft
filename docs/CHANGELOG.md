@@ -313,7 +313,11 @@ the values he left to Claude ship as **tested defaults**, each behind its own `b
   (38 % Normal, 63 % Hard); the title raise alone takes the Hard snowball p90 6.1 → 4.0.
 - `BALANCE_VERSION` 2 → 3.
 - **The re-measure** (294 careers, seeds 9100 and 17019, ECONOMY-CONTRACT §10, `ECONOMY-PROBE-rc33.md`
-  and `CAREER-ARC-rc33.md`): @@REMEASURE@@
+  and `CAREER-ARC-rc33.md`): the first measure of the merged fronts (before the renewal tuning)
+  had insolvent careers 30 → 19 % of 294 (Easy 0 → 1 %, Normal 34 → 17 %, Hard 56 → 39 %), the
+  newcomers 0 / 33 / 60 → 2 / 19 / 43 %, the spender still breaking (0 / 36 / 79 %) and the snowball
+  p90 up (13.1 / 6.1 / 5.1 seasons of payroll); the final numbers, after the renewal tuning, are
+  §10's.
 
 ### Fixed — rc.33
 - **The negotiated wage did not move, or moved the wrong way (ECO-11).** Root causes: the stepper

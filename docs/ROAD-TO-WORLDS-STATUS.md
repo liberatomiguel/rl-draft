@@ -51,21 +51,27 @@ Tunables: `CAREER_*` blocks in `src/config/balance.ts`. Copy: `copy.career.en.ts
 Built: the v2.0 guide's Part 3 (R20–R34), the rc.2 UX pass (R35–R37), R39
 (real birth years), R40–R44 (the weekend, the Match Center, the rc.29 E2E
 fixes), R45 (the direct-8 week, the save repair), rc.31's Etapa 2b part 1
-(R46–R49) and rc.32's part 2 (R50–R60: the economy mechanisms as
-**provisional defaults**, renewals, growth model 2, the presets, the age
-clock, the review's fixes).
+(R46–R49), rc.32's part 2 (R50–R60) and rc.33's part 3 (R61–R70: Miguel's
+30/10 answers — breaches 3 / 2 / 1 and Easy's rescue partner, no founding
+partner, 12 % and the star bend, M7, the prize share per contract, the
+contract talk, honest potential, no sale listing, the EU reputation path,
+every org's entry, a full squad to play, match difficulty, the screens —
+plus the renewal jump cap and the title raise). Values Miguel left to
+Claude stay behind their keys, tested at Gate 2.
 
 ## Remaining / open
 
-- **Next: Etapa 2b part 3** (`ROADMAP.md` Etapa 2): Miguel's 30/10 answers
-  on rc.32 replace several provisional defaults (ECO-07–12, RTW-02–05,
-  DEV-04, UX-07, BAL-04); the rest stay provisional until he confirms.
+- **Next: Etapa 3 as rc.34** (Gate 3a approved 30/10): DEV-03 training
+  packages, scrims and coaches (`TRAINING-CONTRACT.md`), ECO-04/05 sponsors
+  (`SPONSOR-CONTRACT.md`, adjusted to ECO-07/08), UX-01 HQ around the next
+  decision and UX-06 "New" markers and contracts (`HQ-CONTRACT.md`; the
+  seen-state module from #154). UX-02–05, CAL-01, SUN-01..03 after.
+- The money: `ECONOMY-CONTRACT.md` §10. Still out of band: Hard in EU and
+  NA (its first breach ends a career), the snowball at the top (hands-off
+  careers in weak regions; Etapa 3's sponsors and the wage budget are the
+  next levers), the star path.
 - Content: scripted beats corpus (~30, EN+PT). New birth dates go in the base
   export (`BIRTHDAY`), not in `born:` rows.
-- The money: `ECONOMY-CONTRACT.md` §9. Still out of band: EU and NA (a trap
-  since rc.30), the snowball at the top, guaranteed income (M7, held by
-  9-B), the star path; APAC and SSA got easy. The next package waits on
-  Gate 2.
 - Deferred by design: org relocation, t1 circuit, PvP.
 
 ## Guardrails

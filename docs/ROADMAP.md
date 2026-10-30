@@ -524,7 +524,10 @@ never calibrates the old training model as if it were final.
   state; they clear when the content is opened, not when a tab is
   visited; urgent items (contracts) above cosmetics.
 
-- **Gate 3a:** Miguel approves the written contracts.
+- **Gate 3a: approved 30/10** — the recommended options of all three
+  contracts (training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A), the
+  sponsor contract adjusted to ECO-07/08: there is no day-one founding
+  partner to hand over from, only Easy's rescue partner.
 - **Gate 3b:** a playtest. The loop must not need a repetitive weekly chore.
 
 ## Etapa 4 — collect and progress
@@ -626,43 +629,72 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**Gate 2 — what to play on rc.32** (desktop and mobile, EN and PT; Miguel's
-first answers, 30/10, are Etapa 2's "2b part 3": the day-one founding
-partner, the restructurings and the sale listing go there). Start
-**new careers**: growth model 2 and the founding partner exist only in a
-career created on rc.32 (an older one keeps rc.31's development; it gets the
-founding partner only if it is still in its first two seasons without a
-sponsor). rc.31's list below still holds where it was not played.
-- Creation: the three presets and their real effects, "Money ends the
-  career" included (Easy never, Normal at breach 3, Hard at breach 2);
-  Hard starts hands-on.
-- Day one: the founding partner's mail and its Finances card (70 % of the
-  founding wage bill, its end condition) and the weekly statement.
-- A hands-off burn on Normal in EU or NA (still the hardest pools): the
-  8-week notice, then the Monday mails with the breach week; the rescue,
-  sized in weeks of payroll; a signing refused while the Backer is owed; a
-  second breach that restructures (who was sold, the real money in the
-  mail; he plays on for his buyer) and a third that ends it. On Easy, money
-  never ends it.
-- From week 11 (never weeks 1–2): Market → My deals → "List for sale", an
-  offer within a few days; accept it, then a late signing in the 7 days
-  after the window; or decline.
-- A regional podium: the players' share line in the event result and in
-  Finances.
-- A Blockbuster (FaZe for Firstkiller, 2021-22 W1): read the offer and the
-  mail, decline it, then renew him (+10 %).
-- Season 1's renewals (W23–24): the readout's rule, his market ask against
-  the renewal ask, the runway after.
-- Growth: a 13–15-year-old with a high band; a bought report never moves a
-  band; the Training readout; ages step +1 across 2022-23 → 2024.
-- `/pt`: view-source shows `lang="pt-BR"` and the PT header; flags in the
-  draft, the collection and the wizard look as before.
+**Gate 2 — what to play on rc.33** (desktop and mobile, EN and PT). Start
+**new careers**: an rc.32 career keeps a running founding-partner deal to its
+end and reads rc.33's breach rules from its next breach.
+- Creation: the preset step's three lines (matches; money — the third /
+  second / first cash breach ends the career; day to day); the wizard's
+  potential bands match HQ's.
+- Day one: no founding partner. EU or NA: the first sponsor in season 0 —
+  cup semi-finals from seed 3 or lower and two Swiss wins in a qualifier from
+  outside the eight pay reputation ("An underdog's run" in the digest), below
+  reputation 25.
+- Money: on Easy, overspend to the warnings → breach 1 brings the Backer and
+  the Overtime Fund (the mail's weekly amount, the Finances card, the
+  statement line; the warnings' week counts its end) → breach 2 a second
+  rescue → breach 3 ends it. Normal: breach 2 ends it. Hard: no Backer,
+  breach 1 ends it (the deal warning says "likely ends the career").
+- Finances: tap the sparkline → the expanded chart (drag or arrow keys, the
+  per-season table), at 360 px.
+- Market: "Signable at my reputation"; a signing with four players warns and
+  links to Squad; no "List for sale"; a plain bid against a Blockbuster bid
+  (the sentence only on the Blockbuster).
+- The contract talk, on a signing and a renewal: every wage press moves the
+  weekly wage; a higher prize share lowers his wage; below his zone he
+  counters, and "Take his counter" signs; Sign stays off until he accepts.
+- Season 1's renewals (W23–24): the readout's rule (×1.5, never under 50 %
+  of his market ask, at most ×2.5 in one renewal) and "+X % for the titles he
+  won with you". A podium: the players' share line, per contract.
+- Potential: veterans' and stars' bands (5 wide at most, never far above),
+  the phase tag after a report.
+- World: the rollover into 2021-22 (Karmine Corp enters; an "org leaves"
+  line); few known free agents in seasons 0–1.
+- A full squad: release a player mid-week → the clock holds on the eve (HQ:
+  Market, Squad, Pass for a cup); a free agent signs outside the window (the
+  cheapest one even when broke); a short squad cannot scrim.
+- Match difficulty: Normal a bit harder than rc.32 (65 % at equal rating,
+  was 71 %), Easy 81 %, Hard 56 %.
+- Collection: find a national team (its album page and a "New album page"
+  toast, no cards); draft one of its cards and finish the run (the ceremony,
+  the album); abandon a run (the discovery stays, no card); NEW on unowned
+  cards in the draft; the national org card's frame; the "New" dots (nav,
+  home, album tabs, Challenges) clear when the content is opened; an old
+  profile shows nothing new.
+- `/pt` as in rc.32; rc.31's list where not played (promote; the bank loan
+  and "Pay it all"; no bid in weeks 1–2; the Major and Worlds tables; final
+  seasons, retirements, a 13-year-old free agent).
 
-**rc.31's list** (where not played): sign with three starters, promote,
-sign a fifth ("Squad full (4)"); the bank loan and "Pay it all"; no bid in
-weeks 1–2; the Major and Worlds tables after week 4's regional; seasons 2–3:
-final-season badges from 24, the retirement news (coach or for good), a
-13-year-old free agent.
+**Decide (rc.33):**
+1. The album's pacing: a card per find needs about 420 Classic runs for the
+   worldwide album (150–180 in rc.32). Keep it, or raise
+   `nationalTeamChance` / weight found-but-incomplete teams? And the card
+   at the run's end (built: one rule for every special, no farming) or at
+   the pick?
+2. Hard in EU and NA: the first breach ends the career (ECO-08), and the
+   engaged and spending policies still break there (§10). Keep it as Hard's
+   identity, or soften Hard's start (budget, sponsor multiplier)?
+3. The snowball at the top (hands-off careers in APAC and SSA banking many
+   seasons of payroll): leave it to Etapa 3's sponsors (ECO-04: goals,
+   fines, performance pay) and then the wage budget (M6 lever 4)?
+4. DEV-04's band: with a top at most 2 above the truth and a width of 5, the
+   truth always sits in the band's top three points. Keep it, or narrow the
+   band instead?
+5. The "New" markers stay on the device (not synced). OK?
+
+**Answered 30/10 (Gate 3a):** the three Etapa 3 contracts as recommended —
+training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A — with the sponsor
+contract adjusted to ECO-07/08 (no day-one founding partner). Etapa 3 is
+built on rc.33 as rc.34.
 
 **Answered 30/10 on rc.32** (the work is Etapa 2's "2b part 3"): 3-A
 rejected (ECO-07: a rescue partner at the first breach on Easy/Normal
@@ -677,13 +709,9 @@ ECO-10's prize share values. Each keeps its `balance.ts` key.
 **Still open from rc.32:**
 1. The analytics catalogue (`ANALYTICS-EVENTS-2.0.md`): built, production
    only; approve or cut events. Proposed additions: the rescue partner
-   (ECO-07), the preset, the per-contract prize share (ECO-10).
-2. Gate 3a, the Etapa 3 contracts (`TRAINING-`, `SPONSOR-`, `HQ-CONTRACT.md`
-   §6), 21 decisions. Recommended: training 1–7 A; sponsors 1–5 A, 6-B, 7-A
-   (sponsors 1 reverses the design's §9, "never penalties"); HQ 1-B, 2–7 A.
-   ECO-07 and ECO-08 change the sponsor contract's founding-partner
-   hand-over: re-read SPONSOR-CONTRACT §5 against them.
-3. Web: keep the one English frame a PT-saved player sees on an EN URL?
+   (ECO-07), the preset, the per-contract prize share (ECO-10), a national
+   team's find (COL-01b).
+2. Web: keep the one English frame a PT-saved player sees on an EN URL?
    Should the PT chrome link to the PT pages (`/pt/sobre`)? (WEB-01)
 
 **Still open from Gate 1** (the 28/10 plan did not answer them; the

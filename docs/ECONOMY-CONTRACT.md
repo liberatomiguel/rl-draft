@@ -10,8 +10,18 @@
 > (other income) in Etapa 3. The numbers come from `CAREER-BASELINE-rc30.md`
 > and the economy probe (`src/store/careerEconomy.probe.test.ts`), whose
 > tables are the appendix. Regenerate them; never hand-edit them. §8
-> re-measures rc.31 (fronts A and C merged) and §9 rc.32: the same seeds,
-> the deltas.
+> re-measures rc.31 (fronts A and C merged), §9 rc.32 and §10 rc.33: the
+> same seeds, the deltas.
+>
+> **rc.33 (Miguel's 30/10 answers, Etapa 2b part 3):** 3-A is rejected and
+> 4-B replaced by ECO-07/08 (no day-one founding partner; breaches end a
+> career at 3 / 2 / 1 on Easy / Normal / Hard, Easy's first rescue brings a
+> rescue partner, no restructuring), so §2(a)'s "never ends through money"
+> now reads "a newcomer playing normally does not reach the breach that ends
+> it". 1-A is revisited to 12 % with a star bend (ECO-09), 8-B withdrawn
+> (ECO-12), M6's fixed share replaced by a share per contract (ECO-10), M7
+> built (9-B), 2-B kept with a ×2.5 jump cap and M6 lever 3 shipped (R69).
+> The other values are Claude's call, tested at Gate 2.
 
 ## 1. Why a contract
 
