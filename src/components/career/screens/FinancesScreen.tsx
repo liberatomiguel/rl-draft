@@ -97,6 +97,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
+import { LadderStrip } from "@/components/career/ladder/LadderParts";
+import { ladderOf } from "@/engine/career/ladder";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 type LedgerFilter = "all" | "in" | "out";
@@ -579,6 +581,9 @@ export function FinancesScreen() {
   const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>("all");
   // rc.33 (UX-07): the expanded balance chart.
   const [chartOpen, setChartOpen] = useState(false);
+  // rc.35: the ladder is compact (the icon track + the rungs to act on); "See more" shows every step.
+  const [ladderAll, setLadderAll] = useState(false);
+  const stepShown = (status: StepStatus) => ladderAll || status === "next";
 
   if (!mounted || !save) {
     return (
@@ -645,6 +650,7 @@ export function FinancesScreen() {
 
   // --- gear ladder state ------------------------------------------------------
   const nextGear = gearNextItem(gear);
+  const ladderRungsState = ladderOf(save);
   const bootTier = bootcampTierFor(rep);
   const freeAllowance = save.sponsor
     ? CAREER_SPONSOR.tiers[save.sponsor.tier - 1].freeBootcampsPerSeason
@@ -698,6 +704,7 @@ export function FinancesScreen() {
     const superseded = bootTier > tier;
     const status: StepStatus = superseded ? "owned" : isActiveTier ? "next" : "locked";
     const nextRunFree = freeLeft > 0;
+    if (!stepShown(status)) return null;
     return (
       <LadderStep
         status={status}
@@ -964,10 +971,13 @@ export function FinancesScreen() {
             </span>
           </div>
           <p className="mb-4 text-xs text-sub">{C.finances.gearLadderHint}</p>
+          <div className="mb-3">
+            <LadderStrip rungs={ladderRungsState} C={C} expanded={ladderAll} onToggle={() => setLadderAll((v) => !v)} />
+          </div>
 
           <ol>
             {/* 1-3 · peripherals → monitors → PCs */}
-            {gearFront.map((item) => (
+            {gearFront.filter((item) => stepShown(gearStatus(item))).map((item) => (
               <LadderStep
                 key={item.id}
                 status={gearStatus(item)}
@@ -986,6 +996,7 @@ export function FinancesScreen() {
             {bootcampStep(2)}
 
             {/* 6 · sports psychologist (rolling retainer) */}
+            {stepShown(psychStatus) ? (
             <LadderStep
               status={psychStatus}
               title={C.finances.psychologist}
@@ -1021,7 +1032,10 @@ export function FinancesScreen() {
               }
             />
 
+            ) : null}
+
             {/* 7 · Performance Center (the summit) */}
+            {stepShown(gearStatus(perfCenter)) ? (
             <LadderStep
               status={gearStatus(perfCenter)}
               last
@@ -1033,6 +1047,7 @@ export function FinancesScreen() {
               aside={gearAside(perfCenter)}
               notes={gearNotes(perfCenter)}
             />
+            ) : null}
           </ol>
         </Panel>
 

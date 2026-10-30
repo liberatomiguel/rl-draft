@@ -12,6 +12,7 @@
  */
 
 import { CAREER_UNLOCKS } from "@/config/balance";
+import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { insertById } from "@/data/career/inserts";
 import {
   DAYS_PER_SEASON,
@@ -669,7 +670,7 @@ function answerInsert(save: CareerSave, policy: ArcPolicy): CareerSave {
 function coachMoves(save: CareerSave, policy: ArcPolicy): CareerSave {
   if (policy.coach === "none" || save.reputation < CAREER_UNLOCKS.coachRep) return save;
   const candidates = coachCandidatesFor(save)
-    .filter((c) => c.id !== save.coach?.id)
+    .filter((c) => c.id !== save.coach?.id && !coachHireRefusalFor(save.reputation, c))
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
   const budget = (c: { salaryPerSplit: number }) =>
     affordable(save, save.coach ? save.coach.salaryPerSplit : 0, c.salaryPerSplit - (save.coach?.salaryPerSplit ?? 0), policy);

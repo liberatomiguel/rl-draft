@@ -47,6 +47,7 @@ import {
   CAREER_TRAINING,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
+  CAREER_LADDER,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
 } from "@/config/balance";
@@ -116,6 +117,7 @@ import {
   growthCtxOf,
   userSeriesPlayed,
 } from "@/engine/career/development";
+import { coachHireRefusalFor } from "@/engine/career/ladder";
 import {
   initialTrainingState,
   noteSeriesXp,
@@ -423,6 +425,8 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
     [CAREER_GEAR.bootcamp[1].repGate, "bootcamp2"],
     [CAREER_GEAR.psychologistRep, "psychologist"],
     [CAREER_UNLOCKS.coachRep, "coach"],
+    [CAREER_LADDER.exProCoachRep, "exProCoach"],
+    ...CAREER_LADDER.sponsorRep.map((g, i): [number, string] => [g, `sponsors${i + 1}`]),
     [CAREER_UNLOCKS.t2InvitationalRep, "t2"],
     [CAREER_UNLOCKS.relocationRep, "relocation"],
   ];
@@ -4532,6 +4536,8 @@ export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult 
   const valid = candidates.find((c) => c.id === coach.id);
   if (!valid) return { save: input, error: "unknown" };
   if (save.coach?.id === valid.id) return { save: input, error: "alreadySigned" };
+  // rc.35: the ladder gates ex-pro coaches (engine/career/ladder).
+  if (coachHireRefusalFor(save.reputation, valid)) return { save: input, error: "exProGate" };
   // rc.32 (M4, provisional): while the Backer is owed, a hire must not shorten the runway.
   const coachWeeklyDelta =
     weeklyWageBill([], valid.salaryPerSplit) - weeklyWageBill([], save.coach?.salaryPerSplit ?? null);

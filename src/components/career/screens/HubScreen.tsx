@@ -40,7 +40,6 @@ import {
   isWindowWeek,
   nameOfRef,
   seasonLabelFor,
-  unlockTrack,
   useCareerSave,
   userTeamPreview,
   weekOfDay,
@@ -60,7 +59,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 
 // ---------------------------------------------------------------------------
 // Wire filters (moved here from the old NewsScreen — the full feed lives on HQ)
@@ -268,11 +266,6 @@ export function HubScreen() {
   const unreadMail = save.mail.filter((m) => !m.read).length;
   const latestMail = save.mail.slice(0, 2);
 
-  // --- next unlock ------------------------------------------------------------
-  const nextUnlock = unlockTrack(save)
-    .filter((e) => !e.unlocked && !e.future)
-    .sort((a, b) => a.gate - b.gate)[0];
-  const unlockLabels = C.club.unlockables as Record<string, string>;
 
   const goalText = (key: string): string => {
     const suffix = key.split(".").pop() ?? key;
@@ -383,7 +376,7 @@ export function HubScreen() {
             <FinanceBlock save={save} C={C} />
           </div>
 
-          {/* 6 — the toolbox (UX-01f, decisions 5-A and 7-A; UX-06a's unlock modal) */}
+          {/* 6 — progression + toolbox in one card (rc.35; UX-01f, 5-A, 7-A; UX-06a's unlock modal) */}
           <div className="order-6">
             <ToolboxBlock save={save} C={C} />
           </div>
@@ -440,26 +433,6 @@ export function HubScreen() {
             </AppLink>
           </div>
 
-          {/* 11 — next unlock */}
-          {nextUnlock ? (
-            <div className="order-11">
-              <AppLink href="/career/club" className="block">
-                <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "210ms" }}>
-                  <div className="mb-1.5 flex items-center justify-between gap-2">
-                    <p className="kicker text-[10px]">{C.hub.progression}</p>
-                    <span className="text-[10px] text-faint">
-                      {Math.round(save.reputation)} / {nextUnlock.gate} {C.common.rep}
-                    </span>
-                  </div>
-                  <p className="display text-sm font-bold uppercase tracking-wide text-ink">
-                    {unlockLabels[nextUnlock.key] ?? nextUnlock.key}
-                  </p>
-                  <ProgressBar value={save.reputation / nextUnlock.gate} tone="orange" className="mt-2" label={C.hub.progression} />
-                  <p className="mt-1.5 text-[10px] text-faint">{C.club.unlockAt(nextUnlock.gate)}</p>
-                </Panel>
-              </AppLink>
-            </div>
-          ) : null}
         </div>
       </div>
 

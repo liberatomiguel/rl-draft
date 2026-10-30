@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 4;
+export const BALANCE_VERSION = 5;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2187,6 +2187,26 @@ export const CAREER_UNLOCKS = {
   signableCapBase: 74,
   signableCapPerRep: 0.3,
   signableCapFreeAt: 84,
+} as const;
+
+/**
+ * rc.35 — THE PROGRESSION LADDER (Miguel, rc.34 feedback). One ordered
+ * staircase of reputation gates mixing gear, staff, coaches and sponsor
+ * access: peripherals (8) → coach hiring (CAREER_UNLOCKS.coachRep) → monitors
+ * (14) → local sponsors (sponsorRep[0]) → tournament PCs (20) → ex-pro
+ * coaches (exProCoachRep) → bootcamp (26) → challenger sponsors
+ * (sponsorRep[1]) → structured bootcamp (38) → psychologist (46) → global
+ * sponsors (sponsorRep[2]) → performance centre (55) → headline sponsors
+ * (sponsorRep[3]). The gear/staff gates stay on CAREER_GEAR; the engine reads
+ * the order in career/ladder.ts. `sponsorRep[i]` is the reputation that opens
+ * sponsor ladder level i + 1 (engine/career/ladder.sponsorLadderLevelFor) —
+ * the sponsor desk reads that level (front S, sponsorAccessFor).
+ */
+export const CAREER_LADDER = {
+  /** Retired real pros on the coach shortlist are hireable from here (generic coaches from CAREER_UNLOCKS.coachRep). */
+  exProCoachRep: 23,
+  /** Sponsor ladder levels 1–4: local, challenger, global, headline. */
+  sponsorRep: [16, 30, 50, 75] as const,
 } as const;
 
 /**
