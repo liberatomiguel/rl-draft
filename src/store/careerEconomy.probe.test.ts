@@ -694,7 +694,8 @@ interface EconCareer {
   /** rc.34: absolute weeks a missed goal's fine was set (s4). */
   fineWeeks?: number[];
   /** rc.34 (ECO_FOUNDING): the weekly guaranteed income on each Monday of S0–S2, and the partner's full weekly pay. */
-  guaranteedWeeks?: { s: number; w: number; g: number }[];
+  /** S0–S2 Mondays: the guaranteed income booked (sponsor base + founding partner + fanbase), the partner's booked line, its full weekly pay. */
+  guaranteedWeeks?: { s: number; w: number; g: number; fp: number; full: number }[];
   partnerWeekly?: number;
 }
 
@@ -867,11 +868,19 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
         rec.events = mine.length;
         (career.splits ??= []).push(rec);
       }
-      // ECON_FOUNDING (s6): the weekly guaranteed income of S0–S2 and the partner's full weekly pay.
+      // ECON_FOUNDING (s6): what this Monday's payroll booked (not the projection: a deal ending on a
+      // boundary Monday is replaced before the next one), and the partner's full weekly pay at today's index.
       if (env.ECON_FOUNDING && save.clock.seasonIndex <= 2 && save.phase !== "ended") {
-        const st = statementOf(save);
-        (career.guaranteedWeeks ??= []).push({ s: save.clock.seasonIndex, w: week, g: st.sponsorBase + st.foundingPartner + st.fanbase });
-        if (save.foundingPartner && !save.foundingPartner.taperStep && st.foundingPartner > 0) career.partnerWeekly = st.foundingPartner;
+        const booked = (kinds: string[]) =>
+          save.finances.ledger
+            .filter((l) => l.seasonIndex === save.clock.seasonIndex && l.week === week && kinds.includes(l.kind))
+            .reduce((a, l) => a + l.amount, 0);
+        const fp = booked(["foundingPartner"]);
+        const share = E.foundingTaperShareOf(save.foundingPartner);
+        const prev = career.guaranteedWeeks?.[career.guaranteedWeeks.length - 1];
+        const full = share > 0 && save.foundingPartner?.endedSeason === undefined ? statementOf(save).foundingPartner / share : (prev?.full ?? 0);
+        (career.guaranteedWeeks ??= []).push({ s: save.clock.seasonIndex, w: week, g: booked(["sponsorBase", "foundingPartner", "fanbase"]), fp, full });
+        if (save.foundingPartner && !save.foundingPartner.taperStep && fp > 0) career.partnerWeekly = fp;
       }
     };
     const seasonOf = (s: number): EconSeason => {
@@ -1875,14 +1884,26 @@ function dealsReport(careers: EconCareer[], SD: typeof import("@/engine/career/s
   // (j) s6 — the handover (ECON_FOUNDING only).
   const handed = careers.filter((c) => (c.guaranteedWeeks?.length ?? 0) > 1 && (c.partnerWeekly ?? 0) > 0);
   if (handed.length) {
-    const falls = handed.map((c) => {
+    // The handover's own steps, on the booked lines: the largest one-Monday fall in the partner's pay ÷ its
+    // full pay at that Monday's index; and the whole guaranteed income's move on those Mondays (a deal
+    // changing hands on the same boundary counts too: positive = a fall).
+    const steps = handed.map((c) => {
       const g = c.guaranteedWeeks!;
-      let worst = 0;
-      for (let i = 1; i < g.length; i++) worst = Math.max(worst, g[i - 1].g - g[i].g);
-      return worst / c.partnerWeekly!;
+      let own = 0;
+      let total = 0;
+      for (let i = 1; i < g.length; i++) {
+        const fall = g[i - 1].fp - g[i].fp;
+        const full = g[i - 1].full || c.partnerWeekly!;
+        if (fall <= 0 || full <= 0) continue;
+        own = Math.max(own, fall / full);
+        total = Math.max(total, (g[i - 1].g - g[i].g) / full);
+      }
+      return { own, total };
     });
+    const own = steps.map((x) => x.own);
+    const total = steps.map((x) => x.total);
     lines.push(
-      `s6 — the founding partner's handover (ECON_FOUNDING, ${handed.length} careers): the largest one-step fall in weekly guaranteed income in S0–S2 ÷ the partner's weekly pay, p50 ${ratio(q(falls, 0.5), 2)}, p90 ${ratio(q(falls, 0.9), 2)}, max ${ratio(Math.max(...falls), 2)} (band ≤ 0.33).`,
+      `s6 — the founding partner's handover (ECON_FOUNDING, ${handed.length} careers, S0–S2): the largest one-step fall in the partner's weekly pay ÷ its full pay, p50 ${ratio(q(own, 0.5), 2)}, max ${ratio(Math.max(...own), 2)} (band ⅓; the per-split and weekly roundings add a few points); the whole weekly guaranteed income's largest fall on those Mondays ÷ the partner's full pay (booked, the sponsor deal changing hands included), p50 ${ratio(q(total, 0.5), 2)}, max ${ratio(Math.max(...total), 2)}.`,
     );
     lines.push("");
   }
