@@ -38,11 +38,13 @@ import {
   bankMinAmountFor,
   bootcampCostFor,
   breachesToEndFor,
+  canSettleLoan,
   deadlineWeeksFor,
   debtPaymentFor,
   foundingPartnerActive,
   investorShareFor,
   loanBreachesOf,
+  maxLoansFor,
   moneyIndex,
   nextPaydayFor,
   psychologistPerSplitFor,
@@ -168,7 +170,8 @@ function PayDown({
   const canPay = maxPay > 0 && maxPay >= payMin;
   const clamp = (n: number) => Math.min(Math.max(n, payMin), Math.max(payMin, maxPay));
   const amount = debtPaymentFor(remaining, clamp(raw ?? step));
-  const canPayAll = balance - remaining >= floor;
+  // rc.34 review: the deadline's own rule (economy.canSettleLoan) — down to the floor.
+  const canPayAll = canSettleLoan(balance, remaining, floor);
   const balanceAfter = balance - amount;
 
   return (
@@ -1404,7 +1407,8 @@ export function FinancesScreen() {
             ) : fin.loanUsed ? (
               <>
                 <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.hub.backerNextBreach(nextBreachParams)}
+                  {/* rc.34 review: the flow's own words — a breach count, or the career's last loan repaid (the loan cap). */}
+                  {C.hub.backerNextBreach(nextBreachParams)}
                 </p>
                 <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
                 {breachEnd !== null ? (
@@ -1435,6 +1439,7 @@ export function FinancesScreen() {
                     partnerWeeks: CAREER_LOAN.investor.weeks,
                     maxTopUps: CAREER_LOAN.emergency.maxTopUps,
                     endAt: breachEnd,
+                    maxLoans: maxLoansFor(save.difficulty),
                   })}
                 </p>
               </>

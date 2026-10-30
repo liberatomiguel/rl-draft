@@ -2167,7 +2167,8 @@ export const CAREER_LOAN = {
    * Monday below the floor) that ends a career OUTRIGHT, by difficulty; null
    * = none. With null, every breach is the bank's emergency loan (the first
    * opens it, a later one while it is owed adds to it) and only the loan's
-   * deadline (`emergency.deadlineWeeks`) ends a career through money.
+   * deadline (`emergency.deadlineWeeks`) and its caps (`emergency.maxTopUps`,
+   * rc.34 review: `emergency.maxLoans`) end a career through money.
    * `hard: 1` restores "Hard ends at the first breach" (a decision for
    * Miguel); rc.33: { easy: 3, normal: 2, hard: 1 } (with deadlineWeeks null
    * everywhere: rc.33's rule exactly); rc.31: 2 everywhere.
@@ -2185,9 +2186,11 @@ export const CAREER_LOAN = {
     /**
      * ECO-15. Weeks from the FIRST emergency loan to the Monday it must be repaid by,
      * by difficulty; null = no deadline (rc.33). On that Monday the bank
-     * takes what it is owed if the balance covers it; otherwise the career
-     * ends. A later breach while it is owed adds to the loan and never moves
-     * the deadline. Front I's difficulty screen reads exactly this key.
+     * takes what it is owed when the books stay at or above the floor after
+     * paying it (rc.34 review: `economy.canSettleLoan`, the same test as
+     * "Pay it all" — the overdraft counts); otherwise the career ends. A
+     * later breach while it is owed adds to the loan and never moves the
+     * deadline. The wizard's money line reads it (`economy.moneyRuleFor`).
      * Easy two seasons, Normal a season and a half, Hard three splits (a
      * season is 32 weeks, 3 splits). Measured (rc.34, 84 careers): with
      * 32 / 24 / 16 no rescued bot career ever covered its debt on the day —
@@ -2196,8 +2199,31 @@ export const CAREER_LOAN = {
      * turned every rescue into a delayed end.
      */
     deadlineWeeks: { easy: 64, normal: 48, hard: 24 } as Record<string, number | null>,
-    /** The Mondays before the deadline the bank warns (a mail and the money notice), largest first. */
-    warnWeeks: [8, 4] as readonly number[],
+    /**
+     * The Mondays before the deadline the bank warns (a mail and the money
+     * notice), largest first. rc.34 review: + the last week (1) — after the
+     * 4-week warning nothing spoke until the deadline itself.
+     */
+    warnWeeks: [8, 4, 1] as readonly number[],
+    /**
+     * rc.34 review: inside this many weeks of the deadline the bank re-reads
+     * the projection every day ("covered" = the books on the deadline Monday,
+     * the weekly burn counted) and sends a notice and a mail the day it flips
+     * from covered to not covered (nothing is locked while owing, so a late
+     * fee or purchase can flip it). 0 = off.
+     */
+    slipWatchWeeks: 4,
+    /**
+     * rc.34 review: emergency loans the bank opens in a whole career, by
+     * difficulty (a top-up is not a new loan); null = no cap. Once the last
+     * one is repaid — on its deadline or before — the next Monday below the
+     * floor ends the career (announced by every warning first, like the
+     * top-up cap). Why: a loan paid on its deadline into the overdraft broke
+     * the floor again and opened a fresh loan with a fresh term, so the
+     * deadline could be rolled over forever. 3 / 2 / 1 follow rc.33's
+     * breaches 3 / 2 / 1 one rescue gentler ("not too punitive").
+     */
+    maxLoans: { easy: 3, normal: 2, hard: 1 } as Record<string, number | null>,
     /**
      * Breaches while the loan is owed that the bank tops up (each adds to the
      * debt, the deadline stays); the next one ends the career. null = no cap.

@@ -303,7 +303,16 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
       <DayCard
         save={save}
         C={C}
-        decision={topBody ? { body: topBody, count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined } : null}
+        decision={
+          topBody
+            ? {
+                body: topBody,
+                count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined,
+                // rc.34 review (Gate 3b): a fresh invite holds nothing — it sits above the clock's controls.
+                inline: top?.kind === "invite" && !top.holds,
+              }
+            : null
+        }
         footer={footer}
       />
 

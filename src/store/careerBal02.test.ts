@@ -14,7 +14,8 @@ import { CAREER_DIFFICULTY, CAREER_LOAN, CAREER_WORLD, DIFFICULTY, TOURNAMENT } 
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import { orgById } from "@/data";
-import { careerMatchProfile, loanDeadlineWeeksFor, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
+import { careerMatchProfile, matchEdgeOf, presetPrefs, presetTrainingModeOf } from "@/engine/career/difficulty";
+import { moneyRuleFor } from "@/engine/career/economy";
 import { localSceneRefs } from "@/engine/career/localScene";
 import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
 import { computeStars, localTeamFor, orgTeamFor, userTeamFor } from "@/engine/career/worldSim";
@@ -174,18 +175,25 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
       for (const d of DIFFS) {
         const bullets = Object.fromEntries(PRESET_BULLETS.map((b) => [b.key, b.value(d, C)]));
         expect(bullets.matches).toBe(C.wizard.presetMatches[matchFeelOf(d)]);
-        expect(bullets.help).toBe(presetPrefs(d).autoTrain ? C.wizard.presetHelpGuided : C.wizard.presetHelpHandsOn);
-        const weeks = loanDeadlineWeeksFor(d);
-        expect(bullets.money).toBe(weeks === null ? C.wizard.presetMoneyNoLoan : C.wizard.presetMoney(weeks));
+        // rc.34 review: the help bullet reads the training delegation the preset starts on
+        // (CAREER_PLAN.modeByPreset) and its cup entry — Normal's coach proposes, you approve.
+        expect(bullets.help).toBe(C.wizard.presetHelp(presetTrainingModeOf(d), presetPrefs(d).autoEnterUnofficials));
+        // rc.34 review: the money bullet states the preset's whole money rule (economy.moneyRuleFor).
+        const rule = moneyRuleFor(d);
+        expect(bullets.money).toBe(rule.lends ? C.wizard.presetMoney(rule) : C.wizard.presetMoneyNoLoan);
         // Short and plain: one line of promise, bullets of a few words — no jargon, no figures but the weeks.
         const promise = C.wizard.presets[d].promise;
         expect(promise.split(/\s+/).length, `${lang} ${d} promise`).toBeLessThanOrEqual(12);
         for (const text of [promise, ...Object.values(bullets)]) {
           expect(text, `${lang} ${d}`).not.toMatch(JARGON);
-          expect(text.split(/\s+/).length, `${lang} ${d}: ${text}`).toBeLessThanOrEqual(16);
+          // The money bullet may name the loans as well as the weeks (two more words).
+          expect(text.split(/\s+/).length, `${lang} ${d}: ${text}`).toBeLessThanOrEqual(text === bullets.money ? 18 : 16);
         }
-        expect(bullets.money.replace(String(weeks), "")).not.toMatch(/\d/);
+        expect(bullets.money.replace(String(rule.deadlineWeeks), "")).not.toMatch(/\d/);
       }
+      // The three presets start on three different delegations, each told apart.
+      expect(new Set(DIFFS.map((d) => presetTrainingModeOf(d)))).toEqual(new Set(["coach", "approve", "manual"]));
+      expect(new Set(DIFFS.map((d) => C.wizard.presetHelp(presetTrainingModeOf(d), presetPrefs(d).autoEnterUnofficials))).size).toBe(3);
       // Three different promises, and the matches bullet tells the presets apart.
       expect(new Set(DIFFS.map((d) => C.wizard.presets[d].promise)).size).toBe(3);
       expect(new Set(DIFFS.map((d) => C.wizard.presetMatches[matchFeelOf(d)])).size).toBe(3);
@@ -194,31 +202,48 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
     }
   });
 
-  it("the money bullet reads the loan's deadline from front H's key when it exists (CAREER_LOAN.emergency.deadlineWeeks), else the scaffold; no loan reads plainly", () => {
-    const L = CAREER_LOAN as unknown as { emergency?: { deadlineWeeks?: Record<string, number | null> } };
-    const had = "emergency" in L;
-    const saved = L.emergency;
+  it("rc.34 review: the money bullet states the whole rule from every key — the loans, the deadline or none, a breach that ends it outright", () => {
+    const L = CAREER_LOAN as unknown as {
+      breachesToEnd: Record<string, number | null>;
+      emergency: { deadlineWeeks: Record<string, number | null>; maxLoans: Record<string, number | null> };
+    };
+    const saved = { end: { ...L.breachesToEnd }, dl: { ...L.emergency.deadlineWeeks }, max: { ...L.emergency.maxLoans } };
     const money = PRESET_BULLETS.find((b) => b.key === "money")!;
     try {
-      if (!had) {
-        // The scaffold: a deadline for every preset, shorter as the preset gets harder.
-        const [e, n, h] = DIFFS.map((d) => loanDeadlineWeeksFor(d)!);
-        expect(e).toBeGreaterThanOrEqual(n);
-        expect(n).toBeGreaterThanOrEqual(h);
-        expect(h).toBeGreaterThanOrEqual(1);
-      }
-      L.emergency = { ...(saved ?? {}), deadlineWeeks: { easy: 10, normal: 6, hard: 1 } };
-      expect(DIFFS.map((d) => loanDeadlineWeeksFor(d))).toEqual([10, 6, 1]);
-      expect(money.value("easy", COPY.en)).toBe("Out of money? The bank lends it — repay within 10 weeks or the career ends.");
-      expect(money.value("hard", COPY.en)).toBe("Out of money? The bank lends it — repay within 1 week or the career ends.");
-      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? O banco empresta — pague em até 6 semanas ou a carreira acaba.");
-      expect(money.value("hard", COPY.pt)).toBe("Sem dinheiro? O banco empresta — pague em até 1 semana ou a carreira acaba.");
-      L.emergency = { ...(saved ?? {}), deadlineWeeks: { easy: 12, normal: 8, hard: null } };
+      // Today's keys: Easy three loans in 64 weeks each, Normal two in 48, Hard one in 24.
+      expect(DIFFS.map((d) => moneyRuleFor(d))).toEqual([
+        { lends: true, loans: 3, deadlineWeeks: 64 },
+        { lends: true, loans: 2, deadlineWeeks: 48 },
+        { lends: true, loans: 1, deadlineWeeks: 24 },
+      ]);
+      expect(money.value("easy", COPY.en)).toBe("Out of money? Up to three bank loans — repay each within 64 weeks or the career ends.");
+      expect(money.value("normal", COPY.en)).toBe("Out of money? Up to two bank loans — repay each within 48 weeks or the career ends.");
+      expect(money.value("hard", COPY.en)).toBe("Out of money? One bank loan — repay it within 24 weeks or the career ends.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? Até dois empréstimos do banco — pague em até 48 semanas ou a carreira acaba.");
+      expect(money.value("hard", COPY.pt)).toBe("Sem dinheiro? Um empréstimo do banco — pague em até 24 semanas ou a carreira acaba.");
+      // `breachesToEnd.hard: 1` (Hard ends at the first breach): no loan is promised.
+      L.breachesToEnd.hard = 1;
+      expect(moneyRuleFor("hard")).toMatchObject({ lends: false, loans: 0 });
       expect(money.value("hard", COPY.en)).toBe(COPY.en.wizard.presetMoneyNoLoan);
       expect(money.value("hard", COPY.pt)).toBe(COPY.pt.wizard.presetMoneyNoLoan);
+      // A breach count caps the loans too (the third breach ends it: two loans at most).
+      L.breachesToEnd.easy = 3;
+      expect(moneyRuleFor("easy").loans).toBe(2);
+      // No deadline: the loan never ends the career — the bullet says so instead of "the career ends".
+      L.emergency.deadlineWeeks.normal = null;
+      expect(moneyRuleFor("normal")).toEqual({ lends: true, loans: 2, deadlineWeeks: null });
+      expect(money.value("normal", COPY.en)).toBe("Out of money? Up to two bank loans — no deadline: prizes and sales repay them.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? Até dois empréstimos do banco — sem prazo: prêmios e vendas pagam.");
+      // No cap and no deadline: the plain loan.
+      L.emergency.maxLoans.normal = null;
+      expect(money.value("normal", COPY.en)).toBe("Out of money? The bank lends it — no deadline: prizes and sales repay it.");
+      L.emergency.deadlineWeeks.normal = 1;
+      expect(money.value("normal", COPY.en)).toBe("Out of money? The bank lends it — repay within 1 week or the career ends.");
+      expect(money.value("normal", COPY.pt)).toBe("Sem dinheiro? O banco empresta — pague em até 1 semana ou a carreira acaba.");
     } finally {
-      if (had) L.emergency = saved;
-      else delete L.emergency;
+      Object.assign(L.breachesToEnd, saved.end);
+      Object.assign(L.emergency.deadlineWeeks, saved.dl);
+      Object.assign(L.emergency.maxLoans, saved.max);
     }
   });
 });

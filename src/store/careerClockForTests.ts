@@ -4,11 +4,12 @@
  *
  * rc.34's decision queue (UX-01a, `careerDecisions.ts`) holds the clock on
  * what rc.33's clock walked past: an accepted Community Cup's matchday
- * (walking past declined it), a fresh invite (it stood until Monday), an
- * incoming bid (it expired after its last day) and the sponsor offers (they
- * stood). Suites written against rc.33's walk that test something else — the
- * weekend, the race, the money — answer those the way the walk did and then
- * move through the REAL `advanceDayFlow`: `walkPastForTests` before each step,
+ * (walking past declined it), an incoming bid (it expired after its last
+ * day) and the sponsor offers (they stood). A fresh invite holds nothing
+ * (rc.34 review, Gate 3b): walked past its matchday, it is passed. Suites
+ * written against rc.33's walk that test something else — the weekend, the
+ * race, the money — answer those the way the walk did and then move through
+ * the REAL `advanceDayFlow`: `walkPastForTests` before each step,
  * or `stepDayForTests` for both. The holds rc.33 already had (the insert, a
  * short squad's eve, an official matchday) are left alone.
  */
@@ -26,8 +27,6 @@ export function walkPastForTests(input: CareerSave): CareerSave {
       if (!save.activeEvent && def && def.day === save.clock.day && (def.tier === "t2" || def.tier === "t3")) {
         save = { ...save, pendingEventDef: null, unofficialOffer: null };
       }
-    } else if (d.kind === "invite") {
-      save = { ...save, unofficialOffer: null };
     } else if (d.kind === "bid") {
       save = d.canWait ? parkDecisionFlow(save, d.id).save : declineBidFlow(save, d.id);
     } else if (d.kind === "sponsor") {

@@ -24,10 +24,13 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { firstDayOfWeek, weekOfDay } from "@/engine/career/calendar";
 import {
   applyPrize,
+  balanceAfterMondays,
+  canSettleLoan,
   deadlineWeeksFor,
   emergencyLoansOf,
   investorJoinsNext,
   investorWeeklyFor,
+  maxLoansFor,
   mondayAfter,
   quantize,
   startingBudgetFor,
@@ -49,12 +52,15 @@ import {
   migrateSaveToV5,
   moneyNoticeOf,
   moneyNoticeRaisedToday,
+  nextBreachOutcomeOf,
+  nextBreachParamsOf,
   payDebtFlow,
   repairLoanOnLoad,
   signingPlanFor,
   weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
+import { walkPastForTests } from "./careerClockForTests";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -276,8 +282,10 @@ describe("rc.34 — the deadline: repaid, collected, or the end", () => {
     const { save: opened, dueWeek } = owing(71_103);
     let save = opened;
     const sunday = quietSunday(save, dueWeek - 1);
-    // Above the floor, below the debt: no breach — the deadline alone ends it.
-    sunday.finances.balance = sunday.finances.loan!.remaining - 5_000;
+    // rc.34 review: above the floor (no breach — the deadline alone ends it), but paying
+    // the debt would close the books $5,000 below the floor after Monday's payroll.
+    const net = weeklyStatementOf(sunday).net;
+    sunday.finances.balance = sunday.finances.loan!.remaining + backerLineOf(sunday).floor - 5_000 - net;
     save = advanceDayFlow(sunday);
     expect(save.phase).toBe("ended");
     expect(save.end).toMatchObject({ reason: "insolvency", moneyCause: "deadline" });
@@ -505,5 +513,219 @@ describe("rc.34 — every founding roster starts with the same runway in weeks",
     } finally {
       keys.normal = saved;
     }
+  });
+});
+
+// ===========================================================================
+// rc.34 review (P1–P3): one rule on the deadline, the loan cap, the boundary
+// Monday, and "covered" as the bank's own test on the projected books
+// ===========================================================================
+
+const EN = CAREER_EN as unknown as CareerCopy;
+
+/** The Sunday before a Hard loan's deadline, the books `afterPay` from the floor once Monday's payroll and the whole debt are paid. */
+function dueSunday(seed: number, afterPay: number): { sunday: CareerSave; owed: number; floor: number } {
+  const save = mondayAtFloor(heavyCareer("hard", seed), 2, -10);
+  const sunday = quietSunday(save, save.finances.loan!.deadline!.week - 1);
+  const owed = sunday.finances.loan!.remaining;
+  const floor = backerLineOf(sunday).floor;
+  sunday.finances.balance = owed + floor + afterPay - weeklyStatementOf(sunday).net;
+  return { sunday, owed, floor };
+}
+
+describe("rc.34 review (P1) — the deadline and 'Pay it all' read ONE rule: balance − owed ≥ the floor", () => {
+  it("short of the debt but above the floor once it is paid: 'Pay it all' is accepted and the bank collects on the day (the Hard repro)", () => {
+    const { sunday, owed, floor } = dueSunday(71_601, 5_000);
+    expect(canSettleLoan(sunday.finances.balance, owed, floor)).toBe(true);
+    expect(payDebtFlow(sunday, owed).error).toBeUndefined();
+    // Doing nothing is the same test on Monday: the bank takes it, the books close in the overdraft.
+    const monday = advanceDayFlow(sunday);
+    expect(monday.phase).toBe("running");
+    expect(monday.finances.loan).toBeNull();
+    expect(monday.finances.balance).toBe(floor + 5_000);
+    expect(monday.finances.balance).toBeLessThan(0);
+    expect(monday.moneyNotices!.some((n) => n.kind === "deadlineCollected" && n.params.collected === owed)).toBe(true);
+  });
+
+  it("past the floor once paid: the deadline ends the career, and 'Pay it all' refuses those same books", () => {
+    const { sunday, owed, floor } = dueSunday(71_602, -5_000);
+    const monday = advanceDayFlow(sunday);
+    expect(monday.phase).toBe("ended");
+    expect(monday.end).toMatchObject({ reason: "insolvency", moneyCause: "deadline" });
+    const atCheck = structuredClone(sunday);
+    atCheck.finances.balance = owed + floor - 5_000;
+    expect(canSettleLoan(atCheck.finances.balance, owed, floor)).toBe(false);
+    expect(payDebtFlow(atCheck, owed).error).toBe("funds");
+    atCheck.finances.balance = owed + floor;
+    expect(canSettleLoan(atCheck.finances.balance, owed, floor)).toBe(true);
+    expect(payDebtFlow(atCheck, owed).error).toBeUndefined();
+  });
+});
+
+describe("rc.34 review (P1) — a career-wide cap on emergency loans: the deadline cannot be rolled over forever", () => {
+  it("maxLoans by difficulty (Easy 3, Normal 2, Hard 1): after the last one is repaid the next breach ends the career, and the warnings say so first", () => {
+    expect(CAREER_LOAN.emergency.maxLoans).toEqual({ easy: 3, normal: 2, hard: 1 });
+    for (const d of DIFFS) {
+      let save = heavyCareer(d, 71_611);
+      const cap = maxLoansFor(d)!;
+      let week = 2;
+      for (let n = 1; n <= cap; n++) {
+        save = acknowledgeAll(mondayAtFloor(save, week++, -10));
+        expect(save.phase, `${d} loan ${n}`).toBe("running");
+        expect(emergencyLoansOf(save.finances)).toBe(n);
+        expect(nextBreachParamsOf(save)).toMatchObject({ owing: 1, loansLeft: cap - n });
+        // Paid in full, into the overdraft (the deadline's own rule).
+        save = structuredClone(save);
+        save.finances.balance = save.finances.loan!.remaining + backerLineOf(save).floor;
+        save = payDebtFlow(save, save.finances.loan!.remaining).save;
+        expect(save.finances.loan).toBeNull();
+        expect(nextBreachOutcomeOf(save), `${d} after loan ${n}`).toBe(n === cap ? "insolvent" : "rescue");
+      }
+      const next = nextBreachParamsOf(save);
+      expect(next).toMatchObject({ next: "insolvent", owing: 0, loansLeft: 0, maxLoans: cap });
+      expect(EN.hub.backerNextBreach(next)).toMatch(/will not open another emergency loan/);
+      expect(CAREER_PT.hub.backerNextBreach(next)).toMatch(/não abre outro empréstimo emergencial/);
+      // The bank's "repaid in full" mail says it too (it used to say its door stays open).
+      const cleared = mailOf(save, "debtCleared")[0];
+      expect(EN.mail.body.debtCleared(cleared.params!)).toMatch(/will not open another emergency loan/);
+      expect(CAREER_PT.mail.body.debtCleared(cleared.params!)).toMatch(/não abre outro empréstimo emergencial/);
+      save = mondayAtFloor(save, week, -10);
+      expect(save.phase, d).toBe("ended");
+      expect(save.end).toMatchObject({ reason: "insolvency", moneyCause: "breach" });
+      const notice = save.moneyNotices!.at(-1)!;
+      expect(notice).toMatchObject({ kind: "careerEnded", params: { cause: "breach", loans: cap, maxLoans: cap } });
+      expect(moneyNoticeTextOf(EN, notice, save.clock).lead).toMatch(/would not open another emergency loan/);
+      expect(moneyNoticeTextOf(CAREER_PT, notice, save.clock).lead).toMatch(/não abriria outro empréstimo emergencial/);
+    }
+  });
+
+  it("the reviewer's rollover: Hard settles on its deadline in the overdraft and breaks the floor later — no fresh loan, no fresh term", () => {
+    const { sunday } = dueSunday(71_612, 2_000);
+    const monday = advanceDayFlow(sunday);
+    expect(monday.phase).toBe("running");
+    expect(monday.finances.loan).toBeNull();
+    const collected = monday.moneyNotices!.find((n) => n.kind === "deadlineCollected")!;
+    expect(collected.params).toMatchObject({ next: "insolvent", loansLeft: 0 });
+    expect(moneyNoticeTextOf(EN, collected, monday.clock).rows.flat().join(" ")).toMatch(/will not open another emergency loan/);
+    let save = acknowledgeAll(monday);
+    save = mondayAtFloor(save, weekOfDay(save.clock.day) + 2, -10);
+    expect(save.phase).toBe("ended");
+    expect(save.end).toMatchObject({ reason: "insolvency", moneyCause: "breach" });
+    expect(emergencyLoansOf(save.finances)).toBe(1);
+  });
+});
+
+describe("rc.34 review (P2) — a split boundary's sponsor bonus is booked before the deadline is checked", () => {
+  it("W11: the objective bonus that closes the gap keeps the career (it used to land after the check); without it the deadline ends it", () => {
+    const sunday = quietSunday(heavyCareer("normal", 71_621), 10);
+    const bonus = 40_000;
+    sunday.sponsor = { sponsorId: "test-sponsor", tier: 1, basePerSplit: 0, bonus, objectiveKind: "majorQualify", progress: 0, hitThisSplit: true, missedCount: 0 };
+    sunday.finances.loan = { remaining: 60_000, lent: 50_000, topUps: 0, openedAt: { seasonIndex: 0, week: 3 }, deadline: { seasonIndex: 0, week: 11 }, warned: [...CAREER_LOAN.emergency.warnWeeks] };
+    sunday.finances.loanUsed = true;
+    sunday.finances.emergencyLoans = 1;
+    sunday.finances.loanBreaches = 1;
+    const floor = backerLineOf(sunday).floor;
+    // After Monday's payroll the books are $10,000 past the floor once the debt is paid — the bonus closes it.
+    sunday.finances.balance = 60_000 + floor - 10_000 - weeklyStatementOf(sunday).net;
+    const monday = advanceDayFlow(sunday);
+    expect(weekOfDay(monday.clock.day)).toBe(11);
+    expect(monday.phase).toBe("running");
+    expect(monday.finances.loan).toBeNull();
+    expect(monday.finances.balance).toBe(floor - 10_000 + bonus);
+    expect(monday.finances.ledger.some((l) => l.kind === "sponsorBonus" && l.amount === bonus)).toBe(true);
+    const missed = structuredClone(sunday);
+    missed.sponsor!.hitThisSplit = false;
+    expect(advanceDayFlow(missed)).toMatchObject({ phase: "ended", end: { moneyCause: "deadline" } });
+  });
+});
+
+describe("rc.34 review (P3) — 'covered' is the bank's test on the books projected to the deadline", () => {
+  it("warnWeeks [8, 4, 1]; covered = balance + weeksLeft × the weekly net, less the debt, at or above the floor", () => {
+    expect(CAREER_LOAN.emergency.warnWeeks).toEqual([8, 4, 1]);
+    const opened = mondayAtFloor(heavyCareer("hard", 71_631), 2, -10);
+    const save = structuredClone(opened);
+    save.clock.day = firstDayOfWeek(save.finances.loan!.deadline!.week - 4);
+    const owed = save.finances.loan!.remaining;
+    const floor = backerLineOf(save).floor;
+    const net = weeklyStatementOf(save).net;
+    expect(net).toBeLessThan(-1_000);
+    // Payable today with $2,000 to spare — four more Mondays of burn sink it.
+    save.finances.balance = owed + floor + 2_000;
+    expect(canSettleLoan(save.finances.balance, owed, floor)).toBe(true);
+    const view = emergencyLoanViewOf(save)!;
+    expect(view.weeksLeft).toBe(4);
+    expect(view.projected).toBe(balanceAfterMondays(save.finances.balance, net, 4));
+    expect(view.projected).toBe(save.finances.balance + 4 * net);
+    expect(view.covered).toBe(false);
+    expect(view.gap).toBe(owed + floor - view.projected);
+    save.finances.balance = owed + floor - 4 * net;
+    expect(emergencyLoanViewOf(save)).toMatchObject({ covered: true, gap: 0 });
+  });
+
+  it("the 4-week warning quotes the projection (not today's balance), and the copy says what closes the gap — never a partial payment", () => {
+    const opened = mondayAtFloor(heavyCareer("hard", 71_632), 2, -10);
+    const sunday = quietSunday(opened, opened.finances.loan!.deadline!.week - 5);
+    sunday.finances.loan!.warned = [8];
+    const owed = sunday.finances.loan!.remaining;
+    const floor = backerLineOf(sunday).floor;
+    sunday.finances.balance = owed + floor + 2_000 - weeklyStatementOf(sunday).net;
+    const monday = advanceDayFlow(sunday);
+    const mail = mailOf(monday, "loanDeadline")[0];
+    expect(mail.params).toMatchObject({ weeksLeft: 4, covered: 0 });
+    expect(Number(mail.params!.gap)).toBeGreaterThan(0);
+    for (const C of [EN, CAREER_PT]) {
+      const body = C.mail.body.loanDeadline(mail.params!);
+      const notice = moneyNoticeTextOf(C, moneyNoticeOf(monday)!, monday.clock);
+      const all = [body, notice.lead, ...notice.rows.flat()].join(" ");
+      expect(all).not.toMatch(/Pay it down from Finances|Abata em Finanças|undefined|NaN/);
+      expect(all).toMatch(C === CAREER_PT ? /Quitar tudo/ : /Pay it all/);
+    }
+  });
+
+  it("inside the last 4 weeks the bank watches every day: the day 'covered' flips to 'not covered' a notice and a mail say so, once", () => {
+    const opened = mondayAtFloor(heavyCareer("hard", 71_633), 2, -10);
+    const sunday = quietSunday(opened, opened.finances.loan!.deadline!.week - 5);
+    sunday.finances.loan!.warned = [8];
+    const owed = sunday.finances.loan!.remaining;
+    const floor = backerLineOf(sunday).floor;
+    // Covered on this pace with $3,000 to spare after five Mondays of burn (this one and four more).
+    sunday.finances.balance = owed + floor + 3_000 - 5 * weeklyStatementOf(sunday).net;
+    let save = advanceDayFlow(sunday);
+    expect(mailOf(save, "loanDeadline")[0].params).toMatchObject({ weeksLeft: 4, covered: 1 });
+    expect(emergencyLoanViewOf(save)!.covered).toBe(true);
+    save = structuredClone(walkPastForTests(acknowledgeAll(save)));
+    // A late transfer fee (nothing is locked while owing): $5,000 out — the projection now misses.
+    save.finances.balance -= 5_000;
+    expect(emergencyLoanViewOf(save)!.covered).toBe(false);
+    save = advanceDayFlow(save);
+    expect(moneyNoticeOf(save)).toMatchObject({ kind: "deadlineSlipped" });
+    expect(moneyNoticeRaisedToday(save)).toBe(true);
+    const slipped = mailOf(save, "loanSlipped");
+    expect(slipped).toHaveLength(1);
+    expect(slipped[0].fromKey).toBe("bank");
+    for (const C of [EN, CAREER_PT]) {
+      const text = moneyNoticeTextOf(C, moneyNoticeOf(save)!, save.clock);
+      expect([text.title, text.lead, ...text.rows.flat()].join(" ")).not.toMatch(/undefined|NaN/);
+      expect(C.mail.tpl.loanSlipped()).not.toMatch(/undefined|NaN/);
+      expect(C.mail.body.loanSlipped(slipped[0].params!)).not.toMatch(/undefined|NaN/);
+    }
+    // Once: the next day raises nothing more.
+    save = advanceDayFlow(walkPastForTests(acknowledgeAll(save)));
+    expect(mailOf(save, "loanSlipped")).toHaveLength(1);
+    expect(moneyNoticeRaisedToday(save)).toBe(false);
+  });
+
+  it("outside the last 4 weeks the same flip raises nothing (the 8- and 4-week warnings carry it)", () => {
+    const opened = mondayAtFloor(heavyCareer("hard", 71_634), 2, -10);
+    let save = structuredClone(opened);
+    save.clock.day = firstDayOfWeek(save.finances.loan!.deadline!.week - 7) + 1;
+    save.finances.loan!.warned = [8];
+    save.finances.balance = save.finances.loan!.remaining + backerLineOf(save).floor + 3_000 - 7 * weeklyStatementOf(save).net;
+    expect(emergencyLoanViewOf(save)!.covered).toBe(true);
+    save = advanceDayFlow(walkPastForTests(acknowledgeAll(save)));
+    save.finances.balance -= 5_000;
+    expect(emergencyLoanViewOf(save)!.covered).toBe(false);
+    save = advanceDayFlow(walkPastForTests(acknowledgeAll(save)));
+    expect(mailOf(save, "loanSlipped")).toHaveLength(0);
   });
 });

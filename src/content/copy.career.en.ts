@@ -36,23 +36,42 @@ const legacyNextBreachEn = (
  * flow's `nextBreachParamsOf` — `next` (economy.breachOutcomeOf: "rescue" or
  * "insolvent"), `owing` (a loan is open: the bank adds to it, the deadline
  * stays), `nextPartner` / `partnerRun` (the investor joins the first loan),
- * `term` (weeks to repay a new loan; 0 = no deadline) and `topUpsLeft`
- * (-1 = no cap). Older mails pass only `next`: they read the general rule.
+ * `term` (weeks to repay a new loan; 0 = no deadline), `topUpsLeft`
+ * (-1 = no cap) and, rc.34 review, `loansLeft` (new loans the career still
+ * gets, CAREER_LOAN.emergency.maxLoans; -1 = no cap). Older mails pass only
+ * `next`: they read the general rule.
  */
 const nextBreachEn = (p: Record<string, string | number | undefined>): string => {
-  if (p.next === "insolvent")
-    return Number(p.owing) && Number(p.topUpsLeft) === 0
-      ? "The bank will not add to the loan again: the next breach of the floor ends the career."
-      : "The next breach of the floor ends the career.";
+  if (p.next === "insolvent") {
+    if (Number(p.owing) && Number(p.topUpsLeft) === 0)
+      return "The bank will not add to the loan again: the next breach of the floor ends the career.";
+    if (!Number(p.owing) && Number(p.loansLeft) === 0)
+      return "The bank will not open another emergency loan: the next breach of the floor ends the career.";
+    return "The next breach of the floor ends the career.";
+  }
   if (p.next === "restructure") return "";
   if (Number(p.owing)) {
     const left = Number(p.topUpsLeft);
     return `Below the floor again before it is repaid, the bank adds to the loan — the deadline stays${left > 0 ? ` (it will do that ${left === 1 ? "once more" : `${left} more times`})` : ""}.`;
   }
   const term = Number(p.term) > 0 ? `, to be repaid within ${p.term} weeks` : "";
+  const last = Number(p.loansLeft) === 1 ? " — the last one it will open in this career" : "";
   return Number(p.nextPartner)
-    ? `Below the floor on a Monday, the bank opens an emergency loan${term} — and an investor adds a little income${partnerRunEn(p.partnerRun)}.`
-    : `Below the floor on a Monday, the bank opens an emergency loan${term}.`;
+    ? `Below the floor on a Monday, the bank opens an emergency loan${term}${last} — and an investor adds a little income${partnerRunEn(p.partnerRun)}.`
+    : `Below the floor on a Monday, the bank opens an emergency loan${term}${last}.`;
+};
+
+/**
+ * rc.34 review: the emergency loans the career still gets once this one is
+ * repaid (`loansLeft` of nextBreachParamsOf, read while one is owed) — the
+ * loan notice's row and the bank's mail. Empty without a cap (-1).
+ */
+const loansLeftEn = (p: Record<string, string | number | undefined>): string => {
+  const left = Number(p.loansLeft);
+  if (p.loansLeft === undefined || left < 0) return "";
+  return left === 0
+    ? "It is the last emergency loan the bank opens in this career: once it is repaid, the next breach of the floor ends the career."
+    : `Once it is repaid, the bank opens ${left === 1 ? "one more" : `${left} more`} in this career at most.`;
 };
 
 /** rc.34: an emergency-loan Monday as the bank's mails quote it (this season, next, or N seasons on). */
@@ -65,8 +84,29 @@ const mondayWhenEn = (week: string | number | undefined, ahead: string | number 
       : `the Monday of week ${week}, ${a} seasons from now`;
 };
 
-/** rc.34: what happens on the deadline Monday — one sentence every loan mail and notice repeats. */
-const deadlineRuleEn = "On that Monday the bank takes what is owed if the balance covers it; if it cannot, the career ends.";
+/**
+ * rc.34: what happens on the deadline Monday — one sentence every loan mail
+ * and notice repeats. rc.34 review: the bank's rule is "Pay it all"'s own
+ * (economy.canSettleLoan): it collects as long as the books stay at or above
+ * the floor after paying — the overdraft counts.
+ */
+const deadlineRuleEn =
+  "On that Monday the bank takes what is owed as long as the books stay at or above the floor after paying it; if they would not, the career ends.";
+
+/**
+ * rc.34 review: what closes the gap to the deadline — new money (a sale, a
+ * prize: each repays its share and the rest stays in the books) or a lower
+ * burn. A partial payment from Finances moves money from the balance to the
+ * debt and closes nothing; "Pay it all" settles it the day the books allow.
+ */
+const gapWaysEn = (p: Record<string, string | number | undefined>): string =>
+  `What closes the gap is new money or a lower burn: a good bid for a player (${p.salePct}% of the fee repays the loan, the rest stays in the books), prize money (${p.garnishPct}% of each prize repays it), a lighter wage bill. A partial payment from Finances only moves money from the balance to the debt; "Pay it all" settles the loan the day the books can take it.`;
+
+/** rc.34 review: the projection the bank's deadline mails and notices quote ("on this pace"). */
+const onPaceEn = (p: Record<string, string | number | undefined>): string =>
+  Number(p.covered)
+    ? `On this pace (${p.net} a week) the books cover it on the day — the balance would be ${p.projected} on the deadline Monday. Keep it that way, or settle it now with "Pay it all" in Finances.`
+    : `On this pace (${p.net} a week) the books do not cover it: the balance would be ${p.projected} on the deadline Monday, ${p.gap} short of what the bank needs.`;
 
 /** rc.34: one money notice's text — a title, a lead sentence, label/value rows and an optional footnote. */
 export interface MoneyNoticeText {
@@ -95,6 +135,9 @@ const breachWhenEn = (p: Record<string, string | number>): string =>
 /** rc.33 (ECO-07): the rescue partner's last payday, as the rescue mail quotes it. */
 const partnerUntilEn = (p: Record<string, string | number>): string =>
   `the Monday of ${Number(p.partnerNextSeason) ? "next season's " : ""}week ${p.partnerUntilWeek}`;
+
+/** rc.34 review: a small count in words for the wizard's money line ("two", "three"; digits past five). */
+const countWordEn = (n: number): string => ["zero", "one", "two", "three", "four", "five"][n] ?? String(n);
 
 /** rc.33 (UX-07, ECO-08): "first", "second"… for the wizard's money line and the rescue mail (any count). */
 const ordinalEn = (n: number): string =>
@@ -203,6 +246,10 @@ export const CAREER_EN = {
     wageBill: "Wage bill",
     avgAge: "Avg age",
     avgOverall: "Avg OVR",
+    // rc.34 review: the start budget on the difficulty picked (Normal until the next step changes it),
+    // and how many weeks of this roster's wages it covers.
+    rosterBudget: (difficulty: string) => `Start budget · ${difficulty}`,
+    rosterRunway: (weeks: number) => `Covers about ${weeks} weeks of wages`,
     // Step 5 — difficulty + summary. rc.34 (front I, Miguel 31/10): rewritten
     // for a first-time player on a phone — a promise and three plain bullets.
     finalTitle: "Difficulty",
@@ -219,12 +266,20 @@ export const CAREER_EN = {
       even: "Fair matches.",
       harder: "Tougher rivals.",
     } as Record<"easier" | "even" | "harder", string>,
-    // The weeks the bank gives to repay its loan (difficulty.loanDeadlineWeeksFor).
-    presetMoney: (weeks: number) =>
-      `Out of money? The bank lends it — repay within ${weeks} ${weeks === 1 ? "week" : "weeks"} or the career ends.`,
+    // rc.34 review: the preset's whole money rule (economy.moneyRuleFor) — the emergency loans a
+    // career gets (null = no cap), the weeks to repay each, or no deadline (the loan never ends it).
+    presetMoney: (r: { loans: number | null; deadlineWeeks: number | null }): string => {
+      const head = r.loans === null ? "The bank lends it" : r.loans === 1 ? "One bank loan" : `Up to ${countWordEn(r.loans)} bank loans`;
+      if (r.deadlineWeeks === null) return `Out of money? ${head} — no deadline: prizes and sales repay ${r.loans === null || r.loans === 1 ? "it" : "them"}.`;
+      const repay = r.loans === null ? "repay" : r.loans === 1 ? "repay it" : "repay each";
+      return `Out of money? ${head} — ${repay} within ${r.deadlineWeeks} ${r.deadlineWeeks === 1 ? "week" : "weeks"} or the career ends.`;
+    },
+    // CAREER_LOAN.breachesToEnd 1: the first Monday below the floor ends the career — no loan.
     presetMoneyNoLoan: "Out of money? The career ends.",
-    presetHelpGuided: "Your staff run training and enter you into cups.",
-    presetHelpHandsOn: "You plan every week and pick every cup.",
+    // rc.34 review: the training delegation the preset starts on (difficulty.presetTrainingModeOf,
+    // CAREER_PLAN.modeByPreset) and whether cups are entered for you (the preset's prefs).
+    presetHelp: (mode: "coach" | "approve" | "manual", autoCups: boolean): string =>
+      `${{ coach: "Your coach runs training.", approve: "Your coach proposes training; you approve it.", manual: "You plan training." }[mode]} ${autoCups ? "Cups are entered for you." : "You pick every cup."}`,
     summaryTitle: "The paperwork",
     found: (org: string) => `Found ${org}`,
     founded: "EST. 2020",
@@ -424,7 +479,8 @@ export const CAREER_EN = {
     financePartnerWeeks: (n: number) => (n === 1 ? "1 more week" : `${n} more weeks`),
     financeDebt: "Debt",
     financeDebtNone: "None",
-    financeDebtBacker: (owed: string) => `Backer ${owed}`,
+    // rc.34 review: the emergency loan (rc.31–rc.33's "Backer" is gone from the product).
+    financeDebtBacker: (owed: string) => `Emergency loan ${owed}`,
     financeDebtBank: (owed: string, next: string) => `bank ${owed} · next ${next}`,
     financeProjection: "End of split",
     financeProjectionLine: (date: string, mondays: number, balance: string) =>
@@ -481,6 +537,8 @@ export const CAREER_EN = {
       loanDeadline: (p: Record<string, string | number>) =>
         Number(p.weeksLeft) === 1 ? `Emergency loan: due next Monday` : `Emergency loan: ${p.weeksLeft} weeks to the deadline`,
       loanCollected: () => `Emergency loan settled on its deadline`,
+      // rc.34 review: the projection stopped covering the debt inside the deadline's last weeks.
+      loanSlipped: () => `Emergency loan: no longer covered`,
       loanTakenOver: () => `The bank takes over the Backer's loan`,
       unlock: (p: Record<string, string | number>) => `New for the org: ${p.name}`,
       windowReport: (p: Record<string, string | number>) => `Window report: ${p.n} moves`,
@@ -545,13 +603,16 @@ export const CAREER_EN = {
       // rc.34 (Miguel, 31/10): the bank's emergency loan — why, how much, how it is repaid, by when,
       // the investor if it came with it, and what ends the career.
       emergencyLoan: (p: Record<string, string | number>) =>
-        `The books closed a Monday below the floor (${p.floor}), so the bank stepped in with an emergency loan of ${p.lent}: the balance is back at ${p.rescueTo}${Number(p.weeks) > 0 ? ` (about ${p.weeks} weeks of wages)` : ""}. You owe ${p.owed}, interest included. ${p.garnishPct}% of every prize and ${p.salePct}% of any sale repay it automatically; pay the rest from Finances whenever you like.${p.dlWeek !== undefined ? ` It is due on ${mondayWhenEn(p.dlWeek, p.dlAhead)}. ${deadlineRuleEn}` : ""}${positive(p.partnerWeekly) ? ` An investor, ${p.partnerName}, comes in with this first loan: ${p.partnerWeekly} a week from next Monday for ${p.partnerWeeks} weeks — the last payment on ${partnerUntilEn(p)}. It is income, never garnished.` : ""} ${Number(p.lock) ? "While it is owed, transfer fees, gear and new commitments that shorten the runway are on hold." : "Nothing is locked while you owe: signings, fees and gear stay open."} ${nextBreachEn(p)}`,
+        `The books closed a Monday below the floor (${p.floor}), so the bank stepped in with an emergency loan of ${p.lent}: the balance is back at ${p.rescueTo}${Number(p.weeks) > 0 ? ` (about ${p.weeks} weeks of wages)` : ""}. You owe ${p.owed}, interest included. ${p.garnishPct}% of every prize and ${p.salePct}% of any sale repay it automatically; pay the rest from Finances whenever you like.${p.dlWeek !== undefined ? ` It is due on ${mondayWhenEn(p.dlWeek, p.dlAhead)}. ${deadlineRuleEn}` : ""}${loansLeftEn(p) ? ` ${loansLeftEn(p)}` : ""}${positive(p.partnerWeekly) ? ` An investor, ${p.partnerName}, comes in with this first loan: ${p.partnerWeekly} a week from next Monday for ${p.partnerWeeks} weeks — the last payment on ${partnerUntilEn(p)}. It is income, never garnished.` : ""} ${Number(p.lock) ? "While it is owed, transfer fees, gear and new commitments that shorten the runway are on hold." : "Nothing is locked while you owe: signings, fees and gear stay open."} ${nextBreachEn(p)}`,
       emergencyTopUp: (p: Record<string, string | number>) =>
         `The books closed below the floor again, so the bank lent ${p.lent} more: the balance is back at ${p.rescueTo}, and you now owe ${p.owed} in all.${p.dlWeek !== undefined ? ` The deadline does not move: ${mondayWhenEn(p.dlWeek, p.dlAhead)}. ${deadlineRuleEn}` : ""} ${nextBreachEn(p)}`,
+      // rc.34 review: the books projected to the deadline (an older mail without the projection reads today's balance).
       loanDeadline: (p: Record<string, string | number>) =>
-        `${Number(p.weeksLeft) === 1 ? "One week" : `${p.weeksLeft} weeks`} to the emergency loan's deadline, ${mondayWhenEn(p.dlWeek, p.dlAhead)}. You owe ${p.owed}; the balance stands at ${p.balance}. ${Number(p.covered) ? "Today's balance would cover it — keep it there." : `Today's balance would not cover it. Pay it down from Finances, take a good bid for a player (${p.salePct}% of the fee repays the loan) or win prize money (${p.garnishPct}% of each prize does).`} ${deadlineRuleEn}`,
+        `${Number(p.weeksLeft) === 1 ? "One week" : `${p.weeksLeft} weeks`} to the emergency loan's deadline, ${mondayWhenEn(p.dlWeek, p.dlAhead)}. You owe ${p.owed}; the balance stands at ${p.balance}. ${p.projected === undefined ? (Number(p.covered) ? "Today's balance would cover it." : "Today's balance would not cover it.") : onPaceEn(p)}${Number(p.covered) ? "" : ` ${gapWaysEn(p)}`} ${deadlineRuleEn}`,
       loanCollected: (p: Record<string, string | number>) =>
-        `The emergency loan came due and the balance covered it: the bank took ${p.collected}, and the balance stands at ${p.balance}. The loan is closed — another breach of the floor would open a new one, with a new deadline.`,
+        `The emergency loan came due and the books could pay it: the bank took ${p.collected}, and the balance stands at ${p.balance}. The loan is closed. ${p.next === undefined ? "Another breach of the floor would open a new one, with a new deadline." : nextBreachEn(p)}`,
+      loanSlipped: (p: Record<string, string | number>) =>
+        `${Number(p.weeksLeft) === 1 ? "One week" : `${p.weeksLeft} weeks`} before the emergency loan is due, ${mondayWhenEn(p.dlWeek, p.dlAhead)}, the books stopped covering it: on this pace (${p.net} a week) the balance would be ${p.projected} on that Monday, ${p.gap} short of what the bank needs for the ${p.owed} owed. ${gapWaysEn(p)} ${deadlineRuleEn}`,
       loanTakenOver: (p: Record<string, string | number>) =>
         `The Emergency Backer is gone: the bank now holds what you owed it, ${p.owed}, as an emergency loan.${p.dlWeek !== undefined ? ` It is due on ${mondayWhenEn(p.dlWeek, p.dlAhead)} — ${p.dlWeeks} weeks from now. ${deadlineRuleEn}` : ""} ${p.garnishPct}% of every prize and ${p.salePct}% of any sale still repay it automatically, and Finances takes any payment. ${Number(p.lock) ? "" : "Nothing is locked while you owe any more: signings, fees and gear are open. "}${nextBreachEn(p)}`,
       unlock: (p: Record<string, string | number>) =>
@@ -560,8 +621,9 @@ export const CAREER_EN = {
         `The window is shut — ${p.n} moves across all regions. Headline fees: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. The full wire is on the HQ.`,
       unavailable: (p: Record<string, string | number>) =>
         `${p.player} can't play ${p.event} — the sub takes his seat with his chemistry.`,
-      debtCleared: () =>
-        `The emergency loan is repaid in full, and its deadline is lifted — the org owns its future again. The bank's door stays open.`,
+      // rc.34 review: with what the next breach does (the career's last loan repaid: the end) — an older mail reads as sent.
+      debtCleared: (p: Record<string, string | number> = {}) =>
+        `The emergency loan is repaid in full, and its deadline is lifted — the org owns its future again. ${p.next === undefined ? "The bank's door stays open." : nextBreachEn(p)}`,
       retiredToCoach: (p: Record<string, string | number>) =>
         `${p.player} played his final season and steps away from competition — straight into coaching. He is in the coach pool now and can turn up on the coach shortlist.`,
       retiredLeaves: (p: Record<string, string | number>) =>
@@ -1297,14 +1359,19 @@ export const CAREER_EN = {
       `The line moves with the wage bill: the floor is ${floorWeeks} weeks of wages below zero; the emergency loan tops the balance up to ${rescueWeeks} weeks above.`,
     // rc.34: the whole rule on this difficulty — the term, the investor, the top-ups, the deadline,
     // and CAREER_LOAN.breachesToEnd if it ends careers outright (null = it does not).
-    loanRule: (p: { term: number | null; partnerPct: number; partnerWeeks: number; maxTopUps: number | null; endAt: number | null }) => {
+    loanRule: (p: { term: number | null; partnerPct: number; partnerWeeks: number; maxTopUps: number | null; endAt: number | null; maxLoans?: number | null }) => {
       if (p.endAt !== null && p.endAt <= 1) return "On this difficulty the first breach of the floor ends the career.";
       const partner = p.partnerPct > 0 ? ` (the first time, an investor adds ${p.partnerPct}% of the wage bill${partnerRunEn(p.partnerWeeks)})` : "";
       const term = p.term !== null ? ` Repay it within ${p.term} weeks: prizes and sales repay part of it automatically, Finances the rest.` : "";
       const topUps = `Below the floor again while it is owed, the bank adds to it${p.maxTopUps !== null ? ` (up to ${p.maxTopUps} times)` : ""} — the deadline stays.`;
-      const end = p.term !== null ? ` On the deadline the bank takes what is owed if the balance covers it; if not, the career ends.` : "";
+      const end = p.term !== null ? ` On the deadline the bank takes what is owed as long as the books stay at or above the floor after it; if not, the career ends.` : "";
       const count = p.endAt !== null ? ` The ${ordinalEn(p.endAt)} breach ends the career.` : "";
-      return `A breach opens the bank's emergency loan${partner}.${term} ${topUps}${end}${count}`;
+      // rc.34 review: the career-wide cap on new loans (CAREER_LOAN.emergency.maxLoans).
+      const loans =
+        p.maxLoans !== undefined && p.maxLoans !== null
+          ? ` The bank opens ${p.maxLoans === 1 ? "one emergency loan" : `${p.maxLoans} emergency loans`} at most in a career: a breach after the last one is repaid ends it.`
+          : "";
+      return `A breach opens the bank's emergency loan${partner}.${term} ${topUps}${end}${loans}${count}`;
     },
     // History count (rc.33's rule ended careers at a breach count; `end` null = no count does).
     breachCount: (n: number, end: number | null) =>
@@ -1320,8 +1387,9 @@ export const CAREER_EN = {
     loanDeadline: (date: string, weeks: number) =>
       weeks <= 0 ? `Due this Monday (${date})` : weeks === 1 ? `Due next Monday, ${date}` : `Due ${date} — ${weeks} weeks left`,
     loanDeadlineRule: deadlineRuleEn,
+    // rc.34 review: the books projected to the deadline Monday (the weekly burn counted), the bank's own test.
     loanCovered: (covered: boolean): string =>
-      covered ? "Today's balance covers it." : "Today's balance does not cover it yet.",
+      covered ? "On this pace the books cover it on the day." : "On this pace the books will not cover it on the day.",
     loanLent: (s: string) => `Lent in all: ${s}`,
     loanTopUps: (n: number, max: number | null) =>
       max === null ? `Top-ups so far: ${n}` : n >= max ? `Top-ups: ${n} of ${max} — the next breach ends the career` : `Top-ups: ${n} of ${max}`,
@@ -1416,9 +1484,9 @@ export const CAREER_EN = {
     hire: "Hire",
     refusal: {
       locked: "Locked: reputation, or the ladder's previous rung first.",
-      funds: "Not enough money above the Backer's floor.",
-      loanActive: "Not while the Backer's loan is open.",
-      loanRunway: "Not while the Backer is owed: it would shorten the runway.",
+      funds: "Not enough money above the floor.",
+      loanActive: "Not while the emergency loan is open.",
+      loanRunway: "Not while the emergency loan is owed: it would shorten the runway.",
       used: "Already used this split.",
       maxed: "The ladder is complete.",
       blocked: "The career has ended.",
@@ -2086,7 +2154,8 @@ export const CAREER_EN = {
           `${p.partnerName} comes in with this first loan: ${p.partnerWeekly} a week for ${p.partnerWeeks} weeks (${p.partnerPct}% of the wage bill) — income, never garnished.`,
         ],
         ["Below the floor again", nextBreachEn(p)],
-        p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If the balance cannot cover it, the career ends.`],
+        loansLeftEn(p) !== "" && ["After this loan", loansLeftEn(p)],
+        p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
       ),
       foot: Number(p.lock)
         ? "While it is owed: no transfer fees, no gear, nothing that shortens the runway."
@@ -2099,29 +2168,44 @@ export const CAREER_EN = {
         ["Owed", `${p.owed} in all`],
         p.dlDate !== undefined && ["Repay by", `${p.dlDate} — the deadline does not move`],
         ["Below the floor again", nextBreachEn(p)],
-        p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If the balance cannot cover it, the career ends.`],
+        p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
       ),
     }),
     deadlineWarning: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: Number(p.weeksLeft) === 1 ? "One week to repay the bank" : `${p.weeksLeft} weeks to repay the bank`,
       lead: `The emergency loan is due on ${p.dlDate}. You owe ${p.owed}; the balance is ${p.balance}.`,
       rows: noticeRows(
-        ["Today", Number(p.covered) ? "The balance would cover it — keep it there and the career goes on." : "The balance would not cover it yet."],
-        ["Ways to close the gap", `Pay it down from Finances, take a good bid for a player (${p.salePct}% of the fee repays the loan), win prize money (${p.garnishPct}% of each prize does).`],
-        ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If the balance cannot cover it, the career ends.`],
+        // rc.34 review: the books projected to the deadline (the weekly burn counted), not today's balance.
+        ["On this pace", onPaceEn(p)],
+        !Number(p.covered) && ["Ways to close the gap", gapWaysEn(p)],
+        ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
+      ),
+    }),
+    // rc.34 review: inside the last weeks the projection stopped covering the debt (a fee, a purchase, a lost prize).
+    deadlineSlipped: (p: Record<string, string | number>): MoneyNoticeText => ({
+      title: "The loan is no longer covered",
+      lead: `${Number(p.weeksLeft) === 1 ? "One week" : `${p.weeksLeft} weeks`} before the emergency loan is due (${p.dlDate}), the books stopped covering it: on this pace the balance would be ${p.projected} on that Monday, ${p.gap} short of what the bank needs for the ${p.owed} owed.`,
+      rows: noticeRows(
+        ["Ways to close the gap", gapWaysEn(p)],
+        ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
       ),
     }),
     deadlineCollected: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "Loan settled",
-      lead: `The deadline arrived and the balance covered the debt: the bank took ${p.collected}. The balance is now ${p.balance}.`,
-      rows: noticeRows(["What comes next", "The emergency loan is closed. Another breach of the floor would open a new one, with a new deadline."]),
+      lead: `The deadline arrived and the books could pay it: the bank took ${p.collected}. The balance is now ${p.balance}.`,
+      rows: noticeRows([
+        "What comes next",
+        `The emergency loan is closed. ${p.next === undefined ? "Another breach of the floor would open a new one, with a new deadline." : nextBreachEn(p)}`,
+      ]),
     }),
     careerEnded: (p: Record<string, string | number>): MoneyNoticeText => ({
       title: "The career ends here",
       lead:
         p.cause === "deadline"
-          ? `The emergency loan came due with ${p.owed} owed and ${p.balance} in the bank. The balance could not cover it, so the bank called the loan in and the org closed.`
-          : `The books closed below the floor again and the bank would not lend any more${Number(p.topUps) > 0 ? ` after ${p.topUps} top-ups` : ""}. The org closed.`,
+          ? `The emergency loan came due with ${p.owed} owed and ${p.balance} in the bank. Paying it would have closed the books below the floor, so the bank called the loan in and the org closed.`
+          : !positive(p.owed) && Number(p.maxLoans) >= 0 && Number(p.loans) >= Number(p.maxLoans)
+            ? `The books closed below the floor again and the bank would not open another emergency loan after ${Number(p.loans) === 1 ? "the one it lent" : `the ${p.loans} it lent`}. The org closed.`
+            : `The books closed below the floor again and the bank would not lend any more${Number(p.topUps) > 0 ? ` after ${p.topUps} top-ups` : ""}. The org closed.`,
       rows: noticeRows(["What stays", "The season review, the archive and the trophies stay open."]),
     }),
     loanTakenOver: (p: Record<string, string | number>): MoneyNoticeText => ({
@@ -2131,7 +2215,7 @@ export const CAREER_EN = {
         p.dlDate !== undefined && ["Repay by", `${p.dlDate} — ${p.dlWeeks} weeks from now`],
         ["How it is repaid", `${p.garnishPct}% of every prize and ${p.salePct}% of every sale go to it automatically; pay the rest from Finances whenever you like.`],
         ["Below the floor again", nextBreachEn(p)],
-        p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If the balance cannot cover it, the career ends.`],
+        p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
       ),
       foot: Number(p.lock) ? undefined : "Nothing is locked while you owe any more: signings, fees and gear are open.",
     }),

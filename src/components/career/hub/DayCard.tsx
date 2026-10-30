@@ -145,8 +145,12 @@ export function DayCard({
 }: {
   save: CareerSave;
   C: CareerCopy;
-  /** rc.34 (UX-01a): the decision the block shows instead of the clock, with its "1 of N". */
-  decision?: { body: React.ReactNode; count?: string } | null;
+  /**
+   * rc.34 (UX-01a): the decision the block shows instead of the clock, with its "1 of N".
+   * rc.34 review (Gate 3b): `inline` — one that does not hold the clock (a fresh
+   * invite) shows above the clock's controls instead of replacing them.
+   */
+  decision?: { body: React.ReactNode; count?: string; inline?: boolean } | null;
   /** rc.34: the line under the block — the other decisions, with their deadlines. */
   footer?: React.ReactNode;
 }) {
@@ -205,7 +209,8 @@ export function DayCard({
             ? { label: C.ceremonies.legacyTitle, go: () => router.push("/career/season") }
             : null;
 
-  const inserting = Boolean(decision);
+  // An inline decision (a fresh invite) is not required: the clock's own card keeps its look.
+  const inserting = Boolean(decision) && !decision?.inline;
 
   return (
     <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-hidden p-4 sm:p-5", inserting && "!border-cyan/40")}>
@@ -236,9 +241,8 @@ export function DayCard({
         />
       </div>
 
-      {decision ? (
-        <div className="mt-4">{decision.body}</div>
-      ) : (
+      {decision ? <div className="mt-4">{decision.body}</div> : null}
+      {decision && !decision.inline ? null : (
         <>
           {/* the week strip — remounts (and slides in) when the week turns */}
           <div key={monday} className="week-slide relative mt-4">

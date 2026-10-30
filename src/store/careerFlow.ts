@@ -110,7 +110,6 @@ import {
   signsForFinalSeason,
   squadPotentialBand,
   squadRollover,
-  trainDay,
   trainWeek,
   trainingProjection,
   type DrillEffect,
@@ -136,13 +135,16 @@ import {
   applyPrize,
   applyTransferIncome,
   backerLineFor,
+  balanceAfterMondays,
   bankLoanRefusal,
   bootcampCostFor,
   bootcampTierFor,
   breachOutcomeOf,
+  canSettleLoan,
   computeSalaryAsk,
   deadlineWeeksFor,
   debtPaymentFor,
+  emergencyLoansLeftOf,
   emergencyLoansOf,
   eventRepKindFor,
   foundingPartnerBaseFor,
@@ -155,6 +157,7 @@ import {
   investorShareFor,
   loanBreachesOf,
   marketValueFor,
+  maxLoansFor,
   mondayAfter,
   mondayBalancesFromLedger,
   mondaysToBreach,
@@ -641,7 +644,11 @@ export function nextBreachOutcomeOf(save: CareerSave): BreachOutcome {
  * rc.34: the emergency loan as every screen shows it (null = nothing owed) —
  * what is owed and was lent, the deadline Monday (as a day on the calendar)
  * and the Mondays left to it, the top-ups against the cap, and whether the
- * balance covers the debt today (what the bank checks on the deadline).
+ * books cover the debt on the deadline Monday. rc.34 review: "covered" is
+ * the bank's own test (`canSettleLoan`, the overdraft counting) on the
+ * books PROJECTED to that Monday — today's balance plus the weekly net of
+ * every Monday left (`balanceAfterMondays`, the runway's projection) — not
+ * today's balance (a known −$3,060 a week ended a career "covered" $12k short).
  */
 export interface EmergencyLoanView {
   remaining: number;
@@ -652,6 +659,10 @@ export interface EmergencyLoanView {
   weeksLeft: number | null;
   topUps: number;
   maxTopUps: number | null;
+  /** The balance projected to the deadline Monday, its payroll booked (today's balance without a deadline). */
+  projected: number;
+  /** What the projection misses by (0 = covered): the debt less what the books can pay down to the floor. */
+  gap: number;
   covered: boolean;
 }
 
@@ -659,14 +670,32 @@ export function emergencyLoanViewOf(save: CareerSave): EmergencyLoanView | null 
   const loan = save.finances.loan;
   if (!loan) return null;
   const now = { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) };
+  const weeksLeft = weeksToDeadline(loan, now);
+  const cover = loanCoverOf(save, weeksLeft);
   return {
     remaining: loan.remaining,
     lent: loan.lent ?? null,
     deadline: loan.deadline ? { ...loan.deadline, day: firstDayOfWeek(loan.deadline.week) } : null,
-    weeksLeft: weeksToDeadline(loan, now),
+    weeksLeft,
     topUps: loan.topUps ?? 0,
     maxTopUps: CAREER_LOAN.emergency.maxTopUps,
-    covered: save.finances.balance >= loan.remaining,
+    ...cover,
+  };
+}
+
+/**
+ * rc.34 review: the books on the deadline Monday at this pace and the bank's
+ * test on them — every remaining Monday's net (the investor only for its
+ * run), the floor on today's wage bill (`canSettleLoan`).
+ */
+function loanCoverOf(save: CareerSave, weeksLeft: number | null): { projected: number; gap: number; covered: boolean } {
+  const owed = save.finances.loan?.remaining ?? 0;
+  const projected = balanceAfterMondays(save.finances.balance, weeklyStatementOf(save).net, Math.max(0, weeksLeft ?? 0), partnerRunOf(save));
+  const floor = backerLineOf(save).floor;
+  return {
+    projected,
+    gap: Math.max(0, owed + floor - projected),
+    covered: canSettleLoan(projected, owed, floor),
   };
 }
 
@@ -845,6 +874,17 @@ export function processDayArrival(input: CareerSave): CareerSave {
     save.finances.bootcampUntil = null;
   }
 
+  // rc.34 review (Gate 3b): a fresh invite never holds the clock — not
+  // accepted by its matchday, it is passed (gone the day after).
+  const invite = save.unofficialOffer;
+  if (
+    invite &&
+    save.pendingEventDef?.id !== invite.id &&
+    (invite.seasonIndex < seasonIndex || (invite.seasonIndex === seasonIndex && invite.day < day))
+  ) {
+    save.unofficialOffer = null;
+  }
+
   // =========================== MONDAY =====================================
   if (dow === 1) {
     save.scrimsThisWeek = 0;
@@ -870,6 +910,19 @@ export function processDayArrival(input: CareerSave): CareerSave {
     if (seasonIndex === 0 && day === 1 && save.foundingPartner === undefined) {
       if (CAREER_SPONSOR.founding.enabled) openFoundingPartner(save);
       else save.foundingPartner = null;
+    }
+
+    // --- 0a2. rc.34 review: a split boundary (weeks 11 / 21 / 31) settles
+    //     BEFORE the payroll — its sponsor objective bonus is that Monday's
+    //     income, so the emergency loan's deadline and the floor check (0b)
+    //     see it (they ran first, and ended careers the bonus would have
+    //     covered). The turnover and the next sponsor offers ride along: no
+    //     step between here and the old step 5 reads the turnover; the offers
+    //     read the reputation before W31's Worlds-field gain (a career that
+    //     crosses the first-offer gate on that very gain hears a split later).
+    if (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek) {
+      runSplitBoundary(save);
+      if (save.phase === "ended") return capNews(save);
     }
 
     // --- 0b. v2.0 WEEKLY PAYROLL (R20) — every Monday but the founding day --
@@ -1121,11 +1174,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
       }
     }
 
-    // --- 5. split boundary: sponsor objective + turnover (weeks 11/21/31) --
-    if (week === 11 || week === 21 || week === CAREER_CALENDAR.worldsWindowWeek) {
-      runSplitBoundary(save);
-      if (save.phase === "ended") return capNews(save);
-    }
+    // --- 5. split boundary: moved to 0a2 (rc.34 review — before the payroll) --
 
     // --- 6. contract-expiry telegraph (final contract season, week 23) -----
     if (week === 23) {
@@ -1168,6 +1217,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
       }
     }
   }
+
+  // ============ EVERY DAY: the emergency loan's projection (rc.34 review) ===
+  // Inside the last weeks before its deadline the bank re-reads "covered" (a
+  // Monday's payroll and warnings already booked above).
+  watchLoanCover(save);
 
   // ============ WINDOW DAYS: incoming-bid roll (v0.3, any day) =============
   const dayWindowIdx = windowIndexOf(week);
@@ -1576,7 +1630,8 @@ function runWeeklyPayroll(save: CareerSave): void {
   }
   // rc.34 (Miguel, 31/10): the deadline Monday — the balance covered the debt, the bank took it.
   if (payroll.collected > 0) {
-    const params = { collected: payroll.collected, balance: save.finances.balance };
+    // rc.34 review: with what the next breach does — a new loan, or the end once the career had its last.
+    const params = { collected: payroll.collected, balance: save.finances.balance, ...nextBreachParamsOf(save) };
     pushNews(save, { type: "org", priority: 2, titleKey: "loanCollected" });
     pushMail(save, {
       kind: "finance",
@@ -1608,6 +1663,9 @@ function runWeeklyPayroll(save: CareerSave): void {
       balance: save.finances.balance,
       topUps: loan?.topUps ?? 0,
       maxTopUps: CAREER_LOAN.emergency.maxTopUps ?? -1,
+      // rc.34 review: the loans the career had against the cap (a breach past the last one).
+      loans: emergencyLoansOf(save.finances),
+      maxLoans: maxLoansFor(save.difficulty) ?? -1,
       ...deadlineParamsOf(save, loan?.deadline ?? null),
     };
     endCareer(save, "insolvency");
@@ -1668,6 +1726,8 @@ function deadlineParamsOf(
  * (a rescue then tops it up, the deadline unchanged), whether the investor
  * would join (the career's first loan) and for how long, the loan's term
  * on this difficulty and the top-ups the bank still grants (-1 = no cap).
+ * rc.34 review: the NEW loans the bank still opens in this career
+ * (`loansLeft`, -1 = no cap) out of `maxLoans` (CAREER_LOAN.emergency.maxLoans).
  */
 export function nextBreachParamsOf(save: CareerSave): Record<string, string | number> {
   const fin = save.finances;
@@ -1680,6 +1740,8 @@ export function nextBreachParamsOf(save: CareerSave): Record<string, string | nu
     partnerRun: CAREER_LOAN.investor.weeks,
     term: term ?? 0,
     topUpsLeft: fin.loan && cap !== null ? Math.max(0, cap - (fin.loan.topUps ?? 0)) : -1,
+    loansLeft: emergencyLoansLeftOf(fin, save.difficulty) ?? -1,
+    maxLoans: maxLoansFor(save.difficulty) ?? -1,
   };
 }
 
@@ -1737,16 +1799,10 @@ function warnDeadline(save: CareerSave): void {
   const sent = loan.warned ?? [];
   const due = CAREER_LOAN.emergency.warnWeeks.filter((w) => left <= w && !sent.includes(w));
   if (due.length === 0) return;
-  save.finances = { ...save.finances, loan: { ...loan, warned: [...sent, ...due] } };
-  const params: Record<string, string | number> = {
-    weeksLeft: left,
-    owed: loan.remaining,
-    balance: save.finances.balance,
-    covered: save.finances.balance >= loan.remaining ? 1 : 0,
-    garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
-    salePct: Math.round(CAREER_LOAN.saleGarnishRate * 100),
-    ...deadlineParamsOf(save, loan.deadline),
-  };
+  // rc.34 review: "covered" on the books projected to the deadline (the weekly burn counted),
+  // and recorded — the daily watch (watchLoanCover) speaks only when it flips after this.
+  const params = deadlineCoverParamsOf(save, left);
+  save.finances = { ...save.finances, loan: { ...loan, warned: [...sent, ...due], covered: Number(params.covered) === 1 } };
   pushMail(save, {
     kind: "finance",
     titleKey: "loanDeadline",
@@ -1756,6 +1812,61 @@ function warnDeadline(save: CareerSave): void {
     linkTo: "/career/finances",
   });
   pushMoneyNotice(save, "deadlineWarning", params);
+}
+
+/**
+ * rc.34 review: what the bank's deadline mails and notices quote — the debt,
+ * today's balance, the books projected to the deadline Monday (`projected`,
+ * the weekly net of every Monday left), whether that covers the debt
+ * (`covered`, the bank's own test) and by how much it misses (`gap`), the
+ * weekly net, the repayment shares and the deadline.
+ */
+function deadlineCoverParamsOf(save: CareerSave, weeksLeft: number): Record<string, string | number> {
+  const loan = save.finances.loan!;
+  const cover = loanCoverOf(save, weeksLeft);
+  return {
+    weeksLeft,
+    owed: loan.remaining,
+    balance: save.finances.balance,
+    projected: cover.projected,
+    covered: cover.covered ? 1 : 0,
+    gap: cover.gap,
+    net: weeklyStatementOf(save).net,
+    garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
+    salePct: Math.round(CAREER_LOAN.saleGarnishRate * 100),
+    ...deadlineParamsOf(save, loan.deadline ?? null),
+  };
+}
+
+/**
+ * rc.34 review: inside CAREER_LOAN.emergency.slipWatchWeeks of the deadline
+ * the bank re-reads the projection every day (processDayArrival, after the
+ * Monday's warnings): the day "covered" flips to not covered — a late fee, a
+ * purchase, a lost prize; nothing is locked while owing — it sends a mail
+ * and the money notice (the batched Advance and the autoplay stop on it).
+ * The state it compares with is the loan's `covered`, recorded by the last
+ * warning or watch; a flip back to covered is recorded silently.
+ */
+function watchLoanCover(save: CareerSave): void {
+  const loan = save.finances.loan;
+  const window = CAREER_LOAN.emergency.slipWatchWeeks;
+  if (save.phase !== "running" || !loan?.deadline || window <= 0) return;
+  const left = weeksToDeadline(loan, { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) });
+  if (left === null || left <= 0 || left > window) return;
+  const params = deadlineCoverParamsOf(save, left);
+  const covered = Number(params.covered) === 1;
+  if (loan.covered === covered) return;
+  save.finances = { ...save.finances, loan: { ...loan, covered } };
+  if (covered || loan.covered === undefined) return;
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "loanSlipped",
+    bodyKey: "loanSlipped",
+    params,
+    fromKey: "bank",
+    linkTo: "/career/finances",
+  });
+  pushMoneyNotice(save, "deadlineSlipped", params);
 }
 
 /** Save flags of the M4 warnings: the 8-week notice sent, the 4-week news line sent (this squeeze). */
@@ -2045,7 +2156,8 @@ function announceDebtCleared(save: CareerSave): void {
     kind: "finance",
     titleKey: "debtCleared",
     bodyKey: "debtCleared",
-    params: {},
+    // rc.34 review: what the next breach does now — a new loan, or the end after the career's last.
+    params: nextBreachParamsOf(save),
     fromKey: "bank",
     linkTo: "/career/finances",
   });
@@ -2063,7 +2175,8 @@ export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
   // ECO-02 (R46): settle the exact remainder when the request covers it.
   const pay = debtPaymentFor(save.finances.loan.remaining, amount);
   if (pay <= 0) return { save: input, error: "invalid" };
-  if (save.finances.balance - pay < backerLineOf(save).floor) return { save: input, error: "funds" };
+  // rc.34 review: the deadline's own rule (economy.canSettleLoan) — down to the floor, never past it.
+  if (!canSettleLoan(save.finances.balance, pay, backerLineOf(save).floor)) return { save: input, error: "funds" };
   save.finances = payLoanDown(save.finances, pay, {
     seasonIndex: save.clock.seasonIndex,
     week: weekOfDay(save.clock.day),
@@ -2270,7 +2383,8 @@ export function canSkipShortSquadEvent(save: CareerSave): boolean {
 /**
  * The skip: the team does not enter — the week's commit is dropped, so the
  * event resolves on its own day without the user (fieldForEvent seats the
- * next team: no points, no prize, nothing played) — and the clock moves on;
+ * next team: no points, no prize, nothing played; skipped on that day
+ * itself, it resolves at once — rc.34 review) — and the clock moves on;
  * training continues and the next regional asks again. A free agent can
  * still take the empty seat any day (R67).
  */
@@ -2287,6 +2401,10 @@ export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
     titleKey: "regionalSkipped",
     params: { org: save.identity.orgName, event: regional?.name ?? def.name, n: save.squad.length },
   });
+  // rc.34 review: skipped ON its day, the event was already passed over by this
+  // day's arrival as the user's own — it resolves for the AI now (its result,
+  // champion and the region's points), as the arrival does on the eve's path.
+  if (save.clock.day >= def.day) resolveAiEvent(save, def);
   return { save: capNews(save) };
 }
 
@@ -2348,20 +2466,9 @@ export function declineUnofficial(input: CareerSave): CareerSave {
     save.pendingEventDef = null;
   }
   save.unofficialOffer = null;
-  // The freed matchday becomes a Training Week boost (one bonus week).
-  const gearBonus = gearTrainingBonus(save.finances.gear);
-  for (const p of save.squad) {
-    const res = trainDay(p, {
-      seasonIndex: save.clock.seasonIndex,
-      coachOverall: save.coach?.overall ?? null,
-      gearBonus,
-      trainingWeekBonus: true,
-      splitGained: p.gainedThisSplit,
-      seasonGained: p.gainedThisSeason,
-      ...growthCtxOf(save),
-    });
-    Object.assign(p, res.player);
-  }
+  // rc.34 review: no hidden "Training Week" day for the whole squad any more —
+  // it ran outside the period plan (the summary showed gain it could not
+  // explain); DEV-03's package already trains the freed days.
   return save;
 }
 
@@ -3038,6 +3145,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   save.clock = { seasonIndex: nextSeason, day: 1 };
   save.phase = "running";
   save.finances.freeBootcampsUsedThisSeason = 0;
+  // rc.34 review: a camp bought in W31–32 is last season's — the new season's first split may run one.
+  save.finances.bootcampUsedThisSplit = false;
   save.world = computeStars(save.world, {
     seasonIndex: nextSeason,
     careerSeed: save.careerSeed,
@@ -3111,6 +3220,9 @@ function stylePrefsFor(style: ManagementStyle): CareerPrefs {
 /** The scouting report level a founder joins with (squadFromOffer; the wizard's band reads it too). */
 const FOUNDER_SCOUT_LEVEL = 1 as const;
 
+/** The last season a founding deal covers (squadFromOffer; the founders' share repair reads it). */
+const FOUNDING_DEAL_END_SEASON = 1;
+
 function squadFromOffer(
   offer: StarterOffer,
   input: CreateCareerInput,
@@ -3147,7 +3259,7 @@ function squadFromOffer(
     // reads the pre-rc.33 team share. A founder who grows past
     // CAREER_PRIZE_SHARE.shareThresholdOverall asks one at his renewal.
     prizeSharePct: 0,
-    contractEndSeason: 1,
+    contractEndSeason: FOUNDING_DEAL_END_SEASON,
     trainingFocus: "auto" as const,
     trainingIntensity: "normal" as const,
     scoutLevel: FOUNDER_SCOUT_LEVEL,
@@ -3297,11 +3409,12 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   if (input.clock.day >= DAYS_PER_SEASON) return input;
   // rc.34 (UX-01a, HQ decision 1-B): the clock never passes a needed decision,
   // whatever moves it — ONE list (careerDecisions.pendingDecisionsOf): a user
-  // matchday (a Community Cup's too: played, or passed explicitly — walking
-  // past no longer declines it), a short squad on the eve (R67), the weekly
-  // insert (R36), a fresh invite, an incoming bid or the sponsor offers (until
-  // parked with "Later", and again on their deadline day), the training
-  // proposal. The paused Saturday does not hold: moving to Sunday is its answer.
+  // matchday (an accepted Community Cup's too: played, or passed explicitly —
+  // walking past no longer declines it), a short squad on the eve (R67), the
+  // weekly insert (R36), an incoming bid or the sponsor offers (until parked
+  // with "Later", and again on their deadline day), the training proposal.
+  // The paused Saturday does not hold: moving to Sunday is its answer; nor
+  // does a fresh invite (rc.34 review, Gate 3b: walked past, it is passed).
   if (clockHoldOf(input)) return input;
   const save = clone(input);
   save.clock.day += 1;
@@ -3318,6 +3431,18 @@ export function continueEventToNextDayFlow(input: CareerSave): CareerSave {
   return isEventPaused(input) ? advanceDayFlow(input) : input;
 }
 
+/**
+ * rc.34 review (Gate 3b, "no repetitive weekly chore"): a fresh invite
+ * surfaced today — the Monday of its week, not entered. It holds nothing
+ * (careerDecisions: its default is "not entered"); the batched Advance and
+ * the autoplay stop on it once, that Monday.
+ */
+export function inviteSurfacedToday(save: CareerSave): boolean {
+  const offer = save.unofficialOffer;
+  if (save.phase !== "running" || !offer || save.pendingEventDef || save.activeEvent) return false;
+  return dayOfWeekOf(save.clock.day) === 1 && offer.seasonIndex === save.clock.seasonIndex && offer.week === weekOfDay(save.clock.day);
+}
+
 /** True when the save is at a state the batched Advance must stop at. */
 function isStopState(save: CareerSave, startedAtDay: number): boolean {
   if (save.phase !== "running") return true;
@@ -3325,9 +3450,13 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   // R40: an event in progress — Championship Sunday after the Saturday pause.
   if (save.activeEvent) return true;
   // rc.34 (UX-01a): any needed decision (careerDecisions — a matchday, the
-  // insert, a fresh invite, a bid or offers not parked, a parked one on its
-  // deadline day, a short squad's eve, the training proposal).
+  // insert, a bid or offers not parked, a parked one on its deadline day, a
+  // short squad's eve, the training proposal).
   if (clockHoldOf(save)) return true;
+  // rc.34 review (Gate 3b): a fresh invite holds nothing, but the batched
+  // Advance stops ONCE, on the Monday it surfaces (rc.33's behaviour); a
+  // second press goes on past it.
+  if (day !== startedAtDay && inviteSurfacedToday(save)) return true;
   // A transfer window just opened (its first Monday).
   if (
     day !== startedAtDay &&
@@ -4525,6 +4654,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairHqOnLoad(save); // rc.34: every load, idempotent, no version bump
   repairTrainingOnLoad(save); // rc.34 (DEV-03 T8): every load, idempotent, no version bump
   repairLoanOnLoad(save); // rc.34: every load, idempotent, no version bump
+  repairFoundingShareOnLoad(save); // rc.34 review: every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {
@@ -4674,6 +4804,27 @@ export function repairLoanOnLoad(save: CareerSave): void {
     linkTo: "/career/finances",
   });
   pushMoneyNotice(save, "loanTakenOver", params);
+}
+
+/**
+ * rc.34 review (Miguel, 31/10: "starting players get no percentage"): the
+ * founders' prize share, a one-line load repair run by migrateSaveToV5 on
+ * every load (idempotent; persist version 3 and saveVersion 5 unchanged).
+ * rc.34 writes a founding deal with no share (squadFromOffer); an rc.33 save
+ * kept the share each founder asked (2–6 %) and an older one none at all
+ * (the pre-rc.33 team share), until his renewal. While a founder's FOUNDING
+ * deal still runs — on the founding squad, joined in season 0, the founding
+ * deal's end season — its share is 0. A renewed deal ends later and keeps
+ * what it signed; anyone else is untouched.
+ */
+export function repairFoundingShareOnLoad(save: CareerSave): void {
+  if (!Array.isArray(save.squad) || !save.clock) return;
+  const founders = save.foundingSquadIds ?? [];
+  if (save.clock.seasonIndex > FOUNDING_DEAL_END_SEASON) return;
+  for (const p of save.squad) {
+    if (!founders.includes(p.id) || p.joinedSeason !== 0 || p.contractEndSeason !== FOUNDING_DEAL_END_SEASON) continue;
+    if (p.prizeSharePct !== 0) p.prizeSharePct = 0;
+  }
 }
 
 /** rc.30 (direct-8): the in-flight regional week's seeding, rebuilt from its commit (migrateSaveToV5). */
