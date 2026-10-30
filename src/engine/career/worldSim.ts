@@ -351,7 +351,7 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     }
   }
 
-  return {
+  const world: WorldState = {
     orgs,
     overallDelta: {},
     freeAgentIds: [...realFAs.map((r) => r.id), ...fillerFAIds],
@@ -362,6 +362,38 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     // rc.32 (DEV-01, R55): a new career runs CAREER_DEV.growthModel for life.
     ...(isGrowthContract(CAREER_DEV.growthModel) ? { growthModel: CAREER_DEV.growthModel } : {}),
   };
+  addCreationFaProspects(world, careerSeed, ficNext);
+  return world;
+}
+
+/**
+ * rc.35 (front C, Miguel on rc.34: "no free agent above 80 potential in my
+ * career"): every region's creation pool holds at least
+ * CAREER_WORLD.creationFaProspects.perRegion free agents whose potential is
+ * at least `minPotential`. The missing ones are the next filler ids whose
+ * derived potential qualifies (a bounded scan; the skipped ids are never
+ * used, `nextFillerId` reads the highest). Before the rookies' first intake
+ * the pool had none in about a third of the regions. Mutates `world`.
+ */
+function addCreationFaProspects(world: WorldState, careerSeed: number, ficNext: Record<Region, number>): void {
+  const { perRegion, minPotential, scanLimit } = CAREER_WORLD.creationFaProspects;
+  const ctx = { careerSeed, seasonIndex: 0, world };
+  const count = new Map<Region, number>();
+  for (const id of world.freeAgentIds) {
+    const v = playerViewById(id, ctx);
+    if (v && v.potential >= minPotential) count.set(v.region, (count.get(v.region) ?? 0) + 1);
+  }
+  for (const region of REGIONS) {
+    let have = count.get(region) ?? 0;
+    for (let tries = 0; have < perRegion && tries < scanLimit; tries++) {
+      const id = `fic:${region}:${ficNext[region]++}`;
+      const v = playerViewById(id, ctx);
+      if (v && v.potential >= minPotential) {
+        world.freeAgentIds.push(id);
+        have += 1;
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -383,6 +415,12 @@ export interface StarterOffer {
  * filler / rookie bank — in MENA, APAC and SSA every PLAYER_NAME_BANK name is
  * a filler pro's, so each starter shared a gamertag with a regional opponent.
  */
+/** rc.35 (front C): the Prospects headliner's potential (CAREER_WORLD.prospectHeadliner). */
+function headlinerPotential(f: number): number {
+  const [lo, hi] = CAREER_WORLD.prospectHeadliner.potentialRange;
+  return Math.min(hi, lo + Math.floor(f * (hi - lo + 1)));
+}
+
 export function starterRosterOffers(
   region: Region,
   careerSeed: number,
@@ -404,6 +442,11 @@ export function starterRosterOffers(
   for (let o = 0; o < STARTER_OFFERS.length; o++) {
     const shape = STARTER_OFFERS[o];
     const group: CareerPlayerView[] = [];
+    // rc.35 (front C): one Prospects founder is the headliner (potential above 90).
+    const headliner =
+      shape.key === "prospects"
+        ? Math.min(2, Math.floor(derivedFloat(careerSeed, streams.gen("starterHead", region)) * 3))
+        : -1;
     for (let j = 0; j < 3; j++) {
       const k = o * 3 + j;
       const id = `fic:${region}:starter${k}`;
@@ -418,7 +461,9 @@ export function starterRosterOffers(
               overall,
               JOURNEYMAN_POTENTIAL_CAP,
             )
-          : clamp(Math.round(shape.potMin + f("pot") * shape.potSpan), overall, 99);
+          : j === headliner
+            ? headlinerPotential(f("pot"))
+            : clamp(Math.round(shape.potMin + f("pot") * shape.potSpan), overall, 99);
       const archetype = deriveArchetype(id, careerSeed);
       group.push({
         id,

@@ -258,6 +258,8 @@ export const CAREER_PT: CareerCopy = {
     rosterBalanced: "Equilibrado",
     rosterBalancedDesc: "Um pouco de agora, um pouco de depois.",
     recommended: "Recomendado",
+    /** rc.35 (front C): a tag da oferta do meio. */
+    rosterBalancedTag: "Equilibrado",
     wageBill: "Folha salarial",
     avgAge: "Idade média",
     avgOverall: "OVR médio",
@@ -480,6 +482,9 @@ export const CAREER_PT: CareerCopy = {
     cardEndsIn: (weeks: number) => (weeks <= 0 ? "Sai na virada" : weeks === 1 ? "Termina em 1 semana" : `Termina em ${weeks} semanas`),
     cardFinalSeason: "Última temporada",
     cardCoach: (name: string, ovr: number, pct: number) => `${name} · ${ovr} · ${pct > 0 ? "+" : ""}${pct}% de treino`,
+    // rc.35 (front C): o título da fila do elenco e o chip de treino do técnico.
+    cardStarters: "Titulares",
+    coachTrainingPct: (pct: number) => `${pct > 0 ? "+" : ""}${pct}% de treino`,
     // rc.34 (UX-01d, decisão 6-A): a pergunta da semana sobre a vaga.
     nextRegional: (ordinal: number, week: number) => `Próxima regional (R${ordinal}, semana ${week})`,
     seatDirect: "vaga direta",
@@ -1172,6 +1177,9 @@ export const CAREER_PT: CareerCopy = {
     allRegions: "Todas as regiões",
     // rc.33 (UX-07): só os jogadores que a reputação da org consegue contratar (a regra que a contratação confere).
     filterSignable: "Contratáveis com minha reputação",
+    filterSignableCount: (n: number) => `${n} ${n === 1 ? "jogador" : "jogadores"} ao alcance`,
+    /** rc.35 (front C): uma org o contratou nesta janela. */
+    justSignedTag: "Recém-contratado",
     viewSheet: "Ver ficha",
     noResults: "Nenhum jogador com esses filtros.",
     dealsEmpty: "Nenhuma negociação ativa. Propostas chegam aqui com a janela aberta.",
@@ -1235,6 +1243,8 @@ export const CAREER_PT: CareerCopy = {
       none: "Nada a fazer.",
       invalid: "Seleção inválida.",
       repGate: "A reputação da org ainda é baixa para um jogador desse nível.",
+      /** rc.35 (front C): uma org o contratou nesta janela. */
+      justSigned: "Ele acabou de assinar com outra org nesta janela — tente na próxima.",
       // rc.33 (ECO-11): uma oferta abaixo do piso dele — a ficha mostra a contraproposta.
       negotiationCounter: "Isso está abaixo do piso dele — aceite a contraproposta ou suba a oferta.",
       sameDay: "Vocês já treinaram contra esse time hoje.",

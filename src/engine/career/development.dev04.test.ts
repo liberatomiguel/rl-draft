@@ -24,6 +24,8 @@ import { buildWorldAtCreation } from "./worldSim";
 
 const SEED = 33_004;
 const LEVELS: ScoutLevel[] = [0, 1, 2, 3];
+/** rc.35 (front C): an overall under every band — these checks read the honest band itself, before its floor is clamped to the overall (rc35FrontC.test.ts). */
+const NO_FLOOR = 0;
 
 const sample = (): CareerPlayerView[] => {
   const w = buildWorldAtCreation(SEED);
@@ -39,7 +41,7 @@ describe("DEV-04 — honest potential bands", () => {
     for (const v of PLAYERS) {
       const truth = Math.round(v.potential);
       for (const level of LEVELS) {
-        const b = scoutedBand(v.potential, v.overall, level, SEED, v.id, 2);
+        const b = scoutedBand(v.potential, NO_FLOOR, level, SEED, v.id, 2);
         expect(b.max - b.min).toBeLessThanOrEqual(CAREER_SCOUT.honestWidthByLevel[level]);
         expect(b.max - b.min).toBeLessThanOrEqual(6);
         expect(b.max - truth).toBeLessThanOrEqual(CAREER_SCOUT.bandMaxAbove);
@@ -53,7 +55,7 @@ describe("DEV-04 — honest potential bands", () => {
 
   it("no known player reads 99 unless his potential is within bandMaxAbove of it (rc.32: a 91 could read 89–99)", () => {
     for (const v of PLAYERS) {
-      const b = scoutedBand(v.potential, v.overall, 0, SEED, v.id, 2);
+      const b = scoutedBand(v.potential, NO_FLOOR, 0, SEED, v.id, 2);
       if (b.max === 99) expect(Math.round(v.potential)).toBeGreaterThanOrEqual(99 - CAREER_SCOUT.bandMaxAbove);
     }
     // rc.32's band did put far lower potentials at 99 — the case Miguel saw.
@@ -65,14 +67,14 @@ describe("DEV-04 — honest potential bands", () => {
     for (const v of PLAYERS) {
       const truth = Math.round(v.potential);
       if (truth < 66 || truth > 94) continue;
-      const b = scoutedBand(v.potential, v.overall, 0, SEED, v.id, 2);
+      const b = scoutedBand(v.potential, NO_FLOOR, 0, SEED, v.id, 2);
       expect(b.max - b.min).toBe(CAREER_SCOUT.honestWidthByLevel[0]);
     }
   });
 
   it("each report narrows inside the one before, and keeps its full width in a new career", () => {
     for (const v of PLAYERS) {
-      const b = LEVELS.map((l) => scoutedBand(v.potential, v.overall, l, SEED, v.id, 2));
+      const b = LEVELS.map((l) => scoutedBand(v.potential, NO_FLOOR, l, SEED, v.id, 2));
       for (let l = 1; l < 4; l++) {
         expect(b[l].min).toBeGreaterThanOrEqual(b[l - 1].min);
         expect(b[l].max).toBeLessThanOrEqual(b[l - 1].max);
@@ -82,13 +84,13 @@ describe("DEV-04 — honest potential bands", () => {
       if (truth >= 66 && truth <= 94)
         for (const l of [1, 2] as ScoutLevel[]) expect(b[l].max - b[l].min).toBe(CAREER_SCOUT.honestWidthByLevel[l]);
       // Deterministic: the same call reads the same band.
-      expect(scoutedBand(v.potential, v.overall, 1, SEED, v.id, 2)).toEqual(b[1]);
+      expect(scoutedBand(v.potential, NO_FLOOR, 1, SEED, v.id, 2)).toEqual(b[1]);
     }
   });
 
   it("in a career created before rc.33 a bought report only narrows: every level ≥ 1 sits inside rc.32's band", () => {
     for (const v of PLAYERS) {
-      const b = LEVELS.map((l) => scoutedBand(v.potential, v.overall, l, SEED, v.id, 2, { rc32Reports: true }));
+      const b = LEVELS.map((l) => scoutedBand(v.potential, NO_FLOOR, l, SEED, v.id, 2, { rc32Reports: true }));
       for (let l = 1; l < 4; l++) {
         expect(b[l].min).toBeGreaterThanOrEqual(b[l - 1].min);
         expect(b[l].max).toBeLessThanOrEqual(b[l - 1].max);
@@ -99,7 +101,7 @@ describe("DEV-04 — honest potential bands", () => {
         expect(b[l].max - Math.round(v.potential)).toBeLessThanOrEqual(CAREER_SCOUT.bandMaxAbove);
       }
       // The free level 0 is the same honest band in both.
-      expect(b[0]).toEqual(scoutedBand(v.potential, v.overall, 0, SEED, v.id, 2));
+      expect(b[0]).toEqual(scoutedBand(v.potential, NO_FLOOR, 0, SEED, v.id, 2));
     }
   });
 });

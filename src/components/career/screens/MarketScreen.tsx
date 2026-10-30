@@ -47,6 +47,7 @@ import {
   backerLineOf,
   coachCandidatesFor,
   emptySeatPriceFor,
+  justSignedElsewhere,
   nextBreachOutcomeOf,
   signingPlanFor,
   signingTalkFor,
@@ -83,6 +84,7 @@ import {
 import { formatDateTiny, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
+import { BadgeCheckIcon, LockIcon } from "@/components/ui/icons";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import { CoachAttributeLines, CoachHireCard } from "@/components/career/training/CoachHireCard";
@@ -283,6 +285,10 @@ export function MarketScreen() {
       : listing.freeAgents.map((v) => quote(v, null, null));
   }, [listing, tab, save]);
 
+  const signableCount = useMemo(
+    () => (save ? rows.filter((r) => signableAtRep(r.view.overall, save.reputation)).length : 0),
+    [rows, save],
+  );
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     let out = rows;
@@ -520,10 +526,49 @@ export function MarketScreen() {
                   </Chip>
                 ))}
               </div>
-              {/* rc.33 (UX-07): only the players the org's reputation can sign. */}
-              <Chip active={signableOnly} onClick={() => setSignableOnly((v) => !v)} activeClass="border-good/50 bg-good/15 text-good">
-                {C.market.filterSignable}
-              </Chip>
+              {/* rc.33 (UX-07): only the players the org's reputation can sign.
+                  rc.35 (front C): a switch with its icon and how many players it keeps. */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={signableOnly}
+                onClick={() => setSignableOnly((v) => !v)}
+                className={cx(
+                  "flex min-h-11 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors sm:w-auto",
+                  signableOnly
+                    ? "border-good/60 bg-good/15 shadow-[0_0_16px_-8px_rgba(34,197,94,0.6)]"
+                    : "border-line-strong bg-white/[0.03] hover:border-good/40",
+                )}
+              >
+                <span
+                  className={cx(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
+                    signableOnly ? "bg-good/25 text-good" : "bg-white/5 text-sub",
+                  )}
+                >
+                  <BadgeCheckIcon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={cx("block text-xs font-bold", signableOnly ? "text-good" : "text-ink")}>
+                    {C.market.filterSignable}
+                  </span>
+                  <span className="block text-[11px] text-faint">{C.market.filterSignableCount(signableCount)}</span>
+                </span>
+                <span
+                  aria-hidden
+                  className={cx(
+                    "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+                    signableOnly ? "bg-good" : "bg-white/15",
+                  )}
+                >
+                  <span
+                    className={cx(
+                      "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
+                      signableOnly ? "translate-x-[18px]" : "translate-x-0.5",
+                    )}
+                  />
+                </span>
+              </button>
             </div>
           </Panel>
 
@@ -540,7 +585,10 @@ export function MarketScreen() {
                 {visible.slice(0, shown).map((r) => {
                   // v0.3 visible signing gate: over-cap players stay browsable
                   // but read as locked, with the rep that opens the door.
-                  const locked = !signableAtRep(r.view.overall, save.reputation);
+                  const repLocked = !signableAtRep(r.view.overall, save.reputation);
+                  // rc.35 (front C): an org signed him in this window — no offer until the next one.
+                  const justSigned = !repLocked && justSignedElsewhere(save, r.view.id);
+                  const locked = repLocked || justSigned;
                   const tile = (
                     <PlayerCardTile
                       key={locked ? undefined : r.view.id}
@@ -548,6 +596,7 @@ export function MarketScreen() {
                       overall={r.view.overall}
                       age={r.view.age}
                       band={r.band}
+                      phase={phaseLabelOf(phaseOfView(save, r.view))}
                       archetype={r.view.archetype}
                       country={r.view.country}
                       region={r.view.region}
@@ -582,10 +631,13 @@ export function MarketScreen() {
                     <div key={r.view.id} className="relative">
                       <div className="opacity-60 saturate-50">{tile}</div>
                       <span
-                        className="pointer-events-none absolute right-2 top-2 rounded-md border border-line-strong bg-[color:var(--bg)]/90 px-2 py-0.5 text-[10px] font-bold text-sub"
-                        title={C.market.lockedHint}
+                        className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-md border border-line-strong bg-[color:var(--bg)]/90 px-2 py-0.5 text-[10px] font-bold text-sub"
+                        title={justSigned ? C.market.errors.justSigned : C.market.lockedHint}
                       >
-                        🔒 {C.market.lockedAtRep(repNeededForOverall(Math.round(r.view.overall)))}
+                        <LockIcon className="h-3 w-3" />
+                        {justSigned
+                          ? C.market.justSignedTag
+                          : C.market.lockedAtRep(repNeededForOverall(Math.round(r.view.overall)))}
                       </span>
                     </div>
                   );

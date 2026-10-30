@@ -19,7 +19,7 @@ import {
 import { lineups, playerById, playerCardById } from "@/data";
 import { createRng } from "@/lib/rng";
 import type { Region, StatKey } from "../types";
-import { windowCloseDayFor } from "./calendar";
+import { weekOfDay, windowCloseDayFor, windowIndexOf } from "./calendar";
 import {
   ageOf,
   anchorOverall,
@@ -287,6 +287,43 @@ interface WindowCtx {
   userSquadIds: string[];
   isPreseason: boolean;
   infinite: boolean;
+  /**
+   * rc.35 (front C): players already signed by an org in this window
+   * (`movedThisWindowIds`) — no AI org moves them again before it closes.
+   */
+  lockedIds?: string[];
+}
+
+/**
+ * rc.35 (front C, Miguel on rc.34): the players an org (AI or the user)
+ * signed in a given window, read from the transfer wire — a just-signed
+ * player takes no other offer before that window closes.
+ */
+export function movedThisWindowIds(
+  log: readonly { seasonIndex: number; day: number; playerId: string; toRef: string | null }[],
+  seasonIndex: number,
+  windowIdx: number,
+): Set<string> {
+  const out = new Set<string>();
+  for (const e of log) {
+    if (e.seasonIndex !== seasonIndex || e.toRef === null) continue;
+    if (windowIndexOf(weekOfDay(e.day)) === windowIdx) out.add(e.playerId);
+  }
+  return out;
+}
+
+/** rc.35 (front C): true while a squad player's signing window is still open. */
+export function signedInWindow(
+  p: { joinedSeason: number; signedDay?: number },
+  seasonIndex: number,
+  windowIdx: number | null,
+): boolean {
+  return (
+    windowIdx !== null &&
+    p.signedDay !== undefined &&
+    p.joinedSeason === seasonIndex &&
+    windowIndexOf(weekOfDay(p.signedDay)) === windowIdx
+  );
 }
 
 /** This season's real dataset lineups (the anchor targets). Empty when infinite. */
@@ -439,11 +476,14 @@ export function aiWindowMoves(
     return v;
   };
   const userOwned = new Set(ctx.userSquadIds);
+  // rc.35 (front C): a player signed in this window is not moved again before it closes.
+  const locked = new Set(ctx.lockedIds ?? []);
   const transfers: AiTransferRecord[] = [];
 
   const execMove = (playerId: string, toRef: string): void => {
     const target = next.orgs[toRef];
     if (!target) return;
+    if (locked.has(playerId)) return;
     if (target.playerIds.includes(playerId)) return;
     const view = viewOf(playerId);
     if (!view) return;
@@ -483,6 +523,7 @@ export function aiWindowMoves(
       if (!(displaced in next.overallDelta)) next.overallDelta[displaced] = 0;
     }
     target.playerIds[weakest] = playerId;
+    locked.add(playerId);
     next.version += 1;
     transfers.push({
       playerId,
@@ -632,7 +673,10 @@ export function incomingBidForDay(ctx: {
 
   // Target: attractiveness-weighted — AI GMs hunt upside, not only the star.
   const pendingSet = new Set(ctx.pendingTargetIds);
-  const pool = ctx.squad.filter((p) => !pendingSet.has(p.id));
+  // rc.35 (front C): a player the user signed in this window takes no bid before it closes.
+  const pool = ctx.squad.filter(
+    (p) => !pendingSet.has(p.id) && !signedInWindow(p, ctx.seasonIndex, ctx.windowIdx),
+  );
   if (pool.length === 0) return null;
   const weightOf = (p: SquadPlayer) =>
     Math.max(1, p.overall - 70) +

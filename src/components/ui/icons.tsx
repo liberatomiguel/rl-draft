@@ -94,3 +94,162 @@ export function LegacyEmblem({
     </div>
   );
 }
+
+/** rc.35: the shared stroke frame of the small line icons below. */
+function LineIcon({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      {children}
+    </svg>
+  );
+}
+
+/** Shield — a safe, forgiving choice (Easy). */
+export function ShieldIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="M12 3.5 5 6v5.5c0 4.2 3 7.6 7 9 4-1.4 7-4.8 7-9V6l-7-2.5Z" {...P} />
+      <path d="m9 12 2 2 4-4" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Target — the intended way to play (Normal). */
+export function TargetIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+    </LineIcon>
+  );
+}
+
+/** Flame — the hard road (Hard). */
+export function FlameIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="M12 3c.5 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.4 1.3-3.8 2.5-5 .3 1.6 1 2.6 2 3 0-3 0-5.5.5-8Z" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Crossed swords — matches. */
+export function SwordsIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="M4 4l9 9M20 4l-9 9M6.5 15.5 4 18M17.5 15.5 20 18M8 14l2 2M16 14l-2 2" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Coin — money. */
+export function CoinIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <circle cx="12" cy="12" r="8" />
+      <path
+        d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.5.8-2.5 2s1.1 1.6 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"
+        {...P}
+      />
+    </LineIcon>
+  );
+}
+
+/** Clipboard — the coach's help, the training plan. */
+export function ClipboardIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <rect x="5.5" y="5" width="13" height="15.5" rx="2" />
+      <path d="M9 5V3.8h6V5M8.5 11h7M8.5 14.5h5" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Check — a confirmed pick. */
+export function CheckIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="m5 12.5 4.5 4.5L19 7.5" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Star — a recommendation. */
+export function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="m12 3.2 2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3.1-5.4 3.1 1.2-6-4.5-4.2 6.1-.7L12 3.2Z" />
+    </svg>
+  );
+}
+
+/** Scale — balance. */
+export function ScaleIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0L5 7ZM19 7l-2.5 6a2.5 2.5 0 0 0 5 0L19 7Z" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Arrow up-right — developing. */
+export function TrendUpIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="m4 17 6-6 4 4 6-7M14.5 8H20v5.5" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Peak — at his best. */
+export function PeakIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="m3 19 6.5-11 3.5 5.5 2.5-3.5L21 19H3Z" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Arrow down-right — declining. */
+export function TrendDownIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path d="m4 7 6 6 4-4 6 7M14.5 16H20v-5.5" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Question — not known yet. */
+export function QuestionIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.5" {...P} />
+      <circle cx="12" cy="16.8" r=".6" fill="currentColor" />
+    </LineIcon>
+  );
+}
+
+/** Badge with a check — "signable", within reach. */
+export function BadgeCheckIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <path
+        d="M12 3 14.2 5l2.9-.3.6 2.9 2.5 1.5-1.2 2.7 1.2 2.7-2.5 1.5-.6 2.9-2.9-.3L12 21l-2.2-2-2.9.3-.6-2.9-2.5-1.5 1.2-2.7-1.2-2.7 2.5-1.5.6-2.9 2.9.3L12 3Z"
+        {...P}
+      />
+      <path d="m9 12 2 2 4-4" {...P} />
+    </LineIcon>
+  );
+}
+
+/** Lock — not available yet. */
+export function LockIcon({ className }: { className?: string }) {
+  return (
+    <LineIcon className={className}>
+      <rect x="5.5" y="10.5" width="13" height="9.5" rx="2" />
+      <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" {...P} />
+    </LineIcon>
+  );
+}

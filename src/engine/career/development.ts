@@ -1012,16 +1012,28 @@ export function scoutedBand(
       opts?.rc32Reports ? nestedBand(potential, l, careerSeed, playerId) : null,
     );
     const arc = opts?.arc;
-    if (!arc) return band;
+    if (!arc) return floorAtOverall(band, overall);
     const cap = Math.round(
       reachableOverallOf({ id: playerId, overall, potential, peakAge: arc.peakAge }, arc.exactAge, careerSeed),
     );
-    return cap >= band.max ? band : { min: Math.min(band.min, cap), max: cap, level };
+    return floorAtOverall(cap >= band.max ? band : { min: Math.min(band.min, cap), max: cap, level }, overall);
   }
   const band = honestBand(potential, level, careerSeed, playerId, (l) =>
     rc31Band(potential, overall, l, careerSeed, playerId),
   );
   return { ...band, min: Math.min(band.max, Math.max(band.min, Math.floor(overall))) };
+}
+
+/**
+ * rc.35 (front C, Miguel on rc.34: a 78 at his peak read "76–80"): a band
+ * never reads below the overall he already shows — its floor is clamped to
+ * his (rounded) overall, and a band wholly under it collapses onto it. The
+ * top stays the honest one (or what he can still reach).
+ */
+function floorAtOverall(band: PotentialBand, overall: number): PotentialBand {
+  const ovr = Math.round(overall);
+  const max = Math.max(band.max, ovr);
+  return { min: Math.max(band.min, Math.min(ovr, max)), max, level: band.level };
 }
 
 /**

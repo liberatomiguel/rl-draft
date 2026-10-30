@@ -393,11 +393,12 @@ describe("DEV-01e — honest scouting bands that never move", () => {
     return ids.map((id) => playerViewById(id, ctx)).filter((v) => v !== null);
   };
 
+  // rc.35 (front C): overalls under the band — its floor now follows the overall above it (rc35FrontC.test.ts).
   it("the band reads the potential only: a growing overall, a new day or a reload never moves it", () => {
     for (const v of sample().slice(0, 300))
       for (const level of [0, 1, 2] as ScoutLevel[]) {
-        const a = scoutedBand(v.potential, v.overall, level, SEED, v.id, 2);
-        expect(scoutedBand(v.potential, v.overall + 4.3, level, SEED, v.id, 2)).toEqual(a);
+        const a = scoutedBand(v.potential, 0, level, SEED, v.id, 2);
+        expect(scoutedBand(v.potential, 4.3, level, SEED, v.id, 2)).toEqual(a);
         expect(a.min).toBeLessThanOrEqual(Math.round(v.potential));
         expect(a.max).toBeGreaterThanOrEqual(Math.round(v.potential));
         expect(a.min).toBeGreaterThanOrEqual(60);

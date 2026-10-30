@@ -14,6 +14,8 @@ import { useCareerCopy } from "@/content/careerCopy";
 import { CountryChip } from "@/components/ui/Badge";
 import type { PotentialBand } from "@/engine/career/types";
 import type { ArchetypeId } from "@/engine/career/types";
+import { PhaseChip } from "@/components/career/PhaseChip";
+import type { PhaseLabel } from "@/components/career/careerUi";
 
 /** Rarity-like frame keyed off overall: 90+ cyan glow · 80+ amber · base. */
 function ovrFrame(overall: number): {
@@ -44,6 +46,7 @@ export function PlayerCardTile({
   overall,
   age,
   band,
+  phase,
   archetype,
   country,
   region,
@@ -58,6 +61,8 @@ export function PlayerCardTile({
   overall: number;
   age?: number;
   band?: PotentialBand;
+  /** rc.35 (front C): his phase on his arc as an icon chip ("?" until a report reveals it). */
+  phase?: PhaseLabel;
   archetype?: ArchetypeId;
   country?: string;
   region?: string;
@@ -118,6 +123,7 @@ export function PlayerCardTile({
             {potText}
           </span>
         ) : null}
+        {phase ? <PhaseChip phase={phase} /> : null}
         {archetype ? (
           <span className="rounded bg-white/6 px-1.5 py-0.5 text-[10px] font-semibold text-sub">
             {C.player.archetype[archetype]}

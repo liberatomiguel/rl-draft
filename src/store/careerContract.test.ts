@@ -25,6 +25,8 @@ import type { Region } from "@/engine/types";
 import { placementOf } from "@/engine/career/careerResults";
 import {
   advanceDayFlow,
+  chooseSponsorFlow,
+  declineBidFlow,
   createCareerSave,
   eventPlayerShareFor,
   finishEvent,
@@ -202,6 +204,9 @@ describe("ECO-10 — every contract carries a prize share", () => {
         continue;
       }
       if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
+      // rc.35: a sponsor offer or a bid holds the clock (R71) — answer it, as a bot would.
+      if (save.sponsorOffers?.length) save = chooseSponsorFlow(save, save.sponsorOffers[0].sponsorId).save;
+      for (const o of save.pendingOffers.filter((x) => x.status === "pending" && x.direction === "out")) save = declineBidFlow(save, o.id);
       const day = save.clock.day;
       save = advanceDayFlow(save);
       if (save.clock.day === day && !save.pendingEventDef) break;

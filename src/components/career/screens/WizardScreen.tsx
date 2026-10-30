@@ -38,6 +38,16 @@ import {
 import type { CrestId, PatternId, SymbolId } from "@/components/career/UserCrest";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge, CountryChip } from "@/components/ui/Badge";
+import {
+  CheckIcon,
+  FlameIcon,
+  PeakIcon,
+  ScaleIcon,
+  ShieldIcon,
+  StarIcon,
+  TargetIcon,
+  TrendUpIcon,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { TeamLogo } from "@/components/ui/TeamLogo";
@@ -59,8 +69,25 @@ const TOTAL_STEPS = 5;
 const REGION_ORDER: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const STAT_KEYS: StatKey[] = ["offense", "defense", "mechanics", "consistency", "experience", "clutch"];
 const DIFFICULTIES: CareerDifficulty[] = ["easy", "normal", "hard"];
-const ROSTER_KEYS = ["prospects", "journeymen", "balanced"] as const;
+// rc.35 (front C, Miguel): Balanced sits in the middle, between the long game and the ready-now.
+const ROSTER_KEYS = ["prospects", "balanced", "journeymen"] as const;
 type RosterKey = (typeof ROSTER_KEYS)[number];
+const ROSTER_ICON: Record<RosterKey, typeof ShieldIcon> = {
+  prospects: TrendUpIcon,
+  balanced: ScaleIcon,
+  journeymen: PeakIcon,
+};
+/** rc.35 (front C): each preset's icon; Normal is the recommended one (CAREER_DIFFICULTY.defaultPreset). */
+const PRESET_ICON: Record<CareerDifficulty, typeof ShieldIcon> = {
+  easy: ShieldIcon,
+  normal: TargetIcon,
+  hard: FlameIcon,
+};
+const PRESET_TONE: Record<CareerDifficulty, string> = {
+  easy: "bg-good/15 text-good",
+  normal: "bg-amber-400/15 text-amber-300",
+  hard: "bg-bad/15 text-bad",
+};
 
 /** null = the "None" tile in the pattern picker / randomizer pool. */
 const PATTERN_OPTIONS = [null, ...PATTERN_IDS] as const;
@@ -686,6 +713,7 @@ export function WizardScreen() {
                 const offer = offers.find((o) => o.key === key);
                 if (!offer) return null;
                 const active = rosterKey === key;
+                const RosterIcon = ROSTER_ICON[key];
                 const wage = wageBillOf(offer);
                 const budget = budgetOf(offer);
                 // rc.34 review: the weeks of this roster's wages the start budget covers (no income) —
@@ -717,10 +745,26 @@ export function WizardScreen() {
                     )}
                   >
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="display text-base font-bold uppercase tracking-wide text-ink">
-                        {labels[key].label}
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={cx(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                            active ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-sub",
+                          )}
+                        >
+                          <RosterIcon className="h-5 w-5" />
+                        </span>
+                        <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
+                          {labels[key].label}
+                        </span>
                       </span>
-                      {key === "balanced" ? <Badge tone="gold">{C.wizard.recommended}</Badge> : null}
+                      {/* rc.35 (front C, Miguel): the middle offer is tagged "Balanced". */}
+                      {key === "balanced" ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300">
+                          <ScaleIcon className="h-3 w-3" />
+                          {C.wizard.rosterBalancedTag}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mb-3 text-xs leading-relaxed text-sub">{labels[key].desc}</p>
 
@@ -786,9 +830,15 @@ export function WizardScreen() {
             {/* rc.34 (front I, Miguel 31/10): three clear choices for a first-time
                 player on a phone — a promise and three plain bullets each, the
                 selected card unmistakable (orange frame, tint and check). */}
-            <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label={C.wizard.finalTitle}>
+            {/* rc.35 (front C, Miguel on rc.34): an icon per preset, the promise as
+                the headline, and Normal marked RECOMMENDED — an amber stroke, a
+                tag over its top edge and a taller card, so it draws the eye
+                before any pick (the pick itself stays the orange frame + check). */}
+            <div className="grid items-stretch gap-3 pt-3 sm:grid-cols-3" role="radiogroup" aria-label={C.wizard.finalTitle}>
               {DIFFICULTIES.map((id) => {
                 const active = difficulty === id;
+                const recommended = id === CAREER_DIFFICULTY.defaultPreset;
+                const PresetIcon = PRESET_ICON[id];
                 return (
                   <button
                     key={id}
@@ -797,14 +847,32 @@ export function WizardScreen() {
                     aria-checked={active}
                     onClick={() => setDifficulty(id)}
                     className={cx(
-                      "panel flex min-h-11 flex-col p-4 text-left transition-all",
-                      active ? "panel-glow-orange !border-orange !bg-orange/10" : "hover:!border-line-strong",
+                      "panel relative flex min-h-11 flex-col p-4 text-left transition-all",
+                      recommended && "!border-2 !border-amber-400/70 shadow-[0_0_28px_-10px_rgba(251,191,36,0.55)] sm:-my-2 sm:py-6",
+                      active && "panel-glow-orange !border-orange !bg-orange/10",
+                      !active && !recommended && "hover:!border-line-strong",
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    {recommended ? (
+                      <span className="absolute -top-3 left-4 inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-black shadow">
+                        <StarIcon className="h-3 w-3" />
+                        {C.wizard.recommended}
+                      </span>
+                    ) : null}
+                    <div className="flex items-center gap-3">
                       <span
                         className={cx(
-                          "display text-lg font-bold uppercase tracking-wide",
+                          "flex shrink-0 items-center justify-center rounded-xl",
+                          recommended ? "h-12 w-12" : "h-10 w-10",
+                          PRESET_TONE[id],
+                        )}
+                      >
+                        <PresetIcon className={recommended ? "h-7 w-7" : "h-6 w-6"} />
+                      </span>
+                      <span
+                        className={cx(
+                          "display min-w-0 flex-1 font-bold uppercase tracking-wide",
+                          recommended ? "text-xl" : "text-lg",
                           active ? "text-orange-bright" : "text-ink",
                         )}
                       >
@@ -813,15 +881,17 @@ export function WizardScreen() {
                       <span
                         aria-hidden
                         className={cx(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black leading-none",
+                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
                           active ? "border-orange bg-orange text-white" : "border-line-strong",
                         )}
                       >
-                        {active ? "✓" : null}
+                        {active ? <CheckIcon className="h-4 w-4" /> : null}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm font-semibold leading-snug text-ink">{C.wizard.presets[id].promise}</p>
-                    <PresetEffects difficulty={id} C={C} />
+                    <p className="mt-3 text-sm font-semibold leading-snug text-ink">{C.wizard.presets[id].promise}</p>
+                    <div className="mt-3 border-t border-line pt-1">
+                      <PresetEffects difficulty={id} C={C} />
+                    </div>
                   </button>
                 );
               })}

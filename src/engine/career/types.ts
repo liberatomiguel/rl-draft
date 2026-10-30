@@ -310,6 +310,12 @@ export interface SquadPlayer {
   /** Splits spent on the squad — chemistry accrual credit (subs accrue 0.5/split). */
   splitsTogether: number;
   joinedSeason: number;
+  /**
+   * rc.35 (front C): the season day he signed (with `joinedSeason`). Optional
+   * and additive: a founder or an older save has none. No bid lands for him
+   * in the window he signed in (`market.signedInWindow`).
+   */
+  signedDay?: number;
   /** Set one season ahead when the retirement roll hits a user player. */
   finalSeasonAnnounced?: boolean;
   /**

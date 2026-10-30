@@ -23,6 +23,10 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { matchEdgeOf, presetPrefs, presetTrainingModeOf } from "@/engine/career/difficulty";
 import { moneyRuleFor } from "@/engine/career/economy";
 import type { CareerDifficulty } from "@/engine/career/types";
+import { ClipboardIcon, CoinIcon, SwordsIcon } from "@/components/ui/icons";
+
+/** rc.35 (front C): each bullet leads with its icon (matches / money / help). */
+const BULLET_ICON = { matches: SwordsIcon, money: CoinIcon, help: ClipboardIcon } as const;
 
 /** Edges within this many rating points of Normal's read as "even". */
 const EVEN_EDGE_BAND = 0.25;
@@ -55,7 +59,10 @@ export function PresetEffects({ difficulty, C }: { difficulty: CareerDifficulty;
     <ul className="mt-3 space-y-1.5 text-[13px] leading-snug text-sub">
       {PRESET_BULLETS.map((b) => (
         <li key={b.key} className="flex gap-2">
-          <span aria-hidden className="mt-[0.5em] h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
+          {(() => {
+            const Icon = BULLET_ICON[b.key];
+            return <Icon className="mt-px h-4 w-4 shrink-0 text-faint" />;
+          })()}
           <span>{b.value(difficulty, C)}</span>
         </li>
       ))}
