@@ -626,6 +626,12 @@ never calibrates the old training model as if it were final.
       prospect, the growth fix), so the user wins more and climbs reputation
       faster. Match difficulty did not change: 66 % at an even rating, as in
       rc.34.
+    - **The pace target is rc.34's, on Normal (Miguel, 31/10: it was better
+      for progression):** 0.44 Majors qualified a season and Worlds reached
+      in 16 % of season-rows (rc.35: 0.60 and 23 %). Measure it in
+      CAREER_ARC's "Competitive line" and tune back to it, with the levers
+      behind keys (the newcomer's reputation pay, the prospect headliner, the
+      season growth room, founding wages). Never use the match difficulty.
     - Re-measure both sides of the guardrail.
 - **Gate 3a: approved 30/10** — the recommended options of all three
   contracts (training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A), the
