@@ -10,6 +10,8 @@
  *    R40: the Saturday pause before Championship Sunday — never rolled into
  *    on its own)
  *  - a fresh unofficial invite surfaced and isn't committed
+ *  - a money notice is waiting (rc.34: the emergency loan, a top-up, the
+ *    deadline's warnings or the deadline itself — MoneyNoticeModal)
  *  - the clock refused to move (blocked)
  * The user can pause any day from the TopBar; navigation never stops it —
  * the calendar keeps rolling on every career screen.
@@ -17,6 +19,7 @@
 
 import { useEffect, useRef } from "react";
 import { CAREER_PLAYBACK } from "@/config/balance";
+import { moneyNoticeOf } from "@/store/careerFlow";
 import { useCareerStore, selectActiveSave } from "@/store/careerStore";
 import { continueKind } from "./careerUi";
 
@@ -37,6 +40,11 @@ export function CareerAutopilot() {
       return;
     }
     if (save.unofficialOffer && !save.pendingEventDef) {
+      setAutoAdvance(false);
+      return;
+    }
+    // rc.34: a money notice (the emergency loan, a top-up, the deadline) waits to be read.
+    if (moneyNoticeOf(save)) {
       setAutoAdvance(false);
       return;
     }

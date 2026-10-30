@@ -6,15 +6,16 @@
  * v2.0 (R20/R21): the statement is WEEKLY — the tiles, the "Weekly statement"
  * breakdown and the hub tile all read economy.weeklyStatement, the same
  * function the Monday funnel books, so no screen can disagree with the
- * ledger. "Loans & debt" holds both the bank loan (request / pay early) and
- * the Emergency Backer pay-down.
+ * ledger. "Loans & debt" holds both of the bank's loans: the voluntary one
+ * (request / pay early) and, rc.34, the emergency one (its deadline and the
+ * pay-down; rc.31–rc.33 the Emergency Backer).
  *
  * Statement tiles (balance + sparkline · net/week · projected + runway),
  * the GEAR LADDER as the progression centerpiece
  * (7 steps: peripherals → monitors → PCs → bootcamp T1 → bootcamp T2 →
  * psychologist → Performance Center, unlocked by rep, bought in order, sponsor
  * perks discounting), the sponsor desk (active deal with objective/patience/
- * perks + season offers), the date-grouped ledger and the Emergency Backer
+ * perks + season offers), the date-grouped ledger and the emergency loan
  * panel. Every gate and price reads from CAREER_* constants — zero literals.
  */
 
@@ -36,16 +37,16 @@ import {
   bankLoanTerms,
   bankMinAmountFor,
   bootcampCostFor,
-  breachOutcomeFor,
   breachesToEndFor,
+  deadlineWeeksFor,
   debtPaymentFor,
   foundingPartnerActive,
+  investorShareFor,
   loanBreachesOf,
   moneyIndex,
   nextPaydayFor,
   psychologistPerSplitFor,
   quantize,
-  rescuePartnerAt,
   rescuePartnerLastPayday,
   weeklyOf,
   type BankLoanRefusal,
@@ -54,8 +55,10 @@ import {
 } from "@/engine/career/economy";
 import {
   backerLineOf,
+  emergencyLoanViewOf,
   foundingPartnerPerSplitOf,
   mondayBalancesOf,
+  nextBreachParamsOf,
   runwayWeeksOf,
   weeklyStatementOf,
 } from "@/store/careerFlow";
@@ -82,6 +85,7 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
+import { deadlineDateText } from "@/components/career/finances/loanDates";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -128,7 +132,7 @@ function FinanceErrorNotice({ className }: { className?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Emergency Backer pay-down (v0.3): amount stepper + pay / pay-it-all
+// Loan pay-down (v0.3; rc.34: the emergency loan and the bank's): amount stepper + pay / pay-it-all
 // ---------------------------------------------------------------------------
 
 function PayDown({
@@ -145,10 +149,10 @@ function PayDown({
   onPay: (amount: number) => void;
   cta: string;
   hint?: string;
-  /** rc.32 (M4): the Backer's floor on this wage bill (the flows' own `backerLineOf`). */
+  /** rc.32 (M4): the floor on this wage bill (the flows' own `backerLineOf`). */
   floor: number;
-  /** rc.32 (M4): what the next breach would do (the rescue, a restructuring, the end). */
-  next: BreachOutcome;
+  /** rc.34: what the next breach would do — the flow's nextBreachParamsOf (a new loan, a top-up, the end). */
+  next: Record<string, string | number>;
 }) {
   const C = useCareerCopy();
   const [raw, setRaw] = useState<number | null>(null);
@@ -207,7 +211,7 @@ function PayDown({
       ) : null}
       {canPay && balanceAfter < 0 ? (
         <p className="mt-1 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">
-          {next === "rescue"
+          {next.next === "rescue" && !Number(next.owing)
             ? C.finances.payRiskBacker(formatMoney(floor, { compact: true }))
             : C.finances.payRiskNext(formatMoney(floor, { compact: true }), next)}
         </p>
@@ -603,10 +607,12 @@ export function FinancesScreen() {
   const flatIndex = moneyIndex(seasonIndex, "flat");
   const backer = backerLineOf(save);
   const breaches = loanBreachesOf(fin);
-  const nextBreach = breachOutcomeFor(breaches + 1, save.difficulty);
-  // rc.33 (ECO-07/08): the breach that ends it here, the rescue partner on the next one, its last payday.
+  // rc.34: what the next breach does (a new emergency loan, a top-up, or the end), the loan's
+  // deadline view, a breach count only where one still ends a career, the investor's last payday.
+  const nextBreachParams = nextBreachParamsOf(save);
+  const nextBreach: BreachOutcome = nextBreachParams.next === "insolvent" ? "insolvent" : "rescue";
+  const loanView = emergencyLoanViewOf(save);
   const breachEnd = breachesToEndFor(save.difficulty);
-  const nextPartner = rescuePartnerAt(breaches + 1, save.difficulty);
   const rescueLast = rescuePartnerLastPayday(fin.rescuePartner, save.clock);
 
   // --- sparkline series: running balance reconstructed backwards ------------
@@ -1052,12 +1058,7 @@ export function FinancesScreen() {
                 <p className="mt-2 text-sm font-semibold text-good">
                   {C.finances.perWeekBase(formatMoney(fin.rescuePartner.weekly, { compact: true }))}
                 </p>
-                <p className="text-xs text-sub">
-                  {C.finances.rescueTerms(
-                    Math.round(CAREER_LOAN.rescuePartner.payrollShare * 100),
-                    CAREER_LOAN.rescuePartner.weeks,
-                  )}
-                </p>
+                <p className="text-xs text-sub">{C.finances.rescueTerms(CAREER_LOAN.investor.weeks)}</p>
                 <p className="mt-1.5 text-[11px] text-faint">
                   {C.finances.rescueUntil(
                     formatDateTiny(D, dateOfDay(rescueLast.seasonIndex, rescueLast.day)),
@@ -1299,7 +1300,7 @@ export function FinancesScreen() {
                   onPay={payBankLoan}
                   cta={C.finances.bankPayEarly}
                   floor={backer.floor}
-                  next={nextBreach}
+                  next={nextBreachParams}
                 />
                 <p className="mt-2 text-[10px] text-faint">{C.finances.bankBlockedActive}</p>
               </>
@@ -1316,7 +1317,9 @@ export function FinancesScreen() {
             )}
           </div>
 
-          {/* Emergency Backer */}
+          {/* rc.34 (Miguel, 31/10): the bank's emergency loan (rc.31–rc.33: the Emergency Backer) —
+              what is owed, the deadline and what happens on it, how it is repaid, the top-ups,
+              what the next breach does; the rule on this difficulty when nothing is owed. */}
           <div
             className={cx(
               "rounded-lg border bg-white/[0.02] p-3",
@@ -1329,17 +1332,37 @@ export function FinancesScreen() {
                 <p className="display mt-1 text-lg font-bold text-orange-bright">
                   {C.finances.backerRemaining(formatMoney(fin.loan.remaining))}
                 </p>
+                {loanView?.deadline ? (
+                  <>
+                    <p className={cx("mt-1 text-sm font-semibold", loanView.covered ? "text-orange-bright" : "text-bad")}>
+                      {C.finances.loanDeadline(
+                        deadlineDateText(D, loanView.deadline, save.clock),
+                        loanView.weeksLeft ?? 0,
+                      )}
+                    </p>
+                    <p className="mt-0.5 text-xs text-sub">
+                      {C.finances.loanCovered(loanView.covered)} {C.finances.loanDeadlineRule}
+                    </p>
+                  </>
+                ) : null}
                 <p className="mt-1 text-xs text-sub">{C.finances.backerLine(garnishPct)}</p>
                 <p className="mt-0.5 text-xs text-sub">
                   {C.finances.backerSaleLine(Math.round(CAREER_LOAN.saleGarnishRate * 100))}
                 </p>
-                {/* rc.32 (M4): the lock, the count and what the next breach means. */}
-                {CAREER_LOAN.lockCommitments ? (
-                  <p className="mt-0.5 text-xs text-sub">{C.finances.backerLock}</p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {CAREER_LOAN.lockCommitments ? C.finances.backerLock : C.finances.loanNoLock}
+                </p>
+                {loanView?.lent ? (
+                  <p className="mt-1 text-[11px] text-faint">{C.finances.loanLent(formatMoney(loanView.lent))}</p>
                 ) : null}
-                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
-                <p className={cx("mt-0.5 text-xs font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {C.hub.backerNextBreach(nextBreach, nextPartner, CAREER_LOAN.rescuePartner.weeks)}
+                {loanView && (loanView.topUps > 0 || loanView.maxTopUps !== null) ? (
+                  <p className="mt-0.5 text-[11px] text-faint">{C.finances.loanTopUps(loanView.topUps, loanView.maxTopUps)}</p>
+                ) : null}
+                {breachEnd !== null ? (
+                  <p className="mt-0.5 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
+                ) : null}
+                <p className={cx("mt-1 text-xs", nextBreach === "insolvent" ? "font-semibold text-bad" : "text-sub")}>
+                  {C.hub.backerNextBreach(nextBreachParams)}
                 </p>
                 <PayDown
                   remaining={fin.loan.remaining}
@@ -1348,28 +1371,29 @@ export function FinancesScreen() {
                   cta={C.finances.payDebt}
                   hint={C.finances.payDebtHint}
                   floor={backer.floor}
-                  next={nextBreach}
+                  next={nextBreachParams}
                 />
               </>
             ) : fin.loanUsed ? (
               <>
                 <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {nextBreach === "insolvent"
-                    ? C.finances.insolvencyWarning
-                    : C.hub.backerNextBreach(nextBreach, nextPartner, CAREER_LOAN.rescuePartner.weeks)}
+                  {nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.hub.backerNextBreach(nextBreachParams)}
                 </p>
                 <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
-                <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
+                {breachEnd !== null ? (
+                  <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
+                ) : null}
               </>
             ) : (
               <>
-                {/* rc.33 (ECO-08): on Hard the first breach ends the career — no Backer to describe. */}
+                {/* CAREER_LOAN.breachesToEnd may end this difficulty's careers at the first breach: no loan to describe. */}
                 <p className="mt-1 text-xs text-sub">
                   {nextBreach === "insolvent"
                     ? C.finances.backerIdleNone(formatMoney(backer.floor, { compact: true }))
                     : C.finances.backerIdle(
                         formatMoney(backer.floor, { compact: true }),
                         formatMoney(backer.rescueTo, { compact: true }),
+                        deadlineWeeksFor(save.difficulty),
                       )}
                 </p>
                 {CAREER_LOAN.sizing === "weeks" && nextBreach !== "insolvent" ? (
@@ -1378,11 +1402,13 @@ export function FinancesScreen() {
                   </p>
                 ) : null}
                 <p className="mt-1 text-[11px] text-faint">
-                  {C.finances.breachLadder(
-                    breachEnd,
-                    CAREER_LOAN.rescuePartner.atBreach[save.difficulty] ?? null,
-                    CAREER_LOAN.rescuePartner.weeks,
-                  )}
+                  {C.finances.loanRule({
+                    term: deadlineWeeksFor(save.difficulty),
+                    partnerPct: Math.round((investorShareFor(save.difficulty) ?? 0) * 100),
+                    partnerWeeks: CAREER_LOAN.investor.weeks,
+                    maxTopUps: CAREER_LOAN.emergency.maxTopUps,
+                    endAt: breachEnd,
+                  })}
                 </p>
               </>
             )}

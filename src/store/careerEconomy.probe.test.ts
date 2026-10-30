@@ -21,7 +21,8 @@
  *    season start against the user's books and the best AI rosters' wage bill.
  *
  * Knobs: ECON_REGIONS (default all seven), ECON_DIFFS (easy,normal,hard),
- * ECON_POLICIES (default all seven ARC_POLICIES), ECON_SEEDS (careers per
+ * ECON_POLICIES (default the seven ARC_DEFAULT_POLICIES; rc.34's veterans runs
+ * when named), ECON_SEEDS (careers per
  * cell, default 1: seed 9100, the first seed of CAREER-BASELINE-rc30),
  * ECON_SEASONS (default 8), ECON_OUT (optional JSON dump of the records),
  * ECON_IN (re-render the Markdown from such a dump, no careers played;
@@ -181,11 +182,12 @@ async function curvesReport(): Promise<string> {
   const { createCareerSave } = await import("./careerFlow");
   lines.push("#### P0. Day one — the founding payroll against the start budget (median of the 7 regions, seed 9100)");
   lines.push("");
+  const emergency = (B.CAREER_LOAN as { emergency?: { deadlineWeeks: Record<string, number | null> } }).emergency;
   lines.push(
-    `No sponsor until rep ${B.CAREER_SPONSOR.firstOfferRepGate}; the fanbase at rep ${B.CAREER_REP.start} pays ${money(perWeek(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint))}/wk. ${B.CAREER_SPONSOR.founding.enabled ? `The founding partner (M3) pays ${Math.round(B.CAREER_SPONSOR.founding.payrollShare * 100)}% of the founding wage bill through season ${B.CAREER_SPONSOR.founding.throughSeasonIndex} at least. ` : ""}Runway = weeks the start budget covers at that burn (wages − fanbase − founding partner, no prizes), then the Backer: ${B.CAREER_LOAN.sizing === "weeks" ? `floor ${B.CAREER_LOAN.floorWeeks} weeks of wages below zero, each rescue back to ${B.CAREER_LOAN.rescueToWeeks} weeks above (M4)` : `floor ${money(B.CAREER_LOAN.floor)}, each rescue back to ${money(B.CAREER_LOAN.rescueTo)}`} — rc.33 (ECO-08): the career ends at breach ${["easy", "normal", "hard"].map((d) => `${B.CAREER_LOAN.breachesToEnd[d] ?? "never"} (${d})`).join(" / ")}, the breaches before it are rescues (Easy's first adds the rescue partner, not counted here). The founders' deals end after season 1.`,
+    `No sponsor until rep ${B.CAREER_SPONSOR.firstOfferRepGate}; the fanbase at rep ${B.CAREER_REP.start} pays ${money(perWeek(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint))}/wk. ${B.CAREER_SPONSOR.founding.enabled ? `The founding partner (M3) pays ${Math.round(B.CAREER_SPONSOR.founding.payrollShare * 100)}% of the founding wage bill through season ${B.CAREER_SPONSOR.founding.throughSeasonIndex} at least. ` : ""}The start budget is the median of the career's real day-one balance (rc.34: at least \`startingBudgetWeeks\` of the founding wage bill). Runway = weeks the start budget covers at that burn (wages − fanbase − founding partner, no prizes), then the safety net: ${B.CAREER_LOAN.sizing === "weeks" ? `floor ${B.CAREER_LOAN.floorWeeks} weeks of wages below zero, each rescue back to ${B.CAREER_LOAN.rescueToWeeks} weeks above (M4)` : `floor ${money(B.CAREER_LOAN.floor)}, each rescue back to ${money(B.CAREER_LOAN.rescueTo)}`}. ${emergency ? `rc.34: the first breach opens the bank's emergency loan, due ${["easy", "normal", "hard"].map((d) => `${emergency.deadlineWeeks[d] ?? "never"} wk (${d})`).join(" / ")} later — "… to the end" is the first breach plus that term (a breach count from \`breachesToEnd\` ends it sooner where set: ${["easy", "normal", "hard"].map((d) => `${B.CAREER_LOAN.breachesToEnd[d] ?? "none"} (${d})`).join(" / ")}).` : `rc.33 (ECO-08): the career ends at breach ${["easy", "normal", "hard"].map((d) => `${B.CAREER_LOAN.breachesToEnd[d] ?? "never"} (${d})`).join(" / ")}, the breaches before it are rescues.`} The founders' deals end after season 1.`,
   );
   lines.push("");
-  head(["Difficulty · founding roster", "wages / wk (season)", "founding partner / wk", "start budget", "Backer floor · rescue", "runway to $0", "… to the breach that ends it", "S0 prizes / wk: out early · qualifier side"]);
+  head(["Difficulty · founding roster", "wages / wk (season)", "founding partner / wk", "start budget", "floor · rescue", "runway to $0", "… to the end (no prizes, no sponsor)", "S0 prizes / wk: out early · qualifier side"]);
   for (const difficulty of ["easy", "normal", "hard"] as const)
     for (const rosterKey of ["balanced", "prospects", "journeymen"] as const) {
       const bills = ALL_REGIONS.map((region) => {
@@ -210,18 +212,26 @@ async function curvesReport(): Promise<string> {
         return {
           wk: save.squad.reduce((n, p) => n + E.weeklyWage(p.salaryPerSplit), 0),
           partner: E.weeklyOf(E.foundingPartnerBaseFor(save.foundingPartner, 0)),
+          // rc.34: the day-one balance (startingBudgetFor — per roster since rc.34).
+          budget: save.finances.balance,
         };
       });
       const wk = q(bills.map((b) => b.wk), 0.5);
       const partner = q(bills.map((b) => b.partner), 0.5);
       const fan = E.weeklyOf(B.CAREER_REP.start * B.CAREER_ECONOMY.passivePerRepPoint);
       const burn = Math.max(1, wk - fan - partner);
-      const budget = B.CAREER_ECONOMY.startingBudget[difficulty];
+      const budget = q(bills.map((b) => b.budget), 0.5);
       const line = E.backerLineFor(wk, 0);
       const toZero = budget / burn;
-      // rc.33 (ECO-08): every breach before CAREER_LOAN.breachesToEnd is a Backer rescue (Easy 2, Normal 1, Hard 0).
-      const rescues = Math.max(0, (B.CAREER_LOAN.breachesToEnd[difficulty] ?? 2) - 1);
-      const toEnd = toZero + -line.floor / burn + (rescues * (line.rescueTo - line.floor)) / burn;
+      const toBreach = toZero + -line.floor / burn;
+      const endAt = B.CAREER_LOAN.breachesToEnd[difficulty] ?? null;
+      const term = emergency ? (emergency.deadlineWeeks[difficulty] ?? null) : null;
+      // rc.34: the first breach opens the emergency loan; its deadline ends a career that cannot pay
+      // (a burn with no income never can). A count from breachesToEnd ends it at that breach instead
+      // (each breach before it a rescue back to the target). rc.33: the count alone.
+      const byCount = endAt === null ? Infinity : toBreach + ((endAt - 1) * (line.rescueTo - line.floor)) / burn;
+      const byDeadline = emergency ? (term === null ? Infinity : toBreach + term) : Infinity;
+      const toEnd = Math.min(byCount, byDeadline);
       const pzd = (tier: Parameters<typeof E.prizeFor>[0], pl: Parameters<typeof E.prizeFor>[1]) =>
         E.prizeFor(tier, pl, tier === "qualifier" ? "swissOnly" : "swiss", difficulty, 0);
       const outEarly = 6 * pzd("qualifier", "swiss_exit") + 3 * (pzd("qualifier", "top8") + pzd("regional", "swiss_exit"));
@@ -233,7 +243,7 @@ async function curvesReport(): Promise<string> {
         money(budget),
         `${money(line.floor)} · ${money(line.rescueTo)}`,
         `${toZero.toFixed(0)} wk`,
-        `${toEnd.toFixed(0)} wk`,
+        Number.isFinite(toEnd) ? `${toEnd.toFixed(0)} wk` : "never",
         `${money(outEarly / W)} · ${money(qualSide / W)}`,
       ]);
     }
@@ -629,8 +639,16 @@ interface EconCareer {
   rescueSwing?: number | null;
   /** rc.32 (M4): every restructuring (absolute weeks; none since rc.33, ECO-08 — kept to read rc.32 dumps). */
   restructureWeeks?: number[];
-  /** rc.33 (ECO-08): every Backer rescue (absolute weeks) — Easy can be rescued twice. */
+  /** rc.33 (ECO-08): every Backer rescue (absolute weeks) — Easy can be rescued twice. rc.34: every emergency loan and top-up. */
   rescueWeeks?: number[];
+  /** rc.34: the emergency loans opened (a top-up is not one), the deadlines the bank collected, its deadline warnings (absolute weeks). */
+  loanWeeks?: number[];
+  collectedWeeks?: number[];
+  deadlineWarnWeeks?: number[];
+  /** rc.34: what ended the career through money ("deadline" / "breach"; absent in older dumps = a breach). */
+  endCause?: "deadline" | "breach";
+  /** rc.34 (C10b): the lowest balance in season 0's weeks 1–12 (the first split carried?). */
+  firstSplitLow?: number;
   endWeek: number | null;
   firstSponsorSeason: number | null;
   arcRows: Pick<ArcCareer["seasons"][number], "seasonIndex" | "regionRank" | "majorsQualified" | "worlds" | "titles" | "sales" | "signings" | "starSignings">[];
@@ -776,8 +794,13 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
           c.warningWeeks.push(m.seasonIndex * W + weekOfDay(m.day));
         }
         // rc.33 (ECO-08): Easy's Backer can rescue twice — every rescue is recorded.
-        if (m.titleKey === "backerIn") (c.rescueWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
-        if (m.titleKey === "backerIn" && c.rescueWeek === null) {
+        // rc.34: the bank's emergency loan and its top-ups are the rescues now.
+        const rescue = m.titleKey === "backerIn" || m.titleKey === "emergencyLoan" || m.titleKey === "emergencyTopUp";
+        if (rescue) (c.rescueWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
+        if (m.titleKey === "emergencyLoan") (c.loanWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
+        if (m.titleKey === "loanCollected") (c.collectedWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
+        if (m.titleKey === "loanDeadline") (c.deadlineWarnWeeks ??= []).push(m.seasonIndex * W + weekOfDay(m.day));
+        if (rescue && c.rescueWeek === null) {
           c.rescueWeek = m.seasonIndex * W + weekOfDay(m.day);
           const stmt = statementOf(save);
           c.rescueBurn = Math.max(0, -stmt.net);
@@ -792,6 +815,10 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       const x = seasonOf(save.clock.seasonIndex);
       const fin = save.finances;
       x.balanceMin = Math.min(x.balanceMin, fin.balance);
+      // rc.34 (C10b): the first split carried? The lowest balance in season 0's weeks 1–12.
+      if (save.clock.seasonIndex === 0 && weekOfDay(save.clock.day) <= 12) {
+        c.firstSplitLow = Math.min(c.firstSplitLow ?? fin.balance, fin.balance);
+      }
       x.balanceEnd = fin.balance;
       x.backerOwedEnd = fin.loan?.remaining ?? 0;
       x.bankOwedEnd = fin.bankLoan?.remaining ?? 0;
@@ -810,6 +837,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       if (save.phase === "ended") {
         x.ended = true;
         c.endWeek ??= absWeek(save);
+        // rc.34: the emergency loan unpaid on its deadline, or a breach the bank would not cover.
+        c.endCause ??= save.end.moneyCause ?? "breach";
         x.ratingEnd = save.squad.length ? userSeedRatingFor(save) : 0;
       }
       if (kind === "seasonEnd" || ((kind === "day" || kind === "event") && save.phase === "seasonReview")) {
@@ -1454,10 +1483,10 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
   lines.push("#### C10. Both sides of the guardrail — by difficulty (rc.32; Miguel, 30/10: not too easy, not punitive)");
   lines.push("");
   lines.push(
-    "Left of the bar, the unfair break: insolvent (the career ended through money), the newcomer policies (autopilot, badSponsor, losingStart), rescued, restructured (rc.32 only), rescued twice (rc.33: Easy's second Backer loan). Right of it, money still decides: the spender still going broke, season-rows with a tight Monday in S3–S5, the snowball p90 (balance in seasons of payroll, S2–S7 worst), careers with an 88+ signing by S4.",
+    "Left of the bar, the unfair break: insolvent (the career ended through money), the newcomer policies (autopilot, badSponsor, losingStart), rescued, restructured (rc.32 only), rescued twice (rc.33: Easy's second Backer loan; rc.34: a top-up of the emergency loan), the insolvencies the emergency loan's deadline ended (rc.34), the careers whose deadline the bank collected (rc.34), and the rescue's warning lead (p50 weeks from the first cash warning in the season before the first rescue). Right of it, money still decides: the spender still going broke, season-rows with a tight Monday in S3–S5, the snowball p90 (balance in seasons of payroll, S2–S7 worst), careers with an 88+ signing by S4.",
   );
   lines.push("");
-  head(["Difficulty", "n", "insolvent", "newcomers insolvent", "rescued", "restructured", "rescued twice", "‖ spender insolvent", "tight Monday S3–S5", "snowball p90 S2–S7 (max)", "88+ signing by S4"]);
+  head(["Difficulty", "n", "insolvent", "newcomers insolvent", "rescued", "restructured", "rescued twice", "ended by the deadline", "deadline collected", "warning lead p50", "‖ spender insolvent", "tight Monday S3–S5", "snowball p90 S2–S7 (max)", "88+ signing by S4"]);
   const newcomer = new Set(["autopilot", "badSponsor", "losingStart"]);
   for (const d of diffs) {
     const cs = careers.filter((c) => c.difficulty === d);
@@ -1467,6 +1496,12 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
     const mid = cs.flatMap((c) => c.seasons.filter((x) => x.s >= 3 && x.s <= 5));
     const banked = (x: EconSeason) => x.balanceEnd / Math.max(1, sumKeys(x.spend, ["payroll", "salary", "coachSalary"]));
     const p90s = cols.filter((s) => s >= 2).map((s) => rowsAt(cs, s)).filter((xs) => xs.length > 0).map((xs) => q(xs.map(banked), 0.9));
+    // rc.34: from the earliest cash warning in the 32 weeks before the first rescue to it.
+    const leads = cs.flatMap((c) => {
+      if (c.rescueWeek === null) return [];
+      const ws = (c.warningWeeks ?? []).filter((w) => w < c.rescueWeek! && w >= c.rescueWeek! - W);
+      return ws.length ? [c.rescueWeek - Math.min(...ws)] : [];
+    });
     row([
       d,
       cs.length,
@@ -1475,6 +1510,9 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
       pct(cs.filter((c) => c.rescueWeek !== null).length, cs.length),
       pct(cs.filter(restructured).length, cs.length),
       pct(cs.filter((c) => (c.rescueWeeks?.length ?? 0) >= 2).length, cs.length),
+      pct(cs.filter((c) => insolvent(c) && c.endCause === "deadline").length, cs.length),
+      pct(cs.filter((c) => (c.collectedWeeks?.length ?? 0) > 0).length, cs.length),
+      leads.length ? `${q(leads, 0.5)} wk` : "–",
       pct(sp.filter(insolvent).length, sp.length),
       pct(mid.filter((x) => x.mondaysTight > 0).length, mid.length),
       p90s.length ? ratio(Math.max(...p90s), 1) : "–",
@@ -1482,6 +1520,39 @@ function careersReport(careers: EconCareer[], seasons: number, rescueSwing: numb
     ]);
   }
   lines.push("");
+
+  // C10b. rc.34 (Miguel, 31/10: "the older team went broke in the first split"): the three
+  // founding rosters played hands-off — the autopilot (balanced), losingStart (prospects) and
+  // veterans (journeymen, run when ECON_POLICIES names it).
+  const rosterPolicies: [string, string][] = [["autopilot", "balanced"], ["losingStart", "prospects"], ["veterans", "journeymen"]];
+  if (careers.some((c) => rosterPolicies.some(([p]) => p === c.policy))) {
+    lines.push("#### C10b. The founding rosters, hands-off — by difficulty (rc.34)");
+    lines.push("");
+    lines.push(
+      "The autopilot with each founding roster: the balanced (autopilot), the prospects (losingStart) and the journeymen (veterans, only when ECON_POLICIES names it). Day one viable = the first split carried: no Monday below $0 in weeks 1–12 of season 0.",
+    );
+    lines.push("");
+    head(["Difficulty · roster", "n", "start budget p50", "S0 low p50", "below $0 in the first split", "rescued", "insolvent", "ended by S1", "S1 end balance p50"]);
+    for (const d of diffs)
+      for (const [policy, roster] of rosterPolicies) {
+        const cs = careers.filter((c) => c.difficulty === d && c.policy === policy);
+        if (!cs.length) continue;
+        const s0 = cs.map((c) => c.seasons.find((x) => x.s === 0)).filter((x): x is EconSeason => Boolean(x));
+        const s1 = cs.map((c) => c.seasons.find((x) => x.s === 1)).filter((x): x is EconSeason => Boolean(x));
+        row([
+          `${d} · ${roster}`,
+          cs.length,
+          money(q(s0.map((x) => x.balanceStart), 0.5)),
+          money(q(s0.map((x) => x.balanceMin), 0.5)),
+          pct(cs.filter((c) => (c.firstSplitLow ?? 0) < 0).length, cs.length),
+          pct(cs.filter((c) => c.rescueWeek !== null).length, cs.length),
+          pct(cs.filter(insolvent).length, cs.length),
+          pct(cs.filter((c) => insolvent(c) && c.endWeek! <= 2 * W).length, cs.length),
+          s1.length ? money(q(s1.map((x) => x.balanceEnd), 0.5)) : "–",
+        ]);
+      }
+    lines.push("");
+  }
   return lines.join("\n");
 }
 
@@ -1496,8 +1567,11 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
       const t0 = Date.now();
       const regions = list(env.ECON_REGIONS, ALL_REGIONS);
       const diffs = list<CareerDifficulty>(env.ECON_DIFFS, ALL_DIFFS);
-      const { ARC_POLICIES } = await import("./careerArcBot");
-      const policies = list<ArcPolicyId>(env.ECON_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[]);
+      const { ARC_DEFAULT_POLICIES, ARC_POLICIES } = await import("./careerArcBot");
+      // rc.34: the seven defaults unless named (ECON_POLICIES=…,veterans plays the older founding roster).
+      const policies = env.ECON_POLICIES
+        ? list<ArcPolicyId>(env.ECON_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[])
+        : [...ARC_DEFAULT_POLICIES];
       const seeds = Number(env.ECON_SEEDS ?? 1);
       const seasons = Number(env.ECON_SEASONS ?? 8);
       const knobs = [
@@ -1525,8 +1599,25 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
           for (const difficulty of diffs)
             for (const policy of policies)
               for (let k = 0; k < seeds; k++) cells.push({ region, difficulty, policy, seed: 9100 + k * 7919 });
-        // ECON_IN re-renders a saved ECON_OUT dump without replaying the careers.
-        const saved = env.ECON_IN ? (JSON.parse(readFileSync(env.ECON_IN, "utf8")) as { seasons: number; careers: EconCareer[] }) : null;
+        // ECON_IN re-renders saved ECON_OUT dumps without replaying the careers. rc.34: a
+        // comma-separated list merges the slices of a split sweep, and ECON_POLICIES /
+        // ECON_REGIONS / ECON_DIFFS, when given, keep only those careers (like with like).
+        const dumps = env.ECON_IN
+          ? env.ECON_IN.split(",").map((f) => JSON.parse(readFileSync(f.trim(), "utf8")) as { seasons: number; careers: EconCareer[] })
+          : [];
+        const saved = dumps.length
+          ? {
+              seasons: dumps[0].seasons,
+              careers: dumps
+                .flatMap((d) => d.careers)
+                .filter(
+                  (c) =>
+                    (!env.ECON_POLICIES || policies.includes(c.policy)) &&
+                    (!env.ECON_REGIONS || regions.includes(c.region)) &&
+                    (!env.ECON_DIFFS || diffs.includes(c.difficulty)),
+                ),
+            }
+          : null;
         const careers = saved ? saved.careers : await playEconCareers(cells, seasons);
         if (!saved) expect(careers).toHaveLength(cells.length);
         if (env.ECON_OUT && !saved) writeFileSync(env.ECON_OUT, JSON.stringify({ seasons, careers }));

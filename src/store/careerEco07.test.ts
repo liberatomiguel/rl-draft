@@ -2,11 +2,14 @@
  * Road to Worlds — rc.33 (Etapa 2b part 3, front A): Miguel's 30/10 money
  * answers on rc.32. Every number reads its balance.ts key.
  *
- *  - ECO-08: what ends a career by difficulty — Easy at the 3rd breach,
- *    Normal at the 2nd, Hard at the 1st; every breach before it is the
- *    Backer's rescue; no restructuring (rc.32's forced sale is gone).
+ *  - ECO-08: what ends a career by difficulty. rc.34 (Miguel, 31/10)
+ *    replaced the breach count with the emergency loan's deadline
+ *    (careerLoan.test.ts has that model); this file keeps what still holds:
+ *    no restructuring, the count key that can still end a career
+ *    (`breachesToEnd`, null by default), the warnings' next breach.
  *  - ECO-07: no day-one founding partner (a running rc.32 deal is honoured);
- *    Easy's first breach brings a rescue partner for one split.
+ *    rc.34: Easy's first emergency loan brings the investor (rc.33's rescue
+ *    partner) for about a split.
  *  - ECO-09: one index at 12 % and a steeper ask above the strong-player line.
  *  - M7: the sponsor tier bases and the fanbase (guaranteed income).
  *  - ECO-12: no sale listing and no late signing; an rc.32 save loads clean.
@@ -32,16 +35,17 @@ import {
   coachSalaryFor,
   computeSalaryAsk,
   foundingPartnerActive,
+  investorJoinsNext,
+  investorWeeklyFor,
   loanBreachesOf,
   marketValueFor,
   moneyIndex,
+  mondayAfter,
   mondayBalancesFromLedger,
   mondaysToBreach,
   quantizeWeekly,
   recordMondayBalance,
-  rescuePartnerAt,
   rescuePartnerLastPayday,
-  rescuePartnerWeeklyFor,
   runwayWeeks,
   sponsorOffersFor,
   starCurveFactor,
@@ -105,37 +109,57 @@ function mondayAtFloor(save: CareerSave, week: number, delta: number): CareerSav
 }
 
 /** A career on `difficulty` with a wage bill no income carries (every Monday burns). */
-function heavyCareer(difficulty: CareerDifficulty, seed: number): CareerSave {
+function heavyCareer(difficulty: CareerDifficulty, seed: number, base = 10_000): CareerSave {
   const save = createCareerSave({ ...INPUT, difficulty }, seed);
-  for (const [i, p] of save.squad.entries()) p.salaryPerSplit = 10_000 + i * 1_000;
+  for (const [i, p] of save.squad.entries()) p.salaryPerSplit = base + i * 1_000;
   return save;
 }
 
 const mailOf = (save: CareerSave, titleKey: string): MailItem[] => save.mail.filter((m) => m.titleKey === titleKey);
 
+/** Run `fn` with CAREER_LOAN.breachesToEnd temporarily set (the key is a plain object at runtime). */
+function withBreachesToEnd<T>(value: Record<string, number | null>, fn: () => T): T {
+  const keys = CAREER_LOAN.breachesToEnd as Record<string, number | null>;
+  const saved = { ...keys };
+  Object.assign(keys, value);
+  try {
+    return fn();
+  } finally {
+    Object.assign(keys, saved);
+  }
+}
+
 // ===========================================================================
-// ECO-08 — breaches by difficulty: 3 / 2 / 1, no restructuring
+// ECO-08 — what ends a career through money (rc.34: the deadline; the count key stays)
 // ===========================================================================
 
-describe("rc.33 ECO-08 — what ends a career through money, by difficulty", () => {
-  it("Easy: rescue, rescue, the end · Normal: rescue, the end · Hard: the first breach ends it", () => {
-    expect(CAREER_LOAN.breachesToEnd).toEqual({ easy: 3, normal: 2, hard: 1 });
-    expect([1, 2, 3, 4].map((b) => breachOutcomeFor(b, "easy"))).toEqual(["rescue", "rescue", "insolvent", "insolvent"]);
-    expect([1, 2, 3].map((b) => breachOutcomeFor(b, "normal"))).toEqual(["rescue", "insolvent", "insolvent"]);
-    expect([1, 2].map((b) => breachOutcomeFor(b, "hard"))).toEqual(["insolvent", "insolvent"]);
-    for (const d of ["easy", "normal", "hard"] as const) expect(breachesToEndFor(d)).toBe(CAREER_LOAN.breachesToEnd[d]);
-    // null = money never ends it: every breach is a rescue.
-    const keys = CAREER_LOAN.breachesToEnd as Record<string, number | null>;
-    const saved = keys.easy;
-    keys.easy = null;
-    try {
-      expect([1, 2, 7].map((b) => breachOutcomeFor(b, "easy"))).toEqual(["rescue", "rescue", "rescue"]);
-    } finally {
-      keys.easy = saved;
+describe("rc.33 ECO-08 → rc.34 — no breach count ends a career by default; the count key still can", () => {
+  it("breachesToEnd is null everywhere (the emergency loan's deadline ends careers); `hard: 1` restores Hard's first-breach end", () => {
+    expect(CAREER_LOAN.breachesToEnd).toEqual({ easy: null, normal: null, hard: null });
+    for (const d of ["easy", "normal", "hard"] as const) {
+      expect([1, 2, 7].map((b) => breachOutcomeFor(b, d))).toEqual(["rescue", "rescue", "rescue"]);
+      expect(breachesToEndFor(d)).toBeNull();
     }
+    // rc.33's counts, restored by the key: Easy rescue, rescue, the end · Normal rescue, the end · Hard the end.
+    withBreachesToEnd({ easy: 3, normal: 2, hard: 1 }, () => {
+      expect([1, 2, 3, 4].map((b) => breachOutcomeFor(b, "easy"))).toEqual(["rescue", "rescue", "insolvent", "insolvent"]);
+      expect([1, 2, 3].map((b) => breachOutcomeFor(b, "normal"))).toEqual(["rescue", "insolvent", "insolvent"]);
+      expect([1, 2].map((b) => breachOutcomeFor(b, "hard"))).toEqual(["insolvent", "insolvent"]);
+    });
+    // Through the real flow: Hard's first breach ends the career with the key on, opens a loan without it.
+    withBreachesToEnd({ hard: 1 }, () => {
+      const hard = mondayAtFloor(heavyCareer("hard", 70_103), 2, -10);
+      expect(hard.phase).toBe("ended");
+      expect(hard.end).toMatchObject({ reason: "insolvency", moneyCause: "breach" });
+      expect(hard.finances.ledger.some((l) => l.kind === "loanGrant")).toBe(false);
+      expect(mailOf(hard, "emergencyLoan")).toHaveLength(0);
+    });
+    const hard = mondayAtFloor(heavyCareer("hard", 70_103), 2, -10);
+    expect(hard.phase).toBe("running");
+    expect(mailOf(hard, "emergencyLoan")).toHaveLength(1);
   });
 
-  it("Easy through the real flow: breach 1 rescues with the partner, breach 2 rescues again (the debt adds up), breach 3 ends it", () => {
+  it("Easy through the real flow: breach 1 opens the loan with the investor, breach 2 adds to it (the debt adds up), the squad intact", () => {
     let save = heavyCareer("easy", 70_101);
     save = mondayAtFloor(save, 2, -10);
     expect(save.phase).toBe("running");
@@ -143,49 +167,31 @@ describe("rc.33 ECO-08 — what ends a career through money, by difficulty", () 
     expect(save.finances.balance).toBe(backerLineOf(save).rescueTo);
     expect(save.finances.rescuePartner).not.toBeNull();
     const owedAfterFirst = save.finances.loan!.remaining;
-    const first = mailOf(save, "backerIn")[0];
-    expect(first.params).toMatchObject({ n: 1, next: "rescue", nextPartner: 0, partnerName: RESCUE_PARTNER_BRAND.name });
+    const first = mailOf(save, "emergencyLoan")[0];
+    expect(first.params).toMatchObject({ n: 1, next: "rescue", owing: 1, nextPartner: 0, partnerName: RESCUE_PARTNER_BRAND.name });
 
     save = mondayAtFloor(save, 3, -10);
     expect(save.phase).toBe("running");
     expect(save.finances.loanBreaches).toBe(2);
     expect(save.finances.balance).toBe(backerLineOf(save).rescueTo);
-    // The second loan is added to what is still owed — no forced sale, the squad intact.
+    // The second breach adds to what is still owed — no forced sale, the squad intact.
     expect(save.finances.loan!.remaining).toBeGreaterThan(owedAfterFirst);
     expect(save.squad).toHaveLength(createCareerSave({ ...INPUT, difficulty: "easy" }, 70_101).squad.length);
-    const second = mailOf(save, "backerIn").find((m) => m.params?.n === 2)!;
-    expect(second.params).toMatchObject({ next: "insolvent", partnerWeekly: 0 });
-    expect(CAREER_EN.mail.body.backerIn(second.params!)).toContain("second time");
-    expect(CAREER_PT.mail.body.backerIn(second.params!)).toContain("segunda vez");
-
-    save = mondayAtFloor(save, 4, -10);
-    expect(save.phase).toBe("ended");
-    expect(save.end.reason).toBe("insolvency");
+    const second = mailOf(save, "emergencyTopUp")[0];
+    expect(second.params).toMatchObject({ n: 2, topUps: 1, partnerWeekly: 0 });
     expect(save.finances.ledger.filter((l) => l.kind === "loanGrant")).toHaveLength(2);
   });
 
-  it("Normal: one rescue (no partner), the second breach ends it — Hard: the first breach ends it, no Backer", () => {
-    let normal = mondayAtFloor(heavyCareer("normal", 70_102), 2, -10);
-    expect(normal.phase).toBe("running");
-    expect(normal.finances.rescuePartner ?? null).toBeNull();
-    expect(mailOf(normal, "backerIn")[0].params).toMatchObject({ next: "insolvent", partnerWeekly: 0 });
-    normal = mondayAtFloor(normal, 3, -10);
-    expect(normal.phase).toBe("ended");
-
-    const hard = mondayAtFloor(heavyCareer("hard", 70_103), 2, -10);
-    expect(hard.phase).toBe("ended");
-    expect(hard.end.reason).toBe("insolvency");
-    expect(hard.finances.ledger.some((l) => l.kind === "loanGrant")).toBe(false);
-    expect(mailOf(hard, "backerIn")).toHaveLength(0);
-  });
-
-  it("no restructuring anywhere: no forced sale, no rep loss, no 'restructured' mail on any difficulty", () => {
+  it("no restructuring anywhere: no forced sale, no rep loss, no 'restructured' mail — the top-up cap ends a spiral", () => {
     for (const [d, seed] of [["easy", 70_104], ["normal", 70_105]] as const) {
       let save = heavyCareer(d, seed);
       const squad = save.squad.map((p) => p.id);
       const rep = save.reputation;
-      for (let w = 2; save.phase === "running" && w < 8; w++) save = mondayAtFloor(save, w, -10);
+      for (let w = 2; save.phase === "running" && w < 12; w++) save = mondayAtFloor(save, w, -10);
+      // The loan, then CAREER_LOAN.emergency.maxTopUps top-ups, then the breach the bank will not cover.
       expect(save.phase).toBe("ended");
+      expect(save.end.moneyCause).toBe("breach");
+      expect(loanBreachesOf(save.finances)).toBe(2 + (CAREER_LOAN.emergency.maxTopUps ?? 0));
       expect(save.squad.map((p) => p.id)).toEqual(squad);
       expect(save.reputation).toBe(rep);
       expect(mailOf(save, "restructured")).toHaveLength(0);
@@ -193,8 +199,8 @@ describe("rc.33 ECO-08 — what ends a career through money, by difficulty", () 
     }
   });
 
-  it("the warnings quote the next breach per difficulty: Easy's first names the partner, Hard's first names the end", () => {
-    for (const [d, next, partner] of [["easy", "rescue", 1], ["normal", "rescue", 0], ["hard", "insolvent", 0]] as const) {
+  it("the warnings quote the next breach per difficulty: Easy's first names the investor; Hard's opens a loan too (rc.34)", () => {
+    for (const [d, partner] of [["easy", 1], ["normal", 0], ["hard", 0]] as const) {
       let save = createCareerSave({ ...INPUT, difficulty: d }, 70_106);
       for (const p of save.squad) p.salaryPerSplit = 8_000;
       save = quietSunday(save, 2);
@@ -203,36 +209,48 @@ describe("rc.33 ECO-08 — what ends a career through money, by difficulty", () 
       save = advanceDayFlow(save);
       const notice = mailOf(save, "cashNotice")[0] ?? mailOf(save, "cashWarning")[0];
       expect(notice, d).toBeDefined();
-      expect(notice.params).toMatchObject({ next, nextPartner: partner });
+      expect(notice.params).toMatchObject({ next: "rescue", owing: 0, nextPartner: partner, term: CAREER_LOAN.emergency.deadlineWeeks[d] });
     }
   });
 
-  it("every player-facing statement of when money ends a career derives N from breachesToEnd (EN + PT, no restructuring)", () => {
+  it("every player-facing statement of the rule reads its keys (EN + PT, no restructuring)", () => {
     for (const C of [CAREER_EN, CAREER_PT]) {
-      const at = (d: CareerDifficulty) => C.finances.breachLadder(breachesToEndFor(d), CAREER_LOAN.rescuePartner.atBreach[d] ?? null);
       for (const d of ["easy", "normal", "hard"] as const) {
-        const text = at(d);
-        expect(text).not.toMatch(/restructur|reestrutur/i);
+        const text = C.finances.loanRule({
+          term: CAREER_LOAN.emergency.deadlineWeeks[d],
+          partnerPct: d === "easy" ? 20 : 0,
+          partnerWeeks: CAREER_LOAN.investor.weeks,
+          maxTopUps: CAREER_LOAN.emergency.maxTopUps,
+          endAt: breachesToEndFor(d),
+        });
+        expect(text).toContain(String(CAREER_LOAN.emergency.deadlineWeeks[d]));
+        expect(text).not.toMatch(/restructur|reestrutur|Backer|Investidor de emergência/i);
       }
-      // The wizard's money line (front C's preset step) spells the key's count as an ordinal:
-      // each preset's line differs and follows the count, never a fixed word.
-      const lines = (["easy", "normal", "hard"] as const).map((d) => C.wizard.presetMoneyAt(breachesToEndFor(d)!));
-      expect(new Set(lines).size).toBe(3);
-      expect(C.wizard.presetMoneyAt(1)).not.toBe(C.wizard.presetMoneyAt(2));
+      // The count key, when set, reads as an ordinal (and the first breach as the end).
+      const withEnd = (endAt: number) => C.finances.loanRule({ term: 24, partnerPct: 0, partnerWeeks: 10, maxTopUps: 3, endAt });
+      expect(withEnd(1)).not.toBe(withEnd(3));
+      // The wizard's money line (front I's step) still spells any count as an ordinal.
+      expect(new Set([1, 2, 3].map((n) => C.wizard.presetMoneyAt(n))).size).toBe(3);
       expect(C.wizard.presetMoneyAt(7)).toContain("7");
-      // The count reads the end too.
       expect(C.finances.breachCount(1, 2)).toMatch(/1/);
       expect(C.finances.breachCount(2, 3)).not.toBe(C.finances.breachCount(1, 3));
-      expect(C.wizard.presetMoneyNever).not.toMatch(/restructur|reestrutur/i);
       // No screen string promises a restructuring any more (the rc.32 mail and news
       // templates stay only to render an older save's inbox).
       const screens = JSON.stringify([C.hub, C.finances, C.market, C.wizard], (_k, v) => (typeof v === "function" ? v.toString() : v));
       expect(screens).not.toMatch(/restructur|reestrutur/i);
+      // rc.34: the bank lends; no screen names the Emergency Backer (the wizard is front I's) —
+      // except the one notice that explains, once, that an older save's Backer debt moved to the bank.
+      const { loanTakenOver, ...notices } = C.moneyNotice;
+      const loanScreens = JSON.stringify([C.hub, C.finances, C.market.errors, notices], (_k, v) =>
+        typeof v === "function" ? v.toString() : v,
+      );
+      expect(loanScreens).not.toMatch(/Emergency Backer|Investidor de emergência/);
+      expect(loanTakenOver.toString()).toMatch(/Emergency Backer|Investidor de emergência/);
     }
-    expect(CAREER_EN.finances.breachLadder(3, 1)).toMatch(/third ends the career/);
-    expect(CAREER_EN.finances.breachLadder(2, null)).toMatch(/second ends the career/);
-    expect(CAREER_EN.finances.breachLadder(1, null)).toMatch(/first breach of the floor ends the career/);
-    expect(CAREER_PT.finances.breachLadder(3, 1)).toMatch(/terceira encerra a carreira/);
+    expect(CAREER_EN.finances.loanRule({ term: null, partnerPct: 0, partnerWeeks: 10, maxTopUps: null, endAt: 1 })).toMatch(
+      /first breach of the floor ends the career/,
+    );
+    expect(CAREER_PT.finances.loanRule({ term: 24, partnerPct: 0, partnerWeeks: 10, maxTopUps: 3, endAt: 3 })).toMatch(/terceira quebra encerra a carreira/);
   });
 });
 
@@ -240,7 +258,7 @@ describe("rc.33 ECO-08 — what ends a career through money, by difficulty", () 
 // ECO-07 — no founding partner; Easy's rescue partner for one split
 // ===========================================================================
 
-describe("rc.33 ECO-07 — the rescue partner (Easy's first breach) and no founding partner", () => {
+describe("rc.33 ECO-07 → rc.34 — the investor (Easy's first emergency loan) and no founding partner", () => {
   it("a new career gets no founding partner: recorded null, no mail, no ledger line", () => {
     expect(CAREER_SPONSOR.founding.enabled).toBe(false);
     for (const d of ["easy", "normal", "hard"] as const) {
@@ -266,33 +284,33 @@ describe("rc.33 ECO-07 — the rescue partner (Easy's first breach) and no found
     expect(migrateSaveToV5(undecided)!.foundingPartner).toBeNull();
   });
 
-  it("pays payrollShare × the rescue Monday's wage bill for `weeks` Mondays, its own line, then clears", () => {
+  it("pays its share × the loan Monday's wage bill for `weeks` Mondays, its own line, then clears", () => {
     let save = mondayAtFloor(heavyCareer("easy", 70_203), 2, -10);
     const bill = weeklyStatementOf(save).payroll + weeklyStatementOf(save).coach;
     const partner = save.finances.rescuePartner!;
-    expect(partner).toEqual({ weekly: rescuePartnerWeeklyFor(bill), mondaysLeft: CAREER_LOAN.rescuePartner.weeks });
-    expect(partner.weekly).toBe(quantizeWeekly(CAREER_LOAN.rescuePartner.payrollShare * bill));
-    // The rescue mail announces who, how much, how long and until when.
-    const mail = mailOf(save, "backerIn")[0];
+    expect(partner).toEqual({ weekly: investorWeeklyFor(bill, "easy"), mondaysLeft: CAREER_LOAN.investor.weeks });
+    expect(partner.weekly).toBe(quantizeWeekly(CAREER_LOAN.investor.payrollShare.easy! * bill));
+    // The loan mail announces who, how much, how long and until when.
+    const mail = mailOf(save, "emergencyLoan")[0];
     const last = rescuePartnerLastPayday(partner, save.clock)!;
     expect(mail.params).toMatchObject({
       partnerName: RESCUE_PARTNER_BRAND.name,
       partnerWeekly: partner.weekly,
-      partnerWeeks: CAREER_LOAN.rescuePartner.weeks,
+      partnerWeeks: CAREER_LOAN.investor.weeks,
       partnerUntilWeek: weekOfDay(last.day),
     });
-    for (const C of [CAREER_EN, CAREER_PT]) expect(C.mail.body.backerIn(mail.params!)).toContain(RESCUE_PARTNER_BRAND.name);
+    for (const C of [CAREER_EN, CAREER_PT]) expect(C.mail.body.emergencyLoan(mail.params!)).toContain(RESCUE_PARTNER_BRAND.name);
     // Next Monday's statement counts it (the runway the screens show).
     expect(weeklyStatementOf(save).rescuePartner).toBe(partner.weekly);
     // A balance the burn cannot breach for the whole run: one line per Monday, then nothing.
     let week = 3;
-    for (let i = 0; i < CAREER_LOAN.rescuePartner.weeks; i++) {
+    for (let i = 0; i < CAREER_LOAN.investor.weeks; i++) {
       const sunday = quietSunday(save, week++);
       sunday.finances.balance = 10_000_000;
       save = advanceDayFlow(sunday);
     }
     const lines = save.finances.ledger.filter((l) => l.kind === "rescuePartner");
-    expect(lines).toHaveLength(CAREER_LOAN.rescuePartner.weeks);
+    expect(lines).toHaveLength(CAREER_LOAN.investor.weeks);
     for (const l of lines) expect(l.amount).toBe(partner.weekly);
     expect(save.finances.rescuePartner ?? null).toBeNull();
     expect(weeklyStatementOf(save).rescuePartner).toBe(0);
@@ -311,10 +329,13 @@ describe("rc.33 ECO-07 — the rescue partner (Easy's first breach) and no found
       seasonIndex: 3,
       day: firstDayOfWeek(8),
     });
-    expect(rescuePartnerAt(1, "easy")).toBe(true);
-    expect(rescuePartnerAt(2, "easy")).toBe(false);
-    expect(rescuePartnerAt(1, "normal")).toBe(false);
-    expect(rescuePartnerAt(1, "hard")).toBe(false);
+    // rc.34: only the career's first emergency loan brings it, on a difficulty with a share (Easy).
+    const fresh = { loanBreaches: 0, loanUsed: false, loan: null } as const;
+    expect(investorJoinsNext(fresh, "easy")).toBe(true);
+    expect(investorJoinsNext(fresh, "normal")).toBe(false);
+    expect(investorJoinsNext(fresh, "hard")).toBe(false);
+    expect(investorJoinsNext({ ...fresh, loan: { remaining: 1_000 } }, "easy")).toBe(false);
+    expect(investorJoinsNext({ ...fresh, loanUsed: true, loanBreaches: 1 }, "easy")).toBe(false);
   });
 });
 
@@ -322,12 +343,13 @@ describe("rc.33 ECO-07 — the rescue partner (Easy's first breach) and no found
 // rc.33 review — the rescue mail's money and the projections over the partner's run
 // ===========================================================================
 
-describe("rc.33 review — the rescue partner in the mail and in the projections", () => {
-  it("the rescue mail prints the partner's weekly help as money, EN and PT (a real Easy rescue through resolveMail)", () => {
-    const save = mondayAtFloor(heavyCareer("easy", 70_203), 2, -10);
+describe("rc.33 review — the investor in the mail and in the projections", () => {
+  it("the loan mail prints the investor's weekly help as money, EN and PT (a real Easy loan through resolveMail)", () => {
+    // A wage bill big enough for a four-digit weekly help (the formatting shows: "$1,540", never "1540").
+    const save = mondayAtFloor(heavyCareer("easy", 70_203, 20_000), 2, -10);
     const partner = save.finances.rescuePartner!;
     expect(partner.weekly).toBeGreaterThan(999);
-    const mail = mailOf(save, "backerIn")[0];
+    const mail = mailOf(save, "emergencyLoan")[0];
     const en = resolveMail(mail, CAREER_EN as unknown as CareerCopy).body;
     const pt = resolveMail(mail, CAREER_PT).body;
     expect(en).toContain(`${formatMoney(partner.weekly)} a week`);
@@ -335,16 +357,17 @@ describe("rc.33 review — the rescue partner in the mail and in the projections
     for (const body of [en, pt]) {
       expect(body).toContain(RESCUE_PARTNER_BRAND.name);
       expect(body).not.toContain(` ${partner.weekly} `);
-      // Every other amount of the rescue mail is money too.
+      // Every other amount of the loan mail is money too.
       expect(body).toContain(formatMoney(Number(mail.params!.rescueTo)));
       expect(body).toContain(formatMoney(Number(mail.params!.owed)));
+      expect(body).toContain(formatMoney(Number(mail.params!.lent)));
     }
   });
 
   it("Easy, seed 70101, $10–12k wages, rescued on week 3's Monday: the warnings quote the Monday the books really cross the floor", () => {
     let save = mondayAtFloor(heavyCareer("easy", 70_101), 2, -10);
     expect(loanBreachesOf(save.finances)).toBe(1);
-    expect(save.finances.rescuePartner?.mondaysLeft).toBe(CAREER_LOAN.rescuePartner.weeks);
+    expect(save.finances.rescuePartner?.mondaysLeft).toBe(CAREER_LOAN.investor.weeks);
     const seen = new Set(save.mail.map((m) => m.id));
     const quoted: { sentWeek: number; breachWeek: number; nextSeason: number }[] = [];
     let realBreachWeek: number | null = null;
@@ -392,15 +415,22 @@ describe("rc.33 review — the rescue partner in the mail and in the projections
     );
   });
 
-  it("where the next breach ends the career, no warning promises the Backer: the deal warning, the loans and bank hints, the error banner (EN + PT)", () => {
+  it("where the next breach ends the career, no warning promises a loan: the deal warning, the loans and bank hints, the error banner (EN + PT)", () => {
     const hard = createCareerSave({ ...INPUT, difficulty: "hard" }, 70_301);
     const easy = createCareerSave({ ...INPUT, difficulty: "easy" }, 70_301);
     const rescuedOnce = structuredClone(createCareerSave(INPUT, 70_301));
     rescuedOnce.finances.loanBreaches = 1;
     rescuedOnce.finances.loanUsed = true;
-    expect(nextBreachOutcomeOf(hard)).toBe("insolvent");
+    // rc.34: no count ends a career by default — Hard's first breach opens a loan too.
+    expect(nextBreachOutcomeOf(hard)).toBe("rescue");
     expect(nextBreachOutcomeOf(easy)).toBe("rescue");
-    expect(nextBreachOutcomeOf(rescuedOnce)).toBe("insolvent");
+    expect(nextBreachOutcomeOf(rescuedOnce)).toBe("rescue");
+    // The top-up cap reached: the next breach ends it.
+    const capped = structuredClone(rescuedOnce);
+    capped.finances.loan = { remaining: 9_000, topUps: CAREER_LOAN.emergency.maxTopUps ?? 0 };
+    expect(nextBreachOutcomeOf(capped)).toBe("insolvent");
+    // Hard's first-breach end restored by the key.
+    withBreachesToEnd({ hard: 1 }, () => expect(nextBreachOutcomeOf(hard)).toBe("insolvent"));
     for (const C of [CAREER_EN as unknown as CareerCopy, CAREER_PT]) {
       expect(errorTextFor(C, "funds", "rescue")).toBe(C.finances.backerWarning);
       expect(errorTextFor(C, "funds", "insolvent")).toBe(C.finances.endsCareerWarning);
@@ -413,22 +443,26 @@ describe("rc.33 review — the rescue partner in the mail and in the projections
       expect(C.finances.bankHintEnd(12, 10)).toContain("12");
     }
     expect(CAREER_EN.finances.loansHintEnd).not.toMatch(/on theirs/);
-    expect(CAREER_EN.finances.bankHintEnd(12, 10)).not.toMatch(/alternative to the Backer/);
-    expect(CAREER_PT.finances.bankHintEnd(12, 10)).not.toMatch(/alternativa ao Investidor/);
+    expect(CAREER_EN.finances.bankHintEnd(12, 10)).not.toMatch(/Backer/);
+    expect(CAREER_PT.finances.bankHintEnd(12, 10)).not.toMatch(/Investidor/);
   });
 
-  it("the partner's run reads CAREER_LOAN.rescuePartner.weeks, never a hardcoded split (EN + PT)", () => {
-    const weeks = CAREER_LOAN.rescuePartner.weeks;
+  it("the investor's run reads CAREER_LOAN.investor.weeks, never a hardcoded split (EN + PT)", () => {
+    const weeks = CAREER_LOAN.investor.weeks;
+    const next = { next: "rescue", owing: 0, nextPartner: 1, partnerRun: weeks, term: 24, topUpsLeft: -1 };
     for (const C of [CAREER_EN as unknown as CareerCopy, CAREER_PT]) {
-      const texts = [C.finances.breachLadder(3, 1, weeks), C.hub.backerNextBreach("rescue", true, weeks)];
+      const texts = [
+        C.finances.loanRule({ term: 24, partnerPct: 20, partnerWeeks: weeks, maxTopUps: 3, endAt: null }),
+        C.hub.backerNextBreach(next),
+      ];
       for (const t of texts) {
         expect(t).toContain(String(weeks));
         expect(t).not.toMatch(/a split|um split/);
       }
     }
-    expect(CAREER_EN.hub.backerNextBreach("rescue", true, 7)).toContain("for 7 weeks");
-    expect(CAREER_PT.hub.backerNextBreach("rescue", true, 7)).toContain("por 7 semanas");
-    // The warnings carry it: Easy's first breach names the partner's run.
+    expect(CAREER_EN.hub.backerNextBreach({ ...next, partnerRun: 7 })).toContain("for 7 weeks");
+    expect(CAREER_PT.hub.backerNextBreach({ ...next, partnerRun: 7 })).toContain("por 7 semanas");
+    // The warnings carry it: Easy's first breach names the investor's run.
     let save = createCareerSave({ ...INPUT, difficulty: "easy" }, 70_106);
     for (const p of save.squad) p.salaryPerSplit = 8_000;
     save = quietSunday(save, 2);
@@ -574,11 +608,14 @@ describe("rc.33 ECO-12 — the sale listing and the late signing are gone", () =
       expect(r.body.length).toBeGreaterThan(20);
       expect(r.body).not.toMatch(/next breach forces|próxima quebra força/);
     }
-    // rc.33's rules from the next breach: three breaches behind it, so the next one ends it on Easy.
-    expect(CAREER_EN.finances.breachCount(3, breachesToEndFor("easy"))).toMatch(/next one ends the career/);
+    // rc.34: the open Backer debt is the bank's emergency loan now, due deadlineWeeks from the load;
+    // three breaches behind it no longer end the career — the next one adds to the loan.
+    expect(loaded.finances.loan).toMatchObject({ remaining: 9_000, topUps: 0 });
+    expect(loaded.finances.loan!.deadline).toEqual(mondayAfter({ seasonIndex: 0, week: 12 }, CAREER_LOAN.emergency.deadlineWeeks.easy!));
     const next = mondayAtFloor(loaded, 13, -10);
-    expect(next.phase).toBe("ended");
-    expect(next.end.reason).toBe("insolvency");
+    expect(next.phase).toBe("running");
+    expect(next.finances.loan!.topUps).toBe(1);
+    expect(next.finances.loan!.deadline).toEqual(loaded.finances.loan!.deadline);
   });
 
   it("the repair is safe on a fresh rc.33 save (nothing to clear, the ring kept)", () => {

@@ -35,6 +35,7 @@ import type {
 import type { Placement, Region } from "@/engine/types";
 import {
   acceptBidFlow,
+  acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
   chooseSponsorFlow,
   coachCandidatesFor,
@@ -43,6 +44,7 @@ import {
   finishEvent,
   hireCoachFlow,
   isEventPaused,
+  moneyNoticeOf,
   releasePlayerFlow,
   renewPlayerFlow,
   renewalTalkFor,
@@ -70,7 +72,8 @@ export type ArcPolicyId =
   | "spender"
   | "badSponsor"
   | "losingStart"
-  | "coachChurn";
+  | "coachChurn"
+  | "veterans";
 
 export interface ArcPolicy {
   id: ArcPolicyId;
@@ -140,7 +143,30 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
     scrims: true,
     bids: "whenTight",
   },
+  /**
+   * rc.34 (Miguel, 31/10: "the older team went broke in the first split"):
+   * the wizard's older founding roster (journeymen), hands-off — the
+   * autopilot with the dearest founding payroll. Only the spender started
+   * from it before, with stars and loans on top. Opt-in: not in
+   * ARC_DEFAULT_POLICIES, so the default sweeps compare like with like.
+   */
+  veterans: { id: "veterans", ...base, rosterKey: "journeymen" },
 };
+
+/**
+ * The policies a sweep runs when none are named (rc.30–rc.33's seven), so
+ * rc.33 and rc.34 compare like with like; the others (rc.34's veterans) run
+ * when ARC_POLICIES / ECON_POLICIES name them.
+ */
+export const ARC_DEFAULT_POLICIES: readonly ArcPolicyId[] = [
+  "autopilot",
+  "tuned",
+  "youth",
+  "spender",
+  "badSponsor",
+  "losingStart",
+  "coachChurn",
+];
 
 // ---------------------------------------------------------------------------
 // Records
@@ -521,6 +547,9 @@ function borrow(save: CareerSave, t: Tally): CareerSave {
 /** Today's decisions, in the order a player meets them. */
 function decide(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
   let save = input;
+  // rc.34: a money notice (the emergency loan, its deadline) is read, as the modal makes a player do —
+  // nothing in the books moves, and the clock never waits on an unread one.
+  while (moneyNoticeOf(save)) save = acknowledgeMoneyNoticeFlow(save);
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).

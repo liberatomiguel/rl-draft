@@ -441,17 +441,20 @@ describe("rc.32 M4 — the Backer in weeks of payroll and what each breach does"
     });
   });
 
-  it("an older save rescued under rc.31 (loanUsed, no counter): on Normal its next breach ends it (rc.33, ECO-08)", () => {
-    let save = createCareerSave(INPUT, 50_203);
+  it("an older save rescued under rc.31 (loanUsed, no counter): its next breach opens a second emergency loan, no investor (rc.34)", () => {
+    let save = createCareerSave({ ...INPUT, difficulty: "easy" }, 50_203);
     save.finances.loanUsed = true;
     delete save.finances.loanBreaches;
     for (const p of save.squad) p.salaryPerSplit = 10_000;
     save = quietSunday(save, 2);
     save.finances.balance = backerLineOf(save).floor + 10;
     save = advanceDayFlow(save);
-    expect(save.phase).toBe("ended");
-    expect(save.end.reason).toBe("insolvency");
+    expect(save.phase).toBe("running");
     expect(save.finances.loanBreaches).toBe(2);
+    // Its rescue was the career's first loan: this one has a deadline and comes alone.
+    expect(save.finances.emergencyLoans).toBe(2);
+    expect(save.finances.loan!.deadline).toBeDefined();
+    expect(save.finances.rescuePartner ?? null).toBeNull();
   });
 });
 
@@ -477,13 +480,14 @@ describe("rc.32 M4 — warnings with the projected breach", () => {
     expect(net).toBeLessThan(0);
     save.finances.balance = -net * (CAREER_PAYROLL.runwayNoticeWeeks + 3);
     let guard = 0;
-    while (!save.mail.some((m) => m.titleKey === "backerIn") && guard++ < 400) save = step(save);
+    // rc.34: the rescue is the bank's emergency loan.
+    while (!save.mail.some((m) => m.titleKey === "emergencyLoan") && guard++ < 400) save = step(save);
     return save;
   }
 
   it("a notice once at ≤ 8 weeks, then a mail every Monday at ≤ 4, each naming the breach — all before the rescue", () => {
     const save = burnToRescue();
-    const rescue = save.mail.find((m) => m.titleKey === "backerIn")!;
+    const rescue = save.mail.find((m) => m.titleKey === "emergencyLoan")!;
     const rescueWeek = weekOfDay(rescue.day);
     const notices = save.mail.filter((m) => m.titleKey === "cashNotice");
     const warnings = save.mail.filter((m) => m.titleKey === "cashWarning" && m.day < rescue.day);
@@ -513,7 +517,11 @@ describe("rc.32 M4 — warnings with the projected breach", () => {
   });
 });
 
-describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runway", () => {
+// rc.34 (Miguel, 31/10): the lock is off by default (CAREER_LOAN.lockCommitments false) — these
+// tests pin the switch-back: with the key on, rc.33's lock holds exactly as it did.
+const withLock = (fn: () => void) => withConfig(CAREER_LOAN, { lockCommitments: true }, fn);
+
+describe("rc.32 M4 — while a loan is owed, nothing that shortens the runway (rc.34: lockCommitments true)", () => {
   /** In the window after split 1, burning, the Backer owed — exactly 10 weeks of runway, so any new weekly cost shortens it. */
   function owedInWindow(): CareerSave {
     const save = createCareerSave(INPUT, 50_401);
@@ -531,44 +539,47 @@ describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runwa
       .filter((v): v is CareerPlayerView => v !== null && v.age >= 13 && Math.round(v.overall) <= 74)
       .sort((a, b) => a.overall - b.overall)[0];
 
-  it("a signing that adds wages is refused with the reason, and leaves the save untouched", () => {
-    const save = owedInWindow();
-    const fa = cheapFa(save);
-    const planned = signingPlanFor(save, fa.id, { lengthSeasons: 2 });
-    expect("error" in planned && planned.error).toBe("loanRunway");
-    const res = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
-    expect(res.error).toBe("loanRunway");
-    expect(res.save).toBe(save);
-    expect(CAREER_EN.market.errors.loanRunway.length).toBeGreaterThan(0);
-    expect(CAREER_PT.market.errors.loanRunway.length).toBeGreaterThan(0);
-  });
-
-  it("the lock holds in the overdraft too: between $0 and the Backer's floor a commitment is still refused (rc.32 review)", () => {
-    for (const weeks of [0.5, 0, -1, -3]) {
+  it("a signing that adds wages is refused with the reason, and leaves the save untouched", () =>
+    withLock(() => {
       const save = owedInWindow();
-      const net = weeklyStatementOf(save).net;
-      save.finances.balance = Math.round(-net * weeks);
-      expect(save.finances.balance).toBeGreaterThan(backerLineOf(save).floor);
       const fa = cheapFa(save);
-      expect(signPlayerFlow(save, fa.id, { lengthSeasons: 2 }).error, `balance ${weeks} weeks of burn`).toBe("loanRunway");
-      expect(hireCoachFlow(save, coachCandidatesFor(save)[0]).error, `coach at ${weeks} weeks`).toBe("loanRunway");
-    }
-  });
+      const planned = signingPlanFor(save, fa.id, { lengthSeasons: 2 });
+      expect("error" in planned && planned.error).toBe("loanRunway");
+      const res = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
+      expect(res.error).toBe("loanRunway");
+      expect(res.save).toBe(save);
+      expect(CAREER_EN.market.errors.loanRunway.length).toBeGreaterThan(0);
+      expect(CAREER_PT.market.errors.loanRunway.length).toBeGreaterThan(0);
+    }));
 
-  it("never a soft lock: a free agent may still fill an empty starting seat (a squad under three)", () => {
-    const save = owedInWindow();
-    save.squad = save.squad.slice(0, 2);
-    save.starterIds = [save.squad[0].id, save.squad[1].id, ""];
-    save.finances.balance = -weeklyStatementOf(save).net * 10;
-    const fa = cheapFa(save);
-    const planned = signingPlanFor(save, fa.id, { lengthSeasons: 2 });
-    expect("plan" in planned).toBe(true);
-    const signed = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
-    expect(signed.error).toBeUndefined();
-    // Back at three: the next signing (a reserve) is a commitment again.
-    const next = cheapFa(signed.save);
-    expect(signPlayerFlow(signed.save, next.id, { lengthSeasons: 2 }).error).toBe("loanRunway");
-  });
+  it("the lock holds in the overdraft too: between $0 and the floor a commitment is still refused (rc.32 review)", () =>
+    withLock(() => {
+      for (const weeks of [0.5, 0, -1, -3]) {
+        const save = owedInWindow();
+        const net = weeklyStatementOf(save).net;
+        save.finances.balance = Math.round(-net * weeks);
+        expect(save.finances.balance).toBeGreaterThan(backerLineOf(save).floor);
+        const fa = cheapFa(save);
+        expect(signPlayerFlow(save, fa.id, { lengthSeasons: 2 }).error, `balance ${weeks} weeks of burn`).toBe("loanRunway");
+        expect(hireCoachFlow(save, coachCandidatesFor(save)[0]).error, `coach at ${weeks} weeks`).toBe("loanRunway");
+      }
+    }));
+
+  it("never a soft lock: a free agent may still fill an empty starting seat (a squad under three)", () =>
+    withLock(() => {
+      const save = owedInWindow();
+      save.squad = save.squad.slice(0, 2);
+      save.starterIds = [save.squad[0].id, save.squad[1].id, ""];
+      save.finances.balance = -weeklyStatementOf(save).net * 10;
+      const fa = cheapFa(save);
+      const planned = signingPlanFor(save, fa.id, { lengthSeasons: 2 });
+      expect("plan" in planned).toBe(true);
+      const signed = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
+      expect(signed.error).toBeUndefined();
+      // Back at three: the next signing (a reserve) is a commitment again.
+      const next = cheapFa(signed.save);
+      expect(signPlayerFlow(signed.save, next.id, { lengthSeasons: 2 }).error).toBe("loanRunway");
+    }));
 
   it("never a soft lock: the Market always lists a page of free agents a low-reputation org can sign", () => {
     let world = buildWorldAtCreation(50_404);
@@ -586,13 +597,14 @@ describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runwa
     expect(topped.freeAgents.filter((v) => Math.round(v.overall) <= cap)).toHaveLength(Math.min(24, pool.length));
   });
 
-  it("a coach hire that adds wages is refused the same way", () => {
-    const save = owedInWindow();
-    const coach = coachCandidatesFor(save)[0];
-    expect(hireCoachFlow(save, coach).error).toBe("loanRunway");
-  });
+  it("a coach hire that adds wages is refused the same way", () =>
+    withLock(() => {
+      const save = owedInWindow();
+      const coach = coachCandidatesFor(save)[0];
+      expect(hireCoachFlow(save, coach).error).toBe("loanRunway");
+    }));
 
-  it("switch-back: lockCommitments false restores rc.31 (only fees, gear and the bank are locked)", () => {
+  it("rc.34's default, lockCommitments false: the signing and the coach go through while a loan is owed", () => {
     withConfig(CAREER_LOAN, { lockCommitments: false }, () => {
       const save = owedInWindow();
       const fa = cheapFa(save);

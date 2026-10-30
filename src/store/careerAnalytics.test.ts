@@ -414,7 +414,7 @@ describe("career action events", () => {
     expect(careerEventsFor(broke, structuredClone(broke))).toEqual([]);
   });
 
-  it("the Backer's milestone fires on every rescue, the breach number in its actionId — Easy's second too (rc.33 review)", () => {
+  it("the rescue milestone fires on every breach the bank covers (a loan or a top-up), the breach number in its actionId (rc.34)", () => {
     const save = makeSave();
     save.difficulty = "easy";
     const breach = (from: CareerSave, n: number, day: number): CareerSave => {
@@ -422,13 +422,14 @@ describe("career action events", () => {
       next.clock.day = day;
       next.finances.loanUsed = true;
       next.finances.loanBreaches = n;
-      next.finances.loan = { remaining: 40_000 * n };
+      next.finances.loan = { remaining: 40_000 * n, topUps: n - 1 };
       return next;
     };
     const first = breach(save, 1, 15);
     const second = breach(first, 2, 64);
+    // A breach the bank would not cover (the top-up cap) ends the career: no rescue for it.
     const third = breach(second, 3, 120);
-    third.end = { ...third.end, ended: true, reason: "insolvency" };
+    third.end = { ...third.end, ended: true, reason: "insolvency", moneyCause: "breach" };
     third.phase = "ended";
     const backer = (a: CareerSave, b: CareerSave) =>
       named(careerEventsFor(a, b), "career_milestone").filter((e) => e.props.kind === "backer");
@@ -438,13 +439,17 @@ describe("career action events", () => {
     expect(two).toHaveLength(1);
     expect(one[0].props.actionId).toMatch(/:backer:1$/);
     expect(two[0].props.actionId).toMatch(/:backer:2$/);
-    // The third breach ends an Easy career: no rescue, the insolvency milestone instead.
     expect(named(careerEventsFor(second, third), "career_milestone").map((e) => e.props.kind)).toEqual(["insolvency"]);
     // Two rescues in one write (a long batched advance): one event each.
     expect(backer(save, second).map((e) => e.props.actionId.split(":").at(-1))).toEqual(["1", "2"]);
-    // Normal's second breach ends it: no Backer milestone for it.
+    // rc.34: a later breach on Normal is a top-up, a rescue like any other.
     const normal = { ...structuredClone(first), difficulty: "normal" as const };
-    expect(backer(normal, { ...breach(normal, 2, 64), difficulty: "normal" })).toHaveLength(0);
+    expect(backer(normal, { ...breach(normal, 2, 64), difficulty: "normal" })).toHaveLength(1);
+    // The deadline ends a career without a breach: the insolvency milestone, no rescue.
+    const due = structuredClone(second);
+    due.end = { ...due.end, ended: true, reason: "insolvency", moneyCause: "deadline" };
+    due.phase = "ended";
+    expect(named(careerEventsFor(second, due), "career_milestone").map((e) => e.props.kind)).toEqual(["insolvency"]);
   });
 
   it("a Major result (no region of its own) reports eventRegion international; an AI-only result reports nothing", () => {
