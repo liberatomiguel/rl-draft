@@ -19,7 +19,8 @@
  *  - classic (PT): /pt sets the saved language, then a whole Classic run to the results;
  *  - career: /career → Quick start → the presets step (labels, the money row) → found →
  *    HQ → a week of "+1 day" (a weekly decision card is answered with its first option)
- *    → Finances (the partner card), Market's deals tab, Squad, Training, Standings,
+ *    → Finances (no founding partner, rc.33), Market (the reputation filter; no sale
+ *    listing in the deals tab, rc.33), Squad, Training, Standings,
  *    Calendar, News, each in the right language.
  * The labels it presses are the copy's (EN and PT, `L` below): update them with the copy.
  * Needs Playwright with its Chromium (cloud sessions have it; never `playwright install`).
@@ -40,12 +41,14 @@ const L = {
   en: {
     playNow: /^Play now/, startDraft: /^Start Draft$/, reroll: /^Free reroll/, startT: /^Start Tournament$/, skip: /^Skip to end$/,
     results: /^View results$/, quick: /^Quick start$/, next: /^Next$/, found: /^Found /, presets: ["Easy", "Normal", "Hard"],
-    moneyRow: "Money ends the career", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
+    moneyRow: "cash breach ends the career", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
+    signable: "Signable at my reputation",
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
     results: /^Ver resultados$/, quick: /^Início rápido$/, next: /^(Próximo|Avançar)$/, found: /^Fundar /, presets: ["Fácil", "Normal", "Difícil"],
-    moneyRow: "O dinheiro encerra a carreira", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
+    moneyRow: "quebra de caixa encerra a carreira", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
+    signable: "Contratáveis com minha reputação",
   },
 };
 const DIALOG_PREF = [/^let's (play|go)$/i, /^vamos (jogar|lá)/i, /^start season 1$/i, /^continue$/i, /^continuar$/i, /^got it/i, /^entendi/i, /^next$/i, /^próximo$/i, /^skip$/i, /^pular$/i, /^close$/i, /^fechar$/i, /^ok$/i];
@@ -271,16 +274,19 @@ async function scenarioCareer(browser, viewport, locale) {
       await settle(page, 900);
       await dismiss(page, mobile);
       const txt = await bodyText(page);
-      if (route === "finances") checks.push({ step: `${tag} founding partner on Finances`, ok: txt.toLowerCase().includes(C.founding.toLowerCase()) });
+      // rc.33 (ECO-07): a new career has no day-one founding partner.
+      if (route === "finances") checks.push({ step: `${tag} no founding partner on Finances`, ok: !txt.toLowerCase().includes(C.founding.toLowerCase()) });
       if (route === "market") {
-        // The sale listing lives in the deals tab.
+        // rc.33 (UX-07): the reputation filter on the players tab.
+        checks.push({ step: `${tag} signable-at-my-reputation filter`, ok: txt.toLowerCase().includes(C.signable.toLowerCase()) });
+        // rc.33 (ECO-12): the deals tab no longer offers a sale listing.
         const deals = page.getByRole("button", { name: /^(My deals|Meus negócios|Minhas negociações)/ }).or(page.getByRole("tab", { name: /^(My deals|Meus)/ })).first();
         if (await deals.count()) {
           await press(deals, mobile).catch(() => {});
           await sleep(600);
         }
         const t2 = await bodyText(page);
-        checks.push({ step: `${tag} sale listing panel`, ok: t2.toLowerCase().includes(C.sell.toLowerCase()) });
+        checks.push({ step: `${tag} no sale listing`, ok: !t2.toLowerCase().includes(C.sell.toLowerCase()) });
         await shot(page, `${tag}-market-deals`);
       }
       const lang = await page.evaluate(() => document.documentElement.lang);
