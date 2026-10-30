@@ -24,6 +24,7 @@ import {
   CAREER_REP,
   CAREER_SALARY,
   CAREER_SPONSOR,
+  CAREER_COACH_MARKET,
 } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
@@ -499,7 +500,10 @@ describe("rc.33 ECO-09 — one index at 12 % and a steeper curve above the stron
     // Market value follows the same bend; a coach never does.
     const value = (o: number) => marketValueFor({ overall: o, age: 23, potential: o, seasonIndex: 0 });
     expect(value(88) / value(87)).toBeCloseTo(CAREER_SALARY.growthPerPoint * CAREER_SALARY.starGrowthPerPoint, 1);
-    expect(coachSalaryFor(84, 0, "normal") / coachSalaryFor(83, 0, "normal")).toBeCloseTo(CAREER_SALARY.growthPerPoint, 1);
+    expect(coachSalaryFor(84, 0, "normal") / coachSalaryFor(83, 0, "normal")).toBeCloseTo(
+      CAREER_COACH_MARKET.wageGrowthPerPoint ?? CAREER_SALARY.growthPerPoint,
+      1,
+    );
   });
 });
 

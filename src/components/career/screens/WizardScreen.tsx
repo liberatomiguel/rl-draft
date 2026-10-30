@@ -11,11 +11,11 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_REP } from "@/config/balance";
+import { CAREER_DIFFICULTY, CAREER_ECONOMY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs } from "@/data";
-import { computeSalaryAsk, runwayWeeks, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/engine/career/economy";
+import { runwayWeeks, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/engine/career/economy";
 import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
@@ -52,7 +52,7 @@ import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { useCareerStore } from "@/store/careerStore";
-import { founderPotentialBandFor, starterOffersForRegion } from "@/store/careerFlow";
+import { founderPotentialBandFor, foundingWageOf, starterOffersForRegion } from "@/store/careerFlow";
 import { useMounted } from "@/store/useMounted";
 import { CountrySelect } from "@/components/career/wizard/CountrySelect";
 import { FoundingSplash } from "@/components/career/wizard/FoundingSplash";
@@ -204,23 +204,9 @@ export function WizardScreen() {
 
   const region: Region = regionPick ?? regionForCountry(country) ?? "EU";
   const offers = useMemo(() => starterOffersForRegion(region, seed), [region, seed]);
-  /** Each founder's per-split ask (the wage the founding deal writes). */
+  /** Each founder's per-split wage (the founding deal the flow writes — rc.35: foundingWageOf). */
   const salariesOf = useCallback(
-    (offer: StarterOffer) =>
-      offer.players.map((p) =>
-        computeSalaryAsk({
-          overall: p.overall,
-          age: p.age,
-          potential: p.potential,
-          rep: CAREER_REP.start,
-          role: "starter",
-          seasonIndex: 0,
-          lengthSeasons: 2,
-          difficulty,
-          careerSeed: seed,
-          playerId: p.id,
-        }),
-      ),
+    (offer: StarterOffer, full = false) => offer.players.map((p) => foundingWageOf(p, difficulty, seed, full)),
     [difficulty, seed],
   );
   const wageBillOf = useCallback(
@@ -231,7 +217,7 @@ export function WizardScreen() {
   const budgetOf = useCallback(
     (offer: StarterOffer | undefined) =>
       offer
-        ? startingBudgetFor(difficulty, weeklyWageBill(salariesOf(offer), null))
+        ? startingBudgetFor(difficulty, weeklyWageBill(salariesOf(offer, true), null))
         : CAREER_ECONOMY.startingBudget[difficulty],
     [difficulty, salariesOf],
   );

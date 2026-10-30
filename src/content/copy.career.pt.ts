@@ -493,7 +493,7 @@ export const CAREER_PT: CareerCopy = {
     financePayroll: "Próxima folha",
     financeGuaranteed: "Receita garantida",
     financeGuaranteedParts: (sponsor: string, partner: string, fans: string) =>
-      `patrocínio ${sponsor} · parceiro ${partner} · torcida ${fans}`,
+      `patrocínio ${sponsor} · parceiro ${partner} · loja e streams ${fans}`,
     financePartnerWeeks: (n: number) => (n === 1 ? "mais 1 semana" : `mais ${n} semanas`),
     financeDebt: "Dívida",
     financeDebtNone: "Nenhuma",
@@ -593,7 +593,7 @@ export const CAREER_PT: CareerCopy = {
       foundingPartner: (p: Record<string, string | number>) =>
         `Um parceiro local apoia os primeiros passos da org: ${p.base} por split (${p.pct}% da folha salarial de fundação), pagos junto com a folha de toda segunda-feira. A única exigência é disputar eventos, e não há luvas. Ele segue até o seu primeiro contrato de patrocínio — e pelo menos até o fim de ${p.through}, mesmo ao lado de um contrato assinado antes. Finanças mostra a linha dele à parte.`,
       foundingPartnerEnds: () =>
-        `O ciclo do parceiro fundador acabou: a org já tem o próprio patrocínio e deixou as primeiras temporadas para trás. Daqui em diante as contas se apoiam em patrocínio, premiação e torcida.`,
+        `O ciclo do parceiro fundador acabou: a org já tem o próprio patrocínio e deixou as primeiras temporadas para trás. Daqui em diante as contas se apoiam em patrocínio, premiação, loja e streams.`,
       cashNotice: (p: Record<string, string | number>) =>
         `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas fechariam abaixo do piso (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p)} Agora é a hora barata de agir: aceite uma boa proposta por um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para a caixa de um save antigo.
@@ -1273,6 +1273,19 @@ export const CAREER_PT: CareerCopy = {
     // rc.33 (ECO-10 + ECO-11): a negociação do contrato — duas alavancas, a faixa à vista, uma resposta.
     negotiation: {
       title: "Negociação do contrato",
+      // rc.35 (front N): a negociação visual — uma terceira alavanca, o medidor de chance, o alívio do prazo.
+      bonus: "Luvas",
+      bonusAsk: (amount: string) => `Pede ${amount}`,
+      bonusDown: "Baixar as luvas",
+      bonusUp: "Subir as luvas",
+      shareAskNone: "Não pede",
+      odds: "Chance de assinar",
+      oddsSure: "Certo",
+      zoneLegend: "Assina com certeza",
+      riskLegend: "Talvez",
+      lengthRelief: (perWeek: string, seasons: number) => `Contrato de ${seasons} temporadas: ${perWeek} / semana a menos no piso dele`,
+      refuses: (wage: string) => `Ele recusa — assina por ${wage} / semana`,
+      upfront: (amount: string) => `+ ${amount} na assinatura`,
       perWeek: "/ semana",
       fullAsk: "Pagar a pedida",
       wage: "Salário semanal",
@@ -1346,7 +1359,7 @@ export const CAREER_PT: CareerCopy = {
     net: "Líquido / semana",
     projected: "Projeção após segunda-feira",
     weeklyStatement: "Extrato semanal",
-    statementHint: "Toda segunda-feira o caixa se move: patrocínio e torcida entram; salários, staff, manutenção e parcelas saem.",
+    statementHint: "Toda segunda-feira o caixa se move: patrocínio, loja e streams entram; salários, staff, manutenção e parcelas saem.",
     runway: (weeks: number) => (weeks === 1 ? "Fôlego: 1 semana nesse ritmo" : `Fôlego: ${weeks} semanas nesse ritmo`),
     runwayOk: "As contas fecham no azul",
     nextPayday: (s: string) => `Próximo pagamento ${s}`,
@@ -1373,7 +1386,8 @@ export const CAREER_PT: CareerCopy = {
       sponsorBase: "Base do patrocínio",
       foundingPartner: "Parceiro fundador",
       rescuePartner: "Investidor",
-      fanbase: "Torcida",
+      // rc.35 (front N): a receita ligada à reputação lê como o que ela modela — camisas, streams, conteúdo.
+      fanbase: "Loja e streams",
       payroll: "Salários do elenco",
       coach: "Coach",
       psychologist: "Psicólogo esportivo",
@@ -1443,7 +1457,7 @@ export const CAREER_PT: CareerCopy = {
       foundingPartner: "Parceiro fundador",
       rescuePartner: "Investidor",
       playerShare: "Parte dos jogadores no prêmio",
-      fanbase: "Receita de torcida",
+      fanbase: "Receita de loja e streaming",
       payroll: "Salários do elenco",
       bankLoan: "Empréstimo bancário recebido",
       bankPayment: "Parcela do banco",

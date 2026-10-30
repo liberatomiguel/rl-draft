@@ -496,7 +496,8 @@ describe("rc.34 — every founding roster starts with the same runway in weeks",
           const bill = save.squad.reduce((n, p) => n + weeklyWage(p.salaryPerSplit), 0);
           expect(bill).toBe(weeklyWageBill(save.squad.map((p) => p.salaryPerSplit), null));
           const weeks = CAREER_ECONOMY.startingBudgetWeeks[difficulty]!;
-          expect(save.finances.balance).toBe(startingBudgetFor(difficulty, bill));
+          // rc.35 (front N): the budget reads the founders' full asks (foundingWageMult discounts the deals).
+          expect(save.finances.balance).toBeGreaterThanOrEqual(startingBudgetFor(difficulty, bill));
           expect(save.finances.balance).toBeGreaterThanOrEqual(CAREER_ECONOMY.startingBudget[difficulty]);
           expect(save.finances.balance).toBeGreaterThanOrEqual(quantize(weeks * bill));
         }

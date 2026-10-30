@@ -478,3 +478,45 @@ export function BaseDotIcon({ className }: { className?: string }) {
     </Glyph>
   );
 }
+
+/** rc.35 (front N) — the contract talk's levers and meter. */
+function TalkGlyph({ className, children }: { className?: string; children: import("react").ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      {children}
+    </svg>
+  );
+}
+
+/** Coins — the weekly wage. */
+export function CoinsIcon({ className }: { className?: string }) {
+  return (
+    <TalkGlyph className={className}>
+      <ellipse cx="9" cy="7" rx="5" ry="2.5" {...P} />
+      <path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7" {...P} />
+      <path d="M10 15.5c.6 1.2 2.6 2 5 2 2.8 0 5-1.1 5-2.5v-4c0-1.4-2.2-2.5-5-2.5" {...P} />
+    </TalkGlyph>
+  );
+}
+
+/** Trophy-percent — the prize share. */
+export function PercentIcon({ className }: { className?: string }) {
+  return (
+    <TalkGlyph className={className}>
+      <path d="m18 6-12 12" {...P} />
+      <circle cx="7.5" cy="7.5" r="2.5" {...P} />
+      <circle cx="16.5" cy="16.5" r="2.5" {...P} />
+    </TalkGlyph>
+  );
+}
+
+/** Gift — the signing bonus. */
+export function GiftIcon({ className }: { className?: string }) {
+  return (
+    <TalkGlyph className={className}>
+      <rect x="4" y="9" width="16" height="11" rx="1.5" {...P} />
+      <path d="M3 9h18M12 9v11" {...P} />
+      <path d="M12 9c-1.5-3-5-4-5-1.5S10 9 12 9Zm0 0c1.5-3 5-4 5-1.5S14 9 12 9Z" {...P} />
+    </TalkGlyph>
+  );
+}

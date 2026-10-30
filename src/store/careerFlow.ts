@@ -214,6 +214,7 @@ import {
   contractMinWageFor,
   negotiationAnswerFor,
   negotiationFlexFor,
+  negotiationRollFor,
   prizeShareAskFor,
   prizeShareOfPodium,
   type ContractOffer,
@@ -3650,6 +3651,32 @@ const FOUNDER_SCOUT_LEVEL = 1 as const;
 /** The last season a founding deal covers (squadFromOffer; the founders' share repair reads it). */
 const FOUNDING_DEAL_END_SEASON = 1;
 
+/**
+ * The founding ask (the market ask at the starting reputation, 2 seasons) —
+ * rc.35 (front N): a founding deal pays CAREER_SALARY.foundingWageMult of it,
+ * and the starting budget reads the full ask (`full`).
+ */
+export function foundingWageOf(
+  view: StarterOffer["players"][number],
+  difficulty: CareerDifficulty,
+  careerSeed: number,
+  full = false,
+): number {
+  const ask = computeSalaryAsk({
+    overall: view.overall,
+    age: view.age,
+    potential: view.potential,
+    rep: CAREER_REP.start,
+    role: "starter",
+    seasonIndex: 0,
+    lengthSeasons: 2,
+    difficulty,
+    careerSeed,
+    playerId: view.id,
+  });
+  return full ? ask : Math.max(CAREER_SALARY.minSalary, quantize(ask * CAREER_SALARY.foundingWageMult));
+}
+
 function squadFromOffer(
   offer: StarterOffer,
   input: CreateCareerInput,
@@ -3669,18 +3696,7 @@ function squadFromOffer(
     peakAge: view.peakAge,
     declineRate: view.declineRate,
     role: "starter" as const,
-    salaryPerSplit: computeSalaryAsk({
-      overall: view.overall,
-      age: view.age,
-      potential: view.potential,
-      rep: CAREER_REP.start,
-      role: "starter",
-      seasonIndex: 0,
-      lengthSeasons: 2,
-      difficulty: input.difficulty,
-      careerSeed,
-      playerId: view.id,
-    }),
+    salaryPerSplit: foundingWageOf(view, input.difficulty, careerSeed),
     // rc.34 (front I; Miguel 31/10): a founding deal carries no prize share
     // (rc.33: the share each founder asked). Explicitly 0 — an absent field
     // reads the pre-rc.33 team share. A founder who grows past
@@ -3743,10 +3759,11 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     coach: null,
     finances: {
       // rc.34: at least CAREER_ECONOMY.startingBudgetWeeks of the founding wage bill (every roster's runway).
+      // rc.35 (front N): on the founders' full asks, so the founding discount is extra runway.
       balance: startingBudgetFor(
         input.difficulty,
         weeklyWageBill(
-          squad.map((p) => p.salaryPerSplit),
+          offer.players.map((v) => foundingWageOf(v, input.difficulty, careerSeed, true)),
           null,
         ),
       ),
@@ -3966,11 +3983,23 @@ function talkWindowKeyOf(save: CareerSave): string {
  */
 export function contractTalkFor(
   save: CareerSave,
-  input: { playerId: string; askWagePerSplit: number; askSharePct: number; offer?: ContractOffer },
+  input: {
+    playerId: string;
+    askWagePerSplit: number;
+    askSharePct: number;
+    /** rc.35 (front N): the signing bonus he asks (0 on a renewal). */
+    askBonus?: number;
+    /** rc.35 (front N): the contract length (a longer deal lowers his floor). */
+    lengthSeasons?: number;
+    offer?: ContractOffer;
+  },
 ): NegotiationAnswer {
+  const windowKey = talkWindowKeyOf(save);
   return negotiationAnswerFor({
-    ask: { wagePerSplit: input.askWagePerSplit, sharePct: input.askSharePct },
-    flex: negotiationFlexFor(save.careerSeed, input.playerId, save.clock.seasonIndex, talkWindowKeyOf(save)),
+    ask: { wagePerSplit: input.askWagePerSplit, sharePct: input.askSharePct, bonus: input.askBonus ?? 0 },
+    flex: negotiationFlexFor(save.careerSeed, input.playerId, save.clock.seasonIndex, windowKey),
+    roll: negotiationRollFor(save.careerSeed, input.playerId, save.clock.seasonIndex, windowKey),
+    lengthSeasons: input.lengthSeasons ?? 1,
     offer: input.offer,
     minWagePerSplit: contractMinWageFor(save.clock.seasonIndex),
   });
@@ -3980,13 +4009,16 @@ export function contractTalkFor(
 export function signingTalkFor(
   save: CareerSave,
   view: Pick<CareerPlayerView, "id" | "overall" | "age">,
-  pack: Pick<AskPackage, "salaryPerSplit">,
+  pack: Pick<AskPackage, "salaryPerSplit" | "signingBonus">,
   offer?: ContractOffer,
+  lengthSeasons: 1 | 2 | 3 = 1,
 ): NegotiationAnswer {
   return contractTalkFor(save, {
     playerId: view.id,
     askWagePerSplit: pack.salaryPerSplit,
     askSharePct: prizeShareAskFor(view),
+    askBonus: pack.signingBonus,
+    lengthSeasons,
     offer,
   });
 }
@@ -4035,6 +4067,7 @@ export function renewalTalkFor(
     playerId: player.id,
     askWagePerSplit: terms.ask,
     askSharePct: prizeShareAskFor({ overall: player.overall, age: ageOf(player.birthYear, save.clock.seasonIndex) }),
+    lengthSeasons,
     offer,
   });
 }
@@ -4180,9 +4213,10 @@ export function signingPlanFor(
       : undefined,
   });
   // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
-  const talk = signingTalkFor(save, view, pack, opts.offer);
+  const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);
   const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
-  const cost = pack.fee + pack.signingBonus + severance;
+  // rc.35 (front N): the signing bonus is the talk's (a lever), not the package's.
+  const cost = pack.fee + talk.terms.bonus + severance;
   // RTW-05 (rc.33): no event plays short, so a broke org must still be able to
   // field three (it used to pay a stand-in's fee the same way): a free agent
   // into an empty seat skips the money checks — but only one who costs no
@@ -4295,13 +4329,13 @@ export function signPlayerFlow(
     });
     save.stats.biggestSigningFee = Math.max(save.stats.biggestSigningFee, pack.fee);
   }
-  if (pack.signingBonus > 0) {
+  if (talk.terms.bonus > 0) {
     save.finances = pushLedger(save.finances, {
       seasonIndex: save.clock.seasonIndex,
       week: weekOfDay(save.clock.day),
       day: save.clock.day,
       kind: "signingBonus",
-      amount: -pack.signingBonus,
+      amount: -talk.terms.bonus,
       refName: view.name,
     });
   }
@@ -4404,7 +4438,21 @@ export function renewPlayerFlow(
   // one answer; under his floor nothing moves.
   const talk = renewalTalkFor(input, current, lengthSeasons, offer);
   if (!talk.accepted) return { save: input, error: "negotiationCounter" };
+  // rc.35 (front N): a renewal's signing bonus (a lever; he asks none) is paid on signature.
+  if (talk.terms.bonus > 0 && input.finances.balance - talk.terms.bonus < backerLineOf(input).floor) {
+    return { save: input, error: "funds" };
+  }
   const save = clone(input);
+  if (talk.terms.bonus > 0) {
+    save.finances = pushLedger(save.finances, {
+      seasonIndex: save.clock.seasonIndex,
+      week: weekOfDay(save.clock.day),
+      day: save.clock.day,
+      kind: "signingBonus",
+      amount: -talk.terms.bonus,
+      refName: current.name,
+    });
+  }
   const player = save.squad.find((p) => p.id === playerId)!;
   player.salaryPerSplit = talk.terms.wagePerSplit;
   player.prizeSharePct = talk.terms.sharePct;

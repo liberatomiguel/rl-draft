@@ -419,8 +419,9 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
 /** rc.33 (ECO-11): an offer one weekly quantum under his floor, at the share he asks. */
 function underFloorOffer(save: CareerSave, view: CareerPlayerView): ContractOffer {
   const talk = signingTalkFor(save, view, marketAsk(save, view));
+  // rc.35 (front N): under the floor his odds fall; at zeroWeekly (or the minimum) they are 0 or near it.
   expect(talk.zone.floorWeekly).toBeGreaterThan(10);
-  return { weekly: talk.zone.floorWeekly - 10, sharePct: talk.ask.sharePct };
+  return { weekly: Math.max(talk.zone.minWeekly, talk.zone.zeroWeekly), sharePct: talk.ask.sharePct };
 }
 
 // ---------------------------------------------------------------------------
