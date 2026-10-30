@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { CareerLifetimeStats } from "@/engine/career/types";
 import { useCareerCopy } from "@/content/careerCopy";
+import { useCopy } from "@/content/copy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
@@ -141,6 +142,8 @@ const TROPHY_TINT: Record<string, string> = {
 export function ClubScreen() {
   const achievements = useCareerStore((s) => s.achievements);
   const copy = useCareerCopy();
+  // rc.36 (UX-05, #155): the achievements' words live in the core copy (one source with the general list).
+  const { ACH_UI } = useCopy();
   const mounted = useMounted();
   const save = useCareerSave();
   const activeSlot = useCareerStore((s) => s.activeSlot);
@@ -432,7 +435,7 @@ export function ClubScreen() {
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {CAREER_ACHIEVEMENTS.map((a) => {
             const at = achievements.unlocked[a.id];
-            const item = copy.achievements.items[a.id] ?? { name: a.id, desc: "" };
+            const item = ACH_UI.careerItems[a.id] ?? { name: a.id, desc: "" };
             return (
               <div
                 key={a.id}

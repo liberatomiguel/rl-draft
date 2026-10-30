@@ -25,10 +25,10 @@
  */
 
 import { AppLink } from "@/components/ui/AppLink";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import type { CareerSave, NewsItem, NewsType } from "@/engine/career/types";
+import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -39,7 +39,6 @@ import {
   dateOfDay,
   isWindowWeek,
   nameOfRef,
-  seasonLabelFor,
   useCareerSave,
   userTeamPreview,
   weekOfDay,
@@ -51,7 +50,9 @@ import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
 import { ToolboxBlock } from "@/components/career/hub/ToolboxBlock";
-import { resolveMail, resolveNews } from "@/components/career/news/newsText";
+import { SeasonGoalBlock } from "@/components/career/hub/SeasonGoalBlock";
+import { resolveMail } from "@/components/career/news/newsText";
+import { NewsFeed } from "@/components/career/news/NewsFeed";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { ErrorBanner, withMoneyParams } from "@/components/career/hub/hubShared";
@@ -60,131 +61,9 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
 
-// ---------------------------------------------------------------------------
-// Wire filters (moved here from the old NewsScreen — the full feed lives on HQ)
-// ---------------------------------------------------------------------------
+// rc.36 (UX-03): the wire — its filters, type icons and rows — lives in news/NewsFeed.tsx.
 
 type DatesCopy = CareerCopy["dates"];
-
-const WIRE_BATCH = 30;
-const WIRE_PREVIEW = 5;
-
-type FilterKey = "all" | "mine" | "region" | "world" | "deals";
-const FILTERS: FilterKey[] = ["all", "mine", "region", "world", "deals"];
-
-/** "My org" = notices about the user org itself (contracts, training, rep). */
-const MINE_TYPES: NewsType[] = ["org", "training", "rep"];
-
-function matchesFilter(item: NewsItem, filter: FilterKey, region: string): boolean {
-  switch (filter) {
-    case "all":
-      return true;
-    case "mine":
-      return MINE_TYPES.includes(item.type);
-    case "deals":
-      return item.type === "transfer";
-    case "region":
-      // Region relevance rides on the params (event names carry the region
-      // code, e.g. "EU Regional 2"; rookie classes carry params.region).
-      return Object.values(item.params ?? {}).some((v) => String(v).includes(region));
-    case "world":
-      return !MINE_TYPES.includes(item.type) && item.type !== "transfer";
-  }
-}
-
-// ---------------------------------------------------------------------------
-// News type icons — hand-drawn 24×24 currentColor (house icon style)
-// ---------------------------------------------------------------------------
-
-const ICON_TONE: Record<NewsType, string> = {
-  result: "text-orange-bright",
-  transfer: "text-blue-bright",
-  beat: "text-amber-300",
-  org: "text-cyan",
-  training: "text-good",
-  milestone: "text-orange-bright",
-  window: "text-blue-bright",
-  rep: "text-cyan",
-  flavor: "text-faint",
-};
-
-function NewsTypeIcon({ type, className }: { type: NewsType; className?: string }) {
-  const common = {
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    className,
-    "aria-hidden": true,
-  };
-  switch (type) {
-    case "result":
-      return (
-        <svg {...common}>
-          <path d="M8 4h8v4a4 4 0 0 1-8 0V4Z" />
-          <path d="M8 5H5.5a2.5 2.5 0 0 0 2.8 3.3M16 5h2.5a2.5 2.5 0 0 1-2.8 3.3" />
-          <path d="M12 12v4M9 19h6" />
-        </svg>
-      );
-    case "transfer":
-      return (
-        <svg {...common}>
-          <path d="M4 9h13l-3-3M20 15H7l3 3" />
-        </svg>
-      );
-    case "beat":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
-          <path d="M8.8 15.2a4.6 4.6 0 0 1 0-6.4M15.2 8.8a4.6 4.6 0 0 1 0 6.4" />
-          <path d="M6.2 17.8a8.2 8.2 0 0 1 0-11.6M17.8 6.2a8.2 8.2 0 0 1 0 11.6" />
-        </svg>
-      );
-    case "org":
-      return (
-        <svg {...common}>
-          <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z" />
-        </svg>
-      );
-    case "training":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8" />
-          <circle cx="12" cy="12" r="4" />
-          <circle cx="12" cy="12" r="0.8" fill="currentColor" stroke="none" />
-        </svg>
-      );
-    case "milestone":
-      return (
-        <svg {...common}>
-          <path d="M6 21V4" />
-          <path d="M6 5h11l-2.5 3.5L17 12H6" />
-        </svg>
-      );
-    case "window":
-      return (
-        <svg {...common}>
-          <rect x="4" y="5" width="16" height="15" rx="2" />
-          <path d="M4 9.5h16M8 3v4M16 3v4" />
-        </svg>
-      );
-    case "rep":
-      return (
-        <svg {...common}>
-          <path d="m12 3 2.5 5.4 5.5.7-4 4 1 5.9-5-2.9-5 2.9 1-5.9-4-4 5.5-.7L12 3Z" />
-        </svg>
-      );
-    case "flavor":
-      return (
-        <svg {...common}>
-          <path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z" />
-          <path d="M6 11a6 6 0 0 0 12 0M12 17v3.5" />
-        </svg>
-      );
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -199,39 +78,9 @@ export function HubScreen() {
   const mounted = useMounted();
   const save = useCareerSave();
 
-  const markNewsRead = useCareerStore((s) => s.markNewsRead);
   const markFlag = useCareerStore((s) => s.markFlag);
 
-  const [wireOpen, setWireOpen] = useState(false);
-  const [wireFilter, setWireFilter] = useState<FilterKey>("all");
-  const [wireLimit, setWireLimit] = useState(WIRE_BATCH);
-  // Render-phase reset so a filter switch never carries a stale page count.
-  const [prevFilter, setPrevFilter] = useState<FilterKey>(wireFilter);
-  if (wireFilter !== prevFilter) {
-    setPrevFilter(wireFilter);
-    setWireLimit(WIRE_BATCH);
-  }
-
   const team = useMemo(() => (save ? userTeamPreview(save) : null), [save]);
-
-  const wireHasMore =
-    Boolean(save) &&
-    wireOpen &&
-    wireLimit <
-      (save?.news.filter((n) => matchesFilter(n, wireFilter, save.identity.region)).length ?? 0);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setWireLimit((l) => l + WIRE_BATCH);
-      },
-      { rootMargin: "400px 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [mounted, wireOpen, wireFilter, wireHasMore]);
 
   if (!mounted || !save || !team) {
     return (
@@ -254,24 +103,10 @@ export function HubScreen() {
     );
   }
 
-  const region = save.identity.region;
-
-  // --- the wire ----------------------------------------------------------------
-  const unreadNews = save.news.filter((n) => !n.read).length;
-  const wireItems = wireOpen
-    ? save.news.filter((n) => matchesFilter(n, wireFilter, region)).slice(0, wireLimit)
-    : save.news.slice(0, WIRE_PREVIEW);
-
   // --- inbox teaser -----------------------------------------------------------
   const unreadMail = save.mail.filter((m) => !m.read).length;
   const latestMail = save.mail.slice(0, 2);
 
-
-  const goalText = (key: string): string => {
-    const suffix = key.split(".").pop() ?? key;
-    const v = C.goals[suffix as keyof typeof C.goals];
-    return typeof v === "string" ? v : key;
-  };
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
@@ -300,62 +135,9 @@ export function HubScreen() {
             <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
           </div>
 
-          {/* 9 — THE WIRE (full feed, filterable, expands in place) */}
+          {/* 9 — THE WIRE (rc.36, UX-03: the visual feed — lead story, crests, subject, action) */}
           <div className="order-9">
-            <Panel className="rise-in p-4" style={{ animationDelay: "120ms" }}>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="kicker text-[10px]">
-                  {C.hub.news}
-                  {unreadNews > 0 ? (
-                    <span className="ml-2 rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal text-orange-bright">
-                      {unreadNews}
-                    </span>
-                  ) : null}
-                </p>
-                <div className="flex items-center gap-2">
-                  {wireOpen && unreadNews > 0 ? (
-                    <Button size="sm" variant="ghost" onClick={markNewsRead}>
-                      {C.news.markAllRead}
-                    </Button>
-                  ) : null}
-                  <Button size="sm" variant="ghost" onClick={() => setWireOpen((v) => !v)}>
-                    {wireOpen ? C.common.close : C.hub.newsAll}
-                  </Button>
-                </div>
-              </div>
-
-              {wireOpen ? (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {FILTERS.map((key) => (
-                    <button
-                      key={key}
-                      onClick={() => setWireFilter(key)}
-                      aria-pressed={wireFilter === key}
-                      className={cx(
-                        "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
-                        wireFilter === key
-                          ? "border-blue/50 bg-blue/15 text-blue-bright"
-                          : "border-line-strong bg-white/5 text-sub hover:text-ink",
-                      )}
-                    >
-                      {C.news.filter[key]}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              {wireItems.length === 0 ? (
-                <p className="py-6 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
-              ) : (
-                <div className="space-y-2">
-                  {wireItems.map((item) => (
-                    <WireRow key={item.id} item={item} save={save} C={C} D={D} lang={lang} />
-                  ))}
-                </div>
-              )}
-
-              {wireHasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
-            </Panel>
+            <NewsFeed save={save} C={C} lang={lang} />
           </div>
 
           {/* 10 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
@@ -381,24 +163,10 @@ export function HubScreen() {
             <ToolboxBlock save={save} C={C} />
           </div>
 
-          {/* 7 — season goal */}
+          {/* 7 — season goal (rc.36, UX-02: progress, deadline and the board's reasons) */}
           {save.seasonGoals ? (
             <div className="order-7">
-              <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
-                <p className="kicker mb-1 text-[10px]">{C.hub.seasonGoal}</p>
-                <p className="display text-base font-bold uppercase tracking-wide text-ink">
-                  {/* rc.35 (front S): the sponsors' level model (any split) when the save carries it. */}
-                  {save.seasonGoals.model
-                    ? C.goals.model(save.seasonGoals.model.target.kind, save.seasonGoals.model.target.count, save.seasonGoals.model.target.place ?? 0)
-                    : goalText(save.seasonGoals.targetKey)}
-                </p>
-                <p className="mt-1 text-xs text-sub">
-                  <span className="kicker mr-1.5 text-[9px]">{C.hub.goalStretch}</span>
-                  {save.seasonGoals.model
-                    ? C.goals.model(save.seasonGoals.model.stretch.kind, save.seasonGoals.model.stretch.count, save.seasonGoals.model.stretch.place ?? 0)
-                    : goalText(save.seasonGoals.stretchKey)}
-                </p>
-              </Panel>
+              <SeasonGoalBlock save={save} C={C} />
             </div>
           ) : null}
 
@@ -600,72 +368,6 @@ function TransferWirePanel({
 
       <OrgSheet save={save} orgRef={sheetRef} onClose={() => setSheetRef(null)} />
     </Panel>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Wire row (headline + support text + stamp)
-// ---------------------------------------------------------------------------
-
-function WireRow({
-  item,
-  save,
-  C,
-  D,
-  lang,
-}: {
-  item: NewsItem;
-  save: CareerSave;
-  C: CareerCopy;
-  D: DatesCopy;
-  lang: "en" | "pt";
-}) {
-  const resolved = resolveNews(withMoneyParams(item), C, lang);
-  const gold = item.priority === 3;
-  const sameSeason = item.seasonIndex === save.clock.seasonIndex;
-  const stamp =
-    typeof item.day === "number"
-      ? formatDateTiny(D, dateOfDay(item.seasonIndex, item.day))
-      : C.hub.week(item.week);
-
-  return (
-    <article
-      className={cx(
-        "flex gap-3 rounded-lg border border-line bg-white/[0.02] p-3",
-        gold && "!border-amber-400/40 !bg-amber-400/5",
-      )}
-    >
-      <div className={cx("mt-0.5 shrink-0", ICON_TONE[item.type])}>
-        <NewsTypeIcon type={item.type} className="h-5 w-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        {resolved.wire ? (
-          <p className="kicker mb-0.5 !text-[9px] !tracking-[0.28em] text-amber-300">
-            {C.news.wire}
-          </p>
-        ) : null}
-        <p
-          className={cx(
-            "text-sm leading-snug",
-            item.read ? "text-sub" : "font-semibold text-ink",
-          )}
-        >
-          {resolved.title}
-        </p>
-        {resolved.body ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-sub">{resolved.body}</p>
-        ) : null}
-        <p className="mt-1.5 text-[10px] text-faint">
-          {sameSeason ? stamp : `${seasonLabelFor(item.seasonIndex)} · ${stamp}`}
-        </p>
-      </div>
-      {!item.read ? (
-        <span
-          className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-orange"
-          aria-label={C.news.unread(1)}
-        />
-      ) : null}
-    </article>
   );
 }
 

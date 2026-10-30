@@ -23,6 +23,8 @@
  *            + img/badges/<art>.<glowHash>.glow.webp (rc.11): the art's silhouette
  *            in gold, blurred once here, padded — the legendary glow behind the
  *            badge, so the browser never blurs anything.
+ *   partners public/partners/<id>.png         → img/partners/<id>.<hash>.webp (rc.36, PARTNER_BOX_PX):
+ *            a news partner's logo (UX-03's 50/50 desk); absent → the styled fallback
  *   flags    public/flags/<cc>.png             → img/flags/flags.<hash>.png (rc.32): ONE sprite
  *            of every flag (FLAG_SPRITE), so a run's flags cost one request; the
  *            source PNGs stay in /flags/ (dev, and the manifest's flag list).
@@ -91,6 +93,9 @@ const SPECIAL_WEBP = { quality: 80, alphaQuality: 100, effort: 5 };
  *  not in the file name, so it is part of the rank hash instead. */
 const RANK_BOX_PX = { menu: 224, profile: 224 };
 const RANK_WEBP = { quality: 90, alphaQuality: 100, effort: 5, smartSubsample: true };
+/** rc.36 (UX-03): a news partner's logo, fitted inside this box (the news desk shows it at ≤ 64 CSS px, 3×). */
+const PARTNER_BOX_PX = 192;
+const PARTNER_WEBP = { quality: 90, alphaQuality: 100, effort: 5, smartSubsample: true };
 
 /** Badges render at 28–108 CSS px (BadgeEmblem); assets.ts picks the smallest
  *  width ≥ 2 × the CSS size: 96 covers the board rows, 224 the locker / hero /
@@ -238,6 +243,7 @@ async function plan() {
      *  the badge's VISUAL centre (alpha-weighted centroid) onto the box centre. */
     badgeShifts: {},
     banners: {},
+    partners: {},
   };
   let sourceBytes = 0;
 
@@ -302,6 +308,23 @@ async function plan() {
         webp: RANK_WEBP,
       });
     }
+  }
+
+  // news partners' logos (rc.36, UX-03): one WebP each, fitted inside PARTNER_BOX_PX
+  const partnerDir = join(PUBLIC, "partners");
+  for (const name of await listPngs(partnerDir)) {
+    const id = stripPng(name);
+    const src = join(partnerDir, name);
+    const hash = hashOf(await read(src), { box: PARTNER_BOX_PX, webp: PARTNER_WEBP });
+    manifest.partners[id] = hash;
+    jobs.push({
+      src,
+      dest: join(OUT_DIR, "partners", `${id}.${hash}.webp`),
+      width: PARTNER_BOX_PX,
+      height: PARTNER_BOX_PX,
+      fit: "inside",
+      webp: PARTNER_WEBP,
+    });
   }
 
   // badges (rc.9): the generated SVGs → raster WebP
@@ -518,6 +541,8 @@ async function writeManifest(manifest) {
     badgeGlows: sortKeys(manifest.badgeGlows),
     badgeShifts: sortKeys(manifest.badgeShifts),
     banners: sortKeys(manifest.banners),
+    // rc.36: written only once a partner's art exists (the manifest stays byte-identical until then).
+    ...(Object.keys(manifest.partners).length ? { partners: sortKeys(manifest.partners) } : {}),
   };
   const text = `${JSON.stringify(ordered, null, 2)}\n`;
   let current = null;

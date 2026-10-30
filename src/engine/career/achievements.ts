@@ -7,7 +7,7 @@
  * never parses news.
  */
 
-import { CAREER_ACHIEVEMENTS, type CareerAchievementDef } from "@/data/career/achievements";
+import { CAREER_ACHIEVEMENTS, careerAchievementById, type CareerAchievementDef } from "@/data/career/achievements";
 import type { CareerDifficulty, CareerSave } from "./types";
 
 export interface CareerAchievementMemory {
@@ -56,6 +56,31 @@ function satisfied(def: CareerAchievementDef, save: CareerSave, memory: CareerAc
     case "allDifficulties":
       return ALL_DIFFICULTIES.every((d) => memory.worldsWonOn[d] === true);
   }
+}
+
+/**
+ * rc.36 (UX-05, DESIGN-DECISIONS #155): ONE record of what is unlocked. The
+ * profile's career marks (cloud-synced, union-merged, untouched by a Season
+ * reset) count as unlocked here too: a mark another device — or an older
+ * store — already holds joins this memory silently, dated `at` (no toast, no
+ * XP), so it is never granted twice. Unknown ids are ignored.
+ */
+export function withProfileMarks(
+  memory: CareerAchievementMemory,
+  marks: readonly string[],
+  at: number,
+): CareerAchievementMemory {
+  const missing = marks.filter((id) => careerAchievementById.has(id) && !memory.unlocked[id]);
+  if (missing.length === 0) return memory;
+  const unlocked = { ...memory.unlocked };
+  for (const id of missing) unlocked[id] = at;
+  return { ...memory, unlocked };
+}
+
+/** The memory's unlocked ids the profile's marks lack (catalog order) — mirrored back, silently. */
+export function marksMissingFrom(memory: CareerAchievementMemory, marks: readonly string[]): string[] {
+  const have = new Set(marks);
+  return CAREER_ACHIEVEMENTS.filter((d) => memory.unlocked[d.id] && !have.has(d.id)).map((d) => d.id);
 }
 
 /** Ids newly satisfied by this save that the memory has not unlocked yet (catalog order). */

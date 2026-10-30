@@ -29,6 +29,8 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgMark } from "@/components/career/OrgMark";
 import { seasonLabelFor, squadAge, useCareerSave } from "@/components/career/careerUi";
 import { ContractReview, rolloverBlocked } from "@/components/career/ContractReview";
+import { SeasonGoalRows, seasonGoalText } from "@/components/career/SeasonGoalRows";
+import { seasonGoalsViewOf } from "@/engine/career/seasonGoals";
 
 // Duplicated from ClubScreen (not exported there) — keep the two in sync.
 const GRADE_TONE: Record<string, "gold" | "good" | "blue" | "neutral" | "bad"> = {
@@ -88,12 +90,9 @@ export function SeasonScreen() {
 
   // Season goal — settled at review time (targetMet flips off null in enterSeasonReview).
   const goals = save.seasonGoals;
-  // rc.35 (front S): a modelled goal reads its own words.
-  const goalLabel = goals?.model
-    ? C.goals.model(goals.model.target.kind, goals.model.target.count, goals.model.target.place ?? 0)
-    : goals && typeof (C.goals as Record<string, unknown>)[goals.targetKey] === "string"
-      ? ((C.goals as Record<string, unknown>)[goals.targetKey] as string)
-      : null;
+  // rc.36 (UX-02): one view for the season's plan, rc.35's split model and a legacy key.
+  const goalsView = seasonGoalsViewOf(save);
+  const goalLabel = goalsView ? seasonGoalText(goalsView.target.label, C) : null;
 
   const worldsChampionLine =
     !wonWorlds && last?.worldsChampionName ? (
@@ -208,9 +207,10 @@ export function SeasonScreen() {
                 </p>
               ) : null}
             </div>
-            <Badge tone={GRADE_TONE[last.grade] ?? "neutral"} className="hidden shrink-0 sm:inline-flex">
-              {C.ceremonies.seasonGrade(last.grade)}
-            </Badge>
+            {/* rc.36: the wrapper hides it on a phone (the Badge's own inline-flex beat `hidden`). */}
+            <span className="hidden shrink-0 sm:inline-flex">
+              <Badge tone={GRADE_TONE[last.grade] ?? "neutral"}>{C.ceremonies.seasonGrade(last.grade)}</Badge>
+            </span>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -237,6 +237,13 @@ export function SeasonScreen() {
             />
             <Stat label={C.club.recordTitles} value={<AnimatedNumber value={last.titles} />} />
           </div>
+          {/* rc.36 (UX-02): the season's goal, settled — target and stretch with their final meters. */}
+          {goalsView && goals?.targetMet !== null ? (
+            <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3.5">
+              <p className="kicker mb-2.5 !text-[10px]">{C.hub.seasonGoal}</p>
+              <SeasonGoalRows view={goalsView} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} />
+            </div>
+          ) : null}
         </Panel>
       ) : null}
 

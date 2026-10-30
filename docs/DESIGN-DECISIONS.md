@@ -1679,6 +1679,24 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      update. The persist contract keeps its keys and versions
      (`nationalDiscovered` joins its SACRED list).
 
+155. **Road to Worlds' achievements in the general list (rc.36, ROADMAP
+     UX-05; R87 f).** The list (`AchievementsGrid`: /achievements and the
+     profile) gets a mode filter — All · Draft · Road to Worlds, the last two
+     only while `FEATURES.careerMode` is on — and a Road to Worlds section
+     with the same trophy card. One source per id: ids, tiers, XP and rules
+     stay in `data/career/achievements.ts` (a light module, so the shared
+     path stays off `@/data`); their words move from the career copy to the
+     core copy (`ACH_UI.careerItems`, EN and PT), which the Club screen and
+     the toast read too; the draft catalog never holds them
+     (`pruneEarnedAchievements` would drop them). One record of what is
+     unlocked: the profile's `careerMarks` (cloud-synced, union-merged,
+     untouched by the Season reset) and the career store's memory (dates,
+     the Worlds difficulties) mirror each other silently, both ways
+     (`withProfileMarks`, `marksMissingFrom`: on load and before every
+     settle), so a mark another device holds is never granted twice (no
+     toast, no XP) and none is lost. The counts beside the list read both
+     sets. No persist key, version or field changed.
+
 
 ## Open questions for review
 

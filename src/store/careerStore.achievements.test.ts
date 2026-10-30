@@ -47,6 +47,35 @@ describe("careerStore — achievements settle after flows (R32)", () => {
     expect(useCareerStore.getState().toasts.filter((t) => t.source === "achievement")).toHaveLength(1);
   });
 
+  it("rc.36 (UX-05, #155): a mark the profile already holds (another device) is never granted twice", () => {
+    useProfileStore.getState().resetAll();
+    // The cloud brought "Open for Business" in; this device's career memory never saw it.
+    useProfileStore.getState().addCareerMarks(["car-first-sponsor"]);
+    useCareerStore.getState().createCareer(0, INPUT, 321);
+    const xpBefore = useProfileStore.getState().xp;
+    useCareerStore.getState().markFlag(ACH_FLAGS.sponsorSigned);
+    const s = useCareerStore.getState();
+    // It joins the memory silently: no toast, no Season XP.
+    expect(s.achievements.unlocked["car-first-sponsor"]).toBeGreaterThan(0);
+    expect(s.toasts.some((t) => t.source === "achievement" && t.titleKey === "car-first-sponsor")).toBe(false);
+    expect(useProfileStore.getState().xp).toBe(xpBefore);
+  });
+
+  it("rc.36 (UX-05): permanent across saves — a new career after deleting the slot grants nothing again", () => {
+    useProfileStore.getState().resetAll();
+    const xp0 = useProfileStore.getState().xp;
+    useCareerStore.getState().createCareer(0, INPUT, 777);
+    useCareerStore.getState().markFlag(ACH_FLAGS.sponsorSigned);
+    const xpAfterFirst = useProfileStore.getState().xp;
+    expect(xpAfterFirst - xp0).toBe(careerAchievementById.get("car-first-sponsor")!.xp);
+    useCareerStore.getState().deleteSlot(0);
+    useCareerStore.getState().createCareer(1, INPUT, 778);
+    useCareerStore.getState().markFlag(ACH_FLAGS.sponsorSigned);
+    expect(useProfileStore.getState().xp).toBe(xpAfterFirst);
+    expect(useCareerStore.getState().achievements.unlocked["car-first-sponsor"]).toBeGreaterThan(0);
+    expect(useProfileStore.getState().careerMarks.filter((id) => id === "car-first-sponsor")).toHaveLength(1);
+  });
+
   it("rc.4: a Worlds title feeds the profile's lifetime + season counters (World Champion badges)", () => {
     const before = useProfileStore.getState();
     const lifetime = before.careerWorldsWon ?? 0;

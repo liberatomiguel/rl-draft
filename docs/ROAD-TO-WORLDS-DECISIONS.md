@@ -1672,6 +1672,66 @@ R84. **HQ and the screens polished to Miguel's rc.35 playtest (rc.36 front
      weekly expenses as "the weekly out" (the payroll line carries them);
      four or five rungs with hyphenated names.
 
+R87. **Season goals read the season; a visual news desk with its archive;
+     the career's achievements in the general list (rc.36 front A; ROADMAP
+     UX-02, UX-03, UX-05).** (a) The board's goal is set once at the season's
+     start (the rollover, or the founding day) and never moves
+     (`engine/career/seasonGoals.ts`, `seasonGoals.plan`). It reads the
+     squad's level against its region (the sponsors' `TeamLevel`, difficulty
+     edge included), its Community Cup draw and the Saturday qualifier's line
+     (the region's 16th org), the career's stage (`targetAim` founding 0.6,
+     rising 0.56, established 0.52 from `establishedRep` 40), its resources (a
+     runway under `tightRunwayWeeks` 8 or a loan owed eases the aim by 0.04;
+     26+ weeks raises it by 0.02) and last season's target (met −0.03, missed
+     +0.05), clamped to 0.45–0.68. A goal counts over the season: Community
+     Cup finals and titles (the newcomer's rung), Sunday regionals played,
+     regional top 8, top 4 and titles, Majors qualified, a Major top 4 or
+     title, Worlds. The target is the goal nearest the aim inside
+     `targetBand` 0.40–0.75 that leaves room for a stretch; the stretch is
+     the one nearest `stretchAim` 0.17 inside `stretchBand` 0.10–0.35, at
+     least `stretchGap` 0.15 less likely. The model reads the level
+     `seasonForm` 1.5 points up (squads grow 4.3 points p50 in a season; the
+     likelihood peaks at 1.5–2), regional reach on its own curve against the
+     qualifier's line (`reachCurve` mid −2, scale 4.5; the 12th org misread
+     EU's deep pool), cups on a series logistic fitted on rc.35's series by
+     gap (`cupSeries` mid −1.2, scale 1.8). HQ and the season review show
+     both goals with an icon, a meter, the chances left, the dated deadline
+     (the last event that can count) and the status, plus the board's
+     reasons; a miss still costs `repRisk`, and the stretch settles too.
+     (b) Measured (CAREER_GOALS, 252 seasons: 7 regions × 3 presets ×
+     autopilot / tuned / youth × 4 seasons; GOALS_FIT replays the shipped
+     settings): target met 63 % (Easy 70, Normal 56, Hard 63; founding 59,
+     rising 63, established 66), stretch 29 % (37 / 23 / 29). SAM (78 / 47)
+     and MENA (75 / 33) run high, NA (50 / 25) and EU (53 / 17) low; by
+     manager, autopilot 40 %, tuned 69 %, youth 80 % (the board cannot see the
+     growth ahead). (c) Miguel's rc.35-(b), decided by measurement: a
+     Balanced split goal met in any split was met in 94 % of the same seasons
+     (100 % of founding ones), its Bold stretch in 88 % — trivial.
+     `CAREER_SEASON_GOAL.rule` "season" replaces it ("anySplit" keeps rc.35's
+     path); an rc.35 save keeps its current season's goal and rule, and gets
+     a plan at its next rollover. (d) HQ's feed (`news/NewsFeed.tsx`) leads
+     with the freshest headline of priority 2+ from the last 7 days, then
+     rows: the crests of the orgs it names, a short subject, the headline, a
+     line of body and the action (the screen that handles it). A historical
+     beat carries a `check` (`engine/career/beats.ts`: the org in the world
+     and near the top of its region, the player still playing or not signed
+     yet, a region's Major run this season); when the save contradicts it,
+     the beat files "From the archive" with its real season, at priority 1,
+     and its effect does not run. Real history the sim does not replay is
+     `archiveOnly`: the LANs coming back (this timeline never lost them), the
+     prodigy era, the salary boom, the old guard, and Miguel's example, FURIA
+     fielding its roster in NA in 2022–23 (a new beat). Vitality signs zen
+     only with Vitality in the world and zen still playing. FaZe plays from
+     Season X in the dataset, so its beat is the Firstkiller signing; Moist
+     entered a season earlier, so its preempted line no longer says
+     "enters". (e) 50/50: `CAREER_NEWS.brand` "wire" | "fiftyFifty", "wire"
+     until the partner agrees on material, naming and credit. The 50/50 desk
+     shows its name, a logo slot (`partnerLogoSrc`, `public/partners/`,
+     built to WebP like the other art; a styled fallback in the game's own
+     chrome, never a redrawn mark) and a credit line saying the headlines
+     are the game's own — never a quote in the partner's mouth. (f) UX-05:
+     DESIGN-DECISIONS #155.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
