@@ -17,13 +17,13 @@ import {
   challengeById,
   lineupById,
   lineupPoolForRegion,
-  nationalSpecialIdsByLineupId,
   playerById,
   playerCardById,
   seasonById,
   specialCardById,
   specialCards,
 } from "@/data";
+import { completeNationalLineups, nationalCardIdsOf, unownedOfferSpecials } from "@/engine/collection";
 import { rankRewardsForXp } from "@/engine/progression";
 import {
   applyFreeReroll,
@@ -32,7 +32,6 @@ import {
   createDraft,
   drawNextOffer,
   eventSpecialsFor,
-  nationalUnlocks,
 } from "@/engine/draft";
 import {
   buildChallengeOpponent,
@@ -77,38 +76,33 @@ import { useProfileStore } from "./profileStore";
 import { useRewardToasts } from "./rewardToastStore";
 
 /**
- * National teams the player has fully collected (v2.0) — the draft favours the
- * others (DRAFT.nationalUndiscoveredWeight) so the album can be completed.
+ * COL-02a (rc.33): the offer's specials the player does not own, decided NOW —
+ * right after the offer is drawn, before anything is collected — and kept with
+ * the run, so the NEW tag never re-reads an inventory a grant has changed.
  */
-function discoveredNationalLineups(unlocked: Record<string, string>): string[] {
-  const out: string[] = [];
-  for (const [lineupId, ids] of nationalSpecialIdsByLineupId) {
-    if (ids.every((id) => unlocked[id])) out.push(lineupId);
-  }
-  return out;
+function offerNewOf(draft: DraftState): RunState["offerNew"] {
+  if (!draft.offer) return undefined;
+  return { round: draft.round, ids: unownedOfferSpecials(draft.offer, useProfileStore.getState().unlockedSpecials) };
 }
 
 /**
- * Seeing a national team collects ALL its cards (v2.0, engine nationalUnlocks);
- * a find that adds new cards gets a toast. Idempotent — re-renders and
- * re-hydrated offers collect nothing new. `mode` labels the discovery (OBS-01).
+ * COL-01b (rc.33): SEEING a national team reveals its album page; it grants no
+ * card. Each card is collected by drafting it and finishing the run, like every
+ * special (compileResults → applyRunResults), so an abandoned run keeps the
+ * discovery and collects nothing. A first find gets a toast; a team already
+ * found — or with a card owned (a save from before rc.33) — stays quiet.
+ * Idempotent: re-renders and re-hydrated offers discover nothing new.
  */
-function collectNationalOffer(draft: DraftState, mode: RunMode): void {
-  const ids = nationalUnlocks(draft.offer);
-  if (ids.length === 0 || !draft.offer) return;
-  const profile = useProfileStore.getState();
-  const fresh = ids.filter((id) => !profile.unlockedSpecials[id]);
-  if (fresh.length === 0) return;
-  profile.collectSpecials(ids, mode);
-  const lineup = lineupById.get(draft.offer.lineupId);
-  if (!lineup) return;
+function discoverNationalOffer(draft: DraftState): void {
+  const lineup = draft.offer ? lineupById.get(draft.offer.lineupId) : undefined;
+  if (!lineup?.national) return;
+  if (!useProfileStore.getState().discoverNationalTeam(lineup.id, nationalCardIdsOf(lineup.id))) return;
   useRewardToasts.getState().push([
     {
       kind: "nationalTeam",
       orgId: lineup.orgId,
       name: lineup.name,
       edition: seasonById.get(lineup.seasonId)?.shortLabel ?? "",
-      cards: fresh.length,
     },
   ]);
 }
@@ -126,7 +120,7 @@ function regionLabelOf(run: RunState): string {
   return run.regionLock ?? "worldwide";
 }
 
-/** OBS-01 (COL-02a): a special the profile did not own when this run started. */
+/** OBS-01: a special the profile did not own when this run started. */
 function isNewThisRun(run: RunState, specialId: string): boolean {
   const since = useProfileStore.getState().unlockedSpecials[specialId];
   return !since || since >= run.startedAt;
@@ -182,8 +176,8 @@ export const useRunStore = create<RunStore>()(
       setSetupMode: (setupMode) => set({ setupMode }),
 
       startRun: ({ mode, difficulty, showOverall, regionLock }) => {
-        // Stamped before the first offer collects a national team, so a card
-        // found in it counts as new this run (`special_used.isNew`, OBS-01).
+        // Stamped when the run starts: a special collected by this run counts as
+        // new this run (`special_used.isNew`, OBS-01).
         const startedAt = new Date().toISOString();
         const seed = randomSeed();
         const rng = createRng(seed);
@@ -205,12 +199,14 @@ export const useRunStore = create<RunStore>()(
             specialRarities: rewards.rarities,
             // Event-exclusive cards live today + the Special Hunt boost (v2.0).
             eventSpecials: eventSpecialsFor(specialCards, todayKey(), useProfileStore.getState().events),
-            // National teams (v2.0): a rare draw of their own in classic/quick.
-            nationalTeams: { discovered: discoveredNationalLineups(useProfileStore.getState().unlockedSpecials) },
+            // National teams (v2.0): a rare draw of their own in classic/quick,
+            // favouring the teams the player has not completed (rc.33).
+            nationalTeams: { complete: completeNationalLineups(useProfileStore.getState().unlockedSpecials) },
           }),
           rng,
         );
-        collectNationalOffer(draft, mode);
+        const offerNew = offerNewOf(draft);
+        discoverNationalOffer(draft);
 
         // Remember the setup for next time (and for "Play again").
         useProfileStore.getState().setLastSetup(difficulty, showOverall, mode, region);
@@ -227,6 +223,7 @@ export const useRunStore = create<RunStore>()(
           startedAt,
           xpAtStart,
           draft,
+          offerNew,
           tournament: null,
           challenge: null,
           results: null,
@@ -280,6 +277,7 @@ export const useRunStore = create<RunStore>()(
           xpAtStart: useProfileStore.getState().xp,
           daily: config.info,
           draft,
+          offerNew: offerNewOf(draft),
           tournament: null,
           challenge: null,
           results: null,
@@ -314,6 +312,7 @@ export const useRunStore = create<RunStore>()(
           phase: "draft",
           startedAt: new Date().toISOString(),
           draft,
+          offerNew: offerNewOf(draft),
           tournament: null,
           challenge: null,
           results: null,
@@ -391,11 +390,13 @@ export const useRunStore = create<RunStore>()(
         const draft = applyPick(run.draft, card, slot, rng);
         // Missions (v2.0): "select a special card" counts at pick time.
         if (card.specialId) useProfileStore.getState().applyMissionEvent({ type: "special_selected" });
-        collectNationalOffer(draft, run.mode);
+        const offerNew = offerNewOf(draft);
+        discoverNationalOffer(draft);
         set({
           run: {
             ...run,
             draft,
+            offerNew,
             rngState: rng.state,
             phase: draft.complete ? "review" : "draft",
           },
@@ -414,8 +415,9 @@ export const useRunStore = create<RunStore>()(
         if (run.draft.rerollsLeft <= 0) return;
         const rng = createRng(run.rngState);
         const draft = applyReroll(run.draft, rng);
-        collectNationalOffer(draft, run.mode);
-        set({ run: { ...run, draft, rngState: rng.state } });
+        const offerNew = offerNewOf(draft);
+        discoverNationalOffer(draft);
+        set({ run: { ...run, draft, offerNew, rngState: rng.state } });
       },
 
       freeReroll: () => {
@@ -424,8 +426,9 @@ export const useRunStore = create<RunStore>()(
         if (run.draft.offer?.hasPickableCard) return;
         const rng = createRng(run.rngState);
         const draft = applyFreeReroll(run.draft, rng);
-        collectNationalOffer(draft, run.mode);
-        set({ run: { ...run, draft, rngState: rng.state } });
+        const offerNew = offerNewOf(draft);
+        discoverNationalOffer(draft);
+        set({ run: { ...run, draft, offerNew, rngState: rng.state } });
       },
 
       startTournament: () => {

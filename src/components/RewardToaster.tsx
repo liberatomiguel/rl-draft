@@ -77,7 +77,9 @@ function Toast({ toast }: { toast: RewardToast }) {
         <span className="display block truncate text-sm font-bold uppercase tracking-wide text-ink">{title}</span>
       </span>
       {toast.kind === "nationalTeam" ? (
-        <span className="display shrink-0 text-sm font-bold text-amber-200">{N.toastCards(toast.cards)}</span>
+        <span className="display max-w-[7.5rem] shrink-0 text-right text-[11px] font-bold uppercase leading-tight tracking-wide text-amber-200">
+          {N.toastPage}
+        </span>
       ) : toast.xp ? (
         <span className="display shrink-0 text-sm font-bold text-orange-bright">+{toast.xp} XP</span>
       ) : null}

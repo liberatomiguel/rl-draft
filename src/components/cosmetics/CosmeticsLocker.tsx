@@ -29,6 +29,7 @@ import { sfx } from "@/lib/sfx";
 import { useProfileStore } from "@/store/profileStore";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
+import { NewDot } from "@/components/ui/NewDot";
 import { BadgeEmblem, CosmeticArt, TIER_ACCENT, TIER_RING, useCosmeticCopy } from "./CosmeticViews";
 
 export const LOCKER_KINDS: CosmeticKind[] = ["title", "badge", "banner"];
@@ -82,17 +83,9 @@ export function useUnseenCosmetics(): number {
   return unseenOwnedIds(cosmetics).length;
 }
 
-/** rc.4: the small green "something new here" dot (tabs, hero slots). */
-export function NewDot({ className, label }: { className?: string; label?: string }) {
-  return (
-    <span
-      className={cx("pointer-events-none block h-2 w-2 rounded-full bg-good shadow-[0_0_0_2px_var(--bg-raised),0_0_8px_rgba(74,222,128,0.6)]", className)}
-      role={label ? "status" : undefined}
-      aria-label={label}
-      aria-hidden={label ? undefined : true}
-    />
-  );
-}
+/** rc.4: the small green "something new here" dot (tabs, hero slots). rc.33:
+ *  shared with the nav, the collection and the challenges (`ui/NewDot`). */
+export { NewDot };
 
 export function CosmeticsLockerModal({
   open,

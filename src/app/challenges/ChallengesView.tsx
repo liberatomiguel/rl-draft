@@ -32,8 +32,11 @@ import { sfx } from "@/lib/sfx";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { useRunStore } from "@/store/runStore";
+import { useOpenContent, useProfileNew } from "@/store/useNewItems";
+import { challengeKey } from "@/engine/profileNew";
 import { achievementStyle } from "@/components/achievementStyle";
 import { Badge } from "@/components/ui/Badge";
+import { NewTag } from "@/components/ui/NewDot";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
@@ -172,6 +175,10 @@ export function ChallengesView() {
   const starsMax = ordered.reduce((n, c) => n + starsAvailable(c), 0);
 
   const [active, setActive] = useState<Challenge | null>(null);
+  // rc.33 (COL-02c): NEW = opened to the player, briefing not read yet. Reading
+  // the briefing is opening the content; visiting this page marks nothing.
+  const fresh = useProfileNew();
+  const openContent = useOpenContent();
 
   // Whole mode is rank-gated (Bronze, alongside the Collection) — v1.4.
   const modeLocked = mounted && rankForXp(xp).id === "unranked";
@@ -219,8 +226,10 @@ export function ChallengesView() {
                       ch={ch}
                       status={statusOf(ch)}
                       starMask={mounted ? starMasks[ch.id] ?? 0 : 0}
+                      isNew={fresh.keys.has(challengeKey(ch.id))}
                       onOpen={() => {
                         sfx.click();
+                        openContent([challengeKey(ch.id)]);
                         setActive(ch);
                       }}
                       CH={CH}
@@ -242,12 +251,14 @@ function ChallengeCard({
   ch,
   status,
   starMask,
+  isNew,
   onOpen,
   CH,
 }: {
   ch: Challenge;
   status: ChallengeStatus;
   starMask: number;
+  isNew: boolean;
   onOpen: () => void;
   CH: ReturnType<typeof useCopy>["CHALLENGES_UI"];
 }) {
@@ -270,6 +281,7 @@ function ChallengeCard({
         <span className="flex items-center gap-2">
           <span className={cx("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>{style.label}</span>
           {ch.kind === "gauntlet" ? <Badge tone="blue">{CH.gauntletKicker}</Badge> : null}
+          {isNew && !locked ? <NewTag>{CH.newTag}</NewTag> : null}
         </span>
         {perfect ? (
           <Badge tone="gold">✓ {CH.status.cleared}</Badge>

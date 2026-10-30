@@ -171,6 +171,8 @@ export const NAV_UI = {
   inspiredBy: "Inspired by",
   by: "by",
   balancedBy: "Overalls balanced by",
+  /** rc.33: the green dot on a nav item / tile with something not opened yet. */
+  newHere: "Something new here",
 };
 
 export const RUN_UI = {
@@ -263,6 +265,9 @@ export const DRAFT_UI = {
   noSub: "No Sub",
   notFielded: "Not fielded this season",
   player: "Player",
+  /** rc.33 (COL-02a): a special or national card the player does not own yet. */
+  newTag: "NEW",
+  newTagHint: "Not in your collection yet",
 };
 
 export const ONBOARDING = {
@@ -546,6 +551,8 @@ export const COLLECTION_UI = {
   effect: "Special effect",
   context: "The moment",
   empty: "Nothing here yet. Finish runs with special cards to grow the album.",
+  /** rc.33 (COL-02c): a card or a page the player has not opened yet. */
+  newTag: "NEW",
 };
 
 export const SETTINGS_UI = {
@@ -1054,6 +1061,8 @@ export const CHALLENGES_UI = {
   /** Rarity section headers (challenges are grouped by tier). */
   tier: { common: "Common", rare: "Rare", epic: "Epic", legend: "Legend" } as Record<string, string>,
   status: { locked: "Locked", available: "Available", cleared: "Cleared" },
+  /** rc.33 (COL-02c): a challenge opened to the player whose briefing is not read yet. */
+  newTag: "NEW",
   unlocksAt: (rank: string) => `Unlocks at ${rank}`,
   clearPrereq: (title: string) => `Clear “${title}” first`,
   rewardXp: (xp: number) => `+${xp} XP`,
@@ -1575,18 +1584,30 @@ export const NATIONAL_UI = {
   /** Team name for display — the data name in English; PT maps it. */
   teamName: (_orgId: string, dataName: string) => dataName,
   drawKicker: "Rare draw",
-  drawNote: (n: number) =>
-    `Every card of this national team is a special — all ${n} are now in your collection.`,
+  /** rc.33: finding the team opens its album page; each card is collected by drafting it. */
+  drawNote: (have: number, total: number) =>
+    have >= total
+      ? `Every card of this national team is a special — all ${total} are already in your album.`
+      : `Every card of this national team is a special. Draft one and finish the run to collect it (${have}/${total} in your album).`,
   toastKicker: "National team found",
-  toastCards: (n: number) => `+${n} card${n === 1 ? "" : "s"}`,
+  toastPage: "New album page",
   tabSpecials: "Special cards",
   tabNational: "National teams",
   albumIntro:
-    "The FIFAe national rosters. They show up rarely in Classic and Quick drafts — find a team once and every one of its cards joins your album.",
+    "The FIFAe national rosters. They show up rarely in Classic and Quick drafts. Finding a team opens its page in the album; every card you draft from it fills its slot once the run is over, win or lose.",
   teamsFound: (found: number, total: number) => `${found}/${total} teams`,
   cardsProgress: (got: number, total: number) => `${got}/${total} cards`,
   notFound: "Not found yet",
-  notFoundHint: "Draw this team in a Classic or Quick draft to collect its cards.",
+  notFoundHint: "Draw this team in a Classic or Quick draft to open its page.",
+  /** rc.33 (COL-01a): the team page. */
+  lockedSlotHint:
+    "Draft a missing card when this team shows up again and finish the run, win or lose, to collect it. Coaches and subs only come up in Classic.",
+  complete: "Complete",
+  foundOn: (date: string) => `Found ${date}`,
+  backToAlbum: "All national teams",
+  startingThree: "Starting three",
+  bench: "Bench",
+  edition: "Edition",
   flavor: (name: string, nation: string, edition: string) => `${name} wore ${nation}'s colours at ${edition}.`,
   effect: (n: number) => `+${n} to every team attribute — the national colours.`,
 };

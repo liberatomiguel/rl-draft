@@ -74,6 +74,9 @@ const SACRED_PROFILE_FIELDS = [
   "login",
   "events",
   "quiz",
+  // rc.33 (COL-01b): national teams found (album pages revealed). Additive and
+  // optional: a save without it derives the teams it owns cards of.
+  "nationalDiscovered",
 ];
 
 class MemoryStorage implements Storage {

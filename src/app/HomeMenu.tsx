@@ -34,7 +34,9 @@ import { useMounted } from "@/store/useMounted";
 import { useAccountStore } from "@/store/accountStore";
 import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/lazyRunStore";
 import { selectChampionships, selectCollectionUnlocked, selectDailyStreak, useProfileStore } from "@/store/profileStore";
+import { useNewDots } from "@/store/useNewItems";
 import { Badge } from "@/components/ui/Badge";
+import { NewDot } from "@/components/ui/NewDot";
 import { buttonClass } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel } from "@/components/ui/Panel";
@@ -63,8 +65,10 @@ const warmRunStore = {
 };
 
 export default function HomeMenu() {
-  const { APP, HOME, HOME_SEO, QUIZ_UI, DAILY_TEXT } = useCopy();
+  const { APP, HOME, HOME_SEO, QUIZ_UI, DAILY_TEXT, NAV_UI } = useCopy();
   const mounted = useMounted();
+  // rc.33 (COL-02c): the same "something new" dots as the nav.
+  const dots = useNewDots();
   const lang = useSettings((s) => s.lang);
   const active = mounted ? lang : "en";
   const router = useRouter();
@@ -280,7 +284,8 @@ export default function HomeMenu() {
             </div>
           ) : (
             <AppLink href="/challenges" className={cx("group", playtest ? "sm:col-span-2 md:col-span-12" : "md:col-span-4")}>
-              <Panel className="flex h-full flex-col p-5 transition-colors group-hover:!border-line-strong">
+              <Panel className="relative flex h-full flex-col p-5 transition-colors group-hover:!border-line-strong">
+                {dots.challenges ? <NewDot className="absolute right-2 top-2" label={NAV_UI.newHere} /> : null}
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="display text-lg font-bold uppercase tracking-wide text-ink">{HOME.challenges}</h3>
                   <span className="text-orange-bright" aria-hidden>
@@ -344,7 +349,7 @@ export default function HomeMenu() {
               </Panel>
             </div>
           ) : (
-            <Tile href="/collection" title={HOME.collection} desc={HOME.collectionDesc}>
+            <Tile href="/collection" title={HOME.collection} desc={HOME.collectionDesc} dot={dots.collection} dotLabel={NAV_UI.newHere}>
               <span className="display shrink-0 text-2xl font-bold text-cyan">
                 {mounted ? unlocked : 0}
                 <span className="text-sm text-faint">/{COUNTS.specialCards}</span>
@@ -357,7 +362,7 @@ export default function HomeMenu() {
               <span className="text-sm text-faint">/{COUNTS.achievements}</span>
             </span>
           </Tile>
-          <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc}>
+          <Tile href="/profile" title={HOME.profile} desc={HOME.profileDesc} dot={dots.profile} dotLabel={NAV_UI.newHere}>
             {mounted ? <RankBadge rank={rank} variant="menu" size="sm" /> : null}
           </Tile>
           <Tile href="/leaderboards" title={HOME.leaderboards} desc={HOME.leaderboardsDesc}>
@@ -453,10 +458,26 @@ function CardHit({
   );
 }
 
-function Tile({ href, title, desc, children }: { href: string; title: string; desc: string; children: React.ReactNode }) {
+function Tile({
+  href,
+  title,
+  desc,
+  dot,
+  dotLabel,
+  children,
+}: {
+  href: string;
+  title: string;
+  desc: string;
+  /** rc.33: something not opened yet behind this tile. */
+  dot?: boolean;
+  dotLabel?: string;
+  children: React.ReactNode;
+}) {
   return (
     <AppLink href={href} className="group">
-      <Panel className="flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-line-strong">
+      <Panel className="relative flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:!border-line-strong">
+        {dot ? <NewDot className="absolute right-2 top-2" label={dotLabel} /> : null}
         <div className="min-w-0">
           <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{title}</h3>
           <p className="mt-1 hidden text-xs text-sub sm:block">{desc}</p>

@@ -12,7 +12,9 @@ import { useSettings } from "@/store/settingsStore";
 import { useAccountStore } from "@/store/accountStore";
 import { useProfileStore } from "@/store/profileStore";
 import { useMounted } from "@/store/useMounted";
+import { useNewDots } from "@/store/useNewItems";
 import { rankForXp } from "@/engine/progression";
+import { NewDot } from "@/components/ui/NewDot";
 import { RankBadge } from "@/components/ui/RankBadge";
 import { AchievementToaster } from "@/components/AchievementToaster";
 import { RewardToaster } from "@/components/RewardToaster";
@@ -52,6 +54,11 @@ export function Logo({ className }: { className?: string }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const t = useCopy();
+  // rc.33 (COL-02c): a dot on the destinations holding something not opened yet
+  // (the same items as the NEW tags inside them).
+  const dots = useNewDots();
+  const hasDot = (key: NavKey): boolean =>
+    (key === "collection" || key === "challenges" || key === "profile") && dots[key];
 
   // Leaving the run (any page that isn't /play) RESETS it automatically
   // (v0.7.0 — the leave-confirmation modal was removed by direction). The run
@@ -145,13 +152,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       item={item}
                       className={cx(
-                        "display rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
+                        "display relative rounded-lg px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] transition-colors",
                         active
                           ? "bg-orange/12 text-orange-bright"
                           : "text-sub hover:bg-white/5 hover:text-ink",
                       )}
                     >
                       {t.NAV[item.key]}
+                      {hasDot(item.key) ? (
+                        <NewDot className="absolute right-1 top-1" label={t.NAV_UI.newHere} />
+                      ) : null}
                     </NavLink>
                   );
                 })}
@@ -217,7 +227,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     active ? "text-orange-bright" : "text-sub",
                   )}
                 >
-                  <Icon className="h-6 w-6" />
+                  <span className="relative">
+                    <Icon className="h-6 w-6" />
+                    {hasDot(item.key) ? (
+                      <NewDot className="absolute -right-1 -top-0.5" label={t.NAV_UI.newHere} />
+                    ) : null}
+                  </span>
                   <span className="sr-only">{t.NAV[item.key]}</span>
                 </NavLink>
               );

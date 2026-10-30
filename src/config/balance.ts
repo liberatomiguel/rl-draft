@@ -414,9 +414,13 @@ export const DRAFT = {
    */
   nationalTeamChance: 0.025,
   /**
-   * Which national team shows: uniform, except that a team whose cards the
-   * player has NOT collected yet weighs this much more — a full album (32 teams)
-   * stays reachable without making the next find predictable.
+   * Which national team shows: uniform, except that a team the player has NOT
+   * completed yet (some card not owned — never found, or found and still being
+   * collected) weighs this much more, so a full album stays reachable without
+   * making the next find predictable. rc.33: finding a team only reveals its
+   * album page and each card is collected by drafting it, so a team stays
+   * favoured until its last card is owned (same semantics, the key keeps its
+   * pre-rc.33 name).
    */
   nationalUndiscoveredWeight: 3,
 } as const;

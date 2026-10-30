@@ -8,7 +8,8 @@ export function ProgressBar({
 }: {
   /** 0..1 */
   value: number;
-  tone?: "blue" | "orange" | "good";
+  /** rc.33: "gold" for the national album. */
+  tone?: "blue" | "orange" | "good" | "gold";
   className?: string;
   label?: string;
 }) {
@@ -18,7 +19,9 @@ export function ProgressBar({
       ? "from-orange to-orange-bright"
       : tone === "good"
         ? "from-emerald-500 to-emerald-300"
-        : "from-blue to-cyan";
+        : tone === "gold"
+          ? "from-yellow-600 to-yellow-200"
+          : "from-blue to-cyan";
   return (
     <div
       className={cx("h-2 w-full overflow-hidden rounded-full bg-white/8", className)}

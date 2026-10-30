@@ -19,8 +19,9 @@
 import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
+import { nationalTeamProgress, unownedOfferSpecials } from "@/engine/collection";
 import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
-import { draftableLineups, lineupById, nationalSpecialIdsByLineupId, seasonById } from "@/data";
+import { draftableLineups, lineupById, seasonById, specialCardById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
 import { dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
@@ -227,6 +228,14 @@ function OfferReveal({
 
   const rolling = reel !== null;
 
+  // COL-02a (rc.33): NEW = a special or national card the player did not own
+  // when this offer was drawn. The store decided it then and kept it with the
+  // offer; a run saved before rc.33 has no record, so it reads the inventory.
+  const newIds = new Set(
+    run.offerNew?.round === run.draft.round ? run.offerNew.ids : unownedOfferSpecials(offer, unlockedSpecials),
+  );
+  const nationalProgress = national ? nationalTeamProgress(lineup.id, unlockedSpecials) : null;
+
   const playerCards = offer.cards.filter((c) => c.kind === "player");
   const coachCard = offer.cards.find((c) => c.kind === "coach") ?? null;
   const subCard = offer.cards.find((c) => c.kind === "sub") ?? null;
@@ -245,9 +254,16 @@ function OfferReveal({
         <GameCard
           card={resolvedCard}
           showOverall={run.showOverall}
+          // A national card's identity is public (the header names the team), so
+          // it never hides behind "???"; NEW says it is not collected yet.
           specialCollected={
-            offerCard.specialId ? Boolean(unlockedSpecials[offerCard.specialId]) : true
+            offerCard.specialId
+              ? Boolean(unlockedSpecials[offerCard.specialId]) ||
+                specialCardById.get(offerCard.specialId)?.rarity === "national"
+              : true
           }
+          // Only on a card that can be drafted: NEW says "draft it to collect it".
+          newTag={Boolean(!unavailable && offerCard.specialId && newIds.has(offerCard.specialId))}
           maskOrgId={lineup.orgId}
           maskSeasonId={lineup.seasonId}
           size="md"
@@ -353,15 +369,15 @@ function OfferReveal({
 
       {/* The offer fades in once the reel lands */}
       <div className={cx(rolling && "pointer-events-none opacity-0", "transition-opacity duration-300")}>
-        {/* National team (v2.0): the rare draw announces itself — and seeing it
-            already collected every one of its cards (runStore). */}
-        {national ? (
+        {/* National team (v2.0): the rare draw announces itself. rc.33: seeing it
+            opens its album page; a drafted card is collected when the run ends. */}
+        {national && nationalProgress ? (
           <div className="mb-4 flex items-center gap-3 rounded-xl border border-yellow-300/40 bg-yellow-300/[0.06] px-3 py-2 shadow-[0_0_24px_rgba(234,179,8,0.12)]">
             <span className="display shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-200">
               {NATIONAL_UI.drawKicker}
             </span>
             <span className="min-w-0 text-xs leading-snug text-yellow-50/85">
-              {NATIONAL_UI.drawNote(nationalSpecialIdsByLineupId.get(lineup.id)?.length ?? 0)}
+              {NATIONAL_UI.drawNote(nationalProgress.have, nationalProgress.total)}
             </span>
           </div>
         ) : null}

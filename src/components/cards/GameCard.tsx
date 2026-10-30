@@ -23,9 +23,11 @@ import { BUFF_LEVEL_VALUE } from "@/config/balance";
 import { hasSpecialPhoto } from "@/lib/assets";
 import { cx, initials } from "@/lib/util";
 import { Badge, CountryChip } from "@/components/ui/Badge";
+import { NewTag } from "@/components/ui/NewDot";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { TiltCard, type TiltIntensity } from "@/components/ui/TiltCard";
 import { REGION_BADGE } from "@/components/regionStyle";
+import { frameOf, isNationalOrgCard } from "./cardFrame";
 
 export interface GameCardProps {
   card: ResolvedCard;
@@ -73,6 +75,14 @@ export interface GameCardProps {
    * "max" is for the collection detail view. "off" disables it.
    */
   tilt?: TiltIntensity | "off";
+  /**
+   * rc.33: a "NEW" pill on the card's top edge — the draft's "not in your
+   * collection yet" (COL-02a) and the collection's "not opened yet" (COL-02c).
+   * The caller decides; the card only draws it. `newTagText` replaces the
+   * draft's wording (the collection says NEW for "not opened").
+   */
+  newTag?: boolean;
+  newTagText?: string;
   onClick?: () => void;
   className?: string;
 }
@@ -152,19 +162,6 @@ function specialBuffLabel(effect: SpecialEffect, showOverall: boolean): string |
   return `${value} ${stats}`;
 }
 
-function frameOf(card: ResolvedCard, showOverall: boolean): string {
-  if (card.special) {
-    const holo = ["epic", "mythic", "legendary", "creator", "wings", "community", "national"].includes(card.special.rarity)
-      ? ` holo-${card.special.rarity}`
-      : "";
-    return `card-${card.special.rarity} card-special${holo}`;
-  }
-  // Hidden runs black out EVERYTHING except special cards (base doc §11):
-  // player/coach/sub overalls, coach bonuses, org buffs and all rarities.
-  if (!showOverall) return "card-hidden";
-  return `card-${card.baseRarity ?? "common"}`;
-}
-
 export function GameCard({
   card,
   showOverall,
@@ -177,6 +174,8 @@ export function GameCard({
   disabled,
   disabledLabel,
   tilt,
+  newTag,
+  newTagText,
   onClick,
   className,
 }: GameCardProps) {
@@ -189,12 +188,14 @@ export function GameCard({
   };
   const isOrg = card.kind === "org";
   const isSpecial = Boolean(card.special);
+  // COL-02b (rc.33): a national team's org card wears the national visual.
+  const isNationalOrg = isNationalOrgCard(card);
   // National-team card (v2.0): the localized team name is the title line, the
   // edition the sub-line and "National team" the badge — no duplicated labels.
   const isNational = card.special?.rarity === "national";
   // A national team's ORG card reads in the player's language too (data is EN).
   const displayName =
-    isOrg && card.orgId?.startsWith("national-") ? NATIONAL_UI.teamName(card.orgId, card.name) : card.name;
+    isNationalOrg && card.orgId ? NATIONAL_UI.teamName(card.orgId, card.name) : card.name;
   const hiddenBase = !showOverall && !isSpecial;
   // v1.3: special cards always show their photo, identity, org/season and buff in
   // EVERY mode (base doc §11/§14) — exactly like base cards keep their crest and
@@ -418,6 +419,10 @@ export function GameCard({
                 ? "No buff"
                 : `${STAT_LABELS[card.buffType]} +${BUFF_LEVEL_VALUE[card.buffLevel ?? "~"]}`}
             </Badge>
+          ) : isNationalOrg ? (
+            <Badge tone="gold" className="!block min-w-0 truncate !text-[9px]">
+              {NATIONAL_UI.label}
+            </Badge>
           ) : (
             <span className="text-[9px] uppercase tracking-widest text-faint">
               {hiddenBase
@@ -441,6 +446,24 @@ export function GameCard({
     </div>
   );
 
+  // rc.33: the NEW pill sits on the card's top edge, outside the frame (which
+  // clips its overflow), so it never covers the overall or the flag.
+  const newPill = newTag ? (
+    <span className="pointer-events-none absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+      {/* Rides with the card's hover lift (the body moves up 1.5 on hover) —
+          transform only. */}
+      <NewTag
+        className={cx(
+          interactive && "transition-transform duration-200 group-hover/card:-translate-y-1.5 motion-reduce:transition-none",
+        )}
+      >
+        {newTagText ?? DRAFT_UI.newTag}
+        {/* The draft's NEW means "not owned yet": say so to screen readers. */}
+        {newTagText ? null : <span className="sr-only"> · {DRAFT_UI.newTagHint}</span>}
+      </NewTag>
+    </span>
+  ) : null;
+
   // Buttons are shrink-to-fit (unlike divs) — fluid must force w-full here
   // or pickable cards collapse while disabled ones render full size.
   const interactiveBody =
@@ -448,13 +471,17 @@ export function GameCard({
       <button
         type="button"
         onClick={onClick}
-        className={cx("relative block focus-visible:outline-orange", fluid && "w-full")}
+        className={cx("group/card relative block focus-visible:outline-orange", fluid && "w-full")}
         aria-pressed={selected}
       >
         {body}
+        {newPill}
       </button>
     ) : (
-      <div className={cx("relative", fluid && "w-full")}>{body}</div>
+      <div className={cx("relative", fluid && "w-full")}>
+        {body}
+        {newPill}
+      </div>
     );
 
   if (tiltTier === "off") return interactiveBody;

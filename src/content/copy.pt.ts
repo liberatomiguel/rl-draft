@@ -158,6 +158,7 @@ export const PT: Copy = {
     inspiredBy: "Inspirado em",
     by: "por",
     balancedBy: "Overalls balanceados por",
+    newHere: "Novidade aqui",
   },
 
   RUN_UI: {
@@ -185,6 +186,7 @@ export const PT: Copy = {
     progress: (done: number, total: number) => `${done} / ${total} concluídos`,
     tier: { common: "Comum", rare: "Raro", epic: "Épico", legend: "Lendário" } as Record<string, string>,
     status: { locked: "Bloqueado", available: "Disponível", cleared: "Concluído" },
+    newTag: "NOVO",
     unlocksAt: (rank: string) => `Libera em ${rank}`,
     clearPrereq: (title: string) => `Conclua “${title}” antes`,
     rewardXp: (xp: number) => `+${xp} XP`,
@@ -411,6 +413,8 @@ export const PT: Copy = {
     noSub: "Sem Reserva",
     notFielded: "Não atuou nesta season",
     player: "Jogador",
+    newTag: "NOVA",
+    newTagHint: "Ainda não está na sua coleção",
   },
 
   ONBOARDING: {
@@ -688,6 +692,7 @@ export const PT: Copy = {
     effect: "Efeito especial",
     context: "O momento",
     empty: "Nada aqui ainda. Termine runs com cartas especiais para crescer o álbum.",
+    newTag: "NOVA",
   },
 
   SETTINGS_UI: {
@@ -1521,18 +1526,28 @@ export const PT: Copy = {
     label: "Seleção",
     teamName: (orgId: string, dataName: string) => NATIONAL_TEAM_NAMES_PT[orgId] ?? dataName,
     drawKicker: "Sorteio raro",
-    drawNote: (n: number) =>
-      `Todas as cartas desta seleção são especiais — as ${n} já estão na sua coleção.`,
+    drawNote: (have: number, total: number) =>
+      have >= total
+        ? `Todas as cartas desta seleção são especiais — as ${total} já estão no seu álbum.`
+        : `Todas as cartas desta seleção são especiais. Escolha uma e termine a run para colecioná-la (${have}/${total} no seu álbum).`,
     toastKicker: "Seleção encontrada",
-    toastCards: (n: number) => `+${n} carta${n === 1 ? "" : "s"}`,
+    toastPage: "Nova página no álbum",
     tabSpecials: "Cartas especiais",
     tabNational: "Seleções",
     albumIntro:
-      "As seleções da FIFAe. Elas aparecem raramente nos drafts Classic e Quick — encontre uma seleção uma vez e todas as cartas dela entram no seu álbum.",
+      "As seleções da FIFAe. Elas aparecem raramente nos drafts Classic e Quick. Encontrar uma seleção abre a página dela no álbum; cada carta que você escolher dela preenche o seu espaço quando a run termina, vencendo ou perdendo.",
     teamsFound: (found: number, total: number) => `${found}/${total} seleções`,
     cardsProgress: (got: number, total: number) => `${got}/${total} cartas`,
     notFound: "Ainda não encontrada",
-    notFoundHint: "Sorteie esta seleção num draft Classic ou Quick para colecionar as cartas.",
+    notFoundHint: "Sorteie esta seleção num draft Classic ou Quick para abrir a página dela.",
+    lockedSlotHint:
+      "Escolha uma carta que falta quando esta seleção aparecer de novo e termine a run, vencendo ou perdendo, para colecioná-la. Técnicos e reservas só aparecem no Classic.",
+    complete: "Completa",
+    foundOn: (date: string) => `Encontrada em ${date}`,
+    backToAlbum: "Todas as seleções",
+    startingThree: "Titulares",
+    bench: "Banco",
+    edition: "Edição",
     flavor: (name: string, _nation: string, edition: string) => `${name} defendeu a seleção na ${edition}.`,
     effect: (n: number) => `+${n} em todos os atributos do time — as cores da seleção.`,
   },

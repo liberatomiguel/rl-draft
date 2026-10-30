@@ -26,7 +26,6 @@ import {
   lineupById,
   lineups,
   nationalSpecialByCardId,
-  nationalSpecialIdsByLineupId,
   playerById,
   playerCardById,
   specialsByPlayerId,
@@ -155,7 +154,8 @@ export interface CreateDraftOptions {
   eventSpecials?: DraftState["eventSpecials"];
   /**
    * National-team draws (v2.0) — classic/quick runs only; leave undefined for
-   * dailies/challenges. `discovered` = national lineups the player has collected.
+   * dailies/challenges. `complete` = national lineups whose every card the
+   * player owns (the draw favours the others).
    */
   nationalTeams?: DraftState["nationalTeams"];
 }
@@ -203,17 +203,6 @@ export function createDraft(
     roster: {},
     complete: false,
   };
-}
-
-/**
- * National specials collected by SEEING an offer (v2.0): a national team shows
- * one card per pick, so finding the lineup unlocks ALL its cards in the
- * collection — otherwise a full national set would need the same rare draw three
- * or four times. Empty for any other lineup. Pure; the store persists it.
- */
-export function nationalUnlocks(offer: DraftOffer | null): string[] {
-  if (!offer || !lineupById.get(offer.lineupId)?.national) return [];
-  return nationalSpecialIdsByLineupId.get(offer.lineupId) ?? [];
 }
 
 /** Quick mode drafts players only. */
@@ -475,7 +464,9 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
   // `&&` short-circuits and the seeded RNG sequence stays byte-identical).
   const availableEggs = eggs.filter((l) => !draft.shownLineupIds.includes(l.id));
   const availableNationals = nationals.filter((l) => !draft.shownLineupIds.includes(l.id));
-  const discovered = draft.nationalTeams?.discovered ?? [];
+  // rc.33: `complete` (every card owned); a run saved before rc.33 named the same
+  // list `discovered`. Same weights, same single weighted pick → same RNG use.
+  const complete = draft.nationalTeams?.complete ?? draft.nationalTeams?.discovered ?? [];
   // Tier bias is classic/quick only — the daily's draw must stay byte-identical
   // (tierBiasOn=false there → the staff branch multiplies by 1 and the open branch
   // stays rng.pick, so the seeded RNG sequence is untouched).
@@ -494,7 +485,7 @@ export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
     }
     if (availableNationals.length > 0 && rng.chance(DRAFT.nationalTeamChance)) {
       return rng.weightedPick(availableNationals, (l) =>
-        discovered.includes(l.id) ? 1 : DRAFT.nationalUndiscoveredWeight,
+        complete.includes(l.id) ? 1 : DRAFT.nationalUndiscoveredWeight,
       );
     }
     if (staffNeeds.length > 0) {

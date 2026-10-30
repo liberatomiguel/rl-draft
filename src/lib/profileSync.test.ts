@@ -5,7 +5,7 @@ import { EMPTY_COSMETICS } from "@/engine/cosmetics";
 import { EMPTY_LOGIN, EMPTY_MISSIONS } from "@/engine/missions";
 import { EMPTY_QUIZ } from "@/engine/quizState";
 import { freshSeason } from "@/engine/season";
-import { mergeProfiles, type DurableProfile } from "./profileSync";
+import { mergeProfiles, toDurable, type DurableProfile } from "./profileSync";
 
 /** A CURRENT-season row (v2.0). Pre-season rows are built in the v2.0 block below. */
 function make(over: Partial<DurableProfile> = {}): DurableProfile {
@@ -139,6 +139,22 @@ describe("mergeProfiles — never lose progress (#55.7)", () => {
     const b = make({ unlockedSpecials: { "sp-a": "2026-02-01", "sp-b": "2026-03-01" } });
     const m = mergeProfiles(a, b);
     expect(m.unlockedSpecials).toEqual({ "sp-a": "2026-02-01", "sp-b": "2026-03-01", "sp-c": "2026-01-01" });
+  });
+
+  it("rc.33: unions the national teams found (earliest date); a row written before rc.33 has none", () => {
+    const a = make({ nationalDiscovered: { "national-br-fifae-2025": "2026-10-02" } });
+    const b = make({ nationalDiscovered: { "national-br-fifae-2025": "2026-10-01", "national-fr-fifae-2024": "2026-10-03" } });
+    expect(mergeProfiles(a, b).nationalDiscovered).toEqual({
+      "national-br-fifae-2025": "2026-10-01",
+      "national-fr-fifae-2024": "2026-10-03",
+    });
+    const old = make(); // no `nationalDiscovered` at all
+    expect(mergeProfiles(a, old).nationalDiscovered).toEqual(a.nationalDiscovered);
+  });
+
+  it("rc.33: the 'New' markers stay on the device — not in the cloud slice", () => {
+    const local = { ...make(), newItems: { seen: ["sp:sp-a"] } } as DurableProfile;
+    expect(Object.keys(toDurable(local as never))).not.toContain("newItems");
   });
 
   it("dedupes runHistory by runId, newest first, and ORs onboarding flags", () => {

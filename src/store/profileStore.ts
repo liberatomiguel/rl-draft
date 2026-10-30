@@ -57,6 +57,13 @@ import {
   type LegacyState,
   type SeasonState,
 } from "@/engine/season";
+import {
+  markSeen as markItemsSeenIn,
+  seedOnChange,
+  withQuietArrivals,
+  type SeenState,
+} from "@/engine/newItems";
+import { profileAvailableKeys } from "@/engine/profileNew";
 import { FEATURES, MISSIONS } from "@/config/balance";
 import type { DurableProfile } from "@/lib/profileSync";
 import { trackEvent } from "@/lib/analytics";
@@ -126,6 +133,16 @@ export interface ProfileState {
   goalsScored: number;
   /** specialCardId → ISO date unlocked. */
   unlockedSpecials: Record<string, string>;
+  /** rc.33 (COL-01b): national lineup id → ISO date the team was first FOUND in a
+   *  draft offer — its album page is revealed. Cards are collected by drafting
+   *  them (`unlockedSpecials`). Saves from before rc.33 lack it; a team with any
+   *  owned card counts as found anyway (engine/collection, derived, not written). */
+  nationalDiscovered?: Record<string, string>;
+  /** rc.33 (COL-02c): the profile scope's "New" state (engine/newItems) — the
+   *  items the player has opened. Absent until the first change after the update:
+   *  an unseeded profile has seen everything it owns (never "everything is new").
+   *  Device-local (not in the cloud slice). */
+  newItems?: SeenState;
   /** achievementId → ISO date earned. */
   achievements: Record<string, string>;
   runHistory: RunHistoryEntry[];
@@ -205,6 +222,13 @@ export interface ProfileState {
    *  does (compileResults → applyRunResults), exposed standalone so the Challenge
    *  flow can collect the specials it drafted too. Idempotent. (v1.4.3, #100) */
   collectSpecials: (specialIds: string[], mode?: RunMode) => void;
+  /** rc.33 (COL-01b): a national team showed in a draft offer — reveal its album
+   *  page. `cardIds` are the team's national special ids: a team with any of them
+   *  owned is already revealed (a save from before rc.33). Returns true on a
+   *  first discovery (the caller toasts it). Grants no card. */
+  discoverNationalTeam: (lineupId: string, cardIds: readonly string[]) => boolean;
+  /** rc.33 (COL-02c): the player opened these items (engine/newItems keys). */
+  markItemsSeen: (keys: readonly string[]) => void;
   /** Replace the durable slice wholesale (v1.4 cloud sync — after a merge). */
   hydrateDurable: (durable: DurableProfile) => void;
   /** Award achievements the MOMENT they're earned (v1.4): mark + grant XP +
@@ -271,6 +295,7 @@ const initialData = {
   gamesWon: 0,
   goalsScored: 0,
   unlockedSpecials: {},
+  nationalDiscovered: {} as Record<string, string>,
   achievements: {},
   runHistory: [] as RunHistoryEntry[],
   dailyResults: {} as Record<string, DailyResult>,
@@ -721,19 +746,46 @@ export const useProfileStore = create<ProfileState>()(
         trackDiscoveries(discovered, mode ?? "unknown");
       },
 
+      discoverNationalTeam: (lineupId, cardIds) => {
+        let fresh = false;
+        set((state) => {
+          const known = state.nationalDiscovered ?? {};
+          if (known[lineupId] || cardIds.some((id) => state.unlockedSpecials[id])) return {};
+          fresh = true;
+          return { nationalDiscovered: { ...known, [lineupId]: new Date().toISOString() } };
+        });
+        return fresh;
+      },
+
+      markItemsSeen: (keys) =>
+        set((state) => {
+          if (!keys.length) return {};
+          const next = markItemsSeenIn(state.newItems, keys, profileAvailableKeys(state));
+          return next === state.newItems ? {} : { newItems: next };
+        }),
+
       hydrateDurable: (durable) => {
         // A cloud / storage merge is never "a new unlock": whatever it brings in
         // stays silent (the pop-up is for rewards earned in THIS session).
         quietUnlocks += 1;
         try {
-          set(() => {
+          set((state) => {
             const next = normalizeToSeason(durable);
+            const unlockedSpecials = pruneUnlockedSpecials(durable.unlockedSpecials);
+            const nationalDiscovered = { ...(state.nationalDiscovered ?? {}), ...(next.nationalDiscovered ?? {}) };
             return {
               ...next,
               legacyStreak: durable.legacyStreak ?? initialData.legacyStreak,
               achievements: pruneEarnedAchievements(durable.achievements),
-              unlockedSpecials: pruneUnlockedSpecials(durable.unlockedSpecials),
+              unlockedSpecials,
+              nationalDiscovered,
               cosmetics: withCosmetics({ ...next, cosmetics: next.cosmetics ?? EMPTY_COSMETICS }),
+              // rc.33: what the merge brought in is not news on this device.
+              newItems: withQuietArrivals(
+                state.newItems,
+                profileAvailableKeys(state),
+                profileAvailableKeys({ ...next, unlockedSpecials, nationalDiscovered }),
+              ),
             };
           });
         } finally {
@@ -941,7 +993,7 @@ export const useProfileStore = create<ProfileState>()(
         return out;
       },
 
-      resetAll: () => set({ ...initialData, season: freshSeason() }),
+      resetAll: () => set({ ...initialData, season: freshSeason(), newItems: undefined }),
     }),
     {
       name: "rocket-draft:profile:v1",
@@ -1056,6 +1108,21 @@ useProfileStore.subscribe((state, prev) => {
   if (quietUnlocks > 0 || state.cosmetics?.owned === prev.cosmetics?.owned) return;
   const ids = newlyOwnedIds(prev.cosmetics?.owned ?? {}, state.cosmetics?.owned ?? {});
   if (ids.length) useCosmeticUnlocks.getState().push(ids);
+});
+
+// rc.33 (COL-02c): seed the "New" state on the first change after the update.
+// Until then the profile is unseeded — it has seen everything it owns, so an
+// existing player never opens the game to "everything is new". The first write
+// that ADDS to what the profile can show (a card, a found team, an unlocked
+// challenge) seeds from the state BEFORE it, so exactly that arrival is new; a
+// write that only removes (a reset, a season turnover) seeds nothing.
+// Hydration (persist, `rehydrate`) and cloud merges never seed: they are not
+// arrivals (`hydrateDurable` marks merged content seen itself).
+useProfileStore.subscribe((state, prev) => {
+  if (state.newItems || quietUnlocks > 0) return;
+  if (useProfileStore.persist && !useProfileStore.persist.hasHydrated()) return;
+  const seeded = seedOnChange(state.newItems, profileAvailableKeys(prev), profileAvailableKeys(state));
+  if (seeded) useProfileStore.setState({ newItems: seeded });
 });
 
 /** Legacy difficulty unlock rule (v1.4): a real Classic/Quick Hard (or Legacy)
