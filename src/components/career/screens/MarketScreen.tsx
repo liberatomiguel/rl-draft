@@ -530,48 +530,23 @@ export function MarketScreen() {
                 ))}
               </div>
               {/* rc.33 (UX-07): only the players the org's reputation can sign.
-                  rc.35 (front C): a switch with its icon and how many players it keeps. */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={signableOnly}
+                  rc.36 (POL-02, Miguel on rc.35): discreet and in place — a chip in the filter
+                  row (rc.34's place) with its icon and how many players it keeps. */}
+              <Chip
+                active={signableOnly}
                 onClick={() => setSignableOnly((v) => !v)}
-                className={cx(
-                  "flex min-h-11 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors sm:w-auto",
-                  signableOnly
-                    ? "border-good/60 bg-good/15 shadow-[0_0_16px_-8px_rgba(34,197,94,0.6)]"
-                    : "border-line-strong bg-white/[0.03] hover:border-good/40",
-                )}
+                activeClass="border-good/50 bg-good/15 text-good"
+                className="max-w-full"
               >
+                <BadgeCheckIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 truncate">{C.market.filterSignable}</span>
                 <span
-                  className={cx(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
-                    signableOnly ? "bg-good/25 text-good" : "bg-white/5 text-sub",
-                  )}
+                  className="shrink-0 rounded-full bg-white/10 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal"
+                  title={C.market.filterSignableCount(signableCount)}
                 >
-                  <BadgeCheckIcon className="h-5 w-5" />
+                  {signableCount}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className={cx("block text-xs font-bold", signableOnly ? "text-good" : "text-ink")}>
-                    {C.market.filterSignable}
-                  </span>
-                  <span className="block text-[11px] text-faint">{C.market.filterSignableCount(signableCount)}</span>
-                </span>
-                <span
-                  aria-hidden
-                  className={cx(
-                    "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                    signableOnly ? "bg-good" : "bg-white/15",
-                  )}
-                >
-                  <span
-                    className={cx(
-                      "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
-                      signableOnly ? "translate-x-[18px]" : "translate-x-0.5",
-                    )}
-                  />
-                </span>
-              </button>
+              </Chip>
             </div>
           </Panel>
 

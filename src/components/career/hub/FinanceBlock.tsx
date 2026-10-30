@@ -4,9 +4,12 @@
  * Road to Worlds hub — THE FINANCE BLOCK (rc.34 UX-01e, H5 / 4-A; rc.35:
  * Miguel found rc.34's rows too much text — "earlier was better"). Visual,
  * key numbers only: the balance with its week trend and the Monday line
- * (tap: rc.33's larger chart), then icon tiles for the next payroll, the
- * runway, and the debt when there is any. Everything else lives in
- * Finances (link). Figures from store/careerHq.hqFinanceOf.
+ * (tap: rc.33's larger chart). Everything else lives in Finances (link).
+ * Figures from store/careerHq.hqFinanceOf.
+ * rc.36 (POL-02, Miguel on rc.35): only the balance, the weekly out, the
+ * chart, and the next-payroll and runway LINES — full-width icon lines
+ * instead of rc.35's tiles (which truncated at 360 px), no debt tile or
+ * badge (the emergency loan keeps its own HQ card, NowCards' DebtCard).
  */
 
 import { useMemo, useState } from "react";
@@ -21,10 +24,9 @@ import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
 import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
 import { AppLink } from "@/components/ui/AppLink";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { BankIcon, CalendarIcon, TrendIcon, WalletIcon } from "@/components/ui/icons";
+import { CalendarIcon, HourglassIcon, TrendIcon, WalletIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 
 /** A small line of the recorded Monday balances (no axes; the chart opens larger). */
@@ -46,26 +48,26 @@ function MondayLine({ points }: { points: number[] }) {
   );
 }
 
-/** One key number: icon, label, value. */
-function Tile({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: React.ReactNode; tone?: "bad" | "warn" | "good" }) {
+/** rc.36: one full-width line — icon, label, the value on the right (toned when it warns). */
+function Line({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone?: "bad" | "warn" | "good" }) {
   return (
-    <div
-      className={cx(
-        "flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2",
-        tone === "bad" ? "border-bad/40 bg-bad/[0.06]" : tone === "warn" ? "border-orange/40 bg-orange/[0.05]" : "border-line bg-white/[0.02]",
-      )}
-    >
+    <div className="flex min-h-10 items-center gap-2.5 py-1.5">
       <span
         className={cx(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
           tone === "bad" ? "bg-bad/15 text-bad" : tone === "warn" ? "bg-orange/15 text-orange-bright" : tone === "good" ? "bg-good/15 text-good" : "bg-cyan/10 text-cyan",
         )}
       >
         {icon}
       </span>
-      <span className="min-w-0">
-        <span className="kicker block truncate !text-[9px]">{label}</span>
-        <span className="block truncate text-xs font-bold text-ink">{value}</span>
+      <span className="kicker shrink-0 !text-[9px]">{label}</span>
+      <span
+        className={cx(
+          "ml-auto min-w-0 truncate text-right text-xs font-semibold",
+          tone === "bad" ? "text-bad" : tone === "warn" ? "text-orange-bright" : "text-ink",
+        )}
+      >
+        {value}
       </span>
     </div>
   );
@@ -80,24 +82,16 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const money = (n: number) => formatMoney(n, { compact: true });
   const cashTight = f.runway !== null && f.runway <= CAREER_PAYROLL.runwayWarnWeeks;
   const ended = save.phase === "ended";
-  const hasDebt = f.debt.backer !== null || f.debt.bankRemaining !== null;
 
   return (
     <Panel
       className={cx("rise-in p-4", f.balance < 0 ? "border-bad/40" : cashTight ? "border-orange/40" : "")}
       style={{ animationDelay: "120ms" }}
     >
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="kicker inline-flex items-center gap-1.5 text-[10px]">
-          <WalletIcon className="h-3.5 w-3.5 text-cyan" />
-          {C.hub.financesTitle}
-        </p>
-        {f.debt.backer !== null ? (
-          <Badge tone="orange">{C.finances.backer}</Badge>
-        ) : f.debt.bankRemaining !== null ? (
-          <Badge tone="blue">{C.finances.bankTitle}</Badge>
-        ) : null}
-      </div>
+      <p className="kicker mb-1 inline-flex items-center gap-1.5 text-[10px]">
+        <WalletIcon className="h-3.5 w-3.5 text-cyan" />
+        {C.hub.financesTitle}
+      </p>
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className={cx("display text-2xl font-bold leading-none", f.balance < 0 ? "text-bad" : "text-ink")}>{money(f.balance)}</p>
@@ -120,33 +114,24 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         </button>
       </div>
 
+      {/* rc.36: the next payroll and the runway as two full-width lines. */}
       {!ended ? (
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Tile
+        <div className="mt-3 divide-y divide-line rounded-lg border border-line bg-white/[0.02] px-2.5">
+          <Line
             icon={<CalendarIcon className="h-4 w-4" />}
             label={C.hub.financePayroll}
             value={`${formatDateShort(D, dateOfDay(f.payroll.seasonIndex, f.payroll.day))} · ${money(f.payroll.amount)}`}
           />
-          <Tile
-            icon={<TrendIcon className="h-4 w-4" down={f.net < 0} />}
+          <Line
+            icon={<HourglassIcon className="h-4 w-4" />}
             label={C.hub.financeRunway}
-            value={f.runway === null ? C.finances.runwayOk : C.finances.runway(f.runway)}
+            value={f.runway === null ? C.hub.financeRunwayOk : C.hub.financeRunwayWeeks(f.runway)}
             tone={f.balance < 0 ? "bad" : cashTight ? "warn" : "good"}
           />
-          {hasDebt ? (
-            <div className="col-span-2">
-              <Tile
-                icon={<BankIcon className="h-4 w-4" />}
-                label={C.hub.financeDebt}
-                value={money((f.debt.backer ?? 0) + (f.debt.bankRemaining ?? 0))}
-                tone="warn"
-              />
-            </div>
-          ) : null}
         </div>
       ) : null}
 
-      <AppLink href="/career/finances" className="mt-2 flex min-h-11 items-center justify-end text-xs font-semibold text-blue-bright hover:underline">
+      <AppLink href="/career/finances" className="mt-1 flex min-h-11 items-center justify-end text-xs font-semibold text-blue-bright hover:underline">
         {C.hub.financesOpen} →
       </AppLink>
 
