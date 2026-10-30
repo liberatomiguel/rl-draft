@@ -293,7 +293,7 @@ describe("rc.34 UX-01b (H2, 2-A, 3-A) — the squad as Draft cards", () => {
     const html = renderToStaticMarkup(
       createElement(SquadBlock, { save, C: CAREER_EN, team: userTeamPreview(save), chemTiers: {} }),
     );
-    for (const p of save.squad) expect(html).toContain(`card-frame flex min-w-0 flex-col p-2.5 text-left transition-transform duration-200 hover:-translate-y-0.5 card-${baseRarityOf(Math.round(p.overall))}`);
+    for (const p of save.squad) expect(html).toContain(`card-frame flex min-h-52 min-w-0 flex-col p-3 text-left transition-transform duration-200 hover:-translate-y-0.5 card-${baseRarityOf(Math.round(p.overall))}`);
     expect(baseRarityOf(70)).toBe("silver");
     expect(baseRarityOf(80)).toBe("gold");
     expect(baseRarityOf(90)).toBe("blue");

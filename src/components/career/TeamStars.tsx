@@ -34,7 +34,6 @@ export function TeamStars({
       className={`inline-flex items-center gap-[1px] ${className ?? ""}`}
       role="img"
       aria-label={`${value}-star team`}
-      title={`${value}★`}
     >
       {Array.from({ length: max }, (_, i) => {
         const fillLevel = Math.max(0, Math.min(1, value - i)); // 0 | 0.5 | 1

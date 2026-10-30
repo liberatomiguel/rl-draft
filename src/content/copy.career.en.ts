@@ -278,6 +278,8 @@ export const CAREER_EN = {
     rosterBalanced: "Balanced",
     rosterBalancedDesc: "A bit of now, a bit of later.",
     recommended: "Recommended",
+    /** rc.35 (front C): the middle roster offer's tag. */
+    rosterBalancedTag: "Balanced",
     wageBill: "Wage bill",
     avgAge: "Avg age",
     avgOverall: "Avg OVR",
@@ -500,6 +502,9 @@ export const CAREER_EN = {
     cardEndsIn: (weeks: number) => (weeks <= 0 ? "Leaves at the rollover" : weeks === 1 ? "Ends in 1 week" : `Ends in ${weeks} weeks`),
     cardFinalSeason: "Final season",
     cardCoach: (name: string, ovr: number, pct: number) => `${name} · ${ovr} · ${pct > 0 ? "+" : ""}${pct}% training`,
+    // rc.35 (front C): the squad block's row title and the coach card's training chip.
+    cardStarters: "Starters",
+    coachTrainingPct: (pct: number) => `${pct > 0 ? "+" : ""}${pct}% training`,
     // rc.34 (UX-01d, decision 6-A): the week's seeding question.
     nextRegional: (ordinal: number, week: number) => `Next regional (R${ordinal}, week ${week})`,
     seatDirect: "direct seat",
@@ -1193,6 +1198,9 @@ export const CAREER_EN = {
     allRegions: "All regions",
     // rc.33 (UX-07): only the players the org's reputation can sign (the rule a signing checks).
     filterSignable: "Signable at my reputation",
+    filterSignableCount: (n: number) => `${n} ${n === 1 ? "player" : "players"} within reach`,
+    /** rc.35 (front C): an org signed him in this window. */
+    justSignedTag: "Just signed",
     viewSheet: "View sheet",
     noResults: "No players match the filters.",
     dealsEmpty: "No active deals. Offers land here when a window is open.",
@@ -1259,6 +1267,8 @@ export const CAREER_EN = {
       none: "Nothing to do.",
       invalid: "Invalid selection.",
       repGate: "The org's reputation is too low for a player of this level.",
+      /** rc.35 (front C): an org signed him in this window. */
+      justSigned: "He just signed elsewhere in this window — try again in the next one.",
       // rc.33 (ECO-11): an offer under his floor — the sheet shows his counter.
       negotiationCounter: "That is under his floor — take his counter or raise the offer.",
       sameDay: "Already scrimmed this team today.",

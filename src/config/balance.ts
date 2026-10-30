@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 4;
+export const BALANCE_VERSION = 5;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2630,6 +2630,20 @@ export const CAREER_WORLD = {
     weights: { 93: 0.25, 94: 0.22, 95: 0.19, 96: 0.15, 97: 0.11, 98: 0.08 } as Record<number, number>,
   },
   faPoolFloorPerRegion: 10,
+  /**
+   * rc.35 (front C, Miguel on rc.34): every region's creation free-agent pool
+   * holds at least `perRegion` players of potential `minPotential` or more
+   * (worldSim `addCreationFaProspects`; the rookies' intake brings more from
+   * the first rollover on). `scanLimit` bounds the filler ids it tries.
+   */
+  creationFaProspects: { perRegion: 2, minPotential: 81, scanLimit: 400 },
+  /**
+   * rc.35 (front C, Miguel on rc.34: "no prospect above 86"): one of the
+   * three Prospects founders (a seeded pick) is the headliner, his potential
+   * drawn in `potentialRange` (the other two keep 80–90). His overall stays
+   * the offer's 65–67, so the gap is years of growth, not a ready star.
+   */
+  prospectHeadliner: { potentialRange: [91, 93] as const },
   /**
    * rc.33 (RTW-04, Miguel 30/10: "fewer known players without a team — it
    * should happen, but much less often"). The creation free-agent pool takes

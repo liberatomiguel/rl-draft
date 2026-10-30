@@ -200,6 +200,8 @@ import {
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
   incomingBidForDay,
+  movedThisWindowIds,
+  signedInWindow,
   listingFor,
   userBidsBlocked,
   type AskPackage,
@@ -381,6 +383,17 @@ function pushMail(
 }
 
 /** v0.3: append to the transfer wire (ring buffer, newest first). */
+/**
+ * rc.35 (front C): an AI org signed him in the current window — the user's
+ * offer waits for the next one (the Market reads it to lock his tile).
+ */
+export function justSignedElsewhere(save: CareerSave, playerId: string): boolean {
+  const w = windowIndexOf(weekOfDay(save.clock.day));
+  if (w === null) return false;
+  if (save.squad.some((p) => p.id === playerId)) return false;
+  return movedThisWindowIds(save.transferLog, save.clock.seasonIndex, w).has(playerId);
+}
+
 function logTransfer(
   save: CareerSave,
   entry: Omit<TransferLogEntry, "id" | "seasonIndex" | "day">,
@@ -1100,7 +1113,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
           beat.requiresPlayerFree && save.squad.some((p) => p.id === beat.requiresPlayerFree);
         // ECO-03b (ROADMAP, R47): the career's first window is bid-free — a
         // Blockbuster for a user-owned target there reads as preempted instead.
-        const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week));
+        // rc.35 (front C): so is a target the user signed in this window.
+        const signedNow = save.squad.some(
+          (p) => p.id === beat.requiresPlayerFree && signedInWindow(p, seasonIndex, windowIndexOf(week)),
+        );
+        const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week)) || signedNow;
         if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree && !bidFree) {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
@@ -1191,6 +1208,7 @@ export function processDayArrival(input: CareerSave): CareerSave {
         userSquadIds: save.squad.map((p) => p.id),
         isPreseason: windowIdx === 0,
         infinite: isInfinite(save),
+        lockedIds: [...movedThisWindowIds(save.transferLog, seasonIndex, windowIdx)],
       });
       save.world = world;
       // v0.3: every AI move lands on the transfer wire (HQ window panel).
@@ -4135,6 +4153,8 @@ export function signingPlanFor(
   // v0.3 visible signing gate: new signings accept only up to the rep cap
   // (rc.33 UX-07: the one rule the Market's "signable at my reputation" filter reads).
   if (!signableAtRep(view.overall, save.reputation)) return { error: "repGate" };
+  // rc.35 (front C): a player an org signed in this window takes no other offer before it closes.
+  if (justSignedElsewhere(save, playerId)) return { error: "justSigned" };
 
   // ECO-03 (R47): a full squad asks who leaves — never a silent release or demotion.
   if (save.squad.length - (leaver ? 1 : 0) >= CAREER_CONTRACT.squadCap) return { error: "squadFull" };
@@ -4316,6 +4336,7 @@ export function signPlayerFlow(
     scoutLevel,
     splitsTogether: 0,
     joinedSeason: save.clock.seasonIndex,
+    signedDay: save.clock.day,
     gainedThisSplit: 0,
     gainedThisSeason: 0,
     // DEV-02 (R48): announced at signing — he retires at the coming rollover.

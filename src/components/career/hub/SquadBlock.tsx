@@ -9,9 +9,11 @@
  * Each card reads, at 360 px: the overall, the name, age · trait (archetype,
  * the phase once revealed), growth to the next point, the potential band, the
  * role and the contract (UX-06b: its time left, warning in its final stretch,
- * with the "New" tag until it is opened). Phone: a 2 × 2 grid (three starters
- * and the reserve); desktop: four in a row; the coach as one line under it.
- * A tap opens the player's sheet (and marks his contract seen).
+ * with the "New" tag until it is opened). A tap opens the player's sheet (and
+ * marks his contract seen).
+ * rc.35 (front C, Miguel on rc.34): the three starter seats in a row, the
+ * reserve seat beside the coach under them (as before rc.34), each card a
+ * bit larger with its phase as an icon chip (PhaseChip); no star text.
  */
 
 import { useState } from "react";
@@ -35,11 +37,13 @@ import {
   statsOfSquad,
   userStars,
 } from "@/components/career/careerUi";
+import { PhaseChip } from "@/components/career/PhaseChip";
 import { PlayerSheet, type PlayerSheetData } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
 import { AppLink } from "@/components/ui/AppLink";
 import { NewTag } from "@/components/ui/NewDot";
+import { ClipboardIcon, TrendUpIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -74,23 +78,25 @@ function SquadCard({
       onClick={onOpen}
       aria-label={`${p.name} · ${ovr}`}
       className={cx(
-        "card-frame flex min-w-0 flex-col p-2.5 text-left transition-transform duration-200 hover:-translate-y-0.5",
+        "card-frame flex min-h-52 min-w-0 flex-col p-3 text-left transition-transform duration-200 hover:-translate-y-0.5",
         `card-${baseRarityOf(ovr)}`,
       )}
     >
       <span className="relative flex items-start justify-between gap-1">
-        <span className="display text-3xl font-bold leading-none text-ink" title={C.common.ovr}>
+        <span className="display text-4xl font-bold leading-none text-ink" title={C.common.ovr}>
           {ovr}
         </span>
         <UserCrest crestId={save.identity.crestId} colors={save.identity.colors} size="sm" />
       </span>
-      <span className="relative mt-1.5 flex min-w-0 items-center gap-1">
-        <span className="truncate text-sm font-bold text-ink">{p.name}</span>
+      <span className="relative mt-2 flex min-w-0 items-center gap-1">
+        <span className="truncate text-sm font-bold text-ink sm:text-base">{p.name}</span>
         {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
       </span>
       <span className="relative truncate text-[11px] text-sub">
         {squadAge(save, p)} · {C.player.archetype[p.archetype]}
-        {phase !== "unknown" ? ` · ${C.player.phase[phase]}` : ""}
+      </span>
+      <span className="relative mt-1.5 flex min-w-0">
+        <PhaseChip phase={phase} className="max-w-full" />
       </span>
       <span className="relative mt-1.5 block">
         <ProgressBar value={eta.progress} tone={eta.daysToNext ? "good" : "blue"} className="h-1" label={C.training.growth} />
@@ -98,7 +104,9 @@ function SquadCard({
           {eta.daysToNext ? C.hub.growthNext(eta.daysToNext) : eta.atPotential ? C.training.etaNone : C.hub.growthStalled}
         </span>
       </span>
-      <span className="relative mt-0.5 block truncate text-[10px] text-sub">{C.player.potBand(band.min, band.max)}</span>
+      <span className="relative mt-1 block truncate text-[11px] font-semibold text-cyan">
+        {band.min === band.max ? C.player.potExact(band.max) : C.player.potBand(band.min, band.max)}
+      </span>
       <span className="relative mt-auto flex flex-wrap items-center gap-1 pt-1.5">
         <span className="rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em] text-sub">
           {p.role === "sub" ? C.hub.cardReserve : C.hub.cardStarter}
@@ -120,7 +128,7 @@ function EmptySeat({ C }: { C: CareerCopy }) {
   return (
     <AppLink
       href="/career/market"
-      className="card-frame card-hidden flex min-h-44 flex-col items-center justify-center gap-1 p-2.5 text-center"
+      className="card-frame card-hidden flex min-h-52 flex-col items-center justify-center gap-1 p-2.5 text-center"
     >
       <span className="relative text-xs font-bold uppercase tracking-[0.1em] text-sub">{C.hub.cardEmptySeat}</span>
       <span className="relative text-[11px] text-blue-bright">{C.hub.cardSignHint} →</span>
@@ -139,8 +147,18 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
   const coach = save.coach;
   const coachFx = coach ? coachEffectsFor(coach) : null;
   const fresh = careerNewSummary(save).keys;
-  // Three starter seats and the reserve; an empty seat (R67) shows the way to the Market.
-  const slots: (SquadPlayer | null)[] = [starters[0] ?? null, starters[1] ?? null, starters[2] ?? null, sub];
+  // Three starter seats; an empty seat (R67) shows the way to the Market.
+  const slots: (SquadPlayer | null)[] = [starters[0] ?? null, starters[1] ?? null, starters[2] ?? null];
+  const cardOf = (p: SquadPlayer) => (
+    <SquadCard
+      key={p.id}
+      save={save}
+      p={p}
+      C={C}
+      isNew={fresh.has(contractNewKey(p.id, p.contractEndSeason))}
+      onOpen={() => open(p)}
+    />
+  );
 
   const open = (p: SquadPlayer) => {
     // UX-06: opening the player is opening his contract — its "New" mark clears.
@@ -168,44 +186,57 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="kicker text-[10px]">{C.hub.squadTitle}</p>
         <span className="flex items-center gap-2">
-          <TeamStars stars={userStars(save)} size="xs" />
+          <TeamStars stars={userStars(save)} size="sm" />
           <AppLink href="/career/squad" className="inline-flex min-h-11 items-center text-[11px] font-semibold text-blue-bright underline-offset-4 hover:underline">
             {C.hub.squadManage} →
           </AppLink>
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {slots.map((p, i) =>
-          p ? (
-            <SquadCard
-              key={p.id}
-              save={save}
-              p={p}
-              C={C}
-              isNew={fresh.has(contractNewKey(p.id, p.contractEndSeason))}
-              onOpen={() => open(p)}
-            />
-          ) : i < 3 ? (
-            <EmptySeat key={`empty:${i}`} C={C} />
+      <p className="kicker mb-1.5 !text-[9px]">{C.hub.cardStarters}</p>
+      <div className="grid grid-cols-3 gap-2">
+        {slots.map((p, i) => (p ? cardOf(p) : <EmptySeat key={`empty:${i}`} C={C} />))}
+      </div>
+      {/* The reserve seat beside the coach (as before rc.34). */}
+      <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-3">
+        <div className="min-w-0">
+          <p className="kicker mb-1.5 !text-[9px]">{C.hub.cardReserve}</p>
+          {sub ? (
+            cardOf(sub)
           ) : (
-            <div
-              key="nosub"
-              className="flex min-h-44 items-center justify-center rounded-[14px] border border-dashed border-line px-2 text-center text-[11px] text-faint"
-            >
+            <div className="flex min-h-52 items-center justify-center rounded-[14px] border border-dashed border-line px-2 text-center text-[11px] text-faint">
               {C.hub.squadNoSub}
             </div>
-          ),
-        )}
-      </div>
-      <div className="mt-2 flex min-h-11 items-center gap-2 rounded-lg border border-line bg-white/[0.02] px-3 py-2">
-        <span className="kicker shrink-0 !text-[9px]">{C.hub.squadCoach}</span>
-        {coach && coachFx ? (
-          <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">
-            {C.hub.cardCoach(coach.name, Math.round(coach.overall), coachFx.trainingPct)}
-          </span>
-        ) : (
-          <span className="truncate text-[11px] text-faint">{C.hub.squadNoCoach}</span>
-        )}
+          )}
+        </div>
+        <div className="flex min-w-0 flex-col lg:col-span-2">
+          <p className="kicker mb-1.5 !text-[9px]">{C.hub.squadCoach}</p>
+          <AppLink
+            href="/career/training"
+            className="flex min-h-52 flex-1 flex-col justify-between rounded-[14px] border border-line bg-white/[0.03] p-3 transition-colors hover:border-line-strong"
+          >
+            <span className="flex items-center justify-between gap-2">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue/15 text-blue-bright">
+                <ClipboardIcon className="h-6 w-6" />
+              </span>
+              {coach ? (
+                <span className="display text-4xl font-bold leading-none text-ink" title={C.common.ovr}>
+                  {Math.round(coach.overall)}
+                </span>
+              ) : null}
+            </span>
+            {coach && coachFx ? (
+              <span className="mt-2 min-w-0">
+                <span className="block truncate text-sm font-bold text-ink sm:text-base">{coach.name}</span>
+                <span className="mt-1 inline-flex items-center gap-1 rounded border border-good/40 bg-good/10 px-1.5 py-px text-[10px] font-semibold text-good">
+                  <TrendUpIcon className="h-3 w-3" />
+                  {C.hub.coachTrainingPct(coachFx.trainingPct)}
+                </span>
+              </span>
+            ) : (
+              <span className="mt-2 text-[11px] text-faint">{C.hub.squadNoCoach}</span>
+            )}
+          </AppLink>
+        </div>
       </div>
       <div className="mt-3 flex items-center gap-3">
         <span className="kicker shrink-0 text-[10px]">{C.hub.chemistry}</span>
