@@ -89,6 +89,8 @@ import { hqFinanceOf } from "@/store/careerHq";
 import { careerNewSummary, toolboxNewKey, type ToolboxItemId } from "@/engine/career/careerNew";
 import { NewTag } from "@/components/ui/NewDot";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
+import { SponsorDealPanel, SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
+import { otherIncomeRoomOfSave } from "@/engine/career/inserts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -381,6 +383,8 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
     { key: "psychologist", amount: -st.psychologist },
     { key: "upkeep", amount: -st.upkeep },
     { key: "bankPayment", amount: -st.bankPayment },
+    // rc.34 (ECO-04): a missed goal's fine instalment.
+    { key: "sponsorFine", amount: -st.sponsorFine },
   ];
   return (
     <div className="rounded-lg border border-line bg-white/[0.02]">
@@ -831,6 +835,8 @@ export function FinancesScreen() {
 
   const garnishPct = Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100);
   const patienceMax = CAREER_SPONSOR.patienceMisses;
+  // rc.34 (ECO-05): the other-income cap this season and split.
+  const otherRoom = otherIncomeRoomOfSave(save);
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
@@ -1061,7 +1067,12 @@ export function FinancesScreen() {
                   {C.finances.foundingTerms(Math.round(CAREER_SPONSOR.founding.payrollShare * 100))}
                 </p>
                 <p className="mt-1.5 text-[11px] text-faint">
-                  {C.finances.foundingEnds(seasonLabelFor(CAREER_SPONSOR.founding.throughSeasonIndex))}
+                  {save.foundingPartner?.taperStep !== undefined
+                    ? C.finances.foundingTapering(
+                        Math.round((CAREER_SPONSOR.founding.taper[save.foundingPartner.taperStep - 1] ?? 0) * 100),
+                        save.foundingPartner.taperStep >= CAREER_SPONSOR.founding.taper.length,
+                      )
+                    : C.finances.foundingEnds(seasonLabelFor(CAREER_SPONSOR.founding.throughSeasonIndex))}
                 </p>
               </div>
             ) : save.foundingPartner?.endedSeason === seasonIndex ? (
@@ -1095,7 +1106,9 @@ export function FinancesScreen() {
               </div>
             ) : null}
 
-            {save.sponsor ? (
+            {/* rc.34 (ECO-04): a deal signed since rc.34 reads its own panel; a deal from before keeps rc.33's. */}
+            {save.sponsor?.terms ? <SponsorDealPanel save={save} perks={perkChips(save.sponsor.tier)} /> : null}
+            {save.sponsor && !save.sponsor.terms ? (
               <div className="rounded-lg border border-line-strong bg-white/[0.02] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="display truncate text-base font-bold uppercase tracking-wide text-ink">
@@ -1159,7 +1172,12 @@ export function FinancesScreen() {
               </div>
             ) : null}
 
-            {save.sponsorOffers && save.sponsorOffers.length > 0 ? (
+            {save.sponsorOffers?.some((o) => o.terms) ? (
+              <div className={cx(save.sponsor && "mt-3")}>
+                <p className="kicker mb-2 text-[10px]">{C.finances.offerTitle}</p>
+                <SponsorDecision save={save} onSign={chooseSponsor} bare />
+              </div>
+            ) : save.sponsorOffers && save.sponsorOffers.length > 0 ? (
               <div className={cx(save.sponsor && "mt-3")}>
                 <p className="kicker mb-2 text-[10px]">{C.finances.offerTitle}</p>
                 <div className="space-y-2.5">
@@ -1194,6 +1212,27 @@ export function FinancesScreen() {
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : null}
+
+            {/* rc.34 (ECO-05, S7): other income — capped, never guaranteed. */}
+            {otherRoom.taken > 0 || otherRoom.count < CAREER_SPONSOR.otherIncome.perSplitCap ? (
+              <div className="mt-3 rounded-lg border border-line bg-white/[0.02] p-2.5">
+                <p className="kicker text-[9px]">{C.finances.deal.otherIncome}</p>
+                <p className="mt-0.5 text-xs text-sub">
+                  {C.finances.deal.otherIncomeLine(
+                    formatMoney(otherRoom.taken, { compact: true }),
+                    formatMoney(otherRoom.cap, { compact: true }),
+                    CAREER_SPONSOR.otherIncome.perSplitCap - otherRoom.count,
+                    CAREER_SPONSOR.otherIncome.perSplitCap,
+                  )}
+                </p>
+                <p className="mt-0.5 text-[10px] text-faint">
+                  {C.finances.deal.otherIncomeHint(
+                    Math.round(CAREER_SPONSOR.otherIncome.seasonShare * 100),
+                    CAREER_SPONSOR.otherIncome.perSplitCap,
+                  )}
+                </p>
               </div>
             ) : null}
 

@@ -12,6 +12,7 @@
  */
 
 import { CAREER_UNLOCKS } from "@/config/balance";
+import { insertById } from "@/data/career/inserts";
 import {
   DAYS_PER_SEASON,
   dayOfWeekOf,
@@ -87,12 +88,26 @@ export type ArcPolicyId =
   | "trainer"
   | "veterans";
 
+/** rc.34: how the bot picks a sponsor offer (see ArcPolicy.sponsor). */
+export type ArcSponsorPick = "best" | "worst" | "steady" | "balanced" | "bold";
+
 export interface ArcPolicy {
   id: ArcPolicyId;
   /** The founding roster the wizard offers (prospects = the weakest start). */
   rosterKey: CreateCareerInput["rosterKey"];
-  /** Sponsor pick: the richest base deal, or the poorest one (the "bad sponsor" case). */
-  sponsor: "best" | "worst";
+  /**
+   * Sponsor pick: the richest weekly pay, the poorest one (the "bad sponsor"
+   * case), or — rc.34 (ECO-04, SPONSOR-CONTRACT §7's measuring note) — the
+   * offer of one profile. An offer from before rc.34 (no profile) is read
+   * by its base, as rc.33's harness did.
+   */
+  sponsor: ArcSponsorPick;
+  /**
+   * rc.34 (ECO-05): the weekly inserts that pay a fee (other income) —
+   * "take" answers them "a" (the fee, at its agenda cost), "skip" answers
+   * every insert "b" (rc.33's harness).
+   */
+  others: "take" | "skip";
   /**
    * Window moves: "keep" only fills an open starter seat; "upgrade" replaces
    * the weakest starter with a clearly better affordable player; "youth"
@@ -121,7 +136,9 @@ export interface ArcPolicy {
 
 const base: Omit<ArcPolicy, "id"> = {
   rosterKey: "balanced",
-  sponsor: "best",
+  // rc.34 (ECO-04): the median manager signs the Balanced deal (the contract's s5 measures b3 on it).
+  sponsor: "balanced",
+  others: "skip",
   market: "keep",
   renew: "all",
   coach: "none",
@@ -135,8 +152,8 @@ const base: Omit<ArcPolicy, "id"> = {
 export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   /** The median, hands-off manager: takes the best sponsor, renews everyone, never shops (delegates; no coach = the base). */
   autopilot: { id: "autopilot", ...base },
-  /** The engaged manager chasing titles: upgrades, coach, a Development package with scrims, selective renewals. */
-  tuned: { id: "tuned", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, bids: "whenTight" },
+  /** The engaged manager chasing titles: upgrades, coach, a Development package with scrims, selective renewals, the side income (rc.34). */
+  tuned: { id: "tuned", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, bids: "whenTight", others: "take" },
   /** A youth core: the prospects start, young high-potential signings, everyone renewed; a Development package. */
   youth: { id: "youth", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, bids: "whenTight" },
   /** A costly squad: stars first, borrowing to pay for them. */
@@ -150,8 +167,9 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
     training: "repeat",
     scrims: true,
     bank: true,
+    others: "take",
   },
-  /** The autopilot stuck with the poorest sponsor deal. */
+  /** The autopilot stuck with the poorest sponsor deal (rc.34: the least sure weekly pay — a Bold deal). */
   badSponsor: { id: "badSponsor", ...base, sponsor: "worst" },
   /** The weakest founding roster, hands-off. */
   losingStart: { id: "losingStart", ...base, rosterKey: "prospects" },
@@ -629,10 +647,23 @@ function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
 function chooseSponsor(save: CareerSave, policy: ArcPolicy): CareerSave {
   const offers = save.sponsorOffers ?? [];
   if (offers.length === 0) return save;
-  const sorted = [...offers].sort((a, b) => b.basePerSplit - a.basePerSplit || a.sponsorId.localeCompare(b.sponsorId));
-  const pick = policy.sponsor === "best" ? sorted[0] : sorted[sorted.length - 1];
+  const weekly = (o: (typeof offers)[number]) => o.terms?.weekly ?? weeklyOf(o.basePerSplit);
+  const sorted = [...offers].sort((a, b) => weekly(b) - weekly(a) || a.sponsorId.localeCompare(b.sponsorId));
+  const byProfile =
+    policy.sponsor === "best" || policy.sponsor === "worst"
+      ? null
+      : (offers.find((o) => o.terms?.profile === policy.sponsor) ?? null);
+  // A profile pick on offers from before rc.34 (no profile) falls back to the best base, as rc.33's harness did.
+  const pick = byProfile ?? (policy.sponsor === "worst" ? sorted[sorted.length - 1] : sorted[0]);
   const res = chooseSponsorFlow(save, pick.sponsorId);
   return res.error ? save : res.save;
+}
+
+/** rc.34 (ECO-05): answer the day's insert — its fee ("a") when the policy takes other income, else "b". */
+function answerInsert(save: CareerSave, policy: ArcPolicy): CareerSave {
+  const def = save.pendingInsert ? insertById.get(save.pendingInsert.id) : undefined;
+  const pays = (def?.options.find((o) => o.key === "a")?.effects.money ?? 0) > 0;
+  return resolveInsertFlow(save, policy.others === "take" && pays ? "a" : "b").save;
 }
 
 function coachMoves(save: CareerSave, policy: ArcPolicy): CareerSave {
@@ -692,7 +723,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     }
   }
   if (save.phase !== "running") return save;
-  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
+  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = answerInsert(save, policy);
   // Every offered cup is entered (the store's enterUnofficial).
   if (save.unofficialOffer && !save.pendingEventDef && !save.activeEvent) {
     save = { ...structuredClone(save), pendingEventDef: save.unofficialOffer };
@@ -799,9 +830,17 @@ export function playArcCareer(cfg: {
   budgetMs?: number;
   /** rc.34 (5-A's measurement, opt-in): book a bootcamp each split. */
   bootcamp?: boolean;
+  /** rc.34: override the policy's sponsor pick (the probe's ECON_SPONSOR). */
+  sponsor?: ArcSponsorPick;
+  /** rc.34: override the policy's other-income answer (the probe's ECON_OTHERS). */
+  others?: ArcPolicy["others"];
 }): ArcCareer {
   const t0 = Date.now();
-  const policy = ARC_POLICIES[cfg.policy];
+  const policy: ArcPolicy = {
+    ...ARC_POLICIES[cfg.policy],
+    ...(cfg.sponsor ? { sponsor: cfg.sponsor } : {}),
+    ...(cfg.others ? { others: cfg.others } : {}),
+  };
   let save = createCareerSave(inputFor(cfg.region, cfg.difficulty, policy), cfg.seed);
   const out: ArcCareer = {
     region: cfg.region,

@@ -575,7 +575,9 @@ export type LedgerKind =
   | "payroll" // v2.0: the squad aggregated weekly wages (one line per Monday)
   | "bankLoan" // v2.0: bank loan principal received
   | "bankPayment" // v2.0: weekly instalment / early pay-down
-  | "insert"; // v2.0 (R33): a mid-week decision's money effect
+  | "insert" // v2.0 (R33): a mid-week decision's money effect
+  | "sponsorMilestone" // rc.34 (ECO-04): a Bold deal's milestone payment, the day its first goal is reached
+  | "sponsorFine"; // rc.34 (ECO-04): an instalment of a missed goal's fine (Balanced and Bold deals)
 
 export interface LedgerEntry {
   id: string;
@@ -693,6 +695,41 @@ export interface FinanceState {
   bootcampUsedThisSplit: boolean;
   /** Sponsor-perk free bootcamps consumed this season. */
   freeBootcampsUsedThisSeason: number;
+  /**
+   * rc.34 (ECO-04): missed goals' fines still to book, each spread over its
+   * Mondays (CAREER_SPONSOR.fines.spreadMondays). Absent / empty = none.
+   */
+  sponsorFines?: SponsorFineState[];
+  /**
+   * rc.34 (ECO-05): this season's earned income and other income, kept by
+   * pushLedger — the other-income cap's basis. Absent until the first line
+   * a save books after rc.34.
+   */
+  incomeTally?: IncomeTally;
+}
+
+/** rc.34 (ECO-04): one missed goal's fine, booked in equal Monday instalments. */
+export interface SponsorFineState {
+  /** The brand that fined (the ledger line's name). */
+  sponsorId: string;
+  /** What is still owed. */
+  remaining: number;
+  /** The Monday instalment (the last one is clamped to `remaining`). */
+  perMonday: number;
+}
+
+/**
+ * rc.34 (ECO-05): the season's income so far, by pushLedger. `earned` = every
+ * positive line but loans (the Backer's grant, a bank loan); `other` = other
+ * income (a money insert's fee); `otherCount` = other-income items in
+ * `period` (1 = W1–W10, 2 = W11–W20, 3 = W21–W32), the per-split cap's count.
+ */
+export interface IncomeTally {
+  s: number;
+  earned: number;
+  other: number;
+  period: number;
+  otherCount: number;
 }
 
 /**
@@ -764,13 +801,93 @@ export type SponsorObjectiveKind =
 export interface SponsorState {
   sponsorId: string;
   tier: 1 | 2 | 3 | 4;
+  /**
+   * The base per split. An rc.34 deal pays `terms.weekly` (this mirrors it
+   * per split, weekly × weeks ÷ splits, for the readers that sort by it).
+   */
   basePerSplit: number;
+  /** The bonus per objective hit (rc.34: per goal hit). */
   bonus: number;
+  /** A deal from before rc.34: its one objective. rc.34: the nearest kind of its first goal (analytics). */
   objectiveKind: SponsorObjectiveKind;
-  /** Progress toward the objective within the current split. */
+  /** Progress toward the objective within the current split (deals from before rc.34). */
   progress: number;
   hitThisSplit: boolean;
+  /** Misses so far — the patience meter (deals from before rc.34, and rc.34's Steady deals: 7-A). */
   missedCount: number;
+  /**
+   * rc.34 (ECO-04): the deal's terms. Absent = a deal or an offer from before
+   * rc.34: it runs to its end on its old rules (one season, one objective a
+   * split, the patience meter, no fines).
+   */
+  terms?: SponsorTerms;
+}
+
+/** rc.34 (ECO-04): how a deal shares its money between sure pay and goals (SPONSOR-CONTRACT S1). */
+export type SponsorProfile = "steady" | "balanced" | "bold";
+
+/** rc.34 (ECO-04, decision 4-A): a goal's difficulty as a word, calibrated on the harness. */
+export type SponsorGoalWord = "likely" | "even" | "stretch";
+
+/** rc.34 (ECO-04): what a goal asks, inside one split (SPONSOR-CONTRACT S2). */
+export type SponsorGoalKind = "enterEvents" | "regionalReach" | "regionalFinish" | "majorQualify" | "majorFinish";
+
+/** rc.34 (ECO-04): one split's goal. */
+export interface SponsorGoal {
+  /** The split it counts: seasonIndex × 3 + split − 1 (sponsorDeals.slotOf). */
+  slot: number;
+  kind: SponsorGoalKind;
+  /** enterEvents: the events to enter; regionalReach: the regionals to play (direct or through the qualifier); regionalFinish: the regionals to finish at `place` or better; else 1. */
+  count: number;
+  /** regionalFinish / majorFinish: the place to reach or beat (8, 6, 4 or 1). */
+  place?: number;
+  /** The engine's estimate when the goal was set (0–1), and the word it shows. */
+  chance: number;
+  word: SponsorGoalWord;
+  /** Reached on this day (the bonus, and a Bold deal's milestone, paid then). */
+  hitOn?: { seasonIndex: number; day: number };
+  /** Settled as missed on its split's boundary Monday: the shortfall (0–1) the fine scales with. */
+  missed?: number;
+}
+
+/** rc.34 (ECO-04): an rc.34 deal's terms, fixed when it is offered (a signed deal keeps its figures). */
+export interface SponsorTerms {
+  profile: SponsorProfile;
+  /** Splits covered: 1, 3 or 6 (one split, one season, two seasons — decision 2-A). */
+  lengthSplits: number;
+  /** The first split covered (a slot, seasonIndex × 3 + split − 1). */
+  firstSlot: number;
+  /** The boundary Monday its last split settles on: its last weekly pay, then it ends. */
+  endsOn: { seasonIndex: number; day: number };
+  /** Paid every Monday after signing, through `endsOn`. */
+  weekly: number;
+  /** The fixed part: paid on signing, or (Bold) the day its first goal is reached. */
+  fixedKind: "signing" | "milestone";
+  fixed: number;
+  /** The fixed part has been paid. */
+  fixedPaid?: boolean;
+  /** A missed goal's fine: fineShare × its bonus × the shortfall, at most fineCap (0 = no fines: Steady, Easy). */
+  fineShare: number;
+  fineCap: number;
+  /** The word every split's goal is set at (the profile's). */
+  word: SponsorGoalWord;
+  /** Goals set so far: the first with the offer, each later one on its split's first Monday. */
+  goals: SponsorGoal[];
+  /** The engine's expected value of the deal (at its goals' word) and its most ("up to"), as offered. */
+  ev: number;
+  ceiling: number;
+  /** The season whose money index priced it. */
+  pricedSeason: number;
+  /**
+   * The share of the tier's value it pays at the team's level when offered
+   * (sponsorDeals.levelValueShareOf: a Tier 3 or 4 brand pays a side below
+   * its level less). Absent = in full.
+   */
+  levelShare?: number;
+  /** The day it was offered (it pays from the Monday after signing). */
+  offeredOn: { seasonIndex: number; day: number };
+  /** Offers only: the decision's deadline — unsigned offers lapse after this day. */
+  decideBy?: { seasonIndex: number; day: number };
 }
 
 export interface CoachState {
@@ -871,6 +988,15 @@ export interface FoundingPartnerState {
   sizedSeason: number;
   /** Set when it ends: the first real deal, never before throughSeasonIndex is over. */
   endedSeason?: number;
+  /**
+   * rc.34 (SPONSOR-CONTRACT S6, decision 5-A as adjusted to ECO-07/08): the
+   * handover's step — 1 pays CAREER_SPONSOR.founding.taper[0] (⅔) of the
+   * base, 2 pays taper[1] (⅓); each split boundary moves it one step, and
+   * past the last it ends. Absent = paying in full.
+   */
+  taperStep?: number;
+  /** rc.34 (S6): the absolute day (sponsorDeals.absDayOf) its current step began — a step lasts to a later boundary. */
+  taperDay?: number;
 }
 
 // ---------------------------------------------------------------------------

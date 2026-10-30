@@ -1,10 +1,13 @@
 /**
  * Road to Worlds — fictional sponsor brands (career-only data).
  *
- * All INVENTED brands (fan-game caution: no real companies). Ids match the
- * pool used by src/engine/career/economy.ts sponsorOffersFor. Monogram
- * fallback renders the mark; PNG drop-in convention can come later
- * (public/sponsors/<id>.png).
+ * All INVENTED brands (fan-game caution: no real companies). The first two
+ * of each tier are the pool rc.33's offers drew from (economy.ts
+ * sponsorOffersFor, kept for older saves and tests); rc.34 (ECO-04, S4)
+ * offers three deals per decision, one per profile, each from a different
+ * brand of the tier (sponsorDeals.sponsorDecisionFor), so the pool grows to
+ * four a tier. Monogram fallback renders the mark; PNG drop-in convention
+ * can come later (public/sponsors/<id>.png).
  */
 
 export interface SponsorBrand {
@@ -71,6 +74,63 @@ export const SPONSOR_BRANDS: SponsorBrand[] = [
     tier: 4,
     flavorEn: "A tech giant that only signs future world champions.",
     flavorPt: "Uma gigante de tecnologia que só assina com futuros campeões mundiais.",
+  },
+  // rc.34 (ECO-04, S4): two more brands a tier — a decision offers three.
+  {
+    id: "pixelpress",
+    name: "PixelPress",
+    tier: 1,
+    flavorEn: "A print shop that sponsors anyone with a logo and a dream.",
+    flavorPt: "Uma gráfica que patrocina qualquer um com um logo e um sonho.",
+  },
+  {
+    id: "overclock-snacks",
+    name: "Overclock Snacks",
+    tier: 1,
+    flavorEn: "Protein snacks sold at every LAN café in town.",
+    flavorPt: "Barrinhas de proteína vendidas em toda lan house da cidade.",
+  },
+  {
+    id: "kickoff-mobile",
+    name: "Kickoff Mobile",
+    tier: 2,
+    flavorEn: "A phone network that wants its logo on every stream overlay.",
+    flavorPt: "Uma operadora que quer o logo em todo overlay de stream.",
+  },
+  {
+    id: "wallride-gear",
+    name: "Wallride Gear",
+    tier: 2,
+    flavorEn: "Controllers tuned for players who live on the wall.",
+    flavorPt: "Controles ajustados para quem vive na parede.",
+  },
+  {
+    id: "ledgerline",
+    name: "Ledgerline",
+    tier: 3,
+    flavorEn: "A digital bank that sponsors teams the way it lends: on numbers.",
+    flavorPt: "Um banco digital que patrocina como empresta: pelos números.",
+  },
+  {
+    id: "aerowave",
+    name: "AeroWave Audio",
+    tier: 3,
+    flavorEn: "Headsets worn on every main stage this season.",
+    flavorPt: "Headsets usados em todo palco principal da temporada.",
+  },
+  {
+    id: "quantum-arc",
+    name: "Quantum Arc",
+    tier: 4,
+    flavorEn: "A chipmaker that buys the jersey's front and the naming rights.",
+    flavorPt: "Uma fabricante de chips que compra a frente da camisa e o nome da equipe.",
+  },
+  {
+    id: "solstice-air",
+    name: "Solstice Air",
+    tier: 4,
+    flavorEn: "An airline that flies its partners to every Major in first class.",
+    flavorPt: "Uma companhia aérea que leva seus parceiros a todo Major de primeira classe.",
   },
 ];
 

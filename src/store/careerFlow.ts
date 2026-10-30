@@ -174,7 +174,6 @@ import {
   scoutReportCostFor,
   severanceFor,
   signableOverallCap,
-  sponsorOffersFor,
   startingBudgetFor,
   t3RepKeyFor,
   takeBankLoan,
@@ -215,6 +214,28 @@ import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
 import { deepRunKeyFor, newcomerRepKindOf } from "@/engine/career/reputation";
+// rc.34 (ECO-04/05, SPONSOR-CONTRACT): the deals, their goals, fines and the other-income cap.
+import {
+  absDayOf,
+  fineFor,
+  fineScheduleFor,
+  goalForSlot,
+  goalProgressOf,
+  isAfter,
+  offerTierFor,
+  pickGoal,
+  settleDayOf,
+  shortfallOf,
+  slotOf,
+  slotSeason,
+  slotSplit,
+  slotsOfDeal,
+  sponsorDecisionFor,
+  teamLevelFor,
+  type CareerDay,
+  type GoalProgress,
+  type TeamLevel,
+} from "@/engine/career/sponsorDeals";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
@@ -255,6 +276,9 @@ import type {
   PotentialBand,
   ScrimLogEntry,
   SeasonRecord,
+  SponsorGoal,
+  SponsorState,
+  SponsorTerms,
   SquadPlayer,
   TransferLogEntry,
   TransferOffer,
@@ -623,6 +647,7 @@ export function weeklyStatementOf(save: CareerSave): WeeklyStatement {
     seasonIndex: save.clock.seasonIndex,
     foundingPartnerPerSplit: foundingPartnerPerSplitOf(save),
     rescuePartner: save.finances.rescuePartner ?? null,
+    sponsorFines: save.finances.sponsorFines ?? null,
   });
 }
 
@@ -801,6 +826,66 @@ function openFoundingPartner(save: CareerSave): void {
   });
 }
 
+/**
+ * rc.34 (SPONSOR-CONTRACT S6, decision 5-A as adjusted to ECO-07/08): the
+ * founding partner's end condition is met (past season index
+ * `throughSeasonIndex` with a real deal) — it hands over over two splits
+ * (CAREER_SPONSOR.founding.taper: ⅔, then ⅓, then it ends) instead of
+ * stopping at once. An empty taper restores rc.33's cliff. Announced once,
+ * with the dates of each step.
+ */
+function beginFoundingHandover(save: CareerSave): void {
+  const fp = save.foundingPartner;
+  if (!fp || fp.taperStep !== undefined) return;
+  const taper = CAREER_SPONSOR.founding.taper;
+  if (taper.length === 0) {
+    closeFoundingPartner(save);
+    return;
+  }
+  save.foundingPartner = { ...fp, taperStep: 1, taperDay: absDayOf(todayOf(save)) };
+  const steps = handoverStepDaysFrom(todayOf(save), taper.length);
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "foundingHandover",
+    bodyKey: "foundingHandover",
+    params: {
+      base: foundingPartnerPerSplitOf(save),
+      first: Math.round((taper[0] ?? 0) * 100),
+      second: Math.round((taper[1] ?? 0) * 100),
+      stepWeek: steps[0] ? weekOfDay(steps[0].day) : 0,
+      stepNextSeason: steps[0] && steps[0].seasonIndex > save.clock.seasonIndex ? 1 : 0,
+      endWeek: steps[steps.length - 1] ? weekOfDay(steps[steps.length - 1].day) : 0,
+      endNextSeason: steps[steps.length - 1] && steps[steps.length - 1].seasonIndex > save.clock.seasonIndex ? 1 : 0,
+    },
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+}
+
+/** rc.34 (S6): the split boundaries (W11 / W21 / W31 Mondays) the handover steps on, from `from`. */
+export function handoverStepDaysFrom(from: CareerDay, steps: number): CareerDay[] {
+  const out: CareerDay[] = [];
+  let slot = slotOf(from.seasonIndex, 1);
+  while (out.length < steps && slot < slotOf(from.seasonIndex + 3, 1)) {
+    const day = settleDayOf(slot);
+    if (isAfter(day, from)) out.push(day);
+    slot += 1;
+  }
+  return out;
+}
+
+/** rc.34 (S6): a split boundary moves the handover one step; past the last share it ends. */
+function stepFoundingHandover(save: CareerSave): void {
+  const fp = save.foundingPartner;
+  if (!fp || fp.taperStep === undefined || fp.endedSeason !== undefined) return;
+  // A step lasts at least to the next boundary after it began (one begun on a boundary Monday keeps it).
+  const today = absDayOf(todayOf(save));
+  if (fp.taperDay !== undefined && today <= fp.taperDay) return;
+  const next = fp.taperStep + 1;
+  if (next > CAREER_SPONSOR.founding.taper.length) closeFoundingPartner(save);
+  else save.foundingPartner = { ...fp, taperStep: next, taperDay: today };
+}
+
 /** M3: the founding partner steps back (its end condition met) — a mail says so. */
 function closeFoundingPartner(save: CareerSave): void {
   if (!save.foundingPartner) return;
@@ -863,6 +948,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
         save.sponsor.progress = 0;
         save.sponsor.hitThisSplit = false;
       }
+      // rc.34 (ECO-04): a running deal's goal for the split starting today.
+      setSponsorGoalForSplit(save, slotOf(seasonIndex, week === 3 ? 1 : week === 13 ? 2 : 3));
     }
 
     // --- 0a. rc.32 (M3): the founding partner opens on the founding day —
@@ -1040,7 +1127,9 @@ export function processDayArrival(input: CareerSave): CareerSave {
       save.competition.majorFieldRefs = majorFieldFor(save.competition, save.careerSeed);
       if (save.competition.majorFieldRefs.includes("user")) {
         gainRep(save, "majorQualify");
-        if (save.sponsor?.objectiveKind === "majorQualify") save.sponsor.hitThisSplit = true;
+        if (save.sponsor?.objectiveKind === "majorQualify" && !save.sponsor.terms) save.sponsor.hitThisSplit = true;
+        // rc.34: a Major goal is reached the day the field is announced.
+        checkSponsorGoals(save);
         pushNews(save, { type: "milestone", priority: 2, titleKey: "qualifiedMajor" });
       } else {
         pushNews(save, { type: "milestone", priority: 2, titleKey: "missedMajor" });
@@ -1212,6 +1301,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
   }
 
   // ==================== EVERY DAY: offer expiry ============================
+  // rc.34 (ECO-04): an unsigned sponsor decision lapses after its deadline.
+  lapseSponsorOffers(save);
   const beforeCount = save.pendingOffers.length;
   for (const offer of save.pendingOffers) {
     if (
@@ -1425,24 +1516,250 @@ function maybeOfferSponsors(save: CareerSave): void {
   if (save.sponsor) return;
   if (save.sponsorOffers && save.sponsorOffers.length > 0) return;
   if (save.reputation < CAREER_SPONSOR.firstOfferRepGate) return;
-  save.sponsorOffers = sponsorOffersFor(
-    save.reputation,
-    save.clock.seasonIndex,
-    save.careerSeed,
-    null,
-    false,
-    save.difficulty,
+  offerSponsorDecision(save, false);
+}
+
+// ---------------------------------------------------------------------------
+// rc.34 (ECO-04, SPONSOR-CONTRACT; Gate 3a 30/10: 1–5 A, 6-B, 7-A): deals
+// ---------------------------------------------------------------------------
+
+/** The day on the save's clock. */
+function todayOf(save: CareerSave): CareerDay {
+  return { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
+}
+
+/**
+ * rc.34 (S2): the team's level the sponsor goals are built from — its seed
+ * rating (the one R45's direct-8 seeding reads) ranked among its region's
+ * AI orgs, and against the expected Major field (sponsorDeals.teamLevelFor).
+ */
+export function sponsorLevelOf(save: CareerSave): TeamLevel {
+  return teamLevelFor({
+    region: save.identity.region,
+    userRating: save.squad.length > 0 ? userSeedRatingFor(save) : 0,
+    difficulty: save.difficulty,
+    orgs: Object.values(save.world.orgs).map((o) => ({ region: o.region, rating: o.rating ?? 70 + o.prestige * 6 })),
+  });
+}
+
+/**
+ * rc.34 (S4, decision 3-A): a sponsor decision on the desk — three offers,
+ * one per profile, at the best tier the reputation allows (one lower when
+ * `demote`: a Steady deal that ran out of patience), priced in today's
+ * money, each with its first split's goal; the inbox says until when.
+ */
+function offerSponsorDecision(save: CareerSave, demote: boolean): void {
+  const offers = sponsorDecisionFor({
+    tier: offerTierFor(save.reputation, demote),
+    today: todayOf(save),
+    careerSeed: save.careerSeed,
+    difficulty: save.difficulty,
+    level: sponsorLevelOf(save),
+  });
+  save.sponsorOffers = offers;
+  const by = offers[0]?.terms?.decideBy;
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "sponsorOffers",
+    bodyKey: "sponsorDecision",
+    params: { n: offers.length, tier: offers[0]?.tier ?? 1, byWeek: by ? weekOfDay(by.day) : 0, demoted: demote ? 1 : 0 },
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+}
+
+/** rc.34 (ECO-04): a sponsor decision on the desk, as HQ's queue and the cards read it. */
+export interface SponsorDecisionView {
+  /** Stable for the decision's life: "sponsor:{season}:{day it was offered}". */
+  id: string;
+  /** The last day (of the current season) to sign — the offers lapse the day after. */
+  deadline: number;
+  /** The same deadline on the career clock (a decision never outlives its season). */
+  deadlineOn: CareerDay;
+  /** Steady, Balanced, Bold — the comparison's order. */
+  offers: SponsorState[];
+}
+
+/**
+ * rc.34 (ECO-04): the sponsor decision on the desk — the offers and the last
+ * day to sign them (they lapse after it). HQ's decision queue (UX-01, front
+ * G's `DECISION_SOURCES.sponsor`: "Later" is allowed up to `deadline`,
+ * Miguel's 1-B), the offer cards and Finances read this one function. Null
+ * when no offer is pending or the career is over.
+ */
+export function sponsorDecisionOf(save: CareerSave): SponsorDecisionView | null {
+  if (save.phase === "ended" || !save.sponsorOffers || save.sponsorOffers.length === 0) return null;
+  const terms = save.sponsorOffers[0].terms;
+  const by = terms?.decideBy ?? { seasonIndex: save.clock.seasonIndex, day: DAYS_PER_SEASON };
+  const from = terms?.offeredOn ?? { seasonIndex: save.clock.seasonIndex, day: 0 };
+  return {
+    id: `sponsor:${from.seasonIndex}:${from.day}`,
+    deadline: by.day,
+    deadlineOn: { ...by },
+    offers: save.sponsorOffers,
+  };
+}
+
+/** rc.34: an unsigned decision lapses the day after its deadline — the inbox says when the next one comes. */
+function lapseSponsorOffers(save: CareerSave): void {
+  const by = save.sponsorOffers?.[0]?.terms?.decideBy;
+  if (!by || !isAfter(todayOf(save), by)) return;
+  save.sponsorOffers = null;
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "sponsorLapsed",
+    bodyKey: "sponsorLapsed",
+    params: {},
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+}
+
+/**
+ * rc.34 (ECO-04): how far a sponsor goal is on this save — the one reading
+ * the Monday settlement, the offer card and the Finances desk share
+ * (sponsorDeals.goalProgressOf on the season's results and the announced
+ * Major field).
+ */
+export function sponsorGoalProgressOf(save: CareerSave, goal: SponsorGoal): GoalProgress {
+  return goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, goal.slot) });
+}
+
+/** Is the user in the announced Major field of this split (the field resets at each split's first Monday)? */
+function inMajorFieldOf(save: CareerSave, slot: number): boolean {
+  const week = weekOfDay(save.clock.day);
+  const fieldSplit = week < 3 ? 0 : week < 13 ? 1 : week < 23 ? 2 : 3;
+  return (
+    slotSeason(slot) === save.clock.seasonIndex &&
+    slotSplit(slot) === fieldSplit &&
+    (save.competition.majorFieldRefs?.includes("user") ?? false)
   );
-  if (save.sponsorOffers.length > 0) {
+}
+
+/**
+ * rc.34 (S1/S2): a goal of the running deal reached — its bonus is paid that
+ * day, and a Bold deal's milestone payment with the first one. Run after
+ * every event the user finishes, on the Monday the Major field is announced
+ * and before a split settles.
+ */
+function checkSponsorGoals(save: CareerSave): void {
+  const s = save.sponsor;
+  if (!s?.terms) return;
+  const { seasonIndex, day } = save.clock;
+  const week = weekOfDay(day);
+  for (const goal of s.terms.goals) {
+    if (goal.hitOn || goal.missed !== undefined) continue;
+    const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, goal.slot) });
+    if (!progress.hit) continue;
+    goal.hitOn = { seasonIndex, day };
+    save.finances = pushLedger(save.finances, { seasonIndex, week, day, kind: "sponsorBonus", amount: s.bonus, refName: s.sponsorId });
+    let milestone = 0;
+    if (s.terms.fixedKind === "milestone" && !s.terms.fixedPaid && s.terms.fixed > 0) {
+      milestone = s.terms.fixed;
+      s.terms.fixedPaid = true;
+      save.finances = pushLedger(save.finances, { seasonIndex, week, day, kind: "sponsorMilestone", amount: milestone, refName: s.sponsorId });
+    }
+    pushNews(save, { type: "org", priority: 2, titleKey: "objectiveHit", params: { name: s.sponsorId } });
     pushMail(save, {
       kind: "sponsor",
-      titleKey: "sponsorOffers",
-      bodyKey: "sponsorOffers",
-      params: { n: save.sponsorOffers.length },
+      titleKey: "sponsorGoalHit",
+      bodyKey: "sponsorGoalHit",
+      params: { name: s.sponsorId, bonus: s.bonus, milestone, profile: s.terms.profile, ...goalParamsOf(goal) },
       fromKey: "sponsor",
       linkTo: "/career/finances",
     });
   }
+}
+
+/** A goal as mail params (the copy words it: sponsorGoalEn / Pt). */
+function goalParamsOf(goal: SponsorGoal): Record<string, string | number> {
+  return {
+    goalKind: goal.kind,
+    goalCount: goal.count,
+    goalPlace: goal.place ?? 0,
+    goalSplit: slotSplit(goal.slot),
+    word: goal.word,
+    // The estimate it was set at (the harness scores the words on it; the copy never prints a percentage).
+    chance: goal.chance,
+  };
+}
+
+/**
+ * rc.34 (S2): on a split's first Monday, the running deal's goal for it, at
+ * the deal's word, from the team's level today (the first split's goal came
+ * with the offer). Announced in the inbox.
+ */
+function setSponsorGoalForSplit(save: CareerSave, slot: number): void {
+  const s = save.sponsor;
+  if (!s?.terms || !slotsOfDeal(s.terms).includes(slot) || goalForSlot(s.terms, slot)) return;
+  const goal = pickGoal(s.terms.word, sponsorLevelOf(save), slot);
+  s.terms.goals = [...s.terms.goals, goal];
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "sponsorGoalSet",
+    bodyKey: "sponsorGoalSet",
+    params: { name: s.sponsorId, bonus: s.bonus, fine: s.terms.fineShare > 0 ? fineFor(s.terms, s.bonus, 1) : 0, ...goalParamsOf(goal) },
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+}
+
+/**
+ * rc.34 (S1–S3): a split boundary for an rc.34 deal — its goal for the split
+ * that ends here settles (a miss costs a fine on a Balanced or Bold deal,
+ * never on Easy, spread over the next Mondays; or a patience miss on a
+ * Steady deal: one consequence per miss, 7-A), then the deal ends if this
+ * was its last split and the next decision is offered (one tier lower after
+ * a Steady deal ran out of patience).
+ */
+function settleSponsorSplit(save: CareerSave, slot: number): void {
+  const s = save.sponsor;
+  if (!s?.terms) return;
+  checkSponsorGoals(save);
+  const goal = goalForSlot(s.terms, slot);
+  if (goal && !goal.hitOn && goal.missed === undefined) {
+    const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, slot) });
+    const shortfall = shortfallOf(progress);
+    goal.missed = shortfall;
+    const fine = fineFor(s.terms, s.bonus, shortfall);
+    const schedule = fineScheduleFor(s.sponsorId, fine);
+    if (schedule) save.finances.sponsorFines = [...(save.finances.sponsorFines ?? []), schedule];
+    if (s.terms.profile === "steady") s.missedCount += 1;
+    pushNews(save, { type: "org", priority: 2, titleKey: "objectiveMissed", params: { name: s.sponsorId } });
+    pushMail(save, {
+      kind: "sponsor",
+      titleKey: "sponsorGoalMissed",
+      bodyKey: "sponsorGoalMissed",
+      params: {
+        name: s.sponsorId,
+        fine,
+        perMonday: schedule?.perMonday ?? 0,
+        mondays: schedule ? Math.ceil(fine / schedule.perMonday) : 0,
+        done: progress.done,
+        target: progress.target,
+        steady: s.terms.profile === "steady" ? 1 : 0,
+        profile: s.terms.profile,
+        misses: s.missedCount,
+        patience: CAREER_SPONSOR.patienceMisses,
+        ...goalParamsOf(goal),
+      },
+      fromKey: "sponsor",
+      linkTo: "/career/finances",
+    });
+  }
+  if (absDayOf(todayOf(save)) < absDayOf(s.terms.endsOn)) return;
+  const demote = s.terms.profile === "steady" && s.missedCount >= CAREER_SPONSOR.patienceMisses;
+  save.sponsor = null;
+  pushNews(save, { type: "org", priority: 2, titleKey: "sponsorEnded", params: { name: s.sponsorId } });
+  pushMail(save, {
+    kind: "sponsor",
+    titleKey: "sponsorEnded",
+    bodyKey: "sponsorEnded",
+    params: { name: s.sponsorId, hits: s.terms.goals.filter((g) => g.hitOn).length, goals: s.terms.lengthSplits, demoted: demote ? 1 : 0 },
+    fromKey: "sponsor",
+    linkTo: "/career/finances",
+  });
+  offerSponsorDecision(save, demote);
 }
 
 function ingestResult(save: CareerSave, result: CompactEventResult): void {
@@ -1547,7 +1864,8 @@ function runWeeklyPayroll(save: CareerSave): void {
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
   // rc.32 (M3): past season index throughSeasonIndex with a real deal signed, the founding partner steps back.
-  if (foundingPartnerEnds(save.foundingPartner, seasonIndex, realDealSigned(save))) closeFoundingPartner(save);
+  // rc.34 (S6): over two splits, not at once (beginFoundingHandover).
+  if (foundingPartnerEnds(save.foundingPartner, seasonIndex, realDealSigned(save))) beginFoundingHandover(save);
   const payroll = weeklyPayroll({
     fin: save.finances,
     squadSalaries: save.squad.map((p) => ({ name: p.name, amount: p.salaryPerSplit })),
@@ -1826,8 +2144,13 @@ function warnRunway(save: CareerSave, net: number): void {
 function runSplitBoundary(save: CareerSave): void {
   const { seasonIndex, day } = save.clock;
   const week = weekOfDay(day);
-  // Sponsor objective settlement — the bonus lands as its own line.
-  if (save.sponsor) {
+  // rc.34 (S6): the founding partner's handover steps once a split.
+  stepFoundingHandover(save);
+  // rc.34 (ECO-04): an rc.34 deal settles this split's goal (and may end).
+  if (save.sponsor?.terms) {
+    settleSponsorSplit(save, slotOf(seasonIndex, week === 11 ? 1 : week === 21 ? 2 : 3));
+  } else if (save.sponsor) {
+    // A deal from before rc.34: its objective, settled on its old rules.
     const s = save.sponsor;
     const hit =
       s.hitThisSplit ||
@@ -2331,7 +2654,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     save.finances.bootcampSharp = 0;
   }
   if (def.tier === "t3") save.t3EntriesThisSplit += 1;
-  if (save.sponsor?.objectiveKind === "enterEvents") save.sponsor.progress += 1;
+  if (save.sponsor?.objectiveKind === "enterEvents" && !save.sponsor.terms) save.sponsor.progress += 1;
   save.unofficialOffer = null;
   return save;
 }
@@ -2550,8 +2873,9 @@ export function finishEvent(input: CareerSave): CareerSave {
   // Reputation.
   applyEventRep(save, def, placement, ev.tournament);
 
-  // Sponsor objective progress.
-  if (save.sponsor) {
+  // Sponsor objective progress (a deal from before rc.34); rc.34: the deal's goals.
+  checkSponsorGoals(save);
+  if (save.sponsor && !save.sponsor.terms) {
     const s = save.sponsor;
     const top8 = placement !== "swiss_exit";
     if (s.objectiveKind === "regionalTop8" && def.tier === "regional" && top8) s.hitThisSplit = true;
@@ -3009,22 +3333,24 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     string,
   ];
 
-  // 3. Sponsor renewal offers for the new season (only once the org has earned
-  //    standing — no day-1 sponsorship).
-  const patienceMissed = (save.sponsor?.missedCount ?? 0) >= CAREER_SPONSOR.patienceMisses;
-  const hadSponsor = save.sponsor !== null;
-  save.sponsorOffers =
-    hadSponsor || save.reputation >= CAREER_SPONSOR.firstOfferRepGate
-      ? sponsorOffersFor(
-          save.reputation,
-          nextSeason,
-          save.careerSeed,
-          save.sponsor?.tier ?? null,
-          patienceMissed,
-          save.difficulty,
-        )
-      : null;
-  save.sponsor = null;
+  // 3. Sponsors (only once the org has earned standing — no day-1
+  //    sponsorship). rc.34 (ECO-04): a deal signed since rc.34 runs on to its
+  //    own end (a split boundary); a deal from before rc.34 ends here, as it
+  //    always did, and its renewal is an rc.34 decision (one tier lower after
+  //    three misses — the patience meter). Without a deal, an org with
+  //    standing gets a fresh decision in the new season's money (a decision
+  //    left from the Worlds window lapses with the season). Offered below,
+  //    once the new season's world and clock are set.
+  let sponsorDecision: { demote: boolean } | null = null;
+  if (!save.sponsor?.terms) {
+    const legacy = save.sponsor;
+    const patienceMissed = (legacy?.missedCount ?? 0) >= CAREER_SPONSOR.patienceMisses;
+    if (legacy || save.reputation >= CAREER_SPONSOR.firstOfferRepGate) {
+      sponsorDecision = { demote: legacy !== null && patienceMissed };
+    }
+    save.sponsor = null;
+    save.sponsorOffers = null;
+  }
 
   // 4. Fresh competition + goals + clock; stars refresh.
   save.competition = emptyCompetition();
@@ -3043,6 +3369,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
   });
+  if (sponsorDecision) offerSponsorDecision(save, sponsorDecision.demote);
 
   return processDayArrival(save);
 }
@@ -4290,16 +4617,41 @@ export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowRes
   save.flags[ACH_FLAGS.sponsorSigned] = true;
   const offer = save.sponsorOffers?.find((o) => o.sponsorId === sponsorId);
   if (!offer) return { save: input, error: "unknown" };
-  save.sponsor = { ...offer, progress: 0, hitThisSplit: false, missedCount: 0 };
-  save.sponsorOffers = null;
-  save.finances = pushLedger(save.finances, {
-    seasonIndex: save.clock.seasonIndex,
-    week: weekOfDay(save.clock.day),
-    day: save.clock.day,
-    kind: "sponsorSigning",
-    amount: offer.basePerSplit * CAREER_SPONSOR.signingBonusSplits,
-    refName: offer.sponsorId,
-  });
+  if (offer.terms) {
+    // rc.34 (ECO-04): an offer past its deadline is gone (the day's lapse clears it; a stale screen lands here).
+    if (offer.terms.decideBy && isAfter(todayOf(save), offer.terms.decideBy)) {
+      lapseSponsorOffers(save);
+      return { save: capNews(save), error: "expired" };
+    }
+    const terms: SponsorTerms = structuredClone(offer.terms);
+    delete terms.decideBy;
+    save.sponsor = { ...offer, terms, progress: 0, hitThisSplit: false, missedCount: 0 };
+    save.sponsorOffers = null;
+    // The fixed part on signing (Steady, Balanced); Bold's is the milestone.
+    if (terms.fixedKind === "signing" && terms.fixed > 0) {
+      terms.fixedPaid = true;
+      save.finances = pushLedger(save.finances, {
+        seasonIndex: save.clock.seasonIndex,
+        week: weekOfDay(save.clock.day),
+        day: save.clock.day,
+        kind: "sponsorSigning",
+        amount: terms.fixed,
+        refName: offer.sponsorId,
+      });
+    }
+  } else {
+    // An offer from before rc.34 (a save's load converts them; kept for safety): rc.33's rules.
+    save.sponsor = { ...offer, progress: 0, hitThisSplit: false, missedCount: 0 };
+    save.sponsorOffers = null;
+    save.finances = pushLedger(save.finances, {
+      seasonIndex: save.clock.seasonIndex,
+      week: weekOfDay(save.clock.day),
+      day: save.clock.day,
+      kind: "sponsorSigning",
+      amount: offer.basePerSplit * CAREER_SPONSOR.signingBonusSplits,
+      refName: offer.sponsorId,
+    });
+  }
   pushNews(save, {
     type: "org",
     priority: 2,
@@ -4307,7 +4659,8 @@ export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowRes
     params: { org: save.identity.orgName, name: offer.sponsorId },
   });
   // rc.32 (M3): past its minimum term, the first real deal ends the founding partner.
-  if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) closeFoundingPartner(save);
+  // rc.34 (S6): it hands over over two splits instead (beginFoundingHandover).
+  if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) beginFoundingHandover(save);
   return { save: capNews(save) };
 }
 
@@ -4525,6 +4878,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairHqOnLoad(save); // rc.34: every load, idempotent, no version bump
   repairTrainingOnLoad(save); // rc.34 (DEV-03 T8): every load, idempotent, no version bump
   repairLoanOnLoad(save); // rc.34: every load, idempotent, no version bump
+  repairSponsorsOnLoad(save); // rc.34: every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {
@@ -4674,6 +5028,28 @@ export function repairLoanOnLoad(save: CareerSave): void {
     linkTo: "/career/finances",
   });
   pushMoneyNotice(save, "loanTakenOver", params);
+}
+
+/**
+ * rc.34 (ECO-04): the sponsors' one-time load repair, run by migrateSaveToV5
+ * on every load next to repairMoneyOnLoad (idempotent; persist version 3
+ * and saveVersion 5 unchanged). Offers from before rc.34 still pending (no
+ * `terms`) become an rc.34 decision made today — three profiles at the best
+ * tier the reputation allows, their first split the next one with all its
+ * events ahead — so the comparison card has something to compare; an ended
+ * career drops them. A running deal from before rc.34 is left alone: it
+ * runs to its end on its old rules. Nothing else moves.
+ */
+export function repairSponsorsOnLoad(save: CareerSave): void {
+  if (!Array.isArray(save.sponsorOffers) || save.sponsorOffers.length === 0) return;
+  if (save.sponsorOffers.every((o) => o.terms)) return;
+  if (save.phase === "ended" || save.sponsor || !save.clock || !save.world?.orgs || !Array.isArray(save.squad)) {
+    save.sponsorOffers = null;
+    return;
+  }
+  save.mail ??= [];
+  save.flags ??= {};
+  offerSponsorDecision(save, false);
 }
 
 /** rc.30 (direct-8): the in-flight regional week's seeding, rebuilt from its commit (migrateSaveToV5). */

@@ -26,13 +26,13 @@
  */
 
 import { CAREER_HQ } from "@/config/balance";
-import { splitEndDayFor } from "@/engine/career/calendar";
 import type { CareerSave } from "@/engine/career/types";
 import {
   isEventPaused,
   moneyNoticeOf,
   moneyNoticeRaisedToday,
   rolloverToNextSeason,
+  sponsorDecisionOf,
   squadHoldFor,
   type FlowResult,
 } from "./careerFlow";
@@ -119,9 +119,10 @@ export function moneyNoticeSource(save: CareerSave): DecisionSourceItem | null {
  * F's `sponsorDecisionOf(save)` (its id and deadline).
  */
 export function sponsorDecisionSource(save: CareerSave): DecisionSourceItem | null {
-  if (save.phase !== "running" || save.sponsor || !save.sponsorOffers?.length) return null;
-  const day = splitEndDayFor(save.clock.day);
-  return { id: `sponsor:${save.clock.seasonIndex}:${day}`, deadline: { seasonIndex: save.clock.seasonIndex, day } };
+  if (save.phase !== "running") return null;
+  // rc.34 (front F): the decision's own deadline — the Sunday before its first split's first event week.
+  const decision = sponsorDecisionOf(save);
+  return decision ? { id: decision.id, deadline: { seasonIndex: decision.deadlineOn.seasonIndex, day: decision.deadlineOn.day } } : null;
 }
 
 /**

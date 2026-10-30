@@ -19,7 +19,6 @@ import {
   firstDayOfWeek,
   officialEventDefsForWeek,
   qualifierDefsForWeek,
-  splitEndDayFor,
   weekOfDay,
 } from "@/engine/career/calendar";
 import { sponsorOffersFor } from "@/engine/career/economy";
@@ -39,7 +38,7 @@ import {
   topDecisionOf,
   type DecisionKind,
 } from "./careerDecisions";
-import {
+import { sponsorDecisionOf,
   advanceDayFlow,
   advanceToNextStopFlow,
   canSkipShortSquadEvent,
@@ -295,7 +294,8 @@ describe("rc.34 decision 1-B — Later only for a bid and the sponsor offers, up
   it("the sponsor offers park until the Sunday before the next split boundary; there: sign or decline", () => {
     const base = holding("sponsor").save;
     const d = pendingDecisionsOf(base).find((x) => x.kind === "sponsor")!;
-    expect(d.deadline).toEqual({ seasonIndex: 0, day: splitEndDayFor(base.clock.day) });
+    // rc.34 (front F): the decision's own deadline (sponsorDecisionOf.deadlineOn).
+    expect(d.deadline).toEqual(sponsorDecisionOf(base)!.deadlineOn);
     expect(d.canWait).toBe(true);
     let s = parkDecisionFlow(base, d.id).save;
     expect(clockHoldOf(s)).toBeNull();
@@ -303,7 +303,10 @@ describe("rc.34 decision 1-B — Later only for a bid and the sponsor offers, up
     const due = pendingDecisionsOf(s).find((x) => x.kind === "sponsor")!;
     expect(due).toMatchObject({ canWait: false, holds: true, parked: false });
     expect(advanceDayFlow(s)).toBe(s);
-    expect(advanceDayFlow(declineSponsorOffersFlow(s).save).clock.day).toBe(s.clock.day + 1);
+    // Declined, the sponsor no longer holds the clock (rc.33-shaped offers carry the season's end as deadline).
+    const declined = declineSponsorOffersFlow(s).save;
+    expect(sponsorDecisionOf(declined)).toBeNull();
+    expect(clockHoldOf(declined)?.kind).not.toBe("sponsor");
   });
 
   it("no Later for anything else: insert, invite, a matchday, a short squad, a notice, the training proposal", () => {
@@ -333,7 +336,7 @@ describe("rc.34 — the queue's order: urgent first", () => {
       `insert:ins-showmatch:0:${base.clock.day}`,
       "bid:soon",
       "bid:late",
-      `sponsor:0:${splitEndDayFor(base.clock.day)}`,
+      sponsorDecisionOf(save)!.id,
     ]);
     // Parked ones go last; the top block shows the first that is not parked.
     const parked = parkDecisionFlow(save, "bid:soon").save;

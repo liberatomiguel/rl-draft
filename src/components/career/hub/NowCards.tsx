@@ -26,7 +26,8 @@ import { insertById, type InsertEffects } from "@/data/career/inserts";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { REGION_BADGE } from "@/components/regionStyle";
-import { dateOfDay, nameOfRef, squadAge } from "@/components/career/careerUi";
+import { dateOfDay, nameOfRef, squadAge, useCareerSave } from "@/components/career/careerUi";
+import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { TeamStars } from "@/components/career/TeamStars";
@@ -470,6 +471,14 @@ export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; 
   );
 }
 
+/**
+ * The sponsor decision's card on HQ. rc.34 (ECO-04, SPONSOR-CONTRACT S5): an
+ * rc.34 decision renders the comparison (`SponsorDecision`: the deadline and
+ * three `SponsorOfferCard`s, Stability · Total return · Length · Risk ·
+ * Goal); HQ's decision queue (UX-01, front G) can render the same pieces
+ * from `sponsorDecisionOf(save)`. Offers from before rc.34 (a save's load
+ * converts them) keep rc.33's card.
+ */
 export function NowSponsorChoice({
   C,
   lang,
@@ -483,6 +492,8 @@ export function NowSponsorChoice({
   objectiveText: (kind: SponsorObjectiveKind) => string;
   onChoose: (sponsorId: string) => void;
 }) {
+  const save = useCareerSave();
+  if (save && offers.some((o) => o.terms)) return <SponsorDecision save={save} onSign={onChoose} />;
   return (
     <div>
       <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink">

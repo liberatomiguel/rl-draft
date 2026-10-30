@@ -18,9 +18,9 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { CAREER_PAYROLL, CAREER_SPONSOR } from "@/config/balance";
+import { CAREER_PAYROLL } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import type { CareerSave, SponsorObjectiveKind, TransferOffer } from "@/engine/career/types";
+import type { CareerSave, TransferOffer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -28,7 +28,7 @@ import { canSkipShortSquadEvent, runwayWeeksOf, squadHoldFor, weeklyStatementOf 
 import { pendingDecisionsOf, type PendingDecision } from "@/store/careerDecisions";
 import { trainingDecisionOf } from "@/store/careerTraining";
 import { TrainingProposalCard } from "@/components/career/training/TrainingPackageParts";
-import { useSettings } from "@/store/settingsStore";
+import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
 import { contractWarnsFor } from "@/engine/career/careerNew";
 import {
   dateOfDay,
@@ -47,7 +47,6 @@ import {
   NowInsert,
   NowInvite,
   NowSeason,
-  NowSponsorChoice,
   NowSquadShort,
 } from "@/components/career/hub/NowCards";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
@@ -88,7 +87,6 @@ function LaterRow({ C, d, onLater }: { C: CareerCopy; d: PendingDecision; onLate
 
 export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const router = useRouter();
-  const lang = useSettings((s) => s.lang);
   const acceptBid = useCareerStore((s) => s.acceptBid);
   const declineBid = useCareerStore((s) => s.declineBid);
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
@@ -113,9 +111,6 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
 
   const D = C.dates;
   const today = save.clock.day;
-
-  const objectiveText = (kind: SponsorObjectiveKind): string =>
-    kind === "enterEvents" ? C.finances.objective.enterEvents(CAREER_SPONSOR.enterEventsTarget) : C.finances.objective[kind];
 
   const later = (d: PendingDecision) => {
     parkDecision(d.id);
@@ -247,8 +242,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         if (offers.length === 0) return null;
         return (
           <>
-            {/* ECO-04 (front F) places its SponsorOfferCard here; rc.33's choice until then. */}
-            <NowSponsorChoice C={C} lang={lang} offers={offers} objectiveText={objectiveText} onChoose={(id) => chooseSponsor(id)} />
+            {/* ECO-04 (front F): the three profiles in one comparison, signed from here. */}
+            <SponsorDecision save={save} onSign={(id) => chooseSponsor(id)} bare />
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
               <Button variant="secondary" size="md" className="min-h-11" onClick={declineSponsorOffers}>
                 {C.hub.sponsorDecline}

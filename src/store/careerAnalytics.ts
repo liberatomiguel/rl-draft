@@ -204,7 +204,8 @@ function splitSummaries(prev: CareerSave, next: CareerSave): TrackedEvent[] {
         payrollPerSplit:
           next.squad.reduce((total, p) => total + p.salaryPerSplit, 0) + (next.coach?.salaryPerSplit ?? 0),
         incomePrize: sumKinds(lines, ["prize"]),
-        incomeSponsor: sumKinds(lines, ["sponsorBase", "sponsorBonus", "sponsorSigning"]),
+        // rc.34 (ECO-04): a Bold deal's milestone is sponsor income too (fines are spending).
+        incomeSponsor: sumKinds(lines, ["sponsorBase", "sponsorBonus", "sponsorSigning", "sponsorMilestone"]),
         incomeFanbase: sumKinds(lines, ["fanbase"]),
         incomeTransfers: sumKinds(lines, ["transferIn"]),
         debtBacker: next.finances.loan?.remaining ?? 0,
@@ -364,7 +365,9 @@ function staff(prev: CareerSave, next: CareerSave, action: CareerAction): Tracke
           kind: "sponsor_signed",
           tier: next.sponsor.tier,
           basePerSplit: next.sponsor.basePerSplit,
-          objectiveKind: next.sponsor.objectiveKind,
+          // rc.34 (ECO-04): the first goal's kind and the profile of a deal signed since rc.34.
+          objectiveKind: next.sponsor.terms?.goals[0]?.kind ?? next.sponsor.objectiveKind,
+          ...(next.sponsor.terms ? { profile: next.sponsor.terms.profile } : {}),
         },
       },
     ];

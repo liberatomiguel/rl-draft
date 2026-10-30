@@ -44,9 +44,11 @@ import type {
   FinanceState,
   FoundingPartnerState,
   GearState,
+  IncomeTally,
   LedgerEntry,
   MondayBalance,
   RescuePartnerState,
+  SponsorFineState,
   SponsorObjectiveKind,
   SponsorState,
 } from "./types";
@@ -577,7 +579,45 @@ function nextLedgerSeq(fin: FinanceState): number {
 export function pushLedger(fin: FinanceState, entry: Omit<LedgerEntry, "id">): FinanceState {
   const id = `led:${entry.seasonIndex}:${entry.week}:${nextLedgerSeq(fin)}`;
   const ledger = [...fin.ledger, { ...entry, id }].slice(-CAREER_SAVE.ledgerTailCap);
-  return { ...fin, ledger, balance: fin.balance + entry.amount };
+  const next: FinanceState = { ...fin, ledger, balance: fin.balance + entry.amount };
+  // rc.34 (ECO-05): the season's earned and other income — the other-income cap's basis.
+  const tally = tallyIncome(fin.incomeTally, entry);
+  if (tally !== fin.incomeTally) next.incomeTally = tally;
+  return next;
+}
+
+/**
+ * rc.34 (ECO-05): the deals' and the other-income cap's split of a week —
+ * W1–W10 → 1, W11–W20 → 2, W21–W32 → 3 (each runs from one boundary Monday
+ * to the next, the Worlds weeks with Split 3).
+ */
+export function periodOfWeek(week: number): 1 | 2 | 3 {
+  return week < 11 ? 1 : week < 21 ? 2 : 3;
+}
+
+const UNEARNED_KINDS: ReadonlySet<LedgerEntry["kind"]> = new Set<LedgerEntry["kind"]>(["loanGrant", "bankLoan"]);
+
+/**
+ * rc.34 (ECO-05): the season's income tally after one ledger line: every
+ * positive line but a loan is earned income; a positive insert line (a
+ * showmatch fee, a partner's content day, a jersey shoot) is other income,
+ * counted in its split. A new season starts a new tally.
+ */
+export function tallyIncome(
+  tally: IncomeTally | undefined,
+  line: Pick<LedgerEntry, "seasonIndex" | "week" | "kind" | "amount">,
+): IncomeTally | undefined {
+  if (line.amount <= 0 || UNEARNED_KINDS.has(line.kind)) return tally;
+  const period = periodOfWeek(line.week);
+  let t: IncomeTally =
+    tally && tally.s === line.seasonIndex ? { ...tally } : { s: line.seasonIndex, earned: 0, other: 0, period, otherCount: 0 };
+  if (t.period !== period) t = { ...t, period, otherCount: 0 };
+  t.earned += line.amount;
+  if (line.kind === "insert") {
+    t.other += line.amount;
+    t.otherCount += 1;
+  }
+  return t;
 }
 
 /**
@@ -804,6 +844,8 @@ export interface WeeklyStatementInput {
   foundingPartnerPerSplit?: number;
   /** rc.33 (ECO-07): the rescue partner while it runs (FinanceState.rescuePartner; omitted = none). */
   rescuePartner?: RescuePartnerState | null;
+  /** rc.34 (ECO-04): missed goals' fines still owed (FinanceState.sponsorFines; omitted = none). */
+  sponsorFines?: readonly SponsorFineState[] | null;
 }
 
 export interface WeeklyStatement {
@@ -818,6 +860,8 @@ export interface WeeklyStatement {
   psychologist: number;
   upkeep: number;
   bankPayment: number;
+  /** rc.34 (ECO-04): this Monday's instalments of missed goals' fines (0 = none). */
+  sponsorFine: number;
   income: number;
   expenses: number;
   net: number;
@@ -830,7 +874,10 @@ export interface WeeklyStatement {
  */
 export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
   const s = input.seasonIndex ?? 0;
-  const sponsorBase = input.sponsor ? weeklyOf(input.sponsor.basePerSplit) : 0;
+  // rc.34 (ECO-04): a deal's terms carry its weekly pay; a deal from before rc.34 spreads its base.
+  const sponsorBase = input.sponsor
+    ? (input.sponsor.terms?.weekly ?? weeklyOf(input.sponsor.basePerSplit))
+    : 0;
   const foundingPartner =
     input.foundingPartnerPerSplit && input.foundingPartnerPerSplit > 0 ? weeklyOf(input.foundingPartnerPerSplit) : 0;
   const rescuePartner = rescuePartnerWeeklyOf(input.rescuePartner);
@@ -842,8 +889,9 @@ export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
   const bankPayment = input.bankLoan
     ? Math.min(input.bankLoan.remaining, input.bankLoan.weeklyPayment)
     : 0;
+  const sponsorFine = sponsorFineDueOf(input.sponsorFines);
   const income = sponsorBase + foundingPartner + rescuePartner + fanbase;
-  const expenses = payroll + coach + psychologist + upkeep + bankPayment;
+  const expenses = payroll + coach + psychologist + upkeep + bankPayment + sponsorFine;
   return {
     sponsorBase,
     foundingPartner,
@@ -854,10 +902,16 @@ export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
     psychologist,
     upkeep,
     bankPayment,
+    sponsorFine,
     income,
     expenses,
     net: income - expenses,
   };
+}
+
+/** rc.34 (ECO-04): this Monday's fine instalments — each clamped to what it still owes. */
+export function sponsorFineDueOf(fines: readonly SponsorFineState[] | null | undefined): number {
+  return (fines ?? []).reduce((n, f) => n + Math.max(0, Math.min(f.remaining, f.perMonday)), 0);
 }
 
 /**
@@ -1201,12 +1255,15 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
   /** The floor and rescue target this Monday (on the wage bill just booked). */
   line: BackerLine;
   bankCleared: boolean;
+  /** rc.34 (ECO-04): fine instalments waived this Monday so the books stay above the floor. */
+  fineWaived: number;
 } {
   const { seasonIndex, week, day } = input;
   const statement = weeklyStatement({
     ...input,
     bankLoan: input.fin.bankLoan ?? null,
     rescuePartner: input.fin.rescuePartner ?? null,
+    sponsorFines: input.fin.sponsorFines ?? null,
   });
   let fin = input.fin;
   const line = (kind: LedgerEntry["kind"], amount: number, refName?: string) => {
@@ -1236,6 +1293,25 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     fin = { ...fin, bankLoan: remaining > 0 ? { ...fin.bankLoan, remaining } : null };
   }
 
+  const backer = backerLineFor(statement.payroll + statement.coach, seasonIndex);
+  // rc.34 (ECO-04, S3): missed goals' fines, one instalment each, as their
+  // own line. `neverBreaches`: an instalment never takes the books below the
+  // Backer's floor — what would is waived, so a fine never triggers a rescue.
+  let fineWaived = 0;
+  if (fin.sponsorFines && fin.sponsorFines.length > 0) {
+    const left: SponsorFineState[] = [];
+    for (const f of fin.sponsorFines) {
+      const due = Math.max(0, Math.min(f.remaining, f.perMonday));
+      const room = CAREER_SPONSOR.fines.neverBreaches ? Math.max(0, fin.balance - backer.floor) : Infinity;
+      const booked = Math.min(due, room === Infinity ? due : quantize(room));
+      if (booked > 0) line("sponsorFine", -booked, f.sponsorId);
+      fineWaived += due - booked;
+      const remaining = f.remaining - due;
+      if (remaining > 0) left.push({ ...f, remaining });
+    }
+    fin = { ...fin, sponsorFines: left };
+    if (left.length === 0) delete fin.sponsorFines;
+  }
   // rc.34: the emergency loan's deadline — the bank takes what it is owed if
   // the balance covers it; otherwise the career ends (no floor check after).
   let collected = 0;
@@ -1250,7 +1326,6 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     }
   }
 
-  const backer = backerLineFor(statement.payroll + statement.coach, seasonIndex);
   let rescued = false;
   let topUp = false;
   let granted = 0;
@@ -1287,6 +1362,7 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     rescuePartner,
     line: backer,
     bankCleared,
+    fineWaived,
   };
 }
 
@@ -1543,7 +1619,19 @@ export function foundingPartnerActive(fp: FoundingPartnerState | null | undefine
 export function foundingPartnerBaseFor(fp: FoundingPartnerState | null | undefined, seasonIndex: number): number {
   if (!fp || !foundingPartnerActive(fp)) return 0;
   const idx = moneyIndex(seasonIndex, "sponsor") / moneyIndex(fp.sizedSeason, "sponsor");
-  return quantize(CAREER_SPONSOR.founding.payrollShare * fp.wageBillPerSplit * idx);
+  return quantize(CAREER_SPONSOR.founding.payrollShare * fp.wageBillPerSplit * idx * foundingTaperShareOf(fp));
+}
+
+/**
+ * rc.34 (S6, decision 5-A as adjusted to ECO-07/08): the share of its base
+ * the founding partner pays at its handover step — in full before the
+ * handover, then CAREER_SPONSOR.founding.taper's shares (⅔, ⅓), one split
+ * each.
+ */
+export function foundingTaperShareOf(fp: Pick<FoundingPartnerState, "taperStep"> | null | undefined): number {
+  const step = fp?.taperStep ?? 0;
+  if (step <= 0) return 1;
+  return CAREER_SPONSOR.founding.taper[step - 1] ?? 0;
 }
 
 /**

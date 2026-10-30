@@ -57,7 +57,9 @@ export const CAREER_INSERTS_CATALOG: readonly InsertDef[] = [
     { key: "b", effects: {} },
   ] },
   { id: "ins-sponsor-jersey", kind: "sponsor", weight: 2, requires: { sponsor: true }, options: [
-    { key: "a", effects: { money: 900, rep: 1 } },
+    // rc.34 (ECO-05, S7): every other-income item takes a day from the
+    // agenda — the shoot now costs a session like the showmatch and the content day.
+    { key: "a", effects: { money: 900, rep: 1, trainingWeeks: -0.2 } },
     { key: "b", effects: {} },
   ] },
   { id: "ins-rest-request", kind: "training", weight: 3, options: [

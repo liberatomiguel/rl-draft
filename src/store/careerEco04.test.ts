@@ -337,6 +337,11 @@ function withFounding(fn: () => void): void {
   withConfig(CAREER_SPONSOR.founding, { enabled: true }, fn);
 }
 
+/** rc.32's founding partner with rc.33's cliff at its end (rc.34's S6 handover off). */
+function withFoundingCliff(fn: () => void): void {
+  withConfig(CAREER_SPONSOR.founding, { enabled: true, taper: [] }, fn);
+}
+
 describe("rc.32 M3 — the founding partner (switch-back: founding.enabled true restores rc.32)", () => {
   it("opens on day one, sized on the founding wage bill, announced, and paid on Mondays as its own line", () => withFounding(() => {
     const save = createCareerSave(INPUT, 50_101);
@@ -355,7 +360,8 @@ describe("rc.32 M3 — the founding partner (switch-back: founding.enabled true 
     );
   }));
 
-  it("a deal signed early: it runs alongside through season 1 and steps back on season 2's first Monday", () => withFounding(() => {
+  // rc.34 (S6): the end is a two-split handover now (careerSponsors.test.ts); `taper: []` restores the rc.32/33 cliff these check.
+  it("a deal signed early: it runs alongside through season 1 and steps back on season 2's first Monday", () => withFoundingCliff(() => {
     let save = createCareerSave(INPUT, 50_102);
     save.flags[ACH_FLAGS.sponsorSigned] = true; // a real deal was signed in season 0
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
@@ -368,7 +374,7 @@ describe("rc.32 M3 — the founding partner (switch-back: founding.enabled true 
     expect(save.finances.ledger.some((l) => l.kind === "foundingPartner" && l.seasonIndex === 2)).toBe(false);
   }));
 
-  it("no deal yet: it carries on past season 1 and the first real deal ends it there and then", () => withFounding(() => {
+  it("no deal yet: it carries on past season 1 and the first real deal ends it there and then", () => withFoundingCliff(() => {
     let save = createCareerSave(INPUT, 50_103);
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });

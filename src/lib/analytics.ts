@@ -290,6 +290,8 @@ export interface CareerEvents {
     tier?: number;
     basePerSplit?: number;
     objectiveKind?: string;
+    /** rc.34 (ECO-04): the deal's profile (steady / balanced / bold); absent for a deal from before rc.34. */
+    profile?: string;
   };
   career_scout_report: {
     careerId: string;
