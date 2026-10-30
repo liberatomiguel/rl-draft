@@ -40,7 +40,7 @@ import {
 } from "@/config/balance";
 import { clamp } from "@/lib/util";
 import type { Placement } from "../types";
-import { indexedAmount, quantize, weeklyWage } from "./economy";
+import { indexedAmount, quantize, signingBonusFor, weeklyWage } from "./economy";
 import { derivedFloat, streams } from "./seeds";
 import type { EventTier } from "./types";
 
@@ -162,191 +162,293 @@ export function sharePointWeeklyFor(askWeekly: number): number {
   return Math.max(q, Math.round((askWeekly * CAREER_PRIZE_SHARE.wagePerPoint) / q) * q);
 }
 
-/** Contract terms: the per-split wage written, the weekly wage it pays, the prize share. */
+/** Contract terms: the per-split wage written, the weekly wage it pays, the prize share, the signing bonus (rc.35). */
 export interface ContractTerms {
   wagePerSplit: number;
   weekly: number;
   sharePct: number;
+  /** rc.35 (front N): the signing bonus paid once on signature (luvas). */
+  bonus: number;
 }
 
-/** What the user offers. Omitted fields read his ask: the share he asks, his wage at the share offered. */
+/** What the user offers. Omitted fields read his ask: the share and bonus he asks, his wage at the share and bonus offered. */
 export interface ContractOffer {
   /** The weekly wage offered — what every wage label shows. */
   weekly?: number;
   /** The prize share offered (whole percent). */
   sharePct?: number;
+  /** rc.35 (front N): the signing bonus offered. */
+  bonus?: number;
 }
 
-/** The zone at the share offered — everything the sheet draws. */
+/** The zone at the share and bonus offered — everything the sheet draws. */
 export interface NegotiationZone {
   /** The shares the talk allows (whole percent, inclusive). */
   shareMin: number;
   shareMax: number;
   /**
-   * The share is a lever in this talk. False while the prize share is
-   * switched off (CAREER_PRIZES.playerShare.enabled) and, rc.34 (front I),
-   * for a player who asks no share: the share stays his ask, buys no wage,
-   * and the sheet hides the lever.
+   * The share is a lever in this talk. False only while the prize share is
+   * switched off (CAREER_PRIZES.playerShare.enabled). rc.35 (front N, Miguel
+   * on rc.34): a player who asks no share still has the lever — offering him
+   * one buys wage.
    */
   shareLever: boolean;
-  /** One share point in weekly money (`sharePointWeeklyFor`): each point over his ask lowers the zone by this, each under it raises it. */
+  /** One share point in weekly money (`sharePointWeeklyFor`). */
   pointWeekly: number;
-  /** His ask at this share — the zone's top (paying it always signs). */
+  /** His ask at this share and bonus — the zone's top (paying it always signs; the wage never goes above it). */
   topPerSplit: number;
   topWeekly: number;
-  /** The least he signs for at this share — the zone's floor. */
+  /** The least he signs for for sure at this share and bonus — the zone's floor (100 % odds). */
   floorWeekly: number;
+  /** rc.35 (front N): the wage where his odds reach 0 % (the floor minus the fall). */
+  zeroWeekly: number;
   /** One press of the wage stepper (weekly). */
   stepWeekly: number;
   /** rc.34 (front I): the least any contract pays, in weekly money (the wage never goes under it). */
   minWeekly: number;
+  /** rc.35 (front N): the signing bonus range and one step of it. */
+  bonusMax: number;
+  bonusStep: number;
+  /** rc.35 (front N): what the contract length takes off his floor this talk (weekly). */
+  lengthReliefWeekly: number;
 }
 
 /**
  * rc.34 (front I): why a lever cannot move further one way, for the offer on
- * the table — null = that way is open. The sheet names the reason under the
- * button it closes, so a disabled lever always says why.
+ * the table — null = that way is open.
  */
 export interface TalkLimits {
-  /** Wage down: "floor" = the least he signs for at this share; "minimum" = the least a contract pays. */
+  /** Wage down: "minimum" = the least a contract pays. ("floor" is kept for the type; rc.35 lets an offer go under his floor.) */
   wageDown: "floor" | "minimum" | null;
-  /** Wage up: "ask" = his full ask at this share (paying more buys nothing). */
+  /** Wage up: "ask" = his full ask at this share and bonus (paying more buys nothing). */
   wageUp: "ask" | null;
-  /** Share down: "least" = the least share the talk allows (his ask − maxBelowAsk, never under minPct); "none" = the offer is already no share at all. */
+  /** Share down: "least" = the least share the talk allows; "none" = the offer is already no share at all. */
   shareDown: "least" | "none" | null;
-  /** Share up: "most" = the most the talk allows (his ask + maxAboveAsk, maxPct); "minimum" = his wage would go under the least a contract pays. */
+  /** Share up: "most" = the most the talk allows; "minimum" = his wage would go under the least a contract pays. */
   shareUp: "most" | "minimum" | null;
+  /** rc.35 (front N): bonus down "none" (already 0), up "most" (the slider's top). */
+  bonusDown: "none" | null;
+  bonusUp: "most" | "minimum" | null;
 }
 
 export interface NegotiationAnswer {
-  /** His ask: his wage and the share he asks. */
+  /** His ask: his wage, the share and the bonus he asks. */
   ask: ContractTerms;
-  /** The offer as read: the share clamped to the zone; the weekly wage capped at the zone's top, on the weekly quantum. */
-  offer: { weekly: number; sharePct: number };
+  /** The offer as read: the share and bonus clamped to their ranges; the weekly wage between the minimum and the zone's top, on the weekly quantum. */
+  offer: { weekly: number; sharePct: number; bonus: number };
   zone: NegotiationZone;
-  /** rc.34 (front I): which ways each lever is closed for this offer, and why (`talkPressFor` reads it). */
   limits: TalkLimits;
-  /** He signs the offer. */
+  /** rc.35 (front N): his odds of signing this offer, 0–1 (1 inside the zone). */
+  odds: number;
+  /** He signs the offer (his odds beat this window's roll). */
   accepted: boolean;
   /** The deal on the table: the offer when he signs it, else his counter. A confirm writes it only when `accepted`. */
   terms: ContractTerms;
-  /** Under the zone: the nearest deal he signs (the share offered, his floor). Null when he signs. */
+  /** When he refuses: the nearest deal he signs for sure (the share and bonus offered, his floor). Null when he signs. */
   counter: ContractTerms | null;
   /** His weekly ask at his own share minus the weekly wage on the table (what the talk saves; negative = it costs more). */
   savingWeekly: number;
-  /** His flexibility this window (1 − the zone's width at his own share ÷ his ask, before minZoneSteps). */
+  /** His flexibility this window. */
   flex: number;
+  /** rc.35 (front N): the contract length the talk was priced on. */
+  lengthSeasons: number;
+}
+
+/** rc.35 (front N): his odds at `deficit` weekly money under his floor — smoothstep from 1 (at the floor) to 0 (`fall` under it). */
+export function talkOddsFor(deficit: number, fall: number): number {
+  if (deficit <= 0) return 1;
+  if (fall <= 0 || deficit >= fall) return 0;
+  const t = deficit / fall;
+  return 1 - t * t * (3 - 2 * t);
 }
 
 /**
- * ECO-11 (with ECO-10): the ONE answer to a contract offer. His ask is a
- * weekly wage at the share he asks. The zone where he signs runs from his
- * floor to his ask (the top); its width is his flexibility × his ask, never
- * under CAREER_NEGOTIATION.minZoneSteps presses of the wage stepper and never
- * under the least a contract pays (rc.34, front I: rc.33's zone collapsed on
- * the $10 weekly grid for most low asks, so the wage could not move). Each
- * share point over his ask moves the whole zone down by one share point's
- * weekly money (`sharePointWeeklyFor`: CAREER_PRIZE_SHARE.wagePerPoint of his
- * weekly ask, whole weekly quanta), each point under it moves it up, inside
- * maxAboveAsk / maxBelowAsk — and never so far that the floor would go under
- * the least a contract pays. The offer is capped at the top (paying more than
- * his ask buys nothing); under the floor he counters with the floor at the
- * same share — the nearest deal he signs, which taking always signs.
- * Monotone (more wage or more share never turns a yes into a counter),
- * deterministic, one round. The share is pinned to his ask when the prize
- * share is switched off (CAREER_PRIZES.playerShare.enabled: a share nobody is
- * paid buys no wage) and, rc.34, when he asks none (Miguel 31/10: a player
- * under the threshold gets no percentage).
+ * rc.35 (front N): this window's roll for a player — he signs an offer under
+ * his floor when his odds beat it. Seeded per (player, season, window) like
+ * his flexibility, so a reload changes nothing.
+ */
+export function negotiationRollFor(
+  careerSeed: number,
+  playerId: string,
+  seasonIndex: number,
+  windowKey: string,
+): number {
+  return derivedFloat(careerSeed, streams.gen("negRoll", `${playerId}:${seasonIndex}:${windowKey}`));
+}
+
+/**
+ * ECO-11 (with ECO-10), rc.35 (front N): the ONE answer to a contract offer.
+ * His ask is a weekly wage at the share and signing bonus he asks. Three
+ * levers trade against each other in weekly money: each share point over his
+ * ask lowers the wage he needs by one point's weekly money
+ * (`sharePointWeeklyFor`), each $1 of bonus over his ask by
+ * bonusWeight / (contract weeks); under his ask they raise it. The zone runs
+ * from his floor (his flexibility × his ask, at least minZoneSteps presses,
+ * minus the length relief: lengthReliefPerSeason of his ask a season past
+ * the first) to his ask (the top; paying more buys nothing). Inside the zone
+ * he signs; under the floor his odds fall smoothly to 0 over oddsFallPct of
+ * his ask (`talkOddsFor`) and he signs when they beat `roll` (seeded per
+ * window; omitted = 1, he never signs under the floor). When he refuses he
+ * counters with his floor at the same share and bonus. Monotone in every
+ * lever, deterministic, one round.
  */
 export function negotiationAnswerFor(input: {
-  ask: { wagePerSplit: number; sharePct: number };
+  ask: { wagePerSplit: number; sharePct: number; bonus?: number };
   flex: number;
   offer?: ContractOffer;
   /** The least a contract may pay per split (CAREER_SALARY.minSalary, indexed). */
   minWagePerSplit?: number;
+  /** rc.35: the contract length in seasons (1 when omitted). */
+  lengthSeasons?: number;
+  /** rc.35: this window's roll (`negotiationRollFor`); omitted = 1 (never signs under the floor). */
+  roll?: number;
 }): NegotiationAnswer {
   const S = CAREER_PRIZE_SHARE;
+  const N = CAREER_NEGOTIATION;
   const q = CAREER_PAYROLL.weeklyQuantum;
+  const bq = CAREER_ECONOMY.roundQuantum;
+  const len = Math.max(1, Math.round(input.lengthSeasons ?? 1));
   const askShare = Math.max(0, Math.round(input.ask.sharePct));
   const askWage = input.ask.wagePerSplit;
+  const askBonus = Math.max(0, input.ask.bonus ?? 0);
   const askWeekly = weeklyWage(askWage);
   const minWage = Math.min(askWage, Math.max(0, input.minWagePerSplit ?? 0));
   const minWeekly = Math.min(askWeekly, weeklyAtLeast(minWage));
   const pointWeekly = sharePointWeeklyFor(askWeekly);
   const stepWeekly = wageStepWeeklyFor(askWeekly);
 
-  // The zone's width (weekly money, whole quanta): his flexibility × his ask,
-  // at least minZoneSteps presses, never under the least a contract pays.
+  // The zone's width at his own share and bonus: flexibility, at least minZoneSteps presses, plus the length relief.
   const flexGap = Math.floor(((1 - input.flex) * askWeekly) / q + 1e-9) * q;
-  const gapWeekly = clamp(Math.max(flexGap, CAREER_NEGOTIATION.minZoneSteps * stepWeekly), 0, askWeekly - minWeekly);
+  const lengthReliefWeekly = Math.floor((askWeekly * N.lengthReliefPerSeason * (len - 1)) / q + 1e-9) * q;
+  const gapWeekly = clamp(Math.max(flexGap, N.minZoneSteps * stepWeekly) + lengthReliefWeekly, 0, askWeekly - minWeekly);
   const floorAtAsk = askWeekly - gapWeekly;
 
-  const shareLever = CAREER_PRIZES.playerShare.enabled && askShare > 0;
-  // Share points over his ask that still leave his floor at or above the minimum.
+  // The share lever (rc.35: also for a player who asks none).
+  const shareLever = CAREER_PRIZES.playerShare.enabled;
   const roomAbove = Math.max(0, Math.floor((floorAtAsk - minWeekly) / pointWeekly));
   const mostAbove = Math.min(S.maxPct, askShare + S.maxAboveAsk);
   const shareMin = shareLever ? Math.min(askShare, Math.max(S.minPct, askShare - S.maxBelowAsk)) : askShare;
   const shareMax = shareLever ? Math.max(askShare, Math.min(mostAbove, askShare + roomAbove)) : askShare;
   const share = clamp(Math.round(input.offer?.sharePct ?? askShare), shareMin, shareMax);
 
-  // The zone at this share: his ask (the top) and the least he signs for (the
-  // floor) both move by one point's weekly money a point, so its width holds.
-  const shift = (share - askShare) * pointWeekly;
-  const topWeekly = askWeekly - shift;
-  const topPerSplit = share === askShare ? askWage : perSplitForWeekly(topWeekly);
-  const floorWeekly = floorAtAsk - shift;
+  // The bonus lever: 0 … bonusMaxMult × the standard bonus (never under his own ask).
+  const bonusMax = Math.max(askBonus, quantize(signingBonusFor(askWage) * N.bonusMaxMult));
+  const bonusStep = Math.max(bq, quantize(bonusMax / N.bonusSteps));
+  const bonus = clamp(Math.round((input.offer?.bonus ?? askBonus) / bq) * bq, 0, bonusMax);
+  const bonusShift = ((bonus - askBonus) * N.bonusWeight) / (len * CAREER_PAYROLL.weeksPerSeason);
 
-  // The offer, in weekly money on the weekly quantum: omitted = the top; never above it.
-  const offerWeekly = Math.min(topWeekly, Math.max(0, Math.floor((input.offer?.weekly ?? topWeekly) / q + 1e-9) * q));
+  // The zone at this share and bonus: both ends move by the same money, so its width holds.
+  const shift = (share - askShare) * pointWeekly + bonusShift;
+  const topRaw = Math.ceil((askWeekly - shift) / q - 1e-9) * q;
+  const topWeekly = Math.max(minWeekly, topRaw);
+  const atAsk = share === askShare && bonus === askBonus;
+  const topPerSplit = atAsk ? askWage : perSplitForWeekly(topWeekly);
+  const floorWeekly = clamp(Math.ceil((floorAtAsk - shift) / q - 1e-9) * q, minWeekly, topWeekly);
+  const fall = Math.max(q, Math.round((askWeekly * N.oddsFallPct) / q) * q);
+  const zeroWeekly = floorWeekly - fall;
+
+  // The offer, on the weekly quantum: omitted = the top; between the minimum and the top.
+  const rawWeekly = Math.floor((input.offer?.weekly ?? topWeekly) / q + 1e-9) * q;
+  const offerWeekly = clamp(rawWeekly, minWeekly, topWeekly);
   const termsAt = (weekly: number): ContractTerms => {
     const wagePerSplit = weekly >= topWeekly ? topPerSplit : perSplitForWeekly(weekly);
-    return { wagePerSplit, weekly: weeklyWage(wagePerSplit), sharePct: share };
+    return { wagePerSplit, weekly: weeklyWage(wagePerSplit), sharePct: share, bonus };
   };
-  const accepted = offerWeekly >= floorWeekly;
+  const odds = talkOddsFor(floorWeekly - offerWeekly, fall);
+  const roll = input.roll ?? 1;
+  const accepted = odds >= 1 || odds > roll;
   const counter = accepted ? null : termsAt(floorWeekly);
   const terms = accepted ? termsAt(offerWeekly) : counter!;
   const limits: TalkLimits = {
-    wageDown: offerWeekly > floorWeekly ? null : floorWeekly <= minWeekly ? "minimum" : "floor",
+    wageDown: offerWeekly > minWeekly ? null : "minimum",
     wageUp: offerWeekly < topWeekly ? null : "ask",
     shareDown: share > shareMin ? null : share <= 0 ? "none" : "least",
-    shareUp: share < shareMax ? null : shareMax < mostAbove ? "minimum" : "most",
+    // A share point or a bonus step that would push the wage under the league minimum buys nothing: closed.
+    shareUp:
+      share >= shareMax ? (shareMax < mostAbove ? "minimum" : "most") : offerWeekly - pointWeekly < minWeekly ? "minimum" : null,
+    bonusDown: bonus > 0 ? null : "none",
+    bonusUp: bonus >= bonusMax ? "most" : offerWeekly <= minWeekly ? "minimum" : null,
   };
   return {
-    ask: { wagePerSplit: askWage, weekly: askWeekly, sharePct: askShare },
-    offer: { weekly: offerWeekly, sharePct: share },
-    zone: { shareMin, shareMax, shareLever, pointWeekly, topPerSplit, topWeekly, floorWeekly, stepWeekly, minWeekly },
+    ask: { wagePerSplit: askWage, weekly: askWeekly, sharePct: askShare, bonus: askBonus },
+    offer: { weekly: offerWeekly, sharePct: share, bonus },
+    zone: {
+      shareMin,
+      shareMax,
+      shareLever,
+      pointWeekly,
+      topPerSplit,
+      topWeekly,
+      floorWeekly,
+      zeroWeekly,
+      stepWeekly,
+      minWeekly,
+      bonusMax,
+      bonusStep,
+      lengthReliefWeekly,
+    },
     limits,
+    odds,
     accepted,
     terms,
     counter,
     savingWeekly: askWeekly - terms.weekly,
     flex: input.flex,
+    lengthSeasons: len,
   };
 }
 
-/** rc.34 (front I): the two levers of the talk. */
-export type TalkLever = "wage" | "share";
+/** rc.34 (front I) / rc.35 (front N): the three levers of the talk. */
+export type TalkLever = "wage" | "share" | "bonus";
 
 /**
- * rc.34 (front I): the offer one press of a lever makes — the wage by one
- * stepper press (never past his floor or his ask), the share by one point
- * with the wage moved one point's weekly money the other way, so the offer
- * keeps its place in the zone: a share press always moves the wage shown and
- * never turns a yes into a counter (rc.33's sheet kept the wage, so lowering
- * his share often left the wage as it was and made him counter). Null when
- * that way is closed (`answer.limits` says why). The sheet only renders this.
+ * rc.34 (front I), rc.35 (front N): the offer one press of a lever makes —
+ * the wage by one stepper press (between the minimum and his ask; rc.35: it
+ * may go under his floor), the share by one point and the bonus by one step
+ * with the wage moved the other way by what that lever is worth, so the
+ * offer keeps its place against the zone. Null when that way is closed
+ * (`answer.limits` says why).
  */
 export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1 | -1): ContractOffer | null {
   const { zone, offer, limits } = answer;
   if (lever === "wage") {
     if (dir < 0) {
-      return limits.wageDown ? null : { weekly: Math.max(zone.floorWeekly, offer.weekly - zone.stepWeekly), sharePct: offer.sharePct };
+      return limits.wageDown ? null : { ...offer, weekly: Math.max(zone.minWeekly, offer.weekly - zone.stepWeekly) };
     }
-    return limits.wageUp ? null : { weekly: Math.min(zone.topWeekly, offer.weekly + zone.stepWeekly), sharePct: offer.sharePct };
+    return limits.wageUp ? null : { ...offer, weekly: Math.min(zone.topWeekly, offer.weekly + zone.stepWeekly) };
   }
-  if (!zone.shareLever) return null;
-  if (dir < 0) return limits.shareDown ? null : { weekly: offer.weekly + zone.pointWeekly, sharePct: offer.sharePct - 1 };
-  return limits.shareUp ? null : { weekly: Math.max(0, offer.weekly - zone.pointWeekly), sharePct: offer.sharePct + 1 };
+  if (lever === "share") {
+    if (!zone.shareLever) return null;
+    if (dir < 0) return limits.shareDown ? null : { ...offer, weekly: offer.weekly + zone.pointWeekly, sharePct: offer.sharePct - 1 };
+    return limits.shareUp ? null : { ...offer, weekly: Math.max(0, offer.weekly - zone.pointWeekly), sharePct: offer.sharePct + 1 };
+  }
+  const nextBonus = clamp(offer.bonus + dir * zone.bonusStep, 0, zone.bonusMax);
+  if ((dir < 0 && limits.bonusDown) || (dir > 0 && limits.bonusUp)) return null;
+  const perDollar = CAREER_NEGOTIATION.bonusWeight / (answer.lengthSeasons * CAREER_PAYROLL.weeksPerSeason);
+  const q = CAREER_PAYROLL.weeklyQuantum;
+  const wageMove = Math.round(((nextBonus - offer.bonus) * perDollar) / q) * q;
+  return { ...offer, bonus: nextBonus, weekly: Math.max(0, offer.weekly - wageMove) };
+}
+
+/**
+ * rc.35 (front N): the offer a slider makes when it sets one lever to
+ * `value` — the wage as is (on the weekly quantum); the share or the bonus
+ * with the wage moved the other way by what the change is worth, so the
+ * offer keeps its place against the zone (several presses of `talkPressFor`
+ * at once). The engine clamps whatever comes back.
+ */
+export function talkSetFor(answer: NegotiationAnswer, lever: TalkLever, value: number): ContractOffer {
+  const { offer, zone } = answer;
+  const q = CAREER_PAYROLL.weeklyQuantum;
+  if (lever === "wage") return { ...offer, weekly: Math.round(value / q) * q };
+  if (lever === "share") {
+    const share = clamp(Math.round(value), zone.shareMin, zone.shareMax);
+    return { ...offer, sharePct: share, weekly: Math.max(0, offer.weekly - (share - offer.sharePct) * zone.pointWeekly) };
+  }
+  const bonus = clamp(Math.round(value / CAREER_ECONOMY.roundQuantum) * CAREER_ECONOMY.roundQuantum, 0, zone.bonusMax);
+  const perDollar = CAREER_NEGOTIATION.bonusWeight / (answer.lengthSeasons * CAREER_PAYROLL.weeksPerSeason);
+  const wageMove = Math.round(((bonus - offer.bonus) * perDollar) / q) * q;
+  return { ...offer, bonus, weekly: Math.max(0, offer.weekly - wageMove) };
 }
 
 /** The smallest weekly wage (whole quanta) whose contract (`perSplitForWeekly`) pays at least `perSplit`. */

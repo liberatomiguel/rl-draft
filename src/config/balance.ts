@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 4;
+export const BALANCE_VERSION = 5;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1210,6 +1210,31 @@ export const CAREER_NEGOTIATION = {
    * 3.3 %. 0 restores rc.33's zone.
    */
   minZoneSteps: 1,
+  /**
+   * rc.35 (front N, Miguel on rc.34: "I can offer below his zone, he is just
+   * less likely to accept"): under the zone's floor his odds fall smoothly
+   * (smoothstep) from 100 % at the floor to 0 % this share of his weekly ask
+   * further down. Whether he signs is a seeded roll per player and window
+   * (`contract.negotiationRollFor`): he signs when his odds beat it, so a
+   * reload changes nothing and more money never turns a yes into a no.
+   */
+  oddsFallPct: 0.25,
+  /**
+   * rc.35 (front N): each season of contract past the first lowers what he
+   * needs (the zone's floor) by this share of his weekly ask — a longer deal
+   * is security, so he takes less wage, bonus and share for it.
+   */
+  lengthReliefPerSeason: 0.03,
+  /**
+   * rc.35 (front N): the signing bonus (luvas) is a lever. Each $1 of bonus
+   * over his ask is worth bonusWeight / (contract weeks) a week of wage to
+   * him (cash up front is worth more than the same money spread), each $1
+   * under it costs the same. The slider runs from 0 to bonusMaxMult × the
+   * standard bonus (`economy.signingBonusFor`) in bonusSteps steps.
+   */
+  bonusWeight: 1.25,
+  bonusMaxMult: 2,
+  bonusSteps: 8,
 } as const;
 
 /**
@@ -1790,6 +1815,16 @@ export const CAREER_SALARY = {
   blockbusterRefusalRenewalMult: 1.1,
   lengthDiscountPerSeason: 0.95,
   /**
+   * rc.35 (front N, Miguel on rc.34: "starting wages feel too high"; on
+   * Normal the veterans went broke right after hiring a coach): the
+   * founders' founding deals pay this share of their market ask
+   * (`careerFlow.squadFromOffer` — they sign for the project). The starting
+   * budget still reads the full ask (CAREER_ECONOMY.startingBudgetWeeks), so
+   * every roster starts with more weeks of runway. Renewals reprice at the
+   * normal ask (the raise cap spreads it). 1 = rc.34.
+   */
+  foundingWageMult: 0.85,
+  /**
    * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 2, option B (M2,
    * ROAD-TO-WORLDS-DECISIONS R58): renewing a player you already have.
    * "capFloor": ask = min(fresh ask, max(current wage × renewalRaiseCap,
@@ -2284,6 +2319,16 @@ export const CAREER_COACH_MARKET = {
    * (economy.coachSalaryFor — CAREER_SALARY.coachFactor, the money index).
    */
   wagePointsPerExperience: 0.25,
+  /**
+   * rc.35 (front N, Miguel on rc.34: the veterans went broke right after
+   * the first coach): the coach curve's own growth per quality point from
+   * CAREER_SALARY.anchorOverall (players: growthPerPoint 1.2). On 1.2 a
+   * Normal season-0 coach cost $70 a week at 72, $340 at 80 and $2,160 at
+   * 90 — a senior candidate cost a third of the journeymen's whole payroll.
+   * 1.12: about $65 / $165 / $520 — a good coach stays a real decision,
+   * never a bankruptcy. null = rc.34 (the player curve).
+   */
+  wageGrowthPerPoint: 1.12 as number | null,
   /**
    * rc.34 (T4): coaches grow with relevant experience — at each rollover the
    * coach in post gains experiencePerSeason; quality +qualityPerSeason, or

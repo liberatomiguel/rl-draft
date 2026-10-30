@@ -17,12 +17,14 @@ import {
   contractSharePctFor,
   negotiationAnswerFor,
   negotiationFlexFor,
+  negotiationRollFor,
   perSplitForWeekly,
   prizeShareAskFor,
   prizeShareOfPodium,
   sharePaysOn,
   sharePointWeeklyFor,
   talkPressFor,
+  talkSetFor,
   wageStepWeeklyFor,
   type ContractOffer,
   type NegotiationAnswer,
@@ -84,7 +86,8 @@ describe("ECO-11 — the wage talk makes sense (the rc.32 reproduction, on the r
           const under = new Set<number>([a.zone.floorWeekly - 10]);
           for (let w = 0; w < a.zone.floorWeekly; w += stride) under.add(w);
           for (const w of under) {
-            if (w < 0) continue;
+            // rc.35: the wage never goes under the league minimum (an offer under it reads as it).
+            if (w < a.zone.minWeekly) continue;
             const no = answer(ask, 8, flex, { sharePct: share, weekly: w });
             expect(no.accepted).toBe(false);
             const c = no.counter!;
@@ -110,7 +113,7 @@ describe("ECO-11 — the model's properties", () => {
       for (const flex of FLEXES) {
         const a = answer(ask, 9, flex);
         expect(a.accepted).toBe(true);
-        expect(a.terms).toEqual({ wagePerSplit: ask, weekly: weeklyWage(ask), sharePct: 9 });
+        expect(a.terms).toEqual({ wagePerSplit: ask, weekly: weeklyWage(ask), sharePct: 9, bonus: 0 });
         expect(a.savingWeekly).toBe(0);
       }
     }
@@ -288,7 +291,8 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
     while (queue.length && seen.size < cap) {
       const a = talk(queue.shift());
       const key = `${a.offer.weekly}|${a.offer.sharePct}`;
-      if (seen.has(key)) continue;
+      // rc.35: a press may leave the zone (his odds fall); the walk stays on deals he signs.
+      if (seen.has(key) || !a.accepted) continue;
       seen.set(key, a);
       for (const [lever, dir] of PRESSES) {
         const next = talkPressFor(a, lever, dir);
@@ -331,14 +335,18 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
           }
           let cur = a;
           let presses = 0;
-          for (let next = talkPressFor(cur, "wage", -1); next; next = talkPressFor(cur, "wage", -1)) {
+          // rc.35: the wage may go under his floor (his odds fall); count the presses inside the zone.
+          for (
+            let next = talkPressFor(cur, "wage", -1);
+            next && (next.weekly ?? 0) >= a.zone.floorWeekly;
+            next = talkPressFor(cur, "wage", -1)
+          ) {
             cur = answer(ask, share, flex, next);
             presses += 1;
             expect(cur.accepted).toBe(true);
           }
           expect(presses, `${ask}/split ${share}% @${flex}`).toBeGreaterThanOrEqual(CAREER_NEGOTIATION.minZoneSteps);
-          expect(cur.offer.weekly).toBe(a.zone.floorWeekly);
-          expect(cur.limits.wageDown).toMatch(/^(floor|minimum)$/);
+          expect(cur.offer.weekly - a.zone.floorWeekly).toBeLessThan(a.zone.stepWeekly);
           // The zone keeps his flexibility (rounded down to the grid) when it is wider than the minimum.
           expect(a.zone.topWeekly - a.zone.floorWeekly).toBeGreaterThanOrEqual(
             Math.min(a.ask.weekly - a.zone.minWeekly, Math.floor(((1 - flex) * a.ask.weekly) / q + 1e-9) * q),
@@ -384,14 +392,15 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
     expect(states).toBeGreaterThan(2_000);
   }, 60_000);
 
-  it("the share lever is there only for a player who asks a share; its bounds are named", () => {
+  it("rc.35: every player has the share lever (one who asks none can be offered one, which buys wage); its bounds are named", () => {
     const S = CAREER_PRIZE_SHARE;
     for (const ask of GRID_ASKS) {
-      const none = answer(ask, 0, 0.97, { sharePct: 5 });
-      expect(none.zone.shareLever).toBe(false);
-      expect([none.zone.shareMin, none.zone.shareMax, none.offer.sharePct, none.terms.sharePct]).toEqual([0, 0, 0, 0]);
-      expect(talkPressFor(none, "share", 1)).toBeNull();
-      expect(talkPressFor(none, "share", -1)).toBeNull();
+      const none = answer(ask, 0, 0.97, { sharePct: 2 });
+      expect(none.zone.shareLever).toBe(CAREER_PRIZES.playerShare.enabled);
+      expect(none.zone.shareMin).toBe(0);
+      expect(none.zone.shareMax).toBeLessThanOrEqual(S.maxAboveAsk);
+      expect(talkPressFor(answer(ask, 0, 0.97), "share", -1)).toBeNull();
+      if (none.offer.sharePct > 0) expect(none.zone.topWeekly).toBeLessThan(none.ask.weekly);
       for (const share of GRID_SHARES.filter((x) => x > 0)) {
         const a = answer(ask, share, 0.97);
         expect(a.zone.shareLever).toBe(CAREER_PRIZES.playerShare.enabled);
@@ -408,7 +417,14 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
     }
     // At the league minimum: the wage cannot go lower, and the share cannot buy any of it.
     const min = answer(250, 7, 0.95);
-    expect(min.limits).toEqual({ wageDown: "minimum", wageUp: "ask", shareDown: null, shareUp: "minimum" });
+    expect(min.limits).toEqual({
+      wageDown: "minimum",
+      wageUp: "ask",
+      shareDown: null,
+      shareUp: "minimum",
+      bonusDown: "none",
+      bonusUp: "minimum",
+    });
   });
 });
 
@@ -508,5 +524,80 @@ describe("ECO-10 — the prize share each contract carries", () => {
       const dominantKept = kept("regional", 9) + kept("major", 3) + kept("worlds", 1);
       expect(dominantKept / (3 * 3 * ask85(s))).toBeLessThanOrEqual(1.5);
     }
+  });
+});
+
+describe("rc.35 front N — under the zone, the signing bonus and the contract length (Miguel on rc.34)", () => {
+  const talk = (o: {
+    ask?: number;
+    share?: number;
+    bonus?: number;
+    len?: number;
+    roll?: number;
+    offer?: ContractOffer;
+  }) =>
+    negotiationAnswerFor({
+      ask: { wagePerSplit: o.ask ?? 12_000, sharePct: o.share ?? 0, bonus: o.bonus ?? 0 },
+      flex: 0.97,
+      offer: o.offer,
+      minWagePerSplit: 250,
+      lengthSeasons: o.len,
+      roll: o.roll,
+    });
+
+  it("under his floor his odds fall smoothly from 100 % to 0 %, and he signs when they beat the roll", () => {
+    const top = talk({});
+    let prev = 1;
+    for (let w = top.zone.floorWeekly; w >= top.zone.zeroWeekly; w -= 10) {
+      const a = talk({ offer: { weekly: w }, roll: 0.5 });
+      expect(a.odds).toBeLessThanOrEqual(prev);
+      expect(prev - a.odds).toBeLessThan(0.06); // smooth: no cliff on one $10 step
+      expect(a.accepted).toBe(a.odds >= 1 || a.odds > 0.5);
+      prev = a.odds;
+    }
+    expect(prev).toBe(0);
+    // Omitting the roll keeps rc.34's rule: never under the floor.
+    expect(talk({ offer: { weekly: top.zone.floorWeekly - 10 } }).accepted).toBe(false);
+  });
+
+  it("the roll is seeded per player and window: a reload changes nothing", () => {
+    expect(negotiationRollFor(7, "p1", 1, "w0")).toBe(negotiationRollFor(7, "p1", 1, "w0"));
+    expect(negotiationRollFor(7, "p1", 1, "w0")).not.toBe(negotiationRollFor(7, "p1", 1, "w1"));
+  });
+
+  it("a longer contract lowers his floor — wage, bonus and share all ask less", () => {
+    const one = talk({ len: 1 });
+    const three = talk({ len: 3 });
+    expect(three.zone.floorWeekly).toBeLessThan(one.zone.floorWeekly);
+    expect(three.zone.lengthReliefWeekly).toBeGreaterThan(0);
+    expect(one.zone.lengthReliefWeekly).toBe(0);
+    // The same low offer has better odds on the longer deal.
+    const w = one.zone.floorWeekly - 40;
+    expect(talk({ len: 3, offer: { weekly: w } }).odds).toBeGreaterThan(talk({ len: 1, offer: { weekly: w } }).odds);
+  });
+
+  it("the signing bonus is a lever: more bonus moves the whole zone down, less moves it up; the deal carries it", () => {
+    const base = talk({ bonus: 4_000 });
+    expect(base.zone.bonusMax).toBeGreaterThanOrEqual(4_000);
+    const more = talk({ bonus: 4_000, offer: { bonus: 8_000 } });
+    const less = talk({ bonus: 4_000, offer: { bonus: 0 } });
+    expect(more.zone.floorWeekly).toBeLessThan(base.zone.floorWeekly);
+    expect(less.zone.floorWeekly).toBeGreaterThan(base.zone.floorWeekly);
+    expect(more.terms.bonus).toBe(8_000);
+    const press = talkPressFor(base, "bonus", 1)!;
+    expect(press.bonus).toBe(4_000 + base.zone.bonusStep);
+    expect(talk({ bonus: 4_000, offer: press }).accepted).toBe(true);
+    // The slider sets several steps at once with the wage moved the same way.
+    const set = talkSetFor(base, "bonus", 8_000);
+    expect(talk({ bonus: 4_000, offer: set }).accepted).toBe(true);
+    expect(set.weekly).toBeLessThan(base.offer.weekly);
+  });
+
+  it("the zone moves with the share too: a player who asks none takes a share for wage", () => {
+    const none = talk({});
+    const withShare = talk({ offer: { sharePct: 2 } });
+    expect(withShare.zone.topWeekly).toBe(none.zone.topWeekly - 2 * none.zone.pointWeekly);
+    const set = talkSetFor(none, "share", 2);
+    expect(talk({ offer: set }).accepted).toBe(true);
   });
 });

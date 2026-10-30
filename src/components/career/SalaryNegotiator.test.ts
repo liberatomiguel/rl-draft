@@ -28,7 +28,8 @@ describe("SalaryNegotiator — renders the talk's one answer", () => {
     const { talk, html } = render();
     expect(talk.accepted).toBe(true);
     expect(html).toContain(N.signs(formatMoney(talk.terms.weekly), 9));
-    expect(html).toContain(N.zone(formatMoney(talk.zone.floorWeekly), formatMoney(talk.zone.topWeekly)));
+    expect(html).toContain(N.zoneLegend);
+    expect(html).toContain(N.oddsSure);
     expect(html).toContain(N.shareAsk(9));
     expect(html).not.toContain(N.takeCounter);
   });
@@ -37,15 +38,19 @@ describe("SalaryNegotiator — renders the talk's one answer", () => {
     const at = render();
     const { talk, html } = render({ weekly: at.talk.zone.floorWeekly - 10 });
     expect(talk.accepted).toBe(false);
-    expect(html).toContain(N.counter(formatMoney(talk.counter!.weekly), talk.counter!.sharePct));
+    expect(talk.odds).toBeGreaterThan(0.9);
+    expect(html).toContain(`${Math.round(talk.odds * 100)}%`);
+    expect(html).toContain(N.refuses(formatMoney(talk.counter!.weekly)));
     expect(html).toContain(N.takeCounter);
   });
 
-  it("each stepper carries its own label; a share point is quoted in weekly money", () => {
-    const { talk, html } = render();
-    for (const label of [N.wageDown, N.wageUp, N.shareDown, N.shareUp]) expect(html).toContain(`aria-label="${label}"`);
-    expect(new Set([N.wageDown, N.wageUp, N.shareDown, N.shareUp]).size).toBe(4);
-    expect(html).toContain(N.trade(formatMoney(talk.zone.pointWeekly)));
+  it("each lever carries its own labels and a slider; the odds meter is labelled", () => {
+    const { html } = render();
+    const labels = [N.wageDown, N.wageUp, N.shareDown, N.shareUp, N.bonusDown, N.bonusUp];
+    for (const label of labels) expect(html).toContain(`aria-label="${label}"`);
+    expect(new Set(labels).size).toBe(6);
+    expect(html.match(/type="range"/g)?.length).toBe(3);
+    expect(html).toContain(`role="meter" aria-label="${N.odds}"`);
   });
 
   it("with the prize share switched off, the share lever is hidden", () => {
@@ -78,42 +83,28 @@ describe("rc.34 front I — a closed way says why; no share lever for a player w
     return { talk, html: renderToStaticMarkup(createElement(SalaryNegotiator, { talk, onChange: () => {} })) };
   };
 
-  it("at his ask the wage '+' is closed with 'His full ask'; at his floor the '−' is closed with 'His floor'", () => {
-    const top = sheet({ wagePerSplit: 12_000, sharePct: 9 }, 0.97);
-    expect(top.talk.limits.wageUp).toBe("ask");
-    expect(top.html).toContain(N.why.ask);
-    expect(top.html).not.toContain(N.why.floor);
-    const floor = sheet({ wagePerSplit: 12_000, sharePct: 9 }, 0.97, { weekly: top.talk.zone.floorWeekly });
-    expect(floor.talk.limits.wageDown).toBe("floor");
-    expect(floor.html).toContain(N.why.floor);
-    expect(floor.html).not.toContain(N.why.ask);
-    // The reason is tied to the button it closes (aria-describedby).
-    expect(floor.html).toMatch(new RegExp(`aria-label="${N.wageDown}" aria-describedby="[^"]+-wage-down"[^>]*disabled=""`));
-  });
-
-  it("a $100-a-week ask never collapses: the wage '−' is open (rc.33: floor = top, both buttons dead)", () => {
+  it("a $100-a-week ask never collapses: the wage '−' is open, the zone has width", () => {
     const { talk, html } = sheet({ wagePerSplit: 1_100, sharePct: 0 }, 1);
     expect(talk.zone.floorWeekly).toBeLessThan(talk.zone.topWeekly);
-    expect(html).toContain(N.zone(formatMoney(talk.zone.floorWeekly), formatMoney(talk.zone.topWeekly)));
     expect(html).toMatch(new RegExp(`aria-label="${N.wageDown}"(?![^>]*disabled="")[^>]*>`));
   });
 
-  it("a player who asks no share: no share lever, and the deal reads without a share", () => {
+  it("rc.35: a player who asks no share still has the share lever (offering one buys wage); the deal reads without a share", () => {
     const { talk, html } = sheet({ wagePerSplit: 5_600, sharePct: 0 }, 0.97);
-    expect(talk.zone.shareLever).toBe(false);
-    expect(html).not.toContain(`aria-label="${N.shareUp}"`);
-    expect(html).not.toContain(N.shareAsk(0));
+    expect(talk.zone.shareLever).toBe(true);
+    expect(talk.zone.shareMin).toBe(0);
+    expect(talk.zone.shareMax).toBeGreaterThan(0);
+    expect(html).toContain(`aria-label="${N.shareUp}"`);
+    expect(html).toContain(N.shareAskNone);
     expect(html).toContain(N.signsNoShare(formatMoney(talk.terms.weekly)));
     for (const C of [CAREER_EN, CAREER_PT]) {
       expect(prizeShareLabelOf(C as unknown as CareerCopy, { prizeSharePct: 0 })).toBe(C.player.prizeShareNone);
     }
   });
 
-  it("at the league minimum both wage ways name the reason, and the share '+' says the wage is at the minimum", () => {
-    const { talk, html } = sheet({ wagePerSplit: 250, sharePct: 7 }, 0.95);
+  it("at the league minimum the wage '−' is closed", () => {
+    const { talk } = sheet({ wagePerSplit: 250, sharePct: 7 }, 0.95);
     expect(talk.limits.wageDown).toBe("minimum");
-    expect(html).toContain(N.why.minimum);
-    expect(html).toContain(N.why.shareMinimum);
   });
 
   it("EN and PT name every reason", () => {

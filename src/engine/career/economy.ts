@@ -537,8 +537,22 @@ export function coachSalaryFor(
   seasonIndex: number,
   difficulty: CareerDifficulty,
 ): number {
-  return quantize(
-    baseCurve(coachOverall, seasonIndex, difficulty, false) * CAREER_SALARY.coachFactor,
+  return quantize(coachCurve(coachOverall, seasonIndex, difficulty) * CAREER_SALARY.coachFactor);
+}
+
+/**
+ * rc.35 (front N): the coach curve — the player curve without the star bend,
+ * on CAREER_COACH_MARKET.wageGrowthPerPoint a point (null = the player's
+ * growthPerPoint, rc.34).
+ */
+function coachCurve(points: number, seasonIndex: number, difficulty: CareerDifficulty): number {
+  const g = CAREER_COACH_MARKET.wageGrowthPerPoint;
+  if (g === null) return baseCurve(points, seasonIndex, difficulty, false);
+  return (
+    CAREER_SALARY.basePerSplit *
+    Math.pow(g, points - CAREER_SALARY.anchorOverall) *
+    CAREER_ECONOMY.salaryAskMult[difficulty] *
+    moneyIndex(seasonIndex, "wages")
   );
 }
 
@@ -554,7 +568,7 @@ export function coachWageFor(
 ): number {
   const points = coach.quality + CAREER_COACH_MARKET.wagePointsPerExperience * Math.max(0, coach.experience);
   return quantize(
-    baseCurve(points, seasonIndex, difficulty, false) *
+    coachCurve(points, seasonIndex, difficulty) *
       CAREER_SALARY.coachFactor *
       (coach.exPro ? CAREER_COACH_MARKET.exPro.wageMult : 1),
   );

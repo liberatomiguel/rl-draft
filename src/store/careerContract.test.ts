@@ -238,13 +238,17 @@ describe("ECO-11 — the wage talk through the flows", () => {
     expect(res.save.negotiationTries).toEqual(save.negotiationTries);
   });
 
-  it("under his floor nothing moves; his counter is shown before any confirm and taking it signs", () => {
+  it("far under his floor (0 % odds) nothing moves; his counter is shown before any confirm and taking it signs", () => {
     const save = makeSave();
-    const fa = freeAgents(save)[1];
+    // rc.35: under the floor his odds fall to 0 over CAREER_NEGOTIATION.oddsFallPct of his ask.
+    const fa = freeAgents(save).find((v) => {
+      const z = signingTalkFor(save, v, askOf(save, v)).zone;
+      return z.zeroWeekly >= z.minWeekly;
+    })!;
     const ask = askOf(save, fa);
-    const floor = signingTalkFor(save, fa, ask).zone.floorWeekly;
-    const under = { weekly: floor - 10 };
+    const under = { weekly: signingTalkFor(save, fa, ask).zone.zeroWeekly };
     const talk = signingTalkFor(save, fa, ask, under);
+    expect(talk.odds).toBe(0);
     expect(talk.accepted).toBe(false);
     const refused = signPlayerFlow(save, fa.id, { lengthSeasons: 2, offer: under });
     expect(refused.error).toBe("negotiationCounter");
@@ -314,7 +318,7 @@ describe("rc.34 front I — the share threshold through the flows (Miguel 31/10)
     const [a, b] = save.squad;
     const stays = renewalTalkFor(save, a, 2);
     expect(stays.ask.sharePct).toBe(0);
-    expect(stays.zone.shareLever).toBe(false);
+    expect(stays.zone.shareLever).toBe(CAREER_PRIZES.playerShare.enabled); // rc.35: the lever stays
     expect(renewPlayerFlow(save, a.id, 2).save.squad.find((p) => p.id === a.id)!.prizeSharePct).toBe(0);
     const grown = structuredClone(save);
     const g = grown.squad.find((p) => p.id === b.id)!;
@@ -356,7 +360,7 @@ describe("rc.34 front I — the talk on real players: both levers move, every pr
   function walk(label: string, talk: (o?: ContractOffer) => NegotiationAnswer, askShare: number): number {
     const a0 = talk();
     expect(a0.ask.sharePct, label).toBe(askShare);
-    expect(a0.zone.shareLever, label).toBe(askShare > 0 && CAREER_PRIZES.playerShare.enabled);
+    expect(a0.zone.shareLever, label).toBe(CAREER_PRIZES.playerShare.enabled);
     if (a0.ask.weekly > a0.zone.minWeekly) expect(talkPressFor(a0, "wage", -1), `${label}: the wage moves`).not.toBeNull();
     const seen = new Set<string>();
     const queue: (ContractOffer | undefined)[] = [undefined];
@@ -376,7 +380,12 @@ describe("rc.34 front I — the talk on real players: both levers move, every pr
         // A wage press moves the wage; a share press moves the share AND the wage.
         expect(b.offer.weekly, `${label} ${key} ${lever}${dir}`).not.toBe(a.offer.weekly);
         if (lever === "share") expect(b.offer.sharePct).toBe(a.offer.sharePct + dir);
-        expect(b.accepted, `${label} ${key} ${lever}${dir}`).toBe(true);
+        // rc.35: only a wage press down may leave the zone (his odds fall under his floor).
+        if (!b.accepted) {
+          expect(`${lever}${dir}`, `${label} ${key}`).toBe("wage-1");
+          expect(b.odds).toBeLessThan(1);
+          continue;
+        }
         queue.push(next);
       }
     }

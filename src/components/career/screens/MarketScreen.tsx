@@ -373,7 +373,10 @@ export function MarketScreen() {
   const planned = target ? signingPlanFor(save, target.view.id, { lengthSeasons: offerLen, offer }) : null;
   const plan = planned && "plan" in planned ? planned.plan : null;
   const planError = planned && "error" in planned ? planned.error : null;
-  const cost = pack ? pack.fee + pack.signingBonus : 0;
+  // rc.33 (ECO-10/11): the talk — the engine's one answer to the offer on the table.
+  // rc.35 (front N): priced on the contract length; the signing bonus is its lever.
+  const talk = target && pack ? signingTalkFor(save, target.view, pack, offer, offerLen) : null;
+  const cost = pack ? pack.fee + (talk ? talk.terms.bonus : pack.signingBonus) : 0;
   const balanceAfter = save.finances.balance - cost;
   const blockReason = !planError
     ? null
@@ -386,8 +389,6 @@ export function MarketScreen() {
     (planError === "funds" || planError === "loanRunway") && squadIsShort(save)
       ? emptySeatPriceFor(save, offerLen)
       : null;
-  // rc.33 (ECO-10/11): the talk — the engine's one answer to the offer on the table.
-  const talk = target && pack ? signingTalkFor(save, target.view, pack, offer) : null;
   const wageBill = payrollProjection({
     squadSalaries,
     coachSalary,
@@ -944,7 +945,7 @@ export function MarketScreen() {
                   <div className="flex items-center justify-between">
                     <span className="text-sub">{C.market.signingBonus}</span>
                     <span className="display font-bold text-ink">
-                      {formatMoney(pack.signingBonus)}
+                      {formatMoney(talk ? talk.terms.bonus : pack.signingBonus)}
                     </span>
                   </div>
                 )}

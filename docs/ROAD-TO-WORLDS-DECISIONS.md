@@ -1519,6 +1519,28 @@ R80. **The integration of Etapa 3 and Miguel's 31/10 answers, and the fixes
      its net change; signing validated before any change. (c) Re-measured
      on the §9 seeds in `ECONOMY-CONTRACT.md` §11.
 
+R81 (front N). **The contract talk has odds, a signing bonus and a length
+     lever; cheaper founders and coaches; "Merch & streams" (rc.35, Miguel
+     on rc.34).** (a) An offer may go under his zone: from the floor his odds
+     fall smoothly (smoothstep) to 0 over `oddsFallPct` 0.25 of his ask; he
+     signs when they beat a roll seeded per player and window
+     (`negotiationRollFor`), so a reload changes nothing and more money
+     never turns a yes into a no; a refusal counters at the floor. (b) Every
+     player has the share lever (one who asks 0 % can be offered a share,
+     which buys wage); the signing bonus (luvas) is a third lever, 0 …
+     `bonusMaxMult` × the standard bonus, each $1 over his ask worth
+     `bonusWeight` 1.25 / contract weeks of wage; the zone moves with share
+     and bonus. (c) Each season past the first takes `lengthReliefPerSeason`
+     3 % of his ask off the floor. (d) The sheet is three sliders with the
+     zone painted on the wage track, an odds meter and icons. (e) Founding
+     deals pay `foundingWageMult` 0.85 of the founding ask while the start
+     budget reads the full ask (more runway); coaches get their own curve,
+     `wageGrowthPerPoint` 1.12 (a Normal S0 coach at 80 costs ~$160/wk, was
+     $340; at 90 ~$510, was $2,160). (f) The reputation-tied income stays
+     (removing it measured unsafe in rc.33 M7) and is renamed "Merch &
+     streams" — what it models. Rejected: a hidden reserve without shown
+     odds; removing the income.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

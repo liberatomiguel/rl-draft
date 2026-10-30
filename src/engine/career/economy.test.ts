@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CAREER_BANK,
+  CAREER_COACH_MARKET,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
@@ -330,9 +331,13 @@ describe("fees", () => {
     expect(signingBonusFor(10_000) % QUANTUM).toBe(0);
   });
 
-  it("coachSalaryFor rides the overall curve at coachFactor", () => {
+  it("coachSalaryFor rides the coach curve at coachFactor (rc.35: its own growth per point)", () => {
     const coach = coachSalaryFor(75, 0, "normal");
-    const expected = curveAt(75) * CAREER_SALARY.coachFactor;
+    const g = CAREER_COACH_MARKET.wageGrowthPerPoint;
+    const expected =
+      (g === null
+        ? curveAt(75)
+        : CAREER_SALARY.basePerSplit * Math.pow(g, 75 - CAREER_SALARY.anchorOverall)) * CAREER_SALARY.coachFactor;
     expect(coach).toBeGreaterThan(expected * 0.8);
     expect(coach).toBeLessThan(expected * 1.2);
     expect(coach % QUANTUM).toBe(0);
