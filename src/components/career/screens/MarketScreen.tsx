@@ -21,6 +21,7 @@ import {
   CAREER_CONTRACT,
   CAREER_PAYROLL,
   CAREER_SCOUT,
+  CAREER_LADDER,
   CAREER_UNLOCKS,
 } from "@/config/balance";
 import { useCopy } from "@/content/copy";
@@ -88,6 +89,7 @@ import { BadgeCheckIcon, LockIcon } from "@/components/ui/icons";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import { CoachAttributeLines, CoachHireCard } from "@/components/career/training/CoachHireCard";
+import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { objectiveEffectPct } from "@/engine/career/training";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -720,6 +722,11 @@ export function MarketScreen() {
                 C={C}
                 statLabels={t.STAT_LABELS}
                 disabled={save.coach?.id === c.id}
+                lockedNote={
+                  coachHireRefusalFor(save.reputation, c) === "exProGate"
+                    ? C.market.exProLockedAt(CAREER_LADDER.exProCoachRep)
+                    : null
+                }
                 onHire={() => hireCoach(c)}
               />
             ))}

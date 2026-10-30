@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { CAREER_PLAN } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { coachEffectsFor } from "@/engine/career/development";
+import { LockIcon } from "@/components/ui/icons";
 import type { CareerSave, CoachState } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { coachImpactFor } from "@/store/careerTraining";
@@ -77,6 +78,7 @@ export function CoachHireCard({
   C,
   statLabels,
   disabled,
+  lockedNote,
   onHire,
 }: {
   save: CareerSave;
@@ -84,6 +86,8 @@ export function CoachHireCard({
   C: CareerCopy;
   statLabels: Record<string, string>;
   disabled: boolean;
+  /** rc.35: the ladder gate this coach waits on (an ex-pro before his rung) — Hire stays off. */
+  lockedNote?: string | null;
   onHire: () => void;
 }) {
   const M = C.market;
@@ -105,9 +109,15 @@ export function CoachHireCard({
         <CoachAttributeLines save={save} coach={coach} C={C} statLabels={statLabels} showImpact />
       </div>
       <p className="mt-2 text-xs font-semibold text-sub">{wageLabel(C, coach.salaryPerSplit)}</p>
+      {lockedNote ? (
+        <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-faint">
+          <LockIcon className="h-3.5 w-3.5 shrink-0" />
+          {lockedNote}
+        </p>
+      ) : null}
       <button
         type="button"
-        disabled={disabled}
+        disabled={disabled || Boolean(lockedNote)}
         onClick={onHire}
         className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-gradient-to-b from-orange-bright to-orange px-4 text-sm font-semibold text-[#1a0d02] transition hover:brightness-110 disabled:opacity-40"
       >

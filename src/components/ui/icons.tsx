@@ -253,3 +253,149 @@ export function LockIcon({ className }: { className?: string }) {
     </LineIcon>
   );
 }
+
+/**
+ * rc.35 — progression ladder & finance glyphs. Same grammar as the icons
+ * above (24-grid, currentColor, 1.8 stroke, round caps).
+ */
+function Glyph({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      {children}
+    </svg>
+  );
+}
+
+/** Keyboard + mouse — pro peripherals. */
+export function PeripheralsIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <rect x="2.5" y="9" width="13" height="8" rx="1.5" {...P} />
+      <path d="M5 12h1m2.5 0h1m2.5 0h1M6 14.5h6" {...P} />
+      <rect x="17.5" y="9" width="4" height="7" rx="2" {...P} />
+      <path d="M19.5 9v2" {...P} />
+    </Glyph>
+  );
+}
+
+/** Monitor — 240Hz monitors. */
+export function MonitorIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <rect x="3" y="4.5" width="18" height="12" rx="1.5" {...P} />
+      <path d="M9 20h6M12 16.5V20" {...P} />
+    </Glyph>
+  );
+}
+
+/** Tower PC — tournament PCs. */
+export function PcIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <rect x="7" y="3" width="10" height="18" rx="1.5" {...P} />
+      <path d="M10 7h4M10 10h4" {...P} />
+      <circle cx="12" cy="16" r="1.6" {...P} />
+    </Glyph>
+  );
+}
+
+/** Clipboard with a tick — a coach. */
+export function CoachIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <rect x="5" y="4.5" width="14" height="16" rx="1.5" {...P} />
+      <path d="M9 3.5h6v2.5H9z" {...P} />
+      <path d="M8.5 11l2 2 4-4M8.5 16.5h7" {...P} />
+    </Glyph>
+  );
+}
+
+/** Star medal — an ex-pro coach. */
+export function StarCoachIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="m8 3 4 5 4-5" {...P} />
+      <circle cx="12" cy="15" r="6" {...P} />
+      <path d="m12 12 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 14.3l2-.3 1-2Z" {...P} />
+    </Glyph>
+  );
+}
+
+/** Handshake — sponsors. */
+export function HandshakeIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M2.5 8.5 6 6l4 1.5L13 6l3.5 1.5L21.5 9" {...P} />
+      <path d="M2.5 8.5V14l3 1M21.5 9v5l-3 1" {...P} />
+      <path d="m8 12 3 3c.8.8 2 .8 2.6 0l3.4-3.5-3-2.5-2.5 1.5L10 9.5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Tent — bootcamp. */
+export function TentIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3 19.5 12 5l9 14.5H3Z" {...P} />
+      <path d="m12 11-3.5 8.5M12 11l3.5 8.5M10.5 3l1.5 2 1.5-2" {...P} />
+    </Glyph>
+  );
+}
+
+/** Head + spark — sports psychologist. */
+export function MindIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M14 20.5v-3h2.5a1.5 1.5 0 0 0 1.5-1.5v-2.5l2-.5-2-4A7 7 0 1 0 8 15.7v4.8" {...P} />
+      <path d="M12 7.5v3m-1.5-1.5h3" {...P} />
+    </Glyph>
+  );
+}
+
+/** Building — performance centre. */
+export function HqIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M4 20.5h16M6 20.5V9l6-3.5L18 9v11.5" {...P} />
+      <path d="M10 20.5v-4h4v4M9.5 11.5h1m3 0h1" {...P} />
+    </Glyph>
+  );
+}
+
+/** Wallet — balance. */
+export function WalletIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M4 7.5h14.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18V7.5Zm0 0L15.5 4.5V7.5" {...P} />
+      <path d="M16 13.5h1" {...P} />
+    </Glyph>
+  );
+}
+
+/** Calendar — next payroll. */
+export function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <rect x="3.5" y="5" width="17" height="15" rx="1.5" {...P} />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4" {...P} />
+    </Glyph>
+  );
+}
+
+/** Trend line (up by default). */
+export function TrendIcon({ className, down }: { className?: string; down?: boolean }) {
+  return (
+    <Glyph className={className}>
+      {down ? <path d="m3 7 6 6 4-4 8 8M15 17h6v-6" {...P} /> : <path d="m3 17 6-6 4 4 8-8M15 7h6v6" {...P} />}
+    </Glyph>
+  );
+}
+
+/** Bank — debt. */
+export function BankIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3 9.5 12 4l9 5.5H3ZM4 20h16M6 12v5m4-5v5m4-5v5m4-5v5" {...P} />
+    </Glyph>
+  );
+}

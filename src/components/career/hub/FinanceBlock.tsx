@@ -1,15 +1,12 @@
 "use client";
 
 /**
- * Road to Worlds hub — THE FINANCE BLOCK (rc.34, ROADMAP UX-01e;
- * HQ-CONTRACT H5, decision 4-A). Money is honest: only booked or committed
- * figures — the balance, next Monday's net and the runway, the next payroll
- * (its date and the week's expenses), the guaranteed income a week, the debt
- * and the balance at the split's end with no prize counted — every one from
- * store/careerHq.hqFinanceOf, which reads the Finances desk's own functions.
- * The small line is the last CAREER_HQ.tileChartWeeks Mondays the save
- * recorded (mondayBalancesOf, rc.33's ring); a tap opens rc.33's larger
- * chart (BalanceHistory, the whole ring) in the portal Modal.
+ * Road to Worlds hub — THE FINANCE BLOCK (rc.34 UX-01e, H5 / 4-A; rc.35:
+ * Miguel found rc.34's rows too much text — "earlier was better"). Visual,
+ * key numbers only: the balance with its week trend and the Monday line
+ * (tap: rc.33's larger chart), then icon tiles for the next payroll, the
+ * runway, and the debt when there is any. Everything else lives in
+ * Finances (link). Figures from store/careerHq.hqFinanceOf.
  */
 
 import { useMemo, useState } from "react";
@@ -27,6 +24,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { BankIcon, CalendarIcon, TrendIcon, WalletIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 
 /** A small line of the recorded Monday balances (no axes; the chart opens larger). */
@@ -48,11 +46,27 @@ function MondayLine({ points }: { points: number[] }) {
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+/** One key number: icon, label, value. */
+function Tile({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: React.ReactNode; tone?: "bad" | "warn" | "good" }) {
   return (
-    <div className="flex items-baseline gap-2 border-t border-line/50 py-1.5 text-xs">
-      <span className="kicker w-20 shrink-0 !text-[9px] sm:w-24">{label}</span>
-      <span className="min-w-0 flex-1 text-sub">{children}</span>
+    <div
+      className={cx(
+        "flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2",
+        tone === "bad" ? "border-bad/40 bg-bad/[0.06]" : tone === "warn" ? "border-orange/40 bg-orange/[0.05]" : "border-line bg-white/[0.02]",
+      )}
+    >
+      <span
+        className={cx(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+          tone === "bad" ? "bg-bad/15 text-bad" : tone === "warn" ? "bg-orange/15 text-orange-bright" : tone === "good" ? "bg-good/15 text-good" : "bg-cyan/10 text-cyan",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="kicker block truncate !text-[9px]">{label}</span>
+        <span className="block truncate text-xs font-bold text-ink">{value}</span>
+      </span>
     </div>
   );
 }
@@ -66,6 +80,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const money = (n: number) => formatMoney(n, { compact: true });
   const cashTight = f.runway !== null && f.runway <= CAREER_PAYROLL.runwayWarnWeeks;
   const ended = save.phase === "ended";
+  const hasDebt = f.debt.backer !== null || f.debt.bankRemaining !== null;
 
   return (
     <Panel
@@ -73,7 +88,10 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       style={{ animationDelay: "120ms" }}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
+        <p className="kicker inline-flex items-center gap-1.5 text-[10px]">
+          <WalletIcon className="h-3.5 w-3.5 text-cyan" />
+          {C.hub.financesTitle}
+        </p>
         {f.debt.backer !== null ? (
           <Badge tone="orange">{C.finances.backer}</Badge>
         ) : f.debt.bankRemaining !== null ? (
@@ -84,9 +102,9 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <div className="min-w-0">
           <p className={cx("display text-2xl font-bold leading-none", f.balance < 0 ? "text-bad" : "text-ink")}>{money(f.balance)}</p>
           {!ended ? (
-            <p className="mt-1.5 text-xs text-sub">
-              <span className={f.net >= 0 ? "text-good" : "text-bad"}>{C.hub.financePerWeek(formatMoneyDelta(f.net, { compact: true }))}</span>
-              <span className="text-faint"> · {f.runway === null ? C.finances.runwayOk : C.finances.runway(f.runway)}</span>
+            <p className={cx("mt-1.5 inline-flex items-center gap-1 text-xs font-semibold", f.net >= 0 ? "text-good" : "text-bad")}>
+              <TrendIcon className="h-3.5 w-3.5" down={f.net < 0} />
+              {C.hub.financePerWeek(formatMoneyDelta(f.net, { compact: true }))}
             </p>
           ) : null}
         </div>
@@ -103,39 +121,28 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       </div>
 
       {!ended ? (
-        <div className="mt-3">
-          <Row label={C.hub.financePayroll}>
-            {formatDateShort(D, dateOfDay(f.payroll.seasonIndex, f.payroll.day))} · {money(f.payroll.amount)}
-          </Row>
-          <Row label={C.hub.financeGuaranteed}>
-            <span className="font-semibold text-good">{C.hub.financePerWeek(money(f.guaranteed.total))}</span>
-            <span className="block text-[11px] text-faint">
-              {C.hub.financeGuaranteedParts(money(f.guaranteed.sponsor), money(f.guaranteed.partner), money(f.guaranteed.fans))}
-              {f.guaranteed.partnerMondays !== null ? ` (${C.hub.financePartnerWeeks(f.guaranteed.partnerMondays)})` : ""}
-            </span>
-          </Row>
-          <Row label={C.hub.financeDebt}>
-            {f.debt.backer === null && f.debt.bankRemaining === null ? (
-              C.hub.financeDebtNone
-            ) : (
-              <>
-                {f.debt.backer !== null ? (
-                  <span className="font-semibold text-orange-bright">{C.hub.financeDebtBacker(money(f.debt.backer))}</span>
-                ) : null}
-                {f.debt.backer !== null && f.debt.bankRemaining !== null ? " · " : null}
-                {f.debt.bankRemaining !== null ? C.hub.financeDebtBank(money(f.debt.bankRemaining), money(f.debt.bankNext ?? 0)) : null}
-              </>
-            )}
-          </Row>
-          <Row label={C.hub.financeProjection}>
-            <span className={f.projection.balance < 0 ? "text-bad" : undefined}>
-              {C.hub.financeProjectionLine(
-                formatDateShort(D, dateOfDay(f.projection.seasonIndex, f.projection.day)),
-                f.projection.mondays,
-                money(f.projection.balance),
-              )}
-            </span>
-          </Row>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Tile
+            icon={<CalendarIcon className="h-4 w-4" />}
+            label={C.hub.financePayroll}
+            value={`${formatDateShort(D, dateOfDay(f.payroll.seasonIndex, f.payroll.day))} · ${money(f.payroll.amount)}`}
+          />
+          <Tile
+            icon={<TrendIcon className="h-4 w-4" down={f.net < 0} />}
+            label={C.hub.financeRunway}
+            value={f.runway === null ? C.finances.runwayOk : C.finances.runway(f.runway)}
+            tone={f.balance < 0 ? "bad" : cashTight ? "warn" : "good"}
+          />
+          {hasDebt ? (
+            <div className="col-span-2">
+              <Tile
+                icon={<BankIcon className="h-4 w-4" />}
+                label={C.hub.financeDebt}
+                value={money((f.debt.backer ?? 0) + (f.debt.bankRemaining ?? 0))}
+                tone="warn"
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
