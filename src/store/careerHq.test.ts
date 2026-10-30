@@ -29,6 +29,7 @@ import { RaceBlock, defaultRaceKind } from "@/components/career/hub/RaceBlock";
 import { raceTableOf, userTeamPreview } from "@/components/career/careerUi";
 import { stepDayForTests } from "./careerClockForTests";
 import {
+  backerLineOf,
   buyGearFlow,
   createCareerSave,
   finishEvent,
@@ -107,6 +108,27 @@ describe("rc.34 UX-01e (H5) — the finance block reads the Finances desk", () =
     }
     expect(f.projection.mondays).toBe(mondays);
     expect(f.projection.balance).toBe(bal);
+  });
+
+  it("rc.34 review: the projection books the sponsor fines' instalments, each until it is paid", () => {
+    const save = fresh();
+    save.finances.balance = 50_000; // far above the floor: nothing is waived
+    const without = hqFinanceOf(save).projection;
+    const fined = structuredClone(save);
+    fined.finances.sponsorFines = [
+      { sponsorId: "voltway", remaining: 800, perMonday: 200 },
+      { sponsorId: "brightline", remaining: 150, perMonday: 100 },
+    ];
+    const f = hqFinanceOf(fined).projection;
+    expect(f.mondays).toBe(without.mondays);
+    expect(f.mondays).toBeGreaterThanOrEqual(4);
+    // 200 × 4 Mondays, then 100 + 50: $950 in all within the split.
+    expect(f.balance).toBe(without.balance - 950);
+    // At the floor an instalment is waived, as the Monday funnel waives it: it never takes the books below the floor.
+    const net = weeklyStatementOf(save).net;
+    expect(net).toBeLessThan(0);
+    const atFloor = (s: CareerSave): CareerSave => ({ ...s, finances: { ...s.finances, balance: backerLineOf(s).floor - net } });
+    expect(hqFinanceOf(atFloor(fined)).projection.balance).toBe(hqFinanceOf(atFloor(save)).projection.balance);
   });
 });
 

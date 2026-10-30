@@ -9,10 +9,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_ECONOMY, CAREER_PAYROLL, CAREER_SPONSOR } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_ECONOMY, CAREER_PAYROLL, CAREER_SLOTS, CAREER_SPONSOR } from "@/config/balance";
 import { SPONSOR_BRANDS } from "@/data/career/sponsors";
-import { firstDayOfWeek } from "./calendar";
-import { moneyIndex, quantize, sponsorFineDueOf, tallyIncome } from "./economy";
+import type { Region } from "../types";
+import { firstDayOfWeek, seasonSchedule, splitBoundaryWeeks } from "./calendar";
+import { moneyIndex, quantize, quantizeWeekly, sponsorFineDueOf, tallyIncome } from "./economy";
 import {
   binomialTail,
   decideByFor,
@@ -36,6 +37,7 @@ import {
   slotSplit,
   SPONSOR_GOAL_CANDIDATES,
   splitStartDayOf,
+  splitWeeksOf,
   sponsorDecisionFor,
   sureMoneyOf,
   teamLevelFor,
@@ -45,6 +47,7 @@ import {
   type TeamLevel,
 } from "./sponsorDeals";
 import type { CareerDifficulty, CompactEventResult, SponsorGoalWord } from "./types";
+import { buildWorldAtCreation, computeStars } from "./worldSim";
 
 /** A level `m` rating points from every reference team (m > 0: stronger). */
 function levelAt(m: number, slots = 2): TeamLevel {
@@ -76,6 +79,22 @@ describe("rc.34 sponsors — splits and dates", () => {
     expect(splitStartDayOf(slotOf(2, 2))).toEqual({ seasonIndex: 2, day: firstDayOfWeek(13) });
     expect(slotSeason(slotOf(4, 3))).toBe(4);
     expect(slotSplit(slotOf(4, 3))).toBe(3);
+  });
+
+  it("rc.34 review: a split's weeks are the calendar's (CAREER_CALENDAR), not a copy of them", () => {
+    const schedule = seasonSchedule();
+    for (const split of [1, 2, 3] as const) {
+      const weeks = schedule.filter((w) => w.split === split);
+      const regionals = weeks.filter((w) => w.kind === "regional").map((w) => w.week);
+      expect(splitWeeksOf(slotOf(0, split))).toEqual({
+        start: weeks[0].week,
+        firstEvent: regionals[0],
+        lastRegional: regionals[regionals.length - 1],
+        major: weeks.find((w) => w.kind === "major")!.week,
+        settle: splitBoundaryWeeks()[split - 1],
+      });
+    }
+    expect(splitWeeksOf(slotOf(0, 3)).settle).toBe(CAREER_CALENDAR.worldsWindowWeek);
   });
 
   it("counts the Mondays a deal pays: after the signing day, through its last boundary (across a rollover)", () => {
@@ -173,6 +192,61 @@ describe("rc.34 sponsors — the offers of one decision (S1, S4, s1)", () => {
     expect(offerTierFor(60, false)).toBe(3);
     expect(offerTierFor(60, true)).toBe(2);
     expect(offerTierFor(5, true)).toBe(1);
+  });
+});
+
+describe("rc.34 review — weekly pay runs Steady ≥ Balanced ≥ Bold in every decision", () => {
+  it("7 regions × 3 difficulties × ratings 40–100 × 4 tiers × the decision days: ordered, each offer at the tier's value, the spread ≤ 2 %", () => {
+    const seed = 34_301;
+    const world = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" });
+    const orgs = Object.values(world.orgs).map((o) => ({ region: o.region, rating: o.rating ?? 70 + o.prestige * 6 }));
+    const regions = Object.keys(CAREER_SLOTS.major) as Region[];
+    // A rollover, the three boundaries, a day inside each split (a converted older offer) and the Worlds week.
+    const days = [1, ...splitBoundaryWeeks().map(firstDayOfWeek), firstDayOfWeek(5), firstDayOfWeek(15), firstDayOfWeek(26), firstDayOfWeek(32)];
+    let decisions = 0;
+    let unordered = 0;
+    let widest = 0;
+    let offValue = 0;
+    for (const region of regions)
+      for (const difficulty of DIFFS)
+        for (let rating = 40; rating <= 100; rating += 2) {
+          const level = teamLevelFor({ region, userRating: rating, difficulty, orgs });
+          for (const tier of [1, 2, 3, 4] as const)
+            for (const seasonIndex of [0, 3])
+              for (const day of days) {
+                const today = { seasonIndex, day };
+                const offers = sponsorDecisionFor({ tier, today, careerSeed: seed, difficulty, level });
+                const [steady, balanced, bold] = offers.map((o) => o.terms!.weekly);
+                decisions += 1;
+                if (steady < balanced || balanced < bold) unordered += 1;
+                // The total: each offer's expected value is the tier's value for its Mondays at the team's level.
+                const value = tierValuePerWeek(tier, seasonIndex, difficulty) * levelValueShareOf(tier, level);
+                const per = offers.map((o) => o.terms!.ev / mondaysBetween(today, o.terms!.endsOn));
+                const mean = per.reduce((a, b) => a + b, 0) / per.length;
+                for (const v of per) {
+                  widest = Math.max(widest, Math.abs(v / mean - 1));
+                  offValue = Math.max(offValue, Math.abs(v / value - 1));
+                }
+              }
+        }
+    expect(decisions).toBeGreaterThan(30_000);
+    expect(unordered).toBe(0);
+    expect(widest).toBeLessThanOrEqual(0.02);
+    expect(offValue).toBeLessThanOrEqual(0.02);
+  });
+
+  it("the weekly pay is the profile's share of the tier's value a Monday, whatever the goal: only the fixed part and the bonus follow the chance", () => {
+    const P = CAREER_SPONSOR.profiles;
+    expect(P.steady.weeklyOfValue).toBeGreaterThanOrEqual(P.balanced.weeklyOfValue);
+    expect(P.balanced.weeklyOfValue).toBeGreaterThanOrEqual(P.bold.weeklyOfValue);
+    for (const m of MARGINS) {
+      const offers = sponsorDecisionFor({ tier: 2, today: MOMENTS[1], careerSeed: 5, difficulty: "normal", level: levelAt(m) });
+      const value = tierValuePerWeek(2, MOMENTS[1].seasonIndex, "normal") * levelValueShareOf(2, levelAt(m));
+      for (const o of offers) {
+        const t = o.terms!;
+        expect(t.weekly).toBe(Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(P[t.profile].weeklyOfValue * value)));
+      }
+    }
   });
 });
 

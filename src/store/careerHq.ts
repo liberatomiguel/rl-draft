@@ -29,11 +29,13 @@ import {
   moneyIndex,
   nextPaydayFor,
   psychologistPerSplitFor,
+  quantize,
   weeklyOf,
 } from "@/engine/career/economy";
 import type { CareerSave, SquadPlayer } from "@/engine/career/types";
 import { committedSeedingFor } from "@/engine/career/worldSim";
 import {
+  backerLineOf,
   buyGearFlow,
   runBootcampFlow,
   runwayWeeksOf,
@@ -61,7 +63,9 @@ export interface HqFinance {
   /**
    * The balance at the end of the split (its last day, `splitEndDayFor`) from
    * committed flows only — every Monday's statement, the bank's instalments
-   * running out, the rescue partner's remaining Mondays — and no prize money.
+   * running out, the rescue partner's remaining Mondays, the sponsor fines'
+   * instalments until each is paid (rc.34 review; as the Monday funnel books
+   * them: never below the floor) — and no prize money.
    */
   projection: { seasonIndex: number; day: number; mondays: number; balance: number };
 }
@@ -81,8 +85,11 @@ export function hqFinanceOf(save: CareerSave): HqFinance {
   let mondays = 0;
   let bankLeft = bank?.remaining ?? 0;
   let partnerLeft = rescue?.mondaysLeft ?? 0;
+  let finesLeft = (fin.sponsorFines ?? []).map((f) => ({ ...f }));
   const fixedIncome = st.sponsorBase + st.foundingPartner + st.fanbase;
   const fixedCost = st.payroll + st.coach + st.psychologist + st.upkeep;
+  // rc.34 review: the fines' floor is the Monday funnel's (economy.weeklyPayroll: on the wage bill booked).
+  const floor = backerLineOf(save).floor;
   for (let day = save.clock.day + 1; day <= endDay && day <= DAYS_PER_SEASON; day++) {
     if (dayOfWeekOf(day) !== 1) continue;
     mondays += 1;
@@ -91,6 +98,14 @@ export function hqFinanceOf(save: CareerSave): HqFinance {
     const instalment = bank ? Math.min(bankLeft, bank.weeklyPayment) : 0;
     bankLeft -= instalment;
     balance += fixedIncome + help - fixedCost - instalment;
+    // Each fine's instalment until it is paid; with `neverBreaches` what would cross the floor is waived.
+    for (const f of finesLeft) {
+      const due = Math.max(0, Math.min(f.remaining, f.perMonday));
+      const room = CAREER_SPONSOR.fines.neverBreaches ? quantize(Math.max(0, balance - floor)) : due;
+      balance -= Math.min(due, room);
+      f.remaining -= due;
+    }
+    finesLeft = finesLeft.filter((f) => f.remaining > 0);
   }
 
   return {

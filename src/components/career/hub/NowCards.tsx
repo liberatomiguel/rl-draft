@@ -3,31 +3,25 @@
 /**
  * Road to Worlds hub — the "Needs you" cards (v2.0 hub rebuild, R26). Each
  * card is one decision or one stop the clock cannot pass on its own: a
- * season stop, an event today, an incoming bid, sponsor offers, a Community
- * Cup invite. Extracted from HubScreen so the hub itself reads as layout.
+ * season stop, an event today, an incoming bid, a Community Cup invite.
+ * Extracted from HubScreen so the hub itself reads as layout. (rc.34
+ * review: the sponsor offers render as `SponsorDecision` in HQ's decision
+ * block; rc.33's NowSponsorChoice is gone.)
  */
 
 import { useRouter } from "next/navigation";
 import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import { sponsorBrandById } from "@/data/career/sponsors";
-import { breachesToEndFor, insertMoneyFor, loanBreachesOf, weeklyOf } from "@/engine/career/economy";
+import { breachesToEndFor, insertMoneyFor, loanBreachesOf } from "@/engine/career/economy";
 import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor } from "@/store/careerFlow";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
 import { regionalForQualifier } from "@/engine/career/calendar";
-import type {
-  CareerEventDef,
-  CareerSave,
-  SponsorObjectiveKind,
-  SponsorState,
-  TransferOffer,
-} from "@/engine/career/types";
+import type { CareerEventDef, CareerSave, TransferOffer } from "@/engine/career/types";
 import { insertById, type InsertEffects } from "@/data/career/inserts";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { REGION_BADGE } from "@/components/regionStyle";
-import { dateOfDay, nameOfRef, squadAge, useCareerSave } from "@/components/career/careerUi";
-import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
+import { dateOfDay, nameOfRef, squadAge } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { TeamStars } from "@/components/career/TeamStars";
@@ -470,77 +464,3 @@ export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; 
     </div>
   );
 }
-
-/**
- * The sponsor decision's card on HQ. rc.34 (ECO-04, SPONSOR-CONTRACT S5): an
- * rc.34 decision renders the comparison (`SponsorDecision`: the deadline and
- * three `SponsorOfferCard`s, Stability · Total return · Length · Risk ·
- * Goal); HQ's decision queue (UX-01, front G) can render the same pieces
- * from `sponsorDecisionOf(save)`. Offers from before rc.34 (a save's load
- * converts them) keep rc.33's card.
- */
-export function NowSponsorChoice({
-  C,
-  lang,
-  offers,
-  objectiveText,
-  onChoose,
-}: {
-  C: CareerCopy;
-  lang: "en" | "pt";
-  offers: SponsorState[];
-  objectiveText: (kind: SponsorObjectiveKind) => string;
-  onChoose: (sponsorId: string) => void;
-}) {
-  const save = useCareerSave();
-  if (save && offers.some((o) => o.terms)) return <SponsorDecision save={save} onSign={onChoose} />;
-  return (
-    <div>
-      <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink">
-        {C.finances.offerTitle}
-      </h2>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {offers.map((o) => {
-          const brand = sponsorBrandById.get(o.sponsorId);
-          return (
-            <div
-              key={o.sponsorId}
-              className="flex flex-col rounded-lg border border-line bg-white/[0.03] p-3.5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="display truncate text-base font-bold uppercase tracking-wide text-ink">
-                  {brand?.name ?? o.sponsorId}
-                </p>
-                <Badge tone="blue">{C.finances.sponsorTier(o.tier)}</Badge>
-              </div>
-              {brand ? (
-                <p className="mt-1 text-xs italic text-faint">
-                  {lang === "pt" ? brand.flavorPt : brand.flavorEn}
-                </p>
-              ) : null}
-              <p className="mt-2 text-sm font-semibold text-good">
-                {C.finances.perWeekBase(formatMoney(weeklyOf(o.basePerSplit), { compact: true }))}
-              </p>
-              <p className="text-xs text-sub">
-                {C.finances.bonusFor(formatMoney(o.bonus, { compact: true }))}
-              </p>
-              <p className="mt-1.5 text-xs text-sub">
-                {C.finances.sponsorObjective}: {objectiveText(o.objectiveKind)}
-              </p>
-              <Button
-                variant="primary"
-                size="md"
-                full
-                className="mt-3"
-                onClick={() => onChoose(o.sponsorId)}
-              >
-                {C.market.accept}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-

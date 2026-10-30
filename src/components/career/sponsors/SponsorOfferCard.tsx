@@ -23,11 +23,16 @@
 import { CAREER_SPONSOR } from "@/config/balance";
 import { useCareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
-import { foundingPartnerActive } from "@/engine/career/economy";
+import { seasonLabelFor } from "@/engine/career/calendar";
 import type { CareerSave, SponsorState } from "@/engine/career/types";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { foundingPartnerPerSplitOf, sponsorDecisionOf } from "@/store/careerFlow";
+import {
+  foundingHandoverOf,
+  handoverNetWeeklyOf,
+  sponsorDecisionOf,
+  type FoundingHandoverView,
+} from "@/store/careerFlow";
 import { useSettings } from "@/store/settingsStore";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
@@ -150,20 +155,32 @@ export function SponsorOfferCard({
   today,
   onSign,
   disabled,
+  handover,
 }: {
   offer: SponsorState;
   today: { seasonIndex: number; day: number };
   onSign: (sponsorId: string) => void;
   disabled?: boolean;
+  /** rc.34 review (S6): the founding partner's handover, when one is ahead — the card shows its net weekly change. */
+  handover?: FoundingHandoverView | null;
 }) {
   const C = useCareerCopy();
   const view = offerViewOf(offer, today);
   if (!view) return null;
+  const net = handover ? handoverNetWeeklyOf(handover, offer) : null;
   return (
     <div className="flex min-w-0 flex-col rounded-lg border border-line bg-white/[0.03] p-3">
       <BrandHead sponsorId={view.sponsorId} tier={view.tier} profile={view.profile} />
       <p className="mt-1.5 text-[11px] text-sub">{C.finances.deal.profileHint[view.profile]}</p>
       <DealRows view={view} />
+      {handover && net !== null ? (
+        <p className={cx("mb-2 text-[11px] font-semibold", net < 0 ? "text-orange-bright" : "text-sub")}>
+          {C.finances.deal.handoverNet(
+            formatMoneyDelta(net, { compact: true }),
+            formatDateShort(C.dates, dateOfDay(handover.startsOn.seasonIndex, handover.startsOn.day)),
+          )}
+        </p>
+      ) : null}
       <Button
         variant="primary"
         size="md"
@@ -200,12 +217,8 @@ export function SponsorDecision({
   if (!decision) return null;
   const today = { seasonIndex: save.clock.seasonIndex, day: save.clock.day };
   const levelShare = decision.offers[0]?.terms?.levelShare;
-  const taper = CAREER_SPONSOR.founding.taper;
-  const handover =
-    foundingPartnerActive(save.foundingPartner) &&
-    save.foundingPartner?.taperStep === undefined &&
-    foundingPartnerPerSplitOf(save) > 0 &&
-    taper.length >= 2;
+  // rc.34 review (S6): signing starts the handover only past season index 1 — before it, the partner pays its term in full.
+  const handover = foundingHandoverOf(save);
   return (
     <div>
       {bare ? null : (
@@ -222,13 +235,15 @@ export function SponsorDecision({
       ) : null}
       {handover ? (
         <p className="mt-1 text-[11px] text-faint">
-          {T.handover(Math.round((taper[0] ?? 0) * 100), Math.round((taper[1] ?? 0) * 100))}
+          {handover.onSigning
+            ? T.handover(handover.first, handover.second)
+            : T.handoverLater(seasonLabelFor(handover.throughSeason), handover.first, handover.second)}
         </p>
       ) : null}
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
         {decision.offers.map((o) =>
           o.terms ? (
-            <SponsorOfferCard key={o.sponsorId} offer={o} today={today} onSign={onSign} />
+            <SponsorOfferCard key={o.sponsorId} offer={o} today={today} onSign={onSign} handover={handover} />
           ) : null,
         )}
       </div>

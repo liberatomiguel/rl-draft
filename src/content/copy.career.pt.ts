@@ -1415,6 +1415,10 @@ export const CAREER_PT: CareerCopy = {
       stabilityBar: (pct: number) => `${pct}% do máximo é garantido`,
       handover: (first: number, second: number) =>
         `Seu parceiro fundador sai aos poucos quando este contrato começar: ${first}%, depois ${second}% do valor, um split cada.`,
+      // rc.34 review (S6): antes da temporada de índice 2, assinar não inicia a transição — o parceiro paga integralmente até o fim do prazo.
+      handoverLater: (season: string, first: number, second: number) =>
+        `Seu parceiro fundador paga o valor cheio até o fim de ${season}, assine o que assinar; depois sai aos poucos: ${first}%, depois ${second}% do valor, um split cada.`,
+      handoverNet: (delta: string, date: string) => `Variação semanal líquida na transição (${date}): ${delta}`,
       activeTitle: "Contrato atual",
       endsOn: (date: string) => `Termina ${date}`,
       signingPaid: (s: string) => `${s} pagos na assinatura`,

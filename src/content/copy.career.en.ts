@@ -1440,6 +1440,10 @@ export const CAREER_EN = {
       stabilityBar: (pct: number) => `${pct}% of the most it pays is sure`,
       handover: (first: number, second: number) =>
         `Your founding partner steps back once this deal starts: ${first}%, then ${second}% of its pay, one split each.`,
+      // rc.34 review (S6): before season index 2 signing does not start the handover — the partner pays in full through its term.
+      handoverLater: (season: string, first: number, second: number) =>
+        `Your founding partner pays in full through the end of ${season}, whatever you sign; then it steps back: ${first}%, then ${second}% of its pay, one split each.`,
+      handoverNet: (delta: string, date: string) => `Net weekly change at the handover (${date}): ${delta}`,
       activeTitle: "Current deal",
       endsOn: (date: string) => `Ends ${date}`,
       signingPaid: (s: string) => `${s} paid on signing`,

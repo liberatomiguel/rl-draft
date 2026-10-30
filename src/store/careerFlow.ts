@@ -147,6 +147,7 @@ import {
   emergencyLoansLeftOf,
   emergencyLoansOf,
   eventRepKindFor,
+  foundingPartnerActive,
   foundingPartnerBaseFor,
   foundingPartnerEnds,
   gearNextItem,
@@ -161,6 +162,7 @@ import {
   mondayAfter,
   mondayBalancesFromLedger,
   mondaysToBreach,
+  nextPaydayFor,
   payBankLoanDown,
   payLoanDown,
   payrollProjection,
@@ -181,6 +183,7 @@ import {
   t3RepKeyFor,
   takeBankLoan,
   unlocksFor,
+  weeklyOf,
   weeklyPayroll,
   weeklyStatement,
   weeklyWageBill,
@@ -222,6 +225,7 @@ import {
   absDayOf,
   fineFor,
   fineScheduleFor,
+  firstSlotFrom,
   goalForSlot,
   goalProgressOf,
   isAfter,
@@ -901,6 +905,61 @@ export function handoverStepDaysFrom(from: CareerDay, steps: number): CareerDay[
     slot += 1;
   }
   return out;
+}
+
+/** rc.34 review (S6): an rc.32 career's founding partner as a sponsor decision prints its handover. */
+export interface FoundingHandoverView {
+  /** Signing starts it (past season index `throughSeason`); false = it starts after that season, whatever is signed. */
+  onSigning: boolean;
+  /** The last season the partner pays in full (CAREER_SPONSOR.founding.throughSeasonIndex). */
+  throughSeason: number;
+  /** The taper's first two steps, in percent of its pay. */
+  first: number;
+  second: number;
+  /** The Monday its first step is paid: the next one when signing starts it, else the first of season `throughSeason` + 1. */
+  startsOn: CareerDay;
+  /** The partner's weekly pay on that Monday — in full, and at its first step. */
+  partnerWeekly: number;
+  firstStepWeekly: number;
+}
+
+/**
+ * rc.34 review (S6): the founding partner's handover as an offer reads it —
+ * null without a partner, once its handover runs, or with rc.33's cliff
+ * (`taper: []`). Signing starts it only past season index
+ * `throughSeasonIndex` (economy.foundingPartnerEnds); before that the
+ * partner pays in full through that season whatever is signed, and steps
+ * back on the next season's first Monday (runWeeklyPayroll).
+ */
+export function foundingHandoverOf(save: CareerSave): FoundingHandoverView | null {
+  const fp = save.foundingPartner;
+  const taper = CAREER_SPONSOR.founding.taper;
+  if (!fp || !foundingPartnerActive(fp) || fp.taperStep !== undefined || taper.length < 2) return null;
+  if (foundingPartnerPerSplitOf(save) <= 0) return null;
+  const through = CAREER_SPONSOR.founding.throughSeasonIndex;
+  const onSigning = foundingPartnerEnds(fp, save.clock.seasonIndex, true);
+  const startsOn = onSigning ? nextPaydayFor(save.clock) : { seasonIndex: through + 1, day: 1 };
+  return {
+    onSigning,
+    throughSeason: through,
+    first: Math.round((taper[0] ?? 0) * 100),
+    second: Math.round((taper[1] ?? 0) * 100),
+    startsOn,
+    partnerWeekly: weeklyOf(foundingPartnerBaseFor(fp, startsOn.seasonIndex)),
+    firstStepWeekly: weeklyOf(foundingPartnerBaseFor({ ...fp, taperStep: 1 }, startsOn.seasonIndex)),
+  };
+}
+
+/**
+ * rc.34 review (S6, "each real offer shows the net weekly change at the
+ * handover"): the weekly guaranteed income the handover's first Monday adds
+ * with this offer signed today — its weekly pay when it still pays that
+ * Monday, less the partner's first step.
+ */
+export function handoverNetWeeklyOf(view: FoundingHandoverView, offer: SponsorState): number {
+  const pays = offer.terms ? absDayOf(offer.terms.endsOn) >= absDayOf(view.startsOn) : true;
+  const weekly = offer.terms?.weekly ?? weeklyOf(offer.basePerSplit);
+  return (pays ? weekly : 0) - (view.partnerWeekly - view.firstStepWeekly);
 }
 
 /** rc.34 (S6): a split boundary moves the handover one step; past the last share it ends. */
@@ -1601,22 +1660,32 @@ export function sponsorLevelOf(save: CareerSave): TeamLevel {
  * one per profile, at the best tier the reputation allows (one lower when
  * `demote`: a Steady deal that ran out of patience), priced in today's
  * money, each with its first split's goal; the inbox says until when.
+ * rc.34 review: the demotion is recorded on the offers and, by its first
+ * split, on the save (`sponsorDemotedSlot`): another decision for that
+ * split — the rollover's, after a Worlds-window renewal was declined — is
+ * one tier lower too, so declining never gets around 7-A.
  */
 function offerSponsorDecision(save: CareerSave, demote: boolean): void {
+  const today = todayOf(save);
+  const firstSlot = firstSlotFrom(today);
+  const demoted = demote || save.sponsorDemotedSlot === firstSlot;
   const offers = sponsorDecisionFor({
-    tier: offerTierFor(save.reputation, demote),
-    today: todayOf(save),
+    tier: offerTierFor(save.reputation, demoted),
+    today,
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
     level: sponsorLevelOf(save),
+    demoted,
   });
   save.sponsorOffers = offers;
+  if (demoted) save.sponsorDemotedSlot = firstSlot;
+  else delete save.sponsorDemotedSlot;
   const by = offers[0]?.terms?.decideBy;
   pushMail(save, {
     kind: "sponsor",
     titleKey: "sponsorOffers",
     bodyKey: "sponsorDecision",
-    params: { n: offers.length, tier: offers[0]?.tier ?? 1, byWeek: by ? weekOfDay(by.day) : 0, demoted: demote ? 1 : 0 },
+    params: { n: offers.length, tier: offers[0]?.tier ?? 1, byWeek: by ? weekOfDay(by.day) : 0, demoted: demoted ? 1 : 0 },
     fromKey: "sponsor",
     linkTo: "/career/finances",
   });
@@ -3449,15 +3518,20 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   //    own end (a split boundary); a deal from before rc.34 ends here, as it
   //    always did, and its renewal is an rc.34 decision (one tier lower after
   //    three misses — the patience meter). Without a deal, an org with
-  //    standing gets a fresh decision in the new season's money (a decision
-  //    left from the Worlds window lapses with the season). Offered below,
-  //    once the new season's world and clock are set.
+  //    standing gets a fresh decision in the new season's money. rc.34
+  //    review: a decision still pending (the Worlds window's — the season
+  //    review only lets it through on a direct call) is offered again in the
+  //    new season's money with its demotion, even below the standing gate;
+  //    one declined at the window passes its demotion on through
+  //    `sponsorDemotedSlot` (offerSponsorDecision). Offered below, once the
+  //    new season's world and clock are set.
   let sponsorDecision: { demote: boolean } | null = null;
   if (!save.sponsor?.terms) {
     const legacy = save.sponsor;
     const patienceMissed = (legacy?.missedCount ?? 0) >= CAREER_SPONSOR.patienceMisses;
-    if (legacy || save.reputation >= CAREER_SPONSOR.firstOfferRepGate) {
-      sponsorDecision = { demote: legacy !== null && patienceMissed };
+    const pending = save.sponsorOffers ?? [];
+    if (legacy || pending.length > 0 || save.reputation >= CAREER_SPONSOR.firstOfferRepGate) {
+      sponsorDecision = { demote: (legacy !== null && patienceMissed) || pending.some((o) => o.terms?.demoted) };
     }
     save.sponsor = null;
     save.sponsorOffers = null;
@@ -4745,19 +4819,31 @@ export function scrimProjection(
   };
 }
 
+/**
+ * Sign one of the offers on the desk. rc.34 review: validated before
+ * anything moves — an unknown offer changes nothing, and an expired one only
+ * lapses the decision (as the day's lapse would); neither marks a deal as
+ * signed (`ACH_FLAGS.sponsorSigned`: an achievement, the founding partner's
+ * end condition), since the store commits a changed save even on an error.
+ */
 export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowResult {
+  const pick = input.sponsorOffers?.find((o) => o.sponsorId === sponsorId);
+  if (!pick) return { save: input, error: "unknown" };
+  // rc.34 (ECO-04): an offer past its deadline is gone (the day's lapse clears it; a stale screen lands here).
+  if (pick.terms?.decideBy && isAfter(todayOf(input), pick.terms.decideBy)) {
+    const lapsed = clone(input);
+    lapseSponsorOffers(lapsed);
+    return { save: capNews(lapsed), error: "expired" };
+  }
   const save = clone(input);
+  const offer = save.sponsorOffers!.find((o) => o.sponsorId === sponsorId)!;
   save.flags[ACH_FLAGS.sponsorSigned] = true;
-  const offer = save.sponsorOffers?.find((o) => o.sponsorId === sponsorId);
-  if (!offer) return { save: input, error: "unknown" };
+  // The renewal is taken: a demotion it carried is spent.
+  delete save.sponsorDemotedSlot;
   if (offer.terms) {
-    // rc.34 (ECO-04): an offer past its deadline is gone (the day's lapse clears it; a stale screen lands here).
-    if (offer.terms.decideBy && isAfter(todayOf(save), offer.terms.decideBy)) {
-      lapseSponsorOffers(save);
-      return { save: capNews(save), error: "expired" };
-    }
     const terms: SponsorTerms = structuredClone(offer.terms);
     delete terms.decideBy;
+    delete terms.demoted;
     save.sponsor = { ...offer, terms, progress: 0, hitThisSplit: false, missedCount: 0 };
     save.sponsorOffers = null;
     // The fixed part on signing (Steady, Balanced); Bold's is the milestone.
@@ -5173,6 +5259,10 @@ export function repairLoanOnLoad(save: CareerSave): void {
  * events ahead — so the comparison card has something to compare; an ended
  * career drops them. A running deal from before rc.34 is left alone: it
  * runs to its end on its old rules. Nothing else moves.
+ *
+ * rc.34 review: rc.33's renewal after three misses came one tier lower (its
+ * patience meter: the best offer below the tier the reputation allows) —
+ * the converted decision keeps that demotion.
  */
 export function repairSponsorsOnLoad(save: CareerSave): void {
   if (!Array.isArray(save.sponsorOffers) || save.sponsorOffers.length === 0) return;
@@ -5183,7 +5273,8 @@ export function repairSponsorsOnLoad(save: CareerSave): void {
   }
   save.mail ??= [];
   save.flags ??= {};
-  offerSponsorDecision(save, false);
+  const best = Math.max(...save.sponsorOffers.map((o) => o.tier ?? 1));
+  offerSponsorDecision(save, best < offerTierFor(save.reputation ?? 0, false));
 }
 
 /**
