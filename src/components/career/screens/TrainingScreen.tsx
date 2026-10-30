@@ -72,7 +72,7 @@ const STAT_KEYS: StatKey[] = [
 
 const INTENSITIES: TrainingIntensity[] = ["light", "normal", "heavy"];
 
-const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral" } as const;
+const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral", unknown: "neutral" } as const;
 
 /** "0.08" — projections are round2 from the engine; render both decimals. */
 const fmt2 = (n: number): string => n.toFixed(2);

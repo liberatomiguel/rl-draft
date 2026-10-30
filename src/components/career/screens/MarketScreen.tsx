@@ -32,10 +32,10 @@ import {
   repNeededForOverall,
   runwayWeeksAfter,
   scoutReportCostFor,
-  severanceFor,
   signableOverallCap,
 } from "@/engine/career/economy";
-import { userBidsBlocked } from "@/engine/career/market";
+import { signableAtRep, userBidsBlocked } from "@/engine/career/market";
+import type { ContractOffer } from "@/engine/career/contract";
 import { windowIndexOf } from "@/engine/career/calendar";
 import { signsForFinalSeason } from "@/engine/career/development";
 import type {
@@ -51,12 +51,13 @@ import {
   backerLineOf,
   coachCandidatesFor,
   lateSigningOpen,
-  negotiationTriesFor,
   signingPlanFor,
+  signingTalkFor,
   squadIsShort,
   weeklyStatementOf,
 } from "@/store/careerFlow";
-import { blockbusterWhatOf, refusalPct } from "@/components/career/hub/NowCards";
+import { blockbusterWhatOf } from "@/components/career/hub/NowCards";
+import { AppLink } from "@/components/ui/AppLink";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
@@ -71,6 +72,8 @@ import {
   isWindowWeek,
   listingFor,
   nameOfRef,
+  phaseLabelOf,
+  phaseOfView,
   potBandOfView,
   statsFromView,
   upcomingStops,
@@ -280,30 +283,30 @@ export function MarketScreen() {
   const [shown, setShown] = useState(PAGE);
   const [target, setTarget] = useState<MarketRow | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
-  /** ECO-03 (R47): with a full squad, who leaves to make room (the user's choice). */
-  const [leaverId, setLeaverId] = useState<string | null>(null);
   const [len, setLen] = useState<1 | 2 | 3>(2);
-  /** v0.3 wage talk — the counter-offer on the table (0 = full ask). */
-  const [offered, setOffered] = useState(0);
+  /** rc.33 (ECO-10/11): the offer on the table — weekly wage + prize share (empty = his ask). */
+  const [offer, setOffer] = useState<ContractOffer>({});
+  /** rc.33 (UX-07): only the players the org's reputation can sign. */
+  const [signableOnly, setSignableOnly] = useState(false);
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [confirmFire, setConfirmFire] = useState(false);
   /** v0.3 org sheet (deals tab — inspect the bidder's roster). */
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
   // Render-phase pagination reset so filter switches never carry a stale page.
-  const filterSig = `${tab}|${search}|${sort}|${sortFlip}|${regionFilter}`;
+  const filterSig = `${tab}|${search}|${sort}|${sortFlip}|${regionFilter}|${signableOnly}`;
   const [prevSig, setPrevSig] = useState(filterSig);
   if (filterSig !== prevSig) {
     setPrevSig(filterSig);
     setShown(PAGE);
   }
 
-  // The counter-offer resets to the fresh ask whenever the quote changes.
+  // The offer resets to his ask whenever the quote changes.
   const offerSig = `${target?.view.id ?? ""}|${len}`;
   const [prevOfferSig, setPrevOfferSig] = useState(offerSig);
   if (offerSig !== prevOfferSig) {
     setPrevOfferSig(offerSig);
-    setOffered(0);
+    setOffer({});
   }
 
   // --- listing: only recomputed when the world/squad actually changes -------
@@ -356,6 +359,8 @@ export function MarketScreen() {
     let out = rows;
     if (q) out = out.filter((r) => r.view.name.toLowerCase().includes(q));
     if (regionFilter !== "all") out = out.filter((r) => r.view.region === regionFilter);
+    // rc.33 (UX-07): the one rule a signing checks (market.signableAtRep).
+    if (signableOnly && save) out = out.filter((r) => signableAtRep(r.view.overall, save.reputation));
     const sorted = [...out];
     switch (sort) {
       case "ovr":
@@ -374,7 +379,7 @@ export function MarketScreen() {
     // v0.3: the direction toggle flips whatever the key's natural order is.
     if (sortFlip) sorted.reverse();
     return sorted;
-  }, [rows, search, regionFilter, sort, sortFlip]);
+  }, [rows, search, regionFilter, sort, sortFlip, signableOnly, save]);
 
   const coaches = useMemo(() => (save ? coachCandidatesFor(save) : []), [save]);
 
@@ -401,9 +406,7 @@ export function MarketScreen() {
   const emptySeatOpen = !windowOpen && squadIsShort(save);
   const freeAgentSignable = windowOpen || lateOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
-  // v0.3 visible signing gate (new signings only; renewals/squad exempt).
-  const signableCap = signableOverallCap(save.reputation);
-  const targetLocked = target ? Math.round(target.view.overall) > signableCap : false;
+  const targetLocked = target ? !signableAtRep(target.view.overall, save.reputation) : false;
   const nextWindowStop = windowOpen
     ? null
     : (upcomingStops(save, 12).find((s) => s.kind === "window") ?? null);
@@ -437,37 +440,30 @@ export function MarketScreen() {
             : undefined,
       })
     : null;
-  // ECO-03 (R47): the flow's own plan — slot, leaver, severance and every
-  // refusal come from signingPlanFor, the function signPlayerFlow applies.
-  const leaver = leaverId ? (save.squad.find((p) => p.id === leaverId) ?? null) : null;
-  const planned = target
-    ? signingPlanFor(save, target.view.id, { lengthSeasons: offerLen, releaseId: leaver?.id })
-    : null;
+  // ECO-03 (R47): the flow's own plan — the slot and every refusal come from
+  // signingPlanFor, the function signPlayerFlow applies. rc.33 (UX-07): a full
+  // squad is refused there ("squadFull") — the sheet warns and points to Squad.
+  const planned = target ? signingPlanFor(save, target.view.id, { lengthSeasons: offerLen, offer }) : null;
   const plan = planned && "plan" in planned ? planned.plan : null;
   const planError = planned && "error" in planned ? planned.error : null;
-  // The chosen leaver's severance counts whatever the plan says — a refusal
-  // for funds or the loan lock still shows the numbers behind it.
-  const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
-  const cost = pack ? pack.fee + pack.signingBonus + severance : 0;
+  const cost = pack ? pack.fee + pack.signingBonus : 0;
   const balanceAfter = save.finances.balance - cost;
   const blockReason = !planError
     ? null
     : planError === "squadFull"
-      ? C.market.chooseLeaver(CAREER_CONTRACT.squadCap)
+      ? C.market.squadFullWarn(CAREER_CONTRACT.squadCap)
       : ((C.market.errors as Record<string, string>)[planError] ?? C.market.errors.unknown);
-  // v0.3 wage talk — the live proposal (0 = pay the ask) + hardened count.
-  const askNow = pack?.salaryPerSplit ?? 0;
-  const proposal = offered > 0 ? Math.min(offered, askNow) : askNow;
+  // rc.33 (ECO-10/11): the talk — the engine's one answer to the offer on the table.
+  const talk = target && pack ? signingTalkFor(save, target.view, pack, offer) : null;
   const wageBill = payrollProjection({
     squadSalaries,
     coachSalary,
-    remove: leaver ? [leaver.id] : [],
-    add: [proposal],
+    remove: [],
+    add: [talk?.terms.wagePerSplit ?? 0],
   });
-  const targetRejects = target ? negotiationTriesFor(save, target.view.id) : 0;
   // rc.32 (M4): the Backer's line on this wage bill, and the runway the deal leaves.
   const backerRisk =
-    pack !== null && !blockReason && balanceAfter < backerLineOf(save).floor + pack.salaryPerSplit;
+    pack !== null && !blockReason && balanceAfter < backerLineOf(save).floor + (talk?.terms.wagePerSplit ?? pack.salaryPerSplit);
   const runwayLeft = runwayWeeksAfter({
     balance: save.finances.balance,
     weeklyNet: weeklyStatementOf(save).net,
@@ -599,6 +595,10 @@ export function MarketScreen() {
                   </Chip>
                 ))}
               </div>
+              {/* rc.33 (UX-07): only the players the org's reputation can sign. */}
+              <Chip active={signableOnly} onClick={() => setSignableOnly((v) => !v)} activeClass="border-good/50 bg-good/15 text-good">
+                {C.market.filterSignable}
+              </Chip>
             </div>
           </Panel>
 
@@ -615,7 +615,7 @@ export function MarketScreen() {
                 {visible.slice(0, shown).map((r) => {
                   // v0.3 visible signing gate: over-cap players stay browsable
                   // but read as locked, with the rep that opens the door.
-                  const locked = Math.round(r.view.overall) > signableCap;
+                  const locked = !signableAtRep(r.view.overall, save.reputation);
                   const tile = (
                     <PlayerCardTile
                       key={locked ? undefined : r.view.id}
@@ -629,8 +629,6 @@ export function MarketScreen() {
                       onClick={() => {
                         setTarget(r);
                         setOfferOpen(false);
-                        // ECO-03 (R47): the slot follows the squad; a full squad asks who leaves.
-                        setLeaverId(null);
                         setLen(2);
                       }}
                       footer={
@@ -873,7 +871,6 @@ export function MarketScreen() {
                   </Panel>
                 );
               })}
-              <p className="text-center text-[11px] text-faint">{C.market.declineHint(refusalPct())}</p>
             </>
           )}
           {/* rc.32 (M8, provisional): "List for sale". */}
@@ -894,6 +891,8 @@ export function MarketScreen() {
                 region: target.view.region,
                 band: targetBand ?? { min: 60, max: 99, level: 0 },
                 stats: statsFromView(target.view),
+                // DEV-04 (rc.33): his phase, "?" until a report reveals it.
+                phase: phaseLabelOf(phaseOfView(save, target.view)),
               }
             : null
         }
@@ -953,16 +952,12 @@ export function MarketScreen() {
             </Button>
             <Button
               variant="primary"
-              disabled={Boolean(blockReason)}
+              disabled={Boolean(blockReason) || !talk?.accepted}
               onClick={() => {
                 if (!target) return;
-                signPlayer(target.view.id, {
-                  lengthSeasons: offerLen,
-                  offeredSalary: proposal < askNow ? proposal : undefined,
-                  releaseId: leaver?.id,
-                });
-                // A rejected counter keeps the modal open — the negotiator
-                // re-reads the hardened tries count from the persisted save.
+                signPlayer(target.view.id, { lengthSeasons: offerLen, offer });
+                // A refusal keeps the modal open with the reason (the talk's
+                // answer is shown before this confirm, so it is never a surprise).
                 if (!useCareerStore.getState().lastError) {
                   setOfferOpen(false);
                   setTarget(null);
@@ -978,17 +973,29 @@ export function MarketScreen() {
           <div className="space-y-4">
             <MarketErrorNotice />
 
+            {/* rc.33 (UX-07): a full squad only warns and points to Squad — the
+                signing waits for a free seat (signingPlanFor refuses "squadFull"). */}
+            {squadFull ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-orange/40 bg-orange/[0.06] p-3">
+                <p className="min-w-0 flex-1 text-xs font-semibold text-orange-bright">
+                  {C.market.squadFullWarn(CAREER_CONTRACT.squadCap)}
+                </p>
+                <AppLink
+                  href="/career/squad"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-orange/50 px-3 text-xs font-semibold text-orange-bright hover:bg-orange/10"
+                >
+                  {C.market.toSquad}
+                </AppLink>
+              </div>
+            ) : null}
+
             {/* ECO-03 (R47): the squad slot (never the price) + contract length */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <p className="kicker mb-1.5 text-[10px]">{C.market.slotLabel}</p>
                 {plan ? (
                   <p className="text-xs font-semibold text-ink">
-                    {plan.slot === "reserve"
-                      ? C.market.slotReserve
-                      : plan.leaver && plan.leaver.role === "starter"
-                        ? C.market.slotReplaces(plan.leaver.name)
-                        : C.market.slotStarter}
+                    {plan.slot === "reserve" ? C.market.slotReserve : C.market.slotStarter}
                   </p>
                 ) : null}
                 <p className="mt-1 text-[10px] text-faint">{C.market.samePrice}</p>
@@ -1013,36 +1020,6 @@ export function MarketScreen() {
               </div>
             </div>
 
-            {/* ECO-03 (R47): a full squad asks who leaves — nothing moves silently */}
-            {squadFull ? (
-              <div className="rounded-lg border border-orange/40 bg-orange/[0.06] p-3">
-                <p className="text-xs font-semibold text-orange-bright">
-                  {C.market.chooseLeaver(CAREER_CONTRACT.squadCap)}
-                </p>
-                <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                  {save.squad.map((p) => (
-                    <Chip
-                      key={p.id}
-                      active={leaverId === p.id}
-                      onClick={() => setLeaverId(leaverId === p.id ? null : p.id)}
-                      activeClass="border-orange/60 bg-orange/15 text-orange-bright"
-                      className="w-full justify-between normal-case tracking-normal"
-                    >
-                      <span className="min-w-0 truncate">
-                        {p.name} · {Math.round(p.overall)} ·{" "}
-                        {p.role === "starter" ? C.market.starter : C.market.sub}
-                      </span>
-                      <span className="shrink-0 text-faint">
-                        {C.market.leaverSeverance(
-                          formatMoney(severanceFor(p, save.clock.seasonIndex), { compact: true }),
-                        )}
-                      </span>
-                    </Chip>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
             {/* Asking terms */}
             <div className="rounded-lg border border-line-strong bg-white/[0.03] p-3">
               <p className="kicker mb-2 text-[10px]">{C.market.ask}</p>
@@ -1053,6 +1030,13 @@ export function MarketScreen() {
                     {C.squad.perWeek(formatMoney(weeklyWage(pack.salaryPerSplit)))}
                   </span>
                 </div>
+                {/* rc.33 (ECO-10): the prize share he asks. */}
+                {talk ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sub">{C.player.prizeShare}</span>
+                    <span className="display font-bold text-ink">{C.player.prizeSharePct(talk.ask.sharePct)}</span>
+                  </div>
+                ) : null}
                 {target.orgRef ? (
                   <div className="flex items-center justify-between">
                     <span className="text-sub">{C.market.fee}</span>
@@ -1071,14 +1055,8 @@ export function MarketScreen() {
               </div>
             </div>
 
-            {/* v0.3 wage talk — counter below the ask, honest odds shown */}
-            <SalaryNegotiator
-              ask={askNow}
-              offered={proposal}
-              onChange={setOffered}
-              rejects={targetRejects}
-              disabled={Boolean(blockReason)}
-            />
+            {/* rc.33 (ECO-10/11): the contract talk — wage + prize share, the zone, the answer */}
+            {talk && !squadFull ? <SalaryNegotiator talk={talk} onChange={setOffer} /> : null}
 
             {/* Why this price — the wage effects carry their unit (per split:
                 converted to the weekly line they would not add up after its
@@ -1128,11 +1106,6 @@ export function MarketScreen() {
               <p className={cx("font-semibold", balanceAfter < 0 ? "text-bad" : "text-ink")}>
                 {C.market.balanceAfter(formatMoney(balanceAfter))}
               </p>
-              {severance > 0 && leaver ? (
-                <p className="mt-0.5 text-xs text-sub">
-                  {leaver.name} · {C.market.leaverSeverance(formatMoney(severance))}
-                </p>
-              ) : null}
               <p className="mt-0.5 font-semibold text-ink">
                 {C.market.payrollWeek(formatMoney(wageBill.now), formatMoney(wageBill.after))}
               </p>

@@ -15,6 +15,7 @@ import { StatBar } from "@/components/ui/ProgressBar";
 import { CountryChip } from "@/components/ui/Badge";
 import { weeklyWage } from "@/engine/career/economy";
 import { formatMoney } from "@/lib/format";
+import { cx } from "@/lib/util";
 import type { ArchetypeId, PotentialBand } from "@/engine/career/types";
 import type { Stats } from "@/engine/types";
 
@@ -30,7 +31,10 @@ export interface PlayerSheetData {
   /** Squad-only. */
   wage?: number;
   contractLabel?: string;
-  phase?: "growing" | "prime" | "declining";
+  /** rc.33 (ECO-10): the contract's prize share, as a label (squad-only). */
+  shareLabel?: string;
+  /** DEV-04 (rc.33): his phase — "unknown" until a report reveals it (squad and market). */
+  phase?: "growing" | "prime" | "declining" | "unknown";
   focusLabel?: string;
 }
 
@@ -77,7 +81,13 @@ export function PlayerSheet({
             </span>
           ) : null}
           {data.phase ? (
-            <span className="rounded bg-blue/10 px-2 py-0.5 font-semibold text-cyan">
+            <span
+              className={cx(
+                "rounded px-2 py-0.5 font-semibold",
+                data.phase === "unknown" ? "bg-white/6 text-faint" : "bg-blue/10 text-cyan",
+              )}
+              title={data.phase === "unknown" ? C.player.phaseUnknownHint : undefined}
+            >
               {C.player.phase[data.phase]}
             </span>
           ) : null}
@@ -139,6 +149,12 @@ export function PlayerSheet({
               <div>
                 <p className="kicker text-[10px]">{C.player.contract}</p>
                 <p className="font-semibold text-ink">{data.contractLabel}</p>
+              </div>
+            ) : null}
+            {data.shareLabel ? (
+              <div>
+                <p className="kicker text-[10px]">{C.player.prizeShare}</p>
+                <p className="font-semibold text-ink">{data.shareLabel}</p>
               </div>
             ) : null}
             {data.focusLabel ? (

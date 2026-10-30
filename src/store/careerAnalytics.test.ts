@@ -12,7 +12,7 @@
  */
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { DAYS_PER_SEASON, firstDayOfWeek } from "@/engine/career/calendar";
-import { growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, exactAgeOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
 import { signableOverallCap } from "@/engine/career/economy";
 import type { CareerPlayerView, CareerSave, MailItem, SponsorState, TransferOffer } from "@/engine/career/types";
 import {
@@ -251,8 +251,12 @@ describe("career action events", () => {
     const [t] = named(out, "career_transfer");
     expect(out).toHaveLength(1);
     const signed = res.save.squad.find((p) => p.id === target.id)!;
-    // The band the screens show (careerUi.potBandOfSquad): the save's development model (rc.32 review).
-    const band = scoutedBand(signed.potential, signed.overall, signed.scoutLevel, save.careerSeed, signed.id, growthModelOf(save.world));
+    // The band the screens show (careerUi.potBandOfSquad): the save's development model (rc.32 review),
+    // rc.33 (DEV-04): capped by the age clock, an older career's reports kept inside rc.32's band.
+    const band = scoutedBand(signed.potential, signed.overall, signed.scoutLevel, save.careerSeed, signed.id, growthModelOf(save.world), {
+      arc: { peakAge: signed.peakAge, exactAge: exactAgeOf(ageOf(signed.birthYear, 0), res.save.clock.day) },
+      rc32Reports: res.save.bandModel === undefined,
+    });
     const fee = res.save.transferLog.find((x) => x.kind === "userIn" && x.playerId === target.id)!.fee;
     expect(t.props).toMatchObject({
       kind: "sign",
@@ -380,7 +384,10 @@ describe("career action events", () => {
     expect(res.error).toBeUndefined();
     const [r] = named(careerEventsFor(save, res.save, { kind: "scout", playerId: fa.id }), "career_scout_report");
     const level = Number(res.save.scouted[fa.id]);
-    const band = scoutedBand(fa.potential, fa.overall, level as 0 | 1 | 2 | 3, save.careerSeed, fa.id, growthModelOf(save.world));
+    const band = scoutedBand(fa.potential, fa.overall, level as 0 | 1 | 2 | 3, save.careerSeed, fa.id, growthModelOf(save.world), {
+      arc: { peakAge: fa.peakAge, exactAge: exactAgeOf(fa.age, res.save.clock.day) },
+      rc32Reports: res.save.bandModel === undefined,
+    });
     expect(r.props).toMatchObject({
       level,
       age: fa.age,

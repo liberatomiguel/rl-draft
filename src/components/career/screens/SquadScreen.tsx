@@ -25,13 +25,15 @@ import { payrollProjection, severanceFor } from "@/engine/career/economy";
 import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { negotiationTriesFor } from "@/store/careerFlow";
+import type { ContractOffer } from "@/engine/career/contract";
+import { renewalTalkFor } from "@/store/careerFlow";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import {
   agePhase,
   clockLabel,
   potBandOfSquad,
+  prizeShareLabelOf,
   seasonLabelFor,
   squadAge,
   statsOfSquad,
@@ -80,8 +82,8 @@ export function SquadScreen() {
   const [release, setRelease] = useState<SquadPlayer | null>(null);
   const [renew, setRenew] = useState<SquadPlayer | null>(null);
   const [renewLen, setRenewLen] = useState<1 | 2 | 3>(2);
-  /** v0.3 wage talk — the counter-offer on the table (== ask when not countering). */
-  const [renewOffer, setRenewOffer] = useState(0);
+  /** rc.33 (ECO-10/11): the renewal offer on the table — weekly wage + prize share (empty = his ask). */
+  const [renewOffer, setRenewOffer] = useState<ContractOffer>({});
 
   const team = useMemo(() => (save ? userTeamPreview(save) : null), [save]);
 
@@ -146,6 +148,7 @@ export function SquadScreen() {
       stats: statsOfSquad(p),
       wage: p.salaryPerSplit,
       contractLabel: seasonLabelFor(p.contractEndSeason),
+      shareLabel: prizeShareLabelOf(C, p),
       phase: agePhase(save, p),
       focusLabel:
         p.trainingFocus === "auto" || p.trainingFocus === "balanced"
@@ -158,10 +161,8 @@ export function SquadScreen() {
   // rc.32 (M2, provisional): the raise cap and the market floor, readout below.
   const askFor = (p: SquadPlayer, lengthSeasons: 1 | 2 | 3): number => renewalTermsOf(save, p, lengthSeasons).ask;
 
-  // v0.3 wage talk — fresh ask + this window's rejected counters (both re-read
-  // from the live save so a rejection refreshes the widget in place).
-  const renewAsk = renew ? askFor(renew, renewLen) : 0;
-  const renewRejects = renew ? negotiationTriesFor(save, renew.id) : 0;
+  // rc.33 (ECO-10/11): the talk renewPlayerFlow answers with — wage + prize share.
+  const renewTalk = renew ? renewalTalkFor(save, renew, renewLen, renewOffer) : null;
   const closeRenew = () => {
     setRenew(null);
     clearError();
@@ -176,7 +177,7 @@ export function SquadScreen() {
         squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
         coachSalary: save.coach?.salaryPerSplit ?? null,
         remove: [renew.id],
-        add: [Math.min(renewOffer || renewAsk, renewAsk)],
+        add: [renewTalk?.terms.wagePerSplit ?? renew.salaryPerSplit],
       })
     : null;
 
@@ -460,6 +461,8 @@ export function SquadScreen() {
                     {Math.round(p.overall)} {C.common.ovr} · {C.player.age(squadAge(save, p))} ·{" "}
                     {C.squad.expires(seasonLabelFor(p.contractEndSeason))}
                   </div>
+                  {/* rc.33 (ECO-10): the prize share this contract carries. */}
+                  <div className="mt-0.5 text-[11px] text-faint">{prizeShareLabelOf(C, p)}</div>
                 </div>
                 <span className="text-xs text-sub">
                   {wageLabel(C, p.salaryPerSplit)}
@@ -473,7 +476,7 @@ export function SquadScreen() {
                     variant="secondary"
                     onClick={() => {
                       setRenewLen(2);
-                      setRenewOffer(askFor(p, 2));
+                      setRenewOffer({});
                       setRenew(p);
                     }}
                   >
@@ -540,15 +543,12 @@ export function SquadScreen() {
             </Button>
             <Button
               variant="primary"
+              disabled={!renewTalk?.accepted}
               onClick={() => {
                 if (!renew) return;
-                renewPlayer(
-                  renew.id,
-                  renewLen,
-                  renewOffer < renewAsk ? renewOffer : undefined,
-                );
-                // A rejected counter keeps the modal open — the widget re-reads
-                // the hardened tries count from the persisted save.
+                renewPlayer(renew.id, renewLen, renewOffer);
+                // A refusal keeps the modal open with the reason (the talk's
+                // answer is shown before this confirm, so it is never a surprise).
                 if (!useCareerStore.getState().lastError) closeRenew();
               }}
             >
@@ -574,7 +574,7 @@ export function SquadScreen() {
                     type="button"
                     onClick={() => {
                       setRenewLen(len);
-                      setRenewOffer(askFor(renew, len));
+                      setRenewOffer({});
                     }}
                     className={cx(
                       "rounded-lg border p-2.5 text-center transition-colors",
@@ -599,18 +599,21 @@ export function SquadScreen() {
               </div>
             </div>
             <RenewalReadout terms={renewalTermsOf(save, renew, renewLen)} C={C} save={save} player={renew} />
-            <SalaryNegotiator
-              ask={renewAsk}
-              offered={Math.min(renewOffer || renewAsk, renewAsk)}
-              onChange={setRenewOffer}
-              rejects={renewRejects}
-            />
+            {renewTalk ? <SalaryNegotiator talk={renewTalk} onChange={setRenewOffer} /> : null}
             <div className="rounded-lg border border-line bg-white/[0.02] p-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sub">{C.squad.wage}</span>
                 <span className="font-semibold text-ink">
                   {wageLabel(C, renew.salaryPerSplit, false)} →{" "}
-                  {wageLabel(C, Math.min(renewOffer || renewAsk, renewAsk), false)}
+                  {wageLabel(C, renewTalk?.terms.wagePerSplit ?? renew.salaryPerSplit, false)}
+                </span>
+              </div>
+              {/* rc.33 (ECO-10): the prize share — today's deal → the renewal's. */}
+              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2">
+                <span className="text-sub">{C.player.prizeShare}</span>
+                <span className="text-right font-semibold text-ink">
+                  {prizeShareLabelOf(C, renew)} →{" "}
+                  {renewTalk ? C.player.prizeSharePct(renewTalk.terms.sharePct) : "—"}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center justify-between">

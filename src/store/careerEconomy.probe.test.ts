@@ -50,7 +50,7 @@ import type { FlowResult } from "./careerFlow";
 
 type TapEvent =
   | { kind: "create" | "pre" | "day" | "event" | "seasonEnd" | "rollover"; save: CareerSave }
-  | { kind: "renew"; save: CareerSave; playerId: string; offered: number | undefined; res: FlowResult }
+  | { kind: "renew"; save: CareerSave; playerId: string; ask: number | undefined; res: FlowResult }
   | { kind: "sign"; save: CareerSave; playerId: string; res: FlowResult };
 
 const hub = vi.hoisted(() => ({ tap: null as null | ((e: TapEvent) => void) }));
@@ -84,7 +84,11 @@ vi.mock("./careerFlow", async (importOriginal) => {
     },
     renewPlayerFlow: (...args: Parameters<typeof real.renewPlayerFlow>) => {
       const res = real.renewPlayerFlow(...args);
-      emit({ kind: "renew", save: args[0], playerId: args[1], offered: args[3], res });
+      // rc.33 (ECO-11): the renewal's ask, read off the talk the flow answers
+      // with (the bot's "selective" policy signs at the zone's floor).
+      const player = args[0].squad.find((p) => p.id === args[1]);
+      const ask = player ? real.renewalTalkFor(args[0], player, args[2]).ask.wagePerSplit : undefined;
+      emit({ kind: "renew", save: args[0], playerId: args[1], ask, res });
       return res;
     },
     signPlayerFlow: (...args: Parameters<typeof real.signPlayerFlow>) => {
@@ -131,6 +135,7 @@ const p3 = (xs: number[], f: (n: number) => string = money) =>
 async function curvesReport(): Promise<string> {
   const B = await import("@/config/balance");
   const E = await import("@/engine/career/economy");
+  const K = await import("@/engine/career/contract");
   const W = B.CAREER_PAYROLL.weeksPerSeason;
   const S = B.CAREER_PAYROLL.splitsPerSeason;
   const seasons = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -413,14 +418,17 @@ async function curvesReport(): Promise<string> {
   ];
   head(["Season money", ...seasons.map((s) => `S${s}`)]);
   for (const p of profiles) row([`Prizes — ${p.name}`, ...seasons.map((s) => money(p.f(s)))]);
-  // rc.32 (M6 lever 2): what the org keeps of the two podium profiles after the players' share.
+  // What the org keeps of the two podium profiles after the players' share — rc.33
+  // (ECO-10): each contract's own share, here three 85s at the share they ask.
+  const share85 = K.prizeShareAskFor({ overall: 85, age: 20 });
+  const squad85 = [share85, share85, share85].map((prizeSharePct) => ({ prizeSharePct }));
   const net = (tier: Parameters<typeof E.prizeFor>[0], pl: Parameters<typeof E.prizeFor>[1], s: number) =>
-    pz(tier, pl, s) - E.playerShareFor(tier, pl, pz(tier, pl, s));
+    pz(tier, pl, s) - K.prizeShareOfPodium(squad85, tier, pl, pz(tier, pl, s));
   const netProfiles: { name: string; f: (s: number) => number }[] = [
     { name: "contender", f: (s) => 9 * net("regional", "third", s) + 3 * net("major", "top6", s) + net("worlds", "top8", s) },
     { name: "dominant", f: (s) => 9 * net("regional", "champion", s) + 3 * net("major", "champion", s) + net("worlds", "champion", s) },
   ];
-  for (const p of netProfiles) row([`Prizes kept (after the players' share) — ${p.name}`, ...seasons.map((s) => money(p.f(s)))]);
+  for (const p of netProfiles) row([`Prizes kept (after three 85s' ${share85} % shares) — ${p.name}`, ...seasons.map((s) => money(p.f(s)))]);
   for (const o of [75, 80, 85, 90]) row([`Wages — 3 × ${o}`, ...seasons.map((s) => money(3 * S * ask({ overall: o, seasonIndex: s })))]);
   row([
     "Dominant prizes kept ÷ 3 × 85 wages (e2)",
@@ -908,7 +916,7 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       if (!c) return;
       if (e.kind === "renew") {
         const key = `${e.save.clock.seasonIndex}:${e.playerId}`;
-        if (e.offered !== undefined || e.res.error || renewSeen.has(key)) return;
+        if (e.ask === undefined || e.res.error || renewSeen.has(key)) return;
         renewSeen.add(key);
         const before = e.save.squad.find((p) => p.id === e.playerId);
         const after = e.res.save.squad.find((p) => p.id === e.playerId);
@@ -931,7 +939,7 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
           overall: before.overall,
           gained,
           prevWage: before.salaryPerSplit,
-          ask: after.salaryPerSplit,
+          ask: e.ask,
           guaranteedPerSplit: guaranteedPerSplit(e.save),
           kept: null,
         };

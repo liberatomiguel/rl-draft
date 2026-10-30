@@ -18,7 +18,8 @@
  * development model straight from the engine, no career needed: rookie
  * classes (age, potential, by era), the season-0 fillers, real players'
  * potential against their special cards, where the truth sits inside a
- * scouting band, and the world's growth curve by age over nine seasons.
+ * scouting band (rc.33: DEV-04's band against rc.32's, same players), and the
+ * world's growth curve by age over nine seasons.
  */
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -30,7 +31,10 @@ import {
   bestEligibleSpecialOverall,
   derivePotential,
   derivePotentialV2,
+  developmentProfileOf,
+  exactAgeOf,
   isGrowthContract,
+  nestedBand,
   playerViewById,
   rookieView,
   scoutedBand,
@@ -538,6 +542,51 @@ function curvesReport(seeds: number): string {
       const ab = [...above].sort((a, b) => a - b);
       lines.push(
         `| ${level} | ${label} | ${pos.length} | ${(pos.reduce((a, b) => a + b, 0) / Math.max(1, pos.length)).toFixed(2)} | ${share(pos.filter((x) => x <= 0.15).length, pos.length)} | ${share(pos.filter((x) => x >= 0.85).length, pos.length)} | ${ab.length ? ab[Math.floor(ab.length / 2)].toFixed(1) : "–"} |`,
+      );
+    }
+  }
+  lines.push("");
+
+  // 4b. DEV-04 (rc.33): rc.32's band against the band shown now, on the same players
+  // (mid-season, the market's view: the age clock's cap included).
+  lines.push("### Scouting bands (DEV-04) — rc.32's band vs rc.33's (a new career, and an rc.32 career whose reports only narrow), same players (season 0, mid-season)");
+  lines.push("");
+  lines.push(
+    "| Report level | band | players | width p50 / max | top − truth p50 / p90 / max | reads 99 with potential ≤ 93 | past his plateau: top over his overall |",
+  );
+  lines.push("|---|---|---|---|---|---|---|");
+  const DAY = 80;
+  const seeded: { v: CareerPlayerView; seed: number }[] = [];
+  for (let k = 0; k < Math.min(seeds, 12); k++)
+    for (const v of worldViews(buildWorldAtCreation(seedOf(k)), 0, seedOf(k))) seeded.push({ v, seed: seedOf(k) });
+  for (const level of [0, 1, 2] as ScoutLevel[]) {
+    for (const which of ["rc.32", "rc.33 new career", "rc.33 rc.32 career"] as const) {
+      const widths: number[] = [];
+      const over: number[] = [];
+      let at99 = 0;
+      let past = 0;
+      let pastOver = 0;
+      for (const { v, seed } of seeded) {
+        const truth = Math.round(v.potential);
+        const exactAge = exactAgeOf(v.age, DAY);
+        const band =
+          which === "rc.32"
+            ? nestedBand(v.potential, level, seed, v.id)
+            : scoutedBand(v.potential, v.overall, level, seed, v.id, model, {
+                arc: { peakAge: v.peakAge, exactAge },
+                rc32Reports: which === "rc.33 rc.32 career",
+              });
+        widths.push(band.max - band.min);
+        over.push(band.max - truth);
+        if (band.max === 99 && truth <= 93) at99 += 1;
+        if (exactAge >= v.peakAge + developmentProfileOf(v.id, seed).plateauYears) {
+          past += 1;
+          if (band.max > Math.round(v.overall)) pastOver += 1;
+        }
+      }
+      const q = (xs: number[], p: number) => [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(xs.length * p))];
+      lines.push(
+        `| ${level} | ${which} | ${seeded.length} | ${q(widths, 0.5)} / ${Math.max(...widths)} | ${q(over, 0.5)} / ${q(over, 0.9)} / ${Math.max(...over)} | ${share(at99, seeded.length)} | ${share(pastOver, past)} of ${past} |`,
       );
     }
   }

@@ -33,7 +33,6 @@ import {
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
-  CAREER_NEGOTIATION,
   CAREER_PAYROLL,
   CAREER_QUALIFIER,
   CAREER_REP,
@@ -141,11 +140,9 @@ import {
   loanBreachesOf,
   marketValueFor,
   mondaysToBreach,
-  negotiationAccepts,
   payBankLoanDown,
   payLoanDown,
   payrollProjection,
-  playerShareFor,
   pushLedger,
   quantize,
   repGainFor,
@@ -155,7 +152,6 @@ import {
   runwayWeeks,
   scoutReportCostFor,
   severanceFor,
-  signableOverallCap,
   sponsorOffersFor,
   t3RepKeyFor,
   takeBankLoan,
@@ -180,6 +176,17 @@ import {
   type AskPackage,
 } from "@/engine/career/market";
 import { renewalTermsFor } from "@/engine/career/renewal";
+// rc.33 (ECO-10/11): the contract's prize share and the wage talk.
+import {
+  contractMinWageFor,
+  negotiationAnswerFor,
+  negotiationFlexFor,
+  prizeShareAskFor,
+  prizeShareOfPodium,
+  type ContractOffer,
+  type NegotiationAnswer,
+} from "@/engine/career/contract";
+import { signableAtRep } from "@/engine/career/market";
 import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
@@ -2347,7 +2354,8 @@ export function finishEvent(input: CareerSave): CareerSave {
   const placement = result.userPlacement ?? placementOf(ev.tournament, "user");
   const userRow = result.rows.find((r) => r.ref === "user");
 
-  // Prize (+ rc.32 the players' share of a podium, M6 provisional; + Backer garnish).
+  // Prize (+ the players' share of a podium — rc.33 ECO-10: each contract's
+  // own share for the players who played; + Backer garnish).
   if (userRow && userRow.prize > 0) {
     const { fin } = applyPrize(save.finances, userRow.prize, {
       seasonIndex: save.clock.seasonIndex,
@@ -2355,7 +2363,7 @@ export function finishEvent(input: CareerSave): CareerSave {
       day: save.clock.day,
       refName: def.name,
       difficulty: save.difficulty,
-      playerShare: playerShareFor(def.tier, placement, userRow.prize),
+      playerShare: eventPlayerShareFor(save, ev, placement, userRow.prize),
     });
     save.finances = fin;
     save.stats.totalPrize += userRow.prize;
@@ -2525,6 +2533,26 @@ function underdogGapOf(t: TournamentState): number {
   if (!user || others.length === 0) return 0;
   const avg = others.reduce((n, tm) => n + tm.rating.avgPlayerOverall, 0) / others.length;
   return Math.round((avg - user.rating.avgPlayerOverall) * 10) / 10;
+}
+
+/**
+ * rc.33 (ECO-10): the players' share of this event's prize — each player who
+ * played keeps his contract's share of a podium prize
+ * (`contract.prizeShareOfPodium`; a deal signed before rc.33 reads the rc.32
+ * rule). finishEvent books it and the event digest shows it, from this one
+ * function.
+ */
+export function eventPlayerShareFor(
+  save: CareerSave,
+  ev: NonNullable<CareerSave["activeEvent"]>,
+  placement: Placement,
+  prize: number,
+): number {
+  const fielded = ev.fieldedIds ?? fieldedIdsFor(save);
+  const contracts = fielded
+    .map((id) => save.squad.find((p) => p.id === id))
+    .filter((p): p is SquadPlayer => p !== undefined);
+  return prizeShareOfPodium(contracts, ev.def.tier, placement, prize);
 }
 
 /** The lineup as it stands now — the fallback for events started before `fieldedIds` existed. */
@@ -2923,6 +2951,8 @@ function squadFromOffer(
       careerSeed,
       playerId: view.id,
     }),
+    // rc.33 (ECO-10): the founders' deals carry the share each one asks.
+    prizeSharePct: prizeShareAskFor(view),
     contractEndSeason: 1,
     trainingFocus: "auto" as const,
     trainingIntensity: "normal" as const,
@@ -2992,6 +3022,8 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     scrimLog: [],
     transferLog: [],
     negotiationTries: {},
+    // rc.33 (DEV-04): a new career reads the honest band from day one.
+    bandModel: 2,
     bidsThisWindow: 0,
     lastBidDay: -99,
     pendingOffers: [],
@@ -3170,48 +3202,70 @@ function removePlayerFromWorld(save: CareerSave, playerId: string): void {
   save.world.version += 1;
 }
 
-/** The negotiation bookkeeping key for this player in the current window. */
-function negotiationKeyFor(save: CareerSave, playerId: string): string {
+/** ECO-11 (rc.33): the bucket a player's flexibility is fixed for — this transfer window, else this split. */
+function talkWindowKeyOf(save: CareerSave): string {
   const week = weekOfDay(save.clock.day);
-  const bucket = windowIndexOf(week) !== null ? `w${windowIndexOf(week)}` : `s${splitOfWeek(week) ?? 0}`;
-  return `${playerId}:${save.clock.seasonIndex}:${bucket}`;
-}
-
-export function negotiationTriesFor(save: CareerSave, playerId: string): number {
-  return save.negotiationTries?.[negotiationKeyFor(save, playerId)] ?? 0;
+  const w = windowIndexOf(week);
+  return w !== null ? `w${w}` : `s${splitOfWeek(week) ?? 0}`;
 }
 
 /**
- * v0.3 negotiation resolution shared by sign + renew: `offered` below the ask
- * consults the hidden reserve. Returns the salary to write, or an error key —
- * and on rejection the tries counter is persisted on the DRAFT save (the
- * caller returns it so the player visibly hardens).
+ * rc.33 (ECO-10 + ECO-11): the talk for any contract — his ask (the wage
+ * the market or the renewal rule prices, and the prize share he asks)
+ * against the offer, answered by the engine (`contract.negotiationAnswerFor`)
+ * with his flexibility this window. The offer sheet, the renewal sheet and
+ * both flows read this one function, so a screen always shows the deal a
+ * confirm writes. Replaces v0.3's hidden reserve: nothing is stored, so
+ * nothing hardens and a reload changes nothing (`negotiationTries` is no
+ * longer written).
  */
-function resolveSalaryOffer(
+export function contractTalkFor(
   save: CareerSave,
-  playerId: string,
-  ask: number,
-  offered: number | undefined,
-): { salary: number } | { error: string } {
-  if (offered === undefined || offered >= ask) return { salary: ask };
-  if (offered < quantize(ask * CAREER_NEGOTIATION.minOfferFactor)) return { error: "lowball" };
-  const key = negotiationKeyFor(save, playerId);
-  const tries = save.negotiationTries[key] ?? 0;
-  const week = weekOfDay(save.clock.day);
-  const accepted = negotiationAccepts({
-    careerSeed: save.careerSeed,
-    playerId,
-    seasonIndex: save.clock.seasonIndex,
-    windowKey: windowIndexOf(week) !== null ? `w${windowIndexOf(week)}` : `s${splitOfWeek(week) ?? 0}`,
-    offered,
-    ask,
-    rejects: tries,
+  input: { playerId: string; askWagePerSplit: number; askSharePct: number; offer?: ContractOffer },
+): NegotiationAnswer {
+  return negotiationAnswerFor({
+    ask: { wagePerSplit: input.askWagePerSplit, sharePct: input.askSharePct },
+    flex: negotiationFlexFor(save.careerSeed, input.playerId, save.clock.seasonIndex, talkWindowKeyOf(save)),
+    offer: input.offer,
+    minWagePerSplit: contractMinWageFor(save.clock.seasonIndex),
   });
-  if (!accepted) {
-    save.negotiationTries[key] = tries + 1;
-    return { error: tries + 1 >= CAREER_NEGOTIATION.maxRejects ? "negotiationLocked" : "negotiationRejected" };
-  }
-  return { salary: offered };
+}
+
+/** ECO-10/11: the talk on a signing — the ask package's wage and the share he asks. */
+export function signingTalkFor(
+  save: CareerSave,
+  view: Pick<CareerPlayerView, "id" | "overall" | "age">,
+  pack: Pick<AskPackage, "salaryPerSplit">,
+  offer?: ContractOffer,
+): NegotiationAnswer {
+  return contractTalkFor(save, {
+    playerId: view.id,
+    askWagePerSplit: pack.salaryPerSplit,
+    askSharePct: prizeShareAskFor(view),
+    offer,
+  });
+}
+
+/** ECO-10/11: the talk on a renewal — the M2 ask (`renewalTermsFor`) and the share he asks today. */
+export function renewalTalkFor(
+  save: CareerSave,
+  player: SquadPlayer,
+  lengthSeasons: 1 | 2 | 3,
+  offer?: ContractOffer,
+): NegotiationAnswer {
+  const terms = renewalTermsFor(player, {
+    rep: save.reputation,
+    seasonIndex: save.clock.seasonIndex,
+    difficulty: save.difficulty,
+    careerSeed: save.careerSeed,
+    lengthSeasons,
+  });
+  return contractTalkFor(save, {
+    playerId: player.id,
+    askWagePerSplit: terms.ask,
+    askSharePct: prizeShareAskFor({ overall: player.overall, age: ageOf(player.birthYear, save.clock.seasonIndex) }),
+    offer,
+  });
 }
 
 /**
@@ -3246,12 +3300,23 @@ export interface SigningPlan {
   lengthSeasons: 1 | 2 | 3;
   /** rc.32 (M8): outside a window — the late signing a window sale opened (a free agent only). */
   lateSigning: boolean;
+  /**
+   * rc.33 (ECO-10/11): the talk on this deal — his ask, the zone and the
+   * answer to the offer (`signingTalkFor`). The flow writes `talk.terms`
+   * only when `talk.accepted`; the payroll checks read its wage.
+   */
+  talk: NegotiationAnswer;
 }
 
 export function signingPlanFor(
   save: CareerSave,
   playerId: string,
-  opts: { lengthSeasons: 1 | 2 | 3; releaseId?: string },
+  opts: {
+    lengthSeasons: 1 | 2 | 3;
+    releaseId?: string;
+    /** rc.33 (ECO-11): the weekly wage and prize share offered (omitted = his ask). */
+    offer?: ContractOffer;
+  },
 ): { plan: SigningPlan } | { error: string } {
   if (save.activeEvent) return { error: "rosterLocked" }; // rc.30: roster moves wait for the event
   const outsideWindow = !isWindowWeek(weekOfDay(save.clock.day));
@@ -3281,8 +3346,9 @@ export function signingPlanFor(
   // DEV-02 (R48): signable (and so playable) from the minimum competitive age, 13.
   if (!isCompetitiveAge(view.age)) return { error: "tooYoung" };
 
-  // v0.3 visible signing gate: new signings accept only up to the rep cap.
-  if (Math.round(view.overall) > signableOverallCap(save.reputation)) return { error: "repGate" };
+  // v0.3 visible signing gate: new signings accept only up to the rep cap
+  // (rc.33 UX-07: the one rule the Market's "signable at my reputation" filter reads).
+  if (!signableAtRep(view.overall, save.reputation)) return { error: "repGate" };
 
   // ECO-03 (R47): a full squad asks who leaves — never a silent release or demotion.
   if (save.squad.length - (leaver ? 1 : 0) >= CAREER_CONTRACT.squadCap) return { error: "squadFull" };
@@ -3303,6 +3369,8 @@ export function signingPlanFor(
       ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
       : undefined,
   });
+  // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
+  const talk = signingTalkFor(save, view, pack, opts.offer);
   const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   const cost = pack.fee + pack.signingBonus + severance;
   // RTW-05 (rc.33): a free agent into an empty seat is never refused for money
@@ -3318,7 +3386,7 @@ export function signingPlanFor(
     squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
     coachSalary: save.coach?.salaryPerSplit ?? null,
     remove: leaver ? [leaver.id] : [],
-    add: [pack.salaryPerSplit],
+    add: [talk.terms.wagePerSplit],
   });
   if (!fillsEmptySeat && backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
 
@@ -3336,6 +3404,7 @@ export function signingPlanFor(
       finalSeason,
       lengthSeasons,
       lateSigning,
+      talk,
     },
   };
 }
@@ -3381,22 +3450,23 @@ export function signPlayerFlow(
      */
     role?: "starter" | "sub";
     lengthSeasons: 1 | 2 | 3;
-    /** v0.3 negotiation: counter-offer below the ask (omit = pay the ask). */
-    offeredSalary?: number;
+    /**
+     * rc.33 (ECO-10/11): the weekly wage and prize share offered (omit = his
+     * ask). Under his floor nothing moves and the flow answers
+     * "negotiationCounter" — the sheet shows his counter before any confirm.
+     */
+    offer?: ContractOffer;
     /** ECO-03 (R47): with a full squad, who leaves (released, severance paid) in the same operation. */
     releaseId?: string;
   },
 ): FlowResult {
   const planned = signingPlanFor(input, playerId, opts);
   if ("error" in planned) return { save: input, error: planned.error };
-  const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons, lateSigning } = planned.plan;
+  const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons, lateSigning, talk } = planned.plan;
+  // rc.33 (ECO-11): the talk's answer is the deal — under his floor, nothing moves.
+  if (!talk.accepted) return { save: input, error: "negotiationCounter" };
   const save = clone(input);
-
-  // v0.3 negotiation: a counter-offer may sign cheaper — or harden the agent.
-  // A rejection keeps only the hardened counter: no money and no slot moves.
-  const negotiated = resolveSalaryOffer(save, playerId, pack.salaryPerSplit, opts.offeredSalary);
-  if ("error" in negotiated) return { save: capNews(save), error: negotiated.error };
-  const finalSalary = negotiated.salary;
+  const finalSalary = talk.terms.wagePerSplit;
 
   // ECO-03 (R47): from here everything moves together — the leaver and his
   // severance, the fee, the bonus, the wage and the slot.
@@ -3449,6 +3519,8 @@ export function signPlayerFlow(
     declineRate: view.declineRate,
     role: slot === "starter" ? "starter" : "sub",
     salaryPerSplit: finalSalary,
+    // rc.33 (ECO-10): the share of a podium prize this deal lets him keep.
+    prizeSharePct: talk.terms.sharePct,
     contractEndSeason: save.clock.seasonIndex + lengthSeasons,
     trainingFocus: "auto",
     trainingIntensity: "normal",
@@ -3506,27 +3578,24 @@ export function renewPlayerFlow(
   input: CareerSave,
   playerId: string,
   lengthSeasons: 1 | 2 | 3,
-  /** v0.3 negotiation: counter-offer below the fresh ask (omit = pay it). */
-  offeredSalary?: number,
+  /** rc.33 (ECO-10/11): the weekly wage and prize share offered (omit = his ask). */
+  offer?: ContractOffer,
 ): FlowResult {
-  const save = clone(input);
-  const player = save.squad.find((p) => p.id === playerId);
-  if (!player) return { save: input, error: "unknown" };
+  const current = input.squad.find((p) => p.id === playerId);
+  if (!current) return { save: input, error: "unknown" };
   // ECO-03 (R47): a reserve renews at his normal value, like a starter — and
   // an old save's cheap sub contract reprices here, never retroactively.
   // rc.32 (M2, PROVISIONAL 30/10): the raise cap and the market floor
   // (CAREER_SALARY.renewalRule) spread that repricing, and a developed
   // player's, over renewals; ambition and a refused Blockbuster stay on top.
-  const ask = renewalTermsFor(player, {
-    rep: save.reputation,
-    seasonIndex: save.clock.seasonIndex,
-    difficulty: save.difficulty,
-    careerSeed: save.careerSeed,
-    lengthSeasons,
-  }).ask;
-  const negotiated = resolveSalaryOffer(save, playerId, ask, offeredSalary);
-  if ("error" in negotiated) return { save, error: negotiated.error };
-  player.salaryPerSplit = negotiated.salary;
+  // rc.33 (ECO-10/11): the talk on that ask — the wage and the prize share,
+  // one answer; under his floor nothing moves.
+  const talk = renewalTalkFor(input, current, lengthSeasons, offer);
+  if (!talk.accepted) return { save: input, error: "negotiationCounter" };
+  const save = clone(input);
+  const player = save.squad.find((p) => p.id === playerId)!;
+  player.salaryPerSplit = talk.terms.wagePerSplit;
+  player.prizeSharePct = talk.terms.sharePct;
   player.contractEndSeason = save.clock.seasonIndex + lengthSeasons;
   return { save };
 }

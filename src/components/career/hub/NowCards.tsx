@@ -399,7 +399,7 @@ export function NowBid({
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-faint">{C.market.declineHint(refusalPct())}</p>
+      {/* rc.33 (UX-07): the refusal cost lives in the Blockbuster's own sentence above — a plain bid says nothing. */}
 
       <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="primary" size="lg" onClick={onAccept}>

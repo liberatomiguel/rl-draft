@@ -16,7 +16,6 @@ import {
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
-  CAREER_NEGOTIATION,
   CAREER_PAYROLL,
   CAREER_POINTS,
   CAREER_PRIZES,
@@ -445,66 +444,8 @@ export function contractedFeeFor(value: number, splitsRemaining: number, seasonI
   return quantize(Math.max(indexedAmount(CAREER_TRANSFER.minFee, seasonIndex), value * load));
 }
 
-// ---------------------------------------------------------------------------
-// v0.3 salary negotiation (deterministic hidden reserve, legible odds)
-// ---------------------------------------------------------------------------
-
-/**
- * The player's hidden reserve factor for this (season, window bucket): a
- * uniform draw in [reserveFloor, 1]. Fixed per window — re-rolling by
- * reloading is impossible by construction.
- */
-export function negotiationReserveFor(
-  careerSeed: number,
-  playerId: string,
-  seasonIndex: number,
-  windowKey: string,
-): number {
-  const f = derivedFloat(
-    careerSeed,
-    streams.gen("negRes", `${playerId}:${seasonIndex}:${windowKey}`),
-  );
-  return CAREER_NEGOTIATION.reserveFloor + f * (1 - CAREER_NEGOTIATION.reserveFloor);
-}
-
-/**
- * TRUE accept probability of an offer at `offer/ask`, given `rejects` prior
- * lowballs this window (each hardens the reserve by hardenPerReject). This is
- * the honest uniform CDF — the UI shows exactly this number.
- */
-export function negotiationAcceptChance(
-  offered: number,
-  ask: number,
-  rejects: number,
-): number {
-  if (ask <= 0) return 0;
-  const floor = Math.min(
-    1,
-    CAREER_NEGOTIATION.reserveFloor + CAREER_NEGOTIATION.hardenPerReject * rejects,
-  );
-  if (floor >= 1) return offered >= ask ? 1 : 0;
-  return clamp((offered / ask - floor) / (1 - floor), 0, 1);
-}
-
-/** Resolve a counter-offer: accepted iff offer ≥ hardened reserve × ask. */
-export function negotiationAccepts(input: {
-  careerSeed: number;
-  playerId: string;
-  seasonIndex: number;
-  windowKey: string;
-  offered: number;
-  ask: number;
-  rejects: number;
-}): boolean {
-  if (input.offered >= input.ask) return true;
-  if (input.rejects >= CAREER_NEGOTIATION.maxRejects) return false;
-  const reserve = Math.min(
-    1,
-    negotiationReserveFor(input.careerSeed, input.playerId, input.seasonIndex, input.windowKey) +
-      CAREER_NEGOTIATION.hardenPerReject * input.rejects,
-  );
-  return input.offered >= quantize(input.ask * reserve);
-}
+// rc.33 (ECO-11): the v0.3 salary negotiation (a hidden reserve that hardened
+// on every refusal) is gone — the wage talk lives in contract.ts.
 
 // ---------------------------------------------------------------------------
 // v0.3 rep-gated signing cap (visible lock — supersedes §21.3's soft-only gate)

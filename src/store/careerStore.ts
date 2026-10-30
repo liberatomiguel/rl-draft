@@ -91,6 +91,7 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import type { GearItemId } from "@/engine/career/economy";
+import type { ContractOffer } from "@/engine/career/contract";
 import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
 import { reportingJSONStorage, reportingMigrate, reportMigration } from "./persistStorage";
@@ -183,14 +184,15 @@ interface CareerStoreState {
   /**
    * ECO-03 (R47): sign at the player's normal value; he takes an open seat in
    * the starting three, else the reserve slot. A full squad names who leaves
-   * (`releaseId`), released in the same operation.
+   * (`releaseId`), released in the same operation. rc.33 (ECO-10/11): `offer`
+   * is the weekly wage and prize share the talk settled (omitted = his ask).
    */
   signPlayer: (
     playerId: string,
-    opts: { lengthSeasons: 1 | 2 | 3; offeredSalary?: number; releaseId?: string },
+    opts: { lengthSeasons: 1 | 2 | 3; offer?: ContractOffer; releaseId?: string },
   ) => void;
   releasePlayer: (playerId: string) => void;
-  renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3, offeredSalary?: number) => void;
+  renewPlayer: (playerId: string, lengthSeasons: 1 | 2 | 3, offer?: ContractOffer) => void;
   acceptBid: (offerId: string) => void;
   declineBid: (offerId: string) => void;
   /** rc.32 (M8, provisional): list a squad player for sale / withdraw the listing. */
@@ -421,8 +423,8 @@ export const useCareerStore = create<CareerStoreState>()(
           withResult((s) => signPlayerFlow(s, playerId, opts), { kind: "sign", playerId }),
         releasePlayer: (playerId) =>
           withResult((s) => releasePlayerFlow(s, playerId), { kind: "release", playerId }),
-        renewPlayer: (playerId, lengthSeasons, offeredSalary) =>
-          withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offeredSalary), { kind: "renew", playerId }),
+        renewPlayer: (playerId, lengthSeasons, offer) =>
+          withResult((s) => renewPlayerFlow(s, playerId, lengthSeasons, offer), { kind: "renew", playerId }),
         acceptBid: (offerId) => withResult((s) => acceptBidFlow(s, offerId), { kind: "sell", offerId }),
         declineBid: (offerId) => withSave((s) => declineBidFlow(s, offerId)),
         listForSale: (playerId) => withResult((s) => listForSaleFlow(s, playerId)),

@@ -1146,20 +1146,79 @@ export const CAREER_SCRIM = {
 } as const;
 
 /**
- * v0.3 salary negotiation (supersedes §21.4's fixed-ask-only market): every
- * player carries a hidden, deterministic reserve factor in
- * [reserveFloor, 1] × ask per (player, season, window). Counter-offers below
- * the reserve are rejected and HARDEN the player (+hardenPerReject on the
- * reserve, telegraphed); after maxRejects only the full ask signs this
- * window. The accept-chance readout shown in the UI is the true uniform CDF —
- * legible risk, no save-scum (the reserve is fixed per window).
+ * rc.33 (ECO-11, ROAD-TO-WORLDS-DECISIONS — the wage talk): ONE model for a
+ * signing and a renewal, two levers — the weekly wage and the prize share
+ * (ECO-10, CAREER_PRIZE_SHARE) — with the contract length repricing the ask
+ * as before. The player signs any offer worth at least his flexibility × his
+ * ask (`contract.negotiationAnswerFor`): the zone is shown, the answer is
+ * deterministic (seeded per player and window, so a reload changes nothing),
+ * and below the zone his counter is the nearest deal he signs — it only ever
+ * moves toward agreement. Replaces v0.3's hidden reserve (0.88–1), the +4 %
+ * hardening per refusal and the 0.85 stepper floor: the stepper offered 0 %
+ * deals, the odds shown ignored what a refusal had revealed, and a $50
+ * per-split step often left the weekly wage shown unchanged.
  */
 export const CAREER_NEGOTIATION = {
-  reserveFloor: 0.88,
-  hardenPerReject: 0.04,
-  maxRejects: 2,
-  /** UI floor for the counter-offer stepper (below this is auto-insulting). */
-  minOfferFactor: 0.85,
+  /**
+   * ECO-11 (rc.33): the lowest share of his ask (in wage value) a player ever
+   * signs for; his own flexibility is a seeded draw in [flexFloor, 1], fixed
+   * per window and shown as the zone. 0.94: a 3 % saving on average, 6 % at
+   * best (rc.32's hidden reserve ran 0.88–1, but a refusal hardened it).
+   */
+  flexFloor: 0.94,
+  /**
+   * ECO-11 (rc.33): one press of the wage stepper moves this share of his
+   * weekly ask, rounded to the weekly quantum and never under it ($10), so
+   * every press moves the wage shown.
+   */
+  wageStepPct: 0.02,
+} as const;
+
+/**
+ * rc.33 (ECO-10): the share of a podium prize each contract lets its player
+ * keep — asked by the player, shown and negotiable in the offer, the renewal
+ * and the contract, booked out of a regional / Major / Worlds top-four prize
+ * for each player who played the event (`contract.prizeShareOfPodium`).
+ * Replaces M6's fixed team share (20 / 35 / 50 % by tier, rc.32). The master
+ * switch stays `CAREER_PRIZES.playerShare.enabled` (false = rc.31, no share
+ * at all), and its tier rates are now only the default of a contract signed
+ * before rc.33 (÷ `legacySeats`). A star asks a bigger share, so the share
+ * stays a snowball brake (contract e2: a dominant season's kept prizes ÷ a
+ * three-85 squad's wages ≤ 1.5).
+ */
+export const CAREER_PRIZE_SHARE = {
+  /** ECO-10 (rc.33): the share (percent of a podium prize) a player of `pivotOverall` asks. */
+  askAtPivot: 8,
+  /** ECO-10 (rc.33): the overall the share ask is anchored at. */
+  pivotOverall: 80,
+  /** ECO-10 (rc.33): points more (less) per overall point above (below) the pivot — a 70 asks 3 %, an 85 11 %, a 90 13 %. */
+  askPerPoint: 0.5,
+  /** ECO-10 (rc.33): at this age or younger a player asks `youngDiscount` points less (a prospect sells his upside on the wage). */
+  youngAge: 18,
+  /** ECO-10 (rc.33): see youngAge. */
+  youngDiscount: 1,
+  /** ECO-10 (rc.33): no contract keeps less than this share of a podium prize (percent). */
+  minPct: 2,
+  /** ECO-10 (rc.33): no contract keeps more than this share (percent). */
+  maxPct: 18,
+  /** ECO-10 (rc.33): the talk can raise the share this many points over his ask… */
+  maxAboveAsk: 4,
+  /** ECO-10 (rc.33): …and lower it this many points under it (the bound that keeps e2 ≤ 1.5 for a dominant squad). */
+  maxBelowAsk: 3,
+  /**
+   * ECO-10 (rc.33): the exchange rate between the two levers — each share
+   * point over his ask lowers the wage he signs for by this share of his
+   * asking wage, each point under it raises it (−8 % … +6 % at the bounds).
+   * About neutral for a contender's podium money, so the choice is a bet on
+   * the team's results.
+   */
+  wagePerPoint: 0.02,
+  /**
+   * ECO-10 (rc.33): a contract signed before rc.33 carries no share; it keeps
+   * the rc.32 rule — CAREER_PRIZES.playerShare by tier ÷ this many seats for
+   * each player who played, so three old deals pay exactly the old team share.
+   */
+  legacySeats: 3,
 } as const;
 
 /** Player derivation (ages are RL-realistic: debut 13-15; careers end 24-29, DEV-02 R48). */
@@ -1395,7 +1454,26 @@ export const CAREER_AGE = {
 } as const;
 
 export const CAREER_SCOUT = {
+  /** rc.31's half-widths (the band is twice as wide); rc.32's model-2 band reads them too, and DEV-04 nests inside it. */
   bandWidthByLevel: { 0: 5, 1: 3, 2: 1, 3: 0 } as Record<number, number>,
+  /**
+   * DEV-04 (rc.33): model 2's band width (max − min) at each report level —
+   * at most 5 points wide (Miguel 30/10: 5–6); rc.32 showed 10 / 6 / 2.
+   */
+  honestWidthByLevel: { 0: 5, 1: 3, 2: 1, 3: 0 } as Record<number, number>,
+  /**
+   * DEV-04 (rc.33): the band's top sits 0 to this many points above the true
+   * potential (a seeded draw per player and level) — never a "99" for a 91
+   * (rc.32: up to 10 above).
+   */
+  bandMaxAbove: 2,
+  /**
+   * DEV-04 (rc.33): the report level that reveals a player's phase
+   * (developing / at his peak / declining); below it the tag reads "?". A
+   * founder starts at 1, a signing at the level bought, the squad gains one a
+   * split.
+   */
+  phaseRevealLevel: 1,
   /** Own-squad levels auto-narrow once per completed split (max 3). */
   autoRevealPerSplit: 1,
   reportCost: 2_500,
