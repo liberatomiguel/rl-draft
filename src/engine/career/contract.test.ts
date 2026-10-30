@@ -22,7 +22,11 @@ import {
   prizeShareOfPodium,
   sharePaysOn,
   sharePointWeeklyFor,
+  talkPressFor,
   wageStepWeeklyFor,
+  type ContractOffer,
+  type NegotiationAnswer,
+  type TalkLever,
 } from "@/engine/career/contract";
 import { computeSalaryAsk, playerShareFor, prizeFor, quantize, weeklyWage } from "@/engine/career/economy";
 import type { Placement } from "@/engine/types";
@@ -251,18 +255,183 @@ describe("ECO-10/11 — the share lever moves the wage shown (rc.33 review)", ()
   });
 });
 
-describe("ECO-10 — the prize share each contract carries", () => {
-  it("a star asks a bigger share, a young or low player a smaller one", () => {
-    const S = CAREER_PRIZE_SHARE;
-    expect(prizeShareAskFor({ overall: 90, age: 21 })).toBeGreaterThan(prizeShareAskFor({ overall: 80, age: 21 }));
-    expect(prizeShareAskFor({ overall: 80, age: 21 })).toBeGreaterThan(prizeShareAskFor({ overall: 70, age: 21 }));
-    expect(prizeShareAskFor({ overall: 80, age: 17 })).toBe(prizeShareAskFor({ overall: 80, age: 21 }) - S.youngDiscount);
-    expect(prizeShareAskFor({ overall: 80, age: 21 })).toBe(S.askAtPivot);
-    for (let o = 60; o <= 99; o++) {
-      const s = prizeShareAskFor({ overall: o, age: 22 });
-      expect(s).toBeGreaterThanOrEqual(S.minPct);
-      expect(s).toBeLessThanOrEqual(S.maxPct);
+describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes you just can't move anything\")", () => {
+  // Reproduced FIRST on rc.33's model and sheet, over real careers (the
+  // founders' renewals at 1–3 seasons, founders grown 6 points, every market
+  // player and rookie). There: (a) the zone was
+  // (1 − flex) × his ask with its floor rounded UP to the $10 weekly grid, so
+  // a $100/wk ask (a founder renewing, flex 0.951) had floor = top and both
+  // wage buttons disabled — 85 % of the founders' renewals and 63 % of the
+  // market's rookies over 7 regions × 3 rosters × 3 difficulties; (b) a share
+  // press kept the offered wage, so "share −" at his ask left the wage shown
+  // as it was and made him counter (every talk had such a press); (c) no
+  // closed way said why. The presses below are the engine's own
+  // (`talkPressFor`), the ones the sheet renders.
+  const LOW_ASKS = [250, 300, 400, 500, 650, 800, 1_100, 1_550, 2_150, 3_200, 4_300];
+  const GRID_ASKS = [...LOW_ASKS, 5_600, 9_700, 12_000, 21_350, 29_000, 72_000, 180_000];
+  const GRID_SHARES = [0, 1, 2, 4, 7, 13, 18];
+  const GRID_FLEXES = [CAREER_NEGOTIATION.flexFloor, 0.951, 0.97, 0.99, 0.999, 1];
+  const q = 10;
+  const PRESSES: [TalkLever, 1 | -1][] = [
+    ["wage", -1],
+    ["wage", 1],
+    ["share", -1],
+    ["share", 1],
+  ];
+  const limitOf = (a: NegotiationAnswer, lever: TalkLever, dir: 1 | -1) =>
+    lever === "wage" ? (dir < 0 ? a.limits.wageDown : a.limits.wageUp) : dir < 0 ? a.limits.shareDown : a.limits.shareUp;
+
+  /** Every state the sheet's presses reach from his ask (breadth-first), with its answer. */
+  function reachable(talk: (o?: ContractOffer) => NegotiationAnswer, cap = 300): NegotiationAnswer[] {
+    const seen = new Map<string, NegotiationAnswer>();
+    const queue: (ContractOffer | undefined)[] = [undefined];
+    while (queue.length && seen.size < cap) {
+      const a = talk(queue.shift());
+      const key = `${a.offer.weekly}|${a.offer.sharePct}`;
+      if (seen.has(key)) continue;
+      seen.set(key, a);
+      for (const [lever, dir] of PRESSES) {
+        const next = talkPressFor(a, lever, dir);
+        if (next) queue.push(next);
+      }
     }
+    return [...seen.values()];
+  }
+
+  it("the rc.33 reproductions: a $100/wk ask can be lowered, and lowering his share raises the wage instead of making him counter", () => {
+    // (a) The founder's renewal: $1,100/split ($100 a week), flex 0.951.
+    const a = answer(1_100, 0, 0.951);
+    expect(a.zone.topWeekly).toBe(100);
+    expect(a.zone.floorWeekly).toBeLessThan(100);
+    const down = talkPressFor(a, "wage", -1)!;
+    expect(down.weekly).toBe(100 - wageStepWeeklyFor(100));
+    expect(answer(1_100, 0, 0.951, down).accepted).toBe(true);
+    // (b) A $2,000/wk ask at 7 %, flex 0.99: "share −" at his ask.
+    const b = answer(21_350, 7, 0.99);
+    expect(b.zone.topWeekly).toBe(2_000);
+    const less = talkPressFor(b, "share", -1)!;
+    const after = answer(21_350, 7, 0.99, less);
+    expect(after.offer.sharePct).toBe(6);
+    expect(after.offer.weekly).toBe(2_000 + b.zone.pointWeekly);
+    expect(after.accepted).toBe(true);
+    // rc.33's press (the wage kept) is still answered — a counter when it falls under his floor — but the sheet never makes it.
+    expect(answer(21_350, 7, 0.99, { weekly: 2_000, sharePct: 6 }).accepted).toBe(after.zone.floorWeekly <= 2_000);
+  });
+
+  it("over a grid of asks ($20–$17k a week), shares and flexibilities: the wage moves at least minZoneSteps presses below his ask, unless he asks the league minimum", () => {
+    for (const ask of GRID_ASKS) {
+      for (const share of GRID_SHARES) {
+        for (const flex of GRID_FLEXES) {
+          const a = answer(ask, share, flex);
+          const atMinimum = a.ask.weekly <= a.zone.minWeekly;
+          if (atMinimum) {
+            expect(talkPressFor(a, "wage", -1)).toBeNull();
+            expect(a.limits.wageDown).toBe("minimum");
+            continue;
+          }
+          let cur = a;
+          let presses = 0;
+          for (let next = talkPressFor(cur, "wage", -1); next; next = talkPressFor(cur, "wage", -1)) {
+            cur = answer(ask, share, flex, next);
+            presses += 1;
+            expect(cur.accepted).toBe(true);
+          }
+          expect(presses, `${ask}/split ${share}% @${flex}`).toBeGreaterThanOrEqual(CAREER_NEGOTIATION.minZoneSteps);
+          expect(cur.offer.weekly).toBe(a.zone.floorWeekly);
+          expect(cur.limits.wageDown).toMatch(/^(floor|minimum)$/);
+          // The zone keeps his flexibility (rounded down to the grid) when it is wider than the minimum.
+          expect(a.zone.topWeekly - a.zone.floorWeekly).toBeGreaterThanOrEqual(
+            Math.min(a.ask.weekly - a.zone.minWeekly, Math.floor(((1 - flex) * a.ask.weekly) / q + 1e-9) * q),
+          );
+        }
+      }
+    }
+  });
+
+  it("every press the sheet can make moves the number it names; a share press moves the wage one point the other way and never turns a yes into a counter", () => {
+    let states = 0;
+    for (const ask of GRID_ASKS) {
+      for (const share of GRID_SHARES) {
+        for (const flex of [CAREER_NEGOTIATION.flexFloor, 0.97, 1]) {
+          const talk = (o?: ContractOffer) => answer(ask, share, flex, o);
+          for (const a of reachable(talk)) {
+            states += 1;
+            // Every state the presses reach is one he signs, paying exactly the weekly wage shown.
+            expect(a.accepted).toBe(true);
+            expect(weeklyWage(a.terms.wagePerSplit)).toBe(a.terms.weekly);
+            expect(a.terms.weekly).toBe(a.offer.weekly);
+            for (const [lever, dir] of PRESSES) {
+              const next = talkPressFor(a, lever, dir);
+              // A closed way always names its reason, and a reason always closes its way.
+              const closed = limitOf(a, lever, dir) !== null || (lever === "share" && !a.zone.shareLever);
+              expect(next === null, `${lever}${dir} ${ask}/${share}/${flex}`).toBe(closed);
+              if (!next) continue;
+              const b = talk(next);
+              if (lever === "wage") {
+                expect(b.offer.sharePct).toBe(a.offer.sharePct);
+                expect(Math.sign(b.offer.weekly - a.offer.weekly)).toBe(dir);
+                expect(Math.abs(b.offer.weekly - a.offer.weekly)).toBeGreaterThanOrEqual(q);
+              } else {
+                expect(b.offer.sharePct - a.offer.sharePct).toBe(dir);
+                expect(a.offer.weekly - b.offer.weekly).toBe(dir * a.zone.pointWeekly);
+                expect(b.accepted).toBe(a.accepted);
+              }
+            }
+          }
+        }
+      }
+    }
+    expect(states).toBeGreaterThan(2_000);
+  }, 60_000);
+
+  it("the share lever is there only for a player who asks a share; its bounds are named", () => {
+    const S = CAREER_PRIZE_SHARE;
+    for (const ask of GRID_ASKS) {
+      const none = answer(ask, 0, 0.97, { sharePct: 5 });
+      expect(none.zone.shareLever).toBe(false);
+      expect([none.zone.shareMin, none.zone.shareMax, none.offer.sharePct, none.terms.sharePct]).toEqual([0, 0, 0, 0]);
+      expect(talkPressFor(none, "share", 1)).toBeNull();
+      expect(talkPressFor(none, "share", -1)).toBeNull();
+      for (const share of GRID_SHARES.filter((x) => x > 0)) {
+        const a = answer(ask, share, 0.97);
+        expect(a.zone.shareLever).toBe(CAREER_PRIZES.playerShare.enabled);
+        const low = answer(ask, share, 0.97, { sharePct: 0 });
+        expect(low.offer.sharePct).toBe(Math.max(S.minPct, share - S.maxBelowAsk));
+        expect(low.limits.shareDown).toBe(low.offer.sharePct === 0 ? "none" : "least");
+        const high = answer(ask, share, 0.97, { sharePct: 99 });
+        const most = Math.min(S.maxPct, share + S.maxAboveAsk);
+        expect(high.offer.sharePct).toBeLessThanOrEqual(most);
+        expect(high.limits.shareUp).toBe(high.offer.sharePct < most ? "minimum" : "most");
+        // The floor never goes under the least a contract pays, at any share.
+        expect(high.zone.floorWeekly).toBeGreaterThanOrEqual(high.zone.minWeekly);
+      }
+    }
+    // At the league minimum: the wage cannot go lower, and the share cannot buy any of it.
+    const min = answer(250, 7, 0.95);
+    expect(min.limits).toEqual({ wageDown: "minimum", wageUp: "ask", shareDown: null, shareUp: "minimum" });
+  });
+});
+
+describe("ECO-10 — the prize share each contract carries", () => {
+  it("a star asks a bigger share, a young player a smaller one; at or under the threshold nobody asks one (rc.34, Miguel 31/10)", () => {
+    const S = CAREER_PRIZE_SHARE;
+    const T = S.shareThresholdOverall;
+    expect(prizeShareAskFor({ overall: 90, age: 21 })).toBeGreaterThan(prizeShareAskFor({ overall: 85, age: 21 }));
+    expect(prizeShareAskFor({ overall: 85, age: 21 })).toBeGreaterThan(prizeShareAskFor({ overall: T + 1, age: 21 }));
+    expect(prizeShareAskFor({ overall: 85, age: 17 })).toBe(prizeShareAskFor({ overall: 85, age: 21 }) - S.youngDiscount);
+    // No share at or under the threshold, whatever the age; the curve starts at 0 there.
+    for (let o = 40; o <= T; o++) {
+      for (const age of [15, 17, 20, 26]) expect(prizeShareAskFor({ overall: o, age }), `${o}`).toBe(0);
+    }
+    for (let o = T + 1; o <= 99; o++) {
+      const s = prizeShareAskFor({ overall: o, age: 22 });
+      expect(s).toBe(Math.min(S.maxPct, Math.round((o - T) * S.askPerPoint)));
+      expect(s).toBeGreaterThanOrEqual(1);
+      expect(s).toBeGreaterThanOrEqual(prizeShareAskFor({ overall: o - 1, age: 22 }));
+    }
+    // A fractional overall reads its rounded value (real players' derived overalls).
+    expect(prizeShareAskFor({ overall: T + 0.49, age: 22 })).toBe(0);
+    expect(prizeShareAskFor({ overall: T + 0.5, age: 22 })).toBe(prizeShareAskFor({ overall: T + 1, age: 22 }));
   });
 
   it("three pre-rc.33 deals pay the rc.32 team share, on every podium of every tier", () => {
@@ -326,7 +495,11 @@ describe("ECO-10 — the prize share each contract carries", () => {
           playerId: `e2:${k}`,
         }),
       )].sort((a, b) => a - b)[50];
-    const lowest = prizeShareAskFor({ overall: 85, age: 20 }) - S.maxBelowAsk;
+    // The lowest share the talk lets an 85 sign for (rc.34: his ask from the threshold curve − maxBelowAsk).
+    const ask85Share = prizeShareAskFor({ overall: 85, age: 20 });
+    const lowest = answer(ask85(0), ask85Share, 1, { sharePct: 0 }).zone.shareMin;
+    expect(lowest).toBe(Math.max(S.minPct, ask85Share - S.maxBelowAsk));
+    expect(lowest).toBeGreaterThan(0);
     for (const s of [0, 3, 7]) {
       const kept = (tier: EventTier, n: number) => {
         const prize = prizeFor(tier, "champion", "swiss", "normal", s);

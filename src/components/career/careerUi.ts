@@ -384,9 +384,15 @@ export function phaseOfView(save: CareerSave, view: CareerPlayerView): PhaseTag 
   });
 }
 
-/** ECO-10 (rc.33): the prize share a squad contract carries, as a label (an older deal reads the rc.32 rule). */
+/**
+ * ECO-10 (rc.33): the prize share a squad contract carries, as a label (an
+ * older deal reads the rc.32 rule). rc.34 (front I): 0 % reads "No prize
+ * share" — a player under the threshold, a founding deal.
+ */
 export function prizeShareLabelOf(C: CareerCopy, p: Pick<SquadPlayer, "prizeSharePct">): string {
-  if (p.prizeSharePct !== undefined) return C.player.prizeSharePct(p.prizeSharePct);
+  if (p.prizeSharePct !== undefined) {
+    return p.prizeSharePct > 0 ? C.player.prizeSharePct(p.prizeSharePct) : C.player.prizeShareNone;
+  }
   const s = CAREER_PRIZES.playerShare;
   return C.player.prizeShareLegacy(
     CAREER_PRIZE_SHARE.legacySeats,

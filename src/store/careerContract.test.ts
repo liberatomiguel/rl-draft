@@ -7,12 +7,21 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_CONTRACT, CAREER_PRIZE_SHARE } from "@/config/balance";
-import { contractSharePctFor, prizeShareAskFor, sharePointWeeklyFor } from "@/engine/career/contract";
+import { CAREER_CONTRACT, CAREER_PRIZE_SHARE, CAREER_PRIZES } from "@/config/balance";
+import {
+  contractSharePctFor,
+  prizeShareAskFor,
+  sharePointWeeklyFor,
+  talkPressFor,
+  type ContractOffer,
+  type NegotiationAnswer,
+  type TalkLever,
+} from "@/engine/career/contract";
 import { ageOf, playerViewById } from "@/engine/career/development";
 import { playerShareFor, prizeFor, quantize, signableOverallCap, weeklyWage } from "@/engine/career/economy";
 import { askPackageFor, signableAtRep } from "@/engine/career/market";
-import type { CareerPlayerView, CareerSave } from "@/engine/career/types";
+import type { CareerDifficulty, CareerPlayerView, CareerSave, CompactEventResult } from "@/engine/career/types";
+import type { Region } from "@/engine/types";
 import { placementOf } from "@/engine/career/careerResults";
 import {
   advanceDayFlow,
@@ -20,7 +29,9 @@ import {
   eventPlayerShareFor,
   finishEvent,
   isEventPaused,
+  migrateSaveToV5,
   renewalTalkFor,
+  renewalTermsOfSave,
   renewPlayerFlow,
   resolveInsertFlow,
   signingPlanFor,
@@ -66,22 +77,40 @@ function freeAgents(save: CareerSave): CareerPlayerView[] {
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
 }
 
-const askOf = (save: CareerSave, view: CareerPlayerView) =>
+const askOf = (save: CareerSave, view: CareerPlayerView, lengthSeasons: 1 | 2 | 3 = 2) =>
   askPackageFor(view, {
     rep: save.reputation,
     seasonIndex: save.clock.seasonIndex,
     difficulty: save.difficulty,
     careerSeed: save.careerSeed,
-    lengthSeasons: 2,
+    lengthSeasons,
   });
 
+/**
+ * rc.34 (front I): a free agent pushed past the share threshold (his overall
+ * through the world's delta), at a reputation that signs anyone — a player
+ * who asks a share, `minAsk` points or more.
+ */
+function shareAsker(save: CareerSave, minAsk = 4): CareerPlayerView {
+  save.reputation = 90;
+  const fa = freeAgents(save)[0];
+  const base = fa.overall;
+  save.world.overallDelta[fa.id] = (save.world.overallDelta[fa.id] ?? 0) + Math.max(0, CAREER_PRIZE_SHARE.shareThresholdOverall + 6 - Math.round(base));
+  const view = viewsOf(save, [fa.id])[0];
+  expect(prizeShareAskFor(view)).toBeGreaterThanOrEqual(minAsk);
+  return view;
+}
+
 describe("ECO-10 — every contract carries a prize share", () => {
-  it("the founders carry the share each one asks; a new career reads the honest bands (DEV-04)", () => {
-    const save = makeSave();
-    for (const p of save.squad) {
-      expect(p.prizeSharePct).toBe(prizeShareAskFor({ overall: p.overall, age: ageOf(p.birthYear, 0) }));
+  it("rc.34 (Miguel 31/10): the founding deals carry no prize share — 0 %, never the pre-rc.33 rule; a new career reads the honest bands (DEV-04)", () => {
+    for (const rosterKey of ["balanced", "prospects", "journeymen"] as const) {
+      const save = createCareerSave({ ...INPUT, rosterKey }, 33_034);
+      for (const p of save.squad) {
+        expect(p.prizeSharePct).toBe(0);
+        expect(contractSharePctFor(p, "worlds")).toBe(0);
+      }
+      expect(save.bandModel).toBe(2);
     }
-    expect(save.bandModel).toBe(2);
   });
 
   it("a podium books each played contract's own share; the reserve who sat out keeps none; an older deal reads the rc.32 rule", () => {
@@ -91,6 +120,8 @@ describe("ECO-10 — every contract carries a prize share", () => {
     expect(save.squad).toHaveLength(4);
     const reserve = save.squad.find((p) => p.role === "sub")!;
     const starters = save.squad.filter((p) => p.role === "starter");
+    // rc.34: founders and a season-0 free agent ask none — give the deals shares to book.
+    [starters[0].prizeSharePct, starters[1].prizeSharePct, starters[2].prizeSharePct, reserve.prizeSharePct] = [6, 3, 0, 4];
     const ev = {
       def: { tier: "major" },
       fieldedIds: starters.map((p) => p.id),
@@ -157,7 +188,7 @@ describe("ECO-10 — every contract carries a prize share", () => {
 describe("ECO-11 — the wage talk through the flows", () => {
   it("a signing writes the talk's terms: the weekly wage shown and the share offered", () => {
     const save = makeSave();
-    const fa = freeAgents(save)[0];
+    const fa = shareAsker(save);
     const ask = askOf(save, fa);
     const share = prizeShareAskFor(fa) + 2;
     const talk = signingTalkFor(save, fa, ask, { sharePct: share });
@@ -203,6 +234,7 @@ describe("ECO-11 — the wage talk through the flows", () => {
     const save = structuredClone(base);
     const p = save.squad[0];
     delete p.prizeSharePct; // a deal signed before rc.33
+    p.overall = CAREER_PRIZE_SHARE.shareThresholdOverall + 7; // rc.34: grown past the threshold, he asks a share
     const talk = renewalTalkFor(save, p, 2, { sharePct: prizeShareAskFor({ overall: p.overall, age: ageOf(p.birthYear, 0) }) - 1 });
     expect(talk.offer.sharePct).toBe(talk.ask.sharePct - 1);
     // One point under his share ask: he wants more wage (his ask at that share is the top).
@@ -248,4 +280,174 @@ describe("UX-07 — the Market", () => {
     expect("error" in planned && planned.error).toBe("squadFull");
     expect(signPlayerFlow(save, b.id, { lengthSeasons: 2 }).error).toBe("squadFull");
   });
+});
+
+describe("rc.34 front I — the share threshold through the flows (Miguel 31/10)", () => {
+  it("a founder under the threshold renews at 0 % with no share lever; one who grew past it asks a share at his renewal", () => {
+    const save = makeSave();
+    const [a, b] = save.squad;
+    const stays = renewalTalkFor(save, a, 2);
+    expect(stays.ask.sharePct).toBe(0);
+    expect(stays.zone.shareLever).toBe(false);
+    expect(renewPlayerFlow(save, a.id, 2).save.squad.find((p) => p.id === a.id)!.prizeSharePct).toBe(0);
+    const grown = structuredClone(save);
+    const g = grown.squad.find((p) => p.id === b.id)!;
+    g.overall = CAREER_PRIZE_SHARE.shareThresholdOverall + 4;
+    const talk = renewalTalkFor(grown, g, 2);
+    expect(talk.ask.sharePct).toBe(prizeShareAskFor({ overall: g.overall, age: ageOf(g.birthYear, 0) }));
+    expect(talk.ask.sharePct).toBeGreaterThan(0);
+    expect(talk.zone.shareLever).toBe(CAREER_PRIZES.playerShare.enabled);
+    expect(renewPlayerFlow(grown, g.id, 2).save.squad.find((p) => p.id === g.id)!.prizeSharePct).toBe(talk.ask.sharePct);
+  });
+
+  it("a deal signed with a share keeps it through a load and on every podium until it is renewed (an rc.33 founder's 3 %)", () => {
+    const save = makeSave();
+    save.squad[0].prizeSharePct = 3; // rc.33 gave a 70 a 3 % founding share
+    const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(save)))!;
+    expect(loaded.squad[0].prizeSharePct).toBe(3);
+    const ev = { def: { tier: "regional" }, fieldedIds: [...loaded.starterIds] } as unknown as NonNullable<CareerSave["activeEvent"]>;
+    expect(eventPlayerShareFor(loaded, ev, "champion", 10_000)).toBe(quantize((10_000 * 3) / 100 + 1e-6));
+    // At its renewal he asks what the curve says today — none under the threshold.
+    expect(renewalTalkFor(loaded, loaded.squad[0], 2).ask.sharePct).toBe(0);
+  });
+});
+
+describe("rc.34 front I — the talk on real players: both levers move, every press moves its number, a closed way names its reason", () => {
+  const PRESSES: [TalkLever, 1 | -1][] = [
+    ["wage", -1],
+    ["wage", 1],
+    ["share", -1],
+    ["share", 1],
+  ];
+  const REGIONS: Region[] = ["EU", "SAM", "SSA"];
+  const careerIn = (region: Region, rosterKey: CreateCareerInput["rosterKey"], difficulty: CareerDifficulty, seed: number) =>
+    createCareerSave({ ...INPUT, identity: { ...INPUT.identity, region }, rosterKey, difficulty }, seed);
+
+  /** Every state the sheet's presses reach from his ask (breadth-first), each checked; returns how many. */
+  function walk(label: string, talk: (o?: ContractOffer) => NegotiationAnswer, askShare: number): number {
+    const a0 = talk();
+    expect(a0.ask.sharePct, label).toBe(askShare);
+    expect(a0.zone.shareLever, label).toBe(askShare > 0 && CAREER_PRIZES.playerShare.enabled);
+    if (a0.ask.weekly > a0.zone.minWeekly) expect(talkPressFor(a0, "wage", -1), `${label}: the wage moves`).not.toBeNull();
+    const seen = new Set<string>();
+    const queue: (ContractOffer | undefined)[] = [undefined];
+    while (queue.length && seen.size < 120) {
+      const a = talk(queue.shift());
+      const key = `${a.offer.weekly}|${a.offer.sharePct}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      expect(a.accepted, `${label} ${key}`).toBe(true);
+      expect(weeklyWage(a.terms.wagePerSplit), `${label} ${key}`).toBe(a.offer.weekly);
+      for (const [lever, dir] of PRESSES) {
+        const next = talkPressFor(a, lever, dir);
+        const why = lever === "wage" ? (dir < 0 ? a.limits.wageDown : a.limits.wageUp) : dir < 0 ? a.limits.shareDown : a.limits.shareUp;
+        expect(next === null, `${label} ${key} ${lever}${dir}`).toBe(why !== null || (lever === "share" && !a.zone.shareLever));
+        if (!next) continue;
+        const b = talk(next);
+        // A wage press moves the wage; a share press moves the share AND the wage.
+        expect(b.offer.weekly, `${label} ${key} ${lever}${dir}`).not.toBe(a.offer.weekly);
+        if (lever === "share") expect(b.offer.sharePct).toBe(a.offer.sharePct + dir);
+        expect(b.accepted, `${label} ${key} ${lever}${dir}`).toBe(true);
+        queue.push(next);
+      }
+    }
+    return seen.size;
+  }
+
+  it("the founders renewing — as they are, grown past the threshold, at the raise cap / market floor / jump cap, with a title raise, ambitious, after a refused Blockbuster — at 1, 2 and 3 seasons", () => {
+    let talks = 0;
+    let withShare = 0;
+    const bounds = new Set<string>();
+    for (const region of REGIONS) {
+      for (const rosterKey of ["balanced", "prospects", "journeymen"] as const) {
+        for (const difficulty of ["normal", "hard"] as CareerDifficulty[]) {
+          const save = careerIn(region, rosterKey, difficulty, 34_100 + talks);
+          // Season 1, a Major won with them (the title raise); three growth paths; one refused Blockbuster.
+          const s1 = structuredClone(save);
+          s1.clock.seasonIndex = 1;
+          s1.eventResults.push({
+            eventId: "front-i",
+            tier: "major",
+            seasonIndex: 1,
+            week: 10,
+            name: "Major",
+            rows: [],
+            championRef: "user",
+            userPlacement: "champion",
+            fieldQuality: 1,
+          } as CompactEventResult);
+          const cases = [
+            ...save.squad.map((p) => ({ s: save, p, tag: "as is" })),
+            ...s1.squad.map((p, i) => ({
+              s: s1,
+              p: { ...p, overall: p.overall + [6, 12, 22][i % 3], ...(i === 1 ? { blockbusterRefusedUntil: p.contractEndSeason } : {}) },
+              tag: "grown",
+            })),
+          ];
+          for (const { s, p, tag } of cases) {
+            for (const len of [1, 2, 3] as const) {
+              const share = prizeShareAskFor({ overall: p.overall, age: ageOf(p.birthYear, s.clock.seasonIndex) });
+              walk(`${region}/${rosterKey}/${difficulty} ${p.name} ${tag} ${p.overall} L${len}`, (o) => renewalTalkFor(s, p, len, o), share);
+              bounds.add(renewalTermsOfSave(s, p, len).bound);
+              talks += 1;
+              if (share > 0) withShare += 1;
+            }
+          }
+        }
+      }
+    }
+    expect(talks).toBe(REGIONS.length * 3 * 2 * 6 * 3);
+    expect(withShare).toBeGreaterThan(20);
+    // The renewal rule's bounds the cases reach include the jump cap (a founder who grew far).
+    expect(bounds.has("jump")).toBe(true);
+    expect(bounds.has("fresh")).toBe(true);
+  }, 120_000);
+
+  it("every market player and generated rookie, at two reputations and 1, 2 and 3 seasons — and the flow writes the talk's terms", () => {
+    let talks = 0;
+    let rookies = 0;
+    let askers = 0;
+    let signed = 0;
+    for (const region of REGIONS) {
+      for (const rep of [5, 60]) {
+        const save = careerIn(region, "balanced", "normal", 34_200 + REGIONS.indexOf(region));
+        save.reputation = rep;
+        save.finances.balance = 4_000_000;
+        const ids = [
+          ...save.world.freeAgentIds,
+          ...Object.values(save.world.orgs)
+            .filter((o) => o.region === region)
+            .flatMap((o) => o.playerIds),
+        ];
+        for (const view of viewsOf(save, ids)) {
+          if (view.age < 13) continue;
+          const share = prizeShareAskFor(view);
+          for (const len of [1, 2, 3] as const) {
+            const pack = askOf(save, view, len);
+            const talk = (o?: ContractOffer) => signingTalkFor(save, view, pack, o);
+            walk(`${region}@${rep} ${view.name} ${view.overall} L${len}`, talk, share);
+            talks += 1;
+            if (view.kind === "fictional") rookies += 1;
+            if (share > 0) askers += 1;
+            // The deepest deal the presses reach (his floor at the most share he takes) is the contract written.
+            if (rep === 60 && len === 2 && talks % 7 === 0) {
+              let a = talk();
+              for (let n = talkPressFor(a, "share", 1); n; n = talkPressFor(a, "share", 1)) a = talk(n);
+              for (let n = talkPressFor(a, "wage", -1); n; n = talkPressFor(a, "wage", -1)) a = talk(n);
+              const res = signPlayerFlow(save, view.id, { lengthSeasons: len, offer: { weekly: a.offer.weekly, sharePct: a.offer.sharePct } });
+              if (res.error) continue;
+              const p = res.save.squad.find((x) => x.id === view.id)!;
+              expect(p.salaryPerSplit).toBe(a.terms.wagePerSplit);
+              expect(p.prizeSharePct).toBe(a.terms.sharePct);
+              signed += 1;
+            }
+          }
+        }
+      }
+    }
+    expect(talks).toBeGreaterThan(500);
+    expect(rookies).toBeGreaterThan(50);
+    expect(askers).toBeGreaterThan(50);
+    expect(signed).toBeGreaterThan(5);
+  }, 120_000);
 });

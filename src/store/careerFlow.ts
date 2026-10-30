@@ -2871,8 +2871,11 @@ function squadFromOffer(
       careerSeed,
       playerId: view.id,
     }),
-    // rc.33 (ECO-10): the founders' deals carry the share each one asks.
-    prizeSharePct: prizeShareAskFor(view),
+    // rc.34 (front I; Miguel 31/10): a founding deal carries no prize share
+    // (rc.33: the share each founder asked). Explicitly 0 — an absent field
+    // reads the pre-rc.33 team share. A founder who grows past
+    // CAREER_PRIZE_SHARE.shareThresholdOverall asks one at his renewal.
+    prizeSharePct: 0,
     contractEndSeason: 1,
     trainingFocus: "auto" as const,
     trainingIntensity: "normal" as const,

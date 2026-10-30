@@ -7,12 +7,20 @@
  * `careerFlow.signingTalkFor` / `renewalTalkFor`): two levers — the weekly
  * wage and the prize share —, the zone where he signs at the share offered,
  * and the result before any confirm (he signs, or his counter, which taking
- * always signs). Every number comes from the answer; a press of either
- * stepper is whole weekly quanta, so it always moves the wage shown. The
- * share lever hides while the prize share is switched off (`zone.shareLever`).
+ * always signs). Every number comes from the answer.
+ *
+ * rc.34 (front I, Miguel 31/10: "sometimes you just can't move anything"):
+ * each press is the engine's (`contract.talkPressFor`) — a wage press moves
+ * the wage one step, a share press moves the share one point AND the wage
+ * one point's money the other way, so every press moves the wage shown and a
+ * share press never turns a yes into a counter; a closed way names its
+ * reason under its button (`answer.limits`); the share lever hides for a
+ * player who asks no share, or while the share is switched off
+ * (`zone.shareLever`).
  */
 
-import type { ContractOffer, NegotiationAnswer } from "@/engine/career/contract";
+import { useId, type ReactNode } from "react";
+import { talkPressFor, type ContractOffer, type NegotiationAnswer, type TalkLever } from "@/engine/career/contract";
 import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -32,19 +40,68 @@ export function SalaryNegotiator({
   disabled?: boolean;
 }) {
   const N = useCareerCopy().market.negotiation;
-  const { zone, offer, ask } = talk;
+  const ids = useId();
+  const { zone, offer, ask, limits } = talk;
   const atAsk = offer.sharePct === ask.sharePct && offer.weekly >= zone.topWeekly;
-
-  const setWage = (weekly: number) => onChange({ weekly, sharePct: offer.sharePct });
-  const setShare = (sharePct: number) => onChange({ weekly: offer.weekly, sharePct });
-  const wageDown = Math.max(zone.floorWeekly, offer.weekly - zone.stepWeekly);
-  const wageUp = Math.min(zone.topWeekly, offer.weekly + zone.stepWeekly);
+  const press = (lever: TalkLever, dir: 1 | -1) => talkPressFor(talk, lever, dir);
+  const wageDown = press("wage", -1);
+  const wageUp = press("wage", 1);
+  const shareDown = press("share", -1);
+  const shareUp = press("share", 1);
 
   // The zone track: from a little under the lower of (offer, floor) to his ask at this share.
   const lo = Math.max(0, Math.min(offer.weekly, zone.floorWeekly) - 2 * zone.stepWeekly);
   const hi = Math.max(lo + 1, zone.topWeekly);
   const pos = (w: number) => Math.max(0, Math.min(100, ((w - lo) / (hi - lo)) * 100));
   const money = (w: number) => formatMoney(w);
+
+  // Why a way is closed — named under the button it closes.
+  const wageDownWhy = limits.wageDown === "minimum" ? N.why.minimum : limits.wageDown === "floor" ? N.why.floor : null;
+  const wageUpWhy = limits.wageUp ? N.why.ask : null;
+  const shareDownWhy = limits.shareDown === "none" ? N.why.noShare : limits.shareDown ? N.why.shareLeast : null;
+  const shareUpWhy = limits.shareUp === "minimum" ? N.why.shareMinimum : limits.shareUp ? N.why.shareMost : null;
+
+  const stepper = (
+    lever: TalkLever,
+    label: { down: string; up: string },
+    value: ReactNode,
+    down: ContractOffer | null,
+    up: ContractOffer | null,
+    why: { down: string | null; up: string | null },
+  ) => (
+    <>
+      <div className="mt-1 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label={label.down}
+          aria-describedby={why.down ? `${ids}-${lever}-down` : undefined}
+          className={STEP_BTN}
+          onClick={() => down && onChange(down)}
+          disabled={disabled || !down}
+        >
+          −
+        </button>
+        <p className="min-w-0 flex-1 text-center text-lg font-bold tabular-nums">{value}</p>
+        <button
+          type="button"
+          aria-label={label.up}
+          aria-describedby={why.up ? `${ids}-${lever}-up` : undefined}
+          className={STEP_BTN}
+          onClick={() => up && onChange(up)}
+          disabled={disabled || !up}
+        >
+          +
+        </button>
+      </div>
+      {/* Always laid out (one line), so a reason appearing never shifts the sheet. */}
+      <div className="mt-0.5 flex min-h-4 justify-between gap-2 text-[10px] font-semibold leading-4 text-faint">
+        <span id={`${ids}-${lever}-down`}>{why.down}</span>
+        <span id={`${ids}-${lever}-up`} className="text-right">
+          {why.up}
+        </span>
+      </div>
+    </>
+  );
 
   return (
     <div className="rounded-lg border border-line bg-white/3 p-3">
@@ -62,30 +119,17 @@ export function SalaryNegotiator({
 
       {/* Lever 1 — the weekly wage */}
       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-faint">{N.wage}</p>
-      <div className="mt-1 flex items-center gap-2">
-        <button
-          type="button"
-          aria-label={N.wageDown}
-          className={STEP_BTN}
-          onClick={() => setWage(wageDown)}
-          disabled={disabled || offer.weekly <= zone.floorWeekly}
-        >
-          −
-        </button>
-        <p className="min-w-0 flex-1 text-center text-lg font-bold tabular-nums">
+      {stepper(
+        "wage",
+        { down: N.wageDown, up: N.wageUp },
+        <>
           {money(offer.weekly)}
           <span className="ml-1 text-[10px] font-semibold text-faint">{N.perWeek}</span>
-        </p>
-        <button
-          type="button"
-          aria-label={N.wageUp}
-          className={STEP_BTN}
-          onClick={() => setWage(wageUp)}
-          disabled={disabled || offer.weekly >= zone.topWeekly}
-        >
-          +
-        </button>
-      </div>
+        </>,
+        wageDown,
+        wageUp,
+        { down: wageDownWhy, up: wageUpWhy },
+      )}
 
       {/* The zone at this share: where he signs (floor → his ask), the offer marked */}
       {zone.topWeekly > zone.floorWeekly ? (
@@ -111,34 +155,21 @@ export function SalaryNegotiator({
           : N.zoneFixed(money(zone.topWeekly))}
       </p>
 
-      {/* Lever 2 — the prize share (ECO-10); hidden while the share is switched off (zone.shareLever) */}
+      {/* Lever 2 — the prize share (ECO-10); hidden when he asks none or the share is switched off (zone.shareLever) */}
       {zone.shareLever ? (
         <>
           <div className="mt-3 flex items-baseline justify-between gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-faint">{N.share}</p>
             <p className="text-[10px] text-faint">{N.shareAsk(ask.sharePct)}</p>
           </div>
-          <div className="mt-1 flex items-center gap-2">
-            <button
-              type="button"
-              aria-label={N.shareDown}
-              className={STEP_BTN}
-              onClick={() => setShare(offer.sharePct - 1)}
-              disabled={disabled || offer.sharePct <= zone.shareMin}
-            >
-              −
-            </button>
-            <p className="min-w-0 flex-1 text-center text-lg font-bold tabular-nums">{offer.sharePct}%</p>
-            <button
-              type="button"
-              aria-label={N.shareUp}
-              className={STEP_BTN}
-              onClick={() => setShare(offer.sharePct + 1)}
-              disabled={disabled || offer.sharePct >= zone.shareMax}
-            >
-              +
-            </button>
-          </div>
+          {stepper(
+            "share",
+            { down: N.shareDown, up: N.shareUp },
+            `${offer.sharePct}%`,
+            shareDown,
+            shareUp,
+            { down: shareDownWhy, up: shareUpWhy },
+          )}
           <p className="mt-1 text-[10px] text-faint">
             {N.shareHint} {N.trade(money(zone.pointWeekly))}
           </p>
@@ -149,7 +180,12 @@ export function SalaryNegotiator({
       <div className="mt-3 border-t border-line pt-2 text-[11px]">
         {talk.accepted ? (
           <>
-            <p className="font-bold text-emerald-400">✓ {N.signs(money(talk.terms.weekly), talk.terms.sharePct)}</p>
+            <p className="font-bold text-emerald-400">
+              ✓{" "}
+              {talk.terms.sharePct > 0
+                ? N.signs(money(talk.terms.weekly), talk.terms.sharePct)
+                : N.signsNoShare(money(talk.terms.weekly))}
+            </p>
             {talk.savingWeekly !== 0 ? (
               <p className={cx("mt-0.5 font-semibold", talk.savingWeekly > 0 ? "text-emerald-400" : "text-amber-400")}>
                 {talk.savingWeekly > 0 ? N.saves(money(talk.savingWeekly)) : N.costs(money(-talk.savingWeekly))}
@@ -158,7 +194,12 @@ export function SalaryNegotiator({
           </>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="font-bold text-amber-400">↺ {N.counter(money(talk.terms.weekly), talk.terms.sharePct)}</p>
+            <p className="font-bold text-amber-400">
+              ↺{" "}
+              {talk.terms.sharePct > 0
+                ? N.counter(money(talk.terms.weekly), talk.terms.sharePct)
+                : N.counterNoShare(money(talk.terms.weekly))}
+            </p>
             <button
               type="button"
               className="min-h-11 rounded-lg border border-amber-400/50 px-3 text-[11px] font-semibold text-amber-300 hover:bg-amber-400/10 disabled:opacity-40"
