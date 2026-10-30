@@ -316,7 +316,7 @@ export const CAREER_EN = {
     // rc.34 review: the training delegation the preset starts on (difficulty.presetTrainingModeOf,
     // CAREER_PLAN.modeByPreset) and whether cups are entered for you (the preset's prefs).
     presetHelp: (mode: "auto" | "recommend" | "manual", autoCups: boolean): string =>
-      `${{ auto: "The best training plan is applied for you.", recommend: "The best training plan is tagged; you pick.", manual: "You plan training, no hints." }[mode]} ${autoCups ? "Cups are entered for you." : "You pick every cup."}`,
+      `${{ auto: "The best training plan is tagged for you.", recommend: "The best training plan is tagged; you pick.", manual: "You plan training, no hints." }[mode]} ${autoCups ? "Cups are entered for you." : "You pick every cup."}`,
     summaryTitle: "The paperwork",
     found: (org: string) => `Found ${org}`,
     founded: "EST. 2020",
@@ -984,32 +984,71 @@ export const CAREER_EN = {
       running: "Running now",
       by: { coach: "Coach's plan", user: "Your plan", auto: "Auto plan", base: "Base growth" } as Record<string, string>,
       baseLine: "No plan: everyone grows at the base pace. Never a penalty.",
-      controllerCoach: (name: string) => `${name} picks and runs every cycle. You can still adjust it.`,
+      controllerCoach: (name: string) => `${name} plans and starts every cycle. You can adjust it.`,
+      // rc.36 (front T2): a hired coach who no longer plans — he only recommends.
+      controllerCoachOff: (name: string) => `You start each cycle. ${name}'s plan is tagged Recommended.`,
       controller: {
-        auto: "Easy: the best plan is applied for you every cycle. Adjust it any time.",
-        recommend: "Pick your plan. The most effective one is tagged Recommended.",
-        manual: "You pick everything. No recommendation.",
+        auto: "Easy: the best plan is tagged Recommended. Start it when you like.",
+        recommend: "Normal: the most effective option in each step is tagged Recommended.",
+        manual: "Hard: you pick everything. No recommendation.",
       } as Record<string, string>,
-      steps: { objective: "Objective", intensity: "Intensity", scrims: "Scrims" } as Record<string, string>,
-      objectives: { development: "Develop", preparation: "Compete", recovery: "Recover" } as Record<string, string>,
+      steps: { objective: "Objective", focus: "Focus", intensity: "Intensity", scrims: "Scrims" } as Record<string, string>,
+      // rc.36 (front T2, Miguel): Evolve / Gel / Recover.
+      objectives: { development: "Evolve", preparation: "Gel", recovery: "Recover" } as Record<string, string>,
       objectiveEffect: {
-        development: "Players grow faster toward their peak.",
-        preparation: "Sharper scrims and chemistry before big events.",
+        development: "Faster growth toward each player's peak.",
+        preparation: "Scrims build chemistry faster, with a little growth.",
         recovery: "Less wear. Veterans hold their level longer.",
       } as Record<string, string>,
+      // rc.36 (front T2, Miguel): the squad focus is a choice again — one per plan.
+      focuses: {
+        balanced: "Balanced",
+        "mechanics-lab": "Mechanics",
+        rotations: "Defense",
+        "set-plays": "Offense",
+        "film-room": "Consistency",
+        "clutch-sets": "Clutch",
+      } as Record<string, string>,
+      focusBalanced: "Overall growth only. Nothing sharpened.",
+      focusEffect: (stats: string, perWeek: string) => `+${perWeek} ${stats} a week, everyone.`,
+      focusHint: "One attribute everyone sharpens. It costs no overall growth.",
+      scrimsHint: "Practice only: no points, prizes or reputation.",
       intensities: { light: "Light", normal: "Normal", heavy: "Heavy" } as Record<string, string>,
       intensityEffect: {
         light: "Half the boost, 40% less wear.",
-        normal: "The standard boost and wear.",
-        heavy: "1.5× the boost, extra wear.",
+        normal: "The standard boost. No added risk.",
+        heavy: "1.5× the boost. Raises the absence risk.",
       } as Record<string, string>,
       scrimChoices: { off: "None", easy: "Easy", even: "Even", hard: "Hard" } as Record<string, string>,
       scrimEffect: {
         off: "No scrims, no scrim wear.",
-        easy: "Confidence and little wear.",
+        easy: "Confidence, little wear.",
         even: "The most chemistry.",
-        hard: "The most learning, more wear.",
+        hard: "The most learning. Raises the absence risk.",
       } as Record<string, string>,
+      // rc.36 (front T2): nothing runs until a plan is picked and started.
+      pickTitle: "Choose this cycle's plan",
+      pickHint: "Nothing runs until you start a plan. Meanwhile everyone grows at the base pace.",
+      idle: "No plan running",
+      idleLine: "Your squad grows at the base pace. Start a plan to speed it up.",
+      choosePlan: "Choose a plan",
+      start: "Start training",
+      applyChanges: "Apply changes",
+      pickAll: "Pick one option in each step to start.",
+      useRecommended: "Use the recommended plan",
+      sameAgain: "Same plan as last cycle",
+      runsTo: (date: string, days: number) => `Runs to ${date} · ${days === 1 ? "1 day" : `${days} days`}`,
+      fromTomorrow: "Today's session already ran: it starts tomorrow.",
+      startsTomorrow: "Starts tomorrow",
+      promised: (v: string) => `+${v} OVR promised`,
+      promiseTitle: "Cycle gain",
+      promiseLine: (paid: string, total: string) => `+${paid} of +${total} OVR`,
+      onCompletion: (v: string) => `+${v} lands when the cycle completes`,
+      legend: { paid: "Earned", toCome: "To come", completion: "On completion" } as Record<string, string>,
+      adjustHint: "Adjusting keeps what is earned. The completion part still lands at the end.",
+      coachPlans: (name: string) => `${name} plans each cycle`,
+      coachPlansHint: "Off: he only tags his plan Recommended, and you start each cycle.",
+      riskLine: (pts: string) => `Absence risk before each event: +${pts} pts`,
       scrimsAWeek: (n: number) => `${n} a week · practice only`,
       recommended: "Recommended",
       expected: "Expected result",
@@ -1048,6 +1087,13 @@ export const CAREER_EN = {
         plan: "Plan",
         close: "Continue",
         open: "Open training",
+        // rc.36 (front T2): the prettier report.
+        completion: (v: string) => `+${v} landed on completion`,
+        completionShort: (v: string) => `+${v} at the end`,
+        planNext: "Plan the next cycle",
+        coachNext: (name: string) => `${name} has started the next cycle.`,
+        joined: "Joined mid-cycle",
+        players: "Player by player",
       },
       coach: {
         quality: "Quality",
@@ -1160,6 +1206,8 @@ export const CAREER_EN = {
         coachHired: (p: Record<string, string | number>) => `${p.coach} took over the plan`,
         coachFired: (p: Record<string, string | number>) => `${p.coach} left — the plan ran on at the coachless rate`,
         objectiveChange: () => "The objective changed mid-period",
+        // rc.36 (front T2): a cycle stopped before its end forfeits its held gain.
+        cycleStopped: (p: Record<string, string | number>) => `The cycle stopped early: +${p.lost} held was forfeited`,
         coachEvent: () => "The coach planned preparation for the period's big event",
         coachWear: () => "The coach planned recovery after a heavy period",
       } as Record<string, (p: Record<string, string | number>) => string>,
@@ -1917,7 +1965,10 @@ export const CAREER_EN = {
       trainingReport: (p: Record<string, string | number>) => `Training report: squad ${p.n} OVR`,
       // rc.34 (DEV-03 T7): a period's summary is filed — one feed line, never a toast.
       trainingPeriod: (p: Record<string, string | number>) =>
-        `Period ${p.n} report (${({ development: "Development", preparation: "Competitive prep", recovery: "Recovery" } as Record<string, string>)[String(p.objective)] ?? "Base growth"}): squad +${p.avg} avg, ${p.player} +${p.gain}`,
+        `Cycle ${p.n} report (${({ development: "Evolve", preparation: "Gel", recovery: "Recover" } as Record<string, string>)[String(p.objective)] ?? "Base growth"}): squad +${p.avg} avg, ${p.player} +${p.gain}`,
+      // rc.36 (front T2): a signing's unknown phase, read after a few training days.
+      phaseRead: (p: Record<string, string | number>) =>
+        `After ${p.n} training days the staff reads ${p.player}: ${({ growing: "still developing", peak: "at his peak", declining: "past his peak" } as Record<string, string>)[String(p.phase)] ?? "phase unclear"}`,
       // rc.34 (T3): one line a week for the package's scrims (practice only).
       scrimWeek: (p: Record<string, string | number>) =>
         `Scrim week (${({ easy: "easy", even: "even", hard: "hard" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,

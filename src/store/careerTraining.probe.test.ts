@@ -15,7 +15,9 @@
  *    from a sessions-only pass, as the flow does) and four series every other
  *    week (the growth probe's G4 schedule). rc.33's delegated coach is the
  *    "before" row (its multiplier × auto focus × the coach's drill, its two
- *    run-now scrims a week).
+ *    run-now scrims a week). rc.36 (front T2, R83): a package pays
+ *    CAREER_PLAN.payout.alongShare along the way and its held rest at each
+ *    28-day cycle's end, as the flow does.
  *  - P2 the coach profiles (none; generic 75 / 2; generic 88 / 6 development;
  *    ex-pro peak 85; ex-pro peak 99): a period's expected gain by age.
  *  - P3 the scrim levels: XP, chemistry, wear, confidence per period.
@@ -49,6 +51,7 @@ import {
   coachEfficiencyFor,
   coachProfileOf,
   packageEffectFor,
+  paidSessionMultFor,
   planQualityFor,
   scrimCapRatio,
   scrimXpWeeksFor,
@@ -138,7 +141,12 @@ function season(p0: SquadPlayer, seasonIndex: number, careerSeed: number, s: Set
   const fx = packageEffectFor(s.pkg, s.coach, p.id, { unsupervised: s.unsupervised });
   const level = s.pkg && s.pkg.scrimsPerWeek > 0 ? (s.pkg.scrimLevel === "auto" ? "even" : s.pkg.scrimLevel) : null;
   const days = s.pkg ? (CAREER_SCRIM.package.days[s.pkg.scrimsPerWeek] ?? []) : [];
-  const sessionDay = (pl: SquadPlayer, week: number, dow: number) => {
+  // rc.36 (front T2, CAREER_PLAN.payout): a package pays alongShare along the way
+  // (never under the base) and the held rest on its cycle's last day, as the flow does.
+  const hold = Boolean(s.pkg) && !s.rc33;
+  const fullMult = s.rc33 ? s.rc33.mult : fx.sessionMult;
+  const paidMult = hold ? paidSessionMultFor(fx.sessionMult) : fullMult;
+  const sessionDay = (pl: SquadPlayer, week: number, dow: number, mult: number = fullMult) => {
     const event = week % 2 === 0;
     return trainDay(
       pl,
@@ -153,12 +161,30 @@ function season(p0: SquadPlayer, seasonIndex: number, careerSeed: number, s: Set
         day: (week - 1) * CAREER_CALENDAR.daysPerWeek + dow,
         careerSeed,
         aging: true,
-        packageMult: s.rc33 ? s.rc33.mult : fx.sessionMult,
+        packageMult: mult,
         offsetGrowth: fx.offsets,
         declineMult: fx.declineMult,
       },
       event ? CAREER_TRAINING.matchPrepShare : 1,
     );
+  };
+  /** The held gain lands at the cycle's end, inside today's caps (the flow's landHeldGain). */
+  const land = (pl: SquadPlayer, amount: number, day: number): SquadPlayer => {
+    if (amount <= 1e-6) return pl;
+    const room = trainWeek(pl, {
+      seasonIndex,
+      coachOverall: null,
+      gearBonus: 0,
+      trainingWeekBonus: false,
+      splitGained: pl.gainedThisSplit,
+      seasonGained: pl.gainedThisSeason,
+      weeks: CAREER_CALENDAR.weeksPerSeason,
+      model: 2,
+      day,
+      careerSeed,
+    }).gained;
+    const pay = Math.max(0, Math.min(amount, room));
+    return { ...pl, overall: Math.min(99, pl.overall + pay), gainedThisSplit: pl.gainedThisSplit + pay, gainedThisSeason: pl.gainedThisSeason + pay };
   };
   for (let period = 0; period < CAREER_CALENDAR.weeksPerSeason / periodWeeks; period++) {
     // The flow's cap: a sessions-only pass over the period.
@@ -176,13 +202,16 @@ function season(p0: SquadPlayer, seasonIndex: number, careerSeed: number, s: Set
     let pSessions = 0;
     let pScrims = 0;
     let pSeries = 0;
+    let held = 0;
     for (let w = 1; w <= periodWeeks; w++) {
       const week = period * periodWeeks + w;
       const event = week % 2 === 0;
       for (let dow = 1; dow <= CAREER_TRAINING.trainingDaysPerWeek; dow++) {
         const r = sessionDay(p, week, dow);
+        const paid = hold && paidMult < fullMult - 1e-9 ? sessionDay(p, week, dow, paidMult) : r;
         pSessions += r.gained;
-        p = r.player;
+        held += Math.max(0, r.gained - paid.gained);
+        p = paid.player;
         const k = days.indexOf(dow);
         const scrimN = s.rc33 ? s.rc33.scrims : 0;
         const rc33Scrim = s.rc33 && (dow === 2 || dow === 4) && scrimN > 0;
@@ -204,10 +233,16 @@ function season(p0: SquadPlayer, seasonIndex: number, careerSeed: number, s: Set
               careerSeed,
               packageMult: s.rc33 ? s.rc33.mult : 1,
             };
+            let w2 = weeks;
             let r2 = trainWeek(p, ctx);
-            if (r2.gained > room) r2 = trainWeek(p, { ...ctx, weeks: weeks * (room / r2.gained) });
+            if (r2.gained > room) {
+              w2 = weeks * (room / r2.gained);
+              r2 = trainWeek(p, { ...ctx, weeks: w2 });
+            }
+            const paid2 = hold ? trainWeek(p, { ...ctx, weeks: w2 * CAREER_PLAN.payout.alongShare }) : r2;
             pScrims += r2.gained;
-            p = r2.player;
+            held += Math.max(0, r2.gained - paid2.gained);
+            p = paid2.player;
           }
         }
       }
@@ -227,6 +262,8 @@ function season(p0: SquadPlayer, seasonIndex: number, careerSeed: number, s: Set
         pSeries += p.overall - before;
       }
     }
+    // rc.36: the cycle completes — its held gain lands (the next period's arrival).
+    p = land(p, held, (period + 1) * periodWeeks * CAREER_CALENDAR.daysPerWeek);
     sessions += pSessions;
     scrims += pScrims;
     series += pSeries;

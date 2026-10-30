@@ -1653,6 +1653,13 @@ export function trainingProjection(
  * overall point, how many TRAINING DAYS until it lands at the current weekly
  * rate (null when nothing moves: capped, at potential, or zero rate), and
  * what the split/season caps still allow.
+ *
+ * rc.36 (front T2, Miguel: "HQ's green bar fills only toward the player's
+ * next overall point"): the point is the next one the cards PRINT. They show
+ * Math.round(overall), so the next point lands at shown + 0.5 — `progress`
+ * runs 0 → 1 from the last shown point to it and resets as the number ticks
+ * up (rc.35 read floor(overall): at 78.6 the card said 79 while the bar,
+ * 60 % full, still led to 79).
  */
 export function trainingEta(
   p: SquadPlayer,
@@ -1668,6 +1675,8 @@ export function trainingEta(
 ): {
   progress: number;
   toNext: number;
+  /** rc.36: the next overall the cards will print (Math.round(overall) + 1). */
+  nextPoint: number;
   daysToNext: number | null;
   weeklyRate: number;
   splitCapLeft: number;
@@ -1676,9 +1685,10 @@ export function trainingEta(
   /** DEV-01 (model 2): false — the split has no cap of its own (rc.31: true, CAREER_TRAINING.maxSplitGain). */
   splitCapped: boolean;
 } {
-  const whole = Math.floor(p.overall + 1e-9);
-  const progress = clamp(p.overall - whole, 0, 1);
-  const toNext = round2(Math.max(0, whole + 1 - p.overall));
+  const shown = Math.round(p.overall);
+  const nextAt = shown + 0.5;
+  const progress = clamp(p.overall - (nextAt - 1), 0, 1);
+  const toNext = round2(Math.max(0, nextAt - p.overall));
   const dev01 = isGrowthContract(ctx.model);
   // DEV-01 (model 2): the season cap only, and his real peak (potential ± offset) as the ceiling.
   const ceiling = dev01 ? squadArcOf(p, ctx.careerSeed).target : p.potential;
@@ -1693,7 +1703,7 @@ export function trainingEta(
     weeklyRate <= 0 || capLeft < toNext - 1e-9
       ? null
       : Math.max(1, Math.ceil((toNext / weeklyRate) * CAREER_TRAINING.trainingDaysPerWeek));
-  return { progress, toNext, daysToNext, weeklyRate, splitCapLeft, seasonCapLeft, atPotential, splitCapped: !dev01 };
+  return { progress, toNext, nextPoint: shown + 1, daysToNext, weeklyRate, splitCapLeft, seasonCapLeft, atPotential, splitCapped: !dev01 };
 }
 
 /**

@@ -99,6 +99,7 @@ import {
   acknowledgeTrainingReportFlow,
   approveTrainingProposalFlow,
   keepBaseTrainingFlow,
+  setCoachPlansFlow,
   setTrainingModeFlow,
   setTrainingPackageFlow,
   setTrainingRepeatFlow,
@@ -222,6 +223,8 @@ interface CareerStoreState {
   keepBaseTraining: () => void;
   /** rc.35 (front T): the cycle results modal was seen (never shows that report again). */
   acknowledgeTrainingReport: () => void;
+  /** rc.36 (front T2): the hired coach plans and starts each cycle (on) or only recommends (off). */
+  setTrainingCoachPlans: (on: boolean) => void;
   /** v2.0 (R33): answer the pending mid-week insert. */
   resolveInsert: (key: "a" | "b") => void;
 
@@ -475,6 +478,7 @@ export const useCareerStore = create<CareerStoreState>()(
         approveTrainingProposal: () => withResult(approveTrainingProposalFlow),
         keepBaseTraining: () => withResult(keepBaseTrainingFlow),
         acknowledgeTrainingReport: () => withResult(acknowledgeTrainingReportFlow),
+        setTrainingCoachPlans: (on) => withResult((s) => setCoachPlansFlow(s, on)),
         resolveInsert: (key) => withResult((s) => resolveInsertFlow(s, key)),
 
         // rc.34 (UX-06a): buying opens the item — its "New" mark clears.

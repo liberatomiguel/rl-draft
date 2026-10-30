@@ -52,7 +52,13 @@ import {
   acknowledgeTrainingReportFlow,
   approveTrainingProposalFlow,
   coachImpactFor,
+  coachPlansOf,
+  coachProposalOf,
+  cycleEndedTodayOf,
   recommendedPackageOf,
+  recommendedPlanOf,
+  setCoachPlansFlow,
+  trainingBlockOf,
   trainingControllerOf,
   trainingReportOf,
   projectTrainingPackage,
@@ -60,12 +66,12 @@ import {
   runTrainingSession,
   setTrainingModeFlow,
   setTrainingPackageFlow,
-  setTrainingRepeatFlow,
   trainingDayStart,
   trainingDecisionOf,
   trainingOf,
   trainingSeasonEnd,
 } from "./careerTraining";
+import { clockHoldOf } from "./careerDecisions";
 import { walkPastForTests } from "./careerClockForTests";
 
 const INPUT: CreateCareerInput = {
@@ -113,6 +119,20 @@ function step(input: CareerSave, approve = true): CareerSave {
   return advanceDayFlow(walkPastForTests(save));
 }
 
+/** rc.36: today's decisions and events as `step` takes them, without moving the clock. */
+function settle(input: CareerSave): CareerSave {
+  let save = input;
+  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
+  if (save.activeEvent) {
+    save = simEventToEnd(save);
+    if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") save = finishEvent(save);
+  } else if (save.pendingEventDef && save.pendingEventDef.day === save.clock.day) {
+    save = simEventToEnd(startEvent(save, false));
+    if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") save = finishEvent(save);
+  }
+  return save.phase === "running" ? walkPastForTests(save) : save;
+}
+
 /** Advance (playing every event, answering every insert) until the clock reaches `day` (or the season stops). */
 function playTo(input: CareerSave, day: number, onDay?: (s: CareerSave) => CareerSave): CareerSave {
   let save = input;
@@ -135,16 +155,17 @@ const sessionsOf = (s: CareerSave) => Object.fromEntries(Object.entries(training
 // ---------------------------------------------------------------------------
 
 describe("DEV-03 rules (engine)", () => {
-  it("T1 (rc.35): a 14-day grid, 16 a season, never crossing one; the split mode is 3 periods", () => {
+  it("T1 (rc.36, Miguel: back to 28 days): a 28-day grid, 8 a season, never crossing one; the split mode is 3 periods", () => {
     const grid = periodsOfSeason("grid");
-    expect(CAREER_PLAN.periodDays).toBe(14);
-    expect(grid).toHaveLength(16);
-    expect(grid[0]).toMatchObject({ startDay: 1, endDay: 14 });
-    expect(grid[15]).toMatchObject({ startDay: 211, endDay: 224 });
+    expect(CAREER_PLAN.periodDays).toBe(28);
+    expect(grid).toHaveLength(8);
+    expect(grid[0]).toMatchObject({ startDay: 1, endDay: 28 });
+    expect(grid[7]).toMatchObject({ startDay: 197, endDay: 224 });
     for (const p of grid) expect(dayOfWeekOf(p.startDay)).toBe(1); // every period starts on a Monday
     const split = periodsOfSeason("split");
     expect(split.map((p) => [p.startDay, p.endDay])).toEqual([[1, 84], [85, 154], [155, 224]]);
-    expect(periodOfDay(15).index).toBe(1);
+    expect(periodOfDay(15).index).toBe(0);
+    expect(periodOfDay(29).index).toBe(1);
   });
 
   it("decision 7-A: no package = the base, whoever coaches; a coachless package runs at 0.5", () => {
@@ -247,14 +268,14 @@ describe("DEV-03 flow (TRAINING-CONTRACT §3)", { timeout: 120_000 }, () => {
     const withPkg = setTrainingPackageFlow(start, DEV).save;
     const card = projectTrainingPackage(withPkg, DEV, { unsupervised: false });
     expect(card.fromDay).toBe(2);
-    expect(card.endDay).toBe(14);
+    expect(card.endDay).toBe(28);
     const s1 = sessionsOf(withPkg);
-    const end = playTo(withPkg, 13); // rc.35: the 14-day cycle's last weekday session ran on Friday 12
+    const end = playTo(withPkg, 27); // rc.36: the 28-day cycle's last weekday session ran on Friday 26
     const ran = sessionsOf(end);
     for (const p of card.players) {
       expect(Math.abs(ran[p.id] - s1[p.id] - p.sessions), p.name).toBeLessThanOrEqual(0.011);
     }
-    const base = playTo(start, 13);
+    const base = playTo(start, 27);
     for (const p of end.squad) {
       expect(trainingOf(end).plan!.players[p.id].sessions).toBeGreaterThan(trainingOf(base).plan!.players[p.id].sessions);
     }
@@ -364,18 +385,19 @@ describe("DEV-03 flow (TRAINING-CONTRACT §3)", { timeout: 120_000 }, () => {
     });
     const t = trainingOf(save);
     expect(prompts).toBe(0);
-    expect(t.history.length).toBe(10); // rc.35: cycles 1–10 filed by day 141 (cycle 11 runs)
+    expect(t.history.length).toBe(5); // rc.36: 28-day cycles 1–5 filed by day 141 (cycle 6 runs)
     expect(new Set(t.history.map((h) => `${h.seasonIndex}:${h.periodIndex}`)).size).toBe(t.history.length);
     const byPeriod = new Map(t.history.map((h) => [h.periodIndex, h]));
-    // Cycle 1 opened before he arrived (Easy, no coach: the auto plan); from cycle 2 he runs it.
-    expect(byPeriod.get(0)?.author).toBe("auto");
+    // Cycle 1 opened before he arrived — rc.36: nothing runs until a plan is
+    // picked (Easy no longer applies one); from cycle 2 he plans and starts it.
+    expect(byPeriod.get(0)).toMatchObject({ author: "base", package: null });
     expect(byPeriod.get(1)).toMatchObject({ author: "coach" });
     expect(byPeriod.get(1)?.package?.objective).toBe("development");
-    // The Major's cycle (W9–12) is preparation, run by him.
+    // The Majors' cycles (W9–12, W17–20) are preparation, run by him.
     const prep = t.history.filter((h) => h.package?.objective === "preparation");
     expect(prep.length).toBeGreaterThan(0);
     const bigWeek = (h: { startDay: number; endDay: number }) =>
-      [h.startDay, h.startDay + 7].some((d) => d <= h.endDay && ["major", "worlds"].includes(weekAt(weekOfDay(d)).kind));
+      [0, 7, 14, 21].map((o) => h.startDay + o).some((d) => d <= h.endDay && ["major", "worlds"].includes(weekAt(weekOfDay(d)).kind));
     for (const h of prep) expect(h.author === "coach" && bigWeek(h), `cycle ${h.periodIndex + 1}`).toBe(true);
     expect(signed).toBe(true);
     expect(t.history.some((h) => h.notes.some((n) => n.key === "joined"))).toBe(true);
@@ -392,7 +414,7 @@ describe("DEV-03 flow (TRAINING-CONTRACT §3)", { timeout: 120_000 }, () => {
     const fx = packageEffectFor(DEV, null, save.squad[0].id);
     expect(trainingOf(save).plan!.package).toEqual(DEV); // the package runs on
     expect(fx.sessionMult).toBeCloseTo(1 + CAREER_PLAN.objectives.development.boost * CAREER_PLAN.coach.coachless, 6);
-    save = playTo(save, 15);
+    save = playTo(save, 29); // rc.36: the 28-day cycle is filed on day 29
     const summary = trainingOf(save).history[0];
     expect(summary.coaches.map((c) => c.name)).toEqual(["first", hire.name]);
     const [first, second] = summary.coaches;
@@ -497,59 +519,110 @@ describe("DEV-03 flow (TRAINING-CONTRACT §3)", { timeout: 120_000 }, () => {
 // ---------------------------------------------------------------------------
 
 describe("DEV-03 delegation, the hold and the load repair", { timeout: 120_000 }, () => {
-  it("rc.35 (Miguel): no coach at the start — Easy applies the best plan, Normal tags it, Hard shows none", () => {
+  it("rc.36 (Miguel): nothing runs until you pick — every preset starts on the base; Easy and Normal tag the best plan, Hard none", () => {
     const easy = createCareerSave({ ...INPUT, difficulty: "easy", trainingMode: undefined }, 1);
     const normal = createCareerSave({ ...INPUT, difficulty: "normal", trainingMode: undefined }, 1);
     const hard = createCareerSave({ ...INPUT, difficulty: "hard", trainingMode: undefined }, 1);
     expect(trainingOf(easy).mode).toBe("auto");
     expect(trainingOf(normal).mode).toBe("recommend");
     expect(trainingOf(hard).mode).toBe("manual");
-    for (const s of [easy, normal, hard]) expect(s.coach).toBeNull();
-    // Easy: the recommended plan runs from day 1, no coach involved.
-    expect(trainingOf(easy).plan).toMatchObject({ author: "auto" });
-    expect(trainingOf(easy).plan!.package).toEqual(recommendedPackageOf(easy).package);
-    // Normal and Hard start on the base; nothing waits, nothing holds the clock.
-    expect(trainingOf(normal).plan).toMatchObject({ author: "base", package: null });
-    expect(trainingOf(hard).plan).toMatchObject({ author: "base", package: null });
+    for (const s of [easy, normal, hard]) {
+      expect(s.coach).toBeNull();
+      // rc.35 applied the best plan on Easy; now no preset starts one by itself.
+      expect(trainingOf(s).plan).toMatchObject({ author: "base", package: null });
+      expect(trainingDecisionOf(s)).toBeNull();
+      expect(clockHoldOf(s)).toBeNull();
+      expect(trainingBlockOf(s)).toMatchObject({ running: false, cycle: null, promise: null });
+    }
+    // The tag: a real plan on Easy and Normal (development at a season's start), none on Hard.
+    expect(recommendedPlanOf(easy)?.objective).toBe("development");
+    expect(recommendedPlanOf(normal)).toEqual(recommendedPackageOf(normal).package);
+    expect(recommendedPlanOf(hard)).toBeNull();
     expect(trainingControllerOf(normal)).toBe("recommend");
     expect(trainingControllerOf(hard)).toBe("manual");
-    for (const s of [easy, normal, hard]) expect(trainingDecisionOf(s)).toBeNull();
-    // The recommendation is a real plan (development at the start of a season).
-    expect(recommendedPackageOf(normal).package.objective).toBe("development");
+    // rc.36: the focus it tags is the trio's weakest theme (a focus costs no overall).
+    expect(recommendedPlanOf(normal)?.focus).not.toBe("balanced");
+    // Not picking runs the base: the squad keeps growing, nothing waits.
+    const later = playTo(normal, 20);
+    expect(later.squad.some((p, i) => p.overall > normal.squad[i].overall)).toBe(true);
+    expect(trainingOf(later).plan).toMatchObject({ package: null });
   });
 
-  it("rc.35: a hired coach picks and runs every cycle (no prompt); you can adjust a cycle, the next is his again", () => {
+  it("rc.36: a hired coach plans and starts each cycle (no prompt); an adjustment keeps his cycle's held gain; switched off he only recommends", () => {
     let save = createCareerSave({ ...INPUT, trainingMode: undefined }, 61_010);
     save = { ...save, coach: coach("run", 80, 2, "development") };
     expect(trainingControllerOf(save)).toBe("coach");
+    expect(coachPlansOf(save)).toBe(CAREER_PLAN.coachPlansByDefault);
     let prompts = 0;
-    save = playTo(save, 15, (s) => {
+    save = playTo(save, 36, (s) => {
       if (trainingDecisionOf(s)) prompts += 1;
       return s;
     });
     expect(prompts).toBe(0);
-    expect(trainingOf(save).plan).toMatchObject({ periodIndex: 1, author: "coach" });
-    // Adjust this cycle: the manager's plan runs to the boundary.
+    expect(trainingOf(save).plan).toMatchObject({ periodIndex: 1, author: "coach", cycleFrom: 29 });
+    const heldBefore = Object.values(trainingOf(save).plan!.players).reduce((n, e) => n + (e.held ?? 0), 0);
+    expect(heldBefore).toBeGreaterThan(0);
+    // Adjust this cycle: the manager's plan runs to the boundary, what is held stays.
     const heavy = simplePackageOf({ objective: "development", workload: "heavy", scrims: "hard" });
     save = setTrainingPackageFlow(save, heavy).save;
-    expect(trainingOf(save).plan).toMatchObject({ author: "user" });
+    expect(trainingOf(save).plan).toMatchObject({ author: "user", cycleFrom: 29 });
     expect(trainingOf(save).plan!.package).toMatchObject({ workload: "heavy", scrimLevel: "hard", scrimsPerWeek: CAREER_PLAN.scrimsPerWeekOnLevel });
-    save = playTo(save, 29);
+    const heldAfter = Object.values(trainingOf(save).plan!.players).reduce((n, e) => n + (e.held ?? 0), 0);
+    expect(heldAfter).toBeGreaterThanOrEqual(heldBefore);
+    save = playTo(save, 57);
+    expect(trainingOf(save).history[0].players.some((p) => (p.completion ?? 0) > 0)).toBe(true);
     expect(trainingOf(save).plan).toMatchObject({ periodIndex: 2, author: "coach" });
-    // Fired: the cycle hands back to the preset (Normal: the manager's repeated plan).
+    // Switched off: the running cycle runs on; the next one waits for the manager, his plan only tagged.
+    save = setCoachPlansFlow(save, false).save;
+    expect(trainingControllerOf(save)).toBe("recommend");
+    expect(trainingOf(save).plan).toMatchObject({ author: "coach" });
+    expect(recommendedPlanOf(save)).toEqual(coachProposalOf(save)!.package);
+    save = playTo(save, 86);
+    expect(trainingOf(save).plan).toMatchObject({ periodIndex: 3, author: "base", package: null });
+    // Back on with nothing running: he starts his plan now.
+    save = setCoachPlansFlow(save, true).save;
+    expect(trainingOf(save).plan).toMatchObject({ author: "coach" });
+    // Fired: his cycle runs on at the coachless rate to its end (rc.35 handed it to the preset).
     const fired = fireCoachFlow(save).save;
-    expect(trainingOf(fired).plan).toMatchObject({ author: "user" });
+    expect(trainingOf(fired).plan).toMatchObject({ author: "coach" });
+    expect(trainingOf(fired).plan!.package).toEqual(trainingOf(save).plan!.package);
   });
 
-  it("rc.35: Normal / Hard keep the manager's plan cycle to cycle ('Keep my plan'), or start on the base when it is off", () => {
-    const hard = setTrainingPackageFlow(createCareerSave({ ...INPUT, difficulty: "hard", trainingMode: undefined }, 61_021), DEV).save;
-    expect(trainingOf(hard).repeat).toBe(true);
-    expect(trainingOf(playTo(hard, 15)).plan).toMatchObject({ periodIndex: 1, author: "user" });
-    const off = setTrainingRepeatFlow(hard, false).save;
-    expect(trainingOf(playTo(off, 15)).plan).toMatchObject({ periodIndex: 1, author: "base", package: null });
-    // The simple package: three choices; "off" scrims = none a week.
+  it("rc.36: without a coach a finished cycle is started again by hand — the next period opens on the base and the batched Advance stops there once", () => {
+    const start = setTrainingPackageFlow(createCareerSave({ ...INPUT, difficulty: "easy", trainingMode: undefined }, 61_021), DEV).save;
+    expect(trainingOf(start).plan).toMatchObject({ author: "user", cycleFrom: 2 });
+    const end = playTo(start, 29);
+    expect(trainingOf(end).plan).toMatchObject({ periodIndex: 1, author: "base", package: null });
+    expect(trainingOf(end).history[0]).toMatchObject({ periodIndex: 0, author: "user" });
+    expect(cycleEndedTodayOf(end)).toBe(true);
+    // The batched Advance from the cycle's last day stops on day 29 (the report, the next plan) —
+    // once, and only because of the cycle (CAREER_PLAN.stopOnCycleEnd off: it runs on).
+    const cups = setTrainingPackageFlow(
+      createCareerSave({ ...INPUT, difficulty: "easy", trainingMode: undefined, prefs: { autoEnterUnofficials: true } }, 61_021),
+      DEV,
+    ).save;
+    const eve = settle(playTo(cups, 28));
+    expect(eve.clock.day).toBe(28);
+    expect(advanceToNextStopFlow(eve).clock.day).toBe(29);
+    const knob = CAREER_PLAN as unknown as { stopOnCycleEnd: boolean };
+    knob.stopOnCycleEnd = false;
+    try {
+      expect(advanceToNextStopFlow(eve).clock.day).toBeGreaterThan(29);
+    } finally {
+      knob.stopOnCycleEnd = true;
+    }
+    expect(advanceToNextStopFlow(settle(advanceToNextStopFlow(eve))).clock.day).toBeGreaterThan(29);
+    // It is a nudge, never a hold: the clock moves on without a plan.
+    expect(clockHoldOf(end)).toBeNull();
+    expect(advanceDayFlow(walkPastForTests(end)).clock.day).toBe(30);
+    // Started by hand again: the next cycle runs.
+    const again = setTrainingPackageFlow(end, DEV).save;
+    expect(trainingOf(again).plan).toMatchObject({ periodIndex: 1, author: "user", cycleFrom: 30 });
+    expect(cycleEndedTodayOf(again)).toBe(false);
+    // The simple package: four choices; "off" scrims = none a week.
     expect(simplePackageOf({ objective: "recovery", workload: "light", scrims: "off" })).toMatchObject({ scrimsPerWeek: 0, focus: "balanced" });
-    expect(setTrainingModeFlow(hard, "coach" as never).error).toBe("invalid");
+    expect(simplePackageOf({ objective: "development", workload: "normal", scrims: "even", focus: "clutch-sets" })).toMatchObject({ focus: "clutch-sets" });
+    expect(setTrainingModeFlow(start, "coach" as never).error).toBe("invalid");
   });
 
   it("rc.35: an rc.34 save migrates — 'coach' / 'approve' become the preset's meaning, a waiting proposal is dropped, idempotent", () => {
@@ -574,7 +647,7 @@ describe("DEV-03 delegation, the hold and the load repair", { timeout: 120_000 }
   it("rc.35 bug (Miguel): a finished cycle's results modal shows once, survives a reload, never repeats", () => {
     let save = setTrainingPackageFlow(createCareerSave(INPUT, 61_031), DEV).save;
     expect(trainingReportOf(save)).toBeNull();
-    save = playTo(save, 15);
+    save = playTo(save, 29);
     const report = trainingReportOf(save);
     expect(report).toMatchObject({ seasonIndex: 0, periodIndex: 0 });
     expect(report!.players.length).toBeGreaterThan(0);
@@ -585,9 +658,13 @@ describe("DEV-03 delegation, the hold and the load repair", { timeout: 120_000 }
     expect(trainingReportOf(seen)).toBeNull();
     expect(trainingReportOf(migrateSaveToV5(JSON.parse(JSON.stringify(seen)))!)).toBeNull();
     expect(acknowledgeTrainingReportFlow(seen).save).toBe(seen);
-    // The next cycle files the next report: it shows once more.
-    const later = playTo(seen, 29);
-    expect(trainingReportOf(later)).toMatchObject({ periodIndex: 1 });
+    // rc.36: a period on the base (nothing started) is filed quietly — no modal.
+    const quiet = playTo(seen, 57);
+    expect(trainingOf(quiet).history[0]).toMatchObject({ periodIndex: 1, package: null });
+    expect(trainingReportOf(quiet)).toBeNull();
+    // A cycle started by hand files the next report: it shows once more.
+    const later = playTo(setTrainingPackageFlow(quiet, DEV).save, 85);
+    expect(trainingReportOf(later)).toMatchObject({ periodIndex: 2 });
     // An older save with reports but no seen key: nothing old pops after the update.
     const legacy = structuredClone(later);
     delete legacy.training!.reportSeen;
@@ -649,18 +726,23 @@ describe("DEV-03 delegation, the hold and the load repair", { timeout: 120_000 }
     expect(filed.coach!.overall).toBeCloseTo(80 + CAREER_COACH_MARKET.growth.qualityPerSeason, 6);
   });
 
-  it("the rollover files the last cycle (16 a season, rc.35) and the season's report; the next season opens a fresh plan", () => {
+  it("the rollover files the last cycle (8 a season, rc.36) and pays its completion; the next season opens on the base", () => {
     let save = setTrainingPackageFlow(createCareerSave(INPUT, 61_012), DEV).save;
-    save = playTo(save, 224);
+    // rc.36: started by hand every cycle (nothing repeats by itself).
+    save = playTo(save, 224, (s) => (trainingOf(s).plan && !trainingOf(s).plan!.package ? setTrainingPackageFlow(s, DEV).save : s));
     let guard = 0;
     while (save.phase === "running" && guard++ < 20) save = step(save);
     expect(save.phase).toBe("seasonReview");
     {
+      const heldAtEnd = Object.values(trainingOf(save).plan?.players ?? {}).reduce((n, e) => n + (e.held ?? 0), 0);
       const next = rolloverToNextSeason(save);
       const t = trainingOf(next);
-      expect(t.history.filter((h) => h.seasonIndex === 0)).toHaveLength(16);
-      expect(t.plan).toMatchObject({ seasonIndex: 1, periodIndex: 0 });
-      expect(t.plan!.package).toEqual(DEV); // "I set it" + repeat
+      const season0 = t.history.filter((h) => h.seasonIndex === 0);
+      expect(season0).toHaveLength(8);
+      expect(season0.every((h) => h.package !== null)).toBe(true);
+      // The last cycle's held gain landed at the rollover (before the squad aged).
+      if (heldAtEnd > 0) expect(season0[0].players.some((p) => (p.completion ?? 0) > 0)).toBe(true);
+      expect(t.plan).toMatchObject({ seasonIndex: 1, periodIndex: 0, package: null, author: "base" });
     }
   });
 });

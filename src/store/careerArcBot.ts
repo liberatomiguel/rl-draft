@@ -11,7 +11,7 @@
  * matrix runner and the report live in the test file.
  */
 
-import { CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { insertById } from "@/data/career/inserts";
 import {
@@ -67,6 +67,9 @@ import {
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
 import {
   approveTrainingProposalFlow,
+  coachPlansOf,
+  recommendedPlanOf,
+  setCoachPlansFlow,
   setTrainingPackageFlow,
   trainingDecisionOf,
   trainingOf,
@@ -126,6 +129,12 @@ export interface ArcPolicy {
    * period); "delegate" lets the coach run it (no coach = the base).
    */
   training: "base" | "repeat" | "delegate";
+  /**
+   * rc.36 (front T2, R83): a hired coach plans each cycle (the default, as
+   * rc.35's coach ran every plan); false = the manager keeps planning himself
+   * (the trainer). Absent = on.
+   */
+  coachPlans?: boolean;
   /** rc.34: the repeated package's scrims — two a week (Tue, Thu) at `scrimLevel`, or none. */
   scrims: boolean;
   scrimLevel: ScrimLevel | "auto";
@@ -187,8 +196,8 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   },
   /** rc.34 (TRAINING-CONTRACT §7): the delegator — hires the best coach and lets him run every period. */
   delegator: { id: "delegator", ...base, coach: "best", training: "delegate" },
-  /** rc.34 (§7): the trainer — the best coach and a manual Development package with even scrims, renewed every period. */
-  trainer: { id: "trainer", ...base, coach: "best", training: "repeat", scrims: true, scrimLevel: "even" },
+  /** rc.34 (§7): the trainer — the best coach and a manual Development package with even scrims, renewed every period (rc.36: his coach never plans it). */
+  trainer: { id: "trainer", ...base, coach: "best", training: "repeat", coachPlans: false, scrims: true, scrimLevel: "even" },
   /**
    * rc.34 (Miguel, 31/10: "the older team went broke in the first split"):
    * the wizard's older founding roster (journeymen), hands-off — the
@@ -224,6 +233,27 @@ function arcPackageFor(policy: ArcPolicy): TrainingPackage {
     scrimsPerWeek: policy.scrims ? 2 : 0,
     scrimLevel: policy.scrimLevel,
   };
+}
+
+/**
+ * rc.36 (front T2, R83): "nothing runs until you pick" — on a day nothing
+ * runs, each policy starts the cycle as its player would: "repeat" its own
+ * Development package (by hand, every cycle), "delegate" the recommendation
+ * (the bot's mode "auto" always tags one), "base" never. A coach who plans
+ * (the policy's `coachPlans`, default on) starts his own at the period's
+ * first day, so the bot only fills the days he does not.
+ */
+function startArcCycle(input: CareerSave, policy: ArcPolicy): CareerSave {
+  if (policy.training === "base" || input.phase !== "running") return input;
+  let save = input;
+  const wanted = policy.coachPlans ?? true;
+  if ((trainingOf(save).coachPlans ?? CAREER_PLAN.coachPlansByDefault) !== wanted) save = setCoachPlansFlow(save, wanted).save;
+  if (trainingOf(save).plan?.package) return save;
+  if (coachPlansOf(save)) return save;
+  const pkg = policy.training === "repeat" ? arcPackageFor(policy) : recommendedPlanOf(save);
+  if (!pkg) return save;
+  const res = setTrainingPackageFlow(save, pkg);
+  return res.error ? save : res.save;
 }
 
 // ---------------------------------------------------------------------------
@@ -745,16 +775,13 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     if (week === 24 && dow === 1) save = renewals(save, policy);
   }
   // rc.34 (DEV-03): training is a package per period, never a weekly click —
-  // a waiting proposal is approved (the bot never adjusts), and a "repeat"
-  // policy sets its Development package once (repeat renews it every period).
+  // a waiting proposal is approved (the bot never adjusts). rc.36 (front T2):
+  // nothing runs until a plan is picked — the policy starts each cycle.
   if (trainingDecisionOf(save)) {
     t.promptDays.add(save.clock.seasonIndex * 1000 + save.clock.day);
     save = approveTrainingProposalFlow(save).save;
   }
-  if (policy.training === "repeat" && save.phase === "running" && !trainingOf(save).userPackage) {
-    const res = setTrainingPackageFlow(save, arcPackageFor(policy));
-    if (!res.error) save = res.save;
-  }
+  save = startArcCycle(save, policy);
   // rc.34 (HQ decision 5-A's measurement, opt-in): a bootcamp on the first
   // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
   if (opts.bootcamp && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {

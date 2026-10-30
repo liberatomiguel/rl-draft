@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 6;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1152,11 +1152,17 @@ export const CAREER_SCRIM = {
    * and the easy scrim's "confidence" (decision 4-A: the consistency offset).
    * Contract candidates, each ±50 %: easy 0.25 / 0.03 / −1 / +0.1, even
    * 0.40 / 0.06 / 0, hard 0.60 / 0.03 / +2.
+   * rc.36 (front T2, Miguel: "Heavy and Hard raise the wear risk again,
+   * modestly"): hard 2 → 0.5 wear a scrim and easy −1 → −0.25, so each of
+   * Heavy (+1 wear a week) and Hard scrims adds about +2 points of absence
+   * risk to a 28-day cycle, both together reach the +4 cap, and easy scrims
+   * no longer cancel a Heavy load (rc.35: Hard alone hit the cap, Heavy +
+   * Easy read no risk at all).
    */
   levels: {
-    easy: { gap: [-8, -3] as const, xpWeeks: 0.25, chemistry: 0.03, wear: -1, consistency: 0.1 },
+    easy: { gap: [-8, -3] as const, xpWeeks: 0.25, chemistry: 0.03, wear: -0.25, consistency: 0.1 },
     even: { gap: [-3, 3] as const, xpWeeks: 0.4, chemistry: 0.06, wear: 0, consistency: 0 },
-    hard: { gap: [3, 8] as const, xpWeeks: 0.6, chemistry: 0.03, wear: 2, consistency: 0 },
+    hard: { gap: [3, 8] as const, xpWeeks: 0.6, chemistry: 0.03, wear: 0.5, consistency: 0 },
   },
   /**
    * rc.34 (T3): a package's scrims a week (0..maxPerWeek) and their weekdays
@@ -1532,8 +1538,8 @@ export const CAREER_PLAN = {
    * W23–32). A period never crosses a season.
    */
   periodMode: "grid" as "grid" | "split",
-  /** rc.35 (front T, Miguel): a 14-day cycle (16 a season); rc.34: 28. */
-  periodDays: 14,
+  /** rc.36 (front T2, Miguel): back to a 28-day cycle (8 a season); rc.35: 14. */
+  periodDays: 28,
   /** The Monday weeks that open a period in "split" mode (1-B). */
   splitStartWeeks: [1, 13, 23] as readonly number[],
   /**
@@ -1616,19 +1622,57 @@ export const CAREER_PLAN = {
   /** T6: the history ring — two seasons of grid periods. */
   historySize: 16,
   /**
-   * rc.35 (front T, Miguel): who sets the package while no coach is hired —
-   * Easy: the best plan is applied for you; Normal: it is tagged
-   * RECOMMENDED and you pick; Hard: you pick, no tag. A hired coach always
-   * picks and runs it (you can still adjust it for the cycle).
+   * rc.35 (front T, Miguel): the preset's training mode while no coach is
+   * hired. rc.36 (front T2, Miguel: "nothing runs until you pick"): it only
+   * decides the RECOMMENDED tag — Easy ("auto") and Normal ("recommend") tag
+   * the best plan, Hard ("manual") tags nothing; no preset starts a plan by
+   * itself any more (rc.35's Easy applied it). The ids are kept (no migration).
    */
   modeByPreset: { easy: "auto", normal: "recommend", hard: "manual" } as Record<string, "auto" | "recommend" | "manual">,
-  /** "Keep my plan next cycle" — its default per mode (rc.35: on everywhere; Easy re-picks the best plan). */
+  /** "Keep my plan next cycle" — rc.36: retired (a finished cycle is started again by hand); the save field stays. */
   repeatByMode: { auto: true, recommend: true, manual: true } as Record<string, boolean>,
   /**
    * rc.35 (front T): the simplified package picks a scrim LEVEL (or none);
    * a level runs this many scrims a week (on CAREER_SCRIM.package.days).
    */
   scrimsPerWeekOnLevel: 2,
+  /**
+   * rc.36 (front T2, Miguel: "the promised gain is paid in full only at the
+   * cycle's end — you climb to 8–9 of 10 along the way, the rest lands on
+   * completion"). Each session and package scrim pays `alongShare` of the
+   * plan's gain now — never less than the base rate, so a plan never slows
+   * anyone below not picking — and holds the rest; the held part lands on
+   * the cycle's last day (the next period's arrival, or the rollover). An
+   * adjustment keeps what is held; a cycle stopped early, or a player who
+   * leaves, forfeits it.
+   */
+  payout: { alongShare: 0.85 },
+  /**
+   * rc.36 (front T2): a hired coach plans and starts every cycle while this
+   * is on (the manager can switch it off on Training — then he only tags his
+   * plan Recommended). Without a coach a finished cycle is started by hand.
+   */
+  coachPlansByDefault: true,
+  /**
+   * rc.36 (front T2, Miguel: "an unknown phase is revealed after a few
+   * training days"): a signing whose phase reads "?" (no report bought) shows
+   * it after this many training days (Mon–Fri) with the squad.
+   */
+  phaseRevealDays: 5,
+  /**
+   * rc.36 (front T2): the focus the RECOMMENDED tag marks without a coach —
+   * "need": the drill theme of the fielded trio's weakest stat (a focus costs
+   * no overall, so "balanced" is never the best pick); "balanced": rc.35's.
+   * A coach always recommends the theme of his buff stat.
+   */
+  recommendedFocus: "need" as "need" | "balanced",
+  /**
+   * rc.36 (front T2): the batched Advance stops once on the day a cycle
+   * completes with nothing started after it (no coach planning it), so the
+   * manager sees the report and can start the next one. Never a hold: a
+   * second press goes on, and not picking is the base.
+   */
+  stopOnCycleEnd: true,
   /**
    * T5 the coach's proposal: development by default, preparation for a
    * period with a Major or Worlds, recovery when the last period's squad wear

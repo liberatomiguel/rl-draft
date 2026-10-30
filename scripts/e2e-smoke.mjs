@@ -21,7 +21,8 @@
  *    HQ → a week of "+1 day" (a weekly decision card is answered with its first option; rc.34:
  *    HQ's decision block — the coach's training proposal on Normal — is approved)
  *    → Finances (no founding partner, rc.33), Market (the reputation filter; no sale
- *    listing in the deals tab, rc.33), Squad, Training, Standings,
+ *    listing in the deals tab, rc.33), Squad, Training (rc.36: the recommended plan is
+ *    filled and started — the running cycle's bar shows), Standings,
  *    Calendar, News, each in the right language.
  * The labels it presses are the copy's (EN and PT, `L` below): update them with the copy.
  * Needs Playwright with its Chromium (cloud sessions have it; never `playwright install`).
@@ -44,12 +45,14 @@ const L = {
     results: /^View results$/, quick: /^Quick start$/, next: /^Next$/, found: /^Found /, presets: ["Easy", "Normal", "Hard"],
     moneyRow: "bank loan", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
     signable: "Signable at my reputation", approve: /^Approve$/,
+    useRec: /^Use the recommended plan$/, startTraining: /^Start training$/, cycleGain: "Cycle gain",
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
     results: /^Ver resultados$/, quick: /^Início rápido$/, next: /^(Próximo|Avançar)$/, found: /^Fundar /, presets: ["Fácil", "Normal", "Difícil"],
     moneyRow: "empréstimo", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
     signable: "Contratáveis com minha reputação", approve: /^Aprovar$/,
+    useRec: /^Usar o plano recomendado$/, startTraining: /^Iniciar treino$/, cycleGain: "Ganho do ciclo",
   },
 };
 const DIALOG_PREF = [/^let's (play|go)$/i, /^vamos (jogar|lá)/i, /^start season 1$/i, /^continue$/i, /^continuar$/i, /^got it/i, /^entendi/i, /^next$/i, /^próximo$/i, /^skip$/i, /^pular$/i, /^close$/i, /^fechar$/i, /^ok$/i];
@@ -253,8 +256,8 @@ async function scenarioCareer(browser, viewport, locale) {
         await sleep(700);
         continue;
       }
-      // rc.34 (UX-01, R71): HQ's decision block holds the clock — on Normal the coach's
-      // training proposal waits on each period's first Monday.
+      // rc.34 (UX-01, R71): HQ's decision block holds the clock. rc.35+ raises no training
+      // proposal (rc.36, R83: an unpicked plan is a nudge, never a hold) — kept for an older save.
       const approve = page.locator("main").getByRole("button", { name: C.approve }).first();
       if (await approve.count()) {
         await press(approve, mobile).catch(() => {});
@@ -298,6 +301,22 @@ async function scenarioCareer(browser, viewport, locale) {
         const t2 = await bodyText(page);
         checks.push({ step: `${tag} no sale listing`, ok: !t2.toLowerCase().includes(C.sell.toLowerCase()) });
         await shot(page, `${tag}-market-deals`);
+      }
+      if (route === "training") {
+        // rc.36 (R83): nothing runs until you pick — fill the recommended plan (Normal tags one), start it,
+        // and the running cycle shows its progress bar.
+        const rec = page.getByRole("button", { name: C.useRec }).first();
+        if (await rec.count()) {
+          await press(rec, mobile).catch(() => {});
+          await sleep(400);
+          const start = page.getByRole("button", { name: C.startTraining }).first();
+          await press(start, mobile).catch(() => {});
+          await settle(page, 900);
+          const t3 = await bodyText(page);
+          checks.push({ step: `${tag} started a training cycle`, ok: t3.toLowerCase().includes(C.cycleGain.toLowerCase()) });
+        } else {
+          checks.push({ step: `${tag} the recommended plan is offered`, ok: false });
+        }
       }
       const lang = await page.evaluate(() => document.documentElement.lang);
       checks.push({ step: `${tag} /career/${route} lang`, ok: lang === (locale === "pt" ? "pt-BR" : "en"), value: lang });

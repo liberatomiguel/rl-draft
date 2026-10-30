@@ -119,10 +119,12 @@ import {
 } from "@/engine/career/development";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import {
+  cycleEndedTodayOf,
   initialTrainingState,
   noteSeriesXp,
   noteUnavailable,
   onCoachChanged,
+  onSquadJoined,
   repairTrainingOnLoad,
   runPackageScrims,
   runTrainingSession,
@@ -3938,6 +3940,9 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   // Advance stops ONCE, on the Monday it surfaces (rc.33's behaviour); a
   // second press goes on past it.
   if (day !== startedAtDay && inviteSurfacedToday(save)) return true;
+  // rc.36 (front T2, R83): a training cycle completed and nothing runs after
+  // it — stop once (the report, the next plan); never a hold.
+  if (day !== startedAtDay && cycleEndedTodayOf(save)) return true;
   // A transfer window just opened (its first Monday).
   if (
     day !== startedAtDay &&
@@ -4427,6 +4432,8 @@ export function signPlayerFlow(
     save.starterIds = seats as [string, string, string];
   }
   syncSquadRoles(save);
+  // rc.36 (front T2, R83): he joins the running training cycle from today.
+  onSquadJoined(save, view.id);
 
   logTransfer(save, {
     playerId: view.id,

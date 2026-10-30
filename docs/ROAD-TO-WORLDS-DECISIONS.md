@@ -1556,6 +1556,87 @@ R82. **Sponsors priced by risk; one level model for the season goal; the
      grade rule). (c) `sponsorAccessFor(level)` (CAREER_SPONSOR.access):
      levels 0–1 two offers, no Bold; 2–3 three, ×1.05; 4 global, ×1.1 and
      2 free bootcamps. Level = `repTierOf(rep)` until front P's ladder.
+R83. **Training: nothing runs until you pick; 28-day cycles that pay in
+     full on completion (rc.36 front T2, POL-01; Miguel's rc.35 playtest).**
+     (a) Back to the 28-day grid (`CAREER_PLAN.periodDays` 14 → 28, 8 a
+     season). A period opens on DEV-01's base and nothing starts by itself:
+     the manager picks objective, focus, intensity and scrims (the picker
+     starts empty) and "Start training" runs the plan from today — tomorrow
+     if today's session ran — to the period's end; without a coach a
+     finished cycle is started again by hand (rc.35's Easy applied the best
+     plan and "Keep my plan" repeated it; `repeatByMode` now only fills the
+     old save field). A hired coach plans and starts each cycle while
+     `coachPlans` is on (`coachPlansByDefault` true, a toggle on Training);
+     off, his plan is only tagged. The preset's mode now decides the
+     RECOMMENDED tag only (`NewTag`): Easy and Normal tag the best plan,
+     Hard none. (b) Not picking is the base, never a penalty, so an
+     unpicked plan is a NUDGE, not a decision: it never enters the queue
+     (`DECISION_SOURCES.training` still reads rc.34's proposal, which
+     nothing raises) and never holds the clock (Gate 3b: no repetitive
+     chore). HQ's Training block becomes "No plan running · Choose a plan"
+     with the recommendation, the report modal leads to "Plan the next
+     cycle", and the batched Advance stops once on the day a cycle completes
+     with nothing started after it (`stopOnCycleEnd` true; a second press
+     goes on). (c) Evolve / Gel / Recover (the ids stay development /
+     preparation / recovery: no migration). The squad focus is a choice
+     again, one per plan (Balanced or the five drill themes, named by their
+     attribute); without a coach the tag marks the fielded trio's weakest
+     theme (`recommendedFocus` "need": a focus costs no overall, so Balanced
+     is never the best pick), with one his buff stat's theme. (d) The
+     promise ("you climb to 8–9 of 10, the rest lands on completion"): a
+     session pays `payout.alongShare` 0.85 of the plan's rate, never under
+     the base (`paidSessionMultFor` = max(1, mult × 0.85)), a package scrim
+     0.85 of its XP; the rest is held per player
+     (`TrainingPeriodPlayer.held`) and lands on the cycle's last day
+     (`closePlan` → `landHeldGain`, inside the peak and the season room a
+     tick obeys, read with a cap-sized `trainWeek`, so DEV-01's rules stay
+     the only ones), filed as `completion`. An adjustment keeps what is
+     earned and held; a stop (the flow's null — the screen offers none) or
+     a player who leaves forfeits it; it pays once (the pool empties as it
+     pays: a reload, the same day twice and the batched Advance reach the
+     same save). The running plan shows the bar — earned · to come · on
+     completion — and the ETA reads the paid rate. (e) Heavy and Hard raise
+     the absence risk again, modestly and additively: hard scrims 2 → 0.5
+     wear, easy −1 → −0.25 (`CAREER_SCRIM.levels`; Heavy's +1 a week
+     unchanged) — a cycle reads Heavy ≈ +2 points, Hard ≈ +2, both the +4
+     cap; Easy no longer cancels Heavy (rc.35: Hard alone hit the cap,
+     Heavy + Easy read 0). (f) A signing joins the running cycle the day he
+     signs (`onSquadJoined` in `signPlayerFlow`: his entry, a summary line,
+     counted in the promise); a "?" phase is read after `phaseRevealDays` 5
+     training days with the squad (`SquadPlayer.phaseDays`,
+     `squadPhaseLevelOf`; the band is not narrowed for free), with a feed
+     line. (g) HQ's green bar fills toward the next point the card PRINTS:
+     cards show Math.round(overall), so it lands at shown + 0.5
+     (`trainingEta.progress`, `nextPoint`; rc.35 read floor — at 78.6 the
+     card said 79 and the bar still led to 79). (h) An rc.35 save: the
+     running 14-day plan keeps its window to its end (`trainingDayStart`
+     reads the plan's window, not its index), then the grid's period opens
+     from that day; summaries and the seen report are keyed by the period's
+     first day (`reportKeyOf` "season:dDay", rc.35's "season:index"
+     re-keyed on load) because the grid reuses rc.35's indexes in that
+     season. Training no longer shows the season ceiling, "this cycle so
+     far", "expected result" or "use the base". (i) The arc bot starts
+     cycles as its players would (`startArcCycle`): "repeat" policies their
+     Development package by hand while no coach plans, "delegate" the
+     recommendation, the trainer with his coach's planning off.
+     Measured (`CAREER_TRAINING=1`, P1 now pays the held part at each
+     cycle's end; the ratio to the base at 13–19, p50, rc.35 → rc.36 on
+     rc.35's base growth): a development package without a coach 1.14 →
+     1.14, a generic 75 1.16–1.17 → 1.16–1.17, a generic 88 1.20 → 1.20, an
+     ex-pro 99 1.19 → 1.20, heavy + hard + generic 88 1.32 → 1.33 (band
+     1.10–1.35); nobody past his peak; scrims' share p90 16–18 → 17–18 %.
+     P4 (coach 75/2): Heavy +1.9 points, three hard scrims a week +2.8,
+     both +4.0 (the cap), Heavy + Easy +0.5 (rc.35: Hard alone +4.0, Heavy
+     + Easy 0). In the flow (`careerTraining.rc36.test.ts`) a cycle's bar
+     reads 80–95 % earned on its last day and the rest lands the next
+     morning. Rejected:
+     floating cycles from the start day (an idle container between cycles;
+     the grid keeps "Cycle N of 8", the history and the coach's growth);
+     holding part of the base too (a plan would grow slower than not
+     picking along the way); the unpicked plan as a decision (a hold every
+     four weeks for a default that is fine); a separate risk adder on top
+     of wear (two systems for one effect); repeating a plan without a coach
+     (Miguel: by hand).
 
 ## Still open for Miguel (career mode)
 
