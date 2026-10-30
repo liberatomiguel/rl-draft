@@ -463,7 +463,9 @@ export function developmentProfileOf(playerId: string, careerSeed: number): Deve
 
   const maturity = weightedFrom(f("dev-maturity"), MATURITIES, (k) => CAREER_DEV.maturity[k].weight);
   const [lo, hi] = CAREER_DEV.maturity[maturity].peakAge;
-  return { maturity, peakAge: intFrom(f("dev-peak"), lo, hi), plateauYears, declineRate, peakOffset };
+  // rc.36 (POL-04): a generated player's top comes CAREER_DEV.peakAgeShift years later (same draw).
+  const peakAge = intFrom(f("dev-peak"), lo, hi) + CAREER_DEV.peakAgeShift;
+  return { maturity, peakAge, plateauYears, declineRate, peakOffset };
 }
 
 /**
@@ -756,8 +758,10 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
     // with two seasons or more to grow (and a peak late enough for his gap),
     // otherwise his base overall plus the years to his peak ×
     // CAREER_DEV.fillerHeadroomPerYear (0 once past it). rc.31: the current
-    // overall + 2, which moved with him every season.
-    const yearsToPeak = Math.max(0, profile.peakAge - age0);
+    // overall + 2, which moved with him every season. rc.36 (POL-04): his
+    // ceiling reads the years before CAREER_DEV.peakAgeShift — the same
+    // peak, reached later.
+    const yearsToPeak = Math.max(0, profile.peakAge - CAREER_DEV.peakAgeShift - age0);
     if (wonderkidRoll && yearsToPeak >= 2) {
       potential = Math.max(wonderkidPot(), baseOverall);
       peakAge = peakAgeWithRoom(profile.peakAge, age0, potential - baseOverall);

@@ -198,9 +198,10 @@ describe("DEV-01b — an individual arc fixed per career", () => {
   it("three separate dimensions: maturity sets the peak age, plateau and decline roll on their own", () => {
     const profiles = Array.from({ length: 600 }, (_, n) => developmentProfileOf(`fic:OCE:${n}`, SEED));
     for (const p of profiles) {
+      // rc.36 (POL-04): the drawn peak comes CAREER_DEV.peakAgeShift years later.
       const [lo, hi] = CAREER_DEV.maturity[p.maturity].peakAge;
-      expect(p.peakAge).toBeGreaterThanOrEqual(lo);
-      expect(p.peakAge).toBeLessThanOrEqual(hi);
+      expect(p.peakAge).toBeGreaterThanOrEqual(lo + CAREER_DEV.peakAgeShift);
+      expect(p.peakAge).toBeLessThanOrEqual(hi + CAREER_DEV.peakAgeShift);
       expect(Object.keys(CAREER_DEV.plateauYearsWeights).map(Number)).toContain(p.plateauYears);
       expect(Math.abs(p.peakOffset)).toBeLessThanOrEqual(CAREER_DEV.peakTolerance);
     }

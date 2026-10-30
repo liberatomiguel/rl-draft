@@ -95,6 +95,7 @@ import {
   fillerPlayerView,
   growthModelOf,
   growthPacePerYear,
+  isCompetitiveAge,
   isGrowthContract,
   peakAgeOf,
   peakAgeWithRoom,
@@ -1795,24 +1796,70 @@ export function agePassAndIntake(
   const held = heldNamesByRegion(next, toSeasonIndex, careerSeed, userSquadNames);
   const rookies: { id: string; name: string; region: Region }[] = [];
   const rookieNames: Record<string, string> = { ...(next.rookieNames ?? {}) };
+  const admit = (region: Region, view: CareerPlayerView) => {
+    const name = pickRookieName(
+      region,
+      view.name,
+      held.get(region)!,
+      playerNameBankFor(region, next.nameBankVersion),
+    );
+    held.get(region)!.add(nameKey(name));
+    rookieNames[view.id] = name;
+    next.freeAgentIds.push(view.id);
+    rookies.push({ id: view.id, name, region });
+  };
   for (const region of REGIONS) {
     for (let i = 0; i < CAREER_WORLD.rookiesPerRegionPerSeason; i++) {
-      const view = rookieView(region, toSeasonIndex, i, careerSeed, infinite, undefined, growthModelOf(world));
-      const name = pickRookieName(
-        region,
-        view.name,
-        held.get(region)!,
-        playerNameBankFor(region, next.nameBankVersion),
-      );
-      held.get(region)!.add(nameKey(name));
-      rookieNames[view.id] = name;
-      next.freeAgentIds.push(view.id);
-      rookies.push({ id: view.id, name, region });
+      admit(region, rookieView(region, toSeasonIndex, i, careerSeed, infinite, undefined, growthModelOf(world)));
     }
   }
+  // rc.36 (POL-04): every region's pool keeps its prospects season after season.
+  seasonFaProspects(next, toSeasonIndex, careerSeed, infinite, growthModelOf(world), admit);
   next.rookieNames = rookieNames;
 
   return { world: next, retired, rookies, left };
+}
+
+/**
+ * rc.36 (POL-04, Miguel on rc.35: "more free agents with potential in the
+ * 80s through the seasons, not only at creation"): after a rollover's intake
+ * every region's free-agent pool holds at least
+ * CAREER_WORLD.seasonFaProspects.perRegion prospects — competitive age,
+ * potential `minPotential` or more and `minRoom` still to grow. The missing
+ * ones are extra rookies of the new class (ids past
+ * rookiesPerRegionPerSeason whose derived potential qualifies, a bounded
+ * scan; the skipped ids are never used). rc.35's creation floor
+ * (`addCreationFaProspects`) only covered season 0; the AI orgs sign the
+ * grown ones, so a thin region's pool could run dry by its second season.
+ */
+function seasonFaProspects(
+  world: WorldState,
+  seasonIndex: number,
+  careerSeed: number,
+  infinite: boolean,
+  model: number,
+  admit: (region: Region, view: CareerPlayerView) => void,
+): void {
+  const { perRegion, minPotential, minRoom, scanLimit } = CAREER_WORLD.seasonFaProspects;
+  if (perRegion <= 0) return;
+  const ctx = { careerSeed, seasonIndex, world };
+  const isProspect = (v: CareerPlayerView) =>
+    isCompetitiveAge(v.age) && v.potential >= minPotential && v.potential - v.overall >= minRoom;
+  const count = new Map<Region, number>();
+  for (const id of world.freeAgentIds) {
+    const v = playerViewById(id, ctx);
+    if (v && isProspect(v)) count.set(v.region, (count.get(v.region) ?? 0) + 1);
+  }
+  for (const region of REGIONS) {
+    let have = count.get(region) ?? 0;
+    const first = CAREER_WORLD.rookiesPerRegionPerSeason;
+    for (let n = first; have < perRegion && n < first + scanLimit; n++) {
+      const view = rookieView(region, seasonIndex, n, careerSeed, infinite, undefined, model);
+      if (!isProspect(view)) continue;
+      admit(region, view);
+      have += 1;
+    }
+  }
 }
 
 /**

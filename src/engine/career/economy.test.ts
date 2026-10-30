@@ -484,12 +484,14 @@ describe("weekly payroll (v2.0 R20)", () => {
     expect(insolvent).toBe(false);
     expect(rescued).toBe(false);
     expect(statement).toEqual(st);
+    // rc.36 (POL-04): "Merch & streams" is gone — no fanbase line is booked.
     expect(fin.ledger.map((e) => e.kind)).toEqual([
-      "sponsorBase", "fanbase", "payroll", "coachSalary", "buff", "upkeep",
+      "sponsorBase", "payroll", "coachSalary", "buff", "upkeep",
     ]);
     expect(st.payroll).toBe(weeklyWage(2_000) + weeklyWage(1_500));
     expect(st.sponsorBase).toBe(weeklyOf(1_500));
-    expect(st.fanbase).toBe(weeklyOf(10 * CAREER_ECONOMY.passivePerRepPoint));
+    expect(CAREER_ECONOMY.passivePerRepPoint).toBe(0);
+    expect(st.fanbase).toBe(0);
     expect(st.psychologist).toBe(weeklyOf(CAREER_GEAR.psychologistPerSplit));
     expect(st.upkeep).toBe(weeklyOf(gearUpkeepPerSplit(gear)));
     expect(fin.balance).toBe(50_000 + st.net);

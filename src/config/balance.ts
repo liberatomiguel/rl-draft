@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 6;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1337,6 +1337,15 @@ export const CAREER_DEV = {
     late: { weight: 0.25, peakAge: [22, 24] },
   },
   /**
+   * rc.36 (POL-04, Miguel 31/10: "slower growth, a later peak — the same
+   * peak, reached later"): years added to a generated player's drawn peak
+   * age (`developmentProfileOf`; the draw and its maturity label are
+   * unchanged). A filler's fixed ceiling still reads the years to the
+   * unshifted peak (the same potential), so only the timing moves. A real
+   * player keeps the age of his real moment. 0 = rc.35.
+   */
+  peakAgeShift: 1,
+  /**
    * DEV-01b: a REAL player peaks at the age of his best moment (the club card
    * or eligible special his potential comes from), held inside this range —
    * signing him never moves his real peak.
@@ -1370,8 +1379,11 @@ export const CAREER_DEV = {
    * `paceMinYears`), never below `paceFloorPerYear` while a gap remains — so
    * it is steep when young, slows near the peak and never stops short of it.
    * Training multipliers (coach, gear, focus, intensity, drill) scale it.
+   * rc.36 (POL-04, Miguel 31/10: "slow the base pace"): 2 → 1.5 — less
+   * front-loaded (a 15-year-old's base season ~4.2 → ~3.3 points), still
+   * closing the gap by the peak age. 2 = rc.35.
    */
-  paceCurvature: 2,
+  paceCurvature: 1.5,
   paceMinYears: 0.5,
   paceFloorPerYear: 0.6,
   /**
@@ -1392,15 +1404,23 @@ export const CAREER_DEV = {
    * rc.35 (front T): the season cap spreads instead of stopping dead — a tick
    * may take this × (its weeks ÷ the calendar weeks left) of the room left,
    * so a fast prospect slows near the cap but never reads flat for weeks.
+   * rc.36 (POL-04): 2 → 1 — with the ceiling at 9 a strong package reaches
+   * it sooner, and at 2 the room ran out in the season's last two weeks
+   * (the flat stretch back: `development.flatline.test.ts`); at 1 each tick
+   * takes its own share of the weeks left, so the pace tapers evenly to the
+   * rollover. 2 = rc.35.
    */
-  seasonCapSpread: 2,
+  seasonCapSpread: 1,
   /**
    * rc.35 (front T): the season's hard ceiling on growth. The pace stays
    * capped at seasonGainCap a year (so the base never front-loads); this
    * leaves room for a package, gear and the Training Weeks to run ahead of
    * it — they only speed the road to the peak, which still bounds it.
+   * rc.36 (POL-04, Miguel 31/10: "bring the season ceiling down, about
+   * 8–9"): 13 → 9 — a strong package still runs ahead of the base (7) and
+   * the spread keeps every week moving (no flat weeks). 13 = rc.35.
    */
-  seasonGainHardCap: 13,
+  seasonGainHardCap: 9,
   /**
    * DEV-01 base growth: match XP per series a player actually plays, in
    * training-week equivalents × field quality. A reserve who does not play
@@ -1750,8 +1770,12 @@ export const CAREER_ECONOMY = {
    * every region starts with at least that runway in weeks (the dearer
    * journeymen, and the balanced in NA and APAC, get more). null = rc.33
    * (the flat budget only).
+   * rc.36 (POL-04, Miguel on rc.35: "the start budget is the same for every
+   * roster; only the difficulty changes it"): BAL-05 reversed — all null,
+   * so every roster starts on `startingBudget`; the founders' wages fit it
+   * instead (CAREER_SALARY.foundingFitWeeks). 44 / 24 / 13 = rc.35.
    */
-  startingBudgetWeeks: { easy: 44, normal: 24, hard: 13 } as Record<string, number | null>,
+  startingBudgetWeeks: { easy: null, normal: null, hard: null } as Record<string, number | null>,
   prizeMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
   salaryAskMult: { easy: 0.9, normal: 1.0, hard: 1.15 } as Record<string, number>,
   sponsorMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
@@ -1761,8 +1785,11 @@ export const CAREER_ECONOMY = {
    * Miguel, 30/10: Claude decides, Miguel tests): 40 → 60, the contract's
    * candidate — the guaranteed floor that grows with reputation, so a
    * newcomer without a founding partner (ECO-07) still has a base.
+   * rc.36 (POL-04, Miguel on rc.35: remove "Merch & streams"): 60 → 0 — the
+   * income is gone and Finances no longer has its line (an rc.35 save's
+   * booked lines still read). 60 = rc.35 (restoring it needs the line back).
    */
-  passivePerRepPoint: 60,
+  passivePerRepPoint: 0,
   /**
    * ECONOMY-CONTRACT M1 (rc.32, decision 1-A): ONE season money index, read
    * through `economy.moneyIndex`. "single": every stream grows
@@ -1843,6 +1870,19 @@ export const CAREER_SALARY = {
    * normal ask (the raise cap spreads it). 1 = rc.34.
    */
   foundingWageMult: 0.85,
+  /**
+   * rc.36 (POL-04, Miguel on rc.35: one start budget for every roster — so
+   * "the veterans' founding wages must fit it"): an offer's founding weekly
+   * bill (after foundingWageMult) is at most the start budget ÷ these weeks;
+   * above it the three founding wages are scaled down together
+   * (`careerFlow.foundingFitOf`, never under minSalary). The weeks are
+   * BAL-05's runway (the balanced roster's in a median region), so every
+   * roster still starts with at least that runway on the flat budget: on
+   * Normal the journeymen's ~$770 a week (up to $970) fits $500, the
+   * balanced (p50 $430) only trims in its dearest regions, the prospects
+   * never. null = rc.35 (no fit).
+   */
+  foundingFitWeeks: { easy: 44, normal: 24, hard: 13 } as Record<string, number | null>,
   /**
    * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 2, option B (M2,
    * ROAD-TO-WORLDS-DECISIONS R58): renewing a player you already have.
@@ -2759,6 +2799,25 @@ export const CAREER_WORLD = {
    * the first rollover on). `scanLimit` bounds the filler ids it tries.
    */
   creationFaProspects: { perRegion: 2, minPotential: 81, scanLimit: 400 },
+  /**
+   * rc.36 (POL-04, Miguel on rc.35: "more free agents with potential in the
+   * 80s through the seasons, not only at creation"): after every rollover's
+   * intake each region's free-agent pool holds at least `perRegion`
+   * prospects (competitive age, potential `minPotential` or more and
+   * `minRoom` still to grow); the missing ones are extra rookies of the new
+   * class (worldSim `seasonFaProspects`, a bounded scan of `scanLimit` ids).
+   * The rookies' pyramid alone left a thin region with 0–2 by its second
+   * season once the AI orgs signed the grown ones. perRegion 0 = rc.35.
+   */
+  seasonFaProspects: { perRegion: 4, minPotential: 81, minRoom: 3, scanLimit: 64 },
+  /**
+   * rc.36 (POL-04): the Market lists every free-agent prospect — competitive
+   * age, potential `minPotential` or more and `minRoom` still to grow — on
+   * top of the best LISTING_CAP by overall (market `listingFor`), which hid
+   * the low-overall kids behind the other regions' veterans (an APAC career
+   * listed 1 of its 10 by season 3). null = rc.35 (overall only).
+   */
+  listingProspects: { minPotential: 80 as number | null, minRoom: 3 },
   /**
    * rc.35 (front C, Miguel on rc.34: "no prospect above 86"): one of the
    * three Prospects founders (a seeded pick) is the headliner, his potential

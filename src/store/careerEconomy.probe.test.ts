@@ -32,7 +32,8 @@
  * ECON_POLICIES (default the seven ARC_DEFAULT_POLICIES; rc.34's veterans runs
  * when named), ECON_SEEDS (careers per
  * cell, default 1: seed 9100, the first seed of CAREER-BASELINE-rc30),
- * ECON_SEASONS (default 8), ECON_OUT (optional JSON dump of the records),
+ * ECON_SEASONS (default 8), ECON_BUDGET_MS (the bot's per-career wall-clock
+ * stop, default 120 000), ECON_OUT (optional JSON dump of the records),
  * ECON_IN (re-render the Markdown from such a dump, no careers played;
  * ECON_RUNTIME, free text, names the original sweep's runtime in the footer).
  * One process; the bot is deterministic, so the same knobs give the same
@@ -1220,6 +1221,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
     const arc = playArcCareer({
       ...cell,
       seasons,
+      // rc.36 (front M): ECON_BUDGET_MS raises the bot's 120 s wall-clock stop on a loaded machine (default unchanged).
+      budgetMs: env.ECON_BUDGET_MS ? Number(env.ECON_BUDGET_MS) : undefined,
       sponsor: (env.ECON_SPONSOR as ArcSponsorPick | undefined) || undefined,
       others: (env.ECON_OTHERS as "take" | "skip" | undefined) || undefined,
     });

@@ -383,7 +383,6 @@ function StatementLines({ st }: { st: WeeklyStatement }) {
     { key: "sponsorBase", amount: st.sponsorBase },
     { key: "foundingPartner", amount: st.foundingPartner },
     { key: "rescuePartner", amount: st.rescuePartner },
-    { key: "fanbase", amount: st.fanbase },
     { key: "payroll", amount: -st.payroll },
     { key: "coach", amount: -st.coach },
     { key: "psychologist", amount: -st.psychologist },

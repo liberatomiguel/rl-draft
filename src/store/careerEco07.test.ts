@@ -524,10 +524,10 @@ describe("rc.33 M7 — guaranteed income carries a newcomer's founding wage bill
       expect(ratio, d).toBeGreaterThanOrEqual(0.66);
       expect(ratio, d).toBeLessThanOrEqual(2);
     }
-    // The tiers climb and the fanbase grows with reputation from day one.
+    // The tiers climb. rc.36 (POL-04): "Merch & streams" is gone — the first offer carries the founders alone.
     const bases = CAREER_SPONSOR.tiers.map((t) => t.base);
     expect([...bases].sort((a, b) => a - b)).toEqual(bases);
-    expect(CAREER_REP.start * CAREER_ECONOMY.passivePerRepPoint).toBeGreaterThan(0);
+    expect(CAREER_REP.start * CAREER_ECONOMY.passivePerRepPoint).toBe(0);
   });
 });
 

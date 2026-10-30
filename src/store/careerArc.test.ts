@@ -11,7 +11,8 @@
  * Knobs: ARC_REGIONS (default all seven), ARC_DIFFS (easy,normal,hard),
  * ARC_POLICIES (default the seven ARC_DEFAULT_POLICIES; rc.34's veterans runs
  * when named), ARC_SEEDS (careers per cell, default 2),
- * ARC_SEASONS (default 8), ARC_SLICE "i/n" (this process plays every n-th cell,
+ * ARC_SEASONS (default 8), ARC_BUDGET_MS (the bot's per-career wall-clock
+ * stop, default 120 000; raise it on a loaded machine), ARC_SLICE "i/n" (this process plays every n-th cell,
  * so 4 processes split one matrix), ARC_BOOTCAMP=1 (rc.34: the bot books a
  * bootcamp each split — HQ decision 5-A's measurement; off by default). ARC_REPORT=1 ARC_IN=a.json,b.json
  * ARC_MD=report.md merges slices into the Markdown summary (p10/p50/p90).
@@ -135,8 +136,10 @@ it.skipIf(!env.CAREER_ARC)(
     const careers: ArcCareer[] = [];
     // rc.34 (HQ decision 5-A's measurement): ARC_BOOTCAMP=1 books a bootcamp each split.
     const bootcamp = env.ARC_BOOTCAMP === "1";
+    // rc.36 (front M): ARC_BUDGET_MS raises the bot's 120 s wall-clock stop on a loaded machine (default unchanged).
+    const budgetMs = env.ARC_BUDGET_MS ? Number(env.ARC_BUDGET_MS) : undefined;
     for (const cell of mine) {
-      careers.push(playArcCareer({ ...cell, seasons, bootcamp }));
+      careers.push(playArcCareer({ ...cell, seasons, bootcamp, budgetMs }));
       if (env.ARC_OUT) writeFileSync(env.ARC_OUT, JSON.stringify({ seasons, careers }));
     }
     console.log(`career arc: ${careers.length} careers, ${careers.reduce((n, c) => n + c.ms, 0) / 1000}s`);
