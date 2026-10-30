@@ -55,10 +55,9 @@ clock, the review's fixes).
 
 ## Remaining / open
 
-- **Gate 2:** Miguel plays rc.32 in NEW careers (growth model 2 and the
-  founding partner exist only there) and confirms or rejects each
-  provisional default (`ROADMAP.md`, "Waiting on Miguel"; every one flips
-  back by its `balance.ts` key).
+- **Next: Etapa 2b part 3** (`ROADMAP.md` Etapa 2): Miguel's 30/10 answers
+  on rc.32 replace several provisional defaults (ECO-07–12, RTW-02–05,
+  DEV-04, UX-07, BAL-04); the rest stay provisional until he confirms.
 - Content: scripted beats corpus (~30, EN+PT). New birth dates go in the base
   export (`BIRTHDAY`), not in `born:` rows.
 - The money: `ECONOMY-CONTRACT.md` §9. Still out of band: EU and NA (a trap

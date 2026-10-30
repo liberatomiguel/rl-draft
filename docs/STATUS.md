@@ -33,9 +33,11 @@ plan's Etapas 1, 2a and 2b (rc.27–32; `ROADMAP.md` "Done", CHANGELOG).
   the economy decisions as **provisional defaults** (each flips back to
   rc.31 by its `balance.ts` key), DEV-01, M2, BAL-02, the age clock; the
   Etapa 3 contracts written; DRAFT-11 and WEB-02 pulled forward.
-- **Now, at Gate 2:** Miguel plays rc.32 (new careers) and confirms or
-  rejects each default (`ROADMAP.md`, "Waiting on Miguel"; the re-measure
-  is `ECONOMY-CONTRACT.md` §9).
+- **Next: Etapa 2b part 3**, Miguel's 30/10 answers on rc.32 (`ROADMAP.md`
+  Etapa 2, "2b part 3": the rescue partner, 3 / 2 / 1 breaches, the 12 %
+  scale, a per-contract prize share, the negotiation, honest bands, the
+  EU path, the seat rule, the screens). The re-measure to beat is
+  `ECONOMY-CONTRACT.md` §9.
 
 ## Open before `main`
 

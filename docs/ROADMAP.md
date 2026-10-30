@@ -43,7 +43,7 @@
 | 1 | M1 rules | Swiss, weekend calendar, match timeline, lint | ✅ rc.27–28 |
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
-| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a rc.30 + rc.32; 2b rc.31 + rc.32 (provisional defaults, at Gate 2) |
+| 2 | M0 rest + M2 | Instruments, then a sustainable career | ▶ 2a rc.30 + rc.32; 2b rc.31 + rc.32; 2b part 3 next (Miguel's 30/10 answers) |
 | 3 | M3 | The new RTW loop (contract first) | |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
@@ -350,6 +350,61 @@ Etapa 3 packages and coaches will add):
   gets them at launch, so the build can wait for the end of 2b or Etapa 5,
   before the cutover.
 
+**2b part 3 — Miguel's answers on rc.32 (30/10, his first rc.32 playtest;
+he plays more before the numbers settle).** Each item is a behaviour
+package; every value stays a `balance.ts` key and is re-measured on the
+§9 seeds (`CAREER_ECON=1`, `CAREER_ARC=1`) before and after.
+- **ECO-07, the rescue partner (replaces 3-A):** no day-one founding partner
+  ("too easy"; remove M3's day-one deal). Instead, on Easy and Normal, the
+  first breach of the floor brings a partner's offer in place of the
+  Backer loan: an income boost for one split, to help the org through.
+  Hard gets none. To test.
+- **ECO-08, what ends a career (replaces 4-B):** Easy at the third breach,
+  Normal at the second, Hard at the first (no recovery on Hard). No forced
+  sale of the highest-paid player: restructurings go. The warnings (8 weeks,
+  then every Monday at ≤ 4) stay. Open for the implementation, with a
+  proposed default: what Easy's second breach brings (the Backer loan, as
+  today).
+- **ECO-09, the money scale (revisits 1-A):** wages feel too low, or should
+  grow more steeply; the old 12 % felt better. One index at 12 % a season
+  and a steeper wage curve for strong players, measured on both sides of
+  the guardrail.
+- **ECO-10, the prize share per contract (replaces M6's fixed 20/35/50):**
+  each contract carries the share of prize money the player keeps, shown and
+  negotiable in the offer, the renewal and the contract, so deals vary.
+- **ECO-11, the wage negotiation:** on a signing the negotiated value
+  sometimes does not move or makes no sense. Diagnose and redesign (with
+  ECO-10).
+- **ECO-12, no sale listing for now (withdraws 8-B):** remove "List for
+  sale" and the late signing; a future update rethinks selling (ECO-06).
+- **M7, guaranteed income** (9-B: "after M1–M3 are measured"): next, with
+  ECO-07/09.
+- **RTW-02, reputation in EU (and NA):** playing EU, the reputation did not
+  rise (§9: rep 5 for two seasons, no sponsor before S4). A path to
+  reputation the first seasons can reach.
+- **RTW-03, every org enters its history (C-1):** a region may hold more
+  than 16 orgs, or an org without a lineup leaves; either is fine (Karmine
+  Corp and the other later EU, SAM and NA orgs must appear).
+- **RTW-04, fewer known players without a team:** it should happen, but much
+  less often than now.
+- **RTW-05, a full squad to play:** no event with fewer than three players
+  (no stand-in for a missing player); the team rating always counts three
+  seats, an empty one as 0.
+- **DEV-04, honest potential (revisits DEV-01e):** bands at most 5–6 points
+  wide, never much higher than the true potential (known players showing
+  99 now); an older player in the market shows no potential he can no
+  longer reach; a phase tag — developing / at his peak / declining —
+  unknown until a scouting report reveals it.
+- **UX-07, the screens:** a Market filter "signable at my reputation"; a
+  signing with a full squad only warns and sends the user to Squad (no
+  who-leaves block on the offer sheet); the difficulty screen with only the
+  basics of each mode; the Blockbuster explanation only on a Blockbuster
+  bid, and a better sentence (EN + PT; today it shows on plain bids too);
+  the Finances balance chart opens an expanded view.
+- **BAL-04, match difficulty:** Normal felt a bit easy (not played enough to
+  be sure): measure the career's win rates by preset and region with the
+  harness and tune against the presets' intent.
+
 **Gate 2:** Miguel approves the new numbers (curves, economy) and plays a
 long career on staging.
 
@@ -549,7 +604,9 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**Gate 2 — what to play on rc.32** (desktop and mobile, EN and PT). Start
+**Gate 2 — what to play on rc.32** (desktop and mobile, EN and PT; Miguel's
+first answers, 30/10, are Etapa 2's "2b part 3": the day-one founding
+partner, the restructurings and the sale listing go there). Start
 **new careers**: growth model 2 and the founding partner exist only in a
 career created on rc.32 (an older one keeps rc.31's development; it gets the
 founding partner only if it is still in its first two seasons without a
@@ -585,60 +642,26 @@ weeks 1–2; the Major and Worlds tables after week 4's regional; seasons 2–3:
 final-season badges from 24, the retirement news (coach or for good), a
 13-year-old free agent.
 
-**The provisional defaults to confirm or reject** (30/10; built in rc.32,
-each flips back to rc.31 by the key named; numbers in ECONOMY-CONTRACT §9):
-1. One money index ×1.08 for every stream (decision 1-A;
-   `CAREER_ECONOMY.indexMode` "single" → "rc31").
-2. Renewals capped at ×1.5 his wage, never under half his market ask (2-B;
-   `CAREER_SALARY.renewalRule` "capFloor" → "fresh").
-3. The founding partner, 70 % of the founding wage bill until the first
-   real deal, at least through season 2 (3-A;
-   `CAREER_SPONSOR.founding.enabled`).
-4. The safety net (4-B): warnings at 8 weeks and every Monday at ≤ 4
-   (`CAREER_PAYROLL.runwayWarnMode` "weekly" → "rc31"); the Backer in weeks
-   of payroll (`CAREER_LOAN.sizing` "weeks" → "flat"); what ends a career,
-   Easy never / Normal at breach 3 / Hard at breach 2, restructurings in
-   between (`breachesToEnd` → 2 / 2 / 2); nothing that shortens the runway
-   while the Backer is owed (`lockCommitments`).
-5. Stars (5-B): the rep comfort cap 86 (`CAREER_SALARY.repComfortMax` →
-   null) and the players' share of podium prizes 20 / 35 / 50 %
-   (`CAREER_PRIZES.playerShare.enabled`). Lever C, the title raise, is
-   built nowhere; the snowball reading (§9) is its case.
-6. Prize tables that pay 100 % (6-B; `CAREER_PRIZES.tables` "contract" →
-   "rc31"). This also answers Gate-1 question 2.
-7. The T4 contender as the stars' yardstick, no AI budgets (7-A; no code).
-8. "List for sale" and a 7-day late signing (8-B;
-   `CAREER_TRANSFER.listingEnabled`, `lateSigningDays` 0 = option C).
-9. Guaranteed income held (9-B): M1–M3 are now measured, so M7 is next.
-10. §3's bands as written (10-A); no adjustment used.
-11. With BAL-02 and DEV-01: filler orgs capped at the region's best real
-    lineup (`CAREER_WORLD.fillerCapToBestReal`; it made APAC and SSA easy,
-    §9); career Hard counts the AI's chemistry (81 / 65 / 55 % at equal
-    strength — is Easy's +16 points "small"?); Hard starts hands-on;
-    DEV-01's parameters (peak ranges, ±2 tolerance, the 0.8 % elite rate,
-    pre-2020 specials never set potential); rc.31's shipped values (the
-    retirement table, 60 % ex-pro coaches, debt pay-downs to the floor, no
-    bank loan while the Backer is owed, local sides around the user frozen
-    at W4) kept as they are.
+**Answered 30/10 on rc.32** (the work is Etapa 2's "2b part 3"): 3-A
+rejected (ECO-07: a rescue partner at the first breach on Easy/Normal
+instead); 4-B replaced (ECO-08: 3 / 2 / 1 breaches, no forced sale); 1-A
+revisited (ECO-09: 12 %, steeper wages); M6's fixed share replaced (ECO-10:
+per contract); 8-B withdrawn (ECO-12); C-1 answered (RTW-03). **Still
+provisional, not answered yet:** 2-B (renewals), 5-B's comfort cap, 6-B
+(prize tables at 100 %), 7-A, 9-B (M7 next), 10-A, the filler cap, Hard's
+retune (BAL-04 re-measures it), DEV-01's parameters. Each flips back by
+its key (rc.32's list in the CHANGELOG and ECONOMY-CONTRACT §5–§6).
 
-**New decisions from rc.32:**
-1. C-1, the 16-orgs-per-region seat rule (MODULE-AUDIT): EU has no free
-   seat at creation, so none of its 23 later orgs ever enters a career
-   (Karmine Corp, R31's own example); SAM fits 3 of 31, NA 4 of 10. (a) An
-   org with no lineup that season or later gives up its seat; (b) a region
-   grows past 16 (the fields read the top 16: an engine change); (c) keep
-   it and say so in R31. Recommendation: (a).
-2. The next money package (§9): M7 guaranteed income, the EU/NA path to
-   reputation, M6's title raise for the snowball, APAC/SSA after the
-   filler cap, the star path. Which first? Recommendation: EU/NA and M7
-   together (the largest gap and the lever 9-B held).
-3. The analytics catalogue (`ANALYTICS-EVENTS-2.0.md`): built, production
-   only; approve or cut events. Proposed additions for rc.32's mechanics:
-   restructurings, listings, the preset, the founding partner.
-4. Gate 3a, the Etapa 3 contracts (`TRAINING-`, `SPONSOR-`, `HQ-CONTRACT.md`
+**Still open from rc.32:**
+1. The analytics catalogue (`ANALYTICS-EVENTS-2.0.md`): built, production
+   only; approve or cut events. Proposed additions: the rescue partner
+   (ECO-07), the preset, the per-contract prize share (ECO-10).
+2. Gate 3a, the Etapa 3 contracts (`TRAINING-`, `SPONSOR-`, `HQ-CONTRACT.md`
    §6), 21 decisions. Recommended: training 1–7 A; sponsors 1–5 A, 6-B, 7-A
    (sponsors 1 reverses the design's §9, "never penalties"); HQ 1-B, 2–7 A.
-5. Web: keep the one English frame a PT-saved player sees on an EN URL?
+   ECO-07 and ECO-08 change the sponsor contract's founding-partner
+   hand-over: re-read SPONSOR-CONTRACT §5 against them.
+3. Web: keep the one English frame a PT-saved player sees on an EN URL?
    Should the PT chrome link to the PT pages (`/pt/sobre`)? (WEB-01)
 
 **Still open from Gate 1** (the 28/10 plan did not answer them; the
