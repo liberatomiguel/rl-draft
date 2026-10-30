@@ -232,6 +232,36 @@ export function focusAttrsOf(focus: SquadFocus): readonly StatKey[] {
   return (CAREER_TRAINING.drills.find((d) => d.id === focus)?.attrs ?? []) as readonly StatKey[];
 }
 
+/**
+ * rc.36 (front T2): the drill theme of the fielded trio's weakest stat (the
+ * theme's attributes averaged; ties keep the drills' order) — the focus the
+ * RECOMMENDED tag marks without a coach (CAREER_PLAN.recommendedFocus "need").
+ */
+export function weakestFocusOf(stats: Partial<Record<StatKey, number>> | null | undefined): SquadFocus {
+  if (!stats) return "balanced";
+  let best: SquadFocus = "balanced";
+  let low = Infinity;
+  for (const d of CAREER_TRAINING.drills) {
+    const vals = (d.attrs as readonly StatKey[]).map((a) => stats[a]).filter((v): v is number => typeof v === "number");
+    if (vals.length === 0) continue;
+    const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+    if (avg < low - 1e-9) {
+      low = avg;
+      best = d.id as DrillId;
+    }
+  }
+  return best;
+}
+
+/**
+ * rc.36 (front T2, CAREER_PLAN.payout): the session multiplier paid along the
+ * way for a plan running at `mult` — alongShare of it, never under the base
+ * (×1): the rest is held for the cycle's completion.
+ */
+export function paidSessionMultFor(mult: number): number {
+  return Math.max(1, mult * CAREER_PLAN.payout.alongShare);
+}
+
 /** The tweak that applies to a player (none = he follows the squad). */
 export function tweakOf(pkg: TrainingPackage | null, playerId: string): PlayerTweak | null {
   return pkg?.tweaks?.[playerId] ?? null;
@@ -409,6 +439,8 @@ export function coachProposalFor(input: {
   coach: Pick<CoachTrainingProfile, "bonusType"> | null;
   bigEvent: boolean;
   lastWear: number;
+  /** rc.36 (front T2): the focus without a coach (the squad's need); absent = balanced. */
+  needFocus?: SquadFocus;
 }): { package: TrainingPackage; reasonKey: "default" | "event" | "wear" } {
   const P = CAREER_PLAN.proposal;
   const reasonKey: "default" | "event" | "wear" =
@@ -418,7 +450,7 @@ export function coachProposalFor(input: {
   return {
     package: {
       objective,
-      focus: focusForStat(input.coach?.bonusType),
+      focus: input.coach ? focusForStat(input.coach.bonusType) : (input.needFocus ?? "balanced"),
       workload: row.workload as TrainingWorkload,
       scrimsPerWeek: row.scrimsPerWeek,
       scrimLevel: row.scrimLevel as ScrimLevel,
@@ -442,9 +474,9 @@ export function scrimChoiceOf(pkg: Pick<TrainingPackage, "scrimsPerWeek" | "scri
 }
 
 /**
- * rc.35: a package from the screen's three choices. The focus is the coach's
- * (his buff stat's theme) or balanced; a scrim level runs
- * CAREER_PLAN.scrimsPerWeekOnLevel a week. No per-player tweaks.
+ * rc.35: a package from the screen's choices; a scrim level runs
+ * CAREER_PLAN.scrimsPerWeekOnLevel a week. No per-player tweaks. rc.36
+ * (front T2, Miguel): the squad focus is a choice again (one per plan).
  */
 export function simplePackageOf(input: {
   objective: TrainingObjective;

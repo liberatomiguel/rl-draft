@@ -17,12 +17,19 @@
  * Never imports careerFlow (careerFlow imports this): the news line and the
  * scrim series are built here with the same id scheme. Everything mutating
  * takes a DRAFT save (the caller cloned it); flows return `{ save, error }`.
+ *
+ * rc.36 (front T2, Miguel's rc.35 playtest — R83): 28-day cycles again;
+ * nothing runs until a plan is picked and started (the base runs meanwhile;
+ * a hired coach plans each cycle while `coachPlans` is on); the plan pays
+ * CAREER_PLAN.payout.alongShare along the way and the held rest when the
+ * cycle completes (`closePlan`); a signing joins the running cycle
+ * (`onSquadJoined`) and an unknown phase is read after a few training days.
  */
 
-import { CAREER_CALENDAR, CAREER_DEV, CAREER_PLAN, CAREER_SAVE, CAREER_SCRIM, CAREER_TRAINING, TOURNAMENT } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_DEV, CAREER_PLAN, CAREER_SAVE, CAREER_SCOUT, CAREER_SCRIM, CAREER_TRAINING, TOURNAMENT } from "@/config/balance";
 import { DAYS_PER_SEASON, dayOfWeekOf, unofficialOfferFor, weekAt, weekOfDay } from "@/engine/career/calendar";
 import { majorFieldFor, worldsFieldFor } from "@/engine/career/careerResults";
-import { fieldQualityFor, growthCtxOf, trainDay, trainWeek } from "@/engine/career/development";
+import { ageOf, fieldQualityFor, growthCtxOf, growthModelOf, phaseTagFor, trainDay, trainWeek } from "@/engine/career/development";
 import { presetTrainingModeOf } from "@/engine/career/difficulty";
 import { gearTrainingBonus } from "@/engine/career/economy";
 import { deriveSeed, derivedFloat, streams } from "@/engine/career/seeds";
@@ -32,6 +39,7 @@ import {
   coachProfileOf,
   coachProposalFor,
   packageEffectFor,
+  paidSessionMultFor,
   periodOfDay,
   pickScrimOpponent,
   resolveScrimLevel,
@@ -41,6 +49,7 @@ import {
   scrimWeekShare,
   scrimXpWeeksFor,
   unavailabilityAddFor,
+  weakestFocusOf,
   type CoachTrainingProfile,
   type PackageEffect,
   type TrainingPeriod,
@@ -54,8 +63,10 @@ import type {
   CareerSave,
   CoachState,
   PlayerTweak,
+  ScoutLevel,
   ScrimLevel,
   ScrimLogEntry,
+  SquadFocus,
   SquadPlayer,
   TrainingMode,
   TrainingObjective,
@@ -149,6 +160,27 @@ export function teamChemistryOf(save: CareerSave): number {
   }
 }
 
+/** rc.36 (front T2): the fielded trio's stat line (the recommended focus reads its weakest theme). */
+function teamStatsOf(save: CareerSave): Partial<Record<StatKey, number>> | null {
+  if (save.squad.length === 0) return null;
+  try {
+    return userTeamFor({
+      identity: save.identity,
+      squad: save.squad,
+      starterIds: save.starterIds,
+      coach: save.coach,
+      gear: save.finances.gear,
+      bootcampSharp: 0,
+      seasonIndex: save.clock.seasonIndex,
+      careerSeed: save.careerSeed,
+      difficulty: save.difficulty,
+      unavailablePlayerId: null,
+    }).team.stats;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // State: defaults, creation, the load repair
 // ---------------------------------------------------------------------------
@@ -219,10 +251,19 @@ export function repairTrainingOnLoad(save: CareerSave): void {
   openPlan(save, periodOfDay(save.clock.day), { repaired: true });
 }
 
-/** A report's stable key ("season:period") — what `reportSeen` stores. */
-export function reportKeyOf(s: Pick<TrainingSummary, "seasonIndex" | "periodIndex">): string {
-  return `${s.seasonIndex}:${s.periodIndex}`;
+/**
+ * A report's stable key — what `reportSeen` stores. rc.36 (front T2): keyed by
+ * the period's first day ("season:dDay"), not its index: an rc.35 save files
+ * 14-day periods and the 28-day grid reuses their indexes in the same season
+ * (its period 1 would read as rc.35's, already seen). rc.35's "season:index"
+ * is re-keyed on load (`normaliseTrainingState`).
+ */
+export function reportKeyOf(s: Pick<TrainingSummary, "seasonIndex" | "startDay">): string {
+  return `${s.seasonIndex}:d${s.startDay}`;
 }
+
+/** rc.35's key ("season:index") — read only to re-key an older save. */
+const LEGACY_REPORT_KEY = /^\d+:\d+$/;
 
 /**
  * rc.35 (front T): the load repair's idempotent half for a save that already
@@ -252,43 +293,81 @@ function normaliseTrainingState(save: CareerSave): void {
     }
   }
   if (t.reportSeen === undefined) t.reportSeen = t.history[0] ? reportKeyOf(t.history[0]) : "";
+  // rc.36 (front T2): rc.35's "season:index" key → "season:dDay" (the newest
+  // summary it names; none = the newest filed, so nothing old pops).
+  if (LEGACY_REPORT_KEY.test(t.reportSeen)) {
+    const seen = t.history.find((h) => `${h.seasonIndex}:${h.periodIndex}` === t.reportSeen) ?? t.history[0];
+    t.reportSeen = seen ? reportKeyOf(seen) : "";
+  }
+}
+
+/**
+ * rc.36 (front T2): a hired coach plans and starts each cycle (his delegation,
+ * `TrainingState.coachPlans`, default CAREER_PLAN.coachPlansByDefault).
+ */
+export function coachPlansOf(save: Pick<CareerSave, "coach" | "training">): boolean {
+  if (!save.coach) return false;
+  return trainingOf(save).coachPlans ?? CAREER_PLAN.coachPlansByDefault;
 }
 
 /**
  * rc.35 (front T): who sets the package now — the hired coach, else the
- * preset's mode (Easy "auto", Normal "recommend", Hard "manual").
+ * preset's mode (Easy "auto", Normal "recommend", Hard "manual"). rc.36: the
+ * coach only while he plans the cycles (`coachPlansOf`); with that off the
+ * manager sets it and the coach's plan is the recommendation.
  */
 export function trainingControllerOf(save: Pick<CareerSave, "coach" | "training">): "coach" | TrainingMode {
-  if (save.coach) return "coach";
+  if (coachPlansOf(save)) return "coach";
   const m = trainingOf(save).mode;
   return m === "auto" || m === "recommend" || m === "manual" ? m : "recommend";
 }
 
+/** rc.36 (front T2): the focus the recommendation marks without a coach (CAREER_PLAN.recommendedFocus). */
+function needFocusOf(save: CareerSave): SquadFocus {
+  return CAREER_PLAN.recommendedFocus === "need" ? weakestFocusOf(teamStatsOf(save)) : "balanced";
+}
+
 /**
- * rc.35: the most effective plan for this cycle without a coach — the same
- * rule the coach proposes by (development; preparation for a Major / Worlds
- * cycle; recovery after a worn one), at a balanced focus. Easy applies it,
- * Normal tags it RECOMMENDED, Hard shows no tag.
+ * rc.35: the most effective plan for this cycle — the same rule the coach
+ * proposes by (development; preparation for a Major / Worlds cycle; recovery
+ * after a worn one). rc.36: without a coach its focus is the squad's need
+ * (`needFocusOf`); with one, his buff stat's theme.
  */
 export function recommendedPackageOf(save: CareerSave): { package: TrainingPackage; reasonKey: "default" | "event" | "wear" } {
   return coachProposalFor({
     coach: coachProfileOf(save.coach),
     bigEvent: periodHasBigEvent(periodOfDay(save.clock.day)),
     lastWear: lastWearOf(trainingOf(save)),
+    needFocus: save.coach ? undefined : needFocusOf(save),
   });
+}
+
+/**
+ * rc.36 (front T2): the plan the RECOMMENDED tag marks — a hired coach's plan
+ * (whether he runs the cycles or not), else the preset's: Easy and Normal tag
+ * the best plan, Hard tags nothing (null).
+ */
+export function recommendedPlanOf(save: CareerSave): TrainingPackage | null {
+  if (save.coach) return coachProposalOf(save)?.package ?? null;
+  if (trainingOf(save).mode === "manual") return null;
+  return recommendedPackageOf(save).package;
 }
 
 /**
  * rc.35 (front T): the newest filed report the manager has not seen — the
  * results modal (once per finished cycle; survives a reload: the seen key is
- * in the save). Null when there is none, or the career ended.
+ * in the save). Null when there is none, or the career ended. rc.36: only a
+ * period a plan ran in is a report (a period on the base is filed quietly),
+ * and only one newer than the last seen.
  */
 export function trainingReportOf(save: CareerSave): TrainingSummary | null {
   const t = save.training;
   if (!t || save.phase === "ended") return null;
-  const last = t.history[0];
-  if (!last || last.players.length === 0) return null;
-  return t.reportSeen === reportKeyOf(last) ? null : last;
+  for (const h of t.history) {
+    if (t.reportSeen === reportKeyOf(h)) return null;
+    if (h.package && h.players.length > 0) return h;
+  }
+  return null;
 }
 
 /** rc.35: the manager saw the results modal — never again for that report (nor older ones). */
@@ -365,47 +444,33 @@ export function coachProposalOf(
 }
 
 /**
- * Open the plan for `period` and decide its package (T5):
- *  - "coach" + a coach: his proposal runs (exceptions become summary lines);
- *  - "approve" + a coach, no package repeated (repeat off, or nothing set —
- *    rc.34 review): his proposal WAITS — the clock holds on the period's
- *    first day until the manager approves, adjusts or keeps the base
- *    (`trainingDecisionOf`); that day's session runs once answered;
- *  - otherwise: the repeated package (repeat on) or DEV-01's base.
+ * Open the plan for `period` and decide its package (T5). rc.36 (front T2,
+ * Miguel: "nothing runs until you pick"): DEV-01's base, unless a hired coach
+ * plans the cycles (`coachPlansOf`) — then his proposal starts it. Without a
+ * coach a finished cycle is started again by hand; nothing waits and nothing
+ * holds the clock (rc.35: Easy applied the best plan, Normal / Hard repeated
+ * the manager's). A plan opened mid-period (an rc.35 14-day cycle that ended
+ * inside a 28-day period) runs from today, so its window never repeats an
+ * earlier one's first day.
  */
 function openPlan(save: CareerSave, period: TrainingPeriod, opts: { repaired?: boolean } = {}): void {
   const t = save.training!;
   const day = save.clock.day;
-  const proposal = opts.repaired ? null : coachProposalOf(save);
-  let pkg: TrainingPackage | null = null;
-  let author: TrainingPlan["author"] = "base";
+  const proposal = opts.repaired || !coachPlansOf(save) ? null : coachProposalOf(save);
+  const pkg: TrainingPackage | null = proposal ? sanitizePackage(proposal.package) : null;
+  const author: TrainingPlan["author"] = pkg ? "coach" : "base";
   t.proposal = null;
-  if (!opts.repaired) {
-    // rc.35 (front T): a hired coach picks and runs it; without one Easy
-    // applies the recommended plan; Normal / Hard keep the manager's plan
-    // (repeat) or the base. Nothing waits — no clock hold.
-    const controller = trainingControllerOf(save);
-    if (controller === "coach" && proposal) {
-      pkg = proposal.package;
-      author = "coach";
-    } else if (controller === "auto") {
-      pkg = recommendedPackageOf(save).package;
-      author = "auto";
-    } else if (t.repeat && t.userPackage) {
-      pkg = sanitizePackage(t.userPackage);
-      author = "user";
-    }
-  }
   const players: Record<string, TrainingPeriodPlayer> = {};
   for (const p of save.squad) players[p.id] = snapshotPlayer(p);
   t.plan = {
     seasonIndex: save.clock.seasonIndex,
     periodIndex: period.index,
-    startDay: period.startDay,
+    startDay: opts.repaired ? period.startDay : Math.max(period.startDay, Math.min(period.endDay, day)),
     endDay: period.endDay,
     package: pkg,
     author,
     packageFromDay: day,
+    ...(pkg ? { cycleFrom: day } : {}),
     // A repaired save already trained today under rc.33's tick (T8: never twice).
     lastSessionDay: opts.repaired ? day : day - 1,
     lastScrimDay: opts.repaired ? day : day - 1,
@@ -429,14 +494,77 @@ function openPlan(save: CareerSave, period: TrainingPeriod, opts: { repaired?: b
   recomputePlan(save);
 }
 
-/** T7: file the running period (once — keyed by season and period) and clear it. */
+/** A season's worth of training-weeks: a probe large enough to read the caps' whole room (seasonRoomFor spreads by weeks). */
+const CAP_PROBE_WEEKS = CAREER_CALENDAR.weeksPerSeason;
+
+/**
+ * rc.36 (front T2, CAREER_PLAN.payout): the held gain lands — `amount`
+ * overall, inside the same caps a tick obeys today (his real peak, the
+ * season's room; read with a cap-sized `trainWeek` probe, so DEV-01's rules
+ * stay the only ones). No aging, no offsets. Returns what landed.
+ */
+function landHeldGain(save: CareerSave, p: SquadPlayer, amount: number): number {
+  if (!(amount > 1e-6)) return 0;
+  const room = trainWeek(p, {
+    seasonIndex: save.clock.seasonIndex,
+    coachOverall: null,
+    gearBonus: 0,
+    trainingWeekBonus: false,
+    splitGained: p.gainedThisSplit,
+    seasonGained: p.gainedThisSeason,
+    weeks: CAP_PROBE_WEEKS,
+    ...growthCtxOf(save),
+  }).gained;
+  const pay = round4(Math.max(0, Math.min(amount, room)));
+  if (pay <= 0) return 0;
+  p.overall = Math.min(99, round4(p.overall + pay));
+  p.gainedThisSplit = round4(p.gainedThisSplit + pay);
+  p.gainedThisSeason = round4(p.gainedThisSeason + pay);
+  return pay;
+}
+
+/**
+ * rc.36: the cycle completed — every squad player still in it gets his held
+ * gain (`completion` on his entry, for the summary). Called once, by
+ * `closePlan`: the entry's pool is emptied as it pays, so nothing pays twice.
+ */
+function payCycleCompletion(save: CareerSave, plan: TrainingPlan): Record<string, number> {
+  const paid: Record<string, number> = {};
+  for (const p of save.squad) {
+    const e = plan.players[p.id];
+    if (!e || !(e.held && e.held > 0)) continue;
+    const landed = landHeldGain(save, p, e.held);
+    e.held = 0;
+    if (landed > 0) paid[p.id] = landed;
+  }
+  return paid;
+}
+
+/** rc.36: a running cycle stops before its end (the package cleared) — the held gain is forfeited. */
+function forfeitHeld(plan: TrainingPlan): number {
+  let lost = 0;
+  for (const e of Object.values(plan.players)) {
+    if (e.held && e.held > 0) lost += e.held;
+    if (e.held !== undefined) e.held = 0;
+    if (e.cycleGain !== undefined) e.cycleGain = 0;
+  }
+  return round4(lost);
+}
+
+/**
+ * T7: file the running period (once — rc.36: keyed by season and its first
+ * day, since rc.35's 14-day indexes recur in a 28-day season) and clear it.
+ * rc.36: a cycle that ran to its end pays its held gain first, so `after`
+ * includes it.
+ */
 function closePlan(save: CareerSave): void {
   const t = save.training;
   const plan = t?.plan;
   if (!t || !plan) return;
   t.plan = null;
   t.proposal = null;
-  if (t.history.some((h) => h.seasonIndex === plan.seasonIndex && h.periodIndex === plan.periodIndex)) return;
+  if (t.history.some((h) => h.seasonIndex === plan.seasonIndex && h.startDay === plan.startDay)) return;
+  const completion = payCycleCompletion(save, plan);
   const players = save.squad
     .filter((p) => plan.players[p.id])
     .map((p) => {
@@ -461,6 +589,7 @@ function closePlan(save: CareerSave): void {
         wear: round2(Math.max(0, e.wear)),
         ...(e.unavailable ? { unavailable: true } : {}),
         ...(e.joinedDay !== undefined ? { joined: true } : {}),
+        ...(completion[p.id] ? { completion: round2(completion[p.id]) } : {}),
       };
     });
   const summary: TrainingSummary = {
@@ -502,11 +631,13 @@ export function trainingDayStart(save: CareerSave): void {
   if (!save.training) save.training = initialTrainingState(save.difficulty);
   if (save.phase === "ended") return;
   const t = save.training;
-  const period = periodOfDay(save.clock.day);
+  const day = save.clock.day;
   const plan = t.plan;
-  if (plan && plan.seasonIndex === save.clock.seasonIndex && plan.periodIndex === period.index) return;
+  // rc.36 (front T2): the plan's own window decides (an rc.35 14-day cycle runs
+  // to its end inside the 28-day grid, then the grid's period opens from today).
+  if (plan && plan.seasonIndex === save.clock.seasonIndex && day >= plan.startDay && day <= plan.endDay) return;
   if (plan) closePlan(save);
-  openPlan(save, period);
+  openPlan(save, periodOfDay(day));
 }
 
 /**
@@ -612,18 +743,52 @@ export function runTrainingSession(save: CareerSave): void {
       offsetGrowth: fx.offsets,
       declineMult: fx.declineMult,
     };
-    const res = trainDay(p, ctx, share);
+    // rc.36 (front T2, CAREER_PLAN.payout): the plan's session pays alongShare
+    // now (never under the base) and holds the rest for the cycle's end.
+    const full = trainDay(p, ctx, share);
+    const paidMult = plan.package ? paidSessionMultFor(fx.sessionMult) : fx.sessionMult;
+    const res = paidMult < fx.sessionMult - 1e-9 ? trainDay(p, { ...ctx, packageMult: paidMult }, share) : full;
     if (coach && fx.sessionMult > fx.coachlessMult + 1e-9) {
       const alt = trainDay(p, { ...ctx, packageMult: fx.coachlessMult }, share);
-      const coachGain = Math.max(0, res.gained - alt.gained);
+      const coachGain = Math.max(0, full.gained - alt.gained);
       e.coachShare = round4(e.coachShare + coachGain);
       ce.share = round4(ce.share + coachGain);
     }
-    e.sessions = round4(e.sessions + res.gained);
+    e.sessions = round4(e.sessions + full.gained);
+    if (plan.package) {
+      e.held = round4((e.held ?? 0) + Math.max(0, full.gained - res.gained));
+      e.cycleGain = round4((e.cycleGain ?? 0) + full.gained);
+    }
     e.declined = round4(e.declined + res.declined);
     e.wear = round4(e.wear + (fx.wearPerWeek * fx.wearMult * share) / CAREER_TRAINING.trainingDaysPerWeek);
     Object.assign(p, res.player);
+    revealPhaseByTraining(save, p);
   }
+}
+
+/**
+ * rc.36 (front T2, Miguel): the scouting level a squad player's phase reads
+ * at — his report level, or the reveal level once he has trained
+ * CAREER_PLAN.phaseRevealDays days with the squad (the staff has seen him).
+ */
+export function squadPhaseLevelOf(p: Pick<SquadPlayer, "scoutLevel" | "phaseDays">): ScoutLevel {
+  const reveal = CAREER_SCOUT.phaseRevealLevel as ScoutLevel;
+  return (p.phaseDays ?? 0) >= CAREER_PLAN.phaseRevealDays && p.scoutLevel < reveal ? reveal : p.scoutLevel;
+}
+
+/** One training day with the squad while his phase reads "?": at the threshold, a feed line names it. */
+function revealPhaseByTraining(save: CareerSave, p: SquadPlayer): void {
+  if (p.scoutLevel >= CAREER_SCOUT.phaseRevealLevel || (p.phaseDays ?? 0) >= CAREER_PLAN.phaseRevealDays) return;
+  p.phaseDays = (p.phaseDays ?? 0) + 1;
+  if (p.phaseDays < CAREER_PLAN.phaseRevealDays) return;
+  const phase = phaseTagFor(p, {
+    level: squadPhaseLevelOf(p),
+    careerSeed: save.careerSeed,
+    model: growthModelOf(save.world),
+    seasonAge: ageOf(p.birthYear, save.clock.seasonIndex),
+    day: save.clock.day,
+  });
+  pushTrainingNews(save, "phaseRead", { player: p.name, phase, n: p.phaseDays });
 }
 
 /** The scrim series core (shared with careerFlow's run-now / booked scrims): one Bo5 vs `oppRef`. */
@@ -736,9 +901,13 @@ function scrimPlayersOf(save: CareerSave, pkg: TrainingPackage): SquadPlayer[] {
   return save.squad.filter((p) => save.starterIds.includes(p.id) && !pkg.tweaks?.[p.id]?.rest);
 }
 
-/** Apply a package scrim's XP to one player inside his period cap; returns the gain. */
-function applyScrimXp(save: CareerSave, p: SquadPlayer, weeks: number, room: number): number {
-  if (weeks <= 0 || room <= 0) return 0;
+/**
+ * Apply a package scrim's XP to one player inside his period cap; returns the
+ * scrim's whole gain and (rc.36, CAREER_PLAN.payout) the part held for the
+ * cycle's end — alongShare of it lands now.
+ */
+function applyScrimXp(save: CareerSave, p: SquadPlayer, weeks: number, room: number): { gained: number; held: number } {
+  if (weeks <= 0 || room <= 0) return { gained: 0, held: 0 };
   const ctx = {
     seasonIndex: save.clock.seasonIndex,
     coachOverall: null,
@@ -749,10 +918,15 @@ function applyScrimXp(save: CareerSave, p: SquadPlayer, weeks: number, room: num
     weeks,
     ...growthCtxOf(save),
   };
-  let res = trainWeek(p, ctx);
-  if (res.gained > room + 1e-9) res = trainWeek(p, { ...ctx, weeks: weeks * (room / res.gained) });
-  Object.assign(p, res.player);
-  return res.gained;
+  let w = weeks;
+  let full = trainWeek(p, ctx);
+  if (full.gained > room + 1e-9) {
+    w = weeks * (room / full.gained);
+    full = trainWeek(p, { ...ctx, weeks: w });
+  }
+  const paid = trainWeek(p, { ...ctx, weeks: w * CAREER_PLAN.payout.alongShare });
+  Object.assign(p, paid.player);
+  return { gained: full.gained, held: Math.max(0, round4(full.gained - paid.gained)) };
 }
 
 /** The easy scrim's "confidence" (decision 4-A): the consistency offset, inside the offset cap and attr ≤ 99. */
@@ -802,7 +976,10 @@ export function runPackageScrims(save: CareerSave): void {
     const e = entryOf(save, plan, p);
     p.splitsTogether = round4(p.splitsTogether + row.chemistry * share * fx.scrimMult);
     const room = Math.max(0, (plan.scrimCap[p.id] ?? Infinity) - e.scrims);
-    e.scrims = round4(e.scrims + applyScrimXp(save, p, scrimXpWeeksFor(level, k, quality, fx.scrimMult), room));
+    const xp = applyScrimXp(save, p, scrimXpWeeksFor(level, k, quality, fx.scrimMult), room);
+    e.scrims = round4(e.scrims + xp.gained);
+    if (xp.held > 0) e.held = round4((e.held ?? 0) + xp.held);
+    if (xp.gained > 0) e.cycleGain = round4((e.cycleGain ?? 0) + xp.gained);
     if (row.consistency > 0) addConfidence(p, row.consistency * share);
     e.wear = round4(e.wear + row.wear * fx.wearMult);
   }
@@ -877,28 +1054,33 @@ export function onCoachChanged(save: CareerSave, kind: "hired" | "fired", name: 
     t.proposal = null;
     runTodaysSessionIfDue(save);
   }
-  // "The coach runs it": a coach hired into a period on the base (or on his
-  // predecessor's plan) takes it over from his first day — never a plan the
-  // manager set himself.
-  // rc.35 (front T): a hired coach takes the cycle over from his first day
-  // (never a plan the manager set himself); a coach who leaves hands it back
-  // to the preset (Easy: the recommended plan; else the manager's or the base).
+  // rc.36 (front T2): a coach who plans the cycles (`coachPlansOf`) takes the
+  // period over from his first day — a base period (his cycle starts) or his
+  // predecessor's plan (an adjustment: what is held stays) — never a plan the
+  // manager set himself. A coach who leaves hands nothing back: the cycle
+  // runs on at the coachless rate to its end (rc.35 handed it to the preset).
   const plan = t.plan;
-  if (kind === "hired" && save.coach && plan && plan.author !== "user") {
+  if (kind === "hired" && coachPlansOf(save) && plan && plan.author !== "user") {
     const proposal = coachProposalOf(save);
     if (proposal) {
       applyPackage(save, proposal.package, "coach");
       return;
     }
   }
-  if (kind === "fired" && !save.coach && plan && plan.author === "coach") {
-    const controller = trainingControllerOf(save);
-    if (controller === "auto") applyPackage(save, recommendedPackageOf(save).package, "auto");
-    else if (t.repeat && t.userPackage) applyPackage(save, t.userPackage, "user");
-    else applyPackage(save, null, "base");
-    return;
-  }
   recomputePlan(save);
+}
+
+/**
+ * rc.36 (front T2, Miguel: "a newly signed player joins the running cycle"):
+ * the signing flow's hook — he joins the plan the day he signs (his entry, a
+ * summary line), so the cycle's promise counts him from today and his first
+ * session runs the plan. Nothing to do without a plan (the next day opens one).
+ */
+export function onSquadJoined(save: CareerSave, playerId: string): void {
+  const plan = save.training?.plan;
+  const p = save.squad.find((x) => x.id === playerId);
+  if (!plan || !p || save.phase === "ended" || plan.players[p.id]) return;
+  entryOf(save, plan, p);
 }
 
 // ---------------------------------------------------------------------------
@@ -915,9 +1097,12 @@ export interface PlayerProjection {
   coachShare: number;
   offsets: Partial<Record<StatKey, number>>;
   wear: number;
+  /** rc.36: his overall when the cycle completes (the held gain landed). */
   overallEnd: number;
-  /** The weekly session rate today (the ETA reads it). */
+  /** The weekly session rate today (the ETA reads it; rc.36: the rate paid along the way). */
   weeklyRate: number;
+  /** rc.36 (CAREER_PLAN.payout): the part of `gain` held for the cycle's completion. */
+  held: number;
 }
 
 export interface PackageProjection {
@@ -998,7 +1183,7 @@ interface ProjectOpts {
   /** Skip the scrims (the cap's sessions-only pass). */
   sessionsOnly?: boolean;
   /** Period-so-far totals per player (the cap and the period wear); default: the running plan's. */
-  soFar?: Record<string, { sessions: number; scrims: number; wear: number }>;
+  soFar?: Record<string, { sessions: number; scrims: number; wear: number; held?: number }>;
 }
 
 /**
@@ -1024,11 +1209,12 @@ export function projectTrainingPackage(
   const soFar =
     opts.soFar ??
     Object.fromEntries(
-      Object.entries(plan?.players ?? {}).map(([id, e]) => [id, { sessions: e.sessions, scrims: e.scrims, wear: e.wear }]),
+      Object.entries(plan?.players ?? {}).map(([id, e]) => [id, { sessions: e.sessions, scrims: e.scrims, wear: e.wear, held: e.held ?? 0 }]),
     );
   const squad: SquadPlayer[] = save.squad.map((p) => ({ ...p, attrOffsets: { ...p.attrOffsets } }));
   const before = new Map(save.squad.map((p) => [p.id, { overall: p.overall, offsets: { ...p.attrOffsets } }]));
-  const acc = new Map(squad.map((p) => [p.id, { sessions: 0, scrims: 0, coachShare: 0, wear: 0 }]));
+  const acc = new Map(squad.map((p) => [p.id, { sessions: 0, scrims: 0, coachShare: 0, wear: 0, held: 0 }]));
+  const alongShare = CAREER_PLAN.payout.alongShare;
   const gearBonus = gearTrainingBonus(save.finances.gear);
   const level = pkg && pkg.scrimsPerWeek > 0 ? resolveScrimLevel(pkg) : null;
   const scrimDays = pkg ? scrimDaysOf(pkg.scrimsPerWeek) : [];
@@ -1070,13 +1256,17 @@ export function projectTrainingPackage(
         offsetGrowth: fx.offsets,
         declineMult: fx.declineMult,
       };
-      const res = trainDay(p, ctx, forecast.share);
+      // rc.36: the same paid / held split the session runs (CAREER_PLAN.payout).
+      const full = trainDay(p, ctx, forecast.share);
+      const paidMult = pkg ? paidSessionMultFor(fx.sessionMult) : fx.sessionMult;
+      const res = paidMult < fx.sessionMult - 1e-9 ? trainDay(p, { ...ctx, packageMult: paidMult }, forecast.share) : full;
       if (!weeklyRates.has(p.id)) weeklyRates.set(p.id, round2(res.gained * (CAREER_TRAINING.trainingDaysPerWeek / Math.max(1e-9, forecast.share))));
       if (coach && fx.sessionMult > fx.coachlessMult + 1e-9) {
         const alt = trainDay(p, { ...ctx, packageMult: fx.coachlessMult }, forecast.share);
-        a.coachShare += Math.max(0, res.gained - alt.gained);
+        a.coachShare += Math.max(0, full.gained - alt.gained);
       }
-      a.sessions += res.gained;
+      a.sessions += full.gained;
+      a.held += Math.max(0, full.gained - res.gained);
       a.wear += (fx.wearPerWeek * fx.wearMult * forecast.share) / CAREER_TRAINING.trainingDaysPerWeek;
       Object.assign(p, res.player);
     }
@@ -1103,10 +1293,16 @@ export function projectTrainingPackage(
             day: d,
             careerSeed: save.careerSeed,
           };
-          let res = trainWeek(p, ctx);
-          if (res.gained > room + 1e-9) res = trainWeek(p, { ...ctx, weeks: weeks * (room / res.gained) });
-          a.scrims += res.gained;
-          Object.assign(p, res.player);
+          let w = weeks;
+          let full = trainWeek(p, ctx);
+          if (full.gained > room + 1e-9) {
+            w = weeks * (room / full.gained);
+            full = trainWeek(p, { ...ctx, weeks: w });
+          }
+          const paid = trainWeek(p, { ...ctx, weeks: w * alongShare });
+          a.scrims += full.gained;
+          a.held += Math.max(0, full.gained - paid.gained);
+          Object.assign(p, paid.player);
         }
         if (row.consistency > 0) addConfidence(p, row.consistency * scrimWeekShare(k));
         a.wear += row.wear * fx.wearMult;
@@ -1130,8 +1326,9 @@ export function projectTrainingPackage(
       coachShare: round2(a.coachShare),
       offsets,
       wear: round2(Math.max(0, (soFar[p.id]?.wear ?? 0) + a.wear)),
-      overallEnd: round2(p.overall),
+      overallEnd: round2(p.overall + a.held + (soFar[p.id]?.held ?? 0)),
       weeklyRate: weeklyRates.get(p.id) ?? 0,
+      held: round2(a.held),
     };
   });
   const starters = players.filter((p) => save.starterIds.includes(p.id));
@@ -1180,7 +1377,7 @@ function recomputePlan(save: CareerSave): void {
     return;
   }
   const soFar = Object.fromEntries(
-    Object.entries(plan.players).map(([id, e]) => [id, { sessions: e.sessions, scrims: e.scrims, wear: e.wear }]),
+    Object.entries(plan.players).map(([id, e]) => [id, { sessions: e.sessions, scrims: e.scrims, wear: e.wear, held: e.held ?? 0 }]),
   );
   const unsupervised = unsupervisedOf(t, plan);
   plan.scrimCap = scrimCapsFor(save, plan.package, { unsupervised, soFar });
@@ -1254,18 +1451,31 @@ function clone(save: CareerSave): CareerSave {
   return structuredClone(save);
 }
 
-/** Put `pkg` (null = the base) on the running plan from today (or tomorrow, today's session done). */
+/**
+ * Put `pkg` (null = the base) on the running plan from today (or tomorrow,
+ * today's session done). rc.36 (front T2): on a period with nothing running
+ * it STARTS the cycle (`cycleFrom`); on a running one it is an adjustment —
+ * what was earned and what is held stay, the completion still lands at the
+ * end; null stops the cycle and forfeits what is held.
+ */
 function applyPackage(save: CareerSave, pkg: TrainingPackage | null, author: TrainingPlan["author"]): void {
   trainingDayStart(save);
   const t = save.training!;
   const plan = t.plan!;
   const before = plan.package?.objective ?? null;
+  const wasRunning = plan.package !== null;
   plan.package = pkg ? sanitizePackage(pkg) : null;
   plan.author = pkg ? author : "base";
   plan.packageFromDay = plan.lastSessionDay >= save.clock.day ? save.clock.day + 1 : save.clock.day;
   t.proposal = null;
   const after = plan.package?.objective ?? null;
-  if (save.clock.day > plan.startDay && before !== after) {
+  if (!wasRunning && plan.package) {
+    plan.cycleFrom = plan.packageFromDay;
+  } else if (wasRunning && !plan.package) {
+    const lost = forfeitHeld(plan);
+    delete plan.cycleFrom;
+    noteTraining(save, "cycleStopped", { lost: lost.toFixed(2) });
+  } else if (wasRunning && before !== after) {
     noteTraining(save, "objectiveChange", { from: before ?? "base", to: after ?? "base" });
   }
   recomputePlan(save);
@@ -1293,9 +1503,11 @@ export function keepBaseTrainingFlow(input: CareerSave): TrainingFlowResult {
 }
 
 /**
- * "I set it" / "Adjust": the manager's package runs from today to the
- * period's boundary (the card says how many days) and is what "repeat"
- * renews. A waiting proposal is answered by it. null = the base.
+ * "Start training" / "Adjust": the manager's package runs from today to the
+ * period's boundary (the card says how many days). A waiting proposal is
+ * answered by it. rc.36 (front T2): it starts the cycle when nothing runs and
+ * adjusts it when one does (what is held stays); null stops it early and
+ * forfeits the held gain (the screen offers no stop — not picking is the base).
  */
 export function setTrainingPackageFlow(input: CareerSave, pkg: TrainingPackage | null): TrainingFlowResult {
   if (input.phase !== "running") return { save: input, error: "blocked" };
@@ -1333,9 +1545,27 @@ export function setTrainingModeFlow(input: CareerSave, mode: TrainingMode): Trai
   // rc.34 review: the new mode's own "repeat" (CAREER_PLAN.repeatByMode) — the old one
   // made "approve" never propose (repeat on) and "I set it" lapse after a period (off).
   t.repeat = CAREER_PLAN.repeatByMode[mode] ?? false;
-  // rc.35: switching to "auto" without a coach applies the recommended plan now.
-  if (mode === "auto" && !save.coach && t.plan && t.plan.author !== "user") {
-    applyPackage(save, recommendedPackageOf(save).package, "auto");
+  // rc.36 (front T2): a mode only decides the RECOMMENDED tag — nothing starts by itself.
+  return { save };
+}
+
+/**
+ * rc.36 (front T2): the hired coach plans and starts each cycle (on) or only
+ * recommends his plan (off). Switched on with nothing running, he starts his
+ * plan now; switched off, the running cycle runs on to its end.
+ */
+export function setCoachPlansFlow(input: CareerSave, on: boolean): TrainingFlowResult {
+  if (input.phase === "ended") return { save: input, error: "blocked" };
+  const save = clone(input);
+  trainingDayStart(save);
+  const t = save.training!;
+  t.coachPlans = on;
+  if (on && save.coach && save.phase === "running" && t.plan && !t.plan.package) {
+    const proposal = coachProposalOf(save);
+    if (proposal) {
+      applyPackage(save, proposal.package, "coach");
+      runTodaysSessionIfDue(save);
+    }
   }
   return { save };
 }
@@ -1374,6 +1604,22 @@ export interface TrainingBlockView {
   decision: TrainingDecision | null;
   /** The pre-event unavailability the plan adds, in points. */
   unavailabilityPts: number;
+  /** rc.36 (front T2): a plan runs this period — a cycle in progress (else the base: pick one). */
+  running: boolean;
+  /** rc.36: the hired coach plans and starts each cycle (`coachPlansOf`). */
+  coachPlans: boolean;
+  /** rc.36: the running cycle — from its first plan day to the period's end; `progress` = the days gone (0..1). */
+  cycle: { fromDay: number; endDay: number; length: number; dayOf: number; daysLeft: number; progress: number } | null;
+  /**
+   * rc.36 (CAREER_PLAN.payout): the cycle's promise, the starters' average —
+   * paid so far, held so far (lands at the end), and the projected rest
+   * (its paid and its held part). total = paid + held + restPaid + restHeld.
+   */
+  promise: { paid: number; held: number; restPaid: number; restHeld: number; total: number } | null;
+  /** rc.36: the plan the RECOMMENDED tag marks (null: Hard without a coach). */
+  recommended: TrainingPackage | null;
+  /** rc.36: the plan of the last finished cycle (its "Same plan again"), else null. */
+  lastPlan: TrainingPackage | null;
 }
 
 /** The package scrims the period's remaining weekdays hold (never on a matchday). */
@@ -1407,8 +1653,34 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
   const lastAvg = lastGains.length > 0 ? round2(lastGains.reduce((s, g) => s + g.gain, 0) / lastGains.length) : null;
   const lastBest = [...lastGains].sort((a, b) => b.gain - a.gain)[0] ?? null;
   const lastWearAvg = last && last.players.length > 0 ? last.players.reduce((s, p) => s + p.wear, 0) / last.players.length : null;
-  const expectedAvg = save.phase === "running" && plan ? projectTrainingPackage(save, pkg).startersAvg : 0;
+  const proj = save.phase === "running" && plan && pkg ? projectTrainingPackage(save, pkg) : null;
+  const expectedAvg = proj?.startersAvg ?? 0;
   const dayOf = Math.min(length, Math.max(1, save.clock.day - startDay + 1));
+  // rc.36: the running cycle and its promise (the starters' average).
+  const running = Boolean(plan && pkg);
+  const fromDay = plan ? Math.min(plan.endDay, Math.max(plan.startDay, plan.cycleFrom ?? plan.packageFromDay)) : startDay;
+  const cycleLength = endDay - fromDay + 1;
+  const cycleDayOf = Math.min(cycleLength, Math.max(1, save.clock.day - fromDay + 1));
+  const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
+  const avgOf = (pick: (id: string) => number) =>
+    starters.length > 0 ? round2(starters.reduce((s, p) => s + pick(p.id), 0) / starters.length) : 0;
+  const promise =
+    running && plan && proj
+      ? (() => {
+          const soFar = avgOf((id) => plan.players[id]?.cycleGain ?? 0);
+          const held = avgOf((id) => plan.players[id]?.held ?? 0);
+          const restHeld = avgOf((id) => proj.players.find((x) => x.id === id)?.held ?? 0);
+          const rest = proj.startersAvg;
+          return {
+            paid: round2(Math.max(0, soFar - held)),
+            held,
+            restPaid: round2(Math.max(0, rest - restHeld)),
+            restHeld,
+            total: round2(soFar + rest),
+          };
+        })()
+      : null;
+  const lastCycle = t.history.find((h) => h.package) ?? null;
   return {
     mode: t.mode,
     controller: trainingControllerOf(save),
@@ -1446,10 +1718,37 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
     lastWear: lastWearAvg === null ? null : wearBandOf(lastWearAvg),
     decision: trainingDecisionOf(save),
     unavailabilityPts: Math.round(wearUnavailabilityAddOf(save) * 1000) / 10,
+    running,
+    coachPlans: coachPlansOf(save),
+    cycle: running
+      ? {
+          fromDay,
+          endDay,
+          length: cycleLength,
+          dayOf: cycleDayOf,
+          daysLeft: Math.max(0, endDay - save.clock.day),
+          progress: round2(Math.min(1, Math.max(0, (cycleDayOf - 1) / Math.max(1, cycleLength)))),
+        }
+      : null,
+    promise,
+    recommended: save.phase === "running" ? recommendedPlanOf(save) : null,
+    lastPlan: lastCycle?.package ? sanitizePackage(lastCycle.package) : null,
   };
 }
 
-/** T4's hire card: what this coach would do here, from the same functions that run it. */
+/**
+ * rc.36 (front T2, CAREER_PLAN.stopOnCycleEnd): a cycle completed at today's
+ * arrival and nothing runs after it (no coach planning it) — the batched
+ * Advance stops here once, so the manager sees the report and can start the
+ * next one. Never a hold (careerFlow.isStopState only).
+ */
+export function cycleEndedTodayOf(save: CareerSave): boolean {
+  if (!CAREER_PLAN.stopOnCycleEnd || save.phase !== "running") return false;
+  const t = save.training;
+  const last = t?.history[0];
+  if (!t || !last || !last.package || t.plan?.package) return false;
+  return last.seasonIndex === save.clock.seasonIndex && last.endDay === save.clock.day - 1;
+}
 export interface CoachImpact {
   quality: number;
   experience: number;
@@ -1499,14 +1798,19 @@ export function coachImpactFor(save: CareerSave, coach: CoachState): CoachImpact
   };
 }
 
-/** The ETA / weekly projection context for a squad player under the running plan. */
+/**
+ * The ETA / weekly projection context for a squad player under the running
+ * plan. rc.36: at the rate paid along the way (CAREER_PLAN.payout) — the held
+ * rest lands at the cycle's end, so the ETA never promises a day early.
+ */
 export function packageTickCtxOf(save: CareerSave, playerId: string): {
   packageMult: number;
   offsetGrowth: Partial<Record<StatKey, number>>;
   declineMult: number;
 } {
   const fx = playerEffectOf(save, playerId);
-  return { packageMult: fx.sessionMult, offsetGrowth: fx.offsets, declineMult: fx.declineMult };
+  const running = Boolean(trainingOf(save).plan?.package);
+  return { packageMult: running ? paidSessionMultFor(fx.sessionMult) : fx.sessionMult, offsetGrowth: fx.offsets, declineMult: fx.declineMult };
 }
 
 /** A coach's training profile for the UI (null = no coach). */

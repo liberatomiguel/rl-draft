@@ -583,13 +583,15 @@ describe("trainWeek", () => {
   });
 
   it("v2.0 (R29): trainingEta counts training days to the next point and respects the caps", () => {
-    const p = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74.6, potential: 88 });
+    // rc.36 (front T2): toward the next point the card PRINTS — 74.4 shows 74, the next (75) lands at 74.5.
+    const p = mkSquad({ birthYear: seasonYear(0) - 18, overall: 74.4, potential: 88 });
     const eta = trainingEta(p, trainCtx());
-    expect(eta.progress).toBeCloseTo(0.6, 5);
-    expect(eta.toNext).toBeCloseTo(0.4, 5);
+    expect(eta.nextPoint).toBe(75);
+    expect(eta.progress).toBeCloseTo(0.9, 5);
+    expect(eta.toNext).toBeCloseTo(0.1, 5);
     expect(eta.weeklyRate).toBeGreaterThan(0);
     expect(eta.daysToNext).toBe(
-      Math.ceil((0.4 / eta.weeklyRate) * CAREER_TRAINING.trainingDaysPerWeek),
+      Math.ceil((0.1 / eta.weeklyRate) * CAREER_TRAINING.trainingDaysPerWeek),
     );
     // Split cap exhausted → nothing moves.
     const capped = trainingEta({ ...p, gainedThisSplit: CAREER_TRAINING.maxSplitGain }, trainCtx());

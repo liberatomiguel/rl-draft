@@ -295,7 +295,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.34 review: a delegação do treino com que o preset começa (difficulty.presetTrainingModeOf,
     // CAREER_PLAN.modeByPreset) e se as copas são inscritas por você (as prefs do preset).
     presetHelp: (mode: "auto" | "recommend" | "manual", autoCups: boolean): string =>
-      `${{ auto: "O melhor plano de treino é aplicado para você.", recommend: "O melhor plano de treino vem marcado; você escolhe.", manual: "Você planeja os treinos, sem dicas." }[mode]} ${autoCups ? "A inscrição nas copas é automática." : "Você escolhe cada copa."}`,
+      `${{ auto: "O melhor plano de treino vem marcado para você.", recommend: "O melhor plano de treino vem marcado; você escolhe.", manual: "Você planeja os treinos, sem dicas." }[mode]} ${autoCups ? "A inscrição nas copas é automática." : "Você escolhe cada copa."}`,
     summaryTitle: "A papelada",
     found: (org: string) => `Fundar ${org}`,
     founded: "EST. 2020",
@@ -967,32 +967,71 @@ export const CAREER_PT: CareerCopy = {
       running: "Em andamento",
       by: { coach: "Plano do coach", user: "Seu plano", auto: "Plano automático", base: "Evolução base" } as Record<string, string>,
       baseLine: "Sem plano: todos evoluem no ritmo base. Nunca é penalidade.",
-      controllerCoach: (name: string) => `${name} escolhe e conduz cada ciclo. Você ainda pode ajustar.`,
+      controllerCoach: (name: string) => `${name} planeja e inicia cada ciclo. Você pode ajustar.`,
+      // rc.36 (front T2): um coach contratado que não planeja mais — ele só recomenda.
+      controllerCoachOff: (name: string) => `Você inicia cada ciclo. O plano de ${name} vem marcado como Recomendado.`,
       controller: {
-        auto: "Fácil: o melhor plano é aplicado para você a cada ciclo. Ajuste quando quiser.",
-        recommend: "Escolha seu plano. O mais eficaz vem marcado como Recomendado.",
-        manual: "Você escolhe tudo. Sem recomendação.",
+        auto: "Fácil: o melhor plano vem marcado como Recomendado. Inicie quando quiser.",
+        recommend: "Normal: a opção mais eficaz de cada etapa vem marcada como Recomendada.",
+        manual: "Difícil: você escolhe tudo. Sem recomendação.",
       } as Record<string, string>,
-      steps: { objective: "Objetivo", intensity: "Intensidade", scrims: "Scrims" } as Record<string, string>,
-      objectives: { development: "Evoluir", preparation: "Competir", recovery: "Recuperar" } as Record<string, string>,
+      steps: { objective: "Objetivo", focus: "Foco", intensity: "Intensidade", scrims: "Scrims" } as Record<string, string>,
+      // rc.36 (front T2, Miguel): Evoluir / Entrosar / Recuperar.
+      objectives: { development: "Evoluir", preparation: "Entrosar", recovery: "Recuperar" } as Record<string, string>,
       objectiveEffect: {
-        development: "Os jogadores evoluem mais rápido rumo ao auge.",
-        preparation: "Scrims mais afiados e entrosamento antes dos grandes eventos.",
+        development: "Evolução mais rápida rumo ao auge de cada jogador.",
+        preparation: "Os scrims entrosam o elenco mais rápido, com um pouco de evolução.",
         recovery: "Menos desgaste. Veteranos seguram o nível por mais tempo.",
       } as Record<string, string>,
+      // rc.36 (front T2, Miguel): o foco do elenco volta a ser uma escolha — um por plano.
+      focuses: {
+        balanced: "Equilibrado",
+        "mechanics-lab": "Mecânica",
+        rotations: "Defesa",
+        "set-plays": "Ataque",
+        "film-room": "Consistência",
+        "clutch-sets": "Clutch",
+      } as Record<string, string>,
+      focusBalanced: "Só evolução geral. Nada afiado.",
+      focusEffect: (stats: string, perWeek: string) => `+${perWeek} de ${stats} por semana, para todos.`,
+      focusHint: "Um atributo que todos afiam. Não custa evolução geral.",
+      scrimsHint: "Só treino: sem pontos, prêmios ou reputação.",
       intensities: { light: "Leve", normal: "Normal", heavy: "Pesada" } as Record<string, string>,
       intensityEffect: {
         light: "Metade do ganho, 40% menos desgaste.",
-        normal: "Ganho e desgaste padrão.",
-        heavy: "1,5× o ganho, mais desgaste.",
+        normal: "O ganho padrão. Sem risco extra.",
+        heavy: "1,5× o ganho. Aumenta o risco de desfalque.",
       } as Record<string, string>,
       scrimChoices: { off: "Nenhum", easy: "Fácil", even: "Parelho", hard: "Difícil" } as Record<string, string>,
       scrimEffect: {
         off: "Sem scrims, sem desgaste de scrim.",
-        easy: "Confiança e pouco desgaste.",
+        easy: "Confiança, pouco desgaste.",
         even: "O maior entrosamento.",
-        hard: "O maior aprendizado, mais desgaste.",
+        hard: "O maior aprendizado. Aumenta o risco de desfalque.",
       } as Record<string, string>,
+      // rc.36 (front T2): nada roda até um plano ser escolhido e iniciado.
+      pickTitle: "Escolha o plano deste ciclo",
+      pickHint: "Nada roda até você iniciar um plano. Enquanto isso, todos evoluem no ritmo base.",
+      idle: "Nenhum plano rodando",
+      idleLine: "Seu elenco evolui no ritmo base. Inicie um plano para acelerar.",
+      choosePlan: "Escolher um plano",
+      start: "Iniciar treino",
+      applyChanges: "Aplicar mudanças",
+      pickAll: "Escolha uma opção em cada etapa para iniciar.",
+      useRecommended: "Usar o plano recomendado",
+      sameAgain: "Mesmo plano do ciclo passado",
+      runsTo: (date: string, days: number) => `Vai até ${date} · ${days === 1 ? "1 dia" : `${days} dias`}`,
+      fromTomorrow: "O treino de hoje já rolou: começa amanhã.",
+      startsTomorrow: "Começa amanhã",
+      promised: (v: string) => `+${v} OVR prometidos`,
+      promiseTitle: "Ganho do ciclo",
+      promiseLine: (paid: string, total: string) => `+${paid} de +${total} OVR`,
+      onCompletion: (v: string) => `+${v} chegam quando o ciclo terminar`,
+      legend: { paid: "Conquistado", toCome: "A caminho", completion: "Na conclusão" } as Record<string, string>,
+      adjustHint: "Ajustar mantém o que já foi conquistado. A parte da conclusão ainda chega no fim.",
+      coachPlans: (name: string) => `${name} planeja cada ciclo`,
+      coachPlansHint: "Desligado: ele só marca o plano dele como Recomendado, e você inicia cada ciclo.",
+      riskLine: (pts: string) => `Risco de desfalque antes de cada evento: +${pts} pts`,
       scrimsAWeek: (n: number) => `${n} por semana · só treino`,
       recommended: "Recomendado",
       expected: "Resultado esperado",
@@ -1031,6 +1070,13 @@ export const CAREER_PT: CareerCopy = {
         plan: "Plano",
         close: "Continuar",
         open: "Abrir treino",
+        // rc.36 (front T2): o relatório mais bonito.
+        completion: (v: string) => `+${v} chegaram na conclusão`,
+        completionShort: (v: string) => `+${v} no fim`,
+        planNext: "Planejar o próximo ciclo",
+        coachNext: (name: string) => `${name} já iniciou o próximo ciclo.`,
+        joined: "Entrou no meio do ciclo",
+        players: "Jogador por jogador",
       },
       coach: {
         quality: "Qualidade",
@@ -1142,6 +1188,8 @@ export const CAREER_PT: CareerCopy = {
         coachHired: (p: Record<string, string | number>) => `${p.coach} assumiu o plano`,
         coachFired: (p: Record<string, string | number>) => `${p.coach} saiu — o plano seguiu no ritmo sem coach`,
         objectiveChange: () => "O objetivo mudou no meio do período",
+        // rc.36 (front T2): um ciclo interrompido antes do fim perde o ganho retido.
+        cycleStopped: (p: Record<string, string | number>) => `O ciclo parou antes do fim: +${p.lost} retidos foram perdidos`,
         coachEvent: () => "O coach planejou preparação para o grande evento do período",
         coachWear: () => "O coach planejou recuperação depois de um período pesado",
       } as Record<string, (p: Record<string, string | number>) => string>,
@@ -1897,7 +1945,10 @@ export const CAREER_PT: CareerCopy = {
       trainingReport: (p: Record<string, string | number>) => `Relatório de treinos: elenco ${p.n} OVR`,
       // rc.34 (DEV-03 T7): o relatório de um período é arquivado — uma linha no feed, nunca um toast.
       trainingPeriod: (p: Record<string, string | number>) =>
-        `Relatório do período ${p.n} (${({ development: "Desenvolvimento", preparation: "Preparação competitiva", recovery: "Recuperação" } as Record<string, string>)[String(p.objective)] ?? "Crescimento base"}): elenco +${p.avg} em média, ${p.player} +${p.gain}`,
+        `Relatório do ciclo ${p.n} (${({ development: "Evoluir", preparation: "Entrosar", recovery: "Recuperar" } as Record<string, string>)[String(p.objective)] ?? "Crescimento base"}): elenco +${p.avg} em média, ${p.player} +${p.gain}`,
+      // rc.36 (front T2): a fase desconhecida de uma contratação, lida após alguns dias de treino.
+      phaseRead: (p: Record<string, string | number>) =>
+        `Depois de ${p.n} dias de treino, a comissão lê ${p.player}: ${({ growing: "ainda em evolução", peak: "no auge", declining: "já passou do auge" } as Record<string, string>)[String(p.phase)] ?? "fase incerta"}`,
       // rc.34 (T3): uma linha por semana para os scrims do pacote (só treino).
       scrimWeek: (p: Record<string, string | number>) =>
         `Semana de scrims (${({ easy: "fácil", even: "equilibrado", hard: "difícil" } as Record<string, string>)[String(p.level)] ?? String(p.level)}): ${p.won}–${p.lost}`,

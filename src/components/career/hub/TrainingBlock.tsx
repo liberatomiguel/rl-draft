@@ -1,16 +1,18 @@
 "use client";
 
 /**
- * Road to Worlds hub — THE TRAINING BLOCK (rc.35, front T; rc.34 H3).
+ * Road to Worlds hub — THE TRAINING BLOCK (rc.35 front T; rc.36 front T2, R83).
  *
  * The cycle at a glance, from one flow read (`careerTraining.trainingBlockOf`):
- * what is running (the objective's icon and name, who set it), the cycle's
- * progress ring with the days left, the expected gain to its end, the
- * scrims, the coach (or the hire link), the absence risk and the last
- * cycle's result — then "Adjust" into the Training tab. rc.34's
- * "Delegate: the coach runs it" switch is gone: a hired coach always runs
- * the plan (Miguel). A legacy proposal still shows its card until the save
- * passes the load repair. Props unchanged, so HQ's layout places it as before.
+ *  - a running plan: its objective, who set it, the days-left ring, the chips
+ *    and the PROGRESS BAR of its promised gain (earned · to come · what lands
+ *    on completion), the coach or the hire link, the absence risk, "Adjust";
+ *  - nothing running (Miguel: "nothing runs until you pick"): a call to pick
+ *    this cycle's plan — the recommendation where the preset or the coach
+ *    gives one — and "Choose a plan" into the Training tab. A NUDGE, never a
+ *    hold: not picking is the base (R83).
+ * A legacy proposal still shows its card until the save passes the load
+ * repair. Props unchanged, so HQ's layout places it as before.
  */
 
 import { useRouter } from "next/navigation";
@@ -26,12 +28,14 @@ import {
   OBJECTIVE_TONE,
   ObjectiveIcon,
   PackageChips,
+  PromiseBar,
   TrainingProposalCard,
 } from "@/components/career/training/TrainingPackageParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { AlertIcon, SwordsIcon, TrendUpIcon, WhistleIcon } from "@/components/ui/icons";
+import { AlertIcon, BaseDotIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
+import { NewTag } from "@/components/ui/NewDot";
 import { Panel } from "@/components/ui/Panel";
 
 export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; statLabels?: Record<string, string> }) {
@@ -49,20 +53,37 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
   const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub", ring: "border-line", bg: "bg-white/[0.03]" };
   const openTraining = () => router.push("/career/training");
 
+  const coachLine = b.coach ? (
+    <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-cyan">
+      <WhistleIcon className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate">
+        {b.coach.name}
+        {b.coach.effectPct > 0 ? ` · ${Y.coachBoost(b.coach.effectPct)}` : ""}
+      </span>
+    </span>
+  ) : (
+    <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-semibold text-orange-bright hover:underline">
+      <WhistleIcon className="h-3.5 w-3.5" />
+      {Y.hireCoach} →
+    </AppLink>
+  );
+
   return (
     <Panel className="rise-in overflow-hidden p-0" style={{ animationDelay: "90ms" }}>
-      <div className="flex items-center justify-between gap-2 px-4 pt-3">
-        <p className="kicker min-w-0 truncate text-[10px]">
+      <div className="flex items-start justify-between gap-2 px-4 pt-3">
+        <p className="kicker min-w-0 text-[10px] leading-snug">
           {C.hub.trainingTitle} · {Y.cycleOf(b.period.index + 1, b.period.count)}
         </p>
-        <Badge tone={trainingDay ? "good" : eventToday ? "orange" : "neutral"}>{status}</Badge>
+        <Badge tone={trainingDay ? "good" : eventToday ? "orange" : "neutral"} className="shrink-0 whitespace-nowrap">
+          {status}
+        </Badge>
       </div>
 
       {b.decision ? (
         <div className="p-4">
           <TrainingProposalCard save={save} decision={b.decision} C={C} onApprove={approve} onAdjust={openTraining} onKeepBase={keepBase} />
         </div>
-      ) : (
+      ) : b.running && b.cycle ? (
         <div className="space-y-3 px-4 pb-4 pt-2.5">
           {/* what is running */}
           <div className={cx("flex items-center gap-3 rounded-xl border px-3 py-2.5", tone.ring, tone.bg)}>
@@ -70,42 +91,15 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
               <ObjectiveIcon objective={objective} className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className={cx("display truncate text-base font-bold", objective ? tone.text : "text-ink")}>
-                {objective ? Y.objectives[objective] : Y.by.base}
-              </p>
+              <p className={cx("display truncate text-base font-bold", tone.text)}>{objective ? Y.objectives[objective] : Y.by.base}</p>
               <p className="truncate text-[11px] text-sub">{Y.by[b.author] ?? ""}</p>
             </div>
-            <CycleRing progress={b.progress} daysLeft={b.period.daysLeft} label={Y.daysLeft(b.period.daysLeft)} className="h-14 w-14" />
+            <CycleRing progress={b.cycle.progress} daysLeft={b.cycle.daysLeft} label={Y.daysLeft(b.cycle.daysLeft)} className="h-14 w-14" />
           </div>
 
           <PackageChips pkg={b.package} C={C} />
 
-          {/* the numbers */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-xl border border-good/30 bg-good/[0.06] px-3 py-2">
-              <p className="flex items-center gap-1 text-[9px] uppercase tracking-[0.1em] text-good">
-                <TrendUpIcon className="h-3 w-3" />
-                {Y.expected}
-              </p>
-              <p className="display text-lg font-bold text-good">{Y.expectedGain(b.expectedAvg.toFixed(2))}</p>
-              <p className="text-[10px] text-faint">{Y.daysLeft(b.period.daysLeft)}</p>
-            </div>
-            <div className="rounded-xl border border-line bg-black/20 px-3 py-2">
-              <p className="text-[9px] uppercase tracking-[0.1em] text-faint">{Y.lastCycle}</p>
-              {b.lastAvg !== null ? (
-                <>
-                  <p className={cx("display text-lg font-bold", b.lastAvg >= 0 ? "text-ink" : "text-bad")}>{fmt1(b.lastAvg)}</p>
-                  {b.lastBest ? (
-                    <p className="truncate text-[10px] text-sub">
-                      {b.lastBest.name} <span className="font-bold text-good">{fmt1(b.lastBest.gain)}</span>
-                    </p>
-                  ) : null}
-                </>
-              ) : (
-                <p className="mt-1 text-[11px] text-faint">{Y.lastNone}</p>
-              )}
-            </div>
-          </div>
+          {b.promise ? <PromiseBar promise={b.promise} C={C} /> : null}
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
             {b.package && b.package.scrimsPerWeek > 0 ? (
@@ -121,25 +115,44 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
                 {Y.risk(b.unavailabilityPts.toFixed(1))}
               </span>
             ) : null}
-            {b.coach ? (
-              <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-cyan">
-                <WhistleIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">
-                  {b.coach.name}
-                  {b.coach.effectPct > 0 ? ` · ${Y.coachBoost(b.coach.effectPct)}` : ""}
-                </span>
-              </span>
-            ) : (
-              <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-semibold text-orange-bright hover:underline">
-                <WhistleIcon className="h-3.5 w-3.5" />
-                {Y.hireCoach} →
-              </AppLink>
-            )}
+            {coachLine}
           </div>
 
           {running ? (
             <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={openTraining}>
               {Y.adjust} →
+            </Button>
+          ) : null}
+        </div>
+      ) : (
+        <div className="space-y-3 px-4 pb-4 pt-2.5">
+          {/* nothing running: the nudge (never a hold) */}
+          <div className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong bg-white/[0.02] px-3 py-2.5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/25 text-faint">
+              <BaseDotIcon className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="display text-base font-bold leading-tight text-ink">{Y.idle}</p>
+              <p className="text-[11px] leading-snug text-sub">{Y.idleLine}</p>
+            </div>
+          </div>
+          {b.recommended ? (
+            <div className="space-y-1.5">
+              <NewTag>{Y.recommended}</NewTag>
+              <PackageChips pkg={b.recommended} C={C} />
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+            {b.lastAvg !== null && b.last?.package ? (
+              <span className="text-sub">
+                {Y.lastCycle}: <span className="font-bold text-ink">{fmt1(b.lastAvg)}</span>
+              </span>
+            ) : null}
+            {coachLine}
+          </div>
+          {running ? (
+            <Button variant="primary" size="md" className="min-h-11 w-full sm:w-auto" onClick={openTraining}>
+              {Y.choosePlan} →
             </Button>
           ) : null}
         </div>

@@ -91,7 +91,7 @@ import type {
 } from "@/engine/career/types";
 import type { Region, Stats, TournamentTeam } from "@/engine/types";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
-import { packageTickCtxOf } from "@/store/careerTraining";
+import { packageTickCtxOf, squadPhaseLevelOf } from "@/store/careerTraining";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { roundsOf } from "@/components/career/event/eventPlayback";
 import { participationOf, type Participation } from "@/components/career/event/weekendView";
@@ -418,10 +418,11 @@ export function phaseLabelOf(tag: PhaseTag): PhaseLabel {
 export function agePhase(save: CareerSave, p: SquadPlayer): PhaseLabel {
   // DEV-01 (model 2): his own arc — growing to his peak age, at the top for
   // his plateau, then declining (rc.31: fixed ages 20 / 22). DEV-04 (rc.33):
-  // the engine's tag, "unknown" until his report level reveals it.
+  // the engine's tag, "unknown" until his report level reveals it — rc.36
+  // (front T2): or until he has trained a few days with the squad.
   return phaseLabelOf(
     phaseTagFor(p, {
-      level: p.scoutLevel,
+      level: squadPhaseLevelOf(p),
       careerSeed: save.careerSeed,
       model: growthModelOf(save.world),
       seasonAge: squadAge(save, p),

@@ -146,6 +146,17 @@ export interface TrainingPeriodPlayer {
   wear: number;
   /** Ruled out of an event in this period (the pre-event roll). */
   unavailable?: boolean;
+  /**
+   * rc.36 (front T2): the plan's gain held back for the cycle's completion
+   * (CAREER_PLAN.payout) — paid when the cycle ends, forfeited if it stops
+   * early. Absent = nothing held (an rc.35 plan runs on pay-as-you-go).
+   */
+  held?: number;
+  /**
+   * rc.36: his overall from the running cycle so far (sessions + package
+   * scrims while a plan ran, held part included) — the promise bar's "so far".
+   */
+  cycleGain?: number;
 }
 
 /** T6: the running period — one per season grid slot, never crossing a season. */
@@ -159,6 +170,12 @@ export interface TrainingPlan {
   author: "coach" | "user" | "base" | "auto";
   /** The day the current package took over (a mid-period change runs to the boundary). */
   packageFromDay: number;
+  /**
+   * rc.36 (front T2): the day this period's cycle started (the first package
+   * of the period; an adjustment keeps it). Absent while nothing runs, or on
+   * an older plan (it reads packageFromDay).
+   */
+  cycleFrom?: number;
   lastSessionDay: number;
   lastScrimDay: number;
   /** Days per coach (and their share), in order of arrival; id "none" = coachless days. */
@@ -204,6 +221,8 @@ export interface TrainingSummaryPlayer {
   wear: number;
   unavailable?: boolean;
   joined?: boolean;
+  /** rc.36 (front T2): the held gain that landed when the cycle completed (in `after`). */
+  completion?: number;
 }
 
 /** T7: a closed period, filed as history (Training → History, HQ's "last period"). */
@@ -250,9 +269,15 @@ export interface TrainingState {
    * rc.35 (front T): the last period report the manager has seen
    * ("season:period"; "" = none yet) — the results modal shows the newest
    * filed report once. Optional: the load repair stamps an older save with
-   * its newest report so nothing old pops.
+   * its newest report so nothing old pops. rc.36: keyed by the period's first
+   * day ("season:dDay", `reportKeyOf`); an rc.35 key is re-keyed on load.
    */
   reportSeen?: string;
+  /**
+   * rc.36 (front T2): a hired coach plans and starts each cycle (true), or
+   * only tags his plan Recommended (false). Absent = CAREER_PLAN.coachPlansByDefault.
+   */
+  coachPlans?: boolean;
 }
 
 /**
@@ -329,6 +354,12 @@ export interface SquadPlayer {
    * in the window he signed in (`market.signedInWindow`).
    */
   signedDay?: number;
+  /**
+   * rc.36 (front T2): training days (Mon–Fri) with the squad while his phase
+   * reads "?" (no report) — at CAREER_PLAN.phaseRevealDays the staff reads it
+   * (`careerTraining.squadPhaseLevelOf`). Optional and additive.
+   */
+  phaseDays?: number;
   /** Set one season ahead when the retirement roll hits a user player. */
   finalSeasonAnnounced?: boolean;
   /**
