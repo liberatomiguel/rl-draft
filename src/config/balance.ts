@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 2;
+export const BALANCE_VERSION = 3;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1411,29 +1411,55 @@ export const CAREER_ECONOMY = {
   prizeMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
   salaryAskMult: { easy: 0.9, normal: 1.0, hard: 1.15 } as Record<string, number>,
   sponsorMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
-  /** Fanbase trickle per split = reputation × this. */
-  passivePerRepPoint: 40,
   /**
-   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 1, option A (M1): ONE
-   * season money index, read through `economy.moneyIndex`. "single": every
-   * stream grows ×indexPerSeason^seasonIndex — wages, fees and coach asks,
-   * prizes, new sponsor deals, the fanbase, the bank's limits, the minimum
-   * fee and salary, the stand-in, scouting, gear (costs and upkeep), the
-   * founding partner and the inserts' money. Signed contracts keep their
-   * figure. The Backer is sized in weeks of payroll (M4), so it is not
-   * indexed again. "rc31" restores rc.31 exactly: wages and fees
+   * Fanbase trickle per split = reputation × this (season-0 money, on the
+   * money index). rc.33 — M7 (decision 9-B, "after M1–M3 are measured";
+   * Miguel, 30/10: Claude decides, Miguel tests): 40 → 60, the contract's
+   * candidate — the guaranteed floor that grows with reputation, so a
+   * newcomer without a founding partner (ECO-07) still has a base.
+   */
+  passivePerRepPoint: 60,
+  /**
+   * ECONOMY-CONTRACT M1 (rc.32, decision 1-A): ONE season money index, read
+   * through `economy.moneyIndex`. "single": every stream grows
+   * ×indexPerSeason^seasonIndex — wages, fees and coach asks, prizes, new
+   * sponsor deals, the fanbase, the bank's limits, the minimum fee and
+   * salary, the stand-in, scouting, gear (costs and upkeep), the founding
+   * partner and the inserts' money. Signed contracts keep their figure. The
+   * Backer is sized in weeks of payroll (M4), so it is not indexed again.
+   * "rc31" restores rc.31 exactly: wages and fees
    * ×CAREER_SALARY.inflationPerSeason (1.08), prizes
    * ×CAREER_PRIZES.growthPerSeason (1.12), new sponsor deals
    * ×CAREER_SPONSOR.growthPerSeason (1.10), every other amount flat.
    */
   indexMode: "single" as "single" | "rc31",
-  indexPerSeason: 1.08,
+  /**
+   * rc.33 — ECO-09 (Miguel, 30/10, revisits 1-A: "the old 12 % felt
+   * better"): the one index at 12 % a season (rc.32: 1.08). Every stream
+   * still moves together, so no ratio drifts (b1 ±2 %); money just grows
+   * faster (×2.21 by season 7 instead of ×1.71).
+   */
+  indexPerSeason: 1.12,
 } as const;
 
 export const CAREER_SALARY = {
   basePerSplit: 1_500,
   growthPerPoint: 1.2,
   anchorOverall: 70,
+  /**
+   * rc.33 — ECO-09 (Miguel, 30/10: "wages feel too low, or should grow more
+   * steeply"): a steeper ask above a strong-player line. Each overall point
+   * above `starCurveFrom` multiplies the ask by `starGrowthPerPoint` on top
+   * of growthPerPoint, so the curve bends upward for strong players and
+   * leaves every ask at or under the line untouched (the founding rosters,
+   * the 60s–70s market). Market value and fees follow (value = ask ×
+   * valueMultiple); coaches stay on the plain curve. 1.03: an 85 asks ×1.16,
+   * a 90 ×1.34 and a 95 ×1.56 rc.32's figure, so a 90's wage is about 1.1×
+   * the T4-contender income (P8; rc.32 0.85) — a star is a franchise
+   * decision. 1.02 would make it ≈1.0; 1 = rc.32's curve.
+   */
+  starCurveFrom: 80,
+  starGrowthPerPoint: 1.03,
   minSalary: 250,
   /** Age factors (young scene: primes 19-22 cost the most). */
   ageFactor: { u18: 0.9, a19_22: 1.1, a23_24: 0.9, a25plus: 0.75 },
@@ -1536,25 +1562,10 @@ export const CAREER_TRANSFER = {
   /** AI bid fee = marketValue × this band (selling should tempt). */
   aiBidRange: [1.0, 1.35] as const,
   blockbusterFeeMult: 1.5,
-  /**
-   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 8, option B (M8):
-   * "List for sale". A listed player under contract draws one offer from an
-   * AI org of his region that would field him, after `listingOfferDays`
-   * eligible window days (the window rules apply, the bid-free first window
-   * included), at market value × listingOfferRange; accept or decline
-   * (declining keeps him), or withdraw the listing. rc.31: no listing
-   * (`listingEnabled: false`).
-   */
-  listingEnabled: true,
-  listingOfferRange: [0.9, 1.15] as const,
-  listingOfferDays: [1, 3] as const,
-  /**
-   * PROVISIONAL (30/10) — decision 8-B's replacement signing: a seat sold
-   * in a window can be refilled with a free agent for this many days after
-   * the window closes (one such late signing per window, so one per split).
-   * 0 = none (option C; rc.31 had no late signing).
-   */
-  lateSigningDays: 7,
+  // rc.33 — ECO-12 (Miguel, 30/10; withdraws decision 8-B): rc.32's "List
+  // for sale" (`listingEnabled`, `listingOfferRange`, `listingOfferDays`) and
+  // the late signing (`lateSigningDays`) are gone; random AI bids stay. A
+  // future update rethinks selling (ECO-06).
 } as const;
 
 export const CAREER_SPONSOR = {
@@ -1563,10 +1574,25 @@ export const CAREER_SPONSOR = {
    * gear discounts and free bootcamps — so a better sponsor visibly upgrades
    * the org's toolbox, not just the bank line.
    */
+  /**
+   * rc.33 — M7 (decision 9-B, "tune after M1–M3 are measured"; Miguel,
+   * 30/10: Claude decides, Miguel tests): the tier bases per split, season-0
+   * money (rc.32: $1.5k / $6k / $18k / $45k). Sized so that, with no
+   * founding partner (ECO-07), a newcomer playing normally pays its way and
+   * payroll ÷ guaranteed income (b3) moves toward 1.0–2.0, while a spender
+   * still breaks on Normal and Hard. The money goes where the newcomer is:
+   * T1 at the top of the contract's range ($3–5k) carries a founding roster
+   * (b3 ≈ 0.9–1.2 at the first offer), T2 doubles. The top tiers stay below
+   * the contract's candidates ($30–40k / $55–65k): measured, T3 and T4
+   * holders already sat at b3 1.5 / 1.1 with $26k / $50k, and the snowball
+   * (e1) is the binding limit there — a reputation-90 org on a cheap squad
+   * took ~6× its payroll in guaranteed money at $35k / $60k. So T3 +22 %,
+   * T4 as rc.32. Bonuses, gates and perks unchanged.
+   */
   tiers: [
-    { tier: 1, repGate: 0, base: 1_500, bonus: 750, objective: "enterEvents", gearDiscountPct: 0, freeBootcampsPerSeason: 0 },
-    { tier: 2, repGate: 25, base: 6_000, bonus: 3_000, objective: "regionalTop8", gearDiscountPct: 20, freeBootcampsPerSeason: 0 },
-    { tier: 3, repGate: 50, base: 18_000, bonus: 9_000, objective: "majorQualify", gearDiscountPct: 35, freeBootcampsPerSeason: 1 },
+    { tier: 1, repGate: 0, base: 5_000, bonus: 750, objective: "enterEvents", gearDiscountPct: 0, freeBootcampsPerSeason: 0 },
+    { tier: 2, repGate: 25, base: 12_000, bonus: 3_000, objective: "regionalTop8", gearDiscountPct: 20, freeBootcampsPerSeason: 0 },
+    { tier: 3, repGate: 50, base: 22_000, bonus: 9_000, objective: "majorQualify", gearDiscountPct: 35, freeBootcampsPerSeason: 1 },
     { tier: 4, repGate: 75, base: 45_000, bonus: 25_000, objective: "majorTop4", gearDiscountPct: 50, freeBootcampsPerSeason: 2 },
   ] as const,
   signingBonusSplits: 1,
@@ -1576,17 +1602,19 @@ export const CAREER_SPONSOR = {
    */
   growthPerSeason: 1.1,
   /**
-   * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 3, option A (M3): the
-   * founding partner, a day-one tier-0 deal. Base per split = payrollShare ×
-   * the founding wage bill (fixed at creation, then on the money index),
-   * objective "enter events", no signing bonus. It runs until the first real
-   * deal or the end of season index `throughSeasonIndex`, whichever is
-   * later — alongside a real deal signed earlier. A save from before rc.32
-   * gets it only while still in season index ≤ throughSeasonIndex with no
-   * sponsor ever signed, sized on its wage bill at that load. rc.31: none
-   * (`enabled: false`).
+   * ECONOMY-CONTRACT M3 (rc.32, decision 3-A) — the founding partner, a
+   * day-one tier-0 deal. Base per split = payrollShare × the founding wage
+   * bill (fixed at creation, then on the money index), objective "enter
+   * events", no signing bonus. It runs until the first real deal or the end
+   * of season index `throughSeasonIndex`, whichever is later — alongside a
+   * real deal signed earlier.
+   * rc.33 — ECO-07 (Miguel, 30/10: "no day-one founding partner"):
+   * `enabled: false` grants none — not on a new career, not to an older save
+   * at load. `honourRunning: true`: a deal an rc.32 career already holds is
+   * paid to its own end condition (a signed deal is honoured; nothing new is
+   * granted). `enabled: true` restores rc.32 (the backfill included).
    */
-  founding: { enabled: true, payrollShare: 0.7, throughSeasonIndex: 1 },
+  founding: { enabled: false, honourRunning: true, payrollShare: 0.7, throughSeasonIndex: 1 },
   /** Misses within a deal before the renewal drops one tier. Never clawbacks. */
   patienceMisses: 3,
   enterEventsTarget: 2,
@@ -1711,23 +1739,40 @@ export const CAREER_LOAN = {
   /** Guard for a squad with (almost) no wages: the weekly bill the weeks count, season-0 money. */
   weeksBasisMin: 100,
   /**
-   * PROVISIONAL (30/10) — decision 4-B: the breach (Monday below the floor)
-   * that ends the career, by difficulty; null = never. The first breach is
-   * the Backer's rescue; every breach strictly between the first and that
-   * one is a RESTRUCTURING (the highest-paid player sold at market value,
-   * rep −restructureRepLoss, and the Backer's rescue tops the books back up).
-   * Easy: every later breach restructures; Hard: the second ends it. rc.31:
-   * 2 on every difficulty (no restructuring).
+   * rc.33 — ECO-08 (Miguel, 30/10; replaces decision 4-B): the breach (a
+   * Monday below the floor) that ends the career, by difficulty; null =
+   * never. Every breach before it is the Backer's rescue (a grant back to
+   * the rescue target, added to what is owed): Easy rescues twice and ends
+   * at the third, Normal rescues once and ends at the second, Hard has no
+   * Backer — the first breach ends it. No restructuring: rc.32's forced sale
+   * of the highest-paid player is gone. Every screen that says when money
+   * ends a career reads this key. rc.32: { easy: null, normal: 3, hard: 2 }
+   * with restructurings between; rc.31: 2 everywhere.
    */
-  breachesToEnd: { easy: null, normal: 3, hard: 2 } as Record<string, number | null>,
-  restructureRepLoss: 5,
+  breachesToEnd: { easy: 3, normal: 2, hard: 1 } as Record<string, number | null>,
+  /**
+   * rc.33 — ECO-07 (Miguel, 30/10; replaces decision 3-A's founding
+   * partner): the rescue partner, "a partner's help" on top of the Backer's
+   * loan. `atBreach`: the breach that brings it, by difficulty (null = none —
+   * Easy's first breach only). From the next Monday it pays `payrollShare` ×
+   * the weekly wage bill booked on the rescue Monday (squad + coach), fixed
+   * for its run, for `weeks` Mondays — one split and its transfer window
+   * (CAREER_CALENDAR.splitWeeks 8 + windowWeeks 2). Its own ledger line, in
+   * the rescue mail and in Finances while it runs. Never garnished: it is
+   * income, the Backer is repaid from prizes and sales as before.
+   */
+  rescuePartner: {
+    atBreach: { easy: 1, normal: null, hard: null } as Record<string, number | null>,
+    payrollShare: 0.5,
+    weeks: 10,
+  },
   /**
    * PROVISIONAL (30/10) — M4: while the Backer is owed, a signing, a coach
    * hire or the psychologist that would shorten the runway is refused
    * ("loanRunway"), on top of rc.31's lock (transfer fees, gear, the bank).
    * A free agent into an empty starting seat (squad under three — after a
-   * restructuring) is always allowed: the org can field its three again.
-   * rc.31: false.
+   * sale, an expiry or a retirement) is always allowed: the org can field
+   * its three again. rc.31: false.
    */
   lockCommitments: true,
   repayFactor: 1.2,
@@ -1764,6 +1809,14 @@ export const CAREER_PAYROLL = {
    */
   runwayWarnMode: "weekly" as "weekly" | "rc31",
   runwayNoticeWeeks: 8,
+  /**
+   * rc.33 — UX-07 (the expanded balance chart; HQ-CONTRACT decision 4-A):
+   * the Monday balances a save keeps, a ring of the last this-many Mondays
+   * (three seasons of 32 weeks, a few KB), recorded by the Monday funnel
+   * once per Monday. The Finances chart draws it; nothing is invented for
+   * the weeks before a save started recording.
+   */
+  balanceRingWeeks: 96,
 } as const;
 
 /**

@@ -406,6 +406,7 @@ export type LedgerKind =
   | "loanGarnish"
   | "loanPayment" // v0.3: manual Backer pay-down
   | "foundingPartner" // rc.32 (M3, provisional): the founding partner's weekly base
+  | "rescuePartner" // rc.33 (ECO-07): the rescue partner's weekly help
   | "playerShare" // rc.32 (M6, provisional): the players' share of a podium prize
   | "fanbase"
   | "payroll" // v2.0: the squad aggregated weekly wages (one line per Monday)
@@ -461,11 +462,20 @@ export interface FinanceState {
   /** One rescue per career — a second breach after this is set ends the career. */
   loanUsed: boolean;
   /**
-   * rc.32 (M4, provisional): Mondays the books closed below the Backer's
-   * floor so far (the rescue was the first). Absent on older saves: read as
-   * 1 when `loanUsed`, else 0 (`economy.loanBreachesOf`).
+   * rc.32 (M4): Mondays the books closed below the Backer's floor so far
+   * (the first rescue was the first). Absent on older saves: read as 1 when
+   * `loanUsed`, else 0 (`economy.loanBreachesOf`). rc.33 (ECO-08): the count
+   * CAREER_LOAN.breachesToEnd ends the career at.
    */
   loanBreaches?: number;
+  /** rc.33 (ECO-07): the rescue partner's help while it runs (absent / null = none). */
+  rescuePartner?: RescuePartnerState | null;
+  /**
+   * rc.33 (UX-07): the Monday balances, oldest first, a ring of
+   * CAREER_PAYROLL.balanceRingWeeks (economy.recordMondayBalance). Absent on
+   * a save from before rc.33 until its load repair seeds it from the ledger.
+   */
+  balanceRing?: MondayBalance[];
   /** v2.0 bank loan (absent on pre-2.0 saves = none). */
   bankLoan?: BankLoanState | null;
   gear: GearState;
@@ -474,6 +484,34 @@ export interface FinanceState {
   bootcampUsedThisSplit: boolean;
   /** Sponsor-perk free bootcamps consumed this season. */
   freeBootcampsUsedThisSeason: number;
+}
+
+/**
+ * rc.33 (ECO-07): the rescue partner — "a partner's help" that comes with
+ * the Backer's loan at the breach CAREER_LOAN.rescuePartner.atBreach names
+ * (Easy's first). The Monday funnel pays `weekly` while `mondaysLeft` > 0,
+ * counting it down, then clears it.
+ */
+export interface RescuePartnerState {
+  /** Weekly income, fixed at the rescue: payrollShare × that Monday's wage bill. */
+  weekly: number;
+  /** Mondays still to pay (CAREER_LOAN.rescuePartner.weeks at the rescue). */
+  mondaysLeft: number;
+}
+
+/**
+ * rc.33 (UX-07): one Monday's closing books in the Finances chart's ring.
+ * Short keys: the ring holds up to CAREER_PAYROLL.balanceRingWeeks of them.
+ */
+export interface MondayBalance {
+  /** Season index of the Monday. */
+  s: number;
+  /** Week of the Monday (1–32). */
+  w: number;
+  /** The balance after that Monday's payroll (the Backer's rescue included). */
+  b: number;
+  /** The Backer's floor that Monday; absent on Mondays seeded from an older save's ledger. */
+  f?: number;
 }
 
 export type SponsorObjectiveKind =
@@ -534,11 +572,15 @@ export interface TransferOffer {
   factors: OfferFactor[];
   /** True when this offer came from a degraded scripted beat (Blockbuster). */
   blockbuster?: boolean;
-  /** rc.32 (M8, provisional): the offer answers the user's "List for sale". */
+  /**
+   * @deprecated rc.32 (M8): the offer answered the user's "List for sale" —
+   * withdrawn in rc.33 (ECO-12). Never written; the load repair
+   * (careerFlow.repairMoneyOnLoad) strips it, so the offer stays a plain bid.
+   */
   listing?: boolean;
 }
 
-/** rc.32 (M8, provisional): a squad player the user listed for sale. */
+/** @deprecated rc.32 (M8): a squad player the user listed for sale — withdrawn in rc.33 (ECO-12). */
 export interface SaleListing {
   playerId: string;
   seasonIndex: number;
@@ -548,8 +590,8 @@ export interface SaleListing {
 }
 
 /**
- * rc.32 (M8, provisional): a seat sold in a window may be refilled with a
- * free agent until `untilDay` (one late signing per window).
+ * @deprecated rc.32 (M8): a seat sold in a window could be refilled with a
+ * free agent until `untilDay` — withdrawn in rc.33 (ECO-12).
  */
 export interface LateSigningState {
   seasonIndex: number;
@@ -843,11 +885,15 @@ export interface CareerSave {
   bidsThisWindow: number;
   lastBidDay: number;
   pendingOffers: TransferOffer[];
-  /** rc.32 (M3, provisional): the founding partner; null = none; absent = not decided yet (older save). */
+  /**
+   * rc.32 (M3): the founding partner; null = none; absent = not decided yet
+   * (older save). rc.33 (ECO-07): never granted any more (null); a deal an
+   * rc.32 career holds runs to its own end (CAREER_SPONSOR.founding.honourRunning).
+   */
   foundingPartner?: FoundingPartnerState | null;
-  /** rc.32 (M8, provisional): players listed for sale. */
+  /** @deprecated rc.32 (M8) — withdrawn in rc.33 (ECO-12): never written; the load repair (careerFlow.repairMoneyOnLoad) deletes it. */
   saleListings?: SaleListing[];
-  /** rc.32 (M8, provisional): the late signing a window sale opened, if any. */
+  /** @deprecated rc.32 (M8) — withdrawn in rc.33 (ECO-12): never written; the load repair (careerFlow.repairMoneyOnLoad) deletes it. */
   lateSigning?: LateSigningState | null;
   /** A starter is unavailable for this event (random event, sub steps in). */
   pendingUnavailability: { playerId: string; eventId: string } | null;

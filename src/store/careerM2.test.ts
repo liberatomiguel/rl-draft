@@ -132,10 +132,13 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     const { save, p } = withPlayer({ overall: CAREER_SALARY.ambitiousOverall + 1, potential: 92, salaryPerSplit: 45_000 }, (s) => {
       s.reputation = 10;
     });
+    // rc.33 (ECO-09 steepened the ask above 80): a wage the raise cap prices whatever the
+    // curve — the cap (×1.5) lands between the market floor and his fresh ask.
+    p.salaryPerSplit = quantize(renewalTermsFor(p, ctxOf(save)).marketFloor * 0.8);
     const terms = renewalTermsFor(p, ctxOf(save));
     expect(terms.ambitious).toBe(true);
     expect(terms.bound).toBe("cap");
-    expect(terms.ask).toBe(quantize(quantize(45_000 * CAREER_SALARY.renewalRaiseCap) * CAREER_SALARY.ambitionRenewalMult));
+    expect(terms.ask).toBe(quantize(quantize(p.salaryPerSplit * CAREER_SALARY.renewalRaiseCap) * CAREER_SALARY.ambitionRenewalMult));
   });
 
   it("switch back: renewalRule 'fresh' prices the plain fresh ask exactly (rc.31's rule; a refused Blockbuster's surcharge is rc.32's fix)", () => {

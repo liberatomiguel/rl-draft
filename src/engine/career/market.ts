@@ -675,95 +675,9 @@ export function incomingBidForDay(ctx: {
   };
 }
 
-// ---------------------------------------------------------------------------
-// rc.32 M8 (ECONOMY-CONTRACT §5, decision 8-B — provisional): "List for sale"
-// ---------------------------------------------------------------------------
-
-/**
- * Eligible window days a new listing waits for its offer — a seeded draw in
- * CAREER_TRANSFER.listingOfferDays, fixed per (player, listing day).
- */
-export function listingWaitDaysFor(playerId: string, seasonIndex: number, day: number, careerSeed: number): number {
-  const [lo, hi] = CAREER_TRANSFER.listingOfferDays;
-  const f = derivedFloat(careerSeed, streams.gen("listWait", `${playerId}:${seasonIndex}:${day}`));
-  return lo + Math.min(hi - lo, Math.floor(f * (hi - lo + 1)));
-}
-
-/**
- * The AI org that buys a user player outside a bid (a listing, a
- * restructuring): an org of his region that would field him (he beats its
- * weakest player; any org of the region when none would), picked by a
- * seeded draw on `key`. Null when his region has no org at all.
- */
-export function fieldingBuyerFor(ctx: {
-  world: WorldState;
-  player: Pick<SquadPlayer, "id" | "region" | "overall">;
-  seasonIndex: number;
-  careerSeed: number;
-  key: string;
-}): string | null {
-  const { player } = ctx;
-  const viewCtx: ViewCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, world: ctx.world };
-  const orgs = Object.values(ctx.world.orgs)
-    .filter((o) => o.region === player.region && !o.playerIds.includes(player.id))
-    .sort((a, b) => a.ref.localeCompare(b.ref));
-  if (orgs.length === 0) return null;
-  const weakestOf = (playerIds: readonly string[]) =>
-    Math.min(...playerIds.map((id) => playerViewById(id, viewCtx)?.overall ?? 60));
-  const fielding = orgs.filter((o) => player.overall > weakestOf(o.playerIds));
-  const pool = fielding.length > 0 ? fielding : orgs;
-  const pick = Math.floor(derivedFloat(ctx.careerSeed, streams.gen("buyer", `${ctx.key}:${player.id}`)) * pool.length);
-  return pool[Math.min(pick, pool.length - 1)].ref;
-}
-
-/**
- * The AI offer a listed player draws: from fieldingBuyerFor's org, at market
- * value × CAREER_TRANSFER.listingOfferRange. It expires when the window
- * closes, like a bid. Null when his region has no org at all.
- */
-export function listingOfferFor(ctx: {
-  world: WorldState;
-  player: SquadPlayer;
-  seasonIndex: number;
-  windowIdx: 0 | 1 | 2 | 3;
-  day: number;
-  careerSeed: number;
-}): TransferOffer | null {
-  const { player } = ctx;
-  const key = `${ctx.seasonIndex}:${ctx.day}:${player.id}`;
-  const buyer = fieldingBuyerFor({
-    world: ctx.world,
-    player,
-    seasonIndex: ctx.seasonIndex,
-    careerSeed: ctx.careerSeed,
-    key: `list:${ctx.seasonIndex}:${ctx.day}`,
-  });
-  if (!buyer) return null;
-  const value = marketValueFor({
-    overall: player.overall,
-    age: ageOf(player.birthYear ?? deriveBirthYear(player.id, ctx.careerSeed), ctx.seasonIndex),
-    potential: player.potential,
-    seasonIndex: ctx.seasonIndex,
-  });
-  const [lo, hi] = CAREER_TRANSFER.listingOfferRange;
-  const mult = lo + (hi - lo) * derivedFloat(ctx.careerSeed, streams.gen("listFee", key));
-  return {
-    id: `list:${key}`,
-    direction: "out",
-    playerId: player.id,
-    playerName: player.name,
-    fee: quantize(value * mult),
-    salaryPerSplit: 0,
-    lengthSeasons: 2,
-    role: "starter",
-    otherRef: buyer,
-    status: "pending",
-    resolveSeason: ctx.seasonIndex,
-    resolveDay: windowCloseDayFor(ctx.windowIdx),
-    factors: [],
-    listing: true,
-  };
-}
+// rc.33 (ECO-12): rc.32's "List for sale" helpers (listingWaitDaysFor,
+// fieldingBuyerFor, listingOfferFor) are gone with the listing and the
+// restructuring's forced sale; random AI bids (incomingBidForDay) stay.
 
 // ---------------------------------------------------------------------------
 // Coach market (v0.2 — real retired pros + generated candidates)

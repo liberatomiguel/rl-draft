@@ -5,13 +5,16 @@
  * flipping it restores rc.31's behaviour exactly.
  *
  *  - M1 (1-A): one season money index for every stream, the flat ones too.
- *  - M3 (3-A): the founding partner.
+ *  - M3 (3-A): the founding partner — rc.33 (ECO-07) switched it off for new
+ *    careers; its tests run as the `enabled: true` switch-back.
  *  - M4 (4-B): warnings with the projected breach, the Backer in weeks of
- *    payroll, the lock on runway-shortening commitments, and what ends a
- *    career by difficulty (restructurings in between).
+ *    payroll, the lock on runway-shortening commitments. What ends a career
+ *    is rc.33's (ECO-08, 3 / 2 / 1 breaches, no restructuring):
+ *    careerEco07.test.ts.
  *  - M5 (6-B): prize tables that pay 100 %.
  *  - M6 (5-B): the comfort cap and the players' share of podium prizes.
- *  - M8 (8-B): "List for sale" and the late signing.
+ *  - M8 (8-B): "List for sale" and the late signing — withdrawn in rc.33
+ *    (ECO-12); the load repair is tested in careerEco07.test.ts.
  *  - The Blockbuster refusal surcharge (declared since v0.2, now applied and
  *    explained) and the age clock (+1 a season, 2022-23 → 2024 included).
  */
@@ -35,7 +38,7 @@ import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import { playerById } from "@/data";
 import { ACH_FLAGS } from "@/engine/career/achievements";
-import { firstDayOfWeek, officialEventDefsForWeek, weekOfDay } from "@/engine/career/calendar";
+import { firstDayOfWeek, weekOfDay } from "@/engine/career/calendar";
 import { ageOf, deriveBirthYear, playerViewById, seasonYear } from "@/engine/career/development";
 import {
   applyPrize,
@@ -71,7 +74,6 @@ import { blockbusterRefusalApplies, listingFor, renewalAskFor } from "@/engine/c
 import type { CareerPlayerView, CareerSave, FinanceState, TransferOffer } from "@/engine/career/types";
 import { buildWorldAtCreation, agePassAndIntake } from "@/engine/career/worldSim";
 import {
-  acceptBidFlow,
   advanceDayFlow,
   backerLineOf,
   chooseSponsorFlow,
@@ -79,15 +81,11 @@ import {
   createCareerSave,
   declineBidFlow,
   hireCoachFlow,
-  lateSigningOpen,
-  listForSaleFlow,
   migrateSaveToV5,
   rolloverToNextSeason,
   signingPlanFor,
   signPlayerFlow,
-  userTeamForEvent,
   weeklyStatementOf,
-  withdrawListingFlow,
   type CreateCareerInput,
 } from "./careerFlow";
 
@@ -330,8 +328,13 @@ describe("rc.32 M6 — the comfort cap and the players' share", () => {
 // M3 — the founding partner (decision 3-A)
 // ===========================================================================
 
-describe("rc.32 M3 — the founding partner", () => {
-  it("opens on day one, sized on the founding wage bill, announced, and paid on Mondays as its own line", () => {
+/** rc.33 (ECO-07): the founding partner is off for new careers — rc.32's behaviour is the `enabled: true` switch-back. */
+function withFounding(fn: () => void): void {
+  withConfig(CAREER_SPONSOR.founding, { enabled: true }, fn);
+}
+
+describe("rc.32 M3 — the founding partner (switch-back: founding.enabled true restores rc.32)", () => {
+  it("opens on day one, sized on the founding wage bill, announced, and paid on Mondays as its own line", () => withFounding(() => {
     const save = createCareerSave(INPUT, 50_101);
     const bill = sum(save.squad.map((p) => p.salaryPerSplit));
     expect(save.foundingPartner).toEqual({ wageBillPerSplit: bill, sizedSeason: 0 });
@@ -346,9 +349,9 @@ describe("rc.32 M3 — the founding partner", () => {
     expect(foundingPartnerBaseFor(save.foundingPartner, 3)).toBe(
       quantize(CAREER_SPONSOR.founding.payrollShare * bill * moneyIndex(3, "sponsor")),
     );
-  });
+  }));
 
-  it("a deal signed early: it runs alongside through season 1 and steps back on season 2's first Monday", () => {
+  it("a deal signed early: it runs alongside through season 1 and steps back on season 2's first Monday", () => withFounding(() => {
     let save = createCareerSave(INPUT, 50_102);
     save.flags[ACH_FLAGS.sponsorSigned] = true; // a real deal was signed in season 0
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
@@ -359,9 +362,9 @@ describe("rc.32 M3 — the founding partner", () => {
     expect(save.foundingPartner?.endedSeason).toBe(2);
     expect(save.mail.some((m) => m.titleKey === "foundingPartnerEnds")).toBe(true);
     expect(save.finances.ledger.some((l) => l.kind === "foundingPartner" && l.seasonIndex === 2)).toBe(false);
-  });
+  }));
 
-  it("no deal yet: it carries on past season 1 and the first real deal ends it there and then", () => {
+  it("no deal yet: it carries on past season 1 and the first real deal ends it there and then", () => withFounding(() => {
     let save = createCareerSave(INPUT, 50_103);
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
     save = rolloverToNextSeason({ ...save, phase: "seasonReview" });
@@ -374,9 +377,9 @@ describe("rc.32 M3 — the founding partner", () => {
     expect(signed.save.foundingPartner?.endedSeason).toBe(2);
     expect(signed.save.mail.some((m) => m.titleKey === "foundingPartnerEnds")).toBe(true);
     expect(weeklyStatementOf(signed.save).foundingPartner).toBe(0);
-  });
+  }));
 
-  it("an older save: only in season index ≤ 1 with no sponsor ever, sized on its wage bill at load, announced once", () => {
+  it("an older save: only in season index ≤ 1 with no sponsor ever, sized on its wage bill at load, announced once", () => withFounding(() => {
     const old = createCareerSave(INPUT, 50_104);
     delete old.foundingPartner;
     old.mail = [];
@@ -393,16 +396,15 @@ describe("rc.32 M3 — the founding partner", () => {
     const sponsored = structuredClone(old);
     sponsored.flags[ACH_FLAGS.sponsorSigned] = true;
     expect(migrateSaveToV5(sponsored)!.foundingPartner).toBeNull();
-  });
+  }));
 
-  it("switch-back: founding.enabled false — no partner, no mail, no ledger line (rc.31)", () => {
-    withConfig(CAREER_SPONSOR.founding, { enabled: false }, () => {
-      const save = createCareerSave(INPUT, 50_105);
-      expect(save.foundingPartner).toBeUndefined();
-      expect(save.mail).toEqual([]);
-      const monday = advanceDayFlow(quietSunday(save, 1));
-      expect(monday.finances.ledger.some((l) => l.kind === "foundingPartner")).toBe(false);
-    });
+  it("rc.33's default (founding.enabled false, as rc.31): no partner, no mail, no ledger line", () => {
+    expect(CAREER_SPONSOR.founding.enabled).toBe(false);
+    const save = createCareerSave(INPUT, 50_105);
+    expect(save.foundingPartner).toBeNull();
+    expect(save.mail.some((m) => m.titleKey === "foundingPartner")).toBe(false);
+    const monday = advanceDayFlow(quietSunday(save, 1));
+    expect(monday.finances.ledger.some((l) => l.kind === "foundingPartner")).toBe(false);
   });
 });
 
@@ -425,107 +427,21 @@ describe("rc.32 M4 — the Backer in weeks of payroll and what each breach does"
     });
   });
 
-  it("what ends a career: Easy never, Normal at the third breach, Hard at the second (restructurings between)", () => {
-    expect([1, 2, 3, 4, 9].map((b) => breachOutcomeFor(b, "easy"))).toEqual(["rescue", "restructure", "restructure", "restructure", "restructure"]);
-    expect([1, 2, 3].map((b) => breachOutcomeFor(b, "normal"))).toEqual(["rescue", "restructure", "insolvent"]);
-    expect([1, 2].map((b) => breachOutcomeFor(b, "hard"))).toEqual(["rescue", "insolvent"]);
-    // An older save: its one rescue counts as the first breach.
+  it("an older save: its one rescue counts as the first breach", () => {
     expect(loanBreachesOf({ loanUsed: true })).toBe(1);
     expect(loanBreachesOf({ loanUsed: false })).toBe(0);
   });
 
-  it("switch-back: breachesToEnd 2 everywhere restores rc.31 (the second breach ends it)", () => {
+  it("switch-back: breachesToEnd 2 everywhere restores rc.31 (a rescue, then the second breach ends it)", () => {
     withConfig(CAREER_LOAN, { breachesToEnd: { easy: 2, normal: 2, hard: 2 } }, () => {
-      for (const d of ["easy", "normal", "hard"] as const) expect(breachOutcomeFor(2, d)).toBe("insolvent");
+      for (const d of ["easy", "normal", "hard"] as const) {
+        expect(breachOutcomeFor(1, d)).toBe("rescue");
+        expect(breachOutcomeFor(2, d)).toBe("insolvent");
+      }
     });
   });
 
-  it("Normal: rescue, then a restructuring (the highest-paid sold, rep down, topped back up, still playable), then the end", () => {
-    let save = createCareerSave(INPUT, 50_201);
-    for (const [i, p] of save.squad.entries()) p.salaryPerSplit = 10_000 + i * 1_000;
-    const top = save.squad[save.squad.length - 1];
-    // Breach 1 — the rescue.
-    save = quietSunday(save, 2);
-    save.finances.balance = backerLineOf(save).floor + 10;
-    save = advanceDayFlow(save);
-    expect(save.finances.loanBreaches).toBe(1);
-    expect(save.finances.balance).toBe(backerLineOf(save).rescueTo);
-    const rescueMail = save.mail.find((m) => m.titleKey === "backerIn")!;
-    expect(rescueMail.params?.next).toBe("restructure");
-    // Breach 2 — the restructuring.
-    const repBefore = save.reputation;
-    save = quietSunday(save, 3);
-    save.finances.balance = backerLineOf(save).floor + 10;
-    save = advanceDayFlow(save);
-    expect(save.phase).toBe("running");
-    expect(save.finances.loanBreaches).toBe(2);
-    expect(save.squad.some((p) => p.id === top.id)).toBe(false);
-    expect(save.world.retiredIds).not.toContain(top.id);
-    expect(Object.values(save.world.orgs).some((o) => o.playerIds.includes(top.id))).toBe(true);
-    expect(save.finances.ledger.some((l) => l.kind === "transferIn" && l.refName === top.name)).toBe(true);
-    expect(save.reputation).toBe(Math.max(0, repBefore - CAREER_LOAN.restructureRepLoss));
-    expect(save.finances.balance).toBeGreaterThanOrEqual(backerLineOf(save).rescueTo);
-    const mail = save.mail.find((m) => m.titleKey === "restructured")!;
-    expect(mail.params).toMatchObject({ n: 2, player: top.name, next: "insolvent", rep: repBefore - save.reputation });
-    // rc.32 review: the mail states what the sale and the Backer really did.
-    const garnishedLogged = -save.finances.ledger
-      .filter((l) => l.kind === "loanGarnish" && l.day === save.clock.day)
-      .reduce((n, l) => n + l.amount, 0);
-    expect(mail.params?.garnished).toBe(garnishedLogged);
-    expect(Number(mail.params?.garnished)).toBeGreaterThan(0);
-    expect(mail.params?.balance).toBe(save.finances.balance);
-    expect(CAREER_EN.mail.body.restructured(mail.params!)).toContain("went to the debt");
-    expect(save.news.some((n) => n.titleKey === "restructured")).toBe(true);
-    // Playable: two players and a stand-in in the third seat, no softlock.
-    const regional = officialEventDefsForWeek(0, 4).find((d) => d.region === "SAM")!;
-    expect(userTeamForEvent(save, regional).usedStandIn).toBe(true);
-    // Breach 3 — the end on Normal.
-    save = quietSunday(save, 4);
-    save.finances.balance = backerLineOf(save).floor + 10;
-    save = advanceDayFlow(save);
-    expect(save.phase).toBe("ended");
-    expect(save.end.reason).toBe("insolvency");
-  });
-
-  it("a restructuring after the Backer was repaid says so: nothing to the debt, no top-up, the real balance (rc.32 review)", () => {
-    let save = createCareerSave(INPUT, 50_203);
-    for (const [i, p] of save.squad.entries()) p.salaryPerSplit = 10_000 + i * 1_000;
-    const top = save.squad[save.squad.length - 1];
-    top.overall = 88; // worth far more than the gap to the rescue target
-    save = quietSunday(save, 2);
-    save.finances.balance = backerLineOf(save).floor + 10;
-    save = advanceDayFlow(save);
-    expect(save.finances.loanBreaches).toBe(1);
-    save.finances.loan = null; // repaid
-    save = quietSunday(save, 3);
-    save.finances.balance = backerLineOf(save).floor + 10;
-    save = advanceDayFlow(save);
-    const mail = save.mail.find((m) => m.titleKey === "restructured")!;
-    expect(mail.params).toMatchObject({ player: top.name, garnished: 0, granted: 0, owed: 0 });
-    expect(mail.params?.balance).toBe(save.finances.balance);
-    for (const C of [CAREER_EN, CAREER_PT]) {
-      const text = C.mail.body.restructured(mail.params!);
-      expect(text).toContain(String(save.finances.balance));
-      expect(text).not.toMatch(/half of it|metade para a dívida|topped the balance|recompôs o saldo/);
-    }
-  });
-
-  it("Easy: money never ends the career — every later breach restructures, down to an empty squad", () => {
-    let save = createCareerSave({ ...INPUT, difficulty: "easy" }, 50_202);
-    for (const p of save.squad) p.salaryPerSplit = 12_000;
-    const breaches = save.squad.length + 2; // the rescue, one restructuring per player, then one with nobody left
-    for (let breach = 1; breach <= breaches; breach++) {
-      save = quietSunday(save, 1 + breach);
-      // A burn the books cannot carry, every time.
-      save.finances.balance = backerLineOf(save).floor - 1;
-      save = advanceDayFlow(save);
-      expect(save.phase).toBe("running");
-    }
-    expect(save.squad).toHaveLength(0);
-    expect(save.mail.filter((m) => m.titleKey === "restructured").length).toBeGreaterThanOrEqual(3);
-  });
-
-  it("an older save rescued under rc.31 (loanUsed, no counter): its next breach on Normal restructures", () => {
+  it("an older save rescued under rc.31 (loanUsed, no counter): on Normal its next breach ends it (rc.33, ECO-08)", () => {
     let save = createCareerSave(INPUT, 50_203);
     save.finances.loanUsed = true;
     delete save.finances.loanBreaches;
@@ -533,9 +449,9 @@ describe("rc.32 M4 — the Backer in weeks of payroll and what each breach does"
     save = quietSunday(save, 2);
     save.finances.balance = backerLineOf(save).floor + 10;
     save = advanceDayFlow(save);
-    expect(save.phase).toBe("running");
+    expect(save.phase).toBe("ended");
+    expect(save.end.reason).toBe("insolvency");
     expect(save.finances.loanBreaches).toBe(2);
-    expect(save.mail.some((m) => m.titleKey === "restructured")).toBe(true);
   });
 });
 
@@ -639,7 +555,7 @@ describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runwa
     }
   });
 
-  it("never a soft lock: a free agent may still fill an empty starting seat (a restructured squad under three)", () => {
+  it("never a soft lock: a free agent may still fill an empty starting seat (a squad under three)", () => {
     const save = owedInWindow();
     save.squad = save.squad.slice(0, 2);
     save.starterIds = [save.squad[0].id, save.squad[1].id, ""];
@@ -682,149 +598,6 @@ describe("rc.32 M4 — while the Backer is owed, nothing that shortens the runwa
       const fa = cheapFa(save);
       expect("plan" in signingPlanFor(save, fa.id, { lengthSeasons: 2 })).toBe(true);
       expect(hireCoachFlow(save, coachCandidatesFor(save)[0]).error).toBeUndefined();
-    });
-  });
-});
-
-// ===========================================================================
-// M8 — "List for sale" and the late signing (decision 8-B)
-// ===========================================================================
-
-describe("rc.32 M8 — List for sale", () => {
-  /** Sunday before the window after split 1 (W11), money plentiful. */
-  function beforeWindow1(seed = 50_501): CareerSave {
-    const save = quietSunday(createCareerSave(INPUT, seed), 10);
-    save.finances.balance = 400_000;
-    return save;
-  }
-  function untilListingOffer(save: CareerSave, playerId: string): CareerSave {
-    let s = save;
-    let guard = 0;
-    while (!s.pendingOffers.some((o) => o.listing && o.playerId === playerId) && guard++ < 20) s = step(s);
-    return s;
-  }
-
-  it("an AI org of his region that would field him offers market value × 0.9–1.15 within a few window days", () => {
-    const start = beforeWindow1();
-    const seller = start.squad[0];
-    const listed = listForSaleFlow(start, seller.id);
-    expect(listed.error).toBeUndefined();
-    const listing = listed.save.saleListings![0];
-    expect(listing.waitDays).toBeGreaterThanOrEqual(CAREER_TRANSFER.listingOfferDays[0]);
-    expect(listing.waitDays).toBeLessThanOrEqual(CAREER_TRANSFER.listingOfferDays[1]);
-    const withOffer = untilListingOffer(listed.save, seller.id);
-    const offer = withOffer.pendingOffers.find((o) => o.listing && o.playerId === seller.id)!;
-    expect(offer).toBeTruthy();
-    expect(weekOfDay(withOffer.clock.day)).toBeLessThanOrEqual(12);
-    expect(withOffer.world.orgs[offer.otherRef!].region).toBe(seller.region);
-    const value = marketValueFor({
-      overall: seller.overall,
-      age: ageOf(seller.birthYear, 0),
-      potential: seller.potential,
-      seasonIndex: 0,
-    });
-    const [lo, hi] = CAREER_TRANSFER.listingOfferRange;
-    expect(offer.fee).toBeGreaterThanOrEqual(quantize(value * lo) - CAREER_ECONOMY.roundQuantum);
-    expect(offer.fee).toBeLessThanOrEqual(value * hi);
-    expect(withOffer.mail.some((m) => m.titleKey === "listingOffer")).toBe(true);
-    // Accept: atomic, like any sale — and the seat may be refilled after the window closes.
-    const sold = acceptBidFlow(withOffer, offer.id);
-    expect(sold.error).toBeUndefined();
-    expect(sold.save.squad.some((p) => p.id === seller.id)).toBe(false);
-    expect(sold.save.saleListings).toEqual([]);
-    expect(sold.save.finances.balance).toBe(withOffer.finances.balance + offer.fee);
-    expect(sold.save.lateSigning).toMatchObject({ seasonIndex: 0, windowIdx: 1, used: false });
-  });
-
-  it("decline keeps him and ends the listing; withdraw takes him off the market", () => {
-    const start = beforeWindow1(50_502);
-    const p = start.squad[1];
-    const withOffer = untilListingOffer(listForSaleFlow(start, p.id).save, p.id);
-    const offer = withOffer.pendingOffers.find((o) => o.listing && o.playerId === p.id)!;
-    const declined = declineBidFlow(withOffer, offer.id);
-    expect(declined.squad.some((x) => x.id === p.id)).toBe(true);
-    expect(declined.saleListings).toEqual([]);
-    const relisted = listForSaleFlow(declined, p.id);
-    expect(relisted.error).toBeUndefined();
-    expect(listForSaleFlow(relisted.save, p.id).error).toBe("alreadyListed");
-    const withdrawn = withdrawListingFlow(relisted.save, p.id);
-    expect(withdrawn.save.saleListings).toEqual([]);
-    expect(withdrawn.save.pendingOffers.some((o) => o.listing)).toBe(false);
-  });
-
-  it("the career's first window is bid-free: a listing there waits for the next window", () => {
-    let save = createCareerSave(INPUT, 50_503);
-    save.finances.balance = 400_000;
-    const p = save.squad[0];
-    save = listForSaleFlow(save, p.id).save;
-    while (weekOfDay(save.clock.day) <= 2) {
-      save = step(save);
-      expect(save.pendingOffers.some((o) => o.listing)).toBe(false);
-    }
-    expect(save.saleListings?.[0].waitDays).toBe(listForSaleFlow(createCareerSave(INPUT, 50_503), p.id).save.saleListings![0].waitDays);
-  });
-
-  it("the late signing: one free agent within 7 days after the window, never a contracted player, once", () => {
-    const start = beforeWindow1(50_504);
-    const seller = start.squad[0];
-    const withOffer = untilListingOffer(listForSaleFlow(start, seller.id).save, seller.id);
-    let save = acceptBidFlow(withOffer, withOffer.pendingOffers.find((o) => o.listing)!.id).save;
-    // Past the window's close (W12 Sunday), inside the 7 days.
-    save = { ...structuredClone(save), pendingEventDef: null, pendingInsert: null, unofficialOffer: null };
-    save.clock.day = firstDayOfWeek(13) + 1;
-    expect(lateSigningOpen(save)).toBe(true);
-    const ctx = { careerSeed: save.careerSeed, seasonIndex: 0, world: save.world };
-    const fas = save.world.freeAgentIds
-      .map((id) => playerViewById(id, ctx))
-      .filter((v): v is CareerPlayerView => v !== null && v.age >= 13 && Math.round(v.overall) <= 74);
-    const contracted = Object.values(save.world.orgs)[0].playerIds[0];
-    expect("error" in signingPlanFor(save, contracted, { lengthSeasons: 2 }) && signingPlanFor(save, contracted, { lengthSeasons: 2 })).toMatchObject({ error: "windowClosed" });
-    const planned = signingPlanFor(save, fas[0].id, { lengthSeasons: 2 });
-    expect("plan" in planned && planned.plan.lateSigning).toBe(true);
-    const signed = signPlayerFlow(save, fas[0].id, { lengthSeasons: 2 });
-    expect(signed.error).toBeUndefined();
-    expect(signed.save.lateSigning?.used).toBe(true);
-    expect(signPlayerFlow(signed.save, fas[1].id, { lengthSeasons: 2 }).error).toBe("windowClosed");
-    // Past the 7 days: closed.
-    const after = { ...structuredClone(save), clock: { seasonIndex: 0, day: save.lateSigning!.untilDay + 1 } };
-    expect(lateSigningOpen(after)).toBe(false);
-  });
-
-  it("the late signing refills the sold seat only: not after a refill inside the window, never as a swap (rc.32 review)", () => {
-    const start = beforeWindow1(50_507);
-    const seller = start.squad[0];
-    const withOffer = untilListingOffer(listForSaleFlow(start, seller.id).save, seller.id);
-    let save = acceptBidFlow(withOffer, withOffer.pendingOffers.find((o) => o.listing)!.id).save;
-    const sizeAfterSale = save.squad.length;
-    expect(save.lateSigning?.squadAfterSale).toBe(sizeAfterSale);
-    const ctx = () => ({ careerSeed: save.careerSeed, seasonIndex: 0, world: save.world });
-    const freeAgents = () =>
-      save.world.freeAgentIds
-        .map((id) => playerViewById(id, ctx()))
-        .filter((v): v is CareerPlayerView => v !== null && v.age >= 13 && Math.round(v.overall) <= 74);
-    // Refill the seat inside the window: the squad is back to its size before the sale.
-    const inWindow = signPlayerFlow(save, freeAgents()[0].id, { lengthSeasons: 2 });
-    expect(inWindow.error).toBeUndefined();
-    save = { ...structuredClone(inWindow.save), pendingEventDef: null, pendingInsert: null, unofficialOffer: null };
-    save.clock.day = firstDayOfWeek(13) + 1; // after the window, inside the 7 days
-    expect(lateSigningOpen(save)).toBe(false); // the Market no longer offers it
-    const fa = freeAgents()[0];
-    // No sold seat is left to refill, and the late seat is not a swap either.
-    expect(signPlayerFlow(save, fa.id, { lengthSeasons: 2 }).error).toBe("windowClosed");
-    expect(signPlayerFlow(save, fa.id, { lengthSeasons: 2, releaseId: save.squad[0].id }).error).toBe("windowClosed");
-  });
-
-  it("switch-back: listingEnabled false (rc.31) — no listing; lateSigningDays 0 (option C) — no late seat", () => {
-    withConfig(CAREER_TRANSFER, { listingEnabled: false }, () => {
-      const save = beforeWindow1(50_505);
-      expect(listForSaleFlow(save, save.squad[0].id).error).toBe("listingOff");
-    });
-    withConfig(CAREER_TRANSFER, { lateSigningDays: 0 }, () => {
-      const start = beforeWindow1(50_506);
-      const seller = start.squad[0];
-      const withOffer = untilListingOffer(listForSaleFlow(start, seller.id).save, seller.id);
-      const sold = acceptBidFlow(withOffer, withOffer.pendingOffers.find((o) => o.listing)!.id).save;
-      expect(sold.lateSigning ?? null).toBeNull();
     });
   });
 });

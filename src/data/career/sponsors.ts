@@ -75,3 +75,11 @@ export const SPONSOR_BRANDS: SponsorBrand[] = [
 ];
 
 export const sponsorBrandById = new Map(SPONSOR_BRANDS.map((s) => [s.id, s]));
+
+/**
+ * rc.33 (ECO-07): the rescue partner's brand (INVENTED) — the help that comes
+ * with the Backer's loan at Easy's first breach (CAREER_LOAN.rescuePartner).
+ * Not a sponsor deal: no tier, no objective; the terms live in balance.ts and
+ * the copy (`finances.rescue*`).
+ */
+export const RESCUE_PARTNER_BRAND = { id: "overtime-fund", name: "Overtime Fund" } as const;
