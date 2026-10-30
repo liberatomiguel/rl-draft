@@ -383,8 +383,10 @@ function sign(save: CareerSave, c: Candidate, t: Tally): CareerSave | null {
  * Open starter seats (contracts that ran out, retirements, a sale): every
  * policy fills them. RTW-05 (rc.33): no event plays short and the clock holds
  * before one, so a squad under three always signs — the cheapest player when
- * nothing fits the policy's budget (a free agent into an empty seat is never
- * refused for money or the window).
+ * nothing fits the policy's budget. A free agent into an empty seat is never
+ * refused for the window, and the cheapest one the org may sign never for
+ * money (`careerFlow.emptySeatPriceFor`); a dearer one refused for money is
+ * tried no more, so the cost-ordered fallback always reaches him.
  */
 function fillSeats(input: CareerSave, policy: ArcPolicy, t: Tally, pool: Candidate[] = candidatesFor(input)): CareerSave {
   let save = input;
@@ -406,6 +408,11 @@ function fillSeats(input: CareerSave, policy: ArcPolicy, t: Tally, pool: Candida
     save = sign(save, c, t) ?? save;
   }
   return save;
+}
+
+/** RTW-05 test hook: one visit of the bot's seat filler (a squad under three always signs, broke or not). */
+export function fillSeatsForTests(save: CareerSave, policyId: ArcPolicyId): CareerSave {
+  return fillSeats(save, ARC_POLICIES[policyId], newTally(save, new Set()));
 }
 
 /** One window visit: fill open seats, then (by policy) one upgrade. */

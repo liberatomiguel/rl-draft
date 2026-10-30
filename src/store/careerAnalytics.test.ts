@@ -414,6 +414,39 @@ describe("career action events", () => {
     expect(careerEventsFor(broke, structuredClone(broke))).toEqual([]);
   });
 
+  it("the Backer's milestone fires on every rescue, the breach number in its actionId — Easy's second too (rc.33 review)", () => {
+    const save = makeSave();
+    save.difficulty = "easy";
+    const breach = (from: CareerSave, n: number, day: number): CareerSave => {
+      const next = structuredClone(from);
+      next.clock.day = day;
+      next.finances.loanUsed = true;
+      next.finances.loanBreaches = n;
+      next.finances.loan = { remaining: 40_000 * n };
+      return next;
+    };
+    const first = breach(save, 1, 15);
+    const second = breach(first, 2, 64);
+    const third = breach(second, 3, 120);
+    third.end = { ...third.end, ended: true, reason: "insolvency" };
+    third.phase = "ended";
+    const backer = (a: CareerSave, b: CareerSave) =>
+      named(careerEventsFor(a, b), "career_milestone").filter((e) => e.props.kind === "backer");
+    const one = backer(save, first);
+    const two = backer(first, second);
+    expect(one).toHaveLength(1);
+    expect(two).toHaveLength(1);
+    expect(one[0].props.actionId).toMatch(/:backer:1$/);
+    expect(two[0].props.actionId).toMatch(/:backer:2$/);
+    // The third breach ends an Easy career: no rescue, the insolvency milestone instead.
+    expect(named(careerEventsFor(second, third), "career_milestone").map((e) => e.props.kind)).toEqual(["insolvency"]);
+    // Two rescues in one write (a long batched advance): one event each.
+    expect(backer(save, second).map((e) => e.props.actionId.split(":").at(-1))).toEqual(["1", "2"]);
+    // Normal's second breach ends it: no Backer milestone for it.
+    const normal = { ...structuredClone(first), difficulty: "normal" as const };
+    expect(backer(normal, { ...breach(normal, 2, 64), difficulty: "normal" })).toHaveLength(0);
+  });
+
   it("a Major result (no region of its own) reports eventRegion international; an AI-only result reports nothing", () => {
     const save = makeSave();
     const next = structuredClone(save);

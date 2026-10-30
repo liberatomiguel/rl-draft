@@ -107,6 +107,8 @@ export function listingFor(ctx: {
   careerSeed: number;
   /** rc.32: the org's signing cap (economy.signableOverallCap) — tops the free agents up with signable ones. */
   signableCap?: number;
+  /** Skip the contracted players (an empty `contracted`) — the free-agent page only. */
+  freeAgentsOnly?: boolean;
 }): MarketListing {
   const viewCtx: ViewCtx = {
     careerSeed: ctx.careerSeed,
@@ -125,7 +127,7 @@ export function listingFor(ctx: {
   freeAgents.sort((a, b) => b.overall - a.overall);
 
   const contracted: MarketListing["contracted"] = [];
-  for (const org of Object.values(ctx.world.orgs)) {
+  for (const org of ctx.freeAgentsOnly ? [] : Object.values(ctx.world.orgs)) {
     for (const id of org.playerIds) {
       if (squad.has(id)) continue;
       const view = playerViewById(id, viewCtx);

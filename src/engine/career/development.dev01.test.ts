@@ -432,7 +432,8 @@ describe("DEV-01e — honest scouting bands that never move", () => {
     expect(atTop).toBeLessThan(0.65);
   });
 
-  it("model 1 keeps rc.31's band (floored at the overall, so an rc.31 save's bought reports never move)", () => {
+  // rc.33 review: model 1 reads DEV-04's honest band too (development.dev04.test.ts), still floored at the overall.
+  it("model 1 floors its band at the overall (an absent model is model 1)", () => {
     const v = { potential: 80, overall: 79 };
     const b = scoutedBand(v.potential, v.overall, 0, SEED, "fic:EU:3");
     expect(b.min).toBeGreaterThanOrEqual(79);

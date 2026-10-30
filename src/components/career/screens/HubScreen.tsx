@@ -50,7 +50,6 @@ import {
   isWindowWeek,
   nameOfRef,
   nextPaydayFor,
-  runwayWeeks,
   seasonLabelFor,
   unlockTrack,
   useCareerSave,
@@ -63,7 +62,7 @@ import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { DayCard } from "@/components/career/hub/DayCard";
 import { NowBacker, NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice, NowSquadShort } from "@/components/career/hub/NowCards";
-import { squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
+import { runwayWeeksOf, squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
@@ -328,7 +327,8 @@ export function HubScreen() {
   // rc.32: the statement the Monday books (the season's money index, the founding partner).
   const statement = weeklyStatementOf(save);
   // No runway, Backer or instalment notices once the books are closed.
-  const runway = ended ? null : runwayWeeks(save.finances.balance, statement.net);
+  // rc.33 review: the rescue partner's help counts only on its remaining Mondays.
+  const runway = ended ? null : runwayWeeksOf(save, statement.net);
   const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
   const backerOwed = ended ? null : save.finances.loan;
   const bankLoan = ended ? null : (save.finances.bankLoan ?? null);

@@ -159,7 +159,9 @@ export function TrainingScreen() {
       ? C.scrim.usedUp
       : scrim.reason === "restDay"
         ? C.scrim.restDay
-        : C.hub.scrimUnavailable;
+        : scrim.reason === "squadShort"
+          ? C.scrim.squadShort
+          : C.hub.scrimUnavailable;
 
   const shortlist = scrimShortlistFor(save);
   const tiers = (() => {

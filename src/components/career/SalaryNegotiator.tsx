@@ -7,11 +7,11 @@
  * `careerFlow.signingTalkFor` / `renewalTalkFor`): two levers — the weekly
  * wage and the prize share —, the zone where he signs at the share offered,
  * and the result before any confirm (he signs, or his counter, which taking
- * always signs). Every number comes from the answer; a press of the wage
- * stepper is whole weekly quanta, so it always moves the wage shown.
+ * always signs). Every number comes from the answer; a press of either
+ * stepper is whole weekly quanta, so it always moves the wage shown. The
+ * share lever hides while the prize share is switched off (`zone.shareLever`).
  */
 
-import { CAREER_PRIZE_SHARE } from "@/config/balance";
 import type { ContractOffer, NegotiationAnswer } from "@/engine/career/contract";
 import { useCareerCopy } from "@/content/careerCopy";
 import { formatMoney } from "@/lib/format";
@@ -65,7 +65,7 @@ export function SalaryNegotiator({
       <div className="mt-1 flex items-center gap-2">
         <button
           type="button"
-          aria-label="−"
+          aria-label={N.wageDown}
           className={STEP_BTN}
           onClick={() => setWage(wageDown)}
           disabled={disabled || offer.weekly <= zone.floorWeekly}
@@ -78,7 +78,7 @@ export function SalaryNegotiator({
         </p>
         <button
           type="button"
-          aria-label="+"
+          aria-label={N.wageUp}
           className={STEP_BTN}
           onClick={() => setWage(wageUp)}
           disabled={disabled || offer.weekly >= zone.topWeekly}
@@ -111,35 +111,39 @@ export function SalaryNegotiator({
           : N.zoneFixed(money(zone.topWeekly))}
       </p>
 
-      {/* Lever 2 — the prize share (ECO-10) */}
-      <div className="mt-3 flex items-baseline justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-faint">{N.share}</p>
-        <p className="text-[10px] text-faint">{N.shareAsk(ask.sharePct)}</p>
-      </div>
-      <div className="mt-1 flex items-center gap-2">
-        <button
-          type="button"
-          aria-label="−"
-          className={STEP_BTN}
-          onClick={() => setShare(offer.sharePct - 1)}
-          disabled={disabled || offer.sharePct <= zone.shareMin}
-        >
-          −
-        </button>
-        <p className="min-w-0 flex-1 text-center text-lg font-bold tabular-nums">{offer.sharePct}%</p>
-        <button
-          type="button"
-          aria-label="+"
-          className={STEP_BTN}
-          onClick={() => setShare(offer.sharePct + 1)}
-          disabled={disabled || offer.sharePct >= zone.shareMax}
-        >
-          +
-        </button>
-      </div>
-      <p className="mt-1 text-[10px] text-faint">
-        {N.shareHint} {N.trade(Math.round(CAREER_PRIZE_SHARE.wagePerPoint * 100))}
-      </p>
+      {/* Lever 2 — the prize share (ECO-10); hidden while the share is switched off (zone.shareLever) */}
+      {zone.shareLever ? (
+        <>
+          <div className="mt-3 flex items-baseline justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-faint">{N.share}</p>
+            <p className="text-[10px] text-faint">{N.shareAsk(ask.sharePct)}</p>
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={N.shareDown}
+              className={STEP_BTN}
+              onClick={() => setShare(offer.sharePct - 1)}
+              disabled={disabled || offer.sharePct <= zone.shareMin}
+            >
+              −
+            </button>
+            <p className="min-w-0 flex-1 text-center text-lg font-bold tabular-nums">{offer.sharePct}%</p>
+            <button
+              type="button"
+              aria-label={N.shareUp}
+              className={STEP_BTN}
+              onClick={() => setShare(offer.sharePct + 1)}
+              disabled={disabled || offer.sharePct >= zone.shareMax}
+            >
+              +
+            </button>
+          </div>
+          <p className="mt-1 text-[10px] text-faint">
+            {N.shareHint} {N.trade(money(zone.pointWeekly))}
+          </p>
+        </>
+      ) : null}
 
       {/* The answer — readable before any confirm */}
       <div className="mt-3 border-t border-line pt-2 text-[11px]">

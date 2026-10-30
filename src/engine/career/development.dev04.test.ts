@@ -15,6 +15,7 @@ import {
   nestedBand,
   phaseTagFor,
   playerViewById,
+  rc31Band,
   reachableOverallOf,
   scoutedBand,
 } from "./development";
@@ -171,5 +172,59 @@ describe("DEV-04 — the phase tag", () => {
     expect(tag(21)).toBe("peak");
     expect(tag(25)).toBe("declining");
     expect(phaseTagFor(p, { level: 0, careerSeed: SEED, model: 1, seasonAge: 25 })).toBe("unknown");
+  });
+});
+
+describe("DEV-04 on model 1 — careers created on rc.31 (rc.33 review)", () => {
+  // rc.31's development (no growthModel on the world): its potential is the ceiling training climbs to.
+  const MODEL1: CareerPlayerView[] = (() => {
+    const w = structuredClone(buildWorldAtCreation(SEED));
+    delete (w as { growthModel?: number }).growthModel;
+    const ctx = { careerSeed: SEED, seasonIndex: 0, world: w };
+    const ids = [...new Set([...Object.values(w.orgs).flatMap((o) => o.playerIds), ...w.freeAgentIds])];
+    return ids.map((id) => playerViewById(id, ctx)).filter((v): v is CareerPlayerView => v !== null);
+  })();
+
+  it("reads the honest band on its potential: the honest width, a top at most bandMaxAbove over the truth, floored at the overall", () => {
+    expect(MODEL1.length).toBeGreaterThan(300);
+    let rc31Wide = 0;
+    for (const v of MODEL1) {
+      const truth = Math.round(v.potential);
+      expect(v.potential).toBeGreaterThanOrEqual(v.overall);
+      for (const level of LEVELS) {
+        const b = scoutedBand(v.potential, v.overall, level, SEED, v.id, 1);
+        expect(b.max - b.min).toBeLessThanOrEqual(CAREER_SCOUT.honestWidthByLevel[level]);
+        expect(b.max - truth).toBeLessThanOrEqual(CAREER_SCOUT.bandMaxAbove);
+        expect(b.min).toBeLessThanOrEqual(truth);
+        expect(b.max).toBeGreaterThanOrEqual(truth);
+        expect(b.min).toBeGreaterThanOrEqual(Math.floor(v.overall));
+        // An absent model is model 1.
+        expect(scoutedBand(v.potential, v.overall, level, SEED, v.id)).toEqual(b);
+      }
+      // The reproduction: rc.31's level-0 band, up to 10 wide.
+      const old = rc31Band(v.potential, v.overall, 0, SEED, v.id);
+      if (old.max - old.min > 6 || old.max - truth > CAREER_SCOUT.bandMaxAbove) rc31Wide += 1;
+    }
+    expect(rc31Wide).toBeGreaterThan(MODEL1.length / 2);
+  });
+
+  it("a bought report only narrows: each level nests in the one before and stays inside the band rc.31 showed at that level", () => {
+    for (const v of MODEL1) {
+      const b = LEVELS.map((l) => scoutedBand(v.potential, v.overall, l, SEED, v.id, 1));
+      for (let l = 1; l < LEVELS.length; l++) {
+        expect(b[l].min).toBeGreaterThanOrEqual(b[l - 1].min);
+        expect(b[l].max).toBeLessThanOrEqual(b[l - 1].max);
+        const was = rc31Band(v.potential, v.overall, LEVELS[l], SEED, v.id);
+        expect(b[l].min).toBeGreaterThanOrEqual(was.min);
+        expect(b[l].max).toBeLessThanOrEqual(was.max);
+      }
+    }
+  });
+
+  it("no age cap on model 1 — its growth never stops by age, so the arc changes nothing", () => {
+    for (const v of MODEL1.slice(0, 150)) {
+      const plain = scoutedBand(v.potential, v.overall, 0, SEED, v.id, 1);
+      expect(scoutedBand(v.potential, v.overall, 0, SEED, v.id, 1, { arc: { peakAge: 18, exactAge: 29 } })).toEqual(plain);
+    }
   });
 });

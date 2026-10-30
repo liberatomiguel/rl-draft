@@ -968,6 +968,14 @@ export function statsFromView(
  * truth; with `opts.arc` (his peak age and exact age), capped at what the age
  * clock still lets him reach (`reachableOverallOf`), so an older player shows
  * no potential he can no longer reach.
+ *
+ * Model 1 (rc.31's development, careers created on rc.31; rc.33 review): the
+ * same honest band on its potential — the ceiling its training climbs to,
+ * never under his overall — floored at the overall like rc.31's band, and a
+ * bought report (level ≥ 1) also stays inside the band rc.31 showed at that
+ * level (`rc31Band`), so it only narrows. No age cap: model 1's growth has
+ * no age stop (training still climbs toward the potential at any age, the
+ * rollover decline is separate), so there is nothing he can no longer reach.
  */
 export function scoutedBand(
   potential: number,
@@ -975,18 +983,20 @@ export function scoutedBand(
   level: ScoutLevel,
   careerSeed: number,
   playerId: string,
-  /** rc.32 (DEV-01e): the career's development model (absent = rc.31's band). */
+  /** rc.32 (DEV-01e): the career's development model (absent = rc.31's model 1). */
   model?: number,
   /**
    * rc.33 (DEV-04, model 2): `arc` — his peak age and exact age today — caps
    * the band at what he can still reach; `rc32Reports` keeps a bought or
    * earned level inside the band rc.32 showed (a career created before
-   * rc.33, `CareerSave.bandModel` absent).
+   * rc.33, `CareerSave.bandModel` absent). Model 1 reads neither.
    */
   opts?: { arc?: { peakAge: number; exactAge: number }; rc32Reports?: boolean },
 ): PotentialBand {
   if (isGrowthContract(model)) {
-    const band = honestBand(potential, level, careerSeed, playerId, opts?.rc32Reports ?? false);
+    const band = honestBand(potential, level, careerSeed, playerId, (l) =>
+      opts?.rc32Reports ? nestedBand(potential, l, careerSeed, playerId) : null,
+    );
     const arc = opts?.arc;
     if (!arc) return band;
     const cap = Math.round(
@@ -994,6 +1004,26 @@ export function scoutedBand(
     );
     return cap >= band.max ? band : { min: Math.min(band.min, cap), max: cap, level };
   }
+  const band = honestBand(potential, level, careerSeed, playerId, (l) =>
+    rc31Band(potential, overall, l, careerSeed, playerId),
+  );
+  return { ...band, min: Math.min(band.max, Math.max(band.min, Math.floor(overall))) };
+}
+
+/**
+ * rc.31's band (model 1) at one report level: 2 × CAREER_SCOUT.bandWidthByLevel
+ * wide, split unevenly around the truth by a stable per-(player, level)
+ * jitter, floored at the current overall, capped at 99; exact at level 3.
+ * Since the rc.33 review it is no longer shown — only the bound a bought
+ * model-1 report stays inside (`scoutedBand`).
+ */
+export function rc31Band(
+  potential: number,
+  overall: number,
+  level: ScoutLevel,
+  careerSeed: number,
+  playerId: string,
+): PotentialBand {
   const w = CAREER_SCOUT.bandWidthByLevel[level] ?? 0;
   if (w <= 0) {
     const exact = Math.round(potential);
@@ -1006,6 +1036,25 @@ export function scoutedBand(
   const min = Math.max(Math.floor(potential - below), Math.floor(overall));
   const max = Math.min(Math.ceil(potential + (2 * w - below)), 99);
   return { min, max, level };
+}
+
+/**
+ * DEV-04 (rc.33): a squad player's potential band on a given day — the ONE
+ * rule HQ and the squad screens read (`careerUi.potBandOfSquad`) and the
+ * wizard reads for a founder before the career exists
+ * (`careerFlow.founderPotentialBandFor`): his report level, the career's
+ * development model, his age arc on that day and, for a career created
+ * before rc.33, rc.32's reports.
+ */
+export function squadPotentialBand(
+  p: { id: string; potential: number; overall: number; peakAge: number; birthYear: number; scoutLevel: ScoutLevel },
+  ctx: { careerSeed: number; seasonIndex: number; day: number; model: number; rc32Reports: boolean },
+): PotentialBand {
+  const arc = { peakAge: p.peakAge, exactAge: exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day) };
+  return scoutedBand(p.potential, p.overall, p.scoutLevel, ctx.careerSeed, p.id, ctx.model, {
+    arc,
+    rc32Reports: ctx.rc32Reports,
+  });
 }
 
 /**
@@ -1052,17 +1101,19 @@ export function nestedBand(potential: number, level: ScoutLevel, careerSeed: num
  * before. The places are drawn inside out (the deepest report first, each
  * outer band then drawn among the places that contain it), so the deepest
  * report keeps its whole uncertainty instead of collapsing onto its top. In a
- * career created before rc.33 (`rc32Reports`) a bought or earned level (≥ 1)
- * also stays inside the band rc.32 showed at that level (`nestedBand`), so a
- * report it already holds only narrows; the band is then narrower than its
- * width where the two disagree. Kept inside 60–99.
+ * career created before rc.33 a bought or earned level (≥ 1) also stays
+ * inside the band its old model showed at that level (`reportBound`: rc.32's
+ * `nestedBand` on model 2, rc.31's `rc31Band` on model 1), so a report it
+ * already holds only narrows; the band is then narrower than its width where
+ * the two disagree (an old band that misses the truth is ignored). Kept
+ * inside 60–99.
  */
 function honestBand(
   potential: number,
   level: ScoutLevel,
   careerSeed: number,
   playerId: string,
-  rc32Reports: boolean,
+  reportBound: (level: ScoutLevel) => PotentialBand | null,
 ): PotentialBand {
   const truth = clamp(Math.round(potential), 60, 99);
   const S = CAREER_SCOUT;
@@ -1088,8 +1139,8 @@ function honestBand(
   for (let l = 0; l <= level; l++) {
     max = Math.min(max, truth + above[l]);
     min = Math.max(min, truth + above[l] - width(l));
-    if (rc32Reports && l >= 1) {
-      const was = nestedBand(potential, l as ScoutLevel, careerSeed, playerId);
+    const was = l >= 1 ? reportBound(l as ScoutLevel) : null;
+    if (was && was.min <= truth && truth <= was.max) {
       max = Math.min(max, was.max);
       min = Math.max(min, was.min);
     }

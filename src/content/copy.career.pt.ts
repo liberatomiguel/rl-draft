@@ -10,6 +10,9 @@
 
 import type { CareerCopy } from "./copy.career.en";
 
+/** rc.33 review: quanto tempo o parceiro de resgate paga (CAREER_LOAN.rescuePartner.weeks, recebido) — nada quando não se sabe. */
+const partnerRunPt = (weeks?: string | number): string => (Number(weeks) > 0 ? ` por ${weeks} semanas` : "");
+
 /**
  * rc.32 (ECONOMY-CONTRACT M4): o que a próxima segunda abaixo do piso do
  * Investidor faz — `next` é a resposta de economy.breachOutcomeFor; rc.33
@@ -17,14 +20,26 @@ import type { CareerCopy } from "./copy.career.en";
  * resgate. A "restructure" do rc.32 acabou (ECO-08): um e-mail antigo que
  * ainda a traz não prevê nada, em vez de uma regra que não existe mais.
  */
-const nextBreachPt = (next: string | number | undefined, partner?: string | number): string =>
+const nextBreachPt = (
+  next: string | number | undefined,
+  partner?: string | number,
+  partnerWeeks?: string | number,
+): string =>
   next === "insolvent"
     ? "A próxima quebra do piso encerra a carreira."
     : next === "restructure"
       ? ""
       : Number(partner)
-        ? "Abaixo do piso numa segunda-feira, o Investidor de emergência entra — e um parceiro de resgate reforça a receita por um split."
+        ? `Abaixo do piso numa segunda-feira, o Investidor de emergência entra — e um parceiro de resgate reforça a receita${partnerRunPt(partnerWeeks)}.`
         : "Abaixo do piso numa segunda-feira, o Investidor de emergência entra.";
+
+/**
+ * rc.33 review: um parâmetro de dinheiro chega formatado ("$1,540",
+ * MONEY_PARAM_KEYS de news/newsText) — `Number()` dele é NaN. Verdadeiro
+ * para um valor positivo, formatado ou não.
+ */
+const positive = (v: string | number | undefined): boolean =>
+  typeof v === "number" ? v > 0 : typeof v === "string" && /[1-9]/.test(v) && !v.trim().startsWith("-");
 
 /** rc.32 (M4): a quebra projetada, como os alertas a citam (semana desta temporada ou da próxima). */
 const breachWhenPt = (p: Record<string, string | number>): string =>
@@ -252,7 +267,8 @@ export const CAREER_PT: CareerCopy = {
     backerOpen: (owed: string) =>
       `Dívida com o Investidor aberta — ${owed} a reembolsar. A premiação é descontada até quitar.`,
     // rc.32 (M4, provisório): a linha do QG abaixo dele — o que significa a próxima quebra.
-    backerNextBreach: (next: string, partner?: boolean) => nextBreachPt(next, partner ? 1 : 0),
+    backerNextBreach: (next: string, partner?: boolean, partnerWeeks?: number) =>
+      nextBreachPt(next, partner ? 1 : 0, partnerWeeks),
     cards: {
       training: "Treino",
       trainingOn: "Sessão hoje. De segunda a sexta o elenco evolui.",
@@ -365,10 +381,10 @@ export const CAREER_PT: CareerCopy = {
       foundingPartnerEnds: () =>
         `O ciclo do parceiro fundador acabou: a org já tem o próprio patrocínio e deixou as primeiras temporadas para trás. Daqui em diante as contas se apoiam em patrocínio, premiação e torcida.`,
       cashNotice: (p: Record<string, string | number>) =>
-        `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas cruzariam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next, p.nextPartner)} Agora é a hora barata de agir: aceite uma boa proposta por um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
+        `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas cruzariam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next, p.nextPartner, p.partnerRun)} Agora é a hora barata de agir: aceite uma boa proposta por um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para a caixa de um save antigo.
       restructured: (p: Record<string, string | number>) =>
-        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${Number(p.garnished) > 0 ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${Number(p.owed) > 0 ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando — o reserva sobe; uma vaga vazia pede um agente livre antes do próximo evento. ${nextBreachPt(p.next)}`,
+        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${positive(p.garnished) ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${positive(p.owed) ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando — o reserva sobe; uma vaga vazia pede um agente livre antes do próximo evento. ${nextBreachPt(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} responderam ao seu anúncio: ${p.fee} por ${p.player}. Aceite na aba de negociações do Mercado antes de a janela fechar, ou recuse para mantê-lo — recusar encerra o anúncio.`,
       sponsorOffers: () =>
@@ -387,7 +403,7 @@ export const CAREER_PT: CareerCopy = {
       cashWarning: (p: Record<string, string | number>) =>
         p.breachWeek === undefined
           ? `A ${p.net} por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras. Corte salários, ganhe premiação ou negocie um empréstimo antes que o Investidor precise entrar.`
-          : `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras; nesse ritmo as contas cruzam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next, p.nextPartner)} Saídas: aceitar uma boa proposta por um jogador, ganhar premiação, enxugar a folha na renovação${Number(p.backer) ? "" : " ou pegar um empréstimo no banco"}.`,
+          : `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras; nesse ritmo as contas cruzam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next, p.nextPartner, p.partnerRun)} Saídas: aceitar uma boa proposta por um jogador, ganhar premiação, enxugar a folha na renovação${Number(p.backer) ? "" : " ou pegar um empréstimo no banco"}.`,
       qualifiedRegional: (p: Record<string, string | number>) =>
         `O Swiss de sábado acabou e a org está entre os oito classificados. ${p.event} é no domingo — os oito diretos esperam.`,
       missedRegional: (p: Record<string, string | number>) =>
@@ -397,7 +413,7 @@ export const CAREER_PT: CareerCopy = {
       backerIn: (p: Record<string, string | number>) =>
         p.rescueTo === undefined
           ? `As contas romperam o piso e o Investidor de emergência entrou — uma única vez. O pagamento sai descontado da premiação. Um segundo colapso encerra a org.`
-          : `As contas fecharam uma segunda-feira abaixo do piso${Number(p.n) > 1 ? ` pela ${ordinalPt(Number(p.n))} vez` : ""} e o Investidor de emergência entrou: o saldo voltou a ${p.rescueTo}${Number(p.weeks) > 0 ? ` (cerca de ${p.weeks} semanas de salários)` : ""}. A dívida é de ${p.owed} — ${p.garnishPct}% de cada premiação e metade de qualquer venda vão para ela até quitar, ou abata em Finanças. Enquanto ela existir, taxas de transferência, equipamentos${Number(p.lock) ? " e novos compromissos que encurtam o fôlego" : ""} ficam suspensos.${Number(p.partnerWeekly) > 0 ? ` Um parceiro de resgate, o ${p.partnerName}, entra junto: ${p.partnerWeekly} por semana a partir da próxima segunda, por ${p.partnerWeeks} semanas — o último pagamento n${partnerUntilPt(p)}. É receita, nunca descontada; Finanças o mostra enquanto durar.` : ""} ${nextBreachPt(p.next, p.nextPartner)}`,
+          : `As contas fecharam uma segunda-feira abaixo do piso${Number(p.n) > 1 ? ` pela ${ordinalPt(Number(p.n))} vez` : ""} e o Investidor de emergência entrou: o saldo voltou a ${p.rescueTo}${Number(p.weeks) > 0 ? ` (cerca de ${p.weeks} semanas de salários)` : ""}. A dívida é de ${p.owed} — ${p.garnishPct}% de cada premiação e metade de qualquer venda vão para ela até quitar, ou abata em Finanças. Enquanto ela existir, taxas de transferência, equipamentos${Number(p.lock) ? " e novos compromissos que encurtam o fôlego" : ""} ficam suspensos.${positive(p.partnerWeekly) ? ` Um parceiro de resgate, o ${p.partnerName}, entra junto: ${p.partnerWeekly} por semana a partir da próxima segunda, por ${p.partnerWeeks} semanas — o último pagamento n${partnerUntilPt(p)}. É receita, nunca descontada; Finanças o mostra enquanto durar.` : ""} ${nextBreachPt(p.next, p.nextPartner, p.partnerRun)}`,
       unlock: (p: Record<string, string | number>) =>
         `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no Clube — o arsenal cresce com a reputação.`,
       windowReport: (p: Record<string, string | number>) =>
@@ -424,6 +440,7 @@ export const CAREER_PT: CareerCopy = {
     lost: (opp: string, a: number, b: number) => `Scrim D ${a}-${b} vs ${opp}`,
     usedUp: "Sem blocos de scrim restantes nesta semana",
     restDay: "Nada de scrim em dia de descanso",
+    squadShort: "Sem scrim com menos de três jogadores — contrate um terceiro antes.",
     // v0.3 agendamento + resultados
     planTitle: "Parceiros de treino",
     planDesc: "Escolha o adversário e o dia — scrims agendadas rodam sozinhas e aparecem no calendário.",
@@ -571,8 +588,8 @@ export const CAREER_PT: CareerCopy = {
     // ECO-10 (rc.33): a parte do prêmio que o contrato dele garante.
     prizeShare: "Parte do prêmio",
     prizeSharePct: (pct: number) => `${pct}% dos prêmios de pódio`,
-    prizeShareLegacy: (regional: number, major: number, worlds: number) =>
-      `Contrato antigo: um terço dos ${regional} / ${major} / ${worlds}% do time (regional / Major / Worlds)`,
+    prizeShareLegacy: (seats: number, regional: number, major: number, worlds: number) =>
+      `Contrato antigo: os ${regional} / ${major} / ${worlds}% do time divididos por ${seats} (regional / Major / Worlds)`,
     projected: (v: string) => `Projeção: ${v} até o fim do split`,
     trainingFocusLabel: "Foco de treino",
     archetype: {
@@ -683,6 +700,8 @@ export const CAREER_PT: CareerCopy = {
     scoutingOpen: "A observação segue aberta entre janelas.",
     // RTW-05 (rc.33): um elenco com menos de três contrata um agente livre para a vaga vazia, com ou sem janela.
     emptySeatOpen: "Seu elenco tem menos de três: um agente livre pode ocupar a vaga vazia hoje, com ou sem janela.",
+    emptySeatCheapest: (name: string, wage: string) =>
+      `Sem dinheiro? ${name} (${wage} / semana), o agente livre mais barato que você pode contratar, sempre ocupa a vaga vazia.`,
     fee: "Taxa de transferência",
     signingBonus: "Luvas",
     freeAgentTag: "Agente livre",
@@ -785,7 +804,11 @@ export const CAREER_PT: CareerCopy = {
       share: "Parte do prêmio",
       shareHint: "A fatia dele em cada prêmio de pódio do time (top 4 de um regional, Major ou Worlds).",
       shareAsk: (pct: number) => `Ele pede ${pct}%`,
-      trade: (pct: number) => `Cada ponto de parte que você dá vale ${pct}% do salário dele.`,
+      trade: (perWeek: string) => `Cada ponto de parte que você dá vale ${perWeek} por semana do salário dele.`,
+      wageDown: "Baixar o salário semanal",
+      wageUp: "Subir o salário semanal",
+      shareDown: "Baixar a parte do prêmio",
+      shareUp: "Subir a parte do prêmio",
       zone: (floor: string, top: string) => `Com essa parte ele assina de ${floor} a ${top} por semana.`,
       zoneFixed: (top: string) => `Com essa parte ele só assina pela pedida, ${top} por semana.`,
       signs: (wage: string, pct: number) => `Ele assina: ${wage} / semana + ${pct}% dos prêmios de pódio`,
@@ -810,6 +833,7 @@ export const CAREER_PT: CareerCopy = {
       maxed: "Já está no máximo.",
       used: "Já utilizado.",
       restDay: "Não em dia de descanso.",
+      squadShort: "Sem scrim com menos de três jogadores — contrate um terceiro antes.",
       blocked: "Agora não.",
       none: "Nada a fazer.",
       invalid: "Seleção inválida.",
@@ -867,10 +891,13 @@ export const CAREER_PT: CareerCopy = {
     },
     loans: "Empréstimos & dívidas",
     loansHint: "Dois jeitos de se financiar: o banco, nos seus termos, ou o Investidor de emergência, nos dele.",
+    loansHintEnd: "Um jeito de se financiar: o banco. Sem Investidor de emergência por trás — a próxima quebra do piso encerra a carreira.",
     bankTitle: "Empréstimo bancário",
     bankNone: "Nenhum empréstimo bancário aberto",
     bankHint: (weeks: number, pct: number) =>
       `Uma linha de crédito do tamanho da sua reputação, paga em ${weeks} parcelas semanais com ${pct}% de juros. Planeje — é a alternativa ao Investidor.`,
+    bankHintEnd: (weeks: number, pct: number) =>
+      `Uma linha de crédito do tamanho da sua reputação, paga em ${weeks} parcelas semanais com ${pct}% de juros. Planeje — não há Investidor por trás: a próxima quebra do piso encerra a carreira.`,
     bankAvailable: (s: string) => `Disponível agora: até ${s}`,
     bankTerms: (weekly: string, weeks: number, total: string) =>
       `${weekly} / semana por ${weeks} semanas · ${total} no total`,
@@ -960,14 +987,15 @@ export const CAREER_PT: CareerCopy = {
     backerIdleNone: (floor: string) =>
       `Sem Investidor nesta dificuldade: uma segunda-feira que fechar abaixo de ${floor} encerra a carreira.`,
     backerWarning: "Este negócio provavelmente aciona o investidor de emergência.",
+    endsCareerWarning: "Este negócio provavelmente encerra a carreira: a próxima quebra do piso é a última.",
     backerRescued: "O resgate do Investidor está quitado.",
     insolvencyWarning: "As contas estão ruindo — a próxima quebra do piso encerra a carreira.",
     // rc.32 (M4): a linha em semanas de salário e o que cada quebra faz nesta dificuldade.
     backerWeeksLine: (floorWeeks: number, rescueWeeks: number) =>
       `A linha acompanha a folha: o piso fica ${floorWeeks} semanas de salário abaixo de zero, e o resgate recompõe ${rescueWeeks} semanas acima.`,
     // rc.33 (ECO-07/08): CAREER_LOAN.breachesToEnd e rescuePartner.atBreach nesta dificuldade — sem reestruturação.
-    breachLadder: (end: number | null, partnerAt: number | null) => {
-      const partner = (n: number) => (partnerAt === n ? " com a ajuda de um parceiro de resgate por um split" : "");
+    breachLadder: (end: number | null, partnerAt: number | null, partnerWeeks?: number) => {
+      const partner = (n: number) => (partnerAt === n ? ` com a ajuda de um parceiro de resgate${partnerRunPt(partnerWeeks)}` : "");
       if (end === null)
         return `Nesta dificuldade o dinheiro nunca encerra a carreira: toda quebra traz o Investidor de emergência${partnerAt !== null ? ` (a ${ordinalPt(partnerAt)}${partner(partnerAt)})` : ""}.`;
       if (end <= 1) return "Nesta dificuldade a primeira quebra do piso encerra a carreira.";
@@ -1158,6 +1186,8 @@ export const CAREER_PT: CareerCopy = {
       coachHired: (p: Record<string, string | number>) => `${p.org} traz ${p.coach}`,
       scrimWin: (p: Record<string, string | number>) => `Portas fechadas: scrim V ${p.a}-${p.b} vs ${p.opponent}`,
       scrimLoss: (p: Record<string, string | number>) => `Portas fechadas: scrim D ${p.a}-${p.b} vs ${p.opponent}`,
+      scrimSkipped: (p: Record<string, string | number>) =>
+        `Scrim contra ${p.opponent} cancelado: o elenco tem menos de três`,
       blockbusterBid: (p: Record<string, string | number>) => `${p.org} fazem proposta bombástica por ${p.player}`,
       // Histórico do rc.32 (ECO-08 / ECO-12): nada os envia desde o rc.33 — ficam para o feed de um save antigo.
       restructured: (p: Record<string, string | number>) =>

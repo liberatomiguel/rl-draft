@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CAREER_PAYROLL } from "@/config/balance";
 import type { MondayBalance } from "@/engine/career/types";
-import { CHART_MARGIN, balanceChartModel, nearestPoint, seasonSummaries } from "./balanceChart";
+import { CHART_MARGIN, CHART_MIN_WIDTH, balanceChartModel, nearestPoint, observeWidth, seasonSummaries } from "./balanceChart";
 
 /** Mondays of season 0 weeks 30–32, then season 1 weeks 1–3 (consecutive), the floor recorded from week 31. */
 const RING: MondayBalance[] = [
@@ -76,5 +76,39 @@ describe("rc.33 UX-07 — the balance chart's geometry", () => {
     expect(m.seasonStarts).toHaveLength(2);
     expect(Math.max(...m.points.map((p) => p.x))).toBeLessThanOrEqual(280 - CHART_MARGIN.right);
     expect(new Set(m.points.map((p) => p.x.toFixed(2))).size).toBe(ring.length);
+  });
+});
+
+describe("rc.33 review — the chart box is measured on mount and on every resize", () => {
+  it("observeWidth measures now, again on each resize, and stops on disconnect", () => {
+    const el = { clientWidth: 512.7 } as unknown as Element & { clientWidth: number };
+    const widths: number[] = [];
+    let fire: (() => void) | null = null;
+    let observed: Element | null = null;
+    let disconnected = false;
+    const stop = observeWidth(el, (w) => widths.push(w), (cb) => {
+      fire = cb;
+      return {
+        observe: (target) => {
+          observed = target;
+        },
+        disconnect: () => {
+          disconnected = true;
+        },
+      };
+    });
+    expect(widths).toEqual([512]);
+    expect(observed).toBe(el);
+    (el as { clientWidth: number }).clientWidth = 340;
+    fire!();
+    (el as { clientWidth: number }).clientWidth = 120;
+    fire!();
+    expect(widths).toEqual([512, 340, CHART_MIN_WIDTH]);
+    stop();
+    expect(disconnected).toBe(true);
+    // No ResizeObserver: one measurement, nothing to disconnect.
+    const once: number[] = [];
+    observeWidth(el, (w) => once.push(w), null)();
+    expect(once).toEqual([CHART_MIN_WIDTH]);
   });
 });

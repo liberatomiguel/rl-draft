@@ -32,14 +32,17 @@ import {
   coachSalaryFor,
   computeSalaryAsk,
   foundingPartnerActive,
+  loanBreachesOf,
   marketValueFor,
   moneyIndex,
   mondayBalancesFromLedger,
+  mondaysToBreach,
   quantizeWeekly,
   recordMondayBalance,
   rescuePartnerAt,
   rescuePartnerLastPayday,
   rescuePartnerWeeklyFor,
+  runwayWeeks,
   sponsorOffersFor,
   starCurveFactor,
   weeklyOf,
@@ -47,13 +50,18 @@ import {
 } from "@/engine/career/economy";
 import type { CareerDifficulty, CareerSave, FinanceState, MailItem, TransferOffer } from "@/engine/career/types";
 import { resolveMail } from "@/components/career/news/newsText";
+import { errorTextFor } from "@/components/career/hub/hubShared";
+import type { CareerCopy } from "@/content/careerCopy";
+import { formatMoney } from "@/lib/format";
 import {
   advanceDayFlow,
   backerLineOf,
   createCareerSave,
   migrateSaveToV5,
   mondayBalancesOf,
+  nextBreachOutcomeOf,
   repairMoneyOnLoad,
+  runwayWeeksOf,
   signingPlanFor,
   weeklyStatementOf,
   type CreateCareerInput,
@@ -311,6 +319,130 @@ describe("rc.33 ECO-07 — the rescue partner (Easy's first breach) and no found
 });
 
 // ===========================================================================
+// rc.33 review — the rescue mail's money and the projections over the partner's run
+// ===========================================================================
+
+describe("rc.33 review — the rescue partner in the mail and in the projections", () => {
+  it("the rescue mail prints the partner's weekly help as money, EN and PT (a real Easy rescue through resolveMail)", () => {
+    const save = mondayAtFloor(heavyCareer("easy", 70_203), 2, -10);
+    const partner = save.finances.rescuePartner!;
+    expect(partner.weekly).toBeGreaterThan(999);
+    const mail = mailOf(save, "backerIn")[0];
+    const en = resolveMail(mail, CAREER_EN as unknown as CareerCopy).body;
+    const pt = resolveMail(mail, CAREER_PT).body;
+    expect(en).toContain(`${formatMoney(partner.weekly)} a week`);
+    expect(pt).toContain(`${formatMoney(partner.weekly)} por semana`);
+    for (const body of [en, pt]) {
+      expect(body).toContain(RESCUE_PARTNER_BRAND.name);
+      expect(body).not.toContain(` ${partner.weekly} `);
+      // Every other amount of the rescue mail is money too.
+      expect(body).toContain(formatMoney(Number(mail.params!.rescueTo)));
+      expect(body).toContain(formatMoney(Number(mail.params!.owed)));
+    }
+  });
+
+  it("Easy, seed 70101, $10–12k wages, rescued on week 3's Monday: the warnings quote the Monday the books really cross the floor", () => {
+    let save = mondayAtFloor(heavyCareer("easy", 70_101), 2, -10);
+    expect(loanBreachesOf(save.finances)).toBe(1);
+    expect(save.finances.rescuePartner?.mondaysLeft).toBe(CAREER_LOAN.rescuePartner.weeks);
+    const seen = new Set(save.mail.map((m) => m.id));
+    const quoted: { sentWeek: number; breachWeek: number; nextSeason: number }[] = [];
+    let realBreachWeek: number | null = null;
+    for (let week = 3; week < 31 && realBreachWeek === null; week++) {
+      save = advanceDayFlow(quietSunday(save, week));
+      if (loanBreachesOf(save.finances) > 1) {
+        realBreachWeek = weekOfDay(save.clock.day);
+        break;
+      }
+      for (const m of save.mail) {
+        if (seen.has(m.id)) continue;
+        seen.add(m.id);
+        if (m.titleKey === "cashNotice" || m.titleKey === "cashWarning") {
+          quoted.push({
+            sentWeek: weekOfDay(m.day),
+            breachWeek: Number(m.params!.breachWeek),
+            nextSeason: Number(m.params!.nextSeason),
+          });
+        }
+      }
+    }
+    expect(realBreachWeek).not.toBeNull();
+    expect(quoted.length).toBeGreaterThan(0);
+    for (const q of quoted) expect(q, `sent in week ${q.sentWeek}`).toEqual({ ...q, breachWeek: realBreachWeek!, nextSeason: 0 });
+  });
+
+  it("the runway and the breach run over the partner's remaining Mondays, then without its weekly", () => {
+    // Burning 1,000 a week of which the partner pays 600 for 3 more Mondays: −1,000 then −1,600.
+    const run = { weekly: 600, mondays: 3 };
+    expect(runwayWeeks(10_000, -1_000)).toBe(10);
+    expect(runwayWeeks(10_000, -1_000, run)).toBe(3 + Math.floor(7_000 / 1_600));
+    expect(mondaysToBreach(10_000, -1_000, -5_000)).toBe(16);
+    expect(mondaysToBreach(10_000, -1_000, -5_000, run)).toBe(3 + Math.floor(12_000 / 1_600) + 1);
+    // A breach inside the run is unchanged; a net that only burns after the run now has an end.
+    expect(mondaysToBreach(1_500, -1_000, 0, run)).toBe(2);
+    expect(runwayWeeks(10_000, 200)).toBeNull();
+    expect(runwayWeeks(10_000, 200, run)).toBe(3 + Math.floor(10_600 / 400));
+    expect(mondaysToBreach(10_000, 700, 0, run)).toBeNull();
+    // HQ and Finances read the flow's runway, which counts the partner only on its Mondays (finding 9).
+    const rescued = mondayAtFloor(heavyCareer("easy", 70_101), 2, -10);
+    const net = weeklyStatementOf(rescued).net;
+    const partner = rescued.finances.rescuePartner!;
+    expect(runwayWeeksOf(rescued)).toBe(
+      runwayWeeks(rescued.finances.balance, net, { weekly: partner.weekly, mondays: partner.mondaysLeft }),
+    );
+  });
+
+  it("where the next breach ends the career, no warning promises the Backer: the deal warning, the loans and bank hints, the error banner (EN + PT)", () => {
+    const hard = createCareerSave({ ...INPUT, difficulty: "hard" }, 70_301);
+    const easy = createCareerSave({ ...INPUT, difficulty: "easy" }, 70_301);
+    const rescuedOnce = structuredClone(createCareerSave(INPUT, 70_301));
+    rescuedOnce.finances.loanBreaches = 1;
+    rescuedOnce.finances.loanUsed = true;
+    expect(nextBreachOutcomeOf(hard)).toBe("insolvent");
+    expect(nextBreachOutcomeOf(easy)).toBe("rescue");
+    expect(nextBreachOutcomeOf(rescuedOnce)).toBe("insolvent");
+    for (const C of [CAREER_EN as unknown as CareerCopy, CAREER_PT]) {
+      expect(errorTextFor(C, "funds", "rescue")).toBe(C.finances.backerWarning);
+      expect(errorTextFor(C, "funds", "insolvent")).toBe(C.finances.endsCareerWarning);
+      // "No fee transfers while the Backer is owed" — Easy's next breach is a rescue, not the end.
+      expect(errorTextFor(C, "loanActive", "rescue")).toBe(C.market.errors.loanActive);
+      expect(errorTextFor(C, "loanActive", "insolvent")).toBe(C.finances.insolvencyWarning);
+      expect(C.finances.endsCareerWarning).not.toBe(C.finances.backerWarning);
+      expect(C.finances.loansHintEnd).not.toBe(C.finances.loansHint);
+      expect(C.finances.bankHintEnd(12, 10)).not.toBe(C.finances.bankHint(12, 10));
+      expect(C.finances.bankHintEnd(12, 10)).toContain("12");
+    }
+    expect(CAREER_EN.finances.loansHintEnd).not.toMatch(/on theirs/);
+    expect(CAREER_EN.finances.bankHintEnd(12, 10)).not.toMatch(/alternative to the Backer/);
+    expect(CAREER_PT.finances.bankHintEnd(12, 10)).not.toMatch(/alternativa ao Investidor/);
+  });
+
+  it("the partner's run reads CAREER_LOAN.rescuePartner.weeks, never a hardcoded split (EN + PT)", () => {
+    const weeks = CAREER_LOAN.rescuePartner.weeks;
+    for (const C of [CAREER_EN as unknown as CareerCopy, CAREER_PT]) {
+      const texts = [C.finances.breachLadder(3, 1, weeks), C.hub.backerNextBreach("rescue", true, weeks)];
+      for (const t of texts) {
+        expect(t).toContain(String(weeks));
+        expect(t).not.toMatch(/a split|um split/);
+      }
+    }
+    expect(CAREER_EN.hub.backerNextBreach("rescue", true, 7)).toContain("for 7 weeks");
+    expect(CAREER_PT.hub.backerNextBreach("rescue", true, 7)).toContain("por 7 semanas");
+    // The warnings carry it: Easy's first breach names the partner's run.
+    let save = createCareerSave({ ...INPUT, difficulty: "easy" }, 70_106);
+    for (const p of save.squad) p.salaryPerSplit = 8_000;
+    save = quietSunday(save, 2);
+    save.finances.balance = -weeklyStatementOf(save).net * 6;
+    save = advanceDayFlow(save);
+    const notice = mailOf(save, "cashNotice")[0] ?? mailOf(save, "cashWarning")[0];
+    expect(notice.params).toMatchObject({ nextPartner: 1, partnerRun: weeks });
+    const body = resolveMail(notice, CAREER_EN as unknown as CareerCopy).body;
+    expect(body).toContain(`for ${weeks} weeks`);
+    expect(resolveMail(notice, CAREER_PT).body).toContain(`por ${weeks} semanas`);
+  });
+});
+
+// ===========================================================================
 // ECO-09 — the 12 % index and the steeper ask for strong players
 // ===========================================================================
 
@@ -518,5 +650,28 @@ describe("rc.33 UX-07 — the Monday balance ring", () => {
     const seeded = mondayBalancesOf(migrateSaveToV5(old)!);
     expect(seeded).toEqual(live.map(({ s, w, b }) => ({ s, w, b })));
     expect(mondayBalancesFromLedger({ balance: 500, ledger: [] })).toEqual([]);
+  });
+
+  it("a purchase on a Monday after the books closed is not seeded as payroll (rc.33 review)", () => {
+    let save = createCareerSave(INPUT, 70_603);
+    for (let week = 1; week <= 3; week++) save = advanceDayFlow(quietSunday(save, week));
+    // Week 4's Monday: a psychologist on the books, a bank instalment, then the user's own moves that day.
+    save = structuredClone(save);
+    save.finances.gear.psychologist = true;
+    save.finances.bankLoan = { principal: 4_000, remaining: 4_000, weeklyPayment: 400, takenSeason: 0, takenWeek: 3 };
+    save = advanceDayFlow(quietSunday(save, 4));
+    const live = mondayBalancesOf(save).find((m) => m.w === 5)!;
+    const monday = save.finances.ledger.filter((l) => l.day === save.clock.day).map((l) => l.kind);
+    expect(monday).toEqual(expect.arrayContaining(["payroll", "buff", "bankPayment"]));
+    // A scout report (a "buff" line with a name) and an early bank payment, the same Monday.
+    const bought = flow.buyScoutReportFlow(save, save.world.freeAgentIds[0]);
+    expect(bought.error).toBeUndefined();
+    const paid = flow.payBankLoanFlow(bought.save, 1_000);
+    expect(paid.error).toBeUndefined();
+    expect(paid.save.finances.balance).toBeLessThan(live.b);
+    const old = structuredClone(paid.save);
+    delete (old.finances as FinanceState & Record<string, unknown>).balanceRing;
+    const seeded = mondayBalancesFromLedger(old.finances).find((m) => m.w === 5)!;
+    expect(seeded.b).toBe(live.b);
   });
 });

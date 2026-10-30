@@ -20,6 +20,7 @@ import { CAREER_CALENDAR, CAREER_SAVE, CAREER_SCOUT } from "@/config/balance";
 import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
 import { ageOf, exactAgeOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { breachOutcomeFor, loanBreachesOf } from "@/engine/career/economy";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
 import type { CareerMilestoneKind, TrackedEvent } from "@/lib/analytics";
@@ -137,19 +138,24 @@ function eventCompletions(prev: CareerSave, next: CareerSave): TrackedEvent[] {
 }
 
 function milestones(prev: CareerSave, next: CareerSave): TrackedEvent[] {
-  const hits: CareerMilestoneKind[] = [];
-  if (titlesOf(prev) === 0 && titlesOf(next) > 0) hits.push("first_title");
-  if ((prev.stats.majorsQualified ?? 0) === 0 && (next.stats.majorsQualified ?? 0) > 0) hits.push("first_major");
-  if ((prev.stats.worldsQualified ?? 0) === 0 && (next.stats.worldsQualified ?? 0) > 0) hits.push("first_worlds");
-  if ((prev.stats.titlesWorlds ?? 0) === 0 && (next.stats.titlesWorlds ?? 0) > 0) hits.push("worlds_title");
-  if (!prev.finances.loanUsed && next.finances.loanUsed) hits.push("backer");
-  if (!prev.finances.bankLoan && next.finances.bankLoan) hits.push("bank_loan");
-  if (prev.end.reason !== "insolvency" && next.end.reason === "insolvency") hits.push("insolvency");
-  return hits.map((kind) => ({
+  const hits: { kind: CareerMilestoneKind; ref: string }[] = [];
+  const hit = (kind: CareerMilestoneKind) => hits.push({ kind, ref: kind });
+  if (titlesOf(prev) === 0 && titlesOf(next) > 0) hit("first_title");
+  if ((prev.stats.majorsQualified ?? 0) === 0 && (next.stats.majorsQualified ?? 0) > 0) hit("first_major");
+  if ((prev.stats.worldsQualified ?? 0) === 0 && (next.stats.worldsQualified ?? 0) > 0) hit("first_worlds");
+  if ((prev.stats.titlesWorlds ?? 0) === 0 && (next.stats.titlesWorlds ?? 0) > 0) hit("worlds_title");
+  // rc.33 review (ECO-08): every Backer rescue (Easy's second too), not only the
+  // first — the breach number rides in the actionId (the event has no field for it).
+  for (let b = loanBreachesOf(prev.finances) + 1; b <= loanBreachesOf(next.finances); b++) {
+    if (breachOutcomeFor(b, next.difficulty) === "rescue") hits.push({ kind: "backer", ref: `backer:${b}` });
+  }
+  if (!prev.finances.bankLoan && next.finances.bankLoan) hit("bank_loan");
+  if (prev.end.reason !== "insolvency" && next.end.reason === "insolvency") hit("insolvency");
+  return hits.map(({ kind, ref }) => ({
     name: "career_milestone",
     props: {
       careerId: careerIdOf(next),
-      actionId: actionIdOf(next, "milestone", kind),
+      actionId: actionIdOf(next, "milestone", ref),
       seasonIndex: next.clock.seasonIndex,
       kind,
     },
