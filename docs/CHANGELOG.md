@@ -368,6 +368,8 @@ the values he left to Claude ship as **tested defaults**, each behind its own `b
   wide.** Root causes: the seed extended a Monday through any same-day line of those kinds; the width
   was measured only on the first render.
 - **The Backer analytics milestone fired only on the first rescue.** Root cause: it keyed on `loanUsed`.
+- **rc.33's footer read "2.0.0-rc.32".** Root cause: the version bump missed `src/config/site.ts` (the
+  full suite was run before the bump; `analytics.test.ts` ties the two and caught it afterwards).
 
 ### Added — rc.32 (Etapa 2b part 2: the economy contract's provisional defaults, the growth contract, renewals, career presets, the 2a leftovers, the Etapa 3 contracts, /pt and the request budget · 2026-10-29 · ROAD-TO-WORLDS-DECISIONS R50–R60 · DESIGN-DECISIONS #145–#150)
 
