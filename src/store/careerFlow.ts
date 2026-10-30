@@ -34,6 +34,7 @@ import {
   CAREER_GEAR,
   CAREER_HQ,
   CAREER_LOAN,
+  CAREER_NEGOTIATION,
   CAREER_PAYROLL,
   CAREER_QUALIFIER,
   CAREER_REP,
@@ -212,6 +213,7 @@ import { renewalTermsFor, type RenewalTerms, type RenewalTitles } from "@/engine
 // rc.33 (ECO-10/11): the contract's prize share and the wage talk.
 import {
   contractMinWageFor,
+  countedRefusals,
   negotiationAnswerFor,
   negotiationFlexFor,
   negotiationRollFor,
@@ -236,6 +238,7 @@ import {
   isAfter,
   offerTierFor,
   cappedSeasonFine,
+  safestSponsorOfferOf,
   seasonGoalMetOf,
   seasonGoalModelFor,
   sponsorAccessFor,
@@ -1693,8 +1696,15 @@ export function sponsorLevelOf(save: CareerSave): TeamLevel {
  * split, on the save (`sponsorDemotedSlot`): another decision for that
  * split — the rollover's, after a Worlds-window renewal was declined — is
  * one tier lower too, so declining never gets around 7-A.
+ * rc.36 (front S2, CAREER_SPONSOR.fines.seasonCapScope "season"): the deal
+ * that just ended hands its season's fine tally (`finedSeason`) to the
+ * offers, so the next deal of the same season shares one cap.
  */
-function offerSponsorDecision(save: CareerSave, demote: boolean): void {
+function offerSponsorDecision(
+  save: CareerSave,
+  demote: boolean,
+  finedSeason?: { s: number; amount: number },
+): void {
   const today = todayOf(save);
   const firstSlot = firstSlotFrom(today);
   const demoted = demote || save.sponsorDemotedSlot === firstSlot;
@@ -1708,6 +1718,9 @@ function offerSponsorDecision(save: CareerSave, demote: boolean): void {
     // rc.35 (front S): the ladder's sponsor access (front P's ladder will hand its own level in here).
     access: sponsorAccessFor(sponsorLadderLevelOf(save.reputation)),
   });
+  if (CAREER_SPONSOR.fines.seasonCapScope === "season" && finedSeason && finedSeason.s === today.seasonIndex) {
+    for (const o of offers) if (o.terms) o.terms.finedSeason = { ...finedSeason };
+  }
   save.sponsorOffers = offers;
   if (demoted) save.sponsorDemotedSlot = firstSlot;
   else delete save.sponsorDemotedSlot;
@@ -1716,7 +1729,14 @@ function offerSponsorDecision(save: CareerSave, demote: boolean): void {
     kind: "sponsor",
     titleKey: "sponsorOffers",
     bodyKey: "sponsorDecision",
-    params: { n: offers.length, tier: offers[0]?.tier ?? 1, byWeek: by ? weekOfDay(by.day) : 0, demoted: demoted ? 1 : 0 },
+    params: {
+      n: offers.length,
+      tier: offers[0]?.tier ?? 1,
+      byWeek: by ? weekOfDay(by.day) : 0,
+      demoted: demoted ? 1 : 0,
+      // rc.36 (front S2): the deadline rule the mail names.
+      auto: CAREER_SPONSOR.deadlineRule === "signSafest" ? 1 : 0,
+    },
     fromKey: "sponsor",
     linkTo: "/career/finances",
   });
@@ -1774,10 +1794,29 @@ export function sponsorDecisionOf(save: CareerSave): SponsorDecisionView | null 
   };
 }
 
-/** rc.34: an unsigned decision lapses the day after its deadline — the inbox says when the next one comes. */
+/**
+ * rc.34: an unsigned decision lapses the day after its deadline — the inbox
+ * says when the next one comes. rc.36 (front S2): with "No deal for now"
+ * gone, the deadline day holds the clock (CAREER_SPONSOR.deadlineRule
+ * "hold"), so only a path past the hold lands here; under "signSafest" the
+ * safest offer is signed instead (`safestSponsorOfferOf`) and mailed.
+ */
 function lapseSponsorOffers(save: CareerSave): void {
   const by = save.sponsorOffers?.[0]?.terms?.decideBy;
   if (!by || !isAfter(todayOf(save), by)) return;
+  const safest = CAREER_SPONSOR.deadlineRule === "signSafest" ? safestSponsorOfferOf(save.sponsorOffers ?? []) : null;
+  if (safest) {
+    signSponsorOfferInPlace(save, safest.sponsorId);
+    pushMail(save, {
+      kind: "sponsor",
+      titleKey: "sponsorAutoSigned",
+      bodyKey: "sponsorAutoSigned",
+      params: { name: safest.sponsorId },
+      fromKey: "sponsor",
+      linkTo: "/career/finances",
+    });
+    return;
+  }
   save.sponsorOffers = null;
   pushMail(save, {
     kind: "sponsor",
@@ -1940,7 +1979,7 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
     fromKey: "sponsor",
     linkTo: "/career/finances",
   });
-  offerSponsorDecision(save, demote);
+  offerSponsorDecision(save, demote, s.terms.finedSeason);
 }
 
 function ingestResult(save: CareerSave, result: CompactEventResult): void {
@@ -4009,6 +4048,38 @@ function talkWindowKeyOf(save: CareerSave): string {
 }
 
 /**
+ * rc.36 (front S2): where a player's refusals this window are counted — the
+ * save's `negotiationTries` (v0.3's bookkeeping, unwritten since rc.33),
+ * "talk:{player}:{season}:{window}", so the window's close prunes it
+ * (`emitWindowReport`, by its ":{season}:w{n}" suffix) and the rollover
+ * clears it. The "talk:" prefix keeps a v0.3 save's old counts out.
+ */
+function talkRefusalKeyOf(save: CareerSave, playerId: string): string {
+  return `talk:${playerId}:${save.clock.seasonIndex}:${talkWindowKeyOf(save)}`;
+}
+
+/** rc.36 (front S2): the offers this player turned down this window (CAREER_NEGOTIATION.refusalsCounted at most). */
+export function talkRefusalsOf(save: CareerSave, playerId: string): number {
+  return countedRefusals(save.negotiationTries?.[talkRefusalKeyOf(save, playerId)]);
+}
+
+/**
+ * rc.36 (front S2): a sent offer he refused — the one thing it writes is
+ * the count (money and squad untouched), so a reload cannot reset what he
+ * now needs. Past the counted maximum, or with the raise switched off
+ * (`refusalRaisePct` 0, rc.35), nothing is written.
+ */
+function withTalkRefusal(input: CareerSave, playerId: string): CareerSave {
+  if (CAREER_NEGOTIATION.refusalRaisePct <= 0) return input;
+  const was = talkRefusalsOf(input, playerId);
+  const next = countedRefusals(was + 1);
+  if (next === was) return input;
+  const save = clone(input);
+  save.negotiationTries = { ...(save.negotiationTries ?? {}), [talkRefusalKeyOf(save, playerId)]: next };
+  return save;
+}
+
+/**
  * rc.33 (ECO-10 + ECO-11): the talk for any contract — his ask (the wage
  * the market or the renewal rule prices, and the prize share he asks)
  * against the offer, answered by the engine (`contract.negotiationAnswerFor`)
@@ -4016,7 +4087,9 @@ function talkWindowKeyOf(save: CareerSave): string {
  * both flows read this one function, so a screen always shows the deal a
  * confirm writes. Replaces v0.3's hidden reserve: nothing is stored, so
  * nothing hardens and a reload changes nothing (`negotiationTries` is no
- * longer written).
+ * longer written). rc.36 (front S2, Miguel on rc.35): a refused offer is
+ * counted (`talkRefusalsOf`) and raises his floor for the rest of the
+ * window — shown, and the same after a reload.
  */
 export function contractTalkFor(
   save: CareerSave,
@@ -4036,6 +4109,8 @@ export function contractTalkFor(
     ask: { wagePerSplit: input.askWagePerSplit, sharePct: input.askSharePct, bonus: input.askBonus ?? 0 },
     flex: negotiationFlexFor(save.careerSeed, input.playerId, save.clock.seasonIndex, windowKey),
     roll: negotiationRollFor(save.careerSeed, input.playerId, save.clock.seasonIndex, windowKey),
+    // rc.36 (front S2): each offer he refused this window raises what he needs.
+    refusals: talkRefusalsOf(save, input.playerId),
     lengthSeasons: input.lengthSeasons ?? 1,
     offer: input.offer,
     minWagePerSplit: contractMinWageFor(save.clock.seasonIndex),
@@ -4142,7 +4217,8 @@ export interface SigningPlan {
   /**
    * rc.33 (ECO-10/11): the talk on this deal — his ask, the zone and the
    * answer to the offer (`signingTalkFor`). The flow writes `talk.terms`
-   * only when `talk.accepted`; the payroll checks read its wage.
+   * only when `talk.accepted`; rc.36: the money checks read the offer's own
+   * terms (`talk.offered`), so a refusal-to-be never shows in them.
    */
   talk: NegotiationAnswer;
 }
@@ -4253,16 +4329,27 @@ export function signingPlanFor(
   const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);
   const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   // rc.35 (front N): the signing bonus is the talk's (a lever), not the package's.
-  const cost = pack.fee + talk.terms.bonus + severance;
+  // rc.36 (front S2): the money checks price the OFFER (what his yes would move), whatever he answers.
+  const cost = pack.fee + talk.offered.bonus + severance;
   // RTW-05 (rc.33): no event plays short, so a broke org must still be able to
   // field three (it used to pay a stand-in's fee the same way): a free agent
   // into an empty seat skips the money checks — but only one who costs no
   // more, upfront and in wages, than the cheapest free agent it may sign
   // (`emptySeatPriceFor`); anyone dearer goes through the normal checks.
   const seatPrice = !onOrg && !leaver && squadIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
+  // rc.36 (front S2, rc.35-(d)): the waiver counts the bonus offered (CAREER_NEGOTIATION.emptySeatCountsOfferedBonus).
+  const waiverCost = CAREER_NEGOTIATION.emptySeatCountsOfferedBonus ? cost : pack.fee + pack.signingBonus + severance;
   const fillsEmptySeat =
-    seatPrice !== null && cost <= seatPrice.cost && talk.terms.wagePerSplit <= seatPrice.wagePerSplit;
-  if (!fillsEmptySeat && save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
+    seatPrice !== null && waiverCost <= seatPrice.cost && talk.offered.wagePerSplit <= seatPrice.wagePerSplit;
+  if (!fillsEmptySeat && save.finances.balance - cost < backerLineOf(save).floor) {
+    // rc.36 (front S2, rc.35-(d)): the seat would cover him at the bonus he asks — the sheet says so.
+    const seatAtAskedBonus =
+      seatPrice !== null &&
+      talk.offered.bonus > pack.signingBonus &&
+      pack.fee + pack.signingBonus + severance <= seatPrice.cost &&
+      talk.offered.wagePerSplit <= seatPrice.wagePerSplit;
+    return { error: seatAtAskedBonus ? "fundsSeatBonus" : "funds" };
+  }
   // rc.34 (Miguel, 31/10): no lock while the emergency loan is owed (CAREER_LOAN.lockCommitments
   // false). true restores rc.33: no transfer fee while it is owed, and no signing that shortens
   // the runway — except the empty seat's cheapest free agent (a sale, an expiry or a retirement
@@ -4272,7 +4359,7 @@ export function signingPlanFor(
     squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
     coachSalary: save.coach?.salaryPerSplit ?? null,
     remove: leaver ? [leaver.id] : [],
-    add: [talk.terms.wagePerSplit],
+    add: [talk.offered.wagePerSplit],
   });
   if (!fillsEmptySeat && backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
 
@@ -4338,6 +4425,8 @@ export function signPlayerFlow(
      * rc.33 (ECO-10/11): the weekly wage and prize share offered (omit = his
      * ask). Under his floor nothing moves and the flow answers
      * "negotiationCounter" — the sheet shows his counter before any confirm.
+     * rc.36 (front S2): the sheet shows his answer only once sent, and the
+     * refusal is counted (`talkRefusalsOf`): it raises his floor this window.
      */
     offer?: ContractOffer;
     /** ECO-03 (R47): with a full squad, who leaves (released, severance paid) in the same operation. */
@@ -4348,7 +4437,8 @@ export function signPlayerFlow(
   if ("error" in planned) return { save: input, error: planned.error };
   const { view, pack, leaver, severance, slot, fromRef, finalSeason, lengthSeasons, talk } = planned.plan;
   // rc.33 (ECO-11): the talk's answer is the deal — under his floor, nothing moves.
-  if (!talk.accepted) return { save: input, error: "negotiationCounter" };
+  // rc.36 (front S2): but the refusal is counted — it raises what he needs this window.
+  if (!talk.accepted) return { save: withTalkRefusal(input, playerId), error: "negotiationCounter" };
   const save = clone(input);
   const finalSalary = talk.terms.wagePerSplit;
 
@@ -4474,11 +4564,13 @@ export function renewPlayerFlow(
   // rc.33 (ECO-10/11): the talk on that ask — the wage and the prize share,
   // one answer; under his floor nothing moves.
   const talk = renewalTalkFor(input, current, lengthSeasons, offer);
-  if (!talk.accepted) return { save: input, error: "negotiationCounter" };
   // rc.35 (front N): a renewal's signing bonus (a lever; he asks none) is paid on signature.
-  if (talk.terms.bonus > 0 && input.finances.balance - talk.terms.bonus < backerLineOf(input).floor) {
+  // rc.36 (front S2): checked on the offer before he answers — an offer the org cannot pay is never sent.
+  if (talk.offered.bonus > 0 && input.finances.balance - talk.offered.bonus < backerLineOf(input).floor) {
     return { save: input, error: "funds" };
   }
+  // rc.36 (front S2): a refusal is counted — it raises what he needs this window.
+  if (!talk.accepted) return { save: withTalkRefusal(input, playerId), error: "negotiationCounter" };
   const save = clone(input);
   if (talk.terms.bonus > 0) {
     save.finances = pushLedger(save.finances, {
@@ -4946,6 +5038,17 @@ export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowRes
     return { save: capNews(lapsed), error: "expired" };
   }
   const save = clone(input);
+  signSponsorOfferInPlace(save, sponsorId);
+  return { save: capNews(save) };
+}
+
+/**
+ * The signing itself, on a save the caller owns (`chooseSponsorFlow`, and
+ * rc.36's "signSafest" deadline rule in `lapseSponsorOffers`): the deal
+ * from the offer, its fixed part, the news, and the founding partner's
+ * handover. The offer must be on the desk.
+ */
+function signSponsorOfferInPlace(save: CareerSave, sponsorId: string): void {
   const offer = save.sponsorOffers!.find((o) => o.sponsorId === sponsorId)!;
   save.flags[ACH_FLAGS.sponsorSigned] = true;
   // The renewal is taken: a demotion it carried is spent.
@@ -4990,7 +5093,6 @@ export function chooseSponsorFlow(input: CareerSave, sponsorId: string): FlowRes
   // rc.32 (M3): past its minimum term, the first real deal ends the founding partner.
   // rc.34 (S6): it hands over over two splits instead (beginFoundingHandover).
   if (foundingPartnerEnds(save.foundingPartner, save.clock.seasonIndex, true)) beginFoundingHandover(save);
-  return { save: capNews(save) };
 }
 
 // ---------------------------------------------------------------------------

@@ -21,7 +21,7 @@ import { useMemo, useState } from "react";
 import { CAREER_STABILITY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
-import { payrollProjection, severanceFor } from "@/engine/career/economy";
+import { payrollProjection, severanceFor, weeklyWage } from "@/engine/career/economy";
 import type { SquadPlayer } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
@@ -187,7 +187,7 @@ export function SquadScreen() {
         squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
         coachSalary: save.coach?.salaryPerSplit ?? null,
         remove: [renew.id],
-        add: [renewTalk?.terms.wagePerSplit ?? renew.salaryPerSplit],
+        add: [renewTalk?.offered.wagePerSplit ?? renew.salaryPerSplit],
       })
     : null;
 
@@ -552,84 +552,58 @@ export function SquadScreen() {
         open={Boolean(renew)}
         onClose={closeRenew}
         title={renew ? `${C.squad.renew} — ${renew.name}` : ""}
-        actions={
-          <>
-            <Button variant="ghost" onClick={closeRenew}>
-              {C.common.cancel}
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!renewTalk?.accepted}
-              onClick={() => {
-                if (!renew) return;
-                renewPlayer(renew.id, renewLen, renewOffer);
-                // A refusal keeps the modal open with the reason (the talk's
-                // answer is shown before this confirm, so it is never a surprise).
-                if (!useCareerStore.getState().lastError) closeRenew();
-              }}
-            >
-              {C.common.confirm}
-            </Button>
-          </>
-        }
       >
         {renew ? (
           <div className="space-y-4">
-            {lastError ? (
+            {/* rc.36 (front S2): a refused offer is answered in the talk itself. */}
+            {lastError && lastError !== "negotiationCounter" ? (
               <p className="rounded-lg border border-bad/40 bg-bad/10 p-2.5 text-xs font-semibold text-bad">
                 {(C.market.errors as Record<string, string>)[lastError] ??
                   C.market.errors.unknown}
               </p>
             ) : null}
-            <div>
-              <p className="kicker mb-2 text-[10px]">{C.market.lengthLabel}</p>
-              <div className="grid grid-cols-3 gap-2">
-                {RENEW_LENGTHS.map((len) => (
-                  <button
-                    key={len}
-                    type="button"
-                    onClick={() => {
-                      setRenewLen(len);
-                      setRenewOffer({});
-                    }}
-                    className={cx(
-                      "rounded-lg border p-2.5 text-center transition-colors",
-                      renewLen === len
-                        ? "border-orange bg-orange/10"
-                        : "border-line bg-white/[0.02] hover:border-line-strong",
-                    )}
-                  >
-                    <span
-                      className={cx(
-                        "display block text-sm font-bold",
-                        renewLen === len ? "text-orange-bright" : "text-ink",
-                      )}
-                    >
-                      {C.market.seasons(len)}
-                    </span>
-                    <span className="mt-0.5 block text-[11px] text-sub">
-                      {wageLabel(C, askFor(renew, len))}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
             <RenewalReadout terms={renewalTermsOf(save, renew, renewLen)} C={C} save={save} player={renew} />
-            {renewTalk ? <SalaryNegotiator talk={renewTalk} onChange={setRenewOffer} /> : null}
+            {/* rc.33 (ECO-10/11): the talk. rc.36 (front S2): the length is one of its levers (the offer
+                keeps its place when it changes); "Send offer" gets his answer. */}
+            {renewTalk ? (
+              <SalaryNegotiator
+                key={renew.id}
+                talk={renewTalk}
+                onChange={setRenewOffer}
+                length={{
+                  value: renewLen,
+                  options: RENEW_LENGTHS,
+                  onChange: setRenewLen,
+                  sub: (len) => formatMoney(weeklyWage(askFor(renew, len)), { compact: true }),
+                }}
+                onSend={() => {
+                  renewPlayer(renew.id, renewLen, renewOffer);
+                  const error = useCareerStore.getState().lastError;
+                  if (!error) {
+                    closeRenew();
+                    return "signed";
+                  }
+                  if (error !== "negotiationCounter") return "error";
+                  // rc.36 (front S2): the talk shows his answer itself — no error lingers into other screens.
+                  useCareerStore.getState().clearError();
+                  return "refused";
+                }}
+              />
+            ) : null}
             <div className="rounded-lg border border-line bg-white/[0.02] p-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sub">{C.squad.wage}</span>
                 <span className="font-semibold text-ink">
                   {wageLabel(C, renew.salaryPerSplit, false)} →{" "}
-                  {wageLabel(C, renewTalk?.terms.wagePerSplit ?? renew.salaryPerSplit, false)}
+                  {wageLabel(C, renewTalk?.offered.wagePerSplit ?? renew.salaryPerSplit, false)}
                 </span>
               </div>
-              {/* rc.33 (ECO-10): the prize share — today's deal → the renewal's. */}
+              {/* rc.33 (ECO-10): the prize share — today's deal → the renewal's (rc.36: the offer's, before he answers). */}
               <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2">
                 <span className="text-sub">{C.player.prizeShare}</span>
                 <span className="text-right font-semibold text-ink">
                   {prizeShareLabelOf(C, renew)} →{" "}
-                  {renewTalk ? prizeShareLabelOf(C, { prizeSharePct: renewTalk.terms.sharePct }) : "—"}
+                  {renewTalk ? prizeShareLabelOf(C, { prizeSharePct: renewTalk.offered.sharePct }) : "—"}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center justify-between">

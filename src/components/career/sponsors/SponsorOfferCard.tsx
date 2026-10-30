@@ -1,23 +1,25 @@
 "use client";
 
 /**
- * Road to Worlds — the sponsor deals' comparison (rc.34, ECO-04,
- * SPONSOR-CONTRACT S5; rc.35 front S: made visual, Miguel's rc.34 playtest).
+ * Road to Worlds — the sponsor deals (rc.34, ECO-04, SPONSOR-CONTRACT S5;
+ * rc.35 front S: made visual; rc.36 front S2: Miguel's rc.35 playtest).
  *
- *  - `SponsorDecision`: a decision on the desk — the deadline, a one-line
- *    rule and ONE comparison: a column per offer (brand, profile, a bar of
- *    the most it pays), then one band per row, each led by its icon —
- *    weekly pay, the up-front money (signing or first-goal milestone), the
- *    bonus per goal, the goal with its difficulty meter, the fine, the
- *    length — and a Sign button per column. HQ and Finances render it.
- *  - `SponsorOfferCard`: one offer on its own (the same bands, one column).
+ *  - `SponsorDecision`: a decision's offers — the deadline, a one-line rule
+ *    and ONE CARD PER SPONSOR (rc.36; rc.35 drew one column each in a single
+ *    comparison grid): the brand, its profile and tag, a bar of the most it
+ *    pays, then one icon-led row each — weekly pay, the up-front money, the
+ *    bonus per goal, the goal with its difficulty bars (horizontal again,
+ *    rc.36), the fine, the length — and its Sign button. HQ's pop-up
+ *    (`SponsorDecisionPrompt`) and Finances render it.
+ *  - `SponsorOfferCard`: one offer's card on its own.
  *  - `SponsorDealPanel`: the running deal on the Finances desk — three stat
  *    tiles (weekly pay, next payment, fines owed), the goal with its
  *    progress, the deal's run and its record.
  *
- * Mobile first: at 360 px each band is a full-width caption over N narrow
- * cells (compact money), so nothing scrolls sideways; buttons are 44 px.
- * Components only render: every figure comes from `dealView.ts`.
+ * Mobile first: at 360 px the cards stack, one per row, every row a label
+ * and its value (nothing scrolls sideways); from `sm` they sit side by side.
+ * Buttons are 44 px. Components only render: every figure comes from
+ * `dealView.ts`.
  */
 
 import { CAREER_SPONSOR } from "@/config/balance";
@@ -58,198 +60,189 @@ const PROFILE_TONE: Record<string, "good" | "blue" | "orange"> = {
 };
 
 /** The profile's accent: text, bar and border. */
-const ACCENT: Record<string, { text: string; bar: string; border: string }> = {
+export const SPONSOR_ACCENT: Record<string, { text: string; bar: string; border: string }> = {
   steady: { text: "text-good", bar: "bg-good", border: "border-good/40" },
   balanced: { text: "text-blue-bright", bar: "bg-blue", border: "border-blue/40" },
   bold: { text: "text-orange-bright", bar: "bg-orange", border: "border-orange/50" },
 };
+const ACCENT = SPONSOR_ACCENT;
 
 const money = (n: number) => formatMoney(n, { compact: true });
 
-/** The goal's difficulty: three rising bars, lit to its level (1 Likely, 2 Even, 3 Stretch). */
-function DifficultyMeter({ level, label }: { level: 1 | 2 | 3; label: string }) {
+/**
+ * The goal's difficulty: three horizontal bars side by side, lit to its
+ * level (1 Likely, 2 Even, 3 Stretch). rc.36 (front S2, Miguel on rc.35:
+ * "the goal-difficulty bars horizontal again"): rc.35 drew them as rising
+ * vertical bars.
+ */
+export function DifficultyMeter({ level, label }: { level: 1 | 2 | 3; label: string }) {
   const tone = level === 3 ? "bg-orange" : level === 2 ? "bg-blue" : "bg-good";
   return (
-    <span className="inline-flex items-end gap-0.5" role="img" aria-label={label} title={label}>
+    <span className="inline-flex w-12 shrink-0 items-center gap-0.5" role="img" aria-label={label} title={label}>
       {[1, 2, 3].map((i) => (
-        <span
-          key={i}
-          className={cx("w-1.5 rounded-sm", i <= level ? tone : "bg-white/10")}
-          style={{ height: `${4 + i * 3}px` }}
-        />
+        <span key={i} className={cx("h-1.5 flex-1 rounded-full", i <= level ? tone : "bg-white/10")} />
       ))}
     </span>
   );
 }
 
-/** A band's caption: its icon and label, full width. */
-function BandHead({ icon, label }: { icon: React.ReactNode; label: string }) {
+/** One row of a card: its icon and label on the left, the value on the right. */
+function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <p className="col-span-full flex items-center gap-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint">
-      <span className="h-3.5 w-3.5 shrink-0 text-sub">{icon}</span>
-      {label}
-    </p>
+    <div className="flex items-start justify-between gap-2 border-t border-line/50 py-1.5 first:border-t-0">
+      <span className="flex shrink-0 items-center gap-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-wider text-faint">
+        <span className="h-3.5 w-3.5 shrink-0 text-sub">{icon}</span>
+        {label}
+      </span>
+      <div className="min-w-0 text-right">{children}</div>
+    </div>
   );
 }
 
-/** One cell of a band. */
-function Cell({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cx("min-w-0 rounded-md bg-white/[0.03] px-1.5 py-1.5 text-center", className)}>{children}</div>;
-}
-
-/** The brand column head: name, profile badge, tag and a bar of the most it pays. */
-function ColumnHead({ view, topCeiling }: { view: OfferView; topCeiling: number }) {
+/** One sponsor's card: the brand head, the six rows, an optional note and its Sign button. */
+function OfferCard({
+  view,
+  topCeiling,
+  onSign,
+  disabled,
+  note,
+}: {
+  view: OfferView;
+  topCeiling: number;
+  onSign?: (sponsorId: string) => void;
+  disabled?: boolean;
+  note?: React.ReactNode;
+}) {
   const C = useCareerCopy();
+  const D = C.dates;
   const T = C.finances.deal;
   const brand = sponsorBrandById.get(view.sponsorId);
   const a = ACCENT[view.profile] ?? ACCENT.balanced;
   const pct = topCeiling > 0 ? Math.max(8, Math.round((view.upTo / topCeiling) * 100)) : 100;
   return (
-    <div className={cx("flex min-w-0 flex-col rounded-md border bg-white/[0.02] p-1.5", a.border)}>
-      <p className="truncate text-[11px] font-bold uppercase tracking-wide text-ink" title={brand?.name ?? view.sponsorId}>
-        {brand?.name ?? view.sponsorId}
-      </p>
-      <span className="mt-1 flex flex-wrap items-center gap-1">
-        <Badge tone={PROFILE_TONE[view.profile] ?? "blue"}>{T.profile[view.profile] ?? view.profile}</Badge>
+    <div className={cx("flex min-w-0 flex-col rounded-lg border bg-white/[0.02] p-3", a.border)}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="display min-w-0 break-words text-base font-bold uppercase leading-tight tracking-wide text-ink">
+          {brand?.name ?? view.sponsorId}
+        </p>
+        <Badge tone={PROFILE_TONE[view.profile] ?? "blue"} className="shrink-0">
+          {T.profile[view.profile] ?? view.profile}
+        </Badge>
+      </div>
+      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <span className={cx("text-[11px] font-semibold", a.text)}>{T.profileTag[view.profile]}</span>
         {view.global ? (
-          <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase text-cyan">
+          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase text-cyan">
             <GlobeIcon className="h-3 w-3" />
             {T.globalSponsor}
           </span>
         ) : null}
-      </span>
-      <p className={cx("mt-1 text-[10px] font-semibold", a.text)}>{T.profileTag[view.profile]}</p>
-      <p className="mt-1.5 text-sm font-bold text-ink">{T.upTo(money(view.upTo))}</p>
-      <span className="mt-1 h-1.5 w-full rounded-full bg-white/10" aria-hidden>
-        <span className={cx("block h-full rounded-full", a.bar)} style={{ width: `${pct}%` }} />
-      </span>
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <span className="h-1.5 min-w-0 flex-1 rounded-full bg-white/10" aria-hidden>
+          <span className={cx("block h-full rounded-full", a.bar)} style={{ width: `${pct}%` }} />
+        </span>
+        <span className="shrink-0 text-sm font-bold text-ink">{T.upTo(money(view.upTo))}</span>
+      </div>
+
+      <div className="mt-2">
+        <Row icon={<CoinsIcon className="h-full w-full" />} label={T.rowWeekly}>
+          <p className="text-sm font-bold text-good">{money(view.weekly)}</p>
+        </Row>
+        <Row icon={<SignIcon className="h-full w-full" />} label={T.rowUpfront}>
+          <p className="text-sm font-bold text-ink">{view.fixed > 0 ? money(view.fixed) : "—"}</p>
+          {view.fixed > 0 ? (
+            <p className="flex items-center justify-end gap-0.5 text-[10px] text-faint">
+              {view.fixedKind === "milestone" ? <FlagIcon className="h-2.5 w-2.5" /> : null}
+              {view.fixedKind === "milestone" ? T.upfrontMilestone : T.upfrontSigning}
+            </p>
+          ) : null}
+        </Row>
+        <Row icon={<TrophyIcon className="h-full w-full" />} label={T.rowBonus}>
+          <p className="text-sm font-bold text-ink">{money(view.bonus)}</p>
+        </Row>
+        <Row icon={<TargetIcon className="h-full w-full" />} label={T.rowGoal}>
+          {view.goal ? (
+            <span className="flex items-center justify-end gap-1.5">
+              <DifficultyMeter level={view.difficulty} label={T.difficultyMeter(T.word[view.goal.word] ?? view.goal.word)} />
+              <span className="text-[10px] font-semibold uppercase text-sub">{T.word[view.goal.word] ?? view.goal.word}</span>
+            </span>
+          ) : (
+            "—"
+          )}
+        </Row>
+        {view.goal ? (
+          <div className="-mt-0.5 pb-1.5">
+            <p className="text-[11px] leading-snug text-ink">
+              {T.goal(view.goal.kind, view.goal.count, view.goal.place ?? 0, (view.goal.slot % 3) + 1)}
+            </p>
+            {view.goalBy ? <p className="text-[10px] text-faint">{T.goalBy(formatDateShort(D, view.goalBy))}</p> : null}
+          </div>
+        ) : null}
+        <Row icon={<FineIcon className="h-full w-full" />} label={T.rowFine}>
+          {view.fineMax > 0 ? (
+            <p className="text-sm font-bold text-orange-bright">−{money(view.fineMax)}</p>
+          ) : (
+            <p className="flex items-center justify-end gap-1 text-xs font-semibold text-good">
+              <ShieldIcon className="h-3.5 w-3.5" />
+              {T.noFine}
+            </p>
+          )}
+        </Row>
+        <Row icon={<CalendarIcon className="h-full w-full" />} label={T.rowLength}>
+          <p className="text-xs font-semibold text-ink">{T.lengthShort(view.lengthSplits)}</p>
+          <span className="mt-0.5 flex justify-end gap-0.5" aria-hidden>
+            {Array.from({ length: Math.min(6, view.lengthSplits) }).map((_, i) => (
+              <span key={i} className={cx("h-1.5 w-2 rounded-sm", a.bar)} />
+            ))}
+          </span>
+          <p className="text-[10px] text-faint">{T.endsOn(formatDateShort(D, view.endsOn))}</p>
+        </Row>
+      </div>
+
+      {note}
+      {onSign ? (
+        <Button
+          variant="primary"
+          size="md"
+          full
+          className="mt-auto min-h-11"
+          disabled={disabled}
+          onClick={() => onSign(view.sponsorId)}
+        >
+          {T.sign}
+        </Button>
+      ) : null}
     </div>
   );
 }
 
-/** The comparison: one column per offer, one icon-led band per row. */
-function Comparison({
+/**
+ * The cards of a decision: one per sponsor, stacked, side by side once their
+ * CONTAINER is wide enough (a container query: the pop-up fits three, the
+ * Finances column stacks them) — never squeezed by a wide screen's narrow
+ * column.
+ */
+function OfferCards({
   views,
   onSign,
   disabled,
-  footer,
+  note,
 }: {
   views: OfferView[];
   onSign?: (sponsorId: string) => void;
   disabled?: boolean;
-  footer?: (view: OfferView) => React.ReactNode;
+  note?: (view: OfferView) => React.ReactNode;
 }) {
-  const C = useCareerCopy();
-  const D = C.dates;
-  const T = C.finances.deal;
   const top = Math.max(...views.map((v) => v.upTo));
-  const cols = views.length === 1 ? "grid-cols-1" : views.length === 2 ? "grid-cols-2" : "grid-cols-3";
-  const grid = cx("grid gap-1.5", cols);
+  const cols = views.length >= 3 ? "@xl:grid-cols-3" : views.length === 2 ? "@md:grid-cols-2" : "";
   return (
-    <div className="min-w-0">
-      <div className={grid}>
+    <div className="@container">
+      <div className={cx("grid grid-cols-1 gap-2.5", cols)}>
         {views.map((v) => (
-          <ColumnHead key={v.sponsorId} view={v} topCeiling={top} />
+          <OfferCard key={v.sponsorId} view={v} topCeiling={top} onSign={onSign} disabled={disabled} note={note?.(v)} />
         ))}
       </div>
-
-      <div className={grid}>
-        <BandHead icon={<CoinsIcon className="h-full w-full" />} label={T.rowWeekly} />
-        {views.map((v) => (
-          <Cell key={v.sponsorId}>
-            <p className="text-sm font-bold text-good">{money(v.weekly)}</p>
-          </Cell>
-        ))}
-
-        <BandHead icon={<SignIcon className="h-full w-full" />} label={T.rowUpfront} />
-        {views.map((v) => (
-          <Cell key={v.sponsorId}>
-            <p className="text-sm font-bold text-ink">{v.fixed > 0 ? money(v.fixed) : "—"}</p>
-            {v.fixed > 0 ? (
-              <p className="flex items-center justify-center gap-0.5 text-[9px] text-faint">
-                {v.fixedKind === "milestone" ? <FlagIcon className="h-2.5 w-2.5" /> : null}
-                {v.fixedKind === "milestone" ? T.upfrontMilestone : T.upfrontSigning}
-              </p>
-            ) : null}
-          </Cell>
-        ))}
-
-        <BandHead icon={<TrophyIcon className="h-full w-full" />} label={T.rowBonus} />
-        {views.map((v) => (
-          <Cell key={v.sponsorId}>
-            <p className="text-sm font-bold text-ink">{money(v.bonus)}</p>
-          </Cell>
-        ))}
-
-        <BandHead icon={<TargetIcon className="h-full w-full" />} label={T.rowGoal} />
-        {views.map((v) => (
-          <Cell key={v.sponsorId} className="text-left">
-            {v.goal ? (
-              <>
-                <span className="flex items-center justify-between gap-1">
-                  <DifficultyMeter level={v.difficulty} label={T.difficultyMeter(T.word[v.goal.word] ?? v.goal.word)} />
-                  <span className="truncate text-[9px] font-semibold uppercase text-faint">{T.word[v.goal.word] ?? v.goal.word}</span>
-                </span>
-                <p className="mt-1 text-[10px] leading-tight text-ink">
-                  {T.goal(v.goal.kind, v.goal.count, v.goal.place ?? 0, (v.goal.slot % 3) + 1)}
-                </p>
-                {v.goalBy ? <p className="mt-0.5 text-[9px] text-faint">{T.goalBy(formatDateShort(D, v.goalBy))}</p> : null}
-              </>
-            ) : (
-              "—"
-            )}
-          </Cell>
-        ))}
-
-        <BandHead icon={<FineIcon className="h-full w-full" />} label={T.rowFine} />
-        {views.map((v) => (
-          <Cell key={v.sponsorId}>
-            {v.fineMax > 0 ? (
-              <p className="text-sm font-bold text-orange-bright">−{money(v.fineMax)}</p>
-            ) : (
-              <p className="flex items-center justify-center gap-1 text-xs font-semibold text-good">
-                <ShieldIcon className="h-3.5 w-3.5" />
-                {T.noFine}
-              </p>
-            )}
-          </Cell>
-        ))}
-
-        <BandHead icon={<CalendarIcon className="h-full w-full" />} label={T.rowLength} />
-        {views.map((v) => (
-          <Cell key={v.sponsorId}>
-            <span className="flex justify-center gap-0.5" aria-hidden>
-              {Array.from({ length: Math.min(6, v.lengthSplits) }).map((_, i) => (
-                <span key={i} className={cx("h-1.5 w-2 rounded-sm", (ACCENT[v.profile] ?? ACCENT.balanced).bar)} />
-              ))}
-            </span>
-            <p className="mt-1 text-[10px] font-semibold text-ink">{T.lengthShort(v.lengthSplits)}</p>
-            <p className="text-[9px] text-faint">{T.endsOn(formatDateShort(D, v.endsOn))}</p>
-          </Cell>
-        ))}
-      </div>
-
-      {footer || onSign ? (
-        <div className={cx(grid, "mt-2")}>
-          {views.map((v) => (
-            <div key={v.sponsorId} className="flex min-w-0 flex-col gap-1">
-              {footer?.(v)}
-              {onSign ? (
-                <Button
-                  variant="primary"
-                  size="md"
-                  full
-                  className="mt-auto min-h-11"
-                  disabled={disabled}
-                  onClick={() => onSign(v.sponsorId)}
-                >
-                  {T.sign}
-                </Button>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -259,7 +252,7 @@ function HandoverNet({ handover, offer }: { handover: FoundingHandoverView; offe
   const C = useCareerCopy();
   const net = handoverNetWeeklyOf(handover, offer);
   return (
-    <p className={cx("text-center text-[10px] font-semibold", net < 0 ? "text-orange-bright" : "text-sub")}>
+    <p className={cx("mb-2 text-[10px] font-semibold", net < 0 ? "text-orange-bright" : "text-sub")}>
       {C.finances.deal.handoverNet(
         formatMoneyDelta(net, { compact: true }),
         formatDateShort(C.dates, dateOfDay(handover.startsOn.seasonIndex, handover.startsOn.day)),
@@ -268,7 +261,7 @@ function HandoverNet({ handover, offer }: { handover: FoundingHandoverView; offe
   );
 }
 
-/** One offer on its own (the comparison's bands in one column) and its Sign button. */
+/** One offer's card on its own, with its Sign button. */
 export function SponsorOfferCard({
   offer,
   today,
@@ -285,20 +278,20 @@ export function SponsorOfferCard({
   const view = offerViewOf(offer, today);
   if (!view) return null;
   return (
-    <Comparison
-      views={[view]}
+    <OfferCard
+      view={view}
+      topCeiling={view.upTo}
       onSign={onSign}
       disabled={disabled}
-      footer={handover ? () => <HandoverNet handover={handover} offer={offer} /> : undefined}
+      note={handover ? <HandoverNet handover={handover} offer={offer} /> : undefined}
     />
   );
 }
 
 /**
- * A sponsor decision: its deadline, the comparison's rule, the founding
- * partner's handover (an rc.32 career still running one) and one
- * comparison of the offers. Null when nothing is pending. `bare` drops the
- * title (a host that titles it itself).
+ * A sponsor decision: its deadline, the cards' rule, the founding partner's
+ * handover (an rc.32 career still running one) and one card per offer. Null
+ * when nothing is pending. `bare` drops the title (a host that titles it).
  */
 export function SponsorDecision({
   save,
@@ -320,6 +313,7 @@ export function SponsorDecision({
   const levelShare = offers[0]?.terms?.levelShare;
   const handover = foundingHandoverOf(save);
   const boldMissing = views.length > 0 && !views.some((v) => v.profile === "bold");
+  const by = formatDateShort(D, dateOfDay(decision.deadlineOn.seasonIndex, decision.deadlineOn.day));
   return (
     <div>
       {bare ? null : (
@@ -328,14 +322,14 @@ export function SponsorDecision({
       <div className={cx("flex flex-wrap items-center gap-x-3 gap-y-1", !bare && "mt-1")}>
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-bright">
           <CalendarIcon className="h-3.5 w-3.5" />
-          {T.decideBy(formatDateShort(D, dateOfDay(decision.deadlineOn.seasonIndex, decision.deadlineOn.day)))}
+          {CAREER_SPONSOR.deadlineRule === "signSafest" ? T.decideBySafest(by) : T.decideBy(by)}
         </span>
       </div>
       <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-sub">
-        <span className="inline-flex items-end gap-0.5" aria-hidden>
-          <span className="h-1.5 w-1 rounded-sm bg-good" />
-          <span className="h-2.5 w-1 rounded-sm bg-blue" />
-          <span className="h-3.5 w-1 rounded-sm bg-orange" />
+        <span className="inline-flex items-center gap-0.5" aria-hidden>
+          <span className="h-1.5 w-2.5 rounded-full bg-good" />
+          <span className="h-1.5 w-2.5 rounded-full bg-blue" />
+          <span className="h-1.5 w-2.5 rounded-full bg-orange" />
         </span>
         {T.compareRule}
       </p>
@@ -350,10 +344,10 @@ export function SponsorDecision({
         </p>
       ) : null}
       <div className="mt-3">
-        <Comparison
+        <OfferCards
           views={views}
           onSign={onSign}
-          footer={
+          note={
             handover
               ? (v) => {
                   const o = offers.find((x) => x.sponsorId === v.sponsorId);

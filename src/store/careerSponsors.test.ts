@@ -35,12 +35,15 @@ import { CAREER_PT } from "@/content/copy.career.pt";
 import { CAREER_INSERTS_CATALOG, insertById } from "@/data/career/inserts";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { DAYS_PER_SEASON, firstDayOfWeek, seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
-import { foundingPartnerBaseFor, sponsorOffersFor, weeklyOf } from "@/engine/career/economy";
+import { foundingPartnerBaseFor, quantize, sponsorOffersFor, weeklyOf } from "@/engine/career/economy";
 import { insertWithinCap, rollInsertFor } from "@/engine/career/inserts";
-import { absDayOf, fineFor, slotOf } from "@/engine/career/sponsorDeals";
+import { absDayOf, cappedSeasonFine, fineFor, fineMaxOf, safestSponsorOfferOf, slotOf } from "@/engine/career/sponsorDeals";
 import type { CareerSave, CompactEventResult, SponsorGoal, SponsorState } from "@/engine/career/types";
 import { formatMoneyDelta } from "@/lib/format";
 import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
+import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
+import type { CareerCopy } from "@/content/careerCopy";
+import { sponsorBrandById } from "@/data/career/sponsors";
 import { playArcCareer } from "./careerArcBot";
 import {
   advanceDayFlow,
@@ -691,3 +694,135 @@ describe("rc.34 — the arc bot signs each profile and plays on (no softlock)", 
 function flowResolve(save: CareerSave): CareerSave {
   return resolveInsertFlow(save, "a").save;
 }
+
+// ===========================================================================
+// rc.36 (front S2, Miguel on rc.35) — the pop-up, "Decide later" only, the
+// deadline rule, one fine cap a season
+// ===========================================================================
+
+describe("rc.36 front S2 — the sponsor choice: 'Decide later' only, and what the deadline does", () => {
+  it("'hold' (shipped): the deadline day holds the clock until a card is signed; before it, Later parks it", () => {
+    expect(CAREER_SPONSOR.deadlineRule).toBe("hold");
+    const save = decisionAtW11(36_001);
+    const early = pendingDecisionsOf(save).find((x) => x.kind === "sponsor")!;
+    expect(early.canWait).toBe(true);
+    expect(parkDecisionFlow(save, early.id).error).toBeUndefined();
+    const atDeadline = sundayOf(save, 13);
+    const d = pendingDecisionsOf(atDeadline).find((x) => x.kind === "sponsor")!;
+    expect(d.canWait).toBe(false);
+    expect(d.holds).toBe(true);
+    expect(advanceDayFlow(atDeadline)).toBe(atDeadline);
+    const signed = sign(atDeadline, "steady");
+    expect(advanceDayFlow(signed).clock.day).toBe(13 * 7 + 1);
+    // The mail names the rule: that day the clock waits (EN and PT).
+    const mail = mailsOf(save, "sponsorOffers")[0];
+    expect(mail.params).toMatchObject({ auto: 0 });
+    expect(CAREER_EN.mail.body.sponsorDecision(mail.params!)).toContain("the clock waits");
+    expect(CAREER_PT.mail.body.sponsorDecision(mail.params!)).toContain("o relógio espera");
+    // HQ has no "No deal for now" any more, in either language.
+    for (const C of [CAREER_EN, CAREER_PT]) {
+      expect("sponsorDecline" in C.hub).toBe(false);
+      expect("sponsorDeclineHint" in C.hub).toBe(false);
+    }
+  });
+
+  it("'signSafest': the deadline day holds nothing; the day after, the safest offer (Steady, no fine) is signed and mailed", () => {
+    withConfig(CAREER_SPONSOR, { deadlineRule: "signSafest" }, () => {
+      const save = decisionAtW11(36_002);
+      expect(mailsOf(save, "sponsorOffers")[0].params).toMatchObject({ auto: 1 });
+      expect(CAREER_EN.mail.body.sponsorDecision(mailsOf(save, "sponsorOffers")[0].params!)).toContain("the safest is signed");
+      // Before the deadline day it still holds until parked (HQ 1-B).
+      expect(pendingDecisionsOf(save).find((x) => x.kind === "sponsor")!.holds).toBe(true);
+      const atDeadline = sundayOf(save, 13);
+      expect(pendingDecisionsOf(atDeadline).find((x) => x.kind === "sponsor")!.holds).toBe(false);
+      const safest = safestSponsorOfferOf(atDeadline.sponsorOffers!)!;
+      expect(safest.terms!.profile).toBe("steady");
+      expect(fineMaxOf(safest.terms!, safest.bonus)).toBe(0);
+      const next = advanceDayFlow(atDeadline);
+      expect(next.clock.day).toBe(13 * 7 + 1);
+      expect(next.sponsorOffers).toBeNull();
+      expect(next.sponsor?.sponsorId).toBe(safest.sponsorId);
+      expect(next.flags[ACH_FLAGS.sponsorSigned]).toBe(true);
+      expect(ledgerOf(next, "sponsorSigning").at(-1)?.amount).toBe(safest.terms!.fixed);
+      expect(mailsOf(next, "sponsorAutoSigned")).toHaveLength(1);
+      expect(mailsOf(next, "sponsorLapsed")).toHaveLength(0);
+      for (const C of [CAREER_EN, CAREER_PT]) {
+        expect(C.mail.tpl.sponsorAutoSigned({ name: "X" })).toContain("X");
+        expect(C.mail.body.sponsorAutoSigned({ name: "X" })).toContain("X");
+      }
+    });
+  });
+
+  it("the season's fine tally passes from a deal that ended to the next offers — one cap a season for a run of one-split Bold deals; 'deal' restores rc.35", () => {
+    let save = sign(decisionAtW11(36_003), "bold");
+    save = withGoal(save, { slot: slotOf(0, 2), kind: "regionalFinish", count: 3, place: 1 });
+    save.finances.balance = 1_000_000;
+    const settled = mondayAfter(save, 20);
+    expect(settled.sponsor).toBeNull();
+    const booked = settled.finances.sponsorFines?.[0]?.remaining ?? 0;
+    expect(booked).toBeGreaterThan(0);
+    for (const o of settled.sponsorOffers!) expect(o.terms!.finedSeason).toEqual({ s: 0, amount: booked });
+    // Signed, the next deal's misses this season only get what is left of the season's cap.
+    const next = sign(settled, "bold");
+    const terms = next.sponsor!.terms!;
+    expect(terms.finedSeason).toEqual({ s: 0, amount: booked });
+    const cap = quantize(CAREER_SPONSOR.fines.seasonCapWeeks * terms.weekly);
+    expect(cappedSeasonFine(terms, 0, 1e9).fine).toBe(Math.max(0, cap - booked));
+    // Next season the tally is spent: a fresh cap.
+    expect(cappedSeasonFine(terms, 1, 1e9).fine).toBe(cap);
+    withConfig(CAREER_SPONSOR.fines, { seasonCapScope: "deal" }, () => {
+      for (const o of mondayAfter(save, 20).sponsorOffers!) expect(o.terms!.finedSeason).toBeUndefined();
+    });
+  });
+
+  it("an rc.35 save with pending offers — fresh or parked — loads and plays on: the decision, Later, a signature", () => {
+    const save = decisionAtW11(36_004);
+    const parked = parkDecisionFlow(save, sponsorDecisionOf(save)!.id).save;
+    for (const s of [save, parked]) {
+      const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(s)))!;
+      expect(sponsorDecisionOf(loaded)?.offers).toHaveLength(3);
+      expect(pendingDecisionsOf(loaded).find((x) => x.kind === "sponsor")?.parked).toBe(s === parked);
+      expect(sign(loaded, "balanced").sponsor?.terms?.profile).toBe("balanced");
+    }
+  });
+});
+
+describe("rc.36 front S2 — one card per sponsor, horizontal difficulty bars, HQ's prompt (static markup)", () => {
+  const C = CAREER_EN as unknown as CareerCopy;
+  const T = CAREER_EN.finances.deal;
+
+  it("one card per sponsor with its own Sign button; each goal's difficulty as three horizontal bars", () => {
+    const save = decisionAtW11(36_005);
+    const html = renderToStaticMarkup(createElement(SponsorDecision, { save, onSign: () => {}, bare: true }));
+    expect(html.match(new RegExp(`>${T.sign}</button>`, "g"))?.length).toBe(save.sponsorOffers!.length);
+    for (const o of save.sponsorOffers!) expect(html).toContain(sponsorBrandById.get(o.sponsorId)!.name);
+    const meters = [...html.matchAll(/<span class="inline-flex w-12[^"]*" role="img" aria-label="Goal difficulty: [^"]+"[^>]*>(.*?)<\/span><\/span>/g)];
+    expect(meters).toHaveLength(save.sponsorOffers!.length);
+    for (const m of meters) {
+      const bars = m[1].match(/h-1\.5 flex-1 rounded-full/g) ?? [];
+      expect(bars).toHaveLength(3);
+      // Horizontal: the bars share one height (no rising inline heights, rc.35).
+      expect(m[1]).not.toContain("height:");
+    }
+  });
+
+  it("HQ's prompt: who is offering and until when, 'See the offers' and 'Decide later' without a stroke — never 'No deal for now'; the cards wait for the pop-up", () => {
+    const save = decisionAtW11(36_006);
+    const prompt = (canWait: boolean) =>
+      renderToStaticMarkup(createElement(SponsorDecisionPrompt, { save, C, canWait, onSign: () => {}, onLater: () => {} }));
+    const html = prompt(true);
+    expect(html).toContain(C.hub.sponsorPromptTitle(save.sponsorOffers!.length));
+    for (const o of save.sponsorOffers!) expect(html).toContain(sponsorBrandById.get(o.sponsorId)!.name);
+    expect(html).toContain(C.hub.sponsorSeeOffers);
+    const later = html.match(new RegExp(`<button[^>]*class="([^"]*)"[^>]*>${C.hub.sponsorLater}</button>`));
+    expect(later).not.toBeNull();
+    expect(later![1]).not.toMatch(/(^|\s)border(\s|$|-)/);
+    expect(html).not.toContain("No deal for now");
+    // The pop-up is closed until asked: no card's Sign button in the block.
+    expect(html).not.toContain(`>${T.sign}</button>`);
+    // On the deadline day: no "Decide later", the clock waits for a pick.
+    const last = prompt(false);
+    expect(last).not.toContain(C.hub.sponsorLater);
+    expect(last).toContain(C.hub.lastDay);
+  });
+});

@@ -1556,6 +1556,55 @@ R82. **Sponsors priced by risk; one level model for the season goal; the
      grade rule). (c) `sponsorAccessFor(level)` (CAREER_SPONSOR.access):
      levels 0–1 two offers, no Bold; 2–3 three, ×1.05; 4 global, ×1.1 and
      2 free bootcamps. Level = `repTierOf(rep)` until front P's ladder.
+R85. **Sponsors are picked in a pop-up and the deadline holds; the talk
+     answers only the offer sent, a refusal raises his floor, every lever
+     counts (rc.36 front S2; Miguel's rc.35 playtest, POL-03).** (a) HQ's
+     decision block only prompts the sponsor choice (an icon, one chip per
+     brand in its profile's colour, the deadline, "See the offers" and
+     "Decide later" as a plain ghost button); the offers open in a pop-up
+     (the shared Modal: portal, focus trap, Escape), one card per sponsor —
+     the same cards on Finances — with the goal's difficulty as three
+     horizontal bars again. (b) "No deal for now" is gone, so what a
+     deadline does is keyed: `CAREER_SPONSOR.deadlineRule` "hold" (Claude's
+     pick) keeps R71's rule — the deadline day holds the clock until a card
+     is signed (a Steady deal has no fine, so no offer is worse than none);
+     "signSafest" lets that day pass and signs the smallest-fine offer the
+     day after, mailed. Rejected: signing for him by default (a silent money
+     decision the queue exists to prevent) and lapsing (a "No deal" by
+     another name). (c) rc.34's open decision 3 (Bold-only careers over the
+     season-fines band): R82's `fines.seasonCapWeeks` did not settle it —
+     the tally lived on each deal and a Bold deal lasts one split, so a run
+     of Bold deals had a cap per split. `fines.seasonCapScope` "season"
+     hands the ended deal's tally to the next offers (one cap a season);
+     "deal" restores rc.35. Measured (`ECON_SPONSOR=bold`, EU, Normal +
+     Hard, seed 9100, 14 careers × 8 seasons): s3 22 / 27 → 8 / 10 % of
+     seasons (band ≤ 10 %), fines a season p90 $10.6k / $9.4k → $5.8k /
+     $5.0k, insolvent 29 / 71 → 29 / 57 %. So decision 3 is settled as
+     option C, on the deal's weekly pay (not payroll).
+     (d) The talk (rc.35-(e), "count attempts?": yes): the levers only shape
+     the offer, "Send offer" gets his answer, and the sheet shows the same
+     thing whether he would sign or refuse (its money is the offer's, never
+     his counter). Each refusal in a window raises what he needs for sure by
+     `CAREER_NEGOTIATION.refusalRaisePct` 0.03 of his ask, counted
+     `refusalsCounted` 3 times at most (≤ 9 %, never past his ask: paying it
+     always signs), per player and window in the save's `negotiationTries`
+     ("talk:{player}:{season}:{window}", pruned with the window, cleared at
+     the rollover), so a reload cannot reset it; his roll stays the
+     window's, so the same offer is never answered twice differently.
+     Rejected: a fresh roll per send (at the cap a lowball could be resent
+     until it landed) and raising his ask (the Market's price stays it).
+     (e) Every lever counts: his odds read the offer's worth — the wage plus
+     what the share and bonus are worth against his ask, unrounded — and
+     under his ask a share or bonus press moves only itself (rc.35 moved the
+     wage back, so his answer never changed); at his full ask they still
+     trade against the wage. The length is a lever of the sheet (the offer
+     keeps its place when it changes) and the sheet names what each lever is
+     worth to him in $ a week (share, bonus, length, refusals). (f) rc.35-(d)
+     kept: `emptySeatCountsOfferedBonus` true — the empty seat's waiver
+     counts the bonus offered (more is the org's own money), and the sheet
+     now says so (`fundsSeatBonus`); false reads the bonus he asks. The arc
+     bot is unchanged: it signs at his ask and renews at his floor, both
+     sure, so it is never refused.
 
 ## Still open for Miguel (career mode)
 

@@ -14,7 +14,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_TRAINING } from "@/config/balance";
+import { CAREER_NEGOTIATION, CAREER_TRAINING } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -226,6 +226,29 @@ describe("RTW-05 — no event with fewer than three players", () => {
     const rich = structuredClone(day);
     rich.finances.balance = 5_000_000;
     expect(signPlayerFlow(rich, dear.id, { lengthSeasons: 1 }).error).toBeUndefined();
+  });
+
+  it("rc.36 (rc.35-(d), kept): a broke short squad offering the seat's player more bonus than he asks loses the waiver — and is told why; the switch reads his asked bonus", () => {
+    const day = withoutOne(onDay(createCareerSave(INPUT, 50_516), regionalW4.day, regionalW4));
+    const broke = structuredClone(day);
+    broke.finances.balance = backerLineOf(broke).floor - 50_000;
+    const seat = emptySeatPriceFor(broke, 1)!;
+    const at = signingPlanFor(broke, seat.playerId, { lengthSeasons: 1 });
+    expect("plan" in at).toBe(true);
+    const talk = "plan" in at ? at.plan.talk : null;
+    const more = { weekly: talk!.offer.weekly, bonus: talk!.ask.bonus + talk!.zone.bonusStep };
+    expect(CAREER_NEGOTIATION.emptySeatCountsOfferedBonus).toBe(true);
+    expect(signingPlanFor(broke, seat.playerId, { lengthSeasons: 1, offer: more })).toEqual({ error: "fundsSeatBonus" });
+    for (const C of [CAREER_EN, CAREER_PT]) expect(C.market.errors.fundsSeatBonus).toBeTruthy();
+    // At the bonus he asks the seat is covered; with the switch off, the bonus offered is not counted.
+    expect("plan" in signingPlanFor(broke, seat.playerId, { lengthSeasons: 1, offer: { weekly: more.weekly } })).toBe(true);
+    const N = CAREER_NEGOTIATION as unknown as { emptySeatCountsOfferedBonus: boolean };
+    N.emptySeatCountsOfferedBonus = false;
+    try {
+      expect("plan" in signingPlanFor(broke, seat.playerId, { lengthSeasons: 1, offer: more })).toBe(true);
+    } finally {
+      N.emptySeatCountsOfferedBonus = true;
+    }
   });
 
   it("broke, short and owing the Backer: the cheapest free agent still signs; a dearer one waits for the runway", () => {

@@ -7,11 +7,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_CONTRACT, CAREER_PRIZE_SHARE, CAREER_PRIZES } from "@/config/balance";
+import { CAREER_CONTRACT, CAREER_NEGOTIATION, CAREER_PRIZE_SHARE, CAREER_PRIZES } from "@/config/balance";
 import {
   contractSharePctFor,
   prizeShareAskFor,
   sharePointWeeklyFor,
+  talkAtFullAsk,
   talkPressFor,
   type ContractOffer,
   type NegotiationAnswer,
@@ -42,6 +43,7 @@ import {
   signPlayerFlow,
   simEventToEnd,
   startEvent,
+  talkRefusalsOf,
   type CreateCareerInput,
 } from "./careerFlow";
 
@@ -257,11 +259,46 @@ describe("ECO-11 — the wage talk through the flows", () => {
     expect(talk.accepted).toBe(false);
     const refused = signPlayerFlow(save, fa.id, { lengthSeasons: 2, offer: under });
     expect(refused.error).toBe("negotiationCounter");
-    expect(refused.save).toBe(save);
-    const counter = talk.counter!;
-    const res = signPlayerFlow(save, fa.id, { lengthSeasons: 2, offer: { weekly: counter.weekly, sharePct: counter.sharePct } });
+    // rc.36 (front S2): money and squad untouched — only the refusal is counted, and it raises his floor.
+    expect(refused.save.finances).toEqual(save.finances);
+    expect(refused.save.squad).toEqual(save.squad);
+    expect(talkRefusalsOf(refused.save, fa.id)).toBe(1);
+    const after = signingTalkFor(refused.save, fa, ask, under);
+    expect(after.refusals).toBe(1);
+    expect(after.zone.floorWeekly).toBeGreaterThan(talk.zone.floorWeekly);
+    // His counter after the refusal (the raised floor) signs.
+    const counter = after.counter!;
+    const res = signPlayerFlow(refused.save, fa.id, { lengthSeasons: 2, offer: { weekly: counter.weekly, sharePct: counter.sharePct } });
     expect(res.error).toBeUndefined();
     expect(res.save.squad.find((p) => p.id === fa.id)!.salaryPerSplit).toBe(counter.wagePerSplit);
+  });
+
+  it("rc.36: each refusal is counted per player and window (at most refusalsCounted), never moves money, and the window's close clears it", () => {
+    const save = makeSave();
+    const fa = freeAgents(save).find((v) => {
+      const z = signingTalkFor(save, v, askOf(save, v)).zone;
+      return z.zeroWeekly >= z.minWeekly;
+    })!;
+    const other = freeAgents(save).find((v) => v.id !== fa.id)!;
+    const ask = askOf(save, fa);
+    const under = { weekly: signingTalkFor(save, fa, ask).zone.zeroWeekly };
+    let s = save;
+    for (let i = 1; i <= CAREER_NEGOTIATION.refusalsCounted + 2; i++) {
+      const r = signPlayerFlow(s, fa.id, { lengthSeasons: 2, offer: under });
+      expect(r.error).toBe("negotiationCounter");
+      expect(talkRefusalsOf(r.save, fa.id)).toBe(Math.min(i, CAREER_NEGOTIATION.refusalsCounted));
+      // Past the count nothing is written at all.
+      if (i > CAREER_NEGOTIATION.refusalsCounted) expect(r.save).toBe(s);
+      expect(r.save.finances.balance).toBe(save.finances.balance);
+      s = r.save;
+    }
+    // Another player's talk is his own.
+    expect(talkRefusalsOf(s, other.id)).toBe(0);
+    // His full ask still signs after every refusal.
+    expect(signingTalkFor(s, fa, ask).accepted).toBe(true);
+    // The rollover clears the count (a new season, a new talk).
+    const nextSeason = { ...structuredClone(s), clock: { seasonIndex: 1, day: s.clock.day } };
+    expect(talkRefusalsOf(nextSeason, fa.id)).toBe(0);
   });
 
   it("a renewal runs the same talk on the M2 ask, and an older deal gets a share when renewed", () => {
@@ -280,10 +317,13 @@ describe("ECO-11 — the wage talk through the flows", () => {
     expect(renewed.prizeSharePct).toBe(talk.offer.sharePct);
     expect(renewed.salaryPerSplit).toBe(talk.zone.topPerSplit);
     expect(renewed.contractEndSeason).toBe(2);
-    // Under the floor: refused, nothing moves.
+    // Under the floor: refused — nothing moves but the count of his refusals (rc.36).
     const no = renewPlayerFlow(save, p.id, 2, { weekly: 0 });
     expect(no.error).toBe("negotiationCounter");
-    expect(no.save).toBe(save);
+    expect(no.save.squad).toEqual(save.squad);
+    expect(no.save.finances).toEqual(save.finances);
+    expect(talkRefusalsOf(no.save, p.id)).toBe(1);
+    expect(renewalTalkFor(no.save, p, 2).zone.needWorth).toBeGreaterThan(renewalTalkFor(save, p, 2).zone.needWorth);
   });
 });
 
@@ -382,12 +422,14 @@ describe("rc.34 front I — the talk on real players: both levers move, every pr
         expect(next === null, `${label} ${key} ${lever}${dir}`).toBe(why !== null || (lever === "share" && !a.zone.shareLever));
         if (!next) continue;
         const b = talk(next);
-        // A wage press moves the wage; a share press moves the share AND the wage.
-        expect(b.offer.weekly, `${label} ${key} ${lever}${dir}`).not.toBe(a.offer.weekly);
+        // A wage press moves the wage; a share press moves the share — at his full ask the wage too (the
+        // trade), under it (rc.36, "every lever counts") the offer's worth, so it moves his answer.
+        if (lever === "wage" || talkAtFullAsk(a)) expect(b.offer.weekly, `${label} ${key} ${lever}${dir}`).not.toBe(a.offer.weekly);
+        else expect(Math.sign(b.worth - a.worth), `${label} ${key} ${lever}${dir}`).toBe(dir);
         if (lever === "share") expect(b.offer.sharePct).toBe(a.offer.sharePct + dir);
-        // rc.35: only a wage press down may leave the zone (his odds fall under his floor).
+        // rc.35: a press down may leave the zone (his odds fall under his floor) — the wage, or (rc.36) the share under his ask.
         if (!b.accepted) {
-          expect(`${lever}${dir}`, `${label} ${key}`).toBe("wage-1");
+          expect(["wage-1", "share-1"], `${label} ${key}`).toContain(`${lever}${dir}`);
           expect(b.odds).toBeLessThan(1);
           continue;
         }

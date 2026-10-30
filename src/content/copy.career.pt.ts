@@ -465,10 +465,12 @@ export const CAREER_PT: CareerCopy = {
     noticeBody: "Leia e confirme o aviso — o relógio anda depois disso.",
     trainingDecisionTitle: "O técnico tem um plano",
     trainingDecisionBody: "A proposta de treino do técnico espera a sua resposta.",
-    sponsorDecline: "Sem acordo por agora",
-    // rc.35 (front S): ao lado de "Recusar" na decisão de patrocínio.
+    // rc.36 (front S2, Miguel sobre a rc.35): a escolha do patrocínio é um pop-up; o bloco só a chama, com "Decidir depois".
     sponsorLater: "Decidir depois",
-    sponsorDeclineHint: "As marcas voltam no próximo split.",
+    sponsorPromptTitle: (n: number) => (n === 1 ? "Uma marca quer patrocinar a org" : `${n} marcas querem patrocinar a org`),
+    sponsorSeeOffers: "Ver as ofertas",
+    sponsorDueBy: (date: string) => `Escolha uma até ${date}`,
+    sponsorAutoSign: (date: string) => `Em ${date} a oferta mais segura é assinada por você.`,
     // rc.34 (Miguel, 31/10): um elenco incompleto pode ficar fora de uma regional.
     squadShortSkip: "Pular esta regional",
     squadShortSkipHint: (event: string) =>
@@ -580,6 +582,8 @@ export const CAREER_PT: CareerCopy = {
       listingOffer: (p: Record<string, string | number>) => `Proposta por ${p.player} — seu anúncio`,
       // rc.34 (ECO-04): os e-mails dos contratos.
       sponsorLapsed: () => `As propostas de patrocínio expiraram`,
+      // rc.36 (front S2): CAREER_SPONSOR.deadlineRule "signSafest" — ninguém escolheu até o prazo.
+      sponsorAutoSigned: (p: Record<string, string | number>) => `${p.name}: o contrato mais seguro, assinado por você`,
       sponsorGoalHit: (p: Record<string, string | number>) => `${p.name}: meta batida`,
       sponsorGoalMissed: (p: Record<string, string | number>) => `${p.name}: meta perdida`,
       sponsorGoalSet: (p: Record<string, string | number>) => `${p.name}: a meta do Split ${p.goalSplit}`,
@@ -610,10 +614,13 @@ export const CAREER_PT: CareerCopy = {
       objectiveMissed: (p: Record<string, string | number>) =>
         `A meta do split escapou. Ninguém cobra dinheiro de volta — mas faltas repetidas derrubam o tier da renovação. (Faltas até aqui: ${p.misses}.)`,
       // rc.34 (ECO-04): os e-mails dos contratos.
+      // rc.36 (front S2): duas ou três marcas (o acesso da escada), com preço pelo risco (rc.35), e a regra do prazo.
       sponsorDecision: (p: Record<string, string | number>) =>
-        `Três marcas querem a organização no Tier ${p.tier}: um contrato Estável, um Equilibrado e um Ousado. Em média valem mais ou menos o mesmo — mudam no quanto do dinheiro é garantido, na duração e no que pedem. Compare em Finanças e assine um até o domingo da semana ${p.byWeek}, ou elas expiram.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um tier abaixo." : ""}`,
+        `${Number(p.n) === 2 ? "Duas marcas querem a organização no Tier " + p.tier + ": um contrato Estável e um Equilibrado" : "Três marcas querem a organização no Tier " + p.tier + ": um contrato Estável, um Equilibrado e um Ousado"}. Quanto mais ousado o contrato, mais ele paga — por uma meta mais difícil e uma multa maior. Compare no QG e assine um até o domingo da semana ${p.byWeek}${Number(p.auto) ? " — depois disso o mais seguro é assinado por você" : " — nesse dia o relógio espera a sua escolha"}.${Number(p.demoted) ? " Três metas escaparam no último contrato Estável, então esta rodada vem um tier abaixo." : ""}`,
       sponsorLapsed: () =>
         `Ninguém assinou antes do prazo e as marcas seguiram em frente. As próximas propostas chegam na próxima virada de split.`,
+      sponsorAutoSigned: (p: Record<string, string | number>) =>
+        `Ninguém escolheu um contrato até o prazo, então a org assinou o mais seguro da mesa: ${p.name}. Os números estão em Finanças.`,
       sponsorGoalHit: (p: Record<string, string | number>) =>
         `${goalOfParamsPt(p)}: feito. O bônus de ${p.bonus} entra hoje${positive(p.milestone) ? `, junto com o pagamento do marco de ${p.milestone}` : ""}.`,
       sponsorGoalMissed: (p: Record<string, string | number>) =>
@@ -1177,7 +1184,6 @@ export const CAREER_PT: CareerCopy = {
       length: "Duração do contrato",
       contract: "Sob contrato",
     },
-    lengthLabel: "Duração do contrato",
     seasons: (n: number) => (n === 1 ? "1 temporada" : `${n} temporadas`),
     starter: "Titular",
     sub: "Reserva",
@@ -1275,7 +1281,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.33 (ECO-10 + ECO-11): a negociação do contrato — duas alavancas, a faixa à vista, uma resposta.
     negotiation: {
       title: "Negociação do contrato",
-      // rc.35 (front N): a negociação visual — uma terceira alavanca, o medidor de chance, o alívio do prazo.
+      // rc.35 (front N): a negociação visual — uma terceira alavanca e a chance.
       bonus: "Luvas",
       bonusAsk: (amount: string) => `Pede ${amount}`,
       bonusDown: "Baixar as luvas",
@@ -1283,29 +1289,15 @@ export const CAREER_PT: CareerCopy = {
       shareAskNone: "Não pede",
       odds: "Chance de assinar",
       oddsSure: "Certo",
-      zoneLegend: "Assina com certeza",
-      riskLegend: "Talvez",
-      lengthRelief: (perWeek: string, seasons: number) => `Contrato de ${seasons} temporadas: ${perWeek} / semana a menos no piso dele`,
-      refuses: (wage: string) => `Ele recusa — assina por ${wage} / semana`,
-      upfront: (amount: string) => `+ ${amount} na assinatura`,
       perWeek: "/ semana",
       fullAsk: "Pagar a pedida",
       wage: "Salário semanal",
       share: "Parte do prêmio",
-      shareHint: "A fatia dele em cada prêmio de pódio do time (top 4 de um regional, Major ou Worlds).",
       shareAsk: (pct: number) => `Ele pede ${pct}%`,
-      trade: (perWeek: string) => `Cada ponto de parte que você dá vale ${perWeek} por semana do salário dele.`,
       wageDown: "Baixar o salário semanal",
       wageUp: "Subir o salário semanal",
       shareDown: "Baixar a parte do prêmio",
       shareUp: "Subir a parte do prêmio",
-      zone: (floor: string, top: string) => `Com essa parte ele assina de ${floor} a ${top} por semana.`,
-      zoneFixed: (top: string) => `Com essa parte ele só assina pela pedida, ${top} por semana.`,
-      signs: (wage: string, pct: number) => `Ele assina: ${wage} / semana + ${pct}% dos prêmios de pódio`,
-      // rc.34 (front I): um contrato sem parte do prêmio (ele não pede, ou a negociação levou a 0 %).
-      signsNoShare: (wage: string) => `Ele assina: ${wage} / semana, sem parte do prêmio`,
-      counter: (wage: string, pct: number) => `Abaixo do piso dele — contraproposta: ${wage} / semana com ${pct}%`,
-      counterNoShare: (wage: string) => `Abaixo do piso dele — contraproposta: ${wage} / semana`,
       // rc.34 (front I): por que uma alavanca para, embaixo do botão que ela trava (contract.TalkLimits).
       why: {
         floor: "Piso dele",
@@ -1315,10 +1307,30 @@ export const CAREER_PT: CareerCopy = {
         shareMost: "O máximo que ele aceita",
         shareMinimum: "Salário no mínimo",
         noShare: "Sem parte",
+        // rc.36 (front S2): os limites das luvas.
+        noBonus: "Sem luvas",
+        bonusMost: "O máximo da oferta",
       },
-      takeCounter: "Aceitar a contraproposta",
-      saves: (s: string) => `${s} / semana abaixo da pedida`,
-      costs: (s: string) => `${s} / semana acima da pedida, por uma parte menor`,
+      // rc.36 (front S2, Miguel sobre a rc.35): três grupos — sua oferta, a posição dele, enviar — e a resposta só depois do envio.
+      groupOffer: "Sua oferta",
+      groupPosition: "A posição dele",
+      length: "Duração",
+      asks: (wage: string, pct: number, bonus: string | null) =>
+        `Pede ${wage} / sem.${pct > 0 ? ` · ${pct}%` : ""}${bonus ? ` · ${bonus}` : ""}`,
+      worthTitle: "Quanto sua oferta vale para ele",
+      sureFrom: (wage: string) => `Assina com certeza a partir de ${wage}`,
+      askMark: (wage: string) => `Pedida ${wage}`,
+      effectsTitle: "O que move a resposta dele",
+      effectShare: (pts: number) => `Parte ${pts > 0 ? "+" : "−"}${Math.abs(pts)} pt${Math.abs(pts) === 1 ? "" : "s"}`,
+      effectBonus: (delta: string) => `Luvas ${delta}`,
+      effectLength: (seasons: number) => `Contrato de ${seasons} temporada${seasons === 1 ? "" : "s"}`,
+      effectRefusals: (n: number) => (n === 1 ? "1 oferta recusada" : `${n} ofertas recusadas`),
+      effectWeekly: (amount: string) => `${amount} / sem.`,
+      send: "Enviar oferta",
+      sendHint: "Ele responde quando você enviar. Uma recusa aumenta o que ele exige.",
+      refused: (wage: string) => `Ele recusou ${wage} / semana.`,
+      nowWants: (wage: string) => `Com essa parte e essas luvas, agora ele assina com certeza a partir de ${wage} / semana.`,
+      meetPrice: "Atender a pedida",
     },
     errors: {
       windowClosed: "A janela de transferências está fechada.",
@@ -1326,6 +1338,8 @@ export const CAREER_PT: CareerCopy = {
       squadFull: "Elenco cheio — dispense ou venda antes.",
       unavailable: "Jogador indisponível.",
       funds: "Caixa insuficiente para este negócio.",
+      // rc.36 (front S2, rc.35-(d)): sem dinheiro, a vaga vazia só é coberta com as luvas que ele pede.
+      fundsSeatBonus: "Sem dinheiro, a vaga vazia só é coberta com as luvas que ele pede — baixe as luvas.",
       loanActive: "Sem transferências com taxa enquanto houver dívida do empréstimo emergencial.",
       bankActive: "Um empréstimo bancário por vez — quite o atual primeiro.",
       bankBacker: "O banco não faz outro empréstimo enquanto o emergencial estiver aberto — quite esse primeiro.",
@@ -1534,7 +1548,9 @@ export const CAREER_PT: CareerCopy = {
       goalBy: (date: string) => `até ${date}`,
       laterGoals: "Depois, uma meta nova a cada split, na mesma dificuldade",
       sign: "Assinar",
-      decideBy: (date: string) => `Assine até ${date} — depois disso as propostas expiram.`,
+      // rc.36 (front S2): CAREER_SPONSOR.deadlineRule — "hold" (no último dia o relógio espera) ou "signSafest".
+      decideBy: (date: string) => `Escolha uma até ${date} — nesse dia o relógio espera a sua escolha.`,
+      decideBySafest: (date: string) => `Escolha uma até ${date} — depois disso a oferta mais segura é assinada por você.`,
       compareHint:
         "As três valem mais ou menos o mesmo em média. Mudam no quanto do dinheiro é garantido, na duração e no que pedem.",
       // rc.34: uma marca de Tier 3 / 4 paga menos a um time abaixo do nível dela (sponsorDeals.levelValueShareOf).

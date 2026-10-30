@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 6;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1235,6 +1235,32 @@ export const CAREER_NEGOTIATION = {
   bonusWeight: 1.25,
   bonusMaxMult: 2,
   bonusSteps: 8,
+  /**
+   * rc.36 (front S2, Miguel on rc.35: "he answers only after you send the
+   * offer, and a refusal raises his requirements"; his question rc.35-(e),
+   * "count attempts?"): each offer he turns down in a window raises what he
+   * needs for sure (the zone's floor, in the offer's whole worth — wage,
+   * share and bonus) by this share of his weekly ask, counted at most
+   * `refusalsCounted` times, never above his ask (paying it always signs).
+   * The count lives in the save per player and window (`negotiationTries`),
+   * so a reload cannot reset it; the window's close and the rollover clear
+   * it. 0.03 × 3: three refusals cost up to 9 % of his ask, about what his
+   * flexibility and a longer deal take off (the zone is 2–12 % wide). His
+   * roll stays fixed per window, so the same offer is never answered twice
+   * differently. 0 restores rc.35 (nothing hardens).
+   */
+  refusalRaisePct: 0.03,
+  refusalsCounted: 3,
+  /**
+   * rc.36 (front S2, settling rc.35-(d)): the empty seat's waiver (RTW-05,
+   * `careerFlow.emptySeatPriceFor`) covers a signing no dearer than the
+   * cheapest free agent the org may sign. true (rc.35, kept): its up-front
+   * cost counts the signing bonus OFFERED — a bonus over that seat's price
+   * is the org's own money, so a broke org offering it loses the waiver
+   * (the sheet names the most the waiver pays). false: the waiver reads the
+   * bonus he asks, so a broke org could pay any bonus into the overdraft.
+   */
+  emptySeatCountsOfferedBonus: true,
 } as const;
 
 /**
@@ -2186,7 +2212,21 @@ export const CAREER_SPONSOR = {
    * emergency loan's deadline check, so one never decides that check.
    */
   // rc.35 (front S): capWeeks is now per profile (profiles.*.fineCapWeeks); seasonCapWeeks bounds a season's fines.
-  fines: { capWeeks: 1, spreadMondays: 4, neverBreaches: true, seasonCapWeeks: 2 },
+  // rc.36 (front S2, rc.34's open decision 3): `seasonCapScope` "season" carries the season's tally from the
+  // deal that ended into the next decision's offers, so a run of one-split Bold deals shares one cap (rc.35
+  // kept it on each deal: three Bold deals a season fined up to three caps); "deal" restores rc.35.
+  fines: { capWeeks: 1, spreadMondays: 4, neverBreaches: true, seasonCapWeeks: 2, seasonCapScope: "season" as "season" | "deal" },
+  /**
+   * rc.36 (front S2, Miguel on rc.35: only "Decide later", no "No deal for
+   * now"): what a sponsor decision's deadline does when nobody picked.
+   * "hold" (Claude's pick): the deadline day holds the clock until a card is
+   * signed, like every other needed decision (R71) — a Steady deal has no
+   * fine, so no offer is worse than none. "signSafest": the deadline day
+   * does not hold; the day after it the safest offer (the smallest fine,
+   * then the most weekly pay: the Steady deal) is signed for the manager and
+   * the inbox says so.
+   */
+  deadlineRule: "hold" as "hold" | "signSafest",
   /**
    * rc.34 — ECO-05, S7 (decision 6-B: today's money inserts stay random
    * inserts, indexed and counted against the cap). Other income — an

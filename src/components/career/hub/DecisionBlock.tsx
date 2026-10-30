@@ -28,7 +28,7 @@ import { canSkipShortSquadEvent, runwayWeeksOf, squadHoldFor, weeklyStatementOf 
 import { pendingDecisionsOf, type PendingDecision } from "@/store/careerDecisions";
 import { trainingDecisionOf } from "@/store/careerTraining";
 import { TrainingProposalCard } from "@/components/career/training/TrainingPackageParts";
-import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
+import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
 import { contractWarnsFor } from "@/engine/career/careerNew";
 import {
   dateOfDay,
@@ -93,7 +93,6 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const resolveInsert = useCareerStore((s) => s.resolveInsert);
   const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
-  const declineSponsorOffers = useCareerStore((s) => s.declineSponsorOffers);
   const parkDecision = useCareerStore((s) => s.parkDecision);
   const skipShortSquadEvent = useCareerStore((s) => s.skipShortSquadEvent);
   const approveTrainingProposal = useCareerStore((s) => s.approveTrainingProposal);
@@ -240,30 +239,16 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
       case "sponsor": {
         const offers = save.sponsorOffers ?? [];
         if (offers.length === 0) return null;
+        // rc.36 (front S2, Miguel on rc.35): the block only prompts the choice (who, until when);
+        // the offers open as a pop-up, one card per sponsor. Only "Decide later", no "No deal for now".
         return (
-          <>
-            {/* ECO-04 (front F): the three profiles in one comparison, signed from here. */}
-            <SponsorDecision save={save} onSign={(id) => chooseSponsor(id)} bare />
-            {/* rc.35 (front S): "Decide later" sits beside "Decline", not under it. */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="secondary" size="md" className="min-h-11" onClick={declineSponsorOffers}>
-                {C.hub.sponsorDecline}
-              </Button>
-              {d.canWait ? (
-                <Button variant="ghost" size="md" className="min-h-11 border border-line" onClick={() => later(d)}>
-                  {C.hub.sponsorLater}
-                </Button>
-              ) : (
-                <span className="flex min-h-11 items-center text-xs font-semibold text-orange-bright">{C.hub.lastDay}</span>
-              )}
-            </div>
-            <p className="mt-1.5 text-[11px] text-faint">
-              {C.hub.sponsorDeclineHint}
-              {d.canWait && d.deadline
-                ? ` · ${C.hub.standsUntil(formatDateShort(C.dates, dateOfDay(d.deadline.seasonIndex, d.deadline.day)))}`
-                : ""}
-            </p>
-          </>
+          <SponsorDecisionPrompt
+            save={save}
+            C={C}
+            canWait={d.canWait}
+            onSign={(id) => chooseSponsor(id)}
+            onLater={() => later(d)}
+          />
         );
       }
     }
@@ -316,7 +301,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 body: topBody,
                 count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined,
                 // rc.34 review (Gate 3b): a fresh invite holds nothing — it sits above the clock's controls.
-                inline: top?.kind === "invite" && !top.holds,
+                // rc.36 (front S2): so does a sponsor prompt that holds nothing (parked, or "signSafest"'s last day).
+                inline: (top?.kind === "invite" || top?.kind === "sponsor") && !top.holds,
               }
             : null
         }
