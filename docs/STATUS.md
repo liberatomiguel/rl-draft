@@ -36,7 +36,8 @@ Etapas 1–2 and most of 3 (rc.27–34), and Etapa 4's national album (rc.33).
 - **rc.35:** Miguel's rc.34 playtest — training simplified (14-day cycles),
   sponsors priced by risk, the progression ladder, the talk's odds and
   bonus, creation/market/squad visuals (R81–R82; `ECONOMY-CONTRACT.md` §12).
-- **Next in Etapa 3:** UX-02 (season goals), UX-03 (news, 50/50), UX-04
+- **Next: rc.36** closes Etapa 3 — Miguel's rc.35 playtest (POL-01..04 in
+  `ROADMAP.md`) in parallel with the rest of Etapa 3: UX-02 (season goals), UX-03 (news, 50/50), UX-04
   (creation), UX-05 (achievements), CAL-01, SUN-01..03.
 
 ## Open before `main`

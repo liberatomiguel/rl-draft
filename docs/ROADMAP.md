@@ -572,6 +572,61 @@ never calibrates the old training model as if it were final.
     for low-overall players and founders, only from a higher overall.
   - BAL-05: he went broke in the first split with the veterans roster —
     check every founding roster's first split.
+- **rc.36 — Miguel's rc.35 playtest (31/10), next session, with the rest of
+  Etapa 3 (UX-02–05, CAL-01, SUN-01..03) in parallel fronts:**
+  - **POL-01, training (front T2):**
+    - Back to 28-day cycles.
+    - Nothing runs until you pick: the Training tab's main action is choosing
+      a plan (empty by default, the recommendation only where the preset gives
+      one), then "Start training". Without a coach, a finished cycle is started
+      again by hand.
+    - The objectives become Evolve / Gel / Recover. The focus (offense,
+      clutch…) comes back as a choice.
+    - Drop the "this cycle so far" and "expected result" blocks (they repeat
+      the plan) and the "use the base" button. Never show the season ceiling
+      (13).
+    - Heavy and Hard raise the wear risk again, modestly.
+    - A running plan shows a progress bar. You can adjust it midway, but the
+      promised gain is paid in full only at the cycle's end (promised 0–10:
+      you climb to 8–9 along the way, the rest lands on completion).
+    - A prettier cycle-report modal.
+    - A newly signed player joins the running cycle, and an unknown phase is
+      revealed after a few training days.
+    - HQ's green bar fills only toward the player's next overall point.
+  - **POL-02, HQ and screens (front H2):**
+    - HQ squad: the sub and the coach thin again, as before.
+    - The toolbox card: less white space, a clear hierarchy.
+    - HQ finances: only the balance, the weekly out, the chart, and the
+      next-payroll and runway lines.
+    - The unlock modal: Close only (no Buy).
+    - "Signable at my reputation": discreet and in place.
+    - Finances' "org arsenal": back to the old stacked list, with icons.
+    - Club tab: drop the "Org 0.5 stars" text.
+    - The "Recommended" tag uses the same style as the special cards' "NEW"
+      tag.
+  - **POL-03, sponsors and the talk (front S2):**
+    - Sponsors:
+      - The sponsor choice leaves the calendar block and opens as a pop-up,
+        one card per sponsor.
+      - The goal-difficulty bars horizontal again.
+      - Only "Decide later" (no "No deal for now"), without a stroke.
+    - The talk:
+      - He answers only after you send the offer, and a refusal raises his
+        requirements.
+      - Every lever counts, the signing bonus included.
+      - The block is more discreet and organised.
+  - **POL-04, economy and the world (front M):**
+    - Remove the "Merch & streams" income.
+    - The start budget is the same for every roster; only the difficulty
+      changes it. This reverses BAL-05, so the veterans' founding wages must
+      fit it.
+    - More free agents with potential in the 80s through the seasons, not
+      only at creation.
+    - Check the pace: rc.35's squads are stronger (cheaper wages, the 91–93
+      prospect, the growth fix), so the user wins more and climbs reputation
+      faster. Match difficulty did not change: 66 % at an even rating, as in
+      rc.34.
+    - Re-measure both sides of the guardrail.
 - **Gate 3a: approved 30/10** — the recommended options of all three
   contracts (training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A), the
   sponsor contract adjusted to ECO-07/08: there is no day-one founding
@@ -716,6 +771,17 @@ a pending sponsor offer becomes an rc.34 decision.
   reputation filter, renewals (the ×2.5 cap, the title raise), the potential
   bands, the 2021-22 rollover (Karmine Corp), match difficulty, the national
   album.
+
+**Answered 31/10 (rc.35 playtest):** f — remove "Merch & streams" (POL-04);
+g — the text was the Club tab's "Org 0.5 stars" (POL-02); the start budget
+equal for every roster (POL-04).
+
+**Pace (Miguel, 31/10: the project is late).** From rc.36 on, every session
+ships its stage's new scope in parallel fronts, with the previous rc's
+playtest fixes as one or two more fronts, never as a session of their own. A
+screen's further polish after its stage's gate goes to Etapa 5 unless it is
+a bug. Plan: rc.36 closes Etapa 3 (Gate 3b), then Etapa 4 (rc.37), Etapa 5
+(rc.38), Etapa 6 (the cutover).
 
 **Decide (rc.35):** (a) the season growth ceiling of 13 (a strong package
 can add ~12 a season, bounded by the peak); (b) the season-goal rule (a
