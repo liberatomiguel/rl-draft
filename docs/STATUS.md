@@ -65,6 +65,9 @@ plan's Etapas 1, 2a and 2b (rc.27–32; `ROADMAP.md` "Done", CHANGELOG).
   `CAREER_ECON=1` (294 careers, ~25 min in four processes by
   `ECON_REGIONS`), `CAREER_ARC=1` / `CAREER_CURVES=1`, `CAREER_GROWTH=1`
   (never set `CAREER_ARC` with `ARC_REPORT`: it replays the sweep).
+- Browser E2E of an rc: `node scripts/e2e-smoke.mjs` (home, a PT Classic run,
+  a career's first week; desktop + mobile, EN + PT) on the export served by
+  `wrangler dev`.
 - Perf reference (rc.32, a staging-like Turbopack export, `node
   scripts/request-budget.mjs`): cold home **26** requests; a whole Classic run
   from a cold home **56–59**, desktop and mobile (budget 75; rc.31 65–78). The
