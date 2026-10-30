@@ -486,6 +486,8 @@ export const CAREER_EN = {
     trainingDecisionTitle: "The coach has a plan",
     trainingDecisionBody: "The coach's training proposal waits for your answer.",
     sponsorDecline: "No deal for now",
+    // rc.35 (front S): beside "Decline" on the sponsor decision.
+    sponsorLater: "Decide later",
     sponsorDeclineHint: "The brands come back at the next split.",
     // rc.34 (Miguel, 31/10): a short squad can sit a regional out.
     squadShortSkip: "Skip this regional",
@@ -1414,6 +1416,28 @@ export const CAREER_EN = {
       rowLength: "Length",
       rowRisk: "Risk",
       rowGoal: "Goal",
+      // rc.35 (front S): the visual comparison — one band per row, icons first.
+      rowWeekly: "Weekly pay",
+      rowUpfront: "Up front",
+      rowBonus: "Bonus per goal",
+      rowFine: "Fine if missed",
+      upfrontSigning: "on signing",
+      upfrontMilestone: "at 1st goal",
+      upTo: (s: string) => `up to ${s}`,
+      noFine: "None",
+      lengthShort: (splits: number) =>
+        splits === 1 ? "1 split" : splits === 3 ? "1 season" : splits === 6 ? "2 seasons" : `${splits} splits`,
+      difficultyMeter: (word: string) => `Goal difficulty: ${word}`,
+      profileTag: { steady: "Safest", balanced: "Middle ground", bold: "Biggest pay" } as Record<string, string>,
+      compareRule: "More money, harder goal, bigger fine.",
+      boldLocked: "Bold deals open as your reputation grows.",
+      globalSponsor: "Global",
+      nextPay: "Next payment",
+      noNextPay: "Last one paid",
+      finesNone: "No fines owed",
+      finesShort: (mondays: number) => `over ${mondays} Mondays`,
+      seasonFineCap: (s: string) => `Fines never pass ${s} a season`,
+      dealRun: (paid: number, total: number) => `${paid} of ${total} Mondays paid`,
       weeklySure: (s: string) => `${s} a week, sure`,
       plusSigning: (s: string) => `+ ${s} on signing`,
       plusMilestone: (s: string) => `+ ${s} the day you reach a first goal`,
@@ -2203,6 +2227,24 @@ export const CAREER_EN = {
     worldsTop4: "A Worlds top-4",
     winMajor: "Win a Major",
     winWorlds: "Win Worlds",
+    // rc.35 (front S): a season goal from the sponsors' level model — reached in any split.
+    model: (kind: string, count: number, place: number): string => {
+      switch (kind) {
+        case "enterEvents":
+          return `Enter ${count} events in a split`;
+        case "regionalReach":
+          return count === 1 ? "Reach a regional" : `Reach ${count} regionals in one split`;
+        case "regionalFinish":
+          if (place <= 1) return count === 1 ? "Win a regional" : `Win ${count} regionals in one split`;
+          return count === 1 ? `A regional top ${place}` : `Top ${place} at ${count} regionals in one split`;
+        case "majorQualify":
+          return "Reach a Major";
+        case "majorFinish":
+          return place <= 1 ? "Win a Major" : `A Major top ${place}`;
+        default:
+          return "";
+      }
+    },
     repRisk: (n: number) => `Your reputation expects it (−${n} if missed)`,
   },
 

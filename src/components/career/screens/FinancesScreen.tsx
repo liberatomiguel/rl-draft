@@ -93,6 +93,7 @@ import { NewTag } from "@/components/ui/NewDot";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
 import { SponsorDealPanel, SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
 import { otherIncomeRoomOfSave } from "@/engine/career/inserts";
+import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -646,9 +647,7 @@ export function FinancesScreen() {
   // --- gear ladder state ------------------------------------------------------
   const nextGear = gearNextItem(gear);
   const bootTier = bootcampTierFor(rep);
-  const freeAllowance = save.sponsor
-    ? CAREER_SPONSOR.tiers[save.sponsor.tier - 1].freeBootcampsPerSeason
-    : 0;
+  const freeAllowance = sponsorFreeBootcampsOf(save.sponsor);
   const freeLeft = Math.max(0, freeAllowance - fin.freeBootcampsUsedThisSeason);
   const [gearFront, perfCenter] = [CAREER_GEAR.items.slice(0, 3), CAREER_GEAR.items[3]];
 

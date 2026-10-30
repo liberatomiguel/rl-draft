@@ -44,6 +44,10 @@ import {
   tierValuePerWeek,
   upToMoneyOf,
   wordOf,
+  cappedSeasonFine,
+  seasonGoalModelFor,
+  sponsorAccessFor,
+  sponsorFreeBootcampsOf,
   type TeamLevel,
 } from "./sponsorDeals";
 import type { CareerDifficulty, CompactEventResult, SponsorGoalWord } from "./types";
@@ -137,21 +141,22 @@ describe("rc.34 sponsors — the offers of one decision (S1, S4, s1)", () => {
     }
   });
 
-  it("s1 — every decision's offers carry about the same expected value per Monday (±10 %), equal to the tier's value", () => {
-    let widest = 0;
+  it("rc.35 — priced by risk: the most each pays is its profile's share of the tier's value (Bold > Balanced > Steady)", () => {
+    const P = CAREER_SPONSOR.profiles;
+    expect(P.bold.ceilingOfValue).toBeGreaterThan(P.balanced.ceilingOfValue);
+    expect(P.balanced.ceilingOfValue).toBeGreaterThan(P.steady.ceilingOfValue);
     for (const difficulty of DIFFS)
       for (const tier of [1, 2, 3, 4] as const)
         for (const today of MOMENTS)
           for (const m of MARGINS) {
             const offers = sponsorDecisionFor({ tier, today, careerSeed: 5, difficulty, level: levelAt(m) });
-            const per = offers.map((o) => o.terms!.ev / mondaysBetween(today, o.terms!.endsOn));
-            const mean = per.reduce((a, b) => a + b, 0) / per.length;
-            for (const v of per) widest = Math.max(widest, Math.abs(v / mean - 1));
-            // Each one is the tier's value for its Mondays at the team's level (quantization aside).
             const value = tierValuePerWeek(tier, today.seasonIndex, difficulty) * levelValueShareOf(tier, levelAt(m));
-            for (const v of per) expect(Math.abs(v / value - 1)).toBeLessThan(0.05);
+            for (const o of offers) {
+              const mondays = mondaysBetween(today, o.terms!.endsOn);
+              const per = o.terms!.ceiling / mondays;
+              expect(Math.abs(per / (P[o.terms!.profile].ceilingOfValue * value) - 1)).toBeLessThan(0.08);
+            }
           }
-    expect(widest).toBeLessThanOrEqual(0.1);
   });
 
   it("stability runs Steady > Balanced > Bold: the share of the most a deal pays that is sure (the Stability bar)", () => {
@@ -195,8 +200,8 @@ describe("rc.34 sponsors — the offers of one decision (S1, S4, s1)", () => {
   });
 });
 
-describe("rc.34 review — weekly pay runs Steady ≥ Balanced ≥ Bold in every decision", () => {
-  it("7 regions × 3 difficulties × ratings 40–100 × 4 tiers × the decision days: ordered, each offer at the tier's value, the spread ≤ 2 %", () => {
+describe("rc.35 — pay runs Bold ≥ Balanced ≥ Steady, goals the other way, in every decision", () => {
+  it("7 regions × 3 difficulties × ratings 40–100 × 4 tiers × the decision days: weekly and per-Monday ceiling ordered, Bold's goal the hardest", () => {
     const seed = 34_301;
     const world = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" });
     const orgs = Object.values(world.orgs).map((o) => ({ region: o.region, rating: o.rating ?? 70 + o.prestige * 6 }));
@@ -205,8 +210,7 @@ describe("rc.34 review — weekly pay runs Steady ≥ Balanced ≥ Bold in every
     const days = [1, ...splitBoundaryWeeks().map(firstDayOfWeek), firstDayOfWeek(5), firstDayOfWeek(15), firstDayOfWeek(26), firstDayOfWeek(32)];
     let decisions = 0;
     let unordered = 0;
-    let widest = 0;
-    let offValue = 0;
+    let goalsUnordered = 0;
     for (const region of regions)
       for (const difficulty of DIFFS)
         for (let rating = 40; rating <= 100; rating += 2) {
@@ -217,34 +221,26 @@ describe("rc.34 review — weekly pay runs Steady ≥ Balanced ≥ Bold in every
                 const today = { seasonIndex, day };
                 const offers = sponsorDecisionFor({ tier, today, careerSeed: seed, difficulty, level });
                 const [steady, balanced, bold] = offers.map((o) => o.terms!.weekly);
+                const [cs, cb, cx] = offers.map((o) => o.terms!.ceiling / Math.max(1, mondaysBetween(today, o.terms!.endsOn)));
                 decisions += 1;
-                if (steady < balanced || balanced < bold) unordered += 1;
-                // The total: each offer's expected value is the tier's value for its Mondays at the team's level.
-                const value = tierValuePerWeek(tier, seasonIndex, difficulty) * levelValueShareOf(tier, level);
-                const per = offers.map((o) => o.terms!.ev / mondaysBetween(today, o.terms!.endsOn));
-                const mean = per.reduce((a, b) => a + b, 0) / per.length;
-                for (const v of per) {
-                  widest = Math.max(widest, Math.abs(v / mean - 1));
-                  offValue = Math.max(offValue, Math.abs(v / value - 1));
-                }
+                if (steady > balanced || balanced > bold || cs >= cb || cb >= cx) unordered += 1;
+                const [gs, gb, gx] = offers.map((o) => o.terms!.goals[0].chance);
+                if (gx > gb || gb > gs) goalsUnordered += 1;
               }
         }
     expect(decisions).toBeGreaterThan(30_000);
     expect(unordered).toBe(0);
-    expect(widest).toBeLessThanOrEqual(0.02);
-    expect(offValue).toBeLessThanOrEqual(0.02);
+    expect(goalsUnordered).toBe(0);
   });
 
-  it("the weekly pay is the profile's share of the tier's value a Monday, whatever the goal: only the fixed part and the bonus follow the chance", () => {
+  it("the weekly pay is the profile's share of its ceiling, whatever the goal", () => {
     const P = CAREER_SPONSOR.profiles;
-    expect(P.steady.weeklyOfValue).toBeGreaterThanOrEqual(P.balanced.weeklyOfValue);
-    expect(P.balanced.weeklyOfValue).toBeGreaterThanOrEqual(P.bold.weeklyOfValue);
     for (const m of MARGINS) {
       const offers = sponsorDecisionFor({ tier: 2, today: MOMENTS[1], careerSeed: 5, difficulty: "normal", level: levelAt(m) });
       const value = tierValuePerWeek(2, MOMENTS[1].seasonIndex, "normal") * levelValueShareOf(2, levelAt(m));
       for (const o of offers) {
         const t = o.terms!;
-        expect(t.weekly).toBe(Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(P[t.profile].weeklyOfValue * value)));
+        expect(t.weekly).toBe(Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(P[t.profile].ceilingOfValue * P[t.profile].weeklyOfCeiling * value)));
       }
     }
   });
@@ -343,7 +339,8 @@ describe("rc.34 sponsors — fines (S3, decision 1-A)", () => {
     for (const o of [balanced, bold]) {
       const t = o.terms!;
       expect(t.fineShare).toBe(CAREER_SPONSOR.profiles[t.profile].fineShare);
-      expect(t.fineCap).toBe(quantize(CAREER_SPONSOR.fines.capWeeks * t.weekly));
+      // rc.35: the cap is per profile (Balanced 1 week, Bold 2).
+      expect(t.fineCap).toBe(quantize(CAREER_SPONSOR.profiles[t.profile].fineCapWeeks * t.weekly));
       const full = fineFor(t, o.bonus, 1);
       expect(full).toBe(quantize(Math.min(t.fineCap, t.fineShare * o.bonus)));
       expect(fineFor(t, o.bonus, 0.5)).toBeLessThanOrEqual(full);
@@ -408,5 +405,47 @@ describe("rc.34 ECO-05 — other income, capped (S7, decision 6-B)", () => {
     // A new split resets the count, a new season the money.
     expect(otherIncomeRoomOf({ tally: { s: 1, earned: 0, other: 0, period: 1, otherCount: 2 }, seasonIndex: 1, week: 12, guaranteedWeekly: 0 }).count).toBe(O.perSplitCap);
     expect(otherIncomeRoomOf({ tally: { s: 1, earned: 9e5, other: 9e4, period: 3, otherCount: 2 }, seasonIndex: 2, week: 2, guaranteedWeekly: 0 }).taken).toBe(0);
+  });
+});
+
+describe("rc.35 front S — the ladder's sponsor access, the season fine cap, the season goal", () => {
+  it("early: two offers, no Bold, tier ≤ 2; better: three with Bold; global: the most money and bootcamps", () => {
+    const early = sponsorAccessFor(0);
+    expect(early).toMatchObject({ offers: 2, boldAllowed: false, tierCap: 2, global: false });
+    expect(sponsorAccessFor(2)).toMatchObject({ offers: 3, boldAllowed: true, global: false });
+    const global = sponsorAccessFor(4);
+    expect(global).toMatchObject({ offers: 3, boldAllowed: true, tierCap: 4, global: true });
+    const two = sponsorDecisionFor({ tier: 3, today: MOMENTS[1], careerSeed: 3, difficulty: "normal", level: levelAt(0), access: early });
+    expect(two.map((o) => o.terms!.profile)).toEqual(["steady", "balanced"]);
+    expect(two.every((o) => o.tier === 2)).toBe(true);
+    const plain = sponsorDecisionFor({ tier: 4, today: MOMENTS[1], careerSeed: 3, difficulty: "normal", level: levelAt(6), access: sponsorAccessFor(3) });
+    const top = sponsorDecisionFor({ tier: 4, today: MOMENTS[1], careerSeed: 3, difficulty: "normal", level: levelAt(6), access: global });
+    expect(top[2].terms!.ceiling).toBeGreaterThan(plain[2].terms!.ceiling);
+    expect(top[0].terms!.global).toBe(true);
+    expect(sponsorFreeBootcampsOf(top[0])).toBe(CAREER_SPONSOR.access.globalBootcamps);
+    expect(sponsorFreeBootcampsOf(plain[0])).toBe(CAREER_SPONSOR.tiers[plain[0].tier - 1].freeBootcampsPerSeason);
+  });
+
+  it("a season's fines never pass seasonCapWeeks weeks of the deal's weekly pay", () => {
+    const terms = { weekly: 10_000 };
+    const cap = quantize(CAREER_SPONSOR.fines.seasonCapWeeks * 10_000);
+    const a = cappedSeasonFine(terms, 1, cap - 2_500);
+    expect(a.fine).toBe(cap - 2_500);
+    const b = cappedSeasonFine({ ...terms, finedSeason: a.finedSeason }, 1, 10_000);
+    expect(b.fine).toBe(2_500);
+    expect(cappedSeasonFine({ ...terms, finedSeason: b.finedSeason }, 1, 5_000).fine).toBe(0);
+    // A new season starts a new tally.
+    expect(cappedSeasonFine({ ...terms, finedSeason: b.finedSeason }, 2, 5_000).fine).toBe(5_000);
+  });
+
+  it("the season target is never harder than a Balanced goal, its stretch a Bold one's", () => {
+    for (const m of [-12, -6, -3, 0, 3, 6, 12]) {
+      const level = levelAt(m);
+      const { target, stretch } = seasonGoalModelFor(level, 1);
+      const balanced = pickGoal("even", level, slotOf(1, 1));
+      expect(target.chance).toBeGreaterThanOrEqual(balanced.chance - 1e-9);
+      expect(stretch.chance).toBeLessThanOrEqual(target.chance + 1e-9);
+      expect(stretch.chance).toBeGreaterThanOrEqual(CAREER_SPONSOR.wordMin.stretch);
+    }
   });
 });

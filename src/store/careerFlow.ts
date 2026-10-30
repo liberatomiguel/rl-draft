@@ -230,6 +230,12 @@ import {
   goalProgressOf,
   isAfter,
   offerTierFor,
+  cappedSeasonFine,
+  seasonGoalMetOf,
+  seasonGoalModelFor,
+  sponsorAccessFor,
+  sponsorFreeBootcampsOf,
+  sponsorLadderLevelOf,
   pickGoal,
   settleDayOf,
   shortfallOf,
@@ -1676,6 +1682,8 @@ function offerSponsorDecision(save: CareerSave, demote: boolean): void {
     difficulty: save.difficulty,
     level: sponsorLevelOf(save),
     demoted,
+    // rc.35 (front S): the ladder's sponsor access (front P's ladder will hand its own level in here).
+    access: sponsorAccessFor(sponsorLadderLevelOf(save.reputation)),
   });
   save.sponsorOffers = offers;
   if (demoted) save.sponsorDemotedSlot = firstSlot;
@@ -1689,6 +1697,26 @@ function offerSponsorDecision(save: CareerSave, demote: boolean): void {
     fromKey: "sponsor",
     linkTo: "/career/finances",
   });
+}
+
+/**
+ * rc.35 (front S): the season goal from the sponsors' level model — the
+ * target a Balanced deal would set for one split (reached in any split),
+ * the stretch a Bold one's (sponsorDeals.seasonGoalModelFor).
+ */
+function attachSeasonGoalModel(save: CareerSave, seasonIndex: number): void {
+  if (!save.seasonGoals || save.squad.length === 0) return;
+  const { target, stretch } = seasonGoalModelFor(sponsorLevelOf(save), seasonIndex);
+  const strip = (g: SponsorGoal) => {
+    const out: { kind: SponsorGoal["kind"]; count: number; place?: number; word: SponsorGoal["word"] } = {
+      kind: g.kind,
+      count: g.count,
+      word: g.word,
+    };
+    if (g.place !== undefined) out.place = g.place;
+    return out;
+  };
+  save.seasonGoals.model = { target: strip(target), stretch: strip(stretch) };
 }
 
 /** rc.34 (ECO-04): a sponsor decision on the desk, as HQ's queue and the cards read it. */
@@ -1844,7 +1872,10 @@ function settleSponsorSplit(save: CareerSave, slot: number): void {
     const progress = goalProgressOf(goal, { results: save.eventResults, inMajorField: inMajorFieldOf(save, slot) });
     const shortfall = shortfallOf(progress);
     goal.missed = shortfall;
-    const fine = fineFor(s.terms, s.bonus, shortfall);
+    // rc.35 (front S): a season's fines never pass fines.seasonCapWeeks weeks of the deal's pay.
+    const capped = cappedSeasonFine(s.terms, save.clock.seasonIndex, fineFor(s.terms, s.bonus, shortfall));
+    const fine = capped.fine;
+    if (fine > 0) s.terms.finedSeason = capped.finedSeason;
     const schedule = fineScheduleFor(s.sponsorId, fine);
     if (schedule) {
       // The settling Monday books none: the first instalment is the next Monday's.
@@ -3323,7 +3354,11 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
 
   // Season-goal settlement (rep risk telegraphed on the goals card).
   if (save.seasonGoals && save.seasonGoals.targetMet === null) {
-    const met = grade === "S" || grade === "A" || grade === "B";
+    // rc.35 (front S): a modelled goal is met if reached in any split; older saves settle on the grade.
+    const model = save.seasonGoals.model;
+    const met = model
+      ? seasonGoalMetOf(model.target, save.clock.seasonIndex, save.eventResults)
+      : grade === "S" || grade === "A" || grade === "B";
     save.seasonGoals.targetMet = met;
     if (!met && save.seasonGoals.repRisk > 0) {
       loseRep(save, save.seasonGoals.repRisk, "repDown");
@@ -3540,6 +3575,7 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // 4. Fresh competition + goals + clock; stars refresh.
   save.competition = emptyCompetition();
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
+  attachSeasonGoalModel(save, nextSeason);
   save.eventResults = [];
   // v0.3 season-scoped bookkeeping resets.
   save.scheduledScrims = [];
@@ -3797,6 +3833,7 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     seq: 0,
     lastPlayedAt: 0,
   };
+  attachSeasonGoalModel(save, 0);
 
   return processDayArrival(save);
 }
@@ -4447,9 +4484,7 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
   const campCost = bootcampCostFor(tier, save.clock.seasonIndex); // rc.32 (M1): indexed
 
   // Sponsor perk: free bootcamps per season (tier 3+ deals).
-  const freeAllowance = save.sponsor
-    ? (CAREER_SPONSOR.tiers[save.sponsor.tier - 1]?.freeBootcampsPerSeason ?? 0)
-    : 0;
+  const freeAllowance = sponsorFreeBootcampsOf(save.sponsor);
   const isFree = save.finances.freeBootcampsUsedThisSeason < freeAllowance;
   if (!isFree && save.finances.balance - campCost < backerLineOf(save).floor) {
     return { save: input, error: "funds" };

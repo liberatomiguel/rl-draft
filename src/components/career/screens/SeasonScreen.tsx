@@ -88,8 +88,10 @@ export function SeasonScreen() {
 
   // Season goal — settled at review time (targetMet flips off null in enterSeasonReview).
   const goals = save.seasonGoals;
-  const goalLabel =
-    goals && typeof (C.goals as Record<string, unknown>)[goals.targetKey] === "string"
+  // rc.35 (front S): a modelled goal reads its own words.
+  const goalLabel = goals?.model
+    ? C.goals.model(goals.model.target.kind, goals.model.target.count, goals.model.target.place ?? 0)
+    : goals && typeof (C.goals as Record<string, unknown>)[goals.targetKey] === "string"
       ? ((C.goals as Record<string, unknown>)[goals.targetKey] as string)
       : null;
 

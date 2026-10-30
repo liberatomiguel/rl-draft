@@ -34,6 +34,7 @@ import {
 } from "@/engine/career/economy";
 import type { CareerSave, SquadPlayer } from "@/engine/career/types";
 import { committedSeedingFor } from "@/engine/career/worldSim";
+import { sponsorFreeBootcampsOf } from "@/engine/career/sponsorDeals";
 import {
   backerLineOf,
   buyGearFlow,
@@ -216,7 +217,7 @@ export function toolboxOf(save: CareerSave): ToolboxItem[] {
   }
 
   const tier = bootcampTierFor(rep);
-  const freeAllowance = save.sponsor ? (CAREER_SPONSOR.tiers[save.sponsor.tier - 1]?.freeBootcampsPerSeason ?? 0) : 0;
+  const freeAllowance = sponsorFreeBootcampsOf(save.sponsor);
   const freeNext = fin.freeBootcampsUsedThisSeason < freeAllowance;
   const lastsSplit = CAREER_GEAR.bootcampSpan === "split";
   const until = fin.bootcampUntil ?? null;

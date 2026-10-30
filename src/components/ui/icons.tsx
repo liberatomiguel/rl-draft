@@ -6,6 +6,109 @@
 
 const P = { strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
+/** rc.35 (sponsor comparison): a stroked 24px glyph from its paths. */
+function Glyph({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      {children}
+    </svg>
+  );
+}
+
+/** Coins — weekly pay. */
+export function CoinsIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <ellipse cx="9" cy="7" rx="5" ry="2.5" {...P} />
+      <path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7" {...P} />
+      <path d="M10 15.3c.9 1.3 3 2.2 5.5 2.2 2.8 0 5-1.1 5-2.5v-4c0-1.4-2.2-2.5-5-2.5" {...P} />
+      <path d="M14 13.4c.5.1 1 .1 1.5.1 2.8 0 5-1.1 5-2.5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Signature — a payment on signing. */
+export function SignIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3 19.5h18" {...P} />
+      <path d="M5 15c2-4 3.5-6 4.5-6 1.6 0-1.5 6 .5 6 1.5 0 2.5-3 4-3 1.2 0 .8 2.5 2 2.5.8 0 1.5-.6 2-1.2" {...P} />
+    </Glyph>
+  );
+}
+
+/** Flag — a milestone (paid the day a first goal is reached). */
+export function FlagIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M5 21V4" {...P} />
+      <path d="M5 4.5h11l-2.5 4 2.5 4H5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Trophy — a goal's bonus. */
+export function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" {...P} />
+      <path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 3.5M17 6h2.5a2.5 2.5 0 0 1-2.6 3.5" {...P} />
+      <path d="M12 14v3.5M8.5 20.5h7M9.5 17.5h5v3h-5z" {...P} />
+    </Glyph>
+  );
+}
+
+/** Target — a goal. */
+export function TargetIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <circle cx="12" cy="12" r="8.5" {...P} />
+      <circle cx="12" cy="12" r="4.5" {...P} />
+      <circle cx="12" cy="12" r="0.8" fill="currentColor" />
+    </Glyph>
+  );
+}
+
+/** Warning triangle — a fine. */
+export function FineIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" {...P} />
+      <path d="M12 10v4.5M12 17.3v.2" {...P} />
+    </Glyph>
+  );
+}
+
+/** Shield — safe (no fine). */
+export function ShieldIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 3 19.5 6v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6L12 3Z" {...P} />
+      <path d="m8.8 12 2.2 2.2 4.2-4.4" {...P} />
+    </Glyph>
+  );
+}
+
+/** Calendar — a deal's length / a payment date. */
+export function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" {...P} />
+      <path d="M3.5 10h17M8 3v4M16 3v4" {...P} />
+    </Glyph>
+  );
+}
+
+/** Globe — a global sponsor. */
+export function GlobeIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <circle cx="12" cy="12" r="8.5" {...P} />
+      <path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.5 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.5-3.5-8.5s1-6 3.5-8.5Z" {...P} />
+    </Glyph>
+  );
+}
+
 /** Crown — Legacy accent. Path matches the dynasty-builder achievement crown. */
 export function CrownIcon({ className }: { className?: string }) {
   return (
