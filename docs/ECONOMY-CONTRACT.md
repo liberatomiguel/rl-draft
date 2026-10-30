@@ -435,6 +435,81 @@ How to read it:
 - **The bands of §3 do not change.** The next re-run, after Miguel's
   decisions, is measured against these rc.31 numbers.
 
+## 9. The rc.32 re-measure — the provisional defaults
+
+Same probe, same 294 careers (seeds 9100 and 17019, 8 seasons) as §8, on
+rc.32 (`d2e5445`): front A's M1, M3, M4, M5, M6 (levers 1–2), M8 and the age
+clock, front B's DEV-01, M2 and BAL-02, the integration and the review's
+fixes (R50–R60). Every move below comes from a **provisional default**
+(§6's 30/10 note), not an approved rule; each flips back by its key. Full
+tables: `ECONOMY-PROBE-rc32.md`, against rc.31's `ECONOMY-PROBE-rc31.md`
+(regenerate with the appendix command; about 25 minutes in four processes
+split by `ECON_REGIONS`). Easy / Normal / Hard unless noted.
+
+| | rc.31 | rc.32 | band (§3) |
+|---|---|---|---|
+| Insolvent, all careers | 68 % (201 of 294) | **30 % (88 of 294)** | — |
+| Insolvent, mean over the 7 policies (a1) | 44 / 77 / 85 % | **0 / 34 / 56 %** | ≤ 2 / 10 / 25 % |
+| Newcomer policies insolvent (a2) | 48 / 81 / 86 % | **0 / 33 / 60 %** | 0 / ≤ 5 / ≤ 20 % |
+| Newcomers' S0–S1 pay their way without a big win (a7) | 62 / 38 / 26 % | **86 / 86 / 69 %** | ≥ 80 / 60 / 40 % |
+| Rescues warned in the 8 weeks before (a3) | 0–45 % | **100 %** | 100 % |
+| Warning lead before the rescue, p50 (a4; rc.32: from the first warning) | 5–8 wk (the few warned) | 19–32 wk | ≥ 4 / 4 / 3 wk |
+| Rescue window, p50 (a5) | 1–8 wk | 10–18 wk | ≥ 10 / 8 / 4 wk |
+| Rescued careers that never end (a6) | 0–17 % | 100 / 28 / 20 % | ≥ 90 / 60 / 30 % |
+| Careers restructured at least once (M4) | — | 29 / 41 / 0 % | — |
+| Normal insolvent by S3: autopilot · tuned · youth | 43 · 29 · 43 % | 0 · 0 · 0 % | — |
+| Renewal raise p50: developed founders · signed at ≤ 19 (d1) | ×2.90 · ×2.26 | ×1.58 · ×1.50 | ≤ ×1.6 |
+| A founder's new ask ÷ guaranteed income, p50 (d1) | 1.63 | 0.64 | ≤ 1.5 |
+| Normal by region: SAM · MENA · OCE · APAC · SSA (EU, NA) (f1) | 93 · 100 · 50 · 43 · 50 % (100, 100) | 21 · 21 · 21 · 0 · 0 % (86, 86) | ≤ 20 % |
+| *Money still decides:* the spender insolvent (d2) | 57 / 93 / 100 % | 0 / 71 / 86 % | ≤ 2 × a1 |
+| Season-rows with a tight Monday, S3–S5 (e3) | 20 / 49 / 52 % | 37 / 49 / 64 % | ≥ 10 / 20 / 30 % |
+| Snowball p90, S2–S7 worst, in seasons of payroll (e1) | 4.4 / 2.0 / 1.8 | 10.4 / 4.2 / 2.1 | ≤ 3.0 / 2.0 / 1.5 |
+| Careers with an 88+ signing by S4 (c3) | 17 / 3 / 0 % | 12 / 5 / 2 % | ≥ 20 / 15 / 10 % |
+| A 90's wage ÷ the T4-contender income (c1) | 0.74 → 0.63 | 0.85 every season | ≥ 0.35 |
+| A dominant season's kept prizes ÷ three-85 wages (e2) | 1.94 → 2.50 | 1.13 | ≤ 1.5 |
+| Payroll ÷ guaranteed income, p50 by season, Normal (b3) | 2.1–7.4 | 2.4–9.5 | 1.0–2.0 |
+| Every stream on one index (b1) | ×1.00–2.21 by S7 | ×1.71–1.73 | ±2 % |
+
+(rc.31's C10 row values are rc.31's dump rendered by rc.32's probe: the
+same records, the new table.)
+
+How to read it:
+- **The unfair break is more than halved, and Easy is solved.** No Easy
+  career ends through money; a newcomer's first two seasons pay their way
+  on every difficulty (a7 passes everywhere for the first time); every
+  rescue now comes with a warning half a season ahead and buys two to four
+  times the weeks. No Normal career breaks by season 3 any more. The
+  founding partner (M3) and the safety net (M4) carry the start; the
+  renewal rule (M2) and DEV-01's growth carry the late seasons (the youth
+  path went from 71 % insolvent on Normal to 0 %).
+- **Money still decides.** Tight Mondays held or grew, the spender still
+  breaks on Normal (71 %) and Hard (86 %), a star still costs a real share
+  of a top budget (c1), and a dominant season no longer pays twice its
+  squad (e2).
+- **What is still out of band, and why.**
+  - EU and NA stay traps (86 % on Normal, as in rc.30 and rc.31): EU's
+    reputation sits at 5 for two seasons (no sponsor before S4; guaranteed
+    income $20 a week in S1), NA's at 12–19. Their pools out-rate a starter
+    roster, so the early results that build reputation never come. This is
+    the biggest single gap (f1), and it is about the path to reputation, not
+    only money.
+  - The snowball p90 rose (e1): more careers survive to the late seasons,
+    and APAC and SSA careers run away (Normal reputation 68–74 by S1,
+    balance $118–158k at S3, the Major slot by S2; DEV-01's world growth
+    and the filler cap moved those regions, R59). The contract keeps M6's
+    lever 3 (the title raise) for exactly this reading.
+  - Payroll ÷ guaranteed income (b3) did not move: M7 was held (9-B, "tune
+    after M1–M3 are measured"); they are now measured, so M7 is the next
+    lever.
+  - The star path (c3) stays rare outside Easy.
+  - Normal and Hard insolvency (a1, a2) stays above the band, mostly EU and
+    NA (24 of the 33 Normal insolvencies) and the spender.
+- **So the next package, after Miguel plays rc.32:** M7 with the numbers it
+  waited for; the EU/NA path to reputation (the early field or the rep the
+  first results pay); M6 lever 3 if the snowball holds; APAC/SSA after the
+  filler cap. Each re-measured on these seeds. Decision 10-A's one
+  documented band adjustment is not used.
+
 ## Appendix — the probe tables (generated)
 
 The probe's output for the baseline's 294 cells, as generated. The careers

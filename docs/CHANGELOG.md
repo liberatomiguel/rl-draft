@@ -277,8 +277,16 @@ behind its own `balance.ts` key, commented `PROVISIONAL (30/10)`, that restores 
 - **Career Hard (BAL-02, R59):** the AI keeps its chemistry (cap 0 → 2) and shifts −0.5 → −0.2: the
   user's Bo5 win rate at equal strength is 81 / 65 / 55 % on Easy / Normal / Hard (rc.31: 81 / 65 /
   81 %). Easy and Normal unchanged.
-- **The re-measure** (the economy probe, the same 294 careers as §8, seeds 9100 and 17019):
-  ECONOMY-CONTRACT §9.
+- **The re-measure** (the economy probe, the same 294 careers as rc.31, seeds 9100 and 17019;
+  ECONOMY-CONTRACT §9, `ECONOMY-PROBE-rc32.md`): insolvent careers 68 → 30 % (Easy 44 → 0 %,
+  Normal 77 → 34 %, Hard 85 → 56 %); newcomers' first two seasons pay their way 62 / 38 / 26 →
+  86 / 86 / 69 %; every rescue warned (was 0–45 %), the first warning 19–32 weeks ahead, rescue
+  windows 10–18 weeks (were 1–8); renewal raises p50 ×2.90 → ×1.58 (developed founders). Money
+  still decides: the spender breaks in 71 % on Normal and 86 % on Hard, tight Mondays S3–S5 hold
+  (37 / 49 / 64 %). Still out of band: EU and NA (86 % on Normal), the snowball p90 (4.2 seasons
+  of payroll on Normal), guaranteed income (M7 held), the star path. The long-career run
+  (`CAREER-ARC-rc32.md`): first Major by S2 on Normal ≈ 29 %, all of it APAC and SSA (100 %);
+  EU, NA, MENA, SAM and OCE 0 %.
 
 ### Fixed — rc.32
 - **Ages jumped two years at the 2022-23 → 2024 rollover.** Root cause: `seasonYear` read each
