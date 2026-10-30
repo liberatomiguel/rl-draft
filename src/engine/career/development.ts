@@ -31,8 +31,10 @@ import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
 import type { BuffLevel, PlayerCard, Region, StatKey, Stats, TournamentState } from "../types";
 import { derivedFloat, streams } from "./seeds";
+import { coachProfileOf, objectiveEffectPct } from "./training";
 import type {
   ArchetypeId,
+  CoachState,
   DrillId,
   CareerPlayerView,
   DeclineRate,
@@ -641,6 +643,18 @@ export function anchorOverall(playerId: string, seasonOrder: number): number | n
   return latest ? finalOverall(latest) : null;
 }
 
+/**
+ * rc.34 (DEV-03 decision 5-A): a player's CAREER-BEST club card overall (the
+ * ex-pro coach's quality reads it, not the last card); null = no card.
+ */
+export function bestCardOverall(playerId: string): number | null {
+  const cards = cardsByPlayer.get(playerId);
+  if (!cards || cards.length === 0) return null;
+  let best = -Infinity;
+  for (const card of cards) best = Math.max(best, finalOverall(card));
+  return Number.isFinite(best) ? best : null;
+}
+
 // ---------------------------------------------------------------------------
 // Views
 // ---------------------------------------------------------------------------
@@ -1204,6 +1218,12 @@ function growthMultFor(age: number): number {
   return g.a25plus;
 }
 
+/**
+ * rc.33's coach training multiplier (0.85 floor with no coach). rc.34 (DEV-03,
+ * decision 7-A): no training tick reads it any more — the base is one rate
+ * for everyone (CAREER_TRAINING.baseRateMult) and the coach acts through the
+ * package. Kept as rc.33's figure for tools and old tests.
+ */
 export function coachMultFor(coachOverall: number | null): number {
   const { perPoint, min, max } = CAREER_TRAINING.coachMult;
   if (coachOverall === null) return min;
@@ -1213,11 +1233,17 @@ export function coachMultFor(coachOverall: number | null): number {
 /**
  * v2.0 (R22) — the coach's effects, spelled out for the market card, the
  * squad panel and the training screen (one formula, three surfaces):
- * training efficiency vs. the no-coach baseline, the team-rating modifier
- * the rating engine applies (TEAM_RATING.coach), and the stat buff.
+ * the training effect, the team-rating modifier the rating engine applies
+ * (TEAM_RATING.coach), and the stat buff.
  */
 export interface CoachEffects {
-  /** Training multiplier vs. the NO-coach baseline, in percent (e.g. +18). */
+  /**
+   * rc.34 (DEV-03): the coach's effect on a Development package, in percent
+   * of the base session rate (normal workload; e.g. +22 for a quality-82
+   * development specialist) — `training.objectiveEffectPct`. No package =
+   * the base, whoever coaches (decision 7-A). rc.33: the multiplier vs. no
+   * coach (the 0.85 floor).
+   */
   trainingPct: number;
   /** Flat team-rating add (0..TEAM_RATING.coach.max), one decimal. */
   ratingMod: number;
@@ -1229,7 +1255,7 @@ export function coachEffectsFor(coach: {
   overall: number;
   bonusType: StatKey;
   bonusLevel: string;
-}): CoachEffects {
+} & Partial<Pick<CoachState, "id" | "name" | "source" | "experience" | "specialty" | "ceiling" | "salaryPerSplit">>): CoachEffects {
   const c = TEAM_RATING.coach;
   const ratingMod = clamp(
     Math.max(0, (coach.overall - c.baseline) * c.scale) +
@@ -1237,11 +1263,15 @@ export function coachEffectsFor(coach: {
     0,
     c.max,
   );
-  const trainingPct = Math.round(
-    (coachMultFor(coach.overall) / CAREER_TRAINING.coachMult.min - 1) * 100,
-  );
+  const profile = coachProfileOf({
+    ...coach,
+    id: coach.id ?? `coach:${coach.overall}`,
+    name: coach.name ?? "",
+    source: coach.source ?? "generated",
+    salaryPerSplit: coach.salaryPerSplit ?? 0,
+  });
   return {
-    trainingPct,
+    trainingPct: objectiveEffectPct("development", profile),
     ratingMod: Math.round(ratingMod * 10) / 10,
     bonusType: coach.bonusType,
     bonusLevel: coach.bonusLevel,
@@ -1294,15 +1324,30 @@ export interface GrowthCtx {
   careerSeed?: number;
 }
 
-interface GainCtx extends GrowthCtx {
+/**
+ * rc.34 (DEV-03): what a training package does to one tick, from
+ * `training.packageEffectFor` — absent = DEV-01's base (×1, no offsets, the
+ * full decline).
+ */
+export interface PackageTickCtx {
+  /** The package's session multiplier on the base (≥ 1). */
+  packageMult?: number;
+  /** Attribute offset growth per training-week (the squad focus or his tweak). */
+  offsetGrowth?: Partial<Record<StatKey, number>>;
+  /** DEV-01's decline × this (recovery, past the plateau). */
+  declineMult?: number;
+}
+
+interface GainCtx extends GrowthCtx, PackageTickCtx {
   seasonIndex: number;
+  /** @deprecated rc.34 (decision 7-A): the coach no longer scales a tick (kept for callers). */
   coachOverall: number | null;
   /** Additive training-efficiency bonus from the gear ladder (0..~0.35). */
   gearBonus: number;
   trainingWeekBonus: boolean;
   /** Training-week equivalents applied at once (match XP multiplies here). */
   weeks: number;
-  /** v2.0 (R27): this week's team drill, if any. */
+  /** @deprecated rc.34: the weekly drill retired into the package's squad focus — ignored. */
   drill?: DrillEffect | null;
 }
 
@@ -1337,6 +1382,8 @@ function contractPacePerWeek(p: SquadPlayer, ctx: GainCtx): number {
  * overall; a single-attribute focus trades a slice of overall for offset
  * growth; auto is the coach's near-optimal plan — WITHOUT a coach it falls
  * back to balanced (the missing coach already costs via coachMult.min).
+ * rc.34 (DEV-03): no tick reads it — the per-card focus retired into the
+ * package (a per-player tweak, CAREER_PLAN.tweakFocus). rc.33's figure.
  */
 export function focusShareFor(
   focus: SquadPlayer["trainingFocus"],
@@ -1349,16 +1396,22 @@ export function focusShareFor(
   return CAREER_TRAINING.focusOverallShare;
 }
 
-/** Session intensity multiplier (v0.2: light/normal/heavy). */
+/** Session intensity multiplier (v0.2: light/normal/heavy). rc.34: retired into the package's workload (rc.33's figure). */
 export function intensityMultFor(intensity: SquadPlayer["trainingIntensity"]): number {
   return CAREER_TRAINING.intensityMult[intensity ?? "normal"] ?? 1;
 }
 
-/** Raw overall gain for `weeks` training-week equivalents (before caps). */
+/**
+ * Raw overall gain for `weeks` training-week equivalents (before caps).
+ * rc.34 (DEV-03, decision 7-A): one base for everyone — the curve ×
+ * CAREER_TRAINING.baseRateMult (rc.33's no-coach floor, so DEV-01's measured
+ * base is unchanged) × gear × the Training Week bonus × the package's
+ * multiplier (≥ 1; absent = the base). The coach, the per-player focus and
+ * intensity and the weekly drill no longer scale it: the package does.
+ */
 function rawGain(p: SquadPlayer, ctx: GainCtx): number {
   // DEV-01 (model 2): the pace toward his real peak replaces rc.31's
-  // weeklyBase × age band × headroom/(headroom + K); the training multipliers
-  // below are unchanged.
+  // weeklyBase × age band × headroom/(headroom + K).
   let base: number;
   if (isGrowthContract(ctx.model)) {
     base = contractPacePerWeek(p, ctx);
@@ -1370,22 +1423,20 @@ function rawGain(p: SquadPlayer, ctx: GainCtx): number {
   }
   return (
     base *
-    coachMultFor(ctx.coachOverall) *
+    CAREER_TRAINING.baseRateMult *
     (1 + ctx.gearBonus) *
-    focusShareFor(p.trainingFocus, ctx.coachOverall) *
-    intensityMultFor(p.trainingIntensity) *
     (ctx.trainingWeekBonus ? 1 + CAREER_CALENDAR.trainingWeekBonus : 1) *
-    (ctx.drill ? ctx.drill.overallMult : 1) *
+    Math.max(1, ctx.packageMult ?? 1) *
     ctx.weeks
   );
 }
 
-/** Focused-attribute offset growth for `weeks` (respects the cap and attr ≤ 99). */
+/** rc.34: the package's attribute offset growth for `weeks` (respects the cap and attr ≤ 99). */
 function grownOffsets(
   p: SquadPlayer,
   weeks: number,
   newOverall: number,
-  drill?: DrillEffect | null,
+  offsetGrowth?: Partial<Record<StatKey, number>>,
 ): Record<StatKey, number> {
   const cap = CAREER_DEV.attrOffsetCap;
   const out = { ...p.attrOffsets };
@@ -1397,15 +1448,15 @@ function grownOffsets(
     const next = Math.min(current + perWeek * weeks, allowedMax);
     out[key] = round2(Math.max(next, -cap));
   };
-  const focus = p.trainingFocus;
-  if (focus !== "balanced" && focus !== "auto") grow(focus, CAREER_TRAINING.focusOffsetPerWeek);
-  // v2.0 (R27): the team drill sharpens its attribute(s) for everyone.
-  if (drill) for (const key of drill.attrs) grow(key, drill.offsetPerWeek);
+  for (const [key, perWeek] of Object.entries(offsetGrowth ?? {}) as [StatKey, number][]) {
+    if (perWeek > 0) grow(key, perWeek);
+  }
   return out;
 }
 
-export interface TrainTickCtx extends GrowthCtx {
+export interface TrainTickCtx extends GrowthCtx, PackageTickCtx {
   seasonIndex: number;
+  /** @deprecated rc.34 (decision 7-A): the coach no longer scales a tick (kept for callers). */
   coachOverall: number | null;
   /** Additive training-efficiency bonus from the gear ladder. */
   gearBonus: number;
@@ -1414,7 +1465,7 @@ export interface TrainTickCtx extends GrowthCtx {
   seasonGained: number;
   /** Training-week equivalents (1 = a full week; a weekday = 1/trainingDaysPerWeek). */
   weeks?: number;
-  /** v2.0 (R27): this week's team drill, if any. */
+  /** @deprecated rc.34: the weekly drill retired into the package's squad focus — ignored. */
   drill?: DrillEffect | null;
   /**
    * DEV-01b (model 2): the share of a year this tick lives through — the
@@ -1434,28 +1485,34 @@ const TRAINING_DAY_YEARS = 1 / (CAREER_TRAINING.trainingDaysPerWeek * CAREER_CAL
  * declinePerYear × the year share it lives × trainingDeclineDampen — the
  * decline lands day by day, never at the rollover.
  */
-function contractTick(p: SquadPlayer, ctx: TrainTickCtx & { weeks: number }): { player: SquadPlayer; gained: number } {
+function contractTick(
+  p: SquadPlayer,
+  ctx: TrainTickCtx & { weeks: number },
+): { player: SquadPlayer; gained: number; declined: number } {
   const { profile, target } = squadArcOf(p, ctx.careerSeed);
   const raw = rawGain(p, ctx);
   const gained = floor4(
     Math.max(0, Math.min(raw, CAREER_DEV.seasonGainCap - ctx.seasonGained, target - p.overall)),
   );
   const exactAge = exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day);
+  // rc.34 (DEV-03): a recovery package slows the decline while it runs (declineMult ≤ 1).
   const decline = ctx.agingYears
     ? declinePerYearOf({ exactAge, peakAge: p.peakAge, plateauYears: profile.plateauYears, declineRate: p.declineRate }) *
       ctx.agingYears *
-      CAREER_AGE.trainingDeclineDampen
+      CAREER_AGE.trainingDeclineDampen *
+      clamp(ctx.declineMult ?? 1, 0, 1)
     : 0;
   const overall = clamp(round4(p.overall + gained - decline), 60, 99);
   return {
     player: {
       ...p,
       overall,
-      attrOffsets: grownOffsets(p, ctx.weeks, overall, ctx.drill),
+      attrOffsets: grownOffsets(p, ctx.weeks, overall, ctx.offsetGrowth),
       gainedThisSplit: round4(ctx.splitGained + gained),
       gainedThisSeason: round4(ctx.seasonGained + gained),
     },
     gained,
+    declined: Math.max(0, round4(p.overall + gained - overall)),
   };
 }
 
@@ -1470,7 +1527,7 @@ function contractTick(p: SquadPlayer, ctx: TrainTickCtx & { weeks: number }): { 
 export function trainWeek(
   p: SquadPlayer,
   ctx: TrainTickCtx,
-): { player: SquadPlayer; gained: number } {
+): { player: SquadPlayer; gained: number; declined: number } {
   const weeks = ctx.weeks ?? 1;
   if (isGrowthContract(ctx.model)) return contractTick(p, { ...ctx, weeks });
   const raw = rawGain(p, { ...ctx, weeks });
@@ -1490,11 +1547,12 @@ export function trainWeek(
     player: {
       ...p,
       overall,
-      attrOffsets: grownOffsets(p, weeks, overall, ctx.drill),
+      attrOffsets: grownOffsets(p, weeks, overall, ctx.offsetGrowth),
       gainedThisSplit: round4(ctx.splitGained + gained),
       gainedThisSeason: round4(ctx.seasonGained + gained),
     },
     gained,
+    declined: 0,
   };
 }
 
@@ -1510,7 +1568,7 @@ export function trainDay(
     aging?: boolean;
   },
   weekShare = 1,
-): { player: SquadPlayer; gained: number } {
+): { player: SquadPlayer; gained: number; declined: number } {
   const { aging, ...rest } = ctx;
   return trainWeek(p, {
     ...rest,
@@ -1526,27 +1584,30 @@ export function trainDay(
  */
 export function trainingProjection(
   p: SquadPlayer,
-  ctx: GrowthCtx & {
-    seasonIndex: number;
-    coachOverall: number | null;
-    gearBonus: number;
-    trainingWeekBonus: boolean;
-    drill?: DrillEffect | null;
-  },
+  ctx: GrowthCtx &
+    PackageTickCtx & {
+      seasonIndex: number;
+      coachOverall: number | null;
+      gearBonus: number;
+      trainingWeekBonus: boolean;
+      /** @deprecated rc.34: ignored (the drill retired into the package). */
+      drill?: DrillEffect | null;
+    },
 ): {
   weeklyOverall: number;
+  /** rc.34: the largest attribute offset growth a week (the package's focus or his tweak). */
   weeklyOffset: number;
   /** DEV-01 (model 2): overall lost per week past his plateau (0 before it; rc.31: 0, the rollover took it). */
   weeklyDecline: number;
 } {
-  const focused = p.trainingFocus !== "balanced" && p.trainingFocus !== "auto";
-  const weeklyOffset = focused ? CAREER_TRAINING.focusOffsetPerWeek : 0;
+  const weeklyOffset = round2(Math.max(0, ...Object.values(ctx.offsetGrowth ?? {}).map((v) => v ?? 0)));
   if (isGrowthContract(ctx.model)) {
     const { profile, target } = squadArcOf(p, ctx.careerSeed);
     const exactAge = exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day);
     const weeklyDecline = round2(
       (declinePerYearOf({ exactAge, peakAge: p.peakAge, plateauYears: profile.plateauYears, declineRate: p.declineRate }) *
-        CAREER_AGE.trainingDeclineDampen) /
+        CAREER_AGE.trainingDeclineDampen *
+        clamp(ctx.declineMult ?? 1, 0, 1)) /
         CAREER_CALENDAR.weeksPerSeason,
     );
     const weeklyOverall = round2(Math.max(0, Math.min(rawGain(p, { ...ctx, weeks: 1 }), target - p.overall)));
@@ -1566,13 +1627,15 @@ export function trainingProjection(
  */
 export function trainingEta(
   p: SquadPlayer,
-  ctx: GrowthCtx & {
-    seasonIndex: number;
-    coachOverall: number | null;
-    gearBonus: number;
-    trainingWeekBonus: boolean;
-    drill?: DrillEffect | null;
-  },
+  ctx: GrowthCtx &
+    PackageTickCtx & {
+      seasonIndex: number;
+      coachOverall: number | null;
+      gearBonus: number;
+      trainingWeekBonus: boolean;
+      /** @deprecated rc.34: ignored (the drill retired into the package). */
+      drill?: DrillEffect | null;
+    },
 ): {
   progress: number;
   toNext: number;

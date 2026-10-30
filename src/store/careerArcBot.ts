@@ -31,6 +31,8 @@ import type {
   CareerSave,
   EventTier,
   ScoutLevel,
+  ScrimLevel,
+  TrainingPackage,
 } from "@/engine/career/types";
 import type { Placement, Region } from "@/engine/types";
 import {
@@ -48,7 +50,6 @@ import {
   renewalTalkFor,
   resolveInsertFlow,
   rolloverToNextSeason,
-  runScrimFlow,
   signPlayerFlow,
   simEventToEnd,
   squadIsShort,
@@ -58,6 +59,13 @@ import {
   weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
+import {
+  approveTrainingProposalFlow,
+  setTrainingPackageFlow,
+  trainingDecisionOf,
+  trainingOf,
+  trainingSeasonEnd,
+} from "./careerTraining";
 
 // ---------------------------------------------------------------------------
 // Policies
@@ -70,7 +78,9 @@ export type ArcPolicyId =
   | "spender"
   | "badSponsor"
   | "losingStart"
-  | "coachChurn";
+  | "coachChurn"
+  | "delegator"
+  | "trainer";
 
 export interface ArcPolicy {
   id: ArcPolicyId;
@@ -89,8 +99,15 @@ export interface ArcPolicy {
   renew: "all" | "selective";
   /** No coach, the best affordable one, or a new one every season (coach change). */
   coach: "none" | "best" | "churn";
-  /** Scrim on Tuesdays and Thursdays. */
+  /**
+   * rc.34 (DEV-03, TRAINING-CONTRACT §7): "base" never sets a package;
+   * "repeat" sets a Development package once ("I set it", repeated every
+   * period); "delegate" lets the coach run it (no coach = the base).
+   */
+  training: "base" | "repeat" | "delegate";
+  /** rc.34: the repeated package's scrims — two a week (Tue, Thu) at `scrimLevel`, or none. */
   scrims: boolean;
+  scrimLevel: ScrimLevel | "auto";
   /** Take a bank loan when the balance goes negative. */
   bank: boolean;
   /** Incoming bids: always declined, or accepted while the runway is under eight weeks. */
@@ -103,18 +120,20 @@ const base: Omit<ArcPolicy, "id"> = {
   market: "keep",
   renew: "all",
   coach: "none",
+  training: "delegate",
   scrims: false,
+  scrimLevel: "even",
   bank: false,
   bids: "decline",
 };
 
 export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
-  /** The median, hands-off manager: takes the best sponsor, renews everyone, never shops. */
+  /** The median, hands-off manager: takes the best sponsor, renews everyone, never shops (delegates; no coach = the base). */
   autopilot: { id: "autopilot", ...base },
-  /** The engaged manager chasing titles: upgrades, coach, scrims, selective renewals. */
-  tuned: { id: "tuned", ...base, market: "upgrade", renew: "selective", coach: "best", scrims: true, bids: "whenTight" },
-  /** A youth core: the prospects start, young high-potential signings, everyone renewed. */
-  youth: { id: "youth", ...base, rosterKey: "prospects", market: "youth", coach: "best", scrims: true, bids: "whenTight" },
+  /** The engaged manager chasing titles: upgrades, coach, a Development package with scrims, selective renewals. */
+  tuned: { id: "tuned", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, bids: "whenTight" },
+  /** A youth core: the prospects start, young high-potential signings, everyone renewed; a Development package. */
+  youth: { id: "youth", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, bids: "whenTight" },
   /** A costly squad: stars first, borrowing to pay for them. */
   spender: {
     id: "spender",
@@ -123,6 +142,7 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
     market: "stars",
     renew: "selective",
     coach: "best",
+    training: "repeat",
     scrims: true,
     bank: true,
   },
@@ -137,10 +157,42 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
     market: "upgrade",
     renew: "selective",
     coach: "churn",
+    training: "repeat",
     scrims: true,
     bids: "whenTight",
   },
+  /** rc.34 (TRAINING-CONTRACT §7): the delegator — hires the best coach and lets him run every period. */
+  delegator: { id: "delegator", ...base, coach: "best", training: "delegate" },
+  /** rc.34 (§7): the trainer — the best coach and a manual Development package with even scrims, renewed every period. */
+  trainer: { id: "trainer", ...base, coach: "best", training: "repeat", scrims: true, scrimLevel: "even" },
 };
+
+/**
+ * The sweeps' default policies: the seven of rc.30–33, so a re-measure plays
+ * the same careers as the baselines (147 = 7 regions × 3 presets × 7). The
+ * two rc.34 training policies join on request (ARC_POLICIES / ECON_POLICIES
+ * = delegator,trainer).
+ */
+export const ARC_DEFAULT_POLICIES: readonly ArcPolicyId[] = [
+  "autopilot",
+  "tuned",
+  "youth",
+  "spender",
+  "badSponsor",
+  "losingStart",
+  "coachChurn",
+];
+
+/** rc.34: the Development package a "repeat" policy sets once (normal workload, the policy's scrims). */
+function arcPackageFor(policy: ArcPolicy): TrainingPackage {
+  return {
+    objective: "development",
+    focus: "balanced",
+    workload: "normal",
+    scrimsPerWeek: policy.scrims ? 2 : 0,
+    scrimLevel: policy.scrimLevel,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Records
@@ -199,6 +251,27 @@ export interface ArcSeason {
    * `ARC_GAP_BUCKETS`), [won, lost] — "even" is the presets' intent row.
    */
   seriesByGap?: Record<string, [number, number]>;
+  /**
+   * rc.34 (DEV-03, TRAINING-CONTRACT §7): the season's training — periods
+   * filed, prompts the manager met (t1), the package objective per period
+   * ("base" = none), package scrims won / lost, the scrims' share of each
+   * player's period gain (t4, p90), players ruled out by the pre-event roll,
+   * and each player's season gain split by source. Absent in older dumps.
+   */
+  training?: ArcTraining;
+}
+
+/** rc.34 (DEV-03): one season of training in the arc records. */
+export interface ArcTraining {
+  summaries: number;
+  prompts: number;
+  objectives: string[];
+  scrimsWon: number;
+  scrimsLost: number;
+  scrimShareP90: number;
+  unavailable: number;
+  /** Per squad player at the season's end: age, overall gained (sessions, scrims, series), coach's share. */
+  players: { age: number; gain: number; sessions: number; scrims: number; series: number; coachShare: number }[];
 }
 
 /** rc.33 (BAL-04): the rating-gap buckets of `ArcSeason.seriesByGap` (user − opponent). */
@@ -244,6 +317,8 @@ interface Tally {
   sales: number;
   series: Partial<Record<EventTier, [number, number]>>;
   seriesByGap: Record<string, [number, number]>;
+  /** rc.34: the days a training proposal held the clock (t1). */
+  promptDays: Set<number>;
 }
 
 function newTally(save: CareerSave, seen: Set<string>): Tally {
@@ -259,6 +334,58 @@ function newTally(save: CareerSave, seen: Set<string>): Tally {
     sales: 0,
     series: {},
     seriesByGap: {},
+    promptDays: new Set(),
+  };
+}
+
+/** rc.34 (DEV-03): the season's training read off its filed summaries (call after the rollover's filing, or at the end). */
+function trainingOfSeason(save: CareerSave, seasonIndex: number, t: Tally): ArcTraining {
+  const hist = trainingOf(save).history.filter((h) => h.seasonIndex === seasonIndex);
+  const shares: number[] = [];
+  const byPlayer = new Map<string, ArcTraining["players"][number]>();
+  let won = 0;
+  let lost = 0;
+  let unavailable = 0;
+  for (const h of hist) {
+    for (const [w, l] of Object.values(h.scrims)) {
+      won += w;
+      lost += l;
+    }
+    for (const p of h.players) {
+      const gain = p.after - p.before;
+      if (p.sessions + p.scrims > 0.01) shares.push(p.scrims / (p.sessions + p.scrims + p.seriesGain));
+      if (p.unavailable) unavailable += 1;
+      const row = byPlayer.get(p.id) ?? { age: 0, gain: 0, sessions: 0, scrims: 0, series: 0, coachShare: 0 };
+      row.gain += gain;
+      row.sessions += p.sessions;
+      row.scrims += p.scrims;
+      row.series += p.seriesGain;
+      row.coachShare += p.coachShare;
+      byPlayer.set(p.id, row);
+    }
+  }
+  for (const [id, row] of byPlayer) {
+    const sq = save.squad.find((p) => p.id === id);
+    row.age = sq ? ageOf(sq.birthYear, seasonIndex) : 0;
+  }
+  const sorted = [...shares].sort((a, b) => a - b);
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  return {
+    summaries: hist.length,
+    prompts: t.promptDays.size,
+    objectives: [...hist].reverse().map((h) => h.package?.objective ?? "base"),
+    scrimsWon: won,
+    scrimsLost: lost,
+    scrimShareP90: sorted.length ? r2(sorted[Math.min(sorted.length - 1, Math.round(0.9 * (sorted.length - 1)))]) : 0,
+    unavailable,
+    players: [...byPlayer.values()].map((r) => ({
+      age: r.age,
+      gain: r2(r.gain),
+      sessions: r2(r.sessions),
+      scrims: r2(r.scrims),
+      series: r2(r.series),
+      coachShare: r2(r.coachShare),
+    })),
   };
 }
 
@@ -558,8 +685,15 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
     if (isWindowStartWeek(week) && dow === 2 && week <= 2) save = coachMoves(save, policy);
     if (week === 24 && dow === 1) save = renewals(save, policy);
   }
-  if (policy.scrims && (dow === 2 || dow === 4) && !save.activeEvent) {
-    const res = runScrimFlow(save);
+  // rc.34 (DEV-03): training is a package per period, never a weekly click —
+  // a waiting proposal is approved (the bot never adjusts), and a "repeat"
+  // policy sets its Development package once (repeat renews it every period).
+  if (trainingDecisionOf(save)) {
+    t.promptDays.add(save.clock.seasonIndex * 1000 + save.clock.day);
+    save = approveTrainingProposalFlow(save).save;
+  }
+  if (policy.training === "repeat" && save.phase === "running" && !trainingOf(save).userPackage) {
+    const res = setTrainingPackageFlow(save, arcPackageFor(policy));
     if (!res.error) save = res.save;
   }
   if (policy.bank) save = borrow(save, t);
@@ -585,6 +719,8 @@ const ARC_BOT_PREFS: CareerPrefs = {
 
 function inputFor(region: Region, difficulty: CareerDifficulty, policy: ArcPolicy): CreateCareerInput {
   return {
+    // rc.34 (DEV-03): the policy's training mode, never the preset's (comparable across difficulties).
+    trainingMode: policy.training === "delegate" ? "coach" : "manual",
     identity: {
       orgName: "Arc Bot",
       abbrev: "ARC",
@@ -697,6 +833,12 @@ export function playArcCareer(cfg: {
       squad: squadRows(save),
       series: t.series,
       seriesByGap: t.seriesByGap,
+      // rc.34: the last period is filed at the rollover — read it off a copy filed now.
+      training: (() => {
+        const filed = structuredClone(save);
+        trainingSeasonEnd(filed);
+        return trainingOfSeason(filed, save.clock.seasonIndex, t);
+      })(),
     });
     const row = out.seasons[out.seasons.length - 1];
     if (row.majorsQualified > 0 && out.firstMajorSeason === null) out.firstMajorSeason = row.seasonIndex;

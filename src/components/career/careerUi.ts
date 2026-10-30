@@ -91,6 +91,7 @@ import type {
 } from "@/engine/career/types";
 import type { Region, Stats, TournamentTeam } from "@/engine/types";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
+import { packageTickCtxOf, trainingDecisionOf } from "@/store/careerTraining";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { roundsOf } from "@/components/career/event/eventPlayback";
 import { participationOf, type Participation } from "@/components/career/event/weekendView";
@@ -423,7 +424,7 @@ export function agePhase(save: CareerSave, p: SquadPlayer): PhaseLabel {
   );
 }
 
-/** Truthful training projection straight from the engine (no UI math). */
+/** Truthful training projection straight from the engine (no UI math) — rc.34: under the period's package. */
 export function squadTrainingProjection(
   save: CareerSave,
   p: SquadPlayer,
@@ -432,13 +433,13 @@ export function squadTrainingProjection(
     seasonIndex: save.clock.seasonIndex,
     coachOverall: save.coach?.overall ?? null,
     gearBonus: gearTrainingBonus(save.finances.gear),
-    drill: activeDrillFor(save),
     trainingWeekBonus: false,
     ...growthCtxOf(save),
+    ...packageTickCtxOf(save, p.id),
   });
 }
 
-/** v2.0 (R29): growth made tangible — progress to the next point + ETA. */
+/** v2.0 (R29): growth made tangible — progress to the next point + ETA (rc.34: under the period's package). */
 export function squadTrainingEta(save: CareerSave, p: SquadPlayer): ReturnType<typeof trainingEta> {
   const week = weekAt(weekOfDay(save.clock.day));
   return trainingEta(p, {
@@ -446,8 +447,8 @@ export function squadTrainingEta(save: CareerSave, p: SquadPlayer): ReturnType<t
     coachOverall: save.coach?.overall ?? null,
     gearBonus: gearTrainingBonus(save.finances.gear),
     trainingWeekBonus: (week.kind === "open" || week.kind === "preseason") && !save.pendingEventDef,
-    drill: activeDrillFor(save),
     ...growthCtxOf(save),
+    ...packageTickCtxOf(save, p.id),
   });
 }
 
@@ -699,6 +700,8 @@ export function continueKind(save: CareerSave): ContinueKind {
   if (squadHoldFor(save)) return "decision";
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) return "event";
   if (save.pendingInsert && save.pendingInsert.day === save.clock.day) return "decision";
+  // rc.34 (DEV-03): the coach's training proposal waiting for approval (front G folds it into H1's queue).
+  if (trainingDecisionOf(save)) return "decision";
   if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) {
     return "decision";
   }

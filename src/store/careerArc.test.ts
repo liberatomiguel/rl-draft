@@ -44,6 +44,7 @@ import { agePassAndIntake, buildWorldAtCreation, worldGrowthWeek } from "@/engin
 import type { Region } from "@/engine/types";
 import {
   ARC_GAP_BUCKETS,
+  ARC_DEFAULT_POLICIES,
   ARC_POLICIES,
   playArcCareer,
   type ArcCareer,
@@ -105,7 +106,10 @@ it.skipIf(!env.CAREER_ARC)(
   () => {
     const regions = list(env.ARC_REGIONS, ALL_REGIONS);
     const diffs = list<CareerDifficulty>(env.ARC_DIFFS, ["easy", "normal", "hard"]);
-    const policies = list<ArcPolicyId>(env.ARC_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[]);
+    // rc.34: the seven baseline policies by default; ARC_POLICIES may name the two training ones.
+    const policies = env.ARC_POLICIES
+      ? list<ArcPolicyId>(env.ARC_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[])
+      : [...ARC_DEFAULT_POLICIES];
     const seeds = Number(env.ARC_SEEDS ?? 2);
     const seasons = Number(env.ARC_SEASONS ?? 8);
     const [slice, slices] = (env.ARC_SLICE ?? "0/1").split("/").map(Number);

@@ -28,6 +28,7 @@ import {
   userIsDirect,
   type CreateCareerInput,
 } from "./careerFlow";
+import { setTrainingPackageFlow } from "./careerTraining";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -99,29 +100,26 @@ describe("bank loan flows (R21)", () => {
   });
 });
 
-describe("weekly drill through the day clock (R27)", () => {
-  it("a chosen drill grows its attribute for the whole squad; a stale week drops it; delegation auto-picks", () => {
+describe("rc.34 (DEV-03): the weekly drill retired into the package's squad focus", () => {
+  it("a package's focus grows its attribute for the whole squad through the day clock; the drill is gone", () => {
     let save = createCareerSave(INPUT, 31337);
-    save = { ...save, prefs: { ...save.prefs, autoTrain: false } };
     expect(activeDrillFor(save)).toBeNull();
-    save = setDrillFlow(save, "rotations");
-    expect(activeDrillFor(save)?.id).toBe("rotations");
+    expect(setDrillFlow(save, "rotations")).toBe(save); // a no-op now
+    save = setTrainingPackageFlow(save, {
+      objective: "development",
+      focus: "rotations",
+      workload: "normal",
+      scrimsPerWeek: 0,
+      scrimLevel: "auto",
+    }).save;
     const before = save.squad.map((p) => p.attrOffsets.defense ?? 0);
-    // Tue → Fri of week 1: four training days of the drill.
+    // Tue → Fri of week 1: four training days of the package (Monday's ran at the base).
     save = advanceTo(save, 5);
     save.squad.forEach((p, i) => expect(p.attrOffsets.defense ?? 0).toBeGreaterThan(before[i]));
-    // The drill is week-scoped: next Monday it no longer applies…
-    save = advanceTo(save, firstDayOfWeek(2));
-    expect(activeDrillFor(save)).toBeNull();
-    // …unless training is delegated TO A COACH, whose plan picks one (their own buff).
-    const noCoach = { ...save, prefs: { ...save.prefs, autoTrain: true }, coach: null };
-    expect(activeDrillFor(noCoach)).toBeNull();
-    const delegated = {
-      ...noCoach,
-      coach: { id: "c", name: "Coach", overall: 80, bonusType: "defense" as const, bonusLevel: "+", salaryPerSplit: 1_000, source: "generated" as const },
-    };
-    expect(activeDrillFor(delegated)?.id).toBe("rotations");
-    expect(setDrillFlow(save, null).drill).toBeNull();
+    // It is a period routine, not a week's: next Monday it still runs.
+    const mid = save.squad.map((p) => p.attrOffsets.defense ?? 0);
+    save = advanceTo(save, firstDayOfWeek(2) + 1);
+    save.squad.forEach((p, i) => expect(p.attrOffsets.defense ?? 0).toBeGreaterThan(mid[i]));
   });
 });
 

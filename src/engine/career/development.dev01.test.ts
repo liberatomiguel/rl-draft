@@ -276,9 +276,10 @@ describe("DEV-01d — the curve: no split cap, a season cap, steep young, never 
     trainWeek(p, { seasonIndex: 1, coachOverall: 85, gearBonus: 0.2, trainingWeekBonus: true, splitGained: p.gainedThisSplit, seasonGained: p.gainedThisSeason, weeks, ...M2, ...extra });
 
   it("no per-split cap: a split can bank more than rc.31's 3; the season cap (7) still holds", () => {
-    // A split is ten weeks; heavy sessions with a coach and gear clear rc.31's 3.
-    let p = kid({ potential: 95, trainingIntensity: "heavy" });
-    for (let w = 0; w < 10; w++) p = tick(p, 1.3).player;
+    // A split is ten weeks; a heavy package with gear clears rc.31's 3
+    // (rc.34: the workload lives in the package's multiplier).
+    let p = kid({ potential: 95 });
+    for (let w = 0; w < 10; w++) p = tick(p, 1.3, { packageMult: 1.3 }).player;
     expect(p.gainedThisSplit).toBeGreaterThan(CAREER_TRAINING.maxSplitGain);
     for (let w = 0; w < 40; w++) p = tick(p, 1).player;
     expect(p.gainedThisSeason).toBeLessThanOrEqual(CAREER_DEV.seasonGainCap + 1e-9);

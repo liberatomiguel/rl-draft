@@ -49,13 +49,11 @@ import {
   CAREER_UNLOCKS,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
-  TOURNAMENT,
 } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { playerNameBankFor } from "@/data/career/names";
 import { RESCUE_PARTNER_BRAND } from "@/data/career/sponsors";
-import { simulateSeries } from "@/engine/match";
 import {
   asSwissOnly,
   atPlayoffsStart,
@@ -102,10 +100,8 @@ import {
 import {
   ageOf,
   applyMatchXp,
-  autoDrillFor,
   becomesCoachOnRetirement,
   isCompetitiveAge,
-  drillEffectFor,
   fieldQualityFor,
   playerViewById,
   seasonYear,
@@ -119,6 +115,20 @@ import {
   growthCtxOf,
   userSeriesPlayed,
 } from "@/engine/career/development";
+import {
+  initialTrainingState,
+  noteSeriesXp,
+  noteUnavailable,
+  onCoachChanged,
+  repairTrainingOnLoad,
+  runPackageScrims,
+  runTrainingSession,
+  simulateScrimSeries,
+  trainingDayStart,
+  trainingDecisionOf,
+  trainingSeasonEnd,
+  wearUnavailabilityAddOf,
+} from "./careerTraining";
 import { insertById } from "@/data/career/inserts";
 import { insertDowFor, rollInsertFor } from "@/engine/career/inserts";
 import {
@@ -209,7 +219,6 @@ import {
   fieldForEvent,
   LINEUP_SEATS,
   localSeedRowsFor,
-  orgTeamFor,
   realOrgIntake,
   regionalSeedingFor,
   repairLegacyWorld,
@@ -229,6 +238,7 @@ import type {
   CoachState,
   CompactEventResult,
   DrillId,
+  TrainingMode,
   MailItem,
   ManagementStyle,
   MondayBalance,
@@ -732,6 +742,11 @@ export function processDayArrival(input: CareerSave): CareerSave {
   const dow = dayOfWeekOf(day);
   const cal = weekAt(week);
 
+  // rc.34 (DEV-03): a new training period files the last one's summary and
+  // opens this one (the package by the mode; "approve" holds the day for the
+  // coach's proposal) — first, so the summary reads the squad as it ended.
+  trainingDayStart(save);
+
   // =========================== MONDAY =====================================
   if (dow === 1) {
     save.scrimsThisWeek = 0;
@@ -1121,13 +1136,13 @@ export function processDayArrival(input: CareerSave): CareerSave {
   // v0.3: committed-event weeks are match-prep weeks — they now train at
   // matchPrepShare instead of freezing entirely (playing a weak-field event
   // must never develop players SLOWER than skipping it).
+  // rc.34 (DEV-03): the session runs the period's package (or DEV-01's base),
+  // once per day (`plan.lastSessionDay`), then the package's scrim of the
+  // day (Tue / Wed / Thu, never a matchday). A proposal waiting for the
+  // manager holds today's session until it is answered.
   if (dow <= CAREER_TRAINING.trainingDaysPerWeek) {
-    const prep = save.pendingEventDef !== null;
-    applyDailyTraining(
-      save,
-      (cal.kind === "open" || cal.kind === "preseason") && !prep,
-      prep ? CAREER_TRAINING.matchPrepShare : 1,
-    );
+    runTrainingSession(save);
+    runPackageScrims(save);
   }
 
   // ==================== TUE–THU (v2.0 R33: the weekly insert) ===============
@@ -1212,13 +1227,12 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   if (save.flags[usedKey]) return;
   if (def.tier === "t3" || def.tier === "t2") return; // officials only
   const rng = createRng(deriveSeed(save.careerSeed, streams.random(seasonIndex, week)));
-  // Heavy training raises the telegraphed fatigue risk (v0.2 intensity).
-  const heavyCount = save.squad.filter(
-    (p) => save.starterIds.includes(p.id) && p.trainingIntensity === "heavy",
-  ).length;
+  // rc.34 (DEV-03 decision 6-A): the period's projected wear raises the
+  // telegraphed risk (shown before approval, ≤ CAREER_PLAN.wear.chanceMax) —
+  // it replaces rc.33's +1 point per heavy-intensity starter.
   const chance =
     CAREER_WORLD.unavailabilityChancePerWeek * CAREER_WORLD.unavailabilityEventMult +
-    heavyCount * CAREER_TRAINING.heavyUnavailabilityAdd;
+    wearUnavailabilityAddOf(save);
   if (!rng.chance(chance)) return;
   const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
   if (starters.length < LINEUP_SEATS) return;
@@ -1228,6 +1242,7 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
   const victim = rng.pick(starters);
   save.flags[usedKey] = true;
   save.pendingUnavailability = { playerId: victim.id, eventId: def.id };
+  noteUnavailable(save, victim.id);
   pushNews(save, {
     type: "org",
     priority: 2,
@@ -1334,54 +1349,24 @@ function ingestResult(save: CareerSave, result: CompactEventResult): void {
 }
 
 /**
- * v2.0 (R27): the drill in force this week — the player's pick for THIS
- * week, else (when training is delegated) the coach's auto pick, else none.
+ * v2.0 (R27): the drill in force this week.
+ * @deprecated rc.34 (DEV-03): the weekly drill retired into the package's
+ * squad focus (`careerTraining`, TRAINING-CONTRACT §8 step 2) — always null;
+ * kept so older callers compile.
  */
-export function activeDrillFor(save: CareerSave): DrillEffect | null {
-  const week = weekOfDay(save.clock.day);
-  const chosen =
-    save.drill && save.drill.seasonIndex === save.clock.seasonIndex && save.drill.week === week
-      ? save.drill.id
-      : null;
-  if (chosen) return drillEffectFor(chosen);
-  // Delegation needs a coach to delegate to (the Training screen's rule too).
-  if (save.prefs.autoTrain && save.coach) return drillEffectFor(autoDrillFor(save.coach.bonusType, week));
+export function activeDrillFor(_save: CareerSave): DrillEffect | null {
+  void _save;
   return null;
 }
 
-/** v2.0 (R27): choose this week's team drill (null clears it). */
-export function setDrillFlow(input: CareerSave, id: DrillId | null): CareerSave {
-  const save = clone(input);
-  save.drill = id
-    ? { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day), id }
-    : null;
-  return save;
-}
-
-function applyDailyTraining(save: CareerSave, trainingWeekBonus: boolean, weekShare = 1): void {
-  const gearBonus = gearTrainingBonus(save.finances.gear);
-  const drill = activeDrillFor(save);
-  // DEV-01 (rc.32): the save's growth model and today — a calendar training
-  // day also ages the player (the decline lands day by day, model 2).
-  const growth = growthCtxOf(save);
-  for (const p of save.squad) {
-    const res = trainDay(
-      p,
-      {
-        seasonIndex: save.clock.seasonIndex,
-        coachOverall: save.coach?.overall ?? null,
-        gearBonus,
-        trainingWeekBonus,
-        splitGained: p.gainedThisSplit,
-        seasonGained: p.gainedThisSeason,
-        drill,
-        ...growth,
-        aging: true,
-      },
-      weekShare,
-    );
-    Object.assign(p, res.player);
-  }
+/**
+ * v2.0 (R27): choose this week's team drill.
+ * @deprecated rc.34 (DEV-03): the drill retired into the package — a no-op
+ * (an older save's drill expires with its week).
+ */
+export function setDrillFlow(input: CareerSave, _id: DrillId | null): CareerSave {
+  void _id;
+  return input;
 }
 
 /**
@@ -1922,7 +1907,7 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
   if (fx.chemistry) for (const p of save.squad) p.splitsTogether += fx.chemistry;
   if (fx.trainingWeeks) {
     const gearBonus = gearTrainingBonus(save.finances.gear);
-    const drill = activeDrillFor(save);
+    // rc.34 (DEV-03): an insert's training weeks run at DEV-01's base (no package boost, no drill).
     for (const p of save.squad) {
       const weeks = fx.trainingWeeks;
       if (weeks > 0) {
@@ -1934,13 +1919,12 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
           splitGained: p.gainedThisSplit,
           seasonGained: p.gainedThisSeason,
           weeks,
-          drill,
           ...growthCtxOf(save),
         });
         Object.assign(p, res.player);
       } else {
         // A lost session: a small, capped step back (never below 60).
-        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, drill, ...growthCtxOf(save) });
+        const proj = trainingProjection(p, { seasonIndex, coachOverall: save.coach?.overall ?? null, gearBonus, trainingWeekBonus: false, ...growthCtxOf(save) });
         p.overall = Math.max(60, p.overall - proj.weeklyOverall * -weeks);
       }
     }
@@ -2340,6 +2324,7 @@ export function finishEvent(input: CareerSave): CareerSave {
     const wasFielded = fielded.includes(p.id);
     const isSub = !wasFielded && p.role === "sub";
     if (wasFielded || isSub) {
+      const before = p.overall;
       const next = applyMatchXp(p, {
         seasonIndex: save.clock.seasonIndex,
         fieldQuality: ev.fieldQuality,
@@ -2350,6 +2335,8 @@ export function finishEvent(input: CareerSave): CareerSave {
         ...growthCtxOf(save),
       });
       Object.assign(p, next);
+      // rc.34 (DEV-03 T7): the period's summary counts the series he played.
+      if (wasFielded) noteSeriesXp(save, p.id, seriesPlayed, p.overall - before);
     }
   }
 
@@ -2635,6 +2622,9 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   const save = clone(input);
   const nextSeason = save.clock.seasonIndex + 1;
   const rng = createRng(deriveSeed(save.careerSeed, streams.rollover(nextSeason)));
+  // rc.34 (DEV-03 T6/T4): the season's last period is filed at the rollover,
+  // before the squad ages; the coach in post grows with his season.
+  trainingSeasonEnd(save);
 
   // 1. World: aging, retirement, rookie intake (procedural era included).
   const pass = agePassAndIntake(
@@ -2809,6 +2799,8 @@ export interface CreateCareerInput {
   /** rc.32 (BAL-02): explicit starting prefs over the preset's (the arc bot keeps rc.31's "balanced"). */
   prefs?: Partial<CareerPrefs>;
   rosterKey: "prospects" | "journeymen" | "balanced";
+  /** rc.34 (DEV-03): an explicit training mode over the preset's (tools, the arc bot). */
+  trainingMode?: TrainingMode;
 }
 
 /** rc.32 (BAL-02): a new career's prefs — the preset's, or rc.31's style mapping, then any explicit ones. */
@@ -2962,6 +2954,10 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     negotiationTries: {},
     // rc.33 (DEV-04): a new career reads the honest band from day one.
     bandModel: 2,
+    // rc.34 (DEV-03, decision 3-A): the preset's delegation (Easy: the coach
+    // runs it; Normal: the coach proposes; Hard: you set it); the first
+    // period opens on day 1's arrival, on the base until a coach is hired.
+    training: initialTrainingState(input.difficulty, input.trainingMode),
     bidsThisWindow: 0,
     lastBidDay: -99,
     pendingOffers: [],
@@ -3012,6 +3008,9 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   if (input.clock.day >= DAYS_PER_SEASON) return input;
   // rc.2: a pending weekly insert blocks the clock until the player answers.
   if (input.pendingInsert && input.pendingInsert.day === input.clock.day) return input;
+  // rc.34 (DEV-03, "the coach proposes"): a training proposal holds its day
+  // until approved, adjusted or set aside (front G folds it into H1's queue).
+  if (trainingDecisionOf(input)) return input;
   // RTW-05 (rc.33): a short squad never enters its matchday — sign a third
   // player first. A Community Cup on its own day can still be passed (below).
   const hold = squadHoldFor(input);
@@ -3073,8 +3072,10 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   ) {
     return true;
   }
-  // Pending decisions: incoming bids, sponsor offers, a mid-week insert.
+  // Pending decisions: incoming bids, sponsor offers, a mid-week insert,
+  // rc.34: a training proposal waiting for approval.
   if (save.pendingInsert && save.pendingInsert.day === day) return true;
+  if (trainingDecisionOf(save)) return true;
   if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) return true;
   if (save.sponsorOffers && save.sponsorOffers.length > 0) return true;
   // A transfer window just opened (its first Monday).
@@ -3760,6 +3761,8 @@ export function hireCoachFlow(input: CareerSave, coach: CoachState): FlowResult 
     titleKey: "coachHired",
     params: { coach: valid.name, org: save.identity.orgName },
   });
+  // rc.34 (DEV-03 f5): the period runs on — each day uses the coach present.
+  onCoachChanged(save, "hired", valid.name);
   return { save };
 }
 
@@ -3774,7 +3777,10 @@ export function fireCoachFlow(input: CareerSave): FlowResult {
     amount: -save.coach.salaryPerSplit,
     refName: save.coach.name,
   });
+  const name = save.coach.name;
   save.coach = null;
+  // rc.34 (DEV-03 f5): the package runs on at the coachless rate.
+  onCoachChanged(save, "fired", name);
   return { save };
 }
 
@@ -3877,40 +3883,13 @@ function performScrim(save: CareerSave, oppRefWanted: string | null): string | n
   }
   if (!opponent) return "unavailable";
 
-  const { team } = userTeamFor({
-    identity: save.identity,
-    squad: save.squad,
-    starterIds: save.starterIds,
-    coach: save.coach,
-    gear: save.finances.gear,
-    bootcampSharp: 0,
-    seasonIndex: save.clock.seasonIndex,
-    careerSeed: save.careerSeed,
-    difficulty: save.difficulty,
-  });
-  const oppTeam = orgTeamFor(opponent.ref, {
-    world: save.world,
-    seasonIndex: save.clock.seasonIndex,
-    careerSeed: save.careerSeed,
-    difficulty: save.difficulty,
-  });
+  // rc.34: the series core is shared with the package's scrims (careerTraining).
   const n = todaysScrimOpponents(save).size;
-  const rng = createRng(
-    deriveSeed(save.careerSeed, `scrim:${save.clock.seasonIndex}:${save.clock.day}:${n}`),
+  const { won, score, games } = simulateScrimSeries(
+    save,
+    opponent.ref,
+    `scrim:${save.clock.seasonIndex}:${save.clock.day}:${n}`,
   );
-  const series = simulateSeries(
-    team,
-    oppTeam,
-    { bestOf: TOURNAMENT.swiss.bestOf, stage: "swiss", difficulty: save.difficulty },
-    rng,
-  );
-  const won = series.winnerTeamId === "user";
-  const score: [number, number] = [series.score[0], series.score[1]];
-  // Game scores oriented user-first (engine stores winner-first per game).
-  const games = series.games.map((g) => {
-    const userWon = g.winnerTeamId === "user";
-    return userWon ? `${g.score[0]}-${g.score[1]}` : `${g.score[1]}-${g.score[0]}`;
-  });
 
   // Chemistry credit + light match XP for the fielded squad.
   const oppRating = save.world.orgs[opponent.ref]?.rating ?? 74;
@@ -4284,6 +4263,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   if (!save) return null;
   backfillEconomyOnLoad(save); // rc.32: every load, idempotent, no version bump
   repairMoneyOnLoad(save); // rc.33: every load, idempotent, no version bump
+  repairTrainingOnLoad(save); // rc.34 (DEV-03 T8): every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {

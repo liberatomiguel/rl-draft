@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 3;
+export const BALANCE_VERSION = 4;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1143,6 +1143,31 @@ export const CAREER_SCRIM = {
   shortlistSize: 6,
   /** How many days ahead a scrim can be booked (within the season). */
   scheduleHorizonDays: 14,
+  /**
+   * rc.34 (DEV-03 T3): a package's scrims — practice, never official points,
+   * prizes, reputation or win achievements. Three levels by the opponent's
+   * rating gap to the squad (picked from the region's orgs, nearest to the
+   * level's band first): XP in training-week equivalents per scrim × the
+   * opponent's field quality, chemistry credit (splitsTogether), wear points,
+   * and the easy scrim's "confidence" (decision 4-A: the consistency offset).
+   * Contract candidates, each ±50 %: easy 0.25 / 0.03 / −1 / +0.1, even
+   * 0.40 / 0.06 / 0, hard 0.60 / 0.03 / +2.
+   */
+  levels: {
+    easy: { gap: [-8, -3] as const, xpWeeks: 0.25, chemistry: 0.03, wear: -1, consistency: 0.1 },
+    even: { gap: [-3, 3] as const, xpWeeks: 0.4, chemistry: 0.06, wear: 0, consistency: 0 },
+    hard: { gap: [3, 8] as const, xpWeeks: 0.6, chemistry: 0.03, wear: 2, consistency: 0 },
+  },
+  /**
+   * rc.34 (T3): a package's scrims a week (0..maxPerWeek) and their weekdays
+   * (2 = Tue, 3 = Wed, 4 = Thu — never a matchday); the k-th scrim of a week
+   * pays weekShare[k] of its XP and chemistry (contract: 100 / 60 / 30 %).
+   */
+  package: {
+    maxPerWeek: 3,
+    days: { 1: [2], 2: [2, 4], 3: [2, 3, 4] } as Record<number, readonly number[]>,
+    weekShare: [1, 0.6, 0.3] as readonly number[],
+  },
 } as const;
 
 /**
@@ -1348,8 +1373,24 @@ export const CAREER_TRAINING = {
    * coachMult = clamp(1 + (coachOVR - 75) × perPoint, min, max); no coach = min.
    * v2.0 (R22): 0.01/1.2 → 0.015/1.3 — an 85 coach now reads +15% and a 92
    * coach +25%, so "better coaches, better benefits" is visible on the card.
+   * rc.34 (DEV-03, decision 7-A): no longer read by a training tick — the
+   * coach's training effect acts only through the package (CAREER_PLAN).
+   * Kept for `coachMultFor` (rc.33's figure, quoted by old tests and tools).
    */
   coachMult: { perPoint: 0.015, min: 0.85, max: 1.3 },
+  /**
+   * rc.34 (DEV-03, TRAINING-CONTRACT decision 7-A — "no coach = DEV-01's
+   * base", the 0.85 floor dropped as a malus): every training tick runs at
+   * this share of DEV-01's pace unit, coach or not. 0.85 is rc.33's no-coach
+   * floor, so the base growth DEV-01 measured (R55e: the default setup had no
+   * coach; `CAREER_DEV.trainingWeeksPerYear` was calibrated on it) is
+   * unchanged to the decimal — a coached squad without a package now grows
+   * at that base, and the coach's effect lands through the package
+   * (`training.packageEffectFor`). The per-player focus / intensity and the
+   * weekly drill no longer scale the base either (they retired into the
+   * package, contract §8 step 2).
+   */
+  baseRateMult: 0.85,
   /** Training days per week (Mon-Fri); the daily tick is weeklyBase ÷ this. */
   trainingDaysPerWeek: 5,
   /**
@@ -1400,6 +1441,128 @@ export const CAREER_TRAINING = {
   ] as const,
   drillOffsetPerWeek: 0.25,
   drillOverallMult: 1.05,
+} as const;
+
+/**
+ * rc.34 — DEV-03, training packages per period (TRAINING-CONTRACT.md, Gate 3a
+ * approved 30/10: decisions 1–7 A). One training decision per period, none
+ * per week: a package (objective, one squad focus, a workload, scrims,
+ * optional per-player tweaks) runs Monday–Friday around the calendar, and a
+ * summary is filed at the boundary. The base (no package) is DEV-01's growth
+ * (CAREER_TRAINING.baseRateMult). Every value Miguel did not fix is Claude's
+ * call, measured in the rc.34 report and tested at Gate 3b.
+ */
+export const CAREER_PLAN = {
+  /**
+   * Decision 1-A: a fixed 28-day grid from each season's day 1 (8 periods;
+   * a season is exactly 8 × 28 days). "split" = decision 1-B, the playtest's
+   * comparison: one period per split with its window (W1–12, W13–22,
+   * W23–32). A period never crosses a season.
+   */
+  periodMode: "grid" as "grid" | "split",
+  periodDays: 28,
+  /** The Monday weeks that open a period in "split" mode (1-B). */
+  splitStartWeeks: [1, 13, 23] as readonly number[],
+  /**
+   * T2 objectives (decision 2-A: a package moves speed and attributes only —
+   * the peak stays DEV-01's). Each main effect is scaled by the coach effect
+   * (T4's focus efficiency; CAREER_PLAN.coach) and +specialtyBoost when the
+   * coach's specialty matches:
+   *  - development: the session rate × (1 + boost);
+   *  - preparation: the session rate × (1 + boost), scrim XP and chemistry
+   *    × (1 + scrimBonus);
+   *  - recovery: no boost; wear × (1 − wearCut); for a player past his peak,
+   *    DEV-01's decline × (1 − declineCut) while it runs.
+   * Contract candidates: 0.20 (0.10–0.30), 0.05 / ×1.5 (1.25–2.0), −50 %
+   * (30–70 %), ×0.75 (0.6–0.9).
+   */
+  objectives: {
+    development: { boost: 0.2, scrimBonus: 0, wearCut: 0, declineCut: 0 },
+    preparation: { boost: 0.05, scrimBonus: 0.5, wearCut: 0, declineCut: 0 },
+    recovery: { boost: 0, scrimBonus: 0, wearCut: 0.5, declineCut: 0.25 },
+  },
+  /**
+   * T2 workload (squad, or a per-player tweak): scales the objective's boost
+   * and the wear. Heavy adds `wearPerWeek` wear points a week (contract: +1).
+   */
+  workloads: {
+    light: { boostScale: 0.5, wearCut: 0.4, wearPerWeek: 0 },
+    normal: { boostScale: 1, wearCut: 0, wearPerWeek: 0 },
+    heavy: { boostScale: 1.5, wearCut: 0, wearPerWeek: 1 },
+  },
+  /**
+   * T2 the squad focus: one of the five drill themes grows its attribute
+   * offset(s) for every player who follows it, at today's drill rate per
+   * training-week (rc.33's drill also ran ×1.05 overall; the objective
+   * carries the overall effect now, so a focus costs no overall).
+   */
+  focusOffsetPerWeek: 0.25,
+  /**
+   * T2 a per-player focus tweak (rc.33's personal focus): +offsetPerWeek on
+   * his attribute instead of the squad focus, at overallShare of his package
+   * rate — never below the base (×1.00).
+   */
+  tweakFocus: { offsetPerWeek: 0.35, overallShare: 0.9 },
+  /**
+   * T4 the coach's three attributes, each with one printed effect:
+   *  - quality → focus efficiency, the share of a package's effect that
+   *    lands: efficiencyAt60 at quality 60, + efficiencyPerPoint a point
+   *    (1.0 at 90), inside efficiencyRange; no coach = coachless (contract:
+   *    "a package without a coach runs at 0.5");
+   *  - experience → plan quality, the share of the effect his own plan lands
+   *    when he runs it alone (mode "coach"; 0.85 at 0, +0.015 a season, at
+   *    most 1 — t5: ≥ 0.85 new, ≥ 0.95 from 7 seasons), and recovery: wear
+   *    × (1 − wearCutPerExperience × experience), at most wearCutMax;
+   *  - specialty → its objective's main effect × (1 + specialtyBoost).
+   */
+  coach: {
+    efficiencyAt60: 0.6,
+    efficiencyPerPoint: 0.4 / 30,
+    efficiencyRange: [0.5, 1.1] as const,
+    coachless: 0.5,
+    specialtyBoost: 0.25,
+    planQualityBase: 0.85,
+    planQualityPerExperience: 0.015,
+    wearCutPerExperience: 0.03,
+    wearCutMax: 0.3,
+  },
+  /**
+   * T3 / decision 6-A: wear feeds today's pre-event unavailability roll — no
+   * new fatigue meter. The squad's projected wear for the period (shown
+   * before approval) adds chancePerPoint per point, at most chanceMax (t6:
+   * ≤ +4 points per event), normalised to a nominalDays period (so a split
+   * period in mode 1-B reads per 28 days).
+   */
+  wear: { chancePerPoint: 0.005, chanceMax: 0.04, nominalDays: 28 },
+  /**
+   * T3: a period's package-scrim XP is capped at this share of the period's
+   * gain (sessions + scrims; contract 25 %, range 15–35 %) — t4 by
+   * construction.
+   */
+  scrimCapShare: 0.25,
+  /** T6: the history ring — two seasons of grid periods. */
+  historySize: 16,
+  /**
+   * Decision 3-A (BAL-02): the delegation a NEW career starts on per preset —
+   * Easy: the coach runs it; Normal: the coach proposes; Hard: you set it.
+   * Every mode stays available; without a coach every mode runs the base
+   * (or the repeated package) and nothing prompts.
+   */
+  modeByPreset: { easy: "coach", normal: "approve", hard: "manual" } as Record<string, "coach" | "approve" | "manual">,
+  /** "Repeat until I change it" — its default per mode ("approve" asks every period). */
+  repeatByMode: { coach: true, approve: false, manual: true } as Record<string, boolean>,
+  /**
+   * T5 the coach's proposal: development by default, preparation for a
+   * period with a Major or Worlds, recovery when the last period's squad wear
+   * reached recoveryWearAt. Each objective's workload and scrims (count,
+   * level); the focus is the theme of his buff stat.
+   */
+  proposal: {
+    recoveryWearAt: 8,
+    development: { workload: "normal", scrimsPerWeek: 2, scrimLevel: "even" },
+    preparation: { workload: "normal", scrimsPerWeek: 3, scrimLevel: "even" },
+    recovery: { workload: "light", scrimsPerWeek: 1, scrimLevel: "easy" },
+  } as const,
 } as const;
 
 /** Age curve (young scene): growth to ~20, decline lands at season rollover. */
@@ -1838,10 +2001,63 @@ export const CAREER_COACH_MARKET = {
   candidatesPerWindow: 5,
   /** Target share of REAL (retired-pro) names among candidates. */
   realShare: 0.5,
-  generatedOverallRange: [62, 84] as const,
-  /** Retired-pro coach quality = base + factor × final playing overall. */
-  retiredCoachBase: 55,
-  retiredCoachFinalOvrFactor: 0.25,
+  /**
+   * rc.34 (DEV-03 T4): generated coaches. The first generated candidate of a
+   * window is a senior profile (t7: a good generic sits within 5 quality of
+   * the best ex-pro in most windows), the rest standard. Quality is a
+   * triangular draw [min, mode, max] (contract: 60–90, most around 72; rc.33
+   * was a flat 62–84); experience a whole number of seasons in its range;
+   * the specialty is rolled (one of the three objectives).
+   */
+  generated: {
+    senior: { quality: [72, 80, 90] as const, experience: [3, 8] as const },
+    standard: { quality: [60, 70, 84] as const, experience: [0, 5] as const },
+  },
+  /**
+   * rc.34 (decision 5-A): an ex-pro's quality comes from his CAREER-BEST
+   * club card, not the last: base + slope × (best − anchor) ± jitter,
+   * clamped to range (contract: 66 + 0.8 × (peak − 75) ± 4, 64–94 — a 75
+   * peak coaches near 66, a 90 near 78, a 99 near 85). He starts with
+   * `experience` seasons (the playing years count), the specialty of his
+   * archetype (all-rounders roll one), and costs wageMult × a generic of the
+   * same quality and experience. rc.33: round(min(92, 55 + 0.25 × last card)).
+   */
+  exPro: {
+    base: 66,
+    slope: 0.8,
+    anchor: 75,
+    jitter: 4,
+    range: [64, 94] as const,
+    experience: 3,
+    wageMult: 1.15,
+    specialtyByArchetype: {
+      mechanical: "development",
+      playmaker: "preparation",
+      veteranmind: "preparation",
+      anchor: "recovery",
+      icecold: "recovery",
+    } as Record<string, "development" | "preparation" | "recovery">,
+  },
+  /**
+   * rc.34 (T4): a coach's wage reads his quality plus wagePointsPerExperience
+   * quality points per season of experience, on the coach curve
+   * (economy.coachSalaryFor — CAREER_SALARY.coachFactor, the money index).
+   */
+  wagePointsPerExperience: 0.25,
+  /**
+   * rc.34 (T4): coaches grow with relevant experience — at each rollover the
+   * coach in post gains experiencePerSeason; quality +qualityPerSeason, or
+   * +qualityPerSeasonMatched when most of the season's periods ran his
+   * specialty, up to his personal ceiling (his quality at hire + ceilingRoom,
+   * never above ceilingMax).
+   */
+  growth: {
+    experiencePerSeason: 1,
+    qualityPerSeason: 0.5,
+    qualityPerSeasonMatched: 1,
+    ceilingRoom: [3, 8] as const,
+    ceilingMax: 95,
+  },
 } as const;
 
 export const CAREER_SUB = {
