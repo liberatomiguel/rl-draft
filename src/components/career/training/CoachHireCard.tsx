@@ -1,13 +1,16 @@
 "use client";
 
 /**
- * Road to Worlds — the coach card (rc.34, DEV-03 T4). Three attributes, each
- * with the one effect it has, printed from the functions that run it
- * (`careerTraining.coachImpactFor`): quality → focus efficiency (+ the team
- * rating modifier), experience → plan quality and wear, specialty → +25 % on
- * its objective; then the effect on the package you would run and the
- * expected impact over the next period against your current setup, and the
- * wage. The market's shortlist and the current-coach panel share it.
+ * Road to Worlds — the coach card (rc.35, front T; rc.34 DEV-03 T4).
+ *
+ * Miguel: "the hire options are text-heavy and confusing". The card is now
+ * icon-led with a clear order: who he is (name, ex-pro / staff, overall) →
+ * the expected effect (per starter over the next cycle, vs now — the number
+ * that decides) → three meters (quality → how much of a plan lands,
+ * experience → his own plan's quality and less wear, specialty → +25 % on
+ * its objective) → the wage → Hire. Every number comes from the functions
+ * that run it (`careerTraining.coachImpactFor`); the meters read the engine's
+ * own ranges (CAREER_PLAN.coach), never a UI scale.
  */
 
 import { useMemo } from "react";
@@ -16,10 +19,61 @@ import type { CareerCopy } from "@/content/careerCopy";
 import { coachEffectsFor } from "@/engine/career/development";
 import type { CareerSave, CoachState } from "@/engine/career/types";
 import { cx } from "@/lib/util";
-import { coachImpactFor } from "@/store/careerTraining";
+import { coachImpactFor, type CoachImpact } from "@/store/careerTraining";
 import { wageLabel } from "@/components/career/careerUi";
+import { OBJECTIVE_TONE, ObjectiveIcon } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
+import { HourglassIcon, StarIcon, TrendUpIcon, WalletIcon, WhistleIcon } from "@/components/ui/icons";
 
+const clamp01 = (n: number): number => Math.min(1, Math.max(0, n));
+
+/** Quality → the share of a plan that lands, on the engine's efficiency range. */
+function qualityMeter(impact: CoachImpact): number {
+  const [lo, hi] = CAREER_PLAN.coach.efficiencyRange;
+  return clamp01((impact.efficiencyPct / 100 - lo) / (hi - lo));
+}
+
+/** Experience → his own plan's quality, from the base to 100 %. */
+function experienceMeter(impact: CoachImpact): number {
+  const base = CAREER_PLAN.coach.planQualityBase;
+  return clamp01((impact.planQualityPct / 100 - base) / (1 - base));
+}
+
+function Meter({
+  icon,
+  label,
+  value,
+  fill,
+  hint,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  fill: number;
+  hint: string;
+  tone: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 text-[11px]">
+        <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
+          <span className={tone}>{icon}</span>
+          {label}
+        </span>
+        <span className={cx("font-mono font-bold", tone)}>{value}</span>
+      </div>
+      <div className="mt-1 flex gap-0.5" aria-hidden>
+        {Array.from({ length: 10 }, (_, i) => (
+          <span key={i} className={cx("h-1.5 flex-1 rounded-sm", i < Math.round(fill * 10) ? "bg-current" : "bg-white/10", tone)} />
+        ))}
+      </div>
+      <p className="mt-0.5 text-[10px] text-faint">{hint}</p>
+    </div>
+  );
+}
+
+/** The three attributes as meters (the market's shortlist and the coach in post). */
 export function CoachAttributeLines({
   save,
   coach,
@@ -34,43 +88,67 @@ export function CoachAttributeLines({
   /** The expected impact vs the current setup (the shortlist; not the coach in post). */
   showImpact: boolean;
 }) {
-  const M = C.market;
-  const P = C.training.plan;
+  const K = C.training.cycle.coach;
+  const Y = C.training.cycle;
   const impact = useMemo(() => coachImpactFor(save, coach), [save, coach]);
   const fx = coachEffectsFor(coach);
   const specialtyPct = Math.round(CAREER_PLAN.coach.specialtyBoost * 100);
+  const spec = OBJECTIVE_TONE[impact.specialty];
   const vs = impact.vsCurrent;
   return (
-    <ul className="space-y-1 text-[11px] leading-snug" aria-label={M.coachEffects}>
-      <li>
-        <span className="font-semibold text-ink">{M.coachQuality(Math.round(coach.overall))}</span>
-        <span className="text-sub"> — {M.coachQualityEffect(impact.efficiencyPct)}</span>
-        {fx.ratingMod > 0 ? <span className="text-cyan"> · {M.coachRating(fx.ratingMod)}</span> : null}
-      </li>
-      <li>
-        <span className="font-semibold text-ink">{M.coachExperience(impact.experience)}</span>
-        <span className="text-sub"> — {M.coachExperienceEffect(impact.planQualityPct, impact.wearCutPct)}</span>
-      </li>
-      <li>
-        <span className="font-semibold text-ink">{M.coachSpecialty(P.objectives[impact.specialty])}</span>
-        <span className="text-sub"> — {M.coachSpecialtyEffect(P.objectives[impact.specialty], specialtyPct)}</span>
-      </li>
-      <li className="text-faint">
-        {M.coachBonus(statLabels[coach.bonusType] ?? coach.bonusType)} <span className="font-mono font-bold text-cyan">{coach.bonusLevel}</span>
-        {coach.bestCard ? ` · ${M.coachBestCard(coach.bestCard)}` : ""}
-        {coach.ceiling ? ` · ${M.coachGrows(coach.ceiling)}` : ""}
-      </li>
-      <li className="font-semibold text-good">{M.coachPackage(P.objectives[impact.packageObjective], impact.packagePct)}</li>
+    <div className="space-y-2.5" aria-label={C.market.coachEffects}>
       {showImpact ? (
-        <li className={cx("font-semibold", vs > 0.005 ? "text-good" : vs < -0.005 ? "text-bad" : "text-sub")}>
-          {Math.abs(vs) < 0.005 ? M.coachImpactSame : M.coachImpact(`${vs > 0 ? "+" : "−"}${Math.abs(vs).toFixed(2)}`)}
-        </li>
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-good/30 bg-good/[0.07] px-3 py-2">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1 text-[9px] uppercase tracking-[0.1em] text-good">
+              <TrendUpIcon className="h-3 w-3" />
+              {K.expected}
+            </p>
+            <p className={cx("text-[10px] font-semibold", vs > 0.005 ? "text-good" : vs < -0.005 ? "text-bad" : "text-faint")}>
+              {Math.abs(vs) < 0.005 ? K.same : K.vsNow(`${vs > 0 ? "+" : "−"}${Math.abs(vs).toFixed(2)}`)}
+            </p>
+          </div>
+          <p className="display shrink-0 text-xl font-bold text-good">{Y.expectedGain(impact.perStarter.toFixed(2))}</p>
+        </div>
       ) : null}
-    </ul>
+      <Meter
+        icon={<StarIcon className="h-3.5 w-3.5" filled />}
+        label={K.quality}
+        value={String(impact.quality)}
+        fill={qualityMeter(impact)}
+        hint={K.qualityEffect(impact.efficiencyPct)}
+        tone="text-amber-300"
+      />
+      <Meter
+        icon={<HourglassIcon className="h-3.5 w-3.5" />}
+        label={K.experience}
+        value={K.experienceEffect(impact.experience)}
+        fill={experienceMeter(impact)}
+        hint={K.experienceHint(impact.planQualityPct, impact.wearCutPct)}
+        tone="text-blue-bright"
+      />
+      <div className={cx("flex items-center gap-2.5 rounded-xl border px-2.5 py-2", spec.ring, spec.bg)}>
+        <span className={cx("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/25", spec.text)}>
+          <ObjectiveIcon objective={impact.specialty} className="h-[18px] w-[18px]" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[9px] uppercase tracking-[0.1em] text-faint">{K.specialty}</p>
+          <p className={cx("truncate text-xs font-bold", spec.text)}>{Y.objectives[impact.specialty]}</p>
+          <p className="text-[10px] text-faint">{K.specialtyEffect(specialtyPct)}</p>
+        </div>
+      </div>
+      <p className="flex flex-wrap items-center gap-1.5 text-[10px] text-faint">
+        <span className="rounded-full bg-cyan/10 px-2 py-0.5 font-semibold text-cyan">
+          {statLabels[coach.bonusType] ?? coach.bonusType} {coach.bonusLevel}
+        </span>
+        {fx.ratingMod > 0 ? <span className="rounded-full bg-white/5 px-2 py-0.5">{C.market.coachRating(fx.ratingMod)}</span> : null}
+        {coach.bestCard ? <span className="rounded-full bg-white/5 px-2 py-0.5">{C.market.coachBestCard(coach.bestCard)}</span> : null}
+      </p>
+    </div>
   );
 }
 
-/** One coach on the shortlist: identity, the three attributes and their effects, the wage, Hire. */
+/** One coach on the shortlist: identity → expected effect → meters → wage → Hire. */
 export function CoachHireCard({
   save,
   coach,
@@ -87,24 +165,30 @@ export function CoachHireCard({
   onHire: () => void;
 }) {
   const M = C.market;
+  const K = C.training.cycle.coach;
   return (
-    <div className="flex flex-col rounded-xl border border-line-strong bg-gradient-to-b from-white/[0.04] to-transparent p-3.5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+    <div className="flex flex-col rounded-2xl border border-line-strong bg-gradient-to-b from-white/[0.05] to-transparent p-3.5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan/40 bg-cyan/10 text-cyan">
+          <WhistleIcon className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
           <div className="display truncate text-base font-bold text-ink">{coach.name}</div>
-          <div className="mt-1">
-            {coach.source === "real" ? <Badge tone="gold">{M.coachRealTag}</Badge> : <Badge tone="neutral">{M.coachGenTag}</Badge>}
-          </div>
+          {coach.source === "real" ? <Badge tone="gold">{K.exPro}</Badge> : <Badge tone="neutral">{K.staff}</Badge>}
         </div>
         <div className="shrink-0 text-right leading-none">
           <div className="display text-2xl font-bold text-ink">{Math.round(coach.overall)}</div>
           <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
         </div>
       </div>
-      <div className="mt-2">
+      <div className="mt-3 flex-1">
         <CoachAttributeLines save={save} coach={coach} C={C} statLabels={statLabels} showImpact />
       </div>
-      <p className="mt-2 text-xs font-semibold text-sub">{wageLabel(C, coach.salaryPerSplit)}</p>
+      <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-sub">
+        <WalletIcon className="h-4 w-4 text-faint" />
+        <span className="text-faint">{K.wage}</span>
+        <span className="text-ink">{wageLabel(C, coach.salaryPerSplit)}</span>
+      </p>
       <button
         type="button"
         disabled={disabled}

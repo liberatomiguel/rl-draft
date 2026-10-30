@@ -163,6 +163,7 @@ export function initialTrainingState(difficulty: CareerDifficulty, modeOverride?
     plan: null,
     proposal: null,
     history: [],
+    reportSeen: "",
   };
 }
 
@@ -194,9 +195,12 @@ export function trainingOf(save: Pick<CareerSave, "training">): TrainingState {
  * experience from his source (`training.coachProfileOf`).
  */
 export function repairTrainingOnLoad(save: CareerSave): void {
-  if (save.training !== undefined) return;
+  if (save.training !== undefined) {
+    normaliseTrainingState(save);
+    return;
+  }
   if (!save.clock || !Array.isArray(save.squad) || !save.finances || !save.world) return;
-  const mode: TrainingMode = save.prefs?.autoTrain ? presetTrainingModeOf(save.difficulty) : "manual";
+  const mode: TrainingMode = presetTrainingModeOf(save.difficulty);
   const carry: Record<string, PlayerTweak> = {};
   for (const p of save.squad) {
     const tweak: PlayerTweak = {};
@@ -208,10 +212,93 @@ export function repairTrainingOnLoad(save: CareerSave): void {
     ...initialTrainingState(save.difficulty, mode),
     ...(Object.keys(carry).length > 0 ? { carryTweaks: carry } : {}),
   };
+  normaliseTrainingState(save);
   if (save.phase === "ended") return;
   save.news ??= [];
   // The running period opens on the base: today's session already ran (rc.33's tick).
   openPlan(save, periodOfDay(save.clock.day), { repaired: true });
+}
+
+/** A report's stable key ("season:period") — what `reportSeen` stores. */
+export function reportKeyOf(s: Pick<TrainingSummary, "seasonIndex" | "periodIndex">): string {
+  return `${s.seasonIndex}:${s.periodIndex}`;
+}
+
+/**
+ * rc.35 (front T): the load repair's idempotent half for a save that already
+ * has a training state. rc.34's delegation modes ("coach" / "approve") become
+ * the preset's meaning (Easy auto, Normal recommend, Hard manual) — a hired
+ * coach runs the plan whatever the mode; a proposal left waiting is dropped
+ * (the plan it held keeps the base, or the coach's plan when he is there);
+ * `reportSeen` is stamped with the newest filed report, so no old report
+ * pops after the update. Running it twice changes nothing.
+ */
+function normaliseTrainingState(save: CareerSave): void {
+  const t = save.training!;
+  const modes: readonly string[] = ["auto", "recommend", "manual"];
+  if (!modes.includes(t.mode as string)) {
+    t.mode = presetTrainingModeOf(save.difficulty);
+    t.repeat = CAREER_PLAN.repeatByMode[t.mode] ?? true;
+  }
+  if (t.delegatedFrom !== undefined) delete t.delegatedFrom;
+  if (t.proposal) {
+    t.proposal = null;
+    if (save.coach && t.plan && t.plan.author === "base") {
+      const proposal = coachProposalOf(save);
+      if (proposal) {
+        t.plan.package = sanitizePackage(proposal.package);
+        t.plan.author = "coach";
+      }
+    }
+  }
+  if (t.reportSeen === undefined) t.reportSeen = t.history[0] ? reportKeyOf(t.history[0]) : "";
+}
+
+/**
+ * rc.35 (front T): who sets the package now — the hired coach, else the
+ * preset's mode (Easy "auto", Normal "recommend", Hard "manual").
+ */
+export function trainingControllerOf(save: Pick<CareerSave, "coach" | "training">): "coach" | TrainingMode {
+  if (save.coach) return "coach";
+  const m = trainingOf(save).mode;
+  return m === "auto" || m === "recommend" || m === "manual" ? m : "recommend";
+}
+
+/**
+ * rc.35: the most effective plan for this cycle without a coach — the same
+ * rule the coach proposes by (development; preparation for a Major / Worlds
+ * cycle; recovery after a worn one), at a balanced focus. Easy applies it,
+ * Normal tags it RECOMMENDED, Hard shows no tag.
+ */
+export function recommendedPackageOf(save: CareerSave): { package: TrainingPackage; reasonKey: "default" | "event" | "wear" } {
+  return coachProposalFor({
+    coach: coachProfileOf(save.coach),
+    bigEvent: periodHasBigEvent(periodOfDay(save.clock.day)),
+    lastWear: lastWearOf(trainingOf(save)),
+  });
+}
+
+/**
+ * rc.35 (front T): the newest filed report the manager has not seen — the
+ * results modal (once per finished cycle; survives a reload: the seen key is
+ * in the save). Null when there is none, or the career ended.
+ */
+export function trainingReportOf(save: CareerSave): TrainingSummary | null {
+  const t = save.training;
+  if (!t || save.phase === "ended") return null;
+  const last = t.history[0];
+  if (!last || last.players.length === 0) return null;
+  return t.reportSeen === reportKeyOf(last) ? null : last;
+}
+
+/** rc.35: the manager saw the results modal — never again for that report (nor older ones). */
+export function acknowledgeTrainingReportFlow(input: CareerSave): TrainingFlowResult {
+  const t = input.training;
+  const last = t?.history[0];
+  if (!t || !last || t.reportSeen === reportKeyOf(last)) return { save: input };
+  const save = clone(input);
+  save.training!.reportSeen = reportKeyOf(last);
+  return { save };
 }
 
 // ---------------------------------------------------------------------------
@@ -294,20 +381,16 @@ function openPlan(save: CareerSave, period: TrainingPeriod, opts: { repaired?: b
   let author: TrainingPlan["author"] = "base";
   t.proposal = null;
   if (!opts.repaired) {
-    if (t.mode === "coach" && proposal) {
+    // rc.35 (front T): a hired coach picks and runs it; without one Easy
+    // applies the recommended plan; Normal / Hard keep the manager's plan
+    // (repeat) or the base. Nothing waits — no clock hold.
+    const controller = trainingControllerOf(save);
+    if (controller === "coach" && proposal) {
       pkg = proposal.package;
       author = "coach";
-    } else if (t.mode === "approve" && proposal && !(t.repeat && t.userPackage)) {
-      // rc.34 review: whenever no package is repeated — "repeat" on with nothing
-      // set used to fall to the base silently (the coach never proposed).
-      t.proposal = {
-        seasonIndex: save.clock.seasonIndex,
-        periodIndex: period.index,
-        day,
-        package: proposal.package,
-        coachId: save.coach!.id,
-        reasonKey: proposal.reasonKey,
-      };
+    } else if (controller === "auto") {
+      pkg = recommendedPackageOf(save).package;
+      author = "auto";
     } else if (t.repeat && t.userPackage) {
       pkg = sanitizePackage(t.userPackage);
       author = "user";
@@ -342,7 +425,7 @@ function openPlan(save: CareerSave, period: TrainingPeriod, opts: { repaired?: b
     prev &&
     ((prev.seasonIndex === save.clock.seasonIndex && prev.periodIndex === period.index - 1) ||
       (prev.seasonIndex === save.clock.seasonIndex - 1 && period.index === 0 && prev.periodIndex === period.count - 1));
-  if (prev && follows) prev.next = t.proposal ? t.proposal.package.objective : (pkg?.objective ?? null);
+  if (prev && follows) prev.next = pkg?.objective ?? null;
   recomputePlan(save);
 }
 
@@ -456,9 +539,9 @@ export function trainingSeasonEnd(save: CareerSave): void {
 // Running the plan: sessions and the package's scrims
 // ---------------------------------------------------------------------------
 
-/** Who runs the plan right now: the coach alone (mode "coach", his plan) lands it at his plan quality. */
-function unsupervisedOf(t: TrainingState, plan: TrainingPlan): boolean {
-  return t.mode === "coach" && plan.author === "coach";
+/** Who runs the plan right now: the coach's own plan lands at his plan quality (experience). */
+function unsupervisedOf(_t: TrainingState, plan: TrainingPlan): boolean {
+  return plan.author === "coach";
 }
 
 /** A player's effect under the running plan (the base when none). */
@@ -797,13 +880,23 @@ export function onCoachChanged(save: CareerSave, kind: "hired" | "fired", name: 
   // "The coach runs it": a coach hired into a period on the base (or on his
   // predecessor's plan) takes it over from his first day — never a plan the
   // manager set himself.
+  // rc.35 (front T): a hired coach takes the cycle over from his first day
+  // (never a plan the manager set himself); a coach who leaves hands it back
+  // to the preset (Easy: the recommended plan; else the manager's or the base).
   const plan = t.plan;
-  if (kind === "hired" && t.mode === "coach" && save.coach && plan && plan.author !== "user") {
+  if (kind === "hired" && save.coach && plan && plan.author !== "user") {
     const proposal = coachProposalOf(save);
     if (proposal) {
       applyPackage(save, proposal.package, "coach");
       return;
     }
+  }
+  if (kind === "fired" && !save.coach && plan && plan.author === "coach") {
+    const controller = trainingControllerOf(save);
+    if (controller === "auto") applyPackage(save, recommendedPackageOf(save).package, "auto");
+    else if (t.repeat && t.userPackage) applyPackage(save, t.userPackage, "user");
+    else applyPackage(save, null, "base");
+    return;
   }
   recomputePlan(save);
 }
@@ -927,7 +1020,7 @@ export function projectTrainingPackage(
   const endDay = Math.min(DAYS_PER_SEASON, opts.toDay ?? (plan?.endDay ?? period.endDay));
   const coachState = opts.coach !== undefined ? opts.coach : save.coach;
   const coach = coachProfileOf(coachState);
-  const unsupervised = opts.unsupervised ?? (t.mode === "coach" && (!plan || plan.author === "coach"));
+  const unsupervised = opts.unsupervised ?? (plan ? plan.author === "coach" : Boolean(coachState));
   const soFar =
     opts.soFar ??
     Object.fromEntries(
@@ -1229,28 +1322,21 @@ export function setTrainingPackageFlow(input: CareerSave, pkg: TrainingPackage |
  * runs; "manual": the repeated package or the base).
  */
 export function setTrainingModeFlow(input: CareerSave, mode: TrainingMode): TrainingFlowResult {
-  if (!["coach", "approve", "manual"].includes(mode)) return { save: input, error: "invalid" };
+  if (!["auto", "recommend", "manual"].includes(mode)) return { save: input, error: "invalid" };
   if (input.phase === "ended") return { save: input, error: "blocked" };
   const save = clone(input);
   trainingDayStart(save);
   const t = save.training!;
   if (t.mode === mode) return { save: input };
-  // rc.34 review: HQ's "Delegated" switch returns to the mode before the delegation.
-  if (mode === "coach") {
-    if (t.mode === "approve" || t.mode === "manual") t.delegatedFrom = t.mode;
-  } else delete t.delegatedFrom;
+  delete t.delegatedFrom;
   t.mode = mode;
   // rc.34 review: the new mode's own "repeat" (CAREER_PLAN.repeatByMode) — the old one
   // made "approve" never propose (repeat on) and "I set it" lapse after a period (off).
   t.repeat = CAREER_PLAN.repeatByMode[mode] ?? false;
-  const pending = t.proposal;
-  if (mode === "coach" && save.coach) {
-    const proposal = pending?.package ?? coachProposalOf(save)?.package ?? null;
-    if (proposal) applyPackage(save, proposal, "coach");
-  } else if (mode === "manual" && pending) {
-    applyPackage(save, t.repeat && t.userPackage ? t.userPackage : null, t.repeat && t.userPackage ? "user" : "base");
+  // rc.35: switching to "auto" without a coach applies the recommended plan now.
+  if (mode === "auto" && !save.coach && t.plan && t.plan.author !== "user") {
+    applyPackage(save, recommendedPackageOf(save).package, "auto");
   }
-  if (pending && !save.training!.proposal) runTodaysSessionIfDue(save);
   return { save };
 }
 
@@ -1269,6 +1355,12 @@ export function setTrainingRepeatFlow(input: CareerSave, on: boolean): TrainingF
 /** HQ's training block (HQ-CONTRACT H3) — one read for front G's layout. */
 export interface TrainingBlockView {
   mode: TrainingMode;
+  /** rc.35: who sets the package now (the hired coach, else the preset's mode). */
+  controller: "coach" | TrainingMode;
+  /** rc.35: the starters' expected average gain over the cycle's remaining days (the running plan). */
+  expectedAvg: number;
+  /** rc.35: the share of the cycle gone (0..1), for the progress ring. */
+  progress: number;
   repeat: boolean;
   period: { index: number; count: number; startDay: number; endDay: number; dayOf: number; length: number; daysLeft: number };
   package: TrainingPackage | null;
@@ -1282,8 +1374,6 @@ export interface TrainingBlockView {
   decision: TrainingDecision | null;
   /** The pre-event unavailability the plan adds, in points. */
   unavailabilityPts: number;
-  /** rc.34 review: the mode HQ's "Delegated" switch returns to (the one before the delegation; "approve" by default). */
-  undelegateTo: TrainingMode;
 }
 
 /** The package scrims the period's remaining weekdays hold (never on a matchday). */
@@ -1317,15 +1407,20 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
   const lastAvg = lastGains.length > 0 ? round2(lastGains.reduce((s, g) => s + g.gain, 0) / lastGains.length) : null;
   const lastBest = [...lastGains].sort((a, b) => b.gain - a.gain)[0] ?? null;
   const lastWearAvg = last && last.players.length > 0 ? last.players.reduce((s, p) => s + p.wear, 0) / last.players.length : null;
+  const expectedAvg = save.phase === "running" && plan ? projectTrainingPackage(save, pkg).startersAvg : 0;
+  const dayOf = Math.min(length, Math.max(1, save.clock.day - startDay + 1));
   return {
     mode: t.mode,
+    controller: trainingControllerOf(save),
+    expectedAvg: round2(expectedAvg),
+    progress: round2(Math.min(1, Math.max(0, (dayOf - 1) / Math.max(1, length)))),
     repeat: t.repeat,
     period: {
       index: period.index,
       count: period.count,
       startDay,
       endDay,
-      dayOf: Math.min(length, Math.max(1, save.clock.day - startDay + 1)),
+      dayOf,
       length,
       daysLeft: Math.max(0, endDay - save.clock.day),
     },
@@ -1351,7 +1446,6 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
     lastWear: lastWearAvg === null ? null : wearBandOf(lastWearAvg),
     decision: trainingDecisionOf(save),
     unavailabilityPts: Math.round(wearUnavailabilityAddOf(save) * 1000) / 10,
-    undelegateTo: t.delegatedFrom ?? "approve",
   };
 }
 
@@ -1385,7 +1479,7 @@ export function coachImpactFor(save: CareerSave, coach: CoachState): CoachImpact
   const pkg = plan?.package ?? coachProposalOf(save, coach)?.package ?? null;
   const fromDay = save.clock.day;
   const toDay = Math.min(DAYS_PER_SEASON, fromDay + CAREER_PLAN.periodDays - 1);
-  const unsupervised = trainingOf(save).mode === "coach";
+  const unsupervised = true;
   const soFar = {};
   const withHim = projectTrainingPackage(save, pkg, { coach, fromDay, toDay, unsupervised, soFar });
   const withNow = projectTrainingPackage(save, pkg, { coach: save.coach, fromDay, toDay, unsupervised, soFar });

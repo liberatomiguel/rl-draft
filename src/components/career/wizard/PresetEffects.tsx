@@ -12,7 +12,7 @@
  *    from every key (the loans a career gets, the weeks to repay each or no
  *    deadline, a breach count that ends it outright);
  *  - help: rc.34 review — the training delegation the preset starts on
- *    (`presetTrainingModeOf`, CAREER_PLAN.modeByPreset: the coach runs it /
+ *    (`presetTrainingModeOf`, CAREER_PLAN.modeByPreset: the best plan applied /
  *    proposes and you approve / you plan it) and whether cups are entered.
  *
  * ONE descriptor list: a new bullet is `{ key, value }` in PRESET_BULLETS

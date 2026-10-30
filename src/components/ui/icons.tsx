@@ -94,3 +94,129 @@ export function LegacyEmblem({
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// rc.35 (front T) — training and coach glyphs (same 24-grid, stroke 1.8)
+// ---------------------------------------------------------------------------
+
+function Glyph({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
+      {children}
+    </svg>
+  );
+}
+
+/** Rising line — growth / Develop. */
+export function TrendUpIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3.5 17.5 9.5 11.5l4 4 7-7.5" {...P} />
+      <path d="M15.5 8h5v5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Trophy — Compete (preparation). */
+export function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M7.5 4.5h9v5a4.5 4.5 0 0 1-9 0v-5Z" {...P} />
+      <path d="M7.5 6.5H4.5a3 3 0 0 0 3 4M16.5 6.5h3a3 3 0 0 1-3 4M12 14v3.5M8.5 20h7" {...P} />
+    </Glyph>
+  );
+}
+
+/** Heart with a pulse — Recover. */
+export function HeartPulseIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" {...P} />
+      <path d="M7 12.5h2.5l1.3-2.3 2.2 4.3 1.3-2h2.7" {...P} />
+    </Glyph>
+  );
+}
+
+/** Gauge — intensity. */
+export function GaugeIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M4 17a8 8 0 1 1 16 0" {...P} />
+      <path d="m12 17 4-5.5" {...P} />
+      <circle cx="12" cy="17" r="1.3" fill="currentColor" stroke="none" />
+    </Glyph>
+  );
+}
+
+/** Crossed swords — scrims. */
+export function SwordsIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M4.5 4.5 15 15M19.5 4.5 9 15" {...P} />
+      <path d="M13 17l4-4M11 17l-4-4M16 16l3.5 3.5M8 16l-3.5 3.5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Whistle — the coach. */
+export function WhistleIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3.5 9.5h9l6-3v4.5a5.5 5.5 0 1 1-11 1.5" {...P} />
+      <circle cx="13" cy="13.5" r="1.4" {...P} />
+      <path d="M3.5 9.5v3" {...P} />
+    </Glyph>
+  );
+}
+
+/** Star — quality / recommended. */
+export function StarIcon({ className, filled = false }: { className?: string; filled?: boolean }) {
+  return (
+    <Glyph className={className}>
+      <path
+        d="m12 3.8 2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8L12 3.8Z"
+        fill={filled ? "currentColor" : "none"}
+        {...P}
+      />
+    </Glyph>
+  );
+}
+
+/** Hourglass — experience / days left. */
+export function HourglassIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 5 9 5 9 8.5s-9 3.5-9 8.5M16.5 3.5c0 5-9 5-9 8.5s9 3.5 9 8.5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Warning triangle — absence risk. */
+export function AlertIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 4 21 19.5H3L12 4Z" {...P} />
+      <path d="M12 10v4.5M12 17v.1" {...P} />
+    </Glyph>
+  );
+}
+
+/** Ring with a dot — the base plan (nothing added). */
+export function BaseDotIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <circle cx="12" cy="12" r="7.5" {...P} />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+    </Glyph>
+  );
+}
+
+/** Wallet — wage. */
+export function WalletIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M4 7.5h14.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 18V7.5Zm0 0 11.5-3v3" {...P} />
+      <path d="M15.5 13.5h1.5" {...P} />
+    </Glyph>
+  );
+}

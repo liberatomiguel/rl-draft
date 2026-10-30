@@ -96,6 +96,7 @@ import { bootcampTierFor, type GearItemId } from "@/engine/career/economy";
 import { careerAvailableKeys, seedCareerNew, toolboxNewKey } from "@/engine/career/careerNew";
 import { markSeen } from "@/engine/newItems";
 import {
+  acknowledgeTrainingReportFlow,
   approveTrainingProposalFlow,
   keepBaseTrainingFlow,
   setTrainingModeFlow,
@@ -219,6 +220,8 @@ interface CareerStoreState {
   setTrainingRepeat: (on: boolean) => void;
   approveTrainingProposal: () => void;
   keepBaseTraining: () => void;
+  /** rc.35 (front T): the cycle results modal was seen (never shows that report again). */
+  acknowledgeTrainingReport: () => void;
   /** v2.0 (R33): answer the pending mid-week insert. */
   resolveInsert: (key: "a" | "b") => void;
 
@@ -471,6 +474,7 @@ export const useCareerStore = create<CareerStoreState>()(
         setTrainingRepeat: (on) => withResult((s) => setTrainingRepeatFlow(s, on)),
         approveTrainingProposal: () => withResult(approveTrainingProposalFlow),
         keepBaseTraining: () => withResult(keepBaseTrainingFlow),
+        acknowledgeTrainingReport: () => withResult(acknowledgeTrainingReportFlow),
         resolveInsert: (key) => withResult((s) => resolveInsertFlow(s, key)),
 
         // rc.34 (UX-06a): buying opens the item — its "New" mark clears.
