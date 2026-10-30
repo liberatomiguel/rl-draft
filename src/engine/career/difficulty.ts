@@ -35,7 +35,7 @@ export function careerMatchProfile(difficulty: CareerDifficulty): CareerMatchPro
  * and the new career's training state both read it.
  */
 export function presetTrainingModeOf(difficulty: CareerDifficulty): TrainingMode {
-  return CAREER_PLAN.modeByPreset[difficulty] ?? "approve";
+  return CAREER_PLAN.modeByPreset[difficulty] ?? "recommend";
 }
 
 /** The prefs a new career on this preset starts with (how much is guided). */

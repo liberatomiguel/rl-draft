@@ -1,41 +1,32 @@
 "use client";
 
 /**
- * Road to Worlds — Training (rc.34, DEV-03: a package per period).
+ * Road to Worlds — Training (rc.35, front T: the simplified 14-day cycle).
  *
- * One training decision per period, none per week (TRAINING-CONTRACT §2):
- *  1. today's status (session, match prep at half load, rest);
- *  2. a waiting proposal from the coach ("the coach proposes") — approve,
- *     adjust or keep the base; the clock holds until answered;
- *  3. the period's plan: which period, the days left, the package (or the
- *     base), who set it, the coach's effect, the wear and absence risk, and
- *     what the period has paid so far — with Adjust / Keep the base;
- *  4. who decides (the coach runs it / proposes / I set it) and "repeat";
- *  5. the package builder with its projection from the engine that runs it;
- *  6. the squad's growth (the next point, the peak) — no per-card controls;
- *  7. the period reports (T7) and the recent scrims;
- *  8. what the attributes do.
+ * Miguel (rc.34 playtest): "absurdly complex — too many choices, no
+ * hierarchy". The screen reads top-down:
+ *  1. the current plan HERO — its objective icon, who set it, the cycle's
+ *     progress ring and days left, the expected gain, the coach;
+ *  2. who sets it (the hired coach, else the preset: Easy auto, Normal
+ *     recommended, Hard you) and Adjust → the three-choice picker
+ *     (objective · intensity · scrims) with its expected result;
+ *  3. the squad's growth (the next point, the peak);
+ *  4. past cycles (the results, visual), recent scrims, what the attributes do.
  * Every number comes from the engine or balance.ts — never inline math.
  */
 
 import { AppLink } from "@/components/ui/AppLink";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CAREER_CALENDAR, CAREER_DEV, CAREER_TRAINING } from "@/config/balance";
 import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import type { CareerSave, SquadPlayer, TrainingMode } from "@/engine/career/types";
+import type { CareerSave, SquadPlayer } from "@/engine/career/types";
 import type { StatKey } from "@/engine/types";
 import { clamp, cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
-import {
-  coachTrainingProfileOf,
-  playerEffectOf,
-  trainingBlockOf,
-  trainingDecisionOf,
-  trainingOf,
-} from "@/store/careerTraining";
+import { coachTrainingProfileOf, playerEffectOf, projectTrainingPackage, trainingBlockOf, trainingOf } from "@/store/careerTraining";
 import {
   agePhase,
   clockLabel,
@@ -51,19 +42,22 @@ import {
 import { formatDateShort, formatDateTiny } from "@/components/career/dateText";
 import { ErrorBanner } from "@/components/career/hub/hubShared";
 import {
-  PackageBuilder,
+  CycleRing,
+  ExpectedResult,
+  OBJECTIVE_TONE,
+  ObjectiveIcon,
   PackageChips,
   PeriodReport,
-  TrainingProposalCard,
+  PlanPicker,
 } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { AlertIcon, StarIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Toggle } from "@/components/ui/Toggle";
 
 const PHASE_TONE = { growing: "good", prime: "blue", declining: "neutral", unknown: "neutral" } as const;
-const MODES: TrainingMode[] = ["coach", "approve", "manual"];
 
 export function TrainingScreen() {
   const mounted = useMounted();
@@ -71,19 +65,19 @@ export function TrainingScreen() {
   const t = useCopy();
   const C = useCareerCopy();
   const setTrainingPackage = useCareerStore((s) => s.setTrainingPackage);
-  const setTrainingMode = useCareerStore((s) => s.setTrainingMode);
   const setTrainingRepeat = useCareerStore((s) => s.setTrainingRepeat);
-  const approveTrainingProposal = useCareerStore((s) => s.approveTrainingProposal);
-  const keepBaseTraining = useCareerStore((s) => s.keepBaseTraining);
-  /** The builder is open (null) or closed; `editFrom` seeds it (a proposal or the running package). */
   const [editing, setEditing] = useState(false);
-  const [editFrom, setEditFrom] = useState<"plan" | "proposal">("plan");
 
-  if (!mounted || !save) {
+  const block = useMemo(() => (save ? trainingBlockOf(save) : null), [save]);
+  const projection = useMemo(
+    () => (save && save.phase === "running" ? projectTrainingPackage(save, trainingOf(save).plan?.package ?? null) : null),
+    [save],
+  );
+
+  if (!mounted || !save || !block) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 px-3 py-5 sm:px-4" aria-busy>
         <div className="h-10 w-52 animate-pulse rounded-lg bg-white/5" />
-        <div className="h-28 animate-pulse rounded-2xl bg-white/5" />
         <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
         <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
       </div>
@@ -91,14 +85,15 @@ export function TrainingScreen() {
   }
 
   const D = C.dates;
-  const P = C.training.plan;
+  const Y = C.training.cycle;
   const clock = clockLabel(save);
-  const block = trainingBlockOf(save);
   const training = trainingOf(save);
-  const decision = trainingDecisionOf(save);
   const plan = training.plan;
   const coachProfile = coachTrainingProfileOf(save.coach);
   const running = save.phase === "running";
+  const pkg = block.package;
+  const objective = pkg?.objective ?? null;
+  const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub", ring: "border-line", bg: "bg-white/[0.03]" };
 
   // Engine truth: Mon–Fri sessions; a committed week trains at half load.
   const matchPrepWeek = save.pendingEventDef !== null;
@@ -111,174 +106,149 @@ export function TrainingScreen() {
   const effects = statEffectsFor(teamNow.stats);
 
   const endDate = formatDateTiny(D, dateOfDay(save.clock.seasonIndex, block.period.endDay));
-  const soFar = Object.values(plan?.players ?? {}).reduce(
-    (s, e) => ({ sessions: s.sessions + e.sessions, scrims: s.scrims + e.scrims, series: s.series + e.seriesGain }),
-    { sessions: 0, scrims: 0, series: 0 },
-  );
-  const n = Math.max(1, Object.keys(plan?.players ?? {}).length);
+  const entries = Object.values(plan?.players ?? {});
+  const gainedAvg = entries.length > 0 ? entries.reduce((s, e) => s + e.sessions + e.scrims + e.seriesGain, 0) / entries.length : 0;
   const seasonScrims = save.scrimLog.filter((e) => e.seasonIndex === save.clock.seasonIndex);
-
-  const openBuilder = (from: "plan" | "proposal") => {
-    setEditFrom(from);
-    setEditing(true);
-  };
+  const controllerLine = block.controller === "coach" && coachProfile ? Y.controllerCoach(coachProfile.name) : Y.controller[block.controller];
+  const coachPct = block.coach?.effectPct ?? 0;
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-3 py-5 sm:px-4">
-      <SectionTitle
-        kicker={C.meta.title}
-        title={C.training.title}
-        right={<Badge tone="neutral">{formatDateShort(D, clock.date)}</Badge>}
-      />
+      <SectionTitle kicker={C.meta.title} title={C.training.title} right={<Badge tone="neutral">{formatDateShort(D, clock.date)}</Badge>} />
 
       <ErrorBanner />
 
-      {/* 1 — today's status */}
-      <div className="rise-in flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white/[0.03] px-4 py-2.5 text-[11px]">
-        <span className={cx("inline-flex items-center gap-1.5 font-semibold", sessionToday ? "text-cyan" : "text-faint")}>
-          <span className={cx("h-1.5 w-1.5 rounded-full", sessionToday ? "animate-pulse bg-cyan" : "bg-white/15")} aria-hidden />
-          {sessionToday && matchPrepWeek ? C.training.matchPrepWeek : sessionToday ? C.training.sessionToday : C.training.noSessionToday}
-        </span>
-        <span className="flex flex-wrap items-center gap-2">
-          {trainingWeek ? (
-            <span className="rounded-full border border-good/40 bg-good/10 px-2.5 py-0.5 font-semibold text-good">
-              +{trainingWeekPct}% · {C.hub.trainingWeek}
-            </span>
-          ) : null}
-          <AppLink href="/career/finances" className="text-faint underline-offset-4 hover:text-ink hover:underline">
-            {C.training.facilityEffect(gearPct)}
-          </AppLink>
-        </span>
-      </div>
-
-      {/* 2 — the coach's proposal waiting for an answer */}
-      {decision && !editing ? (
-        <div className="rise-in">
-          <TrainingProposalCard
-            save={save}
-            decision={decision}
-            C={C}
-            onApprove={approveTrainingProposal}
-            onAdjust={() => openBuilder("proposal")}
-            onKeepBase={keepBaseTraining}
-          />
-        </div>
-      ) : null}
-
-      {/* 3 — the period's plan */}
-      <Panel glow={plan?.package ? "blue" : undefined} className="rise-in p-4" style={{ animationDelay: "30ms" }}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="kicker mb-0.5 text-[10px]">{P.title}</p>
-            <p className="display text-lg font-bold text-ink">{P.periodOf(block.period.index + 1, block.period.count)}</p>
-            <p className="text-[11px] text-faint">
-              {P.dayOf(block.period.dayOf, block.period.length)} · {P.daysLeft(block.period.daysLeft)} · {endDate}
+      {/* 1 — the current plan: the hero */}
+      <Panel glow={pkg ? "blue" : undefined} className="rise-in overflow-hidden p-0">
+        <div className={cx("flex items-center gap-3 border-b border-line px-4 py-3", tone.bg)}>
+          <span className={cx("flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 bg-black/25", tone.ring, tone.text)}>
+            <ObjectiveIcon objective={objective} className="h-8 w-8" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="kicker text-[10px]">
+              {Y.cycleOf(block.period.index + 1, block.period.count)} · {Y.running}
             </p>
+            <p className={cx("display truncate text-xl font-bold", objective ? tone.text : "text-ink")}>
+              {objective ? Y.objectives[objective] : Y.by.base}
+            </p>
+            <p className="truncate text-[11px] text-sub">{Y.by[block.author] ?? ""}</p>
           </div>
-          <Badge tone={plan?.package ? "blue" : "neutral"}>{P.by[block.author]}</Badge>
+          <CycleRing progress={block.progress} daysLeft={block.period.daysLeft} label={Y.daysLeft(block.period.daysLeft)} />
         </div>
-        <ProgressBar value={clamp(block.period.dayOf / block.period.length, 0, 1)} tone="blue" className="mt-2.5 h-1.5" label={P.title} />
-        <PackageChips pkg={block.package} C={C} className="mt-3" />
-        {!block.package ? <p className="mt-2 text-xs text-sub">{P.baseHint}</p> : null}
-        <div className="mt-2.5 space-y-1 text-[11px]">
-          {coachProfile ? (
-            <p className="font-semibold text-cyan">
-              {P.coachLine(coachProfile.name, block.coach?.effectPct ?? 0)}
-              {block.mode === "coach" && block.author === "coach" ? (
-                <span className="ml-1.5 font-normal text-faint">· {P.planQuality(Math.round(coachProfile.planQuality * 100))}</span>
+        <div className="space-y-3 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <span className="text-faint">
+              {Y.dayOf(block.period.dayOf, block.period.length)} · {Y.daysLeft(block.period.daysLeft)} · {Y.endsOn(endDate)}
+            </span>
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span className={cx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold", sessionToday ? "bg-cyan/10 text-cyan" : "bg-white/5 text-faint")}>
+                <span className={cx("h-1.5 w-1.5 rounded-full", sessionToday ? "animate-pulse bg-cyan" : "bg-white/20")} aria-hidden />
+                {sessionToday && matchPrepWeek ? C.training.matchPrepWeek : sessionToday ? C.training.sessionToday : C.training.noSessionToday}
+              </span>
+              {trainingWeek ? (
+                <span className="rounded-full bg-good/10 px-2 py-0.5 font-semibold text-good">
+                  +{trainingWeekPct}% · {C.hub.trainingWeek}
+                </span>
               ) : null}
+            </span>
+          </div>
+          <PackageChips pkg={pkg} C={C} />
+          {!pkg ? <p className="text-xs text-sub">{Y.baseLine}</p> : null}
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-line bg-black/20 px-3 py-2">
+              <p className="text-[9px] uppercase tracking-[0.1em] text-faint">{Y.progress}</p>
+              <p className="display text-lg font-bold text-ink">{Y.gained(gainedAvg.toFixed(2))}</p>
+              {pkg && pkg.scrimsPerWeek > 0 ? (
+                <p className="flex items-center gap-1 text-[10px] text-sub">
+                  <SwordsIcon className="h-3 w-3" />
+                  {Y.scrimsDone(block.scrims.done, block.scrims.planned)}
+                  {block.scrims.done > 0 ? ` · ${Y.record(block.scrims.won, block.scrims.lost)}` : ""}
+                </p>
+              ) : null}
+            </div>
+            <div className="rounded-xl border border-good/30 bg-good/[0.06] px-3 py-2">
+              <p className="text-[9px] uppercase tracking-[0.1em] text-good">{Y.expected}</p>
+              <p className="display text-lg font-bold text-good">{Y.expectedGain((projection?.startersAvg ?? 0).toFixed(2))}</p>
+              <p className={cx("flex items-center gap-1 text-[10px]", block.unavailabilityPts > 0 ? "text-orange-bright" : "text-faint")}>
+                <AlertIcon className="h-3 w-3" />
+                {block.unavailabilityPts > 0 ? Y.risk(block.unavailabilityPts.toFixed(1)) : Y.noRisk}
+              </p>
+            </div>
+          </div>
+
+          {coachProfile ? (
+            <p className="flex items-center gap-2 text-[11px] font-semibold text-cyan">
+              <WhistleIcon className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 truncate">
+                {coachProfile.name}
+                {coachPct > 0 ? ` · ${Y.coachBoost(coachPct)}` : ""}
+              </span>
             </p>
           ) : (
-            <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center font-semibold text-orange-bright hover:underline">
-              {P.coachless} →
+            <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-2 text-[11px] font-semibold text-orange-bright hover:underline">
+              <WhistleIcon className="h-4 w-4 shrink-0" />
+              {Y.noCoach} · {Y.hireCoach} →
             </AppLink>
           )}
-          {block.package && block.package.scrimsPerWeek > 0 ? (
-            <p className="text-sub">
-              {C.hub.trainingScrims(block.scrims.done, block.scrims.planned, block.scrims.level ? P.levels[block.scrims.level] : "")}
-              {block.scrims.done > 0 ? ` · ${P.scrimRecord(block.scrims.won, block.scrims.lost)}` : ""}
-            </p>
-          ) : null}
-          <p className={cx(block.unavailabilityPts > 0 ? "text-orange-bright" : "text-faint")}>
-            {block.unavailabilityPts > 0 ? C.hub.trainingRisk(block.unavailabilityPts.toFixed(1)) : P.noWear}
+        </div>
+      </Panel>
+
+      {/* 2 — who sets it, and the picker */}
+      <Panel strong={editing} className="rise-in p-4" style={{ animationDelay: "40ms" }}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex min-w-0 items-start gap-2 text-xs text-sub">
+            {block.controller === "coach" ? (
+              <WhistleIcon className="mt-0.5 h-4 w-4 shrink-0 text-cyan" />
+            ) : (
+              <StarIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" filled={block.controller !== "manual"} />
+            )}
+            <span className="min-w-0">{controllerLine}</span>
           </p>
-          {plan ? (
-            <p className="text-faint">
-              {P.progress}: {P.soFar((soFar.sessions / n).toFixed(2), (soFar.scrims / n).toFixed(2), (soFar.series / n).toFixed(2))}
-            </p>
+          {running && !editing ? (
+            <Button variant="secondary" size="md" className="min-h-11" onClick={() => setEditing(true)}>
+              {Y.adjust}
+            </Button>
           ) : null}
         </div>
-        {running && !editing ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="secondary" size="md" className="min-h-11" onClick={() => openBuilder("plan")}>
-              {P.edit}
-            </Button>
-            {block.package ? (
-              <Button variant="ghost" size="md" className="min-h-11" onClick={() => setTrainingPackage(null)}>
-                {P.keepBase}
-              </Button>
-            ) : null}
+        {editing && running ? (
+          <div className="mt-4">
+            <PlanPicker
+              save={save}
+              C={C}
+              initial={pkg ?? training.userPackage ?? null}
+              onApply={(p) => {
+                setTrainingPackage(p);
+                setEditing(false);
+              }}
+              onBase={() => {
+                setTrainingPackage(null);
+                setEditing(false);
+              }}
+              onCancel={() => setEditing(false)}
+            />
           </div>
         ) : null}
+        {!editing && projection && projection.players.length > 0 ? (
+          <div className="mt-3">
+            <ExpectedResult C={C} avg={projection.startersAvg} players={projection.players} risk={projection.unavailabilityPts} />
+          </div>
+        ) : null}
+        {block.controller === "recommend" || block.controller === "manual" ? (
+          <div className="mt-3">
+            <Toggle checked={training.repeat} onChange={setTrainingRepeat} label={Y.keepPlan} hint={Y.keepPlanHint} />
+          </div>
+        ) : null}
+        <p className="mt-2 text-[10px] text-faint">
+          <AppLink href="/career/finances" className="underline-offset-4 hover:text-ink hover:underline">
+            {C.training.facilityEffect(gearPct)}
+          </AppLink>
+        </p>
       </Panel>
 
-      {/* 5 — the builder (adjust / set) */}
-      {editing && running ? (
-        <Panel strong className="rise-in p-4">
-          <PackageBuilder
-            save={save}
-            C={C}
-            statLabels={t.STAT_LABELS}
-            initial={editFrom === "proposal" && decision ? decision.proposal : (plan?.package ?? training.userPackage ?? null)}
-            onApply={(pkg) => {
-              setTrainingPackage(pkg);
-              setEditing(false);
-            }}
-            onKeepBase={() => {
-              if (decision) keepBaseTraining();
-              else setTrainingPackage(null);
-              setEditing(false);
-            }}
-            onCancel={() => setEditing(false)}
-          />
-        </Panel>
-      ) : null}
-
-      {/* 4 — who decides */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
-        <p className="kicker mb-1.5 text-[10px]">{P.mode}</p>
-        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3" role="radiogroup" aria-label={P.mode}>
-          {MODES.map((m) => {
-            const selected = training.mode === m;
-            return (
-              <button
-                key={m}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => setTrainingMode(m)}
-                className={cx(
-                  "flex min-h-11 flex-col justify-center rounded-lg border px-2.5 py-1.5 text-left transition-colors",
-                  selected ? "border-blue/60 bg-blue/15" : "border-line bg-white/[0.03] hover:border-line-strong",
-                )}
-              >
-                <span className={cx("display text-[11px] font-bold uppercase tracking-[0.08em]", selected ? "text-blue-bright" : "text-ink")}>
-                  {P.modes[m]}
-                </span>
-                <span className="mt-0.5 text-[10px] leading-snug text-faint">{P.modeHint[m]}</span>
-              </button>
-            );
-          })}
-        </div>
-        {!save.coach ? <p className="mt-2 text-[11px] text-orange-bright">{P.noCoachMode}</p> : null}
-        <div className="mt-3">
-          <Toggle checked={training.repeat} onChange={setTrainingRepeat} label={P.repeat} hint={P.repeatHint} />
-        </div>
-      </Panel>
-
-      {/* 6 — the squad's growth */}
+      {/* 3 — the squad's growth */}
       <div>
-        <p className="kicker mb-2 text-[10px]">{P.squadGrowth}</p>
+        <p className="kicker mb-2 text-[10px]">{C.training.plan.squadGrowth}</p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {save.squad.map((p, i) => (
             <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
@@ -286,11 +256,11 @@ export function TrainingScreen() {
         </div>
       </div>
 
-      {/* 7 — period reports */}
+      {/* 4 — past cycles */}
       <Panel className="rise-in p-4" style={{ animationDelay: "200ms" }}>
-        <p className="kicker mb-2 text-[10px]">{P.history}</p>
+        <p className="kicker mb-2 text-[10px]">{Y.history}</p>
         {training.history.length === 0 ? (
-          <p className="text-xs text-faint">{P.historyEmpty}</p>
+          <p className="text-xs text-faint">{Y.historyEmpty}</p>
         ) : (
           <div className="space-y-2">
             {training.history.slice(0, 8).map((h, i) => (
@@ -300,9 +270,12 @@ export function TrainingScreen() {
         )}
       </Panel>
 
-      {/* 7b — recent scrims (the package's and any booked earlier) */}
+      {/* 4b — recent scrims */}
       <Panel className="rise-in p-4" style={{ animationDelay: "220ms" }}>
-        <p className="kicker mb-1.5 text-[10px]">{C.scrim.results}</p>
+        <p className="kicker mb-1.5 flex items-center gap-1.5 text-[10px]">
+          <SwordsIcon className="h-3.5 w-3.5" />
+          {C.scrim.results}
+        </p>
         {seasonScrims.length === 0 ? (
           <p className="text-xs text-faint">{C.scrim.noResults}</p>
         ) : (
@@ -313,7 +286,7 @@ export function TrainingScreen() {
                 <span className={cx("min-w-0 font-semibold", e.won ? "text-good" : "text-bad")}>
                   {e.won ? C.scrim.won(e.oppName, e.scoreA, e.scoreB) : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
                 </span>
-                {e.level ? <Badge tone="neutral">{P.levels[e.level]}</Badge> : null}
+                {e.level ? <Badge tone="neutral">{Y.scrimChoices[e.level]}</Badge> : null}
                 <span className="ml-auto shrink-0 text-[10px] text-faint">{formatDateTiny(D, dateOfDay(e.seasonIndex, e.day))}</span>
               </li>
             ))}
@@ -321,7 +294,7 @@ export function TrainingScreen() {
         )}
       </Panel>
 
-      {/* 8 — what the attributes do */}
+      {/* 4c — what the attributes do */}
       <details className="rise-in group panel p-0" style={{ animationDelay: "240ms" }}>
         <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
           <span className="kicker text-[10px]">
@@ -419,7 +392,7 @@ function GrowthCard({
           {" · "}
           {eta.splitCapped
             ? C.training.capLine(p.gainedThisSplit.toFixed(1), CAREER_TRAINING.maxSplitGain, p.gainedThisSeason.toFixed(1), CAREER_TRAINING.maxSeasonGain)
-            : C.training.capLineSeason(p.gainedThisSeason.toFixed(1), CAREER_DEV.seasonGainCap)}
+            : C.training.capLineSeason(p.gainedThisSeason.toFixed(1), CAREER_DEV.seasonGainHardCap)}
         </p>
         {weeklyDecline > 0 ? <p className="mt-0.5 text-[10px] text-bad">{C.training.declineLine(weeklyDecline.toFixed(2))}</p> : null}
       </div>

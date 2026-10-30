@@ -1364,6 +1364,19 @@ export const CAREER_DEV = {
   /** DEV-01d: the season cap on growth (model 2 has no split cap; rc.31: 3 a split, 7 a season). */
   seasonGainCap: 7,
   /**
+   * rc.35 (front T): the season cap spreads instead of stopping dead — a tick
+   * may take this × (its weeks ÷ the calendar weeks left) of the room left,
+   * so a fast prospect slows near the cap but never reads flat for weeks.
+   */
+  seasonCapSpread: 2,
+  /**
+   * rc.35 (front T): the season's hard ceiling on growth. The pace stays
+   * capped at seasonGainCap a year (so the base never front-loads); this
+   * leaves room for a package, gear and the Training Weeks to run ahead of
+   * it — they only speed the road to the peak, which still bounds it.
+   */
+  seasonGainHardCap: 13,
+  /**
    * DEV-01 base growth: match XP per series a player actually plays, in
    * training-week equivalents × field quality. A reserve who does not play
    * keeps his training days (no starter XP; rc.31 paid the registered sub
@@ -1494,7 +1507,8 @@ export const CAREER_PLAN = {
    * W23–32). A period never crosses a season.
    */
   periodMode: "grid" as "grid" | "split",
-  periodDays: 28,
+  /** rc.35 (front T, Miguel): a 14-day cycle (16 a season); rc.34: 28. */
+  periodDays: 14,
   /** The Monday weeks that open a period in "split" mode (1-B). */
   splitStartWeeks: [1, 13, 23] as readonly number[],
   /**
@@ -1577,14 +1591,19 @@ export const CAREER_PLAN = {
   /** T6: the history ring — two seasons of grid periods. */
   historySize: 16,
   /**
-   * Decision 3-A (BAL-02): the delegation a NEW career starts on per preset —
-   * Easy: the coach runs it; Normal: the coach proposes; Hard: you set it.
-   * Every mode stays available; without a coach every mode runs the base
-   * (or the repeated package) and nothing prompts.
+   * rc.35 (front T, Miguel): who sets the package while no coach is hired —
+   * Easy: the best plan is applied for you; Normal: it is tagged
+   * RECOMMENDED and you pick; Hard: you pick, no tag. A hired coach always
+   * picks and runs it (you can still adjust it for the cycle).
    */
-  modeByPreset: { easy: "coach", normal: "approve", hard: "manual" } as Record<string, "coach" | "approve" | "manual">,
-  /** "Repeat until I change it" — its default per mode ("approve" asks every period). */
-  repeatByMode: { coach: true, approve: false, manual: true } as Record<string, boolean>,
+  modeByPreset: { easy: "auto", normal: "recommend", hard: "manual" } as Record<string, "auto" | "recommend" | "manual">,
+  /** "Keep my plan next cycle" — its default per mode (rc.35: on everywhere; Easy re-picks the best plan). */
+  repeatByMode: { auto: true, recommend: true, manual: true } as Record<string, boolean>,
+  /**
+   * rc.35 (front T): the simplified package picks a scrim LEVEL (or none);
+   * a level runs this many scrims a week (on CAREER_SCRIM.package.days).
+   */
+  scrimsPerWeekOnLevel: 2,
   /**
    * T5 the coach's proposal: development by default, preparation for a
    * period with a Major or Worlds, recovery when the last period's squad wear

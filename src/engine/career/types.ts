@@ -93,8 +93,14 @@ export type TrainingWorkload = "light" | "normal" | "heavy";
 export type ScrimLevel = "easy" | "even" | "hard";
 /** T2: one squad focus — balanced, or one of the five drill themes (CAREER_TRAINING.drills). */
 export type SquadFocus = "balanced" | DrillId;
-/** T5: who decides the package at each period boundary. */
-export type TrainingMode = "coach" | "approve" | "manual";
+/**
+ * rc.35 (front T): who sets the package when no coach is hired, by preset —
+ * Easy "auto" (the best plan is applied for you), Normal "recommend" (the
+ * best plan is tagged, you pick), Hard "manual" (no tag). A hired coach
+ * always picks and runs it (you can still adjust). rc.34's "coach" /
+ * "approve" are migrated on load (`repairTrainingOnLoad`).
+ */
+export type TrainingMode = "auto" | "recommend" | "manual";
 
 /** T2: an optional per-player tweak — the card lists only the players who differ. */
 export interface PlayerTweak {
@@ -150,7 +156,7 @@ export interface TrainingPlan {
   endDay: number;
   /** null = DEV-01's base (no package). */
   package: TrainingPackage | null;
-  author: "coach" | "user" | "base";
+  author: "coach" | "user" | "base" | "auto";
   /** The day the current package took over (a mid-period change runs to the boundary). */
   packageFromDay: number;
   lastSessionDay: number;
@@ -207,7 +213,7 @@ export interface TrainingSummary {
   startDay: number;
   endDay: number;
   package: TrainingPackage | null;
-  author: "coach" | "user" | "base";
+  author: "coach" | "user" | "base" | "auto";
   players: TrainingSummaryPlayer[];
   scrims: Partial<Record<ScrimLevel, [number, number]>>;
   chemStart: number;
@@ -240,6 +246,13 @@ export interface TrainingState {
    * Optional; absent = "approve".
    */
   delegatedFrom?: "approve" | "manual";
+  /**
+   * rc.35 (front T): the last period report the manager has seen
+   * ("season:period"; "" = none yet) — the results modal shows the newest
+   * filed report once. Optional: the load repair stamps an older save with
+   * its newest report so nothing old pops.
+   */
+  reportSeen?: string;
 }
 
 /**

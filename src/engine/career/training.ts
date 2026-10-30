@@ -405,7 +405,8 @@ export function focusForStat(stat: StatKey | null | undefined): SquadFocus {
  * workload and scrims (CAREER_PLAN.proposal) and the theme of his buff stat.
  */
 export function coachProposalFor(input: {
-  coach: Pick<CoachTrainingProfile, "bonusType">;
+  /** rc.35: null = no coach — the recommended plan (a balanced focus). */
+  coach: Pick<CoachTrainingProfile, "bonusType"> | null;
   bigEvent: boolean;
   lastWear: number;
 }): { package: TrainingPackage; reasonKey: "default" | "event" | "wear" } {
@@ -417,13 +418,47 @@ export function coachProposalFor(input: {
   return {
     package: {
       objective,
-      focus: focusForStat(input.coach.bonusType),
+      focus: focusForStat(input.coach?.bonusType),
       workload: row.workload as TrainingWorkload,
       scrimsPerWeek: row.scrimsPerWeek,
       scrimLevel: row.scrimLevel as ScrimLevel,
     },
     reasonKey,
   };
+}
+
+// ---------------------------------------------------------------------------
+// rc.35 (front T) — the simplified package: objective + intensity + scrims
+// ---------------------------------------------------------------------------
+
+/** The scrim choice the screen shows: none, or a level. */
+export type ScrimChoice = "off" | ScrimLevel;
+export const SCRIM_CHOICES: readonly ScrimChoice[] = ["off", "easy", "even", "hard"];
+
+/** A package's scrim choice ("auto" reads as the level it resolves to). */
+export function scrimChoiceOf(pkg: Pick<TrainingPackage, "scrimsPerWeek" | "scrimLevel" | "objective"> | null): ScrimChoice {
+  if (!pkg || pkg.scrimsPerWeek <= 0) return "off";
+  return resolveScrimLevel(pkg);
+}
+
+/**
+ * rc.35: a package from the screen's three choices. The focus is the coach's
+ * (his buff stat's theme) or balanced; a scrim level runs
+ * CAREER_PLAN.scrimsPerWeekOnLevel a week. No per-player tweaks.
+ */
+export function simplePackageOf(input: {
+  objective: TrainingObjective;
+  workload: TrainingWorkload;
+  scrims: ScrimChoice;
+  focus?: SquadFocus;
+}): TrainingPackage {
+  return sanitizePackage({
+    objective: input.objective,
+    focus: input.focus ?? "balanced",
+    workload: input.workload,
+    scrimsPerWeek: input.scrims === "off" ? 0 : CAREER_PLAN.scrimsPerWeekOnLevel,
+    scrimLevel: input.scrims === "off" ? "auto" : input.scrims,
+  });
 }
 
 /** Two packages are the same routine (tweaks included). */

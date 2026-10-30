@@ -21,6 +21,7 @@ import { CareerAutopilot } from "@/components/career/CareerAutopilot";
 import { CareerToaster } from "@/components/career/CareerToaster";
 import { CareerTopBar } from "@/components/career/CareerTopBar";
 import { MoneyNoticeModal } from "@/components/career/MoneyNoticeModal";
+import { TrainingReportModal } from "@/components/career/training/TrainingReportModal";
 
 // Full-screen routes without the career top bar. EXACT match — "/career/news"
 // must NOT be caught by a "/career/new" prefix (that hid the nav in the inbox).
@@ -82,6 +83,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
           <CareerToaster />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}
           <MoneyNoticeModal />
+          {/* rc.35 (front T): a finished training cycle's results, once per cycle. */}
+          <TrainingReportModal />
         </>
       ) : null}
       {children}

@@ -791,7 +791,7 @@ const ARC_BOT_PREFS: CareerPrefs = {
 function inputFor(region: Region, difficulty: CareerDifficulty, policy: ArcPolicy): CreateCareerInput {
   return {
     // rc.34 (DEV-03): the policy's training mode, never the preset's (comparable across difficulties).
-    trainingMode: policy.training === "delegate" ? "coach" : "manual",
+    trainingMode: policy.training === "delegate" ? "auto" : "manual",
     identity: {
       orgName: "Arc Bot",
       abbrev: "ARC",

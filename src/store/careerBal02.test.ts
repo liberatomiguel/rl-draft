@@ -192,7 +192,7 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
         expect(bullets.money.replace(String(rule.deadlineWeeks), "")).not.toMatch(/\d/);
       }
       // The three presets start on three different delegations, each told apart.
-      expect(new Set(DIFFS.map((d) => presetTrainingModeOf(d)))).toEqual(new Set(["coach", "approve", "manual"]));
+      expect(new Set(DIFFS.map((d) => presetTrainingModeOf(d)))).toEqual(new Set(["auto", "recommend", "manual"]));
       expect(new Set(DIFFS.map((d) => C.wizard.presetHelp(presetTrainingModeOf(d), presetPrefs(d).autoEnterUnofficials))).size).toBe(3);
       // Three different promises, and the matches bullet tells the presets apart.
       expect(new Set(DIFFS.map((d) => C.wizard.presets[d].promise)).size).toBe(3);

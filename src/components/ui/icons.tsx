@@ -176,9 +176,17 @@ export function CheckIcon({ className }: { className?: string }) {
 }
 
 /** Star — a recommendation. */
-export function StarIcon({ className }: { className?: string }) {
+export function StarIcon({ className, filled = true }: { className?: string; filled?: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke={filled ? "none" : "currentColor"}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
       <path d="m12 3.2 2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3.1-5.4 3.1 1.2-6-4.5-4.2 6.1-.7L12 3.2Z" />
     </svg>
   );
@@ -396,6 +404,77 @@ export function BankIcon({ className }: { className?: string }) {
   return (
     <Glyph className={className}>
       <path d="M3 9.5 12 4l9 5.5H3ZM4 20h16M6 12v5m4-5v5m4-5v5m4-5v5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Trophy — Compete (preparation). */
+export function TrophyIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M7.5 4.5h9v5a4.5 4.5 0 0 1-9 0v-5Z" {...P} />
+      <path d="M7.5 6.5H4.5a3 3 0 0 0 3 4M16.5 6.5h3a3 3 0 0 1-3 4M12 14v3.5M8.5 20h7" {...P} />
+    </Glyph>
+  );
+}
+
+/** Heart with a pulse — Recover. */
+export function HeartPulseIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" {...P} />
+      <path d="M7 12.5h2.5l1.3-2.3 2.2 4.3 1.3-2h2.7" {...P} />
+    </Glyph>
+  );
+}
+
+/** Gauge — intensity. */
+export function GaugeIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M4 17a8 8 0 1 1 16 0" {...P} />
+      <path d="m12 17 4-5.5" {...P} />
+      <circle cx="12" cy="17" r="1.3" fill="currentColor" stroke="none" />
+    </Glyph>
+  );
+}
+
+/** Whistle — the coach. */
+export function WhistleIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3.5 9.5h9l6-3v4.5a5.5 5.5 0 1 1-11 1.5" {...P} />
+      <circle cx="13" cy="13.5" r="1.4" {...P} />
+      <path d="M3.5 9.5v3" {...P} />
+    </Glyph>
+  );
+}
+
+/** Hourglass — experience / days left. */
+export function HourglassIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 5 9 5 9 8.5s-9 3.5-9 8.5M16.5 3.5c0 5-9 5-9 8.5s9 3.5 9 8.5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Warning triangle — absence risk. */
+export function AlertIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 4 21 19.5H3L12 4Z" {...P} />
+      <path d="M12 10v4.5M12 17v.1" {...P} />
+    </Glyph>
+  );
+}
+
+/** Ring with a dot — the base plan (nothing added). */
+export function BaseDotIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <circle cx="12" cy="12" r="7.5" {...P} />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
     </Glyph>
   );
 }

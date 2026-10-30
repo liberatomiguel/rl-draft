@@ -1491,6 +1491,25 @@ export interface TrainTickCtx extends GrowthCtx, PackageTickCtx {
 const TRAINING_DAY_YEARS = 1 / (CAREER_TRAINING.trainingDaysPerWeek * CAREER_CALENDAR.weeksPerSeason);
 
 /**
+ * rc.35 (front T): the season cap's room for one tick. rc.32–34 stopped dead
+ * at CAREER_DEV.seasonGainCap, so a prospect on a package banked the season's
+ * points weeks before the rollover and read flat until it (Miguel: "he stops
+ * growing, then resumes"). The room left is now spread over the calendar
+ * weeks left: a tick may take seasonCapSpread × its share (its weeks ÷ the
+ * weeks left), so
+ * growth slows near the cap but never stops, and the season total still
+ * holds. A tick with no day (an old caller) keeps the plain room.
+ */
+function seasonRoomFor(ctx: { seasonGained: number; weeks: number; day?: number }): number {
+  const room = Math.max(0, CAREER_DEV.seasonGainHardCap - ctx.seasonGained);
+  if (ctx.day === undefined) return room;
+  const seasonDays = CAREER_CALENDAR.weeksPerSeason * CAREER_CALENDAR.daysPerWeek;
+  const weeksLeft = Math.max(0, seasonDays - ctx.day + 1) / CAREER_CALENDAR.daysPerWeek;
+  const share = (ctx.weeks * CAREER_DEV.seasonCapSpread) / Math.max(1e-6, weeksLeft);
+  return share >= 1 ? room : room * share;
+}
+
+/**
  * DEV-01 (model 2): one tick of the growth contract. Growth runs at the pace
  * toward his real peak (potential ± offset), never past it, under the season
  * cap only (no split cap); past his plateau the tick instead loses
@@ -1503,9 +1522,7 @@ function contractTick(
 ): { player: SquadPlayer; gained: number; declined: number } {
   const { profile, target } = squadArcOf(p, ctx.careerSeed);
   const raw = rawGain(p, ctx);
-  const gained = floor4(
-    Math.max(0, Math.min(raw, CAREER_DEV.seasonGainCap - ctx.seasonGained, target - p.overall)),
-  );
+  const gained = floor4(Math.max(0, Math.min(raw, seasonRoomFor(ctx), target - p.overall)));
   const exactAge = exactAgeOf(ageOf(p.birthYear, ctx.seasonIndex), ctx.day);
   // rc.34 (DEV-03): a recovery package slows the decline while it runs (declineMult ≤ 1).
   const decline = ctx.agingYears
@@ -1666,7 +1683,7 @@ export function trainingEta(
   // DEV-01 (model 2): the season cap only, and his real peak (potential ± offset) as the ceiling.
   const ceiling = dev01 ? squadArcOf(p, ctx.careerSeed).target : p.potential;
   const seasonCapLeft = round2(
-    Math.max(0, (dev01 ? CAREER_DEV.seasonGainCap : CAREER_TRAINING.maxSeasonGain) - p.gainedThisSeason),
+    Math.max(0, (dev01 ? CAREER_DEV.seasonGainHardCap : CAREER_TRAINING.maxSeasonGain) - p.gainedThisSeason),
   );
   const splitCapLeft = dev01 ? seasonCapLeft : round2(Math.max(0, CAREER_TRAINING.maxSplitGain - p.gainedThisSplit));
   const atPotential = ceiling - p.overall < 1e-6;
