@@ -15,11 +15,20 @@
  *   instant mode   Sunday re-opens the choice: Play it out / Instant result.
  *   reduced motion no motion and no timer — a static card and a button.
  *
+ * rc.36 (SUN-02, R88): a short FULL-SCREEN intro — a portal on <body> over
+ * the top bar and the nav (never position:fixed inside an animated tree),
+ * the page scroll locked, other pop-ups held ("ceremony"); the coach's
+ * briefing, when one was given, rides under the opener line. It still plays
+ * at most once per event (the flag `startChampionshipSunday` sets) and still
+ * shows nothing Sunday has decided.
+ *
  * Motion is transform / opacity only (DESIGN-DECISIONS #128–#130): one-shot
  * entrances and a scaleX progress bar; no filters, no infinite loops.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { CAREER_PLAYBACK, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
@@ -27,12 +36,15 @@ import type { ActiveEventState, CareerSave } from "@/engine/career/types";
 import type { TournamentState } from "@/engine/types";
 import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
 import { cx } from "@/lib/util";
+import { useOverlayHold } from "@/store/overlayHoldStore";
 import { ANIM_SCALE, useSettings } from "@/store/settingsStore";
+import { usePageScrollLock } from "@/components/ui/dialog";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { TierChip } from "@/components/career/hub/hubShared";
 import { Button, buttonClass } from "@/components/ui/Button";
+import { WhistleIcon } from "@/components/ui/icons";
 import { sundayPreviewOf, type SundayPairing } from "./weekendView";
 
 export function ChampionshipSunday({
@@ -47,10 +59,20 @@ export function ChampionshipSunday({
 }) {
   const C = useCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
+  const router = useRouter();
   const reduced = useOsReducedMotion();
   const animSpeed = useSettings((s) => s.animSpeed);
   const startedRef = useRef(false);
   const primaryRef = useRef<HTMLButtonElement>(null);
+  // rc.36 (SUN-02): the portal host resolves after mount (SSR-safe), deferred a tick
+  // so the set never runs synchronously inside the effect body (React Compiler rule).
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const t = window.setTimeout(() => setHost(document.body), 0);
+    return () => window.clearTimeout(t);
+  }, []);
+  usePageScrollLock(host !== null);
+  useOverlayHold("ceremony", host !== null);
 
   const def = ev.def;
   const t = ev.tournament;
@@ -70,7 +92,7 @@ export function ChampionshipSunday({
   // watch mode Escape skips the card too.
   useEffect(() => {
     primaryRef.current?.focus({ preventScroll: true });
-  }, []);
+  }, [host]);
   useEffect(() => {
     if (!auto) return;
     const onKey = (e: KeyboardEvent) => {
@@ -84,27 +106,36 @@ export function ChampionshipSunday({
   const userLine = preview?.opener
     ? C.event.sundayOpener(nameOf(preview.opener.id), preview.userSeed ?? 0, preview.opener.seed)
     : C.event.sundaySpectating;
+  // rc.36 (SUN-01): the coach's briefing for today, when one was given (keep = none to show).
+  const briefing = save.weekend?.eventId === def.id ? save.weekend.briefing : null;
 
-  return (
-    <div className="mx-auto max-w-4xl px-3 py-5 sm:px-4">
-      <section
-        aria-labelledby="championship-sunday-title"
-        onClick={auto ? () => start(true) : undefined}
-        className={cx(
-          "panel-strong panel-glow-orange relative overflow-hidden rounded-2xl px-4 py-6 text-center sm:px-10 sm:py-12",
-          auto && "cursor-pointer",
-        )}
-      >
-        {/* static stage light — no animated filters */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.24),transparent_62%)]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(251,191,36,0.10),transparent_70%)]"
-        />
+  if (!host) return <div className="min-h-[60vh]" aria-busy />;
 
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="championship-sunday-title"
+      onClick={auto ? () => start(true) : undefined}
+      className={cx(
+        "fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-[color:var(--bg)]",
+        auto && "cursor-pointer",
+      )}
+    >
+      {/* static stage light — no animated filters */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.26),transparent_58%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-56 bg-[radial-gradient(ellipse_at_bottom,rgba(251,191,36,0.12),transparent_70%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange/60 to-transparent"
+      />
+      <section className="relative mx-auto flex min-h-full max-w-3xl flex-col justify-center px-4 py-8 text-center sm:px-8 sm:py-12">
         <div className="relative">
           <div className="rise-in flex flex-wrap items-center justify-center gap-2">
             <p className="kicker !text-[11px]">
@@ -159,6 +190,15 @@ export function ChampionshipSunday({
           >
             {userLine}
           </p>
+          {briefing && briefing !== "keep" ? (
+            <p
+              className="rise-in mt-2 inline-flex items-center gap-1.5 rounded-full border border-cyan/40 bg-cyan/10 px-2.5 py-1 text-[11px] font-semibold text-cyan"
+              style={{ animationDelay: `${bracketDelay + 5 * CAREER_PLAYBACK.sundayIntroStaggerMs}ms` }}
+            >
+              <WhistleIcon className="h-3.5 w-3.5" />
+              {C.sunday.briefingChip(C.sunday.briefing[briefing])}
+            </p>
+          ) : null}
 
           {/* controls */}
           {choose ? (
@@ -173,6 +213,9 @@ export function ChampionshipSunday({
               </button>
               <Button variant="secondary" size="lg" className="w-full sm:w-auto" onClick={() => start(false)}>
                 {C.event.instant}
+              </Button>
+              <Button variant="ghost" size="md" className="w-full sm:w-auto" onClick={() => router.push("/career")}>
+                {C.event.continueToHq}
               </Button>
             </div>
           ) : (
@@ -205,12 +248,17 @@ export function ChampionshipSunday({
                   <span className="pointer-fine:hidden">{C.event.tapToSkip}</span>
                   <span className="hidden pointer-fine:inline">{C.event.clickToSkip}</span>
                 </p>
-              ) : null}
+              ) : (
+                <Button variant="ghost" size="md" className="mt-2 w-full sm:w-auto" onClick={() => router.push("/career")}>
+                  {C.event.continueToHq}
+                </Button>
+              )}
             </div>
           )}
         </div>
       </section>
-    </div>
+    </div>,
+    host,
   );
 }
 

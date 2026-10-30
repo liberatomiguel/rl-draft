@@ -30,7 +30,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isLocalRef, localTeamName } from "@/engine/career/localScene";
 import { useRouter } from "next/navigation";
-import { CAREER_PLAYBACK, CAREER_QUALIFIER, TOURNAMENT } from "@/config/balance";
+import { CAREER_PLAYBACK, CAREER_QUALIFIER, CAREER_SUNDAY, TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { isTwoDayEvent, regionalForQualifier } from "@/engine/career/calendar";
@@ -290,6 +290,12 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         </Badge>
         <Badge>{formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day))}</Badge>
         {def.region ? <Badge className={REGION_BADGE[def.region]}>{def.region}</Badge> : null}
+        {/* rc.36 (SUN-01): the coach's briefing for this Sunday, when one was given. */}
+        {save.weekend?.eventId === def.id && save.weekend.briefing && save.weekend.briefing !== "keep" ? (
+          <Badge className="!border-cyan/40 !bg-cyan/10 !text-cyan">
+            {C.sunday.briefingChip(C.sunday.briefing[save.weekend.briefing])}
+          </Badge>
+        ) : null}
       </div>
 
       {/* stakes */}
@@ -1100,7 +1106,9 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const regionalName = isQualifier ? (regionalForQualifier(def)?.name ?? C.common.tier.regional) : "";
   // "On to Sunday" only when the regional really is tomorrow (a pre-R40
   // midweek qualifier still running at the update has days to go).
-  const sundayNext = qualified && regionalTomorrowOf(def, save.clock.day) !== null;
+  // rc.36 (SUN-01, R88): with the Saturday-evening stop the digest goes back
+  // to HQ, where Sunday is started (the briefing); this is rc.35's shortcut.
+  const sundayNext = !CAREER_SUNDAY.saturdayStop && qualified && regionalTomorrowOf(def, save.clock.day) !== null;
   const userRecord = t.swiss.records.find((r) => r.teamId === "user") ?? { wins: 0, losses: 0 };
   const labels = { placement: C.common.placement, qualifierOutcome: C.common.qualifierOutcome };
 

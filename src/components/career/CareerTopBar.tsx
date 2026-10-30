@@ -99,6 +99,8 @@ export function CareerTopBar() {
 
   const continueLabel = (() => {
     if (kind === "eventPaused") return copy.hub.continueTo(copy.event.championshipSunday);
+    // rc.36 (SUN-01): Saturday evening — Sunday is started from HQ.
+    if (kind === "sunday") return copy.sunday.start;
     if (kind === "event") {
       return copy.hub.continueTo(save.pendingEventDef?.name ?? save.activeEvent?.def.name ?? "");
     }
@@ -131,7 +133,7 @@ export function CareerTopBar() {
       router.push("/career/season");
       return;
     }
-    if (kind === "decision") {
+    if (kind === "decision" || kind === "sunday") {
       router.push("/career");
       return;
     }

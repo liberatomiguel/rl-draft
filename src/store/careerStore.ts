@@ -43,10 +43,18 @@ import type {
   CareerSave,
   CareerSlotMeta,
   CoachState,
+  SundayBriefingChoice,
   TrainingMode,
   TrainingPackage,
 } from "@/engine/career/types";
 import { createRng, randomSeed } from "@/lib/rng";
+import {
+  dismissFollowFlow,
+  followSundayFlow,
+  openFollowFlow,
+  startSundayFlow,
+  type SpectatorMode,
+} from "./careerSunday";
 import {
   acceptBidFlow,
   acknowledgeMoneyNoticeFlow,
@@ -169,6 +177,18 @@ interface CareerStoreState {
    * `advanceToNextStop` also move a paused Saturday on — this names the intent.
    */
   continueEventToNextDay: () => void;
+  /**
+   * rc.36 (SUN-01, R88): HQ's "Start Sunday" — the Saturday-evening stop's
+   * answer: the briefing (omitted = the default) and exactly one day on; a
+   * spectator's `mode` (watch / results / skip) for the playoffs it is out of.
+   */
+  startSunday: (choice?: SundayBriefingChoice | null, mode?: SpectatorMode) => void;
+  /** rc.36 (SUN-03): the eliminated Saturday's answer for Sunday's regional (watch / results / skip). */
+  followSunday: (choice: SpectatorMode) => void;
+  /** rc.36 (SUN-03): opens the followed event in /career/follow. */
+  openFollow: (view: "watch" | "results") => void;
+  /** rc.36 (SUN-03): hides the followed event from HQ. */
+  dismissFollow: () => void;
   setAutoAdvance: (on: boolean) => void;
   dismissToast: (id: string) => void;
 
@@ -438,6 +458,10 @@ export const useCareerStore = create<CareerStoreState>()(
         advanceDay: () => withSave(advanceDayFlow),
         advanceToNextStop: () => withSave(advanceToNextStopFlow),
         continueEventToNextDay: () => withSave(continueEventToNextDayFlow),
+        startSunday: (choice, mode) => withResult((s) => startSundayFlow(s, choice, mode)),
+        followSunday: (choice) => withResult((s) => followSundayFlow(s, choice)),
+        openFollow: (view) => withResult((s) => openFollowFlow(s, view)),
+        dismissFollow: () => withResult(dismissFollowFlow),
         setAutoAdvance: (on) => set({ autoAdvance: on }),
         dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 

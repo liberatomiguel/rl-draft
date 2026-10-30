@@ -469,6 +469,23 @@ function tutorials(prev: CareerSave, next: CareerSave): TrackedEvent[] {
   }));
 }
 
+/** rc.36 (SUN-01): Sunday started from HQ — the briefing it was started with (keep = none picked). */
+function sundayBriefings(prev: CareerSave, next: CareerSave): TrackedEvent[] {
+  const w = next.weekend;
+  if (!w?.briefing || (prev.weekend?.eventId === w.eventId && prev.weekend.briefing)) return [];
+  return [
+    {
+      name: "ux_sunday_briefing",
+      props: {
+        gameMode: "career",
+        careerId: careerIdOf(next),
+        actionId: `${careerIdOf(next)}:sunday_briefing:${w.eventId}`,
+        choice: w.briefing,
+      },
+    },
+  ];
+}
+
 /**
  * Every career event one store write produced, in a stable order. `prev` is
  * the save before the action; `next` the save the store wrote.
@@ -486,6 +503,7 @@ export function careerEventsFor(prev: CareerSave, next: CareerSave, action: Care
     ...seasonReviews(prev, next),
     ...lettingGo(prev, next),
     ...tutorials(prev, next),
+    ...sundayBriefings(prev, next),
   ];
 }
 

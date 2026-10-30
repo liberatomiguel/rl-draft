@@ -75,6 +75,7 @@ import {
 } from "./careerFlow";
 import { stepDayForTests, walkPastForTests } from "./careerClockForTests";
 import { parkDecisionFlow } from "./careerDecisions";
+import { startSundayFlow } from "./careerSunday";
 import { eventTeamPreview, upcomingStops } from "@/components/career/careerUi";
 import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
 
@@ -623,8 +624,11 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     expect(isEventPaused(reloaded)).toBe(true);
     const before = counters(reloaded, def);
 
-    // Continue → exactly one day; Sunday's arrival leaves the user's Major alone.
-    const sun = advanceToNextStopFlow(reloaded);
+    // rc.36 (SUN-01): Saturday evening holds — neither +1 day nor the batched Advance moves it.
+    expect(advanceDayFlow(reloaded)).toBe(reloaded);
+    expect(advanceToNextStopFlow(reloaded)).toBe(reloaded);
+    // Start Sunday (HQ) → exactly one day; Sunday's arrival leaves the user's Major alone.
+    const sun = startSundayFlow(reloaded).save;
     expect(continueEventToNextDayFlow(reloaded)).toEqual(sun); // the named action, same result
     expect(continueEventToNextDayFlow(sun)).toBe(sun); // no-op once it is Sunday
     expect(continueEventToNextDayFlow(sat)).toBe(sat); // …and in a plain lobby
@@ -660,7 +664,7 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     // Nothing more to do on Sunday — and a second finish is inert.
     expect(counters(finishEvent(done), def)).toEqual(after);
     // The reload changed nothing: the same Sunday without the JSON round trip ends identically.
-    const direct = finishEvent(simEventToEnd(advanceToNextStopFlow(save)));
+    const direct = finishEvent(simEventToEnd(startSundayFlow(save).save));
     expect(counters(direct, def)).toEqual(after);
     expect(resultOf(direct, def)).toEqual(result);
   });
@@ -669,7 +673,8 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     const lobby = startEvent(majorSaturday(80), false);
     const ev = lobby.activeEvent!;
     const straight = fastForward(ev.tournament, lobby.difficulty, createRng(ev.rngState));
-    const split = simEventToEnd(advanceDayFlow(simEventToEnd(lobby)));
+    // rc.36 (SUN-01): started with the plan kept (the default) — no edge, the same Sunday.
+    const split = simEventToEnd(startSundayFlow(simEventToEnd(lobby)).save);
     expect(split.activeEvent!.tournament).toEqual(straight);
   });
 
@@ -689,7 +694,9 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     expect(isEventPaused(save)).toBe(true);
     expect(save.activeEvent!.tournament.userEliminated).toBe(true);
     const def = save.activeEvent!.def;
-    save = advanceDayFlow(save);
+    // rc.36 (SUN-01): out in the Swiss, the Saturday evening still holds — HQ starts Sunday (watch).
+    expect(advanceDayFlow(save)).toBe(save);
+    save = startSundayFlow(save).save;
     expect(save.clock.day).toBe(playoffsDayFor(def));
     expect(eventDayPhaseOf(save)).toBe("playoffs");
     // One step resolves every remaining (AI-only) playoff round.
@@ -741,7 +748,7 @@ describe("two-day Major (R40)", { timeout: 30_000 }, () => {
     moved.starterIds = swapIn;
     moved.squad.find((p) => p.id === bench.id)!.role = "starter";
     moved.squad.find((p) => p.id === starters[0])!.role = "sub";
-    const fin = simEventToEnd(advanceDayFlow(moved));
+    const fin = simEventToEnd(startSundayFlow(moved).save);
     const done = finishEvent(fin);
     expect(done.competition.newFacesThisSplit).not.toContain(bench.id);
     const xp = (id: string, isSub: boolean) =>
@@ -816,8 +823,10 @@ describe("roster moves wait for the event (rc.30, rc.29 review)", { timeout: 30_
     // rc.34 (UX-01a): the bid holds the clock, the Saturday pause included — "Later" parks it to its deadline.
     expect(advanceToNextStopFlow(withBid)).toBe(withBid);
     const parked = parkDecisionFlow(withBid, "bid:test").save;
+    // rc.36 (SUN-01): parked, the bid stops holding — Sunday is started from HQ.
+    expect(advanceToNextStopFlow(parked)).toBe(parked);
     // Sunday: the playoffs, the finish — then the market is open for business again.
-    const done = finishEvent(simEventToEnd(advanceToNextStopFlow(parked)));
+    const done = finishEvent(simEventToEnd(startSundayFlow(parked).save));
     expect(done.activeEvent).toBeNull();
     const after = acceptBidFlow(done, "bid:test");
     expect(after.error).toBeUndefined();
@@ -853,7 +862,7 @@ describe("Worlds on the season's last weekend (R40)", { timeout: 30_000 }, () =>
     save = simEventToEnd(startEvent(save, false));
     expect(isEventPaused(save)).toBe(true);
     const def = save.activeEvent!.def;
-    save = advanceToNextStopFlow(save);
+    save = startSundayFlow(save).save; // rc.36 (SUN-01): HQ's "Start Sunday"
     expect(save.clock.day).toBe(DAYS_PER_SEASON);
     expect(save.phase).toBe("running");
     expect(isChampionshipSunday(save)).toBe(true);
@@ -923,7 +932,7 @@ describe("every format pays exactly its advertised pool — real results (rc.29 
     expect(majorDef.format).toBe(FORMAT_OF.major);
     const paused = simEventToEnd(startEvent(sat, false));
     expect(isEventPaused(paused)).toBe(true);
-    const major = finishEvent(simEventToEnd(advanceToNextStopFlow(paused)));
+    const major = finishEvent(simEventToEnd(startSundayFlow(paused).save));
     expectPaysItsPool(resultOf(major, majorDef), "normal");
 
     let worlds = advanceToNextStopFlow(quiet(advanceDayFlow(worldsEve(true))));
@@ -932,7 +941,7 @@ describe("every format pays exactly its advertised pool — real results (rc.29 
     expect(worldsDef).toMatchObject({ tier: "worlds", format: FORMAT_OF.worlds });
     worlds = simEventToEnd(startEvent(worlds, false));
     expect(isEventPaused(worlds)).toBe(true);
-    worlds = finishEvent(simEventToEnd(advanceToNextStopFlow(worlds)));
+    worlds = finishEvent(simEventToEnd(startSundayFlow(worlds).save));
     expectPaysItsPool(resultOf(worlds, worldsDef), "normal");
   });
 
@@ -980,7 +989,8 @@ describe("season review counts (R40 review)", () => {
         continue;
       }
       const before = save.clock.day;
-      save = quiet(advanceDayFlow(save));
+      // rc.36 (SUN-01): `quiet` first too — it starts the Saturday-evening Sunday (the default briefing).
+      save = quiet(advanceDayFlow(quiet(save)));
       if (save.clock.day === before) throw new Error(`clock blocked on day ${before}`);
     }
     expect(save.phase).toBe("seasonReview");
@@ -1008,6 +1018,9 @@ describe("season review counts (R40 review)", () => {
 function asLegacy(save: CareerSave, edit: (s: CareerSave) => void = () => {}): CareerSave {
   const legacy = JSON.parse(JSON.stringify(save)) as CareerSave;
   legacy.saveVersion = 3;
+  // rc.36 (SUN-01/03): the weekend record and the follow copy are rc.36's — a pre-R40 save has neither.
+  delete legacy.weekend;
+  delete legacy.followEvent;
   edit(legacy);
   return legacy;
 }
@@ -1048,7 +1061,7 @@ describe("legacy saves (R40 migration)", { timeout: 30_000 }, () => {
   it("an open Saturday regional lobby moves to Sunday; the AI regionals already on file are not re-run", () => {
     // New layout up to Sunday's lobby: 6 AI regionals resolved, the user's pending.
     const sat = advanceTo(freshCareer(), qualifierDayFor(W));
-    const sun = advanceDayFlow(simToday(withStrength(sat, 99)));
+    const sun = startSundayFlow(simToday(withStrength(sat, 99))).save;
     expect(eventDayPhaseOf(sun)).toBe("lobby");
     expect(sun.eventResults.filter((r) => r.tier === "regional")).toHaveLength(6);
     // The old layout's Saturday: same history, the lobby open on Saturday.
@@ -1197,7 +1210,7 @@ describe("legacy saves (R40 migration)", { timeout: 30_000 }, () => {
 
   it("SEAM-1 (rc.30): a regional already played on the old Saturday is never Sunday's stop", () => {
     const sat = advanceTo(freshCareer(), qualifierDayFor(W));
-    const sun = advanceDayFlow(simToday(withStrength(sat, 99)));
+    const sun = startSundayFlow(simToday(withStrength(sat, 99))).save;
     const played = simToday(sun);
     const regional = officialEventDefsForWeek(0, W).find((d) => d.tier === "regional" && d.region === "SAM")!;
     expect(played.eventResults.some((r) => r.eventId === regional.id && r.userPlacement)).toBe(true);
@@ -1221,7 +1234,7 @@ describe("legacy saves (R40 migration)", { timeout: 30_000 }, () => {
     expect(isLegacySaturdayPlayoffs(legacy)).toBe(true);
     expect(isChampionshipSunday(legacy)).toBe(false);
     // The new flow's Sunday is Championship Sunday, never the legacy case.
-    const sunday = advanceToNextStopFlow(paused);
+    const sunday = startSundayFlow(paused).save;
     expect(isChampionshipSunday(sunday)).toBe(true);
     expect(isLegacySaturdayPlayoffs(sunday)).toBe(false);
   });

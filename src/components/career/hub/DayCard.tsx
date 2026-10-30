@@ -38,6 +38,7 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { ContinueToSundayLabel, roleTitleOf } from "@/components/career/event/WeekendPlan";
+import { EventTierIcon, TIER_ICON_TONE } from "@/components/career/event/EventTierIcon";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -76,24 +77,22 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
   const spectating = d.participation === "spectating";
   const matchday = d.kinds.includes("matchday") && !spectating;
   const windowOpens = d.kinds.includes("windowOpen");
-  const payday = d.kinds.includes("payday");
   const scrim = d.kinds.includes("scrim");
   const rest = d.kinds.includes("rest");
   const training = d.kinds.includes("training");
 
+  // rc.36 (CAL-01, R88): no payroll marker (Finances shows payroll).
   const label = d.event
     ? eventChipLabel(C, d)
     : windowOpens
       ? C.calendar.window
-      : payday
-        ? C.calendar.payday
-        : scrim
-          ? C.calendar.scrimDay
-          : rest
-            ? C.calendar.restDay
-            : training
-              ? C.calendar.trainingDay
-              : "";
+      : scrim
+        ? C.calendar.scrimDay
+        : rest
+          ? C.calendar.restDay
+          : training
+            ? C.calendar.trainingDay
+            : "";
 
   const title = d.event && label !== d.event.name ? `${d.event.name} · ${label}` : label;
 
@@ -102,7 +101,8 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       title={title || undefined}
       className={cx(
         "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5",
-        matchday ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
+        // rc.36 (CAL-01): a window day reads blue; a matchday keeps its own look on top.
+        matchday ? "border-orange/50 bg-orange/10" : d.windowOpen ? "border-blue/35 bg-blue/10" : "border-line bg-white/[0.03]",
         d.isToday && "day-tick",
         d.isPast && "opacity-40",
       )}
@@ -116,11 +116,10 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       >
         {d.date.d}
       </span>
-      <span className="flex h-1.5 items-center gap-0.5" aria-hidden>
-        {matchday ? <span className="h-1.5 w-1.5 rounded-full bg-orange" /> : null}
-        {spectating ? <span className="h-1.5 w-1.5 rounded-full ring-1 ring-white/35" /> : null}
+      <span className="flex h-3 items-center gap-0.5" aria-hidden>
+        {matchday && d.event ? <EventTierIcon tier={d.event.tier} className={cx("h-3 w-3", TIER_ICON_TONE[d.event.tier])} /> : null}
+        {spectating && d.event ? <EventTierIcon tier={d.event.tier} className="h-3 w-3 text-white/40" /> : null}
         {windowOpens ? <span className="h-1.5 w-1.5 rounded-full bg-blue" /> : null}
-        {payday ? <span className="h-1.5 w-1.5 rounded-full bg-amber-300" /> : null}
         {scrim ? <span className="h-1.5 w-1.5 rounded-full bg-cyan" /> : null}
         {rest && !matchday && !spectating ? <span className="h-px w-2 bg-white/20" /> : null}
       </span>

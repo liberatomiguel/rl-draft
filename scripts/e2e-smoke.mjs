@@ -22,7 +22,7 @@
  *    HQ's decision block — the coach's training proposal on Normal — is approved)
  *    → Finances (no founding partner, rc.33), Market (the reputation filter; no sale
  *    listing in the deals tab, rc.33), Squad, Training, Standings,
- *    Calendar, News, each in the right language.
+ *    Calendar (rc.36, CAL-01: no payroll marker), News, each in the right language.
  * The labels it presses are the copy's (EN and PT, `L` below): update them with the copy.
  * Needs Playwright with its Chromium (cloud sessions have it; never `playwright install`).
  * Prints one line per scenario ("n/m checks ok, k errors") and the failures.
@@ -43,13 +43,13 @@ const L = {
     playNow: /^Play now/, startDraft: /^Start Draft$/, reroll: /^Free reroll/, startT: /^Start Tournament$/, skip: /^Skip to end$/,
     results: /^View results$/, quick: /^Quick start$/, next: /^Next$/, found: /^Found /, presets: ["Easy", "Normal", "Hard"],
     moneyRow: "bank loan", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
-    signable: "Signable at my reputation", approve: /^Approve$/,
+    signable: "Signable at my reputation", approve: /^Approve$/, payday: "Payday",
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
     results: /^Ver resultados$/, quick: /^Início rápido$/, next: /^(Próximo|Avançar)$/, found: /^Fundar /, presets: ["Fácil", "Normal", "Difícil"],
     moneyRow: "empréstimo", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
-    signable: "Contratáveis com minha reputação", approve: /^Aprovar$/,
+    signable: "Contratáveis com minha reputação", approve: /^Aprovar$/, payday: "Pagamento",
   },
 };
 const DIALOG_PREF = [/^let's (play|go)$/i, /^vamos (jogar|lá)/i, /^start season 1$/i, /^continue$/i, /^continuar$/i, /^got it/i, /^entendi/i, /^next$/i, /^próximo$/i, /^skip$/i, /^pular$/i, /^close$/i, /^fechar$/i, /^ok$/i];
@@ -286,6 +286,8 @@ async function scenarioCareer(browser, viewport, locale) {
       const txt = await bodyText(page);
       // rc.33 (ECO-07): a new career has no day-one founding partner.
       if (route === "finances") checks.push({ step: `${tag} no founding partner on Finances`, ok: !txt.toLowerCase().includes(C.founding.toLowerCase()) });
+      // rc.36 (CAL-01): the calendar carries no payroll marker (payroll stays in Finances).
+      if (route === "calendar") checks.push({ step: `${tag} no payroll marker on the calendar`, ok: !txt.includes(C.payday) });
       if (route === "market") {
         // rc.33 (UX-07): the reputation filter on the players tab.
         checks.push({ step: `${tag} signable-at-my-reputation filter`, ok: txt.toLowerCase().includes(C.signable.toLowerCase()) });

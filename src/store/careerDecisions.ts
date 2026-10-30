@@ -39,9 +39,11 @@ import {
   type FlowResult,
 } from "./careerFlow";
 import { trainingDecisionOf } from "./careerTraining";
+import { followCardOf, sundayStopHolds, sundayWithoutYouOf } from "./careerSunday";
 
 export type DecisionKind =
   | "event" // today's matchday, an event in progress, the Saturday pause (R40)
+  | "sunday" // rc.36 (SUN-01): the Saturday evening before the user's Sunday — start it (an optional briefing)
   | "seasonReview" // the season review (and an ended career's legacy screen)
   | "notice" // a notice to acknowledge (front H's money notice): no deadline, no "Later"
   | "contractReview" // UX-06b: the explicit review before the rollover
@@ -50,7 +52,8 @@ export type DecisionKind =
   | "invite" // a fresh unofficial invite (not auto-entered)
   | "training" // DEV-03: the coach's period proposal (front E)
   | "bid" // an incoming bid for a squad player
-  | "sponsor"; // the sponsor offers (front F's deals replace rc.33's)
+  | "sponsor" // the sponsor offers (front F's deals replace rc.33's)
+  | "follow"; // rc.36 (SUN-03): an event the user is out of — watch / results / skip (never holds)
 
 /** A day of the save's calendar. */
 export interface DecisionDate {
@@ -172,12 +175,40 @@ function dueNow(kind: DecisionKind, id: string, holds = true): PendingDecision {
 function eventDecisionOf(save: CareerSave): PendingDecision | null {
   if (save.phase !== "running") return null;
   const active = save.activeEvent;
+  // rc.36 (SUN-01): a paused Saturday not started yet is the "sunday" stop instead.
+  if (active && isEventPaused(save) && sundayStopHolds(save)) return null;
   if (active) return dueNow("event", `event:${active.def.id}`, !isEventPaused(save));
   // R67: a short squad's matchday is the squad's decision first.
   if (squadHoldFor(save)) return null;
   const pending = save.pendingEventDef;
   // Every user matchday holds, a Community Cup's too: it is played, or passed explicitly.
   return pending && pending.day === save.clock.day ? dueNow("event", `event:${pending.id}`) : null;
+}
+
+/**
+ * rc.36 (SUN-01, R88): Saturday evening after the user's Saturday (the
+ * qualifier won; a Major / Worlds paused after its Swiss) — it holds until
+ * Sunday is started from HQ (careerSunday.startSundayFlow records the
+ * briefing and moves the clock one day). No "Later": its answer is the clock.
+ */
+function sundayDecisionOf(save: CareerSave): PendingDecision | null {
+  if (save.phase !== "running" || !sundayStopHolds(save)) return null;
+  const def = save.activeEvent?.def ?? save.pendingEventDef;
+  return def ? dueNow("sunday", `sunday:${def.id}`) : null;
+}
+
+/**
+ * rc.36 (SUN-03, R88): an event the user is out of — the eliminated
+ * Saturday's "Sunday without you", or a followed event that resolved within
+ * CAREER_SUNDAY.followCardDays. Never holds (its default is "skip"): HQ
+ * shows it above the clock when nothing else is due.
+ */
+function followDecisionOf(save: CareerSave): PendingDecision | null {
+  if (save.phase !== "running") return null;
+  const out = sundayWithoutYouOf(save);
+  if (out) return dueNow("follow", `follow:${out.def.id}`, false);
+  const card = followCardOf(save);
+  return card ? dueNow("follow", `follow:${card.def.id}`, false) : null;
 }
 
 function seasonDecisionOf(save: CareerSave): PendingDecision | null {
@@ -243,6 +274,7 @@ function bidDecisionsOf(save: CareerSave): PendingDecision[] {
 
 const KIND_ORDER: DecisionKind[] = [
   "event",
+  "sunday",
   "seasonReview",
   "notice",
   "contractReview",
@@ -252,6 +284,7 @@ const KIND_ORDER: DecisionKind[] = [
   "training",
   "bid",
   "sponsor",
+  "follow",
 ];
 
 /**
@@ -260,10 +293,13 @@ const KIND_ORDER: DecisionKind[] = [
  * 4 what is due today (an insert, an invite, a proposal, a bid or offers on
  * their deadline day) · 5 what can still wait, by deadline · 6 the Saturday
  * pause (its answer moves the clock, so it waits for every hold) · 7 parked,
- * by deadline.
+ * by deadline. rc.36: the Saturday-evening stop sits with the pause (6), and
+ * following an event the user is out of comes last (8).
  */
 function groupOf(d: PendingDecision): number {
   if (d.kind === "event") return d.holds ? 0 : 6;
+  if (d.kind === "sunday") return 6;
+  if (d.kind === "follow") return 8;
   if (d.kind === "seasonReview") return 0;
   if (d.kind === "notice") return 1;
   if (d.kind === "contractReview") return 2;
@@ -290,6 +326,7 @@ export function pendingDecisionsOf(save: CareerSave): PendingDecision[] {
     if (d) out.push(d);
   };
   push(eventDecisionOf(save));
+  push(sundayDecisionOf(save));
   push(seasonDecisionOf(save));
   const notice = save.phase === "ended" ? null : DECISION_SOURCES.notice(save);
   if (notice) out.push(dueNow("notice", notice.id, notice.holds ?? true));
@@ -302,6 +339,7 @@ export function pendingDecisionsOf(save: CareerSave): PendingDecision[] {
   out.push(...bidDecisionsOf(save));
   const sponsor = DECISION_SOURCES.sponsor(save);
   if (sponsor) out.push(decisionFrom("sponsor", sponsor, save));
+  push(followDecisionOf(save));
   return out.sort(compareDecisions);
 }
 

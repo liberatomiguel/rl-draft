@@ -8,9 +8,12 @@
  * Championship Sunday" (the store's continueEventToNextDay: exactly one day)
  * — plus a way back to HQ. Everything is derived from the persisted save, so
  * a reload lands right back here; nothing of Sunday exists yet to spoil.
+ * rc.36 (SUN-01, R88): with CAREER_SUNDAY.saturdayStop the way forward is
+ * HQ, where Sunday is started (the optional coach briefing).
  */
 
 import { useRouter } from "next/navigation";
+import { CAREER_SUNDAY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { ActiveEventState, CareerSave } from "@/engine/career/types";
@@ -99,20 +102,32 @@ export function SwissCompletePanel({ save, ev }: { save: CareerSave; ev: ActiveE
             }
           />
 
-          <div className="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full sm:w-auto"
-              onClick={() => continueEventToNextDay()}
-            >
-              <ContinueToSundayLabel />
-            </Button>
-            <Button variant="ghost" className="w-full sm:w-auto" onClick={() => router.push("/career")}>
-              {C.event.continueToHq}
-            </Button>
-          </div>
-          <p className="mt-3 text-xs text-faint">{C.event.pauseHint}</p>
+          {/* rc.36 (SUN-01, R88): back to HQ, where Sunday is started (the briefing). */}
+          {CAREER_SUNDAY.saturdayStop ? (
+            <div className="mt-6 flex flex-col items-center justify-center gap-2">
+              <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => router.push("/career")}>
+                {C.event.continueToHq}
+              </Button>
+              <p className="text-xs text-faint">{C.sunday.fromHqHint}</p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  onClick={() => continueEventToNextDay()}
+                >
+                  <ContinueToSundayLabel />
+                </Button>
+                <Button variant="ghost" className="w-full sm:w-auto" onClick={() => router.push("/career")}>
+                  {C.event.continueToHq}
+                </Button>
+              </div>
+              <p className="mt-3 text-xs text-faint">{C.event.pauseHint}</p>
+            </>
+          )}
         </div>
       </Panel>
 

@@ -23,19 +23,20 @@ import { formatMoney } from "@/lib/format";
 import { randomSeed } from "@/lib/rng";
 import { cx } from "@/lib/util";
 import { CAREER_SLOTS } from "@/components/career/careerUi";
-import { proceduralCrestFor } from "@/components/career/OrgMark";
 import {
+  ALL_CREST_IDS,
+  ALL_PATTERN_IDS,
+  ALL_SYMBOL_IDS,
   composeCrestId,
   contrastingSecondaryIndex,
-  CREST_IDS,
-  CREST_KITS,
   CREST_PALETTE,
-  crestLuminance,
-  PATTERN_IDS,
-  SYMBOL_IDS,
+  LAYOUT_IDS,
   UserCrest,
 } from "@/components/career/UserCrest";
-import type { CrestId, PatternId, SymbolId } from "@/components/career/UserCrest";
+import type { CrestId, LayoutId, PatternId, SymbolId } from "@/components/career/UserCrest";
+import { CrestStep } from "@/components/career/wizard/CrestStep";
+import { crestContrastOf } from "@/components/career/wizard/crestContrast";
+import { NewTag } from "@/components/ui/NewDot";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import {
@@ -44,7 +45,6 @@ import {
   PeakIcon,
   ScaleIcon,
   ShieldIcon,
-  StarIcon,
   TargetIcon,
   TrendUpIcon,
 } from "@/components/ui/icons";
@@ -90,11 +90,7 @@ const PRESET_TONE: Record<CareerDifficulty, string> = {
 };
 
 /** null = the "None" tile in the pattern picker / randomizer pool. */
-const PATTERN_OPTIONS = [null, ...PATTERN_IDS] as const;
-
-/** Dimmed neighbor crests for the step-2 table-row mock (deterministic filler orgs). */
-const MOCK_ROW_ABOVE = proceduralCrestFor("fill:wizard-mock-above");
-const MOCK_ROW_BELOW = proceduralCrestFor("fill:wizard-mock-below");
+const PATTERN_OPTIONS = [null, ...ALL_PATTERN_IDS] as const;
 
 function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -158,18 +154,18 @@ export function WizardScreen() {
   const [abbrevTouched, setAbbrevTouched] = useState(false);
   const [managerName, setManagerName] = useState("");
   const [country, setCountry] = useState("US");
-  // Step 2 — crest & colors & identity buff (crest v2: shape + symbol + pattern)
+  // Step 2 — crest & colors & identity buff (crest v2: shape + symbol + pattern; rc.36: + layout)
   const [crestShape, setCrestShape] = useState<CrestId>("shield");
   const [crestSymbol, setCrestSymbol] = useState<SymbolId | null>(null);
   const [crestPattern, setCrestPattern] = useState<PatternId | null>(null);
-  const [customColors, setCustomColors] = useState(false);
+  const [crestLayout, setCrestLayout] = useState<LayoutId>("emblem");
   const [colors, setColors] = useState<CareerColors>({
     primary: CREST_PALETTE[0].hex,
     secondary: CREST_PALETTE[1].hex,
   });
   const [buffType, setBuffType] = useState<StatKey>("offense");
-  /** The composite crestId written to identity ("shape[:symbol[:pattern]]"). */
-  const crestId = composeCrestId({ shape: crestShape, symbol: crestSymbol, pattern: crestPattern });
+  /** The composite crestId written to identity ("shape[:symbol[:pattern[:layout]]]"). */
+  const crestId = composeCrestId({ shape: crestShape, symbol: crestSymbol, pattern: crestPattern, layout: crestLayout });
   // Step 3 — region (null = derived from country)
   const [regionPick, setRegionPick] = useState<Region | null>(null);
   // Step 4 — starter roster
@@ -224,18 +220,20 @@ export function WizardScreen() {
 
   /** Randomize every crest layer + a legibility-checked color pair (step 2 + quick start). */
   const randomizeCrest = () => {
-    setCrestShape(pickRandom(CREST_IDS));
-    setCrestSymbol(pickRandom(SYMBOL_IDS));
+    setCrestShape(pickRandom(ALL_CREST_IDS));
+    setCrestSymbol(pickRandom(ALL_SYMBOL_IDS));
     setCrestPattern(pickRandom(PATTERN_OPTIONS));
-    const primaryIdx = Math.floor(Math.random() * CREST_PALETTE.length);
-    const secondaryIdx = contrastingSecondaryIndex(
-      primaryIdx,
-      Math.floor(Math.random() * CREST_PALETTE.length),
-    );
-    setColors({
-      primary: CREST_PALETTE[primaryIdx].hex,
-      secondary: CREST_PALETTE[secondaryIdx].hex,
-    });
+    setCrestLayout(pickRandom(LAYOUT_IDS));
+    // rc.36 (UX-04): a random pair the contrast guard is happy with (a few re-rolls at most).
+    let pair: CareerColors = { primary: CREST_PALETTE[0].hex, secondary: CREST_PALETTE[1].hex };
+    for (let i = 0; i < 12; i++) {
+      const primaryIdx = Math.floor(Math.random() * CREST_PALETTE.length);
+      const secondaryIdx = contrastingSecondaryIndex(primaryIdx, Math.floor(Math.random() * CREST_PALETTE.length));
+      pair = { primary: CREST_PALETTE[primaryIdx].hex, secondary: CREST_PALETTE[secondaryIdx].hex };
+      const guard = crestContrastOf(pair);
+      if (guard.pairOk && guard.cardOk) break;
+    }
+    setColors(pair);
   };
 
   const quickStart = () => {
@@ -412,226 +410,29 @@ export function WizardScreen() {
         ) : null}
 
         {/* -------------------------------------------- Step 2 · Crest & colors */}
+        {/* rc.36 (UX-04, R88): more shapes / symbols / layouts, free colours, the contrast guard. */}
         {step === 2 ? (
           <>
             <StepHeader title={C.wizard.crestTitle} kicker={C.wizard.crestKicker} />
-            <div className="grid gap-4 lg:grid-cols-[1fr_minmax(16rem,19rem)]">
-              <Panel className="p-5">
-                {/* Shape */}
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="kicker">{C.wizard.crestLabel}</p>
-                  <Button variant="secondary" size="sm" onClick={randomizeCrest}>
-                    {C.wizard.randomizeCrest}
-                  </Button>
-                </div>
-                <div
-                  className="grid grid-cols-4 gap-2 sm:grid-cols-6"
-                  role="radiogroup"
-                  aria-label={C.wizard.crestLabel}
-                >
-                  {CREST_IDS.map((id) => (
-                    <CrestTile
-                      key={id}
-                      active={crestShape === id}
-                      ariaLabel={id}
-                      onClick={() => setCrestShape(id)}
-                      className="min-h-14"
-                    >
-                      <UserCrest crestId={id} colors={colors} size="md" />
-                    </CrestTile>
-                  ))}
-                </div>
-
-                {/* Symbol */}
-                <p className="kicker mb-3 mt-6">{C.wizard.crestSymbol}</p>
-                <div
-                  className="grid grid-cols-3 gap-2 sm:grid-cols-5"
-                  role="radiogroup"
-                  aria-label={C.wizard.crestSymbol}
-                >
-                  <CrestTile
-                    active={crestSymbol === null}
-                    ariaLabel={C.wizard.crestNone}
-                    onClick={() => setCrestSymbol(null)}
-                    className="min-h-[5.25rem]"
-                  >
-                    <NoneLabel active={crestSymbol === null}>{C.wizard.crestNone}</NoneLabel>
-                  </CrestTile>
-                  {SYMBOL_IDS.map((sy) => (
-                    <CrestTile
-                      key={sy}
-                      active={crestSymbol === sy}
-                      ariaLabel={sy}
-                      onClick={() => setCrestSymbol(sy)}
-                      className="min-h-[5.25rem]"
-                    >
-                      <UserCrest
-                        crestId={composeCrestId({ shape: crestShape, symbol: sy })}
-                        colors={colors}
-                        size="lg"
-                      />
-                    </CrestTile>
-                  ))}
-                </div>
-
-                {/* Pattern */}
-                <p className="kicker mb-3 mt-6">{C.wizard.crestPattern}</p>
-                <div
-                  className="grid grid-cols-3 gap-2 sm:grid-cols-6"
-                  role="radiogroup"
-                  aria-label={C.wizard.crestPattern}
-                >
-                  <CrestTile
-                    active={crestPattern === null}
-                    ariaLabel={C.wizard.crestNone}
-                    onClick={() => setCrestPattern(null)}
-                    className="min-h-14"
-                  >
-                    <NoneLabel active={crestPattern === null}>{C.wizard.crestNone}</NoneLabel>
-                  </CrestTile>
-                  {PATTERN_IDS.map((pt) => (
-                    <CrestTile
-                      key={pt}
-                      active={crestPattern === pt}
-                      ariaLabel={pt}
-                      onClick={() => setCrestPattern(pt)}
-                      className="min-h-14"
-                    >
-                      <UserCrest
-                        crestId={composeCrestId({ shape: crestShape, pattern: pt })}
-                        colors={colors}
-                        size="md"
-                      />
-                    </CrestTile>
-                  ))}
-                </div>
-
-                {/* v2.0 (R34): curated kits first — one tap sets both colours */}
-                <p className="kicker mb-1 mt-6">{C.wizard.kits}</p>
-                <p className="mb-3 text-xs text-sub">{C.wizard.kitsHint}</p>
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-8" role="radiogroup" aria-label={C.wizard.kits}>
-                  {CREST_KITS.map((k) => {
-                    const active = colors.primary === k.primary && colors.secondary === k.secondary;
-                    return (
-                      <button
-                        key={k.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        title={k.id}
-                        onClick={() => setColors({ primary: k.primary, secondary: k.secondary })}
-                        className={cx(
-                          "relative h-11 overflow-hidden rounded-lg border transition-transform hover:scale-105",
-                          active ? "border-orange ring-2 ring-orange/50" : "border-line-strong",
-                        )}
-                        style={{ background: `linear-gradient(135deg, ${k.primary} 0 55%, ${k.secondary} 55% 100%)` }}
-                      />
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  className="mt-3 text-[11px] font-semibold text-blue-bright hover:underline"
-                  onClick={() => setCustomColors((v) => !v)}
-                  aria-expanded={customColors}
-                >
-                  {customColors ? C.wizard.customColorsHide : C.wizard.customColors}
-                </button>
-                <div className={cx(!customColors && "hidden")}>
-                {/* Colors — independent primary/secondary swatches */}
-                <p className="kicker mb-3 mt-4">{C.wizard.primaryColor}</p>
-                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={C.wizard.primaryColor}>
-                  {CREST_PALETTE.map((c) => (
-                    <Swatch
-                      key={c.id}
-                      hex={c.hex}
-                      name={c.id}
-                      active={colors.primary === c.hex}
-                      disabled={colors.secondary === c.hex}
-                      onClick={() => setColors((prev) => ({ ...prev, primary: c.hex }))}
-                    />
-                  ))}
-                </div>
-                <p className="kicker mb-3 mt-6">{C.wizard.secondaryColor}</p>
-                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={C.wizard.secondaryColor}>
-                  {CREST_PALETTE.map((c) => (
-                    <Swatch
-                      key={c.id}
-                      hex={c.hex}
-                      name={c.id}
-                      active={colors.secondary === c.hex}
-                      disabled={
-                        colors.primary === c.hex ||
-                        Math.abs(crestLuminance(c.hex) - crestLuminance(colors.primary)) < 0.12
-                      }
-                      onClick={() => setColors((prev) => ({ ...prev, secondary: c.hex }))}
-                    />
-                  ))}
-                </div>
-                <p className="mt-2 text-[10px] text-faint">{C.wizard.contrastHint}</p>
-                </div>
-
-                <p className="kicker mb-1 mt-6">{C.wizard.identityBuff}</p>
-                <p className="mb-3 text-xs text-sub">{C.wizard.identityBuffHint}</p>
-                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={C.wizard.identityBuff}>
-                  {STAT_KEYS.map((key) => {
-                    const active = buffType === key;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => setBuffType(key)}
-                        className={cx(
-                          "display h-11 rounded-lg border px-3.5 text-xs font-bold uppercase tracking-[0.12em] transition-all",
-                          active
-                            ? "border-orange/60 bg-orange/15 text-orange-bright"
-                            : "border-line-strong bg-white/5 text-sub hover:border-line-strong hover:text-ink",
-                        )}
-                      >
-                        {copy.STAT_LABELS[key]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </Panel>
-
-              {/* Live crest preview + small-size legibility strip */}
-              <Panel strong className="relative flex flex-col items-center justify-center gap-4 overflow-hidden p-6 text-center">
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -top-16 h-56 w-56 rounded-full opacity-20 blur-3xl"
-                  style={{ background: `radial-gradient(circle, ${colors.primary}, transparent 70%)` }}
-                />
-                <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="xl" />
-                <div>
-                  <p className="display text-xl font-bold uppercase tracking-wide text-ink">
-                    {nameTrim || "—"}
-                  </p>
-                  <div className="mt-2 flex items-center justify-center gap-2">
-                    {abbrev ? <Badge tone="blue">{abbrev}</Badge> : null}
-                    <Badge tone="orange">{copy.STAT_LABELS[buffType]}</Badge>
-                  </div>
-                </div>
-
-                {/* Standings-row mock: the crest at sm size between dimmed filler rows */}
-                <div className="relative w-full rounded-xl border border-line bg-black/30 p-1 text-left">
-                  <MockStandingRow pos="3" crest={MOCK_ROW_ABOVE} />
-                  <div className="flex items-center gap-2.5 rounded-lg border border-orange/40 bg-orange/10 px-2 py-1.5">
-                    <span className="w-4 shrink-0 text-center font-mono text-[11px] font-semibold text-orange-bright">
-                      4
-                    </span>
-                    <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="sm" />
-                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">
-                      {nameTrim || abbrev || "—"}
-                    </span>
-                    <span className="shrink-0 font-mono text-[11px] text-sub">7–2</span>
-                  </div>
-                  <MockStandingRow pos="5" crest={MOCK_ROW_BELOW} />
-                </div>
-              </Panel>
-            </div>
+            <CrestStep
+              C={C}
+              statLabels={copy.STAT_LABELS}
+              statKeys={STAT_KEYS}
+              orgName={nameTrim}
+              abbrev={abbrev}
+              pick={{ shape: crestShape, symbol: crestSymbol, pattern: crestPattern, layout: crestLayout }}
+              onPick={(next) => {
+                if (next.shape !== undefined) setCrestShape(next.shape);
+                if (next.symbol !== undefined) setCrestSymbol(next.symbol);
+                if (next.pattern !== undefined) setCrestPattern(next.pattern);
+                if (next.layout !== undefined) setCrestLayout(next.layout);
+              }}
+              colors={colors}
+              onColors={setColors}
+              buffType={buffType}
+              onBuff={setBuffType}
+              onRandomize={randomizeCrest}
+            />
           </>
         ) : null}
 
@@ -834,16 +635,15 @@ export function WizardScreen() {
                     onClick={() => setDifficulty(id)}
                     className={cx(
                       "panel relative flex min-h-11 flex-col p-4 text-left transition-all",
-                      recommended && "!border-2 !border-amber-400/70 shadow-[0_0_28px_-10px_rgba(251,191,36,0.55)] sm:-my-2 sm:py-6",
+                      // rc.36 (UX-04): the recommended card keeps its emphasis in the NEW tag's green.
+                      recommended && "!border-2 !border-good/60 shadow-[0_0_28px_-10px_rgba(74,222,128,0.45)] sm:-my-2 sm:py-6",
                       active && "panel-glow-orange !border-orange !bg-orange/10",
                       !active && !recommended && "hover:!border-line-strong",
                     )}
                   >
                     {recommended ? (
-                      <span className="absolute -top-3 left-4 inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-black shadow">
-                        <StarIcon className="h-3 w-3" />
-                        {C.wizard.recommended}
-                      </span>
+                      // rc.36 (UX-04, Miguel): "Recommended" is the special cards' NEW pill, the word from copy.
+                      <NewTag className="absolute -top-2 left-4 !px-2 !py-0.5 !text-[10px]">{C.wizard.recommended}</NewTag>
                     ) : null}
                     <div className="flex items-center gap-3">
                       <span
@@ -966,112 +766,6 @@ export function WizardScreen() {
 const inputCls =
   "h-11 w-full rounded-lg border border-line-strong bg-white/5 px-3 text-sm text-ink " +
   "placeholder:text-faint transition-colors focus:border-orange/60 focus:outline-none";
-
-/** Radio-grid tile for the step-2 shape/symbol/pattern pickers (44px+ targets). */
-function CrestTile({
-  active,
-  ariaLabel,
-  onClick,
-  className,
-  children,
-}: {
-  active: boolean;
-  ariaLabel: string;
-  onClick: () => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      aria-label={ariaLabel}
-      onClick={onClick}
-      className={cx(
-        "flex items-center justify-center rounded-xl border p-1 transition-all",
-        active
-          ? "border-orange/60 bg-orange/10 panel-glow-orange"
-          : "border-line bg-white/[0.03] hover:border-line-strong hover:bg-white/[0.06]",
-        className,
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-/** "None" tile content for the symbol/pattern pickers. */
-function NoneLabel({ active, children }: { active: boolean; children: React.ReactNode }) {
-  return (
-    <span
-      className={cx(
-        "display text-[11px] font-bold uppercase tracking-[0.12em]",
-        active ? "text-orange-bright" : "text-sub",
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-/**
- * Single color swatch (44px target). The swatch already used by the OTHER
- * role is disabled so primary/secondary can never collapse into one color.
- */
-function Swatch({
-  hex,
-  name,
-  active,
-  disabled,
-  onClick,
-}: {
-  hex: string;
-  name: string;
-  active: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      aria-label={name}
-      title={name}
-      disabled={disabled}
-      onClick={onClick}
-      className={cx(
-        "h-11 w-11 rounded-full border-2 transition-all",
-        active ? "scale-110 border-white/80" : "border-white/15",
-        !active && !disabled && "hover:border-white/40",
-        disabled && "cursor-not-allowed opacity-30",
-      )}
-      style={{ background: hex }}
-    />
-  );
-}
-
-/** Dimmed neighbor row for the step-2 legibility mock (skeleton bars, no fake copy). */
-function MockStandingRow({
-  pos,
-  crest,
-}: {
-  pos: string;
-  crest: ReturnType<typeof proceduralCrestFor>;
-}) {
-  return (
-    <div
-      aria-hidden
-      className="flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-1.5 opacity-45"
-    >
-      <span className="w-4 shrink-0 text-center font-mono text-[11px] text-faint">{pos}</span>
-      <UserCrest crestId={crest.crestId} colors={crest.colors} size="sm" />
-      <span className="h-2 w-16 rounded-full bg-white/15" />
-      <span className="ml-auto h-2 w-6 shrink-0 rounded-full bg-white/10" />
-    </div>
-  );
-}
 
 function StepHeader({ title, kicker }: { title: string; kicker: string }) {
   return (

@@ -20,6 +20,15 @@
  * v0.3: classic-tone palette (22 swatches — the length is load-bearing:
  * contrastingSecondaryIndex steps +5, coprime with 22) + badge/banner shapes,
  * lion/comet/anchor/trident symbols, sash/quarters patterns.
+ *
+ * rc.36 (UX-04, R88): six more shapes, eight more symbols (a battle car, the
+ * ball, a wheel, a trophy…), four more patterns and a LAYOUT — a fourth part,
+ * "shape:symbol:pattern:layout": the emblem alone (the default, omitted),
+ * the emblem over the letters ("stacked") or a band carrying them ("band").
+ * The new ids live in their own lists: the procedural filler crests
+ * (OrgMark.proceduralCrestFor) index CREST_IDS / SYMBOL_IDS / PATTERN_IDS
+ * by hash, so those three stay exactly as they were — every filler org keeps
+ * its crest — and every saved id renders as it always did.
  */
 
 import { useId } from "react";
@@ -31,23 +40,45 @@ import type { CareerColors } from "@/engine/career/types";
 
 // Order = wizard display order (strong classics first). Ids are the contract —
 // never rename; appending is always safe (parse falls back on unknowns).
+// FROZEN for the procedural pool (its hash indexes this length): append new
+// ids to CREST_IDS_RC36 instead.
 export const CREST_IDS = [
   "shield", "badge", "banner", "crown", "hex", "circle", "diamond",
   "star", "blade", "flame", "wing", "bolt", "orbit", "wave",
 ] as const;
-export type CrestId = (typeof CREST_IDS)[number];
+/** rc.36 (UX-04): the wizard's further shapes (never in the procedural pool). */
+export const CREST_IDS_RC36 = ["heater", "notch", "squircle", "octagon", "pentagon", "arch"] as const;
+/** Every shape the wizard offers and the parser accepts. */
+export const ALL_CREST_IDS = [...CREST_IDS, ...CREST_IDS_RC36] as const;
+export type CrestId = (typeof ALL_CREST_IDS)[number];
 
+/** FROZEN for the procedural pool — append to SYMBOL_IDS_RC36. */
 export const SYMBOL_IDS = [
   "lion", "wolf", "dragon", "phoenix", "falcon", "crown", "blade",
   "trident", "anchor", "star", "comet", "bolt", "flame", "wave",
   "rocket", "gear", "orb", "arrow",
 ] as const;
-export type SymbolId = (typeof SYMBOL_IDS)[number];
+/** rc.36 (UX-04): the wizard's further symbols. */
+export const SYMBOL_IDS_RC36 = ["car", "ball", "wheel", "trophy", "wings", "peak", "gem", "chevrons"] as const;
+export const ALL_SYMBOL_IDS = [...SYMBOL_IDS, ...SYMBOL_IDS_RC36] as const;
+export type SymbolId = (typeof ALL_SYMBOL_IDS)[number];
 
+/** FROZEN for the procedural pool — append to PATTERN_IDS_RC36. */
 export const PATTERN_IDS = [
   "stripes", "sash", "split", "quarters", "chevron", "rays", "ring",
 ] as const;
-export type PatternId = (typeof PATTERN_IDS)[number];
+/** rc.36 (UX-04): the wizard's further patterns. */
+export const PATTERN_IDS_RC36 = ["hoops", "halves", "cross", "border"] as const;
+export const ALL_PATTERN_IDS = [...PATTERN_IDS, ...PATTERN_IDS_RC36] as const;
+export type PatternId = (typeof ALL_PATTERN_IDS)[number];
+
+/**
+ * rc.36 (UX-04): how the emblem and the letters sit — the emblem alone (the
+ * default; the letters on a symbol-less crest, as ever), the emblem over the
+ * letters, or a band across the crest carrying the letters.
+ */
+export const LAYOUT_IDS = ["emblem", "stacked", "band"] as const;
+export type LayoutId = (typeof LAYOUT_IDS)[number];
 
 // ---------------------------------------------------------------------------
 // Colors
@@ -161,23 +192,31 @@ export interface CrestConfig {
   shape: CrestId;
   symbol?: SymbolId;
   pattern?: PatternId;
+  /** rc.36: absent = "emblem" (every id saved before rc.36). */
+  layout?: LayoutId;
 }
 
 /** Parse any crestId string; unknown/absent parts fall back (legacy-safe). */
 export function parseCrestId(raw: string): CrestConfig {
-  const [s, sy, pt] = (raw ?? "").split(":");
-  const shape = (CREST_IDS as readonly string[]).includes(s) ? (s as CrestId) : "shield";
-  const symbol = (SYMBOL_IDS as readonly string[]).includes(sy) ? (sy as SymbolId) : undefined;
-  const pattern = (PATTERN_IDS as readonly string[]).includes(pt) ? (pt as PatternId) : undefined;
-  return { shape, symbol, pattern };
+  const [s, sy, pt, ly] = (raw ?? "").split(":");
+  const shape = (ALL_CREST_IDS as readonly string[]).includes(s) ? (s as CrestId) : "shield";
+  const symbol = (ALL_SYMBOL_IDS as readonly string[]).includes(sy) ? (sy as SymbolId) : undefined;
+  const pattern = (ALL_PATTERN_IDS as readonly string[]).includes(pt) ? (pt as PatternId) : undefined;
+  const layout = ly && ly !== "emblem" && (LAYOUT_IDS as readonly string[]).includes(ly) ? (ly as LayoutId) : undefined;
+  return { shape, symbol, pattern, layout };
 }
 
-/** Compose the compact crestId string ("shield" stays "shield" — legacy-stable). */
+/**
+ * Compose the compact crestId string ("shield" stays "shield" — legacy-stable;
+ * the default layout is never written, so every pre-rc.36 id composes as before).
+ */
 export function composeCrestId(cfg: {
   shape: string;
   symbol?: string | null;
   pattern?: string | null;
+  layout?: string | null;
 }): string {
+  if (cfg.layout && cfg.layout !== "emblem") return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern ?? ""}:${cfg.layout}`;
   if (cfg.pattern) return `${cfg.shape}:${cfg.symbol ?? ""}:${cfg.pattern}`;
   if (cfg.symbol) return `${cfg.shape}:${cfg.symbol}`;
   return cfg.shape;
@@ -210,6 +249,18 @@ const BASE_PATH: Record<CrestId, string> = {
     "M14 6 H50 A6 6 0 0 1 56 12 V36 C56 49 46 57 32 60 C18 57 8 49 8 36 V12 A6 6 0 0 1 14 6 Z",
   // v0.3 — hanging pennant banner with a swallowtail bottom.
   banner: "M14 4 H50 V54 L32 45 L14 54 Z",
+  // rc.36 (UX-04) — the classic heater: flat top, straight flanks, a long curve to the point.
+  heater: "M8 6 H56 V22 C56 40 46 53 32 60 C18 53 8 40 8 22 Z",
+  // rc.36 — a heraldic shield with a notched top.
+  notch: "M8 6 H22 L26 11 H38 L42 6 H56 V30 C56 46 45 56 32 60 C19 56 8 46 8 30 Z",
+  // rc.36 — the modern esports tile (a squircle).
+  squircle: "M32 5 C52 5 59 12 59 32 C59 52 52 59 32 59 C12 59 5 52 5 32 C5 12 12 5 32 5 Z",
+  // rc.36 — octagon.
+  octagon: "M22 5 H42 L59 22 V42 L42 59 H22 L5 42 V22 Z",
+  // rc.36 — pentagon, point up.
+  pentagon: "M32 4 L59 24 L49 59 H15 L5 24 Z",
+  // rc.36 — the arch (a domed top on a flat base).
+  arch: "M8 59 V30 A24 24 0 0 1 56 30 V59 Z",
 };
 
 /** Legacy accent detail (secondary fill) — rendered ONLY on symbol-less, pattern-less crests. */
@@ -228,6 +279,12 @@ const ACCENT_PATH: Record<CrestId, string> = {
   wave: "M6 48 C14 40 20 40 26 46 C34 52 44 52 58 42 L58 48 C46 58 34 58 26 50 C18 42 12 44 6 52 Z",
   badge: "M32 12 L50 12 V36 C50 46 43 52 32 55 Z",
   banner: "M32 10 L44 10 V45 L32 40 Z",
+  heater: "M32 12 L50 12 V23 C50 37 43 48 32 54 Z",
+  notch: "M32 15 H39 L42 12 H50 V30 C50 42 43 50 32 54 Z",
+  squircle: "M32 11 C47 11 53 17 53 32 C53 47 47 53 32 53 Z",
+  octagon: "M32 11 H40 L53 24 V40 L40 53 H32 Z",
+  pentagon: "M32 11 L52 26 L45 53 H32 Z",
+  arch: "M32 12 A18 18 0 0 1 50 30 V53 H32 Z",
 };
 
 // ---------------------------------------------------------------------------
@@ -337,6 +394,61 @@ const SYMBOL_PATHS: Record<SymbolId, string[]> = {
     "M32 49.5 C24.6 49 19.6 44.6 18 37.6 L23 40.6 L22.2 34.8 C24.9 40 27.7 43 30.4 43.9 L33.6 43.9 C36.3 43 39.1 40 41.8 34.8 " +
       "L41 40.6 L46 37.6 C44.4 44.6 39.4 49 32 49.5 Z",
   ],
+  // rc.36 (UX-04) — a battle car in profile (facing right): body with a window cut, two wheels with hubs.
+  car: [
+    "M11 39.5 C11 36.6 12.8 34.6 15.6 33.8 L23.4 28.2 C25.2 26.9 27.3 26.3 29.6 26.3 L38.4 26.3 C40.8 26.3 42.8 27.3 44.3 29.1 L47.2 32.6 L51.6 33.4 C54.2 33.9 55.8 35.9 55.8 38.4 L55.8 41 L11 41 Z " +
+      "M26.6 31.6 L30.6 28.8 L37.6 28.8 L40.6 32.4 Z",
+    "M21 36.4 A5.6 5.6 0 1 1 20.99 36.4 Z M21 39.8 A2.2 2.2 0 1 0 21.01 39.8 Z " +
+      "M46.4 36.4 A5.6 5.6 0 1 1 46.39 36.4 Z M46.4 39.8 A2.2 2.2 0 1 0 46.41 39.8 Z",
+  ],
+  // rc.36 — the ball: a ring, a pentagon panel and five seams.
+  ball: [
+    "M32 20.5 A13.5 13.5 0 1 1 31.99 20.5 Z M32 23.2 A10.8 10.8 0 1 0 32.01 23.2 Z",
+    "M32 28.6 L37.2 32.4 L35.2 38.5 L28.8 38.5 L26.8 32.4 Z " +
+      "M31 23.2 H33 V29.3 H31 Z " +
+      "M36.7 31.5 L42.6 29.7 L43.2 31.6 L37.3 33.4 Z " +
+      "M34.9 37.5 L38.6 42.5 L37 43.7 L33.3 38.7 Z " +
+      "M29.1 37.5 L30.7 38.7 L27 43.7 L25.4 42.5 Z " +
+      "M27.3 31.5 L26.7 33.4 L20.8 31.6 L21.4 29.7 Z",
+  ],
+  // rc.36 — a wheel: rim, six spokes, the hub.
+  wheel: [
+    "M32 20.5 A13.5 13.5 0 1 1 31.99 20.5 Z M32 23.6 A10.4 10.4 0 1 0 32.01 23.6 Z",
+    "M22 32.6 H42 V35.4 H22 Z " +
+      "M35.79 43.36 L37.21 41.96 L28.21 24.64 L26.79 26.04 Z " +
+      "M25.79 41.96 L28.21 43.36 L38.21 26.04 L35.79 24.64 Z",
+    "M32 29.6 A4.4 4.4 0 1 1 31.99 29.6 Z",
+  ],
+  // rc.36 — a trophy: the cup with its handles, the stem, the base.
+  trophy: [
+    "M23 18.5 H41 V27 C41 33 37.2 37 32 37 C26.8 37 23 33 23 27 Z " +
+      "M23 20.6 H19.2 C17 20.6 15.8 22.2 15.8 24.4 C15.8 27.9 18.9 30.2 23.2 30.6 V28 C20.4 27.6 18.6 26.4 18.6 24.6 C18.6 23.8 19 23.4 19.8 23.4 H23 Z " +
+      "M41 20.6 H44.8 C47 20.6 48.2 22.2 48.2 24.4 C48.2 27.9 45.1 30.2 40.8 30.6 V28 C43.6 27.6 45.4 26.4 45.4 24.6 C45.4 23.8 45 23.4 44.2 23.4 H41 Z",
+    "M30 36.4 H34 V43 H30 Z M23.5 43 H40.5 V47.6 H23.5 Z",
+  ],
+  // rc.36 — wings spread around a gem.
+  wings: [
+    "M30.6 30.2 C25.2 22.6 17.2 20.4 10.6 22 C13.6 23.8 14.8 25.8 15 27.8 C12.2 28.4 10.2 30 9.2 32.2 C13 32 15.2 33 16.4 34.4 C14.4 35.6 13.2 37.2 13.2 39.4 C19.2 37.4 26 36.4 30.6 38.4 Z " +
+      "M33.4 30.2 C38.8 22.6 46.8 20.4 53.4 22 C50.4 23.8 49.2 25.8 49 27.8 C51.8 28.4 53.8 30 54.8 32.2 C51 32 48.8 33 47.6 34.4 C49.6 35.6 50.8 37.2 50.8 39.4 C44.8 37.4 38 36.4 33.4 38.4 Z",
+    "M32 26.6 L35.2 33.4 L32 41.2 L28.8 33.4 Z",
+  ],
+  // rc.36 — a peak: two summits, a snowcap cut into the tall one.
+  peak: [
+    "M11.5 46.5 L25.5 25 L31.5 33 L38.5 21.5 L52.5 46.5 Z " +
+      "M38.5 21.5 L43 29 L40.2 27.6 L38 30.4 L35.6 28.2 L34.2 29 Z",
+  ],
+  // rc.36 — a cut gem: the girdle and a pavilion facet cut out.
+  gem: [
+    "M21 26.5 L27 19 H37 L43 26.5 L32 47.5 Z " +
+      "M22.6 26.2 H41.4 L40.4 28 H23.6 Z " +
+      "M30 30 H34 L32 41 Z",
+  ],
+  // rc.36 — three rising chevrons (a rank climb).
+  chevrons: [
+    "M20 26.5 L32 17.5 L44 26.5 V31.5 L32 22.5 L20 31.5 Z " +
+      "M20 35.5 L32 26.5 L44 35.5 V40.5 L32 31.5 L20 40.5 Z " +
+      "M20 44.5 L32 35.5 L44 44.5 V49.5 L32 40.5 L20 49.5 Z",
+  ],
   // v0.3 — trident: three prongs over a crossbar, shaft down.
   trident: [
     "M32 13.5 L36.2 20.5 L33.6 20.5 L33.6 32 L30.4 32 L30.4 20.5 L27.8 20.5 Z " +
@@ -367,6 +479,12 @@ const SYMBOL_FIT: Record<CrestId, { s: number; cx: number; cy: number }> = {
   wave: { s: 0.6, cx: 32, cy: 42 },
   badge: { s: 0.82, cx: 32, cy: 31.5 },
   banner: { s: 0.7, cx: 32, cy: 28.5 },
+  heater: { s: 0.8, cx: 32, cy: 29.5 },
+  notch: { s: 0.78, cx: 32, cy: 32.5 },
+  squircle: { s: 0.86, cx: 32, cy: 32.5 },
+  octagon: { s: 0.84, cx: 32, cy: 32.5 },
+  pentagon: { s: 0.78, cx: 32, cy: 35 },
+  arch: { s: 0.82, cx: 32, cy: 35 },
 };
 
 // ---------------------------------------------------------------------------
@@ -402,6 +520,14 @@ const PATTERN_DEFS: Record<PatternId, string> = {
   sash: "M-22 12 L12 -22 L86 52 L52 86 Z",
   // v0.3 — quartered field (two opposite quarters filled).
   quarters: "M-2 -2 H32 V32 H-2 Z M32 32 H66 V66 H32 Z",
+  // rc.36 (UX-04) — three horizontal hoops.
+  hoops: "M-2 13 H66 V21 H-2 Z M-2 29 H66 V37 H-2 Z M-2 45 H66 V53 H-2 Z",
+  // rc.36 — a vertical half.
+  halves: "M32 -2 H66 V66 H32 Z",
+  // rc.36 — a centred cross.
+  cross: "M27 -2 H37 V66 H27 Z M-2 27 H66 V37 H-2 Z",
+  // rc.36 — "border" is drawn as a thick inner outline of the shape itself (the renderer).
+  border: "",
 };
 
 // ---------------------------------------------------------------------------
@@ -413,6 +539,11 @@ const LIGHT_INK = "rgba(245,248,255,0.92)";
 /** Primaries darker than this get a light monogram (dark ink vanished on them). */
 const INK_LUMINANCE_THRESHOLD = 0.16;
 const SYMBOL_SHADOW = "rgba(5,8,15,0.5)";
+/** rc.36 (UX-04): the stacked / band letters need this many pixels to read (smaller: the emblem alone). */
+const LAYOUT_LETTERS_MIN_PX = 40;
+/** rc.36: the emblem's size and rise when it shares the crest with the letters. */
+const LAYOUT_SYMBOL_SCALE = 0.72;
+const LAYOUT_SYMBOL_LIFT = 6;
 
 export function UserCrest({
   crestId,
@@ -428,15 +559,27 @@ export function UserCrest({
   className?: string;
 }) {
   const uid = useId();
-  const { shape, symbol, pattern } = parseCrestId(crestId);
+  const { shape, symbol, pattern, layout = "emblem" } = parseCrestId(crestId);
   const px = SIZE[size];
+  // rc.36 (UX-04): stacked / band letters only where they read (the band itself always shows).
+  const layoutLetters = Boolean(abbrev) && px >= LAYOUT_LETTERS_MIN_PX;
+  const stacked = layout === "stacked" && Boolean(symbol) && layoutLetters;
+  const band = layout === "band";
   // Symbol crests drop the monogram at every size — the emblem IS the mark.
-  const showTag = Boolean(abbrev) && px >= 28 && !symbol;
-  const legacy = !symbol && !pattern;
+  const showTag = Boolean(abbrev) && px >= 28 && !symbol && !band;
+  const legacy = !symbol && !pattern && !band;
   const clipId = `crest-clip-${uid.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const ink = crestLuminance(colors.primary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
+  const bandInk = crestLuminance(colors.secondary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
   const fit = SYMBOL_FIT[shape];
-  const symbolTransform = `translate(${fit.cx} ${fit.cy}) scale(${fit.s}) translate(-32 -34)`;
+  // The emblem shrinks and rises to make room for the letters / the band.
+  const lifted = stacked || (band && Boolean(symbol));
+  const symbolScale = lifted ? fit.s * LAYOUT_SYMBOL_SCALE : fit.s;
+  const symbolY = lifted ? fit.cy - LAYOUT_SYMBOL_LIFT : fit.cy;
+  const symbolTransform = `translate(${fit.cx} ${symbolY}) scale(${symbolScale}) translate(-32 -34)`;
+  const bandY = fit.cy + (symbol ? 6 : -6);
+  const letters = abbrev ?? "";
+  const letterSize = letters.length > 3 ? 9.5 : 11;
 
   return (
     <svg
@@ -447,7 +590,7 @@ export function UserCrest({
       role="img"
       aria-label={abbrev ? `${abbrev} crest` : "Org crest"}
     >
-      {pattern ? (
+      {pattern || band ? (
         <defs>
           <clipPath id={clipId}>
             <path d={BASE_PATH[shape]} />
@@ -458,8 +601,12 @@ export function UserCrest({
       {/* 1 — base silhouette */}
       <path d={BASE_PATH[shape]} fill={colors.primary} opacity={0.92} />
 
-      {/* 2 — pattern, clipped inside the base */}
-      {pattern ? (
+      {/* 2 — pattern, clipped inside the base (rc.36 "border": a thick inner outline) */}
+      {pattern === "border" ? (
+        <g clipPath={`url(#${clipId})`}>
+          <path d={BASE_PATH[shape]} fill="none" stroke={colors.secondary} strokeWidth={9} opacity={0.45} />
+        </g>
+      ) : pattern ? (
         <g clipPath={`url(#${clipId})`}>
           <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} opacity={0.35} fillRule="evenodd" />
         </g>
@@ -467,6 +614,27 @@ export function UserCrest({
 
       {/* legacy accent — only on plain shape crests (old saves render unchanged) */}
       {legacy ? <path d={ACCENT_PATH[shape]} fill={colors.secondary} opacity={0.55} /> : null}
+
+      {/* rc.36 (UX-04): the band layout — a secondary band across the crest, the letters on it */}
+      {band ? (
+        <g clipPath={`url(#${clipId})`}>
+          <rect x={-2} y={bandY} width={68} height={13} fill={colors.secondary} opacity={0.92} />
+          <rect x={-2} y={bandY} width={68} height={1.2} fill="rgba(255,255,255,0.35)" />
+        </g>
+      ) : null}
+      {band && layoutLetters ? (
+        <text
+          x="32"
+          y={bandY + 10}
+          textAnchor="middle"
+          fontSize={letterSize}
+          fontWeight={700}
+          fill={bandInk}
+          style={{ fontFamily: "var(--font-rajdhani), sans-serif", letterSpacing: 0.6 }}
+        >
+          {letters}
+        </text>
+      ) : null}
 
       {/* 3 — center symbol: dark drop shape for contrast, then the emblem */}
       {symbol ? (
@@ -480,6 +648,21 @@ export function UserCrest({
             <path key={i} d={d} fill={colors.secondary} opacity={0.9} fillRule="evenodd" />
           ))}
         </g>
+      ) : null}
+
+      {/* rc.36 (UX-04): the stacked layout's letters under the raised emblem */}
+      {stacked ? (
+        <text
+          x="32"
+          y={Math.min(56, fit.cy + 17)}
+          textAnchor="middle"
+          fontSize={letterSize}
+          fontWeight={700}
+          fill={ink}
+          style={{ fontFamily: "var(--font-rajdhani), sans-serif", letterSpacing: 0.6 }}
+        >
+          {letters}
+        </text>
       ) : null}
 
       {/* 4 — outline */}
