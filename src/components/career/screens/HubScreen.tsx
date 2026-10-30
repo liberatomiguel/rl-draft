@@ -62,8 +62,8 @@ import { formatDateTiny } from "@/components/career/dateText";
 import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { DayCard } from "@/components/career/hub/DayCard";
-import { NowBacker, NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice } from "@/components/career/hub/NowCards";
-import { weeklyStatementOf } from "@/store/careerFlow";
+import { NowBacker, NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice, NowSquadShort } from "@/components/career/hub/NowCards";
+import { squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
@@ -290,10 +290,13 @@ export function HubScreen() {
   const ended = save.phase === "ended";
 
   // --- Needs you: every pending decision / stop, each its own card ----------
-  const eventNow = ended
-    ? null
-    : (save.activeEvent?.def ??
-      (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null));
+  // RTW-05 (rc.33): a short squad's event — the clock holds until a third player signs.
+  const squadHold = ended ? null : squadHoldFor(save);
+  const eventNow =
+    ended || squadHold
+      ? null
+      : (save.activeEvent?.def ??
+        (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null));
   // R40: the weekend phase of today's event (Saturday Swiss · the pause · Championship Sunday).
   // rc.29 (CAR-02): a Saturday the playback has not finished revealing still
   // reads as the Swiss stage — "Swiss stage complete" and the Sunday CTA would
@@ -331,7 +334,12 @@ export function HubScreen() {
   const bankLoan = ended ? null : (save.finances.bankLoan ?? null);
   const nextPayday = nextPaydayFor(save.clock);
   const needsCount =
-    (phaseStop ? 1 : 0) + (eventNow ? 1 : 0) + (outBid ? 1 : 0) + (sponsorOffers ? 1 : 0) + (invite ? 1 : 0);
+    (phaseStop ? 1 : 0) +
+    (eventNow ? 1 : 0) +
+    (squadHold ? 1 : 0) +
+    (outBid ? 1 : 0) +
+    (sponsorOffers ? 1 : 0) +
+    (invite ? 1 : 0);
 
   // --- the wire ----------------------------------------------------------------
   const unreadNews = save.news.filter((n) => !n.read).length;
@@ -398,6 +406,11 @@ export function HubScreen() {
                       router.push("/career/event");
                     }}
                   />
+                </Panel>
+              ) : null}
+              {squadHold ? (
+                <Panel strong glow="orange" className="rise-in border-bad/40 p-5">
+                  <NowSquadShort save={save} C={C} def={squadHold} onPass={passUnofficial} />
                 </Panel>
               ) : null}
               {invite ? (

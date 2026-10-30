@@ -10,8 +10,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_LOAN, CAREER_WORLD, DIFFICULTY, TOURNAMENT } from "@/config/balance";
-import { getCareerCopy } from "@/content/careerCopy";
+import { CAREER_DIFFICULTY, CAREER_LOAN, CAREER_WORLD, DIFFICULTY, TOURNAMENT } from "@/config/balance";
+import { CAREER_EN } from "@/content/copy.career.en";
+import { CAREER_PT } from "@/content/copy.career.pt";
 import { orgById } from "@/data";
 import { careerMatchProfile, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
 import { localSceneRefs } from "@/engine/career/localScene";
@@ -19,9 +20,8 @@ import type { CareerDifficulty, CareerSave } from "@/engine/career/types";
 import { computeStars, localTeamFor, orgTeamFor, userTeamFor } from "@/engine/career/worldSim";
 import { simulateSeries } from "@/engine/match";
 import type { Region, TournamentTeam } from "@/engine/types";
-import { formatMoney } from "@/lib/format";
 import { createRng } from "@/lib/rng";
-import { PRESET_ROWS } from "@/components/career/wizard/PresetEffects";
+import { PRESET_ROWS, matchFeelOf } from "@/components/career/wizard/PresetEffects";
 import { createCareerSave, migrateSaveToV5, type CreateCareerInput } from "./careerFlow";
 
 const identity = (region: Region) => ({
@@ -41,6 +41,7 @@ const input = (difficulty: CareerDifficulty, over: Partial<CreateCareerInput> = 
   ...over,
 });
 const DIFFS: CareerDifficulty[] = ["easy", "normal", "hard"];
+const COPY = { en: CAREER_EN, pt: CAREER_PT };
 
 const intrinsic = (t: TournamentTeam) => t.rating.total - t.rating.difficultyShift;
 
@@ -77,14 +78,17 @@ function seriesWins(save: CareerSave): number {
 }
 
 describe("BAL-02 — the career's own difficulty", () => {
-  it("Easy and Normal keep rc.31's values exactly; Hard's two tuned keys are the documented ones", () => {
+  it("Easy and Normal keep rc.31's values but the AI shift (rc.33 BAL-04); Hard's two tuned keys are the documented ones", () => {
     const rc31 = {
       easy: { userRollRange: [-3, 5], aiRollRange: [-4, 4], chemistryMaxBonus: 1.3, opponentChemistryMaxBonus: 1.3, opponentRatingShift: -2 },
       normal: { userRollRange: [-3, 4], aiRollRange: [-4, 4], chemistryMaxBonus: 2, opponentChemistryMaxBonus: 2, opponentRatingShift: -1.05 },
       hard: { userRollRange: [-3.5, 4], aiRollRange: [-4, 4], chemistryMaxBonus: 2.4, opponentChemistryMaxBonus: 0, opponentRatingShift: -0.5 },
     };
-    expect(careerMatchProfile("easy")).toEqual(rc31.easy);
-    expect(careerMatchProfile("normal")).toEqual(rc31.normal);
+    // rc.33 (BAL-04): only the AI shift moved — Easy −2 → −1.6, Normal −1.05 → −0.6.
+    expect({ ...careerMatchProfile("easy"), opponentRatingShift: -2 }).toEqual(rc31.easy);
+    expect({ ...careerMatchProfile("normal"), opponentRatingShift: -1.05 }).toEqual(rc31.normal);
+    expect(careerMatchProfile("easy").opponentRatingShift).toBe(-1.6);
+    expect(careerMatchProfile("normal").opponentRatingShift).toBe(-0.6);
     expect({ ...careerMatchProfile("hard"), opponentChemistryMaxBonus: 0, opponentRatingShift: -0.5 }).toEqual(rc31.hard);
     expect(careerMatchProfile("hard").opponentChemistryMaxBonus).toBe(2);
     expect(careerMatchProfile("hard").opponentRatingShift).toBe(-0.2);
@@ -161,19 +165,42 @@ describe("BAL-02 — the presets replace the Management Style step", () => {
     expect(loaded.prefs.managementStyle).toBe("handsOn");
   });
 
-  it("the wizard readout lists the preset's real effects straight from balance.ts", () => {
-    const C = getCareerCopy();
-    for (const d of DIFFS) {
-      const rows = Object.fromEntries(PRESET_ROWS.map((r) => [r.key, r.value(d, C)]));
-      expect(rows.budget).toBe(formatMoney(CAREER_ECONOMY.startingBudget[d]));
-      expect(rows.prizes).toBe(C.wizard.presetMult(String(CAREER_ECONOMY.prizeMult[d])));
-      expect(rows.asks).toBe(C.wizard.presetMult(String(CAREER_ECONOMY.salaryAskMult[d])));
-      expect(rows.sponsors).toBe(C.wizard.presetMult(String(CAREER_ECONOMY.sponsorMult[d])));
-      expect(rows.training).toBe(presetPrefs(d).autoTrain ? C.wizard.presetTrainingGuided : C.wizard.presetTrainingManual);
-      // rc.32 integration: what ends a career through money (front A's M4).
-      const ends = CAREER_LOAN.breachesToEnd[d];
-      expect(rows.money).toBe(ends === null || ends === undefined ? C.wizard.presetMoneyNever : C.wizard.presetMoneyAt(ends));
-      for (const r of PRESET_ROWS) expect(C.wizard.presetRows[r.key], r.key).toBeTruthy();
+  it("the wizard shows each preset's basics straight from balance.ts (rc.33 UX-07: three lines, no numbers)", () => {
+    for (const lang of ["en", "pt"] as const) {
+      const C = COPY[lang];
+      expect(PRESET_ROWS.map((r) => r.key)).toEqual(["matches", "money", "start"]);
+      for (const d of DIFFS) {
+        const rows = Object.fromEntries(PRESET_ROWS.map((r) => [r.key, r.value(d, C)]));
+        expect(rows.matches).toBe(C.wizard.presetMatchFeel[matchFeelOf(d)]);
+        expect(rows.start).toBe(presetPrefs(d).autoTrain ? C.wizard.presetStartGuided : C.wizard.presetStartHandsOn);
+        // What ends a career through money: CAREER_LOAN.breachesToEnd, whatever its value.
+        const ends = CAREER_LOAN.breachesToEnd[d];
+        expect(rows.money).toBe(ends === null || ends === undefined ? C.wizard.presetMoneyNever : C.wizard.presetMoneyAt(ends));
+        for (const r of PRESET_ROWS) expect(C.wizard.presetRows[r.key], r.key).toBeTruthy();
+        // The basics only: no rolls, caps, multipliers or money figures.
+        for (const v of Object.values(rows)) expect(v, `${lang} ${d}`).not.toMatch(/[×$]|\d\.\d/);
+      }
+      expect([matchFeelOf("easy"), matchFeelOf("normal"), matchFeelOf("hard")]).toEqual(["easier", "even", "harder"]);
+    }
+  });
+
+  it("the money line renders any breach count from the key (front A moves breachesToEnd)", () => {
+    const L = CAREER_LOAN as { breachesToEnd: Record<string, number | null> };
+    const saved = { ...L.breachesToEnd };
+    try {
+      L.breachesToEnd = { easy: 3, normal: 2, hard: 1 };
+      const money = PRESET_ROWS.find((r) => r.key === "money")!;
+      expect(money.value("easy", COPY.en)).toBe("The third cash breach ends the career");
+      expect(money.value("normal", COPY.en)).toBe("The second cash breach ends the career");
+      expect(money.value("hard", COPY.en)).toBe("The first cash breach ends the career");
+      expect(money.value("hard", COPY.pt)).toBe("A primeira quebra de caixa encerra a carreira");
+      L.breachesToEnd = { easy: null, normal: 7, hard: 12 };
+      expect(money.value("easy", COPY.en)).toBe(COPY.en.wizard.presetMoneyNever);
+      expect(money.value("normal", COPY.en)).toBe("The 7th cash breach ends the career");
+      expect(money.value("hard", COPY.en)).toBe("The 12th cash breach ends the career");
+      expect(money.value("normal", COPY.pt)).toBe("A 7ª quebra de caixa encerra a carreira");
+    } finally {
+      L.breachesToEnd = saved;
     }
   });
 });

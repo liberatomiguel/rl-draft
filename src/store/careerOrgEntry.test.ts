@@ -7,12 +7,14 @@
  *  - an org enters at a season only with a playable lineup that season
  *    (region-only rosters count; national and easter-egg rosters never), in
  *    that lineup's region, and never before its first career season;
- *  - an org with a lineup that season that is still missing after the
- *    rollover found no filler seat in that region (R31: 16 orgs a region,
- *    fillers only ever decrease);
- *  - once in, an org never leaves the world.
+ *  - rc.33 (RTW-03, Miguel's answer to C-1): EVERY org with a lineup that
+ *    season is in the world after the rollover — Karmine Corp included. An
+ *    entrant takes a filler's seat, else the seat of an org whose history is
+ *    over, else the region grows past 16;
+ *  - an org leaves only when its history is over (no lineup that season or
+ *    later), and only to give its seat to an entrant of its region.
  * Season X orgs are there at creation. `docs/DATA-AUDIT-rc32.md` lists who
- * enters when, and who never finds a seat.
+ * enters when (rc.32 left most later EU, SAM and NA orgs without a seat).
  */
 import { describe, expect, it } from "vitest";
 import { CAREER_SEASONS } from "@/config/balance";
@@ -63,28 +65,61 @@ describe("DATA-01: each org enters the career in its right season (the real roll
   it.each([
     [11, "SAM"],
     [90210, "EU"],
-  ] as const)("career seed %i (%s): an org enters only with a lineup that season, in its region, never early, never leaves", (seed, region) => {
+  ] as const)("career seed %i (%s): an org enters only with a lineup that season, in its region, never early; every org with a lineup is in; only a finished history leaves", (seed, region) => {
     let save: CareerSave = createCareerSave({ ...INPUT, identity: { ...INPUT.identity, region } }, seed);
     for (const ref of realRefs(save.world)) expect(firstSeason(ref), ref).toBe(0);
+    const hasLineupFrom = (ref: string, s: number) => [...(seasonRegion.get(ref)?.keys() ?? [])].some((k) => k >= s);
 
     for (let s = 1; s < CAREER_SEASONS.length; s++) {
       const before = new Set(realRefs(save.world));
+      const regionBefore = new Map([...before].map((ref) => [ref, save.world.orgs[ref].region] as const));
+      const fillersBefore = new Map(
+        (["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"] as Region[]).map((r) => [r, fillersIn(save.world, r)] as const),
+      );
       save = rolloverToNextSeason(save);
       expect(save.clock.seasonIndex).toBe(s);
-      for (const ref of before) expect(save.world.orgs[ref], `${ref} left the world in season ${s}`).toBeDefined();
-      for (const ref of realRefs(save.world)) {
-        if (before.has(ref)) continue;
+      const entered = realRefs(save.world).filter((ref) => !before.has(ref));
+      for (const ref of entered) {
         const lineupRegion = seasonRegion.get(ref)?.get(s);
         expect(lineupRegion, `${ref} entered in season ${s} without a lineup that season`).toBeDefined();
         expect(save.world.orgs[ref].region, ref).toBe(lineupRegion);
         expect(firstSeason(ref), ref).toBeLessThanOrEqual(s);
       }
-      // A lineup this season but still missing: that region has no filler seat left.
+      // RTW-03: every org with a lineup this season is in the world.
       for (const [ref, bySeason] of seasonRegion) {
-        const r = bySeason.get(s);
-        if (r === undefined || save.world.orgs[ref]) continue;
-        expect(fillersIn(save.world, r), `${ref} (${r}) left out in season ${s} with a seat free`).toBe(0);
+        if (bySeason.get(s) === undefined) continue;
+        expect(save.world.orgs[ref], `${ref} has a ${CAREER_SEASONS[s].seasonId} lineup but no seat`).toBeDefined();
+      }
+      // RTW-03: an org leaves only when its history is over, to seat an entrant of its region
+      // once that region's fillers are gone.
+      const leftByRegion = new Map<Region, number>();
+      for (const ref of before) {
+        if (save.world.orgs[ref]) continue;
+        expect(hasLineupFrom(ref, s), `${ref} left in season ${s} with a lineup still to come`).toBe(false);
+        const r = regionBefore.get(ref)!;
+        leftByRegion.set(r, (leftByRegion.get(r) ?? 0) + 1);
+      }
+      for (const [r, n] of leftByRegion) {
+        const entrants = entered.filter((ref) => save.world.orgs[ref].region === r).length;
+        expect(n, `${r}: ${n} orgs left for ${entrants} entrants in season ${s}`).toBeLessThanOrEqual(
+          Math.max(0, entrants - fillersBefore.get(r)!),
+        );
       }
     }
+  });
+
+  it("Karmine Corp and the later EU, SAM and NA orgs appear in their region at their season (RTW-03)", () => {
+    let save: CareerSave = createCareerSave({ ...INPUT, identity: { ...INPUT.identity, region: "EU" } }, 4242);
+    const due = (s: number) =>
+      [...seasonRegion].filter(([ref, bySeason]) => firstSeason(ref) === s && ["EU", "SAM", "NA"].includes(bySeason.get(s)!));
+    for (let s = 1; s < CAREER_SEASONS.length; s++) {
+      save = rolloverToNextSeason(save);
+      for (const [ref, bySeason] of due(s)) {
+        expect(save.world.orgs[ref]?.region, `${ref} in ${CAREER_SEASONS[s].seasonId}`).toBe(bySeason.get(s));
+      }
+      if (s === 1) expect(save.world.orgs["karmine-corp"]?.region).toBe("EU");
+    }
+    // Every region still fields its events from 16 by the existing seeding.
+    expect(Object.values(save.world.orgs).filter((o) => o.region === "EU").length).toBeGreaterThanOrEqual(16);
   });
 });

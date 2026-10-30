@@ -28,6 +28,7 @@ import {
   localAnchorForEvent,
   localTeamFor,
   localTeamTarget,
+  orgHistoryOverAt,
   orgTeamFor,
   qualifierEventRefsFor,
   qualifierFieldRefsFor,
@@ -299,7 +300,7 @@ describe("real orgs enter by era (RTW-01): none arrives before its first dataset
   const fillersIn = (w: WorldState, region: Region) =>
     Object.values(w.orgs).filter((o) => o.region === region && o.ref.startsWith("fill:")).length;
 
-  it.each([11, 777, 90210])("career seed %i: an org enters only in a season it has a lineup (its region), never before its first — and is never left out while a filler seat is free", (seed) => {
+  it.each([11, 777, 90210])("career seed %i: an org enters only in a season it has a lineup (its region), never before its first — and is never left out (rc.33 RTW-03)", (seed) => {
     let w = computeStars(buildWorldAtCreation(seed), { seasonIndex: 0, careerSeed: seed, difficulty: "normal" });
     // Season X: exactly the Season X orgs.
     const seasonX = new Set([...firstSeason].filter(([, s]) => s === 0).map(([org]) => org));
@@ -319,10 +320,14 @@ describe("real orgs enter by era (RTW-01): none arrives before its first dataset
         expect(firstSeason.get(e.ref)!).toBeLessThanOrEqual(s);
       }
       for (const o of real(w)) expect(firstSeason.get(o.ref), `${o.ref} present in season ${s}`).toBeLessThanOrEqual(s);
-      // An org with a lineup this season that is still missing: its region had no filler seat left.
+      // rc.33 (RTW-03): no org with a lineup this season is left out — with no
+      // filler seat, an org whose history is over gives its seat (else the region grows).
       for (const l of seasonLineups) {
-        if (w.orgs[l.orgId]) continue;
-        expect(fillersIn(w, l.region), `${l.orgId} (${l.region}) left out in season ${s}`).toBe(0);
+        expect(w.orgs[l.orgId], `${l.orgId} (${l.region}) left out in season ${s}`).toBeDefined();
+      }
+      for (const o of intake.left) {
+        expect(orgHistoryOverAt(o.ref, s), `${o.ref} left with history to come`).toBe(true);
+        expect(fillersIn(w, o.region), `${o.ref} left while ${o.region} kept a filler`).toBe(0);
       }
     }
     // The infinite era brings nobody.

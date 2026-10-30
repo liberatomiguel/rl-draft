@@ -157,7 +157,6 @@ import {
   severanceFor,
   signableOverallCap,
   sponsorOffersFor,
-  standInFeeFor,
   t3RepKeyFor,
   takeBankLoan,
   unlocksFor,
@@ -184,6 +183,7 @@ import { renewalTermsFor } from "@/engine/career/renewal";
 import { presetPrefs } from "@/engine/career/difficulty";
 import { ACH_FLAGS } from "@/engine/career/achievements";
 import { isLocalRef, localRegionOf, localTeamName } from "@/engine/career/localScene";
+import { deepRunKeyFor, newcomerRepKindOf } from "@/engine/career/reputation";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
   agePassAndIntake,
@@ -191,7 +191,9 @@ import {
   buildWorldAtCreation,
   committedSeedingFor,
   computeStars,
+  datasetOrgName,
   fieldForEvent,
+  LINEUP_SEATS,
   localSeedRowsFor,
   orgTeamFor,
   realOrgIntake,
@@ -234,7 +236,8 @@ function clone(save: CareerSave): CareerSave {
 
 export function nameOfRef(save: CareerSave, ref: string): string {
   if (ref === "user") return save.identity.orgName;
-  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed) : ref);
+  // rc.33 (RTW-03): an org that left the world keeps its name in old results and the wire.
+  return save.world.orgs[ref]?.name ?? (isLocalRef(ref) ? localTeamName(ref, save.careerSeed) : (datasetOrgName(ref) ?? ref));
 }
 
 /**
@@ -910,7 +913,9 @@ export function processDayArrival(input: CareerSave): CareerSave {
     // for the whole season (the Saturday qualifier, Sunday, a Major, Worlds,
     // the cups) — the lineup fielded and an armed bootcamp never move it. A
     // save from before rc.31 freezes it on its next Monday.
-    if (!save.competition.localAnchor && week >= FIRST_REGIONAL_WEEK) {
+    // RTW-05 (rc.33): never on a short squad (its empty seat rates 0) — the
+    // freeze waits for the first regional Monday with three players.
+    if (!save.competition.localAnchor && week >= FIRST_REGIONAL_WEEK && !squadIsShort(save)) {
       save.competition.localAnchor = { region: save.identity.region, rating: localAnchorRatingFor(save) };
     }
     // rc.30 (direct-8): the week's seeding is decided ONCE, here, and stored —
@@ -1173,8 +1178,8 @@ function capNews(save: CareerSave): CareerSave {
  */
 function approxUserRating(save: CareerSave): number {
   const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
-  if (starters.length === 0) return 70;
-  return starters.reduce((s, p) => s + p.overall, 0) / starters.length;
+  // RTW-05 (rc.33): three seats, an empty one counts 0.
+  return starters.reduce((s, p) => s + p.overall, 0) / LINEUP_SEATS;
 }
 
 function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
@@ -1196,7 +1201,10 @@ function rollUnavailability(save: CareerSave, def: CareerEventDef): void {
     heavyCount * CAREER_TRAINING.heavyUnavailabilityAdd;
   if (!rng.chance(chance)) return;
   const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
-  if (starters.length < 3) return;
+  if (starters.length < LINEUP_SEATS) return;
+  // RTW-05 (rc.33): a reserve covers the ruled-out starter; with no reserve
+  // nobody is ruled out — no lineup ever drops below three.
+  if (!save.squad.some((p) => !save.starterIds.includes(p.id))) return;
   const victim = rng.pick(starters);
   save.flags[usedKey] = true;
   save.pendingUnavailability = { playerId: victim.id, eventId: def.id };
@@ -1712,7 +1720,15 @@ function keepInWorld(save: CareerSave, player: SquadPlayer): void {
 function forceTransferInWorld(save: CareerSave, playerId: string, toOrgRef: string): void {
   const world = save.world;
   const target = world.orgs[toOrgRef];
-  if (!target) return;
+  if (!target) {
+    // rc.33 (RTW-03): the buyer left the world since its bid (its seat went to
+    // an entrant at the rollover) — the player lands in free agency, never nowhere.
+    if (!world.freeAgentIds.includes(playerId) && !Object.values(world.orgs).some((o) => o.playerIds.includes(playerId))) {
+      world.freeAgentIds.push(playerId);
+      world.version += 1;
+    }
+    return;
+  }
   // Pull from wherever the player currently is.
   for (const org of Object.values(world.orgs)) {
     const idx = org.playerIds.indexOf(playerId);
@@ -2060,25 +2076,54 @@ export function userTeamForEvent(
   });
 }
 
+/**
+ * RTW-05 (rc.33): the squad player ruled out of `def` — only while a reserve
+ * covers his seat (userTeamFor's rule: without one nobody is ruled out, and
+ * he plays). The lobby and HQ read this, never the raw pending flag.
+ */
+export function ruledOutFor(save: CareerSave, def: Pick<CareerEventDef, "id">): SquadPlayer | null {
+  const u = save.pendingUnavailability;
+  if (!u || u.eventId !== def.id) return null;
+  const player = save.squad.find((p) => p.id === u.playerId) ?? null;
+  if (!player || !save.starterIds.includes(player.id)) return player;
+  const covered = save.squad.some((p) => p.role === "sub" && p.id !== player.id && !save.starterIds.includes(p.id));
+  return covered ? player : null;
+}
+
+/**
+ * RTW-05 (rc.33, Miguel 30/10: "no event with fewer than three players"):
+ * the squad cannot field a full lineup. No event starts like this and no
+ * stand-in exists any more — the user signs a third player first (a free
+ * agent into the empty seat is signable at any time, `signingPlanFor`).
+ */
+export function squadIsShort(save: CareerSave): boolean {
+  return save.squad.length < LINEUP_SEATS;
+}
+
+/**
+ * RTW-05 (rc.33): the user's committed event the clock is holding for — a
+ * short squad never enters its matchday (Advance, the batched Advance and
+ * the autoplay all stop on the eve), and on the matchday itself the event
+ * cannot start. The hub shows it as a decision ("Sign a player"). Null when
+ * nothing holds.
+ */
+export function squadHoldFor(save: CareerSave): CareerEventDef | null {
+  if (save.phase !== "running" || save.activeEvent || !squadIsShort(save)) return null;
+  const def = save.pendingEventDef;
+  if (!def) return null;
+  return def.day === save.clock.day || def.day === save.clock.day + 1 ? def : null;
+}
+
 export function startEvent(input: CareerSave, watch: boolean): CareerSave {
   const save = clone(input);
   const def = save.pendingEventDef;
   if (!def || save.activeEvent) return save;
   // The lobby opens on the matchday only (the day clock stops there).
   if (save.clock.day !== def.day) return save;
+  // RTW-05 (rc.33): never with fewer than three players (no stand-in).
+  if (squadIsShort(save)) return input;
 
-  const { team, usedStandIn, fieldedIds } = userTeamForEvent(save, def);
-  if (usedStandIn) {
-    save.finances = pushLedger(save.finances, {
-      seasonIndex: save.clock.seasonIndex,
-      week: weekOfDay(save.clock.day),
-      day: save.clock.day,
-      kind: "standInFee",
-      amount: -standInFeeFor(save.clock.seasonIndex),
-      refName: def.name,
-    });
-    pushNews(save, { type: "org", priority: 2, titleKey: "standIn", params: { event: def.name } });
-  }
+  const { team, fieldedIds } = userTeamForEvent(save, def);
   const { field, fieldQuality } = fieldForEvent(def, {
     world: save.world,
     competition: save.competition,
@@ -2317,7 +2362,7 @@ export function finishEvent(input: CareerSave): CareerSave {
   }
 
   // Reputation.
-  applyEventRep(save, def, placement);
+  applyEventRep(save, def, placement, ev.tournament);
 
   // Sponsor objective progress.
   if (save.sponsor) {
@@ -2493,18 +2538,24 @@ function fieldedIdsFor(save: CareerSave): string[] {
   return ids;
 }
 
-function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placement): void {
+function applyEventRep(save: CareerSave, def: CareerEventDef, placement: Placement, t: TournamentState): void {
   // The rule lives in the engine (eventRepKindFor — the digest previews the
-  // same one). t3 rep (win or final) shares one per-split cap counter; the
-  // regional's Swiss-exit floor keeps a losing season 1 climbing.
-  const key = t3RepKeyFor(save.clock.seasonIndex, splitOfWeek(weekOfDay(save.clock.day)));
+  // same one). t3 rep (win, final or an underdog's semi) shares one per-split
+  // cap counter; the regional's Swiss-exit floor keeps a losing season 1 climbing.
+  const split = splitOfWeek(weekOfDay(save.clock.day));
+  const key = t3RepKeyFor(save.clock.seasonIndex, split);
   const used = Number(save.flags[key] as unknown as number) || 0;
-  const kind = eventRepKindFor(def.tier, placement, {
-    t3CapReached: used >= CAREER_UNOFFICIAL.t3RepCapPerSplit,
-  });
+  const t3CapReached = used >= CAREER_UNOFFICIAL.t3RepCapPerSplit;
+  // rc.33 (RTW-02): the newcomer's path — what no placement pays, against the seed.
+  const deepKey = deepRunKeyFor(save.clock.seasonIndex, split);
+  const deepRunsThisSplit = Number(save.flags[deepKey] as unknown as number) || 0;
+  const kind =
+    eventRepKindFor(def.tier, placement, { t3CapReached }) ??
+    newcomerRepKindOf(def.tier, placement, t, { rep: save.reputation, t3CapReached, deepRunsThisSplit });
   if (!kind) return;
   gainRep(save, kind);
   if (def.tier === "t3") (save.flags as Record<string, unknown>)[key] = used + 1;
+  if (kind === "qualifierDeepRun") (save.flags as Record<string, unknown>)[deepKey] = deepRunsThisSplit + 1;
 }
 
 function accumulateStats(save: CareerSave, t: TournamentState): void {
@@ -2660,6 +2711,10 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
       titleKey: "orgEnters",
       params: { org: org.name, region: org.region },
     });
+  }
+  // rc.33 (RTW-03): an org whose history is over gave its seat to an entrant.
+  for (const org of intake.left.filter((o) => o.region === save.identity.region).slice(0, 4)) {
+    pushNews(save, { type: "milestone", priority: 1, titleKey: "orgLeaves", params: { org: org.name, region: org.region } });
   }
   for (const r of pass.retired.slice(0, 3)) {
     pushNews(save, { type: "milestone", priority: 1, titleKey: "retired", params: { player: r.name } });
@@ -2987,6 +3042,10 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   if (input.clock.day >= DAYS_PER_SEASON) return input;
   // rc.2: a pending weekly insert blocks the clock until the player answers.
   if (input.pendingInsert && input.pendingInsert.day === input.clock.day) return input;
+  // RTW-05 (rc.33): a short squad never enters its matchday — sign a third
+  // player first. A Community Cup on its own day can still be passed (below).
+  const hold = squadHoldFor(input);
+  if (hold && hold.day === input.clock.day + 1) return input;
   // An OFFICIAL matchday must be resolved (play or sim) — never skipped. The
   // paused Saturday counts as resolved for the day (its Swiss is complete).
   const pending = input.pendingEventDef;
@@ -3195,8 +3254,12 @@ export function signingPlanFor(
   opts: { lengthSeasons: 1 | 2 | 3; releaseId?: string },
 ): { plan: SigningPlan } | { error: string } {
   if (save.activeEvent) return { error: "rosterLocked" }; // rc.30: roster moves wait for the event
+  const outsideWindow = !isWindowWeek(weekOfDay(save.clock.day));
+  // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat
+  // at any time (an open late signing, rc.32's M8, keeps its own rule).
+  const emptySeat = outsideWindow && squadIsShort(save) && !opts.releaseId && !lateSigningOpen(save);
   // rc.32 (M8, provisional): outside a window only the late signing a window sale opened.
-  const lateSigning = !isWindowWeek(weekOfDay(save.clock.day));
+  const lateSigning = outsideWindow && !emptySeat;
   if (lateSigning && !lateSigningOpen(save)) return { error: "windowClosed" };
   // rc.32 review: the late signing refills the sold seat — never a swap.
   if (lateSigning && opts.releaseId) return { error: "windowClosed" };
@@ -3213,7 +3276,8 @@ export function signingPlanFor(
   if (!view) return { error: "unavailable" };
   const onOrg = Object.values(save.world.orgs).find((o) => o.playerIds.includes(playerId));
   // rc.32 (M8): the late seat takes a free agent only — say so before any other reason.
-  if (lateSigning && onOrg) return { error: "windowClosed" };
+  // RTW-05 (rc.33): so does the empty seat outside a window.
+  if ((lateSigning || emptySeat) && onOrg) return { error: "windowClosed" };
   // DEV-02 (R48): signable (and so playable) from the minimum competitive age, 13.
   if (!isCompetitiveAge(view.age)) return { error: "tooYoung" };
 
@@ -3241,7 +3305,11 @@ export function signingPlanFor(
   });
   const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   const cost = pack.fee + pack.signingBonus + severance;
-  if (save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
+  // RTW-05 (rc.33): a free agent into an empty seat is never refused for money
+  // — no event plays short, so a broke org must still be able to field three
+  // (it used to pay a stand-in's fee the same way).
+  const fillsEmptySeat = !onOrg && !leaver && squadIsShort(save);
+  if (!fillsEmptySeat && save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
   if (pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
   // rc.32 (M4, provisional): while the Backer is owed, no signing that shortens the runway —
   // except a free agent into an empty starting seat (a restructuring can sell a squad down
@@ -3252,8 +3320,7 @@ export function signingPlanFor(
     remove: leaver ? [leaver.id] : [],
     add: [pack.salaryPerSplit],
   });
-  const refillsEmptySeat = !onOrg && !leaver && save.squad.length < 3;
-  if (!refillsEmptySeat && backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
+  if (!fillsEmptySeat && backerLocks(save, cost, bill.after - bill.now)) return { error: "loanRunway" };
 
   const openSeats =
     3 - save.starterIds.filter((id) => id !== leaver?.id && save.squad.some((p) => p.id === id)).length;

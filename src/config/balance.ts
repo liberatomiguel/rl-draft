@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 2;
+export const BALANCE_VERSION = 3;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1614,7 +1614,35 @@ export const CAREER_REP = {
      */
     qualifierAdvance: 1,
     majorQualify: 2, majorTop4: 4, majorWin: 7, worldsQualify: 8, worldsTop4: 10,
+    /**
+     * rc.33 (RTW-02): the newcomer's path (`engine/career/reputation.ts`,
+     * the rules in `newcomer` below) — a Community Cup semi-final as an
+     * underdog, and a qualifier decider seeded outside the qualifying eight.
+     */
+    t3Semi: 1,
+    qualifierDeepRun: 1,
   },
+  /**
+   * rc.33 (RTW-02, Miguel 30/10: "playing EU, the reputation did not rise").
+   * Placements paid every point, and EU's and NA's pools out-rate a starter
+   * roster: the cup seats the two closest stronger orgs (10+ up), so the
+   * rating-seeded bracket ends every cup in the semi-final against seed 2,
+   * and the qualifier's eight orgs end every Saturday in the Swiss — EU sat at
+   * reputation 5 for two seasons (ECONOMY-CONTRACT §9). These results now pay
+   * `gains.t3Semi` / `gains.qualifierDeepRun`, judged against the user's SEED:
+   *  - repCeiling: only below this reputation (the org is still making its
+   *    name; sponsor tier 2's gate). APAC and SSA pass it in their first
+   *    season, so the easy regions gain a couple of points at most;
+   *  - t3SemiMinSeed: a cup semi-final pays from this seed down (two stronger
+   *    sides in the bracket); it shares CAREER_UNOFFICIAL.t3RepCapPerSplit;
+   *  - deepRunWins: the qualifier's decider — this many Swiss wins, then out —
+   *    pays when seeded outside CAREER_QUALIFIER.advanceSlots;
+   *  - deepRunsPerSplit: at most this many deciders pay in a split (an EU
+   *    starter, seed 9 over seven weaker local sides, reaches one in most
+   *    qualifiers — uncapped, EU passed SAM's and NA's first season).
+   * rc.32: none (repCeiling 0 turns the path off).
+   */
+  newcomer: { repCeiling: 25, t3SemiMinSeed: 3, deepRunWins: 2, deepRunsPerSplit: 1 },
   softCapAt: 80,
   softCapFactor: 0.5,
   /** Reputation FALLS on missed telegraphed expectations (v0.1 adjustment). */
@@ -1810,6 +1838,21 @@ export const CAREER_WORLD = {
   spendCapPctPerWindow: 0.6,
   /** Filler world: min AI orgs per region (user fills slot 16 at home). */
   minOrgsPerRegion: 16,
+  /**
+   * rc.33 (RTW-03, Miguel 30/10 — the answer to C-1: "a region may hold more
+   * than 16 orgs, or an org without a lineup leaves; either is fine"). How a
+   * real org whose first lineup is this season finds its seat at the rollover
+   * (`worldSim.realOrgIntake`):
+   *  - "everyOrg": the region's weakest filler org (R31); with no filler
+   *    left, the weakest org whose history is over (no lineup this season or
+   *    any later career season) leaves and the entrant takes its seat; with
+   *    neither, the region grows past minOrgsPerRegion (its events still
+   *    field 16 by the existing seeding). Every org enters its history:
+   *    Karmine Corp, Gentle Mates, MIBR, Cloud9…
+   *  - "fillersOnly": rc.32 — fillers only, so EU (no filler at creation)
+   *    never saw its 23 later orgs, nor SAM 28 of 31 and NA 6 of 10.
+   */
+  orgIntake: "everyOrg" as "everyOrg" | "fillersOnly",
   fillerOverallRange: [64, 80] as const,
   /** v0.3: 0.05 → 0.08 — fictional players deserve real ceilings. */
   fillerWonderkidChance: 0.08,
@@ -1826,8 +1869,19 @@ export const CAREER_WORLD = {
    * (R59). A filler org's team rating never passes the strongest real org of
    * its region at that moment (a region with no real org yet is uncapped);
    * its players keep their overalls. rc.31: uncapped — switch back with false.
+   * rc.33 (BAL-04): kept, Claude's call (30/10) — see fillerCapMargin.
    */
   fillerCapToBestReal: true,
+  /**
+   * rc.33 (BAL-04, the filler cap left to Claude 30/10): how far above the
+   * region's best real lineup a filler org may rate. 0 = R59's cap, kept:
+   * measured on APAC and SSA (Normal and Hard, three policies, three
+   * seasons), a 1-point margin moved nothing (first Major by S2 in every
+   * career either way, series won 66–73 % vs 61–74 %), and rc.31's uncapped
+   * world was the opposite cliff (0 % first Major by S2). The soft road's
+   * runaway is money and reputation (ECONOMY-CONTRACT M6 lever 3), not this.
+   */
+  fillerCapMargin: 0,
   rookiesPerRegionPerSeason: 8,
   rookieAgeRange: [13, 16] as const,
   rookieOverallRange: [60, 72] as const,
@@ -1854,6 +1908,26 @@ export const CAREER_WORLD = {
     weights: { 93: 0.25, 94: 0.22, 95: 0.19, 96: 0.15, 97: 0.11, 98: 0.08 } as Record<number, number>,
   },
   faPoolFloorPerRegion: 10,
+  /**
+   * rc.33 (RTW-04, Miguel 30/10: "fewer known players without a team — it
+   * should happen, but much less often"). The creation free-agent pool takes
+   * a real player with no Season X card only if his last club card is at
+   * most this many dataset seasons before Season X, or he plays again later.
+   * An older career was over by 2020-21: rc.32 seeded 72 such players (44
+   * rated 80+, some last seen in Season 1) at their peak, and the first
+   * window's scavenger pass signed them onto active rosters, pushing about
+   * 20 active Season X pros into free agency. null = rc.32 (all of them).
+   */
+  creationFreeAgentRecentSeasons: 1 as number | null,
+  /**
+   * rc.33 (RTW-04): at each rollover into a dataset season, a real free agent
+   * whose history is over (no club card that season or later — the anchor
+   * pass pushed him out when his real org moved on) leaves the scene with
+   * this chance, like the pros who left it. Without it the pool kept every
+   * one of them and grew each season (rc.32: 55 real free agents at S0, 107
+   * by S5). 0 = rc.32 (they stay until the age window retires them).
+   */
+  historyOverFreeAgentLeaveChance: 0.5,
   /** Random events: one type in v1 ("starter unavailable"), ≤1 per split. */
   unavailabilityChancePerWeek: 0.02,
   /** The pre-event roll multiplies the weekly chance by this (≈ a month's risk). */
@@ -2021,6 +2095,16 @@ export const CAREER_DIFFICULTY = {
    * at equal player strength the user won 81 % of Bo5 series on Easy, 65 % on
    * Normal and 81 % on Hard. Now AI chemistry counts (2) and the shift is
    * −0.2: 81 / 65 / 55 % (the user keeps Hard's 2.4 chemistry reward).
+   *
+   * rc.33 (BAL-04, Miguel 30/10: "Normal felt a bit easy"; the retune left to
+   * Claude). Measured on the arc harness's yardstick — Bo5 series between
+   * sides of EQUAL team rating (chemistry, coach and gear included, the AI
+   * shift left out) — the presets ran 84.7 / 70.5 / 56.2 %: R59's 81 / 65 %
+   * for Easy and Normal had been read with the user a little below his
+   * opponent, so at an even rating Normal gave a 1.55-point edge, not the
+   * "fair matches" its sentence promises. Easy's shift −2 → −1.6 and
+   * Normal's −1.05 → −0.6 put the ladder at R59's numbers on that yardstick:
+   * 81.4 / 65.2 / 56.2 %. Hard's R59 values are confirmed (at its intent).
    */
   match: {
     easy: {
@@ -2028,14 +2112,14 @@ export const CAREER_DIFFICULTY = {
       aiRollRange: [-4, 4] as const,
       chemistryMaxBonus: 1.3,
       opponentChemistryMaxBonus: 1.3,
-      opponentRatingShift: -2,
+      opponentRatingShift: -1.6,
     },
     normal: {
       userRollRange: [-3, 4] as const,
       aiRollRange: [-4, 4] as const,
       chemistryMaxBonus: 2,
       opponentChemistryMaxBonus: 2,
-      opponentRatingShift: -1.05,
+      opponentRatingShift: -0.6,
     },
     hard: {
       userRollRange: [-3.5, 4] as const,

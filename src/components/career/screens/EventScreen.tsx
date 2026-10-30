@@ -46,6 +46,7 @@ import type {
 import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
+import { ruledOutFor, squadIsShort } from "@/store/careerFlow";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { useOverlayHold } from "@/store/overlayHoldStore";
@@ -98,6 +99,7 @@ import { WeekendPlan, formatLineOf, type WeekendNote } from "@/components/career
 import {
   advancedSeedsOf,
   eventRepPreview,
+  eventRepPreviewKind,
   isSundaySpectator,
   openingOpponentOf,
   placementLabelOf,
@@ -256,10 +258,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       : null;
   const points = maxPointsOf(def.tier);
 
-  const unavailable =
-    save.pendingUnavailability?.eventId === def.id
-      ? save.squad.find((p) => p.id === save.pendingUnavailability?.playerId)
-      : null;
+  // RTW-05 (rc.33): ruled out only while a reserve covers him.
+  const unavailable = ruledOutFor(save, def);
 
   // R40: the weekend this lobby belongs to, and who came through Saturday.
   const isQualifier = def.tier === "qualifier";
@@ -400,8 +400,35 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         </Panel>
       ) : null}
 
+      {/* RTW-05 (rc.33): a short squad never starts an event — sign a third player first. */}
+      {isToday && squadIsShort(save) ? (
+        <div className="rise-in space-y-3 rounded-lg border border-bad/40 bg-bad/10 p-3" style={{ animationDelay: "120ms" }}>
+          <p className="text-sm text-ink">{C.hub.squadShortBody(save.squad.length, def.name)}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="primary" className="min-h-11" onClick={() => router.push("/career/market")}>
+              {C.hub.squadShortMarket}
+            </Button>
+            <Button variant="secondary" className="min-h-11" onClick={() => router.push("/career/squad")}>
+              {C.hub.squadShortSquad}
+            </Button>
+            {isUnofficial ? (
+              <Button
+                variant="ghost"
+                className="min-h-11"
+                onClick={() => {
+                  passUnofficial();
+                  router.push("/career");
+                }}
+              >
+                {C.calendar.skip}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       {/* CTAs — matchday only; earlier days are a read-only preview */}
-      {isToday ? (
+      {isToday && !squadIsShort(save) ? (
         <div className="rise-in space-y-2" style={{ animationDelay: "120ms" }}>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>
@@ -1039,14 +1066,19 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
   const playerShare = playerShareFor(def.tier, placement, prize);
   const points = pointsFor(def.tier, placement);
   // Display mirror of finishEvent's applyEventRep (pure, unit-tested).
-  const rep = eventRepPreview({
+  const repInput = {
     tier: def.tier,
     placement,
     reputation: save.reputation,
     flags: save.flags,
     seasonIndex: save.clock.seasonIndex,
     day: save.clock.day,
-  });
+    tournament: t,
+  };
+  const rep = eventRepPreview(repInput);
+  // rc.33 (RTW-02): the newcomer's path says why an exit paid reputation.
+  const repKind = rep > 0 ? eventRepPreviewKind(repInput) : null;
+  const underdogRep = repKind === "t3Semi" || repKind === "qualifierDeepRun";
   const championName = t.playoffs?.championTeamId
     ? (t.teams[t.playoffs.championTeamId]?.name ?? "")
     : "";
@@ -1188,6 +1220,9 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
                   "—"
                 )}
               </p>
+              {underdogRep ? (
+                <p className="mt-0.5 text-[10px] font-semibold text-sub">{C.event.digestRepUnderdog}</p>
+              ) : null}
             </div>
           </div>
 

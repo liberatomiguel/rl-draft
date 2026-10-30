@@ -130,6 +130,9 @@ describe("the lobby lists exactly the teams that play (rc.29 CAR-06)", { timeout
       const save = onMatchday(seed, def);
       staleRatings(save);
       // A starter ruled out for this cup: the fielded team is not the preview.
+      // RTW-05 (rc.33): a reserve covers him (without one nobody is ruled out).
+      const lead = save.squad[0];
+      save.squad.push({ ...lead, id: `${lead.id}:reserve`, name: "Reserve", role: "sub", overall: lead.overall - 6 });
       save.pendingUnavailability = { eventId: def.id, playerId: save.starterIds[0] };
       expect(eventTeamPreview(save, def).rating.total).not.toBe(userTeamPreview(save).rating.total);
       expect(eventTeamPreview(save, def).rating.total).toBe(userTeamForEvent(save, def).team.rating.total);
