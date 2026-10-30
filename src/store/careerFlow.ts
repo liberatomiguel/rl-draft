@@ -30,6 +30,7 @@
 import {
   CAREER_CALENDAR,
   CAREER_CONTRACT,
+  CAREER_DEV,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
@@ -109,6 +110,7 @@ import {
   playerViewById,
   seasonYear,
   signsForFinalSeason,
+  squadPotentialBand,
   squadRollover,
   trainDay,
   trainWeek,
@@ -151,10 +153,12 @@ import {
   repTierOf,
   rescuePartnerAt,
   rescuePartnerLastPayday,
+  rescuePartnerWeeklyOf,
   runwayShortened,
   runwayWeeks,
   scoutReportCostFor,
   severanceFor,
+  signableOverallCap,
   sponsorOffersFor,
   t3RepKeyFor,
   takeBankLoan,
@@ -163,7 +167,9 @@ import {
   weeklyStatement,
   weeklyWageBill,
   type BackerLine,
+  type BreachOutcome,
   type GearItemId,
+  type NetRun,
   type WeeklyStatement,
 } from "@/engine/career/economy";
 import {
@@ -172,6 +178,7 @@ import {
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
   incomingBidForDay,
+  listingFor,
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
@@ -226,6 +233,7 @@ import type {
   ManagementStyle,
   MondayBalance,
   NewsItem,
+  PotentialBand,
   ScrimLogEntry,
   SeasonRecord,
   SquadPlayer,
@@ -593,6 +601,33 @@ export function weeklyStatementOf(save: CareerSave): WeeklyStatement {
     foundingPartnerPerSplit: foundingPartnerPerSplitOf(save),
     rescuePartner: save.finances.rescuePartner ?? null,
   });
+}
+
+/**
+ * rc.33 (ECO-08): what the next Monday below the Backer's floor does on this
+ * save — the Backer's rescue, or the end of the career (Easy's third breach,
+ * Normal's second, Hard's first). Every warning that names the Backer picks
+ * its text by this (rc.33 review: several promised a Backer on Hard).
+ */
+export function nextBreachOutcomeOf(save: CareerSave): BreachOutcome {
+  return breachOutcomeFor(loanBreachesOf(save.finances) + 1, save.difficulty);
+}
+
+/** rc.33 review: the rescue partner's remaining run — the part of the weekly net that stops (economy.NetRun). */
+function partnerRunOf(save: CareerSave): NetRun | null {
+  const rp = save.finances.rescuePartner ?? null;
+  const weekly = rescuePartnerWeeklyOf(rp);
+  return rp && weekly > 0 ? { weekly, mondays: rp.mondaysLeft } : null;
+}
+
+/**
+ * rc.33 review: the runway every screen shows (HQ's cash-tight card, the
+ * Finances runway) and the Monday warnings read — the weeks the balance
+ * covers at next Monday's net (`weeklyStatementOf`), the rescue partner's
+ * help counted only on its remaining Mondays.
+ */
+export function runwayWeeksOf(save: CareerSave, net: number = weeklyStatementOf(save).net): number | null {
+  return runwayWeeks(save.finances.balance, net, partnerRunOf(save));
 }
 
 /**
@@ -1065,7 +1100,20 @@ export function processDayArrival(input: CareerSave): CareerSave {
   // ==================== MON-FRI: scheduled scrims (v0.3) ===================
   if (save.phase === "running" && !save.activeEvent && save.scheduledScrims.length > 0) {
     const due = save.scheduledScrims.filter((s) => s.day === day);
-    for (const s of due) performScrim(save, s.oppRef);
+    for (const s of due) {
+      // RTW-05 (rc.33 review): a squad under three never scrims — the booking
+      // is called off, and the feed says so.
+      if (squadIsShort(save)) {
+        pushNews(save, {
+          type: "training",
+          priority: 2,
+          titleKey: "scrimSkipped",
+          params: { opponent: save.world.orgs[s.oppRef]?.name ?? "?" },
+        });
+        continue;
+      }
+      performScrim(save, s.oppRef);
+    }
     save.scheduledScrims = save.scheduledScrims.filter((s) => s.day > day);
   }
 
@@ -1444,6 +1492,8 @@ function runWeeklyPayroll(save: CareerSave): void {
         lock: CAREER_LOAN.lockCommitments ? 1 : 0,
         next: breachOutcomeFor(breach + 1, save.difficulty),
         nextPartner: rescuePartnerAt(breach + 1, save.difficulty) ? 1 : 0,
+        // rc.33 review: how long a rescue partner pays (the copy reads the key, never "a split").
+        partnerRun: CAREER_LOAN.rescuePartner.weeks,
         // rc.33 (ECO-08): which breach this was (the second rescue on Easy says so).
         n: breach,
         partnerName: partner ? RESCUE_PARTNER_BRAND.name : "",
@@ -1501,14 +1551,17 @@ const RUNWAY_WARNED_FLAG = "runwayWarned";
  */
 function warnRunway(save: CareerSave, net: number): void {
   const balance = save.finances.balance;
-  const runway = runwayWeeks(balance, net);
+  // rc.33 review: the rescue partner pays only its remaining Mondays — the
+  // runway and the breach are projected over them, then without its weekly.
+  const run = partnerRunOf(save);
+  const runway = runwayWeeksOf(save, net);
   if (runway === null || runway > CAREER_PAYROLL.runwayNoticeWeeks) {
     delete save.flags[RUNWAY_NOTICE_FLAG];
     delete save.flags[RUNWAY_WARNED_FLAG];
     return;
   }
   const line = backerLineOf(save);
-  const mondays = mondaysToBreach(balance, net, line.floor) ?? 1;
+  const mondays = mondaysToBreach(balance, net, line.floor, run) ?? 1;
   const breachWeek = weekOfDay(save.clock.day) + mondays;
   const nextSeason = breachWeek > CAREER_CALENDAR.weeksPerSeason;
   const params = {
@@ -1522,6 +1575,7 @@ function warnRunway(save: CareerSave, net: number): void {
     next: breachOutcomeFor(loanBreachesOf(save.finances) + 1, save.difficulty),
     // rc.33 (ECO-07): the next breach also brings the rescue partner (Easy's first).
     nextPartner: rescuePartnerAt(loanBreachesOf(save.finances) + 1, save.difficulty) ? 1 : 0,
+    partnerRun: CAREER_LOAN.rescuePartner.weeks,
     backer: save.finances.loan ? 1 : 0,
   };
   if (runway <= CAREER_PAYROLL.runwayWarnWeeks) {
@@ -2783,6 +2837,9 @@ function stylePrefsFor(style: ManagementStyle): CareerPrefs {
   };
 }
 
+/** The scouting report level a founder joins with (squadFromOffer; the wizard's band reads it too). */
+const FOUNDER_SCOUT_LEVEL = 1 as const;
+
 function squadFromOffer(
   offer: StarterOffer,
   input: CreateCareerInput,
@@ -2819,7 +2876,7 @@ function squadFromOffer(
     contractEndSeason: 1,
     trainingFocus: "auto" as const,
     trainingIntensity: "normal" as const,
-    scoutLevel: 1 as const,
+    scoutLevel: FOUNDER_SCOUT_LEVEL,
     splitsTogether: 0,
     joinedSeason: 0,
     gainedThisSplit: 0,
@@ -2829,6 +2886,24 @@ function squadFromOffer(
 
 export function starterOffersForRegion(region: Region, careerSeed: number): StarterOffer[] {
   return starterRosterOffers(region, careerSeed);
+}
+
+/**
+ * DEV-04 (rc.33 review): the potential band the wizard shows for a founder —
+ * exactly the band HQ shows once the career exists (`squadPotentialBand`):
+ * the report level founders get (FOUNDER_SCOUT_LEVEL), the new career's
+ * development model, his age arc on day 1 of season 0, no rc.32 reports
+ * (a new career reads band model 2). The wizard's own ±5 band around the
+ * truth was 10 wide and centred on it.
+ */
+export function founderPotentialBandFor(
+  view: Pick<CareerPlayerView, "id" | "potential" | "overall" | "peakAge" | "age">,
+  careerSeed: number,
+): PotentialBand {
+  return squadPotentialBand(
+    { ...view, birthYear: seasonYear(0) - view.age, scoutLevel: FOUNDER_SCOUT_LEVEL },
+    { careerSeed, seasonIndex: 0, day: 1, model: CAREER_DEV.growthModel, rc32Reports: false },
+  );
 }
 
 export function createCareerSave(input: CreateCareerInput, careerSeed: number): CareerSave {
@@ -3169,6 +3244,49 @@ export interface SigningPlan {
   talk: NegotiationAnswer;
 }
 
+/**
+ * RTW-05 (rc.33 review): what the empty seat can always afford — the cheapest
+ * free agent the Market lists that this org may sign (signable at its
+ * reputation, of competitive age), priced as a signing of this length (his
+ * final season signs for one). A squad under three signs anyone at or under
+ * this upfront cost and wage without the money checks, so a broke org can
+ * always field three; rc.33's first cut waved every free agent through (an
+ * 80-rated star at $10.6k a split while $50k under the floor). Null when the
+ * Market lists no free agent the org may sign.
+ */
+export function emptySeatPriceFor(
+  save: CareerSave,
+  lengthSeasons: 1 | 2 | 3,
+): { playerId: string; name: string; cost: number; wagePerSplit: number } | null {
+  const listing = listingFor({
+    world: save.world,
+    squadIds: save.squad.map((p) => p.id),
+    seasonIndex: save.clock.seasonIndex,
+    careerSeed: save.careerSeed,
+    signableCap: signableOverallCap(save.reputation),
+    freeAgentsOnly: true,
+  });
+  let best: { playerId: string; name: string; cost: number; wagePerSplit: number } | null = null;
+  for (const view of listing.freeAgents) {
+    if (!isCompetitiveAge(view.age) || !signableAtRep(view.overall, save.reputation)) continue;
+    const pack = askPackageFor(view, {
+      rep: save.reputation,
+      seasonIndex: save.clock.seasonIndex,
+      difficulty: save.difficulty,
+      careerSeed: save.careerSeed,
+      lengthSeasons: signsForFinalSeason(view, save.clock.seasonIndex) ? 1 : lengthSeasons,
+    });
+    const cost = pack.fee + pack.signingBonus;
+    const wagePerSplit = pack.salaryPerSplit;
+    const cheaper =
+      !best ||
+      wagePerSplit < best.wagePerSplit ||
+      (wagePerSplit === best.wagePerSplit && (cost < best.cost || (cost === best.cost && view.id < best.playerId)));
+    if (cheaper) best = { playerId: view.id, name: view.name, cost, wagePerSplit };
+  }
+  return best;
+}
+
 export function signingPlanFor(
   save: CareerSave,
   playerId: string,
@@ -3230,14 +3348,18 @@ export function signingPlanFor(
   const talk = signingTalkFor(save, view, pack, opts.offer);
   const severance = leaver ? severanceFor(leaver, save.clock.seasonIndex) : 0;
   const cost = pack.fee + pack.signingBonus + severance;
-  // RTW-05 (rc.33): a free agent into an empty seat is never refused for money
-  // — no event plays short, so a broke org must still be able to field three
-  // (it used to pay a stand-in's fee the same way).
-  const fillsEmptySeat = !onOrg && !leaver && squadIsShort(save);
+  // RTW-05 (rc.33): no event plays short, so a broke org must still be able to
+  // field three (it used to pay a stand-in's fee the same way): a free agent
+  // into an empty seat skips the money checks — but only one who costs no
+  // more, upfront and in wages, than the cheapest free agent it may sign
+  // (`emptySeatPriceFor`); anyone dearer goes through the normal checks.
+  const seatPrice = !onOrg && !leaver && squadIsShort(save) ? emptySeatPriceFor(save, opts.lengthSeasons) : null;
+  const fillsEmptySeat =
+    seatPrice !== null && cost <= seatPrice.cost && talk.terms.wagePerSplit <= seatPrice.wagePerSplit;
   if (!fillsEmptySeat && save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
   if (pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
   // rc.32 (M4, provisional): while the Backer is owed, no signing that shortens the runway —
-  // except a free agent into an empty starting seat (a sale, an expiry or a retirement can
+  // except the empty seat's cheapest free agent (a sale, an expiry or a retirement can
   // leave a squad below three; the org must be able to field its own three again, never a soft lock).
   const bill = payrollProjection({
     squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
@@ -3712,6 +3834,9 @@ export interface ScrimOutcome {
 function performScrim(save: CareerSave, oppRefWanted: string | null): string | null {
   const dow = dayOfWeekOf(save.clock.day);
   if (save.phase !== "running" || save.activeEvent) return "blocked";
+  // RTW-05 (rc.33 review): a squad under three never scrims — an empty seat
+  // rated 0 earned the two players chemistry and XP as if they had a lineup.
+  if (squadIsShort(save)) return "squadShort";
   if (dow > CAREER_TRAINING.trainingDaysPerWeek) return "restDay";
   if (save.scrimsThisWeek >= CAREER_SCRIM.maxPerWeek) return "used";
 

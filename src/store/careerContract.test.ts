@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 import { CAREER_CONTRACT, CAREER_PRIZE_SHARE } from "@/config/balance";
-import { contractSharePctFor, prizeShareAskFor } from "@/engine/career/contract";
+import { contractSharePctFor, prizeShareAskFor, sharePointWeeklyFor } from "@/engine/career/contract";
 import { ageOf, playerViewById } from "@/engine/career/development";
 import { playerShareFor, prizeFor, quantize, signableOverallCap, weeklyWage } from "@/engine/career/economy";
 import { askPackageFor, signableAtRep } from "@/engine/career/market";
@@ -172,8 +172,11 @@ describe("ECO-11 — the wage talk through the flows", () => {
     const signed = res.save.squad.find((p) => p.id === fa.id)!;
     expect(weeklyWage(signed.salaryPerSplit)).toBe(talk.zone.floorWeekly);
     expect(signed.prizeSharePct).toBe(share);
-    // Two share points over his ask bought a lower wage at the bounded rate.
-    expect(talk.zone.topPerSplit).toBe(quantize(ask.salaryPerSplit * (1 - 2 * CAREER_PRIZE_SHARE.wagePerPoint)));
+    // Two share points over his ask bought a lower wage at the bounded rate (weekly money: wagePerPoint of his weekly ask).
+    expect(talk.zone.topWeekly).toBe(weeklyWage(ask.salaryPerSplit) - 2 * sharePointWeeklyFor(weeklyWage(ask.salaryPerSplit)));
+    expect(sharePointWeeklyFor(weeklyWage(ask.salaryPerSplit))).toBe(
+      Math.max(10, Math.round((weeklyWage(ask.salaryPerSplit) * CAREER_PRIZE_SHARE.wagePerPoint) / 10) * 10),
+    );
     // Nothing hardens: the talk stores nothing.
     expect(res.save.negotiationTries).toEqual(save.negotiationTries);
   });

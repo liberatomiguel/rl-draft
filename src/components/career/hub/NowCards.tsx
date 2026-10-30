@@ -8,7 +8,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
+import { CAREER_LOAN, CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import {
@@ -442,7 +442,7 @@ export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; 
         <p className="text-xs text-faint">{C.finances.breachCount(breaches, breachesToEndFor(save.difficulty))}</p>
       ) : null}
       <p className={cx("text-xs font-semibold", next === "insolvent" ? "text-bad" : "text-orange-bright")}>
-        {C.hub.backerNextBreach(next, rescuePartnerAt(breaches + 1, save.difficulty))}
+        {C.hub.backerNextBreach(next, rescuePartnerAt(breaches + 1, save.difficulty), CAREER_LOAN.rescuePartner.weeks)}
       </p>
     </div>
   );

@@ -1210,7 +1210,9 @@ export const CAREER_PRIZE_SHARE = {
    * point over his ask lowers the wage he signs for by this share of his
    * asking wage, each point under it raises it (−8 % … +6 % at the bounds).
    * About neutral for a contender's podium money, so the choice is a bet on
-   * the team's results.
+   * the team's results. rc.33 review: priced in weekly money — this share of
+   * his WEEKLY ask, whole weekly quanta, never under one
+   * (`contract.sharePointWeeklyFor`), so every press moves the wage shown.
    */
   wagePerPoint: 0.02,
   /**

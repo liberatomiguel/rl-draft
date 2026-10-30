@@ -47,13 +47,18 @@ import {
   quantize,
   rescuePartnerAt,
   rescuePartnerLastPayday,
-  runwayWeeks,
   weeklyOf,
   type BankLoanRefusal,
   type BreachOutcome,
   type WeeklyStatement,
 } from "@/engine/career/economy";
-import { backerLineOf, foundingPartnerPerSplitOf, mondayBalancesOf, weeklyStatementOf } from "@/store/careerFlow";
+import {
+  backerLineOf,
+  foundingPartnerPerSplitOf,
+  mondayBalancesOf,
+  runwayWeeksOf,
+  weeklyStatementOf,
+} from "@/store/careerFlow";
 import type {
   BankLoanState,
   FinanceState,
@@ -591,7 +596,8 @@ export function FinancesScreen() {
   const statement = weeklyStatementOf(save);
   const { income, expenses, net } = statement;
   const projected = fin.balance + net;
-  const runway = runwayWeeks(fin.balance, net);
+  // rc.33 review: the rescue partner's help counts only on its remaining Mondays.
+  const runway = runwayWeeksOf(save, net);
   // rc.32 (M1): season-0 prices on the money index; (M4) the Backer's line and the next breach.
   const seasonIndex = save.clock.seasonIndex;
   const flatIndex = moneyIndex(seasonIndex, "flat");
@@ -1266,7 +1272,10 @@ export function FinancesScreen() {
             {C.finances.loans}
             {fin.loan ? <Badge tone="orange" className="ml-2">{C.finances.backer}</Badge> : fin.bankLoan ? <Badge tone="blue" className="ml-2">{C.finances.bankTitle}</Badge> : null}
           </span>
-          <span className="text-[10px] text-faint">{C.finances.loansHint}</span>
+          {/* rc.33 review (ECO-08): where the next breach ends the career, no Backer is promised. */}
+          <span className="text-[10px] text-faint">
+            {nextBreach === "insolvent" ? C.finances.loansHintEnd : C.finances.loansHint}
+          </span>
         </summary>
         <div className="px-4 pb-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -1297,7 +1306,10 @@ export function FinancesScreen() {
             ) : (
               <>
                 <p className="mt-1 text-xs text-sub">
-                  {C.finances.bankHint(CAREER_BANK.termWeeks, Math.round(CAREER_BANK.interestPct * 100))}
+                  {(nextBreach === "insolvent" ? C.finances.bankHintEnd : C.finances.bankHint)(
+                    CAREER_BANK.termWeeks,
+                    Math.round(CAREER_BANK.interestPct * 100),
+                  )}
                 </p>
                 <BankLoanRequest fin={fin} rep={rep} balance={fin.balance} seasonIndex={seasonIndex} />
               </>
@@ -1327,7 +1339,7 @@ export function FinancesScreen() {
                 ) : null}
                 <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
                 <p className={cx("mt-0.5 text-xs font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {C.hub.backerNextBreach(nextBreach, nextPartner)}
+                  {C.hub.backerNextBreach(nextBreach, nextPartner, CAREER_LOAN.rescuePartner.weeks)}
                 </p>
                 <PayDown
                   remaining={fin.loan.remaining}
@@ -1342,7 +1354,9 @@ export function FinancesScreen() {
             ) : fin.loanUsed ? (
               <>
                 <p className={cx("mt-1 text-sm font-semibold", nextBreach === "insolvent" ? "text-bad" : "text-orange-bright")}>
-                  {nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.hub.backerNextBreach(nextBreach, nextPartner)}
+                  {nextBreach === "insolvent"
+                    ? C.finances.insolvencyWarning
+                    : C.hub.backerNextBreach(nextBreach, nextPartner, CAREER_LOAN.rescuePartner.weeks)}
                 </p>
                 <p className="mt-1 text-xs text-faint">{C.finances.backerRescued}</p>
                 <p className="mt-1 text-[11px] text-faint">{C.finances.breachCount(breaches, breachEnd)}</p>
@@ -1364,7 +1378,11 @@ export function FinancesScreen() {
                   </p>
                 ) : null}
                 <p className="mt-1 text-[11px] text-faint">
-                  {C.finances.breachLadder(breachEnd, CAREER_LOAN.rescuePartner.atBreach[save.difficulty] ?? null)}
+                  {C.finances.breachLadder(
+                    breachEnd,
+                    CAREER_LOAN.rescuePartner.atBreach[save.difficulty] ?? null,
+                    CAREER_LOAN.rescuePartner.weeks,
+                  )}
                 </p>
               </>
             )}

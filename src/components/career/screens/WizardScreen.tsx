@@ -43,7 +43,7 @@ import { Panel, SectionTitle } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { useCareerStore } from "@/store/careerStore";
-import { starterOffersForRegion } from "@/store/careerFlow";
+import { founderPotentialBandFor, starterOffersForRegion } from "@/store/careerFlow";
 import { useMounted } from "@/store/useMounted";
 import { CountrySelect } from "@/components/career/wizard/CountrySelect";
 import { FoundingSplash } from "@/components/career/wizard/FoundingSplash";
@@ -715,8 +715,8 @@ export function WizardScreen() {
 
                     <div className="mb-3 space-y-2">
                       {offer.players.map((p) => {
-                        const lo = Math.max(Math.round(p.overall), p.potential - 5);
-                        const hi = Math.min(99, p.potential + 5);
+                        // DEV-04: the band HQ shows once the career exists (never one centred on the truth).
+                        const band = founderPotentialBandFor(p, seed);
                         return (
                           <div
                             key={p.id}
@@ -732,7 +732,7 @@ export function WizardScreen() {
                               </span>
                             </span>
                             <Badge tone="blue" className="shrink-0">
-                              {C.player.potBand(lo, hi)}
+                              {C.player.potBand(band.min, band.max)}
                             </Badge>
                           </div>
                         );

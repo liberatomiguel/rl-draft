@@ -21,6 +21,7 @@ import {
   prizeShareAskFor,
   prizeShareOfPodium,
   sharePaysOn,
+  sharePointWeeklyFor,
   wageStepWeeklyFor,
 } from "@/engine/career/contract";
 import { computeSalaryAsk, playerShareFor, prizeFor, quantize, weeklyWage } from "@/engine/career/economy";
@@ -137,12 +138,17 @@ describe("ECO-11 — the model's properties", () => {
 
   it("the share moves only inside its bounds, at the bounded exchange rate", () => {
     const S = CAREER_PRIZE_SHARE;
+    // The exchange rate is in weekly money: wagePerPoint of his weekly ask, whole weekly quanta.
+    const point = sharePointWeeklyFor(weeklyWage(100_000));
+    expect(point).toBe(Math.round((weeklyWage(100_000) * S.wagePerPoint) / 10) * 10);
     const a = answer(100_000, 10, 1, { sharePct: 99 });
     expect(a.offer.sharePct).toBe(10 + S.maxAboveAsk);
-    expect(a.zone.topPerSplit).toBe(quantize(100_000 * (1 - S.wagePerPoint * S.maxAboveAsk)));
+    expect(a.zone.topWeekly).toBe(weeklyWage(100_000) - S.maxAboveAsk * point);
+    expect(a.zone.topPerSplit).toBe(perSplitForWeekly(a.zone.topWeekly));
     const b = answer(100_000, 10, 1, { sharePct: 0 });
     expect(b.offer.sharePct).toBe(10 - S.maxBelowAsk);
-    expect(b.zone.topPerSplit).toBe(quantize(100_000 * (1 + S.wagePerPoint * S.maxBelowAsk)));
+    expect(b.zone.topWeekly).toBe(weeklyWage(100_000) + S.maxBelowAsk * point);
+    expect(b.zone.topPerSplit).toBe(perSplitForWeekly(b.zone.topWeekly));
     // Never under minPct / over maxPct, whatever the ask.
     expect(answer(5_000, S.minPct, 1, { sharePct: 0 }).offer.sharePct).toBe(S.minPct);
     expect(answer(5_000, S.maxPct, 1, { sharePct: 99 }).offer.sharePct).toBe(S.maxPct);
@@ -167,6 +173,80 @@ describe("ECO-11 — the model's properties", () => {
       const step = wageStepWeeklyFor(weeklyWage(ask));
       expect(step % 10).toBe(0);
       expect(step).toBeGreaterThanOrEqual(10);
+    }
+  });
+});
+
+describe("ECO-10/11 — the share lever moves the wage shown (rc.33 review)", () => {
+  // rc.33's first cut priced a share point per split ($50 quanta) and then
+  // rounded to the $10 weekly label: at a $1,500/split ask, 5–8 % all paid
+  // $140/wk, and 6.4 % of the share presses over $1k–$30k asks moved nothing.
+  it("over a grid of asks, every ±1 share press moves his top weekly wage the right way, by whole weekly quanta", () => {
+    const asks = [...ASKS];
+    for (let a = 1_000; a <= 30_000; a += 50) asks.push(a);
+    const stuck: string[] = [];
+    let presses = 0;
+    for (const ask of asks) {
+      for (const askShare of [3, 8, 13]) {
+        const { shareMin, shareMax } = answer(ask, askShare, 0.97).zone;
+        let prev: number | null = null;
+        for (let s = shareMin; s <= shareMax; s++) {
+          const a = answer(ask, askShare, 0.97, { sharePct: s });
+          // The contract written pays exactly the weekly wage shown, and his ask at this share is what the sheet shows.
+          expect(weeklyWage(a.zone.topPerSplit)).toBe(a.zone.topWeekly);
+          expect(a.terms.weekly).toBe(a.zone.topWeekly);
+          if (prev !== null) {
+            presses += 1;
+            // One more point lowers his wage (one fewer raises it) by at least one weekly quantum.
+            if (!(prev - a.zone.topWeekly >= 10)) stuck.push(`${ask}/split @${askShare}%: ${s - 1}% → ${s}%: ${prev} → ${a.zone.topWeekly}`);
+          }
+          prev = a.zone.topWeekly;
+        }
+      }
+    }
+    expect(presses).toBeGreaterThan(1_000);
+    expect(stuck).toEqual([]);
+  });
+
+  it("a share point is worth the same weekly money each press, and the lever stops where the wage would pass the minimum", () => {
+    // The reproduction's ask: $1,500/split at 8 % — every share from 5 % to 12 % now pays its own weekly wage.
+    const tops = [5, 6, 7, 8, 9, 10, 11, 12].map((s) => answer(1_500, 8, 1, { sharePct: s }).zone.topWeekly);
+    expect(new Set(tops).size).toBe(tops.length);
+    for (const ask of ASKS) {
+      const a = answer(ask, 8, 1);
+      const point = sharePointWeeklyFor(weeklyWage(ask));
+      expect(point % 10).toBe(0);
+      expect(point).toBeGreaterThanOrEqual(10);
+      expect(a.zone.pointWeekly).toBe(point);
+      for (let s = a.zone.shareMin; s <= a.zone.shareMax; s++) {
+        const z = answer(ask, 8, 1, { sharePct: s }).zone;
+        expect(z.topWeekly).toBe(weeklyWage(ask) - (s - 8) * point);
+        // Never under the least a contract may pay.
+        expect(z.topPerSplit).toBeGreaterThanOrEqual(Math.min(ask, 250));
+      }
+    }
+    // An ask at the minimum wage: no share point over his ask has a wage left to trade.
+    expect(answer(250, 8, 1).zone.shareMax).toBe(8);
+  });
+
+  it("with the prize share switched off, the share is pinned to his ask: no wage trade, no lever", () => {
+    expect(answer(12_000, 8, 0.97).zone.shareLever).toBe(CAREER_PRIZES.playerShare.enabled);
+    const share = CAREER_PRIZES.playerShare as unknown as { enabled: boolean };
+    const was = share.enabled;
+    share.enabled = false;
+    try {
+      for (const ask of ASKS) {
+        for (const offered of [1, 5, 8, 12, 20]) {
+          const a = answer(ask, 8, 0.97, { sharePct: offered });
+          expect(a.zone.shareLever).toBe(false);
+          expect([a.zone.shareMin, a.zone.shareMax, a.offer.sharePct, a.terms.sharePct]).toEqual([8, 8, 8, 8]);
+          // A share nobody is paid buys no wage: the top is his ask.
+          expect(a.zone.topWeekly).toBe(weeklyWage(ask));
+          expect(a.zone.topPerSplit).toBe(ask);
+        }
+      }
+    } finally {
+      share.enabled = was;
     }
   });
 });

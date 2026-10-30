@@ -14,18 +14,37 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { firstDayOfWeek, isWindowWeek, officialEventDefsForWeek, qualifierDefsForWeek, weekOfDay } from "@/engine/career/calendar";
+import { CAREER_TRAINING } from "@/config/balance";
+import { CAREER_EN } from "@/content/copy.career.en";
+import { CAREER_PT } from "@/content/copy.career.pt";
+import type { CareerCopy } from "@/content/careerCopy";
+import {
+  dayOfWeekOf,
+  firstDayOfWeek,
+  isWindowWeek,
+  officialEventDefsForWeek,
+  qualifierDefsForWeek,
+  weekOfDay,
+} from "@/engine/career/calendar";
 import type { CareerEventDef, CareerSave, SquadPlayer } from "@/engine/career/types";
 import { userTeamFor } from "@/engine/career/worldSim";
-import { continueKind } from "@/components/career/careerUi";
+import { signableOverallCap } from "@/engine/career/economy";
+import { listingFor, signableAtRep } from "@/engine/career/market";
+import { continueKind, scrimAvailability } from "@/components/career/careerUi";
+import { resolveNews } from "@/components/career/news/newsText";
+import { errorTextFor } from "@/components/career/hub/hubShared";
+import { fillSeatsForTests } from "./careerArcBot";
 import {
   advanceDayFlow,
   advanceToNextStopFlow,
   backerLineOf,
   createCareerSave,
+  emptySeatPriceFor,
   migrateSaveToV5,
   releasePlayerFlow,
   ruledOutFor,
+  runScrimFlow,
+  scheduleScrimFlow,
   signPlayerFlow,
   signingPlanFor,
   squadHoldFor,
@@ -169,6 +188,82 @@ describe("RTW-05 — no event with fewer than three players", () => {
     expect(started.finances.ledger.some((l) => l.kind === "standInFee")).toBe(false);
   });
 
+  it("broke and short: only the cheapest free agent it may sign skips the money checks — anyone dearer is refused for money", () => {
+    const day = withoutOne(onDay(createCareerSave(INPUT, 50_514), regionalW4.day, regionalW4));
+    const broke = structuredClone(day);
+    broke.finances.balance = backerLineOf(broke).floor - 50_000;
+    const seat = emptySeatPriceFor(broke, 1)!;
+    expect(seat).not.toBeNull();
+    // The dearest free agent the Market lists that this org may sign (a star at its reputation cap).
+    const listed = listingFor({
+      world: broke.world,
+      squadIds: broke.squad.map((p) => p.id),
+      seasonIndex: 0,
+      careerSeed: broke.careerSeed,
+      signableCap: signableOverallCap(broke.reputation),
+    }).freeAgents.filter((v) => signableAtRep(v.overall, broke.reputation));
+    const ask = (id: string) => {
+      const plan = signingPlanFor({ ...broke, finances: { ...broke.finances, balance: 10_000_000 } }, id, { lengthSeasons: 1 });
+      return "plan" in plan ? plan.plan.talk.terms.wagePerSplit : 0;
+    };
+    const dear = [...listed].sort((a, b) => ask(b.id) - ask(a.id))[0];
+    expect(ask(dear.id)).toBeGreaterThan(seat.wagePerSplit);
+    expect(signingPlanFor(broke, dear.id, { lengthSeasons: 1 })).toEqual({ error: "funds" });
+    expect(signPlayerFlow(broke, dear.id, { lengthSeasons: 1 }).save).toBe(broke);
+    // The cheapest one always signs, and so does anyone no dearer — the seat can always be filled.
+    const signed = signPlayerFlow(broke, seat.playerId, { lengthSeasons: 1 });
+    expect(signed.error).toBeUndefined();
+    expect(signed.save.squad).toHaveLength(3);
+    expect(signed.save.squad.find((p) => p.id === seat.playerId)!.salaryPerSplit).toBe(seat.wagePerSplit);
+    expect(startEvent(signed.save, false).activeEvent?.fieldedIds).toHaveLength(3);
+    // A raise over his ask (a smaller share) is dearer than the seat's price: the normal checks apply.
+    const share = signingPlanFor(broke, seat.playerId, { lengthSeasons: 1 });
+    const lowShare = "plan" in share ? share.plan.talk.zone.shareMin : 0;
+    if ("plan" in share && lowShare < share.plan.talk.ask.sharePct) {
+      expect(signingPlanFor(broke, seat.playerId, { lengthSeasons: 1, offer: { sharePct: lowShare } })).toEqual({ error: "funds" });
+    }
+    // With money in the bank the dear one signs as before (the normal checks pass).
+    const rich = structuredClone(day);
+    rich.finances.balance = 5_000_000;
+    expect(signPlayerFlow(rich, dear.id, { lengthSeasons: 1 }).error).toBeUndefined();
+  });
+
+  it("broke, short and owing the Backer: the cheapest free agent still signs; a dearer one waits for the runway", () => {
+    const day = withoutOne(onDay(createCareerSave(INPUT, 50_515), regionalW4.day - 2, regionalW4));
+    const owed = structuredClone(day);
+    owed.finances.balance = backerLineOf(owed).floor - 1_000;
+    owed.finances.loan = { remaining: 60_000 };
+    owed.finances.loanUsed = true;
+    const seat = emptySeatPriceFor(owed, 2)!;
+    const refusedDearer = owed.world.freeAgentIds.filter((id) => {
+      if (id === seat.playerId) return false;
+      const plan = signingPlanFor(owed, id, { lengthSeasons: 2 });
+      return "error" in plan && (plan.error === "funds" || plan.error === "loanRunway");
+    });
+    expect(refusedDearer.length).toBeGreaterThan(0);
+    const res = signPlayerFlow(owed, seat.playerId, { lengthSeasons: 2 });
+    expect(res.error).toBeUndefined();
+    expect(squadIsShort(res.save)).toBe(false);
+  });
+
+  it("the arc bot's short squad always signs, broke or not, window or not — never a softlock", () => {
+    for (const [seed, policy] of [
+      [50_521, "autopilot"],
+      [50_522, "spender"],
+      [50_523, "youth"],
+    ] as const) {
+      const day = withoutOne(onDay(createCareerSave(INPUT, seed), regionalW4.day - 1, regionalW4));
+      const broke = structuredClone(day);
+      broke.finances.balance = backerLineOf(broke).floor - 80_000;
+      broke.finances.loan = { remaining: 90_000 };
+      broke.finances.loanUsed = true;
+      expect(isWindowWeek(weekOfDay(broke.clock.day))).toBe(false);
+      const filled = fillSeatsForTests(broke, policy);
+      expect(filled.squad, `${policy} @${seed}`).toHaveLength(3);
+      expect(squadHoldFor(filled)).toBeNull();
+    }
+  });
+
   it("a release that leaves two players holds the next matchday until a third signs", () => {
     const base = onDay(createCareerSave(INPUT, 50_505), qualifierW4.day - 2, qualifierW4);
     const released = releasePlayerFlow(base, base.squad[2].id);
@@ -243,5 +338,59 @@ describe("RTW-05 — the unavailability roll never takes a lineup below three", 
       if (withReserve.pendingUnavailability) fired += 1;
     }
     expect(fired).toBeGreaterThan(0);
+  });
+});
+
+describe("RTW-05 — no scrim with fewer than three players (rc.33 review)", () => {
+  /** Day 1 of season 0 with nothing pending: a training day the clock can leave. */
+  function quietStart(seed: number): CareerSave {
+    const save = structuredClone(createCareerSave(INPUT, seed));
+    save.pendingEventDef = null;
+    save.unofficialOffer = null;
+    save.pendingInsert = null;
+    save.sponsorOffers = null;
+    save.pendingOffers = [];
+    return save;
+  }
+
+  it("a short squad cannot scrim: the flow refuses, nothing moves, the hub says why", () => {
+    const full = quietStart(50_531);
+    expect(dayOfWeekOf(full.clock.day)).toBeLessThanOrEqual(CAREER_TRAINING.trainingDaysPerWeek);
+    const short = withoutOne(full);
+    const res = runScrimFlow(short);
+    expect(res.error).toBe("squadShort");
+    expect(res.save).toBe(short);
+    expect(scrimAvailability(short)).toMatchObject({ available: false, reason: "squadShort" });
+    for (const C of [CAREER_EN as unknown as CareerCopy, CAREER_PT]) {
+      expect(C.market.errors.squadShort.length).toBeGreaterThan(10);
+      // The Training screen's banner names it (not the generic "Locked").
+      expect(errorTextFor(C, "squadShort", "rescue")).toBe(C.market.errors.squadShort);
+    }
+    // The same day with three players scrims.
+    expect(runScrimFlow(full).error).toBeUndefined();
+  });
+
+  it("a scrim booked for a day the squad is short is called off on arrival, and the feed says so", () => {
+    const full = quietStart(50_532);
+    const day = full.clock.day + 1;
+    expect(dayOfWeekOf(day)).toBeLessThanOrEqual(CAREER_TRAINING.trainingDaysPerWeek);
+    const opp = Object.values(full.world.orgs).find((o) => o.region === "SAM")!;
+    const booked = scheduleScrimFlow(full, day, opp.ref);
+    expect(booked.error).toBeUndefined();
+    // Booked with three; a player leaves before the day.
+    const short = withoutOne(booked.save);
+    const next = advanceDayFlow(short);
+    expect(next.clock.day).toBe(day);
+    expect(next.scheduledScrims.some((x) => x.day === day)).toBe(false);
+    expect(next.scrimLog.some((e) => e.day === day)).toBe(false);
+    expect(next.scrimsThisWeek).toBe(short.scrimsThisWeek);
+    expect(next.squad.map((p) => p.splitsTogether)).toEqual(short.squad.map((p) => p.splitsTogether));
+    const item = next.news.find((n) => n.titleKey === "scrimSkipped")!;
+    expect(item).toBeDefined();
+    expect(resolveNews(item, CAREER_EN as unknown as CareerCopy, "en").title).toContain(opp.name);
+    expect(resolveNews(item, CAREER_PT, "pt").title).toContain(opp.name);
+    // The same booking with three players runs.
+    const ran = advanceDayFlow(booked.save);
+    expect(ran.scrimLog.some((e) => e.day === day && e.oppRef === opp.ref)).toBe(true);
   });
 });

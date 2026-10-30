@@ -13,7 +13,7 @@
 
 import { CAREER_POINTS } from "@/config/balance";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import { prizePoolPaidFor } from "@/engine/career/economy";
+import { prizePoolPaidFor, type BreachOutcome } from "@/engine/career/economy";
 import type {
   CalendarWeek,
   CareerDifficulty,
@@ -24,7 +24,8 @@ import type {
 } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { useCareerStore } from "@/store/careerStore";
+import { nextBreachOutcomeOf } from "@/store/careerFlow";
+import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { Badge } from "@/components/ui/Badge";
 
 // Canonical org-logo dispatcher (user crest / procedural filler / real logo).
@@ -56,21 +57,25 @@ export function TierChip({ tier, className }: { tier: EventTier; className?: str
 // lastError → inline dismissible warning (nearest copy key; see report)
 // ---------------------------------------------------------------------------
 
-function errorTextFor(C: CareerCopy, key: string): string {
+export function errorTextFor(C: CareerCopy, key: string, nextBreach: BreachOutcome): string {
   switch (key) {
     case "windowClosed":
       return C.market.windowClosed;
     case "squadFull":
     case "alreadySigned":
       return C.squad.squadFull;
+    // rc.33 review (ECO-08): by what the next breach does — the Backer's rescue or the end.
     case "funds":
-      return C.finances.backerWarning;
+      return nextBreach === "insolvent" ? C.finances.endsCareerWarning : C.finances.backerWarning;
     case "loanActive":
-      return C.finances.insolvencyWarning;
+      return nextBreach === "insolvent" ? C.finances.insolvencyWarning : C.market.errors.loanActive;
     case "eventLocked":
       return C.event.lineupLocked;
     case "rosterLocked":
       return C.market.errors.rosterLocked;
+    // RTW-05 (rc.33 review): no scrim with fewer than three players.
+    case "squadShort":
+      return C.market.errors.squadShort;
     default:
       // locked / maxed / used / none / unknown / invalid — no CAREER.errors.*
       // group exists yet; "Locked" is the least-wrong neutral fallback.
@@ -82,7 +87,9 @@ export function ErrorBanner({ className }: { className?: string }) {
   const C = useCareerCopy();
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
+  const save = useCareerStore(selectActiveSave);
   if (!lastError) return null;
+  const nextBreach: BreachOutcome = save ? nextBreachOutcomeOf(save) : "rescue";
   return (
     <div
       role="alert"
@@ -91,7 +98,7 @@ export function ErrorBanner({ className }: { className?: string }) {
         className,
       )}
     >
-      <span className="text-sm text-bad">{errorTextFor(C, lastError)}</span>
+      <span className="text-sm text-bad">{errorTextFor(C, lastError, nextBreach)}</span>
       <button
         onClick={clearError}
         aria-label={C.common.close}

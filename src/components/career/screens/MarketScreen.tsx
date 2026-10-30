@@ -47,6 +47,8 @@ import { cx } from "@/lib/util";
 import {
   backerLineOf,
   coachCandidatesFor,
+  emptySeatPriceFor,
+  nextBreachOutcomeOf,
   signingPlanFor,
   signingTalkFor,
   squadIsShort,
@@ -377,6 +379,12 @@ export function MarketScreen() {
     : planError === "squadFull"
       ? C.market.squadFullWarn(CAREER_CONTRACT.squadCap)
       : ((C.market.errors as Record<string, string>)[planError] ?? C.market.errors.unknown);
+  // RTW-05 (rc.33 review): a short squad refused for money is pointed to the
+  // free agent the empty seat always takes (the flow's own rule).
+  const seatFallback =
+    (planError === "funds" || planError === "loanRunway") && squadIsShort(save)
+      ? emptySeatPriceFor(save, offerLen)
+      : null;
   // rc.33 (ECO-10/11): the talk — the engine's one answer to the offer on the table.
   const talk = target && pack ? signingTalkFor(save, target.view, pack, offer) : null;
   const wageBill = payrollProjection({
@@ -1037,12 +1045,18 @@ export function MarketScreen() {
               </p>
               {backerRisk ? (
                 <p className="mt-2 rounded-md border border-orange/40 bg-orange/10 px-2.5 py-1.5 text-xs font-semibold text-orange-bright">
-                  {C.finances.backerWarning}
+                  {/* rc.33 review (ECO-08): a breach that ends the career is not the Backer's rescue. */}
+                  {nextBreachOutcomeOf(save) === "insolvent" ? C.finances.endsCareerWarning : C.finances.backerWarning}
                 </p>
               ) : null}
               {blockReason && planError !== "squadFull" ? (
                 <p className="mt-2 rounded-md border border-bad/40 bg-bad/10 px-2.5 py-1.5 text-xs font-semibold text-bad">
                   {blockReason}
+                </p>
+              ) : null}
+              {seatFallback && seatFallback.playerId !== target?.view.id ? (
+                <p className="mt-1.5 text-xs font-semibold text-good">
+                  {C.market.emptySeatCheapest(seatFallback.name, formatMoney(weeklyWage(seatFallback.wagePerSplit)))}
                 </p>
               ) : null}
             </div>

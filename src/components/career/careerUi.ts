@@ -10,6 +10,7 @@
 
 import {
   CAREER_GEAR,
+  CAREER_PRIZE_SHARE,
   CAREER_PRIZES,
   CAREER_SCOUT,
   CAREER_SCRIM,
@@ -54,6 +55,7 @@ import {
   phaseTagFor,
   playerViewById,
   scoutedBand,
+  squadPotentialBand,
   type PhaseTag,
   statsFromView,
   trainingEta,
@@ -102,6 +104,7 @@ import {
   regionalUserEligible,
   scrimOpponentFor,
   squadHoldFor,
+  squadIsShort,
   userEventDefOnDay,
   userIsDirect,
   userOwnsQualifier,
@@ -342,9 +345,11 @@ export function squadAge(save: CareerSave, p: SquadPlayer): number {
 // DEV-04 (rc.33): the band is capped at what the age clock still lets him reach (model 2),
 // and a career created before rc.33 keeps its bought reports inside rc.32's band.
 export function potBandOfSquad(save: CareerSave, p: SquadPlayer): PotentialBand {
-  const arc = { peakAge: p.peakAge, exactAge: exactAgeOf(squadAge(save, p), save.clock.day) };
-  return scoutedBand(p.potential, p.overall, p.scoutLevel, save.careerSeed, p.id, growthModelOf(save.world), {
-    arc,
+  return squadPotentialBand(p, {
+    careerSeed: save.careerSeed,
+    seasonIndex: save.clock.seasonIndex,
+    day: save.clock.day,
+    model: growthModelOf(save.world),
     rc32Reports: save.bandModel === undefined,
   });
 }
@@ -383,7 +388,12 @@ export function phaseOfView(save: CareerSave, view: CareerPlayerView): PhaseTag 
 export function prizeShareLabelOf(C: CareerCopy, p: Pick<SquadPlayer, "prizeSharePct">): string {
   if (p.prizeSharePct !== undefined) return C.player.prizeSharePct(p.prizeSharePct);
   const s = CAREER_PRIZES.playerShare;
-  return C.player.prizeShareLegacy(Math.round(s.regional * 100), Math.round(s.major * 100), Math.round(s.worlds * 100));
+  return C.player.prizeShareLegacy(
+    CAREER_PRIZE_SHARE.legacySeats,
+    Math.round(s.regional * 100),
+    Math.round(s.major * 100),
+    Math.round(s.worlds * 100),
+  );
 }
 
 export function statsOfSquad(p: SquadPlayer): Stats {
@@ -489,12 +499,16 @@ export function scrimAvailability(save: CareerSave): {
   available: boolean;
   remaining: number;
   opponentName: string | null;
-  reason: "ok" | "restDay" | "used" | "event" | "blocked";
+  reason: "ok" | "restDay" | "used" | "event" | "blocked" | "squadShort";
 } {
   const dow = dayOfWeekOf(save.clock.day);
   const remaining = Math.max(0, CAREER_SCRIM.maxPerWeek - save.scrimsThisWeek);
   if (save.phase !== "running" || save.activeEvent) {
     return { available: false, remaining, opponentName: null, reason: "blocked" };
+  }
+  // RTW-05 (rc.33 review): the flow's own rule (performScrim) — no scrim with fewer than three.
+  if (squadIsShort(save)) {
+    return { available: false, remaining, opponentName: null, reason: "squadShort" };
   }
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) {
     return { available: false, remaining, opponentName: null, reason: "event" };

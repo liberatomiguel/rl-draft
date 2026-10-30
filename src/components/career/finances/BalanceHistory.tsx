@@ -11,40 +11,49 @@
  * width, so text never scales and nothing overflows at 360 px.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { dateOfDay, firstDayOfWeek, seasonLabelFor } from "@/engine/career/calendar";
 import type { MondayBalance } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { formatDateTiny } from "@/components/career/dateText";
-import { balanceChartModel, nearestPoint, seasonSummaries } from "./balanceChart";
+import { balanceChartModel, nearestPoint, observeWidth, seasonSummaries } from "./balanceChart";
 
 const HEIGHT = 200;
 const TOOLTIP_WIDTH = 132;
 /** Narrowest season band that still gets its label (px). */
 const SEASON_LABEL_MIN = 64;
 
-/** The container's width (a ResizeObserver), so the chart draws 1:1 in px. */
-function useWidth(ref: React.RefObject<HTMLDivElement | null>, fallback: number): number {
+/**
+ * The container's width (a ResizeObserver), so the chart draws 1:1 in px.
+ * rc.33 review: measured whenever the box mounts (a callback ref), not only
+ * on the first render — a chart opened with fewer than two Mondays renders
+ * no box, and when the data arrived it stayed at the fallback width.
+ */
+function useWidth(fallback: number): {
+  width: number;
+  boxRef: React.RefObject<HTMLDivElement | null>;
+  attach: (el: HTMLDivElement | null) => (() => void) | undefined;
+} {
   const [width, setWidth] = useState(fallback);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const update = () => setWidth(Math.max(200, Math.floor(el.clientWidth)));
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const attach = useCallback((el: HTMLDivElement | null) => {
+    boxRef.current = el;
+    if (!el) return undefined;
+    const disconnect = observeWidth(el, setWidth);
+    return () => {
+      disconnect();
+      if (boxRef.current === el) boxRef.current = null;
+    };
+  }, []);
+  return { width, boxRef, attach };
 }
 
 export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
   const C = useCareerCopy();
   const D = C.dates;
-  const boxRef = useRef<HTMLDivElement>(null);
-  const width = useWidth(boxRef, 280);
+  const { width, boxRef, attach } = useWidth(280);
   const [active, setActive] = useState<number | null>(null);
   const model = balanceChartModel(ring, width, HEIGHT);
 
@@ -111,7 +120,7 @@ export function BalanceHistory({ ring }: { ring: readonly MondayBalance[] }) {
       </ul>
 
       <div
-        ref={boxRef}
+        ref={attach}
         role="group"
         aria-label={summary}
         tabIndex={0}

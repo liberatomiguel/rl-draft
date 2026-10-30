@@ -106,7 +106,9 @@ export function TrainingBlock({ save, C, statLabels }: { save: CareerSave; C: Ca
                     ? C.hub.restDay
                     : scrim.reason === "used"
                       ? C.scrim.usedUp
-                      : C.hub.scrimUnavailable}
+                      : scrim.reason === "squadShort"
+                        ? C.scrim.squadShort
+                        : C.hub.scrimUnavailable}
               </p>
             </div>
           </div>

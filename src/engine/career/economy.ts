@@ -834,12 +834,38 @@ export function weeklyStatement(input: WeeklyStatementInput): WeeklyStatement {
 }
 
 /**
- * Weeks the balance covers at the current weekly net (null = not burning).
- * The Finances runway line and the hub warning read this.
+ * rc.33 review: a part of the weekly net that stops — the rescue partner's
+ * `weekly` help on its `mondays` remaining Mondays (the net counts it until
+ * then; after its last payday the net is that much lower).
  */
-export function runwayWeeks(balance: number, weeklyNet: number): number | null {
-  if (weeklyNet >= 0) return null;
-  return Math.max(0, Math.floor(balance / -weeklyNet));
+export interface NetRun {
+  weekly: number;
+  mondays: number;
+}
+
+/**
+ * The first Monday (1 = the next one) the books close below `level` at this
+ * weekly net — over a run's remaining Mondays at the net with it, then at
+ * the net without it. Null = never (not burning, during the run nor after).
+ */
+function firstMondayBelow(balance: number, weeklyNet: number, level: number, run?: NetRun | null): number | null {
+  const at = (b: number, net: number): number | null => (net >= 0 ? null : Math.floor((b - level) / -net) + 1);
+  const during = at(balance, weeklyNet);
+  if (!run || run.weekly <= 0 || run.mondays <= 0) return during;
+  if (during !== null && during <= run.mondays) return during;
+  const after = at(balance + run.mondays * weeklyNet, weeklyNet - run.weekly);
+  return after === null ? null : run.mondays + after;
+}
+
+/**
+ * Weeks the balance covers at the current weekly net (null = not burning).
+ * The Finances runway line and the hub warning read this. rc.33 review:
+ * with `run` (the rescue partner's remaining Mondays), the net drops by its
+ * weekly once its run ends — the runway no longer assumes it pays forever.
+ */
+export function runwayWeeks(balance: number, weeklyNet: number, run?: NetRun | null): number | null {
+  const k = firstMondayBelow(balance, weeklyNet, 0, run);
+  return k === null ? null : Math.max(0, k - 1);
 }
 
 /**
@@ -868,11 +894,13 @@ export function runwayShortened(now: number | null, after: number | null): boole
 /**
  * rc.32 (M4): Mondays until the books close below `floor` at this weekly net
  * — the projected breach the warnings quote (null = not burning; at least 1,
- * the next Monday).
+ * the next Monday). rc.33 review: with `run`, over the rescue partner's
+ * remaining Mondays and then without its weekly (Easy's rescue on week 3
+ * quoted week 32 while the books crossed the floor in week 23).
  */
-export function mondaysToBreach(balance: number, weeklyNet: number, floor: number): number | null {
-  if (weeklyNet >= 0) return null;
-  return Math.max(1, Math.floor((balance - floor) / -weeklyNet) + 1);
+export function mondaysToBreach(balance: number, weeklyNet: number, floor: number, run?: NetRun | null): number | null {
+  const k = firstMondayBelow(balance, weeklyNet, floor, run);
+  return k === null ? null : Math.max(1, k);
 }
 
 // ---------------------------------------------------------------------------
@@ -1132,9 +1160,20 @@ export function mondayBalancesFromLedger(fin: Pick<FinanceState, "balance" | "le
   fin.ledger.forEach((e, i) => {
     if (e.kind !== "payroll" || e.day === undefined || dayOfWeekOf(e.day) !== 1) return;
     // The funnel books payroll, then coach, psychologist, upkeep, the bank and the Backer's
-    // grant on the same Monday stamp: the Monday's point is the last of them.
+    // grant on the same Monday stamp: the Monday's point is the last of them. rc.33 review:
+    // each at most once and in that order, and the psychologist's "buff" line has no name —
+    // a purchase the same Monday (a scout report, a bootcamp, an early bank payment) is
+    // the user's, after the books closed, not payroll.
     let j = i;
-    while (j + 1 < fin.ledger.length && fin.ledger[j + 1].day === e.day && fin.ledger[j + 1].seasonIndex === e.seasonIndex && MONDAY_FUNNEL_TAIL.has(fin.ledger[j + 1].kind)) j++;
+    let at = 0;
+    while (j + 1 < fin.ledger.length) {
+      const next = fin.ledger[j + 1];
+      if (next.day !== e.day || next.seasonIndex !== e.seasonIndex) break;
+      const k = MONDAY_FUNNEL_TAIL.indexOf(next.kind, at);
+      if (k < 0 || (next.kind === "buff" && next.refName !== undefined)) break;
+      j += 1;
+      at = k + 1;
+    }
     byMonday.set(`${e.seasonIndex}:${e.week}`, { s: e.seasonIndex, w: e.week, b: after[j] });
   });
   const ring = [...byMonday.values()].sort((a, b) => a.s - b.s || a.w - b.w);
@@ -1142,8 +1181,8 @@ export function mondayBalancesFromLedger(fin: Pick<FinanceState, "balance" | "le
   return ring.length > cap ? ring.slice(ring.length - cap) : ring;
 }
 
-/** The lines the Monday funnel books after the payroll line (mondayBalancesFromLedger). */
-const MONDAY_FUNNEL_TAIL = new Set<LedgerEntry["kind"]>(["coachSalary", "buff", "upkeep", "bankPayment", "loanGrant"]);
+/** The lines the Monday funnel books after the payroll line, in its order (mondayBalancesFromLedger). */
+const MONDAY_FUNNEL_TAIL: readonly LedgerEntry["kind"][] = ["coachSalary", "buff", "upkeep", "bankPayment", "loanGrant"];
 
 // ---------------------------------------------------------------------------
 // v2.0 bank loan (R21)

@@ -168,3 +168,34 @@ export function seasonSummaries(ring: readonly MondayBalance[]): { s: number; mo
   }
   return rows;
 }
+
+/** The narrowest width the chart draws at (px). */
+export const CHART_MIN_WIDTH = 200;
+
+/** The part of ResizeObserver `observeWidth` uses (injectable for tests). */
+export interface WidthObserver {
+  observe(el: Element): void;
+  disconnect(): void;
+}
+
+/**
+ * rc.33 review: measure the chart box now and on every resize — the one DOM
+ * touch, called each time the box mounts (BalanceHistory's callback ref), so
+ * a chart that first opened with fewer than two Mondays (no box) measures
+ * when the data arrives instead of keeping the fallback width. Returns the
+ * disconnect. Without ResizeObserver it measures once.
+ */
+export function observeWidth(
+  el: Element & { clientWidth: number },
+  onWidth: (width: number) => void,
+  makeObserver: ((cb: () => void) => WidthObserver) | null = typeof ResizeObserver === "undefined"
+    ? null
+    : (cb) => new ResizeObserver(cb),
+): () => void {
+  const update = () => onWidth(Math.max(CHART_MIN_WIDTH, Math.floor(el.clientWidth)));
+  update();
+  if (!makeObserver) return () => {};
+  const observer = makeObserver(update);
+  observer.observe(el);
+  return () => observer.disconnect();
+}

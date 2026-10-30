@@ -142,6 +142,17 @@ export function wageStepWeeklyFor(askWeekly: number): number {
   return Math.max(q, Math.round((askWeekly * CAREER_NEGOTIATION.wageStepPct) / q) * q);
 }
 
+/**
+ * ECO-10: what one share point is worth in WEEKLY money — wagePerPoint of his
+ * weekly ask, whole weekly quanta, never under one — so every press of the
+ * share lever moves the wage shown (rc.33's first cut priced it per split in
+ * $50 quanta, and ±1 point often left the $10 weekly label as it was).
+ */
+export function sharePointWeeklyFor(askWeekly: number): number {
+  const q = CAREER_PAYROLL.weeklyQuantum;
+  return Math.max(q, Math.round((askWeekly * CAREER_PRIZE_SHARE.wagePerPoint) / q) * q);
+}
+
 /** Contract terms: the per-split wage written, the weekly wage it pays, the prize share. */
 export interface ContractTerms {
   wagePerSplit: number;
@@ -162,6 +173,14 @@ export interface NegotiationZone {
   /** The shares the talk allows (whole percent, inclusive). */
   shareMin: number;
   shareMax: number;
+  /**
+   * The share is a lever in this talk. False while the prize share is
+   * switched off (CAREER_PRIZES.playerShare.enabled): the share stays his
+   * ask, buys no wage, and the sheet hides the lever.
+   */
+  shareLever: boolean;
+  /** One share point in weekly money (`sharePointWeeklyFor`): each point over his ask lowers the top by this, each under it raises it. */
+  pointWeekly: number;
   /** His ask at this share — the zone's top (paying it always signs). */
   topPerSplit: number;
   topWeekly: number;
@@ -191,14 +210,19 @@ export interface NegotiationAnswer {
 
 /**
  * ECO-11 (with ECO-10): the ONE answer to a contract offer. His ask is a
- * weekly wage at the share he asks; each share point over it lowers the wage
- * he signs for by CAREER_PRIZE_SHARE.wagePerPoint of his asking wage (each
- * point under it raises it), inside maxAboveAsk / maxBelowAsk. At the share
+ * weekly wage at the share he asks; each share point over it lowers the
+ * weekly wage he signs for by one share point's weekly money
+ * (`sharePointWeeklyFor`: CAREER_PRIZE_SHARE.wagePerPoint of his weekly ask,
+ * whole weekly quanta), each point under it raises it, inside maxAboveAsk /
+ * maxBelowAsk — and never past the point where the wage would drop under the
+ * least a contract pays, so every press moves the wage shown. At the share
  * offered he signs anything from his flexibility × that ask (the floor) to
  * the ask itself (the top) — never more than the ask (the offer is capped
  * there). Under the floor he counters with the floor at the same share: the
  * nearest deal he signs, which taking always signs. Monotone (more wage or
  * more share never turns a yes into a counter), deterministic, one round.
+ * With the prize share switched off (CAREER_PRIZES.playerShare.enabled) the
+ * share is pinned to his ask: a share nobody is paid buys no wage.
  */
 export function negotiationAnswerFor(input: {
   ask: { wagePerSplit: number; sharePct: number };
@@ -210,18 +234,24 @@ export function negotiationAnswerFor(input: {
   const S = CAREER_PRIZE_SHARE;
   const askShare = Math.round(input.ask.sharePct);
   const askWage = input.ask.wagePerSplit;
+  const askWeekly = weeklyWage(askWage);
   const minWage = Math.min(askWage, Math.max(0, input.minWagePerSplit ?? 0));
-  const shareMin = Math.min(askShare, Math.max(S.minPct, askShare - S.maxBelowAsk));
-  const shareMax = Math.max(askShare, Math.min(S.maxPct, askShare + S.maxAboveAsk));
+  const pointWeekly = sharePointWeeklyFor(askWeekly);
+  const shareLever = CAREER_PRIZES.playerShare.enabled;
+  // Share points over his ask that still leave a wage at or above the minimum.
+  const roomAbove = Math.max(0, Math.floor((askWeekly - weeklyAtLeast(minWage)) / pointWeekly));
+  const shareMin = shareLever ? Math.min(askShare, Math.max(S.minPct, askShare - S.maxBelowAsk)) : askShare;
+  const shareMax = shareLever
+    ? Math.max(askShare, Math.min(S.maxPct, askShare + S.maxAboveAsk, askShare + roomAbove))
+    : askShare;
   const share = clamp(Math.round(input.offer?.sharePct ?? askShare), shareMin, shareMax);
 
-  // His ask at this share (the top) and the least he signs for (the floor), per split.
-  const factor = 1 - S.wagePerPoint * (share - askShare);
-  const topPerSplit = share === askShare ? askWage : Math.max(minWage, quantize(askWage * factor));
-  const floorPerSplit = Math.min(topPerSplit, Math.max(minWage, input.flex * askWage * factor));
-  const topWeekly = weeklyWage(topPerSplit);
+  // His ask at this share (the top), in weekly money, and the least he signs for (the floor).
+  const topWeekly = askWeekly - (share - askShare) * pointWeekly;
+  const topPerSplit = share === askShare ? askWage : perSplitForWeekly(topWeekly);
+  const floorPerSplit = Math.min(topPerSplit, Math.max(minWage, input.flex * topPerSplit));
   const floorWeekly = Math.min(topWeekly, weeklyAtLeast(floorPerSplit));
-  const stepWeekly = wageStepWeeklyFor(weeklyWage(askWage));
+  const stepWeekly = wageStepWeeklyFor(askWeekly);
 
   // The offer, in weekly money: omitted = the top; never above it.
   const offerWeekly = Math.min(topWeekly, Math.max(0, input.offer?.weekly ?? topWeekly));
@@ -233,13 +263,13 @@ export function negotiationAnswerFor(input: {
   const counter = accepted ? null : termsAt(floorWeekly);
   const terms = accepted ? termsAt(offerWeekly) : counter!;
   return {
-    ask: { wagePerSplit: askWage, weekly: weeklyWage(askWage), sharePct: askShare },
+    ask: { wagePerSplit: askWage, weekly: askWeekly, sharePct: askShare },
     offer: { weekly: offerWeekly, sharePct: share },
-    zone: { shareMin, shareMax, topPerSplit, topWeekly, floorWeekly, stepWeekly },
+    zone: { shareMin, shareMax, shareLever, pointWeekly, topPerSplit, topWeekly, floorWeekly, stepWeekly },
     accepted,
     terms,
     counter,
-    savingWeekly: weeklyWage(askWage) - terms.weekly,
+    savingWeekly: askWeekly - terms.weekly,
     flex: input.flex,
   };
 }
