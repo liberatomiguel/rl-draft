@@ -569,6 +569,15 @@ How to read it:
   levers. The renewal raise's p50 (d1) is above ×1.6 because the star bend
   lifted the market asks the 50 % floor follows; the asks themselves stay a
   third of the guaranteed income. Star signings stay rare outside Easy.
+- **The long-career run on the same seeds** (`CAREER-ARC-rc33.md`; rc.32
+  re-run on both seeds as the before), Normal by region — first Major by S2
+  · Worlds by S4 · balance at S3 p50: EU 0 · 0 % · $3.0k → 0 · 0 % · $21.8k;
+  NA 0 · 0 % · −$0.3k → 0 · 21 % · $72.5k; SAM 0 · 7 % → 7 · 14 %; MENA 7 · 0 %
+  → 14 · 7 %; OCE 7 · 36 % → 36 · 50 %; APAC 79 · 79 % → 93 · 79 %; SSA 79 · 86
+  % → 86 · 86 %. At an even rating the user wins 80 / 66 / 58 % of series on
+  Easy / Normal / Hard (BAL-04's target, R59: 81 / 65 / 55). Its 57 "budget"
+  stops are the bot's 120 s wall-clock limit on a machine shared with five
+  agents, not game softlocks (the probe's same careers all played 8 seasons).
 - **After rc.33 (Miguel, 31/10, his first rc.33 run):** the rescue becomes a
   bank loan with a repayment deadline (what ends a career is the unpaid debt,
   not the breach count), a light investor at the first loan, no signing lock
