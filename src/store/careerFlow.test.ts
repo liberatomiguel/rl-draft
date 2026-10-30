@@ -27,6 +27,7 @@ import {
   type CreateCareerInput,
   resolveInsertFlow,
 } from "./careerFlow";
+import { stepDayForTests } from "./careerClockForTests";
 import { userTeamFor } from "@/engine/career/worldSim";
 
 const INPUT: CreateCareerInput = {
@@ -76,7 +77,8 @@ function playSeason(input: CareerSave): CareerSave {
     // rc.2: a pending weekly insert blocks the clock until answered — take the quiet option.
     if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
     const before = save.clock.day;
-    save = advanceDayFlow(save);
+    // rc.34 (UX-01a): bids, offers, cups and invites hold the clock — answered as rc.33's walk did.
+    save = stepDayForTests(save);
     if (save.phase !== "running") break;
     if (save.clock.day === before) {
       // Blocked: only an unresolved official matchday or the season end may block.
@@ -169,7 +171,7 @@ describe("careerFlow — full season integration (day clock)", () => {
       save = resolveEventIfDue(save);
       if (save.phase !== "running") break;
       if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
-      save = advanceDayFlow(save);
+      save = stepDayForTests(save);
     }
     expect(save.clock.day).toBeGreaterThanOrEqual(targetDay - 1);
   });

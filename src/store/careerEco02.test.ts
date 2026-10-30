@@ -32,6 +32,7 @@ import {
   weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
+import { stepDayForTests } from "./careerClockForTests";
 import { slotMetaFor } from "./careerStore";
 
 const INPUT: CreateCareerInput = {
@@ -158,7 +159,7 @@ describe("ECO-02 — the Backer once, the bank one at a time (real day clock)", 
     let guard = 0;
     while (save.phase === "running" && guard++ < 400) {
       const before = save.clock.day;
-      save = advanceDayFlow(save);
+      save = stepDayForTests(save); // rc.34: rc.33's walk past cups / invites / bids / offers
       if (save.clock.day === before && save.phase === "running") {
         // A matchday or an insert blocks the clock: this test only follows the money.
         save = { ...structuredClone(save), pendingEventDef: null, pendingInsert: null };

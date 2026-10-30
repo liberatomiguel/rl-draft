@@ -20,6 +20,7 @@ import {
   weeklyOf,
 } from "@/engine/career/economy";
 import { ruledOutFor } from "@/store/careerFlow";
+import { regionalForQualifier } from "@/engine/career/calendar";
 import type {
   CareerEventDef,
   CareerSave,
@@ -192,17 +193,22 @@ export function NowInvite({
  * RTW-05 (rc.33): the squad is under three and an event is due — the clock
  * holds on its eve (and the event cannot start) until a third player signs.
  * A free agent can take the empty seat any day; a Community Cup can be passed.
+ * rc.34 (Miguel, 31/10): a regional (or the qualifier leading to it) can be
+ * skipped — `onSkip` (careerFlow.skipShortSquadEventFlow): no entry, the
+ * clock moves on, the next regional asks again.
  */
 export function NowSquadShort({
   save,
   C,
   def,
   onPass,
+  onSkip,
 }: {
   save: CareerSave;
   C: CareerCopy;
   def: CareerEventDef;
   onPass: () => void;
+  onSkip?: () => void;
 }) {
   const router = useRouter();
   const unofficial = def.tier === "t3" || def.tier === "t2";
@@ -225,7 +231,17 @@ export function NowSquadShort({
             {C.hub.invitePass}
           </Button>
         ) : null}
+        {onSkip ? (
+          <Button variant="ghost" size="md" className="min-h-11" onClick={onSkip}>
+            {C.hub.squadShortSkip}
+          </Button>
+        ) : null}
       </div>
+      {onSkip ? (
+        <p className="mt-2 max-w-xl text-xs text-faint">
+          {C.hub.squadShortSkipHint(def.tier === "qualifier" ? (regionalForQualifier(def)?.name ?? def.name) : def.name)}
+        </p>
+      ) : null}
     </div>
   );
 }

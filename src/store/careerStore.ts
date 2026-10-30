@@ -70,7 +70,6 @@ import {
   resolveInsertFlow,
   releasePlayerFlow,
   renewPlayerFlow,
-  rolloverToNextSeason,
   runBootcampFlow,
   runScrimFlow,
   scheduleScrimFlow,
@@ -79,6 +78,7 @@ import {
   setTrainingFocusFlow,
   setDrillFlow,
   setTrainingIntensityFlow,
+  skipShortSquadEventFlow,
   takeBankLoanFlow,
   signPlayerFlow,
   simEventToEnd,
@@ -88,7 +88,15 @@ import {
   syncSquadRoles,
   type CreateCareerInput,
 } from "./careerFlow";
-import type { GearItemId } from "@/engine/career/economy";
+import {
+  continueToNextSeasonFlow,
+  declineSponsorOffersFlow,
+  parkDecisionFlow,
+  reviewContractsFlow,
+} from "./careerDecisions";
+import { bootcampTierFor, type GearItemId } from "@/engine/career/economy";
+import { careerAvailableKeys, seedCareerNew, toolboxNewKey } from "@/engine/career/careerNew";
+import { markSeen } from "@/engine/newItems";
 import type { ContractOffer } from "@/engine/career/contract";
 import { analyticsAllowed, anonymousId, trackEvent, trackEvents } from "@/lib/analytics";
 import { careerCreatedEvent, careerEventsFor, careerIdOf, type CareerAction } from "./careerAnalytics";
@@ -219,9 +227,23 @@ interface CareerStoreState {
   takeBankLoan: (principal: number) => void;
   payBankLoan: (amount: number) => void;
 
+  /** rc.34 (UX-06b): refused ("decisionPending") while the contract review or a bid still holds. */
   continueToNextSeason: () => void;
   continueInfinite: () => void;
   retireCareer: () => void;
+
+  /** rc.34 (UX-01a, decision 1-B): "Later" on a bid or the sponsor offers, until their deadline day. */
+  parkDecision: (id: string) => void;
+  /** rc.34: the sponsor offers' "not now" (they come back at the next split boundary). */
+  declineSponsorOffers: () => void;
+  /** rc.34 (UX-06b): the explicit review before the rollover — let the expiring contracts end. */
+  reviewContracts: () => void;
+  /** rc.34 (Miguel, 31/10): a short squad sits this regional out (the hold's third answer). */
+  skipShortSquadEvent: () => void;
+  /** rc.34 (UX-06): the manager OPENED these "New" items (engine/career/careerNew keys). */
+  markCareerSeen: (keys: readonly string[]) => void;
+  /** rc.34 (UX-06a): HQ's unlock modal announced these toolbox keys (once per novelty). */
+  markCareerAnnounced: (keys: readonly string[]) => void;
 
   markFlag: (flag: string) => void;
   markNewsRead: () => void;
@@ -305,6 +327,9 @@ export const useCareerStore = create<CareerStoreState>()(
         const prevSeq = slots[activeSlot]!.seq ?? 0;
         const prevWorlds = slots[activeSlot]!.stats.titlesWorlds ?? 0;
         const next = fn(slots[activeSlot]!);
+        // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
+        const seeded = next !== prevSave ? seedCareerNew(prevSave, next) : undefined;
+        if (seeded) next.newItems = seeded;
         // rc.4: Worlds titles feed the profile's cross-save + season counters
         // (World Champion / Dynasty badges). Read before the flow mutates.
         const worldsWon = (next.stats.titlesWorlds ?? 0) - prevWorlds;
@@ -343,6 +368,9 @@ export const useCareerStore = create<CareerStoreState>()(
         const { save, error } = fn(slots[activeSlot]!);
         const changed = save !== slots[activeSlot];
         if (changed) save.lastPlayedAt = Date.now();
+        // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
+        const seeded = changed ? seedCareerNew(prevSave, save) : undefined;
+        if (seeded) save.newItems = seeded;
         const nextSlots = changed ? [...slots] : slots;
         if (changed) nextSlots[activeSlot] = save;
         const fresh = changed ? collectToasts(save, prevSeq) : [];
@@ -440,9 +468,21 @@ export const useCareerStore = create<CareerStoreState>()(
             return next;
           }),
 
-        buyGear: (itemId) => withResult((s) => buyGearFlow(s, itemId)),
-        setPsychologist: (on) => withResult((s) => setPsychologistFlow(s, on)),
-        runBootcamp: () => withResult(runBootcampFlow),
+        // rc.34 (UX-06a): buying opens the item — its "New" mark clears.
+        buyGear: (itemId) => {
+          withResult((s) => buyGearFlow(s, itemId));
+          if (!get().lastError) get().markCareerSeen([toolboxNewKey(itemId)]);
+        },
+        setPsychologist: (on) => {
+          withResult((s) => setPsychologistFlow(s, on));
+          if (on && !get().lastError) get().markCareerSeen([toolboxNewKey("psych")]);
+        },
+        runBootcamp: () => {
+          const before = selectActiveSave(get());
+          withResult(runBootcampFlow);
+          const tier = before ? bootcampTierFor(before.reputation) : 0;
+          if (tier > 0 && !get().lastError) get().markCareerSeen([toolboxNewKey(tier === 2 ? "bootcamp2" : "bootcamp1")]);
+        },
         buyScoutReport: (playerId) =>
           withResult((s) => buyScoutReportFlow(s, playerId), { kind: "scout", playerId }),
         hireCoach: (coach) => withResult((s) => hireCoachFlow(s, coach), { kind: "hireCoach" }),
@@ -453,8 +493,35 @@ export const useCareerStore = create<CareerStoreState>()(
         takeBankLoan: (principal) => withResult((s) => takeBankLoanFlow(s, principal)),
         payBankLoan: (amount) => withResult((s) => payBankLoanFlow(s, amount)),
 
-        continueToNextSeason: () => withSave(rolloverToNextSeason),
+        // rc.34 (UX-06b): the rollover waits for the contract review (and any bid on its last day).
+        continueToNextSeason: () => withResult(continueToNextSeasonFlow),
         continueInfinite: () => withSave(continueInfiniteFlow),
+        parkDecision: (id) => withResult((s) => parkDecisionFlow(s, id)),
+        declineSponsorOffers: () => withResult(declineSponsorOffersFlow),
+        reviewContracts: () => withResult(reviewContractsFlow),
+        skipShortSquadEvent: () => withResult(skipShortSquadEventFlow),
+        // rc.34 (UX-06): a light write — only the save's seen state moves (no flow, no toasts).
+        markCareerSeen: (keys) => {
+          const { slots, activeSlot } = get();
+          const save = activeSlot === null ? null : slots[activeSlot];
+          if (!save || keys.length === 0) return;
+          const next = markSeen(save.newItems, keys, careerAvailableKeys(save));
+          if (next === save.newItems) return;
+          const nextSlots = [...slots];
+          nextSlots[activeSlot!] = { ...save, newItems: next };
+          set({ slots: nextSlots });
+        },
+        markCareerAnnounced: (keys) => {
+          const { slots, activeSlot } = get();
+          const save = activeSlot === null ? null : slots[activeSlot];
+          if (!save || keys.length === 0) return;
+          const known = new Set(save.newAnnounced ?? []);
+          const fresh = keys.filter((k) => !known.has(k));
+          if (fresh.length === 0) return;
+          const nextSlots = [...slots];
+          nextSlots[activeSlot!] = { ...save, newAnnounced: [...known, ...fresh] };
+          set({ slots: nextSlots });
+        },
         // ECO-02 (R46): the end flow and the viewing state pass the closed-career guard.
         retireCareer: () =>
           withSave(

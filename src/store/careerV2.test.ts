@@ -28,6 +28,7 @@ import {
   userIsDirect,
   type CreateCareerInput,
 } from "./careerFlow";
+import { stepDayForTests } from "./careerClockForTests";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -52,7 +53,7 @@ function advanceTo(input: CareerSave, day: number): CareerSave {
   while (save.clock.day < day && save.phase === "running" && guard < 400) {
     guard += 1;
     const before = save.clock.day;
-    save = advanceDayFlow(save);
+    save = stepDayForTests(save); // rc.34: rc.33's walk past cups / invites / bids / offers
     if (save.clock.day === before) break; // official matchday — stop here
   }
   return save;

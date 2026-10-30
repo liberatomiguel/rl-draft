@@ -82,6 +82,9 @@ import {
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
 import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
+import { hqFinanceOf } from "@/store/careerHq";
+import { careerNewSummary, toolboxNewKey, type ToolboxItemId } from "@/engine/career/careerNew";
+import { NewTag } from "@/components/ui/NewDot";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -598,6 +601,11 @@ export function FinancesScreen() {
   const projected = fin.balance + net;
   // rc.33 review: the rescue partner's help counts only on its remaining Mondays.
   const runway = runwayWeeksOf(save, net);
+  // rc.34 (UX-01e): the end-of-split projection HQ shows — one function, the same figure.
+  const projection = hqFinanceOf(save).projection;
+  // rc.34 (UX-06a): the toolbox items unlocked and not opened carry the "New" tag here too.
+  const fresh = careerNewSummary(save).keys;
+  const newTag = (id: ToolboxItemId) => (fresh.has(toolboxNewKey(id)) ? <NewTag>{C.toolbox.newTag}</NewTag> : null);
   // rc.32 (M1): season-0 prices on the money index; (M4) the Backer's line and the next breach.
   const seasonIndex = save.clock.seasonIndex;
   const flatIndex = moneyIndex(seasonIndex, "flat");
@@ -687,7 +695,12 @@ export function FinancesScreen() {
           superseded ? (
             <Badge tone="orange">{C.finances.ownedLabel}</Badge>
           ) : isActiveTier && nextRunFree ? (
-            <Badge tone="gold">{C.common.free}</Badge>
+            <>
+              <Badge tone="gold">{C.common.free}</Badge>
+              {newTag(tier === 2 ? "bootcamp2" : "bootcamp1")}
+            </>
+          ) : isActiveTier ? (
+            newTag(tier === 2 ? "bootcamp2" : "bootcamp1")
           ) : null
         }
         aside={
@@ -713,6 +726,12 @@ export function FinancesScreen() {
             {isActiveTier && fin.bootcampUsedThisSplit ? (
               <p className="mt-1 text-[10px] font-semibold text-faint">
                 {C.finances.bootcampUsed}
+              </p>
+            ) : null}
+            {/* rc.34 (UX-01f, 5-A): the edge lasts the split — its end date. */}
+            {isActiveTier && fin.bootcampSharp > 0 && fin.bootcampUntil ? (
+              <p className="mt-1 text-[10px] font-semibold text-orange-bright">
+                {C.finances.bootcampUntil(formatDateTiny(D, dateOfDay(fin.bootcampUntil.seasonIndex, fin.bootcampUntil.day)))}
               </p>
             ) : null}
             {isActiveTier && freeLeft > 0 ? (
@@ -909,6 +928,14 @@ export function FinancesScreen() {
           >
             {runway === null ? C.finances.runwayOk : C.finances.runway(runway)}
           </p>
+          {save.phase !== "ended" ? (
+            <p className={cx("mt-1 text-[11px]", projection.balance < 0 ? "text-bad" : "text-faint")}>
+              {C.finances.projectionSplit(
+                formatDateTiny(D, dateOfDay(projection.seasonIndex, projection.day)),
+                formatMoney(projection.balance, { compact: true }),
+              )}
+            </p>
+          ) : null}
         </Panel>
       </div>
 
@@ -932,7 +959,7 @@ export function FinancesScreen() {
                 title={C.finances.gear[item.id as keyof typeof C.finances.gear]}
                 desc={C.finances.gearDesc[item.id as keyof typeof C.finances.gearDesc]}
                 badges={
-                  gear[item.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : null
+                  gear[item.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : newTag(item.id)
                 }
                 aside={gearAside(item)}
                 notes={gearNotes(item)}
@@ -949,7 +976,7 @@ export function FinancesScreen() {
               title={C.finances.psychologist}
               desc={C.finances.psychologistDesc}
               badges={
-                gear.psychologist ? <Badge tone="good">{C.finances.retainedLabel}</Badge> : null
+                gear.psychologist ? <Badge tone="good">{C.finances.retainedLabel}</Badge> : newTag("psych")
               }
               aside={
                 gear.psychologist ? (
@@ -986,7 +1013,7 @@ export function FinancesScreen() {
               title={C.finances.gear[perfCenter.id as keyof typeof C.finances.gear]}
               desc={C.finances.gearDesc[perfCenter.id as keyof typeof C.finances.gearDesc]}
               badges={
-                gear[perfCenter.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : null
+                gear[perfCenter.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : newTag(perfCenter.id)
               }
               aside={gearAside(perfCenter)}
               notes={gearNotes(perfCenter)}

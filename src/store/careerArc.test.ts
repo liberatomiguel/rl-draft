@@ -11,7 +11,8 @@
  * Knobs: ARC_REGIONS (default all seven), ARC_DIFFS (easy,normal,hard),
  * ARC_POLICIES (every ARC_POLICIES id), ARC_SEEDS (careers per cell, default 2),
  * ARC_SEASONS (default 8), ARC_SLICE "i/n" (this process plays every n-th cell,
- * so 4 processes split one matrix). ARC_REPORT=1 ARC_IN=a.json,b.json
+ * so 4 processes split one matrix), ARC_BOOTCAMP=1 (rc.34: the bot books a
+ * bootcamp each split — HQ decision 5-A's measurement; off by default). ARC_REPORT=1 ARC_IN=a.json,b.json
  * ARC_MD=report.md merges slices into the Markdown summary (p10/p50/p90).
  *
  * CAREER_CURVES=1 CURVES_MD=curves.md (CURVES_SEEDS, default 40) samples the
@@ -116,8 +117,10 @@ it.skipIf(!env.CAREER_ARC)(
           for (let k = 0; k < seeds; k++) cells.push({ region, difficulty, policy, seed: 9100 + k * 7919 });
     const mine = cells.filter((_, i) => i % slices === slice);
     const careers: ArcCareer[] = [];
+    // rc.34 (HQ decision 5-A's measurement): ARC_BOOTCAMP=1 books a bootcamp each split.
+    const bootcamp = env.ARC_BOOTCAMP === "1";
     for (const cell of mine) {
-      careers.push(playArcCareer({ ...cell, seasons }));
+      careers.push(playArcCareer({ ...cell, seasons, bootcamp }));
       if (env.ARC_OUT) writeFileSync(env.ARC_OUT, JSON.stringify({ seasons, careers }));
     }
     console.log(`career arc: ${careers.length} careers, ${careers.reduce((n, c) => n + c.ms, 0) / 1000}s`);

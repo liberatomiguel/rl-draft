@@ -47,7 +47,7 @@ import type {
 import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
-import { ruledOutFor, squadIsShort } from "@/store/careerFlow";
+import { canSkipShortSquadEvent, ruledOutFor, squadIsShort } from "@/store/careerFlow";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { useOverlayHold } from "@/store/overlayHoldStore";
@@ -213,6 +213,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const enterEvent = useCareerStore((s) => s.enterEvent);
   const simEvent = useCareerStore((s) => s.simEvent);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
+  const skipShortSquadEvent = useCareerStore((s) => s.skipShortSquadEvent);
   // One sheet for the lobby — any AI org in the field opens it.
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
@@ -422,6 +423,19 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
                 }}
               >
                 {C.calendar.skip}
+              </Button>
+            ) : null}
+            {/* rc.34 (Miguel, 31/10): a short squad can sit a regional out. */}
+            {canSkipShortSquadEvent(save) ? (
+              <Button
+                variant="ghost"
+                className="min-h-11"
+                onClick={() => {
+                  skipShortSquadEvent();
+                  router.push("/career");
+                }}
+              >
+                {C.hub.squadShortSkip}
               </Button>
             ) : null}
           </div>

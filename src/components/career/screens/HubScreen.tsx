@@ -1,15 +1,17 @@
 "use client";
 
 /**
- * v2.0 hub rebuild (R26), re-cut in rc.2: HQ is a day you can read at a glance.
- *   main column — the TIMELINE block (date, week strip, play/pause · skip ·
- *                 +1 day; a pending insert takes the whole block over)
- *                 → Needs you (every pending decision as its own card)
- *                 → the SQUAD block → the TRAINING block → the wire(s)
- *   side column — season goal, Road to Worlds mini, finances, inbox, next unlock.
- * The decision cards live in hub/NowCards.tsx, the clock in hub/DayCard.tsx,
- * the squad and training blocks in hub/SquadBlock.tsx / TrainingBlock.tsx —
- * this file is layout.
+ * v2.0 hub rebuild (R26), re-cut in rc.2 and rc.34 (ROADMAP UX-01, HQ-CONTRACT
+ * H1–H7): HQ around the next decision.
+ *   main column — the DECISION block (hub/DecisionBlock: the next needed
+ *                 decision from the one queue, or the clock — date, week
+ *                 strip, play/pause · skip · +1 day) → the SQUAD as Draft
+ *                 cards → the TRAINING block (DEV-03's) → the wire(s)
+ *   side column — the race (+ the seeding line), finances, the toolbox,
+ *                 season goal, inbox, next unlock.
+ * On a phone the two columns interleave in the contract's H7 order. The
+ * decision cards live in hub/NowCards.tsx, the clock in hub/DayCard.tsx — this
+ * file is layout.
  */
 
 /**
@@ -23,21 +25,10 @@
  */
 
 import { AppLink } from "@/components/ui/AppLink";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  CAREER_PAYROLL,
-  CAREER_SPONSOR,
-} from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
-import type {
-  CareerSave,
-  NewsItem,
-  NewsType,
-  SponsorObjectiveKind,
-  TransferOffer,
-} from "@/engine/career/types";
+import type { CareerSave, NewsItem, NewsType } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
@@ -46,31 +37,24 @@ import { useMounted } from "@/store/useMounted";
 import { REGION_BADGE } from "@/components/regionStyle";
 import {
   dateOfDay,
-  eventDayPhaseOf,
   isWindowWeek,
   nameOfRef,
-  nextPaydayFor,
   seasonLabelFor,
   unlockTrack,
   useCareerSave,
-  useRevealHeldEventId,
   userTeamPreview,
   weekOfDay,
 } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
-import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
-import { weekendRoleOf } from "@/components/career/event/weekendView";
-import { DayCard } from "@/components/career/hub/DayCard";
-import { NowBacker, NowBid, NowEvent, NowInvite, NowSeason, NowSponsorChoice, NowSquadShort } from "@/components/career/hub/NowCards";
-import { runwayWeeksOf, squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
+import { DecisionBlock } from "@/components/career/hub/DecisionBlock";
+import { FinanceBlock } from "@/components/career/hub/FinanceBlock";
 import { SquadBlock } from "@/components/career/hub/SquadBlock";
 import { TrainingBlock } from "@/components/career/hub/TrainingBlock";
 import { RaceBlock } from "@/components/career/hub/RaceBlock";
-import { SaleConsequences } from "@/components/career/SaleConsequences";
+import { ToolboxBlock } from "@/components/career/hub/ToolboxBlock";
 import { resolveMail, resolveNews } from "@/components/career/news/newsText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
-import { formatMoneyDelta } from "@/lib/format";
 import { ErrorBanner, withMoneyParams } from "@/components/career/hub/hubShared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -216,20 +200,10 @@ export function HubScreen() {
   const lang = useSettings((s) => s.lang);
   const mounted = useMounted();
   const save = useCareerSave();
-  const router = useRouter();
 
-  const acceptBid = useCareerStore((s) => s.acceptBid);
-  const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
-  const resolveInsert = useCareerStore((s) => s.resolveInsert);
-  const passUnofficial = useCareerStore((s) => s.passUnofficial);
-  const declineBid = useCareerStore((s) => s.declineBid);
-  const chooseSponsor = useCareerStore((s) => s.chooseSponsor);
   const markNewsRead = useCareerStore((s) => s.markNewsRead);
   const markFlag = useCareerStore((s) => s.markFlag);
-  const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
-  const revealHeld = useRevealHeldEventId(save);
 
-  const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
   const [wireOpen, setWireOpen] = useState(false);
   const [wireFilter, setWireFilter] = useState<FilterKey>("all");
   const [wireLimit, setWireLimit] = useState(WIRE_BATCH);
@@ -283,63 +257,6 @@ export function HubScreen() {
   }
 
   const region = save.identity.region;
-  const today = save.clock.day;
-  // ECO-02 (R46): an ended career is closed — HQ keeps the season stop and
-  // drops every decision card and money warning (the actions are refused).
-  const ended = save.phase === "ended";
-
-  // --- Needs you: every pending decision / stop, each its own card ----------
-  // RTW-05 (rc.33): a short squad's event — the clock holds until a third player signs.
-  const squadHold = ended ? null : squadHoldFor(save);
-  const eventNow =
-    ended || squadHold
-      ? null
-      : (save.activeEvent?.def ??
-        (save.pendingEventDef && save.pendingEventDef.day === today ? save.pendingEventDef : null));
-  // R40: the weekend phase of today's event (Saturday Swiss · the pause · Championship Sunday).
-  // rc.29 (CAR-02): a Saturday the playback has not finished revealing still
-  // reads as the Swiss stage — "Swiss stage complete" and the Sunday CTA would
-  // spoil the unfinished round (and skip its replay).
-  const rawPhase = eventDayPhaseOf(save);
-  const eventPhase =
-    rawPhase === "paused" && revealHeld !== null && revealHeld === save.activeEvent?.def.id ? "swiss" : rawPhase;
-  const eventRole = eventNow ? weekendRoleOf(eventNow, today) : null;
-  const eventStage =
-    eventPhase === "paused"
-      ? { label: C.event.swissComplete, tone: "good" as const }
-      : eventRole === "championshipSunday"
-        ? { label: C.event.championshipSunday, tone: "gold" as const, live: true }
-        : eventRole === "swissDay"
-          ? { label: C.event.swissStage, tone: "orange" as const, live: true }
-          : undefined;
-  const outBid = ended
-    ? null
-    : (save.pendingOffers.find((o) => o.status === "pending" && o.direction === "out") ?? null);
-  const sponsorOffers =
-    !ended && save.sponsorOffers && save.sponsorOffers.length > 0 ? save.sponsorOffers : null;
-  const phaseStop = save.phase === "seasonReview" || ended;
-  const invite = !ended && !save.pendingEventDef && save.unofficialOffer ? save.unofficialOffer : null;
-  const insert = !ended && save.pendingInsert && save.pendingInsert.day === today ? save.pendingInsert : null;
-  const expiringContracts =
-    !ended && weekOfDay(today) >= 23
-      ? save.squad.filter((p) => p.contractEndSeason === save.clock.seasonIndex).length
-      : 0;
-  // rc.32: the statement the Monday books (the season's money index, the founding partner).
-  const statement = weeklyStatementOf(save);
-  // No runway, Backer or instalment notices once the books are closed.
-  // rc.33 review: the rescue partner's help counts only on its remaining Mondays.
-  const runway = ended ? null : runwayWeeksOf(save, statement.net);
-  const cashTight = runway !== null && runway <= CAREER_PAYROLL.runwayWarnWeeks;
-  const backerOwed = ended ? null : save.finances.loan;
-  const bankLoan = ended ? null : (save.finances.bankLoan ?? null);
-  const nextPayday = nextPaydayFor(save.clock);
-  const needsCount =
-    (phaseStop ? 1 : 0) +
-    (eventNow ? 1 : 0) +
-    (squadHold ? 1 : 0) +
-    (outBid ? 1 : 0) +
-    (sponsorOffers ? 1 : 0) +
-    (invite ? 1 : 0);
 
   // --- the wire ----------------------------------------------------------------
   const unreadNews = save.news.filter((n) => !n.read).length;
@@ -357,356 +274,194 @@ export function HubScreen() {
     .sort((a, b) => a.gate - b.gate)[0];
   const unlockLabels = C.club.unlockables as Record<string, string>;
 
-  const objectiveText = (kind: SponsorObjectiveKind): string =>
-    kind === "enterEvents"
-      ? C.finances.objective.enterEvents(CAREER_SPONSOR.enterEventsTarget)
-      : C.finances.objective[kind];
-
   const goalText = (key: string): string => {
     const suffix = key.split(".").pop() ?? key;
     const v = C.goals[suffix as keyof typeof C.goals];
     return typeof v === "string" ? v : key;
   };
 
-
-
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
       <ErrorBanner />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* ============ main column (2fr): NOW · week · office · wire ============ */}
-        <div className="space-y-4 lg:col-span-2">
-          {/* 1 — THE DAY CARD (clock + week strip + advance) */}
-          <DayCard save={save} C={C} insertId={insert?.id ?? null} onInsert={resolveInsert} />
+      {/*
+        rc.34 (HQ-CONTRACT H7): one column on a phone in the contract's order —
+        decision → squad → training → race → finances → toolbox → goal → inbox →
+        the wire → the transfer wire → next unlock (the two column wrappers are
+        `display: contents` there, so `order` interleaves them); two columns on
+        desktop: main (decision, squad, training, the wires) and side.
+      */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:items-start">
+        {/* ============ main column (2fr) ============ */}
+        <div className="contents lg:col-span-2 lg:block lg:space-y-4">
+          {/* 1 — THE DECISION BLOCK: the next needed decision, or the clock (UX-01a) */}
+          <div className="order-1">
+            <DecisionBlock save={save} C={C} />
+          </div>
 
-          {/* 2 — NEEDS YOU (decisions and stops, one card each) */}
-          {needsCount > 0 || expiringContracts > 0 || cashTight || backerOwed ? (
-            <div className="space-y-3">
-              <p className="kicker text-[10px] text-orange-bright">{C.hub.needsYou}</p>
-              {phaseStop ? (
-                <Panel strong glow="orange" className="rise-in p-5">
-                  <NowSeason save={save} C={C} onGo={() => router.push("/career/season")} />
-                </Panel>
-              ) : null}
-              {eventNow ? (
-                <Panel strong glow="orange" className="rise-in p-5">
-                  <NowEvent
-                    save={save}
-                    C={C}
-                    D={D}
-                    def={eventNow}
-                    daysAway={0}
-                    day={today}
-                    stage={eventStage}
-                    primaryLabel={eventPhase === "paused" ? <ContinueToSundayLabel /> : C.hub.continue}
-                    onPrimary={() => {
-                      // R40: the paused Saturday moves exactly one day, to Championship Sunday.
-                      if (eventPhase === "paused") continueEventToNextDay();
-                      router.push("/career/event");
-                    }}
-                  />
-                </Panel>
-              ) : null}
-              {squadHold ? (
-                <Panel strong glow="orange" className="rise-in border-bad/40 p-5">
-                  <NowSquadShort save={save} C={C} def={squadHold} onPass={passUnofficial} />
-                </Panel>
-              ) : null}
-              {invite ? (
-                <Panel strong className="rise-in border-orange/40 p-5">
-                  <NowInvite
-                    save={save}
-                    C={C}
-                    D={D}
-                    def={invite}
-                    onAccept={acceptUnofficial}
-                    onPass={passUnofficial}
-                  />
-                </Panel>
-              ) : null}
-              {outBid ? (
-                <Panel strong className="rise-in border-orange/40 p-5">
-                  <NowBid
-                    save={save}
-                    C={C}
-                    offer={outBid}
-                    onAccept={() => setConfirmBid(outBid)}
-                    onDecline={() => declineBid(outBid.id)}
-                  />
-                </Panel>
-              ) : null}
-              {sponsorOffers ? (
-                <Panel strong className="rise-in border-blue/40 p-5">
-                  <NowSponsorChoice
-                    C={C}
-                    lang={lang}
-                    offers={sponsorOffers}
-                    objectiveText={objectiveText}
-                    onChoose={(id) => chooseSponsor(id)}
-                  />
-                </Panel>
-              ) : null}
-              {expiringContracts > 0 ? (
-                <AppLink href="/career/squad" className="block">
-                  <Panel className="rise-in border-orange/30 p-3.5 text-sm text-ink transition-colors hover:border-orange/60">
-                    {C.hub.contractsExpiring(expiringContracts)}
-                  </Panel>
-                </AppLink>
-              ) : null}
-              {cashTight ? (
-                <AppLink href="/career/finances" className="block">
-                  <Panel className="rise-in border-bad/40 p-3.5 text-sm text-bad transition-colors hover:border-bad/70">
-                    {C.hub.cashWarningCard(runway ?? 0)}
-                  </Panel>
-                </AppLink>
-              ) : null}
-              {backerOwed ? (
-                <AppLink href="/career/finances" className="block">
-                  <Panel className="rise-in border-orange/30 p-3.5 text-sm text-sub transition-colors hover:border-orange/60">
-                    {/* rc.32 (M4): the debt and what the next breach means. */}
-                    <NowBacker save={save} C={C} owed={formatMoney(backerOwed.remaining)} />
-                  </Panel>
-                </AppLink>
-              ) : null}
-            </div>
-          ) : insert ? null : (
-            // rc.31: the day card's inline insert IS today's decision — never say "nothing needs one" under it.
-            <p className="px-1 text-xs text-faint">{C.hub.nothingNeeded}</p>
-          )}
+          {/* 2 — THE SQUAD as Draft cards (UX-01b) + 3 — TRAINING (DEV-03's block) */}
+          <div className="order-2">
+            <SquadBlock save={save} C={C} team={team} chemTiers={CHEM} />
+          </div>
+          <div className="order-3">
+            <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
+          </div>
 
-          {/* 3 — THE SQUAD + TRAINING (rc.2) */}
-          <SquadBlock save={save} C={C} team={team} chemTiers={CHEM} />
-          <TrainingBlock save={save} C={C} statLabels={copy.STAT_LABELS} />
-
-          {/* 7 — THE WIRE (full feed, filterable, expands in place) */}
-          <Panel className="rise-in p-4" style={{ animationDelay: "120ms" }}>
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="kicker text-[10px]">
-                {C.hub.news}
-                {unreadNews > 0 ? (
-                  <span className="ml-2 rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal text-orange-bright">
-                    {unreadNews}
-                  </span>
-                ) : null}
-              </p>
-              <div className="flex items-center gap-2">
-                {wireOpen && unreadNews > 0 ? (
-                  <Button size="sm" variant="ghost" onClick={markNewsRead}>
-                    {C.news.markAllRead}
+          {/* 9 — THE WIRE (full feed, filterable, expands in place) */}
+          <div className="order-9">
+            <Panel className="rise-in p-4" style={{ animationDelay: "120ms" }}>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="kicker text-[10px]">
+                  {C.hub.news}
+                  {unreadNews > 0 ? (
+                    <span className="ml-2 rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal text-orange-bright">
+                      {unreadNews}
+                    </span>
+                  ) : null}
+                </p>
+                <div className="flex items-center gap-2">
+                  {wireOpen && unreadNews > 0 ? (
+                    <Button size="sm" variant="ghost" onClick={markNewsRead}>
+                      {C.news.markAllRead}
+                    </Button>
+                  ) : null}
+                  <Button size="sm" variant="ghost" onClick={() => setWireOpen((v) => !v)}>
+                    {wireOpen ? C.common.close : C.hub.newsAll}
                   </Button>
-                ) : null}
-                <Button size="sm" variant="ghost" onClick={() => setWireOpen((v) => !v)}>
-                  {wireOpen ? C.common.close : C.hub.newsAll}
-                </Button>
+                </div>
               </div>
-            </div>
 
-            {wireOpen ? (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {FILTERS.map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setWireFilter(key)}
-                    aria-pressed={wireFilter === key}
-                    className={cx(
-                      "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
-                      wireFilter === key
-                        ? "border-blue/50 bg-blue/15 text-blue-bright"
-                        : "border-line-strong bg-white/5 text-sub hover:text-ink",
-                    )}
-                  >
-                    {C.news.filter[key]}
-                  </button>
-                ))}
-              </div>
-            ) : null}
+              {wireOpen ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {FILTERS.map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => setWireFilter(key)}
+                      aria-pressed={wireFilter === key}
+                      className={cx(
+                        "display inline-flex min-h-9 items-center rounded-md border px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors",
+                        wireFilter === key
+                          ? "border-blue/50 bg-blue/15 text-blue-bright"
+                          : "border-line-strong bg-white/5 text-sub hover:text-ink",
+                      )}
+                    >
+                      {C.news.filter[key]}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
 
-            {wireItems.length === 0 ? (
-              <p className="py-6 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
-            ) : (
-              <div className="space-y-2">
-                {wireItems.map((item) => (
-                  <WireRow key={item.id} item={item} save={save} C={C} D={D} lang={lang} />
-                ))}
-              </div>
-            )}
+              {wireItems.length === 0 ? (
+                <p className="py-6 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
+              ) : (
+                <div className="space-y-2">
+                  {wireItems.map((item) => (
+                    <WireRow key={item.id} item={item} save={save} C={C} D={D} lang={lang} />
+                  ))}
+                </div>
+              )}
 
-            {wireHasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
-          </Panel>
+              {wireHasMore ? <div ref={sentinelRef} className="h-8" aria-hidden /> : null}
+            </Panel>
+          </div>
 
-          {/* 8 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
-          <TransferWirePanel save={save} C={C} D={D} />
+          {/* 10 — v0.3 THE TRANSFER WIRE (window panel, region-filterable) */}
+          <div className="order-10">
+            <TransferWirePanel save={save} C={C} D={D} />
+          </div>
         </div>
 
-        {/* ============ side column (1fr): goal · race · squad · budget · inbox · unlock ============ */}
-        <div className="space-y-4">
-          {/* 4a — season goal */}
+        {/* ============ side column (1fr) ============ */}
+        <div className="contents lg:block lg:space-y-4">
+          {/* 4 — RTW-01 (R49, UX-01d): the Major / Worlds race toggle + the seeding line (6-A) */}
+          <div className="order-4">
+            <RaceBlock save={save} C={C} />
+          </div>
+
+          {/* 5 — finances (UX-01e, decision 4-A) */}
+          <div className="order-5">
+            <FinanceBlock save={save} C={C} />
+          </div>
+
+          {/* 6 — the toolbox (UX-01f, decisions 5-A and 7-A; UX-06a's unlock modal) */}
+          <div className="order-6">
+            <ToolboxBlock save={save} C={C} />
+          </div>
+
+          {/* 7 — season goal */}
           {save.seasonGoals ? (
-            <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
-              <p className="kicker mb-1 text-[10px]">{C.hub.seasonGoal}</p>
-              <p className="display text-base font-bold uppercase tracking-wide text-ink">
-                {goalText(save.seasonGoals.targetKey)}
-              </p>
-              <p className="mt-1 text-xs text-sub">
-                <span className="kicker mr-1.5 text-[9px]">{C.hub.goalStretch}</span>
-                {goalText(save.seasonGoals.stretchKey)}
-              </p>
-            </Panel>
+            <div className="order-7">
+              <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
+                <p className="kicker mb-1 text-[10px]">{C.hub.seasonGoal}</p>
+                <p className="display text-base font-bold uppercase tracking-wide text-ink">
+                  {goalText(save.seasonGoals.targetKey)}
+                </p>
+                <p className="mt-1 text-xs text-sub">
+                  <span className="kicker mr-1.5 text-[9px]">{C.hub.goalStretch}</span>
+                  {goalText(save.seasonGoals.stretchKey)}
+                </p>
+              </Panel>
+            </div>
           ) : null}
 
-          {/* 4b — RTW-01 (R49, UX-01d): the Major / Worlds race toggle */}
-          <RaceBlock save={save} C={C} />
-
-          {/* 5 — finances at a glance (rc.2) */}
-          <AppLink href="/career/finances" className="block">
-            <Panel
-              className={cx(
-                "rise-in p-4 transition-colors hover:border-line-strong",
-                save.finances.balance < 0 ? "border-bad/40" : cashTight ? "border-orange/40" : "",
-              )}
-              style={{ animationDelay: "120ms" }}
-            >
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
-                {backerOwed ? <Badge tone="orange">{C.finances.backer}</Badge> : bankLoan ? <Badge tone="blue">{C.finances.bankTitle}</Badge> : null}
-              </div>
-              <p className={cx("display text-2xl font-bold leading-none", save.finances.balance < 0 ? "text-bad" : "text-ink")}>
-                {formatMoney(save.finances.balance, { compact: true })}
-              </p>
-              <p className="mt-1.5 text-xs text-sub">
-                <span className={statement.net >= 0 ? "text-good" : "text-bad"}>{formatMoneyDelta(statement.net, { compact: true })}</span>{" "}
-                <span className="text-faint">/ {C.hub.week(1).toLowerCase().replace(/\s*1$/, "")}</span>
-                {runway !== null ? <span className="text-faint"> · {C.finances.runway(runway)}</span> : null}
-              </p>
-              {/* ECO-02 (R46): the debts as Finances and the ledger have them (not once the career ended). */}
-              {backerOwed ? (
-                <p className="mt-1 text-xs font-semibold text-orange-bright">
-                  {C.finances.backerRemaining(formatMoney(backerOwed.remaining))}
-                </p>
-              ) : null}
-              {bankLoan ? (
-                <p className="mt-1 text-xs text-sub">
-                  {C.finances.bankNext(
-                    formatMoney(Math.min(bankLoan.remaining, bankLoan.weeklyPayment)),
-                    formatDateTiny(D, dateOfDay(nextPayday.seasonIndex, nextPayday.day)),
-                  )}
-                </p>
-              ) : null}
-              <p className="mt-2 text-right text-xs font-semibold text-blue-bright">{C.hub.financesOpen} →</p>
-            </Panel>
-          </AppLink>
-
           {/* 8 — inbox teaser */}
-          <AppLink href="/career/news" className="block">
-            <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "180ms" }}>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="kicker text-[10px]">{C.hub.inboxTeaser}</p>
-                {unreadMail > 0 ? (
-                  <Badge tone="orange">{C.mail.unread(unreadMail)}</Badge>
-                ) : null}
-              </div>
-              {latestMail.length === 0 ? (
-                <p className="text-xs text-faint">{C.mail.empty}</p>
-              ) : (
-                <ul>
-                  {latestMail.map((m) => {
-                    const r = resolveMail(withMoneyParams(m), C);
-                    return (
-                      <li
-                        key={m.id}
-                        className="flex items-start gap-2 border-b border-line py-1.5 last:border-0"
-                      >
-                        <span
-                          className={cx(
-                            "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-                            m.read ? "bg-white/15" : "bg-orange",
-                          )}
-                          aria-hidden
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={cx(
-                              "truncate text-xs",
-                              m.read ? "text-sub" : "font-semibold text-ink",
-                            )}
-                          >
-                            {r.title}
-                          </p>
-                          <p className="text-[10px] text-faint">
-                            {r.from} · {formatDateTiny(D, dateOfDay(m.seasonIndex, m.day))}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              <p className="mt-2 text-right text-xs font-semibold text-blue-bright">
-                {C.hub.inboxAll}
-              </p>
-            </Panel>
-          </AppLink>
-
-          {/* 9 — next unlock */}
-          {nextUnlock ? (
-            <AppLink href="/career/club" className="block">
-              <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "210ms" }}>
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <p className="kicker text-[10px]">{C.hub.progression}</p>
-                  <span className="text-[10px] text-faint">
-                    {Math.round(save.reputation)} / {nextUnlock.gate} {C.common.rep}
-                  </span>
+          <div className="order-8">
+            <AppLink href="/career/news" className="block">
+              <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "180ms" }}>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="kicker text-[10px]">{C.hub.inboxTeaser}</p>
+                  {unreadMail > 0 ? <Badge tone="orange">{C.mail.unread(unreadMail)}</Badge> : null}
                 </div>
-                <p className="display text-sm font-bold uppercase tracking-wide text-ink">
-                  {unlockLabels[nextUnlock.key] ?? nextUnlock.key}
-                </p>
-                <ProgressBar
-                  value={save.reputation / nextUnlock.gate}
-                  tone="orange"
-                  className="mt-2"
-                  label={C.hub.progression}
-                />
-                <p className="mt-1.5 text-[10px] text-faint">{C.club.unlockAt(nextUnlock.gate)}</p>
+                {latestMail.length === 0 ? (
+                  <p className="text-xs text-faint">{C.mail.empty}</p>
+                ) : (
+                  <ul>
+                    {latestMail.map((m) => {
+                      const r = resolveMail(withMoneyParams(m), C);
+                      return (
+                        <li key={m.id} className="flex items-start gap-2 border-b border-line py-1.5 last:border-0">
+                          <span
+                            className={cx("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", m.read ? "bg-white/15" : "bg-orange")}
+                            aria-hidden
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className={cx("truncate text-xs", m.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
+                            <p className="text-[10px] text-faint">
+                              {r.from} · {formatDateTiny(D, dateOfDay(m.seasonIndex, m.day))}
+                            </p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <p className="mt-2 text-right text-xs font-semibold text-blue-bright">{C.hub.inboxAll}</p>
               </Panel>
             </AppLink>
+          </div>
+
+          {/* 11 — next unlock */}
+          {nextUnlock ? (
+            <div className="order-11">
+              <AppLink href="/career/club" className="block">
+                <Panel className="rise-in p-4 transition-colors hover:border-line-strong" style={{ animationDelay: "210ms" }}>
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <p className="kicker text-[10px]">{C.hub.progression}</p>
+                    <span className="text-[10px] text-faint">
+                      {Math.round(save.reputation)} / {nextUnlock.gate} {C.common.rep}
+                    </span>
+                  </div>
+                  <p className="display text-sm font-bold uppercase tracking-wide text-ink">
+                    {unlockLabels[nextUnlock.key] ?? nextUnlock.key}
+                  </p>
+                  <ProgressBar value={save.reputation / nextUnlock.gate} tone="orange" className="mt-2" label={C.hub.progression} />
+                  <p className="mt-1.5 text-[10px] text-faint">{C.club.unlockAt(nextUnlock.gate)}</p>
+                </Panel>
+              </AppLink>
+            </div>
           ) : null}
         </div>
       </div>
-
-      {/* Accept-bid confirm: cost + balance-after BEFORE commit (principle 4). */}
-      <Modal
-        open={Boolean(confirmBid)}
-        title={C.market.incomingBid}
-        onClose={() => setConfirmBid(null)}
-        actions={
-          <>
-            <Button variant="ghost" onClick={() => setConfirmBid(null)}>
-              {C.common.cancel}
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => {
-                if (confirmBid) acceptBid(confirmBid.id);
-                setConfirmBid(null);
-              }}
-            >
-              {C.common.confirm}
-            </Button>
-          </>
-        }
-      >
-        {confirmBid ? (
-          <div className="space-y-2">
-            <p className="text-ink">
-              {C.market.bidFrom(confirmBid.otherRef ? nameOfRef(save, confirmBid.otherRef) : "?")} —{" "}
-              {confirmBid.playerName}
-            </p>
-            {/* ECO-02 (R46) / ECO-03 (R47): the Market's own sale block — the Backer's share and the weekly bill. */}
-            <SaleConsequences save={save} offer={confirmBid} />
-          </div>
-        ) : null}
-      </Modal>
 
       {/* First-visit explainer (one-shot). */}
       <Modal
