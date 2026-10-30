@@ -354,17 +354,13 @@ Etapa 3 packages and coaches will add):
 he plays more before the numbers settle).** Each item is a behaviour
 package; every value stays a `balance.ts` key and is re-measured on the
 §9 seeds (`CAREER_ECON=1`, `CAREER_ARC=1`) before and after.
-- **ECO-07, the rescue partner (replaces 3-A):** no day-one founding partner
-  ("too easy"; remove M3's day-one deal). Instead, on Easy and Normal, the
-  first breach of the floor brings a partner's offer in place of the
-  Backer loan: an income boost for one split, to help the org through.
-  Hard gets none. To test.
-- **ECO-08, what ends a career (replaces 4-B):** Easy at the third breach,
-  Normal at the second, Hard at the first (no recovery on Hard). No forced
-  sale of the highest-paid player: restructurings go. The warnings (8 weeks,
-  then every Monday at ≤ 4) stay. Open for the implementation, with a
-  proposed default: what Easy's second breach brings (the Backer loan, as
-  today).
+- **ECO-07 + ECO-08, breaches by difficulty (decided 30/10, replaces 3-A and
+  4-B):** no day-one founding partner. Easy: breach 1 → the Backer loan AND
+  a partner's help (an income boost for one split); breach 2 → the loan;
+  breach 3 → bankruptcy. Normal: breach 1 → the loan; breach 2 →
+  bankruptcy. Hard: breach 1 → bankruptcy. No forced sale of the
+  highest-paid player (restructurings go). The warnings (8 weeks, then
+  every Monday at ≤ 4) stay.
 - **ECO-09, the money scale (revisits 1-A):** wages feel too low, or should
   grow more steeply; the old 12 % felt better. One index at 12 % a season
   and a steeper wage curve for strong players, measured on both sides of
@@ -646,11 +642,11 @@ final-season badges from 24, the retirement news (coach or for good), a
 rejected (ECO-07: a rescue partner at the first breach on Easy/Normal
 instead); 4-B replaced (ECO-08: 3 / 2 / 1 breaches, no forced sale); 1-A
 revisited (ECO-09: 12 %, steeper wages); M6's fixed share replaced (ECO-10:
-per contract); 8-B withdrawn (ECO-12); C-1 answered (RTW-03). **Still
-provisional, not answered yet:** 2-B (renewals), 5-B's comfort cap, 6-B
-(prize tables at 100 %), 7-A, 9-B (M7 next), 10-A, the filler cap, Hard's
-retune (BAL-04 re-measures it), DEV-01's parameters. Each flips back by
-its key (rc.32's list in the CHANGELOG and ECONOMY-CONTRACT §5–§6).
+per contract); 8-B withdrawn (ECO-12); C-1 answered (RTW-03). **The rest
+(30/10): Claude decides what works best and Miguel tests it** — 2-B
+(renewals), 5-B's comfort cap, 6-B (prize tables at 100 %), 7-A, 9-B (M7),
+10-A, the filler cap, Hard's retune (BAL-04), DEV-01's parameters, and
+ECO-10's prize share values. Each keeps its `balance.ts` key.
 
 **Still open from rc.32:**
 1. The analytics catalogue (`ANALYTICS-EVENTS-2.0.md`): built, production
