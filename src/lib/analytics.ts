@@ -335,7 +335,7 @@ export interface SharedEvents {
     actionId: string;
     outcome: "seen" | "renewed" | "released" | "let_go";
   };
-  /** RESERVED — SUN-01 (the Sunday briefing) is not built yet. */
+  /** rc.36 (SUN-01): Sunday started from HQ, with the coach briefing it was started with (keep = none picked). */
   ux_sunday_briefing: {
     gameMode: "career";
     careerId: string;

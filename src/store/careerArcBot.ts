@@ -34,6 +34,7 @@ import type {
   EventTier,
   ScoutLevel,
   ScrimLevel,
+  SundayBriefingChoice,
   TrainingPackage,
 } from "@/engine/career/types";
 import type { Placement, Region } from "@/engine/types";
@@ -65,6 +66,7 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
+import { recordSundayBriefingFlow, sundayStopHolds } from "./careerSunday";
 import {
   approveTrainingProposalFlow,
   coachPlansOf,
@@ -142,6 +144,12 @@ export interface ArcPolicy {
   bank: boolean;
   /** Incoming bids: always declined, or accepted while the runway is under eight weeks. */
   bids: "decline" | "whenTight";
+  /**
+   * rc.36 (SUN-01, R88): the Sunday briefing it starts each Sunday with.
+   * Every default policy keeps the plan (= no briefing: the measured arc is
+   * the base career's); a measuring run may set one per policy.
+   */
+  briefing: SundayBriefingChoice;
 }
 
 const base: Omit<ArcPolicy, "id"> = {
@@ -157,6 +165,7 @@ const base: Omit<ArcPolicy, "id"> = {
   scrimLevel: "even",
   bank: false,
   bids: "decline",
+  briefing: "keep",
 };
 
 export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
@@ -754,6 +763,9 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     }
   }
   if (save.phase !== "running") return save;
+  // rc.36 (SUN-01): back in HQ on Saturday evening — Sunday is started with the policy's briefing
+  // (the loop's next day is Sunday).
+  if (sundayStopHolds(save)) save = recordSundayBriefingFlow(save, policy.briefing).save;
   if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = answerInsert(save, policy);
   // Every offered cup is entered (the store's enterUnofficial).
   if (save.unofficialOffer && !save.pendingEventDef && !save.activeEvent) {

@@ -23,9 +23,10 @@
  *    → Finances (no founding partner, rc.33), Market (the reputation filter; no sale
  *    listing in the deals tab, rc.33), Squad, Training (rc.36: the recommended plan is
  *    filled and started — the running cycle's bar shows), Standings,
- *    Calendar, News, each in the right language.
+ *    Calendar (rc.36, CAL-01: no payroll marker), News, each in the right language.
  * The labels it presses are the copy's (EN and PT, `L` below): update them with the copy.
- * Needs Playwright with its Chromium (cloud sessions have it; never `playwright install`).
+ * Needs Playwright with its Chromium, or CHROME_PATH pointing to an existing Chrome/Edge
+ * installation (the same override as perf-probe; never `playwright install`).
  * Prints one line per scenario ("n/m checks ok, k errors") and the failures.
  */
 import { createRequire } from "node:module";
@@ -48,6 +49,7 @@ const L = {
     useRec: /^Use the recommended plan$/, startTraining: /^Start training$/, cycleGain: "Cycle gain",
     // rc.36 (UX-02): the season goal card's deadline line.
     goalDeadline: /Last chance:|Decided when/,
+    payday: "Payday",
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
@@ -56,6 +58,7 @@ const L = {
     signable: "Contratáveis com minha reputação", approve: /^Aprovar$/,
     useRec: /^Usar o plano recomendado$/, startTraining: /^Iniciar treino$/, cycleGain: "Ganho do ciclo",
     goalDeadline: /Última chance:|Decidida quando/,
+    payday: "Pagamento",
   },
 };
 const DIALOG_PREF = [/^let's (play|go)$/i, /^vamos (jogar|lá)/i, /^start season 1$/i, /^continue$/i, /^continuar$/i, /^got it/i, /^entendi/i, /^next$/i, /^próximo$/i, /^skip$/i, /^pular$/i, /^close$/i, /^fechar$/i, /^ok$/i];
@@ -294,6 +297,8 @@ async function scenarioCareer(browser, viewport, locale) {
       const txt = await bodyText(page);
       // rc.33 (ECO-07): a new career has no day-one founding partner.
       if (route === "finances") checks.push({ step: `${tag} no founding partner on Finances`, ok: !txt.toLowerCase().includes(C.founding.toLowerCase()) });
+      // rc.36 (CAL-01): the calendar carries no payroll marker (payroll stays in Finances).
+      if (route === "calendar") checks.push({ step: `${tag} no payroll marker on the calendar`, ok: !txt.includes(C.payday) });
       if (route === "market") {
         // rc.33 (UX-07): the reputation filter on the players tab.
         checks.push({ step: `${tag} signable-at-my-reputation filter`, ok: txt.toLowerCase().includes(C.signable.toLowerCase()) });
@@ -335,7 +340,7 @@ async function scenarioCareer(browser, viewport, locale) {
   return { tag, errors, checks };
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
 const out = [];
 for (const viewport of VIEWPORTS) {
   for (const locale of LOCALES) {

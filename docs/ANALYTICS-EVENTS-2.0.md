@@ -72,7 +72,7 @@
 |---|---|
 | `ux_unlock_seen` | kind (toolbox, cosmetic, challenge), id |
 | `ux_contract_warning` | careerId, seen / acted (renewed, released, let go) |
-| `ux_sunday_briefing` | careerId, choice (keep, recover, prepare) — SUN-01, once built |
+| `ux_sunday_briefing` | careerId, choice (keep, recover, prepare) — SUN-01 (rc.36) |
 | `ux_tutorial` | id, step, completed / skipped |
 | `quality_save_error` | store, kind (quota, parse, migrate) |
 | `quality_migration` | store, fromVersion, toVersion (once per save) |
@@ -128,7 +128,8 @@ Tests: `src/lib/analytics.test.ts` (guard, common props, scalars, ring, queue),
 | `quality_save_error` | the persist storage of the four stores (`store/persistStorage.ts`) | `kind` adds `write` (a non-quota write failure). Reports, then rethrows: saving behaves exactly as before. Once per store and kind per session. |
 | `quality_migration` | each store's persist `migrate`; the career's per-slot `saveVersion` upgrade on load | The career's load-time upgrade is written back with the next action, so a reload before any action can repeat it (same `actionId`, count distinct). |
 | `quality_duplicate_reward` | `completeChallenge` a second time · `recordChallengeResult` offered XP for stars already held | The two refusal points that exist today. |
-| `career_training_plan` · `ux_sunday_briefing` | RESERVED | Typed only: DEV-03 and SUN-01 are not built. |
+| `ux_sunday_briefing` | `careerStore.startSunday` (rc.36, SUN-01: HQ's "Start Sunday" records `save.weekend.briefing`) | Once per Sunday event (`actionId` per event id). `keep` = the plan kept, or no pick; a spectator's Sunday (out in the Swiss) reports `keep`. |
+| `career_training_plan` | RESERVED | Typed only: DEV-03 is not built. |
 
 Every career and UX / quality event carries an `actionId`; the module sends
 each `actionId` at most once per session (a ring of the last 256).

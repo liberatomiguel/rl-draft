@@ -26,6 +26,7 @@ import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { canSkipShortSquadEvent, runwayWeeksOf, squadHoldFor, weeklyStatementOf } from "@/store/careerFlow";
 import { pendingDecisionsOf, type PendingDecision } from "@/store/careerDecisions";
+import { followCardOf, sundayAheadOf, sundayWithoutYouOf } from "@/store/careerSunday";
 import { trainingDecisionOf } from "@/store/careerTraining";
 import { TrainingProposalCard } from "@/components/career/training/TrainingPackageParts";
 import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
@@ -40,6 +41,7 @@ import { formatDateShort } from "@/components/career/dateText";
 import { ContinueToSundayLabel } from "@/components/career/event/WeekendPlan";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { DayCard } from "@/components/career/hub/DayCard";
+import { NowFollow, NowSunday } from "@/components/career/hub/SundayCard";
 import {
   NowBacker,
   NowBid,
@@ -163,6 +165,31 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           </>
         );
       }
+      case "sunday": {
+        // rc.36 (SUN-01): Saturday evening — the briefing and "Start Sunday". While the event
+        // screen still reveals Saturday (CAR-02), the card would spoil it: the event's own Continue.
+        const ahead = sundayAheadOf(save);
+        if (!ahead) return null;
+        if (revealHeld !== null && revealHeld === save.activeEvent?.def.id) {
+          return (
+            <NowEvent
+              save={save}
+              C={C}
+              D={D}
+              def={ahead.def}
+              daysAway={0}
+              day={today}
+              stage={{ label: C.event.swissStage, tone: "orange", live: true }}
+              primaryLabel={C.hub.continue}
+              onPrimary={() => router.push("/career/event")}
+            />
+          );
+        }
+        return <NowSunday key={ahead.def.id} save={save} C={C} ahead={ahead} />;
+      }
+      case "follow":
+        // rc.36 (SUN-03): an event the user is out of — never holds, shown above the clock.
+        return <NowFollow save={save} C={C} out={sundayWithoutYouOf(save)} follow={followCardOf(save)} />;
       case "seasonReview":
         return <NowSeason save={save} C={C} onGo={() => router.push("/career/season")} />;
       case "notice":
@@ -301,8 +328,8 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 body: topBody,
                 count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined,
                 // rc.34 review (Gate 3b): a fresh invite holds nothing — it sits above the clock's controls.
-                // rc.36 (front S2): so does a sponsor prompt that holds nothing (parked, or "signSafest"'s last day).
-                inline: (top?.kind === "invite" || top?.kind === "sponsor") && !top.holds,
+                // Nonblocking sponsor prompts, invites and followed events keep the clock controls.
+                inline: (top?.kind === "invite" || top?.kind === "sponsor" || top?.kind === "follow") && !top.holds,
               }
             : null
         }

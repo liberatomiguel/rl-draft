@@ -46,6 +46,7 @@ import {
   CAREER_SEASON_GOAL,
   CAREER_SPONSOR,
   CAREER_SUB,
+  CAREER_SUNDAY,
   CAREER_TRAINING,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
@@ -138,6 +139,8 @@ import {
 } from "./careerTraining";
 import { insertById } from "@/data/career/inserts";
 import { insertDowFor, rollInsertFor } from "@/engine/career/inserts";
+import { repairWeekendState, sundayEdgeFor, withUserEdge } from "@/engine/career/sunday";
+import { followRecordOf, repairFollowState } from "@/engine/career/follow";
 import {
   applyPrize,
   applyTransferIncome,
@@ -1663,6 +1666,28 @@ function resolveAiEvent(save: CareerSave, def: CareerEventDef): void {
     nameOf: (id) => nameOfRef(save, id),
   });
   ingestResult(save, result);
+  // rc.36 (SUN-03, R88): an event the user is out of — their own regional, a
+  // Major / Worlds — is kept compact so HQ can offer it (watch / results / skip).
+  if ((def.tier === "regional" && def.region === save.identity.region) || def.tier === "major" || def.tier === "worlds") {
+    const q = def.region ? save.competition.qualifiedRefs?.[def.region] : undefined;
+    const lostQualifier = save.eventResults.some(
+      (r) =>
+        r.tier === "qualifier" &&
+        r.region === def.region &&
+        r.seasonIndex === def.seasonIndex &&
+        r.week === def.week &&
+        r.userPlacement === "swiss_exit",
+    );
+    const record = followRecordOf(def, state, {
+      reason: def.tier === "regional" && lostQualifier ? "eliminated" : "notQualified",
+      qualifiedIds: q && q.eventId === def.id ? q.refs : [],
+    });
+    // The eliminated Saturday's answer (store/careerSunday.followSundayFlow).
+    const asked = save.weekend?.eventId === def.id ? save.weekend.follow : undefined;
+    if (asked === "watch" || asked === "results") record.view = asked;
+    if (asked === "skip") record.dismissed = true;
+    save.followEvent = record;
+  }
   if (def.tier === "major" || def.tier === "worlds") {
     pushNews(save, {
       type: "result",
@@ -3122,6 +3147,19 @@ function holdsForPlayoffsDay(save: CareerSave, t: TournamentState): boolean {
   return save.clock.day < playoffsDayFor(ev.def) && atPlayoffsStart(t);
 }
 
+/**
+ * rc.36 (SUN-01, R88): one round of the user's event — on its Sunday, the
+ * coach briefing's edge on the user's team for this round only (the base
+ * team stays as it was frozen when the event started). No briefing, "keep",
+ * or any other day: exactly `playNextRound`.
+ */
+function playEventRound(save: CareerSave, t: TournamentState, rng: ReturnType<typeof createRng>): TournamentState {
+  const ev = save.activeEvent;
+  const edge = ev ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t) : 0;
+  if (edge === 0) return playNextRound(t, save.difficulty, rng);
+  return { ...playNextRound(withUserEdge(t, edge), save.difficulty, rng), teams: t.teams };
+}
+
 export function stepEventRound(input: CareerSave): CareerSave {
   // R40: the Saturday pause — nothing to play until Sunday (same object back,
   // so a watch-mode clock calling this cannot spin store writes).
@@ -3130,7 +3168,7 @@ export function stepEventRound(input: CareerSave): CareerSave {
   const ev = save.activeEvent;
   if (!ev || ev.tournament.stage === "finished") return save;
   const rng = createRng(ev.rngState);
-  let t: TournamentState = playNextRound(ev.tournament, save.difficulty, rng);
+  let t: TournamentState = playEventRound(save, ev.tournament, rng);
   let guard = 0;
   while (
     t.stage !== "finished" &&
@@ -3138,7 +3176,7 @@ export function stepEventRound(input: CareerSave): CareerSave {
     !holdsForPlayoffsDay(save, t) &&
     guard < 16
   ) {
-    t = playNextRound(t, save.difficulty, rng);
+    t = playEventRound(save, t, rng);
     guard += 1;
   }
   ev.tournament = t;
@@ -3161,7 +3199,7 @@ export function simEventToEnd(input: CareerSave): CareerSave {
   let t = ev.tournament;
   let guard = 0;
   while (t.stage !== "finished" && !holdsForPlayoffsDay(save, t) && guard < 20) {
-    t = playNextRound(t, save.difficulty, rng);
+    t = playEventRound(save, t, rng);
     guard += 1;
   }
   ev.tournament = t;
@@ -3311,6 +3349,11 @@ export function finishEvent(input: CareerSave): CareerSave {
     if (regional && advanced) {
       save.flags[ACH_FLAGS.qualifierAdvanced] = true;
       save.pendingEventDef = regional;
+      // rc.36 (SUN-01, R88): through on Saturday → HQ holds Saturday evening
+      // until Sunday is started (a pre-R40 midweek qualifier has days to go).
+      if (CAREER_SUNDAY.saturdayStop && regional.day === save.clock.day + 1) {
+        save.weekend = { eventId: regional.id, briefing: null };
+      }
       rollUnavailability(save, regional);
       pushNews(save, { type: "milestone", priority: 2, titleKey: "qualifiedRegional", params: { event: regional.name } });
       pushMail(save, {
@@ -4015,8 +4058,9 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   // walking past no longer declines it), a short squad on the eve (R67), the
   // weekly insert (R36), an incoming bid or the sponsor offers (until parked
   // with "Later", and again on their deadline day), the training proposal.
-  // The paused Saturday does not hold: moving to Sunday is its answer; nor
-  // does a fresh invite (rc.34 review, Gate 3b: walked past, it is passed).
+  // rc.36 (SUN-01, R88): the Saturday evening before the user's Sunday holds
+  // until Sunday is started (store/careerSunday — the briefing's record lifts
+  // it). A fresh invite does not hold (rc.34 review, Gate 3b: walked past, it is passed).
   if (clockHoldOf(input)) return input;
   const save = clone(input);
   save.clock.day += 1;
@@ -4030,7 +4074,14 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
  * does the same on a paused Saturday; this is the intention-revealing name.)
  */
 export function continueEventToNextDayFlow(input: CareerSave): CareerSave {
-  return isEventPaused(input) ? advanceDayFlow(input) : input;
+  if (!isEventPaused(input)) return input;
+  // rc.36 (SUN-01, R88): starting Sunday answers the Saturday-evening stop —
+  // with the briefing already picked, else the default (store/careerSunday).
+  const id = input.activeEvent!.def.id;
+  if (input.weekend?.eventId === id && input.weekend.briefing) return advanceDayFlow(input);
+  const next = advanceDayFlow({ ...input, weekend: { eventId: id, briefing: CAREER_SUNDAY.defaultBriefing } });
+  // Another decision holds the clock: nothing is recorded (it is answered first).
+  return next.clock.day === input.clock.day ? input : next;
 }
 
 /**
@@ -5398,6 +5449,8 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairLoanOnLoad(save); // rc.34: every load, idempotent, no version bump
   repairSponsorsOnLoad(save); // rc.34: every load, idempotent, no version bump
   repairFoundingShareOnLoad(save); // rc.34 review: every load, idempotent, no version bump
+  repairWeekendState(save); // rc.36 (SUN-01): every load, idempotent, no version bump
+  repairFollowState(save); // rc.36 (SUN-03): every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {

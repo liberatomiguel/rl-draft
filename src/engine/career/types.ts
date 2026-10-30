@@ -1207,6 +1207,64 @@ export interface ActiveEventState {
   fieldedIds?: string[];
 }
 
+/** rc.36 (SUN-01, R88): the coach's briefing before a Sunday the user plays. */
+export type SundayBriefingChoice = "keep" | "recover" | "prepare";
+
+/**
+ * rc.36 (SUN-01, R88): the user's weekend between Saturday and Sunday. Set
+ * when Saturday's qualifier sends the user through to Sunday's regional (a
+ * Major / Worlds paused after its Swiss needs none: the pause itself is the
+ * marker); `briefing` is written when Sunday is started — the one answer to
+ * the Saturday-evening stop. Matched by event id, so a stale one is inert.
+ */
+export interface WeekendState {
+  /** The Sunday event: the regional the user qualified for, or the paused Major / Worlds. */
+  eventId: string;
+  /** null while the Saturday-evening stop waits; the briefing once Sunday is started. */
+  briefing: SundayBriefingChoice | null;
+  /**
+   * SUN-03: a Sunday the user is out of (`eventId` = that regional) — how
+   * they follow it, answered on the eliminated Saturday (absent = not yet).
+   */
+  follow?: "watch" | "results" | "skip";
+}
+
+/** rc.36 (SUN-03): one series of a followed event — the two sides and the score. */
+export interface FollowSeries {
+  a: string;
+  b: string;
+  /** Games won by a / by b (the winner has more). */
+  sa: number;
+  sb: number;
+}
+
+/**
+ * rc.36 (SUN-03, R88): an event the user is OUT of, kept compact (~4 KB)
+ * when it resolves without them — the user's own regional after a lost
+ * qualifier, or a Major / Worlds they are not in — so HQ and /career/follow
+ * can show who played, the rounds and the results (watch / results / skip).
+ * Display only: the result is already banked (`eventResults`), so nothing
+ * here can change one. One slot: the next such event replaces it.
+ */
+export interface FollowEventState {
+  def: CareerEventDef;
+  /** Why the user follows from outside: out at Saturday's qualifier, or not in the field. */
+  reason: "eliminated" | "notQualified";
+  /** The field in seed order (the regional's direct eight first). */
+  teams: { id: string; name: string; rating: number }[];
+  /** The regional's teams that came through Saturday's qualifier ("Q"). */
+  qualifiedIds: string[];
+  swiss: FollowSeries[][];
+  playoffs: { name: string; series: FollowSeries[] }[];
+  /** The playoff eight in seed order ([] for a Swiss-only event). */
+  seeds: string[];
+  champion: string | null;
+  /** How the user opened it (null = not opened yet). */
+  view: "watch" | "results" | null;
+  /** Hidden from HQ ("Skip"). */
+  dismissed: boolean;
+}
+
 export interface StandingRowSnapshot {
   ref: string;
   name: string;
@@ -1471,6 +1529,16 @@ export interface CareerSave {
   lateSigning?: LateSigningState | null;
   /** A starter is unavailable for this event (random event, sub steps in). */
   pendingUnavailability: { playerId: string; eventId: string } | null;
+  /**
+   * rc.36 (SUN-01, R88): Saturday → HQ → Sunday — the Sunday ahead and its
+   * briefing (engine/career/sunday.ts). Optional, additive: absent = none.
+   */
+  weekend?: WeekendState | null;
+  /**
+   * rc.36 (SUN-03, R88): the latest event the user is out of, compact, for
+   * HQ's follow card and /career/follow. Optional, additive: absent = none.
+   */
+  followEvent?: FollowEventState | null;
   /**
    * rc.34: money notices not yet acknowledged, oldest first (each shown once
    * in a modal — careerFlow.moneyNoticeOf / acknowledgeMoneyNoticeFlow).

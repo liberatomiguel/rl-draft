@@ -3142,10 +3142,64 @@ export const CAREER_PLAYBACK = {
    * hands over to the playoffs on its own (× the animation-speed scale;
    * skippable; never under OS reduced motion), the delay before its bracket
    * preview starts and the stagger between the opening matchups.
+   * rc.36 (SUN-02, R88): full-screen now, and short — 4.2 s → 3.6 s.
    */
-  sundayIntroMs: 4_200,
+  sundayIntroMs: 3_600,
   sundayIntroBracketDelayMs: 450,
   sundayIntroStaggerMs: 110,
+} as const;
+
+/**
+ * rc.36 (SUN-01..03, R88) — the weekend: Saturday → HQ → Sunday.
+ *  - `saturdayStop`: once the user's Saturday is done (Saturday's qualifier
+ *    won, or a Major / Worlds paused after its Swiss) the clock holds on
+ *    Saturday evening until Sunday is started from HQ — the conscious start.
+ *    Nothing else moves it (+1 day, the batched Advance, the autoplay, a
+ *    reload); starting it is exactly one day on (Sunday trains nobody and
+ *    pays nobody). false = rc.35's flow (the clock walks into Sunday).
+ *  - `briefing`: the coach's optional Sunday briefing, as a team-rating edge
+ *    on the user's side in Sunday's series only, shown upfront. Keep the
+ *    plan = no change (and what starting without a pick means); Recover = a
+ *    steady edge in every series of the day; Prepare = a bigger edge in the
+ *    day's opening series only. Measured (rc.36, a Bo5 at an even rating):
+ *    +0.25 ≈ +3.5 points of series odds, +0.5 ≈ +7 — under a bootcamp's
+ *    +0.5 / +1.0 for a whole event (CAREER_GEAR.bootcamps).
+ *  - follow (SUN-03): an event the user is out of is kept compact; HQ offers
+ *    it for `followCardDays` days from the day it resolved (the eliminated
+ *    Saturday's "Sunday without you" card besides); watching reveals a round
+ *    every `followRoundMs` (× the animation-speed scale; reduced motion: a
+ *    button per round).
+ */
+/**
+ * rc.36 (UX-04, R88) — the creation wizard's contrast guard: WCAG contrast
+ * ratios ((L1 + 0.05) / (L2 + 0.05)). It warns and suggests a fix (an
+ * accent, a base, or a swap); it never blocks a pick. Measured on the
+ * palette (rc.36): every curated kit clears both (the lowest pair is
+ * steel-scarlet at 1.63, the darkest base charcoal at 1.26 on a card);
+ * same-family pairs land under `pairMin` (ivory-cream 1.15, navy-charcoal
+ * 1.24, forest-teal 1.45), and only a near-black free pick under `cardMin`.
+ */
+export const CAREER_CREST = {
+  contrast: {
+    /** The accent on the base: under this the symbol and the letters blur on small crests. */
+    pairMin: 1.6,
+    /** The base on a dark card (`.panel`): under this the crest melts into HQ, the tables, the top bar. */
+    cardMin: 1.25,
+    /** A suggested accent / base clears its floor by this factor (a fix that is clearly a fix). */
+    fixMargin: 1.25,
+  },
+} as const;
+
+export const CAREER_SUNDAY = {
+  saturdayStop: true,
+  briefing: {
+    keep: { everySeries: 0, opener: 0 },
+    recover: { everySeries: 0.25, opener: 0 },
+    prepare: { everySeries: 0, opener: 0.5 },
+  },
+  defaultBriefing: "keep",
+  followCardDays: 2,
+  followRoundMs: 1_600,
 } as const;
 
 export const CAREER_SIM = {

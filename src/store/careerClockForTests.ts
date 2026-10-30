@@ -11,12 +11,16 @@
  * race, the money — answer those the way the walk did and then move through
  * the REAL `advanceDayFlow`: `walkPastForTests` before each step,
  * or `stepDayForTests` for both. The holds rc.33 already had (the insert, a
- * short squad's eve, an official matchday) are left alone.
+ * short squad's eve, an official matchday) are left alone. rc.36 (SUN-01):
+ * the Saturday evening before the user's Sunday holds until Sunday is
+ * started — the walk starts it with the default briefing (rc.35's clock
+ * walked straight into Sunday; the next step is that day).
  */
 
 import type { CareerSave } from "@/engine/career/types";
 import { acknowledgeMoneyNoticeFlow, advanceDayFlow, declineBidFlow } from "./careerFlow";
 import { declineSponsorOffersFlow, parkDecisionFlow, pendingDecisionsOf } from "./careerDecisions";
+import { recordSundayBriefingFlow } from "./careerSunday";
 
 export function walkPastForTests(input: CareerSave): CareerSave {
   let save = input;
@@ -34,6 +38,9 @@ export function walkPastForTests(input: CareerSave): CareerSave {
     } else if (d.kind === "notice") {
       // rc.34 (front H): the money modal's "OK".
       save = acknowledgeMoneyNoticeFlow(save, d.id);
+    } else if (d.kind === "sunday") {
+      // rc.36 (SUN-01): Sunday started with the default briefing (the clock move is the next step).
+      save = recordSundayBriefingFlow(save).save;
     }
   }
   return save;

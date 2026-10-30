@@ -50,6 +50,7 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import { walkPastForTests } from "./careerClockForTests";
+import { sundayStopHolds } from "./careerSunday";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -550,7 +551,8 @@ describe("the career store sends each event once, in production only", () => {
         st().enterEvent(false);
         st().simEvent();
         if (isEventPaused(active())) {
-          st().advanceDay();
+          // rc.36 (SUN-01): HQ's "Start Sunday" moves a paused Saturday on.
+          st().startSunday();
           st().simEvent();
         }
         st().completeEvent();
@@ -558,6 +560,11 @@ describe("the career store sends each event once, in production only", () => {
       }
       if (s.pendingInsert && s.pendingInsert.day === s.clock.day) {
         st().resolveInsert("b");
+        continue;
+      }
+      // rc.36 (SUN-01): through on Saturday, Sunday is started from HQ.
+      if (sundayStopHolds(s)) {
+        st().startSunday();
         continue;
       }
       st().advanceDay();

@@ -310,16 +310,18 @@ describe("rc.34 UX-01a — Championship Sunday holds too", () => {
 
   it("a decision on the paused Saturday holds the move to Sunday; answered, Sunday opens", () => {
     const paused = pausedMajor();
-    // With nothing due the pause does not hold: moving to Sunday is its answer.
-    expect(clockHoldOf(paused)).toBeNull();
-    expect(topDecisionOf(paused)?.kind).toBe("event");
-    expect(continueKind(paused)).toBe("eventPaused");
+    // rc.36 (SUN-01): with nothing else due the pause is the Saturday-evening
+    // stop — it holds until Sunday is started (its answer moves the clock).
+    expect(clockHoldOf(paused)?.kind).toBe("sunday");
+    expect(topDecisionOf(paused)?.kind).toBe("sunday");
+    expect(continueKind(paused)).toBe("sunday");
+    expect(advanceToNextStopFlow(paused)).toBe(paused);
     const withBid = { ...paused, pendingOffers: [bidFor(paused, 3)] };
     expect(continueEventToNextDayFlow(withBid)).toBe(withBid);
     expect(advanceToNextStopFlow(withBid)).toBe(withBid);
     expect(continueKind(withBid)).toBe("decision");
-    // The bid comes first; the pause waits behind it.
-    expect(pendingDecisionsOf(withBid).map((d) => d.kind)).toEqual(["bid", "event"]);
+    // The bid comes first; the Sunday start waits behind it.
+    expect(pendingDecisionsOf(withBid).map((d) => d.kind)).toEqual(["bid", "sunday"]);
     const sunday = continueEventToNextDayFlow(declineBidFlow(withBid, "bid:test:1"));
     expect(sunday.clock.day).toBe(paused.clock.day + 1);
   });

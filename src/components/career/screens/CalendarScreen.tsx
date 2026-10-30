@@ -17,7 +17,7 @@ import { AppLink } from "@/components/ui/AppLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
-import { officialEventDefsForWeek } from "@/engine/career/calendar";
+import { officialEventDefsForWeek, playoffsDayFor } from "@/engine/career/calendar";
 import { hasChampion } from "@/engine/career/careerResults";
 import type {
   CareerEventDef,
@@ -42,6 +42,7 @@ import {
   upcomingStops,
   useCareerSave,
   useRevealHeldEventId,
+  visibleContinueKind,
   weekOfDay,
   type AgendaDay,
   type DayKind,
@@ -54,6 +55,9 @@ import {
 import { TierChip, maxPointsOf, prizePoolOf } from "@/components/career/hub/hubShared";
 import { formatLineOf, roleTitleOf } from "@/components/career/event/WeekendPlan";
 import { placementLabelOf, weekendRoleOf } from "@/components/career/event/weekendView";
+import { EventTierIcon, TIER_ICON_TONE } from "@/components/career/event/EventTierIcon";
+import { OrgMark } from "@/components/career/OrgMark";
+import { TrophyIcon } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
@@ -103,6 +107,7 @@ export function CalendarScreen() {
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const cancelScrim = useCareerStore((s) => s.cancelScrim);
+  const openFollow = useCareerStore((s) => s.openFollow);
   const revealHeld = useRevealHeldEventId(save);
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -156,6 +161,18 @@ export function CalendarScreen() {
 
   const stops = useMemo(() => (save ? upcomingStops(save, 4) : []), [save]);
 
+  /** rc.36 (CAL-01): the season's transfer windows as day ranges (the month headers name their end). */
+  const windowRanges = useMemo(() => {
+    const out: { start: number; end: number }[] = [];
+    for (const d of days) {
+      if (!d.windowOpen) continue;
+      const last = out[out.length - 1];
+      if (last && last.end === d.day - 1) last.end = d.day;
+      else out.push({ start: d.day, end: d.day });
+    }
+    return out;
+  }, [days]);
+
   // Auto-scroll to the current month once, after the grid exists.
   useEffect(() => {
     if (didScroll.current || !currentMonthRef.current) return;
@@ -186,6 +203,13 @@ export function CalendarScreen() {
   // rc.29 (CAR-02): once its playback has revealed Saturday (else back to it).
   const paused =
     isEventPaused(save) && !(revealHeld !== null && revealHeld === save.activeEvent?.def.id);
+  // rc.36 (SUN-01): Saturday evening before the user's Sunday — it is started in HQ (the briefing).
+  const sundayStop = visibleContinueKind(save, revealHeld) === "sunday";
+  // rc.36 (SUN-03): the event the user is out of, on the day it resolved (this season).
+  const followed =
+    save.followEvent && save.followEvent.def.seasonIndex === save.clock.seasonIndex
+      ? { def: save.followEvent.def, day: playoffsDayFor(save.followEvent.def) }
+      : null;
   const placementLabels = { placement: C.common.placement, qualifierOutcome: C.common.qualifierOutcome };
   const eventDue: CareerEventDef | null =
     save.activeEvent?.def ??
@@ -217,8 +241,6 @@ export function CalendarScreen() {
         return C.calendar.matchday;
       case "windowOpen":
         return C.calendar.windowOpen;
-      case "payday":
-        return C.calendar.payday;
       case "training":
         return C.calendar.trainingDay;
       case "scrim":
@@ -253,6 +275,12 @@ export function CalendarScreen() {
               {event ? (
                 <>
                   <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-line bg-white/[0.04]"
+                    >
+                      <EventTierIcon tier={event.tier} className={cx("h-4 w-4", TIER_ICON_TONE[event.tier])} />
+                    </span>
                     <span className="display text-base font-bold text-ink">{event.name}</span>
                     <TierChip tier={event.tier} />
                     {twoDayRole ? (
@@ -274,7 +302,7 @@ export function CalendarScreen() {
                     return (
                       <Badge
                         key={k}
-                        tone={k === "windowOpen" ? "blue" : k === "payday" ? "good" : "neutral"}
+                        tone={k === "windowOpen" ? "blue" : "neutral"}
                       >
                         {label}
                       </Badge>
@@ -316,6 +344,36 @@ export function CalendarScreen() {
               ) : !isUserEventDef(save, event) ? (
                 <span className="text-faint">{C.calendar.notQualified}</span>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* rc.36 (CAL-01): a finished event names its champion, with the crest. */}
+          {event && result && hasChampion(result) ? (
+            <div className="mt-2.5 flex items-center gap-2 text-xs">
+              <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+              <span className="text-faint">{C.common.placement.champion}</span>
+              <OrgMark save={save} orgRef={result.championRef} size="xs" className="shrink-0" />
+              <span className="min-w-0 truncate font-semibold text-ink">{nameOfRef(save, result.championRef)}</span>
+            </div>
+          ) : null}
+
+          {/* rc.36 (SUN-03): the event the user is out of that resolved this day — follow it. */}
+          {followed && followed.day === day.day ? (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue/30 bg-blue/[0.06] px-3 py-2">
+              <span className="flex min-w-0 items-center gap-2 text-xs">
+                <EventTierIcon tier={followed.def.tier} className="h-3.5 w-3.5 shrink-0 text-blue-bright" />
+                <span className="min-w-0 truncate font-semibold text-ink">{followed.def.name}</span>
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  openFollow("results");
+                  router.push("/career/follow");
+                }}
+              >
+                {C.calendar.follow}
+              </Button>
             </div>
           ) : null}
 
@@ -449,7 +507,12 @@ export function CalendarScreen() {
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="display truncate text-xs font-bold text-ink">{title}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    {stop.event ? (
+                      <EventTierIcon tier={stop.event.tier} className={cx("h-3.5 w-3.5 shrink-0", TIER_ICON_TONE[stop.event.tier])} />
+                    ) : null}
+                    <span className="display truncate text-xs font-bold text-ink">{title}</span>
+                  </span>
                   {stop.event ? (
                     <TierChip tier={stop.event.tier} className="!px-1.5 !text-[9px]" />
                   ) : stop.kind === "window" ? (
@@ -487,22 +550,21 @@ export function CalendarScreen() {
           </button>
         </div>
 
-        {/* legend */}
+        {/* legend — rc.36 (CAL-01): the tier icons, the whole window in blue, no payroll marker
+            (payroll stays in Finances) */}
         <div
           className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint"
           aria-label={C.calendar.legend}
         >
           <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded border border-orange/70 bg-orange/25" />
+            <span className="flex h-3.5 w-3.5 items-center justify-center rounded border border-orange/70 bg-orange/25">
+              <EventTierIcon tier="regional" className="h-2.5 w-2.5 text-orange-bright" />
+            </span>
             {C.calendar.matchday}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded border border-line bg-blue/15" />
+            <span className="h-3.5 w-5 rounded border border-blue/45 bg-blue/25" />
             {C.calendar.window}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="font-bold text-good">$</span>
-            {C.calendar.payday}
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="h-1 w-1 rounded-full bg-white/30" />
@@ -530,9 +592,23 @@ export function CalendarScreen() {
                 ref={isCurrent && mi > 0 ? currentMonthRef : undefined}
                 className="scroll-mt-24"
               >
-                <p className="display mb-1.5 text-sm font-bold uppercase tracking-wide text-ink">
-                  {D.months[g.m - 1]} <span className="font-semibold text-faint">{g.y}</span>
-                </p>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <p className="display text-sm font-bold uppercase tracking-wide text-ink">
+                    {D.months[g.m - 1]} <span className="font-semibold text-faint">{g.y}</span>
+                  </p>
+                  {/* rc.36 (CAL-01): the window(s) running through this month, end date named. */}
+                  {windowRanges
+                    .filter((r) => r.start <= g.days[g.days.length - 1].day && r.end >= g.days[0].day)
+                    .map((r) => (
+                      <span
+                        key={r.start}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-blue/40 bg-blue/15 px-2 py-0.5 text-[10px] font-semibold text-blue-bright"
+                      >
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-blue-bright" />
+                        {C.calendar.windowUntil(formatDateTiny(D, dateOfDay(save.clock.seasonIndex, r.end)))}
+                      </span>
+                    ))}
+                </div>
                 <div className="grid grid-cols-7 gap-1">
                   {D.weekdays.map((w) => (
                     <div
@@ -557,52 +633,54 @@ export function CalendarScreen() {
                       : undefined;
                     const isSelected = selectedDay === d.day;
                     const worldCount = showWorld ? (worldByDay.get(d.day)?.length ?? 0) : 0;
+                    // rc.36 (CAL-01): the whole window is one blue band — a bridge over the
+                    // gap to the next window day of the same row; an event cell keeps its own
+                    // fill on top of it (the band shows under it as a strip).
+                    const bridge = d.windowOpen && d.dow !== 7 && (days[d.day]?.windowOpen ?? false);
                     return (
                       <button
                         key={d.day}
                         type="button"
                         onClick={() => setSelectedDay(isSelected ? null : d.day)}
                         aria-pressed={isSelected}
-                        aria-label={formatDateShort(D, d.date) + (cellLabel ? ` — ${cellLabel}` : "")}
+                        aria-label={
+                          formatDateShort(D, d.date) +
+                          (cellLabel ? ` — ${cellLabel}` : "") +
+                          (d.windowOpen ? ` · ${C.calendar.window}` : "")
+                        }
                         title={cellLabel}
                         className={cx(
-                          "relative flex min-h-10 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
+                          "relative flex min-h-11 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
                           ev
                             ? spectating
-                              ? "border-line/60 bg-white/[0.03] hover:bg-white/[0.06]"
+                              ? cx("border-line/60 hover:bg-white/[0.06]", d.windowOpen ? "bg-[#0d1a33]" : "bg-white/[0.03]")
                               : MATCHDAY_FILL[ev.tier]
                             : d.windowOpen
-                              ? "border-line/60 bg-blue/[0.06] hover:bg-blue/10"
+                              ? "border-blue/40 bg-blue/20 hover:bg-blue/25"
                               : "border-line/50 bg-white/[0.015] hover:bg-white/[0.05]",
                           d.isPast && !d.isToday && "opacity-40",
                           d.isToday && "ring-2 ring-orange",
                           isSelected && "border-white/60",
                         )}
                       >
-                        {d.windowOpen && !ev ? (
-                          <span
-                            aria-hidden
-                            className="absolute bottom-1 left-0 top-1 w-0.5 rounded-r bg-blue/70"
-                          />
+                        {bridge ? (
+                          <span aria-hidden className="pointer-events-none absolute -right-[5px] inset-y-[-1px] w-[5px] bg-blue/20" />
                         ) : null}
-                        <span className={cx(ev ? "font-bold text-ink" : "font-semibold text-sub")}>
+                        {d.windowOpen && ev ? (
+                          <span aria-hidden className="pointer-events-none absolute inset-x-1 bottom-0.5 h-0.5 rounded-full bg-blue/70" />
+                        ) : null}
+                        <span className={cx(ev ? "font-bold text-ink" : d.windowOpen ? "font-semibold text-blue-bright" : "font-semibold text-sub")}>
                           {d.date.d}
                         </span>
-                        <span className="mt-auto flex h-2 items-center gap-0.5 pt-0.5">
-                          {d.kinds.includes("payday") ? (
-                            <span className="text-[8px] font-bold text-good">$</span>
-                          ) : null}
+                        <span className="mt-auto flex h-3 items-center gap-0.5 pt-0.5">
                           {ev ? (
-                            <span
-                              className={cx(
-                                "h-1.5 w-1.5 rounded-full",
-                                spectating
-                                  ? "ring-1 ring-white/40"
-                                  : ev.tier === "worlds"
-                                    ? "bg-amber-300"
-                                    : "bg-orange-bright",
-                              )}
+                            <EventTierIcon
+                              tier={ev.tier}
+                              className={cx("h-3 w-3", spectating ? "text-white/40" : TIER_ICON_TONE[ev.tier])}
                             />
+                          ) : followed && followed.day === d.day ? (
+                            // rc.36 (SUN-03): an event the user is out of — muted, tap to follow it.
+                            <EventTierIcon tier={followed.def.tier} className="h-3 w-3 text-white/40" />
                           ) : d.kinds.includes("scrim") ? (
                             // v0.3: a booked scrim reads as a ringed training dot.
                             <span
@@ -710,7 +788,11 @@ export function CalendarScreen() {
           half of this bar — it now sits above it. */}
       <div ref={footerRef} className="sticky bottom-[4.25rem] z-10 md:bottom-3">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
-          {paused ? (
+          {sundayStop ? (
+            <Button variant="primary" onClick={() => router.push("/career")}>
+              {C.calendar.sundayAhead}
+            </Button>
+          ) : paused ? (
             <Button
               variant="primary"
               onClick={() => {

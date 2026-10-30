@@ -1751,24 +1751,6 @@ R86. **One founding budget, no passive fanbase pay, prospects throughout
      Their existing defaults are retained for the remeasurement; POL-04
      does not silently approve a different loan, band or wage-budget rule.
 
-## Still open for Miguel (career mode)
-
-The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
-$1M Worlds pool, fixed-ask→negotiation, career→profile progression, mobile
-6-nav, no manual saves, auto-train default ON, Season X alternate history) are
-LOCKED and built. Remaining review items:
-
-- **Beat corpus** — the ~30 hand-written scripted beats (EN+PT) for launch is
-  the biggest content ask; currently a partial floor.
-- **`born:` rows** for the ~150–200 modern-era players (ages are inferred
-  today; §21.13 PT glossary tone check also pending).
-- **`CAREER_ARC` pacing harness** — the 120-career difficulty sweep isn't built
-  yet; v0.3 moved the whole money surface, so the economy bands need a
-  re-validation pass after Miguel plays.
-- **First-guess tunables to confirm after playtests:** scrim chemistryCredit
-  0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
-  the filler headliner band 77–84.
-
 R87. **Season goals read the season; a visual news desk with its archive;
      the career's achievements in the general list (rc.36 front A; ROADMAP
      UX-02, UX-03, UX-05).** (a) The board's goal is set once at the season's
@@ -1828,3 +1810,79 @@ R87. **Season goals read the season; a visual news desk with its archive;
      chrome, never a redrawn mark) and a credit line saying the headlines
      are the game's own — never a quote in the partner's mouth. (f) UX-05:
      DESIGN-DECISIONS #155.
+
+R88. **The weekend goes back to HQ, a coach briefing, Championship Sunday
+     full-screen, following an event you are out of, the crest builder and
+     the calendar (rc.36 front B: SUN-01..03, UX-04, CAL-01).** (a) SUN-01:
+     once the user's Saturday is done — the qualifier won (`weekend` =
+     {eventId, briefing: null}, set by finishEvent) or a Major / Worlds
+     paused after its Swiss — the digest and the pause panel go back to HQ,
+     and Saturday evening is a stop of the decision queue (kind "sunday",
+     group 6 with the pause, no "Later"): +1 day, the batched Advance, the
+     autoplay (continueKind "sunday") and a reload hold until HQ's "Start
+     Sunday" (`careerSunday.startSundayFlow`) records the briefing and moves
+     the clock exactly one day (`CAREER_SUNDAY.saturdayStop` true; false =
+     rc.35's walk). The calendar's own dates: Sunday trains and pays nobody,
+     nothing replays, no prize twice. A direct seed gets no stop; an rc.35
+     save on that evening plays on as before (no record), a paused Major is
+     the stop by itself. (b) The briefing, optional and shown upfront: keep
+     the plan (no change — the default, and what starting without a pick
+     means), recover (+0.25 team rating in every Sunday series,
+     `briefing.recover.everySeries`), prepare for the opponent (+0.5 in the
+     day's opening series, `briefing.prepare.opener`) — a per-round edge on
+     the user's side (`sunday.sundayEdgeFor`), the frozen team untouched; a
+     Bo5 at an even rating moves ≈ +3.5 / +7 points, under a bootcamp. The
+     bot keeps the plan (`ArcPolicy.briefing` "keep": the arc measures the
+     base career); analytics `ux_sunday_briefing`. (c) SUN-02: the
+     Championship Sunday card is a short full-screen intro (a portal over
+     the bar and the nav, scroll locked, pop-ups held; `sundayIntroMs` 4.2 →
+     3.6 s), skippable, static under reduced motion, once per event, seeds
+     only; the briefing rides as a chip. (d) SUN-03: an event the user is out
+     of — their regional after a lost qualifier, a Major / Worlds without
+     them — is kept compact when it resolves (`followEvent`, ~4 KB, one slot:
+     the field, every series' score, the bracket); the eliminated Saturday
+     offers Sunday without you (watch / results / skip, never holds), HQ
+     offers a resolved one for `followCardDays` 2 days, /career/follow
+     replays it a round every `followRoundMs` 1.6 s or shows the readable
+     results; a Swiss exit picks watch / results / skip as Sunday starts.
+     (e) UX-04: six shapes, eight symbols (a battle car, the ball, a wheel,
+     a trophy, wings, a peak, a gem, chevrons), four patterns and a layout
+     (emblem / emblem + letters / band) as a fourth crestId part; the
+     procedural pool's lists stay frozen (every filler org keeps its crest)
+     and every saved id renders as before. Presets fill both colours, each
+     colour is free (the palette or any colour), the crest previews live
+     (sticky on phones); the contrast guard (`CAREER_CREST.contrast`:
+     pairMin 1.6, cardMin 1.25, fixMargin 1.25 — every kit clears both)
+     warns and offers a one-tap fix, never a block; "Recommended" is the NEW
+     pill. (f) CAL-01: the whole window blue (one band per row, its end date
+     on the month), a tier icon per event, the event drawn over the band,
+     the champion's crest in the day detail, no payroll marker on the
+     calendar or HQ's week (Finances keeps it). Rejected: the batched
+     Advance starting Sunday by itself (it skipped the briefing); a training
+     day for the briefing (a weekend effect only); storing a followed
+     event's whole TournamentState (~52 KB, the save's size again) or
+     re-simulating it (the field moves after Sunday); rc.35's disabled
+     low-contrast swatches (a silent block).
+
+     Completion review: the full-screen intro also uses the shared dialog focus
+     trap and restoration (Tab never enters the obscured navigation). Verification
+     tools accept CHROME_PATH to reuse an installed Chrome/Edge; it changes no
+     game dependency, save or hosting behavior.
+
+## Still open for Miguel (career mode)
+
+The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
+$1M Worlds pool, fixed-ask→negotiation, career→profile progression, mobile
+6-nav, no manual saves, auto-train default ON, Season X alternate history) are
+LOCKED and built. Remaining review items:
+
+- **Beat corpus** — the ~30 hand-written scripted beats (EN+PT) for launch is
+  the biggest content ask; currently a partial floor.
+- **`born:` rows** for the ~150–200 modern-era players (ages are inferred
+  today; §21.13 PT glossary tone check also pending).
+- **`CAREER_ARC` pacing harness** — the 120-career difficulty sweep isn't built
+  yet; v0.3 moved the whole money surface, so the economy bands need a
+  re-validation pass after Miguel plays.
+- **First-guess tunables to confirm after playtests:** scrim chemistryCredit
+  0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
+  the filler headliner band 77–84.

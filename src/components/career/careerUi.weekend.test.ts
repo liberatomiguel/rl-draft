@@ -28,6 +28,7 @@ import {
   type CreateCareerInput,
 } from "@/store/careerFlow";
 import { stepDayForTests } from "@/store/careerClockForTests";
+import { startSundayFlow } from "@/store/careerSunday";
 import {
   agendaDays,
   continueKind,
@@ -114,7 +115,9 @@ describe("next stops around a two-day event (R40 review)", { timeout: 30_000 }, 
     expect(first).toMatchObject({ kind: "event", day: playoffsDayFor(def), daysAway: 1 });
     expect(first.event?.id).toBe(def.id);
 
-    const sun = advanceDayFlow(sat);
+    // rc.36 (SUN-01): Saturday evening holds until HQ starts Sunday.
+    expect(advanceDayFlow(sat)).toBe(sat);
+    const sun = startSundayFlow(sat).save;
     expect(eventDayPhaseOf(sun)).toBe("playoffs");
     const stops = upcomingStops(sun, 3);
     expect(stops[0]).toMatchObject({ kind: "event", day: sun.clock.day, daysAway: 0 });
@@ -125,12 +128,13 @@ describe("next stops around a two-day event (R40 review)", { timeout: 30_000 }, 
   it("the top bar keeps the event's Continue while Saturday is still being revealed", () => {
     const sat = pausedMajor();
     const id = sat.activeEvent!.def.id;
-    expect(continueKind(sat)).toBe("eventPaused");
-    expect(visibleContinueKind(sat, null)).toBe("eventPaused");
+    // rc.36 (SUN-01): the paused Saturday is the Saturday-evening stop ("sunday" → HQ).
+    expect(continueKind(sat)).toBe("sunday");
+    expect(visibleContinueKind(sat, null)).toBe("sunday");
     expect(visibleContinueKind(sat, id)).toBe("event");
-    expect(visibleContinueKind(sat, "some-other-event")).toBe("eventPaused");
+    expect(visibleContinueKind(sat, "some-other-event")).toBe("sunday");
     // On Sunday the hold no longer matters (nothing is paused).
-    const sun = advanceDayFlow(sat);
+    const sun = startSundayFlow(sat).save;
     expect(visibleContinueKind(sun, id)).toBe(continueKind(sun));
   });
 
@@ -147,10 +151,10 @@ describe("next stops around a two-day event (R40 review)", { timeout: 30_000 }, 
     expect(persistedRevealHold(sat, saturday)).toBeNull();
     expect(persistedRevealHold(sat, null)).toBeNull();
     expect(persistedRevealHold(sat, undefined)).toBeNull();
-    expect(visibleContinueKind(sat, persistedRevealHold(sat, saturday))).toBe("eventPaused");
+    expect(visibleContinueKind(sat, persistedRevealHold(sat, saturday))).toBe("sunday");
     // An instant Saturday has nothing to replay; Sunday is not paused.
     expect(persistedRevealHold({ ...sat, activeEvent: { ...sat.activeEvent!, watched: false } }, 0)).toBeNull();
-    expect(persistedRevealHold(advanceDayFlow(sat), 0)).toBeNull();
+    expect(persistedRevealHold(startSundayFlow(sat).save, 0)).toBeNull();
   });
 });
 
@@ -182,7 +186,7 @@ describe("the reduced-motion results stop on mount (rc.29 review R2)", { timeout
     // shows first, then "See the Swiss result".
     expect(resultsSeenOnMount({ atResults, cursor: saturday - 1, simulated: saturday })).toBe(false);
     // Mid-event (Sunday's playoffs to play): the stop waits for the final.
-    const sun = advanceDayFlow(sat);
+    const sun = startSundayFlow(sat).save;
     expect(isEventPaused(sun)).toBe(false);
     expect(sun.activeEvent!.tournament.stage).not.toBe("finished");
     const sunday = roundsOf(sun.activeEvent!.tournament).length;

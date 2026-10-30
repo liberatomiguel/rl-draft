@@ -234,8 +234,8 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
     const kinds: DayKind[] = [];
     if (event) kinds.push("matchday");
     if (dow === 1 && isWindowStartWeek(week)) kinds.push("windowOpen");
-    // v2.0 (R20): payroll books every Monday but the founding day.
-    if (dow === 1 && !(save.clock.seasonIndex === 0 && week === 1)) kinds.push("payday");
+    // rc.36 (CAL-01, R88): no payroll marker on the calendars — payroll still
+    // books every Monday but the founding day; Finances shows it.
     // v0.3: booked scrims show as training events on the calendar.
     if (save.scheduledScrims?.some((s) => s.day === day)) kinds.push("scrim");
     if (!event && dow <= CAREER_TRAINING.trainingDaysPerWeek) kinds.push("training");
@@ -690,6 +690,7 @@ export { CAREER_GEAR };
 export type ContinueKind =
   | "event" // an event awaits (lobby or in progress) → /career/event
   | "eventPaused" // v2.0 (R40): Major/Worlds Saturday Swiss done → continueEventToNextDay
+  | "sunday" // rc.36 (SUN-01): Saturday evening before the user's Sunday → HQ (briefing, "Start Sunday")
   | "seasonReview" // → /career/season
   | "ended" // → /career/season (legacy screen)
   | "decision" // pending out-bid / sponsor choice on the hub
@@ -700,6 +701,9 @@ export function continueKind(save: CareerSave): ContinueKind {
   if (save.phase === "seasonReview") return "seasonReview";
   // rc.34 (UX-01a): the one decision list the clock reads (careerDecisions).
   const hold = clockHoldOf(save);
+  // rc.36 (SUN-01, R88): the Saturday evening before the user's Sunday — HQ
+  // starts it (its own kind: the autopilot stops, the bar routes to HQ).
+  if (hold?.kind === "sunday") return "sunday";
   // v2.0 (R40): a Major/Worlds paused after its Saturday Swiss — the routed
   // CONTINUE moves the clock to Championship Sunday (continueEventToNextDay).
   // A kind of its own, so the day autopilot never rolls into Sunday alone;
@@ -721,7 +725,10 @@ export function continueKind(save: CareerSave): ContinueKind {
  */
 export function visibleContinueKind(save: CareerSave, revealHeldEventId: string | null): ContinueKind {
   const kind = continueKind(save);
-  return kind === "eventPaused" && revealHeldEventId !== null && revealHeldEventId === save.activeEvent?.def.id
+  // rc.36: the Saturday-evening stop of a paused Major is held the same way (its card names the verdict).
+  return (kind === "eventPaused" || kind === "sunday") &&
+    revealHeldEventId !== null &&
+    revealHeldEventId === save.activeEvent?.def.id
     ? "event"
     : kind;
 }
