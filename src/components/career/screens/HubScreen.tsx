@@ -387,11 +387,16 @@ export function HubScreen() {
               <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
                 <p className="kicker mb-1 text-[10px]">{C.hub.seasonGoal}</p>
                 <p className="display text-base font-bold uppercase tracking-wide text-ink">
-                  {goalText(save.seasonGoals.targetKey)}
+                  {/* rc.35 (front S): the sponsors' level model (any split) when the save carries it. */}
+                  {save.seasonGoals.model
+                    ? C.goals.model(save.seasonGoals.model.target.kind, save.seasonGoals.model.target.count, save.seasonGoals.model.target.place ?? 0)
+                    : goalText(save.seasonGoals.targetKey)}
                 </p>
                 <p className="mt-1 text-xs text-sub">
                   <span className="kicker mr-1.5 text-[9px]">{C.hub.goalStretch}</span>
-                  {goalText(save.seasonGoals.stretchKey)}
+                  {save.seasonGoals.model
+                    ? C.goals.model(save.seasonGoals.model.stretch.kind, save.seasonGoals.model.stretch.count, save.seasonGoals.model.stretch.place ?? 0)
+                    : goalText(save.seasonGoals.stretchKey)}
                 </p>
               </Panel>
             </div>

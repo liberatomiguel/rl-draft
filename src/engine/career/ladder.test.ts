@@ -8,8 +8,9 @@ describe("rc.35 progression ladder", () => {
     const idx = (id: string) => ids.indexOf(id as never);
     expect(idx("peripherals")).toBeLessThan(idx("coach"));
     expect(idx("coach")).toBeLessThan(idx("monitors"));
-    expect(idx("monitors")).toBeLessThan(idx("sponsors1"));
-    expect(idx("sponsors1")).toBeLessThan(idx("pcs"));
+    // rc.35 integration (Miguel): local sponsors open with the generic coach, at rep 10.
+    expect(idx("sponsors1")).toBeLessThan(idx("monitors"));
+    expect(idx("monitors")).toBeLessThan(idx("pcs"));
     expect(idx("pcs")).toBeLessThan(idx("exProCoach"));
     expect(idx("exProCoach")).toBeLessThan(idx("bootcamp1"));
     expect(idx("bootcamp1")).toBeLessThan(idx("sponsors2"));

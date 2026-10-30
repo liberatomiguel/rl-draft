@@ -466,6 +466,8 @@ export const CAREER_PT: CareerCopy = {
     trainingDecisionTitle: "O técnico tem um plano",
     trainingDecisionBody: "A proposta de treino do técnico espera a sua resposta.",
     sponsorDecline: "Sem acordo por agora",
+    // rc.35 (front S): ao lado de "Recusar" na decisão de patrocínio.
+    sponsorLater: "Decidir depois",
     sponsorDeclineHint: "As marcas voltam no próximo split.",
     // rc.34 (Miguel, 31/10): um elenco incompleto pode ficar fora de uma regional.
     squadShortSkip: "Pular esta regional",
@@ -1497,6 +1499,28 @@ export const CAREER_PT: CareerCopy = {
       rowLength: "Duração",
       rowRisk: "Risco",
       rowGoal: "Meta",
+      // rc.35 (front S): a comparação visual — uma faixa por linha, ícones primeiro.
+      rowWeekly: "Pagamento semanal",
+      rowUpfront: "Adiantado",
+      rowBonus: "Bônus por meta",
+      rowFine: "Multa se falhar",
+      upfrontSigning: "na assinatura",
+      upfrontMilestone: "na 1ª meta",
+      upTo: (s: string) => `até ${s}`,
+      noFine: "Nenhuma",
+      lengthShort: (splits: number) =>
+        splits === 1 ? "1 split" : splits === 3 ? "1 temporada" : splits === 6 ? "2 temporadas" : `${splits} splits`,
+      difficultyMeter: (word: string) => `Dificuldade da meta: ${word}`,
+      profileTag: { steady: "Mais seguro", balanced: "Meio-termo", bold: "Maior pagamento" } as Record<string, string>,
+      compareRule: "Mais dinheiro, meta mais difícil, multa maior.",
+      boldLocked: "Contratos ousados liberam conforme a reputação cresce.",
+      globalSponsor: "Global",
+      nextPay: "Próximo pagamento",
+      noNextPay: "Último já pago",
+      finesNone: "Nenhuma multa devida",
+      finesShort: (mondays: number) => `em ${mondays} segundas`,
+      seasonFineCap: (s: string) => `As multas nunca passam de ${s} por temporada`,
+      dealRun: (paid: number, total: number) => `${paid} de ${total} segundas pagas`,
       weeklySure: (s: string) => `${s} por semana, garantido`,
       plusSigning: (s: string) => `+ ${s} na assinatura`,
       plusMilestone: (s: string) => `+ ${s} no dia da primeira meta batida`,
@@ -2346,6 +2370,24 @@ export const CAREER_PT: CareerCopy = {
     worldsTop4: "Um top-4 no Worlds",
     winMajor: "Vencer um Major",
     winWorlds: "Vencer o Worlds",
+    // rc.35 (front S): meta da temporada pelo modelo de nível dos patrocinadores — em qualquer split.
+    model: (kind: string, count: number, place: number): string => {
+      switch (kind) {
+        case "enterEvents":
+          return `Disputar ${count} eventos em um split`;
+        case "regionalReach":
+          return count === 1 ? "Chegar a um regional" : `Chegar a ${count} regionais em um split`;
+        case "regionalFinish":
+          if (place <= 1) return count === 1 ? "Vencer um regional" : `Vencer ${count} regionais em um split`;
+          return count === 1 ? `Um top ${place} em regional` : `Top ${place} em ${count} regionais de um split`;
+        case "majorQualify":
+          return "Chegar a um Major";
+        case "majorFinish":
+          return place <= 1 ? "Vencer um Major" : `Um top ${place} em Major`;
+        default:
+          return "";
+      }
+    },
     repRisk: (n: number) => `Sua reputação espera isso (−${n} se falhar)`,
   },
 

@@ -934,6 +934,10 @@ export interface SponsorTerms {
    * A decision still pending at the rollover is offered again with it.
    */
   demoted?: boolean;
+  /** rc.35 (front S): a global sponsor (the ladder's last level) — more money, more free bootcamps. */
+  global?: boolean;
+  /** rc.35 (front S): the fines booked this season (the per-season cap, fines.seasonCapWeeks). */
+  finedSeason?: { s: number; amount: number };
 }
 
 export interface CoachState {
@@ -1230,6 +1234,15 @@ export interface SeasonGoals {
   /** Rep at stake if the target is missed (0 = none). */
   repRisk: number;
   targetMet: boolean | null;
+  /**
+   * rc.35 (front S): the target and stretch from the sponsors' goal model
+   * (sponsorDeals.seasonGoalModelFor) — reached in any split of the season.
+   * Absent on older saves (they settle on the grade, as before).
+   */
+  model?: {
+    target: { kind: SponsorGoal["kind"]; count: number; place?: number; word: SponsorGoalWord };
+    stretch: { kind: SponsorGoal["kind"]; count: number; place?: number; word: SponsorGoalWord };
+  };
 }
 
 export interface CareerLifetimeStats {

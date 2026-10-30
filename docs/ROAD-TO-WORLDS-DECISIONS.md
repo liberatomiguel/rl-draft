@@ -1519,7 +1519,7 @@ R80. **The integration of Etapa 3 and Miguel's 31/10 answers, and the fixes
      its net change; signing validated before any change. (c) Re-measured
      on the §9 seeds in `ECONOMY-CONTRACT.md` §11.
 
-R81 (front N). **The contract talk has odds, a signing bonus and a length
+R81. **The contract talk has odds, a signing bonus and a length
      lever; cheaper founders and coaches; "Merch & streams" (rc.35, Miguel
      on rc.34).** (a) An offer may go under his zone: from the floor his odds
      fall smoothly (smoothstep) to 0 over `oddsFallPct` 0.25 of his ask; he
@@ -1540,6 +1540,22 @@ R81 (front N). **The contract talk has odds, a signing bonus and a length
      (removing it measured unsafe in rc.33 M7) and is renamed "Merch &
      streams" — what it models. Rejected: a hidden reserve without shown
      odds; removing the income.
+R82. **Sponsors priced by risk; one level model for the season goal; the
+     ladder's sponsor access (rc.35 front S; Miguel's rc.34 playtest).**
+     (a) Replaces R76(a)'s equal expected value: each profile pays
+     `ceilingOfValue` (Steady 0.95 / Balanced 1.2 / Bold 1.5) × the tier's
+     value for its Mondays, `weeklyOfCeiling` of it weekly, so weekly pay and
+     the most a deal pays both read Bold > Balanced > Steady. Risk is the
+     price: Bold's goal is capped at Balanced's chance, Balanced's at
+     Steady's; fines `fineShare` 0 / 0.3 / 0.6 of a bonus, at most
+     `fineCapWeeks` 0 / 1 / 2 weeks of weekly pay a miss and
+     `fines.seasonCapWeeks` 2 a season. Stretch's floor 0.16 → 0.2.
+     (b) The season goal: the target a Balanced deal would set for one
+     split, met if reached in ANY split (never harder than a Balanced goal),
+     the stretch the Bold one (`seasonGoalModelFor`; older saves keep the
+     grade rule). (c) `sponsorAccessFor(level)` (CAREER_SPONSOR.access):
+     levels 0–1 two offers, no Bold; 2–3 three, ×1.05; 4 global, ×1.1 and
+     2 free bootcamps. Level = `repTierOf(rep)` until front P's ladder.
 
 ## Still open for Miguel (career mode)
 

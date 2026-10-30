@@ -75,9 +75,9 @@ export function sponsorLadderLevelFor(rep: number): 0 | 1 | 2 | 3 | 4 {
 
 /**
  * The seam for the sponsor desk (front S): the org's sponsor ladder level.
- * TODO(rc.35 integrator): feed this into sponsorDeals.sponsorAccessFor(level)
- * where offers are rolled (level 1 = two offers, no Bold; 2 = three incl.
- * Bold; 3+ = global values/perks). Front P does not touch the pricing.
+ * The sponsor desk reads it through sponsorDeals.sponsorLadderLevelOf →
+ * sponsorAccessFor (level ≤ 1 two offers, no Bold; 2 three incl. Bold; 3+
+ * global values and perks).
  */
 export function sponsorLadderLevelOf(save: Pick<CareerSave, "reputation">): 0 | 1 | 2 | 3 | 4 {
   return sponsorLadderLevelFor(save.reputation);

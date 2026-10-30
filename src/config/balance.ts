@@ -2047,11 +2047,44 @@ export const CAREER_SPONSOR = {
    * its word's chance): 0.65, a tenth less sure money than before at its
    * word, the rest moved to its milestone and bonus.
    */
+  /*
+   * rc.35 — front S (Miguel, playtesting rc.34: "Steady pays more than
+   * Balanced, which pays more than Bold — makes no sense"). The profiles are
+   * priced by RISK now, not at equal expected value: each pays a share of
+   * the tier's value for its Mondays — `ceilingOfValue`, the most it pays —
+   * Bold the most, Steady the least; `weeklyOfCeiling` of that ceiling is the
+   * weekly pay (so weekly pay also reads Bold ≥ Balanced ≥ Steady), the rest
+   * is the fixed part and the bonuses in the `fixedShare` : `bonusShare`
+   * ratio. The price of Bold's money is its goal (the hardest of the three)
+   * and its fine: `fineShare` × a bonus, at most `fineCapWeeks` weeks of the
+   * deal's weekly pay a miss (Steady none, Balanced 1, Bold 2), and never
+   * more than `fines.seasonCapWeeks` weeks in a season. Claude's values,
+   * measured on the probe's C10 / C11 (insolvency bands kept).
+   */
   profiles: {
-    steady: { weeklyOfValue: 0.76, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, word: "likely", lengthSplits: 6 },
-    balanced: { weeklyOfValue: 0.7, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.15, word: "even", lengthSplits: 3 },
-    bold: { weeklyOfValue: 0.65, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.5, word: "stretch", lengthSplits: 1 },
+    steady: { ceilingOfValue: 0.95, weeklyOfCeiling: 0.82, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, fineCapWeeks: 0, word: "likely", lengthSplits: 6 },
+    balanced: { ceilingOfValue: 1.2, weeklyOfCeiling: 0.72, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.3, fineCapWeeks: 1, word: "even", lengthSplits: 3 },
+    bold: { ceilingOfValue: 1.5, weeklyOfCeiling: 0.66, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.6, fineCapWeeks: 2, word: "stretch", lengthSplits: 1 },
   } as const,
+  /**
+   * rc.35 — front S: the sponsor side of the progression ladder
+   * (`sponsorDeals.sponsorAccessFor(level)`; front P's unlock ladder calls
+   * it — until then the level is the reputation tier, economy.repTierOf).
+   * Each row holds from `minLevel`: how many offers a decision brings (2 =
+   * Steady and Balanced, no Bold), the best tier a brand may be, and whether
+   * its brands are "global" (`valueMult` more money, and `globalBootcamps`
+   * free bootcamps a season, at least the tier's). Early sides see two safe
+   * offers; "better sponsors" add Bold and pay more (a bootcamp's worth);
+   * global sponsors pay the most.
+   */
+  access: {
+    levels: [
+      { minLevel: 0, offers: 2, boldAllowed: false, tierCap: 2, global: false, valueMult: 1 },
+      { minLevel: 2, offers: 3, boldAllowed: true, tierCap: 4, global: false, valueMult: 1.05 },
+      { minLevel: 3, offers: 3, boldAllowed: true, tierCap: 4, global: true, valueMult: 1.1 },
+    ],
+    globalBootcamps: 2,
+  },
   /**
    * rc.34 — ECO-04 (s1): the tier's value per season, at season-0 money
    * before the difficulty and the index: base × (splits + the signing
@@ -2094,7 +2127,8 @@ export const CAREER_SPONSOR = {
    * Likely ≥ 65 %, Even 35–65 %, Stretch 15–35 %).
    */
   wordChance: { likely: 0.8, even: 0.5, stretch: 0.25 } as const,
-  wordMin: { likely: 0.66, even: 0.38, stretch: 0.16 } as const,
+  // rc.35 (front S): Stretch never under 0.2 (Miguel: goals must be reachable).
+  wordMin: { likely: 0.66, even: 0.38, stretch: 0.2 } as const,
   /**
    * rc.34 — ECO-04 (S2): a goal comes from the team's level — its seed
    * rating (the R45 seeding's) against its region's teams — after this
@@ -2148,7 +2182,8 @@ export const CAREER_SPONSOR = {
    * triggers a rescue). rc.34 review: the instalments book after the
    * emergency loan's deadline check, so one never decides that check.
    */
-  fines: { capWeeks: 1, spreadMondays: 4, neverBreaches: true },
+  // rc.35 (front S): capWeeks is now per profile (profiles.*.fineCapWeeks); seasonCapWeeks bounds a season's fines.
+  fines: { capWeeks: 1, spreadMondays: 4, neverBreaches: true, seasonCapWeeks: 2 },
   /**
    * rc.34 — ECO-05, S7 (decision 6-B: today's money inserts stay random
    * inserts, indexed and counted against the cap). Other income — an
@@ -2247,7 +2282,7 @@ export const CAREER_UNLOCKS = {
  * rc.35 — THE PROGRESSION LADDER (Miguel, rc.34 feedback). One ordered
  * staircase of reputation gates mixing gear, staff, coaches and sponsor
  * access: peripherals (8) → coach hiring (CAREER_UNLOCKS.coachRep) → monitors
- * (14) → local sponsors (sponsorRep[0]) → tournament PCs (20) → ex-pro
+ * (14) → local sponsors (sponsorRep[0], rc.35 integration: 10, with the generic coach — Miguel) → tournament PCs (20) → ex-pro
  * coaches (exProCoachRep) → bootcamp (26) → challenger sponsors
  * (sponsorRep[1]) → structured bootcamp (38) → psychologist (46) → global
  * sponsors (sponsorRep[2]) → performance centre (55) → headline sponsors
@@ -2260,7 +2295,7 @@ export const CAREER_LADDER = {
   /** Retired real pros on the coach shortlist are hireable from here (generic coaches from CAREER_UNLOCKS.coachRep). */
   exProCoachRep: 23,
   /** Sponsor ladder levels 1–4: local, challenger, global, headline. */
-  sponsorRep: [16, 30, 50, 75] as const,
+  sponsorRep: [10, 30, 50, 75] as const,
 } as const;
 
 /**

@@ -6,10 +6,11 @@
  * cannot disagree with the ledger.
  */
 
-import { CAREER_SPONSOR } from "@/config/balance";
-import { dateOfDay, type CareerDate } from "@/engine/career/calendar";
+import { CAREER_CALENDAR, CAREER_SPONSOR } from "@/config/balance";
+import { dateOfDay, firstDayOfWeek, type CareerDate } from "@/engine/career/calendar";
 import {
   fineMaxOf,
+  mondaysBetween,
   goalDeadlineOf,
   goalForSlot,
   mondaysLeftOf,
@@ -61,10 +62,26 @@ export interface OfferView {
   goalBy: CareerDate | null;
   /** More splits follow (a new goal each). */
   laterGoals: boolean;
+  /** rc.35 (front S): the bonus per goal and the most a miss is fined (0 = none). */
+  bonus: number;
+  fineMax: number;
+  /** The goal's difficulty on the meter: 1 Likely, 2 Even, 3 Stretch. */
+  difficulty: 1 | 2 | 3;
+  /** A global sponsor (the ladder's last level). */
+  global: boolean;
 }
+
+const DIFFICULTY: Record<string, 1 | 2 | 3> = { likely: 1, even: 2, stretch: 3 };
 
 function dateOf(d: CareerDay): CareerDate {
   return dateOfDay(d.seasonIndex, d.day);
+}
+
+/** The first Monday strictly after `today` (a season's day 1 is a Monday). */
+function nextMondayOf(today: CareerDay): CareerDay {
+  const days = CAREER_CALENDAR.weeksPerSeason * CAREER_CALENDAR.daysPerWeek;
+  const next = firstDayOfWeek(weekOfDay(today.day) + 1);
+  return next > days ? { seasonIndex: today.seasonIndex + 1, day: 1 } : { seasonIndex: today.seasonIndex, day: next };
 }
 
 function riskOf(state: SponsorState): DealRisk {
@@ -100,6 +117,10 @@ export function offerViewOf(offer: SponsorState, today: CareerDay): OfferView | 
     goal,
     goalBy: goal ? dateOf(goalDeadlineOf(goal)) : null,
     laterGoals: terms.lengthSplits > 1,
+    bonus: offer.bonus,
+    fineMax: fineMaxOf(terms, offer.bonus),
+    difficulty: DIFFICULTY[goal?.word ?? terms.word] ?? 2,
+    global: Boolean(terms.global),
   };
 }
 
@@ -115,6 +136,9 @@ export interface DealView extends OfferView {
   /** Steady deals: the patience meter (misses so far). */
   patienceMisses: number | null;
   mondaysLeft: number;
+  /** rc.35 (front S): the next Monday it pays (null once the last is paid), and the Mondays it pays in all. */
+  nextPayOn: CareerDate | null;
+  mondaysTotal: number;
 }
 
 /** The split slot the clock is in for the deals (W1–W10 → split 1, W11–W20 → 2, W21–W32 → 3). */
@@ -134,6 +158,7 @@ export function dealViewOf(save: CareerSave): DealView | null {
   // The goal to show: the earliest one not settled; else the latest set.
   const goal = open[0] ?? terms.goals[terms.goals.length - 1] ?? null;
   const nextSlot = slots.find((s) => s > currentSlotOf(save) && !goalForSlot(terms, s));
+  const mondaysLeft = mondaysLeftOf(terms, today);
   return {
     ...base,
     current: goal ? { goal, progress: sponsorGoalProgressOf(save, goal), by: dateOf(goalDeadlineOf(goal)) } : null,
@@ -142,7 +167,10 @@ export function dealViewOf(save: CareerSave): DealView | null {
     misses: terms.goals.filter((g) => g.missed !== undefined).length,
     fixedPaid: Boolean(terms.fixedPaid),
     patienceMisses: terms.profile === "steady" ? state.missedCount : null,
-    mondaysLeft: mondaysLeftOf(terms, today),
+    mondaysLeft,
+    nextPayOn:
+      mondaysLeft > 0 ? dateOf(nextMondayOf(today)) : null,
+    mondaysTotal: Math.max(mondaysLeft, mondaysBetween(terms.offeredOn, terms.endsOn)),
   };
 }
 

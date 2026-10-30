@@ -244,13 +244,25 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           <>
             {/* ECO-04 (front F): the three profiles in one comparison, signed from here. */}
             <SponsorDecision save={save} onSign={(id) => chooseSponsor(id)} bare />
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {/* rc.35 (front S): "Decide later" sits beside "Decline", not under it. */}
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <Button variant="secondary" size="md" className="min-h-11" onClick={declineSponsorOffers}>
                 {C.hub.sponsorDecline}
               </Button>
-              <span className="text-xs text-faint">{C.hub.sponsorDeclineHint}</span>
+              {d.canWait ? (
+                <Button variant="ghost" size="md" className="min-h-11 border border-line" onClick={() => later(d)}>
+                  {C.hub.sponsorLater}
+                </Button>
+              ) : (
+                <span className="flex min-h-11 items-center text-xs font-semibold text-orange-bright">{C.hub.lastDay}</span>
+              )}
             </div>
-            <LaterRow C={C} d={d} onLater={() => later(d)} />
+            <p className="mt-1.5 text-[11px] text-faint">
+              {C.hub.sponsorDeclineHint}
+              {d.canWait && d.deadline
+                ? ` · ${C.hub.standsUntil(formatDateShort(C.dates, dateOfDay(d.deadline.seasonIndex, d.deadline.day)))}`
+                : ""}
+            </p>
           </>
         );
       }

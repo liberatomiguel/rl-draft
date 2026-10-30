@@ -520,3 +520,43 @@ export function GiftIcon({ className }: { className?: string }) {
     </TalkGlyph>
   );
 }
+
+/** Signature — a payment on signing. */
+export function SignIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M3 19.5h18" {...P} />
+      <path d="M5 15c2-4 3.5-6 4.5-6 1.6 0-1.5 6 .5 6 1.5 0 2.5-3 4-3 1.2 0 .8 2.5 2 2.5.8 0 1.5-.6 2-1.2" {...P} />
+    </Glyph>
+  );
+}
+
+/** Flag — a milestone (paid the day a first goal is reached). */
+export function FlagIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M5 21V4" {...P} />
+      <path d="M5 4.5h11l-2.5 4 2.5 4H5" {...P} />
+    </Glyph>
+  );
+}
+
+/** Warning triangle — a fine. */
+export function FineIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" {...P} />
+      <path d="M12 10v4.5M12 17.3v.2" {...P} />
+    </Glyph>
+  );
+}
+
+/** Globe — a global sponsor. */
+export function GlobeIcon({ className }: { className?: string }) {
+  return (
+    <Glyph className={className}>
+      <circle cx="12" cy="12" r="8.5" {...P} />
+      <path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.5 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.5-3.5-8.5s1-6 3.5-8.5Z" {...P} />
+    </Glyph>
+  );
+}

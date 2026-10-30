@@ -24,6 +24,7 @@
  *  - Other income (S7, ECO-05): the per-split count and the season share.
  */
 
+import { sponsorLadderLevelFor } from "@/engine/career/ladder";
 import {
   CAREER_CALENDAR,
   CAREER_ECONOMY,
@@ -364,11 +365,14 @@ export const SPONSOR_GOAL_CANDIDATES: readonly Pick<SponsorGoal, "kind" | "count
  * least `wordMin.stretch` (never unreachable), the one closest to the
  * word's chance, preferring one that shows the word itself.
  */
-export function pickGoal(word: SponsorGoalWord, level: TeamLevel, slot: number): SponsorGoal {
+export function pickGoal(word: SponsorGoalWord, level: TeamLevel, slot: number, maxChance = 1): SponsorGoal {
   const target = CAREER_SPONSOR.wordChance[word];
-  const rated = SPONSOR_GOAL_CANDIDATES.map((c) => ({ ...c, chance: goalChance(c, level) })).filter(
+  const reachable = SPONSOR_GOAL_CANDIDATES.map((c) => ({ ...c, chance: goalChance(c, level) })).filter(
     (c) => c.chance >= CAREER_SPONSOR.wordMin.stretch,
   );
+  // rc.35 (front S): never easier than a safer profile's goal of the same decision (Bold's is the hardest).
+  const capped = reachable.filter((c) => c.chance <= maxChance + 1e-9);
+  const rated = capped.length > 0 ? capped : reachable;
   const pool = rated.some((c) => wordOf(c.chance) === word) ? rated.filter((c) => wordOf(c.chance) === word) : rated;
   let best = pool[0];
   for (const c of pool) if (Math.abs(c.chance - target) < Math.abs(best.chance - target) - 1e-9) best = c;
@@ -527,7 +531,9 @@ export function fineScheduleFor(sponsorId: string, fine: number): SponsorFineSta
 }
 
 interface ProfileRow {
-  weeklyOfValue: number;
+  ceilingOfValue: number;
+  weeklyOfCeiling: number;
+  fineCapWeeks: number;
   fixedShare: number;
   fixedKind: "signing" | "milestone";
   bonusShare: number;
@@ -573,17 +579,14 @@ export interface DealQuote {
 }
 
 /**
- * Price a profile at a tier for the Mondays it pays. rc.34 review: the
- * weekly pay is the profile's share of the tier's value a Monday
- * (`weeklyOfValue`) — the same whatever the goal, so one decision's weekly
- * pay always reads Steady ≥ Balanced ≥ Bold. The rest of the value is the
- * fixed part's and the bonuses' (in the profile's `fixedShare` :
- * `bonusShare` ratio): their sum C solves EV(C) = the tier's value ×
- * Mondays at the goals' chance — EV is the weekly pay, plus C at that
- * chance, less a miss's fine (the profile's share of a bonus, up to the
- * cap of `fines.capWeeks` weeks of weekly pay: piecewise linear in C,
- * solved on the piece that holds). The figures are then quantized and the
- * EV and the most it pays (`ceiling`) re-read from them.
+ * Price a profile at a tier for the Mondays it pays. rc.35 (front S,
+ * Miguel's rc.34 playtest): priced by risk, not at equal expected value.
+ * The most a deal pays is the profile's `ceilingOfValue` × the tier's value
+ * for its Mondays (Bold > Balanced > Steady); `weeklyOfCeiling` of it is
+ * the weekly pay (also Bold ≥ Balanced ≥ Steady), the rest the fixed part
+ * and the bonuses (`fixedShare` : `bonusShare`). A miss's fine is capped at
+ * `fineCapWeeks` weeks of weekly pay. The EV is read at the goal's chance —
+ * it differs by profile now; the risk (goal, fine) is the price.
  */
 export function quoteDeal(input: {
   profile: SponsorProfile;
@@ -604,22 +607,15 @@ export function quoteDeal(input: {
   const perMonday = tierValuePerWeek(input.tier, input.seasonIndex, input.difficulty) * (input.valueShare ?? 1);
   const value = perMonday * mondays;
   const fines = finesApply(input.profile, input.difficulty);
-  const weekly = Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(row.weeklyOfValue * perMonday));
+  // rc.35 (front S): the most it pays is the profile's share of the value (Bold > Balanced > Steady); the weekly pay is a share of that.
+  const ceilingTotal = row.ceilingOfValue * value;
+  const weekly = Math.max(CAREER_PAYROLL.weeklyQuantum, quantizeWeekly(row.ceilingOfValue * row.weeklyOfCeiling * perMonday));
   const fineShare = fines ? row.fineShare : 0;
-  const fineCap = fines ? quantize(CAREER_SPONSOR.fines.capWeeks * weekly) : 0;
-  // The rest of the value comes from C: the fixed part (fx of it) and the bonuses (bx of it, over n goals).
-  const rest = Math.max(0, value - weekly * mondays);
+  const fineCap = fines ? quantize(row.fineCapWeeks * weekly) : 0;
+  // The rest of the ceiling: the fixed part (fx of it) and the bonuses (bx of it, over n goals).
+  const c = Math.max(0, ceilingTotal - weekly * mondays);
   const fx = row.fixedShare / (row.fixedShare + row.bonusShare);
   const bx = 1 - fx;
-  const anyHit = 1 - Math.pow(1 - p, n);
-  // What C returns at the chance (a milestone at the chance any goal is reached), and a full miss's fine per C below the cap.
-  const gain = fx * (row.fixedKind === "milestone" ? anyHit : 1) + bx * p;
-  const finePerC = (fineShare * bx) / n;
-  const belowCap = gain - n * (1 - p) * finePerC;
-  const c =
-    belowCap > 0 && (rest / belowCap) * finePerC <= fineCap
-      ? rest / belowCap
-      : (rest + n * (1 - p) * fineCap) / gain;
   const fixed = quantize(fx * c);
   const bonus = quantize((bx * c) / n);
   const fineMax = fineMaxOf({ fineShare, fineCap }, bonus);
@@ -633,6 +629,69 @@ export function quoteDeal(input: {
     ev: Math.round(expectedValueOf({ weekly, mondays, fixed, fixedKind: row.fixedKind, bonus, goals: n, chance: p, fineMax })),
     ceiling: weekly * mondays + fixed + bonus * n,
   };
+}
+
+// ---------------------------------------------------------------------------
+// rc.35 (front S): the sponsor side of the progression ladder
+// ---------------------------------------------------------------------------
+
+export interface SponsorAccess {
+  /** Offers a decision brings: 2 = Steady and Balanced, 3 = Bold too. */
+  offers: 2 | 3;
+  boldAllowed: boolean;
+  /** The best tier a brand may be at this level. */
+  tierCap: 1 | 2 | 3 | 4;
+  /** Global sponsors: the highest values and better perks. */
+  global: boolean;
+  /** The money multiplier on the tier's value at this level. */
+  valueMult: number;
+}
+
+/**
+ * What sponsors a ladder level reaches (CAREER_SPONSOR.access): the row of
+ * the highest `minLevel` at or below `level`. Front P's unlock ladder calls
+ * this; until it lands the flow passes the reputation tier
+ * (`sponsorLadderLevelOf`).
+ */
+export function sponsorAccessFor(level: number): SponsorAccess {
+  const rows = CAREER_SPONSOR.access.levels;
+  let row: (typeof rows)[number] = rows[0];
+  for (const r of rows) if (level >= r.minLevel) row = r;
+  return {
+    offers: (row.boldAllowed ? Math.min(3, row.offers) : 2) as 2 | 3,
+    boldAllowed: row.boldAllowed,
+    tierCap: row.tierCap as 1 | 2 | 3 | 4,
+    global: row.global,
+    valueMult: row.valueMult,
+  };
+}
+
+/** The org's sponsor ladder level (career/ladder.ts: 1 local, 2 challenger, 3 global, 4 headline). */
+export function sponsorLadderLevelOf(rep: number): number {
+  return sponsorLadderLevelFor(rep);
+}
+
+/** A deal's free bootcamps a season: its tier's perk, at least the global sponsors' (CAREER_SPONSOR.access). */
+export function sponsorFreeBootcampsOf(state: Pick<SponsorState, "tier" | "terms"> | null | undefined): number {
+  if (!state) return 0;
+  const tierPerk = CAREER_SPONSOR.tiers[state.tier - 1]?.freeBootcampsPerSeason ?? 0;
+  return state.terms?.global ? Math.max(tierPerk, CAREER_SPONSOR.access.globalBootcamps) : tierPerk;
+}
+
+/**
+ * rc.35 (front S): a missed goal's fine after the season cap — at most
+ * `fines.seasonCapWeeks` weeks of the deal's weekly pay across a season's
+ * misses. Returns the fine to book and the season tally to store.
+ */
+export function cappedSeasonFine(
+  terms: Pick<SponsorTerms, "weekly" | "finedSeason">,
+  seasonIndex: number,
+  fine: number,
+): { fine: number; finedSeason: { s: number; amount: number } } {
+  const prior = terms.finedSeason && terms.finedSeason.s === seasonIndex ? terms.finedSeason.amount : 0;
+  const cap = quantize(CAREER_SPONSOR.fines.seasonCapWeeks * terms.weekly);
+  const allowed = Math.max(0, Math.min(fine, cap - prior));
+  return { fine: allowed, finedSeason: { s: seasonIndex, amount: prior + allowed } };
 }
 
 /** The best tier the reputation allows (one lower after a Steady deal ran out of patience). */
@@ -662,18 +721,26 @@ export function sponsorDecisionFor(input: {
   difficulty: CareerDifficulty;
   level: TeamLevel;
   demoted?: boolean;
+  /** rc.35 (front S): the ladder's sponsor access (sponsorAccessFor) — default: every profile, no cap. */
+  access?: SponsorAccess;
 }): SponsorState[] {
-  const { tier, today, careerSeed, difficulty, level } = input;
+  const { today, careerSeed, difficulty, level } = input;
+  const access = input.access;
+  const tier = (access ? Math.min(input.tier, access.tierCap) : input.tier) as 1 | 2 | 3 | 4;
   const firstSlot = firstSlotFrom(today);
   const decideBy = decideByFor(today, firstSlot);
   const pool = brandsOfTier(tier);
   const start = Math.floor(derivedFloat(careerSeed, streams.gen("sponsorDeal", `${firstSlot}:${tier}`)) * pool.length);
-  const valueShare = levelValueShareOf(tier, level);
-  return SPONSOR_PROFILES.map((profile, i) => {
+  const levelShare = levelValueShareOf(tier, level);
+  const valueShare = levelShare * (access?.valueMult ?? 1);
+  const profiles = access && !access.boldAllowed ? SPONSOR_PROFILES.filter((p) => p !== "bold") : SPONSOR_PROFILES;
+  // rc.35 (front S): each goal is at most as likely as the safer profile's — Bold's is the hardest of the decision.
+  let maxChance = 1;
+  return profiles.slice(0, access?.offers ?? 3).map((profile, i) => {
     const row = profileRow(profile);
     const endsOn = settleDayOf(firstSlot + row.lengthSplits - 1);
-    // The first split's goal comes first: the deal is priced at its chance (s1 — the same expected value whatever goal the level allows).
-    const goal = pickGoal(row.word, level, firstSlot);
+    const goal = pickGoal(row.word, level, firstSlot, maxChance);
+    maxChance = goal.chance;
     const quote = quoteDeal({
       profile,
       tier,
@@ -702,8 +769,9 @@ export function sponsorDecisionFor(input: {
       offeredOn: { ...today },
       decideBy,
     };
-    if (valueShare < 1) terms.levelShare = valueShare;
+    if (levelShare < 1) terms.levelShare = levelShare;
     if (input.demoted) terms.demoted = true;
+    if (access?.global) terms.global = true;
     return {
       sponsorId: pool.length > 0 ? pool[(start + i) % pool.length] : `sponsor-${tier}-${profile}`,
       tier,
@@ -716,6 +784,36 @@ export function sponsorDecisionFor(input: {
       terms,
     };
   });
+}
+
+// ---------------------------------------------------------------------------
+// rc.35 (front S): the season goal from the same level model
+// ---------------------------------------------------------------------------
+
+/**
+ * The board's season goal, from the goal model the sponsors use (rc.35,
+ * Miguel's rc.34 playtest: "the season goal was harder than the Bold
+ * sponsor's"). The rule: the target is the goal a Balanced deal would set
+ * for one split (`pickGoal("even")`), met if reached in ANY split of the
+ * season — so it is never harder than a Balanced goal; the stretch is the
+ * Bold one (`pickGoal("stretch")`, never easier than the target).
+ */
+export function seasonGoalModelFor(level: TeamLevel, seasonIndex: number): { target: SponsorGoal; stretch: SponsorGoal } {
+  const slot = slotOf(seasonIndex, 1);
+  const target = pickGoal("even", level, slot);
+  const stretch = pickGoal("stretch", level, slot, target.chance);
+  return { target, stretch };
+}
+
+/** Is a season goal met: reached in any of the season's three splits (goalProgressOf on each). */
+export function seasonGoalMetOf(
+  goal: Pick<SponsorGoal, "kind" | "count" | "place">,
+  seasonIndex: number,
+  results: readonly CompactEventResult[],
+): boolean {
+  return ([1, 2, 3] as const).some(
+    (split) => goalProgressOf({ ...goal, slot: slotOf(seasonIndex, split) }, { results }).hit,
+  );
 }
 
 /** What a deal pays for sure from today: its weekly pay on the Mondays left, plus a signing payment not yet paid. */

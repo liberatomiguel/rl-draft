@@ -28,7 +28,7 @@ import {
 } from "./careerDecisions";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CAREER_INSERTS, CAREER_SPONSOR } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
@@ -89,6 +89,35 @@ function withConfig(target: object, patch: Record<string, unknown>, fn: () => vo
     for (const k of Object.keys(saved)) t[k] = saved[k];
   }
 }
+
+/**
+ * rc.35 (front S): the rc.34 suites below test the three profiles at every
+ * reputation; the ladder's access (two offers, no Bold, early) is opened for
+ * them and tested on its own ("rc.35 front S — the ladder's access").
+ */
+const ACCESS_LEVELS = CAREER_SPONSOR.access.levels as unknown as { offers: number; boldAllowed: boolean; minLevel: number }[];
+const SHIPPED_ACCESS = ACCESS_LEVELS.map((r) => ({ ...r }));
+const restoreAccess = () => ACCESS_LEVELS.forEach((r, i) => Object.assign(r, SHIPPED_ACCESS[i]));
+beforeEach(() => {
+  for (const r of ACCESS_LEVELS) {
+    r.offers = 3;
+    r.boldAllowed = true;
+  }
+});
+afterEach(restoreAccess);
+
+describe("rc.35 front S — the ladder's access", () => {
+  it("an early org gets two offers (Steady and Balanced, no Bold); from level 2 Bold joins", () => {
+    restoreAccess();
+    const at = (rep: number) => {
+      const save = createCareerSave(INPUT, 35_001);
+      save.reputation = rep;
+      return mondayAfter({ ...save, sponsorOffers: null }, 10);
+    };
+    expect(at(20).sponsorOffers!.map((o) => o.terms!.profile)).toEqual(["steady", "balanced"]);
+    expect(at(45).sponsorOffers!.map((o) => o.terms!.profile)).toEqual(["steady", "balanced", "bold"]);
+  });
+});
 
 /** The Sunday of `week`, nothing else pending (offers kept): the next advance is that week's Monday + 1. */
 function sundayOf(save: CareerSave, week: number, seasonIndex = save.clock.seasonIndex): CareerSave {
