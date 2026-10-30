@@ -335,9 +335,10 @@ function buildReport({ createCareerSave, rolloverToNextSeason }: Flow): string {
     "## Career entry season by org (Road to Worlds)",
     "",
     "An org enters in the first career season where it has a playable lineup (any region-only roster",
-    "included; national and easter-egg rosters never), in that lineup's region, when the region still",
-    "has a filler seat. Season X orgs are there at creation. `store/careerOrgEntry.test.ts` proves it",
-    "through the real rollover; RTW-01's `worldSim.test.ts` proves the intake function.",
+    "included; national and easter-egg rosters never), in that lineup's region (rc.33 RTW-03: a filler's",
+    "seat, else the seat of an org whose history is over, else a new one). Season X orgs are there at",
+    "creation. `store/careerOrgEntry.test.ts` proves it through the real rollover; `worldSim.test.ts`",
+    "proves the intake function.",
     "",
     table(
       ["Career season", "Orgs entering", "By region"],
@@ -358,11 +359,11 @@ function buildReport({ createCareerSave, rolloverToNextSeason }: Flow): string {
     "",
   );
 
-  // Who actually finds a seat: the real flow (creation + five rollovers). R31
-  // keeps 16 orgs a region and an entrant takes a filler's seat, so a region
-  // with no filler left keeps its field. Which org takes the last seats follows
-  // the dataset's file order (not strength); the outcome does not depend on
-  // the career seed.
+  // Who actually finds a seat: the real flow (creation + five rollovers).
+  // rc.33 (RTW-03): an entrant takes a filler's seat, else the seat of an org
+  // whose history is over, else the region grows — every org enters (an org
+  // that later leaves still counts as entered). The outcome does not depend
+  // on the career seed.
   let career = createCareerSave(
     {
       identity: { orgName: "Audit", abbrev: "AUD", managerName: "Audit", country: "BR", region: "SAM", crestId: "shield", colors: { primary: "#f97316", secondary: "#fde68a" }, buffType: "consistency" },
@@ -375,8 +376,11 @@ function buildReport({ createCareerSave, rolloverToNextSeason }: Flow): string {
   const atCreation = new Set(Object.keys(career.world.orgs).filter((r) => !r.startsWith("fill:")));
   const fillersAtCreation = (r: Region) => Object.keys(career.world.orgs).filter((ref) => ref.startsWith(`fill:${r}:`)).length;
   const seats = Object.fromEntries(REGIONS.map((r) => [r, fillersAtCreation(r)])) as Record<Region, number>;
-  for (let s = 1; s < CAREER_SEASONS.length; s++) career = rolloverToNextSeason(career);
   const inWorld = new Set(Object.keys(career.world.orgs));
+  for (let s = 1; s < CAREER_SEASONS.length; s++) {
+    career = rolloverToNextSeason(career);
+    for (const ref of Object.keys(career.world.orgs)) inWorld.add(ref);
+  }
   const due = [...entry].filter(([, e]) => e.index > 0);
   push(
     "### Who finds a seat (the real flow, seed-independent)",

@@ -53,6 +53,7 @@ import {
   lateSigningOpen,
   negotiationTriesFor,
   signingPlanFor,
+  squadIsShort,
   weeklyStatementOf,
 } from "@/store/careerFlow";
 import { blockbusterWhatOf, refusalPct } from "@/components/career/hub/NowCards";
@@ -396,6 +397,9 @@ export function MarketScreen() {
   const windowOpen = isWindowWeek(weekOfDay(save.clock.day));
   // rc.32 (M8, provisional): after a window sale, one free agent may still sign for a few days.
   const lateOpen = lateSigningOpen(save);
+  // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat, window or not.
+  const emptySeatOpen = !windowOpen && squadIsShort(save);
+  const freeAgentSignable = windowOpen || lateOpen || emptySeatOpen;
   const closesIn = daysUntilWindowCloses(save);
   // v0.3 visible signing gate (new signings only; renewals/squad exempt).
   const signableCap = signableOverallCap(save.reputation);
@@ -508,6 +512,9 @@ export function MarketScreen() {
             <span className="text-xs font-semibold text-blue-bright">
               {C.market.windowClosedHint(formatDaysAway(D, nextWindowStop.daysAway))}
             </span>
+          ) : null}
+          {emptySeatOpen ? (
+            <span className="w-full text-xs font-semibold text-good">{C.market.emptySeatOpen}</span>
           ) : null}
           {lateOpen && save.lateSigning ? (
             <span className="flex w-full items-center gap-2 text-xs font-semibold text-good">
@@ -921,8 +928,8 @@ export function MarketScreen() {
                 <Button
                   variant="primary"
                   size="md"
-                  disabled={!windowOpen && !(lateOpen && target.orgRef === null)}
-                  title={windowOpen || (lateOpen && target.orgRef === null) ? undefined : C.market.windowClosed}
+                  disabled={!windowOpen && !(freeAgentSignable && target.orgRef === null)}
+                  title={windowOpen || (freeAgentSignable && target.orgRef === null) ? undefined : C.market.windowClosed}
                   onClick={() => setOfferOpen(true)}
                 >
                   {C.market.signCta}

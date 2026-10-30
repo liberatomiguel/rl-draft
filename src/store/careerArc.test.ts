@@ -35,10 +35,17 @@ import {
   rookieView,
   scoutedBand,
 } from "@/engine/career/development";
-import type { CareerDifficulty, CareerPlayerView, ScoutLevel, WorldState } from "@/engine/career/types";
+import type { CareerDifficulty, CareerPlayerView, EventTier, ScoutLevel, WorldState } from "@/engine/career/types";
 import { agePassAndIntake, buildWorldAtCreation, worldGrowthWeek } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
-import { ARC_POLICIES, playArcCareer, type ArcCareer, type ArcPolicyId } from "./careerArcBot";
+import {
+  ARC_GAP_BUCKETS,
+  ARC_POLICIES,
+  playArcCareer,
+  type ArcCareer,
+  type ArcPolicyId,
+  type ArcSeason,
+} from "./careerArcBot";
 
 const env = process.env;
 const ALL_REGIONS: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
@@ -69,6 +76,13 @@ describe("career arc harness — smoke (rc.30 OBS-02)", { timeout: 60_000 }, () 
     expect(s0.income.prize ?? 0).toBeGreaterThan(0);
     expect(s0.spend.payroll ?? 0).toBeGreaterThan(0);
     expect(s0.squad.length).toBeGreaterThanOrEqual(3);
+    // rc.33 (BAL-04 / RTW-02): the series record by tier and by rating gap, and the first sponsor.
+    const byTier = Object.values(s0.series ?? {});
+    const byGap = Object.values(s0.seriesByGap ?? {});
+    const sum = (xs: [number, number][]) => xs.reduce((n, [w, l]) => n + w + l, 0);
+    expect(sum(byTier)).toBeGreaterThan(10);
+    expect(sum(byGap)).toBe(sum(byTier));
+    expect(tuned.firstSponsorSeason === null || tuned.firstSponsorSeason === 0).toBe(true);
     // Same seed, same story.
     const again = playArcCareer({ region: "SAM", difficulty: "normal", policy: "tuned", seed: 31337, seasons: 1 });
     expect(again.seasons).toEqual(tuned.seasons);
@@ -244,6 +258,107 @@ function arcReport(careers: ArcCareer[], seasons: number): string {
     const titles = rows.reduce((n, r) => n + r.titles, 0) / Math.max(1, rows.length);
     lines.push(
       `| ${d} | ${rows.length} | ${majors.toFixed(2)} | ${pct(worlds, rows.length)} | ${titles.toFixed(2)} | ${q(rows.map((r) => r.regionRank).filter((x) => x > 0), 0.5)} |`,
+    );
+  }
+  lines.push("");
+
+  // 4d. rc.33 (BAL-04): the user's series win rate — difficulty × region, by
+  // season, by tier, and at an even rating gap (the presets' intent row).
+  // Dumps from before rc.33 carry no series record: their cells read "–".
+  const sumSeries = (rows: ArcSeason[], pick: (r: ArcSeason) => readonly [number, number] | undefined): [number, number] => {
+    let won = 0;
+    let lost = 0;
+    for (const r of rows) {
+      const x = pick(r);
+      if (x) {
+        won += x[0];
+        lost += x[1];
+      }
+    }
+    return [won, lost];
+  };
+  const allSeries = (r: ArcSeason): [number, number] | undefined => {
+    if (!r.series) return undefined;
+    let won = 0;
+    let lost = 0;
+    for (const x of Object.values(r.series)) {
+      won += x?.[0] ?? 0;
+      lost += x?.[1] ?? 0;
+    }
+    return [won, lost];
+  };
+  const winCell = ([won, lost]: [number, number]) =>
+    won + lost === 0 ? "–" : `${Math.round((100 * won) / (won + lost))}% · ${won + lost}`;
+  const DIFFS = ["easy", "normal", "hard"] as const;
+  lines.push("### Series win rate — difficulty × region (every policy, every season; won % · series)");
+  lines.push("");
+  lines.push("| Region | easy | normal | hard |");
+  lines.push("|---|---|---|---|");
+  for (const [region, rcs] of [...group((c) => c.region), ["all", careers] as [string, ArcCareer[]]]) {
+    const cells = DIFFS.map((d) => winCell(sumSeries(rcs.filter((c) => c.difficulty === d).flatMap((c) => c.seasons), allSeries)));
+    lines.push(`| ${region} | ${cells.join(" | ")} |`);
+  }
+  lines.push("");
+  lines.push("### Series win rate at an even rating gap (±2, the AI shift left out) — difficulty × region");
+  lines.push("");
+  lines.push("| Region | easy | normal | hard |");
+  lines.push("|---|---|---|---|");
+  for (const [region, rcs] of [...group((c) => c.region), ["all", careers] as [string, ArcCareer[]]]) {
+    const cells = DIFFS.map((d) =>
+      winCell(sumSeries(rcs.filter((c) => c.difficulty === d).flatMap((c) => c.seasons), (r) => r.seriesByGap?.[ARC_GAP_BUCKETS[2].key])),
+    );
+    lines.push(`| ${region} | ${cells.join(" | ")} |`);
+  }
+  lines.push("");
+  lines.push("### Series win rate by rating gap (user − opponent) — by difficulty, every region");
+  lines.push("");
+  lines.push(`| Difficulty | ${ARC_GAP_BUCKETS.map((b) => b.key).join(" | ")} |`);
+  lines.push(`|---|${ARC_GAP_BUCKETS.map(() => "---").join("|")}|`);
+  for (const d of DIFFS) {
+    const rows = careers.filter((c) => c.difficulty === d).flatMap((c) => c.seasons);
+    if (rows.length === 0) continue;
+    lines.push(`| ${d} | ${ARC_GAP_BUCKETS.map((b) => winCell(sumSeries(rows, (r) => r.seriesByGap?.[b.key]))).join(" | ")} |`);
+  }
+  lines.push("");
+  const TIERS: EventTier[] = ["t3", "t2", "qualifier", "regional", "major", "worlds"];
+  lines.push("### Series win rate by event tier — by difficulty, every region");
+  lines.push("");
+  lines.push(`| Difficulty | ${TIERS.join(" | ")} |`);
+  lines.push(`|---|${TIERS.map(() => "---").join("|")}|`);
+  for (const d of DIFFS) {
+    const rows = careers.filter((c) => c.difficulty === d).flatMap((c) => c.seasons);
+    if (rows.length === 0) continue;
+    lines.push(`| ${d} | ${TIERS.map((tier) => winCell(sumSeries(rows, (r) => r.series?.[tier]))).join(" | ")} |`);
+  }
+  lines.push("");
+  lines.push("### Series win rate by season — by difficulty, every region");
+  lines.push("");
+  lines.push(`| Difficulty | ${Array.from({ length: seasons }, (_, s) => `S${s}`).join(" | ")} |`);
+  lines.push(`|---|${Array.from({ length: seasons }, () => "---").join("|")}|`);
+  for (const d of DIFFS) {
+    const cs = careers.filter((c) => c.difficulty === d);
+    if (cs.length === 0) continue;
+    const cells = Array.from({ length: seasons }, (_, s) =>
+      winCell(sumSeries(cs.map((c) => c.seasons[s]).filter((r): r is ArcSeason => r !== undefined), allSeries)),
+    );
+    lines.push(`| ${d} | ${cells.join(" | ")} |`);
+  }
+  lines.push("");
+
+  // 4e. rc.33 (RTW-02): the path to reputation — rep at the end of S0 / S1 / S2
+  // (careers alive then) and the first real sponsor deal, region × difficulty.
+  lines.push("### Reputation path (RTW-02) — region × difficulty, every policy");
+  lines.push("");
+  lines.push("| Region · difficulty | n | rep S0 p50 (p10–p90) | rep S1 p50 (p10–p90) | rep S2 p50 | sponsor by end S1 | first sponsor p50 |");
+  lines.push("|---|---|---|---|---|---|---|");
+  for (const [k, cs] of group((c) => `${c.region} · ${c.difficulty}`)) {
+    const repAt = (s: number) => cs.map((c) => c.seasons[s]?.rep).filter((x): x is number => x !== undefined);
+    const spread = (xs: number[]) => (xs.length ? `${q(xs, 0.5)} (${q(xs, 0.1)}–${q(xs, 0.9)})` : "–");
+    const known = cs.filter((c) => c.firstSponsorSeason !== undefined);
+    const first = known.map((c) => (c.firstSponsorSeason === null ? Infinity : c.firstSponsorSeason!));
+    const p50 = q(first, 0.5);
+    lines.push(
+      `| ${k} | ${cs.length} | ${spread(repAt(0))} | ${spread(repAt(1))} | ${repAt(2).length ? q(repAt(2), 0.5) : "–"} | ${known.length ? pct(known.filter((c) => c.firstSponsorSeason !== null && c.firstSponsorSeason! <= 1).length, known.length) : "–"} | ${known.length === 0 ? "–" : p50 === Infinity ? "never" : `S${p50}`} |`,
     );
   }
   lines.push("");

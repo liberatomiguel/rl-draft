@@ -333,7 +333,7 @@ describe("ECO-03 — sales and failed transfers are atomic", () => {
     expect(now.now).toBe(before.after);
   });
 
-  it("sell a starter WITHOUT a reserve: the seat stays open (a stand-in covers events) — nobody else moves", () => {
+  it("sell a starter WITHOUT a reserve: the seat stays open (rc.33 RTW-05: the next event waits for a third player) — nobody else moves", () => {
     const save = bidFor(makeSave(), makeSave().starterIds[2], 7_500);
     const seller = save.starterIds[2];
     const sold = acceptBidFlow(save, `bid:test:${seller}`).save;

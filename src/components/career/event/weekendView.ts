@@ -24,6 +24,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { eventRepKindFor, repGainFor, t3RepKeyFor } from "@/engine/career/economy";
+import { deepRunKeyFor, newcomerRepKindOf, type NewcomerRepKind } from "@/engine/career/reputation";
 import type { CareerEventDef, CareerSave, EventTier } from "@/engine/career/types";
 import { nextPlayoffPairings } from "@/engine/playoffs";
 import type { PlayoffState } from "@/engine/types";
@@ -349,17 +350,41 @@ export function placementLabelOf(labels: PlacementLabels, tier: EventTier, place
  * applyEventRep awards — with gainRep's cap at 100, the t3 per-split cap read
  * from the save flags, and the Worlds title (finishEvent sets reputation to 100).
  */
-export function eventRepPreview(input: {
+export function eventRepPreview(input: EventRepPreviewInput): number {
+  const { tier, placement, reputation } = input;
+  if (tier === "worlds" && placement === "champion") return Math.max(0, 100 - reputation);
+  const kind = eventRepPreviewKind(input);
+  return kind ? Math.max(0, Math.min(100 - reputation, repGainFor(kind, reputation))) : 0;
+}
+
+export interface EventRepPreviewInput {
   tier: EventTier;
   placement: Placement;
   reputation: number;
   flags: Record<string, unknown>;
   seasonIndex: number;
   day: number;
-}): number {
-  const { tier, placement, reputation } = input;
-  if (tier === "worlds" && placement === "champion") return Math.max(0, 100 - reputation);
-  const used = Number(input.flags[t3RepKeyFor(input.seasonIndex, splitOfWeek(weekOfDay(input.day)))] ?? 0) || 0;
-  const kind = eventRepKindFor(tier, placement, { t3CapReached: used >= CAREER_UNOFFICIAL.t3RepCapPerSplit });
-  return kind ? Math.max(0, Math.min(100 - reputation, repGainFor(kind, reputation))) : 0;
+  /** rc.33 (RTW-02): the finished event — the newcomer's path reads the user's seed and Swiss wins. */
+  tournament?: TournamentState;
+}
+
+/**
+ * The kind of reputation finishEvent awards (applyEventRep's order: the
+ * placement first, then rc.33's newcomer path against the seed), or null.
+ */
+export function eventRepPreviewKind(input: EventRepPreviewInput): ReturnType<typeof eventRepKindFor> | NewcomerRepKind | null {
+  const split = splitOfWeek(weekOfDay(input.day));
+  const used = Number(input.flags[t3RepKeyFor(input.seasonIndex, split)] ?? 0) || 0;
+  const t3CapReached = used >= CAREER_UNOFFICIAL.t3RepCapPerSplit;
+  const deepRunsThisSplit = Number(input.flags[deepRunKeyFor(input.seasonIndex, split)] ?? 0) || 0;
+  return (
+    eventRepKindFor(input.tier, input.placement, { t3CapReached }) ??
+    (input.tournament
+      ? newcomerRepKindOf(input.tier, input.placement, input.tournament, {
+          rep: input.reputation,
+          t3CapReached,
+          deepRunsThisSplit,
+        })
+      : null)
+  );
 }

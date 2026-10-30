@@ -476,9 +476,10 @@ describe("rc.32 M4 — the Backer in weeks of payroll and what each breach does"
     expect(mail.params?.balance).toBe(save.finances.balance);
     expect(CAREER_EN.mail.body.restructured(mail.params!)).toContain("went to the debt");
     expect(save.news.some((n) => n.titleKey === "restructured")).toBe(true);
-    // Playable: two players and a stand-in in the third seat, no softlock.
+    // RTW-05 (rc.33): two players — the third seat is empty (rated 0, no
+    // stand-in); the clock holds before the event until a third one signs.
     const regional = officialEventDefsForWeek(0, 4).find((d) => d.region === "SAM")!;
-    expect(userTeamForEvent(save, regional).usedStandIn).toBe(true);
+    expect(userTeamForEvent(save, regional).emptySeats).toBe(1);
     // Breach 3 — the end on Normal.
     save = quietSunday(save, 4);
     save.finances.balance = backerLineOf(save).floor + 10;

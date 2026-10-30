@@ -38,7 +38,7 @@ import { CAREER_SAVE, CAREER_SEASONS } from "@/config/balance";
 import { seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
 import { repTierOf } from "@/engine/career/economy";
 import { deriveSeed, streams } from "@/engine/career/seeds";
-import { userStarsFor } from "@/engine/career/worldSim";
+import { LINEUP_SEATS, userStarsFor } from "@/engine/career/worldSim";
 import type {
   CareerSave,
   CareerSlotMeta,
@@ -578,10 +578,8 @@ export function slotMetaFor(slots: (CareerSave | null)[]): (CareerSlotMeta | nul
   return slots.map((save, slot) => {
     if (!save) return null;
     const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
-    const avg =
-      starters.length > 0
-        ? starters.reduce((s, p) => s + p.overall, 0) / starters.length
-        : 70;
+    // RTW-05 (rc.33): three seats, an empty one counts 0.
+    const avg = starters.reduce((s, p) => s + p.overall, 0) / LINEUP_SEATS;
     return {
       slot,
       orgName: save.identity.orgName,

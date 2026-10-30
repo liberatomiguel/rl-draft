@@ -12,6 +12,7 @@ import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import { breachOutcomeFor, insertMoneyFor, loanBreachesOf, weeklyOf } from "@/engine/career/economy";
+import { ruledOutFor } from "@/store/careerFlow";
 import type {
   CareerEventDef,
   CareerSave,
@@ -180,6 +181,48 @@ export function NowInvite({
   );
 }
 
+/**
+ * RTW-05 (rc.33): the squad is under three and an event is due — the clock
+ * holds on its eve (and the event cannot start) until a third player signs.
+ * A free agent can take the empty seat any day; a Community Cup can be passed.
+ */
+export function NowSquadShort({
+  save,
+  C,
+  def,
+  onPass,
+}: {
+  save: CareerSave;
+  C: CareerCopy;
+  def: CareerEventDef;
+  onPass: () => void;
+}) {
+  const router = useRouter();
+  const unofficial = def.tier === "t3" || def.tier === "t2";
+  return (
+    <div>
+      <p className="kicker mb-1 text-[10px] text-bad">{C.hub.squadShortKicker}</p>
+      <h2 className="display text-xl font-bold uppercase tracking-wide text-ink sm:text-2xl">{C.hub.squadShortTitle}</h2>
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-sub">
+        {C.hub.squadShortBody(save.squad.length, def.name)}
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button variant="primary" size="md" className="min-h-11" onClick={() => router.push("/career/market")}>
+          {C.hub.squadShortMarket}
+        </Button>
+        <Button variant="secondary" size="md" className="min-h-11" onClick={() => router.push("/career/squad")}>
+          {C.hub.squadShortSquad}
+        </Button>
+        {unofficial ? (
+          <Button variant="ghost" size="md" className="min-h-11" onClick={onPass}>
+            {C.hub.invitePass}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function NowSeason({ save, C, onGo }: { save: CareerSave; C: CareerCopy; onGo: () => void }) {
   const ended = save.phase === "ended";
   return (
@@ -231,10 +274,8 @@ export function NowEvent({
     ? fieldOrgs.reduce((s, o) => s + o.stars, 0) / fieldOrgs.length
     : 0;
   const points = maxPointsOf(def.tier);
-  const unavailable =
-    daysAway === 0 && save.pendingUnavailability && save.pendingUnavailability.eventId === def.id
-      ? save.squad.find((p) => p.id === save.pendingUnavailability?.playerId)
-      : null;
+  // RTW-05 (rc.33): ruled out only while a reserve covers him.
+  const unavailable = daysAway === 0 ? ruledOutFor(save, def) : null;
 
   return (
     <div>

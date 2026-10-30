@@ -23,7 +23,15 @@ import {
 import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
 import { quantize, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
-import type { CareerDifficulty, CareerEndReason, CareerPlayerView, CareerPrefs, CareerSave, ScoutLevel } from "@/engine/career/types";
+import type {
+  CareerDifficulty,
+  CareerEndReason,
+  CareerPlayerView,
+  CareerPrefs,
+  CareerSave,
+  EventTier,
+  ScoutLevel,
+} from "@/engine/career/types";
 import type { Placement, Region } from "@/engine/types";
 import {
   acceptBidFlow,
@@ -42,6 +50,7 @@ import {
   runScrimFlow,
   signPlayerFlow,
   simEventToEnd,
+  squadIsShort,
   startEvent,
   takeBankLoanFlow,
   userSeedRatingFor,
@@ -178,6 +187,30 @@ export interface ArcSeason {
   /** Players sold to an incoming bid. */
   sales: number;
   squad: ArcSquadRow[];
+  /**
+   * rc.33 (BAL-04): the user's series this season, [won, lost], by event tier
+   * (t3, t2, qualifier, regional, major, worlds). Absent in older dumps.
+   */
+  series?: Partial<Record<EventTier, [number, number]>>;
+  /**
+   * rc.33 (BAL-04): the same series by the rating gap at the series (the
+   * user's team rating − the opponent's, the AI shift left out; buckets of
+   * `ARC_GAP_BUCKETS`), [won, lost] — "even" is the presets' intent row.
+   */
+  seriesByGap?: Record<string, [number, number]>;
+}
+
+/** rc.33 (BAL-04): the rating-gap buckets of `ArcSeason.seriesByGap` (user − opponent). */
+export const ARC_GAP_BUCKETS: { key: string; max: number }[] = [
+  { key: "≤ −6", max: -6 },
+  { key: "−6 to −2", max: -2 },
+  { key: "even (±2)", max: 2 },
+  { key: "2 to 6", max: 6 },
+  { key: "≥ 6", max: Infinity },
+];
+
+function gapBucketOf(gap: number): string {
+  return (ARC_GAP_BUCKETS.find((b) => gap <= b.max) ?? ARC_GAP_BUCKETS[ARC_GAP_BUCKETS.length - 1]).key;
 }
 
 export interface ArcCareer {
@@ -192,6 +225,8 @@ export interface ArcCareer {
   firstMajorSeason: number | null;
   firstWorldsSeason: number | null;
   worldsTitleSeason: number | null;
+  /** rc.33 (RTW-02): the season the first real sponsor deal was signed (null = never; absent in older dumps). */
+  firstSponsorSeason?: number | null;
   ms: number;
 }
 
@@ -206,6 +241,8 @@ interface Tally {
   signings: number;
   starSignings: number;
   sales: number;
+  series: Partial<Record<EventTier, [number, number]>>;
+  seriesByGap: Record<string, [number, number]>;
 }
 
 function newTally(save: CareerSave, seen: Set<string>): Tally {
@@ -219,7 +256,34 @@ function newTally(save: CareerSave, seen: Set<string>): Tally {
     signings: 0,
     starSignings: 0,
     sales: 0,
+    series: {},
+    seriesByGap: {},
   };
+}
+
+/**
+ * rc.33 (BAL-04): books the user's series of a finished event (called right
+ * before finishEvent): won / lost by tier and by the rating gap at the series
+ * (each side's rating with the AI shift left out — the presets' edge is what
+ * the win rate at an even gap measures).
+ */
+function countSeries(save: CareerSave, t: Tally): void {
+  const ev = save.activeEvent;
+  if (!ev || ev.tournament.stage !== "finished") return;
+  const tr = ev.tournament;
+  const intrinsic = (id: string) => {
+    const r = tr.teams[id]?.rating;
+    return r ? r.total - r.difficultyShift : 0;
+  };
+  const byTier = (t.series[ev.def.tier] ??= [0, 0]);
+  for (const s of [...tr.swiss.rounds.flatMap((r) => r.series), ...(tr.playoffs?.rounds.flatMap((r) => r.series) ?? [])]) {
+    if (s.teamAId !== "user" && s.teamBId !== "user") continue;
+    const opponent = s.teamAId === "user" ? s.teamBId : s.teamAId;
+    const slot = s.winnerTeamId === "user" ? 0 : 1; // [won, lost]
+    byTier[slot] += 1;
+    const gap = Math.round((intrinsic("user") - intrinsic(opponent)) * 10) / 10;
+    (t.seriesByGap[gapBucketOf(gap)] ??= [0, 0])[slot] += 1;
+  }
 }
 
 /** Books every ledger line not seen yet (ids are unique; the tail is a ring buffer). */
@@ -314,10 +378,15 @@ function sign(save: CareerSave, c: Candidate, t: Tally): CareerSave | null {
   return res.save;
 }
 
-/** One window visit: fill open seats, then (by policy) one upgrade. */
-function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+/**
+ * Open starter seats (contracts that ran out, retirements, a sale): every
+ * policy fills them. RTW-05 (rc.33): no event plays short and the clock holds
+ * before one, so a squad under three always signs — the cheapest player when
+ * nothing fits the policy's budget (a free agent into an empty seat is never
+ * refused for money or the window).
+ */
+function fillSeats(input: CareerSave, policy: ArcPolicy, t: Tally, pool: Candidate[] = candidatesFor(input)): CareerSave {
   let save = input;
-  const pool = candidatesFor(save);
   const byOverall = [...pool].sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
   const byCost = [...pool].sort((a, b) => a.cost - b.cost || b.view.overall - a.view.overall);
   const youngest = pool.filter((c) => c.view.age <= 19).sort((a, b) => b.potentialRead - a.potentialRead);
@@ -326,14 +395,23 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
   const tried = new Set<string>();
   const pick = (list: Candidate[]) =>
     list.find((c) => !tried.has(c.view.id) && affordable(save, c.cost, c.salaryPerSplit, policy));
-
-  // 1. Open starter seats (contracts that ran out, retirements, a sale): every policy fills them.
   while (starters(save).length < 3) {
-    const c = pick(policy.market === "youth" ? youngest : byOverall) ?? pick(byCost);
+    const c =
+      pick(policy.market === "youth" ? youngest : byOverall) ??
+      pick(byCost) ??
+      (squadIsShort(save) ? byCost.find((x) => !tried.has(x.view.id)) : undefined);
     if (!c) break;
     tried.add(c.view.id);
     save = sign(save, c, t) ?? save;
   }
+  return save;
+}
+
+/** One window visit: fill open seats, then (by policy) one upgrade. */
+function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+  const pool = candidatesFor(input);
+  const save = fillSeats(input, policy, t, pool);
+  const byOverall = [...pool].sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
   if (policy.market === "keep") return save;
 
   // 2. One upgrade per visit: release the weakest starter for a clearly better player.
@@ -431,13 +509,21 @@ function borrow(save: CareerSave, t: Tally): CareerSave {
 /** Today's decisions, in the order a player meets them. */
 function decide(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
   let save = input;
+  // RTW-05 (rc.33): a squad under three signs first — no event starts short.
+  if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).
   if (save.activeEvent) {
     save = simEventToEnd(save);
-    if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") save = finishEvent(save);
+    if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
+      countSeries(save, t);
+      save = finishEvent(save);
+    }
   } else if (save.pendingEventDef && save.pendingEventDef.day === save.clock.day) {
     save = simEventToEnd(startEvent(save, false));
-    if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") save = finishEvent(save);
+    if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
+      countSeries(save, t);
+      save = finishEvent(save);
+    }
   }
   if (save.phase !== "running") return save;
   if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = resolveInsertFlow(save, "b").save;
@@ -539,6 +625,7 @@ export function playArcCareer(cfg: {
     firstMajorSeason: null,
     firstWorldsSeason: null,
     worldsTitleSeason: null,
+    firstSponsorSeason: null,
     ms: 0,
   };
   const seen = new Set<string>(save.finances.ledger.map((l) => l.id));
@@ -554,6 +641,7 @@ export function playArcCareer(cfg: {
       }
       save = decide(save, policy, t);
       track(save, t);
+      if (save.sponsor && out.firstSponsorSeason === null) out.firstSponsorSeason = save.clock.seasonIndex;
       if (save.phase !== "running") break;
       const before = save.clock.day;
       const wasMonday = dayOfWeekOf(before + 1) === 1;
@@ -595,6 +683,8 @@ export function playArcCareer(cfg: {
       starSignings: t.starSignings,
       sales: t.sales,
       squad: squadRows(save),
+      series: t.series,
+      seriesByGap: t.seriesByGap,
     });
     const row = out.seasons[out.seasons.length - 1];
     if (row.majorsQualified > 0 && out.firstMajorSeason === null) out.firstMajorSeason = row.seasonIndex;

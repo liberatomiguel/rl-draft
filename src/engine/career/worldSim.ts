@@ -38,7 +38,6 @@ import {
   CAREER_GEAR,
   CAREER_QUALIFIER,
   CAREER_SEASONS,
-  CAREER_SUB,
   CAREER_TRAINING,
   CAREER_UNOFFICIAL,
   CAREER_WORLD,
@@ -60,7 +59,6 @@ import {
 import {
   FILLER_ORG_NAME_BANK,
   PLAYER_NAME_BANK,
-  STAND_IN_NAMES,
   STARTER_NAME_BANK,
   playerNameBankFor,
 } from "@/data/career/names";
@@ -152,6 +150,9 @@ const FACILITY_BUFF_LEVEL = ["~", "+", "++", "+++"] as const;
 
 /** initFieldTournament's single-elim contract (unofficial cups are 8 teams). */
 const SINGLE_ELIM_TEAMS = 8;
+
+/** RTW-05 (rc.33): the seats a lineup has — a team rating always counts all three. */
+export const LINEUP_SEATS = 3;
 
 // Derivation shapes below are structural (documented in the design doc §6/§10
 // prose rather than a CAREER_* group — candidates to hoist into balance.ts):
@@ -300,8 +301,17 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
   const hasSeason0Card = new Set(
     playerCards.filter((c) => c.seasonId === season0.seasonId).map((c) => c.playerId),
   );
+  // rc.33 (RTW-04): a career that ended well before Season X stays ended —
+  // only a recent one (CAREER_WORLD.creationFreeAgentRecentSeasons) or one
+  // that resumes later puts a real player in the pool.
+  const recent = CAREER_WORLD.creationFreeAgentRecentSeasons;
+  const inCreationPool = (id: string): boolean => {
+    if (recent === null) return true;
+    const last = lastDatasetCardOrder(id);
+    return last === undefined || last >= season0.order - recent;
+  };
   const candidates = players
-    .filter((p) => !rosteredPlayerIds.has(p.id) && !hasSeason0Card.has(p.id))
+    .filter((p) => !rosteredPlayerIds.has(p.id) && !hasSeason0Card.has(p.id) && inCreationPool(p.id))
     .map((p) => ({ id: p.id, region: p.region, overall: anchorOverall(p.id, season0.order) }))
     .filter((p): p is { id: string; region: Region; overall: number } => p.overall !== null)
     .sort((a, b) => b.overall - a.overall || a.id.localeCompare(b.id));
@@ -524,51 +534,65 @@ function careerChemistry(fielded: SquadPlayer[]): {
     if (conn > 0) items.push({ label: `${a.name} · ${b.name} — time together`, points: conn });
     if (her > 0) items.push({ label: `${a.name} · ${b.name} — ${herLabel}`, points: her });
   }
-  const max = Math.max(1, C.maxRawPerPair * pairsIdx.length);
+  // RTW-05 (rc.33): the pairs of a full lineup (3) — an empty seat's pairs count 0.
+  const fullPairs = (LINEUP_SEATS * (LINEUP_SEATS - 1)) / 2;
+  const max = Math.max(1, C.maxRawPerPair * Math.max(fullPairs, pairsIdx.length));
   const percent = Math.min(100, Math.round((raw / max) * 100));
   const tier = CHEMISTRY.tiers.find((t) => percent >= t.min)?.tier ?? "Poor";
   return { raw, max, percent, tier, items };
 }
 
-/** Emergency Stand-in: a 60-OVR rental with NO chemistry history. */
-function standInMemberView(region: Region): MemberView {
+/**
+ * RTW-05 (rc.33): an empty seat — nobody plays it (no event starts with one,
+ * `careerFlow.squadIsShort`), and the team rating counts it as 0, so HQ and
+ * the Squad screen show the honest rating of a squad under three. Replaces
+ * the emergency stand-in (a 60-OVR rental).
+ */
+function emptySeatMemberView(): MemberView {
   return {
-    name: STAND_IN_NAMES[region],
-    overall: CAREER_SUB.standInOverall,
-    stats: effectiveStats(CAREER_SUB.standInOverall),
-    lineupId: "standin",
-    orgId: "standin",
+    name: "—",
+    overall: 0,
+    stats: effectiveStats(0),
+    lineupId: "empty-seat",
+    orgId: "empty-seat",
   };
 }
 
 /**
  * Assemble the user's TournamentTeam for one event. The fielded trio is
- * `starterIds`; an unavailable starter is replaced by the squad sub (role
- * "sub") or, without one, by the Emergency Stand-in. The bench sub (when not
- * fielded and not unavailable) rides AssembleInput.sub for depth + chemistry.
+ * `starterIds`; an unavailable starter is replaced by the squad's reserve
+ * (role "sub"). RTW-05 (rc.33): with no reserve to cover him nobody is ruled
+ * out (he plays), and a seat the squad cannot fill stays EMPTY — rated 0, no
+ * stand-in. The bench sub (when not fielded and not unavailable) rides
+ * AssembleInput.sub for depth + chemistry.
  */
 export function userTeamFor(input: UserTeamInput): {
   team: TournamentTeam;
-  usedStandIn: boolean;
+  /** RTW-05 (rc.33): seats no squad player fills (rated 0; an event never starts with one). */
+  emptySeats: number;
   usedSubId: string | null;
-  /** v2.0 (R40 review): the squad players actually fielded (a stand-in is not one). */
+  /** v2.0 (R40 review): the squad players actually fielded (an empty seat is not one). */
   fieldedIds: string[];
 } {
   const byId = new Map(input.squad.map((p) => [p.id, p]));
-  const unavailable = input.unavailablePlayerId ?? null;
   const subPlayer =
     input.squad.find((p) => p.role === "sub" && !input.starterIds.includes(p.id)) ?? null;
+  // RTW-05: a ruled-out starter needs a reserve who can take his seat;
+  // without one nobody is ruled out (no lineup ever drops below three).
+  const asked = input.unavailablePlayerId ?? null;
+  const askedIsStarter = asked !== null && input.starterIds.includes(asked) && byId.has(asked);
+  const unavailable = askedIsStarter && !(subPlayer && subPlayer.id !== asked) ? null : asked;
 
-  let usedStandIn = false;
+  let emptySeats = 0;
   let usedSubId: string | null = null;
-  // Track the actual fielded squad players (for earned chemistry); a stand-in
-  // contributes no history.
+  // Track the actual fielded squad players (for earned chemistry); an empty
+  // seat contributes no history.
   const fieldedPlayers: (SquadPlayer | null)[] = [];
   // Defensive: a starter id that isn't on the squad (e.g. a released player
   // whose slot wasn't repaired) must NEVER throw — the fielded lineup renders
-  // on every top-bar render. Fall back to the squad sub, then an emergency
-  // stand-in, so a stale roster degrades gracefully instead of crashing the
-  // whole /career layout (and corrupting the save on the next write).
+  // on every top-bar render. Fall back to the squad sub, then an empty seat,
+  // so a stale roster degrades gracefully instead of crashing the whole
+  // /career layout (and corrupting the save on the next write).
   const fielded: MemberView[] = input.starterIds.map((starterId) => {
     const p = starterId && starterId !== unavailable ? byId.get(starterId) : undefined;
     if (p) {
@@ -580,9 +604,9 @@ export function userTeamFor(input: UserTeamInput): {
       fieldedPlayers.push(subPlayer);
       return squadMemberView(subPlayer, input.gear.psychologist);
     }
-    usedStandIn = true;
+    emptySeats += 1;
     fieldedPlayers.push(null);
-    return standInMemberView(input.identity.region);
+    return emptySeatMemberView();
   });
 
   const chem = careerChemistry(fieldedPlayers.filter((p): p is SquadPlayer => p !== null));
@@ -640,7 +664,7 @@ export function userTeamFor(input: UserTeamInput): {
   });
 
   const fieldedIds = fieldedPlayers.filter((p): p is SquadPlayer => p !== null).map((p) => p.id);
-  return { team, usedStandIn, usedSubId, fieldedIds };
+  return { team, emptySeats, usedSubId, fieldedIds };
 }
 
 /**
@@ -649,7 +673,7 @@ export function userTeamFor(input: UserTeamInput): {
  * lineup of the squad rated with the others on the bench, the best kept. It
  * ignores who the user happens to field and the bootcamp edge (bootcampSharp
  * 0), so a lineup swap or an armed bootcamp cannot move what is frozen on it
- * (the local scene's anchor). A squad under three fields its stand-ins.
+ * (the local scene's anchor). RTW-05: a squad under three rates its empty seats at 0.
  */
 export function bestTrioRatingFor(
   input: Omit<UserTeamInput, "starterIds" | "bootcampSharp" | "unavailablePlayerId">,
@@ -773,7 +797,9 @@ export function orgTeamFor(orgRef: string, ctx: OrgTeamCtx): TournamentTeam {
   // rc.32 (30/10, PROVISIONAL — CAREER_WORLD.fillerCapToBestReal): a filler
   // org never out-rates the region's best real lineup.
   if (!isFiller || !CAREER_WORLD.fillerCapToBestReal) return team;
-  const cap = bestRealOrgRating(org.region, ctx);
+  const best = bestRealOrgRating(org.region, ctx);
+  // rc.33 (BAL-04): the cap sits CAREER_WORLD.fillerCapMargin above that lineup.
+  const cap = best === null ? null : best + CAREER_WORLD.fillerCapMargin;
   if (cap === null || intrinsicRating(team) <= cap) return team;
   // A flat cut lands on the cap; a second pass corrects the superteam
   // compression when the side sat above TEAM_RATING.superteamPivot.
@@ -1561,6 +1587,8 @@ export function agePassAndIntake(
   world: WorldState;
   retired: { id: string; name: string }[];
   rookies: { id: string; name: string; region: Region }[];
+  /** rc.33 (RTW-04): real free agents whose history is over and who left the scene. */
+  left: { id: string; name: string }[];
 } {
   const rng = createRng(deriveSeed(careerSeed, streams.rollover(toSeasonIndex)));
   // Views resolve against the INCOMING world — decisions this pass makes are
@@ -1613,8 +1641,10 @@ export function agePassAndIntake(
 
   const retired: { id: string; name: string }[] = [];
   const retiredNow = new Set<string>();
-  const retire = (id: string, name: string) => {
-    retired.push({ id, name });
+  /** rc.33 (RTW-04): real free agents whose history is over and who left the scene (not an age retirement). */
+  const left: { id: string; name: string }[] = [];
+  const retire = (id: string, name: string, list = retired) => {
+    list.push({ id, name });
     retiredNow.add(id);
     next.retiredIds.push(id);
     delete next.overallDelta[id];
@@ -1635,10 +1665,27 @@ export function agePassAndIntake(
     });
   }
   // 1b. Free agents (pool order).
+  // rc.33 (RTW-04): in the dataset era a real free agent whose history is
+  // over (no club card this season or later) leaves the scene with
+  // CAREER_WORLD.historyOverFreeAgentLeaveChance — a draw of its own per
+  // player and season, so the rollover's retirement rolls are unchanged.
+  const leavesWithHistory = (view: CareerPlayerView): boolean => {
+    if (view.kind !== "real" || toSeasonIndex >= CAREER_SEASONS.length) return false;
+    const last = lastDatasetCardOrder(view.id);
+    if (last === undefined || last >= orderNow) return false;
+    return (
+      derivedFloat(careerSeed, streams.gen("historyOverFaLeaves", `${view.id}:${toSeasonIndex}`)) <
+      CAREER_WORLD.historyOverFreeAgentLeaveChance
+    );
+  };
   for (const id of next.freeAgentIds) {
     if (userSquad.has(id)) continue;
     const view = playerViewById(id, viewCtx);
-    if (view && rollsRetirement(view)) retire(id, view.name);
+    if (!view) continue;
+    if (rollsRetirement(view)) retire(id, view.name);
+    // He leaves for good like a retiree (his id never resolves again), but it
+    // is no age retirement: listed apart, no "hangs up the controller" news.
+    else if (leavesWithHistory(view)) retire(id, view.name, left);
   }
   next.freeAgentIds = next.freeAgentIds.filter((id) => !retiredNow.has(id));
 
@@ -1720,7 +1767,7 @@ export function agePassAndIntake(
   }
   next.rookieNames = rookieNames;
 
-  return { world: next, retired, rookies };
+  return { world: next, retired, rookies, left };
 }
 
 /**
@@ -1972,8 +2019,13 @@ export function repairLegacyWorld(
 export function realOrgIntake(
   world: WorldState,
   toSeasonIndex: number,
-): { world: WorldState; entered: { ref: string; name: string; region: Region }[] } {
-  if (toSeasonIndex <= 0 || toSeasonIndex >= CAREER_SEASONS.length) return { world, entered: [] };
+): {
+  world: WorldState;
+  entered: { ref: string; name: string; region: Region }[];
+  /** rc.33 (RTW-03): orgs whose history was over and whose seat an entrant took. */
+  left: { ref: string; name: string; region: Region }[];
+} {
+  if (toSeasonIndex <= 0 || toSeasonIndex >= CAREER_SEASONS.length) return { world, entered: [], left: [] };
   const seasonId = CAREER_SEASONS[toSeasonIndex].seasonId;
   const next: WorldState = {
     ...world,
@@ -1982,18 +2034,39 @@ export function realOrgIntake(
     version: world.version,
   };
   const entered: { ref: string; name: string; region: Region }[] = [];
+  const left: { ref: string; name: string; region: Region }[] = [];
+  const everyOrg = CAREER_WORLD.orgIntake === "everyOrg";
   const seen = new Set<string>();
   for (const lineup of lineups) {
-    if (lineup.seasonId !== seasonId || lineup.rareSpawn) continue;
+    if (lineup.seasonId !== seasonId || lineup.rareSpawn || lineup.national) continue;
     if (next.orgs[lineup.orgId] || seen.has(lineup.orgId)) continue;
     seen.add(lineup.orgId);
-    const fillers = Object.values(next.orgs)
-      .filter((o) => o.region === lineup.region && o.ref.startsWith("fill:"))
-      .sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0) || a.ref.localeCompare(b.ref));
-    const victim = fillers[0];
-    if (!victim) continue;
-    delete next.orgs[victim.ref];
-    next.freeAgentIds.push(...victim.playerIds);
+    const weakestFirst = (a: WorldOrgState, b: WorldOrgState) =>
+      (a.rating ?? 0) - (b.rating ?? 0) || a.ref.localeCompare(b.ref);
+    const inRegion = Object.values(next.orgs).filter((o) => o.region === lineup.region);
+    // R31: the region's weakest filler org.
+    let victim: WorldOrgState | undefined = inRegion.filter((o) => o.ref.startsWith("fill:")).sort(weakestFirst)[0];
+    // RTW-03: else the weakest org whose history is over leaves.
+    if (!victim && everyOrg) {
+      victim = inRegion.filter((o) => orgHistoryOverAt(o.ref, toSeasonIndex)).sort(weakestFirst)[0];
+      if (victim) left.push({ ref: victim.ref, name: victim.name, region: victim.region });
+    }
+    let seat: [string, string, string];
+    if (victim) {
+      delete next.orgs[victim.ref];
+      seat = [...victim.playerIds] as [string, string, string];
+    } else if (everyOrg) {
+      // RTW-03: no seat to take — the region grows; three fresh filler
+      // players keep the new seat warm until the anchor pass.
+      const ids: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        const id = nextFillerId(lineup.region, next);
+        ids.push(id);
+        next.freeAgentIds.push(id); // reserves the number for the next mint
+      }
+      next.freeAgentIds = next.freeAgentIds.filter((id) => !ids.includes(id));
+      seat = ids as [string, string, string];
+    } else continue;
     const coach = lineup.coachId ? coachById.get(lineup.coachId) : undefined;
     const prestige = PRESTIGE_BY_STRENGTH[lineup.historicalStrength];
     const name = orgById.get(lineup.orgId)?.name ?? lineup.name;
@@ -2002,19 +2075,47 @@ export function realOrgIntake(
       name,
       region: lineup.region,
       prestige,
-      // The filler roster keeps the seat warm; the preseason anchor pass
-      // brings the real lineup in (fidelity-gated, like every anchor).
-      playerIds: [...victim.playerIds] as [string, string, string],
+      // The seat's roster keeps it warm (a filler's or a departed org's); the
+      // preseason anchor pass brings the real lineup in (fidelity-gated, like
+      // every anchor) and the players it displaces go to free agency.
+      playerIds: seat,
       coachOverall: coach?.overall,
       stars: prestige,
-      rating: victim.rating,
+      ...(victim?.rating !== undefined ? { rating: victim.rating } : {}),
     };
-    // The seat's players are now free agents of the real org, not the filler.
-    next.freeAgentIds = next.freeAgentIds.filter((id) => !victim.playerIds.includes(id));
     next.version += 1;
     entered.push({ ref: lineup.orgId, name, region: lineup.region });
   }
-  return { world: next, entered };
+  return { world: next, entered, left };
+}
+
+/**
+ * rc.33 (RTW-03): a real org's dataset name — the label an org that left the
+ * world (its seat taken by an entrant) keeps in old results and the wire.
+ */
+export function datasetOrgName(ref: string): string | undefined {
+  return orgById.get(ref)?.name;
+}
+
+/** rc.33 (RTW-03): career season index → the orgs with a club lineup that season (memoized). */
+let orgsBySeason: Set<string>[] | null = null;
+
+/**
+ * rc.33 (RTW-03): an org's history is over at a season when it has no club
+ * lineup that season nor in any later career season — a filler never counts
+ * (it has no history; fillers leave first anyway).
+ */
+export function orgHistoryOverAt(ref: string, seasonIndex: number): boolean {
+  if (ref.startsWith("fill:")) return false;
+  if (!orgsBySeason) {
+    orgsBySeason = CAREER_SEASONS.map((s) => {
+      const set = new Set<string>();
+      for (const l of lineups) if (l.seasonId === s.seasonId && !l.rareSpawn && !l.national) set.add(l.orgId);
+      return set;
+    });
+  }
+  for (let s = Math.max(0, seasonIndex); s < orgsBySeason.length; s++) if (orgsBySeason[s].has(ref)) return false;
+  return true;
 }
 
 /**

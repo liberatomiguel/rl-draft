@@ -25,6 +25,11 @@ const nextBreachEn = (next: string | number | undefined): string =>
 const breachWhenEn = (p: Record<string, string | number>): string =>
   `the Monday of ${Number(p.nextSeason) ? "next season's " : ""}week ${p.breachWeek}`;
 
+/** rc.33 (UX-07): "first", "second"… for the wizard's money line (any count from the key). */
+const ordinalEn = (n: number): string =>
+  ["first", "second", "third", "fourth", "fifth"][n - 1] ??
+  `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th")}`;
+
 export const CAREER_EN = {
   meta: {
     title: "Road to Worlds",
@@ -145,28 +150,24 @@ export const CAREER_EN = {
         sentence: "Stronger rivals and tighter money — and you run every week yourself.",
       },
     } as Record<"easy" | "normal" | "hard", { label: string; sentence: string }>,
+    // rc.33 (UX-07): only the basics of each preset — three lines, read live from balance.ts.
     presetRows: {
-      matches: "Your match edge",
-      chemistry: "Chemistry worth (you / rivals)",
-      budget: "Starting budget",
-      prizes: "Prize money",
-      asks: "Wage asks",
-      sponsors: "Sponsor deals",
-      training: "Training",
-      cups: "Community cups",
-      money: "Money ends the career",
+      matches: "Matches",
+      money: "Money",
+      start: "Day to day",
     } as Record<string, string>,
-    presetEdge: (n: string) => `${n} rating`,
-    presetChemistry: (you: string, them: string) => `up to +${you} / +${them}`,
-    presetMult: (x: string) => `×${x}`,
-    presetTrainingGuided: "Delegated to your coach",
-    presetTrainingManual: "You plan every week",
-    presetCupsAuto: "Entered for you",
-    presetCupsManual: "You choose",
-    // rc.32 (M4, provisional): CAREER_LOAN.breachesToEnd by preset.
-    presetMoneyNever: "Never: each later breach restructures",
-    presetMoneyAt: (n: number) => `At breach ${n} of the Backer's floor`,
-    presetsNote: "Settings stay yours: delegation can be switched on or off on the Training screen.",
+    presetMatchFeel: {
+      easier: "Easier: a small edge in every match",
+      even: "Even: fair matches",
+      harder: "Harder: stronger rivals",
+    } as Record<"easier" | "even" | "harder", string>,
+    // CAREER_LOAN.breachesToEnd by preset (null = never), rendered from the key.
+    presetMoneyNever: "Running short of money never ends the career",
+    presetMoneyAt: (n: number) => `The ${ordinalEn(n)} cash breach ends the career`,
+    presetStartGuided: "Guided: your staff plan training and enter the cups",
+    presetStartHandsOn: "Hands-on: you plan every week and choose every cup",
+    presetsNote:
+      "A cash breach: the balance falls below the Backer's floor on a Monday. Delegation can be switched on or off on the Training screen.",
     summaryTitle: "The paperwork",
     found: (org: string) => `Found ${org}`,
     founded: "EST. 2020",
@@ -238,6 +239,13 @@ export const CAREER_EN = {
     inviteBody: (day: string) => `Community circuit, plays ${day}. Accept to commit the squad, or pass and keep training.`,
     inviteAccept: "Accept invite",
     invitePass: "Pass",
+    // RTW-05 (rc.33): a squad under three — the clock waits for a third player.
+    squadShortKicker: "Squad short",
+    squadShortTitle: "Sign a player",
+    squadShortBody: (n: number, event: string) =>
+      `Only ${n} of 3 seats are filled, and no event is played short-handed. The clock waits before ${event} until a third player signs — a free agent can take the empty seat today, window or not.`,
+    squadShortMarket: "Go to the Market",
+    squadShortSquad: "Squad",
     contractsExpiring: (n: number) => (n === 1 ? "1 contract ends this season — renew or let it run out." : `${n} contracts end this season — renew or let them run out.`),
     cashWarningCard: (weeks: number) => `Cash runs out in about ${weeks} weeks at this burn.`,
     // ECO-02 (R46): the card names the debt Finances shows.
@@ -359,7 +367,7 @@ export const CAREER_EN = {
       cashNotice: (p: Record<string, string | number>) =>
         `A heads-up from the accountant: at ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays, and the books would cross the Backer's floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p.next)} This is the cheap moment to act: list or sell a player, aim the squad at prize money, keep the next renewal in check${Number(p.backer) ? "" : ", or line up a bank loan"}.`,
       restructured: (p: Record<string, string | number>) =>
-        `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value${Number(p.garnished) > 0 ? ` (${p.garnished} of it went to the debt)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `The Backer topped the balance back up to ${p.rescueTo}` : `The balance stands at ${p.balance}`}; ${Number(p.owed) > 0 ? `you owe ${p.owed}` : "nothing is owed"}. The squad plays on — the sub steps up, or a stand-in fills an empty seat. ${nextBreachEn(p.next)}`,
+        `The books closed below the floor again (breach ${p.n}), so the Backer restructured the org${p.player ? `: ${p.player} was sold to ${p.org} for ${p.fee}, his market value${Number(p.garnished) > 0 ? ` (${p.garnished} of it went to the debt)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputation −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `The Backer topped the balance back up to ${p.rescueTo}` : `The balance stands at ${p.balance}`}; ${Number(p.owed) > 0 ? `you owe ${p.owed}` : "nothing is owed"}. The squad plays on — the sub steps up; an empty seat needs a free agent before the next event. ${nextBreachEn(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} answered your listing: ${p.fee} for ${p.player}. Accept it in the Market's deals tab before the window closes, or decline to keep him — declining ends the listing.`,
       sponsorOffers: () =>
@@ -393,7 +401,7 @@ export const CAREER_EN = {
       windowReport: (p: Record<string, string | number>) =>
         `The window is shut — ${p.n} moves across all regions. Headline fees: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. The full wire is on the HQ.`,
       unavailable: (p: Record<string, string | number>) =>
-        `${p.player} can't play ${p.event} — the sub steps in with his chemistry; without one, an emergency stand-in fills the seat for a fee.`,
+        `${p.player} can't play ${p.event} — the sub takes his seat with his chemistry.`,
       debtCleared: () =>
         `The Emergency Backer is repaid in full. Transfer fees and gear purchases are unlocked again — the org owns its future.`,
       retiredToCoach: (p: Record<string, string | number>) =>
@@ -498,7 +506,7 @@ export const CAREER_EN = {
     coachSlot: "Coach",
     staffRow: "Staff & boosts",
     hire: "Hire",
-    emptySub: "No sub — an absence costs a stand-in fee and chemistry.",
+    emptySub: "No sub — nobody is ruled out without one, but a reserve adds depth to the team rating.",
     emptyCoach: "A coach boosts development and match prep.",
     contracts: "Contracts",
     wage: "Wage",
@@ -662,6 +670,8 @@ export const CAREER_EN = {
     windowClosed: "Market closed",
     windowClosedHint: (label: string) => `Transfer window opens ${label}`,
     scoutingOpen: "Scouting stays open between windows.",
+    // RTW-05 (rc.33): a squad under three signs a free agent into the empty seat, window or not.
+    emptySeatOpen: "Your squad is short of three: a free agent can take the empty seat today, window or not.",
     fee: "Transfer fee",
     signingBonus: "Signing bonus",
     freeAgentTag: "Free agent",
@@ -1078,6 +1088,8 @@ export const CAREER_EN = {
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} hangs up the controller for good`,
       insertResolved: (p: Record<string, string | number>) => `Decision made: ${p.insert}`,
       orgEnters: (p: Record<string, string | number>) => `${p.org} enters the ${p.region} scene`,
+      // rc.33 (RTW-03): an org whose history is over gives its seat to an entrant.
+      orgLeaves: (p: Record<string, string | number>) => `${p.org} leaves the ${p.region} scene`,
       rookieClass: (p: Record<string, string | number>) => `${p.region} rookie class arrives — ${p.name} headlines`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, has lost half a step`,
       breakout: (p: Record<string, string | number>) => `${p.player} is outgrowing everyone's projections`,
@@ -1169,6 +1181,8 @@ export const CAREER_EN = {
         `${p.player} retires and leaves the scene. The org thanks him for every season in its colours.`,
       orgEnters: (p: Record<string, string | number>) =>
         `A new badge on the ${p.region} circuit: ${p.org} fields a roster this season. History arrives on schedule — and the table gets harder.`,
+      orgLeaves: (p: Record<string, string | number>) =>
+        `${p.org} fields no roster this season and leaves the ${p.region} circuit. Its seat goes to a new name; its players look for a new home.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Fresh names hit the ${p.region} free-agent pool. ${p.name} is the one scouts underline.`,
       decline: (p: Record<string, string | number>) =>
@@ -1186,7 +1200,7 @@ export const CAREER_EN = {
       registryRepair: () =>
         `Players listed by two orgs now sit on one roster, and repeated gamertags were renamed. Your squad, contracts and results are unchanged.`,
       unavailable: (p: Record<string, string | number>) =>
-        `${p.player} can't play ${p.event} — visas, health, life. The sub steps in with his chemistry; without one, a stand-in fills the seat.`,
+        `${p.player} can't play ${p.event} — visas, health, life. The sub steps in with his chemistry.`,
       standIn: (p: Record<string, string | number>) =>
         `A hired stand-in keeps the org in ${p.event}. Full lineup, zero chemistry — it shows.`,
       bankLoan: (p: Record<string, string | number>) =>
@@ -1396,6 +1410,8 @@ export const CAREER_EN = {
     digestPlayerShare: (s: string) => `Players' share −${s}`,
     digestPoints: "Season Points",
     digestRep: "Reputation",
+    // rc.33 (RTW-02): reputation paid by the newcomer's path (a result beyond the seed).
+    digestRepUnderdog: "An underdog's run: the scene takes note",
     digestTopScorer: "Top scorer",
     continueToHq: "Back to HQ",
     continueToReview: "Season review",
@@ -1564,7 +1580,7 @@ export const CAREER_EN = {
     },
     randomEvent: {
       title: "Next man up",
-      body: "Sometimes a starter can't play — visas, health, life. A sub steps in with his chemistry; without one, a hired stand-in keeps you in the bracket.",
+      body: "Sometimes a starter can't play — visas, health, life. A sub steps in with his chemistry; without one nobody is ruled out. No event is ever played with fewer than three.",
     },
     worldsRace: {
       title: "The Worlds race",

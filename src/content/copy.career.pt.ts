@@ -25,6 +25,9 @@ const nextBreachPt = (next: string | number | undefined): string =>
 const breachWhenPt = (p: Record<string, string | number>): string =>
   `a segunda-feira da semana ${p.breachWeek}${Number(p.nextSeason) ? " da próxima temporada" : ""}`;
 
+/** rc.33 (UX-07): "primeira", "segunda"… para a linha de dinheiro do assistente (qualquer número da chave). */
+const ordinalPt = (n: number): string => ["primeira", "segunda", "terceira", "quarta", "quinta"][n - 1] ?? `${n}ª`;
+
 export const CAREER_PT: CareerCopy = {
   meta: {
     title: "Road to Worlds",
@@ -138,28 +141,24 @@ export const CAREER_PT: CareerCopy = {
         sentence: "Rivais mais fortes e dinheiro mais curto — e você toca cada semana sozinho.",
       },
     } as Record<"easy" | "normal" | "hard", { label: string; sentence: string }>,
+    // rc.33 (UX-07): só o básico de cada preset — três linhas, lidas ao vivo de balance.ts.
     presetRows: {
-      matches: "Sua vantagem nas partidas",
-      chemistry: "Valor da química (você / rivais)",
-      budget: "Orçamento inicial",
-      prizes: "Premiações",
-      asks: "Pedidas salariais",
-      sponsors: "Patrocínios",
-      training: "Treino",
-      cups: "Copas comunitárias",
-      money: "O dinheiro encerra a carreira",
+      matches: "Partidas",
+      money: "Dinheiro",
+      start: "Dia a dia",
     } as Record<string, string>,
-    presetEdge: (n: string) => `${n} de rating`,
-    presetChemistry: (you: string, them: string) => `até +${you} / +${them}`,
-    presetMult: (x: string) => `×${x}`,
-    presetTrainingGuided: "Delegado ao seu coach",
-    presetTrainingManual: "Você planeja cada semana",
-    presetCupsAuto: "Inscrição automática",
-    presetCupsManual: "Você escolhe",
-    // rc.32 (M4, provisório): CAREER_LOAN.breachesToEnd por preset.
-    presetMoneyNever: "Nunca: cada nova quebra reestrutura",
-    presetMoneyAt: (n: number) => `Na ${n}ª quebra do piso do Investidor`,
-    presetsNote: "As configurações continuam suas: a delegação liga e desliga na tela de Treino.",
+    presetMatchFeel: {
+      easier: "Mais fáceis: uma pequena vantagem em cada partida",
+      even: "Equilibradas: partidas justas",
+      harder: "Mais difíceis: rivais mais fortes",
+    } as Record<"easier" | "even" | "harder", string>,
+    // CAREER_LOAN.breachesToEnd por preset (null = nunca), montado a partir da chave.
+    presetMoneyNever: "Ficar sem dinheiro nunca encerra a carreira",
+    presetMoneyAt: (n: number) => `A ${ordinalPt(n)} quebra de caixa encerra a carreira`,
+    presetStartGuided: "Guiado: a comissão planeja os treinos e inscreve nas copas",
+    presetStartHandsOn: "Na mão: você planeja cada semana e escolhe cada copa",
+    presetsNote:
+      "Quebra de caixa: o saldo cai abaixo do piso do Investidor numa segunda-feira. A delegação liga e desliga na tela de Treino.",
     summaryTitle: "A papelada",
     found: (org: string) => `Fundar ${org}`,
     founded: "EST. 2020",
@@ -231,6 +230,13 @@ export const CAREER_PT: CareerCopy = {
     inviteBody: (day: string) => `Circuito comunitário, joga ${day}. Aceite para comprometer o elenco, ou passe e siga treinando.`,
     inviteAccept: "Aceitar convite",
     invitePass: "Passar",
+    // RTW-05 (rc.33): elenco com menos de três — o relógio espera o terceiro jogador.
+    squadShortKicker: "Elenco incompleto",
+    squadShortTitle: "Contrate um jogador",
+    squadShortBody: (n: number, event: string) =>
+      `Só ${n} de 3 vagas estão preenchidas, e nenhum evento é disputado com time incompleto. O relógio espera antes de ${event} até um terceiro jogador assinar — um agente livre pode ocupar a vaga hoje, com ou sem janela.`,
+    squadShortMarket: "Ir ao Mercado",
+    squadShortSquad: "Elenco",
     contractsExpiring: (n: number) => (n === 1 ? "1 contrato termina nesta temporada — renove ou deixe vencer." : `${n} contratos terminam nesta temporada — renove ou deixe vencer.`),
     cashWarningCard: (weeks: number) => `O caixa acaba em cerca de ${weeks} semanas nesse ritmo.`,
     // ECO-02 (R46): o card cita a dívida que Finanças mostra.
@@ -352,7 +358,7 @@ export const CAREER_PT: CareerCopy = {
       cashNotice: (p: Record<string, string | number>) =>
         `Um aviso do contador: com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras, e as contas cruzariam o piso do Investidor (${p.floor}) n${breachWhenPt(p)}. ${nextBreachPt(p.next)} Agora é a hora barata de agir: anuncie ou venda um jogador, mire a premiação, segure a próxima renovação${Number(p.backer) ? "" : " ou prepare um empréstimo no banco"}.`,
       restructured: (p: Record<string, string | number>) =>
-        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${Number(p.garnished) > 0 ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${Number(p.owed) > 0 ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando — o reserva sobe, ou um substituto ocupa a vaga vazia. ${nextBreachPt(p.next)}`,
+        `As contas fecharam de novo abaixo do piso (quebra ${p.n}), e o Investidor reestruturou a org${p.player ? `: ${p.player} foi vendido para ${p.org} por ${p.fee}, o valor de mercado dele${Number(p.garnished) > 0 ? ` (${p.garnished} foram para a dívida)` : ""}` : ""}. ${Number(p.rep) > 0 ? `Reputação −${p.rep}. ` : ""}${Number(p.granted) > 0 ? `O Investidor recompôs o saldo para ${p.rescueTo}` : `O saldo está em ${p.balance}`}; ${Number(p.owed) > 0 ? `a dívida é de ${p.owed}` : "não há dívida"}. O elenco segue jogando — o reserva sobe; uma vaga vazia pede um agente livre antes do próximo evento. ${nextBreachPt(p.next)}`,
       listingOffer: (p: Record<string, string | number>) =>
         `${p.org} responderam ao seu anúncio: ${p.fee} por ${p.player}. Aceite na aba de negociações do Mercado antes de a janela fechar, ou recuse para mantê-lo — recusar encerra o anúncio.`,
       sponsorOffers: () =>
@@ -386,7 +392,7 @@ export const CAREER_PT: CareerCopy = {
       windowReport: (p: Record<string, string | number>) =>
         `A janela fechou — ${p.n} trocas em todas as regiões. Taxas de destaque: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. O plantão completo está no QG.`,
       unavailable: (p: Record<string, string | number>) =>
-        `${p.player} não joga ${p.event} — o reserva entra com a química dele; sem reserva, um substituto de emergência ocupa a vaga por uma taxa.`,
+        `${p.player} não joga ${p.event} — o reserva assume a vaga com a química dele.`,
       debtCleared: () =>
         `O Investidor de emergência foi quitado por completo. Transferências com taxa e compras de equipamento estão liberadas de novo — a org é dona do próprio futuro.`,
       retiredToCoach: (p: Record<string, string | number>) =>
@@ -491,7 +497,7 @@ export const CAREER_PT: CareerCopy = {
     coachSlot: "Coach",
     staffRow: "Staff & boosts",
     hire: "Contratar",
-    emptySub: "Sem sub — uma ausência custa taxa de emergência e química.",
+    emptySub: "Sem sub — ninguém fica de fora sem ele, mas um reserva dá profundidade ao rating do time.",
     emptyCoach: "Um coach acelera o desenvolvimento e a preparação.",
     contracts: "Contratos",
     wage: "Salário",
@@ -655,6 +661,8 @@ export const CAREER_PT: CareerCopy = {
     windowClosed: "Mercado fechado",
     windowClosedHint: (label: string) => `A janela de transferências abre ${label}`,
     scoutingOpen: "A observação segue aberta entre janelas.",
+    // RTW-05 (rc.33): um elenco com menos de três contrata um agente livre para a vaga vazia, com ou sem janela.
+    emptySeatOpen: "Seu elenco tem menos de três: um agente livre pode ocupar a vaga vazia hoje, com ou sem janela.",
     fee: "Taxa de transferência",
     signingBonus: "Luvas",
     freeAgentTag: "Agente livre",
@@ -1072,6 +1080,8 @@ export const CAREER_PT: CareerCopy = {
       retiredLeaves: (p: Record<string, string | number>) => `${p.player} pendura o controle de vez`,
       insertResolved: (p: Record<string, string | number>) => `Decisão tomada: ${p.insert}`,
       orgEnters: (p: Record<string, string | number>) => `${p.org} entra na cena de ${p.region}`,
+      // rc.33 (RTW-03): uma org cuja história acabou cede a vaga a quem entra.
+      orgLeaves: (p: Record<string, string | number>) => `${p.org} deixa a cena de ${p.region}`,
       rookieClass: (p: Record<string, string | number>) => `Chega a turma de novatos de ${p.region} — ${p.name} é o destaque`,
       decline: (p: Record<string, string | number>) => `${p.player}, ${p.n}, perdeu meio passo`,
       breakout: (p: Record<string, string | number>) => `${p.player} está superando todas as projeções`,
@@ -1163,6 +1173,8 @@ export const CAREER_PT: CareerCopy = {
         `${p.player} se aposenta e deixa a cena. A org agradece cada temporada com as nossas cores.`,
       orgEnters: (p: Record<string, string | number>) =>
         `Um escudo novo no circuito de ${p.region}: ${p.org} coloca uma line nesta temporada. A história chega no horário — e a tabela fica mais dura.`,
+      orgLeaves: (p: Record<string, string | number>) =>
+        `${p.org} não monta line nesta temporada e deixa o circuito de ${p.region}. A vaga fica com um nome novo; os jogadores procuram outra casa.`,
       rookieClass: (p: Record<string, string | number>) =>
         `Nomes novos chegam ao mercado de ${p.region}. ${p.name} é o que os olheiros sublinham.`,
       decline: (p: Record<string, string | number>) =>
@@ -1180,7 +1192,7 @@ export const CAREER_PT: CareerCopy = {
       registryRepair: () =>
         `Jogadores listados por duas orgs agora ficam em um só elenco, e gamertags repetidas foram renomeadas. Seu elenco, seus contratos e seus resultados não mudaram.`,
       unavailable: (p: Record<string, string | number>) =>
-        `${p.player} está fora de ${p.event} — visto, saúde, vida. O sub entra com a química dele; sem sub, um contratado tampa o buraco.`,
+        `${p.player} está fora de ${p.event} — visto, saúde, vida. O sub entra com a química dele.`,
       standIn: (p: Record<string, string | number>) =>
         `Um substituto contratado mantém a org no ${p.event}. Escalação completa, química zero — e dá para notar.`,
       bankLoan: (p: Record<string, string | number>) =>
@@ -1391,6 +1403,8 @@ export const CAREER_PT: CareerCopy = {
     digestPlayerShare: (s: string) => `Parte dos jogadores −${s}`,
     digestPoints: "Pontos da Temporada",
     digestRep: "Reputação",
+    // rc.33 (RTW-02): reputação paga pelo caminho do estreante (um resultado acima do seed).
+    digestRepUnderdog: "Campanha de azarão: a cena repara",
     digestTopScorer: "Artilheiro",
     continueToHq: "Voltar ao QG",
     continueToReview: "Balanço da temporada",
@@ -1560,7 +1574,7 @@ export const CAREER_PT: CareerCopy = {
     },
     randomEvent: {
       title: "Próximo da fila",
-      body: "Às vezes um titular não pode jogar — visto, saúde, vida. O sub entra com a química dele; sem sub, um contratado de emergência mantém você no chaveamento.",
+      body: "Às vezes um titular não pode jogar — visto, saúde, vida. O sub entra com a química dele; sem sub, ninguém fica de fora. Nenhum evento é disputado com menos de três.",
     },
     worldsRace: {
       title: "A corrida pelo Worlds",

@@ -101,6 +101,7 @@ import {
   nameOfRef,
   regionalUserEligible,
   scrimOpponentFor,
+  squadHoldFor,
   userEventDefOnDay,
   userIsDirect,
   userOwnsQualifier,
@@ -636,6 +637,8 @@ export function continueKind(save: CareerSave): ContinueKind {
   // A kind of its own, so the day autopilot never rolls into Sunday alone.
   if (isEventPaused(save)) return "eventPaused";
   if (save.activeEvent) return "event";
+  // RTW-05 (rc.33): a short squad holds the clock on its event's eve and day.
+  if (squadHoldFor(save)) return "decision";
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) return "event";
   if (save.pendingInsert && save.pendingInsert.day === save.clock.day) return "decision";
   if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) {
