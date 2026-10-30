@@ -690,6 +690,32 @@ How to read it:
   81 / 65 / 55). No career stopped on the bot's 120 s budget (about 29 s a
   career; rc.33's 57 stops came from a machine shared with five agents).
 
+## 12. The rc.35 re-measure — Miguel's rc.34 playtest
+
+Same 294 careers on rc.35 (sponsors priced by risk with a season fine cap
+and ladder access, local sponsors at rep 10, cheaper founders and coaches,
+the talk's odds and bonus, 14-day training). Easy / Normal / Hard.
+
+| | rc.34 | rc.35 | band (§3) |
+|---|---|---|---|
+| Insolvent (a1) | 1 / 6 / 16 % | **0 / 5 / 14 %** | ≤ 2 / 10 / 25 % |
+| Newcomers insolvent (a2) | 0 / 2 / 12 % | 0 / 2 / 17 % | 0 / ≤ 5 / ≤ 20 % |
+| Normal, EU (f1) | 36 % | 29 % | ≤ 20 % |
+| The spender insolvent (d2) | 7 / 21 / 36 % | 0 / 14 / 21 % | — |
+| Tight Mondays S3–S5 (e3) | 16 / 22 / 34 % | 11 / 20 / 31 % | ≥ 10 / 20 / 30 % |
+| Snowball p90 (e1) | 14.9 / 8.6 / 6.8 | 21.1 / 12.0 / 8.0 | ≤ 3.0 / 2.0 / 1.5 |
+| 88+ signing by S4 (c3) | 7 / 4 / 3 % | 22 / 9 / 3 % | ≥ 20 / 15 / 10 % |
+| Seasons with fines > 2 weeks of payroll (s3) | 0 / 5 / 2 % | 0 / 5 / 1 % | ≤ 10 % |
+
+Every band of the left side holds; Easy's star path reached its band. The
+snowball grew (Bold pays more and wages fell): the wage budget (M6 lever 4)
+is now the open lever. The probe ran before the review moved tier 1 below
+the "local sponsors" rung (rep 10); that change only touches reputations
+under 10. The long-career run (`CAREER-ARC-rc35.md`, no softlock in 294): Normal
+by region, first Major by S2 · Worlds by S4 — EU 0 · 7 %, NA 7 · 29 %, SAM 7 · 21 %,
+MENA 7 · 14 %, OCE 57 · 64 %, APAC 100 · 86 %, SSA 100 · 100 %; at an even rating
+the user wins 81 / 66 / 58 % of series.
+
 ## Appendix — the probe tables (generated)
 
 The probe's output for the baseline's 294 cells, as generated. The careers

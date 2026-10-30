@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.34**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.35**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -180,6 +180,67 @@ with the root cause — that section doubles as the project's bugfix log.
   training time). Unanswered cards expire with the day.
 - **Colour kits** in the career wizard (R34): sixteen curated pairs, one tap;
   custom swatches are contrast-guarded.
+
+### Added — rc.35 (Miguel's rc.34 playtest, 31/10 · ROAD-TO-WORLDS-DECISIONS R81–R82)
+
+Five parallel fronts, one independent review, the full re-measure and the browser E2E. The owner's rule
+for every reworked screen: icon-led, a clear hierarchy, no plain-text cards.
+
+- **Training, simpler (front T):** a 14-day cycle (`CAREER_PLAN.periodDays`); three choices as icon
+  tiles — objective (Develop / Compete / Recover), intensity, scrims. No coach at the start: Easy
+  applies the best plan for you, Normal tags it "Recommended", Hard shows no tag; a hired coach picks
+  and runs each cycle and you can adjust one. The rebuilt Training screen and HQ block (plan, days-left
+  ring, expected and last gain), visual coach hire cards, and a results modal at each cycle's end.
+- **Sponsors by risk (front S):** Bold pays the most (the highest weekly pay and bonuses) for the
+  hardest goal and the biggest fine; Steady the least, safest. A season's fines are capped at two weeks
+  of the deal's pay; Bold's goal is never likelier than Balanced's. The season goal uses the same level
+  model (never harder than a Balanced goal). One visual comparison, a visual offer modal, "Decide
+  later" beside "Decline", the Finances deal panel as tiles. Access by the ladder: two offers without
+  Bold until "challenger sponsors", then three, then global sponsors (more money, free bootcamps).
+- **The progression ladder (front P):** peripherals → generic coach and local sponsors (rep 10) →
+  monitors → tournament PCs → ex-pro coaches → bootcamp → challenger sponsors → structured bootcamp →
+  psychologist → global sponsors → performance centre → headline sponsors (the old "title partners"),
+  with icons; one HQ Progression card (toolbox + next unlock); the unlock modal with the benefits,
+  the price, Buy and Close only; HQ finances reduced to the balance, its trend and three tiles; the
+  Finances ladder compact with "See more".
+- **Creation, market, squad (front C):** the difficulty step with icons and Normal marked Recommended;
+  the Balanced roster in the middle; one prospect at potential 91–93; at least two free agents with
+  potential above 80 per region; phase chips on Market cards; the reputation filter as an icon switch;
+  HQ's squad as three starters plus the reserve beside the coach, with phases.
+- **The talk (front N):** offers below his zone with odds that fall smoothly (seeded per window); the
+  share slider for everyone; a negotiable signing bonus; each extra contract season relaxes his floor
+  3 %; three sliders with the zone painted and an odds meter. Founders' first deals at 85 % of their
+  ask; a flatter coach wage curve; the fanbase line is "Merch & streams".
+
+### Changed — rc.35
+- rc.34's training modes ("the coach runs it / proposes") map on load to the preset's mode; a pending
+  proposal is dropped. Ex-pro coaches wait for their rung (`exProGate`).
+
+### Balance — rc.35
+- `BALANCE_VERSION` 4 → 5. `CAREER_PLAN.periodDays` 14; `CAREER_DEV.seasonCapSpread` 2 and
+  `seasonGainHardCap` 13; `CAREER_SPONSOR` ceilings by profile (Steady 0.95 / Balanced 1.2 / Bold 1.5 of
+  the tier's value), fines 0 / 0.3 / 0.6 with `fines.seasonCapWeeks` 2, `wordMin.stretch` 0.2,
+  `access.levels`; `CAREER_LADDER` (`exProCoachRep` 23, `sponsorRep` 10 / 30 / 50 / 75);
+  `CAREER_WORLD.prospectHeadliner`, `creationFaProspects`; `CAREER_NEGOTIATION.oddsFallPct` 0.25,
+  `lengthReliefPerSeason` 0.03, the bonus keys; `CAREER_SALARY.foundingWageMult` 0.85;
+  `CAREER_COACH_MARKET.wageGrowthPerPoint` 1.12.
+- **The re-measure** (294 careers, ECONOMY-CONTRACT §12): insolvent 1 / 6 / 16 → **0 / 5 / 14 %**,
+  newcomers 0 / 2 / 12 → 0 / 2 / 17 %, the spender 7 / 21 / 36 → 0 / 14 / 21 %, tight Mondays S3–S5
+  11 / 20 / 31 %; 88+ signings by S4 7 / 4 / 3 → 22 / 9 / 3 %. Worse: the snowball p90 14.9 / 8.6 / 6.8 →
+  21.1 / 12.0 / 8.0 (Bold pays more, wages are lower); EU on Normal 36 → 29 %.
+
+### Fixed — rc.35
+- **No results pop-up at a training cycle's end.** Root cause: rc.34 only filed the report in the
+  history and a news line.
+- **Players stopped growing for weeks, then resumed.** Root cause: model 2's season cap of 7 was a hard
+  stop the package reached before the season turned; the room now spreads over the weeks left.
+- **Bold paid less than Steady.** Root cause: weekly pay was priced at equal expected value.
+- **The season goal could be harder than the Bold sponsor goal.** Root cause: two goal models.
+- **A player at his peak showed a band below his overall (78 → 76–80).** Root cause: the band's floor
+  was not clamped to the current overall.
+- **A just-signed player drew another bid in the same window, or moved again.** Root cause: nothing
+  recorded the signing day (`SquadPlayer.signedDay`).
+- **The autopilot ran past a training report.** Root cause: it paused only for money notices.
 
 ### Added — rc.34 (Etapa 3: the new Road to Worlds loop — training packages, sponsors, HQ around the next decision, "New" markers — and Miguel's 31/10 answers on rc.33 · 2026-10-30 · ROAD-TO-WORLDS-DECISIONS R71–R80)
 

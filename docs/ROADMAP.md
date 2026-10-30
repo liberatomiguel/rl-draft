@@ -187,6 +187,13 @@ rc.33 — five parallel fronts, three independent reviews):**
   rewritten (UX-08). The integration and the reviews' 21 fixes (R80).
   Re-measured in the economy contract's §11.
 
+**rc.35 (Miguel's rc.34 playtest, 31/10 — five fronts, one review):**
+training simplified (14-day cycles, three icon choices, presets without a
+phantom coach, the cycle report, the growth stall fixed), sponsors priced by
+risk with ladder access, the progression ladder (local sponsors at rep 10
+with the coach), the talk's odds and signing bonus, creation / market /
+squad visuals, cheaper founders and coaches (R81–R82; economy §12).
+
 ## Deferred (owner Etapa)
 
 - The share card's text (mode, difficulty) is English in PT → Etapa 5, with
@@ -709,6 +716,14 @@ a pending sponsor offer becomes an rc.34 decision.
   reputation filter, renewals (the ×2.5 cap, the title raise), the potential
   bands, the 2021-22 rollover (Karmine Corp), match difficulty, the national
   album.
+
+**Decide (rc.35):** (a) the season growth ceiling of 13 (a strong package
+can add ~12 a season, bounded by the peak); (b) the season-goal rule (a
+Balanced-split goal reached in any split); (c) the snowball grew (21 / 12 / 8
+seasons of payroll): build the wage budget next?; (d) a broke org that offers
+a bigger signing bonus than asked loses the empty-seat waiver — OK?; (e) the
+talk lets you step an offer up within a window to find his floor — OK, or
+count attempts?; (f) the fanbase stays as "Merch & streams" — OK?
 
 **Decide (rc.34):**
 1. **Hard's first breach** is now a 24-week loan (one loan a career). Keep

@@ -9,7 +9,7 @@
 
 - **Production:** `main` @ v1.4.6 (`rocketdraft.app`, static export on an
   assets-only Cloudflare Worker). Season 1 announcement pop-up is up.
-- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.34**
+- **v2.0 "Season 1":** branch `staging`, published as **v2.0.0-rc.35**
   (`staging.rocketdraft.app`: career on, noindex, preview tools on, no
   analytics). **Never deploy v2.0 to `main` before the full review.**
 - Career: `ROAD-TO-WORLDS-STATUS.md`. A push to `staging` that does not
@@ -33,6 +33,9 @@ Etapas 1–2 and most of 3 (rc.27–34), and Etapa 4's national album (rc.33).
   its deadline, the talk, the difficulty step). Re-measured in
   `ECONOMY-CONTRACT.md` §11. **Gate 3b** waits on Miguel's play
   (`ROADMAP.md` "Waiting on Miguel").
+- **rc.35:** Miguel's rc.34 playtest — training simplified (14-day cycles),
+  sponsors priced by risk, the progression ladder, the talk's odds and
+  bonus, creation/market/squad visuals (R81–R82; `ECONOMY-CONTRACT.md` §12).
 - **Next in Etapa 3:** UX-02 (season goals), UX-03 (news, 50/50), UX-04
   (creation), UX-05 (achievements), CAL-01, SUN-01..03.
 
@@ -48,11 +51,11 @@ Etapas 1–2 and most of 3 (rc.27–34), and Etapa 4's national album (rc.33).
 
 ## Gates (before any commit)
 
-- `npm run typecheck` clean · `npm test` **1331** tests (+10 opt-in tools
+- `npm run typecheck` clean · `npm test` **1353** tests (+10 opt-in tools
   skipped) · `npm run lint` **0 errors, 0 warnings** · `build:data` +
   `validate:data` green · green `npm run build` for anything that ships. Visual
   effects: `npm run perf:probe` (#130).
-- A `balance.ts` value change bumps `BALANCE_VERSION` (now 4;
+- A `balance.ts` value change bumps `BALANCE_VERSION` (now 5;
   `balanceVersion.test.ts` prints the fingerprint). A version bump touches
   `package.json`, `package-lock.json` and `src/config/site.ts`; run the full
   suite after it.
