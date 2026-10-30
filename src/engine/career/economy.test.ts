@@ -50,6 +50,7 @@ import {
   weeklyStatement,
   weeklyWage,
   backerLineFor,
+  canSettleLoan,
   mondayAfter,
   moneyIndex,
   prizeTables,
@@ -570,17 +571,25 @@ describe("weekly payroll (v2.0 R20)", () => {
     }
   });
 
-  it("rc.34: on the deadline Monday the bank takes what is owed when the balance covers it; otherwise the career ends", () => {
+  it("rc.34: on the deadline Monday the bank takes what is owed when the books stay at or above the floor after it; otherwise the career ends", () => {
     const due = { seasonIndex: 1, week: 9 };
     const loan = { remaining: 30_000, deadline: due, topUps: 0 };
+    const line = backerLineFor(weeklyWageBill([70_000], null), 1);
     const covered = heavyMonday(freshFin(200_000, { loan, loanUsed: true }), 9, "normal");
     expect(covered).toMatchObject({ insolvent: false, collected: 30_000, rescued: false });
     expect(covered.fin.loan).toBeNull();
     expect(covered.fin.ledger.filter((e) => e.kind === "loanPayment").map((e) => e.amount)).toEqual([-30_000]);
     // A Monday past the deadline (a missed one) is the same test.
     expect(heavyMonday(freshFin(200_000, { loan, loanUsed: true }), 11, "normal").collected).toBe(30_000);
-    // Short of the debt, even above the floor: the deadline ends the career (no floor check after it).
-    const short = heavyMonday(freshFin(30_000, { loan, loanUsed: true }), 9, "normal");
+    // rc.34 review — one rule with "Pay it all" (canSettleLoan): short of the debt but above the
+    // floor once it is paid, the bank collects and the books close in the overdraft (no breach).
+    const overdraft = heavyMonday(freshFin(30_000, { loan, loanUsed: true }), 9, "normal");
+    expect(overdraft).toMatchObject({ insolvent: false, collected: 30_000, rescued: false });
+    expect(overdraft.fin.balance).toBeLessThan(0);
+    expect(overdraft.fin.balance).toBeGreaterThanOrEqual(line.floor);
+    expect(canSettleLoan(30_000 - weeklyWage(70_000), 30_000, line.floor)).toBe(true);
+    // Past the floor once paid: the deadline ends the career (no floor check after it).
+    const short = heavyMonday(freshFin(30_000 + line.floor, { loan, loanUsed: true }), 9, "normal");
     expect(short).toMatchObject({ insolvent: true, endCause: "deadline", collected: 0, rescued: false });
     expect(short.fin.loan).toEqual(loan);
     // Before the deadline nothing is collected.

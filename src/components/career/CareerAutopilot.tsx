@@ -9,7 +9,9 @@
  *  - continueKind ≠ "advance" (matchday lobby, decision, season review, end;
  *    R40: the Saturday pause before Championship Sunday — never rolled into
  *    on its own)
- *  - a fresh unofficial invite surfaced and isn't committed
+ *  - a fresh unofficial invite surfaced — once, on its Monday (rc.34 review,
+ *    Gate 3b: it never holds the clock; switched on again that Monday, the
+ *    autoplay rolls past it, and past its matchday it is passed)
  *  - a money notice is waiting (rc.34: the emergency loan, a top-up, the
  *    deadline's warnings or the deadline itself — MoneyNoticeModal)
  *  - the clock refused to move (blocked)
@@ -19,7 +21,7 @@
 
 import { useEffect, useRef } from "react";
 import { CAREER_PLAYBACK } from "@/config/balance";
-import { moneyNoticeOf } from "@/store/careerFlow";
+import { inviteSurfacedToday, moneyNoticeOf } from "@/store/careerFlow";
 import { useCareerStore, selectActiveSave } from "@/store/careerStore";
 import { continueKind } from "./careerUi";
 
@@ -29,9 +31,17 @@ export function CareerAutopilot() {
   const advanceDay = useCareerStore((s) => s.advanceDay);
   const save = useCareerStore(selectActiveSave);
   const dayRef = useRef<number>(save?.clock.day ?? 0);
+  /** The day this run of the autoplay started on ("season:day"; null while it is off). */
+  const startRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!autoAdvance) startRef.current = null;
+  }, [autoAdvance]);
 
   useEffect(() => {
     if (!autoAdvance || !save) return;
+    const today = `${save.clock.seasonIndex}:${save.clock.day}`;
+    startRef.current ??= today;
 
     // Stop conditions checked BEFORE each tick (and re-checked after by the
     // next effect run, since advanceDay updates the store).
@@ -39,7 +49,7 @@ export function CareerAutopilot() {
       setAutoAdvance(false);
       return;
     }
-    if (save.unofficialOffer && !save.pendingEventDef) {
+    if (inviteSurfacedToday(save) && startRef.current !== today) {
       setAutoAdvance(false);
       return;
     }

@@ -26,13 +26,14 @@ import {
   periodOfDay,
   periodsOfSeason,
 } from "@/engine/career/training";
-import type { CareerSave, CoachState, SquadPlayer, TrainingPackage } from "@/engine/career/types";
+import type { CareerEventDef, CareerSave, CoachState, SquadPlayer, TrainingPackage } from "@/engine/career/types";
 import { agePassAndIntake, buildWorldAtCreation, orgTeamFor } from "@/engine/career/worldSim";
 import {
   advanceDayFlow,
   advanceToNextStopFlow,
   coachCandidatesFor,
   createCareerSave,
+  declineUnofficial,
   finishEvent,
   fireCoachFlow,
   hireCoachFlow,
@@ -55,6 +56,7 @@ import {
   runTrainingSession,
   setTrainingModeFlow,
   setTrainingPackageFlow,
+  setTrainingRepeatFlow,
   trainingBlockOf,
   trainingDayStart,
   trainingDecisionOf,
@@ -522,6 +524,57 @@ describe("DEV-03 delegation, the hold and the load repair", { timeout: 120_000 }
     expect(trainingOf(delegated).plan!.author).toBe("coach");
   });
 
+  /** Play to the next period's first day (29) without answering, on `save` with a coach in post. */
+  function toPeriod2(save: CareerSave): CareerSave {
+    let s = playTo(save, 28);
+    for (let g = 0; g < 10 && s.clock.day < 29; g++) s = step(s, false);
+    expect(s.clock.day).toBe(29);
+    return s;
+  }
+
+  it("rc.34 review: a mode switch takes that mode's 'repeat' (CAREER_PLAN.repeatByMode) — no mode lapses silently to the base", () => {
+    const easy = { ...createCareerSave({ ...INPUT, difficulty: "easy", trainingMode: undefined }, 61_020), coach: coach("sw", 80, 2, "development") };
+    expect(trainingOf(easy)).toMatchObject({ mode: "coach", repeat: CAREER_PLAN.repeatByMode.coach });
+    // HQ's "Delegated" switched off → "approve": repeat off, so the coach proposes at the next period.
+    const approve = setTrainingModeFlow(easy, "approve").save;
+    expect(trainingOf(approve)).toMatchObject({ mode: "approve", repeat: CAREER_PLAN.repeatByMode.approve });
+    expect(trainingDecisionOf(toPeriod2(approve))).not.toBeNull();
+    // Normal → "I set it": repeat on, the package the manager sets runs on past the period.
+    const normal = createCareerSave({ ...INPUT, trainingMode: undefined }, 61_021);
+    expect(trainingOf(normal)).toMatchObject({ mode: "approve", repeat: false });
+    let manual = setTrainingModeFlow(normal, "manual").save;
+    expect(trainingOf(manual)).toMatchObject({ mode: "manual", repeat: CAREER_PLAN.repeatByMode.manual });
+    manual = setTrainingPackageFlow(manual, DEV).save;
+    const next = toPeriod2(manual);
+    expect(trainingOf(next).plan).toMatchObject({ periodIndex: 1, author: "user" });
+    expect(trainingOf(next).plan!.package).toMatchObject({ objective: "development" });
+  });
+
+  it("rc.34 review: in approve mode the coach proposes whenever no package is repeated (repeat on with nothing set included)", () => {
+    let save: CareerSave = { ...createCareerSave({ ...INPUT, trainingMode: "approve" }, 61_022), coach: coach("p2", 80, 2, "development") };
+    save = setTrainingRepeatFlow(save, true).save;
+    expect(trainingOf(save)).toMatchObject({ mode: "approve", repeat: true, userPackage: null });
+    expect(trainingDecisionOf(toPeriod2(save))).not.toBeNull();
+    // A package to repeat (one he proposed and was approved, or the manager's own) runs again silently.
+    const set = setTrainingPackageFlow(save, DEV).save;
+    const repeated = toPeriod2(set);
+    expect(trainingDecisionOf(repeated)).toBeNull();
+    expect(trainingOf(repeated).plan).toMatchObject({ periodIndex: 1, author: "user" });
+  });
+
+  it("rc.34 review: HQ's toggle returns to the mode before delegation — Hard gets back to 'I set it', a preset delegation to 'approve'", () => {
+    const hard = { ...createCareerSave({ ...INPUT, difficulty: "hard", trainingMode: undefined }, 61_023), coach: coach("hq", 80, 2, "development") };
+    expect(trainingOf(hard).mode).toBe("manual");
+    const delegated = setTrainingModeFlow(hard, "coach").save;
+    expect(trainingBlockOf(delegated)).toMatchObject({ mode: "coach", undelegateTo: "manual" });
+    const back = setTrainingModeFlow(delegated, trainingBlockOf(delegated).undelegateTo).save;
+    expect(trainingOf(back)).toMatchObject({ mode: "manual", repeat: true });
+    const normal = setTrainingModeFlow({ ...createCareerSave({ ...INPUT, trainingMode: undefined }, 61_024), coach: coach("hn", 80, 2, "development") }, "coach").save;
+    expect(trainingBlockOf(normal).undelegateTo).toBe("approve");
+    const easy = { ...createCareerSave({ ...INPUT, difficulty: "easy", trainingMode: undefined }, 61_025), coach: coach("he", 80, 2, "development") };
+    expect(trainingBlockOf(easy).undelegateTo).toBe("approve");
+  });
+
   it("T8: an rc.33 save loads on the base — its mode from the preset, its focus as a tweak, nothing twice, no jump", () => {
     let save = createCareerSave({ ...INPUT, trainingMode: undefined }, 61_011);
     save = playTo(save, 10);
@@ -544,8 +597,31 @@ describe("DEV-03 delegation, the hold and the load repair", { timeout: 120_000 }
     expect(Object.values(trainingOf(next).plan!.players).some((e) => e.sessions > 0)).toBe(true);
   });
 
-  it("T4: the coach in post grows once at the season's filing (a second call changes nothing)", () => {
-    const filed = { ...createCareerSave(INPUT, 61_013), coach: coach("grow", 80, 2, "development") };
+  it("rc.34 review: passing a cup (a fresh invite or an accepted one) runs no hidden training day outside the plan", () => {
+    const save = createCareerSave(INPUT, 61_030);
+    const day = save.clock.day + 5;
+    const cup = { id: `0:${weekOfDay(day)}:unofficial`, seasonIndex: 0, week: weekOfDay(day), day, split: 1, format: "single", tier: "t3", name: "Test Cup" } as CareerEventDef;
+    const grown = (s: CareerSave) => s.squad.map((p) => ({ overall: p.overall, attrs: p.attrOffsets, split: p.gainedThisSplit, season: p.gainedThisSeason }));
+    for (const offered of [
+      { ...structuredClone(save), unofficialOffer: cup },
+      { ...structuredClone(save), unofficialOffer: cup, pendingEventDef: cup },
+    ]) {
+      const passed = declineUnofficial(offered);
+      expect(passed.unofficialOffer).toBeNull();
+      expect(passed.pendingEventDef).toBeNull();
+      expect(grown(passed)).toEqual(grown(offered));
+      expect(trainingOf(passed).plan).toEqual(trainingOf(offered).plan);
+    }
+  });
+
+  it("T4: the coach in post grows once at the season's filing (a second call changes nothing) — rc.34 review: only after days of work", () => {
+    // Hired and straight to the filing (in the season review, or on the last day): no coach days, no growth.
+    const idle = { ...createCareerSave(INPUT, 61_013), coach: coach("idle", 80, 2, "development") };
+    trainingSeasonEnd(idle);
+    expect(idle.coach).toMatchObject({ overall: 80, experience: 2 });
+    // A coach who ran this season's sessions grows.
+    const filed = playTo({ ...createCareerSave(INPUT, 61_013), coach: coach("grow", 80, 2, "development") }, 8);
+    expect(trainingOf(filed).plan!.coaches.find((c) => c.name === "grow")!.days).toBeGreaterThan(0);
     trainingSeasonEnd(filed);
     expect(filed.coach!.experience).toBe(3);
     expect(filed.coach!.overall).toBeCloseTo(80 + CAREER_COACH_MARKET.growth.qualityPerSeason, 6);

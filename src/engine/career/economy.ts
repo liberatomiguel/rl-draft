@@ -1067,18 +1067,88 @@ export function breachesToEndFor(difficulty: CareerDifficulty): number | null {
 
 /**
  * rc.34: what the NEXT Monday below the floor does on these books — the end
- * when CAREER_LOAN.breachesToEnd counts it, or when the emergency loan is
- * owed and already holds CAREER_LOAN.emergency.maxTopUps top-ups; otherwise
- * the bank's emergency loan (a new one, or a top-up of the one owed). Every
- * screen and warning that names the next breach reads this.
+ * when CAREER_LOAN.breachesToEnd counts it, when the emergency loan is owed
+ * and already holds CAREER_LOAN.emergency.maxTopUps top-ups, or (rc.34
+ * review) when nothing is owed and the career has had its last loan
+ * (emergency.maxLoans); otherwise the bank's emergency loan (a new one, or
+ * a top-up of the one owed). Every screen and warning that names the next
+ * breach reads this.
  */
 export function breachOutcomeOf(
-  fin: Pick<FinanceState, "loanBreaches" | "loanUsed" | "loan">,
+  fin: Pick<FinanceState, "loanBreaches" | "loanUsed" | "loan" | "emergencyLoans">,
   difficulty: CareerDifficulty,
 ): BreachOutcome {
   if (breachOutcomeFor(loanBreachesOf(fin) + 1, difficulty) === "insolvent") return "insolvent";
-  const cap = CAREER_LOAN.emergency.maxTopUps;
-  return fin.loan && cap !== null && (fin.loan.topUps ?? 0) >= cap ? "insolvent" : "rescue";
+  if (fin.loan) {
+    const cap = CAREER_LOAN.emergency.maxTopUps;
+    return cap !== null && (fin.loan.topUps ?? 0) >= cap ? "insolvent" : "rescue";
+  }
+  // rc.34 review: nothing owed — a NEW loan, unless the career has had its last one.
+  const left = emergencyLoansLeftOf(fin, difficulty);
+  return left !== null && left <= 0 ? "insolvent" : "rescue";
+}
+
+/** rc.34 review: the emergency loans a career gets on this difficulty (CAREER_LOAN.emergency.maxLoans; null = no cap). */
+export function maxLoansFor(difficulty: CareerDifficulty): number | null {
+  const max = CAREER_LOAN.emergency.maxLoans[difficulty] ?? null;
+  return max === null ? null : Math.max(0, Math.floor(max));
+}
+
+/** rc.34 review: the NEW emergency loans the bank still opens for this career (null = no cap; a top-up is not one). */
+export function emergencyLoansLeftOf(
+  fin: Pick<FinanceState, "emergencyLoans" | "loanUsed">,
+  difficulty: CareerDifficulty,
+): number | null {
+  const max = maxLoansFor(difficulty);
+  return max === null ? null : Math.max(0, max - emergencyLoansOf(fin));
+}
+
+/**
+ * rc.34 review — THE rule the emergency loan is settled by, on its deadline
+ * Monday (the bank collects) and from Finances ("Pay it all"): paying `owed`
+ * out of `balance` must leave the books at or above the floor (the overdraft
+ * counts; "not too punitive"). rc.34 first shipped two rules: the deadline
+ * wanted balance ≥ owed while "Pay it all" took the floor, so paying on the
+ * Sunday saved a career that doing nothing ended on the Monday.
+ */
+export function canSettleLoan(balance: number, owed: number, floor: number): boolean {
+  return balance - owed >= floor;
+}
+
+/**
+ * rc.34 review: the balance after `mondays` more Mondays at this weekly net
+ * — the runway's own projection (with `run`, the investor's weekly stops
+ * after its remaining Mondays). The emergency loan's "covered" reads it to
+ * the deadline Monday.
+ */
+export function balanceAfterMondays(balance: number, weeklyNet: number, mondays: number, run?: NetRun | null): number {
+  const n = Math.max(0, Math.floor(mondays));
+  const withRun = run && run.weekly > 0 ? Math.min(n, Math.max(0, run.mondays)) : n;
+  return balance + n * weeklyNet - (run && run.weekly > 0 ? (n - withRun) * run.weekly : 0);
+}
+
+/**
+ * rc.34 review: a difficulty's whole money rule, as the wizard states it —
+ * from every key: whether the bank lends at all (CAREER_LOAN.breachesToEnd
+ * 1 ends a career at its first breach), how many emergency loans a career
+ * gets (emergency.maxLoans, and a breach count caps them too: the n-th
+ * breach ending it leaves n − 1), and the weeks to repay each (null = no
+ * deadline: the loan itself never ends the career).
+ */
+export interface MoneyRule {
+  lends: boolean;
+  /** Emergency loans in a career at most (null = no cap). */
+  loans: number | null;
+  /** Weeks to repay each loan (null = no deadline). */
+  deadlineWeeks: number | null;
+}
+
+export function moneyRuleFor(difficulty: CareerDifficulty): MoneyRule {
+  const end = breachesToEndFor(difficulty);
+  const byBreaches = end === null ? null : Math.max(0, end - 1);
+  const cap = maxLoansFor(difficulty);
+  const loans = byBreaches === null ? cap : cap === null ? byBreaches : Math.min(cap, byBreaches);
+  return { lends: loans === null || loans > 0, loans, deadlineWeeks: deadlineWeeksFor(difficulty) };
 }
 
 /** rc.34: the emergency loan's term on this difficulty, in weeks (null = no deadline). */
@@ -1223,16 +1293,19 @@ export interface WeeklyPayrollInput extends WeeklyStatementInput {
  * emergency loan's deadline (rc.34) → floor check.
  *
  * Deadline (rc.34, Miguel 31/10): on the emergency loan's deadline Monday
- * (or past it), the bank takes what it is owed if the balance covers it
- * (one "loanPayment" line, `collected`); otherwise the career ends
- * (`endCause` "deadline").
+ * (or past it), the bank takes what it is owed when the books stay at or
+ * above the floor after it (`canSettleLoan`, the rule "Pay it all" reads;
+ * one "loanPayment" line, `collected`); otherwise the career ends
+ * (`endCause` "deadline"). On a split boundary the store books the sponsor
+ * objective's bonus before this funnel runs (rc.34 review).
  *
  * Floor check: a Monday below the floor (backerLineFor, on the wage bill
  * booked) is a breach, counted in `fin.loanBreaches`. breachOutcomeOf says
  * what it does: the bank's emergency loan (emergencyLoanFor — a new loan
  * with its deadline, or a top-up of the one owed), with the investor on the
  * career's first loan (investorJoinsNext), or the end (`endCause` "breach":
- * CAREER_LOAN.breachesToEnd or the top-up cap). The STORE owns the ending.
+ * CAREER_LOAN.breachesToEnd, the top-up cap or, rc.34 review, the loan cap
+ * `emergency.maxLoans`). The STORE owns the ending.
  * rc.33's keys (breachesToEnd 3 / 2 / 1, deadlineWeeks null) restore rc.33.
  * The investor is read from and counted down on `fin` (pure).
  */
@@ -1301,6 +1374,10 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
   if (fin.sponsorFines && fin.sponsorFines.length > 0) {
     const left: SponsorFineState[] = [];
     for (const f of fin.sponsorFines) {
+      if (f.from && (seasonIndex < f.from.seasonIndex || (seasonIndex === f.from.seasonIndex && (day ?? 0) < f.from.day))) {
+        left.push(f); // settled today: its first instalment is next Monday's
+        continue;
+      }
       const due = Math.max(0, Math.min(f.remaining, f.perMonday));
       const room = CAREER_SPONSOR.fines.neverBreaches ? Math.max(0, fin.balance - backer.floor) : Infinity;
       const booked = Math.min(due, room === Infinity ? due : quantize(room));
@@ -1312,12 +1389,14 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     fin = { ...fin, sponsorFines: left };
     if (left.length === 0) delete fin.sponsorFines;
   }
-  // rc.34: the emergency loan's deadline — the bank takes what it is owed if
-  // the balance covers it; otherwise the career ends (no floor check after).
+  // rc.34: the emergency loan's deadline — the bank takes what it is owed
+  // when the books stay at or above the floor after paying it (rc.34 review:
+  // canSettleLoan, "Pay it all"'s own test — the overdraft counts);
+  // otherwise the career ends (no floor check after).
   let collected = 0;
   let endCause: "deadline" | "breach" | null = null;
   if (fin.loan?.deadline && absWeekOf({ seasonIndex, week }) >= absWeekOf(fin.loan.deadline)) {
-    if (fin.balance >= fin.loan.remaining) {
+    if (canSettleLoan(fin.balance, fin.loan.remaining, backer.floor)) {
       collected = fin.loan.remaining;
       line("loanPayment", -collected);
       fin = { ...fin, loan: null };

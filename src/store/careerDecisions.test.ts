@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { CAREER_CALENDAR } from "@/config/balance";
 import {
   DAYS_PER_SEASON,
+  dayOfWeekOf,
   eventDayFor,
   firstDayOfWeek,
   officialEventDefsForWeek,
@@ -49,6 +50,7 @@ import { sponsorDecisionOf,
   declineBidFlow,
   declineUnofficial,
   finishEvent,
+  inviteSurfacedToday,
   isEventPaused,
   migrateSaveToV5,
   renewPlayerFlow,
@@ -165,7 +167,8 @@ function holding(kind: DecisionKind, base = fresh()): { save: CareerSave; restor
 const reload = (save: CareerSave): CareerSave => migrateSaveToV5(JSON.parse(JSON.stringify(save)))!;
 
 describe("rc.34 UX-01a — the clock never passes a needed decision (one flow test per kind)", () => {
-  const kinds: DecisionKind[] = ["insert", "invite", "bid", "sponsor", "event", "squadShort", "notice", "training"];
+  // rc.34 review (Gate 3b): a fresh invite is not a needed decision (its default is "not entered") — its own describe below.
+  const kinds: DecisionKind[] = ["insert", "bid", "sponsor", "event", "squadShort", "notice", "training"];
   for (const kind of kinds) {
     it(`${kind}: +1 day, the batched Advance, the autoplay and a reload all hold`, () => {
       const { save, restore } = holding(kind);
@@ -216,6 +219,63 @@ describe("rc.34 UX-01a — the clock never passes a needed decision (one flow te
     } finally {
       DECISION_SOURCES.notice = was;
     }
+  });
+});
+
+describe("rc.34 review (Gate 3b: no repetitive weekly chore) — a fresh invite never holds the clock", () => {
+  /** A Hard-like career that enters no cup on its own: its invites surface as invites. */
+  function noAutoEntry(seed: number): CareerSave {
+    const save = createCareerSave({ ...INPUT, prefs: { autoEnterUnofficials: false } }, seed);
+    for (let s = 0; s < 2; s++) for (let w = 1; w <= CAREER_CALENDAR.weeksPerSeason; w++) save.flags[`insertRolled:${s}:${w}`] = true;
+    save.sponsorOffers = null;
+    save.pendingOffers = [];
+    return save;
+  }
+
+  it("shown on HQ (Accept / Pass) but not holding: +1 day, the routed continue and a reload all move on", () => {
+    const { save } = holding("invite");
+    expect(clockHoldOf(save)).toBeNull();
+    expect(pendingDecisionsOf(save).find((d) => d.kind === "invite")).toMatchObject({ holds: false, canWait: false, parked: false });
+    expect(topDecisionOf(save)?.kind).toBe("invite");
+    expect(continueKind(save)).toBe("advance");
+    expect(advanceDayFlow(save).clock.day).toBe(save.clock.day + 1);
+    expect(advanceDayFlow(reload(save)).clock.day).toBe(save.clock.day + 1);
+  });
+
+  it("the batched Advance stops once, on the Monday it surfaces; a second press goes past it; past its matchday unanswered it is passed", () => {
+    let save = noAutoEntry(34_041);
+    let stop: CareerSave | null = null;
+    for (let i = 0; i < 40 && save.phase === "running" && save.clock.seasonIndex === 0; i++) {
+      const next = advanceToNextStopFlow(walkPastForTests(save));
+      if (next.clock.day === save.clock.day) break;
+      save = next;
+      if (inviteSurfacedToday(save)) {
+        stop = save;
+        break;
+      }
+    }
+    expect(stop).not.toBeNull();
+    const monday = stop!;
+    const offer = monday.unofficialOffer!;
+    expect(dayOfWeekOf(monday.clock.day)).toBe(1);
+    expect(clockHoldOf(monday)).toBeNull();
+    // A second press moves on past the Monday (the invite stays on HQ until its matchday).
+    const past = advanceToNextStopFlow(monday);
+    expect(past.clock.day).toBeGreaterThan(monday.clock.day);
+    // Day by day: still offered on its matchday (and the matchday does not hold); gone the day after.
+    let s = monday;
+    while (s.clock.day < offer.day) s = stepDayForTests(s);
+    expect(s.unofficialOffer?.id).toBe(offer.id);
+    expect(clockHoldOf(s)).toBeNull();
+    s = stepDayForTests(s);
+    expect(s.clock.day).toBe(offer.day + 1);
+    expect(s.unofficialOffer).toBeNull();
+    expect(s.eventResults.some((r) => r.eventId === offer.id && r.rows.some((row) => row.ref === "user"))).toBe(false);
+    // Accepted instead, its matchday holds (Play, or Pass explicitly).
+    let accepted: CareerSave = { ...structuredClone(monday), pendingEventDef: offer };
+    while (accepted.clock.day < offer.day) accepted = stepDayForTests(accepted);
+    expect(clockHoldOf(accepted)?.kind).toBe("event");
+    expect(advanceDayFlow(accepted)).toBe(accepted);
   });
 });
 
@@ -406,6 +466,51 @@ describe("rc.34 (Miguel, 31/10) — a short squad can skip each regional", () =>
     // The batched Advance also runs on past the skipped weekend.
     expect(advanceToNextStopFlow(s0).clock.day).toBeGreaterThan(s0.clock.day);
   });
+
+  /**
+   * rc.34 review: the user's event on its OWN day, the squad short only now (the
+   * day's arrival already passed the event over as the user's). `direct` commits
+   * the week to Sunday's regional (a direct seat) instead of Saturday's qualifier.
+   */
+  function shortOnTheDay(direct: boolean): { save: CareerSave; def: CareerEventDef } {
+    let save = fresh(34_023);
+    while (save.clock.day < firstDayOfWeek(4)) save = stepDayForTests(save);
+    if (direct) {
+      save = structuredClone(save);
+      save.pendingEventDef = officialEventDefsForWeek(0, 4).find((d) => d.tier === "regional" && d.region === "SAM")!;
+    }
+    const def = save.pendingEventDef!;
+    expect(def.tier).toBe(direct ? "regional" : "qualifier");
+    while (save.clock.day < def.day) save = stepDayForTests(save);
+    expect(save.eventResults.some((r) => r.eventId === def.id)).toBe(false);
+    save = structuredClone(save);
+    save.squad = save.squad.slice(0, 2);
+    syncSquadRoles(save);
+    expect(canSkipShortSquadEvent(save)).toBe(true);
+    return { save, def };
+  }
+
+  for (const direct of [false, true]) {
+    it(`rc.34 review: skipped on its own day (${direct ? "Sunday's regional" : "Saturday's qualifier"}), it resolves for the region at once — once`, () => {
+      const { save, def } = shortOnTheDay(direct);
+      const s = skipShortSquadEventFlow(save).save;
+      const res = s.eventResults.filter((r) => r.eventId === def.id);
+      expect(res).toHaveLength(1);
+      expect(res[0].rows.some((r) => r.ref === "user")).toBe(false);
+      if (direct) {
+        // Sunday's regional crowned a champion and paid the region's points — to everyone but the user.
+        expect(res[0].rows.some((r) => r.placement === "champion")).toBe(true);
+        const pts = s.competition.splitPoints.SAM ?? {};
+        expect(Object.entries(pts).some(([ref, v]) => ref !== "user" && v > 0)).toBe(true);
+        expect(pts.user ?? 0).toBe(save.competition.splitPoints.SAM?.user ?? 0);
+      }
+      // The clock moves on, and the weekend never resolves it twice.
+      expect(clockHoldOf(s)).toBeNull();
+      let t = s;
+      while (t.clock.day <= def.day + 1 && t.phase === "running") t = stepDayForTests(t);
+      expect(t.eventResults.filter((r) => r.eventId === def.id)).toHaveLength(1);
+    });
+  }
 
   it("the next regional asks again; a Major keeps the hold (sign first) and a cup keeps its Pass", () => {
     let s = skipShortSquadEventFlow(shortEve()).save;

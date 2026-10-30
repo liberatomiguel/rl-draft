@@ -234,6 +234,12 @@ export interface TrainingState {
    * of the first package the manager builds (then cleared). Optional.
    */
   carryTweaks?: Record<string, PlayerTweak>;
+  /**
+   * rc.34 review: the mode training was in before it was delegated to the
+   * coach — HQ's "Delegated" switch returns to it (Hard back to "I set it").
+   * Optional; absent = "approve".
+   */
+  delegatedFrom?: "approve" | "manual";
 }
 
 /**
@@ -644,6 +650,13 @@ export interface EmergencyLoanState {
   topUps?: number;
   /** The deadline warnings already sent, by weeks before it (CAREER_LOAN.emergency.warnWeeks). */
   warned?: number[];
+  /**
+   * rc.34 review: whether the books projected to the deadline covered the
+   * debt when the bank last looked (a deadline warning, or its daily watch
+   * inside CAREER_LOAN.emergency.slipWatchWeeks) — a flip to false sends the
+   * "deadlineSlipped" notice. Optional; absent = not looked yet.
+   */
+  covered?: boolean;
 }
 
 export interface FinanceState {
@@ -716,6 +729,12 @@ export interface SponsorFineState {
   remaining: number;
   /** The Monday instalment (the last one is clamped to `remaining`). */
   perMonday: number;
+  /**
+   * rc.34 integration: no instalment before this day — a fine settled on a
+   * split-boundary Monday (which now runs before that Monday's payroll)
+   * starts the next Monday, as SPONSOR-CONTRACT S3 says. Absent = due now.
+   */
+  from?: { seasonIndex: number; day: number };
 }
 
 /**
@@ -763,7 +782,9 @@ export type MoneyNoticeKind =
   | "deadlineWarning"
   | "deadlineCollected"
   | "careerEnded"
-  | "loanTakenOver";
+  | "loanTakenOver"
+  // rc.34 review: inside the deadline's last weeks the projection stopped covering the debt.
+  | "deadlineSlipped";
 
 /** One pending money notice (careerFlow.moneyNoticeOf / acknowledgeMoneyNoticeFlow). */
 export interface MoneyNotice {

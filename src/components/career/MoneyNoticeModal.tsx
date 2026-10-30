@@ -29,7 +29,19 @@ import { Modal } from "@/components/ui/Modal";
 import { deadlineDateText } from "@/components/career/finances/loanDates";
 
 /** The notice params that carry raw dollar amounts (formatted before the copy reads them). */
-const NOTICE_MONEY_KEYS = new Set(["lent", "owed", "rescueTo", "floor", "partnerWeekly", "balance", "collected"]);
+const NOTICE_MONEY_KEYS = new Set([
+  "lent",
+  "owed",
+  "rescueTo",
+  "floor",
+  "partnerWeekly",
+  "balance",
+  "collected",
+  // rc.34 review: the deadline's projection — the books on that Monday, the shortfall, the weekly net.
+  "projected",
+  "gap",
+  "net",
+]);
 
 /**
  * Pure: a notice's words in this language — the money formatted and the

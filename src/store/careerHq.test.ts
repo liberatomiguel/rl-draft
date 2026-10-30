@@ -13,6 +13,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CAREER_CALENDAR, CAREER_GEAR } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
+import { CAREER_PT } from "@/content/copy.career.pt";
 import { baseRarityOf } from "@/engine/cards";
 import {
   firstDayOfWeek,
@@ -34,6 +35,7 @@ import {
   simEventToEnd,
   migrateSaveToV5,
   repairHqOnLoad,
+  rolloverToNextSeason,
   runBootcampFlow,
   runwayWeeksOf,
   startEvent,
@@ -209,6 +211,19 @@ describe("rc.34 UX-01f (5-A) — the bootcamp lasts the split and shows its end"
     expect(monday.finances.bootcampUsedThisSplit).toBe(false);
   });
 
+  it("rc.34 review: a camp bought in W31–32 never blocks next season's first split — the rollover reopens the allowance", () => {
+    let save = fresh(34_123);
+    save.reputation = 30;
+    save = { ...save, clock: { seasonIndex: 0, day: firstDayOfWeek(31) + 1 }, pendingEventDef: null, unofficialOffer: null };
+    save = runBootcampFlow(save).save;
+    expect(save.finances.bootcampUsedThisSplit).toBe(true);
+    const review: CareerSave = { ...save, phase: "seasonReview", clock: { seasonIndex: 0, day: CAREER_CALENDAR.weeksPerSeason * 7 } };
+    const next = rolloverToNextSeason(review);
+    expect(next.clock).toMatchObject({ seasonIndex: 1 });
+    expect(next.finances.bootcampUsedThisSplit).toBe(false);
+    expect(runBootcampFlow(next).error).toBeUndefined();
+  });
+
   it("rc.33's rule stays behind the key (\"event\": spent by the next official event); 5-B halves the edge", () => {
     const gear = CAREER_GEAR as unknown as { bootcampSpan: string; bootcampSplitEdgeShare: number };
     const span = gear.bootcampSpan;
@@ -286,5 +301,28 @@ describe("rc.34 — the HQ projection and Finances' read one function", () => {
   it("officialEventDefsForWeek sanity: the split's regionals fall before its end day", () => {
     const end = splitEndDayFor(1);
     for (const w of [4, 6, 8, 10]) for (const d of officialEventDefsForWeek(0, w)) expect(d.day).toBeLessThanOrEqual(end);
+  });
+});
+
+describe("rc.34 review — no \"Backer\" in what a new career shows (the emergency loan's names)", () => {
+  /** Every plain-string leaf of a copy tree, by its path (templates are checked by name below). */
+  function leaves(node: unknown, path: string, out: [string, string][]): [string, string][] {
+    if (typeof node === "string") out.push([path, node]);
+    else if (node && typeof node === "object") for (const [k, v] of Object.entries(node)) leaves(v, `${path}.${k}`, out);
+    return out;
+  }
+  // Kept on purpose: the sender and texts of mails an older save still holds, and the loan take-over that explains the change.
+  const HISTORY = /\.(backerIn|restructured|loanTakenOver)\b|\.mail\.from\.backer$/;
+
+  it("the HQ finance tile, the toolbox refusals and every label say emergency loan / empréstimo emergencial (EN + PT)", () => {
+    expect(CAREER_EN.hub.financeDebtBacker("$1,000")).toBe("Emergency loan $1,000");
+    expect(CAREER_PT.hub.financeDebtBacker("$1,000")).toBe("Empréstimo emergencial $1,000");
+    for (const [C, lang] of [[CAREER_EN, "en"], [CAREER_PT, "pt"]] as const) {
+      for (const text of Object.values(C.toolbox.refusal)) expect(text, lang).not.toMatch(/Backer|Investidor de emergência/);
+      for (const [path, text] of leaves(C, lang, [])) {
+        if (HISTORY.test(path)) continue;
+        expect(text, path).not.toMatch(/Backer|Investidor de emergência/);
+      }
+    }
   });
 });

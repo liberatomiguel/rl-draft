@@ -6,14 +6,15 @@
  * built with, and the prefs a new career starts on. Pure; no React.
  */
 
-import { CAREER_DIFFICULTY, CAREER_LOAN } from "@/config/balance";
-import type { CareerDifficulty, CareerPrefs } from "./types";
+import { CAREER_DIFFICULTY, CAREER_LOAN, CAREER_PLAN } from "@/config/balance";
+import type { CareerDifficulty, CareerPrefs, TrainingMode } from "./types";
 
 /**
  * rc.34 (front I + front H): the weeks the bank gives to repay the emergency
  * loan on this preset before the career ends ("the bank lends you the money;
- * repay it within N weeks or the career ends") — the wizard's money line,
- * from `CAREER_LOAN.emergency.deadlineWeeks` (null = no deadline).
+ * repay it within N weeks or the career ends"), from
+ * `CAREER_LOAN.emergency.deadlineWeeks` (null = no deadline). rc.34 review:
+ * the wizard's money line reads the whole rule, `economy.moneyRuleFor`.
  */
 export function loanDeadlineWeeksFor(difficulty: CareerDifficulty): number | null {
   const weeks = CAREER_LOAN.emergency.deadlineWeeks[difficulty];
@@ -25,6 +26,16 @@ export type CareerMatchProfile = (typeof CAREER_DIFFICULTY.match)[CareerDifficul
 /** The match profile a career difficulty plays with (CAREER_DIFFICULTY.match). */
 export function careerMatchProfile(difficulty: CareerDifficulty): CareerMatchProfile {
   return CAREER_DIFFICULTY.match[difficulty] ?? CAREER_DIFFICULTY.match.normal;
+}
+
+/**
+ * rc.34 review: the training delegation a new career on this preset starts
+ * on (CAREER_PLAN.modeByPreset, decision 3-A) — Easy: the coach runs it;
+ * Normal: he proposes, you approve; Hard: you set it. The wizard's help line
+ * and the new career's training state both read it.
+ */
+export function presetTrainingModeOf(difficulty: CareerDifficulty): TrainingMode {
+  return CAREER_PLAN.modeByPreset[difficulty] ?? "approve";
 }
 
 /** The prefs a new career on this preset starts with (how much is guided). */

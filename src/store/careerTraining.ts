@@ -23,6 +23,7 @@ import { CAREER_CALENDAR, CAREER_DEV, CAREER_PLAN, CAREER_SAVE, CAREER_SCRIM, CA
 import { DAYS_PER_SEASON, dayOfWeekOf, unofficialOfferFor, weekAt, weekOfDay } from "@/engine/career/calendar";
 import { majorFieldFor, worldsFieldFor } from "@/engine/career/careerResults";
 import { fieldQualityFor, growthCtxOf, trainDay, trainWeek } from "@/engine/career/development";
+import { presetTrainingModeOf } from "@/engine/career/difficulty";
 import { gearTrainingBonus } from "@/engine/career/economy";
 import { deriveSeed, derivedFloat, streams } from "@/engine/career/seeds";
 import {
@@ -154,7 +155,7 @@ export function teamChemistryOf(save: CareerSave): number {
 
 /** A new career's training state: the preset's delegation (decision 3-A). */
 export function initialTrainingState(difficulty: CareerDifficulty, modeOverride?: TrainingMode): TrainingState {
-  const mode = modeOverride ?? CAREER_PLAN.modeByPreset[difficulty] ?? "approve";
+  const mode = modeOverride ?? presetTrainingModeOf(difficulty);
   return {
     mode,
     repeat: CAREER_PLAN.repeatByMode[mode] ?? false,
@@ -195,9 +196,7 @@ export function trainingOf(save: Pick<CareerSave, "training">): TrainingState {
 export function repairTrainingOnLoad(save: CareerSave): void {
   if (save.training !== undefined) return;
   if (!save.clock || !Array.isArray(save.squad) || !save.finances || !save.world) return;
-  const mode: TrainingMode = save.prefs?.autoTrain
-    ? (CAREER_PLAN.modeByPreset[save.difficulty] ?? "approve")
-    : "manual";
+  const mode: TrainingMode = save.prefs?.autoTrain ? presetTrainingModeOf(save.difficulty) : "manual";
   const carry: Record<string, PlayerTweak> = {};
   for (const p of save.squad) {
     const tweak: PlayerTweak = {};
@@ -281,9 +280,10 @@ export function coachProposalOf(
 /**
  * Open the plan for `period` and decide its package (T5):
  *  - "coach" + a coach: his proposal runs (exceptions become summary lines);
- *  - "approve" + a coach, repeat off: his proposal WAITS — the clock holds on
- *    the period's first day until the manager approves, adjusts or keeps
- *    the base (`trainingDecisionOf`); that day's session runs once answered;
+ *  - "approve" + a coach, no package repeated (repeat off, or nothing set —
+ *    rc.34 review): his proposal WAITS — the clock holds on the period's
+ *    first day until the manager approves, adjusts or keeps the base
+ *    (`trainingDecisionOf`); that day's session runs once answered;
  *  - otherwise: the repeated package (repeat on) or DEV-01's base.
  */
 function openPlan(save: CareerSave, period: TrainingPeriod, opts: { repaired?: boolean } = {}): void {
@@ -297,7 +297,9 @@ function openPlan(save: CareerSave, period: TrainingPeriod, opts: { repaired?: b
     if (t.mode === "coach" && proposal) {
       pkg = proposal.package;
       author = "coach";
-    } else if (t.mode === "approve" && proposal && !t.repeat) {
+    } else if (t.mode === "approve" && proposal && !(t.repeat && t.userPackage)) {
+      // rc.34 review: whenever no package is repeated — "repeat" on with nothing
+      // set used to fall to the base silently (the coach never proposed).
       t.proposal = {
         seasonIndex: save.clock.seasonIndex,
         periodIndex: period.index,
@@ -428,7 +430,8 @@ export function trainingDayStart(save: CareerSave): void {
  * The rollover hook (careerFlow.rolloverToNextSeason, before the squad ages):
  * period 8's summary is filed at the rollover (T6), and the coach in post
  * grows (T4): +experience, quality +0.5 — +1 when most of the season's
- * periods ran his specialty — up to his ceiling.
+ * periods ran his specialty — up to his ceiling. rc.34 review: only when he
+ * worked days of this season's sessions.
  */
 export function trainingSeasonEnd(save: CareerSave): void {
   if (!save.training) return;
@@ -439,7 +442,12 @@ export function trainingSeasonEnd(save: CareerSave): void {
   if (filing && save.coach) {
     const prof = coachProfileOf(save.coach)!;
     const ran = save.training.history.filter((h) => h.seasonIndex === season);
-    const matched = ran.filter((h) => h.package?.objective === prof.specialty && h.coaches.some((c) => c.name === save.coach!.name)).length;
+    // rc.34 review: only a coach who worked this season grows (his days on the season's
+    // plans) — one hired in the season review or on its last day grew after zero days.
+    const name = save.coach.name;
+    const days = ran.reduce((n, h) => n + h.coaches.filter((c) => c.name === name).reduce((d, c) => d + c.days, 0), 0);
+    if (days <= 0) return;
+    const matched = ran.filter((h) => h.package?.objective === prof.specialty && h.coaches.some((c) => c.name === name)).length;
     save.coach = coachAfterSeason(save.coach, ran.length > 0 && matched * 2 > ran.length);
   }
 }
@@ -1227,7 +1235,14 @@ export function setTrainingModeFlow(input: CareerSave, mode: TrainingMode): Trai
   trainingDayStart(save);
   const t = save.training!;
   if (t.mode === mode) return { save: input };
+  // rc.34 review: HQ's "Delegated" switch returns to the mode before the delegation.
+  if (mode === "coach") {
+    if (t.mode === "approve" || t.mode === "manual") t.delegatedFrom = t.mode;
+  } else delete t.delegatedFrom;
   t.mode = mode;
+  // rc.34 review: the new mode's own "repeat" (CAREER_PLAN.repeatByMode) — the old one
+  // made "approve" never propose (repeat on) and "I set it" lapse after a period (off).
+  t.repeat = CAREER_PLAN.repeatByMode[mode] ?? false;
   const pending = t.proposal;
   if (mode === "coach" && save.coach) {
     const proposal = pending?.package ?? coachProposalOf(save)?.package ?? null;
@@ -1267,6 +1282,8 @@ export interface TrainingBlockView {
   decision: TrainingDecision | null;
   /** The pre-event unavailability the plan adds, in points. */
   unavailabilityPts: number;
+  /** rc.34 review: the mode HQ's "Delegated" switch returns to (the one before the delegation; "approve" by default). */
+  undelegateTo: TrainingMode;
 }
 
 /** The package scrims the period's remaining weekdays hold (never on a matchday). */
@@ -1334,6 +1351,7 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
     lastWear: lastWearAvg === null ? null : wearBandOf(lastWearAvg),
     decision: trainingDecisionOf(save),
     unavailabilityPts: Math.round(wearUnavailabilityAddOf(save) * 1000) / 10,
+    undelegateTo: t.delegatedFrom ?? "approve",
   };
 }
 

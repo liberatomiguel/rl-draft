@@ -41,13 +41,13 @@ const L = {
   en: {
     playNow: /^Play now/, startDraft: /^Start Draft$/, reroll: /^Free reroll/, startT: /^Start Tournament$/, skip: /^Skip to end$/,
     results: /^View results$/, quick: /^Quick start$/, next: /^Next$/, found: /^Found /, presets: ["Easy", "Normal", "Hard"],
-    moneyRow: "The bank lends it", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
+    moneyRow: "bank loan", advance: /^(\+1 day|Advance one day)$/i, founding: "Founding partner", sell: "Sell a player",
     signable: "Signable at my reputation",
   },
   pt: {
     playNow: /^Jogar agora/, startDraft: /^Começar Draft$/, reroll: /^Reroll grátis/, startT: /^Começar Torneio$/, skip: /^Pular para o fim$/,
     results: /^Ver resultados$/, quick: /^Início rápido$/, next: /^(Próximo|Avançar)$/, found: /^Fundar /, presets: ["Fácil", "Normal", "Difícil"],
-    moneyRow: "O banco empresta", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
+    moneyRow: "empréstimo", advance: /^(\+1 dia|Avançar um dia)$/i, founding: "Parceiro fundador", sell: "Vender um jogador",
     signable: "Contratáveis com minha reputação",
   },
 };

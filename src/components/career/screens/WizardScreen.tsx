@@ -15,7 +15,7 @@ import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_REP } from "@/config/balance"
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs } from "@/data";
-import { computeSalaryAsk, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/engine/career/economy";
+import { computeSalaryAsk, runwayWeeks, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/engine/career/economy";
 import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
@@ -40,7 +40,6 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge, CountryChip } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { TeamLogo } from "@/components/ui/TeamLogo";
 import { useCareerStore } from "@/store/careerStore";
 import { founderPotentialBandFor, starterOffersForRegion } from "@/store/careerFlow";
@@ -689,6 +688,9 @@ export function WizardScreen() {
                 const active = rosterKey === key;
                 const wage = wageBillOf(offer);
                 const budget = budgetOf(offer);
+                // rc.34 review: the weeks of this roster's wages the start budget covers (no income) —
+                // the budget scales with the wage bill (BAL-05), so a wage/budget bar read the same everywhere.
+                const runway = runwayWeeks(budget, -weeklyWageBill(salariesOf(offer), null)) ?? 0;
                 const avgOvr = Math.round(
                   offer.players.reduce((s, p) => s + p.overall, 0) / offer.players.length,
                 );
@@ -763,15 +765,12 @@ export function WizardScreen() {
                           {C.squad.perWeek(`~${formatMoney(weeklyWage(wage), { compact: true })}`)}
                         </span>
                       </div>
-                      <ProgressBar
-                        value={wage / budget}
-                        tone={wage > budget / 2 ? "orange" : "blue"}
-                        label={C.wizard.wageBill}
-                      />
+                      {/* rc.34 review: the budget on the difficulty picked (Normal until step 5 changes it). */}
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-sub">{C.finances.balance}</span>
+                        <span className="text-sub">{C.wizard.rosterBudget(C.wizard.presets[difficulty].label)}</span>
                         <span className="display font-bold text-good">{formatMoney(budget)}</span>
                       </div>
+                      <p className="text-[11px] text-faint">{C.wizard.rosterRunway(runway)}</p>
                     </div>
                   </button>
                 );

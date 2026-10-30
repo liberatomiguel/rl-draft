@@ -208,10 +208,21 @@ function insertDecisionOf(save: CareerSave): PendingDecision | null {
   return dueNow("insert", `insert:${ins.id}:${save.clock.seasonIndex}:${ins.day}`);
 }
 
-/** A fresh invite (not auto-entered): accepted or passed before the clock moves. */
+/**
+ * A fresh invite (not auto-entered): HQ shows it with Accept / Pass. rc.34
+ * review (Gate 3b, "no repetitive weekly chore" — on Hard an invite held
+ * every open Monday): it is NOT a needed decision, its default is "not
+ * entered" — it never holds the clock; the batched Advance and the autoplay
+ * stop on it once, the Monday it surfaces (careerFlow.inviteSurfacedToday);
+ * walked past its matchday, it is passed. An accepted cup is the user's
+ * matchday ("event"), which holds (Play, or Pass).
+ */
 function inviteDecisionOf(save: CareerSave): PendingDecision | null {
-  if (save.phase !== "running" || save.activeEvent || save.pendingEventDef || !save.unofficialOffer) return null;
-  return dueNow("invite", `invite:${save.unofficialOffer.id}`);
+  const offer = save.unofficialOffer;
+  if (save.phase !== "running" || save.activeEvent || save.pendingEventDef || !offer) return null;
+  // Past its matchday it is passed (the next day's arrival clears it; an older save may still hold one).
+  if (offer.seasonIndex !== save.clock.seasonIndex || offer.day < save.clock.day) return null;
+  return dueNow("invite", `invite:${offer.id}`, false);
 }
 
 function bidDecisionsOf(save: CareerSave): PendingDecision[] {

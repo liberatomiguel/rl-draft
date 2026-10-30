@@ -53,6 +53,9 @@ const MONEY_PARAM_KEYS = new Set([
   // rc.34: the emergency loan's mails — what the bank lent, what it took on the deadline.
   "lent",
   "collected",
+  // rc.34 review: the deadline's projection — the books on that Monday and the shortfall.
+  "projected",
+  "gap",
   // rc.34 (ECO-04): the deals' mails — a fine, its instalment, a milestone payment.
   "fine",
   "perMonday",

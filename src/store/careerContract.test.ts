@@ -31,6 +31,7 @@ import {
   isEventPaused,
   migrateSaveToV5,
   renewalTalkFor,
+  repairFoundingShareOnLoad,
   renewalTermsOfSave,
   renewPlayerFlow,
   resolveInsertFlow,
@@ -111,6 +112,31 @@ describe("ECO-10 — every contract carries a prize share", () => {
       }
       expect(save.bandModel).toBe(2);
     }
+  });
+
+  it("rc.34 review: an older save's founders keep no prize share while the founding deal runs (an idempotent load repair); a renewed deal keeps what it signed", () => {
+    const save = makeSave(33_036);
+    const [a, b, c] = save.squad;
+    // rc.33's founding deals carried the share each founder asked (2–6 %); a pre-rc.33 one none at all.
+    a.prizeSharePct = 4;
+    delete b.prizeSharePct;
+    // c renewed: a new deal to season 3 with the share it signed.
+    c.contractEndSeason = 3;
+    c.prizeSharePct = 5;
+    // A season-0 signing on a one-season deal is no founder: it keeps its share.
+    const fa = freeAgents(save)[0];
+    const signed = signPlayerFlow(save, fa.id, { lengthSeasons: 1 }).save;
+    const newcomer = signed.squad.find((p) => p.id === fa.id)!;
+    newcomer.prizeSharePct = 3;
+    expect(newcomer.contractEndSeason).toBe(a.contractEndSeason);
+    const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(signed)))!;
+    const share = (id: string) => loaded.squad.find((p) => p.id === id)!.prizeSharePct;
+    expect([share(a.id), share(b.id), share(c.id), share(fa.id)]).toEqual([0, 0, 5, 3]);
+    // Idempotent: a second load moves nothing; the repair alone on a repaired save neither.
+    expect(migrateSaveToV5(JSON.parse(JSON.stringify(loaded)))).toEqual(loaded);
+    const again = structuredClone(loaded);
+    repairFoundingShareOnLoad(again);
+    expect(again).toEqual(loaded);
   });
 
   it("a podium books each played contract's own share; the reserve who sat out keeps none; an older deal reads the rc.32 rule", () => {
@@ -300,9 +326,12 @@ describe("rc.34 front I — the share threshold through the flows (Miguel 31/10)
     expect(renewPlayerFlow(grown, g.id, 2).save.squad.find((p) => p.id === g.id)!.prizeSharePct).toBe(talk.ask.sharePct);
   });
 
-  it("a deal signed with a share keeps it through a load and on every podium until it is renewed (an rc.33 founder's 3 %)", () => {
+  it("a deal signed with a share keeps it through a load and on every podium until it is renewed (an rc.33 renewal's 3 %)", () => {
     const save = makeSave();
-    save.squad[0].prizeSharePct = 3; // rc.33 gave a 70 a 3 % founding share
+    // rc.34 review: an rc.33 FOUNDING deal's share is 0 after the load (repairFoundingShareOnLoad,
+    // "starting players get no percentage"); a deal he signed after it keeps what it signed.
+    save.squad[0].prizeSharePct = 3; // rc.33 gave a 70 a 3 % share
+    save.squad[0].contractEndSeason = 2; // a renewed deal, past the founding one
     const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(save)))!;
     expect(loaded.squad[0].prizeSharePct).toBe(3);
     const ev = { def: { tier: "regional" }, fieldedIds: [...loaded.starterIds] } as unknown as NonNullable<CareerSave["activeEvent"]>;

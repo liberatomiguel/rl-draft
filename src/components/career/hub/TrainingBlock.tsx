@@ -105,7 +105,7 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
                   type="button"
                   role="switch"
                   aria-checked={delegated}
-                  onClick={() => setMode(delegated ? "approve" : "coach")}
+                  onClick={() => setMode(delegated ? b.undelegateTo : "coach")}
                   className={cx(
                     "inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-[11px] font-semibold transition-colors",
                     delegated ? "border-good/50 bg-good/10 text-good" : "border-line bg-white/[0.03] text-sub hover:border-line-strong",

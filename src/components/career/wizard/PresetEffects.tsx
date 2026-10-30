@@ -8,16 +8,20 @@
  * live from balance.ts:
  *  - matches: easier / fair / tougher — the preset's match edge against
  *    Normal's (CAREER_DIFFICULTY.match via `matchEdgeOf`);
- *  - money: the bank lends it, repay within N weeks or the career ends — N
- *    from `loanDeadlineWeeksFor` (front H's CAREER_LOAN.emergency.deadlineWeeks);
- *  - help: how much the game does for you (the preset's prefs).
+ *  - money: the preset's whole money rule — rc.34 review: `economy.moneyRuleFor`
+ *    from every key (the loans a career gets, the weeks to repay each or no
+ *    deadline, a breach count that ends it outright);
+ *  - help: rc.34 review — the training delegation the preset starts on
+ *    (`presetTrainingModeOf`, CAREER_PLAN.modeByPreset: the coach runs it /
+ *    proposes and you approve / you plan it) and whether cups are entered.
  *
  * ONE descriptor list: a new bullet is `{ key, value }` in PRESET_BULLETS
  * plus its copy in `wizard` in copy.career.en.ts AND copy.career.pt.ts.
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
-import { loanDeadlineWeeksFor, matchEdgeOf, presetPrefs } from "@/engine/career/difficulty";
+import { matchEdgeOf, presetPrefs, presetTrainingModeOf } from "@/engine/career/difficulty";
+import { moneyRuleFor } from "@/engine/career/economy";
 import type { CareerDifficulty } from "@/engine/career/types";
 
 /** Edges within this many rating points of Normal's read as "even". */
@@ -39,11 +43,11 @@ export const PRESET_BULLETS: PresetBullet[] = [
   {
     key: "money",
     value: (d, C) => {
-      const weeks = loanDeadlineWeeksFor(d);
-      return weeks === null ? C.wizard.presetMoneyNoLoan : C.wizard.presetMoney(weeks);
+      const rule = moneyRuleFor(d);
+      return rule.lends ? C.wizard.presetMoney(rule) : C.wizard.presetMoneyNoLoan;
     },
   },
-  { key: "help", value: (d, C) => (presetPrefs(d).autoTrain ? C.wizard.presetHelpGuided : C.wizard.presetHelpHandsOn) },
+  { key: "help", value: (d, C) => C.wizard.presetHelp(presetTrainingModeOf(d), presetPrefs(d).autoEnterUnofficials) },
 ];
 
 export function PresetEffects({ difficulty, C }: { difficulty: CareerDifficulty; C: CareerCopy }) {
