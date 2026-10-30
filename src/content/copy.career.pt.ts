@@ -1072,7 +1072,9 @@ export const CAREER_PT: CareerCopy = {
       levelScaled: (tier: number, pct: number) =>
         tier >= 4
           ? `Marcas de Tier 4 pagam o valor cheio a candidatos ao título mundial — no nível atual do time, oferecem ${pct}% disso.`
-          : `Marcas de Tier 3 pagam o valor cheio a quem chega ao Major — no nível atual do time, oferecem ${pct}% disso.`,
+          : tier === 3
+            ? `Marcas de Tier 3 pagam o valor cheio a quem briga de igual para igual num Major — no nível atual do time, oferecem ${pct}% disso.`
+            : `Marcas de Tier 2 pagam o valor cheio a quem fica no top 8 dos regionais — no nível atual do time, oferecem ${pct}% disso.`,
       stabilityBar: (pct: number) => `${pct}% do máximo é garantido`,
       handover: (first: number, second: number) =>
         `Seu parceiro fundador sai aos poucos quando este contrato começar: ${first}%, depois ${second}% do valor, um split cada.`,

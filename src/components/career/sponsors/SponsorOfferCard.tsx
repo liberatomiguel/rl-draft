@@ -212,7 +212,7 @@ export function SponsorDecision({
         <h2 className="display text-2xl font-bold uppercase tracking-wide text-ink">{C.finances.offerTitle}</h2>
       )}
       <p className={cx("text-xs font-semibold text-orange-bright", !bare && "mt-1")}>
-        {T.decideBy(formatDateShort(D, dateOfDay(decision.deadline.seasonIndex, decision.deadline.day)))}
+        {T.decideBy(formatDateShort(D, dateOfDay(decision.deadlineOn.seasonIndex, decision.deadlineOn.day)))}
       </p>
       <p className="mt-1 text-xs text-sub">{T.compareHint}</p>
       {levelShare !== undefined && levelShare < 1 ? (

@@ -186,6 +186,8 @@ export interface TeamLevel {
   vs1: number;
   vsCut: number;
   vsMajor4: number;
+  /** Against the expected Major field's 8th (its middle: a side that holds its own at a Major). */
+  vsMajor8: number;
   vsMajor1: number;
 }
 
@@ -240,6 +242,7 @@ export function teamLevelFor(input: {
     vs1: round1(rating - nthBest(home, 1)),
     vsCut: round1(rating - nthBest(home, slots)),
     vsMajor4: round1(rating - nthBest(field, 4)),
+    vsMajor8: round1(rating - nthBest(field, 8)),
     vsMajor1: round1(rating - nthBest(field, 1)),
   };
 }
@@ -451,18 +454,18 @@ export function tierValuePerWeek(tier: 1 | 2 | 3 | 4, seasonIndex: number, diffi
 
 /**
  * The share of the tier's value a sponsor pays at the team's level (rc.34,
- * "deals scaled to the team's level" — the snowball lever at the top):
- * the newcomer tiers (T1, T2) always pay in full; a Tier 3 brand pays a
- * Major side in full (the margin over the region's last Major seat), a
- * Tier 4 brand a world contender (the margin over the expected Major
+ * "deals scaled to the team's level"): Tier 1 always pays in full; a Tier 2
+ * brand pays a regional top-8 side in full (the margin over the region's
+ * 8th org), a Tier 3 brand a side that holds its own at a Major (over the
+ * expected Major field's 8th), a Tier 4 brand a world contender (over the
  * field's 4th) — below that, `perPoint` less a rating point, never under
  * the tier's floor (CAREER_SPONSOR.levelValue).
  */
-export function levelValueShareOf(tier: 1 | 2 | 3 | 4, level: Pick<TeamLevel, "vsCut" | "vsMajor4">): number {
+export function levelValueShareOf(tier: 1 | 2 | 3 | 4, level: Pick<TeamLevel, "vs8" | "vsMajor8" | "vsMajor4">): number {
   const L = CAREER_SPONSOR.levelValue;
   const floor = (L.floor as Record<number, number>)[tier];
   if (floor === undefined || floor >= 1) return 1;
-  const margin = tier >= 4 ? level.vsMajor4 : level.vsCut;
+  const margin = tier >= 4 ? level.vsMajor4 : tier === 3 ? level.vsMajor8 : level.vs8;
   if (!Number.isFinite(margin) || margin >= 0) return 1;
   return Math.max(floor, Math.round((1 + L.perPoint * margin) * 100) / 100);
 }

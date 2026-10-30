@@ -1727,7 +1727,7 @@ function dealsReport(careers: EconCareer[], SD: typeof import("@/engine/career/s
 
   // (b) signed deals by profile, (c) s2 on the signed goals.
   const deals = careers.flatMap((c) => c.deals ?? []);
-  head(["Profile (signed)", "deals", "tiers T1/T2/T3/T4", "goals settled", "hit %", "fines booked / deal (mean)", "realized ÷ EV p50 (completed deals)"]);
+  head(["Profile (signed)", "deals", "tiers T1/T2/T3/T4", "goals settled", "hit %", "fines booked / deal (mean)", "realized ÷ EV, completed deals: mean · p50"]);
   for (const prof of profiles) {
     const ds = deals.filter((d) => d.profile === prof);
     if (!ds.length) continue;
@@ -1747,7 +1747,7 @@ function dealsReport(careers: EconCareer[], SD: typeof import("@/engine/career/s
       settled.length,
       pct(settled.filter((g) => g.hit).length, settled.length),
       money(mean(fines)),
-      realized.length ? ratio(q(realized, 0.5), 2) : "–",
+      realized.length ? `${ratio(mean(realized), 2)} · ${ratio(q(realized, 0.5), 2)}` : "–",
     ]);
   }
   lines.push("");

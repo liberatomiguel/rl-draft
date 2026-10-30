@@ -1436,17 +1436,34 @@ function offerSponsorDecision(save: CareerSave, demote: boolean): void {
   });
 }
 
+/** rc.34 (ECO-04): a sponsor decision on the desk, as HQ's queue and the cards read it. */
+export interface SponsorDecisionView {
+  /** Stable for the decision's life: "sponsor:{season}:{day it was offered}". */
+  id: string;
+  /** The last day (of the current season) to sign — the offers lapse the day after. */
+  deadline: number;
+  /** The same deadline on the career clock (a decision never outlives its season). */
+  deadlineOn: CareerDay;
+  /** Steady, Balanced, Bold — the comparison's order. */
+  offers: SponsorState[];
+}
+
 /**
  * rc.34 (ECO-04): the sponsor decision on the desk — the offers and the last
- * day to sign them (they lapse after it). HQ's decision queue (UX-01), the
- * offer cards and Finances read this one function. Null when no offer is
- * pending or the career is over.
+ * day to sign them (they lapse after it). HQ's decision queue (UX-01, front
+ * G's `DECISION_SOURCES.sponsor`: "Later" is allowed up to `deadline`,
+ * Miguel's 1-B), the offer cards and Finances read this one function. Null
+ * when no offer is pending or the career is over.
  */
-export function sponsorDecisionOf(save: CareerSave): { deadline: CareerDay; offers: SponsorState[] } | null {
+export function sponsorDecisionOf(save: CareerSave): SponsorDecisionView | null {
   if (save.phase === "ended" || !save.sponsorOffers || save.sponsorOffers.length === 0) return null;
-  const by = save.sponsorOffers[0].terms?.decideBy;
+  const terms = save.sponsorOffers[0].terms;
+  const by = terms?.decideBy ?? { seasonIndex: save.clock.seasonIndex, day: DAYS_PER_SEASON };
+  const from = terms?.offeredOn ?? { seasonIndex: save.clock.seasonIndex, day: 0 };
   return {
-    deadline: by ? { ...by } : { seasonIndex: save.clock.seasonIndex, day: DAYS_PER_SEASON },
+    id: `sponsor:${from.seasonIndex}:${from.day}`,
+    deadline: by.day,
+    deadlineOn: { ...by },
     offers: save.sponsorOffers,
   };
 }

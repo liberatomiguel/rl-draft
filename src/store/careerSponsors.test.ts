@@ -132,7 +132,10 @@ describe("rc.34 ECO-04 — a sponsor decision (S4: three profiles, one tier, a d
     const d = sponsorDecisionOf(save)!;
     expect(d.offers.map((o) => o.terms!.profile)).toEqual(["steady", "balanced", "bold"]);
     expect(new Set(d.offers.map((o) => o.tier))).toEqual(new Set([2]));
-    expect(d.deadline).toEqual({ seasonIndex: 0, day: 13 * 7 });
+    // HQ's queue reads { id, deadline (a day of the season) }; the cards the career day.
+    expect(d.id).toBe(`sponsor:0:${firstDayOfWeek(11)}`);
+    expect(d.deadline).toBe(13 * 7);
+    expect(d.deadlineOn).toEqual({ seasonIndex: 0, day: 13 * 7 });
     const mail = mailsOf(save, "sponsorOffers")[0];
     expect(mail.bodyKey).toBe("sponsorDecision");
     expect(mail.params).toMatchObject({ n: 3, tier: 2, byWeek: 13 });

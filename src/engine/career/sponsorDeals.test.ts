@@ -48,7 +48,7 @@ import type { CareerDifficulty, CompactEventResult, SponsorGoalWord } from "./ty
 
 /** A level `m` rating points from every reference team (m > 0: stronger). */
 function levelAt(m: number, slots = 2): TeamLevel {
-  return { rank: m > 0 ? 1 : 12, teams: 17, slots, majorRank: 8, vs12: m + 3, vs8: m, vs6: m - 1, vs4: m - 2, vs1: m - 5, vsCut: m - 3, vsMajor4: m - 6, vsMajor1: m - 9 };
+  return { rank: m > 0 ? 1 : 12, teams: 17, slots, majorRank: 8, vs12: m + 3, vs8: m, vs6: m - 1, vs4: m - 2, vs1: m - 5, vsCut: m - 3, vsMajor8: m - 3, vsMajor4: m - 6, vsMajor1: m - 9 };
 }
 
 const MOMENTS = [
@@ -145,14 +145,15 @@ describe("rc.34 sponsors — the offers of one decision (S1, S4, s1)", () => {
     }
   });
 
-  it("scaled to the team's level: a Tier 3 or 4 brand pays a side below its level less, never under the floor; T1–T2 in full", () => {
+  it("scaled to the team's level: a Tier 2, 3 or 4 brand pays a side below its level less, never under the floor; T1 in full", () => {
     const L = CAREER_SPONSOR.levelValue;
     expect(levelValueShareOf(1, levelAt(-20))).toBe(1);
-    expect(levelValueShareOf(2, levelAt(-20))).toBe(1);
+    expect(levelValueShareOf(2, levelAt(0))).toBe(1); // vs8 0: a regional top-8 side
+    expect(levelValueShareOf(2, levelAt(-20))).toBe(L.floor[2]);
     expect(levelValueShareOf(4, levelAt(6))).toBe(1); // vsMajor4 0: a contender
     expect(levelValueShareOf(4, levelAt(4))).toBeCloseTo(1 + L.perPoint * -2, 6);
     expect(levelValueShareOf(4, levelAt(-20))).toBe(L.floor[4]);
-    expect(levelValueShareOf(3, levelAt(3))).toBe(1); // vsCut 0: a Major side
+    expect(levelValueShareOf(3, levelAt(3))).toBe(1); // vsMajor8 0: holds its own at a Major
     expect(levelValueShareOf(3, levelAt(-20))).toBe(L.floor[3]);
     const [full] = sponsorDecisionFor({ tier: 4, today: MOMENTS[1], careerSeed: 4, difficulty: "normal", level: levelAt(6) });
     const [king] = sponsorDecisionFor({ tier: 4, today: MOMENTS[1], careerSeed: 4, difficulty: "normal", level: levelAt(-2) });

@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 3;
+export const BALANCE_VERSION = 4;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1748,18 +1748,23 @@ export const CAREER_SPONSOR = {
    * fixed part (paid on signing, or — Bold — the day its first goal is
    * reached) and a bonus per goal, sets every split's goal at its word, and
    * runs for `lengthSplits` splits (6 = two seasons, 3 = one season, 1 = one
-   * split). Each ceiling is sized so the deal's expected value at its word's
-   * `wordChance` equals the tier's value for the Mondays it pays (s1).
+   * split). Each ceiling is sized so the deal's expected value at its first
+   * goal's chance equals the tier's value for the Mondays it pays (s1).
    * Claude's values (Miguel fixed the decisions, not the shares): the
-   * contract's candidates for Steady and Balanced; Bold's weekly share
-   * 0.35 and bonus 0.45 sit outside the candidate ranges (50–85 % / 10–35 %)
-   * because Bold's goals are Stretch goals — at the candidates (0.5 / 0.3),
-   * the ceiling that keeps its expected value level makes Bold's weekly pay
-   * the HIGHEST of the three, the opposite of the profile.
+   * contract's candidates for Steady and Balanced with 5 points moved from
+   * the weekly pay to the signing payment (measured: at 0.8 / 0.65 the
+   * weekly part outgrew rc.33's base — payroll ÷ guaranteed 0.7 at S2–S3,
+   * under band b3, and fewer tight Mondays, e3), and Balanced's fine 0.15
+   * of a bonus, not 0.25 (0.25 put 14–24 % of the seasons over two weeks of
+   * payroll in fines, s3 ≤ 10 %); Bold's weekly share 0.35 and
+   * bonus 0.45 sit outside the candidate ranges (50–85 % / 10–35 %) because
+   * Bold's goals are Stretch goals — at the candidates (0.5 / 0.3), the
+   * ceiling that keeps its expected value level makes Bold's weekly pay the
+   * HIGHEST of the three, the opposite of the profile.
    */
   profiles: {
-    steady: { weeklyShare: 0.8, fixedShare: 0.1, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, word: "likely", lengthSplits: 6 },
-    balanced: { weeklyShare: 0.65, fixedShare: 0.1, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.25, word: "even", lengthSplits: 3 },
+    steady: { weeklyShare: 0.75, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, word: "likely", lengthSplits: 6 },
+    balanced: { weeklyShare: 0.6, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.15, word: "even", lengthSplits: 3 },
     bold: { weeklyShare: 0.35, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.5, word: "stretch", lengthSplits: 1 },
   } as const,
   /**
@@ -1772,19 +1777,28 @@ export const CAREER_SPONSOR = {
   valueBonusShare: 0.5,
   /**
    * rc.34 — ECO-04, "deals scaled to the team's level" (the snowball lever at
-   * the top; Miguel, 30/10: not too easy, not punitive). The newcomer tiers
-   * pay in full; a Tier 3 brand pays a side that reaches the Major in full
-   * (its margin over the region's last Major seat), a Tier 4 brand a world
-   * contender (its margin over the expected Major field's 4th). Below it,
-   * `perPoint` less per rating point, never under the tier's `floor`.
+   * the top; Miguel, 30/10: not too easy, not punitive). Tier 1 pays in
+   * full; a Tier 2 brand pays a regional top-8 side in full (its margin over
+   * the region's 8th org), a Tier 3 brand a side that holds its own at a
+   * Major (over the expected Major field's 8th), a Tier 4 brand a world
+   * contender (over the field's 4th). Below it, `perPoint` less per rating
+   * point, never under the tier's `floor`. T2's floor 0.7: measured, rc.33's
+   * meter dropped a weak EU/NA side's T2 deal to T1 every other season (a
+   * regional top 8 it never reached); without it the median Normal career
+   * banked 2–2.6 seasons of payroll at S2–S3 (band b2 0.25–1.5) and a tight
+   * Monday in 16 % of S3–S5 seasons (e3 ≥ 20 %).
    * Why: rc.33's patience meter demoted the top tiers every season
    * (objectives a regional king never reaches — a Major top 4 for an APAC
    * side), which kept their money near T2–T3; with fines replacing the
    * meter (7-A), a rep-90 side on a cheap squad drew full T4 money, 3–4× its
-   * payroll (the harness: APAC/SSA sponsor income ×2–3 of rc.33). Measured:
-   * the probe's C10 / C11.
+   * payroll (the harness: APAC/SSA sponsor income ×2–3 of rc.33). A
+   * Major's 8th for T3 (not the region's cut, which an APAC or SSA king
+   * always clears): the measured top careers bank 10–20 seasons of payroll,
+   * so the brake reaches T3 too. 0.08 a point, floors 0.5 / 0.4: at 0.06 /
+   * 0.6 / 0.5 the snowball p90 only fell 12.9 → 11.0 seasons of payroll.
+   * Measured: the probe's C10 / C11.
    */
-  levelValue: { perPoint: 0.06, floor: { 3: 0.6, 4: 0.5 } as Record<number, number> },
+  levelValue: { perPoint: 0.08, floor: { 2: 0.7, 3: 0.5, 4: 0.4 } as Record<number, number> },
   /**
    * rc.34 — ECO-04, decision 4-A: the chance each word stands for. A goal is
    * picked as close as possible to its profile's `wordChance`; the ceilings
@@ -1841,9 +1855,9 @@ export const CAREER_SPONSOR = {
    * rc.34 — ECO-04, S3 (decision 1-A: fines on Balanced and Bold deals
    * only, never on Steady deals or on Easy). A missed goal's fine is the
    * profile's `fineShare` × the goal's bonus × the shortfall, at most
-   * `capWeeks` weeks of the deal's weekly pay (contract range 1–4; 1, so a
-   * season of misses on a Balanced deal stays under two weeks of payroll,
-   * s3), booked as its own line over the next `spreadMondays` Mondays (2–6),
+   * `capWeeks` weeks of the deal's weekly pay (contract range 1–4; the
+   * bottom of it, for s3: a season of misses stays near two weeks of
+   * payroll), booked as its own line over the next `spreadMondays` Mondays (2–6),
    * never a lump sum. `neverBreaches`: an instalment never takes the books
    * below the Backer's floor — what would is waived (s4: a fine never
    * triggers a rescue).

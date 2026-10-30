@@ -1090,7 +1090,9 @@ export const CAREER_EN = {
       levelScaled: (tier: number, pct: number) =>
         tier >= 4
           ? `Tier 4 brands pay world contenders in full — at the team's level today, they offer ${pct}% of that.`
-          : `Tier 3 brands pay a side that reaches the Major in full — at the team's level today, they offer ${pct}% of that.`,
+          : tier === 3
+            ? `Tier 3 brands pay a side that holds its own at a Major in full — at the team's level today, they offer ${pct}% of that.`
+            : `Tier 2 brands pay a regional top-8 side in full — at the team's level today, they offer ${pct}% of that.`,
       stabilityBar: (pct: number) => `${pct}% of the most it pays is sure`,
       handover: (first: number, second: number) =>
         `Your founding partner steps back once this deal starts: ${first}%, then ${second}% of its pay, one split each.`,
