@@ -147,15 +147,17 @@ describe("ECO-02 — pay-downs settle exactly what they quote", () => {
   });
 });
 
-describe("ECO-02 — the Backer once, the bank one at a time (real day clock)", () => {
-  // rc.33 (ECO-08): on Normal the second breach ends the career (rc.31's rule
-  // everywhere); Easy rescues twice, Hard ends at the first (careerEco07.test.ts).
-  it("a structural deficit gets exactly one rescue, then on Normal the second breach ends the career", () => {
-    let save = createCareerSave({ ...INPUT, difficulty: "normal" }, 46_101);
+describe("ECO-02 — one emergency loan at a time, the bank's voluntary one too (real day clock)", () => {
+  // rc.34 (Miguel, 31/10): a breach opens the bank's emergency loan, a later one
+  // adds to it (same deadline), and the deadline ends a career that cannot pay
+  // (careerLoan.test.ts). rc.33: Normal's second breach ended it.
+  it("a structural deficit: one emergency loan, a top-up, then its deadline ends the career (Hard's shorter term)", () => {
+    let save = createCareerSave({ ...INPUT, difficulty: "hard" }, 46_101);
     // Wages far above any income: every Monday burns ~$2.8k.
     for (const p of save.squad) p.salaryPerSplit = 10_000;
     save = quietSunday(save, 2);
-    save.finances.balance = 2_000;
+    // Just over the floor: week 3's Monday breaks it, so the 24-week term ends inside the season.
+    save.finances.balance = backerLineOf(save).floor + 1_000;
     let guard = 0;
     while (save.phase === "running" && guard++ < 400) {
       const before = save.clock.day;
@@ -166,9 +168,11 @@ describe("ECO-02 — the Backer once, the bank one at a time (real day clock)", 
       }
     }
     expect(save.phase).toBe("ended");
-    expect(save.end.reason).toBe("insolvency");
+    expect(save.end).toMatchObject({ reason: "insolvency", moneyCause: "deadline" });
     const grants = save.finances.ledger.filter((l) => l.kind === "loanGrant");
-    expect(grants).toHaveLength(1);
+    expect(grants.length).toBeGreaterThanOrEqual(2);
+    expect(save.finances.emergencyLoans).toBe(1);
+    expect(save.finances.loan!.topUps).toBe(grants.length - 1);
     expect(save.finances.loanUsed).toBe(true);
     // Ended means ended: no more days, no rollover, no endless era.
     expect(advanceDayFlow(save)).toBe(save);
@@ -230,16 +234,17 @@ describe("ECO-02 — insolvency is final, whatever ending came before", () => {
       legacyGrade: "legend",
     };
     save.finances.loanUsed = true;
-    // rc.32 (M4): one breach before the one that ends a Normal career.
-    save.finances.loanBreaches = (CAREER_LOAN.breachesToEnd.normal ?? 2) - 1;
-    save.finances.loan = null;
+    // rc.34: an emergency loan at its top-up cap — the next breach is one the bank will not cover.
+    const cap = CAREER_LOAN.emergency.maxTopUps ?? 0;
+    save.finances.loanBreaches = cap + 1;
+    save.finances.loan = { remaining: 9_000, topUps: cap };
     for (const p of save.squad) p.salaryPerSplit = 10_000;
     save.finances.balance = backerLineOf(save).floor + 10;
     return save;
   }
 
   for (const prior of ["worlds_won", "timeline_complete"] as const) {
-    it(`a second breach after '${prior}' records the insolvency and cannot be continued`, () => {
+    it(`a breach the bank will not cover after '${prior}' records the insolvency and cannot be continued`, () => {
       const broke = advanceDayFlow(brokeAfter(prior));
       expect(broke.phase).toBe("ended");
       expect(broke.end.reason).toBe("insolvency");

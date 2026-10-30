@@ -1689,6 +1689,25 @@ export const CAREER_SCOUT = {
 export const CAREER_ECONOMY = {
   roundQuantum: 50,
   startingBudget: { easy: 20_000, normal: 12_000, hard: 8_000 } as Record<string, number>,
+  /**
+   * rc.34 — BAL-05 (Miguel, 31/10: "I created a career with the older team and went
+   * broke in the first split"): the start budget is at least this many weeks
+   * of the founding wage bill (the three founders' weekly wages at their
+   * founding asks), by difficulty — `startingBudget` stays the floor
+   * (economy.startingBudgetFor). The flat budget gave every roster the same
+   * money while the founding payroll runs ×3 from the prospects to the
+   * journeymen (Normal: $200–$320 a week for the prospects, $480–$650 the
+   * balanced, $740–$1,150 the journeymen, by region), so the older team had
+   * 10–16 weeks of runway on Normal (6–9 on Hard) against the balanced
+   * roster's 25: with the first sponsor late in a strong region, it broke
+   * inside the first split. These weeks are the balanced roster's runway in
+   * a median region (Easy 44 × $450, Normal 24 × $500, Hard 13 × $590), so
+   * it and the prospects keep their flat budget there, and every roster in
+   * every region starts with at least that runway in weeks (the dearer
+   * journeymen, and the balanced in NA and APAC, get more). null = rc.33
+   * (the flat budget only).
+   */
+  startingBudgetWeeks: { easy: 44, normal: 24, hard: 13 } as Record<string, number | null>,
   prizeMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
   salaryAskMult: { easy: 0.9, normal: 1.0, hard: 1.15 } as Record<string, number>,
   sponsorMult: { easy: 1.15, normal: 1.0, hard: 0.9 } as Record<string, number>,
@@ -2118,6 +2137,13 @@ export const CAREER_SUB = {
   chemistryCreditFactor: 0.5,
 } as const;
 
+/**
+ * The safety net under the books. A Monday that closes below the floor is a
+ * breach. rc.34 (Miguel, 31/10): a breach opens the bank's EMERGENCY LOAN
+ * (`emergency`) — the identifiers still say "Backer" (backerLineFor, the
+ * save's `finances.loan`), the product says "emergency loan"; rc.31–rc.33:
+ * the Emergency Backer's grant.
+ */
 export const CAREER_LOAN = {
   /** rc.31's flat Backer line, read when `sizing` is "flat" (×the M1 index there). */
   floor: -5_000,
@@ -2136,48 +2162,85 @@ export const CAREER_LOAN = {
   /** Guard for a squad with (almost) no wages: the weekly bill the weeks count, season-0 money. */
   weeksBasisMin: 100,
   /**
-   * rc.33 — ECO-08 (Miguel, 30/10; replaces decision 4-B): the breach (a
-   * Monday below the floor) that ends the career, by difficulty; null =
-   * never. Every breach before it is the Backer's rescue (a grant back to
-   * the rescue target, added to what is owed): Easy rescues twice and ends
-   * at the third, Normal rescues once and ends at the second, Hard has no
-   * Backer — the first breach ends it. No restructuring: rc.32's forced sale
-   * of the highest-paid player is gone. Every screen that says when money
-   * ends a career reads this key. rc.32: { easy: null, normal: 3, hard: 2 }
-   * with restructurings between; rc.31: 2 everywhere.
+   * rc.34 — ECO-15 (Miguel, 31/10: "if you don't pay within X time, the career ends —
+   * not too punitive"; replaces rc.33's ECO-08 breach count): the breach (a
+   * Monday below the floor) that ends a career OUTRIGHT, by difficulty; null
+   * = none. With null, every breach is the bank's emergency loan (the first
+   * opens it, a later one while it is owed adds to it) and only the loan's
+   * deadline (`emergency.deadlineWeeks`) ends a career through money.
+   * `hard: 1` restores "Hard ends at the first breach" (a decision for
+   * Miguel); rc.33: { easy: 3, normal: 2, hard: 1 } (with deadlineWeeks null
+   * everywhere: rc.33's rule exactly); rc.31: 2 everywhere.
    */
-  breachesToEnd: { easy: 3, normal: 2, hard: 1 } as Record<string, number | null>,
+  breachesToEnd: { easy: null, normal: null, hard: null } as Record<string, number | null>,
   /**
-   * rc.33 — ECO-07 (Miguel, 30/10; replaces decision 3-A's founding
-   * partner): the rescue partner, "a partner's help" on top of the Backer's
-   * loan. `atBreach`: the breach that brings it, by difficulty (null = none —
-   * Easy's first breach only). From the next Monday it pays `payrollShare` ×
-   * the weekly wage bill booked on the rescue Monday (squad + coach), fixed
-   * for its run, for `weeks` Mondays — one split and its transfer window
-   * (CAREER_CALENDAR.splitWeeks 8 + windowWeeks 2). Its own ledger line, in
-   * the rescue mail and in Finances while it runs. Never garnished: it is
-   * income, the Backer is repaid from prizes and sales as before.
+   * rc.34 — ECO-13 (Miguel, 31/10: "when you break, you get a loan from the bank, not
+   * an investor"): the emergency loan — the rescue money comes from the bank
+   * (CAREER_BANK's lender; one bank, a voluntary loan and an emergency one).
+   * A breach tops the balance back up to the rescue target (floorWeeks /
+   * rescueToWeeks above); it is owed ×repayFactor and repaid from prizes
+   * (garnishRate), sales (saleGarnishRate) and any payment from Finances.
    */
-  rescuePartner: {
-    atBreach: { easy: 1, normal: null, hard: null } as Record<string, number | null>,
-    payrollShare: 0.5,
+  emergency: {
+    /**
+     * ECO-15. Weeks from the FIRST emergency loan to the Monday it must be repaid by,
+     * by difficulty; null = no deadline (rc.33). On that Monday the bank
+     * takes what it is owed if the balance covers it; otherwise the career
+     * ends. A later breach while it is owed adds to the loan and never moves
+     * the deadline. Front I's difficulty screen reads exactly this key.
+     * Easy two seasons, Normal a season and a half, Hard three splits (a
+     * season is 32 weeks, 3 splits). Measured (rc.34, 84 careers): with
+     * 32 / 24 / 16 no rescued bot career ever covered its debt on the day —
+     * the careers that recovered under rc.33's Backer took 1.5–2 seasons
+     * (sales and cheaper renewals) to bring the debt down, so a shorter term
+     * turned every rescue into a delayed end.
+     */
+    deadlineWeeks: { easy: 64, normal: 48, hard: 24 } as Record<string, number | null>,
+    /** The Mondays before the deadline the bank warns (a mail and the money notice), largest first. */
+    warnWeeks: [8, 4] as readonly number[],
+    /**
+     * Breaches while the loan is owed that the bank tops up (each adds to the
+     * debt, the deadline stays); the next one ends the career. null = no cap.
+     * 3: a burn three weeks of wages deep every week still reaches the
+     * deadline on Normal; only a spiral faster than that ends earlier.
+     */
+    maxTopUps: 3 as number | null,
+  },
+  /**
+   * rc.34 — ECO-13 (Miguel, 31/10: "the investor can come in with the first loan,
+   * helping lightly with the monthly income — not much"): today's rescue
+   * partner becomes the investor. It joins only the career's FIRST emergency
+   * loan, on the difficulties with a share here (null = none; Easy only, as
+   * decided 30/10 — Miguel can extend it), and from the next Monday pays
+   * `payrollShare` × the weekly wage bill booked on that Monday (squad +
+   * coach), fixed for its run, for `weeks` Mondays — about a split (8 event
+   * weeks + the 2-week window). Its own ledger line ("rescuePartner"), in the
+   * loan's notice and mail and in Finances while it runs. Never garnished.
+   * rc.33: the rescue partner, 50 % for 10 Mondays at Easy's first breach.
+   */
+  investor: {
+    payrollShare: { easy: 0.2, normal: null, hard: null } as Record<string, number | null>,
     weeks: 10,
   },
   /**
-   * PROVISIONAL (30/10) — M4: while the Backer is owed, a signing, a coach
-   * hire or the psychologist that would shorten the runway is refused
-   * ("loanRunway"), on top of rc.31's lock (transfer fees, gear, the bank).
-   * A free agent into an empty starting seat (squad under three — after a
-   * sale, an expiry or a retirement) is always allowed: the org can field
-   * its three again. rc.31: false.
+   * rc.34 — ECO-14 (Miguel, 31/10: "remove the rule that you cannot buy players while
+   * you owe"): false = nothing is locked while the emergency loan is owed —
+   * transfer fees, signings, gear, a coach and the psychologist are all
+   * open; the floor ("funds") still applies to each. true restores rc.33's
+   * lock: no transfer fees or gear, and no signing, coach hire or
+   * psychologist that shortens the runway ("loanRunway"; a free agent into an
+   * empty starting seat always allowed). The bank's voluntary loan stays one
+   * debt at a time (CAREER_BANK.blockedWhileBacker).
    */
-  lockCommitments: true,
+  lockCommitments: false,
+  /** What the bank wants back for each emergency dollar (the loan's interest, on the principal). */
   repayFactor: 1.2,
+  /** The slice of the org's part of every prize that repays the emergency loan, by difficulty. */
   garnishRate: { easy: 0.1, normal: 0.15, hard: 0.2 } as Record<string, number>,
   /**
-   * v0.3 debt-lock fix: while the Backer loan is active, HALF of every player
-   * sale amortizes the debt (was: prizes only — selling a star did nothing),
-   * and the Finances screen can pay any amount down manually at any time.
+   * v0.3 debt-lock fix: while the emergency loan (rc.33: the Backer) is
+   * owed, HALF of every player sale repays it, and the Finances screen can
+   * pay any amount down manually at any time.
    */
   saleGarnishRate: 0.5,
 } as const;
@@ -2253,11 +2316,12 @@ export const CAREER_HQ = {
 } as const;
 
 /**
- * v2.0 BANK LOAN (R21) — the player-initiated alternative to the Emergency
- * Backer. One loan at a time, sized by reputation tier, repaid in equal
- * weekly instalments over `termWeeks` with a flat `interestPct` on top.
- * Taking one never ends the career; missing payments just drains the balance
- * (the floor/Backer rules still apply).
+ * v2.0 BANK LOAN (R21) — the voluntary loan, the player-initiated
+ * alternative to the emergency one (rc.34: the same bank writes both;
+ * CAREER_LOAN.emergency). One loan at a time, sized by reputation tier,
+ * repaid in equal weekly instalments over `termWeeks` with a flat
+ * `interestPct` on top. Taking one never ends the career; missing payments
+ * just drains the balance (the floor and the emergency loan still apply).
  */
 export const CAREER_BANK = {
   /** Max principal by reputation tier (repTierOf → 0..4). */
@@ -2265,7 +2329,11 @@ export const CAREER_BANK = {
   minAmount: 1_000,
   interestPct: 0.12,
   termWeeks: 16,
-  /** Loan offers are blocked while the Backer debt is open (one debt at a time). */
+  /**
+   * No voluntary loan while the emergency loan (rc.33: the Backer's debt) is
+   * open — one debt at a time, and a voluntary loan cannot refinance the
+   * emergency one past its deadline.
+   */
   blockedWhileBacker: true,
 } as const;
 

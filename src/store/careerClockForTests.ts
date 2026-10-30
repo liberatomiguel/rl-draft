@@ -14,7 +14,7 @@
  */
 
 import type { CareerSave } from "@/engine/career/types";
-import { advanceDayFlow, declineBidFlow } from "./careerFlow";
+import { acknowledgeMoneyNoticeFlow, advanceDayFlow, declineBidFlow } from "./careerFlow";
 import { declineSponsorOffersFlow, parkDecisionFlow, pendingDecisionsOf } from "./careerDecisions";
 
 export function walkPastForTests(input: CareerSave): CareerSave {
@@ -32,6 +32,9 @@ export function walkPastForTests(input: CareerSave): CareerSave {
       save = d.canWait ? parkDecisionFlow(save, d.id).save : declineBidFlow(save, d.id);
     } else if (d.kind === "sponsor") {
       save = d.canWait ? parkDecisionFlow(save, d.id).save : declineSponsorOffersFlow(save).save;
+    } else if (d.kind === "notice") {
+      // rc.34 (front H): the money modal's "OK".
+      save = acknowledgeMoneyNoticeFlow(save, d.id);
     }
   }
   return save;

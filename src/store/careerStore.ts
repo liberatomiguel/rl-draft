@@ -49,6 +49,7 @@ import type {
 import { createRng, randomSeed } from "@/lib/rng";
 import {
   acceptBidFlow,
+  acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
   advanceToNextStopFlow,
   buyGearFlow,
@@ -228,8 +229,14 @@ interface CareerStoreState {
   hireCoach: (coach: CoachState) => void;
   fireCoach: () => void;
   chooseSponsor: (sponsorId: string) => void;
-  /** v0.3: manual Backer debt pay-down. */
+  /** v0.3: manual pay-down of the emergency loan (rc.33: the Backer's debt). */
   payDebt: (amount: number) => void;
+  /**
+   * rc.34: the money notice the career shell's modal shows (careerFlow.moneyNoticeOf)
+   * is read — removed from the save's queue (the head when `id` is omitted). Allowed
+   * on an ended career: the notice that explains the end is acknowledged there.
+   */
+  acknowledgeMoneyNotice: (id?: string) => void;
   /** v2.0 bank loan (R21). */
   takeBankLoan: (principal: number) => void;
   payBankLoan: (amount: number) => void;
@@ -488,6 +495,7 @@ export const useCareerStore = create<CareerStoreState>()(
         chooseSponsor: (sponsorId) =>
           withResult((s) => chooseSponsorFlow(s, sponsorId), { kind: "chooseSponsor" }),
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
+        acknowledgeMoneyNotice: (id) => withSave((s) => acknowledgeMoneyNoticeFlow(s, id), { allowEnded: true }),
         takeBankLoan: (principal) => withResult((s) => takeBankLoanFlow(s, principal)),
         payBankLoan: (amount) => withResult((s) => payBankLoanFlow(s, amount)),
 

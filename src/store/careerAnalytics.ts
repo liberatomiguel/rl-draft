@@ -20,7 +20,7 @@ import { CAREER_CALENDAR, CAREER_SAVE, CAREER_SCOUT } from "@/config/balance";
 import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
 import { ageOf, exactAgeOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
-import { breachOutcomeFor, loanBreachesOf } from "@/engine/career/economy";
+import { loanBreachesOf } from "@/engine/career/economy";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
 import type { CareerMilestoneKind, TrackedEvent } from "@/lib/analytics";
@@ -144,10 +144,15 @@ function milestones(prev: CareerSave, next: CareerSave): TrackedEvent[] {
   if ((prev.stats.majorsQualified ?? 0) === 0 && (next.stats.majorsQualified ?? 0) > 0) hit("first_major");
   if ((prev.stats.worldsQualified ?? 0) === 0 && (next.stats.worldsQualified ?? 0) > 0) hit("first_worlds");
   if ((prev.stats.titlesWorlds ?? 0) === 0 && (next.stats.titlesWorlds ?? 0) > 0) hit("worlds_title");
-  // rc.33 review (ECO-08): every Backer rescue (Easy's second too), not only the
-  // first — the breach number rides in the actionId (the event has no field for it).
-  for (let b = loanBreachesOf(prev.finances) + 1; b <= loanBreachesOf(next.finances); b++) {
-    if (breachOutcomeFor(b, next.difficulty) === "rescue") hits.push({ kind: "backer", ref: `backer:${b}` });
+  // rc.33 review (ECO-08): every rescue, not only the first — the breach number rides in
+  // the actionId (the event has no field for it). rc.34: every breach the bank covered (a
+  // new emergency loan or a top-up; the kind keeps its "backer" name) — all but a breach
+  // that ended the career in this write (`end.moneyCause` "breach").
+  const endedByBreach =
+    prev.end.reason !== "insolvency" && next.end.reason === "insolvency" && next.end.moneyCause === "breach";
+  const lastRescue = loanBreachesOf(next.finances) - (endedByBreach ? 1 : 0);
+  for (let b = loanBreachesOf(prev.finances) + 1; b <= lastRescue; b++) {
+    hits.push({ kind: "backer", ref: `backer:${b}` });
   }
   if (!prev.finances.bankLoan && next.finances.bankLoan) hit("bank_loan");
   if (prev.end.reason !== "insolvency" && next.end.reason === "insolvency") hit("insolvency");

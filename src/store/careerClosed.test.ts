@@ -46,10 +46,11 @@ const INPUT: CreateCareerInput = {
 };
 
 /**
- * A real insolvency: the Backer already used, the books just over the floor,
- * wages far above income, then W2's Monday. rc.32 (M4): the breach that ends
- * a Normal career is CAREER_LOAN.breachesToEnd.normal, so the fixture stands
- * one breach before it, just over the Backer's line on its own wage bill.
+ * A real insolvency: the books just over the floor, wages far above income,
+ * then W2's Monday. rc.34: the breach that ends a career is one the bank will
+ * not cover — the emergency loan already at its top-up cap
+ * (CAREER_LOAN.emergency.maxTopUps), the books just over the floor on their
+ * own wage bill.
  */
 function insolventSave(): CareerSave {
   const save = createCareerSave(INPUT, 46_505);
@@ -59,8 +60,9 @@ function insolventSave(): CareerSave {
   save.pendingInsert = null;
   save.sponsorOffers = null;
   save.finances.loanUsed = true;
-  save.finances.loanBreaches = (CAREER_LOAN.breachesToEnd.normal ?? 2) - 1;
-  save.finances.loan = null;
+  const cap = CAREER_LOAN.emergency.maxTopUps ?? 0;
+  save.finances.loanBreaches = cap + 1;
+  save.finances.loan = { remaining: 9_000, topUps: cap };
   for (const p of save.squad) p.salaryPerSplit = 10_000;
   save.finances.balance = backerLineOf(save).floor + 10;
   return advanceDayFlow(save);

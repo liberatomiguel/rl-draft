@@ -9,7 +9,8 @@
  *   CAREER_ARC=1 ARC_OUT=arc.json npx vitest run src/store/careerArc.test.ts
  *
  * Knobs: ARC_REGIONS (default all seven), ARC_DIFFS (easy,normal,hard),
- * ARC_POLICIES (every ARC_POLICIES id), ARC_SEEDS (careers per cell, default 2),
+ * ARC_POLICIES (default the seven ARC_DEFAULT_POLICIES; rc.34's veterans runs
+ * when named), ARC_SEEDS (careers per cell, default 2),
  * ARC_SEASONS (default 8), ARC_SLICE "i/n" (this process plays every n-th cell,
  * so 4 processes split one matrix), ARC_BOOTCAMP=1 (rc.34: the bot books a
  * bootcamp each split — HQ decision 5-A's measurement; off by default). ARC_REPORT=1 ARC_IN=a.json,b.json
@@ -44,8 +45,8 @@ import type { CareerDifficulty, CareerPlayerView, EventTier, ScoutLevel, WorldSt
 import { agePassAndIntake, buildWorldAtCreation, worldGrowthWeek } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
 import {
-  ARC_GAP_BUCKETS,
   ARC_DEFAULT_POLICIES,
+  ARC_GAP_BUCKETS,
   ARC_POLICIES,
   playArcCareer,
   type ArcCareer,
@@ -96,6 +97,17 @@ describe("career arc harness — smoke (rc.30 OBS-02)", { timeout: 60_000 }, () 
     expect(auto.softlock).toBeNull();
     expect(auto.seasons[0].sponsorBasePerSplit).toBeGreaterThanOrEqual(0);
   });
+
+  it("rc.34: the veterans policy (the older founding roster, hands-off) plays a season — named only, not a default", () => {
+    expect(ARC_POLICIES.veterans).toMatchObject({ rosterKey: "journeymen", market: "keep", coach: "none", bank: false });
+    expect(ARC_DEFAULT_POLICIES).toHaveLength(7);
+    expect(ARC_DEFAULT_POLICIES).not.toContain("veterans");
+    const vets = playArcCareer({ region: "NA", difficulty: "normal", policy: "veterans", seed: 31337, seasons: 1 });
+    expect(vets.softlock).toBeNull();
+    expect(vets.seasons).toHaveLength(1);
+    // The journeymen start: 21–23 years old, the strongest founding overalls.
+    expect(Math.min(...vets.seasons[0].squad.map((p) => p.age))).toBeGreaterThanOrEqual(21);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -107,7 +119,7 @@ it.skipIf(!env.CAREER_ARC)(
   () => {
     const regions = list(env.ARC_REGIONS, ALL_REGIONS);
     const diffs = list<CareerDifficulty>(env.ARC_DIFFS, ["easy", "normal", "hard"]);
-    // rc.34: the seven baseline policies by default; ARC_POLICIES may name the two training ones.
+    // rc.34: the seven baseline policies by default; ARC_POLICIES may name the opt-in ones (delegator, trainer, veterans).
     const policies = env.ARC_POLICIES
       ? list<ArcPolicyId>(env.ARC_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[])
       : [...ARC_DEFAULT_POLICIES];

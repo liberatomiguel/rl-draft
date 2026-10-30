@@ -617,21 +617,60 @@ export interface BankLoanState {
   takenWeek: number;
 }
 
+/** A Monday on the career clock: the season index and its week (1–32). */
+export interface CareerMonday {
+  seasonIndex: number;
+  week: number;
+}
+
+/**
+ * rc.34 (Miguel, 31/10): the bank's emergency loan (rc.31–rc.33: the
+ * Emergency Backer's debt — same field, `finances.loan`). Every field but
+ * `remaining` is optional: an rc.33 save's open Backer loan gets its
+ * deadline from the load repair (careerFlow.repairLoanOnLoad).
+ */
+export interface EmergencyLoanState {
+  /** Still owed (the principal ×CAREER_LOAN.repayFactor, less what was repaid). */
+  remaining: number;
+  /** The Monday it must be repaid by (CAREER_LOAN.emergency.deadlineWeeks after the first loan; absent = none). */
+  deadline?: CareerMonday;
+  /** The Monday the first loan opened (the load repair: the update's). */
+  openedAt?: CareerMonday;
+  /** What the bank lent in all — the first loan and its top-ups, before interest. */
+  lent?: number;
+  /** Later breaches while it was owed, each added to the debt (CAREER_LOAN.emergency.maxTopUps). */
+  topUps?: number;
+  /** The deadline warnings already sent, by weeks before it (CAREER_LOAN.emergency.warnWeeks). */
+  warned?: number[];
+}
+
 export interface FinanceState {
   balance: number;
   /** Ring-buffer tail (CAREER_SAVE.ledgerTailCap). */
   ledger: LedgerEntry[];
-  loan: { remaining: number } | null;
-  /** One rescue per career — a second breach after this is set ends the career. */
+  /** rc.34: the bank's emergency loan (rc.33: the Emergency Backer's debt); null = nothing owed. */
+  loan: EmergencyLoanState | null;
+  /** The career has had an emergency loan (rc.33: a Backer rescue) — history. */
   loanUsed: boolean;
   /**
-   * rc.32 (M4): Mondays the books closed below the Backer's floor so far
-   * (the first rescue was the first). Absent on older saves: read as 1 when
-   * `loanUsed`, else 0 (`economy.loanBreachesOf`). rc.33 (ECO-08): the count
-   * CAREER_LOAN.breachesToEnd ends the career at.
+   * rc.32 (M4): Mondays the books closed below the floor so far (the first
+   * rescue was the first). Absent on older saves: read as 1 when `loanUsed`,
+   * else 0 (`economy.loanBreachesOf`). rc.33 (ECO-08): the count
+   * CAREER_LOAN.breachesToEnd ended the career at; rc.34: history, and the
+   * count that key still reads (null by default — the deadline ends it).
    */
   loanBreaches?: number;
-  /** rc.33 (ECO-07): the rescue partner's help while it runs (absent / null = none). */
+  /**
+   * rc.34: emergency loans opened so far (a top-up is not a new one); the
+   * investor joins only the first. Absent on older saves: read as 1 when
+   * `loanUsed`, else 0 (`economy.emergencyLoansOf`).
+   */
+  emergencyLoans?: number;
+  /**
+   * rc.33 (ECO-07): the rescue partner's help while it runs (absent / null =
+   * none). rc.34: the investor that joins the first emergency loan — same
+   * state, same "rescuePartner" ledger line.
+   */
   rescuePartner?: RescuePartnerState | null;
   /**
    * rc.33 (UX-07): the Monday balances, oldest first, a ring of
@@ -657,16 +696,48 @@ export interface FinanceState {
 }
 
 /**
- * rc.33 (ECO-07): the rescue partner — "a partner's help" that comes with
- * the Backer's loan at the breach CAREER_LOAN.rescuePartner.atBreach names
- * (Easy's first). The Monday funnel pays `weekly` while `mondaysLeft` > 0,
+ * rc.33 (ECO-07): the rescue partner — "a partner's help" that came with the
+ * Backer's loan on Easy's first breach. rc.34: the investor that joins the
+ * career's first emergency loan where CAREER_LOAN.investor.payrollShare has
+ * a share (Easy). The Monday funnel pays `weekly` while `mondaysLeft` > 0,
  * counting it down, then clears it.
  */
 export interface RescuePartnerState {
-  /** Weekly income, fixed at the rescue: payrollShare × that Monday's wage bill. */
+  /** Weekly income, fixed when it joined: payrollShare × that Monday's wage bill. */
   weekly: number;
-  /** Mondays still to pay (CAREER_LOAN.rescuePartner.weeks at the rescue). */
+  /** Mondays still to pay (CAREER_LOAN.investor.weeks when it joined). */
   mondaysLeft: number;
+}
+
+/**
+ * rc.34 (Miguel, 31/10: "communicate it better with a modal that says what
+ * is happening"): the money events that change the stakes, each explained
+ * once in a modal on whatever career screen is open.
+ *  - loanOpened: a breach — the bank's emergency loan (and the investor, if any)
+ *  - loanTopUp: a breach while it is owed — added to the debt, same deadline
+ *  - deadlineWarning: CAREER_LOAN.emergency.warnWeeks before the deadline
+ *  - deadlineCollected: the deadline — the balance covered it, the bank took it
+ *  - careerEnded: the deadline unpaid (or a breach the bank would not cover)
+ *  - loanTakenOver: an rc.33 save's Backer debt, moved to the bank on load
+ */
+export type MoneyNoticeKind =
+  | "loanOpened"
+  | "loanTopUp"
+  | "deadlineWarning"
+  | "deadlineCollected"
+  | "careerEnded"
+  | "loanTakenOver";
+
+/** One pending money notice (careerFlow.moneyNoticeOf / acknowledgeMoneyNoticeFlow). */
+export interface MoneyNotice {
+  /** Unique per save: `${kind}:${seasonIndex}:${day}`. */
+  id: string;
+  kind: MoneyNoticeKind;
+  /** When it was raised — the batched Advance stops on that day. */
+  seasonIndex: number;
+  day: number;
+  /** Raw numbers and flags (money unformatted); the modal's copy reads them. */
+  params: Record<string, string | number>;
 }
 
 /**
@@ -972,6 +1043,12 @@ export interface CareerEndState {
   infinite: boolean;
   /** Set once the first Worlds title fired the full credits (later wins go lighter). */
   creditsShown?: boolean;
+  /**
+   * rc.34: what ended an insolvency — "deadline" (the emergency loan unpaid
+   * on its deadline) or "breach" (a breach the bank would not cover: the
+   * top-up cap, or CAREER_LOAN.breachesToEnd). Absent before rc.34.
+   */
+  moneyCause?: "deadline" | "breach";
 }
 
 export interface SeasonGoals {
@@ -1121,6 +1198,12 @@ export interface CareerSave {
   lateSigning?: LateSigningState | null;
   /** A starter is unavailable for this event (random event, sub steps in). */
   pendingUnavailability: { playerId: string; eventId: string } | null;
+  /**
+   * rc.34: money notices not yet acknowledged, oldest first (each shown once
+   * in a modal — careerFlow.moneyNoticeOf / acknowledgeMoneyNoticeFlow).
+   * Absent = none (older saves).
+   */
+  moneyNotices?: MoneyNotice[];
 
   news: NewsItem[];
   /** v0.2 Inbox — actionable mail addressed to the manager (ring buffer). */

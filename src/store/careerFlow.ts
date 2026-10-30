@@ -31,7 +31,6 @@ import {
   CAREER_CALENDAR,
   CAREER_CONTRACT,
   CAREER_DEV,
-  CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_HQ,
   CAREER_LOAN,
@@ -68,6 +67,7 @@ import {
   dayOfWeekOf,
   eventDayFor,
   eventEndDayFor,
+  firstDayOfWeek,
   isTwoDayEvent,
   isWindowStartWeek,
   isWindowWeek,
@@ -139,9 +139,11 @@ import {
   bankLoanRefusal,
   bootcampCostFor,
   bootcampTierFor,
-  breachOutcomeFor,
+  breachOutcomeOf,
   computeSalaryAsk,
+  deadlineWeeksFor,
   debtPaymentFor,
+  emergencyLoansOf,
   eventRepKindFor,
   foundingPartnerBaseFor,
   foundingPartnerEnds,
@@ -149,8 +151,11 @@ import {
   gearPriceFor,
   gearTrainingBonus,
   insertMoneyFor,
+  investorJoinsNext,
+  investorShareFor,
   loanBreachesOf,
   marketValueFor,
+  mondayAfter,
   mondayBalancesFromLedger,
   mondaysToBreach,
   payBankLoanDown,
@@ -162,7 +167,6 @@ import {
   repGainFor,
   repLossFloor,
   repTierOf,
-  rescuePartnerAt,
   rescuePartnerLastPayday,
   rescuePartnerWeeklyOf,
   runwayShortened,
@@ -171,12 +175,14 @@ import {
   severanceFor,
   signableOverallCap,
   sponsorOffersFor,
+  startingBudgetFor,
   t3RepKeyFor,
   takeBankLoan,
   unlocksFor,
   weeklyPayroll,
   weeklyStatement,
   weeklyWageBill,
+  weeksToDeadline,
   type BackerLine,
   type BreachOutcome,
   type GearItemId,
@@ -243,6 +249,8 @@ import type {
   MailItem,
   ManagementStyle,
   MondayBalance,
+  MoneyNotice,
+  MoneyNoticeKind,
   NewsItem,
   PotentialBand,
   ScrimLogEntry,
@@ -619,13 +627,90 @@ export function weeklyStatementOf(save: CareerSave): WeeklyStatement {
 }
 
 /**
- * rc.33 (ECO-08): what the next Monday below the Backer's floor does on this
- * save — the Backer's rescue, or the end of the career (Easy's third breach,
- * Normal's second, Hard's first). Every warning that names the Backer picks
- * its text by this (rc.33 review: several promised a Backer on Hard).
+ * What the next Monday below the floor does on this save — the bank's
+ * emergency loan ("rescue": a new loan, or a top-up of the one owed) or the
+ * end of the career (rc.34: only CAREER_LOAN.breachesToEnd or the top-up
+ * cap; rc.33: Easy's third breach, Normal's second, Hard's first). Every
+ * warning that names the next breach picks its text by this.
  */
 export function nextBreachOutcomeOf(save: CareerSave): BreachOutcome {
-  return breachOutcomeFor(loanBreachesOf(save.finances) + 1, save.difficulty);
+  return breachOutcomeOf(save.finances, save.difficulty);
+}
+
+/**
+ * rc.34: the emergency loan as every screen shows it (null = nothing owed) —
+ * what is owed and was lent, the deadline Monday (as a day on the calendar)
+ * and the Mondays left to it, the top-ups against the cap, and whether the
+ * balance covers the debt today (what the bank checks on the deadline).
+ */
+export interface EmergencyLoanView {
+  remaining: number;
+  lent: number | null;
+  /** The deadline Monday (null = no deadline: an older save before its repair, or deadlineWeeks null). */
+  deadline: { seasonIndex: number; week: number; day: number } | null;
+  /** Mondays from today's week to the deadline's (0 = this week). */
+  weeksLeft: number | null;
+  topUps: number;
+  maxTopUps: number | null;
+  covered: boolean;
+}
+
+export function emergencyLoanViewOf(save: CareerSave): EmergencyLoanView | null {
+  const loan = save.finances.loan;
+  if (!loan) return null;
+  const now = { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) };
+  return {
+    remaining: loan.remaining,
+    lent: loan.lent ?? null,
+    deadline: loan.deadline ? { ...loan.deadline, day: firstDayOfWeek(loan.deadline.week) } : null,
+    weeksLeft: weeksToDeadline(loan, now),
+    topUps: loan.topUps ?? 0,
+    maxTopUps: CAREER_LOAN.emergency.maxTopUps,
+    covered: save.finances.balance >= loan.remaining,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// rc.34 (Miguel, 31/10): the money notices — "communicate it better with a
+// modal that says what is happening". The flow queues one at each money
+// event that changes the stakes; the career shell shows the oldest in a
+// modal on whatever screen is open; acknowledging it removes it. The batched
+// Advance stops on the day one is raised and the autoplay pauses while one
+// is pending. Integration note (front G's decision queue): the queue reads
+// `moneyNoticeOf(save)` → { id, kind, params } | null and answers with
+// `acknowledgeMoneyNoticeFlow(save, id)`; `params` are raw numbers and
+// flags (money unformatted), the copy is `career.moneyNotice.<kind>`.
+// ---------------------------------------------------------------------------
+
+/** The oldest money notice not yet acknowledged (null = none). */
+export function moneyNoticeOf(save: CareerSave): MoneyNotice | null {
+  return save.moneyNotices?.[0] ?? null;
+}
+
+/** Acknowledge a money notice (the head when `id` is omitted); a no-op for an unknown id. */
+export function acknowledgeMoneyNoticeFlow(input: CareerSave, id?: string): CareerSave {
+  const queue = input.moneyNotices ?? [];
+  const target = id ?? queue[0]?.id;
+  if (!target || !queue.some((n) => n.id === target)) return input;
+  const save = clone(input);
+  save.moneyNotices = queue.filter((n) => n.id !== target);
+  return save;
+}
+
+/** Queue a money notice for today (one per kind and day: a re-raise replaces it). */
+function pushMoneyNotice(save: CareerSave, kind: MoneyNoticeKind, params: Record<string, string | number>): void {
+  const { seasonIndex, day } = save.clock;
+  const id = `${kind}:${seasonIndex}:${day}`;
+  const queue = (save.moneyNotices ?? []).filter((n) => n.id !== id);
+  queue.push({ id, kind, seasonIndex, day, params });
+  save.moneyNotices = queue;
+}
+
+/** Was a money notice raised today (the batched Advance and the autoplay stop on it)? */
+export function moneyNoticeRaisedToday(save: CareerSave): boolean {
+  return (save.moneyNotices ?? []).some(
+    (n) => n.seasonIndex === save.clock.seasonIndex && n.day === save.clock.day,
+  );
 }
 
 /** rc.33 review: the rescue partner's remaining run — the part of the weekly net that stops (economy.NetRun). */
@@ -672,10 +757,11 @@ function realDealSigned(save: CareerSave): boolean {
 }
 
 /**
- * M4 (decision 4-B — provisional): while the Backer is owed, would this
+ * M4 (rc.32): while the emergency loan (then the Backer) is owed, would this
  * decision shorten the runway? `upfront` = its one-off cost, `weeklyCost` =
  * the weekly cost it adds (negative = a saving). False when the lock is off
- * (CAREER_LOAN.lockCommitments) or nothing is owed.
+ * (CAREER_LOAN.lockCommitments — off since rc.34, Miguel 31/10) or nothing
+ * is owed.
  *
  * Measured to the Backer's floor (the next breach), not to $0: the books
  * spend most of an open Backer in the overdraft between $0 and the floor,
@@ -1488,45 +1574,50 @@ function runWeeklyPayroll(save: CareerSave): void {
       linkTo: "/career/finances",
     });
   }
-  if (payroll.rescued) {
-    pushNews(save, { type: "org", priority: 3, titleKey: "backerIn" });
-    // rc.33 (ECO-07): the rescue partner, announced in the same mail — who,
-    // how much a week, for how long and until which Monday.
-    const partner = payroll.rescuePartner;
-    const last = partner ? rescuePartnerLastPayday(partner, save.clock) : null;
-    const breach = loanBreachesOf(save.finances);
+  // rc.34 (Miguel, 31/10): the deadline Monday — the balance covered the debt, the bank took it.
+  if (payroll.collected > 0) {
+    const params = { collected: payroll.collected, balance: save.finances.balance };
+    pushNews(save, { type: "org", priority: 2, titleKey: "loanCollected" });
     pushMail(save, {
       kind: "finance",
-      titleKey: "backerIn",
-      bodyKey: "backerIn",
-      // rc.32 (M4): the window it buys, what is owed and what the next breach means.
-      params: {
-        rescueTo: payroll.line.rescueTo,
-        owed: save.finances.loan?.remaining ?? 0,
-        weeks: CAREER_LOAN.sizing === "weeks" ? CAREER_LOAN.rescueToWeeks : 0,
-        garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
-        lock: CAREER_LOAN.lockCommitments ? 1 : 0,
-        next: breachOutcomeFor(breach + 1, save.difficulty),
-        nextPartner: rescuePartnerAt(breach + 1, save.difficulty) ? 1 : 0,
-        // rc.33 review: how long a rescue partner pays (the copy reads the key, never "a split").
-        partnerRun: CAREER_LOAN.rescuePartner.weeks,
-        // rc.33 (ECO-08): which breach this was (the second rescue on Easy says so).
-        n: breach,
-        partnerName: partner ? RESCUE_PARTNER_BRAND.name : "",
-        partnerWeekly: partner?.weekly ?? 0,
-        partnerWeeks: partner?.mondaysLeft ?? 0,
-        partnerUntilWeek: last ? weekOfDay(last.day) : 0,
-        partnerNextSeason: last && last.seasonIndex > save.clock.seasonIndex ? 1 : 0,
-      },
-      fromKey: "backer",
+      titleKey: "loanCollected",
+      bodyKey: "loanCollected",
+      params,
+      fromKey: "bank",
       linkTo: "/career/finances",
     });
+    pushMoneyNotice(save, "deadlineCollected", params);
+  }
+  if (payroll.rescued) {
+    // rc.34 (Miguel, 31/10): the bank's emergency loan — a new one (its
+    // deadline, the investor on the career's first) or a top-up of the one
+    // owed. One set of params feeds the mail and the modal notice.
+    const kind = payroll.topUp ? "emergencyTopUp" : "emergencyLoan";
+    const params = loanEventParams(save, payroll.granted, payroll.line, payroll.rescuePartner);
+    pushNews(save, { type: "org", priority: 3, titleKey: kind });
+    pushMail(save, { kind: "finance", titleKey: kind, bodyKey: kind, params, fromKey: "bank", linkTo: "/career/finances" });
+    pushMoneyNotice(save, payroll.topUp ? "loanTopUp" : "loanOpened", params);
   }
   if (payroll.insolvent) {
+    // rc.34: why it ended (the deadline unpaid, or a breach the bank would not cover), for the
+    // season screen and the notice — read before endCareer closes the books.
+    const loan = save.finances.loan;
+    const params: Record<string, string | number> = {
+      cause: payroll.endCause ?? "breach",
+      owed: loan?.remaining ?? 0,
+      balance: save.finances.balance,
+      topUps: loan?.topUps ?? 0,
+      maxTopUps: CAREER_LOAN.emergency.maxTopUps ?? -1,
+      ...deadlineParamsOf(save, loan?.deadline ?? null),
+    };
     endCareer(save, "insolvency");
+    save.end.moneyCause = payroll.endCause ?? "breach";
     pushNews(save, { type: "org", priority: 3, titleKey: "insolvency" });
+    pushMoneyNotice(save, "careerEnded", params);
     return;
   }
+  // rc.34: the deadline's warnings (CAREER_LOAN.emergency.warnWeeks: 8, then 4 Mondays before).
+  warnDeadline(save);
   if (CAREER_PAYROLL.runwayWarnMode === "rc31") {
     const runway = runwayWeeks(save.finances.balance, payroll.statement.net);
     if (runway !== null && runway === CAREER_PAYROLL.runwayWarnWeeks && save.finances.balance > 0) {
@@ -1550,6 +1641,121 @@ function runWeeklyPayroll(save: CareerSave): void {
   // rc.33: the runway on next Monday's statement — after a rescue partner's
   // run ends or starts, this week's booked net is no longer the burn ahead.
   warnRunway(save, weeklyStatementOf(save).net);
+}
+
+/**
+ * rc.34: a deadline as the mails and the notice quote it — its week, its
+ * season (absolute, for a calendar date) and how many seasons ahead (0 =
+ * this one), and the loan's term on this difficulty. Empty without one.
+ */
+function deadlineParamsOf(
+  save: CareerSave,
+  deadline: { seasonIndex: number; week: number } | null,
+): Record<string, number> {
+  if (!deadline) return {};
+  const term = deadlineWeeksFor(save.difficulty);
+  return {
+    dlWeek: deadline.week,
+    dlSeason: deadline.seasonIndex,
+    dlAhead: Math.max(0, deadline.seasonIndex - save.clock.seasonIndex),
+    ...(term !== null ? { dlWeeks: term } : {}),
+  };
+}
+
+/**
+ * rc.34: what the next breach means, as every warning and notice quotes it —
+ * `next` (breachOutcomeOf: "rescue" or "insolvent"), whether a loan is owed
+ * (a rescue then tops it up, the deadline unchanged), whether the investor
+ * would join (the career's first loan) and for how long, the loan's term
+ * on this difficulty and the top-ups the bank still grants (-1 = no cap).
+ */
+export function nextBreachParamsOf(save: CareerSave): Record<string, string | number> {
+  const fin = save.finances;
+  const cap = CAREER_LOAN.emergency.maxTopUps;
+  const term = deadlineWeeksFor(save.difficulty);
+  return {
+    next: breachOutcomeOf(fin, save.difficulty),
+    owing: fin.loan ? 1 : 0,
+    nextPartner: investorJoinsNext(fin, save.difficulty) ? 1 : 0,
+    partnerRun: CAREER_LOAN.investor.weeks,
+    term: term ?? 0,
+    topUpsLeft: fin.loan && cap !== null ? Math.max(0, cap - (fin.loan.topUps ?? 0)) : -1,
+  };
+}
+
+/**
+ * rc.34 (Miguel, 31/10): the params of a breach the bank covered — the mail
+ * and the modal notice read the same ones: what it lent now and what is
+ * owed in all, the balance it restored (and in weeks of wages), the
+ * deadline, how the loan is repaid (prize and sale shares, Finances), the
+ * investor if it came with it (who, how much a week, until when), the lock
+ * (off since rc.34) and what the next breach would do.
+ */
+function loanEventParams(
+  save: CareerSave,
+  granted: number,
+  line: BackerLine,
+  partner: { weekly: number; mondaysLeft: number } | null,
+): Record<string, string | number> {
+  const loan = save.finances.loan;
+  const last = partner ? rescuePartnerLastPayday(partner, save.clock) : null;
+  return {
+    lent: granted,
+    owed: loan?.remaining ?? 0,
+    rescueTo: line.rescueTo,
+    floor: line.floor,
+    weeks: CAREER_LOAN.sizing === "weeks" ? CAREER_LOAN.rescueToWeeks : 0,
+    repayPct: Math.round((CAREER_LOAN.repayFactor - 1) * 100),
+    garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
+    salePct: Math.round(CAREER_LOAN.saleGarnishRate * 100),
+    lock: CAREER_LOAN.lockCommitments ? 1 : 0,
+    n: loanBreachesOf(save.finances),
+    topUps: loan?.topUps ?? 0,
+    ...deadlineParamsOf(save, loan?.deadline ?? null),
+    partnerName: partner ? RESCUE_PARTNER_BRAND.name : "",
+    partnerWeekly: partner?.weekly ?? 0,
+    partnerWeeks: partner?.mondaysLeft ?? 0,
+    partnerPct: Math.round((investorShareFor(save.difficulty) ?? 0) * 100),
+    partnerUntilWeek: last ? weekOfDay(last.day) : 0,
+    partnerNextSeason: last && last.seasonIndex > save.clock.seasonIndex ? 1 : 0,
+    ...nextBreachParamsOf(save),
+  };
+}
+
+/**
+ * rc.34 (Miguel, 31/10): the bank's warnings before the emergency loan's
+ * deadline — once at each CAREER_LOAN.emergency.warnWeeks level (8, then 4
+ * Mondays before), a mail and the modal notice: what is owed, the balance
+ * against it, the deadline and what happens on it. One a Monday: a level
+ * passed in the same week as a lower one is folded into it.
+ */
+function warnDeadline(save: CareerSave): void {
+  const loan = save.finances.loan;
+  if (!loan?.deadline) return;
+  const left = weeksToDeadline(loan, { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) });
+  if (left === null || left <= 0) return;
+  const sent = loan.warned ?? [];
+  const due = CAREER_LOAN.emergency.warnWeeks.filter((w) => left <= w && !sent.includes(w));
+  if (due.length === 0) return;
+  save.finances = { ...save.finances, loan: { ...loan, warned: [...sent, ...due] } };
+  const params: Record<string, string | number> = {
+    weeksLeft: left,
+    owed: loan.remaining,
+    balance: save.finances.balance,
+    covered: save.finances.balance >= loan.remaining ? 1 : 0,
+    garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
+    salePct: Math.round(CAREER_LOAN.saleGarnishRate * 100),
+    ...deadlineParamsOf(save, loan.deadline),
+  };
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "loanDeadline",
+    bodyKey: "loanDeadline",
+    params,
+    fromKey: "bank",
+    linkTo: "/career/finances",
+  });
+  pushMoneyNotice(save, "deadlineWarning", params);
 }
 
 /** Save flags of the M4 warnings: the 8-week notice sent, the 4-week news line sent (this squeeze). */
@@ -1588,10 +1794,7 @@ function warnRunway(save: CareerSave, net: number): void {
     breachWeek: nextSeason ? breachWeek - CAREER_CALENDAR.weeksPerSeason : breachWeek,
     nextSeason: nextSeason ? 1 : 0,
     floor: line.floor,
-    next: breachOutcomeFor(loanBreachesOf(save.finances) + 1, save.difficulty),
-    // rc.33 (ECO-07): the next breach also brings the rescue partner (Easy's first).
-    nextPartner: rescuePartnerAt(loanBreachesOf(save.finances) + 1, save.difficulty) ? 1 : 0,
-    partnerRun: CAREER_LOAN.rescuePartner.weeks,
+    ...nextBreachParamsOf(save),
     backer: save.finances.loan ? 1 : 0,
   };
   if (runway <= CAREER_PAYROLL.runwayWarnWeeks) {
@@ -1805,17 +2008,7 @@ function sellSquadPlayer(
     refName: player.name,
   });
   save.finances = fin;
-  if (garnished > 0 && !save.finances.loan) {
-    pushNews(save, { type: "org", priority: 2, titleKey: "debtCleared" });
-    pushMail(save, {
-      kind: "finance",
-      titleKey: "debtCleared",
-      bodyKey: "debtCleared",
-      params: {},
-      fromKey: "backer",
-      linkTo: "/career/finances",
-    });
-  }
+  if (garnished > 0 && !save.finances.loan) announceDebtCleared(save);
   logTransfer(save, {
     playerId: player.id,
     playerName: player.name,
@@ -1842,8 +2035,26 @@ function sellSquadPlayer(
 }
 
 /**
- * v0.3: manual Backer pay-down from the Finances screen — any amount, any
- * time (clamped to the outstanding debt and the available balance headroom).
+ * The emergency loan (rc.33: the Backer's debt) is repaid in full — by a
+ * payment from Finances, a sale's share or a prize's (rc.34: that one said
+ * nothing before) — a news line and the bank's mail: the deadline is lifted.
+ */
+function announceDebtCleared(save: CareerSave): void {
+  pushNews(save, { type: "org", priority: 2, titleKey: "debtCleared" });
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "debtCleared",
+    bodyKey: "debtCleared",
+    params: {},
+    fromKey: "bank",
+    linkTo: "/career/finances",
+  });
+}
+
+/**
+ * v0.3: manual pay-down of the emergency loan (rc.33: the Backer's debt) from
+ * the Finances screen — any amount, any time (clamped to the outstanding debt
+ * and the available balance headroom); "Pay it all" settles it exactly.
  */
 export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
   if (input.phase === "ended") return { save: input, error: "blocked" }; // ECO-02: the books are closed
@@ -1858,17 +2069,7 @@ export function payDebtFlow(input: CareerSave, amount: number): FlowResult {
     week: weekOfDay(save.clock.day),
     day: save.clock.day,
   });
-  if (!save.finances.loan) {
-    pushNews(save, { type: "org", priority: 2, titleKey: "debtCleared" });
-    pushMail(save, {
-      kind: "finance",
-      titleKey: "debtCleared",
-      bodyKey: "debtCleared",
-      params: {},
-      fromKey: "backer",
-      linkTo: "/career/finances",
-    });
-  }
+  if (!save.finances.loan) announceDebtCleared(save);
   return { save: capNews(save) };
 }
 
@@ -2332,7 +2533,7 @@ export function finishEvent(input: CareerSave): CareerSave {
   // Prize (+ the players' share of a podium — rc.33 ECO-10: each contract's
   // own share for the players who played; + Backer garnish).
   if (userRow && userRow.prize > 0) {
-    const { fin } = applyPrize(save.finances, userRow.prize, {
+    const { fin, garnished } = applyPrize(save.finances, userRow.prize, {
       seasonIndex: save.clock.seasonIndex,
       week: weekOfDay(save.clock.day),
       day: save.clock.day,
@@ -2342,6 +2543,8 @@ export function finishEvent(input: CareerSave): CareerSave {
     });
     save.finances = fin;
     save.stats.totalPrize += userRow.prize;
+    // rc.34: a prize's share that clears the emergency loan lifts its deadline — say so.
+    if (garnished > 0 && !save.finances.loan) announceDebtCleared(save);
   }
 
   // Reputation.
@@ -3000,7 +3203,14 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     foundingSquadIds: squad.map((p) => p.id),
     coach: null,
     finances: {
-      balance: CAREER_ECONOMY.startingBudget[input.difficulty],
+      // rc.34: at least CAREER_ECONOMY.startingBudgetWeeks of the founding wage bill (every roster's runway).
+      balance: startingBudgetFor(
+        input.difficulty,
+        weeklyWageBill(
+          squad.map((p) => p.salaryPerSplit),
+          null,
+        ),
+      ),
       ledger: [],
       loan: null,
       loanUsed: false,
@@ -3424,10 +3634,11 @@ export function signingPlanFor(
   const fillsEmptySeat =
     seatPrice !== null && cost <= seatPrice.cost && talk.terms.wagePerSplit <= seatPrice.wagePerSplit;
   if (!fillsEmptySeat && save.finances.balance - cost < backerLineOf(save).floor) return { error: "funds" };
-  if (pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
-  // rc.32 (M4, provisional): while the Backer is owed, no signing that shortens the runway —
-  // except the empty seat's cheapest free agent (a sale, an expiry or a retirement can
-  // leave a squad below three; the org must be able to field its own three again, never a soft lock).
+  // rc.34 (Miguel, 31/10): no lock while the emergency loan is owed (CAREER_LOAN.lockCommitments
+  // false). true restores rc.33: no transfer fee while it is owed, and no signing that shortens
+  // the runway — except the empty seat's cheapest free agent (a sale, an expiry or a retirement
+  // can leave a squad below three; the org must be able to field its own three again).
+  if (CAREER_LOAN.lockCommitments && pack.fee > 0 && save.finances.loan) return { error: "loanActive" };
   const bill = payrollProjection({
     squadSalaries: save.squad.map((p) => ({ id: p.id, amount: p.salaryPerSplit })),
     coachSalary: save.coach?.salaryPerSplit ?? null,
@@ -3664,7 +3875,8 @@ export function buyGearFlow(input: CareerSave, itemId: GearItemId): FlowResult {
   if (!next) return { save: input, error: "maxed" };
   if (next.id !== itemId) return { save: input, error: "locked" }; // strict ladder order
   if (save.reputation < next.repGate) return { save: input, error: "locked" };
-  if (save.finances.loan) return { save: input, error: "loanActive" };
+  // rc.34: gear is open while the emergency loan is owed (CAREER_LOAN.lockCommitments; true = rc.33's lock).
+  if (CAREER_LOAN.lockCommitments && save.finances.loan) return { save: input, error: "loanActive" };
   const cost = gearPriceFor(next.cost, save.sponsor?.tier ?? null, save.clock.seasonIndex);
   if (save.finances.balance - cost < backerLineOf(save).floor) return { save: input, error: "funds" };
   save.finances = pushLedger(save.finances, {
@@ -4312,6 +4524,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairMoneyOnLoad(save); // rc.33: every load, idempotent, no version bump
   repairHqOnLoad(save); // rc.34: every load, idempotent, no version bump
   repairTrainingOnLoad(save); // rc.34 (DEV-03 T8): every load, idempotent, no version bump
+  repairLoanOnLoad(save); // rc.34: every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {
@@ -4411,6 +4624,56 @@ export function repairHqOnLoad(save: CareerSave): void {
   if ((fin.bootcampSharp ?? 0) > 0 && fin.bootcampUntil === undefined) {
     fin.bootcampUntil = { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) };
   }
+}
+
+/**
+ * rc.34 (Miguel, 31/10): the emergency loan's one-time load repair, run by
+ * migrateSaveToV5 on every load next to repairMoneyOnLoad (idempotent;
+ * persist version 3 and saveVersion 5 unchanged). An rc.32/rc.33 career that
+ * still owes the Emergency Backer now owes the bank: the debt becomes the
+ * emergency loan as it stands, due CAREER_LOAN.emergency.deadlineWeeks
+ * Mondays from this load's week (the update's, not the old rescue's — the
+ * rule is new), announced once (a mail and the modal notice). The breach
+ * counter stays as history; a running rescue partner keeps paying to its own
+ * end as the investor; the investor never joins this loan (it is not new)
+ * nor a later one (`loanUsed` reads as the first loan taken). An ended
+ * career, a cleared debt, a loan that already has its deadline, or the
+ * deadline switched off (null): nothing moves.
+ */
+export function repairLoanOnLoad(save: CareerSave): void {
+  const loan = save.finances?.loan;
+  if (!loan || loan.deadline || save.phase === "ended" || !save.clock) return;
+  const weeks = deadlineWeeksFor(save.difficulty);
+  if (weeks === null) return;
+  const now = { seasonIndex: save.clock.seasonIndex, week: weekOfDay(save.clock.day) };
+  const implied = CAREER_LOAN.emergency.warnWeeks.filter((w) => w >= weeks);
+  save.finances.loan = {
+    ...loan,
+    deadline: mondayAfter(now, weeks),
+    openedAt: loan.openedAt ?? now,
+    topUps: loan.topUps ?? 0,
+    ...(implied.length > 0 ? { warned: implied } : {}),
+  };
+  save.finances.emergencyLoans ??= emergencyLoansOf(save.finances);
+  save.flags ??= {};
+  save.mail ??= [];
+  const params: Record<string, string | number> = {
+    owed: loan.remaining,
+    garnishPct: Math.round(CAREER_LOAN.garnishRate[save.difficulty] * 100),
+    salePct: Math.round(CAREER_LOAN.saleGarnishRate * 100),
+    lock: CAREER_LOAN.lockCommitments ? 1 : 0,
+    ...deadlineParamsOf(save, save.finances.loan.deadline ?? null),
+    ...nextBreachParamsOf(save),
+  };
+  pushMail(save, {
+    kind: "finance",
+    titleKey: "loanTakenOver",
+    bodyKey: "loanTakenOver",
+    params,
+    fromKey: "bank",
+    linkTo: "/career/finances",
+  });
+  pushMoneyNotice(save, "loanTakenOver", params);
 }
 
 /** rc.30 (direct-8): the in-flight regional week's seeding, rebuilt from its commit (migrateSaveToV5). */

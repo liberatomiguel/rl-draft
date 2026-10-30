@@ -38,6 +38,8 @@ import type {
   BankLoanState,
   CareerDifficulty,
   CareerEventFormat,
+  CareerMonday,
+  EmergencyLoanState,
   EventTier,
   FinanceState,
   FoundingPartnerState,
@@ -634,11 +636,20 @@ export function applyPrize(
         amount: -garnished,
         refName: ctx.refName,
       });
-      const remaining = next.loan!.remaining - garnished;
-      next = { ...next, loan: remaining > 0 ? { remaining } : null };
+      next = { ...next, loan: loanAfterPayment(next.loan!, garnished) };
     }
   }
   return { fin: next, garnished, playerShare };
+}
+
+/**
+ * rc.34: the emergency loan after a payment of `paid` — its deadline, top-ups
+ * and warnings kept (rc.33 rebuilt `{ remaining }` and would have dropped
+ * them); null once nothing is owed.
+ */
+export function loanAfterPayment(loan: EmergencyLoanState, paid: number): EmergencyLoanState | null {
+  const remaining = loan.remaining - paid;
+  return remaining > 0 ? { ...loan, remaining } : null;
 }
 
 /**
@@ -669,8 +680,7 @@ export function applyTransferIncome(
       amount: -garnished,
       refName: ctx.refName,
     });
-    const remaining = next.loan!.remaining - garnished;
-    next = { ...next, loan: remaining > 0 ? { remaining } : null };
+    next = { ...next, loan: loanAfterPayment(next.loan!, garnished) };
   }
   return { fin: next, garnished };
 }
@@ -740,16 +750,14 @@ export function payLoanDown(
 ): FinanceState {
   if (!fin.loan || amount <= 0) return fin;
   const paid = Math.min(fin.loan.remaining, amount);
-  let next = pushLedger(fin, {
+  const next = pushLedger(fin, {
     seasonIndex: ctx.seasonIndex,
     week: ctx.week,
     day: ctx.day,
     kind: "loanPayment",
     amount: -paid,
   });
-  const remaining = next.loan!.remaining - paid;
-  next = { ...next, loan: remaining > 0 ? { remaining } : null };
-  return next;
+  return { ...next, loan: loanAfterPayment(next.loan!, paid) };
 }
 
 // ---------------------------------------------------------------------------
@@ -926,6 +934,19 @@ export function mondaysToBreach(balance: number, weeklyNet: number, floor: numbe
 // rc.32 M4 (ECONOMY-CONTRACT §5, decision 4-B — provisional): the safety net
 // ---------------------------------------------------------------------------
 
+/**
+ * rc.34 (Miguel, 31/10: "the older team went broke in the first split"): a
+ * new career's start budget — CAREER_ECONOMY.startingBudget on its
+ * difficulty, or `startingBudgetWeeks` × the founding weekly wage bill when
+ * that is more, on the money quantum, so every roster starts with the same
+ * runway in weeks. null weeks = the flat budget (rc.33).
+ */
+export function startingBudgetFor(difficulty: CareerDifficulty, foundingWeeklyBill: number): number {
+  const flat = CAREER_ECONOMY.startingBudget[difficulty];
+  const weeks = CAREER_ECONOMY.startingBudgetWeeks[difficulty] ?? null;
+  return weeks === null ? flat : Math.max(flat, quantize(weeks * Math.max(0, foundingWeeklyBill)));
+}
+
 /** The weekly wage bill (squad + coach) at the Monday funnel's own rounding (weeklyWage per line). */
 export function weeklyWageBill(squadSalaries: readonly number[], coachSalary: number | null): number {
   const coach = coachSalary !== null && coachSalary > 0 ? weeklyWage(coachSalary) : 0;
@@ -960,46 +981,113 @@ export function loanBreachesOf(fin: Pick<FinanceState, "loanBreaches" | "loanUse
   return fin.loanBreaches ?? (fin.loanUsed ? 1 : 0);
 }
 
+/** rc.34: emergency loans opened so far (a top-up is not a new one) — an older save reads its one rescue. */
+export function emergencyLoansOf(fin: Pick<FinanceState, "emergencyLoans" | "loanUsed">): number {
+  return fin.emergencyLoans ?? (fin.loanUsed ? 1 : 0);
+}
+
 /**
- * What a breach does. rc.33 (ECO-08): the Backer's rescue or the end — rc.32's
- * "restructure" (the forced sale of the highest-paid player) is gone; an
- * rc.32 save's mails may still carry it as their `next` param (history).
+ * What a breach does: the bank's emergency loan (rc.34; rc.31–rc.33 the
+ * Backer's rescue — "rescue" either way) or the end. rc.32's "restructure"
+ * is gone; an rc.32 save's mails may still carry it as `next` (history).
  */
 export type BreachOutcome = "rescue" | "insolvent";
 
 /**
- * What the `breach`-th Monday below the floor does on this difficulty
- * (rc.33, ECO-08): CAREER_LOAN.breachesToEnd[difficulty] and every breach
- * after it end the career (null = never); every breach before it is the
- * Backer's rescue — Easy: rescue, rescue, the end; Normal: rescue, the end;
- * Hard: the first breach ends it.
+ * What the `breach`-th Monday below the floor does by its count alone:
+ * CAREER_LOAN.breachesToEnd[difficulty] and every breach after it end the
+ * career. rc.34: null everywhere — no count ends a career, the emergency
+ * loan's deadline does (`hard: 1` restores "Hard ends at the first breach";
+ * rc.33: Easy 3 / Normal 2 / Hard 1). The loan's own top-up cap is
+ * `breachOutcomeOf`'s.
  */
 export function breachOutcomeFor(breach: number, difficulty: CareerDifficulty): BreachOutcome {
   const end = CAREER_LOAN.breachesToEnd[difficulty] ?? null;
   return end !== null && breach >= end ? "insolvent" : "rescue";
 }
 
-/** rc.33 (ECO-08): the breach that ends a career on this difficulty (null = money never does) — every screen quotes it. */
+/** The breach that ends a career outright on this difficulty (null = none, rc.34's default: the deadline does). */
 export function breachesToEndFor(difficulty: CareerDifficulty): number | null {
   return CAREER_LOAN.breachesToEnd[difficulty] ?? null;
 }
 
 /**
- * rc.33 (ECO-07): does the `breach`-th Monday below the floor bring the
- * rescue partner on this difficulty (CAREER_LOAN.rescuePartner.atBreach —
- * Easy's first)? Only a breach the Backer rescues does.
+ * rc.34: what the NEXT Monday below the floor does on these books — the end
+ * when CAREER_LOAN.breachesToEnd counts it, or when the emergency loan is
+ * owed and already holds CAREER_LOAN.emergency.maxTopUps top-ups; otherwise
+ * the bank's emergency loan (a new one, or a top-up of the one owed). Every
+ * screen and warning that names the next breach reads this.
  */
-export function rescuePartnerAt(breach: number, difficulty: CareerDifficulty): boolean {
-  const at = CAREER_LOAN.rescuePartner.atBreach[difficulty] ?? null;
-  return at !== null && breach === at && breachOutcomeFor(breach, difficulty) === "rescue";
+export function breachOutcomeOf(
+  fin: Pick<FinanceState, "loanBreaches" | "loanUsed" | "loan">,
+  difficulty: CareerDifficulty,
+): BreachOutcome {
+  if (breachOutcomeFor(loanBreachesOf(fin) + 1, difficulty) === "insolvent") return "insolvent";
+  const cap = CAREER_LOAN.emergency.maxTopUps;
+  return fin.loan && cap !== null && (fin.loan.topUps ?? 0) >= cap ? "insolvent" : "rescue";
 }
 
-/** rc.33 (ECO-07): the rescue partner's weekly help on this weekly wage bill (payrollShare × the bill, the weekly quantum). */
-export function rescuePartnerWeeklyFor(weeklyBill: number): number {
-  return quantizeWeekly(CAREER_LOAN.rescuePartner.payrollShare * Math.max(0, weeklyBill));
+/** rc.34: the emergency loan's term on this difficulty, in weeks (null = no deadline). */
+export function deadlineWeeksFor(difficulty: CareerDifficulty): number | null {
+  const weeks = CAREER_LOAN.emergency.deadlineWeeks[difficulty] ?? null;
+  return weeks !== null && weeks > 0 ? weeks : null;
 }
 
-/** rc.33 (ECO-07): what the rescue partner pays next Monday (0 = none, or its run is over). */
+/** rc.34: a Monday counted in weeks from the career's first (season × weeks a season + week). */
+export function absWeekOf(m: CareerMonday): number {
+  return m.seasonIndex * CAREER_PAYROLL.weeksPerSeason + m.week;
+}
+
+/** rc.34: the Monday `weeks` weeks after `from` (past week 32 it rolls into the next season). */
+export function mondayAfter(from: CareerMonday, weeks: number): CareerMonday {
+  const W = CAREER_PAYROLL.weeksPerSeason;
+  const abs = absWeekOf(from) + weeks;
+  const seasonIndex = Math.floor((abs - 1) / W);
+  return { seasonIndex, week: abs - seasonIndex * W };
+}
+
+/** rc.34: Mondays from `now` to the emergency loan's deadline (0 = this Monday; null = no loan or no deadline). */
+export function weeksToDeadline(
+  loan: Pick<EmergencyLoanState, "deadline"> | null | undefined,
+  now: CareerMonday,
+): number | null {
+  return loan?.deadline ? absWeekOf(loan.deadline) - absWeekOf(now) : null;
+}
+
+/**
+ * rc.34: the investor's share of the wage bill on this difficulty —
+ * CAREER_LOAN.investor.payrollShare (null = no investor; Easy only by
+ * default, as decided 30/10).
+ */
+export function investorShareFor(difficulty: CareerDifficulty): number | null {
+  const share = CAREER_LOAN.investor.payrollShare[difficulty] ?? null;
+  return share !== null && share > 0 ? share : null;
+}
+
+/**
+ * rc.34: does the next Monday below the floor bring the investor? Only the
+ * career's FIRST emergency loan does, on a difficulty with a share (rc.33's
+ * rescue partner came with Easy's first breach).
+ */
+export function investorJoinsNext(
+  fin: Pick<FinanceState, "emergencyLoans" | "loanUsed" | "loan" | "loanBreaches">,
+  difficulty: CareerDifficulty,
+): boolean {
+  return (
+    investorShareFor(difficulty) !== null &&
+    !fin.loan &&
+    emergencyLoansOf(fin) === 0 &&
+    breachOutcomeOf(fin, difficulty) === "rescue"
+  );
+}
+
+/** rc.34: the investor's weekly help on this weekly wage bill (its share × the bill, on the weekly quantum; 0 = none). */
+export function investorWeeklyFor(weeklyBill: number, difficulty: CareerDifficulty): number {
+  const share = investorShareFor(difficulty);
+  return share === null ? 0 : quantizeWeekly(share * Math.max(0, weeklyBill));
+}
+
+/** rc.33 (ECO-07): what the rescue partner (rc.34: the investor) pays next Monday (0 = none, or its run is over). */
 export function rescuePartnerWeeklyOf(rp: RescuePartnerState | null | undefined): number {
   return rp && rp.mondaysLeft > 0 && rp.weekly > 0 ? rp.weekly : 0;
 }
@@ -1020,17 +1108,20 @@ export function rescuePartnerLastPayday(
 }
 
 /**
- * The Backer's rescue rule: below `rescueTo`, a grant tops the balance back
- * up to it, repaid ×repayFactor on top of whatever is still owed (one
- * "loanGrant" line) — the first rescue and Easy's second alike (rc.33,
- * ECO-08). At or above it, nothing moves.
+ * rc.34 (Miguel, 31/10: "when you break, you get a loan from the bank"): the
+ * emergency loan at a breach. Below `rescueTo`, the bank lends the balance
+ * back up to it (one "loanGrant" line), owed ×repayFactor. Nothing owed: a
+ * NEW loan, due CAREER_LOAN.emergency.deadlineWeeks Mondays on (no deadline
+ * when that is null), counted in `emergencyLoans`. A loan owed: a TOP-UP,
+ * added to the debt — the deadline never moves. At or above `rescueTo`,
+ * nothing moves. (rc.31–rc.33: the Backer's grant, `backerTopUp`.)
  */
-export function backerTopUp(
+export function emergencyLoanFor(
   fin: FinanceState,
   rescueTo: number,
-  ctx: { seasonIndex: number; week: number; day?: number },
-): { fin: FinanceState; granted: number } {
-  if (fin.balance >= rescueTo) return { fin, granted: 0 };
+  ctx: { seasonIndex: number; week: number; day?: number; difficulty: CareerDifficulty },
+): { fin: FinanceState; granted: number; topUp: boolean } {
+  if (fin.balance >= rescueTo) return { fin, granted: 0, topUp: false };
   const granted = rescueTo - fin.balance;
   const next = pushLedger(fin, {
     seasonIndex: ctx.seasonIndex,
@@ -1039,10 +1130,27 @@ export function backerTopUp(
     kind: "loanGrant",
     amount: granted,
   });
-  return {
-    fin: { ...next, loan: { remaining: (fin.loan?.remaining ?? 0) + granted * CAREER_LOAN.repayFactor } },
-    granted,
-  };
+  const owed = Math.round(granted * CAREER_LOAN.repayFactor);
+  if (fin.loan) {
+    const loan: EmergencyLoanState = {
+      ...fin.loan,
+      remaining: fin.loan.remaining + owed,
+      topUps: (fin.loan.topUps ?? 0) + 1,
+    };
+    // A loan taken over from an rc.33 Backer debt has no known principal: it never shows "lent in all".
+    if (fin.loan.lent !== undefined) loan.lent = fin.loan.lent + granted;
+    return { fin: { ...next, loan }, granted, topUp: true };
+  }
+  const at: CareerMonday = { seasonIndex: ctx.seasonIndex, week: ctx.week };
+  const loan: EmergencyLoanState = { remaining: owed, lent: granted, topUps: 0, openedAt: at };
+  const weeks = deadlineWeeksFor(ctx.difficulty);
+  if (weeks !== null) {
+    loan.deadline = mondayAfter(at, weeks);
+    // A warning level at or beyond the whole term is the opening notice's own.
+    const implied = CAREER_LOAN.emergency.warnWeeks.filter((w) => w >= weeks);
+    if (implied.length > 0) loan.warned = implied;
+  }
+  return { fin: { ...next, loan, emergencyLoans: emergencyLoansOf(fin) + 1 }, granted, topUp: false };
 }
 
 export interface WeeklyPayrollInput extends WeeklyStatementInput {
@@ -1055,28 +1163,42 @@ export interface WeeklyPayrollInput extends WeeklyStatementInput {
 
 /**
  * The Monday money funnel (v2.0 — replaces the per-split payday): sponsor
- * base in → the founding partner in (rc.32) → the rescue partner in (rc.33)
- * → fanbase in → squad payroll out (ONE aggregated line) → coach out →
- * psychologist out → upkeep out → bank instalment out → floor check.
+ * base in → the founding partner in (rc.32) → the investor in (rc.33's
+ * rescue partner) → fanbase in → squad payroll out (ONE aggregated line) →
+ * coach out → psychologist out → upkeep out → bank instalment out → the
+ * emergency loan's deadline (rc.34) → floor check.
  *
- * Floor check (design §9 Emergency Backer; rc.33 ECO-08): a Monday below the
- * Backer's floor (backerLineFor, on the wage bill booked) is a breach,
- * counted in `fin.loanBreaches`. breachOutcomeFor says what it does: the
- * Backer's rescue (a grant back to the rescue target, added to what is owed
- * ×repayFactor, garnished from prizes and sales — backerTopUp), with the
- * rescue partner on the breach rescuePartnerAt names (ECO-07), or the end
- * (`insolvent` — the STORE owns the ending). rc.31's keys (sizing "flat",
- * breachesToEnd 2) restore rc.31: −$5k / +$3k, the second breach ends it.
- * The rescue partner is read from and counted down on `fin` (pure).
+ * Deadline (rc.34, Miguel 31/10): on the emergency loan's deadline Monday
+ * (or past it), the bank takes what it is owed if the balance covers it
+ * (one "loanPayment" line, `collected`); otherwise the career ends
+ * (`endCause` "deadline").
+ *
+ * Floor check: a Monday below the floor (backerLineFor, on the wage bill
+ * booked) is a breach, counted in `fin.loanBreaches`. breachOutcomeOf says
+ * what it does: the bank's emergency loan (emergencyLoanFor — a new loan
+ * with its deadline, or a top-up of the one owed), with the investor on the
+ * career's first loan (investorJoinsNext), or the end (`endCause` "breach":
+ * CAREER_LOAN.breachesToEnd or the top-up cap). The STORE owns the ending.
+ * rc.33's keys (breachesToEnd 3 / 2 / 1, deadlineWeeks null) restore rc.33.
+ * The investor is read from and counted down on `fin` (pure).
  */
 export function weeklyPayroll(input: WeeklyPayrollInput): {
   fin: FinanceState;
   statement: WeeklyStatement;
   insolvent: boolean;
+  /** rc.34: why the career ended this Monday (null = it did not). */
+  endCause: "deadline" | "breach" | null;
+  /** A breach the bank covered (a new emergency loan or a top-up). */
   rescued: boolean;
-  /** rc.33 (ECO-07): the rescue partner this breach brought (null = none). */
+  /** rc.34: that breach added to a loan already owed (no new deadline). */
+  topUp: boolean;
+  /** rc.34: what the bank lent at this breach (0 = none). */
+  granted: number;
+  /** rc.34: what the bank took on the deadline Monday (0 = nothing due or nothing taken). */
+  collected: number;
+  /** The investor this breach brought (rc.33: the rescue partner; null = none). */
   rescuePartner: RescuePartnerState | null;
-  /** The Backer's line this Monday (on the wage bill just booked). */
+  /** The floor and rescue target this Monday (on the wage bill just booked). */
   line: BackerLine;
   bankCleared: boolean;
 } {
@@ -1114,26 +1236,58 @@ export function weeklyPayroll(input: WeeklyPayrollInput): {
     fin = { ...fin, bankLoan: remaining > 0 ? { ...fin.bankLoan, remaining } : null };
   }
 
-  const backer = backerLineFor(statement.payroll + statement.coach, seasonIndex);
-  let insolvent = false;
-  let rescued = false;
-  let rescuePartner: RescuePartnerState | null = null;
-  if (fin.balance < backer.floor) {
-    const breach = loanBreachesOf(fin) + 1;
-    fin = { ...fin, loanBreaches: breach };
-    if (breachOutcomeFor(breach, input.difficulty) === "insolvent") {
-      insolvent = true;
+  // rc.34: the emergency loan's deadline — the bank takes what it is owed if
+  // the balance covers it; otherwise the career ends (no floor check after).
+  let collected = 0;
+  let endCause: "deadline" | "breach" | null = null;
+  if (fin.loan?.deadline && absWeekOf({ seasonIndex, week }) >= absWeekOf(fin.loan.deadline)) {
+    if (fin.balance >= fin.loan.remaining) {
+      collected = fin.loan.remaining;
+      line("loanPayment", -collected);
+      fin = { ...fin, loan: null };
     } else {
-      fin = { ...backerTopUp(fin, backer.rescueTo, { seasonIndex, week, day }).fin, loanUsed: true };
+      endCause = "deadline";
+    }
+  }
+
+  const backer = backerLineFor(statement.payroll + statement.coach, seasonIndex);
+  let rescued = false;
+  let topUp = false;
+  let granted = 0;
+  let rescuePartner: RescuePartnerState | null = null;
+  if (endCause === null && fin.balance < backer.floor) {
+    // Read before the count moves: both look at the breach about to happen.
+    const outcome = breachOutcomeOf(fin, input.difficulty);
+    const investor = investorJoinsNext(fin, input.difficulty);
+    fin = { ...fin, loanBreaches: loanBreachesOf(fin) + 1 };
+    if (outcome === "insolvent") {
+      endCause = "breach";
+    } else {
+      const loan = emergencyLoanFor(fin, backer.rescueTo, { seasonIndex, week, day, difficulty: input.difficulty });
+      fin = { ...loan.fin, loanUsed: true };
       rescued = true;
-      const weekly = rescuePartnerWeeklyFor(statement.payroll + statement.coach);
-      if (rescuePartnerAt(breach, input.difficulty) && weekly > 0) {
-        rescuePartner = { weekly, mondaysLeft: CAREER_LOAN.rescuePartner.weeks };
+      topUp = loan.topUp;
+      granted = loan.granted;
+      const weekly = investorWeeklyFor(statement.payroll + statement.coach, input.difficulty);
+      if (investor && weekly > 0) {
+        rescuePartner = { weekly, mondaysLeft: CAREER_LOAN.investor.weeks };
         fin = { ...fin, rescuePartner };
       }
     }
   }
-  return { fin, statement, insolvent, rescued, rescuePartner, line: backer, bankCleared };
+  return {
+    fin,
+    statement,
+    insolvent: endCause !== null,
+    endCause,
+    rescued,
+    topUp,
+    granted,
+    collected,
+    rescuePartner,
+    line: backer,
+    bankCleared,
+  };
 }
 
 // ---------------------------------------------------------------------------

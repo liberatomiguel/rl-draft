@@ -15,7 +15,7 @@ import { CAREER_DIFFICULTY, CAREER_ECONOMY, CAREER_REP } from "@/config/balance"
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { lineups, orgById, orgs } from "@/data";
-import { computeSalaryAsk, weeklyWage } from "@/engine/career/economy";
+import { computeSalaryAsk, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/engine/career/economy";
 import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
 import type { Region, StatKey } from "@/engine/types";
@@ -178,28 +178,36 @@ export function WizardScreen() {
 
   const region: Region = regionPick ?? regionForCountry(country) ?? "EU";
   const offers = useMemo(() => starterOffersForRegion(region, seed), [region, seed]);
-  const budget = CAREER_ECONOMY.startingBudget[difficulty];
-
-  const wageBillOf = useCallback(
+  /** Each founder's per-split ask (the wage the founding deal writes). */
+  const salariesOf = useCallback(
     (offer: StarterOffer) =>
-      offer.players.reduce(
-        (sum, p) =>
-          sum +
-          computeSalaryAsk({
-            overall: p.overall,
-            age: p.age,
-            potential: p.potential,
-            rep: CAREER_REP.start,
-            role: "starter",
-            seasonIndex: 0,
-            lengthSeasons: 2,
-            difficulty,
-            careerSeed: seed,
-            playerId: p.id,
-          }),
-        0,
+      offer.players.map((p) =>
+        computeSalaryAsk({
+          overall: p.overall,
+          age: p.age,
+          potential: p.potential,
+          rep: CAREER_REP.start,
+          role: "starter",
+          seasonIndex: 0,
+          lengthSeasons: 2,
+          difficulty,
+          careerSeed: seed,
+          playerId: p.id,
+        }),
       ),
     [difficulty, seed],
+  );
+  const wageBillOf = useCallback(
+    (offer: StarterOffer) => salariesOf(offer).reduce((sum, w) => sum + w, 0),
+    [salariesOf],
+  );
+  /** rc.34 (BAL-05): the start budget scales with the roster's wage bill (startingBudgetFor, the flow's rule). */
+  const budgetOf = useCallback(
+    (offer: StarterOffer | undefined) =>
+      offer
+        ? startingBudgetFor(difficulty, weeklyWageBill(salariesOf(offer), null))
+        : CAREER_ECONOMY.startingBudget[difficulty],
+    [difficulty, salariesOf],
   );
 
   /** Randomize every crest layer + a legibility-checked color pair (step 2 + quick start). */
@@ -680,6 +688,7 @@ export function WizardScreen() {
                 if (!offer) return null;
                 const active = rosterKey === key;
                 const wage = wageBillOf(offer);
+                const budget = budgetOf(offer);
                 const avgOvr = Math.round(
                   offer.players.reduce((s, p) => s + p.overall, 0) / offer.players.length,
                 );
@@ -844,7 +853,7 @@ export function WizardScreen() {
                         : C.wizard.rosterBalanced}
                   </Badge>
                   <Badge tone="neutral">{C.wizard.presets[difficulty].label}</Badge>
-                  <Badge tone="blue">{formatMoney(budget)}</Badge>
+                  <Badge tone="blue">{formatMoney(budgetOf(offers.find((o) => o.key === rosterKey)))}</Badge>
                 </div>
               </div>
               {slotsFull ? (

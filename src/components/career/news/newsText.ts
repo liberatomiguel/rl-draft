@@ -50,6 +50,9 @@ const MONEY_PARAM_KEYS = new Set([
   "garnished",
   "balance",
   "partnerWeekly",
+  // rc.34: the emergency loan's mails — what the bank lent, what it took on the deadline.
+  "lent",
+  "collected",
 ]);
 
 type TplMap = Record<string, (q: Record<string, string | number>) => string>;

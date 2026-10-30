@@ -125,7 +125,8 @@ export function SeasonScreen() {
                 {C.ceremonies.insolvencyTitle}
               </p>
               <p className="mx-auto mt-3 max-w-md text-sm text-sub">
-                {C.ceremonies.insolvencyBody}
+                {/* rc.34: the emergency loan unpaid on its deadline, or a breach the bank would not cover. */}
+                {save.end.moneyCause === "deadline" ? C.ceremonies.insolvencyBodyDeadline : C.ceremonies.insolvencyBody}
               </p>
             </>
           ) : isRetired ? (

@@ -37,6 +37,7 @@ import type {
 import type { Placement, Region } from "@/engine/types";
 import {
   acceptBidFlow,
+  acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
   chooseSponsorFlow,
   coachCandidatesFor,
@@ -45,6 +46,7 @@ import {
   finishEvent,
   hireCoachFlow,
   isEventPaused,
+  moneyNoticeOf,
   releasePlayerFlow,
   renewPlayerFlow,
   renewalTalkFor,
@@ -82,7 +84,8 @@ export type ArcPolicyId =
   | "losingStart"
   | "coachChurn"
   | "delegator"
-  | "trainer";
+  | "trainer"
+  | "veterans";
 
 export interface ArcPolicy {
   id: ArcPolicyId;
@@ -167,13 +170,21 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   delegator: { id: "delegator", ...base, coach: "best", training: "delegate" },
   /** rc.34 (§7): the trainer — the best coach and a manual Development package with even scrims, renewed every period. */
   trainer: { id: "trainer", ...base, coach: "best", training: "repeat", scrims: true, scrimLevel: "even" },
+  /**
+   * rc.34 (Miguel, 31/10: "the older team went broke in the first split"):
+   * the wizard's older founding roster (journeymen), hands-off — the
+   * autopilot with the dearest founding payroll. Only the spender started
+   * from it before, with stars and loans on top. Opt-in: not in
+   * ARC_DEFAULT_POLICIES, so the default sweeps compare like with like.
+   */
+  veterans: { id: "veterans", ...base, rosterKey: "journeymen" },
 };
 
 /**
  * The sweeps' default policies: the seven of rc.30–33, so a re-measure plays
  * the same careers as the baselines (147 = 7 regions × 3 presets × 7). The
- * two rc.34 training policies join on request (ARC_POLICIES / ECON_POLICIES
- * = delegator,trainer).
+ * rc.34 opt-in policies (delegator, trainer, veterans) join when ARC_POLICIES /
+ * ECON_POLICIES name them.
  */
 export const ARC_DEFAULT_POLICIES: readonly ArcPolicyId[] = [
   "autopilot",
@@ -661,6 +672,9 @@ interface ArcOpts {
 /** Today's decisions, in the order a player meets them. */
 function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = {}): CareerSave {
   let save = input;
+  // rc.34: a money notice (the emergency loan, its deadline) is read, as the modal makes a player do —
+  // nothing in the books moves, and the clock never waits on an unread one.
+  while (moneyNoticeOf(save)) save = acknowledgeMoneyNoticeFlow(save);
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).

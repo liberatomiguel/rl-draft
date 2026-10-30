@@ -8,18 +8,12 @@
  */
 
 import { useRouter } from "next/navigation";
-import { CAREER_LOAN, CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
+import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
-import {
-  breachOutcomeFor,
-  breachesToEndFor,
-  insertMoneyFor,
-  loanBreachesOf,
-  rescuePartnerAt,
-  weeklyOf,
-} from "@/engine/career/economy";
-import { ruledOutFor } from "@/store/careerFlow";
+import { breachesToEndFor, insertMoneyFor, loanBreachesOf, weeklyOf } from "@/engine/career/economy";
+import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor } from "@/store/careerFlow";
+import { deadlineDateText } from "@/components/career/finances/loanDates";
 import { regionalForQualifier } from "@/engine/career/calendar";
 import type {
   CareerEventDef,
@@ -443,22 +437,34 @@ export function blockbusterWhatOf(C: CareerCopy, orgName: string): string {
 }
 
 /**
- * rc.32 (ECONOMY-CONTRACT M4): the HQ's Backer line — the debt still owed and
- * what the next Monday below the floor would mean (economy.breachOutcomeFor).
- * rc.33 (ECO-07/08): the breaches so far against the one that ends the
- * career on this difficulty (CAREER_LOAN.breachesToEnd) — no restructuring.
+ * rc.32 (ECONOMY-CONTRACT M4): the HQ's debt card. rc.34 (Miguel, 31/10): the
+ * bank's emergency loan — what is owed, its deadline (the date and the weeks
+ * left, the money notice's own date), what happens on it, and what the next
+ * Monday below the floor would do (the flow's nextBreachParamsOf: a top-up,
+ * or the end). The breach count shows only where a count still ends a
+ * career (CAREER_LOAN.breachesToEnd, null by default).
  */
 export function NowBacker({ save, C, owed }: { save: CareerSave; C: CareerCopy; owed: string }) {
+  const loan = emergencyLoanViewOf(save);
   const breaches = loanBreachesOf(save.finances);
-  const next = breachOutcomeFor(breaches + 1, save.difficulty);
+  const endAt = breachesToEndFor(save.difficulty);
+  const nextBreach = nextBreachParamsOf(save);
   return (
     <div className="space-y-1">
       <p>{C.hub.backerOpen(owed)}</p>
-      {breaches >= 1 ? (
-        <p className="text-xs text-faint">{C.finances.breachCount(breaches, breachesToEndFor(save.difficulty))}</p>
+      {loan?.deadline ? (
+        <>
+          <p className={cx("text-xs font-semibold", loan.covered ? "text-orange-bright" : "text-bad")}>
+            {C.hub.loanDue(deadlineDateText(C.dates, loan.deadline, save.clock), loan.weeksLeft ?? 0)}
+          </p>
+          <p className="text-xs text-faint">{C.hub.loanDueRule}</p>
+        </>
       ) : null}
-      <p className={cx("text-xs font-semibold", next === "insolvent" ? "text-bad" : "text-orange-bright")}>
-        {C.hub.backerNextBreach(next, rescuePartnerAt(breaches + 1, save.difficulty), CAREER_LOAN.rescuePartner.weeks)}
+      {endAt !== null && breaches >= 1 ? (
+        <p className="text-xs text-faint">{C.finances.breachCount(breaches, endAt)}</p>
+      ) : null}
+      <p className={cx("text-xs", nextBreach.next === "insolvent" ? "font-semibold text-bad" : "text-sub")}>
+        {C.hub.backerNextBreach(nextBreach)}
       </p>
     </div>
   );

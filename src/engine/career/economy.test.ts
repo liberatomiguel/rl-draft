@@ -50,6 +50,7 @@ import {
   weeklyStatement,
   weeklyWage,
   backerLineFor,
+  mondayAfter,
   moneyIndex,
   prizeTables,
   weeklyWageBill,
@@ -507,67 +508,83 @@ describe("weekly payroll (v2.0 R20)", () => {
 
   // rc.32 (M4): the Backer's line is weeks of the wage bill; rc.33 (ECO-08):
   // what a breach does depends on the difficulty (Normal: the second ends it).
-  it("rescues once via the Emergency Backer, then on Normal a second breach is insolvency", () => {
-    const heavy = [{ name: "Alpha", amount: 70_000 }]; // ≈ 6.5k / week
-    const line = backerLineFor(weeklyWageBill([70_000], null), 1);
-    expect(line.floor).toBe(-quantize(CAREER_LOAN.floorWeeks * weeklyWage(70_000)));
-    const first = weeklyPayroll({
-      fin: freshFin(line.floor + 1_000),
-      squadSalaries: heavy,
+  /** One Monday of the funnel on a single ≈ $6.5k-a-week contract, season 1. */
+  const heavyMonday = (fin: FinanceState, week: number, difficulty: CareerDifficulty) =>
+    weeklyPayroll({
+      fin,
+      squadSalaries: [{ name: "Alpha", amount: 70_000 }],
       coachSalary: null,
       sponsor: null,
       rep: 0,
       gear: freshGear(),
       seasonIndex: 1,
-      week: 4,
-      difficulty: "normal",
+      week,
+      difficulty,
     });
-    expect(first.rescued).toBe(true);
-    expect(first.insolvent).toBe(false);
-    expect(first.rescuePartner).toBeNull(); // Normal's rescue comes without the partner (Easy only)
+
+  it("rc.34: the first breach opens the bank's emergency loan, due deadlineWeeks on; a second adds to it, the deadline unchanged", () => {
+    const line = backerLineFor(weeklyWageBill([70_000], null), 1);
+    expect(line.floor).toBe(-quantize(CAREER_LOAN.floorWeeks * weeklyWage(70_000)));
+    const first = heavyMonday(freshFin(line.floor + 1_000), 4, "normal");
+    expect(first).toMatchObject({ rescued: true, insolvent: false, endCause: null, topUp: false, collected: 0 });
+    expect(first.rescuePartner).toBeNull(); // Normal's loan comes without the investor (Easy only)
     expect(first.line).toEqual(line);
     expect(first.fin.balance).toBe(line.rescueTo);
     expect(first.fin.loanUsed).toBe(true);
     expect(first.fin.loanBreaches).toBe(1);
-    const grant = first.fin.ledger.find((e) => e.kind === "loanGrant");
-    expect(grant).toBeDefined();
-    expect(first.fin.loan?.remaining).toBeCloseTo(grant!.amount * CAREER_LOAN.repayFactor, 6);
-
-    const second = weeklyPayroll({
-      fin: { ...first.fin, balance: line.floor + 100 },
-      squadSalaries: heavy,
-      coachSalary: null,
-      sponsor: null,
-      rep: 0,
-      gear: freshGear(),
-      seasonIndex: 1,
-      week: 5,
-      difficulty: "normal",
+    expect(first.fin.emergencyLoans).toBe(1);
+    const grant = first.fin.ledger.find((e) => e.kind === "loanGrant")!;
+    expect(first.granted).toBe(grant.amount);
+    expect(first.fin.loan).toEqual({
+      remaining: Math.round(grant.amount * CAREER_LOAN.repayFactor),
+      lent: grant.amount,
+      topUps: 0,
+      openedAt: { seasonIndex: 1, week: 4 },
+      deadline: mondayAfter({ seasonIndex: 1, week: 4 }, CAREER_LOAN.emergency.deadlineWeeks.normal!),
     });
-    expect(second.rescued).toBe(false);
-    expect(second.insolvent).toBe(true);
-    expect(second.fin.balance).toBeLessThan(line.floor);
+
+    const second = heavyMonday({ ...first.fin, balance: line.floor + 100 }, 5, "normal");
+    expect(second).toMatchObject({ rescued: true, insolvent: false, topUp: true });
+    expect(second.fin.loan!.remaining).toBeGreaterThan(first.fin.loan!.remaining);
+    expect(second.fin.loan!.topUps).toBe(1);
+    expect(second.fin.loan!.deadline).toEqual(first.fin.loan!.deadline);
+    expect(second.fin.emergencyLoans).toBe(1);
   });
 
-  it("rc.33 (ECO-08): on Hard the first breach is insolvency — no Backer", () => {
-    const heavy = [{ name: "Alpha", amount: 70_000 }];
+  it("rc.34: Hard's first breach opens a loan too, on a shorter term; breachesToEnd `hard: 1` restores the first-breach end", () => {
     const line = backerLineFor(weeklyWageBill([70_000], null), 1);
-    const res = weeklyPayroll({
-      fin: freshFin(line.floor + 1_000),
-      squadSalaries: heavy,
-      coachSalary: null,
-      sponsor: null,
-      rep: 0,
-      gear: freshGear(),
-      seasonIndex: 1,
-      week: 4,
-      difficulty: "hard",
-    });
-    expect(res.insolvent).toBe(true);
-    expect(res.rescued).toBe(false);
-    expect(res.fin.loan).toBeNull();
-    expect(res.fin.loanBreaches).toBe(1);
-    expect(res.fin.ledger.some((e) => e.kind === "loanGrant")).toBe(false);
+    const res = heavyMonday(freshFin(line.floor + 1_000), 4, "hard");
+    expect(res.rescued).toBe(true);
+    expect(res.fin.loan!.deadline).toEqual(mondayAfter({ seasonIndex: 1, week: 4 }, CAREER_LOAN.emergency.deadlineWeeks.hard!));
+    const keys = CAREER_LOAN.breachesToEnd as Record<string, number | null>;
+    const saved = keys.hard;
+    keys.hard = 1;
+    try {
+      const ended = heavyMonday(freshFin(line.floor + 1_000), 4, "hard");
+      expect(ended).toMatchObject({ insolvent: true, rescued: false, endCause: "breach" });
+      expect(ended.fin.loan).toBeNull();
+      expect(ended.fin.loanBreaches).toBe(1);
+      expect(ended.fin.ledger.some((e) => e.kind === "loanGrant")).toBe(false);
+    } finally {
+      keys.hard = saved;
+    }
+  });
+
+  it("rc.34: on the deadline Monday the bank takes what is owed when the balance covers it; otherwise the career ends", () => {
+    const due = { seasonIndex: 1, week: 9 };
+    const loan = { remaining: 30_000, deadline: due, topUps: 0 };
+    const covered = heavyMonday(freshFin(200_000, { loan, loanUsed: true }), 9, "normal");
+    expect(covered).toMatchObject({ insolvent: false, collected: 30_000, rescued: false });
+    expect(covered.fin.loan).toBeNull();
+    expect(covered.fin.ledger.filter((e) => e.kind === "loanPayment").map((e) => e.amount)).toEqual([-30_000]);
+    // A Monday past the deadline (a missed one) is the same test.
+    expect(heavyMonday(freshFin(200_000, { loan, loanUsed: true }), 11, "normal").collected).toBe(30_000);
+    // Short of the debt, even above the floor: the deadline ends the career (no floor check after it).
+    const short = heavyMonday(freshFin(30_000, { loan, loanUsed: true }), 9, "normal");
+    expect(short).toMatchObject({ insolvent: true, endCause: "deadline", collected: 0, rescued: false });
+    expect(short.fin.loan).toEqual(loan);
+    // Before the deadline nothing is collected.
+    expect(heavyMonday(freshFin(200_000, { loan, loanUsed: true }), 8, "normal").collected).toBe(0);
   });
 
   it("runwayWeeks: null in the black, floor(balance / burn) otherwise", () => {

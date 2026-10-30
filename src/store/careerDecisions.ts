@@ -28,7 +28,14 @@
 import { CAREER_HQ } from "@/config/balance";
 import { splitEndDayFor } from "@/engine/career/calendar";
 import type { CareerSave } from "@/engine/career/types";
-import { isEventPaused, rolloverToNextSeason, squadHoldFor, type FlowResult } from "./careerFlow";
+import {
+  isEventPaused,
+  moneyNoticeOf,
+  moneyNoticeRaisedToday,
+  rolloverToNextSeason,
+  squadHoldFor,
+  type FlowResult,
+} from "./careerFlow";
 import { trainingDecisionOf } from "./careerTraining";
 
 export type DecisionKind =
@@ -69,6 +76,8 @@ export interface DecisionSourceItem {
   id: string;
   /** The last day it may be answered on; null / absent = due now. */
   deadline?: DecisionDate | null;
+  /** rc.34: false = shown (and outranked) but not holding the clock today; absent = holds. */
+  holds?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,8 +105,10 @@ export function trainingDecisionSource(save: CareerSave): DecisionSourceItem | n
  * at H's `moneyNoticeOf` (its `id` is all the queue needs).
  */
 export function moneyNoticeSource(save: CareerSave): DecisionSourceItem | null {
-  void save;
-  return null;
+  const notice = moneyNoticeOf(save);
+  // Front H: the notice holds its own Monday (the batched Advance and the
+  // autoplay stop there); the modal stays up until acknowledged.
+  return notice ? { id: notice.id, holds: moneyNoticeRaisedToday(save) } : null;
 }
 
 /**
@@ -264,7 +275,7 @@ export function pendingDecisionsOf(save: CareerSave): PendingDecision[] {
   push(eventDecisionOf(save));
   push(seasonDecisionOf(save));
   const notice = save.phase === "ended" ? null : DECISION_SOURCES.notice(save);
-  if (notice) out.push(dueNow("notice", notice.id));
+  if (notice) out.push(dueNow("notice", notice.id, notice.holds ?? true));
   push(contractReviewDecisionOf(save));
   push(squadShortDecisionOf(save));
   push(insertDecisionOf(save));
