@@ -208,8 +208,9 @@ describe("DEV-03 rules (engine)", () => {
     const boosted = run(1.5);
     expect(boosted).toBeLessThanOrEqual(target + 1e-9);
     expect(plain).toBeLessThanOrEqual(target + 1e-9);
-    // Both reach the same real peak; the package only gets there sooner.
-    expect(Math.abs(boosted - plain)).toBeLessThan(0.05);
+    // Both reach the same real peak; the package only gets there sooner. rc.36 (POL-04): the
+    // slower base (paceCurvature 1.5) closes the last points inside his plateau — within a tenth.
+    expect(Math.abs(boosted - plain)).toBeLessThan(0.1);
   });
 
   it("decision 5-A: an ex-pro coaches from his career-best card at slope 0.8, ±4, inside 64–94", () => {

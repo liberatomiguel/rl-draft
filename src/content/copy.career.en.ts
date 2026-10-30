@@ -516,8 +516,8 @@ export const CAREER_EN = {
     financePerWeek: (amount: string) => `${amount} a week`,
     financePayroll: "Next payroll",
     financeGuaranteed: "Guaranteed",
-    financeGuaranteedParts: (sponsor: string, partner: string, fans: string) =>
-      `sponsor ${sponsor} · partner ${partner} · merch & streams ${fans}`,
+    // rc.36 (POL-04): "Merch & streams" is gone — sponsor and partner only.
+    financeGuaranteedParts: (sponsor: string, partner: string) => `sponsor ${sponsor} · partner ${partner}`,
     financePartnerWeeks: (n: number) => (n === 1 ? "1 more week" : `${n} more weeks`),
     financeDebtNone: "None",
     financeRunway: "Runway",
@@ -619,7 +619,7 @@ export const CAREER_EN = {
       foundingPartner: (p: Record<string, string | number>) =>
         `A local partner backs the org's first steps: ${p.base} a split (${p.pct}% of the founding wage bill), paid with every Monday's payroll. Its only ask is entering events, and there is no signing bonus. It runs until your first sponsorship deal — and at least to the end of ${p.through}, alongside a deal signed earlier. Finances lists it as its own line.`,
       foundingPartnerEnds: () =>
-        `The founding partner's term is over: the org has its own sponsorship deal and its first seasons behind it. From here the books stand on sponsors, prizes, merch and streams.`,
+        `The founding partner's term is over: the org has its own sponsorship deal and its first seasons behind it. From here the books stand on sponsors and prizes.`,
       cashNotice: (p: Record<string, string | number>) =>
         `A heads-up from the accountant: at ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays, and the books would close below the floor (${p.floor}) on ${breachWhenEn(p)}. ${nextBreachEn(p)} This is the cheap moment to act: take a good bid for a player, aim the squad at prize money, keep the next renewal in check${Number(p.backer) ? "" : ", or line up a bank loan"}.`,
       // rc.32 history (ECO-08 / ECO-12): nothing sends these since rc.33 — kept so an older save's inbox still reads.
@@ -1450,7 +1450,7 @@ export const CAREER_EN = {
     net: "Net / week",
     projected: "Projected after Monday",
     weeklyStatement: "Weekly statement",
-    statementHint: "Every Monday the books move: sponsor, merch and streams in; wages, staff, upkeep and instalments out.",
+    statementHint: "Every Monday the books move: the sponsor in; wages, staff, upkeep and instalments out.",
     runway: (weeks: number) => (weeks === 1 ? "Runway: 1 week at this burn" : `Runway: ${weeks} weeks at this burn`),
     runwayOk: "The books run in the black",
     nextPayday: (s: string) => `Next payday ${s}`,
@@ -1477,8 +1477,6 @@ export const CAREER_EN = {
       sponsorBase: "Sponsor base",
       foundingPartner: "Founding partner",
       rescuePartner: "Investor",
-      // rc.35 (front N): the reputation-tied income reads as what it models — jerseys, streams, content.
-      fanbase: "Merch & streams",
       payroll: "Squad wages",
       coach: "Coach",
       psychologist: "Sports psychologist",
@@ -1548,6 +1546,7 @@ export const CAREER_EN = {
       foundingPartner: "Founding partner",
       rescuePartner: "Investor",
       playerShare: "Players' prize share",
+      // rc.36 (POL-04): the income is gone; kept so an rc.35 save's books still read.
       fanbase: "Merch & streaming revenue",
       payroll: "Squad wages",
       bankLoan: "Bank loan received",

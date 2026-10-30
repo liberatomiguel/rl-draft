@@ -1021,6 +1021,20 @@ export function weeklyWageBill(squadSalaries: readonly number[], coachSalary: nu
   return squadSalaries.reduce((sum, amount) => sum + weeklyWage(amount), coach);
 }
 
+/**
+ * rc.36 (POL-04): founding deals fit the same budget for every roster.
+ * null fit weeks restores rc.35. The wizard and save use the same result.
+ */
+export function foundingWagesFor(asks: readonly number[], difficulty: CareerDifficulty): number[] {
+  const discounted = asks.map((ask) => Math.max(CAREER_SALARY.minSalary, quantize(ask * CAREER_SALARY.foundingWageMult)));
+  const weeks = CAREER_SALARY.foundingFitWeeks[difficulty] ?? null;
+  if (weeks === null || weeks <= 0) return discounted;
+  const bill = weeklyWageBill(discounted, null);
+  const cap = startingBudgetFor(difficulty, weeklyWageBill(asks, null)) / weeks;
+  if (bill <= cap) return discounted;
+  return discounted.map((wage) => Math.max(CAREER_SALARY.minSalary, quantize(wage * cap / bill)));
+}
+
 export interface BackerLine {
   /** A Monday below this is a breach. */
   floor: number;

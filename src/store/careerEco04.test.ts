@@ -33,6 +33,7 @@ import {
   CAREER_SPONSOR,
   CAREER_SUB,
   CAREER_TRANSFER,
+  CAREER_WORLD,
 } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
@@ -80,6 +81,7 @@ import {
   coachCandidatesFor,
   createCareerSave,
   declineBidFlow,
+  emptySeatPriceFor,
   hireCoachFlow,
   migrateSaveToV5,
   processDayArrival,
@@ -581,7 +583,8 @@ describe("rc.32 M4 — while a loan is owed, nothing that shortens the runway (r
       save.squad = save.squad.slice(0, 2);
       save.starterIds = [save.squad[0].id, save.squad[1].id, ""];
       save.finances.balance = -weeklyStatementOf(save).net * 10;
-      const fa = cheapFa(save);
+      // rc.36: the seat's own cheapest free agent (the lowest overall need not ask the lowest wage).
+      const fa = { id: emptySeatPriceFor(save, 2)!.playerId };
       const planned = signingPlanFor(save, fa.id, { lengthSeasons: 2 });
       expect("plan" in planned).toBe(true);
       const signed = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
@@ -595,16 +598,34 @@ describe("rc.32 M4 — while a loan is owed, nothing that shortens the runway (r
     let world = buildWorldAtCreation(50_404);
     for (let s = 0; s < 4; s++) world = agePassAndIntake(world, s + 1, 50_404, [], false, []).world;
     const ctx = { world, squadIds: [], seasonIndex: 4, careerSeed: 50_404 };
-    const plain = listingFor(ctx);
-    expect(plain.freeAgents.length).toBe(120);
-    const cap = Math.min(...plain.freeAgents.map((v) => Math.round(v.overall))) - 1;
-    const pool = world.freeAgentIds
+    const views = world.freeAgentIds
       .map((id) => playerViewById(id, { careerSeed: 50_404, seasonIndex: 4, world }))
-      .filter((v): v is CareerPlayerView => v !== null && v.age >= 13 && Math.round(v.overall) <= cap);
-    expect(pool.length).toBeGreaterThan(0);
-    const topped = listingFor({ ...ctx, signableCap: cap });
-    expect(topped.freeAgents.slice(0, 120)).toEqual(plain.freeAgents);
-    expect(topped.freeAgents.filter((v) => Math.round(v.overall) <= cap)).toHaveLength(Math.min(24, pool.length));
+      .filter((v): v is CareerPlayerView => v !== null && v.age >= 13);
+    // rc.36 (POL-04): rc.35's listing (the prospect rule off), then the prospects on top of it.
+    const prospectRule = CAREER_WORLD.listingProspects as { minPotential: number | null; minRoom: number };
+    const savedMin = prospectRule.minPotential;
+    prospectRule.minPotential = null;
+    let plain: ReturnType<typeof listingFor>;
+    let cap: number;
+    let topped: ReturnType<typeof listingFor>;
+    try {
+      plain = listingFor(ctx);
+      expect(plain.freeAgents.length).toBe(120);
+      cap = Math.min(...plain.freeAgents.map((v) => Math.round(v.overall))) - 1;
+      const pool = views.filter((v) => Math.round(v.overall) <= cap);
+      expect(pool.length).toBeGreaterThan(0);
+      topped = listingFor({ ...ctx, signableCap: cap });
+      expect(topped.freeAgents.slice(0, 120)).toEqual(plain.freeAgents);
+      expect(topped.freeAgents.filter((v) => Math.round(v.overall) <= cap)).toHaveLength(Math.min(24, pool.length));
+    } finally {
+      prospectRule.minPotential = savedMin;
+    }
+    const withProspects = listingFor({ ...ctx, signableCap: cap });
+    expect(withProspects.freeAgents.slice(0, topped.freeAgents.length)).toEqual(topped.freeAgents);
+    const isProspect = (v: CareerPlayerView) => v.potential >= savedMin! && v.potential - v.overall >= prospectRule.minRoom;
+    const listed = new Set(withProspects.freeAgents.map((v) => v.id));
+    expect(views.filter(isProspect).length).toBeGreaterThan(0);
+    expect(views.filter(isProspect).every((v) => listed.has(v.id))).toBe(true);
   });
 
   it("a coach hire that adds wages is refused the same way", () =>

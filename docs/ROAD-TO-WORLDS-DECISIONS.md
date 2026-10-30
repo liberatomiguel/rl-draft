@@ -1557,56 +1557,6 @@ R82. **Sponsors priced by risk; one level model for the season goal; the
      grade rule). (c) `sponsorAccessFor(level)` (CAREER_SPONSOR.access):
      levels 0–1 two offers, no Bold; 2–3 three, ×1.05; 4 global, ×1.1 and
      2 free bootcamps. Level = `repTierOf(rep)` until front P's ladder.
-R85. **Sponsors are picked in a pop-up and the deadline holds; the talk
-     answers only the offer sent, a refusal raises his floor, every lever
-     counts (rc.36 front S2; Miguel's rc.35 playtest, POL-03).** (a) HQ's
-     decision block only prompts the sponsor choice (an icon, one chip per
-     brand in its profile's colour, the deadline, "See the offers" and
-     "Decide later" as a plain ghost button); the offers open in a pop-up
-     (the shared Modal: portal, focus trap, Escape), one card per sponsor —
-     the same cards on Finances — with the goal's difficulty as three
-     horizontal bars again. (b) "No deal for now" is gone, so what a
-     deadline does is keyed: `CAREER_SPONSOR.deadlineRule` "hold" (Claude's
-     pick) keeps R71's rule — the deadline day holds the clock until a card
-     is signed (a Steady deal has no fine, so no offer is worse than none);
-     "signSafest" lets that day pass and signs the smallest-fine offer the
-     day after, mailed. Rejected: signing for him by default (a silent money
-     decision the queue exists to prevent) and lapsing (a "No deal" by
-     another name). (c) rc.34's open decision 3 (Bold-only careers over the
-     season-fines band): R82's `fines.seasonCapWeeks` did not settle it —
-     the tally lived on each deal and a Bold deal lasts one split, so a run
-     of Bold deals had a cap per split. `fines.seasonCapScope` "season"
-     hands the ended deal's tally to the next offers (one cap a season);
-     "deal" restores rc.35. Measured (`ECON_SPONSOR=bold`, EU, Normal +
-     Hard, seed 9100, 14 careers × 8 seasons): s3 22 / 27 → 8 / 10 % of
-     seasons (band ≤ 10 %), fines a season p90 $10.6k / $9.4k → $5.8k /
-     $5.0k, insolvent 29 / 71 → 29 / 57 %. So decision 3 is settled as
-     option C, on the deal's weekly pay (not payroll).
-     (d) The talk (rc.35-(e), "count attempts?": yes): the levers only shape
-     the offer, "Send offer" gets his answer, and the sheet shows the same
-     thing whether he would sign or refuse (its money is the offer's, never
-     his counter). Each refusal in a window raises what he needs for sure by
-     `CAREER_NEGOTIATION.refusalRaisePct` 0.03 of his ask, counted
-     `refusalsCounted` 3 times at most (≤ 9 %, never past his ask: paying it
-     always signs), per player and window in the save's `negotiationTries`
-     ("talk:{player}:{season}:{window}", pruned with the window, cleared at
-     the rollover), so a reload cannot reset it; his roll stays the
-     window's, so the same offer is never answered twice differently.
-     Rejected: a fresh roll per send (at the cap a lowball could be resent
-     until it landed) and raising his ask (the Market's price stays it).
-     (e) Every lever counts: his odds read the offer's worth — the wage plus
-     what the share and bonus are worth against his ask, unrounded — and
-     under his ask a share or bonus press moves only itself (rc.35 moved the
-     wage back, so his answer never changed); at his full ask they still
-     trade against the wage. The length is a lever of the sheet (the offer
-     keeps its place when it changes) and the sheet names what each lever is
-     worth to him in $ a week (share, bonus, length, refusals). (f) rc.35-(d)
-     kept: `emptySeatCountsOfferedBonus` true — the empty seat's waiver
-     counts the bonus offered (more is the org's own money), and the sheet
-     now says so (`fundsSeatBonus`); false reads the bonus he asks. The arc
-     bot is unchanged: it signs at his ask and renews at his floor, both
-     sure, so it is never refused.
-
 R83. **Training: nothing runs until you pick; 28-day cycles that pay in
      full on completion (rc.36 front T2, POL-01; Miguel's rc.35 playtest).**
      (a) Back to the 28-day grid (`CAREER_PLAN.periodDays` 14 → 28, 8 a
@@ -1721,6 +1671,104 @@ R84. **HQ and the screens polished to Miguel's rc.35 playtest (rc.36 front
      weekly expenses as "the weekly out" (the payroll line carries them);
      four or five rungs with hyphenated names.
 
+R85. **Sponsors are picked in a pop-up and the deadline holds; the talk
+     answers only the offer sent, a refusal raises his floor, every lever
+     counts (rc.36 front S2; Miguel's rc.35 playtest, POL-03).** (a) HQ's
+     decision block only prompts the sponsor choice (an icon, one chip per
+     brand in its profile's colour, the deadline, "See the offers" and
+     "Decide later" as a plain ghost button); the offers open in a pop-up
+     (the shared Modal: portal, focus trap, Escape), one card per sponsor —
+     the same cards on Finances — with the goal's difficulty as three
+     horizontal bars again. (b) "No deal for now" is gone, so what a
+     deadline does is keyed: `CAREER_SPONSOR.deadlineRule` "hold" (Claude's
+     pick) keeps R71's rule — the deadline day holds the clock until a card
+     is signed (a Steady deal has no fine, so no offer is worse than none);
+     "signSafest" lets that day pass and signs the smallest-fine offer the
+     day after, mailed. Rejected: signing for him by default (a silent money
+     decision the queue exists to prevent) and lapsing (a "No deal" by
+     another name). (c) rc.34's open decision 3 (Bold-only careers over the
+     season-fines band): R82's `fines.seasonCapWeeks` did not settle it —
+     the tally lived on each deal and a Bold deal lasts one split, so a run
+     of Bold deals had a cap per split. `fines.seasonCapScope` "season"
+     hands the ended deal's tally to the next offers (one cap a season);
+     "deal" restores rc.35. Measured (`ECON_SPONSOR=bold`, EU, Normal +
+     Hard, seed 9100, 14 careers × 8 seasons): s3 22 / 27 → 8 / 10 % of
+     seasons (band ≤ 10 %), fines a season p90 $10.6k / $9.4k → $5.8k /
+     $5.0k, insolvent 29 / 71 → 29 / 57 %. So decision 3 is settled as
+     option C, on the deal's weekly pay (not payroll).
+     (d) The talk (rc.35-(e), "count attempts?": yes): the levers only shape
+     the offer, "Send offer" gets his answer, and the sheet shows the same
+     thing whether he would sign or refuse (its money is the offer's, never
+     his counter). Each refusal in a window raises what he needs for sure by
+     `CAREER_NEGOTIATION.refusalRaisePct` 0.03 of his ask, counted
+     `refusalsCounted` 3 times at most (≤ 9 %, never past his ask: paying it
+     always signs), per player and window in the save's `negotiationTries`
+     ("talk:{player}:{season}:{window}", pruned with the window, cleared at
+     the rollover), so a reload cannot reset it; his roll stays the
+     window's, so the same offer is never answered twice differently.
+     Rejected: a fresh roll per send (at the cap a lowball could be resent
+     until it landed) and raising his ask (the Market's price stays it).
+     (e) Every lever counts: his odds read the offer's worth — the wage plus
+     what the share and bonus are worth against his ask, unrounded — and
+     under his ask a share or bonus press moves only itself (rc.35 moved the
+     wage back, so his answer never changed); at his full ask they still
+     trade against the wage. The length is a lever of the sheet (the offer
+     keeps its place when it changes) and the sheet names what each lever is
+     worth to him in $ a week (share, bonus, length, refusals). (f) rc.35-(d)
+     kept: `emptySeatCountsOfferedBonus` true — the empty seat's waiver
+     counts the bonus offered (more is the org's own money), and the sheet
+     now says so (`fundsSeatBonus`); false reads the bonus he asks. The arc
+     bot is unchanged: it signs at his ask and renews at his floor, both
+     sure, so it is never refused.
+
+R86. **One founding budget, no passive fanbase pay, prospects throughout
+     the career, and a slower route to the same peak (rc.36, POL-04).**
+     (a) Reverses R78's roster-sized budget: startingBudgetWeeks is null for
+     every difficulty. Every roster starts with the preset's flat budget;
+     foundingWagesFor fits its discounted founding wages to at least
+     foundingFitWeeks 44 / 24 / 13 of that budget, with the normal salary
+     floor. The engine owns the money formula; the wizard and creation use
+     the same seeded roster and fitted deals. Existing saves keep their
+     booked balance and signed contracts. (b) passivePerRepPoint 60 to 0;
+     Finances drops the line. Old fanbase ledger entries remain readable;
+     they are never erased or refunded. (c) After every seasonal intake each
+     region replenishes its free-agent prospects to four with potential 81+
+     and at least three points left to grow (bounded seeded rookie scan).
+     The listing appends all competitive-age free-agent prospects with
+     potential 80+ and three points of room, so the overall-ranked top 120
+     cannot hide the new kids. The signable-player top-up still applies.
+     (d) First pace lever approved by Miguel: generated peakAgeShift +1
+     year, paceCurvature 2 to 1.5, seasonGainHardCap 13 to 9 and
+     seasonCapSpread 2 to 1. Filler potential reads the unshifted peak:
+     the same potential, reached later. Real players retain their historical
+     peak. A strong package keeps growing each week instead of exhausting
+     the cap early. Match difficulty is unchanged. Final CAREER_GROWTH,
+     CAREER_TRAINING, CAREER_ECON and CAREER_ARC measurements are integration
+     gates; the Normal competitive target remains 0.44 Majors per season
+     and Worlds in 16% of season rows. (e) rc.34 decisions 1/2 (loan rules),
+     4 (EU spending policies), 5 (the wage budget), 7 (scouted bands) and
+     9 (the older roster's rebuild) remain explicit Gate 3b choices.
+     Their existing defaults are retained for the remeasurement; POL-04
+     does not silently approve a different loan, band or wage-budget rule.
+
+## Still open for Miguel (career mode)
+
+The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
+$1M Worlds pool, fixed-ask→negotiation, career→profile progression, mobile
+6-nav, no manual saves, auto-train default ON, Season X alternate history) are
+LOCKED and built. Remaining review items:
+
+- **Beat corpus** — the ~30 hand-written scripted beats (EN+PT) for launch is
+  the biggest content ask; currently a partial floor.
+- **`born:` rows** for the ~150–200 modern-era players (ages are inferred
+  today; §21.13 PT glossary tone check also pending).
+- **`CAREER_ARC` pacing harness** — the 120-career difficulty sweep isn't built
+  yet; v0.3 moved the whole money surface, so the economy bands need a
+  re-validation pass after Miguel plays.
+- **First-guess tunables to confirm after playtests:** scrim chemistryCredit
+  0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
+  the filler headliner band 77–84.
+
 R87. **Season goals read the season; a visual news desk with its archive;
      the career's achievements in the general list (rc.36 front A; ROADMAP
      UX-02, UX-03, UX-05).** (a) The board's goal is set once at the season's
@@ -1780,21 +1828,3 @@ R87. **Season goals read the season; a visual news desk with its archive;
      chrome, never a redrawn mark) and a credit line saying the headlines
      are the game's own — never a quote in the partner's mouth. (f) UX-05:
      DESIGN-DECISIONS #155.
-
-## Still open for Miguel (career mode)
-
-The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
-$1M Worlds pool, fixed-ask→negotiation, career→profile progression, mobile
-6-nav, no manual saves, auto-train default ON, Season X alternate history) are
-LOCKED and built. Remaining review items:
-
-- **Beat corpus** — the ~30 hand-written scripted beats (EN+PT) for launch is
-  the biggest content ask; currently a partial floor.
-- **`born:` rows** for the ~150–200 modern-era players (ages are inferred
-  today; §21.13 PT glossary tone check also pending).
-- **`CAREER_ARC` pacing harness** — the 120-career difficulty sweep isn't built
-  yet; v0.3 moved the whole money surface, so the economy bands need a
-  re-validation pass after Miguel plays.
-- **First-guess tunables to confirm after playtests:** scrim chemistryCredit
-  0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
-  the filler headliner band 77–84.

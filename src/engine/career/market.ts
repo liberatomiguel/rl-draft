@@ -151,6 +151,17 @@ export function listingFor(ctx: {
     const missing = LISTING_MIN_SIGNABLE - listedFree.filter(signable).length;
     if (missing > 0) listedFree.push(...freeAgents.slice(LISTING_CAP).filter(signable).slice(0, missing));
   }
+  // rc.36 (POL-04, Miguel on rc.35: "more free agents with potential in the
+  // 80s through the seasons"): every free-agent prospect is listed. The top
+  // LISTING_CAP by overall across the regions hid the kids: by season 3 an
+  // APAC career listed 1 of its region's 10 (the pool's 300 free agents).
+  const { minPotential, minRoom } = CAREER_WORLD.listingProspects;
+  if (minPotential !== null) {
+    const listed = new Set(listedFree.map((v) => v.id));
+    listedFree.push(
+      ...freeAgents.filter((v) => !listed.has(v.id) && v.potential >= minPotential && v.potential - v.overall >= minRoom),
+    );
+  }
   return {
     freeAgents: listedFree,
     contracted: contracted.slice(0, LISTING_CAP),

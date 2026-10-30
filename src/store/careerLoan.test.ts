@@ -17,7 +17,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_ECONOMY, CAREER_GEAR, CAREER_LOAN, CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_ECONOMY, CAREER_GEAR, CAREER_LOAN, CAREER_SALARY, CAREER_UNLOCKS } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -487,32 +487,47 @@ describe("rc.34 — an rc.33 save that owes the Backer loads into the bank's loa
 // Day one: every founding roster's runway
 // ===========================================================================
 
-describe("rc.34 — every founding roster starts with the same runway in weeks", () => {
-  it("the start budget is at least startingBudgetWeeks of the founding wage bill, never under the flat budget", () => {
+describe("rc.36 — one start budget for every roster; the founders' wages fit it (BAL-05 reversed)", () => {
+  it("every roster starts on the difficulty's budget, and its founding bill covers foundingFitWeeks of it", () => {
     for (const region of ["EU", "NA", "SAM", "APAC"] as Region[])
       for (const difficulty of DIFFS)
         for (const rosterKey of ["prospects", "balanced", "journeymen"] as const) {
           const save = createCareerSave({ ...INPUT, identity: { ...INPUT.identity, region }, difficulty, rosterKey }, 71_501);
           const bill = save.squad.reduce((n, p) => n + weeklyWage(p.salaryPerSplit), 0);
           expect(bill).toBe(weeklyWageBill(save.squad.map((p) => p.salaryPerSplit), null));
-          const weeks = CAREER_ECONOMY.startingBudgetWeeks[difficulty]!;
-          // rc.35 (front N): the budget reads the founders' full asks (foundingWageMult discounts the deals).
-          expect(save.finances.balance).toBeGreaterThanOrEqual(startingBudgetFor(difficulty, bill));
-          expect(save.finances.balance).toBeGreaterThanOrEqual(CAREER_ECONOMY.startingBudget[difficulty]);
-          expect(save.finances.balance).toBeGreaterThanOrEqual(quantize(weeks * bill));
+          // The same budget whatever the roster: only the difficulty changes it.
+          expect(save.finances.balance).toBe(CAREER_ECONOMY.startingBudget[difficulty]);
+          expect(save.finances.balance).toBe(startingBudgetFor(difficulty, bill));
+          // The founders' deals fit it: at least foundingFitWeeks of wages, never under the minimum salary.
+          const weeks = CAREER_SALARY.foundingFitWeeks[difficulty]!;
+          expect(bill * weeks).toBeLessThanOrEqual(save.finances.balance);
+          for (const p of save.squad) expect(p.salaryPerSplit).toBeGreaterThanOrEqual(CAREER_SALARY.minSalary);
         }
-    // The older team gets more than the flat budget on Normal; the prospects keep it.
-    const at = (rosterKey: CreateCareerInput["rosterKey"]) => createCareerSave({ ...INPUT, rosterKey }, 71_502).finances.balance;
-    expect(at("journeymen")).toBeGreaterThan(CAREER_ECONOMY.startingBudget.normal);
-    expect(at("prospects")).toBe(CAREER_ECONOMY.startingBudget.normal);
-    // null restores the flat budget (rc.33).
-    const keys = CAREER_ECONOMY.startingBudgetWeeks as Record<string, number | null>;
+    // The older team signs for less than the 0.85 founding discount; the prospects keep it.
+    const wagesOf = (rosterKey: CreateCareerInput["rosterKey"]) =>
+      createCareerSave({ ...INPUT, rosterKey }, 71_502).squad.map((p) => p.salaryPerSplit);
+    const sum = (ws: number[]) => ws.reduce((n, w) => n + w, 0);
+    const fitVets = wagesOf("journeymen");
+    const fitKids = wagesOf("prospects");
+    const keys = CAREER_SALARY.foundingFitWeeks as Record<string, number | null>;
     const saved = keys.normal;
     keys.normal = null;
     try {
-      expect(startingBudgetFor("normal", 5_000)).toBe(CAREER_ECONOMY.startingBudget.normal);
+      // null = rc.35: no fit — the dearer founding deals, and still the flat budget.
+      expect(sum(wagesOf("journeymen"))).toBeGreaterThan(sum(fitVets));
+      expect(wagesOf("prospects")).toEqual(fitKids);
+      expect(createCareerSave({ ...INPUT, rosterKey: "journeymen" }, 71_502).finances.balance).toBe(CAREER_ECONOMY.startingBudget.normal);
     } finally {
       keys.normal = saved;
+    }
+    // rc.35's weeks (BAL-05) restore the budget that grows with the bill.
+    const weekKeys = CAREER_ECONOMY.startingBudgetWeeks as Record<string, number | null>;
+    const savedWeeks = weekKeys.normal;
+    weekKeys.normal = 24;
+    try {
+      expect(startingBudgetFor("normal", 1_000)).toBe(quantize(24 * 1_000));
+    } finally {
+      weekKeys.normal = savedWeeks;
     }
   });
 });

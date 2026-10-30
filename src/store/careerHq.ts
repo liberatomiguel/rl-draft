@@ -74,7 +74,6 @@ export function hqFinanceOf(save: CareerSave): HqFinance {
   const payday = nextPaydayFor(save.clock);
   const bank = fin.bankLoan ?? null;
   const rescue = fin.rescuePartner ?? null;
-  const partner = st.foundingPartner + st.rescuePartner;
 
   // The projection: Mondays after today up to the split's last day.
   const endDay = splitEndDayFor(save.clock.day);
