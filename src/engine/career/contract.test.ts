@@ -228,7 +228,8 @@ describe("ECO-10 — the prize share each contract carries", () => {
     expect(sharePaysOn("worlds", "champion")).toBe(CAREER_PRIZES.playerShare.enabled);
   });
 
-  it("stays a snowball brake (contract e2): a dominant season keeps ≤ 1.5 × three 85s' wages, even at the lowest share", () => {
+  // With the share switched off (CAREER_PRIZES.playerShare.enabled false = rc.31) there is no brake to check.
+  it.skipIf(!CAREER_PRIZES.playerShare.enabled)("stays a snowball brake (contract e2): a dominant season keeps ≤ 1.5 × three 85s' wages, even at the lowest share", () => {
     const S = CAREER_PRIZE_SHARE;
     // The probe's P2 ask: age 20, potential = overall, rep 100, normal, 2 seasons, the median jitter.
     const ask85 = (s: number) =>
