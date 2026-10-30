@@ -49,6 +49,7 @@ import {
   takeBankLoanFlow,
   type CreateCareerInput,
 } from "./careerFlow";
+import { walkPastForTests } from "./careerClockForTests";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -121,7 +122,8 @@ function playSeasonRecording(input: CareerSave, events: TrackedEvent[]): CareerS
       continue;
     }
     const before = save.clock.day;
-    step(advanceDayFlow(save));
+    // rc.34 (UX-01a): bids and offers hold the clock now — answered the way rc.33's walk did.
+    step(advanceDayFlow(walkPastForTests(save)));
     if (save.clock.day === before && before >= DAYS_PER_SEASON) break;
   }
   return save;

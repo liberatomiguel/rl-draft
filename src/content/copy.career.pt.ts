@@ -301,6 +301,66 @@ export const CAREER_PT: CareerCopy = {
     edgesTitle: "Suas vantagens",
     financesTitle: "Finanças",
     financesOpen: "Abrir finanças",
+    // rc.34 (UX-01a, HQ-CONTRACT H1): uma decisão por vez; o "Depois" da 1-B para propostas e patrocínios.
+    decisionCount: (i: number, n: number) => `${i} de ${n}`,
+    later: "Depois",
+    alsoDue: "Também",
+    parked: "Para depois",
+    dueBy: (date: string) => `até ${date}`,
+    dueToday: "último dia",
+    lastDay: "Último dia — o relógio espera a sua resposta.",
+    standsUntil: (date: string) => `Vale até ${date}; "Depois" guarda até lá.`,
+    decisionKind: {
+      event: "Dia de jogo",
+      seasonReview: "Revisão da temporada",
+      notice: "Aviso",
+      contractReview: "Revisão de contratos",
+      squadShort: "Elenco incompleto",
+      insert: "Decisão da semana",
+      invite: "Convite",
+      training: "Plano de treino",
+      bid: (player: string) => `Proposta por ${player}`,
+      sponsor: "Propostas de patrocínio",
+    },
+    noticeTitle: "Um aviso precisa de você",
+    noticeBody: "Leia e confirme o aviso — o relógio anda depois disso.",
+    trainingDecisionTitle: "O técnico tem um plano",
+    trainingDecisionBody: "A proposta de treino do técnico espera a sua resposta.",
+    sponsorDecline: "Sem acordo por agora",
+    sponsorDeclineHint: "As marcas voltam no próximo split.",
+    // rc.34 (Miguel, 31/10): um elenco incompleto pode ficar fora de uma regional.
+    squadShortSkip: "Pular esta regional",
+    squadShortSkipHint: (event: string) =>
+      `${event}: sem inscrição, sem pontos, sem prêmio. O treino segue, e a próxima regional pergunta de novo.`,
+    // rc.34 (UX-01b, HQ-CONTRACT H2): o elenco em cartas do Draft.
+    cardStarter: "Titular",
+    cardReserve: "Reserva",
+    cardEmptySeat: "Vaga aberta",
+    cardSignHint: "Contrate um jogador",
+    cardUntil: (season: string) => `Até ${season}`,
+    cardEndsIn: (weeks: number) => (weeks <= 0 ? "Sai na virada" : weeks === 1 ? "Termina em 1 semana" : `Termina em ${weeks} semanas`),
+    cardFinalSeason: "Última temporada",
+    cardCoach: (name: string, ovr: number, pct: number) => `${name} · ${ovr} · ${pct > 0 ? "+" : ""}${pct}% de treino`,
+    // rc.34 (UX-01d, decisão 6-A): a pergunta da semana sobre a vaga.
+    nextRegional: (ordinal: number, week: number) => `Próxima regional (R${ordinal}, semana ${week})`,
+    seatDirect: "vaga direta",
+    seatQualifier: "qualificatória de sábado",
+    seatPreview: "por enquanto — definida na segunda da semana",
+    // rc.34 (UX-01e, HQ-CONTRACT H5): o dinheiro, só o lançado ou comprometido.
+    financePerWeek: (amount: string) => `${amount} por semana`,
+    financePayroll: "Próxima folha",
+    financeGuaranteed: "Receita garantida",
+    financeGuaranteedParts: (sponsor: string, partner: string, fans: string) =>
+      `patrocínio ${sponsor} · parceiro ${partner} · torcida ${fans}`,
+    financePartnerWeeks: (n: number) => (n === 1 ? "mais 1 semana" : `mais ${n} semanas`),
+    financeDebt: "Dívida",
+    financeDebtNone: "Nenhuma",
+    financeDebtBacker: (owed: string) => `Backer ${owed}`,
+    financeDebtBank: (owed: string, next: string) => `banco ${owed} · próxima ${next}`,
+    financeProjection: "Fim do split",
+    financeProjectionLine: (date: string, mondays: number, balance: string) =>
+      `${date} · ${mondays === 1 ? "1 segunda" : `${mondays} segundas`}, sem prêmios: ${balance}`,
+    financeNoHistory: "A linha se forma com as segundas que o save registra.",
   },
 
   // Caixa de entrada v0.2 — correio endereçado ao manager.
@@ -336,6 +396,8 @@ export const CAREER_PT: CareerCopy = {
       objectiveHit: (p: Record<string, string | number>) => `${p.name}: meta entregue`,
       objectiveMissed: (p: Record<string, string | number>) => `${p.name}: meta perdida`,
       contractExpiring: (p: Record<string, string | number>) => `${p.player} — contrato na última temporada`,
+      // rc.34 (UX-06b): os lembretes antes de um jogador poder sair.
+      contractReminder: (p: Record<string, string | number>) => `Contratos: ${p.weeks} semanas para ${p.players}`,
       bankLoan: (p: Record<string, string | number>) => `Empréstimo aprovado: ${p.amount}`,
       bankCleared: () => `Empréstimo bancário quitado`,
       cashWarning: (p: Record<string, string | number>) => `Alerta de caixa: ${p.weeks} semanas de fôlego`,
@@ -382,6 +444,8 @@ export const CAREER_PT: CareerCopy = {
         `A meta do split escapou. Ninguém cobra dinheiro de volta — mas faltas repetidas derrubam o tier da renovação. (Faltas até aqui: ${p.misses}.)`,
       contractExpiring: (p: Record<string, string | number>) =>
         `${p.player} está na última temporada de contrato. Você tem janela exclusiva de renovação até o fim do Split 3 — depois disso, ele sai de graça.`,
+      contractReminder: (p: Record<string, string | number>) =>
+        `${p.players} — ainda sem contrato depois desta temporada, com ${p.weeks} semanas pela frente. Renove no Elenco antes da virada, ou eles saem como agentes livres (a revisão antes da nova temporada lista todos).`,
       bankLoan: (p: Record<string, string | number>) =>
         `O banco liberou ${p.amount}. Parcelas de ${p.weekly} caem toda segunda-feira até quitar ${p.total}. Gaste em algo que se pague.`,
       bankCleared: () =>
@@ -519,6 +583,17 @@ export const CAREER_PT: CareerCopy = {
     perWeek: (s: string) => `${s} / semana`,
     expires: (label: string) => `Termina ${label}`,
     expiring: "Contrato expirando",
+    // rc.34 (UX-06b): o tempo que resta num contrato na última temporada, e a revisão antes da virada.
+    weeksLeft: (n: number) => (n <= 0 ? "sai na virada" : n === 1 ? "1 semana restante" : `${n} semanas restantes`),
+    reviewTitle: "Antes da nova temporada: contratos",
+    reviewBody: (n: number) =>
+      n === 1
+        ? "1 contrato termina com esta temporada. Renove no Elenco, ou deixe acabar — ele sai na virada."
+        : `${n} contratos terminam com esta temporada. Renove no Elenco, ou deixe acabar — eles saem na virada.`,
+    reviewRenew: "Renovar no Elenco",
+    reviewConfirm: (n: number) => (n === 1 ? "Deixar sair" : `Deixar os ${n} saírem`),
+    reviewDone: "Revisado — eles saem na virada.",
+    reviewHeld: "Uma decisão ainda espera no QG — responda antes da nova temporada.",
     renew: "Renovar",
     release: "Dispensar",
     releaseFee: (s: string) => `Rescisão: ${s}`,
@@ -1068,6 +1143,59 @@ export const CAREER_PT: CareerCopy = {
     perkNone: "Sem vantagens neste nível",
     freeBootcampLeft: (n: number) =>
       n === 1 ? "1 bootcamp pago pelo patrocinador restante na temporada" : `${n} bootcamps pagos pelo patrocinador restantes na temporada`,
+    // rc.34 (UX-01f, 5-A): o bootcamp dura o split — o fim dele na escada.
+    bootcampUntil: (date: string) => `Ativo até ${date}`,
+    // rc.34 (UX-01e): a projeção de Finanças, o mesmo número do QG.
+    projectionSplit: (date: string, balance: string) => `Fim do split (${date}), sem prêmios: ${balance}`,
+  },
+
+  // rc.34 (UX-01f, HQ-CONTRACT H6; UX-06a): a caixa de ferramentas no QG — comprar com confirmação.
+  toolbox: {
+    title: "Caixa de ferramentas",
+    open: "Escada completa em Finanças",
+    active: "Ativo",
+    owned: "Seus",
+    next: "Para comprar",
+    none: "Nada para comprar ainda — a reputação abre a caixa de ferramentas.",
+    lockedRep: (rep: number) => `Reputação ${rep}`,
+    after: (name: string) => `Depois de ${name}`,
+    used: "Já usado neste split",
+    superseded: "Substituído pelo nível seguinte",
+    training: (pct: number) => `+${pct}% de treino`,
+    buff: (n: number) => `+${n} nível de buff`,
+    rating: (n: string) => `+${n} de rating do time`,
+    chemistry: "um ganho de química",
+    stats: "+1 Clutch, +1 Consistência",
+    permanent: "Permanente",
+    until: (date: string) => `Até ${date}`,
+    nextEvent: "O próximo evento oficial",
+    weekly: (amount: string) => `${amount} por semana até dispensar`,
+    upkeep: (amount: string) => `manutenção ${amount} por semana`,
+    priceLabel: "Preço",
+    effectLabel: "Efeito",
+    durationLabel: "Duração",
+    afterLabel: "Depois",
+    afterLine: (balance: string, runway: string) => `Saldo ${balance} · ${runway}`,
+    free: "Grátis — vantagem do patrocínio",
+    discount: (pct: number) => `−${pct}% de desconto do patrocínio`,
+    buy: "Comprar",
+    hire: "Contratar",
+    refusal: {
+      locked: "Bloqueado: reputação, ou o degrau anterior da escada primeiro.",
+      funds: "Dinheiro insuficiente acima do piso do Backer.",
+      loanActive: "Não com o empréstimo do Backer em aberto.",
+      loanRunway: "Não com dívida no Backer: encurtaria o fôlego de caixa.",
+      used: "Já usado neste split.",
+      maxed: "A escada está completa.",
+      blocked: "A carreira terminou.",
+      other: "Não dá para comprar agora.",
+    },
+    // UX-06a: o modal central de desbloqueio — uma vez por novidade; desbloqueado não é comprado.
+    unlockTitle: "Novo na caixa de ferramentas",
+    unlockBody: (name: string) => `${name} foi desbloqueado — pronto para comprar, ainda não comprado.`,
+    unlockSee: "Ver",
+    unlockLater: "Depois",
+    newTag: "Novo",
   },
 
   standings: {
@@ -1147,6 +1275,9 @@ export const CAREER_PT: CareerCopy = {
       missedWorlds: () => `A corrida pelo Worlds termina aqui nesta temporada.`,
       stability: (p: Record<string, string | number>) => `Reformulação do elenco custa ${p.points} Pontos da Temporada`,
       contractExpiring: (p: Record<string, string | number>) => `O contrato de ${p.player} entra na janela final`,
+      contractReminder: (p: Record<string, string | number>) => `Relógio dos contratos: ${p.players} — ${p.weeks} semanas`,
+      // rc.34 (Miguel, 31/10): um elenco incompleto ficou fora de uma regional.
+      regionalSkipped: (p: Record<string, string | number>) => `${p.org} fica fora da ${p.event}`,
       playerLeft: (p: Record<string, string | number>) => `${p.player} sai como agente livre`,
       retirementAnnounce: (p: Record<string, string | number>) => `${p.player} anuncia sua última temporada`,
       retired: (p: Record<string, string | number>) => `${p.player} pendura o controle`,
@@ -1238,6 +1369,10 @@ export const CAREER_PT: CareerCopy = {
         `Escalar mais uma cara nova no meio do split custou ${p.points} Pontos da Temporada. Reformulação é coisa de pré-temporada.`,
       contractExpiring: (p: Record<string, string | number>) =>
         `O contrato de ${p.player} está acabando. Você tem janela exclusiva de renovação até o fim do Split 3.`,
+      contractReminder: (p: Record<string, string | number>) =>
+        `A temporada acaba em ${p.weeks} semanas e ${p.players} não têm contrato depois dela. Renove antes da virada, ou eles saem.`,
+      regionalSkipped: (p: Record<string, string | number>) =>
+        `Só ${p.n} de 3 vagas estão preenchidas, então o elenco não entra na ${p.event}: sem pontos, sem prêmio. A próxima regional pergunta de novo.`,
       playerLeft: (p: Record<string, string | number>) =>
         `A renovação não veio e ${p.player} saiu de graça. Agentes conversam — a próxima negociação começa daí.`,
       retirementAnnounce: (p: Record<string, string | number>) =>

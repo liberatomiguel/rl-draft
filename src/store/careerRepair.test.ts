@@ -21,12 +21,12 @@ import type { CareerSave, WorldState } from "@/engine/career/types";
 import { repairLegacyWorld } from "@/engine/career/worldSim";
 import type { Region } from "@/engine/types";
 import {
-  advanceDayFlow,
   createCareerSave,
   migrateSaveToV5,
   userIsDirect,
   type CreateCareerInput,
 } from "./careerFlow";
+import { stepDayForTests } from "./careerClockForTests";
 
 const REGIONS: Region[] = ["NA", "EU", "SAM", "MENA", "OCE", "APAC", "SSA"];
 const SEED = 7919;
@@ -229,7 +229,10 @@ describe("migrateSaveToV5 (rc.30)", { timeout: 60_000 }, () => {
   it("direct-8: an in-flight regional week keeps the side its pre-rc.30 Monday committed", () => {
     // Monday of the first regional: the starter roster is outside the 8 → Saturday's qualifier.
     let save = createCareerSave(input("SAM"), 55501);
-    while (save.clock.day < firstDayOfWeek(W)) save = advanceDayFlow({ ...save, sponsorOffers: null, pendingOffers: [] });
+    // rc.34 (UX-01a): the clock holds on a Community Cup's Saturday — walk past it as rc.33 did.
+    for (let guard = 0; save.clock.day < firstDayOfWeek(W) && guard < 400; guard++) {
+      save = stepDayForTests({ ...save, sponsorOffers: null, pendingOffers: [] });
+    }
     expect(save.pendingEventDef?.tier).toBe("qualifier");
     // Dressed down to a pre-rc.30 save (a fresh copy each time: the migration upgrades in place).
     const dressDown = (): CareerSave => {

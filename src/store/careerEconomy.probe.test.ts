@@ -529,6 +529,37 @@ async function curvesReport(): Promise<string> {
     ),
   ]);
   lines.push("");
+
+  // P9. rc.34 (HQ decision 5-A): the bootcamp on the money index against a coach — what a
+  // split of rating edge costs. A coach's edge is TEAM_RATING.coach (its overall and
+  // bonus level, market.coachBonusLevel: "+" from 75, "++" from 85), on top of his training.
+  const coachMod = (ovr: number) =>
+    Math.min(
+      B.TEAM_RATING.coach.max,
+      Math.max(0, (ovr - B.TEAM_RATING.coach.baseline) * B.TEAM_RATING.coach.scale) +
+        (ovr >= 85 ? 2 : ovr >= 75 ? 1 : 0) * B.TEAM_RATING.coach.perBonusLevel,
+    );
+  const share = B.CAREER_GEAR.bootcampSpan === "split" ? B.CAREER_GEAR.bootcampSplitEdgeShare : 1;
+  lines.push(
+    `#### P9. The bootcamp on the money index against a coach (normal, per split) — span \`${B.CAREER_GEAR.bootcampSpan}\`, edge ×${share}`,
+  );
+  lines.push("");
+  lines.push(
+    "Price per split and its rating edge; a coach's salary per split and his rating edge (training aside). $ per +0.1 rating for a split: lower is cheaper.",
+  );
+  lines.push("");
+  head(["Per split", ...seasons.map((s) => `S${s}`)]);
+  for (const camp of B.CAREER_GEAR.bootcamp) {
+    const edge = camp.sharpRating * share;
+    row([`Bootcamp T${camp.tier} (+${edge.toFixed(2)})`, ...seasons.map((s) => money(E.bootcampCostFor(camp.tier, s)))]);
+    row([`  $ per +0.1`, ...seasons.map((s) => money(E.bootcampCostFor(camp.tier, s) / (edge * 10)))]);
+  }
+  for (const ovr of [75, 80, 84, 88]) {
+    row([`Coach ${ovr} (+${coachMod(ovr).toFixed(2)})`, ...seasons.map((s) => money(E.coachSalaryFor(ovr, s, "normal")))]);
+    row([`  $ per +0.1`, ...seasons.map((s) => money(E.coachSalaryFor(ovr, s, "normal") / (coachMod(ovr) * 10)))]);
+  }
+  row(["Sponsor T2 base (rep 30)", ...seasons.map((s) => money(sponsorAt(30, s).basePerSplit))]);
+  lines.push("");
   return lines.join("\n");
 }
 

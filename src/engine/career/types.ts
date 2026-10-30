@@ -18,6 +18,7 @@ import type {
   StatKey,
   TournamentState,
 } from "../types";
+import type { SeenState } from "../newItems";
 
 // ---------------------------------------------------------------------------
 // Identity & preferences
@@ -488,6 +489,13 @@ export interface FinanceState {
   gear: GearState;
   /** Bootcamp "Sharp" rating armed for the next official event (0 = none). */
   bootcampSharp: number;
+  /**
+   * rc.34 (UX-01f, HQ decision 5-A): the last day the armed edge lasts — the
+   * Sunday before the next split boundary, or the season's last day
+   * (CAREER_GEAR.bootcampSpan "split"). Absent / null: none armed, or an
+   * edge armed under rc.33's one-event rule (the load repair dates it).
+   */
+  bootcampUntil?: { seasonIndex: number; day: number } | null;
   bootcampUsedThisSplit: boolean;
   /** Sponsor-perk free bootcamps consumed this season. */
   freeBootcampsUsedThisSeason: number;
@@ -898,6 +906,25 @@ export interface CareerSave {
    * narrows (`development.scoutedBand`'s `rc32Reports`). Optional, additive.
    */
   bandModel?: number;
+  /**
+   * rc.34 (UX-01a, HQ decision 1-B): the decisions the manager parked with
+   * "Later" (ids from store/careerDecisions.pendingDecisionsOf — bids and
+   * sponsor offers only). A parked decision stops holding the clock until its
+   * deadline day. Optional, additive; stale ids are ignored.
+   */
+  parkedDecisions?: string[];
+  /**
+   * rc.34 (UX-06, DESIGN-DECISIONS #154's model): this save's "New" state —
+   * the keys the manager has opened (engine/newItems). Absent = never seeded:
+   * an existing save sees nothing new until something arrives
+   * (engine/career/careerNew.ts).
+   */
+  newItems?: SeenState;
+  /**
+   * rc.34 (UX-06a): the toolbox unlocks already announced by HQ's centred
+   * modal — once per novelty; the item stays "New" until it is opened.
+   */
+  newAnnounced?: string[];
   /** v0.3: bookkeeping for the per-window incoming-bid cap/cooldown. */
   bidsThisWindow: number;
   lastBidDay: number;

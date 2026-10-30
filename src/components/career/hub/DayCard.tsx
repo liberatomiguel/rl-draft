@@ -10,8 +10,10 @@
  *   PRIMARY   Play / Pause — the clock runs by itself until something needs you.
  *   SECONDARY Skip to the next stop (event, window, payday, season end).
  *   TERTIARY  +1 day, quiet.
- * When a weekly INSERT is pending the whole block becomes that decision: the
- * clock does not move until the player answers (rc.2).
+ * When a decision is due the whole block becomes that decision (rc.34,
+ * UX-01a: `decision` — hub/DecisionBlock picks it from the one queue,
+ * careerDecisions.pendingDecisionsOf; rc.2 did it for the weekly insert only):
+ * the clock does not move until the player answers.
  * v2.0 (R40): the weekend reads at a glance — Saturday = Qualifier / Swiss
  * stage, Sunday = the Regional / Championship Sunday (a spectated Major is a
  * muted chip, not a matchday) — and a Major / Worlds paused after its
@@ -37,7 +39,6 @@ import {
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { ContinueToSundayLabel, roleTitleOf } from "@/components/career/event/WeekendPlan";
 import { weekendRoleOf } from "@/components/career/event/weekendView";
-import { NowInsert } from "@/components/career/hub/NowCards";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
@@ -139,14 +140,15 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
 export function DayCard({
   save,
   C,
-  insertId,
-  onInsert,
+  decision,
+  footer,
 }: {
   save: CareerSave;
   C: CareerCopy;
-  /** A pending weekly insert for today: the block becomes the decision. */
-  insertId?: string | null;
-  onInsert?: (key: "a" | "b") => void;
+  /** rc.34 (UX-01a): the decision the block shows instead of the clock, with its "1 of N". */
+  decision?: { body: React.ReactNode; count?: string } | null;
+  /** rc.34: the line under the block — the other decisions, with their deadlines. */
+  footer?: React.ReactNode;
 }) {
   const D = C.dates;
   const router = useRouter();
@@ -203,7 +205,7 @@ export function DayCard({
             ? { label: C.ceremonies.legacyTitle, go: () => router.push("/career/season") }
             : null;
 
-  const inserting = Boolean(insertId && onInsert);
+  const inserting = Boolean(decision);
 
   return (
     <Panel strong glow={inserting ? "blue" : "orange"} className={cx("rise-in overflow-hidden p-4 sm:p-5", inserting && "!border-cyan/40")}>
@@ -223,6 +225,7 @@ export function DayCard({
           {clock.windowOpen ? <Badge tone="blue">{C.calendar.windowOpen}</Badge> : null}
           {clock.kind === "open" && running && !inserting ? <Badge tone="good">{C.hub.trainingWeek}</Badge> : null}
           {inserting ? <Badge tone="blue">{C.hub.nowDecision}</Badge> : null}
+          {decision?.count ? <span className="text-[11px] font-semibold text-cyan">{decision.count}</span> : null}
           <span className="text-[11px] text-faint">{C.hub.dayOf(today, DAYS_PER_SEASON)}</span>
         </div>
       </div>
@@ -233,10 +236,8 @@ export function DayCard({
         />
       </div>
 
-      {inserting ? (
-        <div className="mt-4">
-          <NowInsert C={C} id={insertId!} onChoose={onInsert!} seasonIndex={save.clock.seasonIndex} />
-        </div>
+      {decision ? (
+        <div className="mt-4">{decision.body}</div>
       ) : (
         <>
           {/* the week strip — remounts (and slides in) when the week turns */}
@@ -300,6 +301,7 @@ export function DayCard({
           ) : null}
         </>
       )}
+      {footer ? <div className="mt-4 border-t border-line/60 pt-3">{footer}</div> : null}
     </Panel>
   );
 }

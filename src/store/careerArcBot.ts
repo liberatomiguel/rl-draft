@@ -21,7 +21,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
-import { signableOverallCap, weeklyOf } from "@/engine/career/economy";
+import { bootcampCostFor, bootcampTierFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type {
   CareerDifficulty,
@@ -48,6 +48,7 @@ import {
   renewalTalkFor,
   resolveInsertFlow,
   rolloverToNextSeason,
+  runBootcampFlow,
   runScrimFlow,
   signPlayerFlow,
   simEventToEnd,
@@ -58,6 +59,7 @@ import {
   weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
+import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
 
 // ---------------------------------------------------------------------------
 // Policies
@@ -199,6 +201,8 @@ export interface ArcSeason {
    * `ARC_GAP_BUCKETS`), [won, lost] — "even" is the presets' intent row.
    */
   seriesByGap?: Record<string, [number, number]>;
+  /** rc.34: bootcamps booked this season (the opt-in 5-A measurement; absent in older dumps). */
+  bootcamps?: number;
 }
 
 /** rc.33 (BAL-04): the rating-gap buckets of `ArcSeason.seriesByGap` (user − opponent). */
@@ -244,6 +248,8 @@ interface Tally {
   sales: number;
   series: Partial<Record<EventTier, [number, number]>>;
   seriesByGap: Record<string, [number, number]>;
+  /** rc.34: bootcamps booked (the opt-in 5-A measurement). */
+  bootcamps: number;
 }
 
 function newTally(save: CareerSave, seen: Set<string>): Tally {
@@ -259,6 +265,7 @@ function newTally(save: CareerSave, seen: Set<string>): Tally {
     sales: 0,
     series: {},
     seriesByGap: {},
+    bootcamps: 0,
   };
 }
 
@@ -518,8 +525,14 @@ function borrow(save: CareerSave, t: Tally): CareerSave {
   return save;
 }
 
+/** Opt-in behaviours that measure one lever without changing the default sweeps. */
+interface ArcOpts {
+  /** rc.34: book a bootcamp each split (CAREER_GEAR.bootcampSpan decides how long it lasts). */
+  bootcamp?: boolean;
+}
+
 /** Today's decisions, in the order a player meets them. */
-function decide(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = {}): CareerSave {
   let save = input;
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
@@ -561,6 +574,18 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
   if (policy.scrims && (dow === 2 || dow === 4) && !save.activeEvent) {
     const res = runScrimFlow(save);
     if (!res.error) save = res.save;
+  }
+  // rc.34 (HQ decision 5-A's measurement, opt-in): a bootcamp on the first
+  // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
+  if (opts.bootcamp && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {
+    const tier = bootcampTierFor(save.reputation);
+    if (tier !== 0 && affordable(save, bootcampCostFor(tier, save.clock.seasonIndex), 0, policy)) {
+      const res = runBootcampFlow(save);
+      if (!res.error) {
+        save = res.save;
+        t.bootcamps += 1;
+      }
+    }
   }
   if (policy.bank) save = borrow(save, t);
   return save;
@@ -622,6 +647,8 @@ export function playArcCareer(cfg: {
   seasons: number;
   /** Wall-clock budget: past it the career stops as a softlock with where it stood. */
   budgetMs?: number;
+  /** rc.34 (5-A's measurement, opt-in): book a bootcamp each split. */
+  bootcamp?: boolean;
 }): ArcCareer {
   const t0 = Date.now();
   const policy = ARC_POLICIES[cfg.policy];
@@ -651,7 +678,7 @@ export function playArcCareer(cfg: {
         out.softlock = `budget: season ${save.clock.seasonIndex} day ${save.clock.day} squad ${save.squad.length} starters ${starters(save).length} event ${save.pendingEventDef?.id ?? "-"}/${save.activeEvent?.def.id ?? "-"}`;
         break;
       }
-      save = decide(save, policy, t);
+      save = decide(save, policy, t, { bootcamp: cfg.bootcamp });
       track(save, t);
       if (save.sponsor && out.firstSponsorSeason === null) out.firstSponsorSeason = save.clock.seasonIndex;
       if (save.phase !== "running") break;
@@ -663,7 +690,8 @@ export function playArcCareer(cfg: {
       if (save.clock.day === before && save.phase === "running") {
         blocked += 1;
         if (blocked > 3) {
-          out.softlock = `season ${save.clock.seasonIndex} day ${before}: ${save.pendingEventDef?.id ?? "no event"} / ${save.activeEvent?.def.id ?? "-"}`;
+          const hold = clockHoldOf(save);
+          out.softlock = `season ${save.clock.seasonIndex} day ${before}: ${save.pendingEventDef?.id ?? "no event"} / ${save.activeEvent?.def.id ?? "-"}${hold ? ` (holds: ${hold.kind} ${hold.id})` : ""}`;
           break;
         }
       } else blocked = 0;
@@ -697,6 +725,7 @@ export function playArcCareer(cfg: {
       squad: squadRows(save),
       series: t.series,
       seriesByGap: t.seriesByGap,
+      bootcamps: t.bootcamps,
     });
     const row = out.seasons[out.seasons.length - 1];
     if (row.majorsQualified > 0 && out.firstMajorSeason === null) out.firstMajorSeason = row.seasonIndex;
@@ -713,6 +742,15 @@ export function playArcCareer(cfg: {
     }
     if (s === cfg.seasons - 1) break;
     if (save.phase === "seasonReview") {
+      // rc.34 (UX-06b): the explicit contract review before the rollover — the
+      // bot renewed whom it wanted at W24 and lets the rest go.
+      save = reviewContractsFlow(save).save;
+      const hold = rolloverHoldOf(save);
+      if (hold) {
+        out.softlock = `season ${save.clock.seasonIndex} review: ${hold.kind} ${hold.id} still holds the rollover`;
+        out.ended = "softlock";
+        break;
+      }
       // The store's "continue": past a title or the dataset timeline, into the infinite era.
       if (save.end.ended) {
         save = structuredClone(save);

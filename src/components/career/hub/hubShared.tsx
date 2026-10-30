@@ -76,6 +76,11 @@ export function errorTextFor(C: CareerCopy, key: string, nextBreach: BreachOutco
     // RTW-05 (rc.33 review): no scrim with fewer than three players.
     case "squadShort":
       return C.market.errors.squadShort;
+    // rc.34 (UX-01a / UX-06b): a decision still holds (the rollover), or "Later" on its last day.
+    case "decisionPending":
+      return C.squad.reviewHeld;
+    case "cannotWait":
+      return C.hub.lastDay;
     default:
       // locked / maxed / used / none / unknown / invalid — no CAREER.errors.*
       // group exists yet; "Locked" is the least-wrong neutral fallback.

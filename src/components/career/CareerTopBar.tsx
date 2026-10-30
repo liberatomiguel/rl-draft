@@ -24,6 +24,8 @@ import { useCareerStore } from "@/store/careerStore";
 import { Button } from "@/components/ui/Button";
 import { TeamStars } from "@/components/career/TeamStars";
 import { UserCrest } from "@/components/career/UserCrest";
+import { NewDot } from "@/components/ui/NewDot";
+import { careerNewDotsOf, careerNewSummary } from "@/engine/career/careerNew";
 import { formatDateShort } from "@/components/career/dateText";
 import {
   clockLabel,
@@ -73,6 +75,8 @@ export function CareerTopBar() {
   // The star read runs world-percentile math — memo on the save snapshot so
   // it recomputes per store write, not on every navigation re-render.
   const stars = useMemo(() => (save ? userStars(save) : 0), [save]);
+  // rc.34 (UX-06): the tabs' "New" dots — contracts (urgent) on Squad, the toolbox on Finances.
+  const dots = useMemo(() => (save ? careerNewDotsOf(careerNewSummary(save)) : null), [save]);
 
   if (!save) return null;
 
@@ -242,6 +246,9 @@ export function CareerTopBar() {
               )}
             >
               {copy.nav[tab.key as keyof typeof copy.nav]}
+              {(tab.key === "squad" && dots?.squad) || (tab.key === "finances" && dots?.finances) ? (
+                <NewDot className="ml-1 inline-block align-middle" label={copy.toolbox.newTag} />
+              ) : null}
               {tab.key === "news" && unreadMail > 0 ? (
                 <span className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-orange/20 px-1 font-mono text-[10px] leading-4 text-orange-bright">
                   {unreadMail}

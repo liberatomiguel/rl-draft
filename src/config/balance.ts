@@ -1859,6 +1859,23 @@ export const CAREER_GEAR = {
     { tier: 1, repGate: 26, cost: 4_000, chemistryCredit: 0.25, sharpRating: 0.5 },
     { tier: 2, repGate: 38, cost: 10_000, chemistryCredit: 0.5, sharpRating: 1.0 },
   ] as const,
+  /**
+   * rc.34 — UX-01f, HQ-CONTRACT decision 5-A (Gate 3a, 30/10): how long a
+   * bootcamp's rating edge lasts. "split": from the purchase to the next split
+   * boundary (the Mondays of W11, W21 and W31, which also reset the
+   * one-a-split allowance) or the season's end — every official event in
+   * between plays with it, so a split's Major is its last event
+   * (`FinanceState.bootcampUntil`, shown on HQ and in Finances). "event":
+   * rc.33's rule, spent by the next official event. Why: Miguel asked for a
+   * bootcamp that lasts a split and shows its end (ROADMAP UX-01f).
+   */
+  bootcampSpan: "split" as "split" | "event",
+  /**
+   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.0) for the whole split
+   * (1). Decision 5-B, in reserve: 0.5 halves it, should the split-long camp
+   * beat a coach (HQ-CONTRACT §6.5; the rc.34 measurement is in the report).
+   */
+  bootcampSplitEdgeShare: 1,
   /** Sports psychologist (rolling retainer, the "essa é importante" hire). */
   psychologistRep: 46,
   psychologistPerSplit: 4_000,
@@ -1981,6 +1998,42 @@ export const CAREER_PAYROLL = {
    * the weeks before a save started recording.
    */
   balanceRingWeeks: 96,
+} as const;
+
+/**
+ * rc.34 — UX-01 / UX-06 (HQ-CONTRACT, Gate 3a approved 30/10: HQ 1-B, 2–7 A):
+ * HQ around the next decision, the contract reminders and the HQ finance
+ * tile. The queue itself is `store/careerDecisions.ts` (pendingDecisionsOf).
+ */
+export const CAREER_HQ = {
+  /**
+   * Decision 1-B: the decision kinds that offer "Later" — bids and sponsor
+   * offers, up to their deadline day, when the clock stops again until they
+   * are answered. Every other needed decision holds the clock until answered
+   * (like the weekly insert). Why: Miguel's 30/10 answer to HQ-CONTRACT §6.1.
+   */
+  laterKinds: ["bid", "sponsor"] as readonly string[],
+  /**
+   * UX-06b: from this week of a contract's final season the HQ squad card
+   * warns (the time left), the contract counts as an urgent "New" item and
+   * the Squad tab carries its dot. W23 = the final split, the week the old
+   * telegraph mail already went out. Why: rc.33 had one warning at week 23.
+   */
+  contractWarnFromWeek: 23,
+  /**
+   * UX-06b: the reminders before a player can leave — a news line and a mail
+   * on the Monday of each week listed, naming who is still out of contract
+   * and the weeks left (W23 keeps rc.33's first telegraph). W28: a month
+   * before the season ends; W31: the last window, the last Monday before the
+   * season review. The explicit review then holds the rollover.
+   */
+  contractReminderWeeks: [28, 31] as readonly number[],
+  /**
+   * HQ-CONTRACT H5 (decision 4-A): the Monday balances the HQ finance tile
+   * draws in its small line (the last 12 Mondays the save recorded); a tap
+   * opens rc.33's chart with the whole ring (CAREER_PAYROLL.balanceRingWeeks).
+   */
+  tileChartWeeks: 12,
 } as const;
 
 /**

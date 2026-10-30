@@ -27,6 +27,9 @@ import { formatMoney } from "@/lib/format";
 import { cx } from "@/lib/util";
 import type { ContractOffer } from "@/engine/career/contract";
 import { renewalTalkFor } from "@/store/careerFlow";
+import { contractClockOf } from "@/store/careerHq";
+import { careerNewSummary, contractNewKey, contractWarnsFor } from "@/engine/career/careerNew";
+import { NewTag } from "@/components/ui/NewDot";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
 import {
@@ -73,6 +76,8 @@ export function SquadScreen() {
   const renewPlayer = useCareerStore((s) => s.renewPlayer);
   const lastError = useCareerStore((s) => s.lastError);
   const clearError = useCareerStore((s) => s.clearError);
+  // rc.34 (UX-06): opening a contract (the sheet, the renewal) clears its "New" mark.
+  const markCareerSeen = useCareerStore((s) => s.markCareerSeen);
 
   const [selected, setSelected] = useState<string | null>(null);
   /** Rating/chem snapshot taken right before a swap — powers the after-swap readout. */
@@ -86,6 +91,8 @@ export function SquadScreen() {
   const [renewOffer, setRenewOffer] = useState<ContractOffer>({});
 
   const team = useMemo(() => (save ? userTeamPreview(save) : null), [save]);
+  // rc.34 (UX-06): the save's new items (contracts in their final stretch, urgent first).
+  const freshKeys = useMemo(() => (save ? careerNewSummary(save).keys : new Set<string>()), [save]);
 
   if (!mounted || !save || !team) {
     return (
@@ -136,7 +143,11 @@ export function SquadScreen() {
     setSelected(null);
   };
 
-  const openSheet = (p: SquadPlayer) =>
+  const openSheet = (p: SquadPlayer) => {
+    markCareerSeen([contractNewKey(p.id, p.contractEndSeason)]);
+    openSheetData(p);
+  };
+  const openSheetData = (p: SquadPlayer) =>
     setSheet({
       name: p.name,
       overall: p.overall,
@@ -456,10 +467,15 @@ export function SquadScreen() {
                     {p.role === "sub" ? <Badge tone="neutral">{C.market.sub}</Badge> : null}
                     {expiring ? <Badge tone="orange">{C.squad.expiring}</Badge> : null}
                     {p.finalSeasonAnnounced ? <Badge tone="bad">{C.squad.finalSeason}</Badge> : null}
+                    {freshKeys.has(contractNewKey(p.id, p.contractEndSeason)) ? <NewTag>{C.toolbox.newTag}</NewTag> : null}
                   </div>
                   <div className="mt-0.5 text-[11px] text-faint">
                     {Math.round(p.overall)} {C.common.ovr} · {C.player.age(squadAge(save, p))} ·{" "}
                     {C.squad.expires(seasonLabelFor(p.contractEndSeason))}
+                    {/* rc.34 (UX-06b): the time left in a final-season contract. */}
+                    {expiring && contractWarnsFor(save, p) ? (
+                      <span className="font-semibold text-orange-bright"> · {C.squad.weeksLeft(contractClockOf(save, p).weeksLeft ?? 0)}</span>
+                    ) : null}
                   </div>
                   {/* rc.33 (ECO-10): the prize share this contract carries. */}
                   <div className="mt-0.5 text-[11px] text-faint">{prizeShareLabelOf(C, p)}</div>
@@ -475,6 +491,7 @@ export function SquadScreen() {
                     size="sm"
                     variant="secondary"
                     onClick={() => {
+                      markCareerSeen([contractNewKey(p.id, p.contractEndSeason)]);
                       setRenewLen(2);
                       setRenewOffer({});
                       setRenew(p);

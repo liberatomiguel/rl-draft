@@ -73,6 +73,8 @@ import {
   userSeedRatingFor,
   type CreateCareerInput,
 } from "./careerFlow";
+import { stepDayForTests, walkPastForTests } from "./careerClockForTests";
+import { parkDecisionFlow } from "./careerDecisions";
 import { eventTeamPreview, upcomingStops } from "@/components/career/careerUi";
 import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
 
@@ -113,18 +115,22 @@ function freshCareer(seed = SEED): CareerSave {
   return save;
 }
 
-/** Drops the decisions the batched Advance stops at (bids, sponsor offers). */
+/** Drops the decisions the batched Advance stops at (bids, sponsor offers; rc.34: a cup's matchday, an invite). */
 function quiet(save: CareerSave): CareerSave {
-  return { ...save, sponsorOffers: null, pendingOffers: [] };
+  return walkPastForTests({ ...save, sponsorOffers: null, pendingOffers: [] });
 }
 
-/** Day by day up to `day`; never plays — stops at a lobby it may not pass. */
+/**
+ * Day by day up to `day`; never plays — stops at a lobby it may not pass.
+ * rc.34 (UX-01a): the cups, invites, bids and offers rc.33's clock walked past
+ * are answered the way it did (careerClockForTests) — they hold the clock now.
+ */
 function advanceTo(input: CareerSave, day: number): CareerSave {
   let save = input;
   let guard = 0;
   while (save.clock.day < day && save.phase === "running" && guard++ < 400) {
     const before = save.clock.day;
-    save = advanceDayFlow(save);
+    save = stepDayForTests(save);
     if (save.clock.day === before) break;
   }
   return save;
@@ -152,7 +158,7 @@ function autoPlayTo(input: CareerSave, day: number): CareerSave {
       continue;
     }
     const before = save.clock.day;
-    save = advanceDayFlow(save);
+    save = stepDayForTests(save);
     if (save.clock.day === before) throw new Error(`clock blocked on day ${before}`);
   }
   return save;
@@ -807,8 +813,11 @@ describe("roster moves wait for the event (rc.30, rc.29 review)", { timeout: 30_
     const sold = acceptBidFlow(withBid, "bid:test");
     expect(sold.error).toBe("rosterLocked");
     expect(sold.save.squad.map((p) => p.id)).toContain(starter);
+    // rc.34 (UX-01a): the bid holds the clock, the Saturday pause included — "Later" parks it to its deadline.
+    expect(advanceToNextStopFlow(withBid)).toBe(withBid);
+    const parked = parkDecisionFlow(withBid, "bid:test").save;
     // Sunday: the playoffs, the finish — then the market is open for business again.
-    const done = finishEvent(simEventToEnd(advanceToNextStopFlow(withBid)));
+    const done = finishEvent(simEventToEnd(advanceToNextStopFlow(parked)));
     expect(done.activeEvent).toBeNull();
     const after = acceptBidFlow(done, "bid:test");
     expect(after.error).toBeUndefined();

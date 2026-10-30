@@ -27,6 +27,7 @@ import {
   startEvent,
   type CreateCareerInput,
 } from "@/store/careerFlow";
+import { stepDayForTests } from "@/store/careerClockForTests";
 import {
   agendaDays,
   continueKind,
@@ -71,7 +72,7 @@ function advanceTo(input: CareerSave, day: number): CareerSave {
   let guard = 0;
   while (save.clock.day < day && save.phase === "running" && guard++ < 400) {
     const before = save.clock.day;
-    save = advanceDayFlow(save);
+    save = stepDayForTests(save); // rc.34: rc.33's walk past cups / invites / bids / offers
     if (save.clock.day === before) break;
   }
   return save;
@@ -88,7 +89,7 @@ function autoPlayTo(input: CareerSave, day: number): CareerSave {
       continue;
     }
     const before = save.clock.day;
-    save = advanceDayFlow(save);
+    save = stepDayForTests(save);
     if (save.clock.day === before) throw new Error(`clock blocked on day ${before}`);
   }
   return save;

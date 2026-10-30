@@ -63,6 +63,29 @@ export function firstDayOfWeek(week: number): number {
   return (week - 1) * CAREER_CALENDAR.daysPerWeek + 1;
 }
 
+/**
+ * rc.34: the weeks whose Monday closes a split — W11, W21 and the Worlds
+ * window's W31 (the Monday funnel settles the sponsor objective and resets
+ * the one-bootcamp-a-split allowance there).
+ */
+export function splitBoundaryWeeks(): number[] {
+  const C = CAREER_CALENDAR;
+  const first = C.preseasonWeeks + C.splitWeeks + 1;
+  return [first, first + C.splitWeeks + C.windowWeeks, C.worldsWindowWeek];
+}
+
+/**
+ * rc.34 (UX-01f, HQ decision 5-A): the last day before the next split
+ * boundary after `day` — the Sunday before its Monday — or the season's last
+ * day after the last one. A bootcamp bought on `day` lasts until then, and
+ * the HQ projection runs to it.
+ */
+export function splitEndDayFor(day: number): number {
+  const week = weekOfDay(day);
+  const next = splitBoundaryWeeks().find((w) => w > week);
+  return next ? firstDayOfWeek(next) - 1 : DAYS_PER_SEASON;
+}
+
 /** A weekday (1=Mon .. 7=Sun) of a schedule week, as a day number. */
 function dayInWeek(week: number, dow: number): number {
   return (week - 1) * CAREER_CALENDAR.daysPerWeek + dow;

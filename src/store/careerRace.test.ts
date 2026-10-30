@@ -60,6 +60,7 @@ import {
   userSeedRatingFor,
   type CreateCareerInput,
 } from "./careerFlow";
+import { stepDayForTests } from "./careerClockForTests";
 import { eventTeamPreview, localSideRatingOf, raceTableOf } from "@/components/career/careerUi";
 import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
 
@@ -112,7 +113,8 @@ function step(save: CareerSave): CareerSave {
   }
   if (save.pendingInsert && save.pendingInsert.day === save.clock.day) return resolveInsertFlow(save, "b").save;
   const before = save.clock.day;
-  const next = advanceDayFlow(save);
+  // rc.34 (UX-01a): bids, offers and cups hold the clock now — answered as rc.33's walk did.
+  const next = stepDayForTests(save);
   if (next.clock.day === before && next.phase === "running") throw new Error(`clock blocked on day ${before}`);
   return next;
 }

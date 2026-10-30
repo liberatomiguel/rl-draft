@@ -33,6 +33,7 @@ import {
   CAREER_DEV,
   CAREER_ECONOMY,
   CAREER_GEAR,
+  CAREER_HQ,
   CAREER_LOAN,
   CAREER_PAYROLL,
   CAREER_QUALIFIER,
@@ -80,6 +81,7 @@ import {
   regionalForQualifier,
   seasonIdFor,
   seasonLabelFor,
+  splitEndDayFor,
   splitOfWeek,
   unofficialOfferFor,
   weekAt,
@@ -241,6 +243,10 @@ import type {
   TransferOffer,
 } from "@/engine/career/types";
 import type { Placement, Region, TournamentState } from "@/engine/types";
+// rc.34 (UX-01a): the one decision list every clock path reads (a cycle by
+// design: careerDecisions reads squadHoldFor / isEventPaused from here, and
+// both sides only call each other inside functions).
+import { clockHoldOf, rolloverHoldOf } from "./careerDecisions";
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -732,6 +738,14 @@ export function processDayArrival(input: CareerSave): CareerSave {
   const dow = dayOfWeekOf(day);
   const cal = weekAt(week);
 
+  // rc.34 (UX-01f, HQ decision 5-A): a split-long bootcamp's edge ends after
+  // its last day (the Sunday before the split boundary, or the season's end).
+  const campUntil = save.finances.bootcampUntil;
+  if (campUntil && (seasonIndex > campUntil.seasonIndex || (seasonIndex === campUntil.seasonIndex && day > campUntil.day))) {
+    save.finances.bootcampSharp = 0;
+    save.finances.bootcampUntil = null;
+  }
+
   // =========================== MONDAY =====================================
   if (dow === 1) {
     save.scrimsThisWeek = 0;
@@ -1033,6 +1047,25 @@ export function processDayArrival(input: CareerSave): CareerSave {
             linkTo: "/career/squad",
           });
         }
+      }
+    }
+
+    // --- 6b. rc.34 (UX-06b): the reminders before a player can leave — who
+    //     is still out of contract and the weeks left (CAREER_HQ). -----------
+    if (CAREER_HQ.contractReminderWeeks.includes(week)) {
+      const leaving = save.squad.filter((p) => p.contractEndSeason === seasonIndex);
+      if (leaving.length > 0) {
+        const weeks = CAREER_CALENDAR.weeksPerSeason - week + 1;
+        const players = leaving.map((p) => p.name).join(", ");
+        pushNews(save, { type: "org", priority: 2, titleKey: "contractReminder", params: { players, n: leaving.length, weeks } });
+        pushMail(save, {
+          kind: "contract",
+          titleKey: "contractReminder",
+          bodyKey: "contractReminder",
+          params: { players, n: leaving.length, weeks },
+          fromKey: "agent",
+          linkTo: "/career/squad",
+        });
       }
     }
   }
@@ -2038,6 +2071,42 @@ export function squadHoldFor(save: CareerSave): CareerEventDef | null {
   return def.day === save.clock.day || def.day === save.clock.day + 1 ? def : null;
 }
 
+/**
+ * rc.34 (Miguel's rc.33 playtest, 31/10: "with only two players you can't
+ * even play the regionals — give me the option to skip each regional"): the
+ * short squad's hold can be answered by sitting this regional out. Only a
+ * regional week's event — the Sunday regional, or the Saturday qualifier
+ * that leads to it — and only while the hold stands (a Community Cup keeps
+ * its Pass; a Major / Worlds slot keeps the hold: sign first, R67).
+ */
+export function canSkipShortSquadEvent(save: CareerSave): boolean {
+  const def = squadHoldFor(save);
+  return def !== null && (def.tier === "regional" || def.tier === "qualifier");
+}
+
+/**
+ * The skip: the team does not enter — the week's commit is dropped, so the
+ * event resolves on its own day without the user (fieldForEvent seats the
+ * next team: no points, no prize, nothing played) — and the clock moves on;
+ * training continues and the next regional asks again. A free agent can
+ * still take the empty seat any day (R67).
+ */
+export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
+  if (!canSkipShortSquadEvent(input)) return { save: input, error: "none" };
+  const save = clone(input);
+  const def = save.pendingEventDef!;
+  const regional = def.tier === "qualifier" ? regionalForQualifier(def) : def;
+  save.pendingEventDef = null;
+  if (save.pendingUnavailability?.eventId === def.id) save.pendingUnavailability = null;
+  pushNews(save, {
+    type: "org",
+    priority: 2,
+    titleKey: "regionalSkipped",
+    params: { org: save.identity.orgName, event: regional?.name ?? def.name, n: save.squad.length },
+  });
+  return { save: capNews(save) };
+}
+
 export function startEvent(input: CareerSave, watch: boolean): CareerSave {
   const save = clone(input);
   const def = save.pendingEventDef;
@@ -2067,8 +2136,15 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
     watched: watch,
     fieldedIds,
   };
-  // Consumed the bootcamp edge (applies to this event's team build).
-  if (save.finances.bootcampSharp > 0 && def.tier !== "t3" && def.tier !== "t2") {
+  // Consumed the bootcamp edge (applies to this event's team build) — rc.33's
+  // one-event rule only; rc.34's split-long camp (5-A) expires on its date.
+  if (
+    save.finances.bootcampSharp > 0 &&
+    def.tier !== "t3" &&
+    def.tier !== "t2" &&
+    CAREER_GEAR.bootcampSpan === "event" &&
+    !save.finances.bootcampUntil
+  ) {
     save.finances.bootcampSharp = 0;
   }
   if (def.tier === "t3") save.t3EntriesThisSplit += 1;
@@ -2623,6 +2699,8 @@ export function endCareer(save: CareerSave, reason: "insolvency" | "retired"): v
  */
 export function continueInfiniteFlow(input: CareerSave): CareerSave {
   if (input.phase === "ended") return input;
+  // rc.34 (UX-06b): the rollover never passes a needed decision (the contract review, a bid on its last day).
+  if (rolloverHoldOf(input)) return input;
   const save = clone(input);
   save.end.infinite = true;
   save.end.creditsShown = true;
@@ -3013,34 +3091,15 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   const paused = isEventPaused(input);
   if (input.activeEvent && !paused) return input;
   if (input.clock.day >= DAYS_PER_SEASON) return input;
-  // rc.2: a pending weekly insert blocks the clock until the player answers.
-  if (input.pendingInsert && input.pendingInsert.day === input.clock.day) return input;
-  // RTW-05 (rc.33): a short squad never enters its matchday — sign a third
-  // player first. A Community Cup on its own day can still be passed (below).
-  const hold = squadHoldFor(input);
-  if (hold && hold.day === input.clock.day + 1) return input;
-  // An OFFICIAL matchday must be resolved (play or sim) — never skipped. The
-  // paused Saturday counts as resolved for the day (its Swiss is complete).
-  const pending = input.pendingEventDef;
-  if (
-    pending &&
-    !paused &&
-    input.clock.day === pending.day &&
-    pending.tier !== "t3" &&
-    pending.tier !== "t2"
-  ) {
-    return input;
-  }
+  // rc.34 (UX-01a, HQ decision 1-B): the clock never passes a needed decision,
+  // whatever moves it — ONE list (careerDecisions.pendingDecisionsOf): a user
+  // matchday (a Community Cup's too: played, or passed explicitly — walking
+  // past no longer declines it), a short squad on the eve (R67), the weekly
+  // insert (R36), a fresh invite, an incoming bid or the sponsor offers (until
+  // parked with "Later", and again on their deadline day), the training
+  // proposal. The paused Saturday does not hold: moving to Sunday is its answer.
+  if (clockHoldOf(input)) return input;
   const save = clone(input);
-  // Advancing past an unofficial matchday declines the invite.
-  if (
-    pending &&
-    save.clock.day === pending.day &&
-    (pending.tier === "t3" || pending.tier === "t2")
-  ) {
-    save.pendingEventDef = null;
-    save.unofficialOffer = null;
-  }
   save.clock.day += 1;
   return processDayArrival(save);
 }
@@ -3061,25 +3120,10 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   const day = save.clock.day;
   // R40: an event in progress — Championship Sunday after the Saturday pause.
   if (save.activeEvent) return true;
-  // A committed event's matchday (the lobby): the Saturday qualifier (outside
-  // the direct 8), the Sunday regional (direct or qualified), the Saturday
-  // Major/Worlds, the Saturday unofficial cup.
-  if (save.pendingEventDef && day === save.pendingEventDef.day) return true;
-  // A fresh unofficial invite the player hasn't committed to: stop ONCE, on
-  // the Monday it surfaces (hands-on players get the decision moment; a
-  // second press continues past it toward the matchday / next stop).
-  if (
-    save.unofficialOffer &&
-    !save.pendingEventDef &&
-    day !== startedAtDay &&
-    dayOfWeekOf(day) === 1
-  ) {
-    return true;
-  }
-  // Pending decisions: incoming bids, sponsor offers, a mid-week insert.
-  if (save.pendingInsert && save.pendingInsert.day === day) return true;
-  if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) return true;
-  if (save.sponsorOffers && save.sponsorOffers.length > 0) return true;
+  // rc.34 (UX-01a): any needed decision (careerDecisions — a matchday, the
+  // insert, a fresh invite, a bid or offers not parked, a parked one on its
+  // deadline day, a short squad's eve, the training proposal).
+  if (clockHoldOf(save)) return true;
   // A transfer window just opened (its first Monday).
   if (
     day !== startedAtDay &&
@@ -3682,7 +3726,14 @@ export function runBootcampFlow(input: CareerSave): FlowResult {
       refName: "Bootcamp",
     });
   }
-  save.finances.bootcampSharp = camp.sharpRating;
+  // rc.34 (UX-01f, HQ decision 5-A): the edge lasts until the next split
+  // boundary (or the season's end) — every official event in between plays
+  // with it; "event" keeps rc.33's one-event rule (CAREER_GEAR.bootcampSpan).
+  const lastsSplit = CAREER_GEAR.bootcampSpan === "split";
+  save.finances.bootcampSharp = camp.sharpRating * (lastsSplit ? CAREER_GEAR.bootcampSplitEdgeShare : 1);
+  save.finances.bootcampUntil = lastsSplit
+    ? { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) }
+    : null;
   save.finances.bootcampUsedThisSplit = true;
   // Shared-week grind: a permanent chemistry-accrual bump (time-together
   // convention; the structured camp bonds harder).
@@ -4287,6 +4338,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   if (!save) return null;
   backfillEconomyOnLoad(save); // rc.32: every load, idempotent, no version bump
   repairMoneyOnLoad(save); // rc.33: every load, idempotent, no version bump
+  repairHqOnLoad(save); // rc.34: every load, idempotent, no version bump
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {
@@ -4367,6 +4419,24 @@ export function repairMoneyOnLoad(save: CareerSave): void {
       balance: save.finances.balance,
       ledger: save.finances.ledger ?? [],
     });
+  }
+}
+
+/**
+ * rc.34 (Etapa 3, front G — UX-01f): HQ's one-time load repair, run by
+ * migrateSaveToV5 on every load next to repairMoneyOnLoad (idempotent;
+ * persist version 3 and saveVersion 5 unchanged). A bootcamp edge an rc.33
+ * save armed under the one-event rule (no `bootcampUntil`) gets the
+ * split-long camp's end date (decision 5-A: it lasts to the next split
+ * boundary — the camp was bought this split, and no official event has spent
+ * it yet). Nothing else moves: the parked decisions and the "New" state are
+ * optional fields an rc.33 save simply lacks (nothing parked, nothing new).
+ */
+export function repairHqOnLoad(save: CareerSave): void {
+  const fin = save.finances;
+  if (!fin || !save.clock || CAREER_GEAR.bootcampSpan !== "split") return;
+  if ((fin.bootcampSharp ?? 0) > 0 && fin.bootcampUntil === undefined) {
+    fin.bootcampUntil = { seasonIndex: save.clock.seasonIndex, day: splitEndDayFor(save.clock.day) };
   }
 }
 

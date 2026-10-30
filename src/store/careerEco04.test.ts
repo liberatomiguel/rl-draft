@@ -82,12 +82,15 @@ import {
   declineBidFlow,
   hireCoachFlow,
   migrateSaveToV5,
+  processDayArrival,
   rolloverToNextSeason,
   signingPlanFor,
   signPlayerFlow,
   weeklyStatementOf,
   type CreateCareerInput,
 } from "./careerFlow";
+import { stepDayForTests } from "./careerClockForTests";
+import { parkDecisionFlow } from "./careerDecisions";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -136,9 +139,10 @@ function quietSunday(save: CareerSave, week: number): CareerSave {
 /** Advance one day; a matchday or an insert that blocks the clock is cleared (these tests follow the money). */
 function step(save: CareerSave): CareerSave {
   const before = save.clock.day;
-  const next = advanceDayFlow(save);
+  // rc.34 (UX-01a): rc.33's walk past cups, invites, bids and offers (they hold the clock now).
+  const next = stepDayForTests(save);
   if (next.clock.day === before && next.phase === "running") {
-    return advanceDayFlow({ ...structuredClone(next), pendingEventDef: null, pendingInsert: null, unofficialOffer: null });
+    return stepDayForTests({ ...structuredClone(next), pendingEventDef: null, pendingInsert: null, unofficialOffer: null });
   }
   return next;
 }
@@ -645,10 +649,15 @@ describe("rc.32 — a refused Blockbuster raises that deal's renewal ask (and th
     expect(plainBid.squad.find((x) => x.id === p.id)!.blockbusterRefusedUntil).toBeUndefined();
   });
 
-  it("letting it expire is a refusal too", () => {
+  it("letting it expire is a refusal too — rc.34: the clock never lets it lapse (it holds on its last day)", () => {
     const save = createCareerSave(INPUT, 50_602);
     const p = save.squad[0];
-    const next = step({ ...save, pendingOffers: [blockbuster(p.id, save.clock.day)] });
+    const withBid = { ...save, pendingOffers: [blockbuster(p.id, save.clock.day)] };
+    // rc.34 (UX-01a, decision 1-B): on its last day no "Later" — the clock waits for an answer.
+    expect(advanceDayFlow(withBid)).toBe(withBid);
+    expect(parkDecisionFlow(withBid, `bid:test-bb:${p.id}`).error).toBe("cannotWait");
+    // The expiry rule stays for a stale bid the day machine meets (an older save): still a refusal.
+    const next = processDayArrival({ ...withBid, clock: { ...withBid.clock, day: withBid.clock.day + 1 } });
     expect(next.pendingOffers).toEqual([]);
     expect(next.squad.find((x) => x.id === p.id)!.blockbusterRefusedUntil).toBe(p.contractEndSeason);
   });

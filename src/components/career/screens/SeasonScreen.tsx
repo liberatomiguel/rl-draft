@@ -28,6 +28,7 @@ import { cx } from "@/lib/util";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgMark } from "@/components/career/OrgMark";
 import { seasonLabelFor, squadAge, useCareerSave } from "@/components/career/careerUi";
+import { ContractReview, rolloverBlocked } from "@/components/career/ContractReview";
 
 // Duplicated from ClubScreen (not exported there) — keep the two in sync.
 const GRADE_TONE: Record<string, "gold" | "good" | "blue" | "neutral" | "bad"> = {
@@ -82,6 +83,8 @@ export function SeasonScreen() {
   const isInsolvent = reason === "insolvency";
   const isRetired = reason === "retired";
   const canContinueSeasons = save.clock.seasonIndex < CAREER_SEASONS.length - 1;
+  // rc.34 (UX-06b): the rollover never passes a needed decision (the contract review, a bid at HQ).
+  const blocked = rolloverBlocked(save);
 
   // Season goal — settled at review time (targetMet flips off null in enterSeasonReview).
   const goals = save.seasonGoals;
@@ -349,7 +352,10 @@ export function SeasonScreen() {
         </Panel>
       ) : null}
 
-      {/* 6 — Actions / fork (logic unchanged) */}
+      {/* 5b — rc.34 (UX-06b): the explicit contract review before the rollover. */}
+      <ContractReview save={save} C={C} />
+
+      {/* 6 — Actions / fork (rc.34: the rollover waits for the contract review) */}
       <div
         className="rise-in flex flex-wrap justify-center gap-3 pt-2"
         style={{ animationDelay: "240ms" }}
@@ -360,6 +366,7 @@ export function SeasonScreen() {
             {!isRetired && !isInsolvent ? (
               <Button
                 variant="primary"
+                disabled={blocked}
                 onClick={() => {
                   if (wonWorlds && canContinueSeasons) {
                     continueToNextSeason();
@@ -386,6 +393,7 @@ export function SeasonScreen() {
           <Button
             variant="primary"
             size="lg"
+            disabled={blocked}
             onClick={() => {
               continueToNextSeason();
               router.push("/career");

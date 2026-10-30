@@ -103,7 +103,6 @@ import {
   nameOfRef,
   regionalUserEligible,
   scrimOpponentFor,
-  squadHoldFor,
   squadIsShort,
   userEventDefOnDay,
   userIsDirect,
@@ -111,6 +110,7 @@ import {
   userSeedingFor,
   userTeamForEvent,
 } from "@/store/careerFlow";
+import { clockHoldOf } from "@/store/careerDecisions";
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -696,22 +696,18 @@ export type ContinueKind =
 export function continueKind(save: CareerSave): ContinueKind {
   if (save.phase === "ended") return "ended";
   if (save.phase === "seasonReview") return "seasonReview";
+  // rc.34 (UX-01a): the one decision list the clock reads (careerDecisions).
+  const hold = clockHoldOf(save);
   // v2.0 (R40): a Major/Worlds paused after its Saturday Swiss — the routed
   // CONTINUE moves the clock to Championship Sunday (continueEventToNextDay).
-  // A kind of its own, so the day autopilot never rolls into Sunday alone.
-  if (isEventPaused(save)) return "eventPaused";
+  // A kind of its own, so the day autopilot never rolls into Sunday alone;
+  // a decision holding the clock (a bid that Saturday) is answered first.
+  if (isEventPaused(save)) return hold ? "decision" : "eventPaused";
   if (save.activeEvent) return "event";
-  // RTW-05 (rc.33): a short squad holds the clock on its event's eve and day.
-  if (squadHoldFor(save)) return "decision";
-  if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) return "event";
-  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) return "decision";
-  if (save.pendingOffers.some((o) => o.status === "pending" && o.direction === "out")) {
-    return "decision";
-  }
-  if (save.sponsorOffers && save.sponsorOffers.length > 0) {
-    return "decision";
-  }
-  return "advance";
+  if (!hold) return "advance";
+  // RTW-05 (rc.33): a short squad holds the clock on its event's eve and day
+  // as a decision (the queue puts it before the matchday itself).
+  return hold.kind === "event" ? "event" : "decision";
 }
 
 /**
