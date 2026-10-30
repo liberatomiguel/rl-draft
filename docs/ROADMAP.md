@@ -524,6 +524,21 @@ never calibrates the old training model as if it were final.
   state; they clear when the content is opened, not when a tab is
   visited; urgent items (contracts) above cosmetics.
 
+- **rc.34 additions — Miguel's first rc.33 run (31/10):**
+  - ECO-13, the rescue is a bank loan: a breach brings the bank's emergency
+    loan (the money), never an "investor"; an investor may come with the
+    first loan and help the income lightly; a modal says what happened.
+  - ECO-14: no signing lock while a loan is owed.
+  - ECO-15, the debt ends the career, not the breach count: repay within a
+    deadline (by difficulty, not punitive) or the career ends.
+  - RTW-06: with two players a regional cannot be played: each one offers
+    "Skip this regional"; a free agent can still fill the seat outside the
+    window (R67).
+  - UX-08: the difficulty screen again — plainer text, less clutter.
+  - ECO-16: the talk's levers still freeze at times; ECO-17: no prize share
+    for low-overall players and founders, only from a higher overall.
+  - BAL-05: he went broke in the first split with the veterans roster —
+    check every founding roster's first split.
 - **Gate 3a: approved 30/10** — the recommended options of all three
   contracts (training 1–7 A; sponsors 1–5 A, 6-B, 7-A; HQ 1-B, 2–7 A), the
   sponsor contract adjusted to ECO-07/08: there is no day-one founding

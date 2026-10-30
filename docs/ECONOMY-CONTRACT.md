@@ -520,6 +520,62 @@ How to read it:
   filler cap. Each re-measured on these seeds. Decision 10-A's one
   documented band adjustment is not used.
 
+## 10. The rc.33 re-measure — Miguel's 30/10 answers and the renewal tuning
+
+Same probe, same 294 careers (seeds 9100 and 17019, 8 seasons) as §8–§9, on
+rc.33 (`0bd868c`): ECO-07/08 (breaches 3 / 2 / 1, Easy's rescue partner, no
+founding partner, no restructuring), ECO-09 (12 % and the star bend), M7
+(tiers $5k / $12k / $22k / $45k, the fanbase at $60), ECO-10/11 (the share per
+contract, the talk), ECO-12 (no listing), RTW-02..05, BAL-04, DEV-04, and the
+integration's tuning: `renewalMaxJump` 2.5 and the title raise (R69). Full
+tables: `ECONOMY-PROBE-rc33.md` (about 33 min in four processes split by
+`ECON_REGIONS`). Easy / Normal / Hard unless noted.
+
+| | rc.32 | rc.33 | band (§3) |
+|---|---|---|---|
+| Insolvent, mean over the 7 policies (a1) | 0 / 34 / 56 % | **0 / 6 / 30 %** | ≤ 2 / 10 / 25 % |
+| Newcomer policies insolvent (a2) | 0 / 33 / 60 % | **0 / 2 / 26 %** | 0 / ≤ 5 / ≤ 20 % |
+| Newcomers' S0–S1 pay their way without a big win (a7) | 86 / 86 / 69 % | **100 / 100 / 93–100 %** | ≥ 80 / 60 / 40 % |
+| Rescues warned in the 8 weeks before (a3) | 100 % | 100 % | 100 % |
+| Normal by region: NA · EU · SAM · MENA · OCE · APAC · SSA (f1) | 86 · 86 · 21 · 21 · 21 · 0 · 0 % | **14 · 14 · 7 · 7 · 0 · 0 · 0 %** | ≤ 20 % |
+| Renewal raise p50: developed founders · signed at ≤ 19 (d1) | ×1.58 · ×1.50 | ×2.00 · ×2.49 | ≤ ×1.6 |
+| A renewal's new ask ÷ guaranteed income, p50 (d1) | 0.64 | 0.37 | ≤ 1.5 |
+| Payroll ÷ guaranteed income, p50, Normal, S0 · S1–S7 (b3) | 2.4–9.5 | 2.7 · 1.1–1.7 | 1.0–2.0 |
+| *Money still decides:* the spender insolvent (d2) | 0 / 71 / 86 % | 0 / 21 / 79 % | — |
+| Season-rows with a tight Monday, S3–S5 (e3) | 37 / 49 / 64 % | 23 / 26 / 29 % | ≥ 10 / 20 / 30 % |
+| A 90's wage ÷ the T4-contender income (c1) | 0.85 | 1.12 | ≥ 0.35 |
+| A dominant season's kept prizes ÷ three-85 wages (e2) | 1.13 | 1.05 | ≤ 1.5 |
+| Snowball p90, S2–S7 worst, in seasons of payroll (e1) | 10.4 / 4.2 / 2.1 | 15.3 / 8.5 / 6.8 | ≤ 3.0 / 2.0 / 1.5 |
+| Careers with an 88+ signing by S4 (c3) | 12 / 5 / 2 % | 14 / 3 / 2 % | ≥ 20 / 15 / 10 % |
+| Every stream on one index (b1) | ×1.71–1.73 | ×2.21–2.23 | ±2 % |
+
+How to read it:
+- **The unfair break is gone on Easy and Normal.** Normal's newcomers went
+  from 33 % insolvent to 2 %, every region on Normal sits inside the band
+  (EU and NA were traps since rc.30: 86 % → 14 %), and every newcomer's first
+  two seasons pay their way. What did it: the newcomer's reputation path
+  (EU's first sponsor moved from S4 to S0), M7's newcomer tiers, and the
+  renewal jump cap (the hands-off prospects careers renewed developed
+  players at ×3.9 p50 / ×12 p90 before it and broke in seasons 4–6).
+- **Money still decides.** The spender still breaks on Normal (21 %) and
+  Hard (79 %), tight Mondays stay above their floors on Easy and Normal (Hard
+  sits one point under), and a star costs more than a contender's income
+  (c1 1.12).
+- **Still out of band.** Hard (30 % insolvent, 26 % of newcomers): its first
+  breach ends a career (ECO-08), and EU and NA hold most of it. The snowball
+  rose: hands-off careers in weak regions (APAC, SSA, OCE) bank many seasons
+  of a cheap payroll on T3 base pay; the title raise trims it, and Etapa 3's
+  sponsors (performance pay instead of base) and the wage budget are the next
+  levers. The renewal raise's p50 (d1) is above ×1.6 because the star bend
+  lifted the market asks the 50 % floor follows; the asks themselves stay a
+  third of the guaranteed income. Star signings stay rare outside Easy.
+- **After rc.33 (Miguel, 31/10, his first rc.33 run):** the rescue becomes a
+  bank loan with a repayment deadline (what ends a career is the unpaid debt,
+  not the breach count), a light investor at the first loan, no signing lock
+  while owing, a modal at the breach, and a check of the veterans roster
+  (he went broke in the first split with it; no bot policy plays it
+  hands-off). Built in rc.34 and re-measured here as §11.
+
 ## Appendix — the probe tables (generated)
 
 The probe's output for the baseline's 294 cells, as generated. The careers
