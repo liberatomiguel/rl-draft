@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.4**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R92. Gate: `CAREER-ENDGAME-rc36-4.md`.
+> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.5**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R93. Gate: `CAREER-FEEDBACK-rc36-5.md`.
 
 ## Run and verify
 
@@ -10,14 +10,16 @@
 - Career logic is in `src/engine/career`, flows in `src/store/career*`, screens
   in `src/components/career`. Pure seeded engine, bilingual career copy,
   tunables in `src/config/balance.ts`.
-- Full suite: 1452 passed, 16 optional checks skipped. Typecheck,
-  lint, data, static build and 97 browser checks: `CAREER-ENDGAME-rc36-4.md`.
+- Full suite: 1463 passed, 18 optional checks skipped. Typecheck,
+  lint, data, static build and browser checks: `CAREER-FEEDBACK-rc36-5.md`.
 - Probes: CAREER_ARC (run alone; never with ARC_REPORT), CAREER_ECON (four
   processes by ECON_REGIONS), CAREER_GROWTH, CAREER_TRAINING; latest reports
   use the rc36 suffix. `ECONOMY-CONTRACT.md` §13 compares guardrails.
 - `ENDGAME=1`: all 63 difficulty/roster/region cells with paid support;
   14 additional paired prospect careers. Parameters/replay limits in
   `CAREER-ENDGAME-rc36-4.md`; data tables include actual purchase coverage.
+- `FEEDBACK=1`: 63 paired three-season starts, plus four paired six-season
+  SAM/Normal/prospect starts, isolating local rebasing; rc36-5 report.
 
 ## Gate 3b candidate
 
@@ -28,25 +30,24 @@ independent integration review. Miguel's playtest approval is still required.
   intensity/wear and running progress. Coaches can renew cycles; otherwise
   repeat with one click. Legacy periods finish before switching grids;
   signings join the plan; no duplicate session or payout.
+  Results: Continue repeats even with coach, Change opens editing; persistent
+  automatic-report opt-out, re-enabled in Training.
 - Compact HQ, squad/sub/coach, progression, finances and stacked arsenal;
   unlocks use notification/inbox, no automatic purchase sheet; scrims stack
-  with crests/scores under calendar controls. News notices use a newspaper
-  masthead/date/headline; mail retains an envelope/sender. Bootcamps are beside
-  the HQ squad. Sponsor cards in a modal, Decide later until
-  deadline. Contract responses arrive only after sending; refusals raise the
-  floor and each lever counts.
-- Same founding budget by difficulty, fitted founding wages, no Merch &
-  streams income. Seasonal free-agent prospect replenishment and listing;
-  slower generated-player growth, later peak, season ceiling 8.5. rc.36.3
-  fits founding wages to 32/18 Normal/Hard weeks, reduces growth/low-result rep
-  and contains founding market jumps. rc.36.4 adds +1.5 team rating to the
-  centre, structured-camp edge 1 → 1.75 and psychology stats 1 → 3. Prices and
-  gates stay. 77 paired starts per snapshot: no historical Worlds titles;
-  qualified-field replays show benefits, not end-to-end pacing acceptance.
-  Regional timing, star affordability and historical Worlds titles stay open.
-  Match profiles are unchanged. BALANCE_VERSION 9.
+  with crests/scores and weekly variety. News retains game typography with
+  editorial header; mail has envelope/sender. Skip secondary, +1 day tertiary;
+  Instant result blue. Event/result roster inspection pauses playback;
+  spectator Swiss games left/standings right. Clear coach locks; no Buy on
+  owned/active/used items. Sponsor cards in a modal, Later until deadline.
+  Contract replies require sending, and every lever counts.
+- Founding budgets by difficulty, fitted wages, seasonal prospects, later
+  peak and growth ceiling 8.5. Late support: centre +1.5 team rating,
+  structured camp +1.75, psychology +3/+3. Local origin persists, growth capped
+  at 1.5/year; current freezes survive. Regional timing, star affordability
+  and Worlds-title pacing stay open. BALANCE_VERSION 10.
 - Season goals, deadline/progress; Sunday trade-offs, 15% common money
-  growth, firmer renewals/coach wages. News labels historical archives;
+  growth, rounded annual prize steps and one-season new sponsor profiles.
+  Firmer renewals/coach wages. News labels historical archives;
   career achievements join the general list. 50/50 awaits partner agreement.
 - Custom crest shapes/symbols/layouts and predefined colour palettes;
   calendar windows blue on every day chip, event icons keep their tier accents;

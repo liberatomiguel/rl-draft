@@ -281,11 +281,11 @@ export function DayCard({
                     {autoAdvance ? C.hub.pause : C.hub.play}
                   </span>
                 </Button>
-                <Button variant="secondary" size="md" className="min-h-11" onClick={advanceDay} disabled={!running || autoAdvance}>
-                  {C.hub.plusDay}
-                </Button>
-                <Button variant="ghost" size="sm" className="text-faint" onClick={advanceToNextStop} disabled={!running || autoAdvance}>
+                <Button variant="secondary" size="md" className="min-h-11" onClick={advanceToNextStop} disabled={!running || autoAdvance}>
                   {C.hub.skipTo(stopLabel)}
+                </Button>
+                <Button variant="ghost" size="md" className="min-h-11" onClick={advanceDay} disabled={!running || autoAdvance}>
+                  {C.hub.plusDay}
                 </Button>
               </>
             )}

@@ -11,6 +11,7 @@ import type { CareerSave } from "@/engine/career/types";
 import type { TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
+import { EventTeamButton } from "./EventRosters";
 import { Panel } from "@/components/ui/Panel";
 import type { SeedRow } from "./weekendView";
 
@@ -48,6 +49,7 @@ export function SeedList({
               <span className="display w-6 shrink-0 text-center text-[11px] font-bold text-faint">
                 #{r.seed}
               </span>
+              <EventTeamButton teamId={r.id} name={t.teams[r.id]?.name ?? r.id} className="flex-1">
               <OrgMark save={save} orgRef={r.id} size="xs" className="shrink-0" />
               <span
                 className={cx(
@@ -57,6 +59,7 @@ export function SeedList({
               >
                 {t.teams[r.id]?.name ?? r.id}
               </span>
+              </EventTeamButton>
               <span className="display shrink-0 text-xs font-bold text-sub">{T.record(r.wins, r.losses)}</span>
             </li>
           );

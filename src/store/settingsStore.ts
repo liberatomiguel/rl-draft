@@ -36,6 +36,8 @@ export interface SettingsState {
    *  `html.reduce-fx` (+ lite-fx); never stops an animation the game waits on. */
   reduceEffects: boolean;
   animSpeed: AnimSpeedKey;
+  /** Show the career cycle summary automatically; history remains available. */
+  careerTrainingReports: boolean;
   /** UI language (wired now; the PT-BR dictionary lands in the i18n pass). */
   lang: "en" | "pt";
 
@@ -48,6 +50,7 @@ const DEFAULTS = {
   soundVolume: 0.6,
   reduceEffects: false,
   animSpeed: "normal" as AnimSpeedKey,
+  careerTrainingReports: true,
   lang: "en" as const,
 };
 

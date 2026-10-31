@@ -75,6 +75,7 @@ import {
 } from "@/components/career/hub/hubShared";
 import { OrgMark } from "@/components/career/OrgMark";
 import { OrgSheet } from "@/components/career/OrgSheet";
+import { EventRosters, EventTeamButton, useEventRosterOpen } from "@/components/career/event/EventRosters";
 import { TeamStars } from "@/components/career/TeamStars";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -135,6 +136,10 @@ import {
 // ---------------------------------------------------------------------------
 
 export function EventScreen() {
+  return <EventRosters><EventScreenContent /></EventRosters>;
+}
+
+function EventScreenContent() {
   const mounted = useMounted();
   const save = useCareerSave();
   const C = useCareerCopy();
@@ -456,9 +461,8 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
               {C.event.watch}
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
-              className="text-faint"
+              variant="secondary"
+              size="lg"
               onClick={() => {
                 enterEvent(false);
                 simEvent();
@@ -492,6 +496,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
 // ---------------------------------------------------------------------------
 
 function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
+  const rosterOpen = useEventRosterOpen();
   const copy = useCopy();
   const C = useCareerCopy();
   const T = copy.TOURNAMENT_UI;
@@ -554,7 +559,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
 
   // The playback clock — ONE effect, paced by what is being revealed.
   useEffect(() => {
-    if (reduced || !running) return;
+    if (reduced || !running || rosterOpen) return;
     const P = CAREER_PLAYBACK;
     const tick = (ms: number, fn: () => void) => {
       timerRef.current = setTimeout(fn, ms / speed);
@@ -640,7 +645,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [reduced, running, anim, live, revealedRounds, rounds, t, speed, playEventRound, paused]);
+  }, [reduced, running, rosterOpen, anim, live, revealedRounds, rounds, t, speed, playEventRound, paused]);
 
   // Reduced motion / derived reveal state (never blank, never a timer).
   const effRevealed = reduced ? rounds.length : revealedRounds;
@@ -988,7 +993,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               series={center.round.series[center.si]}
               progress={centerMidReveal ? { game: live.game, beat: live.goal } : null}
               clockSpeed={speed}
-              clockPaused={!running}
+              clockPaused={!running || rosterOpen}
               clockSync={beatSyncRef}
               status={centerStatus}
               onClose={inspected ? () => setInspectKey(null) : undefined}
@@ -1343,7 +1348,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
                     {placementLabel}
                   </td>
                   <td className="py-1.5 pr-2">
-                    <span className="flex min-w-0 items-center gap-1.5">
+                    <EventTeamButton teamId={row.id} name={teamName} className="flex min-w-0 items-center gap-1.5">
                       <OrgMark save={save} orgRef={row.id} size="xs" className="shrink-0" />
                       <span
                         title={teamName}
@@ -1354,7 +1359,7 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
                       >
                         {teamName}
                       </span>
-                    </span>
+                    </EventTeamButton>
                     <span className={cx("mt-0.5 block truncate text-[10px] leading-tight sm:hidden", placementTone)}>
                       {placementLabel}
                     </span>

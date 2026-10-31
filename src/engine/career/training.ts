@@ -369,6 +369,15 @@ export function scrimCapRatio(): number {
  * (nearest its centre), else the one nearest the band; a stable float
  * rotates among the three best so the sparring varies.
  */
+export function prioritizeScrimVariety<T extends { ref: string }>(
+  candidates: readonly T[],
+  playedThisWeek: ReadonlySet<string>,
+  rotationFloat: number,
+): readonly T[] {
+  const fresh = candidates.filter(c => !playedThisWeek.has(c.ref));
+  return fresh.length > 0 && rotationFloat >= CAREER_SCRIM.weeklyRematchChance ? fresh : candidates;
+}
+
 export function pickScrimOpponent(
   cands: readonly { ref: string; gap: number }[],
   level: ScrimLevel,

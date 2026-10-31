@@ -29,6 +29,7 @@ import {
 import type { GameResult, SeriesResult, TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
+import { EventTeamButton } from "./EventRosters";
 import { Badge } from "@/components/ui/Badge";
 import { Panel } from "@/components/ui/Panel";
 import {
@@ -461,6 +462,7 @@ function TeamSide({
         align === "left" ? "sm:flex-row sm:text-left" : "sm:flex-row-reverse sm:text-right",
       )}
     >
+      <EventTeamButton teamId={teamId} name={name} className={cx("flex min-w-0 flex-col items-center gap-1.5", align === "left" ? "sm:flex-row" : "sm:flex-row-reverse")}>
       <OrgMark save={save} orgRef={teamId} size="md" className="shrink-0" />
       <div className="min-w-0">
         <p
@@ -473,6 +475,7 @@ function TeamSide({
         </p>
         <p className="hidden truncate text-[10px] text-faint sm:block">{players.join(" · ")}</p>
       </div>
+      </EventTeamButton>
     </div>
   );
 }

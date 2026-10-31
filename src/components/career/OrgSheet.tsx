@@ -12,7 +12,7 @@
 import { useCareerCopy } from "@/content/careerCopy";
 import { Modal } from "@/components/ui/Modal";
 import { CountryChip } from "@/components/ui/Badge";
-import { playerViewById } from "@/engine/career/development";
+import { ageOf, playerViewById } from "@/engine/career/development";
 import { isLocalRef, localRegionOf } from "@/engine/career/localScene";
 import type { CareerSave } from "@/engine/career/types";
 import { Badge } from "@/components/ui/Badge";
@@ -31,6 +31,7 @@ export function OrgSheet({
   onClose: () => void;
 }) {
   const C = useCareerCopy();
+  if (orgRef === "user") return <UserSheet save={save} onClose={onClose} />;
   if (orgRef && isLocalRef(orgRef)) return <LocalSheet save={save} orgRef={orgRef} onClose={onClose} />;
   const org = orgRef ? save.world.orgs[orgRef] : null;
   if (!org) return null;
@@ -85,6 +86,23 @@ export function OrgSheet({
       </div>
     </Modal>
   );
+}
+
+function UserSheet({ save, onClose }: { save: CareerSave; onClose: () => void }) {
+  const C = useCareerCopy();
+  const players = [...save.squad].sort((a, b) => Number(save.starterIds.includes(b.id)) - Number(save.starterIds.includes(a.id)));
+  return <Modal open onClose={onClose} title={save.identity.orgName}>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3"><OrgMark save={save} orgRef="user" size="lg" /><p className="text-sm font-semibold text-sub">{save.identity.region}</p></div>
+      <div><p className="kicker mb-2 text-[10px]">{C.orgSheet.roster}</p>
+        <ul className="divide-y divide-line rounded-lg border border-line">{players.map(p => <li key={p.id} className="flex items-center gap-2 px-3 py-2">
+          {p.country ? <CountryChip code={p.country} /> : null}<span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.name}</span>{!save.starterIds.includes(p.id) ? <Badge tone="neutral">{C.hub.squadSub}</Badge> : null}
+          <span className="text-xs text-faint">{C.player.age(ageOf(p.birthYear, save.clock.seasonIndex))}</span><span className="text-sm font-bold text-orange">{Math.round(p.overall)}</span>
+        </li>)}</ul>
+      </div>
+      <p className="text-xs text-faint">{C.orgSheet.coach}: <span className="font-semibold text-sub">{save.coach ? `${save.coach.name} · ${Math.round(save.coach.overall)}` : C.orgSheet.noCoach}</span></p>
+    </div>
+  </Modal>;
 }
 
 /** rc.2: a local amateur side — the same sheet, built from the procedural

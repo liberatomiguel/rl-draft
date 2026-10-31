@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 9;
+export const BALANCE_VERSION = 10;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1020,6 +1020,9 @@ export const CAREER_INSERTS = {
 
 export const CAREER_PRIZES = {
   pools: { t3: 2_000, t2: 10_000, qualifier: 6_000, regional: 40_000, major: 150_000, worlds: 600_000 },
+  /** Seasonal prize budgets and payouts use readable steps, independent of wage rounding. */
+  poolQuantum: { t3: 250, t2: 1_000, qualifier: 400, regional: 5_000, major: 10_000, worlds: 50_000 },
+  payoutQuantum: { t3: 50, t2: 100, qualifier: 50, regional: 100, major: 500, worlds: 1_000 },
   /**
    * v0.3: pools grow ×this^seasonIndex (esports money arrives as the scene
    * matures) — the income-side counterweight to salary inflation 1.08^N.
@@ -1090,6 +1093,8 @@ export const CAREER_UNOFFICIAL = {
   // rc.36.3: the local circuit is competition, rather than seven near-free wins.
   // Frozen at W4 as before; development can overtake it within the season.
   localSceneBand: [-1, 4] as const,
+  /** Local clubs develop from their original level, rather than matching every roster upgrade. null = full annual rebase. */
+  localSceneGrowthPerSeason: 1.5 as number | null,
   localScenePool: 8,
   t2RepGate: 30,
   t2OfferChance: 0.6,
@@ -1135,6 +1140,8 @@ export const CAREER_CHEMISTRY = {
  */
 export const CAREER_SCRIM = {
   maxPerWeek: 2,
+  /** Automatic picks prefer new weekly opponents; a rematch remains possible. */
+  weeklyRematchChance: 0.15,
   /** splitsTogether credit per scrim (chemistry accrual convention). */
   chemistryCredit: 0.05,
   /** Match-XP weeks granted, before the field-quality ramp of the opponent. */
@@ -2182,9 +2189,9 @@ export const CAREER_SPONSOR = {
    * measured on the probe's C10 / C11 (insolvency bands kept).
    */
   profiles: {
-    steady: { ceilingOfValue: 0.95, weeklyOfCeiling: 0.82, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, fineCapWeeks: 0, word: "likely", lengthSplits: 6 },
+    steady: { ceilingOfValue: 0.95, weeklyOfCeiling: 0.82, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.1, fineShare: 0, fineCapWeeks: 0, word: "likely", lengthSplits: 3 },
     balanced: { ceilingOfValue: 1.2, weeklyOfCeiling: 0.72, fixedShare: 0.15, fixedKind: "signing", bonusShare: 0.25, fineShare: 0.3, fineCapWeeks: 1, word: "even", lengthSplits: 3 },
-    bold: { ceilingOfValue: 1.5, weeklyOfCeiling: 0.66, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.6, fineCapWeeks: 2, word: "stretch", lengthSplits: 1 },
+    bold: { ceilingOfValue: 1.5, weeklyOfCeiling: 0.66, fixedShare: 0.2, fixedKind: "milestone", bonusShare: 0.45, fineShare: 0.6, fineCapWeeks: 2, word: "stretch", lengthSplits: 3 },
   } as const,
   /**
    * rc.35 — front S: the sponsor side of the progression ladder
@@ -3102,21 +3109,21 @@ export const CAREER_MATCH_CLOCK = {
   },
   /** Playback pacing — ms at 1× (÷ the speed toggle). */
   pacing: {
-    /** Regulation clock speed: an empty 5:00 runs in 1.2 s. */
-    regulationMsPerSecond: 4,
+    /** Regulation clock speed: an empty 5:00 runs in 1.5 s. */
+    regulationMsPerSecond: 5,
     /** The new game on the board (0 : 0, 5:00) before the clock starts. */
-    kickoffHoldMs: 350,
+    kickoffHoldMs: 450,
     /** The clock stops after every goal (replay + kickoff). */
-    goalHoldMs: 420,
+    goalHoldMs: 525,
     /** Tied at 0:00: the breath before the OVERTIME beat lands. */
-    regulationBuzzerMs: 300,
+    regulationBuzzerMs: 375,
     /** The OVERTIME beat on screen before the OT clock starts. */
-    overtimeIntroMs: 800,
+    overtimeIntroMs: 1_000,
     /** The OT clock run, log-scaled by OT length: 0:30 → min, 20:00 → max. */
-    overtimeRunMinMs: 1_600,
-    overtimeRunMaxMs: 3_500,
+    overtimeRunMinMs: 2_000,
+    overtimeRunMaxMs: 4_375,
     /** The golden goal holds the board before the game gap. */
-    goldenGoalLingerMs: 600,
+    goldenGoalLingerMs: 750,
     /**
      * Absolute ms (not ÷ speed) the clock settles BEFORE its beat lands,
      * covering a few frames of render latency: the clock stops on the goal's
@@ -3138,12 +3145,12 @@ export const CAREER_MATCH_CLOCK = {
  * user series' in-game beats (goals, OT) follow CAREER_MATCH_CLOCK.pacing.
  */
 export const CAREER_PLAYBACK = {
-  userGameGapMs: 650,
-  userSeriesLingerMs: 2_400,
-  aiSwissMs: 120,
-  aiPlayoffMs: 450,
-  roundGapMs: 1_300,
-  advanceMs: 500,
+  userGameGapMs: 800,
+  userSeriesLingerMs: 3_000,
+  aiSwissMs: 150,
+  aiPlayoffMs: 560,
+  roundGapMs: 1_625,
+  advanceMs: 625,
   speeds: [1, 2, 4] as const,
   /**
    * v0.3 FIFA-style autoplay: ms per auto-advanced day. The autopilot pauses

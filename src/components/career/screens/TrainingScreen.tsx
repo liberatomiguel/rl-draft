@@ -21,6 +21,7 @@
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CAREER_CALENDAR, CAREER_TRAINING } from "@/config/balance";
 import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
@@ -30,6 +31,7 @@ import type { StatKey } from "@/engine/types";
 import { clamp, cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { useMounted } from "@/store/useMounted";
+import { useSettings } from "@/store/settingsStore";
 import { coachTrainingProfileOf, playerEffectOf, trainingBlockOf } from "@/store/careerTraining";
 import {
   agePhase,
@@ -71,6 +73,12 @@ export function TrainingScreen() {
   const setTrainingPackage = useCareerStore((s) => s.setTrainingPackage);
   const setCoachPlans = useCareerStore((s) => s.setTrainingCoachPlans);
   const [editing, setEditing] = useState(false);
+  const router = useRouter();
+  const requestedEdit = useSearchParams().get("edit") === "1";
+  const showEditor = editing || requestedEdit;
+  const closeEditor = () => { setEditing(false); if (requestedEdit) router.replace("/career/training"); };
+  const showReports = useSettings((s) => s.careerTrainingReports);
+  const setSettings = useSettings((s) => s.set);
 
   const block = useMemo(() => (save ? trainingBlockOf(save) : null), [save]);
 
@@ -180,13 +188,13 @@ export function TrainingScreen() {
                 </span>
               ) : null}
             </div>
-            {running && !editing ? (
+            {running && !showEditor ? (
               <Button variant="secondary" size="md" className="min-h-11 w-full sm:w-auto" onClick={() => setEditing(true)}>
                 {Y.adjust}
               </Button>
             ) : null}
-            {running && editing ? (
-              <div className="border-t border-line pt-3">
+            {running && showEditor ? (
+              <div className="border-t border-line pt-3" data-training-editor="adjust">
                 <PlanPicker
                   key={`adjust:${save.clock.seasonIndex}:${block.period.startDay}`}
                   save={save}
@@ -198,9 +206,9 @@ export function TrainingScreen() {
                   soFar={soFar}
                   onSubmit={(p) => {
                     setTrainingPackage(p);
-                    setEditing(false);
+                    closeEditor();
                   }}
-                  onCancel={() => setEditing(false)}
+                  onCancel={closeEditor}
                 />
               </div>
             ) : null}
@@ -276,6 +284,8 @@ export function TrainingScreen() {
           </AppLink>
         </p>
       </Panel>
+
+      <Panel className="p-4"><Toggle checked={showReports} onChange={(on) => setSettings("careerTrainingReports", on)} label={Y.report.showAutomatic} hint={Y.report.historyHint} /></Panel>
 
       {/* 3 — the squad's growth */}
       <div>

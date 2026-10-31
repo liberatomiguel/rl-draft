@@ -249,8 +249,11 @@ describe("rc.34 ECO-04 — a sponsor decision (S4: three profiles, one tier, a d
 function renewalAtW31(seed: number, misses: number, rep = 30): CareerSave {
   let save = createCareerSave(INPUT, seed);
   save.reputation = rep;
-  save = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 0, day: DAYS_PER_SEASON } });
-  save = sign(save, "steady");
+  // A pre-rc.36.5 signed two-season contract keeps its original dates.
+  withConfig(CAREER_SPONSOR.profiles.steady, { lengthSplits: 6 }, () => {
+    save = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 0, day: DAYS_PER_SEASON } });
+    save = sign(save, "steady");
+  });
   expect(save.sponsor!.terms!.endsOn).toEqual({ seasonIndex: 2, day: firstDayOfWeek(31) });
   save = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 1, day: DAYS_PER_SEASON } });
   save.sponsor!.missedCount = misses;
@@ -350,7 +353,8 @@ describe("rc.34 ECO-04 — the deal: three dated parts (S1)", () => {
   });
 
   it("a goal reached pays its bonus — and a Bold deal's milestone with the first one", () => {
-    let save = sign(decisionAtW11(34_012), "bold");
+    let save!: CareerSave;
+    withConfig(CAREER_SPONSOR.profiles.bold, { lengthSplits: 1 }, () => { save = sign(decisionAtW11(34_012), "bold"); });
     const slot = slotOf(0, 2);
     save = withGoal(save, { slot, kind: "regionalFinish", count: 1, place: 8 });
     save.eventResults = [...save.eventResults, userResult(0, 2, 14, "regional", "top8")];
@@ -446,7 +450,8 @@ describe("rc.34 ECO-04 — the deal: three dated parts (S1)", () => {
   });
 
   it("a Steady deal that ran out of patience renews one tier lower (7-A)", () => {
-    let save = sign(decisionAtW11(34_018, 60), "steady");
+    let save!: CareerSave;
+    withConfig(CAREER_SPONSOR.profiles.steady, { lengthSplits: 6 }, () => { save = sign(decisionAtW11(34_018, 60), "steady"); });
     const tier = save.sponsor!.tier;
     // Two seasons from Split 2: six splits, the last settles on season 2's W11 boundary.
     const last = save.sponsor!.terms!.firstSlot + 5;
@@ -465,7 +470,7 @@ describe("rc.34 ECO-04 — the deal: three dated parts (S1)", () => {
 });
 
 describe("rc.34 ECO-04 — a signed deal keeps its figures (S1, M1's index)", () => {
-  it("a two-season deal pays the same weekly figure through the rollover; new offers carry the new season's money", () => {
+  it("a signed deal pays the same weekly figure through the rollover; new offers carry the new season's money", () => {
     let save = sign(decisionAtW11(34_021), "steady");
     const weekly = save.sponsor!.terms!.weekly;
     save = rolloverToNextSeason({ ...save, phase: "seasonReview", clock: { seasonIndex: 0, day: 224 } });
@@ -752,7 +757,8 @@ describe("rc.36 front S2 — the sponsor choice: 'Decide later' only, and what t
   });
 
   it("the season's fine tally passes from a deal that ended to the next offers — one cap a season for a run of one-split Bold deals; 'deal' restores rc.35", () => {
-    let save = sign(decisionAtW11(36_003), "bold");
+    let save!: CareerSave;
+    withConfig(CAREER_SPONSOR.profiles.bold, { lengthSplits: 1 }, () => { save = sign(decisionAtW11(36_003), "bold"); });
     save = withGoal(save, { slot: slotOf(0, 2), kind: "regionalFinish", count: 3, place: 1 });
     save.finances.balance = 1_000_000;
     const settled = mondayAfter(save, 20);

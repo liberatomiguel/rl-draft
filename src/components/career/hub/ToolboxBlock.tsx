@@ -148,7 +148,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
                 ) : <p className="text-xs font-semibold text-sub">{L.rung[rung.id]}</p>}
                 <p className="mt-0.5 text-[10px] text-faint">{rung.status === "locked" ? L.rep(rung.gate) : item ? note ?? priceOf(C, item) : L.rep(rung.gate)}</p>
               </div>
-              {item && rung.status !== "locked" ? <Button size="sm" variant={canBuy ? "primary" : "ghost"} className={canBuy ? "shadow-none" : undefined} disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
+              {item && rung.status !== "locked" && !["owned", "active", "used", "superseded"].includes(item.status) ? <Button size="sm" variant={canBuy ? "primary" : "ghost"} className={canBuy ? "shadow-none" : undefined} disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
             </li>
           );
         })}
@@ -198,9 +198,9 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         onClose={close}
         actions={
           <>
-            <Button variant="primary" className="min-h-11 shadow-none" disabled={Boolean(refusal) || ended} onClick={buy}>
+            {sheet && !["owned", "active", "used", "superseded"].includes(sheet.status) ? <Button variant="primary" className="min-h-11 shadow-none" disabled={Boolean(refusal) || ended} onClick={buy}>
               {sheet?.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}
-            </Button>
+            </Button> : null}
             <Button variant="ghost" className="min-h-11" onClick={close}>
               {C.toolbox.close}
             </Button>

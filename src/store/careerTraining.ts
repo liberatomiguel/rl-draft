@@ -42,6 +42,7 @@ import {
   paidSessionMultFor,
   periodOfDay,
   pickScrimOpponent,
+  prioritizeScrimVariety,
   resolveScrimLevel,
   sanitizePackage,
   scrimCapRatio,
@@ -378,6 +379,16 @@ export function acknowledgeTrainingReportFlow(input: CareerSave): TrainingFlowRe
   const save = clone(input);
   save.training!.reportSeen = reportKeyOf(last);
   return { save };
+}
+
+/** Continue repeats the reported plan even if a coach has opened the next cycle. */
+export function continueTrainingReportFlow(input: CareerSave): TrainingFlowResult {
+  const report = trainingReportOf(input);
+  if (!report) return { save: input };
+  const acknowledged = acknowledgeTrainingReportFlow(input);
+  return input.phase === "running" && report.package
+    ? setTrainingPackageFlow(acknowledged.save, report.package)
+    : acknowledged;
 }
 
 // ---------------------------------------------------------------------------
@@ -880,15 +891,20 @@ function packageScrimOpponent(
   const cands = scrimCandidatesOf(save, today, userRating);
   const f = derivedFloat(save.careerSeed, streams.gen("pkgScrim", `${save.clock.seasonIndex}:${day}`));
   const [lo, hi] = CAREER_SCRIM.levels[level].gap;
-  if (cands.some((c) => c.gap >= lo && c.gap <= hi)) {
-    const ref = pickScrimOpponent(cands, level, f);
-    if (ref) return { ref, rating: cands.find((c) => c.ref === ref)?.rating ?? userRating };
-  }
+  const played = new Set(save.scrimLog.filter(e => e.seasonIndex === save.clock.seasonIndex && e.day <= day && weekOfDay(e.day) === weekOfDay(day)).map(e => e.oppRef));
   const locals = localSceneRefs(save.identity.region, save.clock.seasonIndex).filter((r) => !today.has(r));
-  if (locals.length === 0) return null;
-  const ref = locals[Math.min(locals.length - 1, Math.floor(f * locals.length))];
   const rating = Math.min(96, Math.max(55, userRating + (lo + hi) / 2));
-  return { ref, rating, localAnchor: rating - localTeamOffset(ref, save.careerSeed) };
+  const pool = prioritizeScrimVariety(
+    [...cands.filter(c => c.gap >= lo && c.gap <= hi), ...locals.map(ref => ({ ref, rating, gap: (lo + hi) / 2 }))],
+    played,
+    derivedFloat(save.careerSeed, streams.gen("pkgScrimVariety", `${save.clock.seasonIndex}:${day}`)),
+  );
+  const orgs = pool.filter(c => !isLocalRef(c.ref));
+  const ref = orgs.length ? pickScrimOpponent(orgs, level, f) : pool[Math.min(pool.length - 1, Math.floor(f * pool.length))]?.ref;
+  if (!ref) return null;
+  return isLocalRef(ref)
+    ? { ref, rating, localAnchor: rating - localTeamOffset(ref, save.careerSeed) }
+    : { ref, rating: cands.find(c => c.ref === ref)?.rating ?? userRating };
 }
 
 /** A sparring partner's name (an org, or a side of the local scene). */

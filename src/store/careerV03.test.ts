@@ -20,6 +20,7 @@ import {
   moneyIndex,
   payLoanDown,
   prizeFor,
+  prizePoolPaidFor,
   repNeededForOverall,
   signableOverallCap,
 } from "@/engine/career/economy";
@@ -199,8 +200,11 @@ describe("v0.3 market value", () => {
     const s0 = prizeFor("regional", "champion", "swiss", "normal", 0);
     const s3 = prizeFor("regional", "champion", "swiss", "normal", 3);
     expect(s3).toBeGreaterThan(s0);
-    // rc.32 (M1, provisional): prizes ride the one season money index.
-    expect(s3 / s0).toBeCloseTo(moneyIndex(3, "prizes"), 1);
+    // rc.36.5: the total follows the index in rounded seasonal steps;
+    // placement payouts reconcile to that total rather than a raw percentage.
+    const pool0 = prizePoolPaidFor("regional", "swiss", "normal", 0);
+    const pool3 = prizePoolPaidFor("regional", "swiss", "normal", 3);
+    expect(pool3 / pool0).toBeCloseTo(moneyIndex(3, "prizes"), 1);
   });
 });
 

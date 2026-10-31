@@ -56,6 +56,7 @@ import {
   CAREER_WORLD,
 } from "@/config/balance";
 import { SITE } from "@/config/site";
+import { prioritizeScrimVariety } from "@/engine/career/training";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { playerNameBankFor } from "@/data/career/names";
 import { RESCUE_PARTNER_BRAND } from "@/data/career/sponsors";
@@ -278,6 +279,7 @@ import {
   fieldForEvent,
   LINEUP_SEATS,
   localSeedRowsFor,
+  localSceneSeasonRating,
   realOrgIntake,
   regionalSeedingFor,
   repairLegacyWorld,
@@ -1342,7 +1344,10 @@ export function processDayArrival(input: CareerSave): CareerSave {
     // RTW-05 (rc.33): never on a short squad (its empty seat rates 0) — the
     // freeze waits for the first regional Monday with three players.
     if (!save.competition.localAnchor && week >= FIRST_REGIONAL_WEEK && !squadIsShort(save)) {
-      save.competition.localAnchor = { region: save.identity.region, rating: localAnchorRatingFor(save) };
+      const live = localAnchorRatingFor(save);
+      const origin = save.competition.localOrigin ?? { region: save.identity.region, rating: live, seasonIndex };
+      save.competition.localOrigin = origin;
+      save.competition.localAnchor = { region: save.identity.region, rating: localSceneSeasonRating(live, origin, seasonIndex) };
     }
     // rc.30 (direct-8): the week's seeding is decided ONCE, here, and stored —
     // Saturday, Sunday, the lobby and HQ read this decision, never a re-seed.
@@ -3754,7 +3759,10 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   }
 
   // 4. Fresh competition + goals + clock; stars refresh.
+  const localOrigin = save.competition.localOrigin ?? (save.competition.localAnchor
+    ? { ...save.competition.localAnchor, seasonIndex: input.clock.seasonIndex } : null);
   save.competition = emptyCompetition();
+  if (localOrigin) save.competition.localOrigin = localOrigin;
   // rc.36 (UX-02): last season's target is read before the new goals replace it.
   const lastGoalMet = save.seasonGoals?.targetMet ?? null;
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
@@ -4983,7 +4991,9 @@ export function scrimOpponentFor(save: CareerSave): { ref: string; name: string 
     }))
     .sort((a, b) => a.gap - b.gap || a.ref.localeCompare(b.ref));
   const band = candidates.filter((c) => c.gap <= CAREER_SCRIM.ratingBand);
-  const pool = band.length > 0 ? band : candidates.slice(0, 4);
+  const played = new Set(save.scrimLog.filter(e => e.seasonIndex === save.clock.seasonIndex && e.day <= save.clock.day && weekOfDay(e.day) === weekOfDay(save.clock.day)).map(e => e.oppRef));
+  const pool = prioritizeScrimVariety(band.length > 0 ? band : candidates.slice(0, 4), played,
+    derivedFloat(save.careerSeed, streams.gen("scrimVariety", `${save.clock.seasonIndex}:${save.clock.day}`)));
   if (pool.length === 0) return null;
   const n = todaysScrimOpponents(save).size;
   const pick = Math.floor(

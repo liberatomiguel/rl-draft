@@ -584,6 +584,8 @@ export interface CompetitionState {
    * before rc.31 until their next Monday.
    */
   localAnchor?: LocalSceneAnchor | null;
+  /** Career-long reference for the local scene's own development; optional on old saves. */
+  localOrigin?: (LocalSceneAnchor & { seasonIndex: number }) | null;
 }
 
 /** RTW-01 (R49): the user's region and the team rating its local scene is rated around this season. */

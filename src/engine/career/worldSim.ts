@@ -1069,6 +1069,11 @@ export function regionMedianRating(world: WorldState, region: Region): number {
  * cups: it answers for the user's region until the freeze (the season's
  * W1–3 cups, and a pre-rc.31 save's first week) — the shipped R23 behaviour.
  */
+export function localSceneSeasonRating(liveRating: number, origin: { rating: number; seasonIndex: number }, seasonIndex: number): number {
+  const growth = CAREER_UNOFFICIAL.localSceneGrowthPerSeason;
+  return growth === null ? liveRating : Math.min(liveRating, origin.rating + Math.max(0, seasonIndex - origin.seasonIndex) * growth);
+}
+
 export function localAnchorFor(
   region: Region,
   input: { world: WorldState; competition: CompetitionState; liveUserRating?: number | null },

@@ -107,6 +107,7 @@ import { careerAvailableKeys, seedCareerNew, toolboxNewKey } from "@/engine/care
 import { markSeen } from "@/engine/newItems";
 import {
   acknowledgeTrainingReportFlow,
+  continueTrainingReportFlow,
   approveTrainingProposalFlow,
   keepBaseTrainingFlow,
   setCoachPlansFlow,
@@ -246,6 +247,7 @@ interface CareerStoreState {
   keepBaseTraining: () => void;
   /** rc.35 (front T): the cycle results modal was seen (never shows that report again). */
   acknowledgeTrainingReport: () => void;
+  continueTrainingReport: () => void;
   /** rc.36 (front T2): the hired coach plans and starts each cycle (on) or only recommends (off). */
   setTrainingCoachPlans: (on: boolean) => void;
   /** v2.0 (R33): answer the pending mid-week insert. */
@@ -511,6 +513,7 @@ export const useCareerStore = create<CareerStoreState>()(
         approveTrainingProposal: () => withResult(approveTrainingProposalFlow),
         keepBaseTraining: () => withResult(keepBaseTrainingFlow),
         acknowledgeTrainingReport: () => withResult(acknowledgeTrainingReportFlow),
+        continueTrainingReport: () => withResult(continueTrainingReportFlow),
         setTrainingCoachPlans: (on) => withResult((s) => setCoachPlansFlow(s, on)),
         resolveInsert: (key) => withResult((s) => resolveInsertFlow(s, key)),
 

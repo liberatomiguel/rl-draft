@@ -39,6 +39,7 @@ import { placementRankOf } from "@/components/career/event/eventPlayback";
 import { placementLabelOf } from "@/components/career/event/weekendView";
 import { TierChip, maxPointsOf } from "@/components/career/hub/hubShared";
 import { OrgMark } from "@/components/career/OrgMark";
+import { EventRosters, EventTeamButton, useEventRosterOpen } from "@/components/career/event/EventRosters";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -49,6 +50,10 @@ import { followBoardOf } from "@/components/career/event/followView";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 
 export function FollowScreen() {
+  return <EventRosters><FollowScreenContent /></EventRosters>;
+}
+
+function FollowScreenContent() {
   const mounted = useMounted();
   const save = useCareerSave();
   const C = useCareerCopy();
@@ -74,6 +79,7 @@ export function FollowScreen() {
 }
 
 function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
+  const rosterOpen = useEventRosterOpen();
   const C = useCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
   const router = useRouter();
@@ -91,11 +97,11 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
 
   // Watch: one round every followRoundMs (× the animation-speed scale); never under reduced motion.
   useEffect(() => {
-    if (mode !== "watch" || !playing || reduced || shown >= total) return;
+    if (mode !== "watch" || !playing || rosterOpen || reduced || shown >= total) return;
     const ms = Math.round(CAREER_SUNDAY.followRoundMs * ANIM_SCALE[animSpeed]);
     const timer = window.setTimeout(() => setShown((n) => Math.min(total, n + 1)), ms);
     return () => window.clearTimeout(timer);
-  }, [mode, playing, reduced, shown, total, animSpeed]);
+  }, [mode, playing, rosterOpen, reduced, shown, total, animSpeed]);
 
   const board = followBoardOf(f, revealed);
   const showPlayoffs = board.swissShown >= f.swiss.length && f.playoffs.length > 0;
@@ -115,10 +121,12 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
       <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-4">
         {f.teams.map((t) => (
           <li key={t.id} className="flex min-w-0 items-center gap-1.5 text-xs">
+            <EventTeamButton teamId={t.id} name={t.name} className="flex-1">
             <OrgMark save={save} orgRef={t.id} size="xs" className="shrink-0" />
             <span className="min-w-0 truncate text-ink" title={t.name}>
               {t.name}
             </span>
+            </EventTeamButton>
             {qualified.has(t.id) ? (
               <span title={C.event.qualifiedTagHint} className="display shrink-0 rounded bg-cyan/20 px-1 text-[9px] font-bold text-cyan">
                 {C.event.qualifiedTag}
@@ -131,15 +139,16 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   );
   // the round just revealed (watch)
   const roundPanel =
-    mode === "watch" && current?.stage === "swiss" && !done ? (
-      <Panel key={current.key} className="pop-in p-4">
-        <p className="kicker mb-2.5 text-[10px] text-cyan">{roundTitle(current.label)}</p>
-        <SeriesList save={save} f={f} series={current.series} />
+    mode === "watch" && !showPlayoffs && f.swiss.length > 0 && !done ? (
+      <Panel key={current?.key ?? "waiting"} className="pop-in p-4" data-follow-games>
+        <p className="kicker mb-2.5 text-[10px] text-cyan">{roundTitle(current?.label ?? 1)}</p>
+        {current?.stage === "swiss" ? <SeriesList save={save} f={f} series={current.series} /> : <p className="text-xs text-faint">{C.event.nextUp}…</p>}
       </Panel>
     ) : null;
   // The same standings and bracket used in a played event, with reveal-safe records.
   const boards = (
-    <div className={cx("grid items-start gap-4", f.swiss.length > 0 && showPlayoffs && "xl:grid-cols-[minmax(0,1fr)_320px]")}>
+    <div className={cx("grid items-start gap-4", f.swiss.length > 0 && (showPlayoffs || roundPanel) && "lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]")}>
+      {roundPanel}
       {showPlayoffs ? <div className="min-w-0"><CareerBracket save={save} t={board.tournament} revealed={board.revealed} liveKey={null} showUpcoming={false} layout="wide" /></div> : null}
       {f.swiss.length > 0 ? <div className="min-w-0"><CareerSwissStandings title={C.follow.swissStandings} save={save} t={board.tournament} records={board.records} throughRound={board.swissShown} /></div> : null}
     </div>
@@ -172,10 +181,10 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
                       {label}
                     </td>
                     <td className="py-1.5 pr-2">
-                      <span className="flex min-w-0 items-center gap-1.5">
+                      <EventTeamButton teamId={row.ref} name={nameOf(row.ref)} className="flex min-w-0 items-center gap-1.5">
                         <OrgMark save={save} orgRef={row.ref} size="xs" className="shrink-0" />
                         <span className="min-w-0 truncate text-ink">{row.name}</span>
-                      </span>
+                      </EventTeamButton>
                       <span className="mt-0.5 block truncate text-[10px] leading-tight text-sub sm:hidden">{label}</span>
                     </td>
                     {showPoints ? (
@@ -220,10 +229,12 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
             <div className="min-w-0">
               <p className="kicker !text-[9px] text-amber-300">{C.follow.champion}</p>
               <p className="flex min-w-0 items-center gap-2">
+                <EventTeamButton teamId={f.champion} name={nameOf(f.champion)}>
                 <OrgMark save={save} orgRef={f.champion} size="sm" className="shrink-0" />
                 <span className="display min-w-0 truncate text-2xl font-bold uppercase tracking-wide text-ink">
                   {nameOf(f.champion)}
                 </span>
+                </EventTeamButton>
               </p>
             </div>
           </div>
@@ -262,7 +273,6 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
       </Panel>
 
       {boards}
-      {roundPanel}
       {resultsPanel}
       {fieldPanel}
 
@@ -284,17 +294,17 @@ function SeriesList({ save, f, series }: { save: CareerSave; f: FollowEventState
         const winner = followWinnerOf(s);
         return (
           <li key={`${s.a}-${s.b}`} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg border border-line bg-white/[0.03] px-2 py-1.5 text-xs">
-            <span className="flex min-w-0 items-center gap-1.5">
+            <EventTeamButton teamId={s.a} name={nameOf(s.a)} className="flex min-w-0 items-center gap-1.5">
               <OrgMark save={save} orgRef={s.a} size="xs" className="shrink-0" />
               <span className={cx("min-w-0 truncate", winner === s.a ? "font-bold text-ink" : "text-sub")}>{nameOf(s.a)}</span>
-            </span>
+            </EventTeamButton>
             <span className="display shrink-0 rounded bg-black/30 px-2 py-0.5 text-sm font-bold tabular-nums text-ink">
               {s.sa}–{s.sb}
             </span>
-            <span className="flex min-w-0 items-center justify-end gap-1.5">
+            <EventTeamButton teamId={s.b} name={nameOf(s.b)} className="flex min-w-0 items-center justify-end gap-1.5">
               <span className={cx("min-w-0 truncate text-right", winner === s.b ? "font-bold text-ink" : "text-sub")}>{nameOf(s.b)}</span>
               <OrgMark save={save} orgRef={s.b} size="xs" className="shrink-0" />
-            </span>
+            </EventTeamButton>
           </li>
         );
       })}

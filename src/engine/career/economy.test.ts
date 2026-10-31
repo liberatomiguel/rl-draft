@@ -139,15 +139,16 @@ describe("prizeFor", () => {
   const difficulties: CareerDifficulty[] = ["easy", "normal", "hard"];
 
   // rc.32 (M5, provisional): the champion's share is the active table's (28 %; rc.31: 30 %).
-  it("regional champion pays the table's champion share of the pool × prizeMult", () => {
+  it("regional champion follows the placement table within rounding, with distinct difficulty budgets", () => {
     const pool = (prizeTables().swiss16.champion / 100) * 40_000;
     expect(prizeFor("regional", "champion", "swiss", "normal")).toBe(quantize(pool));
-    expect(prizeFor("regional", "champion", "swiss", "easy")).toBe(
-      quantize(pool * CAREER_ECONOMY.prizeMult.easy),
-    );
-    expect(prizeFor("regional", "champion", "swiss", "hard")).toBe(
-      quantize(pool * CAREER_ECONOMY.prizeMult.hard),
-    );
+    const normal = prizeFor("regional", "champion", "swiss", "normal");
+    expect(prizeFor("regional", "champion", "swiss", "easy")).toBeGreaterThan(normal);
+    expect(prizeFor("regional", "champion", "swiss", "hard")).toBeLessThan(normal);
+    for (const difficulty of difficulties) {
+      const paid = prizePoolPaidFor("regional", "swiss", difficulty);
+      expect(Math.abs(prizeFor("regional", "champion", "swiss", difficulty) / paid - prizeTables().swiss16.champion / 100)).toBeLessThan(0.03);
+    }
   });
 
   it("every swiss16 placement pays > 0 at every difficulty", () => {

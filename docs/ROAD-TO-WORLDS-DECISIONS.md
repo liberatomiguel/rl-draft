@@ -1952,6 +1952,27 @@ R92. **Paid endgame evidence and stronger advanced support (rc.36.4).**
      CAREER-ENDGAME-rc36-4.md records evidence; ROADMAP-NEXT-2026-10-31.md
      plans remaining packages only. Gate 3b stays open; no main deploy.
 
+R93. **31/10 playtest follow-up (rc.36.5).**
+     Miguel corrects the news typography: retain the game's identity, distinct
+     through layout/blue accents. Slow career playback ~25% in duration;
+     Skip secondary, +1 day tertiary, Instant result blue secondary. Prefer
+     fresh weekly scrim opponents, occasional rematches (15% full-pool
+     allowance), same-day exclusion. Cycle Continue repeats even with coach,
+     Change opens editing, persisted automatic-report opt-out/re-enable.
+     Team roster inspection throughout events/results, pausing playback;
+     spectator Swiss games left/standings right. Clear coach gates; no Buy
+     for owned/used progression. New sponsor profiles all three splits;
+     legacy signed/quoted terms survive. Seasonal prizes grow in round tier
+     steps, exact advertised/paid totals, all placements increase; preserve
+     explicit rc31 rollback. Local annual rebasing was absorbing upgrades:
+     retain a local origin, own growth capped at 1.5/year, current freezes
+     preserved. 126 three-season careers + 8 six-season SAM/Normal/prospect
+     careers isolate this local change under the same new finance rules.
+     S1 identical in all 63 pairs; SAM first Major S6/S6/none/S4 → S4/S4/S6/S4.
+     Not Miguel's actual save; regional and Worlds-title pacing stay open.
+     BALANCE_VERSION 10; additive metadata/settings only. Gate 3b stays open,
+     no Etapa 4–6 features/main deploy. CAREER-FEEDBACK-rc36-5.md.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

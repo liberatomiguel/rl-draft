@@ -180,7 +180,9 @@ export function CoachHireCard({
   const M = C.market;
   const K = C.training.cycle.coach;
   return (
-    <div className="flex flex-col rounded-xl border border-line bg-white/[0.02] p-3">
+    <div className={cx("relative flex flex-col rounded-xl border p-3", lockedNote ? "border-line bg-black/25" : "border-line bg-white/[0.02]")} data-coach-locked={Boolean(lockedNote)}>
+      {lockedNote ? <div className="mb-3 flex items-center gap-2 rounded-lg border border-orange/25 bg-orange/5 px-2.5 py-2 text-xs font-semibold text-orange-bright"><LockIcon className="h-4 w-4 shrink-0" />{lockedNote}</div> : null}
+      <div className={cx("flex flex-1 flex-col", lockedNote && "opacity-40 grayscale")}>
       <div className="flex items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue/25 bg-blue/[0.05] text-blue-bright">
           <WhistleIcon className="h-4 w-4" />
@@ -202,18 +204,14 @@ export function CoachHireCard({
         <span>{K.wage}</span>
         <span className="ml-auto text-sm font-bold text-ink">{wageLabel(C, coach.salaryPerSplit)}</span>
       </p>
-      {lockedNote ? (
-        <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-faint">
-          <LockIcon className="h-3.5 w-3.5 shrink-0" />
-          {lockedNote}
-        </p>
-      ) : null}
+      </div>
       <button
         type="button"
         disabled={disabled || Boolean(lockedNote)}
         onClick={onHire}
-        className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-blue/35 bg-blue/[0.06] px-4 text-xs font-semibold text-blue-bright transition hover:bg-blue/15 disabled:opacity-40"
+        className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-blue/35 bg-blue/[0.06] px-4 text-xs font-semibold text-blue-bright transition hover:bg-blue/15 disabled:cursor-not-allowed disabled:opacity-40"
       >
+        {lockedNote ? <LockIcon className="h-3.5 w-3.5" /> : null}
         {M.hireCoach}
       </button>
     </div>

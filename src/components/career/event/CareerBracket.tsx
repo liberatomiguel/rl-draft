@@ -24,6 +24,7 @@ import type { PlayoffRoundName, PlayoffState, SeriesResult } from "@/engine/type
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
+import { EventTeamButton } from "./EventRosters";
 import { Panel } from "@/components/ui/Panel";
 
 /** Only presentation fields are required; compact spectator records never re-simulate. */
@@ -228,11 +229,11 @@ function BracketCell({
     const seed = teamId && seedOf ? seedOf(teamId) : null;
     return (
       <p className={cx("flex items-center gap-1.5 py-0.5 text-xs", won === false && "opacity-45")}>
-        {teamId ? (
+        {teamId ? <EventTeamButton teamId={teamId} name={team?.name ?? teamId} className="flex-1">
           <OrgMark save={save} orgRef={teamId} size="xs" className="shrink-0" />
-        ) : (
+          <span className={cx("min-w-0 flex-1 truncate", teamId === "user" ? "font-bold text-orange-bright" : "text-ink")}>{team?.name ?? tbdLabel}</span>
+        </EventTeamButton> : <>
           <span className="h-4 w-4 shrink-0 rounded bg-white/5" aria-hidden />
-        )}
         <span
           className={cx(
             "min-w-0 flex-1 truncate",
@@ -241,13 +242,14 @@ function BracketCell({
         >
           {team?.name ?? tbdLabel}
         </span>
+        </>}
         {seed !== null ? (
           <span className="display shrink-0 text-[9px] font-bold text-faint">#{seed}</span>
         ) : null}
         {score !== null ? (
-          <span className={cx("display shrink-0 font-bold", won ? "text-good" : "text-sub")}>
+          <button type="button" disabled={!onClick} onClick={onClick} className={cx("display shrink-0 rounded px-1 font-bold hover:bg-white/10", won ? "text-good" : "text-sub")}>
             {score}
-          </span>
+          </button>
         ) : null}
       </p>
     );
@@ -281,15 +283,8 @@ function BracketCell({
   const className = cx(
     "w-full rounded-lg border bg-white/[0.03] px-2.5 py-1.5 text-left transition-colors",
     outline,
-    onClick && "cursor-pointer hover:bg-white/[0.06]",
     live && "bg-orange/8",
   );
 
-  return onClick ? (
-    <button type="button" onClick={onClick} className={cx(className, "pop-in")}>
-      {body}
-    </button>
-  ) : (
-    <div className={className}>{body}</div>
-  );
+  return <div className={cx(className, onClick && "pop-in")}>{body}</div>;
 }

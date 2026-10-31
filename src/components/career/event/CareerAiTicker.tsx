@@ -13,6 +13,7 @@ import type { CareerSave } from "@/engine/career/types";
 import type { SeriesResult, TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
+import { EventTeamButton } from "./EventRosters";
 import { Panel } from "@/components/ui/Panel";
 
 export interface TickerItem {
@@ -51,6 +52,7 @@ export function CareerAiTicker({
                 {item.label}
               </span>
               <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                <EventTeamButton teamId={s.teamAId} name={t.teams[s.teamAId]?.name ?? s.teamAId} className="flex-1 justify-end">
                 <OrgMark save={save} orgRef={s.teamAId} size="xs" />
                 <span
                   className={cx(
@@ -60,9 +62,11 @@ export function CareerAiTicker({
                 >
                   {t.teams[s.teamAId]?.name ?? s.teamAId}
                 </span>
-                <span className="display shrink-0 rounded bg-white/6 px-1.5 py-0.5 text-[11px] font-bold text-ink">
+                </EventTeamButton>
+                <button type="button" disabled={!onInspect} onClick={() => onInspect?.(item.key)} aria-label={C.event.matchCenter} className="display shrink-0 rounded bg-white/6 px-1.5 py-0.5 text-[11px] font-bold text-ink hover:bg-white/10">
                   {s.score[0]}–{s.score[1]}
-                </span>
+                </button>
+                <EventTeamButton teamId={s.teamBId} name={t.teams[s.teamBId]?.name ?? s.teamBId} className="flex-1">
                 <span
                   className={cx(
                     "min-w-0 flex-1 truncate text-[11px]",
@@ -72,6 +76,7 @@ export function CareerAiTicker({
                   {t.teams[s.teamBId]?.name ?? s.teamBId}
                 </span>
                 <OrgMark save={save} orgRef={s.teamBId} size="xs" />
+                </EventTeamButton>
               </span>
               {s.upset ? (
                 <span className="display shrink-0 rounded bg-amber-400/15 px-1 text-[8px] font-bold uppercase tracking-wider text-amber-300">
@@ -86,17 +91,7 @@ export function CareerAiTicker({
           );
           return (
             <li key={item.key}>
-              {onInspect ? (
-                <button
-                  type="button"
-                  onClick={() => onInspect(item.key)}
-                  className={cx(rowClass, "transition-colors hover:bg-white/[0.05]")}
-                >
-                  {row}
-                </button>
-              ) : (
-                <div className={rowClass}>{row}</div>
-              )}
+              <div className={rowClass}>{row}</div>
             </li>
           );
         })}

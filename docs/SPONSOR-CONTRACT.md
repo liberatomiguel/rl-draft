@@ -1,5 +1,10 @@
 # Road to Worlds — the sponsor contract (ECO-04, with ECO-05's caps)
 
+> **Current amendment, rc.36.5 (31/10 chat, R93):** new Steady/Balanced/Bold
+> offers all run for three splits (one season), so their maximum totals are
+> compared over the same horizon. Existing signed/quoted terms retain their
+> dates and values. Earlier duration examples below are historical.
+
 > **APPROVED (Gate 3a, 30/10: decisions 1–5 A, 6-B, 7-A, adjusted to
 > ECO-07/08) and BUILT in rc.34** (ROAD-TO-WORLDS-DECISIONS R76, R80; the
 > values are Claude's, behind `CAREER_SPONSOR`, tested at Gate 3b). Since

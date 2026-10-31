@@ -25,6 +25,36 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Added / Changed — rc.36.5, playtest corrections and local progression (R93)
+- Restore the game's fonts/colours in news notices, keeping their distinct
+  editorial header/date/subject. Career match presentation lasts about 25%
+  longer at 1×. HQ Skip is secondary blue; +1 day tertiary. Instant result
+  is secondary blue. Weekly scrims prefer fresh opponents with legal rematches.
+- Cycle results: primary Continue repeats the reported package even with a
+  planning coach; secondary Change opens the editor. Persisted opt-out of
+  automatic results, re-enabled in Training; history stays available.
+- Spectator Swiss games left, standings right; team names/crests open rosters
+  in live events, standings, brackets and results. Inspection pauses playback.
+- Locked coaches visibly grey/locked; purchased progression items and used
+  camps have no Buy action. Full evidence: CAREER-FEEDBACK-rc36-5.md.
+
+### Balance / Fixed — rc.36.5
+- Local strength rebased to the user's current squad each season, erasing
+  relative progress. Persist a career-long local origin and cap its yearly
+  growth at 1.5; preserve the current season's frozen field on existing saves.
+  63 paired three-season starts, plus four paired six-season SAM/Normal/
+  prospect careers. Gate 3b remains open; no end-to-end title pacing claim.
+- Steady's total exceeded Balanced partly because the contracts lasted
+  6/3/1 splits. New profiles all last 3 splits; signed/legacy terms remain.
+- Compounded prizes produced irregular amounts and rounding plateaus.
+  Round annual pools/payouts by tier, increase each season and reconcile all
+  placements to the exact displayed pool. Legacy rollback modes preserved.
+- Cycle repeat was disabled by an already-started coach plan; Continue now
+  acknowledges/repeats atomically, without duplicate XP or completion pay.
+- Scrim exclusion covered only today; automatic picks now check the week.
+  Buy was rendered unconditionally for unlocked owned items; omit it.
+- BALANCE_VERSION 9 → 10; no save-key/version reset or production deployment.
+
 ### Added / Changed — rc.36.4, paid endgame coverage and late benefits (R92)
 - Complete paired 3 difficulties × 3 founding rosters × 7 regions matrix,
   plus 14 paired Normal/prospect careers; actual purchases, maintenance,

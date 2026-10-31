@@ -179,12 +179,10 @@ export function prizeFor(
   /** v0.3: pools grow with the season (rc.32 M1: the money index; default 0 = season X). */
   seasonIndex = 0,
 ): number {
-  const pool = CAREER_PRIZES.pools[tier] * moneyIndex(seasonIndex, "prizes");
   const pct = prizePctFor(placement, format);
-  const raw = pool * (pct / 100) * CAREER_ECONOMY.prizeMult[difficulty];
-  const quantized = quantize(raw);
-  if (quantized === 0 && raw > 0) return CAREER_ECONOMY.roundQuantum;
-  return quantized;
+  const schedule = prizeScheduleFor(tier, format, difficulty, seasonIndex);
+  const key = Object.keys(schedule).find(p => prizePctFor(p as Placement, format) === pct);
+  return key ? schedule[key] : 0;
 }
 
 /**
@@ -200,6 +198,58 @@ const PLACEMENTS_BY_FORMAT: Record<CareerEventFormat, Partial<Record<Placement, 
 };
 
 /**
+ * A season's complete prize table. Rounded pools grow every season; every
+ * place also grows by at least one payout step. Reconcile rounding against
+ * the first placement so the advertised budget is exactly the amount paid.
+ * Existing ledgers/results are never rewritten.
+ */
+export function prizeScheduleFor(
+  tier: EventTier, format: CareerEventFormat, difficulty: CareerDifficulty, seasonIndex = 0,
+): Record<string, number> {
+  const placements = Object.entries(PLACEMENTS_BY_FORMAT[format]) as [Placement, number][];
+  if (CAREER_PRIZES.tables === "rc31" || CAREER_ECONOMY.indexMode === "rc31") {
+    const pool = CAREER_PRIZES.pools[tier] * moneyIndex(seasonIndex, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
+    return Object.fromEntries(placements.map(([p]) => {
+      const raw = pool * prizePctFor(p, format) / 100;
+      return [p, raw > 0 ? Math.max(CAREER_ECONOMY.roundQuantum, quantize(raw)) : 0];
+    }));
+  }
+  const quantum = CAREER_PRIZES.payoutQuantum[tier];
+  const firstCount = placements[0][1];
+  // Swiss-only pays groups of eight: the total must be divisible by eight steps.
+  const gcd = (a: number, b: number): number => b ? gcd(b, a % b) : a;
+  const groupStep = firstCount * quantum;
+  const configuredStep = CAREER_PRIZES.poolQuantum[tier];
+  const poolStep = configuredStep * groupStep / gcd(configuredStep, groupStep);
+  let previous: Record<string, number> | null = null;
+  let previousPool = 0;
+  for (let season = 0; season <= Math.max(0, Math.floor(seasonIndex)); season++) {
+    const minimum = Object.fromEntries(placements.map(([p]) => [p, previous ? previous[p] + quantum : quantum]));
+    const minimumPool = placements.reduce((sum, [p, count]) => sum + minimum[p] * count, 0);
+    const rawPool = CAREER_PRIZES.pools[tier] * moneyIndex(season, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
+    const pool = Math.max(Math.round(rawPool / poolStep) * poolStep,
+      previousPool + poolStep, Math.ceil(minimumPool / poolStep) * poolStep);
+    const prizes = Object.fromEntries(placements.map(([p]) => [p,
+      Math.max(minimum[p], Math.round(pool * prizePctFor(p, format) / 100 / quantum) * quantum)]));
+    const [first] = placements[0];
+    let rest = placements.slice(1).reduce((sum, [p, count]) => sum + prizes[p] * count, 0);
+    // A minimum can overrule a rounded percentage. Leave room for the first
+    // place, reducing other rounded shares only as far as their own minimum.
+    for (const [p, count] of placements.slice(1)) {
+      const excess = rest + minimum[first] * firstCount - pool;
+      if (excess <= 0) break;
+      const cut = Math.min(prizes[p] - minimum[p], Math.ceil(excess / count / quantum) * quantum);
+      prizes[p] -= cut;
+      rest -= cut * count;
+    }
+    prizes[first] = (pool - rest) / firstCount;
+    previous = prizes;
+    previousPool = pool;
+  }
+  return previous!;
+}
+
+/**
  * rc.29 (CAR-08): an event's REAL prize pool — every finishing place's
  * prizeFor summed over the field (season growth, difficulty and the $50
  * rounding included), so the figure a lobby advertises is what the event pays.
@@ -210,9 +260,10 @@ export function prizePoolPaidFor(
   difficulty: CareerDifficulty,
   seasonIndex = 0,
 ): number {
+  const schedule = prizeScheduleFor(tier, format, difficulty, seasonIndex);
   let total = 0;
   for (const [placement, count] of Object.entries(PLACEMENTS_BY_FORMAT[format])) {
-    total += (count ?? 0) * prizeFor(tier, placement as Placement, format, difficulty, seasonIndex);
+    total += (count ?? 0) * schedule[placement];
   }
   return total;
 }

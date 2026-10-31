@@ -15,6 +15,7 @@ import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
+import { EventTeamButton } from "./EventRosters";
 import { Panel } from "@/components/ui/Panel";
 import type { DerivedRecord } from "./eventPlayback";
 
@@ -97,7 +98,7 @@ export function CareerSwissStandings({
                 )}
               >
                 <td className="py-1.5 pr-2">
-                  <span className="flex min-w-0 items-center gap-1.5">
+                  <EventTeamButton teamId={teamId} name={team?.name ?? teamId} className="flex min-w-0 items-center gap-1.5">
                     <OrgMark save={save} orgRef={teamId} size="xs" className="shrink-0" />
                     <span
                       title={team?.name ?? teamId}
@@ -118,7 +119,7 @@ export function CareerSwissStandings({
                         {C.event.eliminatedTag}
                       </span>
                     ) : null}
-                  </span>
+                  </EventTeamButton>
                 </td>
                 <td className="display whitespace-nowrap py-1.5 text-center font-bold text-ink">
                   {r.wins}–{r.losses}
@@ -140,10 +141,12 @@ export function CareerSwissStandings({
       {nextUpRef ? (
         <div className="pop-in mt-3 flex items-center gap-2 rounded-lg border border-blue/35 bg-blue/5 px-2.5 py-2">
           <span className="kicker shrink-0 !text-[9px] text-blue-bright">{C.event.nextUp}</span>
+          <EventTeamButton teamId={nextUpRef} name={t.teams[nextUpRef]?.name ?? nextUpRef}>
           <OrgMark save={save} orgRef={nextUpRef} size="xs" />
           <span className="display min-w-0 truncate text-xs font-bold uppercase text-ink">
             {t.teams[nextUpRef]?.name ?? nextUpRef}
           </span>
+          </EventTeamButton>
         </div>
       ) : null}
     </Panel>

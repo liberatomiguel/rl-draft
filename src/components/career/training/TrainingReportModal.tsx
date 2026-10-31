@@ -14,6 +14,7 @@
  * and never repeats. It waits while a money notice is up.
  */
 
+import { useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { useCopy } from "@/content/copy";
 import { seasonLabelFor } from "@/engine/career/calendar";
@@ -21,6 +22,7 @@ import { cx } from "@/lib/util";
 import { moneyNoticeOf } from "@/store/careerFlow";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { coachPlansOf, trainingReportOf } from "@/store/careerTraining";
+import { useSettings } from "@/store/settingsStore";
 import { buttonClass, Button } from "@/components/ui/Button";
 import { AppLink } from "@/components/ui/AppLink";
 import { Modal } from "@/components/ui/Modal";
@@ -40,30 +42,34 @@ export function TrainingReportModal() {
   const t = useCopy();
   const save = useCareerStore(selectActiveSave);
   const acknowledge = useCareerStore((s) => s.acknowledgeTrainingReport);
-  const setTrainingPackage = useCareerStore((s) => s.setTrainingPackage);
+  const continueReport = useCareerStore((s) => s.continueTrainingReport);
+  const showReports = useSettings((s) => s.careerTrainingReports);
+  const setSettings = useSettings((s) => s.set);
+  const [dontShow, setDontShow] = useState(false);
   const report = save ? trainingReportOf(save) : null;
-  if (!save || !report || moneyNoticeOf(save)) return null;
+  if (!showReports || !save || !report || moneyNoticeOf(save)) return null;
+  const remember = () => { if (dontShow) setSettings("careerTrainingReports", false); setDontShow(false); };
+  const dismiss = () => { remember(); acknowledge(); };
   const Y = C.training.cycle;
   const R = Y.report;
   const objective = report.package?.objective ?? null;
   const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub", ring: "border-line", bg: "bg-white/[0.02]" };
   const avg = reportAvgOf(report);
   const completion = reportCompletionOf(report);
-  const canRepeat = save.phase === "running" && !save.training?.plan?.package && report.package !== null;
+  const canRepeat = save.phase === "running" && report.package !== null;
   const coachRuns = coachPlansOf(save) && Boolean(save.training?.plan?.package) && save.coach;
   return (
     <Modal
       open
       wide
       title={R.title(report.periodIndex + 1, seasonLabelFor(report.seasonIndex))}
-      onClose={acknowledge}
+      onClose={dismiss}
       actions={
         <div className="flex w-full flex-wrap justify-start gap-2">
-          {report.package ? <Button variant="primary" size="md" className="min-h-11" disabled={!canRepeat} onClick={() => { if (!canRepeat) return; acknowledge(); setTrainingPackage(report.package); }}>{Y.restart}</Button> : null}
-          <AppLink href="/career/training" className={cx(buttonClass("secondary", "md"), "min-h-11")} onClick={acknowledge}>
+          <Button variant="primary" size="md" className="min-h-11" disabled={!canRepeat} onClick={() => { remember(); continueReport(); }}>{R.close}</Button>
+          <AppLink href="/career/training?edit=1" className={cx(buttonClass("secondary", "md"), "min-h-11")} onClick={dismiss}>
             {R.planNext}
           </AppLink>
-          <Button variant="ghost" size="md" className="min-h-11" onClick={acknowledge}>{R.close}</Button>
         </div>
       }
     >
@@ -91,6 +97,10 @@ export function TrainingReportModal() {
           {R.coachNext(save.coach.name)}
         </p>
       ) : null}
+      <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-2 border-t border-line pt-3 text-xs text-sub">
+        <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow(e.target.checked)} className="h-4 w-4 accent-orange" />
+        {R.dontShowAgain}
+      </label>
     </Modal>
   );
 }
