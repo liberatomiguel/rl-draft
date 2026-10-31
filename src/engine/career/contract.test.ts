@@ -305,7 +305,7 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
     return [...seen.values()];
   }
 
-  it("the rc.33 reproductions: a $100/wk ask can be lowered, and lowering his share raises the wage instead of making him counter", () => {
+  it("a $100/wk ask can be lowered; reducing the share keeps the offered wage", () => {
     // (a) The founder's renewal: $1,100/split ($100 a week), flex 0.951.
     const a = answer(1_100, 0, 0.951);
     expect(a.zone.topWeekly).toBe(100);
@@ -319,8 +319,8 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
     const less = talkPressFor(b, "share", -1)!;
     const after = answer(21_350, 7, 0.99, less);
     expect(after.offer.sharePct).toBe(6);
-    expect(after.offer.weekly).toBe(2_000 + b.zone.pointWeekly);
-    expect(after.accepted).toBe(true);
+    expect(after.offer.weekly).toBe(2_000);
+    expect(after.odds).toBeLessThanOrEqual(b.odds);
     // rc.33's press (the wage kept) is still answered — a counter when it falls under his floor — but the sheet never makes it.
     expect(answer(21_350, 7, 0.99, { weekly: 2_000, sharePct: 6 }).accepted).toBe(after.zone.floorWeekly <= 2_000);
   });
@@ -384,8 +384,8 @@ describe("rc.34 front I — both levers always move (Miguel 31/10: \"sometimes y
                 expect(Math.abs(b.offer.weekly - a.offer.weekly)).toBeGreaterThanOrEqual(q);
               } else {
                 expect(b.offer.sharePct - a.offer.sharePct).toBe(dir);
-                if (talkAtFullAsk(a)) {
-                  // At his full ask the share trades against the wage: the offer stays his full ask.
+                if (talkAtFullAsk(a) && dir > 0) {
+                  // At his full ask an increase trades against the wage: the offer stays his full ask.
                   expect(a.offer.weekly - b.offer.weekly).toBe(dir * a.zone.pointWeekly);
                   expect(b.accepted).toBe(a.accepted);
                 } else {
@@ -612,6 +612,22 @@ describe("rc.35 front N — under the zone, the signing bonus and the contract l
     expect(withShare.zone.topWeekly).toBe(none.zone.topWeekly - 2 * none.zone.pointWeekly);
     const set = talkSetFor(none, "share", 2);
     expect(talk({ offer: set }).accepted).toBe(true);
+  });
+});
+
+describe("contract controls — reductions never compensate wages", () => {
+  it("zeroing a large requested bonus lowers odds at the same offered wage", () => {
+    const input = { ask: { wagePerSplit: 12_000, sharePct: 4, bonus: 10_000 }, flex: 0.98, minWagePerSplit: 250, lengthSeasons: 1 };
+    const atAsk = negotiationAnswerFor(input);
+    const reduced = talkSetFor(atAsk, "bonus", 0);
+    expect(reduced.weekly).toBe(atAsk.offer.weekly);
+    const after = negotiationAnswerFor({ ...input, offer: reduced });
+    expect(after.offer.bonus).toBe(0);
+    expect(after.odds).toBeLessThan(0.5);
+    expect(after.worth).toBeLessThan(atAsk.worth);
+    const pressed = talkPressFor(atAsk, "bonus", -1)!;
+    expect(pressed.weekly).toBe(atAsk.offer.weekly);
+    expect(pressed.bonus).toBeLessThan(atAsk.offer.bonus);
   });
 });
 

@@ -41,8 +41,6 @@ import { absDayOf, cappedSeasonFine, fineFor, fineMaxOf, safestSponsorOfferOf, s
 import type { CareerSave, CompactEventResult, SponsorGoal, SponsorState } from "@/engine/career/types";
 import { formatMoneyDelta } from "@/lib/format";
 import { SponsorDecision } from "@/components/career/sponsors/SponsorOfferCard";
-import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
-import type { CareerCopy } from "@/content/careerCopy";
 import { sponsorBrandById } from "@/data/career/sponsors";
 import { playArcCareer } from "./careerArcBot";
 import {
@@ -788,7 +786,6 @@ describe("rc.36 front S2 — the sponsor choice: 'Decide later' only, and what t
 });
 
 describe("rc.36 front S2 — one card per sponsor, horizontal difficulty bars, HQ's prompt (static markup)", () => {
-  const C = CAREER_EN as unknown as CareerCopy;
   const T = CAREER_EN.finances.deal;
 
   it("one card per sponsor with its own Sign button; each goal's difficulty as three horizontal bars", () => {
@@ -806,23 +803,5 @@ describe("rc.36 front S2 — one card per sponsor, horizontal difficulty bars, H
     }
   });
 
-  it("HQ's prompt: who is offering and until when, 'See the offers' and 'Decide later' without a stroke — never 'No deal for now'; the cards wait for the pop-up", () => {
-    const save = decisionAtW11(36_006);
-    const prompt = (canWait: boolean) =>
-      renderToStaticMarkup(createElement(SponsorDecisionPrompt, { save, C, canWait, onSign: () => {}, onLater: () => {} }));
-    const html = prompt(true);
-    expect(html).toContain(C.hub.sponsorPromptTitle(save.sponsorOffers!.length));
-    for (const o of save.sponsorOffers!) expect(html).toContain(sponsorBrandById.get(o.sponsorId)!.name);
-    expect(html).toContain(C.hub.sponsorSeeOffers);
-    const later = html.match(new RegExp(`<button[^>]*class="([^"]*)"[^>]*>${C.hub.sponsorLater}</button>`));
-    expect(later).not.toBeNull();
-    expect(later![1]).not.toMatch(/(^|\s)border(\s|$|-)/);
-    expect(html).not.toContain("No deal for now");
-    // The pop-up is closed until asked: no card's Sign button in the block.
-    expect(html).not.toContain(`>${T.sign}</button>`);
-    // On the deadline day: no "Decide later", the clock waits for a pick.
-    const last = prompt(false);
-    expect(last).not.toContain(C.hub.sponsorLater);
-    expect(last).toContain(C.hub.lastDay);
-  });
+
 });

@@ -754,6 +754,8 @@ export const CAREER_PT: CareerCopy = {
   },
 
   calendar: {
+    previousMonth: "Mês anterior",
+    nextMonth: "Próximo mês",
     title: "Calendário",
     thisWeek: "Esta semana",
     today: "Hoje",
@@ -990,6 +992,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.34 (DEV-03, TRAINING-CONTRACT): um pacote de treino por período.
     // rc.35 (front T, Miguel): o ciclo de treino simplificado — objetivo + intensidade + scrims.
     cycle: {
+      restart: "Iniciar o mesmo plano",
       title: "Ciclo de treino",
       cycleOf: (n: number, count: number) => `Ciclo ${n} de ${count}`,
       dayOf: (day: number, len: number) => `Dia ${day} de ${len}`,

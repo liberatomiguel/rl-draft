@@ -24,7 +24,7 @@ export function SeasonGoalBlock({ save, C }: { save: CareerSave; C: CareerCopy }
         <p className="kicker text-[10px]">{C.hub.seasonGoal}</p>
         <span className="text-[10px] font-semibold text-faint">{seasonLabelFor(save.clock.seasonIndex)}</span>
       </div>
-      <SeasonGoalRows view={view} C={C} seasonIndex={save.clock.seasonIndex} />
+      <SeasonGoalRows view={view} C={C} seasonIndex={save.clock.seasonIndex} showWhy={false} showStatus={false} />
     </Panel>
   );
 }

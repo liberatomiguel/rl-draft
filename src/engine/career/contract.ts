@@ -509,8 +509,9 @@ export function talkAtFullAsk(answer: NegotiationAnswer): boolean {
  * rc.36 (front S2, Miguel on rc.35: "every lever counts"): under his ask a
  * share or bonus press moves only that lever, so its worth moves his answer
  * (rc.35 moved the wage back, and the answer never changed); at his full
- * ask it still trades against the wage (the offer stays his full ask — more
- * than that buys nothing). Null when that way is closed (`answer.limits`
+ * ask, increasing a lever may lower the wage (more than his ask buys nothing).
+ * Reducing a lever never silently raises the wage: it lowers the offer
+ * worth and may lower his odds. Null when that way is closed (`answer.limits`
  * says why).
  */
 export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1 | -1): ContractOffer | null {
@@ -526,14 +527,14 @@ export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1
     if (!zone.shareLever) return null;
     if (dir < 0) {
       if (limits.shareDown) return null;
-      return { ...offer, sharePct: offer.sharePct - 1, weekly: trade ? offer.weekly + zone.pointWeekly : offer.weekly };
+      return { ...offer, sharePct: offer.sharePct - 1, weekly: offer.weekly };
     }
     if (limits.shareUp) return null;
     return { ...offer, sharePct: offer.sharePct + 1, weekly: trade ? Math.max(0, offer.weekly - zone.pointWeekly) : offer.weekly };
   }
   const nextBonus = clamp(offer.bonus + dir * zone.bonusStep, 0, zone.bonusMax);
   if ((dir < 0 && limits.bonusDown) || (dir > 0 && limits.bonusUp)) return null;
-  if (!trade) return { ...offer, bonus: nextBonus };
+  if (!trade || dir < 0) return { ...offer, bonus: nextBonus };
   const perDollar = CAREER_NEGOTIATION.bonusWeight / (answer.lengthSeasons * CAREER_PAYROLL.weeksPerSeason);
   const q = CAREER_PAYROLL.weeklyQuantum;
   const wageMove = Math.round(((nextBonus - offer.bonus) * perDollar) / q) * q;
@@ -544,8 +545,8 @@ export function talkPressFor(answer: NegotiationAnswer, lever: TalkLever, dir: 1
  * rc.35 (front N): the offer a slider makes when it sets one lever to
  * `value` — the wage as is (on the weekly quantum); the share or the bonus
  * as set (rc.36: under his ask the wage stays, so the lever's worth moves
- * his answer; at his full ask the wage moves the other way by what the
- * change is worth — several presses of `talkPressFor` at once). The engine
+ * his answer; at his full ask an increase may lower the wage. Reductions
+ * keep the wage unchanged — several presses of `talkPressFor` at once). The engine
  * clamps whatever comes back.
  */
 export function talkSetFor(answer: NegotiationAnswer, lever: TalkLever, value: number): ContractOffer {
@@ -555,11 +556,11 @@ export function talkSetFor(answer: NegotiationAnswer, lever: TalkLever, value: n
   if (lever === "wage") return { ...offer, weekly: Math.round(value / q) * q };
   if (lever === "share") {
     const share = clamp(Math.round(value), zone.shareMin, zone.shareMax);
-    if (!trade) return { ...offer, sharePct: share };
+    if (!trade || share < offer.sharePct) return { ...offer, sharePct: share };
     return { ...offer, sharePct: share, weekly: Math.max(0, offer.weekly - (share - offer.sharePct) * zone.pointWeekly) };
   }
   const bonus = clamp(Math.round(value / CAREER_ECONOMY.roundQuantum) * CAREER_ECONOMY.roundQuantum, 0, zone.bonusMax);
-  if (!trade) return { ...offer, bonus };
+  if (!trade || bonus < offer.bonus) return { ...offer, bonus };
   const perDollar = CAREER_NEGOTIATION.bonusWeight / (answer.lengthSeasons * CAREER_PAYROLL.weeksPerSeason);
   const wageMove = Math.round(((bonus - offer.bonus) * perDollar) / q) * q;
   return { ...offer, bonus, weekly: Math.max(0, offer.weekly - wageMove) };

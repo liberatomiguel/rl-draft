@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { CAREER_SUNDAY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
-import { followRoundsOf, followSwissTable, followWinnerOf } from "@/engine/career/follow";
+import { followRoundsOf, followWinnerOf } from "@/engine/career/follow";
 import { prizeFor } from "@/engine/career/economy";
 import type { CareerSave, FollowEventState, FollowSeries } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
@@ -43,6 +43,9 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { TrophyIcon } from "@/components/ui/icons";
+import { CareerBracket } from "@/components/career/event/CareerBracket";
+import { CareerSwissStandings } from "@/components/career/event/CareerSwissStandings";
+import { followBoardOf } from "@/components/career/event/followView";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
 
 export function FollowScreen() {
@@ -102,9 +105,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
     openFollow(m);
   };
 
-  const swissShown = Math.min(revealed, f.swiss.length);
-  const playoffShown = Math.max(0, revealed - f.swiss.length);
-  const table = followSwissTable(f, swissShown);
+  const board = followBoardOf(f, revealed);
   const current = revealed > 0 ? rounds[revealed - 1] : null;
   const qualified = new Set(f.qualifiedIds);
   const nameOf = (id: string) => f.teams.find((t) => t.id === id)?.name ?? id;
@@ -137,67 +138,19 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   );
   // the round just revealed (watch)
   const roundPanel =
-    mode === "watch" && current && !done ? (
+    mode === "watch" && current?.stage === "swiss" && !done ? (
       <Panel key={current.key} className="pop-in p-4">
         <p className="kicker mb-2.5 text-[10px] text-cyan">{roundTitle(current.label)}</p>
         <SeriesList save={save} f={f} series={current.series} />
       </Panel>
     ) : null;
-  // the Swiss table, through what is revealed
-  const standingsPanel =
-    swissShown > 0 ? (
-      <Panel className="p-4">
-        <div className="mb-2.5 flex items-center justify-between gap-2">
-          <p className="kicker text-[10px]">{C.follow.standings}</p>
-          <span className="text-[10px] text-faint">{C.event.throughRound(swissShown)}</span>
-        </div>
-        <table className="w-full table-fixed text-left text-xs">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-faint">
-              <th className="w-7 pb-1.5 font-semibold" scope="col">#</th>
-              <th className="pb-1.5 font-semibold" scope="col">{T.team}</th>
-              <th className="w-12 pb-1.5 text-center font-semibold" scope="col">{C.event.record}</th>
-              <th className="w-10 pb-1.5 text-right font-semibold" scope="col">{C.event.gameDiff}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {table.map((row, i) => {
-              const through = f.seeds.length > 0 && swissShown === f.swiss.length && f.seeds.includes(row.id);
-              return (
-                <tr key={row.id} className={cx("border-t border-line", through && "bg-good/[0.06]")}>
-                  <td className="display py-1.5 font-bold text-faint">{i + 1}</td>
-                  <td className="py-1.5 pr-2">
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <OrgMark save={save} orgRef={row.id} size="xs" className="shrink-0" />
-                      <span className="min-w-0 truncate text-ink">{nameOf(row.id)}</span>
-                    </span>
-                  </td>
-                  <td className="display py-1.5 text-center font-bold text-ink">{T.record(row.wins, row.losses)}</td>
-                  <td className={cx("display py-1.5 text-right font-bold", row.gameDiff > 0 ? "text-good" : row.gameDiff < 0 ? "text-bad" : "text-sub")}>
-                    {row.gameDiff > 0 ? `+${row.gameDiff}` : row.gameDiff}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </Panel>
-    ) : null;
-  // the playoff rounds revealed so far
-  const playoffsPanel =
-    playoffShown > 0 ? (
-      <Panel className="p-4">
-        <p className="kicker mb-2.5 text-[10px] text-orange-bright">{C.follow.playoffs}</p>
-        <div className="space-y-3">
-          {f.playoffs.slice(0, playoffShown).map((r) => (
-            <div key={r.name}>
-              <p className="kicker mb-1.5 !text-[9px]">{T.roundNames[r.name] ?? r.name}</p>
-              <SeriesList save={save} f={f} series={r.series} />
-            </div>
-          ))}
-        </div>
-      </Panel>
-    ) : null;
+  // The same standings and bracket used in a played event, with reveal-safe records.
+  const boards = (
+    <div className={cx("grid items-start gap-4", f.swiss.length > 0 && board.tournament.playoffs && "xl:grid-cols-[minmax(0,1fr)_320px]")}>
+      {board.tournament.playoffs ? <div className="min-w-0"><CareerBracket save={save} t={board.tournament} revealed={board.revealed} liveKey={null} showUpcoming={false} layout="wide" /></div> : null}
+      {f.swiss.length > 0 ? <div className="min-w-0"><CareerSwissStandings save={save} t={board.tournament} records={board.records} throughRound={board.swissShown} /></div> : null}
+    </div>
+  );
   // the readable results: placement, points, prize
   const resultsPanel =
     done && result ? (
@@ -252,15 +205,11 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-3 py-5 sm:px-4">
+    <div className="mx-auto max-w-7xl space-y-4 px-3 py-5 sm:px-4">
       <SectionTitle kicker={C.follow.kicker} title={f.def.name} />
 
       {/* header: the event, why the user follows from outside, the champion once revealed */}
-      <Panel strong glow="blue" className="rise-in relative overflow-hidden p-4 sm:p-5">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.16),transparent_70%)]"
-        />
+      <Panel className="rise-in p-4 sm:p-5">
         <div className="relative flex flex-wrap items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-white/[0.04]">
             <EventTierIcon tier={f.def.tier} className={cx("h-5 w-5", TIER_ICON_TONE[f.def.tier])} />
@@ -273,7 +222,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
           </span>
         </div>
         {done && f.champion ? (
-          <div className="pop-in relative mt-4 flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/[0.07] px-3 py-2.5">
+          <div className="pop-in relative mt-4 flex items-center gap-3 rounded-xl border border-line bg-white/[0.03] px-3 py-2.5">
             <TrophyIcon className="h-6 w-6 shrink-0 text-amber-300" />
             <div className="min-w-0">
               <p className="kicker !text-[9px] text-amber-300">{C.follow.champion}</p>
@@ -298,7 +247,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
               onClick={() => pick(m)}
               className={cx(
                 "display min-h-10 rounded-lg text-xs font-bold uppercase tracking-[0.12em] transition-colors",
-                mode === m ? "bg-blue/25 text-blue-bright" : "text-sub hover:text-ink",
+                mode === m ? "bg-white/[0.07] text-ink" : "text-sub hover:text-ink",
               )}
             >
               {m === "watch" ? C.follow.watch : C.follow.resultsTab}
@@ -314,7 +263,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
             </div>
             <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10" aria-hidden>
               <div
-                className="h-full origin-left rounded-full bg-gradient-to-r from-blue to-cyan transition-transform duration-500"
+                className="h-full origin-left rounded-full bg-white/30 transition-transform duration-300 motion-reduce:transition-none"
                 style={{ transform: `scaleX(${total ? revealed / total : 0})` }}
               />
             </div>
@@ -338,24 +287,10 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
         ) : null}
       </Panel>
 
-      {/* rc.36 (SUN-03): watch leads with the round in play; results with the standings that matter */}
-      {mode === "watch" ? (
-        <>
-          {revealed === 0 ? fieldPanel : null}
-          {roundPanel}
-          {standingsPanel}
-          {playoffsPanel}
-          {resultsPanel}
-          {revealed > 0 ? fieldPanel : null}
-        </>
-      ) : (
-        <>
-          {resultsPanel}
-          {playoffsPanel}
-          {standingsPanel}
-          {fieldPanel}
-        </>
-      )}
+      {boards}
+      {roundPanel}
+      {resultsPanel}
+      {fieldPanel}
 
       <div className="flex justify-center pb-2">
         <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={back}>

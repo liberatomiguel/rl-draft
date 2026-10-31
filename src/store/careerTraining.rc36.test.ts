@@ -200,6 +200,20 @@ describe("rc.36 T2 — the promise: paid along the way, the rest on completion",
     expect(trainingOf(after).history[0].package).toBeNull();
   });
 
+  it("keeps the first fractional gain visible without changing the earned growth", () => {
+    const save = setTrainingPackageFlow(createCareerSave(INPUT, 36_009), DEV).save;
+    for (const entry of Object.values(save.training!.plan!.players)) {
+      entry.cycleGain = 0.004;
+      entry.held = 0.0008;
+    }
+    const before = structuredClone(save);
+    const promise = trainingBlockOf(save).promise!;
+    expect(promise.paid).toBeCloseTo(0.0032, 4);
+    expect(promise.held).toBeCloseTo(0.0008, 4);
+    expect(promise.paid + promise.held + promise.restPaid + promise.restHeld).toBeCloseTo(promise.total, 4);
+    expect(save).toEqual(before);
+  });
+
   it("the HQ / Training view: the promise bar adds up and the ETA reads the rate paid along the way", () => {
     const pkg = setTrainingPackageFlow(createCareerSave(INPUT, 36_004), DEV).save;
     const mid = playTo(pkg, 12);

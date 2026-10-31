@@ -1663,7 +1663,7 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
   const cycleDayOf = Math.min(cycleLength, Math.max(1, save.clock.day - fromDay + 1));
   const starters = save.squad.filter((p) => save.starterIds.includes(p.id));
   const avgOf = (pick: (id: string) => number) =>
-    starters.length > 0 ? round2(starters.reduce((s, p) => s + pick(p.id), 0) / starters.length) : 0;
+    starters.length > 0 ? round4(starters.reduce((s, p) => s + pick(p.id), 0) / starters.length) : 0;
   const promise =
     running && plan && proj
       ? (() => {
@@ -1672,11 +1672,11 @@ export function trainingBlockOf(save: CareerSave): TrainingBlockView {
           const restHeld = avgOf((id) => proj.players.find((x) => x.id === id)?.held ?? 0);
           const rest = proj.startersAvg;
           return {
-            paid: round2(Math.max(0, soFar - held)),
+            paid: round4(Math.max(0, soFar - held)),
             held,
-            restPaid: round2(Math.max(0, rest - restHeld)),
+            restPaid: round4(Math.max(0, rest - restHeld)),
             restHeld,
-            total: round2(soFar + rest),
+            total: round4(soFar + rest),
           };
         })()
       : null;

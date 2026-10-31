@@ -68,7 +68,7 @@ import {
   TrendUpIcon,
   TrophyIcon,
 } from "@/components/ui/icons";
-import { NewTag } from "@/components/ui/NewDot";
+
 
 export const fmt1 = (n: number): string => (n >= 0 ? `+${n.toFixed(1)}` : n.toFixed(1));
 const fmt2 = (n: number): string => n.toFixed(2);
@@ -94,15 +94,19 @@ export function playerFocusLabel(save: CareerSave, playerId: string, C: CareerCo
 
 type Tone = { text: string; ring: string; bg: string };
 
+const QUIET_TONE: Tone = { text: "text-ink", ring: "border-line", bg: "bg-white/[0.02]" };
 export const OBJECTIVE_TONE: Record<TrainingObjective, Tone> = {
-  development: { text: "text-good", ring: "border-good/55", bg: "bg-good/10" },
-  preparation: { text: "text-amber-300", ring: "border-amber-300/55", bg: "bg-amber-300/10" },
-  recovery: { text: "text-cyan", ring: "border-cyan/55", bg: "bg-cyan/10" },
+  development: QUIET_TONE,
+  preparation: QUIET_TONE,
+  recovery: QUIET_TONE,
 };
+const NEUTRAL_TONE = QUIET_TONE;
+const HEAVY_TONE = QUIET_TONE;
+const FOCUS_TONE = QUIET_TONE;
 
-const NEUTRAL_TONE: Tone = { text: "text-blue-bright", ring: "border-blue/60", bg: "bg-blue/15" };
-const HEAVY_TONE: Tone = { text: "text-orange-bright", ring: "border-orange/60", bg: "bg-orange/15" };
-const FOCUS_TONE: Tone = { text: "text-cyan", ring: "border-cyan/55", bg: "bg-cyan/10" };
+export function RecommendedTag({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <span className={cx("display pointer-events-none inline-flex items-center rounded-full border border-amber-300/35 bg-[#241e0d] px-1.5 py-px text-[9px] font-bold uppercase leading-none tracking-[0.12em] text-amber-300", className)}>{children}</span>;
+}
 
 export function ObjectiveIcon({ objective, className }: { objective: TrainingObjective | null; className?: string }) {
   if (objective === "development") return <TrendUpIcon className={className} />;
@@ -148,12 +152,12 @@ export function PackageChips({ pkg, C, className }: { pkg: TrainingPackage | nul
   return (
     <div className={cx("flex flex-wrap gap-1.5", className)}>
       <Chip icon={<ObjectiveIcon objective={pkg.objective} className="h-3.5 w-3.5" />} label={Y.objectives[pkg.objective]} tone={tone.text} />
-      <Chip icon={<FocusIcon focus={pkg.focus} className="h-3.5 w-3.5" />} label={focusLabel(C, pkg.focus)} tone="text-cyan" />
-      <Chip icon={<IntensityBars workload={pkg.workload} />} label={Y.intensities[pkg.workload]} tone={pkg.workload === "heavy" ? "text-orange-bright" : undefined} />
+      <Chip icon={<FocusIcon focus={pkg.focus} className="h-3.5 w-3.5" />} label={focusLabel(C, pkg.focus)} tone="text-sub" />
+      <Chip icon={<IntensityBars workload={pkg.workload} />} label={Y.intensities[pkg.workload]} tone={pkg.workload === "heavy" ? "text-sub" : undefined} />
       <Chip
         icon={<SwordsIcon className="h-3.5 w-3.5" />}
         label={`${Y.steps.scrims} · ${Y.scrimChoices[scrims]}`}
-        tone={scrims === "hard" ? "text-orange-bright" : undefined}
+        tone={scrims === "hard" ? "text-sub" : undefined}
       />
     </div>
   );
@@ -173,89 +177,32 @@ function Chip({ icon, label, tone }: { icon: React.ReactNode; label: string; ton
   );
 }
 
-/** The cycle's progress ring (days gone of the cycle), the days left in the middle. */
-export function CycleRing({ progress, daysLeft, label, className }: { progress: number; daysLeft: number; label: string; className?: string }) {
-  const r = 26;
-  const c = 2 * Math.PI * r;
-  return (
-    <div className={cx("relative h-16 w-16 shrink-0", className)} role="img" aria-label={label}>
-      <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90" aria-hidden>
-        <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-white/10" />
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - Math.min(1, Math.max(0, progress)))}
-          className="text-blue-bright"
-        />
-      </svg>
-      <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className="display text-lg font-bold text-ink">{daysLeft}</span>
-      </span>
-    </div>
-  );
+/** A quiet days-left counter; the gain bar carries the meaningful progress. */
+export function CycleRing({ label, className }: { progress: number; daysLeft: number; label: string; className?: string }) {
+  return <span className={cx("shrink-0 whitespace-nowrap text-[11px] tabular-nums text-faint", className)}>{label}</span>;
 }
 
-// ---------------------------------------------------------------------------
-// The promise bar (rc.36, CAREER_PLAN.payout)
-// ---------------------------------------------------------------------------
+const COMPLETION_FILL = "bg-white/30";
 
-const COMPLETION_FILL = "bg-[repeating-linear-gradient(135deg,rgba(252,211,77,0.75)_0_4px,rgba(252,211,77,0.3)_4px_8px)]";
-
-/**
- * The running cycle's gain for the starters: earned (solid), still to come
- * along the way (light) and the part that lands on completion (striped
- * gold) — "you climb to 8–9 of 10, the rest lands at the end".
- */
+/** Only gain already paid fills the track; projected gain never masquerades as progress. */
 export function PromiseBar({ promise, C, className }: { promise: NonNullable<TrainingBlockView["promise"]>; C: CareerCopy; className?: string }) {
   const Y = C.training.cycle;
-  const total = Math.max(0.01, promise.total);
-  const pct = (v: number) => `${Math.max(0, Math.min(100, (v / total) * 100)).toFixed(1)}%`;
-  const atEnd = promise.held + promise.restHeld;
+  const total = Math.max(Number.EPSILON, promise.total);
+  const paidShare = Math.max(0, Math.min(1, promise.paid / total));
+  const atEnd = Math.max(0, promise.held + promise.restHeld);
+  const completionStart = Math.max(0, Math.min(1, 1 - atEnd / total));
   return (
     <div className={className}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-        <span className="kicker text-[10px] text-good">{Y.promiseTitle}</span>
-        <span className="font-mono text-xs font-bold text-ink">{Y.promiseLine(fmt2(promise.paid), fmt2(promise.total))}</span>
+        <span className="text-[11px] text-sub">{Y.promiseTitle}</span>
+        <span className="font-mono text-[11px] tabular-nums text-ink">{Y.promiseLine(fmt2(promise.paid), fmt2(promise.total))}</span>
       </div>
-      <div
-        className="mt-1.5 flex h-2.5 w-full overflow-hidden rounded-full bg-white/8"
-        role="progressbar"
-        aria-label={Y.promiseTitle}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round((promise.paid / total) * 100)}
-      >
-        <span className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width] duration-700" style={{ width: pct(promise.paid) }} />
-        <span className="h-full bg-emerald-400/25" style={{ width: pct(promise.restPaid) }} />
-        <span className={cx("h-full", COMPLETION_FILL)} style={{ width: pct(atEnd) }} />
+      <div className="relative mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/8" role="progressbar" aria-label={Y.promiseTitle} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(paidShare * 100)}>
+        <span className="absolute inset-0 origin-left rounded-full bg-blue-bright/70 transition-transform duration-300 ease-out motion-reduce:transition-none" style={{ transform: 'scaleX(' + paidShare + ')' }} />
+        {atEnd > 0.004 ? <span className="absolute inset-y-0 w-px bg-white/30" style={{ left: (completionStart * 100) + '%' }} aria-hidden /> : null}
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint">
-        <Legend swatch="bg-emerald-400" label={Y.legend.paid} />
-        <Legend swatch="bg-emerald-400/30" label={Y.legend.toCome} />
-        <Legend swatch={COMPLETION_FILL} label={Y.legend.completion} />
-      </div>
-      {atEnd > 0.004 ? (
-        <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-amber-300">
-          <TrophyIcon className="h-3.5 w-3.5 shrink-0" />
-          {Y.onCompletion(fmt2(atEnd))}
-        </p>
-      ) : null}
+      {atEnd > 0.004 ? <p className="mt-1.5 text-[10px] text-faint">{Y.onCompletion(fmt2(atEnd))}</p> : null}
     </div>
-  );
-}
-
-function Legend({ swatch, label }: { swatch: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1">
-      <span className={cx("h-2 w-2 rounded-sm", swatch)} aria-hidden />
-      {label}
-    </span>
   );
 }
 
@@ -290,13 +237,13 @@ function OptionTile({
       onClick={onClick}
       className={cx(
         "relative flex min-h-[4.5rem] w-full min-w-0 items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
-        selected ? cx(tone.ring, tone.bg) : "border-line bg-white/[0.03] hover:border-line-strong",
+        selected ? "border-blue/40 bg-white/[0.05]" : "border-line bg-white/[0.03] hover:border-line-strong",
       )}
     >
       <span
         className={cx(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
-          selected ? cx(tone.ring, tone.text, "bg-black/20") : "border-line text-faint",
+          selected ? "border-line-strong bg-white/[0.03] text-ink" : "border-line text-faint",
         )}
       >
         {icon}
@@ -305,7 +252,7 @@ function OptionTile({
         <span className={cx("display block truncate text-xs font-bold uppercase tracking-[0.08em]", selected ? tone.text : "text-ink")}>{title}</span>
         <span className="mt-0.5 block text-[11px] leading-snug text-faint">{effect}</span>
       </span>
-      {recommended ? <NewTag className="absolute -top-1.5 right-2">{C.training.cycle.recommended}</NewTag> : null}
+      {recommended ? <RecommendedTag className="absolute -top-1.5 right-2">{C.training.cycle.recommended}</RecommendedTag> : null}
     </button>
   );
 }
@@ -340,13 +287,13 @@ function CompactTile({
       onClick={onClick}
       className={cx(
         "relative flex min-h-[4.25rem] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-1.5 pb-2 pt-3 text-center transition-colors",
-        selected ? cx(tone.ring, tone.bg) : "border-line bg-white/[0.03] hover:border-line-strong",
+        selected ? "border-blue/40 bg-white/[0.05]" : "border-line bg-white/[0.03] hover:border-line-strong",
       )}
     >
       <span className={cx("flex h-6 w-6 items-center justify-center", selected ? tone.text : "text-faint")}>{icon}</span>
       <span className={cx("display block max-w-full break-words text-[11px] font-bold leading-tight", selected ? tone.text : "text-ink")}>{title}</span>
       {recommended ? (
-        <NewTag className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">{C.training.cycle.recommended}</NewTag>
+        <RecommendedTag className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">{C.training.cycle.recommended}</RecommendedTag>
       ) : null}
     </button>
   );
@@ -463,7 +410,7 @@ export function PlanPicker({
   const endDate = proj ? formatDateTiny(D, dateOfDay(save.clock.seasonIndex, proj.endDay)) : "";
   const days = proj ? proj.endDay - proj.fromDay + 1 : 0;
   const recommendedPicks = recommended !== null;
-  const showSame = lastPlan !== null && JSON.stringify(picksOf(lastPlan)) !== JSON.stringify(rec);
+  const showSame = lastPlan !== null;
 
   return (
     <div className="space-y-4">
@@ -471,13 +418,13 @@ export function PlanPicker({
         <div className="flex flex-wrap gap-2">
           {recommendedPicks ? (
             <Button variant="secondary" size="md" className="min-h-11" onClick={() => setPicks(rec)}>
-              <StarIcon className="mr-1.5 h-4 w-4 text-good" filled />
+              <StarIcon className="mr-1.5 h-4 w-4 text-amber-300" filled />
               {Y.useRecommended}
             </Button>
           ) : null}
           {showSame ? (
-            <Button variant="ghost" size="md" className="min-h-11" onClick={() => setPicks(picksOf(lastPlan))}>
-              {Y.sameAgain}
+            <Button variant="ghost" size="md" className="min-h-11" onClick={() => lastPlan && onSubmit(lastPlan)}>
+              {Y.restart}
             </Button>
           ) : null}
         </div>
@@ -556,10 +503,10 @@ export function PlanPicker({
       </div>
 
       {/* The CTA: what this cycle promises, what it risks, then Start. */}
-      <div className={cx("rounded-2xl border p-3", proj ? "border-good/35 bg-good/[0.06]" : "border-line bg-white/[0.02]")}>
+      <div className={cx("rounded-2xl border p-3", proj ? "border-line-strong bg-white/[0.03]" : "border-line bg-white/[0.02]")}>
         {proj ? (
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <p className="display text-xl font-bold text-good">{Y.promised(fmt2(soFar + proj.startersAvg))}</p>
+            <p className="display text-lg font-bold text-ink">{Y.promised(fmt2(soFar + proj.startersAvg))}</p>
             <p className="text-[11px] text-sub">{Y.runsTo(endDate, days)}</p>
           </div>
         ) : (
@@ -633,12 +580,12 @@ export function CycleReportBody({
     <div className="space-y-3">
       {stats ? (
         <div className="grid grid-cols-3 gap-2">
-          <Stat label={R.avg} value={fmt1(avg)} tone={avg >= 0 ? "text-good" : "text-bad"} />
+          <Stat label={R.avg} value={fmt1(avg)} tone={avg >= 0 ? "text-ink" : "text-bad"} />
           <Stat label={R.best} value={best ? fmt1(best.after - best.before) : "—"} sub={best?.name} tone="text-ink" />
           <Stat
             label={Y.legend.completion}
             value={completion > 0.004 ? `+${fmt2(completion)}` : "—"}
-            tone="text-amber-300"
+            tone="text-sub"
             icon={<TrophyIcon className="h-3.5 w-3.5" />}
           />
         </div>
@@ -667,7 +614,7 @@ export function CycleReportBody({
                 <span className="flex h-2 flex-1 overflow-hidden rounded-full bg-white/10">
                   {gain >= 0 ? (
                     <>
-                      <span className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300" style={{ width: `${Math.round((along / max) * 100)}%` }} />
+                      <span className="h-full bg-white/35" style={{ width: `${Math.round((along / max) * 100)}%` }} />
                       <span className={cx("h-full", COMPLETION_FILL)} style={{ width: `${Math.round((end / max) * 100)}%` }} />
                     </>
                   ) : (
@@ -679,13 +626,13 @@ export function CycleReportBody({
               {attrs.length > 0 || end > 0.004 ? (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {end > 0.004 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                    <span className="inline-flex items-center gap-1 text-[10px] text-sub">
                       <TrophyIcon className="h-3 w-3" />
                       {R.completionShort(fmt2(end))}
                     </span>
                   ) : null}
                   {attrs.map(([k, v]) => (
-                    <span key={k} className="rounded-full bg-cyan/10 px-2 py-0.5 text-[10px] font-semibold text-cyan">
+                    <span key={k} className="text-[10px] text-faint">
                       {statLabels[k] ?? k} +{fmt2(v)}
                     </span>
                   ))}
@@ -697,7 +644,7 @@ export function CycleReportBody({
       </ul>
       <div className="flex flex-wrap gap-1.5 text-[10px]">
         <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-line bg-white/[0.04] px-2.5 font-semibold text-sub">
-          <HandshakeIcon className="h-3.5 w-3.5 text-amber-300" />
+          <HandshakeIcon className="h-3.5 w-3.5 text-faint" />
           {Y.chemistry} <span className="text-ink">{summary.chemStart}% → {summary.chemEnd}%</span>
         </span>
         {(Object.entries(summary.scrims) as [string, [number, number]][]).map(([lvl, [w, l]]) => (

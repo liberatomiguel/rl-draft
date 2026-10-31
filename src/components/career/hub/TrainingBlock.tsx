@@ -29,13 +29,14 @@ import {
   ObjectiveIcon,
   PackageChips,
   PromiseBar,
+  RecommendedTag,
   TrainingProposalCard,
 } from "@/components/career/training/TrainingPackageParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AlertIcon, BaseDotIcon, SwordsIcon, WhistleIcon } from "@/components/ui/icons";
-import { NewTag } from "@/components/ui/NewDot";
+
 import { Panel } from "@/components/ui/Panel";
 
 export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; statLabels?: Record<string, string> }) {
@@ -54,7 +55,7 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
   const openTraining = () => router.push("/career/training");
 
   const coachLine = b.coach ? (
-    <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-cyan">
+    <span className="inline-flex min-w-0 items-center gap-1 font-medium text-sub">
       <WhistleIcon className="h-3.5 w-3.5 shrink-0" />
       <span className="truncate">
         {b.coach.name}
@@ -62,7 +63,7 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
       </span>
     </span>
   ) : (
-    <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-semibold text-orange-bright hover:underline">
+    <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-medium text-sub hover:text-ink hover:underline">
       <WhistleIcon className="h-3.5 w-3.5" />
       {Y.hireCoach} →
     </AppLink>
@@ -87,14 +88,14 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
         <div className="space-y-3 px-4 pb-4 pt-2.5">
           {/* what is running */}
           <div className={cx("flex items-center gap-3 rounded-xl border px-3 py-2.5", tone.ring, tone.bg)}>
-            <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/25", tone.text)}>
-              <ObjectiveIcon objective={objective} className="h-6 w-6" />
+            <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black/25", tone.text)}>
+              <ObjectiveIcon objective={objective} className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
               <p className={cx("display truncate text-base font-bold", tone.text)}>{objective ? Y.objectives[objective] : Y.by.base}</p>
               <p className="truncate text-[11px] text-sub">{Y.by[b.author] ?? ""}</p>
             </div>
-            <CycleRing progress={b.cycle.progress} daysLeft={b.cycle.daysLeft} label={Y.daysLeft(b.cycle.daysLeft)} className="h-14 w-14" />
+            <CycleRing progress={b.cycle.progress} daysLeft={b.cycle.daysLeft} label={Y.daysLeft(b.cycle.daysLeft)} />
           </div>
 
           <PackageChips pkg={b.package} C={C} />
@@ -128,8 +129,8 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
         <div className="space-y-3 px-4 pb-4 pt-2.5">
           {/* nothing running: the nudge (never a hold) */}
           <div className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong bg-white/[0.02] px-3 py-2.5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/25 text-faint">
-              <BaseDotIcon className="h-6 w-6" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black/25 text-faint">
+              <BaseDotIcon className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="display text-base font-bold leading-tight text-ink">{Y.idle}</p>
@@ -138,7 +139,7 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
           </div>
           {b.recommended ? (
             <div className="space-y-1.5">
-              <NewTag>{Y.recommended}</NewTag>
+              <RecommendedTag>{Y.recommended}</RecommendedTag>
               <PackageChips pkg={b.recommended} C={C} />
             </div>
           ) : null}

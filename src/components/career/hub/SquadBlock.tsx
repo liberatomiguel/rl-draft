@@ -192,7 +192,7 @@ function SquadCard({
       onClick={onOpen}
       aria-label={`${p.name} · ${ovr}`}
       className={cx(
-        "card-frame flex min-h-52 min-w-0 flex-col p-3 text-left transition-transform duration-200 hover:-translate-y-0.5",
+        "card-frame flex min-h-60 min-w-0 flex-col p-3 text-left transition-transform duration-200 hover:-translate-y-0.5",
         `card-${baseRarityOf(ovr)}`,
       )}
     >
@@ -202,7 +202,7 @@ function SquadCard({
         </span>
         <UserCrest crestId={save.identity.crestId} colors={save.identity.colors} size="sm" />
       </span>
-      <span className="relative mt-2 flex min-w-0 items-center gap-1">
+      <span className="relative mt-3 flex min-w-0 items-center gap-1">
         <span className="truncate text-sm font-bold text-ink sm:text-base">{p.name}</span>
         {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
       </span>
@@ -221,7 +221,7 @@ function SquadCard({
       <span className="relative mt-1 block truncate text-[11px] font-semibold text-cyan">
         {band.min === band.max ? C.player.potExact(band.max) : C.player.potBand(band.min, band.max)}
       </span>
-      <span className="relative mt-auto flex flex-wrap items-center gap-1 pt-1.5">
+      <span className="relative mt-auto flex flex-wrap items-center gap-1 pt-3">
         <span className="rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em] text-sub">
           {p.role === "sub" ? C.hub.cardReserve : C.hub.cardStarter}
         </span>
@@ -242,7 +242,7 @@ function EmptySeat({ C }: { C: CareerCopy }) {
   return (
     <AppLink
       href="/career/market"
-      className="card-frame card-hidden flex min-h-52 flex-col items-center justify-center gap-1 p-2.5 text-center"
+      className="card-frame card-hidden flex min-h-60 flex-col items-center justify-center gap-1 p-2.5 text-center"
     >
       <span className="relative text-xs font-bold uppercase tracking-[0.1em] text-sub">{C.hub.cardEmptySeat}</span>
       <span className="relative text-[11px] text-blue-bright">{C.hub.cardSignHint} →</span>

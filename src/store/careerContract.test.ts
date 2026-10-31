@@ -422,9 +422,9 @@ describe("rc.34 front I — the talk on real players: both levers move, every pr
         expect(next === null, `${label} ${key} ${lever}${dir}`).toBe(why !== null || (lever === "share" && !a.zone.shareLever));
         if (!next) continue;
         const b = talk(next);
-        // A wage press moves the wage; a share press moves the share — at his full ask the wage too (the
-        // trade), under it (rc.36, "every lever counts") the offer's worth, so it moves his answer.
-        if (lever === "wage" || talkAtFullAsk(a)) expect(b.offer.weekly, `${label} ${key} ${lever}${dir}`).not.toBe(a.offer.weekly);
+        // A wage press moves the wage; a share press moves the share — increasing a share at his full ask trades the wage. Reducing it
+        // leaves the wage alone and reduces worth, including at his full ask.
+        if (lever === "wage" || (talkAtFullAsk(a) && dir > 0)) expect(b.offer.weekly, `${label} ${key} ${lever}${dir}`).not.toBe(a.offer.weekly);
         else expect(Math.sign(b.worth - a.worth), `${label} ${key} ${lever}${dir}`).toBe(dir);
         if (lever === "share") expect(b.offer.sharePct).toBe(a.offer.sharePct + dir);
         // rc.35: a press down may leave the zone (his odds fall under his floor) — the wage, or (rc.36) the share under his ask.

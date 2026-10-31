@@ -745,22 +745,21 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**Gate 2 + Gate 3b — what to play on rc.36** (desktop/mobile, EN/PT).
-Full evidence and remaining bands: `RC36-GATE3B.md`. Normal measured 0.4562
+**Gate 2 + Gate 3b — what to play on rc.36.1** (desktop/mobile, EN/PT).
+Playtest corrections: `RC36-1-GATE3B.md`; balance bands: `RC36-GATE3B.md`. Normal measured 0.4562
 Majors/season and 17.12% Worlds against the 0.44 / 16% target; confirm the
 remaining progression difference at this playtest. Start new careers;
 also load an rc.35 save. Its active 14-day cycle must finish before the
 28-day grid; saves, money already booked and signed contracts stay intact.
 
-- **Create:** custom crest shape/symbol/layout, independent colours and the
-  contrast warning; presets; equal budget for every roster at a difficulty.
+- **Create:** custom crest shape/symbol/layout and predefined colour palettes; equal budget for every roster at a difficulty.
   Play the veterans' first split on Normal.
 - **HQ:** the decision queue and clock, thin sub/coach rows, growth bar toward
   the next overall, compact finances/chart, progression/arsenal; Close-only
   unlock popup and New markers. +1 day, Advance, autoplay and reload all obey
   real holds; an unpicked training plan never holds the clock.
 - **Train:** empty picker → Evolve/Gel/Recover, focus, intensity, scrims →
-  Start training; bar and day-29 report; adjust midway; hire coach/toggle
+  Start training; earned-gain bar and day-29 report; repeat the plan with one click; adjust midway; hire coach/toggle
   planning; Heavy/Hard wear; sign a free agent into the active cycle.
 - **Sponsors/talk:** popup cards at 360 px, horizontal goal bars, Decide later
   and deadline hold; signed goals/fines. Send an under-ask offer, see the

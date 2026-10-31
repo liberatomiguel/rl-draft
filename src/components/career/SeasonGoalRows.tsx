@@ -137,11 +137,13 @@ function GoalRow({
   C,
   seasonIndex,
   primary,
+  showStatus = true,
 }: {
   row: SeasonGoalRowView;
   C: CareerCopy;
   seasonIndex: number;
   primary: boolean;
+  showStatus?: boolean;
 }) {
   const family = familyOf(row.label);
   const status = statusOf(row);
@@ -171,7 +173,7 @@ function GoalRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <span className="kicker !text-[9px]">{C.goals.role[row.role]}</span>
-          {status ? (
+          {status && showStatus ? (
             <span
               className={cx(
                 "display shrink-0 rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em]",
@@ -222,11 +224,13 @@ export function SeasonGoalRows({
   C,
   seasonIndex,
   showWhy = true,
+  showStatus = true,
 }: {
   view: SeasonGoalsView;
   C: CareerCopy;
   seasonIndex: number;
   showWhy?: boolean;
+  showStatus?: boolean;
 }) {
   const b = view.basis;
   const chips: string[] = [];
@@ -238,9 +242,9 @@ export function SeasonGoalRows({
   }
   return (
     <div className="space-y-3">
-      <GoalRow row={view.target} C={C} seasonIndex={seasonIndex} primary />
+      <GoalRow row={view.target} C={C} seasonIndex={seasonIndex} primary showStatus={showStatus} />
       <div className="border-t border-line/60 pt-3">
-        <GoalRow row={view.stretch} C={C} seasonIndex={seasonIndex} primary={false} />
+        <GoalRow row={view.stretch} C={C} seasonIndex={seasonIndex} primary={false} showStatus={showStatus} />
       </div>
       {showWhy ? (
         <div className="space-y-1.5 border-t border-line/60 pt-2.5">

@@ -13,7 +13,6 @@ import { TOURNAMENT } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
-import type { TournamentState } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
 import { Panel } from "@/components/ui/Panel";
@@ -27,7 +26,7 @@ export function CareerSwissStandings({
   nextUpRef,
 }: {
   save: CareerSave;
-  t: TournamentState;
+  t: { teams: Record<string, { name: string; rating: { total: number } }> };
   /** Records derived from fully revealed rounds only (never spoils). */
   records: Map<string, DerivedRecord>;
   throughRound: number;

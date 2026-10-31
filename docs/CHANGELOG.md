@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.1**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,34 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.36.1, Gate 3b playtest corrections
+- Restored restrained career styling: compact HQ finances with a larger balance
+  and chart, taller starter cards, shorter Major/Worlds tabs, simple goal rows,
+  three vertical progression items with purchase actions and next unlock below.
+- News returns to thin rows with one lead story, type icons and selective crests.
+  Training, its picker and report use neutral surfaces; Recommended is yellow.
+- Calendar shows one month with previous/next controls. All transfer-window
+  day cards in HQ carry a blue top strip, including days with an event.
+- Crest creation uses predefined palettes only; removed arbitrary color inputs
+  and the contrast meter. Existing saved colors remain readable.
+- A completed training package can start again directly from its report/picker;
+  past-cycle history is no longer shown on the training screen.
+
+### Fixed — rc.36.1
+- Training gain appeared full before earning it and its animation jumped.
+  Root cause: future gain occupied the remaining bar and flex widths animated
+  against instant sibling updates; early paid gain also rounded away. Only
+  earned gain now fills the track, with finer selector precision, a stable
+  transform and reduced-motion support. Growth and payouts are unchanged.
+- Removing bonus/share could leave acceptance unchanged because the sheet
+  silently increased wages. Reductions now preserve the chosen wage; engine
+  and flow regressions cover the effect on offer worth and acceptance.
+- Sponsor offers open directly when active; no preliminary HQ decision card.
+  Existing deferral, deadline holds and reload persistence are retained.
+- Spectating used bespoke result lists instead of the career tournament boards.
+  Recorded rounds now feed the shared Swiss and bracket components, with
+  future scores and playoff qualification kept hidden until revealed.
 
 ### Added / Changed — rc.36, Etapa 3 complete (R83–R88)
 - Selected 28-day training cycles, focus and Evolve/Gel/Recover, completion

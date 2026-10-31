@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-10-30**. Candidate: **v2.0.0-rc.36**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R88. Gate: `RC36-GATE3B.md`.
+> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.1**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R89. Gate: `RC36-1-GATE3B.md`.
 
 ## Run and verify
 
@@ -10,8 +10,8 @@
 - Career logic is in `src/engine/career`, flows in `src/store/career*`, screens
   in `src/components/career`. Pure seeded engine, bilingual career copy,
   tunables in `src/config/balance.ts`.
-- Full suite: 1438 passed, 13 optional checks skipped. Typecheck,
-  lint, data, static build and browser gates: `RC36-GATE3B.md`.
+- Full suite: 1441 passed, 13 optional checks skipped. Typecheck,
+  lint, data, static build and browser gates: `RC36-1-GATE3B.md`.
 - Probes: CAREER_ARC (run alone; never with ARC_REPORT), CAREER_ECON (four
   processes by ECON_REGIONS), CAREER_GROWTH, CAREER_TRAINING; latest reports
   use the rc36 suffix. `ECONOMY-CONTRACT.md` §13 compares guardrails.
@@ -24,7 +24,7 @@ independent integration review. Miguel's playtest approval is still required.
 - Training starts only after a plan is selected, in 28-day periods. Evolve,
   Gel, Recover; focus restored; modest Heavy/Hard wear; running progress;
   most gain along the way, remainder on completion. Coach plans can renew
-  cycles; without one restart by hand. rc.35's active 14-day period finishes
+  cycles; without one, repeat the previous plan with one click. rc.35's active 14-day period finishes
   before the new grid. Signings join the plan; no duplicate session or payout.
 - Compact HQ, squad/sub/coach, progression, finances and stacked arsenal;
   unlock modal is Close-only. Sponsor cards in a modal, Decide later until
@@ -37,8 +37,9 @@ independent integration review. Miguel's playtest approval is still required.
 - Fixed season goals with deadline/progress, visual news with honest archive
   labels, career achievements in the general mode-filtered list. 50/50 stays
   behind the brand key pending partner agreement.
-- Custom crest shapes/symbols/layouts, independent colours and contrast guard;
-  calendar windows blue, events take priority, no payroll marker.
+- Custom crest shapes/symbols/layouts and predefined colour palettes;
+  calendar windows blue on every day chip, event icons keep their tier accents;
+  no payroll marker.
 - Saturday returns to HQ, optional coach briefing and conscious Sunday start;
   no extra training/payroll. Skippable once-only full-screen intro with keyboard
   focus and reduced motion. Watch/sim/skip events after elimination.

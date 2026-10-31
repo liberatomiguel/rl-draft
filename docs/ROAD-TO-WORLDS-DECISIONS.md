@@ -1876,6 +1876,22 @@ R88. **The weekend goes back to HQ, a coach briefing, Championship Sunday
      tools accept CHROME_PATH to reuse an installed Chrome/Edge; it changes no
      game dependency, save or hosting behavior.
 
+R89. **Gate 3b visual consistency and interaction corrections (rc.36.1).**
+     Miguel's rc.36 playtest replaces the decorative HQ track with three
+     vertical item rows, purchases and next unlock below; compact finances,
+     taller starters, smaller race tabs, simple goals, thin news and one lead.
+     Neutral surfaces follow Squad/Market/Inbox/Draft; color is an accent.
+     Calendar shows one navigable month and window-day chips keep blue strips.
+     Training displays earned gain, a quiet counter/report and one-click repeat;
+     past-cycle history is hidden. The bar's future segments and rounding
+     caused misleading fill; presentation precision and animation are repaired,
+     without changing growth/payouts. Sponsor offers open directly with the
+     existing persisted deferral/deadline. Reducing bonus/share preserves the
+     chosen wage, so it reduces offer worth instead of silently compensating.
+     Crest uses predefined colors without contrast scoring; saved colors stay.
+     Follow uses shared Swiss/bracket boards from recorded, reveal-safe rounds.
+     This is a Gate 3b correction, not approval/start of Etapa 4.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

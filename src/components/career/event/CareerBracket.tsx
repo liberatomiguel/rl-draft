@@ -20,11 +20,21 @@
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
-import type { PlayoffRoundName, SeriesResult, TournamentState } from "@/engine/types";
+import type { PlayoffRoundName, PlayoffState, SeriesResult } from "@/engine/types";
 import { nextPlayoffPairings, roundOrderFor } from "@/engine/playoffs";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
 import { Panel } from "@/components/ui/Panel";
+
+/** Only presentation fields are required; compact spectator records never re-simulate. */
+export type BracketSeries = Pick<SeriesResult, "teamAId" | "teamBId" | "score" | "winnerTeamId">;
+export interface BracketTournament {
+  teams: Record<string, { name: string }>;
+  playoffs: PlayoffState | (Pick<PlayoffState, "format" | "seeds" | "championTeamId"> & {
+    finished: true;
+    rounds: { name: PlayoffRoundName; series: BracketSeries[] }[];
+  }) | null;
+}
 
 const UPPER_COLUMNS: PlayoffRoundName[] = [
   "ub_quarterfinal",
@@ -66,7 +76,7 @@ export function CareerBracket({
   onInspect,
 }: {
   save: CareerSave;
-  t: TournamentState;
+  t: BracketTournament;
   revealed: Set<string>;
   /** Key of the user series currently animating (orange edge). */
   liveKey: string | null;
@@ -185,8 +195,8 @@ function BracketCell({
   onClick,
 }: {
   save: CareerSave;
-  t: TournamentState;
-  series: SeriesResult | null;
+  t: BracketTournament;
+  series: BracketSeries | null;
   revealed: boolean;
   live: boolean;
   pair?: [string, string];

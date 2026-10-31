@@ -18,14 +18,12 @@ import { useEffect, useRef, useState } from "react";
 import { CAREER_NEWS } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave, NewsItem, NewsType } from "@/engine/career/types";
-import type { Region } from "@/engine/types";
 import { partnerLogoSrc } from "@/lib/assets";
 import { cx } from "@/lib/util";
 import { useCareerStore } from "@/store/careerStore";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
-import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgMark } from "@/components/career/OrgMark";
 import { dateOfDay, seasonLabelFor } from "@/components/career/careerUi";
 import { formatDateTiny } from "@/components/career/dateText";
@@ -77,17 +75,6 @@ const ICON_TONE: Record<NewsType, string> = {
   flavor: "text-faint",
 };
 
-const CHIP_TONE: Record<NewsType, string> = {
-  result: "border-orange/40 bg-orange/10 text-orange-bright",
-  transfer: "border-blue/40 bg-blue/10 text-blue-bright",
-  beat: "border-amber-400/40 bg-amber-400/10 text-amber-300",
-  org: "border-cyan/40 bg-cyan/10 text-cyan",
-  training: "border-good/40 bg-good/10 text-good",
-  milestone: "border-orange/40 bg-orange/10 text-orange-bright",
-  window: "border-blue/40 bg-blue/10 text-blue-bright",
-  rep: "border-cyan/40 bg-cyan/10 text-cyan",
-  flavor: "border-line-strong bg-white/5 text-sub",
-};
 
 export function NewsTypeIcon({ type, className }: { type: NewsType | "archive"; className?: string }) {
   const common = {
@@ -217,8 +204,8 @@ function Crests({ refs, save, size, type, archive }: { refs: string[]; save: Car
       <span
         className={cx(
           "flex shrink-0 items-center justify-center rounded-lg bg-white/[0.04]",
-          size === "md" ? "h-12 w-12" : "h-8 w-8",
-          archive ? "text-sub" : ICON_TONE[type],
+          size === "md" ? "h-10 w-10" : "h-6 w-6",
+          archive || type !== "transfer" ? "text-faint" : ICON_TONE[type],
         )}
       >
         <NewsTypeIcon type={archive ? "archive" : type} className={size === "md" ? "h-6 w-6" : "h-4.5 w-4.5"} />
@@ -248,29 +235,10 @@ function SubjectChips({
   wire: boolean;
 }) {
   const region = newsRegionOf(item);
-  return (
-    <span className="flex flex-wrap items-center gap-1">
-      {archive ? (
-        <span className="display inline-flex items-center gap-1 rounded border border-line-strong bg-white/5 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em] text-sub">
-          <NewsTypeIcon type="archive" className="h-3 w-3" />
-          {C.news.feed.archive} · {seasonLabelFor(item.seasonIndex)}
-        </span>
-      ) : wire ? (
-        <span className="display rounded border border-amber-400/40 bg-amber-400/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em] text-amber-300">
-          {brandKicker}
-        </span>
-      ) : (
-        <span className={cx("display rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em]", CHIP_TONE[item.type])}>
-          {C.news.feed.subject[item.type] ?? item.type}
-        </span>
-      )}
-      {region ? (
-        <span className={cx("display rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em]", REGION_BADGE[region as Region])}>
-          {region}
-        </span>
-      ) : null}
-    </span>
-  );
+  return <span className="flex flex-wrap items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-faint">
+    <span>{archive ? C.news.feed.archive + " · " + seasonLabelFor(item.seasonIndex) : wire ? brandKicker : C.news.feed.subject[item.type]}</span>
+    {region ? <span>· {region}</span> : null}
+  </span>;
 }
 
 function ActionLink({ item, C }: { item: NewsItem; C: CareerCopy }) {
@@ -279,7 +247,7 @@ function ActionLink({ item, C }: { item: NewsItem; C: CareerCopy }) {
   return (
     <AppLink
       href={a.href}
-      className="display inline-flex min-h-7 items-center gap-1 rounded-md border border-blue/30 bg-blue/10 px-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-blue-bright transition-colors hover:bg-blue/20"
+      className="inline-flex min-h-7 items-center gap-1 text-[10px] font-medium text-sub hover:text-ink"
     >
       {C.news.feed.action[a.action]}
       <span aria-hidden>→</span>
@@ -297,23 +265,13 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
   const archive = Boolean(r.archive);
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
-    <article
-      className={cx(
-        "mb-3 rounded-xl border p-3.5 sm:p-4",
-        item.priority >= 3 && !archive
-          ? "border-amber-400/40 bg-gradient-to-br from-amber-400/[0.08] to-transparent"
-          : "border-blue/30 bg-gradient-to-br from-blue/[0.08] to-transparent",
-      )}
-    >
-      <p className="kicker mb-2 flex items-center gap-1.5 !text-[9px] !tracking-[0.24em] text-blue-bright">
-        <span className="h-1.5 w-1.5 rounded-full bg-orange" aria-hidden />
-        {C.news.feed.lead}
-      </p>
+    <article className="mb-2 rounded-lg border border-line bg-white/[0.025] p-4">
+      <p className="kicker mb-3 !text-[9px] text-faint">{C.news.feed.lead}</p>
       <div className="flex gap-3">
         <Crests refs={refs} save={save} size="md" type={item.type} archive={archive} />
         <div className="min-w-0 flex-1">
           <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} />
-          <h3 className="display mt-1 text-lg font-bold leading-snug text-ink sm:text-xl">{r.title}</h3>
+          <h3 className="mt-1.5 text-base font-semibold leading-snug text-ink sm:text-lg">{r.title}</h3>
           {r.body ? <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-sub">{r.body}</p> : null}
           {archive ? <p className="mt-1 text-[10px] italic text-faint">{C.news.feed.archiveNote}</p> : null}
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -326,31 +284,20 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
   );
 }
 
-function StoryRow({ item, save, C, lang, brandKicker }: { item: NewsItem; save: CareerSave; C: CareerCopy; lang: "en" | "pt"; brandKicker: string }) {
+function StoryRow({ item, save, C, lang, brandKicker, compact }: { item: NewsItem; save: CareerSave; C: CareerCopy; lang: "en" | "pt"; brandKicker: string; compact: boolean }) {
   const r = resolveNews(withMoneyParams(item), C, lang);
   const archive = Boolean(r.archive);
   const refs = newsCrestsOf(item, save, r.orgRefs);
-  const gold = item.priority === 3 && !archive;
   return (
-    <article
-      className={cx(
-        "flex gap-3 rounded-lg border border-line bg-white/[0.02] p-3",
-        gold && "!border-amber-400/40 !bg-amber-400/5",
-      )}
-    >
-      <Crests refs={refs} save={save} size="sm" type={item.type} archive={archive} />
+    <article className="flex items-start gap-2.5 border-b border-line/60 py-2.5 last:border-0">
+      <Crests refs={item.type === "transfer" ? refs.slice(0, 1) : []} save={save} size="sm" type={item.type} archive={archive} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} />
-          {!item.read ? <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-orange" aria-label={C.news.unread(1)} /> : null}
-        </div>
-        <p className={cx("mt-1 text-sm leading-snug", item.read ? "text-sub" : "font-semibold text-ink")}>{r.title}</p>
-        {r.body ? <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-sub">{r.body}</p> : null}
-        <div className="mt-1.5 flex flex-wrap items-center gap-2">
-          <span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span>
-          <ActionLink item={item} C={C} />
-        </div>
+        {!compact || archive ? <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} /> : null}
+        <p className={cx("text-xs leading-relaxed", item.read ? "text-sub" : "font-medium text-ink")}>{r.title}</p>
+        {!compact && r.body ? <p className="mt-0.5 text-xs leading-relaxed text-sub">{r.body}</p> : null}
+        <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span><ActionLink item={item} C={C} /></div>
       </div>
+      {!item.read ? <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-blue-bright" aria-label={C.news.unread(1)} /> : null}
     </article>
   );
 }
@@ -390,7 +337,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
   const brand = CAREER_NEWS.brand;
   const B = C.news.brand[brand] ?? C.news.brand.wire;
   const unread = save.news.filter((n) => !n.read).length;
-  const lead = !open ? leadStoryOf(save, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) : null;
+  const lead = !open ? (leadStoryOf(save, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? save.news[0] ?? null) : null;
   const rows = open
     ? filtered.slice(0, limit)
     : save.news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
@@ -440,9 +387,9 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
       {rows.length === 0 && !lead ? (
         <p className="py-6 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
       ) : (
-        <div className="space-y-2">
+        <div>
           {rows.map((item) => (
-            <StoryRow key={item.id} item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} />
+            <StoryRow key={item.id} item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} />
           ))}
         </div>
       )}

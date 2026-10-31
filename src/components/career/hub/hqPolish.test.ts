@@ -76,7 +76,7 @@ describe("rc.36 POL-02 — HQ squad: the reserve and the coach thin again", () =
     const save = withBench();
     const html = squadHtml(save);
     // Three cards only (the starters): the reserve is no longer a card.
-    expect(html.split("card-frame flex min-h-52").length - 1).toBe(3);
+    expect(html.split("card-frame flex min-h-60").length - 1).toBe(3);
     // His OVR in the Draft's rarity frame (decision 3-A), his name, role and contract clock.
     expect(baseRarityOf(81)).toBe("gold");
     expect(html).toContain("card-frame flex h-10 w-10 shrink-0 items-center justify-center !rounded-lg card-gold");
@@ -133,17 +133,16 @@ describe("rc.36 POL-02 — HQ finances: the balance, the weekly out, the chart, 
   });
 });
 
-describe("rc.36 POL-02 — the progression card: rows, one footer row, a three-rung track", () => {
+describe("rc.36 POL-02 — the progression card: three item rows and next unlock below", () => {
   it("the items to buy are icon rows (no tile grid); See more and Finances share the footer", () => {
     const save = fresh();
     save.reputation = 22; // peripherals, monitors and PCs open
     const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
-    expect(html).toContain(CAREER_EN.ladder.toBuy);
     for (const name of [CAREER_EN.finances.gear.peripherals, CAREER_EN.finances.gear.monitors, CAREER_EN.finances.gear.pcs]) expect(html).toContain(name);
     expect(html).not.toContain("grid grid-cols-2 gap-2");
     expect(html).toContain(CAREER_EN.ladder.seeMore);
     expect(html).toContain('href="/career/finances"');
-    // The track: the last rung reached, the next and the one after.
-    expect(html.split("relative z-10 flex min-w-0 flex-1 flex-col items-center gap-1 text-center").length - 1).toBe(3);
+    expect(html).toContain(CAREER_EN.toolbox.buy);
+    expect(html.indexOf(CAREER_EN.ladder.next)).toBeGreaterThan(html.indexOf(CAREER_EN.finances.gear.pcs));
   });
 });

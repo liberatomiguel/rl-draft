@@ -1,15 +1,7 @@
 "use client";
 
-/**
- * Road to Worlds hub — THE RACE BLOCK (RTW-01, R49; ROADMAP UX-01d): a compact
- * Major / Worlds toggle over the user's region — position and points, the
- * cut, the top of the table and the user's row, the fixtures left. It reads
- * the Standings screen's own view-model (careerUi.raceTableOf: the order and
- * the cut the Major / Worlds selection uses), so the two always agree.
- * rc.34 (HQ decision 6-A): one seeding line on top — "Next regional: direct
- * seat / Saturday qualifier" — from the direct-8 seeding itself
- * (store/careerHq.nextRegionalSeatOf → userIsDirect, R45's Monday commit).
- */
+/** HQ Major / Worlds race: compact tabs and the actual regional qualification
+ * table, sharing the standings view-model. Seeding details live with the event. */
 
 import { useId, useMemo, useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -24,7 +16,6 @@ import {
   type RaceLine,
   type RaceTable,
 } from "@/components/career/careerUi";
-import { nextRegionalSeatOf } from "@/store/careerHq";
 import { OrgMark } from "@/components/career/OrgMark";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { AppLink } from "@/components/ui/AppLink";
@@ -89,7 +80,6 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     kind === "major"
       ? C.race.fixturesMajor(table.fixturesLeft.regionals)
       : C.race.fixturesWorlds(table.fixturesLeft.regionals, table.fixturesLeft.majors);
-  const seat = useMemo(() => nextRegionalSeatOf(save), [save]);
 
   return (
     <Panel className="rise-in p-4" style={{ animationDelay: "90ms" }}>
@@ -98,20 +88,10 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         <Badge className={REGION_BADGE[region]}>{region}</Badge>
       </div>
 
-      {seat ? (
-        <p className="mb-2 text-xs text-sub">
-          {C.hub.nextRegional(seat.ordinal, seat.week)}:{" "}
-          <span className={cx("font-semibold", seat.direct ? "text-good" : "text-orange-bright")}>
-            {seat.direct ? C.hub.seatDirect : C.hub.seatQualifier}
-          </span>
-          {seat.committed ? null : <span className="text-faint"> · {C.hub.seatPreview}</span>}
-        </p>
-      ) : null}
-
-      <div
+<div
         role="tablist"
         aria-label={C.race.toggleLabel}
-        className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-line bg-black/20 p-1"
+        className="mb-2 grid grid-cols-2 gap-1 rounded-lg border border-line bg-black/20 p-1"
       >
         {(["major", "worlds"] as const).map((k) => (
           <button
@@ -123,7 +103,7 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
             aria-controls={`${ids}-panel`}
             onClick={() => setPicked(k)}
             className={cx(
-              "display min-h-11 rounded-md border text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
+              "display min-h-9 rounded-md border text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors",
               kind === k
                 ? "border-blue/50 bg-blue/15 text-blue-bright"
                 : "border-transparent text-sub hover:text-ink",
@@ -147,7 +127,7 @@ export function RaceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         </div>
       ) : null}
 
-      <ul className="mt-3 space-y-1">
+      <ul className="mt-2 space-y-0.5">
         {idx.map((i, k) => {
           const r = table.rows[i];
           const prev = k > 0 ? table.rows[idx[k - 1]] : null;

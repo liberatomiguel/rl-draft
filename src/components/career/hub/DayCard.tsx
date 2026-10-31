@@ -100,13 +100,14 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
     <div
       title={title || undefined}
       className={cx(
-        "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5",
-        // rc.36 (CAL-01): a window day reads blue; a matchday keeps its own look on top.
-        matchday ? "border-orange/50 bg-orange/10" : d.windowOpen ? "border-blue/35 bg-blue/10" : "border-line bg-white/[0.03]",
+        "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 overflow-hidden rounded-lg border px-0.5 py-1.5",
+        // The transfer window marks every day; event icons keep their tier accent.
+        d.windowOpen ? "border-blue/35 bg-blue/[0.06]" : matchday ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
         d.isToday && "day-tick",
         d.isPast && "opacity-40",
       )}
     >
+      {d.windowOpen ? <span aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-blue-bright" /> : null}
       <span className="kicker text-[8px] leading-none sm:text-[9px]">{D.weekdays[d.dow - 1]}</span>
       <span
         className={cx(

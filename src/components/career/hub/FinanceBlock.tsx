@@ -26,13 +26,13 @@ import { BalanceHistory } from "@/components/career/finances/BalanceHistory";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { CalendarIcon, HourglassIcon, TrendIcon, WalletIcon } from "@/components/ui/icons";
+import { CalendarIcon, HourglassIcon, TrendIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
 
 /** A small line of the recorded Monday balances (no axes; the chart opens larger). */
 function MondayLine({ points }: { points: number[] }) {
   const W = 120;
-  const H = 32;
+  const H = 44;
   const min = Math.min(...points, 0);
   const max = Math.max(...points, 0);
   const span = max - min || 1;
@@ -41,7 +41,7 @@ function MondayLine({ points }: { points: number[] }) {
   const d = points.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
   const last = points[points.length - 1];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-8 w-28" aria-hidden preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-14 w-36 sm:w-40" aria-hidden preserveAspectRatio="none">
       {min < 0 ? <line x1={0} x2={W} y1={y(0)} y2={y(0)} className="stroke-white/20" strokeDasharray="2 3" /> : null}
       <path d={d} fill="none" strokeWidth={1.6} className={last < 0 ? "stroke-bad" : "stroke-cyan"} />
     </svg>
@@ -51,11 +51,11 @@ function MondayLine({ points }: { points: number[] }) {
 /** rc.36: one full-width line — icon, label, the value on the right (toned when it warns). */
 function Line({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone?: "bad" | "warn" | "good" }) {
   return (
-    <div className="flex min-h-10 items-center gap-2.5 py-1.5">
+    <div className="flex items-center gap-2 py-1">
       <span
         className={cx(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
-          tone === "bad" ? "bg-bad/15 text-bad" : tone === "warn" ? "bg-orange/15 text-orange-bright" : tone === "good" ? "bg-good/15 text-good" : "bg-cyan/10 text-cyan",
+          "flex h-4 w-4 shrink-0 items-center justify-center",
+          tone === "bad" ? "text-bad" : tone === "warn" ? "text-orange-bright" : "text-faint",
         )}
       >
         {icon}
@@ -63,7 +63,7 @@ function Line({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
       <span className="kicker shrink-0 !text-[9px]">{label}</span>
       <span
         className={cx(
-          "ml-auto min-w-0 truncate text-right text-xs font-semibold",
+          "ml-auto min-w-0 truncate text-right text-[11px] font-medium",
           tone === "bad" ? "text-bad" : tone === "warn" ? "text-orange-bright" : "text-ink",
         )}
       >
@@ -88,13 +88,13 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       className={cx("rise-in p-4", f.balance < 0 ? "border-bad/40" : cashTight ? "border-orange/40" : "")}
       style={{ animationDelay: "120ms" }}
     >
-      <p className="kicker mb-1 inline-flex items-center gap-1.5 text-[10px]">
-        <WalletIcon className="h-3.5 w-3.5 text-cyan" />
-        {C.hub.financesTitle}
-      </p>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
+        <AppLink href="/career/finances" className="text-[11px] font-semibold text-sub hover:text-ink">{C.hub.financesOpen} →</AppLink>
+      </div>
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className={cx("display text-2xl font-bold leading-none", f.balance < 0 ? "text-bad" : "text-ink")}>{money(f.balance)}</p>
+          <p className={cx("display text-3xl font-bold leading-none", f.balance < 0 ? "text-bad" : "text-ink")}>{money(f.balance)}</p>
           {!ended ? (
             <p className={cx("mt-1.5 inline-flex items-center gap-1 text-xs font-semibold", f.net >= 0 ? "text-good" : "text-bad")}>
               <TrendIcon className="h-3.5 w-3.5" down={f.net < 0} />
@@ -108,7 +108,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           onClick={() => setChartOpen(true)}
           aria-label={C.finances.chartOpen}
           title={C.finances.chartOpen}
-          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border border-line px-1.5 transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-cyan/60"
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-1.5 transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-cyan/60"
         >
           {line.length >= 2 ? <MondayLine points={line} /> : <span className="px-1 text-[10px] text-faint">{C.finances.chartTitle}</span>}
         </button>
@@ -116,7 +116,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
 
       {/* rc.36: the next payroll and the runway as two full-width lines. */}
       {!ended ? (
-        <div className="mt-3 divide-y divide-line rounded-lg border border-line bg-white/[0.02] px-2.5">
+        <div className="mt-3 space-y-1 border-t border-line pt-2.5">
           <Line
             icon={<CalendarIcon className="h-4 w-4" />}
             label={C.hub.financePayroll}
@@ -131,11 +131,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         </div>
       ) : null}
 
-      <AppLink href="/career/finances" className="mt-1 flex min-h-11 items-center justify-end text-xs font-semibold text-blue-bright hover:underline">
-        {C.hub.financesOpen} →
-      </AppLink>
-
-      {/* rc.33 (UX-07): the larger chart (portal Modal; 360 px, no horizontal scroll). */}
+{/* rc.33 (UX-07): the larger chart (portal Modal; 360 px, no horizontal scroll). */}
       <Modal
         open={chartOpen}
         title={C.finances.chartTitle}

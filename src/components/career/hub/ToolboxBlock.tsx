@@ -1,25 +1,8 @@
 "use client";
 
-/**
- * Road to Worlds hub — PROGRESSION & TOOLBOX (rc.35, Miguel's rc.34
- * feedback: one card, visual, not running text). Merges rc.34's "next
- * unlock" card and the toolbox (UX-01f / UX-06a; HQ-CONTRACT H6, decisions
- * 5-A and 7-A):
- *  - the progression ladder as a compact icon track (engine/career/ladder),
- *    the next rung with its reputation bar, "See more" opens the whole ladder;
- *  - what is running (the bootcamp and its end date) as icon chips;
- *  - the items ready to buy as icon tiles (price, "New" tag).
- * A tile or the once-per-novelty unlock announcement opens ONE visual modal:
- * the item, its icon, benefits and price, and two buttons — Buy and Close
- * (no second step). Buy calls the same flows Finances does; a refusal says
- * why (store/careerHq.toolboxRefusalOf) and disables Buy.
- * rc.36 (POL-02, Miguel on rc.35): less white space, one hierarchy — the
- * next unlock is the card's lead, the items to buy are compact icon rows
- * (no orphan tiles), "See more" and "Finances" share one footer row and the
- * whole ladder opens in a modal (the card never grows). The unlock
- * announcement only informs: Close, no Buy; a row tapped on purpose keeps
- * Buy (Gate 3a decision 7-A, buying in HQ).
- */
+/** HQ progression: three compact item rows, purchases and next unlock below.
+ * Item details and the full ladder remain in modals. New unlock announcements
+ * inform with Close only; deliberate purchases use the existing store flows. */
 
 import { useMemo, useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -32,11 +15,10 @@ import { useCareerStore } from "@/store/careerStore";
 import { toolboxAfterOf, toolboxOf, toolboxRefusalOf, gearBlockerOf, type ToolboxItem } from "@/store/careerHq";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
-import { LadderGrid, LadderStrip, RungIcon } from "@/components/career/ladder/LadderParts";
+import { LadderGrid, RungIcon } from "@/components/career/ladder/LadderParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { NewTag } from "@/components/ui/NewDot";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -112,8 +94,9 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const refusal = useMemo(() => (sheet ? toolboxRefusalOf(save, sheet.id) : null), [save, sheet]);
   const after = sheet ? toolboxAfterOf(save, sheet) : null;
 
+  const purchaseRung = (id: LadderRungId) => items.some((i) => rungOfItem(i.id) === id && i.status !== "locked" && i.status !== "active");
+  const visibleRungs = [...rungs.filter((r) => purchaseRung(r.id)), ...rungs.filter((r) => !purchaseRung(r.id) && r.status !== "owned")].slice(0, HQ_LADDER_WINDOW);
   const active = items.filter((i) => i.status === "active");
-  const toBuy = items.filter((i) => i.status === "buyable" || i.status === "used" || i.status === "queued");
   const next = rungs.find((r) => r.status === "locked") ?? null;
   const rep = Math.round(save.reputation);
 
@@ -130,8 +113,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     setSheetId(null);
   };
 
-  const buy = () => {
-    if (!sheet) return;
+  const purchase = (sheet: ToolboxItem) => {
     markCareerSeen([toolboxNewKey(sheet.id)]);
     markCareerAnnounced([toolboxNewKey(sheet.id)]);
     if (sheet.kind === "gear") buyGear(sheet.id as Parameters<typeof buyGear>[0]);
@@ -139,6 +121,8 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     else setPsychologist(true);
     setSheetId(null);
   };
+
+  const buy = () => { if (sheet) purchase(sheet); };
 
   const noteOf = (item: ToolboxItem): string | null => {
     if (item.status === "used") return C.toolbox.used;
@@ -153,86 +137,38 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     <Panel className="rise-in p-4" style={{ animationDelay: "150ms" }}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="kicker text-[10px]">{L.title}</p>
-        <span className="rounded-full border border-orange/40 bg-orange/10 px-2 py-0.5 text-[10px] font-bold text-orange-bright">
+        <span className="rounded border border-line bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-sub">
           {L.rep(rep)}
         </span>
       </div>
 
-      {/* rc.36: the card's lead — the next rung: icon, name, the reputation bar and how far. */}
+      <ul className="space-y-2">
+        {visibleRungs.map((rung) => {
+          const item = items.find((i) => rungOfItem(i.id) === rung.id);
+          const canBuy = item?.status === "buyable" && !toolboxRefusalOf(save, item.id) && !ended;
+          const note = item ? noteOf(item) : null;
+          return (
+            <li key={rung.id} className="flex min-h-16 items-center gap-3 rounded-lg border border-line px-3 py-2.5">
+              <RungIcon id={rung.id} className={cx("h-5 w-5 shrink-0", rung.status === "locked" ? "text-faint" : "text-sub")} />
+              <div className="min-w-0 flex-1">
+                {item && rung.status !== "locked" ? (
+                  <button type="button" onClick={() => openSheet(item.id)} className="text-left text-xs font-semibold text-ink hover:underline">{toolboxNameOf(C, item.id)}</button>
+                ) : <p className="text-xs font-semibold text-sub">{L.rung[rung.id]}</p>}
+                <p className="mt-0.5 text-[10px] text-faint">{rung.status === "locked" ? L.rep(rung.gate) : item ? note ?? priceOf(C, item) : L.rep(rung.gate)}</p>
+              </div>
+              {item && rung.status !== "locked" ? <Button size="sm" variant="secondary" disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
+            </li>
+          );
+        })}
+      </ul>
+      {active.length > 0 ? <p className="mt-2 text-[10px] text-faint">{active.map((i) => toolboxNameOf(C, i.id) + " · " + durationOf(C, i)).join(" / ")}</p> : null}
       {next ? (
-        <div className="flex items-center gap-3 rounded-xl border border-orange/40 bg-orange/[0.05] px-3 py-2.5 shadow-[0_0_20px_-10px_rgba(249,115,22,0.6)]">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange/15 text-orange-bright">
-            <RungIcon id={next.id} className="h-6 w-6" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="flex items-baseline justify-between gap-2">
-              <span className="kicker truncate !text-[9px] text-orange-bright">{L.next}</span>
-              <span className="shrink-0 text-[10px] font-semibold text-faint">{L.progress(rep, next.gate)}</span>
-            </p>
-            <p className="truncate text-sm font-bold text-ink">{L.rung[next.id]}</p>
-            <ProgressBar value={save.reputation / next.gate} tone="orange" className="mt-1.5 h-1.5" label={L.next} />
-          </div>
+        <div className="mt-3 border-t border-line pt-3">
+          <div className="flex justify-between gap-2 text-[10px] text-faint"><span>{L.next}</span><span>{L.progress(rep, next.gate)}</span></div>
+          <p className="mt-1 text-xs font-semibold text-sub">{L.rung[next.id]}</p>
+          <ProgressBar value={save.reputation / next.gate} tone="blue" className="mt-2 h-1" label={L.next} />
         </div>
-      ) : (
-        <p className="rounded-xl border border-orange/40 bg-orange/[0.05] px-3 py-2.5 text-center text-xs font-semibold text-orange-bright">{L.top}</p>
-      )}
-
-      {/* The road around it (the whole ladder: "See more"). */}
-      <div className="mt-3">
-        <LadderStrip rungs={rungs} C={C} size={HQ_LADDER_WINDOW} />
-      </div>
-
-      {active.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {active.map((i) => (
-            <span key={i.id} className="inline-flex items-center gap-1.5 rounded-full border border-good/40 bg-good/10 px-2.5 py-1 text-[11px] font-semibold text-good">
-              <RungIcon id={rungOfItem(i.id)} className="h-3.5 w-3.5" />
-              {toolboxNameOf(C, i.id)} · {durationOf(C, i)}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {/* rc.36: the items to buy as compact icon rows — name, "New", why it waits, the price. */}
-      {toBuy.length > 0 ? (
-        <>
-          <p className="kicker mb-1.5 mt-3 !text-[9px]">{L.toBuy}</p>
-          <ul className="space-y-1.5">
-            {toBuy.map((i) => {
-              const note = noteOf(i);
-              const isNew = summary.keys.has(toolboxNewKey(i.id));
-              const buyable = i.status === "buyable";
-              return (
-                <li key={i.id}>
-                  <button
-                    type="button"
-                    onClick={() => openSheet(i.id)}
-                    disabled={ended}
-                    className="flex min-h-12 w-full items-center gap-2.5 rounded-lg border border-line bg-white/[0.02] px-2.5 py-1.5 text-left transition-colors hover:border-line-strong disabled:opacity-50"
-                  >
-                    <span
-                      className={cx(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
-                        buyable ? "bg-orange/15 text-orange-bright" : "bg-white/5 text-faint",
-                      )}
-                    >
-                      <RungIcon id={rungOfItem(i.id)} className="h-[18px] w-[18px]" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate text-xs font-semibold text-ink">{toolboxNameOf(C, i.id)}</span>
-                        {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
-                      </span>
-                      {note ? <span className="block truncate text-[10px] text-faint">{note}</span> : null}
-                    </span>
-                    <span className={cx("shrink-0 text-xs font-bold", buyable ? "text-orange-bright" : "text-faint")}>{priceOf(C, i)}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      ) : null}
+      ) : <p className="mt-3 text-xs text-sub">{L.top}</p>}
 
       {/* rc.36: one footer row — the whole ladder (modal) and the way to Finances. */}
       <div className="mt-1.5 flex items-center justify-between gap-2">

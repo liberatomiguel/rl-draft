@@ -266,10 +266,10 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
       case "sponsor": {
         const offers = save.sponsorOffers ?? [];
         if (offers.length === 0) return null;
-        // rc.36 (front S2, Miguel on rc.35): the block only prompts the choice (who, until when);
-        // the offers open as a pop-up, one card per sponsor. Only "Decide later", no "No deal for now".
+        // The active sponsor decision opens directly; deferral keeps its persisted deadline.
         return (
           <SponsorDecisionPrompt
+            key={d.id}
             save={save}
             C={C}
             canWait={d.canWait}
@@ -281,7 +281,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
     }
   };
 
-  const topBody = top ? body(top) : null;
+  const topBody = top && top.kind !== "sponsor" ? body(top) : null;
   const index = top ? queue.indexOf(top) : -1;
 
   // Warnings that are not decisions: one line each, under the block (not once the career ended).
@@ -319,6 +319,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
 
   return (
     <div className="space-y-2">
+      {top?.kind === "sponsor" ? body(top) : null}
       <DayCard
         save={save}
         C={C}

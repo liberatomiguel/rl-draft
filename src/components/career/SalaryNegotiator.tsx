@@ -9,8 +9,8 @@
  * signing bonus included; the block more discreet and organised"): three
  * quiet groups —
  *  - YOUR OFFER: the length, the weekly wage, the prize share and the
- *    signing bonus, plain sliders with ± (under his ask each moves only
- *    itself; at his full ask the share and bonus trade against the wage);
+ *    signing bonus, plain sliders with ± (reducing share/bonus keeps
+ *    the wage; increases above his full ask can trade against the wage);
  *  - HIS POSITION: one gauge of the offer's worth to him against what he
  *    needs for sure and his ask, his chance, his asking terms and what each
  *    lever is worth to him (the reason his answer moves);
@@ -48,7 +48,7 @@ function GroupHead({ icon, title, right }: { icon: ReactNode; title: string; rig
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
       <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
-        <span className="h-3.5 w-3.5 shrink-0 text-cyan">{icon}</span>
+        <span className="h-3.5 w-3.5 shrink-0 text-sub">{icon}</span>
         {title}
       </p>
       {right}
@@ -120,7 +120,7 @@ function LeverSlider({
           <p className="text-center text-base font-bold tabular-nums text-ink">{display}</p>
           <div className="relative h-6">
             <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-white/8">
-              <div className="absolute inset-y-0 left-0 rounded-full bg-cyan/45" style={{ width: `${pct(value)}%` }} />
+              <div className="absolute inset-y-0 left-0 rounded-full bg-orange/45" style={{ width: `${pct(value)}%` }} />
             </div>
             {tick !== undefined ? (
               <div
@@ -138,7 +138,7 @@ function LeverSlider({
               value={value}
               disabled={disabled || max <= min}
               onChange={(e) => onSet(Number(e.target.value))}
-              className="talk-range absolute inset-0 h-6 w-full cursor-pointer appearance-none bg-transparent accent-cyan disabled:cursor-default"
+              className="talk-range absolute inset-0 h-6 w-full cursor-pointer appearance-none bg-transparent accent-orange disabled:cursor-default [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-ink [&::-webkit-slider-thumb]:bg-orange [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-ink [&::-moz-range-thumb]:bg-orange"
             />
           </div>
         </div>
@@ -172,7 +172,7 @@ function WorthGauge({ talk, N }: { talk: NegotiationAnswer; N: Talk }) {
   const needPct = pct(zone.needWorth);
   const sure = talk.odds >= 1;
   const oddsPct = Math.round(talk.odds * 100);
-  const tone = sure ? "text-emerald-400" : oddsPct >= 50 ? "text-amber-400" : "text-rose-400";
+  const tone = sure ? "text-ink" : "text-sub";
   return (
     <div className="mt-2">
       <div className="flex items-end justify-between gap-2">
@@ -198,10 +198,10 @@ function WorthGauge({ talk, N }: { talk: NegotiationAnswer; N: Talk }) {
       <div className="relative mt-1.5 h-4" aria-hidden>
         <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/8">
           <div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-rose-500/30 to-amber-400/55"
-            style={{ width: `${needPct}%` }}
+            className="absolute inset-y-0 left-0 rounded-full bg-orange/40 transition-[width] duration-200 motion-reduce:transition-none"
+            style={{ width: `${pct(talk.worth)}%` }}
           />
-          <div className="absolute inset-y-0 right-0 bg-emerald-400/45" style={{ left: `${needPct}%` }} />
+          <div className="absolute inset-y-0 w-px bg-white/35" style={{ left: `${needPct}%` }} />
         </div>
         <div
           className="absolute top-0 h-4 w-1 rounded-full bg-white shadow-[0_0_0_2px_rgba(0,0,0,0.45)] transition-[left] duration-200"
@@ -210,7 +210,7 @@ function WorthGauge({ talk, N }: { talk: NegotiationAnswer; N: Talk }) {
       </div>
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[10px] text-faint">
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400/70" />
+          <span className="inline-block h-2 w-2 rounded-full bg-white/35" />
           {N.sureFrom(money(zone.needWorth))}
         </span>
         <span>{N.askMark(money(zone.askWorth))}</span>
@@ -222,10 +222,10 @@ function WorthGauge({ talk, N }: { talk: NegotiationAnswer; N: Talk }) {
 /** What one lever is worth to him (weekly money): + helps the offer, − costs it. */
 function Effect({ icon, label, amount, N }: { icon: ReactNode; label: string; amount: number; N: Talk }) {
   return (
-    <span className="inline-flex min-h-7 items-center gap-1 rounded-md bg-white/[0.04] px-2 text-[10px]">
+    <span className="inline-flex min-h-6 items-center gap-1 text-[10px]">
       <span className="h-3 w-3 shrink-0 text-faint">{icon}</span>
       <span className="text-sub">{label}</span>
-      <span className={cx("font-bold tabular-nums", amount > 0 ? "text-emerald-400" : "text-amber-400")}>
+      <span className="font-semibold tabular-nums text-sub">
         {N.effectWeekly(formatMoneyDelta(amount))}
       </span>
     </span>
@@ -291,15 +291,15 @@ export function SalaryNegotiator({
   const bonusDelta = offer.bonus - ask.bonus;
 
   return (
-    <div className="rounded-lg border border-line bg-white/[0.02] p-3">
+    <div className="rounded-lg border border-line bg-white/[0.015] p-3.5">
       <div className="flex items-center justify-between gap-2">
         <p className="kicker flex items-center gap-1.5 text-[10px]">
-          <HandshakeIcon className="h-3.5 w-3.5 text-cyan" />
+          <HandshakeIcon className="h-3.5 w-3.5 text-sub" />
           {N.title}
         </p>
         <button
           type="button"
-          className="min-h-11 px-1 text-[11px] font-semibold text-cyan hover:underline disabled:opacity-40"
+          className="min-h-11 px-1 text-[11px] font-semibold text-sub hover:underline disabled:opacity-40"
           onClick={() => onChange({})}
           disabled={disabled || atAsk}
         >
@@ -326,10 +326,10 @@ export function SalaryNegotiator({
                   onClick={() => length.onChange(l)}
                   className={cx(
                     "min-h-11 rounded-lg border px-1.5 py-1 text-center transition-colors",
-                    length.value === l ? "border-cyan/60 bg-cyan/10" : "border-line hover:border-line-strong",
+                    length.value === l ? "border-white/25 bg-white/[0.06]" : "border-line hover:border-line-strong",
                   )}
                 >
-                  <span className={cx("block text-xs font-bold", length.value === l ? "text-cyan" : "text-ink")}>
+                  <span className={cx("block text-xs font-bold", length.value === l ? "text-sub" : "text-ink")}>
                     {C.market.seasons(l)}
                   </span>
                   {length.sub ? <span className="block text-[10px] text-faint">{length.sub(l)}</span> : null}
@@ -421,8 +421,8 @@ export function SalaryNegotiator({
         </p>
         <WorthGauge talk={talk} N={N} />
         {shareDelta !== 0 || bonusDelta !== 0 || effects.length > 0 || talk.refusals > 0 ? (
-          <div className="mt-2" aria-label={N.effectsTitle}>
-            <p className="text-[10px] text-faint">{N.effectsTitle}</p>
+          <details className="mt-2" aria-label={N.effectsTitle}>
+            <summary className="cursor-pointer text-[10px] text-faint">{N.effectsTitle}</summary>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {shareDelta !== 0 ? (
                 <Effect icon={<PercentIcon className="h-full w-full" />} label={N.effectShare(shareDelta)} amount={effects.share} N={N} />
@@ -442,7 +442,7 @@ export function SalaryNegotiator({
                 <Effect icon={<AlertIcon className="h-full w-full" />} label={N.effectRefusals(talk.refusals)} amount={effects.refusals} N={N} />
               ) : null}
             </div>
-          </div>
+          </details>
         ) : null}
       </div>
 

@@ -4,7 +4,7 @@
  * Road to Worlds — Calendar (v0.2 day clock, FIFA-style month view).
  *
  * Top → bottom: date header + window banner · "Next for you" stops strip ·
- * month-by-month 7-col grids (Mon-Sun) with day markers and a tap-to-open
+ * one navigable month in a 7-col grid (Mon-Sun) with day markers and a tap-to-open
  * day-detail panel · unofficial invite · season overview pips · advance
  * footer. MY schedule only by default; a toggle reveals other regions'
  * regional Sundays as neutral dots + a list in the day detail.
@@ -112,8 +112,7 @@ export function CalendarScreen() {
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showWorld, setShowWorld] = useState(false);
-  const currentMonthRef = useRef<HTMLDivElement | null>(null);
-  const didScroll = useRef(false);
+  const [viewedMonth, setViewedMonth] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
   const reducedMotion = useOsReducedMotion();
@@ -173,13 +172,6 @@ export function CalendarScreen() {
     return out;
   }, [days]);
 
-  // Auto-scroll to the current month once, after the grid exists.
-  useEffect(() => {
-    if (didScroll.current || !currentMonthRef.current) return;
-    didScroll.current = true;
-    currentMonthRef.current.scrollIntoView({ block: "start" });
-  }, [mounted, save]);
-
   // rc.29 (CAR-09): an opened day detail scrolls into view above the sticky
   // advance bar (it used to open under it, out of sight).
   useEffect(() => {
@@ -197,6 +189,16 @@ export function CalendarScreen() {
   const clk = clockLabel(save);
   const windowDaysLeft = daysUntilWindowCloses(save);
   const currentMonthKey = `${clk.date.y}-${clk.date.m}`;
+  const requestedMonth = viewedMonth ?? currentMonthKey;
+  const requestedMonthIndex = months.findIndex((g) => g.key === requestedMonth);
+  const visibleMonthIndex = Math.max(0, requestedMonthIndex >= 0 ? requestedMonthIndex : months.findIndex((g) => g.key === currentMonthKey));
+  const visibleMonth = months[visibleMonthIndex];
+  const changeMonth = (index: number) => {
+    const month = months[index];
+    if (!month) return;
+    setViewedMonth(month.key);
+    setSelectedDay(null);
+  };
   const sel = selectedDay !== null ? (days[selectedDay - 1] ?? null) : null;
 
   // R40: a Major / Worlds paused after its Saturday Swiss continues to Sunday —
@@ -583,19 +585,21 @@ export function CalendarScreen() {
         </div>
 
         <div className="mt-3 space-y-5">
-          {months.map((g, mi) => {
-            const isCurrent = g.key === currentMonthKey;
+          {months.filter((g) => g.key === visibleMonth?.key).map((g) => {
             return (
               <div
                 key={g.key}
                 id={`cal-month-${g.key}`}
-                ref={isCurrent && mi > 0 ? currentMonthRef : undefined}
                 className="scroll-mt-24"
               >
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                  <p className="display text-sm font-bold uppercase tracking-wide text-ink">
-                    {D.months[g.m - 1]} <span className="font-semibold text-faint">{g.y}</span>
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => changeMonth(visibleMonthIndex - 1)} disabled={visibleMonthIndex === 0} aria-label={C.calendar.previousMonth} className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-25">‹</button>
+                    <h2 className="display min-w-36 text-center text-sm font-bold uppercase tracking-wide text-ink" aria-live="polite">
+                      {D.months[g.m - 1]} <span className="font-semibold text-faint">{g.y}</span>
+                    </h2>
+                    <button type="button" onClick={() => changeMonth(visibleMonthIndex + 1)} disabled={visibleMonthIndex === months.length - 1} aria-label={C.calendar.nextMonth} className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-25">›</button>
+                  </div>
                   {/* rc.36 (CAL-01): the window(s) running through this month, end date named. */}
                   {windowRanges
                     .filter((r) => r.start <= g.days[g.days.length - 1].day && r.end >= g.days[0].day)

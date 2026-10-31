@@ -773,6 +773,8 @@ export const CAREER_EN = {
   },
 
   calendar: {
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
     title: "Calendar",
     thisWeek: "This week",
     today: "Today",
@@ -1009,6 +1011,7 @@ export const CAREER_EN = {
     effectPct: (v: number) => `${v}%`,
     // rc.35 (front T, Miguel): the simplified training cycle — objective + intensity + scrims.
     cycle: {
+      restart: "Start the same plan",
       title: "Training cycle",
       cycleOf: (n: number, count: number) => `Cycle ${n} of ${count}`,
       dayOf: (day: number, len: number) => `Day ${day} of ${len}`,

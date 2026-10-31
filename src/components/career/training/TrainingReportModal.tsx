@@ -24,11 +24,10 @@ import { coachPlansOf, trainingReportOf } from "@/store/careerTraining";
 import { buttonClass, Button } from "@/components/ui/Button";
 import { AppLink } from "@/components/ui/AppLink";
 import { Modal } from "@/components/ui/Modal";
-import { StarIcon, TrophyIcon, WhistleIcon } from "@/components/ui/icons";
+import { WhistleIcon } from "@/components/ui/icons";
 import {
   CycleReportBody,
   fmt1,
-  OBJECTIVE_TONE,
   ObjectiveIcon,
   PackageChips,
   reportAvgOf,
@@ -40,15 +39,15 @@ export function TrainingReportModal() {
   const t = useCopy();
   const save = useCareerStore(selectActiveSave);
   const acknowledge = useCareerStore((s) => s.acknowledgeTrainingReport);
+  const setTrainingPackage = useCareerStore((s) => s.setTrainingPackage);
   const report = save ? trainingReportOf(save) : null;
   if (!save || !report || moneyNoticeOf(save)) return null;
   const Y = C.training.cycle;
   const R = Y.report;
   const objective = report.package?.objective ?? null;
-  const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub", ring: "border-line", bg: "bg-white/[0.03]" };
   const avg = reportAvgOf(report);
   const completion = reportCompletionOf(report);
-  const best = [...report.players].sort((a, b) => b.after - b.before - (a.after - a.before))[0];
+  const canRepeat = save.phase === "running" && !save.training?.plan?.package && report.package !== null;
   const coachRuns = coachPlansOf(save) && Boolean(save.training?.plan?.package) && save.coach;
   return (
     <Modal
@@ -66,54 +65,34 @@ export function TrainingReportModal() {
             <Button variant="ghost" size="md" className="min-h-11" onClick={acknowledge}>
               {R.close}
             </Button>
-            <AppLink href="/career/training" className={cx(buttonClass("primary", "md"), "min-h-11")} onClick={acknowledge}>
+            {canRepeat && report.package ? <Button variant="primary" size="md" className="min-h-11" onClick={() => { acknowledge(); setTrainingPackage(report.package); }}>{Y.restart}</Button> : null}
+            <AppLink href="/career/training" className={cx(buttonClass(canRepeat ? "secondary" : "primary", "md"), "min-h-11")} onClick={acknowledge}>
               {R.planNext} →
             </AppLink>
           </>
         )
       }
     >
-      {/* the hero: the objective's colour, the plan, the squad's average, the top gain, the completion */}
-      <div className={cx("mb-3 overflow-hidden rounded-2xl border", tone.ring)}>
-        <div className={cx("px-3.5 py-3", tone.bg)}>
-          <p className={cx("kicker text-[10px]", tone.text)}>{R.kicker}</p>
-          <div className="mt-1.5 flex items-center gap-3">
-            <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 bg-black/25", tone.ring, tone.text)}>
-              <ObjectiveIcon objective={objective} className="h-7 w-7" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className={cx("display truncate text-lg font-bold", tone.text)}>{objective ? Y.objectives[objective] : Y.by.base}</p>
-              <p className="truncate text-[11px] text-sub">{Y.by[report.author] ?? ""}</p>
-            </div>
-            <div className="shrink-0 text-right leading-none">
-              <p className={cx("display text-3xl font-bold", avg >= 0 ? "text-good" : "text-bad")}>{fmt1(avg)}</p>
-              <p className="mt-1 text-[9px] uppercase tracking-[0.1em] text-faint">{R.avg}</p>
-            </div>
+      <div className="mb-4 rounded-xl border border-line bg-white/[0.02] p-3.5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-sub">
+            <ObjectiveIcon objective={objective} className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="display truncate text-base font-bold text-ink">{objective ? Y.objectives[objective] : Y.by.base}</p>
+            <p className="truncate text-[11px] text-faint">{Y.by[report.author] ?? ""}</p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="display text-2xl font-bold tabular-nums text-ink">{fmt1(avg)}</p>
+            <p className="text-[10px] text-faint">{R.avg}</p>
           </div>
         </div>
-        <div className="space-y-2 bg-black/20 px-3.5 py-2.5">
-          <PackageChips pkg={report.package} C={C} />
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-semibold">
-            {best ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5 text-ink">
-                <StarIcon className="h-3.5 w-3.5 shrink-0 text-amber-300" filled />
-                <span className="truncate">
-                  {R.best}: {best.name} <span className="text-good">{fmt1(best.after - best.before)}</span>
-                </span>
-              </span>
-            ) : null}
-            {completion > 0.004 ? (
-              <span className="inline-flex items-center gap-1.5 text-amber-300">
-                <TrophyIcon className="h-3.5 w-3.5 shrink-0" />
-                {R.completion(completion.toFixed(2))}
-              </span>
-            ) : null}
-          </div>
-        </div>
+        <PackageChips pkg={report.package} C={C} className="mt-3" />
+        {completion > 0.004 ? <p className="mt-2 text-[10px] text-faint">{R.completion(completion.toFixed(2))}</p> : null}
       </div>
       <CycleReportBody summary={report} C={C} statLabels={t.STAT_LABELS} stats={false} />
       {coachRuns && save.coach ? (
-        <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-cyan">
+        <p className="mt-3 flex items-center gap-1.5 text-[11px] text-sub">
           <WhistleIcon className="h-3.5 w-3.5 shrink-0" />
           {R.coachNext(save.coach.name)}
         </p>

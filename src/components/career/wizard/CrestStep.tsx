@@ -6,13 +6,11 @@
  *
  * Shape × symbol × layout × pattern, then the colours: the curated kits are
  * presets (one tap fills both colours, nothing is locked), the primary and
- * the accent are picked on their own (the palette, or any colour), and the
+ * the accent are picked on their own (the predefined palette), and the
  * crest previews live — a sticky mini preview on phones, the big one beside
  * the pickers on desktop, plus a standings-row mock at the size the tables
- * use. The contrast guard (crestContrast.ts) reads both ratios — the accent
- * on the base, the base on a dark card — and, under CAREER_CREST.contrast's
- * floors, warns and offers a one-tap fix; it never disables a swatch nor
- * changes a pick by itself.
+ * use. Colors are picked from the curated presets and palette only; saved
+ * custom colors remain readable.
  */
 
 import type { CareerCopy } from "@/content/careerCopy";
@@ -36,9 +34,7 @@ import {
 } from "@/components/career/UserCrest";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { AlertIcon, CheckIcon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/Panel";
-import { crestContrastOf, ratioLabel } from "./crestContrast";
 
 /** Dimmed neighbor crests for the table-row mock (deterministic filler orgs). */
 const MOCK_ROW_ABOVE = proceduralCrestFor("fill:wizard-mock-above");
@@ -84,9 +80,7 @@ export function CrestStep({
 }) {
   const W = C.wizard;
   const crestId = composeCrestId(pick);
-  const guard = crestContrastOf(colors);
   const nameOf = (id: string) => W.colorNames[id] ?? id;
-  const allOk = guard.pairOk && guard.cardOk;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_minmax(16rem,19rem)]">
@@ -96,10 +90,6 @@ export function CrestStep({
           <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="lg" />
           <div className="min-w-0 flex-1">
             <p className="display truncate text-base font-bold uppercase tracking-wide text-ink">{orgName || "—"}</p>
-            <p className={cx("mt-0.5 flex items-center gap-1 text-[11px] font-semibold", allOk ? "text-good" : "text-orange-bright")}>
-              {allOk ? <CheckIcon className="h-3.5 w-3.5" /> : <AlertIcon className="h-3.5 w-3.5" />}
-              {W.contrastTitle}
-            </p>
           </div>
           <UserCrest crestId={crestId} colors={colors} abbrev={abbrev || undefined} size="sm" />
         </div>
@@ -192,64 +182,16 @@ export function CrestStep({
 
         <ColorRow
           label={W.primaryColor}
-          customLabel={W.customColor}
           value={colors.primary}
           nameOf={nameOf}
           onPick={(hex) => onColors({ ...colors, primary: hex })}
         />
         <ColorRow
           label={W.secondaryColor}
-          customLabel={W.customColor}
           value={colors.secondary}
           nameOf={nameOf}
           onPick={(hex) => onColors({ ...colors, secondary: hex })}
         />
-
-        {/* The contrast guard: two ratios, a warning and a one-tap fix — never a block. */}
-        <div
-          className={cx(
-            "mt-5 rounded-xl border p-3",
-            allOk ? "border-good/30 bg-good/[0.05]" : "border-orange/40 bg-orange/[0.06]",
-          )}
-          role="status"
-        >
-          <div className="flex items-center gap-2">
-            <span className={cx("flex h-7 w-7 items-center justify-center rounded-lg", allOk ? "bg-good/15 text-good" : "bg-orange/15 text-orange-bright")}>
-              {allOk ? <CheckIcon className="h-4 w-4" /> : <AlertIcon className="h-4 w-4" />}
-            </span>
-            <p className="display text-sm font-bold uppercase tracking-[0.12em] text-ink">{W.contrastTitle}</p>
-          </div>
-          <div className="mt-2.5 grid grid-cols-2 gap-2">
-            <RatioMeter label={W.contrastPair} ratio={guard.pair} ok={guard.pairOk} />
-            <RatioMeter label={W.contrastCard} ratio={guard.card} ok={guard.cardOk} />
-          </div>
-          {allOk ? (
-            <p className="mt-2 text-xs text-sub">{W.contrastGood}</p>
-          ) : (
-            <div className="mt-2 space-y-2">
-              {!guard.pairOk ? <p className="text-xs text-ink">{W.contrastLowPair}</p> : null}
-              {!guard.cardOk ? <p className="text-xs text-ink">{W.contrastLowCard}</p> : null}
-              <div className="flex flex-wrap gap-2">
-                {guard.fixAccent ? (
-                  <FixButton hex={guard.fixAccent.hex} onClick={() => onColors({ ...colors, secondary: guard.fixAccent!.hex })}>
-                    {W.contrastUseAccent(nameOf(guard.fixAccent.id))}
-                  </FixButton>
-                ) : null}
-                {guard.fixPrimary ? (
-                  <FixButton hex={guard.fixPrimary.hex} onClick={() => onColors({ ...colors, primary: guard.fixPrimary!.hex })}>
-                    {W.contrastUsePrimary(nameOf(guard.fixPrimary.id))}
-                  </FixButton>
-                ) : null}
-                {guard.swapFixes ? (
-                  <Button variant="ghost" size="sm" className="min-h-11 border border-line" onClick={() => onColors({ primary: colors.secondary, secondary: colors.primary })}>
-                    {W.contrastSwap}
-                  </Button>
-                ) : null}
-              </div>
-              <p className="text-[10px] text-faint">{W.contrastKeep}</p>
-            </div>
-          )}
-        </div>
 
         <p className="kicker mb-1 mt-6">{W.identityBuff}</p>
         <p className="mb-3 text-xs text-sub">{W.identityBuffHint}</p>
@@ -309,21 +251,18 @@ export function CrestStep({
   );
 }
 
-/** One colour role: the palette swatches, then any colour (the native picker). */
+/** One colour role, picked from the predefined palette. */
 function ColorRow({
   label,
-  customLabel,
   value,
   nameOf,
   onPick,
 }: {
   label: string;
-  customLabel: string;
   value: string;
   nameOf: (id: string) => string;
   onPick: (hex: string) => void;
 }) {
-  const inPalette = CREST_PALETTE.some((c) => sameHex(c.hex, value));
   return (
     <div className="mt-5">
       <div className="mb-2 flex items-center gap-2">
@@ -351,55 +290,8 @@ function ColorRow({
             />
           );
         })}
-        <label
-          title={customLabel}
-          className={cx(
-            "relative flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2",
-            !inPalette ? "scale-110 border-white/80" : "border-white/15 hover:border-white/40",
-          )}
-          style={{
-            background: !inPalette
-              ? value
-              : "conic-gradient(from 0deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ef4444)",
-          }}
-        >
-          <span className="sr-only">{customLabel}</span>
-          <input
-            type="color"
-            value={/^#[0-9a-fA-F]{6}$/.test(value) ? value.toLowerCase() : "#000000"}
-            onChange={(e) => onPick(e.target.value)}
-            aria-label={`${label} — ${customLabel}`}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          />
-          {inPalette ? <span aria-hidden className="display text-base font-bold text-white drop-shadow">+</span> : null}
-        </label>
       </div>
     </div>
-  );
-}
-
-function RatioMeter({ label, ratio, ok }: { label: string; ratio: number; ok: boolean }) {
-  return (
-    <div className="rounded-lg border border-line bg-black/20 px-2.5 py-2">
-      <p className="text-[10px] leading-tight text-faint">{label}</p>
-      <p className={cx("display mt-0.5 flex items-center gap-1 text-lg font-bold", ok ? "text-good" : "text-orange-bright")}>
-        {ok ? <CheckIcon className="h-4 w-4" /> : <AlertIcon className="h-4 w-4" />}
-        {ratioLabel(ratio)}
-      </p>
-    </div>
-  );
-}
-
-function FixButton({ hex, onClick, children }: { hex: string; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-blue/50 bg-blue/10 px-3 text-xs font-semibold text-blue-bright transition-colors hover:bg-blue/20"
-    >
-      <span aria-hidden className="h-4 w-4 shrink-0 rounded-full border border-white/40" style={{ background: hex }} />
-      {children}
-    </button>
   );
 }
 
