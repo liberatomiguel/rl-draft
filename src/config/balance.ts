@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 7;
+export const BALANCE_VERSION = 8;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1073,7 +1073,7 @@ export const CAREER_UNOFFICIAL = {
   /** t3 offers stop above this team rating ("outgrown the community circuit"). */
   t3RatingCeiling: 85,
   t3MaxEntriesPerSplit: 2,
-  t3RepCapPerSplit: 2,
+  t3RepCapPerSplit: 1,
   /**
    * v2.0 (R23): a Community Cup fields at most this many orgs rated ABOVE the
    * user team (closest-first); the rest are the closest weaker orgs. Early
@@ -1087,7 +1087,9 @@ export const CAREER_UNOFFICIAL = {
    * `localSceneBand` of the user team — the "garage scene" a new org actually
    * plays against. `localScenePool` teams exist per region per season.
    */
-  localSceneBand: [-7, 1] as const,
+  // rc.36.3: the local circuit is competition, rather than seven near-free wins.
+  // Frozen at W4 as before; development can overtake it within the season.
+  localSceneBand: [-1, 4] as const,
   localScenePool: 8,
   t2RepGate: 30,
   t2OfferChance: 0.6,
@@ -1425,8 +1427,10 @@ export const CAREER_DEV = {
    * rc.36 POL-04: 40 → 50.25 slows user sessions and match XP uniformly,
    * preserving package ratios. The world has its own weekly pace; slowing
    * global curvature alone also weakened opposition. Potential is unchanged.
+   * rc.36.3: 50.25 → 60, a 16.25% reduction in the base session/match rate;
+   * packages still accelerate the same individual peak, without a split stop.
    */
-  trainingWeeksPerYear: 50.25,
+  trainingWeeksPerYear: 60,
   /**
    * DEV-01b: a generated player is never promised a peak sooner than his gap
    * needs — peak age ≥ his age + ceil(gap ÷ seasonGainCap) + this slack.
@@ -1955,7 +1959,9 @@ export const CAREER_SALARY = {
    * balanced (p50 $430) only trims in its dearest regions, the prospects
    * never. null = rc.35 (no fit).
    */
-  foundingFitWeeks: { easy: 44, normal: 24, hard: 13 } as Record<string, number | null>,
+  // rc.36.3: a founding squad can survive a season of slow sporting progress.
+  // Only NEW founding contracts; existing signed wages remain frozen.
+  foundingFitWeeks: { easy: 44, normal: 32, hard: 18 } as Record<string, number | null>,
   /**
    * PROVISIONAL (30/10) — ECONOMY-CONTRACT §6 decision 2, option B (M2,
    * ROAD-TO-WORLDS-DECISIONS R58): renewing a player you already have.
@@ -2330,7 +2336,7 @@ export const CAREER_SPONSOR = {
    * No sponsor offers until the org has earned a little standing (v0.1
    * adjustment: no day-1 sponsorship). A couple of decent results clears this.
    */
-  firstOfferRepGate: 12,
+  firstOfferRepGate: 10,
 } as const;
 
 export const CAREER_REP = {
@@ -2343,7 +2349,7 @@ export const CAREER_REP = {
    */
   gains: {
     t3Win: 1, t3Final: 1, t2Win: 2, t2Final: 1,
-    regionalSwissExit: 1, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
+    regionalSwissExit: 0, regionalTop8: 1, regionalTop4: 2, regionalWin: 4,
     /**
      * v2.0 (R30): getting through the qualifier is standing too. R40: the
      * qualifier is Swiss-only (no champion), so `qualifierWin` is gone.
@@ -2378,8 +2384,8 @@ export const CAREER_REP = {
    *    qualifiers — uncapped, EU passed SAM's and NA's first season).
    * rc.32: none (repCeiling 0 turns the path off).
    */
-  newcomer: { repCeiling: 25, t3SemiMinSeed: 3, deepRunWins: 2, deepRunsPerSplit: 1 },
-  softCapAt: 80,
+  newcomer: { repCeiling: 25, t3SemiMinSeed: 3, deepRunWins: 1, deepRunsPerSplit: 1 },
+  softCapAt: 60,
   softCapFactor: 0.5,
   /** Reputation FALLS on missed telegraphed expectations (v0.1 adjustment). */
   lossMajorMissAtRep: 40,
@@ -2400,12 +2406,13 @@ export const CAREER_UNLOCKS = {
   /**
    * v0.3 visible signing gate (Miguel: high-OVR free agents were trivial to
    * land day 1): NEW signings accept only up to
-   * cap(rep) = signableCapBase + signableCapPerRep × rep (uncapped from
+   * cap(rep) = signableCapBase + signableCapPerRep × rep (rc.36.3: 71 + 0.4 × rep; uncapped from
    * signableCapFreeAt). Renewals and the current squad are always exempt.
    * Locked market rows stay visible with the rep they need.
    */
-  signableCapBase: 74,
-  signableCapPerRep: 0.3,
+  // Less of a day-one jump; strong signings still open as the club earns standing.
+  signableCapBase: 71,
+  signableCapPerRep: 0.4,
   signableCapFreeAt: 84,
 } as const;
 
@@ -3306,12 +3313,12 @@ export const CAREER_DIFFICULTY = {
 
 /** Master pacing anchors — every career harness imports these, none restates them. */
 export const CAREER_ARC = {
-  firstMajorBySeason2: 0.7,
-  firstWorldsBySeason4: 0.6,
-  worldsTitleBy2026: { easy: [0.45, 0.7], normal: [0.2, 0.45], hard: [0.08, 0.25] } as Record<
-    string,
-    [number, number]
-  >,
+  // Miguel's 31/10 pacing direction, expressed in 1-based ordinals.
+  // Descriptive targets, NEVER calendar locks or guaranteed outcomes.
+  normalFirstRegionalSplit: 3,
+  normalFirstMajorSeason: [3, 4] as const,
+  normalMajorTitleFromSeason: 4,
+  worldsTitleLastSeasons: 3,
   insolvencyRateMax: { easy: 0.02, normal: 0.1, hard: 0.25 } as Record<string, number>,
 } as const;
 

@@ -975,12 +975,14 @@ describe("every format pays exactly its advertised pool — real results (rc.29 
 
 describe("season review counts (R40 review)", () => {
   it("counts every Major and title the user played — the results cap never trims the user's own season", { timeout: 60_000 }, () => {
-    let save = withStrength(freshCareer(31337), 95);
+    // Retention/counting fixture, not a pacing check: a maximum-strength
+    // roster reliably enters Majors even after the local circuit is retuned.
+    let save = withStrength(freshCareer(31337), 99);
     let guard = 0;
     while (save.phase === "running" && guard++ < 1500) {
       const phase = eventDayPhaseOf(save);
       if (phase === "lobby") {
-        save = simToday(withStrength(save, 95));
+        save = simToday(withStrength(save, 99));
         continue;
       }
       if (phase === "swiss" || phase === "playoffs" || phase === "finished") {

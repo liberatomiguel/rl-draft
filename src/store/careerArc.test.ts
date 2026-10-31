@@ -187,7 +187,7 @@ function arcReport(careers: ArcCareer[], seasons: number): string {
   }
   lines.push("");
   lines.push(
-    `Targets (normal unless noted): first Major by S2 ≥ ${CAREER_ARC.firstMajorBySeason2 * 100}%, first Worlds by S4 ≥ ${CAREER_ARC.firstWorldsBySeason4 * 100}%, Worlds title by 2026 easy ${CAREER_ARC.worldsTitleBy2026.easy.map((x) => x * 100).join("–")}% · normal ${CAREER_ARC.worldsTitleBy2026.normal.map((x) => x * 100).join("–")}% · hard ${CAREER_ARC.worldsTitleBy2026.hard.map((x) => x * 100).join("–")}%, insolvency ≤ easy ${CAREER_ARC.insolvencyRateMax.easy * 100}% · normal ${CAREER_ARC.insolvencyRateMax.normal * 100}% · hard ${CAREER_ARC.insolvencyRateMax.hard * 100}%.`,
+    `Pacing direction (1-based): Normal first regional around split ${CAREER_ARC.normalFirstRegionalSplit}, first Major in seasons ${CAREER_ARC.normalFirstMajorSeason.join("–")}, Major title toward season ${CAREER_ARC.normalMajorTitleFromSeason} onward, Worlds title in the final ${CAREER_ARC.worldsTitleLastSeasons} seasons. The historical columns above use zero-based indices; use report-career-pacing.mjs for ordinal timing and non-achievers. No forced calendar gates. Insolvency guardrails: easy ${CAREER_ARC.insolvencyRateMax.easy * 100}% · normal ${CAREER_ARC.insolvencyRateMax.normal * 100}% · hard ${CAREER_ARC.insolvencyRateMax.hard * 100}%.`,
   );
   lines.push("");
 

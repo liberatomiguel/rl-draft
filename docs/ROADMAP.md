@@ -6,7 +6,7 @@
 > growth, training and HQ decided). Neither file is in the repo; "plan §N"
 > cites the 28/10 update, and its new requirements are written into the
 > Etapas below by ID. "V2 plan" is `V2-IMPLEMENTATION-PLAN.md`. Last updated
-> **2026-10-30**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
+> **2026-10-31**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
 > this file for a stage or an ID; it is not meant to be read whole.
 
 ## How the stages run
@@ -44,12 +44,19 @@
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
 | 2 | M0 rest + M2 | Instruments, then a sustainable career | ✅ built: 2a rc.30 + rc.32; 2b rc.31–rc.33 (Gate 2: Miguel's play) |
-| 3 | M3 | The new RTW loop (contract first) | Built through rc.36; Gate 3b awaits Miguel’s playtest |
+| 3 | M3 | The new RTW loop (contract first) | Built through rc.36.3; Gate 3b balance playtest |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
 | 6 | M6 | Freeze, migration, cutover, launch | |
 
 ## Done
+
+**31/10 roadmap reconciliation:** `ROADMAP-REVIEW-2026-10-31.md` compares
+the attached rc.29 plan with the fetched rc.36.2 staging base. Today's scope
+is pacing/finances tests, unlock notifications and the calendar scrim line.
+It does not authorize starting Etapas 4–6. The new timing direction and
+evidence are in `CAREER-PACING-rc36-3.md`; historical rc.36 aggregate rates
+below are not acceptance of the new career arc.
 
 **Etapa 1 (rc.27–28):**
 - GAME-01: no rematch inside a Swiss, in the Draft and in RTW (#143).
@@ -659,11 +666,11 @@ never calibrates the old training model as if it were final.
   progress, locked and collected cards; no overlap on mobile).
 - COL-01b: finding a national team reveals its page; drafting each player
   collects his card (discovery is separate from ownership; incomplete teams
-  stay favoured in the drop; cards already granted are kept). Today every
-  card of the team is granted on the find.
+  stay favoured in the drop; cards already granted are kept). Built in rc.33;
+  acceptance and completion pacing remain, not the old grant-all behavior.
 - COL-02a: a NEW tag in the draft on a special or national card not owned
-  yet, decided against the inventory BEFORE the offer (the find grants the
-  cards today, so a later check hides the tag). "Not owned" is not "not
+  yet, decided against the inventory BEFORE the offer (rc.33 freezes this
+  before collection). "Not owned" is not "not
   seen".
 - COL-02b: an org/country card of a national team gets a national visual
   (player, coach and sub carry a specialId today; the org does not). No new
@@ -745,7 +752,12 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**Gate 2 + Gate 3b — what to play on rc.36.2** (desktop/mobile, EN/PT).
+**Gate 2 + Gate 3b — what to play on rc.36.3** (desktop/mobile, EN/PT).
+
+First read `CAREER-PACING-rc36-3.md`: early qualifier/community results,
+growth and reputation; founding cash versus optional spending; the Monday
+credit floor and emergency notice; a fresh unlock notification with no
+purchase action; the HQ calendar's weekly scrim results and reload.
 Playtest corrections: `RC36-2-GATE3B.md`; focused economy comparison:
 `ECONOMY-RC36-2-PLAYTEST.md`; prior full-matrix balance bands: `RC36-GATE3B.md`. The rc.36.1 baseline measured Normal 0.4562
 Majors/season and 17.12% Worlds against the 0.44 / 16% target; confirm the

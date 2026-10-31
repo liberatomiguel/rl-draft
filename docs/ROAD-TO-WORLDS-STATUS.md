@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.2**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R90. Gate: `RC36-2-GATE3B.md`.
+> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.3**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R91. Gate: `CAREER-PACING-rc36-3.md`.
 
 ## Run and verify
 
@@ -10,8 +10,8 @@
 - Career logic is in `src/engine/career`, flows in `src/store/career*`, screens
   in `src/components/career`. Pure seeded engine, bilingual career copy,
   tunables in `src/config/balance.ts`.
-- Full suite: 1447 passed, 13 optional checks skipped. Typecheck,
-  lint, data, static build and browser gates: `RC36-2-GATE3B.md`.
+- Full suite: 1449 passed, 15 optional checks skipped. Typecheck,
+  lint, data, static build and 65 browser checks: `CAREER-PACING-rc36-3.md`.
 - Probes: CAREER_ARC (run alone; never with ARC_REPORT), CAREER_ECON (four
   processes by ECON_REGIONS), CAREER_GROWTH, CAREER_TRAINING; latest reports
   use the rc36 suffix. `ECONOMY-CONTRACT.md` §13 compares guardrails.
@@ -27,14 +27,18 @@ independent integration review. Miguel's playtest approval is still required.
   cycles; without one, repeat the previous plan with one click. rc.35's active 14-day period finishes
   before the new grid. Signings join the plan; no duplicate session or payout.
 - Compact HQ, squad/sub/coach, progression, finances and stacked arsenal;
-  unlock modal supports Buy or Close; bootcamps are also beside the HQ squad. Sponsor cards in a modal, Decide later until
+  unlocks use notification/inbox, no automatic purchase sheet; weekly scrims
+  sit under the calendar controls. Bootcamps are beside the HQ squad. Sponsor cards in a modal, Decide later until
   deadline. Contract responses arrive only after sending; refusals raise the
   floor and each lever counts.
 - Same founding budget by difficulty, fitted founding wages, no Merch &
   streams income. Seasonal free-agent prospect replenishment and listing;
-  slower generated-player growth, later peak, season ceiling 8.5. Normal
-  rc.36.1 full-matrix pace: 0.4562 Majors/season, Worlds in 17.12% of rows.
-  rc.36.2 uses one focused six-career economy smoke, not a global pacing retune.
+  slower generated-player growth, later peak, season ceiling 8.5. rc.36.3
+  fits founding wages to 32/18 Normal/Hard weeks, reduces session/match pace
+  and low-result reputation, and contains founding market jumps. 98 matched
+  careers, 7 academy and 28 mixed-strategy careers; 63 finance-probe careers.
+  First-Major timing improves among qualifiers, but regional timing and
+  historical Worlds titles remain open. Match profiles are unchanged.
 - Fixed season goals with +1/+2 reputation at review, deadline/progress;
   Sunday trade-offs, 15% common money growth and firmer renewals/coach wages.
   Visual news with honest archive

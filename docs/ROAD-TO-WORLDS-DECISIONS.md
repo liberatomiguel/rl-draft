@@ -1909,6 +1909,27 @@ R90. **Gate 3b accents, interaction and the economy playtest (rc.36.2).**
      Steady's longer contract has a larger total/signing sum; prices unchanged.
      This remains Gate 3b, not approval/start of Etapa 4 or main publication.
 
+R91. **Timing-first career playtest, weekly feedback (rc.36.3).**
+     Miguel's 31/10 chat sets the direction: Normal regionals around split 3,
+     first Major seasons 3–4, Major title late, Worlds in the final 2–3 of
+     the six historical seasons. These replace the old early-Major aggregate
+     anchors; never calendar locks or forced outcomes. Paired 98-career
+     runs confirm early regionals/rep while late titles are already rare.
+     Local band −1…+4, training unit 60, modest-result rep limits and a lower
+     founding signing cap contain the opening; founding wages fit 32/18
+     Normal/Hard weeks and sponsorship starts at rep 10. Potential, existing
+     contracts, earned growth, saves, roster data and match profiles stay.
+     Broad match hardening and faster star access were tested and rejected.
+     Seven academy careers and 28 four-seed mixed careers add path coverage;
+     63 finance-probe careers, growth and training probes complement them.
+     The regional split-3 target and Worlds-title arc remain open, explicitly:
+     CAREER-PACING-rc36-3.md includes non-achievers and separates infinite years.
+     Unlocks notify without an automatic purchase sheet; manual purchases
+     remain. Weekly real scrims appear beneath calendar controls. Fix the
+     insert unlock announcement omission and rounded founding-payroll fit;
+     explain the existing Monday credit-floor rescue rule, not a new loan.
+     BALANCE_VERSION 8. Gate 3b stays open; no Etapa 4–6 work or main deploy.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
@@ -1920,9 +1941,9 @@ LOCKED and built. Remaining review items:
   the biggest content ask; currently a partial floor.
 - **`born:` rows** for the ~150–200 modern-era players (ages are inferred
   today; §21.13 PT glossary tone check also pending).
-- **`CAREER_ARC` pacing harness** — the 120-career difficulty sweep isn't built
-  yet; v0.3 moved the whole money surface, so the economy bands need a
-  re-validation pass after Miguel plays.
+- **Career pacing acceptance** — the harness was built in rc.30; rc.36.3
+  adds split/season milestones and path-sensitive probes. Regional timing
+  and historical Worlds titles still need calibration and Miguel's play.
 - **First-guess tunables to confirm after playtests:** scrim chemistryCredit
   0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
   the filler headliner band 77–84.

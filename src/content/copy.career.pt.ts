@@ -525,6 +525,7 @@ export const CAREER_PT: CareerCopy = {
     financeRunway: "Fôlego",
     // rc.36 (POL-02): o valor da linha de fôlego.
     financeRunwayWeeks: (weeks: number) => (weeks === 1 ? "1 semana nesse ritmo" : `${weeks} semanas nesse ritmo`),
+    financeOverdraft: (floor: string) => `Usando crédito. O empréstimo de emergência é acionado se a segunda-feira fechar abaixo de ${floor}.`,
     financeRunwayOk: "No azul",
     financeWeek: "Esta semana",
     // rc.34 review: o empréstimo emergencial (o "Backer" do rc.31–rc.33 saiu do produto).
@@ -699,7 +700,7 @@ export const CAREER_PT: CareerCopy = {
       loanTakenOver: (p: Record<string, string | number>) =>
         `O Investidor de emergência saiu de cena: o banco assumiu o que você devia a ele, ${p.owed}, como um empréstimo emergencial.${p.dlWeek !== undefined ? ` O prazo é ${mondayWhenPt(p.dlWeek, p.dlAhead)} — daqui a ${p.dlWeeks} semanas. ${deadlineRulePt}` : ""} ${p.garnishPct}% de cada premiação e ${p.salePct}% de qualquer venda continuam abatendo a dívida automaticamente, e Finanças aceita qualquer pagamento. ${Number(p.lock) ? "" : "Nada fica mais travado enquanto você deve: contratações, taxas e equipamentos estão liberados. "}${nextBreachPt(p)}`,
       unlock: (p: Record<string, string | number>) =>
-        `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no Clube — o arsenal cresce com a reputação.`,
+        `O progresso da org desbloqueou: ${p.name}. Confira a trilha de progressão no QG — o arsenal cresce com a reputação.`,
       windowReport: (p: Record<string, string | number>) =>
         `A janela fechou — ${p.n} trocas em todas as regiões. Taxas de destaque: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. O plantão completo está no QG.`,
       unavailable: (p: Record<string, string | number>) =>
@@ -917,6 +918,7 @@ export const CAREER_PT: CareerCopy = {
 
   training: {
     weekScrims: "Scrims da semana",
+    weekScrimsEmpty: "Nenhuma scrim registrada nesta semana ainda.",
     title: "Treinos",
     autoTrain: "Delegar ao coach",
     manageMyself: "Quero cuidar disso",

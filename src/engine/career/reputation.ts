@@ -15,8 +15,8 @@
  *
  * The path pays what an underdog can reach — a result measured against the
  * user's SEED in that event (its rank by team rating), not only the
- * placement: a cup semi-final as the third seed or lower, a qualifier decider
- * (two Swiss wins) when seeded outside the qualifying eight. It pays only
+ * placement: a cup semi-final as the third seed or lower, a qualifier run
+ * (rc.36.3: one Swiss win) when seeded outside the qualifying eight. It pays only
  * while the org is still making its name (`CAREER_REP.newcomer.repCeiling`):
  * APAC and SSA pass the ceiling in their first season, so the easy regions
  * gain at most a couple of points. Pure; no React.
@@ -57,7 +57,7 @@ export interface NewcomerRepCtx {
 /**
  * The newcomer's reputation for a result no placement pays, or null: a cup
  * semi-final as seed `t3SemiMinSeed` or lower (it shares the cup's per-split
- * cap with the win and the final); a qualifier decider — `deepRunWins` Swiss
+ * cap with the win and the final); a qualifier run — `deepRunWins` Swiss
  * wins, out — seeded outside the advancing slots, `deepRunsPerSplit` a split.
  * Only below the ceiling.
  */

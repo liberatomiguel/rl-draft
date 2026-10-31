@@ -545,6 +545,7 @@ export const CAREER_EN = {
     financeRunway: "Runway",
     // rc.36 (POL-02): the runway line's value.
     financeRunwayWeeks: (weeks: number) => (weeks === 1 ? "1 week at this burn" : `${weeks} weeks at this burn`),
+    financeOverdraft: (floor: string) => `Using credit. The emergency loan is triggered if Monday closes below ${floor}.`,
     financeRunwayOk: "In the black",
     financeWeek: "This week",
     // rc.34 review: the emergency loan (rc.31–rc.33's "Backer" is gone from the product).
@@ -717,7 +718,7 @@ export const CAREER_EN = {
       loanTakenOver: (p: Record<string, string | number>) =>
         `The Emergency Backer is gone: the bank now holds what you owed it, ${p.owed}, as an emergency loan.${p.dlWeek !== undefined ? ` It is due on ${mondayWhenEn(p.dlWeek, p.dlAhead)} — ${p.dlWeeks} weeks from now. ${deadlineRuleEn}` : ""} ${p.garnishPct}% of every prize and ${p.salePct}% of any sale still repay it automatically, and Finances takes any payment. ${Number(p.lock) ? "" : "Nothing is locked while you owe any more: signings, fees and gear are open. "}${nextBreachEn(p)}`,
       unlock: (p: Record<string, string | number>) =>
-        `The org's progress unlocked: ${p.name}. Check the Club's progression track — the toolbox grows with reputation.`,
+        `The org's progress unlocked: ${p.name}. Check the HQ's progression track — the toolbox grows with reputation.`,
       windowReport: (p: Record<string, string | number>) =>
         `The window is shut — ${p.n} moves across all regions. Headline fees: ${p.p1} (${p.f1})${p.p2 ? ` · ${p.p2} (${p.f2})` : ""}${p.p3 ? ` · ${p.p3} (${p.f3})` : ""}. The full wire is on the HQ.`,
       unavailable: (p: Record<string, string | number>) =>
@@ -937,6 +938,7 @@ export const CAREER_EN = {
 
   training: {
     weekScrims: "This week’s scrims",
+    weekScrimsEmpty: "No scrims recorded this week yet.",
     title: "Training",
     autoTrain: "Delegate to coach",
     manageMyself: "Manage it myself",

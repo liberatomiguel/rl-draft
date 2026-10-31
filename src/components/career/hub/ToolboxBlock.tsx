@@ -1,12 +1,12 @@
 "use client";
 
 /** HQ progression: three compact item rows, purchases and next unlock below.
- * Item details and the full ladder remain in modals. Unlock announcements
- * offer an explicit purchase through the same store flows as the rows. */
+ * Item details and the full ladder open only on request. Unlocks use the
+ * existing career notification/inbox, without an automatic purchase sheet. */
 
 import { useMemo, useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
-import { careerNewSummary, toolboxNewKey, toolboxUnannouncedOf, type ToolboxItemId } from "@/engine/career/careerNew";
+import { toolboxNewKey, type ToolboxItemId } from "@/engine/career/careerNew";
 import { ladderOf, type LadderRungId } from "@/engine/career/ladder";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
@@ -81,16 +81,9 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
 
   const items = useMemo(() => toolboxOf(save), [save]);
   const rungs = useMemo(() => ladderOf(save), [save]);
-  const summary = useMemo(() => careerNewSummary(save), [save]);
-  const unannounced = useMemo(() => toolboxUnannouncedOf(save, summary), [save, summary]);
   const ended = save.phase === "ended";
 
-  // UX-06a: the first novelty not yet announced — never over the first-visit explainer (or the ladder).
-  const announce = !ended && save.flags["seenHub"] && !sheetId && !ladderOpen ? (unannounced[0] ?? null) : null;
-  const modalId = sheetId ?? announce;
-  // The unlock sheet can be purchased or dismissed; opening it never buys automatically.
-  const announcing = !sheetId && Boolean(announce);
-  const sheet = modalId ? (items.find((i) => i.id === modalId) ?? null) : null;
+  const sheet = sheetId ? (items.find((i) => i.id === sheetId) ?? null) : null;
   const refusal = useMemo(() => (sheet ? toolboxRefusalOf(save, sheet.id) : null), [save, sheet]);
   const after = sheet ? toolboxAfterOf(save, sheet) : null;
 
@@ -109,8 +102,6 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   };
 
   const close = () => {
-    // Closing the announcement marks it announced; the "New" tag stays until the item is opened.
-    if (!sheetId && announce) markCareerAnnounced([toolboxNewKey(announce)]);
     setSheetId(null);
   };
 
@@ -135,7 +126,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   };
 
   return (
-    <Panel className="rise-in p-4" style={{ animationDelay: "150ms" }}>
+    <Panel id="career-progression" className="rise-in scroll-mt-24 p-4" style={{ animationDelay: "150ms" }}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="kicker text-[10px]">{L.title}</p>
         <span className="rounded-full border border-orange/35 bg-orange/10 px-2.5 py-0.5 text-[10px] font-semibold text-orange-bright">
@@ -223,7 +214,6 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
                 <RungIcon id={rungOfItem(sheet.id)} className="h-6 w-6" />
               </span>
               <div className="min-w-0 flex-1">
-                {announcing ? <p className="kicker !text-[9px] text-orange-bright">{C.toolbox.unlockKicker}</p> : null}
                 <p className="mt-1 display text-2xl font-bold leading-none text-ink">{priceOf(C, sheet)}</p>
                 {sheet.kind === "gear" && sheet.price < sheet.listPrice ? (
                   <p className="mt-1 text-[11px] text-faint">

@@ -1032,7 +1032,16 @@ export function foundingWagesFor(asks: readonly number[], difficulty: CareerDiff
   const bill = weeklyWageBill(discounted, null);
   const cap = startingBudgetFor(difficulty, weeklyWageBill(asks, null)) / weeks;
   if (bill <= cap) return discounted;
-  return discounted.map((wage) => Math.max(CAREER_SALARY.minSalary, quantize(wage * cap / bill)));
+  const fitted = discounted.map((wage) => Math.max(CAREER_SALARY.minSalary, quantize(wage * cap / bill)));
+  // Scaling rounded weekly wages can cross a later rounding boundary. Fit
+  // against the bill that payroll will actually book, never the ratio alone.
+  while (weeklyWageBill(fitted, null) > cap) {
+    const highest = fitted.reduce((best, wage, i) => wage > CAREER_SALARY.minSalary &&
+      (best < 0 || wage > fitted[best]) ? i : best, -1);
+    if (highest < 0) break; // The configured minimum wage cannot fit this budget.
+    fitted[highest] = Math.max(CAREER_SALARY.minSalary, fitted[highest] - CAREER_ECONOMY.roundQuantum);
+  }
+  return fitted;
 }
 
 export interface BackerLine {

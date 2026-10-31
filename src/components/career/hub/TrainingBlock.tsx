@@ -31,7 +31,6 @@ import {
   PromiseBar,
   RecommendedTag,
   TrainingProposalCard,
-  WeeklyScrimRecap,
 } from "@/components/career/training/TrainingPackageParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
@@ -103,7 +102,6 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
 
           {b.promise ? <PromiseBar promise={b.promise} C={C} /> : null}
 
-          <WeeklyScrimRecap save={save} C={C} compact />
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
             {b.package && b.package.scrimsPerWeek > 0 ? (

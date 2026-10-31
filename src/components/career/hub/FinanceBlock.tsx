@@ -18,7 +18,7 @@ import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney, formatMoneyDelta } from "@/lib/format";
 import { cx } from "@/lib/util";
-import { mondayBalancesOf } from "@/store/careerFlow";
+import { backerLineOf, mondayBalancesOf, nextBreachOutcomeOf } from "@/store/careerFlow";
 import { hqFinanceOf } from "@/store/careerHq";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort } from "@/components/career/dateText";
@@ -129,6 +129,14 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
             tone={f.balance < 0 ? "bad" : cashTight ? "warn" : "good"}
           />
         </div>
+      ) : null}
+
+      {!ended && f.balance < 0 && !save.finances.loan ? (
+        <p className="mt-2 text-[11px] leading-relaxed text-sub">
+          {nextBreachOutcomeOf(save) === "rescue"
+            ? C.hub.financeOverdraft(money(backerLineOf(save).floor))
+            : C.finances.backerIdleNone(money(backerLineOf(save).floor))}
+        </p>
       ) : null}
 
 {/* rc.33 (UX-07): the larger chart (portal Modal; 360 px, no horizontal scroll). */}

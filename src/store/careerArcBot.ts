@@ -40,6 +40,7 @@ import type {
 import type { Placement, Region } from "@/engine/types";
 import {
   acceptBidFlow,
+  buyGearFlow,
   acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
   chooseSponsorFlow,
@@ -92,6 +93,10 @@ export type ArcPolicyId =
   | "coachChurn"
   | "delegator"
   | "trainer"
+  | "builder"
+  | "loyal"
+  | "academy"
+  | "contender"
   | "veterans";
 
 /** rc.34: how the bot picks a sponsor offer (see ArcPolicy.sponsor). */
@@ -150,6 +155,10 @@ export interface ArcPolicy {
    * the base career's); a measuring run may set one per policy.
    */
   briefing: SundayBriefingChoice;
+  /** Opt-in human-style infrastructure purchases, preserving the policy's runway. */
+  infrastructure?: boolean;
+  /** A youth project that buys current strength after its first Major qualification. */
+  contendWhenReady?: boolean;
 }
 
 const base: Omit<ArcPolicy, "id"> = {
@@ -215,6 +224,10 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
    * ARC_DEFAULT_POLICIES, so the default sweeps compare like with like.
    */
   veterans: { id: "veterans", ...base, rosterKey: "journeymen" },
+  builder: { id: "builder", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true },
+  loyal: { id: "loyal", ...base, coach: "best", training: "repeat", scrims: true, others: "take", infrastructure: true },
+  academy: { id: "academy", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true },
+  contender: { id: "contender", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, contendWhenReady: true },
 };
 
 /**
@@ -620,6 +633,11 @@ export function fillSeatsForTests(save: CareerSave, policyId: ArcPolicyId): Care
 
 /** One window visit: fill open seats, then (by policy) one upgrade. */
 function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+  // A visible sporting milestone changes the manager's strategy, not the
+  // simulation: no season locks, free cash or guaranteed titles.
+  if (policy.contendWhenReady && (input.stats.majorsQualified > 0 || input.history.some(s => s.majorsQualified > 0))) {
+    policy = { ...policy, market: "upgrade" };
+  }
   const pool = candidatesFor(input);
   const save = fillSeats(input, policy, t, pool);
   const byOverall = [...pool].sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
@@ -781,6 +799,15 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   }
   const week = weekOfDay(save.clock.day);
   const dow = dayOfWeekOf(save.clock.day);
+  if (policy.infrastructure && dow === 1 && !save.activeEvent) {
+    for (const gear of ["peripherals", "monitors", "pcs", "perfCenter"] as const) {
+      const bought = buyGearFlow(save, gear);
+      if (bought.error) continue;
+      const statement = statementOf(bought.save);
+      if (bought.save.finances.balance >= 8 * statement.payroll &&
+        (statement.net >= 0 || bought.save.finances.balance / -statement.net >= 12)) save = bought.save;
+    }
+  }
   if (!save.activeEvent) {
     if (isWindowWeek(week) && (dow === 1 || dow === 4)) save = marketMoves(save, policy, t);
     if (isWindowStartWeek(week) && dow === 2 && week <= 2) save = coachMoves(save, policy);
@@ -876,6 +903,8 @@ export function playArcCareer(cfg: {
   others?: ArcPolicy["others"];
   /** rc.36 (UX-02): read each season's start (day 1, its goal set) and end (the review) — the goals probe. */
   onSeason?: (moment: "start" | "end", save: CareerSave) => void;
+  /** Test-only observation after each real-flow day, including the founding day. */
+  onDay?: (save: CareerSave) => void;
 }): ArcCareer {
   const t0 = Date.now();
   const policy: ArcPolicy = {
@@ -912,6 +941,7 @@ export function playArcCareer(cfg: {
       }
       save = decide(save, policy, t, { bootcamp: cfg.bootcamp });
       track(save, t);
+      cfg.onDay?.(save);
       if (save.sponsor && out.firstSponsorSeason === null) out.firstSponsorSeason = save.clock.seasonIndex;
       if (save.phase !== "running") break;
       const before = save.clock.day;

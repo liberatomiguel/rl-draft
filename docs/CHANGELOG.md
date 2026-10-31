@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.2**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.3**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,38 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed — rc.36.3, career timing and weekly feedback (R91)
+- Paired split/season milestone probe and report: 98 before / 98 after,
+  7 additional academy careers and 28 mixed-strategy careers across 4 seeds;
+  63 instrumented eight-season finance careers. Six historical seasons are
+  explicitly separated from the infinite era. The timing goal stays open.
+- Weekly real scrim results below Advance, inside the HQ calendar card,
+  with a localized weekly empty state; no extra simulation, reward or XP.
+- Progression unlocks use notification/inbox and link to HQ progression;
+  purchases open only on request. No automatic unlock purchase modal.
+- Attached rc.29 plan reconciled against staging in the roadmap review.
+  No Etapa 4–6 feature work or production cutover started.
+
+### Balance — rc.36.3
+- Local scene −7…+1 → −1…+4; growth unit 50.25 → 60; one Community Cup
+  rep award per split; no extra rep for a regional Swiss exit; soft cap 60.
+  One underdog qualifier series win can pay once per split below rep 25.
+- New-signing cap 71 + 0.4×rep; first sponsor gate 10. New founding deals
+  fit 32 Normal / 18 Hard weeks (44 Easy), with the same start budgets.
+- Potential, earned overall, signed contracts and match difficulty preserved;
+  no new calendar locks or forced losses. BALANCE_VERSION 7 → 8.
+
+### Fixed — rc.36.3
+- Founding payroll could slightly exceed its coverage budget: scaling already
+  rounded weekly wages crossed a new rounding boundary. Fit now checks the
+  actual weekly bill; signed contracts are not repriced.
+- Weekly-insert reputation skipped unlock announcements because it changed
+  reputation directly. It now emits the same notification as event rewards,
+  once on that decision, without purchasing anything.
+- Negative HQ cash did not explain the emergency-loan trigger. Show the
+  actual credit floor and Monday rule; all three difficulties and reload
+  passed. No missing valid rescue was reproduced without Miguel's save.
 
 ### Added / Changed — rc.36.2, Gate 3b playtest corrections (R90)
 - Selective color restored to HQ finances/progression/news, training and talks;

@@ -43,6 +43,7 @@ import { weekendRoleOf } from "@/components/career/event/weekendView";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
+import { WeeklyScrimLine } from "./WeeklyScrimLine";
 
 const PlayGlyph = () => (
   <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-current" aria-hidden>
@@ -298,6 +299,7 @@ export function DayCard({
           ) : null}
         </>
       )}
+      <WeeklyScrimLine save={save} C={C} />
       {footer ? <div className="mt-4 border-t border-line/60 pt-3">{footer}</div> : null}
     </Panel>
   );

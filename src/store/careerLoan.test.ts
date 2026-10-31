@@ -56,6 +56,7 @@ import {
   nextBreachParamsOf,
   payDebtFlow,
   repairLoanOnLoad,
+  resolveInsertFlow,
   signingPlanFor,
   weeklyStatementOf,
   type CreateCareerInput,
@@ -133,6 +134,40 @@ function withLock<T>(on: boolean, fn: () => T): T {
 // ===========================================================================
 
 describe("rc.34 — a breach is the bank's emergency loan", () => {
+  it("rc.36.3: an insert's reputation unlock emits the same notification as a tournament, without purchasing", () => {
+    const save = createCareerSave(INPUT, 71_098);
+    save.reputation = 7;
+    save.pendingInsert = { id: "ins-charity-cup", day: save.clock.day };
+    const resolved = resolveInsertFlow(save, "a").save;
+    const unlocks = resolved.mail.filter(m => m.titleKey === "unlock");
+    expect(unlocks).toHaveLength(1);
+    expect(unlocks[0]).toMatchObject({ params: { name: "peripherals" }, linkTo: "/career#career-progression" });
+    expect(resolved.finances.gear).toEqual(save.finances.gear);
+    expect(resolveInsertFlow(resolved, "a").save.mail.filter(m => m.titleKey === "unlock")).toHaveLength(1);
+  });
+
+  it("rc.36.3: a negative balance above the credit floor is not a rescue; a Monday below it grants one notice and one loan", () => {
+    for (const difficulty of DIFFS) {
+      const sunday = quietSunday(createCareerSave({ ...INPUT, difficulty }, 71_099), 2);
+      sunday.finances.balance = -100 - weeklyStatementOf(sunday).net;
+      const negative = advanceDayFlow(sunday);
+      expect(negative.finances.balance).toBe(-100);
+      expect(negative.finances.balance).toBeGreaterThan(backerLineOf(negative).floor);
+      expect(negative.finances.loan).toBeNull();
+      expect(moneyNoticeOf(negative)).toBeNull();
+      const broke = quietSunday(negative, 3);
+      broke.finances.balance = backerLineOf(broke).floor - 100 - weeklyStatementOf(broke).net;
+      const rescued = advanceDayFlow(broke);
+      expect(rescued.finances.balance).toBe(backerLineOf(rescued).rescueTo);
+      expect(rescued.finances.loan).not.toBeNull();
+      expect(moneyNoticeOf(rescued)?.kind).toBe("loanOpened");
+      expect(rescued.finances.ledger.filter(l => l.kind === "loanGrant")).toHaveLength(1);
+      const reloaded = migrateSaveToV5(structuredClone(rescued));
+      expect(reloaded!.finances.loan).toEqual(rescued.finances.loan);
+      expect(reloaded!.finances.ledger.filter(l => l.kind === "loanGrant")).toHaveLength(1);
+    }
+  });
+
   it("on every difficulty: lent back to the rescue target, owed ×repayFactor, due deadlineWeeks on — the investor only on Easy's first", () => {
     expect(CAREER_LOAN.emergency.deadlineWeeks).toEqual({ easy: 64, normal: 48, hard: 24 });
     for (const d of DIFFS) {

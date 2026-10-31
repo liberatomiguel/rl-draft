@@ -17,7 +17,7 @@ import { deepRunKeyFor, newcomerRepKindFor, userSeedIn, userSwissWinsIn } from "
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import type { Placement } from "@/engine/types";
 import { eventRepPreview, eventRepPreviewKind } from "@/components/career/event/weekendView";
-import { createCareerSave, finishEvent, simEventToEnd, startEvent, type CreateCareerInput } from "./careerFlow";
+import { createCareerSave, finishEvent, localAnchorRatingFor, simEventToEnd, startEvent, type CreateCareerInput } from "./careerFlow";
 
 const INPUT: CreateCareerInput = {
   identity: {
@@ -114,7 +114,12 @@ describe("RTW-02 — finishEvent awards it, the digest previews the same (real E
   it("an EU cup semi-final as the third seed pays (the cup's per-split cap holds); the digest shows the same", () => {
     let checked = 0;
     for (let seed = 60_200; seed < 60_240 && checked < 2; seed++) {
-      const s = played(createCareerSave(INPUT, seed), cup);
+      const grown = createCareerSave(INPUT, seed);
+      // A late-split newcomer who has developed beyond the frozen local scene.
+      // This integration test needs a semi-final, not easy founding matches.
+      grown.competition.localAnchor = { region: "EU", rating: localAnchorRatingFor(grown) };
+      for (const player of grown.squad) player.overall += 4;
+      const s = played(grown, cup);
       const p = previewOf(s);
       if (p.placement !== "top4" || userSeedIn(s.activeEvent!.tournament) < N.t3SemiMinSeed) continue;
       checked += 1;

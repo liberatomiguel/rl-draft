@@ -472,7 +472,7 @@ function announceUnlockCrossings(save: CareerSave, repBefore: number): void {
         bodyKey: "unlock",
         params: { name: key },
         fromKey: "board",
-        linkTo: "/career/club",
+        linkTo: "/career#career-progression",
       });
     }
   }
@@ -2824,7 +2824,11 @@ export function resolveInsertFlow(input: CareerSave, key: "a" | "b"): FlowResult
       refName: def.id,
     });
   }
-  if (fx.rep && fx.rep > 0) save.reputation = Math.min(100, save.reputation + fx.rep);
+  if (fx.rep && fx.rep > 0) {
+    const before = save.reputation;
+    save.reputation = Math.min(100, save.reputation + fx.rep);
+    announceUnlockCrossings(save, before);
+  }
   if (fx.rep && fx.rep < 0) loseRep(save, -fx.rep, "repDown");
   if (fx.chemistry) for (const p of save.squad) p.splitsTogether += fx.chemistry;
   if (fx.trainingWeeks) {
