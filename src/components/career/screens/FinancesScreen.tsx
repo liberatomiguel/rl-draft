@@ -693,7 +693,7 @@ export function FinancesScreen() {
         rung={tier === 1 ? "bootcamp1" : "bootcamp2"}
         last={last}
         title={tier === 1 ? C.finances.bootcampT1 : C.finances.bootcampT2}
-        desc={tier === 1 ? C.finances.bootcampT1Desc : C.finances.bootcampT2Desc}
+        desc={`${tier === 1 ? C.finances.bootcampT1Desc : C.finances.bootcampT2Desc} ${C.toolbox.rating(String(CAREER_GEAR.bootcamp[tier - 1].sharpRating * (CAREER_GEAR.bootcampSpan === "split" ? CAREER_GEAR.bootcampSplitEdgeShare : 1)))}`}
         badges={
           superseded ? (
             <Badge tone="orange">{C.finances.ownedLabel}</Badge>
@@ -980,7 +980,7 @@ export function FinancesScreen() {
               status={psychStatus}
               rung="psychologist"
               title={C.finances.psychologist}
-              desc={C.finances.psychologistDesc}
+              desc={C.finances.psychologistDesc(CAREER_GEAR.psychologistStatBonus.clutch, CAREER_GEAR.psychologistStatBonus.consistency)}
               badges={
                 gear.psychologist ? <Badge tone="good">{C.finances.retainedLabel}</Badge> : newTag("psych")
               }
@@ -1018,7 +1018,7 @@ export function FinancesScreen() {
               rung={perfCenter.id}
               last
               title={C.finances.gear[perfCenter.id as keyof typeof C.finances.gear]}
-              desc={C.finances.gearDesc[perfCenter.id as keyof typeof C.finances.gearDesc]}
+              desc={`${C.finances.gearDesc[perfCenter.id as keyof typeof C.finances.gearDesc]} ${C.toolbox.rating(String(perfCenter.ratingBonus))}`}
               badges={
                 gear[perfCenter.id] ? <Badge tone="orange">{C.finances.ownedLabel}</Badge> : newTag(perfCenter.id)
               }

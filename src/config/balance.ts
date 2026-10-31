@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 8;
+export const BALANCE_VERSION = 9;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -2448,15 +2448,16 @@ export const CAREER_LADDER = {
 export const CAREER_GEAR = {
   /** Permanent installations, purchasable strictly in list order. */
   items: [
-    { id: "peripherals", repGate: 8, cost: 1_500, upkeepPerSplit: 0, trainingBonus: 0.05, buffLevels: 0 },
-    { id: "monitors", repGate: 14, cost: 4_000, upkeepPerSplit: 0, trainingBonus: 0.05, buffLevels: 0 },
-    { id: "pcs", repGate: 20, cost: 10_000, upkeepPerSplit: 250, trainingBonus: 0.1, buffLevels: 1 },
-    { id: "perfCenter", repGate: 55, cost: 60_000, upkeepPerSplit: 2_500, trainingBonus: 0.15, buffLevels: 2 },
+    { id: "peripherals", repGate: 8, cost: 1_500, upkeepPerSplit: 0, trainingBonus: 0.05, buffLevels: 0, ratingBonus: 0 },
+    { id: "monitors", repGate: 14, cost: 4_000, upkeepPerSplit: 0, trainingBonus: 0.05, buffLevels: 0, ratingBonus: 0 },
+    { id: "pcs", repGate: 20, cost: 10_000, upkeepPerSplit: 250, trainingBonus: 0.1, buffLevels: 1, ratingBonus: 0 },
+    // Late competitive infrastructure: an explicit benefit after the shared org-buff cap.
+    { id: "perfCenter", repGate: 55, cost: 60_000, upkeepPerSplit: 2_500, trainingBonus: 0.15, buffLevels: 2, ratingBonus: 1.5 },
   ] as const,
   /** Bootcamp tiers (consumable, 1/split): unlock the tier, pay per run. */
   bootcamp: [
     { tier: 1, repGate: 26, cost: 4_000, chemistryCredit: 0.25, sharpRating: 0.5 },
-    { tier: 2, repGate: 38, cost: 10_000, chemistryCredit: 0.5, sharpRating: 1.0 },
+    { tier: 2, repGate: 38, cost: 10_000, chemistryCredit: 0.5, sharpRating: 1.75 },
   ] as const,
   /**
    * rc.34 — UX-01f, HQ-CONTRACT decision 5-A (Gate 3a, 30/10): how long a
@@ -2478,7 +2479,7 @@ export const CAREER_GEAR = {
   /** Sports psychologist (rolling retainer, the "essa é importante" hire). */
   psychologistRep: 46,
   psychologistPerSplit: 4_000,
-  psychologistStatBonus: { clutch: 1, consistency: 1 } as Record<string, number>,
+  psychologistStatBonus: { clutch: 3, consistency: 3 } as Record<string, number>,
   /** Σ active temporary rating mods ≤ this (stays under the coach cap 2.5). */
   tempRatingMax: 2.0,
 } as const;

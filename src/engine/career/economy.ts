@@ -1806,6 +1806,11 @@ export function gearBuffLevels(gear: GearState): 0 | 1 | 2 | 3 {
   return Math.min(3, levels) as 0 | 1 | 2 | 3;
 }
 
+/** Late permanent competitive facilities. Separate from the capped org buff and temporary camps. */
+export function gearCompetitiveBonus(gear: GearState): number {
+  return CAREER_GEAR.items.reduce((bonus, item) => bonus + (gear[item.id] ? item.ratingBonus : 0), 0);
+}
+
 /**
  * Per-split upkeep of owned gear (the psychologist retainer bills
  * separately); rc.32: on the money index (M1) — the Monday funnel's

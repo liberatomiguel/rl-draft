@@ -25,6 +25,28 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Added / Changed — rc.36.4, paid endgame coverage and late benefits (R92)
+- Complete paired 3 difficulties × 3 founding rosters × 7 regions matrix,
+  plus 14 paired Normal/prospect careers; actual purchases, maintenance,
+  salaries, transfers and prizes. Controlled qualified-Worlds-field replays
+  isolate the new flat rating edge without granting rosters or qualification.
+  Coverage, limits and remaining pacing/economy issues: CAREER-ENDGAME-rc36-4.md.
+- Calendar scrims use larger vertically stacked score rows, both club marks,
+  weekday and opponent. News notices have a newspaper masthead/date/subject,
+  serif headline and summary; mail has envelope/sender and an opaque surface.
+- Follow-up roadmap packages and realistic completion estimate documented;
+  the review starts no Etapa 4–6 work and does not close Gate 3b.
+
+### Balance — rc.36.4
+- Existing Performance Centre adds 1.5 competitive team rating independently
+  of the org-buff channel. Structured camp preparation 1.0 → 1.75; psychologist
+  Clutch/Consistency +1 → +3 while retained. Details show actual configured
+  benefits. Prices, gates, upkeep and temporary-effect cap preserved.
+- No historical Worlds titles in the 77 candidate careers: end-to-end timing
+  remains unproven. The Normal/prospect qualified-field replay yields 0 → 21
+  titles in 768 draws per variant; conditional evidence, not a per-start rate.
+  BALANCE_VERSION 8 → 9; earned overall and signed contracts preserved.
+
 ### Added / Changed — rc.36.3, career timing and weekly feedback (R91)
 - Paired split/season milestone probe and report: 98 before / 98 after,
   7 additional academy careers and 28 mixed-strategy careers across 4 seeds;

@@ -106,7 +106,7 @@ import {
   seasonYear,
   statsFromView,
 } from "./development";
-import { gearBuffLevels, starsFor } from "./economy";
+import { gearBuffLevels, gearCompetitiveBonus, starsFor } from "./economy";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -703,7 +703,7 @@ export function userTeamFor(input: UserTeamInput): {
     specialIds: [],
     difficulty: input.difficulty,
     difficultyShift: 0,
-    ratingBonus: Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax),
+    ratingBonus: gearCompetitiveBonus(input.gear) + Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax),
     // rc.32 (BAL-02): the career's own match profile, never the Draft's DIFFICULTY.
     chemistryMaxBonus: careerMatchProfile(input.difficulty).chemistryMaxBonus,
     rollRange: careerMatchProfile(input.difficulty).userRollRange,

@@ -7,32 +7,37 @@
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.3**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.4**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
 - **Etapa 3:** complete for **Gate 3b**. Six fronts integrated and independently
   reviewed: training and HQ polish, sponsor/contract talks, founding economy
   and slower growth, season goals/news/achievements, crests/calendar/weekends.
-  rc.36.3 tests the requested career timing, slows early development/reputation,
-  contains day-one signings and fits founding wages. Unlocks notify without an
-  automatic purchase modal; weekly scrims sit under the calendar's controls.
-  Gate evidence and honest residuals: `CAREER-PACING-rc36-3.md`.
+  rc.36.3 slows early development/reputation and fits founding wages. rc.36.4
+  strengthens existing late facilities/camp/psychology, stacks scrim results
+  with crests/scores and gives news a newspaper-style notice distinct from mail.
+  Unlocks notify without an automatic purchase modal. Gate 3b remains open:
+  `CAREER-ENDGAME-rc36-4.md` and `CAREER-PACING-rc36-3.md`.
 - **Next after approval:** Etapa 4 (rc.37), then Etapa 5 (rc.38), then cutover.
   Further screen polish goes to Etapa 5; bugs can be fixed at the gate.
 
 ## Current gates and evidence
 
-- Full suite: **1449 passed**, 15 opt-in checks skipped; typecheck
+- Full suite: **1452 passed**, 16 opt-in checks skipped; typecheck
   clean; lint **0 errors, 0 warnings**. Data regeneration is unchanged and
   validation green. Staging-like static build, browser E2E and request budget:
-  `CAREER-PACING-rc36-3.md` (65 browser checks; Classic 62/75, home 27/28).
-- **BALANCE_VERSION 8**; fingerprint is
+  `CAREER-ENDGAME-rc36-4.md` (97 browser checks; Classic 62/75, home 27/28).
+- **BALANCE_VERSION 9**; fingerprint is
   pinned by `src/config/balanceVersion.test.ts`. Package, lock and site version
-  are all rc.36.3.
-- Matched pacing: 98 before / 98 after, plus 7 academy and 28 mixed-strategy
-  careers (4 seeds × 7 regions). Economy: 63 instrumented eight-season
-  careers in four region slices. Growth: 24 seeds; training sample: 2 seeds.
+  are all rc.36.4.
+- Endgame: **63 paired starts per version**, all difficulty × roster × region
+  cells, plus 14 paired Normal/prospect starts (two seeds × seven regions).
+  Purchases/maintenance use real flows. Only 9/63 and 6/14 own the final centre
+  by S6. Zero historical Worlds titles in either career snapshot; controlled
+  qualified-field replays show the late bonuses help, not a human win forecast.
+- Earlier evidence: 98 paired pacing starts, 7 academy and 28 mixed careers;
+  63 economy careers, growth 24 seeds, training two seeds.
 - Normal's first Major median moved S2 → S4 **among qualifiers**, but only
   4/42 matched careers reached it by S4. Regionals still arrive before the
   split-3 ideal for many paths; Worlds-title pacing remains unproven.
@@ -57,6 +62,7 @@
   decisions remain in `ROADMAP.md`.
 - Reconciliation of the attached rc.29 plan, deliveries versus pending work,
   changed decisions and the shortest completion path: `ROADMAP-REVIEW-2026-10-31.md`.
+  Current packages/estimate: `ROADMAP-NEXT-2026-10-31.md`; planning only.
 - Scripted career news corpus and 50/50 partner material/permission; the brand
   stays The Wire until agreed. Missing optional art uses fallbacks.
 

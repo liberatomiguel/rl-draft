@@ -12,6 +12,9 @@ it.skipIf(!process.env.PACING_UI_OUT)("writes a real-scrim HQ fixture with unvie
   save.reputation = 21;
   save.clock.day = 9; // Week 2, Tuesday.
   save = runScrimFlow(save).save;
+  const news = structuredClone(save);
+  news.clock.day = 10;
+  news.scheduledScrims = [{ day: 11, oppRef: save.scrimLog[0].oppRef }];
   save.clock.day = 11; // Thursday, same week.
   save = runScrimFlow(save).save;
   expect(save.scrimLog).toHaveLength(2);
@@ -22,4 +25,5 @@ it.skipIf(!process.env.PACING_UI_OUT)("writes a real-scrim HQ fixture with unvie
   unlock.finances.balance = 10_000;
   unlock.pendingInsert = { id: "ins-charity-cup", day: unlock.clock.day };
   writeFileSync(process.env.PACING_UI_OUT!.replace(/\.json$/, "-unlock.json"), JSON.stringify(unlock));
+  writeFileSync(process.env.PACING_UI_OUT!.replace(/\.json$/, "-news.json"), JSON.stringify(news));
 });

@@ -5,6 +5,12 @@ Referência: `rocket-draft-2.0-plano-executavel.md`, snapshot rc.29
 (`1afddcc`), conferido por fetch. O anexo é referência de roadmap;
 não autoriza executar seu backlog nesta sessão.
 
+Atualização após o follow-up rc.36.4: cobertura completa 3×3×7, benefícios
+avançados e distinção visual das notificações em `CAREER-ENDGAME-rc36-4.md`.
+Pendências e estimativa por pacote em `ROADMAP-NEXT-2026-10-31.md`. O gate
+de progressão continua aberto; os demais itens abaixo não foram executados
+por consequência da revisão.
+
 ## O que já foi feito
 
 | Frente do anexo | Estado verificado no staging atual | O que falta para encerrar |

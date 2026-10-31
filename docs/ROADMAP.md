@@ -652,6 +652,10 @@ never calibrates the old training model as if it were final.
   sponsor contract adjusted to ECO-07/08: there is no day-one founding
   partner to hand over from, only Easy's rescue partner.
 - **Gate 3b:** a playtest. The loop must not need a repetitive weekly chore.
+  rc.36.4 evidence: `CAREER-ENDGAME-rc36-4.md` (full 3×3×7 coverage, real
+  paid support, stronger late benefits; historical Worlds-title pacing still
+  unproven). Next packages/estimate: `ROADMAP-NEXT-2026-10-31.md`, planning
+  only; no Etapa 4–6 work authorized by that review.
 
 ## Etapa 4 — collect and progress
 

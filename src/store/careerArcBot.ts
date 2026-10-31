@@ -11,7 +11,7 @@
  * matrix runner and the report live in the test file.
  */
 
-import { CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
+import { CAREER_GEAR, CAREER_PLAN, CAREER_UNLOCKS } from "@/config/balance";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
 import { insertById } from "@/data/career/inserts";
 import {
@@ -23,7 +23,7 @@ import {
   weekOfDay,
 } from "@/engine/career/calendar";
 import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
-import { bootcampCostFor, bootcampTierFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
+import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
 import type {
   CareerDifficulty,
@@ -57,6 +57,7 @@ import {
   resolveInsertFlow,
   rolloverToNextSeason,
   runBootcampFlow,
+  setPsychologistFlow,
   signPlayerFlow,
   simEventToEnd,
   squadIsShort,
@@ -97,6 +98,7 @@ export type ArcPolicyId =
   | "loyal"
   | "academy"
   | "contender"
+  | "professional"
   | "veterans";
 
 /** rc.34: how the bot picks a sponsor offer (see ArcPolicy.sponsor). */
@@ -157,6 +159,8 @@ export interface ArcPolicy {
   briefing: SundayBriefingChoice;
   /** Opt-in human-style infrastructure purchases, preserving the policy's runway. */
   infrastructure?: boolean;
+  /** Buy the psychologist and use legal split bootcamps when the budget carries them. */
+  fullSupport?: boolean;
   /** A youth project that buys current strength after its first Major qualification. */
   contendWhenReady?: boolean;
 }
@@ -228,6 +232,7 @@ export const ARC_POLICIES: Record<ArcPolicyId, ArcPolicy> = {
   loyal: { id: "loyal", ...base, coach: "best", training: "repeat", scrims: true, others: "take", infrastructure: true },
   academy: { id: "academy", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true },
   contender: { id: "contender", ...base, rosterKey: "prospects", market: "youth", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, contendWhenReady: true },
+  professional: { id: "professional", ...base, market: "upgrade", renew: "selective", coach: "best", training: "repeat", scrims: true, others: "take", bids: "whenTight", infrastructure: true, fullSupport: true },
 };
 
 /**
@@ -756,6 +761,7 @@ function borrow(save: CareerSave, t: Tally): CareerSave {
 interface ArcOpts {
   /** rc.34: book a bootcamp each split (CAREER_GEAR.bootcampSpan decides how long it lasts). */
   bootcamp?: boolean;
+  onEvent?: (save: CareerSave) => void;
 }
 
 /** Today's decisions, in the order a player meets them. */
@@ -771,12 +777,14 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     save = simEventToEnd(save);
     if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
       countSeries(save, t);
+      opts.onEvent?.(save);
       save = finishEvent(save);
     }
   } else if (save.pendingEventDef && save.pendingEventDef.day === save.clock.day) {
     save = simEventToEnd(startEvent(save, false));
     if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
       countSeries(save, t);
+      opts.onEvent?.(save);
       save = finishEvent(save);
     }
   }
@@ -800,13 +808,25 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   const week = weekOfDay(save.clock.day);
   const dow = dayOfWeekOf(save.clock.day);
   if (policy.infrastructure && dow === 1 && !save.activeEvent) {
-    for (const gear of ["peripherals", "monitors", "pcs", "perfCenter"] as const) {
-      const bought = buyGearFlow(save, gear);
-      if (bought.error) continue;
+    for (const gear of CAREER_GEAR.items) {
+      if (save.finances.gear[gear.id]) continue;
+      if (save.reputation < gear.repGate) break;
+      const bought = buyGearFlow(save, gear.id);
+      if (bought.error) break;
       const statement = statementOf(bought.save);
       if (bought.save.finances.balance >= 8 * statement.payroll &&
         (statement.net >= 0 || bought.save.finances.balance / -statement.net >= 12)) save = bought.save;
+      else break;
     }
+  }
+  if (policy.fullSupport && dow === 1 && !save.activeEvent) {
+    const hired = !save.finances.gear.psychologist && save.reputation >= CAREER_GEAR.psychologistRep ? setPsychologistFlow(save, true) : null;
+    if (hired && !hired.error) {
+      const extra = save.finances.gear.psychologist ? 0 : psychologistPerSplitFor(save.clock.seasonIndex);
+      if (affordable(save, 0, extra, policy)) save = hired.save;
+    }
+    // A human can hire a first coach as soon as the unlock is earned.
+    if (!save.coach) save = coachMoves(save, policy);
   }
   if (!save.activeEvent) {
     if (isWindowWeek(week) && (dow === 1 || dow === 4)) save = marketMoves(save, policy, t);
@@ -823,7 +843,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
   save = startArcCycle(save, policy);
   // rc.34 (HQ decision 5-A's measurement, opt-in): a bootcamp on the first
   // Monday of each split it is affordable — `bootcamp` in playArcCareer's cfg.
-  if (opts.bootcamp && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {
+  if ((opts.bootcamp || policy.fullSupport) && dow === 1 && !save.activeEvent && !save.finances.bootcampUsedThisSplit) {
     const tier = bootcampTierFor(save.reputation);
     if (tier !== 0 && affordable(save, bootcampCostFor(tier, save.clock.seasonIndex), 0, policy)) {
       const res = runBootcampFlow(save);
@@ -897,6 +917,10 @@ export function playArcCareer(cfg: {
   budgetMs?: number;
   /** rc.34 (5-A's measurement, opt-in): book a bootcamp each split. */
   bootcamp?: boolean;
+  rosterKey?: CreateCareerInput["rosterKey"];
+  fullSupport?: boolean;
+  /** Observer of a finished user event before its real settlement. */
+  onEvent?: (save: CareerSave) => void;
   /** rc.34: override the policy's sponsor pick (the probe's ECON_SPONSOR). */
   sponsor?: ArcSponsorPick;
   /** rc.34: override the policy's other-income answer (the probe's ECON_OTHERS). */
@@ -909,6 +933,8 @@ export function playArcCareer(cfg: {
   const t0 = Date.now();
   const policy: ArcPolicy = {
     ...ARC_POLICIES[cfg.policy],
+    ...(cfg.rosterKey ? { rosterKey: cfg.rosterKey } : {}),
+    ...(cfg.fullSupport !== undefined ? { fullSupport: cfg.fullSupport, infrastructure: cfg.fullSupport } : {}),
     ...(cfg.sponsor ? { sponsor: cfg.sponsor } : {}),
     ...(cfg.others ? { others: cfg.others } : {}),
   };
@@ -939,7 +965,7 @@ export function playArcCareer(cfg: {
         out.softlock = `budget: season ${save.clock.seasonIndex} day ${save.clock.day} squad ${save.squad.length} starters ${starters(save).length} event ${save.pendingEventDef?.id ?? "-"}/${save.activeEvent?.def.id ?? "-"}`;
         break;
       }
-      save = decide(save, policy, t, { bootcamp: cfg.bootcamp });
+      save = decide(save, policy, t, { bootcamp: cfg.bootcamp, onEvent: cfg.onEvent });
       track(save, t);
       cfg.onDay?.(save);
       if (save.sponsor && out.firstSponsorSeason === null) out.firstSponsorSeason = save.clock.seasonIndex;

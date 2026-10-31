@@ -194,6 +194,7 @@ export function toolboxOf(save: CareerSave): ToolboxItem[] {
       repGate: item.repGate,
       trainingPct: Math.round(item.trainingBonus * 100),
       buffLevels: item.buffLevels,
+      ratingEdge: item.ratingBonus,
       weekly: item.upkeepPerSplit > 0 ? weeklyOf(item.upkeepPerSplit * flatIndex) : 0,
       duration: { kind: "permanent" },
     });

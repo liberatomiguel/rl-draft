@@ -1930,6 +1930,28 @@ R91. **Timing-first career playtest, weekly feedback (rc.36.3).**
      explain the existing Monday credit-floor rescue rule, not a new loan.
      BALANCE_VERSION 8. Gate 3b stays open; no Etapa 4–6 work or main deploy.
 
+R92. **Paid endgame evidence and stronger advanced support (rc.36.4).**
+     Miguel's follow-up asks for an honest coverage audit, meaningful late
+     unlocks, stacked crest/score scrims and distinct mail/news notices.
+     Existing centre gains +1.5 competitive team rating, structured camp
+     1 → 1.75, psychology Clutch/Consistency 1 → 3. Same costs, reputation
+     gates, upkeep, temporary cap and signed contracts; no individual OVR
+     grant. BALANCE_VERSION 9. Full paired 63-cell matrix plus 14 paired
+     Normal/prospect careers use real paid support and all finance flows.
+     None won a historical Worlds. Latest qualified fields replayed with
+     identical roster/psychology/opponents isolate the new flat edge:
+     Normal/prospects 0 → 21 titles over 768 draws per variant. This is
+     conditional on qualification, not a human success estimate. Only 9/63
+     and 6/14 own the final centre by S6; star purchases remain sparse.
+     Do not call the game balanced or bypass costs to claim full equipment
+     coverage. Next calibration isolates star affordability, access gates
+     and regional timing; no blind global rep/growth/match nerf. Additional
+     analysis/elite-camp/scouting unlocks are proposals, not implemented.
+     News uses an editorial masthead/date/headline; mail envelope/sender;
+     scrims stack under Advance with both crests and score, no extra sim.
+     CAREER-ENDGAME-rc36-4.md records evidence; ROADMAP-NEXT-2026-10-31.md
+     plans remaining packages only. Gate 3b stays open; no main deploy.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,
@@ -1941,9 +1963,10 @@ LOCKED and built. Remaining review items:
   the biggest content ask; currently a partial floor.
 - **`born:` rows** for the ~150–200 modern-era players (ages are inferred
   today; §21.13 PT glossary tone check also pending).
-- **Career pacing acceptance** — the harness was built in rc.30; rc.36.3
-  adds split/season milestones and path-sensitive probes. Regional timing
-  and historical Worlds titles still need calibration and Miguel's play.
+- **Career pacing acceptance** — rc.36.3 adds split/season milestones;
+  rc.36.4 adds the full paid-support matrix and controlled endgame replays.
+  Regional timing, star affordability and historical Worlds titles still
+  need calibration and Miguel's play.
 - **First-guess tunables to confirm after playtests:** scrim chemistryCredit
   0.05 / xpWeeks 0.5, the daily-poach rates, the talk's flexibility floor 0.94 (rc.33, R64),
   the filler headliner band 77–84.
