@@ -1412,8 +1412,7 @@ export const CAREER_DEV = {
    * it is steep when young, slows near the peak and never stops short of it.
    * Training multipliers (coach, gear, focus, intensity, drill) scale it.
    * rc.36 (POL-04, Miguel 31/10: "slow the base pace"): 2 → 1.5 — less
-   * front-loaded (a 15-year-old's base season ~4.2 → ~3.3 points), still
-   * closing the gap by the peak age. 2 = rc.35.
+   * front-loaded, still closing the gap by the peak age. 2 = rc.35.
    */
   paceCurvature: 1.5,
   paceMinYears: 0.5,
@@ -1423,8 +1422,11 @@ export const CAREER_DEV = {
    * training days plus the series he plays, ≈ 25 + 20, at the no-coach 0.85)
    * — the unit that turns the yearly pace into a day's or a series' gain, so
    * the default setup runs the base pace (a coach and gear run ahead of it).
+   * rc.36 POL-04: 40 → 50.25 slows user sessions and match XP uniformly,
+   * preserving package ratios. The world has its own weekly pace; slowing
+   * global curvature alone also weakened opposition. Potential is unchanged.
    */
-  trainingWeeksPerYear: 40,
+  trainingWeeksPerYear: 50.25,
   /**
    * DEV-01b: a generated player is never promised a peak sooner than his gap
    * needs — peak age ≥ his age + ceil(gap ÷ seasonGainCap) + this slack.
@@ -1436,7 +1438,7 @@ export const CAREER_DEV = {
    * rc.35 (front T): the season cap spreads instead of stopping dead — a tick
    * may take this × (its weeks ÷ the calendar weeks left) of the room left,
    * so a fast prospect slows near the cap but never reads flat for weeks.
-   * rc.36 (POL-04): 2 → 1 — with the ceiling at 9 a strong package reaches
+   * rc.36 (POL-04): 2 → 1 — with the ceiling at 8.5 a strong package reaches
    * it sooner, and at 2 the room ran out in the season's last two weeks
    * (the flat stretch back: `development.flatline.test.ts`); at 1 each tick
    * takes its own share of the weeks left, so the pace tapers evenly to the
@@ -1449,10 +1451,10 @@ export const CAREER_DEV = {
    * leaves room for a package, gear and the Training Weeks to run ahead of
    * it — they only speed the road to the peak, which still bounds it.
    * rc.36 (POL-04, Miguel 31/10: "bring the season ceiling down, about
-   * 8–9"): 13 → 9 — a strong package still runs ahead of the base (7) and
+   * 8–9"): 13 → 8.5 — a strong package still runs ahead of the base (7) and
    * the spread keeps every week moving (no flat weeks). 13 = rc.35.
    */
-  seasonGainHardCap: 9,
+  seasonGainHardCap: 8.5,
   /**
    * DEV-01 base growth: match XP per series a player actually plays, in
    * training-week equivalents × field quality. A reserve who does not play
@@ -1613,7 +1615,7 @@ export const CAREER_PLAN = {
   workloads: {
     light: { boostScale: 0.5, wearCut: 0.4, wearPerWeek: 0 },
     normal: { boostScale: 1, wearCut: 0, wearPerWeek: 0 },
-    heavy: { boostScale: 1.5, wearCut: 0, wearPerWeek: 1 },
+    heavy: { boostScale: 1.3, wearCut: 0, wearPerWeek: 1 },
   },
   /**
    * T2 the squad focus: one of the five drill themes grows its attribute

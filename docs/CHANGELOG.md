@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.35**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -25,6 +25,22 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Added / Changed — rc.36, Etapa 3 complete (R83–R88)
+- Selected 28-day training cycles, focus and Evolve/Gel/Recover, completion
+  payouts, coach planning, modest Heavy/Hard wear and new signings in the plan.
+- Compact HQ/squad/progression/finances, stacked arsenal, Close-only unlock;
+  sponsor cards in a modal; a sent-offer contract talk with refusal history.
+- Fixed season-wide goals with deadline/progress and review, visual archive-
+  aware news, career achievements in the general mode-filtered collection.
+- Custom crests/colours/contrast guard, visual calendar; Saturday HQ, optional
+  briefing, explicit Sunday start, once-only accessible intro and following
+  an event after elimination. Reduced-motion/keyboard behaviour verified.
+- Economy probe checkpoints completed careers, matching the ARC instrument,
+  so long runs remain inspectable. Optional ECON_ARC_OUT retains the exact full
+  ArcCareer result from each measured career for ARC_REPORT, avoiding a duplicate
+  sweep; every cell checks the bot softlock and merged outputs check uniqueness.
+  No gameplay or persist contract changes.
+
 ### Changed / Balance — rc.36, POL-04 (R86)
 - Every founding roster now receives the same budget for its difficulty.
   Founding wages fit that budget, including the veterans; existing deals and
@@ -32,8 +48,17 @@ with the root cause — that section doubles as the project's bugfix log.
 - Free-agent prospects replenish in every region at each seasonal intake and
   appear in the market alongside its best-overall and signable selections.
 - Generated players reach the same potential later: a one-year peak shift,
-  a gentler base growth curve and a nine-point season ceiling. Growth room
+  a gentler base growth curve and an 8.5-point season ceiling. Growth room
   spreads over the remaining weeks to preserve the no-flat-weeks fix.
+
+- POL-04 calibration slows user training/match XP through the existing
+  training-week denominator; procedural opposition and match difficulty stay
+  fixed. Heavy package boost is 1.3× the normal package boost to retain the
+  training contract band without changing normal packages or their wear.
+
+- Final Normal measurement: 349 Majors and 131 Worlds in 765 season rows
+  across 98 careers: 0.4562 / 17.12%, no softlock. The 0.44 / 16% target is
+  close, not exactly met; its residual is explicit for the Gate 3b playtest.
 
 ### Fixed — rc.36, POL-04
 - Young free agents could disappear from the market despite being available:
@@ -45,6 +70,16 @@ with the root cause — that section doubles as the project's bugfix log.
   lowest overall alone did not imply the cheapest salary ask.
 
 ### Fixed — rc.36 integration
+- Growth regressions now isolate the actual contract: a player already at the
+  legacy split ceiling must keep growing, and peak comparison follows the real
+  weekday calendar through the full plateau. Root cause: one fixture assumed
+  three points in ten weeks, another observed only four truncated calendar
+  years. The original one-tenth peak-equality assertion is retained.
+- Calendar Advance no longer deep-copies the whole save twice per day. Root
+  cause: it cloned before passing the result to day arrival, which already
+  owns the deep-clone boundary. The new clock is copied first; day arrival
+  still isolates all nested data. A frozen-input Monday regression and the
+  complete pre-change eight-season deterministic trace both pass.
 - Starting a training package after the daily session no longer runs an early
   scrim outside its displayed window. Root cause: sessions respected
   `packageFromDay`, but package scrims did not. Tuesday/Thursday starts and

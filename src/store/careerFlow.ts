@@ -4062,9 +4062,8 @@ export function advanceDayFlow(input: CareerSave): CareerSave {
   // until Sunday is started (store/careerSunday — the briefing's record lifts
   // it). A fresh invite does not hold (rc.34 review, Gate 3b: walked past, it is passed).
   if (clockHoldOf(input)) return input;
-  const save = clone(input);
-  save.clock.day += 1;
-  return processDayArrival(save);
+  // Day arrival owns the deep clone; copying twice made every batched day expensive.
+  return processDayArrival({ ...input, clock: { ...input.clock, day: input.clock.day + 1 } });
 }
 
 /**

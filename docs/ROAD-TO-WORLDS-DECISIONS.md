@@ -1738,14 +1738,21 @@ R86. **One founding budget, no passive fanbase pay, prospects throughout
      potential 80+ and three points of room, so the overall-ranked top 120
      cannot hide the new kids. The signable-player top-up still applies.
      (d) First pace lever approved by Miguel: generated peakAgeShift +1
-     year, paceCurvature 2 to 1.5, seasonGainHardCap 13 to 9 and
+     year, paceCurvature 2 to 1.5, seasonGainHardCap 13 to 8.5 and
      seasonCapSpread 2 to 1. Filler potential reads the unshifted peak:
      the same potential, reached later. Real players retain their historical
      peak. A strong package keeps growing each week instead of exhausting
-     the cap early. Match difficulty is unchanged. Final CAREER_GROWTH,
+     the cap early. The calibrated user pace uses the existing
+     trainingWeeksPerYear denominator (40 to 50.25); opposition keeps its
+     own weekly pace. Heavy scales the normal package boost by 1.3 instead
+     of 1.5 to keep the development-package gain band. Potential and normal
+     packages are unchanged. Match difficulty is unchanged. Final CAREER_GROWTH,
      CAREER_TRAINING, CAREER_ECON and CAREER_ARC measurements are integration
      gates; the Normal competitive target remains 0.44 Majors per season
-     and Worlds in 16% of season rows. (e) rc.34 decisions 1/2 (loan rules),
+     and Worlds in 16% of season rows. Final Normal measured 0.4562 /
+     17.12%; the remaining difference is explicit for Gate 3b, not an exact
+     target pass. The residual remains an explicit progression
+     decision for this playtest. (e) rc.34 decisions 1/2 (loan rules),
      4 (EU spending policies), 5 (the wage budget), 7 (scouted bands) and
      9 (the older roster's rebuild) remain explicit Gate 3b choices.
      Their existing defaults are retained for the remeasurement; POL-04

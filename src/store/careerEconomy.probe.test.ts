@@ -34,6 +34,8 @@
  * cell, default 1: seed 9100, the first seed of CAREER-BASELINE-rc30),
  * ECON_SEASONS (default 8), ECON_BUDGET_MS (the bot's per-career wall-clock
  * stop, default 120 000), ECON_OUT (optional JSON dump of the records),
+ * ECON_ARC_OUT (also checkpoints the exact full ArcCareer results from this same
+ * run, suitable for ARC_REPORT; avoids replaying the same deterministic careers),
  * ECON_IN (re-render the Markdown from such a dump, no careers played;
  * ECON_RUNTIME, free text, names the original sweep's runtime in the footer).
  * One process; the bot is deterministic, so the same knobs give the same
@@ -825,6 +827,7 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
   const absWeek = (save: CareerSave) => save.clock.seasonIndex * W + weekOfDay(save.clock.day);
 
   const out: EconCareer[] = [];
+  const arcs: ArcCareer[] = [];
   for (const cell of cells) {
     let c: EconCareer | null = null;
     const seenLedger = new Set<string>();
@@ -1227,6 +1230,9 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
       others: (env.ECON_OTHERS as "take" | "skip" | undefined) || undefined,
     });
     hub.tap = null;
+    expect(arc.softlock, `career ${cell.region}/${cell.difficulty}/${cell.policy}/${cell.seed}`).toBeNull();
+    arcs.push(arc);
+    if (env.ECON_ARC_OUT) writeFileSync(env.ECON_ARC_OUT, JSON.stringify({ seasons, careers: arcs }));
     const done = c as EconCareer | null;
     if (!done) throw new Error("the tap never saw the career start");
     done.ended = arc.ended;
@@ -1242,6 +1248,8 @@ async function playEconCareers(cells: { region: Region; difficulty: CareerDiffic
     }));
     for (const x of done.seasons) if (x.balanceMin === Infinity) x.balanceMin = x.balanceEnd;
     out.push(done);
+    // Checkpoint completed cells, as CAREER_ARC does; a long sweep remains inspectable.
+    if (env.ECON_OUT) writeFileSync(env.ECON_OUT, JSON.stringify({ seasons, careers: out }));
   }
   return out;
 }
@@ -2037,6 +2045,11 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
         ? list<ArcPolicyId>(env.ECON_POLICIES, Object.keys(ARC_POLICIES) as ArcPolicyId[])
         : [...ARC_DEFAULT_POLICIES];
       const seeds = Number(env.ECON_SEEDS ?? 1);
+      const seedList = env.ECON_SEED_LIST
+        ? env.ECON_SEED_LIST.split(",").map((s) => s.trim()).filter(Boolean).map(Number)
+        : Array.from({ length: seeds }, (_, k) => 9100 + k * 7919);
+      expect(seedList.length, "the economy probe needs at least one seed").toBeGreaterThan(0);
+      expect(seedList.every(Number.isSafeInteger) && new Set(seedList).size === seedList.length, "ECON_SEED_LIST must contain distinct integer seeds").toBe(true);
       const seasons = Number(env.ECON_SEASONS ?? 8);
       const knobs = [
         "CAREER_ECON=1",
@@ -2044,6 +2057,7 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
         env.ECON_DIFFS ? `ECON_DIFFS=${env.ECON_DIFFS}` : "",
         env.ECON_POLICIES ? `ECON_POLICIES=${env.ECON_POLICIES}` : "",
         env.ECON_SEEDS ? `ECON_SEEDS=${env.ECON_SEEDS}` : "",
+        env.ECON_SEED_LIST ? `ECON_SEED_LIST=${env.ECON_SEED_LIST}` : "",
         env.ECON_SEASONS ? `ECON_SEASONS=${env.ECON_SEASONS}` : "",
         env.ECON_CURVES_ONLY ? "ECON_CURVES_ONLY=1" : "",
         env.ECON_SPONSOR ? `ECON_SPONSOR=${env.ECON_SPONSOR}` : "",
@@ -2065,7 +2079,7 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
         for (const region of regions)
           for (const difficulty of diffs)
             for (const policy of policies)
-              for (let k = 0; k < seeds; k++) cells.push({ region, difficulty, policy, seed: 9100 + k * 7919 });
+              for (const seed of seedList) cells.push({ region, difficulty, policy, seed });
         // ECON_IN re-renders saved ECON_OUT dumps without replaying the careers. rc.34: a
         // comma-separated list merges the slices of a split sweep, and ECON_POLICIES /
         // ECON_REGIONS / ECON_DIFFS, when given, keep only those careers (like with like).
@@ -2080,6 +2094,7 @@ describe.skipIf(!env.CAREER_ECON)("career economy probe (ECO-01, measures only)"
                 .filter(
                   (c) =>
                     (!env.ECON_POLICIES || policies.includes(c.policy)) &&
+                    (!env.ECON_SEED_LIST || seedList.includes(c.seed)) &&
                     (!env.ECON_REGIONS || regions.includes(c.region)) &&
                     (!env.ECON_DIFFS || diffs.includes(c.difficulty)),
                 ),

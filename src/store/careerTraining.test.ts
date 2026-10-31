@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_COACH_MARKET, CAREER_PLAN, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
 import { dayOfWeekOf, weekAt, weekOfDay } from "@/engine/career/calendar";
 import {
   ageOf,
@@ -195,9 +195,10 @@ describe("DEV-03 rules (engine)", () => {
     const run = (mult: number) => {
       let p = { ...base };
       let max = p.overall;
-      for (let s = 1; s <= 4; s++) {
+      for (let s = 1; s <= 8; s++) {
         p = { ...p, gainedThisSeason: 0 };
-        for (let d = 1; d <= 160; d++) {
+        for (let w = 1; w <= CAREER_CALENDAR.weeksPerSeason; w++) for (let dow = 1; dow <= CAREER_TRAINING.trainingDaysPerWeek; dow++) {
+          const d = (w - 1) * CAREER_CALENDAR.daysPerWeek + dow;
           p = trainDay(p, { seasonIndex: s, coachOverall: null, gearBonus: 0, trainingWeekBonus: false, splitGained: 0, seasonGained: p.gainedThisSeason, model: 2, day: d, careerSeed: 7, aging: true, packageMult: mult }).player;
           max = Math.max(max, p.overall);
         }
@@ -208,8 +209,8 @@ describe("DEV-03 rules (engine)", () => {
     const boosted = run(1.5);
     expect(boosted).toBeLessThanOrEqual(target + 1e-9);
     expect(plain).toBeLessThanOrEqual(target + 1e-9);
-    // Both reach the same real peak; the package only gets there sooner. rc.36 (POL-04): the
-    // slower base (paceCurvature 1.5) closes the last points inside his plateau — within a tenth.
+    // Observe the full plateau on the real calendar; slower growth need not finish by age 20.
+    // The package gets there sooner, without changing the observed peak.
     expect(Math.abs(boosted - plain)).toBeLessThan(0.1);
   });
 

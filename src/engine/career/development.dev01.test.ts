@@ -276,10 +276,9 @@ describe("DEV-01d — the curve: no split cap, a season cap, steep young, never 
   const tick = (p: SquadPlayer, weeks: number, extra: Partial<Parameters<typeof trainWeek>[1]> = {}) =>
     trainWeek(p, { seasonIndex: 1, coachOverall: 85, gearBonus: 0.2, trainingWeekBonus: true, splitGained: p.gainedThisSplit, seasonGained: p.gainedThisSeason, weeks, ...M2, ...extra });
 
-  it("no per-split cap: a split can bank more than rc.31's 3; the season ceiling (rc.35: seasonGainHardCap, spread) still holds", () => {
-    // A split is ten weeks; a heavy package with gear clears rc.31's 3
-    // (rc.34: the workload lives in the package's multiplier).
-    let p = kid({ potential: 95 });
+  it("no per-split cap: a player at the old split ceiling keeps growing; the season ceiling still holds", () => {
+    // Starting at rc.31's split ceiling isolates the cap rule from the tunable pace.
+    let p = kid({ potential: 95, gainedThisSplit: CAREER_TRAINING.maxSplitGain, gainedThisSeason: CAREER_TRAINING.maxSplitGain });
     for (let w = 0; w < 10; w++) p = tick(p, 1.3, { packageMult: 1.3 }).player;
     expect(p.gainedThisSplit).toBeGreaterThan(CAREER_TRAINING.maxSplitGain);
     for (let w = 0; w < 40; w++) p = tick(p, 1).player;

@@ -716,6 +716,83 @@ by region, first Major by S2 · Worlds by S4 — EU 0 · 7 %, NA 7 · 29 %, SAM 
 MENA 7 · 14 %, OCE 57 · 64 %, APAC 100 · 86 %, SSA 100 · 100 %; at an even rating
 the user wins 81 / 66 / 58 % of series.
 
+## 13. The rc.36 re-measure — Etapa 3 / POL-04
+
+Equal budgets replace roster-based grants; founding wages fit the difficulty's
+budget. Passive fanbase income is zero. Seasonal free-agent prospects remain
+visible in the market. Generated players retain their potential with a later
+peak; growth room tapers across the season without flat weeks. Match difficulty,
+RNG and the shared simulator are unchanged. Gate evidence: RC36-GATE3B.md.
+
+### Competitive calibration
+
+The integrated starting point measured 98 Normal careers: 767 season rows,
+374 Majors and 142 Worlds (0.4876 / 18.51%). The target is rc.34's 0.44 / 16%.
+The final same-seed measurement is **0.4562 Majors per season and Worlds in
+17.12% of season rows**; exact counts are in CAREER-ARC-rc36.md. The remaining
++0.0162 Majors/season and +1.12 points of Worlds are explicit for Gate 3b
+rather than an exact target pass. The residual remains an explicit progression decision for this playtest.
+
+Selected keys: curvature 1.5, hard season ceiling 8.5,
+peak shift one, cap spread one, trainingWeeksPerYear 50.25. The
+existing denominator controls user sessions and match XP. Changing global
+curvature alone also slowed procedural opposition, so the world's own weekly
+pace is retained. Heavy scales the normal package boost by 1.3; its wear and
+normal packages are unchanged. Training/growth evidence: CAREER-GROWTH-rc36.md uses the default 24 samples (the long-arc section caps
+at eight: 448 model-2 players). All reach peak within ±2; reached-age p50 is
+21.4 (early 19.7, standard 21.5, late 23.1). CAREER-TRAINING-rc36.md uses
+two prospect samples / 112 rookies and the full EU/SAM flow: package/base
+p50 is 1.14–1.35, zero over-peak players, pure scrim share p90 17–18%. Two
+SAM flow rows report 26% against the 25% candidate band; this residual is
+explicit for Gate 3b.
+
+### Economy guardrails
+
+Triples are Easy / Normal / Hard; 98 careers per difficulty. These are
+measurements against §3, not automatic approval of every candidate band.
+
+| Measure | rc.35 | rc.36 | Candidate band (§3) |
+|---|---|---|---|
+| Insolvent (a1) | 0 / 5 / 14% | 1 / 6 / 6% | ≤ 2 / 10 / 25% |
+| Newcomers insolvent (a2) | 0 / 2 / 17% | 0 / 2 / 10% | 0 / ≤ 5 / ≤ 20% |
+| EU on Normal (f1) | 29% | 36% | ≤ 20% |
+| Spender insolvent (d2) | 0 / 14 / 21% | 7 / 14 / 14% | ≤ 4 / 20 / 50% |
+| Tight Mondays S3–S5 (e3) | 11 / 20 / 31% | 13 / 24 / 31% | ≥ 10 / 20 / 30% |
+| Snowball p90 S2–S7, maximum (e1) | 21.1 / 12.0 / 8.0 | 16.7 / 9.6 / 5.9 | ≤ 3.0 / 2.0 / 1.5 |
+| 88+ signing by S4 (c3) | 22 / 9 / 3% | 9 / 3 / 0% | ≥ 20 / 15 / 10% |
+| Seasons with fines > two weeks of payroll (s3) | 0 / 5 / 1% | 0 / 5 / 1% | ≤ 10% |
+
+The aggregate insolvency/newcomer bands hold, as do tight-Monday and fine
+bands. Every rescue has a warning in the preceding eight weeks; first-warning
+lead p50 is 26 / 26 / 30 weeks. All measured balanced/prospect founders carry
+their first split (84 careers). Veterans retain their unit/regression coverage
+and the explicit hands-off rebuild decision; they are not in this default
+seven-policy sweep.
+
+The full money curves and C1–C11 tables remain in ECONOMY-PROBE-rc36.md.
+First-season payroll/guaranteed medians (2.3 / 2.4 / 2.9), Easy's first-season
+prize share (46%), and some cash-balance medians also miss §3's bands.
+Normal tuned insolvency is 14% against autopilot's 0%, above d2's +5-point
+candidate; Easy's single spender ending exceeds its 4% candidate. These are
+explicit tradeoffs for Gate 3b rather than an all-band pass.
+
+ECONOMY-PROBE-rc36.md contains the complete 294-career matrix: seven regions,
+three difficulties, seven policies, seeds 9100 and 17019, eight seasons.
+Regional slices use four processes. ECON_ARC_OUT checkpoints the exact full
+ArcCareer returned by the same real-flow run, while the economy tap records
+its money. Both sets check 294 unique keys, zero softlocks and matching
+competitive counts per cell. ARC_REPORT runs separately after the sweep.
+This produces both reports without replaying the same deterministic matrix.
+
+Unchanged defaults remain Gate 3b decisions: Hard's first loan, loan terms /
+investor, EU spending-policy risk, the wage budget / snowball, scouting bands
+and the veterans' later rebuild. The wealth tail remains high despite falling from rc.35, and the early star
+path is rarer. EU spending-policy endings remain above the regional band.
+Sponsor offer EV spread (C11 s1: 57% within ±10%) and Stretch wording
+(C11 s2: 39 / 36 / 43% hit against 15–35%) also remain outside candidates.
+The full report preserves these misses; loan, wage-budget and sponsor rules
+are not silently retuned to erase them.
+
 ## Appendix — the probe tables (generated)
 
 The probe's output for the baseline's 294 cells, as generated. The careers
