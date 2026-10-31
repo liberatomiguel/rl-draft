@@ -10,6 +10,7 @@
  */
 
 import { cx } from "@/lib/util";
+import { baseRarityOf } from "@/engine/cards";
 import { useCareerCopy } from "@/content/careerCopy";
 import { CountryChip } from "@/components/ui/Badge";
 import type { PotentialBand } from "@/engine/career/types";
@@ -56,6 +57,7 @@ export function PlayerCardTile({
   disabled,
   onClick,
   className,
+  rarityFrame = false,
 }: {
   name: string;
   overall: number;
@@ -72,6 +74,8 @@ export function PlayerCardTile({
   disabled?: boolean;
   onClick?: () => void;
   className?: string;
+  /** Use the Draft's complete OVR rarity palette on the squad screen. */
+  rarityFrame?: boolean;
 }) {
   const C = useCareerCopy();
   const frame = ovrFrame(overall);
@@ -86,9 +90,9 @@ export function PlayerCardTile({
       disabled={disabled}
       className={cx(
         "group relative flex w-full flex-col rounded-xl border bg-gradient-to-b to-transparent text-left transition-all",
-        frame.wash ?? "from-white/[0.04]",
-        frame.border,
-        frame.glow,
+        rarityFrame ? `card-frame card-${baseRarityOf(Math.round(overall))}` : frame.wash ?? "from-white/[0.04]",
+        !rarityFrame && frame.border,
+        !rarityFrame && frame.glow,
         size === "sm" ? "p-2.5" : "p-3.5",
         onClick &&
           !disabled &&
@@ -99,7 +103,7 @@ export function PlayerCardTile({
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className={cx("display truncate font-bold text-ink", size === "sm" ? "text-sm" : "text-base")}>
             {name}
@@ -110,14 +114,14 @@ export function PlayerCardTile({
           </div>
         </div>
         <div className="shrink-0 text-right leading-none">
-          <div className={cx("display font-bold", frame.ovr, size === "sm" ? "text-xl" : "text-2xl")}>
+          <div className={cx("display font-bold", rarityFrame ? "text-ink" : frame.ovr, size === "sm" ? "text-xl" : "text-2xl")}>
             {Math.round(overall)}
           </div>
           <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div className="relative mt-2 flex flex-wrap items-center gap-1.5">
         {potText ? (
           <span className="rounded bg-blue/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan">
             {potText}
@@ -131,7 +135,7 @@ export function PlayerCardTile({
         ) : null}
       </div>
 
-      {footer ? <div className="mt-2 border-t border-line/60 pt-2 text-xs text-sub">{footer}</div> : null}
+      {footer ? <div className="relative mt-2 border-t border-line/60 pt-2 text-xs text-sub">{footer}</div> : null}
     </Wrapper>
   );
 }

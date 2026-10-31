@@ -85,7 +85,7 @@ import {
 import { formatDateTiny, formatDaysAway } from "@/components/career/dateText";
 import { OrgMark } from "@/components/career/OrgMark";
 import { PlayerCardTile } from "@/components/career/PlayerCardTile";
-import { BadgeCheckIcon, LockIcon } from "@/components/ui/icons";
+import { LockIcon } from "@/components/ui/icons";
 import { PlayerSheet } from "@/components/career/PlayerSheet";
 import { TeamStars } from "@/components/career/TeamStars";
 import { CoachAttributeLines, CoachHireCard } from "@/components/career/training/CoachHireCard";
@@ -512,6 +512,10 @@ export function MarketScreen() {
                     {sortFlip ? "↑" : "↓"}
                   </span>
                 </Chip>
+                <label className="ml-1 inline-flex min-h-9 cursor-pointer items-center gap-2 text-[11px] font-semibold text-sub" title={C.market.filterSignableCount(signableCount)}>
+                  <input type="checkbox" checked={signableOnly} onChange={(event) => setSignableOnly(event.target.checked)} className="h-3.5 w-3.5 cursor-pointer accent-blue" />
+                  {C.market.filterAvailable}
+                </label>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="kicker mr-1 text-[9px]">{C.market.filterRegion}</span>
@@ -529,24 +533,7 @@ export function MarketScreen() {
                   </Chip>
                 ))}
               </div>
-              {/* rc.33 (UX-07): only the players the org's reputation can sign.
-                  rc.36 (POL-02, Miguel on rc.35): discreet and in place — a chip in the filter
-                  row (rc.34's place) with its icon and how many players it keeps. */}
-              <Chip
-                active={signableOnly}
-                onClick={() => setSignableOnly((v) => !v)}
-                activeClass="border-good/50 bg-good/15 text-good"
-                className="max-w-full"
-              >
-                <BadgeCheckIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className="min-w-0 truncate">{C.market.filterSignable}</span>
-                <span
-                  className="shrink-0 rounded-full bg-white/10 px-1.5 py-px font-mono text-[10px] normal-case tracking-normal"
-                  title={C.market.filterSignableCount(signableCount)}
-                >
-                  {signableCount}
-                </span>
-              </Chip>
+
             </div>
           </Panel>
 
@@ -656,35 +643,17 @@ export function MarketScreen() {
             </Panel>
           ) : null}
           {save.coach ? (
-            <Panel strong className="p-4">
+            <Panel className="p-3">
               <p className="kicker mb-2 text-[10px]">{C.market.currentCoach}</p>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="display truncate text-lg font-bold text-ink">
-                      {save.coach.name}
-                    </span>
-                    {save.coach.source === "real" ? (
-                      <Badge tone="gold">{C.market.coachRealTag}</Badge>
-                    ) : (
-                      <Badge tone="neutral">{C.market.coachGenTag}</Badge>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-sub">{wageLabel(C, save.coach.salaryPerSplit)}</p>
-                  {/* rc.34 (DEV-03 T4): his three attributes and their effects. */}
-                  <div className="mt-2">
-                    <CoachAttributeLines save={save} coach={save.coach} C={C} statLabels={t.STAT_LABELS} showImpact={false} />
-                  </div>
+                  <div className="flex flex-wrap items-center gap-2"><span className="display truncate text-base font-bold text-ink">{save.coach.name}</span><Badge tone={save.coach.source === "real" ? "gold" : "neutral"}>{save.coach.source === "real" ? C.market.coachRealTag : C.market.coachGenTag}</Badge></div>
+                  <p className="mt-1 text-[11px] text-sub">{C.training.cycle.coach.wage} <span className="ml-1 text-sm font-bold text-ink">{wageLabel(C, save.coach.salaryPerSplit)}</span></p>
                 </div>
-                <div className="text-right leading-none">
-                  <div className="display text-3xl font-bold text-ink">{Math.round(save.coach.overall)}</div>
-                  <div className="kicker text-[9px] text-faint">{C.common.ovr}</div>
-                </div>
-                <Button variant="danger" size="sm" onClick={() => setConfirmFire(true)}>
-                  {C.finances.dropLabel}
-                </Button>
+                <div className="text-right leading-none"><div className="display text-2xl font-bold text-ink">{Math.round(save.coach.overall)}</div><div className="kicker text-[9px] text-faint">{C.common.ovr}</div></div>
+                <Button variant="ghost" size="sm" className="text-bad" onClick={() => setConfirmFire(true)}>{C.finances.dropLabel}</Button>
               </div>
-              <p className="mt-2 text-[11px] text-faint">{C.market.replaceWarning}</p>
+              <div className="mt-2.5"><CoachAttributeLines save={save} coach={save.coach} C={C} statLabels={t.STAT_LABELS} showImpact={false} compact /></div>
             </Panel>
           ) : null}
 

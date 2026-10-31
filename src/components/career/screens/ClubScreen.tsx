@@ -150,7 +150,6 @@ export function ClubScreen() {
   const deleteSlot = useCareerStore((s) => s.deleteSlot);
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [typed, setTyped] = useState("");
 
   if (!mounted) {
     return (
@@ -187,7 +186,6 @@ export function ClubScreen() {
     { key: "t3", count: stats.titlesT3 },
   ] as const;
 
-  const typedOk = typed.trim().toLowerCase() === save.identity.orgName.trim().toLowerCase();
   const onAbandon = () => {
     if (activeSlot === null) return;
     setConfirmOpen(false);
@@ -540,7 +538,6 @@ export function ClubScreen() {
         title={copy.club.abandonCareer}
         onClose={() => {
           setConfirmOpen(false);
-          setTyped("");
         }}
         actions={
           <>
@@ -548,12 +545,11 @@ export function ClubScreen() {
               variant="ghost"
               onClick={() => {
                 setConfirmOpen(false);
-                setTyped("");
               }}
             >
               {copy.common.cancel}
             </Button>
-            <Button variant="danger" disabled={!typedOk} onClick={onAbandon}>
+            <Button variant="danger" onClick={onAbandon}>
               {copy.common.confirm}
             </Button>
           </>
@@ -563,14 +559,6 @@ export function ClubScreen() {
         <p className="mt-2 text-xs text-faint">
           {copy.saves.deleteConfirm(save.identity.orgName, save.clock.seasonIndex + 1)}
         </p>
-        <input
-          value={typed}
-          onChange={(e) => setTyped(e.target.value)}
-          placeholder={save.identity.orgName}
-          aria-label={copy.club.abandonCareer}
-          autoComplete="off"
-          className="mt-4 h-11 w-full rounded-lg border border-line-strong bg-white/5 px-3 text-sm text-ink outline-none placeholder:text-faint focus:border-bad/60"
-        />
       </Modal>
     </div>
   );

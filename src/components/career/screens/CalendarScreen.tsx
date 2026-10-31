@@ -637,10 +637,6 @@ export function CalendarScreen() {
                       : undefined;
                     const isSelected = selectedDay === d.day;
                     const worldCount = showWorld ? (worldByDay.get(d.day)?.length ?? 0) : 0;
-                    // rc.36 (CAL-01): the whole window is one blue band — a bridge over the
-                    // gap to the next window day of the same row; an event cell keeps its own
-                    // fill on top of it (the band shows under it as a strip).
-                    const bridge = d.windowOpen && d.dow !== 7 && (days[d.day]?.windowOpen ?? false);
                     return (
                       <button
                         key={d.day}
@@ -655,7 +651,9 @@ export function CalendarScreen() {
                         title={cellLabel}
                         className={cx(
                           "relative flex min-h-11 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
-                          ev
+                          d.windowOpen
+                            ? "border-blue/50 bg-blue/15 hover:bg-blue/20"
+                            : ev
                             ? spectating
                               ? cx("border-line/60 hover:bg-white/[0.06]", d.windowOpen ? "bg-[#0d1a33]" : "bg-white/[0.03]")
                               : MATCHDAY_FILL[ev.tier]
@@ -667,12 +665,6 @@ export function CalendarScreen() {
                           isSelected && "border-white/60",
                         )}
                       >
-                        {bridge ? (
-                          <span aria-hidden className="pointer-events-none absolute -right-[5px] inset-y-[-1px] w-[5px] bg-blue/20" />
-                        ) : null}
-                        {d.windowOpen && ev ? (
-                          <span aria-hidden className="pointer-events-none absolute inset-x-1 bottom-0.5 h-0.5 rounded-full bg-blue/70" />
-                        ) : null}
                         <span className={cx(ev ? "font-bold text-ink" : d.windowOpen ? "font-semibold text-blue-bright" : "font-semibold text-sub")}>
                           {d.date.d}
                         </span>

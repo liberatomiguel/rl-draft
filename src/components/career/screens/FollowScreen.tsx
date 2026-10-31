@@ -77,14 +77,13 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   const C = useCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
   const router = useRouter();
-  const openFollow = useCareerStore((s) => s.openFollow);
   const dismissFollow = useCareerStore((s) => s.dismissFollow);
   const reduced = useOsReducedMotion();
   const animSpeed = useSettings((s) => s.animSpeed);
 
   const rounds = useMemo(() => followRoundsOf(f), [f]);
   const total = rounds.length;
-  const [mode, setMode] = useState<"watch" | "results">(f.view ?? "watch");
+  const mode = f.view ?? "watch";
   const [shown, setShown] = useState(mode === "results" ? total : 0);
   const [playing, setPlaying] = useState(!reduced);
   const revealed = mode === "results" ? total : shown;
@@ -98,14 +97,8 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
     return () => window.clearTimeout(timer);
   }, [mode, playing, reduced, shown, total, animSpeed]);
 
-  const pick = (m: "watch" | "results") => {
-    setMode(m);
-    setShown(m === "results" ? total : 0);
-    setPlaying(!reduced);
-    openFollow(m);
-  };
-
   const board = followBoardOf(f, revealed);
+  const showPlayoffs = board.swissShown >= f.swiss.length && f.playoffs.length > 0;
   const current = revealed > 0 ? rounds[revealed - 1] : null;
   const qualified = new Set(f.qualifiedIds);
   const nameOf = (id: string) => f.teams.find((t) => t.id === id)?.name ?? id;
@@ -146,9 +139,9 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
     ) : null;
   // The same standings and bracket used in a played event, with reveal-safe records.
   const boards = (
-    <div className={cx("grid items-start gap-4", f.swiss.length > 0 && board.tournament.playoffs && "xl:grid-cols-[minmax(0,1fr)_320px]")}>
-      {board.tournament.playoffs ? <div className="min-w-0"><CareerBracket save={save} t={board.tournament} revealed={board.revealed} liveKey={null} showUpcoming={false} layout="wide" /></div> : null}
-      {f.swiss.length > 0 ? <div className="min-w-0"><CareerSwissStandings save={save} t={board.tournament} records={board.records} throughRound={board.swissShown} /></div> : null}
+    <div className={cx("grid items-start gap-4", f.swiss.length > 0 && showPlayoffs && "xl:grid-cols-[minmax(0,1fr)_320px]")}>
+      {showPlayoffs ? <div className="min-w-0"><CareerBracket save={save} t={board.tournament} revealed={board.revealed} liveKey={null} showUpcoming={false} layout="wide" /></div> : null}
+      {f.swiss.length > 0 ? <div className="min-w-0"><CareerSwissStandings title={C.follow.swissStandings} save={save} t={board.tournament} records={board.records} throughRound={board.swissShown} /></div> : null}
     </div>
   );
   // the readable results: placement, points, prize
@@ -222,38 +215,19 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
           </span>
         </div>
         {done && f.champion ? (
-          <div className="pop-in relative mt-4 flex items-center gap-3 rounded-xl border border-line bg-white/[0.03] px-3 py-2.5">
+          <div className="pop-in relative mt-4 flex items-center gap-4 rounded-xl border border-amber-300/30 bg-amber-300/[0.07] px-4 py-4">
             <TrophyIcon className="h-6 w-6 shrink-0 text-amber-300" />
             <div className="min-w-0">
               <p className="kicker !text-[9px] text-amber-300">{C.follow.champion}</p>
               <p className="flex min-w-0 items-center gap-2">
                 <OrgMark save={save} orgRef={f.champion} size="sm" className="shrink-0" />
-                <span className="display min-w-0 truncate text-lg font-bold uppercase tracking-wide text-ink">
+                <span className="display min-w-0 truncate text-2xl font-bold uppercase tracking-wide text-ink">
                   {nameOf(f.champion)}
                 </span>
               </p>
             </div>
           </div>
         ) : null}
-
-        {/* watch / results */}
-        <div className="relative mt-4 grid grid-cols-2 gap-1 rounded-xl border border-line bg-black/20 p-1" role="tablist">
-          {(["watch", "results"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="tab"
-              aria-selected={mode === m}
-              onClick={() => pick(m)}
-              className={cx(
-                "display min-h-10 rounded-lg text-xs font-bold uppercase tracking-[0.12em] transition-colors",
-                mode === m ? "bg-white/[0.07] text-ink" : "text-sub hover:text-ink",
-              )}
-            >
-              {m === "watch" ? C.follow.watch : C.follow.resultsTab}
-            </button>
-          ))}
-        </div>
 
         {mode === "watch" ? (
           <div className="relative mt-3">
@@ -278,7 +252,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
                     {playing ? C.follow.pause : C.follow.play}
                   </Button>
                 )}
-                <Button variant="ghost" size="md" className="min-h-11 border border-line" onClick={() => setShown(total)}>
+                <Button variant="ghost" size="sm" className="text-faint" onClick={() => setShown(total)}>
                   {C.follow.skipToResults}
                 </Button>
               </div>

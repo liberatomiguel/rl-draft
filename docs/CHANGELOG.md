@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.1**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.2**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,50 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed — rc.36.2, Gate 3b playtest corrections (R90)
+- Selective color restored to HQ finances/progression/news, training and talks;
+  blue links, orange progression, compact coaches and clear salary hierarchy.
+  Squad content sits below OVR/crest; team OVR joins stars, cards use actual
+  OVR rarity frames. Bootcamps can be bought beside the HQ squad.
+- Ordered strong/light crest colors with real black; new subtle club-inspired
+  shapes/patterns/mascots and short playstyle help. Saved IDs and procedural
+  org generation preserved. Region examples sort RLCS X rosters by OVR,
+  explicitly labelled as the starting era, as Miguel requested.
+- One-day advance is secondary, skip-to tertiary beside it; remove empty decision
+  text and typed-name abandonment. Available is a checkbox by Market sort.
+  Arsenal checkmarks stay on the rail, item icons move inside horizontal rows.
+- Training identifies the running plan while editing, integrates attribute help,
+  compacts scrims/coaches, distinguishes prime and aligns restart/plan/close left.
+  Weekly scrim recaps reuse actual records; no new sessions, matches or XP.
+- Window-day cards are blue; spectator playback has explicit Swiss standings
+  before the bracket, a stronger champion, one flow and quiet skip controls.
+  Standings region/table filters share a row and the profile banner wraps safely.
+- Sponsor comparison leads with maximum return per payment week and shows total
+  and duration beneath. Active deal separates pay, goal and contract run.
+
+### Balance — rc.36.2
+- Approved playtest: +1 reputation for the target, +2 for the stretch,
+  independently and once at season review; normal cap/unlocks, no back payment.
+- Sunday: continuity +0.10 throughout; recovery −0.15 opener/+0.35 later;
+  preparation +0.60 opener/−0.15 later. Every option now has a useful role.
+- One economy candidate: common season index 1.12 → 1.15, renewal current-wage
+  multiplier 1.50 → 1.75 and market floor 50% → 60%, core jump guard 2.5 kept;
+  coach quality wage curve 1.12 → 1.14. Signed amounts stay frozen.
+  Focused six-career comparison and limits: ECONOMY-RC36-2-PLAYTEST.md.
+
+### Fixed — rc.36.2
+- Raw “beat” toast: the queue discarded beatId and used a generic template
+  lookup. It now resolves the real bilingual headline, with source/icon/excerpt
+  and a destination in news or mail.
+- Missing Community/Invitational days: agenda lookup only covered official,
+  active and committed events. Current invitations and played cup days appear;
+  legacy cups played before their re-timed Saturday never become future stops.
+- Premature spectator bracket: an empty playoff object rendered during Swiss;
+  the whole bracket now waits until Swiss is revealed.
+- Negative Sunday opener was ignored by a positive-only check; both signs now
+  apply. Existing stable/long sponsor totals no longer masquerade as better
+  weekly value; sponsor prices themselves are unchanged.
 
 ### Changed — rc.36.1, Gate 3b playtest corrections
 - Restored restrained career styling: compact HQ finances with a larger balance

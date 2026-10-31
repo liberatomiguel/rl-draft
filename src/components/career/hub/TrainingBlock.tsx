@@ -31,6 +31,7 @@ import {
   PromiseBar,
   RecommendedTag,
   TrainingProposalCard,
+  WeeklyScrimRecap,
 } from "@/components/career/training/TrainingPackageParts";
 import { AppLink } from "@/components/ui/AppLink";
 import { Badge } from "@/components/ui/Badge";
@@ -63,7 +64,7 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
       </span>
     </span>
   ) : (
-    <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-medium text-sub hover:text-ink hover:underline">
+    <AppLink href="/career/market#coaches" className="inline-flex min-h-11 items-center gap-1 font-medium text-orange-bright hover:text-orange hover:underline">
       <WhistleIcon className="h-3.5 w-3.5" />
       {Y.hireCoach} →
     </AppLink>
@@ -101,6 +102,8 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
           <PackageChips pkg={b.package} C={C} />
 
           {b.promise ? <PromiseBar promise={b.promise} C={C} /> : null}
+
+          <WeeklyScrimRecap save={save} C={C} compact />
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
             {b.package && b.package.scrimsPerWeek > 0 ? (

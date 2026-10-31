@@ -30,10 +30,15 @@ import { coachEffectsFor } from "@/engine/career/development";
 import type { CareerSave, CoachState, SquadPlayer } from "@/engine/career/types";
 import type { TournamentTeam } from "@/engine/types";
 import { cx } from "@/lib/util";
+import { formatMoney } from "@/lib/format";
 import { useCareerStore } from "@/store/careerStore";
-import { contractClockOf } from "@/store/careerHq";
+import { contractClockOf, toolboxOf, toolboxRefusalOf } from "@/store/careerHq";
+import { RungIcon } from "@/components/career/ladder/LadderParts";
+import { formatDateShort } from "@/components/career/dateText";
+import { Button } from "@/components/ui/Button";
 import {
   agePhase,
+  dateOfDay,
   potBandOfSquad,
   prizeShareLabelOf,
   seasonLabelFor,
@@ -202,36 +207,38 @@ function SquadCard({
         </span>
         <UserCrest crestId={save.identity.crestId} colors={save.identity.colors} size="sm" />
       </span>
-      <span className="relative mt-3 flex min-w-0 items-center gap-1">
-        <span className="truncate text-sm font-bold text-ink sm:text-base">{p.name}</span>
-        {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
-      </span>
-      <span className="relative truncate text-[11px] text-sub">
-        {squadAge(save, p)} · {C.player.archetype[p.archetype]}
-      </span>
-      <span className="relative mt-1.5 flex min-w-0">
-        <PhaseChip phase={phase} className="max-w-full" />
-      </span>
-      <span className="relative mt-1.5 block">
-        <ProgressBar value={eta.progress} tone={eta.daysToNext ? "good" : "blue"} className="h-1" label={C.training.growth} />
-        <span className="mt-0.5 block truncate text-[10px] text-faint">
-          {eta.daysToNext ? C.hub.growthNext(eta.daysToNext) : eta.atPotential ? C.training.etaNone : C.hub.growthStalled}
+      <span className="relative mt-auto block pt-5">
+        <span className="flex min-w-0 items-center gap-1">
+          <span className="truncate text-sm font-bold text-ink sm:text-base">{p.name}</span>
+          {isNew ? <NewTag className="shrink-0">{C.toolbox.newTag}</NewTag> : null}
         </span>
-      </span>
-      <span className="relative mt-1 block truncate text-[11px] font-semibold text-cyan">
-        {band.min === band.max ? C.player.potExact(band.max) : C.player.potBand(band.min, band.max)}
-      </span>
-      <span className="relative mt-auto flex flex-wrap items-center gap-1 pt-3">
-        <span className="rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em] text-sub">
-          {p.role === "sub" ? C.hub.cardReserve : C.hub.cardStarter}
+        <span className="block truncate text-[11px] text-sub">
+          {squadAge(save, p)} · {C.player.archetype[p.archetype]}
         </span>
-        <span
-          className={cx(
-            "truncate rounded px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
-            warns ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-faint",
-          )}
-        >
-          {contract}
+        <span className="relative mt-1.5 flex min-w-0">
+          <PhaseChip phase={phase} className="max-w-full" />
+        </span>
+        <span className="relative mt-1.5 block">
+          <ProgressBar value={eta.progress} tone={eta.daysToNext ? "good" : "blue"} className="h-1" label={C.training.growth} />
+          <span className="mt-0.5 block truncate text-[10px] text-faint">
+            {eta.daysToNext ? C.hub.growthNext(eta.daysToNext) : eta.atPotential ? C.training.etaNone : C.hub.growthStalled}
+          </span>
+        </span>
+        <span className="relative mt-1 block truncate text-[11px] font-semibold text-cyan">
+          {band.min === band.max ? C.player.potExact(band.max) : C.player.potBand(band.min, band.max)}
+        </span>
+        <span className="mt-2 flex flex-wrap items-center gap-1">
+          <span className="rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em] text-sub">
+            {p.role === "sub" ? C.hub.cardReserve : C.hub.cardStarter}
+          </span>
+          <span
+            className={cx(
+              "truncate rounded px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
+              warns ? "bg-orange/20 text-orange-bright" : "bg-white/5 text-faint",
+            )}
+          >
+            {contract}
+          </span>
         </span>
       </span>
     </button>
@@ -253,6 +260,7 @@ function EmptySeat({ C }: { C: CareerCopy }) {
 export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: CareerCopy; team: TournamentTeam; chemTiers: Record<string, string> }) {
   const t = useCopy();
   const markCareerSeen = useCareerStore((s) => s.markCareerSeen);
+  const runBootcamp = useCareerStore((s) => s.runBootcamp);
   const [sheet, setSheet] = useState<PlayerSheetData | null>(null);
   const starters = save.starterIds
     .map((id) => save.squad.find((p) => p.id === id))
@@ -260,6 +268,15 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
   const sub = save.squad.find((p) => !save.starterIds.includes(p.id)) ?? null;
   const coach = save.coach;
   const fresh = careerNewSummary(save).keys;
+  const camps = toolboxOf(save).filter((item) => item.kind === "bootcamp");
+  const camp = [...camps].reverse().find((item) => item.status !== "locked" && item.status !== "superseded") ?? camps[0];
+  const campRefusal = camp ? toolboxRefusalOf(save, camp.id) : null;
+  const campReady = camp?.status === "buyable" && !campRefusal && save.phase !== "ended";
+  const campNote = !camp ? "" : camp.status === "locked" ? C.finances.lockedAtRep(camp.repGate)
+    : camp.status === "active" ? camp.duration.kind === "until" ? C.finances.bootcampUntil(formatDateShort(C.dates, dateOfDay(camp.duration.seasonIndex, camp.duration.day))) : C.toolbox.nextEvent
+    : camp.status === "used" ? C.toolbox.used
+    : campRefusal ? C.toolbox.refusal[campRefusal as keyof typeof C.toolbox.refusal] ?? C.toolbox.refusal.other
+    : camp.duration.kind === "until" ? C.toolbox.until(formatDateShort(C.dates, dateOfDay(camp.duration.seasonIndex, camp.duration.day))) : C.toolbox.nextEvent;
   // Three starter seats; an empty seat (R67) shows the way to the Market.
   const slots: (SquadPlayer | null)[] = [starters[0] ?? null, starters[1] ?? null, starters[2] ?? null];
   const cardOf = (p: SquadPlayer) => (
@@ -296,11 +313,12 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
 
   return (
     <Panel className="rise-in p-4" style={{ animationDelay: "60ms" }}>
-      <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <p className="kicker text-[10px]">{C.hub.squadTitle}</p>
         <span className="flex items-center gap-2">
           <TeamStars stars={userStars(save)} size="sm" />
-          <AppLink href="/career/squad" className="inline-flex min-h-11 items-center text-[11px] font-semibold text-blue-bright underline-offset-4 hover:underline">
+          <span className="display text-xs font-bold text-ink" title={C.common.ovr}>{Math.round(team.rating.total)}</span>
+          <AppLink href="/career/squad" className="inline-flex items-center py-1 text-[11px] font-semibold text-blue-bright underline-offset-4 hover:underline">
             {C.hub.squadManage} →
           </AppLink>
         </span>
@@ -340,6 +358,20 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
           {chemTiers[team.chemistry.tier] ?? team.chemistry.tier} · {team.chemistry.percent}%
         </span>
       </div>
+      {camp ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-orange/20 bg-orange/[0.035] px-3 py-2.5">
+          <RungIcon id={camp.id === "bootcamp2" ? "bootcamp2" : "bootcamp1"} className="h-5 w-5 shrink-0 text-orange-bright" />
+          <div className="min-w-0 flex-1 basis-36">
+            <p className="text-xs font-semibold text-ink">{camp.id === "bootcamp2" ? C.finances.bootcampT2 : C.finances.bootcampT1}</p>
+            <p className="mt-0.5 text-[10px] leading-relaxed text-sub">{C.toolbox.rating(camp.ratingEdge.toFixed(1))} · {C.toolbox.chemistry}</p>
+            <p className="mt-0.5 text-[10px] text-faint">{campNote}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="display text-xs font-semibold text-ink">{camp.free ? C.common.free : formatMoney(camp.price, { compact: true })}</span>
+            <Button variant={campReady ? "primary" : "ghost"} size="sm" className="shadow-none" disabled={!campReady} onClick={() => runBootcamp()}>{camp.status === "active" ? C.finances.activeLabel : C.toolbox.buy}</Button>
+          </div>
+        </div>
+      ) : null}
       <PlayerSheet data={sheet} onClose={() => setSheet(null)} />
     </Panel>
   );

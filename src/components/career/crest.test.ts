@@ -17,6 +17,10 @@ import {
   composeCrestId,
   CREST_IDS,
   CREST_KITS,
+  CREST_PALETTE,
+  CREST_WIZARD_PALETTE,
+  WIZARD_CREST_IDS,
+  WIZARD_SYMBOL_IDS,
   LAYOUT_IDS,
   parseCrestId,
   PATTERN_IDS,
@@ -61,6 +65,35 @@ describe("crest ids (rc.36, UX-04)", () => {
       expect(pattern === undefined || (PATTERN_IDS as readonly string[]).includes(pattern)).toBe(true);
       expect(layout).toBeUndefined();
     }
+  });
+
+  it("curates new club options without changing retired ids or procedural colours", () => {
+    expect(WIZARD_CREST_IDS.slice(0, 7)).toEqual(CREST_IDS.slice(0, 7));
+    expect(WIZARD_CREST_IDS).toContain("pentagon");
+    expect(WIZARD_CREST_IDS).not.toContain("wave");
+    expect(WIZARD_SYMBOL_IDS).not.toContain("car");
+    for (const id of ["wave:car:hoops", "notch:peak:border", "arch:wheel", "triangular:bull:yoke", "circle:jaguar:club-ring"]) {
+      expect(composeCrestId(parseCrestId(id))).toBe(id);
+      expect(svg(id)).not.toContain('d=""');
+    }
+    // Palette indexing belongs to the procedural generator, not the picker.
+    expect(CREST_PALETTE).toHaveLength(22);
+    expect(CREST_PALETTE[0]).toEqual({ id: "navy", hex: "#1f3a5f" });
+    expect(CREST_WIZARD_PALETTE.find((c) => c.id === "black")?.hex).toBe("#000000");
+    expect(new Set(CREST_WIZARD_PALETTE.map((c) => c.hex)).size).toBe(CREST_WIZARD_PALETTE.length);
+    expect(CREST_WIZARD_PALETTE.filter((c) => c.id === "white")).toHaveLength(1);
+    expect(CREST_WIZARD_PALETTE.some((c) => c.id === "ivory" || c.id === "cream")).toBe(false);
+    // Every colour family is adjacent to its light tone, including across responsive rows.
+    for (let i = 4; i < CREST_WIZARD_PALETTE.length; i += 2) {
+      expect(CREST_WIZARD_PALETTE[i + 1].id).toMatch(/-light$/);
+    }
+  });
+
+  it("tricolour fields retain the neutral third colour without adding save fields", () => {
+    const out = svg("triangular::tricolor");
+    expect(out).toContain('fill="#f5f7fa"');
+    expect(out).toContain('fill="#c9a227"');
+    expect(parseCrestId("triangular::tricolor")).toMatchObject({ shape: "triangular", pattern: "tricolor" });
   });
 
   it("every shape, symbol, pattern and layout renders", () => {

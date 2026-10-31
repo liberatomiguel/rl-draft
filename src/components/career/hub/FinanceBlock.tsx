@@ -55,7 +55,7 @@ function Line({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
       <span
         className={cx(
           "flex h-4 w-4 shrink-0 items-center justify-center",
-          tone === "bad" ? "text-bad" : tone === "warn" ? "text-orange-bright" : "text-faint",
+          tone === "bad" ? "text-bad" : tone === "warn" ? "text-orange-bright" : tone === "good" ? "text-good" : "text-blue-bright",
         )}
       >
         {icon}
@@ -90,7 +90,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="kicker text-[10px]">{C.hub.financesTitle}</p>
-        <AppLink href="/career/finances" className="text-[11px] font-semibold text-sub hover:text-ink">{C.hub.financesOpen} →</AppLink>
+        <AppLink href="/career/finances" className="text-[11px] font-semibold text-blue-bright hover:underline">{C.hub.financesOpen} →</AppLink>
       </div>
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
@@ -108,7 +108,7 @@ export function FinanceBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           onClick={() => setChartOpen(true)}
           aria-label={C.finances.chartOpen}
           title={C.finances.chartOpen}
-          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-1.5 transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-cyan/60"
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border border-line bg-white/[0.025] px-2.5 py-2 transition-colors hover:border-blue/40 focus-visible:ring-2 focus-visible:ring-cyan/60"
         >
           {line.length >= 2 ? <MondayLine points={line} /> : <span className="px-1 text-[10px] text-faint">{C.finances.chartTitle}</span>}
         </button>

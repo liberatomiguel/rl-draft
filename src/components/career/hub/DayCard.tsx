@@ -102,12 +102,11 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       className={cx(
         "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 overflow-hidden rounded-lg border px-0.5 py-1.5",
         // The transfer window marks every day; event icons keep their tier accent.
-        d.windowOpen ? "border-blue/35 bg-blue/[0.06]" : matchday ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
+        d.windowOpen ? "border-blue/50 bg-blue/15" : matchday ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
         d.isToday && "day-tick",
         d.isPast && "opacity-40",
       )}
     >
-      {d.windowOpen ? <span aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-blue-bright" /> : null}
       <span className="kicker text-[8px] leading-none sm:text-[9px]">{D.weekdays[d.dow - 1]}</span>
       <span
         className={cx(
@@ -281,17 +280,11 @@ export function DayCard({
                     {autoAdvance ? C.hub.pause : C.hub.play}
                   </span>
                 </Button>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  className="min-h-11"
-                  onClick={advanceToNextStop}
-                  disabled={!running || autoAdvance}
-                >
-                  {C.hub.skipTo(stopLabel)}
-                </Button>
-                <Button variant="ghost" size="sm" className="ml-auto text-faint" onClick={advanceDay} disabled={!running || autoAdvance}>
+                <Button variant="secondary" size="md" className="min-h-11" onClick={advanceDay} disabled={!running || autoAdvance}>
                   {C.hub.plusDay}
+                </Button>
+                <Button variant="ghost" size="sm" className="text-faint" onClick={advanceToNextStop} disabled={!running || autoAdvance}>
+                  {C.hub.skipTo(stopLabel)}
                 </Button>
               </>
             )}

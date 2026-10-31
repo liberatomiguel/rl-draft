@@ -353,9 +353,6 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
           <NowBacker save={save} C={C} owed={formatMoney(backerOwed.remaining)} />
         </AppLink>
       ) : null}
-      {!top && !others.length && !expiring && !cashTight && !backerOwed ? (
-        <p className="px-1 text-xs text-faint">{C.hub.nothingNeeded}</p>
-      ) : null}
 
       {/* Accept-bid confirm: cost + balance-after BEFORE commit (principle 4). */}
       <Modal

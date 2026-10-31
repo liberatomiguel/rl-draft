@@ -182,13 +182,18 @@ function insertTitle(career: CareerCopy, id: string): string {
 }
 
 export function resolveToastTitle(
-  toast: { source: "mail" | "news" | "achievement"; titleKey: string; params?: Record<string, string | number> },
+  toast: { source: "mail" | "news" | "achievement"; beatId?: string; titleKey: string; params?: Record<string, string | number> },
   career: CareerCopy,
+  lang: "en" | "pt" = "en",
 ): string {
   // v2.0 (R32): achievement toasts carry the achievement id.
   if (toast.source === "achievement") {
     // rc.36 (UX-05, #155): one source for the words — the core copy the general list reads.
     return getCopy().ACH_UI.careerItems[toast.titleKey]?.name ?? toast.titleKey;
+  }
+  if (toast.beatId) {
+    const beat = CAREER_BEATS.find((b) => b.id === toast.beatId);
+    if (beat) return (lang === "pt" ? beat.pt : beat.en).title;
   }
   const p = displayParams(career, toast.titleKey, toast.params ?? {});
   const mailTitles = career.mail.tpl as unknown as TplMap;

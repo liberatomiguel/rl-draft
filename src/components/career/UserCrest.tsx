@@ -38,7 +38,7 @@ import type { CareerColors } from "@/engine/career/types";
 // Catalogue ids
 // ---------------------------------------------------------------------------
 
-// Order = wizard display order (strong classics first). Ids are the contract —
+// Legacy procedural order (strong classics first). Ids are the contract —
 // never rename; appending is always safe (parse falls back on unknowns).
 // FROZEN for the procedural pool (its hash indexes this length): append new
 // ids to CREST_IDS_RC36 instead.
@@ -48,8 +48,16 @@ export const CREST_IDS = [
 ] as const;
 /** rc.36 (UX-04): the wizard's further shapes (never in the procedural pool). */
 export const CREST_IDS_RC36 = ["heater", "notch", "squircle", "octagon", "pentagon", "arch"] as const;
-/** Every shape the wizard offers and the parser accepts. */
-export const ALL_CREST_IDS = [...CREST_IDS, ...CREST_IDS_RC36] as const;
+/** Club-inspired silhouettes are new ids: no saved geometry is reinterpreted. */
+export const CREST_IDS_CLUB = ["triangular", "roundshield", "tapered", "diamondshield", "laurel"] as const;
+/** Every supported shape, including older options hidden from the picker. */
+export const ALL_CREST_IDS = [...CREST_IDS, ...CREST_IDS_RC36, ...CREST_IDS_CLUB] as const;
+/** Keep the first row; curate the following rows without changing legacy ids. */
+export const WIZARD_CREST_IDS = [
+  ...CREST_IDS.slice(0, 7),
+  "star", "blade", "flame", "wing", "bolt", "orbit", "heater",
+  "triangular", "roundshield", "tapered", "diamondshield", "pentagon", "laurel",
+] as const;
 export type CrestId = (typeof ALL_CREST_IDS)[number];
 
 /** FROZEN for the procedural pool — append to SYMBOL_IDS_RC36. */
@@ -60,7 +68,13 @@ export const SYMBOL_IDS = [
 ] as const;
 /** rc.36 (UX-04): the wizard's further symbols. */
 export const SYMBOL_IDS_RC36 = ["car", "ball", "wheel", "trophy", "wings", "peak", "gem", "chevrons"] as const;
-export const ALL_SYMBOL_IDS = [...SYMBOL_IDS, ...SYMBOL_IDS_RC36] as const;
+export const SYMBOL_IDS_CLUB = ["bull", "jaguar", "sunburst"] as const;
+export const ALL_SYMBOL_IDS = [...SYMBOL_IDS, ...SYMBOL_IDS_RC36, ...SYMBOL_IDS_CLUB] as const;
+/** Retired picker options still render in saved crests. */
+export const WIZARD_SYMBOL_IDS = [
+  ...SYMBOL_IDS,
+  "ball", "trophy", "wings", "gem", "chevrons", ...SYMBOL_IDS_CLUB,
+] as const;
 export type SymbolId = (typeof ALL_SYMBOL_IDS)[number];
 
 /** FROZEN for the procedural pool — append to PATTERN_IDS_RC36. */
@@ -69,7 +83,9 @@ export const PATTERN_IDS = [
 ] as const;
 /** rc.36 (UX-04): the wizard's further patterns. */
 export const PATTERN_IDS_RC36 = ["hoops", "halves", "cross", "border"] as const;
-export const ALL_PATTERN_IDS = [...PATTERN_IDS, ...PATTERN_IDS_RC36] as const;
+export const PATTERN_IDS_CLUB = ["club-hoops", "club-stripes", "tricolor", "yoke", "club-ring"] as const;
+export const ALL_PATTERN_IDS = [...PATTERN_IDS, ...PATTERN_IDS_RC36, ...PATTERN_IDS_CLUB] as const;
+export const WIZARD_PATTERN_IDS = [...PATTERN_IDS_CLUB, ...PATTERN_IDS, "halves", "cross", "border"] as const;
 export type PatternId = (typeof ALL_PATTERN_IDS)[number];
 
 /**
@@ -115,6 +131,41 @@ export const CREST_PALETTE: { id: string; hex: string }[] = [
   { id: "burnt-orange", hex: "#c2540a" },
   { id: "teal", hex: "#0f766e" },
   { id: "slate", hex: "#475569" },
+];
+
+/**
+ * Picker-only palette, in neighbouring strong/light pairs. The procedural
+ * palette above is frozen: reorganising this list never recolours old orgs.
+ * Saved custom hex colours also remain untouched until a new swatch is picked.
+ */
+export const CREST_WIZARD_PALETTE: { id: string; hex: string }[] = [
+  { id: "black", hex: "#000000" }, { id: "graphite", hex: "#737373" },
+  { id: "white", hex: "#f5f7fa" }, { id: "silver", hex: "#cbd5e1" },
+  { id: "navy", hex: "#17345d" }, { id: "navy-light", hex: "#82bef0" },
+  { id: "royal", hex: "#234fd1" }, { id: "royal-light", hex: "#abc2ff" },
+  { id: "scarlet", hex: "#b51f35" }, { id: "scarlet-light", hex: "#ee8d9e" },
+  { id: "burgundy", hex: "#631e38" }, { id: "burgundy-light", hex: "#c98ca2" },
+  { id: "forest", hex: "#16633e" }, { id: "forest-light", hex: "#8ed3ad" },
+  { id: "teal", hex: "#0d7475" }, { id: "teal-light", hex: "#83d6d0" },
+  { id: "plum", hex: "#6635a5" }, { id: "plum-light", hex: "#b7a0e2" },
+  { id: "burnt-orange", hex: "#c85b17" }, { id: "orange-light", hex: "#f0b281" },
+  { id: "gold", hex: "#c5a12a" }, { id: "gold-light", hex: "#ead886" },
+  { id: "olive", hex: "#67762d" }, { id: "olive-light", hex: "#c7d59a" },
+];
+
+export const CREST_WIZARD_KITS: { id: string; primary: string; secondary: string }[] = [
+  { id: "black-scarlet", primary: "#000000", secondary: "#b51f35" },
+  { id: "burgundy-forest", primary: "#631e38", secondary: "#16633e" },
+  { id: "navy-gold", primary: "#17345d", secondary: "#c5a12a" },
+  { id: "royal-white", primary: "#234fd1", secondary: "#f5f7fa" },
+  { id: "sky-black", primary: "#82bef0", secondary: "#000000" },
+  { id: "forest-white", primary: "#16633e", secondary: "#f5f7fa" },
+  { id: "white-scarlet", primary: "#f5f7fa", secondary: "#b51f35" },
+  { id: "plum-gold", primary: "#6635a5", secondary: "#ead886" },
+  { id: "teal-silver", primary: "#0d7475", secondary: "#cbd5e1" },
+  { id: "orange-black", primary: "#c85b17", secondary: "#000000" },
+  { id: "navy-sky", primary: "#17345d", secondary: "#82bef0" },
+  { id: "olive-gold", primary: "#67762d", secondary: "#ead886" },
 ];
 
 /** Legacy curated pairs — kept for old call sites; every color is in CREST_PALETTE. */
@@ -261,6 +312,13 @@ const BASE_PATH: Record<CrestId, string> = {
   pentagon: "M32 4 L59 24 L49 59 H15 L5 24 Z",
   // rc.36 — the arch (a domed top on a flat base).
   arch: "M8 59 V30 A24 24 0 0 1 56 30 V59 Z",
+  // Original club silhouettes: broad triangle, rounded shield, slim taper,
+  // shouldered diamond and scalloped shield. No licensed club marks.
+  triangular: "M5 7 H59 V20 L32 60 L5 20 Z",
+  roundshield: "M9 12 Q32 0 55 12 V34 C55 49 45 59 32 60 C19 59 9 49 9 34 Z",
+  tapered: "M12 5 H52 L49 33 Q46 52 32 61 Q18 52 15 33 Z",
+  diamondshield: "M17 5 H47 L58 20 L50 44 L32 60 L14 44 L6 20 Z",
+  laurel: "M10 7 Q20 11 32 5 Q44 11 54 7 L57 20 L53 29 L55 39 Q49 54 32 60 Q15 54 9 39 L11 29 L7 20 Z",
 };
 
 /** Legacy accent detail (secondary fill) — rendered ONLY on symbol-less, pattern-less crests. */
@@ -285,6 +343,11 @@ const ACCENT_PATH: Record<CrestId, string> = {
   octagon: "M32 11 H40 L53 24 V40 L40 53 H32 Z",
   pentagon: "M32 11 L52 26 L45 53 H32 Z",
   arch: "M32 12 A18 18 0 0 1 50 30 V53 H32 Z",
+  triangular: "M32 13 H52 V19 L32 49 Z",
+  roundshield: "M32 11 Q43 11 49 16 V34 Q49 48 32 54 Z",
+  tapered: "M32 11 H45 L43 32 Q41 46 32 53 Z",
+  diamondshield: "M32 11 H44 L51 21 L45 41 L32 52 Z",
+  laurel: "M32 12 Q42 17 49 14 L50 21 L47 29 L49 38 Q44 48 32 54 Z",
 };
 
 // ---------------------------------------------------------------------------
@@ -449,6 +512,17 @@ const SYMBOL_PATHS: Record<SymbolId, string[]> = {
       "M20 35.5 L32 26.5 L44 35.5 V40.5 L32 31.5 L20 40.5 Z " +
       "M20 44.5 L32 35.5 L44 44.5 V49.5 L32 40.5 L20 49.5 Z",
   ],
+  // Club mascots: angular silhouettes with negative-space eyes/details.
+  bull: [
+    "M21 25 C14 25 12 19 13 14 L20 19 L25 20 L32 18 L39 20 L44 19 L51 14 C52 19 50 25 43 25 L43 36 L38 46 L26 46 L21 36 Z M24 29 L29 31 L25 33 Z M40 29 L35 31 L39 33 Z M28 39 H36 V42 H28 Z",
+  ],
+  jaguar: [
+    "M17 26 L18 17 L27 22 L32 20 L37 22 L46 17 L47 26 L45 37 L38 46 L32 49 L26 46 L19 37 Z M22 29 L29 31 L25 34 Z M42 29 L35 31 L39 34 Z M28 37 H36 L32 41 Z M25 42 L32 44 L39 42 L36 47 H28 Z",
+    "M23 24 L25 25 L24 27 L22 26 Z M39 24 L41 25 L40 27 L38 26 Z",
+  ],
+  sunburst: [
+    "M32 13 L35 22 L41 17 L41 27 L50 26 L44 34 L51 40 L41 42 L42 51 L34 46 L28 54 L26 44 L17 47 L20 38 L12 34 L21 30 L17 22 L27 24 Z M32 27 A7 7 0 1 0 32.01 27 Z",
+  ],
   // v0.3 — trident: three prongs over a crossbar, shaft down.
   trident: [
     "M32 13.5 L36.2 20.5 L33.6 20.5 L33.6 32 L30.4 32 L30.4 20.5 L27.8 20.5 Z " +
@@ -485,6 +559,11 @@ const SYMBOL_FIT: Record<CrestId, { s: number; cx: number; cy: number }> = {
   octagon: { s: 0.84, cx: 32, cy: 32.5 },
   pentagon: { s: 0.78, cx: 32, cy: 35 },
   arch: { s: 0.82, cx: 32, cy: 35 },
+  triangular: { s: 0.66, cx: 32, cy: 28 },
+  roundshield: { s: 0.82, cx: 32, cy: 32 },
+  tapered: { s: 0.73, cx: 32, cy: 29 },
+  diamondshield: { s: 0.77, cx: 32, cy: 30 },
+  laurel: { s: 0.79, cx: 32, cy: 32 },
 };
 
 // ---------------------------------------------------------------------------
@@ -528,6 +607,13 @@ const PATTERN_DEFS: Record<PatternId, string> = {
   cross: "M27 -2 H37 V66 H27 Z M-2 27 H66 V37 H-2 Z",
   // rc.36 — "border" is drawn as a thick inner outline of the shape itself (the renderer).
   border: "",
+  // Strong club fields use full secondary colour. Neutral trim is added
+  // separately by the renderer; the persisted colour schema stays two-colour.
+  "club-hoops": "M-2 10 H66 V20 H-2 Z M-2 30 H66 V40 H-2 Z M-2 50 H66 V60 H-2 Z",
+  "club-stripes": "M8 -2 H18 V66 H8 Z M28 -2 H38 V66 H28 Z M48 -2 H58 V66 H48 Z",
+  tricolor: "M41 -2 H66 V66 H41 Z",
+  yoke: "M32 23 H66 V66 H32 Z",
+  "club-ring": "M17 17 H25 V47 H17 Z M39 17 H47 V47 H39 Z",
 };
 
 // ---------------------------------------------------------------------------
@@ -536,6 +622,8 @@ const PATTERN_DEFS: Record<PatternId, string> = {
 
 const DARK_INK = "rgba(5,8,15,0.88)";
 const LIGHT_INK = "rgba(245,248,255,0.92)";
+/** Opaque neutral field for new club patterns; legacy text ink stays unchanged. */
+const CLUB_TRIM = "#f5f7fa";
 /** Primaries darker than this get a light monogram (dark ink vanished on them). */
 const INK_LUMINANCE_THRESHOLD = 0.16;
 const SYMBOL_SHADOW = "rgba(5,8,15,0.5)";
@@ -568,8 +656,10 @@ export function UserCrest({
   // Symbol crests drop the monogram at every size — the emblem IS the mark.
   const showTag = Boolean(abbrev) && px >= 28 && !symbol && !band;
   const legacy = !symbol && !pattern && !band;
+  const clubPattern = pattern && (PATTERN_IDS_CLUB as readonly string[]).includes(pattern);
   const clipId = `crest-clip-${uid.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  const ink = crestLuminance(colors.primary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
+  const neutralCenter = pattern === "tricolor" || pattern === "club-ring";
+  const ink = neutralCenter || crestLuminance(colors.primary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
   const bandInk = crestLuminance(colors.secondary) >= INK_LUMINANCE_THRESHOLD ? DARK_INK : LIGHT_INK;
   const fit = SYMBOL_FIT[shape];
   // The emblem shrinks and rises to make room for the letters / the band.
@@ -602,7 +692,24 @@ export function UserCrest({
       <path d={BASE_PATH[shape]} fill={colors.primary} opacity={0.92} />
 
       {/* 2 — pattern, clipped inside the base (rc.36 "border": a thick inner outline) */}
-      {pattern === "border" ? (
+      {clubPattern && pattern ? (
+        <g clipPath={`url(#${clipId})`}>
+          {pattern === "club-ring" ? (
+            <>
+              <circle cx={32} cy={32} r={23} fill={CLUB_TRIM} />
+              <circle cx={32} cy={32} r={20} fill={colors.primary} />
+              <path d="M28 13 H36 V51 H28 Z" fill={CLUB_TRIM} />
+              <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} />
+            </>
+          ) : (
+            <>
+              <path d={PATTERN_DEFS[pattern]} fill={colors.secondary} />
+              {pattern === "tricolor" ? <path d="M23 -2 H41 V66 H23 Z" fill={CLUB_TRIM} /> : null}
+              {pattern === "yoke" ? <path d="M-2 -2 H66 V23 H-2 Z" fill={CLUB_TRIM} /> : null}
+            </>
+          )}
+        </g>
+      ) : pattern === "border" ? (
         <g clipPath={`url(#${clipId})`}>
           <path d={BASE_PATH[shape]} fill="none" stroke={colors.secondary} strokeWidth={9} opacity={0.45} />
         </g>

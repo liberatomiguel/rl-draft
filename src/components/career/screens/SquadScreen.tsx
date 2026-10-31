@@ -207,7 +207,7 @@ export function SquadScreen() {
   const showStabilityWarning = nextFacePct > 0 && !stabilityExempt;
 
   return (
-    <div className="rise-in mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4">
+    <div className="rise-in mx-auto max-w-6xl space-y-4 px-3 py-4 sm:px-4">
       <SectionTitle
         kicker={C.meta.title}
         title={C.squad.title}
@@ -222,7 +222,7 @@ export function SquadScreen() {
       <ErrorBanner />
 
       {/* ==================== starters — the pitch ==================== */}
-      <Panel strong className="relative overflow-hidden p-4 sm:p-6">
+      <Panel strong className="relative overflow-hidden p-4">
         <div
           className="pointer-events-none absolute inset-0 opacity-40"
           style={{
@@ -252,6 +252,7 @@ export function SquadScreen() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {starters.map((p) => (
               <PlayerCardTile
+                rarityFrame
                 key={p.id}
                 name={p.name}
                 overall={p.overall}
@@ -344,6 +345,7 @@ export function SquadScreen() {
           {bench.length > 0 ? (
             bench.map((p) => (
               <PlayerCardTile
+                rarityFrame
                 key={p.id}
                 name={p.name}
                 overall={p.overall}

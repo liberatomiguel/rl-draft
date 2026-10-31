@@ -745,8 +745,9 @@ decided its change of scope. Nothing is dropped silently.
 
 ## Waiting on Miguel
 
-**Gate 2 + Gate 3b — what to play on rc.36.1** (desktop/mobile, EN/PT).
-Playtest corrections: `RC36-1-GATE3B.md`; balance bands: `RC36-GATE3B.md`. Normal measured 0.4562
+**Gate 2 + Gate 3b — what to play on rc.36.2** (desktop/mobile, EN/PT).
+Playtest corrections: `RC36-2-GATE3B.md`; focused economy comparison:
+`ECONOMY-RC36-2-PLAYTEST.md`; prior full-matrix balance bands: `RC36-GATE3B.md`. The rc.36.1 baseline measured Normal 0.4562
 Majors/season and 17.12% Worlds against the 0.44 / 16% target; confirm the
 remaining progression difference at this playtest. Start new careers;
 also load an rc.35 save. Its active 14-day cycle must finish before the

@@ -1892,6 +1892,23 @@ R89. **Gate 3b visual consistency and interaction corrections (rc.36.1).**
      Follow uses shared Swiss/bracket boards from recorded, reveal-safe rounds.
      This is a Gate 3b correction, not approval/start of Etapa 4.
 
+R90. **Gate 3b accents, interaction and the economy playtest (rc.36.2).**
+     Miguel's 31/10 feedback restores selective color and compact hierarchy,
+     HQ bootcamp purchases, simple abandonment, weekly scrim recaps from actual
+     records and quieter skips. Club palettes have strong/light pairs and subtle
+     Latin club geometry, preserving saved IDs and procedural generation.
+     Miguel chose the initial RLCS X rivals: sort numeric roster strength, no
+     later FURIA boost. Every-org intake was already fixed in rc.33.
+     Miguel approved +1 target/+2 stretch reputation once at review with normal
+     cap/unlocks, and Sunday keep +.10, recover −.15 opener/+.35 later, prepare
+     +.60 opener/−.15 later. No retroactive rewards or extra training/payroll.
+     Requested economy experiment: common money index 1.15, renewal multiplier
+     1.75/floor .60/core guard 2.5, coach curve 1.14. One matched six-career
+     smoke is in ECONOMY-RC36-2-PLAYTEST.md; the prior 294-career pacing/bands
+     are not claimed as remeasured. Compare sponsors per payment week because
+     Steady's longer contract has a larger total/signing sum; prices unchanged.
+     This remains Gate 3b, not approval/start of Etapa 4 or main publication.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

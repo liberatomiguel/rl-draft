@@ -67,7 +67,7 @@ export function briefingEdgeFor(
   t: TournamentState,
 ): number {
   const fx = briefingEffectOf(choice);
-  const opener = fx.opener > 0 && userSundaySeriesPlayed(def, t) === 0 ? fx.opener : 0;
+  const opener = fx.opener !== 0 && userSundaySeriesPlayed(def, t) === 0 ? fx.opener : 0;
   return fx.everySeries + opener;
 }
 

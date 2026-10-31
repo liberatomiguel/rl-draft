@@ -3,6 +3,10 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { CAREER_BEATS } from "@/data/career/beats";
+import { CAREER_EN } from "@/content/copy.career.en";
+import { CAREER_PT } from "@/content/copy.career.pt";
+import { resolveToastTitle } from "./newsText";
 import type { CareerSave, NewsItem } from "@/engine/career/types";
 import { leadStoryOf, newsActionOf, newsCrestsOf, newsRegionOf } from "./newsView";
 
@@ -58,5 +62,17 @@ describe("the feed's view (UX-03)", () => {
     expect(newsActionOf(item({ titleKey: "beat", type: "beat" }))).toBeNull();
     expect(newsRegionOf(item({ params: { region: "EU" } }))).toBe("EU");
     expect(newsRegionOf(item({ params: { region: "Mars" } }))).toBeNull();
+  });
+});
+
+
+describe("scripted-news notifications", () => {
+  it("resolves live and archive headlines in both languages instead of printing the beat key", () => {
+    const beat = CAREER_BEATS[0];
+    for (const titleKey of ["beat", "beatArchive", "beatPreempted"]) {
+      const toast = { source: "news" as const, titleKey, beatId: beat.id };
+      expect(resolveToastTitle(toast, CAREER_EN, "en")).toBe(beat.en.title);
+      expect(resolveToastTitle(toast, CAREER_PT, "pt")).toBe(beat.pt.title);
+    }
   });
 });

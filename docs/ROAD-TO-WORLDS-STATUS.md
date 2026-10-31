@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.1**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R89. Gate: `RC36-1-GATE3B.md`.
+> Last updated: **2026-10-31**. Candidate: **v2.0.0-rc.36.2**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R90. Gate: `RC36-2-GATE3B.md`.
 
 ## Run and verify
 
@@ -10,8 +10,8 @@
 - Career logic is in `src/engine/career`, flows in `src/store/career*`, screens
   in `src/components/career`. Pure seeded engine, bilingual career copy,
   tunables in `src/config/balance.ts`.
-- Full suite: 1441 passed, 13 optional checks skipped. Typecheck,
-  lint, data, static build and browser gates: `RC36-1-GATE3B.md`.
+- Full suite: 1447 passed, 13 optional checks skipped. Typecheck,
+  lint, data, static build and browser gates: `RC36-2-GATE3B.md`.
 - Probes: CAREER_ARC (run alone; never with ARC_REPORT), CAREER_ECON (four
   processes by ECON_REGIONS), CAREER_GROWTH, CAREER_TRAINING; latest reports
   use the rc36 suffix. `ECONOMY-CONTRACT.md` §13 compares guardrails.
@@ -27,14 +27,17 @@ independent integration review. Miguel's playtest approval is still required.
   cycles; without one, repeat the previous plan with one click. rc.35's active 14-day period finishes
   before the new grid. Signings join the plan; no duplicate session or payout.
 - Compact HQ, squad/sub/coach, progression, finances and stacked arsenal;
-  unlock modal is Close-only. Sponsor cards in a modal, Decide later until
+  unlock modal supports Buy or Close; bootcamps are also beside the HQ squad. Sponsor cards in a modal, Decide later until
   deadline. Contract responses arrive only after sending; refusals raise the
   floor and each lever counts.
 - Same founding budget by difficulty, fitted founding wages, no Merch &
   streams income. Seasonal free-agent prospect replenishment and listing;
   slower generated-player growth, later peak, season ceiling 8.5. Normal
-  pace: 0.4562 Majors/season, Worlds in 17.12% of season rows.
-- Fixed season goals with deadline/progress, visual news with honest archive
+  rc.36.1 full-matrix pace: 0.4562 Majors/season, Worlds in 17.12% of rows.
+  rc.36.2 uses one focused six-career economy smoke, not a global pacing retune.
+- Fixed season goals with +1/+2 reputation at review, deadline/progress;
+  Sunday trade-offs, 15% common money growth and firmer renewals/coach wages.
+  Visual news with honest archive
   labels, career achievements in the general mode-filtered list. 50/50 stays
   behind the brand key pending partner agreement.
 - Custom crest shapes/symbols/layouts and predefined colour palettes;

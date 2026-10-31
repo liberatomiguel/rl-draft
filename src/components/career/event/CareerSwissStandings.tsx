@@ -24,6 +24,7 @@ export function CareerSwissStandings({
   records,
   throughRound,
   nextUpRef,
+  title,
 }: {
   save: CareerSave;
   t: { teams: Record<string, { name: string; rating: { total: number } }> };
@@ -32,6 +33,7 @@ export function CareerSwissStandings({
   throughRound: number;
   /** Known next opponent (only once every simulated round is revealed). */
   nextUpRef?: string | null;
+  title?: string;
 }) {
   const C = useCareerCopy();
   const T = useCopy().TOURNAMENT_UI;
@@ -52,7 +54,7 @@ export function CareerSwissStandings({
     <Panel className="p-4">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <h3 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
-          {C.event.standings}
+          {title ?? C.event.standings}
         </h3>
         {throughRound > 0 ? (
           <span className="shrink-0 text-[10px] uppercase tracking-wider text-faint">

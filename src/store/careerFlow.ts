@@ -265,7 +265,7 @@ import {
   type GoalProgress,
   type TeamLevel,
 } from "@/engine/career/sponsorDeals";
-import { fieldDrawFor, seasonGoalMetAtReview, seasonGoalPlanFor, type FieldDraw } from "@/engine/career/seasonGoals";
+import { fieldDrawFor, seasonGoalReputationAfter, seasonGoalMetAtReview, seasonGoalPlanFor, type FieldDraw } from "@/engine/career/seasonGoals";
 import { beatModeFor } from "@/engine/career/beats";
 import { derivedFloat, deriveSeed, streams } from "@/engine/career/seeds";
 import {
@@ -641,6 +641,10 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
   if (active && covers(active)) return active;
   const pending = save.pendingEventDef;
   if (pending && covers(pending)) return pending;
+  const invite = save.unofficialOffer;
+  if (invite && covers(invite)) return invite;
+  const playedCup = save.eventResults.find((r) => r.seasonIndex === save.clock.seasonIndex && (r.tier === "t2" || r.tier === "t3") && r.userPlacement !== undefined && eventDayFor(r.week) === day);
+  if (playedCup && day <= save.clock.day) return { id: playedCup.eventId, tier: playedCup.tier, name: playedCup.name, seasonIndex: playedCup.seasonIndex, week: playedCup.week, day, split: playedCup.split, format: "single" };
   const week = weekOfDay(day);
   const seasonIndex = save.clock.seasonIndex;
   // The user's committed / in-progress event lands only on its OWN day(s)
@@ -3530,6 +3534,9 @@ export function enterSeasonReview(save: CareerSave, worldsResult: CompactEventRe
     save.seasonGoals.targetMet = met;
     if (plan) save.seasonGoals.stretchMet = seasonGoalMetAtReview(plan.stretch, save);
     else if (model) save.seasonGoals.stretchMet = seasonGoalMetOf(model.stretch, save.clock.seasonIndex, save.eventResults);
+    const repBefore = save.reputation;
+    save.reputation = seasonGoalReputationAfter(repBefore, met, save.seasonGoals.stretchMet === true);
+    announceUnlockCrossings(save, repBefore);
     if (!met && save.seasonGoals.repRisk > 0) {
       loseRep(save, save.seasonGoals.repRisk, "repDown");
     }

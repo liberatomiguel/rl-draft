@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 6;
+export const BALANCE_VERSION = 7;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1882,7 +1882,8 @@ export const CAREER_ECONOMY = {
    * still moves together, so no ratio drifts (b1 ±2 %); money just grows
    * faster (×2.21 by season 7 instead of ×1.71).
    */
-  indexPerSeason: 1.12,
+  // rc.36.2 playtest: more visible season-to-season money growth; all streams still move together.
+  indexPerSeason: 1.15,
 } as const;
 
 export const CAREER_SALARY = {
@@ -1967,9 +1968,10 @@ export const CAREER_SALARY = {
    */
   renewalRule: "capFloor" as "capFloor" | "fresh",
   /** M2, PROVISIONAL (30/10, decision 2-B): the raise cap — a renewal asks at most this × his current wage (contract range 1.3–2.0). */
-  renewalRaiseCap: 1.5,
+  // rc.36.2: a firmer raise for developed players, keeping the breakout jump guard.
+  renewalRaiseCap: 1.75,
   /** M2, PROVISIONAL (30/10, decision 2-B): the market floor — never under this share of his fresh ask (contract range 0.4–0.65). */
-  renewalMarketFloor: 0.5,
+  renewalMarketFloor: 0.6,
   /**
    * rc.33 (2-B, Claude's call — tested at Gate 2): the most one renewal
    * multiplies his current wage, the market floor included. A breakout
@@ -2531,7 +2533,8 @@ export const CAREER_COACH_MARKET = {
    * 1.12: about $65 / $165 / $520 — a good coach stays a real decision,
    * never a bankruptcy. null = rc.34 (the player curve).
    */
-  wageGrowthPerPoint: 1.12 as number | null,
+  // rc.36.2: 1.14 makes experienced/high-quality coaches cost more; signed wages stay frozen.
+  wageGrowthPerPoint: 1.14 as number | null,
   /**
    * rc.34 (T4): coaches grow with relevant experience — at each rollover the
    * coach in post gains experiencePerSeason; quality +qualityPerSeason, or
@@ -2974,6 +2977,8 @@ export const CAREER_NEWS = {
  * any-split rule met 94 % and 88 % on the same seasons.
  */
 export const CAREER_SEASON_GOAL = {
+  /** rc.36.2 playtest: independent rewards, once at the season review. */
+  reward: { target: 1, stretch: 2 },
   /**
    * "season" (rc.36): a season-scope goal sized to the bands below. "anySplit"
    * (rc.35, R82 b): the target a Balanced deal sets for one split, met if
@@ -3195,9 +3200,9 @@ export const CAREER_CREST = {
 export const CAREER_SUNDAY = {
   saturdayStop: true,
   briefing: {
-    keep: { everySeries: 0, opener: 0 },
-    recover: { everySeries: 0.25, opener: 0 },
-    prepare: { everySeries: 0, opener: 0.5 },
+    keep: { everySeries: 0.1, opener: 0 },
+    recover: { everySeries: 0.35, opener: -0.5 },
+    prepare: { everySeries: -0.15, opener: 0.75 },
   },
   defaultBriefing: "keep",
   followCardDays: 2,

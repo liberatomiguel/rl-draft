@@ -209,7 +209,7 @@ export function ChampionshipSunday({
               >
                 {C.event.watch}
               </button>
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto" onClick={() => start(false)}>
+              <Button variant="ghost" size="sm" className="w-full text-faint sm:w-auto" onClick={() => start(false)}>
                 {C.event.instant}
               </Button>
               <Button variant="ghost" size="md" className="w-full sm:w-auto" onClick={() => router.push("/career")}>

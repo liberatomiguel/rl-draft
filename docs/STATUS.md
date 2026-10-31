@@ -7,25 +7,26 @@
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.1**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.2**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
 - **Etapa 3:** complete for **Gate 3b**. Six fronts integrated and independently
   reviewed: training and HQ polish, sponsor/contract talks, founding economy
   and slower growth, season goals/news/achievements, crests/calendar/weekends.
-  rc.36.1 applies the playtest's restrained styling, calendar, spectator boards
-  and training/contract/sponsor interaction corrections.
-  Gate checklist, measurements and decisions: `RC36-1-GATE3B.md`.
+  rc.36.2 restores selective accents, adds HQ bootcamps and weekly scrim recaps,
+  improves clubs/coaches/calendar/news, and applies approved goal rewards/Sunday
+  trade-offs plus the requested wage/prize experiment.
+  Gate checklist, measurements and decisions: `RC36-2-GATE3B.md`.
 - **Next after approval:** Etapa 4 (rc.37), then Etapa 5 (rc.38), then cutover.
   Further screen polish goes to Etapa 5; bugs can be fixed at the gate.
 
 ## Current gates and evidence
 
-- Full suite: **1441 passed**, 13 opt-in checks skipped; typecheck
+- Full suite: **1447 passed**, 13 opt-in checks skipped; typecheck
   clean; lint **0 errors, 0 warnings**. Data regeneration is unchanged and
   validation green. Staging-like static build, browser E2E and request budget:
-  `RC36-1-GATE3B.md`.
+  `RC36-2-GATE3B.md`.
 - **BALANCE_VERSION 6**, rc.36's shared integration version; fingerprint is
   pinned by `src/config/balanceVersion.test.ts`. Package, lock and site version
   are all rc.36.

@@ -118,7 +118,7 @@ function OfferCard({
   const T = C.finances.deal;
   const brand = sponsorBrandById.get(view.sponsorId);
   const a = ACCENT[view.profile] ?? ACCENT.balanced;
-  const pct = topCeiling > 0 ? Math.max(8, Math.round((view.upTo / topCeiling) * 100)) : 100;
+  const pct = topCeiling > 0 ? Math.max(8, Math.round((view.upToPerWeek / topCeiling) * 100)) : 100;
   return (
     <div className={cx("flex min-w-0 flex-col rounded-lg border bg-white/[0.02] p-3", a.border)}>
       <div className="flex items-start justify-between gap-2">
@@ -142,9 +142,10 @@ function OfferCard({
         <span className="h-1.5 min-w-0 flex-1 rounded-full bg-white/10" aria-hidden>
           <span className={cx("block h-full rounded-full", a.bar)} style={{ width: `${pct}%` }} />
         </span>
-        <span className="shrink-0 text-sm font-bold text-ink">{T.upTo(money(view.upTo))}</span>
+        <span className="shrink-0 text-sm font-bold text-ink">{T.upToWeekly(money(view.upToPerWeek))}</span>
       </div>
 
+      <p className="mt-1 text-right text-[10px] text-faint">{T.contractTotal(money(view.upTo), view.lengthSplits)}</p>
       <div className="mt-2">
         <Row icon={<CoinsIcon className="h-full w-full" />} label={T.rowWeekly}>
           <p className="text-sm font-bold text-good">{money(view.weekly)}</p>
@@ -234,7 +235,7 @@ function OfferCards({
   disabled?: boolean;
   note?: (view: OfferView) => React.ReactNode;
 }) {
-  const top = Math.max(...views.map((v) => v.upTo));
+  const top = Math.max(...views.map((v) => v.upToPerWeek));
   const cols = views.length >= 3 ? "@xl:grid-cols-3" : views.length === 2 ? "@md:grid-cols-2" : "";
   return (
     <div className="@container">
@@ -280,7 +281,7 @@ export function SponsorOfferCard({
   return (
     <OfferCard
       view={view}
-      topCeiling={view.upTo}
+      topCeiling={view.upToPerWeek}
       onSign={onSign}
       disabled={disabled}
       note={handover ? <HandoverNet handover={handover} offer={offer} /> : undefined}
@@ -429,7 +430,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
       </div>
       {brand ? <p className="mt-0.5 text-[11px] italic text-faint">{lang === "pt" ? brand.flavorPt : brand.flavorEn}</p> : null}
 
-      <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Tile icon={<CoinsIcon className="h-full w-full" />} label={T.rowWeekly} value={money(view.weekly)} tone="text-good" />
         <Tile
           icon={<CalendarIcon className="h-full w-full" />}
@@ -450,10 +451,10 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
       </div>
 
       {cur ? (
-        <div className="mt-2.5 rounded-md bg-white/[0.03] p-2.5">
+        <div className="mt-3 rounded-lg border border-blue/20 bg-blue/[0.035] p-3">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">
-              <TargetIcon className="h-3.5 w-3.5 text-sub" />
+              <TargetIcon className="h-3.5 w-3.5 text-blue-bright" />
               {T.thisGoal}
             </p>
             <span className="flex items-center gap-2">
@@ -495,7 +496,7 @@ export function SponsorDealPanel({ save, perks }: { save: CareerSave; perks?: Re
         </div>
       ) : null}
 
-      <div className="mt-2.5">
+      <div className="mt-4 border-t border-line pt-3">
         <div className="flex items-center justify-between gap-2 text-[10px] text-faint">
           <span>{T.dealRun(paid, view.mondaysTotal)}</span>
           <span>{T.endsOn(formatDateShort(D, view.endsOn))}</span>

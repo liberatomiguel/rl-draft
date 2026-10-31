@@ -1,8 +1,8 @@
 "use client";
 
 /** HQ progression: three compact item rows, purchases and next unlock below.
- * Item details and the full ladder remain in modals. New unlock announcements
- * inform with Close only; deliberate purchases use the existing store flows. */
+ * Item details and the full ladder remain in modals. Unlock announcements
+ * offer an explicit purchase through the same store flows as the rows. */
 
 import { useMemo, useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -88,14 +88,15 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   // UX-06a: the first novelty not yet announced — never over the first-visit explainer (or the ladder).
   const announce = !ended && save.flags["seenHub"] && !sheetId && !ladderOpen ? (unannounced[0] ?? null) : null;
   const modalId = sheetId ?? announce;
-  // rc.36: the announcement informs (Close only); Buy is for a row the manager opened.
+  // The unlock sheet can be purchased or dismissed; opening it never buys automatically.
   const announcing = !sheetId && Boolean(announce);
   const sheet = modalId ? (items.find((i) => i.id === modalId) ?? null) : null;
   const refusal = useMemo(() => (sheet ? toolboxRefusalOf(save, sheet.id) : null), [save, sheet]);
   const after = sheet ? toolboxAfterOf(save, sheet) : null;
 
-  const purchaseRung = (id: LadderRungId) => items.some((i) => rungOfItem(i.id) === id && i.status !== "locked" && i.status !== "active");
-  const visibleRungs = [...rungs.filter((r) => purchaseRung(r.id)), ...rungs.filter((r) => !purchaseRung(r.id) && r.status !== "owned")].slice(0, HQ_LADDER_WINDOW);
+  const reached = rungs.reduce((latest, rung, index) => rung.status !== "locked" ? index : latest, -1);
+  const windowStart = Math.max(0, Math.min(Math.max(0, reached - 1), rungs.length - HQ_LADDER_WINDOW));
+  const visibleRungs = rungs.slice(windowStart, windowStart + HQ_LADDER_WINDOW);
   const active = items.filter((i) => i.status === "active");
   const next = rungs.find((r) => r.status === "locked") ?? null;
   const rep = Math.round(save.reputation);
@@ -137,7 +138,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
     <Panel className="rise-in p-4" style={{ animationDelay: "150ms" }}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="kicker text-[10px]">{L.title}</p>
-        <span className="rounded border border-line bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-sub">
+        <span className="rounded-full border border-orange/35 bg-orange/10 px-2.5 py-0.5 text-[10px] font-semibold text-orange-bright">
           {L.rep(rep)}
         </span>
       </div>
@@ -148,15 +149,15 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
           const canBuy = item?.status === "buyable" && !toolboxRefusalOf(save, item.id) && !ended;
           const note = item ? noteOf(item) : null;
           return (
-            <li key={rung.id} className="flex min-h-16 items-center gap-3 rounded-lg border border-line px-3 py-2.5">
-              <RungIcon id={rung.id} className={cx("h-5 w-5 shrink-0", rung.status === "locked" ? "text-faint" : "text-sub")} />
+            <li key={rung.id} className={cx("flex min-h-16 items-center gap-3 rounded-lg border px-3 py-2.5", rung.status === "locked" ? "border-orange/10 bg-orange/[0.015]" : "border-orange/25 bg-orange/[0.035]")}>
+              <RungIcon id={rung.id} className={cx("h-5 w-5 shrink-0", rung.status === "locked" ? "text-orange/45" : "text-orange-bright")} />
               <div className="min-w-0 flex-1">
                 {item && rung.status !== "locked" ? (
                   <button type="button" onClick={() => openSheet(item.id)} className="text-left text-xs font-semibold text-ink hover:underline">{toolboxNameOf(C, item.id)}</button>
                 ) : <p className="text-xs font-semibold text-sub">{L.rung[rung.id]}</p>}
                 <p className="mt-0.5 text-[10px] text-faint">{rung.status === "locked" ? L.rep(rung.gate) : item ? note ?? priceOf(C, item) : L.rep(rung.gate)}</p>
               </div>
-              {item && rung.status !== "locked" ? <Button size="sm" variant="secondary" disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
+              {item && rung.status !== "locked" ? <Button size="sm" variant={canBuy ? "primary" : "ghost"} className={canBuy ? "shadow-none" : undefined} disabled={!canBuy} onClick={() => purchase(item)}>{item.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}</Button> : null}
             </li>
           );
         })}
@@ -165,8 +166,8 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
       {next ? (
         <div className="mt-3 border-t border-line pt-3">
           <div className="flex justify-between gap-2 text-[10px] text-faint"><span>{L.next}</span><span>{L.progress(rep, next.gate)}</span></div>
-          <p className="mt-1 text-xs font-semibold text-sub">{L.rung[next.id]}</p>
-          <ProgressBar value={save.reputation / next.gate} tone="blue" className="mt-2 h-1" label={L.next} />
+          <p className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-sub"><RungIcon id={next.id} className="h-4 w-4 shrink-0 text-orange-bright" />{L.rung[next.id]}</p>
+          <ProgressBar value={save.reputation / next.gate} tone="orange" className="mt-2 h-1" label={L.next} />
         </div>
       ) : <p className="mt-3 text-xs text-sub">{L.top}</p>}
 
@@ -205,32 +206,25 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
         title={sheet ? toolboxNameOf(C, sheet.id) : ""}
         onClose={close}
         actions={
-          announcing ? (
-            // rc.36 (Miguel on rc.35): the unlock announcement only informs — Close, no Buy.
-            <Button variant="secondary" className="min-h-11" onClick={close}>
+          <>
+            <Button variant="primary" className="min-h-11 shadow-none" disabled={Boolean(refusal) || ended} onClick={buy}>
+              {sheet?.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}
+            </Button>
+            <Button variant="ghost" className="min-h-11" onClick={close}>
               {C.toolbox.close}
             </Button>
-          ) : (
-            <>
-              <Button variant="ghost" className="min-h-11" onClick={close}>
-                {C.toolbox.close}
-              </Button>
-              <Button variant="primary" className="min-h-11" disabled={Boolean(refusal)} onClick={buy}>
-                {sheet?.kind === "psychologist" ? C.toolbox.hire : C.toolbox.buy}
-              </Button>
-            </>
-          )
+          </>
         }
       >
         {sheet ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-orange/50 bg-gradient-to-br from-orange/25 to-orange/5 text-orange-bright shadow-[0_0_28px_-8px_rgba(249,115,22,0.7)]">
-                <RungIcon id={rungOfItem(sheet.id)} className="h-9 w-9" />
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange/35 bg-orange/10 text-orange-bright">
+                <RungIcon id={rungOfItem(sheet.id)} className="h-6 w-6" />
               </span>
               <div className="min-w-0 flex-1">
                 {announcing ? <p className="kicker !text-[9px] text-orange-bright">{C.toolbox.unlockKicker}</p> : null}
-                <p className="display text-2xl font-bold leading-none text-ink">{priceOf(C, sheet)}</p>
+                <p className="mt-1 display text-2xl font-bold leading-none text-ink">{priceOf(C, sheet)}</p>
                 {sheet.kind === "gear" && sheet.price < sheet.listPrice ? (
                   <p className="mt-1 text-[11px] text-faint">
                     <s>{formatMoney(sheet.listPrice, { compact: true })}</s> · {C.toolbox.discount(Math.round((1 - sheet.price / sheet.listPrice) * 100))}
@@ -242,24 +236,21 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
 
             <div>
               <p className="kicker mb-1.5 !text-[9px]">{C.toolbox.benefits}</p>
-              <ul className="flex flex-wrap gap-1.5">
+              <ul className="space-y-1.5 rounded-lg border border-line bg-white/[0.025] p-3">
                 {benefitsOf(C, sheet).map((b) => (
-                  <li key={b} className="rounded-full border border-good/40 bg-good/10 px-2.5 py-1 text-xs font-semibold text-good">
+                  <li key={b} className="text-xs font-medium text-orange-bright">
                     {b}
                   </li>
                 ))}
                 {sheet.kind === "gear" && sheet.weekly > 0 ? (
-                  <li className="rounded-full border border-line px-2.5 py-1 text-xs text-faint">
+                  <li className="text-xs text-faint">
                     {C.toolbox.upkeep(formatMoney(sheet.weekly, { compact: true }))}
                   </li>
                 ) : null}
               </ul>
             </div>
 
-            {announcing ? (
-              // Unlocked is not bought (UX-06a): where it waits.
-              <p className="text-[11px] text-sub">{C.toolbox.unlockNote}</p>
-            ) : after ? (
+            {after ? (
               <p className={cx("text-[11px]", after.balance < 0 ? "text-bad" : "text-faint")}>
                 {C.toolbox.afterLine(
                   formatMoney(after.balance, { compact: true }),
@@ -267,7 +258,7 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
                 )}
               </p>
             ) : null}
-            {refusal && !announcing ? (
+            {refusal ? (
               <p role="alert" className="rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-xs text-bad">
                 {refusalText(C, refusal)}
               </p>

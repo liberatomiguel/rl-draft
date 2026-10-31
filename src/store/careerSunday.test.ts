@@ -222,7 +222,7 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
     expect(advanceDayFlow(old).clock.day).toBe(regionalDayFor(W));
   });
 
-  it("the briefing's edge: Prepare on the opening series only, Recover on every Sunday series; Keep is rc.35's Sunday", () => {
+  it("the briefing's edge: Prepare favors the opener, Recover trades the opener for later series; Keep provides continuity", () => {
     const eve = regionalSaturdayEvening();
     const play = (choice: "keep" | "recover" | "prepare") => {
       const sun = startSundayFlow(eve, choice).save;
@@ -233,11 +233,11 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
     const prepare = play("prepare");
     const recover = play("recover");
     const opener = (t: TournamentState) => userSeriesOf(t, "swiss")[0];
-    expectEdge(userDiff(opener(prepare)) - userDiff(opener(keep)), CAREER_SUNDAY.briefing.prepare.opener);
-    expectEdge(userDiff(opener(recover)) - userDiff(opener(keep)), CAREER_SUNDAY.briefing.recover.everySeries);
+    expectEdge(userDiff(opener(prepare)) - userDiff(opener(keep)), CAREER_SUNDAY.briefing.prepare.everySeries + CAREER_SUNDAY.briefing.prepare.opener - CAREER_SUNDAY.briefing.keep.everySeries);
+    expectEdge(userDiff(opener(recover)) - userDiff(opener(keep)), CAREER_SUNDAY.briefing.recover.everySeries + CAREER_SUNDAY.briefing.recover.opener - CAREER_SUNDAY.briefing.keep.everySeries);
     // Prepare's edge is gone after the opener; Recover's stays on every series.
     const second = (t: TournamentState) => userSeriesOf(t, "swiss")[1];
-    expectEdge(userDiff(second(recover)) - userDiff(second(keep)), CAREER_SUNDAY.briefing.recover.everySeries, second(recover).teamAId === second(keep).teamAId && second(recover).teamBId === second(keep).teamBId);
+    expectEdge(userDiff(second(recover)) - userDiff(second(keep)), CAREER_SUNDAY.briefing.recover.everySeries - CAREER_SUNDAY.briefing.keep.everySeries, second(recover).teamAId === second(keep).teamAId && second(recover).teamBId === second(keep).teamBId);
     // The frozen team is untouched: the edge is per round, never stored on the team.
     expect(prepare.teams.user.rating.total).toBe(keep.teams.user.rating.total);
     // Keep plays exactly the Sunday without a briefing.
@@ -250,12 +250,13 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
     const def = eve.pendingEventDef!;
     const sun = startSundayFlow(eve, "prepare").save;
     const t = startEvent(sun, false).activeEvent!.tournament;
-    expect(sundayEdgeFor(sun.weekend, def, def.day, t)).toBe(CAREER_SUNDAY.briefing.prepare.opener);
+    expect(sundayEdgeFor(sun.weekend, def, def.day, t)).toBeCloseTo(0.60);
+    expect(briefingEdgeFor("recover", def, t)).toBeCloseTo(-0.15);
     expect(sundayEdgeFor(sun.weekend, def, def.day - 1, t)).toBe(0); // Saturday
     expect(sundayEdgeFor(sun.weekend, { ...def, id: "other" }, def.day, t)).toBe(0);
-    expect(sundayEdgeFor({ eventId: def.id, briefing: "keep" }, def, def.day, t)).toBe(0);
+    expect(sundayEdgeFor({ eventId: def.id, briefing: "keep" }, def, def.day, t)).toBeCloseTo(0.10);
     const played = simEventToEnd(startEvent(sun, false)).activeEvent!.tournament;
-    expect(briefingEdgeFor("prepare", def, played)).toBe(0);
+    expect(briefingEdgeFor("prepare", def, played)).toBeCloseTo(-0.15);
     expect(briefingEdgeFor("recover", def, played)).toBe(CAREER_SUNDAY.briefing.recover.everySeries);
     // The load repair: a bad record reads as none, never throws.
     const bad: { weekend?: unknown } = { weekend: { eventId: 7 } };
@@ -285,7 +286,7 @@ describe("SUN-01 — a Major paused after its Swiss: Championship Sunday is star
     expect(recT.swiss).toEqual(keepT.swiss);
     const first = (t: TournamentState) => userSeriesOf(t, "playoffs")[0];
     if (first(keepT) && first(recT)) {
-      expectEdge(userDiff(first(recT)) - userDiff(first(keepT)), CAREER_SUNDAY.briefing.recover.everySeries);
+      expectEdge(userDiff(first(recT)) - userDiff(first(keepT)), CAREER_SUNDAY.briefing.recover.everySeries + CAREER_SUNDAY.briefing.recover.opener - CAREER_SUNDAY.briefing.keep.everySeries);
     }
     const done = finishEvent(recFin);
     expect(done.eventResults.filter((r) => r.eventId === def.id)).toHaveLength(1);

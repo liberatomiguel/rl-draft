@@ -205,7 +205,7 @@ function Crests({ refs, save, size, type, archive }: { refs: string[]; save: Car
         className={cx(
           "flex shrink-0 items-center justify-center rounded-lg bg-white/[0.04]",
           size === "md" ? "h-10 w-10" : "h-6 w-6",
-          archive || type !== "transfer" ? "text-faint" : ICON_TONE[type],
+          archive ? "text-amber-300/80" : ICON_TONE[type],
         )}
       >
         <NewsTypeIcon type={archive ? "archive" : type} className={size === "md" ? "h-6 w-6" : "h-4.5 w-4.5"} />
@@ -247,7 +247,7 @@ function ActionLink({ item, C }: { item: NewsItem; C: CareerCopy }) {
   return (
     <AppLink
       href={a.href}
-      className="inline-flex min-h-7 items-center gap-1 text-[10px] font-medium text-sub hover:text-ink"
+      className="inline-flex min-h-7 items-center gap-1 text-[10px] font-semibold text-blue-bright hover:text-blue-bright/80"
     >
       {C.news.feed.action[a.action]}
       <span aria-hidden>→</span>
@@ -265,21 +265,22 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
   const archive = Boolean(r.archive);
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
-    <article className="mb-2 rounded-lg border border-line bg-white/[0.025] p-4">
-      <p className="kicker mb-3 !text-[9px] text-faint">{C.news.feed.lead}</p>
-      <div className="flex gap-3">
-        <Crests refs={refs} save={save} size="md" type={item.type} archive={archive} />
+    <article className="relative mb-2 overflow-hidden rounded-xl border border-blue/25 bg-blue/[0.045] p-4 sm:p-5">
+      <div aria-hidden className="absolute inset-y-4 left-0 w-0.5 rounded-full bg-blue" />
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="kicker !text-[9px] text-blue-bright">{C.news.feed.lead}</p>
+        <span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span>
+      </div>
+      <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} />
-          <h3 className="mt-1.5 text-base font-semibold leading-snug text-ink sm:text-lg">{r.title}</h3>
-          {r.body ? <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-sub">{r.body}</p> : null}
-          {archive ? <p className="mt-1 text-[10px] italic text-faint">{C.news.feed.archiveNote}</p> : null}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <ActionLink item={item} C={C} />
-            <span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span>
-          </div>
+          <h3 className="mt-2 text-lg font-semibold leading-snug text-ink sm:text-xl">{r.title}</h3>
         </div>
+        <Crests refs={refs.slice(0, 1)} save={save} size="md" type={item.type} archive={archive} />
       </div>
+      {r.body ? <p className="mt-2 line-clamp-3 max-w-prose text-xs leading-relaxed text-sub">{r.body}</p> : null}
+      {archive ? <p className="mt-2 text-[10px] italic text-faint">{C.news.feed.archiveNote}</p> : null}
+      <div className="mt-3"><ActionLink item={item} C={C} /></div>
     </article>
   );
 }
@@ -343,7 +344,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
     : save.news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
 
   return (
-    <Panel className="rise-in p-4" style={{ animationDelay: "120ms" }}>
+    <Panel id="career-news" className="rise-in p-4" style={{ animationDelay: "120ms" }}>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <BrandMark brand={brand} name={B.name} />
@@ -357,7 +358,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
               {C.news.markAllRead}
             </Button>
           ) : null}
-          <Button size="sm" variant="ghost" onClick={() => setOpen((v) => !v)}>
+          <Button size="sm" variant="ghost" className="text-blue-bright" onClick={() => setOpen((v) => !v)}>
             {open ? C.common.close : C.hub.newsAll}
           </Button>
         </div>

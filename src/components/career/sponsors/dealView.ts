@@ -51,6 +51,8 @@ export interface OfferView {
   sure: number;
   /** The most it can pay from today. */
   upTo: number;
+  /** Comparable return: maximum total divided by remaining payment weeks. */
+  upToPerWeek: number;
   /** The Stability bar: the share of `upTo` that is sure (0–100, and in tenths 0–10). */
   stabilityPct: number;
   stabilityTenths: number;
@@ -109,6 +111,7 @@ export function offerViewOf(offer: SponsorState, today: CareerDay): OfferView | 
     fixedKind: terms.fixedKind,
     sure,
     upTo,
+    upToPerWeek: upTo / Math.max(1, mondaysLeftOf(terms, today)),
     stabilityPct: Math.round(share * 100),
     stabilityTenths: Math.max(0, Math.min(10, Math.round(share * 10))),
     lengthSplits: terms.lengthSplits,

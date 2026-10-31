@@ -19,12 +19,13 @@ import type { StatKey } from "@/engine/types";
 import { cx } from "@/lib/util";
 import { proceduralCrestFor } from "@/components/career/OrgMark";
 import {
-  ALL_CREST_IDS,
-  ALL_PATTERN_IDS,
-  ALL_SYMBOL_IDS,
+  WIZARD_CREST_IDS,
+  WIZARD_PATTERN_IDS,
+  WIZARD_SYMBOL_IDS,
   composeCrestId,
-  CREST_KITS,
   CREST_PALETTE,
+  CREST_WIZARD_KITS,
+  CREST_WIZARD_PALETTE,
   LAYOUT_IDS,
   UserCrest,
   type CrestId,
@@ -49,7 +50,8 @@ export interface CrestPick {
 
 const sameHex = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 /** The palette id of a hex (the colour's name key), or the hex itself for a free pick. */
-const idOfHex = (hex: string): string => CREST_PALETTE.find((c) => sameHex(c.hex, hex))?.id ?? hex;
+const idOfHex = (hex: string): string =>
+  CREST_WIZARD_PALETTE.find((c) => sameHex(c.hex, hex))?.id ?? CREST_PALETTE.find((c) => sameHex(c.hex, hex))?.id ?? hex;
 
 export function CrestStep({
   C,
@@ -81,6 +83,13 @@ export function CrestStep({
   const W = C.wizard;
   const crestId = composeCrestId(pick);
   const nameOf = (id: string) => W.colorNames[id] ?? id;
+  // An older saved option remains visible and selected while editing it.
+  const shapeChoices: readonly CrestId[] = (WIZARD_CREST_IDS as readonly CrestId[]).includes(pick.shape)
+    ? WIZARD_CREST_IDS : [...WIZARD_CREST_IDS, pick.shape];
+  const symbolChoices: readonly SymbolId[] = !pick.symbol || (WIZARD_SYMBOL_IDS as readonly SymbolId[]).includes(pick.symbol)
+    ? WIZARD_SYMBOL_IDS : [...WIZARD_SYMBOL_IDS, pick.symbol];
+  const patternChoices: readonly PatternId[] = !pick.pattern || (WIZARD_PATTERN_IDS as readonly PatternId[]).includes(pick.pattern)
+    ? WIZARD_PATTERN_IDS : [...WIZARD_PATTERN_IDS, pick.pattern];
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_minmax(16rem,19rem)]">
@@ -102,7 +111,7 @@ export function CrestStep({
           </Button>
         </div>
         <div className="grid grid-cols-5 gap-2 sm:grid-cols-7" role="radiogroup" aria-label={W.crestLabel}>
-          {ALL_CREST_IDS.map((id) => (
+          {shapeChoices.map((id) => (
             <CrestTile key={id} active={pick.shape === id} ariaLabel={id} onClick={() => onPick({ shape: id })} className="min-h-14">
               <UserCrest crestId={id} colors={colors} size="md" />
             </CrestTile>
@@ -115,7 +124,7 @@ export function CrestStep({
           <CrestTile active={pick.symbol === null} ariaLabel={W.crestNone} onClick={() => onPick({ symbol: null })} className="min-h-[4.5rem]">
             <NoneLabel active={pick.symbol === null}>{W.crestNone}</NoneLabel>
           </CrestTile>
-          {ALL_SYMBOL_IDS.map((sy) => (
+          {symbolChoices.map((sy) => (
             <CrestTile key={sy} active={pick.symbol === sy} ariaLabel={sy} onClick={() => onPick({ symbol: sy })} className="min-h-[4.5rem]">
               <UserCrest crestId={composeCrestId({ shape: pick.shape, symbol: sy })} colors={colors} size="lg" />
             </CrestTile>
@@ -147,7 +156,7 @@ export function CrestStep({
           <CrestTile active={pick.pattern === null} ariaLabel={W.crestNone} onClick={() => onPick({ pattern: null })} className="min-h-14">
             <NoneLabel active={pick.pattern === null}>{W.crestNone}</NoneLabel>
           </CrestTile>
-          {ALL_PATTERN_IDS.map((pt) => (
+          {patternChoices.map((pt) => (
             <CrestTile key={pt} active={pick.pattern === pt} ariaLabel={pt} onClick={() => onPick({ pattern: pt })} className="min-h-14">
               <UserCrest crestId={composeCrestId({ shape: pick.shape, pattern: pt })} colors={colors} size="md" />
             </CrestTile>
@@ -158,7 +167,7 @@ export function CrestStep({
         <p className="kicker mb-1 mt-6">{W.kits}</p>
         <p className="mb-3 text-xs text-sub">{W.kitsHint}</p>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8" role="radiogroup" aria-label={W.kits}>
-          {CREST_KITS.map((k) => {
+          {CREST_WIZARD_KITS.map((k) => {
             const active = sameHex(colors.primary, k.primary) && sameHex(colors.secondary, k.secondary);
             const kitName = `${nameOf(idOfHex(k.primary))} · ${nameOf(idOfHex(k.secondary))}`;
             return (
@@ -217,6 +226,9 @@ export function CrestStep({
             );
           })}
         </div>
+        <p className="mt-3 max-w-lg border-l-2 border-orange/40 pl-3 text-xs leading-relaxed text-sub" role="status">
+          {W.playstyleHelp[buffType]}
+        </p>
       </Panel>
 
       {/* Live crest preview + small-size legibility strip */}
@@ -270,8 +282,8 @@ function ColorRow({
         <p className="kicker">{label}</p>
         <span className="font-mono text-[10px] uppercase text-faint">{value}</span>
       </div>
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
-        {CREST_PALETTE.map((c) => {
+      <div className="grid grid-cols-6 gap-2 sm:grid-cols-8" role="radiogroup" aria-label={label}>
+        {CREST_WIZARD_PALETTE.map((c) => {
           const active = sameHex(value, c.hex);
           return (
             <button
@@ -283,7 +295,7 @@ function ColorRow({
               title={nameOf(c.id)}
               onClick={() => onPick(c.hex)}
               className={cx(
-                "h-11 w-11 rounded-full border-2 transition-transform",
+                "h-11 w-full rounded-lg border-2 transition-transform",
                 active ? "scale-110 border-white/80" : "border-white/15 hover:border-white/40",
               )}
               style={{ background: c.hex }}

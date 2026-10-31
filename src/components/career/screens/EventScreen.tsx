@@ -456,8 +456,9 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
               {C.event.watch}
             </Button>
             <Button
-              variant="secondary"
-              size="lg"
+              variant="ghost"
+              size="sm"
+              className="text-faint"
               onClick={() => {
                 enterEvent(false);
                 simEvent();

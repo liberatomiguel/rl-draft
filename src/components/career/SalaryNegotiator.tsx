@@ -172,7 +172,7 @@ function WorthGauge({ talk, N }: { talk: NegotiationAnswer; N: Talk }) {
   const needPct = pct(zone.needWorth);
   const sure = talk.odds >= 1;
   const oddsPct = Math.round(talk.odds * 100);
-  const tone = sure ? "text-ink" : "text-sub";
+  const tone = sure ? "text-good" : talk.odds >= 0.5 ? "text-orange-bright" : "text-sub";
   return (
     <div className="mt-2">
       <div className="flex items-end justify-between gap-2">
@@ -223,9 +223,9 @@ function WorthGauge({ talk, N }: { talk: NegotiationAnswer; N: Talk }) {
 function Effect({ icon, label, amount, N }: { icon: ReactNode; label: string; amount: number; N: Talk }) {
   return (
     <span className="inline-flex min-h-6 items-center gap-1 text-[10px]">
-      <span className="h-3 w-3 shrink-0 text-faint">{icon}</span>
+      <span className="h-3 w-3 shrink-0 text-blue-bright">{icon}</span>
       <span className="text-sub">{label}</span>
-      <span className="font-semibold tabular-nums text-sub">
+      <span className={cx("font-semibold tabular-nums", amount > 0 ? "text-good" : amount < 0 ? "text-orange-bright" : "text-sub")}>
         {N.effectWeekly(formatMoneyDelta(amount))}
       </span>
     </span>
@@ -294,7 +294,7 @@ export function SalaryNegotiator({
     <div className="rounded-lg border border-line bg-white/[0.015] p-3.5">
       <div className="flex items-center justify-between gap-2">
         <p className="kicker flex items-center gap-1.5 text-[10px]">
-          <HandshakeIcon className="h-3.5 w-3.5 text-sub" />
+          <HandshakeIcon className="h-3.5 w-3.5 text-orange-bright" />
           {N.title}
         </p>
         <button

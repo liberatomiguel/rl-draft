@@ -29,6 +29,7 @@ import {
   CycleReportBody,
   fmt1,
   ObjectiveIcon,
+  OBJECTIVE_TONE,
   PackageChips,
   reportAvgOf,
   reportCompletionOf,
@@ -45,6 +46,7 @@ export function TrainingReportModal() {
   const Y = C.training.cycle;
   const R = Y.report;
   const objective = report.package?.objective ?? null;
+  const tone = objective ? OBJECTIVE_TONE[objective] : { text: "text-sub", ring: "border-line", bg: "bg-white/[0.02]" };
   const avg = reportAvgOf(report);
   const completion = reportCompletionOf(report);
   const canRepeat = save.phase === "running" && !save.training?.plan?.package && report.package !== null;
@@ -56,26 +58,18 @@ export function TrainingReportModal() {
       title={R.title(report.periodIndex + 1, seasonLabelFor(report.seasonIndex))}
       onClose={acknowledge}
       actions={
-        coachRuns ? (
-          <Button variant="primary" size="md" className="min-h-11" onClick={acknowledge}>
-            {R.close}
-          </Button>
-        ) : (
-          <>
-            <Button variant="ghost" size="md" className="min-h-11" onClick={acknowledge}>
-              {R.close}
-            </Button>
-            {canRepeat && report.package ? <Button variant="primary" size="md" className="min-h-11" onClick={() => { acknowledge(); setTrainingPackage(report.package); }}>{Y.restart}</Button> : null}
-            <AppLink href="/career/training" className={cx(buttonClass(canRepeat ? "secondary" : "primary", "md"), "min-h-11")} onClick={acknowledge}>
-              {R.planNext} →
-            </AppLink>
-          </>
-        )
+        <div className="flex w-full flex-wrap justify-start gap-2">
+          {report.package ? <Button variant="primary" size="md" className="min-h-11" disabled={!canRepeat} onClick={() => { if (!canRepeat) return; acknowledge(); setTrainingPackage(report.package); }}>{Y.restart}</Button> : null}
+          <AppLink href="/career/training" className={cx(buttonClass("secondary", "md"), "min-h-11")} onClick={acknowledge}>
+            {R.planNext}
+          </AppLink>
+          <Button variant="ghost" size="md" className="min-h-11" onClick={acknowledge}>{R.close}</Button>
+        </div>
       }
     >
-      <div className="mb-4 rounded-xl border border-line bg-white/[0.02] p-3.5">
+      <div className={cx("mb-4 rounded-xl border p-3.5", tone.ring, tone.bg)}>
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-sub">
+          <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border", tone.ring, tone.text)}>
             <ObjectiveIcon objective={objective} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -83,7 +77,7 @@ export function TrainingReportModal() {
             <p className="truncate text-[11px] text-faint">{Y.by[report.author] ?? ""}</p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="display text-2xl font-bold tabular-nums text-ink">{fmt1(avg)}</p>
+            <p className={cx("display text-2xl font-bold tabular-nums", avg >= 0 ? "text-good" : "text-bad")}>{fmt1(avg)}</p>
             <p className="text-[10px] text-faint">{R.avg}</p>
           </div>
         </div>

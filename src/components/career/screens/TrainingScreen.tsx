@@ -52,6 +52,7 @@ import {
   PackageChips,
   PlanPicker,
   PromiseBar,
+  WeeklyScrimRecap,
 } from "@/components/career/training/TrainingPackageParts";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -103,7 +104,6 @@ export function TrainingScreen() {
   const effects = statEffectsFor(teamNow.stats);
 
   const endDate = formatDateTiny(D, dateOfDay(save.clock.seasonIndex, block.period.endDay));
-  const seasonScrims = save.scrimLog.filter((e) => e.seasonIndex === save.clock.seasonIndex);
   const controllerLine =
     block.controller === "coach" && coachProfile
       ? Y.controllerCoach(coachProfile.name)
@@ -261,8 +261,8 @@ export function TrainingScreen() {
             </div>
           </div>
         ) : (
-          <AppLink href="/career/market#coaches" className="flex min-h-11 items-center gap-3 text-[11px] font-semibold text-sub hover:underline">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-white/[0.02]">
+          <AppLink href="/career/market#coaches" className="flex min-h-11 items-center gap-3 text-[11px] font-semibold text-orange-bright hover:underline">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange/25 bg-orange/[0.05]">
               <WhistleIcon className="h-5 w-5" />
             </span>
             <span className="min-w-0">
@@ -280,6 +280,26 @@ export function TrainingScreen() {
       {/* 3 — the squad's growth */}
       <div>
         <p className="kicker mb-2 text-[10px]">{C.training.plan.squadGrowth}</p>
+        <div className="mb-3 rounded-xl border border-line bg-black/10 p-3">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-1"><p className="text-[11px] font-semibold text-ink">{C.training.effectsTitle}</p><p className="text-[10px] text-faint">{C.training.effectsHint}</p></div>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
+            {effects.map((e) => {
+              const positive = e.value > 0;
+              return (
+                <div key={e.key} className="rounded-lg border border-line bg-white/[0.03] px-2.5 py-2">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="display text-[10px] font-bold uppercase tracking-[0.08em] text-ink">{t.STAT_LABELS[e.key]}</span>
+                    <span className="font-mono text-[11px] font-bold text-sub">{Math.round(teamNow.stats[e.key])}</span>
+                  </div>
+                  <p className={cx("mt-0.5 text-sm font-bold", positive ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>
+                    {e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)}
+                  </p>
+                  <p className="text-[10px] leading-tight text-faint">{C.training.effectWhen[e.when]}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {save.squad.map((p, i) => (
             <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
@@ -287,59 +307,11 @@ export function TrainingScreen() {
         </div>
       </div>
 
-      {/* 4b — recent scrims */}
-      <Panel className="rise-in p-4" style={{ animationDelay: "220ms" }}>
-        <p className="kicker mb-1.5 flex items-center gap-1.5 text-[10px]">
-          <SwordsIcon className="h-3.5 w-3.5" />
-          {C.scrim.results}
-        </p>
-        {seasonScrims.length === 0 ? (
-          <p className="text-xs text-faint">{C.scrim.noResults}</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {seasonScrims.slice(0, 6).map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center gap-2 text-xs">
-                <span className={cx("h-2 w-2 shrink-0 rounded-full", e.won ? "bg-good" : "bg-bad")} aria-hidden />
-                <span className={cx("min-w-0 font-semibold", e.won ? "text-good" : "text-bad")}>
-                  {e.won ? C.scrim.won(e.oppName, e.scoreA, e.scoreB) : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}
-                </span>
-                {e.level ? <Badge tone="neutral">{Y.scrimChoices[e.level]}</Badge> : null}
-                <span className="ml-auto shrink-0 text-[10px] text-faint">{formatDateTiny(D, dateOfDay(e.seasonIndex, e.day))}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* The current week's scrims, in one compact recap. */}
+      <Panel className="rise-in p-3" style={{ animationDelay: "220ms" }}>
+        <WeeklyScrimRecap save={save} C={C} />
       </Panel>
 
-      {/* 4c — what the attributes do */}
-      <details className="rise-in group panel p-0" style={{ animationDelay: "240ms" }}>
-        <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-baseline justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
-          <span className="kicker text-[10px]">
-            <span className="mr-1.5 inline-block transition-transform group-open:rotate-90" aria-hidden>
-              ▸
-            </span>
-            {C.training.effectsTitle}
-          </span>
-          <span className="text-[10px] text-faint">{C.training.effectsHint}</span>
-        </summary>
-        <div className="grid grid-cols-2 gap-1.5 px-4 pb-4 sm:grid-cols-3 lg:grid-cols-6">
-          {effects.map((e) => {
-            const positive = e.value > 0;
-            return (
-              <div key={e.key} className="rounded-lg border border-line bg-white/[0.03] px-2.5 py-2">
-                <div className="flex items-baseline justify-between gap-1">
-                  <span className="display text-[10px] font-bold uppercase tracking-[0.08em] text-ink">{t.STAT_LABELS[e.key]}</span>
-                  <span className="font-mono text-[11px] font-bold text-sub">{Math.round(teamNow.stats[e.key])}</span>
-                </div>
-                <p className={cx("mt-0.5 text-sm font-bold", positive ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>
-                  {e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)}
-                </p>
-                <p className="text-[10px] leading-tight text-faint">{C.training.effectWhen[e.when]}</p>
-              </div>
-            );
-          })}
-        </div>
-      </details>
 
       <p className="rise-in text-center text-[11px] text-faint">{C.training.matchXpHint}</p>
     </div>
@@ -388,7 +360,7 @@ function GrowthCard({
         <Badge tone={PHASE_TONE[phase]}>{C.player.phase[phase]}</Badge>
       </div>
       <div className="mt-2 flex items-center gap-3">
-        <ProgressBar value={growth} tone="blue" className="flex-1" label={C.player.growthRoom} />
+        <ProgressBar value={growth} tone={phase === "prime" || eta.atPotential ? "gold" : "blue"} className="flex-1" label={C.player.growthRoom} />
         <span className="shrink-0 text-[10px] text-faint">
           {C.player.growthRoom} · {C.player.potBand(band.min, band.max)}
         </span>
@@ -402,7 +374,7 @@ function GrowthCard({
             {eta.atPotential ? "" : eta.daysToNext !== null ? C.training.etaDays(eta.daysToNext) : C.training.etaNone}
           </span>
         </div>
-        <ProgressBar value={eta.progress} tone={eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
+        <ProgressBar value={eta.progress} tone={eta.atPotential || phase === "prime" ? "gold" : eta.daysToNext !== null ? "good" : "blue"} className="mt-1.5 h-1.5" label={C.training.growth} />
         <p className="mt-1 text-[10px] text-faint">
           {C.training.perWeekOverall(proj.weeklyOverall.toFixed(2))}
           {offsets.map(([k, v]) => ` · ${C.training.perWeekOffset(v.toFixed(2), statLabels[k] ?? k)}`).join("")}

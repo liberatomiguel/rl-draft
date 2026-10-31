@@ -25,7 +25,7 @@
 import { useMemo, useState } from "react";
 import { CAREER_PLAN } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
-import { seasonLabelFor } from "@/engine/career/calendar";
+import { seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
 import {
   focusAttrsOf,
   OBJECTIVES,
@@ -96,13 +96,13 @@ type Tone = { text: string; ring: string; bg: string };
 
 const QUIET_TONE: Tone = { text: "text-ink", ring: "border-line", bg: "bg-white/[0.02]" };
 export const OBJECTIVE_TONE: Record<TrainingObjective, Tone> = {
-  development: QUIET_TONE,
-  preparation: QUIET_TONE,
-  recovery: QUIET_TONE,
+  development: { text: "text-good", ring: "border-good/25", bg: "bg-good/[0.04]" },
+  preparation: { text: "text-blue-bright", ring: "border-blue/30", bg: "bg-blue/[0.04]" },
+  recovery: { text: "text-cyan", ring: "border-cyan/25", bg: "bg-cyan/[0.04]" },
 };
 const NEUTRAL_TONE = QUIET_TONE;
-const HEAVY_TONE = QUIET_TONE;
-const FOCUS_TONE = QUIET_TONE;
+const HEAVY_TONE: Tone = { text: "text-orange-bright", ring: "border-orange/25", bg: "bg-orange/[0.04]" };
+const FOCUS_TONE = OBJECTIVE_TONE.preparation;
 
 export function RecommendedTag({ children, className }: { children: React.ReactNode; className?: string }) {
   return <span className={cx("display pointer-events-none inline-flex items-center rounded-full border border-amber-300/35 bg-[#241e0d] px-1.5 py-px text-[9px] font-bold uppercase leading-none tracking-[0.12em] text-amber-300", className)}>{children}</span>;
@@ -152,12 +152,12 @@ export function PackageChips({ pkg, C, className }: { pkg: TrainingPackage | nul
   return (
     <div className={cx("flex flex-wrap gap-1.5", className)}>
       <Chip icon={<ObjectiveIcon objective={pkg.objective} className="h-3.5 w-3.5" />} label={Y.objectives[pkg.objective]} tone={tone.text} />
-      <Chip icon={<FocusIcon focus={pkg.focus} className="h-3.5 w-3.5" />} label={focusLabel(C, pkg.focus)} tone="text-sub" />
-      <Chip icon={<IntensityBars workload={pkg.workload} />} label={Y.intensities[pkg.workload]} tone={pkg.workload === "heavy" ? "text-sub" : undefined} />
+      <Chip icon={<FocusIcon focus={pkg.focus} className="h-3.5 w-3.5" />} label={focusLabel(C, pkg.focus)} tone="text-blue-bright" />
+      <Chip icon={<IntensityBars workload={pkg.workload} />} label={Y.intensities[pkg.workload]} tone={pkg.workload === "heavy" ? "text-orange-bright" : undefined} />
       <Chip
         icon={<SwordsIcon className="h-3.5 w-3.5" />}
         label={`${Y.steps.scrims} · ${Y.scrimChoices[scrims]}`}
-        tone={scrims === "hard" ? "text-sub" : undefined}
+        tone={scrims === "hard" ? "text-orange-bright" : undefined}
       />
     </div>
   );
@@ -177,12 +177,38 @@ function Chip({ icon, label, tone }: { icon: React.ReactNode; label: string; ton
   );
 }
 
+/** A quick look at this week's already-recorded scrims; no separate simulation. */
+export function WeeklyScrimRecap({ save, C, compact = false }: { save: CareerSave; C: CareerCopy; compact?: boolean }) {
+  const entries = save.scrimLog.filter((entry) => entry.seasonIndex === save.clock.seasonIndex && weekOfDay(entry.day) === weekOfDay(save.clock.day));
+  if (compact && entries.length === 0) return null;
+  const won = entries.filter((entry) => entry.won).length;
+  return (
+    <section className={compact ? "border-t border-line pt-2.5" : ""}>
+      <div className="flex items-center justify-between gap-2">
+        <p className="kicker flex items-center gap-1.5 text-[10px]"><SwordsIcon className="h-3.5 w-3.5 text-blue-bright" />{C.training.weekScrims}</p>
+        {entries.length ? <span className="font-mono text-[10px] text-sub">{C.training.cycle.record(won, entries.length - won)}</span> : null}
+      </div>
+      {entries.length === 0 ? <p className="mt-1.5 text-[11px] text-faint">{C.scrim.noResults}</p> : (
+        <ul className="mt-2 space-y-1.5">
+          {entries.slice(0, compact ? 2 : 3).map((entry) => (
+            <li key={entry.id} className="flex items-center gap-2 text-[11px]">
+              <span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", entry.won ? "bg-good" : "bg-bad")} aria-hidden />
+              <span className="min-w-0 truncate text-sub">{entry.won ? C.scrim.won(entry.oppName, entry.scoreA, entry.scoreB) : C.scrim.lost(entry.oppName, entry.scoreA, entry.scoreB)}</span>
+              {!compact ? <span className="ml-auto shrink-0 text-[10px] text-faint">{formatDateTiny(C.dates, dateOfDay(entry.seasonIndex, entry.day))}</span> : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /** A quiet days-left counter; the gain bar carries the meaningful progress. */
 export function CycleRing({ label, className }: { progress: number; daysLeft: number; label: string; className?: string }) {
   return <span className={cx("shrink-0 whitespace-nowrap text-[11px] tabular-nums text-faint", className)}>{label}</span>;
 }
 
-const COMPLETION_FILL = "bg-white/30";
+const COMPLETION_FILL = "bg-amber-300/65";
 
 /** Only gain already paid fills the track; projected gain never masquerades as progress. */
 export function PromiseBar({ promise, C, className }: { promise: NonNullable<TrainingBlockView["promise"]>; C: CareerCopy; className?: string }) {
@@ -237,13 +263,13 @@ function OptionTile({
       onClick={onClick}
       className={cx(
         "relative flex min-h-[4.5rem] w-full min-w-0 items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
-        selected ? "border-blue/40 bg-white/[0.05]" : "border-line bg-white/[0.03] hover:border-line-strong",
+        selected ? `${tone.ring} ${tone.bg}` : "border-line bg-white/[0.02] hover:border-line-strong",
       )}
     >
       <span
         className={cx(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
-          selected ? "border-line-strong bg-white/[0.03] text-ink" : "border-line text-faint",
+          selected ? `${tone.ring} ${tone.bg} ${tone.text}` : `border-line ${tone.text} opacity-70`,
         )}
       >
         {icon}
@@ -287,7 +313,7 @@ function CompactTile({
       onClick={onClick}
       className={cx(
         "relative flex min-h-[4.25rem] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-1.5 pb-2 pt-3 text-center transition-colors",
-        selected ? "border-blue/40 bg-white/[0.05]" : "border-line bg-white/[0.03] hover:border-line-strong",
+        selected ? `${tone.ring} ${tone.bg}` : "border-line bg-white/[0.02] hover:border-line-strong",
       )}
     >
       <span className={cx("flex h-6 w-6 items-center justify-center", selected ? tone.text : "text-faint")}>{icon}</span>
@@ -414,6 +440,12 @@ export function PlanPicker({
 
   return (
     <div className="space-y-4">
+      {initial ? (
+        <div className={cx("rounded-xl border px-3 py-2.5", OBJECTIVE_TONE[initial.objective].ring, OBJECTIVE_TONE[initial.objective].bg)}>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-sub">{Y.running}</p>
+          <PackageChips pkg={initial} C={C} />
+        </div>
+      ) : null}
       {!adjusting && (recommendedPicks || showSame) ? (
         <div className="flex flex-wrap gap-2">
           {recommendedPicks ? (
@@ -580,8 +612,8 @@ export function CycleReportBody({
     <div className="space-y-3">
       {stats ? (
         <div className="grid grid-cols-3 gap-2">
-          <Stat label={R.avg} value={fmt1(avg)} tone={avg >= 0 ? "text-ink" : "text-bad"} />
-          <Stat label={R.best} value={best ? fmt1(best.after - best.before) : "—"} sub={best?.name} tone="text-ink" />
+          <Stat label={R.avg} value={fmt1(avg)} tone={avg >= 0 ? "text-good" : "text-bad"} />
+          <Stat label={R.best} value={best ? fmt1(best.after - best.before) : "—"} sub={best?.name} tone="text-good" />
           <Stat
             label={Y.legend.completion}
             value={completion > 0.004 ? `+${fmt2(completion)}` : "—"}
@@ -614,7 +646,7 @@ export function CycleReportBody({
                 <span className="flex h-2 flex-1 overflow-hidden rounded-full bg-white/10">
                   {gain >= 0 ? (
                     <>
-                      <span className="h-full bg-white/35" style={{ width: `${Math.round((along / max) * 100)}%` }} />
+                      <span className="h-full bg-good/60" style={{ width: `${Math.round((along / max) * 100)}%` }} />
                       <span className={cx("h-full", COMPLETION_FILL)} style={{ width: `${Math.round((end / max) * 100)}%` }} />
                     </>
                   ) : (
@@ -644,7 +676,7 @@ export function CycleReportBody({
       </ul>
       <div className="flex flex-wrap gap-1.5 text-[10px]">
         <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-line bg-white/[0.04] px-2.5 font-semibold text-sub">
-          <HandshakeIcon className="h-3.5 w-3.5 text-faint" />
+          <HandshakeIcon className="h-3.5 w-3.5 text-blue-bright" />
           {Y.chemistry} <span className="text-ink">{summary.chemStart}% → {summary.chemEnd}%</span>
         </span>
         {(Object.entries(summary.scrims) as [string, [number, number]][]).map(([lvl, [w, l]]) => (

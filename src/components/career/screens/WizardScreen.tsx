@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CAREER_DIFFICULTY, CAREER_ECONOMY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
-import { lineups, orgById, orgs } from "@/data";
+import { lineups, orgById, orgs, playerCardById } from "@/data";
 import { runwayWeeks, startingBudgetFor, weeklyWage, weeklyWageBill } from "@/engine/career/economy";
 import type { CareerColors, CareerDifficulty } from "@/engine/career/types";
 import type { StarterOffer } from "@/engine/career/worldSim";
@@ -24,12 +24,12 @@ import { randomSeed } from "@/lib/rng";
 import { cx } from "@/lib/util";
 import { CAREER_SLOTS } from "@/components/career/careerUi";
 import {
-  ALL_CREST_IDS,
-  ALL_PATTERN_IDS,
-  ALL_SYMBOL_IDS,
+  WIZARD_CREST_IDS,
+  WIZARD_PATTERN_IDS,
+  WIZARD_SYMBOL_IDS,
   composeCrestId,
-  contrastingSecondaryIndex,
-  CREST_PALETTE,
+  CREST_WIZARD_PALETTE,
+  CREST_WIZARD_KITS,
   LAYOUT_IDS,
   UserCrest,
 } from "@/components/career/UserCrest";
@@ -90,7 +90,8 @@ const PRESET_TONE: Record<CareerDifficulty, string> = {
 };
 
 /** null = the "None" tile in the pattern picker / randomizer pool. */
-const PATTERN_OPTIONS = [null, ...ALL_PATTERN_IDS] as const;
+const DEFAULT_CREST_COLORS = CREST_WIZARD_KITS.find((k) => k.id === "navy-gold") ?? CREST_WIZARD_KITS[0];
+const PATTERN_OPTIONS = [null, ...WIZARD_PATTERN_IDS] as const;
 
 function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -120,17 +121,11 @@ function rivalsByRegion(): Record<Region, { orgId: string; name: string }[]> {
   const map = Object.fromEntries(
     REGION_ORDER.map((r) => [r, [] as { orgId: string; name: string }[]]),
   ) as Record<Region, { orgId: string; name: string }[]>;
-  const fill = (strengths: string[]) => {
-    for (const l of lineups) {
-      if (l.seasonId !== "rlcs-x" || !strengths.includes(l.historicalStrength)) continue;
-      const bucket = map[l.region];
-      if (bucket.length >= 3 || bucket.some((b) => b.orgId === l.orgId)) continue;
-      bucket.push({ orgId: l.orgId, name: orgById.get(l.orgId)?.name ?? l.orgId });
-    }
-  };
-  fill(["elite"]);
-  fill(["strong"]);
-  fill(["solid", "underdog"]);
+  const rating = (l: (typeof lineups)[number]) => l.playerCardIds.reduce((n, id) => n + (playerCardById.get(id)?.overall ?? 0), 0) / l.playerCardIds.length;
+  for (const l of lineups.filter((l) => l.seasonId === "rlcs-x").sort((a, b) => rating(b) - rating(a) || a.orgId.localeCompare(b.orgId))) {
+    const bucket = map[l.region];
+    if (bucket.length < 3 && !bucket.some((b) => b.orgId === l.orgId)) bucket.push({ orgId: l.orgId, name: orgById.get(l.orgId)?.name ?? l.orgId });
+  }
   rivalsCache = map;
   return map;
 }
@@ -160,8 +155,8 @@ export function WizardScreen() {
   const [crestPattern, setCrestPattern] = useState<PatternId | null>(null);
   const [crestLayout, setCrestLayout] = useState<LayoutId>("emblem");
   const [colors, setColors] = useState<CareerColors>({
-    primary: CREST_PALETTE[0].hex,
-    secondary: CREST_PALETTE[1].hex,
+    primary: DEFAULT_CREST_COLORS.primary,
+    secondary: DEFAULT_CREST_COLORS.secondary,
   });
   const [buffType, setBuffType] = useState<StatKey>("offense");
   /** The composite crestId written to identity ("shape[:symbol[:pattern[:layout]]]"). */
@@ -220,16 +215,16 @@ export function WizardScreen() {
 
   /** Randomize every crest layer + a legibility-checked color pair (step 2 + quick start). */
   const randomizeCrest = () => {
-    setCrestShape(pickRandom(ALL_CREST_IDS));
-    setCrestSymbol(pickRandom(ALL_SYMBOL_IDS));
+    setCrestShape(pickRandom(WIZARD_CREST_IDS));
+    setCrestSymbol(pickRandom(WIZARD_SYMBOL_IDS));
     setCrestPattern(pickRandom(PATTERN_OPTIONS));
     setCrestLayout(pickRandom(LAYOUT_IDS));
     // rc.36 (UX-04): a random pair the contrast guard is happy with (a few re-rolls at most).
-    let pair: CareerColors = { primary: CREST_PALETTE[0].hex, secondary: CREST_PALETTE[1].hex };
+    let pair: CareerColors = { primary: DEFAULT_CREST_COLORS.primary, secondary: DEFAULT_CREST_COLORS.secondary };
     for (let i = 0; i < 12; i++) {
-      const primaryIdx = Math.floor(Math.random() * CREST_PALETTE.length);
-      const secondaryIdx = contrastingSecondaryIndex(primaryIdx, Math.floor(Math.random() * CREST_PALETTE.length));
-      pair = { primary: CREST_PALETTE[primaryIdx].hex, secondary: CREST_PALETTE[secondaryIdx].hex };
+      const primaryIdx = Math.floor(Math.random() * CREST_WIZARD_PALETTE.length);
+      const secondaryIdx = (primaryIdx + 1 + Math.floor(Math.random() * (CREST_WIZARD_PALETTE.length - 1))) % CREST_WIZARD_PALETTE.length;
+      pair = { primary: CREST_WIZARD_PALETTE[primaryIdx].hex, secondary: CREST_WIZARD_PALETTE[secondaryIdx].hex };
       const guard = crestContrastOf(pair);
       if (guard.pairOk && guard.cardOk) break;
     }

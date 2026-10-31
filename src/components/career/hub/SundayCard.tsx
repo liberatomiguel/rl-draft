@@ -175,9 +175,8 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
 
   const effectOf = (c: SundayBriefingChoice): string => {
     const fx = briefingEffectOf(c);
-    if (c === "recover") return C.sunday.effectRecover(fx.everySeries);
-    if (c === "prepare") return openerName ? C.sunday.effectPrepareVs(fx.opener, openerName) : C.sunday.effectPrepare(fx.opener);
-    return C.sunday.effectKeep;
+    if (c === "keep") return C.sunday.effectContinuity(fx.everySeries);
+    return C.sunday.effectTradeoff(Number((fx.everySeries + fx.opener).toFixed(2)), fx.everySeries);
   };
 
   return (
@@ -318,7 +317,7 @@ export function NowFollow({
           <Button variant="secondary" size="md" className="min-h-11" onClick={() => pick("watch")}>
             {C.sunday.watch}
           </Button>
-          <Button variant="ghost" size="md" className="min-h-11 border border-line" onClick={() => pick("results")}>
+          <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => pick("results")}>
             {C.sunday.results}
           </Button>
           <Button variant="ghost" size="md" className="min-h-11" onClick={() => pick("skip")}>
@@ -359,7 +358,7 @@ export function NowFollow({
         <Button variant="secondary" size="md" className="min-h-11" onClick={() => open("watch")}>
           {C.sunday.replay}
         </Button>
-        <Button variant="ghost" size="md" className="min-h-11 border border-line" onClick={() => open("results")}>
+        <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => open("results")}>
           {C.sunday.readResults}
         </Button>
         <Button variant="ghost" size="md" className="min-h-11" onClick={() => dismissFollow()}>

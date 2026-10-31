@@ -250,7 +250,9 @@ export const CAREER_PT: CareerCopy = {
     contrastUsePrimary: (name: string) => `Usar ${name} na base`,
     contrastSwap: "Inverter as cores",
     contrastKeep: "Suas cores ficam salvas de qualquer jeito.",
+    playstyleHelp: {"offense":"Ajuda o time a criar chances e finalizar ataques.","defense":"Reforça o posicionamento e a proteção do gol.","mechanics":"Melhora a execução técnica e o controle de bola.","consistency":"Ajuda os jogadores a manter o nível durante a série.","experience":"Traz mais calma e decisões melhores nas partidas.","clutch":"Ajuda o time a render nos momentos decisivos."},
     colorNames: {
+      "black": "Preto", "graphite": "Grafite", "navy-light": "Marinho claro", "royal-light": "Azul royal claro", "scarlet-light": "Escarlate claro", "burgundy-light": "Bordô claro", "forest-light": "Verde-floresta claro", "teal-light": "Verde-azulado claro", "plum-light": "Ameixa claro", "orange-light": "Laranja claro", "gold-light": "Dourado claro", "olive-light": "Oliva claro",
       navy: "Marinho", gold: "Dourado", burgundy: "Bordô", ivory: "Marfim", royal: "Azul royal", silver: "Prata",
       forest: "Verde-floresta", cream: "Creme", scarlet: "Escarlate", sky: "Celeste", charcoal: "Grafite", amber: "Âmbar",
       petrol: "Petróleo", white: "Branco", plum: "Ameixa", steel: "Aço", wine: "Vinho", olive: "Oliva",
@@ -262,7 +264,7 @@ export const CAREER_PT: CareerCopy = {
     regionKicker: "Onde você joga define quem enfrenta — e quantas vagas de Worlds existem.",
     regionStrength: "Força do campo",
     regionSlots: (n: number) => `${n} vagas no Worlds`,
-    regionRivals: "Rivais de peso",
+    regionRivals: "Rivais da RLCS X",
     regionNote: "Mudar de região é desbloqueado mais adiante na carreira.",
     strengthDeep: "Campo profundo — o caminho difícil",
     strengthStrong: "Campo forte",
@@ -914,6 +916,7 @@ export const CAREER_PT: CareerCopy = {
   },
 
   training: {
+    weekScrims: "Scrims da semana",
     title: "Treinos",
     autoTrain: "Delegar ao coach",
     manageMyself: "Quero cuidar disso",
@@ -992,7 +995,7 @@ export const CAREER_PT: CareerCopy = {
     // rc.34 (DEV-03, TRAINING-CONTRACT): um pacote de treino por período.
     // rc.35 (front T, Miguel): o ciclo de treino simplificado — objetivo + intensidade + scrims.
     cycle: {
-      restart: "Iniciar o mesmo plano",
+      restart: "Reiniciar o mesmo plano",
       title: "Ciclo de treino",
       cycleOf: (n: number, count: number) => `Ciclo ${n} de ${count}`,
       dayOf: (day: number, len: number) => `Dia ${day} de ${len}`,
@@ -1343,6 +1346,7 @@ export const CAREER_PT: CareerCopy = {
     filterRegion: "Região",
     allRegions: "Todas as regiões",
     // rc.33 (UX-07): só os jogadores que a reputação da org consegue contratar (a regra que a contratação confere).
+    filterAvailable: "Disponíveis",
     filterSignable: "Contratáveis com minha reputação",
     filterSignableCount: (n: number) => `${n} ${n === 1 ? "jogador" : "jogadores"} ao alcance`,
     /** rc.35 (front C): uma org o contratou nesta janela. */
@@ -1596,13 +1600,15 @@ export const CAREER_PT: CareerCopy = {
       rowFine: "Multa se falhar",
       upfrontSigning: "na assinatura",
       upfrontMilestone: "na 1ª meta",
+      upToWeekly: (s: string) => `até ${s} / semana`,
+      contractTotal: (s: string, n: number) => `${s} no total · ${n} splits`,
       upTo: (s: string) => `até ${s}`,
       noFine: "Nenhuma",
       lengthShort: (splits: number) =>
         splits === 1 ? "1 split" : splits === 3 ? "1 temporada" : splits === 6 ? "2 temporadas" : `${splits} splits`,
       difficultyMeter: (word: string) => `Dificuldade da meta: ${word}`,
       profileTag: { steady: "Mais seguro", balanced: "Meio-termo", bold: "Maior pagamento" } as Record<string, string>,
-      compareRule: "Mais dinheiro, meta mais difícil, multa maior.",
+      compareRule: "Compare o retorno por semana. O adiantamento cobre contratos de durações diferentes.",
       boldLocked: "Contratos ousados liberam conforme a reputação cresce.",
       globalSponsor: "Global",
       nextPay: "Próximo pagamento",
@@ -2424,12 +2430,14 @@ export const CAREER_PT: CareerCopy = {
     openerLabel: "Sua estreia",
     fieldLabel: "Quem joga no domingo",
     briefingTitle: "Preleção do técnico",
-    briefingHint: "Opcional, e só para domingo. Começar sem ela mantém o plano.",
+    briefingHint: "Escolha a troca para o domingo. Sem briefing, o time segue com continuidade.",
     briefing: {
-      keep: "Manter o plano",
+      keep: "Continuidade",
       recover: "Recuperar",
       prepare: "Estudar o adversário",
     },
+    effectContinuity: (n: number) => `+${String(n).replace(".", ",")} de rating em todas as séries; sem risco extra.`,
+    effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${String(first).replace(".", ",")} na estreia; ${later > 0 ? "+" : ""}${String(later).replace(".", ",")} nas séries seguintes.`,
     effectKeep: "Nada muda: a rotina que trouxe vocês até aqui.",
     effectRecover: (n: number) => `+${String(n).replace(".", ",")} de rating do time em todas as séries de hoje`,
     effectPrepare: (n: number) => `+${String(n).replace(".", ",")} de rating do time na sua série de estreia`,
@@ -2457,6 +2465,7 @@ export const CAREER_PT: CareerCopy = {
 
   // rc.36 (SUN-03, R88) — /career/follow: um evento sem você.
   follow: {
+    swissStandings: "Classificação do Swiss",
     kicker: "Da arquibancada",
     reasonEliminated: "Fora na qualificatória",
     reasonNotQualified: "Fora do evento",
@@ -2539,6 +2548,7 @@ export const CAREER_PT: CareerCopy = {
   },
 
   goals: {
+    reward: (n: number) => `+${n} reputação na revisão`,
     reachMajor: "Alcançar um Major",
     regionalTop4: "Um top-4 regional",
     majorTop8: "Um top-8 de Major",

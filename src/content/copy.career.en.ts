@@ -268,7 +268,9 @@ export const CAREER_EN = {
     contrastUsePrimary: (name: string) => `Use ${name} as base`,
     contrastSwap: "Swap the colours",
     contrastKeep: "Your colours are saved either way.",
+    playstyleHelp: {"offense":"Helps the team create chances and finish attacks.","defense":"Strengthens positioning and protection of the goal.","mechanics":"Improves technical execution and ball control.","consistency":"Helps players keep a steady level during a series.","experience":"Adds composure and better decisions during matches.","clutch":"Helps the team perform in decisive moments."},
     colorNames: {
+      "black": "Black", "graphite": "Graphite", "navy-light": "Light navy", "royal-light": "Light royal blue", "scarlet-light": "Light scarlet", "burgundy-light": "Light burgundy", "forest-light": "Light forest", "teal-light": "Light teal", "plum-light": "Light plum", "orange-light": "Light orange", "gold-light": "Light gold", "olive-light": "Light olive",
       navy: "Navy", gold: "Gold", burgundy: "Burgundy", ivory: "Ivory", royal: "Royal blue", silver: "Silver",
       forest: "Forest", cream: "Cream", scarlet: "Scarlet", sky: "Sky", charcoal: "Charcoal", amber: "Amber",
       petrol: "Petrol", white: "White", plum: "Plum", steel: "Steel", wine: "Wine", olive: "Olive",
@@ -281,7 +283,7 @@ export const CAREER_EN = {
     regionKicker: "Where you play decides who you face — and how many Worlds seats exist.",
     regionStrength: "Field strength",
     regionSlots: (n: number) => `${n} Worlds slots`,
-    regionRivals: "Notable rivals",
+    regionRivals: "RLCS X rivals",
     regionNote: "Relocating to another region unlocks later in the career.",
     strengthDeep: "Deep field — the hard road",
     strengthStrong: "Strong field",
@@ -934,6 +936,7 @@ export const CAREER_EN = {
   },
 
   training: {
+    weekScrims: "This week’s scrims",
     title: "Training",
     autoTrain: "Delegate to coach",
     manageMyself: "Manage it myself",
@@ -1011,7 +1014,7 @@ export const CAREER_EN = {
     effectPct: (v: number) => `${v}%`,
     // rc.35 (front T, Miguel): the simplified training cycle — objective + intensity + scrims.
     cycle: {
-      restart: "Start the same plan",
+      restart: "Restart the same plan",
       title: "Training cycle",
       cycleOf: (n: number, count: number) => `Cycle ${n} of ${count}`,
       dayOf: (day: number, len: number) => `Day ${day} of ${len}`,
@@ -1364,6 +1367,7 @@ export const CAREER_EN = {
     filterRegion: "Region",
     allRegions: "All regions",
     // rc.33 (UX-07): only the players the org's reputation can sign (the rule a signing checks).
+    filterAvailable: "Available",
     filterSignable: "Signable at my reputation",
     filterSignableCount: (n: number) => `${n} ${n === 1 ? "player" : "players"} within reach`,
     /** rc.35 (front C): an org signed him in this window. */
@@ -1621,13 +1625,15 @@ export const CAREER_EN = {
       rowFine: "Fine if missed",
       upfrontSigning: "on signing",
       upfrontMilestone: "at 1st goal",
+      upToWeekly: (s: string) => `up to ${s} / week`,
+      contractTotal: (s: string, n: number) => `${s} total · ${n} splits`,
       upTo: (s: string) => `up to ${s}`,
       noFine: "None",
       lengthShort: (splits: number) =>
         splits === 1 ? "1 split" : splits === 3 ? "1 season" : splits === 6 ? "2 seasons" : `${splits} splits`,
       difficultyMeter: (word: string) => `Goal difficulty: ${word}`,
       profileTag: { steady: "Safest", balanced: "Middle ground", bold: "Biggest pay" } as Record<string, string>,
-      compareRule: "More money, harder goal, bigger fine.",
+      compareRule: "Compare weekly return. Signing payments cover contracts of different lengths.",
       boldLocked: "Bold deals open as your reputation grows.",
       globalSponsor: "Global",
       nextPay: "Next payment",
@@ -2448,12 +2454,14 @@ export const CAREER_EN = {
     openerLabel: "Your opener",
     fieldLabel: "Sunday's field",
     briefingTitle: "Coach's briefing",
-    briefingHint: "Optional, and for Sunday only. Starting without one keeps the plan.",
+    briefingHint: "Choose your Sunday trade-off. Without a briefing, the team uses continuity.",
     briefing: {
-      keep: "Keep the plan",
+      keep: "Continuity",
       recover: "Recover",
       prepare: "Prepare for the opponent",
     },
+    effectContinuity: (n: number) => `+${n} team rating in every series; no extra risk.`,
+    effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${first} in the opener; ${later > 0 ? "+" : ""}${later} in later series.`,
     effectKeep: "No change: the routine that got you here.",
     effectRecover: (n: number) => `+${n} team rating in every series today`,
     effectPrepare: (n: number) => `+${n} team rating in your opening series`,
@@ -2480,6 +2488,7 @@ export const CAREER_EN = {
 
   // rc.36 (SUN-03, R88) — /career/follow: an event the user is out of.
   follow: {
+    swissStandings: "Swiss standings",
     kicker: "From the stands",
     reasonEliminated: "Out at the qualifier",
     reasonNotQualified: "Not in the field",
@@ -2563,6 +2572,7 @@ export const CAREER_EN = {
   },
 
   goals: {
+    reward: (n: number) => `+${n} reputation at review`,
     reachMajor: "Reach a Major",
     regionalTop4: "A regional top-4",
     majorTop8: "A Major top-8",

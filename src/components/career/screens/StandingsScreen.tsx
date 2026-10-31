@@ -426,8 +426,27 @@ export function StandingsScreen() {
     <div className="rise-in mx-auto max-w-6xl px-3 py-6 sm:px-4">
       <SectionTitle kicker={copy.meta.title} title={copy.standings.title} className="mb-5" />
 
+      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+      {/* Region selector */}
+      <div className="flex flex-wrap gap-1.5" aria-label={copy.standings.regionLabel}>
+        {REGIONS.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setPickedRegion(r)}
+            aria-pressed={region === r}
+            className={cx(
+              chipBase,
+              region === r ? REGION_BADGE[r] : "border-line-strong bg-white/5 text-sub hover:text-ink",
+            )}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+
       {/* Tabs — the two race tables (blue = structure) */}
-      <div className="mb-2 flex flex-wrap gap-2" role="tablist" aria-label={copy.standings.title}>
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={copy.standings.title}>
         {(
           [
             ["major", copy.race.majorTab],
@@ -453,6 +472,7 @@ export function StandingsScreen() {
           </button>
         ))}
       </div>
+      </div>
       <div id={`${tabIds}-panel`} role="tabpanel" aria-labelledby={`${tabIds}-tab-${kind}`}>
       <p className="mb-4 text-xs text-sub">{scope}</p>
 
@@ -461,7 +481,7 @@ export function StandingsScreen() {
         <Panel
           strong
           glow="blue"
-          className="rise-in relative mb-4 overflow-hidden p-5"
+          className="rise-in relative mb-4 overflow-hidden p-4"
           style={{ animationDelay: "60ms" }}
         >
           <div
@@ -469,8 +489,8 @@ export function StandingsScreen() {
             className="pointer-events-none absolute -left-12 -top-12 h-44 w-44 rounded-full opacity-15 blur-2xl"
             style={{ background: `radial-gradient(circle, ${save.identity.colors.primary}, transparent 70%)` }}
           />
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3 sm:w-56 sm:shrink-0">
+          <div className="relative grid items-center gap-4 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
+            <div className="flex min-w-0 items-center gap-3">
               <OrgMark save={save} orgRef="user" size="lg" />
               <div className="min-w-0">
                 <p className="display truncate text-base font-bold uppercase tracking-wide text-ink">
@@ -479,22 +499,22 @@ export function StandingsScreen() {
                 <TeamStars stars={userStarCount} size="sm" />
               </div>
             </div>
-            <div className="grid flex-1 gap-4 sm:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-2 items-start gap-x-4 gap-y-3 sm:grid-cols-3">
               <div>
                 <p className="kicker mb-1">{isMajor ? copy.race.majorTab : copy.race.worldsTab}</p>
-                <p className="display text-2xl font-bold text-ink">
+                <p className="display whitespace-nowrap text-xl font-bold text-ink">
                   {homeTable.started ? copy.hub.pointsRank(user.rank, user.points) : "–"}
                 </p>
               </div>
               <div>
                 <p className="kicker mb-1">{cutLabel}</p>
-                <p className={cx("display text-2xl font-bold", LINE_TONE[line ?? "unscored"])}>
+                <p className={cx("display text-lg font-bold leading-snug", LINE_TONE[line ?? "unscored"])}>
                   {lineText(line, homeTable.userGap)}
                 </p>
               </div>
               <div>
                 <p className="kicker mb-1">{copy.race.fixturesLabel}</p>
-                <p className="display text-lg font-bold text-ink">
+                <p className="display text-sm font-semibold leading-snug text-ink">
                   {isMajor
                     ? copy.race.fixturesMajor(homeTable.fixturesLeft.regionals)
                     : copy.race.fixturesWorlds(homeTable.fixturesLeft.regionals, homeTable.fixturesLeft.majors)}
@@ -508,24 +528,6 @@ export function StandingsScreen() {
         </Panel>
       ) : null}
 
-      {/* Region selector */}
-      <p className="kicker mb-2">{copy.standings.regionLabel}</p>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {REGIONS.map((r) => (
-          <button
-            key={r}
-            type="button"
-            onClick={() => setPickedRegion(r)}
-            aria-pressed={region === r}
-            className={cx(
-              chipBase,
-              region === r ? REGION_BADGE[r] : "border-line-strong bg-white/5 text-sub hover:text-ink",
-            )}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
 
       <Panel className="rise-in p-2 sm:p-4" style={{ animationDelay: "120ms" }}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">

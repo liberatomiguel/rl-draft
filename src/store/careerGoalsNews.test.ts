@@ -78,6 +78,31 @@ describe("UX-02 — the season goal through the flow", () => {
     expect(starts[1].basis.last).toBe(ends[0].targetMet ? "met" : "missed");
   });
 
+  it("settles each reward once, independently, with the reputation cap and no retroactive payout", () => {
+    for (const [target, stretch, rep, expected] of [[true, true, 40, 43], [true, false, 40, 41], [false, true, 40, 42], [false, false, 40, 40], [true, true, 99, 100]] as const) {
+      const save = createCareerSave(INPUT, 4242);
+      save.reputation = rep;
+      save.seasonGoals!.repRisk = 0;
+      save.eventResults = [{ eventId: "0:4:regional", tier: "regional", seasonIndex: 0, week: 4, name: "Regional", rows: [{ ref: "user", name: "Goal Org", placement: "top8", points: 1, prize: 0 }], championRef: "other", userPlacement: "top8", fieldQuality: 1 }];
+      const plan = save.seasonGoals!.plan!;
+      plan.target = { kind: "regionalReach", count: target ? 1 : 100, chance: 0.5 };
+      plan.stretch = { kind: "regionalReach", count: stretch ? 1 : 100, chance: 0.2 };
+      enterSeasonReview(save, null);
+      expect(save.reputation).toBe(expected);
+      enterSeasonReview(save, null);
+      expect(save.reputation).toBe(expected);
+      const loaded = migrateSaveToV5(JSON.parse(JSON.stringify(save)))!;
+      enterSeasonReview(loaded, null);
+      expect(loaded.reputation).toBe(expected);
+    }
+    const old = createCareerSave(INPUT, 4242);
+    old.seasonGoals!.targetMet = true;
+    old.seasonGoals!.stretchMet = true;
+    const rep = old.reputation;
+    enterSeasonReview(old, null);
+    expect(old.reputation).toBe(rep);
+  });
+
   it("an rc.35 save keeps its current goal: no plan on load, settled on rc.35's rule", () => {
     const save = createCareerSave(INPUT, 777);
     const { target, stretch } = seasonGoalModelFor(sponsorLevelOf(save), 0);

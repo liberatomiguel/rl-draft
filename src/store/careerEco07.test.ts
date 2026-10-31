@@ -10,7 +10,7 @@
  *  - ECO-07: no day-one founding partner (a running rc.32 deal is honoured);
  *    rc.34: Easy's first emergency loan brings the investor (rc.33's rescue
  *    partner) for about a split.
- *  - ECO-09: one index at 12 % and a steeper ask above the strong-player line.
+ *  - ECO-09: one index at 15 % and a steeper ask above the strong-player line.
  *  - M7: the sponsor tier bases and the fanbase (guaranteed income).
  *  - ECO-12: no sale listing and no late signing; an rc.32 save loads clean.
  *  - UX-07: the Monday balance ring behind the expanded Finances chart.
@@ -477,16 +477,16 @@ describe("rc.33 review — the investor in the mail and in the projections", () 
 });
 
 // ===========================================================================
-// ECO-09 — the 12 % index and the steeper ask for strong players
+// ECO-09 — the 15 % index and the steeper ask for strong players
 // ===========================================================================
 
-describe("rc.33 ECO-09 — one index at 12 % and a steeper curve above the strong-player line", () => {
+describe("rc.33 ECO-09 — one index at 15 % and a steeper curve above the strong-player line", () => {
   const ask = (overall: number, seasonIndex = 0) =>
     computeSalaryAsk({ overall, age: 23, potential: overall, rep: 100, seasonIndex, lengthSeasons: 1, difficulty: "normal", careerSeed: 7, playerId: "x" });
 
-  it("every stream moves on one index of 12 % a season", () => {
-    expect(CAREER_ECONOMY.indexPerSeason).toBe(1.12);
-    for (const stream of ["wages", "prizes", "sponsor", "flat"] as const) expect(moneyIndex(7, stream)).toBeCloseTo(1.12 ** 7, 10);
+  it("every stream moves on one index of 15 % a season", () => {
+    expect(CAREER_ECONOMY.indexPerSeason).toBe(1.15);
+    for (const stream of ["wages", "prizes", "sponsor", "flat"] as const) expect(moneyIndex(7, stream)).toBeCloseTo(1.15 ** 7, 10);
   });
 
   it("asks at or under the line are untouched; above it each point adds starGrowthPerPoint", () => {

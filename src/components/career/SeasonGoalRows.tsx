@@ -8,6 +8,7 @@
  * is fixed at the season's start; results only fill the meter).
  */
 
+import { CAREER_SEASON_GOAL } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { SeasonGoalLabel, SeasonGoalRowView, SeasonGoalsView } from "@/engine/career/seasonGoals";
 import { cx } from "@/lib/util";
@@ -172,7 +173,7 @@ function GoalRow({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="kicker !text-[9px]">{C.goals.role[row.role]}</span>
+          <span className="kicker !text-[9px]">{C.goals.role[row.role]} <span className="ml-1.5 normal-case tracking-normal text-orange-bright">{C.goals.reward(CAREER_SEASON_GOAL.reward[row.role])}</span></span>
           {status && showStatus ? (
             <span
               className={cx(

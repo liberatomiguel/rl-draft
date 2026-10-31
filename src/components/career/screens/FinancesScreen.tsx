@@ -100,7 +100,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Panel, SectionTitle } from "@/components/ui/Panel";
-import { RungBadge } from "@/components/career/ladder/LadderParts";
+import { RungIcon } from "@/components/career/ladder/LadderParts";
+import { CheckIcon } from "@/components/ui/icons";
 import type { LadderRungId } from "@/engine/career/ladder";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
@@ -473,13 +474,10 @@ function BalanceSparkline({ data }: { data: number[] }) {
 // Gear ladder step (timeline node + card)
 // ---------------------------------------------------------------------------
 
-/** rc.36: the step's state as the ladder's icon badge reads it (owned · open to buy · locked). */
-const BADGE_STATUS: Record<StepStatus, "owned" | "open" | "locked"> = { owned: "owned", next: "open", locked: "locked" };
-
 /**
  * One step of the arsenal (rc.34's stacked list). rc.36: its node on the rail
- * is the item's icon badge (the HQ ladder's: a check when owned, a lock when
- * locked, the glow on the one to buy next); on a phone the price / Buy sits
+ * shows completion only; the item icon belongs beside its card title.
+ * On a phone the price / Buy sits
  * under the text instead of squeezing it.
  */
 function LadderStep({
@@ -512,8 +510,8 @@ function LadderStep({
           )}
         />
       ) : null}
-      <span className="absolute left-0 top-1.5 z-10">
-        <RungBadge rung={{ id: rung, status: BADGE_STATUS[status] }} size="sm" highlight={status === "next"} />
+      <span aria-hidden className={cx("absolute left-0 top-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-panel", status === "owned" ? "border-orange/50 text-orange-bright" : status === "next" ? "border-orange/40 text-orange/35" : "border-line text-faint/30")} >
+        <CheckIcon className="h-4 w-4" />
       </span>
       <div
         className={cx(
@@ -526,11 +524,14 @@ function LadderStep({
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-start gap-2.5">
+              <RungIcon id={rung} className={cx("mt-0.5 h-5 w-5 shrink-0", status === "locked" ? "text-orange/40" : "text-orange-bright")} />
+              <div className="flex flex-wrap items-center gap-2">
               <span className="display text-sm font-bold uppercase tracking-wide text-ink">
                 {title}
               </span>
               {badges}
+              </div>
             </div>
             <p className="mt-1 text-xs leading-relaxed text-sub">{desc}</p>
             {notes}
@@ -946,13 +947,11 @@ export function FinancesScreen() {
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-5">
         {/* ================= THE GEAR LADDER (centerpiece) ================= */}
         <Panel className="rise-in p-4 sm:p-5 lg:col-span-3" style={{ animationDelay: "120ms" }}>
-          <div className="mb-1 flex items-baseline justify-between gap-2">
-            <p className="kicker text-[11px]">{C.finances.gearLadder}</p>
+          <div className="mb-3 flex justify-end">
             <span className="shrink-0 text-[10px] font-semibold text-faint">
               {C.common.reputation} {Math.round(rep)}
             </span>
           </div>
-          <p className="mb-4 text-xs text-sub">{C.finances.gearLadderHint}</p>
 
           {/* rc.36: every step stacked again (rc.34's list), each with its icon. */}
           <ol>

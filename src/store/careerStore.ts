@@ -123,6 +123,7 @@ import { reportingJSONStorage, reportingMigrate, reportMigration } from "./persi
 export interface CareerToast {
   id: string;
   source: "mail" | "news" | "achievement";
+  beatId?: string;
   titleKey: string;
   params?: Record<string, string | number>;
   linkTo?: string;
@@ -142,13 +143,13 @@ function collectToasts(save: CareerSave, prevSeq: number): CareerToast[] {
   const out: CareerToast[] = [];
   for (const m of save.mail) {
     if (seqOf(m.id) <= prevSeq) break; // newest-first list
-    out.push({ id: m.id, source: "mail", titleKey: m.titleKey, params: m.params, linkTo: m.linkTo });
+    out.push({ id: m.id, source: "mail", titleKey: m.titleKey, params: m.params, linkTo: m.linkTo ?? "/news" });
   }
   for (const n of save.news) {
     if (seqOf(n.id) <= prevSeq) break;
     if (n.priority < 2) continue;
     if (out.some((t) => t.titleKey === n.titleKey)) continue; // mail twin exists
-    out.push({ id: n.id, source: "news", titleKey: n.titleKey, params: n.params });
+    out.push({ id: n.id, source: "news", titleKey: n.titleKey, params: n.params, beatId: n.beatId });
   }
   return out.slice(0, TOASTS_PER_ACTION);
 }

@@ -218,3 +218,25 @@ describe("the week agenda follows the commit (R40 review)", () => {
     expect(isUserEventDef(save, regional)).toBe(true);
   });
 });
+
+
+describe("unofficial cups on the calendar", () => {
+  it("shows an offered Community Cup or Invitational and retains the played day", () => {
+    for (const tier of ["t3", "t2"] as const) {
+      const save = freshCareer();
+      save.activeEvent = null;
+      save.pendingEventDef = null;
+      const day = eventDayFor(2);
+      const def = { id: "0:2:unofficial", name: "Cup", seasonIndex: 0, week: 2, day, tier, format: "single" as const };
+      save.unofficialOffer = def;
+      expect(agendaDays(save, day, 1)[0]).toMatchObject({ event: def, participation: "playing" });
+      save.unofficialOffer = null;
+      save.clock.day = day + 1;
+      save.eventResults.push({ eventId: def.id, name: def.name, tier, seasonIndex: 0, week: 2, championRef: "user", userPlacement: "champion", rows: [], fieldQuality: 1 });
+      expect(agendaDays(save, day, 1)[0].event).toMatchObject({ id: def.id, tier });
+      expect(agendaDays(save, day + 1, 1)[0].event).toBeNull();
+      save.clock.day = day - 1; // an older save played the cup before its re-timed Saturday
+      expect(agendaDays(save, day, 1)[0].event).toBeNull();
+    }
+  });
+});

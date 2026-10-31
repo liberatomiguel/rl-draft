@@ -4,9 +4,8 @@
  * reserve and the coach are thin rows again (rc.33's shape); the finance
  * block prints only the balance, the weekly out, the chart, and the
  * next-payroll and runway lines (no debt, even with a loan); the progression
- * card lists the items to buy as rows, shares one footer row between "See
- * more" and Finances, and keeps a three-rung track. (The unlock modal's
- * Close-only actions live in a portal: checked in the browser E2E shots.)
+ * card shows the latest reached rung and its neighbors, shares one footer
+ * row between "See more" and Finances, and keeps a three-rung track.
  */
 
 import { createElement } from "react";
@@ -134,15 +133,26 @@ describe("rc.36 POL-02 — HQ finances: the balance, the weekly out, the chart, 
 });
 
 describe("rc.36 POL-02 — the progression card: three item rows and next unlock below", () => {
-  it("the items to buy are icon rows (no tile grid); See more and Finances share the footer", () => {
+  it("shows neighbors of the latest unlock, including when earlier gear is still unbought", () => {
     const save = fresh();
     save.reputation = 22; // peripherals, monitors and PCs open
     const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
-    for (const name of [CAREER_EN.finances.gear.peripherals, CAREER_EN.finances.gear.monitors, CAREER_EN.finances.gear.pcs]) expect(html).toContain(name);
+    for (const name of [CAREER_EN.finances.gear.monitors, CAREER_EN.finances.gear.pcs, CAREER_EN.ladder.rung.exProCoach]) expect(html).toContain(name);
+    expect(html).not.toContain(`>${CAREER_EN.finances.gear.peripherals}</button>`);
+    expect(html.match(/<li class="flex min-h-16/g)).toHaveLength(3);
     expect(html).not.toContain("grid grid-cols-2 gap-2");
     expect(html).toContain(CAREER_EN.ladder.seeMore);
     expect(html).toContain('href="/career/finances"');
     expect(html).toContain(CAREER_EN.toolbox.buy);
     expect(html.indexOf(CAREER_EN.ladder.next)).toBeGreaterThan(html.indexOf(CAREER_EN.finances.gear.pcs));
+  });
+  it("keeps the final three rungs visible at the top of the ladder", () => {
+    const save = fresh();
+    save.reputation = 100;
+    const html = renderToStaticMarkup(createElement(ToolboxBlock, { save, C: CAREER_EN }));
+    for (const name of [CAREER_EN.ladder.rung.sponsors3, CAREER_EN.finances.gear.perfCenter, CAREER_EN.ladder.rung.sponsors4]) expect(html).toContain(name);
+    expect(html).not.toContain(`>${CAREER_EN.finances.gear.peripherals}</button>`);
+    expect(html.match(/<li class="flex min-h-16/g)).toHaveLength(3);
+    expect(html).toContain(CAREER_EN.ladder.top);
   });
 });

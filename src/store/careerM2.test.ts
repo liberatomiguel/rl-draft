@@ -71,13 +71,13 @@ const renewed = (save: CareerSave, id: string, len: 1 | 2 | 3 = 2) => {
 };
 
 describe("M2 — renewing your own players (provisional default 2-B)", () => {
-  it("the provisional keys: rule capFloor, cap ×1.5, floor 50 %", () => {
+  it("the provisional keys: rule capFloor, cap ×1.75, floor 60 %", () => {
     expect(CAREER_SALARY.renewalRule).toBe("capFloor");
-    expect(CAREER_SALARY.renewalRaiseCap).toBe(1.5);
-    expect(CAREER_SALARY.renewalMarketFloor).toBe(0.5);
+    expect(CAREER_SALARY.renewalRaiseCap).toBe(1.75);
+    expect(CAREER_SALARY.renewalMarketFloor).toBe(0.6);
   });
 
-  it("a developed founder: his raise is capped at ×1.5 his current wage, not the full market jump", () => {
+  it("a developed founder: his raise is capped at ×1.75 his current wage, not the full market jump", () => {
     const { save, p } = withPlayer({ overall: 79, potential: 82, salaryPerSplit: 6_000 });
     const fresh = renewalAskFor(p, ctxOf(save));
     expect(fresh).toBeGreaterThan(6_000 * CAREER_SALARY.renewalRaiseCap);
@@ -88,7 +88,7 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     expect(renewed(save, p.id).salaryPerSplit).toBe(terms.ask);
   });
 
-  it("a breakout star on a modest old deal: never under 50 % of his market value", () => {
+  it("a breakout star on a modest old deal: never under 60 % of his market value", () => {
     // His wage × renewalMaxJump is above the floor, so the floor prices him.
     const probe = withPlayer({ overall: 86, potential: 88, salaryPerSplit: 1_000 });
     const floor = quantize(renewalTermsFor(probe.p, ctxOf(probe.save)).freshAsk * CAREER_SALARY.renewalMarketFloor);
@@ -157,7 +157,7 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
       s.reputation = 10;
     });
     // rc.33 (ECO-09 steepened the ask above 80): a wage the raise cap prices whatever the
-    // curve — the cap (×1.5) lands between the market floor and his fresh ask.
+    // curve — the cap (×1.75) lands between the market floor and his fresh ask.
     p.salaryPerSplit = quantize(renewalTermsFor(p, ctxOf(save)).marketFloor * 0.8);
     const terms = renewalTermsFor(p, ctxOf(save));
     expect(terms.ambitious).toBe(true);

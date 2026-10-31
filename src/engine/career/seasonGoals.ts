@@ -601,3 +601,8 @@ export function seasonGoalsViewOf(save: CareerSave): SeasonGoalsView | null {
 export function seasonGoalMetAtReview(spec: SeasonGoalSpec, save: CareerSave): boolean {
   return seasonGoalProgressOf(spec, { ...contextOf(save), over: true }).hit;
 }
+
+/** Settled once by the season review; existing settled reviews are never repaid. */
+export function seasonGoalReputationAfter(rep: number, targetMet: boolean, stretchMet: boolean): number {
+  return Math.min(100, rep + (targetMet ? CAREER_SEASON_GOAL.reward.target : 0) + (stretchMet ? CAREER_SEASON_GOAL.reward.stretch : 0));
+}
