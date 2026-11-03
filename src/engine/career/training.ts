@@ -17,12 +17,13 @@
 
 import { CAREER_COACH_MARKET, CAREER_PLAN, CAREER_SCRIM, CAREER_TRAINING } from "@/config/balance";
 import type { StatKey } from "../types";
-import { DAYS_PER_SEASON, firstDayOfWeek } from "./calendar";
+import { DAYS_PER_SEASON, dayOfWeekOf, firstDayOfWeek } from "./calendar";
 import { derivedFloat } from "./seeds";
 import type {
   CoachState,
   DrillId,
   PlayerTweak,
+  ScheduledScrim,
   ScrimLevel,
   SquadFocus,
   TrainingObjective,
@@ -341,6 +342,18 @@ export function resolveScrimLevel(pkg: Pick<TrainingPackage, "scrimLevel" | "obj
 export function scrimDaysOf(perWeek: number): readonly number[] {
   const n = clamp(Math.round(perWeek), 0, CAREER_SCRIM.package.maxPerWeek);
   return n > 0 ? (CAREER_SCRIM.package.days[n] ?? []) : [];
+}
+
+/** Existing bookings move forward to a legal practice day; never replay a past session. */
+export function rescheduleScrimDays(bookings: readonly ScheduledScrim[], today: number): ScheduledScrim[] {
+  const out: ScheduledScrim[] = [];
+  for (const booking of [...bookings].sort((a, b) => a.day - b.day)) {
+    if (booking.day <= today) continue;
+    let day = booking.day;
+    while (day <= DAYS_PER_SEASON && (!CAREER_SCRIM.weekdays.includes(dayOfWeekOf(day)) || out.some(s => s.day === day && s.oppRef === booking.oppRef))) day++;
+    if (day <= DAYS_PER_SEASON) out.push({ ...booking, day });
+  }
+  return out.sort((a, b) => a.day - b.day);
 }
 
 /** The k-th (0-based) package scrim of a week pays this share (100 / 60 / 30 %). */

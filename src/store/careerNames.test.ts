@@ -11,6 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 import { STARTER_NAME_BANK } from "@/data/career/names";
+import { playerNameBankFor } from "@/engine/career/names";
 import { officialEventDefsForWeek, qualifierDefsForWeek, seasonSchedule } from "@/engine/career/calendar";
 import { playerViewById } from "@/engine/career/development";
 import { isLocalRef } from "@/engine/career/localScene";
@@ -145,7 +146,7 @@ describe("no gamertag on two teams of one field (rc.29 CAR-01)", { timeout: 60_0
     expect(built.orgs["fc-barcelona"].playerIds).toContain("itachi");
     expect(built.orgs["vodafone-giants"].playerIds).not.toContain("itachi");
     expect(built.orgs["vodafone-giants"].playerIds).toHaveLength(3);
-    expect(built.nameBankVersion).toBe(2);
+    expect(built.nameBankVersion).toBe(3);
     for (const world of [built, createCareerSave(input("SAM"), SEEDS[0]).world]) {
       const ids = rosteredIds(world);
       expect(new Set(ids).size).toBe(ids.length);
@@ -237,7 +238,8 @@ describe("the rookie intake picks a free gamertag (rc.29 CAR-01)", { timeout: 60
     const ctx = (world: WorldState, seasonIndex: number) => ({ careerSeed: save.careerSeed, seasonIndex, world });
     // fic:MENA:37 is the filler "Fahad" in an old world and "Nimr" in a new one.
     expect(playerViewById("fic:MENA:37", ctx(legacy, 0))?.name).toBe("Fahad");
-    expect(playerViewById("fic:MENA:37", ctx(save.world, 0))?.name).toBe("Nimr");
+    expect(playerViewById("fic:MENA:37", ctx({ ...save.world, nameBankVersion: 2 }, 0))?.name).toBe("Nimr");
+    expect(playerViewById("fic:MENA:37", ctx(save.world, 0))?.name).toBe(playerNameBankFor("MENA", 3, save.careerSeed)[37]);
     // A rookie generated before rc.29 (no entry) keeps the derived bank pick.
     const oldRookie = "rook:1:MENA:0";
     const before = playerViewById(oldRookie, ctx({ ...legacy, freeAgentIds: [...legacy.freeAgentIds, oldRookie] }, 1))?.name;

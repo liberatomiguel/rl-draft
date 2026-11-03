@@ -31,7 +31,7 @@ import type { PlayoffState } from "@/engine/types";
 import { seedsFromSwiss } from "@/engine/swiss";
 import { atPlayoffsStart } from "@/engine/tournament";
 import type { Placement, TournamentState } from "@/engine/types";
-import { isChampionshipSunday, sundayIntroFlagFor } from "@/store/careerFlow";
+import { isChampionshipSunday, regionalUserEligible, sundayIntroFlagFor } from "@/store/careerFlow";
 
 // ---------------------------------------------------------------------------
 // Day roles & participation
@@ -78,7 +78,8 @@ export function participationOf(save: CareerSave, def: CareerEventDef): Particip
     if (!refs) return "tbd";
     return refs.includes("user") ? "playing" : "spectating";
   }
-  // Qualifiers / regionals / cups only reach the agenda when they are the user's.
+  if (def.tier === "regional") return regionalUserEligible(save, def) ? "playing" : "spectating";
+  // Qualifiers and cups only reach the agenda when they are the user's.
   return "playing";
 }
 

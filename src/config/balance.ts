@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 10;
+export const BALANCE_VERSION = 11;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -1072,6 +1072,8 @@ export const CAREER_PRIZES = {
 
 /** Unofficial tournaments (t3 Community Cup · t2 Invitational; t1 LAN = v1.1). */
 export const CAREER_UNOFFICIAL = {
+  smallTeamChance: 0.16,
+  smallTeamSizes: [1, 2] as const,
   t3RatingBand: 4,
   /** t3 offers stop above this team rating ("outgrown the community circuit"). */
   t3RatingCeiling: 85,
@@ -1139,6 +1141,7 @@ export const CAREER_CHEMISTRY = {
  * chemistry credit + light match XP. No money, no points; capped per week.
  */
 export const CAREER_SCRIM = {
+  weekdays: [2, 3] as readonly number[],
   maxPerWeek: 2,
   /** Automatic picks prefer new weekly opponents; a rematch remains possible. */
   weeklyRematchChance: 0.15,
@@ -1175,12 +1178,12 @@ export const CAREER_SCRIM = {
   },
   /**
    * rc.34 (T3): a package's scrims a week (0..maxPerWeek) and their weekdays
-   * (2 = Tue, 3 = Wed, 4 = Thu — never a matchday); the k-th scrim of a week
+   * (2 = Tue, 3 = Wed — never a matchday); the k-th scrim of a week
    * pays weekShare[k] of its XP and chemistry (contract: 100 / 60 / 30 %).
    */
   package: {
-    maxPerWeek: 3,
-    days: { 1: [2], 2: [2, 4], 3: [2, 3, 4] } as Record<number, readonly number[]>,
+    maxPerWeek: 2,
+    days: { 1: [2], 2: [2, 3] } as Record<number, readonly number[]>,
     weekShare: [1, 0.6, 0.3] as readonly number[],
   },
 } as const;
@@ -2965,11 +2968,11 @@ export const CAREER_NEWS = {
   /**
    * rc.36 — UX-03 (R87): who presents the news desk. "wire" = the game's own
    * "The Wire"; "fiftyFifty" = the 50/50 presentation (its name, logo slot
-   * and credit line). It stays "wire" until the partner agrees on material,
-   * naming and credit; the headlines are the game's own either way (never a
-   * quote put in the partner's mouth).
+   * and credit line). Miguel supplied the logo and requested the 50/50
+   * presentation on 2026-11-03. The editorial content follows the career's
+   * own events; archive stories remain explicitly labelled.
    */
-  brand: "wire" as "wire" | "fiftyFifty",
+  brand: "fiftyFifty" as "wire" | "fiftyFifty",
   /** The feed's lead story: the most important headline (newest on a tie) of at least this priority… */
   leadMinPriority: 1,
   /** …from the last this-many days (older news reads as rows only). */
@@ -3159,6 +3162,8 @@ export const CAREER_PLAYBACK = {
    * secondary action.
    */
   autoAdvanceDayMs: 850,
+  scrimGameMs: 900,
+  scrimReducedMotionMs: 1_200,
   /**
    * v2.0 (R40) Championship Sunday title card (watch mode): ms before it
    * hands over to the playoffs on its own (× the animation-speed scale;

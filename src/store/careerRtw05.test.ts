@@ -31,7 +31,7 @@ import { userTeamFor } from "@/engine/career/worldSim";
 import { signableOverallCap } from "@/engine/career/economy";
 import { listingFor, signableAtRep } from "@/engine/career/market";
 import { continueKind, scrimAvailability } from "@/components/career/careerUi";
-import { resolveNews } from "@/components/career/news/newsText";
+import { resolveMail } from "@/components/career/news/newsText";
 import { errorTextFor } from "@/components/career/hub/hubShared";
 import { fillSeatsForTests } from "./careerArcBot";
 import {
@@ -378,6 +378,7 @@ describe("RTW-05 — no scrim with fewer than three players (rc.33 review)", () 
 
   it("a short squad cannot scrim: the flow refuses, nothing moves, the hub says why", () => {
     const full = quietStart(50_531);
+    full.clock.day = 2;
     expect(dayOfWeekOf(full.clock.day)).toBeLessThanOrEqual(CAREER_TRAINING.trainingDaysPerWeek);
     const short = withoutOne(full);
     const res = runScrimFlow(short);
@@ -408,10 +409,10 @@ describe("RTW-05 — no scrim with fewer than three players (rc.33 review)", () 
     expect(next.scrimLog.some((e) => e.day === day)).toBe(false);
     expect(next.scrimsThisWeek).toBe(short.scrimsThisWeek);
     expect(next.squad.map((p) => p.splitsTogether)).toEqual(short.squad.map((p) => p.splitsTogether));
-    const item = next.news.find((n) => n.titleKey === "scrimSkipped")!;
+    const item = next.mail.find((n) => n.titleKey === "scrimSkipped")!;
     expect(item).toBeDefined();
-    expect(resolveNews(item, CAREER_EN as unknown as CareerCopy, "en").title).toContain(opp.name);
-    expect(resolveNews(item, CAREER_PT, "pt").title).toContain(opp.name);
+    expect(resolveMail(item, CAREER_EN as unknown as CareerCopy).title).toContain(opp.name);
+    expect(resolveMail(item, CAREER_PT).title).toContain(opp.name);
     // The same booking with three players runs.
     const ran = advanceDayFlow(booked.save);
     expect(ran.scrimLog.some((e) => e.day === day && e.oppRef === opp.ref)).toBe(true);

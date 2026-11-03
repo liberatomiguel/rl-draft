@@ -24,6 +24,7 @@
 
 import { useMemo, useState } from "react";
 import { CAREER_PLAN } from "@/config/balance";
+import { useCareerStore } from "@/store/careerStore";
 import type { CareerCopy } from "@/content/careerCopy";
 import { seasonLabelFor, weekOfDay } from "@/engine/career/calendar";
 import {
@@ -179,7 +180,8 @@ function Chip({ icon, label, tone }: { icon: React.ReactNode; label: string; ton
 
 /** A quick look at this week's already-recorded scrims; no separate simulation. */
 export function WeeklyScrimRecap({ save, C, compact = false }: { save: CareerSave; C: CareerCopy; compact?: boolean }) {
-  const entries = save.scrimLog.filter((entry) => entry.seasonIndex === save.clock.seasonIndex && weekOfDay(entry.day) === weekOfDay(save.clock.day));
+  const playing = useCareerStore((s) => s.scrimPlayback?.id);
+  const entries = save.scrimLog.filter((entry) => entry.id !== playing && entry.seasonIndex === save.clock.seasonIndex && weekOfDay(entry.day) === weekOfDay(save.clock.day));
   if (compact && entries.length === 0) return null;
   const won = entries.filter((entry) => entry.won).length;
   return (

@@ -68,6 +68,7 @@ export function CareerTopBar() {
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
   const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const autoAdvance = useCareerStore((s) => s.autoAdvance);
+  const scrimPlaying = useCareerStore((s) => Boolean(s.scrimPlayback));
   const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
   // R40 review / rc.29 (CAR-02): the playback's hold — live, or from its session cursor.
   const revealHeldEventId = useRevealHeldEventId(save);
@@ -216,6 +217,7 @@ export function CareerTopBar() {
               size="sm"
               variant="secondary"
               onClick={onContinue}
+              disabled={scrimPlaying}
               title={copy.hub.skipToNext}
               aria-label={copy.hub.skipToNext}
             >

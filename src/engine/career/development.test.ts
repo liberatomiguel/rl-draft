@@ -19,7 +19,7 @@ import {
   CAREER_WORLD,
 } from "@/config/balance";
 import { lineupById, playerById, playerCards, seasonById } from "@/data";
-import { PLAYER_NAME_BANK } from "@/data/career/names";
+import { PLAYER_NAME_BANK } from "@/data/career/legacyNames";
 import type { Rng } from "@/lib/rng";
 import { finalOverall } from "../cards";
 import type { StatKey } from "../types";

@@ -627,5 +627,8 @@
     "victory-lane.anim": "c3817a3562",
     "wildfire": "b9be3f5b7b",
     "wildfire.anim": "05d5b0f07a"
+  },
+  "partners": {
+    "fiftyfifty": "0e2893020d"
   }
 }

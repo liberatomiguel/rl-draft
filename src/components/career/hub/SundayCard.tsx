@@ -304,6 +304,7 @@ export function NowFollow({
     const pick = (choice: "watch" | "results" | "skip") => {
       followSunday(choice);
       if (choice !== "skip") router.push("/career/follow");
+      else router.push("/career/calendar");
     };
     return (
       <div className="rounded-xl border border-blue/30 bg-blue/[0.05] p-3.5">
@@ -321,7 +322,7 @@ export function NowFollow({
             {C.sunday.results}
           </Button>
           <Button variant="ghost" size="md" className="min-h-11" onClick={() => pick("skip")}>
-            {C.sunday.skip}
+            {C.sunday.backToCalendar}
           </Button>
         </div>
       </div>
@@ -361,8 +362,8 @@ export function NowFollow({
         <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => open("results")}>
           {C.sunday.readResults}
         </Button>
-        <Button variant="ghost" size="md" className="min-h-11" onClick={() => dismissFollow()}>
-          {C.sunday.hide}
+        <Button variant="ghost" size="md" className="min-h-11" onClick={() => { dismissFollow(); router.push("/career/calendar"); }}>
+          {C.sunday.backToCalendar}
         </Button>
       </div>
     </div>

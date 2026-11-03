@@ -14,7 +14,7 @@
  * and never repeats. It waits while a money notice is up.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCareerCopy } from "@/content/careerCopy";
 import { useCopy } from "@/content/copy";
 import { seasonLabelFor } from "@/engine/career/calendar";
@@ -47,6 +47,10 @@ export function TrainingReportModal() {
   const setSettings = useSettings((s) => s.set);
   const [dontShow, setDontShow] = useState(false);
   const report = save ? trainingReportOf(save) : null;
+  // Hiding the recap must have the same lifecycle as its Continue button.
+  useEffect(() => {
+    if (!showReports && report) continueReport();
+  }, [showReports, report, continueReport]);
   if (!showReports || !save || !report || moneyNoticeOf(save)) return null;
   const remember = () => { if (dontShow) setSettings("careerTrainingReports", false); setDontShow(false); };
   const dismiss = () => { remember(); acknowledge(); };

@@ -96,7 +96,7 @@ describe("bank loan flows (R21)", () => {
     const cleared = payBankLoanFlow(save, 999_999);
     expect(cleared.error).toBeUndefined();
     expect(cleared.save.finances.bankLoan).toBeNull();
-    expect(cleared.save.news.some((n) => n.titleKey === "bankCleared")).toBe(true);
+    expect(cleared.save.mail.some((n) => n.titleKey === "bankCleared")).toBe(true);
     expect(payBankLoanFlow(cleared.save, 100).error).toBe("none");
   });
 });
@@ -152,7 +152,7 @@ describe("regional qualifier (R30, R40 weekend)", () => {
       expect(played.news.some((n) => n.titleKey === "qualifiedRegional")).toBe(true);
     } else {
       expect(played.pendingEventDef).toBeNull();
-      expect(played.news.some((n) => n.titleKey === "missedRegional")).toBe(true);
+      expect(played.mail.some((n) => n.titleKey === "missedRegional")).toBe(true);
     }
     // No regional resolves on Saturday — they all play Sunday.
     expect(played.eventResults.some((r) => r.tier === "regional")).toBe(false);

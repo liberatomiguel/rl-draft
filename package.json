@@ -1,6 +1,6 @@
 {
   "name": "rocket-draft",
-  "version": "2.0.0-rc.36.5",
+  "version": "2.0.0-rc.36.6",
   "private": true,
   "browserslist": [
     "chrome >= 111",
@@ -27,6 +27,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build:data": "node scripts/build-dataset.mjs",
+    "build:career-names": "node scripts/build-career-names.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
     "validate:data": "vitest run src/data",
     "test:contract": "vitest run src/store/persistContract.test.ts",

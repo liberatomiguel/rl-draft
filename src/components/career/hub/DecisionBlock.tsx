@@ -105,10 +105,14 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
   const [focusId, setFocusId] = useState<string | null>(null);
   const [confirmBid, setConfirmBid] = useState<TransferOffer | null>(null);
 
-  const queue = useMemo(() => pendingDecisionsOf(save), [save]);
+  const queue = useMemo(() => {
+    const pending = pendingDecisionsOf(save);
+    const needsManager = pending.some(d => d.holds || d.kind === "bid" || d.kind === "sponsor");
+    return needsManager ? pending.filter(d => d.kind !== "follow") : pending;
+  }, [save]);
   const focused = focusId ? (queue.find((d) => d.id === focusId) ?? null) : null;
   const top = focused ?? queue.find((d) => !d.parked) ?? null;
-  const others = queue.filter((d) => d !== top);
+  const others = queue.filter((d) => d !== top && d.kind !== "follow");
 
   const D = C.dates;
   const today = save.clock.day;
@@ -330,7 +334,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined,
                 // rc.34 review (Gate 3b): a fresh invite holds nothing — it sits above the clock's controls.
                 // Nonblocking sponsor prompts, invites and followed events keep the clock controls.
-                inline: (top?.kind === "invite" || top?.kind === "sponsor" || top?.kind === "follow") && !top.holds,
+                inline: (top?.kind === "invite" || top?.kind === "sponsor") && !top.holds,
               }
             : null
         }

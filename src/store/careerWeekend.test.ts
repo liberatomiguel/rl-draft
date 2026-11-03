@@ -250,7 +250,7 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     expect(played.clock.day).toBe(qualifierDayFor(W));
     expect(played.activeEvent).toBeNull();
     expect(played.pendingEventDef).toMatchObject({ tier: "regional", region: "SAM", day: regionalDayFor(W) });
-    expect(played.news.filter((n) => n.titleKey === "qualifiedRegional")).toHaveLength(1);
+    expect(played.mail.filter((n) => n.titleKey === "qualifiedRegional")).toHaveLength(1);
     expect(played.mail.filter((m) => m.titleKey === "qualifiedRegional")).toHaveLength(1);
     expect(played.competition.qualifiedRefs?.SAM?.refs).toContain("user");
     expect(eventDayPhaseOf(played)).toBe("none"); // Saturday is done for the user
@@ -296,10 +296,10 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     const played = simToday(withStrength(sat, 40));
     expect(played.pendingEventDef).toBeNull();
     expect(played.competition.qualifiedRefs!.SAM!.refs).not.toContain("user");
-    expect(played.news.filter((n) => n.titleKey === "missedRegional")).toHaveLength(1);
+    expect(played.news.some((n) => n.titleKey === "missedRegional")).toBe(false);
     expect(played.mail.filter((m) => m.titleKey === "missedRegional")).toHaveLength(1);
     expect(played.eventResults.some((r) => r.tier === "regional" && r.region === "SAM")).toBe(false);
-    expect(userEventDefOnDay(played, regionalDayFor(W))).toBeNull();
+    expect(userEventDefOnDay(played, regionalDayFor(W))?.tier).toBe("regional");
     // Sunday arrival: SAM's regional resolves headlessly (16 teams, no user).
     const sun = advanceDayFlow(played);
     expect(sun.clock.day).toBe(regionalDayFor(W));
@@ -362,9 +362,9 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
       eventId: def.id.replace(":qual", ":reg"),
       refs: result.rows.filter((r) => r.placement === "top8").map((r) => r.ref),
     });
-    // The feed gets the tier (so "top8" reads "Qualified"); no champion news for a qualifier.
-    const news = done.news.find((n) => n.titleKey === "resultUser")!;
-    expect(news.params).toMatchObject({ event: def.name, placement: "top8", tier: "qualifier" });
+    // One private league notice covers qualification; no duplicate result story.
+    expect(done.mail.some((n) => n.titleKey === "qualifiedRegional")).toBe(true);
+    expect(done.mail.some((n) => n.titleKey === "resultUser" && n.params?.tier === "qualifier")).toBe(false);
     expect(done.news.some((n) => n.titleKey === "seasonChampion")).toBe(false);
     expect(done.stats.titlesRegional).toBe(sat.stats.titlesRegional);
   });
@@ -455,7 +455,7 @@ describe("regional weekend (R40): qualifier Saturday → regional Sunday", () =>
     expect(userIsDirect(drifted, NEXT_W)).toBe(true);
     const regional = officialEventDefsForWeek(0, W).find((d) => d.tier === "regional" && d.region === "SAM")!;
     expect(regionalUserEligible(drifted, regional)).toBe(false);
-    expect(userEventDefOnDay(drifted, regionalDayFor(W))).toBeNull();
+    expect(userEventDefOnDay(drifted, regionalDayFor(W))?.id).toBe(regional.id);
     // The qualifier the user played stays on its Saturday.
     expect(userEventDefOnDay(drifted, qualifierDayFor(W))?.tier).toBe("qualifier");
     // Sunday resolves the regional without the user — exactly what the preview said.

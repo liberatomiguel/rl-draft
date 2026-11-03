@@ -1,74 +1,64 @@
 # Project Status — current state only
 
-> Last updated: **2026-10-31**. History: `CHANGELOG.md`; plan of record:
-> `ROADMAP.md`. Career map and state: `ROAD-TO-WORLDS-STATUS.md`.
+> Last updated: **2026-11-03**. History: `CHANGELOG.md`; plan of record:
+> `ROADMAP.md`. Career map: `ROAD-TO-WORLDS-STATUS.md`.
 
 ## Where things are
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.5**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.6**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
-- **Etapa 3:** complete for **Gate 3b**. Six fronts integrated and independently
-  reviewed: training and HQ polish, sponsor/contract talks, founding economy
-  and slower growth, season goals/news/achievements, crests/calendar/weekends.
-  rc.36.5 corrects the requested news typography/controls, adds cycle-report
-  opt-out and coach-compatible repeat, weekly scrim variety, roster inspection
-  and spectator layout. New sponsors share a one-season horizon; prizes grow
-  in rounded annual steps. Local clubs retain their own development origin.
-  Gate 3b remains open: `CAREER-FEEDBACK-rc36-5.md`.
-- **Next after approval:** Etapa 4 (rc.37), then Etapa 5 (rc.38), then cutover.
-  Further screen polish goes to Etapa 5; bugs can be fixed at the gate.
+- **Etapa 3 / Gate 3b:** integrated; acceptance remains open. rc.36.6 fixes
+  calendar holds and hidden training reports, adds Tuesday/Wednesday practice
+  playback, simplifies spectator actions and clarifies HQ/training. Public
+  news is presented by 50/50; private decisions go to mail. Supplied regional
+  names power new careers. Rare 1v1/2v2 cups and new showmatch invitations
+  complete this feedback package. Evidence: `CAREER-FEEDBACK-rc36-6.md`.
+- **Next:** close career progression/economy acceptance, then Etapa 4,
+  Etapa 5 and cutover. `ROADMAP-NEXT-2026-11-03.md` gives scope and a next-chat
+  prompt: four sessions estimated, with a fifth reserved for unresolved gates.
 
-## Current gates and evidence
+## Current evidence and limits
 
-- Full suite: **1463 passed**, 18 opt-in checks skipped; typecheck
-  clean; lint **0 errors, 0 warnings**. Data regeneration is unchanged and
-  validation green. Staging-like static build, browser E2E and request budget:
-  `CAREER-FEEDBACK-rc36-5.md` (EN/PT desktop/mobile; Classic 62/75, home 27/28).
-- **BALANCE_VERSION 10**; fingerprint is
-  pinned by `src/config/balanceVersion.test.ts`. Package, lock and site version
-  are all rc.36.5.
-- Opening: 63 paired starts, every difficulty × roster × region, three
-  seasons; four additional paired SAM/Normal/prospect starts over six seasons.
-  Isolates local annual rebasing under the same new finance rules: first-year
-  results identical in all 63 pairs. SAM first Major S6/S6/none/S4 → S4/S4/S6/S4.
-  Real resources; deterministic policies, not human success forecasts.
-- Earlier pacing/economy/growth/endgame evidence remains in rc36-3/4 reports.
-  Regional timing, star affordability and Worlds titles remain open. Six
-  historical seasons, then infinite; years 7–8 do not satisfy the launch goal.
-- For future economy/growth changes run `CAREER_ECON=1` (four processes by
-  `ECON_REGIONS`), `CAREER_ARC=1` **alone**, `CAREER_GROWTH=1` and
-  `CAREER_TRAINING=1`. Never combine ARC with ARC_REPORT.
-- Before a release: typecheck, full tests, lint, build:data/validate:data,
-  staging-like build; E2E on Wrangler, `request-budget.mjs`; visual effects
-  also `perf:probe`. Data/pool changes additionally require SIM_MATRIX and
-  CH_TUNE if challenges leave their bands; shared-sim golden changes require
-  a documented decision.
+- rc.36.6 career/content/persist/assets/balance regressions: **968 passed**,
+  15 optional checks skipped (77 files passed, nine skipped). Typecheck and
+  lint of changed TS files clean. Data validation and 35 persist-contract
+  checks pass. Build/browser evidence and environment limits are recorded
+  in `CAREER-FEEDBACK-rc36-6.md`.
+- **BALANCE_VERSION 11**, fingerprint pinned by its test. Package, lock and
+  site agree on rc.36.6. This feedback package does not remeasure the career
+  economy or assert that historical Worlds pacing is solved.
+- Prior full-suite baseline: 1463 passed, 18 optional skipped (rc.36.5).
+  Prior static/mobile/request-budget evidence remains in that release's report.
+- Opening/economy/endgame evidence remains in rc36-3/4/5 reports: 63 paired
+  three-season starts and four paired six-season SAM/Normal/prospect starts
+  isolate local annual rebasing. First-year results identical in all pairs;
+  SAM first Major S6/S6/none/S4 → S4/S4/S6/S4. Deterministic policies, not
+  human success forecasts. Regional timing, star affordability and historical
+  Worlds titles remain open; infinite years do not satisfy the launch goal.
+- Only rerun opt-in economy/growth matrices when an actual change needs them.
+  CAREER_ARC runs alone; CAREER_ECON partitions by ECON_REGIONS. Reuse current
+  evidence and real-save fixtures; never silently relax a release gate.
 
 ## Still open before main
 
 - Miguel's account/cutover actions: `V2-IMPLEMENTATION-PLAN.md` §6 (staging
-  Supabase/Worker vars, production SQL and freeze trigger, pre-season freeze,
-  grants, Cloudflare variables and sitemap).
-- Manual regression (§7), Lighthouse, event-card curation, PT pass and the
-  v2.0 player notes. Gate 3b's loan, wage-budget, scouting-band and older-roster
-  decisions remain in `ROADMAP.md`.
-- Reconciliation of the attached rc.29 plan, deliveries versus pending work,
-  changed decisions and the shortest completion path: `ROADMAP-REVIEW-2026-10-31.md`.
-  Current packages/estimate: `ROADMAP-NEXT-2026-10-31.md`; planning only.
-- Scripted career news corpus and 50/50 partner material/permission; the brand
-  stays The Wire until agreed. Missing optional art uses fallbacks.
+  Supabase/Worker variables, production SQL/freeze, grants and sitemap).
+- Gate 3b progression/economy acceptance and loan, wage-budget, scouting-band
+  and older-roster decisions; details in `ROADMAP.md`.
+- Etapa 4 collection/challenges/rewards; Etapa 5 integrated regression,
+  accounts/sync, real saves, performance, EN/PT, launch notes and remaining art.
+- Scripted historical news corpus remains partial. The supplied 50/50 logo,
+  presentation and events are implemented; no partner-art blocker remains.
 
 ## Standing contracts
 
-- Player saves remain on `https://rocketdraft.app` only; staging saves have
-  their own origin. Persist versions/keys remain frozen and migrations additive.
+- Production saves stay on `https://rocketdraft.app`; staging is a separate
+  origin. Persist versions/keys remain frozen; repairs are additive.
 - Pure static export, assets-only Worker, no server code. Career routes stay
-  noindex; production only enables career with NEXT_PUBLIC_CAREER_MODE=1 at
-  the approved cutover.
-- Supabase accounts are code-complete, not enabled in production. PostHog is
-  lazy, cookieless, EU and production-only. Never commit hash-only manifest
-  changes from a Windows asset rebuild.
+  noindex; production career enables only at the approved cutover.
+- Supabase accounts are code-complete, not enabled in production. Analytics
+  stays lazy, cookieless, EU and production-only. No hash-only asset churn.

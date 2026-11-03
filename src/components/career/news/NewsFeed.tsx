@@ -16,6 +16,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CAREER_NEWS } from "@/config/balance";
+import { newsChannelOf } from "@/engine/career/communications";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave, NewsItem, NewsType } from "@/engine/career/types";
 import { partnerLogoSrc } from "@/lib/assets";
@@ -42,18 +43,18 @@ const FILTERS: FilterKey[] = ["all", "mine", "region", "world", "deals"];
 /** "My org" = notices about the user org itself (contracts, training, rep). */
 const MINE_TYPES: NewsType[] = ["org", "training", "rep"];
 
-function matchesFilter(item: NewsItem, filter: FilterKey, region: string): boolean {
+function matchesFilter(item: NewsItem, filter: FilterKey, save: CareerSave): boolean {
   switch (filter) {
     case "all":
       return true;
     case "mine":
-      return MINE_TYPES.includes(item.type);
+      return newsCrestsOf(item, save).includes("user");
     case "deals":
       return item.type === "transfer";
     case "region":
       // Region relevance rides on the params (event names carry the region
       // code, e.g. "EU Regional 2"; rookie classes carry params.region).
-      return Object.values(item.params ?? {}).some((v) => String(v).includes(region));
+      return Object.values(item.params ?? {}).some((v) => String(v).includes(save.identity.region));
     case "world":
       return !MINE_TYPES.includes(item.type) && item.type !== "transfer";
   }
@@ -318,8 +319,8 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
     setPrevFilter(filter);
     setLimit(WIRE_BATCH);
   }
-  const region = save.identity.region;
-  const filtered = open ? save.news.filter((n) => matchesFilter(n, filter, region)) : save.news;
+  const news = save.news.filter(n => newsChannelOf(n) === "news");
+  const filtered = open ? news.filter((n) => matchesFilter(n, filter, save)) : news;
   const hasMore = open && limit < filtered.length;
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -337,11 +338,11 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
 
   const brand = CAREER_NEWS.brand;
   const B = C.news.brand[brand] ?? C.news.brand.wire;
-  const unread = save.news.filter((n) => !n.read).length;
-  const lead = !open ? (leadStoryOf(save, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? save.news[0] ?? null) : null;
+  const unread = news.filter((n) => !n.read).length;
+  const lead = !open ? (leadStoryOf({ ...save, news }, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? news[0] ?? null) : null;
   const rows = open
     ? filtered.slice(0, limit)
-    : save.news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
+    : news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
 
   return (
     <Panel id="career-news" className="rise-in p-4" style={{ animationDelay: "120ms" }}>

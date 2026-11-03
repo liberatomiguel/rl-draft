@@ -444,7 +444,7 @@ describe("rc.34 (Miguel, 31/10) — a short squad can skip each regional", () =>
     expect(skipped.error).toBeUndefined();
     const s0 = skipped.save;
     expect(s0.pendingEventDef).toBeNull();
-    expect(s0.news[0]).toMatchObject({ titleKey: "regionalSkipped", params: { n: 2 } });
+    expect(s0.mail[0]).toMatchObject({ titleKey: "regionalSkipped", params: { n: 2 } });
     // Every clock path moves now.
     expect(clockHoldOf(s0)).toBeNull();
     expect(continueKind(s0)).toBe("advance");
@@ -586,13 +586,13 @@ describe("rc.34 UX-06b — the reminders before a player can leave", () => {
     save.pendingEventDef = null;
     let s = advanceDayFlow(walkPastForTests(save));
     expect(s.clock.day).toBe(firstDayOfWeek(28));
-    const w28 = s.news.find((n) => n.titleKey === "contractReminder");
+    const w28 = s.mail.find((n) => n.titleKey === "contractReminder");
     expect(w28?.params).toMatchObject({ players: leaver, n: 1, weeks: 5 });
     expect(String(w28?.params?.players)).not.toContain(kept);
     expect(s.mail.some((m) => m.titleKey === "contractReminder" && m.linkTo === "/career/squad")).toBe(true);
     s = { ...s, clock: { seasonIndex: 0, day: firstDayOfWeek(31) - 1 }, pendingEventDef: null };
     s = advanceDayFlow(walkPastForTests(s));
-    expect(s.news.find((n) => n.titleKey === "contractReminder")?.params).toMatchObject({ weeks: 2 });
+    expect(s.mail.find((n) => n.titleKey === "contractReminder")?.params).toMatchObject({ weeks: 2 });
   });
 });
 

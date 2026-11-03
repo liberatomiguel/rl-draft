@@ -359,16 +359,17 @@ export function SquadBlock({ save, C, team, chemTiers }: { save: CareerSave; C: 
         </span>
       </div>
       {camp ? (
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-orange/20 bg-orange/[0.035] px-3 py-2.5">
+        <div className={cx("mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-3.5 py-3", campReady ? "border-orange/60 bg-orange/10" : "border-line bg-white/[0.025]")}>
           <RungIcon id={camp.id === "bootcamp2" ? "bootcamp2" : "bootcamp1"} className="h-5 w-5 shrink-0 text-orange-bright" />
           <div className="min-w-0 flex-1 basis-36">
             <p className="text-xs font-semibold text-ink">{camp.id === "bootcamp2" ? C.finances.bootcampT2 : C.finances.bootcampT1}</p>
             <p className="mt-0.5 text-[10px] leading-relaxed text-sub">{C.toolbox.rating(camp.ratingEdge.toFixed(1))} · {C.toolbox.chemistry}</p>
+            <p className="mt-1 text-xs leading-relaxed text-sub">{C.toolbox.bootcampHint}</p>
             <p className="mt-0.5 text-[10px] text-faint">{campNote}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="display text-xs font-semibold text-ink">{camp.free ? C.common.free : formatMoney(camp.price, { compact: true })}</span>
-            <Button variant={campReady ? "primary" : "ghost"} size="sm" className="shadow-none" disabled={!campReady} onClick={() => runBootcamp()}>{camp.status === "active" ? C.finances.activeLabel : C.toolbox.buy}</Button>
+            {camp.status === "buyable" ? <span className="display text-xs font-semibold text-ink">{camp.free ? C.common.free : formatMoney(camp.price, { compact: true })}</span> : null}
+            {campReady ? <Button variant="primary" size="sm" className="shadow-none" onClick={() => runBootcamp()}>{C.toolbox.buy}</Button> : null}
           </div>
         </div>
       ) : null}

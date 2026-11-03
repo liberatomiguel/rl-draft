@@ -193,7 +193,7 @@ describe("careerFlow — full season integration (day clock)", () => {
 
   it("scrims run on weekdays, cap per week, and build chemistry credit", () => {
     let save = createCareerSave(INPUT, 555222);
-    // Day 1 is a Monday — a training day.
+    save = advanceDayFlow(save); // Tuesday: the first practice block.
     const before = save.squad[0].splitsTogether;
     const first = runScrimFlow(save);
     expect(first.error).toBeUndefined();

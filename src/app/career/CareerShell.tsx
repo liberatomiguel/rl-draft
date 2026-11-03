@@ -20,6 +20,7 @@ import { useCareerStore } from "@/store/careerStore";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
 import { CareerToaster } from "@/components/career/CareerToaster";
 import { CareerTopBar } from "@/components/career/CareerTopBar";
+import { ScrimBroadcast } from "@/components/career/ScrimBroadcast";
 import { MoneyNoticeModal } from "@/components/career/MoneyNoticeModal";
 import { TrainingReportModal } from "@/components/career/training/TrainingReportModal";
 
@@ -79,6 +80,7 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
       {!bare && hasActive ? (
         <>
           <CareerTopBar />
+          <ScrimBroadcast />
           <CareerAutopilot />
           <CareerToaster />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}

@@ -61,11 +61,11 @@ export const CAREER_BEATS: CareerBeat[] = [
     trigger: { seasonIndex: 0, week: 1 },
     en: {
       title: "A new era: splits, regionals, Majors",
-      body: "The circuit reshapes around three splits of regional play, each crowned by an international Major — and in this timeline, nothing grounds the planes. The road to the World Championship starts now.",
+      body: "The Rocket League circuit opens a new season with three splits of regional competition and an international Major at the end of each. Organizations across seven regions begin their campaigns with a place at the World Championship as the ultimate prize.",
     },
     pt: {
       title: "Uma nova era: splits, regionais, Majors",
-      body: "O circuito se reorganiza em três splits de disputa regional, cada um coroado por um Major internacional — e nesta linha do tempo, nada segura os aviões. A estrada para o Mundial começa agora.",
+      body: "O circuito de Rocket League abre a temporada com três splits de disputa regional e um Major internacional ao final de cada etapa. Organizações de sete regiões iniciam suas campanhas de olho em uma vaga no Mundial.",
     },
   },
   {
@@ -229,11 +229,11 @@ export const CAREER_BEATS: CareerBeat[] = [
     orgRefs: ["furia"],
     en: {
       title: "FURIA take their project north",
-      body: "In the real 2022–23 season, FURIA fielded its Rocket League roster in North America. In this timeline every org keeps its home region — FURIA included.",
+      body: "FURIA took its Rocket League operation to North America for the 2022–23 season, carrying one of South America's most celebrated rosters into a new regional field. The move became one of the most closely watched chapters in the organization's international expansion.",
     },
     pt: {
       title: "A FURIA leva o projeto para o norte",
-      body: "Na temporada real de 2022–23, a FURIA disputou o Rocket League com seu elenco na América do Norte. Nesta linha do tempo, toda org fica na sua região de origem — a FURIA também.",
+      body: "A FURIA levou sua operação de Rocket League para a América do Norte na temporada 2022–23, colocando um dos elencos mais importantes da América do Sul em uma nova disputa regional. A mudança marcou um capítulo de destaque na expansão internacional da organização.",
     },
   },
   {

@@ -25,7 +25,8 @@ import {
   TEAM_RATING,
 } from "@/config/balance";
 import { lineupById, playerById, playerCardById, playerCards, seasonById, specialCards } from "@/data";
-import { PLAYER_NAME_BANK, playerNameBankFor } from "@/data/career/names";
+import { PLAYER_NAME_BANK } from "@/data/career/legacyNames";
+import { playerNameBankFor } from "./names";
 import type { Rng } from "@/lib/rng";
 import { clamp } from "@/lib/util";
 import { finalOverall } from "../cards";
@@ -717,7 +718,7 @@ export function fillerPlayerView(region: Region, n: number, ctx: ViewCtx): Caree
   const key = `${region}:${n}`;
   // rc.29: a world created from rc.29 on reads the bank without real nicknames.
   // rc.30: a name the legacy repair stored for this filler comes first.
-  const bank = playerNameBankFor(region, ctx.world.nameBankVersion);
+  const bank = playerNameBankFor(region, ctx.world.nameBankVersion, ctx.careerSeed);
   const wrap = Math.floor(n / bank.length);
   const name =
     ctx.world.rookieNames?.[id] ?? bank[n % bank.length] + (wrap > 0 ? ` ${roman(wrap + 1)}` : "");

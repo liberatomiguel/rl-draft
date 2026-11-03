@@ -120,7 +120,7 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       <span className="flex h-3 items-center gap-0.5" aria-hidden>
         {matchday && d.event ? <EventTierIcon tier={d.event.tier} className={cx("h-3 w-3", TIER_ICON_TONE[d.event.tier])} /> : null}
         {spectating && d.event ? <EventTierIcon tier={d.event.tier} className="h-3 w-3 text-white/40" /> : null}
-        {windowOpens ? <span className="h-1.5 w-1.5 rounded-full bg-blue" /> : null}
+        {d.windowOpen ? <span className="h-1.5 w-1.5 rounded-full bg-blue-bright" /> : null}
         {scrim ? <span className="h-1.5 w-1.5 rounded-full bg-cyan" /> : null}
         {rest && !matchday && !spectating ? <span className="h-px w-2 bg-white/20" /> : null}
       </span>
@@ -160,6 +160,7 @@ export function DayCard({
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
   const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const autoAdvance = useCareerStore((s) => s.autoAdvance);
+  const scrimPlaying = useCareerStore((s) => Boolean(s.scrimPlayback));
   const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
   const revealHeld = useRevealHeldEventId(save);
 
@@ -281,10 +282,10 @@ export function DayCard({
                     {autoAdvance ? C.hub.pause : C.hub.play}
                   </span>
                 </Button>
-                <Button variant="secondary" size="md" className="min-h-11" onClick={advanceToNextStop} disabled={!running || autoAdvance}>
+                <Button variant="secondary" size="md" className="min-h-11" onClick={advanceToNextStop} disabled={!running || autoAdvance || scrimPlaying}>
                   {C.hub.skipTo(stopLabel)}
                 </Button>
-                <Button variant="ghost" size="md" className="min-h-11" onClick={advanceDay} disabled={!running || autoAdvance}>
+                <Button variant="ghost" size="md" className="min-h-11" onClick={advanceDay} disabled={!running || autoAdvance || scrimPlaying}>
                   {C.hub.plusDay}
                 </Button>
               </>

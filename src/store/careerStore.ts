@@ -45,6 +45,7 @@ import type {
   CareerSave,
   CareerSlotMeta,
   CoachState,
+  ScrimLogEntry,
   SundayBriefingChoice,
   TrainingMode,
   TrainingPackage,
@@ -86,6 +87,7 @@ import {
   scheduleScrimFlow,
   setPsychologistFlow,
   setStartersFlow,
+  setCommunityParticipantsFlow,
   skipShortSquadEventFlow,
   takeBankLoanFlow,
   signPlayerFlow,
@@ -162,6 +164,9 @@ interface CareerStoreState {
   lastError: string | null;
   /** v0.3 FIFA-style autoplay switch (session-only; driven by CareerAutopilot). */
   autoAdvance: boolean;
+  /** Practice broadcast is session-only; the recorded result never re-simulates. */
+  scrimPlayback: ScrimLogEntry | null;
+  finishScrimPlayback: (id: string) => void;
   /**
    * v2.0 (R32): permanent career achievements — across saves, never reset
    * by a season. Unlock dates by id + the difficulties Worlds was won on.
@@ -175,6 +180,7 @@ interface CareerStoreState {
   deleteSlot: (slot: number) => void;
 
   advanceDay: () => void;
+  setCommunityParticipants: (ids: string[]) => void;
   advanceToNextStop: () => void;
   /**
    * v2.0 (R40): a Major/Worlds paused after its Saturday Swiss → Championship
@@ -392,6 +398,7 @@ export const useCareerStore = create<CareerStoreState>()(
         const ach = settleAchievements(next);
         set((state) => ({
           slots: nextSlots,
+          scrimPlayback: next.scrimLog.find((e) => e.day === next.clock.day && e.seasonIndex === next.clock.seasonIndex && !prevSave.scrimLog.some((p) => p.id === e.id)) ?? state.scrimPlayback,
           lastError: null,
           achievements: ach.memory,
           toasts:
@@ -428,6 +435,7 @@ export const useCareerStore = create<CareerStoreState>()(
         const ach = changed ? settleAchievements(save) : { memory: get().achievements, toasts: [] };
         set((state) => ({
           slots: nextSlots,
+          scrimPlayback: save.scrimLog.find((e) => e.day === save.clock.day && e.seasonIndex === save.clock.seasonIndex && !prevSave.scrimLog.some((p) => p.id === e.id)) ?? state.scrimPlayback,
           lastError: error ?? null,
           achievements: ach.memory,
           toasts:
@@ -443,6 +451,8 @@ export const useCareerStore = create<CareerStoreState>()(
         activeSlot: null,
         lastError: null,
         autoAdvance: false,
+        scrimPlayback: null,
+        finishScrimPlayback: (id) => set((state) => state.scrimPlayback?.id === id ? { scrimPlayback: null } : {}),
         achievements: EMPTY_ACHIEVEMENT_MEMORY,
         toasts: [],
 
@@ -453,13 +463,13 @@ export const useCareerStore = create<CareerStoreState>()(
           save.lastPlayedAt = Date.now();
           const slots = [...get().slots];
           slots[slot] = save;
-          set({ slots, activeSlot: slot, lastError: null, autoAdvance: false, toasts: [] });
+          set({ slots, activeSlot: slot, lastError: null, autoAdvance: false, scrimPlayback: null, toasts: [] });
           const created = careerCreatedEvent(save, input.rosterKey);
           trackEvent(created.name, created.props);
         },
 
         selectSlot: (slot) => {
-          if (get().slots[slot]) set({ activeSlot: slot, autoAdvance: false, toasts: [] });
+          if (get().slots[slot]) set({ activeSlot: slot, autoAdvance: false, scrimPlayback: null, toasts: [] });
         },
 
         deleteSlot: (slot) => {
@@ -469,8 +479,8 @@ export const useCareerStore = create<CareerStoreState>()(
           set({ slots, activeSlot: active });
         },
 
-        advanceDay: () => withSave(advanceDayFlow),
-        advanceToNextStop: () => withSave(advanceToNextStopFlow),
+        advanceDay: () => { if (!get().scrimPlayback) withSave(advanceDayFlow); },
+        advanceToNextStop: () => { if (!get().scrimPlayback) withSave(advanceToNextStopFlow); },
         continueEventToNextDay: () => withSave(continueEventToNextDayFlow),
         startSunday: (choice, mode) => withResult((s) => startSundayFlow(s, choice, mode)),
         followSunday: (choice) => withResult((s) => followSundayFlow(s, choice)),
@@ -480,6 +490,7 @@ export const useCareerStore = create<CareerStoreState>()(
         dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 
         enterEvent: (watch) => withSave((s) => startEvent(s, watch)),
+        setCommunityParticipants: (ids) => withResult((s) => setCommunityParticipantsFlow(s, ids)),
         startChampionshipSunday: (watch) => withSave((s) => startChampionshipSundayFlow(s, watch)),
         playEventRound: () => withSave(stepEventRound),
         simEvent: () => withSave(simEventToEnd),

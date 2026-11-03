@@ -5,10 +5,13 @@ import { dayOfWeekOf, weekOfDay } from "@/engine/career/calendar";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
+import { useCareerStore } from "@/store/careerStore";
 
 /** Recorded results only: advancing the calendar never triggers a second sim. */
 export function WeeklyScrimLine({ save, C }: { save: CareerSave; C: CareerCopy }) {
+  const playing = useCareerStore((s) => s.scrimPlayback?.id);
   const entries = save.scrimLog
+    .filter(e => e.id !== playing)
     .filter(e => e.seasonIndex === save.clock.seasonIndex && e.day <= save.clock.day && weekOfDay(e.day) === weekOfDay(save.clock.day))
     .sort((a, b) => a.day - b.day);
   return (

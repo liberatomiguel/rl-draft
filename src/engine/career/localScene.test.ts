@@ -3,12 +3,13 @@ import { CAREER_UNOFFICIAL } from "@/config/balance";
 import { coaches, players, subs } from "@/data";
 import {
   LOCAL_PLAYER_NAME_BANK,
-  PLAYER_NAME_BANK,
   PLAYER_NAME_BANK_SWAPS,
   STAND_IN_NAMES,
   STARTER_NAME_BANK,
   playerNameBankFor,
 } from "@/data/career/names";
+import { PLAYER_NAME_BANK as LEGACY_PLAYER_NAME_BANK } from "@/data/career/legacyNames";
+import { playerNamePoolFor } from "./names";
 import type { Region } from "../types";
 import { localPlayerNames, localSceneRefs, localTeamName } from "./localScene";
 
@@ -53,12 +54,11 @@ describe("local amateur scene names (rc.28)", () => {
 });
 
 describe("career name banks never overlap (rc.29 CAR-01)", () => {
-  it("the local scene has its own regional bank: ≥ 32 gamertags, no numeric tags, every pick from it", () => {
+  it("the shared regional catalog covers every local pick, including the submitted numeric nicknames", () => {
     for (const region of REGIONS) {
       const bank = LOCAL_PLAYER_NAME_BANK[region];
       expect(bank.length, region).toBeGreaterThanOrEqual(32);
       expect(new Set(bank.map(key)).size, `${region} has a duplicate`).toBe(bank.length);
-      for (const name of bank) expect(name, region).not.toMatch(/\d/);
       // Enough names for a whole pool of distinct players.
       expect(bank.length).toBeGreaterThanOrEqual(CAREER_UNOFFICIAL.localScenePool * 3);
       const picked = localSceneRefs(region, 0).flatMap((ref) => localPlayerNames(ref, 4242));
@@ -76,10 +76,9 @@ describe("career name banks never overlap (rc.29 CAR-01)", () => {
       else owner.set(k, where);
     };
     for (const region of REGIONS) {
-      for (const name of LOCAL_PLAYER_NAME_BANK[region]) claim(name, `local:${region}`);
-      for (const name of STARTER_NAME_BANK[region]) claim(name, `starter:${region}`);
-      for (const name of PLAYER_NAME_BANK[region]) claim(name, `player:${region}`);
-      for (const name of playerNameBankFor(region, 2)) claim(name, `player:${region}`);
+      for (const name of playerNamePoolFor(region, 4242, "local")) claim(name, `local:${region}`);
+      for (const name of playerNamePoolFor(region, 4242, "starter")) claim(name, `starter:${region}`);
+      for (const name of playerNameBankFor(region, 3, 4242)) claim(name, `player:${region}`);
       claim(STAND_IN_NAMES[region], `standIn:${region}`);
     }
     expect(clashes).toEqual([]);
@@ -92,7 +91,7 @@ describe("career name banks never overlap (rc.29 CAR-01)", () => {
       for (const name of [
         ...LOCAL_PLAYER_NAME_BANK[region],
         ...STARTER_NAME_BANK[region],
-        ...playerNameBankFor(region, 2),
+        ...playerNameBankFor(region, 3, 4242),
         STAND_IN_NAMES[region],
       ]) {
         if (REAL.has(key(name))) real.push(`${region}:${name}`);
@@ -104,11 +103,11 @@ describe("career name banks never overlap (rc.29 CAR-01)", () => {
   it("the real-nickname swaps apply only to worlds created from rc.29 on (older careers keep every name)", () => {
     for (const region of REGIONS) {
       // Version 1 (absent): the original bank, untouched.
-      expect(playerNameBankFor(region, undefined)).toBe(PLAYER_NAME_BANK[region]);
+      expect(playerNameBankFor(region, undefined)).toBe(LEGACY_PLAYER_NAME_BANK[region]);
       const v2 = playerNameBankFor(region, 2);
-      expect(v2).toHaveLength(PLAYER_NAME_BANK[region].length);
+      expect(v2).toHaveLength(LEGACY_PLAYER_NAME_BANK[region].length);
       const swaps = PLAYER_NAME_BANK_SWAPS[region] ?? {};
-      PLAYER_NAME_BANK[region].forEach((name, i) => expect(v2[i]).toBe(swaps[name] ?? name));
+      LEGACY_PLAYER_NAME_BANK[region].forEach((name, i) => expect(v2[i]).toBe(swaps[name] ?? name));
     }
     // The five the check found ("Sultan" = the real "! Sultan."): a MENA
     // filler "Fahad" met the real Fahad in a regional.

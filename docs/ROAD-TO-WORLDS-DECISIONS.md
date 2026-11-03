@@ -1973,6 +1973,28 @@ R93. **31/10 playtest follow-up (rc.36.5).**
      BALANCE_VERSION 10; additive metadata/settings only. Gate 3b stays open,
      no Etapa 4–6 features/main deploy. CAREER-FEEDBACK-rc36-5.md.
 
+R94. **03/11 career feedback and supplied catalogs (rc.36.6).**
+     Miguel authorizes this correction package and staging publication.
+     Calendar controls must honor the clock's real hold reason; hidden cycle
+     reports still acknowledge and repeat the plan exactly once. Practices
+     happen Tuesday/Wednesday, with brief playback of recorded results only;
+     no new simulation or reward. Legacy Thursday bookings move forward.
+     Spectator actions reduce to watch/results/calendar; failed qualification
+     never removes the event. All window days have blue markers. HQ surfaces
+     buyable upgrades and explains camps without a locked purchase action.
+     50/50 presents public esports reporting using the supplied SVG; personal
+     decisions use mail, routine technical chatter is silent. Load repair
+     reclassifies prior communications. New 50/50/duds showmatches, rotating
+     50/50 cup and rare selected-roster community 1v1/2v2 brackets; weekly
+     random events start after the first regional. Official events stay 3v3.
+     Workbook supplies 834 player/280 org names, with four exclusions. Seeded
+     disjoint allocations share each regional bank across generic contexts.
+     Five real-player collisions use II, three regional homonyms a region
+     suffix. New worlds use nameBankVersion 3; legacy identities remain.
+     Persist 3/saveVersion 5 frozen. BALANCE_VERSION 11. This does not close
+     progression/economy acceptance or assert solved Worlds pacing. Next-chat
+     plan: ROADMAP-NEXT-2026-11-03.md; Gate 3b remains open, no main deploy.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

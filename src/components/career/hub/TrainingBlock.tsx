@@ -42,6 +42,7 @@ import { Panel } from "@/components/ui/Panel";
 export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; statLabels?: Record<string, string> }) {
   const router = useRouter();
   const approve = useCareerStore((s) => s.approveTrainingProposal);
+  const scrimPlaying = useCareerStore((s) => Boolean(s.scrimPlayback));
   const keepBase = useCareerStore((s) => s.keepBaseTraining);
   const Y = C.training.cycle;
   const b = trainingBlockOf(save);
@@ -108,7 +109,7 @@ export function TrainingBlock({ save, C }: { save: CareerSave; C: CareerCopy; st
               <span className="inline-flex items-center gap-1 text-sub">
                 <SwordsIcon className="h-3.5 w-3.5" />
                 {Y.scrimsDone(b.scrims.done, b.scrims.planned)}
-                {b.scrims.done > 0 ? ` · ${Y.record(b.scrims.won, b.scrims.lost)}` : ""}
+                {b.scrims.done > 0 && !scrimPlaying ? ` · ${Y.record(b.scrims.won, b.scrims.lost)}` : ""}
               </span>
             ) : null}
             {b.unavailabilityPts > 0 ? (

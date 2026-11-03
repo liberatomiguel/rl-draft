@@ -275,10 +275,10 @@ describe("rc.36 T2 — a signing joins the running cycle; an unknown phase is re
     expect(p.phaseDays).toBe(CAREER_PLAN.phaseRevealDays);
     expect(squadPhaseLevelOf(p)).toBe(CAREER_SCOUT.phaseRevealLevel);
     expect(p.scoutLevel).toBeLessThan(CAREER_SCOUT.phaseRevealLevel); // the potential band is not narrowed for free
-    expect(s.news.some((n) => n.titleKey === "phaseRead" && n.params?.player === p.name)).toBe(true);
+    expect(s.mail.some((n) => n.titleKey === "phaseRead" && n.params?.player === p.name)).toBe(true);
     // One more day changes nothing (no second line).
-    const lines = s.news.filter((n) => n.titleKey === "phaseRead").length;
-    expect(playTo(s, s.clock.day + 3).news.filter((n) => n.titleKey === "phaseRead").length).toBe(lines);
+    const lines = s.mail.filter((n) => n.titleKey === "phaseRead").length;
+    expect(playTo(s, s.clock.day + 3).mail.filter((n) => n.titleKey === "phaseRead").length).toBe(lines);
   });
 });
 

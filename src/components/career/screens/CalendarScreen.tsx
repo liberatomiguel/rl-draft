@@ -102,6 +102,7 @@ export function CalendarScreen() {
   const router = useRouter();
 
   const advanceDay = useCareerStore((s) => s.advanceDay);
+  const scrimPlaying = useCareerStore((s) => Boolean(s.scrimPlayback));
   const advanceToNextStop = useCareerStore((s) => s.advanceToNextStop);
   const continueEventToNextDay = useCareerStore((s) => s.continueEventToNextDay);
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
@@ -206,7 +207,8 @@ export function CalendarScreen() {
   const paused =
     isEventPaused(save) && !(revealHeld !== null && revealHeld === save.activeEvent?.def.id);
   // rc.36 (SUN-01): Saturday evening before the user's Sunday — it is started in HQ (the briefing).
-  const sundayStop = visibleContinueKind(save, revealHeld) === "sunday";
+  const continueState = visibleContinueKind(save, revealHeld);
+  const sundayStop = continueState === "sunday";
   // rc.36 (SUN-03): the event the user is out of, on the day it resolved (this season).
   const followed =
     save.followEvent && save.followEvent.def.seasonIndex === save.clock.seasonIndex
@@ -646,9 +648,10 @@ export function CalendarScreen() {
                         aria-label={
                           formatDateShort(D, d.date) +
                           (cellLabel ? ` — ${cellLabel}` : "") +
+                          (spectating ? ` · ${C.calendar.notQualified}` : "") +
                           (d.windowOpen ? ` · ${C.calendar.window}` : "")
                         }
-                        title={cellLabel}
+                        title={spectating ? `${cellLabel} · ${C.calendar.notQualified}` : cellLabel}
                         className={cx(
                           "relative flex min-h-11 flex-col items-center rounded-lg border pb-1 pt-1.5 text-[11px] leading-none transition-colors",
                           d.windowOpen
@@ -686,6 +689,7 @@ export function CalendarScreen() {
                           ) : d.kinds.includes("training") ? (
                             <span className="h-1 w-1 rounded-full bg-white/25" />
                           ) : null}
+                          {d.windowOpen ? <span className="h-1.5 w-1.5 rounded-full bg-blue-bright" title={C.calendar.window} /> : null}
                           {worldCount > 0 ? (
                             <span
                               className="h-1 w-1 rounded-full bg-white/45"
@@ -784,7 +788,15 @@ export function CalendarScreen() {
           half of this bar — it now sits above it. */}
       <div ref={footerRef} className="sticky bottom-[4.25rem] z-10 md:bottom-3">
         <Panel strong className="flex flex-wrap items-center justify-end gap-2 p-3">
-          {sundayStop ? (
+          {continueState === "decision" ? (
+            <Button variant="primary" onClick={() => router.push("/career")}>
+              {C.hub.nowDecision}
+            </Button>
+          ) : continueState === "seasonReview" || continueState === "ended" ? (
+            <Button variant="primary" onClick={() => router.push("/career/season")}>
+              {continueState === "ended" ? C.ceremonies.legacyTitle : C.ceremonies.seasonReview}
+            </Button>
+          ) : sundayStop ? (
             <Button variant="primary" onClick={() => router.push("/career")}>
               {C.calendar.sundayAhead}
             </Button>
@@ -814,14 +826,14 @@ export function CalendarScreen() {
               <Button
                 variant="ghost"
                 onClick={() => advanceDay()}
-                disabled={save.phase !== "running"}
+                disabled={save.phase !== "running" || scrimPlaying}
               >
                 {C.calendar.advanceDay}
               </Button>
               <Button
                 variant="primary"
                 onClick={() => advanceToNextStop()}
-                disabled={save.phase !== "running"}
+                disabled={save.phase !== "running" || scrimPlaying}
               >
                 {C.calendar.advanceToStop(nextStopLabel)}
               </Button>

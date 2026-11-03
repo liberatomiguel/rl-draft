@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.3**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.6**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,50 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed — rc.36.6, career interaction and 50/50 (R94, 2026-11-03)
+- Tuesday/Wednesday practice broadcasts: a short game clock and series
+  score reveal keep the day on screen, then autoplay resumes. Skip stops at
+  recorded practice; reload never re-simulates a result. Legacy Thursday
+  bookings move forward to a legal weekday. Planned practices show on the agenda.
+- 50/50 presents the public news feed using Miguel's supplied logo. Private
+  bids, contracts, finance and qualification notices belong in the inbox;
+  technical maintenance, routine practice and generic filler digests are silent.
+  Qualifier outcomes send one league email rather than duplicate notices.
+  EN/PT articles use reporting language; mail has a greeting, paragraphs and
+  sender signature. Existing messages are reclassified additively on load.
+- Showmatch invitations from 50/50 and duds; the 50/50 Community Cup joins
+  the rotation. No weekly random events before the first career regional.
+  Occasional community 1v1/2v2 cups allow a roster selection, deterministic
+  eight-side brackets, real participant attributes and normal community rewards.
+- Shared regional name catalog imported from the supplied workbook: 834
+  player names, 280 org names, four Excluir rows respected. All sources draw
+  from the same approved catalogs through seeded non-overlapping allocations.
+  Five collisions with real players get II; three cross-region homonyms get
+  region labels. Legacy careers retain their stored identities and versioned banks.
+- HQ highlights newly available upgrades; locked camps have no purchase
+  action or price. Camp purpose/duration are clearer. Training's attribute
+  guide sits above the coach and growth section with one explanation per stat.
+- Roadmap reconciled in ROADMAP-NEXT-2026-11-03.md: three remaining work
+  sessions plus cutover, conditional on playtest acceptance and external setup.
+
+### Fixed — rc.36.6
+- Calendar controls previously called day advancement while a private
+  decision held the clock, producing a silent no-op. They now route to the
+  decision, Sunday start, event or season screen using the clock's own state.
+- Hidden training reports still stopped autoplay, and repeating the plan
+  depended on an invisible Continue button. Opt-out now consumes/continues
+  each report, repeating the plan exactly once while preserving cycle payout.
+- Non-participant event cards exposed three follow actions plus three clock
+  controls. They now expose watch, results and continue-to-calendar only.
+  Follow suggestions no longer appear as "Also — Without You" on a bid.
+- A failed qualifier removed the regional from the agenda. It now stays
+  visible and reads not qualified/spectating; it never becomes a user lobby.
+- Transfer-window dots previously appeared only on the first Monday; every
+  open-window day now has its own blue marker on both calendars.
+- Legacy world repair must preserve nameBankVersion 3 rather than downgrading
+  a new catalog to the rc.29 bank. Persist keys/versions remain unchanged.
+- BALANCE_VERSION 10 → 11. Static assets-only hosting and production remain unchanged.
 
 ### Added / Changed — rc.36.5, playtest corrections and local progression (R93)
 - Restore the game's fonts/colours in news notices, keeping their distinct

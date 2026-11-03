@@ -217,12 +217,16 @@ export function resolveMail(item: MailItem, career: CareerCopy): ResolvedMail {
   const p = displayParams(career, item.titleKey, raw);
   const titles = career.mail.tpl as unknown as TplMap;
   const bodies = career.mail.body as unknown as TplMap;
-  const title = titles[item.titleKey] ? titles[item.titleKey](p) : item.titleKey;
+  const newsKey = templateKeyOf(item.titleKey, raw);
+  const newsTitles = career.news.tpl as unknown as TplMap;
+  const newsBodies = career.news.body as unknown as TplMap;
+  const title = titles[item.titleKey]?.(p) ?? newsTitles[newsKey]?.(p) ?? item.titleKey;
   const bodyKey = item.bodyKey ?? item.titleKey;
-  const body = bodies[bodyKey] ? bodies[bodyKey](p) : "";
+  const message = bodies[bodyKey]?.(p) ?? newsBodies[newsKey]?.(p) ?? title;
   const from =
     (career.mail.from as Record<string, string>)[item.fromKey] ?? career.mail.from.board;
   const kindLabel =
     (career.mail.kinds as Record<string, string>)[item.kind] ?? item.kind;
+  const body = `${career.mail.greeting}\n\n${message}\n\n${career.mail.signoff}\n${from}`;
   return { title, body, from, kindLabel };
 }

@@ -6,7 +6,7 @@
 > growth, training and HQ decided). Neither file is in the repo; "plan §N"
 > cites the 28/10 update, and its new requirements are written into the
 > Etapas below by ID. "V2 plan" is `V2-IMPLEMENTATION-PLAN.md`. Last updated
-> **2026-10-31**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
+> **2026-11-03**. Current state: `STATUS.md`. History: `CHANGELOG.md`. Grep
 > this file for a stage or an ID; it is not meant to be read whole.
 
 ## How the stages run
@@ -44,7 +44,7 @@
 | 1b | M1 hardening | Bugs the rc.28 E2E found | ✅ rc.29 (on staging) |
 | — | **Gate 1** | Answered by the 28/10 plan (Miguel's rc.29 playtest + direction) | ✅ |
 | 2 | M0 rest + M2 | Instruments, then a sustainable career | ✅ built: 2a rc.30 + rc.32; 2b rc.31–rc.33 (Gate 2: Miguel's play) |
-| 3 | M3 | The new RTW loop (contract first) | Built through rc.36.3; Gate 3b balance playtest |
+| 3 | M3 | The new RTW loop (contract first) | Built through rc.36.6; Gate 3b progression/economy acceptance remains |
 | 4 | M4 | Collect and progress | |
 | 5 | M5 | Calibration, SEO/perf, art, 50/50 | |
 | 6 | M6 | Freeze, migration, cutover, launch | |
@@ -658,6 +658,12 @@ never calibrates the old training model as if it were final.
   only; no Etapa 4–6 work authorized by that review.
 
 ## Etapa 4 — collect and progress
+
+Current completion plan after the 03/11 playtest corrections:
+`ROADMAP-NEXT-2026-11-03.md`. The 50/50 feed, weekday scrim presentation,
+community side events and approved name catalog were pulled forward in
+rc.36.6; do not rebuild them in Etapa 5. These corrections do not establish
+historical Worlds-title pacing or approve Gate 3b.
 
 - **COL-01 and COL-02 were pulled forward and built in rc.33** (#151–#154).
   Open for Gate 4: the album's pacing (a card per find now: about 420

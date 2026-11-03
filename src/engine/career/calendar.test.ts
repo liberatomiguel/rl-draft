@@ -345,7 +345,7 @@ describe("unofficialOfferFor", () => {
     expect(offer!.format).toBe("single");
     expect(offer!.split).toBe(1);
     expect(offer!.day).toBe(eventDayFor(3)); // plays on the week's Saturday
-    expect(T3_EVENT_NAMES).toContain(offer!.name);
+    expect(T3_EVENT_NAMES).toContain(offer!.name.split(" · ")[0]);
   });
 
   it("stops t3 offers above the rating ceiling or the split entry cap", () => {

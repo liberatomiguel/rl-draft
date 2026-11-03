@@ -539,6 +539,8 @@ export const CAREER_PT: CareerCopy = {
 
   // Caixa de entrada v0.2 — correio endereçado ao manager.
   mail: {
+    greeting: "Olá,",
+    signoff: "Atenciosamente,",
     title: "Caixa de entrada",
     unread: (n: number) => `${n} não lidas`,
     markAllRead: "Marcar tudo como lido",
@@ -718,6 +720,9 @@ export const CAREER_PT: CareerCopy = {
   // Scrims v0.2 — blocos de dia útil entre eventos. v0.3: agendáveis, escolha
   // de adversário, resultados visíveis.
   scrim: {
+    live: "Scrim ao vivo",
+    game: (n: number) => `Jogo ${n}`,
+    schedule: "Terça e quarta",
     title: "Bloco de scrim",
     desc: "Uma MD5 de portas fechadas: reps de química e desenvolvimento leve. Dois blocos por semana.",
     vs: (opp: string) => `vs ${opp}`,
@@ -725,7 +730,7 @@ export const CAREER_PT: CareerCopy = {
     won: (opp: string, a: number, b: number) => `Scrim V ${a}-${b} vs ${opp}`,
     lost: (opp: string, a: number, b: number) => `Scrim D ${a}-${b} vs ${opp}`,
     usedUp: "Sem blocos de scrim restantes nesta semana",
-    restDay: "Nada de scrim em dia de descanso",
+    restDay: "As scrims acontecem na terça e na quarta",
     squadShort: "Sem scrim com menos de três jogadores — contrate um terceiro antes.",
     // v0.3 agendamento + resultados
     planTitle: "Parceiros de treino",
@@ -917,6 +922,14 @@ export const CAREER_PT: CareerCopy = {
   },
 
   training: {
+    effectDescription: {
+      offense: "Cria pressão e oportunidades de gol ao longo de cada jogo.",
+      defense: "Mantém o time competitivo ao conter o adversário em cada jogo.",
+      mechanics: "Aumenta a chance de uma jogada excepcional que pode decidir o jogo.",
+      consistency: "Reduz o impacto de uma atuação ruim, sem eliminar toda a variação.",
+      experience: "Acrescenta controle e força ao time nas partidas dos playoffs.",
+      clutch: "Acrescenta força no jogo decisivo da série, quando a eliminação está em disputa.",
+    } as Record<string, string>,
     weekScrims: "Scrims da semana",
     weekScrimsEmpty: "Nenhuma scrim registrada nesta semana ainda.",
     title: "Treinos",
@@ -984,7 +997,8 @@ export const CAREER_PT: CareerCopy = {
     etaAtPeak: "No auge — ele segura esse nível por enquanto",
     declineLine: (perWeek: string) => `Passou do auge: cerca de −${perWeek} OVR por semana`,
     effectsTitle: "O que seus atributos fazem",
-    effectsHint: "Linha de atributos do time → os modificadores exatos que a simulação aplica. Treine o que seus resultados pedem.",
+    effectsHint: "Seu elenco atual e os momentos em que cada atributo faz a diferença.",
+    effectBaseline: (n: number) => `Os modificadores de força comparam seu time com um nível de atributo de ${n}: abaixo disso, o valor pode ser negativo. O overall continua sendo a principal fonte de força da equipe.`,
     effectWhen: {
       always: "todo jogo",
       deciding: "jogos decisivos",
@@ -1845,6 +1859,8 @@ export const CAREER_PT: CareerCopy = {
     },
     // UX-06a: o modal central de desbloqueio — uma vez por novidade; desbloqueado não é comprado.
     unlockTitle: "Novo na caixa de ferramentas",
+    bootcampHint: "Reúna o elenco por alguns dias: fortaleça o entrosamento e leve uma vantagem temporária para as competições.",
+    available: "Melhorias disponíveis",
     unlockBody: (name: string) => `${name} foi desbloqueado — pronto para comprar, ainda não comprado.`,
     unlockSee: "Ver",
     unlockLater: "Depois",
@@ -1988,7 +2004,7 @@ export const CAREER_PT: CareerCopy = {
     },
     brand: {
       wire: { name: "O plantão", kicker: "PLANTÃO", credit: "" },
-      fiftyFifty: { name: "50/50", kicker: "50/50", credit: "Central de notícias apresentada com a 50/50 · manchetes escritas pelo jogo" },
+      fiftyFifty: { name: "50/50", kicker: "50/50", credit: "Notícias de Rocket League oferecidas pelo 50/50" },
     } as Record<string, { name: string; kicker: string; credit: string }>,
     digest: (n: number) => `Giro pela liga: mais ${n} movimentações`,
     tpl: {
@@ -1999,7 +2015,7 @@ export const CAREER_PT: CareerCopy = {
       userSold: (p: Record<string, string | number>) => `${p.player} deixa ${p.org} rumo à ${p.to}`,
       userReleased: (p: Record<string, string | number>) => `${p.org} dispensa ${p.player}`,
       result: (p: Record<string, string | number>) => `${p.org} levam o ${p.event}`,
-      resultUser: (p: Record<string, string | number>) => `${p.event}: você termina em ${p.placement}`,
+      resultUser: (p: Record<string, string | number>) => `${p.org ?? "A equipe"} termina em ${p.placement} no ${p.event}`,
       // v2.0 (R40): resultado de qualificatória é classificado / eliminado, nunca colocação.
       resultUserQualified: (p: Record<string, string | number>) => `${p.event}: classificado para domingo`,
       resultUserEliminated: (p: Record<string, string | number>) => `${p.event}: eliminado no Swiss`,
@@ -2089,17 +2105,17 @@ export const CAREER_PT: CareerCopy = {
       transferFee: (p: Record<string, string | number>) =>
         `${p.to} acertou a taxa com ${p.from} por ${p.player}. O mapa da região se redesenha de novo.`,
       transferFa: (p: Record<string, string | number>) =>
-        `${p.player} estava sem org — ${p.to} chegou primeiro. Valor de agente livre, se o encaixe funcionar.`,
+        `${p.to} confirmou a contratação de ${p.player}, que estava livre no mercado. O jogador chega para integrar o elenco na próxima etapa do circuito.`,
       userSigned: (p: Record<string, string | number>) =>
-        `Papelada assinada: ${p.player} é seu. A química começa do zero — a tabela só lembra de resultados.`,
+        `${p.org} anunciou a chegada de ${p.player}. A contratação abre uma nova fase para o jogador e para a organização, que agora se preparam para a primeira apresentação juntos.`,
       userSold: (p: Record<string, string | number>) =>
-        `${p.player} sai rumo à ${p.to}. A taxa entra no caixa; o buraco na escalação é problema seu.`,
+        `${p.to} chegou a um acordo para contratar ${p.player}, de ${p.org}. Com a transferência concluída, as duas organizações voltam as atenções para os próximos compromissos da temporada.`,
       userReleased: (p: Record<string, string | number>) =>
         `${p.org} pagou a rescisão e seguiu em frente. ${p.player} entra no mercado de agentes livres.`,
       result: (p: Record<string, string | number>) =>
         `${p.org} fecharam o ${p.event}. A bancada vai reprisar essa grande final por semanas.`,
       resultUser: (p: Record<string, string | number>) =>
-        `A campanha da org no ${p.event} termina em ${p.placement}. Toda colocação paga — e a tabela lembra.`,
+        `${p.org ?? "A equipe"} encerrou sua participação no ${p.event} em ${p.placement}. O resultado marca mais um capítulo da temporada, enquanto o circuito segue para o próximo compromisso.`,
       resultUserQualified: (p: Record<string, string | number>) =>
         `Três vitórias no Swiss do ${p.event} e a org garantiu a vaga no regional. A qualificatória paga premiação e reputação — os Pontos da Temporada estão em jogo no domingo.`,
       resultUserEliminated: (p: Record<string, string | number>) =>
@@ -2232,7 +2248,9 @@ export const CAREER_PT: CareerCopy = {
       trainingWeeks: (w: number) => `${w > 0 ? "+" : ""}${w} sem`,
     },
     items: {
-      "ins-showmatch": { title: "Um streamer quer um showmatch", body: "Um criador grande oferece ao elenco um showmatch pago nesta semana. Dinheiro fácil, química boa, uma sessão a menos.", a: "Jogar", b: "Passar" },
+      "ins-showmatch": { title: "Um streamer quer um showmatch", body: "Chegou um convite para um amistoso ao vivo. O cachê já está combinado, mas o elenco precisaria abrir mão de uma tarde de treino.", a: "Jogar", b: "Passar" },
+      "ins-5050-showmatch": { title: "Um convite do 50/50", body: "O 50/50 está preparando um showmatch e quer sua organização na transmissão. Há um cachê pela participação e a chance de alcançar um novo público; a comissão precisará remanejar uma tarde de treino.", a: "Participar do showmatch do 50/50", b: "Manter a agenda de treinos" },
+      "ins-duds-showmatch": { title: "O duds tem uma vaga na live", body: "O duds está organizando um showmatch com a comunidade e convidou seu elenco. Os jogadores se animaram e o cachê ajuda, mas o treino daquele dia terminaria mais cedo.", a: "Aceitar o convite do duds", b: "Ficar de fora desta vez" },
       "ins-charity-cup": { title: "Copa beneficente", body: "Uma copa beneficente local quer sua org no cartaz. Custa pouco e compra boa vontade.", a: "Aparecer", b: "Recusar" },
       "ins-pc-dies": { title: "Um PC morre no meio da semana", body: "Uma das máquinas de torneio pifou. Troque agora ou empreste uma reserva e perca tempo de treino.", a: "Trocar", b: "Emprestar uma reserva" },
       "ins-fan-meetup": { title: "A torcida pede um encontro", body: "A torcida quer um encontro depois do treino. Um custo pequeno, um pouco de prestígio.", a: "Organizar", b: "Não esta semana" },
@@ -2299,6 +2317,9 @@ export const CAREER_PT: CareerCopy = {
   },
 
   event: {
+    communityLineup: (n: number) => `Seu elenco para o ${n}v${n}`,
+    communityLineupHint: "Escolha quem representa a organização neste campeonato comunitário. Cada participante entra com seu próprio nível e seus atributos.",
+    communitySeat: (n: number) => `Jogador ${n}`,
     lobbyTitle: "Lobby do evento",
     format: "Formato",
     formatSwiss: "Swiss de 16 times → top-8 em eliminação dupla",
@@ -2429,6 +2450,7 @@ export const CAREER_PT: CareerCopy = {
 
   // rc.36 (SUN-01..03, R88) — o fim de semana: sábado → QG → domingo.
   sunday: {
+    backToCalendar: "Continuar para o calendário",
     tomorrow: "Amanhã",
     qualifiedLine: "Classificado pela qualificatória de sábado",
     seedLine: (seed: number, record: string) => `Seed nº ${seed} · Swiss ${record}`,

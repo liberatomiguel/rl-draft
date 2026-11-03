@@ -278,7 +278,7 @@ describe("DEV-02 — retirees: coach or out (deterministic, feeds the coach mark
     expect(next.world.retiredIds).toContain(real.id);
     const coach = becomesCoachOnRetirement(real.id, save.careerSeed);
     const key = coach ? "retiredToCoach" : "retiredLeaves";
-    expect(next.news.some((n) => n.titleKey === key && n.params?.player === real.name)).toBe(true);
+    expect(next.news.some((n) => n.titleKey === key && n.params?.player === real.name)).toBe(false);
     expect(next.mail.some((m) => m.titleKey === key)).toBe(true);
     // Retired ids never resolve again — the anchor pass cannot re-sign him.
     expect(playerViewById(real.id, { careerSeed: next.careerSeed, seasonIndex: 1, world: next.world })).toBeNull();

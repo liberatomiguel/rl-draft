@@ -47,7 +47,8 @@ import type {
 import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
-import { canSkipShortSquadEvent, ruledOutFor, squadIsShort } from "@/store/careerFlow";
+import { canSkipShortSquadEvent, eventFieldFor, ruledOutFor } from "@/store/careerFlow";
+import { communityParticipantsFor } from "@/engine/career/community";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { useOverlayHold } from "@/store/overlayHoldStore";
@@ -219,6 +220,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const simEvent = useCareerStore((s) => s.simEvent);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const skipShortSquadEvent = useCareerStore((s) => s.skipShortSquadEvent);
+  const setParticipants = useCareerStore((s) => s.setCommunityParticipants);
   // One sheet for the lobby — any AI org in the field opens it.
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
@@ -231,9 +233,12 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const daysAway = def.day - save.clock.day;
   const isToday = daysAway === 0;
   const isUnofficial = def.tier === "t3" || def.tier === "t2";
+  const participants = communityParticipantsFor(save, def);
+  const short = save.squad.length < (def.teamSize ?? 3);
+  const smallField = useMemo(() => def.teamSize ? eventFieldFor(save, def).field : null, [save, def]);
 
   const field = useMemo(
-    () =>
+    () => smallField ? smallField.map(team => ({ ref: team.id, name: team.name, stars: team.id === "user" ? myStars : save.world.orgs[team.id]?.stars ?? 0, rating: Math.round(team.rating.total) })) :
       lobbyFieldRefs(save, def, preview.rating.total).map((ref) => {
         if (ref === "user") {
           return { ref, name: save.identity.orgName, stars: myStars, rating: userRating };
@@ -255,7 +260,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           rating: org?.rating !== undefined ? Math.round(org.rating) : null,
         };
       }),
-    [save, def, preview, myStars, userRating],
+    [save, def, preview, myStars, userRating, smallField],
   );
 
   const rated = field.filter((f) => f.rating !== null) as { rating: number }[];
@@ -347,6 +352,22 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       {/* the field */}
+      {def.teamSize ? (
+        <Panel className="p-4">
+          <h2 className="display text-lg font-bold uppercase text-ink">{C.event.communityLineup(def.teamSize)}</h2>
+          <p className="mt-1 text-xs text-sub">{C.event.communityLineupHint}</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {Array.from({ length: def.teamSize }, (_, slot) => (
+              <label key={slot} className="space-y-1 text-xs text-sub">
+                <span>{C.event.communitySeat(slot + 1)}</span>
+                <select value={participants[slot] ?? ""} disabled={!isToday} className="min-h-11 w-full rounded-lg border border-line-strong bg-raised px-3 text-sm text-ink" onChange={(e) => setParticipants(participants.map((id, index) => index === slot ? e.target.value : id))}>
+                  {save.squad.map(p => <option key={p.id} value={p.id} disabled={participants.some((id, index) => index !== slot && id === p.id)}>{p.name} · {Math.round(p.overall)} {C.common.ovr}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
       {field.length > 0 ? (
         <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
           <p className="kicker mb-2.5 text-[10px]">{C.event.fieldTitle}</p>
@@ -414,7 +435,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       {/* RTW-05 (rc.33): a short squad never starts an event — sign a third player first. */}
-      {isToday && squadIsShort(save) ? (
+      {isToday && short ? (
         <div className="rise-in space-y-3 rounded-lg border border-bad/40 bg-bad/10 p-3" style={{ animationDelay: "120ms" }}>
           <p className="text-sm text-ink">{C.hub.squadShortBody(save.squad.length, def.name)}</p>
           <div className="flex flex-wrap items-center gap-3">
@@ -454,7 +475,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       {/* CTAs — matchday only; earlier days are a read-only preview */}
-      {isToday && !squadIsShort(save) ? (
+      {isToday && !short ? (
         <div className="rise-in space-y-2" style={{ animationDelay: "120ms" }}>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary" size="lg" onClick={() => enterEvent(true)}>

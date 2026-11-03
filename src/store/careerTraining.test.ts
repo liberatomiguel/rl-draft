@@ -479,7 +479,7 @@ describe("DEV-03 flow (TRAINING-CONTRACT §3)", { timeout: 120_000 }, () => {
     // Package scrims: Tue / Wed / Thu only (the matchdays are the weekend)…
     const pkg = end.scrimLog.filter((e) => e.level);
     expect(pkg.length).toBeGreaterThan(0);
-    for (const e of pkg) expect(CAREER_SCRIM.package.days[3]).toContain(dayOfWeekOf(e.day));
+    for (const e of pkg) expect(CAREER_SCRIM.weekdays).toContain(dayOfWeekOf(e.day));
     // …and never on a day the user plays: a Tuesday that is his matchday runs no scrim.
     const tuesday = playTo(start, 9);
     const matchday = structuredClone(tuesday);

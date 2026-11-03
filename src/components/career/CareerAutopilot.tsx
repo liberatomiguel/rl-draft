@@ -25,12 +25,15 @@ import { CAREER_PLAYBACK } from "@/config/balance";
 import { inviteSurfacedToday, moneyNoticeOf } from "@/store/careerFlow";
 import { useCareerStore, selectActiveSave } from "@/store/careerStore";
 import { continueKind } from "./careerUi";
+import { useSettings } from "@/store/settingsStore";
 
 export function CareerAutopilot() {
   const autoAdvance = useCareerStore((s) => s.autoAdvance);
   const setAutoAdvance = useCareerStore((s) => s.setAutoAdvance);
   const advanceDay = useCareerStore((s) => s.advanceDay);
   const save = useCareerStore(selectActiveSave);
+  const showReports = useSettings((s) => s.careerTrainingReports);
+  const scrimPlayback = useCareerStore((s) => s.scrimPlayback);
   const dayRef = useRef<number>(save?.clock.day ?? 0);
   /** The day this run of the autoplay started on ("season:day"; null while it is off). */
   const startRef = useRef<string | null>(null);
@@ -40,7 +43,7 @@ export function CareerAutopilot() {
   }, [autoAdvance]);
 
   useEffect(() => {
-    if (!autoAdvance || !save) return;
+    if (!autoAdvance || !save || scrimPlayback) return;
     const today = `${save.clock.seasonIndex}:${save.clock.day}`;
     startRef.current ??= today;
 
@@ -60,7 +63,7 @@ export function CareerAutopilot() {
       return;
     }
     // rc.35 review: a finished training cycle's report waits to be read (two cycles never stack).
-    if (trainingReportOf(save)) {
+    if (showReports && trainingReportOf(save)) {
       setAutoAdvance(false);
       return;
     }
@@ -75,7 +78,7 @@ export function CareerAutopilot() {
       }
     }, CAREER_PLAYBACK.autoAdvanceDayMs);
     return () => clearTimeout(timer);
-  }, [autoAdvance, save, advanceDay, setAutoAdvance]);
+  }, [autoAdvance, save, advanceDay, setAutoAdvance, showReports, scrimPlayback]);
 
   return null;
 }

@@ -32,6 +32,14 @@ export interface InsertDef {
 }
 
 export const CAREER_INSERTS_CATALOG: readonly InsertDef[] = [
+  { id: "ins-5050-showmatch", kind: "random", weight: 2, options: [
+    { key: "a", effects: { money: 1_500, rep: 1, trainingWeeks: -0.3 } },
+    { key: "b", effects: {} },
+  ] },
+  { id: "ins-duds-showmatch", kind: "random", weight: 2, options: [
+    { key: "a", effects: { money: 1_200, chemistry: 0.05, trainingWeeks: -0.3 } },
+    { key: "b", effects: {} },
+  ] },
   { id: "ins-showmatch", kind: "random", weight: 3, options: [
     { key: "a", effects: { money: 1_500, chemistry: 0.05, trainingWeeks: -0.3 } },
     { key: "b", effects: {} },

@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import type { CareerCopy } from "@/content/careerCopy";
-import { toolboxNewKey, type ToolboxItemId } from "@/engine/career/careerNew";
+import { careerNewSummary, toolboxNewKey, type ToolboxItemId } from "@/engine/career/careerNew";
 import { ladderOf, type LadderRungId } from "@/engine/career/ladder";
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
@@ -82,6 +82,9 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const items = useMemo(() => toolboxOf(save), [save]);
   const rungs = useMemo(() => ladderOf(save), [save]);
   const ended = save.phase === "ended";
+  const fresh = careerNewSummary(save).keys;
+  const available = items.filter((i) => i.status === "buyable" && !ended);
+  const hasNew = available.some((i) => fresh.has(toolboxNewKey(i.id)));
 
   const sheet = sheetId ? (items.find((i) => i.id === sheetId) ?? null) : null;
   const refusal = useMemo(() => (sheet ? toolboxRefusalOf(save, sheet.id) : null), [save, sheet]);
@@ -126,13 +129,19 @@ export function ToolboxBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   };
 
   return (
-    <Panel id="career-progression" className="rise-in scroll-mt-24 p-4" style={{ animationDelay: "150ms" }}>
+    <Panel id="career-progression" className={cx("rise-in scroll-mt-24 p-4", hasNew && "!border-blue-bright/70 bg-blue/10")} style={{ animationDelay: "150ms" }}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="kicker text-[10px]">{L.title}</p>
         <span className="rounded-full border border-orange/35 bg-orange/10 px-2.5 py-0.5 text-[10px] font-semibold text-orange-bright">
           {L.rep(rep)}
         </span>
       </div>
+
+      {available.length > 0 ? (
+        <button type="button" onClick={() => openSheet(available.find((i) => fresh.has(toolboxNewKey(i.id)))?.id ?? available[0].id)} className="mb-3 flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-blue/50 bg-blue/15 px-3 py-2 text-left text-xs font-semibold text-ink hover:bg-blue/20">
+          <span>{hasNew ? C.toolbox.newTag + " · " : ""}{C.toolbox.available}: {available.map((i) => toolboxNameOf(C, i.id)).join(", ")}</span><span aria-hidden>→</span>
+        </button>
+      ) : null}
 
       <ul className="space-y-2">
         {visibleRungs.map((rung) => {

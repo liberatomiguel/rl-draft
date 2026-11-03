@@ -467,7 +467,11 @@ export function unofficialOfferFor(
     ctx.userTeamRating <= CAREER_UNOFFICIAL.t3RatingCeiling &&
     ctx.t3EntriesThisSplit < CAREER_UNOFFICIAL.t3MaxEntriesPerSplit
   ) {
-    return { ...base, tier: "t3", name: T3_EVENT_NAMES[rot % T3_EVENT_NAMES.length] };
+    const small = derivedFloat(ctx.careerSeed, streams.gen("communityFormat", `${seasonIndex}:${week}`)) < CAREER_UNOFFICIAL.smallTeamChance;
+    const sizes = CAREER_UNOFFICIAL.smallTeamSizes;
+    const size = sizes[Math.floor(derivedFloat(ctx.careerSeed, streams.gen("communitySize", `${seasonIndex}:${week}`)) * sizes.length)];
+    const name = T3_EVENT_NAMES[rot % T3_EVENT_NAMES.length];
+    return { ...base, tier: "t3", name: small ? `${name} · ${size}v${size}` : name, ...(small ? { teamSize: size } : {}) };
   }
 
   return null;

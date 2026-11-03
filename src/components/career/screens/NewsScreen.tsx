@@ -326,7 +326,7 @@ function MailRow({
             {resolved.kindLabel}
           </Badge>
           {resolved.body ? (
-            <p className="max-w-prose text-sm leading-relaxed text-sub">{resolved.body}</p>
+            <p className="max-w-prose whitespace-pre-line text-sm leading-relaxed text-sub">{resolved.body}</p>
           ) : null}
           {item.linkTo ? (
             <Button

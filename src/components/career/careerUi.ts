@@ -112,6 +112,7 @@ import {
   userTeamForEvent,
 } from "@/store/careerFlow";
 import { clockHoldOf } from "@/store/careerDecisions";
+import { scrimDaysOf } from "@/engine/career/training";
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -237,7 +238,9 @@ export function agendaDays(save: CareerSave, fromDay: number, count: number): Ag
     // rc.36 (CAL-01, R88): no payroll marker on the calendars — payroll still
     // books every Monday but the founding day; Finances shows it.
     // v0.3: booked scrims show as training events on the calendar.
-    if (save.scheduledScrims?.some((s) => s.day === day)) kinds.push("scrim");
+    const plan = save.training?.plan;
+    const packageScrim = plan?.package && plan.seasonIndex === save.clock.seasonIndex && day >= plan.startDay && day <= plan.endDay && scrimDaysOf(plan.package.scrimsPerWeek).includes(dow);
+    if (packageScrim || save.scheduledScrims?.some((s) => s.day === day) || save.scrimLog.some(s => s.seasonIndex === save.clock.seasonIndex && s.day === day)) kinds.push("scrim");
     if (!event && dow <= CAREER_TRAINING.trainingDaysPerWeek) kinds.push("training");
     // v2.0 (R40): the weekend is matchday (qualifier / Swiss stage Saturday,
     // regional / Championship Sunday Sunday); a weekend day without a match
@@ -521,7 +524,7 @@ export function scrimAvailability(save: CareerSave): {
   if (save.pendingEventDef && save.clock.day === save.pendingEventDef.day) {
     return { available: false, remaining, opponentName: null, reason: "event" };
   }
-  if (dow > CAREER_TRAINING.trainingDaysPerWeek) {
+  if (!CAREER_SCRIM.weekdays.includes(dow)) {
     return { available: false, remaining, opponentName: null, reason: "restDay" };
   }
   if (remaining <= 0) {

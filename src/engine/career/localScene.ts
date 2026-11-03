@@ -16,7 +16,7 @@
  */
 
 import { CAREER_UNOFFICIAL } from "@/config/balance";
-import { LOCAL_PLAYER_NAME_BANK, LOCAL_TEAM_NAME_BANK } from "@/data/career/names";
+import { orgNamePoolFor, playerNamePoolFor } from "./names";
 import { createRng } from "@/lib/rng";
 import type { Region } from "../types";
 import { deriveSeed, derivedFloat, streams } from "./seeds";
@@ -58,7 +58,7 @@ export function localSceneRefs(region: Region, seasonIndex: number): string[] {
 export function localTeamName(ref: string, careerSeed: number): string {
   const parsed = parseLocalRef(ref);
   if (!parsed) return ref;
-  const bank = LOCAL_TEAM_NAME_BANK[parsed.region] ?? LOCAL_TEAM_NAME_BANK.NA;
+  const bank = orgNamePoolFor(parsed.region, careerSeed, "local");
   const base = Math.floor(
     derivedFloat(careerSeed, streams.gen("localName", `${parsed.region}:${parsed.seasonIndex}`)) *
       bank.length,
@@ -98,7 +98,7 @@ export function localTeamOffset(ref: string, careerSeed: number): number {
 export function localPlayerNames(ref: string, careerSeed: number): [string, string, string] {
   const parsed = parseLocalRef(ref);
   const region = parsed?.region ?? "NA";
-  const bank = LOCAL_PLAYER_NAME_BANK[region] ?? LOCAL_PLAYER_NAME_BANK.NA;
+  const bank = playerNamePoolFor(region, careerSeed, "local");
   const order = createRng(
     deriveSeed(careerSeed, streams.gen("localPlayers", `${region}:${parsed?.seasonIndex ?? 0}`)),
   ).shuffle(bank);

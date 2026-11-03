@@ -205,13 +205,13 @@ describe("repairLegacyWorld (rc.30 A4): one roster and one gamertag per player",
 });
 
 describe("migrateSaveToV5 (rc.30)", { timeout: 60_000 }, () => {
-  it("repairs a legacy world once, says so in one news line, and leaves the career's own records alone", () => {
+  it("repairs a legacy world once without publishing technical maintenance as news", () => {
     const { save } = legacyCareer();
     const legacy = JSON.parse(JSON.stringify({ ...save, saveVersion: 4 })) as CareerSave;
     const up = migrateSaveToV5(legacy)!;
     expect(up.saveVersion).toBe(5);
     expect(up.world.nameBankVersion).toBe(2);
-    expect(up.news.filter((n) => n.titleKey === "registryRepair")).toHaveLength(1);
+    expect(up.news.filter((n) => n.titleKey === "registryRepair")).toHaveLength(0);
     for (const field of ["squad", "starterIds", "finances", "eventResults", "competition", "coach", "sponsor"] as const) {
       expect(up[field], field).toEqual(save[field]);
     }

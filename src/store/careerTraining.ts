@@ -44,6 +44,7 @@ import {
   pickScrimOpponent,
   prioritizeScrimVariety,
   resolveScrimLevel,
+  rescheduleScrimDays,
   sanitizePackage,
   scrimCapRatio,
   scrimDaysOf,
@@ -59,6 +60,7 @@ import { isLocalRef, localSceneRefs, localTeamName, localTeamOffset } from "@/en
 import { LINEUP_SEATS, localTeamFor, orgTeamFor, userTeamFor } from "@/engine/career/worldSim";
 import { simulateSeries } from "@/engine/match";
 import { createRng } from "@/lib/rng";
+import { deliverNews } from "@/engine/career/communications";
 import type {
   CareerDifficulty,
   CareerSave,
@@ -98,18 +100,12 @@ function pushTrainingNews(
   params?: Record<string, string | number>,
   priority: 0 | 1 | 2 = 1,
 ): void {
-  save.news.unshift({
-    id: `n:${nextSeq(save)}`,
-    seasonIndex: save.clock.seasonIndex,
-    week: weekOfDay(save.clock.day),
-    day: save.clock.day,
+  deliverNews(save, {
     type: "training",
     priority,
     titleKey,
     ...(params ? { params } : {}),
-    read: false,
   });
-  if (save.news.length > CAREER_SAVE.newsCap) save.news.length = CAREER_SAVE.newsCap;
 }
 
 const squadShort = (save: CareerSave): boolean => save.squad.length < LINEUP_SEATS;
@@ -228,6 +224,7 @@ export function trainingOf(save: Pick<CareerSave, "training">): TrainingState {
  * experience from his source (`training.coachProfileOf`).
  */
 export function repairTrainingOnLoad(save: CareerSave): void {
+  save.scheduledScrims = rescheduleScrimDays(save.scheduledScrims ?? [], save.clock.day);
   if (save.training !== undefined) {
     normaliseTrainingState(save);
     return;

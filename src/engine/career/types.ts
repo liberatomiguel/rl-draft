@@ -416,7 +416,8 @@ export interface WorldState {
   /**
    * rc.29 (CAR-01): which filler/rookie name bank the world reads — 2 =
    * PLAYER_NAME_BANK with PLAYER_NAME_BANK_SWAPS (the real nicknames swapped
-   * out), set at creation; absent = the original bank (older careers).
+   * out); 3 = the approved shared regional catalog with seeded allocations.
+   * Absent = the original bank (older careers retain their existing names).
    */
   nameBankVersion?: number;
   /**
@@ -481,6 +482,9 @@ export interface CareerClock {
 export type EventTier = "t3" | "t2" | "qualifier" | "regional" | "major" | "worlds";
 
 export interface CareerEventDef {
+  /** Community side events only; absent means the standard 3v3 circuit. */
+  teamSize?: 1 | 2;
+  participantIds?: string[];
   /** Also the seed stream id suffix, e.g. "0:1:reg2:EU" — stable forever. */
   id: string;
   tier: EventTier;

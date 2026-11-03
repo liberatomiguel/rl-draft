@@ -82,7 +82,7 @@ describe("ECO-02 — pay-downs settle exactly what they quote", () => {
     const line = res.save.finances.ledger.at(-1)!;
     expect(line.kind).toBe("loanPayment");
     expect(line.amount).toBe(-9_612);
-    expect(res.save.news.some((n) => n.titleKey === "debtCleared")).toBe(true);
+    expect(res.save.mail.some((n) => n.titleKey === "debtCleared")).toBe(true);
   });
 
   it("a stub under the quantum can still be paid (it used to block the bank forever)", () => {

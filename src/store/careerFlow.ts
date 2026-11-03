@@ -59,6 +59,9 @@ import { SITE } from "@/config/site";
 import { prioritizeScrimVariety } from "@/engine/career/training";
 import { CAREER_BEATS } from "@/data/career/beats";
 import { playerNameBankFor } from "@/data/career/names";
+import { deliverMail, deliverNews, repairCommunicationsOnLoad } from "@/engine/career/communications";
+import { communityParticipantsFor, communityTeamFor } from "@/engine/career/community";
+import { statsFromView as communityStats } from "@/engine/career/development";
 import { RESCUE_PARTNER_BRAND } from "@/data/career/sponsors";
 import {
   asSwissOnly,
@@ -380,15 +383,7 @@ function pushNews(
   save: CareerSave,
   item: Omit<NewsItem, "id" | "seasonIndex" | "week" | "day" | "read">,
 ): void {
-  save.news.unshift({
-    id: `n:${nextSeq(save)}`,
-    seasonIndex: save.clock.seasonIndex,
-    week: weekOfDay(save.clock.day),
-    day: save.clock.day,
-    read: false,
-    ...item,
-  });
-  if (save.news.length > CAREER_SAVE.newsCap) save.news.length = CAREER_SAVE.newsCap;
+  deliverNews(save, item);
 }
 
 /** v0.2 Inbox: actionable mail addressed to the manager. */
@@ -396,14 +391,7 @@ function pushMail(
   save: CareerSave,
   item: Omit<MailItem, "id" | "seasonIndex" | "day" | "read">,
 ): void {
-  save.mail.unshift({
-    id: `m:${nextSeq(save)}`,
-    seasonIndex: save.clock.seasonIndex,
-    day: save.clock.day,
-    read: false,
-    ...item,
-  });
-  if (save.mail.length > CAREER_SAVE.mailCap) save.mail.length = CAREER_SAVE.mailCap;
+  deliverMail(save, item);
 }
 
 /** v0.3: append to the transfer wire (ring buffer, newest first). */
@@ -660,7 +648,7 @@ export function userEventDefOnDay(save: CareerSave, day: number): CareerEventDef
     if (!covers(def) || isUsersOwnEvent(save, def)) continue;
     if (def.tier === "regional") {
       if (def.region !== save.identity.region) continue;
-      return regionalUserEligible(save, def) ? def : null;
+      return def;
     }
     return def;
   }
@@ -2899,6 +2887,12 @@ export function userTeamForEvent(
   save: CareerSave,
   def: CareerEventDef,
 ): ReturnType<typeof userTeamFor> {
+  if (def.tier === "t3" && def.teamSize) {
+    const fieldedIds = communityParticipantsFor(save, def);
+    const members = fieldedIds.map(id => save.squad.find(p => p.id === id)!).map(p => ({ name: p.name, overall: p.overall, stats: communityStats(p), lineupId: `solo:${p.id}`, orgId: "user", region: p.region, country: p.country }));
+    const team = communityTeamFor({ id: "user", name: save.identity.orgName, region: save.identity.region, isUser: true }, members, save.difficulty);
+    return { team, fieldedIds, emptySeats: Math.max(0, def.teamSize - members.length), usedSubId: null };
+  }
   const unavailable =
     save.pendingUnavailability?.eventId === def.id ? save.pendingUnavailability.playerId : null;
   return userTeamFor({
@@ -2950,6 +2944,7 @@ export function squadHoldFor(save: CareerSave): CareerEventDef | null {
   if (save.phase !== "running" || save.activeEvent || !squadIsShort(save)) return null;
   const def = save.pendingEventDef;
   if (!def) return null;
+  if (def.tier === "t3" && def.teamSize && save.squad.length >= def.teamSize) return null;
   return def.day === save.clock.day || def.day === save.clock.day + 1 ? def : null;
 }
 
@@ -2994,6 +2989,22 @@ export function skipShortSquadEventFlow(input: CareerSave): FlowResult {
   return { save: capNews(save) };
 }
 
+export function eventFieldFor(save: CareerSave, def: CareerEventDef): ReturnType<typeof fieldForEvent> {
+  return fieldForEvent(def, {
+    world: save.world, competition: save.competition, userTeam: userTeamForEvent(save, def).team,
+    userRegion: save.identity.region, careerSeed: save.careerSeed, difficulty: save.difficulty, userPrestige: repTierOf(save.reputation),
+  });
+}
+
+export function setCommunityParticipantsFlow(input: CareerSave, ids: string[]): FlowResult {
+  const def = input.pendingEventDef;
+  if (!def?.teamSize || def.tier !== "t3" || input.activeEvent || input.phase !== "running") return { save: input, error: "blocked" };
+  if (ids.length !== def.teamSize || new Set(ids).size !== ids.length || ids.some(id => !input.squad.some(p => p.id === id))) return { save: input, error: "invalid" };
+  const save = clone(input);
+  save.pendingEventDef = { ...def, participantIds: [...ids] };
+  return { save };
+}
+
 export function startEvent(input: CareerSave, watch: boolean): CareerSave {
   const save = clone(input);
   const def = save.pendingEventDef;
@@ -3001,7 +3012,7 @@ export function startEvent(input: CareerSave, watch: boolean): CareerSave {
   // The lobby opens on the matchday only (the day clock stops there).
   if (save.clock.day !== def.day) return save;
   // RTW-05 (rc.33): never with fewer than three players (no stand-in).
-  if (squadIsShort(save)) return input;
+  if (save.squad.length < (def.teamSize ?? LINEUP_SEATS)) return input;
 
   const { team, fieldedIds } = userTeamForEvent(save, def);
   const { field, fieldQuality } = fieldForEvent(def, {
@@ -3279,7 +3290,7 @@ export function finishEvent(input: CareerSave): CareerSave {
     fieldedIds: fielded,
     squadAtSplitStart: save.competition.squadAtSplitStart,
     newFacesSoFar: save.competition.newFacesThisSplit,
-    exemptIds: save.pendingUnavailability ? [save.pendingUnavailability.playerId] : [],
+    exemptIds: def.teamSize ? fielded : save.pendingUnavailability ? [save.pendingUnavailability.playerId] : [],
     isPreseason: splitOfWeek(weekOfDay(save.clock.day)) === null,
     seasonPointsUser: save.competition.seasonPoints[save.identity.region]?.user ?? 0,
     tierApplied: save.competition.stabilityTierApplied,
@@ -3347,7 +3358,7 @@ export function finishEvent(input: CareerSave): CareerSave {
     priority: 2,
     titleKey: "resultUser",
     // R40: `tier` lets the feed read a qualifier's "top8" as "Qualified".
-    params: { event: def.name, placement, tier: def.tier },
+    params: { event: def.name, placement, tier: def.tier, org: save.identity.orgName },
   });
 
   save.activeEvent = null;
@@ -4131,6 +4142,8 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   // rc.36 (front T2, R83): a training cycle completed and nothing runs after
   // it — stop once (the report, the next plan); never a hold.
   if (day !== startedAtDay && cycleEndedTodayOf(save)) return true;
+  // Let the short practice broadcast finish before another day can pass.
+  if (day !== startedAtDay && save.scrimLog.some((s) => s.seasonIndex === save.clock.seasonIndex && s.day === day)) return true;
   // A transfer window just opened (its first Monday).
   if (
     day !== startedAtDay &&
@@ -4875,7 +4888,7 @@ export function coachCandidatesFor(save: CareerSave): CoachState[] {
     windowIdx: windowIndexOf(weekOfDay(save.clock.day)) ?? 0,
     careerSeed: save.careerSeed,
     difficulty: save.difficulty,
-    nameBank: [...playerNameBankFor(save.identity.region, save.world.nameBankVersion)],
+    nameBank: [...playerNameBankFor(save.identity.region, save.world.nameBankVersion, save.careerSeed)],
   });
 }
 
@@ -5022,7 +5035,7 @@ function performScrim(save: CareerSave, oppRefWanted: string | null): string | n
   // RTW-05 (rc.33 review): a squad under three never scrims — an empty seat
   // rated 0 earned the two players chemistry and XP as if they had a lineup.
   if (squadIsShort(save)) return "squadShort";
-  if (dow > CAREER_TRAINING.trainingDaysPerWeek) return "restDay";
+  if (!CAREER_SCRIM.weekdays.includes(dow)) return "restDay";
   if (save.scrimsThisWeek >= CAREER_SCRIM.maxPerWeek) return "used";
 
   let opponent: { ref: string; name: string } | null = null;
@@ -5115,7 +5128,7 @@ export function scheduleScrimFlow(input: CareerSave, day: number, oppRef: string
   const today = save.clock.day;
   if (day <= today || day > DAYS_PER_SEASON) return { save: input, error: "invalid" };
   if (day - today > CAREER_SCRIM.scheduleHorizonDays) return { save: input, error: "invalid" };
-  if (dayOfWeekOf(day) > CAREER_TRAINING.trainingDaysPerWeek) {
+  if (!CAREER_SCRIM.weekdays.includes(dayOfWeekOf(day))) {
     return { save: input, error: "restDay" };
   }
   const org = save.world.orgs[oppRef];
@@ -5471,6 +5484,7 @@ export function migrateSaveToV5(raw: unknown): CareerSave | null {
   repairFoundingShareOnLoad(save); // rc.34 review: every load, idempotent, no version bump
   repairWeekendState(save); // rc.36 (SUN-01): every load, idempotent, no version bump
   repairFollowState(save); // rc.36 (SUN-03): every load, idempotent, no version bump
+  repairCommunicationsOnLoad(save);
   if ((save.saveVersion ?? 4) >= 5) return save;
 
   const repair = repairLegacyWorld(save.world, {

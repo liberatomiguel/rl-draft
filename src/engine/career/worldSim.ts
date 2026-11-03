@@ -57,11 +57,11 @@ import {
   seasonById,
 } from "@/data";
 import {
-  FILLER_ORG_NAME_BANK,
   PLAYER_NAME_BANK,
-  STARTER_NAME_BANK,
   playerNameBankFor,
 } from "@/data/career/names";
+import { orgNamePoolFor, playerNamePoolFor } from "./names";
+import { communityTeamFor } from "./community";
 import {
   isLocalRef,
   localPlayerNames,
@@ -207,8 +207,8 @@ function pickStat(f: number): StatKey {
 }
 
 const ROMAN = ["", "II", "III", "IV", "V", "VI"];
-function fillerOrgName(region: Region, i: number): string {
-  const bank = FILLER_ORG_NAME_BANK[region];
+function fillerOrgName(region: Region, i: number, careerSeed: number): string {
+  const bank = orgNamePoolFor(region, careerSeed, "pro");
   const wrap = Math.floor(i / bank.length);
   const base = bank[i % bank.length];
   return wrap === 0 ? base : `${base} ${ROMAN[wrap] ?? String(wrap + 1)}`;
@@ -284,7 +284,7 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
       ficNext[region] += 3;
       orgs[ref] = {
         ref,
-        name: fillerOrgName(region, i),
+        name: fillerOrgName(region, i, careerSeed),
         region,
         prestige,
         playerIds: [
@@ -359,7 +359,7 @@ export function buildWorldAtCreation(careerSeed: number): WorldState {
     retiredIds: [],
     version: 0,
     // rc.29 (CAR-01): this world's fillers never wear a real nickname.
-    nameBankVersion: 2,
+    nameBankVersion: 3,
     // rc.32 (DEV-01, R55): a new career runs CAREER_DEV.growthModel for life.
     ...(isGrowthContract(CAREER_DEV.growthModel) ? { growthModel: CAREER_DEV.growthModel } : {}),
   };
@@ -429,7 +429,7 @@ export function starterRosterOffers(
   model: number = CAREER_DEV.growthModel,
 ): StarterOffer[] {
   // Nine distinct names: rank the bank deterministically, take the first nine.
-  const bank = STARTER_NAME_BANK[region];
+  const bank = playerNamePoolFor(region, careerSeed, "starter");
   const names = bank
     .map((name, i) => ({
       name,
@@ -1526,6 +1526,19 @@ export function fieldForEvent(
     }
   }
 
+  if (def.teamSize && def.tier === "t3") {
+    field = field.map((team) => {
+      if (team.isUser) return team;
+      const org = ctx.world.orgs[team.id];
+      const members: MemberView[] = org
+        ? org.playerIds.map(id => playerViewById(id, { world: ctx.world, careerSeed: ctx.careerSeed, seasonIndex: def.seasonIndex }))
+            .filter((p): p is CareerPlayerView => p !== null)
+            .map(p => ({ name: p.name, overall: p.overall, stats: statsFromView(p), lineupId: team.id, orgId: team.id, region: p.region, country: p.country }))
+        : team.playerNames.map(name => ({ name, overall: team.rating.avgPlayerOverall, stats: { ...team.stats }, lineupId: team.id, orgId: team.id, region: team.region }));
+      const picked = createRng(deriveSeed(ctx.careerSeed, streams.gen("communityLineup", `${def.id}:${team.id}`))).shuffle(members).slice(0, def.teamSize);
+      return communityTeamFor(team, picked, ctx.difficulty);
+    });
+  }
   const want = expectedFieldSize(def);
   if (field.length !== want) {
     throw new Error(
@@ -1806,7 +1819,7 @@ export function agePassAndIntake(
       region,
       view.name,
       held.get(region)!,
-      playerNameBankFor(region, next.nameBankVersion),
+      playerNameBankFor(region, next.nameBankVersion, careerSeed),
     );
     held.get(region)!.add(nameKey(name));
     rookieNames[view.id] = name;
@@ -2068,7 +2081,7 @@ export function repairLegacyWorld(
   for (const p of ctx.userSquad) {
     if (/^fic:[A-Z]+:\d+$/.test(p.id) && !real.has(nameKey(p.name))) renames[p.id] = p.name;
   }
-  next.nameBankVersion = 2;
+  next.nameBankVersion = Math.max(2, world.nameBankVersion ?? 2);
   next.rookieNames = renames;
   const squadKeys = new Set(ctx.userSquad.map((p) => nameKey(p.name)));
   const held = new Map<Region, Set<string>>(REGIONS.map((r) => [r, new Set(squadKeys)]));
@@ -2095,7 +2108,7 @@ export function repairLegacyWorld(
     }
   }
   if (Object.keys(renames).length === 0 && !world.rookieNames) delete next.rookieNames;
-  if (holes.length > 0 || renamed > 0 || world.nameBankVersion !== 2) next.version = world.version + 1;
+  if (holes.length > 0 || renamed > 0 || world.nameBankVersion !== next.nameBankVersion) next.version = world.version + 1;
   return { world: next, reseated: holes.length, renamed };
 }
 

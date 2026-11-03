@@ -22,7 +22,7 @@
 import { AppLink } from "@/components/ui/AppLink";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CAREER_CALENDAR, CAREER_TRAINING } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_TRAINING, SIMULATION } from "@/config/balance";
 import { statEffectsFor } from "@/engine/statEffects";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy, type CareerCopy } from "@/content/careerCopy";
@@ -72,6 +72,7 @@ export function TrainingScreen() {
   const C = useCareerCopy();
   const setTrainingPackage = useCareerStore((s) => s.setTrainingPackage);
   const setCoachPlans = useCareerStore((s) => s.setTrainingCoachPlans);
+  const scrimPlaying = useCareerStore((s) => Boolean(s.scrimPlayback));
   const [editing, setEditing] = useState(false);
   const router = useRouter();
   const requestedEdit = useSearchParams().get("edit") === "1";
@@ -172,7 +173,7 @@ export function TrainingScreen() {
                 <span className="inline-flex items-center gap-1 text-sub">
                   <SwordsIcon className="h-3.5 w-3.5" />
                   {Y.scrimsDone(block.scrims.done, block.scrims.planned)}
-                  {block.scrims.done > 0 ? ` · ${Y.record(block.scrims.won, block.scrims.lost)}` : ""}
+                  {block.scrims.done > 0 && !scrimPlaying ? ` · ${Y.record(block.scrims.won, block.scrims.lost)}` : ""}
                 </span>
               ) : null}
               <span className={cx("inline-flex items-center gap-1", block.unavailabilityPts > 0 ? "text-sub" : "text-faint")}>
@@ -257,6 +258,21 @@ export function TrainingScreen() {
         </Panel>
       )}
 
+      <Panel className="p-4 sm:p-5">
+        <h2 className="display text-lg font-bold uppercase tracking-wide text-ink">{C.training.effectsTitle}</h2>
+        <p className="mt-1 text-xs text-sub">{C.training.effectsHint}</p>
+        <p className="mt-1 text-xs leading-relaxed text-sub">{C.training.effectBaseline(SIMULATION.statBaseline)}</p>
+        <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          {effects.map((e) => (
+            <div key={e.key} className="border-l-2 border-blue/50 pl-3">
+              <div className="flex items-baseline justify-between gap-2"><h3 className="text-sm font-semibold text-ink">{t.STAT_LABELS[e.key]}</h3><span className="font-mono text-sm font-bold text-ink">{Math.round(teamNow.stats[e.key])}</span></div>
+              <p className="mt-1 min-h-10 text-xs leading-relaxed text-sub">{C.training.effectDescription[e.key]}</p>
+              <p className={cx("mt-1 text-xs font-semibold", e.value > 0 ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>{e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)} · {C.training.effectWhen[e.when]}</p>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
       {/* 2 — the coach: he plans each cycle, or the hire link */}
       <Panel className="rise-in p-4" style={{ animationDelay: "40ms" }}>
         {coachProfile ? (
@@ -290,26 +306,6 @@ export function TrainingScreen() {
       {/* 3 — the squad's growth */}
       <div>
         <p className="kicker mb-2 text-[10px]">{C.training.plan.squadGrowth}</p>
-        <div className="mb-3 rounded-xl border border-line bg-black/10 p-3">
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-1"><p className="text-[11px] font-semibold text-ink">{C.training.effectsTitle}</p><p className="text-[10px] text-faint">{C.training.effectsHint}</p></div>
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
-            {effects.map((e) => {
-              const positive = e.value > 0;
-              return (
-                <div key={e.key} className="rounded-lg border border-line bg-white/[0.03] px-2.5 py-2">
-                  <div className="flex items-baseline justify-between gap-1">
-                    <span className="display text-[10px] font-bold uppercase tracking-[0.08em] text-ink">{t.STAT_LABELS[e.key]}</span>
-                    <span className="font-mono text-[11px] font-bold text-sub">{Math.round(teamNow.stats[e.key])}</span>
-                  </div>
-                  <p className={cx("mt-0.5 text-sm font-bold", positive ? "text-good" : e.value < 0 ? "text-bad" : "text-sub")}>
-                    {e.unit === "rating" ? C.training.effectRating(e.value) : C.training.effectPct(e.value)}
-                  </p>
-                  <p className="text-[10px] leading-tight text-faint">{C.training.effectWhen[e.when]}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {save.squad.map((p, i) => (
             <GrowthCard key={p.id} save={save} p={p} C={C} statLabels={t.STAT_LABELS} style={{ animationDelay: `${80 + i * 40}ms` }} />
