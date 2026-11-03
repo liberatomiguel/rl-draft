@@ -436,7 +436,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         </Panel>
       ) : null}
 
-      {isQualifier ? <Panel className="rise-in border-blue/25 p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="space-y-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{save.world.orgs[ref]?.name ?? ref}</span><span className="font-mono text-cyan">{Math.round(save.world.orgs[ref]?.rating ?? 0)}</span></button></li>)}</ul></Panel> : null}
+      {isQualifier ? <Panel className="rise-in border-blue/25 p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="space-y-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{ref === "user" ? save.identity.orgName : save.world.orgs[ref]?.name ?? localTeamName(ref, save.careerSeed)}</span><span className="font-mono text-cyan">{Math.round(ref === "user" ? preview.rating.total : save.world.orgs[ref]?.rating ?? localSideRatingOf(save, ref, { def, userRating: preview.rating.total }))}</span></button></li>)}</ul></Panel> : null}
       </div>
 
       {/* RTW-05 (rc.33): a short squad never starts an event — sign a third player first. */}
