@@ -16,6 +16,7 @@
  * shows as a modal at the career shell) are PLACED here, never restyled.
  */
 
+import { beginCareerNavigation } from "../careerNavigation";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CAREER_PAYROLL } from "@/config/balance";
@@ -89,6 +90,7 @@ function LaterRow({ C, d, onLater }: { C: CareerCopy; d: PendingDecision; onLate
 
 export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const router = useRouter();
+  const enterEvent = useCareerStore(s => s.enterEvent);
   const acceptBid = useCareerStore((s) => s.acceptBid);
   const declineBid = useCareerStore((s) => s.declineBid);
   const acceptUnofficial = useCareerStore((s) => s.acceptUnofficial);
@@ -151,8 +153,10 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
               daysAway={0}
               day={today}
               stage={stage}
-              primaryLabel={phase === "paused" ? <ContinueToSundayLabel /> : C.hub.continue}
+              primaryLabel={phase === "paused" ? <ContinueToSundayLabel /> : ev.teamSize ? C.event.watch : C.hub.continue}
               onPrimary={() => {
+                beginCareerNavigation("/career/event");
+                if (ev.teamSize && !save.activeEvent) enterEvent(true);
                 // R40: the paused Saturday moves exactly one day, to Championship Sunday.
                 if (phase === "paused") continueEventToNextDay();
                 router.push("/career/event");

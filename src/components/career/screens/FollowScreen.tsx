@@ -17,9 +17,10 @@
  * here touches a result: it was banked when the event resolved.
  */
 
+import { beginCareerNavigation } from "../careerNavigation";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CAREER_SUNDAY } from "@/config/balance";
+import { CAREER_PLAYBACK, CAREER_SUNDAY } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import { useCareerCopy } from "@/content/careerCopy";
 import { followRoundsOf, followWinnerOf } from "@/engine/career/follow";
@@ -90,6 +91,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   const rounds = useMemo(() => followRoundsOf(f), [f]);
   const total = rounds.length;
   const mode = f.view ?? "watch";
+  const [speed, setSpeed] = useState<1 | 2 | 4>(1);
   const [shown, setShown] = useState(mode === "results" ? total : 0);
   const [playing, setPlaying] = useState(!reduced);
   const revealed = mode === "results" ? total : shown;
@@ -98,10 +100,10 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
   // Watch: one round every followRoundMs (× the animation-speed scale); never under reduced motion.
   useEffect(() => {
     if (mode !== "watch" || !playing || rosterOpen || reduced || shown >= total) return;
-    const ms = Math.round(CAREER_SUNDAY.followRoundMs * ANIM_SCALE[animSpeed]);
+    const ms = Math.round(CAREER_SUNDAY.followRoundMs * ANIM_SCALE[animSpeed] / speed);
     const timer = window.setTimeout(() => setShown((n) => Math.min(total, n + 1)), ms);
     return () => window.clearTimeout(timer);
-  }, [mode, playing, rosterOpen, reduced, shown, total, animSpeed]);
+  }, [mode, playing, rosterOpen, reduced, shown, total, animSpeed, speed]);
 
   const board = followBoardOf(f, revealed);
   const showPlayoffs = board.swissShown >= f.swiss.length && f.playoffs.length > 0;
@@ -202,6 +204,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
     ) : null;
 
   const back = () => {
+    beginCareerNavigation("/career");
     dismissFollow();
     router.push("/career");
   };
@@ -263,6 +266,7 @@ function FollowView({ save, f }: { save: CareerSave; f: FollowEventState }) {
                     {playing ? C.follow.pause : C.follow.play}
                   </Button>
                 )}
+                {!reduced ? <div className="flex items-center gap-1" aria-label={C.event.speed}>{CAREER_PLAYBACK.speeds.map(n => <Button key={n} size="sm" variant={speed === n ? "secondary" : "ghost"} aria-pressed={speed === n} onClick={() => setSpeed(n)}>{n}×</Button>)}</div> : null}
                 <Button variant="ghost" size="sm" className="text-faint" onClick={() => setShown(total)}>
                   {C.follow.skipToResults}
                 </Button>

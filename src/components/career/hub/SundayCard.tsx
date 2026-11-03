@@ -17,6 +17,7 @@
  * Game logic stays in the flow (store/careerSunday); these only render it.
  */
 
+import { beginCareerNavigation } from "../careerNavigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CAREER_SUNDAY, TOURNAMENT } from "@/config/balance";
@@ -123,6 +124,7 @@ function SundayHeader({
 /** SUN-01: Saturday evening — the Sunday ahead, the optional briefing, "Start Sunday". */
 export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy; ahead: SundayAhead }) {
   const router = useRouter();
+  const setAutoAdvance = useCareerStore(s => s.setAutoAdvance);
   const startSunday = useCareerStore((s) => s.startSunday);
   const [choice, setChoice] = useState<SundayBriefingChoice>(CAREER_SUNDAY.defaultBriefing);
   const T = useCopy().TOURNAMENT_UI;
@@ -132,10 +134,11 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
   const recordText = record ? T.record(record.wins, record.losses) : "";
 
   const go = (pick: SundayBriefingChoice | null, mode?: "watch" | "results" | "skip") => {
+    if (mode !== "skip") beginCareerNavigation("/career/event");
     startSunday(pick, mode);
     // Watching (or playing) Sunday opens the event; a skipped Sunday stays in HQ.
     if (mode !== "skip") router.push("/career/event");
-    else router.push("/career/calendar");
+    else setAutoAdvance(true);
   };
 
   // Out in the Swiss: the playoffs go on without the user (SUN-03's Sunday side).
@@ -156,7 +159,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
           <Button variant="ghost" size="lg" className="w-full" onClick={() => go(null, "results")}>
             {C.sunday.results}
           </Button>
-          <Button variant="secondary" size="lg" className="w-full" onClick={() => go(null, "skip")}>
+          <Button variant="primary" size="lg" className="w-full" onClick={() => go(null, "skip")}>
             {C.sunday.backToCalendar}
           </Button>
         </div>
@@ -297,15 +300,17 @@ export function NowFollow({
   follow: FollowEventState | null;
 }) {
   const router = useRouter();
+  const setAutoAdvance = useCareerStore(s => s.setAutoAdvance);
   const followSunday = useCareerStore((s) => s.followSunday);
   const openFollow = useCareerStore((s) => s.openFollow);
   const dismissFollow = useCareerStore((s) => s.dismissFollow);
 
   if (out) {
     const pick = (choice: "watch" | "results" | "skip") => {
+      if (choice !== "skip") beginCareerNavigation("/career/follow");
       followSunday(choice);
       if (choice !== "skip") router.push("/career/follow");
-      else router.push("/career/calendar");
+      else setAutoAdvance(true);
     };
     return (
       <div className="rounded-xl border border-blue/30 bg-blue/[0.05] p-3.5">
@@ -322,7 +327,7 @@ export function NowFollow({
           <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => pick("results")}>
             {C.sunday.results}
           </Button>
-          </div><Button variant="secondary" size="md" className="min-h-11" onClick={() => pick("skip")}>
+          </div><Button variant="primary" size="md" className="min-h-11" onClick={() => pick("skip")}>
             {C.sunday.backToCalendar}
           </Button>
         </div>
@@ -334,6 +339,7 @@ export function NowFollow({
   const champion = follow.champion;
   const championName = champion ? (follow.teams.find((t) => t.id === champion)?.name ?? nameOfRef(save, champion)) : "";
   const open = (view: "watch" | "results") => {
+    beginCareerNavigation("/career/follow");
     openFollow(view);
     router.push("/career/follow");
   };
@@ -363,7 +369,7 @@ export function NowFollow({
         <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => open("results")}>
           {C.sunday.readResults}
         </Button>
-        </div><Button variant="secondary" size="md" className="min-h-11" onClick={() => { dismissFollow(); router.push("/career/calendar"); }}>
+        </div><Button variant="primary" size="md" className="min-h-11" onClick={() => { dismissFollow(); setAutoAdvance(true); }}>
           {C.sunday.backToCalendar}
         </Button>
       </div>

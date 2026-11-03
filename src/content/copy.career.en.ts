@@ -2476,7 +2476,7 @@ export const CAREER_EN = {
 
   // rc.36 (SUN-01..03, R88) — the weekend: Saturday → HQ → Sunday.
   sunday: {
-    backToCalendar: "Continue to calendar",
+    backToCalendar: "Advance",
     tomorrow: "Tomorrow",
     qualifiedLine: "Through Saturday's qualifier",
     seedLine: (seed: number, record: string) => `Seed #${seed} · Swiss ${record}`,

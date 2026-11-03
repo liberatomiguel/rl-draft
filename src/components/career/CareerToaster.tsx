@@ -37,7 +37,7 @@ export function CareerToaster() {
   if (!mounted || toasts.length === 0) return null;
   return createPortal(
     <div
-      className="pointer-events-none fixed right-3 top-16 z-[80] flex max-h-[calc(100dvh-9rem)] w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto"
+      className="pointer-events-none fixed right-2 top-16 z-[80] flex max-h-[calc(100dvh-9rem)] w-[min(22rem,calc(100vw-1.5rem))] flex-col gap-2 overflow-y-auto p-1"
       aria-live="polite"
     >
       {toasts.slice(0, 3).map((toast) => (
@@ -75,7 +75,7 @@ function Toast({ toast }: { toast: CareerToast }) {
 
   if (toast.source === "news") {
     const brand = C.news.brand[CAREER_NEWS.brand];
-    const crests = news && save ? newsCrestsOf(news, save) : [];
+    const crests = news && save ? newsCrestsOf(news, save, content && "orgRefs" in content ? content.orgRefs as string[] : undefined) : [];
     return (
       <button type="button" data-career-notice="news" onClick={open}
         className="pop-in pointer-events-auto w-full shrink-0 overflow-hidden rounded-xl border border-blue/35 bg-[#111827] text-left shadow-xl">

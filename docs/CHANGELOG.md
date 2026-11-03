@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.7**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.8**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,33 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed — rc.36.8, follow-up interaction fixes (R96)
+- Practice reveals use 100ms game steps (150ms reduced motion). Closed news
+  rows use a smaller partner image; opening an article expands it at its
+  existing list position without scrolling or replacing the lead story.
+- News notices resolve scripted-beat org references before choosing crests.
+  Email popup rails have padding to preserve their outside border/ring.
+- The orange Advance action dismisses the spectator offer and resumes the
+  natural daily autoplay in HQ, rather than routing to Calendar. Watching
+  remains available; spectator playback gains 1x/2x/4x controls.
+- Community 1v1/2v2 participants are visual player cards on the HQ invitation
+  and matchday decision, before Play. Selection persists on an unaccepted
+  offer and survives acceptance; the lobby uses the same cards.
+- Knockout-only cups display a wide playoff bracket in the main playback
+  area and a fully revealed bracket in the digest.
+- Departure guards hide an old route before save mutations expose its empty
+  or intermediate state; settled routes release the guard. A timeout allows
+  recovery from failed navigation. Invitation field previews now show the
+  offered event instead of the empty-event message.
+- Root causes: explicit news scrollIntoView, clipped overflow around toast
+  rings, lost resolved org refs, small single-elimination sidebar/digest
+  omission, and synchronous save mutations preceding asynchronous route
+  commits. BALANCE_VERSION 13; persist contracts unchanged.
+- Validation: 141 targeted tests pass, with the 10-test practice/community
+  file rerun after adding pre-acceptance lineup coverage; types/lint/static
+  export and postexport pass. Browser preview connection timed out in this
+  session, so visual confirmation remains an acceptance check on staging.
 
 ### Added / Changed — rc.36.7, discreet feedback and weekend hierarchy (R95)
 - Newsroom / Central de notícias accompanies 50/50's logo. Selecting a row

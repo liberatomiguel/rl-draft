@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 12;
+export const BALANCE_VERSION = 13;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3162,8 +3162,8 @@ export const CAREER_PLAYBACK = {
    * secondary action.
    */
   autoAdvanceDayMs: 850,
-  scrimGameMs: 320,
-  scrimReducedMotionMs: 400,
+  scrimGameMs: 100,
+  scrimReducedMotionMs: 150,
   /**
    * v2.0 (R40) Championship Sunday title card (watch mode): ms before it
    * hands over to the playoffs on its own (× the animation-speed scale;

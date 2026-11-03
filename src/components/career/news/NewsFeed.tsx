@@ -169,14 +169,14 @@ export function NewsTypeIcon({ type, className }: { type: NewsType | "archive"; 
 /** The partner art's id under public/partners/ (assets.partnerLogoSrc). */
 const PARTNER_ART: Record<string, string> = { fiftyFifty: "fiftyfifty" };
 
-export function BrandMark({ brand, name }: { brand: string; name: string }) {
+export function BrandMark({ brand, name, small = false }: { brand: string; name: string; small?: boolean }) {
   const art = PARTNER_ART[brand];
   const src = art ? partnerLogoSrc(art) : null;
   const [failed, setFailed] = useState(false);
   if (src && !failed) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- a static-export asset URL from assets.ts (WebP in production)
-      <img src={src} alt={name} className="h-7 w-auto max-w-24 object-contain" onError={() => setFailed(true)} />
+      <img src={src} alt={name} className={cx("w-auto object-contain", small ? "h-4 max-w-8" : "h-7 max-w-24")} onError={() => setFailed(true)} />
     );
   }
   // The styled fallback: the game's own broadcast glyph and the desk's name in plain text — never a redrawn logo.
@@ -200,7 +200,7 @@ export function BrandMark({ brand, name }: { brand: string; name: string }) {
 // ---------------------------------------------------------------------------
 
 function Crests({ refs, save, size, type, archive }: { refs: string[]; save: CareerSave; size: "sm" | "md"; type: NewsType; archive: boolean }) {
-  if (refs.length === 0 && CAREER_NEWS.brand === "fiftyFifty") return <BrandMark brand="fiftyFifty" name="50/50" />;
+  if (refs.length === 0 && CAREER_NEWS.brand === "fiftyFifty") return <BrandMark brand="fiftyFifty" name="50/50" small={size === "sm"} />;
   if (refs.length === 0) {
     return (
       <span
@@ -343,7 +343,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
   const brand = CAREER_NEWS.brand;
   const B = C.news.brand[brand] ?? C.news.brand.wire;
   const unread = news.filter((n) => !n.read).length;
-  const lead = filtered.find(n => n.id === selectedId) ?? leadStoryOf({ ...save, news: filtered }, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? filtered[0] ?? null;
+  const lead = leadStoryOf({ ...save, news: filtered }, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? filtered[0] ?? null;
   const rows = open
     ? filtered.filter(n => n.id !== lead?.id).slice(0, limit)
     : news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
@@ -396,7 +396,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
       ) : (
         <div>
           {rows.map((item) => (
-            <StoryRow key={item.id} item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => { setSelectedId(item.id); document.getElementById("career-news")?.scrollIntoView({ block: "start", behavior: "instant" }); }} />
+            <div key={item.id}>{selectedId === item.id ? <LeadStory item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : <StoryRow item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => setSelectedId(item.id)} />}</div>
           ))}
         </div>
       )}

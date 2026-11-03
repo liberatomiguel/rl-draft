@@ -15,6 +15,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect } from "react";
+import { useCareerNavigation, finishCareerNavigation } from "@/components/career/careerNavigation";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
@@ -34,6 +35,13 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
   const mounted = useMounted();
   const router = useRouter();
   const pathname = usePathname();
+  const destination = useCareerNavigation(s => s.destination);
+  useLayoutEffect(() => { if (destination === pathname) finishCareerNavigation(); }, [destination, pathname]);
+  useEffect(() => {
+    if (!destination) return;
+    const timer = setTimeout(finishCareerNavigation, 8000);
+    return () => clearTimeout(timer);
+  }, [destination]);
   const slots = useCareerStore((s) => s.slots);
   const activeSlot = useCareerStore((s) => s.activeSlot);
 
@@ -73,6 +81,7 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
   if (!mounted) {
     return <div className="min-h-[60vh]" />;
   }
+  if (destination && destination !== pathname) return <div className="min-h-[60vh]" aria-busy />;
   if (!bare && !hasActive) return <div className="min-h-[60vh]" />;
 
   return (

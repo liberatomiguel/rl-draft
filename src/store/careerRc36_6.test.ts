@@ -140,8 +140,13 @@ describe("rc.36.6 — occasional community 1v1 and 2v2", () => {
     let save = fresh();
     const def: CareerEventDef = { id: `test:${size}`, tier: "t3", teamSize: size, seasonIndex: 0, week: 3, day: 20, format: "single", name: `50/50 · ${size}v${size}` };
     save.clock.day = def.day;
-    save.pendingEventDef = def;
     const ids = save.squad.slice(-size).map(p => p.id);
+    save.unofficialOffer = def;
+    const offered = setCommunityParticipantsFlow(save, ids).save;
+    expect(offered.unofficialOffer?.participantIds).toEqual(ids);
+    expect(offered.pendingEventDef).toBeNull();
+    save.unofficialOffer = null;
+    save.pendingEventDef = def;
     save = setCommunityParticipantsFlow(save, ids).save;
     expect(userTeamForEvent(save, save.pendingEventDef!).fieldedIds).toEqual(ids);
     if (size === 2) expect(setCommunityParticipantsFlow(save, [ids[0], ids[0]]).error).toBe("invalid");

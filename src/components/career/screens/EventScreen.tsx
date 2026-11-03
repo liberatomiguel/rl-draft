@@ -48,7 +48,8 @@ import { formatMoney } from "@/lib/format";
 import { sfx } from "@/lib/sfx";
 import { cx } from "@/lib/util";
 import { canSkipShortSquadEvent, eventFieldFor, ruledOutFor } from "@/store/careerFlow";
-import { communityParticipantsFor } from "@/engine/career/community";
+import { CommunityLineup } from "../CommunityLineup";
+import { beginCareerNavigation } from "../careerNavigation";
 import { selectActiveSave, useCareerStore } from "@/store/careerStore";
 import { revealCursorKey, useCareerRevealStore } from "@/store/careerRevealStore";
 import { useOverlayHold } from "@/store/overlayHoldStore";
@@ -187,7 +188,7 @@ function EventScreenContent() {
     return <EventPlayback save={save} ev={ev} />;
   }
 
-  const def = save.pendingEventDef;
+  const def = save.pendingEventDef ?? save.unofficialOffer;
   if (def) return <EventLobby save={save} def={def} />;
 
   // No event on the horizon — friendly hand-off to the calendar.
@@ -216,11 +217,12 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const C = useCareerCopy();
   const D = C.dates;
   const router = useRouter();
-  const enterEvent = useCareerStore((s) => s.enterEvent);
+  const enterEventAction = useCareerStore((s) => s.enterEvent);
+  const acceptOffer = useCareerStore(s => s.acceptUnofficial);
+  const enterEvent = (watch: boolean) => { if (!save.pendingEventDef && save.unofficialOffer) acceptOffer(); enterEventAction(watch); };
   const simEvent = useCareerStore((s) => s.simEvent);
   const passUnofficial = useCareerStore((s) => s.passUnofficial);
   const skipShortSquadEvent = useCareerStore((s) => s.skipShortSquadEvent);
-  const setParticipants = useCareerStore((s) => s.setCommunityParticipants);
   // One sheet for the lobby — any AI org in the field opens it.
   const [sheetRef, setSheetRef] = useState<string | null>(null);
 
@@ -233,7 +235,6 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
   const daysAway = def.day - save.clock.day;
   const isToday = daysAway === 0;
   const isUnofficial = def.tier === "t3" || def.tier === "t2";
-  const participants = communityParticipantsFor(save, def);
   const short = save.squad.length < (def.teamSize ?? 3);
   const smallField = useMemo(() => def.teamSize ? eventFieldFor(save, def).field : null, [save, def]);
 
@@ -353,22 +354,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
       ) : null}
 
       {/* the field */}
-      {def.teamSize ? (
-        <Panel className="p-4">
-          <h2 className="display text-lg font-bold uppercase text-ink">{C.event.communityLineup(def.teamSize)}</h2>
-          <p className="mt-1 text-xs text-sub">{C.event.communityLineupHint}</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {Array.from({ length: def.teamSize }, (_, slot) => (
-              <label key={slot} className="space-y-1 text-xs text-sub">
-                <span>{C.event.communitySeat(slot + 1)}</span>
-                <select value={participants[slot] ?? ""} disabled={!isToday} className="min-h-11 w-full rounded-lg border border-line-strong bg-raised px-3 text-sm text-ink" onChange={(e) => setParticipants(participants.map((id, index) => index === slot ? e.target.value : id))}>
-                  {save.squad.map(p => <option key={p.id} value={p.id} disabled={participants.some((id, index) => index !== slot && id === p.id)}>{p.name} · {Math.round(p.overall)} {C.common.ovr}</option>)}
-                </select>
-              </label>
-            ))}
-          </div>
-        </Panel>
-      ) : null}
+      {def.teamSize ? <Panel className="p-4"><CommunityLineup key={def.id} save={save} def={def} C={C} /></Panel> : null}
       <div className={cx("grid items-start gap-4", isQualifier && "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]")}>
       {field.length > 0 ? (
         <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
@@ -1052,7 +1038,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
             />
           ) : null}
 
-          {showBracket && hasSwiss ? (
+          {showBracket ? (
             <CareerBracket
               save={save}
               t={t}
@@ -1077,17 +1063,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               throughRound={throughRound}
               nextUpRef={nextOpponentRef}
             />
-          ) : (
-            <CareerBracket
-              save={save}
-              t={t}
-              revealed={revealedKeys}
-              liveKey={liveBracketKey}
-              showUpcoming={allSimRevealed}
-              layout="column"
-              onInspect={setInspectKey}
-            />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -1171,9 +1147,12 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
 
   const confirm = () => {
     const wasWorlds = def.tier === "worlds";
+    beginCareerNavigation(wasWorlds ? "/career/season" : "/career");
     completeEvent();
     const next = selectActiveSave(useCareerStore.getState());
-    router.push(wasWorlds || next?.phase !== "running" ? "/career/season" : "/career");
+    const destination = wasWorlds || next?.phase !== "running" ? "/career/season" : "/career";
+    beginCareerNavigation(destination);
+    router.push(destination);
   };
   // R40: qualified on Saturday → straight to Sunday's regional lobby (one day).
   const onToSunday = () => {
@@ -1198,6 +1177,8 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-3 py-6 sm:px-4">
+      {!isQualifier && t.playoffs ? <CareerBracket save={save} t={t} revealed={new Set(t.playoffs.rounds.flatMap((r,ri) => r.series.map((_,si) => `po:${ri}:${si}`)))} liveKey={null} showUpcoming={false} layout="wide" /> : null}
+
       {/* placement hero */}
       <Panel
         strong

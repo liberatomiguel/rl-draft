@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.7**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R95. Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.8**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R96. Gate: `CAREER-FEEDBACK-rc36-6.md`.
 
 ## Run and verify
 
@@ -18,6 +18,11 @@
   No new economy/title-pacing claim in this feedback release.
 
 ## Gate 3b candidate
+
+rc.36.8: in-place article expansion, compact partner rows, fast scrims,
+visual HQ lineups, spectator speed/Advance, knockout brackets and departure
+guards. 141 targeted tests, types/lint/static export pass. Visual acceptance
+remains on staging: this session’s browser preview timed out.
 
 Etapa 3 is integrated. Miguel's playtest acceptance is still required.
 
@@ -46,7 +51,7 @@ Etapa 3 is integrated. Miguel's playtest acceptance is still required.
   across all generic roles. New careers use version 3; old identities survive.
 - Founding economy, growth, late support, sponsor/contract talks, goals,
   crests and Sunday decisions remain as in rc.36.5. Regional timing, star
-  affordability and historical Worlds titles remain open. BALANCE_VERSION 12.
+  affordability and historical Worlds titles remain open. BALANCE_VERSION 13.
 
 ## System map
 

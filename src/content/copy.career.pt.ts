@@ -2452,7 +2452,7 @@ export const CAREER_PT: CareerCopy = {
 
   // rc.36 (SUN-01..03, R88) — o fim de semana: sábado → QG → domingo.
   sunday: {
-    backToCalendar: "Continuar para o calendário",
+    backToCalendar: "Avançar",
     tomorrow: "Amanhã",
     qualifiedLine: "Classificado pela qualificatória de sábado",
     seedLine: (seed: number, record: string) => `Seed nº ${seed} · Swiss ${record}`,

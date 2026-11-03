@@ -2997,11 +2997,12 @@ export function eventFieldFor(save: CareerSave, def: CareerEventDef): ReturnType
 }
 
 export function setCommunityParticipantsFlow(input: CareerSave, ids: string[]): FlowResult {
-  const def = input.pendingEventDef;
+  const def = input.pendingEventDef ?? input.unofficialOffer;
   if (!def?.teamSize || def.tier !== "t3" || input.activeEvent || input.phase !== "running") return { save: input, error: "blocked" };
   if (ids.length !== def.teamSize || new Set(ids).size !== ids.length || ids.some(id => !input.squad.some(p => p.id === id))) return { save: input, error: "invalid" };
   const save = clone(input);
-  save.pendingEventDef = { ...def, participantIds: [...ids] };
+  if (input.pendingEventDef) save.pendingEventDef = { ...def, participantIds: [...ids] };
+  else save.unofficialOffer = { ...def, participantIds: [...ids] };
   return { save };
 }
 

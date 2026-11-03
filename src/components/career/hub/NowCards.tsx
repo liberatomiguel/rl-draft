@@ -9,6 +9,7 @@
  * block; rc.33's NowSponsorChoice is gone.)
  */
 
+import { CommunityLineup } from "../CommunityLineup";
 import { useRouter } from "next/navigation";
 import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
@@ -163,6 +164,7 @@ export function NowInvite({
       <p className="mt-3 max-w-md text-sm text-sub">
         {C.hub.inviteBody(formatDateShort(D, dateOfDay(save.clock.seasonIndex, def.day)))}
       </p>
+      <CommunityLineup save={save} def={def} C={C} />
       <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="primary" size="md" onClick={onAccept}>
           {C.hub.inviteAccept}
@@ -335,6 +337,7 @@ export function NowEvent({
         </p>
       ) : null}
 
+      <CommunityLineup save={save} def={def} C={C} />
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={onPrimary}>
           {primaryLabel}

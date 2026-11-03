@@ -2010,6 +2010,18 @@ R95. **rc.36.7 — follow-up after published rc.36.6.**
      Targeted regression 160 passed; types/lint/static export pass. Persist
      contracts unchanged. Still Gate 3b; no progression/economy acceptance.
 
+R96. **rc.36.8 — small interactions and route transitions.**
+     Miguel clarifies Advance: orange primary, dismiss the spectator offer
+     and resume HQ daily autoplay, never navigate to Calendar. Articles expand
+     at their list position; only row partner logos shrink. News toasts use
+     resolved team crests; padded rails preserve mail rings. Scrims use 100ms
+     game steps; spectator rounds gain 1x/2x/4x. Visual community roster cards
+     live in the HQ offer/matchday and persist before acceptance. Single cups
+     show their bracket centrally and in results. Departure guards prevent
+     empty old-route flashes after mutation; offered fields preview correctly.
+     BALANCE_VERSION 13. 141 targeted tests plus types/lint/static export pass;
+     preview connection timed out, leaving visual staging acceptance open.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

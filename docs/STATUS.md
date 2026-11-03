@@ -7,7 +7,7 @@
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.7**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.8**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
@@ -19,7 +19,7 @@
   complete this feedback package. Evidence: `CAREER-FEEDBACK-rc36-6.md`.
 - **rc.36.7:** inline practice detail, window underlines, selectable news lead,
   partner notifications, qualifier/direct-eight layout and phase-based briefing.
-  160 targeted tests plus types/lint/static export pass. BALANCE_VERSION 12.
+  160 targeted tests plus types/lint/static export pass. BALANCE_VERSION 13.
 - **Next:** close career progression/economy acceptance, then Etapa 4,
   Etapa 5 and cutover. `ROADMAP-NEXT-2026-11-03.md` gives scope and a next-chat
   prompt: four sessions estimated, with a fifth reserved for unresolved gates.
@@ -31,7 +31,7 @@
   lint of changed TS files clean. Data validation and 35 persist-contract
   checks pass. Build/browser evidence and environment limits are recorded
   in `CAREER-FEEDBACK-rc36-6.md`.
-- **BALANCE_VERSION 12**, fingerprint pinned by its test. Package, lock and
+- **BALANCE_VERSION 13**, fingerprint pinned by its test. Package, lock and
   site agree on rc.36.6. This feedback package does not remeasure the career
   economy or assert that historical Worlds pacing is solved.
 - Prior full-suite baseline: 1463 passed, 18 optional skipped (rc.36.5).
