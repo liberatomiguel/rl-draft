@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.9**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R97. Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.10**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R98. Gate: `CAREER-FEEDBACK-rc36-6.md`.
 
 ## Run and verify
 

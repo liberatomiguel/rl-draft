@@ -2033,6 +2033,13 @@ R97. **rc.36.9 — presentation and decision priority.**
      lint and static export pass. Browser preview timeout leaves visual
      acceptance on staging. BALANCE_VERSION 13 and saves unchanged.
 
+R98. **rc.36.10 — spectator actions return to the timeline.**
+     Miguel requests Watch only inside non-participant cards. Results is
+     removed; the normal Play/Skip/+1 controls appear below. An eliminated
+     Major/Worlds Swiss uses the same skipped-Sunday settlement before its
+     chosen clock action. No forced watch or calendar navigation, no extra
+     training/rewards. Existing Sunday/queue regression checks apply.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

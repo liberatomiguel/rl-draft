@@ -152,17 +152,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
         <div className="mt-4 rounded-xl border border-line bg-white/[0.02] p-3">
           <CrestStrip save={save} refs={seeds} label={C.event.playoffEight} />
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Button variant="secondary" size="lg" className="w-full" onClick={() => go(null, "watch")}>
-            {C.sunday.watch}
-          </Button>
-          <Button variant="ghost" size="lg" className="w-full" onClick={() => go(null, "results")}>
-            {C.sunday.results}
-          </Button>
-          <Button variant="primary" size="lg" className="w-full" onClick={() => go(null, "skip")}>
-            {C.sunday.backToCalendar}
-          </Button>
-        </div>
+        <div className="mt-4"><Button variant="secondary" size="lg" onClick={() => go(null, "watch")}>{C.sunday.watch}</Button></div>
         <p className="mt-2 text-[11px] text-faint">{C.sunday.outHint}</p>
       </div>
     );
@@ -300,17 +290,14 @@ export function NowFollow({
   follow: FollowEventState | null;
 }) {
   const router = useRouter();
-  const setAutoAdvance = useCareerStore(s => s.setAutoAdvance);
   const followSunday = useCareerStore((s) => s.followSunday);
   const openFollow = useCareerStore((s) => s.openFollow);
-  const dismissFollow = useCareerStore((s) => s.dismissFollow);
 
   if (out) {
-    const pick = (choice: "watch" | "results" | "skip") => {
-      if (choice !== "skip") beginCareerNavigation("/career/follow");
-      followSunday(choice);
-      if (choice !== "skip") router.push("/career/follow");
-      else setAutoAdvance(true);
+    const watch = () => {
+      beginCareerNavigation("/career/follow");
+      followSunday("watch");
+      router.push("/career/follow");
     };
     return (
       <div className="rounded-xl border border-blue/30 bg-blue/[0.05] p-3.5">
@@ -320,17 +307,7 @@ export function NowFollow({
         <div className="mt-3">
           <CrestStrip save={save} refs={out.qualifiedIds} label={C.sunday.whoQualified} />
         </div>
-        <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-line/60 pt-4"><div className="flex flex-col items-start gap-1">
-          <Button variant="secondary" size="md" className="min-h-11" onClick={() => pick("watch")}>
-            {C.sunday.watch}
-          </Button>
-          <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => pick("results")}>
-            {C.sunday.results}
-          </Button>
-          </div><Button variant="primary" size="md" className="min-h-11" onClick={() => pick("skip")}>
-            {C.sunday.backToCalendar}
-          </Button>
-        </div>
+        <div className="mt-4"><Button variant="secondary" size="md" className="min-h-11" onClick={watch}>{C.sunday.watch}</Button></div>
       </div>
     );
   }
@@ -338,9 +315,9 @@ export function NowFollow({
   if (!follow) return null;
   const champion = follow.champion;
   const championName = champion ? (follow.teams.find((t) => t.id === champion)?.name ?? nameOfRef(save, champion)) : "";
-  const open = (view: "watch" | "results") => {
+  const open = () => {
     beginCareerNavigation("/career/follow");
-    openFollow(view);
+    openFollow("watch");
     router.push("/career/follow");
   };
   return (
@@ -362,17 +339,7 @@ export function NowFollow({
           <span className="min-w-0 truncate text-sm font-semibold text-ink">{championName}</span>
         </div>
       ) : null}
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-line/60 pt-4"><div className="flex flex-col items-start gap-1">
-        <Button variant="secondary" size="md" className="min-h-11" onClick={() => open("watch")}>
-          {C.sunday.replay}
-        </Button>
-        <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => open("results")}>
-          {C.sunday.readResults}
-        </Button>
-        </div><Button variant="primary" size="md" className="min-h-11" onClick={() => { dismissFollow(); setAutoAdvance(true); }}>
-          {C.sunday.backToCalendar}
-        </Button>
-      </div>
+      <div className="mt-4"><Button variant="secondary" size="md" className="min-h-11" onClick={open}>{C.sunday.watch}</Button></div>
     </div>
   );
 }

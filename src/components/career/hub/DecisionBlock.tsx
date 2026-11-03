@@ -339,7 +339,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
                 count: queue.length > 1 ? C.hub.decisionCount(index + 1, queue.length) : undefined,
                 // rc.34 review (Gate 3b): a fresh invite holds nothing — it sits above the clock's controls.
                 // Nonblocking sponsor prompts, invites and followed events keep the clock controls.
-                inline: (top?.kind === "invite" || top?.kind === "sponsor") && !top.holds,
+                inline: top?.kind === "follow" || (top?.kind === "sunday" && sundayAheadOf(save)?.playing === false && revealHeld === null) || ((top?.kind === "invite" || top?.kind === "sponsor") && !top.holds),
               }
             : null
         }

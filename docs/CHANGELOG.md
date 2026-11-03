@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.9**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.10**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,17 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.36.10, spectator card and normal clock controls (R98)
+- Non-participant cards contain Watch only; Results and the internal Advance
+  action are removed. The standard day strip and Play/Skip/+1 controls return
+  below the card, including after elimination in a Major/Worlds Swiss.
+- Those controls settle the skipped Championship Sunday with the existing
+  flow, then perform their normal day/skip/autoplay action; watching remains
+  an explicit choice. Calendar routing and game rewards are unchanged.
+- Root cause: a spectator offer was rendered as an exclusive decision, hiding
+  the normal clock controls. Targeted Sunday/queue/practice regressions,
+  types/lint and static export checked. No balance or save changes.
 
 ### Fixed / Changed — rc.36.9, decision priority and presentation (R97)
 - Tournament placement/rewards now precede the knockout bracket. Community

@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import type { CareerCopy } from "@/content/careerCopy";
 import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
+import { sundayAheadOf } from "@/store/careerSunday";
 import { useCareerStore } from "@/store/careerStore";
 import {
   agendaDays,
@@ -172,7 +173,10 @@ export function DayCard({
   const todayIdx = Math.max(0, weekDays.findIndex((d) => d.isToday));
 
   // rc.29 (CAR-02): an unfinished Saturday reveal keeps the event's own Continue.
-  const kind = visibleContinueKind(save, revealHeld);
+  const ahead = sundayAheadOf(save);
+  const spectatorSunday = Boolean(ahead && !ahead.playing && revealHeld !== save.activeEvent?.def.id);
+  const startSunday = useCareerStore(s => s.startSunday);
+  const kind = spectatorSunday ? "advance" : visibleContinueKind(save, revealHeld);
   const running = save.phase === "running";
   const nextStop = upcomingStops(save, 1)[0] ?? null;
   const stopLabel = nextStop
@@ -274,7 +278,7 @@ export function DayCard({
                   variant="primary"
                   size="lg"
                   className="w-full sm:w-auto"
-                  onClick={() => setAutoAdvance(!autoAdvance)}
+                  onClick={() => { if (spectatorSunday && !autoAdvance) startSunday(null, "skip"); setAutoAdvance(!autoAdvance); }}
                   aria-pressed={autoAdvance}
                   disabled={!running}
                 >
@@ -283,10 +287,10 @@ export function DayCard({
                     {autoAdvance ? C.hub.pause : C.hub.play}
                   </span>
                 </Button>
-                <Button variant="secondary" size="md" className="min-h-11" onClick={advanceToNextStop} disabled={!running || autoAdvance || scrimPlaying}>
+                <Button variant="secondary" size="md" className="min-h-11" onClick={() => { if (spectatorSunday) startSunday(null, "skip"); advanceToNextStop(); }} disabled={!running || autoAdvance || scrimPlaying}>
                   {C.hub.skipTo(stopLabel)}
                 </Button>
-                <Button variant="ghost" size="md" className="min-h-11" onClick={advanceDay} disabled={!running || autoAdvance || scrimPlaying}>
+                <Button variant="ghost" size="md" className="min-h-11" onClick={() => { if (spectatorSunday) startSunday(null, "skip"); else advanceDay(); }} disabled={!running || autoAdvance || scrimPlaying}>
                   {C.hub.plusDay}
                 </Button>
               </>

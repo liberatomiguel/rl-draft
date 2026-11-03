@@ -7,7 +7,7 @@
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.9**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.10**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
