@@ -7,7 +7,7 @@
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.8**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.9**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
@@ -25,6 +25,11 @@
   prompt: four sessions estimated, with a fifth reserved for unresolved gates.
 
 ## Current evidence and limits
+
+rc.36.9: 167 targeted tests, types/lint/static export pass. Sponsor prompts
+now lead globally, inserts retain Play intent, one article expands at a time,
+and results/participants have their corrected positions. Browser preview
+connection remains unavailable; visual acceptance is on staging.
 
 - rc.36.6 career/content/persist/assets/balance regressions: **968 passed**,
   15 optional checks skipped (77 files passed, nine skipped). Typecheck and

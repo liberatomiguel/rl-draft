@@ -16,6 +16,9 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect } from "react";
 import { useCareerNavigation, finishCareerNavigation } from "@/components/career/careerNavigation";
+import { useCareerCopy } from "@/content/careerCopy";
+import { pendingDecisionsOf } from "@/store/careerDecisions";
+import { SponsorDecisionPrompt } from "@/components/career/sponsors/SponsorDecisionPrompt";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore } from "@/store/careerStore";
 import { CareerAutopilot } from "@/components/career/CareerAutopilot";
@@ -32,6 +35,7 @@ const isBareRoute = (pathname: string | null): boolean =>
   BARE_ROUTES.some((r) => pathname === r || pathname?.startsWith(`${r}/`));
 
 export function CareerShell({ children }: { children: React.ReactNode }) {
+  const C = useCareerCopy();
   const mounted = useMounted();
   const router = useRouter();
   const pathname = usePathname();
@@ -45,6 +49,8 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
   const slots = useCareerStore((s) => s.slots);
   const activeSlot = useCareerStore((s) => s.activeSlot);
 
+  const save = activeSlot === null ? null : slots[activeSlot];
+  const sponsor = save ? pendingDecisionsOf(save).find(d => d.kind === "sponsor" && !d.parked) : null;
   const hasAnySave = slots.some(Boolean);
   const hasActive = activeSlot !== null && Boolean(slots[activeSlot]);
   const bare = isBareRoute(pathname);
@@ -93,9 +99,9 @@ export function CareerShell({ children }: { children: React.ReactNode }) {
           <CareerAutopilot />
           <CareerToaster />
           {/* rc.34: the money notice (the emergency loan, its deadline) on every career screen. */}
-          <MoneyNoticeModal />
+          {sponsor && save ? <SponsorDecisionPrompt key={sponsor.id} save={save} C={C} canWait={sponsor.canWait} onSign={id => useCareerStore.getState().chooseSponsor(id)} onLater={() => useCareerStore.getState().parkDecision(sponsor.id)} /> : <MoneyNoticeModal />}
           {/* rc.35 (front T): a finished training cycle's results, once per cycle. */}
-          <TrainingReportModal />
+          {!sponsor ? <TrainingReportModal /> : null}
         </>
       ) : null}
       {children}

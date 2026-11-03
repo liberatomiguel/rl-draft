@@ -113,7 +113,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
     return needsManager ? pending.filter(d => d.kind !== "follow") : pending;
   }, [save]);
   const focused = focusId ? (queue.find((d) => d.id === focusId) ?? null) : null;
-  const top = focused ?? queue.find((d) => !d.parked) ?? null;
+  const top = queue.find(d => d.kind === "sponsor" && !d.parked) ?? focused ?? queue.find((d) => !d.parked) ?? null;
   const others = queue.filter((d) => d !== top && d.kind !== "follow");
 
   const D = C.dates;
@@ -272,6 +272,7 @@ export function DecisionBlock({ save, C }: { save: CareerSave; C: CareerCopy }) 
         );
       }
       case "sponsor": {
+        if (!d.parked) return null; // The shell owns the priority popup globally.
         const offers = save.sponsorOffers ?? [];
         if (offers.length === 0) return null;
         // The active sponsor decision opens directly; deferral keeps its persisted deadline.

@@ -344,6 +344,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
   const B = C.news.brand[brand] ?? C.news.brand.wire;
   const unread = news.filter((n) => !n.read).length;
   const lead = leadStoryOf({ ...save, news: filtered }, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? filtered[0] ?? null;
+  const expandedId = filtered.some(n => n.id === selectedId) ? selectedId : lead?.id;
   const rows = open
     ? filtered.filter(n => n.id !== lead?.id).slice(0, limit)
     : news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
@@ -389,14 +390,14 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
         </div>
       ) : null}
 
-      {lead ? <LeadStory item={lead} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : null}
+      {lead ? expandedId === lead.id ? <LeadStory item={lead} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : <StoryRow item={lead} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => setSelectedId(lead.id)} /> : null}
 
       {rows.length === 0 && !lead ? (
         <p className="py-6 text-center text-sm text-sub">{C.hub.emptyStateBody}</p>
       ) : (
         <div>
           {rows.map((item) => (
-            <div key={item.id}>{selectedId === item.id ? <LeadStory item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : <StoryRow item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => setSelectedId(item.id)} />}</div>
+            <div key={item.id}>{expandedId === item.id ? <LeadStory item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} /> : <StoryRow item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => setSelectedId(item.id)} />}</div>
           ))}
         </div>
       )}

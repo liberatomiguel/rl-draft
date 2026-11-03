@@ -1063,7 +1063,7 @@ function EventPlayback({ save, ev }: { save: CareerSave; ev: ActiveEventState })
               throughRound={throughRound}
               nextUpRef={nextOpponentRef}
             />
-          ) : null}
+          ) : <Panel className="p-4"><p className="kicker mb-3 text-[10px]">{C.event.fieldTitle}</p><ul className="space-y-1">{Object.values(t.teams).map(team => <li key={team.id}><EventTeamButton teamId={team.id} name={team.name} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"><OrgMark save={save} orgRef={team.id} size="sm" /><span className="min-w-0 flex-1 truncate text-xs text-ink">{team.name}</span><span className="font-mono text-xs text-sub">{Math.round(team.rating.total)}</span></EventTeamButton></li>)}</ul></Panel>}
         </div>
       </div>
     </div>
@@ -1177,7 +1177,6 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-3 py-6 sm:px-4">
-      {!isQualifier && t.playoffs ? <CareerBracket save={save} t={t} revealed={new Set(t.playoffs.rounds.flatMap((r,ri) => r.series.map((_,si) => `po:${ri}:${si}`)))} liveKey={null} showUpcoming={false} layout="wide" /> : null}
 
       {/* placement hero */}
       <Panel
@@ -1287,6 +1286,8 @@ function EventDigest({ save, ev }: { save: CareerSave; ev: ActiveEventState }) {
           )}
         </div>
       </Panel>
+
+      {!isQualifier && t.playoffs ? <CareerBracket save={save} t={t} revealed={new Set(t.playoffs.rounds.flatMap((r,ri) => r.series.map((_,si) => `po:${ri}:${si}`)))} liveKey={null} showUpcoming={false} layout="wide" /> : null}
 
       {/* R40: the qualifier's eight, in seed order — they meet the direct eight on Sunday */}
       {isQualifier ? (

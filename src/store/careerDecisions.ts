@@ -305,6 +305,7 @@ const KIND_ORDER: DecisionKind[] = [
  * following an event the user is out of comes last (8).
  */
 function groupOf(d: PendingDecision): number {
+  if (d.kind === "sponsor" && !d.parked) return -1;
   if (d.kind === "event") return d.holds ? 0 : 6;
   if (d.kind === "sunday") return 6;
   if (d.kind === "follow") return 8;
@@ -430,4 +431,9 @@ export function reviewContractsFlow(input: CareerSave): FlowResult {
 export function continueToNextSeasonFlow(input: CareerSave): FlowResult {
   if (rolloverHoldOf(input)) return { save: input, error: "decisionPending" };
   return { save: rolloverToNextSeason(input) };
+}
+
+/** Soft pauses preserve Play intent until the manager answers. */
+export function autoplayWaitsForDecision(save: CareerSave): boolean {
+  return Boolean(save.pendingInsert) || pendingDecisionsOf(save).some(d => d.kind === "sponsor" && !d.parked);
 }

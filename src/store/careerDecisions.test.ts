@@ -395,27 +395,30 @@ describe("rc.34 — the queue's order: urgent first", () => {
       sponsorOffers: sponsorOffersFor(30, 0, base.careerSeed, null, false, "normal"),
     };
     expect(pendingDecisionsOf(save).map((d) => d.id)).toEqual([
+      sponsorDecisionOf(save)!.id,
       `insert:ins-showmatch:0:${base.clock.day}`,
       "bid:soon",
       "bid:late",
-      sponsorDecisionOf(save)!.id,
     ]);
     // Parked ones go last; the top block shows the first that is not parked.
     const parked = parkDecisionFlow(save, "bid:soon").save;
     expect(pendingDecisionsOf(parked).map((d) => d.id).slice(-1)).toEqual(["bid:soon"]);
-    expect(topDecisionOf(resolveInsertFlow(parked, "b").save)?.id).toBe("bid:late");
+    expect(topDecisionOf(parked)?.kind).toBe("sponsor");
+    const deferred = parkDecisionFlow(parked, sponsorDecisionOf(save)!.id).save;
+    expect(topDecisionOf(resolveInsertFlow(deferred, "b").save)?.id).toBe("bid:late");
     // A notice outranks what is due today; a short squad's eve too.
     const was = DECISION_SOURCES.notice;
     DECISION_SOURCES.notice = () => ({ id: "notice:x" });
     try {
-      expect(pendingDecisionsOf(save)[0].kind).toBe("notice");
+      expect(pendingDecisionsOf(save)[0].kind).toBe("sponsor");
+      expect(pendingDecisionsOf({ ...save, sponsorOffers: null })[0].kind).toBe("notice");
     } finally {
       DECISION_SOURCES.notice = was;
     }
-    const short = holding("squadShort", save).save;
+    const short = holding("squadShort", { ...save, sponsorOffers: null }).save;
     expect(pendingDecisionsOf(short)[0].kind).toBe("squadShort");
     // The matchday comes first of all.
-    const matchday = { ...save, pendingEventDef: cupOn(save, save.clock.day) };
+    const matchday = { ...save, sponsorOffers: null, pendingEventDef: cupOn(save, save.clock.day) };
     expect(pendingDecisionsOf(matchday)[0].kind).toBe("event");
   });
 });

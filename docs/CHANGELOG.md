@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.8**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.9**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,24 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Fixed / Changed — rc.36.9, decision priority and presentation (R97)
+- Tournament placement/rewards now precede the knockout bracket. Community
+  playback uses the formerly empty rail for roster-inspectable participants.
+- One article stays expanded: selecting a row closes the previous lead or
+  article, while both keep their list positions and no scroll is requested.
+- Inserts soft-pause autoplay without clearing Play intent; answering resumes
+  naturally if it was running, while a manually paused career stays paused.
+- Unparked sponsor offers precede every decision, including a focused card.
+  Their popup is owned by the career shell on all routes; financial/training
+  popups wait. Later still parks the sponsor prompt when permitted.
+- Root causes: bracket placement before the ceremony, knockout rail left
+  empty after the prior move, independent lead/row expansion, destructive
+  autoplay pause at inserts, and sponsor priority scoped to the HQ card.
+- Validation: 167 affected tests pass (including prior Play/Pause insert
+  state and sponsor/deferral ordering), typecheck and changed-file lint clean;
+  static export/postexport pass. No balance/persist contract changes.
+  Browser preview still times out; visual acceptance remains on staging.
 
 ### Added / Changed — rc.36.8, follow-up interaction fixes (R96)
 - Practice reveals use 100ms game steps (150ms reduced motion). Closed news

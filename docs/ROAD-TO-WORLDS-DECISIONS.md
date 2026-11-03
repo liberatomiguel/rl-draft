@@ -2022,6 +2022,17 @@ R96. **rc.36.8 — small interactions and route transitions.**
      BALANCE_VERSION 13. 141 targeted tests plus types/lint/static export pass;
      preview connection timed out, leaving visual staging acceptance open.
 
+R97. **rc.36.9 — presentation and decision priority.**
+     Miguel requests placement/rewards above the bracket, participants in the
+     community side rail, and only one expanded article without repositioning
+     it. Inserts preserve autoplay intent instead of switching it off; manual
+     pause stays off. An unparked sponsor prompt has first priority globally,
+     including over money/training popups and focused HQ decisions. Explicit
+     Later retains its existing deadline/parking contract. Tests cover both
+     Play states, sponsor priority and deferral. 167 affected tests, types,
+     lint and static export pass. Browser preview timeout leaves visual
+     acceptance on staging. BALANCE_VERSION 13 and saves unchanged.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

@@ -1,3 +1,4 @@
+import { autoplayWaitsForDecision } from "./careerDecisions";
 import { describe, expect, it } from "vitest";
 import { CAREER_INSERTS_CATALOG } from "@/data/career/inserts";
 import { CAREER_EN } from "@/content/copy.career.en";
@@ -180,5 +181,18 @@ describe("rc.36.6 — occasional community 1v1 and 2v2", () => {
     expect(formats).toEqual(new Set([1, 2, 3]));
     expect(small).toBeLessThan(40);
     expect(names.has("50/50 Community Cup")).toBe(true);
+  });
+});
+
+describe("rc.36.9 autoplay intent around inserts", () => {
+  it.each([true, false])("preserves the prior Play state (%s) when an insert is answered", playing => {
+    const save = fresh();
+    save.pendingInsert = { id: "ins-showmatch", day: save.clock.day };
+    useCareerStore.setState({ slots: [save, null, null], activeSlot: 0, autoAdvance: playing, scrimPlayback: null, toasts: [] });
+    expect(autoplayWaitsForDecision(save)).toBe(true);
+    useCareerStore.getState().resolveInsert("b");
+    expect(useCareerStore.getState().autoAdvance).toBe(playing);
+    expect(autoplayWaitsForDecision(useCareerStore.getState().slots[0]!)).toBe(false);
+    useCareerStore.setState({ slots: [null, null, null], activeSlot: null, autoAdvance: false, toasts: [] });
   });
 });

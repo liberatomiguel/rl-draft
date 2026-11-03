@@ -19,6 +19,7 @@
  * the calendar keeps rolling on every career screen.
  */
 
+import { autoplayWaitsForDecision } from "@/store/careerDecisions";
 import { trainingReportOf } from "@/store/careerTraining";
 import { useEffect, useRef } from "react";
 import { CAREER_PLAYBACK } from "@/config/balance";
@@ -46,6 +47,8 @@ export function CareerAutopilot() {
     if (!autoAdvance || !save || scrimPlayback) return;
     const today = `${save.clock.seasonIndex}:${save.clock.day}`;
     startRef.current ??= today;
+
+    if (autoplayWaitsForDecision(save)) return;
 
     // Stop conditions checked BEFORE each tick (and re-checked after by the
     // next effect run, since advanceDay updates the store).
