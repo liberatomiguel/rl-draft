@@ -169,7 +169,7 @@ export function NewsTypeIcon({ type, className }: { type: NewsType | "archive"; 
 /** The partner art's id under public/partners/ (assets.partnerLogoSrc). */
 const PARTNER_ART: Record<string, string> = { fiftyFifty: "fiftyfifty" };
 
-function BrandMark({ brand, name }: { brand: string; name: string }) {
+export function BrandMark({ brand, name }: { brand: string; name: string }) {
   const art = PARTNER_ART[brand];
   const src = art ? partnerLogoSrc(art) : null;
   const [failed, setFailed] = useState(false);
@@ -200,6 +200,7 @@ function BrandMark({ brand, name }: { brand: string; name: string }) {
 // ---------------------------------------------------------------------------
 
 function Crests({ refs, save, size, type, archive }: { refs: string[]; save: CareerSave; size: "sm" | "md"; type: NewsType; archive: boolean }) {
+  if (refs.length === 0 && CAREER_NEWS.brand === "fiftyFifty") return <BrandMark brand="fiftyFifty" name="50/50" />;
   if (refs.length === 0) {
     return (
       <span
@@ -279,24 +280,26 @@ function LeadStory({ item, save, C, lang, brandKicker }: { item: NewsItem; save:
         </div>
         <Crests refs={refs.slice(0, 1)} save={save} size="md" type={item.type} archive={archive} />
       </div>
-      {r.body ? <p className="mt-2 line-clamp-3 max-w-prose text-xs leading-relaxed text-sub">{r.body}</p> : null}
+      {r.body ? <p className="mt-2 max-w-prose text-xs leading-relaxed text-sub">{r.body}</p> : null}
       {archive ? <p className="mt-2 text-[10px] italic text-faint">{C.news.feed.archiveNote}</p> : null}
       <div className="mt-3"><ActionLink item={item} C={C} /></div>
     </article>
   );
 }
 
-function StoryRow({ item, save, C, lang, brandKicker, compact }: { item: NewsItem; save: CareerSave; C: CareerCopy; lang: "en" | "pt"; brandKicker: string; compact: boolean }) {
+function StoryRow({ item, save, C, lang, brandKicker, compact, onSelect }: { item: NewsItem; save: CareerSave; C: CareerCopy; lang: "en" | "pt"; brandKicker: string; compact: boolean; onSelect: () => void }) {
   const r = resolveNews(withMoneyParams(item), C, lang);
   const archive = Boolean(r.archive);
   const refs = newsCrestsOf(item, save, r.orgRefs);
   return (
     <article className="flex items-start gap-2.5 border-b border-line/60 py-2.5 last:border-0">
-      <Crests refs={item.type === "transfer" ? refs.slice(0, 1) : []} save={save} size="sm" type={item.type} archive={archive} />
+      <Crests refs={refs.slice(0, 1)} save={save} size="sm" type={item.type} archive={archive} />
       <div className="min-w-0 flex-1">
+        <button type="button" onClick={onSelect} className="block w-full cursor-pointer rounded text-left hover:text-blue-bright focus-visible:outline-2 focus-visible:outline-blue">
         {!compact || archive ? <SubjectChips item={item} C={C} archive={archive} brandKicker={brandKicker} wire={Boolean(r.wire)} /> : null}
         <p className={cx("text-xs leading-relaxed", item.read ? "text-sub" : "font-medium text-ink")}>{r.title}</p>
         {!compact && r.body ? <p className="mt-0.5 text-xs leading-relaxed text-sub">{r.body}</p> : null}
+        </button>
         <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[10px] text-faint">{stampOf(item, save, C, C.dates)}</span><ActionLink item={item} C={C} /></div>
       </div>
       {!item.read ? <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-blue-bright" aria-label={C.news.unread(1)} /> : null}
@@ -311,6 +314,7 @@ function StoryRow({ item, save, C, lang, brandKicker, compact }: { item: NewsIte
 export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; lang: "en" | "pt" }) {
   const markNewsRead = useCareerStore((s) => s.markNewsRead);
   const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [limit, setLimit] = useState(WIRE_BATCH);
   // Render-phase reset so a filter switch never carries a stale page count.
@@ -339,16 +343,17 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
   const brand = CAREER_NEWS.brand;
   const B = C.news.brand[brand] ?? C.news.brand.wire;
   const unread = news.filter((n) => !n.read).length;
-  const lead = !open ? (leadStoryOf({ ...save, news }, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? news[0] ?? null) : null;
+  const lead = filtered.find(n => n.id === selectedId) ?? leadStoryOf({ ...save, news: filtered }, CAREER_NEWS.leadMinPriority, CAREER_NEWS.leadMaxAgeDays) ?? filtered[0] ?? null;
   const rows = open
-    ? filtered.slice(0, limit)
+    ? filtered.filter(n => n.id !== lead?.id).slice(0, limit)
     : news.filter((n) => n.id !== lead?.id).slice(0, lead ? WIRE_PREVIEW - 1 : WIRE_PREVIEW);
 
   return (
-    <Panel id="career-news" className="rise-in p-4" style={{ animationDelay: "120ms" }}>
+    <Panel id="career-news" className="rise-in scroll-mt-36 p-4" style={{ animationDelay: "120ms" }}>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <BrandMark brand={brand} name={B.name} />
+          <span className="display text-xs font-bold uppercase tracking-wider text-ink sm:text-sm">{C.news.feed.name}</span>
           {unread > 0 ? (
             <span className="rounded-full bg-orange/20 px-1.5 py-px font-mono text-[10px] text-orange-bright">{unread}</span>
           ) : null}
@@ -391,7 +396,7 @@ export function NewsFeed({ save, C, lang }: { save: CareerSave; C: CareerCopy; l
       ) : (
         <div>
           {rows.map((item) => (
-            <StoryRow key={item.id} item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} />
+            <StoryRow key={item.id} item={item} save={save} C={C} lang={lang} brandKicker={B.kicker} compact={!open} onSelect={() => { setSelectedId(item.id); document.getElementById("career-news")?.scrollIntoView({ block: "start", behavior: "instant" }); }} />
           ))}
         </div>
       )}

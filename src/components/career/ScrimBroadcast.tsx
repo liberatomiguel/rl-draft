@@ -2,54 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { CAREER_PLAYBACK } from "@/config/balance";
-import { useCareerCopy } from "@/content/careerCopy";
-import type { ScrimLogEntry } from "@/engine/career/types";
+import type { CareerCopy } from "@/content/careerCopy";
+import type { CareerSave, ScrimLogEntry } from "@/engine/career/types";
 import { useOsReducedMotion } from "@/lib/useOsReducedMotion";
-import { selectActiveSave, useCareerStore } from "@/store/careerStore";
+import { useCareerStore } from "@/store/careerStore";
 import { OrgMark } from "./OrgMark";
-import { ClockDigits } from "./event/GameClock";
 
-/** Reveals an already recorded series. No simulation, rewards or save writes per tick. */
-function Playback({ entry }: { entry: ScrimLogEntry }) {
-  const C = useCareerCopy();
-  const save = useCareerStore(selectActiveSave);
-  const finish = useCareerStore((s) => s.finishScrimPlayback);
+/** Session controller only. Presentation belongs inside the week's practice list. */
+export function ScrimBroadcast() {
+  const entry = useCareerStore(s => s.scrimPlayback);
+  const finish = useCareerStore(s => s.finishScrimPlayback);
   const reduced = useOsReducedMotion();
-  const [elapsed, setElapsed] = useState(0);
-  const count = Math.max(1, entry.games.length);
-  const duration = reduced ? CAREER_PLAYBACK.scrimReducedMotionMs : count * CAREER_PLAYBACK.scrimGameMs;
   useEffect(() => {
-    const start = performance.now();
-    const done = setTimeout(() => finish(entry.id), duration);
-    const tick = reduced ? null : setInterval(() => setElapsed(Math.min(duration, performance.now() - start)), 100);
-    return () => { clearTimeout(done); if (tick) clearInterval(tick); };
-  }, [entry.id, duration, finish, reduced]);
-  if (!save) return null;
-  const completed = reduced ? count : Math.min(count, Math.floor(elapsed / CAREER_PLAYBACK.scrimGameMs));
-  const scores = entry.games.slice(0, completed).map((g) => g.split("-").map(Number));
-  const a = reduced ? entry.scoreA : scores.filter(([x, y]) => x > y).length;
-  const b = reduced ? entry.scoreB : scores.filter(([x, y]) => y > x).length;
-  const remaining = Math.ceil(300 * (1 - (elapsed % CAREER_PLAYBACK.scrimGameMs) / CAREER_PLAYBACK.scrimGameMs));
-  const clock = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
-  return (
-    <aside className="sticky top-24 z-20 mx-auto max-w-6xl px-3 pt-3 sm:px-4" aria-label={C.scrim.live}>
-      <div className="overflow-hidden rounded-xl border border-blue/40 bg-raised">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3.5 py-2.5">
-          <div className="flex items-center gap-2 text-xs text-sub"><span className="h-1.5 w-1.5 rounded-full bg-cyan" aria-hidden /><span className="font-semibold text-ink">{C.scrim.live}</span><span>{C.scrim.game(Math.min(count, completed + 1))}</span></div>
-          <div className="flex min-w-0 items-center gap-2.5 text-xs">
-            <OrgMark save={save} orgRef="user" size="sm" /><span className="font-semibold text-ink">{save.identity.abbrev}</span>
-            <span className="font-mono text-base font-bold tabular-nums text-ink">{a}–{b}</span>
-            <span className="max-w-40 truncate text-sub">{entry.oppName}</span><OrgMark save={save} orgRef={entry.oppRef} size="sm" />
-          </div>
-          {reduced ? <span className="text-xs text-sub">{C.scrim.schedule}</span> : <ClockDigits text={clock} className="font-mono text-xs text-cyan" />}
-        </div>
-        {!reduced ? <div className="h-0.5 origin-left bg-blue-bright" style={{ transform: `scaleX(${Math.min(1, elapsed / duration)})` }} aria-hidden /> : null}
-      </div>
-    </aside>
-  );
+    if (!entry) return;
+    const duration = reduced ? CAREER_PLAYBACK.scrimReducedMotionMs : Math.max(1, entry.games.length) * CAREER_PLAYBACK.scrimGameMs;
+    const timer = setTimeout(() => finish(entry.id), duration);
+    return () => clearTimeout(timer);
+  }, [entry, finish, reduced]);
+  return null;
 }
 
-export function ScrimBroadcast() {
-  const entry = useCareerStore((s) => s.scrimPlayback);
-  return entry ? <Playback key={entry.id} entry={entry} /> : null;
+/** Reveal stored game winners; never simulate or grant rewards from the UI. */
+export function ScrimSeriesRow({ entry, save, C }: { entry: ScrimLogEntry; save: CareerSave; C: CareerCopy }) {
+  const reduced = useOsReducedMotion();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (reduced) return;
+    const timer = setInterval(() => setCount(n => Math.min(entry.games.length, n + 1)), CAREER_PLAYBACK.scrimGameMs);
+    return () => clearInterval(timer);
+  }, [entry.games.length, reduced]);
+  const games = entry.games.slice(0, reduced ? entry.games.length : count).map(g => g.split("-").map(Number));
+  const a = games.filter(([x,y]) => x > y).length;
+  const b = games.filter(([x,y]) => y > x).length;
+  return <li className="flex min-w-0 items-center gap-2 rounded-lg border border-line/60 bg-white/[0.025] px-2.5 py-2 text-xs" aria-label={C.scrim.live}>
+    <span className="w-6 shrink-0 text-[10px] text-faint">{C.dates.weekdays[(entry.day - 1) % 7]}</span>
+    <OrgMark save={save} orgRef="user" size="sm" />
+    <span className="min-w-0 flex-1 truncate text-sub">{save.identity.abbrev}</span>
+    <span key={count} className="rounded-md bg-black/20 px-2 py-1 font-mono text-sm font-bold tabular-nums text-sub motion-safe:animate-pulse">{a}–{b}</span>
+    <span className="min-w-0 flex-[2] truncate text-sub">{entry.oppName}</span>
+    <OrgMark save={save} orgRef={entry.oppRef} size="sm" />
+  </li>;
 }

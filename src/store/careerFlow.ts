@@ -4142,8 +4142,6 @@ function isStopState(save: CareerSave, startedAtDay: number): boolean {
   // rc.36 (front T2, R83): a training cycle completed and nothing runs after
   // it — stop once (the report, the next plan); never a hold.
   if (day !== startedAtDay && cycleEndedTodayOf(save)) return true;
-  // Let the short practice broadcast finish before another day can pass.
-  if (day !== startedAtDay && save.scrimLog.some((s) => s.seasonIndex === save.clock.seasonIndex && s.day === day)) return true;
   // A transfer window just opened (its first Monday).
   if (
     day !== startedAtDay &&

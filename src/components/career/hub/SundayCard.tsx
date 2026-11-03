@@ -135,6 +135,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
     startSunday(pick, mode);
     // Watching (or playing) Sunday opens the event; a skipped Sunday stays in HQ.
     if (mode !== "skip") router.push("/career/event");
+    else router.push("/career/calendar");
   };
 
   // Out in the Swiss: the playoffs go on without the user (SUN-03's Sunday side).
@@ -149,14 +150,14 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
           <CrestStrip save={save} refs={seeds} label={C.event.playoffEight} />
         </div>
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Button variant="primary" size="lg" className="w-full" onClick={() => go(null, "watch")}>
+          <Button variant="secondary" size="lg" className="w-full" onClick={() => go(null, "watch")}>
             {C.sunday.watch}
           </Button>
-          <Button variant="secondary" size="lg" className="w-full" onClick={() => go(null, "results")}>
+          <Button variant="ghost" size="lg" className="w-full" onClick={() => go(null, "results")}>
             {C.sunday.results}
           </Button>
-          <Button variant="ghost" size="lg" className="w-full border border-line" onClick={() => go(null, "skip")}>
-            {C.sunday.skip}
+          <Button variant="secondary" size="lg" className="w-full" onClick={() => go(null, "skip")}>
+            {C.sunday.backToCalendar}
           </Button>
         </div>
         <p className="mt-2 text-[11px] text-faint">{C.sunday.outHint}</p>
@@ -175,8 +176,8 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
 
   const effectOf = (c: SundayBriefingChoice): string => {
     const fx = briefingEffectOf(c);
-    if (c === "keep") return C.sunday.effectContinuity(fx.everySeries);
-    return C.sunday.effectTradeoff(Number((fx.everySeries + fx.opener).toFixed(2)), fx.everySeries);
+    if (c === "keep") return C.sunday.effectContinuity(fx.swiss);
+    return championship ? C.sunday.effectPlayoffs(fx.playoffs) : C.sunday.effectTradeoff(fx.swiss, fx.playoffs);
   };
 
   return (
@@ -314,14 +315,14 @@ export function NowFollow({
         <div className="mt-3">
           <CrestStrip save={save} refs={out.qualifiedIds} label={C.sunday.whoQualified} />
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-line/60 pt-4"><div className="flex flex-col items-start gap-1">
           <Button variant="secondary" size="md" className="min-h-11" onClick={() => pick("watch")}>
             {C.sunday.watch}
           </Button>
           <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => pick("results")}>
             {C.sunday.results}
           </Button>
-          <Button variant="ghost" size="md" className="min-h-11" onClick={() => pick("skip")}>
+          </div><Button variant="secondary" size="md" className="min-h-11" onClick={() => pick("skip")}>
             {C.sunday.backToCalendar}
           </Button>
         </div>
@@ -355,14 +356,14 @@ export function NowFollow({
           <span className="min-w-0 truncate text-sm font-semibold text-ink">{championName}</span>
         </div>
       ) : null}
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-line/60 pt-4"><div className="flex flex-col items-start gap-1">
         <Button variant="secondary" size="md" className="min-h-11" onClick={() => open("watch")}>
           {C.sunday.replay}
         </Button>
         <Button variant="ghost" size="md" className="min-h-11 text-faint" onClick={() => open("results")}>
           {C.sunday.readResults}
         </Button>
-        <Button variant="ghost" size="md" className="min-h-11" onClick={() => { dismissFollow(); router.push("/career/calendar"); }}>
+        </div><Button variant="secondary" size="md" className="min-h-11" onClick={() => { dismissFollow(); router.push("/career/calendar"); }}>
           {C.sunday.backToCalendar}
         </Button>
       </div>

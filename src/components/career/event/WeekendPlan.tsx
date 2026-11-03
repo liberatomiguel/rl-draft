@@ -18,6 +18,7 @@ import { cx } from "@/lib/util";
 import { dateOfDay } from "@/components/career/careerUi";
 import { formatDateShort, formatDaysAway } from "@/components/career/dateText";
 import { Panel } from "@/components/ui/Panel";
+import { EventTierIcon, TIER_ICON_TONE } from "./EventTierIcon";
 import { weekendPlanOf, type WeekendPlanDay, type WeekendRole } from "./weekendView";
 
 // ---------------------------------------------------------------------------
@@ -175,7 +176,7 @@ function WeekendDayCell({
     <li
       aria-current={d.state === "today" ? "date" : undefined}
       className={cx(
-        "relative min-w-0 rounded-xl border p-2.5 text-left sm:p-3",
+        "relative min-w-0 rounded-xl border p-3 text-left sm:p-4",
         d.state === "today"
           ? "border-orange/60 bg-orange/10 shadow-[0_0_18px_rgba(249,115,22,0.14)]"
           : d.state === "done"
@@ -183,6 +184,9 @@ function WeekendDayCell({
             : "border-line bg-white/[0.04]",
       )}
     >
+      <span className={cx("mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-current/20 bg-white/5", TIER_ICON_TONE[d.def.tier])}>
+        <EventTierIcon tier={d.def.tier} className="h-5 w-5" />
+      </span>
       <div className="flex flex-wrap items-center justify-between gap-x-1.5 gap-y-1">
         <span className={cx("kicker !text-[9px]", d.state === "today" && "text-orange-bright")}>
           {date}

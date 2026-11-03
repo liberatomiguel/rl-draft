@@ -1320,6 +1320,10 @@ function seedingOfField(input: SeededFieldInput): { direct: string[]; rest: stri
  * listed a local side in place of the org the engine dropped into Saturday.
  * rc.30 (direct-8): both now read the week's committed seeding.
  */
+export function directEventRefsFor(input: SeededFieldInput): string[] {
+  return seedingOfField(input).direct;
+}
+
 export function qualifierEventRefsFor(input: SeededFieldInput): string[] {
   const seeding = seedingOfField(input);
   const refs = qualifierFieldRefsFor({

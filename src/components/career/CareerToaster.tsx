@@ -20,7 +20,7 @@ import { cx } from "@/lib/util";
 import { useMounted } from "@/store/useMounted";
 import { useCareerStore, type CareerToast } from "@/store/careerStore";
 import { resolveMail, resolveNews, resolveToastTitle } from "./news/newsText";
-import { NewsTypeIcon } from "./news/NewsFeed";
+import { BrandMark, NewsTypeIcon } from "./news/NewsFeed";
 import { newsActionOf, newsCrestsOf } from "./news/newsView";
 import { useCareerSave } from "./careerUi";
 import { useSettings } from "@/store/settingsStore";
@@ -80,7 +80,7 @@ function Toast({ toast }: { toast: CareerToast }) {
       <button type="button" data-career-notice="news" onClick={open}
         className="pop-in pointer-events-auto w-full shrink-0 overflow-hidden rounded-xl border border-blue/35 bg-[#111827] text-left shadow-xl">
         <span className="flex items-center justify-between gap-2 border-b border-blue/20 bg-blue/5 px-3.5 py-2">
-          <span className="display text-xs font-bold uppercase tracking-[0.12em] text-blue-bright">{brand.kicker}</span>
+          <span className="display text-xs font-bold uppercase tracking-[0.12em] text-blue-bright"><BrandMark brand={CAREER_NEWS.brand} name={brand.name} /></span>
           <span className="text-[9px] uppercase tracking-wider text-faint">{news ? formatDateTiny(C.dates, dateOfDay(news.seasonIndex, news.day ?? firstDayOfWeek(news.week))) : C.hub.news}</span>
         </span>
         <span className="block border-l-2 border-blue/70 px-3.5 py-3">
@@ -89,7 +89,7 @@ function Toast({ toast }: { toast: CareerToast }) {
               <span className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-bright">{news ? C.news.feed.subject[news.type] : C.hub.news}</span>
               <span className="block text-sm font-semibold leading-snug text-ink line-clamp-3">{title}</span>
             </span>
-            {save && crests.length ? <span className="flex shrink-0 -space-x-2">{crests.map(ref => <OrgMark key={ref} save={save} orgRef={ref} size="sm" />)}</span> : <NewsTypeIcon type={news?.type ?? "flavor"} className="h-6 w-6 shrink-0 text-blue-bright" />}
+            {save && crests.length ? <span className="flex shrink-0 -space-x-2">{crests.map(ref => <OrgMark key={ref} save={save} orgRef={ref} size="sm" />)}</span> : <BrandMark brand={CAREER_NEWS.brand} name={brand.name} />}
           </span>
           {content?.body ? <span className="mt-2 block line-clamp-2 text-xs leading-relaxed text-sub">{content.body}</span> : null}
         </span>

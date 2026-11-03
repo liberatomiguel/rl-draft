@@ -1997,6 +1997,7 @@ export const CAREER_EN = {
     wire: "THE WIRE",
     // rc.36 (UX-03, R87): the visual feed — a lead story, crests, the subject, the action.
     feed: {
+      name: "Newsroom",
       lead: "Top story",
       archive: "From the archive",
       archiveNote: "Real RLCS history — this timeline runs its own course.",
@@ -2425,6 +2426,7 @@ export const CAREER_EN = {
     formatTwoDay: (teams: number, playoffTeams: number) =>
       `Saturday: ${teams}-team Swiss · Sunday: top-${playoffTeams} double elimination`,
     championshipSunday: "Championship Sunday",
+    directSunday: "Already through to Sunday",
     weekendTitle: "The weekend",
     roleQualifierSub: (teams: number, slots: number) => `${teams}-team Swiss · top ${slots} go through`,
     roleRegionalSub: (direct: number, qualified: number) => `${direct} direct + ${qualified} from Saturday`,
@@ -2488,7 +2490,8 @@ export const CAREER_EN = {
       prepare: "Prepare for the opponent",
     },
     effectContinuity: (n: number) => `+${n} team rating in every series; no extra risk.`,
-    effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${first} in the opener; ${later > 0 ? "+" : ""}${later} in later series.`,
+    effectPlayoffs: (n: number) => `${n > 0 ? "+" : ""}${n} in playoffs. Swiss is already complete.`,
+    effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${first} in Swiss; ${later > 0 ? "+" : ""}${later} in playoffs.`,
     effectKeep: "No change: the routine that got you here.",
     effectRecover: (n: number) => `+${n} team rating in every series today`,
     effectPrepare: (n: number) => `+${n} team rating in your opening series`,

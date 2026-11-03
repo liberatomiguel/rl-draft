@@ -97,7 +97,7 @@ import { ChampionshipSunday } from "@/components/career/event/ChampionshipSunday
 import { SeedList } from "@/components/career/event/SeedList";
 import { SwissCompletePanel } from "@/components/career/event/SwissCompletePanel";
 import { SwissVerdict } from "@/components/career/event/SwissVerdict";
-import { lobbyFieldRefs } from "@/components/career/event/lobbyField";
+import { lobbyDirectRefs, lobbyFieldRefs } from "@/components/career/event/lobbyField";
 import { WeekendPlan, formatLineOf, type WeekendNote } from "@/components/career/event/WeekendPlan";
 import {
   advancedSeedsOf,
@@ -275,6 +275,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
 
   // R40: the weekend this lobby belongs to, and who came through Saturday.
   const isQualifier = def.tier === "qualifier";
+  const directRefs = isQualifier ? lobbyDirectRefs(save, def, preview.rating.total) : [];
   const throughSaturday = qualifiedIntoRegional(save, def);
   const entry = regionalEntryOf(save, def);
   const weekendNotes: Partial<Record<WeekendRole, WeekendNote>> | undefined =
@@ -285,7 +286,7 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
         : undefined;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 px-3 py-5 sm:px-4">
+    <div className="mx-auto max-w-6xl space-y-4 px-3 py-5 sm:px-4">
       <ErrorBanner />
 
       <SectionTitle
@@ -368,10 +369,11 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           </div>
         </Panel>
       ) : null}
+      <div className={cx("grid items-start gap-4", isQualifier && "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]")}>
       {field.length > 0 ? (
         <Panel className="rise-in p-4" style={{ animationDelay: "80ms" }}>
           <p className="kicker mb-2.5 text-[10px]">{C.event.fieldTitle}</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className={cx("grid grid-cols-1 gap-2 sm:grid-cols-2", !isQualifier && "lg:grid-cols-4")}>
             {field.map((f) => {
               const isUser = f.ref === "user";
               const content = (
@@ -433,6 +435,9 @@ function EventLobby({ save, def }: { save: CareerSave; def: CareerEventDef }) {
           </div>
         </Panel>
       ) : null}
+
+      {isQualifier ? <Panel className="rise-in border-blue/25 p-4"><p className="kicker mb-3 text-[10px] text-blue-bright">{C.event.directSunday}</p><ul className="space-y-1">{directRefs.map(ref => <li key={ref}><button type="button" onClick={() => setSheetRef(ref)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-xs text-sub hover:bg-white/5"><OrgMark save={save} orgRef={ref} size="sm" /><span className="min-w-0 flex-1 truncate">{save.world.orgs[ref]?.name ?? ref}</span><span className="font-mono text-cyan">{Math.round(save.world.orgs[ref]?.rating ?? 0)}</span></button></li>)}</ul></Panel> : null}
+      </div>
 
       {/* RTW-05 (rc.33): a short squad never starts an event — sign a third player first. */}
       {isToday && short ? (

@@ -6,12 +6,12 @@ import type { CareerSave } from "@/engine/career/types";
 import { cx } from "@/lib/util";
 import { OrgMark } from "@/components/career/OrgMark";
 import { useCareerStore } from "@/store/careerStore";
+import { ScrimSeriesRow } from "../ScrimBroadcast";
 
 /** Recorded results only: advancing the calendar never triggers a second sim. */
 export function WeeklyScrimLine({ save, C }: { save: CareerSave; C: CareerCopy }) {
   const playing = useCareerStore((s) => s.scrimPlayback?.id);
   const entries = save.scrimLog
-    .filter(e => e.id !== playing)
     .filter(e => e.seasonIndex === save.clock.seasonIndex && e.day <= save.clock.day && weekOfDay(e.day) === weekOfDay(save.clock.day))
     .sort((a, b) => a.day - b.day);
   return (
@@ -20,6 +20,7 @@ export function WeeklyScrimLine({ save, C }: { save: CareerSave; C: CareerCopy }
       {entries.length === 0 ? <p className="text-xs text-faint">{C.training.weekScrimsEmpty}</p> : (
         <ul className="space-y-2">
           {entries.map(e => (
+            e.id === playing ? <ScrimSeriesRow key={e.id} entry={e} save={save} C={C} /> :
             <li key={e.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-line/60 bg-white/[0.025] px-2.5 py-2 text-xs" aria-label={e.won ? C.scrim.won(e.oppName, e.scoreA, e.scoreB) : C.scrim.lost(e.oppName, e.scoreA, e.scoreB)}>
               <span className="w-6 shrink-0 text-[10px] text-faint">{C.dates.weekdays[dayOfWeekOf(e.day) - 1]}</span>
               <OrgMark save={save} orgRef="user" size="sm" className="shrink-0" />

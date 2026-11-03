@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.6**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.7**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,34 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed — rc.36.7, discreet feedback and weekend hierarchy (R95)
+- Newsroom / Central de notícias accompanies 50/50's logo. Selecting a row
+  replaces the lead story with its full text, including in the expanded feed.
+  News notifications carry the partner logo; stories without an attributed
+  org use it as their image. Real org stories retain their crests.
+- Practice reveals scores within This week's scrims, in quick 320ms game
+  steps, without a clock or top-of-page broadcast. Skip crosses practice
+  days normally and clears playback; daily/autoplay steps retain the detail.
+- Transfer-window dates use a blue inset underline and background instead
+  of an extra dot. Event icons remain singular; weekday event precedence
+  prevents a simultaneous scrim marker.
+- Watch/replay and Continue to calendar share secondary-button emphasis on
+  opposite sides of the follow card. Results is subordinate to watch.
+- Qualifier lobby: participant cards left, smaller direct-eight list right,
+  reading the engine's committed weekly seeding. Weekend cards have distinct
+  qualifier/regional icons and more breathing room, stacking on narrow screens.
+- Briefing is phase-based: Recover −0.15 Swiss / +0.35 playoffs; Prepare
+  +0.35 Swiss / −0.15 playoffs; Continuity +0.10 throughout. Sunday briefings
+  after a Major/Worlds Swiss affect remaining playoffs only, explicitly shown.
+  Completed rounds and frozen ratings are untouched. BALANCE_VERSION 12.
+- Root causes: a global practice banner/Skip stop overwhelmed a small weekly
+  detail; window markers competed with tournament icons; ghost calendar
+  controls obscured the alternative to watching; opener-only briefing effects
+  did not express the requested Swiss/playoff trade-off. Gate 3b stays open.
+- Validation: 160 targeted tests pass; changed-file lint/typecheck clean;
+  career/noindex static export and postexport pass. No unrelated modes or
+  long economic matrices rerun. UI checked in the disposable local career.
 
 ### Added / Changed — rc.36.6, career interaction and 50/50 (R94, 2026-11-03)
 - Tuesday/Wednesday practice broadcasts: a short game clock and series

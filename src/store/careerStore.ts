@@ -480,7 +480,7 @@ export const useCareerStore = create<CareerStoreState>()(
         },
 
         advanceDay: () => { if (!get().scrimPlayback) withSave(advanceDayFlow); },
-        advanceToNextStop: () => { if (!get().scrimPlayback) withSave(advanceToNextStopFlow); },
+        advanceToNextStop: () => { set({ scrimPlayback: null }); withSave(advanceToNextStopFlow); set({ scrimPlayback: null }); },
         continueEventToNextDay: () => withSave(continueEventToNextDayFlow),
         startSunday: (choice, mode) => withResult((s) => startSundayFlow(s, choice, mode)),
         followSunday: (choice) => withResult((s) => followSundayFlow(s, choice)),

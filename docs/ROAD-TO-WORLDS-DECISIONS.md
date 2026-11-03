@@ -1995,6 +1995,21 @@ R94. **03/11 career feedback and supplied catalogs (rc.36.6).**
      progression/economy acceptance or assert solved Worlds pacing. Next-chat
      plan: ROADMAP-NEXT-2026-11-03.md; Gate 3b remains open, no main deploy.
 
+R95. **rc.36.7 — follow-up after published rc.36.6.**
+     Miguel wants the practice detail in This week's scrims, no clock/banner,
+     fast score reveals and no Skip stops. Preserve Tuesday/Wednesday seeded
+     results and payouts. Window dates use an underline, one event icon.
+     Add Newsroom / Central de notícias beside 50/50, partner art in news
+     toasts/unattributed stories, clickable lead-story selection. Watching
+     and continuing to calendar share weight in separate card positions.
+     Qualifier lobby lists the direct eight beside participants using the
+     same committed engine seeding; weekend roles gain distinct icons.
+     Briefing changes from opener/later to Swiss/playoffs: Recover −.15/+.35,
+     Prepare +.35/−.15, Continuity +.10/+.10. A post-Swiss choice affects
+     remaining playoffs only, never retroactively. BALANCE_VERSION 12.
+     Targeted regression 160 passed; types/lint/static export pass. Persist
+     contracts unchanged. Still Gate 3b; no progression/economy acceptance.
+
 ## Still open for Miguel (career mode)
 
 The design doc's §21 `[DECIDE]` list — the resolved ones (roster-churn tiers,

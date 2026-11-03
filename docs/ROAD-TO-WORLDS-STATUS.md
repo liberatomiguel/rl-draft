@@ -1,7 +1,7 @@
 # Road to Worlds — current state
 
-> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.6**, `staging`.
-> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R94. Gate: `CAREER-FEEDBACK-rc36-6.md`.
+> Last updated: **2026-11-03**. Candidate: **v2.0.0-rc.36.7**, `staging`.
+> Decisions: `ROAD-TO-WORLDS-DECISIONS.md` R1–R95. Gate: `CAREER-FEEDBACK-rc36-6.md`.
 
 ## Run and verify
 
@@ -26,8 +26,8 @@ Etapa 3 is integrated. Miguel's playtest acceptance is still required.
   plan automatically, including with a coach, without duplicate rewards.
   Attribute explanations sit higher, with actual values and baseline context.
 - Practice happens Tuesday/Wednesday. A compact recorded-series clock/score
-  reveal pauses the day briefly; autoplay resumes on completion. Skip stops
-  at practice, results stay hidden until revealed, and reload never re-simulates.
+  reveal pauses the day briefly; autoplay resumes on completion. Skip crosses practice days; the quick score reveal lives in the weekly list,
+  with no clock/banner. Reload never re-simulates.
   Legacy Thursday bookings move forward to a legal day.
 - Calendar advance follows clock holds to the right decision/event/season.
   Failed qualifiers leave regionals visible as not playing. Every transfer
@@ -46,7 +46,7 @@ Etapa 3 is integrated. Miguel's playtest acceptance is still required.
   across all generic roles. New careers use version 3; old identities survive.
 - Founding economy, growth, late support, sponsor/contract talks, goals,
   crests and Sunday decisions remain as in rc.36.5. Regional timing, star
-  affordability and historical Worlds titles remain open. BALANCE_VERSION 11.
+  affordability and historical Worlds titles remain open. BALANCE_VERSION 12.
 
 ## System map
 

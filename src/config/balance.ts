@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 11;
+export const BALANCE_VERSION = 12;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -3162,8 +3162,8 @@ export const CAREER_PLAYBACK = {
    * secondary action.
    */
   autoAdvanceDayMs: 850,
-  scrimGameMs: 900,
-  scrimReducedMotionMs: 1_200,
+  scrimGameMs: 320,
+  scrimReducedMotionMs: 400,
   /**
    * v2.0 (R40) Championship Sunday title card (watch mode): ms before it
    * hands over to the playoffs on its own (× the animation-speed scale;
@@ -3184,13 +3184,9 @@ export const CAREER_PLAYBACK = {
  *    Nothing else moves it (+1 day, the batched Advance, the autoplay, a
  *    reload); starting it is exactly one day on (Sunday trains nobody and
  *    pays nobody). false = rc.35's flow (the clock walks into Sunday).
- *  - `briefing`: the coach's optional Sunday briefing, as a team-rating edge
- *    on the user's side in Sunday's series only, shown upfront. Keep the
- *    plan = no change (and what starting without a pick means); Recover = a
- *    steady edge in every series of the day; Prepare = a bigger edge in the
- *    day's opening series only. Measured (rc.36, a Bo5 at an even rating):
- *    +0.25 ≈ +3.5 points of series odds, +0.5 ≈ +7 — under a bootcamp's
- *    +0.5 / +1.0 for a whole event (CAREER_GEAR.bootcamps).
+ *  - `briefing`: phase-based Sunday team-rating edges, shown upfront.
+ *    Continuity +0.10 throughout; Recover trades Swiss strength for playoff
+ *    strength; Prepare does the reverse. Completed phases are never replayed.
  *  - follow (SUN-03): an event the user is out of is kept compact; HQ offers
  *    it for `followCardDays` days from the day it resolved (the eliminated
  *    Saturday's "Sunday without you" card besides); watching reveals a round
@@ -3220,9 +3216,9 @@ export const CAREER_CREST = {
 export const CAREER_SUNDAY = {
   saturdayStop: true,
   briefing: {
-    keep: { everySeries: 0.1, opener: 0 },
-    recover: { everySeries: 0.35, opener: -0.5 },
-    prepare: { everySeries: -0.15, opener: 0.75 },
+    keep: { swiss: 0.1, playoffs: 0.1 },
+    recover: { swiss: -0.15, playoffs: 0.35 },
+    prepare: { swiss: 0.35, playoffs: -0.15 },
   },
   defaultBriefing: "keep",
   followCardDays: 2,

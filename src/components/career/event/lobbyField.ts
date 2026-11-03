@@ -18,6 +18,7 @@ import { TOURNAMENT } from "@/config/balance";
 import { repTierOf } from "@/engine/career/economy";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import {
+  directEventRefsFor,
   orgsByPointsFor,
   qualifierEventRefsFor,
   regionalEventRefsFor,
@@ -87,4 +88,9 @@ export function lobbyFieldRefs(save: CareerSave, def: CareerEventDef, userRating
   }
   const top = ranked(save.competition.seasonPoints[region] ?? {});
   return ["user", ...top.slice(0, TOURNAMENT.quick.teams - 1)];
+}
+
+export function lobbyDirectRefs(save: CareerSave, def: CareerEventDef, userRating: number): string[] {
+  const region = def.region ?? save.identity.region;
+  return directEventRefsFor({ world: save.world, competition: save.competition, region, seasonIndex: def.seasonIndex, week: def.week, userSeed: region === save.identity.region ? { rating: userRating, prestige: repTierOf(save.reputation) } : null, fieldsUser: region === save.identity.region, careerSeed: save.careerSeed });
 }

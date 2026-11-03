@@ -104,6 +104,7 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
         "relative z-10 flex min-h-[4.5rem] flex-col items-center gap-0.5 overflow-hidden rounded-lg border px-0.5 py-1.5",
         // The transfer window marks every day; event icons keep their tier accent.
         d.windowOpen ? "border-blue/50 bg-blue/15" : matchday ? "border-orange/50 bg-orange/10" : "border-line bg-white/[0.03]",
+        d.windowOpen && "shadow-[inset_0_-2px_0_#60a5fa]",
         d.isToday && "day-tick",
         d.isPast && "opacity-40",
       )}
@@ -120,8 +121,8 @@ function DayChip({ d, C }: { d: AgendaDay; C: CareerCopy }) {
       <span className="flex h-3 items-center gap-0.5" aria-hidden>
         {matchday && d.event ? <EventTierIcon tier={d.event.tier} className={cx("h-3 w-3", TIER_ICON_TONE[d.event.tier])} /> : null}
         {spectating && d.event ? <EventTierIcon tier={d.event.tier} className="h-3 w-3 text-white/40" /> : null}
-        {d.windowOpen ? <span className="h-1.5 w-1.5 rounded-full bg-blue-bright" /> : null}
-        {scrim ? <span className="h-1.5 w-1.5 rounded-full bg-cyan" /> : null}
+
+        {scrim && !d.event ? <span className="h-1.5 w-1.5 rounded-full bg-cyan" /> : null}
         {rest && !matchday && !spectating ? <span className="h-px w-2 bg-white/20" /> : null}
       </span>
       <span

@@ -3,13 +3,9 @@
  *
  * After the user's Saturday (the qualifier won, or a Major / Worlds paused
  * after its Swiss) HQ offers an optional briefing before Sunday is started:
- * keep the plan (no change), recover (a steady edge in every series of the
- * day) or prepare for the opponent (a bigger edge in the day's opening
- * series). The edge is a team-rating bump on the user's side for one round
- * at a time (CAREER_SUNDAY.briefing) — the base team stays as it was frozen
- * when the event started. Deterministic: the same save and the same briefing
- * always play the same Sunday; "keep" (and a save without a briefing) plays
- * exactly rc.35's Sunday.
+ * Continuity keeps a small steady edge; Recover trades Swiss strength for
+ * playoffs strength, Prepare does the reverse. Effects apply per round,
+ * without changing the frozen team or replaying completed stages.
  */
 
 import { CAREER_SUNDAY } from "@/config/balance";
@@ -52,14 +48,13 @@ export function userSundaySeriesPlayed(def: Pick<CareerEventDef, "tier">, t: Tou
 }
 
 /** The briefing's effects as the HQ card states them (team rating). */
-export function briefingEffectOf(choice: SundayBriefingChoice): { everySeries: number; opener: number } {
+export function briefingEffectOf(choice: SundayBriefingChoice): { swiss: number; playoffs: number } {
   return CAREER_SUNDAY.briefing[choice];
 }
 
 /**
  * The team-rating edge the briefing gives the user's side in the NEXT round
- * of `t` (0 when nothing applies): `everySeries` on any Sunday round, plus
- * `opener` while the user has not played a series yet that day.
+ * of `t`: the Swiss effect throughout Swiss, the playoff effect throughout playoffs.
  */
 export function briefingEdgeFor(
   choice: SundayBriefingChoice,
@@ -67,8 +62,7 @@ export function briefingEdgeFor(
   t: TournamentState,
 ): number {
   const fx = briefingEffectOf(choice);
-  const opener = fx.opener !== 0 && userSundaySeriesPlayed(def, t) === 0 ? fx.opener : 0;
-  return fx.everySeries + opener;
+  return t.stage === "swiss" ? fx.swiss : fx.playoffs;
 }
 
 /** `t` with the user's team rating raised by `edge` (a copy; `t` is untouched). */

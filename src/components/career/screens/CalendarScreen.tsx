@@ -664,6 +664,7 @@ export function CalendarScreen() {
                               ? "border-blue/40 bg-blue/20 hover:bg-blue/25"
                               : "border-line/50 bg-white/[0.015] hover:bg-white/[0.05]",
                           d.isPast && !d.isToday && "opacity-40",
+                          d.windowOpen && "shadow-[inset_0_-2px_0_#60a5fa]",
                           d.isToday && "ring-2 ring-orange",
                           isSelected && "border-white/60",
                         )}
@@ -689,8 +690,8 @@ export function CalendarScreen() {
                           ) : d.kinds.includes("training") ? (
                             <span className="h-1 w-1 rounded-full bg-white/25" />
                           ) : null}
-                          {d.windowOpen ? <span className="h-1.5 w-1.5 rounded-full bg-blue-bright" title={C.calendar.window} /> : null}
-                          {worldCount > 0 ? (
+
+                          {worldCount > 0 && !ev ? (
                             <span
                               className="h-1 w-1 rounded-full bg-white/45"
                               title={C.calendar.worldEvents}

@@ -25,10 +25,14 @@ describe("rc.36.6 — weekday practice and clock holds", () => {
     expect(repaired).toEqual([{ day: 9, oppRef: "next" }]);
     expect(rescheduleScrimDays(repaired, 1)).toEqual(repaired);
   });
-  it("runs the two planned scrims on Tuesday and Wednesday; skip lands on the broadcast day", () => {
+  it("runs practice Tuesday/Wednesday on day advance; Skip crosses practice days", () => {
     let save = setTrainingPackageFlow(fresh(), pkg).save;
     expect(agendaDays(save, 1, 7).filter(d => d.kinds.includes("scrim")).map(d => d.dow)).toEqual([2, 3]);
-    save = advanceToNextStopFlow(save);
+    const skipped = advanceToNextStopFlow(save);
+    expect(skipped.clock.day).toBeGreaterThan(3);
+    expect(skipped.scrimLog.some(e => e.day === 2)).toBe(true);
+    expect(skipped.scrimLog.some(e => e.day === 3)).toBe(true);
+    save = advanceDayFlow(save);
     expect(save.clock.day).toBe(2);
     expect(save.scrimLog.map(e => e.day)).toEqual([2]);
     save = advanceDayFlow(save);
@@ -48,12 +52,14 @@ describe("rc.36.6 — weekday practice and clock holds", () => {
     const id = after.scrimPlayback!.id;
     const recorded = JSON.stringify(after.slots[0]!.scrimLog);
     after.advanceDay();
-    after.advanceToNextStop();
     expect(useCareerStore.getState().slots[0]!.clock.day).toBe(2);
     expect(JSON.stringify(useCareerStore.getState().slots[0]!.scrimLog)).toBe(recorded);
     after.finishScrimPlayback(id);
     useCareerStore.getState().advanceDay();
     expect(useCareerStore.getState().slots[0]!.clock.day).toBe(3);
+    useCareerStore.getState().advanceToNextStop();
+    expect(useCareerStore.getState().slots[0]!.clock.day).toBeGreaterThan(3);
+    expect(useCareerStore.getState().scrimPlayback).toBeNull();
     useCareerStore.setState({ slots: [null, null, null], activeSlot: null, scrimPlayback: null, autoAdvance: false, toasts: [] });
   });
 

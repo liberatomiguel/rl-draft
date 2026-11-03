@@ -1975,6 +1975,7 @@ export const CAREER_PT: CareerCopy = {
     filter: { all: "Tudo", mine: "Minha org", region: "Minha região", world: "Mundo", deals: "Negócios" },
     wire: "PLANTÃO",
     feed: {
+      name: "Central de notícias",
       lead: "Manchete",
       archive: "Do arquivo",
       archiveNote: "História real da RLCS — esta linha do tempo segue o próprio rumo.",
@@ -2401,6 +2402,7 @@ export const CAREER_PT: CareerCopy = {
     formatTwoDay: (teams: number, playoffTeams: number) =>
       `Sábado: Swiss de ${teams} times · Domingo: top-${playoffTeams} em eliminação dupla`,
     championshipSunday: "Championship Sunday",
+    directSunday: "Já classificados para domingo",
     weekendTitle: "O fim de semana",
     roleQualifierSub: (teams: number, slots: number) => `Swiss de ${teams} times · top ${slots} avançam`,
     roleRegionalSub: (direct: number, qualified: number) => `${direct} diretos + ${qualified} de sábado`,
@@ -2464,7 +2466,8 @@ export const CAREER_PT: CareerCopy = {
       prepare: "Estudar o adversário",
     },
     effectContinuity: (n: number) => `+${String(n).replace(".", ",")} de rating em todas as séries; sem risco extra.`,
-    effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${String(first).replace(".", ",")} na estreia; ${later > 0 ? "+" : ""}${String(later).replace(".", ",")} nas séries seguintes.`,
+    effectPlayoffs: (n: number) => `${n > 0 ? "+" : ""}${String(n).replace(".", ",")} nos playoffs. O Swiss já terminou.`,
+    effectTradeoff: (first: number, later: number) => `${first > 0 ? "+" : ""}${String(first).replace(".", ",")} no Swiss; ${later > 0 ? "+" : ""}${String(later).replace(".", ",")} nos playoffs.`,
     effectKeep: "Nada muda: a rotina que trouxe vocês até aqui.",
     effectRecover: (n: number) => `+${String(n).replace(".", ",")} de rating do time em todas as séries de hoje`,
     effectPrepare: (n: number) => `+${String(n).replace(".", ",")} de rating do time na sua série de estreia`,
