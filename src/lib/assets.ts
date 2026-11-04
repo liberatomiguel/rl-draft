@@ -22,6 +22,12 @@
 
 import manifestJson from "@/generated/asset-manifest.json";
 
+/** Optimized staging captures used only by the 2.0 announcement. */
+export const SEASON_NOTICE_IMAGES = {
+  career: "/announcements/2.0-road-to-worlds.webp",
+  update: "/announcements/2.0-menu.webp",
+} as const;
+
 type AssetManifest = {
   /** Generated widths per category — ascending, unique (build-images.mjs checks). */
   widths: { orgs: readonly number[]; specials: readonly number[] };

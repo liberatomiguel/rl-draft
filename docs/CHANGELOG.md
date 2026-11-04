@@ -10,6 +10,15 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.7] — 2026-11-04 · Rocket Draft 2.0 announcement
+
+### Changed
+- Replace the Season 1 notice with a responsive 2.0 announcement: real rc.36.10 staging captures, Road to Worlds overview, expanded player/team database, five Regional Draft scenes, three-star challenges, missions/quiz/login cosmetics, season reset and pre-season titles/badges, and the existing profile sign-in action. English and Portuguese copy; signed-in confirmation remains conditional on the real account state.
+- Show once per document load after the tutorial, including on refresh/reopening; navigating back home after dismissal keeps it closed. The old permanent seen marker is ignored; player save keys are unchanged.
+- The announcement owns its portal, focus trap, Escape/backdrop dismissal and scrollable body with persistent close/account controls. Shared modals and game modes are unchanged. No staging code is merged.
+
+---
+
 ## [1.4.6] — 2026-10-16 · Season 1 announcement
 
 ### Added
