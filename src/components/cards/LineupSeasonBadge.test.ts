@@ -4,11 +4,13 @@ import { describe, expect, it } from "vitest";
 import { LineupSeasonBadge } from "./LineupSeasonBadge";
 
 describe("draft season tag", () => {
-  const render = (seasonLabel: string, year?: string) => renderToStaticMarkup(createElement(LineupSeasonBadge, { seasonLabel, year }));
+  const render = (seasonLabel: string, year?: string) => renderToStaticMarkup(createElement(LineupSeasonBadge, { seasonLabel, year, newLabel: "NEW" }));
   it("identifies 2027 once without the removed kicker", () => {
     const html = render("RLCS 2027", "2027");
     expect(html.match(/2027/g)).toHaveLength(1);
     expect(html).not.toContain("Lineup season");
+    expect(html).toContain("NEW");
+    expect(render("RLCS 2026", "2026")).not.toContain("NEW");
   });
   it("keeps editions from the same year distinct", () => {
     const first = render("RLCS Season 1", "2016");

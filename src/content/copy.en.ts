@@ -242,7 +242,7 @@ export const DIFFICULTY_LABELS: Record<
 };
 
 export const DRAFT_UI = {
-  lineupSeason: "Lineup season",
+  newSeason: "NEW",
   pickProgress: (filled: number, total: number) =>
     `Pick ${Math.min(filled + 1, total)} of ${total}`,
   roundLabel: (n: number) => `Lineup ${n}`,

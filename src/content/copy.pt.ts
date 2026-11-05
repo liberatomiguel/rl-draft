@@ -390,7 +390,7 @@ export const PT: Copy = {
   },
 
   DRAFT_UI: {
-    lineupSeason: "Temporada do elenco",
+    newSeason: "NEW",
     pickProgress: (filled: number, total: number) =>
       `Escolha ${Math.min(filled + 1, total)} de ${total}`,
     roundLabel: (n: number) => `Lineup ${n}`,

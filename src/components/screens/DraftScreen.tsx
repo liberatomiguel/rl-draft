@@ -324,7 +324,7 @@ function OfferReveal({
               rolling && "invisible opacity-0",
             )}
           >
-            <LineupSeasonBadge seasonLabel={header.seasonLabel} year={header.year} />
+            <LineupSeasonBadge seasonLabel={header.seasonLabel} year={header.year} newLabel={DRAFT_UI.newSeason} />
             {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
           </div>
         </div>

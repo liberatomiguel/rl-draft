@@ -20,19 +20,20 @@ const SEASON_COLORS: Record<string, string> = {
   "RLCS 2027": "#fcd34d",
 };
 
-export function LineupSeasonBadge({ seasonLabel, year }: { seasonLabel: string; year?: string }) {
+export function LineupSeasonBadge({ seasonLabel, year, newLabel }: { seasonLabel: string; year?: string; newLabel: string }) {
   const color = SEASON_COLORS[seasonLabel] ?? "#cbd5e1";
-  const exclusive = seasonLabel === "RLCS 2027";
-
   return (
-    <span
-      className={exclusive
-        ? "display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2.5 py-1 text-sm font-bold tracking-wide ring-1 ring-amber-300/20"
-        : "display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide"}
-      style={{ color, borderColor: color + (exclusive ? "99" : "40"), backgroundColor: color + (exclusive ? "1f" : "0f") }}
-    >
-      {seasonLabel}
-      {year && !seasonLabel.includes(year) ? <span className="whitespace-nowrap opacity-80">· {year}</span> : null}
+    <span className="inline-flex max-w-full flex-col items-start gap-0.5">
+      {seasonLabel === "RLCS 2027" ? (
+        <span className="display rounded-sm bg-amber-300/15 px-1 py-px text-[8px] font-bold leading-none tracking-wider text-amber-200">{newLabel}</span>
+      ) : null}
+      <span
+        className="display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide"
+        style={{ color, borderColor: color + "40", backgroundColor: color + "0f" }}
+      >
+        {seasonLabel}
+        {year && !seasonLabel.includes(year) ? <span className="whitespace-nowrap opacity-80">· {year}</span> : null}
+      </span>
     </span>
   );
 }
