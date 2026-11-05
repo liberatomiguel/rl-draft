@@ -128,7 +128,7 @@ export function RenewalReadout({
         </p>
       ) : null}
       {capFloor && terms.tenureSteps > 0 ? (
-        <p className="mt-1 text-[11px] text-sub">{C.squad.renewalTenure(terms.tenure, floorPct)}</p>
+        <p className="mt-1 text-[11px] text-sub">{C.squad.renewalTenure(terms.tenure)}</p>
       ) : null}
       {/* rc.37 (F1): a capped stack shows its one applied total, never the premiums in full. */}
       {terms.premiumCapped ? (

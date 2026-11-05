@@ -21,11 +21,13 @@
  * rc.37 (F1 package 3, CAREER_RENEWAL_TENURE): floorShare and maxJump are
  * rc.36's renewalMarketFloor (0.6) and renewalMaxJump (×2.5) for his first
  * renewal at the club and while he has at most protectedTenure seasons there —
- * the initial protection — then rise a step a season with the club (0.7 /
- * 0.8 / 0.9 and ×2.75 / ×3.0), so a developed player's renewal climbs toward
- * his market ask instead of staying a fraction of it. The top's extremes are
- * capped: ambition × refused Blockbuster × titles at most premiumMax, and with
- * his rep premium at most premiumStackCap × his rep-neutral price.
+ * the initial protection — then rise a step a season with the club (the jump
+ * ×2.75 / ×3.0; the floor stays 0.6 by default, floorPerSeason 0 — measured,
+ * a rising floor repriced ordinary players), so a developed player's renewal
+ * — bound by the jump — climbs toward his market ask instead of staying a
+ * fraction of it. The top's extremes are capped: ambition × refused
+ * Blockbuster × titles at most premiumMax, and with his rep premium at most
+ * premiumStackCap × his rep-neutral price.
  *
  * Engine rules: pure, no React; every number from CAREER_SALARY and
  * CAREER_RENEWAL_TENURE.
@@ -119,6 +121,8 @@ export function renewalTermsFor(
     lengthSeasons: 1 | 2 | 3;
     /** rc.33 (M6 lever 3): the titles won with him in the window (`renewalTitlesOf`); none = no raise. */
     titles?: RenewalTitles;
+    /** rc.37 (F1): the career's development model (`growthModelOf(save.world)`; market.valueInputOf). */
+    growthModel?: number;
   },
 ): RenewalTerms {
   const S = CAREER_SALARY;
@@ -129,6 +133,7 @@ export function renewalTermsFor(
     difficulty: ctx.difficulty,
     careerSeed: ctx.careerSeed,
     lengthSeasons: ctx.lengthSeasons,
+    growthModel: ctx.growthModel,
   };
   // The fresh ask carries both surcharges (ambition, a refused Blockbuster).
   const freshAsk = renewalAskFor(player, askCtx);

@@ -32,7 +32,7 @@ import {
   upsideFactorFor,
   type SalaryAskInput,
 } from "./economy";
-import { resaleLocked } from "./market";
+import { renewalAskFor, resaleLocked } from "./market";
 import { renewalLadderFor, renewalTermsFor } from "./renewal";
 import type { ScoutLevel } from "./types";
 
@@ -401,24 +401,27 @@ const renewer = (over: Partial<Renewer> = {}): Renewer => ({
 });
 
 describe("rc.37 F1 — renewals approach the market with his seasons at the club", () => {
-  it("the ladder: rc.36 for a first renewal at any tenure and while tenure ≤ 2; then 0.7 / 0.8 / 0.9 and ×2.75 / ×3.0", () => {
+  it("the ladder: rc.36 for a first renewal at any tenure and while tenure ≤ 2; then the jump ×2.75 / ×3.0 (the floor stays 0.6)", () => {
+    const R = CAREER_RENEWAL_TENURE;
     for (let t = 0; t <= 8; t++) {
       expect(renewalLadderFor({ joinedSeason: 10 - t, renewalCount: 0 }, 10)).toMatchObject({ tenureSteps: 0, floorShare: 0.6, maxJump: 2.5 });
       expect(renewalLadderFor({ joinedSeason: 10 - t }, 10)).toMatchObject({ tenureSteps: 0, floorShare: 0.6, maxJump: 2.5 });
     }
-    const rows: [number, number, number, number][] = [
-      [2, 0, 0.6, 2.5],
-      [3, 1, 0.7, 2.75],
-      [4, 2, 0.8, 3.0],
-      [5, 3, 0.9, 3.0],
-      [8, 6, 0.9, 3.0],
+    const rows: [number, number, number][] = [
+      [2, 0, 2.5],
+      [3, 1, 2.75],
+      [4, 2, 3.0],
+      [5, 3, 3.0],
+      [8, 6, 3.0],
     ];
-    for (const [tenure, steps, floor, jump] of rows) {
+    for (const [tenure, steps, jump] of rows) {
       const l = renewalLadderFor({ joinedSeason: 10 - tenure, renewalCount: 1 }, 10);
       expect(l.tenure).toBe(tenure);
       expect(l.tenureSteps).toBe(steps);
-      expect(l.floorShare).toBeCloseTo(floor, 9);
       expect(l.maxJump).toBeCloseTo(jump, 9);
+      // rc.37 default: no floor ladder (measured: it repriced ordinary players); the tunables bring one back.
+      expect(l.floorShare).toBeCloseTo(Math.min(R.floorMax, S.renewalMarketFloor + R.floorPerSeason * steps), 9);
+      expect(l.floorShare).toBe(S.renewalMarketFloor);
     }
   });
 
@@ -435,19 +438,19 @@ describe("rc.37 F1 — renewals approach the market with his seasons at the club
     }
   });
 
-  it("past the protection the floor and the jump climb: a long-tenured underpaid player renews far closer to his market", () => {
+  it("past the protection the jump climbs: a long-tenured developed player renews far closer to his market", () => {
     const core = renewalTermsFor(renewer(), renewCtx(6)).freshAsk;
     const at = (tenure: number, salary: number) =>
       renewalTermsFor(renewer({ salaryPerSplit: salary, joinedSeason: 6 - tenure, renewalCount: 1 }), renewCtx(6));
-    // 1 % of his market: the jump bounds it (×3.0 from 2 steps; rc.36 ×2.5).
+    // 1 % of his market (a formed prospect): the jump bounds it (×3.0 from 2 steps; rc.36 ×2.5).
     const tiny = Math.max(250, quantize(core * 0.01));
     expect(at(4, tiny).bound).toBe("jump");
     expect(at(4, tiny).ask).toBe(quantize(tiny * 3));
+    expect(at(3, tiny).ask).toBe(quantize(tiny * 2.75));
     expect(at(0, tiny).ask).toBe(quantize(tiny * 2.5));
-    // Half his market: the floor (90 % from 3 steps; rc.36 60 %).
+    // An ordinary player on half his market: rc.36's rule at any tenure (the raise cap, ×1.75).
     const half = quantize(core * 0.5);
-    expect(at(5, half).bound).toBe("floor");
-    expect(at(5, half).ask).toBe(quantize(core * 0.9));
+    for (const t of [0, 3, 5, 8]) expect(at(t, half).ask).toBe(Math.min(core, quantize(half * S.renewalRaiseCap)));
     // The ask never falls as his tenure grows.
     for (const salary of [tiny, half, quantize(core * 0.3)]) {
       let prev = 0;
@@ -491,8 +494,24 @@ describe("rc.37 F1 — renewals approach the market with his seasons at the club
     expect(capped.ambitious).toBe(true);
     expect(capped.premiumCapped).toBe(true);
     expect(capped.premiumMult).toBeCloseTo(CAREER_RENEWAL_TENURE.premiumStackCap / repPremiumFor(95, 30), 9);
+    // Paid his fresh ask: bound "fresh", the cap applied to his core ask (no premium in it).
+    const core = renewalAskFor(p, { ...renewCtx(3, 30), surcharges: false });
+    expect(capped.bound).toBe("fresh");
+    expect(capped.ask).toBe(quantize(core * capped.premiumMult));
     // rc.36 asked his fresh ask (ambition and the surcharge in it) × 1.30 for the titles.
     expect(capped.ask).toBeLessThan(quantize(capped.freshAsk * 1.3));
+    // rc.31's "fresh" rule (the switch-back) caps the stack the same way.
+    const rule = S as { renewalRule: "capFloor" | "fresh" };
+    const was = rule.renewalRule;
+    try {
+      rule.renewalRule = "fresh";
+      const fresh = renewalTermsFor({ ...p, salaryPerSplit: probe.freshAsk }, { ...renewCtx(3, 30), titles });
+      expect(fresh.rule).toBe("fresh");
+      expect(fresh.premiumCapped).toBe(true);
+      expect(fresh.ask).toBe(quantize(core * fresh.premiumMult));
+    } finally {
+      rule.renewalRule = was;
+    }
     // A stack under the caps keeps rc.36's path: refused + 3 titles at rep 80 (not ambitious, ×1.43).
     const high = renewalTermsFor(
       renewer({ overall: 95, potential: 95, joinedSeason: 0, contractEndSeason: 3, blockbusterRefusedUntil: 3, salaryPerSplit: 1_000_000 }),

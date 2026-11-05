@@ -7,31 +7,62 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_CALENDAR, CAREER_ECONOMY, CAREER_SCOUT, CAREER_TRANSFER } from "@/config/balance";
+import {
+  CAREER_CALENDAR,
+  CAREER_ECONOMY,
+  CAREER_RENEWAL_TENURE,
+  CAREER_REP,
+  CAREER_SALARY,
+  CAREER_SCOUT,
+  CAREER_TALENT,
+  CAREER_TRANSFER,
+} from "@/config/balance";
 import { firstDayOfWeek, seasonSchedule, weekOfDay, windowIndexOf } from "@/engine/career/calendar";
 import {
   CURRENT_BAND_MODEL,
   developmentProfileOf,
   exactAgeOf,
+  growthModelOf,
   isCompetitiveAge,
   peakTargetOf,
   playerViewById,
   reachableOverallOf,
   seasonYear,
 } from "@/engine/career/development";
-import { marketValueFor, quantize, signableOverallCap } from "@/engine/career/economy";
-import { bidWeightOf, incomingBidForDay, listingFor, valueInputOf } from "@/engine/career/market";
+import {
+  computeSalaryAsk,
+  marketValueFor,
+  quantize,
+  reachGapFor,
+  signableOverallCap,
+  talentFactorsFor,
+} from "@/engine/career/economy";
+import {
+  askInputOf,
+  askPackageFor,
+  bidWeightOf,
+  incomingBidForDay,
+  listingFor,
+  renewalAskFor,
+  valueInputOf,
+} from "@/engine/career/market";
+import { derivedFloat, streams } from "@/engine/career/seeds";
+import { CAREER_BEATS, type CareerBeat } from "@/data/career/beats";
 import type { CareerPlayerView, CareerSave, CompactEventResult, SquadPlayer } from "@/engine/career/types";
 import { potBandOfView } from "@/components/career/careerUi";
 import {
+  advanceDayFlow,
   createCareerSave,
   eventDayPhaseOf,
   finishEvent,
+  foundingWageOf,
+  renewalTermsOfSave,
   renewalTitlesOf,
   renewPlayerFlow,
   rolloverToNextSeason,
   signPlayerFlow,
   simEventToEnd,
+  starterOffersForRegion,
   startEvent,
   type CreateCareerInput,
 } from "./careerFlow";
@@ -285,6 +316,188 @@ describe("rc.37 F1 — one valuation for buying, selling and the wage", () => {
     expect(seen).toBeGreaterThan(0);
   });
 
+  it("the daily chance counts only players a bid may target: on the days a locked star tipped rc.36's roll, no bid", () => {
+    const T = CAREER_TRANSFER;
+    const without = T.poachDailyBase; // the others: no star, no prospect
+    const withHim = Math.min(T.poachDailyCap, T.poachDailyBase + T.poachPerStar);
+    let sensitive = 0;
+    for (const seed of [4_242, 5, 61, 909, 31_337, 777_001, 12, 3_003, 50_505, 8_888]) {
+      const save = windowSave(seed);
+      const fa = bestFreeAgent(save);
+      const res = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
+      expect(res.error).toBeUndefined();
+      const squad = res.save.squad.map((p) =>
+        p.id === fa.id ? { ...p, overall: 85, potential: 85 } : { ...p, overall: 66, potential: 66 },
+      );
+      for (const [first, last] of [[11, 12], [21, 22]]) {
+        for (let day = firstDayOfWeek(first); day < firstDayOfWeek(last + 1); day++) {
+          const bid = incomingBidForDay({
+            world: res.save.world,
+            squad,
+            seasonIndex: 0,
+            windowIdx: windowIndexOf(weekOfDay(day))!,
+            day,
+            careerSeed: seed,
+            rep: 100,
+            bidsThisWindow: 0,
+            lastBidDay: -99,
+            pendingTargetIds: [],
+          });
+          expect(bid?.playerId).not.toBe(fa.id);
+          const roll = derivedFloat(seed, streams.gen("poachDay", `0:${day}`));
+          if (roll >= without && roll < withHim) {
+            // rc.36 counted the locked star: a bid on a teammate that day. rc.37: none.
+            sensitive += 1;
+            expect(bid).toBeNull();
+          }
+        }
+      }
+    }
+    expect(sensitive).toBeGreaterThan(0);
+  });
+
+  it("a scripted Blockbuster is preempted while he is resale-locked, then bids his arc value × 1.5", () => {
+    const save0 = windowSave(47_303);
+    const fa = bestFreeAgent(save0);
+    const res = signPlayerFlow(save0, fa.id, { lengthSeasons: 2 });
+    expect(res.error).toBeUndefined();
+    const toOrg = Object.values(res.save.world.orgs).find((o) => o.region === fa.region && !o.playerIds.includes(fa.id))!.ref;
+    const beat = (id: string, week: number): CareerBeat => ({
+      id,
+      trigger: { seasonIndex: 0, week },
+      requiresPlayerFree: fa.id,
+      effect: { forceTransfer: { playerId: fa.id, toOrgRef: toOrg } },
+      degradeToOffer: true,
+      en: { title: "t", body: "b" },
+      pt: { title: "t", body: "b" },
+    });
+    const locked = beat("test-f1-blockbuster-w21", 21);
+    const free = beat("test-f1-blockbuster-w31", 31);
+    CAREER_BEATS.push(locked, free);
+    const dayBefore = (week: number) => {
+      const s = { ...structuredClone(res.save), pendingEventDef: null, pendingInsert: null, unofficialOffer: null };
+      s.clock.day = firstDayOfWeek(week) - 1;
+      return s;
+    };
+    try {
+      // Window 2, the window after his signing: still locked — the beat reads as preempted.
+      const w21 = advanceDayFlow(dayBefore(21));
+      expect(w21.firedBeatIds).toContain(locked.id);
+      expect(w21.pendingOffers.some((o) => o.id === `bid:${locked.id}`)).toBe(false);
+      expect(w21.news.some((n) => n.titleKey === "beatPreempted" && n.beatId === locked.id)).toBe(true);
+      // The Worlds window: free — a Blockbuster bid on his arc value (a 17-year-old 70/98 here).
+      const before31 = dayBefore(31);
+      Object.assign(before31.squad.find((p) => p.id === fa.id)!, { overall: 70, potential: 98, birthYear: seasonYear(0) - 17, peakAge: 22 });
+      const w31 = advanceDayFlow(before31);
+      const bid = w31.pendingOffers.find((o) => o.id === `bid:${free.id}`);
+      expect(bid?.blockbuster).toBe(true);
+      const player = w31.squad.find((p) => p.id === fa.id)!;
+      const arcValue = marketValueFor(valueInputOf(player, w31.careerSeed, 0, growthModelOf(w31.world)));
+      expect(bid!.fee).toBe(quantize(arcValue * CAREER_TRANSFER.blockbusterFeeMult));
+      expect(arcValue).toBeGreaterThan(marketValueFor({ overall: 70, potential: 98, age: 17, seasonIndex: 0 }) * 1.5);
+    } finally {
+      CAREER_BEATS.splice(CAREER_BEATS.indexOf(locked), 1);
+      CAREER_BEATS.splice(CAREER_BEATS.indexOf(free), 1);
+    }
+  });
+
+  it("a bid prices a talent on his arc (×2.34 at reach 28), well above the profile-free price", () => {
+    const save = windowSave(909);
+    const fa = bestFreeAgent(save);
+    const res = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
+    expect(res.error).toBeUndefined();
+    // A 17-year-old 70/98 peaking at 22: every season of reach still ahead of him.
+    const kid = { ...res.save.squad.find((p) => p.id === fa.id)!, overall: 70, potential: 98, birthYear: seasonYear(0) - 17, peakAge: 22 };
+    let seen = 0;
+    for (const seedOffset of [0, 1_000, 2_000, 3_000]) {
+      for (const [first, last] of [[1, 2], [11, 12], [21, 22]]) {
+        for (let day = firstDayOfWeek(first); day < firstDayOfWeek(last + 1); day++) {
+          const seed = 909 + day + seedOffset;
+          const bid = incomingBidForDay({
+            world: res.save.world,
+            squad: [kid],
+            seasonIndex: 1,
+            windowIdx: windowIndexOf(weekOfDay(day))!,
+            day,
+            careerSeed: seed,
+            rep: 100,
+            bidsThisWindow: 0,
+            lastBidDay: -99,
+            pendingTargetIds: [],
+          });
+          if (!bid) continue;
+          seen += 1;
+          const arcValue = marketValueFor(valueInputOf(kid, seed, 1));
+          const flatValue = marketValueFor({ overall: 70, potential: 98, age: 18, seasonIndex: 1 });
+          // The two bands never overlap, so the fee says which valuation priced it.
+          expect(arcValue * CAREER_TRANSFER.aiBidRange[0]).toBeGreaterThan(flatValue * CAREER_TRANSFER.aiBidRange[1]);
+          expect(bid.fee).toBeGreaterThanOrEqual(quantize(arcValue * CAREER_TRANSFER.aiBidRange[0]) - CAREER_ECONOMY.roundQuantum);
+          expect(bid.fee).toBeLessThanOrEqual(quantize(arcValue * CAREER_TRANSFER.aiBidRange[1]));
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+
+  it("a market quote prices his arc: past his plateau an unreachable potential is not paid", () => {
+    const save = createCareerSave(INPUT, 7_007);
+    const listing = listingFor({ world: save.world, squadIds: [], seasonIndex: 0, careerSeed: 7_007 });
+    const done = [...listing.freeAgents, ...listing.contracted.map((c) => c.view)].filter((v) => {
+      const input = valueInputOf(v, 7_007, 0);
+      return v.potential - v.overall >= 2 && reachGapFor(input) === 0 && v.age >= 19;
+    });
+    expect(done.length).toBeGreaterThan(0);
+    for (const view of done.slice(0, 20)) {
+      const ctx = { rep: 50, seasonIndex: 0, difficulty: "normal" as const, careerSeed: 7_007, lengthSeasons: 2 as const, growthModel: 2 };
+      const flat = { overall: view.overall, potential: view.potential, age: view.age, rep: 50, seasonIndex: 0, lengthSeasons: 2 as const, difficulty: "normal" as const, careerSeed: 7_007, playerId: view.id };
+      // rc.36 paid +2 % a point of a gap he can no longer close; the arc pays nothing for it.
+      expect(askPackageFor(view, ctx).salaryPerSplit).toBe(computeSalaryAsk({ ...flat, potential: view.overall }));
+      expect(askPackageFor(view, ctx).salaryPerSplit).toBeLessThan(computeSalaryAsk(flat));
+    }
+  });
+
+  it("a career on rc.31's model 1 prices profile-free (its growth never stops at a plateau)", () => {
+    const save = createCareerSave(INPUT, 4_041);
+    delete (save.world as { growthModel?: number }).growthModel;
+    const model = growthModelOf(save.world);
+    expect(model).toBe(1);
+    const listing = listingFor({ world: save.world, squadIds: [], seasonIndex: 0, careerSeed: 4_041 });
+    for (const view of listing.freeAgents.slice(0, 40)) {
+      expect(valueInputOf(view, 4_041, 0, model)).toEqual({ overall: view.overall, potential: view.potential, age: view.age, seasonIndex: 0 });
+      const pack = askPackageFor(view, { rep: 30, seasonIndex: 0, difficulty: "normal", careerSeed: 4_041, lengthSeasons: 2, growthModel: model });
+      expect(pack.salaryPerSplit).toBe(
+        computeSalaryAsk({ overall: view.overall, potential: view.potential, age: view.age, rep: 30, seasonIndex: 0, lengthSeasons: 2, difficulty: "normal", careerSeed: 4_041, playerId: view.id }),
+      );
+    }
+    const p = save.squad[0];
+    save.clock.seasonIndex = p.contractEndSeason;
+    expect(renewalTermsOfSave(save, p, 1).freshAsk).toBe(
+      renewalAskFor({ ...p, peakAge: undefined }, { rep: save.reputation, seasonIndex: save.clock.seasonIndex, difficulty: save.difficulty, careerSeed: save.careerSeed, lengthSeasons: 1 }),
+    );
+  });
+
+  it("a founding deal keeps rc.36's factors (the project contract), however talented the founder", () => {
+    let talents = 0;
+    for (const region of ["EU", "SAM", "APAC", "NA"] as const) {
+      for (const seed of [1, 2, 3, 9_100]) {
+        const prospects = starterOffersForRegion(region, seed).find((o) => o.key === "prospects")!;
+        for (const view of prospects.players) {
+          const founding = foundingWageOf(view, "normal", seed, true);
+          const input = askInputOf(view, { careerSeed: seed, seasonIndex: 0, rep: CAREER_REP.start, lengthSeasons: 2, difficulty: "normal" });
+          expect(founding).toBe(computeSalaryAsk({ ...input, founding: true }));
+          const t = talentFactorsFor({ ...input, founding: true });
+          expect(t.potential).toBe(Math.min(CAREER_SALARY.potentialCap, 1 + CAREER_SALARY.potentialPerPoint * Math.max(0, view.potential - view.overall)));
+          if (view.age <= 18) expect(t.age).toBe(CAREER_SALARY.ageFactor.u18);
+          if (view.age <= 18 && reachGapFor(input) >= CAREER_TALENT.u18TalentRampTo) {
+            talents += 1;
+            expect(founding).toBeLessThan(computeSalaryAsk(input)); // the market would price his talent
+          }
+        }
+      }
+    }
+    expect(talents).toBeGreaterThan(0);
+  });
+
   it("each renewal counts (renewalCount), so the next one climbs the tenure ladder", () => {
     let save = createCareerSave(INPUT, 8_080);
     save.finances.balance = 5_000_000;
@@ -296,6 +509,18 @@ describe("rc.37 F1 — one valuation for buying, selling and the wage", () => {
     save = once.save;
     expect(save.squad.find((x) => x.id === p.id)!.renewalCount).toBe(1);
     expect(save.squad.find((x) => x.id === p.id)!.joinedSeason).toBe(p.joinedSeason);
+    // His next renewal, three seasons on (tenure 4 > protectedTenure 2): the ladder's second step.
+    const renewed = save.squad.find((x) => x.id === p.id)!;
+    save.clock.seasonIndex = renewed.joinedSeason + 4;
+    renewed.contractEndSeason = save.clock.seasonIndex;
+    const next = renewalTermsOfSave(save, renewed, 1);
+    expect(next.tenure).toBe(4);
+    expect(next.tenureSteps).toBe(2);
+    expect(next.floorShare).toBeCloseTo(CAREER_SALARY.renewalMarketFloor + 2 * CAREER_RENEWAL_TENURE.floorPerSeason, 9);
+    // The first renewal priced on rc.36's rule, whatever his tenure.
+    const first = renewalTermsOfSave(save, { ...renewed, renewalCount: undefined }, 1);
+    expect(first.tenureSteps).toBe(0);
+    expect(first.floorShare).toBe(CAREER_SALARY.renewalMarketFloor);
   });
 });
 

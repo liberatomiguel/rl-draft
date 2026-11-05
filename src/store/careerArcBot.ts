@@ -571,6 +571,7 @@ function candidatesFor(save: CareerSave): Candidate[] {
       careerSeed: save.careerSeed,
       lengthSeasons: 2,
       contracted: splitsRemaining === null ? undefined : { splitsRemaining },
+      growthModel: growthModelOf(save.world),
     });
     const level = Math.min(2, Math.max(0, Number(save.scouted[view.id] ?? 0))) as ScoutLevel;
     // rc.32: the band the market screen shows (the save's development model).

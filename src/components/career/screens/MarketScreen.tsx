@@ -35,7 +35,7 @@ import {
 } from "@/engine/career/economy";
 import { signableAtRep } from "@/engine/career/market";
 import type { ContractOffer } from "@/engine/career/contract";
-import { signsForFinalSeason } from "@/engine/career/development";
+import { growthModelOf, signsForFinalSeason } from "@/engine/career/development";
 import type {
   CareerPlayerView,
   PotentialBand,
@@ -274,6 +274,8 @@ export function MarketScreen() {
         careerSeed: save.careerSeed,
         lengthSeasons: 2,
         contracted: splitsRemaining !== null ? { splitsRemaining } : undefined,
+        // rc.37 (F1): the career's development model prices his arc.
+        growthModel: growthModelOf(save.world),
       });
       return {
         view,
@@ -372,6 +374,7 @@ export function MarketScreen() {
       careerSeed: save.careerSeed,
       lengthSeasons,
       contracted: row.splitsRemaining !== null ? { splitsRemaining: row.splitsRemaining } : undefined,
+      growthModel: growthModelOf(save.world),
     });
   const pack = target ? packFor(target, offerLen) : null;
   // ECO-03 (R47): the flow's own plan — the slot and every refusal come from

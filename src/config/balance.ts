@@ -2141,17 +2141,30 @@ export const CAREER_TALENT = {
  * FIRST renewal at the club (SquadPlayer.renewalCount 0) and every renewal
  * while he has at most protectedTenure seasons there keep rc.36's rule
  * exactly — the initial protection (CAREER_SALARY.renewalMarketFloor 0.6,
- * renewalMaxJump ×2.5). From then on each season with the club lifts the
- * floor and the jump a step, so a developed player's renewal climbs toward his
- * market ask instead of staying a fraction of it; the top stays bounded.
+ * renewalMaxJump ×2.5). From then on each season with the club lifts the jump
+ * a step (×2.75, then ×3.0), so a developed player — a formed prospect whose
+ * value outgrew his wage, bound by the jump — renews ever closer to his market
+ * ask instead of a fraction of it (the spec's promising player: 58 % → 71 % of
+ * market at his second 3-season renewal; a wonderkid on 1-season deals 28 % →
+ * 88 % by season 6); the floor stays rc.36's (floorPerSeason below); the top
+ * stays bounded.
  */
 export const CAREER_RENEWAL_TENURE = {
   /** Seasons with the club (seasonIndex − joinedSeason at pricing) that renew on rc.36's rule. */
   protectedTenure: 2,
-  /** Each season past it lifts the market floor by this share of his core fresh ask (0.7, 0.8, 0.9)... */
-  floorPerSeason: 0.1,
-  /** ...up to this: a long-tenured developed player renews at ≥ 90 % of his market ask (a 10 % home discount stays). */
-  floorMax: 0.9,
+  /**
+   * Each season past it lifts the market floor by this share of his core
+   * fresh ask, up to floorMax. 0 / 0.6 = rc.36's floor, measured (career-arc
+   * bot, 7 regions × Normal/Hard): a 0.1-a-season floor up to 0.9 (the design
+   * panel's default) reprices ORDINARY players whose wage lagged the money
+   * index, +33–50 % at their third renewal, and sent the median hands-off
+   * career (autopilot, balanced) to the Backer (Normal 0 → 1 of 7, Hard end
+   * balance p50 $63k → $5k); 0.05 up to 0.7 still did on Normal. A developed
+   * player is jump-bound — the jump ladder below converges him — so the floor
+   * stays. Raise these to bring a floor ladder back.
+   */
+  floorPerSeason: 0,
+  floorMax: 0.6,
   /** Each season past it lets one renewal multiply his wage by this much more than renewalMaxJump (×2.75, then ×3.0)... */
   jumpPerSeason: 0.25,
   /**

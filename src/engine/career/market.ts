@@ -11,6 +11,7 @@
 
 import {
   CAREER_COACH_MARKET,
+  CAREER_DEV,
   CAREER_SALARY,
   CAREER_SEASONS,
   CAREER_TALENT,
@@ -30,7 +31,9 @@ import {
   deriveArchetype,
   deriveBirthYear,
   developmentProfileOf,
+  growthModelOf,
   isCompetitiveAge,
+  isGrowthContract,
   playerViewById,
   type ViewCtx,
 } from "./development";
@@ -219,14 +222,25 @@ export function seasonAgeOf(p: PricedPlayer, careerSeed: number, seasonIndex: nu
  * Another caller (a sale, a crisis) builds its input here too, so buying,
  * selling and a free agent's wage read one valuation.
  */
-export function valueInputOf(p: PricedPlayer, careerSeed: number, seasonIndex: number): MarketValueInput {
+export function valueInputOf(
+  p: PricedPlayer,
+  careerSeed: number,
+  seasonIndex: number,
+  /**
+   * The career's development model (`growthModelOf(save.world)`; absent = the
+   * model a new career starts on). The arc prices model 2 only: rc.31's model
+   * 1 has no plateau — he grows toward his potential at any age — so it reads
+   * the profile-free input (his raw gap), as its bands read no age cap.
+   */
+  growthModel: number = CAREER_DEV.growthModel,
+): MarketValueInput {
   const input: MarketValueInput = {
     overall: p.overall,
     age: seasonAgeOf(p, careerSeed, seasonIndex),
     potential: p.potential,
     seasonIndex,
   };
-  if (p.peakAge == null) return input;
+  if (p.peakAge == null || !isGrowthContract(growthModel)) return input;
   return { ...input, peakAge: p.peakAge, plateauYears: developmentProfileOf(p.id, careerSeed).plateauYears };
 }
 
@@ -241,10 +255,12 @@ export function askInputOf(
     difficulty: CareerDifficulty;
     ambitious?: boolean;
     blockbusterRefused?: boolean;
+    /** The career's development model (see `valueInputOf`). */
+    growthModel?: number;
   },
 ): SalaryAskInput {
   return {
-    ...valueInputOf(p, ctx.careerSeed, ctx.seasonIndex),
+    ...valueInputOf(p, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel),
     rep: ctx.rep,
     lengthSeasons: ctx.lengthSeasons,
     difficulty: ctx.difficulty,
@@ -280,6 +296,8 @@ export function askPackageFor(
     role?: "starter" | "sub";
     lengthSeasons: 1 | 2 | 3;
     contracted?: { splitsRemaining: number };
+    /** rc.37 (F1): the career's development model (`growthModelOf(save.world)`; see `valueInputOf`). */
+    growthModel?: number;
   },
 ): AskPackage {
   // rc.37 (F1): his ask and his fee read one valuation (his reach gap).
@@ -289,7 +307,7 @@ export function askPackageFor(
   // load — no more ask × raw-splits-remaining swings.
   const fee = ctx.contracted
     ? contractedFeeFor(
-        marketValueFor(valueInputOf(view, ctx.careerSeed, ctx.seasonIndex)),
+        marketValueFor(valueInputOf(view, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel)),
         ctx.contracted.splitsRemaining,
         ctx.seasonIndex,
       )
@@ -319,6 +337,8 @@ export function renewalAskFor(
     lengthSeasons: 1 | 2 | 3;
     /** rc.32 (M2): false = the core ask, without the ambition premium or the Blockbuster surcharge (renewalTermsFor adds them on top). */
     surcharges?: boolean;
+    /** rc.37 (F1): the career's development model (see `valueInputOf`). */
+    growthModel?: number;
   },
 ): number {
   // rc.37 (F1): the one valuation (`askInputOf`) — his arc prices a renewal
@@ -330,6 +350,7 @@ export function renewalAskFor(
       rep: ctx.rep,
       lengthSeasons: ctx.lengthSeasons,
       difficulty: ctx.difficulty,
+      growthModel: ctx.growthModel,
       // rc.32 (M2): `surcharges: false` prices the core ask — no ambition
       // premium and no Blockbuster surcharge (renewalTermsFor adds both on top).
       ambitious: ctx.surcharges !== false && isAmbitiousRenewal(player.overall, ctx.rep),
@@ -538,11 +559,13 @@ function feeFictionFor(
   view: CareerPlayerView,
   fromRef: string | null,
   ctx: WindowCtx,
+  /** rc.37 (F1): the world's development model (see `valueInputOf`). */
+  growthModel: number,
 ): number {
   if (!fromRef) return 0;
   // v0.3: value-anchored with a small seeded band — same-OVR players now
   // trade for comparable fees everywhere. rc.37 (F1): the same value input.
-  const value = marketValueFor(valueInputOf(view, ctx.careerSeed, ctx.seasonIndex));
+  const value = marketValueFor(valueInputOf(view, ctx.careerSeed, ctx.seasonIndex, growthModel));
   const [lo, hi] = CAREER_TRANSFER.aiFeeBand;
   const f = derivedFloat(
     ctx.careerSeed,
@@ -636,7 +659,7 @@ export function aiWindowMoves(
       playerName: view.name,
       fromRef,
       toRef,
-      fee: quantize(feeFictionFor(view, fromRef, ctx)),
+      fee: quantize(feeFictionFor(view, fromRef, ctx, growthModelOf(next))),
     });
   };
 
@@ -743,10 +766,13 @@ export function userBidsBlocked(seasonIndex: number, windowIdx: number | null): 
  * × his reach gap, at least talentBidMin (rc.36's +8 for an u18 prospect) and
  * at most talentBidMax: a 70/98 at 17 weighs 29 (rc.36 9).
  */
-export function bidWeightOf(p: SquadPlayer, ctx: { careerSeed: number; seasonIndex: number }): number {
+export function bidWeightOf(
+  p: SquadPlayer,
+  ctx: { careerSeed: number; seasonIndex: number; /** The career's development model (see `valueInputOf`). */ growthModel?: number },
+): number {
   const T = CAREER_TRANSFER;
   const K = CAREER_TALENT;
-  const gap = reachGapFor(valueInputOf(p, ctx.careerSeed, ctx.seasonIndex));
+  const gap = reachGapFor(valueInputOf(p, ctx.careerSeed, ctx.seasonIndex, ctx.growthModel));
   const talent = gap >= T.prospectUpside ? Math.min(K.talentBidMax, Math.max(K.talentBidMin, K.talentBidPerGap * gap)) : 0;
   return Math.max(1, p.overall - 70) + (p.overall >= T.starOverall ? 6 : 0) + talent;
 }
@@ -787,9 +813,10 @@ export function incomingBidForDay(ctx: {
   const pendingSet = new Set(ctx.pendingTargetIds);
   const pool = ctx.squad.filter((p) => !pendingSet.has(p.id) && !resaleLocked(p, ctx.seasonIndex, ctx.day));
   if (pool.length === 0) return null;
-  const valueCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex };
+  // rc.37 (F1): the career's development model prices his arc (`valueInputOf`).
+  const valueCtx = { careerSeed: ctx.careerSeed, seasonIndex: ctx.seasonIndex, growthModel: growthModelOf(ctx.world) };
   const isProspect = (p: SquadPlayer) => {
-    const input = valueInputOf(p, ctx.careerSeed, ctx.seasonIndex);
+    const input = valueInputOf(p, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel);
     return input.age <= T.prospectAgeMax && reachGapFor(input) >= T.prospectUpside;
   };
 
@@ -829,7 +856,7 @@ export function incomingBidForDay(ctx: {
   const bidder = bidders[Math.min(pick, bidders.length - 1)];
 
   // rc.37 (F1): the same valuation as a buy (`valueInputOf`).
-  const value = marketValueFor(valueInputOf(target, ctx.careerSeed, ctx.seasonIndex));
+  const value = marketValueFor(valueInputOf(target, ctx.careerSeed, ctx.seasonIndex, valueCtx.growthModel));
   const [lo, hi] = T.aiBidRange;
   const mult =
     lo +

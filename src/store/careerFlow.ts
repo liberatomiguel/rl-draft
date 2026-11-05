@@ -124,6 +124,7 @@ import {
   trainingProjection,
   type DrillEffect,
   growthCtxOf,
+  growthModelOf,
   userSeriesPlayed,
 } from "@/engine/career/development";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
@@ -1158,7 +1159,8 @@ export function processDayArrival(input: CareerSave): CareerSave {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
           const fee = quantize(
-            marketValueFor(valueInputOf(player, save.careerSeed, seasonIndex)) * CAREER_TRANSFER.blockbusterFeeMult,
+            marketValueFor(valueInputOf(player, save.careerSeed, seasonIndex, growthModelOf(save.world))) *
+              CAREER_TRANSFER.blockbusterFeeMult,
           );
           const toOrg = beat.effect?.forceTransfer.toOrgRef;
           save.pendingOffers.push({
@@ -3897,10 +3899,12 @@ export function foundingWageOf(
 
 /** The founding ask: the market ask at the starting reputation, 2 seasons. */
 function foundingAskOf(view: StarterOffer["players"][number], difficulty: CareerDifficulty, careerSeed: number): number {
-  // rc.37 (F1): the one valuation (`askInputOf`) — his arc prices the founding ask like any other.
-  return computeSalaryAsk(
-    askInputOf(view, { careerSeed, seasonIndex: 0, rep: CAREER_REP.start, lengthSeasons: 2, difficulty }),
-  );
+  // rc.37 (F1): the founding deal is the project contract — rc.36's factors exactly
+  // (`founding`), never the market's talent valuation; his renewals price the market.
+  return computeSalaryAsk({
+    ...askInputOf(view, { careerSeed, seasonIndex: 0, rep: CAREER_REP.start, lengthSeasons: 2, difficulty }),
+    founding: true,
+  });
 }
 
 function squadFromOffer(
@@ -4400,6 +4404,7 @@ export function renewalTermsOfSave(save: CareerSave, player: SquadPlayer, length
     careerSeed: save.careerSeed,
     lengthSeasons,
     titles: renewalTitlesOf(save, player),
+    growthModel: growthModelOf(save.world),
   });
 }
 
@@ -4490,6 +4495,7 @@ export function emptySeatPriceFor(
       difficulty: save.difficulty,
       careerSeed: save.careerSeed,
       lengthSeasons: signsForFinalSeason(view, save.clock.seasonIndex) ? 1 : lengthSeasons,
+      growthModel: growthModelOf(save.world),
     });
     const cost = pack.fee + pack.signingBonus;
     const wagePerSplit = pack.salaryPerSplit;
@@ -4560,6 +4566,7 @@ export function signingPlanFor(
     contracted: onOrg
       ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
       : undefined,
+    growthModel: growthModelOf(save.world),
   });
   // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
   const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);

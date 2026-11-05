@@ -354,10 +354,18 @@ export interface SalaryAskInput {
    * player's, never recomputed) and his DevelopmentProfile's plateau years —
    * so the price reads his REACH gap (`talentFactorsFor`). Both or neither,
    * built by `market.askInputOf`. Absent = the profile-free estimate: rc.36's
-   * factors on his raw gap, never a profile derived from the id.
+   * potential factor on his raw gap (an u18 talent still climbs to the 19–22
+   * age factor), never a profile derived from the id.
    */
   peakAge?: number;
   plateauYears?: number;
+  /**
+   * rc.37 (F1): a founding deal — the project contract (careerFlow.foundingAskOf)
+   * keeps rc.36's age and potential factors exactly, never the talent
+   * valuation: a prospects roster's 15–17-year-olds with 14–28 points of reach
+   * would found at ×1.7 rc.36's bill, which their protected renewals carry on.
+   */
+  founding?: boolean;
 }
 
 /**
@@ -440,10 +448,12 @@ export interface TalentFactors {
 /**
  * rc.37 (F1): the ONE talent valuation — the age and potential factors every
  * price reads: `marketValueFor` (fees, AI bids, the Blockbuster, the AI↔AI
- * fiction), `computeSalaryAsk` (a free agent's wage, a renewal's fresh ask, a
- * founding ask) and the `salaryAskFactors` readout, in rc.36's multiplication
- * slots (equal factors give bit-identical prices). With an arc: the reach gap,
- * its tiers and the u18 ramp. Without one: rc.36's factors exactly.
+ * fiction), `computeSalaryAsk` (a free agent's wage, a renewal's fresh ask)
+ * and the `salaryAskFactors` readout, in rc.36's multiplication slots (equal
+ * factors give bit-identical prices). With an arc: the reach gap, its tiers
+ * and the u18 ramp. Without one: rc.36's potential factor on the raw gap, and
+ * the u18 ramp (rc.36 exactly at 19+, or an u18 with a gap ≤ 3). A founding
+ * deal (`founding`): rc.36's factors exactly.
  */
 export function talentFactorsFor(x: {
   overall: number;
@@ -451,7 +461,17 @@ export function talentFactorsFor(x: {
   age: number;
   peakAge?: number;
   plateauYears?: number;
+  /** A founding deal: rc.36's factors exactly (SalaryAskInput.founding). */
+  founding?: boolean;
 }): TalentFactors {
+  if (x.founding) {
+    return {
+      reachGap: Math.max(0, x.potential - x.overall),
+      age: ageFactorFor(x.age),
+      potential: potentialFactorFor(x.overall, x.potential),
+      hasArc: false,
+    };
+  }
   const hasArc = x.peakAge != null && x.plateauYears != null;
   const reachGap = reachGapFor(x);
   return {
@@ -596,7 +616,8 @@ export interface MarketValueInput {
    * F1 price builds its input with `market.valueInputOf` (any new caller — a
    * sale, a crisis — should too). Optional so a caller with only the four
    * numbers above still compiles: it gets the profile-free estimate, rc.36's
-   * factors on his raw gap. Both or neither.
+   * potential factor on his raw gap (an u18 talent still climbs to the 19–22
+   * age factor). Both or neither.
    */
   peakAge?: number;
   plateauYears?: number;
