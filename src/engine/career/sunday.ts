@@ -4,14 +4,13 @@
  * After the user's Saturday (the qualifier won, or a Major / Worlds paused
  * after its Swiss) HQ offers an optional briefing before Sunday is started:
  * Continuity keeps a steady edge; Recover favors the later series and
- * Prepare targets the opener. Championship Sunday uses playoff-only effects,
+ * Prepare favors the entire Swiss. Championship Sunday targets explicit rounds,
  * without changing the frozen team or replaying completed stages.
  */
 
 import { CAREER_GEAR, CAREER_SUNDAY } from "@/config/balance";
 import type { TournamentState } from "@/engine/types";
-import { nextPlayoffPairings } from "@/engine/playoffs";
-import { upcomingSwissPairings } from "@/engine/swiss";
+import { roundOrderFor } from "@/engine/playoffs";
 import { isTwoDayEvent, playoffsDayFor } from "./calendar";
 import type { CareerEventDef, SundayBriefingChoice, WeekendState } from "./types";
 
@@ -56,7 +55,7 @@ export function briefingEffectOf(choice: SundayBriefingChoice): { swiss: number;
 
 /**
  * The team-rating edge the briefing gives the user's side in the NEXT round
- * of `t`: stage-specific, with preparation restricted to the opening opponent.
+ * of `t`: stage-specific, with championship effects selected by the bracket round.
  */
 export function briefingEdgeFor(
   choice: SundayBriefingChoice,
@@ -64,23 +63,17 @@ export function briefingEdgeFor(
   t: TournamentState,
 ): number {
   if (t.stage === "finished") return 0;
-  const opening = userSundaySeriesPlayed(def, t) === 0;
   if (isTwoDayEvent(def)) {
+    if (t.stage !== "playoffs" || !t.playoffs) return 0;
+    const round = roundOrderFor(t.playoffs.format)[t.playoffs.rounds.length];
     const fx = CAREER_SUNDAY.championshipBriefing[choice];
-    return opening ? fx.opening : fx.later;
+    if (round === "grand_final" || round === "final") return fx.final;
+    if (round === "quarterfinal" || round === "ub_quarterfinal" || round === "lb_round1") return fx.quarters;
+    if (round === "semifinal" || round === "ub_semifinal" || round === "lb_round2" || round === "lb_semifinal") return fx.semis;
+    return fx.other;
   }
   const fx = briefingEffectOf(choice);
-  // Study applies to the actual opening opponent only, never a later rematch.
-  if (choice === "prepare" && t.stage === "swiss") return opening && briefingOpponentOf(t) ? fx.swiss : 0;
   return t.stage === "swiss" ? fx.swiss : fx.playoffs;
-}
-
-/** The opponent the next round will actually pair with the user (no simulation). */
-export function briefingOpponentOf(t: TournamentState): string | null {
-  const pairs = t.stage === "swiss" ? upcomingSwissPairings(t.swiss)
-    : t.stage === "playoffs" && t.playoffs ? nextPlayoffPairings(t.playoffs) : [];
-  const pair = pairs?.find(([a, b]) => a === "user" || b === "user");
-  return pair?.find(id => id !== "user") ?? null;
 }
 
 /** Bootcamp and briefing share the temporary cap; permanent gear is separate. */

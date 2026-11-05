@@ -1,14 +1,14 @@
-# rc.37 F3 — Dia de jogo
-- Branch: `claude/rc37-matchday`; base: staging local `ae0ff80`.
-- Regional: keep +0.15; recover −0.20 Swiss / +0.55 playoffs; prepare +0.55 só na abertura, 0 no resto do Swiss / −0.20 playoffs.
-- Major/Worlds: keep +0.15; recover −0.20 abertura / +0.55 depois; análise internacional +0.55 abertura / −0.20 depois.
-- O estudo usa o pareamento real da abertura; `effectPrepareVs` exibe o adversário internacional. Não reaplica em reencontro.
-- +0.55 mede 6.48–7.49 pp na curva cupSeries, margens −2/−1/0; cap pode reduzir o ganho.
-- Nenhuma opção dominada nos dois estágios, sem camp ou com T1/T2 (teste de vetores).
-- Bootcamp recusado durante qualquer activeEvent, inclusive pausa sábado/domingo, sem cobrança/consumo; erro EN/PT explica.
-- Causa do bug: compra alterava finanças mas não o time congelado; briefing somava acima do teto.
-- Bootcamp + briefing ≤ tempRatingMax (2); campo opcional rating.temporaryMod congela o camp sem afetar equipamento permanente.
-- Saves antigos sem temporaryMod usam bootcampSharp como fallback; sem bump de persistência.
-- Testes alvo: 31 passaram; lint dos alterados e typecheck passaram; nenhum build/servidor.
-- Suíte completa: 1480 passaram, 18 pulados; única falha: balanceVersion.test fingerprint (intencional, integração atualiza).
-- Sem bump, push, merge ou edição de STATUS/ROADMAP/CHANGELOG; fingerprint/BALANCE_VERSION preservados.
+# rc.37 F3 — Dia de jogo (revisado com Miguel)
+- Branch `claude/rc37-matchday`; base staging local `ae0ff80`; sem bump/push/merge/build.
+- Revisão pedida: estudo no Swiss inteiro; Championship por rodada; preleção só com coach contratado.
+- Regional: continuidade +0.10; recuperar −0.15 Swiss / +0.40 playoffs; estudar +0.40 Swiss / −0.15 playoffs.
+- Championship: equilibrada +0.10 em todas; força inicial +0.40 quartas / +0.25 semis / 0 demais / −0.15 grande final.
+- Pico na grande final: −0.15 quartas/semis, 0 demais, +0.40 grande final. Textos EN/PT indicam as rodadas.
+- Repescagem: LB R1 = quartas; LB R2 e LB SF = semis; finais das chaves e terceiro lugar = demais; só grand_final é grande final.
+- Sem coach: opções ocultas, escolhas ignoradas e nenhum bônus (incluindo briefings de saves antigos); iniciar domingo continua disponível.
+- +0.40 mede 4.79–5.48 pp na cupSeries (margens −2/−1/0); é curva de referência, não validação de carreira inteira.
+- Bootcamp separado do briefing; Miguel delegou a escolha. Evita premiar a compra duas vezes; cap conjunto continua +2.
+- Compra bloqueada em activeEvent, sem cobrança/consumo; rating.temporaryMod opcional congela camp, legado usa bootcampSharp.
+- Testes alvo: 33 passaram; tipos/lint passaram; cobertura de todas as rodadas e não dominância sem camp/com T1/T2.
+- Suíte completa: 1482 passaram, 18 pulados; única falha é fingerprint; fingerprint/BALANCE_VERSION intocados para integração.
+- Próxima validação: bateria integrada F4a para efeito acumulado do Swiss e ritmo de progressão; revisar UX no playtest.

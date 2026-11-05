@@ -171,13 +171,9 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
     const fx = briefingEffectOf(c);
     if (championship) {
       const playoffFx = CAREER_SUNDAY.championshipBriefing[c];
-      const opening = c === "prepare" && openerName
-        ? C.sunday.effectPrepareVs(playoffFx.opening, openerName) : "";
-      return opening ? `${opening}; ${C.sunday.effectLaterOnly(playoffFx.later)}`
-        : C.sunday.effectLater(playoffFx.opening, playoffFx.later);
+      return C.sunday.effectChampionship(playoffFx.quarters, playoffFx.semis, playoffFx.other, playoffFx.final);
     }
     if (c === "keep") return C.sunday.effectContinuity(fx.swiss);
-    if (c === "prepare") return `${C.sunday.effectPrepare(fx.swiss)}. ${C.sunday.effectStudyRest(fx.playoffs)}`;
     return C.sunday.effectTradeoff(fx.swiss, fx.playoffs);
   };
 
@@ -224,8 +220,8 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
         )}
       </div>
 
-      {/* The coach's briefing: optional, small, shown upfront. */}
-      <div className="mt-4">
+      {/* Only a hired coach can give a briefing. */}
+      {save.coach ? <div className="mt-4">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan/15 text-cyan">
             <WhistleIcon className="h-4 w-4" />
@@ -271,7 +267,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
             );
           })}
         </div>
-      </div>
+      </div> : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => go(choice)}>

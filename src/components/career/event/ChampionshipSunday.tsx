@@ -188,7 +188,7 @@ export function ChampionshipSunday({
           >
             {userLine}
           </p>
-          {briefing && briefing !== "keep" ? (
+          {save.coach && briefing && briefing !== "keep" ? (
             <p
               className="rise-in mt-2 inline-flex items-center gap-1.5 rounded-full border border-cyan/40 bg-cyan/10 px-2.5 py-1 text-[11px] font-semibold text-cyan"
               style={{ animationDelay: `${bracketDelay + 5 * CAREER_PLAYBACK.sundayIntroStaggerMs}ms` }}

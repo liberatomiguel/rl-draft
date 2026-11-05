@@ -3180,7 +3180,7 @@ function holdsForPlayoffsDay(save: CareerSave, t: TournamentState): boolean {
  */
 function playEventRound(save: CareerSave, t: TournamentState, rng: ReturnType<typeof createRng>): TournamentState {
   const ev = save.activeEvent;
-  const edge = ev ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
+  const edge = ev && save.coach ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
   if (edge === 0) return playNextRound(t, save.difficulty, rng);
   return { ...playNextRound(withUserEdge(t, edge), save.difficulty, rng), teams: t.teams };
 }

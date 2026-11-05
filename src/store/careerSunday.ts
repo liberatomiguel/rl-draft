@@ -99,7 +99,7 @@ export function sundayStopHolds(save: CareerSave): boolean {
 export function recordSundayBriefingFlow(input: CareerSave, choice?: SundayBriefingChoice | null): FlowResult {
   const ahead = sundayAheadOf(input);
   if (!ahead) return { save: input, error: "none" };
-  const briefing = ahead.playing && choice ? choice : CAREER_SUNDAY.defaultBriefing;
+  const briefing = ahead.playing && input.coach && choice ? choice : CAREER_SUNDAY.defaultBriefing;
   return { save: { ...structuredClone(input), weekend: { eventId: ahead.def.id, briefing } } };
 }
 
