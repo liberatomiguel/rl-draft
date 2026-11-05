@@ -23,12 +23,12 @@ const SEASON_COLORS: Record<string, string> = {
 export function LineupSeasonBadge({ seasonLabel, year, newLabel }: { seasonLabel: string; year?: string; newLabel: string }) {
   const color = SEASON_COLORS[seasonLabel] ?? "#cbd5e1";
   return (
-    <span className="inline-flex max-w-full flex-col items-start gap-0.5">
+    <span className="relative inline-flex max-w-full">
       {seasonLabel === "RLCS 2027" ? (
-        <span className="display rounded-sm bg-amber-300/15 px-1 py-px text-[8px] font-bold leading-none tracking-wider text-amber-200">{newLabel}</span>
+        <span className="display absolute -right-1 -top-1.5 z-10 rotate-[10deg] rounded-sm border border-emerald-300/40 bg-emerald-950 px-1 py-px text-[8px] font-bold leading-none tracking-wider text-emerald-300">{newLabel}</span>
       ) : null}
       <span
-        className="display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide"
+        className={"display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border py-0.5 font-semibold tracking-wide " + (seasonLabel === "RLCS 2027" ? "px-2.5 text-[13px]" : "px-2 text-xs")}
         style={{ color, borderColor: color + "40", backgroundColor: color + "0f" }}
       >
         {seasonLabel}

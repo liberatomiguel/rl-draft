@@ -7,7 +7,7 @@
 
 - **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.13**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.14**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
@@ -39,7 +39,7 @@
   normal reel reveal. No browser exceptions; the season stays hidden from
   sight and assistive technology until the reel lands.
 - **BALANCE_VERSION 13**, fingerprint unchanged. Package, lock and site agree
-  on rc.36.13. Career calendar/economy, saves, account settings and other
+  on rc.36.14. Career calendar/economy, saves, account settings and other
   branches are outside this expansion; progression acceptance stays open.
 - Opening/economy/endgame evidence remains in rc36-3/4/5 reports: 63 paired
   three-season starts and four paired six-season SAM/Normal/prospect starts
