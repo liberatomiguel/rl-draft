@@ -200,9 +200,22 @@ opcionais, `HUMAN_AUDIT=1`), copiados de
   - trader;
   - compra-tudo;
   - upgrades de coach;
-  - variações de briefing.
+  - variações de briefing;
+  - troca contínua por jogadores melhores (vender e reinvestir);
+  - os estilos de jogo e planos de treino disponíveis;
+  - um gestor "experiente" (negocia bem, junta caixa cedo) e um
+    "iniciante" (aceita pedidos, gasta sem reserva), espelhando os dois
+    amigos do playtest de 04/11.
+- Cobertura da matriz completa (rodada 2): todas as 7 regiões × 3
+  dificuldades × 3 elencos iniciais × perfis, pelo menos 2 seeds, até S10,
+  mais carreiras longas até S20 depois do título (endless).
 - Variante por spy: **Worlds com +x de rating adversário acima do Major**,
   sem patch.
+- Testes de exploit, um caso cada:
+  - comprar um prospect barato e revender logo;
+  - ficar negativo de propósito para revender free agents na venda de
+    emergência;
+  - renovar barato um jogador formado.
 - Um script de resumo que imprima **só** o funil-alvo por região ×
   dificuldade × elenco × perfil:
   - 1ª vitória de série;
@@ -215,7 +228,24 @@ opcionais, `HUMAN_AUDIT=1`), copiados de
   - título de Worlds;
   - mais falências e o p90 de caixa.
 
+  Também imprimir, por célula:
+  - tempo no negativo, empréstimos e motivo da falência;
+  - caixa nas seasons 1–3 (quem enriquece cedo demais);
+  - folha contra prêmio + sponsor nas seasons finais;
+  - compras de cada item de progressão e o ganho real depois dos caps.
+
   O baseline é o próprio zip, sem rerodar.
+
+  **Progressão-alvo (Miguel, 04/11)**, a referência do relatório:
+  - primeiros splits: sem vencer qualifier, algumas séries ganhas em
+    torneios de comunidade;
+  - entre S1 e S2: classificar para o regional;
+  - depois, quase linear: perder no Swiss → playoffs → melhores posições →
+    Major → melhorar no Major → título de Major;
+  - Worlds: classificar e ganhar em até 2–3 seasons depois disso.
+
+  As finanças devem ser desafiadoras sem frustrar: alguns falem, mas o
+  jogador sempre tem como reagir. Nenhum calendário é imposto por código.
 
 Não rodar a matriz inteira nesta rodada; só um smoke de 2–3 carreiras.
 
@@ -255,6 +285,9 @@ decisões 11–16 acima. Não toca a carreira.
   - início frustrante;
   - ponte Regional → Major em EU/NA;
   - rotas estagnadas (conhecidos);
+  - gestor experiente enriquecendo cedo demais × iniciante quase falindo;
+  - salários do fim de jogo contra prêmio e sponsor (validar o +15/+25/+10
+    da F2);
   - itens de progressão (nerf/buff; um item caro de endgame só se houver
     benefício real depois dos caps);
   - Worlds > Major só se o teste justificar.
