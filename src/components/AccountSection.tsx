@@ -11,7 +11,7 @@
  * unchanged.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { sfx } from "@/lib/sfx";
 import { sendEmailCode, verifyEmailCode } from "@/lib/supabase";
@@ -110,10 +110,10 @@ export function AccountSection() {
   const enabled = useAccountStore((s) => s.enabled);
   const status = useAccountStore((s) => s.status);
   if (!enabled || status !== "signedOut") return null;
-  return <SignIn L={L} />;
+  return <SignInForm L={L} />;
 }
 
-function SignIn({ L }: { L: L }) {
+export function SignInForm({ L, compact = false }: { L: L; compact?: boolean }) {
   // The in-flight email lives in the account store (survives navigation), so the step
   // is DERIVED from it: returning to /profile after a code was sent lands back on the
   // code step with the email remembered — no dead end.
@@ -126,36 +126,51 @@ function SignIn({ L }: { L: L }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const inFlight = useRef(false);
 
   /** Send (or resend) a code to `target`. On the send rate-limit we STILL advance to
    *  the code step — a code from a recent request is very likely already valid — so the
    *  player is never blocked from entering one. */
   const send = async (target: string) => {
     const to = target.trim();
-    if (!to) return;
+    if (!to || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     setNotice(null);
     sfx.click();
-    const { error, code: errCode } = await sendEmailCode(to);
-    setBusy(false);
-    const rateLimited = errCode === "over_email_send_rate_limit" || /after \d+ second/i.test(error ?? "");
-    if (!error || rateLimited) {
-      setPendingEmail(to); // advance to / stay on the code step
-      if (rateLimited) setNotice(L.codeRateLimited);
-    } else {
-      setError(L.authError);
+    try {
+      const { error, code: errCode } = await sendEmailCode(to);
+      const rateLimited = errCode === "over_email_send_rate_limit" || /after \d+ second/i.test(error ?? "");
+      if (!error || rateLimited) {
+        setPendingEmail(to);
+        if (rateLimited) setNotice(L.codeRateLimited);
+      } else {
+        setError(L.sendError);
+      }
+    } catch {
+      setError(L.sendError);
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
     }
   };
 
   const verify = async () => {
-    if (!pendingEmail) return;
+    if (!pendingEmail || code.trim().length < 4 || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     setNotice(null);
-    const { error, code: errCode } = await verifyEmailCode(pendingEmail, code.trim());
-    setBusy(false);
-    if (error) setError(errCode === "otp_expired" ? L.codeExpired : L.authError);
+    try {
+      const { error, code: errCode } = await verifyEmailCode(pendingEmail, code.trim());
+      if (error) setError(errCode === "otp_expired" ? L.codeExpired : L.authError);
+    } catch {
+      setError(L.authError);
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
     // success flips status via the account store (clears pendingEmail), unmounting this.
   };
 
@@ -166,44 +181,49 @@ function SignIn({ L }: { L: L }) {
     setNotice(null);
   };
 
-  return (
-    <Panel strong glow="blue" className="mb-6 p-5">
-      <h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
-      <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p>
+  const content = (
+    <>
+      {!compact ? <><h3 className="display mb-1 text-lg font-bold uppercase tracking-wide text-ink">{L.signInTitle}</h3>
+      <p className="mb-4 text-sm leading-relaxed text-sub">{L.guestNote}</p></> : null}
       {step === "email" ? (
-        <div className="flex flex-col gap-2.5 sm:flex-row">
+        <form onSubmit={(e) => { e.preventDefault(); void send(email); }} className="flex flex-col gap-2.5 sm:flex-row">
           <input
             type="email"
+            aria-label={L.emailLabel}
+            required
+            autoFocus={compact}
             inputMode="email"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send(email)}
             placeholder={L.emailPlaceholder}
-            className="flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60"
+            className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm text-ink outline-none focus:border-orange/60"
           />
-          <Button variant="primary" onClick={() => send(email)} disabled={busy || !email}>
+          <Button type="submit" variant="primary" disabled={busy || !email.trim()}>
             {busy ? L.sending : L.sendCode}
           </Button>
-        </div>
+        </form>
       ) : (
         <div>
           <p className="mb-2.5 text-xs text-sub">{L.codeSentTo(pendingEmail ?? "")}</p>
-          <div className="flex flex-col gap-2.5 sm:flex-row">
+          <form onSubmit={(e) => { e.preventDefault(); void verify(); }} className="flex flex-col gap-2.5 sm:flex-row">
             <input
               type="text"
+              aria-label={L.codeLabel}
+              autoFocus={compact}
+              required
+              minLength={4}
               inputMode="numeric"
               autoComplete="one-time-code"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              onKeyDown={(e) => e.key === "Enter" && verify()}
               placeholder={L.codePlaceholder}
-              className="flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm tracking-[0.3em] text-ink outline-none focus:border-orange/60"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm tracking-[0.3em] text-ink outline-none focus:border-orange/60"
             />
-            <Button variant="primary" onClick={verify} disabled={busy || code.length < 4}>
+            <Button type="submit" variant="primary" disabled={busy || code.length < 4}>
               {busy ? L.verifying : L.verify}
             </Button>
-          </div>
+          </form>
           <div className="mt-2.5 flex items-center gap-3 text-xs">
             <button
               type="button"
@@ -217,15 +237,17 @@ function SignIn({ L }: { L: L }) {
             <button
               type="button"
               onClick={useAnotherEmail}
-              className="text-faint underline-offset-2 hover:text-sub hover:underline"
+              disabled={busy}
+              className="text-faint underline-offset-2 hover:text-sub hover:underline disabled:opacity-50"
             >
               {L.useAnotherEmail}
             </button>
           </div>
         </div>
       )}
-      {notice ? <p className="mt-3 text-xs font-semibold text-sub">{notice}</p> : null}
-      {error ? <p className="mt-3 text-xs font-semibold text-bad">{error}</p> : null}
-    </Panel>
+      {notice ? <p role="status" className="mt-3 text-xs font-semibold text-sub">{notice}</p> : null}
+      {error ? <p role="alert" className="mt-3 text-xs font-semibold text-bad">{error}</p> : null}
+    </>
   );
+  return compact ? content : <Panel strong glow="blue" className="mb-6 p-5">{content}</Panel>;
 }

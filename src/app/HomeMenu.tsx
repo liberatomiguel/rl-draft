@@ -24,6 +24,7 @@ import { rankForXp } from "@/engine/progression";
 import { generateDailyConfig, todayKey } from "@/lib/daily";
 import { useMounted } from "@/store/useMounted";
 import { useAccountStore } from "@/store/accountStore";
+import { useSignInDialog } from "@/store/signInDialog";
 import {
   selectChampionships,
   selectDailyStreak,
@@ -428,8 +429,7 @@ export default function HomeMenu() {
 }
 
 /** Discreet, low-key sign-in nudge (v1.4) — renders only when accounts are
- *  configured AND the player is signed out. Links to the Profile (sign-in lives
- *  there). Intentionally small/quiet, not a banner. */
+ *  configured AND the player is signed out. Opens login without leaving home. */
 function HomeSignInNudge() {
   const { HOME: H } = useCopy();
   const mounted = useMounted();
@@ -438,12 +438,13 @@ function HomeSignInNudge() {
   if (!mounted || !enabled || status !== "signedOut") return null;
   return (
     <p className="mt-3 text-center">
-      <AppLink
-        href="/profile"
+      <button
+        type="button"
+        onClick={() => useSignInDialog.getState().show()}
         className="text-xs text-faint underline-offset-4 transition-colors hover:text-sub hover:underline"
       >
         {H.signInNudge} →
-      </AppLink>
+      </button>
     </p>
   );
 }

@@ -10,6 +10,18 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
+## [1.4.8] — 2026-11-05 · Inline email login
+
+### Changed
+- Announcement, header and home sign-in actions open a lazy-loaded email/code dialog in place. Successful authentication closes it and keeps the current route and run. Reopening an unfinished login resumes the code step; Profile reuses the same form.
+- Email/code forms support native validation, keyboard submission, automatic dialog focus, keyboard containment and readable request errors. In-flight requests cannot be duplicated by repeated submissions.
+- Initial English and saved language preferences are unchanged.
+
+### Fixed
+- Login calls to action previously navigated to Profile, interrupting the player's current screen and clearing an active run through the existing leave-run behavior.
+
+---
+
 ## [1.4.7] — 2026-11-04 · Rocket Draft 2.0 announcement
 
 ### Changed

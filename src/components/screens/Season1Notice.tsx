@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useCopy } from "@/content/copy";
 import { SEASON_NOTICE_IMAGES } from "@/lib/assets";
 import { useProfileStore } from "@/store/profileStore";
 import { useAccountStore } from "@/store/accountStore";
+import { useSignInDialog } from "@/store/signInDialog";
 import { useMounted } from "@/store/useMounted";
 import styles from "./Season1Notice.module.css";
 
@@ -18,7 +18,6 @@ let dismissedThisLoad = false;
 export function Season1Notice() {
   const { HOME } = useCopy();
   const S = HOME.season1;
-  const router = useRouter();
   const mounted = useMounted();
   const tutorialSeen = useProfileStore((s) => s.flags.seenTutorial);
   const accountsOn = useAccountStore((s) => s.enabled);
@@ -96,7 +95,7 @@ export function Season1Notice() {
         <footer className={styles.footer}>
           <div><p className={styles.accountTitle}>{S.accountTitle}</p><p>{signedIn ? S.rewardsSignedIn : S.rewards}</p></div>
           <div className={styles.actions}>
-            {askToSignIn ? <><Button variant="ghost" onClick={close}>{S.later}</Button><Button variant="primary" onClick={() => { close(); router.push("/profile"); }}>{S.cta}<span aria-hidden="true">↗</span></Button></> : <Button variant="primary" onClick={close}>{S.gotIt}</Button>}
+            {askToSignIn ? <><Button variant="ghost" onClick={close}>{S.later}</Button><Button variant="primary" onClick={() => { close(); useSignInDialog.getState().show(); }}>{S.cta}</Button></> : <Button variant="primary" onClick={close}>{S.gotIt}</Button>}
           </div>
         </footer>
       </div>
