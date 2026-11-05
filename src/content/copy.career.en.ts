@@ -696,7 +696,7 @@ export const CAREER_EN = {
         `${Number(p.weeks) > 0 ? `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays` : `The books are in the red (${p.balance}) at ${p.burn} a week of burn`}, and they would close below the floor (${p.floor}) on ${breachWhenEn(p)}. Before that, the bank offers its ordinary loan: ${p.loanNet} on the balance now, ${p.loanTotal} repaid in all (${p.loanPct}% interest) — ${p.loanWeekly} every Monday for ${p.loanTerm} weeks. That is cheaper than the emergency loan (${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, repaid within ${p.emergencyTerm} weeks` : ""}). Finances takes it at any amount up to the bank's limit.`,
       // rc.37 F2 (package 3): an emergency-sale offer — below market value, while the books are in the red.
       emergencyBid: (p: Record<string, string | number>) =>
-        `The books are in the red (${p.balance}), and ${p.org} smell a bargain: ${p.fee} for ${p.player}, ${p.pct}% of his market value. It is an emergency offer: it stands ${p.days} days, inside a transfer window or not, and accepting sells him at once. The Market's deals tab shows what lands after the bank's share, the wages it frees and the seat it leaves.`,
+        `The books are in the red (${p.balance}), and ${p.org} smell a bargain: ${p.fee} for ${p.player}, ${p.pct}% of his market value. It is an emergency offer: it stands ${p.days} days (until the window closes at the latest), and accepting sells him at once. The Market's deals tab shows what lands after the bank's share, the wages it frees and the seat it leaves.`,
       bankCleared: () =>
         `The last instalment cleared. The line of credit is open again if the org ever needs it.`,
       // rc.32 (M4, provisional): every Monday at ≤ 4 weeks — the projected breach and the way out.
@@ -1344,7 +1344,10 @@ export const CAREER_EN = {
     // rc.37 F2 (package 3): the emergency sale — the offer's badge, what it is, and what the sale leaves.
     emergencyBadge: "Emergency offer",
     emergencyWhat: (days: number) =>
-      `The books are in the red, so this buyer offers below market value. It stands ${days} days, inside a transfer window or not.`,
+      `The books are in the red, so this buyer offers below market value. It stands ${days} days, until the window closes at the latest.`,
+    // rc.37 F2 (Miguel, 05/11): the market-value tag on emergency offers and Blockbuster bids.
+    belowValue: (pct: number | null) => (pct === null ? "Below market value" : `Below market value · ${pct}%`),
+    aboveValue: (pct: number | null) => (pct === null ? "Above market value" : `Above market value · ${pct}%`),
     saleLeaves: (player: string, org: string, n: number) => `${player} leaves for ${org}: the squad drops to ${n}.`,
     saleShortSeat: "An empty starting seat: a free agent can fill it any day from the Market.",
     saleNetAfterDebt: (net: string, fee: string, share: string) => `${net} lands: ${fee} less the bank's ${share}.`,

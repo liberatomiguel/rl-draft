@@ -4,9 +4,10 @@
  * While the balance is below CAREER_EMERGENCY_SALE.balanceBelow (cash
  * negative), AI orgs table EXTRA offers for a squad player at a discount —
  * `feeRange` × his market value (economy.marketValueFor, called as it
- * stands) — on any day, inside a transfer window or not. At most one is
- * pending at a time, the next arrives `cooldownDays` after the last at the
- * earliest, and each stays open `validDays`. Never while the user's event is
+ * stands) — on any day of a transfer window (Miguel, 05/11: windows only).
+ * At most one is pending at a time, the next arrives `cooldownDays` after the
+ * last at the earliest, and each stays open `validDays`, never past its
+ * window's close. Never while the user's event is
  * in progress (the squad is frozen; acceptBidFlow refuses a sale then too).
  * The normal window bids (market.incomingBidForDay) roll as before, and an
  * emergency offer is a plain out-offer flagged `emergency`: the Market's
@@ -23,7 +24,7 @@
  */
 
 import { CAREER_EMERGENCY_SALE } from "@/config/balance";
-import { DAYS_PER_SEASON } from "./calendar";
+import { DAYS_PER_SEASON, weekOfDay, windowCloseDayFor, windowIndexOf } from "./calendar";
 import { ageOf, deriveBirthYear } from "./development";
 import { marketValueFor, quantize } from "./economy";
 import { derivedFloat, streams } from "./seeds";
@@ -89,6 +90,9 @@ export interface EmergencyOfferContext {
 export function emergencyOfferForDay(ctx: EmergencyOfferContext): TransferOffer | null {
   const E = CAREER_EMERGENCY_SALE;
   if (!emergencySaleOpen(ctx.balance) || ctx.inEvent || ctx.squad.length === 0) return null;
+  // Miguel (05/11): only inside a transfer window; it lapses when the window closes at the latest.
+  const windowIdx = windowIndexOf(weekOfDay(ctx.day));
+  if (windowIdx === null) return null;
   const pendingOut = ctx.pending.filter((o) => o.status === "pending" && o.direction === "out");
   if (pendingOut.some((o) => o.emergency)) return null;
   const today: ClockDay = { seasonIndex: ctx.seasonIndex, day: ctx.day };
@@ -134,8 +138,9 @@ export function emergencyOfferForDay(ctx: EmergencyOfferContext): TransferOffer 
     otherRef: bidder.ref,
     status: "pending",
     resolveSeason: ctx.seasonIndex,
-    resolveDay: Math.min(DAYS_PER_SEASON, ctx.day + E.validDays),
+    resolveDay: Math.min(DAYS_PER_SEASON, windowCloseDayFor(windowIdx), ctx.day + E.validDays),
     factors: [],
     emergency: true,
+    valuePct: Math.round((fee / target.value) * 100),
   };
 }

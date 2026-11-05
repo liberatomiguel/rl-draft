@@ -24,11 +24,19 @@ import {
   CAREER_EMERGENCY_SALE,
   CAREER_GEAR,
   CAREER_LOAN,
+  CAREER_TRANSFER,
 } from "@/config/balance";
 import { CAREER_EN } from "@/content/copy.career.en";
 import { CAREER_PT } from "@/content/copy.career.pt";
 import type { CareerCopy } from "@/content/careerCopy";
-import { DAYS_PER_SEASON, firstDayOfWeek, weekAt, weekOfDay, windowIndexOf } from "@/engine/career/calendar";
+import {
+  DAYS_PER_SEASON,
+  firstDayOfWeek,
+  weekAt,
+  weekOfDay,
+  windowCloseDayFor,
+  windowIndexOf,
+} from "@/engine/career/calendar";
 import {
   bankLoanTerms,
   gearPriceFor,
@@ -40,6 +48,7 @@ import { emergencyOfferForDay, emergencyValueOf } from "@/engine/career/emergenc
 import type { CareerSave } from "@/engine/career/types";
 import { formatMoney } from "@/lib/format";
 import { moneyNoticeTextOf } from "@/components/career/MoneyNoticeModal";
+import { marketValueTagOf } from "@/components/career/MarketValueTag";
 import {
   acceptBidFlow,
   acceptCreditOfferFlow,
@@ -119,25 +128,31 @@ function untilEmergencyOffer(save: CareerSave, days: number): CareerSave {
 // ===========================================================================
 
 describe("rc.37 F2 — the emergency sale", () => {
-  const week = plainWeek();
-  const inTheRed = (seed: number, balance = -100): CareerSave => {
-    const save = quietSunday(createCareerSave(INPUT, seed), week - 1);
+  /** Miguel (05/11): windows only — the first mid-season window week. */
+  const week = Array.from({ length: 32 }, (_, i) => i + 1).find((w) => w > 2 && windowIndexOf(w) !== null)!;
+  const inTheRed = (seed: number, balance = -100, sundayOf = week - 1): CareerSave => {
+    const save = quietSunday(createCareerSave(INPUT, seed), sundayOf);
     save.finances.balance = balance;
     return save;
   };
 
-  it("a case in the red receives an extra offer outside the windows, at 65–80% of the player's value", () => {
+  it("a case in the red receives an extra offer inside a window, at 65–80% of the player's value", () => {
     const save = untilEmergencyOffer(inTheRed(73_001), 7);
     const offer = emergencyOf(save)!;
     expect(offer).toBeDefined();
     expect(offer.direction).toBe("out");
-    expect(windowIndexOf(weekOfDay(save.clock.day))).toBeNull();
+    const windowIdx = windowIndexOf(weekOfDay(save.clock.day));
+    expect(windowIdx).not.toBeNull();
     const player = save.squad.find((p) => p.id === offer.playerId)!;
     const value = emergencyValueOf(player, save.clock.seasonIndex, save.careerSeed);
     const [lo, hi] = CAREER_EMERGENCY_SALE.feeRange;
     expect(offer.fee).toBeGreaterThanOrEqual(lo * value - 50); // quantized toward zero
     expect(offer.fee).toBeLessThanOrEqual(hi * value);
-    expect(offer.resolveDay).toBe(save.clock.day + CAREER_EMERGENCY_SALE.validDays);
+    expect(offer.valuePct).toBe(Math.round((offer.fee / value) * 100));
+    expect(marketValueTagOf(offer)).toEqual({ side: "below", pct: offer.valuePct });
+    expect(offer.resolveDay).toBe(
+      Math.min(save.clock.day + CAREER_EMERGENCY_SALE.validDays, windowCloseDayFor(windowIdx!)),
+    );
     expect(save.finances.emergencySaleAt).toEqual({ seasonIndex: save.clock.seasonIndex, day: save.clock.day });
     const mail = save.mail.find((m) => m.titleKey === "emergencyBid")!;
     expect(mail).toMatchObject({ kind: "offer", linkTo: "/career/market" });
@@ -163,6 +178,23 @@ describe("rc.37 F2 — the emergency sale", () => {
       s = arrive(s);
       expect(emergencyOf(s)).toBeUndefined();
     }
+  });
+
+  it("no offer outside the transfer windows, however red the books", () => {
+    let s = inTheRed(73_006, -100, plainWeek() - 1);
+    for (let d = 0; d < 7; d++) {
+      s = arrive(s);
+      expect(windowIndexOf(weekOfDay(s.clock.day))).toBeNull();
+      expect(emergencyOf(s)).toBeUndefined();
+    }
+  });
+
+  it("the market-value tag: a Blockbuster bid reads above, a plain bid none", () => {
+    expect(marketValueTagOf({ blockbuster: true })).toEqual({
+      side: "above",
+      pct: Math.round(CAREER_TRANSFER.blockbusterFeeMult * 100),
+    });
+    expect(marketValueTagOf({})).toBeNull();
   });
 
   it("no offer while the balance is at or above zero", () => {

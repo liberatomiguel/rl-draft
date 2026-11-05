@@ -64,6 +64,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
+import { MarketValueTag } from "@/components/career/MarketValueTag";
 import { RenewalsPanel } from "@/components/career/RenewalReadout";
 import {
   askPackageFor,
@@ -718,6 +719,7 @@ export function MarketScreen() {
                             <Badge tone="gold">{C.market.blockbuster}</Badge>
                           ) : null}
                           {o.emergency ? <Badge tone="bad">{C.market.emergencyBadge}</Badge> : null}
+                          <MarketValueTag offer={o} />
                         </div>
                         {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
                         {o.blockbuster ? (

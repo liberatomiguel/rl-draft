@@ -678,7 +678,7 @@ export const CAREER_PT: CareerCopy = {
         `${Number(p.weeks) > 0 ? `Com ${p.burn} de queima por semana, o saldo cobre mais ou menos ${p.weeks} segundas-feiras` : `As contas estão no vermelho (${p.balance}), com ${p.burn} de queima por semana`}, e fechariam abaixo do piso (${p.floor}) n${breachWhenPt(p)}. Antes disso, o banco oferece o empréstimo comum: ${p.loanNet} no saldo agora, ${p.loanTotal} pagos no total (${p.loanPct}% de juros), em parcelas de ${p.loanWeekly} toda segunda por ${p.loanTerm} semanas. Sai mais barato que o empréstimo emergencial (${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, a quitar em até ${p.emergencyTerm} semanas` : ""}). Em Finanças dá para pegar qualquer valor até o limite do banco.`,
       // rc.37 F2 (pacote 3): uma proposta de venda de emergência — abaixo do valor de mercado, com o caixa no vermelho.
       emergencyBid: (p: Record<string, string | number>) =>
-        `O caixa está no vermelho (${p.balance}), e a ${p.org} sentiu a oportunidade: ${p.fee} por ${p.player}, ${p.pct}% do valor de mercado dele. É uma proposta de emergência: vale por ${p.days} dias, com ou sem janela de transferências, e aceitar vende o jogador na hora. A aba de negociações do Mercado mostra o líquido depois da parte do banco, o salário liberado e a vaga que fica.`,
+        `O caixa está no vermelho (${p.balance}), e a ${p.org} sentiu a oportunidade: ${p.fee} por ${p.player}, ${p.pct}% do valor de mercado dele. É uma proposta de emergência: vale por ${p.days} dias (no máximo até a janela fechar), e aceitar vende o jogador na hora. A aba de negociações do Mercado mostra o líquido depois da parte do banco, o salário liberado e a vaga que fica.`,
       bankCleared: () =>
         `A última parcela foi paga. A linha de crédito está aberta de novo, se a org precisar.`,
       // rc.32 (M4, provisório): toda segunda com ≤ 4 semanas — a quebra projetada e a saída.
@@ -1323,7 +1323,10 @@ export const CAREER_PT: CareerCopy = {
     // rc.37 F2 (pacote 3): a venda de emergência — o selo da proposta, o que ela é, e o que a venda deixa.
     emergencyBadge: "Proposta de emergência",
     emergencyWhat: (days: number) =>
-      `As contas estão no vermelho, então este comprador oferece abaixo do valor de mercado. A proposta vale por ${days} dias, com ou sem janela de transferências.`,
+      `As contas estão no vermelho, então este comprador oferece abaixo do valor de mercado. A proposta vale por ${days} dias, no máximo até a janela fechar.`,
+    // rc.37 F2 (Miguel, 05/11): o selo de valor de mercado nas propostas de emergência e bombásticas.
+    belowValue: (pct: number | null) => (pct === null ? "Abaixo do valor de mercado" : `Abaixo do valor de mercado · ${pct}%`),
+    aboveValue: (pct: number | null) => (pct === null ? "Acima do valor de mercado" : `Acima do valor de mercado · ${pct}%`),
     saleLeaves: (player: string, org: string, n: number) => `${player} vai para a ${org}: o elenco fica com ${n}.`,
     saleShortSeat: "Uma vaga de titular aberta: um agente livre pode ocupá-la em qualquer dia, pelo Mercado.",
     saleNetAfterDebt: (net: string, fee: string, share: string) => `Entram ${net}: ${fee} menos a parte do banco, ${share}.`,

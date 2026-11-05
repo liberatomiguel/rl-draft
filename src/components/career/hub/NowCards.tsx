@@ -29,6 +29,7 @@ import { TeamStars } from "@/components/career/TeamStars";
 import { TierChip, maxPointsOf, prizePoolOf } from "@/components/career/hub/hubShared";
 import { formatLineOf } from "@/components/career/event/WeekendPlan";
 import { Badge } from "@/components/ui/Badge";
+import { MarketValueTag } from "@/components/career/MarketValueTag";
 import { Button } from "@/components/ui/Button";
 
 type DatesCopy = CareerCopy["dates"];
@@ -371,6 +372,12 @@ export function NowBid({
 
   return (
     <div>
+      {/* rc.37 F2: BELOW / ABOVE MARKET VALUE on an emergency offer or a Blockbuster bid. */}
+      {offer.blockbuster || offer.emergency ? (
+        <div className="mb-2">
+          <MarketValueTag offer={offer} />
+        </div>
+      ) : null}
       {offer.blockbuster ? (
         <>
           <Badge tone="gold" className="mb-2">

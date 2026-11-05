@@ -2865,9 +2865,10 @@ export const CAREER_SPEND_ALERT = {
 /**
  * rc.37 F2 package 3, the emergency sale. While the balance is below
  * `balanceBelow`, AI orgs table extra offers for a squad player at
- * `feeRange` × his market value (economy.marketValueFor), on any day —
- * inside a transfer window or not — at most one pending, `cooldownDays`
- * apart (from the day one arrives), each open `validDays`. Never while the
+ * `feeRange` × his market value (economy.marketValueFor), on any day of a
+ * transfer window (Miguel, 05/11: windows only) — at most one pending,
+ * `cooldownDays` apart (from the day one arrives), each open `validDays`
+ * and never past the window's close. Never while the
  * user's event is in progress (the squad is frozen). The normal bids roll as
  * before; a player under the resale lock never gets one.
  */

@@ -1046,9 +1046,11 @@ export interface TransferOffer {
   blockbuster?: boolean;
   /**
    * rc.37 F2: an emergency-sale offer (engine/career/emergencySale.ts) — tabled
-   * while the balance is negative, on any day, below market value.
+   * while the balance is negative, inside a transfer window, below market value.
    */
   emergency?: boolean;
+  /** rc.37 F2: the fee as a percent of his market value when it was tabled (the market-value tag; absent = not priced). */
+  valuePct?: number;
   /**
    * @deprecated rc.32 (M8): the offer answered the user's "List for sale" —
    * withdrawn in rc.33 (ECO-12). Never written; the load repair
