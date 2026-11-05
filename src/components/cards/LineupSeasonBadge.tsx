@@ -1,20 +1,38 @@
-import { useCopy } from "@/content/copy";
+/** Stable edition colors; full text keeps the season identifiable without color. */
+const SEASON_COLORS: Record<string, string> = {
+  "RLCS Season 1": "#93c5fd",
+  "RLCS Season 2": "#6ee7b7",
+  "RLCS Season 3": "#c4b5fd",
+  "RLCS Season 4": "#fda4af",
+  "RLCS Season 5": "#67e8f9",
+  "RLCS Season 6": "#fdba74",
+  "RLCS Season 7": "#a5b4fc",
+  "RLCS Season 8": "#bef264",
+  "RLCS Season 9": "#f0abfc",
+  "RLCS X": "#5eead4",
+  "RLCS 2021-22": "#fca5a5",
+  "RLCS 2022-23": "#d8b4fe",
+  "RLCS 2024": "#7dd3fc",
+  "FIFAe 2024": "#cbd5e1",
+  "RLCS 2025": "#86efac",
+  "FIFAe 2025": "#e2e8f0",
+  "RLCS 2026": "#f9a8d4",
+  "RLCS 2027": "#fcd34d",
+};
 
-/** Full edition identity; keep early seasons distinct even when they share a year. */
 export function LineupSeasonBadge({ seasonLabel, year }: { seasonLabel: string; year?: string }) {
-  const { DRAFT_UI } = useCopy();
+  const color = SEASON_COLORS[seasonLabel] ?? "#cbd5e1";
+  const exclusive = seasonLabel === "RLCS 2027";
 
   return (
-    <span className="inline-flex max-w-full flex-col rounded-lg border border-orange-bright/60 bg-orange-bright/10 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-      <span className="display text-[10px] font-bold uppercase leading-none tracking-[0.16em] text-orange-bright">
-        {DRAFT_UI.lineupSeason}
-      </span>
-      <span className="display mt-1 text-lg font-extrabold uppercase leading-tight tracking-wide text-ink sm:text-xl">
-        {seasonLabel}
-        {year && !seasonLabel.includes(year) ? (
-          <span className="ml-2 whitespace-nowrap text-base font-semibold text-sub">· {year}</span>
-        ) : null}
-      </span>
+    <span
+      className={exclusive
+        ? "display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2.5 py-1 text-sm font-bold tracking-wide ring-1 ring-amber-300/20"
+        : "display inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide"}
+      style={{ color, borderColor: color + (exclusive ? "99" : "40"), backgroundColor: color + (exclusive ? "1f" : "0f") }}
+    >
+      {seasonLabel}
+      {year && !seasonLabel.includes(year) ? <span className="whitespace-nowrap opacity-80">· {year}</span> : null}
     </span>
   );
 }

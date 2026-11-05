@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.11**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.12**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,13 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Changed — rc.36.12, compact season tags
+- Moves the competitive region beside the drawn organization name.
+- Removes the season kicker and reduces the edition to a compact colored tag.
+  Every edition has a stable color; 2027 uses a slightly larger gold tag and
+  a restrained border to distinguish the exclusive expansion. Full edition
+  names and years remain readable without relying on color.
 
 ### Added / Changed — rc.36.11, RLCS 2027 and draft edition identity
 - Adds RLCS 2027 (order 16) and the 46 reviewed preseason rosters: 24

@@ -305,25 +305,26 @@ function OfferReveal({
               </div>
             </div>
           ) : (
-            <h2
-              className={cx(
-                "display pop-in truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
-                national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
-              )}
-            >
-              {headerName}
-            </h2>
+            <div className="flex min-w-0 items-center gap-2">
+              <h2
+                className={cx(
+                  "display pop-in truncate text-2xl font-bold uppercase tracking-wide md:text-3xl",
+                  national ? "text-yellow-100 drop-shadow-[0_0_14px_rgba(234,179,8,0.45)]" : "text-ink",
+                )}
+              >
+                {headerName}
+              </h2>
+              <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
+            </div>
           )}
           <div
             aria-hidden={rolling || undefined}
             className={cx(
-              "mt-2 flex flex-wrap items-center gap-2 transition-opacity duration-200",
+              "mt-1.5 flex flex-wrap items-center gap-2 transition-opacity duration-200",
               rolling && "invisible opacity-0",
             )}
           >
             <LineupSeasonBadge seasonLabel={header.seasonLabel} year={header.year} />
-            {/* Region accent color — where is this team from, at a glance */}
-            <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
             {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
           </div>
         </div>
