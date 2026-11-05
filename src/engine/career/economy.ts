@@ -14,6 +14,7 @@ import {
   CAREER_BANK,
   CAREER_COACH_MARKET,
   CAREER_CONTRACT,
+  CAREER_DEV,
   CAREER_ECONOMY,
   CAREER_GEAR,
   CAREER_LOAN,
@@ -27,6 +28,7 @@ import {
   CAREER_SPONSOR,
   CAREER_STARS,
   CAREER_SUB,
+  CAREER_TALENT,
   CAREER_TRANSFER,
   CAREER_UNLOCKS,
 } from "@/config/balance";
@@ -347,21 +349,117 @@ export interface SalaryAskInput {
   ambitious?: boolean;
   /** Refused-Blockbuster surcharge on this player's next renewal. */
   blockbusterRefused?: boolean;
+  /**
+   * rc.37 (F1): his arc — the peak age he carries (the view's or the squad
+   * player's, never recomputed) and his DevelopmentProfile's plateau years —
+   * so the price reads his REACH gap (`talentFactorsFor`). Both or neither,
+   * built by `market.askInputOf`. Absent = the profile-free estimate: rc.36's
+   * factors on his raw gap, never a profile derived from the id.
+   */
+  peakAge?: number;
+  plateauYears?: number;
 }
 
-function ageFactorFor(age: number): number {
+/**
+ * rc.36's age table. rc.37 (F1): an u18 with real upside (his reach gap from
+ * CAREER_TALENT.u18TalentRampFrom to u18TalentRampTo) climbs linearly to the
+ * 19–22 factor, so young age never makes a talent cheaper; an u18 without
+ * upside keeps the u18 factor. `reachGap` 0 = rc.36.
+ */
+function ageFactorFor(age: number, reachGap = 0): number {
   const f = CAREER_SALARY.ageFactor;
-  if (age <= 18) return f.u18;
+  if (age <= 18) {
+    const { u18TalentRampFrom: from, u18TalentRampTo: to } = CAREER_TALENT;
+    const t = to <= from ? (reachGap >= to ? 1 : 0) : Math.max(0, Math.min(1, (reachGap - from) / (to - from)));
+    return t <= 0 ? f.u18 : t >= 1 ? f.a19_22 : f.u18 + (f.a19_22 - f.u18) * t;
+  }
   if (age <= 22) return f.a19_22;
   if (age <= 24) return f.a23_24;
   return f.a25plus;
 }
 
+/** rc.36's potential factor on the raw gap (rc.37: the profile-free fallback only). */
 function potentialFactorFor(overall: number, potential: number): number {
   return Math.min(
     CAREER_SALARY.potentialCap,
     1 + CAREER_SALARY.potentialPerPoint * Math.max(0, potential - overall),
   );
+}
+
+/**
+ * rc.37 (F1): his REACH gap — the potential the age clock still lets him
+ * close: min(potential − overall, CAREER_DEV.seasonGainCap × ceil(peakAge +
+ * plateauYears − age)), 0 once past his plateau (development.reachableOverallOf's
+ * clock on his potential, never his hidden peakOffset). The integer season
+ * age. Without an arc (peakAge and plateauYears) the raw gap.
+ */
+export function reachGapFor(x: { overall: number; potential: number; age: number; peakAge?: number; plateauYears?: number }): number {
+  const raw = Math.max(0, x.potential - x.overall);
+  if (x.peakAge == null || x.plateauYears == null) return raw;
+  const yearsLeft = x.peakAge + x.plateauYears - x.age;
+  if (yearsLeft <= 0) return 0;
+  return Math.min(raw, CAREER_DEV.seasonGainCap * Math.ceil(yearsLeft));
+}
+
+/**
+ * rc.37 (F1): the upside factor in tiers on the reach gap (CAREER_TALENT.
+ * upsideTiers) — rc.36's 0.02 a point up to gap 10 (×1.20), then steeper per
+ * tier and never saturating: ×1.40 at 15, ×1.70 at 20, ×2.34 at 28 (rc.36
+ * stopped at ×1.30 from 15, so a 70/98 priced like a 70/85).
+ */
+export function upsideFactorFor(reachGap: number): number {
+  let f = 1;
+  let lo = 0;
+  for (const t of CAREER_TALENT.upsideTiers) {
+    if (reachGap > lo) f += t.perPoint * (Math.min(reachGap, t.upTo) - lo);
+    lo = t.upTo;
+  }
+  return f;
+}
+
+/** rc.37 (F1): the talent tiers (engine and tests; a UI label must come from the scouted band). */
+export type TalentTier = "promising" | "high" | "exceptional" | "generational";
+const TALENT_TIERS: readonly TalentTier[] = ["promising", "high", "exceptional", "generational"];
+
+/** rc.37 (F1): his tier by reach gap — null under CAREER_TRANSFER.prospectUpside, else the upsideTiers band. */
+export function talentTierOf(reachGap: number): TalentTier | null {
+  if (reachGap < CAREER_TRANSFER.prospectUpside) return null;
+  const idx = CAREER_TALENT.upsideTiers.findIndex((t) => reachGap <= t.upTo);
+  return TALENT_TIERS[Math.min(TALENT_TIERS.length - 1, idx < 0 ? TALENT_TIERS.length - 1 : idx)];
+}
+
+export interface TalentFactors {
+  reachGap: number;
+  /** The age factor (rc.36's table; an u18 talent climbs to the 19–22 factor). */
+  age: number;
+  /** The potential factor (the tiers on the reach gap; rc.36's on the raw gap without an arc). */
+  potential: number;
+  hasArc: boolean;
+}
+
+/**
+ * rc.37 (F1): the ONE talent valuation — the age and potential factors every
+ * price reads: `marketValueFor` (fees, AI bids, the Blockbuster, the AI↔AI
+ * fiction), `computeSalaryAsk` (a free agent's wage, a renewal's fresh ask, a
+ * founding ask) and the `salaryAskFactors` readout, in rc.36's multiplication
+ * slots (equal factors give bit-identical prices). With an arc: the reach gap,
+ * its tiers and the u18 ramp. Without one: rc.36's factors exactly.
+ */
+export function talentFactorsFor(x: {
+  overall: number;
+  potential: number;
+  age: number;
+  peakAge?: number;
+  plateauYears?: number;
+}): TalentFactors {
+  const hasArc = x.peakAge != null && x.plateauYears != null;
+  const reachGap = reachGapFor(x);
+  return {
+    reachGap,
+    age: ageFactorFor(x.age, reachGap),
+    potential: hasArc ? upsideFactorFor(reachGap) : potentialFactorFor(x.overall, x.potential),
+    hasArc,
+  };
 }
 
 /**
@@ -423,10 +521,12 @@ function askJitterFor(careerSeed: number, playerId: string): number {
  * Floor CAREER_SALARY.minSalary, quantized.
  */
 export function computeSalaryAsk(input: SalaryAskInput): number {
+  // rc.37 (F1): the one talent valuation (`talentFactorsFor`), in rc.36's slots.
+  const t = talentFactorsFor(input);
   const raw =
     baseCurve(input.overall, input.seasonIndex, input.difficulty) *
-    ageFactorFor(input.age) *
-    potentialFactorFor(input.overall, input.potential) *
+    t.age *
+    t.potential *
     repPremiumFor(input.overall, input.rep) *
     Math.pow(CAREER_SALARY.lengthDiscountPerSeason, input.lengthSeasons - 1) *
     (input.ambitious ? CAREER_SALARY.ambitionRenewalMult : 1) *
@@ -447,9 +547,11 @@ export function salaryAskFactors(input: SalaryAskInput): { key: string; delta: n
   const core =
     baseCurve(input.overall, input.seasonIndex, input.difficulty) *
     askJitterFor(input.careerSeed, input.playerId);
+  // rc.37 (F1): the same talent factors as the ask, so the readout reconciles.
+  const t = talentFactorsFor(input);
   const steps: { key: string; factor: number }[] = [
-    { key: "age", factor: ageFactorFor(input.age) },
-    { key: "potential", factor: potentialFactorFor(input.overall, input.potential) },
+    { key: "age", factor: t.age },
+    { key: "potential", factor: t.potential },
     { key: "repPremium", factor: repPremiumFor(input.overall, input.rep) },
     {
       key: "length",
@@ -488,6 +590,16 @@ export interface MarketValueInput {
   age: number;
   potential: number;
   seasonIndex: number;
+  /**
+   * rc.37 (F1): his arc — the peak age he carries and his DevelopmentProfile's
+   * plateau years — so his reach gap prices him (`talentFactorsFor`). Every
+   * F1 price builds its input with `market.valueInputOf` (any new caller — a
+   * sale, a crisis — should too). Optional so a caller with only the four
+   * numbers above still compiles: it gets the profile-free estimate, rc.36's
+   * factors on his raw gap. Both or neither.
+   */
+  peakAge?: number;
+  plateauYears?: number;
 }
 
 /**
@@ -498,13 +610,15 @@ export interface MarketValueInput {
  * user's market screen (Miguel: fees were wildly discrepant).
  */
 export function marketValueFor(input: MarketValueInput): number {
+  // rc.37 (F1): the one talent valuation, the same factors as his ask.
+  const t = talentFactorsFor(input);
   const raw =
     CAREER_SALARY.basePerSplit *
     Math.pow(CAREER_SALARY.growthPerPoint, input.overall - CAREER_SALARY.anchorOverall) *
     starCurveFactor(input.overall) *
     moneyIndex(input.seasonIndex, "wages") *
-    ageFactorFor(input.age) *
-    potentialFactorFor(input.overall, input.potential) *
+    t.age *
+    t.potential *
     CAREER_TRANSFER.valueMultiple;
   return quantize(Math.max(indexedAmount(CAREER_TRANSFER.minFee, input.seasonIndex), raw));
 }
@@ -524,9 +638,12 @@ export function contractedFeeFor(value: number, splitsRemaining: number, seasonI
 // v0.3 rep-gated signing cap (visible lock — supersedes §21.3's soft-only gate)
 // ---------------------------------------------------------------------------
 
-/** Max overall a NEW signing accepts at this reputation (squad/renewals exempt). */
+/**
+ * Max overall a NEW signing accepts at this reputation (squad/renewals exempt).
+ * rc.37 (F1): rc.36.3's `signableCapFreeAt` (84) is gone — the line reaches 99
+ * at rep 70 on its own, so the "uncapped from" step never changed a number.
+ */
 export function signableOverallCap(rep: number): number {
-  if (rep >= CAREER_UNLOCKS.signableCapFreeAt) return 99;
   return Math.min(
     99,
     CAREER_UNLOCKS.signableCapBase + CAREER_UNLOCKS.signableCapPerRep * rep,
@@ -536,10 +653,9 @@ export function signableOverallCap(rep: number): number {
 /** Reputation needed before a player of this overall signs (0 = signable now). */
 export function repNeededForOverall(overall: number): number {
   if (overall <= CAREER_UNLOCKS.signableCapBase) return 0;
-  const rep = Math.ceil(
+  return Math.ceil(
     (overall - CAREER_UNLOCKS.signableCapBase) / CAREER_UNLOCKS.signableCapPerRep,
   );
-  return Math.min(rep, CAREER_UNLOCKS.signableCapFreeAt);
 }
 
 /** Free-agent "luvas": ≈15% of the first SEASON's (3 splits) salary. */

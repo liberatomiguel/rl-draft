@@ -349,9 +349,16 @@ export interface SquadPlayer {
   splitsTogether: number;
   joinedSeason: number;
   /**
+   * rc.37 (F1): the renewals he has signed since `joinedSeason` (absent = 0).
+   * His first renewal at the club always keeps rc.36's protection
+   * (renewal.renewalLadderFor). Optional, additive.
+   */
+  renewalCount?: number;
+  /**
    * rc.35 (front C): the season day he signed (with `joinedSeason`). Optional
    * and additive: a founder or an older save has none. No bid lands for him
-   * in the window he signed in (`market.signedInWindow`).
+   * in the window he signed in — rc.37 (F1): nor in the next one, the resale
+   * lock (`market.resaleLocked`).
    */
   signedDay?: number;
   /**
@@ -1277,6 +1284,19 @@ export interface StandingRowSnapshot {
   points: number;
 }
 
+/** rc.37 (F1): the user's titles in one season, as the renewal title raise counts them. */
+export interface SeasonTitleCount {
+  seasonIndex: number;
+  majorOrWorlds: number;
+  regional: number;
+  /**
+   * The season day of each title (`major` = a Major or Worlds), so a player
+   * who joined mid-season counts only the titles won after his signing day.
+   * Absent on a row without days: the whole season counts for him.
+   */
+  days?: { day: number; major: boolean }[];
+}
+
 export interface SeasonRecord {
   seasonIndex: number;
   /** Dataset season id (or "career-<year>" in the infinite era). */
@@ -1560,6 +1580,16 @@ export interface CareerSave {
   scouted: Record<string, number>;
   /** This season's compiled events (archived into history at rollover). */
   eventResults: CompactEventResult[];
+  /**
+   * rc.37 (F1): the user's titles per season (regional, Major or Worlds),
+   * counted when he wins them — the renewal title raise's window reads it
+   * (`careerFlow.renewalTitlesOf`), so last season's titles survive the
+   * rollover that clears `eventResults` (rc.33–rc.36 read only this season).
+   * Pruned at the rollover to the raise's window. Optional, additive: absent
+   * = a save from before rc.37, backfilled from this season's results at its
+   * next title or rollover.
+   */
+  userTitlesBySeason?: SeasonTitleCount[];
 
   history: SeasonRecord[];
   seasonGoals: SeasonGoals | null;

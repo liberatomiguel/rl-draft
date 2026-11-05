@@ -54,6 +54,7 @@ import {
   growthModelOf,
   phaseTagFor,
   playerViewById,
+  readsUniformBand,
   scoutedBand,
   squadPotentialBand,
   type PhaseTag,
@@ -355,6 +356,8 @@ export function potBandOfSquad(save: CareerSave, p: SquadPlayer): PotentialBand 
     day: save.clock.day,
     model: growthModelOf(save.world),
     rc32Reports: save.bandModel === undefined,
+    // rc.37 (F1): a career created on rc.37 reads the uniform band.
+    uniform: readsUniformBand(save.bandModel),
   });
 }
 
@@ -373,7 +376,7 @@ export function potBandOfView(save: CareerSave, view: CareerPlayerView): Potenti
     save.careerSeed,
     view.id,
     growthModelOf(save.world),
-    { arc, rc32Reports: save.bandModel === undefined },
+    { arc, rc32Reports: save.bandModel === undefined, uniform: readsUniformBand(save.bandModel) },
   );
 }
 

@@ -870,6 +870,11 @@ export const CAREER_PT: CareerCopy = {
     renewalTitles: (pct: number) => `+${pct}% pelos títulos que ele ganhou com você nas últimas temporadas.`,
     renewalAmbition: (pct: number) => `+${pct}% de ambição: um craque num clube menor pede mais.`,
     renewalBlockbuster: (pct: number) => `+${pct}%: você recusou uma proposta bombástica por ele.`,
+    // rc.37 (F1): a escada por tempo de clube e o teto dos bônus.
+    renewalTenure: (seasons: number, floorPct: number) =>
+      `${seasons} temporadas com você: o piso da renovação dele subiu para ${floorPct}% do valor de mercado.`,
+    renewalPremiumCapped: (pct: number) =>
+      `Bônus com teto: ambição, proposta bombástica recusada e títulos somam no máximo +${pct}%.`,
     renewalsTitle: "Contratos para renovar",
     renewalsEmpty: "Nenhum contrato termina nesta temporada.",
     renewalsGo: "Renovar no Elenco",

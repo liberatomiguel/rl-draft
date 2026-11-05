@@ -48,9 +48,13 @@ describe("DEV-04 — the wizard's founders show HQ's band", () => {
             expect(squad, `${seed} ${region} ${offer.key} ${p.id}`).toBeDefined();
             const band = founderPotentialBandFor(p, seed);
             expect(band).toEqual(potBandOfSquad(save, squad));
-            // DEV-04: narrow, never much over the truth, and it holds the truth (unless his age caps it).
-            expect(band.max - band.min).toBeLessThanOrEqual(CAREER_SCOUT.honestWidthByLevel[0]);
-            expect(band.max).toBeLessThanOrEqual(Math.round(p.potential) + CAREER_SCOUT.bandMaxAbove);
+            // DEV-04: narrow, and it holds the truth (unless his age caps it). rc.37 (F1, band
+            // model 3 for a new career): the truth at a uniform place, so the top sits up to
+            // the band's width over it (rc.33's model 2: at most bandMaxAbove).
+            const w = CAREER_SCOUT.honestWidthByLevel[band.level];
+            expect(save.bandModel).toBe(3);
+            expect(band.max - band.min).toBeLessThanOrEqual(w);
+            expect(band.max).toBeLessThanOrEqual(Math.round(p.potential) + w);
             expect(band.min).toBeLessThanOrEqual(Math.round(p.potential));
             founders += 1;
             // The reproduction: the wizard's old band, ±5 around the truth.
