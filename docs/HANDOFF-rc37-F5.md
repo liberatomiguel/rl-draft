@@ -1,0 +1,13 @@
+# F5 — contrato de rejogabilidade
+- Branch: claude/rc37-battery; somente docs/RTW-REPLAY-CONTRACT.md, sem código de rejogabilidade.
+- Contrato é proposta, não aprovação: Miguel decide antes da implementação, como exige F5.
+- Recomenda tabelas de Regionais/Majors/Worlds por time e jogador, posição do usuário e histórico novo/aditivo.
+- Cobertura desde a fundação em saves novos; saves antigos mostram parcial; sem inventar títulos/rosters retroativos.
+- Ledger idempotente por evento, escalações congeladas, IA em todas as regiões; registros sobrevivem à aposentadoria.
+- Desbloqueio por profile.careerWorldsWon já existente; carreira comum e endless continuam disponíveis.
+- Recomenda Carreiras de Desafio opcionais; Academia e teto de folha primeiro; regras públicas e sem softlocks.
+- Considera restrições históricas, dinastia, nova geração, passaporte regional, conquistas e cosméticos em fases posteriores.
+- Nenhuma força/riqueza herdada; dados históricos reais ficam separados e dependem de fonte validada por Miguel.
+- Múltiplos Worlds em endless não contam como múltiplas carreiras campeãs; import/sync não podem duplicar feitos.
+- Pendentes: nome, idade Academia, fórmula teto/prize share, ordem, catálogo de recompensas e dados reais.
+- Critérios de aceite incluem migração, idempotência, offline/sync e histórico S20+; sem alterar contratos de persistência nesta rodada.
