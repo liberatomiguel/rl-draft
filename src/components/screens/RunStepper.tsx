@@ -42,7 +42,7 @@ export function RunStepper({ run }: { run: RunState }) {
 
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex min-w-0 max-w-full items-center gap-2 md:gap-3">
         <button
           type="button"
           // Just navigate — AppShell resets the run when it sees we left /play
@@ -50,14 +50,14 @@ export function RunStepper({ run }: { run: RunState }) {
           onClick={() => router.push("/")}
           title={SETUP.back}
           aria-label={SETUP.back}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:bg-white/5 hover:text-ink"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line text-sub transition-colors hover:border-line-strong hover:bg-white/5 hover:text-ink"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
             <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
-        <ol className="flex items-center gap-1.5 md:gap-2" aria-label="Run progress">
+        <ol className="flex min-w-0 flex-wrap items-center gap-1.5 md:gap-2" aria-label="Run progress">
           {phaseIds.map((phase, i) => (
             <li key={phase} className="flex items-center gap-1.5 md:gap-2">
               {i > 0 ? <span className="h-px w-3 bg-line-strong md:w-5" aria-hidden /> : null}

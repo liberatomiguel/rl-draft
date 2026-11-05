@@ -117,5 +117,12 @@
     "shortLabel": "'26",
     "year": "2026",
     "order": 15
+  },
+  {
+    "id": "rlcs-2027",
+    "label": "RLCS 2027",
+    "shortLabel": "'27",
+    "year": "2027",
+    "order": 16
   }
 ]

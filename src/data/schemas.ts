@@ -212,6 +212,7 @@ export const challengeConstraintSchema = z
     maxPlayerOverall: overallSchema.optional(),
     region: regionSchema.optional(),
     seasonId: z.string().min(1).optional(),
+    maxSeasonId: z.string().min(1).optional(),
     country: z.string().length(2).optional(),
     noSpecials: z.boolean().optional(),
   })

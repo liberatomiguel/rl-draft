@@ -28,6 +28,7 @@ import {
   nationalSpecialByCardId,
   playerById,
   playerCardById,
+  seasonById,
   specialsByPlayerId,
   subById,
   worldNationalLineups,
@@ -370,12 +371,20 @@ function buildOffer(lineupId: string, draft: DraftState, rng: Rng): DraftOffer {
   return { lineupId, cards, hasPickableCard };
 }
 
-function lineupPool(draft: DraftState) {
+export function draftLineupPool(draft: DraftState) {
   // An explicit pool (daily / region-locked) may include samOnly teams, so it
   // filters the FULL set; the default general pool is Worlds-only.
-  return draft.poolLineupIds
+  const pool = draft.poolLineupIds
     ? lineups.filter((l) => draft.poolLineupIds!.includes(l.id))
     : draftableLineups;
+  // Authored seeds are calibrated against an edition of the database. Keep
+  // that historical pool stable when a new season is added, including after
+  // pool exhaustion. Do not convert the default pool to an explicit region
+  // pool: doing so would also change its tier weighting.
+  const ceiling = draft.mode === "challenge" && draft.constraint?.maxSeasonId
+    ? seasonById.get(draft.constraint.maxSeasonId)
+    : undefined;
+  return ceiling ? pool.filter((l) => (seasonById.get(l.seasonId)?.order ?? Infinity) <= ceiling.order) : pool;
 }
 
 /**
@@ -423,7 +432,7 @@ function lineupTierWeight(
 }
 
 export function drawNextOffer(draft: DraftState, rng: Rng): DraftState {
-  const fullPool = lineupPool(draft);
+  const fullPool = draftLineupPool(draft);
   // Easter-egg lineups (Wings) never enter the normal draw — they're excluded
   // here and force-injected below at a small chance. So the seeded daily/general
   // draws stay byte-identical (those pools carry no rareSpawn lineup).

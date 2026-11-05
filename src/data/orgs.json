@@ -7,10 +7,24 @@
     "buffLevel": "~"
   },
   {
+    "id": "1",
+    "name": "1",
+    "region": "NA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
     "id": "3rats",
     "name": "3RATS",
     "region": "APAC",
     "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "5head",
+    "name": "5Head",
+    "region": "MENA",
+    "buffType": "experience",
     "buffLevel": "~"
   },
   {
@@ -24,6 +38,13 @@
     "id": "al-qadsiah",
     "name": "Al Qadsiah",
     "region": "MENA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "all-gamers-global",
+    "name": "All Gamers Global",
+    "region": "EU",
     "buffType": "experience",
     "buffLevel": "~"
   },
@@ -56,10 +77,24 @@
     "buffLevel": "~"
   },
   {
+    "id": "avid-esports",
+    "name": "AVID Esports",
+    "region": "SAM",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
     "id": "avidity-esports",
     "name": "Avidity Esports",
     "region": "SAM",
     "buffType": "offense",
+    "buffLevel": "~"
+  },
+  {
+    "id": "ballerrinas",
+    "name": "Ballerrinas",
+    "region": "APAC",
+    "buffType": "experience",
     "buffLevel": "~"
   },
   {
@@ -106,7 +141,7 @@
   },
   {
     "id": "bs-competition",
-    "name": "BS+Competition",
+    "name": "BS+COMPETITION",
     "region": "EU",
     "buffType": "offense",
     "buffLevel": "~"
@@ -356,6 +391,13 @@
     "buffLevel": "++"
   },
   {
+    "id": "fortnite-flick",
+    "name": "Fortnite Flick",
+    "region": "NA",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
     "id": "furia",
     "name": "FURIA",
     "region": "SAM",
@@ -455,7 +497,7 @@
   },
   {
     "id": "gentle-mates-alpine",
-    "name": "Gentle Mates Alpine",
+    "name": "Gentle Mates",
     "region": "EU",
     "buffType": "mechanics",
     "buffLevel": "+++"
@@ -480,6 +522,13 @@
     "region": "NA",
     "buffType": "offense",
     "buffLevel": "+"
+  },
+  {
+    "id": "gmt",
+    "name": "GMT",
+    "region": "EU",
+    "buffType": "clutch",
+    "buffLevel": "~"
   },
   {
     "id": "god-speed",
@@ -515,6 +564,13 @@
     "region": "OCE",
     "buffType": "consistency",
     "buffLevel": "+"
+  },
+  {
+    "id": "grr",
+    "name": "GRR",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "~"
   },
   {
     "id": "guild-esports",
@@ -557,6 +613,13 @@
     "region": "NA",
     "buffType": "offense",
     "buffLevel": "++"
+  },
+  {
+    "id": "ikkaku",
+    "name": "Ikkaku",
+    "region": "EU",
+    "buffType": "consistency",
+    "buffLevel": "~"
   },
   {
     "id": "intz-esports",
@@ -930,6 +993,20 @@
     "buffLevel": "~"
   },
   {
+    "id": "next2nu-esports",
+    "name": "Next2Nu Esports",
+    "region": "NA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "nimmt55",
+    "name": "Nimmt55",
+    "region": "APAC",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
     "id": "ninjas-in-pyjamas",
     "name": "Ninjas in Pyjamas",
     "region": "SAM",
@@ -979,6 +1056,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "not",
+    "name": "NOT",
+    "region": "MENA",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
     "id": "novadrift",
     "name": "Novadrift",
     "region": "SAM",
@@ -1008,7 +1092,7 @@
   },
   {
     "id": "nrg-esports",
-    "name": "NRG Esports",
+    "name": "NRG",
     "region": "NA",
     "buffType": "experience",
     "buffLevel": "+++",
@@ -1030,6 +1114,13 @@
         "untilOrder": 12
       }
     ]
+  },
+  {
+    "id": "nto",
+    "name": "NTO",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "~"
   },
   {
     "id": "nutorious",
@@ -1109,6 +1200,27 @@
     "buffLevel": "~"
   },
   {
+    "id": "parmiticos",
+    "name": "parmiticos",
+    "region": "SAM",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
+    "id": "passion-fc",
+    "name": "PASSION FC",
+    "region": "NA",
+    "buffType": "experience",
+    "buffLevel": "~"
+  },
+  {
+    "id": "pcs-stride",
+    "name": "Project Conquerors",
+    "region": "SAM",
+    "buffType": "clutch",
+    "buffLevel": "~"
+  },
+  {
     "id": "pdhm-gaming",
     "name": "PDHM Gaming",
     "region": "SAM",
@@ -1135,6 +1247,13 @@
     "region": "NA",
     "buffType": "offense",
     "buffLevel": "+"
+  },
+  {
+    "id": "playhouse",
+    "name": "Playhouse",
+    "region": "NA",
+    "buffType": "clutch",
+    "buffLevel": "~"
   },
   {
     "id": "plot-twist",
@@ -1221,6 +1340,13 @@
     "buffLevel": "~"
   },
   {
+    "id": "rmh",
+    "name": "RMH",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "~"
+  },
+  {
     "id": "roc-esports",
     "name": "ROC Esports",
     "region": "MENA",
@@ -1233,6 +1359,13 @@
     "region": "NA",
     "buffType": "clutch",
     "buffLevel": "+"
+  },
+  {
+    "id": "rpc",
+    "name": "RPC",
+    "region": "NA",
+    "buffType": "offense",
+    "buffLevel": "~"
   },
   {
     "id": "ruby",
@@ -1303,6 +1436,13 @@
     "region": "EU",
     "buffType": "consistency",
     "buffLevel": "+"
+  },
+  {
+    "id": "space-bound-cowboys",
+    "name": "Space Bound Cowboys",
+    "region": "NA",
+    "buffType": "defense",
+    "buffLevel": "~"
   },
   {
     "id": "spacestation-gaming",
@@ -1393,6 +1533,13 @@
     "region": "MENA",
     "buffType": "clutch",
     "buffLevel": "+++"
+  },
+  {
+    "id": "team-heretics",
+    "name": "Team Heretics",
+    "region": "EU",
+    "buffType": "mechanics",
+    "buffLevel": "~"
   },
   {
     "id": "team-liquid",
@@ -1527,6 +1674,13 @@
     "buffLevel": "+"
   },
   {
+    "id": "top-pombo-models",
+    "name": "Top Pombo Models",
+    "region": "SAM",
+    "buffType": "defense",
+    "buffLevel": "~"
+  },
+  {
     "id": "triple-trouble",
     "name": "Triple Trouble",
     "region": "EU",
@@ -1552,6 +1706,13 @@
     "name": "Tu-tu-du-du Verstappen",
     "region": "APAC",
     "buffType": "consistency",
+    "buffLevel": "~"
+  },
+  {
+    "id": "tubby-troubles",
+    "name": "Tubby Troubles",
+    "region": "NA",
+    "buffType": "offense",
     "buffLevel": "~"
   },
   {
@@ -1623,5 +1784,12 @@
     "region": "SAM",
     "buffType": "consistency",
     "buffLevel": "+"
+  },
+  {
+    "id": "wolves-esports",
+    "name": "Wolves Esports",
+    "region": "APAC",
+    "buffType": "experience",
+    "buffLevel": "~"
   }
 ]

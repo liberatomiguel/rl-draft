@@ -1698,6 +1698,16 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      sets. No persist key, version or field changed.
 
 
+156. **Authored challenges keep their calibrated database edition (rc.36.11).**
+     Adding RLCS 2027 shifts fixed-seed offers even when historical cards are
+     unchanged; 11 difficulty-band checks regressed while the untouched staging
+     passed all 35 challenge tests. Pin the 27 existing puzzles with the optional
+     `constraint.maxSeasonId: "rlcs-2026"`. Filter by season order inside the
+     existing draft pool so regional/worldwide weighting and RNG consumption
+     remain unchanged, including pool resets. General and regional drafts use
+     the new edition. No boss shifts, seeds, reward values, balance version or
+     persist keys/versions change. Future puzzles can name a later ceiling.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

@@ -20,8 +20,8 @@ import { useMemo, useState } from "react";
 import { useCopy } from "@/content/copy";
 import { lineupHeader, resolveOfferCard } from "@/engine/cards";
 import { nationalTeamProgress, unownedOfferSpecials } from "@/engine/collection";
-import { filledCount, neededKinds, slotsForKind } from "@/engine/draft";
-import { draftableLineups, lineupById, seasonById, specialCardById } from "@/data";
+import { draftLineupPool, filledCount, neededKinds, slotsForKind } from "@/engine/draft";
+import { lineupById, seasonById, specialCardById } from "@/data";
 import type { DraftOffer, DraftOfferCard, Lineup, RunState } from "@/engine/types";
 import { dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
@@ -34,6 +34,7 @@ import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
+import { LineupSeasonBadge } from "@/components/cards/LineupSeasonBadge";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { RunStepper } from "./RunStepper";
 import { RunOnboarding } from "./RunOnboarding";
@@ -208,11 +209,7 @@ function OfferReveal({
     // Decoy names come from the SAME pool this run draws from — regional / daily
     // restrict it via poolLineupIds; worldwide uses the full international set.
     // The easter egg and the national teams are excluded so they stay a surprise.
-    const reelPool = (
-      run.draft.poolLineupIds
-        ? run.draft.poolLineupIds.map((id) => lineupById.get(id)!)
-        : draftableLineups
-    ).filter((l) => l && !l.rareSpawn && !l.national);
+    const reelPool = draftLineupPool(run.draft).filter((l) => !l.rareSpawn && !l.national);
     const names: string[] = [];
     for (let i = 0; i < REEL_LENGTH - 1; i++) {
       const idx = (offer.lineupId.length * 7 + run.draft.round * 13 + i * 29) % reelPool.length;
@@ -285,7 +282,7 @@ function OfferReveal({
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 w-full sm:w-auto sm:flex-1">
           <p className="kicker mb-1">
             {DRAFT_UI.roundLabel(run.draft.round)} · {DRAFT_UI.pickProgress(filled, slotTotal)}
             {run.daily ? <span className="text-orange-bright"> · {dailyLabel(run.daily, DAILY_TEXT)}</span> : null}
@@ -317,25 +314,18 @@ function OfferReveal({
               {headerName}
             </h2>
           )}
-          <p
+          <div
+            aria-hidden={rolling || undefined}
             className={cx(
-              "mt-1 flex items-center gap-2 text-sm text-sub transition-opacity duration-200",
-              rolling && "opacity-0",
+              "mt-2 flex flex-wrap items-center gap-2 transition-opacity duration-200",
+              rolling && "invisible opacity-0",
             )}
           >
-            {/* Season + the year it took place — but only append the year when
-                the label doesn't already carry it (e.g. "RLCS Season 6" → 2018,
-                while "RLCS 2022-23" already has it). */}
-            <span>
-              {header.seasonLabel}
-              {header.year && !header.seasonLabel.includes(header.year) ? (
-                <span className="text-faint"> · {header.year}</span>
-              ) : null}
-            </span>
+            <LineupSeasonBadge seasonLabel={header.seasonLabel} year={header.year} />
             {/* Region accent color — where is this team from, at a glance */}
             <Badge className={REGION_BADGE[header.region]}>{header.region}</Badge>
             {national ? <Badge tone="gold">{NATIONAL_UI.label}</Badge> : null}
-          </p>
+          </div>
         </div>
         {/* Nothing in the offer fits: the top button is the free reroll too, so
             the paid one is never spent on a dead offer (rc.29). */}

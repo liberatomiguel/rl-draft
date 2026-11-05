@@ -61,6 +61,7 @@ const SEASONS = {
   2024: { id: "rlcs-2024", slug: "2024", label: "RLCS 2024", shortLabel: "'24", year: "2024", order: 13 },
   2025: { id: "rlcs-2025", slug: "2025", label: "RLCS 2025", shortLabel: "'25", year: "2025", order: 14 },
   2026: { id: "rlcs-2026", slug: "2026", label: "RLCS 2026", shortLabel: "'26", year: "2026", order: 15 },
+  2027: { id: "rlcs-2027", slug: "2027", label: "RLCS 2027", shortLabel: "'27", year: "2027", order: 16 },
   // v2.0 national teams (FIFAe Nations Cup editions). Same `order` as the RLCS
   // season of the same year — the career and era logos key off order, and no
   // season is renumbered; on a tie the map order puts FIFAe after the RLCS.
@@ -256,6 +257,34 @@ const COUNTRY = {
   life: "US", armonik: "ES", laxin: "NZ", kekkles: "AU", nerve: "AU", evohpaniniwine: "AU",
   hawk: "AU", prompt: "AU", elliott: "AU", frost: "US", pengoli: "AU", taha: "US",
   karion: "CA", kevinacho: "AR", giuk: "FR", nico: "DK", fades: "TR", tawk: "CA",
+  // RLCS 2027 additions: canonical ids from the identity audit.
+  "reyyn": "FR",
+  "prozy": "CH",
+  "tempoh": "DK",
+  "solar": "US",
+  "gear": "US",
+  "frosty": "US",
+  "mizu": "CA",
+  "kin99": "GB",
+  "osaft": "DE",
+  "rxii": "ES",
+  "batou": "FR",
+  "motion": "GB",
+  "rustez95": "FR",
+  "pndh": "CA",
+  "plexi": "US",
+  "crispy": "GB",
+  "beasty": "GB",
+  "pzy": "AT",
+  "pigeon": "US",
+  "resonal": "CA",
+  "brunozyy": "BR",
+  "shadow-br": "BR",
+  "deliivery": "BR",
+  "reisplasma": "BR",
+  "popo": "JP",
+  "justuszzz": "NL",
+  "matter": "US",
 };
 
 /**
@@ -388,6 +417,10 @@ const BUFF_SYMBOLS = ["~", "+", "++", "+++"];
  * era display name ("Renault Vitality" still shows on S7 cards).
  */
 const ORG_ALIAS = {
+  // 2027 branding keeps the existing organization and its historical chemistry.
+  "gentle-mates": "gentle-mates-alpine",
+  nrg: "nrg-esports",
+  "project-conquerors": "pcs-stride",
   "chiefs-esc": "chiefs-esports-club",
   "team-dignitas": "dignitas",
   "renault-vitality": "team-vitality",
@@ -456,6 +489,18 @@ const PERSON_ID = {
   "zen|OCE": "zen-oce",
   "misty|national-my": "misty-my",
   "abdullah|national-om": "abdullah-om",
+  // The Brazilian AVID player is not a future namesake in another scene.
+  "shadow|avid-esports": "shadow-br",
+};
+
+/** Branding aliases only: the canonical ids and all existing card ids stay stable. */
+const PERSON_ALIAS = {
+  justin: "jstn",
+  ghaazi: "ghaazi0",
+  sucoo: "suco",
+  wistyy: "wisty",
+  sqlar: "solar",
+  sxlarr: "solar",
 };
 
 /**
@@ -630,7 +675,8 @@ const teams = rawTeams.map((raw) => {
 
 const persons = new Map(); // key → { id, nickname, country?, birthday?, region, lastOrder }
 function registerPerson(nick, region, seasonOrder, orgId) {
-  const base = personKeyOf(nick);
+  const rawKey = personKeyOf(nick);
+  const base = PERSON_ALIAS[rawKey] ?? rawKey;
   // Homonyms (PERSON_ID): same nickname, different people — org first, then region.
   const key = PERSON_ID[`${base}|${orgId}`] ?? PERSON_ID[`${base}|${region}`] ?? base;
   const existing = persons.get(key);

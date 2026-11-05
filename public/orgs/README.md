@@ -8,14 +8,19 @@ to the default org logo. Generated from data-sources/teams.md — run
 
 ```
 01-esports.png
+1.png
 3rats.png
+5head.png
 90-7.png
 al-qadsiah.png
+all-gamers-global.png
 alpha-sydney.png
 alpine-esports.png
 amethyst.png
 ankaa-esports.png
+avid-esports.png
 avidity-esports.png
+ballerrinas.png
 bigodes.png
 black-dragons.png
 blazar.png
@@ -58,6 +63,7 @@ faze-clan.png
 fc-barcelona.png
 five-fears.png
 flipsid3-tactics.png
+fortnite-flick.png
 furia.png
 fury.png
 fut-esports-na.png
@@ -76,17 +82,20 @@ gentle-mates-alpine.png
 german-amigos.png
 gfactor-galaxy.png
 ghost-gaming.png
+gmt.png
 god-speed.png
 godfidence.png
 griddygoose.png
 gridserve-resolve.png
 ground-zero-gaming.png
+grr.png
 guild-esports.png
 hawks.png
 heet.png
 hero-base.png
 hogan-mode.png
 ibuypower.png
+ikkaku.png
 intz-esports.png
 jam-gaming.png
 jobless.png
@@ -140,6 +149,8 @@ national-tr.png
 national-us.png
 national-za.png
 nerve.png
+next2nu-esports.png
+nimmt55.png
 ninjas-in-pyjamas.png
 nixuh.png
 noble-esports.png
@@ -147,6 +158,7 @@ nocturns-gaming.png
 nokar-esport.png
 northern-gaming.png
 northstar.png
+not.png
 novadrift.png
 novo-esports.png
 novus-aevi.png
@@ -156,6 +168,7 @@ nrg-esports@2016.png
 nrg-esports@2017.png
 nrg-esports@2019.png
 nrg-esports@2020.png
+nto.png
 nutorious.png
 og.png
 optic-gaming.png
@@ -167,10 +180,14 @@ owl-esports.png
 oxey-team.png
 oxygen-esports.png
 pale-horse-esports.png
+parmiticos.png
+passion-fc.png
+pcs-stride.png
 pdhm-gaming.png
 pioneers-oce.png
 pioneers-ssa.png
 pittsburgh-knights.png
+playhouse.png
 plot-twist.png
 poison-bullets.png
 precision-z.png
@@ -183,8 +200,10 @@ r8-esports.png
 rebel.png
 renegades.png
 rix-gg.png
+rmh.png
 roc-esports.png
 rogue.png
+rpc.png
 ruby.png
 rule-one.png
 sandrock-gaming.png
@@ -195,6 +214,7 @@ shopify-rebellion.png
 sk-gaming.png
 smpr-esports.png
 solary.png
+space-bound-cowboys.png
 spacestation-gaming.png
 spacestation-gaming@2021.png
 suhhh.png
@@ -208,6 +228,7 @@ team-brave-soldiers-esports.png
 team-cryptik.png
 team-envy.png
 team-falcons.png
+team-heretics.png
 team-liquid.png
 team-mobula.png
 team-queso.png
@@ -227,10 +248,12 @@ the-ultimates.png
 three-point-shooters.png
 tokyo-verdy.png
 top-blokes.png
+top-pombo-models.png
 triple-trouble.png
 true-neutral.png
 tsm.png
 tu-tu-du-du-verstappen.png
+tubby-troubles.png
 twisted-minds.png
 valiant.png
 veloce-esports.png
@@ -241,4 +264,5 @@ w7m-esports.png
 we-dem-girlz.png
 wildcard.png
 wings-e-sports.png
+wolves-esports.png
 ```

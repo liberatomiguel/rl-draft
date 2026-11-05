@@ -237,6 +237,9 @@ export function assertReferentialIntegrity(data: ParsedDataset): void {
     if (ch.constraint?.seasonId) {
       assertRef(seasonById.has(ch.constraint.seasonId), `challenges: "${ch.id}" → unknown constraint.seasonId "${ch.constraint.seasonId}"`);
     }
+    if (ch.constraint?.maxSeasonId) {
+      assertRef(seasonById.has(ch.constraint.maxSeasonId), `challenges: "${ch.id}" → unknown constraint.maxSeasonId "${ch.constraint.maxSeasonId}"`);
+    }
   }
 }
 

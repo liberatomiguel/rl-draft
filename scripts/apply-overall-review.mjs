@@ -44,6 +44,7 @@ const SEASONS = [
   { key: "2024", id: "rlcs-2024", label: "RLCS 2024", year: "2024", order: 13 },
   { key: "2025", id: "rlcs-2025", label: "RLCS 2025", year: "2025", order: 14 },
   { key: "2026", id: "rlcs-2026", label: "RLCS 2026", year: "2026", order: 15 },
+  { key: "2027", id: "rlcs-2027", label: "RLCS 2027", year: "2027", order: 16 },
 ];
 const KEY_BY_LABEL = new Map(SEASONS.map((s) => [s.label, s.key]));
 const SEASON_BY_ID = new Map(SEASONS.map((s) => [s.id, s]));

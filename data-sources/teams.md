@@ -4386,3 +4386,460 @@ coach: -
 org: Wings E-Sports +
 flag: sam-only rare
 ```
+
+## RLCS 2027 — pre-season snapshot (2026-11-05)
+
+46 lineups reviewed for this expansion: 24 general and 22 region-only.
+Overalls are pre-season estimates. Sources, roster confirmation status and
+canonical identity mappings: `rlcs-2027-audit.json`. A roster listed here
+does not imply an official organization announcement or a future LAN result.
+
+### NA
+
+```team: Shopify Rebellion · 2027
+player 1: Firstkiller 94
+player 2: Daniel 93
+player 3: Atomic 93
+sub: -
+coach: Satthew 90
+org: Shopify Rebellion ++
+```
+
+```team: Gen.G Mobil1 Racing · 2027
+player 1: BeastMode 92
+player 2: Tawk 89
+player 3: Chronic 87
+sub: -
+coach: ApparentlyJack 84
+org: Gen.G Mobil1 Racing ++
+```
+
+```team: Spacestation Gaming · 2027
+player 1: Zach 93
+player 2: reveal 92
+player 3: solar 82
+sub: -
+coach: Xpére 87
+org: Spacestation Gaming ++
+```
+
+```team: FUT Esports · 2027
+player 1: Lj. 89
+player 2: justin. 88
+player 3: CHEESE. 88
+sub: gear 73
+coach: laf 83
+org: FUT Esports +
+```
+
+```team: NRG · 2027
+player 1: 2Piece 88
+player 2: Wahvey 88
+player 3: frosty 84
+sub: mizu 72
+coach: adam_baguette 82
+org: NRG +++
+```
+
+```team: M80 · 2027
+player 1: Joreuz 88
+player 2: drufinho 87
+player 3: Motta 85
+sub: -
+coach: Nick 76
+org: M80 ~
+```
+
+```team: Next2Nu Esports · 2027
+player 1: Evoh 84
+player 2: MaJicBear 83
+player 3: PNDH 82
+sub: -
+coach: RawGreg 80
+org: Next2Nu Esports ~
+flag: region-only
+```
+
+```team: Playhouse · 2027
+player 1: juice 81
+player 2: monk 82
+player 3: dappdapp 80
+sub: -
+coach: -
+org: Playhouse ~
+flag: region-only
+```
+
+```team: PASSION FC · 2027
+player 1: life 81
+player 2: Mech 80
+player 3: plexi 80
+sub: -
+coach: -
+org: PASSION FC ~
+flag: region-only
+```
+
+```team: Tubby Troubles · 2027
+player 1: Crispy 81
+player 2: Fiv3Up 83
+player 3: rehzzy 83
+sub: -
+coach: -
+org: Tubby Troubles ~
+flag: region-only
+```
+
+```team: Space Bound Cowboys · 2027
+player 1: beasty 78
+player 2: pzy 79
+player 3: reshiram 78
+sub: -
+coach: hvcluc 73
+org: Space Bound Cowboys ~
+flag: region-only
+```
+
+```team: RPC · 2027
+player 1: creamz 82
+player 2: pIGEON 79
+player 3: Resonal 80
+sub: -
+coach: -
+org: RPC ~
+flag: region-only
+```
+
+```team: Fortnite Flick · 2027
+player 1: Andy 80
+player 2: Flitz 80
+player 3: Gyro. 80
+sub: -
+coach: -
+org: Fortnite Flick ~
+flag: region-only
+```
+
+```team: 1 · 2027
+player 1: justuszzz 81
+player 2: matter 81
+player 3: Royales 85
+sub: -
+coach: -
+org: 1 ~
+flag: region-only
+```
+
+### EU
+
+```team: Gentle Mates · 2027
+player 1: zen 96
+player 2: Atow. 95
+player 3: Vatira 94
+sub: -
+coach: -
+org: Gentle Mates +++
+```
+
+```team: Team Vitality · 2027
+player 1: nass 93
+player 2: Oski 90
+player 3: diaz 92
+sub: -
+coach: Eversax 88
+org: Team Vitality +++
+```
+
+```team: Karmine Corp · 2027
+player 1: M0nkey M00n 92
+player 2: reyyn 82
+player 3: bibbaba 82
+sub: -
+coach: Extra 88
+org: Karmine Corp +++
+```
+
+```team: All Gamers Global · 2027
+player 1: archie 89
+player 2: Joyo 87
+player 3: oaly. 86
+sub: -
+coach: eekso 82
+org: All Gamers Global ~
+```
+
+```team: Ninjas in Pyjamas · 2027
+player 1: crr 87
+player 2: Stizzy 89
+player 3: prozy 82
+sub: -
+coach: violentpanda 84
+org: Ninjas in Pyjamas +++
+```
+
+```team: Manchester City Esports · 2027
+player 1: accro 83
+player 2: TempoH 84
+player 3: rise. 85
+sub: -
+coach: n0ah 79
+org: Manchester City Esports ++
+```
+
+```team: Team Heretics · 2027
+player 1: AtomiK 85
+player 2: ajg 83
+player 3: dorito 82
+sub: -
+coach: Braan. 78
+org: Team Heretics ~
+```
+
+```team: Geekay Esports · 2027
+player 1: juicy 89
+player 2: Seikoo 90
+player 3: mtzr 82
+sub: -
+coach: Kassio 82
+org: Geekay Esports +
+```
+
+```team: Ikkaku · 2027
+player 1: ExoTiiK 91
+player 2: yujin 84
+player 3: Rezears 85
+sub: -
+coach: Ekon 80
+org: Ikkaku ~
+```
+
+```team: NTO · 2027
+player 1: Tox 84
+player 2: osaft 83
+player 3: Nico 82
+sub: -
+coach: Kasper 79
+org: NTO ~
+flag: region-only
+```
+
+```team: GRR · 2027
+player 1: Gawfs 82
+player 2: Rxii 83
+player 3: rysfox. 82
+sub: -
+coach: BatOu 77
+org: GRR ~
+flag: region-only
+```
+
+```team: GMT · 2027
+player 1: Growlii 83
+player 2: motion 82
+player 3: Toxiic 83
+sub: -
+coach: -
+org: GMT ~
+flag: region-only
+```
+
+```team: RMH · 2027
+player 1: Hyderr 81
+player 2: Mikeboy 81
+player 3: rust ez95 79
+sub: -
+coach: -
+org: RMH ~
+flag: region-only
+```
+
+### SAM
+
+```team: FURIA · 2027
+player 1: yanxnz 89
+player 2: swiftt 88
+player 3: kv1 88
+sub: -
+coach: BRUNOVISQUII 86
+org: FURIA +++
+```
+
+```team: FaZe Clan · 2027
+player 1: Lostt 87
+player 2: Bemmz 84
+player 3: crn 85
+sub: -
+coach: michi 80
+org: FaZe Clan ++
+```
+
+```team: MIBR · 2027
+player 1: Reysbull 87
+player 2: Aztromick 84
+player 3: Sadness 85
+sub: -
+coach: pekitas 84
+org: MIBR ++
+```
+
+```team: Project Conquerors · 2027
+player 1: droppz 82
+player 2: sucoo 83
+player 3: wistyy 86
+sub: -
+coach: STL 81
+org: Project Conquerors ~
+flag: region-only
+```
+
+```team: BS+COMPETITION · 2027
+player 1: klaus 81
+player 2: LeoDkn 80
+player 3: pan 81
+sub: -
+coach: -
+org: BS+COMPETITION ~
+flag: region-only
+```
+
+```team: AVID Esports · 2027
+player 1: davinsano 79
+player 2: brunozyy 78
+player 3: Shadow 78
+sub: -
+coach: chelona 73
+org: AVID Esports ~
+flag: region-only
+```
+
+```team: parmiticos · 2027
+player 1: caard 78
+player 2: Deliivery 80
+player 3: snipjz 79
+sub: -
+coach: -
+org: parmiticos ~
+flag: region-only
+```
+
+```team: Top Pombo Models · 2027
+player 1: Davitrox 78
+player 2: PJ 81
+player 3: Reisplasma 79
+sub: -
+coach: -
+org: Top Pombo Models ~
+flag: region-only
+```
+
+```team: Novadrift · 2027
+player 1: KnS 82
+player 2: Kevinacho 79
+player 3: Rmn 79
+sub: -
+coach: -
+org: Novadrift ~
+flag: region-only
+```
+
+### MENA
+
+```team: Team Falcons · 2027
+player 1: Rw9 94
+player 2: Kiileerrz 94
+player 3: dralii 94
+sub: -
+coach: -
+org: Team Falcons +++
+```
+
+```team: Twisted Minds · 2027
+player 1: Nwpo 92
+player 2: trk511 91
+player 3: Ghaazi 84
+sub: -
+coach: icreepy 84
+org: Twisted Minds +++
+```
+
+```team: NOT · 2027
+player 1: Nush 85
+player 2: Trook 85
+player 3: ops 82
+sub: -
+coach: -
+org: NOT ~
+flag: region-only
+```
+
+```team: 5Head · 2027
+player 1: Abdullah 86
+player 2: DrKnown 82
+player 3: M7md 83
+sub: -
+coach: -
+org: 5Head ~
+flag: region-only
+```
+
+### OCE
+
+```team: PWR · 2027
+player 1: Fever 84
+player 2: gus 82
+player 3: Fibérr 82
+sub: -
+coach: kin99 78
+org: PWR +
+```
+
+```team: Wildcard · 2027
+player 1: bananahead 85
+player 2: hntr 81
+player 3: caleb. 82
+sub: -
+coach: JKnaps 78
+org: Wildcard +
+```
+
+### APAC
+
+```team: Wolves Esports · 2027
+player 1: Catalysm 82
+player 2: Sphinx 82
+player 3: Kevin 82
+sub: -
+coach: trill. 77
+org: Wolves Esports ~
+```
+
+```team: Ballerrinas · 2027
+player 1: ballerrees 77
+player 2: furlashh 78
+player 3: pengoli 78
+sub: -
+coach: -
+org: Ballerrinas ~
+flag: region-only
+```
+
+```team: Nimmt55 · 2027
+player 1: Burn 76
+player 2: mikan 76
+player 3: popo^-^ 76
+sub: -
+coach: -
+org: Nimmt55 ~
+flag: region-only
+```
+
+### SSA
+
+```team: Pioneers · 2027
+player 1: Sweaty 77
+player 2: gunz 78
+player 3: TehQoz 79
+sub: -
+coach: Noxes 73
+org: Pioneers ~
+```

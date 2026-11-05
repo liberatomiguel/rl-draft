@@ -51,19 +51,28 @@ dropped. Declare it in `schemas.ts` (and the type) or remove it.
 
 ## Files at a glance
 
-| File | Entity | Counts at rc.31 (per era and region: `DATA-AUDIT-rc32.md`, generated) |
+| File | Entity | Counts at rc.36.11 (per era and region: `DATA-AUDIT-rc32.md`, generated) |
 | --- | --- | --- |
-| `seasons.json` | RLCS + FIFAe seasons (labels) | 17 |
-| `players.json` | Real player identities | 594 |
-| `playerCards.json` | Player versions per lineup/season | 1314 |
-| `orgs.json` | Organizations + buffs | 227 |
-| `coaches.json` | Coach cards | 289 |
-| `subs.json` | Substitute cards | 147 |
-| `lineups.json` | Historical rosters (the draft pool) | 438 (32 national) |
+| `seasons.json` | RLCS + FIFAe seasons (labels) | 18 |
+| `players.json` | Real player identities | 629 |
+| `playerCards.json` | Player versions per lineup/season | 1452 |
+| `orgs.json` | Organizations + buffs | 251 |
+| `coaches.json` | Coach cards | 317 |
+| `subs.json` | Substitute cards | 149 |
+| `lineups.json` | Historical rosters (the draft pool) | 484 (32 national) |
 | `specialCards.json` | Collectible special versions (hand-maintained) | 111 (+ 133 national cards derived at load) |
 | `achievements.json` | Achievement definitions (hand-maintained) | 56 |
 | `challenges.json` | Challenges (hand-maintained) | 27 |
 | `cardIdAliases.json` | Retired card ids → live cards | 6 |
+
+RLCS 2027 adds 46 reviewed lineups (24 worldwide, 22 region-only). Source
+identities, source links and selection are pinned in
+`data-sources/rlcs-2027-audit.json`; rebuild roster data from `teams.md`.
+The 27 hand-authored challenges keep `constraint.maxSeasonId: "rlcs-2026"`:
+their fixed seeds were calibrated against that historical pool. This ceiling
+uses season order, preserves worldwide/region weighting, and applies on every
+draw, including after pool exhaustion. New challenge editions may opt into a
+later ceiling after their difficulty is measured.
 
 ---
 

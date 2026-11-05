@@ -1615,5 +1615,27 @@
     "lineupId": "godfidence-2025",
     "seasonId": "rlcs-2025",
     "overall": 77
+  },
+  {
+    "id": "gear-sub-fut-esports-na-2027",
+    "personId": "gear",
+    "name": "gear",
+    "country": "US",
+    "region": "NA",
+    "orgId": "fut-esports-na",
+    "lineupId": "fut-esports-na-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 73
+  },
+  {
+    "id": "mizu-sub-nrg-esports-2027",
+    "personId": "mizu",
+    "name": "mizu",
+    "country": "CA",
+    "region": "NA",
+    "orgId": "nrg-esports",
+    "lineupId": "nrg-esports-2027",
+    "seasonId": "rlcs-2027",
+    "overall": 72
   }
 ]

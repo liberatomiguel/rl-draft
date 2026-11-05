@@ -25,7 +25,10 @@
         "kind": "chemistry",
         "tier": "Good"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-european-dawn",
@@ -52,7 +55,10 @@
         "kind": "goals",
         "min": 12
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-new-world-order",
@@ -80,7 +86,10 @@
         "kind": "sweep",
         "maxLosses": 1
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-down-under",
@@ -96,7 +105,8 @@
       "opponentShift": 3
     },
     "constraint": {
-      "region": "OCE"
+      "region": "OCE",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 110,
@@ -127,7 +137,8 @@
       "opponentShift": -4
     },
     "constraint": {
-      "maxPlayerOverall": 86
+      "maxPlayerOverall": 86,
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 110,
@@ -158,7 +169,8 @@
       "opponentShift": -8.75
     },
     "constraint": {
-      "region": "SAM"
+      "region": "SAM",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 160,
@@ -188,7 +200,8 @@
       "opponentShift": -1
     },
     "constraint": {
-      "seasonId": "rlcs-s5"
+      "seasonId": "rlcs-s5",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 180,
@@ -218,7 +231,8 @@
       "opponentShift": -3.5
     },
     "constraint": {
-      "country": "FR"
+      "country": "FR",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 190,
@@ -249,7 +263,8 @@
       "opponentShift": -9.75
     },
     "constraint": {
-      "country": "BR"
+      "country": "BR",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 210,
@@ -281,7 +296,8 @@
       "opponentShift": -5.75
     },
     "constraint": {
-      "maxPlayerOverall": 88
+      "maxPlayerOverall": 88,
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 220,
@@ -311,7 +327,8 @@
       "opponentShift": -6.5
     },
     "constraint": {
-      "noSpecials": true
+      "noSpecials": true,
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 290,
@@ -355,7 +372,10 @@
         "kind": "chemistry",
         "tier": "Good"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-emerald-wall",
@@ -381,7 +401,10 @@
       {
         "kind": "underdog"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-blue-blood",
@@ -397,7 +420,8 @@
       "opponentShift": -4.75
     },
     "constraint": {
-      "country": "FR"
+      "country": "FR",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 340,
@@ -439,7 +463,10 @@
         "kind": "concede",
         "max": 10
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-break-the-wall",
@@ -466,7 +493,10 @@
       {
         "kind": "noSpecials"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-topple-the-titans",
@@ -494,7 +524,10 @@
         "kind": "chemistry",
         "tier": "Great"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-south-american-miracle",
@@ -511,7 +544,8 @@
       "opponentShift": -12
     },
     "constraint": {
-      "region": "SAM"
+      "region": "SAM",
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 520,
@@ -542,7 +576,8 @@
       "opponentShift": -2
     },
     "constraint": {
-      "noSpecials": true
+      "noSpecials": true,
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 540,
@@ -574,7 +609,8 @@
       "opponentShift": -5
     },
     "constraint": {
-      "maxPlayerOverall": 90
+      "maxPlayerOverall": 90,
+      "maxSeasonId": "rlcs-2026"
     },
     "reward": {
       "xp": 560,
@@ -625,7 +661,10 @@
         "kind": "goals",
         "min": 25
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-gauntlet-na-dynasty",
@@ -662,7 +701,10 @@
         "kind": "goals",
         "min": 35
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-gauntlet-eu-crown",
@@ -698,7 +740,10 @@
         "kind": "goals",
         "min": 40
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-gauntlet-world-tour",
@@ -735,7 +780,10 @@
         "kind": "goals",
         "min": 50
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-pure-talent",
@@ -762,7 +810,10 @@
         "kind": "chemistry",
         "tier": "Good"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-homegrown",
@@ -789,7 +840,10 @@
         "kind": "chemistry",
         "tier": "Great"
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   },
   {
     "id": "ch-time-capsule",
@@ -816,6 +870,9 @@
         "kind": "sweep",
         "maxLosses": 2
       }
-    ]
+    ],
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    }
   }
 ]

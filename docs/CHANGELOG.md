@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.10**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.11**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,31 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed — rc.36.11, RLCS 2027 and draft edition identity
+- Adds RLCS 2027 (order 16) and the 46 reviewed preseason rosters: 24
+  worldwide and 22 region-only. Ratings, rumor status, identity mappings and
+  source links are recorded in `data-sources/rlcs-2027-audit.json`.
+- Keeps rebranded people on their existing ids (justin./jstn., Ghaazi/Ghaazi0,
+  sucoo/suco, wistyy/wisty) and organization history across regions (including
+  FaZe in SAM and NiP in EU). Archive-only ps ids are mapped to game ids.
+- The draft offer now highlights the full lineup edition in a high-contrast
+  labeled badge, including the year for early seasons. It wraps on mobile and
+  remains hidden, including from assistive technology, until the reel lands.
+- Existing rosters/cards, special cards, achievements and persist contracts
+  are preserved. APAC region-only projects stay dormant. The career calendar
+  and rc.37 workstreams are unchanged.
+- Fixed: adding a new edition changed the offers behind calibrated challenge
+  seeds, taking 11 puzzles out of their difficulty bands. The 27 authored
+  puzzles now name their historical ceiling (`maxSeasonId: rlcs-2026`); pool
+  selection and the reel honor it without changing seeds, boss shifts,
+  weighting or rewards (DESIGN-DECISIONS #156).
+- Fixed: the run progress labels could overflow a 320px viewport in Portuguese
+  because the row could not wrap. Labels now wrap while the back button keeps
+  its size.
+- Validation: 1531 tests pass (18 optional skipped), typecheck/lint and static
+  export pass. Browser checks cover desktop, mobile 390/320px, EN/PT, both
+  2016 editions, team 1, pick/reroll/reload and normal/reduced-motion reveals.
 
 ### Changed — rc.36.10, spectator card and normal clock controls (R98)
 - Non-participant cards contain Watch only; Results and the internal Advance

@@ -6722,5 +6722,701 @@
     "rareSpawn": true,
     "orgBuffLevel": "+",
     "historicalStrength": "underdog"
+  },
+  {
+    "id": "shopify-rebellion-2027",
+    "name": "Shopify Rebellion",
+    "seasonId": "rlcs-2027",
+    "orgId": "shopify-rebellion",
+    "region": "NA",
+    "playerCardIds": [
+      "firstkiller-shopify-rebellion-2027",
+      "daniel-shopify-rebellion-2027",
+      "atomic-shopify-rebellion-2027"
+    ],
+    "coachId": "satthew-coach-shopify-rebellion-2027",
+    "orgBuffLevel": "++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "gen-g-mobil1-racing-2027",
+    "name": "Gen.G Mobil1 Racing",
+    "seasonId": "rlcs-2027",
+    "orgId": "gen-g-mobil1-racing",
+    "region": "NA",
+    "playerCardIds": [
+      "beastmode-gen-g-mobil1-racing-2027",
+      "tawk-gen-g-mobil1-racing-2027",
+      "chronic-gen-g-mobil1-racing-2027"
+    ],
+    "coachId": "apparentlyjack-coach-gen-g-mobil1-racing-2027",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "spacestation-gaming-2027",
+    "name": "Spacestation Gaming",
+    "seasonId": "rlcs-2027",
+    "orgId": "spacestation-gaming",
+    "region": "NA",
+    "playerCardIds": [
+      "zach-spacestation-gaming-2027",
+      "reveal-spacestation-gaming-2027",
+      "solar-spacestation-gaming-2027"
+    ],
+    "coachId": "xpere-coach-spacestation-gaming-2027",
+    "orgBuffLevel": "++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "fut-esports-na-2027",
+    "name": "FUT Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "fut-esports-na",
+    "region": "NA",
+    "playerCardIds": [
+      "lj-fut-esports-na-2027",
+      "jstn-fut-esports-na-2027",
+      "cheese-fut-esports-na-2027"
+    ],
+    "coachId": "laf-coach-fut-esports-na-2027",
+    "subId": "gear-sub-fut-esports-na-2027",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "nrg-esports-2027",
+    "name": "NRG",
+    "seasonId": "rlcs-2027",
+    "orgId": "nrg-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "2piece-nrg-esports-2027",
+      "wahvey-nrg-esports-2027",
+      "frosty-nrg-esports-2027"
+    ],
+    "coachId": "adambaguette-coach-nrg-esports-2027",
+    "subId": "mizu-sub-nrg-esports-2027",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "m80-2027",
+    "name": "M80",
+    "seasonId": "rlcs-2027",
+    "orgId": "m80",
+    "region": "NA",
+    "playerCardIds": [
+      "joreuz-m80-2027",
+      "drufinho-m80-2027",
+      "motta-m80-2027"
+    ],
+    "coachId": "nick-coach-m80-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "next2nu-esports-2027",
+    "name": "Next2Nu Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "next2nu-esports",
+    "region": "NA",
+    "playerCardIds": [
+      "evoh-next2nu-esports-2027",
+      "majicbear-next2nu-esports-2027",
+      "pndh-next2nu-esports-2027"
+    ],
+    "coachId": "rawgreg-coach-next2nu-esports-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "playhouse-2027",
+    "name": "Playhouse",
+    "seasonId": "rlcs-2027",
+    "orgId": "playhouse",
+    "region": "NA",
+    "playerCardIds": [
+      "juice-playhouse-2027",
+      "monk-playhouse-2027",
+      "dappdapp-playhouse-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "passion-fc-2027",
+    "name": "PASSION FC",
+    "seasonId": "rlcs-2027",
+    "orgId": "passion-fc",
+    "region": "NA",
+    "playerCardIds": [
+      "life-passion-fc-2027",
+      "mech-passion-fc-2027",
+      "plexi-passion-fc-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "tubby-troubles-2027",
+    "name": "Tubby Troubles",
+    "seasonId": "rlcs-2027",
+    "orgId": "tubby-troubles",
+    "region": "NA",
+    "playerCardIds": [
+      "crispy-tubby-troubles-2027",
+      "fiv3up-tubby-troubles-2027",
+      "rehzzy-tubby-troubles-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "space-bound-cowboys-2027",
+    "name": "Space Bound Cowboys",
+    "seasonId": "rlcs-2027",
+    "orgId": "space-bound-cowboys",
+    "region": "NA",
+    "playerCardIds": [
+      "beasty-space-bound-cowboys-2027",
+      "pzy-space-bound-cowboys-2027",
+      "reshiram-space-bound-cowboys-2027"
+    ],
+    "coachId": "hvcluc-coach-space-bound-cowboys-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "rpc-2027",
+    "name": "RPC",
+    "seasonId": "rlcs-2027",
+    "orgId": "rpc",
+    "region": "NA",
+    "playerCardIds": [
+      "creamz-rpc-2027",
+      "pigeon-rpc-2027",
+      "resonal-rpc-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "fortnite-flick-2027",
+    "name": "Fortnite Flick",
+    "seasonId": "rlcs-2027",
+    "orgId": "fortnite-flick",
+    "region": "NA",
+    "playerCardIds": [
+      "andy-fortnite-flick-2027",
+      "flitz-fortnite-flick-2027",
+      "gyro-fortnite-flick-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "1-2027",
+    "name": "1",
+    "seasonId": "rlcs-2027",
+    "orgId": "1",
+    "region": "NA",
+    "playerCardIds": [
+      "justuszzz-1-2027",
+      "matter-1-2027",
+      "royales-1-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "gentle-mates-alpine-2027",
+    "name": "Gentle Mates",
+    "seasonId": "rlcs-2027",
+    "orgId": "gentle-mates-alpine",
+    "region": "EU",
+    "playerCardIds": [
+      "zen-gentle-mates-alpine-2027",
+      "atow-gentle-mates-alpine-2027",
+      "vatira-gentle-mates-alpine-2027"
+    ],
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "team-vitality-2027",
+    "name": "Team Vitality",
+    "seasonId": "rlcs-2027",
+    "orgId": "team-vitality",
+    "region": "EU",
+    "playerCardIds": [
+      "nass-team-vitality-2027",
+      "oski-team-vitality-2027",
+      "diaz-team-vitality-2027"
+    ],
+    "coachId": "eversax-coach-team-vitality-2027",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "karmine-corp-2027",
+    "name": "Karmine Corp",
+    "seasonId": "rlcs-2027",
+    "orgId": "karmine-corp",
+    "region": "EU",
+    "playerCardIds": [
+      "m0nkeym00n-karmine-corp-2027",
+      "reyyn-karmine-corp-2027",
+      "bibbaba-karmine-corp-2027"
+    ],
+    "coachId": "extra-coach-karmine-corp-2027",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "all-gamers-global-2027",
+    "name": "All Gamers Global",
+    "seasonId": "rlcs-2027",
+    "orgId": "all-gamers-global",
+    "region": "EU",
+    "playerCardIds": [
+      "archie-all-gamers-global-2027",
+      "joyo-all-gamers-global-2027",
+      "oaly-all-gamers-global-2027"
+    ],
+    "coachId": "eekso-coach-all-gamers-global-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "ninjas-in-pyjamas-2027",
+    "name": "Ninjas in Pyjamas",
+    "seasonId": "rlcs-2027",
+    "orgId": "ninjas-in-pyjamas",
+    "region": "EU",
+    "playerCardIds": [
+      "crr-ninjas-in-pyjamas-2027",
+      "stizzy-ninjas-in-pyjamas-2027",
+      "prozy-ninjas-in-pyjamas-2027"
+    ],
+    "coachId": "violentpanda-coach-ninjas-in-pyjamas-2027",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "manchester-city-esports-2027",
+    "name": "Manchester City Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "manchester-city-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "accro-manchester-city-esports-2027",
+      "tempoh-manchester-city-esports-2027",
+      "rise-manchester-city-esports-2027"
+    ],
+    "coachId": "n0ah-coach-manchester-city-esports-2027",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "team-heretics-2027",
+    "name": "Team Heretics",
+    "seasonId": "rlcs-2027",
+    "orgId": "team-heretics",
+    "region": "EU",
+    "playerCardIds": [
+      "atomik-team-heretics-2027",
+      "ajg-team-heretics-2027",
+      "dorito-team-heretics-2027"
+    ],
+    "coachId": "braan-coach-team-heretics-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "geekay-esports-2027",
+    "name": "Geekay Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "geekay-esports",
+    "region": "EU",
+    "playerCardIds": [
+      "juicy-geekay-esports-2027",
+      "seikoo-geekay-esports-2027",
+      "mtzr-geekay-esports-2027"
+    ],
+    "coachId": "kassio-coach-geekay-esports-2027",
+    "orgBuffLevel": "+",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "ikkaku-2027",
+    "name": "Ikkaku",
+    "seasonId": "rlcs-2027",
+    "orgId": "ikkaku",
+    "region": "EU",
+    "playerCardIds": [
+      "exotiik-ikkaku-2027",
+      "yujin-ikkaku-2027",
+      "rezears-ikkaku-2027"
+    ],
+    "coachId": "ekon-coach-ikkaku-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "nto-2027",
+    "name": "NTO",
+    "seasonId": "rlcs-2027",
+    "orgId": "nto",
+    "region": "EU",
+    "playerCardIds": [
+      "tox-nto-2027",
+      "osaft-nto-2027",
+      "nico-nto-2027"
+    ],
+    "coachId": "kasper-coach-nto-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "grr-2027",
+    "name": "GRR",
+    "seasonId": "rlcs-2027",
+    "orgId": "grr",
+    "region": "EU",
+    "playerCardIds": [
+      "gawfs-grr-2027",
+      "rxii-grr-2027",
+      "rysfox-grr-2027"
+    ],
+    "coachId": "batou-coach-grr-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "gmt-2027",
+    "name": "GMT",
+    "seasonId": "rlcs-2027",
+    "orgId": "gmt",
+    "region": "EU",
+    "playerCardIds": [
+      "growlii-gmt-2027",
+      "motion-gmt-2027",
+      "toxiic-gmt-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "rmh-2027",
+    "name": "RMH",
+    "seasonId": "rlcs-2027",
+    "orgId": "rmh",
+    "region": "EU",
+    "playerCardIds": [
+      "hyderr-rmh-2027",
+      "mikeboy-rmh-2027",
+      "rustez95-rmh-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "furia-2027",
+    "name": "FURIA",
+    "seasonId": "rlcs-2027",
+    "orgId": "furia",
+    "region": "SAM",
+    "playerCardIds": [
+      "yanxnz-furia-2027",
+      "swiftt-furia-2027",
+      "kv1-furia-2027"
+    ],
+    "coachId": "brunovisquii-coach-furia-2027",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "faze-clan-2027",
+    "name": "FaZe Clan",
+    "seasonId": "rlcs-2027",
+    "orgId": "faze-clan",
+    "region": "SAM",
+    "playerCardIds": [
+      "lostt-faze-clan-2027",
+      "bemmz-faze-clan-2027",
+      "crn-faze-clan-2027"
+    ],
+    "coachId": "michi-coach-faze-clan-2027",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "mibr-2027",
+    "name": "MIBR",
+    "seasonId": "rlcs-2027",
+    "orgId": "mibr",
+    "region": "SAM",
+    "playerCardIds": [
+      "reysbull-mibr-2027",
+      "aztromick-mibr-2027",
+      "sadness-mibr-2027"
+    ],
+    "coachId": "pekitas-coach-mibr-2027",
+    "orgBuffLevel": "++",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pcs-stride-2027",
+    "name": "Project Conquerors",
+    "seasonId": "rlcs-2027",
+    "orgId": "pcs-stride",
+    "region": "SAM",
+    "playerCardIds": [
+      "droppz-pcs-stride-2027",
+      "suco-pcs-stride-2027",
+      "wisty-pcs-stride-2027"
+    ],
+    "coachId": "stl-coach-pcs-stride-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "bs-competition-2027",
+    "name": "BS+COMPETITION",
+    "seasonId": "rlcs-2027",
+    "orgId": "bs-competition",
+    "region": "SAM",
+    "playerCardIds": [
+      "klaus-bs-competition-2027",
+      "leodkn-bs-competition-2027",
+      "pan-bs-competition-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "avid-esports-2027",
+    "name": "AVID Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "avid-esports",
+    "region": "SAM",
+    "playerCardIds": [
+      "davinsano-avid-esports-2027",
+      "brunozyy-avid-esports-2027",
+      "shadow-br-avid-esports-2027"
+    ],
+    "coachId": "chelona-coach-avid-esports-2027",
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "parmiticos-2027",
+    "name": "parmiticos",
+    "seasonId": "rlcs-2027",
+    "orgId": "parmiticos",
+    "region": "SAM",
+    "playerCardIds": [
+      "caard-parmiticos-2027",
+      "deliivery-parmiticos-2027",
+      "snipjz-parmiticos-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "top-pombo-models-2027",
+    "name": "Top Pombo Models",
+    "seasonId": "rlcs-2027",
+    "orgId": "top-pombo-models",
+    "region": "SAM",
+    "playerCardIds": [
+      "davitrox-top-pombo-models-2027",
+      "pj-top-pombo-models-2027",
+      "reisplasma-top-pombo-models-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "novadrift-2027",
+    "name": "Novadrift",
+    "seasonId": "rlcs-2027",
+    "orgId": "novadrift",
+    "region": "SAM",
+    "playerCardIds": [
+      "kns-novadrift-2027",
+      "kevinacho-novadrift-2027",
+      "rmn-novadrift-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "team-falcons-2027",
+    "name": "Team Falcons",
+    "seasonId": "rlcs-2027",
+    "orgId": "team-falcons",
+    "region": "MENA",
+    "playerCardIds": [
+      "rw9-team-falcons-2027",
+      "kiileerrz-team-falcons-2027",
+      "dralii-team-falcons-2027"
+    ],
+    "orgBuffLevel": "+++",
+    "historicalStrength": "elite"
+  },
+  {
+    "id": "twisted-minds-2027",
+    "name": "Twisted Minds",
+    "seasonId": "rlcs-2027",
+    "orgId": "twisted-minds",
+    "region": "MENA",
+    "playerCardIds": [
+      "nwpo-twisted-minds-2027",
+      "trk511-twisted-minds-2027",
+      "ghaazi0-twisted-minds-2027"
+    ],
+    "coachId": "icreepy-coach-twisted-minds-2027",
+    "orgBuffLevel": "+++",
+    "historicalStrength": "strong"
+  },
+  {
+    "id": "not-2027",
+    "name": "NOT",
+    "seasonId": "rlcs-2027",
+    "orgId": "not",
+    "region": "MENA",
+    "playerCardIds": [
+      "nush-not-2027",
+      "trook-not-2027",
+      "ops-not-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "5head-2027",
+    "name": "5Head",
+    "seasonId": "rlcs-2027",
+    "orgId": "5head",
+    "region": "MENA",
+    "playerCardIds": [
+      "abdullah-5head-2027",
+      "drknown-5head-2027",
+      "m7md-5head-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "pwr-2027",
+    "name": "PWR",
+    "seasonId": "rlcs-2027",
+    "orgId": "pwr",
+    "region": "OCE",
+    "playerCardIds": [
+      "fever-pwr-2027",
+      "gus-pwr-2027",
+      "fiberr-pwr-2027"
+    ],
+    "coachId": "kin99-coach-pwr-2027",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "wildcard-2027",
+    "name": "Wildcard",
+    "seasonId": "rlcs-2027",
+    "orgId": "wildcard",
+    "region": "OCE",
+    "playerCardIds": [
+      "bananahead-wildcard-2027",
+      "hntr-wildcard-2027",
+      "caleb-wildcard-2027"
+    ],
+    "coachId": "jknaps-coach-wildcard-2027",
+    "orgBuffLevel": "+",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "wolves-esports-2027",
+    "name": "Wolves Esports",
+    "seasonId": "rlcs-2027",
+    "orgId": "wolves-esports",
+    "region": "APAC",
+    "playerCardIds": [
+      "catalysm-wolves-esports-2027",
+      "sphinx-wolves-esports-2027",
+      "kevin-wolves-esports-2027"
+    ],
+    "coachId": "trill-coach-wolves-esports-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "solid"
+  },
+  {
+    "id": "ballerrinas-2027",
+    "name": "Ballerrinas",
+    "seasonId": "rlcs-2027",
+    "orgId": "ballerrinas",
+    "region": "APAC",
+    "playerCardIds": [
+      "ballerrees-ballerrinas-2027",
+      "furlashh-ballerrinas-2027",
+      "pengoli-ballerrinas-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "nimmt55-2027",
+    "name": "Nimmt55",
+    "seasonId": "rlcs-2027",
+    "orgId": "nimmt55",
+    "region": "APAC",
+    "playerCardIds": [
+      "burn-nimmt55-2027",
+      "mikan-nimmt55-2027",
+      "popo-nimmt55-2027"
+    ],
+    "samOnly": true,
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
+  },
+  {
+    "id": "pioneers-ssa-2027",
+    "name": "Pioneers",
+    "seasonId": "rlcs-2027",
+    "orgId": "pioneers-ssa",
+    "region": "SSA",
+    "playerCardIds": [
+      "sweaty-pioneers-ssa-2027",
+      "gunz-pioneers-ssa-2027",
+      "tehqoz-pioneers-ssa-2027"
+    ],
+    "coachId": "noxes-coach-pioneers-ssa-2027",
+    "orgBuffLevel": "~",
+    "historicalStrength": "underdog"
   }
 ]

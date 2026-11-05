@@ -786,6 +786,8 @@ export interface ChallengeConstraint {
   region?: Region;
   /** ...or to a single season/era (Era Lock). */
   seasonId?: string;
+  /** Latest edition available when this fixed-seed puzzle was calibrated. */
+  maxSeasonId?: string;
   /** ...or every drafted player must be this nationality (One Nation). */
   country?: string;
   /** Base cards only — no specials roll in the draft (Purist). */
