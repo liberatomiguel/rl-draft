@@ -194,7 +194,7 @@ export function ChampionshipSunday({
               style={{ animationDelay: `${bracketDelay + 5 * CAREER_PLAYBACK.sundayIntroStaggerMs}ms` }}
             >
               <WhistleIcon className="h-3.5 w-3.5" />
-              {C.sunday.briefingChip(C.sunday.briefing[briefing])}
+              {C.sunday.briefingChip(C.sunday.championshipBriefing[briefing])}
             </p>
           ) : null}
 

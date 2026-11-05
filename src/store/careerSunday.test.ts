@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_CALENDAR, CAREER_SUNDAY } from "@/config/balance";
+import { CAREER_CALENDAR, CAREER_GEAR, CAREER_SEASON_GOAL, CAREER_SUNDAY } from "@/config/balance";
 import {
   eventDayFor,
   firstDayOfWeek,
@@ -19,7 +19,7 @@ import {
   seasonSchedule,
 } from "@/engine/career/calendar";
 import { followRoundsOf, followSwissTable, followWinnerOf } from "@/engine/career/follow";
-import { briefingEdgeFor, repairWeekendState, sundayEdgeFor } from "@/engine/career/sunday";
+import { briefingEdgeFor, briefingOpponentOf, cappedBriefingEdge, repairWeekendState, sundayEdgeFor, SUNDAY_BRIEFINGS } from "@/engine/career/sunday";
 import type { CareerEventDef, CareerSave } from "@/engine/career/types";
 import type { SeriesResult, TournamentState } from "@/engine/types";
 import {
@@ -32,6 +32,8 @@ import {
   isEventPaused,
   migrateSaveToV5,
   simEventToEnd,
+  runBootcampFlow,
+  stepEventRound,
   startEvent,
   sundayIntroFlagFor,
   type CreateCareerInput,
@@ -250,13 +252,13 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
     const def = eve.pendingEventDef!;
     const sun = startSundayFlow(eve, "prepare").save;
     const t = startEvent(sun, false).activeEvent!.tournament;
-    expect(sundayEdgeFor(sun.weekend, def, def.day, t)).toBeCloseTo(0.35);
-    expect(briefingEdgeFor("recover", def, t)).toBeCloseTo(-0.15);
+    expect(sundayEdgeFor(sun.weekend, def, def.day, t)).toBeCloseTo(CAREER_SUNDAY.briefing.prepare.swiss);
+    expect(briefingEdgeFor("recover", def, t)).toBeCloseTo(-0.2);
     expect(sundayEdgeFor(sun.weekend, def, def.day - 1, t)).toBe(0); // Saturday
     expect(sundayEdgeFor(sun.weekend, { ...def, id: "other" }, def.day, t)).toBe(0);
-    expect(sundayEdgeFor({ eventId: def.id, briefing: "keep" }, def, def.day, t)).toBeCloseTo(0.10);
+    expect(sundayEdgeFor({ eventId: def.id, briefing: "keep" }, def, def.day, t)).toBeCloseTo(CAREER_SUNDAY.briefing.keep.swiss);
     const played = simEventToEnd(startEvent(sun, false)).activeEvent!.tournament;
-    expect(briefingEdgeFor("prepare", def, { ...played, stage: "playoffs" })).toBeCloseTo(-0.15);
+    expect(briefingEdgeFor("prepare", def, { ...played, stage: "playoffs" })).toBeCloseTo(-0.2);
     expect(briefingEdgeFor("recover", def, { ...played, stage: "playoffs" })).toBe(CAREER_SUNDAY.briefing.recover.playoffs);
     // The load repair: a bad record reads as none, never throws.
     const bad: { weekend?: unknown } = { weekend: { eventId: 7 } };
@@ -269,7 +271,7 @@ describe("SUN-01 — Saturday's qualifier won: HQ holds Saturday evening until S
 });
 
 describe("SUN-01 — a Major paused after its Swiss: Championship Sunday is started from HQ", { timeout: 60_000 }, () => {
-  it("the pause is the stop; Recover lands on every playoff series of the user, the result is banked once", () => {
+  it("the pause is the stop; Recover trades the playoff opener for later series, the result is banked once", () => {
     const paused = pausedMajor(85);
     const def = paused.activeEvent!.def;
     expect(sundayAheadOf(paused)).toMatchObject({ kind: "championship", briefing: null, sundayDay: playoffsDayFor(def) });
@@ -286,7 +288,7 @@ describe("SUN-01 — a Major paused after its Swiss: Championship Sunday is star
     expect(recT.swiss).toEqual(keepT.swiss);
     const first = (t: TournamentState) => userSeriesOf(t, "playoffs")[0];
     if (first(keepT) && first(recT)) {
-      expectEdge(userDiff(first(recT)) - userDiff(first(keepT)), CAREER_SUNDAY.briefing.recover.playoffs - CAREER_SUNDAY.briefing.keep.playoffs);
+      expectEdge(userDiff(first(recT)) - userDiff(first(keepT)), CAREER_SUNDAY.championshipBriefing.recover.opening - CAREER_SUNDAY.championshipBriefing.keep.opening);
     }
     const done = finishEvent(recFin);
     expect(done.eventResults.filter((r) => r.eventId === def.id)).toHaveLength(1);
@@ -386,5 +388,92 @@ describe("SUN-03 — an event the user is out of", { timeout: 60_000 }, () => {
     const out = outAtQualifier();
     const broken = reload({ ...out, followEvent: { def: null } as never });
     expect(broken.followEvent).toBeNull();
+  });
+});
+
+
+describe("rc.37 F3 — matchday trade-offs and the shared temporary cap", () => {
+  it("no choice dominates another across regional or championship series", () => {
+    const sun = startSundayFlow(regionalSaturdayEvening(), "keep").save;
+    const base = startEvent(sun, true).activeEvent!.tournament;
+    const played = stepEventRound(startEvent(sun, true)).activeEvent!.tournament;
+    for (const tier of ["regional", "major", "worlds"] as const) {
+      const def = { tier };
+      const opening = tier === "regional" ? base : { ...base, stage: "playoffs" as const, playoffs: { ...base.playoffs!, rounds: [] } };
+      // Real Swiss history for regionals; one user playoff series for internationals.
+      const later = tier === "regional" ? played : {
+        ...opening,
+        playoffs: { ...opening.playoffs!, rounds: [{ name: "ub_quarterfinal" as const, series: [{ teamAId: "user", teamBId: "opponent" }] }] },
+      } as TournamentState;
+      const stages = tier === "regional" ? [opening, later, { ...played, stage: "playoffs" as const }] : [opening, later];
+      for (const camp of [0, ...CAREER_GEAR.bootcamp.map(c => c.sharpRating)]) {
+      const vectors = SUNDAY_BRIEFINGS.map(choice => stages.map(t => cappedBriefingEdge(briefingEdgeFor(choice, def, t), camp)));
+      for (let a = 0; a < vectors.length; a++) for (let b = 0; b < vectors.length; b++) {
+        if (a === b) continue;
+        expect(vectors[a].some((edge, i) => edge > vectors[b][i]), `${tier}, camp ${camp}: ${SUNDAY_BRIEFINGS[a]} vs ${SUNDAY_BRIEFINGS[b]}`).toBe(true);
+      }
+      }
+    }
+  });
+
+  it("the best edge measures 5–8 percentage points on the cupSeries curve", () => {
+    const { mid, scale } = CAREER_SEASON_GOAL.cupSeries;
+    const chance = (margin: number) => 1 / (1 + Math.exp(-(margin - mid) / scale));
+    for (const margin of [-2, -1, 0]) {
+      const pp = 100 * (chance(margin + CAREER_SUNDAY.briefing.prepare.swiss) - chance(margin));
+      expect(pp).toBeGreaterThanOrEqual(5);
+      expect(pp).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it("study affects the actual opening opponent, never a later Swiss series", () => {
+    const sun = startSundayFlow(regionalSaturdayEvening(), "prepare").save;
+    const started = startEvent(sun, true);
+    const t = started.activeEvent!.tournament;
+    const opponent = briefingOpponentOf(t);
+    expect(opponent).toBeTruthy();
+    const next = stepEventRound(started).activeEvent!.tournament;
+    const opener = userSeriesOf(next, "swiss")[0];
+    expect([opener.teamAId, opener.teamBId]).toContain(opponent);
+    expect(briefingEdgeFor("prepare", started.activeEvent!.def, t)).toBe(0.55);
+    expect(briefingEdgeFor("prepare", started.activeEvent!.def, next)).toBe(0);
+  });
+
+  it("bootcamp cannot charge money, spend a sponsor camp or change a frozen event", () => {
+    const eve = regionalSaturdayEvening();
+    eve.reputation = 38;
+    eve.finances.balance = 100_000;
+    const sun = startSundayFlow(eve, "prepare").save;
+    const started = startEvent(sun, true);
+    const before = structuredClone(started);
+    const refused = runBootcampFlow(started);
+    expect(refused.error).toBe("bootcampEventActive");
+    expect(refused.save).toBe(started);
+    expect(started).toEqual(before);
+  });
+
+  it("T2 camp + briefing cap survives reload and frozen teams are not compounded", () => {
+    const eve = regionalSaturdayEvening();
+    eve.reputation = 38;
+    eve.finances.balance = 100_000;
+    const camp = runBootcampFlow(eve);
+    expect(camp.error).toBeUndefined();
+    const sun = startSundayFlow(camp.save, "prepare").save;
+    const started = reload(startEvent(sun, true));
+    const { def, tournament: t } = started.activeEvent!;
+    expect(t.teams.user.rating.temporaryMod).toBe(1.75);
+    expect(sundayEdgeFor(started.weekend, def, sun.clock.day, t)).toBeCloseTo(0.25);
+    expect(cappedBriefingEdge(0.55, 1.75) + 1.75).toBe(CAREER_GEAR.tempRatingMax);
+    expect(cappedBriefingEdge(-0.2, 1.75)).toBe(-0.2);
+    const frozen = structuredClone(t.teams);
+    const done = simEventToEnd(started);
+    expect(done.activeEvent!.tournament.teams).toEqual(frozen);
+  });
+
+  it("a paused Major also refuses bootcamp before Championship Sunday", () => {
+    const paused = pausedMajor(99);
+    paused.reputation = 38;
+    paused.finances.balance = 100_000;
+    expect(runBootcampFlow(paused)).toEqual({ save: paused, error: "bootcampEventActive" });
   });
 });

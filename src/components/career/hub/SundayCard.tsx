@@ -169,8 +169,16 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
 
   const effectOf = (c: SundayBriefingChoice): string => {
     const fx = briefingEffectOf(c);
+    if (championship) {
+      const playoffFx = CAREER_SUNDAY.championshipBriefing[c];
+      const opening = c === "prepare" && openerName
+        ? C.sunday.effectPrepareVs(playoffFx.opening, openerName) : "";
+      return opening ? `${opening}; ${C.sunday.effectLaterOnly(playoffFx.later)}`
+        : C.sunday.effectLater(playoffFx.opening, playoffFx.later);
+    }
     if (c === "keep") return C.sunday.effectContinuity(fx.swiss);
-    return championship ? C.sunday.effectPlayoffs(fx.playoffs) : C.sunday.effectTradeoff(fx.swiss, fx.playoffs);
+    if (c === "prepare") return `${C.sunday.effectPrepare(fx.swiss)}. ${C.sunday.effectStudyRest(fx.playoffs)}`;
+    return C.sunday.effectTradeoff(fx.swiss, fx.playoffs);
   };
 
   return (
@@ -224,7 +232,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
           </span>
           <p className="display text-sm font-bold uppercase tracking-[0.12em] text-ink">{C.sunday.briefingTitle}</p>
         </div>
-        <p className="mt-1 text-xs text-sub">{C.sunday.briefingHint}</p>
+        <p className="mt-1 text-xs text-sub">{championship ? C.sunday.championshipHint : C.sunday.briefingHint}</p>
         <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={C.sunday.briefingTitle}>
           {SUNDAY_BRIEFINGS.map((c) => {
             const Icon = BRIEFING_ICON[c];
@@ -246,7 +254,7 @@ export function NowSunday({ save, C, ahead }: { save: CareerSave; C: CareerCopy;
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className={cx("display block text-[13px] font-bold uppercase tracking-wide", active ? "text-orange-bright" : "text-ink")}>
-                    {C.sunday.briefing[c]}
+                    {championship ? C.sunday.championshipBriefing[c] : C.sunday.briefing[c]}
                   </span>
                   <span className="mt-0.5 block text-[11px] leading-snug text-sub">{effectOf(c)}</span>
                 </span>

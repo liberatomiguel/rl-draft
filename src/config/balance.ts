@@ -2481,7 +2481,7 @@ export const CAREER_GEAR = {
    */
   bootcampSpan: "split" as "split" | "event",
   /**
-   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.0) for the whole split
+   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.75) for the whole split
    * (1). Decision 5-B, in reserve: 0.5 halves it, should the split-long camp
    * beat a coach (HQ-CONTRACT §6.5; the rc.34 measurement is in the report).
    */
@@ -3185,8 +3185,8 @@ export const CAREER_PLAYBACK = {
  *    reload); starting it is exactly one day on (Sunday trains nobody and
  *    pays nobody). false = rc.35's flow (the clock walks into Sunday).
  *  - `briefing`: phase-based Sunday team-rating edges, shown upfront.
- *    Continuity +0.10 throughout; Recover trades Swiss strength for playoff
- *    strength; Prepare does the reverse. Completed phases are never replayed.
+ *    Continuity is steady; Recover favors later series; Prepare targets the
+ *    opener. Championship Sunday has its own opening/later trade-off.
  *  - follow (SUN-03): an event the user is out of is kept compact; HQ offers
  *    it for `followCardDays` days from the day it resolved (the eliminated
  *    Saturday's "Sunday without you" card besides); watching reveals a round
@@ -3215,10 +3215,17 @@ export const CAREER_CREST = {
 
 export const CAREER_SUNDAY = {
   saturdayStop: true,
+  // rc.37 F3 — regional Swiss/playoffs trade-off; study boosts only the opener.
   briefing: {
-    keep: { swiss: 0.1, playoffs: 0.1 },
-    recover: { swiss: -0.15, playoffs: 0.35 },
-    prepare: { swiss: 0.35, playoffs: -0.15 },
+    keep: { swiss: 0.15, playoffs: 0.15 },
+    recover: { swiss: -0.2, playoffs: 0.55 },
+    prepare: { swiss: 0.55, playoffs: -0.2 },
+  },
+  // rc.37 F3 — playoffs-only choices: opening series versus the rest of Sunday.
+  championshipBriefing: {
+    keep: { opening: 0.15, later: 0.15 },
+    recover: { opening: -0.2, later: 0.55 },
+    prepare: { opening: 0.55, later: -0.2 },
   },
   defaultBriefing: "keep",
   followCardDays: 2,

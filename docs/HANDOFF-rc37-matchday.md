@@ -1,0 +1,14 @@
+# rc.37 F3 — Dia de jogo
+- Branch: `claude/rc37-matchday`; base: staging local `ae0ff80`.
+- Regional: keep +0.15; recover −0.20 Swiss / +0.55 playoffs; prepare +0.55 só na abertura, 0 no resto do Swiss / −0.20 playoffs.
+- Major/Worlds: keep +0.15; recover −0.20 abertura / +0.55 depois; análise internacional +0.55 abertura / −0.20 depois.
+- O estudo usa o pareamento real da abertura; `effectPrepareVs` exibe o adversário internacional. Não reaplica em reencontro.
+- +0.55 mede 6.48–7.49 pp na curva cupSeries, margens −2/−1/0; cap pode reduzir o ganho.
+- Nenhuma opção dominada nos dois estágios, sem camp ou com T1/T2 (teste de vetores).
+- Bootcamp recusado durante qualquer activeEvent, inclusive pausa sábado/domingo, sem cobrança/consumo; erro EN/PT explica.
+- Causa do bug: compra alterava finanças mas não o time congelado; briefing somava acima do teto.
+- Bootcamp + briefing ≤ tempRatingMax (2); campo opcional rating.temporaryMod congela o camp sem afetar equipamento permanente.
+- Saves antigos sem temporaryMod usam bootcampSharp como fallback; sem bump de persistência.
+- Testes alvo: 31 passaram; lint dos alterados e typecheck passaram; nenhum build/servidor.
+- Suíte completa: 1480 passaram, 18 pulados; única falha: balanceVersion.test fingerprint (intencional, integração atualiza).
+- Sem bump, push, merge ou edição de STATUS/ROADMAP/CHANGELOG; fingerprint/BALANCE_VERSION preservados.

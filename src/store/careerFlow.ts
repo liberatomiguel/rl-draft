@@ -3175,12 +3175,12 @@ function holdsForPlayoffsDay(save: CareerSave, t: TournamentState): boolean {
 /**
  * rc.36 (SUN-01, R88): one round of the user's event — on its Sunday, the
  * coach briefing's edge on the user's team for this round only (the base
- * team stays as it was frozen when the event started). No briefing, "keep",
- * or any other day: exactly `playNextRound`.
+ * team stays as it was frozen when the event started). Continuity has its
+ * own steady edge; outside the briefed Sunday this is exactly `playNextRound`.
  */
 function playEventRound(save: CareerSave, t: TournamentState, rng: ReturnType<typeof createRng>): TournamentState {
   const ev = save.activeEvent;
-  const edge = ev ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t) : 0;
+  const edge = ev ? sundayEdgeFor(save.weekend, ev.def, save.clock.day, t, save.finances.bootcampSharp) : 0;
   if (edge === 0) return playNextRound(t, save.difficulty, rng);
   return { ...playNextRound(withUserEdge(t, edge), save.difficulty, rng), teams: t.teams };
 }
@@ -4809,6 +4809,8 @@ export function setPsychologistFlow(input: CareerSave, on: boolean): FlowResult 
 }
 
 export function runBootcampFlow(input: CareerSave): FlowResult {
+  // The event team is frozen, including between Saturday and Sunday.
+  if (input.activeEvent) return { save: input, error: "bootcampEventActive" };
   const save = clone(input);
   const tier = bootcampTierFor(save.reputation);
   if (tier === 0) return { save: input, error: "locked" };

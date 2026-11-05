@@ -709,6 +709,9 @@ export function userTeamFor(input: UserTeamInput): {
     rollRange: careerMatchProfile(input.difficulty).userRollRange,
   });
 
+  // Freeze the temporary share separately: briefing + bootcamp share one cap.
+  team.rating.temporaryMod = Math.min(input.bootcampSharp, CAREER_GEAR.tempRatingMax);
+
   const fieldedIds = fieldedPlayers.filter((p): p is SquadPlayer => p !== null).map((p) => p.id);
   return { team, emptySeats, usedSubId, fieldedIds };
 }
