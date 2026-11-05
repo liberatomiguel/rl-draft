@@ -7,11 +7,11 @@
  * today's. Pass the card/lineup `seasonId` and, when the org declares
  * `logoEras` (see ORG_LOGO_ERAS in scripts/build-dataset.mjs), the source
  * chain becomes:
- *   era variant ("<orgId>@<era>")  →  default logo  →  styled monogram
+ *   era variant ("<orgId>@<era>")  →  default logo  →  neutral Octane
  * Without a seasonId (or for single-identity orgs) it's the default logo.
  * URLs come from the asset manifest (src/lib/assets.ts): in production they
  * are small WebP variants sized for the display box, and a logo that has no
- * file is skipped up front — an org without any logo renders the monogram
+ * file is skipped up front — an org without any logo renders the neutral Octane
  * immediately, with zero requests. onError still walks the chain as a
  * safety net. All assets are local files under public/ — nothing is fetched
  * from the internet at runtime.
@@ -56,7 +56,7 @@ export function TeamLogo({
   const name = org?.name ?? orgId;
   const px = SIZE_PX[size];
 
-  // Source chain: era variant (if any) → default logo → monogram fallback.
+  // Source chain: era variant (if any) → default logo → shared neutral Octane.
   // Entries with no file are skipped (orgLogoSrc → null), so they cost nothing.
   const order = seasonId ? seasonById.get(seasonId)?.order : undefined;
   const era =
@@ -66,6 +66,7 @@ export function TeamLogo({
   const sources = [
     era ? orgLogoSrc(`${orgId}@${era.key}`, px) : null,
     org?.logoUrl || orgLogoSrc(orgId, px),
+    orgLogoSrc("_octane-fallback", px),
   ].filter((s): s is string => Boolean(s));
 
   // URLs that failed to load on this mount. Derived, not reset by an effect:

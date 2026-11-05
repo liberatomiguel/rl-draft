@@ -6,3 +6,5 @@
 
 Rocket Draft is a fan-made, non-commercial project and is not affiliated with
 Psyonix, Epic Games, Liquipedia or any esports organization.
+
+- Neutral Octane fallback: generated from an owner-supplied Rocket League vehicle reference. Octane and Rocket League remain properties of their respective owners. Asset and source prompt: `data-sources/org-logo-audit.json`.

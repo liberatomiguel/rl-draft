@@ -1,0 +1,1058 @@
+{
+  "snapshotDate": "2026-11-05",
+  "scope": "All 47 missing organization logos; season variants for 11 major organizations.",
+  "seasonPolicy": "Use the identity worn at the closing RLCS championship of the card season; the data model has one logo per season, not per event.",
+  "symbolPolicy": "Use the standalone symbol for G2 and Vitality: the contemporary full lockups add lettering around the same symbol, reducing legibility in small card slots.",
+  "missingOrganizationReview": [
+    {
+      "orgId": "1",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "1 (North American Team)",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/1_(North_American_Team)"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "5head",
+      "status": "logo-imported",
+      "file": "5Head darkmode.png",
+      "pages": [
+        {
+          "title": "5Head",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/5Head"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "all-gamers-global",
+      "status": "logo-imported",
+      "file": "All Gamers Global full allmode.png",
+      "pages": [
+        {
+          "title": "All Gamers Global",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/All_Gamers_Global"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "avid-esports",
+      "status": "logo-imported",
+      "file": "AVID Esports allmode.png",
+      "pages": [
+        {
+          "title": "AVID Esports",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/AVID_Esports"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "ballerrinas",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Ballerrinas",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/Ballerrinas"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "bodybuilders",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Bodybuilders",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Bodybuilders"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "brocrocros",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Brocrocros",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Brocrocros"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "cringe-society",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Cringe Society",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Cringe_Society"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "dos",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "DOS",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/DOS"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "dracon-esports",
+      "status": "logo-imported",
+      "file": "Dracon Esports 2021 allmode.png",
+      "pages": [
+        {
+          "title": "Dracon Esports",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Dracon_Esports"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "fortnite-flick",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Fortnite Flick",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Fortnite_Flick"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "gmt",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "GMT",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/GMT"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "grr",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "GRR",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/GRR"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "ikkaku",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Ikkaku",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Ikkaku"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "jobless",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Jobless",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Jobless"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "kaydop-corp",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Kaydop Corp",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Kaydop_Corp"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "lg-dire-wolves",
+      "status": "logo-imported",
+      "file": "Dire Wolves 2020 allmode.png",
+      "pages": [
+        {
+          "title": "Dire Wolves",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Dire_Wolves"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "mate-y-tapa",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Mate y Tapa",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Mate_y_Tapa"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "movistar-koi",
+      "status": "logo-imported",
+      "file": "Movistar KOI 2025 allmode.png",
+      "pages": [
+        {
+          "title": "Movistar KOI",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Movistar_KOI"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "nerve",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Nerve",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Nerve"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "next2nu-esports",
+      "status": "logo-imported",
+      "file": "Next2Nu Esports 2026 darkmode.png",
+      "pages": [
+        {
+          "title": "Next2Nu Esports",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Next2Nu_Esports"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "nimmt55",
+      "status": "logo-imported",
+      "file": "Nimmt55 2021 darkmode.png",
+      "pages": [
+        {
+          "title": "Nimmt55",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Nimmt55"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "nixuh",
+      "status": "logo-imported",
+      "file": "Nixuh 2022 full darkmode.png",
+      "pages": [
+        {
+          "title": "Nixuh",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Nixuh"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "northstar",
+      "status": "logo-imported",
+      "file": "NORTHSTAR allmode.png",
+      "pages": [
+        {
+          "title": "NORTHSTAR",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/NORTHSTAR"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "not",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "NOT",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/NOT"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "novadrift",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Novadrift",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Novadrift"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "nto",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "NTO",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/NTO"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "nutorious",
+      "status": "logo-imported",
+      "file": "NuTorious darkmode.png",
+      "pages": [
+        {
+          "title": "NuTorious",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/NuTorious"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "out-of-skill",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Out of Skill",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Out_of_Skill"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "parmiticos",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Parmiticos",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Parmiticos"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "passion-fc",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "PASSION FC",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/PASSION_FC"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "pcs-stride",
+      "status": "logo-imported",
+      "file": "Project Conquerors darkmode.png",
+      "pages": [
+        {
+          "title": "PCS Stride",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/PCS_Stride"
+        },
+        {
+          "title": "Larp",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Larp"
+        },
+        {
+          "title": "PCS Stride",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/PCS_Stride"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "pioneers-oce",
+      "status": "logo-imported",
+      "file": "Kansas City Pioneers 2021 darkmode.png",
+      "pages": [
+        {
+          "title": "Pioneers",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Pioneers"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "playhouse",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Playhouse",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/Playhouse"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "poison-bullets",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Poison Bullets",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Poison_Bullets"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "rmh",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "RMH",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/RMH"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "rpc",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "RPC",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/RPC"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "sapphire",
+      "status": "logo-imported",
+      "file": "Sapphire RL.png",
+      "pages": [
+        {
+          "title": "Sapphire",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Sapphire"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "senbei-strikers",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Senbei Strikers",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Senbei_Strikers"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "space-bound-cowboys",
+      "status": "logo-imported",
+      "file": "Space Bound Cowboys darkmode.png",
+      "pages": [
+        {
+          "title": "Space Bound Cowboys",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Space_Bound_Cowboys"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "team-brave-soldiers-esports",
+      "status": "logo-imported",
+      "file": "Team Brave Soldiers 2025 darkmode.png",
+      "pages": [
+        {
+          "title": "Team Brave Soldiers Esports",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Team_Brave_Soldiers_Esports"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "team-heretics",
+      "status": "logo-imported",
+      "file": "Team Heretics 2024 allmode.png",
+      "pages": [
+        {
+          "title": "Team Heretics",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Team_Heretics"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "the-bricks",
+      "status": "logo-imported",
+      "file": "The Bricks 2019 allmode.png",
+      "pages": [
+        {
+          "title": "The Bricks",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/The_Bricks"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    },
+    {
+      "orgId": "top-pombo-models",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Top Pombo Models",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/Top_Pombo_Models"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "tu-tu-du-du-verstappen",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Tu-tu-du-du Verstappen",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Tu-tu-du-du_Verstappen"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "tubby-troubles",
+      "status": "neutral-fallback",
+      "file": null,
+      "pages": [
+        {
+          "title": "Tubby Troubles",
+          "exists": false,
+          "url": "https://liquipedia.net/rocketleague/Tubby_Troubles"
+        }
+      ],
+      "reason": "No own team logo found in the exact team page/images; no opponent/predecessor/player image substituted."
+    },
+    {
+      "orgId": "wolves-esports",
+      "status": "logo-imported",
+      "file": "Wolves Esports allmode.png",
+      "pages": [
+        {
+          "title": "Wolves Esports",
+          "exists": true,
+          "url": "https://liquipedia.net/rocketleague/Wolves_Esports"
+        }
+      ],
+      "reason": "Own logo file verified on the team page."
+    }
+  ],
+  "assets": [
+    {
+      "asset": "5head",
+      "file": "5Head darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/3/32/5Head_darkmode.png/600px-5Head_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:5Head%20darkmode.png"
+    },
+    {
+      "asset": "all-gamers-global",
+      "file": "All Gamers Global full allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/1/14/All_Gamers_Global_full_allmode.png/600px-All_Gamers_Global_full_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:All%20Gamers%20Global%20full%20allmode.png"
+    },
+    {
+      "asset": "avid-esports",
+      "file": "AVID Esports allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/c/c6/AVID_Esports_allmode.png/600px-AVID_Esports_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:AVID%20Esports%20allmode.png"
+    },
+    {
+      "asset": "dracon-esports",
+      "file": "Dracon Esports 2021 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/7/7c/Dracon_Esports_2021_allmode.png/600px-Dracon_Esports_2021_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Dracon%20Esports%202021%20allmode.png"
+    },
+    {
+      "asset": "lg-dire-wolves",
+      "file": "Dire Wolves 2020 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/a/a0/Dire_Wolves_2020_allmode.png/600px-Dire_Wolves_2020_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Dire%20Wolves%202020%20allmode.png"
+    },
+    {
+      "asset": "movistar-koi",
+      "file": "Movistar KOI 2025 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/6/6c/Movistar_KOI_2025_allmode.png/600px-Movistar_KOI_2025_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Movistar%20KOI%202025%20allmode.png"
+    },
+    {
+      "asset": "next2nu-esports",
+      "file": "Next2Nu Esports 2026 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/5/54/Next2Nu_Esports_2026_darkmode.png/600px-Next2Nu_Esports_2026_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Next2Nu%20Esports%202026%20darkmode.png"
+    },
+    {
+      "asset": "nimmt55",
+      "file": "Nimmt55 2021 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/1/16/Nimmt55_2021_darkmode.png/600px-Nimmt55_2021_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Nimmt55%202021%20darkmode.png"
+    },
+    {
+      "asset": "nixuh",
+      "file": "Nixuh 2022 full darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/b/b1/Nixuh_2022_full_darkmode.png/600px-Nixuh_2022_full_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Nixuh%202022%20full%20darkmode.png"
+    },
+    {
+      "asset": "northstar",
+      "file": "NORTHSTAR allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/e/e9/NORTHSTAR_allmode.png/600px-NORTHSTAR_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:NORTHSTAR%20allmode.png"
+    },
+    {
+      "asset": "nutorious",
+      "file": "NuTorious darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/6/61/NuTorious_darkmode.png/600px-NuTorious_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:NuTorious%20darkmode.png"
+    },
+    {
+      "asset": "pcs-stride",
+      "file": "Project Conquerors darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/2/21/Project_Conquerors_darkmode.png/600px-Project_Conquerors_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Project%20Conquerors%20darkmode.png"
+    },
+    {
+      "asset": "pioneers-oce",
+      "file": "Kansas City Pioneers 2021 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/0/09/Kansas_City_Pioneers_2021_darkmode.png/600px-Kansas_City_Pioneers_2021_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Kansas%20City%20Pioneers%202021%20darkmode.png"
+    },
+    {
+      "asset": "sapphire",
+      "file": "Sapphire RL.png",
+      "url": "https://liquipedia.net/commons/images/a/a0/Sapphire_RL.png",
+      "source": "https://liquipedia.net/rocketleague/File:Sapphire%20RL.png"
+    },
+    {
+      "asset": "space-bound-cowboys",
+      "file": "Space Bound Cowboys darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/0/05/Space_Bound_Cowboys_darkmode.png/600px-Space_Bound_Cowboys_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Space%20Bound%20Cowboys%20darkmode.png"
+    },
+    {
+      "asset": "team-brave-soldiers-esports",
+      "file": "Team Brave Soldiers 2025 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/3/30/Team_Brave_Soldiers_2025_darkmode.png/600px-Team_Brave_Soldiers_2025_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Brave%20Soldiers%202025%20darkmode.png"
+    },
+    {
+      "asset": "team-heretics",
+      "file": "Team Heretics 2024 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/a/a9/Team_Heretics_2024_allmode.png/600px-Team_Heretics_2024_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Heretics%202024%20allmode.png"
+    },
+    {
+      "asset": "the-bricks",
+      "file": "The Bricks 2019 allmode.png",
+      "url": "https://liquipedia.net/commons/images/9/9a/The_Bricks_2019_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:The%20Bricks%202019%20allmode.png"
+    },
+    {
+      "asset": "wolves-esports",
+      "file": "Wolves Esports allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/6/6c/Wolves_Esports_allmode.png/600px-Wolves_Esports_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Wolves%20Esports%20allmode.png"
+    },
+    {
+      "asset": "complexity-gaming",
+      "file": "Complexity 2025 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/9/98/Complexity_2025_allmode.png/600px-Complexity_2025_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Complexity%202025%20allmode.png"
+    },
+    {
+      "asset": "complexity-gaming@2018",
+      "file": "CompLexity Gaming allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/3/33/CompLexity_Gaming_allmode.png/600px-CompLexity_Gaming_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:CompLexity%20Gaming%20allmode.png"
+    },
+    {
+      "asset": "complexity-gaming@2019",
+      "file": "Complexity Gaming 2019 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/f/fe/Complexity_Gaming_2019_darkmode.png/600px-Complexity_Gaming_2019_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Complexity%20Gaming%202019%20darkmode.png"
+    },
+    {
+      "asset": "dignitas",
+      "file": "Dignitas RL December 10, 2025 allmode.png",
+      "url": "https://liquipedia.net/commons/images/a/af/Dignitas_RL_December_10%2C_2025_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Dignitas%20RL%20December%2010%2C%202025%20allmode.png"
+    },
+    {
+      "asset": "dignitas@2003",
+      "file": "Team Dignitas allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/8/8c/Team_Dignitas_allmode.png/600px-Team_Dignitas_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Dignitas%20allmode.png"
+    },
+    {
+      "asset": "dignitas@2021",
+      "file": "Dignitas 2021 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/5/56/Dignitas_2021_allmode.png/600px-Dignitas_2021_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Dignitas%202021%20allmode.png"
+    },
+    {
+      "asset": "dignitas@2025",
+      "file": "Dignitas Rocket League 2025 allmode.png",
+      "url": "https://liquipedia.net/commons/images/4/47/Dignitas_Rocket_League_2025_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Dignitas%20Rocket%20League%202025%20allmode.png"
+    },
+    {
+      "asset": "spacestation-gaming",
+      "file": "Spacestation Gaming 2023 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/1/1a/Spacestation_Gaming_2023_allmode.png/600px-Spacestation_Gaming_2023_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Spacestation%20Gaming%202023%20allmode.png"
+    },
+    {
+      "asset": "spacestation-gaming@2017",
+      "file": "Spacestation Gaming allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/8/80/Spacestation_Gaming_allmode.png/600px-Spacestation_Gaming_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Spacestation%20Gaming%20allmode.png"
+    },
+    {
+      "asset": "team-vitality",
+      "file": "Team Vitality 2023 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/9/96/Team_Vitality_2023_darkmode.png/600px-Team_Vitality_2023_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Vitality%202023%20darkmode.png"
+    },
+    {
+      "asset": "team-vitality@2017",
+      "file": "Team Vitality allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/f/f4/Team_Vitality_allmode.png/600px-Team_Vitality_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Vitality%20allmode.png"
+    },
+    {
+      "asset": "team-vitality@2020",
+      "file": "Team Vitality 2020 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/0/09/Team_Vitality_2020_allmode.png/600px-Team_Vitality_2020_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Vitality%202020%20allmode.png"
+    },
+    {
+      "asset": "team-vitality@2021",
+      "file": "Team Vitality 2021 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/5/55/Team_Vitality_2021_allmode.png/600px-Team_Vitality_2021_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Vitality%202021%20allmode.png"
+    },
+    {
+      "asset": "team-vitality@2023",
+      "file": "Team Vitality 2023 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/9/96/Team_Vitality_2023_darkmode.png/600px-Team_Vitality_2023_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Vitality%202023%20darkmode.png"
+    },
+    {
+      "asset": "g2-esports",
+      "file": "G2 Esports 2019 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/c/cd/G2_Esports_2019_darkmode.png/600px-G2_Esports_2019_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:G2%20Esports%202019%20darkmode.png"
+    },
+    {
+      "asset": "g2-esports@2015",
+      "file": "G2 Esports allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/2/2d/G2_Esports_allmode.png/600px-G2_Esports_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:G2%20Esports%20allmode.png"
+    },
+    {
+      "asset": "g2-esports@2019",
+      "file": "G2 Esports 2019 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/c/cd/G2_Esports_2019_darkmode.png/600px-G2_Esports_2019_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:G2%20Esports%202019%20darkmode.png"
+    },
+    {
+      "asset": "mousesports",
+      "file": "MOUZ 2021 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/c/c2/MOUZ_2021_allmode.png/600px-MOUZ_2021_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:MOUZ%202021%20allmode.png"
+    },
+    {
+      "asset": "mousesports@2016",
+      "file": "Mousesports 2016 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/a/a8/Mousesports_2016_allmode.png/600px-Mousesports_2016_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Mousesports%202016%20allmode.png"
+    },
+    {
+      "asset": "team-liquid",
+      "file": "Team Liquid 2023 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/6/6f/Team_Liquid_2023_darkmode.png/600px-Team_Liquid_2023_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Liquid%202023%20darkmode.png"
+    },
+    {
+      "asset": "team-liquid@2020",
+      "file": "Team Liquid 2020 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/0/05/Team_Liquid_2020_darkmode.png/600px-Team_Liquid_2020_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20Liquid%202020%20darkmode.png"
+    },
+    {
+      "asset": "team-bds",
+      "file": "Team BDS 2021 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/6/60/Team_BDS_2021_allmode.png/600px-Team_BDS_2021_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Team%20BDS%202021%20allmode.png"
+    },
+    {
+      "asset": "team-bds@2019",
+      "file": "BDS Esport 2019 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/0/05/BDS_Esport_2019_allmode.png/600px-BDS_Esport_2019_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:BDS%20Esport%202019%20allmode.png"
+    },
+    {
+      "asset": "cloud9",
+      "file": "Cloud9 2023 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/b/bb/Cloud9_2023_allmode.png/600px-Cloud9_2023_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Cloud9%202023%20allmode.png"
+    },
+    {
+      "asset": "cloud9@2013",
+      "file": "Cloud9 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/f/f8/Cloud9_allmode.png/600px-Cloud9_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:Cloud9%20allmode.png"
+    },
+    {
+      "asset": "faze-clan",
+      "file": "FaZe Esports 2026 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/c/c5/FaZe_Esports_2026_darkmode.png/600px-FaZe_Esports_2026_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:FaZe%20Esports%202026%20darkmode.png"
+    },
+    {
+      "asset": "faze-clan@2021",
+      "file": "FaZe Clan 2021 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/d/de/FaZe_Clan_2021_darkmode.png/600px-FaZe_Clan_2021_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:FaZe%20Clan%202021%20darkmode.png"
+    },
+    {
+      "asset": "faze-clan@2021-11",
+      "file": "FaZe Clan November 2021 darkmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/c/c8/FaZe_Clan_November_2021_darkmode.png/600px-FaZe_Clan_November_2021_darkmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:FaZe%20Clan%20November%202021%20darkmode.png"
+    },
+    {
+      "asset": "nrg-esports",
+      "file": "NRG 2024 allmode.png",
+      "url": "https://liquipedia.net/commons/images/thumb/1/16/NRG_2024_allmode.png/600px-NRG_2024_allmode.png",
+      "source": "https://liquipedia.net/rocketleague/File:NRG%202024%20allmode.png"
+    }
+  ],
+  "eras": {
+    "nrg-esports": [
+      {
+        "key": "2016",
+        "until": "S2"
+      },
+      {
+        "key": "2017",
+        "until": "S6"
+      },
+      {
+        "key": "2019",
+        "until": "S8"
+      },
+      {
+        "key": "2020",
+        "until": "2022-23"
+      }
+    ],
+    "complexity-gaming": [
+      {
+        "key": "2018",
+        "until": "S6"
+      },
+      {
+        "key": "2019",
+        "until": "2024"
+      }
+    ],
+    "dignitas": [
+      {
+        "key": "2003",
+        "until": "S5"
+      },
+      {
+        "key": "2018",
+        "until": "S9"
+      },
+      {
+        "key": "2021",
+        "until": "2024"
+      },
+      {
+        "key": "2025",
+        "until": "2025"
+      }
+    ],
+    "spacestation-gaming": [
+      {
+        "key": "2017",
+        "until": "S9"
+      },
+      {
+        "key": "2021",
+        "until": "2022-23"
+      }
+    ],
+    "team-vitality": [
+      {
+        "key": "2017",
+        "until": "S5"
+      },
+      {
+        "key": "2018",
+        "until": "S8"
+      },
+      {
+        "key": "2020",
+        "until": "S9"
+      },
+      {
+        "key": "2021",
+        "until": "2021-22"
+      },
+      {
+        "key": "2023",
+        "until": "2025"
+      }
+    ],
+    "g2-esports": [
+      {
+        "key": "2015",
+        "until": "S6"
+      },
+      {
+        "key": "2019",
+        "until": "S8"
+      }
+    ],
+    "mousesports": [
+      {
+        "key": "2016",
+        "until": "S9"
+      }
+    ],
+    "team-liquid": [
+      {
+        "key": "2020",
+        "until": "2021-22"
+      }
+    ],
+    "team-bds": [
+      {
+        "key": "2019",
+        "until": "RLCS X"
+      }
+    ],
+    "cloud9": [
+      {
+        "key": "2013",
+        "until": "2021-22"
+      }
+    ],
+    "faze-clan": [
+      {
+        "key": "2021",
+        "until": "RLCS X"
+      },
+      {
+        "key": "2021-11",
+        "until": "2025"
+      }
+    ]
+  },
+  "reviewedUnchanged": [
+    "FURIA",
+    "Ninjas in Pyjamas",
+    "Team Falcons",
+    "Karmine Corp",
+    "Gen.G Mobil1 Racing",
+    "Pioneers"
+  ],
+  "fallback": {
+    "asset": "_octane-fallback",
+    "file": "public/orgs/_octane-fallback.png",
+    "method": "Built-in image_gen, based on user-provided Octane reference; local transparent PNG.",
+    "prompt": "Flat 2D light gray Octane icon based on the user reference, three-quarter front view, transparent background, simplified silhouette, no text or background."
+  },
+  "fetcherFix": "Reject short ambiguous search names and files whose normalized filename does not begin with the organization name; exact file overrides take precedence."
+}

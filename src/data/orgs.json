@@ -193,14 +193,30 @@
     "name": "Cloud9",
     "region": "NA",
     "buffType": "clutch",
-    "buffLevel": "++"
+    "buffLevel": "++",
+    "logoEras": [
+      {
+        "key": "2013",
+        "untilOrder": 11
+      }
+    ]
   },
   {
     "id": "complexity-gaming",
     "name": "Complexity Gaming",
     "region": "EU",
     "buffType": "defense",
-    "buffLevel": "+++"
+    "buffLevel": "+++",
+    "logoEras": [
+      {
+        "key": "2018",
+        "untilOrder": 6
+      },
+      {
+        "key": "2019",
+        "untilOrder": 13
+      }
+    ]
   },
   {
     "id": "cringe-society",
@@ -231,8 +247,20 @@
     "buffLevel": "++",
     "logoEras": [
       {
+        "key": "2003",
+        "untilOrder": 5
+      },
+      {
         "key": "2018",
         "untilOrder": 9
+      },
+      {
+        "key": "2021",
+        "untilOrder": 13
+      },
+      {
+        "key": "2025",
+        "untilOrder": 14
       }
     ]
   },
@@ -367,7 +395,17 @@
     "name": "FaZe Clan",
     "region": "NA",
     "buffType": "offense",
-    "buffLevel": "++"
+    "buffLevel": "++",
+    "logoEras": [
+      {
+        "key": "2021",
+        "untilOrder": 10
+      },
+      {
+        "key": "2021-11",
+        "untilOrder": 14
+      }
+    ]
   },
   {
     "id": "fc-barcelona",
@@ -437,7 +475,17 @@
     "name": "G2 Esports",
     "region": "NA",
     "buffType": "offense",
-    "buffLevel": "++"
+    "buffLevel": "++",
+    "logoEras": [
+      {
+        "key": "2015",
+        "untilOrder": 6
+      },
+      {
+        "key": "2019",
+        "untilOrder": 8
+      }
+    ]
   },
   {
     "id": "g2-stride",
@@ -836,7 +884,13 @@
     "name": "mousesports",
     "region": "EU",
     "buffType": "clutch",
-    "buffLevel": "+"
+    "buffLevel": "+",
+    "logoEras": [
+      {
+        "key": "2016",
+        "untilOrder": 9
+      }
+    ]
   },
   {
     "id": "movistar-koi",
@@ -1452,8 +1506,12 @@
     "buffLevel": "++",
     "logoEras": [
       {
+        "key": "2017",
+        "untilOrder": 9
+      },
+      {
         "key": "2021",
-        "untilOrder": 11
+        "untilOrder": 12
       }
     ]
   },
@@ -1504,7 +1562,13 @@
     "name": "Team BDS",
     "region": "EU",
     "buffType": "consistency",
-    "buffLevel": "+++"
+    "buffLevel": "+++",
+    "logoEras": [
+      {
+        "key": "2019",
+        "untilOrder": 10
+      }
+    ]
   },
   {
     "id": "team-brave-soldiers-esports",
@@ -1546,7 +1610,13 @@
     "name": "Team Liquid",
     "region": "EU",
     "buffType": "clutch",
-    "buffLevel": "++"
+    "buffLevel": "++",
+    "logoEras": [
+      {
+        "key": "2020",
+        "untilOrder": 11
+      }
+    ]
   },
   {
     "id": "team-mobula",
@@ -1605,8 +1675,24 @@
     "buffLevel": "+++",
     "logoEras": [
       {
+        "key": "2017",
+        "untilOrder": 5
+      },
+      {
         "key": "2018",
         "untilOrder": 8
+      },
+      {
+        "key": "2020",
+        "untilOrder": 9
+      },
+      {
+        "key": "2021",
+        "untilOrder": 11
+      },
+      {
+        "key": "2023",
+        "untilOrder": 14
       }
     ]
   },

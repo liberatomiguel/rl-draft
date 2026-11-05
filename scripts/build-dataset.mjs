@@ -553,28 +553,132 @@ const REGION_SPLIT_ORGS = new Set(["pioneers", "fut-esports"]);
  * (`npm run fetch:assets` can also pull exact Liquipedia files via the
  * "orgFiles" block in data-sources/asset-overrides.json.)
  */
+// Curated identity eras: source dates/files in data-sources/org-logo-audit.json.
+// A season uses the mark worn at its closing RLCS championship; intra-season
+// branding changes cannot be represented by the season-only card model.
 const ORG_LOGO_ERAS = {
-  // Big historic orgs that changed identity mid-history. Each entry's `@key`
-  // PNG wears the OLDER logo for seasons on/before `until`; the default
-  // <orgId>.png is always the CURRENT logo. Era PNGs are pulled via the
-  // "orgFiles" overrides (exact Liquipedia File: titles) or dropped by hand;
-  // missing era files fall back to the default, so nothing breaks meanwhile.
-  // (Liquipedia file titles for each key live in data-sources/asset-overrides.json.)
-  //
-  // NRG ran five logos across its S2→2026 RLCS span: the 2016 "NRG eSports",
-  // the 2017, 2019 and 2020 marks, and the 2024 rebrand (the default file).
   "nrg-esports": [
-    { key: "2016", until: "S2" },
-    { key: "2017", until: "S6" },
-    { key: "2019", until: "S8" },
-    { key: "2020", until: "2022-23" },
+    {
+      "key": "2016",
+      "until": "S2"
+    },
+    {
+      "key": "2017",
+      "until": "S6"
+    },
+    {
+      "key": "2019",
+      "until": "S8"
+    },
+    {
+      "key": "2020",
+      "until": "2022-23"
+    }
   ],
-  // Dignitas wore its 2018 logo at the S5 title; current is the 2025 rebrand.
-  dignitas: [{ key: "2018", until: "S9" }],
-  // Spacestation won 2021-22 Worlds under its 2021 logo; rebranded in 2023.
-  "spacestation-gaming": [{ key: "2021", until: "2021-22" }],
-  // Team Vitality's earlier bee (through the 2019 Renault era) vs the modern crest.
-  "team-vitality": [{ key: "2018", until: "S8" }],
+  "complexity-gaming": [
+    {
+      "key": "2018",
+      "until": "S6"
+    },
+    {
+      "key": "2019",
+      "until": "2024"
+    }
+  ],
+  "dignitas": [
+    {
+      "key": "2003",
+      "until": "S5"
+    },
+    {
+      "key": "2018",
+      "until": "S9"
+    },
+    {
+      "key": "2021",
+      "until": "2024"
+    },
+    {
+      "key": "2025",
+      "until": "2025"
+    }
+  ],
+  "spacestation-gaming": [
+    {
+      "key": "2017",
+      "until": "S9"
+    },
+    {
+      "key": "2021",
+      "until": "2022-23"
+    }
+  ],
+  "team-vitality": [
+    {
+      "key": "2017",
+      "until": "S5"
+    },
+    {
+      "key": "2018",
+      "until": "S8"
+    },
+    {
+      "key": "2020",
+      "until": "S9"
+    },
+    {
+      "key": "2021",
+      "until": "2021-22"
+    },
+    {
+      "key": "2023",
+      "until": "2025"
+    }
+  ],
+  "g2-esports": [
+    {
+      "key": "2015",
+      "until": "S6"
+    },
+    {
+      "key": "2019",
+      "until": "S8"
+    }
+  ],
+  "mousesports": [
+    {
+      "key": "2016",
+      "until": "S9"
+    }
+  ],
+  "team-liquid": [
+    {
+      "key": "2020",
+      "until": "2021-22"
+    }
+  ],
+  "team-bds": [
+    {
+      "key": "2019",
+      "until": "RLCS X"
+    }
+  ],
+  "cloud9": [
+    {
+      "key": "2013",
+      "until": "2021-22"
+    }
+  ],
+  "faze-clan": [
+    {
+      "key": "2021",
+      "until": "RLCS X"
+    },
+    {
+      "key": "2021-11",
+      "until": "2025"
+    }
+  ]
 };
 
 function orgIdOf(name, region) {

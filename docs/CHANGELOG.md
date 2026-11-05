@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.14**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.15**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,22 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Fixed — rc.36.15, organization art coverage and historical logos
+- Audits all 47 organizations missing art: imports 19 verified Liquipedia
+  logos and uses a shared transparent light-gray Octane for the remaining 28.
+  Sources, exact files and generation provenance: `data-sources/org-logo-audit.json`.
+- Adds/corrects season logo boundaries for 11 major orgs, including the original,
+  2019 and 2025 Complexity marks; Dignitas, Vitality, SSG, G2, MOUZ, Liquid,
+  BDS, Cloud9 and FaZe retain the mark applicable to each historical season.
+  NRG keeps its existing era sequence and verified current art.
+- Root cause: the fetcher ranked every image embedded on a team page, which
+  includes opponents and transfers. It now rejects foreign-name files and
+  short ambiguous searches; exact curated files take precedence.
+- No lineup/card/player ids, ratings, balance values or save contracts change.
+- Validation: 1532 tests pass in the full run; four 5-second resource timeouts
+  pass when their two files run alone (20 tests, original limits). Targeted
+  logo/data checks, lint, typecheck and static export pass.
 
 ### Changed — rc.36.14, floating NEW marker
 - Positions NEW in green at the upper-right with a slight tilt, outside the

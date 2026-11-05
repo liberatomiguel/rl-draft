@@ -99,21 +99,25 @@ async function fileUrl(fileTitle) {
 const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /**
- * Rank a page's files for "the org logo": allmode > lightmode > name match,
+ * Rank a page's files for "the org logo": allmode > darkmode > lightmode, with strict own-name matching,
  * and NEWER files beat older ones — org pages carry every past identity
  * (predecessor logos included), and the DEFAULT slot wants the current
  * brand; era variants are pulled explicitly via the "orgFiles" override.
  */
 function pickLogoFile(files, orgName) {
   const slug = normalize(orgName);
+  // Short/ambiguous names require an exact-file override, never a search guess.
+  if (slug.length < 4) return undefined;
   const score = (title) => {
     const t = title.toLowerCase();
+    // A team page also embeds opponents, transfers and event art.
+    if (!normalize(title.replace(/^File:/i, "")).startsWith(slug)) return -1;
     if (!/\.(png|svg)$/.test(t)) return -1;
     if (/(map|icon_|flag|trophy|banner)/.test(t)) return -1;
     let s = 0;
     if (t.includes("allmode")) s += 6;
-    if (t.includes("lightmode")) s += 5;
-    if (t.includes("darkmode")) s += 2;
+    if (t.includes("lightmode")) s += 2;
+    if (t.includes("darkmode")) s += 5;
     if (t.includes("logo")) s += 3;
     if (normalize(t).includes(slug.slice(0, 8))) s += 4;
     const year = t.match(/20(1[5-9]|2\d)/)?.[0];
