@@ -775,6 +775,17 @@ export interface FinanceState {
    * a save books after rc.34.
    */
   incomeTally?: IncomeTally;
+  /**
+   * rc.37 F2: the Monday the bank last put its voluntary loan on the table
+   * (the "creditOffer" notice; CAREER_CREDIT_OFFER.cooldownWeeks counts from
+   * it). Absent / null = never.
+   */
+  creditOfferAt?: CareerMonday | null;
+  /**
+   * rc.37 F2: the day the last emergency-sale offer arrived
+   * (CAREER_EMERGENCY_SALE.cooldownDays counts from it). Absent / null = never.
+   */
+  emergencySaleAt?: { seasonIndex: number; day: number } | null;
 }
 
 /** rc.34 (ECO-04): one missed goal's fine, booked in equal Monday instalments. */
@@ -840,7 +851,11 @@ export type MoneyNoticeKind =
   | "careerEnded"
   | "loanTakenOver"
   // rc.34 review: inside the deadline's last weeks the projection stopped covering the debt.
-  | "deadlineSlipped";
+  | "deadlineSlipped"
+  // rc.37 F2: the bank's voluntary loan, offered on the Monday the runway reaches the warning level.
+  | "creditOffer"
+  // rc.37 F2: a one-off spend brought the floor within CAREER_SPEND_ALERT.withinMondays (with the bank's offer when it lends).
+  | "spendRisk";
 
 /** One pending money notice (careerFlow.moneyNoticeOf / acknowledgeMoneyNoticeFlow). */
 export interface MoneyNotice {
@@ -1029,6 +1044,11 @@ export interface TransferOffer {
   factors: OfferFactor[];
   /** True when this offer came from a degraded scripted beat (Blockbuster). */
   blockbuster?: boolean;
+  /**
+   * rc.37 F2: an emergency-sale offer (engine/career/emergencySale.ts) — tabled
+   * while the balance is negative, on any day, below market value.
+   */
+  emergency?: boolean;
   /**
    * @deprecated rc.32 (M8): the offer answered the user's "List for sale" —
    * withdrawn in rc.33 (ECO-12). Never written; the load repair

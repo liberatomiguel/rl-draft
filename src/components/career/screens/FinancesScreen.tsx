@@ -55,10 +55,12 @@ import {
   weeklyOf,
   type BankLoanRefusal,
   type BreachOutcome,
+  type CreditOffer,
   type WeeklyStatement,
 } from "@/engine/career/economy";
 import {
   backerLineOf,
+  creditOfferOf,
   emergencyLoanViewOf,
   foundingPartnerPerSplitOf,
   mondayBalancesOf,
@@ -299,12 +301,15 @@ function BankLoanRequest({
   rep,
   balance,
   seasonIndex,
+  suggested,
 }: {
   fin: FinanceState;
   rep: number;
   balance: number;
   /** rc.32 (M1): the bank's limits are on the season money index. */
   seasonIndex: number;
+  /** rc.37 F2: the bank's own suggestion on these books (careerFlow.creditOfferOf; null = none needed). */
+  suggested?: CreditOffer | null;
 }) {
   const C = useCareerCopy();
   const takeBankLoan = useCareerStore((s) => s.takeBankLoan);
@@ -313,7 +318,8 @@ function BankLoanRequest({
   const step = Math.max(CAREER_ECONOMY.roundQuantum, quantize(limit / 10));
   const [raw, setRaw] = useState<number | null>(null);
   const clamp = (n: number) => Math.min(limit, Math.max(minAmount, quantize(n)));
-  const amount = clamp(raw ?? Math.min(limit, Math.max(minAmount, quantize(limit / 2))));
+  // rc.37 F2: the stepper starts on the bank's suggestion when the books burn.
+  const amount = clamp(raw ?? suggested?.principal ?? Math.min(limit, Math.max(minAmount, quantize(limit / 2))));
   const terms = bankLoanTerms(amount);
   // ECO-02 (R46): the panel states the REAL reason the bank would refuse —
   // the same bankLoanRefusal takeBankLoanFlow runs — instead of its own guess.
@@ -329,6 +335,17 @@ function BankLoanRequest({
   return (
     <div className="mt-3 border-t border-line pt-3">
       <p className="text-[11px] font-semibold text-sub">{C.finances.bankAvailable(formatMoney(limit))}</p>
+      {suggested ? (
+        <p className="mt-1.5 text-xs leading-snug text-cyan">
+          {C.finances.creditSuggest(
+            formatMoney(suggested.net),
+            formatMoney(suggested.total),
+            formatMoney(suggested.weeklyPayment),
+            suggested.termWeeks,
+            suggested.coversMondays,
+          )}
+        </p>
+      ) : null}
       <div className="mt-2 flex items-center gap-2">
         <button
           type="button"
@@ -1373,7 +1390,13 @@ export function FinancesScreen() {
                     Math.round(CAREER_BANK.interestPct * 100),
                   )}
                 </p>
-                <BankLoanRequest fin={fin} rep={rep} balance={fin.balance} seasonIndex={seasonIndex} />
+                <BankLoanRequest
+                  fin={fin}
+                  rep={rep}
+                  balance={fin.balance}
+                  seasonIndex={seasonIndex}
+                  suggested={creditOfferOf(save)}
+                />
               </>
             )}
           </div>

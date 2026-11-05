@@ -41,7 +41,19 @@ const NOTICE_MONEY_KEYS = new Set([
   "projected",
   "gap",
   "net",
+  // rc.37 F2: the bank's offer (what lands, the total, the instalment), the spend and the weekly burn.
+  "principal",
+  "loanNet",
+  "loanTotal",
+  "loanWeekly",
+  "spent",
+  "burn",
 ]);
+
+/** rc.37 F2: does this notice carry the bank's offer (the loan its button takes)? */
+export function noticeOffersLoan(notice: MoneyNotice): boolean {
+  return (notice.kind === "creditOffer" || notice.kind === "spendRisk") && Number(notice.params.principal) > 0;
+}
 
 /**
  * Pure: a notice's words in this language — the money formatted and the
@@ -67,11 +79,14 @@ export function MoneyNoticeModal() {
   const C = useCareerCopy();
   const save = useCareerStore(selectActiveSave);
   const acknowledge = useCareerStore((s) => s.acknowledgeMoneyNotice);
+  const acceptCreditOffer = useCareerStore((s) => s.acceptCreditOffer);
   const notice = save ? moneyNoticeOf(save) : null;
   if (!save || !notice) return null;
 
   const text = moneyNoticeTextOf(C, notice, save.clock);
   const close = () => acknowledge(notice.id);
+  // rc.37 F2: an offer of the bank's loan is answered here — take it, or leave it ("Not now").
+  const offersLoan = noticeOffersLoan(notice);
   return (
     <Modal
       open
@@ -86,9 +101,20 @@ export function MoneyNoticeModal() {
           >
             {C.moneyNotice.toFinances}
           </AppLink>
-          <Button variant="primary" className="min-h-11" onClick={close}>
-            {C.moneyNotice.ok}
-          </Button>
+          {offersLoan ? (
+            <>
+              <Button variant="secondary" className="min-h-11" onClick={close}>
+                {C.moneyNotice.notNow}
+              </Button>
+              <Button variant="primary" className="min-h-11" onClick={() => acceptCreditOffer(notice.id)}>
+                {C.moneyNotice.takeLoan(formatMoney(Number(notice.params.principal)))}
+              </Button>
+            </>
+          ) : (
+            <Button variant="primary" className="min-h-11" onClick={close}>
+              {C.moneyNotice.ok}
+            </Button>
+          )}
         </>
       }
     >

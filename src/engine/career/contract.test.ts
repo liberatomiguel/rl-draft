@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_NEGOTIATION, CAREER_PRIZE_SHARE, CAREER_PRIZES } from "@/config/balance";
+import { CAREER_LATE_REVENUE, CAREER_NEGOTIATION, CAREER_PRIZE_SHARE, CAREER_PRIZES } from "@/config/balance";
 import {
   contractSharePctFor,
   negotiationAnswerFor,
@@ -529,14 +529,32 @@ describe("ECO-10 — the prize share each contract carries", () => {
     const lowest = answer(ask85(0), ask85Share, 1, { sharePct: 0 }).zone.shareMin;
     expect(lowest).toBe(Math.max(S.minPct, ask85Share - S.maxBelowAsk));
     expect(lowest).toBeGreaterThan(0);
-    for (const s of [0, 3, 7]) {
+    const keptRatio = (s: number) => {
       const kept = (tier: EventTier, n: number) => {
         const prize = prizeFor(tier, "champion", "swiss", "normal", s);
         return n * (prize - prizeShareOfPodium([lowest, lowest, lowest].map((p) => ({ prizeSharePct: p })), tier, "champion", prize));
       };
       const dominantKept = kept("regional", 9) + kept("major", 3) + kept("worlds", 1);
-      expect(dominantKept / (3 * 3 * ask85(s))).toBeLessThanOrEqual(1.5);
-    }
+      return dominantKept / (3 * 3 * ask85(s));
+    };
+    // rc.37 F2: the brake reads the base economy (the one money index). Decision 5 (05/11) adds
+    // the late revenue on top from the 4th season (Major ×1.15, Worlds ×1.25, no wage budget) and
+    // leaves its judgment to the battery (the dominants' p90 cash), so here it is switched off...
+    const late = CAREER_LATE_REVENUE as unknown as { fromSeasonIndex: number };
+    const from = late.fromSeasonIndex;
+    late.fromSeasonIndex = Number.POSITIVE_INFINITY;
+    const base = (() => {
+      try {
+        return [0, 3, 7].map(keptRatio);
+      } finally {
+        late.fromSeasonIndex = from;
+      }
+    })();
+    for (const r of base) expect(r).toBeLessThanOrEqual(1.5);
+    // ...and with it on, the seasons before it are untouched and the overshoot after is its factor at most.
+    expect(keptRatio(0)).toBe(base[0]);
+    const top = Math.max(...Object.values(CAREER_LATE_REVENUE.prizePoolMult).map((m) => m ?? 1));
+    for (const [i, s] of [3, 7].entries()) expect(keptRatio(s)).toBeLessThanOrEqual(base[i + 1] * top + 1e-9);
   });
 });
 

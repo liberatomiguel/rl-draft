@@ -2802,6 +2802,97 @@ export const CAREER_BANK = {
   blockedWhileBacker: true,
 } as const;
 
+// ---------------------------------------------------------------------------
+// rc.37 F2 — finances and crisis (ROADMAP-NEXT-2026-11-05 §3, front F2).
+// PROVISIONAL: the battery measures every number below.
+// ---------------------------------------------------------------------------
+
+/**
+ * rc.37 F2 package 1, late revenue (decision 5, 05/11: no wage budget; the
+ * extra money from the 4th season reaches only Majors, Worlds and the new
+ * high sponsor quotes). From season index `fromSeasonIndex` on, a Major's
+ * pool is ×prizePoolMult.major and Worlds' ×prizePoolMult.worlds (inside
+ * economy.prizeScheduleFor, so every placement and the lobbies' totals move
+ * together), and a NEW sponsor quote of tier 3 or 4 is ×sponsorQuoteMult.
+ * Signed deals keep their terms (a quote is priced once, at offer time) and
+ * booked results are never rewritten. 1 everywhere restores rc.36.
+ */
+export const CAREER_LATE_REVENUE = {
+  /** The first season it applies to: index 3 = the 4th season (S4). */
+  fromSeasonIndex: 3,
+  prizePoolMult: { major: 1.15, worlds: 1.25 } as Partial<Record<string, number>>,
+  sponsorQuoteMult: { 3: 1.1, 4: 1.1 } as Partial<Record<number, number>>,
+} as const;
+
+/**
+ * rc.37 F2 package 2, the bank's voluntary credit offered BEFORE the floor:
+ * when the risk shows (the Monday the runway falls to the accountant's
+ * warning level, or a one-off spend that brings the breach within
+ * CAREER_SPEND_ALERT.withinMondays), the bank puts CAREER_BANK's voluntary
+ * loan on the table as a money notice, with its three numbers (what lands,
+ * the total repaid, the term). The floor stays at −CAREER_LOAN.floorWeeks
+ * weeks of payroll (a −4 floor was tested and rejected); nothing here moves
+ * it. The offer follows CAREER_BANK's rules (one loan, none while the
+ * emergency loan is owed, the reputation limit).
+ */
+export const CAREER_CREDIT_OFFER = {
+  enabled: true,
+  /** The runway (weeks to $0 at next Monday's net) at or under which the Monday offer comes — CAREER_PAYROLL.runwayWarnWeeks. */
+  runwayWeeks: 4,
+  /**
+   * The offer is sized to keep the balance at or above $0 for this many
+   * Mondays at today's net, its own instalments counted (at least
+   * CAREER_BANK.minAmount, at most the reputation limit).
+   */
+  coverWeeks: 8,
+  /** Mondays between two offers (one per squeeze; a dismissed offer does not come back the next Monday). */
+  cooldownWeeks: 8,
+} as const;
+
+/**
+ * rc.37 F2 package 4, the one-off spend alert. The runway warnings read the
+ * weekly net, so a fee, gear or a severance that leaves the books just above
+ * the floor broke it on the next Monday without a word. A spend that brings
+ * the projected breach (the Monday the books close below the floor at
+ * next Monday's net) within `withinMondays` raises a money notice at once,
+ * with the bank's offer when it can lend.
+ */
+export const CAREER_SPEND_ALERT = {
+  enabled: true,
+  withinMondays: 4,
+} as const;
+
+/**
+ * rc.37 F2 package 3, the emergency sale. While the balance is below
+ * `balanceBelow`, AI orgs table extra offers for a squad player at
+ * `feeRange` × his market value (economy.marketValueFor), on any day —
+ * inside a transfer window or not — at most one pending, `cooldownDays`
+ * apart (from the day one arrives), each open `validDays`. Never while the
+ * user's event is in progress (the squad is frozen). The normal bids roll as
+ * before; a player under the resale lock never gets one.
+ */
+export const CAREER_EMERGENCY_SALE = {
+  enabled: true,
+  balanceBelow: 0,
+  feeRange: [0.65, 0.8] as readonly [number, number],
+  /** The chance a day with no offer pending (and the cooldown over) brings one. */
+  dailyChance: 0.5,
+  cooldownDays: 14,
+  validDays: 7,
+} as const;
+
+/**
+ * rc.37 F2 package 4, the season-close outlook (the season review,
+ * careerFlow.seasonOutlookOf): next season's wage bill after the contract
+ * review, the debt and its term, the balance projected to the next important
+ * income (next season's first regional, no prize counted) and the
+ * retirements in sight.
+ */
+export const CAREER_SEASON_OUTLOOK = {
+  /** Retirement chances at or above this read "likely"; under it "possible" (decision 8: the warning, no rebuild yet). */
+  likelyRetirementChance: 0.5,
+} as const;
+
 export const CAREER_WORLD = {
   /** History gravity: chance each anchor move executes (top-3 orgs stronger). */
   anchorFidelity: 0.85,

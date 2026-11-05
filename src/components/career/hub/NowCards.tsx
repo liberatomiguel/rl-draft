@@ -11,7 +11,7 @@
 
 import { CommunityLineup } from "../CommunityLineup";
 import { useRouter } from "next/navigation";
-import { CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
+import { CAREER_EMERGENCY_SALE, CAREER_SALARY, CAREER_TRANSFER } from "@/config/balance";
 import type { CareerCopy } from "@/content/careerCopy";
 import { breachesToEndFor, insertMoneyFor, loanBreachesOf } from "@/engine/career/economy";
 import { emergencyLoanViewOf, nextBreachParamsOf, ruledOutFor } from "@/store/careerFlow";
@@ -379,6 +379,17 @@ export function NowBid({
           {/* rc.32 (Miguel, 30/10): what a Blockbuster is, its price, the cost of refusing. */}
           <p className="mb-3 max-w-xl text-xs leading-relaxed text-sub">
             {blockbusterWhatOf(C, orgName)}
+          </p>
+        </>
+      ) : null}
+      {/* rc.37 F2: an emergency-sale offer says what it is (below market, any day, while the books are red). */}
+      {offer.emergency ? (
+        <>
+          <Badge tone="bad" className="mb-2">
+            {C.market.emergencyBadge}
+          </Badge>
+          <p className="mb-3 max-w-xl text-xs leading-relaxed text-sub">
+            {C.market.emergencyWhat(CAREER_EMERGENCY_SALE.validDays)}
           </p>
         </>
       ) : null}

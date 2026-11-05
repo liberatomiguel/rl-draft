@@ -61,6 +61,15 @@ const MONEY_PARAM_KEYS = new Set([
   "fine",
   "perMonday",
   "milestone",
+  // rc.37 F2: the bank loan's mails (R21's amount / instalment / total were never formatted) and the bank's offer.
+  "amount",
+  "weekly",
+  "total",
+  "principal",
+  "loanNet",
+  "loanTotal",
+  "loanWeekly",
+  "spent",
 ]);
 
 /** rc.34 (ECO-04): the sponsor mails and news whose `name` is a brand id (shown as the brand's name). */
