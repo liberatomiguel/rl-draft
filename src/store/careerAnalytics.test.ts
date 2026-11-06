@@ -12,7 +12,7 @@
  */
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { DAYS_PER_SEASON, firstDayOfWeek } from "@/engine/career/calendar";
-import { ageOf, exactAgeOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, exactAgeOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
 import { signableOverallCap } from "@/engine/career/economy";
 import type { CareerPlayerView, CareerSave, MailItem, SponsorState, TransferOffer } from "@/engine/career/types";
 import {
@@ -256,9 +256,11 @@ describe("career action events", () => {
     const signed = res.save.squad.find((p) => p.id === target.id)!;
     // The band the screens show (careerUi.potBandOfSquad): the save's development model (rc.32 review),
     // rc.33 (DEV-04): capped by the age clock, an older career's reports kept inside rc.32's band.
+    // rc.37 (F1): a new career's band model 3, the uniform band.
     const band = scoutedBand(signed.potential, signed.overall, signed.scoutLevel, save.careerSeed, signed.id, growthModelOf(save.world), {
       arc: { peakAge: signed.peakAge, exactAge: exactAgeOf(ageOf(signed.birthYear, 0), res.save.clock.day) },
       rc32Reports: res.save.bandModel === undefined,
+      uniform: readsUniformBand(res.save.bandModel),
     });
     const fee = res.save.transferLog.find((x) => x.kind === "userIn" && x.playerId === target.id)!.fee;
     expect(t.props).toMatchObject({
@@ -390,6 +392,7 @@ describe("career action events", () => {
     const band = scoutedBand(fa.potential, fa.overall, level as 0 | 1 | 2 | 3, save.careerSeed, fa.id, growthModelOf(save.world), {
       arc: { peakAge: fa.peakAge, exactAge: exactAgeOf(fa.age, res.save.clock.day) },
       rc32Reports: res.save.bandModel === undefined,
+      uniform: readsUniformBand(res.save.bandModel),
     });
     expect(r.props).toMatchObject({
       level,

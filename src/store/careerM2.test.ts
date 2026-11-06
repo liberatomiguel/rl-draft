@@ -11,8 +11,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CAREER_SALARY } from "@/config/balance";
-import { quantize, runwayWeeks, weeklyWage } from "@/engine/career/economy";
+import { CAREER_RENEWAL_TENURE, CAREER_SALARY } from "@/config/balance";
+import { quantize, repPremiumFor, runwayWeeks, weeklyWage } from "@/engine/career/economy";
 import { renewalAskFor } from "@/engine/career/market";
 import { renewalTermsFor, titlePremiumFor } from "@/engine/career/renewal";
 import type { CareerSave, SquadPlayer, TransferOffer } from "@/engine/career/types";
@@ -152,17 +152,31 @@ describe("M2 — renewing your own players (provisional default 2-B)", () => {
     expect(declineBidFlow(plain, "bid:plain").squad.find((x) => x.id === p.id)!.blockbusterRefusedUntil).toBeUndefined();
   });
 
-  it("the ambition premium stays on top of the capped price", () => {
+  it("the ambition premium stays on top of the capped price (rc.37 F1: inside the premium cap)", () => {
+    // rc.37 (F1): rep 50 (tier 2, still "ambitious") — his rep premium (×1.38) × ambition stays under
+    // CAREER_RENEWAL_TENURE.premiumStackCap, so rc.36's path prices him. rc.36's fixture used rep 10.
     const { save, p } = withPlayer({ overall: CAREER_SALARY.ambitiousOverall + 1, potential: 92, salaryPerSplit: 45_000 }, (s) => {
-      s.reputation = 10;
+      s.reputation = 50;
     });
     // rc.33 (ECO-09 steepened the ask above 80): a wage the raise cap prices whatever the
     // curve — the cap (×1.75) lands between the market floor and his fresh ask.
     p.salaryPerSplit = quantize(renewalTermsFor(p, ctxOf(save)).marketFloor * 0.8);
     const terms = renewalTermsFor(p, ctxOf(save));
     expect(terms.ambitious).toBe(true);
+    expect(terms.premiumCapped).toBe(false);
     expect(terms.bound).toBe("cap");
     expect(terms.ask).toBe(quantize(quantize(p.salaryPerSplit * CAREER_SALARY.renewalRaiseCap) * CAREER_SALARY.ambitionRenewalMult));
+    // rc.37 (F1, the top's extremes): at rep 10 his rep premium (×1.94) × ambition would ask ×2.43 his
+    // rep-neutral price — the stack is capped at premiumStackCap / repPremium.
+    save.reputation = 10;
+    const capped = renewalTermsFor(p, ctxOf(save));
+    expect(capped.ambitious).toBe(true);
+    expect(capped.premiumCapped).toBe(true);
+    expect(capped.premiumMult).toBeCloseTo(CAREER_RENEWAL_TENURE.premiumStackCap / repPremiumFor(p.overall, 10), 9);
+    expect(capped.premiumMult).toBeLessThan(CAREER_SALARY.ambitionRenewalMult);
+    expect(capped.bound).not.toBe("fresh");
+    const bounded = Math.max(capped.raiseCap, capped.marketFloor);
+    expect(capped.ask).toBe(quantize(bounded * capped.premiumMult));
   });
 
   it("switch back: renewalRule 'fresh' prices the plain fresh ask exactly (rc.31's rule; a refused Blockbuster's surcharge is rc.32's fix)", () => {

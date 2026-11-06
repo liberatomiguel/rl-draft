@@ -89,29 +89,34 @@ describe("rc.35 — a just-signed player gets no other offer in the same window"
     expect(otherBids).toBeGreaterThan(0);
   });
 
-  it("a player signed in an earlier window can be bid for again", () => {
+  it("a player signed in an earlier window can be bid for again (rc.37 F1: once the next window has closed)", () => {
     const save = windowSave(909);
     const fa = bestFreeAgent(save);
     const res = signPlayerFlow(save, fa.id, { lengthSeasons: 2 });
     const squad = res.save.squad.filter((p) => p.id === fa.id);
     squad[0].overall = 92;
-    let hits = 0;
-    for (let day = firstDayOfWeek(21); windowIndexOf(weekOfDay(day)) === 2; day++) {
-      const bid = incomingBidForDay({
-        world: res.save.world,
-        squad,
-        seasonIndex: 0,
-        windowIdx: 2,
-        day,
-        careerSeed: 909 + day,
-        rep: 100,
-        bidsThisWindow: 0,
-        lastBidDay: -99,
-        pendingTargetIds: [],
-      });
-      if (bid) hits += 1;
-    }
-    expect(hits).toBeGreaterThan(0);
+    const bidsIn = (seasonIndex: number, windowIdx: 0 | 1 | 2 | 3, firstWeek: number) => {
+      let hits = 0;
+      for (let day = firstDayOfWeek(firstWeek); windowIndexOf(weekOfDay(day)) === windowIdx; day++) {
+        const bid = incomingBidForDay({
+          world: res.save.world,
+          squad,
+          seasonIndex,
+          windowIdx,
+          day,
+          careerSeed: 909 + day,
+          rep: 100,
+          bidsThisWindow: 0,
+          lastBidDay: -99,
+          pendingTargetIds: [],
+        });
+        if (bid) hits += 1;
+      }
+      return hits;
+    };
+    // rc.37 (F1, the resale lock): the window after his signing window is locked too.
+    expect(bidsIn(0, 2, 21)).toBe(0);
+    expect(bidsIn(0, 3, 31) + bidsIn(1, 0, 1)).toBeGreaterThan(0);
   });
 
   it("the user cannot sign a player an AI org signed in this window", () => {

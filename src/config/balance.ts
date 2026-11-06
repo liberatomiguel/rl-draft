@@ -2070,6 +2070,125 @@ export const CAREER_TRANSFER = {
   // future update rethinks selling (ECO-06).
 } as const;
 
+// rc.37 F1 — market, valuation and renewals (ROADMAP-NEXT-2026-11-05 §3 F1).
+// Every new F1 tunable lives here; the integration bumps BALANCE_VERSION.
+export const CAREER_VALUATION = {
+  /**
+   * The resale lock (F1 package 2): a player the user signed takes no sale —
+   * no AI bid, no Blockbuster bid — in the window he signed in nor in the
+   * next this many windows (the Worlds window's next is the next season's
+   * preseason). Signed between windows, the next window is locked.
+   * `market.resaleLocked`; 0 = rc.35's rule (the signing window only).
+   */
+  resaleLockWindows: 1,
+} as const;
+
+/**
+ * Valuation by talent (F1 package 2). ONE helper (economy.talentFactorsFor)
+ * feeds marketValueFor, computeSalaryAsk and the salaryAskFactors readout, so
+ * a fee, an AI bid, a free agent's wage and a renewal read the same factors;
+ * market.valueInputOf / askInputOf build every input. The defaults reproduce
+ * rc.36 exactly for any price without an arc at age 19+ (and an u18 with a gap
+ * ≤ 3), and for any price with an arc at age 19+ whose reach gap equals his
+ * raw gap and is ≤ 10. rc.36's keys stay and are still read:
+ * CAREER_SALARY.ageFactor, potentialPerPoint / potentialCap (the no-arc
+ * fallback; tier 1 equals potentialPerPoint), CAREER_TRANSFER.prospect* /
+ * poach* (the bid chance).
+ */
+export const CAREER_TALENT = {
+  /**
+   * The upside factor, in tiers, on his REACH gap: the potential the age clock
+   * still lets him close, min(potential − overall, CAREER_DEV.seasonGainCap ×
+   * ceil(peakAge + plateauYears − age)), 0 once past his plateau, never his
+   * hidden peakOffset. Each tier adds perPoint per point of reach gap up to
+   * upTo: ×1.20 at 10 (= rc.36), ×1.40 at 15, ×1.70 at 20, ×2.34 at 28 (a 60/99
+   * tops at ×3.22). rc.36 stopped at ×1.30 from gap 15, so a 70/98 priced like
+   * a 70/85 (now 1.67×). The first slope must equal
+   * CAREER_SALARY.potentialPerPoint (the bulk stays bit-identical; a test pins it).
+   */
+  upsideTiers: [
+    { upTo: 10, perPoint: 0.02 }, // "promising" from CAREER_TRANSFER.prospectUpside (6)
+    { upTo: 15, perPoint: 0.04 }, // "high potential"
+    { upTo: 20, perPoint: 0.06 }, // "exceptional"
+    { upTo: 99, perPoint: 0.08 }, // "generational"
+  ] as readonly { upTo: number; perPoint: number }[],
+  /**
+   * Young age never makes a talent cheaper: an u18 keeps
+   * CAREER_SALARY.ageFactor.u18 (0.9) up to this reach gap...
+   */
+  u18TalentRampFrom: 3,
+  /**
+   * ...and prices at the 19–22 factor (1.1) from this reach gap
+   * (= CAREER_TRANSFER.prospectUpside), linear between (gap 4 ×0.967, 5
+   * ×1.033). Both 0 = no u18 discount for anyone.
+   */
+  u18TalentRampTo: 6,
+  /**
+   * AI bid weight (market.incomingBidForDay): a talent — reach gap ≥
+   * CAREER_TRANSFER.prospectUpside, at any age — adds talentBidPerGap × his
+   * reach gap, at least talentBidMin (rc.36's inline +8 for an u18 prospect)
+   * and at most talentBidMax: a 70/98 at 17 weighs 29 (rc.36 9), an 85/95 at
+   * 19 31 (rc.36 21). The daily chance keeps rc.36's formula, counted over the
+   * players a bid may target.
+   */
+  talentBidMin: 8,
+  talentBidPerGap: 1,
+  talentBidMax: 30,
+} as const;
+
+/**
+ * Renewal convergence (F1 package 3, renewal.renewalTermsFor). A player's
+ * FIRST renewal at the club (SquadPlayer.renewalCount 0) and every renewal
+ * while he has at most protectedTenure seasons there keep rc.36's rule
+ * exactly — the initial protection (CAREER_SALARY.renewalMarketFloor 0.6,
+ * renewalMaxJump ×2.5). From then on each season with the club lifts the jump
+ * a step (×2.75, then ×3.0), so a developed player — a formed prospect whose
+ * value outgrew his wage, bound by the jump — renews ever closer to his market
+ * ask instead of a fraction of it (the spec's promising player: 58 % → 71 % of
+ * market at his second 3-season renewal; a wonderkid on 1-season deals 28 % →
+ * 88 % by season 6); the floor stays rc.36's (floorPerSeason below); the top
+ * stays bounded.
+ */
+export const CAREER_RENEWAL_TENURE = {
+  /** Seasons with the club (seasonIndex − joinedSeason at pricing) that renew on rc.36's rule. */
+  protectedTenure: 2,
+  /**
+   * Each season past it lifts the market floor by this share of his core
+   * fresh ask, up to floorMax. 0 / 0.6 = rc.36's floor, measured (career-arc
+   * bot, 7 regions × Normal/Hard): a 0.1-a-season floor up to 0.9 (the design
+   * panel's default) reprices ORDINARY players whose wage lagged the money
+   * index, +33–50 % at their third renewal, and sent the median hands-off
+   * career (autopilot, balanced) to the Backer (Normal 0 → 1 of 7, Hard end
+   * balance p50 $63k → $5k); 0.05 up to 0.7 still did on Normal. A developed
+   * player is jump-bound — the jump ladder below converges him — so the floor
+   * stays. Raise these to bring a floor ladder back.
+   */
+  floorPerSeason: 0,
+  floorMax: 0.6,
+  /** Each season past it lets one renewal multiply his wage by this much more than renewalMaxJump (×2.75, then ×3.0)... */
+  jumpPerSeason: 0.25,
+  /**
+   * ...up to this: one notch above the first renewal (rc.33 broke hands-off
+   * prospects careers at ×3.9 p50). With premiumMax no renewal multiplies a
+   * wage by more than 3.0 × 1.45 = ×4.35 (rc.36 ×4.47). Fallback if the
+   * battery's hands-off prospects payroll breaks: 2.75.
+   */
+  jumpMax: 3.0,
+  /**
+   * The top's extremes: ambition × refused-Blockbuster surcharge × (1 + title
+   * premium) on a renewal never above this (rc.36 up to ×1.79). 1.45 keeps
+   * the dominant team's title brake whole (Blockbuster + 3 titles = 1.43); a
+   * stack under the cap keeps rc.36's path verbatim.
+   */
+  premiumMax: 1.45,
+  /**
+   * ...and repPremium × that stack never above this × his rep-neutral price
+   * (rc.36 reached ×3.40 for a 95 at rep 30): the applied cap is
+   * min(premiumMax, premiumStackCap / repPremium).
+   */
+  premiumStackCap: 2.2,
+} as const;
+
 export const CAREER_SPONSOR = {
   /**
    * v0.2: tiers rescaled to the garage-org economy and each carries PERKS —
@@ -2416,14 +2535,15 @@ export const CAREER_UNLOCKS = {
   /**
    * v0.3 visible signing gate (Miguel: high-OVR free agents were trivial to
    * land day 1): NEW signings accept only up to
-   * cap(rep) = signableCapBase + signableCapPerRep × rep (rc.36.3: 71 + 0.4 × rep; uncapped from
-   * signableCapFreeAt). Renewals and the current squad are always exempt.
+   * cap(rep) = signableCapBase + signableCapPerRep × rep (rc.36.3: 71 + 0.4 × rep), at most 99
+   * (reached at rep 70). Renewals and the current squad are always exempt.
    * Locked market rows stay visible with the rep they need.
+   * rc.37 (F1): `signableCapFreeAt` (84, "uncapped from") is removed — the
+   * line already reads 99 from rep 70, so it never changed a cap.
    */
   // Less of a day-one jump; strong signings still open as the club earns standing.
   signableCapBase: 71,
   signableCapPerRep: 0.4,
-  signableCapFreeAt: 84,
 } as const;
 
 /**

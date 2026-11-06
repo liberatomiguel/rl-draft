@@ -112,6 +112,7 @@ import {
   ageOf,
   applyMatchXp,
   becomesCoachOnRetirement,
+  CURRENT_BAND_MODEL,
   isCompetitiveAge,
   fieldQualityFor,
   playerViewById,
@@ -123,6 +124,7 @@ import {
   trainingProjection,
   type DrillEffect,
   growthCtxOf,
+  growthModelOf,
   userSeriesPlayed,
 } from "@/engine/career/development";
 import { coachHireRefusalFor } from "@/engine/career/ladder";
@@ -214,10 +216,12 @@ import {
   askPackageFor,
   coachCandidatesFor as marketCoachCandidates,
   contractedSplitsRemaining,
+  askInputOf,
   incomingBidForDay,
   movedThisWindowIds,
-  signedInWindow,
+  resaleLocked,
   listingFor,
+  valueInputOf,
   userBidsBlocked,
   type AskPackage,
 } from "@/engine/career/market";
@@ -312,6 +316,7 @@ import type {
   PotentialBand,
   ScrimLogEntry,
   SeasonRecord,
+  SeasonTitleCount,
   SponsorGoal,
   SponsorState,
   SponsorTerms,
@@ -1145,20 +1150,17 @@ export function processDayArrival(input: CareerSave): CareerSave {
         // ECO-03b (ROADMAP, R47): the career's first window is bid-free — a
         // Blockbuster for a user-owned target there reads as preempted instead.
         // rc.35 (front C): so is a target the user signed in this window.
+        // rc.37 (F1): or in the window before it — the resale lock (`resaleLocked`).
         const signedNow = save.squad.some(
-          (p) => p.id === beat.requiresPlayerFree && signedInWindow(p, seasonIndex, windowIndexOf(week)),
+          (p) => p.id === beat.requiresPlayerFree && resaleLocked(p, seasonIndex, day),
         );
         const bidFree = userBidsBlocked(seasonIndex, windowIndexOf(week)) || signedNow;
         if (targetOnSquad && beat.degradeToOffer && beat.requiresPlayerFree && !bidFree) {
           // Degrade into a Blockbuster incoming bid for the user-owned target.
           const player = save.squad.find((p) => p.id === beat.requiresPlayerFree)!;
           const fee = quantize(
-            marketValueFor({
-              overall: player.overall,
-              age: ageOf(player.birthYear, seasonIndex),
-              potential: player.potential,
-              seasonIndex,
-            }) * CAREER_TRANSFER.blockbusterFeeMult,
+            marketValueFor(valueInputOf(player, save.careerSeed, seasonIndex, growthModelOf(save.world))) *
+              CAREER_TRANSFER.blockbusterFeeMult,
           );
           const toOrg = beat.effect?.forceTransfer.toOrgRef;
           save.pendingOffers.push({
@@ -3344,6 +3346,8 @@ export function finishEvent(input: CareerSave): CareerSave {
     if (def.tier === "regional") save.stats.titlesRegional += 1;
     if (def.tier === "major") save.stats.titlesMajor += 1;
     if (def.tier === "worlds") save.stats.titlesWorlds += 1;
+    // rc.37 (F1): the renewal title raise's per-season count.
+    noteUserTitle(save, def.tier);
     // rc.4 (Underdog): how far below the rest of the field the user's team was.
     if (def.tier === "regional" || def.tier === "major" || def.tier === "worlds") {
       const gap = underdogGapOf(ev.tournament);
@@ -3778,6 +3782,8 @@ export function rolloverToNextSeason(input: CareerSave): CareerSave {
   // rc.36 (UX-02): last season's target is read before the new goals replace it.
   const lastGoalMet = save.seasonGoals?.targetMet ?? null;
   save.seasonGoals = seasonGoalsFor({ rep: save.reputation, seasonIndex: nextSeason });
+  // rc.37 (F1): the title counts outlive the results (the renewal title raise's window).
+  rollTitleCounts(save, nextSeason);
   save.eventResults = [];
   // v0.3 season-scoped bookkeeping resets.
   save.scheduledScrims = [];
@@ -3893,17 +3899,11 @@ export function foundingWageOf(
 
 /** The founding ask: the market ask at the starting reputation, 2 seasons. */
 function foundingAskOf(view: StarterOffer["players"][number], difficulty: CareerDifficulty, careerSeed: number): number {
+  // rc.37 (F1): the founding deal is the project contract — rc.36's factors exactly
+  // (`founding`), never the market's talent valuation; his renewals price the market.
   return computeSalaryAsk({
-    overall: view.overall,
-    age: view.age,
-    potential: view.potential,
-    rep: CAREER_REP.start,
-    role: "starter",
-    seasonIndex: 0,
-    lengthSeasons: 2,
-    difficulty,
-    careerSeed,
-    playerId: view.id,
+    ...askInputOf(view, { careerSeed, seasonIndex: 0, rep: CAREER_REP.start, lengthSeasons: 2, difficulty }),
+    founding: true,
   });
 }
 
@@ -3961,7 +3961,8 @@ export function founderPotentialBandFor(
 ): PotentialBand {
   return squadPotentialBand(
     { ...view, birthYear: seasonYear(0) - view.age, scoutLevel: FOUNDER_SCOUT_LEVEL },
-    { careerSeed, seasonIndex: 0, day: 1, model: CAREER_DEV.growthModel, rc32Reports: false },
+    // rc.37 (F1): a new career reads band model 3 (CURRENT_BAND_MODEL), the uniform band.
+    { careerSeed, seasonIndex: 0, day: 1, model: CAREER_DEV.growthModel, rc32Reports: false, uniform: true },
   );
 }
 
@@ -4029,7 +4030,8 @@ export function createCareerSave(input: CreateCareerInput, careerSeed: number): 
     transferLog: [],
     negotiationTries: {},
     // rc.33 (DEV-04): a new career reads the honest band from day one.
-    bandModel: 2,
+    // rc.37 (F1): band model 3 — the truth at a uniform place inside it.
+    bandModel: CURRENT_BAND_MODEL,
     // rc.34 (DEV-03, decision 3-A): the preset's delegation (Easy: the coach
     // runs it; Normal: the coach proposes; Hard: you set it); the first
     // period opens on day 1's arrival, on the base until a coach is hired.
@@ -4302,21 +4304,93 @@ export function signingTalkFor(
 }
 
 /**
+ * rc.37 (F1): the user's titles per season counted from the stored event
+ * results — the backfill of a save from before rc.37 (`userTitlesBySeason`
+ * absent), whose `eventResults` hold the running season only.
+ */
+function titleCountsFromResults(results: readonly CompactEventResult[]): SeasonTitleCount[] {
+  const bySeason = new Map<number, SeasonTitleCount>();
+  for (const r of results) {
+    if (r.userPlacement !== "champion") continue;
+    const major = r.tier === "major" || r.tier === "worlds";
+    if (!major && r.tier !== "regional") continue;
+    const row = bySeason.get(r.seasonIndex) ?? { seasonIndex: r.seasonIndex, majorOrWorlds: 0, regional: 0, days: [] };
+    if (major) row.majorOrWorlds += 1;
+    else row.regional += 1;
+    // The last day of the event's week (a title is won on its Sunday at the latest).
+    row.days!.push({ day: firstDayOfWeek(r.week) + CAREER_CALENDAR.daysPerWeek - 1, major });
+    bySeason.set(r.seasonIndex, row);
+  }
+  return [...bySeason.values()].sort((a, b) => a.seasonIndex - b.seasonIndex);
+}
+
+/**
+ * rc.37 (F1): count a title the user just won today (its result already
+ * ingested) in `userTitlesBySeason`, with its day. A save from before rc.37
+ * is backfilled from this season's results instead — they already hold this
+ * title.
+ */
+function noteUserTitle(save: CareerSave, tier: CareerEventDef["tier"]): void {
+  const major = tier === "major" || tier === "worlds";
+  if (!major && tier !== "regional") return;
+  if (save.userTitlesBySeason === undefined) {
+    save.userTitlesBySeason = titleCountsFromResults(save.eventResults);
+    return;
+  }
+  const season = save.clock.seasonIndex;
+  let row = save.userTitlesBySeason.find((t) => t.seasonIndex === season);
+  if (!row) {
+    row = { seasonIndex: season, majorOrWorlds: 0, regional: 0, days: [] };
+    save.userTitlesBySeason.push(row);
+  }
+  if (major) row.majorOrWorlds += 1;
+  else row.regional += 1;
+  row.days?.push({ day: save.clock.day, major });
+}
+
+/**
+ * rc.37 (F1): at the rollover, before `eventResults` is cleared — backfill a
+ * save from before rc.37 and keep only the seasons the title raise's window
+ * can still read from `nextSeason` on.
+ */
+function rollTitleCounts(save: CareerSave, nextSeason: number): void {
+  const counts = save.userTitlesBySeason ?? titleCountsFromResults(save.eventResults);
+  const oldest = nextSeason - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1);
+  save.userTitlesBySeason = counts.filter((t) => t.seasonIndex >= oldest);
+}
+
+/**
  * rc.33 (ECONOMY-CONTRACT M6 lever 3): the titles the user won while `player`
  * was in the squad, in the title raise's window (this season and the ones
  * before it, never before he joined): regional titles and Major/Worlds
- * titles, read from the stored event results.
+ * titles. rc.37 (F1): read from `userTitlesBySeason`, which survives the
+ * rollover — rc.33–rc.36 read `eventResults`, cleared at each rollover, so
+ * the two-season window only ever saw this season. A save from before rc.37
+ * reads this season's results until its next title or rollover. In the
+ * season he joined, a player signed mid-season (`signedDay`) counts only the
+ * titles won after his signing day; a founder, or a player signed before
+ * rc.35, counts that whole season.
  */
-export function renewalTitlesOf(save: CareerSave, player: Pick<SquadPlayer, "joinedSeason">): RenewalTitles {
-  const from = Math.max(
-    player.joinedSeason ?? 0,
-    save.clock.seasonIndex - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1),
-  );
+export function renewalTitlesOf(
+  save: CareerSave,
+  player: Pick<SquadPlayer, "joinedSeason"> & Partial<Pick<SquadPlayer, "signedDay">>,
+): RenewalTitles {
+  const joined = player.joinedSeason ?? 0;
+  const from = Math.max(joined, save.clock.seasonIndex - (CAREER_SALARY.titleRenewalPremium.windowSeasons - 1));
   const titles: RenewalTitles = { majorOrWorlds: 0, regional: 0 };
-  for (const r of save.eventResults) {
-    if (r.seasonIndex < from || r.userPlacement !== "champion") continue;
-    if (r.tier === "major" || r.tier === "worlds") titles.majorOrWorlds++;
-    else if (r.tier === "regional") titles.regional++;
+  for (const t of save.userTitlesBySeason ?? titleCountsFromResults(save.eventResults)) {
+    if (t.seasonIndex < from || t.seasonIndex > save.clock.seasonIndex) continue;
+    const signedDay = player.signedDay;
+    if (t.seasonIndex === joined && signedDay !== undefined && t.days) {
+      for (const d of t.days) {
+        if (d.day <= signedDay) continue;
+        if (d.major) titles.majorOrWorlds += 1;
+        else titles.regional += 1;
+      }
+      continue;
+    }
+    titles.majorOrWorlds += t.majorOrWorlds;
+    titles.regional += t.regional;
   }
   return titles;
 }
@@ -4330,6 +4404,7 @@ export function renewalTermsOfSave(save: CareerSave, player: SquadPlayer, length
     careerSeed: save.careerSeed,
     lengthSeasons,
     titles: renewalTitlesOf(save, player),
+    growthModel: growthModelOf(save.world),
   });
 }
 
@@ -4420,6 +4495,7 @@ export function emptySeatPriceFor(
       difficulty: save.difficulty,
       careerSeed: save.careerSeed,
       lengthSeasons: signsForFinalSeason(view, save.clock.seasonIndex) ? 1 : lengthSeasons,
+      growthModel: growthModelOf(save.world),
     });
     const cost = pack.fee + pack.signingBonus;
     const wagePerSplit = pack.salaryPerSplit;
@@ -4490,6 +4566,7 @@ export function signingPlanFor(
     contracted: onOrg
       ? { splitsRemaining: contractedSplitsRemaining(playerId, save.clock.seasonIndex, save.careerSeed) }
       : undefined,
+    growthModel: growthModelOf(save.world),
   });
   // rc.33 (ECO-10/11): the talk on this deal — the wage on the table prices the payroll checks.
   const talk = signingTalkFor(save, view, pack, opts.offer, lengthSeasons);
@@ -4754,6 +4831,8 @@ export function renewPlayerFlow(
   player.salaryPerSplit = talk.terms.wagePerSplit;
   player.prizeSharePct = talk.terms.sharePct;
   player.contractEndSeason = save.clock.seasonIndex + lengthSeasons;
+  // rc.37 (F1): his renewals at the club — the next one climbs the tenure ladder.
+  player.renewalCount = (player.renewalCount ?? 0) + 1;
   return { save };
 }
 

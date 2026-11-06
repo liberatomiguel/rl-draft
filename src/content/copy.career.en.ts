@@ -889,6 +889,11 @@ export const CAREER_EN = {
     renewalTitles: (pct: number) => `+${pct}% for the titles he won with you lately.`,
     renewalAmbition: (pct: number) => `+${pct}% ambition: a star at a smaller org asks more.`,
     renewalBlockbuster: (pct: number) => `+${pct}%: you turned down a Blockbuster bid for him.`,
+    // rc.37 (F1): the tenure ladder and the premium cap.
+    renewalTenure: (seasons: number) =>
+      `${seasons} seasons with you: the longer he stays, the closer his renewal comes to his market ask.`,
+    renewalPremiumCapped: (pct: number) =>
+      `Premiums capped: ambition, a refused Blockbuster and titles add +${pct}% at most.`,
     renewalsTitle: "Contracts up for renewal",
     renewalsEmpty: "No contract ends this season.",
     renewalsGo: "Renew on Squad",

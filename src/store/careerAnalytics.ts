@@ -19,7 +19,7 @@
 import { CAREER_CALENDAR, CAREER_SAVE, CAREER_SCOUT } from "@/config/balance";
 import { firstDayOfWeek, splitOfWeek } from "@/engine/career/calendar";
 import { rankByPoints } from "@/engine/career/careerResults";
-import { ageOf, exactAgeOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, exactAgeOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
 import { loanBreachesOf } from "@/engine/career/economy";
 import { deriveSeed } from "@/engine/career/seeds";
 import type { CareerSave, LedgerEntry, LedgerKind, ScoutLevel, SquadPlayer } from "@/engine/career/types";
@@ -80,6 +80,7 @@ function bandMidOf(save: CareerSave, p: SquadPlayer): number {
   const band = scoutedBand(p.potential, p.overall, clampLevel(p.scoutLevel), save.careerSeed, p.id, growthModelOf(save.world), {
     arc: { peakAge: p.peakAge, exactAge },
     rc32Reports: save.bandModel === undefined,
+    uniform: readsUniformBand(save.bandModel),
   });
   return (band.min + band.max) / 2;
 }
@@ -394,7 +395,11 @@ function scoutReports(prev: CareerSave, next: CareerSave, action: CareerAction):
     id,
     growthModelOf(next.world),
     // rc.33 (DEV-04): the band the sheet shows — the age clock's cap, an older career's reports.
-    { arc: { peakAge: view.peakAge, exactAge: exactAgeOf(view.age, next.clock.day) }, rc32Reports: next.bandModel === undefined },
+    {
+      arc: { peakAge: view.peakAge, exactAge: exactAgeOf(view.age, next.clock.day) },
+      rc32Reports: next.bandModel === undefined,
+      uniform: readsUniformBand(next.bandModel),
+    },
   );
   return [
     {
