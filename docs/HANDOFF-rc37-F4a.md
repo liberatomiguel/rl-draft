@@ -1,0 +1,13 @@
+# F4a — bateria humana
+- Branch: claude/rc37-battery; base ae0ff80 (staging); sem merge/push/build/bump.
+- Novos arquivos auditHuman* em src/store; base copiada de source/final do zip de 04/11.
+- Zip extraído fora do repo; baseline reutilizado, sem rerodar; 315 registros do baseline, não todas as 611 runs do pacote.
+- 41 perfis; plano 7×3×3×41×2 seeds×3 variantes×2 horizontes (S10/S20); só planejamento da matriz foi executado.
+- Uso, sharding, retomada e limites: src/store/auditHumanREADME.md.
+- Smoke real: só 3 carreiras; SAM/Normal/prospects e APAC/Easy/balanced título S8 e S10 completas; EU/Hard/journeymen falência S6 (breach); zero softlocks.
+- Três exploits sintéticos: revenda imediata bloqueada; negativo não cria venda emergencial; renovação barata reproduzida (2500 vs fresh191750).
+- Worlds +0.5/+1 só por spy em fieldForEvent dos eventos do usuário; Major intacto; restauração em finally; sem patch.
+- Resumo: node src/store/auditHumanSummary.mjs --input <pasta externa> --out <resumo externo>.
+- Funil, colocações anuais, finanças/causas, caixa S1–3/p90, compras e efeitos marginais pós-cap; null para métricas ausentes no zip.
+- Suíte completa uma vez: 1479 passed/22 skipped; após ampliar atributos, 5 testes alvo passaram; exploits, tipos/lint OK; sem servidores.
+- Integração deve preservar saves/balance e separar coortes/horizontes; não somar S10/S20 como amostras independentes.
