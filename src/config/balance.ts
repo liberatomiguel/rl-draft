@@ -2601,7 +2601,7 @@ export const CAREER_GEAR = {
    */
   bootcampSpan: "split" as "split" | "event",
   /**
-   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.0) for the whole split
+   * rc.34 — decision 5-A keeps today's edge (+0.5 / +1.75) for the whole split
    * (1). Decision 5-B, in reserve: 0.5 halves it, should the split-long camp
    * beat a coach (HQ-CONTRACT §6.5; the rc.34 measurement is in the report).
    */
@@ -3397,8 +3397,8 @@ export const CAREER_PLAYBACK = {
  *    reload); starting it is exactly one day on (Sunday trains nobody and
  *    pays nobody). false = rc.35's flow (the clock walks into Sunday).
  *  - `briefing`: phase-based Sunday team-rating edges, shown upfront.
- *    Continuity +0.10 throughout; Recover trades Swiss strength for playoff
- *    strength; Prepare does the reverse. Completed phases are never replayed.
+ *    Continuity is steady; Recover favors playoffs; Prepare favors the entire
+ *    Swiss. Championship Sunday trades quarterfinal/semifinal strength for the grand final.
  *  - follow (SUN-03): an event the user is out of is kept compact; HQ offers
  *    it for `followCardDays` days from the day it resolved (the eliminated
  *    Saturday's "Sunday without you" card besides); watching reveals a round
@@ -3427,10 +3427,17 @@ export const CAREER_CREST = {
 
 export const CAREER_SUNDAY = {
   saturdayStop: true,
+  // rc.37 F3 — coach required; bootcamp remains a separate bonus under the shared cap.
   briefing: {
     keep: { swiss: 0.1, playoffs: 0.1 },
-    recover: { swiss: -0.15, playoffs: 0.35 },
-    prepare: { swiss: 0.35, playoffs: -0.15 },
+    recover: { swiss: -0.15, playoffs: 0.4 },
+    prepare: { swiss: 0.4, playoffs: -0.15 },
+  },
+  // rc.37 F3 — explicit bracket rounds, not the user's number of series played.
+  championshipBriefing: {
+    keep: { quarters: 0.1, semis: 0.1, other: 0.1, final: 0.1 },
+    recover: { quarters: -0.15, semis: -0.15, other: 0, final: 0.4 },
+    prepare: { quarters: 0.4, semis: 0.25, other: 0, final: -0.15 },
   },
   defaultBriefing: "keep",
   followCardDays: 2,

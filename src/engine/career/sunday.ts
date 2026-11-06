@@ -3,13 +3,14 @@
  *
  * After the user's Saturday (the qualifier won, or a Major / Worlds paused
  * after its Swiss) HQ offers an optional briefing before Sunday is started:
- * Continuity keeps a small steady edge; Recover trades Swiss strength for
- * playoffs strength, Prepare does the reverse. Effects apply per round,
+ * Continuity keeps a steady edge; Recover favors the later series and
+ * Prepare favors the entire Swiss. Championship Sunday targets explicit rounds,
  * without changing the frozen team or replaying completed stages.
  */
 
-import { CAREER_SUNDAY } from "@/config/balance";
+import { CAREER_GEAR, CAREER_SUNDAY } from "@/config/balance";
 import type { TournamentState } from "@/engine/types";
+import { roundOrderFor } from "@/engine/playoffs";
 import { isTwoDayEvent, playoffsDayFor } from "./calendar";
 import type { CareerEventDef, SundayBriefingChoice, WeekendState } from "./types";
 
@@ -54,15 +55,30 @@ export function briefingEffectOf(choice: SundayBriefingChoice): { swiss: number;
 
 /**
  * The team-rating edge the briefing gives the user's side in the NEXT round
- * of `t`: the Swiss effect throughout Swiss, the playoff effect throughout playoffs.
+ * of `t`: stage-specific, with championship effects selected by the bracket round.
  */
 export function briefingEdgeFor(
   choice: SundayBriefingChoice,
   def: Pick<CareerEventDef, "tier">,
   t: TournamentState,
 ): number {
+  if (t.stage === "finished") return 0;
+  if (isTwoDayEvent(def)) {
+    if (t.stage !== "playoffs" || !t.playoffs) return 0;
+    const round = roundOrderFor(t.playoffs.format)[t.playoffs.rounds.length];
+    const fx = CAREER_SUNDAY.championshipBriefing[choice];
+    if (round === "grand_final" || round === "final") return fx.final;
+    if (round === "quarterfinal" || round === "ub_quarterfinal" || round === "lb_round1") return fx.quarters;
+    if (round === "semifinal" || round === "ub_semifinal" || round === "lb_round2" || round === "lb_semifinal") return fx.semis;
+    return fx.other;
+  }
   const fx = briefingEffectOf(choice);
   return t.stage === "swiss" ? fx.swiss : fx.playoffs;
+}
+
+/** Bootcamp and briefing share the temporary cap; permanent gear is separate. */
+export function cappedBriefingEdge(edge: number, bootcamp: number): number {
+  return Math.min(edge, CAREER_GEAR.tempRatingMax - Math.min(bootcamp, CAREER_GEAR.tempRatingMax));
 }
 
 /** `t` with the user's team rating raised by `edge` (a copy; `t` is untouched). */
@@ -85,9 +101,10 @@ export function sundayEdgeFor(
   def: Pick<CareerEventDef, "id" | "tier" | "week" | "day">,
   day: number,
   t: TournamentState,
+  legacyBootcamp = 0,
 ): number {
   if (!weekend?.briefing || weekend.eventId !== def.id || !isEventSunday(def, day)) return 0;
-  return briefingEdgeFor(weekend.briefing, def, t);
+  return cappedBriefingEdge(briefingEdgeFor(weekend.briefing, def, t), t.teams.user?.rating.temporaryMod ?? legacyBootcamp);
 }
 
 /**

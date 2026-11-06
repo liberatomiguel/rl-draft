@@ -1,0 +1,14 @@
+# rc.37 F3 — Dia de jogo (revisado com Miguel)
+- Branch `claude/rc37-matchday`; base staging local `ae0ff80`; sem bump/push/merge/build.
+- Revisão pedida: estudo no Swiss inteiro; Championship por rodada; preleção só com coach contratado.
+- Regional: continuidade +0.10; recuperar −0.15 Swiss / +0.40 playoffs; estudar +0.40 Swiss / −0.15 playoffs.
+- Championship: equilibrada +0.10 em todas; força inicial +0.40 quartas / +0.25 semis / 0 demais / −0.15 grande final.
+- Pico na grande final: −0.15 quartas/semis, 0 demais, +0.40 grande final. Textos EN/PT indicam as rodadas.
+- Repescagem: LB R1 = quartas; LB R2 e LB SF = semis; finais das chaves e terceiro lugar = demais; só grand_final é grande final.
+- Sem coach: opções ocultas, escolhas ignoradas e nenhum bônus (incluindo briefings de saves antigos); iniciar domingo continua disponível.
+- +0.40 mede 4.79–5.48 pp na cupSeries (margens −2/−1/0); é curva de referência, não validação de carreira inteira.
+- Bootcamp separado do briefing; Miguel delegou a escolha. Evita premiar a compra duas vezes; cap conjunto continua +2.
+- Compra bloqueada em activeEvent, sem cobrança/consumo; rating.temporaryMod opcional congela camp, legado usa bootcampSharp.
+- Testes alvo: 33 passaram; tipos/lint passaram; cobertura de todas as rodadas e não dominância sem camp/com T1/T2.
+- Suíte completa: 1482 passaram, 18 pulados; única falha é fingerprint; fingerprint/BALANCE_VERSION intocados para integração.
+- Próxima validação: bateria integrada F4a para efeito acumulado do Swiss e ritmo de progressão; revisar UX no playtest.

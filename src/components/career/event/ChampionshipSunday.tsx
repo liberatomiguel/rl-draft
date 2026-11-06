@@ -188,13 +188,13 @@ export function ChampionshipSunday({
           >
             {userLine}
           </p>
-          {briefing && briefing !== "keep" ? (
+          {save.coach && briefing && briefing !== "keep" ? (
             <p
               className="rise-in mt-2 inline-flex items-center gap-1.5 rounded-full border border-cyan/40 bg-cyan/10 px-2.5 py-1 text-[11px] font-semibold text-cyan"
               style={{ animationDelay: `${bracketDelay + 5 * CAREER_PLAYBACK.sundayIntroStaggerMs}ms` }}
             >
               <WhistleIcon className="h-3.5 w-3.5" />
-              {C.sunday.briefingChip(C.sunday.briefing[briefing])}
+              {C.sunday.briefingChip(C.sunday.championshipBriefing[briefing])}
             </p>
           ) : null}
 
