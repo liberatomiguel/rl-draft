@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.15**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.15**; rc.37 integrated on `claude/rc37-integration`, unpublished)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,129 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added — rc.37, round-2 integration build (`claude/rc37-integration`, not published to staging)
+- Built on `origin/staging` rc.36.15 (`c680a89`), so rc.36.11–15 stay. Merged,
+  all textually clean: F1 market `e0cda5a` → F2 finance `13d4fa7` → F3
+  matchday `63bedf5` → F4a battery tooling (`claude/rc37-battery@3a94ccd`).
+  The F5 replay contract (`23a8c9f`, `RTW-REPLAY-CONTRACT.md`) is docs only,
+  awaiting Miguel's approval. Handoffs: `HANDOFF-rc37-*.md`. Gates: typecheck
+  and lint clean, full suite 1630 passed / 24 skipped (154 files); no build.
+  Battery running; report pending.
+- **Credit before the floor (F2):** when the Monday runway falls to ≤ 4 weeks,
+  the bank offers its voluntary loan sized to keep $0 for 8 Mondays, instalments
+  counted (minimum…reputation limit): a `creditOffer` notice and mail with
+  "Take $X", once per 8 weeks, never while a loan runs; Finances pre-fills the
+  sum. The −8-week floor is unchanged.
+- **Emergency sale (F2):** with cash below $0, one extra AI offer at 65–80 % of
+  market value, inside a transfer window only (Miguel, 05/11), never on the
+  user's event days; one pending, 14-day cooldown, 7 days to answer, never past
+  the window's close. Market/HQ badge it (BELOW MARKET VALUE · fee %;
+  Blockbuster bids read ABOVE MARKET VALUE · 150%); `SaleConsequences` shows
+  who leaves, the net after the bank's share and the wages freed.
+- **Spend alert and season outlook (F2):** a one-off spend that brings the
+  projected breach within 4 Mondays raises `spendRisk` at once, with the bank's
+  offer when it lends (checked after every player action). The season review
+  shows the wage bill now → after the review, debt and deadline, cash to next
+  season's first regional (no prize counted) and retirements now / likely /
+  possible (decision 8).
+- **Matchday (F3):** the Sunday briefing needs a hired coach (without one:
+  options hidden, choices ignored, no bonus, old saves included; starting
+  Sunday stays available). Championship Sunday applies it by bracket round,
+  not by series played (LB R1 = quarterfinal; LB R2/LB SF = semifinal; bracket
+  finals and third place = other; only the grand final is the final), named in
+  EN/PT. Bootcamp stays a separate bonus under the shared +2 cap and cannot be
+  bought during an active event (no charge, nothing consumed).
+- **Human battery (F4a + integration; test support, never imported by the app;
+  `src/store/auditHuman*`, usage in `auditHumanREADME.md`):** the bot plays the
+  real flows with per-profile F2/F3 options: bank credit (take / lastResort /
+  never), emergency offers (accept / whenTight / decline; a planned sale never
+  takes the discount), the adaptive briefing (Championship: favourite → peak,
+  else early rounds; Regional: top 4 by shown rating → Recover, else Study;
+  none without a coach), the store's spend alert after every action, F1's band
+  and growth models in its market reads. Its memory survives the per-day
+  policy copies.
+- Battery runner: resumable `ArcRun`; Worlds pairs (+0.5/+1 opponent rating at
+  Worlds only, by spy, no patch) fork on the morning of the first Worlds;
+  titled tier-A controls extend to S20 from their own S10 (no S1–S10 replay).
+  Plan: 7 regions × 3 difficulties × 3 rosters × 39 distinct profiles
+  (style-consistency and briefing-adaptive alias coachUpgrades) × 2 seeds =
+  4,914 controls (A/B: 14 base profiles with pairs, A also S20; C/D: one-factor
+  cohorts), replacing F4a's flat 30,996-career plan. JSONL per shard and
+  `done-N.txt`; resume refuses a changed simulation (source hash, line endings
+  normalized). New probes: chemistry/heritage per season, renewal vs market
+  ask, reputation and prize per event, market wage levels, red depth in weeks
+  of payroll.
+- Exploit probes on the integrated game: resale is blocked in the signing
+  window and the next; going red brings no emergency offer for a locked
+  signing (the first legal one, from window 2, at ~68 % of value); a developed
+  90/98 renews at 1.3 % of his market ask (2,500 vs 191,750 per split; 1.4 % /
+  1.2 % at the 2nd/3rd renewal).
+
+### Changed — rc.37
+- **One valuation (F1):** `economy.talentFactorsFor` feeds `marketValueFor`,
+  `computeSalaryAsk` and the ask readout; `market.valueInputOf` builds every
+  input. It prices the reach gap: the potential his arc still lets him close
+  (view `peakAge` + profile `plateauYears`, never the hidden peakOffset).
+- **Resale lock (F1):** no AI bid, Blockbuster bid or emergency offer for a
+  player the user signed, in his signing window or the next (Worlds window →
+  next preseason; `CAREER_VALUATION.resaleLockWindows` 1, 0 = rc.35's rule).
+- **Market (F1):** `listingFor` keeps the top 120 contracted (stars included)
+  and tops up until 24 are signable, as the free agents do; prices, windows
+  and rules unchanged. AI bid weight adds the reach gap (8–30) at any age
+  (70/98 at 17: 9 → 29); the daily chance counts only players a bid may target.
+- **DEV-04 (F1, decision 7):** new careers stamp `bandModel` 3: the true
+  potential sits at a uniform place in the band (L0/L1 uniform, L2 50/50
+  against earlier bands), and the age cap applies only once the age clock
+  binds. rc.36-and-older careers keep their band.
+- Saves additive only (`renewalCount`, `userTitlesBySeason`, `bandModel` 3,
+  `TransferOffer.emergency`, `FinanceState.creditOfferAt`/`emergencySaleAt`,
+  notices `creditOffer`/`spendRisk`, the event's optional
+  `rating.temporaryMod` freezing a bootcamp); persist keys/versions frozen.
+  Version 2.0.0-rc.37 (package, lock, site).
+
+### Balance — rc.37 (BALANCE_VERSION 13 → 14, fingerprint `a7db5347`; provisional until the battery)
+- **Talent price (F1):** reach-gap tiers ×1.20 at 10 (= rc.36), ×1.40 at 15,
+  ×1.70 at 20, ×2.34 at 28 (rc.36 stopped at ×1.30): a 70/98 costs 1.67× a
+  70/85, the same talent costs the same at 17 and 21 (an u18 talent loses the
+  0.9 discount), and a gap past the plateau is no longer paid. 19+ with gap
+  ≤ 10 is bit-identical; founding deals keep rc.36's factors; growth-model-1
+  careers price profile-free.
+- **Renewals (F1):** the first renewal at the club and tenure ≤ 2 stay rc.36;
+  then the jump climbs ×2.75 / ×3.0. The floor stays 0.6 (a rising floor, 0.9
+  or even 0.7, sent the median hands-off career to the Backer). Premiums capped
+  at ×1.45 and ×2.2 ÷ repPremium (worst single renewal ×4.35, rc.36 ×4.47).
+- **Late revenue (F2, decision 5: no wage budget):** from S4, Major pools ×1.15
+  and Worlds ×1.25 (every placement, the lobbies and `prizeFor` together); new
+  tier 3–4 sponsor quotes ×1.10. S1–S3, other tiers and signed deals unchanged.
+  Contract e2's 1.5× brake reads the base economy, so an S4+ dominant season
+  keeps 1.56× three 85s' wages at the lowest share.
+- **Briefings (F3):** Regional: Continuity +0.10 / +0.10; Recover −0.15 Swiss /
+  +0.40 playoffs; Study the Swiss field +0.40 over the whole Swiss / −0.15
+  playoffs (rc.36.7: ±0.35). Championship: Balanced preparation +0.10 every
+  round; Win the early rounds +0.40 QF / +0.25 SF / 0 other / −0.15 final; Peak
+  for the grand final −0.15 QF/SF / 0 other / +0.40 final. +0.40 is worth
+  4.79–5.48 pp per cup series at margins −2/−1/0 (a reference curve, not a
+  career validation).
+- **F1 bot A/B** (7 regions, seed 9100, 7 seasons, vs an rc.36 approximation):
+  autopilot Normal 0 Backer, end balance p50 $186k (rc.36 $190k); Hard 1 Backer
+  (= rc.36), p50 $21k ($63k); hands-off prospects 0 Backer / 0 insolvent on
+  both; youth bot Hard p50 $421k → $205k, for the battery to watch.
+
+### Fixed — rc.37
+- Bank-loan mails showed raw numbers. Root cause: R21's `amount`, `weekly` and
+  `total` were never added to `newsText.MONEY_PARAM_KEYS` (F2).
+- The renewal title premium saw only the current season, and a mid-season
+  signing counted that whole season's titles. Root cause: `renewalTitlesOf`
+  read `eventResults`, which every rollover clears. `CareerSave.
+  userTitlesBySeason` (per season, with days) survives the rollover; older
+  saves backfill from the season's results (F1).
+- Integration: an emergency offer could target a player signed in the previous
+  window and price him outside F1's valuation. Root cause: F2 was built in
+  parallel on rc.35's same-window lock (`signedInWindow`) and its own value
+  input. `careerFlow.rollEmergencySale` now passes `market.resaleLocked(p,
+  seasonIndex, day)`, and `emergencySale.ts` prices on `valueInputOf` + the
+  career's growth model (R99; `careerRc37Integration.test.ts`, 3 cases).
 
 ### Added / Fixed — rc.36.15, organization art coverage and historical logos
 - Audits all 47 organizations missing art: imports 19 verified Liquipedia
@@ -39,7 +162,10 @@ with the root cause — that section doubles as the project's bugfix log.
 - No lineup/card/player ids, ratings, balance values or save contracts change.
 - Validation: 1532 tests pass in the full run; four 5-second resource timeouts
   pass when their two files run alone (20 tests, original limits). Targeted
-  logo/data checks, lint, typecheck and static export pass.
+  logo/data checks (33), lint, typecheck and static export pass. Prebuild: 98
+  data tests and 35 persist-contract tests. Logo browser QA: 10 historical/
+  new/fallback roster cases, desktop and 320px mobile, no missing images or
+  browser exceptions; accounts and analytics stay off in the isolated QA build.
 
 ### Changed — rc.36.14, floating NEW marker
 - Positions NEW in green at the upper-right with a slight tilt, outside the
@@ -80,7 +206,11 @@ with the root cause — that section doubles as the project's bugfix log.
   its size.
 - Validation: 1531 tests pass (18 optional skipped), typecheck/lint and static
   export pass. Browser checks cover desktop, mobile 390/320px, EN/PT, both
-  2016 editions, team 1, pick/reroll/reload and normal/reduced-motion reveals.
+  2016 editions, team 1, pick/reroll/reload and normal/reduced-motion reveals,
+  with no browser exceptions. All 438 previous lineups, 1314 starter cards,
+  289 coaches, 147 subs, 17 seasons, 111 specials and 56 achievements verified
+  identical; every old player/org id stays valid (only reviewed current
+  spellings changed).
 
 ### Changed — rc.36.10, spectator card and normal clock controls (R98)
 - Non-participant cards contain Watch only; Results and the internal Advance
