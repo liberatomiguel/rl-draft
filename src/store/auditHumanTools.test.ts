@@ -1,10 +1,11 @@
-/** Small contract checks only: no complete careers or matrix execution. */
+/** Small contract checks only: no complete careers or matrix execution (the fork/extension checks are opt-in). */
 import { expect, it } from "vitest";
 import { createCareerSave, eventFieldFor, buyGearFlow, setPsychologistFlow } from "./careerFlow";
-import { humanMatrix, humanSmoke, AUDIT_REGIONS, AUDIT_DIFFICULTIES, AUDIT_ROSTERS } from "./auditHumanMatrix";
-import { profiles } from "./auditHumanProfiles";
+import { humanCohortPlan, humanMatrix, humanSmoke, AUDIT_REGIONS, AUDIT_DIFFICULTIES, AUDIT_ROSTERS, BASE_PROFILES } from "./auditHumanMatrix";
+import { profileAliases, profiles } from "./auditHumanProfiles";
 import { withWorldsExtra } from "./auditHumanSpy";
 import { humanTelemetry } from "./auditHumanTelemetry";
+import { ARC_POLICIES, advanceArcRun, startArcRun, type ArcCareer, type ArcRun } from "./auditHumanBot";
 import type { CareerEventDef } from "@/engine/career/types";
 
 export function auditFixture() {
@@ -25,6 +26,63 @@ it("plans every region/difficulty/roster/profile with two seeds and paired World
   expect(humanSmoke()).toHaveLength(3);
   expect(() => humanMatrix([1, 1])).toThrow("two different seeds");
 });
+it("rc.37 cohort plan: every cell × distinct profile × both seeds once; pairs and the S20 extension fork from the control", () => {
+  const aliases = profileAliases(ARC_POLICIES);
+  // The identical effective policies found in the 41 profiles (same career, played once).
+  expect(aliases).toEqual({ "style-consistency": "coachUpgrades", "briefing-adaptive": "coachUpgrades" });
+  const units = humanCohortPlan({ aliases });
+  const distinct = Object.keys(profiles).length - Object.keys(aliases).length;
+  const cells = AUDIT_REGIONS.length * AUDIT_DIFFICULTIES.length * AUDIT_ROSTERS.length;
+  expect(units).toHaveLength(cells * distinct * 2);
+  expect(new Set(units.map((u) => u.key)).size).toBe(units.length);
+  const seedsOf = new Map<string, Set<number>>();
+  for (const u of units) {
+    const c = u.cell;
+    expect(c).toMatchObject({ seasons: 10, cohort: "coverage", worldsExtra: 0 });
+    const key = [c.region, c.difficulty, c.roster, c.profile].join("|");
+    (seedsOf.get(key) ?? seedsOf.set(key, new Set()).get(key)!).add(c.seed);
+    const base = (BASE_PROFILES as readonly string[]).includes(c.profile);
+    expect(u.worldsExtras).toEqual(base ? [0.5, 1] : []);
+    expect(u.endlessTo).toBe(base && u.tier === "A" ? 20 : null);
+    expect(u.tier === "A" || u.tier === "B").toBe(base);
+  }
+  expect(seedsOf.size).toBe(cells * distinct);
+  expect([...seedsOf.values()].every((s) => s.size === 2)).toBe(true);
+  expect(() => humanCohortPlan({ aliases, worldsExtras: [0] })).toThrow("positive increments");
+});
+
+/** A run's record without the wall clock (the only field two identical plays may differ in). */
+function stable(out: ArcCareer) {
+  return JSON.stringify({ ...out, ms: 0 });
+}
+const PROBE = { region: "SAM" as const, difficulty: "normal" as const, rosterKey: "balanced" as const, policy: profiles.experienced.base,
+  policyOverrides: profiles.experienced.changes, seed: 9100, seasons: 2, budgetMs: 600_000 };
+
+it.skipIf(process.env.HUMAN_AUDIT !== "1")("a fork taken mid-season continues exactly as the run it was cloned from", () => {
+  const tel = humanTelemetry();
+  const run = startArcRun(PROBE);
+  let snap: { run: ArcRun; tel: ReturnType<typeof tel.state> } | null = null;
+  advanceArcRun(run, 1, {
+    onDay: tel.onDay, onSeason: tel.onSeason, onAction: tel.onAction, onEvent: tel.onEvent,
+    fork: { when: (s) => s.clock.day === 61, take: (r) => { snap = structuredClone({ run: r, tel: tel.state() }); } },
+  });
+  const forked = snap as { run: ArcRun; tel: ReturnType<typeof tel.state> } | null;
+  expect(forked).not.toBeNull();
+  const copyTel = humanTelemetry(forked!.tel);
+  advanceArcRun(forked!.run, 1, { onDay: copyTel.onDay, onSeason: copyTel.onSeason, onAction: copyTel.onAction, onEvent: copyTel.onEvent });
+  expect(stable(forked!.run.out)).toBe(stable(run.out));
+  expect(JSON.stringify(copyTel.result())).toBe(JSON.stringify(tel.result()));
+  expect(forked!.run.save).toEqual(run.save);
+}, 600_000);
+
+it.skipIf(process.env.HUMAN_AUDIT !== "1")("an extension from a finished horizon plays the seasons a longer run plays", () => {
+  const long = advanceArcRun(startArcRun(PROBE), 2);
+  const short = advanceArcRun(startArcRun(PROBE), 1);
+  expect(short.stage).toBe("seasonOver");
+  advanceArcRun(short, 2);
+  expect(stable(short.out)).toBe(stable(long.out));
+  expect(short.save).toEqual(long.save);
+}, 600_000);
 it("raises only Worlds opponents by spy and restores after failure", () => {
   const save = auditFixture();
   // Frozen synthetic announced fields; no career is played to reach Worlds.

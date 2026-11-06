@@ -24,9 +24,10 @@ import {
   seasonLabelFor,
   weekOfDay,
 } from "@/engine/career/calendar";
-import { ageOf, growthModelOf, playerViewById, scoutedBand } from "@/engine/career/development";
+import { ageOf, growthModelOf, playerViewById, readsUniformBand, scoutedBand } from "@/engine/career/development";
 import { bootcampCostFor, bootcampTierFor, psychologistPerSplitFor, signableOverallCap, weeklyOf } from "@/engine/career/economy";
 import { askPackageFor, listingFor } from "@/engine/career/market";
+import { userTeamFor } from "@/engine/career/worldSim";
 import type {
   CareerDifficulty,
   CareerEndReason,
@@ -42,6 +43,7 @@ import type {
 import type { Placement, Region } from "@/engine/types";
 import {
   acceptBidFlow,
+  acceptCreditOfferFlow,
   buyGearFlow,
   buyScoutReportFlow,
   signingTalkFor,
@@ -51,6 +53,7 @@ import {
   coachCandidatesFor,
   createCareerSave,
   declineBidFlow,
+  eventFieldFor,
   finishEvent,
   hireCoachFlow,
   isEventPaused,
@@ -64,6 +67,7 @@ import {
   setPsychologistFlow,
   signPlayerFlow,
   simEventToEnd,
+  spendAlertFlow,
   squadIsShort,
   startEvent,
   takeBankLoanFlow,
@@ -73,7 +77,7 @@ import {
   type CreateCareerInput,
 } from "./careerFlow";
 import { clockHoldOf, reviewContractsFlow, rolloverHoldOf } from "./careerDecisions";
-import { recordSundayBriefingFlow, sundayStopHolds } from "./careerSunday";
+import { recordSundayBriefingFlow, sundayAheadOf, sundayStopHolds } from "./careerSunday";
 import {
   approveTrainingProposalFlow,
   coachPlansOf,
@@ -109,6 +113,19 @@ export type ArcPolicyId =
 /** rc.34: how the bot picks a sponsor offer (see ArcPolicy.sponsor). */
 export type ArcSponsorPick = "best" | "worst" | "steady" | "balanced" | "bold";
 
+/** rc.37 integration: what the manager remembers between days (ArcPolicy.mem). */
+export interface ArcMemory {
+  lastUpgradeWindow?: string;
+  lastSaleSplit?: string;
+  lastSaleSeason?: number;
+  memorySoldTalent?: boolean;
+}
+
+/** The policy's memory, created on first use and then shared by every copy of the policy. */
+function memOf(policy: ArcPolicy): ArcMemory {
+  return (policy.mem ??= {});
+}
+
 export interface ArcPolicy {
   id: ArcPolicyId;
   negotiate?: boolean;
@@ -119,6 +136,32 @@ export interface ArcPolicy {
   trainingPackage?: Partial<TrainingPackage>;
   keepFirstCoach?: boolean;
   maxSalesPerSplit?: boolean;
+  /**
+   * rc.37 integration: the manager's memory (one upgrade per window, one sale
+   * per split / season, a sold talent). ONE object shared by reference, so it
+   * survives the per-day policy copies (`adaptFinances`, contend / switch
+   * modes) that used to drop it on a crisis day.
+   */
+  mem?: ArcMemory;
+  /**
+   * rc.37 F2 (credit before the floor): the bank's offer — a `creditOffer`
+   * notice, or a `spendRisk` one that carries it. "take" accepts the sum the
+   * bank quotes; "lastResort" only when no incoming offer in hand covers it
+   * (a sale is a manager's first answer); "never" reads and dismisses it.
+   * Absent = "never" (the rc.36 bots never met one). Only the real notice's
+   * offer is taken — the bot never sizes or invents a loan.
+   */
+  credit?: "take" | "lastResort" | "never";
+  /**
+   * rc.37 F2 (the emergency sale): an emergency offer — the below-market bid a
+   * red balance brings inside a window. "accept" sells at once (the manager
+   * reacting to the red), "whenTight" as any bid (runway under eight weeks),
+   * "decline" keeps the player. Absent = the `bids` rule of the day. A planned
+   * sale (`sellToFund`) never takes a crisis discount. Only a real offer from
+   * the flow is ever answered.
+   */
+  emergencySale?: "accept" | "whenTight" | "decline";
+  /** @deprecated rc.37: read `mem.lastSaleSplit` (kept so old overrides type-check). */
   lastSaleSplit?: string;
   /** Audit-only observer. Never imported by the app. */
   onAction?: (kind: string, before: CareerSave, after: CareerSave, item: string) => void;
@@ -389,6 +432,16 @@ export interface ArcSeason {
   seriesByGap?: Record<string, [number, number]>;
   /** rc.34: bootcamps booked this season (the opt-in 5-A measurement; absent in older dumps). */
   bootcamps?: number;
+  /** rc.37 F2: the season's crisis levers (absent in older dumps). */
+  crisis?: ArcCrisis;
+  /**
+   * rc.37 integration: the fielded trio's chemistry at the season's end (the
+   * percent the Squad screen shows), its pairs' shared tenure (splits) and
+   * heritage mix (same country / same region / none) — the "stuck at 67 %" probe.
+   */
+  chemistry?: { percent: number; tier: string; pairTenure: number[]; heritage: { country: number; region: number; none: number } };
+  /** rc.37: the market's price level at the season's first window visit (null = no visit). */
+  market?: ArcMarketLevel | null;
   /**
    * rc.34 (DEV-03, TRAINING-CONTRACT §7): the season's training — periods
    * filed, prompts the manager met (t1), the package objective per period
@@ -445,8 +498,15 @@ export interface ArcCareer {
 /** Running tallies for the season in progress. */
 /** Observe only accepted, real-flow decisions, before their inputs are discarded. */
 function policyAction(policy: ArcPolicy | undefined, kind: string, before: CareerSave, after: CareerSave, item = kind): void {
-  policy?.onAction?.(kind, before, after, item);
+  (policy?.onAction ?? actionObserver)?.(kind, before, after, item);
 }
+
+/**
+ * rc.37 integration: the observer of the run in progress (advanceArcRun sets
+ * it for the duration of a call), so a run's state holds data only and can be
+ * cloned at a fork (structuredClone refuses functions).
+ */
+let actionObserver: ArcPolicy["onAction"] | undefined;
 
 interface Tally {
   policy?: ArcPolicy;
@@ -465,6 +525,65 @@ interface Tally {
   bootcamps: number;
   /** rc.34: the days a training proposal held the clock (t1). */
   promptDays: Set<number>;
+  /** rc.37 F2: the crisis levers met this season (the bank's offers, the emergency sale). */
+  crisis: ArcCrisis & { emergencySeen: string[] };
+  /** rc.37: the market's price level at the season's first window visit. */
+  market?: ArcMarketLevel;
+}
+
+/**
+ * rc.37: the market's price level the season's first window visit shows — the
+ * signable listing's wage asks (per split, before any talk) by overall band,
+ * the fees, and the squad's own payroll beside it (the "endless salaries" probe).
+ */
+export interface ArcMarketLevel {
+  day: number;
+  signable: number;
+  wageP50: number | null;
+  wageP90: number | null;
+  feeP50: number | null;
+  byBand: Record<string, { n: number; wageP50: number | null; feeP50: number | null }>;
+  payrollPerSplit: number;
+}
+
+function pctl(values: number[], p: number): number | null {
+  const s = values.filter(Number.isFinite).sort((a, b) => a - b);
+  return s.length ? s[Math.round((s.length - 1) * p)] : null;
+}
+
+function marketLevelOf(save: CareerSave, pool: Candidate[]): ArcMarketLevel {
+  const bands: [string, number, number][] = [["<80", 0, 79.99], ["80-84", 80, 84.99], ["85-89", 85, 89.99], ["90+", 90, 200]];
+  return {
+    day: save.clock.day,
+    signable: pool.length,
+    wageP50: pctl(pool.map((c) => c.ask), 0.5),
+    wageP90: pctl(pool.map((c) => c.ask), 0.9),
+    feeP50: pctl(pool.map((c) => c.cost), 0.5),
+    byBand: Object.fromEntries(bands.map(([key, lo, hi]) => {
+      const inBand = pool.filter((c) => c.view.overall >= lo && c.view.overall <= hi);
+      return [key, { n: inBand.length, wageP50: pctl(inBand.map((c) => c.ask), 0.5), feeP50: pctl(inBand.map((c) => c.cost), 0.5) }];
+    })),
+    payrollPerSplit: save.squad.reduce((n, p) => n + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0),
+  };
+}
+
+/** rc.37 F2: one season's crisis levers — the bank's offers met / taken, the emergency offers met / accepted. */
+export interface ArcCrisis {
+  creditOffers: number;
+  creditTaken: number;
+  creditPrincipal: number;
+  emergencyOffers: number;
+  emergencyAccepted: number;
+  emergencyFees: number;
+}
+
+/** The season's crisis levers as recorded (the seen-offer ids stay in the tally). */
+function crisisOf(t: Tally): ArcCrisis {
+  const c = t.crisis;
+  return {
+    creditOffers: c.creditOffers, creditTaken: c.creditTaken, creditPrincipal: c.creditPrincipal,
+    emergencyOffers: c.emergencyOffers, emergencyAccepted: c.emergencyAccepted, emergencyFees: c.emergencyFees,
+  };
 }
 
 function newTally(save: CareerSave, seen: Set<string>): Tally {
@@ -482,6 +601,7 @@ function newTally(save: CareerSave, seen: Set<string>): Tally {
     seriesByGap: {},
     bootcamps: 0,
     promptDays: new Set(),
+    crisis: { creditOffers: 0, creditTaken: 0, creditPrincipal: 0, emergencyOffers: 0, emergencyAccepted: 0, emergencyFees: 0, emergencySeen: [] },
   };
 }
 
@@ -604,6 +724,8 @@ interface Candidate {
   potentialRead: number;
   offer?: { weekly: number; sharePct?: number };
   lengthSeasons?: 2 | 3;
+  /** rc.37: his ask before any talk (the listing's price, the same for every manager). */
+  ask: number;
 }
 
 function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
@@ -626,10 +748,15 @@ function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
       careerSeed: save.careerSeed,
       lengthSeasons: policy?.negotiate ? 3 : 2,
       contracted: splitsRemaining === null ? undefined : { splitsRemaining },
+      // rc.37 (F1, as the arc bot does): priced on the career's growth model.
+      growthModel: growthModelOf(save.world),
     });
     const level = Math.min(2, Math.max(0, Number(save.scouted[view.id] ?? 0))) as ScoutLevel;
-    // rc.32: the band the market screen shows (the save's development model).
-    const band = scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world));
+    // rc.32: the band the market screen shows (the save's development model);
+    // rc.37 (F1): and its band model (the uniform band from rc.37 on).
+    const band = scoutedBand(view.potential, view.overall, level, save.careerSeed, view.id, growthModelOf(save.world), {
+      uniform: readsUniformBand(save.bandModel),
+    });
     const baseTalk = policy?.negotiate ? signingTalkFor(save, view, pack, undefined, 3) : null;
     const talk = baseTalk && policy?.shareWage ? signingTalkFor(save, view, pack, { sharePct: baseTalk.zone.shareMax }, 3) : baseTalk;
     const offer = talk ? { weekly: talk.zone.floorWeekly, ...(policy?.shareWage ? { sharePct: talk.offered.sharePct } : {}) } : undefined;
@@ -643,6 +770,7 @@ function candidatesFor(save: CareerSave, policy?: ArcPolicy): Candidate[] {
       offer,
       lengthSeasons: policy?.negotiate ? 3 : 2,
       potentialRead: (band.min + band.max) / 2,
+      ask: pack.salaryPerSplit,
     });
   };
   for (const view of listing.freeAgents) add(view, null);
@@ -654,6 +782,15 @@ function starters(save: CareerSave) {
   return save.squad.filter((p) => save.starterIds.includes(p.id));
 }
 
+/**
+ * rc.37 F2 (package 4): the store runs `spendAlertFlow` after EVERY player
+ * action (careerStore.withResult), so a one-off spend that brings the floor
+ * within reach raises its notice at once; the bot's actions do the same.
+ */
+function alerted(before: CareerSave, after: CareerSave): CareerSave {
+  return after === before ? after : spendAlertFlow(before, after);
+}
+
 function sign(save: CareerSave, c: Candidate, t: Tally, releaseId?: string): CareerSave | null {
   // ECO-03 (R47): the slot follows the squad (an open seat, else the reserve); the price never changes.
   const res = signPlayerFlow(save, c.view.id, { lengthSeasons: c.lengthSeasons ?? 2, offer: c.offer, releaseId });
@@ -661,7 +798,7 @@ function sign(save: CareerSave, c: Candidate, t: Tally, releaseId?: string): Car
   policyAction(t.policy, "signing", save, res.save, c.view.id);
   t.signings += 1;
   if (c.view.overall >= 88) t.starSignings += 1;
-  return res.save;
+  return alerted(save, res.save);
 }
 
 /**
@@ -725,15 +862,16 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
     for (const c of shortlist) {
       if (Number(working.scouted[c.view.id] ?? 0) >= 2) continue;
       const report = buyScoutReportFlow(working, c.view.id);
-      if (!report.error && affordable(report.save, 0, 0, policy)) working = report.save;
+      if (!report.error && affordable(report.save, 0, 0, policy)) working = alerted(working, report.save);
     }
   }
   const pool = candidatesFor(working, policy);
+  t.market ??= marketLevelOf(working, pool);
   const save = fillSeats(working, policy, t, pool);
   const byOverall = [...pool].sort((a, b) => b.view.overall - a.view.overall || a.view.id.localeCompare(b.view.id));
   if (policy.market === "keep") return save;
   const marketWindow = `${save.clock.seasonIndex}:${windowIndexOf(weekOfDay(save.clock.day))}`;
-  if (policy.maxUpgradePerWindow && policy.lastUpgradeWindow === marketWindow) return save;
+  if (policy.maxUpgradePerWindow && memOf(policy).lastUpgradeWindow === marketWindow) return save;
 
   // 2. One upgrade per visit: release the weakest starter for a clearly better player.
   const lineup = starters(save).sort((a, b) => a.overall - b.overall);
@@ -743,7 +881,7 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
   const age = (v: CareerPlayerView) => v.age;
   const incumbentBand = scoutedBand(weakest.potential, weakest.overall,
     Math.min(2, Math.max(0, Number(save.scouted[weakest.id] ?? weakest.scoutLevel ?? 0))) as ScoutLevel,
-    save.careerSeed, weakest.id, growthModelOf(save.world));
+    save.careerSeed, weakest.id, growthModelOf(save.world), { uniform: readsUniformBand(save.bandModel) });
   const incumbentRead = (incumbentBand.min + incumbentBand.max) / 2;
   const preservesFuture = (c: Candidate) => !policy.protectPotential ||
     c.potentialRead >= incumbentRead - 1 || c.view.overall >= weakest.overall + 6;
@@ -759,7 +897,7 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
     for (const candidate of list) {
       if (!affordable(save, candidate.cost + severance, candidate.salaryPerSplit - weakest.salaryPerSplit, policy)) continue;
       const signed = sign(save, candidate, t, weakest.id);
-      if (signed) { if (policy.maxUpgradePerWindow) policy.lastUpgradeWindow = marketWindow; return signed; }
+      if (signed) { if (policy.maxUpgradePerWindow) memOf(policy).lastUpgradeWindow = marketWindow; return signed; }
     }
     return save;
   }
@@ -767,7 +905,8 @@ function marketMoves(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave
   if (!c) return save;
   const released = releasePlayerFlow(save, weakest.id);
   if (released.error) return save;
-  return sign(released.save, c, t) ?? released.save;
+  const afterRelease = alerted(save, released.save);
+  return sign(afterRelease, c, t) ?? afterRelease;
 }
 
 // ---------------------------------------------------------------------------
@@ -791,7 +930,7 @@ function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
   for (const p of expiring) {
     if (policy.renew === "all") {
       const res = renewPlayerFlow(save, p.id, 2);
-      if (!res.error) { policyAction(policy, "renewal", save, res.save, p.id); save = res.save; }
+      if (!res.error) { policyAction(policy, "renewal", save, res.save, p.id); save = alerted(save, res.save); }
       continue;
     }
     const young = ageOf(p.birthYear, seasonIndex) <= 21;
@@ -809,7 +948,7 @@ function renewals(input: CareerSave, policy: ArcPolicy): CareerSave {
     // rc.32's 92 % opening paid on average (a third of them took it).
     const res = renewPlayerFlow(save, p.id, 2, offer);
     const accepted = res.error ? renewPlayerFlow(save, p.id, 2) : res;
-    if (!accepted.error) { policyAction(policy, "renewal", save, accepted.save, p.id); save = accepted.save; }
+    if (!accepted.error) { policyAction(policy, "renewal", save, accepted.save, p.id); save = alerted(save, accepted.save); }
   }
   return save;
 }
@@ -850,7 +989,7 @@ function coachMoves(save: CareerSave, policy: ArcPolicy): CareerSave {
   if (!pick) return save;
   const res = hireCoachFlow(save, pick);
   if (!res.error) policyAction(policy, "coach", save, res.save, pick.id);
-  return res.error ? save : res.save;
+  return res.error ? save : alerted(save, res.save);
 }
 
 function borrow(save: CareerSave, t: Tally): CareerSave {
@@ -870,6 +1009,78 @@ interface ArcOpts {
   /** rc.34: book a bootcamp each split (CAREER_GEAR.bootcampSpan decides how long it lasts). */
   bootcamp?: boolean;
   onEvent?: (save: CareerSave) => void;
+  /** rc.37: the user's event before and after its real settlement (finishEvent: prize, reputation). */
+  onSettled?: (before: CareerSave, after: CareerSave) => void;
+}
+
+/** A team's rating as the lobby and bracket show it (the AI's hidden difficulty shift left out). */
+function shownRating(team: { rating: { total: number; difficultyShift: number } } | undefined): number {
+  return team ? team.rating.total - team.rating.difficultyShift : 0;
+}
+
+/**
+ * rc.37 F3: the "adaptive" briefing, on the numbers the screens show.
+ * Championship Sunday (the bracket is set): the favourite of the playoff
+ * field peaks for the grand final ("recover": −QF/SF, +GF); anyone else
+ * spends it on the early rounds ("prepare": +QF/+SF, −GF). Regional Sunday:
+ * a side among the field's four strongest saves it for the playoffs
+ * ("recover"); the rest study the Swiss ("prepare"), which decides them.
+ */
+function adaptiveBriefingOf(save: CareerSave): SundayBriefingChoice {
+  const ahead = sundayAheadOf(save);
+  if (!ahead) return "keep";
+  if (ahead.kind === "championship" && save.activeEvent) {
+    const tr = save.activeEvent.tournament;
+    const others = (tr.playoffs?.seeds ?? []).filter((id) => id !== "user").map((id) => shownRating(tr.teams[id]));
+    return others.length > 0 && shownRating(tr.teams.user) >= Math.max(...others) ? "recover" : "prepare";
+  }
+  const { field } = eventFieldFor(save, ahead.def);
+  const user = field.find((team) => team.isUser);
+  const stronger = field.filter((team) => !team.isUser && shownRating(team) > shownRating(user)).length;
+  return stronger < 4 ? "recover" : "prepare";
+}
+
+/**
+ * rc.37 F2: the bank's offer (a `creditOffer` notice, or a `spendRisk` one
+ * carrying it) under the policy's `credit` rule — the sum is the notice's own.
+ */
+function takesCredit(save: CareerSave, policy: ArcPolicy, principal: number): boolean {
+  const rule = policy.credit ?? "never";
+  if (rule === "never") return false;
+  if (rule === "take") return true;
+  // "lastResort": an incoming offer in hand that covers the bank's sum is the first answer.
+  const inHand = save.pendingOffers
+    .filter((o) => o.status === "pending" && o.direction === "out")
+    .reduce((best, o) => Math.max(best, o.fee), 0);
+  return inHand < principal;
+}
+
+/**
+ * The money notices, read as the modal makes a player do (rc.34). rc.37 F2:
+ * one that carries the bank's offer is answered by the policy's `credit` rule
+ * (acceptCreditOfferFlow takes exactly the quoted loan and closes the notice).
+ */
+function answerMoneyNotices(input: CareerSave, policy: ArcPolicy, t: Tally): CareerSave {
+  let save = input;
+  for (let guard = 0; guard < 32; guard++) {
+    const notice = moneyNoticeOf(save);
+    if (!notice) break;
+    const principal = Number(notice.params?.principal ?? 0);
+    const offered = (notice.kind === "creditOffer" || notice.kind === "spendRisk") && principal > 0;
+    if (offered) t.crisis.creditOffers += 1;
+    if (offered && takesCredit(save, policy, principal)) {
+      const res = acceptCreditOfferFlow(save, notice.id);
+      if (!res.error) {
+        policyAction(policy, "credit", save, res.save, String(principal));
+        t.crisis.creditTaken += 1;
+        t.crisis.creditPrincipal += principal;
+      }
+      save = res.save;
+      continue;
+    }
+    save = acknowledgeMoneyNoticeFlow(save, notice.id);
+  }
+  return save;
 }
 
 /** Today's decisions, in the order a player meets them. */
@@ -880,13 +1091,14 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     if (save.finances.gear.psychologist) save = setPsychologistFlow(save, false).save;
     policy = { ...policy, fullSupport: false, eagerInfrastructure: false, infrastructure: false, bids: "whenTight" };
   }
-  if (policy.switchAfterSale && (policy.memorySoldTalent || save.transferLog.some(l => l.kind === "userOut"))) {
+  if (policy.switchAfterSale && (memOf(policy).memorySoldTalent || save.transferLog.some(l => l.kind === "userOut"))) {
     policy = { ...policy, market: "stars", candidateKind: "real", candidateMinOverall: 88,
       candidateMinBand: undefined, candidateMaxAge: undefined, upgradeMargin: -5 };
   }
   // rc.34: a money notice (the emergency loan, its deadline) is read, as the modal makes a player do —
-  // nothing in the books moves, and the clock never waits on an unread one.
-  while (moneyNoticeOf(save)) save = acknowledgeMoneyNoticeFlow(save);
+  // nothing in the books moves, and the clock never waits on an unread one. rc.37 F2: the bank's offer
+  // is answered by the policy's `credit` rule.
+  save = answerMoneyNotices(save, policy, t);
   // RTW-05 (rc.33): a squad under three signs first — no event starts short.
   if (!save.activeEvent && save.phase === "running" && squadIsShort(save)) save = fillSeats(save, policy, t);
   // The user's event: instant sim; a two-day event pauses on Saturday (tomorrow plays Sunday).
@@ -895,26 +1107,30 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
       countSeries(save, t);
       opts.onEvent?.(save);
+      const unsettled = save;
       save = finishEvent(save);
+      opts.onSettled?.(unsettled, save);
     }
   } else if (save.pendingEventDef && save.pendingEventDef.day === save.clock.day) {
     save = simEventToEnd(startEvent(save, false));
     if (!isEventPaused(save) && save.activeEvent?.tournament.stage === "finished") {
       countSeries(save, t);
       opts.onEvent?.(save);
+      const unsettled = save;
       save = finishEvent(save);
+      opts.onSettled?.(unsettled, save);
     }
   }
   if (save.phase !== "running") return save;
   // rc.36 (SUN-01): back in HQ on Saturday evening — Sunday is started with the policy's briefing
   // (the loop's next day is Sunday).
   if (sundayStopHolds(save)) {
-    const choice = policy.briefing === "none" ? null : policy.briefing === "adaptive"
-      ? (save.activeEvent ? "recover" : "prepare") : policy.briefing;
+    // rc.37 F3: the flow ignores any choice without a hired coach (no bonus); the bot still asks, as a player would.
+    const choice = policy.briefing === "none" ? null : policy.briefing === "adaptive" ? adaptiveBriefingOf(save) : policy.briefing;
     const briefed = recordSundayBriefingFlow(save, choice);
     if (!briefed.error) { policyAction(policy, "briefing", save, briefed.save, choice ?? "none"); save = briefed.save; }
   }
-  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = answerInsert(save, policy);
+  if (save.pendingInsert && save.pendingInsert.day === save.clock.day) save = alerted(save, answerInsert(save, policy));
   // Every offered cup is entered (the store's enterUnofficial).
   if (!policy.skipOptionalCups && save.unofficialOffer && !save.pendingEventDef && !save.activeEvent) {
     save = { ...structuredClone(save), pendingEventDef: save.unofficialOffer };
@@ -925,19 +1141,39 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     const tight = net < 0 && save.finances.balance / -net < 8;
     const current = save.squad.find(p => p.id === bid.playerId);
     const saleSplit = `${save.clock.seasonIndex}:${windowIndexOf(weekOfDay(save.clock.day))}`;
-    const trade = policy.sellToFund && (!policy.maxSalesPerSeason || policy.lastSaleSeason !== save.clock.seasonIndex)
-      && (!policy.maxSalesPerSplit || policy.lastSaleSplit !== saleSplit) && current && ageOf(current.birthYear, save.clock.seasonIndex) >= (policy.sellMinAge ?? 21)
+    const mem = memOf(policy);
+    // rc.37 F2: an emergency offer (below market, a red balance's) answers to the crisis rule only;
+    // a planned sale (sellToFund) never takes the discount.
+    const emergency = Boolean(bid.emergency);
+    if (emergency && !t.crisis.emergencySeen.includes(bid.id)) {
+      t.crisis.emergencySeen.push(bid.id);
+      t.crisis.emergencyOffers += 1;
+    }
+    const trade = !emergency && policy.sellToFund && (!policy.maxSalesPerSeason || mem.lastSaleSeason !== save.clock.seasonIndex)
+      && (!policy.maxSalesPerSplit || mem.lastSaleSplit !== saleSplit) && current && ageOf(current.birthYear, save.clock.seasonIndex) >= (policy.sellMinAge ?? 21)
       && current.overall >= (policy.sellMinOverall ?? 0)
       && save.reputation >= (policy.sellAfterRep ?? 0)
       && (!policy.sellFictionalOnly || current.kind === "fictional")
       && bid.fee >= 6 * weeklyOf(current.salaryPerSplit);
-    const sold = ((policy.bids === "whenTight" && tight) || trade) && !save.activeEvent ? acceptBidFlow(save, bid.id) : null;
-    if (sold && !sold.error) { policyAction(policy, "sale", save, sold.save, bid.playerId); if (policy.maxSalesPerSplit) policy.lastSaleSplit = saleSplit; t.sales += 1; if (policy.maxSalesPerSeason) policy.lastSaleSeason = save.clock.seasonIndex; if (policy.switchAfterSale) policy.memorySoldTalent = true; }
+    const rule = emergency ? (policy.emergencySale ?? policy.bids) : policy.bids;
+    const wants = rule === "accept" || (rule === "whenTight" && tight) || trade;
+    const sold = wants && !save.activeEvent ? acceptBidFlow(save, bid.id) : null;
+    if (sold && !sold.error) {
+      policyAction(policy, emergency ? "emergencySale" : "sale", save, sold.save, bid.playerId);
+      if (policy.maxSalesPerSplit) mem.lastSaleSplit = saleSplit;
+      t.sales += 1;
+      if (emergency) { t.crisis.emergencyAccepted += 1; t.crisis.emergencyFees += bid.fee; }
+      if (policy.maxSalesPerSeason) mem.lastSaleSeason = save.clock.seasonIndex;
+      if (policy.switchAfterSale) mem.memorySoldTalent = true;
+    }
     save = sold && !sold.error ? sold.save : declineBidFlow(save, bid.id);
   }
   const week = weekOfDay(save.clock.day);
   const dow = dayOfWeekOf(save.clock.day);
-  if (policy.payDebtIfCovered && save.finances.loan && save.finances.balance >= save.finances.loan.remaining + 4 * statementOf(save).payroll) save = payDebtFlow(save, save.finances.loan.remaining).save;
+  if (policy.payDebtIfCovered && save.finances.loan && save.finances.balance >= save.finances.loan.remaining + 4 * statementOf(save).payroll) {
+    const paid = payDebtFlow(save, save.finances.loan.remaining);
+    save = paid.error ? paid.save : alerted(save, paid.save);
+  }
   if (policy.infrastructure && dow === 1 && !save.activeEvent) {
     for (const gear of CAREER_GEAR.items) {
       if (save.finances.gear[gear.id]) continue;
@@ -946,7 +1182,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
       if (bought.error) break;
       const statement = statementOf(bought.save);
       if (policy.eagerInfrastructure || (policy.humanPrefs ? affordable(bought.save, 0, 0, policy) : (bought.save.finances.balance >= 8 * statement.payroll && (statement.net >= 0 || bought.save.finances.balance / -statement.net >= 12)))) {
-        policyAction(policy, "gear", save, bought.save, gear.id); save = bought.save;
+        policyAction(policy, "gear", save, bought.save, gear.id); save = alerted(save, bought.save);
       }
       else break;
     }
@@ -956,7 +1192,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
     if (hired && !hired.error) {
       const extra = save.finances.gear.psychologist ? 0 : psychologistPerSplitFor(save.clock.seasonIndex);
       if (policy.eagerInfrastructure || affordable(save, 0, extra, policy)) {
-        policyAction(policy, "psychologist", save, hired.save); save = hired.save;
+        policyAction(policy, "psychologist", save, hired.save); save = alerted(save, hired.save);
       }
     }
     // A human can hire a first coach as soon as the unlock is earned.
@@ -983,7 +1219,7 @@ function decide(input: CareerSave, policy: ArcPolicy, t: Tally, opts: ArcOpts = 
       const res = runBootcampFlow(save);
       if (!res.error) {
         policyAction(policy, "bootcamp", save, res.save);
-        save = res.save;
+        save = alerted(save, res.save);
         t.bootcamps += 1;
       }
     }
@@ -1041,8 +1277,8 @@ function squadRows(save: CareerSave): ArcSquadRow[] {
   }));
 }
 
-/** Plays `seasons` seasons (continuing past a title / the timeline like the store's "continue"). */
-export function playArcCareer(cfg: {
+/** The career a run plays (playArcCareer's cfg minus the observers). */
+export interface ArcCareerCfg {
   region: Region;
   difficulty: CareerDifficulty;
   policy: ArcPolicyId;
@@ -1055,151 +1291,290 @@ export function playArcCareer(cfg: {
   bootcamp?: boolean;
   rosterKey?: CreateCareerInput["rosterKey"];
   fullSupport?: boolean;
-  /** Observer of a finished user event before its real settlement. */
-  onEvent?: (save: CareerSave) => void;
   /** rc.34: override the policy's sponsor pick (the probe's ECON_SPONSOR). */
   sponsor?: ArcSponsorPick;
   /** rc.34: override the policy's other-income answer (the probe's ECON_OTHERS). */
   others?: ArcPolicy["others"];
+}
+
+/** The observers of a run (test-only; never part of its state). */
+export interface ArcHooks {
+  /** Observer of a finished user event before its real settlement. */
+  onEvent?: (save: CareerSave) => void;
+  /** rc.37: the same event before and after its settlement (the prize and reputation it paid). */
+  onEventSettled?: (before: CareerSave, after: CareerSave) => void;
   /** rc.36 (UX-02): read each season's start (day 1, its goal set) and end (the review) — the goals probe. */
   onSeason?: (moment: "start" | "end", save: CareerSave) => void;
   /** Test-only observation after each real-flow day, including the founding day. */
   onDay?: (save: CareerSave) => void;
   onAction?: ArcPolicy["onAction"];
-}): ArcCareer {
-  const t0 = Date.now();
+  /**
+   * rc.37 integration (the paired Worlds experiment): `take` is called ONCE,
+   * at the top of the first day `when` holds — before that day's decisions
+   * (`userWorldsStartsToday`: before the Worlds field is built). It may
+   * structuredClone the run there and continue the copy under another
+   * condition later; the run itself goes on untouched.
+   */
+  fork?: { when: (save: CareerSave) => boolean; take: (run: ArcRun) => void };
+}
+
+/**
+ * rc.37 integration: a career in progress, as plain data — the save, the
+ * bot's policy and memory, the records so far and where the day loop stands —
+ * so it can be cloned (a fork) and continued (an extension past S10) without
+ * replaying the seasons before. `advanceArcRun` moves it; `playArcCareer` is
+ * one start + one advance.
+ */
+export interface ArcRun {
+  bootcamp: boolean;
+  budgetMs: number;
+  /** Wall-clock spent by earlier advance calls (the budget counts every segment). */
+  elapsedMs: number;
+  policy: ArcPolicy;
+  save: CareerSave;
+  out: ArcCareer;
+  seen: Set<string>;
+  /** The season the loop is on (0-based count of seasons started). */
+  season: number;
+  /** Where the loop stands: before a season's start, inside its days, after its record, or finished. */
+  stage: "seasonStart" | "inSeason" | "seasonOver" | "done";
+  t: Tally | null;
+  blocked: number;
+  guard: number;
+  /** The fork hook has run (a run, and any copy of it, forks once). */
+  forked: boolean;
+}
+
+/** Creates a run on the founding day (no day played yet). */
+export function startArcRun(cfg: ArcCareerCfg): ArcRun {
   const policy: ArcPolicy = {
     ...ARC_POLICIES[cfg.policy],
     ...cfg.policyOverrides,
-    onAction: cfg.onAction,
     ...(cfg.rosterKey ? { rosterKey: cfg.rosterKey } : {}),
     ...(cfg.fullSupport !== undefined ? { fullSupport: cfg.fullSupport, infrastructure: cfg.fullSupport } : {}),
     ...(cfg.sponsor ? { sponsor: cfg.sponsor } : {}),
     ...(cfg.others ? { others: cfg.others } : {}),
   };
-  let save = createCareerSave(inputFor(cfg.region, cfg.difficulty, policy), cfg.seed);
-  const out: ArcCareer = {
-    region: cfg.region,
-    difficulty: cfg.difficulty,
-    policy: cfg.policy,
-    seed: cfg.seed,
-    seasons: [],
-    ended: null,
-    softlock: null,
-    firstMajorSeason: null,
-    firstWorldsSeason: null,
-    worldsTitleSeason: null,
-    firstSponsorSeason: null,
-    ms: 0,
+  delete policy.onAction;
+  // The memory is created here, so every per-day copy of the policy shares it.
+  policy.mem = {};
+  const save = createCareerSave(inputFor(cfg.region, cfg.difficulty, policy), cfg.seed);
+  return {
+    bootcamp: Boolean(cfg.bootcamp),
+    budgetMs: cfg.budgetMs ?? 120_000,
+    elapsedMs: 0,
+    policy,
+    save,
+    out: {
+      region: cfg.region,
+      difficulty: cfg.difficulty,
+      policy: cfg.policy,
+      seed: cfg.seed,
+      seasons: [],
+      ended: null,
+      softlock: null,
+      firstMajorSeason: null,
+      firstWorldsSeason: null,
+      worldsTitleSeason: null,
+      firstSponsorSeason: null,
+      ms: 0,
+    },
+    seen: new Set<string>(save.finances.ledger.map((l) => l.id)),
+    season: 0,
+    stage: "seasonStart",
+    t: null,
+    blocked: 0,
+    guard: 0,
+    forked: false,
   };
-  const seen = new Set<string>(save.finances.ledger.map((l) => l.id));
+}
 
-  for (let s = 0; s < cfg.seasons; s++) {
-    const t = newTally(save, seen);
-    t.policy = policy;
-    cfg.onSeason?.("start", save);
-    let blocked = 0;
-    let guard = 0;
-    while (save.phase === "running" && guard++ < DAYS_PER_SEASON * 4) {
-      if (Date.now() - t0 > (cfg.budgetMs ?? 120_000)) {
-        out.softlock = `budget: season ${save.clock.seasonIndex} day ${save.clock.day} squad ${save.squad.length} starters ${starters(save).length} event ${save.pendingEventDef?.id ?? "-"}/${save.activeEvent?.def.id ?? "-"}`;
-        break;
+/** The morning the user's Worlds starts: today's matchday, not started yet (the fork point of the Worlds pairs). */
+export function userWorldsStartsToday(save: CareerSave): boolean {
+  return save.pendingEventDef?.tier === "worlds" && save.pendingEventDef.day === save.clock.day && !save.activeEvent;
+}
+
+/** rc.37 integration: the fielded trio's chemistry, its pairs' shared tenure and heritage (ArcSeason.chemistry). */
+function chemistryOf(save: CareerSave): ArcSeason["chemistry"] {
+  if (save.squad.length === 0) return undefined;
+  const team = userTeamFor({
+    identity: save.identity, squad: save.squad, starterIds: save.starterIds, coach: save.coach, gear: save.finances.gear,
+    bootcampSharp: save.finances.bootcampSharp, seasonIndex: save.clock.seasonIndex, careerSeed: save.careerSeed,
+    difficulty: save.difficulty, unavailablePlayerId: null,
+  });
+  const fielded = team.fieldedIds.map((id) => save.squad.find((p) => p.id === id)).filter((p): p is (typeof save.squad)[number] => Boolean(p));
+  const pairTenure: number[] = [];
+  const heritage = { country: 0, region: 0, none: 0 };
+  for (let i = 0; i < fielded.length; i++) for (let j = i + 1; j < fielded.length; j++) {
+    const a = fielded[i], b = fielded[j];
+    pairTenure.push(Math.round(Math.min(a.splitsTogether, b.splitsTogether) * 100) / 100);
+    if (a.country && b.country && a.country === b.country) heritage.country += 1;
+    else if (a.region === b.region) heritage.region += 1;
+    else heritage.none += 1;
+  }
+  return { percent: team.team.chemistry.percent, tier: String(team.team.chemistry.tier), pairTenure, heritage };
+}
+
+/** The season's record (the row the arc tests and the human audit read). */
+function seasonRowOf(save: CareerSave, t: Tally): ArcSeason {
+  const last = save.history[save.history.length - 1];
+  const stmt = statementOf(save);
+  return {
+    seasonIndex: save.clock.seasonIndex,
+    label: seasonLabelFor(save.clock.seasonIndex),
+    balanceEnd: save.finances.balance,
+    balanceMin: t.balanceMin,
+    mondaysNegative: t.mondaysNegative,
+    debtEnd: (save.finances.loan?.remaining ?? 0) + (save.finances.bankLoan?.remaining ?? 0),
+    backerActive: Boolean(save.finances.loan),
+    bankLoans: t.bankLoans,
+    payrollPerSplit: save.squad.reduce((n, p) => n + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0),
+    sponsorBasePerSplit: save.sponsor?.basePerSplit ?? 0,
+    weeklyNet: stmt.net,
+    income: t.income,
+    spend: t.spend,
+    regionRank: last?.seasonIndex === save.clock.seasonIndex ? last.userRegionRank : 0,
+    seasonPoints: last?.seasonIndex === save.clock.seasonIndex ? last.userSeasonPoints : 0,
+    majorsQualified: last?.seasonIndex === save.clock.seasonIndex ? last.majorsQualified : 0,
+    worlds: last?.seasonIndex === save.clock.seasonIndex ? last.userWorldsPlacement : null,
+    titles: last?.seasonIndex === save.clock.seasonIndex ? last.titles : 0,
+    rep: save.reputation,
+    teamRating: save.squad.length ? Math.round(userSeedRatingFor(save) * 10) / 10 : 0,
+    signings: t.signings,
+    starSignings: t.starSignings,
+    sales: t.sales,
+    squad: squadRows(save),
+    series: t.series,
+    seriesByGap: t.seriesByGap,
+    bootcamps: t.bootcamps,
+    crisis: crisisOf(t),
+    chemistry: chemistryOf(save),
+    market: t.market ?? null,
+    // rc.34: the last period is filed at the rollover — read it off a copy filed now.
+    training: (() => {
+      const filed = structuredClone(save);
+      trainingSeasonEnd(filed);
+      return trainingOfSeason(filed, save.clock.seasonIndex, t);
+    })(),
+  };
+}
+
+/**
+ * Moves a run until `seasons` seasons are recorded (or it ends), continuing
+ * past a title / the timeline like the store's "continue". A run left after
+ * its last season ("seasonOver") can be advanced again with a larger
+ * `seasons`: the review and the rollover then run as they would have. The
+ * day loop is rc.36's, step for step.
+ */
+export function advanceArcRun(run: ArcRun, seasons: number, hooks: ArcHooks = {}): ArcRun {
+  const t0 = Date.now();
+  const previousObserver = actionObserver;
+  actionObserver = hooks.onAction;
+  const policy = run.policy;
+  const limit = DAYS_PER_SEASON * 4;
+  try {
+    while (run.stage !== "done") {
+      if (run.stage === "seasonOver") {
+        const save = run.save;
+        if (run.season >= seasons - 1) break;
+        if (save.phase === "seasonReview") {
+          // rc.34 (UX-06b): the explicit contract review before the rollover — the
+          // bot renewed whom it wanted at W24 and lets the rest go.
+          run.save = reviewContractsFlow(save).save;
+          const hold = rolloverHoldOf(run.save);
+          if (hold) {
+            run.out.softlock = `season ${run.save.clock.seasonIndex} review: ${hold.kind} ${hold.id} still holds the rollover`;
+            run.out.ended = "softlock";
+            run.stage = "done";
+            break;
+          }
+          // The store's "continue": past a title or the dataset timeline, into the infinite era.
+          if (run.save.end.ended) {
+            run.save = structuredClone(run.save);
+            run.save.end.infinite = true;
+            run.save.end.creditsShown = true;
+          }
+          run.save = rolloverToNextSeason(run.save);
+        }
+        run.season += 1;
+        run.stage = "seasonStart";
+        continue;
       }
-      save = decide(save, policy, t, { bootcamp: cfg.bootcamp, onEvent: cfg.onEvent });
-      track(save, t);
-      cfg.onDay?.(save);
-      if (save.sponsor && out.firstSponsorSeason === null) out.firstSponsorSeason = save.clock.seasonIndex;
-      if (save.phase !== "running") break;
-      const before = save.clock.day;
-      const wasMonday = dayOfWeekOf(before + 1) === 1;
-      save = advanceDayFlow(save);
-      track(save, t);
-      cfg.onDay?.(save);
-      if (wasMonday && save.clock.day === before + 1 && save.finances.balance < 0) t.mondaysNegative += 1;
-      if (save.clock.day === before && save.phase === "running") {
-        blocked += 1;
-        if (blocked > 3) {
-          const hold = clockHoldOf(save);
-          out.softlock = `season ${save.clock.seasonIndex} day ${before}: ${save.pendingEventDef?.id ?? "no event"} / ${save.activeEvent?.def.id ?? "-"}${hold ? ` (holds: ${hold.kind} ${hold.id})` : ""}`;
+      if (run.stage === "seasonStart") {
+        const t = newTally(run.save, run.seen);
+        t.policy = policy;
+        run.t = t;
+        hooks.onSeason?.("start", run.save);
+        run.blocked = 0;
+        run.guard = 0;
+        run.stage = "inSeason";
+      }
+      // stage "inSeason": the day loop.
+      const t = run.t!;
+      while (run.save.phase === "running" && run.guard < limit) {
+        if (!run.forked && hooks.fork?.when(run.save)) {
+          run.forked = true;
+          hooks.fork.take(run);
+        }
+        run.guard += 1;
+        let save = run.save;
+        if (run.elapsedMs + (Date.now() - t0) > run.budgetMs) {
+          run.out.softlock = `budget: season ${save.clock.seasonIndex} day ${save.clock.day} squad ${save.squad.length} starters ${starters(save).length} event ${save.pendingEventDef?.id ?? "-"}/${save.activeEvent?.def.id ?? "-"}`;
           break;
         }
-      } else blocked = 0;
-    }
-    const last = save.history[save.history.length - 1];
-    if (policy.humanPrefs && save.phase === "seasonReview") save = renewals(save, policy);
-    track(save, t);
-    cfg.onSeason?.("end", save);
-    const stmt = statementOf(save);
-    out.seasons.push({
-      seasonIndex: save.clock.seasonIndex,
-      label: seasonLabelFor(save.clock.seasonIndex),
-      balanceEnd: save.finances.balance,
-      balanceMin: t.balanceMin,
-      mondaysNegative: t.mondaysNegative,
-      debtEnd: (save.finances.loan?.remaining ?? 0) + (save.finances.bankLoan?.remaining ?? 0),
-      backerActive: Boolean(save.finances.loan),
-      bankLoans: t.bankLoans,
-      payrollPerSplit: save.squad.reduce((n, p) => n + p.salaryPerSplit, 0) + (save.coach?.salaryPerSplit ?? 0),
-      sponsorBasePerSplit: save.sponsor?.basePerSplit ?? 0,
-      weeklyNet: stmt.net,
-      income: t.income,
-      spend: t.spend,
-      regionRank: last?.seasonIndex === save.clock.seasonIndex ? last.userRegionRank : 0,
-      seasonPoints: last?.seasonIndex === save.clock.seasonIndex ? last.userSeasonPoints : 0,
-      majorsQualified: last?.seasonIndex === save.clock.seasonIndex ? last.majorsQualified : 0,
-      worlds: last?.seasonIndex === save.clock.seasonIndex ? last.userWorldsPlacement : null,
-      titles: last?.seasonIndex === save.clock.seasonIndex ? last.titles : 0,
-      rep: save.reputation,
-      teamRating: save.squad.length ? Math.round(userSeedRatingFor(save) * 10) / 10 : 0,
-      signings: t.signings,
-      starSignings: t.starSignings,
-      sales: t.sales,
-      squad: squadRows(save),
-      series: t.series,
-      seriesByGap: t.seriesByGap,
-      bootcamps: t.bootcamps,
-      // rc.34: the last period is filed at the rollover — read it off a copy filed now.
-      training: (() => {
-        const filed = structuredClone(save);
-        trainingSeasonEnd(filed);
-        return trainingOfSeason(filed, save.clock.seasonIndex, t);
-      })(),
-    });
-    const row = out.seasons[out.seasons.length - 1];
-    if (row.majorsQualified > 0 && out.firstMajorSeason === null) out.firstMajorSeason = row.seasonIndex;
-    if (row.worlds !== null && out.firstWorldsSeason === null) out.firstWorldsSeason = row.seasonIndex;
-    if (row.worlds === "champion" && out.worldsTitleSeason === null) out.worldsTitleSeason = row.seasonIndex;
-
-    if (out.softlock) {
-      out.ended = "softlock";
-      break;
-    }
-    if (save.phase === "ended") {
-      out.ended = save.end.reason ?? "insolvency";
-      break;
-    }
-    if (s === cfg.seasons - 1) break;
-    if (save.phase === "seasonReview") {
-      // rc.34 (UX-06b): the explicit contract review before the rollover — the
-      // bot renewed whom it wanted at W24 and lets the rest go.
-      save = reviewContractsFlow(save).save;
-      const hold = rolloverHoldOf(save);
-      if (hold) {
-        out.softlock = `season ${save.clock.seasonIndex} review: ${hold.kind} ${hold.id} still holds the rollover`;
-        out.ended = "softlock";
-        break;
+        save = decide(save, policy, t, { bootcamp: run.bootcamp, onEvent: hooks.onEvent, onSettled: hooks.onEventSettled });
+        track(save, t);
+        hooks.onDay?.(save);
+        if (save.sponsor && run.out.firstSponsorSeason === null) run.out.firstSponsorSeason = save.clock.seasonIndex;
+        if (save.phase !== "running") {
+          run.save = save;
+          break;
+        }
+        const before = save.clock.day;
+        const wasMonday = dayOfWeekOf(before + 1) === 1;
+        save = advanceDayFlow(save);
+        track(save, t);
+        hooks.onDay?.(save);
+        run.save = save;
+        if (wasMonday && save.clock.day === before + 1 && save.finances.balance < 0) t.mondaysNegative += 1;
+        if (save.clock.day === before && save.phase === "running") {
+          run.blocked += 1;
+          if (run.blocked > 3) {
+            const hold = clockHoldOf(save);
+            run.out.softlock = `season ${save.clock.seasonIndex} day ${before}: ${save.pendingEventDef?.id ?? "no event"} / ${save.activeEvent?.def.id ?? "-"}${hold ? ` (holds: ${hold.kind} ${hold.id})` : ""}`;
+            break;
+          }
+        } else run.blocked = 0;
       }
-      // The store's "continue": past a title or the dataset timeline, into the infinite era.
-      if (save.end.ended) {
-        save = structuredClone(save);
-        save.end.infinite = true;
-        save.end.creditsShown = true;
-      }
-      save = rolloverToNextSeason(save);
+      if (policy.humanPrefs && run.save.phase === "seasonReview") run.save = renewals(run.save, policy);
+      track(run.save, t);
+      hooks.onSeason?.("end", run.save);
+      const row = seasonRowOf(run.save, t);
+      run.out.seasons.push(row);
+      run.t = null;
+      if (row.majorsQualified > 0 && run.out.firstMajorSeason === null) run.out.firstMajorSeason = row.seasonIndex;
+      if (row.worlds !== null && run.out.firstWorldsSeason === null) run.out.firstWorldsSeason = row.seasonIndex;
+      if (row.worlds === "champion" && run.out.worldsTitleSeason === null) run.out.worldsTitleSeason = row.seasonIndex;
+      if (run.out.softlock) {
+        run.out.ended = "softlock";
+        run.stage = "done";
+      } else if (run.save.phase === "ended") {
+        run.out.ended = run.save.end.reason ?? "insolvency";
+        run.stage = "done";
+      } else run.stage = "seasonOver";
     }
+  } finally {
+    actionObserver = previousObserver;
+    run.elapsedMs += Date.now() - t0;
+    run.out.ms = run.elapsedMs;
   }
-  out.ms = Date.now() - t0;
-  return out;
+  return run;
+}
+
+/** Plays `seasons` seasons (continuing past a title / the timeline like the store's "continue"). */
+export function playArcCareer(cfg: ArcCareerCfg & ArcHooks): ArcCareer {
+  const run = startArcRun(cfg);
+  return advanceArcRun(run, cfg.seasons, cfg).out;
 }
 
 /** The world's players in rosters and free agency this season (for the curve samplers). */

@@ -3061,12 +3061,15 @@ export function acceptCreditOfferFlow(input: CareerSave, noticeId: string): Flow
  * rc.37 F2 package 3: today's emergency-sale offer (engine/career/
  * emergencySale.ts) — cash negative, any day, at most one pending; booked as
  * a plain out-offer flagged `emergency`, with a news line and the agent's
- * mail (who, the fee against his value, how long it stands). The resale
- * lock's connection point to rc.37 F1 is `isLocked` below.
+ * mail (who, the fee against his value, how long it stands). rc.37
+ * integration: the resale lock is F1's `resaleLocked` (no offer for a player
+ * signed in this window or the previous one) and the value is F1's one
+ * valuation (`valueInputOf`, the career's growth model).
  */
 function rollEmergencySale(save: CareerSave): void {
   if (save.phase !== "running" || save.squad.length === 0) return;
   const { seasonIndex, day } = save.clock;
+  const growthModel = growthModelOf(save.world);
   const offer = emergencyOfferForDay({
     world: save.world,
     squad: save.squad,
@@ -3078,14 +3081,14 @@ function rollEmergencySale(save: CareerSave): void {
     inEvent: Boolean(save.activeEvent) || save.pendingEventDef?.day === day,
     pending: save.pendingOffers,
     lastOffer: save.finances.emergencySaleAt ?? null,
-    // rc.37 F1 connection point: `(p) => resaleLocked(p, seasonIndex, day)` once F1's market.resaleLocked lands.
-    isLocked: (p) => signedInWindow(p, seasonIndex, windowIndexOf(weekOfDay(day))),
+    isLocked: (p) => resaleLocked(p, seasonIndex, day),
+    growthModel,
   });
   if (!offer) return;
   save.pendingOffers.push(offer);
   save.finances = { ...save.finances, emergencySaleAt: { seasonIndex, day } };
   const player = save.squad.find((p) => p.id === offer.playerId);
-  const value = player ? emergencyValueOf(player, seasonIndex, save.careerSeed) : 0;
+  const value = player ? emergencyValueOf(player, seasonIndex, save.careerSeed, growthModel) : 0;
   const org = offer.otherRef ? nameOfRef(save, offer.otherRef) : "?";
   const params = {
     player: offer.playerName,

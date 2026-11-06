@@ -17,7 +17,8 @@
  *
  * The resale lock is the caller's `isLocked` predicate — the ONE connection
  * point to rc.37 F1's lock: the flow passes `market.resaleLocked(p,
- * seasonIndex, day)` once F1 lands (rc.35's window lock before it).
+ * seasonIndex, day)` (rc.37 integration), so a player the user signed in this
+ * window or the previous one is never offered for, crisis or not.
  *
  * Pure and deterministic: every roll is a derivedFloat of the career seed
  * and the day (`gen:emergency*:season:day`) — no Rng cursor is consumed.
@@ -25,8 +26,8 @@
 
 import { CAREER_EMERGENCY_SALE } from "@/config/balance";
 import { DAYS_PER_SEASON, weekOfDay, windowCloseDayFor, windowIndexOf } from "./calendar";
-import { ageOf, deriveBirthYear } from "./development";
 import { marketValueFor, quantize } from "./economy";
+import { valueInputOf } from "./market";
 import { derivedFloat, streams } from "./seeds";
 import type { SquadPlayer, TransferOffer, WorldState } from "./types";
 
@@ -52,14 +53,20 @@ export function emergencyFeeFor(value: number, f: number): number {
   return quantize(value * (lo + (hi - lo) * Math.min(1, Math.max(0, f))));
 }
 
-/** The market value an emergency offer is priced on (economy.marketValueFor, the inputs the window bids use). */
-export function emergencyValueOf(p: SquadPlayer, seasonIndex: number, careerSeed: number): number {
-  return marketValueFor({
-    overall: p.overall,
-    age: ageOf(p.birthYear ?? deriveBirthYear(p.id, careerSeed), seasonIndex),
-    potential: p.potential,
-    seasonIndex,
-  });
+/**
+ * The market value an emergency offer is priced on: rc.37 F1's one valuation
+ * (`market.valueInputOf` → `economy.marketValueFor`), the input the window
+ * bids, the Blockbuster and the user's buys read — his reach gap included —
+ * so a crisis discount is a discount on the price the market quotes him at.
+ */
+export function emergencyValueOf(
+  p: SquadPlayer,
+  seasonIndex: number,
+  careerSeed: number,
+  /** The career's development model (`growthModelOf(save.world)`; absent = a new career's). */
+  growthModel?: number,
+): number {
+  return marketValueFor(valueInputOf(p, careerSeed, seasonIndex, growthModel));
 }
 
 export interface EmergencyOfferContext {
@@ -75,8 +82,10 @@ export interface EmergencyOfferContext {
   pending: readonly Pick<TransferOffer, "playerId" | "direction" | "status" | "emergency">[];
   /** The day the last emergency offer arrived (FinanceState.emergencySaleAt; null = never). */
   lastOffer: ClockDay | null;
-  /** The resale lock (rc.37 F1's market.resaleLocked once integrated): a locked player gets no offer. */
+  /** The resale lock (rc.37 F1's `market.resaleLocked(p, seasonIndex, day)`): a locked player gets no offer. */
   isLocked: (p: SquadPlayer) => boolean;
+  /** The career's development model (`growthModelOf(save.world)`), for `emergencyValueOf`. */
+  growthModel?: number;
 }
 
 /**
@@ -103,7 +112,7 @@ export function emergencyOfferForDay(ctx: EmergencyOfferContext): TransferOffer 
   const busy = new Set(pendingOut.map((o) => o.playerId));
   const pool = ctx.squad
     .filter((p) => !busy.has(p.id) && !ctx.isLocked(p))
-    .map((p) => ({ p, value: emergencyValueOf(p, ctx.seasonIndex, ctx.careerSeed) }))
+    .map((p) => ({ p, value: emergencyValueOf(p, ctx.seasonIndex, ctx.careerSeed, ctx.growthModel) }))
     .filter((r) => r.value > 0);
   if (pool.length === 0) return null;
   const total = pool.reduce((s, r) => s + r.value, 0);
