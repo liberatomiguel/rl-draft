@@ -35,7 +35,7 @@ import {
 import { SPONSOR_BRANDS } from "@/data/career/sponsors";
 import type { Placement, Region } from "../types";
 import { firstDayOfWeek, splitBoundaryWeeks, weekOfDay } from "./calendar";
-import { moneyIndex, periodOfWeek, quantize, quantizeWeekly } from "./economy";
+import { lateSponsorMultFor, moneyIndex, periodOfWeek, quantize, quantizeWeekly } from "./economy";
 import { derivedFloat, streams } from "./seeds";
 import type {
   CareerDifficulty,
@@ -478,7 +478,9 @@ export function tierValuePerWeek(tier: 1 | 2 | 3 | 4, seasonIndex: number, diffi
   const splits = CAREER_PAYROLL.splitsPerSeason;
   const season =
     row.base * (splits + CAREER_SPONSOR.signingBonusSplits) + row.bonus * splits * CAREER_SPONSOR.valueBonusShare;
-  const mult = CAREER_ECONOMY.sponsorMult[difficulty] * moneyIndex(seasonIndex, "sponsor");
+  // rc.37 F2 (CAREER_LATE_REVENUE): a new tier 3–4 quote from the 4th season carries the late-revenue factor.
+  const mult =
+    CAREER_ECONOMY.sponsorMult[difficulty] * moneyIndex(seasonIndex, "sponsor") * lateSponsorMultFor(tier, seasonIndex);
   return (season * mult) / CAREER_PAYROLL.weeksPerSeason;
 }
 

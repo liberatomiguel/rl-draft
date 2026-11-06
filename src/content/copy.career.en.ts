@@ -596,6 +596,9 @@ export const CAREER_EN = {
       // rc.34 (UX-06b): the reminders before a player can leave.
       contractReminder: (p: Record<string, string | number>) => `Contracts: ${p.weeks} weeks left for ${p.players}`,
       bankLoan: (p: Record<string, string | number>) => `Bank loan approved: ${p.amount}`,
+      // rc.37 F2: the bank's offer before the floor, and the emergency sale's offer.
+      creditOffer: (p: Record<string, string | number>) => `The bank offers ${p.loanNet} before the floor`,
+      emergencyBid: (p: Record<string, string | number>) => `Emergency offer for ${p.player}`,
       bankCleared: () => `Bank loan repaid in full`,
       cashWarning: (p: Record<string, string | number>) => `Cash warning: ${p.weeks} weeks of runway`,
       qualifiedRegional: (p: Record<string, string | number>) => `Through the qualifier: ${p.event} is on`,
@@ -688,6 +691,12 @@ export const CAREER_EN = {
         `${p.players} — still out of contract after this season, with ${p.weeks} weeks to go. Renew in Squad before the rollover, or they leave as free agents (the review before the new season lists them).`,
       bankLoan: (p: Record<string, string | number>) =>
         `The bank wired ${p.amount}. Instalments of ${p.weekly} book every Monday until ${p.total} is repaid. Spend it on something that pays back.`,
+      // rc.37 F2 (package 2): the bank's ordinary loan, offered on the Monday the runway reaches the warning level.
+      creditOffer: (p: Record<string, string | number>) =>
+        `${Number(p.weeks) > 0 ? `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays` : `The books are in the red (${p.balance}) at ${p.burn} a week of burn`}, and they would close below the floor (${p.floor}) on ${breachWhenEn(p)}. Before that, the bank offers its ordinary loan: ${p.loanNet} on the balance now, ${p.loanTotal} repaid in all (${p.loanPct}% interest) — ${p.loanWeekly} every Monday for ${p.loanTerm} weeks. That is cheaper than the emergency loan (${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? `, repaid within ${p.emergencyTerm} weeks` : ""}). Finances takes it at any amount up to the bank's limit.`,
+      // rc.37 F2 (package 3): an emergency-sale offer — below market value, while the books are in the red.
+      emergencyBid: (p: Record<string, string | number>) =>
+        `The books are in the red (${p.balance}), and ${p.org} smell a bargain: ${p.fee} for ${p.player}, ${p.pct}% of his market value. It is an emergency offer: it stands ${p.days} days (until the window closes at the latest), and accepting sells him at once. The Market's deals tab shows what lands after the bank's share, the wages it frees and the seat it leaves.`,
       bankCleared: () =>
         `The last instalment cleared. The line of credit is open again if the org ever needs it.`,
       // rc.32 (M4, provisional): every Monday at ≤ 4 weeks — the projected breach and the way out.
@@ -1337,6 +1346,18 @@ export const CAREER_EN = {
         : `Runway after: ${weeks === 1 ? "1 week" : `${weeks} weeks`} at the new burn`,
     // ECO-02 (R46): a sale while the Backer is owed — its share of the fee.
     saleBackerRepaid: (s: string) => `Emergency loan repaid ${s}`,
+    // rc.37 F2 (package 3): the emergency sale — the offer's badge, what it is, and what the sale leaves.
+    emergencyBadge: "Emergency offer",
+    emergencyWhat: (days: number) =>
+      `The books are in the red, so this buyer offers below market value. It stands ${days} days, until the window closes at the latest.`,
+    // rc.37 F2 (Miguel, 05/11): the market-value tag on emergency offers and Blockbuster bids.
+    belowValue: (pct: number | null) => (pct === null ? "Below market value" : `Below market value · ${pct}%`),
+    aboveValue: (pct: number | null) => (pct === null ? "Above market value" : `Above market value · ${pct}%`),
+    saleLeaves: (player: string, org: string, n: number) => `${player} leaves for ${org}: the squad drops to ${n}.`,
+    saleShortSeat: "An empty starting seat: a free agent can fill it any day from the Market.",
+    saleNetAfterDebt: (net: string, fee: string, share: string) => `${net} lands: ${fee} less the bank's ${share}.`,
+    saleNetFull: (net: string) => `${net} lands in full.`,
+    saleWagesFreed: (s: string) => `Wages freed: ${s} a week.`,
     // ECO-03 (R47): the slot is set after the signing and never prices it.
     slotLabel: "Squad slot",
     slotStarter: "Takes an open seat in the starting three.",
@@ -1734,6 +1755,30 @@ export const CAREER_EN = {
     backerWarning: "This deal likely breaks the floor: the bank's emergency loan would step in, with a deadline.",
     // rc.33 review (ECO-08): the same risk where the next breach ends the career.
     endsCareerWarning: "This deal likely ends the career: the next breach of the floor is the last.",
+    // rc.37 F2: the bank's ordinary loan as Finances suggests it while the books burn (careerFlow.creditOfferOf).
+    creditSuggest: (net: string, total: string, weekly: string, weeks: number, covers: number) =>
+      `The bank's suggestion on these books: ${net} now, ${total} repaid in all — ${weekly} every Monday for ${weeks} weeks. It keeps the balance above $0 for about ${covers} Mondays at this pace.`,
+    // rc.37 F2 (package 4): the season review's consolidated view of next season's books (careerFlow.seasonOutlookOf).
+    outlook: {
+      title: "Next season's books",
+      payroll: "Wage bill",
+      payrollLine: (now: string, next: string) => `${now} a week now → ${next} a week next season (after the contract review)`,
+      leaving: (names: string) => `Leaving at the rollover, no new deal: ${names}`,
+      debt: "Owed",
+      debtNone: "Nothing owed.",
+      debtEmergency: (s: string) => `Emergency loan: ${s}`,
+      debtBank: (s: string, n: number) => `Bank loan: ${s} (${n === 1 ? "1 Monday instalment" : `${n} Monday instalments`} left)`,
+      deadline: (date: string, weeks: number) => `The emergency loan is due ${date} — ${weeks === 1 ? "1 week" : `${weeks} weeks`} from now.`,
+      cash: "To the first regional",
+      cashLine: (balance: string, week: number, mondays: number, net: string) =>
+        `${balance} on the balance by week ${week} — ${mondays} Mondays at ${net} a week, no prize counted.`,
+      sponsorEnds: "The sponsor deal ends with this season: until a new one is signed, the line counts no sponsor base.",
+      retirements: "Retirements",
+      retireNone: "No one is near the end of his career.",
+      retireNow: (name: string) => `${name} retires at the rollover (his final season was announced).`,
+      retireLikely: (name: string) => `${name} will likely announce next season as his last.`,
+      retirePossible: (name: string) => `${name} may announce next season as his last.`,
+    },
     // rc.34: the rule when nothing is owed — the floor, the loan back to the rescue target, the term (null = none).
     backerIdle: (floor: string, rescueTo: string, term: number | null) =>
       `Not in use. If a Monday closes below ${floor}, the bank lends the balance back to ${rescueTo}${term !== null ? `, to be repaid within ${term} weeks` : ""} — prizes and sales repay part of it automatically.`,
@@ -2101,6 +2146,8 @@ export const CAREER_EN = {
       unavailable: (p: Record<string, string | number>) => `${p.player} unavailable for ${p.event}`,
       standIn: (p: Record<string, string | number>) => `Emergency stand-in suits up for ${p.event}`,
       bankLoan: (p: Record<string, string | number>) => `The org takes a ${p.amount} bank loan`,
+      // rc.37 F2 (package 3): an emergency-sale offer lands.
+      emergencyBid: (p: Record<string, string | number>) => `${p.org} table an emergency offer for ${p.player}`,
       bankCleared: () => `The org clears its bank loan`,
       cashWarning: (p: Record<string, string | number>) => `Books tighten: ${p.weeks} weeks of runway`,
       // History (rc.31–rc.33); rc.34 files emergencyLoan / emergencyTopUp / loanCollected.
@@ -2208,6 +2255,8 @@ export const CAREER_EN = {
         `A hired stand-in keeps the org in ${p.event}. Full lineup, zero chemistry — it shows.`,
       bankLoan: (p: Record<string, string | number>) =>
         `Fresh credit lands on the balance sheet — ${p.amount}, repaid weekly. Ambition on borrowed money is still ambition.`,
+      emergencyBid: (p: Record<string, string | number>) =>
+        `With the org's books in the red, ${p.org} move for ${p.player} at a discount. A quick sale or a fight to keep him: the call is the manager's.`,
       bankCleared: () =>
         `The final instalment goes through. Whatever the money bought, the org now owns outright.`,
       cashWarning: (p: Record<string, string | number>) =>
@@ -2840,6 +2889,48 @@ export const CAREER_EN = {
         p.dlDate !== undefined && ["What ends the career", `On ${p.dlDate} the bank takes what is owed. If paying it would close the books below the floor, the career ends.`],
       ),
       foot: Number(p.lock) ? undefined : "Nothing is locked while you owe any more: signings, fees and gear are open.",
+    }),
+    // rc.37 F2 (package 2): the bank's ordinary loan, offered before the floor (careerFlow.offerCreditOnRunway).
+    notNow: "Not now",
+    takeLoan: (amount: string) => `Take ${amount}`,
+    creditOffer: (p: Record<string, string | number>): MoneyNoticeText => ({
+      title: "The bank offers a loan",
+      lead:
+        Number(p.weeks) > 0
+          ? `At ${p.burn} a week of burn the balance covers about ${p.weeks} more Mondays. Before the books reach the floor (${p.floor}), the bank offers its ordinary loan.`
+          : `The books are in the red (${p.balance}) and burn ${p.burn} a week. Before they reach the floor (${p.floor}), the bank offers its ordinary loan.`,
+      rows: noticeRows(
+        ["You receive", `${p.loanNet} now, on the balance`],
+        ["You repay", `${p.loanTotal} in all, ${p.loanPct}% interest included`],
+        ["Term", `${p.loanTerm} weeks: ${p.loanWeekly} every Monday`],
+        [
+          "What it buys",
+          Number(p.loanCapped)
+            ? `It is the most the bank lends at your reputation: about ${p.loanCovers} Mondays above $0 at this pace.`
+            : `About ${p.loanCovers} Mondays above $0 at this pace, its instalments counted.`,
+        ],
+        ["Without it", `On this pace the books close below the floor on ${breachWhenEn(p)}. ${nextBreachEn(p)}`],
+      ),
+      foot: `The emergency loan costs ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? ` and must be repaid within ${p.emergencyTerm} weeks` : ""}. Missing this one's instalments only drains the balance. Finances lends any amount up to the limit, any day.`,
+    }),
+    // rc.37 F2 (package 4): a one-off spend brought the floor within reach (careerFlow.spendAlertFlow).
+    spendRisk: (p: Record<string, string | number>): MoneyNoticeText => ({
+      title: Number(p.mondays) === 1 ? "Next Monday breaks the floor" : "This spend brings the floor close",
+      lead: positive(p.burn)
+        ? `That spend (${p.spent}) leaves ${p.balance} on the balance. At ${p.burn} a week of burn the books close below the floor (${p.floor}) on ${breachWhenEn(p)}.`
+        : `That spend (${p.spent}) leaves ${p.balance} on the balance, below the floor (${p.floor}) even after the week's income: ${breachWhenEn(p)} breaks it.`,
+      rows: noticeRows(
+        ["On that Monday", nextBreachEn(p)],
+        Number(p.offer) > 0 && [
+          "The bank's offer",
+          `${p.loanNet} now; ${p.loanTotal} repaid in all (${p.loanPct}% interest), ${p.loanWeekly} every Monday for ${p.loanTerm} weeks.`,
+        ],
+        ["Other ways out", "Prize money before that Monday, a good bid for a player, or a lighter wage bill."],
+      ),
+      foot:
+        Number(p.offer) > 0
+          ? `The emergency loan costs ${p.emergencyPct}%${Number(p.emergencyTerm) > 0 ? ` and must be repaid within ${p.emergencyTerm} weeks` : ""}.`
+          : undefined,
     }),
   },
 

@@ -54,6 +54,8 @@ import type {
   SponsorObjectiveKind,
   SponsorState,
 } from "./types";
+// rc.37 F2: the finance front's own block (kept apart from the import above).
+import { CAREER_CREDIT_OFFER, CAREER_LATE_REVENUE, CAREER_SPEND_ALERT } from "@/config/balance";
 
 // ---------------------------------------------------------------------------
 // PINNED leaf contract (careerResults + worldSim + market code against these)
@@ -124,6 +126,27 @@ export function standInFeeFor(seasonIndex: number): number {
 /** An insert option's money (data/career/inserts.ts is season-0 money), indexed. */
 export function insertMoneyFor(amount: number, seasonIndex: number): number {
   return indexedAmount(amount, seasonIndex);
+}
+
+// ---------------------------------------------------------------------------
+// rc.37 F2 package 1: late revenue (CAREER_LATE_REVENUE, decision 5)
+// ---------------------------------------------------------------------------
+
+/** rc.37 F2: is this season in the late-revenue era (season index ≥ CAREER_LATE_REVENUE.fromSeasonIndex, the 4th season on)? */
+export function lateRevenueActive(seasonIndex: number): boolean {
+  return seasonIndex >= CAREER_LATE_REVENUE.fromSeasonIndex;
+}
+
+/** rc.37 F2: the late-revenue factor on a tier's prize pool in this season (1 before S4 and for every tier but Major and Worlds). */
+export function latePrizeMultFor(tier: EventTier, seasonIndex: number): number {
+  if (!lateRevenueActive(seasonIndex)) return 1;
+  return CAREER_LATE_REVENUE.prizePoolMult[tier] ?? 1;
+}
+
+/** rc.37 F2: the late-revenue factor on a NEW sponsor quote of this tier in this season (1 before S4 and for tiers 1–2). */
+export function lateSponsorMultFor(tier: number, seasonIndex: number): number {
+  if (!lateRevenueActive(seasonIndex)) return 1;
+  return CAREER_LATE_REVENUE.sponsorQuoteMult[tier] ?? 1;
 }
 
 /**
@@ -209,6 +232,7 @@ export function prizeScheduleFor(
   tier: EventTier, format: CareerEventFormat, difficulty: CareerDifficulty, seasonIndex = 0,
 ): Record<string, number> {
   const placements = Object.entries(PLACEMENTS_BY_FORMAT[format]) as [Placement, number][];
+  // rc.37 F2: the switch-back restores rc.31 exactly — no late-revenue factor on this branch.
   if (CAREER_PRIZES.tables === "rc31" || CAREER_ECONOMY.indexMode === "rc31") {
     const pool = CAREER_PRIZES.pools[tier] * moneyIndex(seasonIndex, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
     return Object.fromEntries(placements.map(([p]) => {
@@ -228,7 +252,9 @@ export function prizeScheduleFor(
   for (let season = 0; season <= Math.max(0, Math.floor(seasonIndex)); season++) {
     const minimum = Object.fromEntries(placements.map(([p]) => [p, previous ? previous[p] + quantum : quantum]));
     const minimumPool = placements.reduce((sum, [p, count]) => sum + minimum[p] * count, 0);
-    const rawPool = CAREER_PRIZES.pools[tier] * moneyIndex(season, "prizes") * CAREER_ECONOMY.prizeMult[difficulty];
+    // rc.37 F2: from the 4th season a Major's and Worlds' pool carry the late-revenue factor.
+    const rawPool = CAREER_PRIZES.pools[tier] * moneyIndex(season, "prizes") * CAREER_ECONOMY.prizeMult[difficulty] *
+      latePrizeMultFor(tier, season);
     const pool = Math.max(Math.round(rawPool / poolStep) * poolStep,
       previousPool + poolStep, Math.ceil(minimumPool / poolStep) * poolStep);
     const prizes = Object.fromEntries(placements.map(([p]) => [p,
@@ -1838,6 +1864,136 @@ export function payBankLoanDown(
 }
 
 // ---------------------------------------------------------------------------
+// rc.37 F2 packages 2 and 4: the bank's offer before the floor, the spend alert
+// ---------------------------------------------------------------------------
+
+/** rc.37 F2: the bank's voluntary loan as its offer states it (CAREER_CREDIT_OFFER). */
+export interface CreditOffer {
+  /** What lands on the balance — the bank takes nothing up front, so the principal. */
+  net: number;
+  principal: number;
+  /** What the org repays in all (the principal + CAREER_BANK.interestPct). */
+  total: number;
+  weeklyPayment: number;
+  termWeeks: number;
+  /** Mondays the balance stays at or above $0 with the loan at this pace, its instalments counted (capped at 104). */
+  coversMondays: number;
+  /** The need was larger than the bank's reputation limit (the offer is the limit). */
+  capped: boolean;
+}
+
+/** Mondays the balance stays at or above $0 after `principal` lands — the net, the instalments while owed, the investor's run. */
+function mondaysCoveredWith(
+  balance: number,
+  weeklyNet: number,
+  principal: number,
+  run: NetRun | null | undefined,
+  maxMondays = 104,
+): number {
+  const terms = bankLoanTerms(principal);
+  let b = balance + principal;
+  let owed = terms.total;
+  for (let k = 1; k <= maxMondays; k++) {
+    const instalment = Math.min(owed, terms.weeklyPayment);
+    owed -= instalment;
+    const lostRun = run && run.weekly > 0 && k > run.mondays ? run.weekly : 0;
+    b += weeklyNet - instalment - lostRun;
+    if (b < 0) return k - 1;
+  }
+  return maxMondays;
+}
+
+/**
+ * rc.37 F2 package 2: the voluntary loan the bank offers on these books —
+ * sized to keep the balance at or above $0 for CAREER_CREDIT_OFFER.coverWeeks
+ * Mondays at next Monday's net, its own instalments counted; at least
+ * CAREER_BANK.minAmount, at most the reputation limit (`capped`). Null when
+ * the bank would refuse (a loan running, the emergency loan owed — one debt
+ * at a time — or a limit under the minimum) or the books need nothing over
+ * that horizon.
+ */
+export function creditOfferFor(input: {
+  fin: FinanceState;
+  rep: number;
+  seasonIndex: number;
+  /** Next Monday's net (weeklyStatement), the bank loan's own instalment excluded (none runs). */
+  weeklyNet: number;
+  run?: NetRun | null;
+}): CreditOffer | null {
+  const { fin, rep, seasonIndex, weeklyNet } = input;
+  if (!CAREER_CREDIT_OFFER.enabled) return null;
+  const min = bankMinAmountFor(seasonIndex);
+  const limit = quantize(bankLoanLimitFor(rep, seasonIndex));
+  if (limit < min || bankLoanRefusal(fin, rep, min, seasonIndex) !== null) return null;
+  const horizon = Math.max(1, Math.floor(CAREER_CREDIT_OFFER.coverWeeks));
+  const shortfall = -balanceAfterMondays(fin.balance, weeklyNet, horizon, input.run);
+  if (shortfall <= 0) return null;
+  // The instalments over the horizon eat part of the principal: P − k·w(P) ≥ shortfall, w ≈ P(1+i)/term.
+  const term = CAREER_BANK.termWeeks;
+  const eaten = (Math.min(horizon, term) * (1 + CAREER_BANK.interestPct)) / term;
+  const q = CAREER_ECONOMY.roundQuantum;
+  let principal = eaten < 1 ? Math.ceil(shortfall / (1 - eaten) / q) * q : limit;
+  principal = Math.max(min, principal);
+  // The instalment rounds up to the weekly quantum: step up until the horizon is really covered.
+  while (principal < limit && mondaysCoveredWith(fin.balance, weeklyNet, principal, input.run) < horizon) principal += q;
+  const capped = principal >= limit && mondaysCoveredWith(fin.balance, weeklyNet, limit, input.run) < horizon;
+  principal = Math.min(principal, limit);
+  const terms = bankLoanTerms(principal);
+  return {
+    net: principal,
+    principal,
+    total: terms.total,
+    weeklyPayment: terms.weeklyPayment,
+    termWeeks: terms.termWeeks,
+    coversMondays: mondaysCoveredWith(fin.balance, weeklyNet, principal, input.run),
+    capped,
+  };
+}
+
+/** rc.37 F2 package 4: what a one-off spend does to the projected breach (spendRiskFor). */
+export interface SpendRisk {
+  balanceAfter: number;
+  /** The Monday the books would close below the floor, before / after the spend (1 = the next; null = not burning). */
+  mondaysBefore: number | null;
+  mondaysAfter: number | null;
+  /** The spend brings the breach within CAREER_SPEND_ALERT.withinMondays (it was later, or never, before). */
+  alert: boolean;
+}
+
+/**
+ * rc.37 F2 package 4: the runway warnings read the weekly net, so a big
+ * one-off cost could leave the books just above the floor and the next
+ * Monday's payroll broke it without a word. This compares the projected
+ * breach before and after a spend (`upfront` out now, `weeklyChange` on the
+ * weekly net, negative = a new cost; `floorAfter` when the spend moves the
+ * wage bill the floor is counted on).
+ */
+export function spendRiskFor(input: {
+  balance: number;
+  weeklyNet: number;
+  floor: number;
+  upfront: number;
+  weeklyChange?: number;
+  floorAfter?: number;
+  run?: NetRun | null;
+}): SpendRisk {
+  const balanceAfter = input.balance - input.upfront;
+  // Books that the next Monday's net leaves below the floor breach then, whatever the net's sign.
+  const breachAt = (balance: number, net: number, floor: number): number | null =>
+    balance + net < floor ? 1 : mondaysToBreach(balance, net, floor, input.run);
+  const mondaysBefore = breachAt(input.balance, input.weeklyNet, input.floor);
+  const mondaysAfter = breachAt(balanceAfter, input.weeklyNet + (input.weeklyChange ?? 0), input.floorAfter ?? input.floor);
+  const within = CAREER_SPEND_ALERT.withinMondays;
+  const alert =
+    CAREER_SPEND_ALERT.enabled &&
+    input.upfront > 0 &&
+    mondaysAfter !== null &&
+    mondaysAfter <= within &&
+    (mondaysBefore === null || mondaysBefore > within);
+  return { balanceAfter, mondaysBefore, mondaysAfter, alert };
+}
+
+// ---------------------------------------------------------------------------
 // Sponsors, unlocks, reputation
 // ---------------------------------------------------------------------------
 
@@ -1862,7 +2018,8 @@ function sponsorOfferForTier(
   const pick = derivedFloat(careerSeed, streams.gen("sponsor", `${seasonIndex}:${tier}`));
   // v0.3: sponsor money grows with the scene (new deals only — offers are
   // generated per season, so the growth bakes in at offer time). rc.32: on
-  // the one money index (M1).
+  // the one money index (M1). rc.37 F2: no late-revenue factor here — this legacy
+  // offer has no runtime caller (sponsorDeals.tierValuePerWeek prices the live quotes).
   const mult = CAREER_ECONOMY.sponsorMult[difficulty] * moneyIndex(seasonIndex, "sponsor");
   return {
     sponsorId: SPONSOR_POOL[tier][pick < 0.5 ? 0 : 1],

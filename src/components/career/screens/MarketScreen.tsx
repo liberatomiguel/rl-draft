@@ -19,6 +19,7 @@
 import { useMemo, useState } from "react";
 import {
   CAREER_CONTRACT,
+  CAREER_EMERGENCY_SALE,
   CAREER_PAYROLL,
   CAREER_SCOUT,
   CAREER_LADDER,
@@ -63,6 +64,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgSheet } from "@/components/career/OrgSheet";
 import { SalaryNegotiator } from "@/components/career/SalaryNegotiator";
 import { SaleConsequences } from "@/components/career/SaleConsequences";
+import { MarketValueTag } from "@/components/career/MarketValueTag";
 import { RenewalsPanel } from "@/components/career/RenewalReadout";
 import {
   askPackageFor,
@@ -719,11 +721,19 @@ export function MarketScreen() {
                           {o.blockbuster ? (
                             <Badge tone="gold">{C.market.blockbuster}</Badge>
                           ) : null}
+                          {o.emergency ? <Badge tone="bad">{C.market.emergencyBadge}</Badge> : null}
+                          <MarketValueTag offer={o} />
                         </div>
                         {/* rc.32 (Miguel, 30/10): the Blockbuster explained in the offer itself. */}
                         {o.blockbuster ? (
                           <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-sub">
                             {blockbusterWhatOf(C, orgName)}
+                          </p>
+                        ) : null}
+                        {/* rc.37 F2: so is an emergency-sale offer. */}
+                        {o.emergency ? (
+                          <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-sub">
+                            {C.market.emergencyWhat(CAREER_EMERGENCY_SALE.validDays)}
                           </p>
                         ) : null}
                         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-sub">

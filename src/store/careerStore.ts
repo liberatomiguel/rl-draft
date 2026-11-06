@@ -60,6 +60,7 @@ import {
 } from "./careerSunday";
 import {
   acceptBidFlow,
+  acceptCreditOfferFlow,
   acknowledgeMoneyNoticeFlow,
   advanceDayFlow,
   advanceToNextStopFlow,
@@ -90,6 +91,7 @@ import {
   setCommunityParticipantsFlow,
   skipShortSquadEventFlow,
   takeBankLoanFlow,
+  spendAlertFlow,
   signPlayerFlow,
   simEventToEnd,
   startChampionshipSundayFlow,
@@ -276,6 +278,8 @@ interface CareerStoreState {
   acknowledgeMoneyNotice: (id?: string) => void;
   /** v2.0 bank loan (R21). */
   takeBankLoan: (principal: number) => void;
+  /** rc.37 F2: take the bank's loan a money notice offered, at its amount (acknowledges the notice). */
+  acceptCreditOffer: (noticeId: string) => void;
   payBankLoan: (amount: number) => void;
 
   /** rc.34 (UX-06b): refused ("decisionPending") while the contract review or a bid still holds. */
@@ -423,7 +427,10 @@ export const useCareerStore = create<CareerStoreState>()(
         if (refuseEnded()) return;
         const prevSave = slots[activeSlot]!;
         const prevSeq = slots[activeSlot]!.seq ?? 0;
-        const { save, error } = fn(slots[activeSlot]!);
+        const result = fn(slots[activeSlot]!);
+        const error = result.error;
+        // rc.37 F2 (package 4): a one-off spend that brings the floor within reach raises its notice at once.
+        const save = spendAlertFlow(prevSave, result.save);
         const changed = save !== slots[activeSlot];
         if (changed) save.lastPlayedAt = Date.now();
         // rc.34 (UX-06, #154's recipe): the first write that adds a "New" key seeds the save's state.
@@ -552,6 +559,7 @@ export const useCareerStore = create<CareerStoreState>()(
         payDebt: (amount) => withResult((s) => payDebtFlow(s, amount)),
         acknowledgeMoneyNotice: (id) => withSave((s) => acknowledgeMoneyNoticeFlow(s, id), { allowEnded: true }),
         takeBankLoan: (principal) => withResult((s) => takeBankLoanFlow(s, principal)),
+        acceptCreditOffer: (noticeId) => withResult((s) => acceptCreditOfferFlow(s, noticeId)),
         payBankLoan: (amount) => withResult((s) => payBankLoanFlow(s, amount)),
 
         // rc.34 (UX-06b): the rollover waits for the contract review (and any bid on its last day).

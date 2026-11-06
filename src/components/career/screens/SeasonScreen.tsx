@@ -29,6 +29,7 @@ import { REGION_BADGE } from "@/components/regionStyle";
 import { OrgMark } from "@/components/career/OrgMark";
 import { seasonLabelFor, squadAge, useCareerSave } from "@/components/career/careerUi";
 import { ContractReview, rolloverBlocked } from "@/components/career/ContractReview";
+import { SeasonOutlook } from "@/components/career/finances/SeasonOutlook";
 import { SeasonGoalRows, seasonGoalText } from "@/components/career/SeasonGoalRows";
 import { seasonGoalsViewOf } from "@/engine/career/seasonGoals";
 
@@ -364,6 +365,9 @@ export function SeasonScreen() {
 
       {/* 5b — rc.34 (UX-06b): the explicit contract review before the rollover. */}
       <ContractReview save={save} C={C} />
+
+      {/* 5c — rc.37 F2: next season's books in one view (live: a renewal above moves it). */}
+      {!isInsolvent && !isRetired ? <SeasonOutlook save={save} C={C} /> : null}
 
       {/* 6 — Actions / fork (rc.34: the rollover waits for the contract review) */}
       <div
