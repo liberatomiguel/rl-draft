@@ -47,7 +47,10 @@ function simulationHash(): string {
   };
   for (const sub of ["engine", "config", "data", "lib", "store"]) walk(join(root, sub));
   const hash = createHash("sha256");
-  for (const file of files.sort()) hash.update(relative(root, file).split(sep).join("/")).update(readFileSync(file));
+  // Line endings normalized: a git checkout under autocrlf rewrites CRLF/LF without changing the code.
+  for (const file of files.sort()) hash.update(relative(root, file).split(sep).join("/")).update(readFileSync(file, "utf8").replace(/
+/g, "
+"));
   return hash.digest("hex");
 }
 
