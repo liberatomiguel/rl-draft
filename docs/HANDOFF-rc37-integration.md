@@ -7,7 +7,7 @@
    - Same commit: the battery bot on F2/F3 and the cohort runner; BALANCE_VERSION 13 → 14 (fingerprint `a7db5347`); 2.0.0-rc.37 (package, lock, site).
    - `2c21114` + `0d92803`: line-ending-proof simulation hash for resume.
 4. **Gates**: typecheck and lint clean; full suite 1630 passed / 24 skipped (154 files). No build (nothing ships this round).
-5. **Battery**: running, report pending. 4 shards, `HUMAN_AUDIT=1 HUMAN_MODE=matrix HUMAN_SHARDS=4 HUMAN_SHARD=i HUMAN_DIR=C:/Users/Miguel/CLAUDE/rc37-battery/run1 node node_modules/vitest/vitest.mjs run src/store/auditHuman.test.ts`. 4,914 S10 controls (tiers A–D), Worlds +0.5/+1 pairs on A/B, S20 for titled tier-A controls; ~38–45 s per S10 career, ≈16 h. Usage and resume rules: `src/store/auditHumanREADME.md`.
+5. **Battery**: done 06/11 — 4,914/4,914 units, 0 softlocks, 0 errors; results and the F6 recommendations (none applied) in `docs/BATTERY-rc37-2026-11.md`, full report in `C:/Users/Miguel/CLAUDE/rc37-battery/report/rc37.md`. 4 shards, `HUMAN_AUDIT=1 HUMAN_MODE=matrix HUMAN_SHARDS=4 HUMAN_SHARD=i HUMAN_DIR=C:/Users/Miguel/CLAUDE/rc37-battery/run1 node node_modules/vitest/vitest.mjs run src/store/auditHuman.test.ts`. 4,914 S10 controls (tiers A–D), Worlds +0.5/+1 pairs on A/B, S20 for titled tier-A controls; ~38–45 s per S10 career, ≈16 h. Usage and resume rules: `src/store/auditHumanREADME.md`.
    - Until it ends, change no `.ts/.tsx/.json/.mjs` under `src/engine|config|data|lib|store` in this worktree (resume hash). Docs are safe.
    - `auditHumanSummary.mjs` reads only `shard-N.json`; the report needs a reader for `shard-N.jsonl` (the summary is outside the hash).
 6. **Docs**: CHANGELOG rc.37 entry, STATUS, ROAD-TO-WORLDS-DECISIONS R99, `auditHumanREADME.md`, this file.

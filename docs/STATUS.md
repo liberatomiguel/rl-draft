@@ -14,8 +14,9 @@
   round.
 - **rc.37 (round 2):** `claude/rc37-integration`, **v2.0.0-rc.37**, from
   `origin/staging` rc.36.15 (`c680a89`). F1 market → F2 finance → F3 matchday
-  → F4a battery tooling merged; F5 replay contract is docs only. Awaiting the
-  battery report and Miguel's review: `HANDOFF-rc37-integration.md`.
+  → F4a battery tooling merged; F5 replay contract is docs only. Battery done
+  (06/11): `BATTERY-rc37-2026-11.md`. Awaiting Miguel's F6 choices and review:
+  `HANDOFF-rc37-integration.md`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
 - **Etapa 3 / Gate 3b:** integrated; progression/economy acceptance stays open
@@ -33,18 +34,17 @@
   valuation (R99, `careerRc37Integration.test.ts`). Every F1–F3 number is
   provisional until the battery.
 
-## Battery: running, report pending
+## Battery: done (06/11), results in `BATTERY-rc37-2026-11.md`
 
-- Four shards from the integration worktree into
-  `C:/Users/Miguel/CLAUDE/rc37-battery/run1`; command and resume rules:
-  `src/store/auditHumanREADME.md`.
-- 4,914 S10 controls (7 regions × 3 difficulties × 3 rosters × 39 profiles ×
-  2 seeds), Worlds +0.5/+1 pairs on the 14 base profiles, S20 for titled
-  tier-A controls. ~38–45 s per S10 career, ≈16 h on 4 processes.
-- Until it ends, change no code under `src/{engine,config,data,lib,store}` in
-  that worktree (resume refuses a changed simulation); docs are safe.
-- `auditHumanSummary.mjs` reads only `shard-N.json`; the report needs a reader
-  for the cohort JSONL.
+- 4,914/4,914 units (A–D), 0 softlocks, 0 errors; 4 shards, ~21–22 h each.
+  Data `C:/Users/Miguel/CLAUDE/rc37-battery/run1`; full report
+  `.../rc37-battery/report/rc37.md` (`auditHumanSummaryReport.mjs`).
+- Main findings: youth profiles (`academy`, `prospectsOnly`) dominate; Worlds
+  reach by region 6 % (EU) to 93 % (SSA); Regional too early and a bimodal
+  funnel (normal Worlds title 10 % by S10); champions retitle 95 % in S11–S20;
+  renewals p50 0.61 of market; chemistry stuck at 67 %; rep saturates at 100;
+  psychologist adds 0 rating. Worlds +0.5 / +1 cuts titles 19 % / 42 %.
+  Finances and crisis levers land on target (insolvency 2 / 7 / 21 %).
 
 ## Open, in order
 
