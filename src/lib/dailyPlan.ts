@@ -13,6 +13,8 @@
  */
 
 import { createRng } from "@/lib/rng";
+import { DAILY_CHALLENGE } from "@/config/balance";
+import reviewedSeeds from "@/generated/daily-seeds-v2.json";
 import type {
   DailyInfo,
   DailyObjective,
@@ -30,6 +32,15 @@ export function todayKey(now = new Date()): string {
 const DAILY_EPOCH = "2026-06-15";
 const DAY_MS = 86_400_000;
 
+/** Preserve published days; from this date every 11-day cycle covers all
+ * templates. Hard/Legacy days are separated by days with visible ratings. */
+export const DAILY_ROTATION_START = "2026-11-09";
+export const DAILY_ROTATION: readonly DailyTemplateId[] = [
+  "pureBracket", "regionalLockdown", "championsOnly", "oldSchool",
+  "noSafetyNet", "gauntlet", "modern", "specialsSurge", "legacyDay",
+  "underdog", "blackout",
+];
+
 /** Sequential daily number since launch (#1, #2, …). */
 export function dailyNumber(date: string): number {
   const t = Date.parse(`${date}T00:00:00Z`);
@@ -46,6 +57,13 @@ export function seedFromDate(date: string): number {
     hash = Math.imul(hash, 0x01000193);
   }
   return hash >>> 0;
+}
+
+/** Authored daily seeds have whole-draft/whole-tournament replay proofs. A
+ * date is pinned once published; the fallback remains deterministic beyond
+ * the reviewed calendar. Historical days have no overrides. */
+export function dailySeedForDate(date: string): number {
+  return (reviewedSeeds as Record<string, number>)[date] ?? seedFromDate(date);
 }
 
 /** Regions a Regional Lockdown day can pick. */
@@ -136,7 +154,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
   const pureBracket = (): TemplateResult => ({
     templateId: "pureBracket",
     label: "Pure Bracket",
-    description: "No modifiers. A clean classic run — same seed for everyone.",
+    description: "A worldwide bracket with visible overalls. Same seed and rules for everyone.",
     difficulty: "normal",
     hiddenOverall: false,
   });
@@ -225,13 +243,13 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
     () => ({
       templateId: "underdog",
       label: "Underdog",
-      description: "Take the long shot all the way. Win the title with a team under 88 OVR.",
+      description: "Take the long shot all the way. Win the title with a team of 88 OVR or lower.",
       difficulty: "normal",
       hiddenOverall: false,
       objective: {
         type: "team_overall_under",
         value: 88,
-        label: "Win the title with a team under 88 OVR",
+        label: "Win the title with a team of 88 OVR or lower",
         bonusXp: 120,
       },
     }),
@@ -248,7 +266,16 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       ),
   ];
 
-  const picked = rng.pick(templates)();
+  const day = Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${DAILY_ROTATION_START}T00:00:00Z`)) / DAY_MS);
+  // Consume the legacy wheel draw as well: all subsequent date RNG stays
+  // deterministic, and dates before the cutover retain their exact rules.
+  const randomTemplate = rng.pick(templates);
+  const picked = day < 0 ? randomTemplate() : (() => {
+    const id = DAILY_ROTATION[day % DAILY_ROTATION.length];
+    // Template construction is lazy because Regional Lockdown consumes RNG.
+    const index = ["pureBracket", "regionalLockdown", "oldSchool", "modern", "blackout", "noSafetyNet", "gauntlet", "specialsSurge", "legacyDay", "underdog", "championsOnly"].indexOf(id);
+    return templates[index]();
+  })();
 
   // A template can pin its own objective; otherwise ~45% of days roll a bonus.
   let objective: DailyObjective | undefined = picked.objective;
@@ -261,6 +288,9 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
     ];
     objective = rng.pick(pool);
   }
+  // A low conceded-total rewards shorter losing runs. Future dailies use a
+  // progression objective instead, while old saved dates keep their rules.
+  if (day >= 0 && objective?.type === "concede_under") objective = { type: "reach_playoffs", label: "Reach the playoffs", bonusXp: objective.bonusXp };
 
   return {
     info: {
@@ -270,6 +300,7 @@ export function planDaily(date: string, viable: (pool: DailyPool) => boolean): D
       description: picked.description,
       objective,
       templateId: picked.templateId,
+      ...(day >= 0 ? { opponentShift: picked.templateId === "underdog" ? DAILY_CHALLENGE.underdogOpponentShift : DAILY_CHALLENGE.opponentShift[picked.difficulty as keyof typeof DAILY_CHALLENGE.opponentShift] } : {}),
       ...(picked.region ? { region: picked.region } : {}),
     },
     difficulty: picked.difficulty,

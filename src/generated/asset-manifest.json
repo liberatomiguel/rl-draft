@@ -13,6 +13,7 @@
       224
     ],
     "banners": [
+      320,
       800,
       1240,
       2480
@@ -501,170 +502,122 @@
     "world-champion-crowned": "af6f5f85bd"
   },
   "badgeShifts": {
-    "constellation": [
-      0,
-      0.011
-    ],
     "contributor": [
-      -0.012,
-      -0.03
-    ],
-    "dynasty": [
-      0.001,
-      0.007
+      -0.004,
+      -0.012
     ],
     "early-supporter": [
-      -0.005,
-      -0.002
-    ],
-    "pre-season-bronze": [
-      0,
-      0.021
+      -0.008,
+      -0.004
     ],
     "pre-season-champion": [
-      0.001,
-      0.008
+      0,
+      0.012
     ],
     "pre-season-diamond": [
-      0.001,
-      0.029
-    ],
-    "pre-season-gold": [
       0,
-      0.015
+      -0.008
     ],
     "pre-season-grand-champion": [
-      0.001,
-      0.022
-    ],
-    "pre-season-platinum": [
       0,
-      0.031
-    ],
-    "pre-season-silver": [
-      0,
-      0.022
-    ],
-    "pre-season-supersonic": [
-      0,
-      -0.019
-    ],
-    "rising-star": [
-      0,
-      -0.026
-    ],
-    "scholar-1": [
-      0,
-      -0.007
-    ],
-    "scholar-2": [
-      0,
-      0.007
+      0.008
     ],
     "scholar-3": [
-      -0.008,
-      -0.005
+      -0.004,
+      -0.012
     ],
     "season-champion-ps": [
       0,
-      -0.055
+      -0.008
     ],
     "season-elite-ps": [
-      -0.008,
-      -0.041
-    ],
-    "season-finalist-ps": [
-      0,
-      -0.025
+      -0.004,
+      -0.008
     ],
     "season-runner-up-ps": [
-      -0.008,
-      -0.032
+      -0.004,
+      0.008
     ],
     "season-third-place-ps": [
-      -0.008,
-      -0.04
-    ],
-    "spark": [
-      0,
-      -0.005
+      -0.004,
+      0.008
     ],
     "supernova": [
       0,
-      0.017
+      -0.008
     ],
     "supporter": [
-      -0.001,
-      0.028
-    ],
-    "underdog": [
       0,
-      -0.009
-    ],
-    "verified-pro": [
-      0.005,
-      0.016
-    ],
-    "veteran-drafter-1": [
-      0,
-      0.05
-    ],
-    "veteran-drafter-2": [
-      0,
-      0.052
+      -0.008
     ],
     "veteran-drafter-3": [
       0,
-      0.029
+      -0.008
     ],
     "veteran-drafter-4": [
-      -0.008,
-      0.012
+      -0.004,
+      -0.008
     ],
     "wildfire": [
-      -0.014,
-      0.008
+      0,
+      -0.008
     ],
     "world-champion-crowned": [
       -0.004,
-      -0.017
+      0.008
     ]
   },
   "banners": {
     "after-hours": "e34141bd92",
-    "after-hours.anim": "b9d2b295e4",
+    "after-hours.base": "e34141bd92",
+    "after-hours.motion": "0382a60c8d",
     "back-to-basics": "d53135f02b",
-    "back-to-basics.anim": "0b47261d1d",
+    "back-to-basics.base": "bf50a1b114",
+    "back-to-basics.motion": "b9f77d2f84",
     "blueprint": "bcaa5c2b61",
-    "blueprint.anim": "cc59ca51e2",
+    "blueprint.base": "3d5e5b17b0",
+    "blueprint.motion": "f3fa3d06ad",
     "circuit": "98ac1bd460",
     "cosmic-ascension": "8547760ce5",
-    "cosmic-ascension.anim": "0ec56d0842",
+    "cosmic-ascension.base": "e7584c70ed",
+    "cosmic-ascension.motion": "8faf5419b4",
     "golden-era": "ceeb8ca2de",
-    "golden-era.anim": "61fd76c957",
+    "golden-era.base": "f5dcf6b172",
+    "golden-era.motion": "cd8a82d5a8",
     "heatwave": "3eefe504d9",
-    "heatwave.anim": "f9d40132f5",
+    "heatwave.base": "ab888fab67",
+    "heatwave.motion": "5cef25f6b6",
     "kickoff": "20653d576f",
     "neon-grid": "2e89d8635c",
-    "neon-grid.anim": "ac35354594",
+    "neon-grid.base": "1d64a8ba61",
+    "neon-grid.motion": "3cd267f452",
     "overdrive": "0d33e810e5",
-    "overdrive.anim": "4ed99218f6",
+    "overdrive.base": "fb86bbcce9",
+    "overdrive.motion": "64e5072478",
     "playbook": "9b95cd244c",
-    "playbook.anim": "a81da4cb4b",
+    "playbook.base": "9b95cd244c",
+    "playbook.motion": "be6892c541",
     "singularity": "64c0db6388",
-    "singularity.anim": "e9235d4598",
+    "singularity.base": "fc4dd4b192",
+    "singularity.motion": "1683a913ca",
     "slipstream": "d910dfcdf9",
-    "slipstream.anim": "da7e83c538",
+    "slipstream.base": "271dfb5ae8",
+    "slipstream.motion": "a68bfd8cae",
     "solar-flare": "f286051e9a",
-    "solar-flare.anim": "203946bb32",
+    "solar-flare.base": "db195d97f7",
+    "solar-flare.motion": "2de09cf85b",
     "target-practice": "84c889ab3f",
-    "target-practice.anim": "50050e2a17",
+    "target-practice.base": "e3f4315e2c",
+    "target-practice.motion": "579e46d790",
     "the-vault": "7371a8cc48",
-    "the-vault.anim": "4026daabd4",
+    "the-vault.base": "e8ea0cc31a",
+    "the-vault.motion": "b432dff32c",
     "victory-lane": "dac05e44e9",
-    "victory-lane.anim": "c3817a3562",
+    "victory-lane.base": "4d97244901",
+    "victory-lane.motion": "17dc2cf2b3",
     "wildfire": "b9be3f5b7b",
-    "wildfire.anim": "05d5b0f07a"
+    "wildfire.base": "b190ed7650",
+    "wildfire.motion": "1f4fc74fff"
   },
   "partners": {
     "fiftyfifty": "0e2893020d"

@@ -36,13 +36,16 @@ export function useProfileNew(): ProfileNewSummary {
   const nationalDiscovered = useProfileStore((s) => s.nationalDiscovered);
   const xp = useProfileStore((s) => s.xp);
   const challengesCompleted = useProfileStore((s) => s.challengesCompleted);
+  const challengeStars = useProfileStore((s) => s.challengeStars);
+  const careerMarks = useProfileStore((s) => s.careerMarks);
+  const quiz = useProfileStore((s) => s.quiz);
   const newItems = useProfileStore((s) => s.newItems);
   return useMemo(
     () =>
       mounted
-        ? profileNewSummary(newItems, { unlockedSpecials, nationalDiscovered, xp, challengesCompleted })
+        ? profileNewSummary(newItems, { unlockedSpecials, nationalDiscovered, xp, challengesCompleted, challengeStars, careerMarks, quiz })
         : EMPTY_PROFILE_NEW,
-    [mounted, newItems, unlockedSpecials, nationalDiscovered, xp, challengesCompleted],
+    [mounted, newItems, unlockedSpecials, nationalDiscovered, xp, challengesCompleted, challengeStars, careerMarks, quiz],
   );
 }
 

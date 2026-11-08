@@ -114,7 +114,7 @@ const BADGE_GLOW = { size: 224, pad: 84, sigma: 2.2, haloSigma: 16, haloAlpha: 0
  *  calendar thumbnails far smaller; assets.ts picks the smallest width ≥ the
  *  CSS width × 2 (2480 = the hero on a retina screen; rc.22 — 1× was soft). The SVGs carry
  *  turbulence / blur / displacement filters: NEVER serve them in production. */
-const BANNER_WIDTHS = [800, 1240, 2480];
+const BANNER_WIDTHS = [320, 800, 1240, 2480];
 const BANNER_SVG_DENSITY = 192;
 const BANNER_WEBP = { quality: 88, alphaQuality: 100, effort: 5 };
 
@@ -359,10 +359,10 @@ async function plan() {
     });
   }
 
-  // badge visual centre (rc.21): some badges carry a crest or a tab on one
-  // side, so their bounding box and their visual weight disagree and they look
-  // off-centre next to the others. Measure the alpha-weighted centroid of the
-  // raster and record the shift that re-centres it (BadgeEmblem applies it).
+  // UI-02: centre the useful silhouette, excluding translucent halos. An
+  // alpha-weighted centroid pulled crests toward their heaviest ornament and
+  // moved visually centred shields down. Bounds keep their whole visible
+  // frame centred; BadgeEmblem moves art, glow and mask together.
   for (const name of await listSvgs(badgeDir)) {
     const art = name.replace(/\.svg$/i, "");
     const { data, info } = await sharp(join(badgeDir, name), { density: BADGE_SVG_DENSITY })
@@ -370,28 +370,25 @@ async function plan() {
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    let sx = 0;
-    let sy = 0;
-    let sum = 0;
+    let minX = info.width, minY = info.height, maxX = -1, maxY = -1;
     for (let y = 0; y < info.height; y++) {
       for (let x = 0; x < info.width; x++) {
         const a = data[(y * info.width + x) * info.channels + 3];
-        if (!a) continue;
-        sx += a * (x + 0.5);
-        sy += a * (y + 0.5);
-        sum += a;
+        if (a < 192) continue;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
       }
     }
-    if (!sum) continue;
-    const dx = 0.5 - sx / sum / info.width;
-    const dy = 0.5 - sy / sum / info.height;
+    if (maxX < 0) continue;
+    const dx = 0.5 - (minX + maxX + 1) / 2 / info.width;
+    const dy = 0.5 - (minY + maxY + 1) / 2 / info.height;
     const r3 = (v) => Math.round(v * 1000) / 1000;
     if (Math.abs(dx) >= 0.004 || Math.abs(dy) >= 0.004) manifest.badgeShifts[art] = [r3(dx), r3(dy)];
   }
 
   // banners (rc.21): the generated SVGs → raster WebP, width-fitted
   const bannerDir = join(PUBLIC, "banners");
-  for (const name of await listSvgs(bannerDir)) {
+  for (const name of (await listSvgs(bannerDir)).filter(n => !n.endsWith(".anim.svg"))) {
     const art = name.replace(/\.svg$/i, "");
     const src = join(bannerDir, name);
     const hash = hashOf(await read(src), { density: BANNER_SVG_DENSITY, webp: BANNER_WEBP });

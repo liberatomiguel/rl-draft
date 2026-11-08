@@ -244,6 +244,13 @@ export const challengeSchema = z
     rankRequired: z.string().min(1),
     /** Optional: a challenge id that must be cleared first (difficulty chain). */
     prereq: z.string().min(1).optional(),
+    unlock: z.object({ anyOf: z.array(z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("clears"), count: z.number().int().positive().max(40) }).strict(),
+      z.object({ kind: z.literal("stars"), count: z.number().int().positive().max(120) }).strict(),
+      z.object({ kind: z.literal("perfects"), count: z.number().int().positive().max(40) }).strict(),
+      z.object({ kind: z.literal("quiz"), count: z.number().int().positive().max(100) }).strict(),
+      z.object({ kind: z.literal("career"), mark: z.enum(["car-first-regional", "car-first-major", "car-first-worlds", "car-major-qualified"]) }).strict(),
+    ])).min(1).max(3) }).strict().optional(),
     /** The FIXED boss lineup the player drafts against (from lineups.json). */
     opponentLineupId: z.string().min(1),
     /** Optional: a player card pre-placed in the roster to build around. */

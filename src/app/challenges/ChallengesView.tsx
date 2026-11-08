@@ -26,6 +26,7 @@ import { finalOverall, lineupHeader } from "@/engine/cards";
 import { challengeStatus, countStars, rosterFromLineup, starsAvailable, totalStars, type ChallengeStatus } from "@/engine/challenges";
 import { CHALLENGE } from "@/config/balance";
 import { rankForXp } from "@/engine/progression";
+import { challengeUnlockProgress } from "@/engine/challengeStars";
 import { FieldView } from "@/components/cards/FieldView";
 import type { Challenge } from "@/engine/types";
 import { useCopy } from "@/content/copy";
@@ -130,6 +131,8 @@ export function ChallengesView() {
   const xp = useProfileStore((s) => s.xp);
   const completed = useProfileStore((s) => s.challengesCompleted);
   const starMasks = useProfileStore((s) => s.challengeStars);
+  const careerMarks = useProfileStore((s) => s.careerMarks);
+  const quizSolved = useProfileStore((s) => s.quiz.solved);
 
   // Ordered by required rank, then by reward (easier first within a tier).
   const ordered = useMemo(
@@ -144,7 +147,7 @@ export function ChallengesView() {
 
   // Pre-mount: treat as a guest (everything locked) to avoid hydration mismatch.
   const statusOf = (ch: Challenge): ChallengeStatus =>
-    mounted ? challengeStatus(ch, xp, completed) : "locked";
+    mounted ? challengeStatus(ch, xp, completed, { challengeStars: starMasks, careerMarks, quizSolved }) : "locked";
   const clearedCount = mounted ? ordered.filter((c) => completed[c.id]).length : 0;
   const starsEarned = mounted ? totalStars(starMasks) : 0;
   const starsMax = ordered.reduce((n, c) => n + starsAvailable(c), 0);
@@ -176,6 +179,7 @@ export function ChallengesView() {
         className="mb-2"
       />
       <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
+      <p className="mb-5 max-w-2xl text-xs leading-relaxed text-sub">{CH.unlockHint}</p>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-xs text-sub">
@@ -199,7 +203,7 @@ export function ChallengesView() {
               <section key={tier}>
                 <div className="mb-3 flex items-center gap-3">
                   <h2 className="display text-sm font-bold uppercase tracking-[0.16em] text-ink">
-                    {CH.tier[tier]}
+                    {CH.tier[tier]} <span className="font-normal text-sub">· {CH.difficultyByTier[tier]}</span>
                   </h2>
                   <span className="text-xs font-semibold text-faint">{CH.progress(cleared, items.length)}</span>
                   <span className="h-px flex-1 bg-line/60" />
@@ -258,8 +262,7 @@ function ChallengeCard({
   const starLabels = challengeStarLabels(ch, CH);
   const starXp = CHALLENGE.starXp[ch.tier] ?? 0;
 
-  // The same layout for every status (rc.2): a locked card shows what it IS,
-  // under a dark overlay that says what opens it.
+  // A locked card is a readable preview, including goals and unlock progress.
   const inner = (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -309,35 +312,49 @@ function ChallengeCard({
         })}
       </ul>
       <CosmeticRewardStrip challengeId={ch.id} perfect={perfect} CH={CH} compact />
+      {locked ? <UnlockPath challenge={ch} CH={CH} compact /> : null}
     </>
   );
 
-  if (locked) {
-    return (
-      <div className="relative" aria-disabled="true">
-        <Panel className="p-4">{inner}</Panel>
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-bg/85 p-4 text-center backdrop-blur-[2px]">
-          <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="md" />
-          <p className="display text-sm font-bold uppercase tracking-wide text-ink">{CH.unlocksAt(rankLabel(ch.rankRequired))}</p>
-          {ch.prereq ? <p className="text-xs text-sub">{CH.clearPrereq(CH.catalog[ch.prereq]?.title ?? challengeById.get(ch.prereq)?.title ?? ch.prereq)}</p> : null}
-        </div>
-      </div>
-    );
-  }
   // Cleared challenges stay playable for the missing stars (v2.0).
   return (
     <button
       type="button"
       onClick={onOpen}
       className={cx(
-        "panel p-4 text-left transition-all hover:!border-line-strong",
-        cleared ? "!border-amber-300/40" : style.glow,
+        "panel p-4 text-left transition-colors hover:!border-line-strong",
+        cleared ? "!border-amber-300/40" : locked ? "!bg-raised" : style.glow,
         cleared && style.legend && "ach-legend",
       )}
     >
       {inner}
     </button>
   );
+}
+
+function UnlockPath({ challenge: ch, CH, compact }: { challenge: Challenge; CH: ReturnType<typeof useCopy>["CHALLENGES_UI"]; compact?: boolean }) {
+  const xp = useProfileStore(s => s.xp);
+  const completed = useProfileStore(s => s.challengesCompleted);
+  const challengeStars = useProfileStore(s => s.challengeStars);
+  const careerMarks = useProfileStore(s => s.careerMarks);
+  const quizSolved = useProfileStore(s => s.quiz.solved);
+  const rankMet = RANKS.findIndex(r => r.id === rankForXp(xp).id) >= RANKS.findIndex(r => r.id === ch.rankRequired);
+  const row = (text: string, met: boolean, progress?: string) => <span className={cx("flex items-start gap-1.5 text-xs leading-relaxed", met ? "text-good" : "text-sub")}><span aria-hidden>{met ? "✓" : "○"}</span><span className="min-w-0 flex-1">{text}</span>{progress ? <span className="shrink-0 font-mono text-[10px]">{progress}</span> : null}</span>;
+  return <div className={cx("mt-4 rounded-lg border border-line-strong bg-bg/70 p-3", !compact && "mb-4")}>
+    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-ink">{CH.unlockTitle}</p>
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2"><RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="sm" className="!h-6 !w-6" />{row(CH.unlocksAt(rankLabel(ch.rankRequired)), rankMet)}</div>
+      {ch.prereq ? row(CH.clearPrereq(CH.catalog[ch.prereq]?.title ?? challengeById.get(ch.prereq)?.title ?? ch.prereq), !!completed[ch.prereq]) : null}
+      {ch.unlock ? <div className="border-t border-line pt-2">
+        {ch.unlock.anyOf.length > 1 ? <p className="mb-1.5 text-[11px] text-sub">{CH.unlockAny}</p> : null}
+        {ch.unlock.anyOf.map((condition, i) => {
+          const p = challengeUnlockProgress(condition, completed, { challengeStars, careerMarks, quizSolved });
+          const label = condition.kind === "career" ? CH.unlockMilestone.career[condition.mark] : CH.unlockMilestone[condition.kind](condition.count);
+          return <div key={i}>{i > 0 ? <p className="my-1 pl-4 text-[10px] font-semibold uppercase text-sub">{CH.unlockOr}</p> : null}{row(label, p.met, condition.kind === "career" ? undefined : CH.unlockProgress(p.current, p.target))}</div>;
+        })}
+      </div> : null}
+    </div>
+  </div>;
 }
 
 function BriefingModal({
@@ -352,13 +369,16 @@ function BriefingModal({
   const router = useRouter();
   const startChallenge = useRunStore((s) => s.startChallenge);
   const starMask = useProfileStore((s) => (challenge ? s.challengeStars[challenge.id] ?? 0 : 0));
+  const profile = useProfileStore();
   if (!challenge) return null;
+  const locked = challengeStatus(challenge, profile.xp, profile.challengesCompleted, { challengeStars: profile.challengeStars, careerMarks: profile.careerMarks, quizSolved: profile.quiz.solved }) === "locked";
 
   const header = lineupHeader(challenge.opponentLineupId);
   const twists = twistLabels(challenge, CH);
   const stageIds = challenge.gauntlet?.lineupIds ?? [];
   const starXp = CHALLENGE.starXp[challenge.tier] ?? 0;
   const start = () => {
+    if (locked) return;
     sfx.start();
     startChallenge(challenge.id);
     router.push("/play");
@@ -374,13 +394,14 @@ function BriefingModal({
           <Button variant="ghost" onClick={onClose}>
             {CH.backToChallenges}
           </Button>
-          <Button variant="primary" onClick={start}>
-            {starMask & 1 ? CH.replay : CH.start}
+          <Button variant="primary" onClick={start} disabled={locked}>
+            {locked ? CH.status.locked : starMask & 1 ? CH.replay : CH.start}
           </Button>
         </>
       }
     >
       <p className="leading-relaxed text-sub">{CH.catalog[challenge.id]?.brief ?? challenge.brief}</p>
+      {locked ? <UnlockPath challenge={challenge} CH={CH} /> : null}
 
       {/* Stars (v2.0) */}
       <p className="kicker mt-5">{CH.starsKicker}</p>

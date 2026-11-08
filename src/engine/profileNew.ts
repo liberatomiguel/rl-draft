@@ -30,6 +30,9 @@ export interface ProfileNewFacts {
   nationalDiscovered?: Record<string, string>;
   xp: number;
   challengesCompleted: Record<string, string>;
+  challengeStars?: Record<string, number>;
+  careerMarks?: string[];
+  quiz?: { solved: number };
 }
 
 export const specialKey = (id: string): string => itemKey(NEW_KIND.special, id);
@@ -42,7 +45,7 @@ export function profileAvailableKeys(p: ProfileNewFacts): string[] {
   for (const id of Object.keys(p.unlockedSpecials ?? {})) keys.push(specialKey(id));
   for (const id of Object.keys(p.nationalDiscovered ?? {})) keys.push(nationalTeamKey(id));
   for (const ch of challenges) {
-    if (challengeStatus(ch, p.xp ?? 0, p.challengesCompleted ?? {}) !== "locked") keys.push(challengeKey(ch.id));
+    if (challengeStatus(ch, p.xp ?? 0, p.challengesCompleted ?? {}, { ...p, quizSolved: p.quiz?.solved }) !== "locked") keys.push(challengeKey(ch.id));
   }
   return keys;
 }

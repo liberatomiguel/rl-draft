@@ -904,7 +904,19 @@
         "kind": "sweep",
         "maxLosses": 2
       }
-    ]
+    ],
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-regional"
+        },
+        {
+          "kind": "clears",
+          "count": 3
+        }
+      ]
+    }
   },
   {
     "id": "ch-pacific-breakthrough",
@@ -935,7 +947,15 @@
         "kind": "sweep",
         "maxLosses": 2
       }
-    ]
+    ],
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "clears",
+          "count": 1
+        }
+      ]
+    }
   },
   {
     "id": "ch-african-frontier",
@@ -965,7 +985,15 @@
         "kind": "chemistry",
         "tier": "Good"
       }
-    ]
+    ],
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "clears",
+          "count": 1
+        }
+      ]
+    }
   },
   {
     "id": "ch-oceania-after-dark",
@@ -997,7 +1025,19 @@
         "kind": "sweep",
         "maxLosses": 2
       }
-    ]
+    ],
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-regional"
+        },
+        {
+          "kind": "clears",
+          "count": 8
+        }
+      ]
+    }
   },
   {
     "id": "ch-global-alliance",
@@ -1026,7 +1066,19 @@
       {
         "kind": "noSpecials"
       }
-    ]
+    ],
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "quiz",
+          "count": 3
+        },
+        {
+          "kind": "clears",
+          "count": 3
+        }
+      ]
+    }
   },
   {
     "id": "ch-club-reunion",
@@ -1075,7 +1127,19 @@
       {
         "lineupId": "g2-stride-2024"
       }
-    ]
+    ],
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-regional"
+        },
+        {
+          "kind": "stars",
+          "count": 24
+        }
+      ]
+    }
   },
   {
     "id": "ch-zen-and-the-art",
@@ -1105,7 +1169,19 @@
         "kind": "noSpecials"
       }
     ],
-    "fixedPlayerCardId": "zen-team-vitality-2026"
+    "fixedPlayerCardId": "zen-team-vitality-2026",
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-major"
+        },
+        {
+          "kind": "perfects",
+          "count": 8
+        }
+      ]
+    }
   },
   {
     "id": "ch-kuxirs-last-stand",
@@ -1136,7 +1212,8 @@
         "maxLosses": 2
       }
     ],
-    "fixedPlayerCardId": "kuxir97-mousesports-s9"
+    "fixedPlayerCardId": "kuxir97-mousesports-s9",
+    "prereq": "ch-old-school"
   },
   {
     "id": "ch-squishys-supporting-cast",
@@ -1166,7 +1243,19 @@
         "max": 1
       }
     ],
-    "fixedPlayerCardId": "squishymuffinz-nrg-esports-2223"
+    "fixedPlayerCardId": "squishymuffinz-nrg-esports-2223",
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-major-qualified"
+        },
+        {
+          "kind": "clears",
+          "count": 8
+        }
+      ]
+    }
   },
   {
     "id": "ch-gauntlet-desert-crossing",
@@ -1204,6 +1293,18 @@
         "team-bds-2122"
       ],
       "bestOf": 5
+    },
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-major"
+        },
+        {
+          "kind": "clears",
+          "count": 15
+        }
+      ]
     }
   },
   {
@@ -1242,6 +1343,19 @@
         "team-bds-2122"
       ],
       "bestOf": 7
+    },
+    "prereq": "ch-gauntlet-world-tour",
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-worlds"
+        },
+        {
+          "kind": "perfects",
+          "count": 12
+        }
+      ]
     }
   },
   {
@@ -1351,7 +1465,8 @@
       {
         "lineupId": "g2-stride-2024"
       }
-    ]
+    ],
+    "prereq": "ch-lab-first-link"
   },
   {
     "id": "ch-lab-time-machine",
@@ -1405,7 +1520,8 @@
       {
         "lineupId": "g2-stride-2024"
       }
-    ]
+    ],
+    "prereq": "ch-lab-first-link"
   },
   {
     "id": "ch-lab-club-architect",
@@ -1459,7 +1575,8 @@
       {
         "lineupId": "g2-stride-2024"
       }
-    ]
+    ],
+    "prereq": "ch-lab-time-machine"
   },
   {
     "id": "ch-lab-balancing-act",
@@ -1514,7 +1631,8 @@
       {
         "lineupId": "g2-stride-2024"
       }
-    ]
+    ],
+    "prereq": "ch-lab-passport"
   },
   {
     "id": "ch-lab-perfect-link",
@@ -1568,7 +1686,8 @@
       {
         "lineupId": "karmine-corp-2025"
       }
-    ]
+    ],
+    "prereq": "ch-lab-club-architect"
   },
   {
     "id": "ch-lab-masterclass",
@@ -1602,6 +1721,19 @@
     "objective": {
       "kind": "minOverall",
       "min": 92
+    },
+    "prereq": "ch-lab-perfect-link",
+    "unlock": {
+      "anyOf": [
+        {
+          "kind": "career",
+          "mark": "car-first-worlds"
+        },
+        {
+          "kind": "stars",
+          "count": 90
+        }
+      ]
     }
   }
 ]

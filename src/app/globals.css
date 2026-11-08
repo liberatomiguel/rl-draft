@@ -19,7 +19,7 @@
   --line-strong: rgba(146, 164, 196, 0.28);
   --ink: #e9eef8;
   --sub: #8d9ab3;
-  --faint: #5b6880;
+  --faint: #7c8aa3;
 
   --blue: #3b82f6;
   --blue-bright: #60a5fa;
@@ -1626,17 +1626,20 @@ html.reduce-fx .card-float {
    a thin dark veil at both edges so the name and the rating always read.
 --------------------------------------------------------------------------- */
 .cos-banner {
+  --cos-position: right center;
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   background-color: #0a0d18;
   background-image: var(--cos-img);
   background-size: cover;
-  background-position: right center;
+  background-position: var(--cos-position);
   background-repeat: no-repeat;
 }
 /* Hero: a touch of dark at the right edge (the rating column). */
 .cos-banner:not(.cos-banner-row)::before {
   content: "";
+  z-index: 1;
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -1645,7 +1648,7 @@ html.reduce-fx .card-float {
 /* Thumbnails (locker tiles, lists, the calendar): the art's focal area sits
    around two thirds of the way across, so a small box frames that. */
 .cos-banner.cos-banner-thumb {
-  background-position: 68% center;
+  --cos-position: 68% center;
 }
 .cos-banner.cos-banner-thumb::before {
   background: none;
@@ -1679,15 +1682,22 @@ html.reduce-fx .card-float {
 /* Phones: the hero stacks and centres its text over the whole width. */
 @media (max-width: 639px) {
   .cos-banner:not(.cos-banner-row) {
-    background-position: 62% center;
+    --cos-position: 62% center;
   }
   .cos-banner:not(.cos-banner-row)::before {
     background: rgba(5, 8, 15, 0.58);
+  }
+  .cos-banner.cos-banner-thumb {
+    --cos-position: 68% center;
+  }
+  .cos-banner.cos-banner-thumb::before {
+    background: none;
   }
 }
 /* A board row: quiet — dark at both ends, the art in the middle-right. */
 .cos-banner.cos-banner-row::before {
   content: "";
+  z-index: 1;
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -1698,6 +1708,7 @@ html.reduce-fx .card-float {
 .cos-banner-epic::after,
 .cos-banner-legend::after {
   content: "";
+  z-index: 1;
   display: block;
   position: absolute;
   top: 0;
@@ -1714,7 +1725,7 @@ html.reduce-fx .card-float {
     transparent 70%
   );
   transform: translateX(-70%);
-  animation: cos-sheen-pass 16s linear infinite;
+  animation: cos-sheen-pass 10s linear infinite paused;
 }
 .cos-banner-legend::after {
   background: linear-gradient(
@@ -1727,11 +1738,18 @@ html.reduce-fx .card-float {
     rgba(185, 162, 255, 0.14) 62%,
     transparent 72%
   );
-  animation-duration: 13s;
+  animation-duration: 7s;
 }
+.cos-banner[data-live][data-motion="full"]::after { animation-play-state: running; }
+.cos-banner[data-live][data-motion="full"] { background-image: var(--cos-motion-img, var(--cos-img)); }
+:is(html.lite-fx, html.reduce-fx) .cos-banner[data-motion] { background-image: var(--cos-img); }
+@media (prefers-reduced-motion: reduce) {
+  .cos-banner[data-live][data-motion] { background-image: var(--cos-img); }
+}
+.cos-banner[data-motion="still"]::after { display: none; }
 @keyframes cos-sheen-pass {
   0% { transform: translateX(-70%); }
-  45%, 100% { transform: translateX(70%); }
+  70%, 100% { transform: translateX(70%); }
 }
 /* Legendary + mouse: the band sits where the pointer is; the hero tilts. */
 .cos-banner-legend[data-hover]::after {
@@ -1746,28 +1764,64 @@ html.reduce-fx .card-float {
 }
 /* The design file's frame: a ring in the banner's materials (a → b, with the
    highlight), thicker and brighter up the rarities. */
-/* rc.23: the animated overlay (profile hero only) — plain SMIL on a few
-   sparkles / dust / flame shapes, no filters; off under lite / reduced motion. */
+/* UI-02: pre-rendered transparent motion planes. No runtime SVG/SMIL repaint;
+   only transform/opacity animate. The pivot tracks the cover-cropped artwork. */
 .cos-banner > .cos-anim {
   position: absolute;
+  z-index: 0;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: right center;
+  object-position: var(--cos-position);
   pointer-events: none;
   user-select: none;
-}
-:is(html.lite-fx, html.reduce-fx) .cos-banner > .cos-anim {
   display: none;
+  transform-origin: var(--cos-pivot-x, 62%) var(--cos-pivot-y, 50%);
+  animation: cos-motion-float 9s ease-in-out var(--cos-delay, 0s) infinite paused;
+}
+.cos-banner-legend > .cos-anim {
+  animation-name: cos-motion-orbit;
+  animation-duration: 10s;
+}
+.cos-banner[data-art="overdrive"] > .cos-anim {
+  animation: cos-motion-shockwave 4.2s linear infinite paused;
+}
+.cos-banner[data-art="overdrive"] > .cos-anim-second { animation-delay: -2.1s; }
+.cos-banner[data-art="wildfire"] > .cos-anim,
+.cos-banner[data-art="heatwave"] > .cos-anim { animation-name: cos-motion-flame; animation-duration: 5s; }
+@keyframes cos-motion-float {
+  0%, 100% { transform: translate(0, 1%) scale(0.99); opacity: 0.65; }
+  50% { transform: translate(0.6%, -1%) scale(1.035); opacity: 1; }
+}
+@keyframes cos-motion-orbit {
+  0%, 100% { transform: rotate(-4deg) scale(0.98); opacity: 0.65; }
+  50% { transform: rotate(4deg) scale(1.04); opacity: 1; }
+}
+@keyframes cos-motion-shockwave {
+  0% { transform: scale(0.85); opacity: 0; }
+  15% { opacity: 0.65; }
+  65% { opacity: 0.85; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+@keyframes cos-motion-flame {
+  0%, 100% { transform: translateY(1%) scaleY(0.98); opacity: 0.6; }
+  50% { transform: translateY(-2%) scaleY(1.04); opacity: 1; }
+}
+.cos-banner[data-live][data-motion="full"] > .cos-anim { display: block; animation-play-state: running; }
+:is(html.lite-fx, html.reduce-fx) .cos-banner[data-motion] > .cos-anim {
+  display: none;
+  animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .cos-banner > .cos-anim {
+  .cos-banner[data-live][data-motion] > .cos-anim {
     display: none;
+    animation: none;
   }
 }
 .cos-banner > .cos-frame {
   position: absolute;
+  z-index: 3;
   inset: 0;
   border-radius: inherit;
   padding: var(--cos-frame-w, 1.5px);
@@ -1802,6 +1856,7 @@ html.reduce-fx .card-float {
 .cos-banner > * {
   position: relative;
 }
+.cos-banner > :not(.cos-anim):not(.cos-frame) { z-index: 2; }
 
 /* Lite effects: stop the loops, keep the colours. */
 :is(html.lite-fx, html.reduce-fx) .cos-banner-epic::after,
@@ -1823,7 +1878,9 @@ html.reduce-fx .card-float {
   .cos-title-legend::after {
     animation: none;
   }
-  .cos-title-legend {
+  .cos-title-legend,
+  .cos-banner-glow.cos-banner-legend {
+    transform: none;
     transition: none;
   }
 }

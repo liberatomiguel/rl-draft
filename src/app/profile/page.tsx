@@ -8,8 +8,8 @@
  *    art), Season Rating and the XP bar. Every cosmetic slot is tappable and
  *    opens the LOCKER MODAL on that kind; a green dot on a slot (and on the
  *    locker button) says something new is waiting there.
- *  · Season — the rank track (rank rewards only come at the season's turnover,
- *    rc.6), the season numbers + rating sparkline under it, and the BADGE
+ *  · Season — the interactive rank-reward track (rc.20: paid on rank-up),
+ *    the season numbers + rating sparkline under it, and the BADGE
  *    SHOWCASE beside it: every badge the player owns, best first.
  *  · Lifetime — three headline numbers, a secondary grid, then the rest as
  *    quiet chips.
@@ -19,7 +19,7 @@
 
 import { AppLink } from "@/components/ui/AppLink";
 import { useState } from "react";
-import { FEATURES, RANKS, SEASON_RATING } from "@/config/balance";
+import { FEATURES, SEASON_RATING } from "@/config/balance";
 import { SEASON } from "@/config/season";
 import { COUNTS, isNationalSpecialId } from "@/data/counts";
 import type { CosmeticKind } from "@/data/cosmetics";
@@ -46,6 +46,7 @@ import { AccountSection, ProfileNickname } from "@/components/AccountSection";
 import { BadgeEmblem, BannerSurface, TitleTag, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
 import { CosmeticsLockerModal, NewDot } from "@/components/cosmetics/CosmeticsLocker";
 import { SeasonRecap } from "@/components/screens/SeasonRecap";
+import { SeasonRankTrack } from "@/components/cosmetics/SeasonRankTrack";
 
 /** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
 const HERO_FEATURED_PX = 58;
@@ -247,7 +248,7 @@ export default function ProfilePage() {
               <p className="kicker !text-[10px]">{P.seasonTrack}</p>
               <p className="text-[11px] text-faint">{P.seasonTrackHint}</p>
             </div>
-            <SeasonTrackBar xp={profile.xp} peakRankId={profile.season.peakRankId} />
+            <SeasonRankTrack xp={profile.xp} peakRankId={profile.season.peakRankId} />
           </Panel>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label={P.seasonRating} value={String(profile.mmr)} accent />
@@ -538,45 +539,6 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
           </p>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-/** The season's rank track: every rank emblem, and a progress bar that follows
- *  the player's XP toward the next one. rc.6: no per-rank rewards — rank and
- *  rating rewards are handed out when the season turns over. */
-function SeasonTrackBar({ xp, peakRankId }: { xp: number; peakRankId: string }) {
-  const { PROFILE_UI: P } = useCopy();
-  const ranks = RANKS.filter((r) => r.id !== "unranked");
-  const peakIdx = ranks.findIndex((r) => r.id === peakRankId);
-  const now = rankForXp(xp);
-  const nowIdx = ranks.findIndex((r) => r.id === now.id);
-  // Node i sits at the centre of column i; the fill reaches the current rank's
-  // node plus the XP progress toward the next one.
-  const nodeCenter = (i: number) => ((i + 0.5) / ranks.length) * 100;
-  const fill = nowIdx < 0 ? Math.max(0, now.progress * nodeCenter(0)) : nowIdx >= ranks.length - 1 ? 100 : nodeCenter(nowIdx) + now.progress * (nodeCenter(nowIdx + 1) - nodeCenter(nowIdx));
-  const next = ranks[Math.max(peakIdx, nowIdx) + 1] ?? null;
-  return (
-    <div>
-      <ol className="grid" style={{ gridTemplateColumns: `repeat(${ranks.length}, minmax(0, 1fr))` }}>
-        {ranks.map((rank, i) => (
-          <li key={rank.id} className={cx("flex flex-col items-center", i > peakIdx && "opacity-55")}>
-            <RankBadge rank={rank} variant="menu" size="sm" className="!h-9 !w-9" />
-            <span className="mt-0.5 hidden text-center text-[9px] font-semibold uppercase tracking-wider text-faint sm:block">{rank.label}</span>
-          </li>
-        ))}
-      </ol>
-      <div className="relative my-2 h-1.5 w-full rounded-full bg-white/8" aria-hidden>
-        <div className="h-full rounded-full bg-gradient-to-r from-orange to-amber-300 transition-[width] duration-700" style={{ width: `${Math.min(100, fill)}%` }} />
-        {ranks.map((rank, i) => (
-          <span
-            key={rank.id}
-            className={cx("absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2", i <= peakIdx ? "border-amber-300 bg-amber-300" : "border-line-strong bg-raised")}
-            style={{ left: `${nodeCenter(i)}%` }}
-          />
-        ))}
-      </div>
-      <p className="mt-3 text-center text-[11px] text-sub">{next ? P.seasonTrackNext(next.label) : P.seasonTrackDone}</p>
     </div>
   );
 }

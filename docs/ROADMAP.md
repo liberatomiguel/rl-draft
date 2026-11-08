@@ -703,14 +703,19 @@ historical Worlds-title pacing or approve Gate 3b.
   once; a win sample does not prove a composition star. CH-03: test the
   daily quiz and the daily Challenge (seed, UTC reset, tries, rewards,
   PT) and decide whether they stay.
-- UI-01a: the Season Tracker previews each rank's reward under the bar
-  (pick a rank → the item, its art and condition), respecting when the
-  reward is really given (today: at the cutover). UI-01: the daily login
-  modal redesign.
-- UI-02a: banner animations, Overdrive first, each banner in the profile,
-  the picker, the preview and other screens, animated and static, EN/PT,
-  desktop/mobile, reduced motion. UI-02b: badge centring one by one, First
-  Chapter included: optical alignment and the useful area at every size.
+- **UI-01/01a and UI-02a/b implemented in rc.36.17 (08/11):** readable daily
+  login XP/reward calendar, interactive rank reward previews, 35 badge alignment
+  reviews and 18 banner reviews (live/static layers, mobile crops, reduced FX).
+  The old turnover sentence was stale: #131/rc.20 already grants rank-track
+  items at rank-up; the UI now reflects it. No grant timing changes.
+- **Daily/progression follow-up in rc.36.17:** 365 reviewed fixed-seed daily
+  title+bonus solutions from 09/11/2026 UTC; an 11-template balanced rotation;
+  259 quiz answers without repeats until the deck completes; unambiguous full
+  clues. New challenge unlock paths use ranks, prerequisites, challenge/quiz
+  progress and existing RTW milestones, with Draft alternatives. All 45 original
+  three-star solutions stay passing. Evidence: UI-DAILY-AUDIT-rc36-17.md.
+- Gate 4 still includes collection pacing/acceptance, DATA-02, SEA-01 review
+  and ECO-06. Implementing UI-01/02 does not silently close those decisions.
 - SEA-01, review part: XP versus Season Rating, cadence and gains (no endless
   farm), the season's events and rewards. Plan §3 puts XP/rating and rewards
   in M4; the dates stay in Etapa 6.

@@ -178,6 +178,24 @@ export const PT: Copy = {
   },
 
   CHALLENGES_UI: {
+    difficultyByTier: { common: "Acessível", rare: "Intermediário", epic: "Difícil", legend: "Muito difícil" } as Record<string,string>,
+    unlockTitle: "Caminho de desbloqueio",
+    unlockAny: "Cumpra um destes marcos",
+    unlockOr: "ou",
+    unlockProgress: (n: number, total: number) => `${Math.min(n, total)}/${total}`,
+    unlockMilestone: {
+      clears: (n: number) => `Conclua ${n} desafios`,
+      stars: (n: number) => `Conquiste ${n} estrelas em desafios`,
+      perfects: (n: number) => `Faça três estrelas em ${n} desafios`,
+      quiz: (n: number) => `Resolva ${n} quizzes diários`,
+      career: {
+        "car-first-regional": "Vença um Regional no Road to Worlds",
+        "car-first-major": "Vença um Major no Road to Worlds",
+        "car-first-worlds": "Vença o Worlds no Road to Worlds",
+        "car-major-qualified": "Classifique-se para um Major no Road to Worlds",
+      },
+    },
+    unlockHint: "O rank e o desafio anterior indicado são obrigatórios. Marcos da carreira oferecem um caminho alternativo; desafios concluídos continuam disponíveis.",
     catalog: CHALLENGE_TEXT_PT,
     formatLabel: "Formato",
     formats: { all: "Todos os formatos", boss: "Confronto", gauntlet: "Gauntlet", draft: "Laboratório de Draft" },
@@ -789,7 +807,12 @@ export const PT: Copy = {
     ratingHistoryEmpty: "Conclua uma run para começar seu histórico de rating.",
     lastRun: "Última run",
     seasonTrack: "Trilha da temporada",
-    seasonTrackHint: "Seu rank máximo vira uma insígnia quando a temporada acabar.",
+    seasonTrackHint: "Um novo rank, uma nova recompensa.",
+    rankRewardSelect: "Selecione um rank para ver suas recompensas.",
+    rankRewardPreview: (rank: string) => `Recompensas de ${rank}`,
+    rankRewardReached: "Rank alcançado",
+    rankRewardRequired: (rank: string, xp: number) => `${rank} · ${xp.toLocaleString("pt-BR")} XP`,
+    rankRewardTiming: "Libera ao alcançar este rank pela primeira vez na Season 1. Recompensas dos ranks anteriores estão incluídas, e os itens conquistados continuam seus.",
     lifetime: "Carreira",
     lifetimeXp: "XP total",
     gamesWon: "Jogos vencidos",
@@ -1439,6 +1462,12 @@ export const PT: Copy = {
     periodSwitch: "Período das missões",
     loginStripHint: "Conta uma vez por dia, na primeira visita.",
     loginModalTitle: "Login diário",
+    loginCredited: "Adicionado ao seu XP hoje",
+    loginStreakLabel: (n: number): string => n === 1 ? "dia seguido" : "dias seguidos",
+    loginXpBreakdown: (base: number, bonus: number) => bonus ? `${base} XP diário + ${bonus} XP do marco` : `${base} XP diário`,
+    loginSelectDay: "Selecione um dia para ver as recompensas",
+    loginXpOnly: "Recompensa de XP. Continue a sequência para chegar ao próximo cosmético.",
+    loginUtcHint: "Um novo dia começa às 00:00 UTC.",
     loginContinue: "Bora",
     loginDay: (n: number) => `Dia ${n}`,
     loginMilestoneHit: (day: number, xp: number) => `Marco do dia ${day} · +${xp} XP hoje`,
@@ -1446,7 +1475,7 @@ export const PT: Copy = {
     loginCalendarKicker: "Calendário de 30 dias",
     loginCalendarComplete: "Calendário completo — todo dia agora paga o XP cheio.",
     loginOwned: "Já é seu",
-    loginOwnedHint: "Você já tem este item — o dia paga XP no lugar.",
+    loginOwnedHint: "Você já tem este item. O XP do dia continua sendo recebido.",
     loginNextReward: (day: number) => `Próxima recompensa no dia ${day}`,
     loginNextRewardIn: (days: number) => (days === 1 ? "amanhã" : `em ${days} dias`),
     items: {
@@ -1572,6 +1601,7 @@ export const PT: Copy = {
         first === last ? `Ativo em ${first} — ${lineups} line${lineups === 1 ? "" : "s"} de RLCS no dataset.` : `Ativo de ${first} a ${last} — ${lineups} lines de RLCS no dataset.`,
       orgs: (orgs: string[]) => (orgs.length === 1 ? `Jogou pela ${orgs[0]}.` : `Jogou pela ${orgs[0]} e pela ${orgs[1]}.`),
       teammate: (name: string) => `Dividiu uma line com ${name}.`,
+      nickname: (prefix: string) => `O nickname começa com “${prefix}”.`,
       peak: (overall: number, org: string, year: number) => `Carta de pico: ${overall} de overall na ${org} (${year}).`,
     },
     dayLabel: (n: number) => `Quiz #${n}`,
@@ -1611,7 +1641,7 @@ export const PT: Copy = {
     templates: {
       pureBracket: {
         label: () => "Chave Pura",
-        description: () => "Sem modificadores. Uma run clássica e limpa — a mesma seed para todos.",
+        description: () => "Um torneio mundial com overalls visíveis. Mesma seed e mesmas regras para todos.",
       },
       regionalLockdown: {
         label: (region: string) => `Bloqueio Regional: ${region}`,
@@ -1648,7 +1678,7 @@ export const PT: Copy = {
       },
       underdog: {
         label: () => "Azarão",
-        description: () => "Aposte no azarão até o fim. Vença o título com um time abaixo de 88 OVR.",
+        description: () => "Aposte no azarão até o fim. Vença o título com um time de no máximo 88 OVR.",
       },
       championsOnly: {
         label: () => "Só Campeões",
@@ -1665,7 +1695,8 @@ export const PT: Copy = {
       chemistry_great: () => "Termine com química Ótima ou melhor",
       concede_under: (n: number) => `Sofra menos de ${n} gols`,
       win_title: () => "Vença o torneio inteiro",
-      team_overall_under: (n: number) => `Vença o título com um time abaixo de ${n} OVR`,
+      reach_playoffs: () => "Chegue aos playoffs",
+      team_overall_under: (n: number) => `Vença o título com um time de no máximo ${n} OVR`,
     },
   },
 };

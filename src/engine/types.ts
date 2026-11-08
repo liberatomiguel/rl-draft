@@ -657,6 +657,8 @@ export interface DailyInfo {
   objective?: DailyObjective;
   /** rc.30: the template the day rolled — screens read its copy (DAILY_TEXT) in the player's language. */
   templateId?: DailyTemplateId;
+  /** Versioned daily field calibration, saved with the published day rules. */
+  opponentShift?: number;
   /** rc.30: the Regional Lockdown's region. */
   region?: Region;
 }
@@ -682,6 +684,7 @@ export interface DailyObjective {
     | "chemistry_great"
     | "concede_under"
     | "win_title"
+    | "reach_playoffs"
     | "team_overall_under";
   /** Threshold for concede_under (max goals) / team_overall_under (max OVR). */
   value?: number;
@@ -739,6 +742,8 @@ export interface Challenge {
   brief: string;
   rankRequired: string;
   prereq?: string;
+  /** Rank + prerequisite still apply; any one of these milestones opens it. */
+  unlock?: { anyOf: ChallengeUnlockCondition[] };
   opponentLineupId: string;
   fixedPlayerCardId?: string;
   tier: "common" | "rare" | "epic" | "legend";
@@ -766,6 +771,13 @@ export interface Challenge {
   gauntlet?: { lineupIds: string[]; bestOf: number };
   stars?: [ChallengeStar, ChallengeStar];
 }
+
+export type ChallengeUnlockCondition =
+  | { kind: "clears"; count: number }
+  | { kind: "stars"; count: number }
+  | { kind: "perfects"; count: number }
+  | { kind: "quiz"; count: number }
+  | { kind: "career"; mark: "car-first-regional" | "car-first-major" | "car-first-worlds" | "car-major-qualified" };
 
 /** An extra objective on a challenge (stars 2 and 3), evaluated on a CLEAR. */
 export type ChallengeStar =

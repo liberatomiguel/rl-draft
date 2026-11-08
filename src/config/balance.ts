@@ -15,7 +15,7 @@ import type { BuffLevel, Difficulty, HistoricalStrength, Placement, Region } fro
  * function) exported here adds 1. `balanceVersion.test.ts` holds a fingerprint
  * of every export except FEATURES and fails until the bump is made.
  */
-export const BALANCE_VERSION = 13;
+export const BALANCE_VERSION = 14;
 
 // ---------------------------------------------------------------------------
 // Card rarity (visual only — does not affect simulation)
@@ -884,6 +884,14 @@ export const QUIZ = {
   minLineups: 2,
   /** Daily results kept on the profile (older days are pruned). */
   historyDays: 90,
+} as const;
+
+/** Field calibration only for versioned shared dailies: one fixed draft and
+ * one official result. Classic, Quick, authored Challenges and career do not
+ * read these values. */
+export const DAILY_CHALLENGE = {
+  opponentShift: { normal: -2, hard: -4, legacy: -8 },
+  underdogOpponentShift: -6,
 } as const;
 
 /**

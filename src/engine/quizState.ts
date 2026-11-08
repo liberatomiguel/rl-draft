@@ -13,6 +13,7 @@ export type QuizClue =
   | { kind: "era"; firstYear: number; lastYear: number; lineups: number }
   | { kind: "orgs"; orgIds: string[] }
   | { kind: "teammate"; playerId: string }
+  | { kind: "nickname"; prefix: string }
   | { kind: "peak"; overall: number; orgId: string; year: number };
 
 export interface QuizPuzzle {

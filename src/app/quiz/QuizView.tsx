@@ -180,6 +180,8 @@ function clueText(c: QuizClue, Q: ReturnType<typeof useCopy>["QUIZ_UI"]): string
       return Q.clues.teammate(playerById.get(c.playerId)?.nickname ?? c.playerId);
     case "peak":
       return Q.clues.peak(c.overall, orgById.get(c.orgId)?.name ?? c.orgId, c.year);
+    case "nickname":
+      return Q.clues.nickname(c.prefix);
   }
 }
 

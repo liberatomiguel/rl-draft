@@ -619,7 +619,12 @@ export const PROFILE_UI = {
   ratingHistoryEmpty: "Finish a run to start your rating history.",
   lastRun: "Last run",
   seasonTrack: "Season track",
-  seasonTrackHint: "Your peak rank becomes a badge when the season ends.",
+  seasonTrackHint: "A new rank, a new reward.",
+  rankRewardSelect: "Select a rank to preview its rewards.",
+  rankRewardPreview: (rank: string) => `${rank} rewards`,
+  rankRewardReached: "Rank reached",
+  rankRewardRequired: (rank: string, xp: number) => `${rank} · ${xp.toLocaleString("en")} XP`,
+  rankRewardTiming: "Unlocked when you first reach this rank in Season 1. Lower-rank rewards are included, and earned items stay yours.",
   lifetime: "Lifetime",
   lifetimeXp: "Lifetime XP",
   gamesWon: "Games won",
@@ -1081,6 +1086,24 @@ export const CHANGELOG_PAGE = {
 };
 
 export const CHALLENGES_UI = {
+  difficultyByTier: { common: "Accessible", rare: "Intermediate", epic: "Hard", legend: "Very hard" } as Record<string,string>,
+  unlockTitle: "Unlock path",
+  unlockAny: "Complete one of these milestones",
+  unlockOr: "or",
+  unlockProgress: (n: number, total: number) => `${Math.min(n, total)}/${total}`,
+  unlockMilestone: {
+    clears: (n: number) => `Clear ${n} challenges`,
+    stars: (n: number) => `Earn ${n} challenge stars`,
+    perfects: (n: number) => `Get three stars in ${n} challenges`,
+    quiz: (n: number) => `Solve ${n} daily quizzes`,
+    career: {
+      "car-first-regional": "Win a Regional in Road to Worlds",
+      "car-first-major": "Win a Major in Road to Worlds",
+      "car-first-worlds": "Win Worlds in Road to Worlds",
+      "car-major-qualified": "Qualify for a Major in Road to Worlds",
+    },
+  },
+  unlockHint: "Rank and any previous challenge shown are required. Career milestones offer an alternative path; completed challenges stay playable.",
   catalog: CHALLENGE_TEXT_EN,
   formatLabel: "Format",
   formats: { all: "All formats", boss: "Showdown", gauntlet: "Gauntlet", draft: "Draft Lab" } as Record<string, string>,
@@ -1492,6 +1515,12 @@ export const MISSIONS_UI = {
   periodSwitch: "Mission period",
   loginStripHint: "Counted once a day, on your first visit.",
   loginModalTitle: "Daily login",
+  loginCredited: "Added to your XP today",
+  loginStreakLabel: (n: number): string => n === 1 ? "consecutive day" : "consecutive days",
+  loginXpBreakdown: (base: number, bonus: number) => bonus ? `${base} daily XP + ${bonus} milestone XP` : `${base} daily XP`,
+  loginSelectDay: "Select a day to see its rewards",
+  loginXpOnly: "XP reward. Keep the streak going for the next cosmetic.",
+  loginUtcHint: "A new day starts at 00:00 UTC.",
   loginContinue: "Let's go",
   loginDay: (n: number) => `Day ${n}`,
   loginMilestoneHit: (day: number, xp: number) => `Day ${day} milestone · +${xp} XP today`,
@@ -1500,7 +1529,7 @@ export const MISSIONS_UI = {
   loginCalendarKicker: "30-day calendar",
   loginCalendarComplete: "Calendar complete — every day now pays the full XP.",
   loginOwned: "Already yours",
-  loginOwnedHint: "You already own this item — the day pays XP instead.",
+  loginOwnedHint: "You already own this item. You still receive the day's XP.",
   loginNextReward: (day: number) => `Next reward on day ${day}`,
   loginNextRewardIn: (days: number) => (days === 1 ? "tomorrow" : `in ${days} days`),
   items: {
@@ -1631,6 +1660,7 @@ export const QUIZ_UI = {
       first === last ? `Active in ${first} — ${lineups} RLCS lineup${lineups === 1 ? "" : "s"} in the dataset.` : `Active from ${first} to ${last} — ${lineups} RLCS lineups in the dataset.`,
     orgs: (orgs: string[]) => (orgs.length === 1 ? `Played for ${orgs[0]}.` : `Played for ${orgs[0]} and ${orgs[1]}.`),
     teammate: (name: string) => `Shared a lineup with ${name}.`,
+    nickname: (prefix: string) => `Nickname begins with “${prefix}”.`,
     peak: (overall: number, org: string, year: number) => `Peak card: ${overall} overall with ${org} (${year}).`,
   },
   dayLabel: (n: number) => `Quiz #${n}`,
@@ -1680,7 +1710,7 @@ export const DAILY_TEXT = {
   templates: {
     pureBracket: {
       label: () => "Pure Bracket",
-      description: () => "No modifiers. A clean classic run — same seed for everyone.",
+      description: () => "A worldwide bracket with visible overalls. Same seed and rules for everyone.",
     },
     regionalLockdown: {
       label: (region: string) => `Regional Lockdown: ${region}`,
@@ -1717,7 +1747,7 @@ export const DAILY_TEXT = {
     },
     underdog: {
       label: () => "Underdog",
-      description: () => "Take the long shot all the way. Win the title with a team under 88 OVR.",
+      description: () => "Take the long shot all the way. Win the title with a team of 88 OVR or lower.",
     },
     championsOnly: {
       label: () => "Champions Only",
@@ -1734,7 +1764,8 @@ export const DAILY_TEXT = {
     chemistry_great: () => "Finish with Great+ chemistry",
     concede_under: (n: number) => `Concede fewer than ${n} goals`,
     win_title: () => "Win the whole thing",
-    team_overall_under: (n: number) => `Win the title with a team under ${n} OVR`,
+    reach_playoffs: () => "Reach the playoffs",
+    team_overall_under: (n: number) => `Win the title with a team of ${n} OVR or lower`,
   },
 };
 

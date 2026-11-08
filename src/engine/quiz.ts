@@ -86,16 +86,50 @@ export function cluesFor(facts: PlayerFacts, rng = createRng(seedFromKey(facts.p
   if (teammates.length) clues.push({ kind: "teammate", playerId: teammates[rng.int(0, teammates.length - 1)] });
   const peak = appearances.reduce((best, a) => (a.overall > best.overall ? a : best), appearances[0]);
   clues.push({ kind: "peak", overall: peak.overall, orgId: peak.orgId, year: peak.year });
-  // Always at least `attempts` + 1 clues so every miss reveals something new.
+  // Some teammates share nationality, career and peak rating. A short nickname
+  // prefix breaks that tie before the last guess, rather than asking for luck.
+  const candidates = [...quizFacts().values()].filter(f => matchesQuizClues(f, clues));
+  if (candidates.length > 1) {
+    let length = 1;
+    while (length < player.nickname.length && candidates.some(f => f.player.id !== player.id &&
+      normalizeGuess(f.player.nickname).startsWith(normalizeGuess(player.nickname.slice(0, length))))) length++;
+    clues.splice(clues.length - 1, 0, { kind: "nickname", prefix: player.nickname.slice(0, length) });
+  }
   return clues;
 }
+
+/** Semantic clue matching: used to keep every full ladder unambiguous. */
+export function matchesQuizClues(facts: PlayerFacts, clues: QuizClue[]): boolean {
+  const a = facts.appearances;
+  return clues.every(c => {
+    switch (c.kind) {
+      case "country": return facts.player.country === c.country;
+      case "era": return Math.min(...a.map(x => x.year)) === c.firstYear && Math.max(...a.map(x => x.year)) === c.lastYear && a.length === c.lineups;
+      case "orgs": return c.orgIds.every(id => a.some(x => x.orgId === id));
+      case "teammate": return a.some(x => x.teammates.includes(c.playerId));
+      case "nickname": return normalizeGuess(facts.player.nickname).startsWith(normalizeGuess(c.prefix));
+      case "peak": {
+        const p = a.reduce((best, x) => x.overall > best.overall ? x : best);
+        return p.overall === c.overall && p.orgId === c.orgId && p.year === c.year;
+      }
+    }
+  });
+}
+
+/** Versioned UTC cutover: already published days keep their original answer. */
+export const QUIZ_ROTATION_START = "2026-11-09";
 
 /** The shared puzzle for a UTC date. */
 export function quizForDate(date: string): QuizPuzzle {
   const facts = quizFacts();
   const ids = [...facts.keys()].sort();
   const rng = createRng(seedFromKey(`quiz:${date}`));
-  const playerId = ids[rng.int(0, ids.length - 1)];
+  const day = Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${QUIZ_ROTATION_START}T00:00:00Z`)) / 86_400_000);
+  // One seeded deck, one player a day. Every eligible player appears before a
+  // repeat; a cycle boundary cannot repeat yesterday's player either.
+  const playerId = day >= 0
+    ? createRng(seedFromKey(`quiz:rotation:${QUIZ_ROTATION_START}`)).shuffle(ids)[day % ids.length]
+    : ids[rng.int(0, ids.length - 1)];
   return { date, playerId, clues: cluesFor(facts.get(playerId)!, rng) };
 }
 

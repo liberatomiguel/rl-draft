@@ -252,6 +252,8 @@ export function compileResults(
             ? goalsConceded < (obj.value ?? 0)
             : obj.type === "win_title"
               ? placement === "champion"
+              : obj.type === "reach_playoffs"
+                ? placement !== "swiss_exit"
               : obj.type === "team_overall_under"
                 ? placement === "champion" && teamOvr <= (obj.value ?? 0)
                 : false;

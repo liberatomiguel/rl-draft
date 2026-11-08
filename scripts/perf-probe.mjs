@@ -57,6 +57,7 @@ const chrome = spawn(
   ],
   { stdio: "ignore" },
 );
+process.on("exit", () => { if (!chrome.killed) chrome.kill(); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let info;
@@ -91,6 +92,7 @@ const send = (method, params = {}) =>
   });
 const run = async (js) => {
   const r = await send("Runtime.evaluate", { expression: `(async()=>{${js}})()`, awaitPromise: true, returnByValue: true });
+  if (r.result?.exceptionDetails) console.error("perf-probe script:", r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text);
   return r.result?.result?.value;
 };
 const go = async (path) => {
@@ -131,13 +133,19 @@ const ready = await run(`
   const open=async(tab)=>{[...document.querySelectorAll('button')].find(b=>/open the locker/i.test(b.textContent))?.click();await wait(400);const d=document.querySelector('[role=dialog]');[...d.querySelectorAll('[role=tab]')].find(t=>new RegExp(tab,'i').test(t.textContent))?.click();await wait(300);return d;};
   let d=await open('badges');
   const tiles=[...d.querySelectorAll('.grid > button')];
-  for(const n of ['Dynasty','Season Champion','Supernova']){tiles.find(t=>t.textContent.includes(n))?.click();await wait(100);}
+  for(const n of ['Dynasty','Season Champion','Pre-season Supersonic']){const tile=tiles.find(t=>t.textContent.includes(n));if(!tile)throw new Error('Missing badge: '+n);tile.click();await wait(100);}
   d.querySelector('button[aria-label]')?.click();await wait(300);
   d=await open('banners');
-  [...d.querySelectorAll('.grid > button')].find(t=>/Champion Banner/.test(t.textContent))?.click();await wait(200);
+  const banner=[...d.querySelectorAll('.grid > button')].find(t=>/Cosmic Ascension/.test(t.textContent));
+  if(!banner)throw new Error('Missing Cosmic Ascension');banner.click();await wait(200);
   d.querySelector('button[aria-label]')?.click();
-  return true;`);
+  d=await open('titles');
+  const title=[...d.querySelectorAll('.grid > button')].find(t=>/Rocket Demigod/i.test(t.textContent));
+  if(!title)throw new Error('Missing Rocket Demigod');title.click();await wait(200);
+  d.querySelector('button[aria-label]')?.click();
+  return !!document.querySelector('.cos-banner-glow.cos-banner-legend') && !!document.querySelector('.cos-title-legend');`);
 if (!ready) {
+  console.error("perf-probe page:", await run("return document.body.innerText.slice(-3000)"));
   console.error("perf-probe: no preview switch — build with NEXT_PUBLIC_NOINDEX=1 (staging-like) first");
   chrome.kill();
   process.exit(1);

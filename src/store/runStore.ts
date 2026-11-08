@@ -25,6 +25,7 @@ import {
 } from "@/data";
 import { completeNationalLineups, nationalCardIdsOf, unownedOfferSpecials } from "@/engine/collection";
 import { rankRewardsForXp } from "@/engine/progression";
+import { challengeStatus } from "@/engine/challengeStars";
 import {
   applyFreeReroll,
   applyPick,
@@ -62,7 +63,7 @@ import type {
   RunState,
 } from "@/engine/types";
 import { generateDailyConfig } from "@/lib/daily";
-import { seedFromDate, todayKey } from "@/lib/dailyPlan";
+import { dailySeedForDate, todayKey } from "@/lib/dailyPlan";
 import { createRng, randomSeed } from "@/lib/rng";
 import { uid } from "@/lib/util";
 import { trackEvent } from "@/lib/analytics";
@@ -238,7 +239,7 @@ export const useRunStore = create<RunStore>()(
         const date = todayKey();
         if (useProfileStore.getState().dailyResults[date]) return;
         const config = generateDailyConfig(date);
-        const seed = seedFromDate(date);
+        const seed = dailySeedForDate(date);
         const rng = createRng(seed);
 
         const draft = drawNextOffer(
@@ -293,6 +294,10 @@ export const useRunStore = create<RunStore>()(
       startChallenge: (challengeId) => {
         const challenge = challengeById.get(challengeId);
         if (!challenge) return;
+        const profile = useProfileStore.getState();
+        if (challengeStatus(challenge, profile.xp, profile.challengesCompleted, {
+          challengeStars: profile.challengeStars, careerMarks: profile.careerMarks, quizSolved: profile.quiz.solved,
+        }) === "locked") return;
         // Deterministic per-challenge seed → a repeatable, solvable puzzle.
         const rng = createRng(challenge.seed);
         const draft = createChallengeDraft(challenge, rng);
@@ -500,7 +505,7 @@ export const useRunStore = create<RunStore>()(
           // per-difficulty boost since v1.3.3).
           opponentRatingBoost: run.regionLock
             ? regionOpponentBoost(run.regionLock, run.difficulty)
-            : 0,
+            : run.daily?.opponentShift ?? 0,
         });
         set({
           run: { ...run, tournament, rngState: rng.state, phase: "tournament" },

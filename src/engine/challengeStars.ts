@@ -9,7 +9,27 @@
 
 import { RANKS } from "@/config/balance";
 import { rankForXp } from "./progression";
-import type { Challenge } from "./types";
+import type { Challenge, ChallengeUnlockCondition } from "./types";
+
+/** Existing durable profile facts; no career-store or dataset dependency. */
+export interface ChallengeUnlockFacts {
+  challengeStars?: Record<string, number>;
+  careerMarks?: readonly string[];
+  quizSolved?: number;
+}
+
+export function challengeUnlockProgress(condition: ChallengeUnlockCondition, completed: Record<string, string>, facts: ChallengeUnlockFacts = {}): { current: number; target: number; met: boolean } {
+  const target = condition.kind === "career" ? 1 : condition.count;
+  let current = 0;
+  switch (condition.kind) {
+    case "clears": current = Object.keys(completed).length; break;
+    case "stars": current = totalStars(facts.challengeStars ?? {}); break;
+    case "perfects": current = Object.values(facts.challengeStars ?? {}).filter(m => (m & ALL_STARS) === ALL_STARS).length; break;
+    case "quiz": current = facts.quizSolved ?? 0; break;
+    case "career": current = facts.careerMarks?.includes(condition.mark) ? 1 : 0; break;
+  }
+  return { current, target, met: current >= target };
+}
 
 export type ChallengeStatus = "locked" | "available" | "cleared";
 
@@ -20,14 +40,16 @@ const rankIndex = (id: string): number => RANKS.findIndex((r) => r.id === id);
  * Cleared once it's in the player's `challengesCompleted` map (one-and-done).
  */
 export function challengeStatus(
-  challenge: Pick<Challenge, "id" | "rankRequired" | "prereq">,
+  challenge: Pick<Challenge, "id" | "rankRequired" | "prereq" | "unlock">,
   xp: number,
   completed: Record<string, string>,
+  facts: ChallengeUnlockFacts = {},
 ): ChallengeStatus {
   if (completed[challenge.id]) return "cleared";
   const haveIdx = rankIndex(rankForXp(xp).id);
   if (haveIdx < rankIndex(challenge.rankRequired)) return "locked";
   if (challenge.prereq && !completed[challenge.prereq]) return "locked";
+  if (challenge.unlock && !challenge.unlock.anyOf.some(c => challengeUnlockProgress(c, completed, facts).met)) return "locked";
   return "available";
 }
 

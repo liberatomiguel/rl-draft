@@ -208,6 +208,7 @@ export function LeaderboardsView() {
                 const rank = rankForXp(r.rankXp);
                 return (
                   <BannerSurface
+                    motion={false}
                     displayPx={800}
                     key={`${r.username}-${i}`}
                     banner={r.cosmetics.banner}

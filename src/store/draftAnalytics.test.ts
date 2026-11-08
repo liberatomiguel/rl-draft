@@ -163,6 +163,7 @@ describe("Draft runs", () => {
 
   it("a challenge reports its stars (0–3) and the specials it collects as discovered, mode challenge", () => {
     const calls = deploy();
+    profileStore.setState({ xp: 60_000 });
     const ch = challenges.find((c) => {
       runStore.getState().startChallenge(c.id);
       return tryDraft();

@@ -21,6 +21,7 @@
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
+import { animationOverlay, staticMotionBase, motionRasterSource } from "./lib/banner-animation.mjs";
 
 const SRC = "data-sources/banners/banners-rocket-draft.html";
 const OUT = "public/banners";
@@ -54,72 +55,15 @@ for (const b of BANNERS) {
 // gradients / clips they reference), every filter stripped — so nothing in the
 // browser ever runs turbulence, displacement or blur. Everything static stays
 // in the raster. A banner with no animation gets no overlay.
-function parseSvg(src) {
-  const root = { tag: "#root", attrs: "", children: [], parent: null };
-  let cur = root;
-  const re = /<\/([\w:-]+)\s*>|<([\w:-]+)((?:\s+[^>]*?)?)(\/?)>|([^<]+)/g;
-  let m;
-  while ((m = re.exec(src))) {
-    if (m[1]) cur = cur.parent ?? root;
-    else if (m[2]) {
-      const node = { tag: m[2], attrs: m[3] ?? "", children: [], parent: cur };
-      cur.children.push(node);
-      if (!m[4]) cur = node;
-    } else if (m[5] && m[5].trim()) cur.children.push({ tag: "#text", text: m[5], children: [], parent: cur });
-  }
-  return root;
-}
-const ANIM = new Set(["animate", "animateTransform", "animateMotion", "set"]);
-function hasAnim(n) {
-  return ANIM.has(n.tag) || n.children.some(hasAnim);
-}
-function refsOf(attrs) {
-  return [...attrs.matchAll(/url\(#([\w:-]+)\)/g)].map((x) => x[1]);
-}
-function idOf(attrs) {
-  return /\sid="([^"]+)"/.exec(attrs)?.[1] ?? null;
-}
-function serialize(n) {
-  if (n.tag === "#text") return n.text;
-  const attrs = n.attrs.replace(/\sfilter="[^"]*"/g, "").replace(/filter:\s*url\([^)]*\);?/g, "");
-  const inner = n.children.map(serialize).join("");
-  return inner ? `<${n.tag}${attrs}>${inner}</${n.tag}>` : `<${n.tag}${attrs}/>`;
-}
-function animOverlay(svgText) {
-  const root = parseSvg(svgText);
-  const svg = root.children.find((c) => c.tag === "svg");
-  if (!svg || !hasAnim(svg)) return null;
-  const defs = svg.children.find((c) => c.tag === "defs");
-  const body = svg.children.filter((c) => c !== defs);
-  // Prune: keep a node only if it animates or holds something that does.
-  const prune = (n) => {
-    n.children = n.children.filter((c) => c.tag === "#text" || hasAnim(c));
-    n.children.forEach((c) => c.tag !== "#text" && prune(c));
-  };
-  body.forEach(prune);
-  const kept = body.filter(hasAnim);
-  // Defs the kept tree references (transitively), filters excluded.
-  const byId = new Map((defs?.children ?? []).map((d) => [idOf(d.attrs), d]).filter(([k]) => k));
-  const need = new Set();
-  const visit = (n) => {
-    if (n.tag === "#text") return;
-    for (const r of refsOf(n.attrs)) if (!need.has(r) && byId.has(r) && byId.get(r).tag !== "filter") {
-      need.add(r);
-      visit(byId.get(r));
-    }
-    n.children.forEach(visit);
-  };
-  kept.forEach(visit);
-  const defsOut = [...need].map((id) => serialize(byId.get(id))).join("");
-  const open = /<svg[^>]*>/.exec(svgText)[0].replace(/\swidth="[^"]*"|\sheight="[^"]*"|\srole="[^"]*"|\saria-label="[^"]*"/g, "");
-  return `${open}<defs>${defsOut}</defs>${kept.map(serialize).join("")}</svg>`;
-}
 const animated = [];
 for (const b of BANNERS) {
-  const overlay = animOverlay(String(bannerSVG(b.key, { frame: false, animated: true })));
+  const source = String(bannerSVG(b.key, { frame: false, animated: true }));
+  const overlay = animationOverlay(source);
   if (!overlay) continue;
   if (/<filter|<feTurbulence|<feGaussianBlur|filter=/.test(overlay)) throw new Error(`${b.key}: a filter survived in the overlay`);
   writeFileSync(join(OUT, `${b.key}.anim.svg`), `${overlay}\n`);
+  writeFileSync(join(OUT, `${b.key}.base.svg`), `${staticMotionBase(source)}\n`);
+  writeFileSync(join(OUT, `${b.key}.motion.svg`), `${motionRasterSource(overlay)}\n`);
   animated.push([b.key, overlay.length]);
 }
 mkdirSync("src/generated", { recursive: true });
@@ -142,7 +86,7 @@ writeFileSync(
     "Replace the design file and re-run the script (then `npm run build:images`) to update the art.",
     "Static, frameless SVGs (1240 × 200); production serves the WebP that build-images renders from them.",
     "",
-    "Banners that animate also get `<art>.anim.svg`: the animated elements only, no filters (the profile hero's overlay).",
+    "Animated banners get `<art>.base.svg` (static background) and `<art>.motion.svg` (transparent moving art), both rasterised to WebP. The UI animates the motion texture with CSS transform/opacity only. `<art>.anim.svg` retains the filter-free reference motion for authoring, never runtime animation. The complete `<art>.svg` is the reduced-effects fallback.",
     "",
     "| File | Name | Rarity |",
     "|---|---|---|",

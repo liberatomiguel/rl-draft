@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.16**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.17**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,62 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed / Balance / Fixed — rc.36.17, daily calendar, unlock paths and cosmetics
+- UI-01: redesigned daily-login calendar with credited XP, daily/milestone
+  breakdown, XP on every date, selectable reward details and real reward art.
+  Desktop shows the calendar and rewards together; mobile keeps close/continue
+  reachable. Days after 30 show the correct flat daily XP. Root cause: milestone
+  cells deliberately rendered an empty XP label, tiny swatches had no names,
+  and most detail existed only in hover tooltips.
+- UI-01a: every rank can be selected on the Season Tracker to preview its
+  actual banners/titles, art, XP requirement and grant timing. Corrects stale
+  turnover wording: #131/rc.20 already restored in-season rank-up rewards;
+  no reward grant timing changes in this release.
+- Accessibility: calendar buttons derive their accessible names from content;
+  the secondary text token has readable contrast and footer links are always
+  underlined. Root causes: custom labels differed from concatenated visible XP,
+  the faint token fell below 4.5:1, and inline links relied on colour alone.
+- UI-02: badge slots have consistent geometry and align-middle; the opaque
+  useful silhouette replaces glow-weighted centroids, and art/mask/glow move
+  together. Reviews all 35 badges at 28/44/64px, including First Chapter.
+- Banner extraction retains painted children of animated groups and animated
+  paint-server references. A separate rasterised live background omits moving
+  shapes, preventing Overdrive's doubled static/moving rings. Profile, picker
+  and previews share motion and crop positions; Cosmic Ascension recovers its
+  rings, particles and gradients. Moving art is a static transparent WebP,
+  composited with CSS transform/opacity; live SVG/SMIL is authoring-only after
+  the production probe caught its repaint cost. Overdrive has staggered pulses;
+  legendaries have stronger orbit/sheen. Offscreen loops pause; reduced effects
+  use the complete still art. Adds 320px rasters for small previews. Root causes:
+  pruned group geometry, hero-only overlays, mismatched thumbnail/mobile crops
+  and moving geometry also baked into the background. Motion stays beneath
+  the text veil; content and frames have explicit stacking. The performance probe
+  now selects current catalog items and asserts its worst-case setup.
+- The 45 challenges retain all seeds, goals, solutions and earned progress.
+  Adds 17 progression gates on the expanded content: previous challenges,
+  clears, stars, perfects, quiz solves and existing RTW Regional/Major/Worlds
+  marks. Rank/prerequisite still apply; career milestones have Draft alternatives.
+  Locked previews show progress. The run store enforces the same rules as UI
+  and New dots; completed challenges remain replayable.
+- Future daily rotation covers all 11 templates every 11 days, separating
+  Hard/Legacy dates. One reviewed year (09/11/2026–08/11/2027 UTC) has 365 unique
+  pinned seeds and legal title+bonus replays through the real store, with reload
+  and reward idempotence. Dates before the cutover retain their seeds and rules.
+- BALANCE_VERSION 14: daily-only field shifts Normal -2, Hard -4, Legacy -8,
+  Underdog -6. Existing global/career tunables are unchanged. Root cause: the
+  fixed hand and once-only daily result were never calibrated for title/bonus
+  reachability; sampled Legacy and underdog paths had no demonstrated wins.
+  Future concede-total bonuses become reach-playoffs objectives (short losses
+  must not be advantageous); the 88 OVR objective copy now matches its <= rule.
+- Quiz has 259 eligible answers in a seeded deck: each appears before a repeat.
+  Before the last guess, ambiguous career/peak ladders gain a minimal nickname
+  prefix. Root cause: Espeon/Pluto and Burn/mikan could share all emitted clues;
+  independent random dates also repeated answers on consecutive days. Historical
+  dates retain their selected answer. No new persistence fields or versions.
+- Authorized by Miguel on 07–08/11 while career Gate 3b remains open. Career
+  engine/store, main and account configuration are preserved. Evidence and
+  remaining acceptance: UI-DAILY-AUDIT-rc36-17.md.
 
 ### Added / Changed / Balance / Fixed — rc.36.16, playable challenge catalog and dailies
 - Expands the catalog from 27 to 45 fixed-seed challenges (135 stars): 32

@@ -1732,6 +1732,39 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      midnight and reject the previous date's pending submission. No account
      or cross-tab sync protocol is changed.
 
+160. **Daily coherence requires a whole-run proof (rc.36.17; Miguel, 08/11).**
+     Pin reviewed daily seeds for one year starting 09/11/2026 UTC. Every date
+     has a legal title+bonus action trace, replayed through the real store,
+     including reload and once-only rewards. Keep published older dates intact.
+     The 11-template wheel covers every type before repeating and separates
+     Hard/Legacy days. Daily-only field shifts live in balance.ts (version 14),
+     without changing Classic/Quick/career simulation. Reach-playoffs replaces
+     future low-conceded bonuses that rewarded shorter losing runs. Quiz uses a
+     fixed shuffled deck of eligible players and a minimal prefix only when
+     career/peak clues cannot distinguish the answer. Refresh the reviewed
+     calendar before its end or whenever data/rules change; proofs fail on drift.
+
+161. **Challenge progression reads existing durable facts (rc.36.17).**
+     Rank AND a named prerequisite remain required. New content may additionally
+     ask for one of several milestones: clears, stars, perfects, quizzes or RTW
+     Regional/Major/Worlds marks already mirrored into the profile. Career has a
+     Draft alternative so no exclusive career wall blocks the catalog. Cleared
+     IDs always remain replayable. UI, New markers and startChallenge share one
+     pure predicate; no career-store imports or persistence migration are needed.
+
+162. **Cosmetic motion has a clean still fallback (rc.36.17, UI-01/02).**
+     Keep the complete artwork for reduced effects. Rasterise a separate static
+     background without moving geometry, then overlay a transparent static
+     WebP texture animated only with CSS transform/opacity. Live SVG/SMIL
+     repainted at 303 ms/s in the production probe, so it is authoring-only.
+     Preserve animated groups' painted descendants and animated gradients;
+     use identical crop positions across both layers. Previews animate too,
+     dense leaderboard rows remain still, and offscreen layers are hidden.
+     Centre badge slots and opaque silhouette bounds, moving art/glow/mask
+     together. The login calendar shows actual XP on every date and previews
+     rewards without granting them. The Season Tracker reflects #131's existing
+     rank-up grants; it does not reinstate the superseded turnover rule #126.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

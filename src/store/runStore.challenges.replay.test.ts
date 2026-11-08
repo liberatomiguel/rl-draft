@@ -27,6 +27,12 @@ function play(id: string) {
 describe("CH-02: solutions through the real store, reload and rewards", () => {
   beforeEach(() => { useProfileStore.getState().resetAll(); useRunStore.setState({ run: null }); });
   for (const ch of challenges) it(`${ch.id}: 3 stars persist; replay/reload never repay them`, () => {
+    // Reach the authored gates first, without pre-awarding the target's stars.
+    const others = challenges.filter(c => c.id !== ch.id);
+    useProfileStore.setState({ xp: 60_000,
+      challengesCompleted: Object.fromEntries(others.map(c => [c.id, "2026-11-01"])),
+      challengeStars: Object.fromEntries(others.map(c => [c.id, 7])),
+    });
     play(ch.id);
     const first = useRunStore.getState().run!.challenge!;
     expect(first).toMatchObject({ evaluated: true, cleared: true, starsEarned: 7, starsNew: 7 });

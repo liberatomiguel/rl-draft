@@ -367,6 +367,12 @@ export function loginDayXp(streak: number): number {
   return Math.min(LOGIN_STREAK.perDayMax, LOGIN_STREAK.perDayBase + LOGIN_STREAK.perDayStep * Math.max(0, streak - 1));
 }
 
+export function loginXpBreakdown(streak: number): { base: number; bonus: number; total: number } {
+  const base = loginDayXp(streak);
+  const bonus = LOGIN_STREAK.milestoneBonus[streak] ?? 0;
+  return { base, bonus, total: base + bonus };
+}
+
 /** Count today's login (idempotent within a UTC day). */
 export function recordLogin(state: LoginState, now = new Date()): LoginResult {
   const today = dayKey(now);
@@ -374,7 +380,7 @@ export function recordLogin(state: LoginState, now = new Date()): LoginResult {
   const yesterday = dayKey(new Date(now.getTime() - 86_400_000));
   const streak = state.lastDay === yesterday ? state.streak + 1 : 1;
   const milestone = LOGIN_STREAK.milestoneBonus[streak] !== undefined ? streak : null;
-  const xp = loginDayXp(streak) + (milestone ? LOGIN_STREAK.milestoneBonus[milestone] : 0);
+  const xp = loginXpBreakdown(streak).total;
   return {
     state: { lastDay: today, streak, best: Math.max(state.best, streak), total: state.total + 1 },
     counted: true,

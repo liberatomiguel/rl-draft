@@ -5,7 +5,7 @@ import { useCopy } from "@/content/copy";
 import { SITE } from "@/config/site";
 
 const linkCls =
-  "text-sub transition-colors hover:text-ink underline-offset-4 hover:underline";
+  "text-sub underline underline-offset-4 transition-colors hover:text-ink";
 
 function ExternalLink({
   href,

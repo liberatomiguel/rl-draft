@@ -224,8 +224,8 @@ export function badgeGlowSrc(art: string): string | null {
   return hash ? `/img/badges/${seg(art)}.${hash}.glow.webp` : null;
 }
 
-/** rc.21: the offset that puts a badge's visual centre on its box centre
- *  (measured at build time by build-images; `null` when the art is balanced). */
+/** The offset that centres the opaque artwork bounds, excluding faint halos
+ *  (measured by build-images; `null` when the art is already balanced). */
 export function badgeShift(art: string): [number, number] | null {
   const v = manifest.badgeShifts?.[art];
   return v && v.length === 2 ? [v[0], v[1]] : null;
@@ -254,6 +254,16 @@ export function bannerArtSrc(art: string, displayPx = 1240): string {
  *  only, no filters (build-banners `<art>.anim.svg`); null for a still banner. */
 export function bannerAnimSrc(art: string): string | null {
   return BANNER_ANIM.has(art) ? `/banners/${seg(art)}.anim.svg` : null;
+}
+
+/** Rasterised background without the moving shapes; paired with the overlay. */
+export function bannerMotionArtSrc(art: string, displayPx = 1240): string | null {
+  return BANNER_ANIM.has(art) ? bannerArtSrc(`${art}.base`, displayPx) : null;
+}
+
+/** Static transparent texture: CSS transforms/opacity provide runtime motion. */
+export function bannerMotionLayerSrc(art: string, displayPx = 1240): string | null {
+  return BANNER_ANIM.has(art) ? bannerArtSrc(`${art}.motion`, displayPx) : null;
 }
 
 export function badgeArtSrc(art: string, displayPx = 64): string {

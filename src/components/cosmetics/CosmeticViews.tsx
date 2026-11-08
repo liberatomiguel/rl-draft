@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { cosmeticById, type CosmeticDef, type CosmeticTier, type Stops } from "@/data/cosmetics";
-import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerAnimSrc, bannerArtSrc } from "@/lib/assets";
+import { BADGE_GLOW_PAD, badgeArtSrc, badgeGlowSrc, badgeShift, bannerArtSrc, bannerMotionArtSrc, bannerMotionLayerSrc } from "@/lib/assets";
 import { useCopy } from "@/content/copy";
 import { cx } from "@/lib/util";
 
@@ -146,9 +146,8 @@ export function BadgeEmblem({
   }, [live]);
   if (badge.kind !== "badge") return null;
   const src = badgeArtSrc(badge.style.art, px);
-  // rc.21: move the art's visual centre onto the box centre (build-images
-  // measures the alpha-weighted centroid; crests / tabs made some badges sit
-  // off-centre next to the others).
+  // Move the useful opaque silhouette onto the box centre. Translucent glow
+  // and ornament weight must not pull the badge away from neighbouring art.
   const shift = badgeShift(badge.style.art);
   const shiftStyle = shift ? { translate: `${(shift[0] * px).toFixed(1)}px ${(shift[1] * px).toFixed(1)}px` } : undefined;
   const img = (
@@ -164,11 +163,11 @@ export function BadgeEmblem({
       loading="lazy"
       decoding="async"
       draggable={false}
-      className={live ? "bfx-img" : cx("shrink-0 select-none object-contain", className)}
-      style={live ? shiftStyle : { width: px, height: px, ...shiftStyle }}
+      className={live ? "bfx-img" : "block shrink-0 select-none object-contain"}
+      style={{ width: px, height: px }}
     />
   );
-  if (!live) return img;
+  if (!live) return <span className={cx("inline-flex shrink-0 items-center justify-center align-middle", className)} style={{width:basePx,height:basePx}}><span style={shiftStyle}>{img}</span></span>;
 
   // Legendary + mouse: tilt toward the pointer (DOM-only CSS vars and a data
   // attribute, no re-render). At rest a legendary does not move.
@@ -224,7 +223,7 @@ export function BadgeEmblem({
       aria-hidden
     >
       <span className="bfx-tilt">
-        <span className="bfx-sway">
+        <span className="bfx-sway" style={shiftStyle}>
           {glow ? <span className="bfx-glow" /> : null}
           {img}
           <span className="bfx-holo">
@@ -358,6 +357,7 @@ export function BannerSurface({
   plainClassName,
   glow,
   displayPx = 1240,
+  motion = true,
 }: {
   banner: CosmeticDef | null | undefined;
   children: ReactNode;
@@ -368,7 +368,31 @@ export function BannerSurface({
   glow?: boolean;
   /** Widest the surface renders (CSS px) — picks the WebP width. */
   displayPx?: number;
+  /** Dense rows and tiny calendar art stay still; previews and heroes animate. */
+  motion?: boolean;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!motion || !banner || banner.kind !== "banner" || !ref.current) return;
+    const el = ref.current;
+    const stop = observeLive(el);
+    // Keep the motion's focal point on the artwork, even under cover-cropping
+    // on a tall phone hero. Resize only; never reads layout per animation frame.
+    const origin = banner.style.art === "overdrive" ? [746, 96] : [770, 100];
+    const align = () => {
+      const w = el.clientWidth, h = el.clientHeight;
+      const scale = Math.max(w / 1240, h / 200);
+      const position = getComputedStyle(el).backgroundPosition.split(/\s+/).map(parseFloat);
+      const x = origin[0] * scale - (1240 * scale - w) * (position[0] / 100);
+      const y = origin[1] * scale - (200 * scale - h) * (position[1] / 100);
+      el.style.setProperty("--cos-pivot-x", `${x}px`);
+      el.style.setProperty("--cos-pivot-y", `${y}px`);
+    };
+    align();
+    const resize = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(align);
+    resize?.observe(el);
+    return () => { stop(); resize?.disconnect(); };
+  }, [motion, banner]);
   if (!banner || banner.kind !== "banner") return <div className={cx(className, plainClassName)}>{children}</div>;
   const legend = banner.tier === "legend";
   // Legendary (rc.22): the holo band follows the pointer; on the hero (glow)
@@ -398,17 +422,21 @@ export function BannerSurface({
     : undefined;
   return (
     <div
+      ref={ref}
+      data-motion={motion ? "full" : "still"}
+      data-art={banner.style.art}
       className={cx(bannerClasses(banner), glow && "cos-banner-glow", className)}
       style={bannerVars(banner, displayPx) as React.CSSProperties}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
-      {glow && bannerAnimSrc(banner.style.art) ? (
-        // rc.23: the design file's animated elements (sparkles, dust, flames),
-        // filter-free, as a second image over the still art — hero only.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="cos-anim" src={bannerAnimSrc(banner.style.art)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
-      ) : null}
+      {motion && bannerMotionLayerSrc(banner.style.art, displayPx) ? <>
+        {/* Static pre-rendered texture; only CSS transform/opacity animate. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="cos-anim" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {banner.style.art === "overdrive" ? <img className="cos-anim cos-anim-second" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} /> : null}
+      </> : null}
       <span className="cos-frame" aria-hidden />
       {children}
     </div>
@@ -425,10 +453,12 @@ export function bannerVars(banner: Extract<CosmeticDef, { kind: "banner" }>, dis
   const [a, b, d] = banner.style.frame;
   return {
     "--cos-img": `url("${bannerArtSrc(banner.style.art, displayPx)}")`,
+    "--cos-motion-img": `url("${bannerMotionArtSrc(banner.style.art, displayPx) ?? bannerArtSrc(banner.style.art, displayPx)}")`,
     "--cos-glow": banner.style.glow,
     "--cos-fa": a,
     "--cos-fb": b,
     "--cos-fd": d,
+    "--cos-delay": fxDelay(banner.id),
   };
 }
 
