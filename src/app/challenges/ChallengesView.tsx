@@ -8,6 +8,9 @@
  * Badge, Button, Modal, TeamLogo) so it's consistent by construction.
  */
 
+import { challengeStarLabels } from "@/components/challenges/challengeLabels";
+export { starLabel, challengeStarLabels } from "@/components/challenges/challengeLabels";
+
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { RANKS } from "@/config/balance";
@@ -22,7 +25,6 @@ import {
 import { finalOverall, lineupHeader } from "@/engine/cards";
 import { challengeStatus, countStars, rosterFromLineup, starsAvailable, totalStars, type ChallengeStatus } from "@/engine/challenges";
 import { CHALLENGE } from "@/config/balance";
-import type { ChallengeStar } from "@/engine/types";
 import { rankForXp } from "@/engine/progression";
 import { FieldView } from "@/components/cards/FieldView";
 import type { Challenge } from "@/engine/types";
@@ -91,34 +93,6 @@ function bossOverall(lineupId: string): number {
   return Math.round(sum / Math.max(1, lineup.playerCardIds.length));
 }
 
-/** Star condition → copy (v2.0). */
-export function starLabel(star: ChallengeStar, CH: ReturnType<typeof useCopy>["CHALLENGES_UI"]): string {
-  switch (star.kind) {
-    case "noSpecials":
-      return CH.star.noSpecials;
-    case "sweep":
-      return CH.star.sweep(star.maxLosses);
-    case "maxOverall":
-      return CH.star.maxOverall(star.max);
-    case "chemistry":
-      return CH.star.chemistry(star.tier);
-    case "underdog":
-      return CH.star.underdog;
-    case "maxRerolls":
-      return CH.star.maxRerolls(star.max);
-    case "goals":
-      return CH.star.goals(star.min);
-    case "concede":
-      return CH.star.concede(star.max);
-    case "noLosses":
-      return CH.star.noLosses;
-    case "sameRegion":
-      return CH.star.sameRegion;
-    case "sameSeason":
-      return CH.star.sameSeason;
-  }
-}
-
 /** ★★★ row: earned stars lit (v2.0). */
 export function StarRow({ mask, total, size = "sm" }: { mask: number; total: number; size?: "sm" | "md" }) {
   const cls = size === "md" ? "text-lg" : "text-sm";
@@ -142,6 +116,7 @@ function twistLabels(ch: Challenge, CH: ReturnType<typeof useCopy>["CHALLENGES_U
   if (c?.seasonId) out.push(CH.twist.season(seasonById.get(c.seasonId)?.shortLabel ?? c.seasonId));
   if (c?.country) out.push(CH.twist.country(c.country));
   if (c?.noSpecials) out.push(CH.twist.noSpecials);
+  if (ch.draftScript) out.push(CH.scriptedHint);
   if (ch.fixedPlayerCardId) {
     const nick = playerById.get(playerCardById.get(ch.fixedPlayerCardId)?.playerId ?? "")?.nickname;
     if (nick) out.push(CH.twist.fixed(nick));
@@ -175,6 +150,7 @@ export function ChallengesView() {
   const starsMax = ordered.reduce((n, c) => n + starsAvailable(c), 0);
 
   const [active, setActive] = useState<Challenge | null>(null);
+  const [format, setFormat] = useState("all");
   // rc.33 (COL-02c): NEW = opened to the player, briefing not read yet. Reading
   // the briefing is opening the content; visiting this page marks nothing.
   const fresh = useProfileNew();
@@ -188,7 +164,7 @@ export function ChallengesView() {
   const TIER_ORDER = ["common", "rare", "epic", "legend"] as const;
   const sections = TIER_ORDER.map((tier) => ({
     tier,
-    items: ordered.filter((c) => c.tier === tier),
+    items: ordered.filter((c) => c.tier === tier && (format === "all" || (c.kind ?? "boss") === format)),
   })).filter((s) => s.items.length > 0);
 
   return (
@@ -201,6 +177,15 @@ export function ChallengesView() {
       />
       <p className="mb-6 max-w-2xl text-sm leading-relaxed text-sub">{CH.subtitle}</p>
 
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-xs text-sub">
+          {CH.formatLabel}
+          <select aria-label={CH.formatLabel} value={format} onChange={e => setFormat(e.target.value)} className="rounded-lg border border-line bg-bg px-3 py-2 text-ink">
+            {Object.entries(CH.formats).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+          </select>
+        </label>
+        <span className="text-xs text-faint">{CH.fixedSeedHint}</span>
+      </div>
       {modeLocked ? (
         <Panel className="p-8 text-center">
           <p className="display text-lg font-bold uppercase tracking-wide text-ink">{CH.modeLockedTitle}</p>
@@ -270,7 +255,7 @@ function ChallengeCard({
   const total = starsAvailable(ch);
   const earnedCount = countStars(starMask);
   const perfect = earnedCount >= total;
-  const starLabels = [CH.star1, ...(ch.stars ?? []).map((st) => starLabel(st, CH))];
+  const starLabels = challengeStarLabels(ch, CH);
   const starXp = CHALLENGE.starXp[ch.tier] ?? 0;
 
   // The same layout for every status (rc.2): a locked card shows what it IS,
@@ -278,24 +263,24 @@ function ChallengeCard({
   const inner = (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          <span className={cx("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>{style.label}</span>
-          {ch.kind === "gauntlet" ? <Badge tone="blue">{CH.gauntletKicker}</Badge> : null}
+        <span className="flex flex-wrap items-center gap-2">
+          <span className={cx("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", style.chip)}>{CH.tier[ch.tier]}</span>
+          <Badge tone="blue">{CH.formats[ch.kind ?? "boss"]}</Badge>
           {isNew && !locked ? <NewTag>{CH.newTag}</NewTag> : null}
         </span>
         {perfect ? (
-          <Badge tone="gold">✓ {CH.status.cleared}</Badge>
+          <Badge className="shrink-0 whitespace-nowrap" tone="gold">✓ {CH.status.cleared}</Badge>
         ) : cleared ? (
           <StarRow mask={starMask} total={total} />
         ) : (
-          <Badge tone="blue">{CH.rewardXp(ch.reward.xp)}</Badge>
+          <Badge className="shrink-0 whitespace-nowrap" tone="blue">{CH.rewardXp(ch.reward.xp)}</Badge>
         )}
       </div>
 
-      <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{ch.title}</h3>
-      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-sub">{ch.brief}</p>
+      <h3 className="display text-base font-bold uppercase tracking-wide text-ink">{CH.catalog[ch.id]?.title ?? ch.title}</h3>
+      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-sub">{CH.catalog[ch.id]?.brief ?? ch.brief}</p>
 
-      <div className="mt-3 flex items-center gap-2 border-t border-line/60 pt-3">
+      {ch.kind === "draft" ? <p className="mt-3 border-t border-line/60 pt-3 text-xs text-sub">{CH.draftOnlyHint}</p> : <div className="mt-3 flex items-center gap-2 border-t border-line/60 pt-3">
         <TeamLogo orgId={lineupById.get(ch.opponentLineupId)!.orgId} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-semibold text-sub">{header.orgName}</p>
@@ -306,7 +291,7 @@ function ChallengeCard({
           </p>
         </div>
         <span className="display text-sm font-bold text-ink">{bossOverall(ch.opponentLineupId)}</span>
-      </div>
+      </div>}
 
       {/* The three stars, what each one asks and what it pays — on the card. */}
       <ul className="mt-3 space-y-1 border-t border-line/60 pt-3">
@@ -334,7 +319,7 @@ function ChallengeCard({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-bg/85 p-4 text-center backdrop-blur-[2px]">
           <RankBadge rank={rankInfo(ch.rankRequired)} variant="menu" size="md" />
           <p className="display text-sm font-bold uppercase tracking-wide text-ink">{CH.unlocksAt(rankLabel(ch.rankRequired))}</p>
-          {ch.prereq ? <p className="text-xs text-sub">{CH.clearPrereq(challengeById.get(ch.prereq)?.title ?? ch.prereq)}</p> : null}
+          {ch.prereq ? <p className="text-xs text-sub">{CH.clearPrereq(CH.catalog[ch.prereq]?.title ?? challengeById.get(ch.prereq)?.title ?? ch.prereq)}</p> : null}
         </div>
       </div>
     );
@@ -382,7 +367,7 @@ function BriefingModal({
   return (
     <Modal
       open={!!challenge}
-      title={challenge.title}
+      title={CH.catalog[challenge.id]?.title ?? challenge.title}
       onClose={onClose}
       actions={
         <>
@@ -395,12 +380,12 @@ function BriefingModal({
         </>
       }
     >
-      <p className="leading-relaxed text-sub">{challenge.brief}</p>
+      <p className="leading-relaxed text-sub">{CH.catalog[challenge.id]?.brief ?? challenge.brief}</p>
 
       {/* Stars (v2.0) */}
       <p className="kicker mt-5">{CH.starsKicker}</p>
       <ul className="mt-2 space-y-1.5">
-        {[CH.star1, ...(challenge.stars ?? []).map((st) => starLabel(st, CH))].map((label, i) => {
+        {challengeStarLabels(challenge, CH).map((label, i) => {
           const earned = Boolean(starMask & (1 << i));
           return (
             <li key={i} className={cx("flex items-center gap-2 rounded-lg border px-3 py-2 text-xs", earned ? "border-amber-300/40 bg-amber-300/5 text-ink" : "border-line/60 text-sub")}>
@@ -441,6 +426,7 @@ function BriefingModal({
         </>
       ) : null}
 
+      {challenge.kind === "draft" ? <p className="mt-5 text-sm text-sub">{CH.draftOnlyHint}</p> : <>
       <p className="kicker mt-5">{CH.briefTargetKicker}</p>
       <div className="mt-2 flex items-center gap-3 rounded-xl border border-line/70 bg-white/[0.02] p-3">
         <TeamLogo orgId={lineupById.get(challenge.opponentLineupId)!.orgId} size="md" />
@@ -463,6 +449,7 @@ function BriefingModal({
         showBench
         className="mt-3"
       />
+      </>}
 
       <p className="kicker mt-5">{CH.briefTwistKicker}</p>
       <div className="mt-2 flex flex-wrap gap-2">

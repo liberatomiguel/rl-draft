@@ -693,7 +693,12 @@ historical Worlds-title pacing or approve Gate 3b.
   leaks into RTW unless intended), and a regression of the Region-only modes
   already built (NA, EU, SAM, MENA, OCE; APAC and SSA have no Region-only
   mode but play in the RTW circuit).
-- CH-01: Challenges with more varied mechanics. CH-02: every Challenge and
+- **CH-01/02/03 implemented for playtest in rc.36.16 (07/11):** 45 fixed-seed
+  challenges / 135 stars, including Draft Labs; exact legal three-star proofs
+  and once-only grants; daily seeds, UTC rollover, quiz attempts and EN/PT.
+  Evidence and remaining human acceptance: CHALLENGE-AUDIT-rc36-16.md.
+  This narrow package was explicitly authorized while career Gate 3b is open.
+- Original acceptance scope — CH-01: Challenges with more varied mechanics. CH-02: every Challenge and
   every star solvable from the real options, prerequisites right, reward
   once; a win sample does not prove a composition star. CH-03: test the
   daily quiz and the daily Challenge (seed, UTC reset, tries, rewards,

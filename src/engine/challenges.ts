@@ -1,11 +1,11 @@
 /**
- * Challenges (v1.4) — rank-unlocked authored puzzles.
+ * Challenges — fixed-seed, rank-unlocked authored puzzles.
  *
  * A challenge is a dedicated mini-run: a CONSTRAINED draft (a "twist" like an
  * overall cap, a nationality lock or a region pool) followed by a single Bo7
- * against a FIXED historical boss lineup. Win the series → the challenge is
- * cleared (one-and-done, like an achievement). This module is pure/deterministic
- * and reuses the existing draft + series engine — it adds no new game math.
+ * against a fixed historical boss, a gauntlet, or visible roster objectives in
+ * Draft Lab. Stars persist across attempts and each reward pays once. This
+ * module is pure/deterministic and reuses the existing draft + series engine.
  */
 
 import { CHALLENGE } from "@/config/balance";
@@ -48,11 +48,15 @@ export function starsAvailable(challenge: Challenge): number {
   return challenge.stars ? 3 : 1;
 }
 
+export function challengeRerolls(challenge: Challenge): number {
+  return challenge.draftScript ? 0 : CHALLENGE.rerollsByDifficulty[challenge.sim.difficulty];
+}
+
 /** Everything the star evaluation reads from one finished attempt. */
 export interface StarContext {
   user: TournamentTeam;
   /** The boss series (the last one for a gauntlet). */
-  boss: SeriesResult;
+  boss: SeriesResult | null;
   /** Every series of the attempt (gauntlet stages first, boss last). */
   all: SeriesResult[];
   bossOverall: number;
@@ -99,6 +103,7 @@ export function starSatisfied(star: ChallengeStar, ctx: StarContext): boolean {
     case "noSpecials":
       return ctx.user.specialIds.filter((id) => specialCardById.has(id)).length === 0;
     case "sweep": {
+      if (!ctx.boss) return false;
       const lost = ctx.boss.winnerTeamId === ctx.boss.teamAId ? ctx.boss.score[1] : ctx.boss.score[0];
       return lost <= star.maxLosses;
     }
@@ -117,7 +122,7 @@ export function starSatisfied(star: ChallengeStar, ctx: StarContext): boolean {
     case "concede":
       return userGoals(ctx.all, userId).conceded <= star.max;
     case "noLosses":
-      return ctx.all.every((s) => s.winnerTeamId === userId);
+      return ctx.all.length > 0 && ctx.all.every((s) => s.winnerTeamId === userId);
     case "sameRegion": {
       const cards = rosterPlayers(ctx.roster);
       if (cards.length < 3) return false;
@@ -128,12 +133,25 @@ export function starSatisfied(star: ChallengeStar, ctx: StarContext): boolean {
       const cards = rosterPlayers(ctx.roster);
       return cards.length >= 3 && new Set(cards.map((c) => c.seasonId)).size === 1;
     }
+    case "minOverall":
+      return displayTeamOverall(ctx.user.rating) >= star.min;
+    case "differentCountries": {
+      const countries = rosterPlayers(ctx.roster).map(c => playerById.get(c.playerId)?.country);
+      return countries.length === 3 && countries.every(Boolean) && new Set(countries).size >= star.min;
+    }
+    case "sameOrg": {
+      const orgs = rosterPlayers(ctx.roster).map(c => lineupById.get(c.lineupId)?.orgId);
+      return orgs.length === 3 && orgs.every(Boolean) && new Set(orgs).size === 1;
+    }
   }
 }
 
 /** Star mask earned by a finished attempt (0 when the boss was not beaten). */
 export function evaluateStars(challenge: Challenge, ctx: StarContext): number {
-  if (ctx.boss.winnerTeamId !== ctx.user.id) return 0;
+  const cleared = challenge.kind === "draft"
+    ? !!challenge.objective && starSatisfied(challenge.objective, ctx)
+    : ctx.boss?.winnerTeamId === ctx.user.id;
+  if (!cleared) return 0;
   let mask = STAR_CLEAR;
   if (challenge.stars) {
     if (starSatisfied(challenge.stars[0], ctx)) mask |= STAR_2;
@@ -221,7 +239,8 @@ export function createChallengeDraft(challenge: Challenge, rng: Rng): DraftState
     mode: "challenge",
     poolLineupIds: challengePool(challenge.constraint),
     constraint: challenge.constraint,
-    rerollsOverride: CHALLENGE.rerollsByDifficulty[challenge.sim.difficulty],
+    rerollsOverride: challengeRerolls(challenge),
+    scriptedLineups: challenge.draftScript,
   });
 
   if (challenge.fixedPlayerCardId) {
@@ -298,4 +317,27 @@ export function playChallengeSeries(
     },
     rng,
   );
+}
+
+/** One real attempt. The caller supplies the unchanged post-draft RNG. */
+export function resolveChallengeAttempt(
+  challenge: Challenge, user: TournamentTeam, opponent: TournamentTeam,
+  roster: Roster, rerollsUsed: number, rng: Rng,
+) {
+  const opponents = buildGauntletOpponents(challenge);
+  const results: SeriesResult[] = [];
+  let failedAt: number | null = null;
+  for (let i = 0; i < opponents.length; i++) {
+    const result = playGauntletStage(user, opponents[i], challenge, rng);
+    results.push(result);
+    if (result.winnerTeamId !== user.id) { failedAt = i; break; }
+  }
+  const series = challenge.kind !== "draft" && failedAt === null
+    ? playChallengeSeries(user, opponent, challenge, rng) : null;
+  const starsEarned = evaluateStars(challenge, {
+    user, boss: series, all: series ? [...results, series] : results,
+    roster, rerollsUsed, bossOverall: displayTeamOverall(opponent.rating),
+  });
+  return { series, cleared: Boolean(starsEarned & STAR_CLEAR), starsEarned,
+    stages: opponents.length ? { opponents, results, failedAt } : undefined };
 }

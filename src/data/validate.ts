@@ -224,9 +224,19 @@ export function assertReferentialIntegrity(data: ParsedDataset): void {
     for (const id of ch.gauntlet?.lineupIds ?? []) {
       assertRef(lineupById.has(id), `challenges: "${ch.id}" → unknown gauntlet lineup "${id}"`);
     }
+    for (const step of ch.draftScript ?? []) {
+      assertRef(lineupById.has(step.lineupId), `challenges: "${ch.id}" → unknown scripted lineup "${step.lineupId}"`);
+    }
     if (ch.prereq) {
       assertRef(challengeById.has(ch.prereq), `challenges: "${ch.id}" → unknown prereq "${ch.prereq}"`);
       assertRef(ch.prereq !== ch.id, `challenges: "${ch.id}" → prereq cannot be itself`);
+      const seen = new Set([ch.id]);
+      let next: string | undefined = ch.prereq;
+      while (next) {
+        assertRef(!seen.has(next), `challenges: "${ch.id}" → prerequisite cycle at "${next}"`);
+        seen.add(next);
+        next = challengeById.get(next)?.prereq;
+      }
     }
     if (ch.fixedPlayerCardId) {
       assertRef(playerCardById.has(ch.fixedPlayerCardId), `challenges: "${ch.id}" → unknown fixedPlayerCardId "${ch.fixedPlayerCardId}"`);

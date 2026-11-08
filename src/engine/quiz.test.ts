@@ -25,13 +25,26 @@ describe("quiz puzzle generation", () => {
 
   it("visibleClues grows with misses and never exceeds the ladder", () => {
     const p = quizForDate("2026-10-22");
-    expect(visibleClues(p, 0)).toHaveLength(1);
-    expect(visibleClues(p, 2).length).toBe(Math.min(3, p.clues.length));
+    expect(visibleClues(p, 0)).toHaveLength(Math.ceil(p.clues.length / QUIZ.attempts));
+    expect(visibleClues(p, QUIZ.attempts - 1)).toEqual(p.clues);
     expect(visibleClues(p, 99).length).toBe(p.clues.length);
   });
 });
 
 describe("guessing", () => {
+  it("every eligible answer can be entered by nickname, including homonyms", () => {
+    for (const { player } of quizFacts().values()) {
+      expect(resolveGuess(player.nickname, player.id), player.id).toBe(player.id);
+      expect(resolveGuess(player.id, player.id), player.id).toBe(player.id);
+    }
+    expect(quizFacts().has("zen-oce")).toBe(true);
+    expect(resolveGuess("ZeN", "zen-oce")).toBe("zen-oce");
+    expect(resolveGuess("zen", "zen")).toBe("zen");
+    expect(resolveGuess("not-a-player", "zen-oce")).toBeNull();
+    const oce = { date: "2026-11-07", playerId: "zen-oce", clues: [] };
+    expect(applyGuess(oce, undefined, "zen", "zen").correct).toBe(false);
+    expect(applyGuess(oce, undefined, resolveGuess("ZeN", oce.playerId), "ZeN").correct).toBe(true);
+  });
   it("normalises nicknames and resolves exact matches only", () => {
     expect(normalizeGuess("  M0nkey M00n! ")).toBe("m0nkeym00n");
     const p = quizForDate("2026-10-23");

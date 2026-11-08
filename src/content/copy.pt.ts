@@ -1,3 +1,4 @@
+import { CHALLENGE_TEXT_PT } from "./copy.challenges.pt";
 /**
  * PT-BR dictionary — mirrors the shape of `copy.en.ts` exactly.
  * Tone: narração de transmissão / análise pós-jogo (esports BR). Termos que a
@@ -177,9 +178,36 @@ export const PT: Copy = {
   },
 
   CHALLENGES_UI: {
+    catalog: CHALLENGE_TEXT_PT,
+    formatLabel: "Formato",
+    formats: { all: "Todos os formatos", boss: "Confronto", gauntlet: "Gauntlet", draft: "Laboratório de Draft" },
+    fixedSeedHint: "Seed fixo. As mesmas escolhas repetem o mesmo resultado.",
+    scriptedHint: "Ofertas fixas · sem rerolls pagos",
+    draftOnlyHint: "Monte o elenco para cumprir os objetivos. Não há partida.",
+    checkDraft: "Conferir draft",
+    draftFailed: "O objetivo principal não foi cumprido. Tente outras escolhas.",
+    teamOverall: (n: number) => "Overall do time: " + n + "",
+    chemistryValue: (n: number) => "Química: " + n + "%",
+    starGauntlet1: "Vença todas as etapas e a série final",
+    draftStar: {
+      noSpecials: "Não escale cartas especiais",
+      minOverall: (n: number) => "Alcance pelo menos " + n + " de overall de time",
+      maxOverall: (n: number) => "Termine com overall de time " + n + " ou menor",
+      chemistry: (tier: string) => "Alcance química " + (({Good: "Boa", Great: "Ótima", Perfect: "Perfeita"} as Record<string,string>)[tier] ?? tier) + " ou melhor",
+      maxRerolls: (n: number) => "Use no máximo " + n + " rerolls pagos",
+      sameRegion: "Três titulares da mesma região",
+      sameSeason: "Três titulares da mesma temporada da RLCS",
+      sameOrg: "Três titulares da mesma organização, de qualquer época",
+      differentCountries: (n: number) => "Titulares de " + n + " países diferentes",
+      sweep: (n: number) => "Perca no máximo " + n + " jogos",
+      underdog: "Overall de time menor que o adversário",
+      goals: (n: number) => "Marque " + n + " gols",
+      concede: (n: number) => "Sofra no máximo " + n + " gols",
+      noLosses: "Vença todas as séries",
+    },
     title: "Desafios",
     subtitle:
-      "Puzzles liberados por rank. Monte um time melhor que uma line histórica fixa sob uma condição e vença a série. Desafios concluídos dão XP e ficam marcados.",
+      "Puzzles com seed fixo, das primeiras conexões aos drafts avançados. Vença equipes históricas, encare gauntlets ou resolva o Laboratório de Draft. Cada estrela paga uma vez.",
     modeLockedTitle: "Desafios bloqueados",
     modeLockedBody:
       "Chegue ao rank Bronze (200 XP) para liberar os Desafios — o mesmo gate da Coleção. Termine uma run ou duas para chegar lá.",
@@ -208,15 +236,18 @@ export const PT: Copy = {
     theBoss: "A line",
     // v2.0 stars + gauntlets
     starsKicker: "Três estrelas",
-    starsHint: "A estrela 1 é a vitória. As estrelas 2 e 3 adicionam uma condição — conquiste em qualquer tentativa, em qualquer ordem.",
+    starsHint: "As estrelas 2 e 3 acrescentam uma condição ao objetivo principal. Conquiste-as juntas ou em tentativas separadas. Rerolls gratuitos de ofertas sem opção válida não contam.",
     starsCount: (n: number, total: number) => `${n}/${total} estrelas`,
     starsTotal: (n: number) => `${n} estrelas`,
     star1: "Vença a série",
     star: {
+      minOverall: (n: number) => "Vença com pelo menos " + n + " de overall de time",
+      differentCountries: (n: number) => "Vença com titulares de " + n + " países diferentes",
+      sameOrg: "Vença com três titulares da mesma organização, de qualquer época",
       noSpecials: "Vença sem escalar nenhuma carta especial",
       sweep: (n: number) => (n === 0 ? "Vença a série do boss por 4–0" : `Vença a série do boss perdendo no máximo ${n} jogo${n === 1 ? "" : "s"}`),
       maxOverall: (n: number) => `Vença com overall de time ${n} ou menor`,
-      chemistry: (tier: string) => `Vença com química ${tier} ou melhor`,
+      chemistry: (tier: string) => `Vença com química ${({Good: "Boa", Great: "Ótima", Perfect: "Perfeita"} as Record<string,string>)[tier] ?? tier} ou melhor`,
       underdog: "Vença com overall de time menor que o da line",
       maxRerolls: (n: number) => (n === 0 ? "Vença sem usar reroll" : `Vença usando no máximo ${n} reroll${n === 1 ? "" : "s"}`),
       goals: (n: number) => `Marque ${n} gols ou mais na tentativa`,
@@ -261,7 +292,7 @@ export const PT: Copy = {
 
   LEADERBOARDS_UI: {
     title: "Rankings",
-    subtitle: "Seus melhores elencos e marcos. Entre com o seu e-mail para salvá-los na nuvem e subir nos rankings globais.",
+    subtitle: "Puzzles com seed fixo, das primeiras conexões aos drafts avançados. Vença equipes históricas, encare gauntlets ou resolva o Laboratório de Draft. Cada estrela paga uma vez.",
     yourRecords: "Seus recordes",
     signInTitle: "Entre para competir",
     emailPlaceholder: "seu@email.com",
@@ -1516,13 +1547,13 @@ export const PT: Copy = {
   QUIZ_UI: {
     kicker: "Quiz diário",
     title: "Guess the Player",
-    subtitle: "Quem é este jogador de RLCS? Um jogador por dia, três tentativas. Cada erro revela uma pista nova.",
+    subtitle: "Quem é este jogador de RLCS? Um jogador por dia UTC, três tentativas. Novas pistas aparecem antes de cada palpite; todas estão disponíveis no último.",
     question: "Quem é este jogador de RLCS?",
     clue: (n: number) => `Pista ${n}`,
     attemptsLeft: (n: number) => (n === 1 ? "1 tentativa restante" : `${n} tentativas restantes`),
     placeholder: "Digite um nickname…",
     guess: "Chutar",
-    wrong: "Não é esse — aqui vai outra pista.",
+    wrong: "Não é esse — confira as novas pistas.",
     solved: (attempt: number) => (attempt === 1 ? "De primeira! Pontuação máxima." : attempt === 2 ? "Acertou na segunda tentativa." : "Acertou na última tentativa."),
     solvedToast: (attempt: number) => (attempt === 1 ? "Acertou de primeira" : `Acertou na tentativa ${attempt}`),
     failed: "Acabaram as tentativas. A resposta era:",
@@ -1536,7 +1567,7 @@ export const PT: Copy = {
     score: (s: number) => `${s} pt${s === 1 ? "" : "s"}`,
     xpFor: (xp: number) => `+${xp} XP`,
     clues: {
-      country: (country: string, region: string) => `Nacionalidade: ${country} (região ${region}).`,
+      country: (country: string, region: string) => `Nacionalidade: ${new Intl.DisplayNames(["pt-BR"], { type: "region" }).of(country) ?? country} (região ${region}).`,
       era: (first: number, last: number, lineups: number) =>
         first === last ? `Ativo em ${first} — ${lineups} line${lineups === 1 ? "" : "s"} de RLCS no dataset.` : `Ativo de ${first} a ${last} — ${lineups} lines de RLCS no dataset.`,
       orgs: (orgs: string[]) => (orgs.length === 1 ? `Jogou pela ${orgs[0]}.` : `Jogou pela ${orgs[0]} e pela ${orgs[1]}.`),

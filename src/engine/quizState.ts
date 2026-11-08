@@ -43,7 +43,10 @@ export const EMPTY_QUIZ: QuizState = { results: {}, solved: 0, played: 0, streak
 
 /** How many clues are visible after `attemptsUsed` misses (at least 1). */
 export function visibleClues(puzzle: QuizPuzzle, attemptsUsed: number): QuizClue[] {
-  return puzzle.clues.slice(0, Math.min(puzzle.clues.length, 1 + attemptsUsed));
+  // Spread the entire ladder across the available guesses. The decisive clues
+  // must be visible BEFORE the final guess, rather than only after a failure.
+  const count = Math.ceil(puzzle.clues.length * Math.min(QUIZ.attempts, Math.max(0, attemptsUsed) + 1) / QUIZ.attempts);
+  return puzzle.clues.slice(0, count);
 }
 
 export interface GuessOutcome {
@@ -72,6 +75,8 @@ export function applyGuess(puzzle: QuizPuzzle, prev: QuizDayResult | undefined, 
 
 /** Fold a FINISHED day into the counters (streak = consecutive solved days by date order). */
 export function foldQuizDay(state: QuizState, date: string, result: QuizDayResult): QuizState {
+  const previous = state.results[date];
+  if (previous && (previous.solved || previous.attempts >= QUIZ.attempts)) return state;
   const results = { ...state.results, [date]: result };
   // Prune old days.
   const keys = Object.keys(results).sort();

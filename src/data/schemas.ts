@@ -230,6 +230,9 @@ export const challengeStarSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("noLosses") }).strict(),
   z.object({ kind: z.literal("sameRegion") }).strict(),
   z.object({ kind: z.literal("sameSeason") }).strict(),
+  z.object({ kind: z.literal("minOverall"), min: overallSchema }).strict(),
+  z.object({ kind: z.literal("differentCountries"), min: z.number().int().min(2).max(3) }).strict(),
+  z.object({ kind: z.literal("sameOrg") }).strict(),
 ]);
 
 export const challengeSchema = z
@@ -266,7 +269,9 @@ export const challengeSchema = z
       specialId: z.string().min(1).optional(),
     }),
     /** v2.0: "boss" (default) or "gauntlet" (stages before the boss). */
-    kind: z.enum(["boss", "gauntlet"]).optional(),
+    kind: z.enum(["boss", "gauntlet", "draft"]).optional(),
+    objective: challengeStarSchema.optional(),
+    draftScript: z.array(z.object({ lineupId: z.string().min(1) }).strict()).min(5).max(6).optional(),
     gauntlet: z
       .object({
         lineupIds: z.array(z.string().min(1)).min(1).max(4),
@@ -280,6 +285,13 @@ export const challengeSchema = z
   .strict()
   .refine((c) => (c.kind === "gauntlet") === Boolean(c.gauntlet), {
     message: "kind \"gauntlet\" needs `gauntlet`, and vice-versa",
+  })
+  .refine((c) => (c.kind === "draft") === Boolean(c.objective), {
+    message: "Draft Lab needs a roster objective; other formats must not have one",
+  })
+  .refine((c) => c.kind !== "draft" || [c.objective, ...(c.stars ?? [])].every(s => s &&
+    ["noSpecials", "maxOverall", "minOverall", "chemistry", "maxRerolls", "sameRegion", "sameSeason", "sameOrg", "differentCountries"].includes(s.kind)), {
+    message: "Draft Lab conditions must be observable roster objectives, not match outcomes",
   });
 
 export const playersFileSchema = z.array(playerSchema);

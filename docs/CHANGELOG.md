@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.15**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.16**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,38 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Added / Changed / Balance / Fixed — rc.36.16, playable challenge catalog and dailies
+- Expands the catalog from 27 to 45 fixed-seed challenges (135 stars): 32
+  showdowns, six gauntlets and seven Draft Labs. Keeps all existing challenge
+  IDs and earned progress/cosmetic references. Adds regional routes, fixed
+  captains, club/era/international composition goals and authored offer puzzles.
+- Draft Labs check visible roster objectives without simulating a match.
+  Format filtering, EN/PT challenge text and goals throughout draft/review
+  explain the rules. Paid rerolls are disabled on authored offer scripts;
+  dead-offer free rerolls remain legal. Changes to existing seeds, boss shifts
+  and two overall caps are recorded in CHALLENGE-AUDIT-rc36-16.md.
+- Replaces the false reachability guarantee: the old tests sampled unrelated
+  match RNG states after a greedy draft and skipped composition-star proofs.
+  Every challenge now has a checked-in legal action trace earning all three
+  stars through the real post-draft RNG, engine AND run store, with reload and
+  repeat-reward checks. Topple the Titans, Perfect Storm and Time Capsule are
+  covered explicitly. Human-readable spoilers: CHALLENGE-SOLUTIONS-rc36-16.md.
+- Quiz: exposes the full clue ladder before the last guess, refreshes the UTC
+  date on open tabs, rejects stale-date submissions and emits the completion
+  mission event once. Root causes: only the first three clues were usable;
+  the no-op finished guess still emitted a mission event outside the updater.
+- Quiz homonyms: a typed answer can resolve its own nickname even when another
+  player shares it (zen/ZeN). Selected suggestions retain their actual person id
+  and show country. Root cause: the first normalized nickname always won, making
+  OCE's ZeN unanswerable by nickname. All eligible answers now have this check.
+- Daily Challenge: enforces one official result/reward per UTC date at start,
+  profile grant and stale-run finish. Root cause: only the home tile guarded
+  repeat attempts; restoring a run could replay XP/rating/mission rewards.
+- Scope: CH-01/02/03 only, authorized by Miguel on 07/11. No career rc.37 code,
+  balance.ts exports/fingerprint, persist key/version, accounts or production
+  settings change. Gate 3b and the rest of Gate 4 remain open.
+- Validation details and playtest checklist: CHALLENGE-AUDIT-rc36-16.md.
 
 ### Added / Fixed — rc.36.15, organization art coverage and historical logos
 - Audits all 47 organizations missing art: imports 19 verified Liquipedia

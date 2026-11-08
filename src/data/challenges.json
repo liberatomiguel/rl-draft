@@ -10,7 +10,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 0
+      "opponentShift": -4
     },
     "reward": {
       "xp": 80,
@@ -134,7 +134,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": -4
+      "opponentShift": -2
     },
     "constraint": {
       "maxPlayerOverall": 86,
@@ -147,7 +147,7 @@
     "stars": [
       {
         "kind": "maxOverall",
-        "max": 84
+        "max": 88
       },
       {
         "kind": "sweep",
@@ -197,7 +197,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -1
+      "opponentShift": -3
     },
     "constraint": {
       "seasonId": "rlcs-s5",
@@ -228,7 +228,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -3.5
+      "opponentShift": -7.5
     },
     "constraint": {
       "country": "FR",
@@ -293,7 +293,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -5.75
+      "opponentShift": -7.75
     },
     "constraint": {
       "maxPlayerOverall": 88,
@@ -320,7 +320,7 @@
     "rankRequired": "diamond",
     "opponentLineupId": "moist-esports-2122",
     "tier": "epic",
-    "seed": 32581,
+    "seed": 32783,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
@@ -357,7 +357,7 @@
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -4.5
+      "opponentShift": -6.5
     },
     "reward": {
       "xp": 300,
@@ -388,7 +388,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -2
+      "opponentShift": -4
     },
     "reward": {
       "xp": 320,
@@ -506,11 +506,11 @@
     "prereq": "ch-break-the-wall",
     "opponentLineupId": "team-vitality-2223",
     "tier": "legend",
-    "seed": 37196,
+    "seed": 37398,
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -8
+      "opponentShift": -4
     },
     "reward": {
       "xp": 500,
@@ -606,7 +606,7 @@
     "sim": {
       "difficulty": "legacy",
       "bestOf": 7,
-      "opponentShift": -5
+      "opponentShift": -11
     },
     "constraint": {
       "maxPlayerOverall": 90,
@@ -619,7 +619,7 @@
     "stars": [
       {
         "kind": "maxOverall",
-        "max": 88
+        "max": 92
       },
       {
         "kind": "sweep",
@@ -646,7 +646,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 1.25
+      "opponentShift": -0.75
     },
     "reward": {
       "xp": 130,
@@ -766,7 +766,7 @@
     "sim": {
       "difficulty": "hard",
       "bestOf": 7,
-      "opponentShift": -9.75
+      "opponentShift": -11.75
     },
     "reward": {
       "xp": 600,
@@ -796,7 +796,7 @@
     "sim": {
       "difficulty": "easy",
       "bestOf": 7,
-      "opponentShift": 5
+      "opponentShift": 1
     },
     "reward": {
       "xp": 110,
@@ -852,11 +852,11 @@
     "rankRequired": "platinum",
     "opponentLineupId": "gale-force-esports-s4",
     "tier": "rare",
-    "seed": 63490,
+    "seed": 65308,
     "sim": {
       "difficulty": "normal",
       "bestOf": 7,
-      "opponentShift": -1.75
+      "opponentShift": -7.75
     },
     "reward": {
       "xp": 210,
@@ -873,6 +873,735 @@
     ],
     "constraint": {
       "maxSeasonId": "rlcs-2026"
+    }
+  },
+  {
+    "id": "ch-desert-rising",
+    "title": "Desert Rising",
+    "brief": "Draft only MENA players and challenge Falcons. Build connections before chasing individual ratings.",
+    "rankRequired": "gold",
+    "opponentLineupId": "team-falcons-2024",
+    "tier": "rare",
+    "seed": 81001,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -4
+    },
+    "constraint": {
+      "region": "MENA",
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 220
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 2
+      }
+    ]
+  },
+  {
+    "id": "ch-pacific-breakthrough",
+    "title": "Pacific Breakthrough",
+    "brief": "APAC takes the stage. Build a regional roster and break through against an early North American powerhouse.",
+    "rankRequired": "silver",
+    "opponentLineupId": "nrg-esports-s2",
+    "tier": "common",
+    "seed": 82003,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": -7
+    },
+    "constraint": {
+      "region": "APAC",
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 120
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Good"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 2
+      }
+    ]
+  },
+  {
+    "id": "ch-african-frontier",
+    "title": "African Frontier",
+    "brief": "A fresh route to the spotlight: draft an all-SSA squad and take on the Season 1 finalists.",
+    "rankRequired": "silver",
+    "opponentLineupId": "flipsid3-tactics-s1",
+    "tier": "common",
+    "seed": 83009,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": -10
+    },
+    "constraint": {
+      "region": "SSA",
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 120
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Good"
+      }
+    ]
+  },
+  {
+    "id": "ch-oceania-after-dark",
+    "title": "Oceania After Dark",
+    "brief": "An OCE roster, a modern opponent and no special cards. Make every connection count.",
+    "rankRequired": "diamond",
+    "opponentLineupId": "team-falcons-2024",
+    "tier": "epic",
+    "seed": 84011,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -10
+    },
+    "constraint": {
+      "region": "OCE",
+      "noSpecials": true,
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 2
+      }
+    ]
+  },
+  {
+    "id": "ch-global-alliance",
+    "title": "Global Alliance",
+    "brief": "Build an international trio. Three different nationalities are the bonus objective against G2.",
+    "rankRequired": "gold",
+    "opponentLineupId": "g2-esports-s7",
+    "tier": "rare",
+    "seed": 85013,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -3
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 220
+    },
+    "stars": [
+      {
+        "kind": "differentCountries",
+        "min": 3
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ]
+  },
+  {
+    "id": "ch-club-reunion",
+    "title": "Club Reunion",
+    "brief": "Reunite players who represented the same club, even in different years. Then take down Cloud9.",
+    "rankRequired": "diamond",
+    "opponentLineupId": "cloud9-s6",
+    "tier": "epic",
+    "seed": 89148,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -1
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "sameOrg"
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      }
+    ],
+    "draftScript": [
+      {
+        "lineupId": "team-vitality-s9"
+      },
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "team-vitality-2025"
+      },
+      {
+        "lineupId": "team-bds-2122"
+      },
+      {
+        "lineupId": "karmine-corp-2024"
+      },
+      {
+        "lineupId": "g2-stride-2024"
+      }
+    ]
+  },
+  {
+    "id": "ch-zen-and-the-art",
+    "title": "Zen and the Art",
+    "brief": "Zen is already in the starting three. Find the supporting cast to face Karmine Corp.",
+    "rankRequired": "champion",
+    "opponentLineupId": "karmine-corp-2024",
+    "tier": "epic",
+    "seed": 87423,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -5
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ],
+    "fixedPlayerCardId": "zen-team-vitality-2026"
+  },
+  {
+    "id": "ch-kuxirs-last-stand",
+    "title": "Kuxir’s Last Stand",
+    "brief": "Build around the veteran kuxir97 and his 2020 card. The old guard still has a series to win.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "nrg-esports-s8",
+    "tier": "rare",
+    "seed": 88425,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": -7
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 220
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      },
+      {
+        "kind": "sweep",
+        "maxLosses": 2
+      }
+    ],
+    "fixedPlayerCardId": "kuxir97-mousesports-s9"
+  },
+  {
+    "id": "ch-squishys-supporting-cast",
+    "title": "Squishy’s Supporting Cast",
+    "brief": "SquishyMuffinz starts in your roster. Assemble the rest of the team for a showdown with Moist.",
+    "rankRequired": "diamond",
+    "opponentLineupId": "moist-esports-2122",
+    "tier": "epic",
+    "seed": 89023,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -6
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "maxRerolls",
+        "max": 1
+      }
+    ],
+    "fixedPlayerCardId": "squishymuffinz-nrg-esports-2223"
+  },
+  {
+    "id": "ch-gauntlet-desert-crossing",
+    "title": "Desert Crossing",
+    "brief": "Cross three eras of competition with one roster. Win two Bo5s before facing Falcons in the final Bo7.",
+    "rankRequired": "champion",
+    "opponentLineupId": "team-falcons-2025",
+    "tier": "epic",
+    "seed": 90029,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -8
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      },
+      {
+        "kind": "goals",
+        "min": 30
+      }
+    ],
+    "kind": "gauntlet",
+    "gauntlet": {
+      "lineupIds": [
+        "nrg-esports-s8",
+        "team-bds-2122"
+      ],
+      "bestOf": 5
+    }
+  },
+  {
+    "id": "ch-gauntlet-final-bosses",
+    "title": "Final Bosses",
+    "brief": "Four title contenders, one draft. Beat Cloud9, Dignitas and BDS, then face Vitality. Every series is a Bo7.",
+    "rankRequired": "supersonic-legend",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "legend",
+    "seed": 91033,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": -8
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 560
+    },
+    "stars": [
+      {
+        "kind": "noSpecials"
+      },
+      {
+        "kind": "goals",
+        "min": 65
+      }
+    ],
+    "kind": "gauntlet",
+    "gauntlet": {
+      "lineupIds": [
+        "cloud9-s6",
+        "dignitas-s5",
+        "team-bds-2122"
+      ],
+      "bestOf": 7
+    }
+  },
+  {
+    "id": "ch-lab-first-link",
+    "title": "The First Link",
+    "brief": "A draft-only puzzle: reach Good chemistry. Choose between star power and connections in six fixed offers.",
+    "rankRequired": "bronze",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "common",
+    "seed": 92041,
+    "sim": {
+      "difficulty": "easy",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 120
+    },
+    "stars": [
+      {
+        "kind": "minOverall",
+        "min": 84
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "chemistry",
+      "tier": "Good"
+    },
+    "draftScript": [
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "karmine-corp-2024"
+      },
+      {
+        "lineupId": "team-bds-2223"
+      },
+      {
+        "lineupId": "nrg-esports-s8"
+      },
+      {
+        "lineupId": "dignitas-s5"
+      },
+      {
+        "lineupId": "g2-stride-2024"
+      }
+    ]
+  },
+  {
+    "id": "ch-lab-passport",
+    "title": "Passport Control",
+    "brief": "Three starters, three nationalities. Complete the roster without playing a match; the extra stars ask for strength and chemistry.",
+    "rankRequired": "gold",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "rare",
+    "seed": 93047,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 220
+    },
+    "stars": [
+      {
+        "kind": "minOverall",
+        "min": 87
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Good"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "differentCountries",
+      "min": 3
+    },
+    "draftScript": [
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "karmine-corp-2024"
+      },
+      {
+        "lineupId": "team-bds-2223"
+      },
+      {
+        "lineupId": "nrg-esports-s8"
+      },
+      {
+        "lineupId": "dignitas-s5"
+      },
+      {
+        "lineupId": "g2-stride-2024"
+      }
+    ]
+  },
+  {
+    "id": "ch-lab-time-machine",
+    "title": "Time Machine",
+    "brief": "Build three starters from the same RLCS season out of a mixed-era sequence. Save the right offers for your bench.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "rare",
+    "seed": 94049,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 220
+    },
+    "stars": [
+      {
+        "kind": "minOverall",
+        "min": 86
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "sameSeason"
+    },
+    "draftScript": [
+      {
+        "lineupId": "dignitas-s5"
+      },
+      {
+        "lineupId": "nrg-esports-s5"
+      },
+      {
+        "lineupId": "team-envy-s5"
+      },
+      {
+        "lineupId": "cloud9-s7"
+      },
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "g2-stride-2024"
+      }
+    ]
+  },
+  {
+    "id": "ch-lab-club-architect",
+    "title": "Club Architect",
+    "brief": "Connect one club across different eras. Three starters must have represented the same organization; no match is required.",
+    "rankRequired": "diamond",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "epic",
+    "seed": 95051,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "minOverall",
+        "min": 89
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "sameOrg"
+    },
+    "draftScript": [
+      {
+        "lineupId": "team-vitality-s9"
+      },
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "team-vitality-2025"
+      },
+      {
+        "lineupId": "team-bds-2122"
+      },
+      {
+        "lineupId": "karmine-corp-2024"
+      },
+      {
+        "lineupId": "g2-stride-2024"
+      }
+    ]
+  },
+  {
+    "id": "ch-lab-balancing-act",
+    "title": "Balancing Act",
+    "brief": "Finish between 96 and 97 team overall with Great chemistry. The strongest card is not always the right pick.",
+    "rankRequired": "platinum",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "rare",
+    "seed": 96053,
+    "sim": {
+      "difficulty": "normal",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 220
+    },
+    "stars": [
+      {
+        "kind": "maxOverall",
+        "max": 97
+      },
+      {
+        "kind": "chemistry",
+        "tier": "Great"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "minOverall",
+      "min": 96
+    },
+    "draftScript": [
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "karmine-corp-2024"
+      },
+      {
+        "lineupId": "team-bds-2223"
+      },
+      {
+        "lineupId": "nrg-esports-s8"
+      },
+      {
+        "lineupId": "dignitas-s5"
+      },
+      {
+        "lineupId": "g2-stride-2024"
+      }
+    ]
+  },
+  {
+    "id": "ch-lab-perfect-link",
+    "title": "Perfect Link",
+    "brief": "Reach Perfect chemistry in a draft-only puzzle. Combine the fixed offers into a strong regional identity.",
+    "rankRequired": "champion",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "epic",
+    "seed": 97057,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 340
+    },
+    "stars": [
+      {
+        "kind": "minOverall",
+        "min": 98
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "chemistry",
+      "tier": "Perfect"
+    },
+    "draftScript": [
+      {
+        "lineupId": "nrg-esports-s8"
+      },
+      {
+        "lineupId": "team-vitality-2223"
+      },
+      {
+        "lineupId": "team-bds-2223"
+      },
+      {
+        "lineupId": "karmine-corp-2024"
+      },
+      {
+        "lineupId": "team-vitality-2025"
+      },
+      {
+        "lineupId": "karmine-corp-2025"
+      }
+    ]
+  },
+  {
+    "id": "ch-lab-masterclass",
+    "title": "Draft Masterclass",
+    "brief": "An expert draft puzzle with open offers: reach 92 team overall. The final stars demand Perfect chemistry and base cards only.",
+    "rankRequired": "supersonic-legend",
+    "opponentLineupId": "team-vitality-2223",
+    "tier": "legend",
+    "seed": 98261,
+    "sim": {
+      "difficulty": "hard",
+      "bestOf": 7,
+      "opponentShift": 0
+    },
+    "constraint": {
+      "maxSeasonId": "rlcs-2026"
+    },
+    "reward": {
+      "xp": 560
+    },
+    "stars": [
+      {
+        "kind": "chemistry",
+        "tier": "Perfect"
+      },
+      {
+        "kind": "noSpecials"
+      }
+    ],
+    "kind": "draft",
+    "objective": {
+      "kind": "minOverall",
+      "min": 92
     }
   }
 ]

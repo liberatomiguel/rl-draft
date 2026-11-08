@@ -104,10 +104,15 @@ export function normalizeGuess(s: string): string {
   return s.normalize("NFKD").replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
 }
 
-/** Resolve a typed guess to a player id (exact nickname / id match, normalised). */
-export function resolveGuess(text: string): string | null {
+/** A typed nickname can identify more than one person (zen / OCE's ZeN).
+ * Accept the answer's own spelling before the general lookup. An explicitly
+ * selected suggestion retains its person id in the UI, so selecting the other
+ * player remains a miss. No fuzzy or partial nickname is accepted. */
+export function resolveGuess(text: string, answerId?: string): string | null {
   const key = normalizeGuess(text);
   if (!key) return null;
+  const answer = answerId ? playerById.get(answerId) : undefined;
+  if (answer && (normalizeGuess(answer.nickname) === key || normalizeGuess(answer.id) === key)) return answer.id;
   for (const p of players) {
     if (normalizeGuess(p.nickname) === key || normalizeGuess(p.id) === key) return p.id;
   }

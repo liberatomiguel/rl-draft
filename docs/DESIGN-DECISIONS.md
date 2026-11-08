@@ -1708,6 +1708,30 @@ Items marked ~~struck~~ were superseded by the v0.2 feedback round.
      the new edition. No boss shifts, seeds, reward values, balance version or
      persist keys/versions change. Future puzzles can name a later ceiling.
 
+157. **Every authored star needs a reproducible legal solution (rc.36.16,
+     CH-02; Miguel, 07/11).** Win-rate samples with independent match seeds do
+     not prove fixed-seed playability. Check in action traces that use only
+     offered cards and legal paid/free rerolls, retain the actual RNG cursor,
+     and earn all three stars. Replay them through the engine and the store,
+     including a reload, then assert repeat attempts never repay stars.
+     Catalog changes must keep these proofs passing. The human-readable
+     solutions are spoilers in CHALLENGE-SOLUTIONS-rc36-16.md, not an in-game
+     auto-solver. Difficulty still needs Miguel's human playtest.
+
+158. **Draft Lab is a no-match challenge format (rc.36.16; expansion authorized
+     by Miguel, 07/11).** A roster objective replaces the boss clear; two extra
+     roster conditions use the same star masks and rewards. Scripted offers
+     have no paid rerolls. No synthetic match or hidden win RNG is used. The
+     existing 27 IDs and save contracts stay intact; 18 new IDs are additive.
+
+159. **Daily completion is a once-per-UTC-date event (rc.36.16, CH-03).** Keep
+     both daily modes after the seed/attempt/reward checks. A completed Daily
+     cannot start or pay a second official attempt, including a restored stale
+     run. A finished Quiz guess is a no-op for XP, counters AND missions. Make
+     all clues available before its final guess; refresh open surfaces at UTC
+     midnight and reject the previous date's pending submission. No account
+     or cross-tab sync protocol is changed.
+
 ## Open questions for review
 
 - UI language final call (EN now; PT-BR translation is one file).

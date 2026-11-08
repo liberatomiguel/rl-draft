@@ -4,12 +4,10 @@ import { createRng, type Rng } from "@/lib/rng";
 import { finalOverall } from "./cards";
 import {
   buildChallengeOpponent,
-  buildGauntletOpponents,
   challengeStatus,
   createChallengeDraft,
   evaluateStars,
   playChallengeSeries,
-  playGauntletStage,
   STAR_2,
   STAR_3,
   STAR_CLEAR,
@@ -20,13 +18,9 @@ import { buildUserTeam } from "./teams";
 import type { Challenge, DraftOfferCard, Roster } from "./types";
 
 /**
- * A COMPETENT, REALISTIC draft (v1.4) — what a thoughtful player actually does:
- * each offer, take the best available card for an open needed slot (players
- * first); reroll a clearly-weak offer while rerolls remain. This is the honest
- * winnability bar — NOT the old `bestLegalRoster`, which cherry-picked the single
- * best card at every slot across all lineups (an unreachable roster, so its win
- * rate said nothing about real play). Seeded by the challenge, so it mirrors the
- * exact offers a player faces.
+ * Greedy smoke helper for the constraint/gating tests below. Three-star
+ * reachability is proved separately by exact legal replays, never by sampling
+ * unrelated match RNG states after this draft.
  */
 function cardScore(c: DraftOfferCard): number {
   if (c.kind === "player") return finalOverall(playerCardById.get(c.refId)!);
@@ -65,41 +59,6 @@ function autoDraft(ch: Challenge, rng: Rng): Roster | null {
     draft = applyPick(draft, best, slotsForKind(best.kind).find((s) => !draft.roster[s])!, rng);
   }
   return draft.complete ? draft.roster : null;
-}
-
-/** One full attempt (gauntlet stages, then the boss) on a given RNG. */
-function attempt(ch: Challenge, user: ReturnType<typeof buildUserTeam>, opponent: ReturnType<typeof buildChallengeOpponent>, stages: ReturnType<typeof buildGauntletOpponents>, rng: Rng) {
-  const all = [];
-  for (const o of stages) {
-    const r = playGauntletStage(user, o, ch, rng);
-    all.push(r);
-    if (r.winnerTeamId !== "user") return { cleared: false, mask: 0 };
-  }
-  const boss = playChallengeSeries(user, opponent, ch, rng);
-  all.push(boss);
-  const mask = evaluateStars(ch, { user, boss, all, bossOverall: displayTeamOverall(opponent.rating), rerollsUsed: 0 });
-  return { cleared: boss.winnerTeamId === "user", mask };
-}
-
-/** Win rate of the competent fixed-seed draft, sampling the whole attempt (the
- *  live series RNG continues from the post-draft state, which varies with the
- *  player's choice path). Also returns how often each extra star came with a win. */
-function realisticRates(ch: Challenge, sims = 200): { win: number; star2: number; star3: number } {
-  const roster = autoDraft(ch, createRng(ch.seed));
-  if (!roster) return { win: 0, star2: 0, star3: 0 }; // couldn't even assemble a legal roster
-  const user = buildUserTeam(roster, ch.sim.difficulty, { mode: "challenge" });
-  const opponent = buildChallengeOpponent(ch);
-  const stages = buildGauntletOpponents(ch);
-  let wins = 0;
-  let s2 = 0;
-  let s3 = 0;
-  for (let i = 0; i < sims; i++) {
-    const r = attempt(ch, user, opponent, stages, createRng(ch.seed + 1 + i * 131));
-    if (r.cleared) wins++;
-    if (r.mask & STAR_2) s2++;
-    if (r.mask & STAR_3) s3++;
-  }
-  return { win: wins / sims, star2: s2 / sims, star3: s3 / sims };
 }
 
 describe("challenges — data integrity", () => {
@@ -186,27 +145,4 @@ describe("challenges — constraints actually bind", () => {
   });
 });
 
-describe("challenges — every one is realistically winnable, none trivial (v1.4)", () => {
-  // A COMPETENT (not perfect) draft on the fixed seed must land in a real DIFFICULTY
-  // BAND: hard enough to matter, never impossible, never a free win. The sim is
-  // deterministic (fixed seeds), so these bands are stable — tuned via the boss
-  // `opponentShift` knob. Floor: legend ≥0.15, others ≥0.30 (margin under the design
-  // targets Common~65/Rare~55/Epic~45/Legend~30). Ceiling: ≤0.85 so nothing is a
-  // walkover (the v1.4 "not too easy" rule for fixed seeds).
-  for (const ch of challenges) {
-    const isLegend = ch.tier === "legend";
-    it(`${ch.id} is in-band (${ch.tier})`, () => {
-      const r = realisticRates(ch);
-      console.log(`  ${ch.id.padEnd(30)} ${ch.tier.padEnd(6)} win ${(r.win * 100).toFixed(0).padStart(3)}%  ★2 ${(r.star2 * 100).toFixed(0).padStart(3)}%  ★3 ${(r.star3 * 100).toFixed(0).padStart(3)}%`);
-      expect(r.win).toBeGreaterThanOrEqual(isLegend ? 0.15 : 0.3);
-      expect(r.win).toBeLessThanOrEqual(0.85);
-      // Outcome-based stars (sweep / goals / concede) must be reachable on the fixed
-      // seed with the competent draft: never 0 across 200 attempts. Draft-shaped stars
-      // (chemistry / max overall / underdog / no specials / rerolls) depend on the
-      // player's choices, so they are not sampled here.
-      const outcomeKinds = new Set(["sweep", "goals", "concede"]);
-      if (ch.stars && outcomeKinds.has(ch.stars[0].kind)) expect(r.star2, `${ch.id} star 2`).toBeGreaterThan(0.02);
-      if (ch.stars && outcomeKinds.has(ch.stars[1].kind)) expect(r.star3, `${ch.id} star 3`).toBeGreaterThan(0.02);
-    });
-  }
-});
+// CH-02 reachability is proven by exact replay in challenges.solvable.test.ts.

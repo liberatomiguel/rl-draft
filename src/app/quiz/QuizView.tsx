@@ -13,9 +13,10 @@ import { orgById, playerById } from "@/data";
 import { useCopy } from "@/content/copy";
 import { quizForDate, quizSuggestions, resolveGuess } from "@/engine/quiz";
 import { visibleClues, type QuizClue } from "@/engine/quizState";
-import { todayKey, dailyNumber } from "@/lib/dailyPlan";
-import { countryName, cx } from "@/lib/util";
+import { dailyNumber } from "@/lib/dailyPlan";
+import { cx } from "@/lib/util";
 import { sfx } from "@/lib/sfx";
+import { useUtcDay } from "@/store/useUtcDay";
 import { useMounted } from "@/store/useMounted";
 import { useProfileStore } from "@/store/profileStore";
 import { BackToMenu } from "@/components/layout/LeaveRunGuard";
@@ -40,7 +41,7 @@ export function QuizView() {
 export function QuizPanel({ compact }: { compact?: boolean }) {
   const { QUIZ_UI: Q } = useCopy();
   const mounted = useMounted();
-  const date = todayKey();
+  const date = useUtcDay();
   const puzzle = useMemo(() => quizForDate(date), [date]);
   const result = useProfileStore((s) => s.quiz.results[date]);
   const quiz = useProfileStore((s) => s.quiz);
@@ -54,8 +55,8 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
   const answer = playerById.get(puzzle.playerId);
   const suggestions = useMemo(() => quizSuggestions(text, 6), [text]);
 
-  const submit = (value: string) => {
-    const id = resolveGuess(value);
+  const submit = (value: string, selectedId?: string) => {
+    const id = selectedId ?? resolveGuess(value, puzzle.playerId);
     const out = guess(puzzle, id, value);
     setText("");
     if (out.correct) sfx.unlock();
@@ -135,10 +136,10 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
                       <li key={p.id}>
                         <button
                           type="button"
-                          onClick={() => submit(p.nickname)}
+                          onClick={() => submit(p.nickname, p.id)}
                           className="rounded-md border border-line px-2 py-1 text-xs font-semibold text-sub transition-colors hover:border-orange/50 hover:text-ink"
                         >
-                          {p.nickname}
+                          {p.nickname}{p.country ? <CountryChip code={p.country} /> : null}
                         </button>
                       </li>
                     ))}
@@ -170,7 +171,7 @@ export function QuizPanel({ compact }: { compact?: boolean }) {
 function clueText(c: QuizClue, Q: ReturnType<typeof useCopy>["QUIZ_UI"]): string {
   switch (c.kind) {
     case "country":
-      return Q.clues.country(countryName(c.country), c.region);
+      return Q.clues.country(c.country, c.region);
     case "era":
       return Q.clues.era(c.firstYear, c.lastYear, c.lineups);
     case "orgs":

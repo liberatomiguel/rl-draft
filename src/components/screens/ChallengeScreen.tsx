@@ -12,7 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import { challengeById, lineupById } from "@/data";
 import { lineupHeader } from "@/engine/cards";
 import { countStars, rosterFromLineup, starsAvailable, totalStars } from "@/engine/challenges";
-import { StarRow, starLabel } from "@/app/challenges/ChallengesView";
+import { StarRow } from "@/app/challenges/ChallengesView";
+import { challengeStarLabels } from "@/components/challenges/challengeLabels";
 import { CHALLENGE } from "@/config/balance";
 import { COSMETICS } from "@/data/cosmetics";
 import { CosmeticIcon, useCosmeticCopy } from "@/components/cosmetics/CosmeticViews";
@@ -35,6 +36,7 @@ import { TeamLogo } from "@/components/ui/TeamLogo";
 import { FieldView } from "@/components/cards/FieldView";
 import { CrownIcon } from "@/components/ui/icons";
 import { RunStepper } from "./RunStepper";
+import { DraftChallengeResult } from "./DraftChallengeResult";
 
 export function ChallengeScreen({ run }: { run: RunState }) {
   const { CHALLENGES_UI: CH, TOURNAMENT_UI: T } = useCopy();
@@ -71,7 +73,7 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   // the rank-up ceremony after it holds them in turn). Held from before "Play"
   // so the hold is already up when they arrive; a gauntlet lost at a stage
   // has no boss series to show.
-  const played = series != null || (state?.stages?.failedAt ?? null) !== null;
+  const played = !!state?.evaluated || series != null || (state?.stages?.failedAt ?? null) !== null;
   useOverlayHold("live", !played || revealing);
 
   const play = () => {
@@ -112,6 +114,7 @@ export function ChallengeScreen({ run }: { run: RunState }) {
   }, [state?.series, state?.cleared, revealing]);
 
   if (!state || !challenge) return null;
+  if (challenge.kind === "draft") return <DraftChallengeResult run={run} challenge={challenge} state={state} />;
   const { user, opponent, cleared } = state;
   const boss = lineupHeader(challenge.opponentLineupId);
   const stages = state.stages;
@@ -359,7 +362,7 @@ function StarRewardModal({
   const copy = useCosmeticCopy();
   const starMasks = useProfileStore((s) => s.challengeStars);
   const [dismissed, setDismissed] = useState(false);
-  const labels = [CH.star1, ...(challenge.stars ?? []).map((st) => starLabel(st, CH))];
+  const labels = challengeStarLabels(challenge, CH);
   const total = totalStars(starMasks);
   const next = CHALLENGE.starMilestones.find((m) => m > total) ?? null;
   const reward = next ? COSMETICS.find((c) => c.source.type === "challenge-stars" && c.source.stars === next) ?? null : null;

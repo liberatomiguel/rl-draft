@@ -1,3 +1,4 @@
+import { CHALLENGE_TEXT_EN } from "./copy.challenges.en";
 /**
  * English copy — the source dictionary (store-free, server-safe).
  *
@@ -1080,9 +1081,36 @@ export const CHANGELOG_PAGE = {
 };
 
 export const CHALLENGES_UI = {
+  catalog: CHALLENGE_TEXT_EN,
+  formatLabel: "Format",
+  formats: { all: "All formats", boss: "Showdown", gauntlet: "Gauntlet", draft: "Draft Lab" } as Record<string, string>,
+  fixedSeedHint: "Fixed seed. The same choices replay the same result.",
+  scriptedHint: "Fixed offers · no paid rerolls",
+  draftOnlyHint: "Build the roster to meet the objectives. No match is played.",
+  checkDraft: "Check draft",
+  draftFailed: "The main objective is missing. Try a different set of picks.",
+  teamOverall: (n: number) => "Team overall: " + n + "",
+  chemistryValue: (n: number) => "Chemistry: " + n + "%",
+  starGauntlet1: "Win every stage and the final series",
+  draftStar: {
+    noSpecials: "Field no special cards",
+    minOverall: (n: number) => "Reach at least " + n + " team overall",
+    maxOverall: (n: number) => "Finish at " + n + " team overall or lower",
+    chemistry: (tier: string) => "Reach " + tier + " chemistry or better",
+    maxRerolls: (n: number) => "Use at most " + n + " paid rerolls",
+    sameRegion: "Three starters from the same region",
+    sameSeason: "Three starters from the same RLCS season",
+    sameOrg: "Three starters from the same organization, in any era",
+    differentCountries: (n: number) => "Starters from " + n + " different countries",
+    sweep: (n: number) => "Lose at most " + n + " games",
+    underdog: "Lower team overall than the opponent",
+    goals: (n: number) => "Score " + n + " goals",
+    concede: (n: number) => "Concede at most " + n + " goals",
+    noLosses: "Win every series",
+  },
   title: "Challenges",
   subtitle:
-    "Rank-unlocked puzzles. Out-draft a fixed historical line under a twist and win the series. Cleared challenges grant XP and stay cleared.",
+    "Fixed-seed puzzles from your first connections to expert drafts. Beat historical teams, survive gauntlets or solve Draft Labs. Each star pays once.",
   modeLockedTitle: "Challenges are locked",
   modeLockedBody:
     "Reach Bronze rank (200 XP) to unlock Challenges — the same gate as the Collection. Finish a run or two to get there.",
@@ -1113,11 +1141,14 @@ export const CHALLENGES_UI = {
   theBoss: "The line",
   // v2.0 stars + gauntlets
   starsKicker: "Three stars",
-  starsHint: "Star 1 is the clear. Stars 2 and 3 add a condition — earn them on any attempt, in any order.",
+  starsHint: "Star 1 is the clear. Stars 2 and 3 add a condition to the clear. Earn them on separate attempts or together. Paid rerolls count; free dead-offer rerolls do not.",
   starsCount: (n: number, total: number) => `${n}/${total} stars`,
   starsTotal: (n: number) => `${n} stars`,
   star1: "Win the series",
   star: {
+    minOverall: (n: number) => "Win with at least " + n + " team overall",
+    differentCountries: (n: number) => "Win with starters from " + n + " different countries",
+    sameOrg: "Win with three starters from the same organization, in any era",
     noSpecials: "Win without fielding a special card",
     sweep: (n: number) => (n === 0 ? "Win the boss series 4–0" : `Win the boss series losing at most ${n} game${n === 1 ? "" : "s"}`),
     maxOverall: (n: number) => `Win with a team overall of ${n} or lower`,
@@ -1575,13 +1606,13 @@ export const SEASON_RECAP = {
 export const QUIZ_UI = {
   kicker: "Daily Quiz",
   title: "Guess the Player",
-  subtitle: "Who is this RLCS player? One player per day, three attempts. Every miss reveals a new clue.",
+  subtitle: "Who is this RLCS player? One player per UTC day, three attempts. More clues open before each guess; all are available for the last one.",
   question: "Who is this RLCS player?",
   clue: (n: number) => `Clue ${n}`,
   attemptsLeft: (n: number) => (n === 1 ? "1 attempt left" : `${n} attempts left`),
   placeholder: "Type a nickname…",
   guess: "Guess",
-  wrong: "Not them — here's another clue.",
+  wrong: "Not them — check the new clues.",
   solved: (attempt: number): string => (attempt === 1 ? "First try! Maximum score." : attempt === 2 ? "Solved on the second attempt." : "Solved on the last attempt."),
   solvedToast: (attempt: number) => (attempt === 1 ? "Solved on the first try" : `Solved on attempt ${attempt}`),
   failed: "Out of attempts. The answer was:",
@@ -1595,7 +1626,7 @@ export const QUIZ_UI = {
   score: (s: number) => `${s} pt${s === 1 ? "" : "s"}`,
   xpFor: (xp: number) => `+${xp} XP`,
   clues: {
-    country: (country: string, region: string) => `Nationality: ${country} (${region} region).`,
+    country: (country: string, region: string) => `Nationality: ${new Intl.DisplayNames(["en"], { type: "region" }).of(country) ?? country} (${region} region).`,
     era: (first: number, last: number, lineups: number) =>
       first === last ? `Active in ${first} — ${lineups} RLCS lineup${lineups === 1 ? "" : "s"} in the dataset.` : `Active from ${first} to ${last} — ${lineups} RLCS lineups in the dataset.`,
     orgs: (orgs: string[]) => (orgs.length === 1 ? `Played for ${orgs[0]}.` : `Played for ${orgs[0]} and ${orgs[1]}.`),

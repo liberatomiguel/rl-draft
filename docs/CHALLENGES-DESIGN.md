@@ -1,4 +1,9 @@
-# Challenges — design (SHIPPED in v1.4)
+# Challenges — current contract (rc.36.16)
+
+> 45 fixed-seed challenges / 135 stars. The current catalog is `src/data/challenges.json`; the release audit is `CHALLENGE-AUDIT-rc36-16.md`. Formats: showdown, gauntlet, Draft Lab (roster objectives without a match). Every three-star clear has a legal replay fixture in `src/engine/__fixtures__/challenge-solutions.json`, checked through both engine and store, including reload and repeat rewards. All existing IDs and star masks are preserved. Human solutions are spoilers in `CHALLENGE-SOLUTIONS-rc36-16.md`. `CH_AUDIT=1` measures legal policy paths; `CH_TUNE=1` finds candidates using the real post-draft RNG; `CH_REPORT=1` exports solutions. None estimates human win rates.
+
+## Historical v1.4 design below
+
 
 > **Status (rc.32): HISTORY — the v1.4 design, not the live set.** The live set is
 > `src/data/challenges.json`: **27 challenges** at rc.31 (23 boss challenges and 4

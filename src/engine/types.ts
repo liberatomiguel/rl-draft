@@ -758,7 +758,11 @@ export interface Challenge {
    * series ends the run. `stars` are the two extra objectives (star 1 is always
    * the main clear); each pays star XP the first time it is earned.
    */
-  kind?: "boss" | "gauntlet";
+  kind?: "boss" | "gauntlet" | "draft";
+  /** Draft Lab: clear by meeting this roster objective, without a match. */
+  objective?: ChallengeStar;
+  /** Authored offers; rerolls remain disabled when a script is present. */
+  draftScript?: DraftScriptStep[];
   gauntlet?: { lineupIds: string[]; bestOf: number };
   stars?: [ChallengeStar, ChallengeStar];
 }
@@ -776,7 +780,10 @@ export type ChallengeStar =
   | { kind: "noLosses" }
   /** rc.20: every drafted player from ONE region / ONE RLCS season. */
   | { kind: "sameRegion" }
-  | { kind: "sameSeason" };
+  | { kind: "sameSeason" }
+  | { kind: "minOverall"; min: number }
+  | { kind: "differentCountries"; min: number }
+  | { kind: "sameOrg" };
 
 /** The optional "twist" on a challenge draft. All fields are optional. */
 export interface ChallengeConstraint {
@@ -796,6 +803,8 @@ export interface ChallengeConstraint {
 
 /** Live state of a challenge match (the single Bo7 vs the fixed boss). */
 export interface ChallengeRunState {
+  /** Draft Lab and early gauntlet losses have no boss series. */
+  evaluated?: boolean;
   user: TournamentTeam;
   opponent: TournamentTeam;
   /** Null until the player presses play; then the simulated series (the BOSS

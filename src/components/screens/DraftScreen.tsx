@@ -37,6 +37,7 @@ import { FieldView } from "@/components/cards/FieldView";
 import { LineupSeasonBadge } from "@/components/cards/LineupSeasonBadge";
 import { REGION_BADGE } from "@/components/regionStyle";
 import { RunStepper } from "./RunStepper";
+import { ChallengeGoals } from "@/components/challenges/ChallengeGoals";
 import { RunOnboarding } from "./RunOnboarding";
 
 const REEL_LENGTH = 10; // 9 decoys + the drawn lineup
@@ -96,8 +97,9 @@ export function DraftScreen({ run }: { run: RunState }) {
 
   return (
     <div className="rise-in">
-      <RunOnboarding difficulty={run.difficulty} regionLock={run.regionLock} />
+      {run.mode !== "challenge" ? <RunOnboarding difficulty={run.difficulty} regionLock={run.regionLock} /> : null}
       <RunStepper run={run} />
+      {run.mode === "challenge" ? <ChallengeGoals challengeId={run.challengeId} /> : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         {/* ----------------------------------------------- Lineup offer.

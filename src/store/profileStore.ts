@@ -64,7 +64,8 @@ import {
   type SeenState,
 } from "@/engine/newItems";
 import { profileAvailableKeys } from "@/engine/profileNew";
-import { FEATURES, MISSIONS } from "@/config/balance";
+import { FEATURES, MISSIONS, QUIZ } from "@/config/balance";
+import { todayKey } from "@/lib/dailyPlan";
 import type { DurableProfile } from "@/lib/profileSync";
 import { trackEvent } from "@/lib/analytics";
 import { useAchievementToasts } from "./achievementToastStore";
@@ -478,6 +479,9 @@ export const useProfileStore = create<ProfileState>()(
         const freshToasts: string[] = [];
         const discovered: string[] = [];
         set((state) => {
+          // One official Daily result per UTC date, even after a stale run is
+          // restored. The home already enforces this; rewards must enforce it too.
+          if (daily && state.dailyResults[daily.date]) return {};
           const now = new Date().toISOString();
 
           const unlockedSpecials = { ...state.unlockedSpecials };
@@ -959,14 +963,17 @@ export const useProfileStore = create<ProfileState>()(
 
       guessQuiz: (puzzle, guessPlayerId, rawText) => {
         let out = { correct: false, finished: false, xp: 0, attempts: 0 };
+        if (puzzle.date !== todayKey()) return out;
+        let accepted = false;
         set((state) => {
           const prev = state.quiz.results[puzzle.date];
           const o = applyGuess(puzzle, prev, guessPlayerId, rawText);
           out = { correct: o.correct, finished: o.finished, xp: o.xp, attempts: o.result.attempts };
           if (o.result === prev) return {};
+          accepted = true;
           // In-progress days live in `results` too (so a reload keeps the attempts);
           // the counters only move when the day finishes.
-          const wasFinished = !!prev && (prev.solved || prev.attempts >= 3);
+          const wasFinished = !!prev && (prev.solved || prev.attempts >= QUIZ.attempts);
           const quiz: QuizState =
             o.finished && !wasFinished
               ? foldQuizDay(state.quiz, puzzle.date, o.result)
@@ -987,7 +994,7 @@ export const useProfileStore = create<ProfileState>()(
           };
         });
         if (out.correct) useRewardToasts.getState().push([{ kind: "quiz", attempt: out.attempts, xp: out.xp }]);
-        if (out.finished) {
+        if (accepted && out.finished) {
           get().applyMissionEvent({ type: "quiz_played", solved: out.correct, attempt: out.attempts });
         }
         return out;

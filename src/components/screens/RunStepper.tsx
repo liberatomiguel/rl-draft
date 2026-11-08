@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCopy } from "@/content/copy";
 import type { RunPhase, RunState } from "@/engine/types";
+import { challengeById } from "@/data/catalog";
 import { cx } from "@/lib/util";
 import { useRunStore } from "@/store/runStore";
 import { Badge } from "@/components/ui/Badge";
@@ -35,7 +36,7 @@ export function RunStepper({ run }: { run: RunState }) {
     review: RUN_UI.phaseReview,
     tournament: RUN_UI.phaseTournament,
     results: RUN_UI.phaseResults,
-    challenge: RUN_UI.phaseChallenge,
+    challenge: run.challengeId && challengeById.get(run.challengeId)?.kind === "draft" ? RUN_UI.phaseResults : RUN_UI.phaseChallenge,
   };
   const phaseIds = run.mode === "challenge" ? PHASE_IDS_CHALLENGE : PHASE_IDS;
   const currentIndex = phaseIds.findIndex((p) => p === run.phase);

@@ -1,5 +1,7 @@
 "use client";
 
+import { challengeById } from "@/data";
+
 /**
  * Team review v0.3: field + analyst column on the left, numbers column on
  * the right, the six cards in a compact strip right below the fold.
@@ -23,6 +25,7 @@ import { GameCard } from "@/components/cards/GameCard";
 import { FieldView } from "@/components/cards/FieldView";
 import { rosterSlots } from "@/components/cards/rosterView";
 import { RunStepper } from "./RunStepper";
+import { ChallengeGoals } from "@/components/challenges/ChallengeGoals";
 
 export function ReviewScreen({ run }: { run: RunState }) {
   const { REVIEW, STAT_LABELS, CHEM_TIERS, CHALLENGES_UI } = useCopy();
@@ -63,6 +66,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
   return (
     <div className="rise-in">
       <RunStepper run={run} />
+      {run.mode === "challenge" ? <ChallengeGoals challengeId={run.challengeId} /> : null}
       <SectionTitle kicker={REVIEW.subtitle} title={REVIEW.title} className="mb-6" />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
@@ -162,7 +166,7 @@ export function ReviewScreen({ run }: { run: RunState }) {
               startTournament();
             }}
           >
-            {run.mode === "challenge" ? CHALLENGES_UI.toMatch : REVIEW.startTournament}
+            {run.mode === "challenge" ? (run.challengeId && challengeById.get(run.challengeId)?.kind === "draft" ? CHALLENGES_UI.checkDraft : CHALLENGES_UI.toMatch) : REVIEW.startTournament}
           </Button>
         </div>
       </div>

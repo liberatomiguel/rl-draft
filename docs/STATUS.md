@@ -1,21 +1,18 @@
 # Project Status — current state only
 
-> Last updated: **2026-11-05**. History: `CHANGELOG.md`; plan of record:
+> Last updated: **2026-11-07**. History: `CHANGELOG.md`; plan of record:
 > `ROADMAP.md`. Career map: `ROAD-TO-WORLDS-STATUS.md`.
 
 ## Where things are
 
-- **Production:** `main` at v1.4.6, `rocketdraft.app`, assets-only Cloudflare
+- **Production:** `main` at v1.4.8, `rocketdraft.app`, assets-only Cloudflare
   static export. Season 1 is not approved for production.
-- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.15**, career on, noindex,
+- **Season 1 candidate:** `staging`, **v2.0.0-rc.36.16**, career on, noindex,
   preview tools on, analytics off. Play at `staging.rocketdraft.app`.
 - **Etapas 1–2:** built; Gate 2 still needs Miguel's play. ENG-03 real-save
   fixtures remain open.
 - **Etapa 3 / Gate 3b:** integrated; progression/economy acceptance remains
   open. Career feedback evidence: `CAREER-FEEDBACK-rc36-6.md`.
-- **rc.36.11:** RLCS 2027 adds 46 reviewed lineups (24 worldwide / 22
-  region-only), including NA team 1. Compact colored season tags identify the drawn edition; 2027 has a
-  gold tag with a small NEW marker, and the region sits beside the organization; the 27 authored challenges retain their 2026 draft pool.
 - **Next:** close career progression/economy acceptance, then Etapa 4,
   Etapa 5 and cutover. `ROADMAP-NEXT-2026-11-05.md` gives the current scope and test plan;
   the rc.37 workstreams remain separate.
@@ -23,7 +20,15 @@
 - **rc.36.15:** 19 missing logos restored, neutral Octane for 28 teams with
   no verified logo, and season-aware identity maps for 11 major orgs.
 
+- **rc.36.16:** CH-01/02/03: 45 challenges / 135 reachable stars, seven
+  Draft Labs, exact legal replay proofs, EN/PT and once-only daily rewards.
+  Evidence/playtest: CHALLENGE-AUDIT-rc36-16.md. Career rc.37 remains separate.
+
 ## Current evidence and limits
+
+- rc.36.16: full suite **1615 passed**, 20 optional skipped, with two workers;
+  lint, typecheck and static export pass. All 45 legal solutions earn three stars through the
+  engine/store, including reload and repeat rewards. Persist contracts unchanged.
 
 - rc.36.15: full regression **1532 passed**, four resource-timeout cases
   passed in an isolated 20-test rerun (no timeout/config changes). 33 targeted

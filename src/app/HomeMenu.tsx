@@ -27,9 +27,10 @@ import { FEATURES } from "@/config/balance";
 import { SITE } from "@/config/site";
 import { sfx } from "@/lib/sfx";
 import { rankForXp } from "@/engine/progression";
-import { dailyInfo, todayKey } from "@/lib/dailyPlan";
+import { dailyInfo } from "@/lib/dailyPlan";
 import { dailyDescription, dailyLabel } from "@/lib/runLabels";
 import { cx } from "@/lib/util";
+import { useUtcDay } from "@/store/useUtcDay";
 import { useMounted } from "@/store/useMounted";
 import { useAccountStore } from "@/store/accountStore";
 import { clearRunInProgress, loadRunStore, type RunStoreState } from "@/store/lazyRunStore";
@@ -83,7 +84,8 @@ export default function HomeMenu() {
   const achieved = useProfileStore((s) => Object.keys(s.achievements).length);
   const dailyResults = useProfileStore((s) => s.dailyResults);
   const streak = useProfileStore(selectDailyStreak);
-  const quizToday = useProfileStore((s) => s.quiz.results[todayKey()]);
+  const today = useUtcDay();
+  const quizToday = useProfileStore((s) => s.quiz.results[today]);
   const collectionOpen = useProfileStore(selectCollectionUnlocked);
   const rank = rankForXp(xp);
   const [quizOpen, setQuizOpen] = useState(false);
@@ -101,7 +103,6 @@ export default function HomeMenu() {
     playWith((run) => run.setSetupMode(mode));
   };
 
-  const today = todayKey();
   const daily = useMemo(() => dailyInfo(today), [today]);
   const dailyDone = mounted ? Boolean(dailyResults[today]) : false;
   const quizDone = mounted ? Boolean(quizToday && (quizToday.solved || quizToday.attempts >= 3)) : false;
