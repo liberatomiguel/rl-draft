@@ -21,7 +21,7 @@
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
-import { animationOverlay, staticMotionBase, motionRasterSource } from "./lib/banner-animation.mjs";
+import { animationOverlay, staticMotionBase, motionRasterSource, splitOrbit } from "./lib/banner-animation.mjs";
 
 const SRC = "data-sources/banners/banners-rocket-draft.html";
 const OUT = "public/banners";
@@ -63,7 +63,8 @@ for (const b of BANNERS) {
   if (/<filter|<feTurbulence|<feGaussianBlur|filter=/.test(overlay)) throw new Error(`${b.key}: a filter survived in the overlay`);
   writeFileSync(join(OUT, `${b.key}.anim.svg`), `${overlay}\n`);
   writeFileSync(join(OUT, `${b.key}.base.svg`), `${staticMotionBase(source)}\n`);
-  writeFileSync(join(OUT, `${b.key}.motion.svg`), `${motionRasterSource(overlay)}\n`);
+  writeFileSync(join(OUT, `${b.key}.motion.svg`), `${motionRasterSource(b.key === "cosmic-ascension" ? splitOrbit(overlay, false) : overlay, b.key === "overdrive")}\n`);
+  if (b.key === "cosmic-ascension") writeFileSync(join(OUT, `${b.key}.orbit.svg`), `${motionRasterSource(splitOrbit(overlay, true))}\n`);
   animated.push([b.key, overlay.length]);
 }
 mkdirSync("src/generated", { recursive: true });

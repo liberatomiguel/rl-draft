@@ -378,7 +378,7 @@ export function BannerSurface({
     const stop = observeLive(el);
     // Keep the motion's focal point on the artwork, even under cover-cropping
     // on a tall phone hero. Resize only; never reads layout per animation frame.
-    const origin = banner.style.art === "overdrive" ? [746, 96] : [770, 100];
+    const origin = banner.style.art === "overdrive" ? [746, 96] : [766, 74];
     const align = () => {
       const w = el.clientWidth, h = el.clientHeight;
       const scale = Math.max(w / 1240, h / 200);
@@ -435,7 +435,7 @@ export function BannerSurface({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="cos-anim" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {banner.style.art === "overdrive" ? <img className="cos-anim cos-anim-second" src={bannerMotionLayerSrc(banner.style.art, displayPx)!} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} /> : null}
+        {banner.style.art === "cosmic-ascension" ? <img className="cos-anim cos-orbit" src={bannerArtSrc(`${banner.style.art}.orbit`, displayPx)} alt="" aria-hidden loading="lazy" decoding="async" draggable={false} /> : null}
       </> : null}
       <span className="cos-frame" aria-hidden />
       {children}

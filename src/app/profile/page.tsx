@@ -49,7 +49,7 @@ import { SeasonRecap } from "@/components/screens/SeasonRecap";
 import { SeasonRankTrack } from "@/components/cosmetics/SeasonRankTrack";
 
 /** rc.5: hero badge boxes (px) — the featured one a step up. Layout, not gameplay. */
-const HERO_FEATURED_PX = 58;
+const HERO_FEATURED_PX = 50;
 const HERO_BADGE_PX = 44;
 
 export default function ProfilePage() {
@@ -136,14 +136,14 @@ export default function ProfilePage() {
                 {/* rc.23: the badges sit by the NAME, on the dark reading
                     zone of the banner (Miguel); the featured one leads. */}
                 {extras ? (
-                <div className="relative ml-1 flex items-end gap-1.5">
+                <div className="relative ml-1 flex shrink-0 items-center gap-1">
                   {shown.badges.map((b, i) => (
                     <button
                       key={b.id}
                       type="button"
                       onClick={() => openLocker("badge")}
                       title={i === 0 ? `${CC.featured} · ${cosmeticCopy.name(b.id)}` : cosmeticCopy.name(b.id)}
-                      className="rounded-md outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-orange/70"
+                      className="flex shrink-0 items-center justify-center rounded-md outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-orange/70"
                     >
                       <BadgeEmblem badge={b} size={i === 0 ? HERO_FEATURED_PX : HERO_BADGE_PX} />
                     </button>
@@ -544,7 +544,6 @@ function RatingSparkline({ history }: { history: { mmr: number; delta: number; t
 }
 
 /** Max badges the showcase draws before a "+N" tile (layout, not gameplay). */
-const SHOWCASE_MAX = 15;
 
 /** rc.6: the locker on display — every badge the player owns, best first
  *  (rarity, then family), with their effects. Tapping opens the locker. */
@@ -553,7 +552,7 @@ function BadgeShowcase({ owned, onOpen, className }: { owned: Record<string, str
   const copy = useCosmeticCopy();
   const { owned: badges, locked } = lockerItems(owned, "badge");
   const total = badges.length + locked.length;
-  const shown = badges.slice(0, SHOWCASE_MAX);
+  const shown = badges;
   const more = badges.length - shown.length;
   return (
     <Panel className={cx("flex flex-col p-4", className)}>

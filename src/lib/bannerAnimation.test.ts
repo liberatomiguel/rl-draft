@@ -1,9 +1,24 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { animationOverlay, staticMotionBase, motionRasterSource } from "../../scripts/lib/banner-animation.mjs";
+import { animationOverlay, staticMotionBase, motionRasterSource, splitOrbit } from "../../scripts/lib/banner-animation.mjs";
 import animated from "@/generated/banner-anim.json";
 
 describe("banner motion extraction",()=>{
+  it("keeps one Overdrive ring train when two SMIL phases freeze to identical poses",()=>{
+    const out=motionRasterSource('<svg viewBox="0 0 1240 200"><g><ellipse cx="770" rx="3"/><ellipse cx="770" rx="3"/></g></svg>',true)!;
+    expect((out.match(/<ellipse/g)??[]).length).toBe(1);
+    const shipped=readFileSync('public/banners/overdrive.motion.svg','utf8');
+    const rings=shipped.match(/<ellipse[^>]*>/g)??[];
+    expect(rings.length).toBe(10);
+    expect(new Set(rings).size).toBe(rings.length);
+  });
+  it("rotates only orbital groups, preserving the stationary nebula and sparkles",()=>{
+    const source='<svg><defs/><g><path id="nebula"/><g><circle id="orbit"/><animateTransform attributeName="transform" type="rotate" to="360"/></g></g></svg>';
+    expect(splitOrbit(source,true)).toContain('id="orbit"');
+    expect(splitOrbit(source,true)).not.toContain('id="nebula"');
+    expect(splitOrbit(source,false)).toContain('id="nebula"');
+    expect(splitOrbit(source,false)).not.toContain('id="orbit"');
+  });
   it("bakes a visible static motion texture, never shipping live SMIL to a moving image",()=>{
     const svg=motionRasterSource('<svg viewBox="0 0 1240 200"><g opacity="0"><path d="M0 0L10 10"/><animate attributeName="opacity" values="0;0.7;1;0"/><animateTransform attributeName="transform" type="rotate" to="360"/></g></svg>')!;
     expect(svg).not.toMatch(/<animate|<filter/);

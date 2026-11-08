@@ -10,7 +10,7 @@ with the root cause — that section doubles as the project's bugfix log.
 
 ---
 
-## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.17**)
+## [2.0.0] — UNRELEASED · "Season 1" (built on `staging`, published as **v2.0.0-rc.36.18**)
 
 > **Playtest build (deploy):** `NEXT_PUBLIC_PLAYTEST=1` (`FEATURES.playtest`)
 > + `wrangler.jsonc` `env.playtest` → `playtest.rocketdraft.app` for external
@@ -24,6 +24,26 @@ with the root cause — that section doubles as the project's bugfix log.
 > (rc.2–rc.26) plus three live lists: Miguel's Supabase/Cloudflare steps (§6), the
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
+
+### Fixed / Changed — rc.36.18, visual review after playtest
+- Daily login: one calendar, in-cell reward art/names and XP, collected checks,
+  current-day highlight and a streak progress meter. Removes the duplicate
+  selected-day panel; past ownership never marks future streak days collected.
+- Restores locked Challenge overlays with rank, prerequisites and milestone
+  alternatives. The briefing remains readable and cannot start a locked run.
+- Overdrive has one ring train, scaling along its original focal point.
+  Root cause: two copies of the entire ring texture and two frozen SMIL
+  phases painted the same rings repeatedly. Deduplicates the ten ring poses.
+  Cosmic Ascension separates its original slow 140s orbital groups from the
+  nebula and stars; the previous whole-image rotation distorted the composition.
+- Rank-up shows earned cosmetic previews, rank transition and readable unlock
+  rows; special-card chance now shows the resulting total instead of a delta
+  mislabeled as the total. Skipped ranks' cosmetics are included.
+- Profile badge slots share a vertical centre, 4px spacing and a smaller
+  featured-size difference. The collection renders all owned badges, removing
+  the hard-coded 15-item cap. Season rewards are visible at every track node.
+- Cosmetic inventory and proposed additions are documented separately; no
+  reward rules, gameplay seeds, persistence or career code change here.
 
 ### Added / Changed / Balance / Fixed — rc.36.17, daily calendar, unlock paths and cosmetics
 - UI-01: redesigned daily-login calendar with credited XP, daily/milestone

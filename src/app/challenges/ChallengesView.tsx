@@ -312,7 +312,6 @@ function ChallengeCard({
         })}
       </ul>
       <CosmeticRewardStrip challengeId={ch.id} perfect={perfect} CH={CH} compact />
-      {locked ? <UnlockPath challenge={ch} CH={CH} compact /> : null}
     </>
   );
 
@@ -322,12 +321,13 @@ function ChallengeCard({
       type="button"
       onClick={onOpen}
       className={cx(
-        "panel p-4 text-left transition-colors hover:!border-line-strong",
+        "panel relative overflow-hidden p-4 text-left transition-colors hover:!border-line-strong",
         cleared ? "!border-amber-300/40" : locked ? "!bg-raised" : style.glow,
         cleared && style.legend && "ach-legend",
       )}
     >
-      {inner}
+      <div aria-hidden={locked || undefined} className={locked ? "opacity-25" : undefined}>{inner}</div>
+      {locked ? <div className="absolute inset-0 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-[2px]"><div className="w-full"><p className="text-center text-sm font-bold text-ink">{CH.catalog[ch.id]?.title ?? ch.title}</p><UnlockPath challenge={ch} CH={CH} compact /></div></div> : null}
     </button>
   );
 }

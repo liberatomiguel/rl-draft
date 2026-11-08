@@ -6,11 +6,14 @@
  * progress, achievement toasts and unlocked specials.
  */
 
+import { COSMETICS } from "@/data/cosmetics";
+import { SEASON } from "@/config/season";
+import { CosmeticPreview } from "@/components/cosmetics/CosmeticViews";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { achievementById, lineupById, playerCardById, specialCardById } from "@/data";
-import { DIFFICULTY, RANK_REWARDS } from "@/config/balance";
+import { DIFFICULTY, RANK_REWARDS, RANKS } from "@/config/balance";
 import { useCopy } from "@/content/copy";
 import {
   resolveCoach,
@@ -840,9 +843,8 @@ function rankUnlockLines(
   }
   if (!before.hardMode && after.hardMode) out.push(R.unlockHard);
   if (after.specialChance > before.specialChance) {
-    // Show the GAIN over the previous rank (e.g. "+2%"), not the absolute chance —
-    // it reads as a reward and stays correct as the base rates change.
-    out.push(R.unlockChance(Math.round((after.specialChance - before.specialChance) * 100)));
+    // The copy describes the resulting chance, so show the new total.
+    out.push(R.unlockChance(Math.round(after.specialChance * 100)));
   }
   return out;
 }
@@ -864,54 +866,18 @@ export function RankUpCelebration({
     sfx.rankUp();
   }, []);
 
-  return (
-    // Portaled full-screen; dismisses only when the player taps/continues.
-    <CeremonyPortal ariaLabel={R.rankUpTitle} className="bg-black/85" onClick={onDone}>
-      <p className="kicker">{R.rankUpKicker}</p>
-      <div className="relative">
-        <div className="ceremony-burst relative">
-          <span className="ceremony-ring" aria-hidden />
-          <div className="card-float">
-            <RankBadge rank={rank} variant="menu" size="lg" />
-          </div>
-        </div>
-      </div>
-      <div className="text-center">
-        <p className="champion-title display bg-gradient-to-b from-amber-200 via-orange-bright to-orange bg-clip-text text-4xl font-bold uppercase tracking-wide text-transparent md:text-5xl">
-          {R.rankUpTitle}
-        </p>
-        <p className="display mt-2 text-lg font-bold uppercase tracking-[0.24em] text-ink">
-          {rank.label}
-        </p>
-        {unlocks.length > 0 ? (
-          <div className="mx-auto mt-5 max-w-xs rounded-xl border border-orange/25 bg-orange/5 px-4 py-3">
-            <p className="kicker !text-[10px] text-orange-bright">{R.rankUpUnlocked}</p>
-            <ul className="mt-2 space-y-1">
-              {unlocks.map((u, i) => (
-                <li key={i} className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink">
-                  <span className="text-good">+</span> {u}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </div>
-      {/* rc.29 (DRAFT-04): always a way out — the button, the hint, Escape / Enter.
-          The unlock list used to replace the hint, leaving no cue at all. */}
-      <div className="flex flex-col items-center gap-2">
-        <Button
-          variant="primary"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDone();
-          }}
-        >
-          {R.ceremonyContinue}
-        </Button>
-        <p className="text-xs text-sub">{R.rankUpHint}</p>
-      </div>
-    </CeremonyPortal>
-  );
+  const previous = RANKS.findIndex(r => r.id === prevRankId);
+  const current = RANKS.findIndex(r => r.id === rank.id);
+  const rewards = COSMETICS.filter(c => { const source=c.source; if(source.type !== "season-rank" || source.seasonId !== SEASON.id) return false; const index=RANKS.findIndex(r=>r.id===source.rankId); return index>previous && index<=current; });
+  return <CeremonyPortal ariaLabel={R.rankUpTitle} className="bg-black/90" onClick={onDone}>
+    <div className="w-full max-w-lg rounded-2xl border border-orange/35 bg-raised p-5 sm:p-7" onClick={e=>e.stopPropagation()}>
+      <p className="kicker text-center">{R.rankUpTitle}</p>
+      <div className="my-5 flex items-center justify-center gap-5"><RankBadge rank={rank} variant="menu" size="lg" /><div><p className="text-sm text-sub">{RANKS[previous]?.label} →</p><p className="display text-3xl font-bold text-orange-bright">{rank.label}</p></div></div>
+      {rewards.length ? <div className="mb-5 grid gap-2">{rewards.map(c=><div key={c.id} className="rounded-xl border border-orange/25 bg-orange/[0.04] p-3"><CosmeticPreview id={c.id} size="sm" /></div>)}</div> : null}
+      {unlocks.length ? <section className="rounded-xl border border-line bg-bg p-4"><p className="mb-3 text-xs font-semibold text-sub">{R.rankUpUnlocked}</p><ul className="space-y-3">{unlocks.map(u=><li key={u} className="flex items-start gap-3 text-sm text-ink"><span className="text-good" aria-hidden>✓</span><span>{u}</span></li>)}</ul></section> : null}
+      <Button variant="primary" full size="lg" className="mt-5" onClick={onDone}>{R.ceremonyContinue}</Button>
+    </div>
+  </CeremonyPortal>;
 }
 
 /**

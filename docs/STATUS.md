@@ -7,7 +7,7 @@
 
 - Production: main, v1.4.8, https://rocketdraft.app; assets-only static export.
   Season 1 is not approved for production.
-- Season 1 candidate: staging, **v2.0.0-rc.36.17**, career on, noindex,
+- Season 1 candidate: staging, **v2.0.0-rc.36.18**, career on, noindex,
   preview tools on, analytics/accounts off in the isolated QA export.
   Play at https://staging.rocketdraft.app.
 - The rc.37 career workstreams remain separate. This package does not edit
@@ -23,15 +23,17 @@
   separates Hard/Legacy days. Only future dailies read the new field shifts.
 - Quiz: 259 eligible players, a deck without repeats until completion, and
   unambiguous full clues before the last attempt. Older dates keep their answer.
-- UI-01/01a/02: clear login XP and selectable reward details; every rank's
+- UI-01/01a/02: clear login XP, collected days and in-cell rewards; every rank's
   actual rewards/condition; all 35 badges and 18 banners reviewed, including
   First Chapter, Overdrive and Cosmic Ascension. Static/live layers, EN/PT,
   profile/locker integration, 320px and reduced effects checked.
-- Release validation: 1995 tests passed, lint, types and static export checked.
-  Production probe: profile 43 ms/s, board 11 ms/s, zero compositor failures.
+- rc.36.18 restores lock overlays, shows all owned badges and inline track
+  rewards, cleans rank-up and separates orbital banner art from its background.
+- Release validation: 1997 tests passed, lint, types and static export checked.
+  Production probe: profile 53 ms/s, board 12 ms/s, zero compositor failures.
   Lighthouse accessibility: 100/100 on profile/login and Challenges entries.
   Final visual/performance/accessibility evidence and limits:
-  UI-DAILY-AUDIT-rc36-17.md.
+  UI-REVIEW-rc36-18.md and UI-DAILY-AUDIT-rc36-17.md.
 - BALANCE_VERSION 14 changes daily-only calibration. Existing match/chemistry,
   Classic/Quick and career tunables retain their values.
 

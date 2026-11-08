@@ -13,9 +13,10 @@ interface ModalProps {
   actions?: React.ReactNode;
   onClose: () => void;
   wide?: boolean;
+  className?: string;
 }
 
-export function Modal({ open, title, children, actions, onClose, wide }: ModalProps) {
+export function Modal({ open, title, children, actions, onClose, wide, className }: ModalProps) {
   // Portal target — animated ancestors create transform containing blocks
   // that would re-anchor position:fixed, so the dialog must live on <body>.
   const host = useMounted() ? document.body : null;
@@ -55,6 +56,7 @@ export function Modal({ open, title, children, actions, onClose, wide }: ModalPr
         className={cx(
           "panel-strong pop-in relative z-10 flex max-h-[calc(100dvh-2rem)] w-full flex-col p-6",
           wide ? "max-w-2xl" : "max-w-md",
+          className,
         )}
       >
         <div className="mb-3 flex shrink-0 items-start justify-between gap-4">

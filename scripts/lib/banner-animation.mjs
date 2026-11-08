@@ -88,9 +88,20 @@ export function staticMotionBase(svgText) {
 /** A representative, transparent still of the moving art. Production animates
  * this raster as a composited plane; live SMIL re-rasterised the SVG per frame.
  * Sparkles that start at opacity zero use their visible pose in this texture. */
-export function motionRasterSource(overlay) {
+export function splitOrbit(overlay, orbitOnly) {
+  const svg = parseSvg(overlay);
+  const keep = n => {
+    if (n.children.some(c => c.tag === "animateTransform" && /attributeName="transform"/.test(c.attrs) && /type="rotate"/.test(c.attrs))) return orbitOnly ? n : null;
+    const children = n.children.map(keep).filter(Boolean);
+    return orbitOnly && !children.length ? null : {...n, children};
+  };
+  return serialize({...svg, children:svg.children.flatMap(n => n.tag === "defs" ? [n] : [keep(n)].filter(Boolean))});
+}
+
+export function motionRasterSource(overlay, dedupeEllipses = false) {
   const svg = parseSvg(overlay);
   if (!svg) return null;
+  const seen = new Set();
   const freeze = n => {
     const opacity = n.children.find(c => c.tag === "animate" && /attributeName="opacity"/.test(c.attrs));
     let attrs = n.attrs;
@@ -102,7 +113,11 @@ export function motionRasterSource(overlay) {
         attrs = /\sopacity="[^"]*"/.test(attrs) ? attrs.replace(/\sopacity="[^"]*"/, ` opacity="${value}"`) : `${attrs} opacity="${value}"`;
       }
     }
-    return {...n, attrs, children:n.children.filter(c=>!ANIM.has(c.tag)).map(freeze)};
+    if (dedupeEllipses && n.tag === "ellipse") {
+      if (seen.has(attrs)) return null;
+      seen.add(attrs);
+    }
+    return {...n, attrs, children:n.children.filter(c=>!ANIM.has(c.tag)).map(freeze).filter(Boolean)};
   };
   const still = freeze(svg);
   const box = /viewBox="([^"]+)"/.exec(still.attrs)?.[1].split(/\s+/).map(Number);

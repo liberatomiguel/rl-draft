@@ -1781,7 +1781,7 @@ html.reduce-fx .card-float {
   animation: cos-motion-float 9s ease-in-out var(--cos-delay, 0s) infinite paused;
 }
 .cos-banner-legend > .cos-anim {
-  animation-name: cos-motion-orbit;
+  animation-name: cos-motion-breathe;
   animation-duration: 10s;
 }
 .cos-banner[data-art="overdrive"] > .cos-anim {
@@ -1884,3 +1884,8 @@ html.reduce-fx .card-float {
     transition: none;
   }
 }
+
+/* Preserve the original slow orbital ring independently from nebula/stars. */
+.cos-banner > .cos-orbit { animation: cos-original-orbit 140s linear infinite paused; }
+@keyframes cos-original-orbit { to { transform: rotate(360deg); } }
+@keyframes cos-motion-breathe { 0%,100% { opacity:.7; } 50% { opacity:1; } }
