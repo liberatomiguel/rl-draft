@@ -349,7 +349,43 @@ Metas do relatório (mesmas 147 carreiras):
 - Nas regiões do meio, MENA e SAM sobem (33% → 43% de alcance, efeito da curva plana); EU e NA ficam iguais
   (14% e 29%), coerente com "o pool mais forte é o mais difícil".
 
-E4_PLACEHOLDER
+### E4. Endless: quem chegou sem vencer, e a defesa de título
+
+**E4-NC (balance atual):** 30 carreiras do Normal **sem título do Worlds até a S10** (regiões e perfis
+variados), estendidas até a S20.
+
+| | n | ≥ 1 título S11–S20 | Temporadas com título | Rating S11 → S20 | Compras / vendas S11–S20 | Caixa S20 p50 | Falência |
+|---|---|---|---|---|---|---|---|
+| não-campeões até a S10 | 30 | **13%** | **4%** | 88,2 → 89,5 | 15 / 5 | 509k | 0% |
+| campeões até a S10 (bateria, 155) | 155 | 95% | 54% | 95,6 → 95,5 | 9 / 3 | 3,73M | 1% |
+
+**Leitura:** a endless é polarizada. Quem já venceu vence em mais da metade das temporadas; quem não venceu
+quase nunca vence depois (87% passam dez temporadas sem título), com o rating parado ~6 pontos abaixo. O
+problema da endless não é só o "campeão eterno": é também a falta de caminho para quem chega sem título. A
+curva plana (B1) deve ajudar este grupo (mercado mais acessível); medir na confirmação.
+
+**E4-TD05 / E4-TD10 (defesa de título):** rivais do Worlds +0,5 / +1,0 a partir do 1º título do usuário
+(`CAREER_TITLE_DEFENSE.worldsShiftPerTitle`, até 1 título), nos 39 campeões de Normal e Hard da bateria,
+S1–S20 (a carreira é idêntica até o 1º título). Pareado com as mesmas 39 carreiras estendidas na bateria.
+
+| Braço | ≥ 1 título S11–S20 | Temporadas com título S11–S20 | Sequência p50 / p90 | Espera pelo novo título p50 | Caixa S20 p50 | Falência |
+|---|---|---|---|---|---|---|
+| controle | 95% | **52%** | 4 / 6 | 2 | 11,8M | 3% |
+| +0,5 | 92% | 52% | 4 / 7 | 3 | 11,2M | 3% |
+| +1,0 | 90% | **45%** | 3 / 6 | 4 | 8,3M | **8%** |
+
+Por que o efeito é pequeno: na S11–S20, o campeão enfrenta rivais **≥ 2 pontos mais fracos em 70–76% das
+séries** e vence 96–100% delas (com 2 pontos de vantagem o motor já dá ~95% de vitória). Somar +0,5 ou +1 no
+Worlds só aproxima algumas séries. A dominância é estrutural: o campeão monta um elenco de ~96, tem caixa de
+oito dígitos e a IA da era infinita não acompanha.
+
+**Leitura:**
+- **+0,5 não muda nada: rejeitar.** +1,0 freia pouco (52% → 45%) e cria falência no topo (folha de milhões
+  sem o prêmio do Worlds): também não recomendo sozinho.
+- O que mexeria de verdade é de desenho, para decidir com o Miguel: (a) orgs de IA que se reforçam na era
+  infinita (contratam do topo do pool, como o usuário); (b) assédio às estrelas de uma dinastia (propostas
+  que o craque quer aceitar); (c) um teto suave pela folha (o prêmio de título na renovação já existe, mas
+  com caixa de 8–12M ele não pesa).
 
 ADIM_PLACEHOLDER
 
@@ -357,10 +393,78 @@ ADIM_PLACEHOLDER
 
 ## 5. Pacote provisório (para aprovação de direção; nada aplicado ao staging)
 
-PACOTE_PLACEHOLDER
+Valores medidos só no **Normal, 1 seed**: a direção está clara, e os números finais saem da confirmação
+(Parte 6). Nada disto está no `staging`.
+
+**Aplicar (depois da confirmação)**
+
+| # | Item | Valor atual → proposto | Efeito medido (Normal) | Impacto em save existente |
+|---|---|---|---|---|
+| A1 | Renovação: saltos maiores, sem piso de valor | `CAREER_SALARY.renewalMaxJump` 2,5 → **4,0**; `CAREER_RENEWAL_TENURE.jumpMax` 3,0 → **5,0** | jovens 52% → 31% sozinho, 38% no pacote; reajuste p90 ~6×, máximo 6,2× por renovação | só renovações futuras; o craque barato sobe por degraus, sem migração |
+| B1 | Curva salarial mais plana acima de 70 | `CAREER_SALARY.growthPerPoint` 1,20 → **1,17** | título geral 9% → 18% sozinho; `ambitious` 0% → 33%; falência 3% → 1% | contratos atuais mantidos; pedidos, valores e taxas futuros mais baratos (85 −31%, 90 −40%); venda dos próprios craques rende menos; abaixo de 70, +13% no 65; coaches não mudam (curva própria) |
+| C1 | Começo mais lento nas regiões fáceis | `CAREER_REGION_FIELD.starterOvrOffset` e `.shift` (dose final pelo P2) | P1: SSA 100% → 81%, APAC 100% → 86%; EU/NA intactos | fundadores: só carreiras novas; cena: vale já nos próximos eventos regionais de saves em SSA/APAC/OCE |
+| F1 | Telemetria da bateria corrigida | qualifier com `advanced`; `prompts` = plano escolhido | — | nenhum (ferramenta de teste) |
+
+**Manter (não mexer agora)**
+- Crescimento dos jovens (`CAREER_AGE.growthMult`): com A1 + B1, os jovens já ficam a 1,6× do melhor
+  não-jovem. Medição separada no item A-dim (abaixo).
+- Faixa de potencial visível (DEV-04, decisão do Miguel em 30/10): medição só informativa (A-INFO).
+- Receitas e prêmios: o P1 manteve o título geral e baixou a falência **sem** mexer em receita.
+- Dificuldade geral da S1–S2: o excesso de facilidade inicial é regional (C1), não global.
+- Vagas e força de EU e NA (decisão do Miguel: os pools mais fortes ficam mais difíceis).
+- Psicóloga (funciona, ~+0,2 de rating equivalente): só falta a tela dizer o que ela faz.
+
+**Rejeitar**
+- Pisos de valor 55/70/80% (e 30/45/60% como padrão): tiram quase todo o retorno de formar craques e
+  produzem reajustes de até 38–54×.
+- Taxa de compra mais barata sozinha (E2-FEE): dobra a rotatividade, a folha passa da receita, a falência
+  sobe.
+- Teto de contratação mais alto (E2-CAP): nenhum efeito em título.
+- Cena regional de SSA a +2,5 sozinha: forte demais (SSA abaixo de APAC e OCE).
+
+**Ainda precisa ser testado**
+- Dose final de C1 na combinação (P2, rodando).
+- Defesa de título na endless (E4, rodando).
+- Química por convivência: dar fôlego a "manter o elenco" (`homegrown` é quem perde com C1). Precisa de uma
+  alavanca de duas inclinações (até 67% como hoje, depois devagar até 100%) e de contrapartida, porque 67% →
+  100% vale +0,67 de rating.
+- Tabela de preleção de campeonato: tornar "recuperar" uma escolha boa quando o time é favorito (por exemplo,
+  final +0,6), medido por contrafactual no domingo.
+- Reputação: o título do Worlds cumprir qualquer meta da temporada (o campeão não perde reputação no
+  fechamento); separar na telemetria a meta do resultado.
+- Confirmação em Easy e Hard e validação com a segunda seed (Parte 6).
+
+**Decisões que ficam com o Miguel**
+1. **Direção A1 + B1 + C1:** aprovar para eu rodar a confirmação (Parte 6) com esses valores.
+2. **EU e NA no Normal:** 14% e 29% de alcance do Worlds até a S10 no P1, e na EU 97% das carreiras
+   não-jovens do controle nunca chegam ao Major. É o "mais difícil de propósito" ou difícil demais?
+3. **Meta da temporada depois de um título mundial:** o campeão deixa de perder reputação no fechamento?
+4. **Química por convivência** com contrapartida: seguir para teste?
+5. **Elenco de 3 imune à indisponibilidade:** hoje ter reserva só traz risco. Manter assim?
+6. **Defesa de título na endless:** depende do E4.
 
 ---
 
 ## 6. Próximos passos e custo
 
-PROXIMOS_PLACEHOLDER
+1. **Confirmação do pacote** (depois da aprovação de direção): A1 + B1 + C1 nas **3 dificuldades** × 21
+   situações × seed 9100 × 8 perfis (`academy`, `prospectsOnly`, `ambitious`, `stars`, `trader`,
+   `homegrown`, `learner`, `coachUpgrades`) = 504 carreiras, **~2 h** de máquina. Pareada com a bateria.
+2. **Ajuste fino**, se a confirmação pedir: um ou dois braços de triagem (25–40 min cada).
+3. **Validação final**, uma vez: os 14 perfis base × 63 situações na **seed 17019** (réplica nova) = 882
+   carreiras, **~3 h**, mais uma amostra pequena da endless (S20) se a defesa de título entrar.
+4. **Pacote no staging:** um commit `v2.0.0-rc.38` com os valores, `BALANCE_VERSION` 16, testes de
+   regressão atualizados (os que fixam números da renovação e da curva), CHANGELOG, DESIGN/ROAD-TO-WORLDS
+   decisions e STATUS. Só depois do seu OK no pacote final.
+
+Custo total até o staging: ~5–6 h de máquina e pouco tempo de análise, contra ~21 h de relógio da bateria.
+
+**Como rodar um braço** (Git Bash, a partir de um worktree fixado no commit do experimento, com
+`node_modules` em junction):
+
+```bash
+HUMAN_EXPERIMENT=1 HUMAN_EXP=C:/caminho/spec.json HUMAN_DIR=C:/Users/Miguel/CLAUDE/rc37-battery/f6/<braço> HUMAN_SHARDS=6 HUMAN_SHARD=0 node node_modules/vitest/vitest.mjs run src/store/auditHumanExperiment.test.ts
+```
+
+Um processo por shard (0 a 5). Comparar: `node src/store/auditHumanSummaryF6.mjs --arm <pasta> --by
+profile|family|region`. As specs e as pastas de resultado ficam em `C:\Users\Miguel\CLAUDE\rc37-battery\f6`.
