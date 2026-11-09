@@ -167,7 +167,20 @@ no Worlds, nas vagas nem na identidade das regiões.
 - **Preleções: o coach nunca troca a escolha.** Com coach e jogando, a única diferença entre pedido e efeito
   é `none → keep` (o padrão, por desenho). Os "37–40% trocados" do relatório são domingos em que o time já
   estava eliminado (espectador recebe `keep`) ou sem coach. O efeito é ±0,4 de rating na rodada (≈ ±4 pp por
-  série). Falta medir escolha adequada × inadequada com contrafactual (ver Parte 6).
+  série). Medido nos perfis de um fator da bateria (idênticos exceto a preleção), título entre eventos em
+  que o time chegou aos playoffs com coach:
+
+  | Preleção | Worlds: título / final (n ≈ 200 cada) | Major: título (n ≈ 550) | Regional: título |
+  |---|---|---|---|
+  | preparar | **15,1% / 27,4%** | 15,7% | 4,3% |
+  | adaptativa (favorito → recuperar, senão preparar) | 14,7% / 26,1% | 16,0% | 5,0% |
+  | manter (= nenhuma, idêntico por desenho) | 9,9% / 18,7% | 13,8% | 4,8% |
+  | recuperar | **9,3% / 21,1%** | 12,7% | 3,8% |
+
+  No domingo de campeonato, a tabela atual soma +0,5 para "preparar" (+0,4 QF, +0,25 SF, −0,15 final) e
+  +0,1 para "recuperar" (−0,15, −0,15, +0,4): **recuperar é quase sempre a escolha pior**, e a decisão não
+  depende do contexto como o texto da tela sugere. Na carreira inteira, o efeito some no ruído (0–2 pp de
+  título até a S10).
 - **Reputação negativa no Worlds = meta da temporada.** Terminar o Worlds (último evento) roda o fechamento
   da temporada no mesmo passo: o campeão vai a 100 e, se não cumpriu a meta, perde `repRisk` logo em
   seguida. A telemetria atribuía isso ao Worlds. Saturação confirmada: 98% dos campeões de Major/Worlds já
@@ -250,5 +263,32 @@ Normal · SSA, APAC, OCE, MENA × 3 elencos · seed 9100 · perfis `academy`, `c
   da carreira: fundadores SSA −3 / APAC −2 / OCE −1 e cena SSA +1,5 / APAC +1,0 / OCE +0,5 / MENA 0.
   Alvo por região no Normal (alcance do Worlds até a S10): SSA e APAC 55–75%, OCE 45–60%, MENA 25–40%, sem
   1º Worlds antes da S3.
+
+### E2. Mercado acessível a quem já evoluiu (B)
+
+Normal · 7 regiões × 3 elencos · seed 9100 · um ou dois perfis por família · 147 carreiras por braço
+(E2-CAP: 63, só os perfis presos pela reputação).
+
+**E2-G117: curva salarial mais plana** (`CAREER_SALARY.growthPerPoint` 1,20 → 1,17 por ponto acima de 70).
+Pedidos e valores ficam mais baratos quanto mais alto o overall: 75 −12%, 80 −22%, 85 −31%, 90 −40%
+(abaixo de 70 ficam um pouco mais caros: 65 +13%).
+
+| Perfil (família) | Título do Worlds | Ganhou / perdeu | Título do Major | Alcance do Major | Falência | Folha ÷ receita S6–10 | Rating S10 |
+|---|---|---|---|---|---|---|---|
+| `academy` (jovens) | 57% → 52% | +1 / −2 | 67% → 71% | 95% → 90% | 0% → 0% | 0,51 → 0,59 | 95,3 → 96,5 |
+| `ambitious` (comprar) | **0% → 33%** | **+7 / −0** | 5% → 24% | 71% → 81% | 10% → 10% | 0,82 → 0,72 | 93,3 → 95,2 |
+| `learner` (outros) | 0% → 14% | +3 / −0 | 0% → 14% | 48% → 67% | 5% → 0% | 1,30 → 1,00 | 91,4 → 94,2 |
+| `stars` (comprar) | 5% → 10% | +2 / −1 | 5% → 10% | 33% → 33% | 0% → 0% | 0,92 → 0,83 | 80,1 → 79,8 |
+| `known` (comprar) | 0% → 5% | +1 / −0 | 0% → 10% | 33% → 38% | 0% → 0% | 0,91 → 0,79 | 80,0 → 81,3 |
+| `trader` (negociar) | 0% → 5% | +1 / −0 | 5% → 24% | 48% → 52% | 0% → 0% | 1,19 → 0,88 | 88,3 → 91,7 |
+| `homegrown` (manter) | 0% → 5% | +1 / −0 | 5% → 10% | 52% → 52% | 10% → 0% | 0,81 → 0,64 | 80,9 → 81,9 |
+| **todos** | **9% → 18%** | **+16 / −3** | 12% → 23% | 54% → 59% | 3% → 1% | 0,86 → 0,72 | 88,6 → 93,0 |
+
+**Leitura:** é o complemento do A. O mercado intermediário fica alcançável e o caminho "comprar prontos"
+(`ambitious`) passa a ganhar, enquanto a academia quase não se beneficia (ela não compra). Também baixa a
+falência e a folha ÷ receita de quem vive no limite. `stars` e `known` continuam presos, pelo teto de
+contratação por reputação e por só aceitarem jogadores reais (ver E2-CAP).
+
+E2_REST_PLACEHOLDER
 
 EXPERIMENTOS3_PLACEHOLDER

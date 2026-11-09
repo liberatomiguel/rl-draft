@@ -25,6 +25,27 @@ with the root cause — that section doubles as the project's bugfix log.
 > regression checklist (§7) and the open decisions (§8). This entry grows with every
 > rc. Never deployed to `main` before the full review.
 
+### Added / Fixed — rc.37 F6, balance experiments (branch `claude/rc37-balance`, no gameplay change yet)
+- **Experiment runner** `auditHumanExperiment.test.ts` (opt-in `HUMAN_EXPERIMENT=1`): plays chosen
+  battery cells under a balance patch applied in memory (strict deep merge: an unknown key fails),
+  battery-format JSONL, sharded and resumable. The integrated code reproduces the 06/11 battery
+  exactly (4 + 2 cells checked), so the battery's 4,914 controls are every experiment's paired control.
+- **Comparator** `auditHumanSummaryF6.mjs` (arm × battery control, by profile / family / region) and
+  **probes** `f6Probes.test.ts` (`F6_PROBE=1`, the psychologist priced in rating points by match.ts
+  Monte Carlo: +0.13–0.31).
+- **Levers, all off by default** (rc.37 values exactly; BALANCE_VERSION stays 15, fingerprint hash
+  only): `CAREER_RENEWAL_TENURE.valueFloorByRenewal` (a renewal floor the jump never caps),
+  `CAREER_REGION_FIELD` (`shift` on a region's qualifier/regional AI sides, carried in
+  difficultyShift; `starterOvrOffset` on its three founding offers), `CAREER_TITLE_DEFENSE`
+  (Worlds opponents per Worlds title the user holds).
+- Fixed (battery telemetry): qualifier rows all read "swiss_exit". Root cause: the audit placed
+  events with `tournament.userPlacement`, which only reads playoff runs; the game books a Swiss-only
+  qualifier with `careerResults.placementOf` ("top8" = through). Rows now carry `advanced`.
+- Fixed (battery telemetry): `season.training.prompts` read 0 everywhere. Root cause: since rc.36
+  (front T2) no proposal waits for approval; the bot now counts the manager's plan pick at a cycle
+  start. `unavailable` = 0 is correct: bot squads carry no reserve, and nobody is ruled out without one.
+- Results and the provisional package: `docs/battery-rc37/F6-EXPERIMENTOS.md`.
+
 ### Added — rc.37, round-2 career build (integrated onto staging rc.36.21)
 - **Staging integration (09/11):** `claude/rc37-integration` (`89a063b`) and the
   battery report (`claude/rc37-battery-report`, `70c506f`, docs only) merged
